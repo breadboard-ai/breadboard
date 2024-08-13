@@ -7,7 +7,7 @@
 import test from "ava";
 
 import map from "../src/nodes/map.js";
-import { Capability, Board } from "@google-labs/breadboard";
+import { Capability, Board, invokeGraph } from "@google-labs/breadboard";
 import { Core } from "../src/index.js";
 
 test("map with no board just outputs list", async (t) => {
@@ -33,7 +33,8 @@ test("sending a real board to a map", async (t) => {
   });
   input.wire("list->", map);
   map.wire("list->", board.output());
-  const outputs = await board.runOnce(
+  const outputs = await invokeGraph(
+    board,
     { list: [1, 2, 3] },
     {
       kits: [core],

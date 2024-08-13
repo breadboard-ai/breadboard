@@ -14,6 +14,7 @@ import {
   StoredDataCapabilityPart,
 } from "../../src/index.js";
 import { HarnessRunResult } from "../../src/harness/types.js";
+import { isLLMContentArray } from "../../src/data/common.js";
 
 const inputResult: HarnessRunResult = {
   type: "nodeend",
@@ -42,13 +43,53 @@ const inputResult: HarnessRunResult = {
   async reply() {},
 };
 
+const inputResultArray: HarnessRunResult = {
+  type: "nodeend",
+  data: {
+    node: {
+      id: "input-45dd0a3d",
+      type: "input",
+    },
+    inputs: {},
+    path: [],
+    timestamp: 10,
+    outputs: {
+      content: [
+        {
+          role: "user",
+          parts: [
+            {
+              inlineData: {
+                data: "aabbcc",
+                mimeType: "text/plain",
+              },
+            },
+          ],
+        },
+        {
+          role: "user",
+          parts: [
+            {
+              inlineData: {
+                data: "aabbcc",
+                mimeType: "text/plain",
+              },
+            },
+          ],
+        },
+      ],
+    },
+  },
+  async reply() {},
+};
+
 function copyResult(result: HarnessRunResult): HarnessRunResult {
   // We can't use structuredClone because of the async function, so we fall back
   // to using parse/stringify to make a copy.
   return JSON.parse(JSON.stringify(result));
 }
 
-test("Default Data Store replaces inline data parts", async (t) => {
+test("Default Data Store replaces inline data parts for LLM Content", async (t) => {
   const store = createDefaultDataStore();
   const result = copyResult(inputResult);
 
@@ -83,7 +124,46 @@ test("Default Data Store replaces inline data parts", async (t) => {
   store.releaseAll();
 });
 
-test("Default Data Store replaces stored data parts", async (t) => {
+test("Default Data Store replaces inline data parts for LLM Content Arrays", async (t) => {
+  const store = createDefaultDataStore();
+  const result = copyResult(inputResultArray);
+
+  if (!(result.type === "nodeend")) {
+    t.fail("Result is not a nodeend");
+    return;
+  }
+
+  for (const property of Object.values(result.data.outputs)) {
+    if (!isLLMContentArray(property)) {
+      continue;
+    }
+
+    for (const llmEntry of property) {
+      for (const part of llmEntry.parts) {
+        t.truthy(isInlineData(part));
+      }
+    }
+  }
+
+  store.createGroup("store");
+  await store.replaceDataParts("store", result);
+
+  for (const property of Object.values(result.data.outputs)) {
+    if (!isLLMContentArray(property)) {
+      continue;
+    }
+
+    for (const llmEntry of property) {
+      for (const part of llmEntry.parts) {
+        t.truthy(isStoredData(part));
+      }
+    }
+  }
+
+  store.releaseAll();
+});
+
+test("Default Data Store replaces stored data parts for LLM Content", async (t) => {
   const store = createDefaultDataStore();
   const result = copyResult(inputResult);
 
@@ -120,6 +200,53 @@ test("Default Data Store replaces stored data parts", async (t) => {
       t.truthy(isStoredData(part));
       const storedPart = part as StoredDataCapabilityPart;
       t.notDeepEqual(handles[i], storedPart.storedData.handle);
+    }
+  }
+
+  store.releaseAll();
+});
+
+test("Default Data Store replaces stored data parts for LLM Content Arrays", async (t) => {
+  const store = createDefaultDataStore();
+  const result = copyResult(inputResultArray);
+
+  if (!(result.type === "nodeend")) {
+    t.fail("Result is not a nodeend");
+    return;
+  }
+
+  store.createGroup("store");
+  await store.replaceDataParts("store", result);
+
+  const handles: string[] = [];
+  for (const property of Object.values(result.data.outputs)) {
+    if (!isLLMContentArray(property)) {
+      continue;
+    }
+
+    for (const llmEntry of property) {
+      for (const part of llmEntry.parts) {
+        t.truthy(isStoredData(part));
+        const storedPart = part as StoredDataCapabilityPart;
+        handles.push(storedPart.storedData.handle);
+      }
+    }
+  }
+
+  // Replace again, and confirm we have different blob URLs.
+  await store.replaceDataParts("store", result);
+  for (const property of Object.values(result.data.outputs)) {
+    if (!isLLMContentArray(property)) {
+      continue;
+    }
+
+    for (const llmEntry of property) {
+      for (let i = 0; i < llmEntry.parts.length; i++) {
+        const part = llmEntry.parts[i];
+        t.truthy(isStoredData(part));
+        const storedPart = part as StoredDataCapabilityPart;
+        t.notDeepEqual(handles[i], storedPart.storedData.handle);
+      }
     }
   }
 

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "../../src/board.js";
 import { KitBuilder } from "../../src/kits/index.js";
 import { StreamCapability } from "../../src/stream.js";
 import {
@@ -54,8 +53,7 @@ export const TestKit = new KitBuilder({
     if (!graph) {
       throw new Error("Must provide a graph to include");
     }
-    const board = await Board.fromGraphDescriptor(graph);
-    return await board.runOnce(inputs, context);
+    return await invokeGraph(graph, inputs, context);
   },
   /**
    * This is a primitive implementation of the `invoke` node in Core Kit,
@@ -69,11 +67,9 @@ export const TestKit = new KitBuilder({
       if ($board) {
         const board =
           ($board as BreadboardCapability).kind === "board"
-            ? await Board.fromBreadboardCapability(
-                $board as BreadboardCapability
-              )
+            ? await getGraphDescriptor($board as BreadboardCapability, context)
             : typeof $board === "string"
-              ? await Board.load($board, {
+              ? await context.loader?.load($board, {
                   base,
                   outerGraph: context.outerGraph,
                 })
@@ -81,14 +77,14 @@ export const TestKit = new KitBuilder({
 
         if (!board) throw new Error("Must provide valid $board to invoke");
 
-        return await board.runOnce(args, context);
+        return await invokeGraph(board, args, context);
       } else {
         const { board, path, ...args } = inputs;
 
         const runnableBoard = board
-          ? await Board.fromBreadboardCapability(board)
+          ? await getGraphDescriptor(board, context)
           : path
-            ? await Board.load(path, {
+            ? await context.loader?.load(path, {
                 base,
                 outerGraph: context.outerGraph,
               })
@@ -97,7 +93,7 @@ export const TestKit = new KitBuilder({
         if (!runnableBoard)
           throw new Error("Must provide valid board to invoke");
 
-        return await runnableBoard.runOnce(args, context);
+        return await invokeGraph(runnableBoard, args, context);
       }
     },
     describe: async (inputs?: InputValues): Promise<NodeDescriberResult> => {
@@ -238,7 +234,9 @@ import {
   NewInputValues,
   NewOutputValues,
   NewNodeFactory as NodeFactory,
+  invokeGraph,
 } from "../../src/index.js";
+import { getGraphDescriptor } from "../../src/capability.js";
 
 export const testKit = addKit(TestKit) as unknown as {
   noop: NodeFactory<NewInputValues, NewOutputValues>;

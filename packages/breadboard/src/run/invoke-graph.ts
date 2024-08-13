@@ -8,8 +8,8 @@ import { timestamp } from "../timestamp.js";
 import type {
   GraphDescriptor,
   InputValues,
-  NodeHandlerContext,
   OutputValues,
+  RunArguments,
   TraversalResult,
 } from "../types.js";
 import { runGraph } from "./run-graph.js";
@@ -22,7 +22,7 @@ import { runGraph } from "./run-graph.js";
 export async function invokeGraph(
   graph: GraphDescriptor,
   inputs: InputValues,
-  context: NodeHandlerContext = {},
+  context: RunArguments = {},
   resumeFrom?: TraversalResult
 ): Promise<OutputValues> {
   const args = { ...inputs, ...graph.args };

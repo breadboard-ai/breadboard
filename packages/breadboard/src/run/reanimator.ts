@@ -26,26 +26,28 @@ export class Reanimator implements ReanimationController {
   }
 
   enter(invocationPath: number[]): ReanimationFrameController {
-    const stackEntry = this.#resumeFrom[invocationPath.join("-")];
-    if (!stackEntry) {
+    const entryId = invocationPath.join("-");
+    const cache = this.#resumeFrom.states;
+    const entry = cache?.[entryId];
+    if (!entry) {
       return new FrameReanimator(undefined);
     }
-    if (!stackEntry || !stackEntry.state) {
+    if (!entry || !entry.state) {
       throw new Error("Cannot reanimate without a state");
     }
-    const result = loadRunnerState(stackEntry.state).state;
+    const result = loadRunnerState(entry.state).state;
     result.outputs = {
       ...this.#inputs,
       ...result.partialOutputs,
     };
     this.#inputs = undefined;
-    const replayOutputs = stackEntry.outputs ? [stackEntry.outputs] : [];
+    const replayOutputs = entry.outputs ? [entry.outputs] : [];
 
     // Always return the new instance:
     // wraps the actual ReanimationFrame, if any.
     return new FrameReanimator({
       result,
-      invocationPath: stackEntry.path,
+      invocationPath: entry.path,
       replayOutputs,
     });
   }
