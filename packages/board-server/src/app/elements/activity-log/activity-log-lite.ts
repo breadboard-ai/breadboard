@@ -223,11 +223,13 @@ export class ActivityLogLite extends LitElement {
       background: var(--bb-icon-smart-toy) center center / 20px 20px no-repeat;
     }
 
-    .entry.human {
+    .entry.human,
+    .entry.user {
       color: var(--bb-human-500);
     }
 
-    .entry.human::before {
+    .entry.human::before,
+    .entry.user::before {
       background: var(--bb-icon-human) center center / 20px 20px no-repeat;
     }
 
@@ -472,6 +474,7 @@ export class ActivityLogLite extends LitElement {
   }
 
   #renderLog(entries: LogEntry[]) {
+    console.log("🌻 rendering log", entries);
     return html`${map(entries, (entry) => {
       switch (entry.type) {
         case "edge": {

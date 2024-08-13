@@ -125,27 +125,57 @@ export class LightObserver {
   }
 
   #nodeStart(event: RunNodeStartEvent) {
+    if (!this.#log) {
+      throw new Error("Node started without a graph");
+    }
+
     if (event.data.path.length > 1) {
       return;
     }
 
-    this.#currentNode = new Node(event);
-    if (!this.#log) {
-      throw new Error("Node started without a graph");
+    const type = event.data.node.type;
+    switch (type) {
+      case "input": {
+        this.#currentNode = new UserNode(event);
+        this.#currentInput = new InputEdge(event);
+        const edge = this.#currentInput;
+        this.#log = placeInputInLog([...this.#log, this.#currentNode!], edge);
+        return;
+      }
+      case "output": {
+        this.#log = placeOutputInLog(this.#log, new Edge());
+        return;
+      }
+      default: {
+        this.#currentNode = new Node(event);
+        this.#log = [...this.#log, this.#currentNode, new Edge()];
+        return;
+      }
     }
-    this.#log = [...this.#log, this.#currentNode, new Edge()];
   }
 
   #nodeEnd(event: RunNodeEndEvent) {
     if (event.data.path.length > 1) {
       return;
     }
-
-    this.#currentNode!.end = event.data.timestamp;
-    this.#currentNode!.outputs = event.data.outputs;
-    this.#currentNode = null;
     if (!this.#log) {
       throw new Error("Node end without a graph");
+    }
+
+    if (event.data.node.type === "output") {
+      // @ts-expect-error - findLastIndex is not in the TS lib
+      const lastEdge = this.#log.findLast(
+        // @ts-expect-error - findLastIndex is not in the TS lib
+        (entry) => entry.type === "edge"
+      );
+      if (lastEdge) {
+        lastEdge.end = event.data.timestamp;
+        lastEdge.value = event.data.inputs;
+      }
+    } else {
+      this.#currentNode!.end = event.data.timestamp;
+      this.#currentNode!.outputs = event.data.outputs;
+      this.#currentNode = null;
     }
 
     this.#log = [...this.#log];
@@ -156,7 +186,7 @@ export class LightObserver {
       // Non-bubbled events will present themselves as node starts.
       return;
     }
-    this.#currentInput = new InputEdge(event);
+    this.#currentInput = new BubbledInputEdge(event);
     if (!this.#log) {
       throw new Error("Node started without a graph");
     }
@@ -168,7 +198,7 @@ export class LightObserver {
       // Non-bubbled events will present themselves as node ends.
       return;
     }
-    const output = new OutputEdge(event);
+    const output = new BubbledOutputEdge(event);
     if (!this.#log) {
       throw new Error("Node started without a graph");
     }
@@ -229,7 +259,7 @@ class Edge implements EdgeLogEntry {
   end = null;
 }
 
-class OutputEdge implements EdgeLogEntry {
+class BubbledOutputEdge implements EdgeLogEntry {
   type: "edge" = "edge";
   value?: OutputValues | undefined;
   schema: Schema | undefined;
@@ -242,7 +272,7 @@ class OutputEdge implements EdgeLogEntry {
   }
 }
 
-class InputEdge implements EdgeLogEntry {
+class BubbledInputEdge implements EdgeLogEntry {
   type: "edge" = "edge";
   id: string;
   value: InputValues | undefined;
@@ -253,5 +283,30 @@ class InputEdge implements EdgeLogEntry {
     this.schema = event.data.inputArguments.schema;
     this.id = idFromPath(event.data.path);
     this.end = null;
+  }
+}
+
+class InputEdge implements EdgeLogEntry {
+  type: "edge" = "edge";
+  id: string;
+  value: InputValues | undefined;
+  schema: Schema | undefined;
+  end: number | null;
+
+  constructor(event: RunNodeStartEvent) {
+    this.schema = event.data.node.configuration?.schema as Schema;
+    this.id = idFromPath(event.data.path);
+    this.end = null;
+  }
+}
+
+class UserNode extends Node {
+  constructor(event: RunNodeStartEvent) {
+    super(event);
+    this.descriptor.type = "user";
+  }
+
+  title(): string {
+    return "User";
   }
 }
