@@ -524,6 +524,7 @@ export class ActivityLogLite extends LitElement {
     return html`<bb-user-input
         id="${event.node.descriptor.id}"
         .inputs=${userInputs}
+        .inlineControls=${true}
         ${ref(this.#userInputRef)}
         @keydown=${(evt: KeyboardEvent) => {
           const isMac = navigator.platform.indexOf("Mac") === 0;
