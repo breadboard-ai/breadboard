@@ -795,7 +795,7 @@ export type InspectableRunEdgeEvent = {
     /**
      * The name of the port of the outgoing node.
      */
-    out: string;
+    out?: string;
     /**
      * The incoming node of the edge.
      */
@@ -803,7 +803,7 @@ export type InspectableRunEdgeEvent = {
     /**
      * The name of the port of the incoming node.
      */
-    in: string;
+    in?: string;
   };
   start: number;
   end: number;

@@ -235,7 +235,7 @@ export class LightObserver {
 
   #edge(event: RunEdgeEvent) {
     if (!this.#run) {
-      throw new Error("Node started without a graph");
+      throw new Error("Edge started without a graph");
     }
 
     const edge: InspectableRunEdgeEvent = {
