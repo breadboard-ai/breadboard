@@ -9,19 +9,15 @@ import { classMap } from "lit/directives/class-map.js";
 import { InputEnterEvent } from "./events/events.js";
 import {
   createLoader,
-  createRunObserver,
   type GraphDescriptor,
   type InputValues,
-  type InspectableRun,
-  type InspectableRunObserver,
-  type NodeValue,
 } from "@google-labs/breadboard";
 import {
   createRunner,
+  type HarnessRunner,
   type RunConfig,
-  type RunNodeStartEvent,
 } from "@google-labs/breadboard/harness";
-import { type InputCallback, STATUS, type UserMessage } from "./types/types.js";
+import { STATUS, type UserMessage } from "./types/types.js";
 import { until } from "lit/directives/until.js";
 import { loadKits } from "./utils/kit-loader.js";
 
@@ -33,6 +29,7 @@ import AgentKit from "@google-labs/agent-kit";
 
 import "@breadboard-ai/shared-ui";
 import "./elements/elements.js";
+import { LightObserver } from "./utils/light-observer.js";
 
 const randomMessage: UserMessage[] = [
   {
@@ -81,9 +78,6 @@ export class AppView extends LitElement {
   status = STATUS.STOPPED;
 
   @state()
-  runs: InspectableRun[] | null = null;
-
-  @state()
   showMenu = false;
 
   #loader = createLoader([]);
@@ -91,9 +85,9 @@ export class AppView extends LitElement {
   #kitLoad = loadKits([TemplateKit, Core, GeminiKit, JSONKit, AgentKit]);
 
   #isSharing = false;
-  #handlers: Map<string, InputCallback[]> = new Map();
   #abortController: AbortController | null = null;
-  #runObserver: InspectableRunObserver | null = null;
+  #runObserver: LightObserver | null = null;
+  #runner: HarnessRunner | null = null;
   #runStartTime = 0;
   #message = randomMessage[Math.floor(Math.random() * randomMessage.length)]!;
 
@@ -398,11 +392,14 @@ export class AppView extends LitElement {
       return;
     }
 
+    console.log("🌻 stopping run");
+
     this.#abortController.abort();
-    this.#callAllPendingInputHandlers();
+    this.#runner = null;
   }
 
   async startRun() {
+    console.log("🌻 starting run");
     this.stopRun();
 
     const [graph, kits] = await Promise.all([
@@ -424,7 +421,7 @@ export class AppView extends LitElement {
       runner: graph,
       loader: this.#loader,
       signal: this.#abortController.signal,
-      diagnostics: true,
+      diagnostics: "top",
       interactiveSecrets: true,
       inputs: {
         model: "gemini-1.5-flash-latest",
@@ -439,99 +436,55 @@ export class AppView extends LitElement {
       };
     }
 
+    this.#runner = createRunner(config);
+
     if (!this.#runObserver) {
-      this.#runObserver = createRunObserver({ kits, logLevel: "debug" });
+      this.#runObserver = new LightObserver(this.#runner);
     }
 
-    const runner = createRunner(config);
-    runner.addEventListener("end", () => {
+    this.#runner.addEventListener("end", () => {
       this.status = STATUS.STOPPED;
     });
 
-    runner.addEventListener("error", (evt) => {
+    this.#runner.addEventListener("error", (evt) => {
       this.requestUpdate();
       this.status = STATUS.STOPPED;
     });
 
-    runner.addEventListener("input", async (evt) => {
-      const value = await this.#registerInputHandler(evt.data.node.id);
-      await runner.run(value);
-    });
-
-    runner.addEventListener("nodeend", (evt) => {
-      this.requestUpdate();
-      this.#handlers.delete(evt.data.node.id);
-    });
-
-    runner.addEventListener("nodestart", (evt) => {
-      this.requestUpdate();
-      if (!this.#handlers.has(evt.data.node.id)) {
-        this.#handlers.set(evt.data.node.id, []);
-      }
-    });
-
-    runner.addEventListener("output", (evt) => {
+    this.#runner.addEventListener("input", async (evt) => {
       this.requestUpdate();
     });
 
-    runner.addEventListener("pause", () => {
+    this.#runner.addEventListener("nodeend", (evt) => {
+      this.requestUpdate();
+    });
+
+    this.#runner.addEventListener("nodestart", (evt) => {
+      this.requestUpdate();
+    });
+
+    this.#runner.addEventListener("output", (evt) => {
+      this.requestUpdate();
+    });
+
+    this.#runner.addEventListener("pause", () => {
       this.status = STATUS.PAUSED;
     });
 
-    runner.addEventListener("resume", () => {
+    this.#runner.addEventListener("resume", () => {
       this.status = STATUS.RUNNING;
     });
 
-    runner.addEventListener("secret", async (evt) => {
+    this.#runner.addEventListener("secret", async (evt) => {
       this.requestUpdate();
-
-      const secrets = await this.#registerSecretsHandler(evt.data.keys);
-      await runner.run(secrets);
     });
 
-    runner.addEventListener("start", () => {
+    this.#runner.addEventListener("start", () => {
       this.status = STATUS.RUNNING;
       this.#runStartTime = Date.now();
     });
 
-    runner.addObserver(this.#runObserver);
-    runner.run();
-  }
-
-  async #registerInputHandler(id: string): Promise<InputValues> {
-    const handlers = this.#handlers.get(id);
-    if (!handlers) {
-      return Promise.reject(`Unable to set up handler for input ${id}`);
-    }
-
-    return new Promise((resolve) => {
-      handlers.push((data: InputValues) => {
-        resolve(data);
-      });
-    });
-  }
-
-  async #registerSecretsHandler(keys: string[]): Promise<InputValues> {
-    const values = await Promise.all(
-      keys.map((key) => {
-        return new Promise<[string, NodeValue]>((resolve) => {
-          const callback = ({ secret }: InputValues) => {
-            resolve([key, secret]);
-          };
-          this.#handlers.set(key, [callback]);
-        });
-      })
-    );
-
-    return Object.fromEntries(values);
-  }
-
-  #callAllPendingInputHandlers() {
-    for (const handlers of this.#handlers.values()) {
-      for (const handler of handlers) {
-        handler.call(null, {});
-      }
-    }
+    this.#runner.run();
   }
 
   async #share() {
@@ -586,11 +539,9 @@ export class AppView extends LitElement {
       return graph.description ? html`${graph.description}` : nothing;
     });
 
-    const runs = this.#runObserver
-      ? this.#runObserver.runs()
-      : Promise.resolve([]);
+    const runs = this.#runObserver?.runs() ?? [];
 
-    const status = runs.then((runs) => {
+    const status = () => {
       const currentRun = runs[0];
       const events = currentRun?.events ?? [];
 
@@ -617,7 +568,7 @@ export class AppView extends LitElement {
       }
 
       return html`<div id="status" class=${classMap(classes)}>${message}</div>`;
-    });
+    };
 
     const active =
       this.status === STATUS.RUNNING || this.status === STATUS.PAUSED;
@@ -638,12 +589,13 @@ export class AppView extends LitElement {
           this.requestUpdate();
         }}
         @bbinputenter=${(event: InputEnterEvent) => {
-          const data = event.data as InputValues;
-          const handlers = this.#handlers.get(event.id) || [];
-          if (handlers.length === 0) {
-            console.warn(
-              `Received event for input(id="${event.id}") but no handlers were found`
-            );
+          let data = event.data as InputValues;
+          const runner = this.#runner;
+          if (!runner) {
+            throw new Error("Can't send input, no runner");
+          }
+          if (runner.running()) {
+            throw new Error("The runner is already running, cannot send input");
           }
 
           if (
@@ -653,9 +605,14 @@ export class AppView extends LitElement {
             globalThis.localStorage.setItem(event.id, event.data.secret);
           }
 
-          for (const handler of handlers) {
-            handler.call(null, data);
+          const keys = this.#runner?.secretKeys();
+          if (keys) {
+            data = Object.fromEntries(
+              keys.map((key) => [key, event.data.secret])
+            ) as InputValues;
           }
+
+          runner.run(data);
         }}
       ></bb-activity-log-lite>`;
     });
@@ -697,12 +654,15 @@ export class AppView extends LitElement {
           by <a href="https://labs.google/">Google labs</a> - v${this.version}
         </div>
         <div id="controls">
-          ${until(status)}
+          ${status()}
           <button
             id="main-control"
             class=${classMap({ active })}
             @click=${async () => {
-              if (this.status === STATUS.RUNNING) {
+              if (
+                this.status === STATUS.RUNNING ||
+                this.status === STATUS.PAUSED
+              ) {
                 this.stopRun();
                 return;
               }

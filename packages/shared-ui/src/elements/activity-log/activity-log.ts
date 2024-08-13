@@ -459,6 +459,7 @@ export class ActivityLog extends LitElement {
         .providerOps=${this.providerOps}
         .showTypes=${false}
         .inputs=${userInputs}
+        .inlineControls=${true}
         ${ref(this.#userInputRef)}
         @keydown=${(evt: KeyboardEvent) => {
           const isMac = navigator.platform.indexOf("Mac") === 0;

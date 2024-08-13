@@ -191,6 +191,7 @@ export class Main extends LitElement {
   #version = "dev";
   #recentBoardStore: RecentBoardStore;
   #recentBoards: BreadboardUI.Types.RecentBoard[] = [];
+  #isSaving = false;
 
   static styles = css`
     * {
@@ -714,6 +715,11 @@ export class Main extends LitElement {
   }
 
   async #attemptBoardSave() {
+    if (this.#isSaving) {
+      return;
+    }
+
+    this.#isSaving = true;
     if (!this.graph || !this.graph.url) {
       return;
     }
@@ -735,7 +741,9 @@ export class Main extends LitElement {
       BreadboardUI.Events.ToastType.PENDING,
       true
     );
+    this.#isSaving = true;
     const { result } = await provider.save(boardUrl, this.graph);
+    this.#isSaving = false;
     if (!result) {
       return;
     }
@@ -747,6 +755,8 @@ export class Main extends LitElement {
       false,
       id
     );
+
+    this.#isSaving = false;
   }
 
   async #attemptBoardSaveAs(
@@ -755,6 +765,10 @@ export class Main extends LitElement {
     fileName: string,
     graph: GraphDescriptor
   ) {
+    if (this.#isSaving) {
+      return;
+    }
+
     const provider = this.#getProviderByName(providerName);
     if (!provider) {
       this.toast(
@@ -779,7 +793,9 @@ export class Main extends LitElement {
     );
 
     const url = new URL(urlString);
+    this.#isSaving = true;
     const { result, error } = await provider.create(url, graph);
+    this.#isSaving = false;
 
     if (!result) {
       this.toast(
@@ -1078,12 +1094,13 @@ export class Main extends LitElement {
     const currentBoardId = this.#boardId;
 
     this.status = BreadboardUI.Types.STATUS.RUNNING;
-    if (!this.#runObserver)
+    if (!this.#runObserver) {
       this.#runObserver = createRunObserver({
         logLevel: "debug",
         dataStore: this.dataStore,
         runStore: this.runStore,
       });
+    }
 
     for await (const result of runner) {
       await this.#runObserver.observe(result);

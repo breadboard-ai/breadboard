@@ -122,6 +122,17 @@ export async function* runGraph(
           },
         });
         continue;
+      } else {
+        lifecycle?.dispatchEdge(result.current);
+        await probe?.report?.({
+          type: "edge",
+          data: {
+            edge: result.current,
+            to: path(),
+            from: lifecycle?.pathFor(result.current.from),
+            timestamp: timestamp(),
+          },
+        });
       }
 
       await lifecycle?.dispatchNodeStart(result, path());

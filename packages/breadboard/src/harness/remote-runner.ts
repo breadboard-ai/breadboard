@@ -8,6 +8,7 @@ import { Schema, InputValues, GraphDescriptor } from "../types.js";
 import type {
   HarnessRunner,
   HarnessRunResult,
+  RunDiagnosticsLevel,
   RunEventTarget,
   SecretResult,
 } from "./types.js";
@@ -31,6 +32,7 @@ import {
   PauseEvent,
   ResumeEvent,
   StartEvent,
+  EdgeEvent,
 } from "./events.js";
 import { timestamp } from "../timestamp.js";
 import { chunkRepairTransform } from "../remote/chunk-repair.js";
@@ -58,8 +60,6 @@ export const remoteMessageTransform = () => {
   });
 };
 
-export const now = () => ({ timestamp: timestamp() });
-
 export const emptyGraph = () => ({}) as GraphDescriptor;
 
 export class HttpClient {
@@ -68,24 +68,27 @@ export class HttpClient {
    * The API key for the remote service.
    */
   #key: string;
-  #diagnostics: boolean;
+  #diagnostics: RunDiagnosticsLevel;
   #fetch: FetchType | undefined;
   #writer: MessageConsumer;
   #fetching = false;
   #lastMessage: InputRemoteMessage | null = null;
+  #signal: AbortSignal | null = null;
 
   constructor(
     url: string,
     key: string,
-    diagnostics: boolean,
+    diagnostics: RunDiagnosticsLevel,
     writer: MessageConsumer,
+    signal: AbortSignal | null,
     fetch?: FetchType
   ) {
     this.#url = url;
+    this.#key = key;
     this.#diagnostics = diagnostics;
     this.#writer = writer;
+    this.#signal = signal;
     this.#fetch = fetch;
-    this.#key = key;
   }
 
   async #sendError(message: string) {
@@ -121,7 +124,7 @@ export class HttpClient {
       }
     }
     if (this.#diagnostics) {
-      body.$diagnostics = true;
+      body.$diagnostics = this.#diagnostics;
     }
     return JSON.stringify(body);
   }
@@ -157,6 +160,7 @@ export class HttpClient {
       .pipeTo(
         new WritableStream({
           write: async (message) => {
+            this.#signal?.throwIfAborted();
             console.log(
               "%cServer-Sent Event",
               "background: #009; color: #FFF",
@@ -188,12 +192,15 @@ export class RemoteRunner
   #config: RemoteRunConfig;
   #client: HttpClient | null = null;
   #observers: InspectableRunObserver[] = [];
+  #abortSignal: AbortSignal | null = null;
   #fetch: FetchType;
+  #error = false;
 
   constructor(config: RemoteRunConfig, fetch?: FetchType) {
     super();
     this.#config = config;
     this.#fetch = fetch || globalThis.fetch;
+    this.#abortSignal = config.signal || null;
   }
 
   addObserver(observer: InspectableRunObserver): void {
@@ -249,6 +256,7 @@ export class RemoteRunner
       async (message) => {
         await this.#processMessage(message);
       },
+      this.#abortSignal,
       this.#fetch
     );
   }
@@ -267,12 +275,17 @@ export class RemoteRunner
         if (!haveInputs) {
           // When there are no inputs to consume, pause the run
           // and wait for the next input.
-          this.dispatchEvent(new PauseEvent(false, now()));
+          this.dispatchEvent(
+            new PauseEvent(false, {
+              timestamp: timestamp(),
+            })
+          );
         }
         break;
       }
       case "error": {
         this.dispatchEvent(new RunnerErrorEvent(data));
+        this.#error = true;
         break;
       }
       case "end": {
@@ -282,6 +295,10 @@ export class RemoteRunner
       }
       case "skip": {
         this.dispatchEvent(new SkipEvent(data));
+        break;
+      }
+      case "edge": {
+        this.dispatchEvent(new EdgeEvent(data));
         break;
       }
       case "graphstart": {
@@ -308,13 +325,26 @@ export class RemoteRunner
   }
 
   async run(inputs?: InputValues): Promise<boolean> {
+    if (this.#error) {
+      return true;
+    }
+    if (this.#abortSignal?.aborted) {
+      this.#error = true;
+      return true;
+    }
+
     const starting = !this.#client;
     if (!this.#client) {
       this.#initializeClient();
     }
 
+    const eventArgs = {
+      inputs,
+      timestamp: timestamp(),
+    };
+
     this.dispatchEvent(
-      starting ? new StartEvent(now()) : new ResumeEvent(now())
+      starting ? new StartEvent(eventArgs) : new ResumeEvent(eventArgs)
     );
 
     return this.#client!.send(inputs || {});

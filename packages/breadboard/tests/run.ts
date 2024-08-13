@@ -79,7 +79,7 @@ test("correctly saves and loads", async (t) => {
       break;
     }
   }
-  t.regex(runResult, /"missingInputs":\[\],"opportunities":\[\]/);
+  t.regex(runResult, /"missingInputs":\[\],.*"opportunities":\[\]/);
 });
 
 test("correctly detects exit node", async (t) => {

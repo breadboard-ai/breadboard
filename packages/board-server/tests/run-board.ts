@@ -19,6 +19,7 @@ import multipleInputsBoard from "./boards/many-inputs.bgl.json" with { type: "js
 import manyOutputsBoard from "./boards/many-outputs.bgl.json" with { type: "json" };
 import invokeWithBubblingInput from "./boards/invoke-board-with-bubbling-input.bgl.json" with { type: "json" };
 import type { RemoteMessage } from "@google-labs/breadboard/remote";
+import type { RunDiagnosticsLevel } from "@google-labs/breadboard/harness";
 
 const mockSecretsKit: Kit = {
   url: import.meta.url,
@@ -57,6 +58,25 @@ const assertResults = (
           expected.outputs,
           `Expected outputs to match at index ${index}`
         );
+        break;
+      }
+      case "edge": {
+        const [, data] = result;
+        const { from, to } = data;
+        if (expected.from) {
+          deepStrictEqual(
+            from,
+            expected.from,
+            `Expected from "${JSON.stringify(from)}" to match "${JSON.stringify(expected.from)}" at index ${index}`
+          );
+        }
+        if (expected.to) {
+          deepStrictEqual(
+            to,
+            expected.to,
+            `Expected to "${JSON.stringify(to)}" to match "${JSON.stringify(expected.to)}" at index ${index}`
+          );
+        }
         break;
       }
       case "graphstart":
@@ -99,6 +119,8 @@ type ExpectedResult = {
   type: string;
   outputs?: OutputValues;
   path?: number[];
+  from?: number[];
+  to?: number[];
 };
 
 type RunScriptEntry = {
@@ -108,7 +130,11 @@ type RunScriptEntry = {
 
 const runStateStore = {
   async loadReanimationState(user: string, ticket: string) {
-    return JSON.parse(ticket) as ReanimationState;
+    const state = JSON.parse(ticket) as ReanimationState;
+    if (!state.states) {
+      return undefined;
+    }
+    return state;
   },
   async saveReanimationState(user: string, state: any) {
     return JSON.stringify(state);
@@ -118,7 +144,7 @@ const runStateStore = {
 const scriptedRun = async (
   board: GraphDescriptor,
   script: RunScriptEntry[],
-  diagnostics = false
+  diagnostics: RunDiagnosticsLevel = false
 ) => {
   let next;
   const path = "/path/to/board";
@@ -288,6 +314,7 @@ describe("Board Server Runs Boards", () => {
         {
           expected: [
             { type: "graphstart", path: [] },
+            { type: "edge", from: undefined, to: [1] },
             { type: "nodestart", path: [1] },
             { type: "input" },
           ],
@@ -296,8 +323,10 @@ describe("Board Server Runs Boards", () => {
           inputs: { name: "Bob" },
           expected: [
             { type: "nodeend", path: [1] },
+            { type: "edge", from: [1], to: [2] },
             { type: "nodestart", path: [2] },
             { type: "graphstart", path: [2] },
+            { type: "edge", from: undefined, to: [2, 1] },
             { type: "nodestart", path: [2, 1] },
             { type: "input" },
           ],
@@ -306,14 +335,18 @@ describe("Board Server Runs Boards", () => {
           inputs: { location: "New York" },
           expected: [
             { type: "nodeend", path: [2, 1] },
+            { type: "edge", from: [2, 1], to: [2, 2] },
             { type: "nodestart", path: [2, 2] },
             { type: "nodeend", path: [2, 2] },
+            { type: "edge", from: [2, 2], to: [2, 4] },
             { type: "nodestart", path: [2, 4] },
             { type: "nodeend", path: [2, 4] },
             { type: "graphend", path: [2] },
             { type: "nodeend", path: [2] },
+            { type: "edge", from: [2], to: [3] },
             { type: "nodestart", path: [3] },
             { type: "nodeend", path: [3] },
+            { type: "edge", from: [3], to: [4] },
             { type: "nodestart", path: [4] },
             {
               type: "output",
@@ -328,6 +361,52 @@ describe("Board Server Runs Boards", () => {
         },
       ],
       true
+    );
+  });
+
+  test('can finish a board with bubbling inputs with "top" diagnostics', async () => {
+    await scriptedRun(
+      invokeWithBubblingInput as GraphDescriptor,
+      [
+        {
+          expected: [
+            { type: "graphstart", path: [] },
+            { type: "edge", from: undefined, to: [1] },
+            { type: "nodestart", path: [1] },
+            { type: "input" },
+          ],
+        },
+        {
+          inputs: { name: "Bob" },
+          expected: [
+            { type: "nodeend", path: [1] },
+            { type: "edge", from: [1], to: [2] },
+            { type: "nodestart", path: [2] },
+            { type: "input" },
+          ],
+        },
+        {
+          inputs: { location: "New York" },
+          expected: [
+            { type: "nodeend", path: [2] },
+            { type: "edge", from: [2], to: [3] },
+            { type: "nodestart", path: [3] },
+            { type: "nodeend", path: [3] },
+            { type: "edge", from: [3], to: [4] },
+            { type: "nodestart", path: [4] },
+            {
+              type: "output",
+              outputs: {
+                greeting: 'Greeting is: "Hello, Bob from New York!"',
+              },
+            },
+            { type: "nodeend", path: [4] },
+            { type: "graphend", path: [] },
+            { type: "end" },
+          ],
+        },
+      ],
+      "top"
     );
   });
 });

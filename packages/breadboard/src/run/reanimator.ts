@@ -27,7 +27,8 @@ export class Reanimator implements ReanimationController {
 
   enter(invocationPath: number[]): ReanimationFrameController {
     const entryId = invocationPath.join("-");
-    const entry = this.#resumeFrom[entryId];
+    const cache = this.#resumeFrom.states;
+    const entry = cache?.[entryId];
     if (!entry) {
       return new FrameReanimator(undefined);
     }
