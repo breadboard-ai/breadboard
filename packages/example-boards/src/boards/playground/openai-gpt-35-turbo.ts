@@ -133,14 +133,6 @@ const context = input({
   examples: [contextDefault as any],
 });
 
-const useStreaming = input({
-  $id: "Streaming",
-  type: "boolean",
-  title: "Stream",
-  description: "Whether to stream the output",
-  default: false,
-});
-
 const openAIContext = code(
   { context, $id: "geminiToOpenAiContext", },
   { result: array(object({ role: "string", content: "string" })) },
@@ -207,7 +199,7 @@ const formattedRequest = jsonata({
   text,
   tools,
   context: updatedContext.outputs.result,
-  useStreaming: useStreaming as any,
+  useStreaming: false,
   raw: true,
   OPENAI_API_KEY: secret("OPENAI_API_KEY"),
 });
@@ -216,7 +208,7 @@ const fetchResult = fetch({
   $id: "callOpenAI",
   url: "https://api.openai.com/v1/chat/completions",
   method: "POST",
-  stream: useStreaming,
+  stream: false,
   headers: formattedRequest.unsafeOutput("headers"),
   body: formattedRequest.unsafeOutput("body")
 });
@@ -242,7 +234,7 @@ export default board({
   description:
     "This board is the simplest possible invocation of OpenAI's GPT-3.5 API to generate text.",
   version: "0.1.0",
-  inputs: { text, tools, context, useStreaming },
+  inputs: { text, tools, context },
   outputs: {
     context: output(getNewContext.unsafeOutput("result")),
     text: output(jsonResponse.unsafeOutput("text")),

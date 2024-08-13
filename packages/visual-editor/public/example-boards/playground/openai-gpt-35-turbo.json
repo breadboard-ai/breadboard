@@ -64,18 +64,6 @@
       "in": "OPENAI_API_KEY"
     },
     {
-      "from": "Streaming",
-      "to": "callOpenAI",
-      "out": "useStreaming",
-      "in": "stream"
-    },
-    {
-      "from": "Streaming",
-      "to": "formatParameters",
-      "out": "useStreaming",
-      "in": "useStreaming"
-    },
-    {
       "from": "Text",
       "to": "formatParameters",
       "out": "text",
@@ -258,24 +246,6 @@
       }
     },
     {
-      "id": "Streaming",
-      "type": "input",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "useStreaming": {
-              "type": "boolean",
-              "title": "Stream",
-              "description": "Whether to stream the output",
-              "default": "false"
-            }
-          },
-          "required": []
-        }
-      }
-    },
-    {
       "id": "Text",
       "type": "input",
       "configuration": {
@@ -388,6 +358,7 @@
       "type": "fetch",
       "configuration": {
         "method": "POST",
+        "stream": false,
         "url": "https://api.openai.com/v1/chat/completions"
       }
     },
@@ -396,7 +367,8 @@
       "type": "jsonata",
       "configuration": {
         "expression": "(\n    $context := $append(\n        context ? context, [\n            {\n                \"role\": \"user\",\n                \"content\": text\n            }\n        ]);\n    OPENAI_API_KEY ? text ? {\n        \"headers\": {\n            \"Content-Type\": \"application/json\",\n            \"Authorization\": \"Bearer \" & OPENAI_API_KEY\n        },\n        \"body\": {\n            \"model\": \"gpt-3.5-turbo-1106\",\n            \"messages\": $context,\n            \"stream\": useStreaming,\n            \"temperature\": 1,\n            \"top_p\": 1,\n            \"tools\": tools ? [tools.{ \"type\": \"function\", \"function\": $ }],\n            \"frequency_penalty\": 0,\n            \"presence_penalty\": 0\n        },\n        \"stream\": useStreaming,\n        \"context\": $context\n    } : {\n        \"$error\": \"`text` input is required\"\n    } : {\n        \"$error\": \"`OPENAI_API_KEY` input is required\"\n    }\n  )",
-        "raw": true
+        "raw": true,
+        "useStreaming": false
       }
     },
     {
