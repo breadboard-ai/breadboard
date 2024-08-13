@@ -73,19 +73,22 @@ export class HttpClient {
   #writer: MessageConsumer;
   #fetching = false;
   #lastMessage: InputRemoteMessage | null = null;
+  #signal: AbortSignal | null = null;
 
   constructor(
     url: string,
     key: string,
     diagnostics: RunDiagnosticsLevel,
     writer: MessageConsumer,
+    signal: AbortSignal | null,
     fetch?: FetchType
   ) {
     this.#url = url;
+    this.#key = key;
     this.#diagnostics = diagnostics;
     this.#writer = writer;
+    this.#signal = signal;
     this.#fetch = fetch;
-    this.#key = key;
   }
 
   async #sendError(message: string) {
@@ -157,6 +160,7 @@ export class HttpClient {
       .pipeTo(
         new WritableStream({
           write: async (message) => {
+            this.#signal?.throwIfAborted();
             console.log(
               "%cServer-Sent Event",
               "background: #009; color: #FFF",
@@ -188,12 +192,15 @@ export class RemoteRunner
   #config: RemoteRunConfig;
   #client: HttpClient | null = null;
   #observers: InspectableRunObserver[] = [];
+  #abortSignal: AbortSignal | null = null;
   #fetch: FetchType;
+  #error = false;
 
   constructor(config: RemoteRunConfig, fetch?: FetchType) {
     super();
     this.#config = config;
     this.#fetch = fetch || globalThis.fetch;
+    this.#abortSignal = config.signal || null;
   }
 
   addObserver(observer: InspectableRunObserver): void {
@@ -249,6 +256,7 @@ export class RemoteRunner
       async (message) => {
         await this.#processMessage(message);
       },
+      this.#abortSignal,
       this.#fetch
     );
   }
@@ -277,6 +285,7 @@ export class RemoteRunner
       }
       case "error": {
         this.dispatchEvent(new RunnerErrorEvent(data));
+        this.#error = true;
         break;
       }
       case "end": {
@@ -316,6 +325,14 @@ export class RemoteRunner
   }
 
   async run(inputs?: InputValues): Promise<boolean> {
+    if (this.#error) {
+      return true;
+    }
+    if (this.#abortSignal?.aborted) {
+      this.#error = true;
+      return true;
+    }
+
     const starting = !this.#client;
     if (!this.#client) {
       this.#initializeClient();

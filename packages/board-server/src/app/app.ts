@@ -85,7 +85,6 @@ export class AppView extends LitElement {
   #kitLoad = loadKits([TemplateKit, Core, GeminiKit, JSONKit, AgentKit]);
 
   #isSharing = false;
-  #handlers: Map<string, InputCallback[]> = new Map();
   #abortController: AbortController | null = null;
   #runObserver: LightObserver | null = null;
   #runner: HarnessRunner | null = null;
@@ -393,12 +392,14 @@ export class AppView extends LitElement {
       return;
     }
 
+    console.log("🌻 stopping run");
+
     this.#abortController.abort();
-    this.#callAllPendingInputHandlers();
     this.#runner = null;
   }
 
   async startRun() {
+    console.log("🌻 starting run");
     this.stopRun();
 
     const [graph, kits] = await Promise.all([
@@ -484,14 +485,6 @@ export class AppView extends LitElement {
     });
 
     this.#runner.run();
-  }
-
-  #callAllPendingInputHandlers() {
-    for (const handlers of this.#handlers.values()) {
-      for (const handler of handlers) {
-        handler.call(null, {});
-      }
-    }
   }
 
   async #share() {
@@ -666,7 +659,10 @@ export class AppView extends LitElement {
             id="main-control"
             class=${classMap({ active })}
             @click=${async () => {
-              if (this.status === STATUS.RUNNING) {
+              if (
+                this.status === STATUS.RUNNING ||
+                this.status === STATUS.PAUSED
+              ) {
                 this.stopRun();
                 return;
               }
