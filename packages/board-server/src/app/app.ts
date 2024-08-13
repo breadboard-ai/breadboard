@@ -542,13 +542,11 @@ export class AppView extends LitElement {
     const log = this.#runObserver?.log() ?? [];
 
     const status = () => {
-      const events = log ?? [];
-
       const classes: Record<string, boolean> = { pending: false };
 
       let message = html`Press "Start Activity" to begin`;
-      if (events.length && this.status !== STATUS.STOPPED) {
-        const newest = events[events.length - 1];
+      if (log.length && this.status !== STATUS.STOPPED) {
+        const newest = log[log.length - 1];
         if (newest && newest.type === "node") {
           if (newest.descriptor.type === "input") {
             classes.pending = true;
@@ -559,7 +557,7 @@ export class AppView extends LitElement {
               newest.descriptor.metadata?.description ?? "Working...";
             message = html`${details}
               <span class="messages-received"
-                >${events.length} event${events.length === 1 ? "" : "s"}
+                >${log.length} event${log.length === 1 ? "" : "s"}
                 received</span
               >`;
           }
@@ -574,12 +572,10 @@ export class AppView extends LitElement {
 
     const activity = Promise.all([this.#descriptorLoad, this.#kitLoad]).then(
       () => {
-        const events = log;
-
         return html`<bb-activity-log-lite
           .start=${this.#runStartTime}
           .message=${this.#message}
-          .events=${events}
+          .log=${log}
           @bbinputrequested=${() => {
             this.requestUpdate();
           }}

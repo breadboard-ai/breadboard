@@ -42,7 +42,7 @@ export class ActivityLogLite extends LitElement {
   message: UserMessage | null = null;
 
   @property()
-  events: LogEntry[] = [];
+  log: LogEntry[] = [];
 
   static styles = css`
     * {
@@ -115,7 +115,7 @@ export class ActivityLogLite extends LitElement {
       margin-right: var(--bb-grid-size);
     }
 
-    #no-events {
+    #no-entries {
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -597,7 +597,7 @@ export class ActivityLogLite extends LitElement {
     </dl>`;
   }
 
-  #renderEvents(entries: LogEntry[]) {
+  #renderLog(entries: LogEntry[]) {
     return html`${map(entries, (entry) => {
       switch (entry.type) {
         case "edge": {
@@ -752,7 +752,7 @@ export class ActivityLogLite extends LitElement {
   render() {
     return html` <div id="controls">
         <div id="actions">
-          ${this.events.length
+          ${this.log.length
             ? html`<button
                 @click=${() => this.#jumpToBottom()}
                 id="jump-to-bottom"
@@ -763,9 +763,9 @@ export class ActivityLogLite extends LitElement {
         </div>
       </div>
       <div id="activity" ${ref(this.#activityRef)}>
-        ${this.events.length
-          ? this.#renderEvents(this.events)
-          : html`<div id="no-events">
+        ${this.log.length
+          ? this.#renderLog(this.log)
+          : html`<div id="no-entries">
               <picture>
                 <source srcset="${this.message?.srcset}" type="image/webp" />
                 <img
