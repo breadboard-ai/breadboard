@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { OutputValues, TraversalResult } from "../types.js";
+import type {
+  Edge,
+  NodeIdentifier,
+  OutputValues,
+  TraversalResult,
+} from "../types.js";
 
 /**
  * Sequential number of the invocation of a node.
@@ -66,12 +71,14 @@ export type ManagedRunStateLifecycle = {
   ): void;
   dispatchGraphEnd(): void;
   dispatchSkip(): void;
+  dispatchEdge(edge: Edge): void;
   supplyPartialOutputs(
     outputs: OutputValues,
     invocationPath: number[]
   ): Promise<void>;
   state(): RunState;
   reanimationState(): ReanimationState;
+  pathFor(node: NodeIdentifier): number[] | undefined;
 };
 
 /**
@@ -86,7 +93,13 @@ export type ManagedRunState = {
   reanimation(): ReanimationController;
 };
 
-export type ReanimationState = Record<string, RunStackEntry>;
+export type ReanimationStateCache = Record<string, RunStackEntry>;
+export type ReanimationStateVisits = [NodeIdentifier, number[]][];
+
+export type ReanimationState = {
+  states?: ReanimationStateCache;
+  visits?: ReanimationStateVisits;
+};
 
 export type ReanimationMode =
   /**

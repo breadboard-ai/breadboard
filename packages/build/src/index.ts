@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { board } from "./internal/board/board.js";
+export { board, inputNode, outputNode } from "./internal/board/board.js";
 export { constant } from "./internal/board/constant.js";
 export { converge } from "./internal/board/converge.js";
 export { input } from "./internal/board/input.js";

@@ -38,7 +38,6 @@ test("editGraph correctly edits node metadata", async (t) => {
     "test",
     true
   );
-  console.log(result);
   t.is(result.success, true);
 
   const newMetadata = { title: "bar" };

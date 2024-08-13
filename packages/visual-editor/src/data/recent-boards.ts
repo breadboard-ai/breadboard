@@ -5,7 +5,7 @@
  */
 
 import * as idb from "idb";
-import * as BreadboardUI from "../ui";
+import * as BreadboardUI from "@breadboard-ai/shared-ui";
 
 interface RecentBoardsDB extends idb.DBSchema {
   boards: {
