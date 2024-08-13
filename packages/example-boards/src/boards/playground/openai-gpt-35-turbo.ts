@@ -150,10 +150,10 @@ const formattedRequest = jsonata({
         },
         "body": {
             "model": "gpt-3.5-turbo-1106",
-            "messages": $context.{
-              "role": $.role,
+            "messages": [$context.{
+              "role": $.role = "model" ? "system" : $.role,
               "content": $.parts.text
-            },
+            }],
             "stream": useStreaming,
             "temperature": 1,
             "top_p": 1,
