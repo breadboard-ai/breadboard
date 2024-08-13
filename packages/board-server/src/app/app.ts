@@ -348,6 +348,30 @@ export class AppView extends LitElement {
     }
   `;
 
+  // FORGIVE ME PAUL
+  #getSecretsAndResume() {
+    const keys = this.#runner?.secretKeys();
+    if (!keys) {
+      return;
+    }
+    const inputs = Object.fromEntries(
+      keys.map((key) => {
+        let secret = globalThis.localStorage.getItem(`SECRET_${key}`);
+        if (!secret) {
+          secret = prompt(`Please enter the secret for ${key}`);
+          if (!secret) {
+            this.#abortController?.abort();
+            throw new Error("Secret required, aborting run.");
+          }
+          globalThis.localStorage.setItem(`SECRET_${key}`, secret);
+        }
+        return [key, secret];
+      })
+    );
+    this.status = STATUS.RUNNING;
+    this.#runner?.run(inputs);
+  }
+
   connectedCallback(): void {
     super.connectedCallback();
 
@@ -392,14 +416,11 @@ export class AppView extends LitElement {
       return;
     }
 
-    console.log("🌻 stopping run");
-
     this.#abortController.abort();
     this.#runner = null;
   }
 
   async startRun() {
-    console.log("🌻 starting run");
     this.stopRun();
 
     const [graph, kits] = await Promise.all([
@@ -475,7 +496,11 @@ export class AppView extends LitElement {
       this.status = STATUS.RUNNING;
     });
 
-    this.#runner.addEventListener("secret", async (evt) => {
+    this.#runner.addEventListener("secret", async (event) => {
+      this.status = STATUS.PAUSED;
+
+      this.#getSecretsAndResume();
+
       this.requestUpdate();
     });
 
@@ -539,28 +564,25 @@ export class AppView extends LitElement {
       return graph.description ? html`${graph.description}` : nothing;
     });
 
-    const runs = this.#runObserver?.runs() ?? [];
+    const log = this.#runObserver?.log() ?? [];
 
     const status = () => {
-      const currentRun = runs[0];
-      const events = currentRun?.events ?? [];
-
       const classes: Record<string, boolean> = { pending: false };
 
       let message = html`Press "Start Activity" to begin`;
-      if (events.length && this.status !== STATUS.STOPPED) {
-        const newest = events[events.length - 1];
+      if (log.length && this.status !== STATUS.STOPPED) {
+        const newest = log[log.length - 1];
         if (newest && newest.type === "node") {
-          if (newest.node.descriptor.type === "input") {
+          if (newest.descriptor.type === "input") {
             classes.pending = true;
             message = html`Requesting user input...`;
           } else {
             classes.pending = true;
             const details =
-              newest.node.descriptor.metadata?.description ?? "Working...";
+              newest.descriptor.metadata?.description ?? "Working...";
             message = html`${details}
               <span class="messages-received"
-                >${events.length} event${events.length === 1 ? "" : "s"}
+                >${log.length} event${log.length === 1 ? "" : "s"}
                 received</span
               >`;
           }
@@ -573,49 +595,31 @@ export class AppView extends LitElement {
     const active =
       this.status === STATUS.RUNNING || this.status === STATUS.PAUSED;
 
-    const activity = Promise.all([
-      this.#descriptorLoad,
-      this.#kitLoad,
-      runs,
-    ]).then(([, , runs]) => {
-      const currentRun = runs[0];
-      const events = currentRun?.events ?? [];
-
-      return html`<bb-activity-log-lite
-        .start=${this.#runStartTime}
-        .message=${this.#message}
-        .events=${events}
-        @bbinputrequested=${() => {
-          this.requestUpdate();
-        }}
-        @bbinputenter=${(event: InputEnterEvent) => {
-          let data = event.data as InputValues;
-          const runner = this.#runner;
-          if (!runner) {
-            throw new Error("Can't send input, no runner");
-          }
-          if (runner.running()) {
-            throw new Error("The runner is already running, cannot send input");
-          }
-
-          if (
-            event.allowSavingIfSecret &&
-            typeof event.data.secret === "string"
-          ) {
-            globalThis.localStorage.setItem(event.id, event.data.secret);
-          }
-
-          const keys = this.#runner?.secretKeys();
-          if (keys) {
-            data = Object.fromEntries(
-              keys.map((key) => [key, event.data.secret])
-            ) as InputValues;
-          }
-
-          runner.run(data);
-        }}
-      ></bb-activity-log-lite>`;
-    });
+    const activity = Promise.all([this.#descriptorLoad, this.#kitLoad]).then(
+      () => {
+        return html`<bb-activity-log-lite
+          .start=${this.#runStartTime}
+          .message=${this.#message}
+          .log=${log}
+          @bbinputrequested=${() => {
+            this.requestUpdate();
+          }}
+          @bbinputenter=${(event: InputEnterEvent) => {
+            let data = event.data as InputValues;
+            const runner = this.#runner;
+            if (!runner) {
+              throw new Error("Can't send input, no runner");
+            }
+            if (runner.running()) {
+              throw new Error(
+                "The runner is already running, cannot send input"
+              );
+            }
+            runner.run(data);
+          }}
+        ></bb-activity-log-lite>`;
+      }
+    );
 
     return html` <main>
         <bb-app-nav
