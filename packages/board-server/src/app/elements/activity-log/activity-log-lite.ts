@@ -119,11 +119,6 @@ export class ActivityLogLite extends LitElement {
         24px no-repeat;
     }
 
-    #expand-all {
-      background: transparent var(--bb-icon-expand-all-48px) right center / 24px
-        24px no-repeat;
-    }
-
     #actions button:last-of-type {
       margin-right: var(--bb-grid-size);
     }
@@ -137,66 +132,76 @@ export class ActivityLogLite extends LitElement {
       color: var(--bb-neutral-400);
     }
 
+    .pending-input,
+    .edge {
+      padding: 24px 8px 24px 64px;
+      position: relative;
+    }
+
+    .pending-input::before,
+    .edge::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 40px;
+      height: 100%;
+      border-left: 1px solid var(--bb-neutral-300);
+    }
+
+    .pending-input::after,
+    .edge::after {
+      content: "";
+      position: absolute;
+      top: calc(50% - 14px);
+      left: 26px;
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--bb-neutral-300);
+
+      border-radius: 50%;
+    }
+
+    .pending-input::after {
+      background: var(--bb-neutral-0) var(--bb-icon-input) center center / 20px
+        20px no-repeat;
+    }
+
+    .edge::after {
+      background: var(--bb-neutral-0) var(--bb-icon-output) center center / 20px
+        20px no-repeat;
+    }
+
+    .edge bb-llm-output,
+    .edge bb-llm-output-array {
+      margin-bottom: 0;
+    }
+
+    .pending-input:last-of-type::before,
+    .edge:last-of-type::before {
+      height: 50%;
+    }
+
     .entry {
       border: 1px solid var(--bb-neutral-200);
-      border-radius: var(--bb-grid-size);
-      margin-bottom: var(--bb-grid-size);
-      padding: var(--bb-grid-size-3);
+      border-radius: var(--bb-grid-size-10);
+      padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+      width: 50%;
     }
 
     .entry.hidden {
       display: none;
     }
 
-    .entry details summary::after {
-      content: "";
-      width: 16px;
-      height: 16px;
-      background: transparent var(--bb-icon-expand) center center / 16px 16px
-        no-repeat;
-    }
-
-    .entry details[open] summary::after {
-      background: transparent var(--bb-icon-collapse) center center / 16px 16px
-        no-repeat;
-    }
-
-    .entry.pending details summary::after {
-      background: transparent url(/images/progress-ui.svg) center center / 16px
-        16px no-repeat;
-    }
-
-    .entry summary::-webkit-details-marker {
-      display: none;
-    }
-
-    .entry summary {
+    .entry {
       display: flex;
       align-items: flex-start;
       list-style: none;
       font: var(--bb-font-title-small);
       color: var(--bb-neutral-600);
-      cursor: pointer;
       user-select: none;
-      transition: color 0.3s cubic-bezier(0, 0, 0.3, 1);
     }
 
-    .entry summary .date-time {
-      font: var(--bb-font-body-x-small);
-      color: var(--bb-neutral-600);
-    }
-
-    .entry summary:hover,
-    .entry summary:focus {
-      color: var(--bb-neutral-800);
-      transition-duration: 0.1s;
-    }
-
-    .entry summary .title-date-time {
-      flex: 1;
-    }
-
-    .entry summary::before {
+    .entry::before {
       content: "";
       width: 20px;
       height: 20px;
@@ -206,80 +211,55 @@ export class ActivityLogLite extends LitElement {
       margin-right: var(--bb-grid-size-2);
     }
 
-    .entry.input summary::before {
+    .entry.input::before {
       background: var(--bb-icon-input) center center / 20px 20px no-repeat;
     }
 
-    .entry.output summary::before {
+    .entry.output::before {
       background: var(--bb-icon-output) center center / 20px 20px no-repeat;
     }
 
-    .entry.secret summary::before {
+    .entry.secret::before {
       background: var(--bb-icon-password) center center / 20px 20px no-repeat;
     }
 
-    .entry.specialist summary {
+    .entry.specialist {
       color: var(--bb-ui-500);
     }
 
-    .entry.specialist summary:hover,
-    .entry.specialist summary:focus {
-      color: var(--bb-ui-700);
-    }
-
-    .entry.specialist summary::before {
+    .entry.specialist::before {
       background: var(--bb-icon-smart-toy) center center / 20px 20px no-repeat;
     }
 
-    .entry.human summary {
+    .entry.human {
       color: var(--bb-human-500);
     }
 
-    .entry.human summary:hover,
-    .entry.human summary:focus {
-      color: var(--bb-human-700);
-    }
-
-    .entry.human summary::before {
+    .entry.human::before {
       background: var(--bb-icon-human) center center / 20px 20px no-repeat;
     }
 
-    .entry.looper summary {
+    .entry.looper {
       color: var(--bb-looper-500);
     }
 
-    .entry.looper summary:hover,
-    .entry.looper summary:focus {
-      color: var(--bb-looper-700);
-    }
-
-    .entry.looper summary::before {
+    .entry.looper::before {
       background: var(--bb-icon-lightbulb) center center / 20px 20px no-repeat;
     }
 
-    .entry.joiner summary {
+    .entry.joiner {
       color: var(--bb-looper-500);
     }
 
-    .entry.joiner summary:hover,
-    .entry.joiner summary:focus {
-      color: var(--bb-looper-700);
-    }
-
-    .entry.joiner summary::before {
+    .entry.joiner::before {
       background: var(--bb-icon-merge-type) center center / 20px 20px no-repeat;
     }
 
-    .entry.runjavascript summary {
+    .entry.runjavascript {
       color: var(--bb-nodes-700);
     }
 
-    .entry.runjavascript summary:hover,
-    .entry.runjavascript summary:focus {
-      color: var(--bb-nodes-800);
-    }
-
-    .entry.runjavascript summary::before {
+    .entry.runjavascript::before {
       background: var(--bb-nodes-400) var(--bb-icon-javascript) center center /
         20px 20px no-repeat;
     }
@@ -525,6 +505,7 @@ export class ActivityLogLite extends LitElement {
         id="${event.node.descriptor.id}"
         .inputs=${userInputs}
         .inlineControls=${true}
+        .llmInputShowEntrySelector=${false}
         ${ref(this.#userInputRef)}
         @keydown=${(evt: KeyboardEvent) => {
           const isMac = navigator.platform.indexOf("Mac") === 0;
@@ -669,153 +650,119 @@ export class ActivityLogLite extends LitElement {
   }
 
   #renderEvents(events: InspectableRunEvent[]) {
-    const bubbledInputAndOutputIds: string[] = events.reduce((prev, curr) => {
-      if (curr.type !== "node" || curr.hidden) {
-        return prev;
-      }
-
-      const isInputOutput =
-        curr.node.descriptor.type === "input" ||
-        curr.node.descriptor.type === "output";
-      if (isInputOutput && curr.bubbled) {
-        prev.push(curr.id);
-      }
-
-      return prev;
-    }, [] as string[]);
-
-    return html`${repeat(
-      events,
-      (event) => event.id,
-      (event) => {
-        let title: HTMLTemplateResult | symbol = nothing;
-        let description: HTMLTemplateResult | symbol = nothing;
-        let content: HTMLTemplateResult | Promise<HTMLTemplateResult> | symbol =
-          nothing;
-
-        const dateTime: HTMLTemplateResult = html`${this.#formatter.format(
-          this.start + event.start
-        )}`;
-        const classes: Record<string, boolean> = {
-          entry: true,
-        };
-
-        let isOpen = event.type === "node" && event.end === null;
-        switch (event.type) {
-          case "node": {
-            const { node, end } = event;
-            const { type } = node.descriptor;
-            const { icon } = node.type().metadata();
-
-            classes[type.toLocaleLowerCase()] = true;
-            classes.pending = end === null;
-            if (icon) {
-              classes[icon] = true;
-            }
-
-            if (event.hidden) {
-              return nothing;
-            }
-
-            title =
-              type === "input"
-                ? html`Input`
-                : type === "output"
-                  ? html`Output`
-                  : html`${node.title()}`;
-            if (type === "input") {
-              content =
-                event.end === null
-                  ? this.#renderPendingInput(event)
-                  : this.#renderCompletedInputOrOutput(event);
-              isOpen = true;
-            } else if (type === "output") {
-              content = this.#renderCompletedInputOrOutput(event);
-              isOpen = true;
-            } else if (event.runs) {
-              const { tmpl, found } = this.#renderEventRunInfo(
-                event.runs,
-                bubbledInputAndOutputIds
-              );
-              isOpen = isOpen || found;
-              content = tmpl;
-            }
-            break;
-          }
-
-          case "secret": {
-            if (event.end !== null) {
-              content = html``;
-              classes.hidden = true;
-            } else {
-              title = html`Requesting secret`;
-              content = this.#renderSecretInput(event);
-              classes.secret = true;
-              isOpen = true;
-            }
-            break;
-          }
-
-          case "error": {
-            const { error } = event;
-            let output = "";
-            if (typeof error === "string") {
-              output = error;
-            } else {
-              if ((error.error as Error)?.name === "AbortError") {
-                console.log("💖 actually aborted");
-              }
-              if (typeof error.error === "string") {
-                output = error.error;
-              } else {
-                let messageOutput = "";
-                let errorData = error;
-                while (typeof errorData === "object") {
-                  if (errorData && "message" in errorData) {
-                    messageOutput += `${errorData.message}\n`;
-                  }
-
-                  errorData = errorData.error as ErrorObject;
-                }
-
-                output = messageOutput;
-              }
-            }
-
-            content = html`${output}`;
-            isOpen = true;
-            break;
-          }
-
-          default: {
+    return html`${map(events, (event) => {
+      switch (event.type) {
+        case "edge": {
+          if (event.to && event.to.length > 1) {
             return nothing;
           }
-        }
 
-        return html`<section class=${classMap(classes)} @animationend=${(
-          evt: Event
-        ) => {
-          if (!(evt.target instanceof HTMLElement)) {
-            return;
+          // TODO: Only include values that need to be presented to the user
+          // i.e., bubbled or tagged as such.
+          if (event.value) {
+            const schema = event.value.schema as Schema;
+            if (schema && schema.properties) {
+              const props = Object.entries(schema.properties);
+              if (
+                props.length === 1 &&
+                props[0] &&
+                isLLMContentArrayBehavior(props[0][1])
+              ) {
+                const nodeName = props[0][0];
+                const nodeValue = event.value[nodeName];
+                if (event.edge.from === "$entry") {
+                  return nothing;
+                }
+
+                return html`<section class="edge">
+                  <bb-llm-output-array
+                    .values=${nodeValue}
+                    .showEntrySelector=${false}
+                    .showModeToggle=${false}
+                    .clamped=${false}
+                    .lite=${true}
+                  ></bb-llm-output-array>
+                </section>`;
+              }
+            }
           }
 
-          evt.target.classList.remove("animating");
-        }}>
-          <details ?open=${isOpen}>
-            <summary>
-              <div class="title-date-time">
-                <div class="title">${title}</div>
-                <div class="date-time">${dateTime}</div>
-              </div>
-            </summary></h1>
-            <div>
-              ${description}
-              ${until(content)}
-            </div>
-          </details>
-        </section>`;
+          return html`<section class="edge empty"></section>`;
+        }
+
+        case "node": {
+          const { node, end } = event;
+          const { type } = node.descriptor;
+          const { icon } = node.type().metadata();
+          let content:
+            | HTMLTemplateResult
+            | Promise<HTMLTemplateResult>
+            | symbol = nothing;
+
+          const classes: Record<string, boolean> = {
+            entry: true,
+            pending: end === null,
+          };
+
+          classes[type.toLocaleLowerCase()] = true;
+          classes.pending = end === null;
+          if (icon) {
+            classes[icon] = true;
+          }
+
+          if (event.hidden || event.node.descriptor.type === "output") {
+            return nothing;
+          }
+
+          // TODO: It feels like this should be a part of the edge.
+          if (end === null) {
+            content = html`<section class="pending-input">
+              ${until(this.#renderPendingInput(event))}
+            </section>`;
+          }
+
+          return html` <section class=${classMap(classes)}>
+              ${node.title()}
+            </section>
+            ${content}`;
+        }
+
+        case "error": {
+          const { error } = event;
+          let output = "";
+          if (typeof error === "string") {
+            output = error;
+          } else {
+            if ((error.error as Error)?.name === "AbortError") {
+              console.log("💖 actually aborted");
+            }
+            if (typeof error.error === "string") {
+              output = error.error;
+            } else {
+              let messageOutput = "";
+              let errorData = error;
+              while (typeof errorData === "object") {
+                if (errorData && "message" in errorData) {
+                  messageOutput += `${errorData.message}\n`;
+                }
+
+                errorData = errorData.error as ErrorObject;
+              }
+
+              output = messageOutput;
+            }
+          }
+
+          return html`${output}`;
+        }
+
+        case "secret": {
+          return html`<section class="secret">
+            ${until(this.#renderSecretInput(event))}
+          </section>`;
+        }
       }
-    )}`;
+    })}`;
   }
 
   #expandAll() {
@@ -857,13 +804,11 @@ export class ActivityLogLite extends LitElement {
         <div id="actions">
           ${this.events.length
             ? html`<button
-                  @click=${() => this.#jumpToBottom()}
-                  id="jump-to-bottom"
-                >
-                  Jump to bottom</button
-                ><button @click=${() => this.#expandAll()} id="expand-all">
-                  Expand all
-                </button>`
+                @click=${() => this.#jumpToBottom()}
+                id="jump-to-bottom"
+              >
+                Jump to bottom
+              </button>`
             : nothing}
         </div>
       </div>
