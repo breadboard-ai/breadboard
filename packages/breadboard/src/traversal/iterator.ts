@@ -14,16 +14,10 @@ export class TraversalMachineIterator
 {
   graph: GraphRepresentation;
   #current: TraversalResult;
-  #noParallelExecution: boolean;
 
-  constructor(
-    graph: GraphRepresentation,
-    result: TraversalResult,
-    noParallelExecution = true
-  ) {
+  constructor(graph: GraphRepresentation, result: TraversalResult) {
     this.graph = graph;
     this.#current = result;
-    this.#noParallelExecution = noParallelExecution;
   }
 
   async next(): Promise<IteratorResult<TraversalResult>> {
@@ -109,6 +103,7 @@ export class TraversalMachineIterator
       currentDescriptor,
       inputsWithConfiguration,
       missingInputs,
+      opportunity,
       this.#current.opportunities,
       newOpportunities,
       this.#current.state

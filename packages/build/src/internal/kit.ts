@@ -12,7 +12,7 @@ import type {
   NodeHandlerContext,
   NodeHandlerFunction,
 } from "@google-labs/breadboard";
-import type { GenericBoardDefinition } from "./board/board.js";
+import type { BoardDefinition } from "./board/board.js";
 import { serialize } from "./board/serialize.js";
 import {
   isDiscreteComponent,
@@ -26,7 +26,7 @@ export interface KitOptions {
   version: string;
   url: string;
   tags?: KitTag[];
-  components: Array<GenericDiscreteComponent | GenericBoardDefinition>;
+  components: Array<GenericDiscreteComponent | BoardDefinition>;
 }
 
 export function kit(options: KitOptions): KitConstructor<Kit> {
@@ -62,7 +62,7 @@ export function kit(options: KitOptions): KitConstructor<Kit> {
   };
 }
 
-function makeBoardComponentHandler(board: GenericBoardDefinition): NodeHandler {
+function makeBoardComponentHandler(board: BoardDefinition): NodeHandler {
   const serialized = serialize(board);
   return {
     metadata: board.metadata,

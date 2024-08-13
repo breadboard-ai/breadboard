@@ -10,11 +10,10 @@ import { until } from "lit/directives/until.js";
 import { map } from "lit/directives/map.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
-import * as BreadboardUI from "./ui";
+import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import {
   blankLLMContent,
-  BoardRunner,
   createLoader,
   edit,
   EditableGraph,
@@ -34,23 +33,11 @@ import GeminiKit from "@google-labs/gemini-kit";
 import { FileSystemGraphProvider } from "./providers/file-system";
 import BuildExampleKit from "./build-example-kit";
 import { SettingsStore } from "./data/settings-store";
-import { inputsFromSettings } from "./data/inputs";
 import { addNodeProxyServerConfig } from "./data/node-proxy-servers";
 import { provide } from "@lit/context";
-import { Environment, environmentContext } from "./ui/contexts/environment.js";
-import { settingsHelperContext } from "./ui/contexts/settings-helper.js";
-import type {
-  SETTINGS_TYPE,
-  SettingEntry,
-  SettingsHelper,
-} from "./ui/types/types.js";
 import PythonWasmKit from "@breadboard-ai/python-wasm";
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 import { RecentBoardStore } from "./data/recent-boards";
-import {
-  TokenVendor,
-  tokenVendorContext,
-} from "./ui/elements/connection/token-vendor.js";
 
 const REPLAY_DELAY_MS = 10;
 const STORAGE_PREFIX = "bb-main";
@@ -80,12 +67,15 @@ const ORIGIN_TO_CONNECTION_SERVER: Record<string, string> = {
     "https://connections-dot-breadboard-community.wl.r.appspot.com",
 };
 
-const ENVIRONMENT: Environment = {
+const ENVIRONMENT: BreadboardUI.Contexts.Environment = {
   connectionServerUrl:
     ORIGIN_TO_CONNECTION_SERVER[new URL(window.location.href).origin],
   connectionRedirectUrl: "/oauth/",
   plugins: {
-    input: [],
+    input: [
+      BreadboardUI.Elements.googleDriveFileIdInputPlugin,
+      BreadboardUI.Elements.googleDriveQueryInputPlugin,
+    ],
   },
 };
 
@@ -157,11 +147,11 @@ export class Main extends LitElement {
   @state()
   providerOps = 0;
 
-  @provide({ context: environmentContext })
+  @provide({ context: BreadboardUI.Contexts.environmentContext })
   environment = ENVIRONMENT;
 
-  @provide({ context: tokenVendorContext })
-  tokenVendor!: TokenVendor;
+  @provide({ context: BreadboardUI.Elements.tokenVendorContext })
+  tokenVendor!: BreadboardUI.Elements.TokenVendor;
 
   @state()
   dataStore = getDataStore();
@@ -169,7 +159,7 @@ export class Main extends LitElement {
   @state()
   runStore = getRunStore();
 
-  @provide({ context: settingsHelperContext })
+  @provide({ context: BreadboardUI.Contexts.settingsHelperContext })
   settingsHelper!: SettingsHelperImpl;
 
   @state()
@@ -201,6 +191,7 @@ export class Main extends LitElement {
   #version = "dev";
   #recentBoardStore: RecentBoardStore;
   #recentBoards: BreadboardUI.Types.RecentBoard[] = [];
+  #isSaving = false;
 
   static styles = css`
     * {
@@ -509,7 +500,10 @@ export class Main extends LitElement {
     this.#proxy = config.proxy || [];
     if (this.#settings) {
       this.settingsHelper = new SettingsHelperImpl(this.#settings);
-      this.tokenVendor = new TokenVendor(this.settingsHelper, ENVIRONMENT);
+      this.tokenVendor = new BreadboardUI.Elements.TokenVendor(
+        this.settingsHelper,
+        ENVIRONMENT
+      );
     }
     // Single loader instance for all boards.
     this.#loader = createLoader(this.#providers);
@@ -721,6 +715,11 @@ export class Main extends LitElement {
   }
 
   async #attemptBoardSave() {
+    if (this.#isSaving) {
+      return;
+    }
+
+    this.#isSaving = true;
     if (!this.graph || !this.graph.url) {
       return;
     }
@@ -742,7 +741,9 @@ export class Main extends LitElement {
       BreadboardUI.Events.ToastType.PENDING,
       true
     );
+    this.#isSaving = true;
     const { result } = await provider.save(boardUrl, this.graph);
+    this.#isSaving = false;
     if (!result) {
       return;
     }
@@ -754,6 +755,8 @@ export class Main extends LitElement {
       false,
       id
     );
+
+    this.#isSaving = false;
   }
 
   async #attemptBoardSaveAs(
@@ -762,6 +765,10 @@ export class Main extends LitElement {
     fileName: string,
     graph: GraphDescriptor
   ) {
+    if (this.#isSaving) {
+      return;
+    }
+
     const provider = this.#getProviderByName(providerName);
     if (!provider) {
       this.toast(
@@ -786,7 +793,9 @@ export class Main extends LitElement {
     );
 
     const url = new URL(urlString);
+    this.#isSaving = true;
     const { result, error } = await provider.create(url, graph);
+    this.#isSaving = false;
 
     if (!result) {
       this.toast(
@@ -1085,12 +1094,13 @@ export class Main extends LitElement {
     const currentBoardId = this.#boardId;
 
     this.status = BreadboardUI.Types.STATUS.RUNNING;
-    if (!this.#runObserver)
+    if (!this.#runObserver) {
       this.#runObserver = createRunObserver({
         logLevel: "debug",
         dataStore: this.dataStore,
         runStore: this.runStore,
       });
+    }
 
     for await (const result of runner) {
       await this.#runObserver.observe(result);
@@ -1715,9 +1725,7 @@ export class Main extends LitElement {
                   return;
                 }
 
-                const runner = await BoardRunner.fromGraphDescriptor(
-                  this.graph
-                );
+                const runner = this.graph;
 
                 this.#abortController = new AbortController();
 
@@ -1733,7 +1741,9 @@ export class Main extends LitElement {
                         loader: this.#loader,
                         store: this.dataStore,
                         signal: this.#abortController?.signal,
-                        inputs: inputsFromSettings(this.#settings),
+                        inputs: BreadboardUI.Data.inputsFromSettings(
+                          this.#settings
+                        ),
                         interactiveSecrets: true,
                       },
                       this.#settings,
@@ -2405,28 +2415,34 @@ export class Main extends LitElement {
   }
 }
 
-class SettingsHelperImpl implements SettingsHelper {
+class SettingsHelperImpl implements BreadboardUI.Types.SettingsHelper {
   #store: SettingsStore;
 
   constructor(store: SettingsStore) {
     this.#store = store;
   }
 
-  get(section: SETTINGS_TYPE, name: string): SettingEntry["value"] | undefined {
+  get(
+    section: BreadboardUI.Types.SETTINGS_TYPE,
+    name: string
+  ): BreadboardUI.Types.SettingEntry["value"] | undefined {
     return this.#store.values[section].items.get(name);
   }
 
   async set(
-    section: SETTINGS_TYPE,
+    section: BreadboardUI.Types.SETTINGS_TYPE,
     name: string,
-    value: SettingEntry["value"]
+    value: BreadboardUI.Types.SettingEntry["value"]
   ): Promise<void> {
     const values = this.#store.values;
     values[section].items.set(name, value);
     await this.#store.save(values);
   }
 
-  async delete(section: SETTINGS_TYPE, name: string): Promise<void> {
+  async delete(
+    section: BreadboardUI.Types.SETTINGS_TYPE,
+    name: string
+  ): Promise<void> {
     const values = this.#store.values;
     values[section].items.delete(name);
     await this.#store.save(values);

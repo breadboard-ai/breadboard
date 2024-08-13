@@ -5,90 +5,62 @@
  */
 
 import { getDataStore } from "@breadboard-ai/data-store";
-import {
-  createLoader,
-  createRunStateManager,
-  inflateData,
-  type InputValues,
-  type OutputValues,
-  type ReanimationState,
-} from "@google-labs/breadboard";
-import { run, type StateToResumeFrom } from "@google-labs/breadboard/harness";
-import type { RunBoardArguments, RunBoardResult } from "../../types.js";
+import { createLoader, type ReanimationState } from "@google-labs/breadboard";
+import { handleRunGraphRequest } from "@google-labs/breadboard/remote";
+import type { RunBoardArguments } from "../../types.js";
 import { BoardServerProvider } from "./board-server-provider.js";
 import { createKits } from "./create-kits.js";
-import { formatRunError } from "./format-run-error.js";
 
-const fromNextToState = (next?: string): ReanimationState | undefined => {
-  return next ? JSON.parse(next) : undefined;
-};
-
-const fromStateToNext = (state: any) => {
-  return JSON.stringify(state);
-};
+export const timestamp = () => globalThis.performance.now();
 
 export const runBoard = async ({
   url,
   path,
+  user,
   inputs,
   loader,
   kitOverrides,
   next,
-}: RunBoardArguments): Promise<RunBoardResult> => {
+  writer,
+  runStateStore,
+  diagnostics = false,
+}: RunBoardArguments): Promise<void> => {
   const store = getDataStore();
   if (!store) {
-    return { $error: "Data store not available." };
+    await writer.write([
+      "error",
+      { error: "Data store not available.", timestamp: timestamp() },
+    ]);
+    return;
   }
+  // TODO: Figure out if this is the right thing to do here.
+  store.createGroup("run-board");
 
-  let inputsToConsume = next ? undefined : inputs;
-
-  const resumeFrom = fromNextToState(next);
-
-  const state = createRunStateManager(resumeFrom, inputs);
-
-  const runner = run({
-    url,
-    kits: createKits(kitOverrides),
-    loader: createLoader([new BoardServerProvider(path, loader)]),
-    store,
-    inputs: { model: "gemini-1.5-flash-latest" },
-    interactiveSecrets: false,
-    state,
-  });
-
-  const outputs: OutputValues[] = [];
-  for await (const result of runner) {
-    const { type, data, reply } = result;
-    if (type === "input") {
-      if (inputsToConsume) {
-        await reply({ inputs: inputsToConsume });
-        inputsToConsume = undefined;
-      } else {
-        const {
-          node: { configuration },
-        } = data;
-        const reanimationState = state.lifecycle().reanimationState();
-        const schema = configuration?.schema || {};
-        const next = fromStateToNext(reanimationState);
-        return {
-          outputs,
-          $state: { type, schema, next },
-        };
-      }
-    } else if (type === "output") {
-      outputs.push((await inflateData(store, data.outputs)) as OutputValues);
-    } else if (type === "error") {
-      return {
-        outputs,
-        $error: formatRunError(data.error),
-      };
-    } else if (type === "end") {
-      return { outputs, $state: { type } };
-    } else {
-      console.log("UNKNOWN RESULT", type, data);
+  return handleRunGraphRequest(
+    {
+      inputs,
+      next,
+      diagnostics,
+    },
+    {
+      url,
+      kits: createKits(kitOverrides),
+      writer,
+      loader: createLoader([new BoardServerProvider(path, loader)]),
+      dataStore: store,
+      stateStore: {
+        async load(next?: string) {
+          if (!next) {
+            return undefined;
+          }
+          return runStateStore.loadReanimationState(user, next);
+        },
+        async save(state: ReanimationState) {
+          return runStateStore.saveReanimationState(user, state);
+        },
+      },
+      inputs: { model: "gemini-1.5-flash-latest" },
+      diagnostics,
     }
-  }
-  return {
-    $error: "Run completed without signaling end or error.",
-  };
+  );
 };

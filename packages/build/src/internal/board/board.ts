@@ -5,7 +5,10 @@
  */
 
 import type { NodeDescriberResult, Schema } from "@google-labs/breadboard";
-import type { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
+import type {
+  GraphMetadata,
+  NodeMetadata,
+} from "@google-labs/breadboard-schema/graph.js";
 import type { JSONSchema4 } from "json-schema";
 import type { Value } from "../../index.js";
 import {
@@ -17,6 +20,7 @@ import {
   type ValuesOrOutputPorts,
 } from "../common/port.js";
 import type {
+  SerializableBoard,
   SerializableInputPort,
   SerializableOutputPort,
   SerializableOutputPortReference,
@@ -30,9 +34,19 @@ import {
 } from "./input.js";
 import { isOptional } from "./optional.js";
 import { isSpecialOutput, type Output } from "./output.js";
+import type { Loopback } from "./loopback.js";
+import type { Convergence } from "./converge.js";
+import type {
+  AutoOptional,
+  Expand,
+  FlattenUnion,
+  RemoveReadonly,
+} from "../common/type-util.js";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 // TODO(aomarks) Support primary ports in boards.
-// TODO(aomarks) Support adding descriptions to board ports.
 
 /**
  * Define a new Breadboard board.
@@ -56,13 +70,7 @@ import { isSpecialOutput, type Output } from "./output.js";
  * distribution, and which can be instantiated for composition into another
  * board.
  */
-export function board<
-  // TODO(aomarks) Does it actually make any sense to pass an input port
-  // directly here? The only way to not have already initialized it to something
-  // was to have used an input(), so only inputs should be allowed, right?
-  IPORTS extends BoardInputShape,
-  OPORTS extends BoardOutputShape,
->({
+export function board<const T extends BoardInit>({
   inputs,
   outputs,
   id,
@@ -70,12 +78,12 @@ export function board<
   description,
   version,
   metadata,
-}: BoardParameters<IPORTS, OPORTS>): BoardDefinition<
-  FlattenMultiInputs<IPORTS>,
-  FlattenMultiOutputs<OPORTS>
+}: T): BoardDefinition<
+  Expand<AutoOptional<RemoveReadonly<SimplifyBoardInitInputs<T["inputs"]>>>>,
+  Expand<AutoOptional<RemoveReadonly<SimplifyBoardInitOutputs<T["outputs"]>>>>
 > {
-  const flatInputs = flattenInputs(inputs);
-  const flatOutputs = flattenOutputs(outputs);
+  const flatInputs = flattenInputs(inputs as any);
+  const flatOutputs = flattenOutputs(outputs as any);
   const defImpl = new BoardDefinitionImpl(flatInputs, flatOutputs);
   const definition = Object.assign(defImpl.instantiate.bind(defImpl), {
     id,
@@ -139,7 +147,10 @@ export type FlattenMultiInputs<I extends BoardInputShape> =
     ? {
         [K in keyof I[number] as K extends "$id" | "$metadata"
           ? never
-          : K]-?: I[number][K] extends Input<infer T> | undefined
+          : K]-?: I[number][K] extends
+          | Input<infer T>
+          | InputWithDefault<infer T>
+          | undefined
           ? undefined extends I[number][K]
             ? Input<T | undefined>
             : Input<T>
@@ -222,10 +233,10 @@ export type BoardOutputPortsWithUndefined = Record<
   $metadata?: { title?: string; description?: string; icon?: string };
 };
 
-export type BoardDefinition<
+export type OldBoardDefinition<
   IPORTS extends BoardInputPorts,
   OPORTS extends BoardOutputPorts,
-> = BoardInstantiateFunction<IPORTS, OPORTS> & {
+> = OldBoardInstantiateFunction<IPORTS, OPORTS> & {
   readonly id?: string;
   readonly inputs: IPORTS;
   readonly inputsForSerialization: BoardInputPorts | Array<BoardInputPorts>;
@@ -240,14 +251,14 @@ export type BoardDefinition<
 
 // TODO(aomarks) Fix this definition so that it doesn't need <any, any>.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type GenericBoardDefinition = BoardDefinition<any, any>;
+export type GenericBoardDefinition = OldBoardDefinition<any, any>;
 
-type BoardInstantiateFunction<
+type OldBoardInstantiateFunction<
   IPORTS extends BoardInputPorts,
   OPORTS extends BoardOutputPorts,
 > = (
   values: ValuesOrOutputPorts<ExtractPortTypes<IPORTS>>
-) => BoardInstance<IPORTS, OPORTS>;
+) => OldBoardInstance<IPORTS, OPORTS>;
 
 class BoardDefinitionImpl<
   IPORTS extends BoardInputPorts,
@@ -255,7 +266,7 @@ class BoardDefinitionImpl<
 > {
   readonly #inputs: IPORTS;
   readonly #outputs: OPORTS;
-  definition?: BoardDefinition<IPORTS, OPORTS>;
+  definition?: OldBoardDefinition<IPORTS, OPORTS>;
 
   constructor(inputs: IPORTS, outputs: OPORTS) {
     this.#inputs = inputs;
@@ -264,8 +275,8 @@ class BoardDefinitionImpl<
 
   instantiate(
     values: ValuesOrOutputPorts<ExtractPortTypes<IPORTS>>
-  ): BoardInstance<IPORTS, OPORTS> {
-    return new BoardInstance(
+  ): OldBoardInstance<IPORTS, OPORTS> {
+    return new OldBoardInstance(
       this.#inputs,
       this.#outputs,
       values,
@@ -309,20 +320,20 @@ class BoardDefinitionImpl<
   }
 }
 
-export class BoardInstance<
+export class OldBoardInstance<
   IPORTS extends BoardInputPorts,
   OPORTS extends BoardOutputPorts,
 > {
   readonly inputs: IPORTS;
   readonly outputs: OPORTS;
   readonly values: ValuesOrOutputPorts<ExtractPortTypes<IPORTS>>;
-  readonly definition: BoardDefinition<IPORTS, OPORTS>;
+  readonly definition: OldBoardDefinition<IPORTS, OPORTS>;
 
   constructor(
     inputs: IPORTS,
     outputs: OPORTS,
     values: ValuesOrOutputPorts<ExtractPortTypes<IPORTS>>,
-    definition: BoardDefinition<IPORTS, OPORTS>
+    definition: OldBoardDefinition<IPORTS, OPORTS>
   ) {
     this.inputs = inputs;
     this.outputs = this.#tagOutputs(outputs);
@@ -343,7 +354,7 @@ export class BoardInstance<
         {
           ...output,
           innerPortName: name,
-          innerBoard: this as object as BoardInstance<
+          innerBoard: this as object as OldBoardInstance<
             BoardInputPorts,
             BoardOutputPorts
           >,
@@ -355,10 +366,10 @@ export class BoardInstance<
 
 export function isBoardInstance(
   value: unknown
-): value is BoardInstance<BoardInputPorts, BoardOutputPorts> {
+): value is OldBoardInstance<BoardInputPorts, BoardOutputPorts> {
   // TODO(aomarks) Use a better brand
   return (
-    (value as Partial<BoardInstance<BoardInputPorts, BoardOutputPorts>>)
+    (value as Partial<OldBoardInstance<BoardInputPorts, BoardOutputPorts>>)
       .definition !== undefined
   );
 }
@@ -369,7 +380,7 @@ export type BoardOutput = (
   | Input<JsonSerializable>
   | InputWithDefault<JsonSerializable>
 ) & {
-  innerBoard: BoardInstance<BoardInputPorts, BoardOutputPorts>;
+  innerBoard: OldBoardInstance<BoardInputPorts, BoardOutputPorts>;
   innerPortName: string;
 };
 
@@ -455,7 +466,7 @@ export function describeOutput(
     port = port[OutputPortGetter];
   }
   // Input<JsonSerializable> | InputWithDefault<JsonSerializable> | SerializableOutputPort | OutputPort<...>
-  const schema = toJSONSchema(unroll(port).type);
+  const schema = toJSONSchema(unroll(port as any).type);
   if (isSpecialOutput(output)) {
     if (output.title !== undefined) {
       schema.title = output.title;
@@ -489,7 +500,7 @@ export function unroll(
   | OutputPort<JsonSerializable>
   | SerializableOutputPort {
   if (isSpecialOutput(value)) {
-    return unroll(value.port);
+    return unroll(value.port as any);
   }
   if ("type" in value) {
     return value;
@@ -498,4 +509,167 @@ export function unroll(
     return unroll(value[OutputPortGetter]);
   }
   return value;
+}
+
+// ------------------
+// NEW ZONE
+// ------------------
+
+export interface BoardInit {
+  inputs: InputNode | InputNode[] | AnonymousInputNodeShorthand;
+  outputs: OutputNode | OutputNode[] | AnonymousOutputNodeShorthand;
+  id?: string;
+  title?: string;
+  description?: string;
+  version?: string;
+  metadata?: GraphMetadata;
+}
+
+type AnonymousInputNodeShorthand = Record<string, GenericSpecialInput>;
+
+type AnonymousOutputNodeShorthand = Record<string, Value | Output | undefined>;
+
+export type BoardDefinition<
+  I extends Record<string, JsonSerializable | undefined> = any,
+  O extends Record<string, JsonSerializable | undefined> = any,
+> = BoardInstantiateFunction<I, O> &
+  SerializableBoard & { describe: () => Promise<NodeDescriberResult> };
+
+export type BoardInstantiateFunction<
+  I extends Record<string, JsonSerializable | undefined>,
+  O extends Record<string, JsonSerializable | undefined>,
+> = (inputs: {
+  [K in keyof I]: Value<I[K]>;
+}) => BoardInstance<I, O>;
+
+export interface BoardInstance<
+  I extends Record<string, JsonSerializable | undefined>,
+  O extends Record<string, JsonSerializable | undefined>,
+> {
+  outputs: Expand<WrapInValues<FilterSerializable<FlattenUnion<O>>>>;
+}
+
+type FilterSerializable<T extends Record<string, unknown>> = {
+  [K in keyof T]: T[K] extends JsonSerializable | undefined ? T[K] : never;
+};
+
+type WrapInValues<T extends Record<string, JsonSerializable | undefined>> = {
+  [K in keyof T]: Value<T[K]>;
+};
+
+/**
+ * Board inputs can either be an object (one input node) or an array of objects
+ * (multiple input nodes). This function returns a union of types in the array
+ * case.
+ */
+type SimplifyBoardInitInputs<T extends BoardInit["inputs"]> =
+  T extends InputNode<infer X>
+    ? X
+    : T extends InputNode[]
+      ? // TODO(amoarks) Recursion shouldn't be needed.
+        SimplifyBoardInitInputs<T[number]>
+      : T extends AnonymousInputNodeShorthand
+        ? ExtractInputTypes<T>
+        : never;
+
+/**
+ *
+ */
+export type SimplifyBoardInitOutputs<T extends BoardInit["outputs"]> =
+  T extends OutputNode<infer X>
+    ? X
+    : // : T extends Array<OutputNode<infer X>>
+      //   ? X
+      T extends Array<OutputNode>
+      ? SimplifyBoardInitOutputs<T[number]>
+      : T extends AnonymousOutputNodeShorthand
+        ? ExtractOutputTypes<T>
+        : never;
+
+/**
+ * Pulls out the type parameter for each `Input`, taking care to add `undefined`
+ * in the case of `InputWithDefault`. This is because when there is a default,
+ * then it is optional from the caller's perspective.
+ */
+type ExtractInputTypes<T extends Record<string, GenericSpecialInput>> = {
+  [K in keyof T]: T[K] extends Input<infer X>
+    ? X
+    : T[K] extends InputWithDefault<infer X>
+      ? X | undefined
+      : never;
+};
+
+/**
+ * Pulls out the type parameter for each `Input`, taking care to add `undefined`
+ * in the case of `InputWithDefault`. This is because when there is a default,
+ * then it is optional from the caller's perspective.
+ */
+type ExtractOutputTypes<T extends Record<string, Value | Output | undefined>> =
+  {
+    // prettier-ignore
+    [K in keyof T]:
+      T[K] extends Input<infer X> ? X :
+      T[K] extends InputWithDefault<infer X> ? X | undefined :
+      T[K] extends Output<infer X> ? X :
+      T[K] extends OutputPort<infer X> ? X :
+      T[K] extends OutputPortReference<infer X> ? X :
+      T[K] extends Loopback<infer X> ? X :
+      T[K] extends Convergence<infer X> ? X :
+      T[K] extends Value<infer X> ? X :
+      never
+    // prettier-ignore-end
+  };
+
+export function inputNode<T extends Record<string, GenericSpecialInput>>(
+  inputs: T,
+  metadata?: NodeMetadata & { id?: string }
+): InputNode<ExtractInputTypes<T>> {
+  const result: Record<string, unknown> = { ...inputs };
+  if (metadata) {
+    if (metadata.id) {
+      result.$id = metadata.id;
+      metadata = { ...metadata };
+      delete metadata["id"];
+    }
+    result.$metadata = metadata;
+  }
+  return result as unknown as InputNode<ExtractInputTypes<T>>;
+}
+
+export interface InputNode<
+  T extends Record<string, JsonSerializable | undefined> = Record<
+    string,
+    JsonSerializable | undefined
+  >,
+> {
+  // TODO(aomarks) Better branding
+  isInputNode: true;
+}
+
+export function outputNode<
+  T extends Record<string, Value | Output | undefined>,
+>(
+  outputs: T,
+  metadata?: NodeMetadata & { id?: string }
+): OutputNode<Expand<ExtractOutputTypes<T>>> {
+  const result: Record<string, unknown> = { ...outputs };
+  if (metadata) {
+    if (metadata.id) {
+      result.$id = metadata.id;
+      metadata = { ...metadata };
+      delete metadata["id"];
+    }
+    result.$metadata = metadata;
+  }
+  return result as unknown as OutputNode<ExtractOutputTypes<T>>;
+}
+
+export interface OutputNode<
+  T extends Record<string, JsonSerializable | undefined> = Record<
+    string,
+    JsonSerializable | undefined
+  >,
+> {
+  // TODO(aomarks) Better branding
+  isOutputNode: true;
 }

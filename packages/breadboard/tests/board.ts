@@ -9,6 +9,7 @@ import { Board } from "../src/board.js";
 import type { GraphDescriptor, InputValues } from "../src/types.js";
 import { TestKit } from "./helpers/_test-kit.js";
 import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" with { type: "json" };
+import { invokeGraph, runGraph } from "../src/index.js";
 
 test("correctly passes inputs and outputs to included boards", async (t) => {
   const nestedBoard = new Board();
@@ -31,27 +32,11 @@ test("correctly passes inputs and outputs to included boards", async (t) => {
         .wire("hello->", board.output())
     );
 
-  const result = await board.runOnce({ hello: "world" }, { kits: [nestedKit] });
-  t.deepEqual(result, { hello: "world" });
-});
-
-test("correctly passes inputs and outputs to invoked boards", async (t) => {
-  const nestedBoard = new Board();
-  const nestedKit = nestedBoard.addKit(TestKit);
-  nestedBoard
-    .input()
-    .wire(
-      "hello->",
-      nestedKit.noop().wire("hello->", nestedBoard.output({ $id: "output" }))
-    );
-
-  const board = new Board();
-  const kit = board.addKit(TestKit);
-  board
-    .input()
-    .wire("hello->", kit.invoke(nestedBoard).wire("hello->", board.output()));
-
-  const result = await board.runOnce({ hello: "world" }, { kits: [nestedKit] });
+  const result = await invokeGraph(
+    board,
+    { hello: "world" },
+    { kits: [nestedKit] }
+  );
   t.deepEqual(result, { hello: "world" });
 });
 
@@ -76,7 +61,11 @@ test("correctly passes inputs and outputs to included boards with a probe", asyn
         .wire("hello->", board.output())
     );
 
-  const result = await board.runOnce({ hello: "world" }, { kits: [nestedKit] });
+  const result = await invokeGraph(
+    board,
+    { hello: "world" },
+    { kits: [nestedKit] }
+  );
   t.deepEqual(result, { hello: "world" });
 });
 
@@ -88,24 +77,21 @@ test("allows pausing and resuming the board", async (t) => {
   input.wire("<-", kit.noop());
   input.wire("*->", kit.noop().wire("*->", board.output().wire("*->", input)));
   {
-    const firstBoard = await Board.fromGraphDescriptor(board);
-    for await (const stop of firstBoard.run({ kits: [kit] }, result)) {
+    for await (const stop of runGraph(board, { kits: [kit] }, result)) {
       t.is(stop.type, "input");
       result = stop;
       break;
     }
   }
   {
-    const secondBoard = await Board.fromGraphDescriptor(board);
-    for await (const stop of secondBoard.run({ kits: [kit] }, result)) {
+    for await (const stop of runGraph(board, { kits: [kit] }, result?.state)) {
       t.is(stop.type, "output");
       result = stop;
       break;
     }
   }
   {
-    const thirdBoard = await Board.fromGraphDescriptor(board);
-    for await (const stop of thirdBoard.run({ kits: [kit] }, result)) {
+    for await (const stop of runGraph(board, { kits: [kit] }, result?.state)) {
       t.is(stop.type, "input");
       result = stop;
       break;
@@ -142,7 +128,8 @@ test("when $error is set, all other outputs are ignored, named", async (t) => {
     // extra noop so that the above output would be used first
     kit.noop().wire("$error->", board.output())
   );
-  const result = await board.runOnce(
+  const result = await invokeGraph(
+    board,
     {},
     {
       kits: [kit],
@@ -159,7 +146,7 @@ test("when $error is set, all other outputs are ignored, with *", async (t) => {
   const output = board.output();
   noop.wire("*->", output);
   noop.wire("$error->", output);
-  const result = await board.runOnce({}, { kits: [kit] });
+  const result = await invokeGraph(board, {}, { kits: [kit] });
   t.is(result.foo, undefined);
   t.like(result.$error, { kind: "error" });
 });

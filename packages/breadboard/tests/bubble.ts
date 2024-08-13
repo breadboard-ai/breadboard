@@ -10,7 +10,7 @@ import {
   createBubbleHandler,
   createErrorMessage,
 } from "../src/bubble.js";
-import { BreadboardRunner, NodeHandlerContext } from "../src/types.js";
+import { GraphDescriptor, NodeHandlerContext } from "../src/types.js";
 
 test("InputSchemaReader works as expected", async (t) => {
   {
@@ -209,7 +209,7 @@ test("createBubbleHandler works as expected", async (t) => {
     const handler = createBubbleHandler(
       {},
       {
-        board: { title: "Foo" } as BreadboardRunner,
+        board: { title: "Foo" } as GraphDescriptor,
       },
       descriptor,
       []
