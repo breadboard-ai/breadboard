@@ -807,6 +807,8 @@ export type InspectableRunEdgeEvent = {
   };
   start: number;
   end: number;
+  from?: number[];
+  to?: number[];
   value?: InputValues;
 };
 

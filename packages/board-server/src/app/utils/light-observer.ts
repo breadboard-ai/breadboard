@@ -245,6 +245,8 @@ export class LightObserver {
       end: event.data.timestamp,
       edge: event.data.edge,
       value: event.data.value,
+      from: event.data.from,
+      to: event.data.to,
     };
 
     this.#run.events = [...this.#run.events, edge];
