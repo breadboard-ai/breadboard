@@ -11,7 +11,7 @@
     },
     {
       "from": "Context",
-      "to": "geminiToOpenAiContext",
+      "to": "geminiToOpenAIContext",
       "out": "context",
       "in": "context"
     },
@@ -34,7 +34,7 @@
       "in": "messages"
     },
     {
-      "from": "geminiToOpenAiContext",
+      "from": "geminiToOpenAIContext",
       "to": "formatParameters",
       "out": "result",
       "in": "context"
@@ -88,7 +88,7 @@
               "type": "array",
               "title": "Context",
               "description": "An array of messages to use as conversation context",
-              "default": "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"You are a pirate. Please talk like a pirate.\"\n      }\n    ]\n  },\n  {\n    \"role\": \"model\",\n    \"parts\": [\n      {\n        \"text\": \"Arr, matey!\"\n      }\n    ]\n  }\n]",
+              "default": "[]",
               "examples": [
                 "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"You are a pirate. Please talk like a pirate.\"\n      }\n    ]\n  },\n  {\n    \"role\": \"model\",\n    \"parts\": [\n      {\n        \"text\": \"Arr, matey!\"\n      }\n    ]\n  }\n]"
               ],
@@ -360,10 +360,10 @@
       }
     },
     {
-      "id": "geminiToOpenAiContext",
+      "id": "geminiToOpenAIContext",
       "type": "runJavascript",
       "configuration": {
-        "code": "const geminiToOpenAiContext = ({context:context2})=>{const arrayOfContext=[];for(let i=0;i<context2.length;i++){if(context2[i].role!=\"$metadata\"){let textString=\"\";for(const part of context2[i].parts){if(\"text\"in part){textString=textString.concat(part.text)}}arrayOfContext.push({role:context2[i].role==\"model\"?\"system\":context2[i].role,content:textString})}}return{result:arrayOfContext}};",
+        "code": "const geminiToOpenAIContext = ({context:context2})=>{const arrayOfContext=[];for(let i=0;i<context2.length;i++){if(context2[i].role!=\"$metadata\"){let textString=\"\";for(const part of context2[i].parts){if(\"text\"in part){textString=textString.concat(part.text)}}arrayOfContext.push({role:context2[i].role==\"model\"?\"system\":context2[i].role,content:textString})}}return{result:arrayOfContext}};",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -507,7 +507,7 @@
             }
           }
         },
-        "name": "geminiToOpenAiContext",
+        "name": "geminiToOpenAIContext",
         "outputSchema": {
           "type": "object",
           "properties": {

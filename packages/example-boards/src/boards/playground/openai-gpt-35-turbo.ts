@@ -134,7 +134,7 @@ const context = input({
 });
 
 const openAIContext = code(
-  { context, $id: "geminiToOpenAiContext", },
+  { context, $id: "geminiToOpenAIContext", },
   { result: array(object({ role: "string", content: "string" })) },
   ({ context }) => {
     const arrayOfContext = []
