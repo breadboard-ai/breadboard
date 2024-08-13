@@ -10,6 +10,7 @@ import {
   GraphEndProbeData,
   GraphStartProbeData,
   InputResponse,
+  InputValues,
   NodeEndResponse,
   NodeStartResponse,
   OutputResponse,
@@ -164,7 +165,7 @@ export class ResumeEvent extends Event implements RunLifecycleEvent {
   static readonly eventName = "resume";
   readonly running = true;
 
-  constructor(public data: { timestamp: number }) {
+  constructor(public data: { timestamp: number; inputs?: InputValues }) {
     super(ResumeEvent.eventName, { ...opts });
   }
 }
@@ -173,7 +174,7 @@ export class StartEvent extends Event implements RunLifecycleEvent {
   static readonly eventName = "start";
   readonly running = true;
 
-  constructor(public data: { timestamp: number }) {
+  constructor(public data: { timestamp: number; inputs?: InputValues }) {
     super(StartEvent.eventName, { ...opts });
   }
 }

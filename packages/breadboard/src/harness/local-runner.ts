@@ -29,8 +29,7 @@ import {
   EdgeEvent,
 } from "./events.js";
 import { InspectableRunObserver } from "../inspector/types.js";
-
-export const now = () => ({ timestamp: globalThis.performance.now() });
+import { timestamp } from "../timestamp.js";
 
 export class LocalRunner
   extends (EventTarget as RunEventTarget)
@@ -85,7 +84,12 @@ export class LocalRunner
   }
 
   async run(inputs?: InputValues): Promise<boolean> {
+    const eventArgs = {
+      inputs,
+      timestamp: timestamp(),
+    };
     const starting = !this.#run;
+
     if (!this.#run) {
       this.#run = run(this.#config);
     } else if (this.#pendingResult) {
@@ -95,7 +99,7 @@ export class LocalRunner
     this.#pendingResult = null;
 
     this.dispatchEvent(
-      starting ? new StartEvent(now()) : new ResumeEvent(now())
+      starting ? new StartEvent(eventArgs) : new ResumeEvent(eventArgs)
     );
 
     for (;;) {
@@ -120,7 +124,11 @@ export class LocalRunner
             // and wait for the next input.
             this.dispatchEvent(new InputEvent(false, data));
             this.#pendingResult = result.value;
-            this.dispatchEvent(new PauseEvent(false, now()));
+            this.dispatchEvent(
+              new PauseEvent(false, {
+                timestamp: timestamp(),
+              })
+            );
             return false;
           }
           break;
@@ -173,7 +181,11 @@ export class LocalRunner
             // and wait for the next input.
             this.dispatchEvent(new SecretEvent(false, data));
             this.#pendingResult = result.value;
-            this.dispatchEvent(new PauseEvent(false, now()));
+            this.dispatchEvent(
+              new PauseEvent(false, {
+                timestamp: timestamp(),
+              })
+            );
             return false;
           }
           break;

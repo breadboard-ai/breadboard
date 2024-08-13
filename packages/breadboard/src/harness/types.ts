@@ -243,7 +243,7 @@ export type RunEventMap = {
 
 export type RunLifecycleEvent = Event & {
   running: boolean;
-  data: { timestamp: number };
+  data: { timestamp: number; inputs?: InputValues };
 };
 
 export type RunInputEvent = Event & {

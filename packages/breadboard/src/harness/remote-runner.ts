@@ -60,8 +60,6 @@ export const remoteMessageTransform = () => {
   });
 };
 
-export const now = () => ({ timestamp: timestamp() });
-
 export const emptyGraph = () => ({}) as GraphDescriptor;
 
 export class HttpClient {
@@ -269,7 +267,11 @@ export class RemoteRunner
         if (!haveInputs) {
           // When there are no inputs to consume, pause the run
           // and wait for the next input.
-          this.dispatchEvent(new PauseEvent(false, now()));
+          this.dispatchEvent(
+            new PauseEvent(false, {
+              timestamp: timestamp(),
+            })
+          );
         }
         break;
       }
@@ -319,8 +321,13 @@ export class RemoteRunner
       this.#initializeClient();
     }
 
+    const eventArgs = {
+      inputs,
+      timestamp: timestamp(),
+    };
+
     this.dispatchEvent(
-      starting ? new StartEvent(now()) : new ResumeEvent(now())
+      starting ? new StartEvent(eventArgs) : new ResumeEvent(eventArgs)
     );
 
     return this.#client!.send(inputs || {});
