@@ -741,7 +741,9 @@ export class Main extends LitElement {
       BreadboardUI.Events.ToastType.PENDING,
       true
     );
+    this.#isSaving = true;
     const { result } = await provider.save(boardUrl, this.graph);
+    this.#isSaving = false;
     if (!result) {
       return;
     }
@@ -763,6 +765,10 @@ export class Main extends LitElement {
     fileName: string,
     graph: GraphDescriptor
   ) {
+    if (this.#isSaving) {
+      return;
+    }
+
     const provider = this.#getProviderByName(providerName);
     if (!provider) {
       this.toast(
@@ -787,7 +793,9 @@ export class Main extends LitElement {
     );
 
     const url = new URL(urlString);
+    this.#isSaving = true;
     const { result, error } = await provider.create(url, graph);
+    this.#isSaving = false;
 
     if (!result) {
       this.toast(
