@@ -539,11 +539,10 @@ export class AppView extends LitElement {
       return graph.description ? html`${graph.description}` : nothing;
     });
 
-    const runs = this.#runObserver?.runs() ?? [];
+    const log = this.#runObserver?.log() ?? [];
 
     const status = () => {
-      const currentRun = runs[0];
-      const events = currentRun?.events ?? [];
+      const events = log ?? [];
 
       const classes: Record<string, boolean> = { pending: false };
 
@@ -551,13 +550,13 @@ export class AppView extends LitElement {
       if (events.length && this.status !== STATUS.STOPPED) {
         const newest = events[events.length - 1];
         if (newest && newest.type === "node") {
-          if (newest.node.descriptor.type === "input") {
+          if (newest.descriptor.type === "input") {
             classes.pending = true;
             message = html`Requesting user input...`;
           } else {
             classes.pending = true;
             const details =
-              newest.node.descriptor.metadata?.description ?? "Working...";
+              newest.descriptor.metadata?.description ?? "Working...";
             message = html`${details}
               <span class="messages-received"
                 >${events.length} event${events.length === 1 ? "" : "s"}
@@ -573,49 +572,49 @@ export class AppView extends LitElement {
     const active =
       this.status === STATUS.RUNNING || this.status === STATUS.PAUSED;
 
-    const activity = Promise.all([
-      this.#descriptorLoad,
-      this.#kitLoad,
-      runs,
-    ]).then(([, , runs]) => {
-      const currentRun = runs[0];
-      const events = currentRun?.events ?? [];
+    const activity = Promise.all([this.#descriptorLoad, this.#kitLoad]).then(
+      () => {
+        const events = log;
 
-      return html`<bb-activity-log-lite
-        .start=${this.#runStartTime}
-        .message=${this.#message}
-        .events=${events}
-        @bbinputrequested=${() => {
-          this.requestUpdate();
-        }}
-        @bbinputenter=${(event: InputEnterEvent) => {
-          let data = event.data as InputValues;
-          const runner = this.#runner;
-          if (!runner) {
-            throw new Error("Can't send input, no runner");
-          }
-          if (runner.running()) {
-            throw new Error("The runner is already running, cannot send input");
-          }
+        return html`<bb-activity-log-lite
+          .start=${this.#runStartTime}
+          .message=${this.#message}
+          .events=${events}
+          @bbinputrequested=${() => {
+            this.requestUpdate();
+          }}
+          @bbinputenter=${(event: InputEnterEvent) => {
+            console.log("🌻 input enter", event);
+            let data = event.data as InputValues;
+            const runner = this.#runner;
+            if (!runner) {
+              throw new Error("Can't send input, no runner");
+            }
+            if (runner.running()) {
+              throw new Error(
+                "The runner is already running, cannot send input"
+              );
+            }
 
-          if (
-            event.allowSavingIfSecret &&
-            typeof event.data.secret === "string"
-          ) {
-            globalThis.localStorage.setItem(event.id, event.data.secret);
-          }
+            if (
+              event.allowSavingIfSecret &&
+              typeof event.data.secret === "string"
+            ) {
+              globalThis.localStorage.setItem(event.id, event.data.secret);
+            }
 
-          const keys = this.#runner?.secretKeys();
-          if (keys) {
-            data = Object.fromEntries(
-              keys.map((key) => [key, event.data.secret])
-            ) as InputValues;
-          }
+            const keys = this.#runner?.secretKeys();
+            if (keys) {
+              data = Object.fromEntries(
+                keys.map((key) => [key, event.data.secret])
+              ) as InputValues;
+            }
 
-          runner.run(data);
-        }}
-      ></bb-activity-log-lite>`;
-    });
+            runner.run(data);
+          }}
+        ></bb-activity-log-lite>`;
+      }
+    );
 
     return html` <main>
         <bb-app-nav

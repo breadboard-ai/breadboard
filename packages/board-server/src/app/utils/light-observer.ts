@@ -4,27 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  InspectableEdge,
-  InspectableGraph,
-  InspectableNode,
-  InspectableNodePorts,
-  InspectableNodeType,
-  InspectableRun,
-  InspectableRunNodeEvent,
-  InspectableRunSecretEvent,
-  InspectableRunEdgeEvent,
-  NodeDescriberResult,
-  NodeDescriptor,
-  NodeHandlerMetadata,
-} from "@google-labs/breadboard";
+import type { NodeDescriptor } from "@google-labs/breadboard";
 import type {
   InputValues,
-  NodeConfiguration,
-  NodeMetadata,
-  NodeTypeIdentifier,
   OutputValues,
-  StartLabel,
 } from "@google-labs/breadboard-schema/graph.js";
 import type {
   HarnessRunner,
@@ -37,6 +20,12 @@ import type {
   RunOutputEvent,
   RunSecretEvent,
 } from "@google-labs/breadboard/harness";
+import type {
+  EdgeLogEntry,
+  LogEntry,
+  NodeLogEntry,
+  SecretLogEntry,
+} from "./types.js";
 
 const idFromPath = (path: number[]): string => {
   return `e-${path.join("-")}`;
@@ -47,20 +36,20 @@ const idFromPath = (path: number[]): string => {
  * only captures the events that are necessary to drive the app UI.
  */
 export class LightObserver {
-  #run: InspectableRun | null = null;
-  #currentNode: InspectableRunNodeEvent | null = null;
+  #log: LogEntry[] | null = null;
+  #currentNode: NodeLogEntry | null = null;
   /**
    * Need to keep track of input separately, because
    * bubbled inputs appear as coming from inside of the
    * node.
    */
-  #currentInput: InspectableRunNodeEvent | null = null;
+  #currentInput: NodeLogEntry | null = null;
   /**
    * Need to keep track of secret separately, because
    * bubbled secrets may appear as coming from inside of the
    * node.
    */
-  #currentSecret: InspectableRunSecretEvent | null = null;
+  #currentSecret: SecretLogEntry | null = null;
 
   constructor(runner: HarnessRunner) {
     runner.addEventListener("nodestart", this.#nodeStart.bind(this));
@@ -71,7 +60,17 @@ export class LightObserver {
     runner.addEventListener("output", this.#output.bind(this));
     runner.addEventListener("edge", this.#edge.bind(this));
     runner.addEventListener("secret", this.#secret.bind(this));
+    runner.addEventListener("error", (event) => {
+      if (!this.#log) {
+        return;
+      }
+      this.#log = [...this.#log, { type: "error", error: event.data.error }];
+    });
+    runner.addEventListener("pause", (event) => {
+      console.log("🌻 Pausing", event);
+    });
     runner.addEventListener("resume", (event) => {
+      console.log("🌻 Resuming", event);
       if (this.#currentInput) {
         this.#currentInput.end = globalThis.performance.now();
         this.#currentInput.outputs = event.data.inputs!;
@@ -82,46 +81,24 @@ export class LightObserver {
       } else {
         return;
       }
-      if (this.#run) {
-        this.#run.events = [...this.#run.events];
+      if (this.#log) {
+        this.#log = [...this.#log];
       }
     });
   }
 
-  runs(): InspectableRun[] {
-    return this.#run ? [this.#run] : [];
+  log(): LogEntry[] | null {
+    return this.#log;
   }
 
   #graphStart(event: RunGraphStartEvent) {
     if (event.data.path.length > 0) {
       return;
     }
-    if (this.#run) {
+    if (this.#log) {
       throw new Error("Graph already started");
     }
-    this.#run = {
-      graphId: "1|graph",
-      graphVersion: 0,
-      start: event.data.timestamp,
-      end: 0,
-      events: [],
-      dataStoreKey: "run",
-      currentNodeEvent() {
-        throw new Error("Method not implemented.");
-      },
-      stack() {
-        throw new Error("Method not implemented.");
-      },
-      getEventById() {
-        throw new Error("Method not implemented.");
-      },
-      inputs() {
-        throw new Error("Method not implemented.");
-      },
-      replay() {
-        throw new Error("Method not implemented.");
-      },
-    };
+    this.#log = [];
   }
 
   #graphEnd(event: RunGraphEndEvent) {
@@ -136,23 +113,11 @@ export class LightObserver {
       return;
     }
 
-    this.#currentNode = {
-      type: "node",
-      id: idFromPath(event.data.path),
-      graph: null as unknown as InspectableGraph,
-      node: new Node(event.data.node),
-      start: event.data.timestamp,
-      end: null,
-      inputs: event.data.inputs,
-      outputs: null,
-      bubbled: false,
-      hidden: false,
-      runs: [],
-    };
-    if (!this.#run) {
+    this.#currentNode = new Node(event);
+    if (!this.#log) {
       throw new Error("Node started without a graph");
     }
-    this.#run.events = [...this.#run.events, this.#currentNode];
+    this.#log = [...this.#log, this.#currentNode];
   }
 
   #nodeEnd(event: RunNodeEndEvent) {
@@ -163,26 +128,25 @@ export class LightObserver {
     this.#currentNode!.end = event.data.timestamp;
     this.#currentNode!.outputs = event.data.outputs;
     this.#currentNode = null;
-    if (!this.#run) {
+    if (!this.#log) {
       throw new Error("Node end without a graph");
     }
 
-    this.#run.events = [...this.#run.events];
+    this.#log = [...this.#log];
   }
 
   #secret(event: RunSecretEvent) {
     this.#currentSecret = {
       type: "secret",
       start: event.data.timestamp,
-      id: "secret",
       keys: event.data.keys,
       end: null,
     };
-    if (!this.#run) {
+    if (!this.#log) {
       throw new Error("Node started without a graph");
     }
     console.log("Secret", this.#currentSecret);
-    this.#run.events = [...this.#run.events, this.#currentSecret];
+    this.#log = [...this.#log, this.#currentSecret];
   }
 
   #input(event: RunInputEvent) {
@@ -190,23 +154,11 @@ export class LightObserver {
       // Non-bubbled events will present themselves as node starts.
       return;
     }
-    this.#currentInput = {
-      type: "node",
-      id: idFromPath(event.data.path),
-      graph: null as unknown as InspectableGraph,
-      node: new Node(event.data.node),
-      start: event.data.timestamp,
-      end: null,
-      inputs: event.data.inputArguments,
-      outputs: null,
-      bubbled: event.data.bubbled,
-      hidden: false,
-      runs: [],
-    };
-    if (!this.#run) {
+    this.#currentInput = new Node(event);
+    if (!this.#log) {
       throw new Error("Node started without a graph");
     }
-    this.#run.events = [...this.#run.events, this.#currentInput];
+    this.#log = [...this.#log, this.#currentInput];
   }
 
   #output(event: RunOutputEvent) {
@@ -214,33 +166,20 @@ export class LightObserver {
       // Non-bubbled events will present themselves as node ends.
       return;
     }
-    const output: InspectableRunNodeEvent = {
-      type: "node",
-      id: idFromPath(event.data.path),
-      graph: null as unknown as InspectableGraph,
-      node: new Node(event.data.node),
-      start: event.data.timestamp,
-      end: event.data.timestamp,
-      inputs: event.data.outputs,
-      outputs: null,
-      bubbled: event.data.bubbled,
-      hidden: false,
-      runs: [],
-    };
-    if (!this.#run) {
+    const output = new Node(event);
+    if (!this.#log) {
       throw new Error("Node started without a graph");
     }
-    this.#run.events = [...this.#run.events, output];
+    this.#log = [...this.#log, output];
   }
 
   #edge(event: RunEdgeEvent) {
-    if (!this.#run) {
+    if (!this.#log) {
       throw new Error("Edge started without a graph");
     }
 
-    const edge: InspectableRunEdgeEvent = {
+    const edge: EdgeLogEntry = {
       type: "edge",
-      id: "edge",
       start: event.data.timestamp,
       end: event.data.timestamp,
       edge: event.data.edge,
@@ -249,86 +188,44 @@ export class LightObserver {
       to: event.data.to,
     };
 
-    this.#run.events = [...this.#run.events, edge];
+    this.#log = [...this.#log, edge];
   }
 }
 
-class Node implements InspectableNode {
+class Node implements NodeLogEntry {
+  type: "node";
+  id: string;
   descriptor: NodeDescriptor;
+  hidden: boolean;
+  outputs: OutputValues | null;
+  inputs: InputValues;
+  start: number;
+  bubbled: boolean;
+  end: number | null;
 
-  constructor(descriptor: NodeDescriptor) {
-    this.descriptor = descriptor;
+  constructor(event: RunInputEvent | RunOutputEvent | RunNodeStartEvent) {
+    this.type = "node";
+    this.id = idFromPath(event.data.path);
+    this.descriptor = event.data.node;
+    this.start = event.data.timestamp;
+    this.end = null;
+    if (this.descriptor.type === "input") {
+      this.inputs = (event as RunInputEvent).data.inputArguments;
+    } else if (this.descriptor.type === "output") {
+      this.inputs = (event as RunOutputEvent).data.outputs;
+    } else {
+      this.inputs = (event as RunNodeStartEvent).data.inputs;
+    }
+    this.outputs = null;
+    if (event.type === "input" || event.type === "output") {
+      this.bubbled = (event as RunOutputEvent | RunInputEvent).data.bubbled;
+    } else {
+      this.bubbled = false;
+    }
+    this.hidden = false;
   }
 
   title(): string {
     return this.descriptor.metadata?.title || this.descriptor.id;
-  }
-
-  description(): string {
-    return this.descriptor.metadata?.description || this.title();
-  }
-
-  incoming(): InspectableEdge[] {
-    throw new Error("Method not implemented.");
-  }
-
-  outgoing(): InspectableEdge[] {
-    throw new Error("Method not implemented.");
-  }
-
-  isEntry(label: StartLabel = "default"): boolean {
-    throw new Error("Method not implemented.");
-  }
-
-  startLabels(): StartLabel[] | undefined {
-    throw new Error("Method not implemented.");
-  }
-
-  isExit(): boolean {
-    throw new Error("Method not implemented.");
-  }
-
-  type(): InspectableNodeType {
-    return new NodeType(this.descriptor.type);
-  }
-
-  configuration(): NodeConfiguration {
-    return this.descriptor.configuration || {};
-  }
-
-  metadata(): NodeMetadata {
-    return this.descriptor.metadata || {};
-  }
-
-  async describe(inputs?: InputValues): Promise<NodeDescriberResult> {
-    throw new Error("Method not implemented.");
-  }
-
-  async ports(
-    inputValues?: InputValues,
-    outputValues?: OutputValues
-  ): Promise<InspectableNodePorts> {
-    throw new Error("Method not implemented.");
-  }
-}
-
-class NodeType implements InspectableNodeType {
-  #type: string;
-
-  constructor(type: string) {
-    this.#type = type;
-  }
-
-  metadata(): NodeHandlerMetadata {
-    // TODO: Figure this out.
-    return {};
-  }
-
-  type(): NodeTypeIdentifier {
-    return this.#type;
-  }
-
-  ports(): Promise<InspectableNodePorts> {
-    throw new Error("Method not implemented.");
   }
 }

@@ -7,20 +7,9 @@ import {
   isLLMContent,
   isLLMContentArray,
   type ErrorObject,
-  type InspectableRun,
-  type InspectableRunEvent,
-  type InspectableRunNodeEvent,
-  type InspectableRunSecretEvent,
   type Schema,
 } from "@google-labs/breadboard";
-import {
-  LitElement,
-  html,
-  css,
-  nothing,
-  type HTMLTemplateResult,
-  type PropertyValues,
-} from "lit";
+import { LitElement, html, css, nothing, type HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { until } from "lit/directives/until.js";
@@ -35,11 +24,14 @@ import {
   isImageURL,
   isLLMContentArrayBehavior,
   isLLMContentBehavior,
-} from "../../utils/types.js";
+} from "../../utils/content-schema.js";
 
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { repeat } from "lit/directives/repeat.js";
-import { guard } from "lit/directives/guard.js";
+import type {
+  LogEntry,
+  NodeLogEntry,
+  SecretLogEntry,
+} from "../../utils/types.js";
 
 @customElement("bb-activity-log-lite")
 export class ActivityLogLite extends LitElement {
@@ -50,7 +42,7 @@ export class ActivityLogLite extends LitElement {
   message: UserMessage | null = null;
 
   @property()
-  events: InspectableRunEvent[] = [];
+  events: LogEntry[] = [];
 
   static styles = css`
     * {
@@ -323,7 +315,9 @@ export class ActivityLogLite extends LitElement {
     return globalThis.localStorage.getItem(key);
   }
 
-  async #renderSecretInput(event: InspectableRunSecretEvent) {
+  async #renderSecretInput(event: SecretLogEntry) {
+    if (event.end !== null) return nothing;
+
     const userInputs: UserInputConfiguration[] = event.keys.reduce(
       (prev, key) => {
         const schema: Schema = {
@@ -358,9 +352,12 @@ export class ActivityLogLite extends LitElement {
       [] as UserInputConfiguration[]
     );
 
+    console.log("🌻 rendering secret input", userInputs);
+
     // Potentially do the autosubmit.
     if (userInputs.every((secret) => secret.value !== undefined)) {
       for (const input of userInputs) {
+        console.log("🌻 dispatching secret", input);
         if (typeof input.value !== "string") {
           console.warn(
             `Expected secret as string, instead received ${typeof input.value}`
@@ -434,7 +431,8 @@ export class ActivityLogLite extends LitElement {
     </section>`;
   }
 
-  async #renderPendingInput(event: InspectableRunNodeEvent) {
+  async #renderPendingInput(event: NodeLogEntry) {
+    console.log("🌻 rendering pending input", event);
     const schema = event.inputs.schema as Schema;
     if (!schema) {
       return html`Unable to render`;
@@ -494,7 +492,7 @@ export class ActivityLogLite extends LitElement {
 
       this.dispatchEvent(
         new InputEnterEvent(
-          event.node.descriptor.id,
+          event.descriptor.id,
           outputs,
           /* allowSavingIfSecret */ true
         )
@@ -502,7 +500,7 @@ export class ActivityLogLite extends LitElement {
     };
 
     return html`<bb-user-input
-        id="${event.node.descriptor.id}"
+        id="${event.descriptor.id}"
         .inputs=${userInputs}
         .inlineControls=${true}
         .llmInputShowEntrySelector=${false}
@@ -523,9 +521,9 @@ export class ActivityLogLite extends LitElement {
       </button>`;
   }
 
-  async #renderCompletedInputOrOutput(event: InspectableRunNodeEvent) {
-    const { node, inputs, outputs } = event;
-    const items = event.node.descriptor.type === "input" ? outputs : inputs;
+  async #renderCompletedInputOrOutput(event: NodeLogEntry) {
+    const { descriptor, inputs, outputs } = event;
+    const items = event.descriptor.type === "input" ? outputs : inputs;
 
     if (!items) {
       return html`Unable to render item`;
@@ -589,7 +587,7 @@ export class ActivityLogLite extends LitElement {
             class=${classMap({
               markdown: format === 'markdown',
               value: true,
-              [node.descriptor.type]: true,
+              [descriptor.type]: true,
             })}
           >${renderableValue}</div>`;
         }
@@ -599,68 +597,18 @@ export class ActivityLogLite extends LitElement {
     </dl>`;
   }
 
-  #renderEventRunInfo(
-    runs: InspectableRun[],
-    bubbledInputAndOutputIds: string[]
-  ): { found: boolean; tmpl: HTMLTemplateResult } {
-    const descender = (
-      runs: InspectableRun[],
-      bubbled: string,
-      target: InspectableRunNodeEvent[]
-    ) => {
-      for (const run of runs) {
-        for (const event of run.events) {
-          if (event.type !== "node") {
-            continue;
-          }
-
-          if (event.id === bubbled) {
-            target.push(event);
-          } else if (bubbled.startsWith(`${event.id}-`) && event.runs) {
-            descender(event.runs, bubbled, target);
-          }
-        }
-      }
-    };
-
-    // Populate this events array based on a matching the nested run
-    // information with the bubbled events. After that render any events that
-    // we've found.
-    const events: InspectableRunNodeEvent[] = [];
-    for (const bubbled of bubbledInputAndOutputIds) {
-      descender(runs, bubbled, events);
-    }
-
-    return {
-      found: events.length > 0,
-      tmpl:
-        events.length > 0
-          ? html`${map(events, (event) => {
-              if (
-                event.end === null &&
-                event.node.descriptor.type === "input"
-              ) {
-                return html`${until(this.#renderPendingInput(event))}`;
-              }
-
-              return html`${until(this.#renderCompletedInputOrOutput(event))} `;
-            })}`
-          : html`<div class="no-information">No information available</div>`,
-    };
-  }
-
-  #renderEvents(events: InspectableRunEvent[]) {
-    return html`${map(events, (event) => {
-      switch (event.type) {
+  #renderEvents(entries: LogEntry[]) {
+    return html`${map(entries, (entry) => {
+      switch (entry.type) {
         case "edge": {
-          if (event.to && event.to.length > 1) {
+          if (entry.to && entry.to.length > 1) {
             return nothing;
           }
 
           // TODO: Only include values that need to be presented to the user
           // i.e., bubbled or tagged as such.
-          if (event.value) {
-            const schema = event.value.schema as Schema;
+          if (entry.value) {
+            const schema = entry.value.schema as Schema;
             if (schema && schema.properties) {
               const props = Object.entries(schema.properties);
               if (
@@ -669,8 +617,8 @@ export class ActivityLogLite extends LitElement {
                 isLLMContentArrayBehavior(props[0][1])
               ) {
                 const nodeName = props[0][0];
-                const nodeValue = event.value[nodeName];
-                if (event.edge.from === "$entry") {
+                const nodeValue = entry.value[nodeName];
+                if (entry.edge.from === "$entry") {
                   return nothing;
                 }
 
@@ -691,9 +639,11 @@ export class ActivityLogLite extends LitElement {
         }
 
         case "node": {
-          const { node, end } = event;
-          const { type } = node.descriptor;
-          const { icon } = node.type().metadata();
+          const { descriptor, end } = entry;
+          const { type } = descriptor;
+          // const { icon } = node.type().metadata();
+          const icon = undefined;
+
           let content:
             | HTMLTemplateResult
             | Promise<HTMLTemplateResult>
@@ -710,25 +660,25 @@ export class ActivityLogLite extends LitElement {
             classes[icon] = true;
           }
 
-          if (event.hidden || event.node.descriptor.type === "output") {
+          if (entry.hidden || entry.descriptor.type === "output") {
             return nothing;
           }
 
           // TODO: It feels like this should be a part of the edge.
           if (end === null) {
             content = html`<section class="pending-input">
-              ${until(this.#renderPendingInput(event))}
+              ${until(this.#renderPendingInput(entry))}
             </section>`;
           }
 
           return html` <section class=${classMap(classes)}>
-              ${node.title()}
+              ${entry.title()}
             </section>
             ${content}`;
         }
 
         case "error": {
-          const { error } = event;
+          const { error } = entry;
           let output = "";
           if (typeof error === "string") {
             output = error;
@@ -758,7 +708,7 @@ export class ActivityLogLite extends LitElement {
 
         case "secret": {
           return html`<section class="secret">
-            ${until(this.#renderSecretInput(event))}
+            ${until(this.#renderSecretInput(entry))}
           </section>`;
         }
       }
