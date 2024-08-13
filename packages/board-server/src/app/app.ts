@@ -17,7 +17,7 @@ import {
   type HarnessRunner,
   type RunConfig,
 } from "@google-labs/breadboard/harness";
-import { type InputCallback, STATUS, type UserMessage } from "./types/types.js";
+import { STATUS, type UserMessage } from "./types/types.js";
 import { until } from "lit/directives/until.js";
 import { loadKits } from "./utils/kit-loader.js";
 
