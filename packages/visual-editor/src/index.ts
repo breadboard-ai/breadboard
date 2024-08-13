@@ -191,6 +191,7 @@ export class Main extends LitElement {
   #version = "dev";
   #recentBoardStore: RecentBoardStore;
   #recentBoards: BreadboardUI.Types.RecentBoard[] = [];
+  #isSaving = false;
 
   static styles = css`
     * {
@@ -714,6 +715,11 @@ export class Main extends LitElement {
   }
 
   async #attemptBoardSave() {
+    if (this.#isSaving) {
+      return;
+    }
+
+    this.#isSaving = true;
     if (!this.graph || !this.graph.url) {
       return;
     }
@@ -747,6 +753,8 @@ export class Main extends LitElement {
       false,
       id
     );
+
+    this.#isSaving = false;
   }
 
   async #attemptBoardSaveAs(
