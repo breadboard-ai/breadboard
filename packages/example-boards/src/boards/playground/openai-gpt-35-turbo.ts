@@ -6,7 +6,7 @@
 
 import { annotate, anyOf, array, board, enumeration, input, object, output, unsafeType } from "@breadboard-ai/build";
 import { Schema } from "@google-labs/breadboard";
-import { code, secret, fetch } from "@google-labs/core-kit";
+import { secret, fetch } from "@google-labs/core-kit";
 import { jsonata } from "@google-labs/json-kit";
 
 const textPartType = object({ text: "string" });
@@ -133,27 +133,6 @@ const context = input({
   examples: [contextDefault as any],
 });
 
-const openAIContext = code(
-  { context, $id: "geminiToOpenAIContext", },
-  { result: array(object({ role: "string", content: "string" })) },
-  ({ context }) => {
-    const arrayOfContext = []
-    for (let i = 0; i < context.length; i++) {
-      if (context[i].role != "$metadata") {
-        let textString = "";
-        for (const part of context[i].parts) {
-          if ("text" in part) {
-            textString = textString.concat(part.text)
-          }
-        }
-
-        arrayOfContext.push({ role: context[i].role == "model" ? "system" : context[i].role, content: textString })
-      }
-    }
-    return { result: arrayOfContext }
-  }
-);
-
 const formattedRequest = jsonata({
   $id: "formatParameters",
   expression: `(
@@ -161,7 +140,7 @@ const formattedRequest = jsonata({
         context ? context, [
             {
                 "role": "user",
-                "content": text
+                "parts": [{ "text": text }]
             }
         ]);
     OPENAI_API_KEY ? text ? {
@@ -171,7 +150,10 @@ const formattedRequest = jsonata({
         },
         "body": {
             "model": "gpt-3.5-turbo-1106",
-            "messages": $context,
+            "messages": $context.{
+              "role": $.role,
+              "content": $.parts.text
+            },
             "stream": useStreaming,
             "temperature": 1,
             "top_p": 1,
@@ -189,7 +171,7 @@ const formattedRequest = jsonata({
   )`,
   text,
   tools,
-  context: openAIContext.outputs.result,
+  context,
   useStreaming: false,
   raw: true,
   OPENAI_API_KEY: secret("OPENAI_API_KEY"),
