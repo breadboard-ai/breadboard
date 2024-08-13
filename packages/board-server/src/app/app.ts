@@ -348,6 +348,30 @@ export class AppView extends LitElement {
     }
   `;
 
+  // FORGIVE ME PAUL
+  #getSecretsAndResume() {
+    const keys = this.#runner?.secretKeys();
+    if (!keys) {
+      return;
+    }
+    const inputs = Object.fromEntries(
+      keys.map((key) => {
+        let secret = globalThis.localStorage.getItem(`SECRET_${key}`);
+        if (!secret) {
+          secret = prompt(`Please enter the secret for ${key}`);
+          if (!secret) {
+            this.#abortController?.abort();
+            throw new Error("Secret required, aborting run.");
+          }
+          globalThis.localStorage.setItem(`SECRET_${key}`, secret);
+        }
+        return [key, secret];
+      })
+    );
+    this.status = STATUS.RUNNING;
+    this.#runner?.run(inputs);
+  }
+
   connectedCallback(): void {
     super.connectedCallback();
 
@@ -472,7 +496,11 @@ export class AppView extends LitElement {
       this.status = STATUS.RUNNING;
     });
 
-    this.#runner.addEventListener("secret", async (evt) => {
+    this.#runner.addEventListener("secret", async (event) => {
+      this.status = STATUS.PAUSED;
+
+      this.#getSecretsAndResume();
+
       this.requestUpdate();
     });
 
@@ -587,21 +615,6 @@ export class AppView extends LitElement {
                 "The runner is already running, cannot send input"
               );
             }
-
-            if (
-              event.allowSavingIfSecret &&
-              typeof event.data.secret === "string"
-            ) {
-              globalThis.localStorage.setItem(event.id, event.data.secret);
-            }
-
-            const keys = this.#runner?.secretKeys();
-            if (keys) {
-              data = Object.fromEntries(
-                keys.map((key) => [key, event.data.secret])
-              ) as InputValues;
-            }
-
             runner.run(data);
           }}
         ></bb-activity-log-lite>`;

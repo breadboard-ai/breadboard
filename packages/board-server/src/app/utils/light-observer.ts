@@ -11,31 +11,31 @@ import type {
 } from "@google-labs/breadboard-schema/graph.js";
 import type {
   HarnessRunner,
-  RunEdgeEvent,
   RunGraphEndEvent,
   RunGraphStartEvent,
   RunInputEvent,
   RunNodeEndEvent,
   RunNodeStartEvent,
   RunOutputEvent,
-  RunSecretEvent,
 } from "@google-labs/breadboard/harness";
-import type {
-  EdgeLogEntry,
-  LogEntry,
-  NodeLogEntry,
-  SecretLogEntry,
-} from "./types.js";
+import type { EdgeLogEntry, LogEntry, NodeLogEntry } from "./types.js";
 
 const idFromPath = (path: number[]): string => {
   return `e-${path.join("-")}`;
 };
 
-const insertBeforeLastNode = (
-  log: LogEntry[],
-  edge: EdgeLogEntry
-): LogEntry[] => {
-  // @ts-expect-error
+/**
+ * Places the output edge in the log, according to the following rules:
+ * - Until first bubbling input, place output before the last node,
+ *   possibly replacing an empty edge.
+ * - After first bubbling input, place output after the last node.
+ */
+const placeOutputInLog = (log: LogEntry[], edge: EdgeLogEntry): LogEntry[] => {
+  const last = log[log.length - 1];
+  if (last?.type === "edge" && last.value) {
+    return [...log, edge];
+  }
+  // @ts-expect-error - findLastIndex is not in the TS lib
   const lastNode = log.findLastIndex((entry) => entry.type === "node");
   if (lastNode === -1) {
     return [...log, edge];
@@ -50,6 +50,14 @@ const insertBeforeLastNode = (
   return [...log.slice(0, lastNode), edge, ...log.slice(lastNode)];
 };
 
+const placeInputInLog = (log: LogEntry[], edge: EdgeLogEntry): LogEntry[] => {
+  const last = log[log.length - 1];
+  if (last?.type === "edge" && !last.value) {
+    return [...log.slice(0, -1), edge];
+  }
+  return [...log, edge];
+};
+
 /**
  * A lightweight rewrite of the `InspectableRunObserver` that
  * only captures the events that are necessary to drive the app UI.
@@ -62,13 +70,7 @@ export class LightObserver {
    * bubbled inputs appear as coming from inside of the
    * node.
    */
-  #currentInput: NodeLogEntry | null = null;
-  /**
-   * Need to keep track of secret separately, because
-   * bubbled secrets may appear as coming from inside of the
-   * node.
-   */
-  #currentSecret: SecretLogEntry | null = null;
+  #currentInput: EdgeLogEntry | null = null;
 
   constructor(runner: HarnessRunner) {
     runner.addEventListener("nodestart", this.#nodeStart.bind(this));
@@ -77,7 +79,6 @@ export class LightObserver {
     runner.addEventListener("graphend", this.#graphEnd.bind(this));
     runner.addEventListener("input", this.#input.bind(this));
     runner.addEventListener("output", this.#output.bind(this));
-    runner.addEventListener("secret", this.#secret.bind(this));
     runner.addEventListener("error", (event) => {
       if (!this.#log) {
         return;
@@ -90,16 +91,13 @@ export class LightObserver {
   }
 
   #cleanUpPendingNodes(inputs: OutputValues) {
-    if (this.#currentInput) {
-      this.#currentInput.end = globalThis.performance.now();
-      this.#currentInput.outputs = inputs;
-      this.#currentInput = null;
-    } else if (this.#currentSecret) {
-      this.#currentSecret.end = globalThis.performance.now();
-      this.#currentSecret = null;
-    } else {
+    if (!this.#currentInput) {
       return;
     }
+    this.#currentInput.end = globalThis.performance.now();
+    this.#currentInput.value = inputs;
+    this.#currentInput = null;
+
     if (this.#log) {
       this.#log = [...this.#log];
     }
@@ -153,29 +151,16 @@ export class LightObserver {
     this.#log = [...this.#log];
   }
 
-  #secret(event: RunSecretEvent) {
-    this.#currentSecret = {
-      type: "secret",
-      start: event.data.timestamp,
-      keys: event.data.keys,
-      end: null,
-    };
-    if (!this.#log) {
-      throw new Error("Node started without a graph");
-    }
-    this.#log = [...this.#log, this.#currentSecret];
-  }
-
   #input(event: RunInputEvent) {
     if (!event.data.bubbled) {
       // Non-bubbled events will present themselves as node starts.
       return;
     }
-    this.#currentInput = new Node(event);
+    this.#currentInput = new InputEdge(event);
     if (!this.#log) {
       throw new Error("Node started without a graph");
     }
-    this.#log = [...this.#log, this.#currentInput];
+    this.#log = placeInputInLog(this.#log, this.#currentInput);
   }
 
   #output(event: RunOutputEvent) {
@@ -187,7 +172,7 @@ export class LightObserver {
     if (!this.#log) {
       throw new Error("Node started without a graph");
     }
-    this.#log = insertBeforeLastNode(this.#log, output);
+    this.#log = placeOutputInLog(this.#log, output);
   }
 }
 
@@ -241,15 +226,32 @@ class Node implements NodeLogEntry {
 class Edge implements EdgeLogEntry {
   type: "edge" = "edge";
   value?: InputValues | undefined;
+  end = null;
 }
 
 class OutputEdge implements EdgeLogEntry {
   type: "edge" = "edge";
   value?: OutputValues | undefined;
   schema: Schema | undefined;
+  end: number;
 
   constructor(event: RunOutputEvent) {
     this.schema = event.data.node.configuration?.schema as Schema;
     this.value = event.data.outputs;
+    this.end = event.data.timestamp;
+  }
+}
+
+class InputEdge implements EdgeLogEntry {
+  type: "edge" = "edge";
+  id: string;
+  value: InputValues | undefined;
+  schema: Schema | undefined;
+  end: number | null;
+
+  constructor(event: RunInputEvent) {
+    this.schema = event.data.inputArguments.schema;
+    this.id = idFromPath(event.data.path);
+    this.end = null;
   }
 }

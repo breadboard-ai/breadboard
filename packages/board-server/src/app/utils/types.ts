@@ -5,7 +5,6 @@
  */
 
 import type {
-  Edge,
   ErrorResponse,
   InputValues,
   NodeDescriptor,
@@ -28,6 +27,8 @@ export type NodeLogEntry = {
 
 export type EdgeLogEntry = {
   type: "edge";
+  id?: string;
+  end: number | null;
   schema?: Schema;
   value?: InputValues;
 };
@@ -37,15 +38,4 @@ export type ErrorLogEntry = {
   error: ErrorResponse["error"];
 };
 
-export type SecretLogEntry = {
-  type: "secret";
-  keys: string[];
-  start: number;
-  end: number | null;
-};
-
-export type LogEntry =
-  | NodeLogEntry
-  | EdgeLogEntry
-  | ErrorLogEntry
-  | SecretLogEntry;
+export type LogEntry = NodeLogEntry | EdgeLogEntry | ErrorLogEntry;
