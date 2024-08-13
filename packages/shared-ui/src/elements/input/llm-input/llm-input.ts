@@ -30,6 +30,10 @@ import { styleMap } from "lit/directives/style-map.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 
+const OVERFLOW_MENU_HEIGHT = 224;
+const OVERFLOW_MENU_WIDTH = 220;
+const OVERFLOW_MENU_PADDING = 20;
+
 type MultiModalInput = AudioInput | DrawableInput | WebcamInput;
 
 @customElement("bb-llm-input")
@@ -71,9 +75,11 @@ export class LLMInput extends LitElement {
   #lastPartRef: Ref<HTMLSpanElement> = createRef();
   #lastInputRef: Ref<HTMLInputElement> = createRef();
   #containerRef: Ref<HTMLDivElement> = createRef();
+  #controlsRef: Ref<HTMLDivElement> = createRef();
 
   #partDataURLs = new Map<number, string>();
   #onWindowPointerDownBound = this.#onWindowPointerDown.bind(this);
+  #onWindowKeyUpBound = this.#onWindowKeyUp.bind(this);
 
   static styles = css`
     * {
@@ -511,6 +517,30 @@ export class LLMInput extends LitElement {
     this.showInlineControls = null;
   }
 
+  #onWindowKeyUp(evt: KeyboardEvent) {
+    if (!this.showInlineControls) {
+      return;
+    }
+
+    if (evt.key === "Enter") {
+      return;
+    }
+
+    if (!this.shadowRoot || !this.#controlsRef.value) {
+      return;
+    }
+
+    // If there's no active element in this shadow root or if it has moved to
+    // outside the controls, hide the overflow menu.
+    if (
+      !this.shadowRoot.activeElement ||
+      this.shadowRoot.activeElement.parentElement !== this.#controlsRef.value
+    ) {
+      this.showInlineControls = null;
+      return;
+    }
+  }
+
   connectedCallback(): void {
     super.connectedCallback();
 
@@ -519,13 +549,15 @@ export class LLMInput extends LitElement {
       return;
     }
 
-    window.addEventListener("pointerdown", this.#onWindowPointerDownBound);
+    window.addEventListener("click", this.#onWindowPointerDownBound);
+    window.addEventListener("keyup", this.#onWindowKeyUpBound);
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
-    window.removeEventListener("pointerdown", this.#onWindowPointerDownBound);
+    window.removeEventListener("click", this.#onWindowPointerDownBound);
+    window.removeEventListener("keyup", this.#onWindowKeyUpBound);
   }
 
   getContainerHeight(): number {
@@ -946,8 +978,13 @@ export class LLMInput extends LitElement {
 
     const styles: Record<string, string> = {};
     if (this.showInlineControls) {
-      styles.left = `${this.showInlineControls.x - 220}px`;
-      styles.top = `${this.showInlineControls.y}px`;
+      let top = this.showInlineControls.y;
+      if (top + OVERFLOW_MENU_HEIGHT > window.innerHeight) {
+        top = window.innerHeight - OVERFLOW_MENU_HEIGHT - OVERFLOW_MENU_PADDING;
+      }
+
+      styles.left = `${this.showInlineControls.x - OVERFLOW_MENU_WIDTH}px`;
+      styles.top = `${top}px`;
     }
 
     return html` <header
@@ -960,7 +997,21 @@ export class LLMInput extends LitElement {
           ? html`<button
               id="toggle-controls"
               @click=${(evt: PointerEvent) => {
-                this.showInlineControls = { x: evt.clientX, y: evt.clientY };
+                evt.stopImmediatePropagation();
+
+                if (this.showInlineControls) {
+                  this.showInlineControls = null;
+                  return;
+                }
+
+                if (evt.clientX === 0 || evt.clientY === 0) {
+                  const bounds = (
+                    evt.target as HTMLElement
+                  ).getBoundingClientRect();
+                  this.showInlineControls = { x: bounds.left, y: bounds.top };
+                } else {
+                  this.showInlineControls = { x: evt.clientX, y: evt.clientY };
+                }
               }}
             >
               Toggle
@@ -970,11 +1021,11 @@ export class LLMInput extends LitElement {
           ? html` <div
               id="controls-container"
               style=${styleMap(styles)}
-              @pointerdown=${(evt: Event) => {
+              @click=${(evt: Event) => {
                 evt.stopImmediatePropagation();
               }}
             >
-              <div id="controls">
+              <div id="controls" ${ref(this.#controlsRef)}>
                 <span id="insert">Insert:</span>
                 ${this.allow.textInline
                   ? html`<button
