@@ -47,6 +47,12 @@ export class UserInput extends LitElement {
   @property()
   showTypes = false;
 
+  @property({ reflect: true })
+  inlineControls = false;
+
+  @property({ reflect: true })
+  llmInputClamped = false;
+
   @property()
   graph: GraphDescriptor | null = null;
 
@@ -370,6 +376,8 @@ export class UserInput extends LitElement {
                     .values=${value}
                     .allow=${allow}
                     .minItems=${minItems}
+                    .clamped=${this.llmInputClamped}
+                    .inlineControls=${this.inlineControls}
                   ></bb-llm-input-array>`;
                 } else {
                   let renderableValue = input.value;
@@ -425,6 +433,8 @@ export class UserInput extends LitElement {
                     .schema=${input.schema}
                     .value=${input.value ?? defaultValue ?? null}
                     .description=${input.schema.description || null}
+                    .clamped=${this.llmInputClamped}
+                    .inlineControls=${this.inlineControls}
                   ></bb-llm-input>`;
                   break;
                 } else if (isBoardBehavior(input.schema, input.value)) {

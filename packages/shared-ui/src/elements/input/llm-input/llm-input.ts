@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { AllowedLLMContentTypes } from "../../../types/types.js";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -26,8 +26,13 @@ import {
   toInlineDataPart,
 } from "@google-labs/breadboard";
 import { asBase64 } from "../../../utils/as-base-64.js";
+import { styleMap } from "lit/directives/style-map.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
+
+const OVERFLOW_MENU_HEIGHT = 224;
+const OVERFLOW_MENU_WIDTH = 220;
+const OVERFLOW_MENU_PADDING = 20;
 
 type MultiModalInput = AudioInput | DrawableInput | WebcamInput;
 
@@ -40,7 +45,10 @@ export class LLMInput extends LitElement {
   description: string | null = null;
 
   @property({ reflect: true })
-  minimal = false;
+  clamped = true;
+
+  @property({ reflect: true })
+  inlineControls = false;
 
   @property()
   minItems = 0;
@@ -58,14 +66,20 @@ export class LLMInput extends LitElement {
     textInline: true,
   };
 
+  @state()
+  showInlineControls: { x: number; y: number } | null = null;
+
   #forceRenderCount = 0;
   #focusLastPart = false;
   #triggerSelectionFlow = false;
   #lastPartRef: Ref<HTMLSpanElement> = createRef();
   #lastInputRef: Ref<HTMLInputElement> = createRef();
   #containerRef: Ref<HTMLDivElement> = createRef();
+  #controlsRef: Ref<HTMLDivElement> = createRef();
 
   #partDataURLs = new Map<number, string>();
+  #onWindowPointerDownBound = this.#onWindowPointerDown.bind(this);
+  #onWindowKeyUpBound = this.#onWindowKeyUp.bind(this);
 
   static styles = css`
     * {
@@ -76,10 +90,17 @@ export class LLMInput extends LitElement {
       display: block;
       font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
+      position: relative;
     }
 
     header {
       display: block;
+      position: relative;
+    }
+
+    header::empty {
+      background: red;
+      height: 20px;
     }
 
     #description {
@@ -101,12 +122,7 @@ export class LLMInput extends LitElement {
       margin: 0 var(--bb-grid-size-2);
     }
 
-    #controls #add-text,
-    #controls #add-image-webcam,
-    #controls #add-image-drawable,
-    #controls #add-video-webcam,
-    #controls #add-audio-microphone,
-    #controls #add-file {
+    #controls button {
       width: 20px;
       height: 20px;
       opacity: 0.5;
@@ -115,36 +131,32 @@ export class LLMInput extends LitElement {
       border-radius: 0;
       font-size: 0;
       cursor: pointer;
-    }
-
-    #controls #add-text {
       background: transparent var(--bb-icon-add-text) center center / 20px 20px
         no-repeat;
     }
 
+    #controls #add-text {
+      background-image: var(--bb-icon-add-text);
+    }
+
     #controls #add-image-webcam {
-      background: transparent var(--bb-icon-add-image-webcam) center center /
-        20px 20px no-repeat;
+      background-image: var(--bb-icon-add-image-webcam);
     }
 
     #controls #add-image-drawable {
-      background: transparent var(--bb-icon-add-drawable) center center / 20px
-        20px no-repeat;
+      background-image: var(--bb-icon-add-drawable);
     }
 
     #controls #add-video-webcam {
-      background: transparent var(--bb-icon-add-video) center center / 20px 20px
-        no-repeat;
+      background-image: var(--bb-icon-add-video);
     }
 
     #controls #add-audio-microphone {
-      background: transparent var(--bb-icon-add-audio) center center / 20px 20px
-        no-repeat;
+      background-image: var(--bb-icon-add-audio);
     }
 
     #controls #add-file {
-      background: transparent var(--bb-icon-add-file) center center / 20px 20px
-        no-repeat;
+      background-image: var(--bb-icon-add-file);
     }
 
     #controls #add-text:hover,
@@ -162,19 +174,101 @@ export class LLMInput extends LitElement {
       opacity: 1;
     }
 
+    :host([inlinecontrols="true"]) #controls-container {
+      position: fixed;
+      background: var(--bb-neutral-0);
+      border: 1px solid var(--bb-neutral-300);
+      border-radius: var(--bb-grid-size-2);
+      box-shadow:
+        0px 4px 8px 3px rgba(0, 0, 0, 0.05),
+        0px 1px 3px rgba(0, 0, 0, 0.1);
+      z-index: 1;
+    }
+
+    :host([inlinecontrols="true"]) #controls {
+      display: grid;
+      grid-template-rows: var(--bb-grid-size-11);
+      background: none;
+      height: 224px;
+      padding: 0;
+    }
+
+    :host([inlinecontrols="true"]) #insert {
+      display: none;
+    }
+
+    :host([inlinecontrols="true"]) #controls button {
+      display: flex;
+      align-items: center;
+      background: none;
+      margin: 0;
+      padding: var(--bb-grid-size-3) var(--bb-grid-size-3) var(--bb-grid-size-3)
+        var(--bb-grid-size-8);
+      border: none;
+      border-bottom: 1px solid var(--bb-neutral-300);
+      text-align: left;
+      cursor: pointer;
+      font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
+        var(--bb-font-family);
+      width: auto;
+      height: auto;
+      background-position: var(--bb-grid-size-2) center;
+      background-repeat: no-repeat;
+      opacity: 1;
+    }
+
+    :host([inlinecontrols="true"]) #controls button:hover,
+    :host([inlinecontrols="true"]) #controls button:focus {
+      background-color: var(--bb-neutral-50);
+    }
+
+    :host([inlinecontrols="true"]) #controls button:last-of-type {
+      border-bottom: none;
+    }
+
+    #toggle-controls {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: var(--bb-ui-500) var(--bb-icon-add-inverted) center center /
+        20px 20px no-repeat;
+      border-radius: 50%;
+      font-size: 0;
+      border: none;
+      bottom: calc(var(--bb-grid-size-9) * -1);
+      right: var(--bb-grid-size-3);
+      cursor: pointer;
+      opacity: 0.75;
+      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+    }
+
+    header.with-description #toggle-controls {
+      bottom: calc(var(--bb-grid-size-11) * -1);
+    }
+
+    #toggle-controls:hover,
+    #toggle-controls:focus {
+      opacity: 1;
+      transition-duration: 0.1s;
+    }
+
     #container {
-      resize: vertical;
-      overflow: auto;
-      height: 30vh;
-      min-height: var(--bb-grid-size-6);
       border: var(--bb-border-size, 2px) solid var(--bb-neutral-300);
       border-radius: 0 0 var(--bb-grid-size) var(--bb-grid-size);
       padding: var(--bb-grid-size-3) 0 var(--bb-grid-size) 0;
       background: #fff;
     }
 
-    :host([minimal]) #container {
-      height: 100px;
+    :host([clamped="true"]) #container {
+      resize: vertical;
+      overflow: auto;
+      height: 160px;
+      min-height: var(--bb-grid-size-6);
+    }
+
+    :host([inlinecontrols="true"]) #container {
+      padding-right: var(--bb-grid-size-7);
+      border-radius: var(--bb-grid-size);
     }
 
     .content {
@@ -379,7 +473,8 @@ export class LLMInput extends LitElement {
     }
 
     #no-parts {
-      padding: 0 var(--bb-grid-size-3);
+      position: relative;
+      margin: 0 var(--bb-grid-size-3);
 
       font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
@@ -397,6 +492,11 @@ export class LLMInput extends LitElement {
         var(--bb-font-family);
     }
 
+    :host([inlinecontrols="true"]) #no-parts {
+      margin-bottom: var(--bb-grid-size-2);
+      min-height: var(--bb-grid-size-7);
+    }
+
     .confirm {
       background: var(--bb-continue-color) var(--bb-icon-confirm-blue) 8px 4px /
         16px 16px no-repeat;
@@ -409,9 +509,55 @@ export class LLMInput extends LitElement {
     }
   `;
 
+  #onWindowPointerDown() {
+    if (!this.showInlineControls) {
+      return;
+    }
+
+    this.showInlineControls = null;
+  }
+
+  #onWindowKeyUp(evt: KeyboardEvent) {
+    if (!this.showInlineControls) {
+      return;
+    }
+
+    if (evt.key === "Enter") {
+      return;
+    }
+
+    if (!this.shadowRoot || !this.#controlsRef.value) {
+      return;
+    }
+
+    // If there's no active element in this shadow root or if it has moved to
+    // outside the controls, hide the overflow menu.
+    if (
+      !this.shadowRoot.activeElement ||
+      this.shadowRoot.activeElement.parentElement !== this.#controlsRef.value
+    ) {
+      this.showInlineControls = null;
+      return;
+    }
+  }
+
   connectedCallback(): void {
     super.connectedCallback();
+
     this.#clearPartDataURLs();
+    if (!this.inlineControls) {
+      return;
+    }
+
+    window.addEventListener("click", this.#onWindowPointerDownBound);
+    window.addEventListener("keyup", this.#onWindowKeyUpBound);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    window.removeEventListener("click", this.#onWindowPointerDownBound);
+    window.removeEventListener("keyup", this.#onWindowKeyUpBound);
   }
 
   getContainerHeight(): number {
@@ -461,6 +607,7 @@ export class LLMInput extends LitElement {
       this.value = { role: "user", parts: [] };
     }
 
+    this.showInlineControls = null;
     this.value.parts.push({ text: "" });
     this.#focusLastPart = true;
     this.requestUpdate();
@@ -471,6 +618,7 @@ export class LLMInput extends LitElement {
       this.value = { role: "user", parts: [] };
     }
 
+    this.showInlineControls = null;
     this.value.parts.push({ inlineData: { data: "", mimeType } });
     this.#focusLastPart = true;
     this.#triggerSelectionFlow = triggerSelectionFlow;
@@ -828,60 +976,105 @@ export class LLMInput extends LitElement {
       this.allow.videoFile ||
       this.allow.textFile;
 
-    return html` <header>
+    const styles: Record<string, string> = {};
+    if (this.showInlineControls) {
+      let top = this.showInlineControls.y;
+      if (top + OVERFLOW_MENU_HEIGHT > window.innerHeight) {
+        top = window.innerHeight - OVERFLOW_MENU_HEIGHT - OVERFLOW_MENU_PADDING;
+      }
+
+      styles.left = `${this.showInlineControls.x - OVERFLOW_MENU_WIDTH}px`;
+      styles.top = `${top}px`;
+    }
+
+    return html` <header
+        class=${classMap({ ["with-description"]: this.description !== null })}
+      >
         ${this.description
           ? html`<div id="description">${this.description}</div>`
           : nothing}
-        <div id="controls-container">
-          <div id="controls">
-            <span id="insert">Insert:</span>
-            ${this.allow.textInline
-              ? html`<button
-                  title="Add text field"
-                  id="add-text"
-                  @click=${this.#addTextPart}
-                >
-                  Text
-                </button>`
-              : nothing}
-            ${this.allow.imageWebcam
-              ? html`<button
-                  title="Add image from webcam"
-                  id="add-image-webcam"
-                  @click=${() => this.#addPart("image-webcam")}
-                >
-                  Image (Webcam)
-                </button>`
-              : nothing}
-            ${this.allow.imageDrawable
-              ? html`<button
-                  title="Add image from drawable"
-                  id="add-image-drawable"
-                  @click=${() => this.#addPart("image-drawable")}
-                >
-                  Image (Drawable)
-                </button>`
-              : nothing}
-            ${this.allow.audioMicrophone
-              ? html`<button
-                  title="Add audio from microphone"
-                  id="add-audio-microphone"
-                  @click=${() => this.#addPart("audio-microphone")}
-                >
-                  Audio
-                </button>`
-              : nothing}
-            ${allowFile
-              ? html`<button
-                  title="Add file"
-                  id="add-file"
-                  @click=${() => this.#addPart("file")}
-                >
-                  File
-                </button>`
-              : nothing}
-          </div>
-        </div>
+        ${this.inlineControls
+          ? html`<button
+              id="toggle-controls"
+              @click=${(evt: PointerEvent) => {
+                evt.stopImmediatePropagation();
+
+                if (this.showInlineControls) {
+                  this.showInlineControls = null;
+                  return;
+                }
+
+                if (evt.clientX === 0 || evt.clientY === 0) {
+                  const bounds = (
+                    evt.target as HTMLElement
+                  ).getBoundingClientRect();
+                  this.showInlineControls = { x: bounds.left, y: bounds.top };
+                } else {
+                  this.showInlineControls = { x: evt.clientX, y: evt.clientY };
+                }
+              }}
+            >
+              Toggle
+            </button>`
+          : nothing}
+        ${!this.inlineControls || this.showInlineControls
+          ? html` <div
+              id="controls-container"
+              style=${styleMap(styles)}
+              @click=${(evt: Event) => {
+                evt.stopImmediatePropagation();
+              }}
+            >
+              <div id="controls" ${ref(this.#controlsRef)}>
+                <span id="insert">Insert:</span>
+                ${this.allow.textInline
+                  ? html`<button
+                      title="Add text field"
+                      id="add-text"
+                      @click=${this.#addTextPart}
+                    >
+                      Add text field
+                    </button>`
+                  : nothing}
+                ${this.allow.imageWebcam
+                  ? html`<button
+                      title="Add image from webcam"
+                      id="add-image-webcam"
+                      @click=${() => this.#addPart("image-webcam")}
+                    >
+                      Add image from webcam
+                    </button>`
+                  : nothing}
+                ${this.allow.imageDrawable
+                  ? html`<button
+                      title="Add drawing"
+                      id="add-image-drawable"
+                      @click=${() => this.#addPart("image-drawable")}
+                    >
+                      Add drawing
+                    </button>`
+                  : nothing}
+                ${this.allow.audioMicrophone
+                  ? html`<button
+                      title="Add audio from microphone"
+                      id="add-audio-microphone"
+                      @click=${() => this.#addPart("audio-microphone")}
+                    >
+                      Add audio
+                    </button>`
+                  : nothing}
+                ${allowFile
+                  ? html`<button
+                      title="Add file"
+                      id="add-file"
+                      @click=${() => this.#addPart("file")}
+                    >
+                      Add file
+                    </button>`
+                  : nothing}
+              </div>
+            </div>`
+          : nothing}
       </header>
       <div id="container" ${ref(this.#containerRef)}>
         ${this.value &&

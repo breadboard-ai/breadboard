@@ -606,7 +606,7 @@ export class SchemaEditor extends LitElement {
                 html`${defaultLabel}<bb-llm-input
                     id="${id}-default"
                     name="${id}-default"
-                    .minimal=${true}
+                    .clamped=${true}
                     .allow=${allow}
                     .value=${defaultValueContent}
                   ></bb-llm-input>`
