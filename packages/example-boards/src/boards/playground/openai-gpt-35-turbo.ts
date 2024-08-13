@@ -154,15 +154,6 @@ const openAIContext = code(
   }
 );
 
-const updatedContext = code(
-  { context: openAIContext.outputs.result, text, $id: "updatedContext" },
-  { result: array(object({ role: "string", content: "string" })) },
-  ({ context, text }) => {
-    context.push({ role: "user", content: text });
-    return { result: context }
-  }
-);
-
 const formattedRequest = jsonata({
   $id: "formatParameters",
   expression: `(
@@ -198,7 +189,7 @@ const formattedRequest = jsonata({
   )`,
   text,
   tools,
-  context: updatedContext.outputs.result,
+  context: openAIContext.outputs.result,
   useStreaming: false,
   raw: true,
   OPENAI_API_KEY: secret("OPENAI_API_KEY"),

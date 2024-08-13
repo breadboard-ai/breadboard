@@ -35,7 +35,7 @@
     },
     {
       "from": "geminiToOpenAiContext",
-      "to": "updatedContext",
+      "to": "formatParameters",
       "out": "result",
       "in": "context"
     },
@@ -70,22 +70,10 @@
       "in": "text"
     },
     {
-      "from": "Text",
-      "to": "updatedContext",
-      "out": "text",
-      "in": "text"
-    },
-    {
       "from": "Tools",
       "to": "formatParameters",
       "out": "tools",
       "in": "tools"
-    },
-    {
-      "from": "updatedContext",
-      "to": "formatParameters",
-      "out": "result",
-      "in": "context"
     }
   ],
   "nodes": [
@@ -100,7 +88,7 @@
               "type": "array",
               "title": "Context",
               "description": "An array of messages to use as conversation context",
-              "default": "[]",
+              "default": "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"You are a pirate. Please talk like a pirate.\"\n      }\n    ]\n  },\n  {\n    \"role\": \"model\",\n    \"parts\": [\n      {\n        \"text\": \"Arr, matey!\"\n      }\n    ]\n  }\n]",
               "examples": [
                 "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"You are a pirate. Please talk like a pirate.\"\n      }\n    ]\n  },\n  {\n    \"role\": \"model\",\n    \"parts\": [\n      {\n        \"text\": \"Arr, matey!\"\n      }\n    ]\n  }\n]"
               ],
@@ -569,66 +557,6 @@
         "keys": [
           "OPENAI_API_KEY"
         ]
-      }
-    },
-    {
-      "id": "updatedContext",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const updatedContext = ({context:context2,text:text2})=>{context2.push({role:\"user\",content:text2});return{result:context2}};",
-        "inputSchema": {
-          "type": "object",
-          "properties": {
-            "context": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "role": {
-                    "type": "string"
-                  },
-                  "content": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "role",
-                  "content"
-                ],
-                "additionalProperties": false
-              }
-            },
-            "text": {
-              "type": "string"
-            }
-          }
-        },
-        "name": "updatedContext",
-        "outputSchema": {
-          "type": "object",
-          "properties": {
-            "result": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "role": {
-                    "type": "string"
-                  },
-                  "content": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "role",
-                  "content"
-                ],
-                "additionalProperties": false
-              }
-            }
-          }
-        },
-        "raw": true
       }
     }
   ]
