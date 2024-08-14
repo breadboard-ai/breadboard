@@ -576,6 +576,7 @@ export class NodeConfigurationInfo extends LitElement {
                 .providers=${this.providers}
                 .providerOps=${this.providerOps}
                 .showTypes=${this.showTypes}
+                .inlineControls=${true}
                 @bbuseroutput=${(evt: UserOutputEvent) => {
                   this.dispatchEvent(
                     new NodeUpdateEvent(

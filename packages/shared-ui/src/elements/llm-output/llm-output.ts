@@ -28,7 +28,7 @@ export class LLMOutput extends LitElement {
   clamped = true;
 
   @property({ reflect: true })
-  lite = true;
+  lite = false;
 
   #partDataURLs = new Map<number, string>();
 
@@ -44,7 +44,7 @@ export class LLMOutput extends LitElement {
     :host([clamped="true"]) {
       resize: vertical;
       overflow: auto;
-      height: 200px;
+      max-height: 200px;
       min-height: var(--bb-grid-size-6);
     }
 
