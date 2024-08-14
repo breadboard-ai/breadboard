@@ -108,6 +108,10 @@ export class LLMOutputArray extends LitElement {
     bb-llm-output.visible {
       display: block;
     }
+
+    bb-llm-output:last-of-type {
+      margin-bottom: 0;
+    }
   `;
 
   protected willUpdate(

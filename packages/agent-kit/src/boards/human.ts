@@ -358,10 +358,13 @@ export default await board(({ context, title, description }) => {
       behavior: ["bubble"],
       properties: {
         output: {
-          type: "object",
-          behavior: ["llm-content"],
           title: "Output",
           description: "The output to display",
+          type: "array",
+          items: {
+            type: "object",
+            behavior: ["llm-content"],
+          },
         },
       },
     } satisfies Schema,

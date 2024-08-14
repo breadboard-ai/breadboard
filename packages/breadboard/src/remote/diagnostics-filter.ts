@@ -18,7 +18,33 @@ import type {
   OutputResponse,
   SkipProbeMessage,
 } from "../types.js";
-import { End, RemoteMessageWriter } from "./types.js";
+import { End, RemoteMessage, RemoteMessageWriter } from "./types.js";
+
+function omit<T extends RemoteMessage[1]>(message: T, ...keys: (keyof T)[]): T {
+  const copy = { ...message };
+  for (const key of keys) {
+    delete copy[key];
+  }
+  return copy;
+}
+
+type HasDescriptor = NodeStartResponse | NodeEndResponse;
+
+function noConfig<T extends HasDescriptor>(data: T): T {
+  const node = { ...data.node };
+  delete node.configuration;
+  return {
+    ...data,
+    node,
+  };
+}
+
+function noIO(data: NodeEndResponse): NodeEndResponse {
+  const result = { ...data } as Partial<NodeEndResponse>;
+  delete result.inputs;
+  delete result.outputs;
+  return result as NodeEndResponse;
+}
 
 export class DiagnosticsFilter {
   #writer: RemoteMessageWriter;
@@ -37,7 +63,7 @@ export class DiagnosticsFilter {
     if (this.#filterTop(data.path.length + 1)) {
       return;
     }
-    await this.#writer.write(["graphstart", data]);
+    await this.#writer.write(["graphstart", omit(data, "graph")]);
   }
 
   async writeGraphEnd(data: GraphEndProbeData) {
@@ -51,14 +77,14 @@ export class DiagnosticsFilter {
     if (this.#filterTop(data.path.length)) {
       return;
     }
-    await this.#writer.write(["nodestart", data]);
+    await this.#writer.write(["nodestart", noConfig(omit(data, "inputs"))]);
   }
 
   async writeNodeEnd(data: NodeEndResponse) {
     if (this.#filterTop(data.path.length)) {
       return;
     }
-    await this.#writer.write(["nodeend", data]);
+    await this.#writer.write(["nodeend", noIO(noConfig(data))]);
   }
 
   async writeSkip(_data: SkipProbeMessage["data"]) {
@@ -67,7 +93,7 @@ export class DiagnosticsFilter {
   }
 
   async writeEdge(data: EdgeResponse) {
-    if (this.#filterTop(data.to.length)) {
+    if (this.#diagnostics !== true) {
       return;
     }
     await this.#writer.write(["edge", data]);

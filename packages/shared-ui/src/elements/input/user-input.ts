@@ -54,6 +54,9 @@ export class UserInput extends LitElement {
   llmInputClamped = false;
 
   @property()
+  llmInputShowEntrySelector = true;
+
+  @property()
   graph: GraphDescriptor | null = null;
 
   @property()
@@ -378,6 +381,7 @@ export class UserInput extends LitElement {
                     .minItems=${minItems}
                     .clamped=${this.llmInputClamped}
                     .inlineControls=${this.inlineControls}
+                    .showEntrySelector=${this.llmInputShowEntrySelector}
                   ></bb-llm-input-array>`;
                 } else {
                   let renderableValue = input.value;

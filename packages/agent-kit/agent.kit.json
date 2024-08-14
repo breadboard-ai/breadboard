@@ -279,12 +279,15 @@
               ],
               "properties": {
                 "output": {
-                  "type": "object",
-                  "behavior": [
-                    "llm-content"
-                  ],
                   "title": "Output",
-                  "description": "The output to display"
+                  "description": "The output to display",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  }
                 }
               }
             }
