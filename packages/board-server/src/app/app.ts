@@ -368,7 +368,6 @@ export class AppView extends LitElement {
         return [key, secret];
       })
     );
-    this.status = STATUS.RUNNING;
     this.#runner?.run(inputs);
   }
 
@@ -497,8 +496,6 @@ export class AppView extends LitElement {
     });
 
     this.#runner.addEventListener("secret", async (event) => {
-      this.status = STATUS.PAUSED;
-
       this.#getSecretsAndResume();
 
       this.requestUpdate();

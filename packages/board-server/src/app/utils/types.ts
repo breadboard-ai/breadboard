@@ -17,8 +17,6 @@ export type NodeLogEntry = {
   id: string;
   descriptor: NodeDescriptor;
   hidden: boolean;
-  outputs: OutputValues | null;
-  inputs: InputValues;
   start: number;
   bubbled: boolean;
   end: number | null;
