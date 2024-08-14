@@ -30,7 +30,15 @@ const getBody = async (req: IncomingMessage): Promise<unknown> => {
     });
 
     req.on("end", () => {
-      resolve(JSON.parse(chunks.join("")));
+      const body = chunks.join("");
+      if (!body) {
+        resolve(undefined);
+      }
+      try {
+        resolve(JSON.parse(body));
+      } catch (e) {
+        resolve(undefined);
+      }
     });
   });
 };

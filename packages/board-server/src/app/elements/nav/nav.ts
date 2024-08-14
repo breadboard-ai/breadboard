@@ -137,9 +137,54 @@ export class AppNav extends LitElement {
     }
   `;
 
+  async #createInviteLink(evt: Event) {
+    evt.preventDefault();
+    const a = evt.target as HTMLAnchorElement;
+    try {
+      const result = await fetch(a.href, { method: "POST" });
+      const json = await result.json();
+      const invite = json.invite;
+      const inviteLink = new URL(window.location.href);
+      inviteLink.searchParams.set("invite", invite);
+      await navigator.clipboard.writeText(inviteLink.href);
+    } catch (e) {
+      console.error("FAILED TO CREATE LINK", e);
+    }
+  }
+
+  async #listInvites(evt: Event) {
+    evt.preventDefault();
+    const a = evt.target as HTMLAnchorElement;
+    try {
+      const result = await fetch(a.href);
+      const json = await result.json();
+      console.log("INVITES YAY", json.invites);
+    } catch (e) {
+      console.error("FAILED TO LIST INVITES", e);
+    }
+  }
+
   render() {
     const boardUrl = window.location.href.replace(/app$/, "json");
     const visualEditorUrl = `https://breadboard-ai.web.app/?board=${boardUrl}`;
+    const boardServerKey = localStorage.getItem("board-server-key");
+    let inviteLink;
+    if (!boardServerKey) {
+      inviteLink = nothing;
+    } else {
+      const inviteURL = new URL(window.location.href.replace(/app$/, "invite"));
+      inviteURL.searchParams.set("API_KEY", boardServerKey);
+      inviteLink = html`<li>
+          <a href=${inviteURL.href} @click=${this.#createInviteLink}
+            >Create Invite</a
+          >
+        </li>
+        <li>
+          <a href=${inviteURL.href} @click=${this.#listInvites}
+            >List invites (in console)</a
+          >
+        </li>`;
+    }
     const showShare = "share" in navigator;
     return html` <div
         id="background"
@@ -160,6 +205,7 @@ export class AppNav extends LitElement {
               >Open in Visual Editor</a
             >
           </li>
+          ${inviteLink}
           <!-- <li><button id="recent">Recent Activity</button></li> -->
           ${showShare
             ? html`<li>
