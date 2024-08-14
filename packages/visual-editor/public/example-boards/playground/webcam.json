@@ -35,50 +35,8 @@
               "title": "Image",
               "items": {
                 "type": "object",
-                "properties": {
-                  "role": {
-                    "type": "string"
-                  },
-                  "parts": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "inlineData": {
-                          "type": "object",
-                          "properties": {
-                            "mimeType": {
-                              "type": "string",
-                              "enum": [
-                                "image/png",
-                                "image/jpeg",
-                                "image/heic",
-                                "image/heif",
-                                "image/webp"
-                              ]
-                            },
-                            "data": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "mimeType",
-                            "data"
-                          ],
-                          "additionalProperties": false
-                        }
-                      },
-                      "required": [
-                        "inlineData"
-                      ],
-                      "additionalProperties": false
-                    }
-                  }
-                },
-                "required": [
-                  "role",
-                  "parts"
-                ],
+                "properties": {},
+                "required": [],
                 "additionalProperties": false,
                 "behavior": [
                   "llm-content"

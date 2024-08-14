@@ -4,31 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { annotate, array, board, enumeration, input, object, output } from "@breadboard-ai/build";
+import { annotate, array, board, input, object, output } from "@breadboard-ai/build";
 import { geminiText } from "@google-labs/gemini-kit";
-
-const imagePartType = object({
-  inlineData: object({
-    mimeType: enumeration(
-      "image/png",
-      "image/jpeg",
-      "image/heic",
-      "image/heif",
-      "image/webp"
-    ),
-    data: "string",
-  }),
-});
-
-const generateContentContentsType = object({
-  role: "string",
-  parts: array(imagePartType),
-});
 
 const picture = input({
   title: "Image",
   type: array(
-    annotate(generateContentContentsType, {
+    annotate(object({}), {
       behavior: ["llm-content"],
     })
   )
