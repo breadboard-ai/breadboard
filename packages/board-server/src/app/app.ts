@@ -62,7 +62,26 @@ const getRemoteURL = () => {
   return url.href;
 };
 
+/**
+ * Get the API key from the URL or local storage.
+ *
+ * First, try to get the key from local storage. If it's not there, check the
+ * URL. If the URL has a `key` parameter, use that.
+ *
+ * If the URL has a `local` parameter, return `undefined`, forcing the app to
+ * run in local mode.
+ *
+ * @returns {string | undefined}
+ */
 const getApiKey = () => {
+  const forceLocal = new URL(window.location.href).searchParams.has("local");
+  if (forceLocal) {
+    return undefined;
+  }
+  const locallyStoredKey = globalThis.localStorage.getItem("board-server-key");
+  if (locallyStoredKey) {
+    return locallyStoredKey;
+  }
   const url = new URL(window.location.href);
   return url.searchParams.get("key") || undefined;
 };
