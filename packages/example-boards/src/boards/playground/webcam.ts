@@ -4,14 +4,34 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { annotate, board, input, object, output } from "@breadboard-ai/build";
+import { annotate, array, board, enumeration, input, object, output } from "@breadboard-ai/build";
 import { geminiText } from "@google-labs/gemini-kit";
+
+const imagePartType = object({
+  inlineData: object({
+    mimeType: enumeration(
+      "image/png",
+      "image/jpeg",
+      "image/heic",
+      "image/heif",
+      "image/webp"
+    ),
+    data: "string",
+  }),
+});
+
+const generateContentContentsType = object({
+  role: "string",
+  parts: array(imagePartType),
+});
 
 const picture = input({
   title: "Image",
-  type: annotate(object({}), {
-    behavior: ["llm-content"],
-  })
+  type: array(
+    annotate(generateContentContentsType, {
+      behavior: ["llm-content"],
+    })
+  )
 });
 
 const prompt = input({
@@ -22,7 +42,7 @@ const prompt = input({
 
 const llmResponse = geminiText({
   text: "unused",
-  context: picture,
+  context: picture as any,
   model: "gemini-1.5-pro-latest",
   systemInstruction: prompt
 });
