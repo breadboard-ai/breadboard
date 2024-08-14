@@ -6,7 +6,7 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { board } from "../internal/board/board.js";
+import { board, outputNode } from "../internal/board/board.js";
 import { output } from "../internal/board/output.js";
 import { defineNodeType } from "../internal/define/define.js";
 import { anyOf } from "../internal/type-system/any-of.js";
@@ -92,11 +92,8 @@ test("output usage", () => {
   // @ts-expect-error
   output();
 
-  output(
-    // @ts-expect-error
-    null,
-    { id: "foo" }
-  );
+  // $ExpectType Output<null>
+  output(null, { id: "foo" });
 
   output(strNode, {
     // @ts-expect-error
@@ -159,25 +156,27 @@ test("multi-output", () => {
   })({}).outputs;
 
   {
-    // $xxExpectType BoardDefinition<{}, { foo: OutputPort<string | undefined>; bar: OutputPort<number>; mix: OutputPort<string | number>; baz: OutputPort<boolean | undefined>; }>
+    // $ExpectType BoardDefinition<{}, { foo: string; bar: number; mix: string; } | { bar: number; baz: boolean; mix: number; }>
     const boardDef = board({
       inputs: {},
       outputs: [
-        {
+        outputNode({
           foo,
           bar,
           mix: foo,
-        },
-        {
-          $id: "custom-output-name",
-          $metadata: {
+        }),
+        outputNode(
+          {
+            bar,
+            baz,
+            mix: bar,
+          },
+          {
+            id: "custom-output-name",
             title: "Custom Title",
             description: "Custom Description",
-          },
-          bar,
-          baz,
-          mix: bar,
-        },
+          }
+        ),
       ],
     });
 
@@ -230,17 +229,20 @@ test("multi-output", () => {
     });
 
     {
-      // $ExpectType BoardInstance<{}, { foo: OutputPort<string | undefined>; bar: OutputPort<number>; mix: OutputPort<string | number>; baz: OutputPort<boolean | undefined>; }>
+      // $ExpectType BoardInstance<{}, { foo: string; bar: number; mix: string; } | { bar: number; baz: boolean; mix: number; }>
       const boardInst = boardDef({});
 
+      // $ExpectType { foo: Value<string | undefined>; bar: Value<number>; mix: Value<string | number>; baz: Value<boolean | undefined>; }
+      boardInst.outputs;
+
       const {
-        // $ExpectType OutputPort<string | undefined>
+        // $ExpectType Value<string | undefined>
         foo,
-        // $ExpectType OutputPort<number>
+        // $ExpectType Value<number>
         bar,
-        // $ExpectType OutputPort<boolean | undefined>
+        // $ExpectType Value<boolean | undefined>
         baz,
-        // $ExpectType OutputPort<string | number>
+        // $ExpectType Value<string | number>
         mix,
       } = boardInst.outputs;
 

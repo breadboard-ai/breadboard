@@ -1,396 +1,386 @@
 /**
  * @license
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-
+import { LitElement, html, css, type PropertyValueMap, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
+import { InputEnterEvent } from "./events/events.js";
 import {
-  LitElement,
-  css,
-  html,
-  nothing,
-  type HTMLTemplateResult,
-  type PropertyValueMap,
-} from "lit";
+  createLoader,
+  type GraphDescriptor,
+  type InputValues,
+} from "@google-labs/breadboard";
+import {
+  createRunner,
+  type HarnessRunner,
+  type RunConfig,
+} from "@google-labs/breadboard/harness";
+import { STATUS, type UserMessage } from "./types/types.js";
+import { until } from "lit/directives/until.js";
+import { loadKits } from "./utils/kit-loader.js";
 
 import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
 import TemplateKit from "@google-labs/template-kit";
-import NodeNurseryWeb from "@google-labs/node-nursery-web";
-import PaLMKit from "@google-labs/palm-kit";
 import GeminiKit from "@google-labs/gemini-kit";
 import AgentKit from "@google-labs/agent-kit";
 
-import { loadKits } from "./utils/kit-loader.js";
-import {
-  BoardRunner,
-  createLoader,
-  createRunObserver,
-  type DataStore,
-  type GraphProvider,
-  type InputValues,
-  type InspectableRun,
-  type InspectableRunObserver,
-  type Kit,
-  type Schema,
-  type SerializedRun,
-} from "@google-labs/breadboard";
-import {
-  run,
-  type HarnessRunResult,
-  type RunConfig,
-} from "@google-labs/breadboard/harness";
-import type { InputResolveRequest } from "@google-labs/breadboard/remote";
-import { until } from "lit/directives/until.js";
-import { isBoolean, isMultiline, isSelect } from "./utils/input.js";
-import { map } from "lit/directives/map.js";
-import type { LLMContent, LLMPart } from "./types.js";
-import { isInlineData, isStoredData, isText } from "./utils/output.js";
-import { cache } from "lit/directives/cache.js";
-import { markdown } from "./directives/markdown.js";
-import { createRef, ref, type Ref } from "lit/directives/ref.js";
-import { classMap } from "lit/directives/class-map.js";
+import "@breadboard-ai/shared-ui";
+import "./elements/elements.js";
+import { LightObserver } from "./utils/light-observer.js";
 
-import "./elements/nav.js";
-import { messages } from "./utils/messages.js";
-import { getDataStore, getRunStore } from "@breadboard-ai/data-store";
+const randomMessage: UserMessage[] = [
+  {
+    srcset: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f648/512.webp",
+    src: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f648/512.gif",
+    alt: "🙈",
+  },
+  {
+    srcset:
+      "https://fonts.gstatic.com/s/e/notoemoji/latest/1f636_200d_1f32b_fe0f/512.webp",
+    src: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f636_200d_1f32b_fe0f/512.gif",
+    alt: "😶",
+  },
+  {
+    srcset: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f9d0/512.webp",
+    src: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f9d0/512.gif",
+    alt: "🧐",
+  },
+  {
+    srcset: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f4a1/512.webp",
+    src: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f4a1/512.gif",
+    alt: "💡",
+  },
+];
 
-type inputCallback = (data: Record<string, unknown>) => void;
+const getRemoteURL = () => {
+  const url = new URL(window.location.href);
+  url.pathname = url.pathname.replace(/app$/, "api/run");
+  return url.href;
+};
 
-enum STATUS {
-  RUNNING,
-  STOPPED,
-  LOADING,
-}
+const getApiKey = () => {
+  const url = new URL(window.location.href);
+  return url.searchParams.get("key") || undefined;
+};
 
-const SPLIT_TEXT_LINE_COUNT = 4;
-
-@customElement("bb-app")
-export class App extends LitElement {
-  @property()
+@customElement("bb-app-view")
+export class AppView extends LitElement {
+  @property({ reflect: true })
   url: string | null = null;
 
-  @property()
-  run: string | null = null;
-
-  @state()
-  runs: InspectableRun[] | null = null;
+  @property({ reflect: true })
+  version: string = "dev";
 
   @state()
   status = STATUS.STOPPED;
 
   @state()
-  showNav = false;
+  showMenu = false;
 
-  @state()
-  dataStore = getDataStore();
+  #loader = createLoader([]);
+  #descriptorLoad: Promise<GraphDescriptor | null> = Promise.resolve(null);
+  #kitLoad = loadKits([TemplateKit, Core, GeminiKit, JSONKit, AgentKit]);
 
-  @state()
-  runStore = getRunStore();
+  #isSharing = false;
+  #abortController: AbortController | null = null;
+  #runObserver: LightObserver | null = null;
+  #runner: HarnessRunner | null = null;
+  #runStartTime = 0;
+  #message = randomMessage[Math.floor(Math.random() * randomMessage.length)]!;
 
-  #kits: Kit[] = [];
-  #runObserver: InspectableRunObserver = createRunObserver({
-    dataStore: this.dataStore,
-    runStore: this.runStore,
-  });
-  #handlers: Map<string, inputCallback[]> = new Map();
-  #providers: GraphProvider[] = [];
-  #kitLoad = loadKits([
-    TemplateKit,
-    Core,
-    PaLMKit,
-    GeminiKit,
-    NodeNurseryWeb,
-    JSONKit,
-    AgentKit,
-  ]);
-
-  #loader = createLoader(this.#providers);
-  #load: Promise<{
-    title: string | undefined;
-    description: string | undefined;
-  }> | null = null;
-  #contentRef: Ref<HTMLDivElement> = createRef();
-  #outputs = new Map<string, InputValues>();
-  #secrets: Record<string, string> = {};
-
-  static override styles = css`
+  static styles = css`
     * {
       box-sizing: border-box;
     }
 
     :host {
-      margin: 0;
-      padding: 0;
+      display: block;
+      font: var(--bb-font-body-medium);
       height: 100%;
-      width: 100%;
-      color: var(--bb-neutral-0);
     }
 
     main {
       display: grid;
-      grid-template-rows: 100px auto;
-      height: 100%;
-      width: 100%;
-      overflow: auto;
+      grid-template-columns: none;
+      grid-template-rows: 48px auto;
+    }
+
+    #loading {
+      padding: var(--bb-grid-size-4);
+      display: flex;
+      align-items: center;
+    }
+
+    #loading::before {
+      content: "";
+      width: 16px;
+      height: 16px;
+      background: transparent url(/images/progress-ui.svg) 0 center / 16px 16px
+        no-repeat;
+      margin-right: var(--bb-grid-size);
+    }
+
+    #board-description {
+      display: none;
+      color: var(--bb-neutral-600);
     }
 
     header {
-      background: var(--bb-neutral-900);
-      padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
-      height: 100px;
-    }
-
-    header h1 {
-      margin: 0;
-      padding-bottom: var(--bb-grid-size-3);
-      font: 400 var(--bb-title-large) / var(--bb-title-line-height-large)
-        var(--bb-font-family);
       display: flex;
       align-items: center;
     }
 
-    header form {
-      position: relative;
-      max-width: 768px;
-      margin: 0 auto;
-    }
-
-    header input[type="text"] {
-      padding: var(--bb-grid-size-2) var(--bb-grid-size-12)
-        var(--bb-grid-size-2) var(--bb-grid-size-6);
-      border: none;
-      border-radius: 200px;
-      font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-        var(--bb-font-family);
-      width: 100%;
-      background: var(--bb-neutral-700);
-      color: var(--bb-neutral-0);
-    }
-
-    header input[type="text"]::placeholder {
-      color: var(--bb-neutral-400);
-    }
-
-    header input[type="submit"] {
+    #menu-toggle {
       width: 20px;
       height: 20px;
-      position: absolute;
-      top: var(--bb-grid-size-2);
-      right: var(--bb-grid-size-4);
+      background: transparent var(--bb-icon-menu-inverted) center center / 20px
+        20px no-repeat;
       border: none;
       font-size: 0;
-
-      background: var(--bb-icon-search-inverted) center center / 20px 20px
-        no-repeat;
-    }
-
-    #show-nav {
-      width: 20px;
-      height: 20px;
-      border: none;
-      font-size: 0;
-      background: transparent var(--bb-icon-menu) center center / 20px 20px
-        no-repeat;
       margin-right: var(--bb-grid-size-2);
-      cursor: pointer;
     }
 
-    section {
-      position: relative;
-      overflow: auto;
+    h1 {
+      font: var(--bb-font-title-small);
+      margin: 0;
+    }
+
+    p {
+      margin: 0 0 var(--bb-grid-size-2) 0;
+    }
+
+    footer {
+      position: fixed;
+      bottom: 0;
+      height: calc(var(--bb-grid-size-13) + var(--bb-grid-size-12));
+      display: grid;
+      grid-template-columns: none;
+      grid-template-rows: var(--bb-grid-size-13) var(--bb-grid-size-8);
+      background: var(--bb-neutral-0);
+      border-top: 1px solid var(--bb-neutral-300);
       width: 100%;
-      scrollbar-gutter: stable;
+      font: var(--bb-font-body-small);
+      align-items: center;
     }
 
-    #progress {
-      height: calc(
-        var(--bb-grid-size-5) + var(--bb-grid-size-4) + var(--bb-grid-size-9)
-      );
-      font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
-        var(--bb-font-family);
-      max-width: 768px;
-      margin: 0 auto;
-      padding-left: var(--bb-grid-size-10);
-      background: var(--bb-neutral-700);
-      position: sticky;
-      top: 0;
-      z-index: 1;
+    #links {
+      color: var(--bb-neutral-400);
+      grid-row: 2/3;
+      padding: 0 var(--bb-grid-size-2);
+    }
+
+    #links a {
+      color: var(--bb-neutral-500);
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    #controls {
+      position: relative;
       display: flex;
       align-items: center;
-      mask: linear-gradient(#ff00ff 90%, rgba(0, 0, 0, 0));
+      width: 100%;
+      justify-content: space-between;
+      background: var(--bb-neutral-0);
+      z-index: 1;
     }
 
-    #progress.start {
-      background: var(--bb-icon-smart-toy-inverted) var(--bb-grid-size-4) 50% /
-        20px 20px no-repeat;
+    #status {
+      max-width: calc(100vw - 160px);
+      flex: 1 1 auto;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 0 var(--bb-grid-size-2);
+      font: var(--bb-font-title-small);
+      color: var(--bb-neutral-700);
     }
 
-    #progress.active {
-      background: var(--bb-neutral-700) url(/images/progress.svg)
-        var(--bb-grid-size-4) 50% / 20px 20px no-repeat;
+    #status.pending {
+      padding: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size-8);
+      background: transparent url(/images/progress-ui.svg) var(--bb-grid-size-2)
+        center / 16px 16px no-repeat;
     }
 
-    #content {
-      max-width: 800px;
-      margin: 0 auto;
-      font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-        var(--bb-font-family);
-      padding: 0 var(--bb-grid-size-4) var(--bb-grid-size-12)
-        var(--bb-grid-size-4);
+    #status .messages-received {
+      color: var(--bb-neutral-500);
+      margin-left: var(--bb-grid-size-4);
     }
 
-    #content textarea,
-    #content input[type="text"],
-    #content input[type="password"],
-    #content select {
-      background: var(--bb-neutral-800);
-      font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
-        var(--bb-font-family);
+    #main-control {
+      height: 32px;
+      background: var(--bb-ui-500);
+      border-radius: 30px;
+      padding: var(--bb-grid-size) var(--bb-grid-size-5);
+      border: 1px solid var(--bb-ui-500);
       color: var(--bb-neutral-0);
-      white-space: pre-line;
-      resize: none;
-      margin: 0 0 var(--bb-grid-size-2) 0;
-      padding: var(--bb-grid-size-3);
-      border: 1px solid var(--bb-neutral-600);
-      border-radius: var(--bb-grid-size-2);
-      width: 100%;
-      outline: none;
-      max-height: 200px;
-      white-space: pre-line;
-      scrollbar-width: none;
+      flex: 0 0 auto;
+      margin: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size-3);
+      cursor: pointer;
+      transition: background-color 0.3s cubic-bezier(0, 0, 0.3, 1);
     }
 
-    #content textarea,
-    #content input[type="text"] {
-      field-sizing: content;
+    #main-control:hover,
+    #main-control:focus {
+      background: var(--bb-ui-600);
+      transition-duration: 0.15s;
     }
 
-    #content input[type="submit"] {
-      background: var(--bb-neutral-900);
-      border: none;
-      border-radius: var(--bb-grid-size-10);
+    #main-control.active {
+      background: var(--bb-neutral-0);
+      border: 1px solid var(--bb-ui-200);
+      color: var(--bb-ui-600);
+    }
+
+    #main-control.active:hover,
+    #main-control.active:focus {
+      background: var(--bb-ui-50);
+      transition-duration: 0.15s;
+    }
+
+    #board-info h1 {
       color: var(--bb-neutral-0);
-      padding: var(--bb-grid-size) var(--bb-grid-size-3);
-      font: normal var(--bb-label-small) / var(--bb-label-line-height-small)
-        var(--bb-font-family);
     }
 
-    #content img {
-      border-radius: var(--bb-grid-size-3);
-      width: 100%;
-    }
-
-    #content audio {
-      width: 100%;
-      display: block;
-      min-height: 54px;
-    }
-
-    #content .text .pre p:first-of-type {
-      margin-top: 0;
-    }
-
-    #content .text .post {
+    #board-info bb-app-nav {
       display: none;
     }
 
-    #content .text .post.visible {
-      display: block;
-      animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) forwards;
+    #board-info-container {
+      display: flex;
+      align-items: center;
+      padding: var(--bb-grid-size) var(--bb-grid-size-2);
+      background: var(--bb-ui-500);
     }
 
-    #content .text .read-more-less {
-      font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-        var(--bb-font-family);
-      padding: 0 var(--bb-grid-size-6);
-      cursor: pointer;
-      color: var(--bb-neutral-0);
-      border: none;
-      height: 20px;
-      background: var(--bb-icon-expand-inverted) 0 0 / 20px 20px no-repeat;
-    }
+    @media (min-width: 700px) {
+      main {
+        display: grid;
+        grid-template-columns: max(300px, 20vw) 1fr;
+        grid-template-rows: none;
+        column-gap: var(--bb-grid-size-5);
+      }
 
-    #content .text .read-more-less.visible {
-      background: var(--bb-icon-collapse-inverted) 0 0 / 20px 20px no-repeat;
-    }
+      #board-info-container {
+        background: var(--bb-neutral-0);
+        border-bottom: 1px solid var(--bb-neutral-300);
+      }
 
-    #content .entry {
-      opacity: 0;
-      animation: fadeIn 1.3s cubic-bezier(0, 0, 0.3, 1) 0.4s forwards;
-      display: grid;
-      grid-template-columns: 1fr;
-      column-gap: var(--bb-grid-size-6);
-      row-gap: var(--bb-grid-size-2);
-      padding-bottom: var(--bb-grid-size-10);
-    }
+      #board-info h1 {
+        color: var(--bb-ui-500);
+      }
 
-    #content .entry .rest > * {
-      margin-bottom: var(--bb-grid-size-4);
-    }
+      #menu-toggle {
+        background-image: var(--bb-icon-menu);
+      }
 
-    #status-update {
-      margin-left: var(--bb-grid-size-2);
-      color: var(--bb-neutral-400);
-    }
+      footer {
+        height: var(--bb-grid-size-13);
+        grid-template-columns: max(300px, 20vw) 1fr;
+        grid-template-rows: none;
+        column-gap: var(--bb-grid-size-5);
+      }
 
-    @media (min-width: 600px) {
-      #content .entry {
-        grid-template-columns: 1fr 1fr;
-        row-gap: var(--bb-grid-size-9);
+      #links {
+        grid-row: auto;
+        padding-left: var(--bb-grid-size-4);
+      }
+
+      #status {
+        max-width: calc(100vw - 180px - max(300px, 20vw));
+      }
+
+      h1 {
+        font: var(--bb-font-title-large);
+        margin: 0;
+      }
+
+      section {
+        display: block;
+      }
+
+      #activity {
+        position: relative;
+      }
+
+      #board-info {
+        position: sticky;
+        top: 0;
+        padding: 0;
+        background: var(--bb-neutral-0);
+      }
+
+      #board-info bb-app-nav {
+        display: block;
+      }
+
+      #board-info #menu-toggle {
+        display: none;
+      }
+
+      #board-info-container {
+        align-items: flex-start;
+        border-bottom: none;
+        padding: 0;
+      }
+
+      #board-description {
+        display: block;
+        margin-top: var(--bb-grid-size-2);
+        padding: 0 var(--bb-grid-size-4);
+      }
+
+      #board-info h1 {
+        padding: var(--bb-grid-size-5) var(--bb-grid-size-4) 0
+          var(--bb-grid-size-4);
       }
     }
 
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-
-      to {
-        opacity: 1;
+    @media (min-width: 1120px) {
+      #activity,
+      #controls {
+        width: 750px;
+        left: calc(50% - 250px - (max(300px, 20vw) / 2));
       }
     }
   `;
 
-  constructor() {
-    super();
-
-    this.#restoreSecrets();
-  }
-
-  #saveSecrets() {
-    if (!this.#secrets) {
+  // FORGIVE ME PAUL
+  #getSecretsAndResume() {
+    const keys = this.#runner?.secretKeys();
+    if (!keys) {
       return;
     }
-
-    globalThis.localStorage.setItem(
-      "secrets",
-      JSON.stringify(this.#secrets, null, 2)
+    const inputs = Object.fromEntries(
+      keys.map((key) => {
+        let secret = globalThis.localStorage.getItem(`SECRET_${key}`);
+        if (!secret) {
+          secret = prompt(`Please enter the secret for ${key}`);
+          if (!secret) {
+            this.#abortController?.abort();
+            throw new Error("Secret required, aborting run.");
+          }
+          globalThis.localStorage.setItem(`SECRET_${key}`, secret);
+        }
+        return [key, secret];
+      })
     );
+    this.#runner?.run(inputs);
   }
 
-  #restoreSecrets() {
-    const secrets = globalThis.localStorage.getItem("secrets");
-    if (!secrets) {
-      return;
-    }
-
-    try {
-      this.#secrets = JSON.parse(secrets);
-    } catch (err) {
-      console.warn(err);
-      globalThis.localStorage.delete("secrets");
-    }
-  }
-
-  override connectedCallback(): void {
+  connectedCallback(): void {
     super.connectedCallback();
 
-    const currentUrl = new URL(window.location.href);
-    const newPathname = currentUrl.pathname.replace(/\.app$/, ".json");
-    currentUrl.pathname = newPathname;
-    this.url = currentUrl.href;
+    this.url = window.location.pathname.replace(/app$/, "json");
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    this.stopRun();
   }
 
   protected willUpdate(
@@ -402,712 +392,296 @@ export class App extends LitElement {
       return;
     }
 
-    if (!this.url) {
-      return;
-    }
-
-    this.#load = this.#kitLoad.then(async (kits) => {
-      this.#kits = kits;
+    this.#descriptorLoad = new Promise(async (resolve) => {
       if (!this.url) {
-        return { title: "Error", description: "No URL" };
+        resolve(null);
+        return;
       }
 
       try {
         const response = await fetch(this.url);
-        await response.json();
+        const graph = (await response.json()) as GraphDescriptor;
+        document.title = `${`${graph.title} - ` ?? ""}Breadboard App View`;
+        resolve(graph);
       } catch (err) {
-        return { title: "Error", description: "Unable to load file" };
+        console.warn(err);
+        resolve(null);
       }
-
-      const board = await this.#getBoardInfo(this.url);
-      this.#runBoard(this.url);
-
-      return board;
     });
   }
 
-  #restored = false;
-  async restoreProvidersAndSettingsIfNeeded() {
-    if (this.#restored) {
+  stopRun() {
+    if (!this.#abortController) {
       return;
     }
 
-    this.#restored = true;
-    const jobs = this.#providers.map((provider) => provider.restore());
-    await Promise.all(jobs);
+    this.#abortController.abort();
+    this.#runner = null;
   }
 
-  async #getBoardInfo(url: string) {
-    const loader = createLoader([]);
-    const base = new URL(window.location.href);
-    const graph = await loader.load(url, { base });
-    if (!graph) {
-      // TODO: Better error handling, maybe a toast?
-      throw new Error(`Unable to load graph: ${url}`);
-    }
-    const runner = await BoardRunner.fromGraphDescriptor(graph);
-    const { title, description } = runner;
+  async startRun() {
+    this.stopRun();
 
-    if (title) {
-      window.document.title = title;
-    }
+    const [graph, kits] = await Promise.all([
+      this.#descriptorLoad,
+      this.#kitLoad,
+    ]);
 
-    return { title, description };
-  }
-
-  async #runBoard(url: string | null) {
-    if (!url) {
+    if (!graph || !kits || !this.url) {
       return;
     }
 
-    await this.restoreProvidersAndSettingsIfNeeded();
+    this.#abortController = new AbortController();
+
+    const key = getApiKey();
 
     const config: RunConfig = {
-      url,
-      kits: this.#kits,
-      diagnostics: true,
+      url: this.url,
+      kits,
+      runner: graph,
       loader: this.#loader,
-      store: this.dataStore,
+      signal: this.#abortController.signal,
+      diagnostics: "top",
       interactiveSecrets: true,
       inputs: {
         model: "gemini-1.5-flash-latest",
       },
     };
 
-    const base = new URL(window.location.href);
-    if (base.searchParams.has("proxy")) {
-      config.proxy = [
-        { location: "http", url: "/proxy", nodes: ["fetch", "secrets"] },
-      ];
-      config.interactiveSecrets = false;
+    if (key) {
+      config.remote = {
+        url: getRemoteURL(),
+        type: "http",
+        key: getApiKey(),
+      };
     }
 
-    this.status = STATUS.RUNNING;
-    this.#outputs.clear();
-    for await (const result of run(config)) {
-      await this.#runObserver?.observe(result);
+    this.#runner = createRunner(config);
+
+    if (!this.#runObserver) {
+      this.#runObserver = new LightObserver(this.#runner);
+    }
+
+    this.#runner.addEventListener("end", () => {
+      this.status = STATUS.STOPPED;
+    });
+
+    this.#runner.addEventListener("error", (evt) => {
       this.requestUpdate();
-
-      const answer = await this.#handleStateChange(result);
-
-      if (answer) {
-        await result.reply({ inputs: answer } as InputResolveRequest);
-      }
-    }
-    this.status = STATUS.STOPPED;
-  }
-
-  async #registerInputHandler(id: string): Promise<InputValues> {
-    const handlers = this.#handlers.get(id);
-    if (!handlers) {
-      return Promise.reject(`Unable to set up handler for input ${id}`);
-    }
-
-    return new Promise((resolve) => {
-      handlers.push((data: Record<string, unknown>) => {
-        resolve(data as InputValues);
-      });
+      this.status = STATUS.STOPPED;
     });
+
+    this.#runner.addEventListener("input", async (evt) => {
+      this.requestUpdate();
+    });
+
+    this.#runner.addEventListener("nodeend", (evt) => {
+      this.requestUpdate();
+    });
+
+    this.#runner.addEventListener("nodestart", (evt) => {
+      this.requestUpdate();
+    });
+
+    this.#runner.addEventListener("output", (evt) => {
+      this.requestUpdate();
+    });
+
+    this.#runner.addEventListener("pause", () => {
+      this.status = STATUS.PAUSED;
+    });
+
+    this.#runner.addEventListener("resume", () => {
+      this.status = STATUS.RUNNING;
+    });
+
+    this.#runner.addEventListener("secret", async (event) => {
+      this.#getSecretsAndResume();
+
+      this.requestUpdate();
+    });
+
+    this.#runner.addEventListener("start", () => {
+      this.status = STATUS.RUNNING;
+      this.#runStartTime = Date.now();
+    });
+
+    this.#runner.run();
   }
 
-  async #registerSecretsHandler(keys: string[]): Promise<InputValues> {
-    const values = await Promise.all(
-      keys.map((key) => {
-        if (this.#secrets && this.#secrets[key]) {
-          return Promise.resolve([key, this.#secrets[key]]);
-        }
-
-        return new Promise<[string, unknown]>((resolve) => {
-          const callback = ({ secret }: Record<string, unknown>) => {
-            this.#secrets = this.#secrets || {};
-            this.#secrets[key] = secret as string;
-
-            this.#saveSecrets();
-            resolve([key, secret]);
-          };
-          this.#handlers.set(key, [callback]);
-        });
-      })
-    );
-
-    return Object.fromEntries(values) as InputValues;
-  }
-
-  async #handleStateChange(
-    result: HarnessRunResult
-  ): Promise<void | InputValues> {
-    this.requestUpdate();
-
-    const { data, type } = result;
-    switch (type) {
-      case "nodestart": {
-        if (!this.#handlers.has(data.node.id)) {
-          this.#handlers.set(data.node.id, []);
-        }
-        return;
-      }
-
-      case "nodeend": {
-        this.#handlers.delete(data.node.id);
-        return;
-      }
-
-      case "input": {
-        return this.#registerInputHandler(data.node.id);
-      }
-
-      case "secret": {
-        return this.#registerSecretsHandler(data.keys);
-      }
-    }
-  }
-
-  #createInput(properties: Record<string, Schema>) {
-    return html`${Object.entries(properties).map(([key, property]) => {
-      const label = html`<label for="${key}">${property.title || key}</label>`;
-      let input;
-      if (isSelect(property)) {
-        // Select input.
-        const options = property.enum || [];
-        input = html`<div>
-          <select name="${key}" id="${key}">
-            ${options.map((option) => {
-              const isSelected = option === property.default;
-              return html`<option ?selected=${isSelected} value=${option}>
-                ${option}
-              </option>`;
-            })}
-          </select>
-        </div>`;
-      } else if (isBoolean(property)) {
-        // Checkbox / Boolean input.
-        const checked = property.default ?? false;
-        input = html`<input
-          name="${key}"
-          id="${key}"
-          type="checkbox"
-          ?checked=${checked}
-        />`;
-      } else {
-        // Text inputs: multi line and single line.
-        const examples = property.examples?.[0];
-        let value = examples ?? property.default ?? "";
-        value =
-          typeof value === "string" ? value : JSON.stringify(value, null, 2);
-        if (isMultiline(property)) {
-          // Multi line input.
-          input = html`<div class="multiline">
-            <textarea
-              name="${key}"
-              id="${key}"
-              placeholder="${property.description || ""}"
-              .value=${value}
-            ></textarea>
-          </div>`;
-        } else {
-          // Single line input.
-          input = html`<input
-            name="${key}"
-            id="${key}"
-            required="true"
-            type="${property.type === "secret" ? "password" : "text"}"
-            autocomplete="${property.type === "secret" ? "off" : "on"}"
-            placeholder="${property.description || ""}"
-            autofocus="true"
-            value="${value}"
-          />`;
-        }
-      }
-
-      return html`${label} ${input}
-        <input
-          name="${key}-data-type"
-          type="hidden"
-          .value=${property.type || "string"}
-        />`;
-    })}`;
-  }
-
-  #handleOutput(inputs: InputValues, id: string) {
-    return html`<div class="entry">
-      ${map(Object.values(inputs), (value) => {
-        if (Array.isArray(value)) {
-          value = value[0];
-        }
-
-        if (typeof value === "object" && value !== null && "parts" in value) {
-          const llmValue = value as LLMContent;
-
-          if (llmValue.parts.length === 0) {
-            return html`No data in response`;
-          }
-
-          const [first, ...rest] = llmValue.parts;
-          const partToTemplate = (part: LLMPart | undefined, idx: number) => {
-            if (!part) {
-              return nothing;
-            }
-
-            if (isText(part)) {
-              const lines = part.text.split("\n");
-              if (lines.length < SPLIT_TEXT_LINE_COUNT) {
-                return html`<div class="text">
-                  ${markdown(lines.join("\n"))}
-                </div>`;
-              } else {
-                const pre = lines.slice(0, SPLIT_TEXT_LINE_COUNT);
-                const post = lines.slice(SPLIT_TEXT_LINE_COUNT);
-                return html`<div class="text">
-                  <div class="pre">${markdown(pre.join("\n"))}</div>
-                  ${post.length > 0
-                    ? html`<button
-                        class="read-more-less"
-                        @click=${(evt: Event) => {
-                          if (!this.#contentRef.value) {
-                            return;
-                          }
-
-                          const post =
-                            this.#contentRef.value.querySelector<HTMLElement>(
-                              `[data-id="${id}"]`
-                            );
-                          if (!post) {
-                            return;
-                          }
-
-                          post.classList.toggle("visible");
-
-                          if (!(evt.target instanceof HTMLButtonElement)) {
-                            return;
-                          }
-
-                          evt.target.classList.toggle(
-                            "visible",
-                            post.classList.contains("visible")
-                          );
-                          evt.target.textContent =
-                            evt.target.classList.contains("visible")
-                              ? "Read less"
-                              : "Read more";
-                        }}
-                      >
-                        Read more
-                      </button>`
-                    : nothing}
-                  <div class="post" data-id=${id}>
-                    ${markdown(post.join("\n"))}
-                  </div>
-                </div>`;
-              }
-            } else if (isInlineData(part)) {
-              const key = idx;
-              let partDataURL: Promise<string> = Promise.resolve("No source");
-              if (
-                part.inlineData.data !== "" &&
-                !part.inlineData.mimeType.startsWith("text")
-              ) {
-                const dataURL = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-                partDataURL = fetch(dataURL)
-                  .then((response) => response.blob())
-                  .then((data) => {
-                    const url = URL.createObjectURL(data);
-                    return url;
-                  });
-              }
-
-              const tmpl = partDataURL.then((url: string) => {
-                if (part.inlineData.mimeType.startsWith("image")) {
-                  return cache(html`<img src="${url}" alt="LLM Image" />`);
-                }
-                if (part.inlineData.mimeType.startsWith("audio")) {
-                  return cache(html`<audio src="${url}" controls />`);
-                }
-                if (part.inlineData.mimeType.startsWith("video")) {
-                  return cache(html`<video src="${url}" controls />`);
-                }
-                if (part.inlineData.mimeType.startsWith("text")) {
-                  return cache(
-                    // prettier-ignore
-                    html`<div class="plain-text">${atob(part.inlineData.data)}</div>`
-                  );
-                }
-              });
-
-              return html`${until(tmpl)}`;
-            } else if (isStoredData(part)) {
-              if (part.storedData.mimeType.startsWith("image")) {
-                return html`<img src=${part.storedData.handle} />`;
-              } else if (part.storedData.mimeType.startsWith("audio")) {
-                return html`<audio
-                  controls
-                  src=${part.storedData.handle}
-                ></audio>`;
-              } else {
-                return html`Stored data of unknown type.`;
-              }
-            }
-
-            return html`Unknown part`;
-          };
-
-          return html` <div class="first">${partToTemplate(first, 0)}</div>
-            <div class="rest">${map(rest, partToTemplate)}</div>`;
-        }
-      })}
-    </div>`;
-  }
-
-  async #getRunLog(evt: Event) {
-    if (!(evt.target instanceof HTMLElement)) {
+  async #share() {
+    if (this.#isSharing) {
       return;
     }
 
-    if (!this.runs || this.runs.length === 0) {
+    const graph = await this.#descriptorLoad;
+    if (!graph) {
       return;
     }
 
-    const run = this.runs[0];
-    if (!run || !run.serialize) {
-      return;
-    }
-
-    if (evt.target.dataset && evt.target.dataset.url) {
-      URL.revokeObjectURL(evt.target.dataset.url);
-    }
-
-    const serializedRun = await run.serialize();
-    const data = JSON.stringify(serializedRun, null, 2);
-    const url = URL.createObjectURL(
-      new Blob([data], { type: "application/json" })
-    );
-
-    evt.target.dataset.url = url;
-
-    const fakeLink = document.createElement("a");
-    fakeLink.download = `run-${new Date().toISOString()}.json`;
-    fakeLink.href = url;
-    fakeLink.click();
-  }
-
-  async #attemptLoad(evt: DragEvent) {
-    if (
-      !evt.dataTransfer ||
-      !evt.dataTransfer.files ||
-      !evt.dataTransfer.files.length
-    ) {
-      return;
-    }
-
-    const isSerializedRun = (data: SerializedRun): data is SerializedRun => {
-      return "timeline" in data;
+    const opts: Partial<ShareData> = {
+      url: window.location.href,
     };
 
-    const fileDropped = evt.dataTransfer.files[0];
-    if (!fileDropped) {
-      return;
+    if (graph.title) {
+      opts.title = graph.title;
     }
 
-    this.status = STATUS.LOADING;
-    this.#outputs.clear();
-    requestAnimationFrame(() => {
-      fileDropped.text().then((data) => {
-        try {
-          const runData = JSON.parse(data) as SerializedRun;
-          if (!isSerializedRun(runData)) {
-            return;
-          }
+    if (graph.description) {
+      opts.text = graph.description;
+    }
 
-          evt.preventDefault();
+    await navigator.share(opts);
+    this.#isSharing = false;
+  }
 
-          this.#runObserver = createRunObserver({
-            dataStore: this.dataStore,
-            runStore: this.runStore,
-          });
-          this.#runObserver.load(runData).then(async (result) => {
-            this.status = STATUS.STOPPED;
+  #renderLoading() {
+    return html`<div id="loading">Loading...</div>`;
+  }
 
-            if (!result.success) {
-              return;
-            }
-
-            const run = result.run;
-            for await (const result of run.replay()) {
-              await this.#runObserver.observe(result);
-              this.requestUpdate();
-            }
-          });
-        } catch (err) {
-          console.warn(err);
+  render() {
+    const boardTitle = Promise.all([this.#descriptorLoad, this.#kitLoad]).then(
+      ([graph, kits]) => {
+        if (!graph || !kits) {
+          return html`Failed to load`;
         }
-      });
+
+        return html`${graph.title}`;
+      }
+    );
+
+    const boardDescription = Promise.all([
+      this.#descriptorLoad,
+      this.#kitLoad,
+    ]).then(([graph, kits]) => {
+      if (!graph || !kits) {
+        return html`Failed to load`;
+      }
+
+      return graph.description ? html`${graph.description}` : nothing;
     });
-  }
 
-  #raceMessage() {
-    return new Promise((resolve) => {
-      const message = Math.floor(Math.random() * messages.length);
-      setTimeout(
-        () =>
-          resolve(html`<span id="status-update">[${messages[message]}]</span>`),
-        1000
-      );
-    });
-  }
+    const log = this.#runObserver?.log() ?? [];
 
-  override render() {
-    if (!this.url) {
-      return html`Unable to load - is this board URL correct?`;
-    }
+    const status = () => {
+      const classes: Record<string, boolean> = { pending: false };
 
-    if (!this.#load) {
-      return nothing;
-    }
-
-    const handleForm = (evt: SubmitEvent) => {
-      evt.preventDefault();
-
-      if (!(evt.target instanceof HTMLFormElement)) {
-        return;
-      }
-
-      const formData = new FormData(evt.target);
-      const handlerId = formData.get("id") as string;
-      if (!handlerId) {
-        console.warn("Form received with no ID");
-        return;
-      }
-
-      let data: Record<string, unknown> = {};
-      if (formData.has("initial-input")) {
-        const initialInputValue = formData.get("initial-input-value") as string;
-        data = {
-          text: {
-            role: "user",
-            parts: [
-              {
-                text: initialInputValue,
-              },
-            ],
-          },
-        };
-      } else if (formData.has("secret")) {
-        const secret = formData.get("secret");
-        data = { secret };
-      } else {
-        formData.forEach((value, key) => {
-          if (key.endsWith("-data-type")) {
-            return;
+      let message = html`Press "Start Activity" to begin`;
+      if (log.length && this.status !== STATUS.STOPPED) {
+        const newest = log[log.length - 1];
+        if (newest && newest.type === "node") {
+          if (newest.descriptor.type === "input") {
+            classes.pending = true;
+            message = html`Requesting user input...`;
+          } else {
+            classes.pending = true;
+            const details =
+              newest.descriptor.metadata?.description ?? "Working...";
+            message = html`${details}
+              <span class="messages-received"
+                >${log.length} event${log.length === 1 ? "" : "s"}
+                received</span
+              >`;
           }
-
-          const typeInfo = formData.get(`${key}-data-type`);
-          if (
-            typeInfo &&
-            (typeInfo === "object" || typeInfo === "array") &&
-            typeof value === "string"
-          ) {
-            try {
-              value = JSON.parse(value);
-            } catch (err) {
-              console.warn(err);
-              return;
-            }
-          }
-
-          data[key] = value;
-        });
+        }
       }
 
-      const handlers = this.#handlers.get(handlerId) || [];
-      if (handlers.length === 0) {
-        console.warn(
-          `Received event for input(id="${handlerId}") but no handlers were found`
-        );
-      }
-
-      for (const handler of handlers) {
-        handler.call(null, data);
-      }
+      return html`<div id="status" class=${classMap(classes)}>${message}</div>`;
     };
 
-    let initialInputPlaceholder = "";
-    const loadData = this.#load.then(async ({ title, description }) => {
-      if (title === "Error") {
-        return html`${description}`;
-      }
+    const active =
+      this.status === STATUS.RUNNING || this.status === STATUS.PAUSED;
 
-      const currentRun = (await this.#runObserver.runs())[0];
-      const events = currentRun?.events || [];
-      const eventPosition = events.length - 1;
-      const topEvent = events[eventPosition];
-
-      const initialInputEnabled =
-        topEvent?.type === "node" &&
-        topEvent.node.descriptor.id === "input" &&
-        topEvent.node.descriptor.type === "input";
-
-      const isAtStart = eventPosition === 0;
-      const currentNodeDescription =
-        topEvent?.type === "node" &&
-        topEvent.node.description() !== topEvent.node.title()
-          ? topEvent.node.description()
-          : html`Working... ${until(this.#raceMessage())}`;
-
-      const progressMessage = isAtStart
-        ? description
-        : this.status === STATUS.RUNNING
-          ? currentNodeDescription
-          : null;
-
-      let initialInputValue = "";
-      if (initialInputEnabled) {
-        const configuration = topEvent.node.configuration();
-        const schema = configuration.schema as Schema;
-        const properties = schema.properties || {};
-        const propertyNames = Object.keys(properties);
-        if (propertyNames.length) {
-          const [firstPropertyName] = propertyNames;
-          if (firstPropertyName) {
-            const property = properties[firstPropertyName];
-            if (property) {
-              if (property.title) {
-                initialInputPlaceholder = property.title;
-              }
-
-              if (property.default) {
-                initialInputValue = property.default;
-              }
+    const activity = Promise.all([this.#descriptorLoad, this.#kitLoad]).then(
+      () => {
+        return html`<bb-activity-log-lite
+          .start=${this.#runStartTime}
+          .message=${this.#message}
+          .log=${log}
+          @bbinputrequested=${() => {
+            this.requestUpdate();
+          }}
+          @bbinputenter=${(event: InputEnterEvent) => {
+            let data = event.data as InputValues;
+            const runner = this.#runner;
+            if (!runner) {
+              throw new Error("Can't send input, no runner");
             }
-          }
-        }
-
-        if (initialInputPlaceholder === "") {
-          initialInputPlaceholder = "Please enter a value";
-        }
-      }
-
-      let content: HTMLTemplateResult | symbol = nothing;
-
-      if (this.status === STATUS.LOADING) {
-        content = nothing;
-      } else {
-        if (!initialInputEnabled) {
-          if (topEvent?.type === "secret") {
-            content = html`<form @submit=${handleForm}>
-              <input
-                type="hidden"
-                name="id"
-                .value=${topEvent.keys.join(",")}
-              />
-              <input
-                type="password"
-                name="secret"
-                placeholder=${topEvent.keys.join(",")}
-              />
-              <input type="submit" />
-            </form>`;
-          }
-
-          if (topEvent?.type === "node" && !topEvent.hidden) {
-            const nodeType = topEvent.node.descriptor.type;
-            if (nodeType === "output") {
-              this.#outputs.set(topEvent.id, topEvent.inputs);
-            } else if (nodeType === "input") {
-              const configuration = topEvent.inputs;
-              const schema = configuration.schema as Schema;
-              if (schema) {
-                const properties = schema.properties as Record<string, Schema>;
-                content = html`<form @submit=${handleForm}>
-                  <input
-                    type="hidden"
-                    name="id"
-                    .value=${topEvent.node.descriptor.id}
-                  />
-                  ${this.#createInput(properties)}
-                  <input type="submit" />
-                </form>`;
-              } else {
-                content = html`No schema`;
-              }
-            } else {
-              content = html`Error: unexpected node`;
+            if (runner.running()) {
+              throw new Error(
+                "The runner is already running, cannot send input"
+              );
             }
-          }
-
-          if (topEvent?.type === "error") {
-            content = html`Error: ${JSON.stringify(topEvent.error, null, 2)}`;
-          }
-        }
+            runner.run(data);
+          }}
+        ></bb-activity-log-lite>`;
       }
+    );
 
-      return html` <main
-        @pointerdown=${() => {
-          this.showNav = false;
-        }}
-        @dragover=${(evt: DragEvent) => {
-          evt.preventDefault();
-        }}
-        @drop=${(evt: DragEvent) => {
-          evt.preventDefault();
-          this.#attemptLoad(evt);
-        }}
-      >
-        <app-nav
-          .visible=${this.showNav}
-          @bbdownload=${this.#getRunLog}
-        ></app-nav>
-        <header>
-          <h1 id="board-title">
-            <button
-              id="show-nav"
-              @click=${() => {
-                this.showNav = true;
-              }}
-            >
-              Navigation Menu
-            </button>
-            ${title || "Untitled board"}
-          </h1>
-          <form @submit=${handleForm}>
-            <input type="hidden" name="initial-input" value="yes" />
-            <input type="hidden" name="id" value="input" />
-            <input
-              name="initial-input-value"
-              required
-              placeholder="${initialInputPlaceholder}"
-              autocomplete="off"
-              ?disabled=${!initialInputEnabled}
-              type="text"
-              .value=${initialInputValue}
-            />
-            <input type="submit" />
-          </form>
-        </header>
-        <section ?inert=${this.status === STATUS.LOADING}>
-          <div
-            id="progress"
-            class=${classMap({
-              start: isAtStart,
-              active: !isAtStart && this.status !== STATUS.STOPPED,
-            })}
-          >
-            ${this.status === STATUS.RUNNING
-              ? progressMessage
-              : this.status === STATUS.LOADING
-                ? html`Loading... Please wait...`
-                : null}
-          </div>
-          <div id="content" ${ref(this.#contentRef)}>
-            ${content}
-
-            <!-- Outputs -->
-            ${map(this.#outputs, ([id, outputs]) => {
-              return this.#handleOutput(outputs, id);
-            })}
+    return html` <main>
+        <bb-app-nav
+          .popout=${true}
+          @bbdismissmenu=${() => {
+            this.showMenu = false;
+          }}
+          @bbshare=${this.#share}
+          ?visible=${this.showMenu}
+        ></bb-app-nav>
+        <section id="board-info-container">
+          <div id="board-info">
+            <header>
+              <button
+                id="menu-toggle"
+                @click=${() => {
+                  this.showMenu = true;
+                }}
+              >
+                ${this.showMenu ? "Hide Menu" : "Show Menu"}
+              </button>
+              <h1>${until(boardTitle, this.#renderLoading())}</h1>
+            </header>
+            <p id="board-description">${until(boardDescription)}</p>
+            <bb-app-nav .popout=${false} @bbshare=${this.#share}></bb-app-nav>
           </div>
         </section>
-      </main>`;
-    });
+        <section id="activity-container" ?inert=${this.showMenu}>
+          <div id="activity">${until(activity)}</div>
+        </section>
+      </main>
+      <footer>
+        <div id="links">
+          Created with
+          <a href="https://breadboard-ai.github.io/breadboard/">Breadboard</a>
+          by <a href="https://labs.google/">Google labs</a> - v${this.version}
+        </div>
+        <div id="controls">
+          ${status()}
+          <button
+            id="main-control"
+            class=${classMap({ active })}
+            @click=${async () => {
+              if (
+                this.status === STATUS.RUNNING ||
+                this.status === STATUS.PAUSED
+              ) {
+                this.stopRun();
+                return;
+              }
 
-    return html`${until(loadData)}`;
+              // Set the component running, then request an update so that
+              // the button updates. When the component is finished, render
+              // the button again.
+              const running = this.startRun();
+              requestAnimationFrame(() => {
+                this.requestUpdate();
+              });
+              await running;
+              this.requestUpdate();
+            }}
+          >
+            ${active ? "Stop Activity" : "Start Activity"}
+          </button>
+        </div>
+      </footer>`;
   }
 }

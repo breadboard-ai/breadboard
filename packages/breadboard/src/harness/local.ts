@@ -5,15 +5,16 @@
  */
 
 import { createDefaultDataStore } from "../data/index.js";
-import { Board, asyncGen } from "../index.js";
+import { asyncGen, runGraph } from "../index.js";
 import { createLoader } from "../loader/index.js";
+import { LastNode } from "../remote/types.js";
 import type { RunStackEntry } from "../run/types.js";
 import { saveRunnerState } from "../serialization.js";
 import { timestamp } from "../timestamp.js";
 import {
   BreadboardRunResult,
-  BreadboardRunner,
   ErrorObject,
+  GraphDescriptor,
   Kit,
   ProbeMessage,
 } from "../types.js";
@@ -85,10 +86,10 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
   throw new Error(`Unknown result type "${type}".`);
 };
 
-const endResult = () => {
+const endResult = (last: LastNode | undefined) => {
   return {
     type: "end",
-    data: { timestamp: timestamp() },
+    data: { timestamp: timestamp(), last },
     reply: async () => {
       // Do nothing
     },
@@ -105,14 +106,39 @@ const errorResult = (error: string | ErrorObject) => {
   } as HarnessRunResult;
 };
 
-const load = async (config: RunConfig): Promise<BreadboardRunner> => {
+const maybeSaveProbe = (
+  result: ProbeMessage,
+  last?: LastNode
+): LastNode | undefined => {
+  const { type, data } = result;
+  if (type === "skip") {
+    return {
+      node: data.node,
+      missing: data.missingInputs,
+    };
+  }
+  return last;
+};
+
+const maybeSaveResult = (result: BreadboardRunResult, last?: LastNode) => {
+  const { type, node } = result;
+  if (type === "output" || type === "input") {
+    return {
+      node,
+      missing: [],
+    };
+  }
+  return last;
+};
+
+const load = async (config: RunConfig): Promise<GraphDescriptor> => {
   const base = baseURL(config);
   const loader = config.loader || createLoader();
   const graph = await loader.load(config.url, { base });
   if (!graph) {
     throw new Error(`Unable to load graph from "${config.url}"`);
   }
-  return Board.fromGraphDescriptor(graph);
+  return graph;
 };
 
 export async function* runLocally(config: RunConfig, kits: Kit[]) {
@@ -120,16 +146,19 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
     const runner = config.runner || (await load(config));
     const loader = config.loader || createLoader();
     const store = config.store || createDefaultDataStore();
-    const { base, signal, inputs, state } = config;
+    const { base, signal, inputs, state, start } = config;
 
     try {
+      let last: LastNode | undefined;
+
       const probe = config.diagnostics
         ? new Diagnostics(async (message) => {
+            last = maybeSaveProbe(message, last);
             await next(fromProbe(message));
           })
         : undefined;
 
-      for await (const data of runner.run({
+      for await (const data of runGraph(runner, {
         probe,
         kits,
         loader,
@@ -138,10 +167,12 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
         signal,
         inputs,
         state,
+        start,
       })) {
+        last = maybeSaveResult(data, last);
         await next(fromRunnerResult(data));
       }
-      await next(endResult());
+      await next(endResult(last));
     } catch (e) {
       const error = extractError(e);
       console.error("Local Run error:", error);

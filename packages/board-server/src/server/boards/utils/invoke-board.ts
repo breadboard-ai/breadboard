@@ -23,6 +23,8 @@ export const invokeBoard = async ({
   if (!store) {
     return;
   }
+  // TODO: Figure out if this is the right thing to do here.
+  store.createGroup("run-board");
 
   const runner = run({
     url,

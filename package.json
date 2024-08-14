@@ -28,6 +28,7 @@
         "./packages/agent-kit:build",
         "./packages/breadboard:build",
         "./packages/breadboard-cli:build",
+        "./packages/shared-ui:build",
         "./packages/visual-editor:build",
         "./packages/build:build",
         "./packages/connection-server:build",
@@ -154,11 +155,11 @@
     "eslint-plugin-expect-type": "^0.4.0",
     "npm-ci": "^0.0.2",
     "rimraf": "^6.0.1",
-    "rollup": "^4.19.1",
+    "rollup": "^4.20.0",
     "rollup-plugin-dts": "^6.1.1",
     "syncpack": "^12.4.0",
     "typescript": "^5.5.4",
-    "wireit": "^0.14.5"
+    "wireit": "^0.14.7"
   },
   "workspaces": [
     "./core/*",
@@ -166,7 +167,7 @@
     "./packages/node-proxy-server/functions"
   ],
   "optionalDependencies": {
-    "@rollup/rollup-darwin-arm64": "^4.19.1",
+    "@rollup/rollup-darwin-arm64": "^4.20.0",
     "@rollup/rollup-linux-x64-gnu": "^4.19.2"
   },
   "dependencies": {

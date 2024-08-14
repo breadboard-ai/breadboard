@@ -61,6 +61,7 @@ export interface SerializableBoard {
           | InputWithDefault<JsonSerializable>
         >
       >;
+  id?: string;
   title?: string;
   description?: string;
   version?: string;

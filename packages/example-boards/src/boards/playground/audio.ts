@@ -4,19 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { annotate, board, input, object, output } from "@breadboard-ai/build";
+import { annotate, array, board, input, object, output } from "@breadboard-ai/build";
 import { geminiText } from "@google-labs/gemini-kit";
 
 const audio = input({
   title: "Audio",
-  type: annotate(object({}), {
-    behavior: ["llm-content"],
-  })
+  type: array(
+    annotate(object({}), {
+      behavior: ["llm-content"],
+    })
+  )
 });
 
 const llmResponse = geminiText({
   text: "unused",
-  context: audio,
+  context: audio as any,
   model: "gemini-1.5-pro-latest",
   systemInstruction: `Describe what you hear in the audio. Please respond in markdown`,
 });

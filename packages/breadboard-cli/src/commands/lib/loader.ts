@@ -1,5 +1,5 @@
 import { SerializableBoard, serialize } from "@breadboard-ai/build";
-import { Board, BoardRunner, GraphDescriptor } from "@google-labs/breadboard";
+import { GraphDescriptor } from "@google-labs/breadboard";
 import { pathToFileURL } from "url";
 
 export type Options = {
@@ -30,19 +30,13 @@ export abstract class Loader {
 
     if (boardLike(board)) {
       // A graph descriptor has been exported.. Possibly a lambda.
-      board = await Board.fromGraphDescriptor(board);
-      board.url = pathToFileURL(file); // So that the base url is correct for subsequent invokes
+      board.url = pathToFileURL(file).href; // So that the base url is correct for subsequent invokes
     }
-    if (
-      board instanceof Board == false &&
-      board instanceof BoardRunner == false
-    )
-      throw new Error(
-        `Board ${file} does not have a default export of type Board, Lambda or something that looks like a board.`
-      );
-
     return board;
   }
 
-  abstract load(filePath: string, options: Options): Promise<BoardRunner>;
+  abstract load(
+    filePath: string,
+    options: Options
+  ): Promise<GraphDescriptor | null>;
 }

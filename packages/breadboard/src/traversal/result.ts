@@ -18,6 +18,7 @@ export class MachineResult implements TraversalResult {
   descriptor: NodeDescriptor;
   inputs: InputValues;
   missingInputs: string[];
+  current: Edge;
   opportunities: Edge[];
   newOpportunities: Edge[];
   state: QueuedNodeValuesState;
@@ -28,6 +29,7 @@ export class MachineResult implements TraversalResult {
     descriptor: NodeDescriptor,
     inputs: InputValues,
     missingInputs: string[],
+    currentOpportunity: Edge,
     opportunities: Edge[],
     newOpportunities: Edge[],
     state: QueuedNodeValuesState,
@@ -36,6 +38,7 @@ export class MachineResult implements TraversalResult {
     this.descriptor = descriptor;
     this.inputs = inputs;
     this.missingInputs = missingInputs;
+    this.current = currentOpportunity;
     this.opportunities = opportunities;
     this.newOpportunities = newOpportunities;
     this.state = state;
@@ -58,6 +61,7 @@ export class MachineResult implements TraversalResult {
       o.descriptor,
       o.inputs,
       o.missingInputs,
+      o.current,
       o.opportunities,
       o.newOpportunities,
       edgeState,

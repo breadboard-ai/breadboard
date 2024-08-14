@@ -51,5 +51,8 @@ export default defineConfig((_) => {
         "pyodide",
       ],
     },
+    resolve: {
+      dedupe: ["lit"],
+    },
   };
 });

@@ -20,7 +20,7 @@ export class RunStateManager implements ManagedRunState {
 
   constructor(resumeFrom: ReanimationState, inputs?: InputValues) {
     this.#resumeFrom = resumeFrom;
-    this.#lifecycle = new LifecycleManager([]);
+    this.#lifecycle = new LifecycleManager(resumeFrom?.visits);
     this.#inputs = inputs;
   }
 

@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.24.0
+
+### Minor Changes
+
+- 8c694ed: Support sequences of nested graphs (like what `reduce` does).
+- bbf2c30: Plumb interruptible run to board server.
+- 14df6a8: Retry with credentials when board fetch fails.
+- 2aabb7a: Introduce the concept of `partialOutputs` to `TraversalState`, to convey outputs produced while processing bubbled inputs.
+- fb72771: Introduce run reanimation and `interruptibleRunGraph`.
+- 9b22cab: Make sure that reanimator correctly adjusts invocationId when resuming.
+- 00cc2c5: Remove `lambda`, introduce standalone `invokeGraph` and `runGraph` functions, and other plumbing refactoring.
+- c04cff0: Bring back synchronous `TraversalResult.outputs`.
+- 3f8cdd1: Introduce run store
+- 3a5ced1: Refactor `map` to run serially when `RunStateManager` is present.
+
+### Patch Changes
+
+- 1dc645a: Remove `validator` and `slot` bits from BoardRunner and allow bubbled inputs to abort gracefully.
+- 62f8d5b: Fix replay of saved runs
+
 ## 0.23.0
 
 ### Minor Changes
