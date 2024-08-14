@@ -144,12 +144,14 @@ export class ActivityLogLite extends LitElement {
     }
 
     .edge.empty {
-      min-height: var(--bb-grid-size-16);
+      height: 0;
       display: flex;
       align-items: center;
       color: var(--bb-neutral-600);
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
+      padding-top: var(--bb-grid-size-2);
+      padding-bottom: var(--bb-grid-size-2);
     }
 
     .pending-input::before,
@@ -197,8 +199,11 @@ export class ActivityLogLite extends LitElement {
     }
 
     .edge.empty::after {
-      background: var(--bb-neutral-0) var(--bb-icon-info) center center / 20px
-        20px no-repeat;
+      display: none;
+    }
+
+    .edge.empty.newest::before {
+      display: none;
     }
 
     .edge bb-llm-output,
@@ -650,9 +655,7 @@ export class ActivityLogLite extends LitElement {
               newest,
               pending,
             })}
-          >
-            No additional information
-          </section>`;
+          ></section>`;
         }
 
         case "node": {
