@@ -8,6 +8,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { InputEnterEvent, SecretsEnterEvent } from "./events/events.js";
 import {
+  createDefaultDataStore,
   createLoader,
   type GraphDescriptor,
   type InputValues,
@@ -85,6 +86,7 @@ export class AppView extends LitElement {
 
   #statusMessageTime: string | null = null;
   #loader = createLoader([]);
+  #dataStore = createDefaultDataStore();
   #descriptorLoad: Promise<GraphDescriptor | null> = Promise.resolve(null);
   #kitLoad = loadKits([TemplateKit, Core, GeminiKit, JSONKit, AgentKit]);
 
@@ -432,6 +434,7 @@ export class AppView extends LitElement {
       loader: this.#loader,
       signal: this.#abortController.signal,
       diagnostics: "top",
+      store: this.#dataStore,
       interactiveSecrets: true,
       inputs: {
         model: "gemini-1.5-flash-latest",
@@ -452,6 +455,9 @@ export class AppView extends LitElement {
       this.#runner,
       this.#abortController.signal
     );
+
+    this.#dataStore.releaseAll();
+    this.#dataStore.createGroup("run");
 
     this.#runner.addEventListener("end", () => {
       this.stopRun();
