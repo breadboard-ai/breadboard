@@ -371,7 +371,6 @@ describe("Board Server Runs Boards", () => {
         {
           expected: [
             { type: "graphstart", path: [] },
-            { type: "edge", from: undefined, to: [1] },
             { type: "nodestart", path: [1] },
             { type: "input" },
           ],
@@ -380,7 +379,6 @@ describe("Board Server Runs Boards", () => {
           inputs: { name: "Bob" },
           expected: [
             { type: "nodeend", path: [1] },
-            { type: "edge", from: [1], to: [2] },
             { type: "nodestart", path: [2] },
             { type: "input" },
           ],
@@ -389,10 +387,8 @@ describe("Board Server Runs Boards", () => {
           inputs: { location: "New York" },
           expected: [
             { type: "nodeend", path: [2] },
-            { type: "edge", from: [2], to: [3] },
             { type: "nodestart", path: [3] },
             { type: "nodeend", path: [3] },
-            { type: "edge", from: [3], to: [4] },
             { type: "nodestart", path: [4] },
             {
               type: "output",

@@ -122,8 +122,8 @@ export class LocalRunner
           } else {
             // When there are no inputs to consume, pause the run
             // and wait for the next input.
-            this.dispatchEvent(new InputEvent(false, data));
             this.#pendingResult = result.value;
+            this.dispatchEvent(new InputEvent(false, data));
             this.dispatchEvent(
               new PauseEvent(false, {
                 timestamp: timestamp(),
@@ -179,8 +179,8 @@ export class LocalRunner
           } else {
             // When there are no inputs to consume, pause the run
             // and wait for the next input.
-            this.dispatchEvent(new SecretEvent(false, data));
             this.#pendingResult = result.value;
+            this.dispatchEvent(new SecretEvent(false, data));
             this.dispatchEvent(
               new PauseEvent(false, {
                 timestamp: timestamp(),

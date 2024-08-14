@@ -7,20 +7,9 @@ import {
   isLLMContent,
   isLLMContentArray,
   type ErrorObject,
-  type InspectableRun,
-  type InspectableRunEvent,
-  type InspectableRunNodeEvent,
-  type InspectableRunSecretEvent,
   type Schema,
 } from "@google-labs/breadboard";
-import {
-  LitElement,
-  html,
-  css,
-  nothing,
-  type HTMLTemplateResult,
-  type PropertyValues,
-} from "lit";
+import { LitElement, html, css, nothing, type HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { until } from "lit/directives/until.js";
@@ -35,11 +24,14 @@ import {
   isImageURL,
   isLLMContentArrayBehavior,
   isLLMContentBehavior,
-} from "../../utils/types.js";
+} from "../../utils/content-schema.js";
 
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { repeat } from "lit/directives/repeat.js";
-import { guard } from "lit/directives/guard.js";
+import type {
+  EdgeLogEntry,
+  LogEntry,
+  NodeLogEntry,
+} from "../../utils/types.js";
 
 @customElement("bb-activity-log-lite")
 export class ActivityLogLite extends LitElement {
@@ -50,7 +42,7 @@ export class ActivityLogLite extends LitElement {
   message: UserMessage | null = null;
 
   @property()
-  events: InspectableRunEvent[] = [];
+  log: LogEntry[] = [];
 
   static styles = css`
     * {
@@ -119,16 +111,11 @@ export class ActivityLogLite extends LitElement {
         24px no-repeat;
     }
 
-    #expand-all {
-      background: transparent var(--bb-icon-expand-all-48px) right center / 24px
-        24px no-repeat;
-    }
-
     #actions button:last-of-type {
       margin-right: var(--bb-grid-size);
     }
 
-    #no-events {
+    #no-entries {
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -137,66 +124,76 @@ export class ActivityLogLite extends LitElement {
       color: var(--bb-neutral-400);
     }
 
+    .pending-input,
+    .edge {
+      padding: 24px 8px 24px 64px;
+      position: relative;
+    }
+
+    .pending-input::before,
+    .edge::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 40px;
+      height: 100%;
+      border-left: 1px solid var(--bb-neutral-300);
+    }
+
+    .pending-input::after,
+    .edge::after {
+      content: "";
+      position: absolute;
+      top: calc(50% - 14px);
+      left: 26px;
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--bb-neutral-300);
+
+      border-radius: 50%;
+    }
+
+    .pending-input::after {
+      background: var(--bb-neutral-0) var(--bb-icon-input) center center / 20px
+        20px no-repeat;
+    }
+
+    .edge::after {
+      background: var(--bb-neutral-0) var(--bb-icon-output) center center / 20px
+        20px no-repeat;
+    }
+
+    .edge bb-llm-output,
+    .edge bb-llm-output-array {
+      margin-bottom: 0;
+    }
+
+    .pending-input:last-of-type::before,
+    .edge:last-of-type::before {
+      height: 50%;
+    }
+
     .entry {
       border: 1px solid var(--bb-neutral-200);
-      border-radius: var(--bb-grid-size);
-      margin-bottom: var(--bb-grid-size);
-      padding: var(--bb-grid-size-3);
+      border-radius: var(--bb-grid-size-10);
+      padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+      width: 50%;
     }
 
     .entry.hidden {
       display: none;
     }
 
-    .entry details summary::after {
-      content: "";
-      width: 16px;
-      height: 16px;
-      background: transparent var(--bb-icon-expand) center center / 16px 16px
-        no-repeat;
-    }
-
-    .entry details[open] summary::after {
-      background: transparent var(--bb-icon-collapse) center center / 16px 16px
-        no-repeat;
-    }
-
-    .entry.pending details summary::after {
-      background: transparent url(/images/progress-ui.svg) center center / 16px
-        16px no-repeat;
-    }
-
-    .entry summary::-webkit-details-marker {
-      display: none;
-    }
-
-    .entry summary {
+    .entry {
       display: flex;
       align-items: flex-start;
       list-style: none;
       font: var(--bb-font-title-small);
       color: var(--bb-neutral-600);
-      cursor: pointer;
       user-select: none;
-      transition: color 0.3s cubic-bezier(0, 0, 0.3, 1);
     }
 
-    .entry summary .date-time {
-      font: var(--bb-font-body-x-small);
-      color: var(--bb-neutral-600);
-    }
-
-    .entry summary:hover,
-    .entry summary:focus {
-      color: var(--bb-neutral-800);
-      transition-duration: 0.1s;
-    }
-
-    .entry summary .title-date-time {
-      flex: 1;
-    }
-
-    .entry summary::before {
+    .entry::before {
       content: "";
       width: 20px;
       height: 20px;
@@ -206,80 +203,57 @@ export class ActivityLogLite extends LitElement {
       margin-right: var(--bb-grid-size-2);
     }
 
-    .entry.input summary::before {
+    .entry.input::before {
       background: var(--bb-icon-input) center center / 20px 20px no-repeat;
     }
 
-    .entry.output summary::before {
+    .entry.output::before {
       background: var(--bb-icon-output) center center / 20px 20px no-repeat;
     }
 
-    .entry.secret summary::before {
+    .entry.secret::before {
       background: var(--bb-icon-password) center center / 20px 20px no-repeat;
     }
 
-    .entry.specialist summary {
+    .entry.specialist {
       color: var(--bb-ui-500);
     }
 
-    .entry.specialist summary:hover,
-    .entry.specialist summary:focus {
-      color: var(--bb-ui-700);
-    }
-
-    .entry.specialist summary::before {
+    .entry.specialist::before {
       background: var(--bb-icon-smart-toy) center center / 20px 20px no-repeat;
     }
 
-    .entry.human summary {
+    .entry.human,
+    .entry.user {
       color: var(--bb-human-500);
     }
 
-    .entry.human summary:hover,
-    .entry.human summary:focus {
-      color: var(--bb-human-700);
-    }
-
-    .entry.human summary::before {
+    .entry.human::before,
+    .entry.user::before {
       background: var(--bb-icon-human) center center / 20px 20px no-repeat;
     }
 
-    .entry.looper summary {
+    .entry.looper {
       color: var(--bb-looper-500);
     }
 
-    .entry.looper summary:hover,
-    .entry.looper summary:focus {
-      color: var(--bb-looper-700);
-    }
-
-    .entry.looper summary::before {
+    .entry.looper::before {
       background: var(--bb-icon-lightbulb) center center / 20px 20px no-repeat;
     }
 
-    .entry.joiner summary {
+    .entry.joiner {
       color: var(--bb-looper-500);
     }
 
-    .entry.joiner summary:hover,
-    .entry.joiner summary:focus {
-      color: var(--bb-looper-700);
-    }
-
-    .entry.joiner summary::before {
+    .entry.joiner::before {
       background: var(--bb-icon-merge-type) center center / 20px 20px no-repeat;
     }
 
-    .entry.runjavascript summary {
+    .entry.runjavascript {
       color: var(--bb-nodes-700);
     }
 
-    .entry.runjavascript summary:hover,
-    .entry.runjavascript summary:focus {
-      color: var(--bb-nodes-800);
-    }
-
-    .entry.runjavascript summary::before {
+    .entry.runjavascript::before {
       background: var(--bb-nodes-400) var(--bb-icon-javascript) center center /
         20px 20px no-repeat;
     }
@@ -339,123 +313,8 @@ export class ActivityLogLite extends LitElement {
   #userInputRef: Ref<BreadboardUI.Elements.UserInput> = createRef();
   #activityRef: Ref<HTMLDivElement> = createRef();
 
-  #getSecretIfAvailable(key: string) {
-    return globalThis.localStorage.getItem(key);
-  }
-
-  async #renderSecretInput(event: InspectableRunSecretEvent) {
-    const userInputs: UserInputConfiguration[] = event.keys.reduce(
-      (prev, key) => {
-        const schema: Schema = {
-          properties: {
-            secret: {
-              title: key,
-              description: `Enter ${key}`,
-              type: "string",
-            },
-          },
-        };
-
-        const savedSecret = this.#getSecretIfAvailable(key);
-
-        let value = undefined;
-        if (savedSecret) {
-          value = savedSecret;
-        }
-
-        prev.push({
-          name: key,
-          title: schema.title ?? key,
-          secret: false,
-          schema,
-          configured: false,
-          required: true,
-          value,
-        });
-
-        return prev;
-      },
-      [] as UserInputConfiguration[]
-    );
-
-    // Potentially do the autosubmit.
-    if (userInputs.every((secret) => secret.value !== undefined)) {
-      for (const input of userInputs) {
-        if (typeof input.value !== "string") {
-          console.warn(
-            `Expected secret as string, instead received ${typeof input.value}`
-          );
-          continue;
-        }
-
-        // Dispatch an event for each secret received.
-        this.dispatchEvent(
-          new InputEnterEvent(
-            input.name,
-            { secret: input.value },
-            /* allowSavingIfSecret */ true
-          )
-        );
-      }
-
-      // If we have chosen to autosubmit do not render the control.
-      return html``;
-    }
-
-    const continueRun = () => {
-      if (!this.#userInputRef.value) {
-        return;
-      }
-
-      const outputs = this.#userInputRef.value.processData(true);
-      if (!outputs) {
-        return;
-      }
-
-      for (const [key, value] of Object.entries(outputs)) {
-        if (typeof value !== "string") {
-          console.warn(
-            `Expected secret as string, instead received ${typeof value}`
-          );
-          continue;
-        }
-
-        // Dispatch an event for each secret received.
-        this.dispatchEvent(
-          new InputEnterEvent(
-            key,
-            { secret: value },
-            /* allowSavingIfSecret */ true
-          )
-        );
-      }
-    };
-
-    return html`<section>
-      <bb-user-input
-        .showTypes=${false}
-        .inputs=${userInputs}
-        ${ref(this.#userInputRef)}
-        @keydown=${(evt: KeyboardEvent) => {
-          const isMac = navigator.platform.indexOf("Mac") === 0;
-          const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
-
-          if (!(evt.key === "Enter" && isCtrlCommand)) {
-            return;
-          }
-
-          continueRun();
-        }}
-      ></bb-user-input>
-
-      <button class="continue-button" @click=${() => continueRun()}>
-        Continue
-      </button>
-    </section>`;
-  }
-
-  async #renderPendingInput(event: InspectableRunNodeEvent) {
-    const schema = event.inputs.schema as Schema;
+  async #renderPendingInput(event: EdgeLogEntry) {
+    const schema = event.schema as Schema;
     if (!schema) {
       return html`Unable to render`;
     }
@@ -513,18 +372,15 @@ export class ActivityLogLite extends LitElement {
       }
 
       this.dispatchEvent(
-        new InputEnterEvent(
-          event.node.descriptor.id,
-          outputs,
-          /* allowSavingIfSecret */ true
-        )
+        new InputEnterEvent(event.id!, outputs, /* allowSavingIfSecret */ true)
       );
     };
 
     return html`<bb-user-input
-        id="${event.node.descriptor.id}"
+        id="${event.id}"
         .inputs=${userInputs}
         .inlineControls=${true}
+        .llmInputShowEntrySelector=${false}
         ${ref(this.#userInputRef)}
         @keydown=${(evt: KeyboardEvent) => {
           const isMac = navigator.platform.indexOf("Mac") === 0;
@@ -542,19 +398,18 @@ export class ActivityLogLite extends LitElement {
       </button>`;
   }
 
-  async #renderCompletedInputOrOutput(event: InspectableRunNodeEvent) {
-    const { node, inputs, outputs } = event;
-    const items = event.node.descriptor.type === "input" ? outputs : inputs;
+  async #renderCompletedInputOrOutput(event: EdgeLogEntry) {
+    const { value, schema } = event;
+    const type = event.id ? "input" : "output";
 
-    if (!items) {
+    if (!value) {
       return html`Unable to render item`;
     }
 
-    const schema = event.inputs.schema as Schema | undefined;
     const properties = schema?.properties ?? {};
 
     return html`<dl class="node-output">
-      ${Object.entries(items).map(([name, nodeValue]) => {
+      ${Object.entries(value).map(([name, nodeValue]) => {
         let value: HTMLTemplateResult | symbol = nothing;
         if (typeof nodeValue === "object") {
           if (isLLMContentArray(nodeValue)) {
@@ -584,7 +439,7 @@ export class ActivityLogLite extends LitElement {
           } else if (isImageURL(nodeValue)) {
             value = html`<img src=${nodeValue.image_url} />`;
           } else {
-            value = nothing;
+            value = html`<bb-json-tree .json=${nodeValue}></bb-json-tree>`;
           }
         } else {
           let renderableValue: HTMLTemplateResult | symbol = nothing;
@@ -608,7 +463,7 @@ export class ActivityLogLite extends LitElement {
             class=${classMap({
               markdown: format === 'markdown',
               value: true,
-              [node.descriptor.type]: true,
+              [type]: true,
             })}
           >${renderableValue}</div>`;
         }
@@ -618,204 +473,90 @@ export class ActivityLogLite extends LitElement {
     </dl>`;
   }
 
-  #renderEventRunInfo(
-    runs: InspectableRun[],
-    bubbledInputAndOutputIds: string[]
-  ): { found: boolean; tmpl: HTMLTemplateResult } {
-    const descender = (
-      runs: InspectableRun[],
-      bubbled: string,
-      target: InspectableRunNodeEvent[]
-    ) => {
-      for (const run of runs) {
-        for (const event of run.events) {
-          if (event.type !== "node") {
-            continue;
+  #renderLog(entries: LogEntry[]) {
+    return html`${map(entries, (entry) => {
+      switch (entry.type) {
+        case "edge": {
+          if (entry.id) {
+            // The "input" edge will have an id
+            // TODO: Maybe we should just have different types of edges?
+            if (entry.end !== null) {
+              return html`<section class="edge">
+                ${until(this.#renderCompletedInputOrOutput(entry))}
+              </section>`;
+            }
+            return html`<section class="pending-input">
+              ${until(this.#renderPendingInput(entry))}
+            </section>`;
+          }
+          if (entry.value) {
+            // The "output" edge will have no id, but will have a value.
+            return html`<section class="edge">
+              ${until(this.#renderCompletedInputOrOutput(entry))}
+            </section>`;
           }
 
-          if (event.id === bubbled) {
-            target.push(event);
-          } else if (bubbled.startsWith(`${event.id}-`) && event.runs) {
-            descender(event.runs, bubbled, target);
-          }
+          return html`<section class="edge empty"></section>`;
         }
-      }
-    };
 
-    // Populate this events array based on a matching the nested run
-    // information with the bubbled events. After that render any events that
-    // we've found.
-    const events: InspectableRunNodeEvent[] = [];
-    for (const bubbled of bubbledInputAndOutputIds) {
-      descender(runs, bubbled, events);
-    }
+        case "node": {
+          const { descriptor, end } = entry;
+          const { type } = descriptor;
+          // const { icon } = node.type().metadata();
+          const icon = undefined;
 
-    return {
-      found: events.length > 0,
-      tmpl:
-        events.length > 0
-          ? html`${map(events, (event) => {
-              if (
-                event.end === null &&
-                event.node.descriptor.type === "input"
-              ) {
-                return html`${until(this.#renderPendingInput(event))}`;
-              }
+          let content:
+            | HTMLTemplateResult
+            | Promise<HTMLTemplateResult>
+            | symbol = nothing;
 
-              return html`${until(this.#renderCompletedInputOrOutput(event))} `;
-            })}`
-          : html`<div class="no-information">No information available</div>`,
-    };
-  }
+          const classes: Record<string, boolean> = {
+            entry: true,
+            pending: end === null,
+          };
 
-  #renderEvents(events: InspectableRunEvent[]) {
-    const bubbledInputAndOutputIds: string[] = events.reduce((prev, curr) => {
-      if (curr.type !== "node" || curr.hidden) {
-        return prev;
-      }
-
-      const isInputOutput =
-        curr.node.descriptor.type === "input" ||
-        curr.node.descriptor.type === "output";
-      if (isInputOutput && curr.bubbled) {
-        prev.push(curr.id);
-      }
-
-      return prev;
-    }, [] as string[]);
-
-    return html`${repeat(
-      events,
-      (event) => event.id,
-      (event) => {
-        let title: HTMLTemplateResult | symbol = nothing;
-        let description: HTMLTemplateResult | symbol = nothing;
-        let content: HTMLTemplateResult | Promise<HTMLTemplateResult> | symbol =
-          nothing;
-
-        const dateTime: HTMLTemplateResult = html`${this.#formatter.format(
-          this.start + event.start
-        )}`;
-        const classes: Record<string, boolean> = {
-          entry: true,
-        };
-
-        let isOpen = event.type === "node" && event.end === null;
-        switch (event.type) {
-          case "node": {
-            const { node, end } = event;
-            const { type } = node.descriptor;
-            const { icon } = node.type().metadata();
-
-            classes[type.toLocaleLowerCase()] = true;
-            classes.pending = end === null;
-            if (icon) {
-              classes[icon] = true;
-            }
-
-            if (event.hidden) {
-              return nothing;
-            }
-
-            title =
-              type === "input"
-                ? html`Input`
-                : type === "output"
-                  ? html`Output`
-                  : html`${node.title()}`;
-            if (type === "input") {
-              content =
-                event.end === null
-                  ? this.#renderPendingInput(event)
-                  : this.#renderCompletedInputOrOutput(event);
-              isOpen = true;
-            } else if (type === "output") {
-              content = this.#renderCompletedInputOrOutput(event);
-              isOpen = true;
-            } else if (event.runs) {
-              const { tmpl, found } = this.#renderEventRunInfo(
-                event.runs,
-                bubbledInputAndOutputIds
-              );
-              isOpen = isOpen || found;
-              content = tmpl;
-            }
-            break;
+          classes[type.toLocaleLowerCase()] = true;
+          classes.pending = end === null;
+          if (icon) {
+            classes[icon] = true;
           }
 
-          case "secret": {
-            if (event.end !== null) {
-              content = html``;
-              classes.hidden = true;
-            } else {
-              title = html`Requesting secret`;
-              content = this.#renderSecretInput(event);
-              classes.secret = true;
-              isOpen = true;
+          return html` <section class=${classMap(classes)}>
+              ${entry.title()}
+            </section>
+            ${content}`;
+        }
+
+        case "error": {
+          const { error } = entry;
+          let output = "";
+          if (typeof error === "string") {
+            output = error;
+          } else {
+            if ((error.error as Error)?.name === "AbortError") {
+              console.log("💖 actually aborted");
             }
-            break;
-          }
-
-          case "error": {
-            const { error } = event;
-            let output = "";
-            if (typeof error === "string") {
-              output = error;
+            if (typeof error.error === "string") {
+              output = error.error;
             } else {
-              if ((error.error as Error)?.name === "AbortError") {
-                console.log("💖 actually aborted");
-              }
-              if (typeof error.error === "string") {
-                output = error.error;
-              } else {
-                let messageOutput = "";
-                let errorData = error;
-                while (typeof errorData === "object") {
-                  if (errorData && "message" in errorData) {
-                    messageOutput += `${errorData.message}\n`;
-                  }
-
-                  errorData = errorData.error as ErrorObject;
+              let messageOutput = "";
+              let errorData = error;
+              while (typeof errorData === "object") {
+                if (errorData && "message" in errorData) {
+                  messageOutput += `${errorData.message}\n`;
                 }
 
-                output = messageOutput;
+                errorData = errorData.error as ErrorObject;
               }
+
+              output = messageOutput;
             }
-
-            content = html`${output}`;
-            isOpen = true;
-            break;
           }
 
-          default: {
-            return nothing;
-          }
+          return html`${output}`;
         }
-
-        return html`<section class=${classMap(classes)} @animationend=${(
-          evt: Event
-        ) => {
-          if (!(evt.target instanceof HTMLElement)) {
-            return;
-          }
-
-          evt.target.classList.remove("animating");
-        }}>
-          <details ?open=${isOpen}>
-            <summary>
-              <div class="title-date-time">
-                <div class="title">${title}</div>
-                <div class="date-time">${dateTime}</div>
-              </div>
-            </summary></h1>
-            <div>
-              ${description}
-              ${until(content)}
-            </div>
-          </details>
-        </section>`;
       }
-    )}`;
+    })}`;
   }
 
   #expandAll() {
@@ -855,22 +596,20 @@ export class ActivityLogLite extends LitElement {
   render() {
     return html` <div id="controls">
         <div id="actions">
-          ${this.events.length
+          ${this.log.length
             ? html`<button
-                  @click=${() => this.#jumpToBottom()}
-                  id="jump-to-bottom"
-                >
-                  Jump to bottom</button
-                ><button @click=${() => this.#expandAll()} id="expand-all">
-                  Expand all
-                </button>`
+                @click=${() => this.#jumpToBottom()}
+                id="jump-to-bottom"
+              >
+                Jump to bottom
+              </button>`
             : nothing}
         </div>
       </div>
       <div id="activity" ${ref(this.#activityRef)}>
-        ${this.events.length
-          ? this.#renderEvents(this.events)
-          : html`<div id="no-events">
+        ${this.log.length
+          ? this.#renderLog(this.log)
+          : html`<div id="no-entries">
               <picture>
                 <source srcset="${this.message?.srcset}" type="image/webp" />
                 <img
