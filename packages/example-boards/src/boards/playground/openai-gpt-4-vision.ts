@@ -23,29 +23,13 @@ const imagePartType = object({
   }),
 });
 
-const functionCallPartType = object({
-  function_call: object({
-    name: "string",
-    args: object({}, "string"),
-  }),
-});
-
-const functionResponsePartType = object({
-  function_response: object({
-    name: "string",
-    response: "unknown",
-  }),
-});
-
 const partType = anyOf(
   textPartType,
-  imagePartType,
-  functionCallPartType,
-  functionResponsePartType
+  imagePartType
 );
 
 const generateContentContentsType = object({
-  role: enumeration("model", "user", "tool", "$metadata"),
+  role: "string",
   parts: array(partType),
 });
 
@@ -108,7 +92,7 @@ const formattedResponse = jsonata({
 });
 
 export default board({
-  title: "OpenAI GPT 4 Turbo Vision",
+  title: "OpenAI GPT-4 Turbo Vision",
   description:
     "This board is the simplest possible invocation of OpenAI's GPT 4 Turbo API, using its vision capabilities to generate text from multipart inputs.",
   version: "0.1.0",

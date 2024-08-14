@@ -1,5 +1,5 @@
 {
-  "title": "OpenAI GPT 4 Turbo Vision",
+  "title": "OpenAI GPT-4 Turbo Vision",
   "description": "This board is the simplest possible invocation of OpenAI's GPT 4 Turbo API, using its vision capabilities to generate text from multipart inputs.",
   "version": "0.1.0",
   "edges": [
@@ -59,13 +59,7 @@
                 "type": "object",
                 "properties": {
                   "role": {
-                    "type": "string",
-                    "enum": [
-                      "model",
-                      "user",
-                      "tool",
-                      "$metadata"
-                    ]
+                    "type": "string"
                   },
                   "parts": {
                     "type": "array",
@@ -112,68 +106,6 @@
                           },
                           "required": [
                             "inlineData"
-                          ],
-                          "additionalProperties": false
-                        },
-                        {
-                          "type": "object",
-                          "properties": {
-                            "function_call": {
-                              "type": "object",
-                              "properties": {
-                                "name": {
-                                  "type": "string"
-                                },
-                                "args": {
-                                  "type": "object",
-                                  "properties": {},
-                                  "required": [],
-                                  "additionalProperties": {
-                                    "type": "string"
-                                  }
-                                }
-                              },
-                              "required": [
-                                "name",
-                                "args"
-                              ],
-                              "additionalProperties": false
-                            }
-                          },
-                          "required": [
-                            "function_call"
-                          ],
-                          "additionalProperties": false
-                        },
-                        {
-                          "type": "object",
-                          "properties": {
-                            "function_response": {
-                              "type": "object",
-                              "properties": {
-                                "name": {
-                                  "type": "string"
-                                },
-                                "response": {
-                                  "type": [
-                                    "array",
-                                    "boolean",
-                                    "null",
-                                    "number",
-                                    "object",
-                                    "string"
-                                  ]
-                                }
-                              },
-                              "required": [
-                                "name",
-                                "response"
-                              ],
-                              "additionalProperties": false
-                            }
-                          },
-                          "required": [
-                            "function_response"
                           ],
                           "additionalProperties": false
                         }
