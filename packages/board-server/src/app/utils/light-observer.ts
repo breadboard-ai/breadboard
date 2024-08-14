@@ -172,7 +172,7 @@ export class LightObserver {
     }
 
     const type = event.data.node.type;
-    if (type === "output" || type === "input") {
+    if (type === "output") {
       return;
     }
 
