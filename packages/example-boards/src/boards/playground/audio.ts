@@ -25,7 +25,7 @@ const llmResponse = geminiText({
 
 export default board({
   title: "Audio",
-  description: "An example of using Gemini Kit's vision(?) node with audio",
+  description: "An example of using Gemini Kit's text node with audio",
   version: "0.1.0",
   inputs: { audio },
   outputs: {

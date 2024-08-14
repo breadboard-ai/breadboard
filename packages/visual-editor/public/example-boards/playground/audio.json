@@ -1,6 +1,6 @@
 {
   "title": "Audio",
-  "description": "An example of using Gemini Kit's vision(?) node with audio",
+  "description": "An example of using Gemini Kit's text node with audio",
   "version": "0.1.0",
   "edges": [
     {
@@ -68,7 +68,7 @@
         "$board": "#subgraph-0",
         "model": "gemini-1.5-pro-latest",
         "systemInstruction": "Describe what you hear in the audio. Please respond in markdown",
-        "text": "unuseds"
+        "text": "unused"
       }
     }
   ],
