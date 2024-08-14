@@ -85,7 +85,8 @@ export class LightObserver {
    */
   #currentInput: EdgeLogEntry | null = null;
 
-  constructor(runner: HarnessRunner) {
+  constructor(runner: HarnessRunner, signal: AbortSignal) {
+    signal.addEventListener("abort", this.#abort.bind(this));
     runner.addEventListener("nodestart", this.#nodeStart.bind(this));
     runner.addEventListener("nodeend", this.#nodeEnd.bind(this));
     runner.addEventListener("graphstart", this.#graphStart.bind(this));
@@ -99,11 +100,11 @@ export class LightObserver {
       this.#log = [...this.#log, { type: "error", error: event.data.error }];
     });
     runner.addEventListener("resume", (event) => {
-      this.#cleanUpPendingNodes(event.data.inputs || {});
+      this.#cleanUpPendingInput(event.data.inputs || {});
     });
   }
 
-  #cleanUpPendingNodes(inputs: OutputValues) {
+  #cleanUpPendingInput(inputs: OutputValues) {
     if (!this.#currentInput) {
       return;
     }
@@ -118,6 +119,18 @@ export class LightObserver {
 
   log(): LogEntry[] | null {
     return this.#log;
+  }
+
+  #abort() {
+    this.#cleanUpPendingInput({});
+    if (!this.#currentNode) {
+      return;
+    }
+    this.#currentNode.end = globalThis.performance.now();
+    this.#currentNode = null;
+    if (this.#log) {
+      this.#log = [...this.#log, new EndNode("Activity stopped")];
+    }
   }
 
   #graphStart(event: RunGraphStartEvent) {
@@ -324,5 +337,29 @@ class UserNode extends Node {
 
   title(): string {
     return "User";
+  }
+}
+
+class EndNode implements NodeLogEntry {
+  type: "node" = "node";
+  id: string = "end";
+  descriptor = {
+    id: "end",
+    metadata: {
+      title: "End",
+    },
+    type: "end",
+  };
+  hidden = false;
+  start = globalThis.performance.now();
+  bubbled = false;
+  end = globalThis.performance.now();
+
+  constructor(reason: string) {
+    this.descriptor.metadata!.title = reason;
+  }
+
+  title(): string {
+    return this.descriptor.metadata!.title!;
   }
 }

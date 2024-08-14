@@ -371,7 +371,7 @@ export class AppView extends LitElement {
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
-    this.stopRun(true);
+    this.stopRun();
   }
 
   protected willUpdate(
@@ -401,19 +401,16 @@ export class AppView extends LitElement {
     });
   }
 
-  stopRun(abort: boolean = false) {
+  stopRun() {
     this.status = STATUS.STOPPED;
 
-    if (abort) {
-      this.#abortController?.abort();
-      this.#runObserver = null;
-    }
+    this.#abortController?.abort();
 
     this.#runner = null;
   }
 
   async startRun() {
-    this.stopRun(true);
+    this.stopRun();
 
     const [graph, kits] = await Promise.all([
       this.#descriptorLoad,
@@ -451,7 +448,10 @@ export class AppView extends LitElement {
 
     this.#runner = createRunner(config);
 
-    this.#runObserver = new LightObserver(this.#runner);
+    this.#runObserver = new LightObserver(
+      this.#runner,
+      this.#abortController.signal
+    );
 
     this.#runner.addEventListener("end", () => {
       this.stopRun();
@@ -459,7 +459,7 @@ export class AppView extends LitElement {
 
     this.#runner.addEventListener("error", () => {
       this.requestUpdate();
-      this.stopRun(true);
+      this.stopRun();
     });
 
     this.#runner.addEventListener("input", async () => {
