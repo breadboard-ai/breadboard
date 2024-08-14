@@ -6,7 +6,7 @@
 import { LitElement, html, css, type PropertyValueMap, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import { InputEnterEvent } from "./events/events.js";
+import { InputEnterEvent, SecretsEnterEvent } from "./events/events.js";
 import {
   createLoader,
   type GraphDescriptor,
@@ -80,6 +80,10 @@ export class AppView extends LitElement {
   @state()
   showMenu = false;
 
+  @state()
+  statusMessage: string | null = null;
+
+  #statusMessageTime: string | null = null;
   #loader = createLoader([]);
   #descriptorLoad: Promise<GraphDescriptor | null> = Promise.resolve(null);
   #kitLoad = loadKits([TemplateKit, Core, GeminiKit, JSONKit, AgentKit]);
@@ -90,6 +94,13 @@ export class AppView extends LitElement {
   #runner: HarnessRunner | null = null;
   #runStartTime = 0;
   #message = randomMessage[Math.floor(Math.random() * randomMessage.length)]!;
+  #formatter = new Intl.DateTimeFormat(navigator.languages, {
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 
   static styles = css`
     * {
@@ -348,28 +359,8 @@ export class AppView extends LitElement {
     }
   `;
 
-  // FORGIVE ME PAUL
-  #getSecretsAndResume() {
-    const keys = this.#runner?.secretKeys();
-    if (!keys) {
-      return;
-    }
-    const inputs = Object.fromEntries(
-      keys.map((key) => {
-        let secret = globalThis.localStorage.getItem(`SECRET_${key}`);
-        if (!secret) {
-          secret = prompt(`Please enter the secret for ${key}`);
-          if (!secret) {
-            this.#abortController?.abort();
-            throw new Error("Secret required, aborting run.");
-          }
-          globalThis.localStorage.setItem(`SECRET_${key}`, secret);
-        }
-        return [key, secret];
-      })
-    );
-    this.#runner?.run(inputs);
-  }
+  @state()
+  secretsNeeded: string[] | null = null;
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -466,24 +457,30 @@ export class AppView extends LitElement {
       this.status = STATUS.STOPPED;
     });
 
-    this.#runner.addEventListener("error", (evt) => {
+    this.#runner.addEventListener("error", () => {
       this.requestUpdate();
       this.status = STATUS.STOPPED;
     });
 
-    this.#runner.addEventListener("input", async (evt) => {
+    this.#runner.addEventListener("input", async () => {
+      this.statusMessage = "Requesting user input";
+      this.#statusMessageTime = null;
       this.requestUpdate();
     });
 
-    this.#runner.addEventListener("nodeend", (evt) => {
+    this.#runner.addEventListener("nodeend", () => {
+      this.statusMessage = null;
+      this.#statusMessageTime = this.#formatter.format(Date.now());
       this.requestUpdate();
     });
 
     this.#runner.addEventListener("nodestart", (evt) => {
+      this.statusMessage = evt.data.node.metadata?.description ?? null;
+      this.#statusMessageTime = this.#formatter.format(Date.now());
       this.requestUpdate();
     });
 
-    this.#runner.addEventListener("output", (evt) => {
+    this.#runner.addEventListener("output", () => {
       this.requestUpdate();
     });
 
@@ -495,10 +492,34 @@ export class AppView extends LitElement {
       this.status = STATUS.RUNNING;
     });
 
-    this.#runner.addEventListener("secret", async (event) => {
-      this.#getSecretsAndResume();
+    this.#runner.addEventListener("secret", async () => {
+      const keys = this.#runner?.secretKeys();
+      const secretsKeysNeeded = structuredClone(keys);
+      if (!secretsKeysNeeded) {
+        this.secretsNeeded = null;
+        return;
+      }
 
-      this.requestUpdate();
+      const allKnownSecrets: [string, string][] = [];
+      for (let i = secretsKeysNeeded.length - 1; i >= 0; i--) {
+        const secret = secretsKeysNeeded[i];
+        if (!secret) {
+          continue;
+        }
+
+        const storedSecret = this.#getSecret(secret);
+        if (storedSecret) {
+          allKnownSecrets.push([secret, storedSecret]);
+          secretsKeysNeeded.splice(i, 1);
+        }
+      }
+
+      if (secretsKeysNeeded.length === 0) {
+        const knownSecrets = Object.fromEntries(allKnownSecrets);
+        this.#runner?.run(knownSecrets);
+      } else {
+        this.secretsNeeded = secretsKeysNeeded;
+      }
     });
 
     this.#runner.addEventListener("start", () => {
@@ -539,6 +560,31 @@ export class AppView extends LitElement {
     return html`<div id="loading">Loading...</div>`;
   }
 
+  #storeSecret(secret: string, value: string) {
+    globalThis.localStorage.setItem(`SECRET_${secret}`, value);
+  }
+
+  #getSecret(secret: string) {
+    return globalThis.localStorage.getItem(`SECRET_${secret}`);
+  }
+
+  #getSecrets(which: string[]): Record<string, string> {
+    const secrets: Record<string, string> = {};
+    for (const secret of which) {
+      const storedSecret = globalThis.localStorage.getItem(`SECRET_${secret}`);
+      if (!storedSecret) {
+        this.#abortController?.abort("Secret required, aborting run.");
+        throw new Error(
+          `Unexpected error - looking for secret ${secret} but unable to find it in storage`
+        );
+      }
+
+      secrets[secret] = storedSecret;
+    }
+
+    return secrets;
+  }
+
   render() {
     const boardTitle = Promise.all([this.#descriptorLoad, this.#kitLoad]).then(
       ([graph, kits]) => {
@@ -562,31 +608,33 @@ export class AppView extends LitElement {
     });
 
     const log = this.#runObserver?.log() ?? [];
-
     const status = () => {
       const classes: Record<string, boolean> = { pending: false };
-
-      let message = html`Press "Start Activity" to begin`;
-      if (log.length && this.status !== STATUS.STOPPED) {
-        const newest = log[log.length - 1];
-        if (newest && newest.type === "node") {
-          if (newest.descriptor.type === "input") {
-            classes.pending = true;
-            message = html`Requesting user input...`;
-          } else {
-            classes.pending = true;
-            const details =
-              newest.descriptor.metadata?.description ?? "Working...";
-            message = html`${details}
-              <span class="messages-received"
-                >${log.length} event${log.length === 1 ? "" : "s"}
-                received</span
-              >`;
-          }
-        }
+      const newest = log[log.length - 1];
+      if (newest && (newest.type === "edge" || newest.type === "node")) {
+        classes.pending = newest.end === null;
       }
 
-      return html`<div id="status" class=${classMap(classes)}>${message}</div>`;
+      let message = html`Press "Start Activity" to begin`;
+      if (this.status !== STATUS.STOPPED) {
+        message = html`${this.statusMessage ?? "Working"}...`;
+      }
+
+      const lastUpdateTime = new Promise((resolve) => {
+        setTimeout(resolve, 3000);
+      }).then(() => {
+        if (!this.#statusMessageTime || this.status === STATUS.STOPPED) {
+          return nothing;
+        }
+
+        return html`<span class="messages-received"
+          >Last update: ${this.#statusMessageTime}</span
+        >`;
+      });
+
+      return html`<div id="status" class=${classMap(classes)}>
+        ${message}${until(lastUpdateTime)}
+      </div>`;
     };
 
     const active =
@@ -618,7 +666,7 @@ export class AppView extends LitElement {
       }
     );
 
-    return html` <main>
+    return html` <main ?inert=${this.secretsNeeded}>
         <bb-app-nav
           .popout=${true}
           @bbdismissmenu=${() => {
@@ -648,7 +696,23 @@ export class AppView extends LitElement {
           <div id="activity">${until(activity)}</div>
         </section>
       </main>
-      <footer>
+
+      ${this.secretsNeeded
+        ? html`<bb-secret-requester
+            .secrets=${this.secretsNeeded}
+            @bbsekrits=${(evt: SecretsEnterEvent) => {
+              for (const [name, secret] of Object.entries(evt.sekrits)) {
+                this.#storeSecret(name, secret);
+              }
+
+              const secrets = this.#getSecrets(this.secretsNeeded ?? []);
+              this.secretsNeeded = null;
+              this.#runner?.run(secrets);
+            }}
+          ></bb-secret-requester>`
+        : nothing}
+
+      <footer ?inert=${this.secretsNeeded}>
         <div id="links">
           Created with
           <a href="https://breadboard-ai.github.io/breadboard/">Breadboard</a>

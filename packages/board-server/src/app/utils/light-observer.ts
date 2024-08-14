@@ -47,6 +47,19 @@ const placeOutputInLog = (log: LogEntry[], edge: EdgeLogEntry): LogEntry[] => {
   if (maybeReplace.type === "edge" && !maybeReplace.value) {
     return [...log.slice(0, lastNode - 1), edge, ...log.slice(lastNode)];
   }
+
+  // To avoid there being two edges placed side-by-side we skip this edge if we
+  // intend to place it next to an existing edge.
+  if (lastNode > 0) {
+    const succeedingItemIdx = lastNode + 1;
+    const precedingItemIsEdge = log[lastNode] && log[lastNode].type === "edge";
+    const succeedingItemIsEdge =
+      log[succeedingItemIdx] && log[succeedingItemIdx].type === "edge";
+    if (precedingItemIsEdge || succeedingItemIsEdge) {
+      return [...log];
+    }
+  }
+
   return [...log.slice(0, lastNode), edge, ...log.slice(lastNode)];
 };
 
