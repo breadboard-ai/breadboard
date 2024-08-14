@@ -32,6 +32,9 @@ import "@breadboard-ai/shared-ui";
 import "./elements/elements.js";
 import { LightObserver } from "./utils/light-observer.js";
 
+const BOARD_SERVER_KEY = "board-server-key";
+const BOARD_SERVER_GUEST_KEY = "board-server-guest-key";
+
 const randomMessage: UserMessage[] = [
   {
     srcset: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f648/512.webp",
@@ -77,9 +80,13 @@ const getApiKey = () => {
   if (forceLocal) {
     return undefined;
   }
-  const locallyStoredKey = globalThis.localStorage.getItem("board-server-key");
+  const locallyStoredKey = globalThis.localStorage.getItem(BOARD_SERVER_KEY);
   if (locallyStoredKey) {
     return locallyStoredKey;
+  }
+  const guestKey = globalThis.localStorage.getItem(BOARD_SERVER_GUEST_KEY);
+  if (guestKey) {
+    return guestKey;
   }
   const url = new URL(window.location.href);
   return url.searchParams.get("key") || undefined;
@@ -386,6 +393,8 @@ export class AppView extends LitElement {
     super.connectedCallback();
 
     this.url = window.location.pathname.replace(/app$/, "json");
+
+    this.#maybeProcessInvite();
   }
 
   disconnectedCallback(): void {
@@ -578,6 +587,21 @@ export class AppView extends LitElement {
 
     await navigator.share(opts);
     this.#isSharing = false;
+  }
+
+  #maybeProcessInvite() {
+    const url = new URL(window.location.href);
+    const invite = url.searchParams.get("invite");
+    if (!invite) {
+      return;
+    }
+
+    // update the URL to remove the invite without changing history
+    url.searchParams.delete("invite");
+    history.replaceState(null, "", url.toString());
+
+    // store the invite as board-server-guest-key in local storage
+    localStorage.setItem(BOARD_SERVER_GUEST_KEY, invite);
   }
 
   #renderLoading() {
