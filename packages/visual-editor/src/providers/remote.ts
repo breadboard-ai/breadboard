@@ -81,6 +81,18 @@ const createRequest = (
   });
 };
 
+const signInToServer = (serverUrl: string, key: string) => {
+  const url = new URL(serverUrl);
+  url.searchParams.set("key", key);
+  const signInIframe = document.createElement("iframe");
+  signInIframe.src = url.href;
+  signInIframe.style.display = "none";
+  signInIframe.onload = () => {
+    signInIframe.remove();
+  };
+  document.body.appendChild(signInIframe);
+};
+
 export class RemoteGraphProvider implements GraphProvider {
   static #instance: RemoteGraphProvider;
   static instance() {
@@ -219,6 +231,7 @@ export class RemoteGraphProvider implements GraphProvider {
           return true;
         }
       }
+      signInToServer(location, apiKey);
 
       this.#locations.push({ url: location, apiKey });
       await this.#storeLocations();
@@ -241,8 +254,10 @@ export class RemoteGraphProvider implements GraphProvider {
     if (!store) {
       return false;
     }
+    signInToServer(store.url, store.apiKey);
 
     await this.#refreshItems(store);
+
     return true;
   }
 
