@@ -171,7 +171,7 @@
     },
     {
       "title": "OpenAI GPT-4 Turbo Vision",
-      "reference": "/example-boards/playground/openai-gpt-4-vision.json",
+      "reference": "/example-boards/playground/openai-gpt-4-turbo-vision.json",
       "version": "0.1.0"
     },
     {
