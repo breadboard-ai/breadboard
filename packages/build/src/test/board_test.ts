@@ -11,6 +11,9 @@ import { test } from "node:test";
 import { board } from "../internal/board/board.js";
 import assert from "node:assert/strict";
 
+const inStr = input();
+const inNum = input({ type: "number" });
+
 const testNode = defineNodeType({
   name: "example",
   inputs: {
@@ -35,8 +38,7 @@ const testNode = defineNodeType({
       outStr: "foo",
     };
   },
-})({ inStr: "foo", inNum: 123 });
-const { inStr, inNum } = testNode.inputs;
+})({ inStr, inNum });
 const { outNum, outStr } = testNode.outputs;
 
 test("expect type: 0 in, 0 out", () => {
@@ -47,23 +49,17 @@ test("expect type: 0 in, 0 out", () => {
   // $ExpectType BoardInstance<{}, {}>
   const instance = definition({});
   // $ExpectType {}
-  instance.inputs;
-  // $ExpectType {}
   instance.outputs;
 });
 
 test("expect type: 1 in, 1 out", () => {
-  // $ExpectType BoardDefinition<{ inStr: InputPort<string>; }, { outNum: OutputPort<number>; }>
+  // $ExpectType BoardDefinition<{ inStr: string; }, { outNum: number; }>
   const definition = board({ inputs: { inStr }, outputs: { outNum } });
   // NodeInstance<BoardPortConfig<{ inStr: InputPort<string>; }>, BoardPortConfig<{ outNum: OutputPort<{ type: "boolean"; }>; }>>
   const instance = definition({ inStr: "inStr" });
-  // $ExpectType { inStr: InputPort<string>; }
-  instance.inputs;
-  // $ExpectType InputPort<string>
-  instance.inputs.inStr;
-  // $ExpectType { outNum: OutputPort<number>; }
+  // $ExpectType { outNum: Value<number>; }
   instance.outputs;
-  // $ExpectType OutputPort<number>
+  // $ExpectType Value<number>
   instance.outputs.outNum;
 });
 
@@ -71,15 +67,11 @@ test("expect type: nested boards", () => {
   const defA = board({ inputs: { inNum }, outputs: { outStr } });
   const defB = board({ inputs: { inStr }, outputs: { outNum } });
   const instanceA = defA({ inNum: 123 });
-  // $ExpectType BoardInstance<{ inStr: InputPort<string>; }, { outNum: OutputPort<number>; }>
+  // $ExpectType BoardInstance<{ inStr: string; }, { outNum: number; }>
   const instanceB = defB({ inStr: instanceA.outputs.outStr });
-  // $ExpectType { inStr: InputPort<string>; }
-  instanceB.inputs;
-  // $ExpectType InputPort<string>
-  instanceB.inputs.inStr;
-  // $ExpectType { outNum: OutputPort<number>; }
+  // $ExpectType { outNum: Value<number>; }
   instanceB.outputs;
-  // $ExpectType OutputPort<number>
+  // $ExpectType Value<number>
   instanceB.outputs.outNum;
 });
 
@@ -107,30 +99,22 @@ test("expect type error: board input/output types", () => {
     invoke: () => ({ out: "foo" }),
   });
 
-  assert.throws(() =>
-    board({
-      inputs: {
-        // @ts-expect-error
-        in1: undefined,
-        // @ts-expect-error
-        in2: null,
-        // @ts-expect-error
-        in3: "foo",
-        // @ts-expect-error
-        in4: noPrimary({}),
-      },
-      outputs: {
-        // @ts-expect-error
-        out1: undefined,
-        // @ts-expect-error
-        out2: null,
-        // @ts-expect-error
-        out3: "foo",
-        // @ts-expect-error
-        out4: noPrimary({}),
-      },
-    })
-  );
+  board({
+    // @ts-expect-error
+    inputs: {
+      in1: undefined,
+      in2: null,
+      in3: "foo",
+      in4: noPrimary({ in: "foo" }),
+    },
+    // @ts-expect-error
+    outputs: {
+      out1: undefined,
+      out2: null,
+      out3: "foo",
+      out4: noPrimary({ in: "foo" }),
+    },
+  });
 });
 
 test("expect type error: incorrect make instance param type", () => {
@@ -143,7 +127,7 @@ test("expect type error: incorrect make instance param type", () => {
 });
 
 test("allow setting title, description, version", () => {
-  // $ExpectType BoardDefinition<{ inStr: InputPort<string>; }, { outNum: OutputPort<number>; }>
+  // $ExpectType BoardDefinition<{ inStr: string; }, { outNum: number; }>
   board({
     title: "My Title",
     description: "My Description",

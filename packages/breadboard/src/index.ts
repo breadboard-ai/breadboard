@@ -7,7 +7,6 @@
 export type * from "./types.js";
 
 export { Board } from "./board.js";
-export { BoardRunner } from "./runner.js";
 export { Node } from "./node.js";
 export { SchemaBuilder, combineSchemas } from "./schema.js";
 export { RunResult } from "./run.js";
@@ -58,6 +57,7 @@ export type {
   AbstractValue as V,
 } from "./new/grammar/types.js";
 export { asyncGen } from "./utils/async-gen.js";
+export { type SemVer, SemanticVersioning } from "./utils/semver.js";
 
 /**
  * Helpers for handling BreadboardCapability.
@@ -101,6 +101,8 @@ export {
   isFunctionCallCapabilityPart,
   isFunctionResponseCapabilityPart,
   isLLMContent,
+  isLLMContentArray,
+  isMetadataEntry,
   isTextCapabilityPart,
   toInlineDataPart,
   toStoredDataPart,

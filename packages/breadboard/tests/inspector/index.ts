@@ -32,7 +32,7 @@ test("inspectableGraph nodes, nodeById, and nodesByType work as expected", (t) =
   );
 });
 
-test("inspectableGraph tailsForNode and headsForNode work as expected", (t) => {
+test("inspectableGraph incomingForNode and outgoingForNode work as expected", (t) => {
   const graph = {
     nodes: [
       { id: "a", type: "foo" },

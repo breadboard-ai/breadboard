@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.3.5
+
+### Patch Changes
+
+- Updated dependencies [8c694ed]
+- Updated dependencies [bbf2c30]
+- Updated dependencies [14df6a8]
+- Updated dependencies [1dc645a]
+- Updated dependencies [2aabb7a]
+- Updated dependencies [fb72771]
+- Updated dependencies [9b22cab]
+- Updated dependencies [00cc2c5]
+- Updated dependencies [c04cff0]
+- Updated dependencies [d88c37b]
+- Updated dependencies [3f8cdd1]
+- Updated dependencies [3a5ced1]
+- Updated dependencies [62f8d5b]
+  - @google-labs/breadboard@0.24.0
+  - @breadboard-ai/build@0.8.1
+
 ## 0.3.4
 
 ### Patch Changes

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BoardRunner, GraphDescriptor } from "@google-labs/breadboard";
+import { GraphDescriptor } from "@google-labs/breadboard";
 import { Dirent, watch as fsWatch } from "fs";
 import { opendir, readFile, stat, writeFile, mkdir } from "fs/promises";
 import { join } from "node:path";
@@ -18,7 +18,7 @@ import { Loaders } from "./loaders/index.js";
 import { MakeOptions } from "../commandTypes.js";
 import { formatGraphDescriptor } from "@google-labs/breadboard";
 
-export const SERVER_PORT = parseInt(process.env.PORT || '') || 3000;
+export const SERVER_PORT = parseInt(process.env.PORT || "") || 3000;
 export const SERVER_URL = `http://localhost:${SERVER_PORT}`;
 
 export const defaultKits = [
@@ -85,7 +85,7 @@ export const resolveFilePath = (file: string) => {
 export const loadBoard = async (
   file: string,
   options: MakeOptions
-): Promise<BoardRunner> => {
+): Promise<GraphDescriptor | null> => {
   const loaderType = extname(file).slice(1) as "js" | "ts" | "json";
   const save = "save" in options ? options["save"] : true;
 
@@ -159,11 +159,11 @@ export const loadBoards = async (
 
       return [
         {
-          ...board,
-          title: board.title ?? path,
+          ...(board || {}),
+          title: board?.title ?? path,
           url: join("/", relative(process.cwd(), path)),
-          version: board.version ?? "0.0.1",
-        },
+          version: board?.version ?? "0.0.1",
+        } as BoardMetaData,
       ];
     } catch (e) {
       showError(e, path);
@@ -218,10 +218,10 @@ async function loadBoardsFromDirectory(
         const board = await loadBoard(filename, options);
         boards.push({
           ...board,
-          title: board.title ?? name,
+          title: board?.title ?? name,
           url: `/${name}`,
-          version: board.version ?? "0.0.1",
-        });
+          version: board?.version ?? "0.0.1",
+        } as BoardMetaData);
       } catch (e) {
         showError(e, filename);
       }

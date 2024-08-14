@@ -8,6 +8,7 @@ import {
   GraphIdentifier,
   GraphMetadata,
   NodeMetadata,
+  StartLabel,
 } from "@google-labs/breadboard-schema/graph.js";
 import { HarnessRunResult, SecretResult } from "../harness/types.js";
 import { GraphLoader } from "../loader/types.js";
@@ -69,9 +70,14 @@ export type InspectableNode = {
    */
   outgoing(): InspectableEdge[];
   /**
-   * Return true if the node is an entry node (no incoming edges)
+   * Return true if the node is an entry node (labeled as such or
+   * has no incoming edges)
    */
-  isEntry(): boolean;
+  isEntry(label?: StartLabel): boolean;
+  /**
+   * The start label of the node.
+   */
+  startLabels(): StartLabel[] | undefined;
   /**
    * Return true if the node is an exit node (no outgoing edges)
    */
@@ -271,12 +277,12 @@ export type InspectableGraph = {
   /**
    * Returns a list of entry nodes for the graph.
    */
-  entries(): InspectableNode[];
+  entries(label?: StartLabel): InspectableNode[];
   /**
    * Returns the API of the graph. This function is designed to match the
    * output of the `NodeDescriberFunction`.
    */
-  describe(): Promise<NodeDescriberResult>;
+  describe(inputs?: InputValues): Promise<NodeDescriberResult>;
   /**
    * Returns the subgraphs that are embedded in this graph.
    */
@@ -778,6 +784,34 @@ export type InspectableRunErrorEvent = {
   start: number;
 };
 
+export type InspectableRunEdgeEvent = {
+  type: "edge";
+  id: EventIdentifier;
+  edge: {
+    /**
+     * The outgoing node of the edge.
+     */
+    from?: string;
+    /**
+     * The name of the port of the outgoing node.
+     */
+    out?: string;
+    /**
+     * The incoming node of the edge.
+     */
+    to?: string;
+    /**
+     * The name of the port of the incoming node.
+     */
+    in?: string;
+  };
+  start: number;
+  end: number;
+  from?: number[];
+  to?: number[];
+  value?: InputValues;
+};
+
 export type InspectableRunSecretEvent = {
   type: "secret";
   id: EventIdentifier;
@@ -808,7 +842,8 @@ export type InspectableRunInputs = Map<NodeIdentifier, OutputValues[]>;
 export type InspectableRunEvent =
   | InspectableRunNodeEvent
   | InspectableRunSecretEvent
-  | InspectableRunErrorEvent;
+  | InspectableRunErrorEvent
+  | InspectableRunEdgeEvent;
 
 /**
  * Represents a single run of a graph.

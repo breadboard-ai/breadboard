@@ -15,6 +15,7 @@ test("MachineResult#skip", (t) => {
       { id: "test", type: "test" },
       {},
       ["input"],
+      { from: "from", to: "to" },
       [],
       [],
       new MachineEdgeState()
@@ -26,6 +27,7 @@ test("MachineResult#skip", (t) => {
       { id: "test", type: "test" },
       {},
       [],
+      { from: "from", to: "to" },
       [],
       [],
       new MachineEdgeState()

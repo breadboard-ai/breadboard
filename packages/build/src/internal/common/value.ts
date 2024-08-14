@@ -18,6 +18,7 @@ import {
 } from "../type-system/type.js";
 import {
   isOutputPortReference,
+  OutputPort,
   OutputPortGetter,
   type OutputPortReference,
 } from "./port.js";
@@ -33,13 +34,16 @@ import {
  * - A node with a primary string-typed output port.
  * - A string-typed `input`.
  */
-export type Value<T extends JsonSerializable> =
+export type Value<
+  T extends JsonSerializable | undefined = JsonSerializable | undefined,
+> =
   | T
+  | OutputPort<T>
   | OutputPortReference<T>
   | Input<T>
   | InputWithDefault<T>
-  | Loopback<T>
-  | Convergence<T>;
+  | Loopback<Exclude<T, /* TODO(aomarks) Questionable */ undefined>>
+  | Convergence<Exclude<T, /* TODO(aomarks) Questionable */ undefined>>;
 
 /**
  * Given a Breadboard {@link Value}, determine its JSON Schema type.

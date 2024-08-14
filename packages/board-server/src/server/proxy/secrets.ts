@@ -10,11 +10,33 @@ import type { SecretInputs } from "../types.js";
 
 const url = import.meta.url;
 
-const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT;
+const getProjectId = async () => {
+  let projectId = process.env.GOOGLE_CLOUD_PROJECT;
+  if (projectId) return projectId;
 
-if (!PROJECT_ID) {
-  throw new Error("Please set GOOGLE_CLOUD_PROJECT environment variable.");
-}
+  const service = process.env.K_SERVICE;
+  if (service) {
+    // Try metadata paths for Cloud Run.
+    const metadataServer = "http://metadata.google.internal";
+    const projectIdPath = "/computeMetadata/v1/project/project-id";
+    try {
+      const response = await fetch(`${metadataServer}${projectIdPath}`, {
+        headers: {
+          "Metadata-Flavor": "Google",
+        },
+      });
+      projectId = await response.text();
+    } catch (e) {
+      throw new Error(`Failed to fetch project ID from metadata server: ${e}`);
+    }
+  }
+  if (!projectId) {
+    throw new Error("Please set GOOGLE_CLOUD_PROJECT environment variable.");
+  }
+  return projectId;
+};
+
+const PROJECT_ID = await getProjectId();
 
 const secretManager = new SecretManagerServiceClient();
 
