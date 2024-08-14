@@ -10,7 +10,7 @@ import {
   createBubbleHandler,
   createErrorMessage,
 } from "../src/bubble.js";
-import { BreadboardRunner, NodeHandlerContext } from "../src/types.js";
+import { GraphDescriptor, NodeHandlerContext } from "../src/types.js";
 
 test("InputSchemaReader works as expected", async (t) => {
   {
@@ -189,7 +189,7 @@ test("createErrorMessage makes sensible messages", (t) => {
 test("createBubbleHandler works as expected", async (t) => {
   const descriptor = { id: "id", type: "type" };
   {
-    const handler = createBubbleHandler({}, {}, descriptor);
+    const handler = createBubbleHandler({}, {}, descriptor, []);
     await t.throwsAsync(
       handler("foo", { type: "string" }, true, []),
       undefined,
@@ -209,9 +209,10 @@ test("createBubbleHandler works as expected", async (t) => {
     const handler = createBubbleHandler(
       {},
       {
-        board: { title: "Foo" } as BreadboardRunner,
+        board: { title: "Foo" } as GraphDescriptor,
       },
-      descriptor
+      descriptor,
+      []
     );
     await t.throwsAsync(
       handler("foo", { type: "string" }, true, []),
@@ -225,7 +226,8 @@ test("createBubbleHandler works as expected", async (t) => {
       {
         requestInput: async () => "bar",
       } satisfies NodeHandlerContext,
-      descriptor
+      descriptor,
+      []
     );
     t.deepEqual(await handler("foo", { type: "string" }, false, []), "bar");
     await t.throwsAsync(
@@ -235,7 +237,7 @@ test("createBubbleHandler works as expected", async (t) => {
     );
   }
   {
-    const handler = createBubbleHandler({}, {}, descriptor);
+    const handler = createBubbleHandler({}, {}, descriptor, []);
     t.deepEqual(
       await handler("foo", { type: "string", default: "bar" }, false, []),
       "bar"

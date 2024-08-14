@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { StartLabel } from "@google-labs/breadboard-schema/graph.js";
 import type { GraphDescriptor, TraversalResult } from "../types.js";
 import { TraversalMachineIterator } from "./iterator.js";
 import { GraphRepresentation } from "./representation.js";
@@ -14,8 +15,12 @@ export class TraversalMachine implements AsyncIterable<TraversalResult> {
   graph: GraphRepresentation;
   previousResult?: TraversalResult;
 
-  constructor(descriptor: GraphDescriptor, result?: TraversalResult) {
-    this.graph = new GraphRepresentation(descriptor);
+  constructor(
+    descriptor: GraphDescriptor,
+    result?: TraversalResult,
+    start?: StartLabel
+  ) {
+    this.graph = new GraphRepresentation(descriptor, start);
     this.previousResult = result;
   }
 
@@ -38,17 +43,11 @@ export class TraversalMachine implements AsyncIterable<TraversalResult> {
       { id: "$empty", type: "$empty" },
       {},
       [],
+      { from: "$entry", to: entries[0] },
       opportunities,
       [],
-      new MachineEdgeState(),
-      new Map()
+      new MachineEdgeState()
     );
     return new TraversalMachineIterator(this.graph, entryResult);
-  }
-
-  static async prepareToSave(
-    result: TraversalResult
-  ): Promise<TraversalResult> {
-    return await TraversalMachineIterator.processAllPendingNodes(result);
   }
 }

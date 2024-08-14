@@ -7,16 +7,13 @@
 import {
   Breadboard,
   BreadboardCapability,
-  ConfigOrLambda,
+  ConfigOrGraph,
   GraphDescriptor,
   GraphDescriptorBoardCapability,
-  InputValues,
   Kit,
   KitConstructor,
-  LambdaFunction,
   NodeFactory,
   OptionalIdConfiguration,
-  OutputValues,
 } from "../types.js";
 import { Node } from "../node.js";
 
@@ -50,9 +47,7 @@ export const asComposeTimeKit = (
     create: (...args) => {
       return new Node(board, ...args);
     },
-    getConfigWithLambda: <Inputs, Outputs>(
-      config: ConfigOrLambda<Inputs, Outputs>
-    ): OptionalIdConfiguration => {
+    getConfigWithLambda: (config: ConfigOrGraph): OptionalIdConfiguration => {
       return getConfigWithLambda(board, config);
     },
   });
@@ -67,12 +62,12 @@ export const asComposeTimeKit = (
  * or
  *  - A regular config, with a `board` property with any of the above.
  *
- * @param config {ConfigOrLambda} the overloaded config
+ * @param config {ConfigOrGraph} the overloaded config
  * @returns {NodeConfigurationConstructor} config with a board property
  */
-const getConfigWithLambda = <In = InputValues, Out = OutputValues>(
+const getConfigWithLambda = (
   board: Breadboard,
-  config: ConfigOrLambda<In, Out>
+  config: ConfigOrGraph
 ): OptionalIdConfiguration => {
   // Did we get a graph?
   const gotGraph =
@@ -93,10 +88,6 @@ const getConfigWithLambda = <In = InputValues, Out = OutputValues>(
       ? { board: gotGraph ? { kind: "board", board: config } : config }
       : config
   ) as OptionalIdConfiguration;
-
-  // Convert passed JS function into a board node.
-  if (typeof result.board === "function")
-    result.board = board.lambda(result.board as LambdaFunction<In, Out>);
 
   return result;
 };

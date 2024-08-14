@@ -1,5 +1,57 @@
 # @breadboard-ai/board-server
 
+## 0.4.0
+
+### Minor Changes
+
+- bbf2c30: Plumb interruptible run to board server.
+- 9b22cab: Implement the `run` API endpoint.
+- 3f8cdd1: Introduce run store
+
+### Patch Changes
+
+- f27acdf: Fix build error.
+- 1dc645a: Add a (failing so far) test for bubbling inputs from invoke.
+- Updated dependencies [8c694ed]
+- Updated dependencies [bbf2c30]
+- Updated dependencies [14df6a8]
+- Updated dependencies [1dc645a]
+- Updated dependencies [2aabb7a]
+- Updated dependencies [fb72771]
+- Updated dependencies [9b22cab]
+- Updated dependencies [00cc2c5]
+- Updated dependencies [c04cff0]
+- Updated dependencies [3f8cdd1]
+- Updated dependencies [3a5ced1]
+- Updated dependencies [62f8d5b]
+  - @google-labs/breadboard@0.24.0
+  - @breadboard-ai/data-store@0.2.0
+
+## 0.3.0
+
+### Minor Changes
+
+- 1e1be2a: Teach board-server run API endpoint to run simple boards.
+- 7298a47: Add simple BSE endpoint to boards.
+- 1b17915: Start laying down infrastructure for `run` API endpoint.
+- 2b9ef5b: Rewrire Datastore usage
+- 08a4c24: Lock BSE endpoints behind a key.
+- 6ffa89c: Migrate to new data-store package
+
+### Patch Changes
+
+- Updated dependencies [1e1be2a]
+- Updated dependencies [2b094a3]
+- Updated dependencies [fa93c3f]
+- Updated dependencies [215bd15]
+- Updated dependencies [2b9ef5b]
+- Updated dependencies [a0852df]
+- Updated dependencies [5ce1026]
+- Updated dependencies [2312443]
+- Updated dependencies [6ffa89c]
+  - @google-labs/breadboard@0.23.0
+  - @breadboard-ai/data-store@0.1.0
+
 ## 0.2.0
 
 ### Minor Changes

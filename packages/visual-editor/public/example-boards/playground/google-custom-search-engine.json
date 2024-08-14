@@ -1,8 +1,26 @@
 {
   "title": "Google Custom Search Engine Tool",
   "description": "A tool to search for information using the Google Custom Search Engine\nFor more information, see the Google Custom Search Engine documentation.\nhttps://developers.google.com/custom-search/v1/reference/rest/v1/cse/list",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "edges": [
+    {
+      "from": "cast-0",
+      "to": "unnest-0",
+      "out": "value",
+      "in": "nested"
+    },
+    {
+      "from": "CSE_API_KEY-secret",
+      "to": "customSearchURL",
+      "out": "CSE_API_KEY",
+      "in": "CSE_API_KEY"
+    },
+    {
+      "from": "CSE_ID-secret",
+      "to": "customSearchURL",
+      "out": "CSE_ID",
+      "in": "CSE_ID"
+    },
     {
       "from": "customSearchURL",
       "to": "search",
@@ -10,87 +28,57 @@
       "in": "url"
     },
     {
-      "from": "input",
+      "from": "input-0",
       "to": "customSearchURL",
-      "out": "CSE_LANG",
+      "out": "language",
       "in": "CSE_LANG"
     },
     {
-      "from": "input",
+      "from": "input-0",
       "to": "customSearchURL",
-      "out": "CSE_NUM",
+      "out": "numberOfResults",
       "in": "CSE_NUM"
     },
     {
-      "from": "input",
-      "to": "customSearchURL",
-      "out": "CSE_SAFE",
-      "in": "CSE_SAFE"
-    },
-    {
-      "from": "input",
-      "to": "customSearchURL",
-      "out": "CSE_START",
-      "in": "CSE_START"
-    },
-    {
-      "from": "input",
+      "from": "input-0",
       "to": "customSearchURL",
       "out": "query",
       "in": "query"
     },
     {
-      "from": "popSearchResult",
-      "to": "popSearchResult",
-      "out": "array",
-      "in": "array"
+      "from": "input-0",
+      "to": "customSearchURL",
+      "out": "safeSearch",
+      "in": "CSE_SAFE"
     },
     {
-      "from": "popSearchResult",
-      "to": "spreadSearchResult",
-      "out": "item",
-      "in": "object"
+      "from": "input-0",
+      "to": "customSearchURL",
+      "out": "startIndex",
+      "in": "CSE_START"
     },
     {
       "from": "search",
-      "to": "spreadResponse",
+      "to": "cast-0",
       "out": "response",
-      "in": "object"
+      "in": "value"
     },
     {
-      "from": "secrets",
-      "to": "customSearchURL",
-      "out": "CSE_API_KEY",
-      "in": "CSE_API_KEY"
-    },
-    {
-      "from": "secrets",
-      "to": "customSearchURL",
-      "out": "CSE_ID",
-      "in": "CSE_ID"
-    },
-    {
-      "from": "spreadResponse",
-      "to": "popSearchResult",
+      "from": "unnest-0",
+      "to": "output-0",
       "out": "items",
-      "in": "array"
-    },
-    {
-      "from": "spreadSearchResult",
-      "to": "output",
-      "out": "*",
-      "in": ""
+      "in": "results"
     }
   ],
   "nodes": [
     {
-      "id": "input",
+      "id": "input-0",
       "type": "input",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
-            "CSE_LANG": {
+            "language": {
               "type": "string",
               "title": "Language",
               "description": "Search language",
@@ -133,27 +121,11 @@
                 "lang_zh-TW"
               ]
             },
-            "CSE_NUM": {
-              "type": "integer",
+            "numberOfResults": {
+              "type": "number",
               "title": "Number of results",
               "description": "Number of search results to return\nValid values are integers between 1 and 10, inclusive.",
               "default": "3"
-            },
-            "CSE_SAFE": {
-              "type": "string",
-              "title": "Safe search",
-              "description": "Search safety level",
-              "default": "active",
-              "enum": [
-                "active",
-                "off"
-              ]
-            },
-            "CSE_START": {
-              "type": "integer",
-              "title": "Start index",
-              "description": "The index of the first result to return.\nThe default number of results per page is 10, so &start=11 would start at the top of the second page of results.\nNote: The JSON API will never return more than 100 results, even if more than 100 documents match the query, so setting the sum of start + num to a number greater than 100 will produce an error.",
-              "default": "1"
             },
             "query": {
               "type": "string",
@@ -165,154 +137,323 @@
                 "Google Custom Search Engine",
                 "Google Gemini"
               ]
+            },
+            "safeSearch": {
+              "type": "string",
+              "title": "Safe search",
+              "description": "Search safety level",
+              "default": "active",
+              "enum": [
+                "active",
+                "off"
+              ]
+            },
+            "startIndex": {
+              "type": "number",
+              "title": "Start index",
+              "description": "The index of the first result to return.\nThe default number of results per page is 10, so &start=11 would start at the top of the second page of results.\nNote: The JSON API will never return more than 100 results, even if more than 100 documents match the query, so setting the sum of start + num to a number greater than 100 will produce an error.",
+              "default": "1"
             }
-          }
+          },
+          "required": []
         }
-      },
-      "metadata": {
-        "title": "Input Parameters"
       }
     },
     {
-      "id": "output",
+      "id": "output-0",
       "type": "output",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
-            "displayLink": {
-              "type": "string",
-              "title": "Display Link"
-            },
-            "formattedUrl": {
-              "type": "string",
-              "title": "Formatted URL"
-            },
-            "htmlFormattedUrl": {
-              "type": "string",
-              "title": "HTML Formatted URL"
-            },
-            "htmlSnippet": {
-              "type": "string",
-              "title": "HTML Snippet"
-            },
-            "htmlTitle": {
-              "type": "string",
-              "title": "HTML Title"
-            },
-            "link": {
-              "type": "string",
-              "title": "Link"
-            },
-            "pagemap": {
-              "type": "object",
-              "title": "Page Map",
-              "properties": {
-                "cse_thumbnail": {
-                  "type": "array",
-                  "items": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "src": {
-                          "type": "string"
-                        },
-                        "width": {
-                          "type": "string"
-                        },
-                        "height": {
-                          "type": "string"
+            "results": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "htmlTitle": {
+                    "type": "string"
+                  },
+                  "link": {
+                    "type": "string"
+                  },
+                  "displayLink": {
+                    "type": "string"
+                  },
+                  "snippet": {
+                    "type": "string"
+                  },
+                  "htmlSnippet": {
+                    "type": "string"
+                  },
+                  "formattedUrl": {
+                    "type": "string"
+                  },
+                  "htmlFormattedUrl": {
+                    "type": "string"
+                  },
+                  "pagemap": {
+                    "type": "object",
+                    "properties": {
+                      "cse_thumbnail": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "src": {
+                              "type": "string"
+                            },
+                            "height": {
+                              "type": "string"
+                            },
+                            "width": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "src",
+                            "height",
+                            "width"
+                          ],
+                          "additionalProperties": false
                         }
                       },
-                      "required": [
-                        "src",
-                        "width",
-                        "height"
-                      ]
-                    }
-                  ]
-                },
-                "softwaresourcecode": {
-                  "type": "array",
-                  "items": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "author": {
-                          "type": "string"
-                        },
-                        "name": {
-                          "type": "string"
-                        },
-                        "text": {
-                          "type": "string"
+                      "softwaresourcecode": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "author": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "text": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "author",
+                            "name",
+                            "text"
+                          ],
+                          "additionalProperties": false
                         }
                       },
-                      "required": [
-                        "author",
-                        "name",
-                        "text"
-                      ]
-                    }
-                  ]
-                },
-                "metatags": {
-                  "type": "array",
-                  "items": [
-                    {
-                      "type": "object"
-                    }
-                  ]
-                },
-                "cse_image": {
-                  "type": "array",
-                  "items": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "src": {
-                          "type": "string"
+                      "metatags": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {},
+                          "required": [],
+                          "additionalProperties": false
                         }
                       },
-                      "required": [
-                        "src"
-                      ]
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "cse_thumbnail",
-                "softwaresourcecode",
-                "metatags",
-                "cse_image"
-              ]
-            },
-            "snippet": {
-              "type": "string",
-              "title": "Snippet"
-            },
-            "title": {
-              "type": "string",
-              "title": "Page Title"
+                      "cse_image": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "src": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "src"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "cse_thumbnail",
+                      "softwaresourcecode",
+                      "metatags",
+                      "cse_image"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "title",
+                  "htmlTitle",
+                  "link",
+                  "displayLink",
+                  "snippet",
+                  "htmlSnippet",
+                  "formattedUrl",
+                  "htmlFormattedUrl"
+                ],
+                "additionalProperties": false
+              }
             }
           },
           "required": [
-            "displayLink",
-            "formattedUrl",
-            "htmlFormattedUrl",
-            "htmlSnippet",
-            "htmlTitle",
-            "kind",
-            "link",
-            "pagemap",
-            "snippet",
-            "title"
+            "results"
           ]
         }
-      },
-      "metadata": {
-        "title": "Output"
+      }
+    },
+    {
+      "id": "cast-0",
+      "type": "cast",
+      "configuration": {
+        "type": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "htmlTitle": {
+                    "type": "string"
+                  },
+                  "link": {
+                    "type": "string"
+                  },
+                  "displayLink": {
+                    "type": "string"
+                  },
+                  "snippet": {
+                    "type": "string"
+                  },
+                  "htmlSnippet": {
+                    "type": "string"
+                  },
+                  "formattedUrl": {
+                    "type": "string"
+                  },
+                  "htmlFormattedUrl": {
+                    "type": "string"
+                  },
+                  "pagemap": {
+                    "type": "object",
+                    "properties": {
+                      "cse_thumbnail": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "src": {
+                              "type": "string"
+                            },
+                            "height": {
+                              "type": "string"
+                            },
+                            "width": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "src",
+                            "height",
+                            "width"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "softwaresourcecode": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "author": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "text": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "author",
+                            "name",
+                            "text"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "metatags": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {},
+                          "required": [],
+                          "additionalProperties": false
+                        }
+                      },
+                      "cse_image": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "src": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "src"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "cse_thumbnail",
+                      "softwaresourcecode",
+                      "metatags",
+                      "cse_image"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "title",
+                  "htmlTitle",
+                  "link",
+                  "displayLink",
+                  "snippet",
+                  "htmlSnippet",
+                  "formattedUrl",
+                  "htmlFormattedUrl"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "items"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "id": "CSE_API_KEY-secret",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "CSE_API_KEY"
+        ]
+      }
+    },
+    {
+      "id": "CSE_ID-secret",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "CSE_ID"
+        ]
       }
     },
     {
@@ -326,18 +467,6 @@
       }
     },
     {
-      "id": "popSearchResult",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const popSearchResult = inputs=>{const{array}=inputs;const[item,...rest]=array;if(item){return{array:rest,item}}return{}};",
-        "name": "popSearchResult",
-        "raw": true
-      },
-      "metadata": {
-        "title": "Pop search result"
-      }
-    },
-    {
       "id": "search",
       "type": "fetch",
       "configuration": {},
@@ -346,41 +475,9 @@
       }
     },
     {
-      "id": "secrets",
-      "type": "secrets",
-      "configuration": {
-        "keys": [
-          "CSE_ID",
-          "CSE_API_KEY"
-        ]
-      },
-      "metadata": {
-        "title": "Secrets"
-      }
-    },
-    {
-      "id": "spreadResponse",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const spreadResponse = inputs=>{const object=inputs.object;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}return{...object}};",
-        "name": "spreadResponse",
-        "raw": true
-      },
-      "metadata": {
-        "title": "Spread search response"
-      }
-    },
-    {
-      "id": "spreadSearchResult",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const spreadSearchResult = inputs=>{const object=inputs.object;if(typeof object!==\"object\"){throw new Error(`object is of type ${typeof object} not object`)}return{...object}};",
-        "name": "spreadSearchResult",
-        "raw": true
-      },
-      "metadata": {
-        "title": "Spread search result"
-      }
+      "id": "unnest-0",
+      "type": "unnest",
+      "configuration": {}
     }
   ]
 }

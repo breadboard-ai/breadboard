@@ -8,6 +8,7 @@ import {
   GraphIdentifier,
   GraphMetadata,
   NodeMetadata,
+  StartLabel,
 } from "@google-labs/breadboard-schema/graph.js";
 import { HarnessRunResult, SecretResult } from "../harness/types.js";
 import { GraphLoader } from "../loader/types.js";
@@ -29,7 +30,11 @@ import {
   OutputValues,
   Schema,
 } from "../types.js";
-import { DataStore, SerializedDataStoreGroup } from "../data/types.js";
+import {
+  DataStore,
+  RunStore,
+  SerializedDataStoreGroup,
+} from "../data/types.js";
 
 export type GraphVersion = number;
 
@@ -65,9 +70,14 @@ export type InspectableNode = {
    */
   outgoing(): InspectableEdge[];
   /**
-   * Return true if the node is an entry node (no incoming edges)
+   * Return true if the node is an entry node (labeled as such or
+   * has no incoming edges)
    */
-  isEntry(): boolean;
+  isEntry(label?: StartLabel): boolean;
+  /**
+   * The start label of the node.
+   */
+  startLabels(): StartLabel[] | undefined;
   /**
    * Return true if the node is an exit node (no outgoing edges)
    */
@@ -267,12 +277,12 @@ export type InspectableGraph = {
   /**
    * Returns a list of entry nodes for the graph.
    */
-  entries(): InspectableNode[];
+  entries(label?: StartLabel): InspectableNode[];
   /**
    * Returns the API of the graph. This function is designed to match the
    * output of the `NodeDescriberFunction`.
    */
-  describe(): Promise<NodeDescriberResult>;
+  describe(inputs?: InputValues): Promise<NodeDescriberResult>;
   /**
    * Returns the subgraphs that are embedded in this graph.
    */
@@ -631,13 +641,13 @@ export type InspectableRunObserver = {
    * Returns the list of runs that were observed. The current run is always
    * at the top of the list.
    */
-  runs(): InspectableRun[];
+  runs(): Promise<InspectableRun[]>;
   /**
    * Observes the given result and collects it into the list of runs.
    * @param result -- the result to observe
    * @returns -- the list of runs that were observed
    */
-  observe(result: HarnessRunResult): Promise<InspectableRun[]>;
+  observe(result: HarnessRunResult): Promise<void>;
   /**
    * Attempts to load a JSON object as a serialized representation of runs,
    * creating a new run if successful.
@@ -774,6 +784,34 @@ export type InspectableRunErrorEvent = {
   start: number;
 };
 
+export type InspectableRunEdgeEvent = {
+  type: "edge";
+  id: EventIdentifier;
+  edge: {
+    /**
+     * The outgoing node of the edge.
+     */
+    from?: string;
+    /**
+     * The name of the port of the outgoing node.
+     */
+    out?: string;
+    /**
+     * The incoming node of the edge.
+     */
+    to?: string;
+    /**
+     * The name of the port of the incoming node.
+     */
+    in?: string;
+  };
+  start: number;
+  end: number;
+  from?: number[];
+  to?: number[];
+  value?: InputValues;
+};
+
 export type InspectableRunSecretEvent = {
   type: "secret";
   id: EventIdentifier;
@@ -804,7 +842,8 @@ export type InspectableRunInputs = Map<NodeIdentifier, OutputValues[]>;
 export type InspectableRunEvent =
   | InspectableRunNodeEvent
   | InspectableRunSecretEvent
-  | InspectableRunErrorEvent;
+  | InspectableRunErrorEvent
+  | InspectableRunEdgeEvent;
 
 /**
  * Represents a single run of a graph.
@@ -833,9 +872,8 @@ export type InspectableRun = {
   events: InspectableRunEvent[];
   /**
    * A way to associate data with the run.
-   * TODO: Revisit the approach once the evolutionary forces have settled.
    */
-  dataStoreGroupId: number;
+  dataStoreKey: string;
   /**
    * Returns the current `InspectableRunNodeEvent` if any.
    * This is useful for tracking the latest node that is being run.
@@ -944,7 +982,15 @@ export type RunObserverOptions = {
   /**
    * The data store that will manage non-text data within the run.
    */
-  store?: DataStore;
+  dataStore?: DataStore;
+  /**
+   * The store that will be used to capture the run's data.
+   */
+  runStore?: RunStore;
+  /**
+   * Whether or not to skip replacing inlineData parts with storedData parts.
+   */
+  skipDataStore?: boolean;
 };
 
 export type GraphstartTimelineEntry = [

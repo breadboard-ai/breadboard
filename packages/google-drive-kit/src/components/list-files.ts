@@ -5,14 +5,15 @@
  */
 
 import {
+  annotate,
   array,
   board,
   enumeration,
   input,
   object,
   optional,
-  output,
   optionalEdge,
+  output,
 } from "@breadboard-ai/build";
 import { cast, fetch, unnest } from "@google-labs/core-kit";
 import { urlTemplate } from "@google-labs/template-kit";
@@ -30,6 +31,7 @@ const query = input({
   title: "Query",
   description: `A Google Drive search query.
 See https://developers.google.com/drive/api/guides/search-files for details.`,
+  type: annotate("string", { behavior: ["google-drive-query"] }),
   examples: [
     "'<folder id>' in parents",
     "name = 'hello'",

@@ -11,22 +11,20 @@ import {
 } from "@google-labs/breadboard/harness";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, PropertyValueMap, css, html, nothing } from "lit";
-import * as BreadboardUI from "./ui";
+import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
   type InputValues,
   Kit,
   InspectableRunObserver,
   createRunObserver,
   InspectableRun,
-  BoardRunner,
   createLoader,
 } from "@google-labs/breadboard";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
-import { InputEnterEvent } from "./ui/events/events.js";
 import { FileSystemGraphProvider } from "./providers/file-system";
 import { IDBGraphProvider } from "./providers/indexed-db";
 import { SettingsStore } from "./data/settings-store.js";
-import { inputsFromSettings } from "./data/inputs";
+import { until } from "lit/directives/until.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -45,7 +43,7 @@ export const getBoardInfo = async (url: string) => {
     // TODO: Better error handling, maybe a toast?
     throw new Error(`Unable to load graph: ${url}`);
   }
-  const runner = await BoardRunner.fromGraphDescriptor(graph);
+  const runner = graph;
   const { title, description, version } = runner;
   return { title, description, version };
 };
@@ -205,12 +203,13 @@ export class PreviewRun extends LitElement {
       diagnostics: true,
       loader: this.#loader,
       interactiveSecrets: true,
-      inputs: inputsFromSettings(this.#settings),
+      inputs: BreadboardUI.Data.inputsFromSettings(this.#settings),
     };
 
     this.status = BreadboardUI.Types.STATUS.RUNNING;
     for await (const result of run(config)) {
-      this.runs = await this.#runObserver?.observe(result);
+      await this.#runObserver?.observe(result);
+      this.requestUpdate();
 
       const answer = await this.#handleStateChange(result);
 
@@ -303,77 +302,85 @@ export class PreviewRun extends LitElement {
       return nothing;
     }
 
-    const currentRun = this.#runObserver.runs()[0];
-    const events = currentRun?.events || [];
-    const eventPosition = events.length - 1;
+    return html`${until(
+      this.#runObserver.runs().then((runs) => {
+        const currentRun = runs[0];
+        const events = currentRun?.events || [];
+        const eventPosition = events.length - 1;
 
-    return html`<main>
-      <header>
-        <div id="masthead"></div>
-        <div id="info">
-          <h1 id="board-title">${this.boardInfo?.title || "Untitled board"}</h1>
-          <h2>${this.boardInfo?.description || "No board description"}</h2>
-          <button
-            id="run"
-            ?disabled=${this.status === BreadboardUI.Types.STATUS.RUNNING}
-            @click=${() => this.#runBoard()}
-          >
-            Run
-          </button>
-        </div>
-      </header>
-      <bb-activity-log
-        logTitle="Activity"
-        .settings=${this.#settings.values}
-        .events=${events}
-        .eventPosition=${eventPosition}
-        @bbinputenter=${async (event: InputEnterEvent) => {
-          const data = event.data;
-          const handlers = this.#handlers.get(event.id) || [];
-          if (handlers.length === 0) {
-            console.warn(
-              `Received event for input(id="${event.id}") but no handlers were found`
-            );
-          }
+        return html`<main>
+          <header>
+            <div id="masthead"></div>
+            <div id="info">
+              <h1 id="board-title">
+                ${this.boardInfo?.title || "Untitled board"}
+              </h1>
+              <h2>${this.boardInfo?.description || "No board description"}</h2>
+              <button
+                id="run"
+                ?disabled=${this.status === BreadboardUI.Types.STATUS.RUNNING}
+                @click=${() => this.#runBoard()}
+              >
+                Run
+              </button>
+            </div>
+          </header>
+          <bb-activity-log
+            logTitle="Activity"
+            .settings=${this.#settings.values}
+            .events=${events}
+            .eventPosition=${eventPosition}
+            @bbinputenter=${async (
+              event: BreadboardUI.Events.InputEnterEvent
+            ) => {
+              const data = event.data;
+              const handlers = this.#handlers.get(event.id) || [];
+              if (handlers.length === 0) {
+                console.warn(
+                  `Received event for input(id="${event.id}") but no handlers were found`
+                );
+              }
 
-          if (this.#settings) {
-            const isSecret = "secret" in event.data;
-            const shouldSaveSecrets =
-              this.#settings
-                .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
-                .items.get("Save Secrets")?.value || false;
+              if (this.#settings) {
+                const isSecret = "secret" in event.data;
+                const shouldSaveSecrets =
+                  this.#settings
+                    .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
+                    .items.get("Save Secrets")?.value || false;
 
-            if (isSecret && shouldSaveSecrets) {
-              const name = event.id;
-              const value = event.data.secret as string;
-              const secrets = this.#settings.getSection(
-                BreadboardUI.Types.SETTINGS_TYPE.SECRETS
-              ).items;
-              let shouldSave = false;
-              if (secrets.has(event.id)) {
-                const settingsItem = secrets.get(event.id);
-                if (settingsItem && settingsItem.value !== value) {
-                  settingsItem.value = value;
-                  shouldSave = true;
+                if (isSecret && shouldSaveSecrets) {
+                  const name = event.id;
+                  const value = event.data.secret as string;
+                  const secrets = this.#settings.getSection(
+                    BreadboardUI.Types.SETTINGS_TYPE.SECRETS
+                  ).items;
+                  let shouldSave = false;
+                  if (secrets.has(event.id)) {
+                    const settingsItem = secrets.get(event.id);
+                    if (settingsItem && settingsItem.value !== value) {
+                      settingsItem.value = value;
+                      shouldSave = true;
+                    }
+                  } else {
+                    secrets.set(name, { name, value });
+                    shouldSave = true;
+                  }
+
+                  if (shouldSave) {
+                    await this.#settings.save(this.#settings.values);
+                  }
                 }
-              } else {
-                secrets.set(name, { name, value });
-                shouldSave = true;
               }
 
-              if (shouldSave) {
-                await this.#settings.save(this.#settings.values);
+              for (const handler of handlers) {
+                handler.call(null, data);
               }
-            }
-          }
-
-          for (const handler of handlers) {
-            handler.call(null, data);
-          }
-        }}
-        name="Board"
-        slot="slot-0"
-      ></bb-activity-log>
-    </main>`;
+            }}
+            name="Board"
+            slot="slot-0"
+          ></bb-activity-log>
+        </main>`;
+      })
+    )}`;
   }
 }

@@ -14,7 +14,7 @@ import {
   WorkerServerTransport,
 } from "../../src/remote/worker.js";
 import { Board } from "../../src/board.js";
-import { asRuntimeKit } from "../../src/index.js";
+import { asRuntimeKit, invokeGraph } from "../../src/index.js";
 
 test("Worker transports can handle ProxyServer and ProxyClient", async (t) => {
   const workers = createMockWorkers();
@@ -38,7 +38,7 @@ test("Worker transports can handle ProxyServer and ProxyClient", async (t) => {
     .input({ hello: "world" })
     .wire("*", kit.reverser().wire("*", board.output()));
   const kits = [client.createProxyKit(["reverser"]), kit];
-  const outputs = await board.runOnce({ hello: "world" }, { kits });
+  const outputs = await invokeGraph(board, { hello: "world" }, { kits });
   t.deepEqual(outputs, { hello: "dlorw" });
 });
 
@@ -76,7 +76,7 @@ test("Worker transports can handle proxy tunnels", async (t) => {
         kit.test().wire("*", kit.reverser().wire("*", board.output()))
       );
     const kits = [client.createProxyKit(["test", "reverser"]), kit];
-    const outputs = await board.runOnce({ hello: "world" }, { kits });
+    const outputs = await invokeGraph(board, { hello: "world" }, { kits });
     t.deepEqual(outputs, { hello: "dlrow" });
   }
   {
@@ -116,7 +116,7 @@ test("Worker transports can handle proxy tunnels", async (t) => {
         kit.test().wire("*", kit.reverser().wire("*", board.output()))
       );
     const kits = [client.createProxyKit(["test", "reverser"]), kit];
-    const outputs = await board.runOnce({ hello: "world" }, { kits });
+    const outputs = await invokeGraph(board, { hello: "world" }, { kits });
     t.deepEqual(outputs, { hello: "DEKCOLB_EULAV" });
   }
 });

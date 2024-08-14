@@ -64,3 +64,31 @@ export type BroadenBasicType<T extends string | number | boolean> =
  * See https://github.com/microsoft/TypeScript/issues/31751#issuecomment-498526919
  */
 export type IsNever<T> = [T] extends [never] ? true : false;
+
+/**
+ * Remove all readonly modifiers on an object.
+ */
+export type RemoveReadonly<T> = { -readonly [K in keyof T]: T[K] };
+
+/**
+ * For each property in an object, if its value can be `undefined`, mark that
+ * property as optional.
+ */
+export type AutoOptional<T> =
+  T /* See Distributive Conditional Types */ extends unknown
+    ? {
+        [K in keyof T as undefined extends T[K] ? K : never]?: T[K];
+      } & { [K in keyof T as undefined extends T[K] ? never : K]: T[K] }
+    : never;
+
+export type FlattenUnion<T> = {
+  [K in keyof UnionToIntersection<T>]: K extends keyof T
+    ? T[K]
+    : UnionToIntersection<T>[K] | undefined;
+};
+
+export type UnionToIntersection<U> = (
+  U extends unknown ? (k: U) => void : never
+) extends (k: infer I) => void
+  ? I
+  : never;

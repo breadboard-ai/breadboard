@@ -163,11 +163,6 @@ When you are unable to create plan from the job, reply with:
   ],
 } satisfies LlmContent;
 
-const contextExample = JSON.stringify({
-  parts: [{ text: "test" }],
-  role: "user",
-});
-
 export type LooperData = {
   type: "looper";
   data: LooperProgress;
@@ -252,7 +247,6 @@ export default await board(({ context, task }) => {
     .behavior("llm-content")
     .optional()
     .default("[]")
-    .examples(contextExample)
     .description("Incoming conversation context");
 
   task

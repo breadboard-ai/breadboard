@@ -15,7 +15,10 @@ import {
 import { createRunObserver } from "../../src/index.js";
 import { HarnessRunResult } from "../../src/harness/types.js";
 import { replaceSecrets } from "../../src/inspector/run/serializer.js";
-import { createDefaultDataStore } from "../../src/data/index.js";
+import {
+  createDefaultDataStore,
+  createDefaultRunStore,
+} from "../../src/data/index.js";
 
 const BASE_PATH = new URL(
   "../../../tests/inspector/data/loader",
@@ -28,10 +31,12 @@ const loadRawRun = async (
 ): Promise<InspectableRun> => {
   const s = await readFile(join(BASE_PATH, name), "utf-8");
   const raw = JSON.parse(s) as HarnessRunResult[];
-  raw.forEach(async (result) => {
+  for (const result of raw) {
     await observer.observe(result);
-  });
-  return observer.runs()[0];
+  }
+
+  const runs = await observer.runs();
+  return runs[0];
 };
 
 const propsEqual = (
@@ -82,7 +87,9 @@ const GEMINI_KEY_VALUE = "b576eea9-5ae6-4e9d-9958-e798ad8dbff7";
 const GEMINI_SENTINEL = "103e9083-13fd-46b4-a9ee-683a09e31a26";
 
 test("run save/load: loadRawRun works as expected", async (t) => {
-  const observer = createRunObserver({ logLevel: "debug" });
+  const observer = createRunObserver({
+    logLevel: "debug",
+  });
   const run1 = await loadRawRun(observer, "ad-writer-2.1.raw.json");
   const run2 = await loadRawRun(observer, "ad-writer-2.1.raw.json");
   runsEqual(t, run1, run2);
@@ -91,7 +98,8 @@ test("run save/load: loadRawRun works as expected", async (t) => {
 test("run save/load: observer.save -> run.load roundtrip", async (t) => {
   const observer = createRunObserver({
     logLevel: "debug",
-    store: createDefaultDataStore(),
+    dataStore: createDefaultDataStore(),
+    runStore: createDefaultRunStore(),
   });
   const run1 = await loadRawRun(observer, "ad-writer-2.1.raw.json");
   if (!run1.serialize) {
@@ -104,11 +112,13 @@ test("run save/load: observer.save -> run.load roundtrip", async (t) => {
     t.fail(run1LoadResult.error);
     return;
   }
-  runsEqual(t, run1, observer.runs()[0]);
+  runsEqual(t, run1, (await observer.runs())[0]);
 });
 
 test("run save/load: replaceSecrets correctly replaces secrets", async (t) => {
-  const observer = createRunObserver({ logLevel: "debug" });
+  const observer = createRunObserver({
+    logLevel: "debug",
+  });
   const run1 = await loadRawRun(observer, "ad-writer-2.1.raw.json");
   if (!run1.serialize) {
     t.fail("run1 should be serializable.");
@@ -157,7 +167,9 @@ test("run save/load: replaceSecrets correctly replaces secrets", async (t) => {
 test("run load/save: serialization produces consistent size", async (t) => {
   const observer = createRunObserver({
     logLevel: "debug",
-    store: createDefaultDataStore(),
+    dataStore: createDefaultDataStore(),
+    runStore: createDefaultRunStore(),
+    skipDataStore: true,
   });
   const run = await loadRawRun(observer, "ad-writer-2.1.raw.json");
   if (!run.serialize) {
@@ -174,5 +186,5 @@ test("run load/save: serialization produces consistent size", async (t) => {
       })
     ).success
   );
-  runsEqual(t, run, observer.runs()[0]);
+  runsEqual(t, run, (await observer.runs())[0]);
 });

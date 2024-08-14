@@ -38,7 +38,11 @@ export class PastRun implements InspectableRun {
   #graphs = new Map<number, InspectableGraph>();
   #options: SerializedRunLoadingOptions;
 
-  constructor(timeline: TimelineEntry[], options: SerializedRunLoadingOptions) {
+  constructor(
+    public readonly dataStoreKey = crypto.randomUUID(),
+    timeline: TimelineEntry[],
+    options: SerializedRunLoadingOptions
+  ) {
     this.#timeline = timeline;
     this.#options = options;
   }

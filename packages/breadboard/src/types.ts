@@ -15,6 +15,7 @@ import type {
   NodeTypeIdentifier,
   NodeValue,
   OutputValues,
+  StartLabel,
 } from "@google-labs/breadboard-schema/graph.js";
 import { GraphLoader } from "./loader/types.js";
 import {
@@ -22,6 +23,7 @@ import {
   InlineDataCapabilityPart,
   StoredDataCapabilityPart,
 } from "./data/types.js";
+import { ManagedRunState, RunState } from "./run/types.js";
 
 export type {
   Capability,
@@ -114,7 +116,12 @@ export type BehaviorSchema =
    * Indicates that the string is a Google Drive Query. See
    * https://developers.google.com/drive/api/guides/search-files.
    */
-  | "google-drive-query";
+  | "google-drive-query"
+  /**
+   * Indicates that the string is a Google Drive File ID.
+   * https://developers.google.com/drive/api/guides/about-files#characteristics
+   */
+  | "google-drive-file-id";
 
 export type Schema = {
   title?: string;
@@ -187,11 +194,12 @@ export interface TraversalResult {
   descriptor: NodeDescriptor;
   inputs: InputValues;
   missingInputs: string[];
+  current: Edge;
   opportunities: Edge[];
   newOpportunities: Edge[];
   state: QueuedNodeValuesState;
-  outputsPromise?: Promise<OutputValues>;
-  pendingOutputs: Map<symbol, Promise<CompletedNodeOutput>>;
+  outputs?: OutputValues;
+  partialOutputs?: OutputValues;
   skip: boolean;
 }
 
@@ -245,6 +253,10 @@ export type NodeDescriberContext = {
    * Information about the wires currently connected to this node.
    */
   wires: NodeDescriberWires;
+  /**
+   * Kits that are available in the context of the node.
+   */
+  kits?: Kit[];
 };
 
 export type NodeDescriberWires = {
@@ -379,6 +391,10 @@ export interface BreadboardRunResult {
    * The timestamp of when this result was issued.
    */
   get timestamp(): number;
+  /** The current run state associated with the result. */
+  get runState(): RunState | undefined;
+
+  save(): string;
 }
 
 export interface NodeFactory {
@@ -388,9 +404,7 @@ export interface NodeFactory {
     configuration?: NodeConfigurationConstructor,
     id?: string
   ): BreadboardNode<Inputs, Outputs>;
-  getConfigWithLambda<Inputs, Outputs>(
-    config: ConfigOrLambda<Inputs, Outputs>
-  ): OptionalIdConfiguration;
+  getConfigWithLambda(config: ConfigOrGraph): OptionalIdConfiguration;
 }
 
 export interface KitConstructor<T extends Kit> {
@@ -398,7 +412,7 @@ export interface KitConstructor<T extends Kit> {
 }
 
 export type NodeSugar<In, Out> = (
-  config?: ConfigOrLambda<In, Out>
+  config?: ConfigOrGraph
 ) => BreadboardNode<In, Out>;
 
 export type GenericKit<T extends NodeHandlers> = Kit & {
@@ -448,40 +462,6 @@ export interface BreadboardValidator {
   ): BreadboardValidator;
 }
 
-/**
- * Sequential number of the invocation of a node.
- * Useful for understanding the relative position of a
- * given invocation of node within the run.
- */
-export type InvocationId = number;
-
-/**
- * Information about a given invocation of a graph and
- * node within the graph.
- */
-export type RunStackEntry = {
-  /**
-   * The invocation id of the graph.
-   */
-  graph: InvocationId;
-  /**
-   * The invocation id of the node within that graph.
-   */
-  node: InvocationId;
-  /**
-   * The state of the graph traversal at the time of the invocation.
-   */
-  state?: string;
-};
-
-/**
- * A stack of all invocations of graphs and nodes within the graphs.
- * The stack is ordered from the outermost graph to the innermost graph
- * that is currently being run.
- * Can be used to understand the current state of the run.
- */
-export type RunState = RunStackEntry[];
-
 export type GraphStartProbeData = {
   graph: GraphDescriptor;
   path: number[];
@@ -517,7 +497,7 @@ export type SkipProbeMessage = {
 export type NodeStartProbeMessage = {
   type: "nodestart";
   data: NodeStartResponse;
-  state: RunState;
+  state?: RunState;
 };
 
 export type NodeEndProbeMessage = {
@@ -525,10 +505,16 @@ export type NodeEndProbeMessage = {
   data: NodeEndResponse;
 };
 
+export type EdgeProbeMessage = {
+  type: "edge";
+  data: EdgeResponse;
+};
+
 export type ProbeMessage =
   | GraphStartProbeMessage
   | GraphEndProbeMessage
   | SkipProbeMessage
+  | EdgeProbeMessage
   | NodeStartProbeMessage
   | NodeEndProbeMessage;
 
@@ -575,6 +561,20 @@ export type NodeEndResponse = {
   validatorMetadata?: BreadboardValidatorMetadata[];
   path: number[];
   timestamp: number;
+};
+
+export type EdgeResponse = {
+  edge: Edge;
+  /**
+   * The path of the outgoing node.
+   */
+  from?: number[];
+  /**
+   * The path of the incoming node.
+   */
+  to: number[];
+  timestamp: number;
+  value?: InputValues;
 };
 
 /**
@@ -636,34 +636,17 @@ export type ErrorResponse = {
 
 // TODO: Remove extending EventTarget once new runner is converted to use
 // reporting.
-export interface Probe extends EventTarget {
+export interface Probe {
   report?(message: ProbeMessage): Promise<void>;
 }
 
-export interface RunnerLike {
-  run(
-    context?: RunArguments,
-    result?: BreadboardRunResult
-  ): AsyncGenerator<BreadboardRunResult>;
-  runOnce(inputs: InputValues, context?: RunArguments): Promise<OutputValues>;
-}
-
-export interface BreadboardRunner extends GraphDescriptor, RunnerLike {
-  kits: Kit[]; // No longer optional
-  addValidator(validator: BreadboardValidator): void;
-}
-
-export interface Breadboard extends BreadboardRunner {
+export interface Breadboard extends GraphDescriptor {
   input<In = InputValues, Out = OutputValues>(
     config?: OptionalIdConfiguration
   ): BreadboardNode<In, Out>;
   output<In = InputValues, Out = OutputValues>(
     config?: OptionalIdConfiguration
   ): BreadboardNode<In, Out>;
-  lambda<In, InL extends In, OutL = OutputValues>(
-    boardOrFunction: LambdaFunction<InL, OutL> | BreadboardRunner,
-    config?: OptionalIdConfiguration
-  ): BreadboardNode<In, LambdaNodeOutputs>;
 
   addEdge(edge: Edge): void;
   addNode(node: NodeDescriptor): void;
@@ -709,7 +692,7 @@ export type BreadboardCapability =
   | UnresolvedPathBoardCapability;
 
 export interface NodeHandlerContext {
-  readonly board?: BreadboardRunner;
+  readonly board?: GraphDescriptor;
   readonly descriptor?: NodeDescriptor;
   readonly kits?: Kit[];
   readonly base?: URL;
@@ -719,13 +702,13 @@ export interface NodeHandlerContext {
    */
   readonly loader?: GraphLoader;
   readonly outerGraph?: GraphDescriptor;
-  readonly slots?: BreadboardSlotSpec;
   readonly probe?: Probe;
   readonly requestInput?: (
     name: string,
     schema: Schema,
     node: NodeDescriptor,
-    path: number[]
+    path: number[],
+    state: RunState
   ) => Promise<NodeValue>;
   /**
    * Provide output directly to the user. This will bypass the normal output
@@ -740,7 +723,7 @@ export interface NodeHandlerContext {
     path: number[]
   ) => Promise<void>;
   readonly invocationPath?: number[];
-  readonly state?: RunState;
+  readonly state?: ManagedRunState;
   /**
    * The `AbortSignal` that can be used to stop the board run.
    */
@@ -757,6 +740,12 @@ export type RunArguments = NodeHandlerContext & {
    * action will be taken. For example, the web-based harness will ask the user.
    */
   inputs?: InputValues;
+  /**
+   * Start label to use for the run. This is useful for specifying a particular
+   * node as the start of the run. If not provided, nodes without any incoming
+   * edges will be used.
+   */
+  start?: StartLabel;
 };
 
 export interface BreadboardNode<Inputs, Outputs> {
@@ -808,46 +797,7 @@ export type NodeConfigurationConstructor = Record<
  *
  * use `getConfigWithLambda()` to turn this into a regular config.
  */
-export type ConfigOrLambda<In, Out> =
+export type ConfigOrGraph =
   | OptionalIdConfiguration
   | BreadboardCapability
-  | BreadboardNode<LambdaNodeInputs, LambdaNodeOutputs>
-  | GraphDescriptor
-  | LambdaFunction<In, Out>
-  | {
-      board:
-        | BreadboardCapability
-        | BreadboardNode<LambdaNodeInputs, LambdaNodeOutputs>
-        | LambdaFunction<In, Out>;
-    };
-
-export type LambdaFunction<In = InputValues, Out = OutputValues> = (
-  board: Breadboard,
-  input: BreadboardNode<In, Out>,
-  output: BreadboardNode<In, Out>
-) => void;
-
-export type LambdaNodeInputs = InputValues & {
-  /**
-   * The (lambda) board this node represents. The purpose of the this node is to
-   * allow wiring data into the lambda board, outside of where it's called.
-   * This is useful when passing a lambda to a map node or as a slot.
-   *
-   * Note that (for now) each board can only be represented by one node.
-   */
-  board: GraphDescriptorBoardCapability;
-
-  /**
-   * All other inputs will be bound to the board.
-   */
-  args: InputValues;
-};
-
-export type LambdaNodeOutputs =
-  | OutputValues
-  | {
-      /**
-       * The lambda board that can be run.
-       */
-      board: BreadboardCapability;
-    };
+  | GraphDescriptor;

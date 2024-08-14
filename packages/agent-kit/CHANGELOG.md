@@ -1,5 +1,32 @@
 # @google-labs/agent-kit
 
+## 0.9.1
+
+### Patch Changes
+
+- c5c39be: Internal refactoring (type system)
+- Updated dependencies [d88c37b]
+  - @breadboard-ai/build@0.8.1
+
+## 0.9.0
+
+### Minor Changes
+
+- 8d2e618: Teach Human to act as a start node.
+
+### Patch Changes
+
+- 8dbbe20: Internal refactoring
+- a0852df: Update titles and help links in Core Kit.
+- 9a2ffab: Unpin @breadboard-ai/build dependency from being overly constrained
+- 1341291: Minor fixes to types and titles.
+- Updated dependencies [ad8aa22]
+- Updated dependencies [f78ec0a]
+- Updated dependencies [2312443]
+- Updated dependencies [b76f9a1]
+- Updated dependencies [15ae381]
+  - @breadboard-ai/build@0.8.0
+
 ## 0.8.1
 
 ### Patch Changes

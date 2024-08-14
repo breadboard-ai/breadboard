@@ -8,7 +8,7 @@ import { object } from "@breadboard-ai/build";
 import { code, secret } from "@google-labs/core-kit";
 
 export const { headers } = code(
-  { token: secret("connection:google-drive") },
+  { token: secret("connection:google-drive-limited") },
   { headers: object({}, "string") },
   ({ token }) => ({
     headers: {

@@ -6,8 +6,9 @@
 
 import { Diagnostics } from "../harness/diagnostics.js";
 import { extractError } from "../harness/error.js";
-import { RunResult } from "../run.js";
-import { BoardRunner } from "../runner.js";
+import { createRunStateManager } from "../run/index.js";
+import { runGraph } from "../run/run-graph.js";
+import { RunState } from "../run/types.js";
 import {
   WritableResult,
   streamsToAsyncIterable,
@@ -15,43 +16,22 @@ import {
 } from "../stream.js";
 import { timestamp } from "../timestamp.js";
 import {
+  GraphDescriptor,
   InputValues,
   NodeHandlerContext,
   OutputValues,
-  RunState,
 } from "../types.js";
 import {
   AnyClientRunResult,
   AnyRunRequestMessage,
-  AnyRunResponseMessage,
+  RemoteMessage,
   InputResolveRequest,
   RunClientTransport,
   RunRequestMessage,
   ServerTransport,
 } from "./types.js";
 
-const resumeRun = (request: AnyRunRequestMessage) => {
-  const [type, , state] = request;
-
-  // There may not be any state to resume from.
-  if (!state) return undefined;
-
-  if (state.length > 1) {
-    throw new Error("I don't yet know how to resume from nested subgraphs.");
-  }
-
-  const result = RunResult.load(state[0].state as string);
-  if (type === "input") {
-    const [, inputs] = request;
-    result.inputs = inputs.inputs;
-  }
-  return result;
-};
-
-type RunServerTransport = ServerTransport<
-  AnyRunRequestMessage,
-  AnyRunResponseMessage
->;
+type RunServerTransport = ServerTransport<AnyRunRequestMessage, RemoteMessage>;
 
 export class RunServer {
   #transport: RunServerTransport;
@@ -61,7 +41,7 @@ export class RunServer {
   }
 
   async serve(
-    runner: BoardRunner,
+    runner: GraphDescriptor,
     diagnostics = false,
     context: NodeHandlerContext = {}
   ) {
@@ -70,11 +50,11 @@ export class RunServer {
     let request = await requestReader.read();
     if (request.done) return;
 
-    const result = resumeRun(request.value);
     const responses = stream.writableResponses.getWriter();
 
-    const servingContext = {
+    const servingContext: NodeHandlerContext = {
       ...context,
+      state: createRunStateManager(),
       probe: diagnostics
         ? new Diagnostics(async (message) => {
             const { type, data } = message;
@@ -82,21 +62,19 @@ export class RunServer {
             if (type == "nodestart") {
               response.push(message.state);
             }
-            await responses.write(response as AnyRunResponseMessage);
+            await responses.write(response as RemoteMessage);
           })
         : undefined,
     };
 
     try {
-      for await (const stop of runner.run(servingContext, result)) {
+      for await (const stop of runGraph(runner, servingContext)) {
         if (stop.type === "input") {
-          const state = stop.runState as RunState;
           const { node, inputArguments, timestamp, path, invocationId } = stop;
           const bubbled = invocationId == -1;
           await responses.write([
             "input",
             { node, inputArguments, timestamp, path, bubbled },
-            state,
           ]);
           request = await requestReader.read();
           if (request.done) {
@@ -129,7 +107,7 @@ export class RunServer {
 }
 
 const createRunResult = (
-  response: WritableResult<AnyRunResponseMessage, AnyRunRequestMessage>
+  response: WritableResult<RemoteMessage, AnyRunRequestMessage>
 ): AnyClientRunResult => {
   const [type, data, state] = response.data;
   const reply = async (chunk: AnyRunRequestMessage[1]) => {
@@ -138,7 +116,7 @@ const createRunResult = (
         "For now, we cannot reply to messages other than 'input'."
       );
     }
-    await response.reply([type, chunk as InputResolveRequest, state]);
+    await response.reply([type, chunk as InputResolveRequest]);
   };
   return {
     type,

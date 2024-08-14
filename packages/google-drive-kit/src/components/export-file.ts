@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { board, input, output } from "@breadboard-ai/build";
+import { annotate, board, input, output } from "@breadboard-ai/build";
 import { fetch } from "@google-labs/core-kit";
 import { urlTemplate } from "@google-labs/template-kit";
 import { headers } from "../internal/headers.js";
@@ -13,6 +13,7 @@ const fileId = input({
   title: "File ID",
   description: `The ID of the Google Drive file.
 See https://developers.google.com/drive/api/reference/rest/v3/files/export#body.PATH_PARAMETERS.file_id`,
+  type: annotate("string", { behavior: ["google-drive-file-id"] }),
 });
 
 const mimeType = input({

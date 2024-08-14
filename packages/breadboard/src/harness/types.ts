@@ -4,7 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { StartLabel } from "@google-labs/breadboard-schema/graph.js";
 import type { DataStore } from "../data/types.js";
+import { InspectableRunObserver } from "../inspector/types.js";
 import type { GraphLoader } from "../loader/types.js";
 import type { NodeProxyConfig } from "../remote/config.js";
 import type {
@@ -12,19 +14,31 @@ import type {
   AnyProbeClientRunResult,
   ClientRunResult,
   ClientTransport,
+  End,
   LoadResponse,
   ServerTransport,
 } from "../remote/types.js";
+import type { ManagedRunState } from "../run/types.js";
 import type {
-  BreadboardRunner,
+  GraphDescriptor,
   ErrorResponse,
   InputResponse,
   InputValues,
   Kit,
   OutputResponse,
   OutputValues,
-  RunStackEntry,
+  SkipProbeMessage,
+  GraphStartProbeData,
+  GraphEndProbeData,
+  NodeEndResponse,
+  NodeStartResponse,
+  Schema,
+  EdgeResponse,
 } from "../types.js";
+import {
+  TypedEventTargetType,
+  TypedEventTarget,
+} from "../utils/typed-event-target.js";
 
 /**
  * The board has been loaded
@@ -55,7 +69,12 @@ export type OutputResult = {
  */
 export type SecretResult = {
   type: "secret";
-  data: { keys: string[]; timestamp: number };
+  data: SecretResponse;
+};
+
+export type SecretResponse = {
+  keys: string[];
+  timestamp: number;
 };
 
 /**
@@ -89,8 +108,6 @@ export type TransportFactory = {
   server<Request, Response>(label: string): ServerTransport<Request, Response>;
 };
 
-export type HarnessRunner = AsyncGenerator<HarnessRunResult, void, unknown>;
-
 export type ProxyLocation = "main" | "worker" | "http" | "python";
 
 export type CustomProxyConfig = () => Promise<Kit>;
@@ -107,7 +124,6 @@ export type HarnessRemoteConfig =
   | {
       /**
        * The type of the remote runtime. Can be "http" or "worker".
-       * Currently, only "worker" is supported.
        */
       type: "http" | "worker";
       /**
@@ -116,8 +132,22 @@ export type HarnessRemoteConfig =
        * `type` is "http".
        */
       url: string;
+      /**
+       * API Key
+       */
+      key?: string;
     }
   | false;
+
+/**
+ * The level of diagnostics to supply during the run.
+ * If `true`, all probe events will be supplied.
+ * If `"top"`, only the top-level probe events will be supplied.
+ * If `false`, no probe events will be supplied.
+ *
+ * Defaults to `false`.
+ */
+export type RunDiagnosticsLevel = boolean | "top";
 
 export type RunConfig = {
   /**
@@ -155,12 +185,12 @@ export type RunConfig = {
    * Specifies whether to output diagnostics information.
    * Defaults to `false`.
    */
-  diagnostics?: boolean;
+  diagnostics?: RunDiagnosticsLevel;
   /**
    * Specifies a runner to use. This can be used instead of loading a board
    * from a URL.
    */
-  runner?: BreadboardRunner;
+  runner?: GraphDescriptor;
   /**
    * The `AbortSignal` that can be used to stop the board run.
    */
@@ -185,10 +215,137 @@ export type RunConfig = {
   /**
    * The state from which to resume the run.
    */
-  resumeFrom?: StateToResumeFrom;
+  state?: ManagedRunState;
+  /**
+   * Start label to use for the run. This is useful for specifying a particular
+   * node as the start of the run. If not provided, nodes without any incoming
+   * edges will be used.
+   */
+  start?: StartLabel;
 };
 
-export type StateToResumeFrom = {
-  state: RunStackEntry[];
-  inputs?: InputValues;
+export type RunEventMap = {
+  start: RunLifecycleEvent;
+  pause: RunLifecycleEvent;
+  resume: RunLifecycleEvent;
+  input: RunInputEvent;
+  output: RunOutputEvent;
+  secret: RunSecretEvent;
+  error: RunErrorEvent;
+  skip: RunSkipEvent;
+  edge: RunEdgeEvent;
+  graphstart: RunGraphStartEvent;
+  graphend: RunGraphEndEvent;
+  nodestart: RunNodeStartEvent;
+  nodeend: RunNodeEndEvent;
+  end: RunEndEvent;
+};
+
+export type RunLifecycleEvent = Event & {
+  running: boolean;
+  data: { timestamp: number; inputs?: InputValues };
+};
+
+export type RunInputEvent = Event & {
+  data: InputResponse;
+  running: boolean;
+};
+
+export type RunOutputEvent = Event & {
+  data: OutputResponse;
+  running: true;
+};
+
+export type RunSecretEvent = Event & {
+  data: SecretResult["data"];
+  running: boolean;
+};
+
+export type RunErrorEvent = Event & {
+  data: ErrorResponse;
+  running: false;
+};
+
+export type RunEndEvent = Event & {
+  data: End;
+  running: false;
+};
+
+export type RunSkipEvent = Event & {
+  data: SkipProbeMessage["data"];
+  running: true;
+};
+
+export type RunEdgeEvent = Event & {
+  data: EdgeResponse;
+  running: true;
+};
+
+export type RunGraphStartEvent = Event & {
+  data: GraphStartProbeData;
+  running: true;
+};
+
+export type RunGraphEndEvent = Event & {
+  data: GraphEndProbeData;
+  running: true;
+};
+
+export type RunNodeStartEvent = Event & {
+  data: NodeStartResponse;
+  running: true;
+};
+
+export type RunNodeEndEvent = Event & {
+  data: NodeEndResponse;
+  running: true;
+};
+
+export type RunEventTarget = TypedEventTarget<RunEventMap>;
+
+export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
+  addObserver(observer: InspectableRunObserver): void;
+
+  /**
+   * Check if the runner is running or not.
+   *
+   * @returns -- true if the runner is currently running, or false otherwise.
+   */
+  running(): boolean;
+
+  /**
+   * A convenience method to get the secret keys that the runner is
+   * waiting for. This information can also be obtained by listening to
+   * the `secret` event.
+   *
+   * Returns null if the runner is not waiting for any secrets.
+   *
+   * @returns -- set of secret keys that the runner is waiting for, or null.
+   */
+  secretKeys(): string[] | null;
+
+  /**
+   * A convenience method to get the input schema that the runner is
+   * waiting for. This information can also be obtained by listening to
+   * the `input` event.
+   *
+   * Returns null if the runner is not waiting for any inputs.
+   *
+   * @returns -- the input schema that the runner is waiting for, or null.
+   */
+  inputSchema(): Schema | null;
+
+  /**
+   * Starts or resumes the running of the board.
+   * If the runner is waiting for input, the input arguments will be used
+   * to provide the input values.
+   *
+   * If the runner is done, it will return true. If the runner is waiting
+   * for input or secret, it will return false.
+   *
+   * @param inputs -- input values to provide to the runner.
+   * @returns -- true if the runner is done, or false if it is waiting
+   *             for input.
+   */
+  run(inputs?: InputValues): Promise<boolean>;
 };
