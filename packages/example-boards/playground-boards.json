@@ -170,9 +170,9 @@
       "version": "0.0.2"
     },
     {
-      "title": "OpenAI GPT 4 Vision Preview",
+      "title": "OpenAI GPT 4 Turbo Vision",
       "reference": "/example-boards/playground/openai-gpt-4-vision.json",
-      "version": "0.0.2"
+      "version": "0.1.0"
     },
     {
       "title": "The Search Summarizer Board",
