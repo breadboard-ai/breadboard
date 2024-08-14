@@ -10,10 +10,15 @@ import {
   type GraphDescriptor,
   type ReanimationState,
 } from "@google-labs/breadboard";
-import type { RunBoardStateStore } from "./types.js";
+import type {
+  CreateInviteResult,
+  ListInviteResult,
+  RunBoardStateStore,
+} from "./types.js";
 
 const REANIMATION_COLLECTION_ID = "resume";
 const EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 2; // 2 days
+const INVITE_EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 4; // 4 days
 
 export type GetUserStoreResult =
   | { success: true; store: string }
@@ -263,5 +268,59 @@ class Store implements RunBoardStateStore {
       .doc(`workspaces/${userStore}/boards/${boardName}`)
       .delete();
     return { success: true };
+  }
+
+  async createInvite(
+    userStore: string,
+    path: string
+  ): Promise<CreateInviteResult> {
+    const { userStore: pathUserStore, boardName } = asInfo(path);
+    if (pathUserStore !== userStore) {
+      return {
+        success: false,
+        error: "This user can't create invite for this board.",
+      };
+    }
+    const invite = Math.random().toString(36).slice(2, 10);
+    const expireAt = new Date(Date.now() + INVITE_EXPIRATION_TIME_MS);
+    await this.#database
+      .doc(`workspaces/${userStore}/boards/${boardName}/invites/${invite}`)
+      .set({ invite, expireAt });
+    return { success: true, invite };
+  }
+
+  async deleteInvite(
+    userStore: string,
+    path: string,
+    invite: string
+  ): Promise<OperationResult> {
+    const { userStore: pathUserStore, boardName } = asInfo(path);
+    if (pathUserStore !== userStore) {
+      return {
+        success: false,
+        error: "This user can't delete invite for this board.",
+      };
+    }
+    await this.#database
+      .doc(`workspaces/${userStore}/boards/${boardName}/invites/${invite}`)
+      .delete();
+    return { success: true };
+  }
+
+  async listInvites(
+    userStore: string,
+    path: string
+  ): Promise<ListInviteResult> {
+    const { userStore: pathUserStore, boardName } = asInfo(path);
+    if (pathUserStore !== userStore) {
+      return {
+        success: false,
+        error: "This user can't list invites for this board.",
+      };
+    }
+    const invites = await this.#database
+      .collection(`workspaces/${userStore}/boards/${boardName}/invites`)
+      .get();
+    return { success: true, invites: invites.docs.map((doc) => doc.id) };
   }
 }

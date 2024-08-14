@@ -71,7 +71,6 @@ const getRemoteURL = () => {
  * If the URL has a `local` parameter, return `undefined`, forcing the app to
  * run in local mode.
  *
- * @returns {string | undefined}
  */
 const getApiKey = () => {
   const forceLocal = new URL(window.location.href).searchParams.has("local");
