@@ -18,6 +18,7 @@ const audio = input({
 
 const llmResponse = geminiText({
   text: "unused",
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   context: audio as any,
   model: "gemini-1.5-pro-latest",
   systemInstruction: `Describe what you hear in the audio. Please respond in markdown`,
