@@ -318,6 +318,7 @@ class InputEdge implements EdgeLogEntry {
 class UserNode extends Node {
   constructor(event: RunInputEvent) {
     super(event);
+    this.descriptor = structuredClone(this.descriptor);
     this.descriptor.type = "user";
   }
 
