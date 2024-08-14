@@ -130,6 +130,7 @@ const context = input({
   title: "Context",
   description: "An array of messages to use as conversation context",
   default: [],
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   examples: [contextDefault as any],
 });
 
