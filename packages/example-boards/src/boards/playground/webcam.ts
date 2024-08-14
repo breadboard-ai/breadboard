@@ -42,6 +42,7 @@ const prompt = input({
 
 const llmResponse = geminiText({
   text: "unused",
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   context: picture as any,
   model: "gemini-1.5-pro-latest",
   systemInstruction: prompt
