@@ -544,6 +544,7 @@ export class ActivityLogLite extends LitElement {
             value = nodeValue.parts.length
               ? html`<bb-llm-output
                   .clamped=${false}
+                  .lite=${true}
                   .value=${nodeValue}
                 ></bb-llm-output>`
               : html`No data provided`;
