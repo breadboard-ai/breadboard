@@ -156,7 +156,7 @@ import type { Schema, InputValues } from "@google-labs/breadboard";
 // Assume we have a graph that takes text input, processes it,
 // and returns a summary.
 const config: RunConfig = {
-  url: "https://example.com/boards/text-summarizer.bgljson",
+  url: "https://example.com/boards/text-summarizer.bgl.json",
   kits: [
     /* specify kits */
   ],
