@@ -402,11 +402,10 @@ export class AppView extends LitElement {
   }
 
   stopRun() {
-    if (!this.#abortController) {
-      return;
-    }
+    this.status = STATUS.STOPPED;
 
-    this.#abortController.abort();
+    this.#abortController?.abort();
+
     this.#runner = null;
   }
 
@@ -449,17 +448,18 @@ export class AppView extends LitElement {
 
     this.#runner = createRunner(config);
 
-    if (!this.#runObserver) {
-      this.#runObserver = new LightObserver(this.#runner);
-    }
+    this.#runObserver = new LightObserver(
+      this.#runner,
+      this.#abortController.signal
+    );
 
     this.#runner.addEventListener("end", () => {
-      this.status = STATUS.STOPPED;
+      this.stopRun();
     });
 
     this.#runner.addEventListener("error", () => {
       this.requestUpdate();
-      this.status = STATUS.STOPPED;
+      this.stopRun();
     });
 
     this.#runner.addEventListener("input", async () => {

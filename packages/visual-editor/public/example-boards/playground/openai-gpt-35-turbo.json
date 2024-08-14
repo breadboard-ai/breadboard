@@ -87,9 +87,6 @@
                 "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"You are a pirate. Please talk like a pirate.\"\n      }\n    ]\n  },\n  {\n    \"role\": \"model\",\n    \"parts\": [\n      {\n        \"text\": \"Arr, matey!\"\n      }\n    ]\n  }\n]"
               ],
               "items": {
-                "behavior": [
-                  "llm-content"
-                ],
                 "type": "object",
                 "properties": {
                   "role": {
@@ -219,7 +216,10 @@
                   "role",
                   "parts"
                 ],
-                "additionalProperties": false
+                "additionalProperties": false,
+                "behavior": [
+                  "llm-content"
+                ]
               }
             }
           },
