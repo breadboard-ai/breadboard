@@ -439,7 +439,7 @@ export class ActivityLogLite extends LitElement {
           } else if (isImageURL(nodeValue)) {
             value = html`<img src=${nodeValue.image_url} />`;
           } else {
-            value = nothing;
+            value = html`<bb-json-tree .json=${nodeValue}></bb-json-tree>`;
           }
         } else {
           let renderableValue: HTMLTemplateResult | symbol = nothing;
@@ -474,7 +474,6 @@ export class ActivityLogLite extends LitElement {
   }
 
   #renderLog(entries: LogEntry[]) {
-    console.log("🌻 rendering log", entries);
     return html`${map(entries, (entry) => {
       switch (entry.type) {
         case "edge": {
