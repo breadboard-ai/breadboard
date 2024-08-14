@@ -246,7 +246,7 @@ export class ActivityLogLite extends LitElement {
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
       width: auto;
-      min-width: 120px;
+      min-width: 150px;
     }
 
     .entry.hidden {
