@@ -6,7 +6,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
-import { SecretsEnterEvent } from "../../events/events.js";
+import { OverlayDismissEvent, SecretsEnterEvent } from "../../events/events.js";
 
 @customElement("bb-secret-requester")
 export class SecretRequester extends LitElement {
@@ -25,7 +25,7 @@ export class SecretRequester extends LitElement {
       background: rgba(0, 0, 0, 0.05);
       position: fixed;
       top: 0;
-      z-index: 1000;
+      z-index: 100;
       align-items: center;
       animation: fadeIn 0.3s cubic-bezier(0, 0, 0.3, 1) forwards;
     }
@@ -83,6 +83,16 @@ export class SecretRequester extends LitElement {
       margin: var(--bb-grid-size-2) 0 var(--bb-grid-size) 0;
     }
 
+    #cancel {
+      background: var(--bb-neutral-100);
+      color: var(--bb-neutral-700);
+      border-radius: var(--bb-grid-size-5);
+      border: none;
+      height: var(--bb-grid-size-6);
+      padding: 0 var(--bb-grid-size-4);
+      margin: var(--bb-grid-size-2) 0 var(--bb-grid-size) var(--bb-grid-size);
+    }
+
     @keyframes fadeIn {
       from {
         opacity: 0;
@@ -96,8 +106,40 @@ export class SecretRequester extends LitElement {
 
   #formRef: Ref<HTMLFormElement> = createRef();
 
+  #onKeyDownBound = this.#onKeyDown.bind(this);
+  #onClickBound = this.#onClick.bind(this);
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    window.addEventListener("keydown", this.#onKeyDownBound);
+    window.addEventListener("click", this.#onClickBound);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    window.removeEventListener("keydown", this.#onKeyDownBound);
+    window.removeEventListener("click", this.#onClickBound);
+  }
+
+  #onKeyDown(evt: KeyboardEvent) {
+    if (evt.key !== "Escape") {
+      return;
+    }
+
+    this.dispatchEvent(new OverlayDismissEvent());
+  }
+
+  #onClick() {
+    this.dispatchEvent(new OverlayDismissEvent());
+  }
+
   render() {
-    return html`<dialog open>
+    return html`<dialog
+      open
+      @click=${(evt: Event) => {
+        evt.stopImmediatePropagation();
+      }}
+    >
       <h1>Please enter the following secrets</h1>
       <form
         ${ref(this.#formRef)}
@@ -143,6 +185,14 @@ export class SecretRequester extends LitElement {
         })}
 
         <button id="continue">Continue</button>
+        <button
+          @click=${() => {
+            this.dispatchEvent(new OverlayDismissEvent());
+          }}
+          id="cancel"
+        >
+          Cancel
+        </button>
       </form>
     </dialog>`;
   }
