@@ -50,6 +50,14 @@ export class InviteManager {
     return this.#url;
   }
 
+  inviteUrl(invite: string): string {
+    const inviteURL = new URL(window.location.href);
+    // Just in case.
+    inviteURL.searchParams.delete("API_KEY");
+    inviteURL.searchParams.set("invite", invite);
+    return inviteURL.href;
+  }
+
   async listInvites(): Promise<InviteListResponse> {
     if (!this.#url) {
       return { success: false, error: "No board server key" };

@@ -141,6 +141,7 @@ export class AppNav extends LitElement {
 
   #invites: InviteManager = new InviteManager();
 
+  // THIS IS THE BEST UI CODE YOU'VE EVER SEEN ✨
   async #createInviteLink(evt: Event) {
     evt.preventDefault();
     const a = evt.target as HTMLAnchorElement;
@@ -150,10 +151,8 @@ export class AppNav extends LitElement {
       console.error("TOAST: FAILED TO CREATE LINK", result.error);
       return;
     }
-    const invite = result.invite;
-    const inviteLink = new URL(window.location.href);
-    inviteLink.searchParams.set("invite", invite);
-    await navigator.clipboard.writeText(inviteLink.href);
+    const inviteLink = this.#invites.inviteUrl(result.invite) as string;
+    await navigator.clipboard.writeText(inviteLink);
   }
 
   async #listInvites(evt: Event) {
@@ -177,14 +176,10 @@ export class AppNav extends LitElement {
         return nothing;
       }
       return html`<li>
-          <a href=${this.#invites.url()} @click=${this.#createInviteLink}
-            >Create Invite</a
-          >
+          <a href="" @click=${this.#createInviteLink}>Create Invite</a>
         </li>
         <li>
-          <a href=${this.#invites.url()} @click=${this.#listInvites}
-            >List invites (in console)</a
-          >
+          <a href="" @click=${this.#listInvites}>List invites (in console)</a>
         </li>`;
     });
     const showShare = "share" in navigator;
