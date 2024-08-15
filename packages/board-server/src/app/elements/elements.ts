@@ -6,4 +6,5 @@
 
 export { ActivityLogLite } from "./activity-log/activity-log-lite.js";
 export { AppNav } from "./nav/nav.js";
+export { BoardServerKey } from "./board-server-key/board-server-key.js";
 export { SecretRequester } from "./secret/secret.js";
