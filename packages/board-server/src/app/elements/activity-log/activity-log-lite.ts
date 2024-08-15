@@ -636,6 +636,7 @@ export class ActivityLogLite extends LitElement {
               ${until(this.#renderPendingInput(entry))}
             </section>`;
           }
+
           if (entry.value) {
             // The "output" edge will have no id, but will have a value.
             return html`<section
