@@ -5,7 +5,12 @@
  */
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { DismissMenuEvent, ShareEvent } from "../../events/events.js";
+import {
+  BoardServerKeyRequestEvent,
+  DismissMenuEvent,
+  RunContextChangeEvent,
+  ShareEvent,
+} from "../../events/events.js";
 import { InviteManager } from "../../utils/invite.js";
 import { until } from "lit/directives/until.js";
 
@@ -19,6 +24,12 @@ export class AppNav extends LitElement {
 
   @property({ reflect: false })
   shareText: string | null = null;
+
+  @property({ reflect: false })
+  runOnBoardServer = false;
+
+  @property({ reflect: false })
+  boardKeyNeeded = false;
 
   static styles = css`
     * {
@@ -101,14 +112,17 @@ export class AppNav extends LitElement {
     }
 
     #container li {
-      height: 24px;
+      min-height: 24px;
       display: flex;
-      align-items: center;
-      margin-bottom: var(--bb-grid-size-3);
+      flex-direction: column;
+      justify-content: center;
+      margin-bottom: var(--bb-grid-size-2);
+      align-items: flex-start;
     }
 
     button,
-    a {
+    a,
+    label {
       background: transparent;
       border: none;
       cursor: pointer;
@@ -116,15 +130,21 @@ export class AppNav extends LitElement {
       color: var(--bb-neutral-800);
       opacity: 0.6;
       transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+      font: var(--bb-font-label-medium);
+      text-decoration: none;
     }
 
     button:hover,
-    button:focus {
+    button:focus,
+    a:hover,
+    a:focus,
+    label:hover,
+    label:focus {
       opacity: 1;
     }
 
-    button#recent {
-      background: transparent var(--bb-icon-recent) left center / 20px 20px
+    button#update-board-key {
+      background: transparent var(--bb-icon-password) left center / 20px 20px
         no-repeat;
     }
 
@@ -136,6 +156,36 @@ export class AppNav extends LitElement {
     a#visual-editor {
       background: transparent var(--bb-icon-open-new) left center / 20px 20px
         no-repeat;
+    }
+
+    #run-on-board-server {
+      display: none;
+    }
+
+    label[for="run-on-board-server"] {
+      padding-left: var(--bb-grid-size-6);
+      background: transparent var(--bb-icon-toggle-off) left center / 20px 20px
+        no-repeat;
+    }
+
+    #run-on-board-server:checked ~ label[for="run-on-board-server"] {
+      background: transparent var(--bb-icon-toggle-on) left center / 20px 20px
+        no-repeat;
+    }
+
+    #key-needed {
+      margin: var(--bb-grid-size-2) 0;
+    }
+
+    #key-needed button {
+      padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+      background: var(--bb-boards-100);
+      color: var(--bb-boards-700);
+      text-align: center;
+      border-radius: var(--bb-grid-size);
+      border: none;
+      font: var(--bb-font-label-medium);
+      opacity: 0.85;
     }
   `;
 
@@ -198,12 +248,50 @@ export class AppNav extends LitElement {
         ${this.popout ? html`<h1>Menu</h1>` : nothing}
         <ul>
           <li>
+            <input
+              type="checkbox"
+              id="run-on-board-server"
+              .checked=${this.runOnBoardServer}
+              @input=${(evt: InputEvent) => {
+                if (!(evt.target instanceof HTMLInputElement)) {
+                  return;
+                }
+
+                this.dispatchEvent(
+                  new RunContextChangeEvent(
+                    evt.target.checked ? "remote" : "local"
+                  )
+                );
+              }}
+            /><label for="run-on-board-server">Run on Board Server</label>
+            ${this.boardKeyNeeded
+              ? html`<div id="key-needed">
+                  <button
+                    @click=${() => {
+                      this.dispatchEvent(new BoardServerKeyRequestEvent());
+                    }}
+                  >
+                    Add Board Server API Key
+                  </button>
+                </div>`
+              : nothing}
+          </li>
+          <li>
+            <button
+              @click=${() => {
+                this.dispatchEvent(new BoardServerKeyRequestEvent());
+              }}
+              id="update-board-key"
+            >
+              Update Board Server API Key
+            </button>
+          </li>
+          <li>
             <a id="visual-editor" .href=${visualEditorUrl}
               >Open in Visual Editor</a
             >
           </li>
           ${until(inviteLink)}
-          <!-- <li><button id="recent">Recent Activity</button></li> -->
           ${showShare
             ? html`<li>
                 <button
