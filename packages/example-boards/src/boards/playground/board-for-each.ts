@@ -140,6 +140,7 @@ const accumulate = accumulator({
 accumulate.to(accumulate);
 
 function emitter<T>(
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   args: any
 ): NodeProxy<
   { a?: T[] | undefined; b?: T[] | undefined },
