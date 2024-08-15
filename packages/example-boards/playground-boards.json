@@ -62,7 +62,7 @@
     {
       "title": "Gemini Simple",
       "reference": "/example-boards/playground/gemini-simple.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Google Custom Search Engine Tool",
