@@ -31,6 +31,9 @@ import AgentKit from "@google-labs/agent-kit";
 import "@breadboard-ai/shared-ui";
 import "./elements/elements.js";
 import { LightObserver } from "./utils/light-observer.js";
+import { toGuestKey as toGuestStorageKey } from "./utils/invite.js";
+
+const BOARD_SERVER_KEY = "board-server-key";
 
 const randomMessage: UserMessage[] = [
   {
@@ -62,8 +65,33 @@ const getRemoteURL = () => {
   return url.href;
 };
 
+/**
+ * Get the API key from the URL or local storage.
+ *
+ * First, try to get the key from local storage. If it's not there, check the
+ * URL. If the URL has a `key` parameter, use that.
+ *
+ * If the URL has a `local` parameter, return `undefined`, forcing the app to
+ * run in local mode.
+ *
+ */
 const getApiKey = () => {
   const url = new URL(window.location.href);
+  const forceLocal = url.searchParams.has("local");
+  if (forceLocal) {
+    return undefined;
+  }
+  const locallyStoredKey = globalThis.localStorage.getItem(BOARD_SERVER_KEY);
+  if (locallyStoredKey) {
+    return locallyStoredKey;
+  }
+  const guestStorageKey = toGuestStorageKey(url);
+  if (guestStorageKey) {
+    const guestKey = globalThis.localStorage.getItem(guestStorageKey);
+    if (guestKey) {
+      return guestKey;
+    }
+  }
   return url.searchParams.get("key") || undefined;
 };
 
@@ -368,6 +396,8 @@ export class AppView extends LitElement {
     super.connectedCallback();
 
     this.url = window.location.pathname.replace(/app$/, "json");
+
+    this.#maybeProcessInvite();
   }
 
   disconnectedCallback(): void {
@@ -560,6 +590,26 @@ export class AppView extends LitElement {
 
     await navigator.share(opts);
     this.#isSharing = false;
+  }
+
+  #maybeProcessInvite() {
+    const url = new URL(window.location.href);
+    const invite = url.searchParams.get("invite");
+    if (!invite) {
+      return;
+    }
+
+    const guestStorageKey = toGuestStorageKey(url);
+    if (!guestStorageKey) {
+      return;
+    }
+
+    // update the URL to remove the invite without changing history
+    url.searchParams.delete("invite");
+    history.replaceState(null, "", url.toString());
+
+    // store the invite as board-server-guest-key in local storage
+    localStorage.setItem(guestStorageKey, invite);
   }
 
   #renderLoading() {

@@ -11,9 +11,9 @@ import { secretsKit } from "../proxy/secrets.js";
 import { invokeBoard } from "./utils/invoke-board.js";
 
 const invokeHandler: ApiHandler = async (parsed, req, res, body) => {
-  const { board, url } = parsed as BoardParseResult;
+  const { board, url, name, user } = parsed as BoardParseResult;
   const inputs = body as Record<string, any>;
-  const keyVerificationResult = await verifyKey(inputs);
+  const keyVerificationResult = await verifyKey(user, name, inputs);
   if (!keyVerificationResult.success) {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ $error: keyVerificationResult.error }));

@@ -13,7 +13,7 @@ import { getStore } from "../store.js";
 import type { RemoteMessage } from "@google-labs/breadboard/remote";
 
 const runHandler: ApiHandler = async (parsed, req, res, body) => {
-  const { board, url } = parsed as BoardParseResult;
+  const { board, url, name, user } = parsed as BoardParseResult;
   const {
     $next: next,
     $diagnostics: diagnostics,
@@ -27,7 +27,7 @@ const runHandler: ApiHandler = async (parsed, req, res, body) => {
   res.setHeader("Content-Type", "text/event-stream");
   res.statusCode = 200;
 
-  const keyVerificationResult = await verifyKey(inputs);
+  const keyVerificationResult = await verifyKey(user, name, inputs);
   if (!keyVerificationResult.success) {
     await writer.write([
       "graphstart",
