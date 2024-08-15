@@ -25,7 +25,7 @@ export interface HighlightResult {
 
 export interface Author {
   matchLevel: string;
-  
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   matchedWords: any[];
   value: string;
 }
