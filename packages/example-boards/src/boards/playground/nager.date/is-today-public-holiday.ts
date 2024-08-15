@@ -1,54 +1,56 @@
-import { base, code } from "@google-labs/breadboard";
-import { core } from "@google-labs/core-kit";
-import { templates } from "@google-labs/template-kit";
+import { board, enumeration, input, output } from "@breadboard-ai/build";
+import { fetch, code } from "@google-labs/core-kit";
+import { urlTemplate } from "@google-labs/template-kit";
 import { countryCodes } from "../../../utils/countryCodes";
 
-const inputs = base.input({
-  $id: "query",
-  schema: {
-    type: "object",
-    properties: {
-      countryCode: {
-        title: "countryCode",
-        type: "string",
-        description: "The data for countryCode",
-        enum: countryCodes,
-        default: "US",
-      },
-      offset: {
-        title: "offset",
-        type: "number",
-        description: "utc timezone offset",
-        maximum: 12,
-        minimum: -12,
-        default: "0",
-      },
-    },
-    required: ["year", "countryCode"],
+const countryCode = input({
+  title: "countryCode",
+  type: enumeration(...countryCodes),
+  description: "The data for countryCode",
+  default: "US"
+});
+
+const offset = input({
+  title: "offset",
+  type: "number",
+  description: "utc timezone offset",
+  default: 0,
+});
+
+const validatedOffset = code(
+  {
+    $id: "validatedOffset",
+    offset
   },
-});
+  { offset: "number" },
+  ({ offset }) => {
+    if (offset > 12 || offset < -12) {
+      throw new Error(`Invalid offset input: ${offset}. Offset must be maximum 12 and minimum -12.`);
+    }
+    return { offset }
+  });
 
-const urlTemplate = templates.urlTemplate({
+const url = urlTemplate({
   $id: "urlTemplate",
-  template:
-    "https://date.nager.at/Api/v3/IsTodayPublicHoliday/{countryCode}?{&offset}",
-  countryCode: inputs.countryCode,
-  offset: inputs.offset,
+  template: "https://date.nager.at/Api/v3/IsTodayPublicHoliday/{countryCode}?{&offset}",
+  countryCode: countryCode,
+  offset: validatedOffset.outputs.offset,
 });
 
-const fetchUrl = core.fetch({
-  $id: "fetch",
+const fetchResult = fetch({
+  $id: "fetchResult",
   raw: true,
   method: "GET",
-  url: urlTemplate.url,
+  url: url.outputs.url,
 });
 
 const statusCodeToResult = code(
-  ({
-    status,
-  }: {
-    status: number;
-  }): {
+  {
+    $id: "statusCodeToResult",
+    status: fetchResult.outputs.status
+  },
+  { isPublicHoliday: "boolean" },
+  ({ status }: { status: number; }): {
     isPublicHoliday: boolean;
   } => {
     if (status === 200) {
@@ -63,26 +65,16 @@ const statusCodeToResult = code(
     throw new Error(`Unexpected status code: ${status}`);
   }
 );
-const result = statusCodeToResult({
-  $id: "statusCodeToResult",
-  status: fetchUrl.status,
-});
-const output = base.output({
-  $id: "output",
-  isPublicHoliday: result.isPublicHoliday,
-  schema: {
-    type: "object",
-    properties: {
-      isPublicHoliday: {
-        type: "boolean",
-      },
-    },
-    required: ["isPublicHoliday"],
-  },
+
+const publicHolidayResult = output(statusCodeToResult.outputs.isPublicHoliday, {
+  title: "Public Holiday Result",
+  description: "A boolean indicating if today is a bank holiday for the given country code from the Nager Date API",
 });
 
-export default await output.serialize({
+export default await board({
   title: "Is Today a Public Holiday",
   description: "Get the public holidays for today for the Nager Date API",
-  version: "0.0.1",
+  version: "0.1.0",
+  inputs: { countryCode, offset },
+  outputs: { publicHolidayResult }
 });

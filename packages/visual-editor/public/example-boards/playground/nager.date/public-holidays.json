@@ -1,36 +1,42 @@
 {
   "title": "Nager Date Public Holidays API",
   "description": "Get the public holidays for the Nager Date API",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "edges": [
     {
-      "from": "fetch",
-      "to": "output",
+      "from": "fetchResult",
+      "to": "spreadResponse",
       "out": "response",
-      "in": "dates"
+      "in": "obj"
     },
     {
-      "from": "query",
-      "to": "urlTemplate",
+      "from": "input-0",
+      "to": "url",
       "out": "countryCode",
       "in": "countryCode"
     },
     {
-      "from": "query",
-      "to": "urlTemplate",
+      "from": "input-0",
+      "to": "url",
       "out": "year",
       "in": "year"
     },
     {
-      "from": "urlTemplate",
-      "to": "fetch",
+      "from": "spreadResponse",
+      "to": "output-0",
+      "out": "results",
+      "in": "dates"
+    },
+    {
+      "from": "url",
+      "to": "fetchResult",
       "out": "url",
       "in": "url"
     }
   ],
   "nodes": [
     {
-      "id": "query",
+      "id": "input-0",
       "type": "input",
       "configuration": {
         "schema": {
@@ -177,70 +183,194 @@
               "default": "2024"
             }
           },
+          "required": []
+        }
+      }
+    },
+    {
+      "id": "output-0",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "dates": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string"
+                  },
+                  "localName": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "countryCode": {
+                    "type": "string"
+                  },
+                  "fixed": {
+                    "type": "boolean"
+                  },
+                  "global": {
+                    "type": "boolean"
+                  },
+                  "counties": {
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "launchYear": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "types": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "date",
+                  "localName",
+                  "name",
+                  "countryCode",
+                  "fixed",
+                  "global",
+                  "counties",
+                  "launchYear",
+                  "types"
+                ],
+                "additionalProperties": false
+              },
+              "title": "Public Holidays",
+              "description": "A list of public holidays for the selected country code and for the given year from the Nager Date API"
+            }
+          },
           "required": [
-            "countryCode",
-            "year"
+            "dates"
           ]
         }
       }
     },
     {
-      "id": "output",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "date": {
-                "type": "string",
-                "format": "date"
-              },
-              "localName": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "countryCode": {
-                "type": "string"
-              },
-              "fixed": {
-                "type": "boolean"
-              },
-              "global": {
-                "type": "boolean"
-              },
-              "counties": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "launchYear": {
-                "type": "integer"
-              },
-              "type": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "fetch",
+      "id": "fetchResult",
       "type": "fetch",
       "configuration": {
         "method": "GET"
       }
     },
     {
-      "id": "urlTemplate",
+      "id": "spreadResponse",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const spreadResponse = ({obj})=>{if(typeof obj!==\"object\"){throw new Error(`object is of type ${typeof obj} not object`)}return{results:{...obj}}};",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "obj": {
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
+              ]
+            }
+          }
+        },
+        "name": "spreadResponse",
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "results": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string"
+                  },
+                  "localName": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "countryCode": {
+                    "type": "string"
+                  },
+                  "fixed": {
+                    "type": "boolean"
+                  },
+                  "global": {
+                    "type": "boolean"
+                  },
+                  "counties": {
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "launchYear": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "types": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "date",
+                  "localName",
+                  "name",
+                  "countryCode",
+                  "fixed",
+                  "global",
+                  "counties",
+                  "launchYear",
+                  "types"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "raw": true
+      },
+      "metadata": {
+        "title": "Spread",
+        "description": "Spread the properties of the Nager Date response into a new object"
+      }
+    },
+    {
+      "id": "url",
       "type": "urlTemplate",
       "configuration": {
         "template": "https://date.nager.at/api/v3/PublicHolidays/{year}/{countryCode}"

@@ -122,27 +122,27 @@
     {
       "title": "Nager Date Available Countries API",
       "reference": "/example-boards/playground/nager.date/available-countries.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Nager Date Country Info API",
       "reference": "/example-boards/playground/nager.date/country-info.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Is Today a Public Holiday",
       "reference": "/example-boards/playground/nager.date/is-today-public-holiday.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Nager Date Long Weekend API",
       "reference": "/example-boards/playground/nager.date/long-weekend.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Nager Date Next Public Holidays Worldwide API",
       "reference": "/example-boards/playground/nager.date/next-holiday-worldwide.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Nager Date Next Public Holiday",
@@ -152,7 +152,7 @@
     {
       "title": "Nager Date Public Holidays API",
       "reference": "/example-boards/playground/nager.date/public-holidays.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Object Manipulator",
