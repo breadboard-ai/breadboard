@@ -5,7 +5,7 @@
  */
 
 import { authenticate } from "../auth.js";
-import { serverError } from "../errors.js";
+import { serverError, unauthorized } from "../errors.js";
 import { getStore } from "../store.js";
 import type { ApiHandler, BoardParseResult } from "../types.js";
 
@@ -14,7 +14,7 @@ const inviteList: ApiHandler = async (parsed, req, res) => {
 
   const userKey = authenticate(req, res);
   if (!userKey) {
-    serverError(res, "Unauthorized");
+    unauthorized(res, "Unauthorized");
     return true;
   }
 
@@ -22,18 +22,21 @@ const inviteList: ApiHandler = async (parsed, req, res) => {
 
   const userStore = await store.getUserStore(userKey);
   if (!userStore.success) {
-    serverError(res, "Unauthorized");
+    unauthorized(res, "Unauthorized");
     return true;
   }
 
   const result = await store.listInvites(userStore.store, path);
+  let responseBody;
   if (!result.success) {
-    serverError(res, result.error);
-    return true;
+    // TODO: Be nice and return a proper error code
+    responseBody = { error: result.error };
+  } else {
+    responseBody = { invites: result.invites };
   }
 
   res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({ invites: result.invites }));
+  res.end(JSON.stringify(responseBody));
   return true;
 };
 

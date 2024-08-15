@@ -31,9 +31,9 @@ import AgentKit from "@google-labs/agent-kit";
 import "@breadboard-ai/shared-ui";
 import "./elements/elements.js";
 import { LightObserver } from "./utils/light-observer.js";
+import { toGuestKey as toGuestStorageKey } from "./utils/invite.js";
 
 const BOARD_SERVER_KEY = "board-server-key";
-const BOARD_SERVER_GUEST_KEY = "board-server-guest-key";
 
 const randomMessage: UserMessage[] = [
   {
@@ -76,7 +76,8 @@ const getRemoteURL = () => {
  *
  */
 const getApiKey = () => {
-  const forceLocal = new URL(window.location.href).searchParams.has("local");
+  const url = new URL(window.location.href);
+  const forceLocal = url.searchParams.has("local");
   if (forceLocal) {
     return undefined;
   }
@@ -84,11 +85,13 @@ const getApiKey = () => {
   if (locallyStoredKey) {
     return locallyStoredKey;
   }
-  const guestKey = globalThis.localStorage.getItem(BOARD_SERVER_GUEST_KEY);
-  if (guestKey) {
-    return guestKey;
+  const guestStorageKey = toGuestStorageKey(url);
+  if (guestStorageKey) {
+    const guestKey = globalThis.localStorage.getItem(guestStorageKey);
+    if (guestKey) {
+      return guestKey;
+    }
   }
-  const url = new URL(window.location.href);
   return url.searchParams.get("key") || undefined;
 };
 
@@ -596,12 +599,17 @@ export class AppView extends LitElement {
       return;
     }
 
+    const guestStorageKey = toGuestStorageKey(url);
+    if (!guestStorageKey) {
+      return;
+    }
+
     // update the URL to remove the invite without changing history
     url.searchParams.delete("invite");
     history.replaceState(null, "", url.toString());
 
     // store the invite as board-server-guest-key in local storage
-    localStorage.setItem(BOARD_SERVER_GUEST_KEY, invite);
+    localStorage.setItem(guestStorageKey, invite);
   }
 
   #renderLoading() {

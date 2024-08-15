@@ -6,6 +6,8 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { DismissMenuEvent, ShareEvent } from "../../events/events.js";
+import { InviteManager } from "../../utils/invite.js";
+import { until } from "lit/directives/until.js";
 
 @customElement("bb-app-nav")
 export class AppNav extends LitElement {
@@ -137,54 +139,54 @@ export class AppNav extends LitElement {
     }
   `;
 
+  #invites: InviteManager = new InviteManager();
+
   async #createInviteLink(evt: Event) {
     evt.preventDefault();
     const a = evt.target as HTMLAnchorElement;
-    try {
-      const result = await fetch(a.href, { method: "POST" });
-      const json = await result.json();
-      const invite = json.invite;
-      const inviteLink = new URL(window.location.href);
-      inviteLink.searchParams.set("invite", invite);
-      await navigator.clipboard.writeText(inviteLink.href);
-    } catch (e) {
-      console.error("FAILED TO CREATE LINK", e);
+    const result = await this.#invites.getOrCreateInvite();
+    if (!result.success) {
+      // IMAGINE THIS IS A TOAST ✨
+      console.error("TOAST: FAILED TO CREATE LINK", result.error);
+      return;
     }
+    const invite = result.invite;
+    const inviteLink = new URL(window.location.href);
+    inviteLink.searchParams.set("invite", invite);
+    await navigator.clipboard.writeText(inviteLink.href);
   }
 
   async #listInvites(evt: Event) {
     evt.preventDefault();
     const a = evt.target as HTMLAnchorElement;
-    try {
-      const result = await fetch(a.href);
-      const json = await result.json();
-      console.log("INVITES YAY", json.invites);
-    } catch (e) {
-      console.error("FAILED TO LIST INVITES", e);
+    const invites = await this.#invites.listInvites();
+    if (!invites.success) {
+      // IMAGINE THIS IS A TOAST ✨
+      console.error("FAILED TO LIST INVITES", invites.error);
+      return;
     }
+    // IMAGINE PRETTY UI FOR INVITES ✨
+    console.log("INVITES", invites.invites);
   }
 
   render() {
     const boardUrl = window.location.href.replace(/app$/, "json");
     const visualEditorUrl = `https://breadboard-ai.web.app/?board=${boardUrl}`;
-    const boardServerKey = localStorage.getItem("board-server-key");
-    let inviteLink;
-    if (!boardServerKey) {
-      inviteLink = nothing;
-    } else {
-      const inviteURL = new URL(window.location.href.replace(/app$/, "invite"));
-      inviteURL.searchParams.set("API_KEY", boardServerKey);
-      inviteLink = html`<li>
-          <a href=${inviteURL.href} @click=${this.#createInviteLink}
+    const inviteLink = this.#invites.canCreateInvite().then((canCreate) => {
+      if (!canCreate) {
+        return nothing;
+      }
+      return html`<li>
+          <a href=${this.#invites.url()} @click=${this.#createInviteLink}
             >Create Invite</a
           >
         </li>
         <li>
-          <a href=${inviteURL.href} @click=${this.#listInvites}
+          <a href=${this.#invites.url()} @click=${this.#listInvites}
             >List invites (in console)</a
           >
         </li>`;
-    }
+    });
     const showShare = "share" in navigator;
     return html` <div
         id="background"
@@ -205,7 +207,7 @@ export class AppNav extends LitElement {
               >Open in Visual Editor</a
             >
           </li>
-          ${inviteLink}
+          ${until(inviteLink)}
           <!-- <li><button id="recent">Recent Activity</button></li> -->
           ${showShare
             ? html`<li>
