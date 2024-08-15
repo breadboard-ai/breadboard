@@ -122,15 +122,34 @@ export class SecretRequester extends LitElement {
   }
 
   #onKeyDown(evt: KeyboardEvent) {
-    if (evt.key !== "Escape") {
+    if (evt.key === "Escape") {
+      this.dispatchEvent(new OverlayDismissEvent());
       return;
     }
 
-    this.dispatchEvent(new OverlayDismissEvent());
+    const isMac = navigator.platform.indexOf("Mac") === 0;
+    const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+    if (evt.key === "Enter" && isCtrlCommand && this.#formRef.value) {
+      this.#formRef.value.dispatchEvent(new SubmitEvent("submit"));
+    }
   }
 
   #onClick() {
     this.dispatchEvent(new OverlayDismissEvent());
+  }
+
+  protected firstUpdated(): void {
+    if (!this.#formRef.value) {
+      return;
+    }
+
+    const input = this.#formRef.value.querySelector<HTMLInputElement>("input");
+    if (!input) {
+      return;
+    }
+
+    input.select();
   }
 
   render() {
@@ -144,12 +163,13 @@ export class SecretRequester extends LitElement {
       <form
         ${ref(this.#formRef)}
         method="dialog"
-        @submit=${(evt: Event) => {
-          if (!(evt.target instanceof HTMLFormElement)) {
+        @submit=${() => {
+          if (!this.#formRef.value) {
             return;
           }
 
-          if (!this.#formRef.value) {
+          if (!this.#formRef.value.checkValidity()) {
+            this.#formRef.value.reportValidity();
             return;
           }
 
@@ -178,6 +198,7 @@ export class SecretRequester extends LitElement {
               .name=${secret}
               .placeholder=${secret}
               .id=${secret}
+              autofocus
               required
               type="password"
             />

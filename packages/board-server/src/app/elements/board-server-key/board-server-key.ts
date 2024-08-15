@@ -3,7 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, type PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import {
@@ -125,15 +125,34 @@ export class BoardServerKey extends LitElement {
   }
 
   #onKeyDown(evt: KeyboardEvent) {
-    if (evt.key !== "Escape") {
+    if (evt.key === "Escape") {
+      this.dispatchEvent(new OverlayDismissEvent());
       return;
     }
 
-    this.dispatchEvent(new OverlayDismissEvent());
+    const isMac = navigator.platform.indexOf("Mac") === 0;
+    const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+    if (evt.key === "Enter" && isCtrlCommand && this.#formRef.value) {
+      this.#formRef.value.dispatchEvent(new SubmitEvent("submit"));
+    }
   }
 
   #onClick() {
     this.dispatchEvent(new OverlayDismissEvent());
+  }
+
+  protected firstUpdated(): void {
+    if (!this.#formRef.value) {
+      return;
+    }
+
+    const input = this.#formRef.value.querySelector<HTMLInputElement>("input");
+    if (!input) {
+      return;
+    }
+
+    input.select();
   }
 
   render() {
@@ -147,11 +166,7 @@ export class BoardServerKey extends LitElement {
       <form
         ${ref(this.#formRef)}
         method="dialog"
-        @submit=${(evt: Event) => {
-          if (!(evt.target instanceof HTMLFormElement)) {
-            return;
-          }
-
+        @submit=${() => {
           if (!this.#formRef.value) {
             return;
           }
@@ -175,6 +190,7 @@ export class BoardServerKey extends LitElement {
             .id=${"server-key"}
             .value=${this.key}
             type="password"
+            autofocus
           />
         </div>
 
