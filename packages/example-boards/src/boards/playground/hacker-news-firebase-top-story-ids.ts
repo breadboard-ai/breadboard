@@ -32,6 +32,7 @@ const passThrough = code({
     object: array("number")
   },
   ({ object }) => {
+    // eslint-disable-next-line  @typescript-eslint/no-explicit-any
     return { object } as any;
   }
 )

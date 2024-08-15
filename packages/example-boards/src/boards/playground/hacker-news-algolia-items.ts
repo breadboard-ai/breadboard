@@ -72,6 +72,7 @@ const spreadHackerNewsStoryResponse = code({
             object[key] = "N/A"
         }
     }
+    // eslint-disable-next-line  @typescript-eslint/no-explicit-any
     return { ...object } as any;
 })
 

@@ -50,6 +50,7 @@ const spreadHackerNewsStoryResponse = code({
   if (typeof object !== "object") {
       throw new Error(`object is of type ${typeof object} not object`);
   }
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   return { ...object } as any;
 })
 
