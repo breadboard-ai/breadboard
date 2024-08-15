@@ -66,8 +66,10 @@ const spreadHackerNewsStoryResponse = code({
     // depending if we grab a story, child ... it may not have some set fields
     // output nodes currently do not support optional outputs
     for (const key in object) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         if (object[key] == undefined) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             object[key] = "N/A"
         }

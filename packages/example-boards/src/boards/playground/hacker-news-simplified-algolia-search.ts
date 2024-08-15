@@ -100,6 +100,7 @@ const forEachBoard = input({
 });
 
 // ignore until object manip board has been refactored
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 const invokeForEach = invoke({$id: "forEachOutput", $board: forEachBoard, board: objectManipBoard, array:hackerNewsOutput, mode: "pick",
   keys: [
