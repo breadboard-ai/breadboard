@@ -50,15 +50,16 @@ export class BoardInvites extends LitElement {
       background: transparent var(--bb-icon-rsvp) 0 center / 20px 20px no-repeat;
     }
 
-    #continue {
-      background: var(--bb-ui-100) var(--bb-icon-resume-blue) 8px 4px / 16px
-        16px no-repeat;
+    .create-invite {
+      background: var(--bb-ui-100) var(--bb-icon-rsvp) 8px 4px / 16px 16px
+        no-repeat;
       color: var(--bb-ui-700);
       border-radius: var(--bb-grid-size-5);
       border: none;
       height: var(--bb-grid-size-6);
       padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-7);
       margin: var(--bb-grid-size-2) 0 var(--bb-grid-size) 0;
+      cursor: pointer;
     }
 
     #cancel {
@@ -90,6 +91,27 @@ export class BoardInvites extends LitElement {
       display: flex;
       align-items: center;
       padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+    }
+
+    #invite-listing .delete {
+      height: 24px;
+      width: 24px;
+      font-size: 0;
+      background: var(--bb-neutral-0) var(--bb-icon-delete) center center / 16px
+        16px no-repeat;
+      flex: 0 0 auto;
+      border: none;
+      border-radius: 50%;
+      opacity: 0.5;
+      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+      cursor: pointer;
+      margin-right: var(--bb-grid-size-2);
+    }
+
+    #invite-listing .delete:hover,
+    #invite-listing .delete:focus {
+      transition-duration: 0.1s;
+      opacity: 1;
     }
 
     #invite-listing .copy-to-clipboard {
@@ -138,6 +160,9 @@ export class BoardInvites extends LitElement {
 
   #invites = new InviteManager();
   #loadInvites = this.#refreshInviteList();
+  #creating = false;
+  #deleting = false;
+  #copying = false;
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -188,12 +213,50 @@ export class BoardInvites extends LitElement {
                     Invite code: <span class="code">${invite}</span>
                   </div>
                   <button
+                    class="delete"
+                    @click=${async () => {
+                      if (this.#deleting) {
+                        return;
+                      }
+
+                      if (
+                        !confirm("Are you sure you want to delete this invite?")
+                      ) {
+                        return;
+                      }
+
+                      this.#deleting = true;
+                      const result = await this.#invites.deleteInvite(invite);
+                      this.#deleting = false;
+
+                      if ("success" in result && !result.success) {
+                        this.dispatchEvent(
+                          new ToastEvent(
+                            "Unable to delete invite",
+                            BreadboardUI.Events.ToastType.ERROR
+                          )
+                        );
+                      } else {
+                        this.#loadInvites = this.#refreshInviteList();
+                        this.requestUpdate();
+                      }
+                    }}
+                  >
+                    Copy to clipboard
+                  </button>
+                  <button
                     class="copy-to-clipboard"
                     @click=${async () => {
                       const inviteLink = this.#invites.inviteUrl(
                         invite
                       ) as string;
+
+                      if (this.#copying) {
+                        return;
+                      }
+                      this.#copying = true;
                       await navigator.clipboard.writeText(inviteLink);
+                      this.#copying = false;
 
                       this.dispatchEvent(
                         new ToastEvent(
@@ -211,7 +274,12 @@ export class BoardInvites extends LitElement {
           : html`<p>There are no active invites for this board</p>
               <button
                 @click=${async () => {
+                  if (this.#creating) {
+                    return;
+                  }
+                  this.#creating = true;
                   const result = await this.#invites.getOrCreateInvite();
+                  this.#creating = false;
                   if (result.success) {
                     this.#loadInvites = this.#refreshInviteList();
                     this.requestUpdate();
@@ -224,6 +292,7 @@ export class BoardInvites extends LitElement {
                     );
                   }
                 }}
+                class="create-invite"
               >
                 Create an invite link
               </button> `}
