@@ -96,7 +96,7 @@ export class InviteManager {
       const response = await fetch(this.#url, { method: "POST" });
       const result = await response.json();
       this.#inviteList = null;
-      return result;
+      return { success: true, invite: result.invite };
     } catch (e) {
       return { success: false, error: (e as Error).message };
     }
