@@ -6,6 +6,8 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { DismissMenuEvent, ShareEvent } from "../../events/events.js";
+import { InviteManager } from "../../utils/invite.js";
+import { until } from "lit/directives/until.js";
 
 @customElement("bb-app-nav")
 export class AppNav extends LitElement {
@@ -137,9 +139,49 @@ export class AppNav extends LitElement {
     }
   `;
 
+  #invites: InviteManager = new InviteManager();
+
+  // THIS IS THE BEST UI CODE YOU'VE EVER SEEN ✨
+  async #createInviteLink(evt: Event) {
+    evt.preventDefault();
+    const a = evt.target as HTMLAnchorElement;
+    const result = await this.#invites.getOrCreateInvite();
+    if (!result.success) {
+      // IMAGINE THIS IS A TOAST ✨
+      console.error("TOAST: FAILED TO CREATE LINK", result.error);
+      return;
+    }
+    const inviteLink = this.#invites.inviteUrl(result.invite) as string;
+    await navigator.clipboard.writeText(inviteLink);
+  }
+
+  async #listInvites(evt: Event) {
+    evt.preventDefault();
+    const a = evt.target as HTMLAnchorElement;
+    const invites = await this.#invites.listInvites();
+    if (!invites.success) {
+      // IMAGINE THIS IS A TOAST ✨
+      console.error("FAILED TO LIST INVITES", invites.error);
+      return;
+    }
+    // IMAGINE PRETTY UI FOR INVITES ✨
+    console.log("INVITES", invites.invites);
+  }
+
   render() {
     const boardUrl = window.location.href.replace(/app$/, "json");
     const visualEditorUrl = `https://breadboard-ai.web.app/?board=${boardUrl}`;
+    const inviteLink = this.#invites.canCreateInvite().then((canCreate) => {
+      if (!canCreate) {
+        return nothing;
+      }
+      return html`<li>
+          <a href="" @click=${this.#createInviteLink}>Create Invite</a>
+        </li>
+        <li>
+          <a href="" @click=${this.#listInvites}>List invites (in console)</a>
+        </li>`;
+    });
     const showShare = "share" in navigator;
     return html` <div
         id="background"
@@ -160,6 +202,7 @@ export class AppNav extends LitElement {
               >Open in Visual Editor</a
             >
           </li>
+          ${until(inviteLink)}
           <!-- <li><button id="recent">Recent Activity</button></li> -->
           ${showShare
             ? html`<li>

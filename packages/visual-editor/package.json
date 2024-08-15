@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/visual-editor",
-  "version": "1.16.1",
+  "version": "1.16.3",
   "description": "The Visual Editor for Breadboard",
   "main": "./build/index.js",
   "exports": {
@@ -292,6 +292,6 @@
     "idb": "^8.0.0",
     "lit": "^3.2.0",
     "markdown-it": "^14.1.0",
-    "pixi.js": "^8.3.2"
+    "pixi.js": "^8.3.3"
   }
 }

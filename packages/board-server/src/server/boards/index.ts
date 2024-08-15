@@ -15,6 +15,8 @@ import del from "./delete.js";
 import type { ViteDevServer } from "vite";
 import invoke from "./invoke.js";
 import describe from "./describe.js";
+import inviteList from "./invite-list.js";
+import inviteUpdate from "./invite-update.js";
 import { parse } from "./utils/board-api-parser.js";
 import { cors, corsAll } from "../cors.js";
 import run from "./run.js";
@@ -28,7 +30,15 @@ const getBody = async (req: IncomingMessage): Promise<unknown> => {
     });
 
     req.on("end", () => {
-      resolve(JSON.parse(chunks.join("")));
+      const body = chunks.join("");
+      if (!body) {
+        resolve(undefined);
+      }
+      try {
+        resolve(JSON.parse(body));
+      } catch (e) {
+        resolve(undefined);
+      }
     });
   });
 };
@@ -99,6 +109,17 @@ export const serveBoardsAPI = async (
       if (!corsAll(req, res)) return true;
       const body = await getBody(req);
       if (await run(parsed, req, res, body)) return true;
+      break;
+    }
+    case "invite-list": {
+      if (!cors(req, res)) return true;
+      if (await inviteList(parsed, req, res)) return true;
+      break;
+    }
+    case "invite-update": {
+      if (!cors(req, res)) return true;
+      const body = await getBody(req);
+      if (await inviteUpdate(parsed, req, res, body)) return true;
       break;
     }
     default: {

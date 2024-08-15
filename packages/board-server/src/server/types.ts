@@ -25,7 +25,9 @@ export type UserRequestType =
   | "api"
   | "invoke"
   | "describe"
-  | "run";
+  | "run"
+  | "invite-list"
+  | "invite-update";
 
 export type RequestType = GeneralRequestType | UserRequestType;
 
@@ -110,3 +112,23 @@ export type RunBoardStateStore = {
   ): Promise<ReanimationState | undefined>;
   saveReanimationState(user: string, state: ReanimationState): Promise<string>;
 };
+
+export type CreateInviteResult =
+  | {
+      success: true;
+      invite: string;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+export type ListInviteResult =
+  | {
+      success: true;
+      invites: string[];
+    }
+  | {
+      success: false;
+      error: string;
+    };

@@ -37,3 +37,11 @@ export class ShareEvent extends Event {
     super(ShareEvent.eventName, { ...eventInit });
   }
 }
+
+export class SecretsEnterEvent extends Event {
+  static eventName = "bbsekrits";
+
+  constructor(public readonly sekrits: Record<string, string>) {
+    super(SecretsEnterEvent.eventName, { ...eventInit });
+  }
+}

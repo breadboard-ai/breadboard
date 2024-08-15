@@ -108,6 +108,10 @@ export class LLMOutputArray extends LitElement {
     bb-llm-output.visible {
       display: block;
     }
+
+    bb-llm-output:last-of-type {
+      margin-bottom: 0;
+    }
   `;
 
   protected willUpdate(
@@ -156,14 +160,14 @@ export class LLMOutputArray extends LitElement {
 
   render() {
     const showControls = this.showEntrySelector || this.showModeToggle;
-
-    return this.values
+    const values = this.values ?? [];
+    return values
       ? html` ${showControls
             ? html`<div id="controls">
                 ${this.mode === "visual" && this.showEntrySelector
                   ? html`<h1>Role</h1>
                       <div id="role-buttons">
-                        ${map(this.values, (item, idx) => {
+                        ${map(values, (item, idx) => {
                           if (item.role === "$metadata") return nothing;
                           const roleClass = (item.role || "user")
                             .toLocaleLowerCase()
@@ -212,8 +216,10 @@ export class LLMOutputArray extends LitElement {
 
           <div ${ref(this.#containerRef)}>
             ${this.mode === "visual"
-              ? map(this.values, (item, idx) => {
+              ? map(values, (item, idx) => {
                   if (item.role === "$metadata") return nothing;
+                  if (!this.showEntrySelector && idx < values.length - 1)
+                    return nothing;
                   return html`<bb-llm-output
                     ${idx === this.selected
                       ? ref(this.#activeLLMContentRef)
@@ -224,7 +230,7 @@ export class LLMOutputArray extends LitElement {
                     .lite=${this.lite}
                   ></bb-llm-output>`;
                 })
-              : html`<bb-json-tree .json=${this.values}></bb-json-tree>`}
+              : html`<bb-json-tree .json=${values}></bb-json-tree>`}
           </div>`
       : html`No items set`;
   }

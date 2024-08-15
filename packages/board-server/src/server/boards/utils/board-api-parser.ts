@@ -42,6 +42,9 @@ export const parse = (url: URL, method: string = "GET"): ParseResult => {
  * GET /boards/@:user/:name.api -> serve API description for the board
  * POST /boards/@:user/:name.api/invoke -> BSE invoke entry point
  * POST /boards/@:user/:name.api/describe -> BSE describe entry point
+ * POST /boards/@:user/:name.api/run -> Remote run entry point
+ * GET /boards/@:user/:name.invite -> Get list of current invites for the board
+ * POST /boards/@:user/:name.invite -> Create a new or delete existing invite
  */
 export class BoardAPIParser {
   #url: URL;
@@ -89,6 +92,7 @@ export class BoardAPIParser {
       const isAPI = maybeName.endsWith(".api");
       const isApp = maybeName.endsWith(".app");
       const isJson = maybeName.endsWith(".json");
+      const isInvite = maybeName.endsWith(".invite");
 
       if (isAPI) {
         const isInvoke = parts.length === 3 && parts[2] === "invoke";
@@ -132,6 +136,22 @@ export class BoardAPIParser {
           return { success: true, type: "get", board, url, user, name };
         } else if (this.#method === "POST") {
           return { success: true, type: "update", board, url, user, name };
+        }
+      } else if (isInvite && parts.length === 2) {
+        const name = `${maybeName.slice(0, -".invite".length)}.json`;
+        const board = `@${user}/${name}`;
+        const url = this.#getAdjustedBoardURL(board);
+        if (this.#method === "GET") {
+          return { success: true, type: "invite-list", board, url, user, name };
+        } else if (this.#method === "POST") {
+          return {
+            success: true,
+            type: "invite-update",
+            board,
+            url,
+            user,
+            name,
+          };
         }
       }
     }

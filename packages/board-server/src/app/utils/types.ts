@@ -1,56 +1,51 @@
 /**
  * @license
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  type NodeValue,
-  type Schema,
-  type UnresolvedPathBoardCapability,
+import type {
+  ErrorResponse,
+  InputValues,
+  NodeDescriptor,
+  OutputValues,
+  Schema,
 } from "@google-labs/breadboard";
 
-export const isBoardBehavior = (
-  schema: Schema,
-  value: NodeValue
-): value is UnresolvedPathBoardCapability | string | undefined => {
-  if (!schema.behavior?.includes("board")) return false;
-  if (!value) return true;
-  if (typeof value === "string") return true;
-  if (typeof value === "object") {
-    const maybeCapability = value as UnresolvedPathBoardCapability;
-    return maybeCapability.kind === "board" && !!maybeCapability.path;
-  }
-  return false;
+export type NodeLogEntry = {
+  type: "node";
+  id: string;
+  descriptor: NodeDescriptor;
+  hidden: boolean;
+  start: number;
+  bubbled: boolean;
+  end: number | null;
+  title(): string;
 };
 
-export function isPortSpecBehavior(schema: Schema) {
-  return schema.behavior?.includes("ports-spec");
-}
+export type EdgeLogEntry = {
+  type: "edge";
+  id?: string;
+  end: number | null;
+  schema?: Schema;
+  value?: InputValues;
+};
 
-export function isCodeBehavior(schema: Schema) {
-  return schema.behavior?.includes("code");
-}
+export type ErrorLogEntry = {
+  type: "error";
+  error: ErrorResponse["error"];
+};
 
-export function isLLMContentBehavior(schema: Schema) {
-  return schema.behavior?.includes("llm-content");
-}
+export type LogEntry = NodeLogEntry | EdgeLogEntry | ErrorLogEntry;
 
-export function isLLMContentArrayBehavior(schema: Schema) {
-  if (schema.type !== "array") return false;
-  if (Array.isArray(schema.items)) return false;
-  if (schema.items?.type !== "object") return false;
-  if (!schema.items?.behavior?.includes("llm-content")) return false;
+export type InviteListResponse =
+  | { success: true; invites: string[] }
+  | { success: false; error: string };
 
-  return true;
-}
+export type CreateInviteResponse =
+  | { success: true; invite: string }
+  | { success: false; error: string };
 
-export function isImageURL(
-  nodeValue: unknown
-): nodeValue is { image_url: string } {
-  if (typeof nodeValue !== "object" || !nodeValue) {
-    return false;
-  }
-
-  return "image_url" in nodeValue;
-}
+export type DeleteInviteResponse =
+  | { success: true; deleted: string }
+  | { success: false; error: string };
