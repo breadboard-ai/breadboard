@@ -4,13 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
+  anyOf,
   board,
   enumeration,
   input,
   object,
   output,
+  serialize,
 } from "@breadboard-ai/build";
 import { code, invoke } from "@google-labs/core-kit";
+import { geminiText } from "@google-labs/gemini-kit";
 
 const text = input({
   type: "string",
@@ -22,19 +25,16 @@ const model = input({
   type: enumeration("Gemini Pro", "GPT 3.5 Turbo")
 });
 
+const geminiGenerator = serialize(geminiText);
+
 const switchModel = code(
-  { model },
-  { board: object({ kind: "string", path: "string"}), model: "string" },
-  ({ model }) => {
-    const models: Record<string, string> = {
-      "Gemini Pro": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/gemini-kit/graphs/gemini-generator.json",
-      "GPT 3.5 Turbo": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/visual-editor/public/example-boards/playground/openai-gpt-35-turbo.json",
-    };
-    const path = models[model];
+  { model, serialized: JSON.stringify(geminiGenerator) },
+  { board: anyOf(object({ kind: "string", board: "string"}), object({ kind: "string", path: "string"})), model: "string" },
+  ({ model, serialized }) => {
     if (model == "Gemini Pro") {
-      return  { board: { kind: "board", path }, model: "gemini-1.5-pro-latest" }
+      return  { board: { kind: "board", board: JSON.parse(serialized) }, model: "gemini-1.5-pro-latest" }
     } else {
-      return  { board: { kind: "board", path }, model: "N/A" } // The OpenAI board only supports one model
+      return  { board: { kind: "board", path: "openai-gpt-35-turbo.json" }, model: "N/A" } // The OpenAI board only supports one model
     }
   }
 );
