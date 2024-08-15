@@ -522,12 +522,19 @@ export class AppView extends LitElement {
       },
     };
 
-    if (this.runOnBoardServer && this.boardServerKey) {
-      config.remote = {
-        url: getRemoteURL(),
-        type: "http",
-        key: this.boardServerKey,
-      };
+    if (this.runOnBoardServer) {
+      if (this.boardServerKey) {
+        config.remote = {
+          url: getRemoteURL(),
+          type: "http",
+          key: this.boardServerKey,
+        };
+      } else {
+        this.#toast(
+          "No Board Server API key provided",
+          BreadboardUI.Events.ToastType.WARNING
+        );
+      }
     }
 
     this.#runner = createRunner(config);
