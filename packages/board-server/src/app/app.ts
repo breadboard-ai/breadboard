@@ -6,7 +6,12 @@
 import { LitElement, html, css, type PropertyValueMap, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import { InputEnterEvent, SecretsEnterEvent } from "./events/events.js";
+import {
+  BoardServerAPIKeyEnterEvent,
+  InputEnterEvent,
+  RunContextChangeEvent,
+  SecretsEnterEvent,
+} from "./events/events.js";
 import {
   createDefaultDataStore,
   createLoader,
@@ -34,6 +39,7 @@ import { LightObserver } from "./utils/light-observer.js";
 import { toGuestKey as toGuestStorageKey } from "./utils/invite.js";
 
 const BOARD_SERVER_KEY = "board-server-key";
+const RUN_ON_BOARD_SERVER = "run-on-board-server";
 
 const randomMessage: UserMessage[] = [
   {
@@ -70,17 +76,9 @@ const getRemoteURL = () => {
  *
  * First, try to get the key from local storage. If it's not there, check the
  * URL. If the URL has a `key` parameter, use that.
- *
- * If the URL has a `local` parameter, return `undefined`, forcing the app to
- * run in local mode.
- *
  */
-const getApiKey = () => {
+const getApiKey = (): string | null => {
   const url = new URL(window.location.href);
-  const forceLocal = url.searchParams.has("local");
-  if (forceLocal) {
-    return undefined;
-  }
   const locallyStoredKey = globalThis.localStorage.getItem(BOARD_SERVER_KEY);
   if (locallyStoredKey) {
     return locallyStoredKey;
@@ -92,7 +90,7 @@ const getApiKey = () => {
       return guestKey;
     }
   }
-  return url.searchParams.get("key") || undefined;
+  return url.searchParams.get("key") || null;
 };
 
 @customElement("bb-app-view")
@@ -110,7 +108,22 @@ export class AppView extends LitElement {
   showMenu = false;
 
   @state()
+  showServerKeyPopover = false;
+
+  @state()
   statusMessage: string | null = null;
+
+  @state()
+  runOnBoardServer = false;
+
+  @state()
+  boardKeyNeeded = false;
+
+  @state()
+  boardServerKey: string | null = getApiKey();
+
+  @state()
+  secretsNeeded: string[] | null = null;
 
   #statusMessageTime: string | null = null;
   #loader = createLoader([]);
@@ -305,6 +318,10 @@ export class AppView extends LitElement {
         column-gap: var(--bb-grid-size-5);
       }
 
+      #board-info {
+        width: 100%;
+      }
+
       #board-info-container {
         background: var(--bb-neutral-0);
         border-bottom: 1px solid var(--bb-neutral-300);
@@ -389,13 +406,12 @@ export class AppView extends LitElement {
     }
   `;
 
-  @state()
-  secretsNeeded: string[] | null = null;
-
   connectedCallback(): void {
     super.connectedCallback();
 
     this.url = window.location.pathname.replace(/app$/, "json");
+    this.runOnBoardServer =
+      globalThis.localStorage.getItem(RUN_ON_BOARD_SERVER) === "true";
 
     this.#maybeProcessInvite();
   }
@@ -408,29 +424,42 @@ export class AppView extends LitElement {
 
   protected willUpdate(
     changedProperties:
-      | PropertyValueMap<{ url: string }>
+      | PropertyValueMap<{
+          url: string | null;
+          runOnBoardServer: boolean;
+          boardServerKey: string | null;
+        }>
       | Map<PropertyKey, unknown>
   ): void {
-    if (!changedProperties.has("url")) {
-      return;
+    if (changedProperties.has("url")) {
+      this.#descriptorLoad = new Promise(async (resolve) => {
+        if (!this.url) {
+          resolve(null);
+          return;
+        }
+
+        try {
+          const response = await fetch(this.url);
+          const graph = (await response.json()) as GraphDescriptor;
+          document.title = `${`${graph.title} - ` ?? ""}Breadboard App View`;
+          resolve(graph);
+        } catch (err) {
+          console.warn(err);
+          resolve(null);
+        }
+      });
     }
 
-    this.#descriptorLoad = new Promise(async (resolve) => {
-      if (!this.url) {
-        resolve(null);
-        return;
+    if (
+      changedProperties.has("runOnBoardServer") ||
+      changedProperties.has("boardServerKey")
+    ) {
+      if (this.runOnBoardServer) {
+        this.boardKeyNeeded = this.boardServerKey === null;
+      } else {
+        this.boardKeyNeeded = false;
       }
-
-      try {
-        const response = await fetch(this.url);
-        const graph = (await response.json()) as GraphDescriptor;
-        document.title = `${`${graph.title} - ` ?? ""}Breadboard App View`;
-        resolve(graph);
-      } catch (err) {
-        console.warn(err);
-        resolve(null);
-      }
-    });
+    }
   }
 
   stopRun() {
@@ -455,8 +484,6 @@ export class AppView extends LitElement {
 
     this.#abortController = new AbortController();
 
-    const key = getApiKey();
-
     const config: RunConfig = {
       url: this.url,
       kits,
@@ -471,11 +498,11 @@ export class AppView extends LitElement {
       },
     };
 
-    if (key) {
+    if (this.runOnBoardServer && this.boardServerKey) {
       config.remote = {
         url: getRemoteURL(),
         type: "http",
-        key: getApiKey(),
+        key: this.boardServerKey,
       };
     }
 
@@ -612,6 +639,11 @@ export class AppView extends LitElement {
     localStorage.setItem(guestStorageKey, invite);
   }
 
+  #storeBoardServerKey(key: string) {
+    globalThis.localStorage.setItem(BOARD_SERVER_KEY, key);
+    this.boardServerKey = getApiKey();
+  }
+
   #renderLoading() {
     return html`<div id="loading">Loading...</div>`;
   }
@@ -639,6 +671,14 @@ export class AppView extends LitElement {
     }
 
     return secrets;
+  }
+
+  #toggleRunContext(evt: RunContextChangeEvent) {
+    this.runOnBoardServer = evt.where === "remote";
+    globalThis.localStorage.setItem(
+      RUN_ON_BOARD_SERVER,
+      `${this.runOnBoardServer}`
+    );
   }
 
   render() {
@@ -722,15 +762,28 @@ export class AppView extends LitElement {
       }
     );
 
-    return html` <main ?inert=${this.secretsNeeded}>
-        <bb-app-nav
-          .popout=${true}
-          @bbdismissmenu=${() => {
-            this.showMenu = false;
-          }}
-          @bbshare=${this.#share}
-          ?visible=${this.showMenu}
-        ></bb-app-nav>
+    const nav = (popout: boolean) => {
+      return html`<bb-app-nav
+        .popout=${popout}
+        .runOnBoardServer=${this.runOnBoardServer}
+        .boardKeyNeeded=${this.boardKeyNeeded}
+        @bbdismissmenu=${() => {
+          this.showMenu = false;
+        }}
+        @bbruncontextchange=${this.#toggleRunContext}
+        @bbshare=${this.#share}
+        @bbserverkeyrequest=${() => {
+          this.showServerKeyPopover = true;
+        }}
+        ?visible=${popout && this.showMenu}
+      ></bb-app-nav>`;
+    };
+
+    const inert =
+      this.secretsNeeded || this.showMenu || this.showServerKeyPopover;
+
+    return html` <main ?inert=${inert}>
+        ${nav(true)}
         <section id="board-info-container">
           <div id="board-info">
             <header>
@@ -745,7 +798,7 @@ export class AppView extends LitElement {
               <h1>${until(boardTitle, this.#renderLoading())}</h1>
             </header>
             <p id="board-description">${until(boardDescription)}</p>
-            <bb-app-nav .popout=${false} @bbshare=${this.#share}></bb-app-nav>
+            ${nav(false)}
           </div>
         </section>
         <section id="activity-container" ?inert=${this.showMenu}>
@@ -767,8 +820,20 @@ export class AppView extends LitElement {
             }}
           ></bb-secret-requester>`
         : nothing}
+      ${this.showServerKeyPopover
+        ? html`<bb-board-server-key
+            .key=${this.boardServerKey}
+            @bboverlaydismiss=${() => {
+              this.showServerKeyPopover = false;
+            }}
+            @bbserverkeyenter=${(evt: BoardServerAPIKeyEnterEvent) => {
+              this.#storeBoardServerKey(evt.key);
+              this.showServerKeyPopover = false;
+            }}
+          ></bb-board-server-key>`
+        : nothing}
 
-      <footer ?inert=${this.secretsNeeded}>
+      <footer ?inert=${inert}>
         <div id="links">
           Created with
           <a href="https://breadboard-ai.github.io/breadboard/">Breadboard</a>

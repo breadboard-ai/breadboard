@@ -30,6 +30,14 @@ export class DismissMenuEvent extends Event {
   }
 }
 
+export class OverlayDismissEvent extends Event {
+  static eventName = "bboverlaydismiss";
+
+  constructor() {
+    super(OverlayDismissEvent.eventName, { ...eventInit });
+  }
+}
+
 export class ShareEvent extends Event {
   static eventName = "bbshare";
 
@@ -43,5 +51,29 @@ export class SecretsEnterEvent extends Event {
 
   constructor(public readonly sekrits: Record<string, string>) {
     super(SecretsEnterEvent.eventName, { ...eventInit });
+  }
+}
+
+export class BoardServerAPIKeyEnterEvent extends Event {
+  static eventName = "bbserverkeyenter";
+
+  constructor(public readonly key: string) {
+    super(BoardServerAPIKeyEnterEvent.eventName, { ...eventInit });
+  }
+}
+
+export class BoardServerKeyRequestEvent extends Event {
+  static eventName = "bbserverkeyrequest";
+
+  constructor() {
+    super(BoardServerKeyRequestEvent.eventName, { ...eventInit });
+  }
+}
+
+export class RunContextChangeEvent extends Event {
+  static eventName = "bbruncontextchange";
+
+  constructor(public readonly where: "remote" | "local") {
+    super(RunContextChangeEvent.eventName, { ...eventInit });
   }
 }
