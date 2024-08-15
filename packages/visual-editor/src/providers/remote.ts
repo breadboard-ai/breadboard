@@ -83,7 +83,7 @@ const createRequest = (
 
 const signInToServer = (serverUrl: string, key: string) => {
   const url = new URL(serverUrl);
-  url.searchParams.set("key", key);
+  url.searchParams.set("API_KEY", key);
   const signInIframe = document.createElement("iframe");
   signInIframe.src = url.href;
   signInIframe.style.display = "none";
