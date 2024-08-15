@@ -1,6 +1,6 @@
 {
-  "title": "Novel Generator Developer",
-  "description": "Develops a novel",
+  "title": "Tool: Novel Developer",
+  "description": "Develops a novel based on an outline.",
   "version": "0.0.1",
   "nodes": [
     {
@@ -28,8 +28,8 @@
       },
       "metadata": {
         "visual": {
-          "x": -37.16229248046875,
-          "y": -83.23087692260754,
+          "x": 202.05468749999983,
+          "y": -28.183593749999943,
           "collapsed": true
         }
       }
@@ -59,8 +59,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 727.8255004882812,
-          "y": -83.39669799804688,
+          "x": 967.04248046875,
+          "y": -28.34941482543951,
           "collapsed": true
         }
       }
@@ -70,8 +70,8 @@
       "type": "looper",
       "metadata": {
         "visual": {
-          "x": 193.83770751953125,
-          "y": -84.23087692260742,
+          "x": 433.0546875,
+          "y": -29.183593749999773,
           "collapsed": true
         },
         "title": "Literary Agent",
@@ -93,8 +93,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 432.83770751953114,
-          "y": 223.76912307739258,
+          "x": 672.0546874999999,
+          "y": 278.8164062500002,
           "collapsed": true
         },
         "title": "Writer (revise)",
@@ -124,8 +124,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 470.82550048828114,
-          "y": -83.39669799804688,
+          "x": 710.0424804687501,
+          "y": -28.34941482543951,
           "collapsed": true
         },
         "title": "Publisher",
@@ -155,8 +155,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 218.83770751953125,
-          "y": 223.76912307739258,
+          "x": 458.0546874999998,
+          "y": 278.8164062500002,
           "collapsed": true
         },
         "title": "Editor",
@@ -186,8 +186,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 3.8377075195312784,
-          "y": 222.76912307739258,
+          "x": 243.05468749999994,
+          "y": 277.81640625,
           "collapsed": true
         },
         "title": "Writer (draft)",
@@ -258,21 +258,35 @@
     }
   ],
   "metadata": {
+    "help": {
+      "description": "Read the guide",
+      "url": "https://breadboard-ai.github.io/breadboard/docs/guides/novel-generator/"
+    },
     "comments": [
       {
         "id": "comment-7f904f21",
         "text": "Develops the novel chapter by chapter",
         "metadata": {
           "visual": {
-            "x": 196.82550048828125,
-            "y": -171.39669799804688,
+            "x": 436.0424804687499,
+            "y": -116.34941482543957,
+            "collapsed": true
+          }
+        }
+      },
+      {
+        "id": "comment-d234a397",
+        "text": "Read the guide: [Building a Novel Generator with the Agent Kit](https://breadboard-ai.github.io/breadboard/docs/guides/novel-generator/)",
+        "metadata": {
+          "visual": {
+            "x": 203.9999999999999,
+            "y": -213,
             "collapsed": true
           }
         }
       }
     ],
     "tags": [
-      "published",
       "tool"
     ]
   }

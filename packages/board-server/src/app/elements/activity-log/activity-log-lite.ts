@@ -9,7 +9,14 @@ import {
   type ErrorObject,
   type Schema,
 } from "@google-labs/breadboard";
-import { LitElement, html, css, nothing, type HTMLTemplateResult } from "lit";
+import {
+  LitElement,
+  html,
+  css,
+  nothing,
+  type HTMLTemplateResult,
+  type PropertyValues,
+} from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { until } from "lit/directives/until.js";
@@ -27,11 +34,7 @@ import {
 } from "../../utils/content-schema.js";
 
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import type {
-  EdgeLogEntry,
-  LogEntry,
-  NodeLogEntry,
-} from "../../utils/types.js";
+import type { EdgeLogEntry, LogEntry } from "../../utils/types.js";
 
 @customElement("bb-activity-log-lite")
 export class ActivityLogLite extends LitElement {
@@ -124,10 +127,31 @@ export class ActivityLogLite extends LitElement {
       color: var(--bb-neutral-400);
     }
 
+    .node-output {
+      margin: 0;
+    }
+
     .pending-input,
     .edge {
-      padding: 24px 8px 24px 64px;
+      padding: var(--bb-grid-size-4) var(--bb-grid-size-2) var(--bb-grid-size-4)
+        var(--bb-grid-size-16);
       position: relative;
+    }
+
+    .pending-input.newest,
+    .edge.newest {
+      animation: fadeAndSlideIn 0.3s cubic-bezier(0, 0, 0.3, 1) forwards;
+    }
+
+    .edge.empty {
+      height: 0;
+      display: flex;
+      align-items: center;
+      color: var(--bb-neutral-600);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      padding-top: var(--bb-grid-size-2);
+      padding-bottom: var(--bb-grid-size-2);
     }
 
     .pending-input::before,
@@ -149,8 +173,19 @@ export class ActivityLogLite extends LitElement {
       width: 28px;
       height: 28px;
       border: 1px solid var(--bb-neutral-300);
-
       border-radius: 50%;
+    }
+
+    .pending-input.newest::before,
+    .edge.newest::before {
+      transform: scaleY(0);
+      animation: growFromTop 0.3s cubic-bezier(0, 0, 0.3, 1) 0.2s forwards;
+    }
+
+    .pending-input.newest::after,
+    .edge.newest::after {
+      opacity: 0;
+      animation: fadeAndSlideIn 0.3s cubic-bezier(0, 0, 0.3, 1) 0.4s forwards;
     }
 
     .pending-input::after {
@@ -161,6 +196,14 @@ export class ActivityLogLite extends LitElement {
     .edge::after {
       background: var(--bb-neutral-0) var(--bb-icon-output) center center / 20px
         20px no-repeat;
+    }
+
+    .edge.empty::after {
+      display: none;
+    }
+
+    .edge.empty.newest::before {
+      display: none;
     }
 
     .edge bb-llm-output,
@@ -174,10 +217,36 @@ export class ActivityLogLite extends LitElement {
     }
 
     .entry {
+      position: relative;
       border: 1px solid var(--bb-neutral-200);
       border-radius: var(--bb-grid-size-10);
       padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
       width: 50%;
+      animation: fadeAndSlideIn 0.3s cubic-bezier(0, 0, 0.3, 1) forwards;
+    }
+
+    .entry.pending::after {
+      content: "";
+      position: absolute;
+      left: calc(100% + var(--bb-grid-size-2));
+      top: calc(50% - 8px);
+      width: 16px;
+      height: 16px;
+      background: url(/images/progress-ui.svg) center center / 16px 16px
+        no-repeat;
+    }
+
+    .entry:not(.pending)::after {
+      content: attr(completed);
+      position: absolute;
+      left: calc(100% + var(--bb-grid-size-2));
+      top: calc(50% - 8px);
+      height: 16px;
+      color: var(--bb-neutral-600);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      width: auto;
+      min-width: 150px;
     }
 
     .entry.hidden {
@@ -277,6 +346,20 @@ export class ActivityLogLite extends LitElement {
       margin: var(--bb-grid-size-2) 0 var(--bb-grid-size) 0;
     }
 
+    .completed-item .title {
+      display: block;
+      font: 600 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
+      padding: var(--bb-grid-size-2) 0 var(--bb-grid-size) 0;
+    }
+
+    .completed-item .description {
+      display: block;
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      margin: 0 0 var(--bb-grid-size-2) 0;
+    }
+
     @media (min-width: 700px) {
       #controls {
         grid-template-rows: 24px;
@@ -304,11 +387,37 @@ export class ActivityLogLite extends LitElement {
         padding: var(--bb-grid-size-2) 0;
       }
     }
+
+    @keyframes fadeAndSlideIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes growFromTop {
+      from {
+        transform-origin: 0 0;
+        transform: scale(1, 0);
+      }
+
+      to {
+        transform-origin: 0 0;
+        transform: scale(1, 1);
+      }
+    }
   `;
 
+  #jumpToBottomAfterUpdated = false;
   #formatter = new Intl.DateTimeFormat(navigator.languages, {
-    dateStyle: "medium",
-    timeStyle: "short",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
   });
   #userInputRef: Ref<BreadboardUI.Elements.UserInput> = createRef();
   #activityRef: Ref<HTMLDivElement> = createRef();
@@ -401,7 +510,6 @@ export class ActivityLogLite extends LitElement {
   async #renderCompletedInputOrOutput(event: EdgeLogEntry) {
     const { value, schema } = event;
     const type = event.id ? "input" : "output";
-
     if (!value) {
       return html`Unable to render item`;
     }
@@ -434,7 +542,11 @@ export class ActivityLogLite extends LitElement {
             }
 
             value = nodeValue.parts.length
-              ? html`<bb-llm-output .value=${nodeValue}></bb-llm-output>`
+              ? html`<bb-llm-output
+                  .clamped=${false}
+                  .lite=${true}
+                  .value=${nodeValue}
+                ></bb-llm-output>`
               : html`No data provided`;
           } else if (isImageURL(nodeValue)) {
             value = html`<img src=${nodeValue.image_url} />`;
@@ -468,41 +580,88 @@ export class ActivityLogLite extends LitElement {
           >${renderableValue}</div>`;
         }
 
-        return html`${value}`;
+        let title: HTMLTemplateResult | symbol = nothing;
+        let description: HTMLTemplateResult | symbol = nothing;
+        if (schema && schema.properties) {
+          title = html`${schema.properties[name]?.title ?? `Input`}`;
+
+          if (schema.properties[name]?.description) {
+            description = html`<span class="description"
+              >${schema.properties[name]?.description}</span
+            >`;
+          }
+        }
+
+        return type === "input"
+          ? html`<div class="completed-item">
+              <label>
+                <span class="title">${title}</span>
+                ${description}
+              </label>
+              ${value}
+            </div>`
+          : html`${value}`;
       })}
     </dl>`;
   }
 
   #renderLog(entries: LogEntry[]) {
-    return html`${map(entries, (entry) => {
+    return html`${map(entries, (entry, idx) => {
+      const newest = idx === entries.length - 1;
       switch (entry.type) {
         case "edge": {
+          const pending = entry.end === null;
+
           if (entry.id) {
             // The "input" edge will have an id
             // TODO: Maybe we should just have different types of edges?
             if (entry.end !== null) {
-              return html`<section class="edge">
+              return html`<section
+                class=${classMap({
+                  ["edge"]: true,
+                  newest,
+                  pending,
+                })}
+              >
                 ${until(this.#renderCompletedInputOrOutput(entry))}
               </section>`;
             }
-            return html`<section class="pending-input">
+            return html`<section
+              class=${classMap({
+                ["pending-input"]: true,
+                newest,
+                pending,
+              })}
+            >
               ${until(this.#renderPendingInput(entry))}
             </section>`;
           }
           if (entry.value) {
             // The "output" edge will have no id, but will have a value.
-            return html`<section class="edge">
+            return html`<section
+              class=${classMap({
+                ["edge"]: true,
+                newest,
+                pending,
+              })}
+            >
               ${until(this.#renderCompletedInputOrOutput(entry))}
             </section>`;
           }
 
-          return html`<section class="edge empty"></section>`;
+          return html`<section
+            class=${classMap({
+              ["edge"]: true,
+              ["empty"]: true,
+              newest,
+              pending,
+            })}
+          ></section>`;
         }
 
         case "node": {
           const { descriptor, end } = entry;
           const { type } = descriptor;
-          // const { icon } = node.type().metadata();
           const icon = undefined;
 
           let content:
@@ -521,7 +680,15 @@ export class ActivityLogLite extends LitElement {
             classes[icon] = true;
           }
 
-          return html` <section class=${classMap(classes)}>
+          let completed = null;
+          if (end !== null) {
+            completed = this.#formatter.format(this.start + end);
+          }
+
+          return html` <section
+              class=${classMap(classes)}
+              completed=${completed ?? nothing}
+            >
               ${entry.title()}
             </section>
             ${content}`;
@@ -559,18 +726,6 @@ export class ActivityLogLite extends LitElement {
     })}`;
   }
 
-  #expandAll() {
-    if (!this.#activityRef.value) {
-      return;
-    }
-
-    this.#activityRef.value
-      .querySelectorAll<HTMLDetailsElement>("details")
-      .forEach((details) => {
-        details.open = true;
-      });
-  }
-
   #jumpToBottom() {
     if (!this.#activityRef.value) {
       return;
@@ -586,11 +741,30 @@ export class ActivityLogLite extends LitElement {
     if (!entry) {
       return;
     }
-    entry.scrollIntoView({ behavior: "smooth" });
+    entry.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+      inline: "nearest",
+    });
+  }
+
+  protected willUpdate(changedProperties: PropertyValues): void {
+    if (!changedProperties.has("log")) {
+      return;
+    }
+
+    this.#jumpToBottomAfterUpdated = true;
   }
 
   protected updated(): void {
-    this.#jumpToBottom();
+    if (!this.#jumpToBottomAfterUpdated) {
+      return;
+    }
+
+    this.#jumpToBottomAfterUpdated = false;
+    requestAnimationFrame(() => {
+      this.#jumpToBottom();
+    });
   }
 
   render() {

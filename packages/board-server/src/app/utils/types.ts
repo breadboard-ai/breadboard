@@ -37,3 +37,15 @@ export type ErrorLogEntry = {
 };
 
 export type LogEntry = NodeLogEntry | EdgeLogEntry | ErrorLogEntry;
+
+export type InviteListResponse =
+  | { success: true; invites: string[] }
+  | { success: false; error: string };
+
+export type CreateInviteResponse =
+  | { success: true; invite: string }
+  | { success: false; error: string };
+
+export type DeleteInviteResponse =
+  | { success: true; deleted: string }
+  | { success: false; error: string };

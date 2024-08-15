@@ -46,7 +46,7 @@ To make this board usable from other boards, we'll check the Tool checkbox in th
 
 Now, let's implement it! Here's the complete board:
 
-{{ "/breadboard/static/boards/novel-generator/novel-generator-outliner.bgl.json" | board }}
+{{ "/breadboard/static/boards/novel-generator/tool-novel-outliner.bgl.json" | board }}
 
 Yes, there's a lot going on! Let's summarize it in three steps: (1) the author writes a draft, (2) the author revises the text based on a friends' feedback, and (3) the patron selects their preferred outline.
 Next we'll explain how each of them works.
@@ -119,9 +119,9 @@ The outliner board is complete! Excellent progress. We'll use it next to develop
 
 ## Step 2: Create a developer
 
-Let's [create another board](/breadboard/docs/reference/visual-editor/#creating-a-new-board). We can call it `developer.bgl.json`. It will look like this when we're done: 
+Let's [create another board](/breadboard/docs/reference/visual-editor/#creating-a-new-board). We can call it `my-novel-developer.bgl.json`. It will look like this when we're done: 
 
-{{ "/breadboard/static/boards/novel-generator/novel-generator-developer.bgl.json" | board }}
+{{ "/breadboard/static/boards/novel-generator/tool-novel-developer.bgl.json" | board }}
 
 >[!NOTE]
 > Don't forget to save this board as a Tool, so we can call it from another board.

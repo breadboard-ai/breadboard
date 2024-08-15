@@ -1,6 +1,6 @@
 {
-  "title": "Novel Generator Outliner",
-  "description": "Generates a novel outline.",
+  "title": "Tool: Novel Outliner",
+  "description": "Outlines a novel outline based on an idea.",
   "version": "0.0.1",
   "nodes": [
     {
@@ -28,8 +28,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 96.99999999999999,
-          "y": -466.9999999999998,
+          "x": 163.29296875,
+          "y": -312.60546875,
           "collapsed": true
         },
         "title": "Input",
@@ -61,8 +61,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 1457,
-          "y": -465,
+          "x": 1523.2929687500002,
+          "y": -310.6054687500002,
           "collapsed": true
         },
         "title": "Result",
@@ -74,8 +74,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 262.89558854498694,
-          "y": -466.03943203110725,
+          "x": 329.18855729498694,
+          "y": -311.6449007811074,
           "collapsed": true
         },
         "title": "Author",
@@ -106,8 +106,8 @@
       "type": "human",
       "metadata": {
         "visual": {
-          "x": 1223,
-          "y": -465,
+          "x": 1289.29296875,
+          "y": -310.6054687500002,
           "collapsed": true
         },
         "title": "Patron",
@@ -124,8 +124,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 528,
-          "y": -607.9999999999999,
+          "x": 594.29296875,
+          "y": -453.6054687500001,
           "collapsed": true
         },
         "title": "Friend (encouraging)",
@@ -155,8 +155,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 520,
-          "y": -463,
+          "x": 586.29296875,
+          "y": -308.6054687500002,
           "collapsed": true
         },
         "title": "Friend (skeptical)",
@@ -186,8 +186,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 523.9999999999999,
-          "y": -337.9999999999998,
+          "x": 590.2929687499999,
+          "y": -183.60546875,
           "collapsed": true
         },
         "title": "Friend (neutral)",
@@ -217,8 +217,8 @@
       "type": "joiner",
       "metadata": {
         "visual": {
-          "x": 1020,
-          "y": -465,
+          "x": 1086.29296875,
+          "y": -310.6054687500002,
           "collapsed": true
         },
         "title": "SxS",
@@ -231,8 +231,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 768.9999999999999,
-          "y": -606.9999999999998,
+          "x": 835.29296875,
+          "y": -452.60546875000006,
           "collapsed": true
         },
         "title": "Author",
@@ -262,8 +262,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 760.9999999999999,
-          "y": -462.9999999999999,
+          "x": 827.2929687500001,
+          "y": -308.6054687500001,
           "collapsed": true
         },
         "title": "Author",
@@ -293,8 +293,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 760,
-          "y": -337.9999999999998,
+          "x": 826.29296875,
+          "y": -183.60546875,
           "collapsed": true
         },
         "title": "Author",
@@ -395,18 +395,14 @@
     }
   ],
   "metadata": {
-    "tags": [
-      "published",
-      "tool"
-    ],
     "comments": [
       {
         "id": "comment-975f58ba",
         "text": "Writes initial draft",
         "metadata": {
           "visual": {
-            "x": 188.99999999999997,
-            "y": -544,
+            "x": 255.29296875,
+            "y": -389.60546875000017,
             "collapsed": true
           }
         }
@@ -416,8 +412,8 @@
         "text": "Generates 3 parallel revisions",
         "metadata": {
           "visual": {
-            "x": 629,
-            "y": -716.9999999999998,
+            "x": 695.2929687499999,
+            "y": -562.60546875,
             "collapsed": true
           }
         }
@@ -427,12 +423,26 @@
         "text": "Offers choice",
         "metadata": {
           "visual": {
-            "x": 1240.9999999999998,
-            "y": -552.9999999999999,
+            "x": 1307.29296875,
+            "y": -398.6054687500001,
+            "collapsed": true
+          }
+        }
+      },
+      {
+        "id": "comment-d234a397",
+        "text": "Read the guide: [Building a Novel Generator with the Agent Kit](https://breadboard-ai.github.io/breadboard/docs/guides/novel-generator/)",
+        "metadata": {
+          "visual": {
+            "x": 171,
+            "y": -563,
             "collapsed": true
           }
         }
       }
+    ],
+    "tags": [
+      "tool"
     ]
   }
 }

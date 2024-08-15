@@ -47,6 +47,19 @@ const placeOutputInLog = (log: LogEntry[], edge: EdgeLogEntry): LogEntry[] => {
   if (maybeReplace.type === "edge" && !maybeReplace.value) {
     return [...log.slice(0, lastNode - 1), edge, ...log.slice(lastNode)];
   }
+
+  // To avoid there being two edges placed side-by-side we skip this edge if we
+  // intend to place it next to an existing edge.
+  if (lastNode > 0) {
+    const succeedingItemIdx = lastNode + 1;
+    const precedingItemIsEdge = log[lastNode] && log[lastNode].type === "edge";
+    const succeedingItemIsEdge =
+      log[succeedingItemIdx] && log[succeedingItemIdx].type === "edge";
+    if (precedingItemIsEdge || succeedingItemIsEdge) {
+      return [...log];
+    }
+  }
+
   return [...log.slice(0, lastNode), edge, ...log.slice(lastNode)];
 };
 
@@ -72,7 +85,8 @@ export class LightObserver {
    */
   #currentInput: EdgeLogEntry | null = null;
 
-  constructor(runner: HarnessRunner) {
+  constructor(runner: HarnessRunner, signal: AbortSignal) {
+    signal.addEventListener("abort", this.#abort.bind(this));
     runner.addEventListener("nodestart", this.#nodeStart.bind(this));
     runner.addEventListener("nodeend", this.#nodeEnd.bind(this));
     runner.addEventListener("graphstart", this.#graphStart.bind(this));
@@ -86,11 +100,11 @@ export class LightObserver {
       this.#log = [...this.#log, { type: "error", error: event.data.error }];
     });
     runner.addEventListener("resume", (event) => {
-      this.#cleanUpPendingNodes(event.data.inputs || {});
+      this.#cleanUpPendingInput(event.data.inputs || {});
     });
   }
 
-  #cleanUpPendingNodes(inputs: OutputValues) {
+  #cleanUpPendingInput(inputs: OutputValues) {
     if (!this.#currentInput) {
       return;
     }
@@ -105,6 +119,18 @@ export class LightObserver {
 
   log(): LogEntry[] | null {
     return this.#log;
+  }
+
+  #abort() {
+    this.#cleanUpPendingInput({});
+    if (!this.#currentNode) {
+      return;
+    }
+    this.#currentNode.end = globalThis.performance.now();
+    this.#currentNode = null;
+    if (this.#log) {
+      this.#log = [...this.#log, new EndNode("Activity stopped")];
+    }
   }
 
   #graphStart(event: RunGraphStartEvent) {
@@ -159,7 +185,7 @@ export class LightObserver {
     }
 
     const type = event.data.node.type;
-    if (type === "output" || type === "input") {
+    if (type === "output") {
       return;
     }
 
@@ -305,10 +331,35 @@ class InputEdge implements EdgeLogEntry {
 class UserNode extends Node {
   constructor(event: RunInputEvent) {
     super(event);
+    this.descriptor = structuredClone(this.descriptor);
     this.descriptor.type = "user";
   }
 
   title(): string {
     return "User";
+  }
+}
+
+class EndNode implements NodeLogEntry {
+  type: "node" = "node";
+  id: string = "end";
+  descriptor = {
+    id: "end",
+    metadata: {
+      title: "End",
+    },
+    type: "end",
+  };
+  hidden = false;
+  start = globalThis.performance.now();
+  bubbled = false;
+  end = globalThis.performance.now();
+
+  constructor(reason: string) {
+    this.descriptor.metadata!.title = reason;
+  }
+
+  title(): string {
+    return this.descriptor.metadata!.title!;
   }
 }

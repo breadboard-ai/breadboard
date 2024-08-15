@@ -167,7 +167,7 @@
     {
       "title": "OpenAI GPT-3.5-turbo",
       "reference": "/example-boards/playground/openai-gpt-35-turbo.json",
-      "version": "0.0.2"
+      "version": "0.1.0"
     },
     {
       "title": "OpenAI GPT 4 Vision Preview",
