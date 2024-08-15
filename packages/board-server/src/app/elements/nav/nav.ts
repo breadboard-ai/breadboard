@@ -8,11 +8,10 @@ import { customElement, property } from "lit/decorators.js";
 import {
   BoardServerKeyRequestEvent,
   DismissMenuEvent,
+  InviteRequestEvent,
   RunContextChangeEvent,
   ShareEvent,
 } from "../../events/events.js";
-import { InviteManager } from "../../utils/invite.js";
-import { until } from "lit/directives/until.js";
 
 @customElement("bb-app-nav")
 export class AppNav extends LitElement {
@@ -126,20 +125,25 @@ export class AppNav extends LitElement {
       background: transparent;
       border: none;
       cursor: pointer;
-      padding: 0 0 0 var(--bb-grid-size-6);
+      padding: 0 0 0 var(--bb-grid-size-8);
       color: var(--bb-neutral-800);
-      opacity: 0.6;
-      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
       font: var(--bb-font-label-medium);
       text-decoration: none;
     }
 
-    button:hover,
-    button:focus,
-    a:hover,
-    a:focus,
-    label:hover,
-    label:focus {
+    button .text,
+    a .text,
+    label .text {
+      opacity: 0.6;
+      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+    }
+
+    button:hover .text,
+    button:focus .text,
+    a:hover .text,
+    a:focus .text,
+    label:hover .text,
+    label:focus .text {
       opacity: 1;
     }
 
@@ -153,6 +157,16 @@ export class AppNav extends LitElement {
         no-repeat;
     }
 
+    button#create-invite {
+      background: transparent var(--bb-icon-rsvp) left center / 20px 20px
+        no-repeat;
+    }
+
+    button#list-invites {
+      background: transparent var(--bb-icon-list) left center / 20px 20px
+        no-repeat;
+    }
+
     a#visual-editor {
       background: transparent var(--bb-icon-open-new) left center / 20px 20px
         no-repeat;
@@ -163,7 +177,7 @@ export class AppNav extends LitElement {
     }
 
     label[for="run-on-board-server"] {
-      padding-left: var(--bb-grid-size-6);
+      padding-left: var(--bb-grid-size-8);
       background: transparent var(--bb-icon-toggle-off) left center / 20px 20px
         no-repeat;
     }
@@ -189,49 +203,10 @@ export class AppNav extends LitElement {
     }
   `;
 
-  #invites: InviteManager = new InviteManager();
-
-  // THIS IS THE BEST UI CODE YOU'VE EVER SEEN ✨
-  async #createInviteLink(evt: Event) {
-    evt.preventDefault();
-    const a = evt.target as HTMLAnchorElement;
-    const result = await this.#invites.getOrCreateInvite();
-    if (!result.success) {
-      // IMAGINE THIS IS A TOAST ✨
-      console.error("TOAST: FAILED TO CREATE LINK", result.error);
-      return;
-    }
-    const inviteLink = this.#invites.inviteUrl(result.invite) as string;
-    await navigator.clipboard.writeText(inviteLink);
-  }
-
-  async #listInvites(evt: Event) {
-    evt.preventDefault();
-    const a = evt.target as HTMLAnchorElement;
-    const invites = await this.#invites.listInvites();
-    if (!invites.success) {
-      // IMAGINE THIS IS A TOAST ✨
-      console.error("FAILED TO LIST INVITES", invites.error);
-      return;
-    }
-    // IMAGINE PRETTY UI FOR INVITES ✨
-    console.log("INVITES", invites.invites);
-  }
-
   render() {
     const boardUrl = window.location.href.replace(/app$/, "json");
     const visualEditorUrl = `https://breadboard-ai.web.app/?board=${boardUrl}`;
-    const inviteLink = this.#invites.canCreateInvite().then((canCreate) => {
-      if (!canCreate) {
-        return nothing;
-      }
-      return html`<li>
-          <a href="" @click=${this.#createInviteLink}>Create Invite</a>
-        </li>
-        <li>
-          <a href="" @click=${this.#listInvites}>List invites (in console)</a>
-        </li>`;
-    });
+
     const showShare = "share" in navigator;
     return html` <div
         id="background"
@@ -248,6 +223,11 @@ export class AppNav extends LitElement {
         ${this.popout ? html`<h1>Menu</h1>` : nothing}
         <ul>
           <li>
+            <a id="visual-editor" .href=${visualEditorUrl}
+              ><span class="text">Open in Visual Editor</span></a
+            >
+          </li>
+          <li>
             <input
               type="checkbox"
               id="run-on-board-server"
@@ -263,7 +243,9 @@ export class AppNav extends LitElement {
                   )
                 );
               }}
-            /><label for="run-on-board-server">Run on Board Server</label>
+            /><label for="run-on-board-server"
+              ><span class="text">Run on Board Server</span></label
+            >
             ${this.boardKeyNeeded
               ? html`<div id="key-needed">
                   <button
@@ -283,15 +265,19 @@ export class AppNav extends LitElement {
               }}
               id="update-board-key"
             >
-              Update Board Server API Key
+              <span class="text">Update Board Server API Key</span>
             </button>
           </li>
           <li>
-            <a id="visual-editor" .href=${visualEditorUrl}
-              >Open in Visual Editor</a
+            <button
+              id="create-invite"
+              @click=${() => {
+                this.dispatchEvent(new InviteRequestEvent());
+              }}
             >
+              <span class="text">Manage Invites</span>
+            </button>
           </li>
-          ${until(inviteLink)}
           ${showShare
             ? html`<li>
                 <button
