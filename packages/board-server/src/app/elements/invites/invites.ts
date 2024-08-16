@@ -6,7 +6,10 @@
 import { LitElement, html, css, nothing, type TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { OverlayDismissEvent, ToastEvent } from "../../events/events.js";
-import { InviteManager, inviteManagerContext } from "../../utils/invite.js";
+import {
+  InviteManager,
+  inviteManagerContext,
+} from "../../utils/invite-manager.js";
 import { until } from "lit/directives/until.js";
 import { map } from "lit/directives/map.js";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";

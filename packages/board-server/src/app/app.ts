@@ -41,7 +41,7 @@ import {
   InviteManager,
   inviteManagerContext,
   toGuestKey as toGuestStorageKey,
-} from "./utils/invite.js";
+} from "./utils/invite-manager.js";
 import { map } from "lit/directives/map.js";
 import { provide } from "@lit/context";
 
