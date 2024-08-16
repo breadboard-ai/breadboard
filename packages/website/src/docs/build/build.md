@@ -302,5 +302,39 @@ updated.resolve(counter.updated);
 >    Meanwhile, the `updated` wire receives a value, so `updated` activates
 >    instead.
 
-- Constant/Optional
+### Constants
+
+By default, values are consumed as they flow through a wire. This behavior can
+be undesirable in some situations, such as when the same value needs to be
+provided to the same instance of a component multiple times. If a wire is
+annotated as _constant_, then it will instead store the most recent value that
+passes through it, and re-emit that value on every subsequent activation.
+
+To express constant wires with the Build API, use the `constant` function to
+create a constant version of an output port or value. Any wires connected to
+that value will be annotated as constant.
+
+Below we have added an `increment` input to the previous example, and annotated
+it with `constant` as we pass it to the counter component. If we did not include
+the `constant` annotation, then the loop would never reach a second iteration.
+This is because the `increment` value would have been consumed on the first
+iteration, leaving the component with an unsatisfied input from there on.
+
+```ts
+import { constant, input, loopback } from "@breadboard-ai/build";
+import { magicCounter } from "./magic-counter.js";
+
+const increment = input({ default: 1 });
+const initial = input({ type: "number" });
+const updated = loopback({ type: "number" });
+const counter = magicCounter({
+  increment: constant(increment),
+  count: converge(initial, updated),
+});
+updated.resolve(counter.updated);
+```
+
+## TODO
+
+- Optional
 - Polymorphic I/O
