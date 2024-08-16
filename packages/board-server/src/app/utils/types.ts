@@ -11,6 +11,7 @@ import type {
   OutputValues,
   Schema,
 } from "@google-labs/breadboard";
+import type { TypedEventTarget } from "../../../../breadboard/dist/src/utils/typed-event-target.js";
 
 export type NodeLogEntry = {
   type: "node";
@@ -72,3 +73,13 @@ export type VisitorState =
    * that the "user" can do, plus manage invites.
    */
   | "owner";
+
+export type VisitorStateChangeEvent = Event & {
+  state: VisitorState;
+};
+
+export type VisitorStateEventMap = {
+  change: VisitorStateChangeEvent;
+};
+
+export type VisitorStateEventTarget = TypedEventTarget<VisitorStateEventMap>;

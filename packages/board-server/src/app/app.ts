@@ -40,11 +40,12 @@ import { LightObserver } from "./utils/light-observer.js";
 import {
   getGuestKey,
   VisitorStateManager,
-  inviteManagerContext,
+  visitorStateManagerContext as visitorStateManagerContext,
   toGuestKey as toGuestStorageKey,
 } from "./utils/visitor-state-manager.js";
 import { map } from "lit/directives/map.js";
 import { provide } from "@lit/context";
+import type { VisitorState } from "./utils/types.js";
 
 const BOARD_SERVER_KEY = "board-server-key";
 const RUN_ON_BOARD_SERVER = "run-on-board-server";
@@ -131,13 +132,16 @@ export class AppView extends LitElement {
   canInviteOthers = false;
 
   @state()
+  visitorState: VisitorState = "loading";
+
+  @state()
   boardServerKey: string | null = getApiKey();
 
   @state()
   secretsNeeded: string[] | null = null;
 
-  @provide({ context: inviteManagerContext })
-  inviteManager = new VisitorStateManager();
+  @provide({ context: visitorStateManagerContext })
+  visitorStateManager = new VisitorStateManager();
 
   #toasts = new Map<
     string,
@@ -445,6 +449,10 @@ export class AppView extends LitElement {
       globalThis.localStorage.getItem(RUN_ON_BOARD_SERVER) === "true";
 
     this.#maybeProcessInvite();
+
+    this.visitorStateManager.addEventListener("change", (evt) => {
+      this.visitorState = evt.state;
+    });
   }
 
   disconnectedCallback(): void {

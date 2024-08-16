@@ -10,6 +10,8 @@ import type {
   DeleteInviteResponse,
   InviteListResponse,
   VisitorState,
+  VisitorStateChangeEvent,
+  VisitorStateEventTarget,
 } from "./types.js";
 
 const GUEST_KEY_PREFIX = "bb-guest-key-";
@@ -32,8 +34,9 @@ export const toGuestKey = (url: URL) => {
   return `${GUEST_KEY_PREFIX}${userStore}/${boardName}`;
 };
 
-export const inviteManagerContext =
-  createContext<VisitorStateManager>("inviteManager");
+export const visitorStateManagerContext = createContext<VisitorStateManager>(
+  "visitorStateManager"
+);
 
 export const getGuestKey = () => {
   const url = new URL(window.location.href);
@@ -44,7 +47,22 @@ export const getGuestKey = () => {
   return null;
 };
 
-export class VisitorStateManager {
+const opts = {
+  composed: true,
+  bubbles: false,
+  cancelable: true,
+};
+
+class ChangeEvent extends Event implements VisitorStateChangeEvent {
+  static readonly eventName = "change";
+  readonly running = true;
+
+  constructor(public state: VisitorState) {
+    super(ChangeEvent.eventName, { ...opts });
+  }
+}
+
+export class VisitorStateManager extends (EventTarget as VisitorStateEventTarget) {
   #url: string | null;
   #inviteList: string[] | null = null;
   #pending = false;
@@ -53,13 +71,16 @@ export class VisitorStateManager {
   #guestKey: string | null = null;
 
   constructor() {
+    super();
     this.#boardServerKey = localStorage.getItem(BOARD_SERVER_KEY);
     if (!this.#boardServerKey) {
       this.#guestKey = getGuestKey();
       this.#url = null;
     } else {
       // User state is at least "user", maybe "owner".
-      const inviteURL = new URL(window.location.href.replace(/app$/, "invite"));
+      const url = new URL(window.location.href);
+      url.search = "";
+      const inviteURL = new URL(url.href.replace(/app$/, "invite"));
       inviteURL.searchParams.set("API_KEY", this.#boardServerKey);
       this.#url = inviteURL.href;
     }
@@ -75,13 +96,18 @@ export class VisitorStateManager {
   }
 
   async #updateVisitorState() {
+    const previousState = this.#visitorState;
     if (!this.#url) {
       this.#visitorState = this.#guestKey ? "user" : "visitor";
+    } else {
+      this.#visitorState = "loading";
+      const canCreate = await this.canCreateInvite();
+      this.#visitorState = canCreate ? "owner" : "user";
+    }
+    if (previousState === this.#visitorState) {
       return;
     }
-    this.#visitorState = "loading";
-    const canCreate = await this.canCreateInvite();
-    this.#visitorState = canCreate ? "owner" : "user";
+    this.dispatchEvent(new ChangeEvent(this.#visitorState));
   }
 
   visitorState(): VisitorState {
@@ -121,6 +147,7 @@ export class VisitorStateManager {
       this.#pending = false;
       return { success: true, ...json };
     } catch (e) {
+      this.#pending = false;
       return { success: false, error: (e as Error).message };
     }
   }
