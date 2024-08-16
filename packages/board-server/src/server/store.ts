@@ -162,21 +162,6 @@ class Store implements RunBoardStateStore {
     return { success: true, store: doc.id };
   }
 
-  async findInvite(
-    userStore: string,
-    boardName: string,
-    invite: string
-  ): Promise<OperationResult> {
-    const invites = this.#database.collection(
-      `workspaces/${userStore}/boards/${boardName}/invites`
-    );
-    const inviteDoc = await invites.where("invite", "==", invite).get();
-    if (inviteDoc.empty) {
-      return { success: false, error: "Board or invite not found" };
-    }
-    return { success: true };
-  }
-
   async list(userKey: string | null): Promise<BoardListEntry[]> {
     const userStoreResult = await this.getUserStore(userKey);
     const userStore = userStoreResult.success ? userStoreResult.store : null;
@@ -282,6 +267,21 @@ class Store implements RunBoardStateStore {
     await this.#database
       .doc(`workspaces/${userStore}/boards/${boardName}`)
       .delete();
+    return { success: true };
+  }
+
+  async findInvite(
+    userStore: string,
+    boardName: string,
+    invite: string
+  ): Promise<OperationResult> {
+    const invites = this.#database.collection(
+      `workspaces/${userStore}/boards/${boardName}/invites`
+    );
+    const inviteDoc = await invites.where("invite", "==", invite).get();
+    if (inviteDoc.empty) {
+      return { success: false, error: "Board or invite not found" };
+    }
     return { success: true };
   }
 
