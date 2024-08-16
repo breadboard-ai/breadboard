@@ -382,7 +382,7 @@ export default board({
 > (Note that the indices of the input and output components in the arrays above
 > have no significance). For this reason, the signatures of all output
 > components of a board are **merged** into a single signature, where each port
-> is typed with the union of possible types for a port by that name:
+> is typed with the union of all possible types for that port across its forms:
 >
 > ```ts
 > interface {
