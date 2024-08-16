@@ -262,8 +262,45 @@ const counter = magicCounter({ count });
 count.resolve(counter.outputs.count);
 ```
 
-## TODO
+### Convergences
 
-- Converge
+It is occasionally useful to wire two or more different output ports to the same
+input port. In the Build API, this is expressed by calling the `converge`
+function (named because multiple wires are _converging_ or _meeting_ at the same
+point).
+
+The `converge` function takes 2 or more arguments, each an output port or board
+`input`. It returns an object which, when passed as an input to a component,
+will cause all of the given output ports to be wired to that input port.
+
+One way this can be used is to initialize loops with a starting condition. In
+the following example, an initial value is taken from an `input` to start off a
+looping counter:
+
+```ts
+import { converge } from "@breadboard-ai/build";
+
+const initial = input({ type: "number" });
+const updated = loopback({ type: "number" });
+const counter = magicCounter({
+  count: converge(initial, updated),
+});
+updated.resolve(counter.updated);
+```
+
+> [!NOTE]
+>
+> The above example works because of two important behaviors of the Breadboard
+> execution model:
+>
+> 1. When there are two or more wires connected to the same port, only one wire
+>    can be active at a time. The first wire that receives a value is the one
+>    that activates. In the above example, on the first iteration, only the
+>    `initial` wire has a value, so `initial` activates.
+> 2. By default, values are _consumed_ as they flow through a wire. In the above
+>    example, on subsequent iterations, the `initial` value is undefined.
+>    Meanwhile, the `updated` wire receives a value, so `updated` activates
+>    instead.
+
 - Constant/Optional
 - Polymorphic I/O
