@@ -39,10 +39,10 @@ import "./elements/elements.js";
 import { LightObserver } from "./utils/light-observer.js";
 import {
   getGuestKey,
-  InviteManager,
+  VisitorStateManager,
   inviteManagerContext,
   toGuestKey as toGuestStorageKey,
-} from "./utils/invite-manager.js";
+} from "./utils/visitor-state-manager.js";
 import { map } from "lit/directives/map.js";
 import { provide } from "@lit/context";
 
@@ -137,7 +137,7 @@ export class AppView extends LitElement {
   secretsNeeded: string[] | null = null;
 
   @provide({ context: inviteManagerContext })
-  inviteManager = new InviteManager();
+  inviteManager = new VisitorStateManager();
 
   #toasts = new Map<
     string,

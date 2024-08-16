@@ -7,9 +7,9 @@ import { LitElement, html, css, nothing, type TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { OverlayDismissEvent, ToastEvent } from "../../events/events.js";
 import {
-  InviteManager,
+  VisitorStateManager,
   inviteManagerContext,
-} from "../../utils/invite-manager.js";
+} from "../../utils/visitor-state-manager.js";
 import { until } from "lit/directives/until.js";
 import { map } from "lit/directives/map.js";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
@@ -19,7 +19,7 @@ import { consume } from "@lit/context";
 export class BoardInvites extends LitElement {
   @consume({ context: inviteManagerContext })
   @property({ attribute: false })
-  public inviteManager?: InviteManager;
+  public inviteManager?: VisitorStateManager;
 
   @property()
   key: string | null = null;

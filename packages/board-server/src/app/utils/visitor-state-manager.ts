@@ -33,7 +33,7 @@ export const toGuestKey = (url: URL) => {
 };
 
 export const inviteManagerContext =
-  createContext<InviteManager>("inviteManager");
+  createContext<VisitorStateManager>("inviteManager");
 
 export const getGuestKey = () => {
   const url = new URL(window.location.href);
@@ -44,7 +44,7 @@ export const getGuestKey = () => {
   return null;
 };
 
-export class InviteManager {
+export class VisitorStateManager {
   #url: string | null;
   #inviteList: string[] | null = null;
   #pending = false;
