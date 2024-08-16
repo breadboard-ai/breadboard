@@ -218,6 +218,22 @@
       "title": "Webcam",
       "reference": "/example-boards/playground/webcam.json",
       "version": "0.0.2"
+    },
+    {
+      "title": "Tool: Get Wiki Article",
+      "reference": "/example-boards/playground/get-wiki-article-tool.bgl.json",
+      "version": "0.0.1",
+      "tags": [
+        "tool"
+      ]
+    },
+    {
+      "title": "Tool: Wiki Search",
+      "reference": "/example-boards/playground/wiki-search-tool.bgl.json",
+      "version": "0.0.1",
+      "tags": [
+        "tool"
+      ]
     }
   ]
 }
