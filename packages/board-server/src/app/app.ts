@@ -531,8 +531,8 @@ export class AppView extends LitElement {
       keys.
     </p>`;
     const invite = html`<p>
-      You own the board for this app, so you can invite others to view. Click
-      "Manage Invites" to create or delete invites.
+      You own the board for this app, so you can invite others to run it on
+      server. Click "Manage Invites" to create or delete invites.
     </p>`;
     const remote = nothing;
     switch (this.visitorState) {
