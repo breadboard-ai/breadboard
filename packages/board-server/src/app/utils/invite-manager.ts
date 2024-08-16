@@ -9,6 +9,7 @@ import type {
   CreateInviteResponse,
   DeleteInviteResponse,
   InviteListResponse,
+  VisitorState,
 } from "./types.js";
 
 const GUEST_KEY_PREFIX = "bb-guest-key-";
@@ -34,20 +35,57 @@ export const toGuestKey = (url: URL) => {
 export const inviteManagerContext =
   createContext<InviteManager>("inviteManager");
 
+export const getGuestKey = () => {
+  const url = new URL(window.location.href);
+  const guestStorageKey = toGuestKey(url);
+  if (guestStorageKey) {
+    return globalThis.localStorage.getItem(guestStorageKey);
+  }
+  return null;
+};
+
 export class InviteManager {
   #url: string | null;
   #inviteList: string[] | null = null;
   #pending = false;
+  #visitorState: VisitorState = "loading";
+  #boardServerKey: string | null = null;
+  #guestKey: string | null = null;
 
   constructor() {
-    const boardServerKey = localStorage.getItem(BOARD_SERVER_KEY);
-    if (!boardServerKey) {
+    this.#boardServerKey = localStorage.getItem(BOARD_SERVER_KEY);
+    if (!this.#boardServerKey) {
+      this.#guestKey = getGuestKey();
       this.#url = null;
+    } else {
+      // User state is at least "user", maybe "owner".
+      const inviteURL = new URL(window.location.href.replace(/app$/, "invite"));
+      inviteURL.searchParams.set("API_KEY", this.#boardServerKey);
+      this.#url = inviteURL.href;
+    }
+    this.#updateVisitorState();
+  }
+
+  boardServerKey(): string | null {
+    return this.#boardServerKey;
+  }
+
+  guestKey(): string | null {
+    return this.#guestKey;
+  }
+
+  async #updateVisitorState() {
+    if (!this.#url) {
+      this.#visitorState = this.#guestKey ? "user" : "visitor";
       return;
     }
-    const inviteURL = new URL(window.location.href.replace(/app$/, "invite"));
-    inviteURL.searchParams.set("API_KEY", boardServerKey);
-    this.#url = inviteURL.href;
+    this.#visitorState = "loading";
+    const canCreate = await this.canCreateInvite();
+    this.#visitorState = canCreate ? "owner" : "user";
+  }
+
+  visitorState(): VisitorState {
+    return this.#visitorState;
   }
 
   url(): string | null {
@@ -74,7 +112,7 @@ export class InviteManager {
     }
     this.#pending = true;
     try {
-      const result = await fetch(this.#url);
+      const result = await fetch(this.#url, { credentials: "include" });
       const json = await result.json();
       if ("error" in json) {
         return { success: false, error: json.error };
@@ -97,7 +135,10 @@ export class InviteManager {
       return { success: false, error: "No board server key" };
     }
     try {
-      const response = await fetch(this.#url, { method: "POST" });
+      const response = await fetch(this.#url, {
+        method: "POST",
+        credentials: "include",
+      });
       const result = await response.json();
       this.#inviteList = null;
       return { success: true, invite: result.invite };
@@ -125,6 +166,7 @@ export class InviteManager {
     try {
       const response = await fetch(this.#url, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },

@@ -38,6 +38,7 @@ import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import "./elements/elements.js";
 import { LightObserver } from "./utils/light-observer.js";
 import {
+  getGuestKey,
   InviteManager,
   inviteManagerContext,
   toGuestKey as toGuestStorageKey,
@@ -90,12 +91,9 @@ const getApiKey = (): string | null => {
   if (locallyStoredKey) {
     return locallyStoredKey;
   }
-  const guestStorageKey = toGuestStorageKey(url);
-  if (guestStorageKey) {
-    const guestKey = globalThis.localStorage.getItem(guestStorageKey);
-    if (guestKey) {
-      return guestKey;
-    }
+  const guestKey = getGuestKey();
+  if (guestKey) {
+    return guestKey;
   }
   return url.searchParams.get("key") || null;
 };
