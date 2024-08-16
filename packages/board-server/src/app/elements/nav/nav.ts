@@ -12,11 +12,15 @@ import {
   RunContextChangeEvent,
   ShareEvent,
 } from "../../events/events.js";
+import type { VisitorState } from "../../utils/types.js";
 
 @customElement("bb-app-nav")
 export class AppNav extends LitElement {
   @property({ reflect: true, type: Boolean })
   popout = true;
+
+  @property({ reflect: false })
+  visitorState: VisitorState = "loading";
 
   @property({ reflect: false })
   shareTitle: string | null = null;
@@ -207,27 +211,10 @@ export class AppNav extends LitElement {
     const boardUrl = window.location.href.replace(/app$/, "json");
     const visualEditorUrl = `https://breadboard-ai.web.app/?board=${boardUrl}`;
 
-    const showShare = "share" in navigator;
-    return html` <div
-        id="background"
-        @click=${() => {
-          this.dispatchEvent(new DismissMenuEvent());
-        }}
-      ></div>
-      <div
-        id="container"
-        @click=${(evt: Event) => {
-          evt.stopImmediatePropagation();
-        }}
-      >
-        ${this.popout ? html`<h1>Menu</h1>` : nothing}
-        <ul>
-          <li>
-            <a id="visual-editor" .href=${visualEditorUrl}
-              ><span class="text">Open in Visual Editor</span></a
-            >
-          </li>
-          <li>
+    const runOnBoardServer =
+      this.visitorState === "visitor"
+        ? nothing
+        : html`<li>
             <input
               type="checkbox"
               id="run-on-board-server"
@@ -257,18 +244,11 @@ export class AppNav extends LitElement {
                   </button>
                 </div>`
               : nothing}
-          </li>
-          <li>
-            <button
-              @click=${() => {
-                this.dispatchEvent(new BoardServerKeyRequestEvent());
-              }}
-              id="update-board-key"
-            >
-              <span class="text">Update Board Server API Key</span>
-            </button>
-          </li>
-          <li>
+          </li>`;
+
+    const manageInvites =
+      this.visitorState === "owner"
+        ? html` <li>
             <button
               id="create-invite"
               @click=${() => {
@@ -277,7 +257,46 @@ export class AppNav extends LitElement {
             >
               <span class="text">Manage Invites</span>
             </button>
+          </li>`
+        : nothing;
+
+    const apiKeyVerb =
+      this.visitorState === "owner" || this.visitorState === "user"
+        ? "Update"
+        : "Add";
+
+    const showShare = "share" in navigator;
+    return html` <div
+        id="background"
+        @click=${() => {
+          this.dispatchEvent(new DismissMenuEvent());
+        }}
+      ></div>
+      <div
+        id="container"
+        @click=${(evt: Event) => {
+          evt.stopImmediatePropagation();
+        }}
+      >
+        ${this.popout ? html`<h1>Menu</h1>` : nothing}
+        <ul>
+          <li>
+            <a id="visual-editor" .href=${visualEditorUrl}
+              ><span class="text">Open in Visual Editor</span></a
+            >
           </li>
+          ${runOnBoardServer}
+          <li>
+            <button
+              @click=${() => {
+                this.dispatchEvent(new BoardServerKeyRequestEvent());
+              }}
+              id="update-board-key"
+            >
+              <span class="text">${apiKeyVerb} Board Server API Key</span>
+            </button>
+          </li>
+          ${manageInvites}
           ${showShare
             ? html`<li>
                 <button

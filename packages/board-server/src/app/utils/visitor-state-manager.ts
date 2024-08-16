@@ -55,7 +55,6 @@ const opts = {
 
 class ChangeEvent extends Event implements VisitorStateChangeEvent {
   static readonly eventName = "change";
-  readonly running = true;
 
   constructor(public state: VisitorState) {
     super(ChangeEvent.eventName, { ...opts });
@@ -84,7 +83,6 @@ export class VisitorStateManager extends (EventTarget as VisitorStateEventTarget
       inviteURL.searchParams.set("API_KEY", this.#boardServerKey);
       this.#url = inviteURL.href;
     }
-    this.#updateVisitorState();
   }
 
   boardServerKey(): string | null {
@@ -108,6 +106,10 @@ export class VisitorStateManager extends (EventTarget as VisitorStateEventTarget
       return;
     }
     this.dispatchEvent(new ChangeEvent(this.#visitorState));
+  }
+
+  update() {
+    this.#updateVisitorState();
   }
 
   visitorState(): VisitorState {

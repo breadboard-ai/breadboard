@@ -453,6 +453,7 @@ export class AppView extends LitElement {
     this.visitorStateManager.addEventListener("change", (evt) => {
       this.visitorState = evt.state;
     });
+    this.visitorStateManager.update();
   }
 
   disconnectedCallback(): void {
@@ -846,6 +847,7 @@ export class AppView extends LitElement {
     const nav = (popout: boolean) => {
       return html`<bb-app-nav
         .popout=${popout}
+        .visitorState=${this.visitorState}
         .runOnBoardServer=${this.runOnBoardServer}
         .boardKeyNeeded=${this.boardKeyNeeded}
         @bbdismissmenu=${() => {
