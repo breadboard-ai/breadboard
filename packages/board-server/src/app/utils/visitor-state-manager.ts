@@ -56,7 +56,10 @@ const opts = {
 class ChangeEvent extends Event implements VisitorStateChangeEvent {
   static readonly eventName = "change";
 
-  constructor(public state: VisitorState) {
+  constructor(
+    public state: VisitorState,
+    public previous: VisitorState
+  ) {
     super(ChangeEvent.eventName, { ...opts });
   }
 }
@@ -66,13 +69,22 @@ export class VisitorStateManager extends (EventTarget as VisitorStateEventTarget
   #inviteList: string[] | null = null;
   #pending = false;
   #visitorState: VisitorState = "loading";
-  #boardServerKey: string | null = null;
+  /**
+   * The API key for the board server. If this is set, the user is at least a
+   * "user".
+   */
+  #boardServerApiKey: string | null = null;
+  /**
+   * The invite key for the guest. If this is set, the user is an
+   * "invitee". Both this and #boardServerApiKey can not be set at the
+   * same time.
+   */
   #guestKey: string | null = null;
 
   constructor() {
     super();
-    this.#boardServerKey = localStorage.getItem(BOARD_SERVER_KEY);
-    if (!this.#boardServerKey) {
+    this.#boardServerApiKey = localStorage.getItem(BOARD_SERVER_KEY);
+    if (!this.#boardServerApiKey) {
       this.#guestKey = getGuestKey();
       this.#url = null;
     } else {
@@ -80,22 +92,40 @@ export class VisitorStateManager extends (EventTarget as VisitorStateEventTarget
       const url = new URL(window.location.href);
       url.search = "";
       const inviteURL = new URL(url.href.replace(/app$/, "invite"));
-      inviteURL.searchParams.set("API_KEY", this.#boardServerKey);
+      inviteURL.searchParams.set("API_KEY", this.#boardServerApiKey);
       this.#url = inviteURL.href;
     }
   }
 
   boardServerKey(): string | null {
-    return this.#boardServerKey;
+    return this.#boardServerApiKey || this.#guestKey;
   }
 
-  guestKey(): string | null {
-    return this.#guestKey;
+  #checkForInvite() {
+    const url = new URL(window.location.href);
+    const invite = url.searchParams.get("invite");
+    if (!invite) {
+      return;
+    }
+
+    const guestStorageKey = toGuestKey(url);
+    if (!guestStorageKey) {
+      // This is not a valid board URL. Something has gone wrong, let's bail.
+      return;
+    }
+
+    // update the URL to remove the invite without changing history
+    url.searchParams.delete("invite");
+    history.replaceState(null, "", url.toString());
+
+    // store the invite in local storage
+    globalThis.localStorage.setItem(guestStorageKey, invite);
+    this.#guestKey = invite;
   }
 
   async #updateVisitorState() {
     const previousState = this.#visitorState;
-    if (!this.#url) {
+    if (!this.#boardServerApiKey) {
       this.#visitorState = this.#guestKey ? "user" : "visitor";
     } else {
       this.#visitorState = "loading";
@@ -105,10 +135,11 @@ export class VisitorStateManager extends (EventTarget as VisitorStateEventTarget
     if (previousState === this.#visitorState) {
       return;
     }
-    this.dispatchEvent(new ChangeEvent(this.#visitorState));
+    this.dispatchEvent(new ChangeEvent(this.#visitorState, previousState));
   }
 
   update() {
+    this.#checkForInvite();
     this.#updateVisitorState();
   }
 

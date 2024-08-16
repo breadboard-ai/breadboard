@@ -76,6 +76,7 @@ export type VisitorState =
 
 export type VisitorStateChangeEvent = Event & {
   state: VisitorState;
+  previous: VisitorState;
 };
 
 export type VisitorStateEventMap = {

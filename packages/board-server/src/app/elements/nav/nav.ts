@@ -285,18 +285,20 @@ export class AppNav extends LitElement {
               ><span class="text">Open in Visual Editor</span></a
             >
           </li>
-          ${runOnBoardServer}
-          <li>
-            <button
-              @click=${() => {
-                this.dispatchEvent(new BoardServerKeyRequestEvent());
-              }}
-              id="update-board-key"
-            >
-              <span class="text">${apiKeyVerb} Board Server API Key</span>
-            </button>
-          </li>
-          ${manageInvites}
+          ${this.visitorState === "loading"
+            ? nothing
+            : html` ${runOnBoardServer}
+                <li>
+                  <button
+                    @click=${() => {
+                      this.dispatchEvent(new BoardServerKeyRequestEvent());
+                    }}
+                    id="update-board-key"
+                  >
+                    <span class="text">${apiKeyVerb} Board Server API Key</span>
+                  </button>
+                </li>
+                ${manageInvites}`}
           ${showShare
             ? html`<li>
                 <button

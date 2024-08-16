@@ -445,13 +445,18 @@ export class AppView extends LitElement {
     super.connectedCallback();
 
     this.url = window.location.pathname.replace(/app$/, "json");
-    this.runOnBoardServer =
-      globalThis.localStorage.getItem(RUN_ON_BOARD_SERVER) === "true";
-
-    this.#maybeProcessInvite();
+    const runOnBoardServer =
+      globalThis.localStorage.getItem(RUN_ON_BOARD_SERVER);
+    this.runOnBoardServer = runOnBoardServer === "true";
 
     this.visitorStateManager.addEventListener("change", (evt) => {
       this.visitorState = evt.state;
+      const upgrade = evt.previous === "visitor" || evt.previous === "loading";
+      const alreadySet =
+        evt.previous === "loading" && runOnBoardServer !== null;
+      if (upgrade && !alreadySet) {
+        this.#toggleRunContext(new RunContextChangeEvent("remote"));
+      }
     });
     this.visitorStateManager.update();
   }
@@ -663,28 +668,6 @@ export class AppView extends LitElement {
 
     await navigator.share(opts);
     this.#isSharing = false;
-  }
-
-  #maybeProcessInvite() {
-    const url = new URL(window.location.href);
-    const invite = url.searchParams.get("invite");
-    if (!invite) {
-      return;
-    }
-
-    const guestStorageKey = toGuestStorageKey(url);
-    if (!guestStorageKey) {
-      return;
-    }
-
-    // update the URL to remove the invite without changing history
-    url.searchParams.delete("invite");
-    history.replaceState(null, "", url.toString());
-
-    // store the invite as board-server-guest-key in local storage
-    globalThis.localStorage.setItem(guestStorageKey, invite);
-    this.boardServerKey = getApiKey();
-    this.#toggleRunContext(new RunContextChangeEvent("remote"));
   }
 
   #storeBoardServerKey(key: string) {
