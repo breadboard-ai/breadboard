@@ -12,14 +12,6 @@
       "tags": []
     },
     {
-      "title": "Tool: Get Wiki Article",
-      "reference": "/example-boards/examples/get-wiki-article-tool.bgl.json",
-      "version": "0.0.1",
-      "tags": [
-        "tool"
-      ]
-    },
-    {
       "title": "Cookbook: Fetch Data",
       "reference": "/example-boards/examples/google-books-api.json",
       "version": "0.0.1"
@@ -71,14 +63,6 @@
     {
       "title": "Tool: Today's Date",
       "reference": "/example-boards/examples/tool-todays-date.bgl.json",
-      "version": "0.0.1",
-      "tags": [
-        "tool"
-      ]
-    },
-    {
-      "title": "Tool: Wiki Search",
-      "reference": "/example-boards/examples/wiki-search-tool.bgl.json",
       "version": "0.0.1",
       "tags": [
         "tool"
