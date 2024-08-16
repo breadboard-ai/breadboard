@@ -285,7 +285,7 @@ const updated = loopback({ type: "number" });
 const counter = magicCounter({
   count: converge(initial, updated),
 });
-updated.resolve(counter.updated);
+updated.resolve(counter.outputs.updated);
 ```
 
 > [!NOTE]
@@ -331,7 +331,7 @@ const counter = magicCounter({
   increment: constant(increment),
   count: converge(initial, updated),
 });
-updated.resolve(counter.updated);
+updated.resolve(counter.outputs.updated);
 ```
 
 ## TODO
