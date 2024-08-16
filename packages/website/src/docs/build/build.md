@@ -234,9 +234,36 @@ const bgl = serialize(poemWriter);
 console.log(JSON.stringify(bgl, null, 2));
 ```
 
+## Advanced Topics
+
+### Loops
+
+The `loopback` function makes it possible to express loops or cycles with the
+Build API.
+
+Calling `loopback` gives you an object that acts like a _placeholder_ for a
+value that you will resolve later in the program, thereby allowing you to wire
+the output of a component back to itself.
+
+The `loopback` function take a single parameter, a [Breadboard Type
+Expression](../type-expressions/) that constrains the schema (`"string"` by
+default).
+
+Loopbacks are resolved by calling the `resolve` function with an output port. An
+error will be thrown if you try to serialize a board that contains a `loopback`
+that was never resolved.
+
+```ts
+import { loopback } from "@breadboard-ai/build";
+import { magicCounter } from "./magic-counter.js";
+
+const count = loopback({ type: "number" });
+const counter = magicCounter({ count });
+count.resolve(counter.outputs.count);
+```
+
 ## TODO
 
-- Loops
 - Converge
 - Constant/Optional
 - Polymorphic I/O
