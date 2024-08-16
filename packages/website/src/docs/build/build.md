@@ -398,3 +398,5 @@ export default board({
 ## TODO
 
 - Optional
+- Kits
+- Casting
