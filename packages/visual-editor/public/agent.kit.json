@@ -220,7 +220,7 @@
           "id": "createSchema",
           "type": "runJavascript",
           "configuration": {
-            "code": "const createSchema = ({title,action,description,context})=>{const text={title,description,type:\"object\",behavior:[\"transient\",\"llm-content\"]};const schema={type:\"object\",properties:{text}};if(action?.action==\"vote\"){text.title=action.title;text.enum=[\"Yes\",\"No\"]}return{schema,context}};",
+            "code": "const createSchema = ({title,action,description,context})=>{const text={title,description,type:\"object\",behavior:[\"transient\",\"llm-content\"],examples:[JSON.stringify({parts:[{text:\"\"}]})]};const schema={type:\"object\",properties:{text}};if(action?.action==\"vote\"){text.title=action.title;text.enum=[\"Yes\",\"No\"]}return{schema,context}};",
             "name": "createSchema",
             "raw": true
           },
