@@ -334,7 +334,67 @@ const counter = magicCounter({
 updated.resolve(counter.outputs.updated);
 ```
 
+### Polymorphism
+
+Some boards are _polymorphic_, meaning their input and/or output signatures can
+take multiple forms. In general, polymorphism is achieved in Breadboard by
+having more than one input or output component in a board.
+
+The way polymorphism is expressed in the Build API is with the `inputNode` and
+`outputNode` functions. These functions let you manually arrange your inputs and
+outputs into components, thereby overriding the default behavior which assumes
+there is exactly one input component and one output component per board.
+
+The first parameter to `inputNode` and `outputNode` is an object mapping port
+ids to inputs and outputs, respectively. The second parameter configures the
+metadata of the input or output component, and supports the following fields:
+
+- `id`: ID of the input or output node.
+- `title`: Title of the input or output node.
+- `description`: Description of the input or output node.
+
+In the example below, we have a board which has 2 input components and 2 output
+signatures, meaning there are 2 ways it can be invoked, and 2 ways it can return
+its values:
+
+```ts
+import { inputNode, outputNode, board } from "@breadboard-ai/build";
+
+export default board({
+  id: "my-polymorphic-board",
+  description: "A contrived board with polymorphic inputs and outputs",
+  inputs: [
+    inputNode({ a: inStr1, b: inStr2, c: inNum1 }, { title: "Inputs I" }),
+    inputNode({ a: inStr1, c: inStr2 }, { title: "Inputs II" }),
+  ],
+  outputs: [
+    outputNode({ a: inStr1, b: inStr2, c: inNum1 }, { title: "Outputs I" }),
+    outputNode({ a: inStr1, c: inStr2 }, { title: "Outputs II" }),
+  ],
+});
+```
+
+> [!NOTE]
+>
+> There is no statically defined correspondance between input signatures and
+> output signatures in Breadboard, meaning it is not possible to know at
+> compile-time which output component will activate for a given input signature.
+> (Note that the indices of the input and output components in the arrays above
+> have no significance). For this reason, the signatures of all output
+> components of a board are **merged** into a single signature, where each port
+> is typed with the union of possible types for a port by that name:
+>
+> ```ts
+> interface {
+>   // string in both forms
+>   a: string;
+>   // string in form I, mising from form II
+>   b: string | undefined;
+>   // number in form I, string in form II
+>   c: number | string;
+> }
+> ```
+
 ## TODO
 
 - Optional
-- Polymorphic I/O
