@@ -1,0 +1,210 @@
+{
+  "title": "Hugging Face Summarization Board",
+  "description": "Board which calls the Hugging Face Summarization Endpoint",
+  "edges": [
+    {
+      "from": "fetch-5",
+      "to": "main",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "fn-3",
+      "to": "fetch-5",
+      "out": "auth",
+      "in": "headers"
+    },
+    {
+      "from": "fn-4",
+      "to": "fetch-5",
+      "out": "payload",
+      "in": "body"
+    },
+    {
+      "from": "main",
+      "to": "output-2",
+      "out": "output",
+      "in": "output"
+    },
+    {
+      "from": "query",
+      "to": "fn-3",
+      "out": "apiKey",
+      "in": "key"
+    },
+    {
+      "from": "query",
+      "to": "fn-4",
+      "out": "inputs",
+      "in": "inputs"
+    },
+    {
+      "from": "query",
+      "to": "fn-4",
+      "out": "max_length",
+      "in": "max_length"
+    },
+    {
+      "from": "query",
+      "to": "fn-4",
+      "out": "max_time",
+      "in": "max_time"
+    },
+    {
+      "from": "query",
+      "to": "fn-4",
+      "out": "min_length",
+      "in": "min_length"
+    },
+    {
+      "from": "query",
+      "to": "fn-4",
+      "out": "repetition",
+      "in": "repetition_penalty"
+    },
+    {
+      "from": "query",
+      "to": "fn-4",
+      "out": "temperature",
+      "in": "temperature"
+    },
+    {
+      "from": "query",
+      "to": "fn-4",
+      "out": "top_k",
+      "in": "top_k"
+    },
+    {
+      "from": "query",
+      "to": "fn-4",
+      "out": "top_p",
+      "in": "top_p"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "query",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "title": "Hugging Face Schema For Summarization",
+          "properties": {
+            "apiKey": {
+              "type": "string",
+              "title": "apiKey",
+              "description": "The hugging face api key",
+              "default": "myKey"
+            },
+            "inputs": {
+              "type": "string",
+              "title": "inputs",
+              "description": "The tower is 324 metres (1,063 ft) tall, about the same height as an 81-storey building, and the tallest structure in Paris. Its base is square, measuring 125 metres (410 ft) on each side. During its construction, the Eiffel Tower surpassed the Washington Monument to become the tallest man-made structure in the world, a title it held for 41 years until the Chrysler Building in New York City was finished in 1930. It was the first structure to reach a height of 300 metres. Due to the addition of a broadcasting aerial at the top of the tower in 1957, it is now taller than the Chrysler Building by 5.2 metres (17 ft). Excluding transmitters, the Eiffel Tower is the second tallest free-standing structure in France after the Millau Viaduct.",
+              "default": "data"
+            },
+            "max_length": {
+              "type": "number",
+              "title": "max_length",
+              "description": "Integer to define the maximum length in tokens of the output summary",
+              "default": "None"
+            },
+            "max_time": {
+              "type": "number",
+              "title": "max_time",
+              "description": "The amount of time in seconds that the query should take maximum. Network can cause some overhead so it will be a soft limit",
+              "default": "None"
+            },
+            "min_length": {
+              "type": "string",
+              "title": "number",
+              "description": "Integer to define the minimum length in tokens of the output summary",
+              "default": "None"
+            },
+            "repetition_penalty": {
+              "type": "number",
+              "title": "repetition_penalty",
+              "description": "The more a token is used within generation the more it is penalized to not be picked in successive generation passes",
+              "default": "1.0"
+            },
+            "temperature": {
+              "type": "number",
+              "title": "temperature",
+              "description": "The temperature of the sampling operation. 1 means regular sampling, 0 means always take the highest score, 100.0 is getting closer to uniform probability",
+              "default": "1.0"
+            },
+            "top_k": {
+              "type": "number",
+              "title": "top_k",
+              "description": "Integer to define the top tokens considered within the sample operation to create new text",
+              "default": "None"
+            },
+            "top_p": {
+              "type": "number",
+              "title": "top_P",
+              "description": "Float to define the tokens that are within the sample operation of text generation. Add tokens in the sample for more probable to least probable until the sum of the probabilities is greater than top_p",
+              "default": "None"
+            },
+            "use_cache": {
+              "type": "boolean",
+              "title": "use_cache",
+              "description": "Boolean. There is a cache layer on the inference API to speedup requests we have already seen. Most models can use those results as is as models are deterministic (meaning the results will be the same anyway). However if you use a non deterministic model, you can set this parameter to prevent the caching mechanism from being used resulting in a real new query",
+              "default": "true"
+            },
+            "wait_for_model": {
+              "type": "boolean",
+              "title": "wait_for_model",
+              "description": " Boolean. If the model is not ready, wait for it instead of receiving 503. It limits the number of requests required to get your inference done. It is advised to only set this flag to true after receiving a 503 error as it will limit hanging in your application to known places",
+              "default": "false"
+            }
+          }
+        },
+        "type": "string"
+      }
+    },
+    {
+      "id": "main",
+      "type": "output",
+      "configuration": {}
+    },
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "output": {
+              "type": "string",
+              "title": "output"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fetch-5",
+      "type": "fetch",
+      "configuration": {
+        "method": "POST",
+        "url": "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
+      }
+    },
+    {
+      "id": "fn-3",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_3 = inputs=>{const key=inputs.key;const auth={Authorization:`Bearer ${key}`};return{auth}};",
+        "name": "fn_3",
+        "raw": true
+      }
+    },
+    {
+      "id": "fn-4",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_4 = input=>{const{inputs,min_length,max_length,top_k,top_p,temperature,repetition_penalty,max_time}=input;const request={inputs,parameters:{min_length,max_length,top_k,top_p,temperature,repetition_penalty,max_time,options:{use_cache:false,wait_for_model:false}}};const payload=JSON.stringify(request);return{payload}};",
+        "name": "fn_4",
+        "raw": true
+      }
+    }
+  ]
+}
