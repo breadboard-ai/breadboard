@@ -1,42 +1,48 @@
 {
   "title": "Is Today a Public Holiday",
   "description": "Get the public holidays for today for the Nager Date API",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "edges": [
     {
-      "from": "fetch",
+      "from": "fetchResult",
       "to": "statusCodeToResult",
       "out": "status",
       "in": "status"
     },
     {
-      "from": "query",
+      "from": "input-0",
       "to": "urlTemplate",
       "out": "countryCode",
       "in": "countryCode"
     },
     {
-      "from": "query",
-      "to": "urlTemplate",
+      "from": "input-0",
+      "to": "validatedOffset",
       "out": "offset",
       "in": "offset"
     },
     {
       "from": "statusCodeToResult",
-      "to": "output",
+      "to": "output-0",
       "out": "isPublicHoliday",
-      "in": "isPublicHoliday"
+      "in": "publicHolidayResult"
     },
     {
       "from": "urlTemplate",
-      "to": "fetch",
+      "to": "fetchResult",
       "out": "url",
       "in": "url"
+    },
+    {
+      "from": "validatedOffset",
+      "to": "urlTemplate",
+      "out": "offset",
+      "in": "offset"
     }
   ],
   "nodes": [
     {
-      "id": "query",
+      "id": "input-0",
       "type": "input",
       "configuration": {
         "schema": {
@@ -180,37 +186,34 @@
               "type": "number",
               "title": "offset",
               "description": "utc timezone offset",
-              "default": "0",
-              "maximum": 12,
-              "minimum": -12
+              "default": "0"
             }
           },
-          "required": [
-            "countryCode",
-            "year"
-          ]
+          "required": []
         }
       }
     },
     {
-      "id": "output",
+      "id": "output-0",
       "type": "output",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
-            "isPublicHoliday": {
-              "type": "boolean"
+            "publicHolidayResult": {
+              "type": "boolean",
+              "title": "Public Holiday Result",
+              "description": "A boolean indicating if today is a bank holiday for the given country code from the Nager Date API"
             }
           },
           "required": [
-            "isPublicHoliday"
+            "publicHolidayResult"
           ]
         }
       }
     },
     {
-      "id": "fetch",
+      "id": "fetchResult",
       "type": "fetch",
       "configuration": {
         "method": "GET",
@@ -222,7 +225,23 @@
       "type": "runJavascript",
       "configuration": {
         "code": "const statusCodeToResult = ({status})=>{if(status===200){return{isPublicHoliday:true}}else if(status===204){return{isPublicHoliday:false}}throw new Error(`Unexpected status code: ${status}`)};",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "number"
+            }
+          }
+        },
         "name": "statusCodeToResult",
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "isPublicHoliday": {
+              "type": "boolean"
+            }
+          }
+        },
         "raw": true
       }
     },
@@ -231,6 +250,31 @@
       "type": "urlTemplate",
       "configuration": {
         "template": "https://date.nager.at/Api/v3/IsTodayPublicHoliday/{countryCode}?{&offset}"
+      }
+    },
+    {
+      "id": "validatedOffset",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const validatedOffset = ({offset:offset2})=>{if(offset2>12||offset2<-12){throw new Error(`Invalid offset input: ${offset2}. Offset must be maximum 12 and minimum -12.`)}return{offset:offset2}};",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "offset": {
+              "type": "number"
+            }
+          }
+        },
+        "name": "validatedOffset",
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "offset": {
+              "type": "number"
+            }
+          }
+        },
+        "raw": true
       }
     }
   ]

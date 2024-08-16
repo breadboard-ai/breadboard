@@ -71,6 +71,10 @@ export type GraphProviderExtendedCapabilities = {
    * Whether the provider supports watching for change notifications.
    */
   watch: boolean;
+  /**
+   * Whether the provider supports a preview URL.
+   */
+  preview: boolean;
 };
 
 /**
@@ -194,6 +198,10 @@ export type GraphProvider = {
    * Provides a way to watch for changes in the store.
    */
   watch: (callback: ChangeNotificationCallback) => void;
+  /**
+   * Provides a way to watch for changes in the store.
+   */
+  preview: (url: URL) => Promise<URL>;
 };
 
 /**

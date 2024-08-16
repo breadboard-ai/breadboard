@@ -66,6 +66,7 @@ export class DefaultGraphProvider implements GraphProvider {
       disconnect: false,
       refresh: false,
       watch: false,
+      preview: false,
     };
   }
 
@@ -122,6 +123,10 @@ export class DefaultGraphProvider implements GraphProvider {
   }
 
   async createBlank(_url: URL): Promise<{ result: boolean; error?: string }> {
+    throw new Error("Create Blank not implemented for DefaultGraphProvider");
+  }
+
+  async preview(_url: URL): Promise<URL> {
     throw new Error("Create Blank not implemented for DefaultGraphProvider");
   }
 

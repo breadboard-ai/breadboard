@@ -3,7 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, type PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import {
@@ -28,7 +28,7 @@ export class BoardServerKey extends LitElement {
       background: rgba(0, 0, 0, 0.05);
       position: fixed;
       top: 0;
-      z-index: 1000;
+      z-index: 100;
       align-items: center;
       animation: fadeIn 0.3s cubic-bezier(0, 0, 0.3, 1) forwards;
     }
@@ -36,7 +36,7 @@ export class BoardServerKey extends LitElement {
     dialog {
       background: var(--bb-neutral-0);
       width: 80vw;
-      max-width: 300px;
+      max-width: 360px;
       border: none;
       border-radius: var(--bb-grid-size-2);
       padding: var(--bb-grid-size-3);
@@ -44,6 +44,7 @@ export class BoardServerKey extends LitElement {
 
     dialog h1 {
       font: var(--bb-font-title-small);
+      font-weight: 500;
       margin: 0 0 var(--bb-grid-size-2) 0;
       padding-left: var(--bb-grid-size-6);
       background: transparent var(--bb-icon-password) 0 center / 20px 20px
@@ -109,36 +110,63 @@ export class BoardServerKey extends LitElement {
 
   #formRef: Ref<HTMLFormElement> = createRef();
   #onKeyDownBound = this.#onKeyDown.bind(this);
+  #onClickBound = this.#onClick.bind(this);
 
   connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener("keydown", this.#onKeyDownBound);
+    window.addEventListener("click", this.#onClickBound);
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     window.removeEventListener("keydown", this.#onKeyDownBound);
+    window.removeEventListener("click", this.#onClickBound);
   }
 
   #onKeyDown(evt: KeyboardEvent) {
-    if (evt.key !== "Escape") {
+    if (evt.key === "Escape") {
+      this.dispatchEvent(new OverlayDismissEvent());
       return;
     }
 
+    const isMac = navigator.platform.indexOf("Mac") === 0;
+    const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+    if (evt.key === "Enter" && isCtrlCommand && this.#formRef.value) {
+      this.#formRef.value.dispatchEvent(new SubmitEvent("submit"));
+    }
+  }
+
+  #onClick() {
     this.dispatchEvent(new OverlayDismissEvent());
   }
 
+  protected firstUpdated(): void {
+    if (!this.#formRef.value) {
+      return;
+    }
+
+    const input = this.#formRef.value.querySelector<HTMLInputElement>("input");
+    if (!input) {
+      return;
+    }
+
+    input.select();
+  }
+
   render() {
-    return html`<dialog open>
+    return html`<dialog
+      open
+      @click=${(evt: Event) => {
+        evt.stopImmediatePropagation();
+      }}
+    >
       <h1>Please enter your Board Server API key</h1>
       <form
         ${ref(this.#formRef)}
         method="dialog"
-        @submit=${(evt: Event) => {
-          if (!(evt.target instanceof HTMLFormElement)) {
-            return;
-          }
-
+        @submit=${() => {
           if (!this.#formRef.value) {
             return;
           }
@@ -150,11 +178,7 @@ export class BoardServerKey extends LitElement {
             return;
           }
 
-          const key = el.value;
-          if (!key) {
-            return;
-          }
-
+          const key = el.value ?? "";
           this.dispatchEvent(new BoardServerAPIKeyEnterEvent(key));
         }}
       >
@@ -165,8 +189,8 @@ export class BoardServerKey extends LitElement {
             .placeholder=${"Your Board Server API Key"}
             .id=${"server-key"}
             .value=${this.key}
-            required
             type="password"
+            autofocus
           />
         </div>
 

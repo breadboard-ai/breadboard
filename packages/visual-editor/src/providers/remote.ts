@@ -420,10 +420,16 @@ export class RemoteGraphProvider implements GraphProvider {
       disconnect: true,
       refresh: true,
       watch: false,
+      preview: true,
     };
   }
 
   watch() {
     throw new Error("Watch not implemented for RemoteProvider");
+  }
+
+  async preview(url: URL): Promise<URL> {
+    // TODO: Maybe query this from the store itself.
+    return new URL(url.href.replace(/json$/, "app"));
   }
 }

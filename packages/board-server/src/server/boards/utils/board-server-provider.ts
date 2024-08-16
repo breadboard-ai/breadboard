@@ -64,6 +64,7 @@ export class BoardServerProvider implements GraphProvider {
       disconnect: false,
       refresh: false,
       watch: false,
+      preview: false,
     };
   }
 
@@ -128,6 +129,10 @@ export class BoardServerProvider implements GraphProvider {
   };
 
   startingURL: () => URL | null = () => {
+    throw new Error("Method not supported.");
+  };
+
+  preview: (_url: URL) => Promise<URL> = () => {
     throw new Error("Method not supported.");
   };
 }

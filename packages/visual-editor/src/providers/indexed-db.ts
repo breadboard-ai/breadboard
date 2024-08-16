@@ -153,6 +153,7 @@ export class IDBGraphProvider implements GraphProvider {
       disconnect: false,
       refresh: false,
       watch: false,
+      preview: false,
     };
   }
 
@@ -251,6 +252,9 @@ export class IDBGraphProvider implements GraphProvider {
 
     await this.#refreshItems(store);
     return true;
+  }
+  async preview(_url: URL): Promise<URL> {
+    throw new Error("The `IDBGraphProvider` should not be called to preview");
   }
 
   items() {

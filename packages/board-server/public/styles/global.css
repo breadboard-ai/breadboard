@@ -85,6 +85,7 @@
   --bb-icon-laps: url(/third_party/icons/laps.svg);
   --bb-icon-lan: url(/third_party/icons/lan.svg);
   --bb-icon-lightbulb: url(/third_party/icons/lightbulb.svg);
+  --bb-icon-list: url(/third_party/icons/list.svg);
   --bb-icon-maximize: url(/third_party/icons/maximize.svg);
   --bb-icon-mic-green: url(/third_party/icons/mic-green.svg);
   --bb-icon-minimize: url(/third_party/icons/minimize.svg);
@@ -108,6 +109,7 @@
   --bb-icon-reset-image: url(/third_party/icons/reset-image.svg);
   --bb-icon-reset-nodes: url(/third_party/icons/reset-nodes.svg);
   --bb-icon-resume-blue: url(/third_party/icons/resume-blue.svg);
+  --bb-icon-rsvp: url(/third_party/icons/rsvp.svg);
   --bb-icon-save: url(/third_party/icons/save.svg);
   --bb-icon-save-as: url(/third_party/icons/save-as.svg);
   --bb-icon-save-inverted: url(/third_party/icons/save-inverted.svg);
@@ -130,7 +132,7 @@
   --bb-icon-expand-all-48px: url(/third_party/icons/expand-all-48px.svg);
   --bb-icon-arrow-down-48px: url(/third_party/icons/arrow-down-48px.svg);
 
-  --bb-warning-50: #ffffff;
+  --bb-warning-50: #ffeeee;
   --bb-warning-100: #ffcccc;
   --bb-warning-200: #ff9999;
   --bb-warning-300: #ff6666;
