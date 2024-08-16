@@ -12,7 +12,7 @@ import {
   RunContextChangeEvent,
   ShareEvent,
 } from "../../events/events.js";
-import type { VisitorState } from "../../utils/types.js";
+import { VisitorState } from "../../utils/types.js";
 
 @customElement("bb-app-nav")
 export class AppNav extends LitElement {
@@ -20,7 +20,7 @@ export class AppNav extends LitElement {
   popout = true;
 
   @property({ reflect: false })
-  visitorState: VisitorState = "loading";
+  visitorState: VisitorState = VisitorState.LOADING;
 
   @property({ reflect: false })
   shareTitle: string | null = null;
@@ -212,7 +212,7 @@ export class AppNav extends LitElement {
     const visualEditorUrl = `https://breadboard-ai.web.app/?board=${boardUrl}`;
 
     const runOnBoardServer =
-      this.visitorState === "visitor"
+      this.visitorState === VisitorState.VISITOR
         ? nothing
         : html`<li>
             <input
@@ -233,21 +233,10 @@ export class AppNav extends LitElement {
             /><label for="run-on-board-server"
               ><span class="text">Run on Board Server</span></label
             >
-            ${this.boardKeyNeeded
-              ? html`<div id="key-needed">
-                  <button
-                    @click=${() => {
-                      this.dispatchEvent(new BoardServerKeyRequestEvent());
-                    }}
-                  >
-                    Add Board Server API Key
-                  </button>
-                </div>`
-              : nothing}
           </li>`;
 
     const manageInvites =
-      this.visitorState === "owner"
+      this.visitorState === VisitorState.OWNER
         ? html` <li>
             <button
               id="create-invite"
@@ -261,9 +250,7 @@ export class AppNav extends LitElement {
         : nothing;
 
     const apiKeyVerb =
-      this.visitorState === "owner" || this.visitorState === "user"
-        ? "Update"
-        : "Add";
+      this.visitorState >= VisitorState.USER ? "Update" : "Add";
 
     const showShare = "share" in navigator;
     return html` <div
@@ -285,7 +272,7 @@ export class AppNav extends LitElement {
               ><span class="text">Open in Visual Editor</span></a
             >
           </li>
-          ${this.visitorState === "loading"
+          ${this.visitorState === VisitorState.LOADING
             ? nothing
             : html` ${runOnBoardServer}
                 <li>

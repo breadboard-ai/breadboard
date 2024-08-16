@@ -5,13 +5,13 @@
  */
 
 import { createContext } from "@lit/context";
-import type {
-  CreateInviteResponse,
-  DeleteInviteResponse,
-  InviteListResponse,
+import {
   VisitorState,
-  VisitorStateChangeEvent,
-  VisitorStateEventTarget,
+  type CreateInviteResponse,
+  type DeleteInviteResponse,
+  type InviteListResponse,
+  type VisitorStateChangeEvent,
+  type VisitorStateEventTarget,
 } from "./types.js";
 
 const GUEST_KEY_PREFIX = "bb-guest-key-";
@@ -68,7 +68,7 @@ export class VisitorStateManager extends (EventTarget as VisitorStateEventTarget
   #url: string | null;
   #inviteList: string[] | null = null;
   #pending = false;
-  #visitorState: VisitorState = "loading";
+  #visitorState: VisitorState = VisitorState.LOADING;
   /**
    * The API key for the board server. If this is set, the user is at least a
    * "user".
@@ -126,11 +126,13 @@ export class VisitorStateManager extends (EventTarget as VisitorStateEventTarget
   async #updateVisitorState() {
     const previousState = this.#visitorState;
     if (!this.#boardServerApiKey) {
-      this.#visitorState = this.#guestKey ? "user" : "visitor";
+      this.#visitorState = this.#guestKey
+        ? VisitorState.USER
+        : VisitorState.VISITOR;
     } else {
-      this.#visitorState = "loading";
+      this.#visitorState = VisitorState.LOADING;
       const canCreate = await this.canCreateInvite();
-      this.#visitorState = canCreate ? "owner" : "user";
+      this.#visitorState = canCreate ? VisitorState.OWNER : VisitorState.USER;
     }
     if (previousState === this.#visitorState) {
       return;

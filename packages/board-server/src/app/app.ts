@@ -45,7 +45,7 @@ import {
 } from "./utils/visitor-state-manager.js";
 import { map } from "lit/directives/map.js";
 import { provide } from "@lit/context";
-import type { VisitorState } from "./utils/types.js";
+import { VisitorState } from "./utils/types.js";
 
 const BOARD_SERVER_KEY = "board-server-key";
 const RUN_ON_BOARD_SERVER = "run-on-board-server";
@@ -132,7 +132,7 @@ export class AppView extends LitElement {
   canInviteOthers = false;
 
   @state()
-  visitorState: VisitorState = "loading";
+  visitorState: VisitorState = VisitorState.LOADING;
 
   @state()
   boardServerKey: string | null = getApiKey();
@@ -451,9 +451,9 @@ export class AppView extends LitElement {
 
     this.visitorStateManager.addEventListener("change", (evt) => {
       this.visitorState = evt.state;
-      const upgrade = evt.previous === "visitor" || evt.previous === "loading";
+      const upgrade = evt.previous < VisitorState.USER;
       const alreadySet =
-        evt.previous === "loading" && runOnBoardServer !== null;
+        evt.previous === VisitorState.LOADING && runOnBoardServer !== null;
       if (upgrade && !alreadySet) {
         this.#toggleRunContext(new RunContextChangeEvent("remote"));
       }

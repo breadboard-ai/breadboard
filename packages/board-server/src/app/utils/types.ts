@@ -51,28 +51,29 @@ export type DeleteInviteResponse =
   | { success: true; deleted: string }
   | { success: false; error: string };
 
-export type VisitorState =
+export enum VisitorState {
   /**
    * The user state is not yet known.
    */
-  | "loading"
+  LOADING,
   /**
    * The user is not signed in and has no active invite.
    * Can't run boards on the board server, can't manage invites.
    * Can update the board server key, which may change the state.
    */
-  | "visitor"
+  VISITOR,
   /**
    * The user is signed in or invite is active.
    * Can run boards on the board server, but can't manage invites.
    * Can update the board server key, which may change the state.
    */
-  | "user"
+  USER,
   /**
    * The user is signed in and is the owner of the board. Can do everything
    * that the "user" can do, plus manage invites.
    */
-  | "owner";
+  OWNER,
+}
 
 export type VisitorStateChangeEvent = Event & {
   state: VisitorState;
