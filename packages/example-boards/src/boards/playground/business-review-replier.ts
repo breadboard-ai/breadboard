@@ -6,7 +6,7 @@
 
 import { agents } from "@google-labs/agent-kit";
 import { Schema, base, code } from "@google-labs/breadboard";
-import { Context, LlmContentRole } from "../../../agent-kit/dist/src/context";
+import { Context, LlmContentRole } from "../../../../agent-kit/dist/src/context";
 
 export const task = [
   `You are tasked with assisting by generating thoughtful, engaging, and professional responses to customer reviews. Your purpose is to process reviews from various sources and generate replies that maintain the brand's voice. Here are the detailed instructions for generating replies:`,

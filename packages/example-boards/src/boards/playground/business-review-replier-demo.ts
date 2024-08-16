@@ -7,7 +7,7 @@ import {
   code,
 } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-import { NodeProxy } from "../../../breadboard/dist/src/new/grammar/types";
+import { NodeProxy } from "../../../../breadboard/dist/src/new/grammar/types";
 import {
   inputSchema,
   graph as replyGenerator,
