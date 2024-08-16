@@ -451,10 +451,10 @@ export class AppView extends LitElement {
 
     this.visitorStateManager.addEventListener("change", (evt) => {
       this.visitorState = evt.state;
-      const upgrade = evt.previous < VisitorState.USER;
+      const upgradeToRunOnServer = evt.previous < VisitorState.INVITEE;
       const alreadySet =
         evt.previous === VisitorState.LOADING && runOnBoardServer !== null;
-      if (upgrade && !alreadySet) {
+      if (upgradeToRunOnServer && !alreadySet) {
         this.#toggleRunContext(new RunContextChangeEvent("remote"));
       }
     });
@@ -671,12 +671,8 @@ export class AppView extends LitElement {
   }
 
   #storeBoardServerKey(key: string) {
-    if (key === "") {
-      globalThis.localStorage.removeItem(BOARD_SERVER_KEY);
-    } else {
-      globalThis.localStorage.setItem(BOARD_SERVER_KEY, key);
-    }
-    this.boardServerKey = getApiKey();
+    this.visitorStateManager.setBoardServerApiKey(key);
+    this.boardServerKey = this.visitorStateManager.boardServerKey();
   }
 
   #renderLoading() {
@@ -898,7 +894,7 @@ export class AppView extends LitElement {
         : nothing}
       ${this.showServerKeyPopover
         ? html`<bb-board-server-key
-            .key=${this.boardServerKey}
+            .key=${this.visitorStateManager.boardServerApiKey()}
             @bboverlaydismiss=${() => {
               this.showServerKeyPopover = false;
             }}

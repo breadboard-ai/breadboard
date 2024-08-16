@@ -63,6 +63,13 @@ export enum VisitorState {
    */
   VISITOR,
   /**
+   * The user accepted invite.
+   * Can run boards on the board server.
+   * Can't manage invites.
+   * Can add the board server key, which may change the state.
+   */
+  INVITEE,
+  /**
    * The user is signed in or invite is active.
    * Can run boards on the board server, but can't manage invites.
    * Can update the board server key, which may change the state.

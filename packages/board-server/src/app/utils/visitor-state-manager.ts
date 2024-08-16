@@ -88,13 +88,16 @@ export class VisitorStateManager extends (EventTarget as VisitorStateEventTarget
       this.#guestKey = getGuestKey();
       this.#url = null;
     } else {
-      // User state is at least "user", maybe "owner".
-      const url = new URL(window.location.href);
-      url.search = "";
-      const inviteURL = new URL(url.href.replace(/app$/, "invite"));
-      inviteURL.searchParams.set("API_KEY", this.#boardServerApiKey);
-      this.#url = inviteURL.href;
+      this.#url = this.#createInviteManagementApiUrl();
     }
+  }
+
+  #createInviteManagementApiUrl() {
+    const url = new URL(window.location.href);
+    url.search = "";
+    const inviteURL = new URL(url.href.replace(/app$/, "invite"));
+    inviteURL.searchParams.set("API_KEY", this.#boardServerApiKey!);
+    return inviteURL.href;
   }
 
   boardServerKey(): string | null {
@@ -127,7 +130,7 @@ export class VisitorStateManager extends (EventTarget as VisitorStateEventTarget
     const previousState = this.#visitorState;
     if (!this.#boardServerApiKey) {
       this.#visitorState = this.#guestKey
-        ? VisitorState.USER
+        ? VisitorState.INVITEE
         : VisitorState.VISITOR;
     } else {
       this.#visitorState = VisitorState.LOADING;
@@ -142,6 +145,25 @@ export class VisitorStateManager extends (EventTarget as VisitorStateEventTarget
 
   update() {
     this.#checkForInvite();
+    this.#updateVisitorState();
+  }
+
+  boardServerApiKey(): string | null {
+    return this.#boardServerApiKey;
+  }
+
+  setBoardServerApiKey(key: string) {
+    if (key === "") {
+      this.#boardServerApiKey = null;
+      this.#guestKey = getGuestKey();
+      this.#url = null;
+      globalThis.localStorage.removeItem(BOARD_SERVER_KEY);
+    } else {
+      this.#boardServerApiKey = key;
+      this.#url = this.#createInviteManagementApiUrl();
+      this.#guestKey = null;
+      globalThis.localStorage.setItem(BOARD_SERVER_KEY, key);
+    }
     this.#updateVisitorState();
   }
 
