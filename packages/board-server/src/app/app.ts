@@ -205,7 +205,8 @@ export class AppView extends LitElement {
       margin-right: var(--bb-grid-size);
     }
 
-    #board-description {
+    #board-description,
+    #help {
       display: none;
       color: var(--bb-neutral-600);
     }
@@ -417,10 +418,18 @@ export class AppView extends LitElement {
         padding: 0;
       }
 
-      #board-description {
+      #board-description,
+      #help {
         display: block;
         margin-top: var(--bb-grid-size-2);
         padding: 0 var(--bb-grid-size-4);
+      }
+
+      #help {
+        border-top: 1px solid var(--bb-neutral-300);
+        margin-top: var(--bb-grid-size-8);
+        padding-top: var(--bb-grid-size-8);
+        color: var(--bb-neutral-500);
       }
 
       #board-info h1 {
@@ -510,6 +519,45 @@ export class AppView extends LitElement {
 
     this.#abortRun("Stopped");
     this.#runner = null;
+  }
+
+  #helpText() {
+    const local = html`<p>
+      You will be asked for various API keys. These keys will be stored in your
+      local browser storage so that you don't have to re-enter them.
+    </p>`;
+    const flip = html`<p>
+      Flip the "Run on Server" toggle to run this app without having to enter
+      keys.
+    </p>`;
+    const invite = html`<p>
+      You own the board for this app, so you can invite others to view. Click
+      "Manage Invites" to create or delete invites.
+    </p>`;
+    const remote = nothing;
+    switch (this.visitorState) {
+      case VisitorState.VISITOR: {
+        return local;
+      }
+      case VisitorState.USER:
+      case VisitorState.INVITEE: {
+        if (this.runOnBoardServer) {
+          return remote;
+        } else {
+          return html`${local}${flip}`;
+        }
+      }
+      case VisitorState.OWNER: {
+        if (this.runOnBoardServer) {
+          return invite;
+        } else {
+          return html`${local}${flip}${invite}`;
+        }
+      }
+      default: {
+        return nothing;
+      }
+    }
   }
 
   async startRun() {
@@ -871,6 +919,7 @@ export class AppView extends LitElement {
             </header>
             <p id="board-description">${until(boardDescription)}</p>
             ${nav(false)}
+            <div id="help">${this.#helpText()}</div>
           </div>
         </section>
         <section id="activity-container" ?inert=${inert}>

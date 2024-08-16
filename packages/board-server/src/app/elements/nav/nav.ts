@@ -231,7 +231,7 @@ export class AppNav extends LitElement {
                 );
               }}
             /><label for="run-on-board-server"
-              ><span class="text">Run on Board Server</span></label
+              ><span class="text">Run on Server</span></label
             >
           </li>`;
 
@@ -282,7 +282,7 @@ export class AppNav extends LitElement {
                     }}
                     id="update-board-key"
                   >
-                    <span class="text">${apiKeyVerb} Board Server API Key</span>
+                    <span class="text">${apiKeyVerb} Server API Key</span>
                   </button>
                 </li>
                 ${manageInvites}`}
