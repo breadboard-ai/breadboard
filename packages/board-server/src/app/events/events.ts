@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type * as BreadboardUI from "@breadboard-ai/shared-ui";
+
 const eventInit = {
   bubbles: true,
   cancelable: true,
@@ -75,5 +77,24 @@ export class RunContextChangeEvent extends Event {
 
   constructor(public readonly where: "remote" | "local") {
     super(RunContextChangeEvent.eventName, { ...eventInit });
+  }
+}
+
+export class InviteRequestEvent extends Event {
+  static eventName = "bbinviterequest";
+
+  constructor() {
+    super(InviteRequestEvent.eventName, { ...eventInit });
+  }
+}
+
+export class ToastEvent extends Event {
+  static eventName = "bbtoast";
+
+  constructor(
+    public readonly message: string,
+    public readonly toastType: BreadboardUI.Events.ToastType
+  ) {
+    super(ToastEvent.eventName, { ...eventInit });
   }
 }

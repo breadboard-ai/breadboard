@@ -20,7 +20,8 @@
     "syncpack:check:dev": "wireit",
     "syncpack:check:prod": "wireit",
     "syncpack:fix": "syncpack fix-mismatches --config syncpack.config.ts && npm install",
-    "check": "wireit"
+    "check": "wireit",
+    "markdown": "(find . -iname \"*.md\" -not -path \"*/.wireit/*\" -not -path \"*/node_modules/*\" -exec cat {} +) > all_markdown.md"
   },
   "wireit": {
     "build": {

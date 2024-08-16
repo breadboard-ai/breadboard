@@ -72,6 +72,7 @@ export class DebuggerGraphProvider implements GraphProvider {
       disconnect: false,
       refresh: false,
       watch: true,
+      preview: false,
     };
   }
 
@@ -136,6 +137,12 @@ export class DebuggerGraphProvider implements GraphProvider {
   async createURL(_location: string, _fileName: string): Promise<string> {
     throw new Error(
       "The `DebuggerGraphProvider` should not be called to create URL."
+    );
+  }
+
+  async preview(_url: URL): Promise<URL> {
+    throw new Error(
+      "The `DebuggerGraphProvider` should not be called to preview"
     );
   }
 

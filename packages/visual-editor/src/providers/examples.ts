@@ -90,6 +90,7 @@ export class ExamplesGraphProvider implements GraphProvider {
       disconnect: false,
       refresh: false,
       watch: false,
+      preview: false,
     };
   }
 
@@ -154,6 +155,12 @@ export class ExamplesGraphProvider implements GraphProvider {
   async createURL(_location: string, _fileName: string): Promise<string> {
     throw new Error(
       "The `ExamplesGraphProvider` should not be called to create URL."
+    );
+  }
+
+  async preview(_url: URL): Promise<URL> {
+    throw new Error(
+      "The `ExamplesGraphProvider` should not be called to preview"
     );
   }
 

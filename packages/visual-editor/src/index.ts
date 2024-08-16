@@ -168,6 +168,9 @@ export class Main extends LitElement {
   @state()
   selectedLocation = "default";
 
+  @state()
+  previewOverlayURL: URL | null = null;
+
   #abortController: AbortController | null = null;
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #boardId = 0;
@@ -2241,7 +2244,12 @@ export class Main extends LitElement {
 
     let overflowMenu: HTMLTemplateResult | symbol = nothing;
     if (this.showOverflowMenu) {
-      const actions = [
+      const actions: Array<{
+        title: string;
+        name: string;
+        icon: string;
+        disabled?: boolean;
+      }> = [
         {
           title: "Download Board",
           name: "download",
@@ -2270,6 +2278,14 @@ export class Main extends LitElement {
                 icon: "delete",
               });
             }
+
+            const extendedCapabilities = provider?.extendedCapabilities();
+            actions.push({
+              title: "Preview Board",
+              name: "preview",
+              icon: "preview",
+              disabled: !extendedCapabilities.preview,
+            });
           }
         } catch (err) {
           // If there are any problems with the URL, etc, don't offer the save button.
@@ -2387,6 +2403,29 @@ export class Main extends LitElement {
               break;
             }
 
+            case "preview": {
+              if (!this.graph || !this.graph.url) {
+                return;
+              }
+
+              const provider = this.#getProviderForURL(new URL(this.graph.url));
+              if (!provider) {
+                return;
+              }
+
+              try {
+                this.previewOverlayURL = await provider.preview(
+                  new URL(this.graph.url)
+                );
+              } catch (err) {
+                this.toast(
+                  "Unable to create preview",
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+              }
+              break;
+            }
+
             default: {
               this.toast(
                 "Unknown action",
@@ -2401,6 +2440,13 @@ export class Main extends LitElement {
       ></bb-overflow-menu>`;
     }
 
+    let previewOverlay: HTMLTemplateResult | symbol = nothing;
+    if (this.previewOverlayURL) {
+      previewOverlay = html`<bb-overlay @bboverlaydismissed=${() => {
+        this.previewOverlayURL = null;
+      }}><iframe src=${this.previewOverlayURL.href}></bb-overlay>`;
+    }
+
     return [
       tmpl,
       boardOverlay,
@@ -2410,6 +2456,7 @@ export class Main extends LitElement {
       providerAddOverlay,
       saveAsDialogOverlay,
       overflowMenu,
+      previewOverlay,
       toasts,
     ];
   }

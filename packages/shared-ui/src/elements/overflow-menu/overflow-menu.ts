@@ -16,6 +16,7 @@ interface Action {
   title: string;
   name: string;
   icon: string;
+  disabled?: boolean;
 }
 
 @customElement("bb-overflow-menu")
@@ -72,6 +73,7 @@ export class OverflowMenu extends LitElement {
     button[disabled] {
       opacity: 0.5;
       cursor: auto;
+      border-bottom: 1px solid var(--bb-neutral-500);
     }
 
     button:not([disabled]):hover,
@@ -101,6 +103,10 @@ export class OverflowMenu extends LitElement {
 
     button.delete {
       background-image: var(--bb-icon-delete);
+    }
+
+    button.preview {
+      background-image: var(--bb-icon-preview);
     }
   `;
 
@@ -143,7 +149,8 @@ export class OverflowMenu extends LitElement {
         @click=${() => {
           this.dispatchEvent(new OverflowMenuActionEvent(action.name));
         }}
-        ?disabled=${action.name !== "settings" && this.disabled}
+        ?disabled=${(action.name !== "settings" && this.disabled) ||
+        action.disabled}
       >
         ${action.title}
       </button>`;

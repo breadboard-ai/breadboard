@@ -11,6 +11,7 @@ import {
   InputEnterEvent,
   RunContextChangeEvent,
   SecretsEnterEvent,
+  ToastEvent,
 } from "./events/events.js";
 import {
   createDefaultDataStore,
@@ -33,10 +34,11 @@ import TemplateKit from "@google-labs/template-kit";
 import GeminiKit from "@google-labs/gemini-kit";
 import AgentKit from "@google-labs/agent-kit";
 
-import "@breadboard-ai/shared-ui";
+import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import "./elements/elements.js";
 import { LightObserver } from "./utils/light-observer.js";
 import { toGuestKey as toGuestStorageKey } from "./utils/invite.js";
+import { map } from "lit/directives/map.js";
 
 const BOARD_SERVER_KEY = "board-server-key";
 const RUN_ON_BOARD_SERVER = "run-on-board-server";
@@ -111,6 +113,9 @@ export class AppView extends LitElement {
   showServerKeyPopover = false;
 
   @state()
+  showInvitesPopover = false;
+
+  @state()
   statusMessage: string | null = null;
 
   @state()
@@ -120,10 +125,22 @@ export class AppView extends LitElement {
   boardKeyNeeded = false;
 
   @state()
+  canInviteOthers = false;
+
+  @state()
   boardServerKey: string | null = getApiKey();
 
   @state()
   secretsNeeded: string[] | null = null;
+
+  #toasts = new Map<
+    string,
+    {
+      message: string;
+      type: BreadboardUI.Events.ToastType;
+      persistent: boolean;
+    }
+  >();
 
   #statusMessageTime: string | null = null;
   #loader = createLoader([]);
@@ -154,6 +171,10 @@ export class AppView extends LitElement {
       display: block;
       font: var(--bb-font-body-medium);
       height: 100%;
+    }
+
+    bb-toast {
+      z-index: 200;
     }
 
     main {
@@ -318,6 +339,10 @@ export class AppView extends LitElement {
         column-gap: var(--bb-grid-size-5);
       }
 
+      bb-app-nav[popout] {
+        display: none;
+      }
+
       #board-info {
         width: 100%;
       }
@@ -465,8 +490,7 @@ export class AppView extends LitElement {
   stopRun() {
     this.status = STATUS.STOPPED;
 
-    this.#abortController?.abort();
-
+    this.#abortRun("Stopped");
     this.#runner = null;
   }
 
@@ -498,12 +522,19 @@ export class AppView extends LitElement {
       },
     };
 
-    if (this.runOnBoardServer && this.boardServerKey) {
-      config.remote = {
-        url: getRemoteURL(),
-        type: "http",
-        key: this.boardServerKey,
-      };
+    if (this.runOnBoardServer) {
+      if (this.boardServerKey) {
+        config.remote = {
+          url: getRemoteURL(),
+          type: "http",
+          key: this.boardServerKey,
+        };
+      } else {
+        this.#toast(
+          "No Board Server API key provided",
+          BreadboardUI.Events.ToastType.WARNING
+        );
+      }
     }
 
     this.#runner = createRunner(config);
@@ -636,11 +667,17 @@ export class AppView extends LitElement {
     history.replaceState(null, "", url.toString());
 
     // store the invite as board-server-guest-key in local storage
-    localStorage.setItem(guestStorageKey, invite);
+    globalThis.localStorage.setItem(guestStorageKey, invite);
+    this.boardServerKey = getApiKey();
+    this.#toggleRunContext(new RunContextChangeEvent("remote"));
   }
 
   #storeBoardServerKey(key: string) {
-    globalThis.localStorage.setItem(BOARD_SERVER_KEY, key);
+    if (key === "") {
+      globalThis.localStorage.removeItem(BOARD_SERVER_KEY);
+    } else {
+      globalThis.localStorage.setItem(BOARD_SERVER_KEY, key);
+    }
     this.boardServerKey = getApiKey();
   }
 
@@ -661,7 +698,7 @@ export class AppView extends LitElement {
     for (const secret of which) {
       const storedSecret = globalThis.localStorage.getItem(`SECRET_${secret}`);
       if (!storedSecret) {
-        this.#abortController?.abort("Secret required, aborting run.");
+        this.#abortRun("Secret required, aborting run.");
         throw new Error(
           `Unexpected error - looking for secret ${secret} but unable to find it in storage`
         );
@@ -681,7 +718,37 @@ export class AppView extends LitElement {
     );
   }
 
+  #toast(
+    message: string,
+    type: BreadboardUI.Events.ToastType,
+    persistent = false,
+    id = globalThis.crypto.randomUUID()
+  ) {
+    this.#toasts.set(id, { message, type, persistent });
+    this.requestUpdate();
+
+    return id;
+  }
+
+  #abortRun(reason: string) {
+    this.#abortController?.abort(reason);
+    this.status = STATUS.STOPPED;
+  }
+
   render() {
+    const toasts = html`${map(
+      this.#toasts,
+      ([, { message, type, persistent }], idx) => {
+        const offset = this.#toasts.size - idx - 1;
+        return html`<bb-toast
+          .offset=${offset}
+          .message=${message}
+          .type=${type}
+          .timeout=${persistent ? 0 : nothing}
+        ></bb-toast>`;
+      }
+    )}`;
+
     const boardTitle = Promise.all([this.#descriptorLoad, this.#kitLoad]).then(
       ([graph, kits]) => {
         if (!graph || !kits) {
@@ -775,16 +842,22 @@ export class AppView extends LitElement {
         @bbserverkeyrequest=${() => {
           this.showServerKeyPopover = true;
         }}
+        @bbinviterequest=${() => {
+          this.showInvitesPopover = true;
+        }}
         ?visible=${popout && this.showMenu}
       ></bb-app-nav>`;
     };
 
     const inert =
-      this.secretsNeeded || this.showMenu || this.showServerKeyPopover;
+      this.secretsNeeded ||
+      this.showMenu ||
+      this.showServerKeyPopover ||
+      this.showInvitesPopover;
 
-    return html` <main ?inert=${inert}>
+    return html` <main>
         ${nav(true)}
-        <section id="board-info-container">
+        <section id="board-info-container" ?inert=${inert}>
           <div id="board-info">
             <header>
               <button
@@ -801,7 +874,7 @@ export class AppView extends LitElement {
             ${nav(false)}
           </div>
         </section>
-        <section id="activity-container" ?inert=${this.showMenu}>
+        <section id="activity-container" ?inert=${inert}>
           <div id="activity">${until(activity)}</div>
         </section>
       </main>
@@ -809,6 +882,10 @@ export class AppView extends LitElement {
       ${this.secretsNeeded
         ? html`<bb-secret-requester
             .secrets=${this.secretsNeeded}
+            @bboverlaydismiss=${() => {
+              this.#abortRun("Secret not provided");
+              this.secretsNeeded = null;
+            }}
             @bbsekrits=${(evt: SecretsEnterEvent) => {
               for (const [name, secret] of Object.entries(evt.sekrits)) {
                 this.#storeSecret(name, secret);
@@ -831,6 +908,16 @@ export class AppView extends LitElement {
               this.showServerKeyPopover = false;
             }}
           ></bb-board-server-key>`
+        : nothing}
+      ${this.showInvitesPopover
+        ? html`<bb-board-invites
+            @bboverlaydismiss=${() => {
+              this.showInvitesPopover = false;
+            }}
+            @bbtoast=${(evt: ToastEvent) => {
+              this.#toast(evt.message, evt.toastType);
+            }}
+          ></bb-board-invites>`
         : nothing}
 
       <footer ?inert=${inert}>
@@ -867,6 +954,7 @@ export class AppView extends LitElement {
             ${active ? "Stop Activity" : "Start Activity"}
           </button>
         </div>
-      </footer>`;
+      </footer>
+      ${toasts}`;
   }
 }

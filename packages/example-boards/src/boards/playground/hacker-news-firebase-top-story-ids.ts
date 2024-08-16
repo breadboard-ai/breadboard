@@ -2,54 +2,60 @@
  * @license
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
- *
- * @title Hacker News Simplified Algolia Search
- * see: https://hn.algolia.com/api
  */
+import {
+  array,
+  board,
+  input,
+  output,
+} from "@breadboard-ai/build";
+import { fetch, code } from "@google-labs/core-kit";
 
-import { base, board, code } from "@google-labs/breadboard";
-import { core } from "@google-labs/core-kit";
-
-const limitInputSchema = {
+const limitInput = input({
   type: "number",
-  title: "Story Limit",
-  default: "1",
-  description: "The Number of Hacker News Story ID's to return",
-};
+  title: "Number of story IDs to return",
+  description: "The number of Hacker News Top story IDs to return",
+  examples: [5]
+})
 
-const slice = code<{ list: number[]; limit: number }>(({ list, limit }) => {
-  return { output: list.slice(0, limit) };
-});
+const fetchOutput = fetch({
+  $id: "fetch",
+  method: "GET",
+  url: "https://hacker-news.firebaseio.com/v0/topstories.json",
+})
 
-export default await board(() => {
-  const input = base.input({
-    $id: "limit",
-    schema: {
-      title: "Hacker News Story",
-      properties: {
-        limit: limitInputSchema,
-      },
-    },
-    type: "number",
-  });
+const passThrough = code({
+  $id: "passThrough",
+  object: fetchOutput.outputs.response,
+},
+  {
+    object: array("number")
+  },
+  ({ object }) => {
+    // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+    return { object } as any;
+  }
+)
 
-  const { response } = core.fetch({
-    $id: "fetch",
-    method: "GET",
-    url: "https://hacker-news.firebaseio.com/v0/topstories.json",
-  });
-  const output = base.output({ $id: "main" });
-  const sliced = slice({
-    list: response as unknown as number[],
-    limit: input.limit as unknown as number,
-  });
+const sliceOutput = code({
+  $id: "sliceOutput",
+  limit: limitInput,
+  list: passThrough.outputs.object
+},
+  {
+    sliced: "unknown"
+  }, ({ limit, list }) => {
+    return { sliced: list?.slice(0, limit) };
+  })
 
-  sliced.to(output);
-
-  return { output };
-}).serialize({
-  title: "Hacker News Firebase API Story IDs",
-  description:
-    "Board which returns the top story ID using the Hacker News Firebase API",
-  version: "0.0.1",
-});
+export default board({
+  title: "Hacker News Firebase Top Story IDs",
+  description: "Board which returns Top Story IDs of Hacker News Story Posts using the Firebase API",
+  version: "0.1.0",
+  inputs: {
+    limitInput,
+  },
+  outputs: {
+    storyIDs: output(sliceOutput.outputs.sliced)
+  }
+})

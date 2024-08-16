@@ -358,6 +358,19 @@ export class ActivityLogLite extends LitElement {
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
       margin: 0 0 var(--bb-grid-size-2) 0;
+      max-width: 90%;
+    }
+
+    .error {
+      display: flex;
+      background: var(--bb-warning-50);
+      border: 2px solid var(--bb-warning-100);
+      padding: var(--bb-grid-size-3);
+      border-radius: var(--bb-grid-size-2);
+      color: var(--bb-warning-700);
+      overflow: auto;
+      font: var(--bb-font-body-small);
+      font-family: var(--bb-font-family-mono);
     }
 
     @media (min-width: 700px) {
@@ -721,7 +734,7 @@ export class ActivityLogLite extends LitElement {
             }
           }
 
-          return html`${output}`;
+          return html`<section class="error">${output}</section>`;
         }
       }
     })}`;
