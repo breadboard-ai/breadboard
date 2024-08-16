@@ -135,9 +135,6 @@ export class AppView extends LitElement {
   visitorState: VisitorState = VisitorState.LOADING;
 
   @state()
-  boardServerKey: string | null = getApiKey();
-
-  @state()
   secretsNeeded: string[] | null = null;
 
   @provide({ context: visitorStateManagerContext })
@@ -500,7 +497,8 @@ export class AppView extends LitElement {
       changedProperties.has("boardServerKey")
     ) {
       if (this.runOnBoardServer) {
-        this.boardKeyNeeded = this.boardServerKey === null;
+        this.boardKeyNeeded =
+          this.visitorStateManager.boardServerKey() === null;
       } else {
         this.boardKeyNeeded = false;
       }
@@ -542,12 +540,16 @@ export class AppView extends LitElement {
       },
     };
 
-    if (this.runOnBoardServer) {
-      if (this.boardServerKey) {
+    if (
+      this.runOnBoardServer &&
+      this.visitorStateManager.visitorState() >= VisitorState.INVITEE
+    ) {
+      const boardServerKey = this.visitorStateManager.boardServerKey();
+      if (boardServerKey) {
         config.remote = {
           url: getRemoteURL(),
           type: "http",
-          key: this.boardServerKey,
+          key: boardServerKey,
         };
       } else {
         this.#toast(
@@ -571,8 +573,11 @@ export class AppView extends LitElement {
       this.stopRun();
     });
 
-    this.#runner.addEventListener("error", () => {
+    this.#runner.addEventListener("error", (event) => {
       this.requestUpdate();
+      if (event.data.code === 403) {
+        this.visitorStateManager.expireInvite();
+      }
       this.stopRun();
     });
 
@@ -672,7 +677,6 @@ export class AppView extends LitElement {
 
   #storeBoardServerKey(key: string) {
     this.visitorStateManager.setBoardServerApiKey(key);
-    this.boardServerKey = this.visitorStateManager.boardServerKey();
   }
 
   #renderLoading() {

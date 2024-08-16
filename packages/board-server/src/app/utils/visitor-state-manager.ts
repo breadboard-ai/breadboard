@@ -148,6 +148,17 @@ export class VisitorStateManager extends (EventTarget as VisitorStateEventTarget
     this.#updateVisitorState();
   }
 
+  expireInvite() {
+    const guestStorageKey = toGuestKey(new URL(window.location.href));
+    if (!guestStorageKey) {
+      return;
+    }
+
+    globalThis.localStorage.removeItem(guestStorageKey);
+    this.#guestKey = null;
+    this.#updateVisitorState();
+  }
+
   boardServerApiKey(): string | null {
     return this.#boardServerApiKey;
   }
