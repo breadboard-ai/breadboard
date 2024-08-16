@@ -40,6 +40,14 @@
       "reference": "/example-boards/playground/board-for-each.json"
     },
     {
+      "title": "Business Review Replier Demo",
+      "reference": "/example-boards/playground/business-review-replier-demo.json"
+    },
+    {
+      "title": "Business Review Reply Generator",
+      "reference": "/example-boards/playground/business-review-replier.json"
+    },
+    {
       "title": "Chat bot 2.0",
       "reference": "/example-boards/playground/chat-bot-2.json",
       "version": "0.0.1"
@@ -222,6 +230,22 @@
       "title": "Webcam",
       "reference": "/example-boards/playground/webcam.json",
       "version": "0.1.0"
+    },
+    {
+      "title": "Tool: Get Wiki Article",
+      "reference": "/example-boards/playground/get-wiki-article-tool.bgl.json",
+      "version": "0.0.1",
+      "tags": [
+        "tool"
+      ]
+    },
+    {
+      "title": "Tool: Wiki Search",
+      "reference": "/example-boards/playground/wiki-search-tool.bgl.json",
+      "version": "0.0.1",
+      "tags": [
+        "tool"
+      ]
     }
   ]
 }
