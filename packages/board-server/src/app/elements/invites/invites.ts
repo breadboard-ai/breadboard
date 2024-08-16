@@ -3,16 +3,21 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, nothing } from "lit";
+import { LitElement, html, css, nothing, type TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { OverlayDismissEvent, ToastEvent } from "../../events/events.js";
-import { InviteManager } from "../../utils/invite.js";
+import { InviteManager, inviteManagerContext } from "../../utils/invite.js";
 import { until } from "lit/directives/until.js";
 import { map } from "lit/directives/map.js";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import { consume } from "@lit/context";
 
 @customElement("bb-board-invites")
 export class BoardInvites extends LitElement {
+  @consume({ context: inviteManagerContext })
+  @property({ attribute: false })
+  public inviteManager?: InviteManager;
+
   @property()
   key: string | null = null;
 
@@ -158,8 +163,7 @@ export class BoardInvites extends LitElement {
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #onClickBound = this.#onClick.bind(this);
 
-  #invites = new InviteManager();
-  #loadInvites = this.#refreshInviteList();
+  #loadInvites: Promise<TemplateResult<1>> | undefined;
   #creating = false;
   #deleting = false;
   #copying = false;
@@ -168,6 +172,7 @@ export class BoardInvites extends LitElement {
     super.connectedCallback();
     window.addEventListener("keydown", this.#onKeyDownBound);
     window.addEventListener("click", this.#onClickBound);
+    this.#loadInvites = this.#refreshInviteList();
   }
 
   disconnectedCallback(): void {
@@ -189,7 +194,7 @@ export class BoardInvites extends LitElement {
   }
 
   #refreshInviteList() {
-    return this.#invites.canCreateInvite().then(async (canCreate) => {
+    return this.inviteManager?.canCreateInvite().then(async (canCreate) => {
       if (!canCreate) {
         return html`<div>
           <p>
@@ -199,7 +204,9 @@ export class BoardInvites extends LitElement {
         </div>`;
       }
 
-      const listing = await this.#invites.listInvites();
+      const listing = (await this.inviteManager?.listInvites()) || {
+        success: false,
+      };
       if (!listing.success) {
         return html`<div>Unable to load invites</div>`;
       }
@@ -226,10 +233,11 @@ export class BoardInvites extends LitElement {
                       }
 
                       this.#deleting = true;
-                      const result = await this.#invites.deleteInvite(invite);
+                      const result =
+                        await this.inviteManager?.deleteInvite(invite);
                       this.#deleting = false;
 
-                      if ("success" in result && !result.success) {
+                      if (result && "success" in result && !result.success) {
                         this.dispatchEvent(
                           new ToastEvent(
                             "Unable to delete invite",
@@ -247,7 +255,7 @@ export class BoardInvites extends LitElement {
                   <button
                     class="copy-to-clipboard"
                     @click=${async () => {
-                      const inviteLink = this.#invites.inviteUrl(
+                      const inviteLink = this.inviteManager?.inviteUrl(
                         invite
                       ) as string;
 
@@ -278,9 +286,9 @@ export class BoardInvites extends LitElement {
                     return;
                   }
                   this.#creating = true;
-                  const result = await this.#invites.getOrCreateInvite();
+                  const result = await this.inviteManager?.getOrCreateInvite();
                   this.#creating = false;
-                  if (result.success) {
+                  if (result && result.success) {
                     this.#loadInvites = this.#refreshInviteList();
                     this.requestUpdate();
                   } else {

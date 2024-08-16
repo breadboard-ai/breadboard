@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { createContext } from "@lit/context";
 import type {
   CreateInviteResponse,
   DeleteInviteResponse,
@@ -29,6 +30,9 @@ export const toGuestKey = (url: URL) => {
   }
   return `${GUEST_KEY_PREFIX}${userStore}/${boardName}`;
 };
+
+export const inviteManagerContext =
+  createContext<InviteManager>("inviteManager");
 
 export class InviteManager {
   #url: string | null;

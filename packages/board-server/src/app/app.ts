@@ -37,8 +37,13 @@ import AgentKit from "@google-labs/agent-kit";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import "./elements/elements.js";
 import { LightObserver } from "./utils/light-observer.js";
-import { toGuestKey as toGuestStorageKey } from "./utils/invite.js";
+import {
+  InviteManager,
+  inviteManagerContext,
+  toGuestKey as toGuestStorageKey,
+} from "./utils/invite.js";
 import { map } from "lit/directives/map.js";
+import { provide } from "@lit/context";
 
 const BOARD_SERVER_KEY = "board-server-key";
 const RUN_ON_BOARD_SERVER = "run-on-board-server";
@@ -132,6 +137,9 @@ export class AppView extends LitElement {
 
   @state()
   secretsNeeded: string[] | null = null;
+
+  @provide({ context: inviteManagerContext })
+  inviteManager = new InviteManager();
 
   #toasts = new Map<
     string,
