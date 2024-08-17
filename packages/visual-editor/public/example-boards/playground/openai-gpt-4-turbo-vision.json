@@ -53,9 +53,6 @@
               "title": "Context",
               "description": "An array of messages to use as conversation context",
               "items": {
-                "behavior": [
-                  "llm-content"
-                ],
                 "type": "object",
                 "properties": {
                   "role": {
@@ -117,7 +114,10 @@
                   "role",
                   "parts"
                 ],
-                "additionalProperties": false
+                "additionalProperties": false,
+                "behavior": [
+                  "llm-content"
+                ]
               }
             }
           },

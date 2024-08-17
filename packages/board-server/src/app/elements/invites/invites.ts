@@ -3,16 +3,24 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, nothing } from "lit";
+import { LitElement, html, css, nothing, type TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { OverlayDismissEvent, ToastEvent } from "../../events/events.js";
-import { InviteManager } from "../../utils/invite.js";
+import {
+  VisitorStateManager,
+  visitorStateManagerContext,
+} from "../../utils/visitor-state-manager.js";
 import { until } from "lit/directives/until.js";
 import { map } from "lit/directives/map.js";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import { consume } from "@lit/context";
 
 @customElement("bb-board-invites")
 export class BoardInvites extends LitElement {
+  @consume({ context: visitorStateManagerContext })
+  @property({ attribute: false })
+  public visitorStateManager?: VisitorStateManager;
+
   @property()
   key: string | null = null;
 
@@ -158,8 +166,7 @@ export class BoardInvites extends LitElement {
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #onClickBound = this.#onClick.bind(this);
 
-  #invites = new InviteManager();
-  #loadInvites = this.#refreshInviteList();
+  #loadInvites: Promise<TemplateResult<1>> | undefined;
   #creating = false;
   #deleting = false;
   #copying = false;
@@ -168,6 +175,7 @@ export class BoardInvites extends LitElement {
     super.connectedCallback();
     window.addEventListener("keydown", this.#onKeyDownBound);
     window.addEventListener("click", this.#onClickBound);
+    this.#loadInvites = this.#refreshInviteList();
   }
 
   disconnectedCallback(): void {
@@ -189,115 +197,123 @@ export class BoardInvites extends LitElement {
   }
 
   #refreshInviteList() {
-    return this.#invites.canCreateInvite().then(async (canCreate) => {
-      if (!canCreate) {
+    return this.visitorStateManager
+      ?.canCreateInvite()
+      .then(async (canCreate) => {
+        if (!canCreate) {
+          return html`<div>
+            <p>
+              You are not able to manage invites for this board. You can only
+              manage invites for boards you created.
+            </p>
+          </div>`;
+        }
+
+        const listing = (await this.visitorStateManager?.listInvites()) || {
+          success: false,
+        };
+        if (!listing.success) {
+          return html`<div>Unable to load invites</div>`;
+        }
+
         return html`<div>
-          <p>
-            You are not able to manage invites for this board. You can only
-            manage invites for boards you created.
-          </p>
-        </div>`;
-      }
+          ${listing.invites.length > 0
+            ? html`<ul id="invite-listing">
+                ${map(listing.invites, (invite) => {
+                  return html`<li>
+                    <div class="label">
+                      Invite code: <span class="code">${invite}</span>
+                    </div>
+                    <button
+                      class="delete"
+                      @click=${async () => {
+                        if (this.#deleting) {
+                          return;
+                        }
 
-      const listing = await this.#invites.listInvites();
-      if (!listing.success) {
-        return html`<div>Unable to load invites</div>`;
-      }
+                        if (
+                          !confirm(
+                            "Are you sure you want to delete this invite?"
+                          )
+                        ) {
+                          return;
+                        }
 
-      return html`<div>
-        ${listing.invites.length > 0
-          ? html`<ul id="invite-listing">
-              ${map(listing.invites, (invite) => {
-                return html`<li>
-                  <div class="label">
-                    Invite code: <span class="code">${invite}</span>
-                  </div>
-                  <button
-                    class="delete"
-                    @click=${async () => {
-                      if (this.#deleting) {
-                        return;
-                      }
+                        this.#deleting = true;
+                        const result =
+                          await this.visitorStateManager?.deleteInvite(invite);
+                        this.#deleting = false;
 
-                      if (
-                        !confirm("Are you sure you want to delete this invite?")
-                      ) {
-                        return;
-                      }
+                        if (result && "success" in result && !result.success) {
+                          this.dispatchEvent(
+                            new ToastEvent(
+                              "Unable to delete invite",
+                              BreadboardUI.Events.ToastType.ERROR
+                            )
+                          );
+                        } else {
+                          this.#loadInvites = this.#refreshInviteList();
+                          this.requestUpdate();
+                        }
+                      }}
+                    >
+                      Copy to clipboard
+                    </button>
+                    <button
+                      class="copy-to-clipboard"
+                      @click=${async () => {
+                        const inviteLink = this.visitorStateManager?.inviteUrl(
+                          invite
+                        ) as string;
 
-                      this.#deleting = true;
-                      const result = await this.#invites.deleteInvite(invite);
-                      this.#deleting = false;
+                        if (this.#copying) {
+                          return;
+                        }
+                        this.#copying = true;
+                        await navigator.clipboard.writeText(inviteLink);
+                        this.#copying = false;
 
-                      if ("success" in result && !result.success) {
                         this.dispatchEvent(
                           new ToastEvent(
-                            "Unable to delete invite",
-                            BreadboardUI.Events.ToastType.ERROR
+                            "Invite copied to clipboard",
+                            BreadboardUI.Events.ToastType.INFORMATION
                           )
                         );
-                      } else {
-                        this.#loadInvites = this.#refreshInviteList();
-                        this.requestUpdate();
-                      }
-                    }}
-                  >
-                    Copy to clipboard
-                  </button>
-                  <button
-                    class="copy-to-clipboard"
-                    @click=${async () => {
-                      const inviteLink = this.#invites.inviteUrl(
-                        invite
-                      ) as string;
-
-                      if (this.#copying) {
-                        return;
-                      }
-                      this.#copying = true;
-                      await navigator.clipboard.writeText(inviteLink);
-                      this.#copying = false;
-
+                      }}
+                    >
+                      Copy to clipboard
+                    </button>
+                  </li>`;
+                })}
+              </ul>`
+            : html`<p>There are no active invites for this board</p>
+                <button
+                  @click=${async () => {
+                    if (this.#creating) {
+                      return;
+                    }
+                    this.#creating = true;
+                    const result =
+                      await this.visitorStateManager?.getOrCreateInvite();
+                    this.#creating = false;
+                    if (result && result.success) {
+                      this.#loadInvites = this.#refreshInviteList();
+                      this.requestUpdate();
+                    } else {
                       this.dispatchEvent(
                         new ToastEvent(
-                          "Invite copied to clipboard",
-                          BreadboardUI.Events.ToastType.INFORMATION
+                          "Unable to create invite",
+                          BreadboardUI.Events.ToastType.ERROR
                         )
                       );
-                    }}
-                  >
-                    Copy to clipboard
-                  </button>
-                </li>`;
-              })}
-            </ul>`
-          : html`<p>There are no active invites for this board</p>
-              <button
-                @click=${async () => {
-                  if (this.#creating) {
-                    return;
-                  }
-                  this.#creating = true;
-                  const result = await this.#invites.getOrCreateInvite();
-                  this.#creating = false;
-                  if (result.success) {
-                    this.#loadInvites = this.#refreshInviteList();
-                    this.requestUpdate();
-                  } else {
-                    this.dispatchEvent(
-                      new ToastEvent(
-                        "Unable to create invite",
-                        BreadboardUI.Events.ToastType.ERROR
-                      )
-                    );
-                  }
-                }}
-                class="create-invite"
-              >
-                Create an invite link
-              </button> `}
-      </div>`;
-    });
+                    }
+                  }}
+                  class="create-invite"
+                >
+                  Create an invite link
+                </button> `}
+        </div>`;
+      });
   }
 
   render() {

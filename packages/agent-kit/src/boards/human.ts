@@ -58,6 +58,7 @@ const inputSchemaBuilder = code<SchemaInputs, SchemaOutputs>(
       description,
       type: "object",
       behavior: ["transient", "llm-content"],
+      examples: [JSON.stringify({ parts: [{ text: "" }] })],
     };
     const schema: Schema = {
       type: "object",
