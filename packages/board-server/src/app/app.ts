@@ -41,13 +41,11 @@ import {
   getGuestKey,
   VisitorStateManager,
   visitorStateManagerContext as visitorStateManagerContext,
-  toGuestKey as toGuestStorageKey,
 } from "./utils/visitor-state-manager.js";
 import { map } from "lit/directives/map.js";
 import { provide } from "@lit/context";
 import { VisitorState } from "./utils/types.js";
 
-const BOARD_SERVER_KEY = "board-server-key";
 const RUN_ON_BOARD_SERVER = "run-on-board-server";
 
 const randomMessage: UserMessage[] = [
@@ -78,25 +76,6 @@ const getRemoteURL = () => {
   const url = new URL(window.location.href);
   url.pathname = url.pathname.replace(/app$/, "api/run");
   return url.href;
-};
-
-/**
- * Get the API key from the URL or local storage.
- *
- * First, try to get the key from local storage. If it's not there, check the
- * URL. If the URL has a `key` parameter, use that.
- */
-const getApiKey = (): string | null => {
-  const url = new URL(window.location.href);
-  const locallyStoredKey = globalThis.localStorage.getItem(BOARD_SERVER_KEY);
-  if (locallyStoredKey) {
-    return locallyStoredKey;
-  }
-  const guestKey = getGuestKey();
-  if (guestKey) {
-    return guestKey;
-  }
-  return url.searchParams.get("key") || null;
 };
 
 @customElement("bb-app-view")
