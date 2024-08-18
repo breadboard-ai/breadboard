@@ -85,7 +85,8 @@
         "src/**/*.ts",
         "tests/**/*.ts",
         "tsconfig.json",
-        "../../core/tsconfig/base.json"
+        "../../core/tsconfig/base.json",
+        "package.json"
       ]
     },
     "build:tsc": {
