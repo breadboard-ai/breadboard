@@ -87,9 +87,16 @@ export class LLMOutput extends LitElement {
     }
 
     .value img,
-    .value video {
+    .value video,
+    iframe.html-view {
       outline: 1px solid var(--bb-neutral-300);
       border-radius: var(--bb-grid-size);
+    }
+
+    iframe.html-view {
+      border: none;
+      width: 100%;
+      height: 600px;
     }
 
     .value .plain-text {
