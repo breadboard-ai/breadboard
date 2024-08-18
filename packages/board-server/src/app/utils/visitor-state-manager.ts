@@ -143,9 +143,9 @@ export class VisitorStateManager extends (EventTarget as VisitorStateEventTarget
     this.dispatchEvent(new ChangeEvent(this.#visitorState, previousState));
   }
 
-  update() {
+  async init(): Promise<void> {
     this.#checkForInvite();
-    this.#updateVisitorState();
+    await this.#updateVisitorState();
   }
 
   expireInvite() {

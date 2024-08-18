@@ -38,9 +38,8 @@ import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import "./elements/elements.js";
 import { LightObserver } from "./utils/light-observer.js";
 import {
-  getGuestKey,
   VisitorStateManager,
-  visitorStateManagerContext as visitorStateManagerContext,
+  visitorStateManagerContext,
 } from "./utils/visitor-state-manager.js";
 import { map } from "lit/directives/map.js";
 import { provide } from "@lit/context";
@@ -133,6 +132,7 @@ export class AppView extends LitElement {
   #dataStore = createDefaultDataStore();
   #descriptorLoad: Promise<GraphDescriptor | null> = Promise.resolve(null);
   #kitLoad = loadKits([TemplateKit, Core, GeminiKit, JSONKit, AgentKit]);
+  #visitorStateInit = Promise.resolve();
 
   #isSharing = false;
   #abortController: AbortController | null = null;
@@ -443,7 +443,7 @@ export class AppView extends LitElement {
         this.#toggleRunContext(new RunContextChangeEvent("remote"));
       }
     });
-    this.visitorStateManager.update();
+    this.#visitorStateInit = this.visitorStateManager.init();
   }
 
   disconnectedCallback(): void {
@@ -546,6 +546,7 @@ export class AppView extends LitElement {
     const [graph, kits] = await Promise.all([
       this.#descriptorLoad,
       this.#kitLoad,
+      this.#visitorStateInit,
     ]);
 
     if (!graph || !kits || !this.url) {
@@ -829,31 +830,31 @@ export class AppView extends LitElement {
     const active =
       this.status === STATUS.RUNNING || this.status === STATUS.PAUSED;
 
-    const activity = Promise.all([this.#descriptorLoad, this.#kitLoad]).then(
-      () => {
-        return html`<bb-activity-log-lite
-          .start=${this.#runStartTime}
-          .message=${this.#message}
-          .log=${log}
-          @bbinputrequested=${() => {
-            this.requestUpdate();
-          }}
-          @bbinputenter=${(event: InputEnterEvent) => {
-            let data = event.data as InputValues;
-            const runner = this.#runner;
-            if (!runner) {
-              throw new Error("Can't send input, no runner");
-            }
-            if (runner.running()) {
-              throw new Error(
-                "The runner is already running, cannot send input"
-              );
-            }
-            runner.run(data);
-          }}
-        ></bb-activity-log-lite>`;
-      }
-    );
+    const activity = Promise.all([
+      this.#descriptorLoad,
+      this.#kitLoad,
+      this.#visitorStateInit,
+    ]).then(() => {
+      return html`<bb-activity-log-lite
+        .start=${this.#runStartTime}
+        .message=${this.#message}
+        .log=${log}
+        @bbinputrequested=${() => {
+          this.requestUpdate();
+        }}
+        @bbinputenter=${(event: InputEnterEvent) => {
+          let data = event.data as InputValues;
+          const runner = this.#runner;
+          if (!runner) {
+            throw new Error("Can't send input, no runner");
+          }
+          if (runner.running()) {
+            throw new Error("The runner is already running, cannot send input");
+          }
+          runner.run(data);
+        }}
+      ></bb-activity-log-lite>`;
+    });
 
     const nav = (popout: boolean) => {
       return html`<bb-app-nav
