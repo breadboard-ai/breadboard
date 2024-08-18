@@ -96,6 +96,7 @@ export class LLMOutput extends LitElement {
     iframe.html-view {
       border: none;
       width: 100%;
+      height: 600px;
     }
 
     .value .plain-text {
