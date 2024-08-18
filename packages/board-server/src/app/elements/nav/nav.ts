@@ -249,8 +249,10 @@ export class AppNav extends LitElement {
           </li>`
         : nothing;
 
-    const apiKeyVerb =
-      this.visitorState >= VisitorState.USER ? "Update" : "Add";
+    const boardServerKeyText =
+      this.visitorState >= VisitorState.USER
+        ? "Update Board Server API Key"
+        : "Sign in to Board Server";
 
     const showShare = "share" in navigator;
     return html` <div
@@ -282,7 +284,7 @@ export class AppNav extends LitElement {
                     }}
                     id="update-board-key"
                   >
-                    <span class="text">${apiKeyVerb} Server API Key</span>
+                    <span class="text">${boardServerKeyText}</span>
                   </button>
                 </li>
                 ${manageInvites}`}

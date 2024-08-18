@@ -33,12 +33,6 @@ export const serveHome = async (
         <h1>${title}</h1>
         <p>${description}</p>
         <p>Version: ${packageInfo.version}</p>
-      <script>
-        const key = new URLSearchParams(window.location.search).get("API_KEY");
-        if (key) {
-          localStorage.setItem("board-server-key", key);
-        }
-      </script>
       </body>
     </html>`);
   return true;
