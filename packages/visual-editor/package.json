@@ -84,6 +84,7 @@
       "files": [
         "src/**/*.ts",
         "tests/**/*.ts",
+        ".env*",
         "tsconfig.json",
         "../../core/tsconfig/base.json",
         "package.json"
