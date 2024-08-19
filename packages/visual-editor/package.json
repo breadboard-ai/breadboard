@@ -84,7 +84,6 @@
       "files": [
         "src/**/*.ts",
         "tests/**/*.ts",
-        ".env*",
         "tsconfig.json",
         "../../core/tsconfig/base.json",
         "package.json"
@@ -121,7 +120,7 @@
       ],
       "files": [
         "vite.config.ts",
-        ".env",
+        ".env*",
         "*.html",
         "oauth/",
         "public/"
