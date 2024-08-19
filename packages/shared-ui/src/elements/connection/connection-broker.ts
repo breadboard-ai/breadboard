@@ -76,7 +76,7 @@ export class ConnectionBroker extends HTMLElement {
       shadow.innerHTML = `<p>Error: Could not find a grant URL for this origin.</p>`;
       return;
     }
-    const grantUrl = new URL( "grant", import.meta.env.VITE_CONNECTION_SERVER_URL);
+    const grantUrl = new URL("grant", import.meta.env.VITE_CONNECTION_SERVER_URL);
     grantUrl.searchParams.set("connection_id", connectionId);
     grantUrl.searchParams.set("code", code);
     grantUrl.searchParams.set(
