@@ -357,33 +357,16 @@ an example.
 
 #### Connect the Visual Editor to the Connection Server
 
-The Visual Editor chooses a Connection Server based on a hard-coded origin map.
-To get your Visual Editor to connect to your Connection Server, you will need to
-edit this map.
+The Visual Editor chooses a Connection Server based on a environment variable.
+You will need to set this value to your connection server URL.
 
-Open [`packages/visual-editor/src/index.ts`](https://github.com/breadboard-ai/breadboard/blob/main/packages/visual-editor/src/index.ts)
+Open [`packages/visual-editor/.env.production`](https://github.com/breadboard-ai/breadboard/blob/main/packages/visual-editor/.env.production)
 in a text editor.
 
-Update the value of **`ORIGIN_TO_CONNECTION_SERVER`** to contain the origins of
-your Visual Editor and Connection Server.
+Update the value of **`VITE_CONNECTION_SERVER_URL`**:
 
-```ts
-const ORIGIN_TO_CONNECTION_SERVER: Record<string, string> = {
-  "{YOUR_VISUAL_EDITOR_ORIGIN}": "{YOUR_CONNECTION_SERVER_ORIGIN}",
-};
-```
-
-Open
-[`packages/shared-ui/src/elements/connection/connection-broker.ts`](https://github.com/breadboard-ai/breadboard/blob/main/packages/shared-ui/src/elements/connection/connection-broker.ts)
-in a text editor.
-
-Update the value of **`ORIGIN_TO_GRANT_URL`**. This is the same as the change
-made above, but the target URL has a path of `/grant`.
-
-```ts
-const ORIGIN_TO_GRANT_URL: Record<string, string> = {
-  "{YOUR_VISUAL_EDITOR_ORIGIN}": "{YOUR_CONNECTION_SERVER_ORIGIN}/grant",
-};
+```env
+VITE_CONNECTION_SERVER_URL={YOUR_CONNECTION_SERVER}
 ```
 
 Re-deploy the Visual Editor.
