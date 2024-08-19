@@ -58,18 +58,8 @@ type SaveAsConfiguration = {
 
 const generatedUrls = new Set<string>();
 
-// TODO(aomarks) Read this from a global stamped into the HTML somehow.
-const ORIGIN_TO_CONNECTION_SERVER: Record<string, string> = {
-  "http://localhost:5173": "http://localhost:5555",
-  "https://breadboard-ai.googleplex.com":
-    "https://connections-dot-breadboard-ai.googleplex.com",
-  "https://breadboard-ai.web.app":
-    "https://connections-dot-breadboard-community.wl.r.appspot.com",
-};
-
 const ENVIRONMENT: BreadboardUI.Contexts.Environment = {
-  connectionServerUrl:
-    ORIGIN_TO_CONNECTION_SERVER[new URL(window.location.href).origin],
+  connectionServerUrl: import.meta.env.VITE_CONNECTION_SERVER_URL,
   connectionRedirectUrl: "/oauth/",
   plugins: {
     input: [
