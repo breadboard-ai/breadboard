@@ -114,7 +114,7 @@ export type RunBoardStateStore = {
 };
 
 export type UserStore = {
-  createUser(username: string, apiKey: string): CreateUserResult
+  createUser(username: string, apiKey: string): Promise<CreateUserResult>
 }
 
 export type CreateUserResult =
