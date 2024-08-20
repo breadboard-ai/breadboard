@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Firestore } from "@google-cloud/firestore";
 import { getStore } from "../src/server/store"
 
 if (process.argv.length !== 3) {
@@ -27,6 +26,6 @@ const store = getStore()
 
 const key = await createAPIKey();
 
-await store.createUser(username, key)
+await store!.createUser(username, key)
 
 console.log(`Created account for ${username} with API key:\n${key}`);
