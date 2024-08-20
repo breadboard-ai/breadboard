@@ -185,33 +185,19 @@ Create a new JSON file called `packages/connection-server/secrets/secrets.json`:
 
 By default, our server will host no secrets. We will come back and add secrets in **Part 2**.
 
-#### Create an `app.yaml` file
+#### Update `app.yaml`
 
-Create a new YAML file at `packages/connection-server/app.yaml`:
+Update `packages/connection-server/app.yaml` to add the
+[origin](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Origin) of
+your Visual Editor. This will configure the CORS headers so that your Visual
+Editor can successfully connect to the Connection Server.
 
 ```yaml
-service: connections
-
-runtime: nodejs22
-
-instance_class: F1
-
-handlers:
-  - url: /.*
-    secure: always
-    redirect_http_response_code: 301
-    script: auto
-
-env_variables:
-  CONNECTIONS_FILE: "secrets/secrets.json"
-  ALLOWED_ORIGINS: "{YOUR_VISUAL_EDITOR_ORIGIN}"
+ALLOWED_ORIGINS: "{YOUR_VISUAL_EDITOR_ORIGIN}"
 ```
 
-Be sure to provide the
-[origin](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Origin) of
-your Visual Editor as the value of the `ALLOWED_ORIGINS` variable. Multiple
-origins can be separated by spaces. Requests from origins not in this list will
-be rejected.
+Multiple origins can be separated by spaces. Requests from origins not in this
+list will be rejected.
 
 #### Deploy the server
 
