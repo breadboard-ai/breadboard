@@ -10,15 +10,6 @@ import {
   type OAuthStateParameter,
 } from "./connection-common.js";
 
-// TODO(aomarks) Read this from a global stamped into the HTML somehow.
-const ORIGIN_TO_GRANT_URL: Record<string, string> = {
-  "http://localhost:5173": "http://localhost:5555/grant",
-  "https://breadboard-ai.googleplex.com":
-    "https://connections-dot-breadboard-ai.googleplex.com/grant",
-  "https://breadboard-ai.web.app":
-    "https://connections-dot-breadboard-community.wl.r.appspot.com/grant",
-};
-
 export class ConnectionBroker extends HTMLElement {
   constructor() {
     super();
@@ -81,13 +72,11 @@ export class ConnectionBroker extends HTMLElement {
     }
 
     // Call the token grant API.
-    const grantUrl = new URL(
-      ORIGIN_TO_GRANT_URL[new URL(window.location.href).origin]
-    );
-    if (!grantUrl) {
+    if (!import.meta.env.VITE_CONNECTION_SERVER_URL) {
       shadow.innerHTML = `<p>Error: Could not find a grant URL for this origin.</p>`;
       return;
     }
+    const grantUrl = new URL("grant", import.meta.env.VITE_CONNECTION_SERVER_URL);
     grantUrl.searchParams.set("connection_id", connectionId);
     grantUrl.searchParams.set("code", code);
     grantUrl.searchParams.set(

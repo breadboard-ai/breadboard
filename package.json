@@ -156,7 +156,7 @@
     "eslint-plugin-expect-type": "^0.4.0",
     "npm-ci": "^0.0.2",
     "rimraf": "^6.0.1",
-    "rollup": "^4.20.0",
+    "rollup": "^4.21.0",
     "rollup-plugin-dts": "^6.1.1",
     "syncpack": "^12.4.0",
     "typescript": "^5.5.4",
@@ -169,7 +169,7 @@
   ],
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.21.0",
-    "@rollup/rollup-linux-x64-gnu": "^4.19.2"
+    "@rollup/rollup-linux-x64-gnu": "^4.21.0"
   },
   "dependencies": {
     "json-schema": "^0.4.0",

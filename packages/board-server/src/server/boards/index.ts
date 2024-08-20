@@ -20,6 +20,9 @@ import inviteUpdate from "./invite-update.js";
 import { parse } from "./utils/board-api-parser.js";
 import { cors, corsAll } from "../cors.js";
 import run from "./run.js";
+import type { BoardParseResult, PageMetadata } from "../types.js";
+import { getStore } from "../store.js";
+import type { GraphDescriptor } from "@google-labs/breadboard";
 
 const getBody = async (req: IncomingMessage): Promise<unknown> => {
   const chunks: string[] = [];
@@ -41,6 +44,19 @@ const getBody = async (req: IncomingMessage): Promise<unknown> => {
       }
     });
   });
+};
+
+const getMetadata = (parsed: BoardParseResult) => {
+  const { user, name } = parsed;
+  return async (): Promise<PageMetadata | null> => {
+    const store = getStore();
+    const board = await store.get(user!, name!);
+    try {
+      return JSON.parse(board) as PageMetadata;
+    } catch {
+      return null;
+    }
+  };
 };
 
 export const serveBoardsAPI = async (
@@ -87,7 +103,7 @@ export const serveBoardsAPI = async (
     }
     case "app": {
       // Serve the index.html file for the app.
-      serveIndex(vite, res);
+      serveIndex(vite, res, getMetadata(parsed));
       return true;
     }
     case "api": {

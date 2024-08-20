@@ -140,3 +140,8 @@ export type ListInviteResult =
       success: false;
       error: string;
     };
+
+export type PageMetadata = {
+  title: string;
+  description: string;
+};

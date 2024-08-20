@@ -120,7 +120,7 @@
       ],
       "files": [
         "vite.config.ts",
-        ".env",
+        ".env*",
         "*.html",
         "oauth/",
         "public/"

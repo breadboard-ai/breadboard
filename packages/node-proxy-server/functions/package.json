@@ -74,7 +74,7 @@
   "main": "lib/bundle.js",
   "dependencies": {
     "firebase-admin": "^12.3.1",
-    "firebase-functions": "^5.0.1"
+    "firebase-functions": "^5.1.0"
   },
   "devDependencies": {
     "@google-labs/breadboard": "^0.24.0",
@@ -86,7 +86,7 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "firebase-functions-test": "^3.3.0",
-    "rollup": "^4.20.0",
+    "rollup": "^4.21.0",
     "typescript": "^5.5.4"
   },
   "private": true,

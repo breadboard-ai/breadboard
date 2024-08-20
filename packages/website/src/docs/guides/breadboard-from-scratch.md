@@ -185,33 +185,19 @@ Create a new JSON file called `packages/connection-server/secrets/secrets.json`:
 
 By default, our server will host no secrets. We will come back and add secrets in **Part 2**.
 
-#### Create an `app.yaml` file
+#### Update `app.yaml`
 
-Create a new YAML file at `packages/connection-server/app.yaml`:
+Update `packages/connection-server/app.yaml` to add the
+[origin](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Origin) of
+your Visual Editor. This will configure the CORS headers so that your Visual
+Editor can successfully connect to the Connection Server.
 
 ```yaml
-service: connections
-
-runtime: nodejs22
-
-instance_class: F1
-
-handlers:
-  - url: /.*
-    secure: always
-    redirect_http_response_code: 301
-    script: auto
-
-env_variables:
-  CONNECTIONS_FILE: "secrets/secrets.json"
-  ALLOWED_ORIGINS: "{YOUR_VISUAL_EDITOR_ORIGIN}"
+ALLOWED_ORIGINS: "{YOUR_VISUAL_EDITOR_ORIGIN}"
 ```
 
-Be sure to provide the
-[origin](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Origin) of
-your Visual Editor as the value of the `ALLOWED_ORIGINS` variable. Multiple
-origins can be separated by spaces. Requests from origins not in this list will
-be rejected.
+Multiple origins can be separated by spaces. Requests from origins not in this
+list will be rejected.
 
 #### Deploy the server
 
@@ -357,33 +343,16 @@ an example.
 
 #### Connect the Visual Editor to the Connection Server
 
-The Visual Editor chooses a Connection Server based on a hard-coded origin map.
-To get your Visual Editor to connect to your Connection Server, you will need to
-edit this map.
+The Visual Editor chooses a Connection Server based on a environment variable.
+You will need to set this value to your connection server URL.
 
-Open [`packages/visual-editor/src/index.ts`](https://github.com/breadboard-ai/breadboard/blob/main/packages/visual-editor/src/index.ts)
+Open [`packages/visual-editor/.env.production`](https://github.com/breadboard-ai/breadboard/blob/main/packages/visual-editor/.env.production)
 in a text editor.
 
-Update the value of **`ORIGIN_TO_CONNECTION_SERVER`** to contain the origins of
-your Visual Editor and Connection Server.
+Update the value of **`VITE_CONNECTION_SERVER_URL`**:
 
-```ts
-const ORIGIN_TO_CONNECTION_SERVER: Record<string, string> = {
-  "{YOUR_VISUAL_EDITOR_ORIGIN}": "{YOUR_CONNECTION_SERVER_ORIGIN}",
-};
-```
-
-Open
-[`packages/shared-ui/src/elements/connection/connection-broker.ts`](https://github.com/breadboard-ai/breadboard/blob/main/packages/shared-ui/src/elements/connection/connection-broker.ts)
-in a text editor.
-
-Update the value of **`ORIGIN_TO_GRANT_URL`**. This is the same as the change
-made above, but the target URL has a path of `/grant`.
-
-```ts
-const ORIGIN_TO_GRANT_URL: Record<string, string> = {
-  "{YOUR_VISUAL_EDITOR_ORIGIN}": "{YOUR_CONNECTION_SERVER_ORIGIN}/grant",
-};
+```env
+VITE_CONNECTION_SERVER_URL={YOUR_CONNECTION_SERVER}
 ```
 
 Re-deploy the Visual Editor.
