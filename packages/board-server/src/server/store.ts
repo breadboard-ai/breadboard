@@ -339,7 +339,7 @@ class Store implements RunBoardStateStore {
   }
 }
 
-class SQLite3BetterStore implements RunBoardStateStore, UserStore {
+class SQLiteStore implements RunBoardStateStore, UserStore {
   private db: Database.Database;
 
   constructor(dbPath: string) {
