@@ -1,6 +1,6 @@
 import { Firestore } from "@google-cloud/firestore";
 import { type ReanimationState, type GraphDescriptor, blankLLMContent } from "@google-labs/breadboard";
-import { EXPIRATION_TIME_MS, BoardServerCorsConfig, ServerInfo, GetUserStoreResult, BoardListEntry, asPath, OperationResult, asInfo, sanitize, INVITE_EXPIRATION_TIME_MS } from "../store";
+import { EXPIRATION_TIME_MS, type BoardServerCorsConfig, type ServerInfo, type GetUserStoreResult, type BoardListEntry, asPath, type OperationResult, asInfo, sanitize, INVITE_EXPIRATION_TIME_MS } from "../store.js";
 import type { CreateInviteResult, ListInviteResult, RunBoardStateStore } from "../types.js";
 
 
