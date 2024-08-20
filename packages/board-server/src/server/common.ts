@@ -4,6 +4,7 @@ import { dirname, extname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { notFound } from "./errors.js";
 import type { ViteDevServer } from "vite";
+import type { PageMetadata } from "./types.js";
 
 const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
 const ROOT_PATH = resolve(MODULE_PATH, "../..");
@@ -12,6 +13,24 @@ const PROD_PATH = "/dist/client";
 const CONTENT_TYPE = new Map([
   [".html", "text/html"],
   [".json", "application/json"],
+  [".css", "text/css"],
+  [".js", "text/javascript"],
+  [".png", "image/png"],
+  [".svg", "image/svg+xml"],
+  [".ico", "image/x-icon"],
+  [".webp", "image/webp"],
+  [".woff", "font/woff"],
+  [".woff2", "font/woff2"],
+  [".ttf", "font/ttf"],
+  [".otf", "font/otf"],
+  [".eot", "application/vnd.ms-fontobject"],
+  [".mp3", "audio/mpeg"],
+  [".wav", "audio/wav"],
+  [".mp4", "video/mp4"],
+  [".webm", "video/webm"],
+  [".pdf", "application/pdf"],
+  [".md", "text/markdown"],
+  [".txt", "text/plain"],
 ]);
 const DEFAULT_CONTENT_TYPE = "text/plain";
 
@@ -60,14 +79,39 @@ export const serveContent = async (
   }
 };
 
+function escapeHTML(s: string) {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function replaceMetadata(contents: string, metadata: PageMetadata) {
+  return contents
+    .replaceAll("{{title}}", escapeHTML(metadata.title))
+    .replaceAll("{{description}}", escapeHTML(metadata.description));
+}
+
 export const serveIndex = async (
   vite: ViteDevServer | null,
-  res: ServerResponse
+  res: ServerResponse,
+  metadataGetter: () => Promise<PageMetadata | null>
 ) => {
+  const metadata = await metadataGetter();
+  if (metadata === null) {
+    return notFound(res, "Board not found");
+  }
   if (vite === null) {
-    return serveFile(res, "/index.html");
+    return serveFile(res, "/index.html", async (contents: string) => {
+      return replaceMetadata(contents, metadata);
+    });
   }
   serveFile(res, "/", async (contents: string) => {
-    return await vite.transformIndexHtml("/index.html", contents);
+    return await vite.transformIndexHtml(
+      "/index.html",
+      replaceMetadata(contents, metadata)
+    );
   });
 };

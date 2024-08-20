@@ -454,7 +454,14 @@ export class FileSystemGraphProvider implements GraphProvider {
       disconnect: true,
       refresh: true,
       watch: false,
+      preview: false,
     };
+  }
+
+  async preview(_url: URL): Promise<URL> {
+    throw new Error(
+      "The `FileSystemGraphProvider` should not be called to preview"
+    );
   }
 
   watch() {

@@ -13,6 +13,11 @@ import type {
   JsonSerializable,
 } from "../type-system/type.js";
 
+type Optionalize<
+  T extends Record<string, unknown>,
+  X extends JsonSerializable | undefined,
+> = T["optional"] extends true ? X | undefined : X;
+
 // no parameters
 export function input(): Input<string>;
 
@@ -29,9 +34,12 @@ export function input<T extends Record<string, unknown>>(
 export function input<T extends Record<string, unknown>>(
   params: T & { type: Defined } & CheckParams<T>
 ): Input<
-  T["type"] extends BreadboardType
-    ? ConvertBreadboardType<T["type"]>
-    : JsonSerializable
+  Optionalize<
+    T,
+    T["type"] extends BreadboardType
+      ? ConvertBreadboardType<T["type"]>
+      : JsonSerializable
+  >
 >;
 
 // just default
@@ -44,7 +52,7 @@ export function input<T extends Record<string, unknown>>(
     : JsonSerializable
 >;
 
-// nothing we can use for types means string
+// string by default (required)
 export function input(params: {
   $id?: string;
   description?: string;
@@ -52,15 +60,30 @@ export function input(params: {
   type?: undefined;
   default?: undefined;
   examples?: undefined;
+  optional?: undefined;
 }): Input<string>;
+
+// string by default (optional)
+export function input(params: {
+  $id?: string;
+  description?: string;
+  title?: string;
+  type?: undefined;
+  default?: undefined;
+  examples?: undefined;
+  optional: true;
+}): Input<string | undefined>;
 
 // just examples
 export function input<T extends Record<string, unknown>>(
   params: T & { examples: Defined } & CheckParams<T>
 ): Input<
-  T["examples"] extends string[] | number[] | boolean[]
-    ? BroadenBasicType<T["examples"][number]>
-    : JsonSerializable
+  Optionalize<
+    T,
+    T["examples"] extends string[] | number[] | boolean[]
+      ? BroadenBasicType<T["examples"][number]>
+      : JsonSerializable
+  >
 >;
 
 /**
@@ -68,7 +91,7 @@ export function input<T extends Record<string, unknown>>(
  */
 export function input(
   params?: LooseParams
-): Input<JsonSerializable> | InputWithDefault<JsonSerializable> {
+): Input<JsonSerializable | undefined> | InputWithDefault<JsonSerializable> {
   let type: BreadboardType;
   if (params?.type !== undefined) {
     type = params.type;
@@ -147,7 +170,7 @@ export interface InputWithDefault<T extends JsonSerializable | undefined> {
 }
 
 export type GenericSpecialInput =
-  | Input<JsonSerializable>
+  | Input<JsonSerializable | undefined>
   | InputWithDefault<JsonSerializable>;
 
 type CheckParams<T extends LooseParams> = (T["type"] extends Defined

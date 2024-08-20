@@ -28,6 +28,12 @@
       "tags": []
     },
     {
+      "title": "Guide: Novel Generator",
+      "reference": "/example-boards/examples/novel-generator.bgl.json",
+      "version": "0.0.1",
+      "tags": []
+    },
+    {
       "title": "Guide: Rhyme of the Day",
       "reference": "/example-boards/examples/rhyme-of-the-day.bgl.json",
       "version": "0.0.1"
@@ -37,6 +43,22 @@
       "reference": "/example-boards/examples/social-media-post-creator.bgl.json",
       "version": "0.0.1",
       "tags": []
+    },
+    {
+      "title": "Tool: Novel Developer",
+      "reference": "/example-boards/examples/tool-novel-developer.bgl.json",
+      "version": "0.0.1",
+      "tags": [
+        "tool"
+      ]
+    },
+    {
+      "title": "Tool: Novel Outliner",
+      "reference": "/example-boards/examples/tool-novel-outliner.bgl.json",
+      "version": "0.0.1",
+      "tags": [
+        "tool"
+      ]
     },
     {
       "title": "Tool: Today's Date",

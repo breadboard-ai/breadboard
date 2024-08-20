@@ -1,25 +1,19 @@
 {
-  "title": "OpenAI GPT 4 Vision Preview",
-  "description": "This board is the simplest possible invocation of OpenAI's GPT 4 Vision Preview API to generate text from multipart inputs.",
-  "version": "0.0.2",
+  "title": "OpenAI GPT-4 Turbo Vision",
+  "description": "This board is the simplest possible invocation of OpenAI's GPT 4 Turbo API, using its vision capabilities to generate text from multipart inputs.",
+  "version": "0.1.0",
   "edges": [
     {
+      "from": "Content",
+      "to": "makeBody",
+      "out": "content",
+      "in": "content"
+    },
+    {
       "from": "getResponse",
-      "to": "textOutput",
+      "to": "output-0",
       "out": "result",
       "in": "text"
-    },
-    {
-      "from": "input",
-      "to": "makeBody",
-      "out": "*",
-      "in": ""
-    },
-    {
-      "from": "input",
-      "to": "openai",
-      "out": "useStreaming",
-      "in": "stream"
     },
     {
       "from": "makeBody",
@@ -40,27 +34,15 @@
       "in": "json"
     },
     {
-      "from": "openai",
-      "to": "streamTransform",
-      "out": "stream",
-      "in": "stream"
-    },
-    {
-      "from": "secrets-3",
+      "from": "OPENAI_API_KEY-secret",
       "to": "makeHeaders",
       "out": "OPENAI_API_KEY",
       "in": "OPENAI_API_KEY"
-    },
-    {
-      "from": "streamTransform",
-      "to": "streamOutput",
-      "out": "*",
-      "in": ""
     }
   ],
   "nodes": [
     {
-      "id": "input",
+      "id": "Content",
       "type": "input",
       "configuration": {
         "schema": {
@@ -68,57 +50,104 @@
           "properties": {
             "content": {
               "type": "array",
-              "title": "Content",
-              "description": "Add content here",
+              "title": "Context",
+              "description": "An array of messages to use as conversation context",
               "items": {
-                "type": "object",
                 "behavior": [
                   "llm-content"
                 ],
-                "format": "image-file,image-webcam"
-              },
-              "minItems": 1
-            },
-            "useStreaming": {
-              "type": "boolean",
-              "title": "Stream",
-              "description": "Whether to stream the output",
-              "default": "false"
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string"
+                  },
+                  "parts": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "text": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "text"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "inlineData": {
+                              "type": "object",
+                              "properties": {
+                                "mimeType": {
+                                  "type": "string",
+                                  "enum": [
+                                    "image/png",
+                                    "image/jpeg",
+                                    "image/heic",
+                                    "image/heif",
+                                    "image/webp"
+                                  ]
+                                },
+                                "data": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "mimeType",
+                                "data"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "inlineData"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "role",
+                  "parts"
+                ],
+                "additionalProperties": false
+              }
             }
-          }
+          },
+          "required": [
+            "content"
+          ]
         }
       }
     },
     {
-      "id": "streamOutput",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "stream": {
-              "type": "object",
-              "title": "Stream",
-              "description": "The generated text",
-              "format": "stream"
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "textOutput",
+      "id": "output-0",
       "type": "output",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
             "text": {
-              "type": "string",
-              "title": "Text",
-              "description": "The generated text"
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
+              ]
             }
-          }
+          },
+          "required": [
+            "text"
+          ]
         }
       }
     },
@@ -133,14 +162,15 @@
       "id": "makeBody",
       "type": "jsonata",
       "configuration": {
-        "expression": "{\n          \"model\": \"gpt-4-vision-preview\",\n          \"messages\": [\n            {\n              \"role\": \"user\",\n              \"content\": $.content.{\n                \"type\": $keys($) = \"text\" ? \"text\" : \"image_url\" ,\n                \"text\": $.text,\n                \"image_url\": \"data:\" & $.inline_data.mime_type & \";base64,\" & $.inline_data.data\n              }\n            }\n          ],\n          \"stream\": $.useStreaming,\n          \"temperature\": 1,\n          \"max_tokens\": 256,\n          \"top_p\": 1,\n          \"frequency_penalty\": 0,\n          \"presence_penalty\": 0\n    }"
+        "expression": "{\n      \"model\": \"gpt-4-turbo\",\n      \"messages\": [\n        {\n            \"role\": \"user\",\n            \"content\": $.content.parts.({\n              \"type\": $exists($.text) ? \"text\" : \"image_url\",\n              \"text\": $exists($.text) ? $.text : undefined,\n              \"image_url\": $exists($.inlineData) ? {\n                  \"url\": \"data:\" & $.inlineData.mimeType & \";base64,\" & $.inlineData.data\n              } : undefined\n            })\n        }\n      ],\n      \"stream\": $.useStreaming,\n      \"temperature\": 1,\n      \"max_tokens\": 256,\n      \"top_p\": 1,\n      \"frequency_penalty\": 0,\n      \"presence_penalty\": 0\n    }",
+        "useStreaming": false
       }
     },
     {
       "id": "makeHeaders",
       "type": "jsonata",
       "configuration": {
-        "expression": "{\n        \"Content-Type\": \"application/json\",\n        \"Authorization\": \"Bearer \" & $.OPENAI_API_KEY\n      }"
+        "expression": "{\n      \"Content-Type\": \"application/json\",\n      \"Authorization\": \"Bearer \" & $.OPENAI_API_KEY\n    }"
       }
     },
     {
@@ -148,101 +178,17 @@
       "type": "fetch",
       "configuration": {
         "method": "POST",
+        "stream": false,
         "url": "https://api.openai.com/v1/chat/completions"
       }
     },
     {
-      "id": "secrets-3",
+      "id": "OPENAI_API_KEY-secret",
       "type": "secrets",
       "configuration": {
         "keys": [
           "OPENAI_API_KEY"
         ]
-      }
-    },
-    {
-      "id": "streamTransform",
-      "type": "transformStream",
-      "configuration": {
-        "board": {
-          "kind": "board",
-          "board": {
-            "kits": [],
-            "edges": [
-              {
-                "from": "transformCompletion",
-                "to": "result",
-                "out": "result",
-                "in": "chunk"
-              },
-              {
-                "from": "chunk",
-                "to": "transformCompletion",
-                "out": "chunk",
-                "in": "json"
-              }
-            ],
-            "nodes": [
-              {
-                "id": "result",
-                "type": "output",
-                "configuration": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "chunk": {
-                        "type": [
-                          "array",
-                          "boolean",
-                          "null",
-                          "number",
-                          "object",
-                          "string"
-                        ],
-                        "title": "Result",
-                        "description": "The result of the Jsonata expression"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "id": "transformCompletion",
-                "type": "jsonata",
-                "configuration": {
-                  "expression": "choices[0].delta.content ? choices[0].delta.content : \"\""
-                }
-              },
-              {
-                "id": "chunk",
-                "type": "input",
-                "configuration": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "chunk": {
-                        "type": [
-                          "array",
-                          "boolean",
-                          "null",
-                          "number",
-                          "object",
-                          "string"
-                        ],
-                        "title": "JSON",
-                        "description": "The JSON object to evaluate. If not set, dynamically wired input ports act as the properties of a JSON object."
-                      }
-                    },
-                    "required": [
-                      "chunk"
-                    ]
-                  }
-                }
-              }
-            ],
-            "graphs": {}
-          }
-        }
       }
     }
   ]

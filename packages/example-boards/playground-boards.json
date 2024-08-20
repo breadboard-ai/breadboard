@@ -23,7 +23,7 @@
     {
       "title": "Audio",
       "reference": "/example-boards/playground/audio.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Best of N",
@@ -38,6 +38,14 @@
     {
       "title": "Board for Each",
       "reference": "/example-boards/playground/board-for-each.json"
+    },
+    {
+      "title": "Business Review Replier Demo",
+      "reference": "/example-boards/playground/business-review-replier-demo.json"
+    },
+    {
+      "title": "Business Review Reply Generator",
+      "reference": "/example-boards/playground/business-review-replier.json"
     },
     {
       "title": "Chat bot 2.0",
@@ -62,7 +70,7 @@
     {
       "title": "Gemini Simple",
       "reference": "/example-boards/playground/gemini-simple.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Google Custom Search Engine Tool",
@@ -71,34 +79,38 @@
     },
     {
       "title": "Hacker News Algolia Items",
-      "reference": "/example-boards/playground/hacker-news-algolia-items.json"
+      "reference": "/example-boards/playground/hacker-news-algolia-items.json",
+      "version": "0.1.0"
     },
     {
       "title": "Hacker News Angolia Search",
       "reference": "/example-boards/playground/hacker-news-algolia-search.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Hacker News Firebase API Story by ID",
       "reference": "/example-boards/playground/hacker-news-firebase-story-from-id.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
-      "title": "Hacker News Firebase API Story IDs",
+      "title": "Hacker News Firebase Top Story IDs",
       "reference": "/example-boards/playground/hacker-news-firebase-top-story-ids.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
-      "title": "Hacker News Simplified Algolia Comment Search",
-      "reference": "/example-boards/playground/hacker-news-simplified-algolia-comment-search.json"
+      "title": "Hacker News Angolia Simplified Comment Search ",
+      "reference": "/example-boards/playground/hacker-news-simplified-algolia-comment-search.json",
+      "version": "0.1.0"
     },
     {
-      "title": "Hacker News Simplified Algolia Search",
-      "reference": "/example-boards/playground/hacker-news-simplified-algolia-search.json"
+      "title": "Hacker News Angolia Simplified Search",
+      "reference": "/example-boards/playground/hacker-news-simplified-algolia-search.json",
+      "version": "0.1.0"
     },
     {
-      "title": "Hacker News Simplified Algolia Story Search",
-      "reference": "/example-boards/playground/hacker-news-simplified-algolia-story-search.json"
+      "title": "Hacker News Angolia Simplified Story Search",
+      "reference": "/example-boards/playground/hacker-news-simplified-algolia-story-search.json",
+      "version": "0.1.0"
     },
     {
       "title": "Looper Chat Testing Grounds",
@@ -118,27 +130,27 @@
     {
       "title": "Nager Date Available Countries API",
       "reference": "/example-boards/playground/nager.date/available-countries.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Nager Date Country Info API",
       "reference": "/example-boards/playground/nager.date/country-info.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Is Today a Public Holiday",
       "reference": "/example-boards/playground/nager.date/is-today-public-holiday.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Nager Date Long Weekend API",
       "reference": "/example-boards/playground/nager.date/long-weekend.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Nager Date Next Public Holidays Worldwide API",
       "reference": "/example-boards/playground/nager.date/next-holiday-worldwide.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Nager Date Next Public Holiday",
@@ -148,7 +160,7 @@
     {
       "title": "Nager Date Public Holidays API",
       "reference": "/example-boards/playground/nager.date/public-holidays.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "Object Manipulator",
@@ -167,12 +179,12 @@
     {
       "title": "OpenAI GPT-3.5-turbo",
       "reference": "/example-boards/playground/openai-gpt-35-turbo.json",
-      "version": "0.0.2"
+      "version": "0.1.0"
     },
     {
-      "title": "OpenAI GPT 4 Vision Preview",
-      "reference": "/example-boards/playground/openai-gpt-4-vision.json",
-      "version": "0.0.2"
+      "title": "OpenAI GPT-4 Turbo Vision",
+      "reference": "/example-boards/playground/openai-gpt-4-turbo-vision.json",
+      "version": "0.1.0"
     },
     {
       "title": "The Search Summarizer Board",
@@ -217,7 +229,23 @@
     {
       "title": "Webcam",
       "reference": "/example-boards/playground/webcam.json",
-      "version": "0.0.2"
+      "version": "0.1.0"
+    },
+    {
+      "title": "Tool: Get Wiki Article",
+      "reference": "/example-boards/playground/get-wiki-article-tool.bgl.json",
+      "version": "0.0.1",
+      "tags": [
+        "tool"
+      ]
+    },
+    {
+      "title": "Tool: Wiki Search",
+      "reference": "/example-boards/playground/wiki-search-tool.bgl.json",
+      "version": "0.0.1",
+      "tags": [
+        "tool"
+      ]
     }
   ]
 }

@@ -1,5 +1,45 @@
 # @google-labs/breadboard-web
 
+## 1.15.0
+
+### Minor Changes
+
+- 3f8cdd1: Introduce run store
+
+### Patch Changes
+
+- 00875af: Teach User Input to honor enums
+- 89ccc90: Reinstate "Test Component"
+- 9f33a12: Remove explicit site name from Firebase hosting config
+- 62f8d5b: Fix replay of saved runs
+- Updated dependencies [8c694ed]
+- Updated dependencies [bbf2c30]
+- Updated dependencies [14df6a8]
+- Updated dependencies [c5c39be]
+- Updated dependencies [1dc645a]
+- Updated dependencies [2aabb7a]
+- Updated dependencies [fb72771]
+- Updated dependencies [9b22cab]
+- Updated dependencies [00cc2c5]
+- Updated dependencies [c04cff0]
+- Updated dependencies [d88c37b]
+- Updated dependencies [3f8cdd1]
+- Updated dependencies [3a5ced1]
+- Updated dependencies [62f8d5b]
+  - @google-labs/breadboard@0.24.0
+  - @google-labs/agent-kit@0.9.1
+  - @google-labs/node-nursery-web@1.2.0
+  - @google-labs/core-kit@0.13.0
+  - @breadboard-ai/build@0.8.1
+  - @breadboard-ai/data-store@0.2.0
+  - @breadboard-ai/example-boards@0.2.1
+  - @google-labs/gemini-kit@0.5.4
+  - @google-labs/json-kit@0.3.5
+  - @breadboard-ai/manifest@0.4.1
+  - @google-labs/palm-kit@0.1.1
+  - @google-labs/template-kit@0.3.7
+  - @breadboard-ai/google-drive-kit@0.2.2
+
 ## 1.14.0
 
 ### Minor Changes

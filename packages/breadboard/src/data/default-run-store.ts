@@ -5,42 +5,36 @@
  */
 
 import { HarnessRunResult } from "../harness/types.js";
-import { isLLMContent, isStoredData, toInlineDataPart } from "./common.js";
-import { RunStore } from "./types.js";
+import {
+  isLLMContent,
+  isLLMContentArray,
+  isMetadataEntry,
+  isStoredData,
+  toInlineDataPart,
+} from "./common.js";
+import { RunStore, RunTimestamp, RunURL } from "./types.js";
 
 export class DefaultRunStore implements RunStore {
-  #runs = new Map<string, HarnessRunResult[]>();
-  #storeId: string | null = null;
+  #runs = new Map<RunURL, Map<RunTimestamp, HarnessRunResult[]>>();
 
-  async start(storeId: string, limit = 2) {
-    if (this.#runs.has(storeId)) {
+  async start(url: RunURL): Promise<RunTimestamp> {
+    const timestamp = Date.now();
+    let store = this.#runs.get(url);
+    if (!store) {
+      store = new Map<RunTimestamp, HarnessRunResult[]>();
+    }
+
+    if (store.has(timestamp)) {
       throw new Error("Run by name has already started");
     }
 
-    this.#storeId = storeId;
-    this.#runs.set(storeId, []);
-
-    const oldStoreNames = [...this.#runs.keys()]
-      .sort((a, b) => {
-        if (a > b) return -1;
-        if (a < b) return 1;
-        return 0;
-      })
-      .slice(limit);
-
-    for (const storeName of oldStoreNames) {
-      this.#runs.delete(storeName);
-    }
-
-    return storeId;
+    store.set(timestamp, []);
+    this.#runs.set(url, store);
+    return timestamp;
   }
 
-  async write(result: HarnessRunResult) {
-    if (!this.#storeId) {
-      throw new Error("Run has not been started");
-    }
-
-    const store = this.#runs.get(this.#storeId);
+  async write(url: RunURL, timestamp: RunTimestamp, result: HarnessRunResult) {
+    const store = this.#runs.get(url);
     if (!store) {
       throw new Error("Unable to find the store");
     }
@@ -49,51 +43,76 @@ export class DefaultRunStore implements RunStore {
     // If so inflate them back to inlineData before storage.
     if (result.type === "nodeend" && result.data.node.type === "input") {
       for (const output of Object.values(result.data.outputs)) {
-        if (!isLLMContent(output)) {
+        if (!isLLMContent(output) && !isLLMContentArray(output)) {
           continue;
         }
 
-        for (let i = 0; i < output.parts.length; i++) {
-          const part = output.parts[i];
-          if (!isStoredData(part)) {
+        const outputs = isLLMContent(output) ? [output] : output;
+        for (const output of outputs) {
+          if (isMetadataEntry(output)) {
             continue;
           }
 
-          output.parts[i] = await toInlineDataPart(part);
+          for (let i = 0; i < output.parts.length; i++) {
+            const part = output.parts[i];
+            if (!isStoredData(part)) {
+              continue;
+            }
+
+            output.parts[i] = await toInlineDataPart(part);
+          }
         }
       }
     }
 
-    store.push(result);
+    const run = store.get(timestamp);
+    if (!run) {
+      console.warn(`No run created for timestamp ${timestamp}`);
+      return;
+    }
+
+    run.push(result);
   }
 
-  async stop() {
-    this.#storeId = null;
+  async stop(_storeId: RunURL, _timestamp: RunTimestamp) {
+    // Noop.
   }
 
-  async abort() {
-    this.#storeId = null;
+  async abort(_storeId: RunURL, _timestamp: RunTimestamp) {
+    // Noop
   }
 
-  async drop() {
-    this.#runs.clear();
+  async drop(url?: RunURL, _limit?: number) {
+    if (url) {
+      this.#runs.delete(url);
+    } else {
+      this.#runs.clear();
+    }
   }
 
-  async getNewestRuns(
-    limit = Number.POSITIVE_INFINITY
-  ): Promise<HarnessRunResult[][]> {
-    const storeNames = [...this.#runs.keys()]
-      .sort((a, b) => {
-        if (a > b) return -1;
-        if (a < b) return 1;
-        return 0;
-      })
-      .slice(0, limit);
+  async truncate(url: RunURL, limit: number) {
+    const store = this.#runs.get(url);
+    if (!store) {
+      return;
+    }
 
-    const runs = storeNames.map(
-      (storeName) => JSON.parse(JSON.stringify(this.#runs.get(storeName))) ?? []
-    );
+    if (store.size <= limit) {
+      return;
+    }
 
-    return runs;
+    const toRemove = [...store.keys()].sort((a, b) => b - a).slice(limit);
+    for (const item of toRemove) {
+      store.delete(item);
+    }
+  }
+
+  async getStoredRuns(
+    url: RunURL
+  ): Promise<Map<RunTimestamp, HarnessRunResult[]>> {
+    if (!this.#runs.has(url)) {
+      return new Map();
+    }
+
+    return this.#runs.get(url)!;
   }
 }

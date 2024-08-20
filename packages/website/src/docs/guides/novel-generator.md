@@ -11,11 +11,11 @@ This guide demonstrates how to build an agent that generates novels.  Given an i
 > [!TIP]
 > This introductory guide is suitable for beginners, though it covers some intermediate concepts. For more detailed steps, you can check out the [Librarian](/breadboard/docs/guides/librarian) and [First Tool](/breadboard/docs/guides/librarian) guides.  
 
-{% include "api-key.liquid" %}
+{% include "final-board-api-key.liquid" %}
 
-{{ "/breadboard/static/boards/novel-generator/generator.json" | board }}
+{{ "/breadboard/static/boards/novel-generator/novel-generator.bgl.json" | board }}
 
-First, we'll [create a board](/breadboard/docs/reference/visual-editor/#creating-a-new-board). Let's name it something like `my-novel-generator.json` and give it a proper title and description, like "My novel generator" and "A simple agent that turns ideas into finished novels.".
+First, we'll [create a board](/breadboard/docs/reference/visual-editor/#creating-a-new-board). Let's name it something like `my-novel-generator.bgl.json` and give it a proper title and description, like "My novel generator" and "A simple agent that turns ideas into finished novels.".
 This board uses the Agent Kit, a collection of components designed to help build asynchronous, semi-autonomous agents. You can read more about it in the [Agent Kit Reference](/breadboard/docs/kits/agents/). Additionally, we'll use the built-in "input" and "output" components. These are described in the [Built-in Kit Reference](/breadboard/docs/reference/kits/built-in/).
 
 To build this board, we will use the Breadboard Visual Editor, which is a tool for rapid prototyping AI systems. You can learn more about about all the different features and capabilities of Breadboard Visual Editor in the [Visual Editor Reference](/breadboard/docs/reference/visual-editor/).
@@ -25,7 +25,7 @@ To build this board, we will use the Breadboard Visual Editor, which is a tool f
 
 ## Step 1: Create the outliner
 
-First, we'll [create a board](/breadboard/docs/reference/visual-editor/#creating-a-new-board). You can use a name like `my-novel-outliner.json` and give it a proper title and description, such as "My novel outliner" and "A novel outliner agent that turns ideas into novel outlines".
+First, we'll [create a board](/breadboard/docs/reference/visual-editor/#creating-a-new-board). You can use a name like `my-novel-outliner.bgl.json` and give it a proper title and description, such as "My novel outliner" and "A novel outliner agent that turns ideas into novel outlines".
 
 An input like the following should work:
 
@@ -46,7 +46,7 @@ To make this board usable from other boards, we'll check the Tool checkbox in th
 
 Now, let's implement it! Here's the complete board:
 
-{{ "/breadboard/static/boards/novel-generator/outliner.json" | board }}
+{{ "/breadboard/static/boards/novel-generator/tool-novel-outliner.bgl.json" | board }}
 
 Yes, there's a lot going on! Let's summarize it in three steps: (1) the author writes a draft, (2) the author revises the text based on a friends' feedback, and (3) the patron selects their preferred outline.
 Next we'll explain how each of them works.
@@ -119,9 +119,9 @@ The outliner board is complete! Excellent progress. We'll use it next to develop
 
 ## Step 2: Create a developer
 
-Let's [create another board](/breadboard/docs/reference/visual-editor/#creating-a-new-board). We can call it `developer.json`. It will look like this when we're done: 
+Let's [create another board](/breadboard/docs/reference/visual-editor/#creating-a-new-board). We can call it `my-novel-developer.bgl.json`. It will look like this when we're done: 
 
-{{ "/breadboard/static/boards/novel-generator/developer.json" | board }}
+{{ "/breadboard/static/boards/novel-generator/tool-novel-developer.bgl.json" | board }}
 
 >[!NOTE]
 > Don't forget to save this board as a Tool, so we can call it from another board.
@@ -183,9 +183,9 @@ Way to go! Let's connect it to the Output component. Our Developer board is done
 ## Step 3: Create the generator
 
 It's time to connect our boards!
-{{ "/breadboard/static/boards/novel-generator/generator.json" | board }}
+{{ "/breadboard/static/boards/novel-generator/novel-generator.bgl.json" | board }}
 
-Let's [create a board](/breadboard/docs/reference/visual-editor/#creating-a-new-board). This will be the main one. We can call it something like `my-novel-generator.json` and give it a short description such as "A simple agent that turns ideas into finished novels.".
+Let's [create a board](/breadboard/docs/reference/visual-editor/#creating-a-new-board). This will be the main one. We can call it something like `my-novel-generator.bgl.json` and give it a short description such as "A simple agent that turns ideas into finished novels.".
 
 Then we'll add two Specialist components and connect them. The first will produce an outline, and the second will develop the mansucript. These Specialists will call the boards we created earlier.
 

@@ -6,21 +6,30 @@
 
 import { loadRunnerState, saveRunnerState } from "../serialization.js";
 import { MachineResult } from "../traversal/result.js";
-import type { OutputValues, TraversalResult } from "../types.js";
+import type {
+  Edge,
+  NodeIdentifier,
+  OutputValues,
+  TraversalResult,
+} from "../types.js";
 import { Registry } from "./registry.js";
 import type {
   LifecyclePathRegistryEntry,
   ManagedRunStateLifecycle,
   ReanimationState,
+  ReanimationStateCache,
+  ReanimationStateVisits,
   RunStackEntry,
   RunState,
 } from "./types.js";
+import { VisitTracker } from "./visit-tracker.js";
 
 // TODO: Support stream serialization somehow.
 // see https://github.com/breadboard-ai/breadboard/issues/423
 
 function toReanimationState(
-  root: LifecyclePathRegistryEntry<RunStackEntry>
+  root: LifecyclePathRegistryEntry<RunStackEntry>,
+  visits: VisitTracker
 ): ReanimationState {
   function pathToString(path: number[]): string {
     return path.join("-");
@@ -29,7 +38,7 @@ function toReanimationState(
   function descend(
     entry: LifecyclePathRegistryEntry<RunStackEntry>,
     path: number[],
-    result: ReanimationState
+    result: ReanimationStateCache
   ) {
     for (const [index, child] of entry.children.entries()) {
       if (!child) continue;
@@ -41,18 +50,20 @@ function toReanimationState(
     }
   }
 
-  const state: ReanimationState = {};
-  descend(root, [], state);
-  return state;
+  const states: ReanimationStateCache = {};
+  descend(root, [], states);
+  return { states, visits: visits.visited() };
 }
 
 export class LifecycleManager implements ManagedRunStateLifecycle {
   #stack: RunState;
   #registry: Registry<RunStackEntry>;
+  #visits: VisitTracker;
 
-  constructor(stack: RunState) {
-    this.#stack = stack;
+  constructor(visits?: ReanimationStateVisits) {
+    this.#stack = [];
     this.#registry = new Registry<RunStackEntry>();
+    this.#visits = new VisitTracker(visits);
   }
 
   async supplyPartialOutputs(
@@ -80,13 +91,18 @@ export class LifecycleManager implements ManagedRunStateLifecycle {
   }
 
   dispatchSkip(): void {
-    // TODO: implement
+    // Do nothing for now.
+  }
+
+  dispatchEdge(_edge: Edge): void {
+    // Do nothing for now.
   }
 
   async dispatchNodeStart(
     result: TraversalResult,
     invocationPath: number[]
   ): Promise<void> {
+    this.#visits.visit(result.descriptor.id, invocationPath);
     if (this.#stack.length === 0) {
       return;
     }
@@ -111,12 +127,16 @@ export class LifecycleManager implements ManagedRunStateLifecycle {
     // TODO: implement
   }
 
+  pathFor(node: NodeIdentifier): number[] | undefined {
+    return this.#visits.pathFor(node);
+  }
+
   state(): RunState {
     return this.#stack;
   }
 
   reanimationState(): ReanimationState {
-    return toReanimationState(this.#registry.root);
+    return toReanimationState(this.#registry.root, this.#visits);
   }
 }
 

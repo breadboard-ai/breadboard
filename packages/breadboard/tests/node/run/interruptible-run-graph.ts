@@ -46,7 +46,7 @@ describe("interruptibleRunGraph end-to-end", async () => {
       {
         expected: {
           type: "output",
-          outputs: [{ one: "foo" }, { two: "foo " }],
+          outputs: [{ one: "foo" }, { two: "foo" }],
         },
       },
     ]);
@@ -68,7 +68,7 @@ describe("interruptibleRunGraph end-to-end", async () => {
           type: "input",
           state: {
             "": { node: "invoke-b5fe388d" },
-            "1": { node: "input" },
+            "2": { node: "input" },
           },
         },
         inputs: { location: "New York" },
@@ -104,7 +104,7 @@ describe("interruptibleRunGraph end-to-end", async () => {
           state: {
             "": { node: "invoke-d5aa6bf1" },
             "1": { node: "invoke-b5fe388d" },
-            "1-1": { node: "input" },
+            "1-2": { node: "input" },
           },
         },
         inputs: { location: "New York" },

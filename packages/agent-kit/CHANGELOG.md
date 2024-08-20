@@ -1,5 +1,13 @@
 # @google-labs/agent-kit
 
+## 0.9.1
+
+### Patch Changes
+
+- c5c39be: Internal refactoring (type system)
+- Updated dependencies [d88c37b]
+  - @breadboard-ai/build@0.8.1
+
 ## 0.9.0
 
 ### Minor Changes

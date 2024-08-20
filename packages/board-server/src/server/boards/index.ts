@@ -15,8 +15,14 @@ import del from "./delete.js";
 import type { ViteDevServer } from "vite";
 import invoke from "./invoke.js";
 import describe from "./describe.js";
+import inviteList from "./invite-list.js";
+import inviteUpdate from "./invite-update.js";
 import { parse } from "./utils/board-api-parser.js";
 import { cors, corsAll } from "../cors.js";
+import run from "./run.js";
+import type { BoardParseResult, PageMetadata } from "../types.js";
+import { getStore } from "../store.js";
+import type { GraphDescriptor } from "@google-labs/breadboard";
 
 const getBody = async (req: IncomingMessage): Promise<unknown> => {
   const chunks: string[] = [];
@@ -27,9 +33,30 @@ const getBody = async (req: IncomingMessage): Promise<unknown> => {
     });
 
     req.on("end", () => {
-      resolve(JSON.parse(chunks.join("")));
+      const body = chunks.join("");
+      if (!body) {
+        resolve(undefined);
+      }
+      try {
+        resolve(JSON.parse(body));
+      } catch (e) {
+        resolve(undefined);
+      }
     });
   });
+};
+
+const getMetadata = (parsed: BoardParseResult) => {
+  const { user, name } = parsed;
+  return async (): Promise<PageMetadata | null> => {
+    const store = getStore();
+    const board = await store.get(user!, name!);
+    try {
+      return JSON.parse(board) as PageMetadata;
+    } catch {
+      return null;
+    }
+  };
 };
 
 export const serveBoardsAPI = async (
@@ -63,7 +90,7 @@ export const serveBoardsAPI = async (
       break;
     }
     case "get": {
-      if (!cors(req, res)) return true;
+      if (!corsAll(req, res)) return true;
       if (await get(parsed, req, res)) return true;
       break;
     }
@@ -76,7 +103,7 @@ export const serveBoardsAPI = async (
     }
     case "app": {
       // Serve the index.html file for the app.
-      serveIndex(vite, res);
+      serveIndex(vite, res, getMetadata(parsed));
       return true;
     }
     case "api": {
@@ -92,6 +119,23 @@ export const serveBoardsAPI = async (
     case "describe": {
       if (!corsAll(req, res)) return true;
       if (await describe(parsed, req, res)) return true;
+      break;
+    }
+    case "run": {
+      if (!corsAll(req, res)) return true;
+      const body = await getBody(req);
+      if (await run(parsed, req, res, body)) return true;
+      break;
+    }
+    case "invite-list": {
+      if (!cors(req, res)) return true;
+      if (await inviteList(parsed, req, res)) return true;
+      break;
+    }
+    case "invite-update": {
+      if (!cors(req, res)) return true;
+      const body = await getBody(req);
+      if (await inviteUpdate(parsed, req, res, body)) return true;
       break;
     }
     default: {

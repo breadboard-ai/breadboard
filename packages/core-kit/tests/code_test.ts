@@ -6,7 +6,14 @@
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
-import { board, defineNodeType, input, serialize } from "@breadboard-ai/build";
+import {
+  board,
+  converge,
+  defineNodeType,
+  input,
+  loopback,
+  serialize,
+} from "@breadboard-ai/build";
 import test from "ava";
 import { code } from "@google-labs/core-kit";
 
@@ -265,5 +272,27 @@ test("can return error", (t) => {
     },
   }));
 
+  t.pass();
+});
+
+test("exotic inputs", (t) => {
+  code(
+    {
+      in1:
+        // $ExpectType Convergence<string | number>
+        converge(input(), input({ type: "number" })),
+      in2:
+        // $ExpectType Loopback<boolean>
+        loopback({ type: "boolean" }),
+    },
+    { out: "string" },
+    ({ in1, in2 }) => {
+      // $ExpectType string | number
+      in1;
+      // $ExpectType boolean
+      in2;
+      return { out: "foo" };
+    }
+  );
   t.pass();
 });

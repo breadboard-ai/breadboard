@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { brand, isBranded } from "../common/brand.js";
 import type { OutputPortReference } from "../common/port.js";
 import type { BroadenBasicType } from "../common/type-util.js";
 import type { JsonSerializable } from "../type-system/type.js";
@@ -27,12 +28,13 @@ export function converge<
   ...rest: C
 ): Convergence<ExtractType<A | B | C[number]>> {
   return {
-    __isConvergence: true,
+    [brand]: "Convergence",
     ports: [first, second, ...rest] as Array<
       Convergable<ExtractType<A | B | C[number]>>
     >,
   };
 }
+
 type ExtractType<T extends Convergable<JsonSerializable>> =
   T extends Convergable<infer X>
     ? X extends string | number | boolean
@@ -40,17 +42,11 @@ type ExtractType<T extends Convergable<JsonSerializable>> =
       : X
     : never;
 
-export interface Convergence<T extends JsonSerializable> {
-  __isConvergence: true;
+export interface Convergence<T extends JsonSerializable = JsonSerializable> {
+  readonly [brand]: "Convergence";
   ports: Array<Convergable<T>>;
 }
 
-export function isConvergence(
-  value: unknown
-): value is Convergence<JsonSerializable> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    (value as Partial<Convergence<JsonSerializable>>).__isConvergence === true
-  );
+export function isConvergence(value: unknown): value is Convergence {
+  return isBranded(value, "Convergence");
 }

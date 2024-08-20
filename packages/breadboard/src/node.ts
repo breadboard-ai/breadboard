@@ -127,9 +127,6 @@ export class Node<Inputs, Outputs> implements BreadboardNode<Inputs, Outputs> {
       this.#descriptor.configuration = configuration as NodeConfiguration;
     }
 
-    if (kit?.url && !this.#breadboard.kits.find((k) => k.url === kit.url))
-      this.#breadboard.kits.push(kit);
-
     this.#breadboard.addNode(this.#descriptor);
   }
 

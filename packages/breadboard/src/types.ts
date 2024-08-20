@@ -15,6 +15,7 @@ import type {
   NodeTypeIdentifier,
   NodeValue,
   OutputValues,
+  StartLabel,
 } from "@google-labs/breadboard-schema/graph.js";
 import { GraphLoader } from "./loader/types.js";
 import {
@@ -193,6 +194,7 @@ export interface TraversalResult {
   descriptor: NodeDescriptor;
   inputs: InputValues;
   missingInputs: string[];
+  current: Edge;
   opportunities: Edge[];
   newOpportunities: Edge[];
   state: QueuedNodeValuesState;
@@ -251,6 +253,10 @@ export type NodeDescriberContext = {
    * Information about the wires currently connected to this node.
    */
   wires: NodeDescriberWires;
+  /**
+   * Kits that are available in the context of the node.
+   */
+  kits?: Kit[];
 };
 
 export type NodeDescriberWires = {
@@ -499,10 +505,16 @@ export type NodeEndProbeMessage = {
   data: NodeEndResponse;
 };
 
+export type EdgeProbeMessage = {
+  type: "edge";
+  data: EdgeResponse;
+};
+
 export type ProbeMessage =
   | GraphStartProbeMessage
   | GraphEndProbeMessage
   | SkipProbeMessage
+  | EdgeProbeMessage
   | NodeStartProbeMessage
   | NodeEndProbeMessage;
 
@@ -549,6 +561,20 @@ export type NodeEndResponse = {
   validatorMetadata?: BreadboardValidatorMetadata[];
   path: number[];
   timestamp: number;
+};
+
+export type EdgeResponse = {
+  edge: Edge;
+  /**
+   * The path of the outgoing node.
+   */
+  from?: number[];
+  /**
+   * The path of the incoming node.
+   */
+  to: number[];
+  timestamp: number;
+  value?: InputValues;
 };
 
 /**
@@ -605,28 +631,17 @@ export type ErrorResponse = {
    * The error message string or a more detailed error object
    */
   error: string | ErrorObject;
+  code?: number;
   timestamp: number;
 };
 
 // TODO: Remove extending EventTarget once new runner is converted to use
 // reporting.
-export interface Probe extends EventTarget {
+export interface Probe {
   report?(message: ProbeMessage): Promise<void>;
 }
 
-export interface RunnerLike {
-  run(
-    context?: RunArguments,
-    result?: BreadboardRunResult
-  ): AsyncGenerator<BreadboardRunResult>;
-  runOnce(inputs: InputValues, context?: RunArguments): Promise<OutputValues>;
-}
-
-export interface BreadboardRunner extends GraphDescriptor, RunnerLike {
-  kits: Kit[]; // No longer optional
-}
-
-export interface Breadboard extends BreadboardRunner {
+export interface Breadboard extends GraphDescriptor {
   input<In = InputValues, Out = OutputValues>(
     config?: OptionalIdConfiguration
   ): BreadboardNode<In, Out>;
@@ -726,6 +741,12 @@ export type RunArguments = NodeHandlerContext & {
    * action will be taken. For example, the web-based harness will ask the user.
    */
   inputs?: InputValues;
+  /**
+   * Start label to use for the run. This is useful for specifying a particular
+   * node as the start of the run. If not provided, nodes without any incoming
+   * edges will be used.
+   */
+  start?: StartLabel;
 };
 
 export interface BreadboardNode<Inputs, Outputs> {

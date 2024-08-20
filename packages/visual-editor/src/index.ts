@@ -10,11 +10,10 @@ import { until } from "lit/directives/until.js";
 import { map } from "lit/directives/map.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
-import * as BreadboardUI from "./ui";
+import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import {
   blankLLMContent,
-  BoardRunner,
   createLoader,
   edit,
   EditableGraph,
@@ -34,23 +33,11 @@ import GeminiKit from "@google-labs/gemini-kit";
 import { FileSystemGraphProvider } from "./providers/file-system";
 import BuildExampleKit from "./build-example-kit";
 import { SettingsStore } from "./data/settings-store";
-import { inputsFromSettings } from "./data/inputs";
 import { addNodeProxyServerConfig } from "./data/node-proxy-servers";
 import { provide } from "@lit/context";
-import { Environment, environmentContext } from "./ui/contexts/environment.js";
-import { settingsHelperContext } from "./ui/contexts/settings-helper.js";
-import type {
-  SETTINGS_TYPE,
-  SettingEntry,
-  SettingsHelper,
-} from "./ui/types/types.js";
 import PythonWasmKit from "@breadboard-ai/python-wasm";
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 import { RecentBoardStore } from "./data/recent-boards";
-import {
-  TokenVendor,
-  tokenVendorContext,
-} from "./ui/elements/connection/token-vendor.js";
 
 const REPLAY_DELAY_MS = 10;
 const STORAGE_PREFIX = "bb-main";
@@ -71,21 +58,14 @@ type SaveAsConfiguration = {
 
 const generatedUrls = new Set<string>();
 
-// TODO(aomarks) Read this from a global stamped into the HTML somehow.
-const ORIGIN_TO_CONNECTION_SERVER: Record<string, string> = {
-  "http://localhost:5173": "http://localhost:5555",
-  "https://breadboard-ai.googleplex.com":
-    "https://connections-dot-breadboard-ai.googleplex.com",
-  "https://breadboard-ai.web.app":
-    "https://connections-dot-breadboard-community.wl.r.appspot.com",
-};
-
-const ENVIRONMENT: Environment = {
-  connectionServerUrl:
-    ORIGIN_TO_CONNECTION_SERVER[new URL(window.location.href).origin],
+const ENVIRONMENT: BreadboardUI.Contexts.Environment = {
+  connectionServerUrl: import.meta.env.VITE_CONNECTION_SERVER_URL,
   connectionRedirectUrl: "/oauth/",
   plugins: {
-    input: [],
+    input: [
+      BreadboardUI.Elements.googleDriveFileIdInputPlugin,
+      BreadboardUI.Elements.googleDriveQueryInputPlugin,
+    ],
   },
 };
 
@@ -157,11 +137,11 @@ export class Main extends LitElement {
   @state()
   providerOps = 0;
 
-  @provide({ context: environmentContext })
+  @provide({ context: BreadboardUI.Contexts.environmentContext })
   environment = ENVIRONMENT;
 
-  @provide({ context: tokenVendorContext })
-  tokenVendor!: TokenVendor;
+  @provide({ context: BreadboardUI.Elements.tokenVendorContext })
+  tokenVendor!: BreadboardUI.Elements.TokenVendor;
 
   @state()
   dataStore = getDataStore();
@@ -169,7 +149,7 @@ export class Main extends LitElement {
   @state()
   runStore = getRunStore();
 
-  @provide({ context: settingsHelperContext })
+  @provide({ context: BreadboardUI.Contexts.settingsHelperContext })
   settingsHelper!: SettingsHelperImpl;
 
   @state()
@@ -177,6 +157,9 @@ export class Main extends LitElement {
 
   @state()
   selectedLocation = "default";
+
+  @state()
+  previewOverlayURL: URL | null = null;
 
   #abortController: AbortController | null = null;
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
@@ -201,6 +184,7 @@ export class Main extends LitElement {
   #version = "dev";
   #recentBoardStore: RecentBoardStore;
   #recentBoards: BreadboardUI.Types.RecentBoard[] = [];
+  #isSaving = false;
 
   static styles = css`
     * {
@@ -509,7 +493,10 @@ export class Main extends LitElement {
     this.#proxy = config.proxy || [];
     if (this.#settings) {
       this.settingsHelper = new SettingsHelperImpl(this.#settings);
-      this.tokenVendor = new TokenVendor(this.settingsHelper, ENVIRONMENT);
+      this.tokenVendor = new BreadboardUI.Elements.TokenVendor(
+        this.settingsHelper,
+        ENVIRONMENT
+      );
     }
     // Single loader instance for all boards.
     this.#loader = createLoader(this.#providers);
@@ -721,6 +708,11 @@ export class Main extends LitElement {
   }
 
   async #attemptBoardSave() {
+    if (this.#isSaving) {
+      return;
+    }
+
+    this.#isSaving = true;
     if (!this.graph || !this.graph.url) {
       return;
     }
@@ -742,7 +734,9 @@ export class Main extends LitElement {
       BreadboardUI.Events.ToastType.PENDING,
       true
     );
+    this.#isSaving = true;
     const { result } = await provider.save(boardUrl, this.graph);
+    this.#isSaving = false;
     if (!result) {
       return;
     }
@@ -754,6 +748,8 @@ export class Main extends LitElement {
       false,
       id
     );
+
+    this.#isSaving = false;
   }
 
   async #attemptBoardSaveAs(
@@ -762,6 +758,10 @@ export class Main extends LitElement {
     fileName: string,
     graph: GraphDescriptor
   ) {
+    if (this.#isSaving) {
+      return;
+    }
+
     const provider = this.#getProviderByName(providerName);
     if (!provider) {
       this.toast(
@@ -786,7 +786,9 @@ export class Main extends LitElement {
     );
 
     const url = new URL(urlString);
+    this.#isSaving = true;
     const { result, error } = await provider.create(url, graph);
+    this.#isSaving = false;
 
     if (!result) {
       this.toast(
@@ -1085,12 +1087,13 @@ export class Main extends LitElement {
     const currentBoardId = this.#boardId;
 
     this.status = BreadboardUI.Types.STATUS.RUNNING;
-    if (!this.#runObserver)
+    if (!this.#runObserver) {
       this.#runObserver = createRunObserver({
         logLevel: "debug",
         dataStore: this.dataStore,
         runStore: this.runStore,
       });
+    }
 
     for await (const result of runner) {
       await this.#runObserver.observe(result);
@@ -1715,9 +1718,7 @@ export class Main extends LitElement {
                   return;
                 }
 
-                const runner = await BoardRunner.fromGraphDescriptor(
-                  this.graph
-                );
+                const runner = this.graph;
 
                 this.#abortController = new AbortController();
 
@@ -1733,7 +1734,9 @@ export class Main extends LitElement {
                         loader: this.#loader,
                         store: this.dataStore,
                         signal: this.#abortController?.signal,
-                        inputs: inputsFromSettings(this.#settings),
+                        inputs: BreadboardUI.Data.inputsFromSettings(
+                          this.#settings
+                        ),
                         interactiveSecrets: true,
                       },
                       this.#settings,
@@ -2231,7 +2234,12 @@ export class Main extends LitElement {
 
     let overflowMenu: HTMLTemplateResult | symbol = nothing;
     if (this.showOverflowMenu) {
-      const actions = [
+      const actions: Array<{
+        title: string;
+        name: string;
+        icon: string;
+        disabled?: boolean;
+      }> = [
         {
           title: "Download Board",
           name: "download",
@@ -2260,6 +2268,14 @@ export class Main extends LitElement {
                 icon: "delete",
               });
             }
+
+            const extendedCapabilities = provider?.extendedCapabilities();
+            actions.push({
+              title: "Preview Board",
+              name: "preview",
+              icon: "preview",
+              disabled: !extendedCapabilities.preview,
+            });
           }
         } catch (err) {
           // If there are any problems with the URL, etc, don't offer the save button.
@@ -2377,6 +2393,29 @@ export class Main extends LitElement {
               break;
             }
 
+            case "preview": {
+              if (!this.graph || !this.graph.url) {
+                return;
+              }
+
+              const provider = this.#getProviderForURL(new URL(this.graph.url));
+              if (!provider) {
+                return;
+              }
+
+              try {
+                this.previewOverlayURL = await provider.preview(
+                  new URL(this.graph.url)
+                );
+              } catch (err) {
+                this.toast(
+                  "Unable to create preview",
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+              }
+              break;
+            }
+
             default: {
               this.toast(
                 "Unknown action",
@@ -2391,6 +2430,13 @@ export class Main extends LitElement {
       ></bb-overflow-menu>`;
     }
 
+    let previewOverlay: HTMLTemplateResult | symbol = nothing;
+    if (this.previewOverlayURL) {
+      previewOverlay = html`<bb-overlay @bboverlaydismissed=${() => {
+        this.previewOverlayURL = null;
+      }}><iframe src=${this.previewOverlayURL.href}></bb-overlay>`;
+    }
+
     return [
       tmpl,
       boardOverlay,
@@ -2400,33 +2446,40 @@ export class Main extends LitElement {
       providerAddOverlay,
       saveAsDialogOverlay,
       overflowMenu,
+      previewOverlay,
       toasts,
     ];
   }
 }
 
-class SettingsHelperImpl implements SettingsHelper {
+class SettingsHelperImpl implements BreadboardUI.Types.SettingsHelper {
   #store: SettingsStore;
 
   constructor(store: SettingsStore) {
     this.#store = store;
   }
 
-  get(section: SETTINGS_TYPE, name: string): SettingEntry["value"] | undefined {
+  get(
+    section: BreadboardUI.Types.SETTINGS_TYPE,
+    name: string
+  ): BreadboardUI.Types.SettingEntry["value"] | undefined {
     return this.#store.values[section].items.get(name);
   }
 
   async set(
-    section: SETTINGS_TYPE,
+    section: BreadboardUI.Types.SETTINGS_TYPE,
     name: string,
-    value: SettingEntry["value"]
+    value: BreadboardUI.Types.SettingEntry["value"]
   ): Promise<void> {
     const values = this.#store.values;
     values[section].items.set(name, value);
     await this.#store.save(values);
   }
 
-  async delete(section: SETTINGS_TYPE, name: string): Promise<void> {
+  async delete(
+    section: BreadboardUI.Types.SETTINGS_TYPE,
+    name: string
+  ): Promise<void> {
     const values = this.#store.values;
     values[section].items.delete(name);
     await this.#store.save(values);
