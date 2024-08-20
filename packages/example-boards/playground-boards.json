@@ -169,7 +169,7 @@
     {
       "title": "Open Alex Entity Search Results",
       "reference": "/example-boards/playground/open-alex-entity-search-list.json",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "title": "OpenAI DALL-E Image Generator",
@@ -194,7 +194,7 @@
     {
       "title": "The simplest LLM-based board",
       "reference": "/example-boards/playground/simplest.json",
-      "version": "0.0.3"
+      "version": "0.1.0"
     },
     {
       "title": "Dense text summarizer (single iteration)",
@@ -219,7 +219,7 @@
     {
       "title": "Text Generator",
       "reference": "/example-boards/playground/text-generator.json",
-      "version": "0.0.2"
+      "version": "0.1.0"
     },
     {
       "title": "Tour Guide Writer",
