@@ -4,6 +4,7 @@ import { dirname, extname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { notFound } from "./errors.js";
 import type { ViteDevServer } from "vite";
+import type { PageMetadata } from "./types.js";
 
 const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
 const ROOT_PATH = resolve(MODULE_PATH, "../..");
@@ -78,14 +79,39 @@ export const serveContent = async (
   }
 };
 
+function escapeHTML(s: string) {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function replaceMetadata(contents: string, metadata: PageMetadata) {
+  return contents
+    .replaceAll("{{title}}", escapeHTML(metadata.title))
+    .replaceAll("{{description}}", escapeHTML(metadata.description));
+}
+
 export const serveIndex = async (
   vite: ViteDevServer | null,
-  res: ServerResponse
+  res: ServerResponse,
+  metadataGetter: () => Promise<PageMetadata | null>
 ) => {
+  const metadata = await metadataGetter();
+  if (metadata === null) {
+    return notFound(res, "Board not found");
+  }
   if (vite === null) {
-    return serveFile(res, "/index.html");
+    return serveFile(res, "/index.html", async (contents: string) => {
+      return replaceMetadata(contents, metadata);
+    });
   }
   serveFile(res, "/", async (contents: string) => {
-    return await vite.transformIndexHtml("/index.html", contents);
+    return await vite.transformIndexHtml(
+      "/index.html",
+      replaceMetadata(contents, metadata)
+    );
   });
 };
