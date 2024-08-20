@@ -151,7 +151,7 @@ Let's walk through a more comprehensive example of using the Run API to run a gr
 
 ```typescript
 import { createRunner } from "@google-labs/breadboard/harness";
-import type { Schema, InputValues } from "@google-labs/breadboard";
+import type { Schema } from "@google-labs/breadboard";
 
 // Assume we have a graph that takes text input, processes it,
 // and returns a summary.
@@ -190,7 +190,9 @@ runner.addEventListener("start", (event) => {
 });
 
 runner.addEventListener("input", async (event) => {
-  await getUserInput(event.data.schema);
+  if (event.data.inputArguments.schema) {
+    await getUserInput(event.data.inputArguments.schema);
+  }
 });
 
 runner.addEventListener("secret", async (event) => {
