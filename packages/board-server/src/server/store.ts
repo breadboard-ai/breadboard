@@ -503,7 +503,7 @@ class SQLite3BetterStore implements RunBoardStateStore, UserStore {
       for (const doc of docs) {
         const path = `${store.id}/${doc.board_id}`;
         const title = doc.title || path;
-        const tags = JSON.parse(doc.tags) as string[] || ["published"];
+        const tags = doc.tags as string[] || ["published"];
         const published = tags.includes("published");
         const readonly = userStore !== store.id;
         const mine = userStore === store.id;
