@@ -5,20 +5,20 @@
  */
 
 import type { IncomingMessage, ServerResponse } from "node:http";
-import type { ViteDevServer } from "vite";
 
-import { serveContent } from "./server/common.js";
 import { serveBoardsAPI } from "./server/boards/index.js";
-import { serveProxyAPI } from "./server/proxy/index.js";
-import { serveInfoAPI } from "./server/info/index.js";
+import { serveContent } from "./server/common.js";
+import type { ServerConfig } from "./server/config.js";
 import { serveHome } from "./server/home/index.js";
+import { serveInfoAPI } from "./server/info/index.js";
+import { serveProxyAPI } from "./server/proxy/index.js";
 
-export function makeRouter(hostname: string, vite: ViteDevServer | null) {
+export function makeRouter(serverConfig: ServerConfig) {
   return async function router(
     req: IncomingMessage,
     res: ServerResponse
   ): Promise<void> {
-    const url = new URL(req.url || "", hostname);
+    const url = new URL(req.url || "", serverConfig.hostname);
 
     if (await serveHome(req, res)) {
       return;
@@ -32,10 +32,10 @@ export function makeRouter(hostname: string, vite: ViteDevServer | null) {
       return;
     }
 
-    if (await serveBoardsAPI(url, vite, req, res)) {
+    if (await serveBoardsAPI(serverConfig, req, res)) {
       return;
     }
 
-    serveContent(vite, req, res);
+    serveContent(serverConfig, req, res);
   };
 }

@@ -2,8 +2,10 @@ import { readFile } from "fs/promises";
 import type { IncomingMessage, ServerResponse } from "http";
 import { dirname, extname, resolve } from "path";
 import { fileURLToPath } from "url";
-import { notFound } from "./errors.js";
 import type { ViteDevServer } from "vite";
+
+import type { ServerConfig } from "./config.js";
+import { notFound } from "./errors.js";
 import type { PageMetadata } from "./types.js";
 
 const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
@@ -67,11 +69,12 @@ export const serveFile = async (
 };
 
 export const serveContent = async (
-  vite: ViteDevServer | null,
+  serverConfig: ServerConfig,
   req: IncomingMessage,
   res: ServerResponse
 ) => {
   const pathname = req.url || "/";
+  const vite = serverConfig.viteDevServer;
   if (vite === null) {
     serveFile(res, pathname);
   } else {
