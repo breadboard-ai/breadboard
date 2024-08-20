@@ -11,5 +11,5 @@ handlers:
     script: auto
 
 env_variables:
-  CONNECTIONS_FILE: "secrets/external.json"
-  ALLOWED_ORIGINS: "https://breadboard-ai.github.io https://breadboard-ai.web.app"
+  CONNECTIONS_FILE: "secrets/secrets.json"
+  ALLOWED_ORIGINS: ""
