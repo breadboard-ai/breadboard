@@ -29,14 +29,4 @@ const key = await createAPIKey();
 
 await store.createUser(username, key)
 
-// const existing = await db.doc(`users/${username}`).get();
-// if (existing.exists) {
-//   console.error(
-//     `Account ${username} already exists with API key:\n${existing.data()!.apiKey}`
-//   );
-//   process.exit(0);
-// }
-//
-// await db.doc(`users/${username}`).set({ apiKey: key });
-
 console.log(`Created account for ${username} with API key:\n${key}`);
