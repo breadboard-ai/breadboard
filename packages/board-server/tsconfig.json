@@ -20,7 +20,8 @@
     "useUnknownInCatchVariables": true,
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "esModuleInterop": true
   },
   "include": ["src/**/*.ts", "tests/**/*.ts", "tests/**/*.json"],
   "exclude": []

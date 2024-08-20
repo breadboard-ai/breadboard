@@ -113,6 +113,14 @@ export type RunBoardStateStore = {
   saveReanimationState(user: string, state: ReanimationState): Promise<string>;
 };
 
+export type UserStore = {
+  createUser(username: string, apiKey: string): CreateUserResult
+}
+
+export type CreateUserResult =
+  | { success: true; apiKey: string }
+  | { success: false; message: string };
+
 export type CreateInviteResult =
   | {
       success: true;

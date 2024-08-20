@@ -20,6 +20,7 @@ const post: ApiHandler = async (parsed, req, res, body) => {
   }
   const store = getStore();
   const userStore = await store.getUserStore(userKey);
+
   if (!userStore.success) {
     serverError(res, "Unauthorized");
     return true;
@@ -31,11 +32,12 @@ const post: ApiHandler = async (parsed, req, res, body) => {
   }
 
   const maybeGraph = body as GraphDescriptor;
+
   if (!("nodes" in maybeGraph && "edges" in maybeGraph)) {
     return false;
   }
 
-  const result = await store.update(userStore.store, path, maybeGraph);
+  const result = await store.update(userStore.store!, path, maybeGraph);
   if (!result.success) {
     serverError(res, result.error);
     return true;

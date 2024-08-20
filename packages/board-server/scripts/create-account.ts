@@ -5,6 +5,7 @@
  */
 
 import { Firestore } from "@google-cloud/firestore";
+import { getStore } from "../src/server/store"
 
 if (process.argv.length !== 3) {
   console.error("Usage: create-account <username>");
@@ -22,20 +23,20 @@ const createAPIKey = async () => {
   return `bb-${hashHex.slice(0, 50)}`;
 };
 
-const db = new Firestore({
-  databaseId: "board-server",
-});
+const store = getStore()
 
 const key = await createAPIKey();
 
-const existing = await db.doc(`users/${username}`).get();
-if (existing.exists) {
-  console.error(
-    `Account ${username} already exists with API key:\n${existing.data()!.apiKey}`
-  );
-  process.exit(0);
-}
+await store.createUser(username, key)
 
-await db.doc(`users/${username}`).set({ apiKey: key });
+// const existing = await db.doc(`users/${username}`).get();
+// if (existing.exists) {
+//   console.error(
+//     `Account ${username} already exists with API key:\n${existing.data()!.apiKey}`
+//   );
+//   process.exit(0);
+// }
+//
+// await db.doc(`users/${username}`).set({ apiKey: key });
 
 console.log(`Created account for ${username} with API key:\n${key}`);

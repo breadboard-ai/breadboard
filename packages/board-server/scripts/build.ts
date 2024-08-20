@@ -10,7 +10,8 @@ await esbuild.build({
   entryPoints: ["src/index.ts"],
   bundle: true,
   platform: "node",
-  external: ["@google-cloud", "import.meta", "vite"],
+  external: ["@google-cloud", "import.meta", "vite", "better-sqlite3"],
   format: "esm",
   outfile: "dist/server/index.js",
+  sourcemap: true
 });
