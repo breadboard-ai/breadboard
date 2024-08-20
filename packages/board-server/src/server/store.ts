@@ -27,7 +27,7 @@ export type OperationResult =
   | { success: false; error: string };
 
 export const getStore = () => {
-  return new SQLiteStore('board-server')
+  return new SQLiteStore('board-server.db')
 };
 
 export type BoardListEntry = {
