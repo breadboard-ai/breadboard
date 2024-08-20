@@ -5,7 +5,7 @@ import { asInfo, asPath, EXPIRATION_TIME_MS, INVITE_EXPIRATION_TIME_MS, sanitize
 import type { GraphDescriptor, ReanimationState } from "@google-labs/breadboard";
 import { v4 as uuidv4 } from 'uuid';
 
-export class SQLiteStore implements RunBoardStateStore, UserStore {
+class SQLiteStore implements RunBoardStateStore, UserStore {
     private db: Database.Database;
   
     constructor(dbPath: string) {
