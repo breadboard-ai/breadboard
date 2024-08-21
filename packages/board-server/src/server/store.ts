@@ -6,7 +6,6 @@
 
 import { SQLiteStorageProvider } from "./storage-providers/sqlite.js"
 import { FirestoreStorageProvider } from "./storage-providers/firestore.js"
-import type { RunBoardStateStore } from "./types.js";
 
 export const EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 2; // 2 days
 export const INVITE_EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 4; // 4 days
