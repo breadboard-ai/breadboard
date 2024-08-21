@@ -35,10 +35,6 @@ const ajv: Ajv = new Ajv({
 
 addFormats(ajv);
 
-// const readSchemaFile = fs.readFileSync(ABSOLUTE_SCHEMA_PATH, "utf-8");
-// const parsedSchema = JSON.parse(readSchemaFile);
-// const validate = await ajv.compileAsync(parsedSchema);
-
 const manifestArray: BreadboardManifest[] = [
   {},
   { title: "Empty manifest" },
@@ -174,9 +170,7 @@ const manifestArray: BreadboardManifest[] = [
 ];
 
 const schemaPaths = [
-  // { path: ABSOLUTE_SCHEMA_PATH },
   { path: "local.bbm.schema.json" },
-  // { path: "head.bbm.schema.json" },
 ];
 
 for await (const schemaPath of schemaPaths) {
