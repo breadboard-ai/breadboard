@@ -12,9 +12,9 @@ import readline from "readline/promises";
 
 export async function bundle(board: string, flags: { output: string }) {
   let breadboardWebPublic;
-  if (typeof import.meta.resolve === 'function') {
+  if (typeof import.meta.resolve === "function") {
     const publicPath = await import.meta.resolve(
-      "@google-labs/breadboard-web/public"
+      "@breadboard-ai/visual-editor/public"
     );
     breadboardWebPublic = fileURLToPath(publicPath);
   }

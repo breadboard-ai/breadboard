@@ -6,15 +6,18 @@
 
 import { KitBuilder } from "@google-labs/breadboard/kits";
 
-import validateJson from "./nodes/validate-json.js";
-import schemish from "./nodes/schemish.js";
 import {
-  NewNodeValue as NodeValue,
   NewNodeFactory as NodeFactory,
+  NewNodeValue as NodeValue,
   addKit,
 } from "@google-labs/breadboard";
 import jsonata from "./nodes/jsonata.js";
+import objectToSchema from "./nodes/object-to-schema.js";
+import schemish from "./nodes/schemish.js";
+import validateJson from "./nodes/validate-json.js";
 import xmlToJson from "./nodes/xml-to-json.js";
+
+export { default as jsonata } from "./nodes/jsonata.js";
 
 const JSONKit = new KitBuilder({
   title: "JSON Kit",
@@ -27,6 +30,7 @@ const JSONKit = new KitBuilder({
   schemish,
   jsonata,
   xmlToJson,
+  objectToSchema,
 });
 
 export default JSONKit;
@@ -49,4 +53,5 @@ export const json = addKit(JSONKit) as unknown as {
     { result: string } | { [key: string]: NodeValue }
   >;
   xmlToJson: NodeFactory<{ xml: string }, { json: NodeValue }>;
+  objectToSchema: NodeFactory<{ object: unknown }, { objectSchema: NodeValue }>;
 };

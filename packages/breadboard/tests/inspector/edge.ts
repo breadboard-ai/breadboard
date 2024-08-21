@@ -36,3 +36,29 @@ test("InspectableEdge instances are stable for read-only graph", (t) => {
   t.assert(edgeInstance1 === edgeInstance2);
   t.assert(edgeInstance2 === edgeInstance3);
 });
+
+test("InspectableEdge correctly reports the type of an edge", (t) => {
+  const graph = inspectableGraph({
+    nodes: [
+      {
+        id: "node0",
+        type: "foo",
+      },
+      {
+        id: "node2",
+        type: "bar",
+      },
+    ],
+    edges: [
+      { from: "node0", out: "out", to: "node2", in: "in" },
+      { from: "node0", out: "out", to: "node2", in: "in", constant: true },
+      { from: "node2", out: "", to: "node0", in: "in", constant: true },
+      { from: "node2", out: "*", to: "node0", in: "in", constant: true },
+    ],
+  });
+  const edges = graph.edges();
+  t.assert(edges[0].type === "ordinary");
+  t.assert(edges[1].type === "constant");
+  t.assert(edges[2].type === "control");
+  t.assert(edges[3].type === "star");
+});

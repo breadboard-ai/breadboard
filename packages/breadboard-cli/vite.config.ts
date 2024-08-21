@@ -3,24 +3,24 @@ import { fileURLToPath } from "url";
 import { createRequire } from "module";
 import { dirname, join } from "path";
 
-// Carry through the breadboard-web public dir as the public dir for the
+// Carry through the visual-editor public dir as the public dir for the
 // debugger here. It's essentially a passthrough.
 let breadboardWebPublic: boolean | string = false;
 // @ts-expect-error 2274
 if (import.meta.resolve) {
-  const publicPath = import.meta.resolve("@google-labs/breadboard-web/public");
+  const publicPath = import.meta.resolve("@breadboard-ai/visual-editor/public");
   breadboardWebPublic = fileURLToPath(publicPath);
 } else {
   const require = createRequire(import.meta.url);
-  const breadboardWebIndex = require.resolve("@google-labs/breadboard-web");
+  const breadboardWebIndex = require.resolve("@breadboard-ai/visual-editor");
   breadboardWebPublic = join(dirname(breadboardWebIndex), "..", "public");
 }
 
 export default defineConfig({
   optimizeDeps: {
     include: [
+      "@breadboard-ai/visual-editor",
       "@google-labs/breadboard",
-      "@google-labs/breadboard-web",
       "@google-labs/core-kit",
       "@google-labs/template-kit",
       "commander",
@@ -33,7 +33,7 @@ export default defineConfig({
   build: {
     lib: {
       entry: {
-        // TODO: These are just variants of the breadboard-web entry points; we
+        // TODO: These are just variants of the visual-editor entry points; we
         // could (and possibly should) unify them.
         index: "./index.html",
         preview: "./preview.html",

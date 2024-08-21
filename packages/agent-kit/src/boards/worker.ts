@@ -53,8 +53,14 @@ export default await board(({ context, instruction, stopSequences }) => {
   instruction
     .title("Instruction")
     .format("multiline")
+    .behavior("config")
     .examples(sampleInstruction);
-  stopSequences.title("Stop Sequences").isArray().optional().default("[]");
+  stopSequences
+    .title("Stop Sequences")
+    .isArray()
+    .optional()
+    .default("[]")
+    .behavior("config");
 
   const buildContext = contextBuilder({
     $id: "buildContext",
@@ -99,4 +105,7 @@ export default await board(({ context, instruction, stopSequences }) => {
   title: "Worker",
   description: "The essential Agent building block",
   version: "0.0.1",
+  metadata: {
+    deprecated: true,
+  },
 });

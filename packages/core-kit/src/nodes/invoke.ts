@@ -6,16 +6,18 @@
 
 import type {
   InputValues,
-  OutputValues,
   NodeHandlerContext,
   BreadboardCapability,
   GraphDescriptor,
-  Schema,
   NodeDescriberContext,
 } from "@google-labs/breadboard";
-import { BoardRunner, inspect } from "@google-labs/breadboard";
-import { SchemaBuilder } from "@google-labs/breadboard/kits";
-import { loadBoardFromPath } from "../load-board.js";
+import {
+  getGraphDescriptor,
+  inspect,
+  invokeGraph,
+} from "@google-labs/breadboard";
+import { getRunner, loadGraphFromPath } from "../utils.js";
+import { defineNodeType, object, unsafeSchema } from "@breadboard-ai/build";
 
 export type InvokeNodeInputs = InputValues & {
   $board?: string | BreadboardCapability | GraphDescriptor;
@@ -25,7 +27,7 @@ export type InvokeNodeInputs = InputValues & {
 };
 
 type RunnableBoardWithArgs = {
-  board: BoardRunner | undefined;
+  board: GraphDescriptor | undefined;
   args: InputValues;
 };
 
@@ -35,17 +37,7 @@ const getRunnableBoard = async (
 ): Promise<RunnableBoardWithArgs> => {
   const { $board, ...args } = inputs;
   if ($board) {
-    let board;
-
-    if (isBreadboardCapability($board)) {
-      board = await BoardRunner.fromBreadboardCapability($board);
-    } else if (isGraphDescriptor($board)) {
-      board = await BoardRunner.fromGraphDescriptor($board);
-    } else if (typeof $board === "string") {
-      board = await loadBoardFromPath($board, context);
-    } else {
-      board = undefined;
-    }
+    const board = await getRunner($board, context);
     return { board, args };
   } else {
     const { path, board, graph, ...args } = inputs as InvokeNodeInputs;
@@ -53,81 +45,93 @@ const getRunnableBoard = async (
     let runnableBoard;
 
     if (board) {
-      runnableBoard = await BoardRunner.fromBreadboardCapability(board);
+      runnableBoard = await getGraphDescriptor(board, context);
     } else if (graph) {
-      runnableBoard = await BoardRunner.fromGraphDescriptor(graph);
+      runnableBoard = graph;
     } else if (path) {
-      runnableBoard = await loadBoardFromPath(path, context);
+      runnableBoard = await loadGraphFromPath(path, context);
     }
     return { board: runnableBoard, args };
   }
 };
 
-const isBreadboardCapability = (
-  candidate: unknown
-): candidate is BreadboardCapability => {
-  const board = candidate as BreadboardCapability;
-  return (
-    board &&
-    typeof board === "object" &&
-    board.kind === "board" &&
-    board.board &&
-    isGraphDescriptor(board.board)
-  );
-};
-
-const isGraphDescriptor = (
-  candidate: unknown
-): candidate is GraphDescriptor => {
-  const graph = candidate as GraphDescriptor;
-  return (
-    graph && typeof graph === "object" && graph.nodes && graph.edges && true
-  );
-};
-
 const describe = async (
-  inputs?: InputValues,
-  _in?: Schema,
-  _out?: Schema,
+  inputs?: InvokeNodeInputs,
   context?: NodeDescriberContext
 ) => {
-  const inputBuilder = new SchemaBuilder().addProperties({
-    path: {
-      title: "path",
-      description: "The path to the board to invoke.",
-      type: "string",
-    },
-    $board: {
-      title: "board",
-      behavior: ["board"],
-      description:
-        "The board to invoke. Can be a BoardCapability, a graph or a URL",
-      type: "object",
-    },
-  });
-  const outputBuilder = new SchemaBuilder();
   if (context?.base) {
-    const { board } = await getRunnableBoard(context, inputs || {});
-    if (board) {
-      const inspectableGraph = inspect(board);
-      const { inputSchema, outputSchema } = await inspectableGraph.describe();
-      inputBuilder.addProperties(inputSchema?.properties);
-      inputSchema?.required && inputBuilder.addRequired(inputSchema?.required);
-      outputBuilder.addProperties(outputSchema?.properties);
+    let board: GraphDescriptor | undefined;
+    if (inputs) {
+      try {
+        board = (await getRunnableBoard(context, inputs)).board;
+      } catch {
+        // eat any exceptions.
+        // This is a describer, so it must always return some valid value.
+      }
+      if (board) {
+        const inspectableGraph = inspect(board, {
+          kits: context.kits,
+          loader: context.loader,
+        });
+        const { inputSchema, outputSchema } =
+          await inspectableGraph.describe(inputs);
+        return {
+          inputs: unsafeSchema(inputSchema),
+          outputs: unsafeSchema(outputSchema),
+        };
+      }
+      return { inputs: { "*": {} }, outputs: { "*": {} } };
     }
   }
-  return {
-    inputSchema: inputBuilder.build(),
-    outputSchema: outputBuilder.build(),
-  };
+  return { inputs: {}, outputs: {} };
 };
 
-export default {
-  describe,
-  invoke: async (
-    inputs: InputValues,
-    context: NodeHandlerContext
-  ): Promise<OutputValues> => {
+export default defineNodeType({
+  name: "invoke",
+  metadata: {
+    title: "Invoke",
+    description:
+      "Invokes (runOnce) specified board, supplying remaining incoming wires as inputs for that board. Returns the outputs of the board.",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-invoke-component",
+    },
+  },
+  inputs: {
+    path: {
+      title: "path",
+      behavior: ["deprecated"],
+      description: "The path to the board to invoke.",
+      type: "string",
+      optional: true,
+    },
+    $board: {
+      title: "Board",
+      behavior: ["board", "config"],
+      description:
+        "The board to invoke. Can be a BoardCapability, a graph or a URL",
+      // TODO(aomarks) A better type.
+      type: object({}),
+      optional: true,
+    },
+    "*": {
+      type: "unknown",
+    },
+  },
+  outputs: {
+    "*": {
+      type: "unknown",
+    },
+  },
+  describe: async (staticInputs, dynamicInputs, context) => {
+    // TODO(aomarks) Cast here because the type system doesn't understand
+    // BreadboardCapability or GraphDescriptors yet.
+    const inputs = { ...staticInputs, ...dynamicInputs } as InvokeNodeInputs;
+    return describe(inputs, context);
+  },
+  invoke: async (staticInputs, dynamicInputs, context) => {
+    // TODO(aomarks) Cast here because the type system doesn't understand
+    // BreadboardCapability or GraphDescriptors yet.
+    const inputs = { ...staticInputs, ...dynamicInputs } as InvokeNodeInputs;
     const { board, args } = await getRunnableBoard(context, inputs);
     if (!board) {
       console.warn("Could not get a runnable board");
@@ -143,6 +147,6 @@ export default {
         }
       : { ...context };
 
-    return await board.runOnce(args, invocationContext);
+    return await invokeGraph(board, args, invocationContext);
   },
-};
+});

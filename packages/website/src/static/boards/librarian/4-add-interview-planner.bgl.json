@@ -1,0 +1,229 @@
+{
+  "title": "Step 4: Add Interview Planner",
+  "version": "0.0.1",
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-9e108a16",
+        "text": "Looper has two output\nports 👇 ",
+        "metadata": {
+          "visual": {
+            "x": -217.99999999999994,
+            "y": -67.00000000000001,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-23347be5",
+        "text": "\"Context out\" for when \nall plan steps are  finished.",
+        "metadata": {
+          "visual": {
+            "x": -109.99999999999994,
+            "y": 18.999999999999964,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-cabc829a",
+        "text": "\"Loop\" to repeat\nfor each step in the plan.",
+        "metadata": {
+          "visual": {
+            "x": -106.99999999999994,
+            "y": 104,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-64142aa5",
+        "text": "🧩 This board snapshot is an intermediate step in the build, and won't run until we finish the build.",
+        "metadata": {
+          "visual": {
+            "x": 243.99999999999997,
+            "y": -267,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-377d3029",
+        "text": "Step 2: **Add Interview Planner**",
+        "metadata": {
+          "visual": {
+            "x": -307,
+            "y": -158,
+            "collapsed": false
+          }
+        }
+      }
+    ],
+    "tags": []
+  },
+  "edges": [
+    {
+      "from": "specialist-deea1d32",
+      "to": "output",
+      "in": "context",
+      "out": "out"
+    },
+    {
+      "from": "input",
+      "to": "specialist-fefc7fd6",
+      "in": "in",
+      "out": "context"
+    },
+    {
+      "from": "specialist-fefc7fd6",
+      "to": "specialist-deea1d32",
+      "in": "in",
+      "out": "out"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "looper-b381bf13",
+      "type": "looper",
+      "metadata": {
+        "visual": {
+          "x": -312.9999999999999,
+          "y": 32.00000000000002,
+          "collapsed": false
+        },
+        "title": "Interview Planner",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "task": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Based on the initial topic, come up with the themes for 3-5 question interview to collect just enough information to look for an interesting book in the library."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 65.00000000000009,
+          "y": -198,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 315.0000000000001,
+          "y": 186,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "specialist-deea1d32",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": 164.99999999999997,
+          "y": 17.999999999999964,
+          "collapsed": false
+        },
+        "title": "Summarizer",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "persona": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are an expert librarian. Given any topic,\nand the raw book search results,\nyou can come up with a list of book recommendations."
+            }
+          ]
+        },
+        "task": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Come up with a list of 5-7 recommendations.\nReply in markdown."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "specialist-fefc7fd6",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": 245.00000000000009,
+          "y": -133,
+          "collapsed": false
+        },
+        "title": "Researcher",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "persona": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are a library researcher. Based on the provided topic,\nformulate the query to call the Google Books API\nto search for the right book for the user."
+            }
+          ]
+        },
+        "tools": [
+          "https://breadboard-ai.github.io/breadboard/static/boards/librarian/tool-google-books.bgl.json"
+        ]
+      }
+    }
+  ],
+  "description": "A simple agent that helps me find interesting books."
+}

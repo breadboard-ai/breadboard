@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BoardRunner, GraphDescriptor } from "@google-labs/breadboard";
+import { GraphDescriptor } from "@google-labs/breadboard";
 import { Dirent, watch as fsWatch } from "fs";
 import { opendir, readFile, stat, writeFile, mkdir } from "fs/promises";
 import { join } from "node:path";
@@ -15,8 +15,11 @@ import { relative } from "path/posix";
 import { URL, pathToFileURL } from "url";
 import { Options } from "./loader.js";
 import { Loaders } from "./loaders/index.js";
+import { MakeOptions } from "../commandTypes.js";
+import { formatGraphDescriptor } from "@google-labs/breadboard";
 
-export const SERVER_URL = "http://localhost:3000";
+export const SERVER_PORT = parseInt(process.env.PORT || "") || 3000;
+export const SERVER_URL = `http://localhost:${SERVER_PORT}`;
 
 export const defaultKits = [
   "@google-labs/palm-kit",
@@ -24,7 +27,7 @@ export const defaultKits = [
   "@google-labs/json-kit",
   "@google-labs/template-kit",
   "@google-labs/node-nursery-web",
-  `${SERVER_URL}/agent.kit.json`,
+  `/agent.kit.json`,
 ];
 
 export type BoardMetaData = {
@@ -81,16 +84,19 @@ export const resolveFilePath = (file: string) => {
 
 export const loadBoard = async (
   file: string,
-  options: Options
-): Promise<BoardRunner> => {
+  options: MakeOptions
+): Promise<GraphDescriptor | null> => {
   const loaderType = extname(file).slice(1) as "js" | "ts" | "json";
   const save = "save" in options ? options["save"] : true;
 
   const loader = new Loaders(loaderType);
   const board = await loader.load(file, options);
   if (save) {
-    const boardClone = JSON.parse(JSON.stringify(board));
+    let boardClone = JSON.parse(JSON.stringify(board));
     delete boardClone.url; // Boards shouldn't have URLs serialized.
+    if (options.format) {
+      boardClone = formatGraphDescriptor(boardClone);
+    }
     const boardJson = JSON.stringify(boardClone, null, 2);
 
     // Most commands will pass in the output directory, but if they don't, we'll use the directory of the file being loaded.
@@ -153,11 +159,11 @@ export const loadBoards = async (
 
       return [
         {
-          ...board,
-          title: board.title ?? path,
+          ...(board || {}),
+          title: board?.title ?? path,
           url: join("/", relative(process.cwd(), path)),
-          version: board.version ?? "0.0.1",
-        },
+          version: board?.version ?? "0.0.1",
+        } as BoardMetaData,
       ];
     } catch (e) {
       showError(e, path);
@@ -212,10 +218,10 @@ async function loadBoardsFromDirectory(
         const board = await loadBoard(filename, options);
         boards.push({
           ...board,
-          title: board.title ?? name,
+          title: board?.title ?? name,
           url: `/${name}`,
-          version: board.version ?? "0.0.1",
-        });
+          version: board?.version ?? "0.0.1",
+        } as BoardMetaData);
       } catch (e) {
         showError(e, filename);
       }

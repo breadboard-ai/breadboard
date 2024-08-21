@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ClientTransport, ServerTransport } from "../../src/remote/protocol.js";
+import { ClientTransport, ServerTransport } from "../../src/remote/types.js";
 import { PatchedReadableStream } from "../../src/stream.js";
 import { ServerRequest, ServerResponse } from "../../src/remote/http.js";
 import { TransformStream } from "stream/web";

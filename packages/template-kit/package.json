@@ -3,15 +3,23 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.2.1",
+  "version": "0.3.7",
   "description": "Breadboard Kit that contains nodes for various sorts of templating",
-  "main": "./dist/src/index.js",
-  "exports": "./dist/src/index.js",
-  "types": "dist/src/index.d.ts",
   "type": "module",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./*.js": {
+      "types": "./*.d.ts",
+      "default": null
+    }
+  },
   "scripts": {
     "prepack": "npm run build",
-    "generate:docs": "wireit",
     "test": "wireit",
     "build": "wireit",
     "build:tsc": "wireit",
@@ -21,15 +29,17 @@
     "build": {
       "dependencies": [
         "../breadboard:build",
+        "../build:build",
         "build:tsc"
       ]
     },
     "build:tsc": {
-      "command": "tsc -b",
+      "command": "tsc -b --pretty",
       "env": {
         "FORCE_COLOR": "1"
       },
       "dependencies": [
+        "../build:build:tsc",
         "../breadboard:build:tsc"
       ],
       "files": [
@@ -62,23 +72,10 @@
       "files": [
         "src/**/*.ts",
         "tests/**/*.ts",
+        ".eslintrc",
         "../../.eslintrc.json"
       ],
       "output": []
-    },
-    "generate:docs": {
-      "command": "typedoc --plugin typedoc-plugin-markdown",
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [
-        "src/**/*.ts",
-        "tsconfig.json",
-        "../../core/tsconfig/base.json"
-      ],
-      "output": [
-        "docs/api/"
-      ]
     }
   },
   "repository": {
@@ -111,18 +108,16 @@
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/template-kit#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^6.20.0",
-    "@types/node": "^20.11.30",
+    "@google-labs/tsconfig": "^0.0.1",
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
     "ava": "^5.2.0",
-    "typescript": "^5.3.3",
-    "@google-labs/tsconfig": "^0.0.1"
+    "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.12.0",
+    "@breadboard-ai/build": "^0.8.1",
+    "@google-labs/breadboard": "^0.24.0",
     "url-template": "^3.1.0"
-  },
-  "engines": {
-    "node": ">=19.0.0"
   }
 }

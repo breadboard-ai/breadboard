@@ -1,0 +1,298 @@
+{
+  "name": "@breadboard-ai/visual-editor",
+  "version": "1.16.7",
+  "description": "The Visual Editor for Breadboard",
+  "main": "./build/index.js",
+  "exports": {
+    ".": {
+      "default": "./build/index.js",
+      "types": "./build.index.d.ts"
+    },
+    "./preview.js": {
+      "default": "./build/preview.js",
+      "types": "./build/preview.d.ts"
+    },
+    "./config.js": {
+      "default": "./build/config.js",
+      "types": "./build/config.d.ts"
+    },
+    "./public": "./public",
+    "./index.html": "./index.html",
+    "./preview.html": "./preview.html",
+    "./embed.js": "./build/embed.js",
+    "./palm-kit.js": "./build/palm-kit.js",
+    "./core-kit.js": "./build/core-kit.js",
+    "./json-kit.js": "./build/json-kit.js",
+    "./template-kit.js": "./build/template-kit.js",
+    "./providers": {
+      "types": "./build/providers/types.d.ts",
+      "default": "./build/providers/types.js"
+    }
+  },
+  "types": "build/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "prepack": "npm run build",
+    "dev": "npm run serve --watch",
+    "serve": "wireit",
+    "preview": "wireit",
+    "deploy": "npm run build:vite && firebase deploy",
+    "build": "wireit",
+    "build:vite": "wireit",
+    "build:tsc": "wireit",
+    "copy-example-boards": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "../agent-kit:build",
+        "../breadboard:build",
+        "../build:build",
+        "../shared-ui:build",
+        "../core-kit:build",
+        "../data-store:build",
+        "../example-boards:build",
+        "../gemini-kit:build",
+        "../google-drive-kit:build",
+        "../json-kit:build",
+        "../template-kit:build",
+        "../node-nursery-web:build",
+        "../palm-kit:build",
+        "../python-wasm:build",
+        "../manifest:build",
+        "build:vite",
+        "build:tsc"
+      ]
+    },
+    "typescript-files-and-deps": {
+      "dependencies": [
+        "../agent-kit:build:tsc",
+        "../breadboard:build:tsc",
+        "../shared-ui:build:tsc",
+        "../build:build:tsc",
+        "../core-kit:build:tsc",
+        "../data-store:build:tsc",
+        "../example-boards:build:tsc",
+        "../gemini-kit:build:tsc",
+        "../google-drive-kit:build:tsc",
+        "../json-kit:build:tsc",
+        "../template-kit:build:tsc",
+        "../node-nursery-web:build:tsc",
+        "../palm-kit:build:tsc",
+        "../python-wasm:build:tsc"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json",
+        "package.json"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc -b --pretty",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "typescript-files-and-deps"
+      ],
+      "files": [],
+      "output": [
+        "build/",
+        "!build/**/*.min.js{,.map}"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "build:vite": {
+      "command": "vite build",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "typescript-files-and-deps",
+        "../example-boards:build",
+        "copy-pyoide-assets",
+        {
+          "script": "copy-light-kits",
+          "cascade": false
+        }
+      ],
+      "files": [
+        "vite.config.ts",
+        ".env*",
+        "*.html",
+        "oauth/",
+        "public/"
+      ],
+      "output": [
+        "dist/"
+      ]
+    },
+    "preview": {
+      "command": "vite preview",
+      "service": true,
+      "dependencies": [
+        "../example-boards:build",
+        {
+          "script": "typescript-files-and-deps",
+          "cascade": false
+        },
+        {
+          "script": "copy-light-kits",
+          "cascade": false
+        },
+        {
+          "script": "copy-example-boards",
+          "cascade": false
+        },
+        {
+          "script": "../connection-server:dev:nowatch",
+          "cascade": false
+        }
+      ],
+      "files": [
+        "vite.config.ts",
+        ".env"
+      ]
+    },
+    "serve": {
+      "command": "vite",
+      "service": true,
+      "dependencies": [
+        "../example-boards:build",
+        {
+          "script": "typescript-files-and-deps",
+          "cascade": false
+        },
+        {
+          "script": "copy-light-kits",
+          "cascade": false
+        },
+        {
+          "script": "copy-example-boards",
+          "cascade": false
+        },
+        {
+          "script": "../connection-server:dev:nowatch",
+          "cascade": false
+        }
+      ],
+      "files": [
+        "vite.config.ts",
+        ".env"
+      ]
+    },
+    "copy-example-boards": {
+      "command": "tsx src/copy-example-boards.ts",
+      "dependencies": [
+        "../example-boards:build"
+      ],
+      "files": [
+        "src/copy-example-boards.ts"
+      ],
+      "output": [
+        "public/example-boards/*.json"
+      ]
+    },
+    "copy-light-kits": {
+      "command": "tsx src/copy-light-kits.ts",
+      "dependencies": [
+        "../agent-kit:build"
+      ],
+      "files": [],
+      "output": [
+        "public/*.kit.json"
+      ]
+    },
+    "copy-pyoide-assets": {
+      "command": "tsx src/copy-pyodide-assets.ts",
+      "files": [],
+      "output": [
+        "public/python_stdlib.zip",
+        "public/pyodide*"
+      ]
+    }
+  },
+  "repository": {
+    "directory": "packages/visual-editor",
+    "type": "git",
+    "url": "git+https://github.com/breadboard-ai/breadboard.git"
+  },
+  "files": [
+    "build/",
+    "public",
+    "index.html",
+    "preview.html"
+  ],
+  "ava": {
+    "timeout": "30s",
+    "files": [
+      "tests/**/*.ts"
+    ],
+    "workerThreads": false,
+    "typescript": {
+      "rewritePaths": {
+        "./": "dist/"
+      },
+      "compile": false
+    }
+  },
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/breadboard-ai/breadboard/issues"
+  },
+  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor#readme",
+  "devDependencies": {
+    "@ava/typescript": "^4.0.0",
+    "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
+    "@google-labs/tsconfig": "^0.0.1",
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "ava": "^5.2.0",
+    "dotenv": "^16.4.5",
+    "tsx": "^4.17.0",
+    "typescript": "^5.5.4",
+    "vite-plugin-full-reload": "^1.2.0",
+    "vite-plugin-watch-and-run": "^1.7.0",
+    "vite": "^5.4.1",
+    "vitest": "^2.0.5"
+  },
+  "dependencies": {
+    "@breadboard-ai/build": "^0.8.1",
+    "@breadboard-ai/data-store": "^0.2.0",
+    "@breadboard-ai/example-boards": "0.2.1",
+    "@breadboard-ai/google-drive-kit": "0.2.2",
+    "@breadboard-ai/manifest": "^0.4.1",
+    "@breadboard-ai/shared-ui": "^1.15.0",
+    "@breadboard-ai/python-wasm": "0.1.4",
+    "@codemirror/autocomplete": "^6.18.0",
+    "@codemirror/commands": "^6.6.0",
+    "@codemirror/lang-javascript": "^6.2.2",
+    "@dagrejs/dagre": "^1.1.4",
+    "@google-labs/agent-kit": "^0.9.1",
+    "@google-labs/breadboard": "^0.24.0",
+    "@google-labs/core-kit": "^0.13.0",
+    "@google-labs/gemini-kit": "^0.5.4",
+    "@google-labs/json-kit": "^0.3.5",
+    "@google-labs/node-nursery-web": "^1.2.0",
+    "@google-labs/palm-kit": "^0.1.1",
+    "@google-labs/template-kit": "^0.3.7",
+    "@lit/context": "^1.1.2",
+    "@lit/task": "^1.0.1",
+    "@types/gapi": "^0.0.47",
+    "@types/gapi.drive": "^0.0.9",
+    "@types/google.picker": "^0.0.42",
+    "ajv": "^8.17.1",
+    "codemirror": "^6.0.1",
+    "idb-keyval": "^6.2.1",
+    "idb": "^8.0.0",
+    "lit": "^3.2.0",
+    "markdown-it": "^14.1.0",
+    "pixi.js": "^8.3.3"
+  }
+}

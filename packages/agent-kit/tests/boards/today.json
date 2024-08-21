@@ -1,0 +1,60 @@
+{
+  "title": "Get Today",
+  "description": "Return today's date",
+  "version": "0.0.1",
+  "metadata": {
+    "tags": ["tool", "published"],
+    "comments": []
+  },
+  "edges": [
+    {
+      "from": "runJavascript-94b48cbd",
+      "to": "output",
+      "in": "today",
+      "out": "result"
+    }
+  ],
+  "nodes": [
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "today": {
+              "type": "string",
+              "title": "Today",
+              "examples": []
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 138,
+          "y": 95,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "runJavascript-94b48cbd",
+      "type": "runJavascript",
+      "metadata": {
+        "visual": {
+          "x": -99,
+          "y": 16,
+          "collapsed": false
+        },
+        "title": "Today",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "name": "run",
+        "code": "function run() {\n  return `Today is ${new Date().toString()}`;\n}"
+      }
+    }
+  ]
+}

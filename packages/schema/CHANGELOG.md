@@ -1,5 +1,38 @@
 # @google-labs/breadboard-schema
 
+## 1.6.0
+
+### Minor Changes
+
+- 2312443: Add support for `deprecated` and `experimental` tags on Kits.
+
+## 1.5.1
+
+### Patch Changes
+
+- dd783e0: Add analyzeIsJsonSubSchema function
+- 3aba1a4: Improve subschema checking of properties and additionalProperties
+
+## 1.5.0
+
+### Minor Changes
+
+- 7af14cf: Add support for comment nodes
+- 511bd9b: Add `tags` to `GraphMetadata`.
+- 431fa3d: Add support for website embeds of boards & YouTube videos
+
+### Patch Changes
+
+- 3d7b4a7: Introduce optional `help` metadata for graphs and kits.
+- cd73b17: Switch to Nodejs v20.14.0 as the baseline.
+- fcef799: Update `help` to have description and URL
+
+## 1.4.1
+
+### Patch Changes
+
+- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types in Kits to describe themselves.
+
 ## 1.4.0
 
 ### Minor Changes

@@ -17,6 +17,7 @@ import {
   OutputValues,
 } from "../src/types.js";
 import { MachineResult } from "../src/traversal/result.js";
+import { StartLabel } from "@google-labs/breadboard-schema/graph.js";
 
 const IN_DIR = "./tests/data/";
 
@@ -25,6 +26,7 @@ interface TestGraphDescriptor extends GraphDescriptor {
   inputs: InputValues;
   outputs: OutputValues[];
   throws: boolean;
+  start: StartLabel;
 }
 
 const graphs = (await readdir(`${IN_DIR}/`)).filter((file) =>
@@ -41,7 +43,7 @@ await Promise.all(
         t.log("Skipped");
         return;
       }
-      const machine = new TraversalMachine(graph);
+      const machine = new TraversalMachine(graph, undefined, graph.start);
       const outputs: OutputValues[] = [];
       const sequence: string[] = [];
       const run = async () => {
@@ -51,7 +53,7 @@ await Promise.all(
           sequence.push(descriptor.id);
           switch (descriptor.type) {
             case "input":
-              result.outputsPromise = Promise.resolve(graph.inputs);
+              result.outputs = graph.inputs;
               break;
             case "output":
               outputs.push({ ...inputs });
@@ -59,36 +61,38 @@ await Promise.all(
             case "extract": {
               const list = result.inputs.list as string[];
               const text = list.shift();
-              result.outputsPromise = Promise.resolve(
-                list.length ? { list, text } : { text }
-              );
+              result.outputs = list.length ? { list, text } : { text };
+              break;
+            }
+            case "make": {
+              // A node that creates its own output.
+              result.outputs = { text: "Hello, world!" };
               break;
             }
             case "error": {
-              result.outputsPromise = Promise.resolve({
+              result.outputs = {
                 $error: {
                   kind: "error",
                   error: new Error("Test error"),
                 } as ErrorCapability,
-              });
-              break;
-            }
-            case "throw": {
-              result.outputsPromise = Promise.reject(new Error("Test throw"));
+              };
               break;
             }
             case "noop":
-              result.outputsPromise = Promise.resolve({ ...inputs });
+              result.outputs = { ...inputs };
               break;
             default:
               throw new Error(`Unknown node: ${descriptor.id}`);
           }
         }
       };
-      if (graph.throws) await t.throwsAsync(run);
-      else await run();
+      if (graph.throws) {
+        await t.throwsAsync(run);
+      } else {
+        await run();
+      }
 
-      // Rewrite instancesof Error to strings for comparison.
+      // Rewrite instances of Error to strings for comparison.
       outputs.forEach((output) => {
         if (output.$error) {
           const $error = output.$error as ErrorCapability;
@@ -123,7 +127,7 @@ test("Can be interrupted and resumed", async (t) => {
       id: "node-a",
       type: "input",
     });
-    result.outputsPromise = Promise.resolve(graph.inputs);
+    result.outputs = graph.inputs;
   }
 
   // Second iteration.
@@ -148,7 +152,7 @@ test("Can be interrupted and resumed", async (t) => {
       id: "node-b",
       type: "noop",
     });
-    result.outputsPromise = Promise.resolve(result.inputs);
+    result.outputs = result.inputs;
   }
 
   // Fourth iteration.

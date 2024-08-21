@@ -6,7 +6,11 @@
 
 import { SchemaBuilder, combineSchemas } from "../schema.js";
 import { NodeDescriberResult, Schema } from "../types.js";
-import { InspectableEdge, NodeTypeDescriberOptions } from "./types.js";
+import {
+  InspectableEdge,
+  InspectableEdgeType,
+  NodeTypeDescriberOptions,
+} from "./types.js";
 
 export enum EdgeType {
   In,
@@ -15,10 +19,19 @@ export enum EdgeType {
 
 const SCHEMA_SCHEMA: Schema = {
   type: "object",
-  behavior: ["json-schema", "ports-spec"],
+  behavior: ["json-schema", "ports-spec", "config"],
 };
 
-export const DEFAULT_SCHEMA = { type: "string" };
+export const DEFAULT_SCHEMA: Schema = { type: "string" };
+
+const blankSchema = () => ({ type: "object" });
+
+const isStarOrControl = (edge: InspectableEdge) => {
+  const type = edge.type;
+  return (
+    type === InspectableEdgeType.Star || type === InspectableEdgeType.Control
+  );
+};
 
 const edgesToProperties = (
   edgeType: EdgeType,
@@ -28,7 +41,7 @@ const edgesToProperties = (
   if (!edges) return {};
   return edges.reduce(
     (acc, edge) => {
-      if (!keepStar && edge.out === "*") return acc;
+      if (!keepStar && isStarOrControl(edge)) return acc;
       const key = edgeType === EdgeType.In ? edge.in : edge.out;
       if (acc[key]) return acc;
       acc[key] = DEFAULT_SCHEMA;
@@ -58,18 +71,27 @@ export const edgesToSchema = (
 export const describeInput = (
   options: NodeTypeDescriberOptions
 ): NodeDescriberResult => {
-  const schema = (options.inputs?.schema as Schema) || SCHEMA_SCHEMA;
+  const schema = (options.inputs?.schema as Schema) || blankSchema();
   const inputSchema = new SchemaBuilder()
     .addProperty("schema", SCHEMA_SCHEMA)
     .build();
+  let hasStarEdge = false;
+  const outgoing = options.outgoing?.filter((edge) => {
+    const isStarEdge = isStarOrControl(edge);
+    if (isStarEdge) {
+      hasStarEdge = true;
+    }
+    return !isStarEdge;
+  });
   const outputSchema = combineSchemas([
-    edgesToSchema(
-      EdgeType.Out,
-      options.outgoing?.filter((edge) => edge.out !== "*"),
-      true
-    ),
+    edgesToSchema(EdgeType.Out, outgoing, true),
     schema,
   ]);
+  if (options.asType) {
+    if (!hasStarEdge) {
+      outputSchema.additionalProperties = false;
+    }
+  }
   return { inputSchema, outputSchema };
 };
 
@@ -81,18 +103,26 @@ export const describeInput = (
 export const describeOutput = (
   options: NodeTypeDescriberOptions
 ): NodeDescriberResult => {
-  const schema = (options.inputs?.schema as Schema) || SCHEMA_SCHEMA;
+  const schema = (options.inputs?.schema as Schema) || blankSchema();
   const outputSchema = new SchemaBuilder()
     .setAdditionalProperties(false)
     .build();
-  const inputSchemaBuilder = new SchemaBuilder()
-    .addProperty("schema", SCHEMA_SCHEMA)
-    .setAdditionalProperties(true);
+  const inputSchemaBuilder = new SchemaBuilder().addProperty(
+    "schema",
+    SCHEMA_SCHEMA
+  );
   const inputSchema = combineSchemas([
     inputSchemaBuilder
       .addProperties(edgesToProperties(EdgeType.In, options.incoming, true))
+      .setAdditionalProperties(true)
       .build(),
     schema,
   ]);
+  if (options.asType) {
+    // If the output has star edge incoming, make sure to communicate that
+    // this output can have many actual ports: set additionalProperties to true.
+    const hasStarEdge = !!options.incoming?.find((edge) => edge.out === "*");
+    if (!hasStarEdge) inputSchema.additionalProperties = false;
+  }
   return { inputSchema, outputSchema };
 };

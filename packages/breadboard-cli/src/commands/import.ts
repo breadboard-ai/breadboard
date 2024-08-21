@@ -8,7 +8,7 @@ import { stat, writeFile } from "fs/promises";
 import path from "path";
 import { pathToFileURL } from "url";
 import { ImportOptions } from "./commandTypes.js";
-import { OpenAPIBoardBuilder } from "./import/builder/index.js";
+import { OpenAPIBoardBuilder } from "@breadboard-ai/import";
 
 export const importGraph = async (url: string, options: ImportOptions) => {
   if (URL.canParse(url) == false) {

@@ -7,13 +7,12 @@
 export type * from "./types.js";
 
 export { Board } from "./board.js";
-export { BoardRunner } from "./runner.js";
 export { Node } from "./node.js";
 export { SchemaBuilder, combineSchemas } from "./schema.js";
 export { RunResult } from "./run.js";
 export { TraversalMachine } from "./traversal/machine.js";
 export { MachineResult } from "./traversal/result.js";
-export { traversalResultFromStack } from "./stack.js";
+export { traversalResultFromStack } from "./run/lifecycle.js";
 export { toMermaid } from "./mermaid.js";
 export { callHandler } from "./handler.js";
 export { asRuntimeKit } from "./kits/ctors.js";
@@ -28,7 +27,6 @@ export {
 } from "./stream.js";
 
 // New Syntax:
-export { Runner } from "./new/runner/runner.js";
 export {
   board,
   // TODO Alias for easier migration to the new name. Remove in a future breaking change.
@@ -59,11 +57,17 @@ export type {
   AbstractValue as V,
 } from "./new/grammar/types.js";
 export { asyncGen } from "./utils/async-gen.js";
+export { type SemVer, SemanticVersioning } from "./utils/semver.js";
+
+/**
+ * Helpers for handling BreadboardCapability.
+ */
+export { getGraphDescriptor } from "./capability.js";
 
 /**
  * The Inspector API.
  */
-export type * from "./inspector/types.js";
+export * from "./inspector/types.js";
 export { inspect, createRunObserver } from "./inspector/index.js";
 export { PortStatus } from "./inspector/types.js";
 
@@ -71,10 +75,45 @@ export { PortStatus } from "./inspector/types.js";
  * The Editor API.
  */
 export type * from "./editor/types.js";
-export { editGraph as edit } from "./editor/graph.js";
+export { editGraph as edit, blank, blankLLMContent } from "./editor/index.js";
 
 /**
  * The Loader API
  */
 export type * from "./loader/types.js";
 export { createLoader } from "./loader/index.js";
+
+export { formatGraphDescriptor } from "./formatter.js";
+
+/**
+ * DataCapability helpers.
+ */
+export type * from "./data/types.js";
+export {
+  asBase64,
+  asBlob,
+  deflateData,
+  inflateData,
+  isDataCapability,
+  isInlineData,
+  isStoredData,
+  isSerializedData,
+  isFunctionCallCapabilityPart,
+  isFunctionResponseCapabilityPart,
+  isLLMContent,
+  isLLMContentArray,
+  isMetadataEntry,
+  isTextCapabilityPart,
+  toInlineDataPart,
+  toStoredDataPart,
+  createDefaultDataStore,
+  createDefaultRunStore,
+} from "./data/index.js";
+
+/**
+ * Managed Run State API
+ */
+export type * from "./run/types.js";
+export { createRunStateManager } from "./run/index.js";
+export { invokeGraph } from "./run/invoke-graph.js";
+export { runGraph } from "./run/run-graph.js";

@@ -34,8 +34,8 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - uses: google/wireit@setup-github-actions-caching/v1
-      - uses: actions/configure-pages@v4
+      - uses: google/wireit@setup-github-actions-caching/v2
+      - uses: actions/configure-pages@v5
 
       - run: npm ci
 

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "../board.js";
 import { createLoader } from "../loader/index.js";
 import { InitServer } from "../remote/init.js";
 import { RunServer } from "../remote/run.js";
@@ -124,8 +123,7 @@ export const serve = async (config: ServeConfig | Promise<ServeConfig>) => {
   if (!graph) {
     throw new Error(`Unable to load graph from "${config.url}"`);
   }
-  const runner = await Board.fromGraphDescriptor(graph);
-  return server.serve(runner, !!config.diagnostics, { kits });
+  return server.serve(graph, !!config.diagnostics, { kits });
 };
 
 /**

@@ -71,12 +71,19 @@ const toAltJson = (
 };
 
 export default {
+  metadata: {
+    title: "XML to JSON",
+    description: "Creates a JSON representation of a given XML input.",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/json/#the-xmltojson-node",
+    },
+  },
   describe: async () => {
     return {
       inputSchema: {
         properties: {
           xml: {
-            title: "XML",
+            title: "XML String",
             type: "string",
             description: "Valid XML as a string",
           },

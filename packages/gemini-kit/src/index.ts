@@ -28,6 +28,7 @@ const builder = new KitBuilder(
 const GeminiKit = builder.build({
   text: adapter.handlerForNode("text"),
   vision: adapter.handlerForNode("vision"),
+  nano: adapter.handlerForNode("nano"),
 });
 
 export type GeminiKit = InstanceType<typeof GeminiKit>;
@@ -88,9 +89,11 @@ export default GeminiKit;
 
 /**
  * The Gemini Kit. Use members of this object to create nodes to interact with
- * the Gemin language model. Currently, the two members are `text` and `vision`.
+ * the Gemini language model. Currently, the two members are `text` and `vision`.
  * The `text` member is used to generate text from the Gemini Pro model, and the
  * `vision` member is used to generate a response from the Gemini Pro Vision
  * model.
  */
 export const gemini = addKit(GeminiKit) as unknown as GeminiKitType;
+
+export { default as geminiText } from "./boards/gemini-generator.js";

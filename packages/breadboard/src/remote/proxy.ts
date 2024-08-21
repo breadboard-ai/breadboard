@@ -18,11 +18,13 @@ import { NodeProxyConfig, NodeProxySpec, ProxyServerConfig } from "./config.js";
 import {
   AnyProxyRequestMessage,
   AnyProxyResponseMessage,
+  ClientBidirectionalStream,
   ClientTransport,
   ServerTransport,
-} from "./protocol.js";
+} from "./types.js";
 import { createTunnelKit, readConfig } from "./tunnel.js";
 import { timestamp } from "../timestamp.js";
+import { inflateData } from "../data/inflate-deflate.js";
 
 type ProxyServerTransport = ServerTransport<
   AnyProxyRequestMessage,
@@ -53,7 +55,7 @@ export class ProxyServer {
   }
 
   async serve(config: ProxyServerConfig) {
-    const { kits } = config;
+    const { kits, store } = config;
     const stream = this.#transport.createServerStream();
     const tunnelKit = createTunnelKit(
       readConfig(config),
@@ -97,6 +99,7 @@ export class ProxyServer {
       try {
         const result = await callHandler(handler, inputs, {
           descriptor: node,
+          store,
         });
 
         if (!result) {
@@ -106,7 +109,10 @@ export class ProxyServer {
           ]);
           continue;
         }
-        request.reply(["proxy", { outputs: result }]);
+        const outputs = store
+          ? ((await inflateData(store, result)) as OutputValues)
+          : result;
+        request.reply(["proxy", { outputs }]);
       } catch (e) {
         request.reply([
           "error",
@@ -138,7 +144,8 @@ export class ProxyClient {
 
   async proxy(
     node: NodeDescriptor,
-    inputs: InputValues
+    inputs: InputValues,
+    _context: NodeHandlerContext
   ): Promise<OutputValues> {
     const stream = this.#transport.createClientStream();
     const writer = stream.writableRequests.getWriter();
@@ -181,7 +188,7 @@ export class ProxyClient {
             ) => {
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               const descriptor = context.descriptor!;
-              const result = await this.proxy(descriptor, inputs);
+              const result = await this.proxy(descriptor, inputs, context);
               return result;
             },
           },

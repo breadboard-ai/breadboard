@@ -1,0 +1,142 @@
+{
+  "title": "reduce component example",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "topics": {
+              "type": "string",
+              "title": "Topics",
+              "examples": [],
+              "format": "multiline",
+              "description": "Enter a list of topics to search Wikipedia for, each topic on a new line."
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -275,
+          "y": -159,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "results": {
+              "type": "string",
+              "title": "Results",
+              "examples": [],
+              "format": "markdown"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 331,
+          "y": -177,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "reduce-67cd5cbb",
+      "type": "reduce",
+      "metadata": {
+        "visual": {
+          "x": 100,
+          "y": -200,
+          "collapsed": false
+        },
+        "title": "Search All Results",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "path": "https://breadboard-ai.github.io/breadboard/static/boards/kits/example-search-wikipedia.bgl.json"
+        },
+        "accumulator": "Search Results"
+      }
+    },
+    {
+      "id": "runJavascript-0c197bee",
+      "type": "runJavascript",
+      "metadata": {
+        "visual": {
+          "x": -134,
+          "y": -171,
+          "collapsed": false
+        },
+        "title": "Split Topics",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "name": "run",
+        "code": "function run({topics}) {\n  return topics.trim().split(\"\\n\");\n}"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "reduce-67cd5cbb",
+      "to": "output",
+      "out": "accumulator",
+      "in": "results"
+    },
+    {
+      "from": "input",
+      "to": "runJavascript-0c197bee",
+      "out": "topics",
+      "in": "topics"
+    },
+    {
+      "from": "runJavascript-0c197bee",
+      "to": "reduce-67cd5cbb",
+      "out": "result",
+      "in": "list"
+    }
+  ],
+  "description": "No Description",
+  "metadata": {
+    "tags": [],
+    "comments": [
+      {
+        "id": "comment-4e2b8ef8",
+        "text": "Split topics into\na list with JS.",
+        "metadata": {
+          "visual": {
+            "x": -119,
+            "y": -231,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-52d8133a",
+        "text": "Call [Search Wikipedia](https://breadboard-ai.web.app/?board=https%3A%2Fbreadboard-ai.github.io%2Fbreadboard%2Fstatic%2Fboards%2Fkits%2Fexample-search-wikipedia.bgl.json) board for each item in the list.",
+        "metadata": {
+          "visual": {
+            "x": 60,
+            "y": -258,
+            "collapsed": false
+          }
+        }
+      }
+    ]
+  }
+}

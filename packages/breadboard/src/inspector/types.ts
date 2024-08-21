@@ -4,9 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import {
+  GraphIdentifier,
+  GraphMetadata,
+  NodeMetadata,
+  StartLabel,
+} from "@google-labs/breadboard-schema/graph.js";
 import { HarnessRunResult, SecretResult } from "../harness/types.js";
 import { GraphLoader } from "../loader/types.js";
 import {
+  BehaviorSchema,
   Edge,
   ErrorResponse,
   GraphDescriptor,
@@ -16,12 +23,18 @@ import {
   NodeConfiguration,
   NodeDescriberResult,
   NodeDescriptor,
+  NodeHandlerMetadata,
   NodeIdentifier,
   NodeTypeIdentifier,
   NodeValue,
   OutputValues,
   Schema,
 } from "../types.js";
+import {
+  DataStore,
+  RunStore,
+  SerializedDataStoreGroup,
+} from "../data/types.js";
 
 export type GraphVersion = number;
 
@@ -57,13 +70,22 @@ export type InspectableNode = {
    */
   outgoing(): InspectableEdge[];
   /**
-   * Return true if the node is an entry node (no incoming edges)
+   * Return true if the node is an entry node (labeled as such or
+   * has no incoming edges)
    */
-  isEntry(): boolean;
+  isEntry(label?: StartLabel): boolean;
+  /**
+   * The start label of the node.
+   */
+  startLabels(): StartLabel[] | undefined;
   /**
    * Return true if the node is an exit node (no outgoing edges)
    */
   isExit(): boolean;
+  /**
+   * Returns the `InspectableNodeType` instance for the node.
+   */
+  type(): InspectableNodeType;
 
   /**
    * Returns the API of the node.
@@ -88,6 +110,11 @@ export type InspectableNode = {
    */
   configuration(): NodeConfiguration;
   /**
+   * Returns metadata for the node.
+   * TODO: Use a friendlier to inspection return type.
+   */
+  metadata(): NodeMetadata;
+  /**
    * Returns the current state of node's ports
    */
   ports(
@@ -96,13 +123,47 @@ export type InspectableNode = {
   ): Promise<InspectableNodePorts>;
 };
 
+/**
+ * The type of the edge.
+ */
+export enum InspectableEdgeType {
+  /**
+   * Just an ordinary edge. Most of the edges in graphs are ordinary.
+   */
+  Ordinary = "ordinary",
+  /**
+   * Constant edge has an effect of "memoizing" the value that passes
+   * through it, make it always available. So when the incoming node is among
+   * opportunities to visit again, the constant edge will report that it already
+   * has the value.
+   * Each new value that comes from the outgoing wire will overwrite the one
+   * that is memoized.
+   * Constant edges are primarily useful when building graphs with cycles.
+   * For example, if you want to invoke some fetch multiple times, with the same
+   * secret value, use the constant edge to connect the secret to the fetch.
+   */
+  Constant = "constant",
+  /**
+   * Control edge does not pass any data across. It is purely a control flow
+   * wire, primarily useful when building graphs with cycles.
+   */
+  Control = "control",
+  /**
+   * Star edge is the opposite of control edge: it passes all data from outgoing
+   * node to incoming node. Use it when you do not need to discern what
+   * ports are being passed and their names match for the incoming/outgoing
+   * nodes.
+   */
+  Star = "star",
+}
+
 export type InspectableEdge = {
   /**
    * The outgoing node of the edge.
    */
   from: InspectableNode;
   /**
-   * The name of the port of the outgoing edge.
+   * The name of the port of the outgoing node.
    */
   out: string;
   /**
@@ -110,10 +171,45 @@ export type InspectableEdge = {
    */
   to: InspectableNode;
   /**
-   * The name of the port of the incoming edge.
+   * The name of the port of the incoming node.
    */
   in: string;
+  /**
+   * The type of the edge.
+   */
+  type: InspectableEdgeType;
+
+  /**
+   * Get an inspectable output port.
+   */
+  outPort(): Promise<InspectablePort>;
+
+  /**
+   * Get the inspectable input port.
+   */
+  inPort(): Promise<InspectablePort>;
+
+  /**
+   * Check if the input and output schemas are compatible (meaning that the
+   * output port type is a subtype of the input port type).
+   */
+  validate(): Promise<ValidateResult>;
 };
+
+export type ValidateResult =
+  | { status: "unknown"; errors?: never }
+  | { status: "valid"; errors?: never }
+  | { status: "invalid"; errors: ValidateError[] };
+
+export interface ValidateError {
+  message: string;
+  detail?: {
+    outputPath: Array<string | number>;
+    inputPath: Array<string | number>;
+  };
+}
+
+export type InspectableSubgraphs = Record<GraphIdentifier, InspectableGraph>;
 
 export type InspectableGraph = {
   /**
@@ -121,6 +217,10 @@ export type InspectableGraph = {
    * TODO: Replace all uses of it with a proper inspector API.
    */
   raw(): GraphDescriptor;
+  /**
+   * Returns this graph's metadata, if exists.
+   */
+  metadata(): GraphMetadata | undefined;
   /**
    * Returns the node with the given id, or undefined if no such node exists.
    * @param id id of the node to find
@@ -148,6 +248,16 @@ export type InspectableGraph = {
    */
   nodesByType(type: NodeTypeIdentifier): InspectableNode[];
   /**
+   * Returns the `InspectableNodeType` for a given node or undefined if the
+   * node does not exist.
+   */
+  typeForNode(id: NodeIdentifier): InspectableNodeType | undefined;
+  /**
+   * Returns the `InspectableNodeType` for a given type or undefined if the type
+   * does not exist.
+   */
+  typeById(id: NodeTypeIdentifier): InspectableNodeType | undefined;
+  /**
    * Describe a given type of the node
    */
   describeType(
@@ -167,12 +277,16 @@ export type InspectableGraph = {
   /**
    * Returns a list of entry nodes for the graph.
    */
-  entries(): InspectableNode[];
+  entries(label?: StartLabel): InspectableNode[];
   /**
    * Returns the API of the graph. This function is designed to match the
    * output of the `NodeDescriberFunction`.
    */
-  describe(): Promise<NodeDescriberResult>;
+  describe(inputs?: InputValues): Promise<NodeDescriberResult>;
+  /**
+   * Returns the subgraphs that are embedded in this graph.
+   */
+  graphs(): InspectableSubgraphs;
 };
 
 /**
@@ -206,6 +320,11 @@ export type NodeTypeDescriberOptions = {
    * Optional, the outgoing edges from the node.
    */
   outgoing?: InspectableEdge[];
+  /**
+   * Optional, describe the the type for type description purposes, rather
+   * than for inspection.
+   */
+  asType?: boolean;
 };
 
 /**
@@ -271,7 +390,7 @@ export type InspectablePort = {
    */
   value: NodeValue;
   /**
-   * Returns true if this is the star port ("*").
+   * Returns true if this is the star or control port ("*" or "").
    */
   star: boolean;
   /**
@@ -282,7 +401,49 @@ export type InspectablePort = {
    * Returns the edges connected to this port.
    */
   edges: InspectableEdge[];
+
+  /**
+   * Returns a representation of the port's type.
+   */
+  type: InspectablePortType;
+
+  /**
+   * Is this an input or output port?
+   */
+  kind: "input" | "output";
 };
+
+export type InspectablePortType = {
+  /**
+   * Returns port schema as defined by the node.
+   */
+  schema: Schema;
+  /**
+   * Returns `true` if this port has specified behavior
+   */
+  hasBehavior(behavior: BehaviorSchema): boolean;
+  /**
+   * Returns `true` if the outgoing port of this type can connect to an
+   * incoming port of the specified type.
+   *
+   * @param to the incoming port type to which to connect.
+   */
+  canConnect(to: InspectablePortType): boolean;
+
+  analyzeCanConnect(to: InspectablePortType): CanConnectAnalysis;
+};
+
+export type CanConnectAnalysis =
+  | { canConnect: true; details?: never }
+  | { canConnect: false; details: CanConnectAnalysisDetail[] };
+
+export interface CanConnectAnalysisDetail {
+  message: string;
+  detail?: {
+    outputPath: Array<string | number>;
+    inputPath: Array<string | number>;
+  };
+}
 
 /**
  * Represents one side (input or output) of ports of a node.
@@ -336,6 +497,10 @@ export type InspectableKit = {
 
 export type InspectableNodeType = {
   /**
+   * Returns the metadata, associated with this node type.
+   */
+  metadata(): NodeHandlerMetadata;
+  /**
    * Returns the type of the node.
    */
   type(): NodeTypeIdentifier;
@@ -351,6 +516,12 @@ export type InspectableNodeType = {
  * `InspectableGraph`.
  */
 export type GraphStoreMutator = {
+  // TODO: This is probably wrong. A new version of the graph should likely
+  // create a new instance of an `InspectableGraph`.
+  updateGraph(graph: GraphDescriptor): void;
+  // Destroys all caches.
+  // TODO: Maybe too much machinery here? Just get a new instance of inspector?
+  resetGraph(graph: GraphDescriptor): void;
   nodeStore: NodeStoreMutator;
   edgeStore: EdgeStoreMutator;
 };
@@ -366,6 +537,32 @@ export type EdgeStoreMutator = {
 };
 
 export type InspectableGraphWithStore = InspectableGraph & GraphStoreMutator;
+
+export type InspectableEdgeCache = {
+  get(edge: Edge): InspectableEdge | undefined;
+  getOrCreate(edge: Edge): InspectableEdge;
+  add(edge: Edge): void;
+  remove(edge: Edge): void;
+  hasByValue(edge: Edge): boolean;
+  edges(): InspectableEdge[];
+};
+
+export type InspectableNodeCache = {
+  byType(type: NodeTypeIdentifier): InspectableNode[];
+  get(id: string): InspectableNode | undefined;
+  add(node: NodeDescriptor): void;
+  remove(id: NodeIdentifier): void;
+  nodes(): InspectableNode[];
+};
+
+/**
+ * A backing store for `InspectableGraph` instances, representing a stable
+ * instance of a graph whose properties mutate.
+ */
+export type MutableGraph = {
+  nodes: InspectableNodeCache;
+  edges: InspectableEdgeCache;
+};
 
 /**
  * Represents a store of graph versions.
@@ -433,6 +630,7 @@ export type InspectableRunLoadResult =
     }
   | {
       success: true;
+      run: InspectableRun;
     };
 
 /**
@@ -443,13 +641,13 @@ export type InspectableRunObserver = {
    * Returns the list of runs that were observed. The current run is always
    * at the top of the list.
    */
-  runs(): InspectableRun[];
+  runs(): Promise<InspectableRun[]>;
   /**
    * Observes the given result and collects it into the list of runs.
    * @param result -- the result to observe
    * @returns -- the list of runs that were observed
    */
-  observe(result: HarnessRunResult): InspectableRun[];
+  observe(result: HarnessRunResult): Promise<void>;
   /**
    * Attempts to load a JSON object as a serialized representation of runs,
    * creating a new run if successful.
@@ -459,7 +657,7 @@ export type InspectableRunObserver = {
   load(
     o: unknown,
     options?: SerializedRunLoadingOptions
-  ): InspectableRunLoadResult;
+  ): Promise<InspectableRunLoadResult>;
 };
 
 /**
@@ -481,12 +679,29 @@ export type SerializedRunLoadingOptions = {
    * Optional, a function replace sentinel values with actual secrets.
    */
   secretReplacer?: SerializedRunSecretReplacer;
+  /**
+   * Optional, kits that are used with this run.
+   */
+  kits?: Kit[];
+};
+
+export type StoreAdditionResult = {
+  /**
+   * The UUID of the graph
+   */
+  id: GraphUUID;
+  /**
+   * True, if the graph did not exist in the store before and was added as
+   * a result of this operation.
+   * False, if the graph already existed.
+   */
+  added: boolean;
 };
 
 /**
  * Represents a store of all graphs that the system has seen so far.
  */
-export type InspectableGraphStore = {
+export type GraphDescriptorStore = {
   /**
    * Retrieves a graph with the given id.
    * @param id -- the id of the graph to retrieve
@@ -498,10 +713,10 @@ export type InspectableGraphStore = {
    */
   has(id: GraphUUID): boolean;
   /**
-   * Adds a graph to the store and returns the UUID. If the graph is already
-   * in the store, returns the UUID of the existing graph.
+   * Adds a graph to the store and returns a `StoreAdditionResult`.
+   * @see StoreAdditionResult
    */
-  add(graph: GraphDescriptor, version: number): GraphUUID;
+  add(graph: GraphDescriptor, version: number): StoreAdditionResult;
 };
 
 /**
@@ -514,6 +729,10 @@ export type InspectableRunNodeEvent = {
    * Unique identifier of the event.
    */
   id: EventIdentifier;
+  /**
+   * The graph that contains this node.
+   */
+  graph: InspectableGraph;
   /**
    * The `InspectableNode` instance associated with this node.
    */
@@ -565,6 +784,34 @@ export type InspectableRunErrorEvent = {
   start: number;
 };
 
+export type InspectableRunEdgeEvent = {
+  type: "edge";
+  id: EventIdentifier;
+  edge: {
+    /**
+     * The outgoing node of the edge.
+     */
+    from?: string;
+    /**
+     * The name of the port of the outgoing node.
+     */
+    out?: string;
+    /**
+     * The incoming node of the edge.
+     */
+    to?: string;
+    /**
+     * The name of the port of the incoming node.
+     */
+    in?: string;
+  };
+  start: number;
+  end: number;
+  from?: number[];
+  to?: number[];
+  value?: InputValues;
+};
+
 export type InspectableRunSecretEvent = {
   type: "secret";
   id: EventIdentifier;
@@ -585,12 +832,18 @@ export type InspectableRunSecretEvent = {
 export type EventIdentifier = string;
 
 /**
+ * Values that were submitted as inputs during a run.
+ */
+export type InspectableRunInputs = Map<NodeIdentifier, OutputValues[]>;
+
+/**
  * Represent all events that can be inspected during a run.
  */
 export type InspectableRunEvent =
   | InspectableRunNodeEvent
   | InspectableRunSecretEvent
-  | InspectableRunErrorEvent;
+  | InspectableRunErrorEvent
+  | InspectableRunEdgeEvent;
 
 /**
  * Represents a single run of a graph.
@@ -618,23 +871,46 @@ export type InspectableRun = {
    */
   events: InspectableRunEvent[];
   /**
+   * A way to associate data with the run.
+   */
+  dataStoreKey: string;
+  /**
+   * Returns the current `InspectableRunNodeEvent` if any.
+   * This is useful for tracking the latest node that is being run.
+   *
+   * Note: this will return node events for nested runs as well as the
+   * top-level run.
+   */
+  currentNodeEvent(): InspectableRunNodeEvent | null;
+  /**
+   * Returns the current run stack as a list of `InspectableRunNodeEvent`
+   * instances.
+   * The first item in the list represents the node in the top-level
+   * graph that is currently being run.
+   * The last item is the actual node that is being run, which may be in a
+   * graph that is nested within the top-level graph.
+   */
+  stack(): InspectableRunNodeEvent[];
+  /**
    * If present, returns a serialized representation of the run or null if
    * serialization of this run is not supported.
    */
-  serialize?(options?: RunSerializationOptions): SerializedRun;
+  serialize?(options?: RunSerializationOptions): Promise<SerializedRun>;
   /**
    * Given an `EventIdentifier`, returns an `InspectableRunEvent` instance or
    * null if not found.
    */
   getEventById(id: EventIdentifier): InspectableRunEvent | null;
   /**
-   * @deprecated Use `events` instead.
+   * Creates a map of all inputs that were submitted during the run or `null`
+   * if no inputs were submitted.
    */
-  messages: HarnessRunResult[];
+  inputs(): InspectableRunInputs | null;
   /**
-   * @deprecated Use `events` instead.
+   * Returns a HarnessRunResult asynchronous generator that allows replaying
+   * the run.
    */
-  currentNode(position: number): string;
+  replay(): AsyncGenerator<HarnessRunResult>;
 };
 
 /**
@@ -650,7 +926,7 @@ export type RunSerializationOptions = {
 };
 
 export type PathRegistryEntry = {
-  id: string;
+  path: number[];
   parent: PathRegistryEntry | null;
   children: PathRegistryEntry[];
   graphId: GraphUUID | null;
@@ -675,7 +951,7 @@ export type PathRegistryEntry = {
    */
   events: InspectableRunEvent[];
   /**
-   * Returns an inspectable graph for the graph, associated with this entry/
+   * Returns an inspectable graph for the graph, associated with this entry.
    */
   graph: InspectableGraph | null;
 };
@@ -703,21 +979,49 @@ export type RunObserverOptions = {
    * the ability to inspect graphs and nodes during the run.
    */
   kits?: Kit[];
+  /**
+   * The data store that will manage non-text data within the run.
+   */
+  dataStore?: DataStore;
+  /**
+   * The store that will be used to capture the run's data.
+   */
+  runStore?: RunStore;
+  /**
+   * Whether or not to skip replacing inlineData parts with storedData parts.
+   */
+  skipDataStore?: boolean;
 };
 
+export type GraphstartTimelineEntry = [
+  type: "graphstart",
+  data: {
+    timestamp: number;
+    path: number[];
+    index: number;
+    graph: GraphDescriptor | null;
+  },
+];
+
+export type NodestartTimelineEntry = [
+  type: "nodestart",
+  data: {
+    id: NodeIdentifier;
+    graph: number;
+    inputs: InputValues;
+    path: number[];
+    timestamp: number;
+  },
+];
+
 // TODO: Figure out if this is permanent.
-export type HistoryEntry = {
-  type:
-    | "graphstart"
-    | "graphend"
-    | "input"
-    | "output"
-    | "secret"
-    | "error"
-    | "nodestart"
-    | "nodeend";
-  data: unknown;
-};
+export type TimelineEntry =
+  | [
+      type: "graphend" | "input" | "output" | "secret" | "error" | "nodeend",
+      data: unknown,
+    ]
+  | GraphstartTimelineEntry
+  | NodestartTimelineEntry;
 
 /**
  * Represents an `InspectableRun` that has been serialized into a JSON object.
@@ -729,5 +1033,6 @@ export type SerializedRun = {
   $schema: "tbd";
   version: "0";
   secrets?: Record<string, string>;
-  timeline: HistoryEntry[];
+  timeline: TimelineEntry[];
+  data?: SerializedDataStoreGroup;
 };

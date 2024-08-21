@@ -12,7 +12,7 @@ import resolve from "../src/nodes/resolve.js";
 
 test("resolve resolves paths relative to the board base by default", async (t) => {
   t.deepEqual(
-    await resolve(
+    await resolve.invoke(
       { path: "./bar.json" },
       { base: new URL("http://example.com/graphs/foo.json") }
     ),
@@ -22,7 +22,7 @@ test("resolve resolves paths relative to the board base by default", async (t) =
 
 test("resolve resolves paths relative to the $base input when provided", async (t) => {
   t.deepEqual(
-    await resolve(
+    await resolve.invoke(
       {
         path: "./bar.json",
         $base: "file://not/the/default/foo.json",
@@ -35,7 +35,7 @@ test("resolve resolves paths relative to the $base input when provided", async (
 
 test("resolve resolves multiple input properties", async (t) => {
   t.deepEqual(
-    await resolve(
+    await resolve.invoke(
       {
         bar: "./bar.json",
         abc123: "./abc123.json",
@@ -51,7 +51,10 @@ test("resolve resolves multiple input properties", async (t) => {
 
 test("resolve does nothing with no inputs", async (t) => {
   t.deepEqual(
-    await resolve({}, { base: new URL("http://example.com/graphs/foo.json") }),
+    await resolve.invoke(
+      {},
+      { base: new URL("http://example.com/graphs/foo.json") }
+    ),
     {}
   );
 });

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { HarnessRunResult } from "./types.js";
-import { RunState, asyncGen } from "../index.js";
+import type { HarnessRunResult, RunConfig } from "./types.js";
+import { asyncGen } from "../index.js";
 import { createSecretAskingKit } from "./secrets.js";
 import { ProxyServer } from "../remote/proxy.js";
 import {
@@ -15,7 +15,7 @@ import {
 } from "../remote/worker.js";
 import { RunClient } from "../remote/run.js";
 import { InitClient } from "../remote/init.js";
-import { RunConfig } from "./run.js";
+import type { RunState } from "../run/types.js";
 
 export const createWorker = (url: string) => {
   const workerURL = new URL(url, location.href);
@@ -46,7 +46,11 @@ export async function* runInWorker(
 
   yield* asyncGen<HarnessRunResult>(async (next) => {
     const kits = [createSecretAskingKit(next), ...config.kits];
-    const proxy = config.proxy?.[0]?.nodes;
+    const proxyConfig = config.proxy?.[0];
+    let proxy;
+    if (proxyConfig && typeof proxyConfig !== "function") {
+      proxy = proxyConfig.nodes;
+    }
     proxyServer.serve({ kits, proxy });
 
     for await (const data of runClient.run(state)) {

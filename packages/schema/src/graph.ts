@@ -67,6 +67,24 @@ export type NodeDescriptor = {
   metadata?: NodeMetadata;
 };
 
+export type CommentNode = {
+  /**
+   * Unique id of the comment node in graph metadata.
+   */
+  id: NodeIdentifier;
+
+  /**
+   * The text content of the comment.
+   */
+  text: string;
+
+  /**
+   * The metadata of the comment node.
+   * Use this to provide additional information about the comment node.
+   */
+  metadata?: NodeMetadata;
+};
+
 /**
  * Represents an edge in a graph.
  */
@@ -131,7 +149,41 @@ export type NodeMetadata = {
    * Logging level.
    */
   logLevel?: "debug" | "info";
+  /**
+   * Tags associated with the node. Can be either a string or a structured tag,
+   * like a `StartTag`.
+   */
+  tags?: NodeTag[];
 };
+
+/**
+ * Represents a tag that can be associated with a node.
+ */
+export type NodeTag =
+  /**
+   * A simple start tag, which is the same as { type: "start" }.
+   */
+  | "start"
+  /**
+   * A tag that indicates that the node is a starting point for traversal.
+   */
+  | StartTag;
+
+/**
+ * Represents a start tag, which is a special tag that can be associated with a
+ * node. It is used to indicate that the node is a starting point for traversal.
+ * The `label` field allows the user to specify additional way to specify the
+ * kind of traversal they are looking for.
+ */
+export type StartTag = {
+  type: "start";
+  label?: StartLabel;
+};
+
+/**
+ * Valid start labels.
+ */
+export type StartLabel = "default" | "describe";
 
 /**
  * Represents references to a "kit": a collection of `NodeHandlers`.
@@ -145,6 +197,13 @@ export type KitReference = {
    */
   url: string;
 };
+
+/**
+ * Represents various tags that can be associated with a kit.
+ * - `deprecated`: The kit is deprecated and should not be used.
+ * - `experimental`: The kit is experimental and may not be stable.
+ */
+export type KitTag = "deprecated" | "experimental";
 
 export type KitDescriptor = KitReference & {
   /**
@@ -161,6 +220,10 @@ export type KitDescriptor = KitReference & {
    * @pattern ^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
    */
   version?: string;
+  /**
+   * Tags, associated with the kit.
+   */
+  tags?: KitTag[];
 };
 
 /**
@@ -169,17 +232,17 @@ export type KitDescriptor = KitReference & {
 export type KitManifest = KitDescriptor & {
   /**
    * A map of nodes. Each key in this object is the node that is provided by
-   * the kit. Each value is the URL (string) pointing to the graph or the
-   * `GraphDescriptor` containing the graph. This graph will be run (runOnce)
-   * when the `invoke` of the node's `NodeHandler` is called.
+   * the kit. Each value the `GraphDescriptor` containing the graph. This
+   * graph will be run (runOnce) when the `invoke` of the node's `NodeHandler`
+   * is called.
    */
-  nodes: Record<NodeIdentifier, string | GraphDescriptor>;
+  nodes: Record<NodeIdentifier, GraphDescriptor>;
 };
 
 /**
- * Represents graph metadata.
+ * Represents graph metadata that is stored inline in the GraphDescriptor.
  */
-export type GraphMetadata = {
+export type GraphInlineMetadata = {
   /**
    * The schema of the graph.
    */
@@ -205,6 +268,37 @@ export type GraphMetadata = {
    * [semver](https://semver.org/) format is encouraged.
    */
   version?: string;
+};
+
+/**
+ * A tag that can be associated with a graph.
+ * - `published`: The graph is published (as opposed to a draft). It may be
+ *    used in production and shared with others.
+ * - `tool`: The graph is intended to be a tool.
+ */
+export type GraphTag = "published" | "tool";
+
+/**
+ * Represents graph metadata.
+ */
+export type GraphMetadata = {
+  /**
+   * The icon that identifies the graph. Can be a URL or a Material Design id.
+   */
+  icon?: string;
+  [name: string]: NodeValue;
+  comments?: CommentNode[];
+  /**
+   * Tags associated with the graph. At this moment, free-form strings.
+   */
+  tags?: GraphTag[];
+  /**
+   * The documentation for the graph, expressed as a URL and optional description.
+   */
+  help?: {
+    description?: string;
+    url: string;
+  };
 };
 
 /**
@@ -266,12 +360,22 @@ type TestProperties = {
    * @deprecated For internal testing only. Do not use.
    */
   explanation?: string;
+
+  /**
+   * For internal testing only. Do not use.
+   * @deprecated For internal testing only. Do not use.
+   */
+  start?: StartLabel;
 };
 
 /**
  * Represents a graph.
  */
-export type GraphDescriptor = GraphMetadata & {
+export type GraphDescriptor = GraphInlineMetadata & {
+  /**
+   * Metadata associated with the graph.
+   */
+  metadata?: GraphMetadata;
   /**
    * The collection of all edges in the graph.
    */
@@ -293,7 +397,7 @@ export type GraphDescriptor = GraphMetadata & {
   graphs?: SubGraphs;
 
   /**
-   * Arguments that are passed to the graph, useful to bind values to lambdas.
+   * Arguments that are passed to the graph, useful to bind values to graphs.
    */
   args?: InputValues;
 } & TestProperties;

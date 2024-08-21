@@ -33,7 +33,7 @@
       ]
     },
     "build:tsc": {
-      "command": "tsc",
+      "command": "tsc --pretty",
       "dependencies": [
         "typescript-files-and-deps"
       ],
@@ -66,28 +66,28 @@
           "cascade": false
         }
       ],
-      "files": []
+      "files": [
+        ".env"
+      ]
     }
-  },
-  "engines": {
-    "node": "20"
   },
   "main": "lib/bundle.js",
   "dependencies": {
-    "firebase-admin": "^12.0.0",
-    "firebase-functions": "^4.8.0"
+    "firebase-admin": "^12.3.1",
+    "firebase-functions": "^5.1.0"
   },
   "devDependencies": {
-    "@google-labs/breadboard": "^0.12.0",
-    "@google-labs/palm-kit": "^0.0.6",
-    "@google-labs/template-kit": "^0.2.1",
-    "@rollup/plugin-commonjs": "^25.0.7",
+    "@google-labs/breadboard": "^0.24.0",
+    "@google-labs/core-kit": "^0.13.0",
+    "@google-labs/palm-kit": "^0.1.1",
+    "@google-labs/template-kit": "^0.3.7",
+    "@rollup/plugin-commonjs": "^26.0.1",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
-    "firebase-functions-test": "^3.1.0",
-    "rollup": "^4.12.1",
-    "typescript": "^5.3.3"
+    "firebase-functions-test": "^3.3.0",
+    "rollup": "^4.21.0",
+    "typescript": "^5.5.4"
   },
   "private": true,
   "version": ""

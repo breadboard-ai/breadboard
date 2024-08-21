@@ -1,0 +1,110 @@
+{
+  "title": "Step 2: Add Summarizer",
+  "description": "A simple agent that helps me find interesting books.",
+  "version": "0.0.1",
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-377d3029",
+        "text": "Step 2: **Add Summarizer**",
+        "metadata": {
+          "visual": {
+            "x": -121,
+            "y": -136,
+            "collapsed": false
+          }
+        }
+      }
+    ],
+    "tags": []
+  },
+  "edges": [
+    {
+      "from": "input",
+      "to": "specialist-deea1d32",
+      "out": "context",
+      "in": "in"
+    },
+    {
+      "from": "specialist-deea1d32",
+      "to": "output",
+      "out": "out",
+      "in": "context"
+    }
+  ],
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -123,
+          "y": -42,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 312,
+          "y": -58,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "specialist-deea1d32",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": 49,
+          "y": -40,
+          "collapsed": false
+        }
+      }
+    }
+  ]
+}

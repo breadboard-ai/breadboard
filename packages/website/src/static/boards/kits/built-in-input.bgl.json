@@ -1,0 +1,64 @@
+{
+  "title": "Input Node example 1",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "property-1": {
+              "type": "string",
+              "title": "Location",
+              "examples": []
+            },
+            "property-2": {
+              "type": "string",
+              "title": "Name",
+              "examples": []
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 113,
+          "y": 36,
+          "collapsed": false
+        }
+      }
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "tags": [],
+    "comments": [
+      {
+        "id": "comment-2a2e29e8",
+        "text": "Requests the \"Location\" and \"Name\" values and provides them as outputs.",
+        "metadata": {
+          "visual": {
+            "x": 52,
+            "y": -67,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-a9eba97d",
+        "text": "The number, names, and types of the output ports is specified using **Schema** configuration port.",
+        "metadata": {
+          "visual": {
+            "x": 61,
+            "y": 148,
+            "collapsed": false
+          }
+        }
+      }
+    ]
+  }
+}

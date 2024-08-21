@@ -5,6 +5,7 @@
  */
 
 import {
+  NodeHandlerObject,
   SchemaBuilder,
   type InputValues,
   type NodeDescriberFunction,
@@ -23,9 +24,13 @@ export type ValidateJsonInputs = InputValues & {
    * Optional schema to validate against.
    */
   schema?: NodeValue;
+  /**
+   * Optional boolean to enforce or turn off strict validation of the supplied schema.
+   */
+  strictSchema?: boolean;
 };
 
-export type ValidationErrorType = "parsing" | "validation";
+export type ValidationErrorType = "parsing" | "schema" | "validation";
 
 export type InvalidJsonOutputs = OutputValues & {
   /**
@@ -74,12 +79,27 @@ export const tryParseJson = (json: string): InvalidJsonOutputs | NodeValue => {
 
 export const validateJson = (
   parsed: NodeValue,
-  schema: Schema
+  schema: Schema,
+  strictSchema: boolean | undefined = undefined
 ): ValidateJsonOutputs => {
   const result = { json: parsed };
   if (!schema) return result;
-  const validator = new Ajv.default();
-  const validate = validator.compile(schema);
+  const validator = new Ajv.default({ strict: strictSchema });
+  let validate: Ajv.ValidateFunction;
+  try {
+    validate = validator.compile(schema);
+  } catch (e) {
+    return {
+      $error: {
+        kind: "error",
+        error: {
+          type: "schema",
+          message: (e as Error).message,
+        },
+      },
+    };
+  }
+
   const valid = validate(parsed);
   if (!valid) {
     return {
@@ -92,12 +112,19 @@ export const validateJson = (
       },
     };
   }
+
   return result;
 };
 
 const invoke = async (inputs: InputValues): Promise<OutputValues> => {
-  const { json, schema } = inputs as ValidateJsonInputs;
+  const { json, schema, strictSchema } = inputs as ValidateJsonInputs;
   if (!json) throw new Error("The `json` input is required.");
+
+  if (!schema && strictSchema == true) {
+    throw new Error(
+      "The `schema` input is required when `strictSchema` is true."
+    );
+  }
 
   // First, let's try to parse JSON.
   const parsed = tryParseJson(json);
@@ -115,27 +142,35 @@ const invoke = async (inputs: InputValues): Promise<OutputValues> => {
   }
 
   // Now, let's try to validate JSON.
-  return validateJson(parsed, parsedSchema as Schema);
+  return validateJson(parsed, parsedSchema as Schema, strictSchema);
 };
 
 const describe: NodeDescriberFunction = async () => {
   const inputSchema = new SchemaBuilder()
     .addProperty("json", {
-      title: "json",
+      title: "JSON string",
       description: "The string to validate as JSON.",
       type: "string",
     })
     .addProperty("schema", {
-      title: "schema",
+      title: "Schema",
       description: "Optional schema to validate against.",
       type: "object",
+      behavior: ["config"],
+    })
+    .addProperty("strictSchema", {
+      title: "Strict",
+      description:
+        "Optional boolean to enforce or turn off strict validation of the supplied schema.",
+      type: "boolean",
+      behavior: ["config"],
     })
     .addRequired(["json"])
     .build();
 
   const outputSchema = new SchemaBuilder()
     .addProperty("json", {
-      title: "json",
+      title: "JSON",
       description: "The validated JSON.",
     })
     .addProperty("$error", {
@@ -162,6 +197,14 @@ const describe: NodeDescriberFunction = async () => {
 };
 
 export default {
+  metadata: {
+    title: "Validate JSON",
+    description:
+      "Validates given text as JSON, trying its best to parse it first.",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/json/#validatejson",
+    },
+  },
   invoke,
   describe,
-};
+} as NodeHandlerObject;

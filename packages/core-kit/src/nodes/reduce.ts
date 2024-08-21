@@ -5,14 +5,15 @@
  */
 
 import {
-  Board,
-  BreadboardCapability,
   InputValues,
+  invokeGraph,
   NodeHandlerContext,
+  NodeHandlerMetadata,
   NodeValue,
   OutputValues,
   SchemaBuilder,
 } from "@google-labs/breadboard";
+import { getRunner } from "../utils.js";
 
 export type ReduceInputs = {
   /**
@@ -52,16 +53,14 @@ export type ReduceFunctionInputs = {
 
 const invoke = async (
   inputs: InputValues,
-  context?: NodeHandlerContext
+  context: NodeHandlerContext
 ): Promise<OutputValues> => {
   const { list, board, accumulator } = inputs;
   if (!Array.isArray(list)) {
     throw new Error(`Expected list to be an array, but got ${list}`);
   }
-  if (!board) return { accumulator };
-  const runnableBoard = await Board.fromBreadboardCapability(
-    board as BreadboardCapability
-  );
+  const runnableBoard = await getRunner(board, context);
+  if (!runnableBoard) return { accumulator };
   let result = accumulator;
   let index = 0;
   for (const item of list) {
@@ -69,7 +68,8 @@ const invoke = async (
       ...context,
       invocationPath: [...(context?.invocationPath || []), index++],
     };
-    const { accumulator } = await runnableBoard.runOnce(
+    const { accumulator } = await invokeGraph(
+      runnableBoard,
       { item, accumulator: result },
       newContext
     );
@@ -88,6 +88,7 @@ const describe = async () => {
     .addProperty("board", {
       title: "Board",
       type: "object",
+      behavior: ["board"],
       description: "The board to run for each element of the list.",
     })
     .addProperty("accumulator", {
@@ -106,4 +107,13 @@ const describe = async () => {
   return { inputSchema, outputSchema };
 };
 
-export default { invoke, describe };
+const metadata = {
+  title: "Reduce",
+  description:
+    "Given a list, an initial accumulator value, and a board, invokes a board (runOnce) for each item and accumulator in the list and returns the final accumulator value. Loosely, same logic as the `reduce` function in JavaScript.",
+  help: {
+    url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-reduce-component",
+  },
+} satisfies NodeHandlerMetadata;
+
+export default { metadata, invoke, describe };

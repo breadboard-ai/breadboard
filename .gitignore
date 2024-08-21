@@ -81,7 +81,9 @@ typings/
 # Nuxt.js build / generate output
 .nuxt
 dist
-packages/breadboard-web/build
+packages/visual-editor/build
+packages/example-boards/build
+packages/example-boards/example-boards
 
 # Gatsby files
 .cache/
@@ -127,3 +129,7 @@ packages/breadboard-web/build
 
 # User-specific configuration
 .vscode/settings.json
+
+lcov.info
+
+packages/data-store/bundled

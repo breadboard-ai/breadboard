@@ -5,13 +5,15 @@
  */
 
 import {
-  Board,
   BreadboardCapability,
   InputValues,
   NodeHandlerContext,
+  NodeHandlerObject,
   OutputValues,
   StreamCapability,
   StreamCapabilityType,
+  getGraphDescriptor,
+  invokeGraph,
   isStreamCapability,
 } from "@google-labs/breadboard";
 
@@ -26,9 +28,11 @@ const getTransformer = async (
   context?: NodeHandlerContext
 ): Promise<Transformer> => {
   if (board) {
-    const runnableBoard = await Board.fromBreadboardCapability(
-      board as BreadboardCapability
+    const runnableBoard = await getGraphDescriptor(
+      board as BreadboardCapability,
+      context
     );
+    if (!runnableBoard) throw new Error("Invalid board");
     // Because stream transformers run outside of the normal board lifecycle,
     // they will not have access to `probe` capabilities and thus will not
     // send diagnostics back.
@@ -36,7 +40,7 @@ const getTransformer = async (
     return {
       async transform(chunk, controller) {
         const inputs = { chunk };
-        const result = await runnableBoard.runOnce(inputs, {
+        const result = await invokeGraph(runnableBoard, inputs, {
           ...context,
           // TODO: figure out how to send diagnostics from streams transformer.
           probe: undefined,
@@ -53,6 +57,9 @@ const getTransformer = async (
 };
 
 export default {
+  metadata: {
+    deprecated: true,
+  },
   invoke: async (
     inputs: InputValues,
     context?: NodeHandlerContext
@@ -69,4 +76,4 @@ export default {
       .pipeThrough(new TransformStream(transformer));
     return { stream: new StreamCapability<object>(outputStream) };
   },
-};
+} satisfies NodeHandlerObject;

@@ -8,11 +8,10 @@ import type { Probe, ProbeMessage } from "../types.js";
 
 export type DiagnosticsCallback = (message: ProbeMessage) => Promise<void>;
 
-export class Diagnostics extends EventTarget implements Probe {
+export class Diagnostics implements Probe {
   #callback: DiagnosticsCallback;
 
   constructor(callback: DiagnosticsCallback) {
-    super();
     this.#callback = callback;
   }
 

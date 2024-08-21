@@ -46,6 +46,11 @@ export class DebuggerGraphProvider implements GraphProvider {
 
   #blank: URL | null = null;
   #items: Map<string, GraphProviderStore> = new Map();
+  #ready = Promise.resolve();
+
+  ready() {
+    return this.#ready;
+  }
 
   items(): Map<string, GraphProviderStore> {
     return this.#items;
@@ -67,6 +72,7 @@ export class DebuggerGraphProvider implements GraphProvider {
       disconnect: false,
       refresh: false,
       watch: true,
+      preview: false,
     };
   }
 
@@ -90,6 +96,15 @@ export class DebuggerGraphProvider implements GraphProvider {
   ): Promise<{ result: boolean; error?: string | undefined }> {
     throw new Error(
       "The `DebuggerGraphProvider` should not be used to create blank graphs."
+    );
+  }
+
+  async create(
+    _url: URL,
+    _descriptor: GraphDescriptor
+  ): Promise<{ result: boolean; error?: string | undefined }> {
+    throw new Error(
+      "The `DebuggerGraphProvider` should not be used to create graphs."
     );
   }
 
@@ -119,9 +134,15 @@ export class DebuggerGraphProvider implements GraphProvider {
     );
   }
 
-  createURL(_location: string, _fileName: string): string {
+  async createURL(_location: string, _fileName: string): Promise<string> {
     throw new Error(
       "The `DebuggerGraphProvider` should not be called to create URL."
+    );
+  }
+
+  async preview(_url: URL): Promise<URL> {
+    throw new Error(
+      "The `DebuggerGraphProvider` should not be called to preview"
     );
   }
 
@@ -135,7 +156,10 @@ export class DebuggerGraphProvider implements GraphProvider {
     const boards = (await api.loadBoards()) as BoardInfo[];
     const boardMap = new Map(
       boards.map((board) => {
-        return [board.title, { url: board.url, handle: undefined }];
+        return [
+          board.title,
+          { url: board.url, mine: true, readonly: false, handle: undefined },
+        ];
       })
     );
     this.#blank = new URL(boards[0].url, window.location.href);

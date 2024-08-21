@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "../../src/board.js";
 import { KitBuilder } from "../../src/kits/index.js";
 import { StreamCapability } from "../../src/stream.js";
 import {
   BreadboardCapability,
   GraphDescriptor,
+  GraphDescriptorBoardCapability,
   InputValues,
   NodeDescriberResult,
   NodeHandlerContext,
@@ -48,13 +48,12 @@ export const TestKit = new KitBuilder({
    * This is a primitive implementation of the `include` node in Core Kit,
    * just enough for testing.
    */
-  include: async (inputs: IncludeInputValues, context: NodeHandlerContext) => {
-    const { graph } = inputs;
+  include: async (inputs: InputValues, context: NodeHandlerContext) => {
+    const { graph } = inputs as IncludeInputValues;
     if (!graph) {
       throw new Error("Must provide a graph to include");
     }
-    const board = await Board.fromGraphDescriptor(graph);
-    return await board.runOnce(inputs, context);
+    return await invokeGraph(graph, inputs, context);
   },
   /**
    * This is a primitive implementation of the `invoke` node in Core Kit,
@@ -68,35 +67,33 @@ export const TestKit = new KitBuilder({
       if ($board) {
         const board =
           ($board as BreadboardCapability).kind === "board"
-            ? await Board.fromBreadboardCapability(
-                $board as BreadboardCapability
-              )
+            ? await getGraphDescriptor($board as BreadboardCapability, context)
             : typeof $board === "string"
-            ? await Board.load($board, {
+              ? await context.loader?.load($board, {
+                  base,
+                  outerGraph: context.outerGraph,
+                })
+              : undefined;
+
+        if (!board) throw new Error("Must provide valid $board to invoke");
+
+        return await invokeGraph(board, args, context);
+      } else {
+        const { board, path, ...args } = inputs;
+
+        const runnableBoard = board
+          ? await getGraphDescriptor(board, context)
+          : path
+            ? await context.loader?.load(path, {
                 base,
                 outerGraph: context.outerGraph,
               })
             : undefined;
 
-        if (!board) throw new Error("Must provide valid $board to invoke");
-
-        return await board.runOnce(args, context);
-      } else {
-        const { board, path, ...args } = inputs;
-
-        const runnableBoard = board
-          ? await Board.fromBreadboardCapability(board)
-          : path
-          ? await Board.load(path, {
-              base,
-              outerGraph: context.outerGraph,
-            })
-          : undefined;
-
         if (!runnableBoard)
           throw new Error("Must provide valid board to invoke");
 
-        return await runnableBoard.runOnce(args, context);
+        return await invokeGraph(runnableBoard, args, context);
       }
     },
     describe: async (inputs?: InputValues): Promise<NodeDescriberResult> => {
@@ -107,12 +104,12 @@ export const TestKit = new KitBuilder({
         inputs?.$board &&
         (inputs?.$board as BreadboardCapability).kind === "board"
       ) {
-        graph = (inputs?.$board as BreadboardCapability).board;
+        graph = (inputs?.$board as GraphDescriptorBoardCapability).board;
       } else if (
         inputs?.board &&
         (inputs.board as BreadboardCapability).kind === "board"
       ) {
-        graph = (inputs.board as BreadboardCapability).board;
+        graph = (inputs.board as GraphDescriptorBoardCapability).board;
       } else if (inputs?.graph) {
         graph = inputs.graph as GraphDescriptor;
       }
@@ -168,7 +165,7 @@ export const TestKit = new KitBuilder({
             },
           ])
         ),
-        additonalProperties: Object.entries(inputs ?? {}).length === 0,
+        additionalProperties: Object.entries(inputs ?? {}).length === 0,
       });
 
       return {
@@ -237,7 +234,9 @@ import {
   NewInputValues,
   NewOutputValues,
   NewNodeFactory as NodeFactory,
+  invokeGraph,
 } from "../../src/index.js";
+import { getGraphDescriptor } from "../../src/capability.js";
 
 export const testKit = addKit(TestKit) as unknown as {
   noop: NodeFactory<NewInputValues, NewOutputValues>;

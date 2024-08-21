@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { DataStore } from "../data/types.js";
 import { Kit, NodeTypeIdentifier } from "../types.js";
 
 /**
@@ -99,6 +100,10 @@ export type ProxyServerConfig = {
    * @see NodeProxySpec for more details.
    */
   proxy?: NodeProxyConfig;
+  /**
+   * The data store to use for storing data.
+   */
+  store?: DataStore;
 };
 
 export const defineConfig = (config: ProxyServerConfig) => config;

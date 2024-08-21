@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.1.1",
+  "version": "0.3.5",
   "description": "A Breadboard Kit containing nodes that facilitate wrangling JSON objects",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -13,22 +13,25 @@
     "prepack": "npm run build",
     "build": "wireit",
     "test": "wireit",
+    "test:coverage": "wireit",
     "lint": "wireit"
   },
   "wireit": {
     "build": {
       "dependencies": [
         "../breadboard:build",
+        "../build:build",
         "build:tsc"
       ]
     },
     "build:tsc": {
-      "command": "tsc -b",
+      "command": "tsc -b --pretty",
       "env": {
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "../breadboard:build:tsc"
+        "../breadboard:build:tsc",
+        "../build:build:tsc"
       ],
       "files": [
         "src/**/*.ts",
@@ -42,10 +45,15 @@
       "clean": "if-file-deleted"
     },
     "test": {
-      "command": "ava",
-      "env": {
-        "FORCE_COLOR": "1"
-      },
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/*.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "test:coverage": {
+      "command": "find tests -name '*.ts' | xargs c8 node --test --test-reporter=spec --loader ts-node/esm",
       "dependencies": [
         "build:tsc"
       ],
@@ -60,6 +68,7 @@
       "files": [
         "src/**/*.ts",
         "tests/**/*.ts",
+        ".eslintrc",
         "../../.eslintrc.json"
       ],
       "output": []
@@ -73,19 +82,6 @@
   "files": [
     "dist/src"
   ],
-  "ava": {
-    "timeout": "30s",
-    "files": [
-      "tests/**/*.ts"
-    ],
-    "workerThreads": false,
-    "typescript": {
-      "rewritePaths": {
-        "./": "dist/"
-      },
-      "compile": false
-    }
-  },
   "keywords": [],
   "author": "Google Labs Team",
   "license": "Apache-2.0",
@@ -94,19 +90,21 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@ava/typescript": "^4.0.0",
     "@google-labs/tsconfig": "^0.0.1",
-    "@types/node": "^20.11.30",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^6.20.0",
-    "ava": "^5.2.0",
-    "typescript": "^5.3.3"
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "c8": "^10.1.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.12.0",
+    "@breadboard-ai/build": "^0.8.1",
+    "@google-labs/breadboard": "^0.24.0",
     "@rgrove/parse-xml": "^4.1.0",
-    "ajv": "^8.12.0",
-    "jsonata": "^2.0.4",
+    "@types/json-schema": "^7.0.15",
+    "ajv": "^8.17.1",
+    "jsonata": "^2.0.5",
     "jsonschema": "^1.4.1"
   }
 }

@@ -5,6 +5,11 @@
  */
 
 import {
+  GraphDescriptor,
+  NodeMetadata,
+  StartLabel,
+} from "@google-labs/breadboard-schema/graph.js";
+import {
   InputValues,
   NodeConfiguration,
   NodeDescriberResult,
@@ -20,6 +25,7 @@ import {
   InspectableGraph,
   InspectableNode,
   InspectableNodePorts,
+  InspectableNodeType,
   InspectablePortList,
   NodeTypeDescriberOptions,
 } from "./types.js";
@@ -49,20 +55,54 @@ class Node implements InspectableNode {
     return this.#graph.outgoingForNode(this.descriptor.id);
   }
 
-  isEntry(): boolean {
+  isEntry(label: StartLabel = "default"): boolean {
+    const labels = this.startLabels();
+    if (labels) {
+      return labels.includes(label);
+    } else if (label !== "default") {
+      return false;
+    }
     return this.incoming().length === 0;
+  }
+
+  startLabels(): StartLabel[] | undefined {
+    const tags = this.descriptor?.metadata?.tags || [];
+    const labels: StartLabel[] = [];
+    for (const tag of tags) {
+      if (typeof tag === "string" && tag === "start") {
+        labels.push("default");
+      } else if (tag.type === "start") {
+        labels.push(tag.label || "default");
+      }
+    }
+    return labels.length > 0 ? labels : undefined;
   }
 
   isExit(): boolean {
     return this.outgoing().length === 0;
   }
 
+  type(): InspectableNodeType {
+    const type = this.#graph.typeForNode(this.descriptor.id);
+    if (!type) {
+      throw new Error(
+        `Possible integrity error: node ${this.descriptor.id} does not have a type`
+      );
+    }
+    return type;
+  }
+
   configuration(): NodeConfiguration {
     return this.descriptor.configuration || {};
   }
 
+  metadata(): NodeMetadata {
+    return this.descriptor.metadata || {};
+  }
+
   #inputsAndConfig(inputs?: InputValues, config?: NodeConfiguration) {
-    return { ...inputs, ...config };
+    // Config first, then inputs on top. Inputs override config.
+    return { ...config, ...inputs };
   }
 
   async #describeInternal(
@@ -101,6 +141,7 @@ class Node implements InspectableNode {
         incoming,
         described.inputSchema,
         false,
+        true,
         this.#inputsAndConfig(inputValues, this.configuration())
       ),
     };
@@ -113,6 +154,7 @@ class Node implements InspectableNode {
         outgoing,
         described.outputSchema,
         addErrorPort,
+        false,
         outputValues
       ),
     };
@@ -120,13 +162,17 @@ class Node implements InspectableNode {
   }
 }
 
-export class InspectableNodeCache {
+export class NodeCache {
   #graph: InspectableGraph;
   #map?: Map<NodeIdentifier, InspectableNode>;
   #typeMap?: Map<NodeTypeIdentifier, InspectableNode[]>;
 
   constructor(graph: InspectableGraph) {
     this.#graph = graph;
+  }
+
+  populate(graph: GraphDescriptor) {
+    graph.nodes.forEach((node) => this.#addNodeInternal(node));
   }
 
   #addNodeInternal(node: NodeDescriptor) {
@@ -146,7 +192,7 @@ export class InspectableNodeCache {
 
   #ensureNodeMap() {
     if (this.#map) return this.#map;
-    this.#graph.raw().nodes.forEach((node) => this.#addNodeInternal(node));
+    this.populate(this.#graph.raw());
     this.#map ??= new Map();
     return this.#map!;
   }

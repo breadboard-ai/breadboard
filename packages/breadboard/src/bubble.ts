@@ -5,20 +5,23 @@
  */
 
 import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
-import {
-  GraphMetadata,
+import type { RunState } from "./run/types.js";
+import { loadRunnerState, saveRunnerState } from "./serialization.js";
+import type {
+  GraphInlineMetadata,
   InputValues,
   NodeDescriptor,
   NodeHandlerContext,
   NodeValue,
   OutputValues,
+  RunArguments,
   Schema,
   TraversalResult,
 } from "./types.js";
 
 export const createErrorMessage = (
   inputName: string,
-  metadata: GraphMetadata = {},
+  metadata: GraphInlineMetadata = {},
   required: boolean
 ): string => {
   const boardTitle = metadata.title ?? metadata?.url;
@@ -29,27 +32,38 @@ export const createErrorMessage = (
 };
 
 export const bubbleUpInputsIfNeeded = async (
-  metadata: GraphMetadata,
+  metadata: GraphInlineMetadata,
   context: NodeHandlerContext,
   descriptor: NodeDescriptor,
   result: TraversalResult,
-  path: number[]
+  path: number[],
+  state: RunState = []
 ): Promise<void> => {
   // If we have no way to bubble up inputs, we just return and not
   // enforce required inputs.
   if (!context.requestInput) return;
 
-  const outputs = (await result.outputsPromise) ?? {};
+  const outputs = result.outputs ?? {};
   const reader = new InputSchemaReader(outputs, result.inputs, path);
-  result.outputsPromise = reader.read(
-    createBubbleHandler(metadata, context, descriptor)
+  await context.state?.lifecycle().supplyPartialOutputs(outputs, path);
+  if (state.length > 0) {
+    const last = state[state.length - 1];
+    if (last.state) {
+      const unpackedState = loadRunnerState(last.state).state;
+      unpackedState.partialOutputs = outputs;
+      last.state = saveRunnerState("nodestart", unpackedState);
+    }
+  }
+  result.outputs = await reader.read(
+    createBubbleHandler(metadata, context, descriptor, state)
   );
 };
 
 export const createBubbleHandler = (
-  metadata: GraphMetadata,
+  metadata: GraphInlineMetadata,
   context: NodeHandlerContext,
-  descriptor: NodeDescriptor
+  descriptor: NodeDescriptor,
+  state: RunState
 ) => {
   return (async (name, schema, required, path) => {
     if (required) {
@@ -61,7 +75,16 @@ export const createBubbleHandler = (
       }
       return schema.default;
     }
-    const value = await context.requestInput?.(name, schema, descriptor, path);
+    const value = await context.requestInput?.(
+      name,
+      schema,
+      descriptor,
+      path,
+      state
+    );
+    if (context?.signal?.aborted) {
+      throw context.signal.throwIfAborted();
+    }
     if (value === undefined) {
       throw new Error(createErrorMessage(name, metadata, required));
     }
@@ -122,8 +145,10 @@ export class RequestedInputsManager {
   #context: NodeHandlerContext;
   #cache: Map<string, NodeValue> = new Map();
 
-  constructor(context: NodeHandlerContext) {
+  constructor(args: RunArguments) {
+    const { inputs, ...context } = args;
     this.#context = context;
+    this.#cache = new Map(inputs ? Object.entries(inputs) : []);
   }
 
   createHandler(
@@ -134,7 +159,8 @@ export class RequestedInputsManager {
       name: string,
       schema: Schema,
       node: NodeDescriptor,
-      path: number[]
+      path: number[],
+      state: RunState
     ) => {
       const cachedValue = this.#cache.get(name);
       if (cachedValue !== undefined) return cachedValue;
@@ -146,16 +172,16 @@ export class RequestedInputsManager {
           schema: { type: "object", properties: { [name]: schema } },
         },
       };
-      //console.log("requestInputResult", requestInputResult);
-      await next(new InputStageResult(requestInputResult, undefined, -1, path));
-      const outputs = await requestInputResult.outputsPromise;
+      await next(new InputStageResult(requestInputResult, state, -1, path));
+      const outputs = requestInputResult.outputs;
       let value = outputs && outputs[name];
       if (value === undefined) {
         value = await this.#context.requestInput?.(
           name,
           schema,
           descriptor,
-          path
+          path,
+          state
         );
       }
       if (!isTransient(schema)) {

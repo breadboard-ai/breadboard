@@ -1,0 +1,290 @@
+{
+  "title": "Book Outline Interviewer",
+  "description": "A small team of workers that interviews the user to produce an outline of a book.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]",
+              "description": "What is this book about?"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -190.99999999999997,
+          "y": -188.9999999999999,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 462.00000000000006,
+          "y": -218.9999999999999,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "specialist-2551887d",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": 15,
+          "y": -21,
+          "collapsed": false
+        },
+        "title": "Interviewer",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "persona": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are an expert researcher, whose job it is to interview the user to collect a wealth of material for producing an outline of a book. With each turn of the interview, offer a very concisely formulated question that allows the user to easily pick or quickly type an answer."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "looper-b381bf13",
+      "type": "looper",
+      "metadata": {
+        "visual": {
+          "x": 8.000000000000028,
+          "y": -217.9999999999999,
+          "collapsed": false
+        },
+        "title": "Interview Planner",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "task": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Plan a 5-7 question interview to collect materials for a book, starting from the general themes of the book to character exposition to tension and key plot points. Make sure that each item in the plan can be answered quickly, so that the interviewee doesn't have to spend too much time typing. \n"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "human-8b77a262",
+      "type": "human",
+      "metadata": {
+        "visual": {
+          "x": 251,
+          "y": -62.99999999999977,
+          "collapsed": false
+        },
+        "title": "Interviewee",
+        "logLevel": "debug"
+      }
+    },
+    {
+      "id": "specialist-27a12855",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": 237,
+          "y": -245.9999999999999,
+          "collapsed": false
+        },
+        "title": "Outline Writer",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "persona": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are an book outline creator. Given the interview material, you are able to transform it into a chapter outline of an award-winning book.\n\nA great book contains chapters that form a story that follows the hero's journey arc, using Freitag pyramid as the delivery structure."
+            }
+          ]
+        },
+        "task": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Write a five-chapter book outline."
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "looper-b381bf13",
+      "to": "specialist-2551887d",
+      "out": "loop",
+      "in": "in"
+    },
+    {
+      "from": "input",
+      "to": "looper-b381bf13",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "specialist-2551887d",
+      "to": "human-8b77a262",
+      "out": "out",
+      "in": "context"
+    },
+    {
+      "from": "human-8b77a262",
+      "to": "looper-b381bf13",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "looper-b381bf13",
+      "to": "specialist-27a12855",
+      "out": "done",
+      "in": "in"
+    },
+    {
+      "from": "specialist-27a12855",
+      "to": "output",
+      "out": "out",
+      "in": "context"
+    }
+  ],
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-62f8bec6",
+        "text": "Comes up with a plan for a 5-7 question interview based on the initial idea of the book, then runs the loop through\nall steps of the plan.",
+        "metadata": {
+          "visual": {
+            "x": -79,
+            "y": -337,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-b9f31568",
+        "text": "Formulates a question based on the current step of the plan and the interview answers so far. ",
+        "metadata": {
+          "visual": {
+            "x": -95,
+            "y": 46,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-4acc26c4",
+        "text": "Hands control over to the user, letting the user respond to the interview question.",
+        "metadata": {
+          "visual": {
+            "x": 331,
+            "y": 5,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-edeb1a7c",
+        "text": "< goes back to planner",
+        "metadata": {
+          "visual": {
+            "x": 263,
+            "y": -129,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-a4d85fb6",
+        "text": "Starts by asking\nfor an idea of a book.",
+        "metadata": {
+          "visual": {
+            "x": -262,
+            "y": -248,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-b01c469b",
+        "text": "Ends by presenting \nthe proposed outline.",
+        "metadata": {
+          "visual": {
+            "x": 480,
+            "y": -147,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-83b726df",
+        "text": "**THE BOOK OUTLINE\nINTERVIEWER**\n\nHelps you write your \nnext book.",
+        "metadata": {
+          "visual": {
+            "x": -216,
+            "y": -100,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-7652ac98",
+        "text": "Using the material collected during the interview, comes up with a detailed chapter outline.",
+        "metadata": {
+          "visual": {
+            "x": 283,
+            "y": -325,
+            "collapsed": false
+          }
+        }
+      }
+    ]
+  }
+}

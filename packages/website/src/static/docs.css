@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+:root {
+  --documentation-width: min(400px, calc((100% - 860px) / 2));
+}
+
 html,
 body {
   height: 100%;
@@ -19,9 +23,11 @@ main {
   max-width: 720px;
   margin: 0 auto;
   flex: 1;
+  padding-bottom: 220px;
 }
 
-main > ol li {
+main > ol li,
+main > ul li {
   margin-bottom: 1em;
   line-height: 160%;
 }
@@ -74,7 +80,7 @@ h2,
 h3,
 h4,
 h5 {
-  color: var(--bb-font-color-accent);
+  color: var(--bb-ui-500);
   margin: 1.5rem 0 0.75rem 0;
   position: relative;
 }
@@ -150,30 +156,69 @@ code[class*="language-"] {
 }
 
 .documentation {
-  border-right: 1px solid #f0f0f0;
+  background: var(--bb-neutral-0);
+  border-right: 1px solid var(--bb-neutral-300);
   display: none;
   position: fixed;
-  height: calc(100% - var(--bb-grid-size) * 10.5 - var(--bb-grid-size) * 16);
+  height: 100%;
   left: 0;
-  top: 42px;
+  top: 0;
   margin: 0 0 0 0;
-  width: calc((100% - 820px) / 2);
+  width: var(--documentation-width);
   overflow: auto;
-  padding: 16px 0 32px 0;
-  align-items: flex-end;
+  padding: 0;
+  align-items: flex-start;
+  z-index: 4;
+}
+
+.documentation .home-link {
+  width: 80%;
+  color: var(--bb-neutral-900);
+  font: 400 var(--bb-title-large) / var(--bb-title-line-height-large)
+    var(--bb-font-family);
+  padding: var(--bb-grid-size-4);
 }
 
 .documentation details {
-  width: 300px;
+  width: 100%;
+}
+
+.documentation details[open] {
+  padding-bottom: var(--bb-grid-size-3);
 }
 
 .documentation summary {
-  color: var(--bb-font-color-accent);
+  color: var(--bb-neutral-800);
   font-size: 0.875rem;
-  margin: 0 0 8px;
-  height: 40px;
-  padding: 20px 20px;
-  font-weight: bold;
+  padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
+  border-top: 1px solid var(--bb-neutral-300);
+  font: 400 var(--bb-title-medium) / var(--bb-title-line-height-medium)
+    var(--bb-font-family);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto min-content;
+  align-items: center;
+}
+
+.documentation summary::after {
+  content: "";
+  width: 20px;
+  height: 20px;
+  background: var(--bb-icon-unfold-more) center center / 20px 20px no-repeat;
+}
+
+.documentation details[open] summary::after {
+  background-image: var(--bb-icon-unfold-less);
+}
+
+.documentation summary::-webkit-details-marker {
+  display: none;
+}
+
+.documentation summary {
+  list-style: none;
 }
 
 .documentation ul {
@@ -193,7 +238,7 @@ code[class*="language-"] {
 }
 
 .documentation a {
-  color: var(--bb-font-color-accent);
+  color: var(--bb-ui-800);
   text-decoration: none;
   transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
   opacity: 0.8;
@@ -209,6 +254,13 @@ code[class*="language-"] {
   .documentation {
     display: flex;
     flex-direction: column;
+  }
+
+  footer {
+    width: calc(100% - var(--documentation-width));
+    margin-left: var(--documentation-width);
+    padding-left: 60px;
+    padding-right: 60px;
   }
 }
 

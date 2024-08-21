@@ -11,6 +11,7 @@ import {
   InspectableEdge,
   InspectableNode,
   InspectableNodePorts,
+  InspectableNodeType,
   InspectablePortList,
 } from "./types.js";
 import {
@@ -20,6 +21,10 @@ import {
   NodeDescriptor,
   OutputValues,
 } from "../types.js";
+import {
+  NodeMetadata,
+  StartLabel,
+} from "@google-labs/breadboard-schema/graph.js";
 
 /**
  * This is a special kind of an `InspectableNode`, representing a bubbled
@@ -60,16 +65,28 @@ export class BubbledInspectableNode implements InspectableNode {
     return this.#actual.outgoing();
   }
 
-  isEntry(): boolean {
-    return this.#actual.isEntry();
+  isEntry(label?: StartLabel): boolean {
+    return this.#actual.isEntry(label);
+  }
+
+  startLabels(): StartLabel[] | undefined {
+    return this.#actual.startLabels();
   }
 
   isExit(): boolean {
     return this.#actual.isExit();
   }
 
+  type(): InspectableNodeType {
+    return this.#actual.type();
+  }
+
   configuration(): NodeConfiguration {
     return this.#actual.configuration();
+  }
+
+  metadata(): NodeMetadata {
+    return this.#actual.metadata();
   }
 
   async describe(
@@ -99,6 +116,7 @@ export class BubbledInspectableNode implements InspectableNode {
           this.incoming(),
           described.inputSchema,
           false,
+          true,
           inputValues
         ),
       };
@@ -108,6 +126,7 @@ export class BubbledInspectableNode implements InspectableNode {
           EdgeType.Out,
           [],
           described.outputSchema,
+          false,
           false,
           bubbledValues
         ),

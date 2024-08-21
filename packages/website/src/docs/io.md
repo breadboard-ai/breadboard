@@ -1,8 +1,8 @@
 ---
-layout: docs.njk
+layout: docs.liquid
 title: Inputs and Outputs
 tags:
-  - general
+  - miscellaneous
   - wip
 ---
 

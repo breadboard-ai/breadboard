@@ -1,9 +1,15 @@
 {
   "title": "Tool Worker",
   "description": "A worker that can use tools to accomplish tasks.",
-  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.3.0/packages/schema/breadboard.schema.json",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.4.1/packages/schema/breadboard.schema.json",
   "version": "0.0.1",
   "edges": [
+    {
+      "from": "fn-3",
+      "to": "output-2",
+      "out": "context",
+      "in": "context"
+    },
     {
       "from": "router",
       "to": "assembleBoardInvoke",
@@ -30,15 +36,33 @@
     },
     {
       "from": "router",
-      "to": "output-2",
+      "to": "fn-3",
       "out": "context",
-      "in": "context"
+      "in": "generated"
     },
     {
       "from": "router",
       "to": "output-2",
       "out": "text",
       "in": "text"
+    },
+    {
+      "from": "buildContext",
+      "to": "doWork",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "buildContext",
+      "to": "formatFunctionResponse",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "buildContext",
+      "to": "fn-3",
+      "out": "context",
+      "in": "context"
     },
     {
       "from": "doWork",
@@ -65,6 +89,36 @@
       "in": "context"
     },
     {
+      "from": "input-1",
+      "to": "buildContext",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "buildContext",
+      "out": "instruction",
+      "in": "instruction"
+    },
+    {
+      "from": "input-1",
+      "to": "turnBoardsToFunctions",
+      "out": "tools",
+      "in": "list"
+    },
+    {
+      "from": "input-1",
+      "to": "doWork",
+      "out": "instruction",
+      "in": "systemInstruction"
+    },
+    {
+      "from": "input-1",
+      "to": "replyToFunction",
+      "out": "retry",
+      "in": "retry"
+    },
+    {
       "from": "formatFunctionDeclarations",
       "to": "doWork",
       "out": "tools",
@@ -81,18 +135,6 @@
       "to": "replyToFunction",
       "out": "tools",
       "in": "tools"
-    },
-    {
-      "from": "buildContext",
-      "to": "doWork",
-      "out": "context",
-      "in": "context"
-    },
-    {
-      "from": "buildContext",
-      "to": "formatFunctionResponse",
-      "out": "context",
-      "in": "context"
     },
     {
       "from": "invokeBoard",
@@ -129,24 +171,6 @@
       "to": "formatFunctionDeclarations",
       "out": "list",
       "in": "list"
-    },
-    {
-      "from": "input-1",
-      "to": "buildContext",
-      "out": "context",
-      "in": "context"
-    },
-    {
-      "from": "input-1",
-      "to": "buildContext",
-      "out": "instruction",
-      "in": "instruction"
-    },
-    {
-      "from": "input-1",
-      "to": "turnBoardsToFunctions",
-      "out": "tools",
-      "in": "list"
     }
   ],
   "nodes": [
@@ -170,10 +194,25 @@
       }
     },
     {
-      "id": "router",
-      "type": "invoke",
+      "id": "fn-3",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#router"
+        "code": "const fn_3 = ({ context: context2, generated }) => {\n  if (!context2) throw new Error(\"Context is required\");\n  return { context: [...context2, generated] };\n};",
+        "name": "fn_3",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Assemble Non-function call Context",
+        "description": "Assembling the final context for the output"
+      }
+    },
+    {
+      "id": "router",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const router = ({ context: context2 }) => {\n  if (!context2) throw new Error(\"Context is a required input\");\n  const item = context2;\n  const functionCallParts = item.parts.filter((part) => \"functionCall\" in part).map((part) => part.functionCall);\n  if (functionCallParts.length === 0) {\n    const textPart = item.parts.find((part) => \"text\" in part);\n    if (!textPart) throw new Error(\"No text or function call found in context\");\n    return { context: context2, text: textPart.text };\n  }\n  return { context: context2, functionCalls: functionCallParts };\n};",
+        "name": "router",
+        "raw": true
       },
       "metadata": {
         "title": "Router",
@@ -181,11 +220,22 @@
       }
     },
     {
+      "id": "buildContext",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const buildContext = ({ context: context2 }) => {\n  if (typeof context2 === \"string\") {\n    context2 = [{ role: \"user\", parts: [{ text: context2 }] }];\n  }\n  const list = context2 || [];\n  return { context: list };\n};",
+        "name": "buildContext",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Build Context",
+        "description": "Combining the context and instruction into a single context"
+      }
+    },
+    {
       "id": "doWork",
       "type": "text",
-      "configuration": {
-        "text": "unused"
-      },
+      "configuration": {},
       "metadata": {
         "title": "Do Work",
         "description": "Using Gemini to do the work"
@@ -193,9 +243,11 @@
     },
     {
       "id": "assembleBoardInvoke",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#assembleBoardInvoke"
+        "code": "const assembleBoardInvoke = ({ functionCalls, urlMap }) => {\n  if (!functionCalls)\n    throw new Error(\"Function call array is a required input\");\n  if (!urlMap) throw new Error(\"URL map is a required input\");\n  const calls = functionCalls;\n  if (calls.length === 0)\n    throw new Error(\"Function call array must not be empty.\");\n  const call = calls[0];\n  const $board = urlMap[call.name];\n  const generator = \"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";\n  return { $board, generator, ...call.args };\n};",
+        "name": "assembleBoardInvoke",
+        "raw": true
       },
       "metadata": {
         "title": "Assemble Board Invoke",
@@ -204,9 +256,11 @@
     },
     {
       "id": "formatFunctionResponse",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#formatFunctionResponse"
+        "code": "const formatFunctionResponse = ({ context: context2, generated, functionCall, response: response2 }) => {\n    const call = functionCall;\n    return {\n      context: [\n        ...context2,\n        generated,\n        {\n          role: \"function\",\n          parts: [{ functionResponse: { name: call.name, response: response2 } }]\n        }\n      ]\n    };\n  };",
+        "name": "formatFunctionResponse",
+        "raw": true
       },
       "metadata": {
         "title": "Format Function Response",
@@ -214,25 +268,72 @@
       }
     },
     {
-      "id": "formatFunctionDeclarations",
-      "type": "invoke",
+      "id": "input-1",
+      "type": "input",
       "configuration": {
-        "$board": "#formatFunctionDeclarations"
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "Context In",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "What is the square root of e?"
+            },
+            "instruction": {
+              "type": "string",
+              "title": "Instruction",
+              "description": "Describe the worker persona and the task given: the skills and various capabilities, the mindset, the thinking process, etc. The ideal task is a call to action with the necessary details on how to best complete this action.",
+              "default": "",
+              "examples": [
+                "You are a hip, fun-loving mathematician who loves to help solve problems and chat about math. You also love finding answers to questions using Search. Use the right tool for solving the problems and reply without engaging tools otherwise. After using the tool, make sure to summarize and expand the answer in a hip, humorous way to help the user enjoy the beauty of math.\n\nIn situations where the tool use is not necessary, just carry the conversation with the user."
+              ],
+              "format": "multiline"
+            },
+            "tools": {
+              "title": "Tools",
+              "type": "array",
+              "description": "The boards to use as tools",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "board"
+                ]
+              },
+              "examples": [
+                "[\"https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/search-summarize.json\",{\"title\":\"The Calculator Board\",\"description\":\"A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.\",\"version\":\"0.0.2\",\"edges\":[{\"from\":\"compute\",\"to\":\"answer\",\"out\":\"*\",\"in\":\"\"},{\"from\":\"generator\",\"to\":\"compute\",\"out\":\"text\",\"in\":\"code\"},{\"from\":\"math-question\",\"to\":\"math-function\",\"out\":\"question\",\"in\":\"question\"},{\"from\":\"math-question\",\"to\":\"generator\",\"out\":\"generator\",\"in\":\"path\"},{\"from\":\"math-function\",\"to\":\"generator\",\"out\":\"prompt\",\"in\":\"text\"}],\"nodes\":[{\"id\":\"answer\",\"type\":\"output\",\"configuration\":{\"schema\":{\"type\":\"object\",\"properties\":{\"result\":{\"type\":\"string\",\"title\":\"Answer\",\"description\":\"The answer to the math problem\"}},\"required\":[\"text\"]}}},{\"id\":\"compute\",\"type\":\"runJavascript\",\"configuration\":{\"name\":\"compute\"}},{\"id\":\"generator\",\"type\":\"invoke\",\"configuration\":{}},{\"id\":\"math-question\",\"type\":\"input\",\"configuration\":{\"schema\":{\"type\":\"object\",\"properties\":{\"question\":{\"type\":\"string\",\"title\":\"Math problem\",\"description\":\"Ask a math question\",\"examples\":[\"What is the square root of pi?\"]},\"generator\":{\"type\":\"string\",\"title\":\"Generator\",\"description\":\"The URL of the generator to call\",\"default\":\"text-generator.json\"}},\"required\":[\"text\"]}}},{\"id\":\"math-function\",\"type\":\"promptTemplate\",\"configuration\":{\"template\":\"Translate the math problem below into a self-contained,\\nzero-argument JavaScript function named `compute` that can be executed\\nto provide the answer to the problem.\\n\\nDo not use any dependencies or libraries.\\n\\nMath Problem: {{question}}\\n\\nSolution:\"}}],\"graphs\":{}}]"
+              ],
+              "default": "[]"
+            },
+            "retry": {
+              "type": "number",
+              "title": "Retry Count",
+              "description": "How many times to retry in case of LLM error",
+              "default": "5"
+            }
+          },
+          "required": [
+            "instruction"
+          ]
+        }
+      }
+    },
+    {
+      "id": "formatFunctionDeclarations",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const formatFunctionDeclarations = ({ list }) => {\n  const tools2 = [];\n  const urlMap = {};\n  list.forEach((item) => {\n    tools2.push(item.function);\n    const flags = item.flags;\n    urlMap[item.function.name] = { url: item.boardURL, flags };\n  });\n  return { tools: tools2, urlMap };\n};",
+        "name": "formatFunctionDeclarations",
+        "raw": true
       },
       "metadata": {
         "title": "Format Function Declarations",
         "description": "Formatting the function declarations"
-      }
-    },
-    {
-      "id": "buildContext",
-      "type": "invoke",
-      "configuration": {
-        "$board": "#buildContext"
-      },
-      "metadata": {
-        "title": "Build Context",
-        "description": "Combining the context and instruction into a single context"
       }
     },
     {
@@ -246,9 +347,11 @@
     },
     {
       "id": "extractBoardResponse",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#extractBoardResponse"
+        "code": "const extractBoardResponse = (inputs) => {\n  const { schema, ...response2 } = inputs;\n  schema;\n  return { response: response2 };\n};",
+        "name": "extractBoardResponse",
+        "raw": true
       },
       "metadata": {
         "title": "Format Board Response",
@@ -258,9 +361,7 @@
     {
       "id": "replyToFunction",
       "type": "text",
-      "configuration": {
-        "text": "unused"
-      },
+      "configuration": {},
       "metadata": {
         "title": "Reply to Function",
         "description": "Using Gemini to reply to function results"
@@ -268,9 +369,11 @@
     },
     {
       "id": "assembleContext",
-      "type": "invoke",
+      "type": "runJavascript",
       "configuration": {
-        "$board": "#assembleContext"
+        "code": "const assembleContext = ({ context: context2, generated }) => {\n  if (!context2) throw new Error(\"Context is required\");\n  return { context: [...context2, generated] };\n};",
+        "name": "assembleContext",
+        "raw": true
       },
       "metadata": {
         "title": "Assemble Context",
@@ -281,138 +384,11 @@
       "id": "turnBoardsToFunctions",
       "type": "map",
       "configuration": {
-        "board": {
-          "kind": "board",
-          "board": {
-            "kits": [],
-            "edges": [
-              {
-                "from": "getFunctionSignature",
-                "to": "output-2",
-                "out": "function",
-                "in": "function"
-              },
-              {
-                "from": "input-1",
-                "to": "fetch-3",
-                "out": "item",
-                "in": "url"
-              },
-              {
-                "from": "input-1",
-                "to": "output-2",
-                "out": "item",
-                "in": "boardURL"
-              },
-              {
-                "from": "fetch-3",
-                "to": "getFunctionSignature",
-                "out": "response",
-                "in": "json"
-              }
-            ],
-            "nodes": [
-              {
-                "id": "output-2",
-                "type": "output",
-                "configuration": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "function": {
-                        "type": "object",
-                        "title": "function"
-                      },
-                      "boardURL": {
-                        "type": "string",
-                        "title": "boardURL"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "id": "getFunctionSignature",
-                "type": "jsonata",
-                "configuration": {
-                  "expression": "\n      (\n        $adjustType := function ($type) {\n            $type = \"object\" or $type = \"array\" ? \"string\" : $type\n        };\n\n        {\n        \"function\": {\n            \"name\": $replace(title, /\\W/, \"_\"),\n            \"description\": description,\n            \"parameters\": {\n                \"type\": \"object\",\n                \"properties\": nodes[type=\"input\"][0].configuration.schema.properties ~> $each(function($v, $k) {\n                { $k: {\n                    \"type\": $v.type ~> $adjustType,\n                    \"description\": $v.description\n                } }\n                }) ~> $merge\n            }\n        },\n        \"returns\": nodes[type=\"output\"][0].configuration.schema ~> | ** | {}, 'title' |\n        }\n    )",
-                  "raw": true
-                }
-              },
-              {
-                "id": "input-1",
-                "type": "input",
-                "configuration": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "item": {
-                        "title": "url",
-                        "description": "The URL to fetch",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "item"
-                    ]
-                  }
-                }
-              },
-              {
-                "id": "fetch-3",
-                "type": "fetch",
-                "configuration": {}
-              }
-            ],
-            "graphs": {}
-          }
-        }
+        "board": "#boardToFunction"
       },
       "metadata": {
         "title": "Turn Boards into Functions",
         "description": "Turning provided boards into functions"
-      }
-    },
-    {
-      "id": "input-1",
-      "type": "input",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "context": {
-              "title": "Context",
-              "type": "array",
-              "behavior": [
-                "llm-content"
-              ],
-              "default": "What is the square root of e?"
-            },
-            "instruction": {
-              "title": "Instruction",
-              "format": "multiline",
-              "examples": [
-                "You are a hip, fun-loving mathematician who loves to help solve problems and chat about math. You also love finding answers to questions using Search. Use the right tool for solving the problems and reply without engaging tools otherwise. After using the tool, make sure to summarize and expand the answer in a hip, humorous way to help the user enjoy the beauty of math."
-              ],
-              "type": "string"
-            },
-            "tools": {
-              "title": "Tools",
-              "type": "array",
-              "description": "The list to iterate over.",
-              "behavior": [
-                "board"
-              ],
-              "examples": [
-                "[\"https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/search-summarize.json\",\"https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/math.json\"]"
-              ],
-              "default": "[]"
-            }
-          },
-          "required": [
-            "instruction"
-          ]
-        }
       }
     },
     {
@@ -442,250 +418,117 @@
   ],
   "kits": [],
   "graphs": {
-    "router": {
+    "boardToFunction": {
+      "title": "Board to functions",
+      "description": "Use this board to convert specified boards into function-calling signatures",
       "edges": [
         {
-          "from": "router-input",
-          "to": "router-run",
-          "out": "*"
+          "from": "fn-4",
+          "to": "output-2",
+          "out": "function",
+          "in": "function"
         },
         {
-          "from": "router-run",
-          "to": "router-output",
-          "out": "*"
+          "from": "fn-4",
+          "to": "output-2",
+          "out": "board",
+          "in": "boardURL"
+        },
+        {
+          "from": "fn-4",
+          "to": "output-2",
+          "out": "flags",
+          "in": "flags"
+        },
+        {
+          "from": "curry-3",
+          "to": "fn-4",
+          "out": "board",
+          "in": "board"
+        },
+        {
+          "from": "input-1",
+          "to": "curry-3",
+          "out": "item",
+          "in": "$board"
+        },
+        {
+          "from": "input-1",
+          "to": "curry-3",
+          "out": "context",
+          "in": "context"
         }
       ],
       "nodes": [
         {
-          "id": "router-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "router-run",
-          "type": "runJavascript",
+          "id": "output-2",
+          "type": "output",
           "configuration": {
-            "code": "function router({ context }) {\n  if (!context)\n    throw new Error(\"Context is a required input\");\n  const item = context;\n  const part = item.parts[0];\n  console.assert(\n    item.parts.length === 1,\n    \"Only one part is expected in Gemini response\"\n  );\n  if (\"text\" in part) {\n    return { context, text: part.text };\n  }\n  return { context, functionCall: part.functionCall };\n}",
-            "name": "router",
-            "raw": true
+            "schema": {
+              "type": "object",
+              "properties": {
+                "function": {
+                  "type": "string",
+                  "title": "function"
+                },
+                "boardURL": {
+                  "type": "string",
+                  "title": "boardURL"
+                },
+                "flags": {
+                  "type": "string",
+                  "title": "flags"
+                }
+              }
+            }
           }
         },
         {
-          "id": "router-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    },
-    "assembleBoardInvoke": {
-      "edges": [
-        {
-          "from": "assembleBoardInvoke-input",
-          "to": "assembleBoardInvoke-run",
-          "out": "*"
+          "id": "fn-4",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const fn_4 = ({ board: board3 }) => {\n  const b = board3;\n  const inputs = b.nodes.filter((node) => node.type === \"input\");\n  if (inputs.length === 0) {\n    throw new Error(\"No inputs found\");\n  }\n  const outputs = b.nodes.filter((node) => node.type === \"output\");\n  if (outputs.length === 0) {\n    throw new Error(\"No outputs found\");\n  }\n  const inputSchema2 = inputs[0].configuration?.schema;\n  if (!inputSchema2) {\n    throw new Error(\"No input schema found\");\n  }\n  const outputSchema = outputs[0].configuration?.schema;\n  if (!outputSchema) {\n    throw new Error(\"No output schema found\");\n  }\n  const properties = {};\n  const flags = {};\n  for (const key in inputSchema2.properties) {\n    const property = inputSchema2.properties[key];\n    const isObject = property.type === \"object\";\n    const isArray = property.type === \"array\";\n    const type = isObject || isArray ? \"string\" : property.type;\n    if (isObject && property.behavior?.includes(\"llm-content\")) {\n      flags.inputLLMContent = key;\n    } else if (isArray && property.items?.behavior?.includes(\"llm-content\")) {\n      flags.inputLLMContentArray = key;\n      continue;\n    }\n    const description2 = property.description || property.title || \"text\";\n    properties[key] = { type, description: description2 };\n  }\n  if (flags.inputLLMContentArray) {\n    if (flags.inputLLMContentArray !== \"context\") {\n      const c = b.args?.context;\n      if (c) {\n        b.args ??= {};\n        b.args[flags.inputLLMContentArray] = c;\n        delete b.args.context;\n      }\n    }\n  } else {\n    delete b.args?.context;\n  }\n  for (const key in outputSchema.properties) {\n    const property = outputSchema.properties[key];\n    const isObject = property.type === \"object\";\n    const isArray = property.type === \"array\";\n    if (isObject && property.behavior?.includes(\"llm-content\")) {\n      flags.outputLLMContent = key;\n    } else if (isArray && property.items?.behavior?.includes(\"llm-content\")) {\n      flags.outputLLMContentArray = key;\n    }\n  }\n  const name = b.title?.replace(/\\W/g, \"_\");\n  const description = b.description;\n  const parameters = {\n    type: \"object\",\n    properties\n  };\n  return {\n    function: { name, description, parameters },\n    returns: outputSchema,\n    flags,\n    board: board3\n  };\n};",
+            "name": "fn_4",
+            "raw": true
+          },
+          "metadata": {
+            "title": "Get Function Signature from board"
+          }
         },
         {
-          "from": "assembleBoardInvoke-run",
-          "to": "assembleBoardInvoke-output",
-          "out": "*"
+          "id": "curry-3",
+          "type": "curry",
+          "configuration": {}
+        },
+        {
+          "id": "input-1",
+          "type": "input",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "item": {
+                  "title": "board",
+                  "behavior": [
+                    "board"
+                  ],
+                  "description": "The board to curry. Can be a BoardCapability, a graph or a URL",
+                  "type": "string"
+                },
+                "context": {
+                  "type": "string",
+                  "title": "context"
+                }
+              },
+              "required": [
+                "item",
+                "context"
+              ]
+            }
+          }
         }
       ],
-      "nodes": [
-        {
-          "id": "assembleBoardInvoke-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "assembleBoardInvoke-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function assembleBoardInvoke({ functionCall, urlMap }) {\n  if (!functionCall)\n    throw new Error(\"Function call is a required input\");\n  if (!urlMap)\n    throw new Error(\"URL map is a required input\");\n  const call = functionCall;\n  const $board = urlMap[call.name];\n  const generator = \"https://raw.githubusercontent.com/breadboard-ai/breadboard/05136f811e443dd931a2a2a40ff5a3f388d5ce75/packages/breadboard-web/public/graphs/gemini-generator.json\";\n  return { $board, generator, ...call.args };\n}",
-            "name": "assembleBoardInvoke",
-            "raw": true
-          }
-        },
-        {
-          "id": "assembleBoardInvoke-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    },
-    "formatFunctionResponse": {
-      "edges": [
-        {
-          "from": "formatFunctionResponse-input",
-          "to": "formatFunctionResponse-run",
-          "out": "*"
-        },
-        {
-          "from": "formatFunctionResponse-run",
-          "to": "formatFunctionResponse-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "formatFunctionResponse-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "formatFunctionResponse-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function formatFunctionResponse({ context, generated, functionCall, response }) {\n    const call = functionCall;\n    return {\n      context: [\n        ...context,\n        generated,\n        {\n          role: \"function\",\n          parts: [{ functionResponse: { name: call.name, response } }]\n        }\n      ]\n    };\n  }",
-            "name": "formatFunctionResponse",
-            "raw": true
-          }
-        },
-        {
-          "id": "formatFunctionResponse-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    },
-    "formatFunctionDeclarations": {
-      "edges": [
-        {
-          "from": "formatFunctionDeclarations-input",
-          "to": "formatFunctionDeclarations-run",
-          "out": "*"
-        },
-        {
-          "from": "formatFunctionDeclarations-run",
-          "to": "formatFunctionDeclarations-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "formatFunctionDeclarations-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "formatFunctionDeclarations-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function formatFunctionDeclarations({ list }) {\n  const tools = [];\n  const urlMap = {};\n  list.forEach((item) => {\n    tools.push(item.function);\n    urlMap[item.function.name] = item.boardURL;\n  });\n  return { tools, urlMap };\n}",
-            "name": "formatFunctionDeclarations",
-            "raw": true
-          }
-        },
-        {
-          "id": "formatFunctionDeclarations-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    },
-    "buildContext": {
-      "edges": [
-        {
-          "from": "buildContext-input",
-          "to": "buildContext-run",
-          "out": "*"
-        },
-        {
-          "from": "buildContext-run",
-          "to": "buildContext-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "buildContext-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "buildContext-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function buildContext({ context, instruction }) {\n  if (typeof context === \"string\") {\n    context = [{ role: \"user\", parts: [{ text: context }] }];\n  }\n  const list = context || [];\n  if (list.length > 0) {\n    const last = list[list.length - 1];\n    if (last.role === \"user\") {\n      last.parts.unshift({ text: instruction });\n      return { context: list };\n    }\n  }\n  return {\n    context: [...list, { role: \"user\", parts: [{ text: instruction }] }]\n  };\n}",
-            "name": "buildContext",
-            "raw": true
-          }
-        },
-        {
-          "id": "buildContext-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    },
-    "extractBoardResponse": {
-      "edges": [
-        {
-          "from": "extractBoardResponse-input",
-          "to": "extractBoardResponse-run",
-          "out": "*"
-        },
-        {
-          "from": "extractBoardResponse-run",
-          "to": "extractBoardResponse-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "extractBoardResponse-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "extractBoardResponse-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function extractBoardResponse(inputs) {\n  const { schema, ...response } = inputs;\n  schema;\n  return { response };\n}",
-            "name": "extractBoardResponse",
-            "raw": true
-          }
-        },
-        {
-          "id": "extractBoardResponse-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
-    },
-    "assembleContext": {
-      "edges": [
-        {
-          "from": "assembleContext-input",
-          "to": "assembleContext-run",
-          "out": "*"
-        },
-        {
-          "from": "assembleContext-run",
-          "to": "assembleContext-output",
-          "out": "*"
-        }
-      ],
-      "nodes": [
-        {
-          "id": "assembleContext-input",
-          "type": "input",
-          "configuration": {}
-        },
-        {
-          "id": "assembleContext-run",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "function assembleContext({ context, generated }) {\n  if (!context)\n    throw new Error(\"Context is required\");\n  return { context: [...context, generated] };\n}",
-            "name": "assembleContext",
-            "raw": true
-          }
-        },
-        {
-          "id": "assembleContext-output",
-          "type": "output",
-          "configuration": {}
-        }
-      ]
+      "graphs": {}
     }
   }
 }
