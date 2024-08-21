@@ -1,5 +1,26 @@
 # Breadboard Board Server Reference Implementation
 
+## Building with docker
+
+The board server can be run as a self-contained docker image.
+
+The docker container build uses `sqlite` as a storage backend. It will keep it's state in a file called `board-server.db` inside the working directory on the container.
+
+To build the container:
+
+```
+docker build --build-context breadboard=../../ -t board-server .
+```
+
+To run the container:
+
+```
+docker run -d -p 3000:3000 board-server
+```
+
+
+## Firestore & App Engine deployment
+
 Uses Firestore. Deploys to App Engine.
 
 You will need to get ADC going to make Firestore work:

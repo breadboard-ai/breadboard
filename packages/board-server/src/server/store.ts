@@ -23,8 +23,18 @@ const providers = {
   "firestore": new FirestoreStorageProvider('board-server')
 }
 
+function getProvider(): "sqlite" | "firestore" {
+  const provider = process.env['STORAGE_BACKEND'];
+  
+  if (provider === "sqlite" || provider === "firestore") {
+    return provider;
+  }
+  
+  return "firestore";
+}
+
 export const getStore = () => {
-  return providers['sqlite']
+  return providers[getProvider()]
 };
 
 export type BoardListEntry = {
