@@ -5,22 +5,20 @@
  */
 
 import { createServer } from "node:http";
-import { join } from "node:path";
-import { cwd, env } from "node:process";
-import type { Config } from "./config.js";
+import { env } from "node:process";
+import { loadConnections, type ServerConfig } from "./config.js";
 import { makeRouter } from "./router.js";
-import { loadSecretsFromDisk } from "./secrets.js";
 
-const secretsFolder = join(cwd(), "secrets/");
-const config: Config = {
-  secrets: await loadSecretsFromDisk(secretsFolder),
+const configPath = process.env["CONNECTIONS_FILE"];
+const config: ServerConfig = {
+  connections: configPath ? await loadConnections(configPath) : new Map(),
   allowedOrigins: new Set(
     (process.env["ALLOWED_ORIGINS"] ?? "")
       .split(/\s+/)
       .filter((origin) => origin !== "")
   ),
 };
-if (config.secrets.size === 0) {
+if (config.connections.size === 0) {
   console.log(
     `
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -28,10 +26,6 @@ if (config.secrets.size === 0) {
 ├─────────────────────────────────────────────────────────────────────────┤
 │ No connection configurations were discovered, so no connections will be │
 │ available from this Breadboard Connection Server.                       │
-│                                                                         │
-│ To add a connection, place a "<connection-id>.json" file in the folder: │
-│                                                                         │
-│   ${secretsFolder}
 │                                                                         │
 │ See README.md#configuring-connections for more information.             │
 └─────────────────────────────────────────────────────────────────────────┘

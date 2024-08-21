@@ -15,10 +15,10 @@ test("MachineResult#skip", (t) => {
       { id: "test", type: "test" },
       {},
       ["input"],
+      { from: "from", to: "to" },
       [],
       [],
-      new MachineEdgeState(),
-      new Map()
+      new MachineEdgeState()
     );
     t.true(result.skip);
   }
@@ -27,10 +27,10 @@ test("MachineResult#skip", (t) => {
       { id: "test", type: "test" },
       {},
       [],
+      { from: "from", to: "to" },
       [],
       [],
-      new MachineEdgeState(),
-      new Map()
+      new MachineEdgeState()
     );
     t.false(result.skip);
   }

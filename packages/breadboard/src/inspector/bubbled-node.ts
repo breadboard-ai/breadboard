@@ -21,7 +21,10 @@ import {
   NodeDescriptor,
   OutputValues,
 } from "../types.js";
-import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
+import {
+  NodeMetadata,
+  StartLabel,
+} from "@google-labs/breadboard-schema/graph.js";
 
 /**
  * This is a special kind of an `InspectableNode`, representing a bubbled
@@ -62,8 +65,12 @@ export class BubbledInspectableNode implements InspectableNode {
     return this.#actual.outgoing();
   }
 
-  isEntry(): boolean {
-    return this.#actual.isEntry();
+  isEntry(label?: StartLabel): boolean {
+    return this.#actual.isEntry(label);
+  }
+
+  startLabels(): StartLabel[] | undefined {
+    return this.#actual.startLabels();
   }
 
   isExit(): boolean {

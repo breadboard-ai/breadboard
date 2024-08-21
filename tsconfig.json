@@ -7,6 +7,7 @@
     { "path": "packages/breadboard-cli" },
     { "path": "packages/connection-server" },
     { "path": "packages/core-kit" },
+    { "path": "packages/data-store" },
     { "path": "packages/discovery-types" },
     { "path": "packages/example-boards" },
     { "path": "packages/gemini-kit" },
@@ -18,6 +19,7 @@
     { "path": "packages/node-proxy-server" },
     { "path": "packages/palm-kit" },
     { "path": "packages/schema" },
+    { "path": "packages/shared-ui" },
     { "path": "packages/template-kit" },
     { "path": "packages/visual-editor" },
     { "path": "packages/website" }

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-type AsyncGenNext<T> = (value: T) => Promise<void>;
-type AsyncGenCallback<T> = (next: AsyncGenNext<T>) => Promise<void>;
+export type AsyncGenNext<T> = (value: T) => Promise<void>;
+export type AsyncGenCallback<T> = (next: AsyncGenNext<T>) => Promise<void>;
 
 // only here for historical purposes. Use asyncGen instead.
 // Remove this when we're sure we don't need it anymore.
@@ -57,7 +57,7 @@ export const asyncGenOld = <T>(callback: AsyncGenCallback<T>) => {
   };
 };
 
-type QueuEntry<T> = {
+type QueueEntry<T> = {
   value: T | undefined;
   receipt: () => void;
 };
@@ -67,7 +67,7 @@ const noop = () => {
 };
 
 class AsyncGenQueue<T> {
-  #queue: QueuEntry<T>[] = [];
+  #queue: QueueEntry<T>[] = [];
   #wroteIntoQueue = noop;
   #whenQueuedUp: Promise<void> | undefined;
   #lastReceipt: (() => void) | undefined;
@@ -84,7 +84,7 @@ class AsyncGenQueue<T> {
     });
   }
 
-  #addToQueue(entry: QueuEntry<T>) {
+  #addToQueue(entry: QueueEntry<T>) {
     this.#queue.push(entry);
     if (this.#queue.length == 1) {
       this.#wroteIntoQueue();

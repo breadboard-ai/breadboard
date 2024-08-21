@@ -17,11 +17,8 @@ import AgentKit from "@google-labs/agent-kit";
 
 import { loadKits } from "./utils/kit-loader.js";
 import {
-  BoardRunner,
-  createDataStore,
   createLoader,
   createRunObserver,
-  type DataStore,
   type GraphProvider,
   type InputValues,
   type InspectableRun,
@@ -39,8 +36,7 @@ import { until } from "lit/directives/until.js";
 import { isBoolean, isMultiline, isSelect } from "./utils/input.js";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 
-import { provide } from "@lit/context";
-import { dataStoreContext } from "./contexts/data-store.js";
+import { getDataStore, getRunStore } from "@breadboard-ai/data-store";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -64,12 +60,16 @@ export class ApiExplorer extends LitElement {
   @state()
   status = STATUS.STOPPED;
 
-  @provide({ context: dataStoreContext })
-  dataStore: { instance: DataStore | null } = { instance: createDataStore() };
+  @state()
+  dataStore = getDataStore();
+
+  @state()
+  runStore = getRunStore();
 
   #kits: Kit[] = [];
   #runObserver: InspectableRunObserver = createRunObserver({
-    store: this.dataStore.instance!,
+    dataStore: this.dataStore,
+    runStore: this.runStore,
   });
   #handlers: Map<string, inputCallback[]> = new Map();
   #providers: GraphProvider[] = [];
@@ -275,7 +275,7 @@ export class ApiExplorer extends LitElement {
       // TODO: Better error handling, maybe a toast?
       throw new Error(`Unable to load graph: ${url}`);
     }
-    const runner = await BoardRunner.fromGraphDescriptor(graph);
+    const runner = graph;
     const { title, description } = runner;
 
     if (title) {
@@ -297,7 +297,7 @@ export class ApiExplorer extends LitElement {
       kits: this.#kits,
       diagnostics: true,
       loader: this.#loader,
-      store: this.dataStore.instance!,
+      store: this.dataStore,
       interactiveSecrets: true,
       inputs: {
         model: "gemini-1.5-flash-latest",
@@ -307,7 +307,9 @@ export class ApiExplorer extends LitElement {
     this.status = STATUS.RUNNING;
     this.#outputs.clear();
     for await (const result of run(config)) {
-      this.runs = this.#runObserver?.observe(result);
+      await this.#runObserver?.observe(result);
+      this.requestUpdate();
+
       const answer = await this.#handleStateChange(result);
 
       if (answer) {
@@ -521,12 +523,12 @@ export class ApiExplorer extends LitElement {
       }
     };
 
-    const loadData = this.#load.then(({ title, description }) => {
+    const loadData = this.#load.then(async ({ title, description }) => {
       if (title === "Error") {
         return html`${description}`;
       }
 
-      const currentRun = this.#runObserver.runs()[0];
+      const currentRun = (await this.#runObserver.runs())[0];
       const events = currentRun?.events || [];
       const eventPosition = events.length - 1;
       const topEvent = events[eventPosition];

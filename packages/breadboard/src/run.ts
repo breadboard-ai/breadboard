@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { RunState } from "./run/types.js";
 import { loadRunnerState, saveRunnerState } from "./serialization.js";
 import { timestamp } from "./timestamp.js";
 import type {
@@ -13,7 +14,6 @@ import type {
   TraversalResult,
   BreadboardRunResult,
   RunResultType,
-  RunState,
 } from "./types.js";
 
 export class RunResult implements BreadboardRunResult {
@@ -60,7 +60,10 @@ export class RunResult implements BreadboardRunResult {
   }
 
   set inputs(inputs: InputValues) {
-    this.#state.outputsPromise = Promise.resolve(inputs);
+    this.#state.outputs = {
+      ...inputs,
+      ...this.#state.partialOutputs,
+    };
   }
 
   get outputs(): OutputValues {
@@ -76,7 +79,7 @@ export class RunResult implements BreadboardRunResult {
     return this.#state;
   }
 
-  async save() {
+  save() {
     return saveRunnerState(this.#type, this.#state);
   }
 
@@ -91,8 +94,7 @@ export class RunResult implements BreadboardRunResult {
   isAtExitNode(): boolean {
     return (
       this.#state.newOpportunities.length === 0 &&
-      this.#state.opportunities.length === 0 &&
-      this.#state.pendingOutputs.size === 0
+      this.#state.opportunities.length === 0
     );
   }
 

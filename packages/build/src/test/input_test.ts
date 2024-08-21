@@ -20,6 +20,7 @@ import type {
   BreadboardType,
   JsonSerializable,
 } from "../internal/type-system/type.js";
+import { inputNode } from "../internal/board/board.js";
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
@@ -36,6 +37,9 @@ function checkInput<T extends GenericSpecialInput>(
 test("defaults to string", () => {
   // $ExpectType Input<string>
   checkInput(input(), "string");
+
+  // $ExpectType Input<string | undefined>
+  checkInput(input({ optional: true }), "string");
 
   checkInput(
     // $ExpectType Input<string>
@@ -59,6 +63,9 @@ test("defaults to string", () => {
 test("only type", () => {
   // $ExpectType Input<string>
   checkInput(input({ type: "string" }), "string");
+
+  // $ExpectType Input<string | undefined>
+  checkInput(input({ type: "string", optional: true }), "string");
 
   // $ExpectType Input<number>
   checkInput(input({ type: "number" }), "number");
@@ -129,6 +136,14 @@ test("type and default and examples", () => {
     default: { foo: ["bar"] },
     examples: [{ foo: ["a"] }, { foo: ["b"] }],
   });
+});
+
+test("just examples", () => {
+  // $ExpectType Input<number>
+  checkInput(input({ examples: [1, 2] }), "number", [1, 2]);
+
+  // $ExpectType Input<number | undefined>
+  checkInput(input({ examples: [1, 2], optional: true }), "number", [1, 2]);
 });
 
 test("default doesn't match type", () => {
@@ -244,17 +259,22 @@ test("multiple input nodes with ids and metadata", () => {
     invoke: () => ({ d: "foo" }),
   })({ a, b, c }).outputs;
 
-  // $ExpectType BoardDefinition<{ a: Input<string | undefined>; b: Input<number | undefined>; c: Input<boolean>; }, { d: OutputPort<string>; }>
+  // $ExpectType BoardDefinition<{ a: string; b: number; c: boolean; } | { b: number; c: boolean; } | { c: boolean; a: string; }, { d: string; }>
   const brd = board({
     inputs: [
-      { a, b, c },
-      {
-        $id: "foo",
-        $metadata: { title: "Foo Title", description: "Foo Desc" },
-        b,
-        c,
-      },
-      { c, a },
+      inputNode({ a, b, c }),
+      inputNode(
+        {
+          b,
+          c,
+        },
+        {
+          id: "foo",
+          title: "Foo Title",
+          description: "Foo Desc",
+        }
+      ),
+      inputNode({ c, a }),
     ],
     outputs: {
       d,
@@ -334,19 +354,22 @@ test("optional inputs aren't required in JSON schema", () => {
   const req = input({ type: "number" });
   const opt = input({ type: "number", optional: true });
 
-  const { baz } = defineNodeType({
+  // $ExpectType Definition<{ foo: number; bar: number; }, { baz: number; }, undefined, undefined, "bar", false, false, false, { foo: { board: false; }; bar: { board: false; }; }>
+  const def = defineNodeType({
     name: "test",
     inputs: {
       foo: { type: "number" },
-      bar: { type: "number" },
+      bar: { type: "number", optional: true },
     },
     outputs: {
       baz: { type: "number" },
     },
     invoke: () => ({ baz: 123 }),
-  })({ foo: req, bar: opt }).outputs;
+  });
 
-  // $ExpectType BoardDefinition<{ req: Input<number>; opt: Input<number>; }, { baz: OutputPort<number>; }>
+  const { baz } = def({ foo: req, bar: opt }).outputs;
+
+  // $ExpectType BoardDefinition<{ opt?: number | undefined; req: number; }, { baz: number; }>
   const brd = board({
     inputs: {
       req,

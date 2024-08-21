@@ -1,5 +1,5 @@
 ---
-layout: docs.njk
+layout: docs.liquid
 title: Template Kit
 tags:
   - kits
@@ -7,21 +7,21 @@ tags:
 
 {% assign src_url = "https://github.com/breadboard-ai/breadboard/tree/main/packages/template-kit/src/nodes/" %}
 
-This kit contains two nodes: **promptTemplate** and **urlTemplate**. Both are intended to facilitate the often-necessary string-munging when working with LLMs or accessing APIs.
+This kit contains two components: **promptTemplate** and **urlTemplate**. Both are intended to facilitate the often-necessary string-munging when working with LLMs or accessing APIs.
 
-## The `promptTemplate` node
+## The `promptTemplate` component
 
 {{ "/breadboard/static/boards/kits/template-prompt-template.bgl.json" | board }}
 
-Use this node to populate simple handlebar-style templates. It takes a string template that can contain zero or more placeholders that will be replaced with values from inputs.
+Use this component to populate simple handlebar-style templates. It takes a string template that can contain zero or more placeholders that will be replaced with values from inputs.
 
-Specify placeholders in the handlebar-style in format -- like `{{inputName}}` in the template. The placeholders in the template will pop up as input ports for the node, ready to be wired in. The node will replace all placeholders with values from the wired in input ports and pass the result along as output.
+Specify placeholders in the handlebar-style in format -- like `{{inputName}}` in the template. The placeholders in the template will pop up as input ports for the component, ready to be wired in. The component will replace all placeholders with values from the wired in input ports and pass the result along as output.
 
 ### Input ports
 
-The `promptTemplate` node has a variable number of input ports.
+The `promptTemplate` component has a variable number of input ports.
 
-![promptTemplate node input ports](/breadboard/static/images/template-kit/prompt-template-inputs.png)
+![promptTemplate component input ports](/breadboard/static/images/template-kit/prompt-template-inputs.png)
 
 - **Template** (id: `template`) -- the template to fill out. Required.
 
@@ -29,7 +29,7 @@ The `promptTemplate` node has a variable number of input ports.
 
 ### Output ports
 
-The `promptTemplate` node has a single output:
+The `promptTemplate` component has a single output:
 
 - **Prompt** (id: `prompt`) -- a string that contains the result of replacing placeholders in the **Template** with values from the placeholder input ports.
 
@@ -57,15 +57,15 @@ Thought: I wonder how old planet Earth is?
 
 - [prompt-template.ts]({{src_url}}prompt-template.ts)
 
-## The `urlTemplate` node
+## The `urlTemplate` component
 
 {{ "/breadboard/static/boards/kits/template-url-template.bgl.json" | board }}
 
-Use this node to safely construct URLs. It's similar in spirit to the `promptTemplate` node, except it ensures that the handlebar parameters are properly encoded as part of the URL. This node relies on the [URI template specification](https://tools.ietf.org/html/rfc6570) to construct URLs, so the syntax is using single curly braces instead of double curly braces.
+Use this component to safely construct URLs. It's similar in spirit to the `promptTemplate` component, except it ensures that the handlebar parameters are properly encoded as part of the URL. This component relies on the [URI template specification](https://tools.ietf.org/html/rfc6570) to construct URLs, so the syntax is using single curly braces instead of double curly braces.
 
 ### Input ports
 
-The `urlTemplate` node has a variable number of input ports.
+The `urlTemplate` component has a variable number of input ports.
 
 - **Template** (id: `template`) -- required, a template for the URL. It can contain zero or more placeholders that will be replaced with values from the input property bag. Specify placeholders as `{propertyName}` in the template.
 
@@ -73,7 +73,7 @@ The `urlTemplate` node has a variable number of input ports.
 
 ### Outputs ports
 
-The `urlTemplate` node has a single output port.
+The `urlTemplate` component has a single output port.
 
 - `url` a string that contains the result of replacing placeholders in the template with values from the inputs.
 

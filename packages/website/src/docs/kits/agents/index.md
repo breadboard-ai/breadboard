@@ -1,5 +1,5 @@
 ---
-layout: docs.njk
+layout: docs.liquid
 title: Agent Kit
 tags:
   - kits
@@ -114,6 +114,9 @@ Once the tool is provided, the Specialist will invoke it whenever the task calls
 
 > [!NOTE]
 > Under the covers, specialist tools are powered by the [function calling](https://ai.google.dev/gemini-api/docs/function-calling) capability of the LLM. Combined with Breadboard's flexible [composition system](breadboard/docs/too-long/#graph-based-composition-system), the LLM's decision to call a function is translated into an invocation of a board, and the results of this invocation are appended to the conversation context with a special "tool" role.
+
+> [!WARNING]
+> Currently, specialist tools [can't be](https://github.com/breadboard-ai/breadboard/issues/2393) [embedded boards](/breadboard/docs/visual-editor/other-features/#creating-embedded-boards). To make a tool, create a new board instead of the embedded board.
 
 ## Looper
 

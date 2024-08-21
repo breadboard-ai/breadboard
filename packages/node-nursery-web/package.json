@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "1.1.4",
+  "version": "1.2.0",
   "description": "A Nursery for new nodes that run in both Web and Node environments. Move to other kits to publish.",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -99,18 +99,18 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@google-labs/core-kit": "^0.10.0",
-    "@google-labs/template-kit": "^0.3.3",
+    "@google-labs/core-kit": "^0.13.0",
+    "@google-labs/template-kit": "^0.3.7",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/gapi": "^0.0.47",
-    "@types/node": "^20.14.9",
-    "@typescript-eslint/eslint-plugin": "^7.14.1",
-    "@typescript-eslint/parser": "^7.14.1",
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
     "ava": "^5.2.0",
-    "npm": "^10.8.1",
-    "typescript": "^5.5.3"
+    "npm": "^10.8.2",
+    "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.21.0"
+    "@google-labs/breadboard": "^0.24.0"
   }
 }

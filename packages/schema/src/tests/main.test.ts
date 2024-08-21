@@ -33,6 +33,9 @@ for (const file of allBoardFiles) {
   test(`Validating ${relativePath}`, async () => {
     const data = JSON.parse(fs.readFileSync(file, "utf-8"));
     const valid = validate(data);
+    if (!valid) {
+      console.error(validate.errors);
+    }
     assert.ok(valid);
   });
 }

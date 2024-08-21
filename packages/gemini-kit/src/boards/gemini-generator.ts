@@ -19,6 +19,8 @@ import {
   output,
   unsafeCast,
   unsafeType,
+  inputNode,
+  outputNode,
 } from "@breadboard-ai/build";
 import { ConvertBreadboardType } from "@breadboard-ai/build/internal/type-system/type.js";
 import { Schema } from "@google-labs/breadboard";
@@ -73,13 +75,12 @@ const functionDeclaration = object({
 });
 
 const systemInstruction = input({
-  type: "string",
+  type: annotate("string", {
+    behavior: ["config"],
+  }),
   title: "System Instruction",
   description:
     "Give the model additional context to understand the task, provide more customized responses, and adhere to specific guidelines over the full user interaction.",
-  examples: [
-    "You are a brilliant poet, specializing in two-line rhyming poems. You also happened to be a cat.",
-  ],
   default: "",
 });
 
@@ -87,69 +88,37 @@ const text = input({
   type: "string",
   title: "Text",
   description: "The text to generate",
-  examples: ["What is the square root of pi?"],
   default: "",
 });
 
 const model = input({
   title: "Model",
   description: "The model to use for generation",
-  type: enumeration("gemini-1.5-flash-latest", "gemini-1.5-pro-latest"),
+  type: annotate(
+    enumeration("gemini-1.5-flash-latest", "gemini-1.5-pro-latest"),
+    {
+      behavior: ["config"],
+    }
+  ),
   examples: ["gemini-1.5-flash-latest"],
-  optional: true,
+  default: "gemini-1.5-flash-latest",
 });
 
 const responseMimeType = input({
   title: "Response MIME Type",
   description: "Output response mimetype of the generated text.",
-  type: enumeration("text/plain", "application/json"),
+  type: annotate(enumeration("text/plain", "application/json"), {
+    behavior: ["config"],
+  }),
   examples: ["text/plain"],
   default: "text/plain",
 });
 
 const tools = input({
-  type: array(
-    annotate(functionDeclaration, {
-      behavior: ["board"],
-    })
-  ),
+  type: array(functionDeclaration),
   title: "Tools",
   description: "An array of functions to use for tool-calling",
   default: [],
-  examples: [
-    [
-      {
-        name: "The_Calculator_Board",
-        description:
-          "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
-        parameters: {
-          type: "object",
-          properties: {
-            text: {
-              type: "string",
-              description: "Ask a math question",
-            },
-          },
-          required: ["text"],
-        },
-      },
-      {
-        name: "The_Search_Summarizer_Board",
-        description:
-          "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
-        parameters: {
-          type: "object",
-          properties: {
-            text: {
-              type: "string",
-              description: "What would you like to search for?",
-            },
-          },
-          required: ["text"],
-        },
-      },
-    ],
-  ],
 });
 
 const context = input({
@@ -161,40 +130,35 @@ const context = input({
   title: "Context",
   description: "An array of messages to use as conversation context",
   default: [],
-  examples: [
-    [
-      {
-        role: "user",
-        parts: [{ text: "You are a pirate. Please talk like a pirate." }],
-      },
-      {
-        role: "model",
-        parts: [{ text: "Arr, matey!" }],
-      },
-    ],
-  ],
 });
 
 const useStreaming = input({
-  type: "boolean",
-  title: "Stream",
+  type: annotate("boolean", {
+    behavior: ["deprecated"],
+  }),
+  title: "Stream Output",
   description: "Whether to stream the output",
   default: false,
 });
 
 const retry = input({
-  type: "number",
+  type: annotate("number", {
+    behavior: ["config"],
+  }),
   title: "Retry Count",
   description: "The number of times to retry the LLM call in case of failure",
   default: 1,
 });
 
 const safetySettings = input({
-  type: array(
-    object({
-      category: "string",
-      threshold: "string",
-    })
+  type: annotate(
+    array(
+      object({
+        category: "string",
+        threshold: "string",
+      })
+    ),
+    { behavior: ["config"] }
   ),
   title: "Safety Settings",
   description:
@@ -203,7 +167,9 @@ const safetySettings = input({
 });
 
 const stopSequences = input({
-  type: array("string"),
+  type: annotate(array("string"), {
+    behavior: ["config"],
+  }),
   title: "Stop Sequences",
   description: "An array of strings that will stop the output",
   default: [],
@@ -509,10 +475,6 @@ const formattedResponse = code(
       optional: true,
     },
     context: responseContentType,
-    toolCalls: {
-      type: array(object({}, "unknown")),
-      optional: true,
-    },
   },
   ({ response }) => {
     const r = response;
@@ -526,7 +488,7 @@ const formattedResponse = code(
     if ("text" in firstPart) {
       return { text: firstPart.text, context };
     } else {
-      return { toolCalls: [], context };
+      return { context };
     }
   }
 );
@@ -571,14 +533,14 @@ errorLoopback.resolve(errorCollector.outputs.error);
 export default board({
   title: "Gemini Pro Generator",
   description: "The text generator board powered by the Gemini Pro model",
+  metadata: {
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/gemini/#the-text-component",
+    },
+  },
   version: "0.1.0",
-  inputs: [
+  inputs: inputNode(
     {
-      $id: "inputs",
-      $metadata: {
-        title: "Input Parameters",
-        description: "Collecting input parameters",
-      },
       systemInstruction,
       text,
       model,
@@ -590,37 +552,42 @@ export default board({
       safetySettings,
       stopSequences,
     },
-  ],
-  outputs: [
     {
-      $id: "content-output",
-      $metadata: {
+      id: "inputs",
+      title: "Input Parameters",
+      description: "Collecting input parameters",
+    }
+  ),
+  outputs: [
+    outputNode(
+      {
+        context: output(formattedResponse.outputs.context, {
+          title: "Context",
+          description: "The conversation context",
+        }),
+        text: output(formattedResponse.outputs.text, {
+          title: "Text",
+          description: "The generated text",
+        }),
+      },
+      {
+        id: "content-output",
         title: "Content Output",
         description: "Outputting content",
+      }
+    ),
+    outputNode(
+      {
+        context: output(formattedResponse.outputs.context, {
+          title: "Context",
+          description: "The conversation context",
+        }),
       },
-      context: output(formattedResponse.outputs.context, {
-        title: "Context",
-        description: "The conversation context",
-      }),
-      text: output(formattedResponse.outputs.text, {
-        title: "Text",
-        description: "The generated text",
-      }),
-    },
-    {
-      $id: "tool-call-output",
-      $metadata: {
+      {
+        id: "tool-call-output",
         title: "Tool Call Output",
         description: "Outputting a tool call",
-      },
-      context: output(formattedResponse.outputs.context, {
-        title: "Context",
-        description: "The conversation context",
-      }),
-      toolCalls: output(formattedResponse.outputs.toolCalls, {
-        title: "Tool Calls",
-        description: "The generated tool calls",
-      }),
-    },
+      }
+    ),
   ],
 });

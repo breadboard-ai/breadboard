@@ -1,5 +1,153 @@
 # @google-labs/breadboard-cli
 
+## 0.10.2
+
+### Patch Changes
+
+- Updated dependencies [8c694ed]
+- Updated dependencies [bbf2c30]
+- Updated dependencies [14df6a8]
+- Updated dependencies [00875af]
+- Updated dependencies [1dc645a]
+- Updated dependencies [89ccc90]
+- Updated dependencies [2aabb7a]
+- Updated dependencies [fb72771]
+- Updated dependencies [9b22cab]
+- Updated dependencies [00cc2c5]
+- Updated dependencies [9f33a12]
+- Updated dependencies [c04cff0]
+- Updated dependencies [d88c37b]
+- Updated dependencies [3f8cdd1]
+- Updated dependencies [3a5ced1]
+- Updated dependencies [62f8d5b]
+  - @google-labs/breadboard@0.24.0
+  - @breadboard-ai/visual-editor@1.15.0
+  - @google-labs/core-kit@0.13.0
+  - @breadboard-ai/build@0.8.1
+  - @breadboard-ai/import@0.1.7
+  - @google-labs/template-kit@0.3.7
+
+## 0.10.1
+
+### Patch Changes
+
+- 9a2ffab: Unpin @breadboard-ai/build dependency from being overly constrained
+- Updated dependencies [ad8aa22]
+- Updated dependencies [e6c7269]
+- Updated dependencies [62e5a34]
+- Updated dependencies [bdaaa81]
+- Updated dependencies [1e1be2a]
+- Updated dependencies [6d2939e]
+- Updated dependencies [fa9073d]
+- Updated dependencies [15b6171]
+- Updated dependencies [5c5b665]
+- Updated dependencies [9171352]
+- Updated dependencies [2b094a3]
+- Updated dependencies [4e2fbd6]
+- Updated dependencies [ec06605]
+- Updated dependencies [fa93c3f]
+- Updated dependencies [8d2e618]
+- Updated dependencies [f78ec0a]
+- Updated dependencies [215bd15]
+- Updated dependencies [2a206e8]
+- Updated dependencies [2b9ef5b]
+- Updated dependencies [645eb63]
+- Updated dependencies [a0852df]
+- Updated dependencies [1a83a77]
+- Updated dependencies [8b370d7]
+- Updated dependencies [7298a47]
+- Updated dependencies [ea7e2a1]
+- Updated dependencies [8edcbc0]
+- Updated dependencies [5f6d97c]
+- Updated dependencies [98f0ff2]
+- Updated dependencies [9a2ffab]
+- Updated dependencies [0a846ff]
+- Updated dependencies [618e265]
+- Updated dependencies [a527740]
+- Updated dependencies [b99472b]
+- Updated dependencies [4bfaec5]
+- Updated dependencies [f1546f5]
+- Updated dependencies [2312443]
+- Updated dependencies [960922e]
+- Updated dependencies [1d98374]
+- Updated dependencies [70ba2d3]
+- Updated dependencies [b76f9a1]
+- Updated dependencies [6ffa89c]
+- Updated dependencies [15ae381]
+  - @breadboard-ai/build@0.8.0
+  - @breadboard-ai/visual-editor@1.14.0
+  - @google-labs/breadboard@0.23.0
+  - @google-labs/core-kit@0.12.0
+  - @google-labs/template-kit@0.3.6
+  - @breadboard-ai/import@0.1.6
+
+## 0.10.0
+
+### Minor Changes
+
+- 6f82dea: Update Visual Editor package name
+- 0f9d617: Move breadboard-web to visual-editor; remove breadbuddy
+- 4ba1243: Migrate breadboard-ui to visual-editor
+
+### Patch Changes
+
+- f4397b9: Update remaining breadboard-web paths
+- Updated dependencies [a925cf0]
+- Updated dependencies [39f1aed]
+- Updated dependencies [c77b034]
+- Updated dependencies [43fc9fc]
+- Updated dependencies [f4d2416]
+- Updated dependencies [bc94299]
+- Updated dependencies [6f82dea]
+- Updated dependencies [f4397b9]
+- Updated dependencies [166f290]
+- Updated dependencies [66918fc]
+- Updated dependencies [4c5bc52]
+- Updated dependencies [da43bb5]
+- Updated dependencies [5cf08f1]
+- Updated dependencies [4bf8894]
+- Updated dependencies [6b91b3e]
+- Updated dependencies [eaca143]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [54cb2d4]
+- Updated dependencies [6a59c83]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [e414ba0]
+- Updated dependencies [b357fbc]
+- Updated dependencies [0f9d617]
+- Updated dependencies [bc8dcdd]
+- Updated dependencies [ffbf163]
+- Updated dependencies [8928fb7]
+- Updated dependencies [fa2d1ab]
+- Updated dependencies [51034a0]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [7bdb5a2]
+- Updated dependencies [cb455ef]
+- Updated dependencies [d6706f2]
+- Updated dependencies [10bfeba]
+- Updated dependencies [d016297]
+- Updated dependencies [ffe100b]
+- Updated dependencies [5447426]
+- Updated dependencies [bd55f95]
+- Updated dependencies [cb0237d]
+- Updated dependencies [4ba1243]
+- Updated dependencies [05f3acb]
+- Updated dependencies [9d4ea07]
+- Updated dependencies [164d104]
+- Updated dependencies [4c1a17c]
+- Updated dependencies [26e1099]
+- Updated dependencies [a0587ec]
+- Updated dependencies [7e1f01c]
+- Updated dependencies [359424b]
+- Updated dependencies [a9def5c]
+- Updated dependencies [a30fb39]
+  - @google-labs/breadboard@0.22.0
+  - @breadboard-ai/visual-editor@1.12.0
+  - @google-labs/core-kit@0.11.0
+  - @breadboard-ai/build@0.7.1
+  - @breadboard-ai/import@0.1.5
+  - @google-labs/template-kit@0.3.5
+
 ## 0.9.5
 
 ### Patch Changes

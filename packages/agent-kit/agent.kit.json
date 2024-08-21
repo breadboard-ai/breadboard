@@ -7,7 +7,10 @@
     "human": {
       "title": "Human",
       "metadata": {
-        "icon": "human"
+        "icon": "human",
+        "help": {
+          "url": "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#human"
+        }
       },
       "description": "A human in the loop. Use this node to insert a real person (user input) into your team of synthetic workers.",
       "version": "0.0.1",
@@ -204,7 +207,7 @@
           "id": "fn-5",
           "type": "runJavascript",
           "configuration": {
-            "code": "const fn_5 = ({context})=>{const c=asContextArray(context);const mode=computeMode(c);if(mode===\"input\"){return{input:c}}else if(mode===\"inputOutput\"){return{input:c,output:c}}return{output:onlyChoices(c),choose:c};function asContextArray(context2){const input=context2;return Array.isArray(input)?input:[input]}__name(asContextArray,\"asContextArray\");function onlyChoices(context2){const choices=[];const reversed=[...context2].reverse();for(const item of reversed){choices.push(item);if(item.role===\"$metadata\"&&item.type===\"split\"&&item.data.type===\"start\"){break}}return choices.reverse()}__name(onlyChoices,\"onlyChoices\");function computeMode(context2){const lastItem=context2[context2.length-1];if(lastItem.role===\"user\"){return\"input\"}if(lastItem.role!==\"$metadata\"){return\"inputOutput\"}if(lastItem.type===\"split\"&&lastItem.data.type===\"end\"){const splitId=lastItem.data.id;let choiceCounter=1;for(let i=context2.length-2;i>=0;i--){const item=context2[i];if(item.role===\"$metadata\"&&item.type===\"split\"){const{id,type}=item.data;if(splitId!==id){return\"inputOutput\"}if(type===\"start\"){break}choiceCounter++}}if(choiceCounter>1){return\"choose\"}}return\"inputOutput\"}__name(computeMode,\"computeMode\")};",
+            "code": "const fn_5 = ({context})=>{if(!context){return{input:[]}}const c=asContextArray(context);const mode=computeMode(c);if(mode===\"input\"){return{input:c}}else if(mode===\"inputOutput\"){return{input:c,output:c}}return{output:onlyChoices(c),choose:c};function asContextArray(context2){const input=context2;return Array.isArray(input)?input:[input]}__name(asContextArray,\"asContextArray\");function onlyChoices(context2){const choices=[];const reversed=[...context2].reverse();for(const item of reversed){choices.push(item);if(item.role===\"$metadata\"&&item.type===\"split\"&&item.data.type===\"start\"){break}}return choices.reverse()}__name(onlyChoices,\"onlyChoices\");function computeMode(context2){const lastItem=context2[context2.length-1];if(!lastItem){return\"input\"}if(lastItem.role===\"user\"){return\"input\"}if(lastItem.role!==\"$metadata\"){return\"inputOutput\"}if(lastItem.type===\"split\"&&lastItem.data.type===\"end\"){const splitId=lastItem.data.id;let choiceCounter=1;for(let i=context2.length-2;i>=0;i--){const item=context2[i];if(item.role===\"$metadata\"&&item.type===\"split\"){const{id,type}=item.data;if(splitId!==id){return\"inputOutput\"}if(type===\"start\"){break}choiceCounter++}}if(choiceCounter>1){return\"choose\"}}return\"inputOutput\"}__name(computeMode,\"computeMode\")};",
             "name": "fn_5",
             "raw": true
           },
@@ -217,7 +220,7 @@
           "id": "createSchema",
           "type": "runJavascript",
           "configuration": {
-            "code": "const createSchema = ({title,action,description,context})=>{const text={title,description,type:\"object\",behavior:[\"transient\",\"llm-content\"]};const schema={type:\"object\",properties:{text}};if(action?.action==\"vote\"){text.title=action.title;text.enum=[\"Yes\",\"No\"]}return{schema,context}};",
+            "code": "const createSchema = ({title,action,description,context})=>{const text={title,description,type:\"object\",behavior:[\"transient\",\"llm-content\"],examples:[JSON.stringify({parts:[{text:\"\"}]})]};const schema={type:\"object\",properties:{text}};if(action?.action==\"vote\"){text.title=action.title;text.enum=[\"Yes\",\"No\"]}return{schema,context}};",
             "name": "createSchema",
             "raw": true
           },
@@ -276,12 +279,15 @@
               ],
               "properties": {
                 "output": {
-                  "type": "object",
-                  "behavior": [
-                    "llm-content"
-                  ],
                   "title": "Output",
-                  "description": "The output to display"
+                  "description": "The output to display",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  }
                 }
               }
             }
@@ -308,9 +314,6 @@
                       "llm-content"
                     ]
                   },
-                  "examples": [
-                    "[{\"parts\":[{\"text\":\"{\\\"adCampaign\\\":{\\\"headlines\\\":[\\\"Breadboard: AI Playground\\\",\\\"Exp. AI Patterns\\\",\\\"Rapid Prototyping\\\",\\\"AI Power, Gemini\\\",\\\"Integrate AI Seamlessly\\\",\\\"Create Graphs, Prompts\\\",\\\"Accessible AI\\\",\\\"Breadboard: Dev's AI Kit\\\",\\\"Supercharge Dev, Breadboard\\\",\\\"Accelerate Innovation\\\",\\\"Revolutionize Dev, AI\\\",\\\"Breadboard: AI, Ingenuity\\\",\\\"Elevate Projects, Breadboard\\\",\\\"Unlock AI Power, Breadboard\\\"],\\\"descriptions\\\":[\\\"Breadboard: Play, experiment, prototype with AI. Integrate AI with Gemini.\\\",\\\"Stunning graphs with prompts. Accessible AI for devs.\\\",\\\"Accelerate innovation with Breadboard. Experiment with AI risk-free.\\\",\\\"Elevate projects with Breadboard AI. Integrate AI seamlessly.\\\"]},\\\"voteRequest\\\":\\\"Does this ad campaign seem ok to you?\\\"}\"}],\"role\":\"model\"}]"
-                  ],
                   "default": "[]"
                 },
                 "title": {
@@ -409,6 +412,9 @@
       "title": "Repeater",
       "description": "A worker whose job it is to repeat the same thing over and over, until some condition is met or the max count of repetitions is reached.",
       "version": "0.0.1",
+      "metadata": {
+        "deprecated": true
+      },
       "edges": [
         {
           "from": "counter",
@@ -571,6 +577,9 @@
       "title": "Structured Worker",
       "description": "A worker who outputs structure data (JSON) provided a schema.",
       "version": "0.0.1",
+      "metadata": {
+        "deprecated": true
+      },
       "edges": [
         {
           "from": "assembleContext",
@@ -908,9 +917,12 @@
     "specialist": {
       "title": "Specialist",
       "metadata": {
-        "icon": "smart-toy"
+        "icon": "smart-toy",
+        "help": {
+          "url": "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#specialist"
+        }
       },
-      "description": "All-in-one worker. A work in progress, incorporates all the learnings from making previous workers.",
+      "description": "Given instructions on how to act, performs a single task, optionally invoking tools.",
       "edges": [
         {
           "from": "fn-13",
@@ -1079,7 +1091,13 @@
               "properties": {
                 "out": {
                   "title": "Context out",
-                  "type": "string"
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  }
                 }
               }
             }
@@ -1200,10 +1218,7 @@
                     "behavior": [
                       "llm-content"
                     ]
-                  },
-                  "examples": [
-                    "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"\\nbook description: This book will be about breadboards and how awesome they are\\nchapter target: 10\\npage target: 400\\nfiction genre: space opera\\nsetting: the planet where there are no breadboards\\nstory arc: A girl named Aurora invents a breadboard on the planet where breadboards are strictly forbidden. Through struggles and determination, and with the help of trusted friends, Aurora overcomes many challenges and changes the whole planet for the better. \\ntonality: futuristic struggle, but optimistic\\nworking title: Aurora\\n\"\n      }\n    ]\n  }\n]"
-                  ]
+                  }
                 },
                 "task": {
                   "title": "Task",
@@ -1213,9 +1228,6 @@
                   "behavior": [
                     "llm-content",
                     "config"
-                  ],
-                  "examples": [
-                    "{\n  \"parts\": [\n    {\n      \"text\": \"\\nWrite an outline for a novel, following the provided specs.\\n\"\n    }\n  ]\n}"
                   ]
                 },
                 "tools": {
@@ -1233,16 +1245,13 @@
                 },
                 "persona": {
                   "type": "object",
-                  "title": "Persona",
-                  "description": "Describe the worker's skills, capabilities, mindset, and thinking process",
-                  "default": "",
-                  "examples": [
-                    "{\n  \"parts\": [\n    {\n      \"text\": \"\\nYou are a famous author.  You are writing a novel.\\n\\nYour well-established process starts with collecting the book description, chapter target, page target, fiction genre, setting, story arc, tonality and the working title.\\n\\nThen, your first step is to write a detailed outline for the novel.  You keep the page target in mind for the finished novel, so your outline typically contains contain key bullets for the story arc across the chapters. You usually create a part of the outline for each chapter. You also keep in mind that the outline must cover at least the target number of chapters.\\n\\nYou are very creative and you pride yourself in adding interesting twists and unexpected turns of the story, something that keeps the reader glued to your book.\\n\"\n    }\n  ]\n}"
-                  ],
                   "behavior": [
                     "llm-content",
                     "config"
-                  ]
+                  ],
+                  "title": "Persona",
+                  "description": "Describe the worker's skills, capabilities, mindset, and thinking process",
+                  "default": ""
                 }
               },
               "required": [
@@ -1331,7 +1340,13 @@
               "properties": {
                 "out": {
                   "title": "Context out",
-                  "type": "string"
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  }
                 }
               }
             }
@@ -1433,7 +1448,7 @@
                   "type": "object",
                   "properties": {
                     "item": {
-                      "title": "board",
+                      "title": "Board",
                       "behavior": [
                         "board"
                       ],
@@ -1894,13 +1909,16 @@
                 },
                 "instruction": {
                   "type": "string",
+                  "behavior": [
+                    "config"
+                  ],
                   "title": "Instruction",
                   "description": "Describe the worker persona and the task given: the skills and various capabilities, the mindset, the thinking process, etc. The ideal task is a call to action with the necessary details on how to best complete this action.",
                   "default": "",
+                  "format": "multiline",
                   "examples": [
                     "You are a hip, fun-loving mathematician who loves to help solve problems and chat about math. You also love finding answers to questions using Search. Use the right tool for solving the problems and reply without engaging tools otherwise. After using the tool, make sure to summarize and expand the answer in a hip, humorous way to help the user enjoy the beauty of math.\n\nIn situations where the tool use is not necessary, just carry the conversation with the user."
-                  ],
-                  "format": "multiline"
+                  ]
                 },
                 "tools": {
                   "type": "array",
@@ -1919,6 +1937,9 @@
                 },
                 "retry": {
                   "type": "number",
+                  "behavior": [
+                    "config"
+                  ],
                   "title": "Retry Count",
                   "description": "How many times to retry in case of LLM error",
                   "default": "5"
@@ -2114,7 +2135,7 @@
                   "type": "object",
                   "properties": {
                     "item": {
-                      "title": "board",
+                      "title": "Board",
                       "behavior": [
                         "board"
                       ],
@@ -2142,6 +2163,9 @@
       "title": "Worker",
       "description": "The essential Agent building block",
       "version": "0.0.1",
+      "metadata": {
+        "deprecated": true
+      },
       "edges": [
         {
           "from": "assembleContext",
@@ -2283,6 +2307,9 @@
                 },
                 "stopSequences": {
                   "type": "array",
+                  "behavior": [
+                    "config"
+                  ],
                   "title": "Stop Sequences",
                   "description": "An array of strings that will stop the output",
                   "default": "[]",
@@ -2307,7 +2334,10 @@
     "looper": {
       "title": "Looper",
       "metadata": {
-        "icon": "laps"
+        "icon": "laps",
+        "help": {
+          "url": "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#looper"
+        }
       },
       "description": "A worker whose job it is to repeat the same thing over and over, until some condition is met or the max count of repetitions is reached.",
       "version": "0.0.1",
@@ -2430,9 +2460,6 @@
                     ]
                   },
                   "default": "[]",
-                  "examples": [
-                    "{\"parts\":[{\"text\":\"test\"}],\"role\":\"user\"}"
-                  ],
                   "description": "Incoming conversation context"
                 },
                 "task": {
@@ -2576,7 +2603,10 @@
     "joiner": {
       "title": "Joiner",
       "metadata": {
-        "icon": "merge-type"
+        "icon": "merge-type",
+        "help": {
+          "url": "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#joiner"
+        }
       },
       "description": "Joins two or more worker contexts into one. Great for combining results of multiple workers.",
       "version": "0.0.1",
@@ -2610,13 +2640,13 @@
               "properties": {
                 "context": {
                   "type": "array",
+                  "title": "Context out",
                   "items": {
                     "type": "object",
                     "behavior": [
                       "llm-content"
                     ]
-                  },
-                  "title": "context"
+                  }
                 }
               }
             }

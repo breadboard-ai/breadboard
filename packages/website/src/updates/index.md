@@ -1,5 +1,5 @@
 ---
-layout: updates.njk
+layout: updates.liquid
 title: Breadboard Updates
 isIndex: true
 ---

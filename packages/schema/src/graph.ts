@@ -149,7 +149,41 @@ export type NodeMetadata = {
    * Logging level.
    */
   logLevel?: "debug" | "info";
+  /**
+   * Tags associated with the node. Can be either a string or a structured tag,
+   * like a `StartTag`.
+   */
+  tags?: NodeTag[];
 };
+
+/**
+ * Represents a tag that can be associated with a node.
+ */
+export type NodeTag =
+  /**
+   * A simple start tag, which is the same as { type: "start" }.
+   */
+  | "start"
+  /**
+   * A tag that indicates that the node is a starting point for traversal.
+   */
+  | StartTag;
+
+/**
+ * Represents a start tag, which is a special tag that can be associated with a
+ * node. It is used to indicate that the node is a starting point for traversal.
+ * The `label` field allows the user to specify additional way to specify the
+ * kind of traversal they are looking for.
+ */
+export type StartTag = {
+  type: "start";
+  label?: StartLabel;
+};
+
+/**
+ * Valid start labels.
+ */
+export type StartLabel = "default" | "describe";
 
 /**
  * Represents references to a "kit": a collection of `NodeHandlers`.
@@ -163,6 +197,13 @@ export type KitReference = {
    */
   url: string;
 };
+
+/**
+ * Represents various tags that can be associated with a kit.
+ * - `deprecated`: The kit is deprecated and should not be used.
+ * - `experimental`: The kit is experimental and may not be stable.
+ */
+export type KitTag = "deprecated" | "experimental";
 
 export type KitDescriptor = KitReference & {
   /**
@@ -179,6 +220,10 @@ export type KitDescriptor = KitReference & {
    * @pattern ^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
    */
   version?: string;
+  /**
+   * Tags, associated with the kit.
+   */
+  tags?: KitTag[];
 };
 
 /**
@@ -315,6 +360,12 @@ type TestProperties = {
    * @deprecated For internal testing only. Do not use.
    */
   explanation?: string;
+
+  /**
+   * For internal testing only. Do not use.
+   * @deprecated For internal testing only. Do not use.
+   */
+  start?: StartLabel;
 };
 
 /**

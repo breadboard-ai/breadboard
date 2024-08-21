@@ -47,7 +47,7 @@ const describe = async (
 ): Promise<NodeDescriberResult> => {
   const inputBuilder = new SchemaBuilder().addProperties({
     $board: {
-      title: "board",
+      title: "Board",
       behavior: ["board"],
       description:
         "The board to curry. Can be a BoardCapability, a graph or a URL",
@@ -57,7 +57,7 @@ const describe = async (
   const outputBuilder = new SchemaBuilder()
     .setAdditionalProperties(false)
     .addProperty("board", {
-      title: "board",
+      title: "Board",
       behavior: ["board"],
       description: "The curried board as a graph descriptor",
       type: "object",
@@ -90,6 +90,9 @@ const metadata = {
   title: "Curry",
   description:
     "Takes a board and bakes in (curries) supplied arguments into it. Very useful when we want to invoke a board with the same arguments many times (like with `map`).",
+  help: {
+    url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-curry-component",
+  },
 } satisfies NodeHandlerMetadata;
 
 export default { metadata, invoke, describe };

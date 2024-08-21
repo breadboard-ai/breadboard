@@ -4,11 +4,11 @@
     "registry": "https://wombat-dressing-room.appspot.com"
   },
   "private": true,
-  "version": "2.3.0",
+  "version": "2.5.1",
   "description": "The public documentation website for Breadboard",
   "author": "Google Labs Team",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/breadboard-ai/breadboard#readme",
+  "homepage": "https://breadboard-ai.github.io",
   "repository": {
     "directory": "packages/website",
     "type": "git",
@@ -117,16 +117,17 @@
   },
   "dependencies": {
     "@11ty/eleventy-plugin-vite": "^4.0.0",
-    "@google-labs/agent-kit": "^0.8.0",
-    "@google-labs/breadboard": "^0.21.0",
-    "@google-labs/core-kit": "^0.10.0",
-    "@google-labs/gemini-kit": "^0.5.0",
-    "@google-labs/json-kit": "^0.3.1",
-    "@google-labs/palm-kit": "^0.0.15",
-    "@google-labs/template-kit": "^0.3.3",
+    "@google-labs/agent-kit": "^0.9.1",
+    "@google-labs/breadboard": "^0.24.0",
+    "@google-labs/core-kit": "^0.13.0",
+    "@google-labs/gemini-kit": "^0.5.4",
+    "@google-labs/json-kit": "^0.3.5",
+    "@google-labs/palm-kit": "^0.1.1",
+    "@google-labs/template-kit": "^0.3.7",
+    "@breadboard-ai/shared-ui": "^1.15.0",
     "eleventy-plugin-youtube-embed": "^1.10.2",
-    "esbuild": "^0.21.5",
-    "typescript": "^5.5.3"
+    "esbuild": "^0.23.1",
+    "typescript": "^5.5.4"
   },
   "devDependencies": {
     "@11ty/eleventy": "^2.0.1",
@@ -136,11 +137,11 @@
     "@koa/cors": "^5.0.0",
     "@web/dev-server": "^0.4.6",
     "@web/dev-server-esbuild": "^1.0.2",
-    "jsdom": "^24.1.0",
-    "lit": "^3.1.4",
+    "jsdom": "^24.1.1",
+    "lit": "^3.2.0",
     "markdown-it-github-alerts": "^0.3.0",
     "markdown-it-github-headings": "^2.0.1",
     "rollup-plugin-import-assert": "^3.0.1",
-    "wireit": "^0.14.5"
+    "wireit": "^0.14.7"
   }
 }

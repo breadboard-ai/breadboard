@@ -26,6 +26,11 @@ const looper = (): Context => {
 };
 
 describe("human/modeRouterFunction", () => {
+  test("correctly recognizes the `input` mode when context is empty", () => {
+    const context: Context[] = [];
+    const result = modeRouterFunction({ context });
+    deepStrictEqual(result, { input: context });
+  });
   test("correctly recognizes the `input` mode", () => {
     const context: Context[] = [text("Hello", "user")];
     const result = modeRouterFunction({ context });

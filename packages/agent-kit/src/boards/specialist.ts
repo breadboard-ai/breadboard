@@ -11,8 +11,6 @@ import {
   board,
 } from "@google-labs/breadboard";
 import {
-  LlmContent,
-  LlmContentRole,
   checkAreWeDone,
   combineContexts,
   looperTaskAdder,
@@ -40,56 +38,19 @@ export type SpecialistType = NewNodeFactory<
   }
 >;
 
-const contextFromText = (text: string, role?: LlmContentRole): LlmContent => {
-  const parts = [{ text }];
-  return role ? { role, parts } : { parts };
-};
-
-const sampleContext: LlmContent[] = [
-  contextFromText(
-    `
-book description: This book will be about breadboards and how awesome they are
-chapter target: 10
-page target: 400
-fiction genre: space opera
-setting: the planet where there are no breadboards
-story arc: A girl named Aurora invents a breadboard on the planet where breadboards are strictly forbidden. Through struggles and determination, and with the help of trusted friends, Aurora overcomes many challenges and changes the whole planet for the better. 
-tonality: futuristic struggle, but optimistic
-working title: Aurora
-`,
-    "user"
-  ),
-];
-
-const samplePersona: LlmContent = contextFromText(`
-You are a famous author.  You are writing a novel.
-
-Your well-established process starts with collecting the book description, chapter target, page target, fiction genre, setting, story arc, tonality and the working title.
-
-Then, your first step is to write a detailed outline for the novel.  You keep the page target in mind for the finished novel, so your outline typically contains contain key bullets for the story arc across the chapters. You usually create a part of the outline for each chapter. You also keep in mind that the outline must cover at least the target number of chapters.
-
-You are very creative and you pride yourself in adding interesting twists and unexpected turns of the story, something that keeps the reader glued to your book.
-`);
-
-const sampleTask: LlmContent = contextFromText(`
-Write an outline for a novel, following the provided specs.
-`);
-
 const specialist = await board(({ in: context, persona, task, tools }) => {
   context
     .title("Context in")
     .description("Incoming conversation context")
     .isArray()
-    .behavior("llm-content")
-    .examples(JSON.stringify(sampleContext, null, 2));
+    .behavior("llm-content");
   persona
     .title("Persona")
     .description(
       "Describe the worker's skills, capabilities, mindset, and thinking process"
     )
     .isObject()
-    .behavior("llm-content", "config")
-    .examples(JSON.stringify(samplePersona, null, 2));
+    .behavior("llm-content", "config");
   task
     .title("Task")
     .description(
@@ -98,8 +59,7 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
     .isObject()
     .optional()
     .default(JSON.stringify({}))
-    .behavior("llm-content", "config")
-    .examples(JSON.stringify(sampleTask, null, 2));
+    .behavior("llm-content", "config");
   tools
     .title("Tools")
     .description(
@@ -227,7 +187,10 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
       title: "Tool Output",
       description: "Return tool results as output",
     },
-    out: addToolResponseToContext.context.title("Context out"),
+    out: addToolResponseToContext.context
+      .title("Context out")
+      .isArray()
+      .behavior("llm-content"),
   });
 
   const areWeDoneChecker = checkAreWeDone({
@@ -240,14 +203,22 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
     text: routeToFunctionsOrText.text,
   });
 
-  return { out: areWeDoneChecker.context.title("Context out") };
+  return {
+    out: areWeDoneChecker.context
+      .title("Context out")
+      .isArray()
+      .behavior("llm-content"),
+  };
 }).serialize({
   title: "Specialist",
   metadata: {
     icon: "smart-toy",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#specialist",
+    },
   },
   description:
-    "All-in-one worker. A work in progress, incorporates all the learnings from making previous workers.",
+    "Given instructions on how to act, performs a single task, optionally invoking tools.",
 });
 
 specialist.graphs = { boardToFunction, invokeBoardWithArgs };

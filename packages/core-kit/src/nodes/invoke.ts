@@ -11,7 +11,11 @@ import type {
   GraphDescriptor,
   NodeDescriberContext,
 } from "@google-labs/breadboard";
-import { BoardRunner, inspect } from "@google-labs/breadboard";
+import {
+  getGraphDescriptor,
+  inspect,
+  invokeGraph,
+} from "@google-labs/breadboard";
 import { getRunner, loadGraphFromPath } from "../utils.js";
 import { defineNodeType, object, unsafeSchema } from "@breadboard-ai/build";
 
@@ -23,7 +27,7 @@ export type InvokeNodeInputs = InputValues & {
 };
 
 type RunnableBoardWithArgs = {
-  board: BoardRunner | undefined;
+  board: GraphDescriptor | undefined;
   args: InputValues;
 };
 
@@ -41,13 +45,11 @@ const getRunnableBoard = async (
     let runnableBoard;
 
     if (board) {
-      runnableBoard = await BoardRunner.fromBreadboardCapability(board);
+      runnableBoard = await getGraphDescriptor(board, context);
     } else if (graph) {
-      runnableBoard = await BoardRunner.fromGraphDescriptor(graph);
+      runnableBoard = graph;
     } else if (path) {
-      runnableBoard = await BoardRunner.fromGraphDescriptor(
-        await loadGraphFromPath(path, context)
-      );
+      runnableBoard = await loadGraphFromPath(path, context);
     }
     return { board: runnableBoard, args };
   }
@@ -67,8 +69,12 @@ const describe = async (
         // This is a describer, so it must always return some valid value.
       }
       if (board) {
-        const inspectableGraph = inspect(board);
-        const { inputSchema, outputSchema } = await inspectableGraph.describe();
+        const inspectableGraph = inspect(board, {
+          kits: context.kits,
+          loader: context.loader,
+        });
+        const { inputSchema, outputSchema } =
+          await inspectableGraph.describe(inputs);
         return {
           inputs: unsafeSchema(inputSchema),
           outputs: unsafeSchema(outputSchema),
@@ -86,6 +92,9 @@ export default defineNodeType({
     title: "Invoke",
     description:
       "Invokes (runOnce) specified board, supplying remaining incoming wires as inputs for that board. Returns the outputs of the board.",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-invoke-component",
+    },
   },
   inputs: {
     path: {
@@ -96,7 +105,7 @@ export default defineNodeType({
       optional: true,
     },
     $board: {
-      title: "board",
+      title: "Board",
       behavior: ["board", "config"],
       description:
         "The board to invoke. Can be a BoardCapability, a graph or a URL",
@@ -138,6 +147,6 @@ export default defineNodeType({
         }
       : { ...context };
 
-    return await board.runOnce(args, invocationContext);
+    return await invokeGraph(board, args, invocationContext);
   },
 });

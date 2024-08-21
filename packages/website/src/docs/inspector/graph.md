@@ -1,5 +1,5 @@
 ---
-layout: docs.njk
+layout: docs.liquid
 title: Graph Inspector API
 tags:
   - api
@@ -60,9 +60,18 @@ const incoming = node.incoming();
 // Returns an array of `InspectableEdge`;
 const outgoing = node.outgoing();
 
-// See if the node is an entry node (no incoming edges)
+// See if the node is a default entry point (no incoming edges or
+// labeled as "default").
 // Returns true or false.
 const isEntry = node.isEntry();
+
+// See if the node is a "describe" entry point.
+// Returns true or false.
+const isDescribeEntry = node.isEntry("describe");
+
+// Get all the start labels assigned to the node.
+// Returns array of strings or undefined if no labels are assigned.
+const startLabels = node.startLabels();
 
 // See if the node is an exit node (no outgoing edges)
 // Returns true or false.
@@ -309,7 +318,7 @@ Some nodes may represent entire subgraphs. For instance, `core.invoke` node take
 > Make sure that when calling `inspect`, the BGL document argument has the `url` property set to
 > a valid URL that represents the current location of this graph. It will enable nodes that do loading as part of describing themselves (such as `core.invoke`) to correctly resolve any relative paths that might be given as their inputs.
 >
-> This value will be automatically set when loading a BGL file using the `BoardRunner.load` method.
+> This value will be automatically set when loading a BGL file using the `GraphLoader.load` method.
 
 It is the responsibility of the respective nodes to provide an accurate description of their input and output ports.
 

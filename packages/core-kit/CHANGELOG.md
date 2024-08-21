@@ -1,5 +1,87 @@
 # Changelog
 
+## 0.13.0
+
+### Minor Changes
+
+- 00cc2c5: Remove `lambda`, introduce standalone `invokeGraph` and `runGraph` functions, and other plumbing refactoring.
+- 3a5ced1: Refactor `map` to run serially when `RunStateManager` is present.
+
+### Patch Changes
+
+- Updated dependencies [8c694ed]
+- Updated dependencies [bbf2c30]
+- Updated dependencies [14df6a8]
+- Updated dependencies [1dc645a]
+- Updated dependencies [2aabb7a]
+- Updated dependencies [fb72771]
+- Updated dependencies [9b22cab]
+- Updated dependencies [00cc2c5]
+- Updated dependencies [c04cff0]
+- Updated dependencies [d88c37b]
+- Updated dependencies [3f8cdd1]
+- Updated dependencies [3a5ced1]
+- Updated dependencies [62f8d5b]
+  - @google-labs/breadboard@0.24.0
+  - @breadboard-ai/build@0.8.1
+
+## 0.12.0
+
+### Minor Changes
+
+- 6d2939e: Remove the ability to bubble up inputs from `map` component.
+- 7298a47: Add simplistic caching to `service` component.
+
+### Patch Changes
+
+- 5c5b665: Stop leaking blob URLs in runJavascript.
+- a0852df: Update titles and help links in Core Kit.
+- ea7e2a1: Mark `schema` as deprecated on `runJavascript`.
+- 8edcbc0: Update Template and Core Kit to jive with docs.
+- 9a2ffab: Unpin @breadboard-ai/build dependency from being overly constrained
+- b99472b: Update titles in `curry` component.
+- 4bfaec5: Improve documentation/metadata for unnest and cast nodes
+- Updated dependencies [ad8aa22]
+- Updated dependencies [1e1be2a]
+- Updated dependencies [2b094a3]
+- Updated dependencies [fa93c3f]
+- Updated dependencies [f78ec0a]
+- Updated dependencies [215bd15]
+- Updated dependencies [2b9ef5b]
+- Updated dependencies [a0852df]
+- Updated dependencies [2312443]
+- Updated dependencies [b76f9a1]
+- Updated dependencies [6ffa89c]
+- Updated dependencies [15ae381]
+  - @breadboard-ai/build@0.8.0
+  - @google-labs/breadboard@0.23.0
+
+## 0.11.0
+
+### Minor Changes
+
+- 166f290: Introduce `service` node.
+
+### Patch Changes
+
+- f4d2416: Add cast node and helper to core-kit, for asserting some JSON schema as the type of some value.
+- bc94299: The unnest node now uses the actual describe function of the connected node to discover the incoming schema, and sets the outgoing schema to match.
+- 9d93cf8: Added inputSchema and outputSchema properties. The old "schema" property is now deprecated in favor of "outputSchema" (though will fall back to "schema").
+- 9d93cf8: Add extractTypeFromValue function.
+- a9def5c: Fix bug in automatic output schema when using code helper.
+- Updated dependencies [a925cf0]
+- Updated dependencies [da43bb5]
+- Updated dependencies [5cf08f1]
+- Updated dependencies [ffbf163]
+- Updated dependencies [8928fb7]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [d6706f2]
+- Updated dependencies [5447426]
+- Updated dependencies [26e1099]
+- Updated dependencies [7e1f01c]
+  - @google-labs/breadboard@0.22.0
+  - @breadboard-ai/build@0.7.1
+
 ## 0.10.1
 
 ### Patch Changes

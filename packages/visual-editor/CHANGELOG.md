@@ -1,5 +1,201 @@
 # @google-labs/breadboard-web
 
+## 1.15.0
+
+### Minor Changes
+
+- 3f8cdd1: Introduce run store
+
+### Patch Changes
+
+- 00875af: Teach User Input to honor enums
+- 89ccc90: Reinstate "Test Component"
+- 9f33a12: Remove explicit site name from Firebase hosting config
+- 62f8d5b: Fix replay of saved runs
+- Updated dependencies [8c694ed]
+- Updated dependencies [bbf2c30]
+- Updated dependencies [14df6a8]
+- Updated dependencies [c5c39be]
+- Updated dependencies [1dc645a]
+- Updated dependencies [2aabb7a]
+- Updated dependencies [fb72771]
+- Updated dependencies [9b22cab]
+- Updated dependencies [00cc2c5]
+- Updated dependencies [c04cff0]
+- Updated dependencies [d88c37b]
+- Updated dependencies [3f8cdd1]
+- Updated dependencies [3a5ced1]
+- Updated dependencies [62f8d5b]
+  - @google-labs/breadboard@0.24.0
+  - @google-labs/agent-kit@0.9.1
+  - @google-labs/node-nursery-web@1.2.0
+  - @google-labs/core-kit@0.13.0
+  - @breadboard-ai/build@0.8.1
+  - @breadboard-ai/data-store@0.2.0
+  - @breadboard-ai/example-boards@0.2.1
+  - @google-labs/gemini-kit@0.5.4
+  - @google-labs/json-kit@0.3.5
+  - @breadboard-ai/manifest@0.4.1
+  - @google-labs/palm-kit@0.1.1
+  - @google-labs/template-kit@0.3.7
+  - @breadboard-ai/google-drive-kit@0.2.2
+
+## 1.14.0
+
+### Minor Changes
+
+- 9171352: Migrates the node configuration to new unified user input component
+- 2b9ef5b: Rewrire Datastore usage
+- 1a83a77: Migrate Activity Log to new unified input
+- 5f6d97c: Separate playground and examples
+- 2312443: Add support for `deprecated` and `experimental` tags on Kits.
+- 6ffa89c: Migrate to new data-store package
+
+### Patch Changes
+
+- e6c7269: Reinstate autosubmit of secrets
+- 62e5a34: Tidy the unified input a little
+- bdaaa81: Add example boards deps to vite build.
+- fa9073d: Fix bug where code editor fails to show up
+- 4e2fbd6: Prevent nav from jumping when a user selects an item
+- ec06605: Improve Array Editor robustness
+- 8d2e618: Teach Human to act as a start node.
+- 215bd15: Add google-drive-file-id
+- 2a206e8: Add "copy board URL to clipboard" option to overflow menu
+- 645eb63: Minor UI tweaks to VE and website
+- a0852df: Update titles and help links in Core Kit.
+- 8b370d7: Increase the set of reasons to refresh the side nav
+- 98f0ff2: Improve board support in unified editor
+- 9a2ffab: Unpin @breadboard-ai/build dependency from being overly constrained
+- 0a846ff: Switch from google-drive connection id to google-drive-limited, which requests access only to shared files, not all files.
+- 618e265: Add MVP of Node Runner
+- a527740: Add improved support for untyped arrays and objects
+- f1546f5: Make some tweaks to help newer users
+- 960922e: Store the OAuth client ID locally, in addition to the token details. Useful for APIs that require the client ID to be provided.
+- 1d98374: Teach unified input to honor multiline strings
+- 70ba2d3: Teach Activity Log & Unified User Input about secrets
+- Updated dependencies [cb0f513]
+- Updated dependencies [ad8aa22]
+- Updated dependencies [0519ebb]
+- Updated dependencies [1e1be2a]
+- Updated dependencies [6d2939e]
+- Updated dependencies [15b6171]
+- Updated dependencies [5c5b665]
+- Updated dependencies [2b094a3]
+- Updated dependencies [fa93c3f]
+- Updated dependencies [8d2e618]
+- Updated dependencies [f78ec0a]
+- Updated dependencies [215bd15]
+- Updated dependencies [2b9ef5b]
+- Updated dependencies [8dbbe20]
+- Updated dependencies [a0852df]
+- Updated dependencies [38e3232]
+- Updated dependencies [7298a47]
+- Updated dependencies [ea7e2a1]
+- Updated dependencies [8edcbc0]
+- Updated dependencies [5ce1026]
+- Updated dependencies [8db38aa]
+- Updated dependencies [5f6d97c]
+- Updated dependencies [9a2ffab]
+- Updated dependencies [b049e00]
+- Updated dependencies [0a846ff]
+- Updated dependencies [b99472b]
+- Updated dependencies [4bfaec5]
+- Updated dependencies [2312443]
+- Updated dependencies [1341291]
+- Updated dependencies [b76f9a1]
+- Updated dependencies [6ffa89c]
+- Updated dependencies [15ae381]
+  - @breadboard-ai/google-drive-kit@0.2.1
+  - @breadboard-ai/build@0.8.0
+  - @google-labs/gemini-kit@0.5.3
+  - @google-labs/breadboard@0.23.0
+  - @google-labs/core-kit@0.12.0
+  - @google-labs/template-kit@0.3.6
+  - @breadboard-ai/data-store@0.1.0
+  - @google-labs/agent-kit@0.9.0
+  - @google-labs/json-kit@0.3.4
+  - @breadboard-ai/example-boards@0.2.0
+  - @breadboard-ai/manifest@0.4.0
+  - @breadboard-ai/python-wasm@0.1.4
+  - @google-labs/palm-kit@0.1.0
+  - @google-labs/node-nursery-web@1.1.6
+
+## 1.12.0
+
+### Minor Changes
+
+- 6f82dea: Update Visual Editor package name
+- 0f9d617: Move breadboard-web to visual-editor; remove breadbuddy
+- 4ba1243: Migrate breadboard-ui to visual-editor
+
+### Patch Changes
+
+- 39f1aed: Improve paste handling in main area
+- c77b034: Add Getting Started Guide to Visual Editor
+- 43fc9fc: Change edit board to close
+- f4397b9: Update remaining breadboard-web paths
+- 66918fc: Enable pasting when on the Welcome Pane
+- 4c5bc52: Add Other Features section to Visual Editor docs
+- 4bf8894: Redirect older /graphs/ URLs to /example-boards/
+- 6b91b3e: Remove unused editable property
+- eaca143: Fall back to URL Constructor for browsers without canParse
+- 54cb2d4: Fix subgraph metadata bug
+- 6a59c83: Use the filename from the board's URL when exporting
+- e414ba0: Add New Board button to Welcome Pane
+- b357fbc: Sort nodes by selection status
+- bc8dcdd: Remind generate-graphs that it depends on agent-kit
+- fa2d1ab: Add fancy-json component for rendering JSON with configurable highlighting
+- 51034a0: Fix editor locking input focus (again)
+- 7bdb5a2: Default node x & y to 0 if not set
+- cb455ef: Account for schema mismatch in fetch component
+- 10bfeba: Clean up recent boards on delete
+- d016297: Tweak pasting of nodes when there is no metadata
+- ffe100b: Tweak the board selector to only show tools
+- bd55f95: Add components section to Visual Editor docs
+- cb0237d: Remove default when changing from array to anything else
+- 05f3acb: Null out the editor property sooner
+- 9d4ea07: Attempt to maintain property order in the schema editor
+- 164d104: Show red squigglies in port tooltips under mismatched schema constraints
+- 4c1a17c: Rename node to component; fix schema issue
+- a0587ec: Version Bump
+- 359424b: Add Activity Pane section to Visual Editor docs
+- a30fb39: Release drag behavior when clicking on port
+- Updated dependencies [a925cf0]
+- Updated dependencies [f2d9839]
+- Updated dependencies [f4d2416]
+- Updated dependencies [bc94299]
+- Updated dependencies [f4397b9]
+- Updated dependencies [166f290]
+- Updated dependencies [da43bb5]
+- Updated dependencies [5cf08f1]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [bc8dcdd]
+- Updated dependencies [ffbf163]
+- Updated dependencies [8928fb7]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [d6706f2]
+- Updated dependencies [5f6432b]
+- Updated dependencies [5447426]
+- Updated dependencies [4da35e5]
+- Updated dependencies [26e1099]
+- Updated dependencies [7e1f01c]
+- Updated dependencies [a9def5c]
+  - @google-labs/breadboard@0.22.0
+  - @breadboard-ai/google-drive-kit@0.2.0
+  - @google-labs/core-kit@0.11.0
+  - @google-labs/agent-kit@0.8.1
+  - @breadboard-ai/build@0.7.1
+  - @breadboard-ai/manifest@0.3.0
+  - @breadboard-ai/example-boards@0.1.1
+  - @google-labs/gemini-kit@0.5.2
+  - @google-labs/json-kit@0.3.3
+  - @google-labs/node-nursery-web@1.1.5
+  - @google-labs/palm-kit@0.0.16
+  - @google-labs/template-kit@0.3.5
+  - @breadboard-ai/python-wasm@0.1.3
+
 ## 1.10.1
 
 ### Patch Changes

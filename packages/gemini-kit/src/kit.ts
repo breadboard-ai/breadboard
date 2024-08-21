@@ -33,6 +33,9 @@ core.invoke({
   $metadata: {
     title: "Gemini Generator",
     description: "Generates text using the Gemini API.",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/gemini/#the-text-component",
+    },
   },
   $board: "#text",
 });
@@ -46,9 +49,11 @@ core.invoke({
   $board: "#nano",
   $metadata: {
     title: "Gemini Nano (Preview)",
-    description:
-      "Generates text with the on-device Gemini Nano model (see https://developer.chrome.com/ for more details) ",
+    description: "Generates text with the on-device Gemini Nano model ",
     icon: "nano",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/gemini/#the-nano-component",
+    },
   },
 });
 

@@ -4,24 +4,55 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import {
+  anyOf,
+  array,
+  enumeration,
+  intersect,
+  object,
+  optional,
+  toJSONSchema,
+  unsafeType,
+} from "@breadboard-ai/build";
+import type { ConvertBreadboardType } from "@breadboard-ai/build/internal/type-system/type.js";
 import { code } from "@google-labs/breadboard";
 
-export type TextPart = { text: string };
+export const textPartType = object({ text: "string" });
+export type TextPart = ConvertBreadboardType<typeof textPartType>;
 
-export type FunctionCallPart = {
-  functionCall: { name: string; args: Record<string, string> };
-};
+export const functionCallPartType = object({
+  functionCall: object({
+    name: "string",
+    args: object({}, "string"),
+  }),
+});
+export type FunctionCallPart = ConvertBreadboardType<
+  typeof functionCallPartType
+>;
 
-export type LlmContentRole = "user" | "model" | "tool";
+export const llmContentRoleType = enumeration("user", "model", "tool");
+export type LlmContentRole = ConvertBreadboardType<typeof llmContentRoleType>;
 
-export type LlmContent = {
-  role?: LlmContentRole;
-  parts: (TextPart | FunctionCallPart)[];
-};
+export const llmContentType = object({
+  role: optional(llmContentRoleType),
+  parts: array(anyOf(textPartType, functionCallPartType)),
+});
+export type LlmContent = ConvertBreadboardType<typeof llmContentType>;
 
-export type Metadata = {
-  role: "$metadata";
-} & (LooperMetadata | SplitMetadata);
+export const splitMarkerDataType = object({
+  /**
+   * There are three types of split markers:
+   * - start: the beginning of the split
+   * - next: the separator between the split parts
+   * - end: the end of the split
+   */
+  type: enumeration("start", "next", "end"),
+  /**
+   * Unique identifier for the split.
+   */
+  id: "string",
+});
+export type SplitMarkerData = ConvertBreadboardType<typeof splitMarkerDataType>;
 
 /**
  * Provides support for storing multiple parallel contexts within
@@ -37,73 +68,88 @@ export type Metadata = {
  * To allow nesting of split markers, a unique identifier is
  * assigned to all split markers that belong to the same split.
  */
-export type SplitMetadata = {
-  type: "split";
-  data: SplitMarkerData;
-};
+export const splitMetadataType = object({
+  type: enumeration("split"),
+  data: splitMarkerDataType,
+});
+export type SplitMetadata = ConvertBreadboardType<typeof splitMetadataType>;
 
-/**
- * Split Marker Data
- */
-export type SplitMarkerData = {
-  /**
-   * There are three types of split markers:
-   * - start: the beginning of the split
-   * - next: the separator between the split parts
-   * - end: the end of the split
-   */
-  type: "start" | "next" | "end";
-  /**
-   * Unique identifier for the split.
-   */
-  id: string;
-};
-
-export type LooperMetadata = {
-  type: "looper";
-  data: LooperPlan;
-};
-
-export type LooperPlan = {
+export const looperPlanType = object({
   /**
    * Maximum iterations to make. This can be used to create simple
    * "repeat N times" loops.
    */
-  max?: number;
+  max: optional("number"),
   /**
    * Plan items. Each item represents one trip down the "Loop" output, and
    * at the end of the list, the "Context Out".
    */
-  todo?: {
-    task: string;
-  }[];
+  todo: optional(
+    array(
+      object({
+        task: "string",
+      })
+    )
+  ),
   /**
    * The marker that will be used by others to signal completion of the job.
    */
-  doneMarker?: string;
+  doneMarker: optional("string"),
   /**
    * Indicator that this job is done.
    */
-  done?: boolean;
+  done: optional("boolean"),
   /**
    * Whether to append only the last item in the loop to the context or all
    * of them.
    */
-  appendLast?: boolean;
+  appendLast: optional("boolean"),
   /**
    * Whether to return only last item from the context as the final product
    * or all of them;
    */
-  returnLast?: boolean;
+  returnLast: optional("boolean"),
   /**
    * The next task.
    */
-  next?: string;
-};
+  next: optional("string"),
+});
+export type LooperPlan = ConvertBreadboardType<typeof looperPlanType>;
 
-export type LooperProgress = LooperPlan & { next: string };
+export const looperMetadataType = object({
+  type: enumeration("looper"),
+  data: looperPlanType,
+});
+export type LooperMetadata = ConvertBreadboardType<typeof looperMetadataType>;
 
-export type Context = LlmContent | Metadata;
+const metadataBase = object({ role: enumeration("$metadata") });
+export const metadataType = anyOf(
+  intersect(metadataBase, looperMetadataType),
+  intersect(metadataBase, splitMetadataType)
+);
+export type Metadata = ConvertBreadboardType<typeof metadataType>;
+
+// TODO(aomarks) intersect currently knows it can't handle cases like this and
+// throws. It's the case where the two intersected objects both have the same
+// property. E.g. {role: "$metadata"} & {role?: "$metadata"} should be
+// {role: "$metadata"}.
+export const looperProgressType = unsafeType<
+  ConvertBreadboardType<typeof looperPlanType> & { next: string }
+>(
+  (() => {
+    const schema = toJSONSchema(looperPlanType);
+    const required = (schema.required as string[] | undefined) ?? [];
+    if (!required.includes("next")) {
+      required.push("next");
+      schema.required = required;
+    }
+    return schema;
+  })()
+);
+export type LooperProgress = ConvertBreadboardType<typeof looperProgressType>;
+
+export const contextType = anyOf(llmContentType, metadataType);
+export type Context = ConvertBreadboardType<typeof contextType>;
 
 /**
  * Type helper for wrapping `code` functions.

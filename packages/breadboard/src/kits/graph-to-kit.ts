@@ -6,7 +6,6 @@
 
 import { callHandler, handlersFromKits } from "../handler.js";
 import { KitBuilderOptions } from "./builder.js";
-import { BoardRunner } from "../runner.js";
 import {
   GraphDescriptor,
   InputValues,
@@ -22,7 +21,6 @@ import { inspect } from "../index.js";
 export class GraphToKitAdapter {
   graph: GraphDescriptor;
   handlers?: NodeHandlers;
-  runner?: BoardRunner;
 
   private constructor(graph: GraphDescriptor) {
     this.graph = graph;
@@ -34,8 +32,7 @@ export class GraphToKitAdapter {
   }
 
   async #initialize(url: string, kits: Kit[] = []) {
-    const runner = await BoardRunner.fromGraphDescriptor(this.graph);
-    runner.url = url;
+    this.graph.url = url;
     // NOTE: This means that this board will _not_ use handlers defined upstream
     // in the stack of boards to execute to nodes on this graph, but only the
     // kits defined on this graph.
@@ -51,7 +48,6 @@ export class GraphToKitAdapter {
     this.handlers = kits?.reduce((acc, kit) => {
       return { ...acc, ...kit.handlers };
     }, {} as NodeHandlers);
-    this.runner = runner;
   }
 
   handlerForNode(id: NodeIdentifier): NodeHandler {
@@ -95,7 +91,7 @@ export class GraphToKitAdapter {
           throw new Error(`No handler found for node "${node.type}".`);
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const board = this.runner!;
+        const board = this.graph;
 
         const base = board.url ? new URL(board.url) : new URL(import.meta.url);
 
@@ -103,8 +99,6 @@ export class GraphToKitAdapter {
           ...context,
           outerGraph: board,
           base,
-          // Add this board's kits, so they are available to subgraphs
-          kits: [...(context.kits || []), ...board.kits],
         });
       },
     } as NodeHandler;

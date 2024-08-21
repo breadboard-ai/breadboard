@@ -10,6 +10,7 @@ import {
   GraphProvider,
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
+  GraphProviderItem,
 } from "@google-labs/breadboard";
 import { GraphProviderStore } from "./types.js";
 
@@ -24,7 +25,13 @@ export class ExamplesGraphProvider implements GraphProvider {
     return this.#ready;
   }
 
-  constructor(manifest: BreadboardManifest) {
+  constructor(manifests: Map<string, BreadboardManifest>) {
+    for (const [title, manifest] of manifests) {
+      this.#setItemsFromManifest(title, manifest);
+    }
+  }
+
+  #setItemsFromManifest(title: string, manifest: BreadboardManifest) {
     const boards = manifest.boards || [];
     const blank = boards
       .filter(isReference)
@@ -33,15 +40,7 @@ export class ExamplesGraphProvider implements GraphProvider {
     if (blank?.reference) {
       this.#blank = new URL(blank.reference, window.location.href);
     }
-    const boardMap: Map<
-      string,
-      {
-        url: string;
-        readonly: boolean;
-        mine: boolean;
-        handle: undefined;
-      }
-    > = new Map(
+    const boardMap: Map<string, GraphProviderItem> = new Map(
       boards
         .map((board) => ({
           ...board,
@@ -59,13 +58,14 @@ export class ExamplesGraphProvider implements GraphProvider {
               readonly: true,
               mine: false,
               handle: undefined,
+              tags: board.tags,
             },
           ];
         })
     );
-    this.#items.set("examples", {
+    this.#items.set(title, {
       permission: "granted",
-      title: "Example Boards",
+      title,
       items: boardMap,
     });
   }
@@ -90,6 +90,7 @@ export class ExamplesGraphProvider implements GraphProvider {
       disconnect: false,
       refresh: false,
       watch: false,
+      preview: false,
     };
   }
 
@@ -154,6 +155,12 @@ export class ExamplesGraphProvider implements GraphProvider {
   async createURL(_location: string, _fileName: string): Promise<string> {
     throw new Error(
       "The `ExamplesGraphProvider` should not be called to create URL."
+    );
+  }
+
+  async preview(_url: URL): Promise<URL> {
+    throw new Error(
+      "The `ExamplesGraphProvider` should not be called to preview"
     );
   }
 

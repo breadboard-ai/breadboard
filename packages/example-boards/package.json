@@ -1,10 +1,11 @@
 {
   "name": "@breadboard-ai/example-boards",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "description": "A collection of example boards",
   "main": "./build/make-graphs.js",
   "exports": {
-    "./local-boards.json": "./local-boards.json",
+    "./examples-boards.json": "./examples-boards.json",
+    "./playground-boards.json": "./playground-boards.json",
     "./example-boards/*.json": "./example-boards/*.json"
   },
   "types": "build/make-graphs.d.ts",
@@ -88,10 +89,12 @@
       ],
       "files": [
         "src/make-graphs.ts",
-        "src/boards/**/*.ts"
+        "src/boards/**/*.ts",
+        "src/boards/**/*.json"
       ],
       "output": [
-        "local-boards.json",
+        "example-boards.json",
+        "playground-boards.json",
         "example-boards/**/*.json",
         "docs/graphs/**/*.md"
       ]
@@ -126,21 +129,21 @@
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/example-boards#readme",
   "devDependencies": {
     "@google-labs/tsconfig": "^0.0.1",
-    "tsx": "^4.16.2",
-    "typescript": "^5.5.3"
+    "tsx": "^4.17.0",
+    "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.7.0",
-    "@breadboard-ai/google-drive-kit": "0.1.3",
-    "@breadboard-ai/manifest": "^0.2.0",
-    "@breadboard-ai/python-wasm": "0.1.2",
-    "@google-labs/agent-kit": "^0.8.0",
-    "@google-labs/breadboard": "^0.21.0",
-    "@google-labs/core-kit": "^0.10.1",
-    "@google-labs/gemini-kit": "^0.5.1",
-    "@google-labs/json-kit": "^0.3.2",
-    "@google-labs/node-nursery-web": "^1.1.4",
-    "@google-labs/palm-kit": "^0.0.15",
-    "@google-labs/template-kit": "^0.3.4"
+    "@breadboard-ai/build": "^0.8.1",
+    "@breadboard-ai/google-drive-kit": "0.2.2",
+    "@breadboard-ai/manifest": "^0.4.1",
+    "@breadboard-ai/python-wasm": "0.1.4",
+    "@google-labs/agent-kit": "^0.9.1",
+    "@google-labs/breadboard": "^0.24.0",
+    "@google-labs/core-kit": "^0.13.0",
+    "@google-labs/gemini-kit": "^0.5.4",
+    "@google-labs/json-kit": "^0.3.5",
+    "@google-labs/node-nursery-web": "^1.2.0",
+    "@google-labs/palm-kit": "^0.1.1",
+    "@google-labs/template-kit": "^0.3.7"
   }
 }

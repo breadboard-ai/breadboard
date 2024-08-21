@@ -14,7 +14,7 @@ import {
   HTTPClientTransport,
   HTTPServerTransport,
 } from "../../src/remote/http.js";
-import { AnyProxyRequestMessage } from "../../src/remote/protocol.js";
+import { AnyProxyRequestMessage } from "../../src/remote/types.js";
 import { Board } from "../../src/board.js";
 import { MirrorUniverseKit, TestKit } from "../helpers/_test-kit.js";
 import { StreamCapability } from "../../src/stream.js";
@@ -23,7 +23,7 @@ import {
   WorkerClientTransport,
   WorkerServerTransport,
 } from "../../src/remote/worker.js";
-import { asRuntimeKit } from "../../src/index.js";
+import { asRuntimeKit, invokeGraph } from "../../src/index.js";
 
 test("ProxyServer can use HTTPServerTransport", async (t) => {
   const kits = [asRuntimeKit(TestKit)];
@@ -85,7 +85,7 @@ test("ProxyClient creates functional proxy kits", async (t) => {
     .input({ hello: "world" })
     .wire("*", kit.reverser().wire("*", board.output()));
   const kits = [client.createProxyKit(["reverser"]), kit];
-  const outputs = await board.runOnce({ hello: "world" }, { kits });
+  const outputs = await invokeGraph(board, { hello: "world" }, { kits });
   t.deepEqual(outputs, { hello: "dlorw" });
 });
 
@@ -114,7 +114,7 @@ test("ProxyServer can be configured to tunnel nodes", async (t) => {
         kit.test().wire("*", kit.reverser().wire("*", board.output()))
       );
     const kits = [client.createProxyKit(["test", "reverser"]), kit];
-    const outputs = await board.runOnce({ hello: "world" }, { kits });
+    const outputs = await invokeGraph(board, { hello: "world" }, { kits });
     t.deepEqual(outputs, { hello: "dlrow" });
   }
   {
@@ -154,7 +154,7 @@ test("ProxyServer can be configured to tunnel nodes", async (t) => {
         kit.test().wire("*", kit.reverser().wire("*", board.output()))
       );
     const kits = [client.createProxyKit(["test", "reverser"]), kit];
-    const outputs = await board.runOnce({ hello: "world" }, { kits });
+    const outputs = await invokeGraph(board, { hello: "world" }, { kits });
     t.deepEqual(outputs, { hello: "DEKCOLB_EULAV" });
   }
 });
@@ -178,7 +178,7 @@ test("ProxyServer and ProxyClient correctly handle streams", async (t) => {
       .input({ hello: "world" })
       .wire("*", kit.streamer().wire("*", board.output()));
     const kits = [client.createProxyKit(["streamer"]), kit];
-    const outputs = await board.runOnce({ hello: "world" }, { kits });
+    const outputs = await invokeGraph(board, { hello: "world" }, { kits });
     t.like(outputs, { stream: { kind: "stream" } });
     const stream = (outputs.stream as StreamCapability<string>).stream;
     const reader = stream.getReader();
@@ -211,7 +211,7 @@ test("ProxyServer and ProxyClient correctly handle streams", async (t) => {
       .input({ hello: "world" })
       .wire("*", kit.streamer().wire("*", board.output()));
     const kits = [client.createProxyKit(["streamer"]), kit];
-    const outputs = await board.runOnce({ hello: "world" }, { kits });
+    const outputs = await invokeGraph(board, { hello: "world" }, { kits });
     t.like(outputs, { stream: { kind: "stream" } });
     const stream = (outputs.stream as StreamCapability<string>).stream;
     const reader = stream.getReader();

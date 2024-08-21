@@ -11,7 +11,7 @@
     "build": "wireit",
     "lint": "wireit",
     "ci": "npm ci",
-    "s": "(cd packages/board-server && npm run dev) # Starts the board server",
+    "s": "npm run dev -w packages/board-server --watch",
     "d": "(cd packages/website && npm run dev) # Starts the docs website",
     "w": "(cd packages/visual-editor && npm run dev) # Starts the breadboard web UI",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
@@ -20,7 +20,8 @@
     "syncpack:check:dev": "wireit",
     "syncpack:check:prod": "wireit",
     "syncpack:fix": "syncpack fix-mismatches --config syncpack.config.ts && npm install",
-    "check": "wireit"
+    "check": "wireit",
+    "markdown": "(find . -iname \"*.md\" -not -path \"*/.wireit/*\" -not -path \"*/node_modules/*\" -exec cat {} +) > all_markdown.md"
   },
   "wireit": {
     "build": {
@@ -28,10 +29,12 @@
         "./packages/agent-kit:build",
         "./packages/breadboard:build",
         "./packages/breadboard-cli:build",
+        "./packages/shared-ui:build",
         "./packages/visual-editor:build",
         "./packages/build:build",
         "./packages/connection-server:build",
         "./packages/core-kit:build",
+        "./packages/data-store:build",
         "./packages/discovery-types:build",
         "./packages/example-boards:build",
         "./packages/gemini-kit:build",
@@ -51,11 +54,13 @@
     "test": {
       "dependencies": [
         "./packages/agent-kit:test",
+        "./packages/board-server:test",
         "./packages/breadboard:test",
         "./packages/breadboard-cli:test",
         "./packages/build:test",
         "./packages/connection-server:test",
         "./packages/core-kit:test",
+        "./packages/data-store:test",
         "./packages/discovery-types:test",
         "./packages/google-drive-kit:test",
         "./packages/import:test",
@@ -75,6 +80,7 @@
         "./packages/build:lint",
         "./packages/connection-server:lint",
         "./packages/core-kit:lint",
+        "./packages/data-store:lint",
         "./packages/discovery-types:lint",
         "./packages/example-boards:lint",
         "./packages/gemini-kit:lint",
@@ -139,22 +145,22 @@
   "author": "Google Labs Team",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@changesets/cli": "^2.27.6",
+    "@changesets/cli": "^2.27.7",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
-    "@types/node": "^20.14.9",
-    "@typescript-eslint/eslint-plugin": "^7.14.1",
-    "@typescript-eslint/parser": "^7.14.1",
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
     "ava": "^5.2.0",
     "eslint": "^8.57.0",
     "eslint-plugin-expect-type": "^0.4.0",
     "npm-ci": "^0.0.2",
-    "rimraf": "^5.0.7",
-    "rollup": "^4.18.0",
+    "rimraf": "^6.0.1",
+    "rollup": "^4.21.0",
     "rollup-plugin-dts": "^6.1.1",
-    "syncpack": "^12.3.3",
-    "typescript": "^5.5.3",
-    "wireit": "^0.14.5"
+    "syncpack": "^12.4.0",
+    "typescript": "^5.5.4",
+    "wireit": "^0.14.7"
   },
   "workspaces": [
     "./core/*",
@@ -162,11 +168,10 @@
     "./packages/node-proxy-server/functions"
   ],
   "optionalDependencies": {
-    "@rollup/rollup-darwin-arm64": "^4.16.4",
-    "@rollup/rollup-linux-x64-gnu": "^4.17.1"
+    "@rollup/rollup-darwin-arm64": "^4.21.0",
+    "@rollup/rollup-linux-x64-gnu": "^4.21.0"
   },
   "dependencies": {
-    "@google-labs/core-kit": "^0.10.1",
     "json-schema": "^0.4.0",
     "litegraph.js": "^0.7.18",
     "prettier": "^3.3.2"

@@ -5,14 +5,15 @@
  */
 
 import {
+  annotate,
   array,
   board,
   enumeration,
   input,
   object,
   optional,
-  output,
   optionalEdge,
+  output,
 } from "@breadboard-ai/build";
 import { cast, fetch, unnest } from "@google-labs/core-kit";
 import { urlTemplate } from "@google-labs/template-kit";
@@ -30,6 +31,7 @@ const query = input({
   title: "Query",
   description: `A Google Drive search query.
 See https://developers.google.com/drive/api/guides/search-files for details.`,
+  type: annotate("string", { behavior: ["google-drive-query"] }),
   examples: [
     "'<folder id>' in parents",
     "name = 'hello'",
@@ -50,9 +52,13 @@ const response = cast(rawResponse, fileListType);
 const { files, incompleteSearch, nextPageToken } = unnest(response);
 
 export const listFiles = board({
-  title: "List Files",
-  description:
-    "List files in Google Drive.\n\nSee https://developers.google.com/drive/api/guides/search-files for more details.",
+  id: "listFiles",
+  metadata: {
+    title: "List Files",
+    description:
+      "List files in Google Drive.\n\nSee https://developers.google.com/drive/api/guides/search-files for more details.",
+    icon: "google-drive",
+  },
   inputs: { query },
   outputs: {
     files: output(files, {

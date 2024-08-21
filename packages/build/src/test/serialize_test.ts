@@ -14,17 +14,19 @@ import {
   array,
   defineNodeType,
   object,
+  optionalEdge,
   output,
   unsafeCast,
+  type SerializableBoard,
 } from "../index.js";
-import { board, type GenericBoardDefinition } from "../internal/board/board.js";
+import { board } from "../internal/board/board.js";
 import { constant } from "../internal/board/constant.js";
 import { input } from "../internal/board/input.js";
 import { loopback } from "../internal/board/loopback.js";
 import { serialize } from "../internal/board/serialize.js";
 
 function checkSerialization(
-  board: GenericBoardDefinition,
+  board: SerializableBoard,
   expected: GraphDescriptor
 ) {
   const actual = serialize(board);
@@ -2161,6 +2163,51 @@ test("constant input", () => {
           },
         },
         { id: "a-0", type: "a", configuration: {} },
+      ],
+    }
+  );
+});
+
+test("optional output", () => {
+  const foo = defineNodeType({
+    name: "foo",
+    inputs: {},
+    outputs: {
+      nodeOut: { type: "string" },
+    },
+    invoke: () => ({ nodeOut: "foo" }),
+  });
+
+  const { nodeOut } = foo({}).outputs;
+
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: { boardOut: output(optionalEdge(nodeOut)) },
+    }),
+    {
+      edges: [
+        {
+          from: "foo-0",
+          to: "output-0",
+          out: "nodeOut",
+          in: "boardOut",
+          optional: true,
+        },
+      ],
+      nodes: [
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: { boardOut: { type: "string" } },
+              required: [],
+            },
+          },
+        },
+        { id: "foo-0", type: "foo", configuration: {} },
       ],
     }
   );

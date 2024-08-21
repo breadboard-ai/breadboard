@@ -13,7 +13,13 @@ import type { Input } from "@breadboard-ai/build/internal/board/input.js";
 import type { OutputPortReference } from "@breadboard-ai/build/internal/common/port.js";
 import type { Expand } from "@breadboard-ai/build/internal/common/type-util.js";
 import type { JsonSerializable } from "@breadboard-ai/build/internal/type-system/type.js";
-import { getRunner } from "../utils.js";
+import {
+  getGraphDescriptor,
+  GraphDescriptor,
+  invokeGraph,
+  NodeHandlerContext,
+  OutputValues,
+} from "@google-labs/breadboard";
 
 /**
  * Apply the given board to all elements of the given array-type Breadboard
@@ -39,12 +45,40 @@ type ExtractOutputTypes<B extends BoardOutputPorts> = {
     : never;
 };
 
+const invokeGraphPerItem = async (
+  graph: GraphDescriptor,
+  item: JsonSerializable,
+  index: number,
+  list: JsonSerializable,
+  context: NodeHandlerContext
+) => {
+  // If the current board has a URL, pass it as new base.
+  // Otherwise, use the previous base.
+  const base = context?.board?.url && new URL(context.board?.url);
+
+  const newContext = {
+    ...context,
+    base: base || context?.base,
+    invocationPath: [...(context?.invocationPath || []), index],
+  };
+  const outputs = await invokeGraph(graph, { item, index, list }, newContext);
+  // TODO(aomarks) Map functions have an "item" input, but not an "item"
+  // output. Instead, all outputs become the map result. That's a bit
+  // weird, since it means you can't e.g. map a string to a string; only a
+  // string to an object containing a string. Let's try and migrate to a
+  // symmetrical map type, will need an opt-in flag initially.
+  return outputs;
+};
+
 const mapNode = defineNodeType({
   name: "map",
   metadata: {
     title: "Map",
     description:
       "Given a list and a board, iterates over this list (just like your usual JavaScript `map` function), invoking (runOnce) the supplied board for each item.",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-map-component",
+    },
   },
   inputs: {
     list: {
@@ -86,33 +120,24 @@ const mapNode = defineNodeType({
       // be able to even get to invoke. We know the JSON schema up-front.
       throw new Error(`Expected list to be an array, but got ${list}`);
     }
-    const runnableBoard = await getRunner(board, context);
-    if (!runnableBoard) return { list };
-    const result = await Promise.all(
-      list.map(async (item, index) => {
-        // TODO: Express as a multi-turn `run`.
-
-        // If the current board has a URL, pass it as new base.
-        // Otherwise, use the previous base.
-        const base = context?.board?.url && new URL(context.board?.url);
-
-        const newContext = {
-          ...context,
-          base: base || context?.base,
-          invocationPath: [...(context?.invocationPath || []), index],
-        };
-        const outputs = await runnableBoard.runOnce(
-          { item, index, list },
-          newContext
+    const graph = await getGraphDescriptor(board, context);
+    if (!graph) return { list };
+    let result: OutputValues[];
+    const runSerially = !!context.state;
+    if (runSerially) {
+      result = [];
+      for (const [index, item] of list.entries()) {
+        result.push(
+          await invokeGraphPerItem(graph, item, index, list, context)
         );
-        // TODO(aomarks) Map functions have an "item" input, but not an "item"
-        // output. Instead, all outputs become the map result. That's a bit
-        // weird, since it means you can't e.g. map a string to a string; only a
-        // string to an object containing a string. Let's try and migrate to a
-        // symmetrical map type, will need an opt-in flag initially.
-        return outputs;
-      })
-    );
+      }
+    } else {
+      result = await Promise.all(
+        list.map(async (item, index) => {
+          return invokeGraphPerItem(graph, item, index, list, context);
+        })
+      );
+    }
 
     const errors = result.filter((r) => r.$error);
     if (errors.length === 0) {

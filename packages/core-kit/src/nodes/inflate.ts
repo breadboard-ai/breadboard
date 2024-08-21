@@ -12,16 +12,21 @@ export default defineNodeType({
   metadata: {
     title: "Inflate",
     description: "Converts stored data to base64.",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-inflate-component",
+    },
   },
   inputs: {
     data: {
       type: object({}),
+      title: "Data",
       description: "Data to inflate.",
     },
   },
   outputs: {
     data: {
       type: object({}),
+      title: "Data",
       description: "inflated data.",
     },
   },

@@ -4,20 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { serverError } from "../errors.js";
-import { asInfo, getStore } from "../store.js";
-import type { ApiHandler } from "../types.js";
+import { getStore } from "../store.js";
+import type { ApiHandler, BoardParseResult } from "../types.js";
 
-const get: ApiHandler = async (path, req, res) => {
+const get: ApiHandler = async (parsed, req, res) => {
+  const { user, name } = parsed as BoardParseResult;
+
   const store = getStore();
 
-  const { userStore, boardName } = asInfo(path);
-  if (!userStore || !boardName) {
-    serverError(res, "Invalid path");
-    return true;
-  }
-
-  const board = await store.get(userStore, boardName);
+  const board = await store.get(user!, name!);
 
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(board);

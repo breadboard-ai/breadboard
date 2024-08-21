@@ -1,5 +1,66 @@
 # @breadboard-ai/google-drive-kit
 
+## 0.2.2
+
+### Patch Changes
+
+- Updated dependencies [00cc2c5]
+- Updated dependencies [d88c37b]
+- Updated dependencies [3a5ced1]
+  - @google-labs/core-kit@0.13.0
+  - @breadboard-ai/build@0.8.1
+  - @google-labs/template-kit@0.3.7
+
+## 0.2.1
+
+### Patch Changes
+
+- cb0f513: Convert google-drive to use new kit function.
+- 38e3232: Annotate file ID/query inputs with new behaviors so that the dedicated input components will be used for them.
+- 9a2ffab: Unpin @breadboard-ai/build dependency from being overly constrained
+- 0a846ff: Switch from google-drive connection id to google-drive-limited, which requests access only to shared files, not all files.
+- Updated dependencies [ad8aa22]
+- Updated dependencies [6d2939e]
+- Updated dependencies [15b6171]
+- Updated dependencies [5c5b665]
+- Updated dependencies [f78ec0a]
+- Updated dependencies [a0852df]
+- Updated dependencies [7298a47]
+- Updated dependencies [ea7e2a1]
+- Updated dependencies [8edcbc0]
+- Updated dependencies [9a2ffab]
+- Updated dependencies [b99472b]
+- Updated dependencies [4bfaec5]
+- Updated dependencies [2312443]
+- Updated dependencies [b76f9a1]
+- Updated dependencies [15ae381]
+  - @breadboard-ai/build@0.8.0
+  - @google-labs/core-kit@0.12.0
+  - @google-labs/template-kit@0.3.6
+
+## 0.2.0
+
+### Minor Changes
+
+- f2d9839: Move components into component folder. Fix some names & descriptions..
+
+### Patch Changes
+
+- 5f6432b: Internal type-safety improvement to list-files
+- Updated dependencies [f4d2416]
+- Updated dependencies [bc94299]
+- Updated dependencies [166f290]
+- Updated dependencies [da43bb5]
+- Updated dependencies [5cf08f1]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [26e1099]
+- Updated dependencies [a9def5c]
+  - @google-labs/core-kit@0.11.0
+  - @breadboard-ai/build@0.7.1
+  - @google-labs/template-kit@0.3.5
+
 ## 0.1.3
 
 ### Patch Changes

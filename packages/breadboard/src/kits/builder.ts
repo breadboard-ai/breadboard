@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { KitDescriptor, KitTag } from "@google-labs/breadboard-schema/graph.js";
 import {
-  ConfigOrLambda,
+  ConfigOrGraph,
   GenericKit,
   InputValues,
   Kit,
@@ -13,14 +14,9 @@ import {
   NodeFactory,
   NodeHandler,
   NodeHandlers,
-  OutputValues,
 } from "../types.js";
 
-export type KitBuilderOptions = {
-  url: string;
-  title?: string;
-  description?: string;
-  version?: string;
+export type KitBuilderOptions = KitDescriptor & {
   namespacePrefix?: string;
 };
 
@@ -36,6 +32,7 @@ export class KitBuilder {
   description?: string;
   version?: string;
   namespacePrefix?: string;
+  tags: KitTag[];
 
   constructor({
     title,
@@ -43,12 +40,14 @@ export class KitBuilder {
     version,
     url,
     namespacePrefix = "",
+    tags = [],
   }: KitBuilderOptions) {
     this.url = url;
     this.title = title;
     this.description = description;
     this.version = version;
     this.namespacePrefix = namespacePrefix;
+    this.tags = tags;
   }
 
   #addPrefix(handlers: NodeHandlers) {
@@ -64,7 +63,7 @@ export class KitBuilder {
     if (!this.url) throw new Error(`Builder was not yet initialized.`);
     const url = this.url;
     const prefix = this.namespacePrefix;
-    const { title, description, version } = this;
+    const { title, description, version, tags } = this;
 
     const prefixedHandlers = this.#addPrefix(handlers);
 
@@ -75,6 +74,7 @@ export class KitBuilder {
       description = description;
       version = version;
       url = url;
+      tags = tags;
 
       get handlers() {
         return prefixedHandlers;
@@ -83,13 +83,16 @@ export class KitBuilder {
       constructor(nodeFactory: NodeFactory) {
         const proxy = new Proxy(this, {
           get(target, prop: string) {
-            if (prop === "handlers" || prop === "url" || prop === "title") {
+            if (
+              prop === "handlers" ||
+              prop === "url" ||
+              prop === "title" ||
+              prop === "tags"
+            ) {
               return target[prop];
             } else if (nodes.includes(prop as NodeNames[number])) {
-              return (
-                configOrLambda: ConfigOrLambda<InputValues, OutputValues> = {}
-              ) => {
-                const config = nodeFactory.getConfigWithLambda(configOrLambda);
+              return (configOrGraph: ConfigOrGraph = {}) => {
+                const config = nodeFactory.getConfigWithLambda(configOrGraph);
                 const { $id, ...rest } = config;
                 return nodeFactory.create(
                   proxy as unknown as Kit,

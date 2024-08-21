@@ -4,14 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BoardRunner } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
 import type {
   InputValues,
   BreadboardCapability,
   NodeHandlerContext,
   GraphDescriptor,
-  LambdaNodeOutputs,
+  OutputValues,
 } from "@google-labs/breadboard";
 import { loadGraphFromPath } from "../utils.js";
 
@@ -55,13 +54,11 @@ export default {
   invoke: async (
     inputs: InputValues,
     context: NodeHandlerContext
-  ): Promise<LambdaNodeOutputs> => {
+  ): Promise<OutputValues> => {
     const { path, graph, ...args } = inputs as ImportNodeInputs;
 
     const board = graph
-      ? (graph as BoardRunner).runOnce // TODO: Hack! Use JSON schema or so instead.
-        ? ({ ...graph } as BoardRunner)
-        : await BoardRunner.fromGraphDescriptor(graph)
+      ? graph
       : path
         ? await loadGraphFromPath(path, context)
         : undefined;

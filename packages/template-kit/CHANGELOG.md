@@ -1,5 +1,64 @@
 # Changelog
 
+## 0.3.7
+
+### Patch Changes
+
+- Updated dependencies [8c694ed]
+- Updated dependencies [bbf2c30]
+- Updated dependencies [14df6a8]
+- Updated dependencies [1dc645a]
+- Updated dependencies [2aabb7a]
+- Updated dependencies [fb72771]
+- Updated dependencies [9b22cab]
+- Updated dependencies [00cc2c5]
+- Updated dependencies [c04cff0]
+- Updated dependencies [d88c37b]
+- Updated dependencies [3f8cdd1]
+- Updated dependencies [3a5ced1]
+- Updated dependencies [62f8d5b]
+  - @google-labs/breadboard@0.24.0
+  - @breadboard-ai/build@0.8.1
+
+## 0.3.6
+
+### Patch Changes
+
+- 15b6171: The wildcard input for urlTemplate now accepts "number" as well as "string"
+- 8edcbc0: Update Template and Core Kit to jive with docs.
+- 9a2ffab: Unpin @breadboard-ai/build dependency from being overly constrained
+- Updated dependencies [ad8aa22]
+- Updated dependencies [1e1be2a]
+- Updated dependencies [2b094a3]
+- Updated dependencies [fa93c3f]
+- Updated dependencies [f78ec0a]
+- Updated dependencies [215bd15]
+- Updated dependencies [2b9ef5b]
+- Updated dependencies [a0852df]
+- Updated dependencies [2312443]
+- Updated dependencies [b76f9a1]
+- Updated dependencies [6ffa89c]
+- Updated dependencies [15ae381]
+  - @breadboard-ai/build@0.8.0
+  - @google-labs/breadboard@0.23.0
+
+## 0.3.5
+
+### Patch Changes
+
+- Updated dependencies [a925cf0]
+- Updated dependencies [da43bb5]
+- Updated dependencies [5cf08f1]
+- Updated dependencies [ffbf163]
+- Updated dependencies [8928fb7]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [d6706f2]
+- Updated dependencies [5447426]
+- Updated dependencies [26e1099]
+- Updated dependencies [7e1f01c]
+  - @google-labs/breadboard@0.22.0
+  - @breadboard-ai/build@0.7.1
+
 ## 0.3.4
 
 ### Patch Changes

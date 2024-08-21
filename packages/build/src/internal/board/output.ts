@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { OutputPortReference } from "../common/port.js";
+import { brand, isBranded } from "../common/brand.js";
+import type { Value } from "../common/value.js";
 import type { JsonSerializable } from "../type-system/type.js";
-import type { Input, InputWithDefault } from "./input.js";
 
-export function output<T extends JsonSerializable>(
-  port: OutputPortReference<T> | Input<T> | InputWithDefault<T>,
+export function output<T extends JsonSerializable | undefined>(
+  port: Value<T>,
   {
     id,
     title,
@@ -17,7 +17,7 @@ export function output<T extends JsonSerializable>(
   }: { id?: string; title?: string; description?: string } = {}
 ): Output<T> {
   return {
-    __SpecialOutputBrand: true,
+    [brand]: "Output",
     id,
     title,
     description,
@@ -25,20 +25,16 @@ export function output<T extends JsonSerializable>(
   };
 }
 
-export interface Output<T extends JsonSerializable | undefined> {
-  readonly __SpecialOutputBrand: true;
+export interface Output<
+  T extends JsonSerializable | undefined = JsonSerializable | undefined,
+> {
+  readonly [brand]: "Output";
   readonly id?: string;
   readonly title?: string;
   readonly description?: string;
-  readonly port: OutputPortReference<T> | Input<T> | InputWithDefault<T>;
+  readonly port: Value<T>;
 }
 
-export function isSpecialOutput(
-  value: unknown
-): value is Output<JsonSerializable> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "__SpecialOutputBrand" in value
-  );
+export function isSpecialOutput(value: unknown): value is Output {
+  return isBranded(value, "Output");
 }

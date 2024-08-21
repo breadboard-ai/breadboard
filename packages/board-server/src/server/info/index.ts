@@ -7,6 +7,8 @@
 import type { IncomingMessage, ServerResponse } from "http";
 import { getStore, type ServerInfo } from "../store.js";
 import { methodNotAllowed } from "../errors.js";
+import { corsAll } from "../cors.js";
+import packageInfo from "../../../package.json" with { type: "json" };
 
 const DEFAULT_SERVER_INFO: ServerInfo = {
   title: "Board Server",
@@ -30,6 +32,10 @@ export const serveInfoAPI = async (
     return false;
   }
 
+  if (!corsAll(req, res)) {
+    return true;
+  }
+
   if (req.method !== "GET") {
     methodNotAllowed(res, "Only GET is allowed for /info");
     return true;
@@ -37,9 +43,10 @@ export const serveInfoAPI = async (
 
   const store = getStore();
   const info = (await store.getServerInfo()) || DEFAULT_SERVER_INFO;
+  const version = packageInfo.version;
 
   res.setHeader("Content-Type", "application/json");
-  res.end(JSON.stringify(info));
+  res.end(JSON.stringify({ ...info, version }));
 
   return true;
 };

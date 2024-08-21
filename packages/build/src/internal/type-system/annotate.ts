@@ -16,10 +16,14 @@ export function annotate<T extends BreadboardType>(
     behavior: BehaviorSchema[];
   }
 ): T {
+  const original = toJSONSchema(value);
+  const behavior = [
+    ...new Set([...(original.behavior ?? []), ...annotations.behavior]),
+  ];
   return {
     jsonSchema: {
-      ...annotations,
-      ...toJSONSchema(value),
+      ...original,
+      behavior,
     },
   } as BreadboardType as T;
 }

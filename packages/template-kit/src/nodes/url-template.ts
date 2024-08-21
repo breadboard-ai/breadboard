@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { defineNodeType } from "@breadboard-ai/build";
+import { anyOf, defineNodeType } from "@breadboard-ai/build";
 import { parseTemplate } from "url-template";
 
 const operators = [
@@ -62,9 +62,10 @@ export default defineNodeType({
       title: "Template",
       format: "multiline",
       description: "The URL template to use",
+      behavior: ["config"],
     },
     "*": {
-      type: "string",
+      type: anyOf("string", "number"),
     },
   },
   outputs: {

@@ -6,6 +6,7 @@
 
 import {
   InputValues,
+  invokeGraph,
   NodeHandlerContext,
   NodeHandlerMetadata,
   NodeValue,
@@ -67,7 +68,8 @@ const invoke = async (
       ...context,
       invocationPath: [...(context?.invocationPath || []), index++],
     };
-    const { accumulator } = await runnableBoard.runOnce(
+    const { accumulator } = await invokeGraph(
+      runnableBoard,
       { item, accumulator: result },
       newContext
     );
@@ -109,6 +111,9 @@ const metadata = {
   title: "Reduce",
   description:
     "Given a list, an initial accumulator value, and a board, invokes a board (runOnce) for each item and accumulator in the list and returns the final accumulator value. Loosely, same logic as the `reduce` function in JavaScript.",
+  help: {
+    url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-reduce-component",
+  },
 } satisfies NodeHandlerMetadata;
 
 export default { metadata, invoke, describe };

@@ -57,6 +57,7 @@ export interface BreadboardManifest extends Resource {
   manifests?: ManifestReference[];
   reference?: Reference;
   title?: Title;
+  tags?: Tags;
 }
 
 export class BreadboardManifestBuilder implements BreadboardManifest {
@@ -65,6 +66,7 @@ export class BreadboardManifestBuilder implements BreadboardManifest {
   readonly reference?: Reference;
   manifests?: ManifestReference[];
   title?: Title;
+  tags?: Tags;
 
   constructor(manifest: BreadboardManifest = {}) {
     this.$schema = manifest.$schema;
@@ -72,6 +74,7 @@ export class BreadboardManifestBuilder implements BreadboardManifest {
     this.manifests = manifest.manifests;
     this.reference = manifest.reference;
     this.title = manifest.title;
+    this.tags = manifest.tags;
   }
 
   addBoard(board: BoardReference): void {
@@ -143,6 +146,7 @@ export type Reference = UriReference | RelativeReference;
 export interface ResourceReference extends Resource, Partial<GraphDescriptor> {
   readonly reference: Reference;
   readonly title?: Title;
+  readonly tags?: Tags;
 }
 
 /**
@@ -190,3 +194,8 @@ export type ManifestReference = ResourceReference | BreadboardManifest;
  * ]
  */
 export type Title = string;
+
+/**
+ * The tags for this board
+ */
+export type Tags = string[];

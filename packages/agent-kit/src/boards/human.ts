@@ -14,34 +14,6 @@ import {
 } from "@google-labs/breadboard";
 import { Context, skipIfDone, userPartsAdder, fun } from "../context.js";
 
-const voteRequestContent = {
-  adCampaign: {
-    headlines: [
-      "Breadboard: AI Playground",
-      "Exp. AI Patterns",
-      "Rapid Prototyping",
-      "AI Power, Gemini",
-      "Integrate AI Seamlessly",
-      "Create Graphs, Prompts",
-      "Accessible AI",
-      "Breadboard: Dev's AI Kit",
-      "Supercharge Dev, Breadboard",
-      "Accelerate Innovation",
-      "Revolutionize Dev, AI",
-      "Breadboard: AI, Ingenuity",
-      "Elevate Projects, Breadboard",
-      "Unlock AI Power, Breadboard",
-    ],
-    descriptions: [
-      "Breadboard: Play, experiment, prototype with AI. Integrate AI with Gemini.",
-      "Stunning graphs with prompts. Accessible AI for devs.",
-      "Accelerate innovation with Breadboard. Experiment with AI risk-free.",
-      "Elevate projects with Breadboard AI. Integrate AI seamlessly.",
-    ],
-  },
-  voteRequest: "Does this ad campaign seem ok to you?",
-};
-
 export type HumanType = NewNodeFactory<
   {
     context: NewNodeValue;
@@ -86,6 +58,7 @@ const inputSchemaBuilder = code<SchemaInputs, SchemaOutputs>(
       description,
       type: "object",
       behavior: ["transient", "llm-content"],
+      examples: [JSON.stringify({ parts: [{ text: "" }] })],
     };
     const schema: Schema = {
       type: "object",
@@ -140,6 +113,9 @@ export type HumanMode = "input" | "inputOutput" | "choose" | "chooseReject";
  */
 export const modeRouterFunction = fun<ModeRouterIn, ModeRouterOut>(
   ({ context }) => {
+    if (!context) {
+      return { input: [] };
+    }
     const c = asContextArray(context);
     const mode = computeMode(c);
     if (mode === "input") {
@@ -172,6 +148,9 @@ export const modeRouterFunction = fun<ModeRouterIn, ModeRouterOut>(
 
     function computeMode(context: Context[]): HumanMode {
       const lastItem = context[context.length - 1];
+      if (!lastItem) {
+        return "input";
+      }
       if (lastItem.role === "user") {
         return "input";
       }
@@ -282,14 +261,6 @@ export default await board(({ context, title, description }) => {
     .isArray()
     .behavior("llm-content")
     .optional()
-    .examples(
-      JSON.stringify([
-        {
-          parts: [{ text: JSON.stringify(voteRequestContent) }],
-          role: "model",
-        },
-      ])
-    )
     .default("[]");
   title
     .title("Title")
@@ -388,10 +359,13 @@ export default await board(({ context, title, description }) => {
       behavior: ["bubble"],
       properties: {
         output: {
-          type: "object",
-          behavior: ["llm-content"],
           title: "Output",
           description: "The output to display",
+          type: "array",
+          items: {
+            type: "object",
+            behavior: ["llm-content"],
+          },
         },
       },
     } satisfies Schema,
@@ -428,6 +402,9 @@ export default await board(({ context, title, description }) => {
   title: "Human",
   metadata: {
     icon: "human",
+    help: {
+      url: "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#human",
+    },
   },
   description:
     "A human in the loop. Use this node to insert a real person (user input) into your team of synthetic workers.",

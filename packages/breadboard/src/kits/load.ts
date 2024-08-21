@@ -6,7 +6,7 @@
 
 import { inspect } from "../inspector/index.js";
 import { loadWithFetch } from "../loader/default.js";
-import { BoardRunner } from "../runner.js";
+import { invokeGraph } from "../run/invoke-graph.js";
 import {
   GraphDescriptor,
   InputValues,
@@ -45,6 +45,7 @@ class GraphDescriptorNodeHandler implements NodeHandlerObject {
     if (metadata?.deprecated)
       this.metadata.deprecated = metadata.deprecated as boolean;
     if (metadata?.icon) this.metadata.icon = metadata.icon;
+    if (metadata?.help) this.metadata.help = metadata.help;
   }
 
   async describe() {
@@ -52,8 +53,7 @@ class GraphDescriptorNodeHandler implements NodeHandlerObject {
   }
 
   async invoke(inputs: InputValues, context: NodeHandlerContext) {
-    const board = await BoardRunner.fromGraphDescriptor(this.#graph);
-    return await board.runOnce(inputs, context);
+    return await invokeGraph(this.#graph, inputs, context);
   }
 }
 

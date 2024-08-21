@@ -1,4 +1,4 @@
-import { Board, BoardRunner } from "@google-labs/breadboard";
+import { GraphDescriptor } from "@google-labs/breadboard";
 import esbuild from "esbuild";
 import { readFile, stat, unlink, writeFile } from "fs/promises";
 import { basename, join, resolve, dirname } from "path";
@@ -12,7 +12,7 @@ export class TypeScriptLoader extends Loader {
     filename: string,
     source: string,
     options?: Options
-  ): Promise<Board | BoardRunner | undefined> {
+  ): Promise<GraphDescriptor | null> {
     const tmpDir = options?.output ?? process.cwd();
     const randomName = Buffer.from(
       crypto.getRandomValues(new Uint32Array(16))
@@ -63,7 +63,7 @@ export class TypeScriptLoader extends Loader {
       return board;
     } catch (e) {
       console.error(e);
-      return undefined;
+      return null;
     } finally {
       tmpFileStat = await stat(tmpFilePath);
       // remove the file
@@ -77,7 +77,7 @@ export class TypeScriptLoader extends Loader {
     filename: string,
     source: string,
     options?: Options
-  ): Promise<{ boardJson: string; board: BoardRunner }> {
+  ): Promise<{ boardJson: string; board: GraphDescriptor }> {
     const board = await this.#loadBoardFromSource(filename, source, options);
     if (board == undefined) {
       throw new Error("Failed to load board from source");
@@ -86,7 +86,10 @@ export class TypeScriptLoader extends Loader {
     return { boardJson, board };
   }
 
-  async load(filePath: string, options: Options): Promise<BoardRunner> {
+  async load(
+    filePath: string,
+    options: Options
+  ): Promise<GraphDescriptor | null> {
     const fileContents = await readFile(filePath, "utf-8");
 
     const result = await esbuild.build({

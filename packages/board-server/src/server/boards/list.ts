@@ -8,7 +8,7 @@ import { getUserKey } from "../auth.js";
 import { getStore } from "../store.js";
 import type { ApiHandler } from "../types.js";
 
-const list: ApiHandler = async (path, req, res) => {
+const list: ApiHandler = async (_path, req, res) => {
   const store = getStore();
   const userKey = getUserKey(req);
   const boards = await store.list(userKey);

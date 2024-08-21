@@ -107,4 +107,7 @@ export default await board(({ context, worker, max }) => {
   description:
     "A worker whose job it is to repeat the same thing over and over, until some condition is met or the max count of repetitions is reached.",
   version: "0.0.1",
+  metadata: {
+    deprecated: true,
+  },
 });

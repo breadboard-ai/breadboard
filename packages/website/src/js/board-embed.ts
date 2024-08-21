@@ -13,7 +13,7 @@ import TemplateKit from "@google-labs/template-kit";
 import GeminiKit from "@google-labs/gemini-kit";
 import AgentKit from "@google-labs/agent-kit/agent.kit.json" assert { type: "json" };
 
-import "@breadboard-ai/visual-editor/editor";
+import "@breadboard-ai/shared-ui/editor";
 
 import {
   KitManifest,
@@ -103,8 +103,10 @@ export class BoardEmbed extends LitElement {
       return html`Unable to load - no URL provided`;
     }
 
-    const response = await fetch(this.url);
-    const graph = await response.json();
+    const loader = createLoader([]);
+    const graph = await loader.load(this.url, {
+      base: new URL(this.url, location.href),
+    });
     const kits = [
       asRuntimeKit(Core),
       asRuntimeKit(JSONKit),
@@ -116,7 +118,7 @@ export class BoardEmbed extends LitElement {
     const collapseNodesByDefault = this.collapseNodesByDefault === "true";
 
     return html`<bb-editor
-        .loader=${createLoader([])}
+        .loader=${loader}
         .kits=${kits}
         .assetPrefix=${"/breadboard/static"}
         .graph=${graph}
