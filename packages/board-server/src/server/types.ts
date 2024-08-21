@@ -117,7 +117,7 @@ export type RunBoardStateStore = {
   createUser(username: string, apiKey: string): Promise<CreateUserResult>
   list(userKey: string): Promise<BoardListEntry[]>
   getUserStore(userKey: string | null): Promise<GetUserStoreResult>
-  get(userStore: string, boardName: string): Promise<any>
+  get(userStore: string, boardName: string): Promise<string>
   update(userStore: string, path: string, graph: GraphDescriptor): Promise<OperationResult>
   create(userKey: string, name: string, dryRun: boolean): Promise<CreateBoardResult>
 };

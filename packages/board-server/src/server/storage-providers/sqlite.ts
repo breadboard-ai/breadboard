@@ -183,7 +183,7 @@ export class SQLiteStorageProvider implements RunBoardStateStore {
       return boards;
     }
   
-    async get(userStore: string, boardName: string): Promise<any> {
+    async get(userStore: string, boardName: string): Promise<string> {
       // Prepare and execute the SQL query to get the board details
       const stmt = this.db.prepare(`
         SELECT graph FROM boards
