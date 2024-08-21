@@ -155,7 +155,7 @@
       "id": "runJavascript-1",
       "type": "runJavascript",
       "configuration": {
-        "code": "const run = ({inputs:inputs2,useCache:useCache2,waitForModel:waitForModel2})=>{const request={inputs:inputs2,options:{use_cache:useCache2,wait_for_model:waitForModel2}};return{payload:JSON.stringify(request)}};",
+        "code": "const run = ({inputs:inputs2,useCache:useCache2,waitForModel:waitForModel2})=>{const request={inputs:inputs2,options:{use_cache:useCache2,wait_for_model:waitForModel2}};return{payload:request}};",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -175,7 +175,33 @@
           "type": "object",
           "properties": {
             "payload": {
-              "type": "string"
+              "type": "object",
+              "properties": {
+                "inputs": {
+                  "type": "string"
+                },
+                "options": {
+                  "type": "object",
+                  "properties": {
+                    "use_cache": {
+                      "type": "boolean"
+                    },
+                    "wait_for_model": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "use_cache",
+                    "wait_for_model"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "inputs",
+                "options"
+              ],
+              "additionalProperties": false
             }
           }
         },

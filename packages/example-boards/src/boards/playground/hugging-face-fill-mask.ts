@@ -8,7 +8,7 @@ const inputs = input({
     description: "The data to send to the hugging face api fill-mask endpoint"
 });
 
-const apiKey = secret("HUGGING_FACE_API_KEY")
+const apiKey = secret("HUGGING_FACE_API_KEY");
 
 const useCache = input({
     type: "boolean",
@@ -32,26 +32,18 @@ const makeHeaders = code(
     }
 );
 
-export type HuggingFaceFillMaskParams = {
-    inputs: string
-    options: {
-        use_cache: boolean
-        wait_for_model: boolean
-    }
-};
-
 const makePayload = code(
     { inputs, useCache, waitForModel },
-    { payload: "string" },
+    { payload: object({ inputs: "string", options: object({ use_cache: "boolean", wait_for_model: "boolean" }) }) },
     ({ inputs, useCache, waitForModel }) => {
-        const request: HuggingFaceFillMaskParams = {
+        const request = {
             inputs: inputs,
             options: {
                 use_cache: useCache,
                 wait_for_model: waitForModel
             }
         }
-        return { payload: JSON.stringify(request) };
+        return { payload: request };
     }
 );
 
