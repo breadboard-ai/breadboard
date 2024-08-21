@@ -15,8 +15,18 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
       });
     }
     
-    createUser(username: string, apiKey: string): Promise<CreateUserResult> {
-        throw new Error("Method not implemented.");
+    async createUser(username: string, apiKey: string): Promise<CreateUserResult> {
+      const existing = await this.#database.doc(`users/${username}`).get();
+      if (existing.exists) {
+        console.error(
+          `Account ${username} already exists with API key:\n${existing.data()!.apiKey}`
+        );
+        process.exit(0);
+      }
+      
+      await this.#database.doc(`users/${username}`).set({ apiKey: apiKey });
+
+      return { success: true, apiKey }
     }
   
     #getReanimationStateDoc(user: string, ticket?: string) {
