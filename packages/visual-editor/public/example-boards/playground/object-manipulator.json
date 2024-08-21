@@ -3,39 +3,39 @@
   "description": "Manipulate an object by picking or omitting keys",
   "edges": [
     {
-      "from": "fn-48",
-      "to": "output-49",
+      "from": "fn-47",
+      "to": "output-48",
       "out": "object",
       "in": "object"
     },
     {
-      "from": "input-47",
-      "to": "fn-48",
+      "from": "input-46",
+      "to": "fn-47",
       "out": "keys",
       "in": "keys"
     },
     {
-      "from": "input-47",
-      "to": "fn-48",
+      "from": "input-46",
+      "to": "fn-47",
       "out": "mode",
       "in": "mode"
     },
     {
-      "from": "input-47",
-      "to": "fn-48",
+      "from": "input-46",
+      "to": "fn-47",
       "out": "object",
       "in": "object"
     },
     {
-      "from": "input-47",
-      "to": "fn-48",
+      "from": "input-46",
+      "to": "fn-47",
       "out": "strict",
       "in": "strict"
     }
   ],
   "nodes": [
     {
-      "id": "input-47",
+      "id": "input-46",
       "type": "input",
       "configuration": {
         "examples": [
@@ -123,7 +123,7 @@
       }
     },
     {
-      "id": "output-49",
+      "id": "output-48",
       "type": "output",
       "configuration": {
         "schema": {
@@ -135,11 +135,11 @@
       }
     },
     {
-      "id": "fn-48",
+      "id": "fn-47",
       "type": "runJavascript",
       "configuration": {
-        "code": "const fn_48 = ({object,keys,mode=\"pick\",strict=false})=>{if(mode===\"pick\"){const result={};keys.forEach(key=>{if(strict&&!object[key]){throw new Error(`Key \"${key}\" not found in object`)}result[key]=object[key]});return{object:result}}else{const result={...object};keys.forEach(key=>{if(strict&&!object[key]){throw new Error(`Key \"${key}\" not found in object`)}delete result[key]});return{object:result}}};",
-        "name": "fn_48",
+        "code": "const fn_47 = ({object,keys,mode=\"pick\",strict=false})=>{if(mode===\"pick\"){const result={};keys.forEach(key=>{if(strict&&!object[key]){throw new Error(`Key \"${key}\" not found in object`)}result[key]=object[key]});return{object:result}}else{const result={...object};keys.forEach(key=>{if(strict&&!object[key]){throw new Error(`Key \"${key}\" not found in object`)}delete result[key]});return{object:result}}};",
+        "name": "fn_47",
         "raw": true
       },
       "metadata": {

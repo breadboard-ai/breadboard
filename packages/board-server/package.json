@@ -43,7 +43,16 @@
         "dist/client"
       ],
       "dependencies": [
-        "build:esbuild"
+        "build:esbuild",
+        "../breadboard:build:tsc",
+        "../data-store:build:tsc",
+        "../agent-kit:build:tsc",
+        "../palm-kit:build:tsc",
+        "../core-kit:build:tsc",
+        "../json-kit:build:tsc",
+        "../template-kit:build:tsc",
+        "../node-nursery-web:build:tsc",
+        "../shared-ui:build:tsc"
       ],
       "clean": "if-file-deleted"
     },
