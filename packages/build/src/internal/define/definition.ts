@@ -80,17 +80,19 @@ export interface Definition<
   >;
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export type GenericDiscreteComponent = Definition<
-  { [K: string]: JsonSerializable },
-  { [K: string]: JsonSerializable },
-  JsonSerializable | undefined,
-  JsonSerializable | undefined,
-  string,
-  boolean,
-  string | false,
-  string | false,
-  { [K: string]: InputMetadata }
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any
 >;
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export function isDiscreteComponent(
   value: object

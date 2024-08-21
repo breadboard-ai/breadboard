@@ -12,5 +12,5 @@ export default kit({
   description: "An example kit",
   version: "0.1.0",
   url: "npm:@breadboard-ai/python-wasm",
-  components: [runPython],
+  components: { runPython },
 });
