@@ -1,0 +1,146 @@
+{
+  "title": "unnest node example",
+  "version": "0.0.1",
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-7d42a1e9",
+        "text": "*Example:*\n\n`{`\n`  \"foo\": \"hello\",`\n`  \"bar\": 42`\n`}`",
+        "metadata": {
+          "visual": {
+            "x": -350,
+            "y": -147,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-2bb5efa9",
+        "text": "  `\"hello\"`",
+        "metadata": {
+          "visual": {
+            "x": 25,
+            "y": -93,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-caeeac74",
+        "text": "      `42`",
+        "metadata": {
+          "visual": {
+            "x": 26,
+            "y": -182,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-19bba74d",
+        "text": "**`unnest`** exposes all properties of the given JSON object as separate output ports.",
+        "metadata": {
+          "visual": {
+            "x": -168,
+            "y": -315,
+            "collapsed": false
+          }
+        }
+      }
+    ]
+  },
+  "edges": [
+    {
+      "from": "input-e511d815",
+      "to": "unnest-ee7e2cbf",
+      "in": "nested",
+      "out": "object"
+    },
+    {
+      "from": "unnest-ee7e2cbf",
+      "to": "output-d2d910de",
+      "out": "bar",
+      "in": "bar"
+    },
+    {
+      "from": "unnest-ee7e2cbf",
+      "to": "output-d2d910de",
+      "out": "foo",
+      "in": "foo"
+    }
+  ],
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input-e511d815",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "object": {
+              "type": "object",
+              "properties": {
+                "foo": {
+                  "type": "string"
+                },
+                "bar": {
+                  "type": "number"
+                }
+              },
+              "examples": [],
+              "default": "{\"foo\": \"hello\", \"bar\": 42}"
+            }
+          },
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -270,
+          "y": -177,
+          "collapsed": false
+        },
+        "title": "Input",
+        "logLevel": "debug"
+      }
+    },
+    {
+      "id": "unnest-ee7e2cbf",
+      "type": "unnest",
+      "metadata": {
+        "visual": {
+          "x": -118,
+          "y": -176,
+          "collapsed": false
+        },
+        "title": "Unnest",
+        "logLevel": "debug"
+      }
+    },
+    {
+      "id": "output-d2d910de",
+      "type": "output",
+      "metadata": {
+        "visual": {
+          "x": 139,
+          "y": -175,
+          "collapsed": false
+        },
+        "title": "Output"
+      },
+      "configuration": {
+        "schema": {
+          "properties": {
+            "bar": {
+              "type": "number",
+              "title": "bar",
+              "examples": []
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      }
+    }
+  ]
+}

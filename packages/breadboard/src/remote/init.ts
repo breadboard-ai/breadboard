@@ -9,7 +9,7 @@ import {
   LoadRequest,
   LoadResponse,
   ServerTransport,
-} from "./protocol.js";
+} from "./types.js";
 
 export class InitServer {
   #transport: ServerTransport<LoadRequest, LoadResponse>;

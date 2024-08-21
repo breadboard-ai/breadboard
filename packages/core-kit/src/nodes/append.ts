@@ -102,6 +102,9 @@ export const appendDescriber: NodeDescriberFunction = async (
 };
 
 export default {
+  metadata: {
+    deprecated: true,
+  },
   describe: appendDescriber,
   invoke: async (inputs: InputValues): Promise<OutputValues> => {
     const { accumulator, ...values } = inputs as AppendInputs;

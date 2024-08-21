@@ -1,9 +1,0 @@
-{
-  "name": "checkMenu",
-  "error": "Item is not on the menu",
-  "suggestion": {
-    "item": "name of the item that is on the menu that could work for the customer instead",
-    "extras": "array extras and options to make the item on the menu work for the customer",
-    "availableExtras": "array of all available extras and options for this item"
-  }
-}

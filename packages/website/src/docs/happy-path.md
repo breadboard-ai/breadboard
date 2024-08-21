@@ -1,8 +1,8 @@
 ---
-layout: docs.njk
-title: Breadboard Developer Happy Path
+layout: docs.liquid
+title: Developer Happy Path
 tags:
-  - general
+  - archive
   - wip
 ---
 
@@ -22,11 +22,16 @@ Go to the [Breadboard Starter Project](https://replit.com/@dglazkov/Breadboard-S
 
 Alternatively, you can install Breadboard locally:
 
-1. Install [Node.js >=v19](https://nodejs.org/en) if needed. Type `node -v` in your CLI to find out which node version you're currently using. If you already have an earlier version of Node installed, you can use [nvm](https://github.com/nvm-sh/nvm) to get to the version that Breadboard needs.
+1. Install [Node.js >=20.14.0](https://nodejs.org/en) if needed. Type `node -v` in your CLI to find out which node version you're currently using. If you already have an earlier version of Node installed, you can use [nvm](https://github.com/nvm-sh/nvm) to get to the version that Breadboard needs.
 
-2. Run `npm init @google-labs/breadboard ./breadboard-starter` to set up the project. This will create it in a new directory called `breadboard-starter`, but feel free to choose a different name.
+2. Run the following command:
 
-This will create a simple starter project that contains most of the bits you need to build AI boards.
+```bash
+npx @google-labs/create-breadboard ./breadboard-starter
+cd breadboard-starter
+```
+
+Doing so will create a new directory called `breadboard-starter`, and change current working directory to it. Feel free to choose a different name.
 
 Open your project in a code editor. We recommend [VSCode](https://code.visualstudio.com/) for the code editor, but any code editor should work (including with "hot reload", see below).
 
@@ -48,17 +53,17 @@ Breadboard relies on the "hot reload" developer experience pattern to ease rapid
 
 To get the best experience with "hot reload", position your code editor window side-by-side with the Breadboard debugger window:
 
-![Breadboard debugger and editor side-by-side](/breadboard/static/images/happy-path.jpg)
-
-When we save our board file in the code editor, the debugger will automatically reload and let us interact with the board.
+![Breadboard debugger and editor side-by-side](/breadboard/static/images/happy-path/happy-path.jpg)
 
 If you're using Replit, you should get this setup out of the box. If you're running Breadboard locally, position your windows as recommended.
 
-(TODO: screenshot of the debugger tile view)
+When we save our board file in the code editor, the debugger will automatically reload and let us interact with the board.
 
-![Debugger overview](/breadboard/static/images/debugger-overview.jpg)
+![Debugger tile view](/breadboard/static/images/happy-path/debugger-tile-view.png)
 
 ### Debugger Overview
+
+![Debugger overview](/breadboard/static/images/debugger-overview.jpg)
 
 The debugger has four main panels:
 
@@ -87,7 +92,7 @@ export default await board(({ text }) => {
 });
 ```
 
-(TODO: point at the visualizer in the debugger -- it shows input and output)
+![Debugger overview](/breadboard/static/images/happy-path/visualizer.png)
 
 > [!NOTE]
 >
@@ -96,20 +101,15 @@ export default await board(({ text }) => {
 > It might be worth going over this code to orient ourselves a little bit:
 >
 > - The `board` call is how we tell Breadboard to create a new board. It takes a function as an argument (`({ text }) => {...}`). This function (let's call it a "board function") is where we describe the board.
->
 > - The board function itself takes a single argument (let's call it "inputs") and returns a single argument, which we'll call "outputs". These arguments are the objects that describe the inputs and outputs of our new board.
->
 > - Both input and output are of the same shape: they are property bags that contain named properties. Each property is a "port" -- one value that the board takes in as input or passes as output. For example, the blank board has a single input port called `text` and a single output port called `text` -- and that input port is passed right through to the output port.
->
 > - The `serialize` function is then called on the result of the `board` invocation. This will serialize the board into Breadboard Graph Language (BGL). BGL is the [common format](./hourglass.md) that Breadboard uses to represent boards. BGL is useful to have a unified language, so you can have boards that call into other boards.
->
 > - The `serialize` function also takes a single argument: a metadata object that describes the board. This is where we can set the title, description, and version of the board. Since we'll be making many boards in the future, it's a good practice to give meaningful values to these properties.
->
 > - Behind the scenes, debugger scans for all the files in `src/boards`, looks for the `default` export in each file, serializes it as BGL, and then renders the BGL in the debugger. This is why we see the "Blank" board in the debugger window. It will also update on save, thanks to the hot reload mechanism. For example, try temporarily updating the two text instances to another string, save your changes, and observe how the debugger view updates accordingly.
 
 In the debugger window, we can see that the board asks for the `text` input. If we enter something there, and hit "Run", we'll see that what we entered gets passed through to the output.
 
-(TODO: screenshot of the finished run)
+![Debugger overview](/breadboard/static/images/happy-path/finished-run.png)
 
 > [!TIP]
 > This "bags of named input and output ports" pattern is very common in Breadboard. Within a board, passing data means connecting output ports to input ports.
@@ -130,10 +130,6 @@ To get a better sense of how debugger and code editor interact, let's play with 
 
 First, we'll make a copy of a blank board to create a clean slate. Make a copy of the file named `src/boards/blank.ts` and give it a name that feels right to you, like `src/boards/fun.ts`.
 
-In debugger, when we navigate back to the list of boards, we will see two "Blank board" tiles.
-
-(TODO: screenshot of the debugger with two blank boards)
-
 To distinguish between the two, we can use the metadata passed to
 the `serialize` function. In our new board file, change the title and description to your liking:
 
@@ -147,9 +143,13 @@ the `serialize` function. In our new board file, change the title and descriptio
 });
 ```
 
+In debugger, when we navigate back to the list of boards, we will two board tiles: "Blank board" and "My first board".
+
+![Debugger overview](/breadboard/static/images/happy-path/boards.png)
+
 When we save the file in the code editor, the tile representing our new board will change to reflect our edits. Now, click on that tile to open the board in debugger.
 
-(TODO: screenshot of new board open in debugger)
+![Debugger overview](/breadboard/static/images/happy-path/new-board.png)
 
 ### Adding inputs and outputs
 
@@ -173,7 +173,7 @@ Let's connect it to the output by appending a property named `number` to the `ou
 
 Now, saving the file pops up a new input field! And when we enter the values, the result appears in the output. Wahoo!
 
-(TODO: Point out that visualizer also shows text and number)
+![Debugger overview](/breadboard/static/images/happy-path/new-io-field.png)
 
 > [!TIP]
 > Please treat the immediacy of "hot reload" in the debugger as an invitation to play and experiment with the board. Change things, see what happens. It's easy to hit "undo" in the editor and get back to the previous state.
@@ -190,7 +190,7 @@ export default await board(({ text, number }) => {
 
 When we save the file, we'll see that the debugger now shows our titles and descriptions for the input fields.
 
-(TODO: screenshot of the inputs with titles/descriptions)
+![Debugger overview](/breadboard/static/images/happy-path/properties.png)
 
 A handy trick is to use the `examples` method to provide an example value for the input. This is especially useful for quick debugging of boards, since it fills in the input fields. No need to type, just hit "run".
 
@@ -245,13 +245,9 @@ We will also need to update TypeScript imports in this file to include the `code
 > Just like before, we will go over this bit of code to orient ourselves:
 >
 > - the `code` function is how we ask Breadboard to create a new type of node, of type `code`.
->
 > - just like the `board` function, it takes a single input: the "node function" that describes what the node will do.
->
 > - The node function takes in the inputs bag of ports and returns the output ports. In our node, there's one input port named `text` and one output port named `reversed`.
->
 > - the one-liner that actually does the work reverses the value of the `text` port. Note that we need to typecast it as `string`. By default, the type ports are unknown.
->
 > - finally, we return the `reversed` value as part of the outputs.
 
 It looks like creating new node types is pretty straightforward. Let's see if we can add it to the board.
@@ -279,11 +275,11 @@ export default await board(({ text, number }) => {
 
 Now, let's run this board.
 
-(TODO: Screenshot of a debugger with results of a reversed string)
+![Debugger overview](/breadboard/static/images/happy-path/reversed-result.png)
 
 Voila! We have a board that reverses a string.
 
-(TODO: Point out that the debugger shows a new node.)
+![Debugger overview](/breadboard/static/images/happy-path/new-node.png)
 
 As an additional exercise, we'll create another node type: a repeater. A repeater takes in a `text` port and a `number` port and returns the value of the `text` port repeated the numbers of times specified in the `number` port.
 
@@ -316,9 +312,7 @@ Just to add a bit of flourish, we can also decorate the output with a title, jus
 
 Now, when we run the board in the debugger, we will see the output titled "Reveresed and repeated text", which contains our input reversed and repeated.
 
-(TODO: screenshot of the debugger showing reveresed and repeated text)
-
-(TODO: Point out that the visualizer shows repeat and reverse nodes)
+![Debugger overview](/breadboard/static/images/happy-path/reverse-and-repeat.png)
 
 For completeness, here's the full code of our board so far:
 

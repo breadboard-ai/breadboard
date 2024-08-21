@@ -144,13 +144,14 @@ export default await board(({ context, instruction, schema }) => {
     .examples(sampleContext);
   instruction
     .title("Instruction")
+    .behavior("config")
     .format("multiline")
     .examples(sampleInstruction);
   schema
     .title("Schema")
     .examples(sampleSchema)
     .isObject()
-    .format("multiline")
+    .behavior("json-schema", "config")
     .optional()
     .default("{}");
 
@@ -267,4 +268,7 @@ export default await board(({ context, instruction, schema }) => {
   title: "Structured Worker",
   description: "A worker who outputs structure data (JSON) provided a schema.",
   version: "0.0.1",
+  metadata: {
+    deprecated: true,
+  },
 });

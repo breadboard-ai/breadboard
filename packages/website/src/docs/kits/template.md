@@ -1,84 +1,96 @@
 ---
-layout: docs.njk
+layout: docs.liquid
 title: Template Kit
 tags:
   - kits
-  - wip
 ---
 
 {% assign src_url = "https://github.com/breadboard-ai/breadboard/tree/main/packages/template-kit/src/nodes/" %}
 
-Here are all node handlers that are included in the Template Kit.
+This kit contains two components: **promptTemplate** and **urlTemplate**. Both are intended to facilitate the often-necessary string-munging when working with LLMs or accessing APIs.
 
-## promptTemplate
+## The `promptTemplate` component
 
-Use this node to populate simple handlebar-style templates. A required input is `template`, which is a string that contains the template prompt template. The template can contain zero or more placeholders that will be replaced with values from inputs. Specify placeholders as `{{inputName}}` in the template. The placeholders in the template must match the inputs wired into this node. The node will replace all placeholders with values from the input property bag and pass the result along as the `prompt` output property.
+{{ "/breadboard/static/boards/kits/template-prompt-template.bgl.json" | board }}
+
+Use this component to populate simple handlebar-style templates. It takes a string template that can contain zero or more placeholders that will be replaced with values from inputs.
+
+Specify placeholders in the handlebar-style in format -- like `{{inputName}}` in the template. The placeholders in the template will pop up as input ports for the component, ready to be wired in. The component will replace all placeholders with values from the wired in input ports and pass the result along as output.
+
+### Input ports
+
+The `promptTemplate` component has a variable number of input ports.
+
+![promptTemplate component input ports](/breadboard/static/images/template-kit/prompt-template-inputs.png)
+
+- **Template** (id: `template`) -- the template to fill out. Required.
+
+- **Placeholder input ports** -- zero or more additional ports that will be used to replace placeholders in the template.
+
+### Output ports
+
+The `promptTemplate` component has a single output:
+
+- **Prompt** (id: `prompt`) -- a string that contains the result of replacing placeholders in the **Template** with values from the placeholder input ports.
 
 ### Example
 
-If we send the following inputs to `promptTemplate`:
+If we set our **Prompt** to:
 
-```json
-{
-  "template": "Question: {{question}}\nThought: {{thought}}",
-  "question": "How old is planet Earth?",
-  "thought": "I wonder how old planet Earth is?"
-}
+```markdown{% raw %}
+Question: {{question}}
+Thought: {{thought}}
+{% endraw %}
 ```
 
-We will get this output:
+And then send "How old is planet Earth" to the **question** input port along with "I wonder how old planet Earth is?" to the **thought** input port, we will get this **Result**:
 
-```json
-{
-  "prompt": "Question: How old is planet Earth?\nThought: I wonder how old planet Earth is?"
-}
+```markdown
+Question: How old is planet Earth?
+Thought: I wonder how old planet Earth is?
 ```
 
-### Inputs
-
-- `template` - required property
-- zero or more inputs that will be used to replace placeholders in the template.
-
-### Outputs
-
-- `prompt` a string that contains the result of replacing placeholders in the template with values from the inputs.
+> [!TIP]
+> This example is captured in the board above.
 
 ### Implementation:
 
 - [prompt-template.ts]({{src_url}}prompt-template.ts)
 
-## urlTemplate
+## The `urlTemplate` component
 
-Use this node to safely construct URLs. It's similar in spirit to the `promptTemplate` node, except it ensures that the handlebar parameters are properly encoded as part of the URL. This node relies on the [URI template specification](https://tools.ietf.org/html/rfc6570) to construct URLs, so the syntax is using single curly braces instead of double curly braces.
+{{ "/breadboard/static/boards/kits/template-url-template.bgl.json" | board }}
 
-### Example:
+Use this component to safely construct URLs. It's similar in spirit to the `promptTemplate` component, except it ensures that the handlebar parameters are properly encoded as part of the URL. This component relies on the [URI template specification](https://tools.ietf.org/html/rfc6570) to construct URLs, so the syntax is using single curly braces instead of double curly braces.
 
-If we send the following inputs to `urlTemplate`:
+### Input ports
 
-```json
-{
-  "template": "https://example.com?question={question}",
-  "question": "How old is planet Earth?"
-}
-```
+The `urlTemplate` component has a variable number of input ports.
 
-We will get this output:
+- **Template** (id: `template`) -- required, a template for the URL. It can contain zero or more placeholders that will be replaced with values from the input property bag. Specify placeholders as `{propertyName}` in the template.
 
-```json
-{
-  "url": "https://example.com?question=How%20old%20is%20planet%20Earth%3F"
-}
-```
+- **Placeholder input ports** -- zero or more inputs that will be used to replace placeholders in the template.
 
-### Inputs:
+### Outputs ports
 
-- `template` -- required, a template for the URL. It can contain zero or more placeholders that will be replaced with values from the input property bag. Specify placeholders as `{propertyName}` in the template.
-- zero or more inputs that will be used to replace placeholders in the template.
-
-### Outputs:
+The `urlTemplate` component has a single output port.
 
 - `url` a string that contains the result of replacing placeholders in the template with values from the inputs.
 
-### Implementation:
+### Example
+
+If we set the **Template** to:
+
+```url
+https://www.googleapis.com/books/v1/volumes?q={query}&orderBy=relevance
+```
+
+And send "utopian sci-fi" to the **query** input, we will see this at the **URL** output:
+
+```url
+https://www.googleapis.com/books/v1/volumes?q=utopian%20sci-fi&orderBy=relevance
+```
+
+### Implementation
 
 - [url-template.ts]({{src_url}}url-template.ts)

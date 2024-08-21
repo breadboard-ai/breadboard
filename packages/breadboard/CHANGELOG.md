@@ -1,5 +1,276 @@
 # Changelog
 
+## 0.24.0
+
+### Minor Changes
+
+- 8c694ed: Support sequences of nested graphs (like what `reduce` does).
+- bbf2c30: Plumb interruptible run to board server.
+- 14df6a8: Retry with credentials when board fetch fails.
+- 2aabb7a: Introduce the concept of `partialOutputs` to `TraversalState`, to convey outputs produced while processing bubbled inputs.
+- fb72771: Introduce run reanimation and `interruptibleRunGraph`.
+- 9b22cab: Make sure that reanimator correctly adjusts invocationId when resuming.
+- 00cc2c5: Remove `lambda`, introduce standalone `invokeGraph` and `runGraph` functions, and other plumbing refactoring.
+- c04cff0: Bring back synchronous `TraversalResult.outputs`.
+- 3f8cdd1: Introduce run store
+- 3a5ced1: Refactor `map` to run serially when `RunStateManager` is present.
+
+### Patch Changes
+
+- 1dc645a: Remove `validator` and `slot` bits from BoardRunner and allow bubbled inputs to abort gracefully.
+- 62f8d5b: Fix replay of saved runs
+
+## 0.23.0
+
+### Minor Changes
+
+- 1e1be2a: Teach board-server run API endpoint to run simple boards.
+- 2b9ef5b: Rewrire Datastore usage
+- 2312443: Add support for `deprecated` and `experimental` tags on Kits.
+- 6ffa89c: Migrate to new data-store package
+
+### Patch Changes
+
+- 2b094a3: Add google-drive-query behavior
+- fa93c3f: Add drop function to datastore
+- 215bd15: Add google-drive-file-id
+- a0852df: Update titles and help links in Core Kit.
+- Updated dependencies [2312443]
+  - @google-labs/breadboard-schema@1.6.0
+
+## 0.22.0
+
+### Minor Changes
+
+- ffbf163: canConnect now checks JSON schema compatibility in a much more complete way, including understanding of nested types.
+
+### Patch Changes
+
+- a925cf0: Add inPort and outPort functions to InspectableEdge
+- 5cf08f1: Add "wires" property to NodeDescriberContext which exposes a describe() function for getting the actual schema of a connected port if needed.
+- 8928fb7: Add section for Visual Editor documentation
+- d6706f2: Add analyzeCanConnect method to InspectablePort which is like canConnect but with detailed error messages.
+- 5447426: Add kind port to InspectablePort to tell you whether it's an input or output port
+- 7e1f01c: Start rolling up .d.ts type information for the package.
+- Updated dependencies [dd783e0]
+- Updated dependencies [3aba1a4]
+  - @google-labs/breadboard-schema@1.5.1
+
+## 0.21.0
+
+### Minor Changes
+
+- 74ade20: Confine the number of inspectable runs to two.
+- 59dd0f5: Add support for "mine" property
+- 417323c: Teach Board Server to use Node Proxy Server
+- b3aa884: Introduce undo/redo capability in Editor API.
+- 7af14cf: Add support for comment nodes
+- 778f7aa: Teach Breadboard to load runs with non-text content.
+- 808f5e2: Introduce graph edit history API.
+- e0fdbc3: Use LLMContent types in blank graphs.
+- 14853d5: Add Gemini Nano node.
+- 8798514: Combine several Editor API methods to one `edit`.
+- eb64b9a: Export enum values
+- 91cb723: Teach Editor API to properly roll back multiple graph changes.
+- 3e10f0f: Introduce `DataCapability` and add support for multipart form data in `fetch`.
+- c53ca01: Plumb `DataStore` throuh to `NodeHandlerContext`.
+- 9491266: Implement `DataStore` and a simple implementation.
+- 2ace620: Teach `InspectableGraph.describe` to correctly propagate fixed/flexible bit.
+- 37418d9: Introduce the `iframe.html` entry point for running Breadboard in an iframe.
+- 083f69c: Add validate() method to InspectableEdge
+- 5b03d96: Start using multi-edit capability when pasting nodes.
+- f0d8d67: Remove the old "star port as ad-hoc port drop zone" machinery.
+- 836389d: Implement `InspectableRun.replay` for past runs.
+- 225c7cc: Implement simple ACL for board server.
+
+### Patch Changes
+
+- 5a55b7d: Don't prefill inputs from bubbled inputs.
+- 3d7b4a7: Introduce optional `help` metadata for graphs and kits.
+- fea8967: Add basic "Save As..." support
+- 54b03b9: Update nav styling
+- 810d7fd: Fix canGoBack check
+- 32a48a3: Teach `output` to be non-fixed by default.
+- cd73b17: Switch to Nodejs v20.14.0 as the baseline.
+- 81d82fe: Don't update events when looking up event data.
+- 2a7531b: Actually initialize `InspectablePort.type`.
+- 7c1b4cb: Temporarily mark new board server boards as published.
+- 702cfe1: Unblock UI on Providers
+- bebd96e: Move a bunch of docs over to archive.
+- 4c681cb: Switch to use edit operations machinery in Editor API internals.
+- fb2e584: Make metadata/configration changes incremental by default.
+- fcef799: Update `help` to have description and URL
+- Updated dependencies [3d7b4a7]
+- Updated dependencies [7af14cf]
+- Updated dependencies [511bd9b]
+- Updated dependencies [431fa3d]
+- Updated dependencies [cd73b17]
+- Updated dependencies [fcef799]
+  - @google-labs/breadboard-schema@1.5.0
+
+## 0.20.0
+
+### Minor Changes
+
+- 8097177: Allow output ports to be required in their schema without it turning output ports red when they are unwired
+- cec6d54: Introduce `InspectablePortType`.
+- 3397974: Add `InspectableNode.type()` and start using it.
+
+### Patch Changes
+
+- ab9a4ce: Remove `runRemote` method. It is old code that doesn't work and isn't used.
+- a35406c: Add formatGraphDescriptor function which formats BGL in a deterministic way
+- 477e6e6: Sort more schema fields for easier comparison across serializers
+
+## 0.19.0
+
+### Minor Changes
+
+- 63eb779: Add support for `interactiveSecrets` option on `RunConfig`.
+
+## 0.18.0
+
+### Minor Changes
+
+- cef20ca: Enable running edgeless graphs
+- 54baba8: Implement `AbortSignal` support.
+- cdc23bb: Make bubbled input values configurable.
+- a1fcaea: Introduce `code` behavior hint.
+- c3ed6a7: Introduce `InspectableRun.inputs`.
+- 3d48482: Change all multi-modal inputs to be a format of llm-content
+- 626139b: Support `icon` metadata on node types and graphs.
+- bd44e29: Support audio input
+- 43da00a: Introduce the concept of editor modes.
+- c3587e1: Introduce `GraphDescriptor.metadata`.
+
+### Patch Changes
+
+- fbf7a83: Apply `format` to array items.
+- 49c3aa1: Make `inputs` and `descriptor` optional for ErrorObject.
+- 416aed2: Introduce `metadata` for `NodeHandler` entries, teaching node types in Kits to describe themselves.
+- f2eda0b: Fix lots of bugs around Tool Worker.
+- 3f9507d: Better compatibility with @breadboard-ai/build
+- Updated dependencies [416aed2]
+  - @google-labs/breadboard-schema@1.4.1
+
+## 0.17.0
+
+### Minor Changes
+
+- ae79e4a: Implement `InspectableRun.currentNodeEvent`.
+- 72c5c6b: Split run-time and build-time URL resolutions for loading graphs.
+- c5ba396: Introduce `InspectableRun.stack` method.
+- 51159c4: Introduce `InspectableEdge.type`.
+- 6f9ba52: Add support for control edges.
+
+### Patch Changes
+
+- c3cb25f: Make star edge fix up work in reverse, too.
+- dd810dd: Introduce `GraphChangeEvent.visualOnly` to indicate that only visual metadata was updated.
+- 7bafa40: Introduce `graphchangereject` event in Editor API.
+- 2932f4b: Remove `schema` from `output` ports.
+
+## 0.16.0
+
+### Minor Changes
+
+- ad9c233: Allow adding edges between `star` and named ports.
+- 65d869b: Teach Editor API about versions and change events.
+- cf0ee4f: Add `blank` method to Editor API.
+- 5382365: Add `InspectableGraph.graphs` API.
+- ffd2a6c: Implement subgraph editing in Editor API.
+
+### Patch Changes
+
+- 417cdf5: Switch to use `GraphDescriptors` in subgraph editing.
+- 43cbed7: Remove `messages` and `currentNode` from `InspectableRun`.
+- ff6433c: Prepare InspectableGraph instances to have a mutable backing store.
+- 0e7f106: Add `metadata` to `InspectableNode`.
+- 9ea6ba0: A quick-and-dirty fix to the TS type system errors.
+
+## 0.15.0
+
+### Minor Changes
+
+- 938015d: Use `runJavascript` directly in `code` block.
+
+### Patch Changes
+
+- 76da09d: Early support for voting (yes/no) in Human node.
+
+## 0.14.0
+
+### Minor Changes
+
+- e8d0737: Make run serialization more compact.
+
+## 0.13.0
+
+### Minor Changes
+
+- 51a38c0: Teach `InspectableRunNodeEvent` to use `InspectableNode` by default.
+- 9326bd7: Introduce ability to save/load runs.
+
+### Patch Changes
+
+- faf1e12: Teach invoke to be more accepting of uncertainty.
+- d49b80e: Introduce `InspectableRun.getEventById` method.
+- fbad949: Various schema-related bug fixes.
+
+## 0.12.1
+
+### Patch Changes
+
+- 2fda461: Add missing build artifacts
+
+## 0.12.0
+
+### Minor Changes
+
+- 866fc36: Refactor `BoardLoader` to be a `GraphLoader` implementation.
+- f005b3b: Introduce `load` API for kits.
+- 048e8ec: Introduce `InspectableRunEvent` and API around it.
+- 60bd63c: Get the Run Inspector API ready to ship
+- 04d5420: Adds describer to GraphToKitAdapter
+- 1b48826: Introduce `GraphProvider` and make it pluggable.
+- 3e8cfcf: Teach `InspectableRunNodeEvent` about `InspectableNode`.
+- 986af39: Update GraphProvider to support additional methods; land IDBGraphProvider
+- eabd97b: Introduce the concept of log levels in Run Inspector API.
+- 2008f69: Teach breadboard to load custom URL types.
+- a8fc3f3: Teach `GraphProvider` to watch for file change notifications.
+- c208cfc: Introduce `canChangeEdge` and `changEdge` to the Editor API.
+
+### Patch Changes
+
+- 99446b8: Various quality improvements to schemas and Graph Inspector API.
+- a8bab08: Add support for inputs (including bubbled) to `InspectableRun.events`.
+- decfa29: Introduce `DebuggerGraphProvider`.
+- dcfdc37: Implement handling subgraphs in Run Inspector API.
+- d971aad: Add documentation for Run Inspector API.
+- dc35601: Improved run inspector API to mostly work.
+- 9cda2ff: Disallow creation of non-star to star edges.
+- 764ccda: Use behaviors to identify port editing UI.
+- 56b90a4: Improve graph unique id generation and various cleanups.
+- e648f64: Start using UUIDs for graphs.
+- ad5c1be: Introduce Tool Worker node in Agent Kit.
+- 4a4a1f6: Place unfinished sidecar events at the bottom of the event list.
+- bac9bb1: Bring loader machinery closer to cacheable load state.
+- 3c497b0: Use esbuild.build to compile the boards. This enables importing modules.
+- c0f785a: Shift more URL-resolution logic into the Loader.
+- 32cfbaf: Optimistically create edge instances during cache miss.
+- 8dc4e00: Fix a race condition in Worker transport.
+- 6438930: Make `InspectableEdge` and `InspectableNode` instances stable.
+- dd2cce6: Make graph editor work with stable `InspectableEdge`.
+- cac4f4f: Add `InspectableRunEvent.id`.
+- b1fc53b: Teach `breadboard debug` to load PaLM Kit dynamically.
+- ef05634: Allow node describe() and invoke() to work as long as an object provides those properties
+- Updated dependencies [f005b3b]
+- Updated dependencies [9b8e732]
+- Updated dependencies [4a4a1f6]
+- Updated dependencies [eabd97b]
+- Updated dependencies [efeb1a3]
+  - @google-labs/breadboard-schema@1.4.0
+
 ## 0.11.2
 
 ### Patch Changes

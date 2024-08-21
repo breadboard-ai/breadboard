@@ -4,10 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export {
+  createDefaultRunStore,
+  createDefaultDataStore,
+} from "../data/index.js";
 import { GraphDescriptor } from "../types.js";
 import { GraphStore } from "./graph-store.js";
 import { inspectableGraph } from "./graph.js";
-import { RunObserver } from "./run.js";
+import { RunObserver } from "./run/run.js";
 import {
   InspectableGraph,
   InspectableGraphOptions,
@@ -28,3 +32,5 @@ export const createRunObserver = (
   const store = new GraphStore();
   return new RunObserver(store, options || {});
 };
+
+export { Run } from "./run/run.js";

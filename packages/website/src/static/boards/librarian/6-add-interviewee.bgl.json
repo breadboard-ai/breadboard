@@ -1,0 +1,246 @@
+{
+  "title": "Step 6: Put Human in the loop",
+  "version": "0.0.1",
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-f45636fe",
+        "text": "Step 6: **Put Human in the loop**",
+        "metadata": {
+          "visual": {
+            "x": -284,
+            "y": -182,
+            "collapsed": false
+          }
+        }
+      }
+    ],
+    "tags": []
+  },
+  "edges": [
+    {
+      "from": "looper-b381bf13",
+      "to": "specialist-2551887d",
+      "in": "in",
+      "out": "loop"
+    },
+    {
+      "from": "input",
+      "to": "looper-b381bf13",
+      "in": "context",
+      "out": "context"
+    },
+    {
+      "from": "specialist-2551887d",
+      "to": "human-8b77a262",
+      "in": "context",
+      "out": "out"
+    },
+    {
+      "from": "human-8b77a262",
+      "to": "looper-b381bf13",
+      "in": "context",
+      "out": "context"
+    },
+    {
+      "from": "looper-b381bf13",
+      "to": "specialist-27a12855",
+      "in": "in",
+      "out": "done"
+    },
+    {
+      "from": "specialist-27a12855",
+      "to": "specialist-8928cd1a",
+      "out": "out",
+      "in": "in"
+    },
+    {
+      "from": "specialist-8928cd1a",
+      "to": "output",
+      "out": "out",
+      "in": "context"
+    }
+  ],
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]",
+              "description": "What book are you looking for?"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -281.9999999999998,
+          "y": -92.00000000000007,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "looper-b381bf13",
+      "type": "looper",
+      "metadata": {
+        "visual": {
+          "x": -78.99999999999991,
+          "y": -99.00000000000011,
+          "collapsed": false
+        },
+        "title": "Interview Planner",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "task": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Based on the initial topic, come up with the themes for 3-5 question interview to collect just enough information to look for an interesting book in the library."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "specialist-2551887d",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": -55.99999999999993,
+          "y": 119.9999999999998,
+          "collapsed": false
+        },
+        "title": "Interviewer",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "persona": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are an expert researcher, whose job it is to interview the user to collect information about the kind of book they want. Based on the theme provided and incorporating the history of the interview so far, offer a question that allows the user to easily pick or quickly type an answer."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "specialist-27a12855",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": 149,
+          "y": -118.0000000000001,
+          "collapsed": false
+        },
+        "title": "Researcher",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "persona": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are a library researcher. Based on the provided topic,\nand the information collected during the interview,\nformulate the query to call the Google Books API\nto search for the right book for the user."
+            }
+          ]
+        },
+        "tools": [
+          "https://breadboard-ai.github.io/breadboard/static/boards/librarian/tool-google-books.bgl.json"
+        ]
+      }
+    },
+    {
+      "id": "human-8b77a262",
+      "type": "human",
+      "metadata": {
+        "visual": {
+          "x": 178.99999999999994,
+          "y": 79.99999999999977,
+          "collapsed": false
+        },
+        "title": "Interviewee",
+        "logLevel": "debug"
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 472.0000000000001,
+          "y": 12.999999999999773,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "specialist-8928cd1a",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": 392,
+          "y": -158.00000000000003,
+          "collapsed": false
+        },
+        "title": "Summarizer",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "persona": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are an expert librarian. You take the raw book search results from multiple queries and the interview information that was collected, and come up with a list of book recommendations."
+            }
+          ]
+        },
+        "task": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Come up with a list of 5-7 recommendations.\nReply in markdown."
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "description": "A simple agent that helps me find interesting books."
+}

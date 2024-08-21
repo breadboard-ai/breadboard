@@ -15,8 +15,8 @@ import type {
 } from "./types.js";
 
 const getHandlerFunction = (handler: NodeHandler): NodeHandlerFunction => {
+  if ("invoke" in handler && handler.invoke) return handler.invoke;
   if (handler instanceof Function) return handler;
-  if (handler.invoke) return handler.invoke;
   throw new Error("Invalid handler");
 };
 

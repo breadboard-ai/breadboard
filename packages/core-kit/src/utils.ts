@@ -1,0 +1,109 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import {
+  GraphDescriptor,
+  NodeHandlerContext,
+  getGraphDescriptor,
+} from "@google-labs/breadboard";
+
+export const loadGraphFromPath = async (
+  path: string,
+  context: NodeHandlerContext
+) => {
+  const graph = await context.loader?.load(path, context);
+  if (!graph) throw new Error(`Unable to load graph from "${path}"`);
+  return graph;
+};
+
+type GetGraphDescriptorThrottler = Throttler<
+  [unknown, NodeHandlerContext],
+  GraphDescriptor | undefined
+>;
+
+const graphDescriptorCache = new Map<unknown, GetGraphDescriptorThrottler>();
+
+export const getRunner = async (
+  board: unknown,
+  context: NodeHandlerContext
+) => {
+  let throttler;
+  if (!graphDescriptorCache.has(board)) {
+    throttler = new Throttler(getGraphDescriptor);
+    graphDescriptorCache.set(board, throttler);
+  } else {
+    throttler = graphDescriptorCache.get(board)!;
+  }
+  return throttler.call({}, board, context);
+};
+
+type AsyncFunction<T extends unknown[], R> = (...args: T) => Promise<R>;
+
+/**
+ * A throttler that caches the result of a function call for a given delay.
+ * If the function is called again within the delay, the cached result is
+ * returned instead of calling the function again.
+ *
+ * This is useful for functions that are called frequently, but where the
+ * result doesn't need to be up-to-date on every call.
+ *
+ * To use, create a new Throttler with the function you want to throttle,
+ * then call the `call` method with the arguments you want to pass to the
+ * function. The first time `call` is called, the function will be called
+ * with the arguments. Subsequent calls within the delay will return the
+ * cached result.
+ */
+export class Throttler<T extends unknown[], R> {
+  private fn: AsyncFunction<T, R>;
+  private delay: number;
+  private lastCall: number = 0;
+  private cachedResult: R | null = null;
+  private inFlight: Promise<R> | null = null;
+
+  constructor(fn: AsyncFunction<T, R>, delay: number = 5000) {
+    this.fn = fn;
+    this.delay = delay;
+  }
+
+  async call(thisObj: object, ...args: T): Promise<R> {
+    const now = Date.now();
+    // If there's an in-flight request, wait for it.
+    if (this.inFlight) {
+      return this.inFlight;
+    }
+
+    // If we have a cached result and we're within the delay,
+    // return the cached result.
+    if (this.cachedResult !== null && now - this.lastCall < this.delay) {
+      return this.cachedResult;
+    }
+
+    // Otherwise, call the function.
+    this.lastCall = now;
+    this.inFlight = this.fn.apply(thisObj, args);
+
+    try {
+      const result = await this.inFlight;
+      this.cachedResult = result;
+      return result;
+    } finally {
+      this.inFlight = null;
+    }
+  }
+
+  getCachedResult(): R | null {
+    return this.cachedResult;
+  }
+
+  clearCache(): void {
+    this.cachedResult = null;
+    this.lastCall = 0;
+  }
+
+  setDelay(delay: number): void {
+    this.delay = delay;
+  }
+}

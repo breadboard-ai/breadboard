@@ -5,12 +5,18 @@
  */
 
 import {
+  GraphDescriptor,
+  NodeMetadata,
+  StartLabel,
+} from "@google-labs/breadboard-schema/graph.js";
+import {
   InputValues,
   NodeConfiguration,
   NodeDescriberResult,
   NodeDescriptor,
   NodeIdentifier,
   NodeTypeIdentifier,
+  OutputValues,
 } from "../types.js";
 import { collectPorts } from "./ports.js";
 import { EdgeType } from "./schemas.js";
@@ -19,6 +25,7 @@ import {
   InspectableGraph,
   InspectableNode,
   InspectableNodePorts,
+  InspectableNodeType,
   InspectablePortList,
   NodeTypeDescriberOptions,
 } from "./types.js";
@@ -36,6 +43,10 @@ class Node implements InspectableNode {
     return this.descriptor.metadata?.title || this.descriptor.id;
   }
 
+  description(): string {
+    return this.descriptor.metadata?.description || this.title();
+  }
+
   incoming(): InspectableEdge[] {
     return this.#graph.incomingForNode(this.descriptor.id);
   }
@@ -44,23 +55,61 @@ class Node implements InspectableNode {
     return this.#graph.outgoingForNode(this.descriptor.id);
   }
 
-  isEntry(): boolean {
+  isEntry(label: StartLabel = "default"): boolean {
+    const labels = this.startLabels();
+    if (labels) {
+      return labels.includes(label);
+    } else if (label !== "default") {
+      return false;
+    }
     return this.incoming().length === 0;
+  }
+
+  startLabels(): StartLabel[] | undefined {
+    const tags = this.descriptor?.metadata?.tags || [];
+    const labels: StartLabel[] = [];
+    for (const tag of tags) {
+      if (typeof tag === "string" && tag === "start") {
+        labels.push("default");
+      } else if (tag.type === "start") {
+        labels.push(tag.label || "default");
+      }
+    }
+    return labels.length > 0 ? labels : undefined;
   }
 
   isExit(): boolean {
     return this.outgoing().length === 0;
   }
 
+  type(): InspectableNodeType {
+    const type = this.#graph.typeForNode(this.descriptor.id);
+    if (!type) {
+      throw new Error(
+        `Possible integrity error: node ${this.descriptor.id} does not have a type`
+      );
+    }
+    return type;
+  }
+
   configuration(): NodeConfiguration {
     return this.descriptor.configuration || {};
+  }
+
+  metadata(): NodeMetadata {
+    return this.descriptor.metadata || {};
+  }
+
+  #inputsAndConfig(inputs?: InputValues, config?: NodeConfiguration) {
+    // Config first, then inputs on top. Inputs override config.
+    return { ...config, ...inputs };
   }
 
   async #describeInternal(
     options: NodeTypeDescriberOptions
   ): Promise<NodeDescriberResult> {
     return this.#graph.describeType(this.descriptor.type, {
-      inputs: { ...options.inputs, ...this.configuration() },
+      inputs: this.#inputsAndConfig(options.inputs, this.configuration()),
       incoming: options.incoming,
       outgoing: options.outgoing,
     });
@@ -74,7 +123,10 @@ class Node implements InspectableNode {
     });
   }
 
-  async ports(inputValues?: InputValues): Promise<InspectableNodePorts> {
+  async ports(
+    inputValues?: InputValues,
+    outputValues?: OutputValues
+  ): Promise<InspectableNodePorts> {
     const incoming = this.incoming();
     const outgoing = this.outgoing();
     const described = await this.#describeInternal({
@@ -88,24 +140,39 @@ class Node implements InspectableNode {
         EdgeType.In,
         incoming,
         described.inputSchema,
-        this.configuration()
+        false,
+        true,
+        this.#inputsAndConfig(inputValues, this.configuration())
       ),
     };
+    const addErrorPort =
+      this.descriptor.type !== "input" && this.descriptor.type !== "output";
     const outputs: InspectablePortList = {
       fixed: described.outputSchema.additionalProperties === false,
-      ports: collectPorts(EdgeType.Out, outgoing, described.outputSchema),
+      ports: collectPorts(
+        EdgeType.Out,
+        outgoing,
+        described.outputSchema,
+        addErrorPort,
+        false,
+        outputValues
+      ),
     };
     return { inputs, outputs };
   }
 }
 
-export class InspectableNodeCache {
+export class NodeCache {
   #graph: InspectableGraph;
   #map?: Map<NodeIdentifier, InspectableNode>;
   #typeMap?: Map<NodeTypeIdentifier, InspectableNode[]>;
 
   constructor(graph: InspectableGraph) {
     this.#graph = graph;
+  }
+
+  populate(graph: GraphDescriptor) {
+    graph.nodes.forEach((node) => this.#addNodeInternal(node));
   }
 
   #addNodeInternal(node: NodeDescriptor) {
@@ -125,7 +192,7 @@ export class InspectableNodeCache {
 
   #ensureNodeMap() {
     if (this.#map) return this.#map;
-    this.#graph.raw().nodes.forEach((node) => this.#addNodeInternal(node));
+    this.populate(this.#graph.raw());
     this.#map ??= new Map();
     return this.#map!;
   }

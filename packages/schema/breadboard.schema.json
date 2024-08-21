@@ -1,5 +1,5 @@
 {
-	"$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.3.0/packages/schema/breadboard.schema.json",
+	"$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.6.0/packages/schema/breadboard.schema.json",
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"$ref": "#/definitions/GraphDescriptor",
 	"definitions": {
@@ -61,6 +61,15 @@
 					"description": "For internal testing only. Do not use.",
 					"deprecated": "For internal testing only. Do not use."
 				},
+				"start": {
+					"$ref": "#/definitions/StartLabel",
+					"description": "For internal testing only. Do not use.",
+					"deprecated": "For internal testing only. Do not use."
+				},
+				"metadata": {
+					"$ref": "#/definitions/GraphMetadata",
+					"description": "Metadata associated with the graph."
+				},
 				"edges": {
 					"type": "array",
 					"items": {
@@ -88,7 +97,7 @@
 				},
 				"args": {
 					"$ref": "#/definitions/InputValues",
-					"description": "Arguments that are passed to the graph, useful to bind values to lambdas."
+					"description": "Arguments that are passed to the graph, useful to bind values to graphs."
 				},
 				"$schema": {
 					"type": "string",
@@ -185,6 +194,177 @@
 			"type": "string",
 			"description": "Unique identifier of a node in a graph."
 		},
+		"StartLabel": {
+			"type": "string",
+			"enum": [
+				"default",
+				"describe"
+			],
+			"description": "Valid start labels."
+		},
+		"GraphMetadata": {
+			"type": "object",
+			"properties": {
+				"icon": {
+					"type": "string",
+					"description": "The icon that identifies the graph. Can be a URL or a Material Design id."
+				},
+				"comments": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/CommentNode"
+					}
+				},
+				"tags": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/GraphTag"
+					},
+					"description": "Tags associated with the graph. At this moment, free-form strings."
+				},
+				"help": {
+					"type": "object",
+					"properties": {
+						"description": {
+							"type": "string"
+						},
+						"url": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"url"
+					],
+					"additionalProperties": false,
+					"description": "The documentation for the graph, expressed as a URL and optional description."
+				}
+			},
+			"additionalProperties": {
+				"$ref": "#/definitions/NodeValue"
+			},
+			"description": "Represents graph metadata."
+		},
+		"CommentNode": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"$ref": "#/definitions/NodeIdentifier",
+					"description": "Unique id of the comment node in graph metadata."
+				},
+				"text": {
+					"type": "string",
+					"description": "The text content of the comment."
+				},
+				"metadata": {
+					"$ref": "#/definitions/NodeMetadata",
+					"description": "The metadata of the comment node. Use this to provide additional information about the comment node."
+				}
+			},
+			"required": [
+				"id",
+				"text"
+			],
+			"additionalProperties": false
+		},
+		"NodeMetadata": {
+			"type": "object",
+			"properties": {
+				"title": {
+					"type": "string",
+					"description": "The title of the node."
+				},
+				"description": {
+					"type": "string",
+					"description": "A more detailed description of the node."
+				},
+				"visual": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "number"
+						},
+						{
+							"type": "boolean"
+						},
+						{
+							"type": "null"
+						},
+						{
+							"type": "array",
+							"items": {
+								"$ref": "#/definitions/NodeValue"
+							}
+						},
+						{
+							"$ref": "#/definitions/Capability"
+						},
+						{
+							"type": "object",
+							"additionalProperties": {
+								"$ref": "#/definitions/NodeValue"
+							}
+						}
+					],
+					"description": "Metadata that conveys visual information about the node. Can be used by visual editors to store information about the node's appearance, current position, etc."
+				},
+				"logLevel": {
+					"type": "string",
+					"enum": [
+						"debug",
+						"info"
+					],
+					"description": "Logging level."
+				},
+				"tags": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/NodeTag"
+					},
+					"description": "Tags associated with the node. Can be either a string or a structured tag, like a `StartTag`."
+				}
+			},
+			"additionalProperties": false,
+			"description": "Represents metadata of a node. This is an optional part of the `NodeDescriptor` that can be used to provide additional information about the node."
+		},
+		"NodeTag": {
+			"anyOf": [
+				{
+					"type": "string",
+					"const": "start"
+				},
+				{
+					"$ref": "#/definitions/StartTag"
+				}
+			],
+			"description": "Represents a tag that can be associated with a node."
+		},
+		"StartTag": {
+			"type": "object",
+			"properties": {
+				"type": {
+					"type": "string",
+					"const": "start"
+				},
+				"label": {
+					"$ref": "#/definitions/StartLabel"
+				}
+			},
+			"required": [
+				"type"
+			],
+			"additionalProperties": false,
+			"description": "Represents a start tag, which is a special tag that can be associated with a node. It is used to indicate that the node is a starting point for traversal. The `label` field allows the user to specify additional way to specify the kind of traversal they are looking for."
+		},
+		"GraphTag": {
+			"type": "string",
+			"enum": [
+				"published",
+				"tool"
+			],
+			"description": "A tag that can be associated with a graph.\n- `published`: The graph is published (as opposed to a draft). It may be    used in production and shared with others.\n- `tool`: The graph is intended to be a tool."
+		},
 		"Edge": {
 			"type": "object",
 			"properties": {
@@ -266,61 +446,6 @@
 			},
 			"description": "Values that are supplied as part of the graph. These values are merged with the `InputValues` and supplied as inputs to the `NodeHandler`."
 		},
-		"NodeMetadata": {
-			"type": "object",
-			"properties": {
-				"title": {
-					"type": "string",
-					"description": "The title of the node."
-				},
-				"description": {
-					"type": "string",
-					"description": "A more detailed description of the node."
-				},
-				"visual": {
-					"anyOf": [
-						{
-							"type": "string"
-						},
-						{
-							"type": "number"
-						},
-						{
-							"type": "boolean"
-						},
-						{
-							"type": "null"
-						},
-						{
-							"type": "array",
-							"items": {
-								"$ref": "#/definitions/NodeValue"
-							}
-						},
-						{
-							"$ref": "#/definitions/Capability"
-						},
-						{
-							"type": "object",
-							"additionalProperties": {
-								"$ref": "#/definitions/NodeValue"
-							}
-						}
-					],
-					"description": "Metadata that conveys visual information about the node. Can be used by visual editors to store information about the node's appearance, current position, etc."
-				},
-				"logLevel": {
-					"type": "string",
-					"enum": [
-						"debug",
-						"info"
-					],
-					"description": "Logging level."
-				}
-			},
-			"additionalProperties": false,
-			"description": "Represents metadata of a node. This is an optional part of the `NodeDescriptor` that can be used to provide additional information about the node."
-		},
 		"KitDescriptor": {
 			"type": "object",
 			"additionalProperties": false,
@@ -338,6 +463,13 @@
 					"description": "Version of the kit. [semver](https://semver.org/) format is encouraged.",
 					"pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
 				},
+				"tags": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/KitTag"
+					},
+					"description": "Tags, associated with the kit."
+				},
 				"url": {
 					"type": "string",
 					"description": "The URL pointing to the location of the kit."
@@ -346,6 +478,14 @@
 			"required": [
 				"url"
 			]
+		},
+		"KitTag": {
+			"type": "string",
+			"enum": [
+				"deprecated",
+				"experimental"
+			],
+			"description": "Represents various tags that can be associated with a kit.\n- `deprecated`: The kit is deprecated and should not be used.\n- `experimental`: The kit is experimental and may not be stable."
 		},
 		"SubGraphs": {
 			"type": "object",

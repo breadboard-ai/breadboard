@@ -6,9 +6,8 @@
 
 import test from "ava";
 
-import {
+import urlTemplate, {
   getUrlTemplateParameters,
-  urlTemplateDescriber,
 } from "../../src/nodes/url-template.js";
 
 test("getUrlTemplateParameters produces valid results", (t) => {
@@ -57,7 +56,7 @@ test("getUrlTemplateParameters produces valid results", (t) => {
 
 test("`urlTemplateDescriber` produces valid results", async (t) => {
   {
-    const description = await urlTemplateDescriber({
+    const description = await urlTemplate.describe({
       template: "https://example.com/{path}",
     });
     t.like(description, {
@@ -67,10 +66,13 @@ test("`urlTemplateDescriber` produces valid results", async (t) => {
           path: {
             title: "path",
             description: 'Value for placeholder "path"',
-            type: "string",
+            type: [
+              "string",
+              "number"
+            ],
           },
           template: {
-            title: "template",
+            title: "Template",
             description: "The URL template to use",
             type: "string",
           },
@@ -79,7 +81,7 @@ test("`urlTemplateDescriber` produces valid results", async (t) => {
     });
   }
   {
-    const description = await urlTemplateDescriber({
+    const description = await urlTemplate.describe({
       template: "https://example.com/{/path}",
     });
     t.like(description, {
@@ -89,10 +91,13 @@ test("`urlTemplateDescriber` produces valid results", async (t) => {
           path: {
             title: "path",
             description: 'Value for path segment expansion placeholder "path"',
-            type: "string",
+            type: [
+              "string",
+              "number"
+            ],
           },
           template: {
-            title: "template",
+            title: "Template",
             description: "The URL template to use",
             type: "string",
           },

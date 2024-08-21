@@ -1,5 +1,424 @@
 # @google-labs/gemini-kit
 
+## 0.5.4
+
+### Patch Changes
+
+- Updated dependencies [8c694ed]
+- Updated dependencies [bbf2c30]
+- Updated dependencies [14df6a8]
+- Updated dependencies [1dc645a]
+- Updated dependencies [2aabb7a]
+- Updated dependencies [fb72771]
+- Updated dependencies [9b22cab]
+- Updated dependencies [00cc2c5]
+- Updated dependencies [c04cff0]
+- Updated dependencies [d88c37b]
+- Updated dependencies [3f8cdd1]
+- Updated dependencies [3a5ced1]
+- Updated dependencies [62f8d5b]
+  - @google-labs/breadboard@0.24.0
+  - @google-labs/node-nursery-web@1.2.0
+  - @google-labs/core-kit@0.13.0
+  - @breadboard-ai/build@0.8.1
+  - @google-labs/json-kit@0.3.5
+  - @google-labs/template-kit@0.3.7
+
+## 0.5.3
+
+### Patch Changes
+
+- 0519ebb: Export geminiText from gemini package
+- 9a2ffab: Unpin @breadboard-ai/build dependency from being overly constrained
+- Updated dependencies [ad8aa22]
+- Updated dependencies [1e1be2a]
+- Updated dependencies [6d2939e]
+- Updated dependencies [15b6171]
+- Updated dependencies [5c5b665]
+- Updated dependencies [2b094a3]
+- Updated dependencies [fa93c3f]
+- Updated dependencies [f78ec0a]
+- Updated dependencies [215bd15]
+- Updated dependencies [2b9ef5b]
+- Updated dependencies [a0852df]
+- Updated dependencies [7298a47]
+- Updated dependencies [ea7e2a1]
+- Updated dependencies [8edcbc0]
+- Updated dependencies [8db38aa]
+- Updated dependencies [9a2ffab]
+- Updated dependencies [b99472b]
+- Updated dependencies [4bfaec5]
+- Updated dependencies [2312443]
+- Updated dependencies [b76f9a1]
+- Updated dependencies [6ffa89c]
+- Updated dependencies [15ae381]
+  - @breadboard-ai/build@0.8.0
+  - @google-labs/breadboard@0.23.0
+  - @google-labs/core-kit@0.12.0
+  - @google-labs/template-kit@0.3.6
+  - @google-labs/json-kit@0.3.4
+  - @google-labs/node-nursery-web@1.1.6
+
+## 0.5.2
+
+### Patch Changes
+
+- Updated dependencies [a925cf0]
+- Updated dependencies [f4d2416]
+- Updated dependencies [bc94299]
+- Updated dependencies [166f290]
+- Updated dependencies [da43bb5]
+- Updated dependencies [5cf08f1]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [ffbf163]
+- Updated dependencies [8928fb7]
+- Updated dependencies [9d93cf8]
+- Updated dependencies [d6706f2]
+- Updated dependencies [5447426]
+- Updated dependencies [26e1099]
+- Updated dependencies [7e1f01c]
+- Updated dependencies [a9def5c]
+  - @google-labs/breadboard@0.22.0
+  - @google-labs/core-kit@0.11.0
+  - @breadboard-ai/build@0.7.1
+  - @google-labs/json-kit@0.3.3
+  - @google-labs/node-nursery-web@1.1.5
+  - @google-labs/template-kit@0.3.5
+
+## 0.5.1
+
+### Patch Changes
+
+- 29774aa: Update dependency package versions.
+- Updated dependencies [29774aa]
+  - @google-labs/template-kit@0.3.4
+  - @google-labs/core-kit@0.10.1
+  - @google-labs/json-kit@0.3.2
+
+## 0.5.0
+
+### Minor Changes
+
+- 14853d5: Add Gemini Nano node.
+- 71f3366: Added `flash`, removed `ultra` and `1.0-pro` (they don't have all the latest stuff).
+
+### Patch Changes
+
+- a8bb460: Teach Gemini Generator to report errors correctly.
+- 5f09b1d: Better error messages and descriptions, also deprecate `vision`.
+- Updated dependencies [5a55b7d]
+- Updated dependencies [74ade20]
+- Updated dependencies [c27c176]
+- Updated dependencies [59dd0f5]
+- Updated dependencies [4e66406]
+- Updated dependencies [417323c]
+- Updated dependencies [b3aa884]
+- Updated dependencies [85bbc00]
+- Updated dependencies [00825d5]
+- Updated dependencies [3d7b4a7]
+- Updated dependencies [7af14cf]
+- Updated dependencies [4db3ab7]
+- Updated dependencies [d9b76bd]
+- Updated dependencies [fea8967]
+- Updated dependencies [778f7aa]
+- Updated dependencies [808f5e2]
+- Updated dependencies [e0fdbc3]
+- Updated dependencies [54b03b9]
+- Updated dependencies [810d7fd]
+- Updated dependencies [14853d5]
+- Updated dependencies [5a0afe4]
+- Updated dependencies [8798514]
+- Updated dependencies [eb64b9a]
+- Updated dependencies [6fdd89e]
+- Updated dependencies [c82138d]
+- Updated dependencies [32a48a3]
+- Updated dependencies [cd73b17]
+- Updated dependencies [81d82fe]
+- Updated dependencies [2a7531b]
+- Updated dependencies [7c1b4cb]
+- Updated dependencies [702cfe1]
+- Updated dependencies [bebd96e]
+- Updated dependencies [91cb723]
+- Updated dependencies [3e10f0f]
+- Updated dependencies [0e54e55]
+- Updated dependencies [c53ca01]
+- Updated dependencies [6ada218]
+- Updated dependencies [4c681cb]
+- Updated dependencies [fb2e584]
+- Updated dependencies [9491266]
+- Updated dependencies [0e76614]
+- Updated dependencies [2ace620]
+- Updated dependencies [c5f8e4f]
+- Updated dependencies [fcef799]
+- Updated dependencies [37418d9]
+- Updated dependencies [26556b6]
+- Updated dependencies [083f69c]
+- Updated dependencies [5f09b1d]
+- Updated dependencies [b75a43e]
+- Updated dependencies [6fdd89e]
+- Updated dependencies [5b03d96]
+- Updated dependencies [f0d8d67]
+- Updated dependencies [9b1513a]
+- Updated dependencies [510e198]
+- Updated dependencies [836389d]
+- Updated dependencies [225c7cc]
+- Updated dependencies [9491266]
+- Updated dependencies [06c3f57]
+  - @google-labs/breadboard@0.21.0
+  - @google-labs/core-kit@0.10.0
+  - @breadboard-ai/build@0.7.0
+  - @google-labs/template-kit@0.3.3
+  - @google-labs/json-kit@0.3.1
+  - @google-labs/node-nursery-web@1.1.4
+
+## 0.4.0
+
+### Minor Changes
+
+- c69f1c5: Teach Looper how to plan and add `responseMimeType` to Gemini API.
+- 3f0ce31: Teach Gemini Kit about "tool" role.
+- 8bef702: Convert gemini-text to new Breadboard API
+- bfdb36a: Remove streaming support for now because it's not working anyway.
+
+### Patch Changes
+
+- ffd2e8e: The core-kit code helper function now behaves exactly like the one in breadboard-ai in terms of the function name it selects for the code.
+- bfdb36a: Add IDs to nodes for BGL clarity
+- Updated dependencies [8097177]
+- Updated dependencies [8774855]
+- Updated dependencies [1b596d4]
+- Updated dependencies [29eda71]
+- Updated dependencies [4957dc5]
+- Updated dependencies [7936d8b]
+- Updated dependencies [f60cb06]
+- Updated dependencies [cec6d54]
+- Updated dependencies [87eb8fe]
+- Updated dependencies [f97a4d5]
+- Updated dependencies [60a18c5]
+- Updated dependencies [b0ed6f3]
+- Updated dependencies [4957dc5]
+- Updated dependencies [a209c51]
+- Updated dependencies [cdcbcdb]
+- Updated dependencies [3397974]
+- Updated dependencies [7368fdd]
+- Updated dependencies [c9c0e06]
+- Updated dependencies [c1acf24]
+- Updated dependencies [af54870]
+- Updated dependencies [3920805]
+- Updated dependencies [ab9a4ce]
+- Updated dependencies [3b2bb4a]
+- Updated dependencies [a35406c]
+- Updated dependencies [31cf016]
+- Updated dependencies [ab43276]
+- Updated dependencies [477e6e6]
+- Updated dependencies [cdcbcdb]
+- Updated dependencies [ee85b67]
+- Updated dependencies [791ec2a]
+- Updated dependencies [c0293c9]
+- Updated dependencies [1d29493]
+- Updated dependencies [b6f5644]
+- Updated dependencies [f870bdd]
+- Updated dependencies [43edef6]
+  - @google-labs/breadboard@0.20.0
+  - @google-labs/core-kit@0.9.0
+  - @breadboard-ai/build@0.6.0
+  - @google-labs/json-kit@0.3.0
+  - @google-labs/node-nursery-web@1.1.3
+  - @google-labs/template-kit@0.3.2
+
+## 0.3.1
+
+### Patch Changes
+
+- Updated dependencies [63eb779]
+  - @google-labs/breadboard@0.19.0
+  - @google-labs/core-kit@0.8.1
+  - @google-labs/json-kit@0.2.2
+  - @google-labs/node-nursery-web@1.1.2
+  - @google-labs/template-kit@0.3.1
+
+## 0.3.0
+
+### Minor Changes
+
+- 691f3d6: Give gemini-generator an overhaul, adding proper system instruction support and safety settings.
+- e736f37: Remove deprecated input-multipart
+- 24230c1: Introduce LLM Content Editor
+
+### Patch Changes
+
+- f2eda0b: Fix lots of bugs around Tool Worker.
+- 5369037: Fix JSONata calls to account for LLM Content
+- Updated dependencies [cef20ca]
+- Updated dependencies [18b9f34]
+- Updated dependencies [d7829a1]
+- Updated dependencies [fbf7a83]
+- Updated dependencies [54baba8]
+- Updated dependencies [49c3aa1]
+- Updated dependencies [cdc23bb]
+- Updated dependencies [416aed2]
+- Updated dependencies [fefd109]
+- Updated dependencies [a1fcaea]
+- Updated dependencies [1aa96c6]
+- Updated dependencies [c3ed6a7]
+- Updated dependencies [34d9c6d]
+- Updated dependencies [3d48482]
+- Updated dependencies [c117d4f]
+- Updated dependencies [f2eda0b]
+- Updated dependencies [626139b]
+- Updated dependencies [bd44e29]
+- Updated dependencies [43da00a]
+- Updated dependencies [776f043]
+- Updated dependencies [c3587e1]
+- Updated dependencies [34d9c6d]
+- Updated dependencies [4d6ce42]
+- Updated dependencies [3f9507d]
+  - @google-labs/breadboard@0.18.0
+  - @google-labs/template-kit@0.3.0
+  - @google-labs/core-kit@0.8.0
+  - @google-labs/node-nursery-web@1.1.1
+  - @google-labs/json-kit@0.2.1
+
+## 0.2.0
+
+### Minor Changes
+
+- 55ed307: Add system instruction support.
+
+### Patch Changes
+
+- Updated dependencies [b244fba]
+- Updated dependencies [c3cb25f]
+- Updated dependencies [ae79e4a]
+- Updated dependencies [72c5c6b]
+- Updated dependencies [0831735]
+- Updated dependencies [dd810dd]
+- Updated dependencies [c5ba396]
+- Updated dependencies [7bafa40]
+- Updated dependencies [2932f4b]
+- Updated dependencies [51159c4]
+- Updated dependencies [cffceb9]
+- Updated dependencies [6f9ba52]
+- Updated dependencies [914353c]
+- Updated dependencies [d60f38b]
+- Updated dependencies [5602f1e]
+  - @google-labs/template-kit@0.2.6
+  - @google-labs/breadboard@0.17.0
+  - @google-labs/core-kit@0.7.0
+  - @google-labs/node-nursery-web@1.1.0
+  - @google-labs/json-kit@0.2.0
+
+## 0.1.8
+
+### Patch Changes
+
+- Updated dependencies [ad9c233]
+- Updated dependencies [65d869b]
+- Updated dependencies [417cdf5]
+- Updated dependencies [cf0ee4f]
+- Updated dependencies [43cbed7]
+- Updated dependencies [ff6433c]
+- Updated dependencies [5382365]
+- Updated dependencies [0e7f106]
+- Updated dependencies [9ea6ba0]
+- Updated dependencies [ffd2a6c]
+- Updated dependencies [9d19852]
+  - @google-labs/breadboard@0.16.0
+  - @google-labs/core-kit@0.6.0
+  - @google-labs/json-kit@0.1.5
+  - @google-labs/node-nursery-web@1.0.8
+  - @google-labs/template-kit@0.2.5
+
+## 0.1.7
+
+### Patch Changes
+
+- Updated dependencies [76da09d]
+- Updated dependencies [938015d]
+- Updated dependencies [182a546]
+  - @google-labs/breadboard@0.15.0
+  - @google-labs/core-kit@0.5.3
+  - @google-labs/json-kit@0.1.4
+  - @google-labs/node-nursery-web@1.0.7
+  - @google-labs/template-kit@0.2.4
+
+## 0.1.6
+
+### Patch Changes
+
+- Updated dependencies [e8d0737]
+  - @google-labs/breadboard@0.14.0
+  - @google-labs/core-kit@0.5.2
+  - @google-labs/json-kit@0.1.3
+  - @google-labs/node-nursery-web@1.0.6
+  - @google-labs/template-kit@0.2.3
+
+## 0.1.5
+
+### Patch Changes
+
+- 646680a: Add gemini-pro-1.5 to the list of models.
+- Updated dependencies [faf1e12]
+- Updated dependencies [51a38c0]
+- Updated dependencies [d49b80e]
+- Updated dependencies [9326bd7]
+- Updated dependencies [fbad949]
+  - @google-labs/breadboard@0.13.0
+  - @google-labs/core-kit@0.5.1
+  - @google-labs/json-kit@0.1.2
+  - @google-labs/node-nursery-web@1.0.5
+  - @google-labs/template-kit@0.2.2
+
+## 0.1.4
+
+### Patch Changes
+
+- 99446b8: Various quality improvements to schemas and Graph Inspector API.
+- ad5c1be: Introduce Tool Worker node in Agent Kit.
+- Updated dependencies [f73c637]
+- Updated dependencies [99446b8]
+- Updated dependencies [866fc36]
+- Updated dependencies [a8bab08]
+- Updated dependencies [decfa29]
+- Updated dependencies [f005b3b]
+- Updated dependencies [49c25aa]
+- Updated dependencies [dcfdc37]
+- Updated dependencies [d971aad]
+- Updated dependencies [048e8ec]
+- Updated dependencies [dc35601]
+- Updated dependencies [9cda2ff]
+- Updated dependencies [60bd63c]
+- Updated dependencies [764ccda]
+- Updated dependencies [04d5420]
+- Updated dependencies [56b90a4]
+- Updated dependencies [1b48826]
+- Updated dependencies [e648f64]
+- Updated dependencies [ad5c1be]
+- Updated dependencies [4a4a1f6]
+- Updated dependencies [bac9bb1]
+- Updated dependencies [3e8cfcf]
+- Updated dependencies [986af39]
+- Updated dependencies [3c497b0]
+- Updated dependencies [5bc47be]
+- Updated dependencies [eabd97b]
+- Updated dependencies [2008f69]
+- Updated dependencies [c0f785a]
+- Updated dependencies [a8fc3f3]
+- Updated dependencies [32cfbaf]
+- Updated dependencies [8dc4e00]
+- Updated dependencies [6438930]
+- Updated dependencies [dd2cce6]
+- Updated dependencies [cac4f4f]
+- Updated dependencies [b1fc53b]
+- Updated dependencies [ef05634]
+- Updated dependencies [c208cfc]
+  - @google-labs/core-kit@0.5.0
+  - @google-labs/breadboard@0.12.0
+  - @google-labs/json-kit@0.1.1
+  - @google-labs/node-nursery-web@1.0.4
+  - @google-labs/template-kit@0.2.1
+
 ## 0.1.3
 
 ### Patch Changes

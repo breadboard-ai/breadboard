@@ -5,7 +5,7 @@
  */
 
 import {
-  GraphMetadata,
+  GraphInlineMetadata,
   Schema,
   base,
   board,
@@ -20,36 +20,21 @@ const metadata = {
   title: "Gemini Pro Vision",
   description: "A simple example of using `gemini-pro-vision` model",
   version: "0.0.2",
-} satisfies GraphMetadata;
+} satisfies GraphInlineMetadata;
 
 const inputSchema = {
   type: "object",
   properties: {
     parts: {
       type: "array",
-      format: "multipart",
       title: "Content",
       description: "Add content here",
       minItems: 1,
-      items: [
-        {
-          type: "object",
-          title: "Text",
-          format: "text_part",
-          description: "A text part, which consists of plain text",
-          properties: {
-            text: {
-              type: "string",
-            },
-          },
-        },
-        {
-          type: "object",
-          title: "Image",
-          format: "image_part",
-          description: "An image part. Can be a JPEG or PNG image",
-        },
-      ],
+      items: {
+        type: "object",
+        behavior: ["llm-content"],
+        format: "image-file,image-webcam",
+      },
     },
     useStreaming: {
       type: "boolean",
@@ -96,7 +81,7 @@ export default await board(() => {
 
   const makeBody = json.jsonata({
     $id: "makeBody",
-    expression: `{ "contents": { "parts": $.parts }}`,
+    expression: `{ "contents": $.parts[0] }`,
     parts: parameters,
   });
 

@@ -1,8 +1,8 @@
 ---
-layout: docs.njk
-title: Breadboard Python
+layout: docs.liquid
+title: Using Python with Breadboard
 tags:
-  - general
+  - miscellaneous
   - wip
 ---
 

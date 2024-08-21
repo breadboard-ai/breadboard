@@ -7,15 +7,13 @@
 import {
   Breadboard,
   BreadboardCapability,
-  ConfigOrLambda,
+  ConfigOrGraph,
   GraphDescriptor,
-  InputValues,
+  GraphDescriptorBoardCapability,
   Kit,
   KitConstructor,
-  LambdaFunction,
   NodeFactory,
   OptionalIdConfiguration,
-  OutputValues,
 } from "../types.js";
 import { Node } from "../node.js";
 
@@ -49,16 +47,14 @@ export const asComposeTimeKit = (
     create: (...args) => {
       return new Node(board, ...args);
     },
-    getConfigWithLambda: <Inputs, Outputs>(
-      config: ConfigOrLambda<Inputs, Outputs>
-    ): OptionalIdConfiguration => {
+    getConfigWithLambda: (config: ConfigOrGraph): OptionalIdConfiguration => {
       return getConfigWithLambda(board, config);
     },
   });
 };
 
 /**
- * Synctactic sugar for node factories that accept lambdas. This allows passing
+ * Syntactic sugar for node factories that accept lambdas. This allows passing
  * either
  *  - A JS function that is a lambda function defining the board
  *  - A board capability, i.e. the result of calling lambda()
@@ -66,12 +62,12 @@ export const asComposeTimeKit = (
  * or
  *  - A regular config, with a `board` property with any of the above.
  *
- * @param config {ConfigOrLambda} the overloaded config
+ * @param config {ConfigOrGraph} the overloaded config
  * @returns {NodeConfigurationConstructor} config with a board property
  */
-const getConfigWithLambda = <In = InputValues, Out = OutputValues>(
+const getConfigWithLambda = (
   board: Breadboard,
-  config: ConfigOrLambda<In, Out>
+  config: ConfigOrGraph
 ): OptionalIdConfiguration => {
   // Did we get a graph?
   const gotGraph =
@@ -85,17 +81,13 @@ const getConfigWithLambda = <In = InputValues, Out = OutputValues>(
     typeof config === "function" ||
     config instanceof Node ||
     ((config as BreadboardCapability).kind === "board" &&
-      (config as BreadboardCapability).board);
+      (config as GraphDescriptorBoardCapability).board);
 
   const result = (
     gotBoard
       ? { board: gotGraph ? { kind: "board", board: config } : config }
       : config
   ) as OptionalIdConfiguration;
-
-  // Convert passed JS function into a board node.
-  if (typeof result.board === "function")
-    result.board = board.lambda(result.board as LambdaFunction<In, Out>);
 
   return result;
 };

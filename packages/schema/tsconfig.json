@@ -11,9 +11,5 @@
     "target": "ESNext"
   },
   "extends": "@google-labs/tsconfig/base.json",
-  "include": [
-    "package.json",
-    "breadboard.schema.json",
-    "src/**/*.ts"
-  ]
+  "include": ["package.json", "breadboard.schema.json", "src/**/*.ts"]
 }

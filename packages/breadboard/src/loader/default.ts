@@ -33,11 +33,28 @@ export const loadFromFile = async (path: string) => {
 };
 
 export const loadWithFetch = async (url: string | URL) => {
-  const response = await fetch(url);
-  return await response.json();
+  let response;
+  try {
+    response = await fetch(url);
+  } catch (e) {
+    // Try again with credentials.
+    // This is useful for sites that require authentication.
+    // We also don't want this to be the default behavior, because some sites
+    // like Github have * CORS headers, which will make this request fail.
+    // See https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS/Errors/CORSNotSupportingCredentials
+    response = await fetch(url, { credentials: "include" });
+  }
+  return await response?.json();
 };
 
 export class DefaultGraphProvider implements GraphProvider {
+  name = "DefaultGraphProvider";
+
+  #ready = Promise.resolve();
+  ready() {
+    return this.#ready;
+  }
+
   isSupported(): boolean {
     return true;
   }
@@ -49,6 +66,7 @@ export class DefaultGraphProvider implements GraphProvider {
       disconnect: false,
       refresh: false,
       watch: false,
+      preview: false,
     };
   }
 
@@ -108,7 +126,18 @@ export class DefaultGraphProvider implements GraphProvider {
     throw new Error("Create Blank not implemented for DefaultGraphProvider");
   }
 
-  createURL(_location: string, _fileName: string): string {
+  async preview(_url: URL): Promise<URL> {
+    throw new Error("Create Blank not implemented for DefaultGraphProvider");
+  }
+
+  async create(
+    _url: URL,
+    _descriptor: GraphDescriptor
+  ): Promise<{ result: boolean; error?: string }> {
+    throw new Error("Create not implemented for DefaultGraphProvider");
+  }
+
+  async createURL(_location: string, _fileName: string): Promise<string> {
     throw new Error("createURL not implemented for DefaultGraphProvider");
   }
 

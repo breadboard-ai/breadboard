@@ -1,0 +1,122 @@
+{
+  "title": "xmlToJson node example",
+  "description": "A simple example of using xmlToJson node.\n",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "xml": {
+              "type": "string",
+              "title": "XML",
+              "examples": [
+                "<snippets>\n  <snippet title=\"Snippet 1\">Question: How old is planet Earth?</snippet>\n  <snippet title=\"Snippet 2\">Thought: I wonder how old planet Earth is?</snippet>\n</snippets>"
+              ]
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -71,
+          "y": -10,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "json": {
+              "type": "object",
+              "title": "JSON",
+              "examples": []
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 189,
+          "y": -15,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "xmlToJson-7d6274e7",
+      "type": "xmlToJson",
+      "metadata": {
+        "visual": {
+          "x": -2,
+          "y": -137,
+          "collapsed": false
+        },
+        "title": "Convert XML to JSON",
+        "logLevel": "debug"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "xmlToJson-7d6274e7",
+      "out": "xml",
+      "in": "xml"
+    },
+    {
+      "from": "xmlToJson-7d6274e7",
+      "to": "output",
+      "out": "json",
+      "in": "json"
+    }
+  ],
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-384c4672",
+        "text": "Takes in a string\nthat contains XML.",
+        "metadata": {
+          "visual": {
+            "x": -188,
+            "y": -63,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-534bf69e",
+        "text": "First, attempts to parse the string as XML.\n\nThen, converts it to alt-json, a format outlined [here](https://developers.google.com/gdata/docs/json).",
+        "metadata": {
+          "visual": {
+            "x": 45,
+            "y": -260,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-eb2f29ee",
+        "text": "Outputs \nresulting JSON",
+        "metadata": {
+          "visual": {
+            "x": 280,
+            "y": -69,
+            "collapsed": false
+          }
+        }
+      }
+    ],
+    "tags": []
+  }
+}

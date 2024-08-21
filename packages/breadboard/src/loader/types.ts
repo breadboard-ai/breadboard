@@ -6,10 +6,20 @@
 
 import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
 
+export type GraphProviderItem = {
+  url: string;
+  username?: string;
+  title?: string;
+  tags?: string[];
+  mine: boolean;
+  readonly: boolean;
+  handle: unknown;
+};
+
 export type GraphProviderStore = {
   permission: "unknown" | "prompt" | "granted";
   title: string;
-  items: Map<string, { url: string; handle: unknown }>;
+  items: Map<string, GraphProviderItem>;
 };
 
 export type GraphProviderChange = {
@@ -61,6 +71,10 @@ export type GraphProviderExtendedCapabilities = {
    * Whether the provider supports watching for change notifications.
    */
   watch: boolean;
+  /**
+   * Whether the provider supports a preview URL.
+   */
+  preview: boolean;
 };
 
 /**
@@ -69,6 +83,14 @@ export type GraphProviderExtendedCapabilities = {
  * graphs from different sources.
  */
 export type GraphProvider = {
+  /**
+   * The name of the provider.
+   */
+  name: string;
+  /**
+   * An indicator that the Provider is ready to serve graphs.
+   */
+  ready(): Promise<void>;
   /**
    * Whether the provider is supported or not in the current environment.
    */
@@ -107,6 +129,16 @@ export type GraphProvider = {
    */
   createBlank(url: URL): Promise<{ result: boolean; error?: string }>;
   /**
+   * Creates a board at the given URL
+   * @param url -- the URL at which to create the blank board
+   * @param graph -- the descriptor to use
+   * @returns -- the result of creating the board, with an error if failed.
+   */
+  create(
+    url: URL,
+    graph: GraphDescriptor
+  ): Promise<{ result: boolean; error?: string }>;
+  /**
    * Given a URL, deletes a `GraphDescriptor` instance at that URL.
    * @param url -- the URL to delete
    * @returns -- the result of deleting, with an error if saving failed.
@@ -115,9 +147,10 @@ export type GraphProvider = {
   /**
    * Connects to a given location if the Provider supports it.
    * @param location -- if supported, the location to connect to.
+   * @param auth -- if supported, the authentication material to use.
    * @returns -- nothing, but throws if connection fails.
    */
-  connect: (location?: string) => Promise<boolean>;
+  connect: (location?: string, auth?: unknown) => Promise<boolean>;
   /**
    * Disconnects to a given location if the Provider supports it.
    * @param url -- the location to save.
@@ -134,9 +167,9 @@ export type GraphProvider = {
    * Creates a provider-specific URL for a board.
    * @param location -- the location of the board.
    * @param fileName -- the board file path.
-   * @returns -- the provider-specific URL as a string.
+   * @returns -- the provider-specific URL as a string or null when the URL can't be created.
    */
-  createURL: (location: string, fileName: string) => string;
+  createURL: (location: string, fileName: string) => Promise<string | null>;
   /**
    * Parses a provider-specific URL for a board.
    * @param url -- the location of the board.
@@ -165,6 +198,10 @@ export type GraphProvider = {
    * Provides a way to watch for changes in the store.
    */
   watch: (callback: ChangeNotificationCallback) => void;
+  /**
+   * Provides a way to watch for changes in the store.
+   */
+  preview: (url: URL) => Promise<URL>;
 };
 
 /**

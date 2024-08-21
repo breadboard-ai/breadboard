@@ -6,6 +6,7 @@
 
 import {
   AbstractNode,
+  GraphCombinedMetadata,
   InputValues,
   InvokeCallbacks,
   NodeHandler,
@@ -18,7 +19,6 @@ import {
 
 import {
   GraphDescriptor,
-  GraphMetadata,
   NodeDescriberResult,
   Schema,
   SubGraphs,
@@ -60,7 +60,7 @@ export class Scope implements ScopeInterface {
 
   getHandler<
     I extends InputValues = InputValues,
-    O extends OutputValues = OutputValues
+    O extends OutputValues = OutputValues,
   >(name: string): NodeHandler<I, O> | undefined {
     return (this.#handlers[name] ||
       this.parentDynamicScope?.getHandler(name) ||
@@ -72,7 +72,7 @@ export class Scope implements ScopeInterface {
 
   pin<
     I extends InputValues = InputValues,
-    O extends OutputValues = OutputValues
+    O extends OutputValues = OutputValues,
   >(node: AbstractNode<I, O>) {
     this.#pinnedNodes.push(node);
   }
@@ -257,7 +257,7 @@ export class Scope implements ScopeInterface {
   }
 
   async serialize(
-    metadata?: GraphMetadata,
+    metadata?: GraphCombinedMetadata,
     node?: AbstractNode
   ): Promise<GraphDescriptor> {
     const queue: AbstractNode[] = (node ? [node] : this.#pinnedNodes).flatMap(

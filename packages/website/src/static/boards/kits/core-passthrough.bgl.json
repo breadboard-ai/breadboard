@@ -1,0 +1,112 @@
+{
+  "title": "passthrough node example",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -99,
+          "y": -51,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 299,
+          "y": -52,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "passthrough-92eba430",
+      "type": "passthrough",
+      "metadata": {
+        "visual": {
+          "x": 53,
+          "y": -51,
+          "collapsed": false
+        },
+        "title": "Pass it through",
+        "logLevel": "debug"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "passthrough-92eba430",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "passthrough-92eba430",
+      "to": "output",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "description": "No Description",
+  "metadata": {
+    "tags": [],
+    "comments": [
+      {
+        "id": "comment-229a4491",
+        "text": "Passes inputs unmodified as outputs.",
+        "metadata": {
+          "visual": {
+            "x": 47,
+            "y": -110,
+            "collapsed": false
+          }
+        }
+      }
+    ]
+  }
+}

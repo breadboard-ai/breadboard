@@ -1,0 +1,150 @@
+{
+  "title": "promptTemplate node example",
+  "description": "A simple example of using the promptTemplate node.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "question": {
+              "type": "string",
+              "title": "Question",
+              "examples": [
+                "How old is planet Earth?"
+              ]
+            },
+            "thought": {
+              "type": "string",
+              "title": "Thought",
+              "examples": [
+                "I wonder how old planet Earth is?"
+              ]
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -206,
+          "y": -135,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "prompt": {
+              "type": "string",
+              "title": "Prompt",
+              "examples": [],
+              "format": "multiline"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 276,
+          "y": -107,
+          "collapsed": false
+        }
+      }
+    },
+    {
+      "id": "promptTemplate-2886bc23",
+      "type": "promptTemplate",
+      "metadata": {
+        "visual": {
+          "x": -19,
+          "y": -199,
+          "collapsed": false
+        },
+        "title": "Question Maker",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "template": "Question: {{question}}\nThought: {{thought}}"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "promptTemplate-2886bc23",
+      "out": "question",
+      "in": "question"
+    },
+    {
+      "from": "input",
+      "to": "promptTemplate-2886bc23",
+      "out": "thought",
+      "in": "thought"
+    },
+    {
+      "from": "promptTemplate-2886bc23",
+      "to": "output",
+      "out": "prompt",
+      "in": "prompt"
+    }
+  ],
+  "metadata": {
+    "tags": [],
+    "comments": [
+      {
+        "id": "comment-738e2757",
+        "text": "Takes \"Question\"\nand \"Thought\" \nas inputs and \npasses them \nto Question Maker",
+        "metadata": {
+          "visual": {
+            "x": -265,
+            "y": -253,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-88222ba2",
+        "text": "Looks for `{{question}}` and `{{thought}}` in the template and replaces them with the supplied values. ",
+        "metadata": {
+          "visual": {
+            "x": 16,
+            "y": -298,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-1fd48dd7",
+        "text": "Outputs \nthe resulting\nprompt.",
+        "metadata": {
+          "visual": {
+            "x": 331,
+            "y": -189,
+            "collapsed": false
+          }
+        }
+      },
+      {
+        "id": "comment-bbd97505",
+        "text": "💡 Input ports on this node are dynamic: they will pop up as soon as you specify them as `{{inputName}}` in the template.",
+        "metadata": {
+          "visual": {
+            "x": 8,
+            "y": -84,
+            "collapsed": false
+          }
+        }
+      }
+    ]
+  }
+}

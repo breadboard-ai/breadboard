@@ -36,6 +36,24 @@ import { BuilderScope } from "./scope.js";
 import { Value, isValue } from "./value.js";
 import { isLambda } from "./board.js";
 
+// eslint-disable-next-line @typescript-eslint/ban-types
+const serializeFunction = (name: string, handlerFn: Function) => {
+  let code = handlerFn.toString();
+
+  const arrowFunctionRegex = /(?:async\s*)?(\w+|\([^)]*\))\s*=>\s*/;
+  const traditionalFunctionRegex =
+    /(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)\s*\{/;
+
+  if (arrowFunctionRegex.test(code)) {
+    code = `const ${name} = ${code};`;
+  } else {
+    const match = traditionalFunctionRegex.exec(code);
+    if (match === null) throw new Error("Unexpected serialization: " + code);
+    else name = match[1] || name;
+  }
+  return [code, name];
+};
+
 export class BuilderNode<
     I extends InputValues = InputValues,
     O extends OutputValues = OutputValues,
@@ -117,9 +135,10 @@ export class BuilderNode<
       // This turns something returned by board() into a BoardCapability, which
       // is going to be either a Promise for a BoardCapability (assigned to
       // constants below) or an AbstractValue to one.
-      if (isLambda(value))
-        value = value.getBoardCapabilityAsValue() as unknown as typeof value;
-
+      if (isLambda(value)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        value = value.getBoardCapabilityAsValue() as any;
+      }
       if (isValue(value)) {
         nodes.push(value.as(key).asNodeInput());
       } else if (value instanceof AbstractNode || isBuilderNodeProxy(value)) {
@@ -178,7 +197,7 @@ export class BuilderNode<
   ) {
     const fromScope = (from as BuilderNode).#scope;
 
-    // If this is a reguar wire, call super method to add it
+    // If this is a regular wire, call super method to add it
     if (fromScope === this.#scope) {
       super.addIncomingEdge(from, out, in_, constant, schema);
       return;
@@ -235,13 +254,17 @@ export class BuilderNode<
         //    - execute the graph, and return the output node's outputs
         //  - otherwise return the handler's return value as result.
         const handlerFn =
-          typeof handler === "function" ? handler : handler?.invoke;
+          handler && "invoke" in handler && handler.invoke
+            ? handler.invoke
+            : typeof handler === "function"
+              ? handler
+              : undefined;
         if (handlerFn) {
           result = (await handlerFn(inputs, this)) as O;
         } else if (handler && typeof handler !== "function" && handler.graph) {
           // TODO: This isn't quite right, but good enough for now. Instead what
           // this should be in invoking a graph from a lexical scope in a dynamic
-          // scope. This requires moving state management into the dyanmic scope.
+          // scope. This requires moving state management into the dynamic scope.
           const graphs = handler.graph.getPinnedNodes();
           if (graphs.length !== 1)
             throw new Error("Expected exactly one graph");
@@ -329,80 +352,34 @@ export class BuilderNode<
       if (graphs.length !== 1) throw new Error("Expected exactly one graph");
 
       return [node, await scope.serialize({}, graphs[0])];
-    }
-
-    // Else, serialize the handler itself and return a runJavascript node.
-    const handlerFn = typeof handler === "function" ? handler : handler?.invoke;
-    if (!handlerFn)
-      throw new Error(`Handler for ${this.type} in ${this.id} not found`);
-
-    let code = handlerFn.toString();
-    let name = this.id.replace(/-/g, "_");
-
-    const arrowFunctionRegex = /(?:async\s*)?(\w+|\([^)]*\))\s*=>\s*/;
-    const traditionalFunctionRegex =
-      /(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)\s*\{/;
-
-    if (arrowFunctionRegex.test(code)) {
-      // It's an arrow function, convert to traditional
-      code = code.replace(arrowFunctionRegex, (_, params) => {
-        const async = code.trim().startsWith("async") ? "async " : "";
-        const paramsWithParens = params.startsWith("(")
-          ? params
-          : `(${params})`;
-        return `${async}function ${name}${paramsWithParens} `;
-      });
     } else {
-      const match = traditionalFunctionRegex.exec(code);
-      if (match === null) throw new Error("Unexpected seralization: " + code);
-      else name = match[1] || name;
+      // Else, serialize the handler itself and return a runJavascript node.
+      const handlerFn =
+        handler && "invoke" in handler && handler.invoke
+          ? handler.invoke
+          : typeof handler === "function"
+            ? handler
+            : undefined;
+      if (!handlerFn)
+        throw new Error(`Handler for ${this.type} in ${this.id} not found`);
+
+      const jsFriendlyId = this.id.replace(/-/g, "_");
+      const [code, name] = serializeFunction(jsFriendlyId, handlerFn);
+
+      const node = {
+        id: this.id,
+        type: "runJavascript",
+        configuration: {
+          ...(this.configuration as OriginalInputValues),
+          code,
+          name,
+          raw: true,
+        },
+        metadata: this.metadata,
+      };
+
+      return [node];
     }
-
-    const schemas = await this.describe(scope);
-
-    const invokeGraph: GraphDescriptor = {
-      edges: [
-        { from: `${this.id}-input`, to: `${this.id}-run`, out: "*" },
-        { from: `${this.id}-run`, to: `${this.id}-output`, out: "*" },
-      ],
-      nodes: [
-        {
-          id: `${this.id}-input`,
-          type: "input",
-          configuration: schemas?.inputSchema
-            ? { schema: schemas.inputSchema }
-            : {},
-        },
-        {
-          id: `${this.id}-run`,
-          type: "runJavascript",
-          configuration: {
-            code,
-            name,
-            raw: true,
-          },
-        },
-        {
-          id: `${this.id}-output`,
-          type: "output",
-          configuration: schemas?.outputSchema
-            ? { schema: schemas.outputSchema }
-            : {},
-        },
-      ],
-    };
-
-    const node = {
-      id: this.id,
-      type: "invoke",
-      configuration: {
-        ...(this.configuration as OriginalInputValues),
-        $board: "#" + this.id,
-      },
-      metadata: this.metadata,
-    };
-
-    return [node, invokeGraph];
   }
 
   /**
@@ -486,7 +463,7 @@ export class BuilderNode<
    *
    * if (thing instanceof BuilderNode) { const node = thing.unProxy(); }
    *
-   * @returns A BuilderNoder that is not a proxy, but the original BuilderNode.
+   * @returns A BuilderNode that is not a proxy, but the original BuilderNode.
    */
   unProxy() {
     return this;

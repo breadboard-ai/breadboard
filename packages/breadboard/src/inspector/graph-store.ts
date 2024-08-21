@@ -5,13 +5,13 @@
  */
 
 import { GraphDescriptor } from "../types.js";
-import { GraphUUID, InspectableGraphStore } from "./types.js";
+import { GraphUUID, GraphDescriptorStore } from "./types.js";
 
 const toUUID = (url: string, version: number): GraphUUID => {
   return `${version}|${url}`;
 };
 
-export class GraphStore implements InspectableGraphStore {
+export class GraphStore implements GraphDescriptorStore {
   #entries = new Map<GraphUUID, GraphDescriptor>();
   #ids = new Map<string, GraphUUID>();
 
@@ -40,9 +40,9 @@ export class GraphStore implements InspectableGraphStore {
 
   add(graph: GraphDescriptor, version: number) {
     const id = this.#getOrSetGraphId(graph, version);
-    if (this.#entries.has(id)) return id;
+    if (this.#entries.has(id)) return { id, added: false };
     this.#entries.set(id, graph);
-    return id;
+    return { id, added: true };
   }
 
   get(id: GraphUUID) {

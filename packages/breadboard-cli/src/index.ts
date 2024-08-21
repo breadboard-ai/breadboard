@@ -24,7 +24,7 @@ program.version("0.0.1");
 program
   .command("debug [file]")
   .description(
-    "Starts a simple HTTP server that serves the breadboard-web app, and outputs a URL that contains a link to a breadboard file that the user provided."
+    "Starts a simple HTTP server that serves the visual-editor app, and outputs a URL that contains a link to a breadboard file that the user provided. Defaults to running on port 3000 (set the PORT environment variable to customize)"
   )
   .option(
     "-k, --kit <kit...>",
@@ -75,6 +75,7 @@ program
   )
   .option("-n, --no-save", "Do not save the compiled graph to disk.")
   .option("-w, --watch", "Watch the file for changes.")
+  .option("-f, --format", "Format the BGL file.")
   .action(makeGraph);
 
 program

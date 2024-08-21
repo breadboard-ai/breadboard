@@ -8,7 +8,7 @@ import http, { IncomingMessage, ServerResponse } from "http";
 import { join, relative } from "path";
 import handler from "serve-handler";
 import { pathToFileURL, URL } from "url";
-import { BoardMetaData, SERVER_URL, defaultKits } from "./utils.js";
+import { BoardMetaData, SERVER_PORT, SERVER_URL, defaultKits } from "./utils.js";
 import { stat } from "fs/promises";
 import { URLPattern } from "urlpattern-polyfill";
 
@@ -53,6 +53,17 @@ const routes: Routes = {
   "/*.(json|ts)": board, // after kits.json
 };
 
+const removeBoardFromCache = (
+  boards: BoardMetaData[],
+  filename: string | null
+) => {
+  if (!filename) return;
+  const toRemove = boards
+    .filter(Boolean)
+    .findIndex((board) => board.url?.endsWith(filename));
+  boards.splice(toRemove, 1);
+};
+
 export const startServer = async (file: string, options: DebugOptions) => {
   const distDir = join(__dirname, "..", "..", "debugger");
   const fileStat = await stat(file);
@@ -80,6 +91,8 @@ export const startServer = async (file: string, options: DebugOptions) => {
     previous: string | null,
     filename: string
   ) => {
+    removeBoardFromCache(globals.boards, previous);
+    removeBoardFromCache(globals.boards, filename);
     Object.values(clients).forEach((clientResponse) => {
       clientResponse.write(
         `event: update\ndata:${JSON.stringify({ type, previous, filename })}\nid:${Date.now()}\n\n`
@@ -114,7 +127,7 @@ export const startServer = async (file: string, options: DebugOptions) => {
     });
   });
 
-  server.listen(3000, () => {
+  server.listen(SERVER_PORT, () => {
     const urlPath = isDirectory
       ? ""
       : `?board=/${relative(process.cwd(), fileUrl.pathname)}`;
