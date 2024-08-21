@@ -20,16 +20,23 @@ import {
 } from "./define/definition.js";
 import type { KitTag } from "@google-labs/breadboard-schema/graph.js";
 
-export interface KitOptions {
+type ComponentManifest = Record<
+  string,
+  GenericDiscreteComponent | BoardDefinition
+>;
+
+export interface KitOptions<T extends ComponentManifest> {
   title: string;
   description: string;
   version: string;
   url: string;
   tags?: KitTag[];
-  components: Record<string, GenericDiscreteComponent | BoardDefinition>;
+  components: T;
 }
 
-export function kit(options: KitOptions): KitConstructor<Kit> {
+export function kit<T extends ComponentManifest>(
+  options: KitOptions<T>
+): KitConstructor<Kit> & T {
   const handlers: Record<string, NodeHandler> = Object.fromEntries(
     Object.values(options.components).map((component) => {
       if (isDiscreteComponent(component)) {
@@ -50,7 +57,7 @@ export function kit(options: KitOptions): KitConstructor<Kit> {
 
   // TODO(aomarks) Unclear why this needs to be a class, and why it needs
   // certain fields on both the static and instance sides.
-  return class GeneratedBreadboardKit {
+  const result = class GeneratedBreadboardKit {
     static handlers = handlers;
     static url = options.url;
     handlers = handlers;
@@ -60,6 +67,7 @@ export function kit(options: KitOptions): KitConstructor<Kit> {
     url = options.url;
     tags = options.tags ?? [];
   };
+  return Object.assign(result, options.components);
 }
 
 function makeBoardComponentHandler(board: BoardDefinition): NodeHandler {
