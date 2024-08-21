@@ -26,12 +26,12 @@ export interface KitOptions {
   version: string;
   url: string;
   tags?: KitTag[];
-  components: Array<GenericDiscreteComponent | BoardDefinition>;
+  components: Record<string, GenericDiscreteComponent | BoardDefinition>;
 }
 
 export function kit(options: KitOptions): KitConstructor<Kit> {
   const handlers: Record<string, NodeHandler> = Object.fromEntries(
-    options.components.map((component) => {
+    Object.values(options.components).map((component) => {
       if (isDiscreteComponent(component)) {
         return [component.id, component];
       } else {

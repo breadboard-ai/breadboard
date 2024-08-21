@@ -25,7 +25,7 @@ test("kit takes discrete component", () => {
     url: "",
     version: "",
     description: "",
-    components: [discreteComponent],
+    components: { foo: discreteComponent },
   });
 });
 
@@ -36,6 +36,6 @@ test("kit takes board component", () => {
     url: "",
     version: "",
     description: "",
-    components: [boardComponent],
+    components: { bar: boardComponent },
   });
 });

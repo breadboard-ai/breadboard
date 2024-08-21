@@ -15,5 +15,5 @@ export default kit({
   description:
     "Nodes for reading & writing to files in Google Drive, including Docs and Sheets",
   version: "0.0.1",
-  components: [getFileContent, listFiles, exportFile],
+  components: { getFileContent, listFiles, exportFile },
 });
