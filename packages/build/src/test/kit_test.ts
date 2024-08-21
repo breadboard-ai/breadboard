@@ -17,7 +17,11 @@ const discreteComponent = defineNodeType({
   invoke: () => ({}),
 });
 
-const boardComponent = board({ id: "foo", inputs: {}, outputs: {} });
+const boardComponent = board({
+  id: "boardComponent",
+  inputs: {},
+  outputs: {},
+});
 
 test("kit takes discrete component", () => {
   // $ExpectType KitConstructor<Kit> & { foo: Definition<{}, {}, undefined, undefined, never, false, false, false, {}>; }
@@ -32,6 +36,7 @@ test("kit takes discrete component", () => {
     // $ExpectType Definition<{}, {}, undefined, undefined, never, false, false, false, {}>
     k.foo
   );
+  assert.equal(k.foo.id, "foo");
 });
 
 test("kit takes board component", () => {
@@ -47,4 +52,5 @@ test("kit takes board component", () => {
     // $ExpectType BoardDefinition<{}, {}>
     k.bar
   );
+  assert.equal(k.bar.id, "bar");
 });
