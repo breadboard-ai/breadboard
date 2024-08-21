@@ -20,6 +20,8 @@ import manyOutputsBoard from "./boards/many-outputs.bgl.json" with { type: "json
 import invokeWithBubblingInput from "./boards/invoke-board-with-bubbling-input.bgl.json" with { type: "json" };
 import type { RemoteMessage } from "@google-labs/breadboard/remote";
 import type { RunDiagnosticsLevel } from "@google-labs/breadboard/harness";
+import type { CreateBoardResult, CreateUserResult, RunBoardStateStore } from "../src/server/types.js";
+import type { BoardServerCorsConfig, ServerInfo, BoardListEntry, GetUserStoreResult, OperationResult } from "../src/server/store.js";
 
 const mockSecretsKit: Kit = {
   url: import.meta.url,
@@ -128,7 +130,7 @@ type RunScriptEntry = {
   expected: ExpectedResult[];
 };
 
-const runStateStore = {
+const runStateStore: RunBoardStateStore = {
   async loadReanimationState(user: string, ticket: string) {
     const state = JSON.parse(ticket) as ReanimationState;
     if (!state.states) {
@@ -139,6 +141,30 @@ const runStateStore = {
   async saveReanimationState(user: string, state: any) {
     return JSON.stringify(state);
   },
+  getBoardServerCorsConfig: function (): Promise<BoardServerCorsConfig | undefined> {
+    throw new Error("Function not implemented.");
+  },
+  getServerInfo: function (): Promise<ServerInfo | undefined> {
+    throw new Error("Function not implemented.");
+  },
+  createUser: function (username: string, apiKey: string): Promise<CreateUserResult> {
+    throw new Error("Function not implemented.");
+  },
+  list: function (userKey: string): Promise<BoardListEntry[]> {
+    throw new Error("Function not implemented.");
+  },
+  getUserStore: function (userKey: string | null): Promise<GetUserStoreResult> {
+    throw new Error("Function not implemented.");
+  },
+  get: function (userStore: string, boardName: string): Promise<any> {
+    throw new Error("Function not implemented.");
+  },
+  update: function (userStore: string, path: string, graph: GraphDescriptor): Promise<OperationResult> {
+    throw new Error("Function not implemented.");
+  },
+  create: function (userKey: string, name: string, dryRun: boolean): Promise<CreateBoardResult> {
+    throw new Error("Function not implemented.");
+  }
 };
 
 const scriptedRun = async (

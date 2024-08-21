@@ -1,11 +1,11 @@
 import Database from "better-sqlite3";
-import type { CreateInviteResult, CreateUserResult, ListInviteResult, RunBoardStateStore, UserStore } from "../types.js";
-import type { BoardListEntry, BoardServerCorsConfig, OperationResult, ServerInfo } from "../store.js";
+import type { CreateInviteResult, CreateUserResult, ListInviteResult, RunBoardStateStore } from "../types.js";
+import type { BoardListEntry, BoardServerCorsConfig, GetUserStoreResult, OperationResult, ServerInfo } from "../store.js";
 import { asInfo, asPath, EXPIRATION_TIME_MS, INVITE_EXPIRATION_TIME_MS, sanitize } from "../store.js";
 import type { GraphDescriptor, ReanimationState } from "@google-labs/breadboard";
 import { v4 as uuidv4 } from 'uuid';
 
-export class SQLiteStorageProvider implements RunBoardStateStore, UserStore {
+export class SQLiteStorageProvider implements RunBoardStateStore {
     private db: Database.Database;
   
     constructor(dbPath: string) {
@@ -134,7 +134,7 @@ export class SQLiteStorageProvider implements RunBoardStateStore, UserStore {
       }
     }
   
-    async getUserStore(userKey: string | null): Promise<{ success: boolean, store?: string, error?: string }> {
+    async getUserStore(userKey: string | null): Promise<GetUserStoreResult> {
       if (!userKey) {
         return { success: false, error: "No user key supplied" };
       }
@@ -228,10 +228,10 @@ export class SQLiteStorageProvider implements RunBoardStateStore, UserStore {
       }
     }
   
-    async create(userKey: string, name: string, dryRun = false) {
+    async create(userKey: string, name: string, dryRun = false): Promise<{success: boolean, path: string | undefined, error: string | undefined}> {
       const userStoreResult = await this.getUserStore(userKey);
       if (!userStoreResult.success) {
-        return { success: false, error: userStoreResult.error };
+        return { success: false, path: undefined, error: userStoreResult.error };
       }
       const userStore = userStoreResult.store!;
   
@@ -270,7 +270,7 @@ export class SQLiteStorageProvider implements RunBoardStateStore, UserStore {
       }
   
       const path = asPath(userStore, `${proposal}.bgl.json`);
-      return { success: true, path };
+      return { success: true, path, error: undefined };
     }
   
     async delete(userStore: string, path: string): Promise<{ success: boolean; error?: string }> {

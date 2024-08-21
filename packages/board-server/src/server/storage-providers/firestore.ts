@@ -1,7 +1,7 @@
 import { Firestore } from "@google-cloud/firestore";
 import { type ReanimationState, type GraphDescriptor, blankLLMContent } from "@google-labs/breadboard";
 import { EXPIRATION_TIME_MS, type BoardServerCorsConfig, type ServerInfo, type GetUserStoreResult, type BoardListEntry, asPath, type OperationResult, asInfo, sanitize, INVITE_EXPIRATION_TIME_MS } from "../store.js";
-import type { CreateInviteResult, ListInviteResult, RunBoardStateStore } from "../types.js";
+import type { CreateInviteResult, CreateUserResult, ListInviteResult, RunBoardStateStore } from "../types.js";
 
 
 const REANIMATION_COLLECTION_ID = "resume";
@@ -13,6 +13,10 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
       this.#database = new Firestore({
         databaseId: storeName,
       });
+    }
+    
+    createUser(username: string, apiKey: string): Promise<CreateUserResult> {
+        throw new Error("Method not implemented.");
     }
   
     #getReanimationStateDoc(user: string, ticket?: string) {
@@ -140,10 +144,10 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
       return { success: true };
     }
   
-    async create(userKey: string, name: string, dryRun = false) {
+    async create(userKey: string, name: string, dryRun = false): Promise<{success: boolean, path: string | undefined, error: string | undefined}> {
       const userStore = await this.getUserStore(userKey);
       if (!userStore.success) {
-        return { success: false, error: userStore.error };
+        return { success: false, path: undefined, error: userStore.error };
       }
       // The format for finding the unique name is {name}-copy[-number].
       // We'll first start with the sanitized name, then move on to {name}-copy.
@@ -179,7 +183,7 @@ export class FirestoreStorageProvider implements RunBoardStateStore {
           .set({ graph: blankLLMContent() });
       }
       const path = asPath(userStore.store, `${proposal}.bgl.json`);
-      return { success: true, path };
+      return { success: true, path, error: undefined };
     }
   
     async delete(userStore: string, path: string): Promise<OperationResult> {

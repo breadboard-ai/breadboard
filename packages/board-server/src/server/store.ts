@@ -19,13 +19,13 @@ export type OperationResult =
   | { success: true }
   | { success: false; error: string };
 
-const providers: Map<string, RunBoardStateStore> = new Map<string, RunBoardStateStore>([
-  ["sqlite", new SQLiteStorageProvider('board-server.db')],
-  ["firestore", new FirestoreStorageProvider('board-server')]
-])
+const providers = {
+  "sqlite": new SQLiteStorageProvider('board-server.db'),
+  "firestore": new FirestoreStorageProvider('board-server')
+}
 
 export const getStore = () => {
-  return providers.get('sqlite')
+  return providers['sqlite']
 };
 
 export type BoardListEntry = {
