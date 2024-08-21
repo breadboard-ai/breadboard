@@ -18,8 +18,6 @@ export function makeRouter(serverConfig: ServerConfig) {
     req: IncomingMessage,
     res: ServerResponse
   ): Promise<void> {
-    const url = new URL(req.url || "", serverConfig.hostname);
-
     if (await serveHome(req, res)) {
       return;
     }
