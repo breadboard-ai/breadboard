@@ -16,7 +16,7 @@ pids
 *.pid.lock
 
 # SQLite board server local db
-board-server.db
+*.db
 
 # output from markdown task
 all_markdown.md
