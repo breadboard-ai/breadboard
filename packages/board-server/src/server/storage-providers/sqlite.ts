@@ -192,7 +192,7 @@ export class SQLiteStorageProvider implements RunBoardStateStore {
       const row: any = stmt.get(userStore, boardName);
   
       // Return the 'graph' column data if it exists, or undefined if not found
-      return row ? JSON.parse(row.graph) : undefined;
+      return row.graph;
     }
   
     async update(
