@@ -7,11 +7,8 @@
 import { createServer } from "http";
 import { createServer as createViteServer } from "vite";
 import { env } from "process";
-import { serveContent } from "./server/common.js";
-import { serveBoardsAPI } from "./server/boards/index.js";
-import { serveProxyAPI } from "./server/proxy/index.js";
-import { serveInfoAPI } from "./server/info/index.js";
-import { serveHome } from "./server/home/index.js";
+
+import { makeRouter } from "./router.js";
 
 const PORT = env.PORT || 3000;
 const HOST = env.HOST || "localhost";
@@ -26,27 +23,7 @@ const vite = IS_PROD
       optimizeDeps: { esbuildOptions: { target: "esnext" } },
     });
 
-const server = createServer(async (req, res) => {
-  const url = new URL(req.url || "", HOSTNAME);
-
-  if (await serveHome(req, res)) {
-    return;
-  }
-
-  if (await serveProxyAPI(req, res)) {
-    return;
-  }
-
-  if (await serveInfoAPI(req, res)) {
-    return;
-  }
-
-  if (await serveBoardsAPI(url, vite, req, res)) {
-    return;
-  }
-
-  serveContent(vite, req, res);
-});
+const server = createServer(makeRouter(HOSTNAME, vite));
 
 server.listen(PORT, () => {
   console.info(`Running on "${HOSTNAME}"...`);

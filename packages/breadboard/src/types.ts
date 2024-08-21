@@ -631,6 +631,7 @@ export type ErrorResponse = {
    * The error message string or a more detailed error object
    */
   error: string | ErrorObject;
+  code?: number;
   timestamp: number;
 };
 

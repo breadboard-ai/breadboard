@@ -7,6 +7,7 @@
 import {
   NewNodeFactory,
   NewNodeValue,
+  Schema,
   base,
   board,
 } from "@google-labs/breadboard";
@@ -69,6 +70,30 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
     .behavior("board", "config")
     .optional()
     .default("[]");
+
+  const modelInput = base.input({
+    $metadata: {
+      title: "Model Input",
+      description: "Ask which model to use",
+    },
+    schema: {
+      type: "object",
+      properties: {
+        model: {
+          type: "string",
+          title: "Model",
+          description: "Choose the model to use for this specialist.",
+          enum: [
+            "gemini-1.5-flash-latest",
+            "gemini-1.5-pro-latest",
+            "gemini-1.5-pro-exp-0801",
+          ],
+          examples: ["gemini-1.5-flash-latest"],
+          behavior: ["config"],
+        },
+      },
+    } as Schema,
+  });
 
   const addTask = userPartsAdder({
     $metadata: { title: "Add Task", description: "Adding task to the prompt." },
@@ -134,6 +159,7 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
     systemInstruction: persona,
     tools: formatFunctionDeclarations.tools,
     context: addLooperTask.context,
+    model: modelInput.model,
   });
 
   const routeToFunctionsOrText = functionOrTextRouter({

@@ -4,7 +4,7 @@
     "registry": "https://wombat-dressing-room.appspot.com"
   },
   "private": true,
-  "version": "0.4.3",
+  "version": "0.4.6",
   "description": "Board Server",
   "main": "./dist/server/index.js",
   "exports": "./dist/server/index.js",
@@ -24,7 +24,8 @@
   "wireit": {
     "build": {
       "dependencies": [
-        "build:vite"
+        "build:vite",
+        "build:esbuild"
       ]
     },
     "build:vite": {
@@ -32,13 +33,23 @@
       "files": [
         "*.html",
         "vite.config.ts",
-        "package.json"
+        "package.json",
+        "src/app/**/*.ts"
       ],
       "output": [
         "dist/client"
       ],
       "dependencies": [
-        "build:esbuild"
+        "build:esbuild",
+        "../breadboard:build:tsc",
+        "../data-store:build:tsc",
+        "../agent-kit:build:tsc",
+        "../palm-kit:build:tsc",
+        "../core-kit:build:tsc",
+        "../json-kit:build:tsc",
+        "../template-kit:build:tsc",
+        "../node-nursery-web:build:tsc",
+        "../shared-ui:build:tsc"
       ],
       "clean": "if-file-deleted"
     },
@@ -139,7 +150,7 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "esbuild": "^0.23.0",
+    "esbuild": "^0.23.1",
     "eslint": "^8.57.0",
     "typescript": "^5.5.4",
     "wireit": "^0.14.7"

@@ -39,7 +39,7 @@ const runHandler: ApiHandler = async (parsed, req, res, body) => {
     ]);
     await writer.write([
       "error",
-      { error: "Invalid or missing key", timestamp: timestamp() },
+      { error: "Invalid or missing key", code: 403, timestamp: timestamp() },
     ]);
     await writer.write([
       "graphend",

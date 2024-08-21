@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { serverError } from "../errors.js";
-import { asInfo, getStore } from "../store.js";
+import { getStore } from "../store.js";
 import type { ApiHandler, BoardParseResult } from "../types.js";
 
 const get: ApiHandler = async (parsed, req, res) => {

@@ -12,11 +12,15 @@ import {
   RunContextChangeEvent,
   ShareEvent,
 } from "../../events/events.js";
+import { VisitorState } from "../../utils/types.js";
 
 @customElement("bb-app-nav")
 export class AppNav extends LitElement {
   @property({ reflect: true, type: Boolean })
   popout = true;
+
+  @property({ reflect: false })
+  visitorState: VisitorState = VisitorState.LOADING;
 
   @property({ reflect: false })
   shareTitle: string | null = null;
@@ -207,6 +211,49 @@ export class AppNav extends LitElement {
     const boardUrl = window.location.href.replace(/app$/, "json");
     const visualEditorUrl = `https://breadboard-ai.web.app/?board=${boardUrl}`;
 
+    const runOnBoardServer =
+      this.visitorState === VisitorState.VISITOR
+        ? nothing
+        : html`<li>
+            <input
+              type="checkbox"
+              id="run-on-board-server"
+              .checked=${this.runOnBoardServer}
+              @input=${(evt: InputEvent) => {
+                if (!(evt.target instanceof HTMLInputElement)) {
+                  return;
+                }
+
+                this.dispatchEvent(
+                  new RunContextChangeEvent(
+                    evt.target.checked ? "remote" : "local"
+                  )
+                );
+              }}
+            /><label for="run-on-board-server"
+              ><span class="text">Run on Server</span></label
+            >
+          </li>`;
+
+    const manageInvites =
+      this.visitorState === VisitorState.OWNER
+        ? html` <li>
+            <button
+              id="create-invite"
+              @click=${() => {
+                this.dispatchEvent(new InviteRequestEvent());
+              }}
+            >
+              <span class="text">Manage Invites</span>
+            </button>
+          </li>`
+        : nothing;
+
+    const boardServerKeyText =
+      this.visitorState >= VisitorState.USER
+        ? "Update Board Server API Key"
+        : "Sign in to Board Server";
+
     const showShare = "share" in navigator;
     return html` <div
         id="background"
@@ -227,57 +274,20 @@ export class AppNav extends LitElement {
               ><span class="text">Open in Visual Editor</span></a
             >
           </li>
-          <li>
-            <input
-              type="checkbox"
-              id="run-on-board-server"
-              .checked=${this.runOnBoardServer}
-              @input=${(evt: InputEvent) => {
-                if (!(evt.target instanceof HTMLInputElement)) {
-                  return;
-                }
-
-                this.dispatchEvent(
-                  new RunContextChangeEvent(
-                    evt.target.checked ? "remote" : "local"
-                  )
-                );
-              }}
-            /><label for="run-on-board-server"
-              ><span class="text">Run on Board Server</span></label
-            >
-            ${this.boardKeyNeeded
-              ? html`<div id="key-needed">
+          ${this.visitorState === VisitorState.LOADING
+            ? nothing
+            : html` ${runOnBoardServer}
+                <li>
                   <button
                     @click=${() => {
                       this.dispatchEvent(new BoardServerKeyRequestEvent());
                     }}
+                    id="update-board-key"
                   >
-                    Add Board Server API Key
+                    <span class="text">${boardServerKeyText}</span>
                   </button>
-                </div>`
-              : nothing}
-          </li>
-          <li>
-            <button
-              @click=${() => {
-                this.dispatchEvent(new BoardServerKeyRequestEvent());
-              }}
-              id="update-board-key"
-            >
-              <span class="text">Update Board Server API Key</span>
-            </button>
-          </li>
-          <li>
-            <button
-              id="create-invite"
-              @click=${() => {
-                this.dispatchEvent(new InviteRequestEvent());
-              }}
-            >
-              <span class="text">Manage Invites</span>
-            </button>
-          </li>
+                </li>
+                ${manageInvites}`}
           ${showShare
             ? html`<li>
                 <button

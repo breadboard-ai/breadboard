@@ -37,10 +37,14 @@ import AgentKit from "@google-labs/agent-kit";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import "./elements/elements.js";
 import { LightObserver } from "./utils/light-observer.js";
-import { toGuestKey as toGuestStorageKey } from "./utils/invite.js";
+import {
+  VisitorStateManager,
+  visitorStateManagerContext,
+} from "./utils/visitor-state-manager.js";
 import { map } from "lit/directives/map.js";
+import { provide } from "@lit/context";
+import { VisitorState } from "./utils/types.js";
 
-const BOARD_SERVER_KEY = "board-server-key";
 const RUN_ON_BOARD_SERVER = "run-on-board-server";
 
 const randomMessage: UserMessage[] = [
@@ -71,28 +75,6 @@ const getRemoteURL = () => {
   const url = new URL(window.location.href);
   url.pathname = url.pathname.replace(/app$/, "api/run");
   return url.href;
-};
-
-/**
- * Get the API key from the URL or local storage.
- *
- * First, try to get the key from local storage. If it's not there, check the
- * URL. If the URL has a `key` parameter, use that.
- */
-const getApiKey = (): string | null => {
-  const url = new URL(window.location.href);
-  const locallyStoredKey = globalThis.localStorage.getItem(BOARD_SERVER_KEY);
-  if (locallyStoredKey) {
-    return locallyStoredKey;
-  }
-  const guestStorageKey = toGuestStorageKey(url);
-  if (guestStorageKey) {
-    const guestKey = globalThis.localStorage.getItem(guestStorageKey);
-    if (guestKey) {
-      return guestKey;
-    }
-  }
-  return url.searchParams.get("key") || null;
 };
 
 @customElement("bb-app-view")
@@ -128,10 +110,13 @@ export class AppView extends LitElement {
   canInviteOthers = false;
 
   @state()
-  boardServerKey: string | null = getApiKey();
+  visitorState: VisitorState = VisitorState.LOADING;
 
   @state()
   secretsNeeded: string[] | null = null;
+
+  @provide({ context: visitorStateManagerContext })
+  visitorStateManager = new VisitorStateManager();
 
   #toasts = new Map<
     string,
@@ -147,6 +132,7 @@ export class AppView extends LitElement {
   #dataStore = createDefaultDataStore();
   #descriptorLoad: Promise<GraphDescriptor | null> = Promise.resolve(null);
   #kitLoad = loadKits([TemplateKit, Core, GeminiKit, JSONKit, AgentKit]);
+  #visitorStateInit = Promise.resolve();
 
   #isSharing = false;
   #abortController: AbortController | null = null;
@@ -198,7 +184,8 @@ export class AppView extends LitElement {
       margin-right: var(--bb-grid-size);
     }
 
-    #board-description {
+    #board-description,
+    #help {
       display: none;
       color: var(--bb-neutral-600);
     }
@@ -410,10 +397,18 @@ export class AppView extends LitElement {
         padding: 0;
       }
 
-      #board-description {
+      #board-description,
+      #help {
         display: block;
         margin-top: var(--bb-grid-size-2);
         padding: 0 var(--bb-grid-size-4);
+      }
+
+      #help {
+        border-top: 1px solid var(--bb-neutral-300);
+        margin-top: var(--bb-grid-size-8);
+        padding-top: var(--bb-grid-size-8);
+        color: var(--bb-neutral-500);
       }
 
       #board-info h1 {
@@ -435,10 +430,20 @@ export class AppView extends LitElement {
     super.connectedCallback();
 
     this.url = window.location.pathname.replace(/app$/, "json");
-    this.runOnBoardServer =
-      globalThis.localStorage.getItem(RUN_ON_BOARD_SERVER) === "true";
+    const runOnBoardServer =
+      globalThis.localStorage.getItem(RUN_ON_BOARD_SERVER);
+    this.runOnBoardServer = runOnBoardServer === "true";
 
-    this.#maybeProcessInvite();
+    this.visitorStateManager.addEventListener("change", (evt) => {
+      this.visitorState = evt.state;
+      const upgradeToRunOnServer = evt.previous < VisitorState.INVITEE;
+      const alreadySet =
+        evt.previous === VisitorState.LOADING && runOnBoardServer !== null;
+      if (upgradeToRunOnServer && !alreadySet) {
+        this.#toggleRunContext(new RunContextChangeEvent("remote"));
+      }
+    });
+    this.#visitorStateInit = this.visitorStateManager.init();
   }
 
   disconnectedCallback(): void {
@@ -468,6 +473,7 @@ export class AppView extends LitElement {
           const graph = (await response.json()) as GraphDescriptor;
           document.title = `${`${graph.title} - ` ?? ""}Breadboard App View`;
           resolve(graph);
+          this.startRun();
         } catch (err) {
           console.warn(err);
           resolve(null);
@@ -480,7 +486,8 @@ export class AppView extends LitElement {
       changedProperties.has("boardServerKey")
     ) {
       if (this.runOnBoardServer) {
-        this.boardKeyNeeded = this.boardServerKey === null;
+        this.boardKeyNeeded =
+          this.visitorStateManager.boardServerKey() === null;
       } else {
         this.boardKeyNeeded = false;
       }
@@ -494,12 +501,52 @@ export class AppView extends LitElement {
     this.#runner = null;
   }
 
+  #helpText() {
+    const local = html`<p>
+      You will be asked for various API keys. These keys will be stored in your
+      local browser storage so that you don't have to re-enter them.
+    </p>`;
+    const flip = html`<p>
+      Flip the "Run on Server" toggle to run this app without having to enter
+      keys.
+    </p>`;
+    const invite = html`<p>
+      You own the board for this app, so you can invite others to run it on
+      server. Click "Manage Invites" to create or delete invites.
+    </p>`;
+    const remote = nothing;
+    switch (this.visitorState) {
+      case VisitorState.VISITOR: {
+        return local;
+      }
+      case VisitorState.USER:
+      case VisitorState.INVITEE: {
+        if (this.runOnBoardServer) {
+          return remote;
+        } else {
+          return html`${local}${flip}`;
+        }
+      }
+      case VisitorState.OWNER: {
+        if (this.runOnBoardServer) {
+          return invite;
+        } else {
+          return html`${local}${flip}${invite}`;
+        }
+      }
+      default: {
+        return nothing;
+      }
+    }
+  }
+
   async startRun() {
     this.stopRun();
 
     const [graph, kits] = await Promise.all([
       this.#descriptorLoad,
       this.#kitLoad,
+      this.#visitorStateInit,
     ]);
 
     if (!graph || !kits || !this.url) {
@@ -522,12 +569,16 @@ export class AppView extends LitElement {
       },
     };
 
-    if (this.runOnBoardServer) {
-      if (this.boardServerKey) {
+    if (
+      this.runOnBoardServer &&
+      this.visitorStateManager.visitorState() >= VisitorState.INVITEE
+    ) {
+      const boardServerKey = this.visitorStateManager.boardServerKey();
+      if (boardServerKey) {
         config.remote = {
           url: getRemoteURL(),
           type: "http",
-          key: this.boardServerKey,
+          key: boardServerKey,
         };
       } else {
         this.#toast(
@@ -551,8 +602,11 @@ export class AppView extends LitElement {
       this.stopRun();
     });
 
-    this.#runner.addEventListener("error", () => {
+    this.#runner.addEventListener("error", (event) => {
       this.requestUpdate();
+      if (event.data.code === 403) {
+        this.visitorStateManager.expireInvite();
+      }
       this.stopRun();
     });
 
@@ -650,35 +704,8 @@ export class AppView extends LitElement {
     this.#isSharing = false;
   }
 
-  #maybeProcessInvite() {
-    const url = new URL(window.location.href);
-    const invite = url.searchParams.get("invite");
-    if (!invite) {
-      return;
-    }
-
-    const guestStorageKey = toGuestStorageKey(url);
-    if (!guestStorageKey) {
-      return;
-    }
-
-    // update the URL to remove the invite without changing history
-    url.searchParams.delete("invite");
-    history.replaceState(null, "", url.toString());
-
-    // store the invite as board-server-guest-key in local storage
-    globalThis.localStorage.setItem(guestStorageKey, invite);
-    this.boardServerKey = getApiKey();
-    this.#toggleRunContext(new RunContextChangeEvent("remote"));
-  }
-
   #storeBoardServerKey(key: string) {
-    if (key === "") {
-      globalThis.localStorage.removeItem(BOARD_SERVER_KEY);
-    } else {
-      globalThis.localStorage.setItem(BOARD_SERVER_KEY, key);
-    }
-    this.boardServerKey = getApiKey();
+    this.visitorStateManager.setBoardServerApiKey(key);
   }
 
   #renderLoading() {
@@ -803,35 +830,36 @@ export class AppView extends LitElement {
     const active =
       this.status === STATUS.RUNNING || this.status === STATUS.PAUSED;
 
-    const activity = Promise.all([this.#descriptorLoad, this.#kitLoad]).then(
-      () => {
-        return html`<bb-activity-log-lite
-          .start=${this.#runStartTime}
-          .message=${this.#message}
-          .log=${log}
-          @bbinputrequested=${() => {
-            this.requestUpdate();
-          }}
-          @bbinputenter=${(event: InputEnterEvent) => {
-            let data = event.data as InputValues;
-            const runner = this.#runner;
-            if (!runner) {
-              throw new Error("Can't send input, no runner");
-            }
-            if (runner.running()) {
-              throw new Error(
-                "The runner is already running, cannot send input"
-              );
-            }
-            runner.run(data);
-          }}
-        ></bb-activity-log-lite>`;
-      }
-    );
+    const activity = Promise.all([
+      this.#descriptorLoad,
+      this.#kitLoad,
+      this.#visitorStateInit,
+    ]).then(() => {
+      return html`<bb-activity-log-lite
+        .start=${this.#runStartTime}
+        .message=${this.#message}
+        .log=${log}
+        @bbinputrequested=${() => {
+          this.requestUpdate();
+        }}
+        @bbinputenter=${(event: InputEnterEvent) => {
+          let data = event.data as InputValues;
+          const runner = this.#runner;
+          if (!runner) {
+            throw new Error("Can't send input, no runner");
+          }
+          if (runner.running()) {
+            throw new Error("The runner is already running, cannot send input");
+          }
+          runner.run(data);
+        }}
+      ></bb-activity-log-lite>`;
+    });
 
     const nav = (popout: boolean) => {
       return html`<bb-app-nav
         .popout=${popout}
+        .visitorState=${this.visitorState}
         .runOnBoardServer=${this.runOnBoardServer}
         .boardKeyNeeded=${this.boardKeyNeeded}
         @bbdismissmenu=${() => {
@@ -872,6 +900,7 @@ export class AppView extends LitElement {
             </header>
             <p id="board-description">${until(boardDescription)}</p>
             ${nav(false)}
+            <div id="help">${this.#helpText()}</div>
           </div>
         </section>
         <section id="activity-container" ?inert=${inert}>
@@ -899,7 +928,7 @@ export class AppView extends LitElement {
         : nothing}
       ${this.showServerKeyPopover
         ? html`<bb-board-server-key
-            .key=${this.boardServerKey}
+            .key=${this.visitorStateManager.boardServerApiKey()}
             @bboverlaydismiss=${() => {
               this.showServerKeyPopover = false;
             }}

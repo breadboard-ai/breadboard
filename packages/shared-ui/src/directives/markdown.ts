@@ -15,8 +15,27 @@ import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import MarkdownIt from "markdown-it";
 
 class MarkdownDirective extends Directive {
-  #markdownIt = MarkdownIt();
+  #markdownIt = MarkdownIt({
+    highlight: (str, lang) => {
+      if (lang !== "html") {
+        return str;
+      }
+      return `<iframe class="html-view" srcdoc="${this.#escapeSrcdoc(str)}" sandbox></iframe>`;
+    },
+  });
   #lastValue: string | null = null;
+
+  #escapeSrcdoc = (str: string) => {
+    const htmlEntities: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    };
+
+    return str.replace(/[&<>"']/g, (char) => htmlEntities[char]);
+  };
 
   update(_part: Part, [value]: DirectiveParameters<this>) {
     if (this.#lastValue === value) {

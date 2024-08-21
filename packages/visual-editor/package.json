@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/visual-editor",
-  "version": "1.16.4",
+  "version": "1.16.7",
   "description": "The Visual Editor for Breadboard",
   "main": "./build/index.js",
   "exports": {
@@ -85,7 +85,8 @@
         "src/**/*.ts",
         "tests/**/*.ts",
         "tsconfig.json",
-        "../../core/tsconfig/base.json"
+        "../../core/tsconfig/base.json",
+        "package.json"
       ]
     },
     "build:tsc": {
@@ -119,7 +120,7 @@
       ],
       "files": [
         "vite.config.ts",
-        ".env",
+        ".env*",
         "*.html",
         "oauth/",
         "public/"
