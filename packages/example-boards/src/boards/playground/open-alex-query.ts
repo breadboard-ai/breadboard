@@ -4,59 +4,32 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { base, board, code } from "@google-labs/breadboard";
-import { core } from "@google-labs/core-kit";
-import { templates } from "@google-labs/template-kit";
+import { board, input, output } from "@breadboard-ai/build";
+import { fetch } from "@google-labs/core-kit";
+import { urlTemplate } from "@google-labs/template-kit";
 
-const spread = code<{ object: object }>((inputs) => {
-  const object = inputs.object;
-  if (typeof object !== "object") {
-    throw new Error(`object is of type ${typeof object} not object`);
-  }
-  return { ...object };
+const requestUri = input({
+  type: "string",
+  title: "Request URI",
+  default: "works/random",
 });
 
-const graph = board(() => {
-  const input = base.input({
-    $id: "query",
-    type: "object",
-    schema: {
-      properties: {
-        requestUri: {
-          type: "string",
-          title: "Request URI",
-          default: "works/random",
-        },
-      },
-      type: "object",
-      required: ["requestUri"],
-      additionalProperties: false,
-    },
-  });
-
-  const urlTemplate = templates.urlTemplate({
-    $id: "urlTemplate",
-    template: "https://api.openalex.org/{requestUri}",
-    requestUri: input.requestUri,
-  });
-
-  const fetchUrl = core.fetch({
-    $id: "fetch",
-    method: "GET",
-    url: urlTemplate.url,
-  });
-
-  const response = spread({ $id: "spreadResponse", object: fetchUrl.response });
-
-  const output = base.output({
-    $id: "result",
-    ...response,
-  });
-  return output;
+const url = urlTemplate({
+  $id: "urlTemplate",
+  template: "https://api.openalex.org/{requestUri}",
+  requestUri: requestUri,
 });
 
-export default await graph.serialize({
+const fetchResult = fetch({
+  $id: "fetch",
+  method: "GET",
+  url: url.outputs.url,
+});
+
+export default board({
   title: "Open Alex API Query",
   description: "Query the Open Alex API",
   version: "0.0.1",
+  inputs: { requestUri },
+  outputs: { result: output(fetchResult.outputs.response)}
 });
