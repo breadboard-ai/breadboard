@@ -22,7 +22,9 @@
     "serve": "wireit",
     "dev": "npm run dev:nowatch --watch",
     "dev:nowatch": "wireit",
-    "test": "wireit"
+    "test": "wireit",
+    "test:integration": "wireit"
+
   },
   "wireit": {
     "build": {
@@ -129,6 +131,14 @@
     },
     "test": {
       "command": "node --test --enable-source-maps --test-reporter spec dist/tests/*.js",
+      "dependencies": [
+        "build:tests"
+      ],
+      "files": [],
+      "output": []
+    },
+    "test:integration": {
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/integration/board-api.test.js",
       "dependencies": [
         "build:tests"
       ],
