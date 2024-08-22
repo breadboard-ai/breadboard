@@ -19,7 +19,7 @@ export type OperationResult =
   | { success: false; error: string };
 
 const providers = {
-  "sqlite": new SQLiteStorageProvider('board-server.db'),
+  "sqlite": new SQLiteStorageProvider(process.env['SQLITE_DB_PATH'] || 'board-server.db'),
   "firestore": new FirestoreStorageProvider('board-server')
 }
 
