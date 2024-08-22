@@ -20,18 +20,31 @@ import {
 } from "./define/definition.js";
 import type { KitTag } from "@google-labs/breadboard-schema/graph.js";
 
-export interface KitOptions {
+type ComponentManifest = Record<
+  string,
+  GenericDiscreteComponent | BoardDefinition
+>;
+
+export interface KitOptions<T extends ComponentManifest> {
   title: string;
   description: string;
   version: string;
   url: string;
   tags?: KitTag[];
-  components: Array<GenericDiscreteComponent | BoardDefinition>;
+  components: T;
 }
 
-export function kit(options: KitOptions): KitConstructor<Kit> {
+export function kit<T extends ComponentManifest>(
+  options: KitOptions<T>
+): KitConstructor<Kit> & T {
+  const componentsWithIds = Object.fromEntries(
+    Object.entries(options.components).map(([id, component]) => [
+      id,
+      { ...component, id },
+    ])
+  );
   const handlers: Record<string, NodeHandler> = Object.fromEntries(
-    options.components.map((component) => {
+    Object.values(componentsWithIds).map((component) => {
       if (isDiscreteComponent(component)) {
         return [component.id, component];
       } else {
@@ -42,7 +55,8 @@ export function kit(options: KitOptions): KitConstructor<Kit> {
         return [
           component.id,
           // TODO(aomarks) Should this just be the invoke() method on Board?
-          makeBoardComponentHandler(component),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          makeBoardComponentHandler(component as any),
         ];
       }
     })
@@ -50,7 +64,7 @@ export function kit(options: KitOptions): KitConstructor<Kit> {
 
   // TODO(aomarks) Unclear why this needs to be a class, and why it needs
   // certain fields on both the static and instance sides.
-  return class GeneratedBreadboardKit {
+  const result = class GeneratedBreadboardKit {
     static handlers = handlers;
     static url = options.url;
     handlers = handlers;
@@ -60,6 +74,10 @@ export function kit(options: KitOptions): KitConstructor<Kit> {
     url = options.url;
     tags = options.tags ?? [];
   };
+  return Object.assign(
+    result,
+    componentsWithIds
+  ) as KitConstructor<Kit> as KitConstructor<Kit> & T;
 }
 
 function makeBoardComponentHandler(board: BoardDefinition): NodeHandler {

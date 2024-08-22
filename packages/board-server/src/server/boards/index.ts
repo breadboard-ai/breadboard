@@ -5,24 +5,26 @@
  */
 
 import type { IncomingMessage, ServerResponse } from "http";
+import type { ViteDevServer } from "vite";
+
 import { methodNotAllowed } from "../errors.js";
 import { serveFile, serveIndex } from "../common.js";
+import type { ServerConfig } from '../config.js';
+import { cors, corsAll } from "../cors.js";
+import { getStore } from "../store.js";
+import type { BoardParseResult, PageMetadata } from "../types.js";
+
 import list from "./list.js";
 import create from "./create.js";
 import get from "./get.js";
 import post from "./post.js";
 import del from "./delete.js";
-import type { ViteDevServer } from "vite";
 import invoke from "./invoke.js";
 import describe from "./describe.js";
 import inviteList from "./invite-list.js";
 import inviteUpdate from "./invite-update.js";
 import { parse } from "./utils/board-api-parser.js";
-import { cors, corsAll } from "../cors.js";
 import run from "./run.js";
-import type { BoardParseResult, PageMetadata } from "../types.js";
-import { getStore } from "../store.js";
-import type { GraphDescriptor } from "@google-labs/breadboard";
 
 const getBody = async (req: IncomingMessage): Promise<unknown> => {
   const chunks: string[] = [];
@@ -60,11 +62,11 @@ const getMetadata = (parsed: BoardParseResult) => {
 };
 
 export const serveBoardsAPI = async (
-  url: URL,
-  vite: ViteDevServer | null,
+  serverConfig: ServerConfig,
   req: IncomingMessage,
   res: ServerResponse
 ): Promise<boolean> => {
+  const url = new URL(req.url || "", serverConfig.hostname);
   const parsed = parse(url, req.method);
 
   if (!parsed.success) {
@@ -103,7 +105,7 @@ export const serveBoardsAPI = async (
     }
     case "app": {
       // Serve the index.html file for the app.
-      serveIndex(vite, res, getMetadata(parsed));
+      serveIndex(serverConfig.viteDevServer, res, getMetadata(parsed));
       return true;
     }
     case "api": {
