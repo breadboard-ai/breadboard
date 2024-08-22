@@ -9,7 +9,7 @@ import type { ViteDevServer } from "vite";
 
 import { methodNotAllowed } from "../errors.js";
 import { serveFile, serveIndex } from "../common.js";
-import type { ServerConfig } from '../config.js';
+import type { ServerConfig } from "../config.js";
 import { cors, corsAll } from "../cors.js";
 import { getStore } from "../store.js";
 import type { BoardParseResult, PageMetadata } from "../types.js";
