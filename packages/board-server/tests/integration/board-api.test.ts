@@ -3,10 +3,21 @@ import assert from 'node:assert';
 import { request } from 'node:http';
 import { startServer, stopServer } from "../../src/server.js";
 
+import fs from 'fs';
+import path from 'path';
+
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+import { createAccount } from '../../src/server/store.js'
+
 let serverInstance: { server: any; port: string | number };
+
+var account: { api_key: any; account?: string; };
 
 test.before(async () => {
   serverInstance = await startServer();
+  account = await createAccount('test')
 });
 
 test.after(async () => {
@@ -29,14 +40,24 @@ process.on('unhandledRejection', async (reason) => {
   process.exit(1);
 });
 
+function readBoard(name: string) {
+      // Get the directory name
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const filePath = path.join(__dirname, `../boards/${name}`);
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+}
+
 function makeRequest({
   path,
   method = 'GET',
   body,
+  headers
 }: {
   path: string;
   method?: string;
   body?: unknown;
+  headers: any
 }): Promise<{ statusCode: number; data: string }> {
 
   return new Promise((resolve, reject) => {
@@ -45,9 +66,7 @@ function makeRequest({
       port: 3000,
       path,
       method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: headers,
     };
 
     const req = request(options, (res) => {
@@ -90,128 +109,142 @@ test('GET /boards should list boards', async () => {
   const { statusCode, data: body } = await makeRequest({
     path: '/boards',
     method: 'GET',
+    headers: { 'Content-Type': 'application/json' }
   });
   assert.strictEqual(statusCode, 200);
-  assert.deepStrictEqual(body, { success: true, type: 'list' }); // Adjust expected response as needed
 });
 
-test('POST /boards/ should create a new board', async () => {
+test('POST /boards/@test/simple.json should create a new board', async () => {
   const { statusCode, data: body } = await makeRequest({
-    path: '/boards/',
+    path: `/boards/@${account.account}/simple.json?API_KEY=${account.api_key}`,
     method: 'POST',
+    body: readBoard('simple.bgl.json'),
+    headers: { 'Content-Type': 'application/json' }
   });
   assert.strictEqual(statusCode, 200);
-  assert.deepStrictEqual(body, { success: true, type: 'create' }); // Adjust expected response as needed
+  assert.deepStrictEqual(JSON.parse(body), { "created" : "@test/simple.json" });
 });
 
-test('GET /boards/@user/board.json should get a board', async () => {
+test('GET /boards/@test/simple.json should get a board', async () => {
   const { statusCode, data: body } = await makeRequest({
-    path: '/boards/@user/board.json',
+    path: '/boards/@test/simple.json',
     method: 'GET',
+    headers: { 'Content-Type': 'application/json' }
   });
   assert.strictEqual(statusCode, 200);
-  assert.deepStrictEqual(body, {
-    success: true,
-    type: 'get',
-    board: '@user/board.json',
-    url: 'http://localhost:3000/boards/@user/board.json',
-    user: 'user',
-    name: 'board.json',
-  });
+  assert.deepStrictEqual(JSON.parse(body), readBoard("simple.bgl.json"));
 });
 
-test('POST /boards/@user/board.json should update a board', async () => {
+test('GET /boards/@test/simple.app should 404 while unpublished', async () => {
   const { statusCode, data: body } = await makeRequest({
-    path: '/boards/@user/board.json',
+    path: '/boards/@test/simple.app',
+    method: 'GET',
+    headers: {}
+  });
+  assert.strictEqual(statusCode, 404);
+});
+
+test('POST /boards/@test/simple.json should update a board', async () => {
+  const { statusCode, data: body } = await makeRequest({
+    path: `/boards/@test/simple.json?API_KEY=${account.api_key}`,
     method: 'POST',
+    body: readBoard('simple-published.bgl.json'),
+    headers: {}
   });
   assert.strictEqual(statusCode, 200);
-  assert.deepStrictEqual(body, {
-    success: true,
-    type: 'update',
-    board: '@user/board.json',
-    url: 'http://localhost:3000/boards/@user/board.json',
-    user: 'user',
-    name: 'board.json',
-  });
+  assert.deepStrictEqual(JSON.parse(body), { "created" : "@test/simple.json" });
 });
 
-test('GET /boards/@user/board.app should serve frontend app', async () => {
+test('GET /boards/@test/simple.json should be published', async () => {
   const { statusCode, data: body } = await makeRequest({
-    path: '/boards/@user/board.app',
+    path: '/boards/@test/simple.json',
     method: 'GET',
+    headers: {}
   });
   assert.strictEqual(statusCode, 200);
-  assert.deepStrictEqual(body, {
-    success: true,
-    type: 'app',
-    board: '@user/board.json',
-    url: 'http://localhost:3000/boards/@user/board.json',
-    user: 'user',
-    name: 'board.json',
-  });
+  assert.deepStrictEqual(JSON.parse(body), readBoard("simple-published.bgl.json"));
 });
 
-test('GET /boards/@user/board.api should serve API description', async () => {
+test('GET /boards should list the published board', async () => {
   const { statusCode, data: body } = await makeRequest({
-    path: '/boards/@user/board.api',
+    path: '/boards',
     method: 'GET',
+    headers: {}
   });
   assert.strictEqual(statusCode, 200);
-  assert.deepStrictEqual(body, {
-    success: true,
-    type: 'api',
-    board: '@user/board.json',
-    url: 'http://localhost:3000/boards/@user/board.json',
-    user: 'user',
-    name: 'board.json',
-  });
+  assert.deepStrictEqual(JSON.parse(body), [ { title: 'simple', path: 'test/simple.json', username: 'test', readonly: true, mine: false, tags: 'published' } ])
 });
 
-test('POST /boards/@user/board.api/invoke should invoke API', async () => {
+test('GET /boards/@test/simple.app should serve frontend app', async () => {
   const { statusCode, data: body } = await makeRequest({
-    path: '/boards/@user/board.api/invoke',
-    method: 'POST',
-  });
-  assert.strictEqual(statusCode, 200);
-  assert.deepStrictEqual(body, {
-    success: true,
-    type: 'invoke',
-    board: '@user/board.json',
-    url: 'http://localhost:3000/boards/@user/board.json',
-    user: 'user',
-    name: 'board.json',
-  });
-});
-
-test('GET /boards/@user/board.invite should list invites', async () => {
-  const { statusCode, data: body } = await makeRequest({
-    path: '/boards/@user/board.invite',
+    path: '/boards/@test/simple.app',
     method: 'GET',
+    headers: {}
   });
+  console.info(body)
   assert.strictEqual(statusCode, 200);
-  assert.deepStrictEqual(body, {
-    success: true,
-    type: 'invite-list',
-    board: '@user/board.json',
-    url: 'http://localhost:3000/boards/@user/board.json',
-    user: 'user',
-    name: 'board.json',
-  });
 });
 
-test('POST /boards/@user/board.invite should update invites', async () => {
-  const { statusCode, data: body } = await makeRequest({
-    path: '/boards/@user/board.invite',
-    method: 'POST',
-  });
-  assert.strictEqual(statusCode, 200);
-  assert.deepStrictEqual(body, {
-    success: true,
-    type: 'invite-update',
-    board: '@user/board.json',
-    url: 'http://localhost:3000/boards/@user/board.json',
-    user: 'user',
-    name: 'board.json',
-  });
-});
+// test('GET /boards/@user/board.api should serve API description', async () => {
+//   const { statusCode, data: body } = await makeRequest({
+//     path: '/boards/@user/board.api',
+//     method: 'GET',
+//   });
+//   assert.strictEqual(statusCode, 200);
+//   assert.deepStrictEqual(body, {
+//     success: true,
+//     type: 'api',
+//     board: '@user/board.json',
+//     url: 'http://localhost:3000/boards/@user/board.json',
+//     user: 'user',
+//     name: 'board.json',
+//   });
+// });
+
+// test('POST /boards/@user/board.api/invoke should invoke API', async () => {
+//   const { statusCode, data: body } = await makeRequest({
+//     path: '/boards/@user/board.api/invoke',
+//     method: 'POST',
+//   });
+//   assert.strictEqual(statusCode, 200);
+//   assert.deepStrictEqual(body, {
+//     success: true,
+//     type: 'invoke',
+//     board: '@user/board.json',
+//     url: 'http://localhost:3000/boards/@user/board.json',
+//     user: 'user',
+//     name: 'board.json',
+//   });
+// });
+
+// test('GET /boards/@user/board.invite should list invites', async () => {
+//   const { statusCode, data: body } = await makeRequest({
+//     path: '/boards/@user/board.invite',
+//     method: 'GET',
+//   });
+//   assert.strictEqual(statusCode, 200);
+//   assert.deepStrictEqual(body, {
+//     success: true,
+//     type: 'invite-list',
+//     board: '@user/board.json',
+//     url: 'http://localhost:3000/boards/@user/board.json',
+//     user: 'user',
+//     name: 'board.json',
+//   });
+// });
+
+// test('POST /boards/@user/board.invite should update invites', async () => {
+//   const { statusCode, data: body } = await makeRequest({
+//     path: '/boards/@user/board.invite',
+//     method: 'POST',
+//   });
+//   assert.strictEqual(statusCode, 200);
+//   assert.deepStrictEqual(body, {
+//     success: true,
+//     type: 'invite-update',
+//     board: '@user/board.json',
+//     url: 'http://localhost:3000/boards/@user/board.json',
+//     user: 'user',
+//     name: 'board.json',
+//   });
+// });

@@ -12,11 +12,13 @@ import type { ServerConfig } from "./server/config.js";
 import { serveHome } from "./server/home/index.js";
 import { serveInfoAPI } from "./server/info/index.js";
 import { serveProxyAPI } from "./server/proxy/index.js";
+import { serverError } from "./server/errors.js";
 
 const handleError = (err: Error, res: ServerResponse) => {
   console.error("Server Error:", err);
-  res.writeHead(500, { "Content-Type": "text/plain" });
-  res.end("Internal Server Error");
+  if(!res.writableEnded) {
+    serverError(res, "Internal server error")
+  }
 };
 
 export function makeRouter(serverConfig: ServerConfig) {

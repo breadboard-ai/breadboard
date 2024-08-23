@@ -37,6 +37,25 @@ export const getStore = () => {
   return providers[getProvider()]
 };
 
+const createAPIKey = async () => {
+  const uuid = crypto.randomUUID();
+  const data = new TextEncoder().encode(uuid);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(digest));
+  const hashHex = hashArray.map((b) => b.toString(36)).join("");
+  return `bb-${hashHex.slice(0, 50)}`;
+};
+
+export async function createAccount(username: string) {
+  const store = getStore()
+
+  const key = await createAPIKey();
+
+  await store!.createUser(username, key)
+
+  return { account: username, api_key: key }
+}
+
 export type BoardListEntry = {
   title: string;
   path: string;
