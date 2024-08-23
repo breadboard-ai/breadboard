@@ -95,7 +95,7 @@ const extractRequestBody = async (request: IncomingMessage) => {
 };
 
 export const serveProxyAPI = async (
-  config: ServerConfig,
+  serverConfig: ServerConfig,
   req: IncomingMessage,
   res: ServerResponse
 ) => {
@@ -105,7 +105,7 @@ export const serveProxyAPI = async (
     return false;
   }
 
-  if (!cors(config, req, res)) {
+  if (!cors(req, res, serverConfig.allowedOrigins)) {
     return true;
   }
 
