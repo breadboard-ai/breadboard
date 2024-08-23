@@ -17,8 +17,10 @@ import {
 } from "@google-labs/breadboard/remote";
 import { asRuntimeKit } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
-import { cors } from "../cors.js";
 import { getDataStore } from "@breadboard-ai/data-store";
+
+import type { ServerConfig } from "../config.js";
+import { cors } from "../cors.js";
 
 const config: ProxyServerConfig = {
   kits: [secretsKit, asRuntimeKit(Core)],
@@ -93,6 +95,7 @@ const extractRequestBody = async (request: IncomingMessage) => {
 };
 
 export const serveProxyAPI = async (
+  config: ServerConfig,
   req: IncomingMessage,
   res: ServerResponse
 ) => {
@@ -102,7 +105,7 @@ export const serveProxyAPI = async (
     return false;
   }
 
-  if (!cors(req, res)) {
+  if (!cors(config, req, res)) {
     return true;
   }
 

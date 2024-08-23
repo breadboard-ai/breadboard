@@ -22,7 +22,7 @@ export function makeRouter(serverConfig: ServerConfig) {
       return;
     }
 
-    if (await serveProxyAPI(req, res)) {
+    if (await serveProxyAPI(serverConfig, req, res)) {
       return;
     }
 
