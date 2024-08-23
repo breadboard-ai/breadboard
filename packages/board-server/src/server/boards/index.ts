@@ -92,7 +92,7 @@ export const serveBoardsAPI = async (
       break;
     }
     case "get": {
-      if (!corsAll(req, res, serverConfig.allowedOrigins)) return true;
+      if (!corsAll(req, res)) return true;
       if (await get(parsed, req, res)) return true;
       break;
     }
