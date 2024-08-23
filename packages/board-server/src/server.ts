@@ -32,29 +32,6 @@ export const startServer = async () => {
         }),
   };
 
-  if (serverConfig.allowedOrigins.size === 0) {
-    console.log(`
-┌─────────────────────────────────────────────────────────────────────────┐
-│ Breadboard Board Server                                                 │
-├─────────────────────────────────────────────────────────────────────────┤
-│ No allowed origins were set. Place a space-delimited list of 1+ allowed │
-│ origins in the ALLOWED_ORIGINS environment variable and restart.        │
-└─────────────────────────────────────────────────────────────────────────┘
-`);
-  } else {
-    console.log(`
-┌─────────────────────────────────────────────────────────────────────────┐
-│ Breadboard Board Server                                                 │
-├─────────────────────────────────────────────────────────────────────────┤
-│ Allowing connections from the following origins:                        │`);
-    for (const origin of serverConfig.allowedOrigins) {
-      console.log(`│   - ${origin}`);
-    }
-    console.log(
-      "└─────────────────────────────────────────────────────────────────────────┘"
-    );
-  }
-
   const server = createServer(makeRouter(serverConfig));
 
   return new Promise<{ server: any; port: string | number }>(
