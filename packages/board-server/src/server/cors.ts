@@ -9,7 +9,6 @@ import type {
   OutgoingHttpHeaders,
   ServerResponse,
 } from "http";
-import { getStore } from "./store.js";
 
 const CORS_HEADERS: OutgoingHttpHeaders = {
   "Access-Control-Allow-Origin": "*",
