@@ -105,7 +105,7 @@ function makeRequest({
 
 
 // Tests
-test('GET /boards should list boards', async () => {
+test('GET /boards should list boards', { concurrency: false }, async () => {
   const { statusCode, data: body } = await makeRequest({
     path: '/boards',
     method: 'GET',
@@ -114,7 +114,7 @@ test('GET /boards should list boards', async () => {
   assert.strictEqual(statusCode, 200);
 });
 
-test('POST /boards/@test/simple.json should create a new board', async () => {
+test('POST /boards/@test/simple.json should create a new board', { concurrency: false },  async () => {
   const { statusCode, data: body } = await makeRequest({
     path: `/boards/@${account.account}/simple.json?API_KEY=${account.api_key}`,
     method: 'POST',
@@ -125,7 +125,7 @@ test('POST /boards/@test/simple.json should create a new board', async () => {
   assert.deepStrictEqual(JSON.parse(body), { "created" : "@test/simple.json" });
 });
 
-test('GET /boards/@test/simple.json should get a board', async () => {
+test('GET /boards/@test/simple.json should get a board', { concurrency: false }, async () => {
   const { statusCode, data: body } = await makeRequest({
     path: '/boards/@test/simple.json',
     method: 'GET',
@@ -135,7 +135,7 @@ test('GET /boards/@test/simple.json should get a board', async () => {
   assert.deepStrictEqual(JSON.parse(body), readBoard("simple.bgl.json"));
 });
 
-test('GET /boards/@test/simple.app should 404 while unpublished', async () => {
+test('GET /boards/@test/simple.app should 404 while unpublished', { concurrency: false }, async () => {
   const { statusCode, data: body } = await makeRequest({
     path: '/boards/@test/simple.app',
     method: 'GET',
@@ -144,7 +144,7 @@ test('GET /boards/@test/simple.app should 404 while unpublished', async () => {
   assert.strictEqual(statusCode, 404);
 });
 
-test('POST /boards/@test/simple.json should update a board', async () => {
+test('POST /boards/@test/simple.json should update a board', { concurrency: false }, async () => {
   const { statusCode, data: body } = await makeRequest({
     path: `/boards/@test/simple.json?API_KEY=${account.api_key}`,
     method: 'POST',
@@ -155,7 +155,7 @@ test('POST /boards/@test/simple.json should update a board', async () => {
   assert.deepStrictEqual(JSON.parse(body), { "created" : "@test/simple.json" });
 });
 
-test('GET /boards/@test/simple.json should be published', async () => {
+test('GET /boards/@test/simple.json should be published', { concurrency: false }, async () => {
   const { statusCode, data: body } = await makeRequest({
     path: '/boards/@test/simple.json',
     method: 'GET',
@@ -165,7 +165,7 @@ test('GET /boards/@test/simple.json should be published', async () => {
   assert.deepStrictEqual(JSON.parse(body), readBoard("simple-published.bgl.json"));
 });
 
-test('GET /boards should list the published board', async () => {
+test('GET /boards should list the published board', { concurrency: false }, async () => {
   const { statusCode, data: body } = await makeRequest({
     path: '/boards',
     method: 'GET',
@@ -175,7 +175,7 @@ test('GET /boards should list the published board', async () => {
   assert.deepStrictEqual(JSON.parse(body), [ { title: 'simple', path: 'test/simple.json', username: 'test', readonly: true, mine: false, tags: 'published' } ])
 });
 
-test('GET /boards/@test/simple.app should serve frontend app', async () => {
+test('GET /boards/@test/simple.app should serve frontend app', { concurrency: false }, async () => {
   const { statusCode, data: body } = await makeRequest({
     path: '/boards/@test/simple.app',
     method: 'GET',
@@ -189,6 +189,7 @@ test('GET /boards/@test/simple.app should serve frontend app', async () => {
 //   const { statusCode, data: body } = await makeRequest({
 //     path: '/boards/@user/board.api',
 //     method: 'GET',
+//     headers: {}
 //   });
 //   assert.strictEqual(statusCode, 200);
 //   assert.deepStrictEqual(body, {
