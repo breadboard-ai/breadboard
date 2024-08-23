@@ -1,5 +1,23 @@
 # @breadboard-ai/google-drive-kit
 
+## 0.2.3
+
+### Patch Changes
+
+- a940b87: Switch to new style of declaring components in kits.
+- Updated dependencies [cc5f4b6]
+- Updated dependencies [a4301e6]
+- Updated dependencies [a940b87]
+- Updated dependencies [374ea85]
+- Updated dependencies [f93ec06]
+- Updated dependencies [cc5f4b6]
+- Updated dependencies [398bf4f]
+- Updated dependencies [7de241c]
+- Updated dependencies [ee1f9ca]
+  - @breadboard-ai/build@0.9.0
+  - @google-labs/core-kit@0.14.0
+  - @google-labs/template-kit@0.3.8
+
 ## 0.2.2
 
 ### Patch Changes

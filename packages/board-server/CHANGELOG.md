@@ -1,5 +1,68 @@
 # @breadboard-ai/board-server
 
+## 0.5.0
+
+### Minor Changes
+
+- cacd8e2: Introduce HTML preview for llm-output.
+- 8b86be4: Support Google Cloud Run deployment.
+- e0dccfe: Polish app view.
+- dd34aba: Introduce social media previews for board server app view.
+- f6c6378: Remove auto-sign-in machinery (it can't work as designed)
+- 068e8cb: Introduce the invite links system for board server.
+- 836058f: Teach App view to handle multimodal content.
+- 001b250: Add support for unclamped outputs
+- b201e07: Implement edge-based UI in board-server (and fix a bunch of bugs elsewhere)
+- 15b5659: Teach app view to use RemoteRunner.
+- a34bb69: Introduce RemoteRunner (over HTTPS)
+- 34bcd9d: Auto-start board run in app view.
+- e0d5971: Teach App view to stop/restart gracefully.
+- 28895c3: Add support for inline controls
+- 7de241c: Remove `BoardRunner`.
+- a424c92: Teach remote runner to send fewer bytes over the wire.
+- 79d709c: Introduce Edge event to Local and Remote runners.
+- ed9ea27: Update .app endpoint
+
+### Patch Changes
+
+- 99510ae: Tweaks to .app UI
+- 1ca21a5: [board-server] Refactor server startup
+- b897c58: [board-server] Read allowed origins env variable
+- 1683b5a: Add invites and toasts
+- 4d04a01: Add support for deleting an invite
+- 28089f1: Add new files to build set
+- e292715: Add proper MIME types for CSS and JS
+- 2309b88: Add date & time to event header
+- c170348: Various bug fixes.
+- cb01b95: Add a rudimentary home page.
+- 3b73763: Fix a bug where visitor state raced with auto-run.
+- 1c7e83c: Add support for running remote/local
+- 4db8fc4: Animate the entries coming in a little
+- d799af1: Apply some polish to .app view
+- 6105d6e: Improve keyboard support for modals
+- 61bace9: Check for the empty object when supplying inputs.
+- 7350e8b: Register even more MIME types.
+- c2cd40d: Add InspectableRunEdgeEvent
+- Updated dependencies [49b3612]
+- Updated dependencies [e0dccfe]
+- Updated dependencies [6404cb3]
+- Updated dependencies [9ad0524]
+- Updated dependencies [a4301e6]
+- Updated dependencies [7fdd660]
+- Updated dependencies [b201e07]
+- Updated dependencies [15b5659]
+- Updated dependencies [0296c89]
+- Updated dependencies [a34bb69]
+- Updated dependencies [534d67e]
+- Updated dependencies [c397d53]
+- Updated dependencies [7de241c]
+- Updated dependencies [a424c92]
+- Updated dependencies [c2cd40d]
+- Updated dependencies [262cefd]
+- Updated dependencies [79d709c]
+  - @google-labs/breadboard@0.25.0
+  - @breadboard-ai/data-store@0.2.1
+
 ## 0.4.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @google-labs/breadboard-schema
 
+## 1.7.0
+
+### Minor Changes
+
+- c397d53: Add support for multiple graph entry points and start tags.
+
 ## 1.6.0
 
 ### Minor Changes

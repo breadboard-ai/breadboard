@@ -1,5 +1,60 @@
 # @google-labs/breadboard-cli
 
+## 0.11.0
+
+### Minor Changes
+
+- 7de241c: Remove `BoardRunner`.
+
+### Patch Changes
+
+- 49b3612: Restore preview functionality
+- Updated dependencies [cc5f4b6]
+- Updated dependencies [cacd8e2]
+- Updated dependencies [1a6a9cf]
+- Updated dependencies [49b3612]
+- Updated dependencies [e0dccfe]
+- Updated dependencies [6404cb3]
+- Updated dependencies [9ad0524]
+- Updated dependencies [f6c6378]
+- Updated dependencies [068e8cb]
+- Updated dependencies [78a6bcf]
+- Updated dependencies [df6ba88]
+- Updated dependencies [a4301e6]
+- Updated dependencies [7fdd660]
+- Updated dependencies [a940b87]
+- Updated dependencies [efdb201]
+- Updated dependencies [b201e07]
+- Updated dependencies [05e3ff2]
+- Updated dependencies [15b5659]
+- Updated dependencies [374ea85]
+- Updated dependencies [0296c89]
+- Updated dependencies [de90fb7]
+- Updated dependencies [a34bb69]
+- Updated dependencies [534d67e]
+- Updated dependencies [c397d53]
+- Updated dependencies [f93ec06]
+- Updated dependencies [e0d5971]
+- Updated dependencies [5f7f44b]
+- Updated dependencies [cc5f4b6]
+- Updated dependencies [398bf4f]
+- Updated dependencies [28895c3]
+- Updated dependencies [494d5ca]
+- Updated dependencies [7de241c]
+- Updated dependencies [c1e21f7]
+- Updated dependencies [a424c92]
+- Updated dependencies [ee1f9ca]
+- Updated dependencies [c2cd40d]
+- Updated dependencies [262cefd]
+- Updated dependencies [79d709c]
+- Updated dependencies [9998938]
+  - @breadboard-ai/build@0.9.0
+  - @breadboard-ai/visual-editor@1.17.0
+  - @google-labs/breadboard@0.25.0
+  - @google-labs/core-kit@0.14.0
+  - @google-labs/template-kit@0.3.8
+  - @breadboard-ai/import@0.1.8
+
 ## 0.10.2
 
 ### Patch Changes
