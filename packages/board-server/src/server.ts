@@ -17,8 +17,11 @@ export const startServer = async () => {
   const IS_PROD = env.NODE_ENV === "production";
 
   const serverConfig: ServerConfig = {
-    // TODO: #2869 - Get allowed origins from environment var
-    allowedOrigins: new Set(),
+    allowedOrigins: new Set(
+      (process.env["ALLOWED_ORIGINS"] ?? "")
+        .split(/\s+/)
+        .filter((origin) => origin !== "")
+    ),
     hostname: HOSTNAME,
     viteDevServer: IS_PROD
       ? null
@@ -28,19 +31,21 @@ export const startServer = async () => {
           optimizeDeps: { esbuildOptions: { target: "esnext" } },
         }),
   };
-  
+
   const server = createServer(makeRouter(serverConfig));
 
-  return new Promise<{ server: any; port: string | number }>((resolve, reject) => {
-    server.listen(PORT, () => {
-      console.info(`Running on "${HOSTNAME}"...`);
-      resolve({ server, port: PORT });
-    });
+  return new Promise<{ server: any; port: string | number }>(
+    (resolve, reject) => {
+      server.listen(PORT, () => {
+        console.info(`Running on "${HOSTNAME}"...`);
+        resolve({ server, port: PORT });
+      });
 
-    server.on("error", (error) => {
-      reject(error);
-    });
-  });
+      server.on("error", (error) => {
+        reject(error);
+      });
+    }
+  );
 };
 
 export const stopServer = (server: any) => {
