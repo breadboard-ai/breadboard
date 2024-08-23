@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.14.0
+
+### Minor Changes
+
+- a4301e6: Introduce the ability to write custom describers.
+- 7de241c: Remove `BoardRunner`.
+- ee1f9ca: Throttle describe requests to once every 5 seconds.
+
+### Patch Changes
+
+- cc5f4b6: Updates for new board function API in build package
+- Updated dependencies [cc5f4b6]
+- Updated dependencies [49b3612]
+- Updated dependencies [e0dccfe]
+- Updated dependencies [6404cb3]
+- Updated dependencies [9ad0524]
+- Updated dependencies [a4301e6]
+- Updated dependencies [7fdd660]
+- Updated dependencies [a940b87]
+- Updated dependencies [b201e07]
+- Updated dependencies [15b5659]
+- Updated dependencies [374ea85]
+- Updated dependencies [0296c89]
+- Updated dependencies [a34bb69]
+- Updated dependencies [534d67e]
+- Updated dependencies [c397d53]
+- Updated dependencies [f93ec06]
+- Updated dependencies [398bf4f]
+- Updated dependencies [7de241c]
+- Updated dependencies [a424c92]
+- Updated dependencies [c2cd40d]
+- Updated dependencies [262cefd]
+- Updated dependencies [79d709c]
+  - @breadboard-ai/build@0.9.0
+  - @google-labs/breadboard@0.25.0
+
 ## 0.13.0
 
 ### Minor Changes
