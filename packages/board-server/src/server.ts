@@ -17,8 +17,11 @@ export const startServer = async () => {
   const IS_PROD = env.NODE_ENV === "production";
 
   const serverConfig: ServerConfig = {
-    // TODO: #2869 - Get allowed origins from environment var
-    allowedOrigins: new Set(),
+    allowedOrigins: new Set(
+      (process.env["ALLOWED_ORIGINS"] ?? "")
+        .split(/\s+/)
+        .filter((origin) => origin !== "")
+    ),
     hostname: HOSTNAME,
     viteDevServer: IS_PROD
       ? null
