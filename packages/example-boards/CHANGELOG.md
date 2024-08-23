@@ -1,5 +1,55 @@
 # @breadboard-ai/example-boards
 
+## 0.3.0
+
+### Minor Changes
+
+- 05e3ff2: Added two new tools
+
+### Patch Changes
+
+- Updated dependencies [cc5f4b6]
+- Updated dependencies [1a6a9cf]
+- Updated dependencies [49b3612]
+- Updated dependencies [e0dccfe]
+- Updated dependencies [6404cb3]
+- Updated dependencies [9ad0524]
+- Updated dependencies [78a6bcf]
+- Updated dependencies [a4301e6]
+- Updated dependencies [7fdd660]
+- Updated dependencies [a940b87]
+- Updated dependencies [b201e07]
+- Updated dependencies [15b5659]
+- Updated dependencies [374ea85]
+- Updated dependencies [0296c89]
+- Updated dependencies [a34bb69]
+- Updated dependencies [534d67e]
+- Updated dependencies [e0dccfe]
+- Updated dependencies [c397d53]
+- Updated dependencies [f93ec06]
+- Updated dependencies [cc5f4b6]
+- Updated dependencies [398bf4f]
+- Updated dependencies [a940b87]
+- Updated dependencies [494d5ca]
+- Updated dependencies [7de241c]
+- Updated dependencies [a424c92]
+- Updated dependencies [ee1f9ca]
+- Updated dependencies [c2cd40d]
+- Updated dependencies [262cefd]
+- Updated dependencies [79d709c]
+  - @breadboard-ai/build@0.9.0
+  - @google-labs/agent-kit@0.10.0
+  - @google-labs/breadboard@0.25.0
+  - @google-labs/gemini-kit@0.6.0
+  - @google-labs/core-kit@0.14.0
+  - @breadboard-ai/google-drive-kit@0.2.3
+  - @breadboard-ai/python-wasm@0.1.5
+  - @google-labs/node-nursery-web@1.3.0
+  - @google-labs/json-kit@0.3.6
+  - @google-labs/template-kit@0.3.8
+  - @breadboard-ai/manifest@0.4.2
+  - @google-labs/palm-kit@0.1.2
+
 ## 0.2.1
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @breadboard-ai/connection-server
 
+## 0.3.1
+
+### Patch Changes
+
+- 84d56e0: Connection server now uses a single service config
+
 ## 0.3.0
 
 ### Minor Changes

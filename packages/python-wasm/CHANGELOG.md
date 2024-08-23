@@ -1,5 +1,18 @@
 # @breadboard-ai/python-wasm
 
+## 0.1.5
+
+### Patch Changes
+
+- a940b87: Switch to new style of declaring components in kits.
+- Updated dependencies [cc5f4b6]
+- Updated dependencies [a940b87]
+- Updated dependencies [374ea85]
+- Updated dependencies [f93ec06]
+- Updated dependencies [398bf4f]
+- Updated dependencies [7de241c]
+  - @breadboard-ai/build@0.9.0
+
 ## 0.1.4
 
 ### Patch Changes
