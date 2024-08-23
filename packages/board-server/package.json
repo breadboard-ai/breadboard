@@ -153,7 +153,7 @@
     "esbuild": "^0.23.1",
     "eslint": "^8.57.0",
     "typescript": "^5.5.4",
-    "wireit": "^0.14.7"
+    "wireit": "^0.14.8"
   },
   "dependencies": {
     "@breadboard-ai/data-store": "^0.2.0",
