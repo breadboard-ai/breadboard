@@ -58,6 +58,8 @@
       "files": [
         "scripts/build.ts",
         "src/index.ts",
+        "src/router.ts",
+        "src/server.ts",
         "src/server/**/*.ts",
         "tsconfig.json",
         "package.json"
