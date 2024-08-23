@@ -1,17 +1,17 @@
 {
-  "name": "@breadboard-ai/google-drive-kit",
-  "version": "0.2.2",
-  "description": "Nodes for reading & writing to files in Google Drive, including Docs and Sheets",
+  "name": "@breadboard-ai/build-legacy",
+  "version": "0.1.0",
+  "description": "Temporary package to aid in migration from the old Breadboard API to the new Breadboard Build API",
   "license": "Apache-2.0",
   "author": "Google LLC",
   "bugs": {
     "url": "https://github.com/breadboard-ai/breadboard/issues"
   },
-  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/google-drive-kit#readme",
+  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/build-legacy#readme",
   "repository": {
-    "directory": "packages/google-drive-kit",
     "type": "git",
-    "url": "git+https://github.com/breadboard-ai/google-drive-kit.git"
+    "url": "git+https://github.com/breadboard-ai/breadboard.git",
+    "directory": "packages/build-legacy"
   },
   "type": "module",
   "main": "dist/index.js",
@@ -45,27 +45,23 @@
     "build:tsc": "wireit",
     "test": "wireit",
     "test:only": "wireit",
-    "coverage": "wireit",
     "lint": "wireit",
     "test-and-lint": "wireit",
-    "dev": "npm run test-and-lint --watch",
-    "generate:graphs": "wireit"
+    "dev": "npm run test-and-lint --watch"
   },
   "wireit": {
     "build": {
       "dependencies": [
         "build:tsc",
-        "../build:build",
-        "../core-kit:build",
-        "../template-kit:build"
+        "../breadboard:build",
+        "../core-kit:build"
       ]
     },
     "build:tsc": {
       "command": "tsc --pretty",
       "dependencies": [
-        "../build:build:tsc",
-        "../core-kit:build:tsc",
-        "../template-kit:build:tsc"
+        "../breadboard:build:tsc",
+        "../core-kit:build:tsc"
       ],
       "files": [
         "src/",
@@ -78,7 +74,7 @@
       "clean": "if-file-deleted"
     },
     "test": {
-      "command": "node --test --test-reporter spec dist/test/*_test.js",
+      "command": "find dist/test -name '*_test.js' | xargs node --test --enable-source-maps --test-reporter spec",
       "dependencies": [
         "build:tsc"
       ],
@@ -86,22 +82,12 @@
       "output": []
     },
     "test:only": {
-      "command": "node --test --test-only --enable-source-maps --test-reporter spec dist/test/*_test.js",
+      "command": "find dist/test -name '*_test.js' | xargs node --test --test-only --enable-source-maps --test-reporter spec",
       "dependencies": [
         "build:tsc"
       ],
       "files": [],
       "output": []
-    },
-    "coverage": {
-      "command": "node --test --enable-source-maps --experimental-test-coverage --test-reporter lcov --test-reporter-destination=lcov.info dist/test/*_test.js",
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [],
-      "output": [
-        "lcov.info"
-      ]
     },
     "lint": {
       "command": "eslint src/ --ext .ts",
@@ -117,25 +103,14 @@
         "test",
         "lint"
       ]
-    },
-    "generate:graphs": {
-      "command": "mkdir graphs && ls dist/components/*.js | xargs -n1 -r -I{} ../breadboard-cli/dist/src/index.js make \"$PWD/{}\" -o \"$PWD/graphs/\" --format",
-      "dependencies": [
-        "build:tsc",
-        "../breadboard-cli:build:tsc"
-      ],
-      "files": [],
-      "output": [
-        "graphs/"
-      ]
     }
   },
   "dependencies": {
-    "@breadboard-ai/build": "^0.8.1",
-    "@google-labs/core-kit": "^0.13.0",
-    "@google-labs/template-kit": "^0.3.7"
+    "@google-labs/breadboard": "^0.24.0",
+    "@google-labs/core-kit": "^0.13.0"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "eslint": "^8.57.0",
     "typescript": "^5.5.4",
     "wireit": "^0.14.8"

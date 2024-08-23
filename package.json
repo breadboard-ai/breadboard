@@ -32,6 +32,7 @@
         "./packages/shared-ui:build",
         "./packages/visual-editor:build",
         "./packages/build:build",
+        "./packages/build-legacy:build",
         "./packages/connection-server:build",
         "./packages/core-kit:build",
         "./packages/data-store:build",
@@ -58,6 +59,7 @@
         "./packages/breadboard:test",
         "./packages/breadboard-cli:test",
         "./packages/build:test",
+        "./packages/build-legacy:test",
         "./packages/connection-server:test",
         "./packages/core-kit:test",
         "./packages/data-store:test",
@@ -78,6 +80,7 @@
         "./packages/breadboard:lint",
         "./packages/breadboard-cli:lint",
         "./packages/build:lint",
+        "./packages/build-legacy:lint",
         "./packages/connection-server:lint",
         "./packages/core-kit:lint",
         "./packages/data-store:lint",
@@ -160,7 +163,7 @@
     "rollup-plugin-dts": "^6.1.1",
     "syncpack": "^12.4.0",
     "typescript": "^5.5.4",
-    "wireit": "^0.14.7"
+    "wireit": "^0.14.8"
   },
   "workspaces": [
     "./core/*",
