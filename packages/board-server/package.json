@@ -133,7 +133,7 @@
       "clean": "if-file-deleted"
     },
     "clear:testdb": {
-      "command": "rm test.db"
+      "command": "rm -f test.db"
     },
     "test": {
       "command": "node --test --enable-source-maps --test-reporter spec dist/tests/*.js",
