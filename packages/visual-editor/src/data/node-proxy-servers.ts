@@ -46,6 +46,10 @@ export const addNodeProxyServerConfig = (
       nodes: ["secrets", "fetch"],
     });
     config.interactiveSecrets = false;
+    console.log(
+      "[Board Server] Using node proxy:",
+      boardServerProxyUrl.replace(/\?API_KEY=.+$/, "")
+    );
   }
   if (!settings) return { ...config, proxy };
 
