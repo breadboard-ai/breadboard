@@ -8,7 +8,7 @@ import { Kit, asyncGen } from "../index.js";
 import { HTTPClientTransport } from "../remote/http.js";
 import { ProxyClient } from "../remote/proxy.js";
 import { runLocally } from "./local.js";
-import { createSecretAskingKit } from "./secrets.js";
+import { configureSecretAsking } from "./secrets.js";
 import { HarnessRunResult, RunConfig } from "./types.js";
 import { runInWorker } from "./worker.js";
 
@@ -47,10 +47,11 @@ const configureKits = async (config: RunConfig): Promise<Kit[]> => {
 export async function* run(config: RunConfig) {
   if (!config.remote) {
     yield* asyncGen<HarnessRunResult>(async (next) => {
-      const secretAskingKit = config.interactiveSecrets
-        ? [createSecretAskingKit(next)]
-        : [];
-      const kits = [...secretAskingKit, ...(await configureKits(config))];
+      const kits = configureSecretAsking(
+        config.interactiveSecrets,
+        await configureKits(config),
+        next
+      );
 
       for await (const data of runLocally(config, kits)) {
         await next(data);

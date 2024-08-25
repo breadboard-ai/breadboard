@@ -164,7 +164,7 @@ export const replaceInputs = async (
 // a simple way to identify a tunnelled value.
 // It is also rotating so that the users of the node proxy don't accidentally
 // adopt bad practices of hard-coding the values.
-// Note: the rotation will occasionaly cause errors at the break of the week.
+// Note: the rotation will occasionally cause errors at the break of the week.
 // TODO: Fix the rotation to be window-based or come up with an even better
 // solution.
 const MILLISECONDS_IN_A_WEEK = 1000 * 60 * 60 * 24 * 7;
