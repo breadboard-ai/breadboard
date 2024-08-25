@@ -7,6 +7,7 @@
 import { SecretManagerServiceClient } from "@google-cloud/secret-manager";
 import type { Kit } from "@google-labs/breadboard";
 import type { SecretInputs } from "../types.js";
+import { hasOrigin, type TunnelSpec } from "@google-labs/breadboard/remote";
 
 const url = import.meta.url;
 
@@ -40,12 +41,22 @@ const PROJECT_ID = await getProjectId();
 
 const secretManager = new SecretManagerServiceClient();
 
-type SecretMapEntry = {
+export type SecretMapEntry = {
   secret: string;
   origin: string | null;
 };
 
 const secretsMap = new Map<string, SecretMapEntry>();
+
+const getAnnotation = async (name: string) => {
+  const secretName = secretManager.secretPath(PROJECT_ID, name);
+  const [secret] = await secretManager.getSecret({ name: secretName });
+  if (!secret) {
+    throw new Error(`Missing secret: ${name}`);
+  }
+  const origin = secret.annotations?.["origin"] || null;
+  return origin;
+};
 
 const getKey = async (key: string) => {
   if (secretsMap.has(key)) {
@@ -67,6 +78,42 @@ const getKey = async (key: string) => {
   const value = payload.toString();
   secretsMap.set(key, { secret: value, origin });
   return [key, value, origin];
+};
+
+export const getSecretList = async (): Promise<SecretMapEntry[]> => {
+  const [secrets] = await secretManager.listSecrets({
+    parent: `projects/${PROJECT_ID}`,
+  });
+  const secretNames = secrets
+    .map((s) => s.name?.split("/").pop())
+    .filter(Boolean) as string[];
+  const entries = await Promise.all(
+    secretNames.map(async (name) => {
+      const origin = await getAnnotation(name);
+      if (!origin) {
+        return null;
+      }
+      return { secret: name, origin };
+    })
+  );
+  return entries.filter(Boolean) as SecretMapEntry[];
+};
+
+export const buildSecretsTunnel = async (): Promise<TunnelSpec> => {
+  const secrets = await getSecretList();
+  return Object.fromEntries(
+    secrets.map(({ secret, origin }) => {
+      return [
+        secret,
+        {
+          to: "fetch",
+          when: {
+            url: hasOrigin(origin!),
+          },
+        },
+      ];
+    })
+  );
 };
 
 /**
