@@ -144,11 +144,16 @@ export class ProxyClient {
   async proxy(
     node: NodeDescriptor,
     inputs: InputValues,
-    _context: NodeHandlerContext
+    context: NodeHandlerContext
   ): Promise<OutputValues> {
     const stream = this.#transport.createClientStream();
     const writer = stream.writableRequests.getWriter();
     const reader = stream.readableResponses.getReader();
+
+    const store = context.store;
+    inputs = store
+      ? ((await inflateData(store, inputs)) as InputValues)
+      : inputs;
 
     writer.write(["proxy", { node, inputs }]);
     writer.close();
