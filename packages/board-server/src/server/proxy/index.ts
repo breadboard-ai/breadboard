@@ -5,7 +5,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from "http";
-import { methodNotAllowed, serverError } from "../errors.js";
+import { methodNotAllowed, serverError, unauthorized } from "../errors.js";
 import { secretsKit } from "./secrets.js";
 import {
   ProxyServer,
@@ -19,6 +19,8 @@ import { asRuntimeKit } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import { cors } from "../cors.js";
 import { getDataStore } from "@breadboard-ai/data-store";
+import { authenticate, getUserKey } from "../auth.js";
+import { timestamp } from "../boards/utils/run-board.js";
 
 const config: ProxyServerConfig = {
   kits: [secretsKit, asRuntimeKit(Core)],
@@ -96,13 +98,29 @@ export const serveProxyAPI = async (
   req: IncomingMessage,
   res: ServerResponse
 ) => {
-  const path = req.url;
-  const isProxy = path === "/proxy" || path === "/proxy/";
+  const url = new URL(req.url || "", "http://localhost");
+  const isProxy = url.pathname === "/proxy" || url.pathname === "/proxy/";
   if (!isProxy) {
     return false;
   }
 
   if (!cors(req, res)) {
+    return true;
+  }
+
+  if (!getUserKey(req)) {
+    // Output the error in node proxy response format.
+    res.setHeader("Content-Type", "application/json");
+    res.statusCode = 401;
+    res.end(
+      JSON.stringify([
+        "error",
+        {
+          error: "Need a valid server key to access the node proxy.",
+          timestamp: timestamp(),
+        },
+      ])
+    );
     return true;
   }
 
