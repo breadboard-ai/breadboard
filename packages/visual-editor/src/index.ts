@@ -1142,6 +1142,17 @@ export class Main extends LitElement {
     return this.#providers.find((provider) => provider.canProvide(url)) || null;
   }
 
+  async #getProxyURL(urlString: string): Promise<string | null> {
+    const url = new URL(urlString, window.location.href);
+    for (const provider of this.#providers) {
+      const proxyURL = await provider.canProxy?.(url);
+      if (proxyURL) {
+        return proxyURL;
+      }
+    }
+    return null;
+  }
+
   #confirmUnloadWithUserFirstIfNeeded(evt: Event) {
     if (!this.#boardPendingSave) {
       return;
@@ -1740,7 +1751,8 @@ export class Main extends LitElement {
                         interactiveSecrets: true,
                       },
                       this.#settings,
-                      this.proxyFromUrl
+                      this.proxyFromUrl,
+                      await this.#getProxyURL(this.graph.url)
                     )
                   )
                 );

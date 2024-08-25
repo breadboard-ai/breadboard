@@ -418,4 +418,17 @@ export class RemoteGraphProvider implements GraphProvider {
     // TODO: Maybe query this from the store itself.
     return new URL(url.href.replace(/json$/, "app"));
   }
+
+  async canProxy(url: URL): Promise<string | false> {
+    if (!this.canProvide(url)) {
+      return false;
+    }
+    const store = this.#locations.find((store) =>
+      url.href.startsWith(store.url)
+    );
+    if (!store) {
+      return false;
+    }
+    return `${store.url}/proxy?API_KEY=${store.apiKey}`;
+  }
 }

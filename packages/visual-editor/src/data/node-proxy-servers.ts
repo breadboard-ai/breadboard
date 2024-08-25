@@ -31,12 +31,21 @@ export const addNodeProxyServerConfig = (
   existingProxy: HarnessProxyConfig[],
   config: RunConfig,
   settings: SettingsStore | null,
-  proxyUrl?: string | undefined
+  proxyUrl: string | undefined,
+  boardServerProxyUrl: string | null
 ): RunConfig => {
   // TODO: Consolidate proxyUrl into settings.
   const proxy = [...existingProxy];
   if (proxyUrl) {
     proxy.push({ location: "python", url: proxyUrl, nodes: PYTHON_NODES });
+  }
+  if (boardServerProxyUrl) {
+    proxy.push({
+      location: "http",
+      url: boardServerProxyUrl,
+      nodes: ["secrets", "fetch"],
+    });
+    config.interactiveSecrets = false;
   }
   if (!settings) return { ...config, proxy };
 
