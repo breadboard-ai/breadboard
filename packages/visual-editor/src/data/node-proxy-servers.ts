@@ -27,6 +27,18 @@ const createNodeProxyConfig = (entry: SettingEntry) => {
   return { location: "http", url, nodes };
 };
 
+const useLocaLSecretsOnly = (settings: SettingsStore | null) => {
+  if (!settings) return false;
+
+  const generalSettings = settings.getSection(
+    BreadboardUI.Types.SETTINGS_TYPE.GENERAL
+  );
+  if (!generalSettings) return false;
+
+  const runLocally = generalSettings.items.get("Use Local Secrets Only");
+  return runLocally && runLocally.value === true;
+};
+
 export const addNodeProxyServerConfig = (
   existingProxy: HarnessProxyConfig[],
   config: RunConfig,
@@ -40,16 +52,22 @@ export const addNodeProxyServerConfig = (
     proxy.push({ location: "python", url: proxyUrl, nodes: PYTHON_NODES });
   }
   if (boardServerProxyUrl) {
-    proxy.push({
-      location: "http",
-      url: boardServerProxyUrl,
-      nodes: ["secrets", "fetch"],
-    });
-    config.interactiveSecrets = "fallback";
-    console.log(
-      "[Board Server] Using node proxy:",
-      boardServerProxyUrl.replace(/\?API_KEY=.+$/, "")
-    );
+    if (useLocaLSecretsOnly(settings)) {
+      console.log(
+        `[Board Server] Ignoring node proxy because "Use Local Secrets Only" is set.`
+      );
+    } else {
+      proxy.push({
+        location: "http",
+        url: boardServerProxyUrl,
+        nodes: ["secrets", "fetch"],
+      });
+      config.interactiveSecrets = "fallback";
+      console.log(
+        "[Board Server] Using node proxy:",
+        boardServerProxyUrl.replace(/\?API_KEY=.+$/, "")
+      );
+    }
   }
   if (!settings) return { ...config, proxy };
 
