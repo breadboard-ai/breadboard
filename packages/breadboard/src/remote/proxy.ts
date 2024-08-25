@@ -18,7 +18,6 @@ import { NodeProxyConfig, NodeProxySpec, ProxyServerConfig } from "./config.js";
 import {
   AnyProxyRequestMessage,
   AnyProxyResponseMessage,
-  ClientBidirectionalStream,
   ClientTransport,
   ServerTransport,
 } from "./types.js";

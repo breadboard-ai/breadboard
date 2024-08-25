@@ -40,21 +40,33 @@ const PROJECT_ID = await getProjectId();
 
 const secretManager = new SecretManagerServiceClient();
 
-const secretsMap = new Map<string, string>();
+type SecretMapEntry = {
+  secret: string;
+  origin: string | null;
+};
+
+const secretsMap = new Map<string, SecretMapEntry>();
 
 const getKey = async (key: string) => {
   if (secretsMap.has(key)) {
-    return [key, secretsMap.get(key)];
+    const entry = secretsMap.get(key);
+    return [key, entry?.secret, entry?.origin];
   }
   const name = secretManager.secretVersionPath(PROJECT_ID, key, "latest");
+  const secretName = secretManager.secretPath(PROJECT_ID, key);
+  const [secret] = await secretManager.getSecret({ name: secretName });
+  if (!secret) {
+    throw new Error(`Missing secret: ${key}`);
+  }
+  const origin = secret.annotations?.["origin"] || null;
   const [version] = await secretManager.accessSecretVersion({ name });
   const payload = version?.payload?.data;
   if (!payload) {
     throw new Error(`Missing secret: ${key}`);
   }
   const value = payload.toString();
-  secretsMap.set(key, value);
-  return [key, value];
+  secretsMap.set(key, { secret: value, origin });
+  return [key, value, origin];
 };
 
 /**
