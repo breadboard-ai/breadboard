@@ -15,7 +15,7 @@ import type {
   NodeTypeIdentifier,
   OutputValues,
 } from "../types.js";
-import { ClientRunResult } from "../remote/types.js";
+import type { ClientRunResult } from "../remote/types.js";
 
 /**
  * Get all secret handlers from the given kits.
