@@ -9,6 +9,7 @@ import { streamsToAsyncIterable } from "../stream.js";
 import { asRuntimeKit } from "../kits/ctors.js";
 import { KitBuilder } from "../kits/builder.js";
 import {
+  ErrorResponse,
   InputValues,
   NodeDescriptor,
   NodeHandlerContext,
@@ -44,6 +45,15 @@ const getHandlerConfig = (
     };
   }
   return handlerConfig;
+};
+
+const makeSerializable = (data: OutputValues) => {
+  if (data["$error"]) {
+    const error = data["$error"] as ErrorResponse;
+    error.error =
+      error.error instanceof Error ? error.error.message : error.error;
+  }
+  return data;
 };
 
 export class ProxyServer {
@@ -109,7 +119,10 @@ export class ProxyServer {
           continue;
         }
         const outputs = store
-          ? ((await inflateData(store, result)) as OutputValues)
+          ? ((await inflateData(
+              store,
+              makeSerializable(result)
+            )) as OutputValues)
           : result;
         request.reply(["proxy", { outputs }]);
       } catch (e) {

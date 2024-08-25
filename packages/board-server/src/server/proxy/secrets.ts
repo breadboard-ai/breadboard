@@ -65,19 +65,20 @@ const getKey = async (key: string) => {
   }
   const name = secretManager.secretVersionPath(PROJECT_ID, key, "latest");
   const secretName = secretManager.secretPath(PROJECT_ID, key);
-  const [secret] = await secretManager.getSecret({ name: secretName });
-  if (!secret) {
-    throw new Error(`Missing secret: ${key}`);
+  try {
+    const [secret] = await secretManager.getSecret({ name: secretName });
+    const origin = secret.annotations?.["origin"] || null;
+    const [version] = await secretManager.accessSecretVersion({ name });
+    const payload = version?.payload?.data;
+    if (!payload) {
+      throw new Error(`Missing secret: ${key}`);
+    }
+    const value = payload.toString();
+    secretsMap.set(key, { secret: value, origin });
+    return [key, value, origin];
+  } catch (e) {
+    throw new Error(`Failed to get secret: ${key}`);
   }
-  const origin = secret.annotations?.["origin"] || null;
-  const [version] = await secretManager.accessSecretVersion({ name });
-  const payload = version?.payload?.data;
-  if (!payload) {
-    throw new Error(`Missing secret: ${key}`);
-  }
-  const value = payload.toString();
-  secretsMap.set(key, { secret: value, origin });
-  return [key, value, origin];
 };
 
 export const getSecretList = async (): Promise<SecretMapEntry[]> => {
