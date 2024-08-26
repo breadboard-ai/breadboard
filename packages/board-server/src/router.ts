@@ -16,8 +16,8 @@ import { serverError } from "./server/errors.js";
 
 const handleError = (err: Error, res: ServerResponse) => {
   console.error("Server Error:", err);
-  if(!res.writableEnded) {
-    serverError(res, "Internal server error")
+  if (!res.writableEnded) {
+    serverError(res, "Internal server error");
   }
 };
 
@@ -26,14 +26,14 @@ export function makeRouter(serverConfig: ServerConfig) {
     req: IncomingMessage,
     res: ServerResponse
   ): Promise<void> {
-    try {  
+    try {
       if (await serveHome(req, res)) {
         return;
       }
 
-    if (await serveProxyAPI(serverConfig, req, res)) {
-      return;
-    }
+      if (await serveProxyAPI(serverConfig, req, res)) {
+        return;
+      }
 
       if (await serveInfoAPI(req, res)) {
         return;
