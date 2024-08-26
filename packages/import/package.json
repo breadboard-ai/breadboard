@@ -80,9 +80,10 @@
       "env": {
         "FORCE_COLOR": "1"
       },
+      "dependencies": [
+        "build"
+      ],
       "files": [
-        "src/**/*.ts",
-        "tests/**/*.ts",
         ".eslintrc",
         "../../.eslintrc.json"
       ],
