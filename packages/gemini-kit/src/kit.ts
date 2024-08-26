@@ -38,11 +38,6 @@ core.invoke({
   $board: "#text",
 });
 core.invoke({
-  $id: "vision",
-  $board: "#vision",
-  $metadata: { deprecated: true },
-});
-core.invoke({
   $id: "nano",
   $board: "#nano",
   $metadata: {
