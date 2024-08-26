@@ -35,9 +35,10 @@ docker build --build-context breadboard=../../ -t board-server .
 To run the container:
 
 ```
-docker run -d -p 3000:3000 board-server
+docker run -d -p 3000:3000 --name board-server board-server
+docker exec -it board-server /bin/bash
+# npm run add <username> # add a user and copy your API key
 ```
-
 
 ## Firestore & App Engine deployment
 
