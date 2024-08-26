@@ -74,7 +74,7 @@ export class SQLiteStorageProvider implements RunBoardStateStore {
     async loadReanimationState(user: string, ticket: string): Promise<ReanimationState | undefined> {
       const stmt = this.db.prepare(`
         SELECT state FROM reanimation_states
-        WHERE user = ? AND id = ? AND expireAt > ?
+        WHERE user = ? AND id = ? AND expire_at > ?
       `);
   
       const row: any = stmt.get(user, ticket, Date.now());
