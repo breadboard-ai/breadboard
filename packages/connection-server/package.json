@@ -64,8 +64,10 @@
     },
     "lint": {
       "command": "eslint src/ --ext .ts",
+      "dependencies": [
+        "build:tsc"
+      ],
       "files": [
-        "src/**/*.ts",
         ".eslintrc",
         "../../.eslintrc.json"
       ],

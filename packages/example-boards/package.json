@@ -104,8 +104,10 @@
       "env": {
         "FORCE_COLOR": "1"
       },
+      "dependencies": [
+        "build:tsc"
+      ],
       "files": [
-        "src/**/*.ts",
         ".eslintrc",
         "../../.eslintrc.json"
       ],
