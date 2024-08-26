@@ -31,9 +31,9 @@ export function makeRouter(serverConfig: ServerConfig) {
         return;
       }
 
-      if (await serveProxyAPI(req, res)) {
-        return;
-      }
+    if (await serveProxyAPI(serverConfig, req, res)) {
+      return;
+    }
 
       if (await serveInfoAPI(req, res)) {
         return;

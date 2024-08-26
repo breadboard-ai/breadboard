@@ -88,6 +88,7 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
             "gemini-1.5-pro-latest",
             "gemini-1.5-pro-exp-0801",
           ],
+          default: "gemini-1.5-flash-latest",
           examples: ["gemini-1.5-flash-latest"],
           behavior: ["config"],
         },

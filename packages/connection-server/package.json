@@ -1,7 +1,7 @@
 {
   "name": "@breadboard-ai/connection-server",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Breadboard Connection Server",
   "license": "Apache-2.0",
   "author": "Google Labs Team",
@@ -76,6 +76,6 @@
     "@types/node": "^22.0.0",
     "eslint": "^8.57.0",
     "typescript": "^5.5.4",
-    "wireit": "^0.14.7"
+    "wireit": "^0.14.8"
   }
 }

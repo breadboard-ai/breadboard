@@ -257,6 +257,31 @@ export default await board(({ context, task }) => {
     .isObject()
     .behavior("llm-content", "config");
 
+  const modelInput = base.input({
+    $metadata: {
+      title: "Model Input",
+      description: "Ask which model to use",
+    },
+    schema: {
+      type: "object",
+      properties: {
+        model: {
+          type: "string",
+          title: "Model",
+          description: "Choose the model to use for this looper.",
+          enum: [
+            "gemini-1.5-flash-latest",
+            "gemini-1.5-pro-latest",
+            "gemini-1.5-pro-exp-0801",
+          ],
+          default: "gemini-1.5-flash-latest",
+          examples: ["gemini-1.5-flash-latest"],
+          behavior: ["config"],
+        },
+      },
+    } as Schema,
+  });
+
   const readProgress = progressReader({
     $metadata: { title: "Read progress so far" },
     context,
@@ -274,6 +299,7 @@ export default await board(({ context, task }) => {
     context: addTask.context,
     systemInstruction: plannerInstruction,
     responseMimeType: "application/json",
+    model: modelInput.model,
   });
 
   const validate = json.validateJson({

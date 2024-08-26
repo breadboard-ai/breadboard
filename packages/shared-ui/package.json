@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/shared-ui",
-  "version": "1.15.0",
+  "version": "1.16.0",
   "description": "Shared UI components for Breadboard",
   "main": "./dist/index.js",
   "exports": {
@@ -96,14 +96,14 @@
     "vitest": "^2.0.5"
   },
   "dependencies": {
-    "@breadboard-ai/build": "^0.8.1",
-    "@breadboard-ai/data-store": "^0.2.0",
+    "@breadboard-ai/build": "^0.9.0",
+    "@breadboard-ai/data-store": "^0.2.1",
     "@codemirror/autocomplete": "^6.18.0",
     "@codemirror/commands": "^6.6.0",
     "@codemirror/lang-javascript": "^6.2.2",
     "@dagrejs/dagre": "^1.1.4",
-    "@google-labs/breadboard": "^0.24.0",
-    "@google-labs/breadboard-schema": "^1.6.0",
+    "@google-labs/breadboard": "^0.25.0",
+    "@google-labs/breadboard-schema": "^1.7.0",
     "@lit/context": "^1.1.2",
     "@lit/task": "^1.0.1",
     "@types/gapi": "^0.0.47",
@@ -115,6 +115,6 @@
     "idb-keyval": "^6.2.1",
     "lit": "^3.2.0",
     "markdown-it": "^14.1.0",
-    "pixi.js": "^8.3.3"
+    "pixi.js": "^8.3.4"
   }
 }

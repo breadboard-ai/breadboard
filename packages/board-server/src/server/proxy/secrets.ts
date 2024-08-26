@@ -7,6 +7,7 @@
 import { SecretManagerServiceClient } from "@google-cloud/secret-manager";
 import type { Kit } from "@google-labs/breadboard";
 import type { SecretInputs } from "../types.js";
+import { hasOrigin, type TunnelSpec } from "@google-labs/breadboard/remote";
 
 const url = import.meta.url;
 
@@ -40,21 +41,80 @@ const PROJECT_ID = await getProjectId();
 
 const secretManager = new SecretManagerServiceClient();
 
-const secretsMap = new Map<string, string>();
+export type SecretMapEntry = {
+  secret: string;
+  origin: string | null;
+};
+
+const secretsMap = new Map<string, SecretMapEntry>();
+
+const getAnnotation = async (name: string) => {
+  const secretName = secretManager.secretPath(PROJECT_ID, name);
+  const [secret] = await secretManager.getSecret({ name: secretName });
+  if (!secret) {
+    throw new Error(`Missing secret: ${name}`);
+  }
+  const origin = secret.annotations?.["origin"] || null;
+  return origin;
+};
 
 const getKey = async (key: string) => {
   if (secretsMap.has(key)) {
-    return [key, secretsMap.get(key)];
+    const entry = secretsMap.get(key);
+    return [key, entry?.secret, entry?.origin];
   }
   const name = secretManager.secretVersionPath(PROJECT_ID, key, "latest");
-  const [version] = await secretManager.accessSecretVersion({ name });
-  const payload = version?.payload?.data;
-  if (!payload) {
-    throw new Error(`Missing secret: ${key}`);
+  const secretName = secretManager.secretPath(PROJECT_ID, key);
+  try {
+    const [secret] = await secretManager.getSecret({ name: secretName });
+    const origin = secret.annotations?.["origin"] || null;
+    const [version] = await secretManager.accessSecretVersion({ name });
+    const payload = version?.payload?.data;
+    if (!payload) {
+      throw new Error(`Missing secret: ${key}`);
+    }
+    const value = payload.toString();
+    secretsMap.set(key, { secret: value, origin });
+    return [key, value, origin];
+  } catch (e) {
+    throw new Error(`Failed to get secret: ${key}`);
   }
-  const value = payload.toString();
-  secretsMap.set(key, value);
-  return [key, value];
+};
+
+export const getSecretList = async (): Promise<SecretMapEntry[]> => {
+  const [secrets] = await secretManager.listSecrets({
+    parent: `projects/${PROJECT_ID}`,
+  });
+  const secretNames = secrets
+    .map((s) => s.name?.split("/").pop())
+    .filter(Boolean) as string[];
+  const entries = await Promise.all(
+    secretNames.map(async (name) => {
+      const origin = await getAnnotation(name);
+      if (!origin) {
+        return null;
+      }
+      return { secret: name, origin };
+    })
+  );
+  return entries.filter(Boolean) as SecretMapEntry[];
+};
+
+export const buildSecretsTunnel = async (): Promise<TunnelSpec> => {
+  const secrets = await getSecretList();
+  return Object.fromEntries(
+    secrets.map(({ secret, origin }) => {
+      return [
+        secret,
+        {
+          to: "fetch",
+          when: {
+            url: hasOrigin(origin!),
+          },
+        },
+      ];
+    })
+  );
 };
 
 /**

@@ -1,5 +1,25 @@
 # @google-labs/agent-kit
 
+## 0.10.0
+
+### Minor Changes
+
+- 1a6a9cf: Teach Specialist to ask for a model.
+- 78a6bcf: Remove example inputs from gemini-generator
+- 494d5ca: Remove examples from Agent Kit components.
+
+### Patch Changes
+
+- b201e07: Implement edge-based UI in board-server (and fix a bunch of bugs elsewhere)
+- e0dccfe: Add empty text default to Human input.
+- Updated dependencies [cc5f4b6]
+- Updated dependencies [a940b87]
+- Updated dependencies [374ea85]
+- Updated dependencies [f93ec06]
+- Updated dependencies [398bf4f]
+- Updated dependencies [7de241c]
+  - @breadboard-ai/build@0.9.0
+
 ## 0.9.1
 
 ### Patch Changes

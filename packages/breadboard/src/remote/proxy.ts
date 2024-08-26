@@ -9,6 +9,7 @@ import { streamsToAsyncIterable } from "../stream.js";
 import { asRuntimeKit } from "../kits/ctors.js";
 import { KitBuilder } from "../kits/builder.js";
 import {
+  ErrorResponse,
   InputValues,
   NodeDescriptor,
   NodeHandlerContext,
@@ -18,7 +19,6 @@ import { NodeProxyConfig, NodeProxySpec, ProxyServerConfig } from "./config.js";
 import {
   AnyProxyRequestMessage,
   AnyProxyResponseMessage,
-  ClientBidirectionalStream,
   ClientTransport,
   ServerTransport,
 } from "./types.js";
@@ -45,6 +45,15 @@ const getHandlerConfig = (
     };
   }
   return handlerConfig;
+};
+
+const makeSerializable = (data: OutputValues) => {
+  if (data["$error"]) {
+    const error = data["$error"] as ErrorResponse;
+    error.error =
+      error.error instanceof Error ? error.error.message : error.error;
+  }
+  return data;
 };
 
 export class ProxyServer {
@@ -110,7 +119,10 @@ export class ProxyServer {
           continue;
         }
         const outputs = store
-          ? ((await inflateData(store, result)) as OutputValues)
+          ? ((await inflateData(
+              store,
+              makeSerializable(result)
+            )) as OutputValues)
           : result;
         request.reply(["proxy", { outputs }]);
       } catch (e) {
@@ -145,11 +157,16 @@ export class ProxyClient {
   async proxy(
     node: NodeDescriptor,
     inputs: InputValues,
-    _context: NodeHandlerContext
+    context: NodeHandlerContext
   ): Promise<OutputValues> {
     const stream = this.#transport.createClientStream();
     const writer = stream.writableRequests.getWriter();
     const reader = stream.readableResponses.getReader();
+
+    const store = context.store;
+    inputs = store
+      ? ((await inflateData(store, inputs)) as InputValues)
+      : inputs;
 
     writer.write(["proxy", { node, inputs }]);
     writer.close();
