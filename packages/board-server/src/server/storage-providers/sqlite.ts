@@ -13,7 +13,7 @@ export class SQLiteStorageProvider implements RunBoardStateStore {
   
       // Initialize tables
       this.db.exec(`
-        CREATE TABLE IF NOT EXISTS reanimationStates (
+        CREATE TABLE IF NOT EXISTS reanimation_states (
           id TEXT PRIMARY KEY,
           user TEXT NOT NULL,
           state TEXT NOT NULL,
@@ -50,11 +50,6 @@ export class SQLiteStorageProvider implements RunBoardStateStore {
         );
         
         CREATE TABLE IF NOT EXISTS configuration (
-          key TEXT PRIMARY KEY,
-          value TEXT
-        );
-  
-        CREATE TABLE IF NOT EXISTS serverInfo (
           key TEXT PRIMARY KEY,
           value TEXT
         );
