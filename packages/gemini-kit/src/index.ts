@@ -27,7 +27,6 @@ const builder = new KitBuilder(
 
 const GeminiKit = builder.build({
   text: adapter.handlerForNode("text"),
-  vision: adapter.handlerForNode("vision"),
   nano: adapter.handlerForNode("nano"),
 });
 
@@ -51,48 +50,14 @@ export type GeminiKitType = {
       text: NewNodeValue;
     }
   >;
-  /**
-   * Creates a node that calls the `Gemini Pro Vision` model to generate a
-   * response.
-   */
-  vision: NewNodeFactory<
-    {
-      /**
-       * The input parts that will be used to generate the response.
-       * The format of this object be an array the `Gemini Pro Vision` model's
-       * "[parts](https://ai.google.dev/api/rest/v1/Content#Part)" objects of REST request:
-       * ```ts
-       * parts: [
-       *  {
-       *   text: "The text to be processed by the model."
-       *  },
-       *  {
-       *    inline_data: {
-       *      mimeType: "image/png",
-       *      data: "base64-encoded-image-data"
-       *  }
-       * ]
-       * ```
-       */
-      parts: NewNodeValue[];
-    },
-    {
-      /**
-       * The generated response from the `Gemini Pro` model.
-       */
-      result: NewNodeValue;
-    }
-  >;
 };
 
 export default GeminiKit;
 
 /**
  * The Gemini Kit. Use members of this object to create nodes to interact with
- * the Gemini language model. Currently, the two members are `text` and `vision`.
- * The `text` member is used to generate text from the Gemini Pro model, and the
- * `vision` member is used to generate a response from the Gemini Pro Vision
- * model.
+ * the Gemini language model. The `text` member is used to generate text from
+ * the Gemini Pro model.
  */
 export const gemini = addKit(GeminiKit) as unknown as GeminiKitType;
 

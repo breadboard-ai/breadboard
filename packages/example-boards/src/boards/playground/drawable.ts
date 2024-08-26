@@ -12,7 +12,7 @@ import { gemini } from "@google-labs/gemini-kit";
 // API request to include the picture as part of the prompt.
 const partsMaker = code(({ picture, prompt }) => {
   const picturePart = (picture as { parts: unknown[] }).parts[0];
-  return { parts: [picturePart, { text: prompt }] };
+  return { parts: [{ parts: [picturePart, { text: prompt }] }] };
 });
 
 export default await board(({ picture, prompt }) => {
@@ -30,9 +30,9 @@ export default await board(({ picture, prompt }) => {
     picture,
     prompt,
   });
-  const describePicture = gemini.vision({
+  const describePicture = gemini.text({
     $id: "describePicture",
-    parts,
+    context: parts,
   });
   return { text: describePicture.result };
 }).serialize({
