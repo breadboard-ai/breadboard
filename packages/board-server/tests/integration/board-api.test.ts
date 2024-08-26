@@ -15,6 +15,8 @@ let serverInstance: { server: any; port: string | number };
 
 var account: { api_key: any; account?: string; };
 
+import { deepStrictEqual } from 'assert';
+
 test.before(async () => {
   serverInstance = await startServer();
   account = await createAccount('test')
@@ -102,6 +104,128 @@ function makeRequest({
     req.end();
   });
 }
+
+type ExpectedResult = {
+  type: string;
+  outputs?: Record<string, any>;
+  path?: number[];
+  from?: number[];
+  to?: number[];
+};
+
+const assertResults = (
+  results: any[],
+  expectedResults: ExpectedResult[],
+  index = 0
+) => {
+  if (results.length !== expectedResults.length) {
+    assert.fail(
+      `Expected ${expectedResults.length} results, but got ${results.length} at index ${index}`
+    );
+  }
+  for (const [i, result] of results.entries()) {
+    const expected = expectedResults[i]!;
+    const [type, data] = result;
+    if (type === "error") {
+      assert.fail(`Unexpected error: ${data}`);
+    }
+    assert.strictEqual(
+      type,
+      expected.type,
+      `Expected state type to be ${expected.type} at index ${index}`
+    );
+    switch (type) {
+      case "output": {
+        deepStrictEqual(
+          data.outputs,
+          expected.outputs,
+          `Expected outputs to match at index ${index}`
+        );
+        break;
+      }
+      case "edge": {
+        const { from, to } = data;
+        if (expected.from) {
+          deepStrictEqual(
+            from,
+            expected.from,
+            `Expected from "${JSON.stringify(from)}" to match "${JSON.stringify(expected.from)}" at index ${index}`
+          );
+        }
+        if (expected.to) {
+          deepStrictEqual(
+            to,
+            expected.to,
+            `Expected to "${JSON.stringify(to)}" to match "${JSON.stringify(expected.to)}" at index ${index}`
+          );
+        }
+        break;
+      }
+      case "graphstart":
+      case "graphend":
+      case "nodestart":
+      case "nodeend": {
+        deepStrictEqual(
+          data.path,
+          expected.path,
+          `Expected path "${JSON.stringify(data.path)}" to match "${JSON.stringify(expected.path)}" at index ${index}`
+        );
+        break;
+      }
+    }
+  }
+};
+
+const scriptedRun = async (
+  boardName: string,
+  script: { inputs?: Record<string, any>; expected: ExpectedResult[] }[],
+  apiKey: string
+) => {
+  let next;
+  for (const [index, { inputs, expected }] of script.entries()) {
+    const inputData = {
+      ...inputs,
+      $key: apiKey,
+      ...(next ? { $next: next } : {})
+    };
+
+    const { statusCode, data: body } = await makeRequest({
+      path: `/boards/@test/${boardName}.api/run`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: inputData
+    });
+
+    assert.strictEqual(statusCode, 200);
+
+    const events = body.split('\n\n').filter(Boolean).map(event => {
+      const jsonStr = event.replace('data: ', '');
+      return JSON.parse(jsonStr);
+    });
+
+    assertResults(events, expected, index);
+    next = getNext(events[events.length - 1]);
+  }
+};
+
+const getNext = (result?: any) => {
+  if (!result) {
+    throw new Error("No result provided.");
+  }
+  const [type, data, next] = result;
+  if (type === "error") {
+    throw new Error(data.error as string);
+  }
+  if (type === "input") {
+    return next;
+  }
+  if (type === "output" || type === "end") {
+    return undefined;
+  }
+  throw new Error(`Unexpected state type: ${type}`);
+};
 
 suite('Board API Integration tests', async () => {
 // Tests
@@ -334,4 +458,32 @@ suite('Board API Integration tests', async () => {
     assert(response.error, 'Response should contain an error message');
   });
 
+  test('POST and run a board with bubbling input', { concurrency: false }, async () => {
+    // First, create the new board
+    const newBoard = readBoard('invoke-board-with-bubbling-input.bgl.json');
+    const createResponse = await makeRequest({
+      path: `/boards/@${account.account}/invoke-board-with-bubbling-input.json?API_KEY=${account.api_key}`,
+      method: 'POST',
+      body: newBoard,
+      headers: { 'Content-Type': 'application/json' }
+    });
+    assert.strictEqual(createResponse.statusCode, 200);
+
+    // Now, run the board using scriptedRun
+    await scriptedRun('invoke-board-with-bubbling-input', [
+      {
+        inputs: { name: 'Alice' },
+        expected: [{ type: 'input' }]
+      },
+      {
+        inputs: { location: 'Wonderland' },
+        expected: [
+          {
+            type: 'output',
+            outputs: { greeting: 'Greeting is: "Hello, Alice from Wonderland!"' }
+          }
+        ]
+      }
+    ], account.api_key);
+  });
 })
