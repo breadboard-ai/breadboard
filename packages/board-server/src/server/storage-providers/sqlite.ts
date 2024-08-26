@@ -169,7 +169,7 @@ export class SQLiteStorageProvider implements RunBoardStateStore {
         for (const doc of docs) {
           const path = `${store.id}/${doc.board_id}`;
           const title = doc.title || path;
-          const tags = doc.tags as string[] || ["published"];
+          const tags = doc.tags as string[] || [];
           const published = tags.includes("published");
           const readonly = userStore !== store.id;
           const mine = userStore === store.id;
