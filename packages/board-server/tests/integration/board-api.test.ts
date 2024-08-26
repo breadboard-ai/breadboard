@@ -186,6 +186,40 @@ suite('Board API Integration tests', async () => {
     assert.strictEqual(statusCode, 200);
   });
 
+  test('GET /boards/@test/simple.api should serve API explorer', { concurrency: false }, async () => {
+    const { statusCode, data: body } = await makeRequest({
+      path: '/boards/@test/simple.api',
+      method: 'GET',
+      headers: {}
+    });
+    assert.strictEqual(statusCode, 200);
+    assert(body.includes('<bb-api-explorer'));
+  });
+
+  test('POST /boards/@test/simple.api/invoke should invoke API', { concurrency: false }, async () => {
+    const inputData = {
+      text: 'Hello, API!',
+      $key: account.api_key
+    };
+
+    const { statusCode, data: body } = await makeRequest({
+      path: '/boards/@test/simple.api/invoke',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: inputData
+    });
+
+    assert.strictEqual(statusCode, 200);
+    
+    const response = JSON.parse(body);
+    
+    // Check if the response contains the expected output
+    assert(response.text, 'Response should contain output');
+    assert.strictEqual(response.text, 'Hello, API!', 'Output should echo the input');
+  });
+
   // test('GET /boards/@user/board.api should serve API description', async () => {
   //   const { statusCode, data: body } = await makeRequest({
   //     path: '/boards/@user/board.api',
