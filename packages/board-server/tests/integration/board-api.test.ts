@@ -214,75 +214,68 @@ suite('Board API Integration tests', async () => {
     assert.strictEqual(statusCode, 200);
     
     const response = JSON.parse(body);
-    
+
     // Check if the response contains the expected output
     assert(response.text, 'Response should contain output');
     assert.strictEqual(response.text, 'Hello, API!', 'Output should echo the input');
   });
 
-  // test('GET /boards/@user/board.api should serve API description', async () => {
-  //   const { statusCode, data: body } = await makeRequest({
-  //     path: '/boards/@user/board.api',
-  //     method: 'GET',
-  //     headers: {}
-  //   });
-  //   assert.strictEqual(statusCode, 200);
-  //   assert.deepStrictEqual(body, {
-  //     success: true,
-  //     type: 'api',
-  //     board: '@user/board.json',
-  //     url: 'http://localhost:3000/boards/@user/board.json',
-  //     user: 'user',
-  //     name: 'board.json',
-  //   });
-  // });
+  test('POST /boards/@test/simple.api/describe should serve API description', { concurrency: false }, async () => {
+    const { statusCode, data: body } = await makeRequest({
+      path: '/boards/@test/simple.api/describe',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
 
-  // test('POST /boards/@user/board.api/invoke should invoke API', async () => {
-  //   const { statusCode, data: body } = await makeRequest({
-  //     path: '/boards/@user/board.api/invoke',
-  //     method: 'POST',
-  //   });
-  //   assert.strictEqual(statusCode, 200);
-  //   assert.deepStrictEqual(body, {
-  //     success: true,
-  //     type: 'invoke',
-  //     board: '@user/board.json',
-  //     url: 'http://localhost:3000/boards/@user/board.json',
-  //     user: 'user',
-  //     name: 'board.json',
-  //   });
-  // });
+    console.log('Describe response:', statusCode, body);
 
-  // test('GET /boards/@user/board.invite should list invites', async () => {
-  //   const { statusCode, data: body } = await makeRequest({
-  //     path: '/boards/@user/board.invite',
-  //     method: 'GET',
-  //   });
-  //   assert.strictEqual(statusCode, 200);
-  //   assert.deepStrictEqual(body, {
-  //     success: true,
-  //     type: 'invite-list',
-  //     board: '@user/board.json',
-  //     url: 'http://localhost:3000/boards/@user/board.json',
-  //     user: 'user',
-  //     name: 'board.json',
-  //   });
-  // });
+    assert.strictEqual(statusCode, 200);
+    
+    const response = JSON.parse(body);
+    
+    // Check if the response contains the expected properties
+    assert(response.title, 'Response should contain a title');
+    assert(response.inputSchema, 'Response should contain an inputSchema');
+    assert(response.outputSchema, 'Response should contain an outputSchema');
+    
+    // Check if the $key input has been added
+    assert(response.inputSchema.properties.$key, 'InputSchema should contain a $key property');
+    assert(response.inputSchema.required.includes('$key'), 'InputSchema should require $key');
+    
+    assert.strictEqual(response.title, 'simple', 'Title should match the simple board');
 
-  // test('POST /boards/@user/board.invite should update invites', async () => {
-  //   const { statusCode, data: body } = await makeRequest({
-  //     path: '/boards/@user/board.invite',
-  //     method: 'POST',
-  //   });
-  //   assert.strictEqual(statusCode, 200);
-  //   assert.deepStrictEqual(body, {
-  //     success: true,
-  //     type: 'invite-update',
-  //     board: '@user/board.json',
-  //     url: 'http://localhost:3000/boards/@user/board.json',
-  //     user: 'user',
-  //     name: 'board.json',
-  //   });
-  // });
+  });
+
+  test('POST /boards/@test/simple.api/run should execute the board', { concurrency: false }, async () => {
+    const inputData = {
+      text: 'Hello, API!',
+      $key: account.api_key
+    };
+
+    const { statusCode, data: body } = await makeRequest({
+      path: '/boards/@test/simple.api/run',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: inputData
+    });
+
+    assert.strictEqual(statusCode, 200);
+    
+    // The response is a stream of events, so we need to parse each event
+    const events = body.split('\n\n').filter(Boolean).map(event => {
+      const jsonStr = event.replace('data: ', '');
+      return JSON.parse(jsonStr);
+    });
+
+    // Check if there's at least one event
+    assert(events.length > 0, 'Response should include at least one event');
+
+    // Check the final output
+    const outputEvent = events.find(event => event[0] === 'output');
+    assert(outputEvent, 'Response should include an output event');
+    assert.deepStrictEqual(outputEvent[1].outputs, { text: 'Hello, API!' }, 'Output should echo the input');
+  });
 
 })
