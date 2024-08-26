@@ -278,4 +278,60 @@ suite('Board API Integration tests', async () => {
     assert.deepStrictEqual(outputEvent[1].outputs, { text: 'Hello, API!' }, 'Output should echo the input');
   });
 
+  test('GET /boards/@test/simple.invite should list invites', { concurrency: false }, async () => {
+    const { statusCode, data: body } = await makeRequest({
+      path: `/boards/@${account.account}/simple.invite?API_KEY=${account.api_key}`,
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    assert.strictEqual(statusCode, 200);
+    const response = JSON.parse(body);
+    assert(Array.isArray(response.invites), 'Response should contain an array of invites');
+  });
+
+  test('POST /boards/@test/simple.invite should create a new invite', { concurrency: false }, async () => {
+    const { statusCode, data: body } = await makeRequest({
+      path: `/boards/@${account.account}/simple.invite?API_KEY=${account.api_key}`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    assert.strictEqual(statusCode, 200);
+    const response = JSON.parse(body);
+    assert(response.invite, 'Response should contain a new invite code');
+  });
+
+  test('POST /boards/@test/simple.invite should delete an invite', { concurrency: false }, async () => {
+    // First, create an invite
+    const { data: createBody } = await makeRequest({
+      path: `/boards/@${account.account}/simple.invite?API_KEY=${account.api_key}`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const createResponse = JSON.parse(createBody);
+    const inviteToDelete = createResponse.invite;
+
+    // Now, delete the invite
+    const { statusCode, data: deleteBody } = await makeRequest({
+      path: `/boards/@${account.account}/simple.invite?API_KEY=${account.api_key}`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: { delete: inviteToDelete }
+    });
+    assert.strictEqual(statusCode, 200);
+    const deleteResponse = JSON.parse(deleteBody);
+    assert.strictEqual(deleteResponse.deleted, inviteToDelete, 'Response should confirm the deleted invite');
+  });
+
+  test('POST /boards/@test/simple.invite should fail to delete non-existent invite', { concurrency: false }, async () => {
+    const { statusCode, data: body } = await makeRequest({
+      path: `/boards/@${account.account}/simple.invite?API_KEY=${account.api_key}`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: { delete: 'non-existent-invite' }
+    });
+    assert.strictEqual(statusCode, 200); // The API currently returns 200 even for failures
+    const response = JSON.parse(body);
+    assert(response.error, 'Response should contain an error message');
+  });
+
 })
