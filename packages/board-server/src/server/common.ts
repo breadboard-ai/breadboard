@@ -3,14 +3,31 @@ import type { IncomingMessage, ServerResponse } from "http";
 import { dirname, extname, resolve } from "path";
 import { fileURLToPath } from "url";
 import type { ViteDevServer } from "vite";
+import { existsSync } from 'fs';
 
 import type { ServerConfig } from "./config.js";
 import { notFound } from "./errors.js";
 import type { PageMetadata } from "./types.js";
 
 const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
-const ROOT_PATH = resolve(MODULE_PATH, "../..");
+
+function findRootPath() {
+  let currentPath = MODULE_PATH;
+  while (currentPath !== '/') {
+    if (existsSync(resolve(currentPath, 'package.json'))) {
+      return currentPath;
+    }
+    currentPath = dirname(currentPath);
+  }
+  throw new Error('Unable to find project root');
+}
+
+const ROOT_PATH = findRootPath();
 const PROD_PATH = "/dist/client";
+
+const IS_PROD = process.env.NODE_ENV === "production";
+
+export const root = () => IS_PROD ? resolve(ROOT_PATH, '..') : ROOT_PATH;
 
 const CONTENT_TYPE = new Map([
   [".html", "text/html"],
@@ -36,34 +53,30 @@ const CONTENT_TYPE = new Map([
 ]);
 const DEFAULT_CONTENT_TYPE = "text/plain";
 
-export const root = () => {
-  return ROOT_PATH;
-};
-
-const IS_PROD = process.env.NODE_ENV === "production";
-
-/**
- * Serve a static file
- */
 export const serveFile = async (
   res: ServerResponse,
   path: string,
   transformer?: (contents: string) => Promise<string>
 ) => {
+  console.log(`Attempting to serve file: ${path}`);
   if (path == "/") {
     path = "/index.html";
   }
   if (IS_PROD) {
     path = `${PROD_PATH}${path}`;
   }
+  console.log(`Adjusted path: ${path}`);
   const contentType = CONTENT_TYPE.get(extname(path)) || DEFAULT_CONTENT_TYPE;
   try {
-    const resolvedPath = `${root()}${path}`;
+    const resolvedPath = resolve(root(), path.replace(/^\//, ''));
+    console.log(`Resolved path: ${resolvedPath}`);
+    console.log(`File exists: ${existsSync(resolvedPath)}`);
     let contents = await readFile(resolvedPath, "utf-8");
     if (transformer) contents = await transformer(contents);
     res.writeHead(200, { "Content-Type": contentType });
     res.end(contents);
-  } catch {
+  } catch (err) {
+    console.error(`Error serving file: ${err}`);
     notFound(res, "Static file not found");
   }
 };
@@ -94,7 +107,7 @@ function escapeHTML(s: string) {
 function replaceMetadata(contents: string, metadata: PageMetadata) {
   return contents
     .replaceAll("{{title}}", escapeHTML(metadata.title))
-    .replaceAll("{{description}}", escapeHTML(metadata.description));
+    .replaceAll("{{description}}", escapeHTML(metadata.description || ''));
 }
 
 export const serveIndex = async (
