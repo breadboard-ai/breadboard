@@ -62,7 +62,7 @@ export class SQLiteStorageProvider implements RunBoardStateStore {
       const id = uuidv4(); // Generate a UUID
   
       const stmt = this.db.prepare(`
-        INSERT INTO reanimation_states (id, user, state, timestamp, expireAt)
+        INSERT INTO reanimation_states (id, user, state, timestamp, expire_at)
         VALUES (?, ?, ?, ?, ?)
       `);
   
