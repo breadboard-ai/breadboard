@@ -31,6 +31,7 @@ import {
   type Definition,
   type GenericDiscreteComponent,
 } from "./define/definition.js";
+import type { Expand } from "./common/type-util.js";
 
 type ComponentManifest = Record<
   string,
@@ -48,7 +49,7 @@ export interface KitOptions<T extends ComponentManifest = ComponentManifest> {
 
 export function kit<T extends ComponentManifest>(
   options: KitOptions<T>
-): KitConstructor<Kit> & T & { legacy(): Promise<LegacyKit<T>> } {
+): KitConstructor<Kit> & T & { legacy(): Promise<Expand<LegacyKit<T>>> } {
   const componentsWithIds = Object.fromEntries(
     Object.entries(options.components).map(([id, component]) => [
       id,
@@ -86,7 +87,7 @@ export function kit<T extends ComponentManifest>(
     ...componentsWithIds,
     legacy: () => makeLegacyKit<T>(options),
   }) as KitConstructor<Kit> as KitConstructor<Kit> &
-    T & { legacy: () => Promise<LegacyKit<T>> };
+    T & { legacy: () => Promise<Expand<LegacyKit<T>>> };
 }
 
 function makeBoardComponentHandler(board: BoardDefinition): NodeHandler {
@@ -148,7 +149,7 @@ async function makeLegacyKit<T extends ComponentManifest>({
   version,
   url,
   components,
-}: KitOptions): Promise<LegacyKit<T>> {
+}: KitOptions): Promise<Expand<LegacyKit<T>>> {
   const kitBoard = new Board({ title, description, version });
   const { Core } = await import(
     // Cast to prevent TypeScript from trying to import these types (we don't
@@ -181,7 +182,9 @@ async function makeLegacyKit<T extends ComponentManifest>({
   }
   kitBoard.graphs = graphs;
   const builder = new KitBuilder(adapter.populateDescriptor({ url }));
-  return addKit(builder.build(handlers)) as object as Promise<LegacyKit<T>>;
+  return addKit(builder.build(handlers)) as object as Promise<
+    Expand<LegacyKit<T>>
+  >;
 }
 
 type LegacyKit<T extends ComponentManifest> = {
@@ -194,7 +197,7 @@ type LegacyNodeSignature<T extends GenericDiscreteComponent | BoardDefinition> =
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     | Definition<infer I, infer O, any, any, any, any, any, any, any>
     ? NewNodeFactory<
-        { [K in keyof I]: NewNodeValue },
-        { [K in keyof O]: NewNodeValue }
+        Expand<Required<{ [K in keyof I]: NewNodeValue }>>,
+        Expand<Required<{ [K in keyof O]: NewNodeValue }>>
       >
     : never;
