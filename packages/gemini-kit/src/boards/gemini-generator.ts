@@ -531,8 +531,8 @@ errorLoopback.resolve(errorCollector.outputs.error);
 // }).serialize(metadata);
 
 export default board({
-  title: "Gemini Pro Generator",
-  description: "The text generator board powered by the Gemini Pro model",
+  title: "Gemini Generator",
+  description: "Generates text using the Gemini API.",
   metadata: {
     help: {
       url: "https://breadboard-ai.github.io/breadboard/docs/kits/gemini/#the-text-component",
