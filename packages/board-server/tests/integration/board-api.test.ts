@@ -190,7 +190,7 @@ const scriptedRun = async (
     };
 
     const { statusCode, data: body } = await makeRequest({
-      path: `/boards/@test/${boardName}.api/run`,
+      path: `/boards/@${account.account}/${boardName}.api/run`,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -246,12 +246,12 @@ suite('Board API Integration tests', async () => {
       headers: { 'Content-Type': 'application/json' }
     });
     assert.strictEqual(statusCode, 200);
-    assert.deepStrictEqual(JSON.parse(body), { "created" : "@test/simple.json" });
+    assert.deepStrictEqual(JSON.parse(body), { "created" : `@${account.account}/simple.json` });
   });
 
   test('GET /boards/@test/simple.json should get a board', { concurrency: false }, async () => {
     const { statusCode, data: body } = await makeRequest({
-      path: '/boards/@test/simple.json',
+      path: `/boards/@${account.account}/simple.json`,
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -271,18 +271,18 @@ suite('Board API Integration tests', async () => {
 
   test('POST /boards/@test/simple.json should update a board', { concurrency: false }, async () => {
     const { statusCode, data: body } = await makeRequest({
-      path: `/boards/@test/simple.json?API_KEY=${account.api_key}`,
+      path: `/boards/@${account.account}/simple.json?API_KEY=${account.api_key}`,
       method: 'POST',
       body: readBoard('simple-published.bgl.json'),
       headers: {}
     });
     assert.strictEqual(statusCode, 200);
-    assert.deepStrictEqual(JSON.parse(body), { "created" : "@test/simple.json" });
+    assert.deepStrictEqual(JSON.parse(body), { "created" : `@${account.account}/simple.json` });
   });
 
   test('GET /boards/@test/simple.json should be published', { concurrency: false }, async () => {
     const { statusCode, data: body } = await makeRequest({
-      path: '/boards/@test/simple.json',
+      path: `/boards/@${account.account}/simple.json`,
       method: 'GET',
       headers: {}
     });
@@ -297,12 +297,12 @@ suite('Board API Integration tests', async () => {
       headers: {}
     });
     assert.strictEqual(statusCode, 200);
-    assert.deepStrictEqual(JSON.parse(body), [ { title: 'simple', path: 'test/simple.json', username: 'test', readonly: true, mine: false, tags: 'published' } ])
+    assert.deepStrictEqual(JSON.parse(body), [ { title: 'simple', path: `${account.account}/simple.json`, username: account.account, readonly: true, mine: false, tags: 'published' } ])
   });
 
   test('GET /boards/@test/simple.app should serve frontend app', { concurrency: false }, async () => {
     const { statusCode, data: body } = await makeRequest({
-      path: '/boards/@test/simple.app',
+      path: `/boards/@${account.account}/simple.app`,
       method: 'GET',
       headers: {}
     });
@@ -312,7 +312,7 @@ suite('Board API Integration tests', async () => {
 
   test('GET /boards/@test/simple.api should serve API explorer', { concurrency: false }, async () => {
     const { statusCode, data: body } = await makeRequest({
-      path: '/boards/@test/simple.api',
+      path: `/boards/@${account.account}/simple.api`,
       method: 'GET',
       headers: {}
     });
@@ -327,7 +327,7 @@ suite('Board API Integration tests', async () => {
     };
 
     const { statusCode, data: body } = await makeRequest({
-      path: '/boards/@test/simple.api/invoke',
+      path: `/boards/@${account.account}/simple.api/invoke`,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -346,7 +346,7 @@ suite('Board API Integration tests', async () => {
 
   test('POST /boards/@test/simple.api/describe should serve API description', { concurrency: false }, async () => {
     const { statusCode, data: body } = await makeRequest({
-      path: '/boards/@test/simple.api/describe',
+      path: `/boards/@${account.account}/simple.api/describe`,
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -377,7 +377,7 @@ suite('Board API Integration tests', async () => {
     };
 
     const { statusCode, data: body } = await makeRequest({
-      path: '/boards/@test/simple.api/run',
+      path: `/boards/@${account.account}/simple.api/run`,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
