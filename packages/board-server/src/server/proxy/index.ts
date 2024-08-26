@@ -22,43 +22,6 @@ import { cors } from "../cors.js";
 import { getUserKey } from "../auth.js";
 import { timestamp } from "../boards/utils/run-board.js";
 
-const config: ProxyServerConfig = {
-  kits: [secretsKit, asRuntimeKit(Core)],
-  store: getDataStore(),
-  proxy: [
-    "fetch",
-    {
-      node: "secrets",
-      tunnel: {
-        GEMINI_KEY: {
-          to: "fetch",
-          when: {
-            url: hasOrigin("https://generativelanguage.googleapis.com"),
-          },
-        },
-        SCRAPING_BEE_KEY: {
-          to: "fetch",
-          when: {
-            url: hasOrigin("https://app.scrapingbee.com"),
-          },
-        },
-        OPENAI_API_KEY: {
-          to: "fetch",
-          when: {
-            url: hasOrigin("https://api.openai.com"),
-          },
-        },
-        ELEVENLABS_API_KEY: {
-          to: "fetch",
-          when: {
-            url: hasOrigin("https://api.elevenlabs.io"),
-          },
-        },
-      },
-    },
-  ],
-};
-
 class ResponseAdapter implements ProxyServerResponse {
   #response: ServerResponse;
 
