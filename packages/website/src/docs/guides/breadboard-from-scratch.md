@@ -241,19 +241,6 @@ gcloud firestore databases create --location=${LOCATION} --database=board-server
 If you have not already enabled the Firestore API in your Cloud project, you
 will be prompted to do so.
 
-#### Configure CORS
-
-CORS configuration for Board Server lives in Firestore. Configure the allowed
-origins by adding the origin for your Visual Editor.
-
-1. Open the [board-server](https://console.cloud.google.com/firestore/databases/board-server)
-   database in Cloud Console.
-2. Click **START COLLECTION**
-3. Create a collection called **`configuration`** with a single document called
-   **`board-server-cors`**
-4. Add a single field called **`allow`** with a type of **`array`**
-5. Add the origin of your Visual Editor instance to the array
-
 #### Add user(s)
 
 Each user who wishes to connect to a Board Server is identified by an API key.
@@ -279,13 +266,20 @@ By default, the Board Server is deployed as the default App Engine service.
 Since we have deployed the Visual Editor as the default service, we want to
 specify an explicit service name.
 
+Also, we need to configure this Board Server instance to accept requests from
+our Visual Editor.
+
 1. Open [`packages/board-server/app.yaml`](https://github.com/breadboard-ai/breadboard/blob/main/packages/board-server/app.yaml)
    in a text editor.
-2. At the top of the file, add the following line:
+2. Set an explicit service name, and add the allowed origins.
 
 ```yaml
 service: boards
-# REST OF FILE REMAINS THE SAME
+
+...
+
+env_variables:
+  ALLOWED_ORIGINS: "{YOUR_VISUAL_EDITOR_ORIGIN}"
 ```
 
 #### Deploy the server

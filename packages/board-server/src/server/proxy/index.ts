@@ -16,8 +16,9 @@ import {
 } from "@google-labs/breadboard/remote";
 import { asRuntimeKit } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
-import { cors } from "../cors.js";
 import { getDataStore } from "@breadboard-ai/data-store";
+import type { ServerConfig } from "../config.js";
+import { cors } from "../cors.js";
 import { getUserKey } from "../auth.js";
 import { timestamp } from "../boards/utils/run-board.js";
 
@@ -57,6 +58,7 @@ const extractRequestBody = async (request: IncomingMessage) => {
 };
 
 export const serveProxyAPI = async (
+  serverConfig: ServerConfig,
   req: IncomingMessage,
   res: ServerResponse
 ) => {
@@ -66,7 +68,7 @@ export const serveProxyAPI = async (
     return false;
   }
 
-  if (!cors(req, res)) {
+  if (!cors(req, res, serverConfig.allowedOrigins)) {
     return true;
   }
 

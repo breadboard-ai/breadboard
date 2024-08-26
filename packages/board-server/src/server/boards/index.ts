@@ -82,12 +82,12 @@ export const serveBoardsAPI = async (
 
   switch (parsed.type) {
     case "list": {
-      if (!cors(req, res)) return true;
+      if (!cors(req, res, serverConfig.allowedOrigins)) return true;
       if (await list(parsed, req, res)) return true;
       break;
     }
     case "create": {
-      if (!cors(req, res)) return true;
+      if (!cors(req, res, serverConfig.allowedOrigins)) return true;
       if (await create(parsed, req, res)) return true;
       break;
     }
@@ -97,7 +97,7 @@ export const serveBoardsAPI = async (
       break;
     }
     case "update": {
-      if (!cors(req, res)) return true;
+      if (!cors(req, res, serverConfig.allowedOrigins)) return true;
       const body = await getBody(req);
       if (await post(parsed, req, res, body)) return true;
       if (await del(parsed, req, res, body)) return true;
@@ -130,12 +130,12 @@ export const serveBoardsAPI = async (
       break;
     }
     case "invite-list": {
-      if (!cors(req, res)) return true;
+      if (!cors(req, res, serverConfig.allowedOrigins)) return true;
       if (await inviteList(parsed, req, res)) return true;
       break;
     }
     case "invite-update": {
-      if (!cors(req, res)) return true;
+      if (!cors(req, res, serverConfig.allowedOrigins)) return true;
       const body = await getBody(req);
       if (await inviteUpdate(parsed, req, res, body)) return true;
       break;
