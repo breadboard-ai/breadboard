@@ -1,11 +1,11 @@
 import Database from "better-sqlite3";
-import type { CreateInviteResult, CreateUserResult, ListInviteResult, RunBoardStateStore } from "../types.js";
+import type { CreateInviteResult, CreateUserResult, ListInviteResult, RunBoardStateStore, BoardServerStore } from "../types.js";
 import type { BoardListEntry, BoardServerCorsConfig, GetUserStoreResult, OperationResult, ServerInfo } from "../store.js";
 import { asInfo, asPath, EXPIRATION_TIME_MS, INVITE_EXPIRATION_TIME_MS, sanitize } from "../store.js";
 import type { GraphDescriptor, ReanimationState } from "@google-labs/breadboard";
 import { v4 as uuidv4 } from 'uuid';
 
-export class SQLiteStorageProvider implements RunBoardStateStore {
+export class SQLiteStorageProvider implements RunBoardStateStore, BoardServerStore {
     private db: Database.Database;
   
     constructor(dbPath: string) {

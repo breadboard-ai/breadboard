@@ -140,30 +140,6 @@ const runStateStore: RunBoardStateStore = {
   },
   async saveReanimationState(user: string, state: any) {
     return JSON.stringify(state);
-  },
-  getBoardServerCorsConfig: function (): Promise<BoardServerCorsConfig | undefined> {
-    throw new Error("Function not implemented.");
-  },
-  getServerInfo: function (): Promise<ServerInfo | undefined> {
-    throw new Error("Function not implemented.");
-  },
-  createUser: function (username: string, apiKey: string): Promise<CreateUserResult> {
-    throw new Error("Function not implemented.");
-  },
-  list: function (userKey: string): Promise<BoardListEntry[]> {
-    throw new Error("Function not implemented.");
-  },
-  getUserStore: function (userKey: string | null): Promise<GetUserStoreResult> {
-    throw new Error("Function not implemented.");
-  },
-  get: function (userStore: string, boardName: string): Promise<any> {
-    throw new Error("Function not implemented.");
-  },
-  update: function (userStore: string, path: string, graph: GraphDescriptor): Promise<OperationResult> {
-    throw new Error("Function not implemented.");
-  },
-  create: function (userKey: string, name: string, dryRun: boolean): Promise<CreateBoardResult> {
-    throw new Error("Function not implemented.");
   }
 };
 

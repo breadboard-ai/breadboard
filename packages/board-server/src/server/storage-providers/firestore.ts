@@ -1,12 +1,12 @@
 import { Firestore } from "@google-cloud/firestore";
 import { type ReanimationState, type GraphDescriptor, blankLLMContent } from "@google-labs/breadboard";
 import { EXPIRATION_TIME_MS, type BoardServerCorsConfig, type ServerInfo, type GetUserStoreResult, type BoardListEntry, asPath, type OperationResult, asInfo, sanitize, INVITE_EXPIRATION_TIME_MS } from "../store.js";
-import type { CreateInviteResult, CreateUserResult, ListInviteResult, RunBoardStateStore } from "../types.js";
+import type { BoardServerStore, CreateInviteResult, CreateUserResult, ListInviteResult, RunBoardStateStore } from "../types.js";
 
 
 const REANIMATION_COLLECTION_ID = "resume";
 
-export class FirestoreStorageProvider implements RunBoardStateStore {
+export class FirestoreStorageProvider implements RunBoardStateStore, BoardServerStore {
     #database;
   
     constructor(storeName: string) {
