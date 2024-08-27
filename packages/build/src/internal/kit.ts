@@ -93,7 +93,11 @@ export function kit<T extends ComponentManifest>(
 function makeBoardComponentHandler(board: BoardDefinition): NodeHandler {
   const serialized = serialize(board);
   return {
-    metadata: board.metadata,
+    metadata: {
+      ...board.metadata,
+      title: board.title,
+      description: board.description,
+    },
     describe: board.describe.bind(board),
     async invoke(inputs: InputValues, context: NodeHandlerContext) {
       // Assume that invoke is available, since that's part of core kit, and use
@@ -171,9 +175,9 @@ async function makeLegacyKit<T extends ComponentManifest>({
         $id: id,
         $board: `#${id}`,
         $metadata: {
+          ...component.metadata,
           title: component.title,
           description: component.description,
-          ...component.metadata,
         },
       });
       graphs[id] = serialize(component);
