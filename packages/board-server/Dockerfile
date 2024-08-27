@@ -1,5 +1,5 @@
 # Build stage
-FROM node:20 AS build
+FROM node:20-slim AS build
 WORKDIR /build
 
 # Copy the entire monorepo
@@ -31,4 +31,4 @@ RUN npm install --only=production && \
     npm install -g tsx
 
 EXPOSE 3000
-CMD ["node", "dist/server/index.js"]
+CMD ["node", "dist/server/index.js", "--host=0.0.0.0" ]
