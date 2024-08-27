@@ -233,7 +233,7 @@ const getNext = (result?: any) => {
 };
 
 suite('Board API Integration tests', async () => {
-// Tests
+
   test('GET /boards should list boards', { concurrency: false }, async () => {
     const { statusCode, data: body } = await makeRequest({
       path: '/boards',
