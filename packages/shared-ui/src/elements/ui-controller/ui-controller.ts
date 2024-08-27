@@ -510,6 +510,7 @@ export class UI extends LitElement {
         this.boardId,
         this.selectedNodeIds,
         this.#lastEdgeCount,
+        editorMode,
         // TODO: Figure out a cleaner way of handling this without watching for
         // all graph changes.
         this.graph,
@@ -522,6 +523,7 @@ export class UI extends LitElement {
           .kits=${this.kits}
           .loader=${this.loader}
           .editable=${true}
+          .editorMode=${editorMode}
           .providers=${this.providers}
           .providerOps=${this.providerOps}
           .showTypes=${showPortTypesInConfiguration}

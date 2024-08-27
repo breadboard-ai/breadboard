@@ -50,8 +50,8 @@ const { text } = code(
 ).outputs;
 
 export default board({
-  title: "Gemini Nano",
-  description: "Generate text with Gemini Nano",
+  title: "Gemini Nano (Preview)",
+  description: "Generates text with the on-device Gemini Nano model",
   metadata: {
     icon: "nano",
     help: {

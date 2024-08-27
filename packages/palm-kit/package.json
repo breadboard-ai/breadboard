@@ -58,8 +58,6 @@
         "FORCE_COLOR": "1"
       },
       "files": [
-        "src/**/*.ts",
-        "tests/**/*.ts",
         ".eslintrc",
         "../../.eslintrc.json"
       ],
