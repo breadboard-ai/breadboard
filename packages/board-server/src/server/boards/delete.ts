@@ -37,7 +37,7 @@ const del: ApiHandler = async (parsed, req, res, body) => {
 
   const result = await store.delete(userStore.store, path);
   if (!result.success) {
-    serverError(res, result.error);
+    serverError(res, result.error!);
     return true;
   }
 

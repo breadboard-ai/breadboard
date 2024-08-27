@@ -20,6 +20,8 @@ import manyOutputsBoard from "./boards/many-outputs.bgl.json" with { type: "json
 import invokeWithBubblingInput from "./boards/invoke-board-with-bubbling-input.bgl.json" with { type: "json" };
 import type { RemoteMessage } from "@google-labs/breadboard/remote";
 import type { RunDiagnosticsLevel } from "@google-labs/breadboard/harness";
+import type { CreateBoardResult, CreateUserResult, RunBoardStateStore } from "../src/server/types.js";
+import type { BoardServerCorsConfig, ServerInfo, BoardListEntry, GetUserStoreResult, OperationResult } from "../src/server/store.js";
 
 const mockSecretsKit: Kit = {
   url: import.meta.url,
@@ -128,7 +130,7 @@ type RunScriptEntry = {
   expected: ExpectedResult[];
 };
 
-const runStateStore = {
+const runStateStore: RunBoardStateStore = {
   async loadReanimationState(user: string, ticket: string) {
     const state = JSON.parse(ticket) as ReanimationState;
     if (!state.states) {
@@ -138,7 +140,7 @@ const runStateStore = {
   },
   async saveReanimationState(user: string, state: any) {
     return JSON.stringify(state);
-  },
+  }
 };
 
 const scriptedRun = async (

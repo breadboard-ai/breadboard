@@ -3,14 +3,13 @@ import type { IncomingMessage, ServerResponse } from "http";
 import { dirname, extname, resolve } from "path";
 import { fileURLToPath } from "url";
 import type { ViteDevServer } from "vite";
+import { existsSync } from 'fs';
 
 import type { ServerConfig } from "./config.js";
 import { notFound, serverError } from "./errors.js";
 import type { PageMetadata } from "./types.js";
 import { createReadStream } from "fs";
 
-const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
-const ROOT_PATH = resolve(MODULE_PATH, "../..");
 const PROD_PATH = "/dist/client";
 
 const CONTENT_TYPE = new Map([
@@ -37,16 +36,13 @@ const CONTENT_TYPE = new Map([
 ]);
 const DEFAULT_CONTENT_TYPE = "text/plain";
 
-export const root = () => {
-  return ROOT_PATH;
-};
-
 const IS_PROD = process.env.NODE_ENV === "production";
 
 /**
  * Serve a static file
  */
 export const serveFile = async (
+  serverConfig: ServerConfig,
   res: ServerResponse,
   path: string,
   transformer?: (contents: string) => Promise<string>
@@ -59,7 +55,7 @@ export const serveFile = async (
   }
   const contentType = CONTENT_TYPE.get(extname(path)) || DEFAULT_CONTENT_TYPE;
   try {
-    const resolvedPath = `${root()}${path}`;
+    const resolvedPath = `${serverConfig.rootPath}${path}`;
     if (contentType.startsWith("text/") || contentType === "application/json") {
       let contents = await readFile(resolvedPath, "utf-8");
       if (transformer) contents = await transformer(contents);
@@ -81,7 +77,6 @@ export const serveFile = async (
     notFound(res, "Static file not found");
   }
 };
-
 export const serveContent = async (
   serverConfig: ServerConfig,
   req: IncomingMessage,
@@ -90,7 +85,7 @@ export const serveContent = async (
   const pathname = req.url || "/";
   const vite = serverConfig.viteDevServer;
   if (vite === null) {
-    serveFile(res, pathname);
+    serveFile(serverConfig, res, pathname);
   } else {
     vite.middlewares(req, res);
   }
@@ -108,11 +103,11 @@ function escapeHTML(s: string) {
 function replaceMetadata(contents: string, metadata: PageMetadata) {
   return contents
     .replaceAll("{{title}}", escapeHTML(metadata.title))
-    .replaceAll("{{description}}", escapeHTML(metadata.description));
+    .replaceAll("{{description}}", escapeHTML(metadata.description || ''));
 }
 
 export const serveIndex = async (
-  vite: ViteDevServer | null,
+  serverConfig: ServerConfig,
   res: ServerResponse,
   metadataGetter: () => Promise<PageMetadata | null>
 ) => {
@@ -120,12 +115,13 @@ export const serveIndex = async (
   if (metadata === null) {
     return notFound(res, "Board not found");
   }
+  const vite = serverConfig.viteDevServer;
   if (vite === null) {
-    return serveFile(res, "/index.html", async (contents: string) => {
+    return serveFile(serverConfig, res, "/index.html", async (contents: string) => {
       return replaceMetadata(contents, metadata);
     });
   }
-  serveFile(res, "/", async (contents: string) => {
+  serveFile(serverConfig, res, "/", async (contents: string) => {
     return await vite.transformIndexHtml(
       "/index.html",
       replaceMetadata(contents, metadata)

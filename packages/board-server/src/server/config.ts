@@ -10,4 +10,5 @@ export interface ServerConfig {
   allowedOrigins: Set<string>;
   hostname: string;
   viteDevServer: ViteDevServer | null;
+  rootPath: string;
 }

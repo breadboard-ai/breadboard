@@ -9,8 +9,13 @@ import { createServer as createViteServer } from "vite";
 import { env } from "process";
 import { makeRouter } from "./router.js";
 import type { ServerConfig } from "./server/config.js";
+import { dirname, resolve } from "path";
+import { fileURLToPath } from "url";
 
-export const startServer = async () => {
+const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
+const ROOT_PATH = resolve(MODULE_PATH, "../../");
+
+export const startServer = async (rootPath: string = ROOT_PATH) => {
   const PORT = env.PORT || 3000;
   const HOST = env.HOST || "localhost";
   const HOSTNAME = `http://${HOST}:${PORT}`;
@@ -30,6 +35,7 @@ export const startServer = async () => {
           appType: "custom",
           optimizeDeps: { esbuildOptions: { target: "esnext" } },
         }),
+      rootPath
   };
 
   const server = createServer(makeRouter(serverConfig));

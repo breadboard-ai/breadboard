@@ -13,13 +13,18 @@
     "start": "node .",
     "prepack": "npm run build",
     "build": "wireit",
+    "build:vite": "wireit",
+    "build:esbuild": "wireit",
+    "build:docker": "docker build --build-context breadboard=../../ -t board-server .",
     "deploy": "npm run build && gcloud app deploy",
     "deploy:gcr": "npm run build && gcloud run deploy --source .",
     "add": "tsx scripts/create-account.ts",
     "serve": "wireit",
     "dev": "npm run dev:nowatch --watch",
     "dev:nowatch": "wireit",
-    "test": "wireit"
+    "test": "wireit",
+    "test:integration": "wireit"
+
   },
   "wireit": {
     "build": {
@@ -129,10 +134,23 @@
       ],
       "clean": "if-file-deleted"
     },
+    "clear:testdb": {
+      "command": "rm -f test.db"
+    },
     "test": {
       "command": "node --test --enable-source-maps --test-reporter spec dist/tests/*.js",
       "dependencies": [
         "build:tests"
+      ],
+      "files": [],
+      "output": []
+    },
+    "test:integration": {
+      "command": "export GOOGLE_APPLICATION_CREDENTIALS=foo && export GOOGLE_CLOUD_PROJECT=foo && export STORAGE_BACKEND=sqlite && export SQLITE_DB_PATH=test.db && node --test --enable-source-maps --test-reporter spec dist/tests/integration/board-api.test.js",
+      "dependencies": [
+        "build:tests",
+        "build:vite",
+        "clear:testdb"
       ],
       "files": [],
       "output": []
@@ -154,7 +172,9 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
     "@types/node": "^22.0.0",
+    "@types/uuid": "^10.0.0",
     "esbuild": "^0.23.1",
     "eslint": "^8.57.0",
     "typescript": "^5.5.4",
@@ -166,7 +186,9 @@
     "@google-cloud/secret-manager": "^5.6.0",
     "@google-labs/breadboard": "^0.25.0",
     "@lit/context": "^1.1.2",
+    "better-sqlite3": "^11.1.2",
     "lit": "^3.2.0",
+    "uuid": "^10.0.0",
     "vite": "^5.4.2"
   }
 }
