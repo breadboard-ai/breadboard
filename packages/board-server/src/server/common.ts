@@ -59,14 +59,12 @@ export const serveFile = async (
   path: string,
   transformer?: (contents: string) => Promise<string>
 ) => {
-  console.log(`Attempting to serve file: ${path}`);
   if (path == "/") {
     path = "/index.html";
   }
   if (IS_PROD) {
     path = `${PROD_PATH}${path}`;
   }
-  console.log(`Adjusted path: ${path}`);
   const contentType = CONTENT_TYPE.get(extname(path)) || DEFAULT_CONTENT_TYPE;
   try {
     const resolvedPath = resolve(root(), path.replace(/^\//, ''));
