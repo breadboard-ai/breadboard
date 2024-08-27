@@ -10,25 +10,7 @@ import { notFound, serverError } from "./errors.js";
 import type { PageMetadata } from "./types.js";
 import { createReadStream } from "fs";
 
-const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
-
-function findRootPath() {
-  let currentPath = MODULE_PATH;
-  while (currentPath !== '/') {
-    if (existsSync(resolve(currentPath, 'package.json'))) {
-      return currentPath;
-    }
-    currentPath = dirname(currentPath);
-  }
-  throw new Error('Unable to find project root');
-}
-
-const ROOT_PATH = findRootPath();
 const PROD_PATH = "/dist/client";
-
-const IS_PROD = process.env.NODE_ENV === "production";
-
-export const root = () => IS_PROD ? resolve(ROOT_PATH, '..') : ROOT_PATH;
 
 const CONTENT_TYPE = new Map([
   [".html", "text/html"],
@@ -54,7 +36,13 @@ const CONTENT_TYPE = new Map([
 ]);
 const DEFAULT_CONTENT_TYPE = "text/plain";
 
+const IS_PROD = process.env.NODE_ENV === "production";
+
+/**
+ * Serve a static file
+ */
 export const serveFile = async (
+  serverConfig: ServerConfig,
   res: ServerResponse,
   path: string,
   transformer?: (contents: string) => Promise<string>
@@ -67,7 +55,7 @@ export const serveFile = async (
   }
   const contentType = CONTENT_TYPE.get(extname(path)) || DEFAULT_CONTENT_TYPE;
   try {
-    const resolvedPath = resolve(root(), path.replace(/^\//, ''));
+    const resolvedPath = `${serverConfig.rootPath}${path}`;
     if (contentType.startsWith("text/") || contentType === "application/json") {
       let contents = await readFile(resolvedPath, "utf-8");
       if (transformer) contents = await transformer(contents);
@@ -85,12 +73,10 @@ export const serveFile = async (
         fileStream.on("end", resolve);
       });
     }
-  } catch (err) {
-    console.error(`Error serving file: ${err}`);
+  } catch {
     notFound(res, "Static file not found");
   }
 };
-
 export const serveContent = async (
   serverConfig: ServerConfig,
   req: IncomingMessage,
@@ -99,7 +85,7 @@ export const serveContent = async (
   const pathname = req.url || "/";
   const vite = serverConfig.viteDevServer;
   if (vite === null) {
-    serveFile(res, pathname);
+    serveFile(serverConfig, res, pathname);
   } else {
     vite.middlewares(req, res);
   }
@@ -121,6 +107,7 @@ function replaceMetadata(contents: string, metadata: PageMetadata) {
 }
 
 export const serveIndex = async (
+  serverConfig: ServerConfig,
   vite: ViteDevServer | null,
   res: ServerResponse,
   metadataGetter: () => Promise<PageMetadata | null>
@@ -130,11 +117,11 @@ export const serveIndex = async (
     return notFound(res, "Board not found");
   }
   if (vite === null) {
-    return serveFile(res, "/index.html", async (contents: string) => {
+    return serveFile(serverConfig, res, "/index.html", async (contents: string) => {
       return replaceMetadata(contents, metadata);
     });
   }
-  serveFile(res, "/", async (contents: string) => {
+  serveFile(serverConfig, res, "/", async (contents: string) => {
     return await vite.transformIndexHtml(
       "/index.html",
       replaceMetadata(contents, metadata)

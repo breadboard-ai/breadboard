@@ -4,7 +4,7 @@ import { request } from 'node:http';
 import { startServer, stopServer } from "../../src/server.js";
 
 import fs from 'fs';
-import path from 'path';
+import path, { resolve } from 'path';
 
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -17,13 +17,18 @@ var account: { api_key: any; account?: string; };
 
 import { deepStrictEqual } from 'assert';
 
+const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
+const ROOT_PATH = resolve(MODULE_PATH, "../../../");
+
 test.before(async () => {
-  serverInstance = await startServer();
+  serverInstance = await startServer(ROOT_PATH);
   account = await createAccount('test')
 });
 
 test.after(async () => {
   await stopServer(serverInstance.server);
+  console.log('Server stopped');
+  process.exit(0);
 });
 
 process.on('uncaughtException', async (err) => {
