@@ -23,18 +23,9 @@ const providers = {
   "firestore": new FirestoreStorageProvider('board-server')
 }
 
-function getProvider(): "sqlite" | "firestore" {
-  const provider = process.env['STORAGE_BACKEND'];
-  
-  if (provider === "sqlite" || provider === "firestore") {
-    return provider;
-  }
-  
-  return "firestore";
-}
-
 export const getStore = () => {
-  return providers[getProvider()]
+  const backend = process.env['STORAGE_BACKEND'];
+  return providers[backend === "sqlite" ? "sqlite" : "firestore"];
 };
 
 const createAPIKey = async () => {
