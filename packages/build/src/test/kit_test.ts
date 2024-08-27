@@ -14,6 +14,9 @@ import { board as oldBoard } from "@google-labs/breadboard";
 
 const testDiscrete = defineNodeType({
   name: "discreteComponent",
+  metadata: {
+    description: "Discrete Description",
+  },
   inputs: {
     str: {
       type: "string",
@@ -30,6 +33,7 @@ const testDiscrete = defineNodeType({
 const numInput = input({ type: "number" });
 const testBoard = board({
   id: "boardComponent",
+  description: "Board Description",
   inputs: { num: numInput },
   outputs: { num: numInput },
 });
@@ -51,6 +55,7 @@ test("kit handles discrete component", () => {
     testKit.foo
   );
   assert.equal(testKit.foo.id, "foo");
+  assert.equal(testKit.foo.metadata.description, "Discrete Description");
 });
 
 test("kit handles board component", () => {
@@ -59,6 +64,7 @@ test("kit handles board component", () => {
     testKit.bar
   );
   assert.equal(testKit.bar.id, "bar");
+  assert.equal(testKit.bar.description, "Board Description");
 });
 
 test("can invoke discrete component through board with old API", async () => {
