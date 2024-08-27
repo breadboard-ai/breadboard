@@ -105,7 +105,7 @@ export const serveBoardsAPI = async (
     }
     case "app": {
       // Serve the index.html file for the app.
-      serveIndex(serverConfig, serverConfig.viteDevServer, res, getMetadata(parsed));
+      serveIndex(serverConfig, res, getMetadata(parsed));
       return true;
     }
     case "api": {

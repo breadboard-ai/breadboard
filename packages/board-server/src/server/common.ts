@@ -108,7 +108,6 @@ function replaceMetadata(contents: string, metadata: PageMetadata) {
 
 export const serveIndex = async (
   serverConfig: ServerConfig,
-  vite: ViteDevServer | null,
   res: ServerResponse,
   metadataGetter: () => Promise<PageMetadata | null>
 ) => {
@@ -116,6 +115,7 @@ export const serveIndex = async (
   if (metadata === null) {
     return notFound(res, "Board not found");
   }
+  const vite = serverConfig.viteDevServer;
   if (vite === null) {
     return serveFile(serverConfig, res, "/index.html", async (contents: string) => {
       return replaceMetadata(contents, metadata);
