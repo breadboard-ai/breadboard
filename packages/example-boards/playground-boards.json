@@ -113,6 +113,36 @@
       "version": "0.1.0"
     },
     {
+      "title": "Hugging Face Fill Mask",
+      "reference": "/example-boards/playground/hugging-face-fill-mask.json",
+      "version": ""
+    },
+    {
+      "title": "Hugging Face Labelling Board",
+      "reference": "/example-boards/playground/hugging-face-labelling.json",
+      "version": ""
+    },
+    {
+      "title": "Hugging Face Question Answering Board",
+      "reference": "/example-boards/playground/hugging-face-question-answering.json",
+      "version": ""
+    },
+    {
+      "title": "Hugging Face Translation Russian to English Board",
+      "reference": "/example-boards/playground/hugging-face-russian-english-translation.json",
+      "version": ""
+    },
+    {
+      "title": "Hugging Face Summarization Board",
+      "reference": "/example-boards/playground/hugging-face-summarization.json",
+      "version": ""
+    },
+    {
+      "title": "Hugging Face Text Classification",
+      "reference": "/example-boards/playground/hugging-face-text-classification.json",
+      "version": ""
+    },
+    {
       "title": "Looper Chat Testing Grounds",
       "reference": "/example-boards/playground/looper-chat-test.json",
       "version": "0.0.1"

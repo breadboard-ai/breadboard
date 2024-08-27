@@ -195,6 +195,11 @@ export type GraphProvider = {
    */
   startingURL: () => URL | null;
   /**
+   * Given the URL of a board, returns the URL of the node proxy server, if
+   * this provider supports it. If it doesn't, returns `false`.
+   */
+  canProxy?: (url: URL) => Promise<string | false>;
+  /**
    * Provides a way to watch for changes in the store.
    */
   watch: (callback: ChangeNotificationCallback) => void;

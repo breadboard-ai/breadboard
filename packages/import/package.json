@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/import",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "The OpenAPI import library for Breadboard",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -52,7 +52,7 @@
   "dependencies": {
     "openapi-types": "^12.1.3",
     "yaml": "^2.5.0",
-    "@google-labs/breadboard": "^0.24.0"
+    "@google-labs/breadboard": "^0.25.0"
   },
   "wireit": {
     "build": {
@@ -80,9 +80,10 @@
       "env": {
         "FORCE_COLOR": "1"
       },
+      "dependencies": [
+        "build"
+      ],
       "files": [
-        "src/**/*.ts",
-        "tests/**/*.ts",
         ".eslintrc",
         "../../.eslintrc.json"
       ],

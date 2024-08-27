@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.25.0
+
+### Minor Changes
+
+- e0dccfe: Polish app view.
+- 6404cb3: Introduce HarnessRunner API (not yet exposed).
+- 9ad0524: Teach Inspector API about start tags.
+- a4301e6: Introduce the ability to write custom describers.
+- 7fdd660: Add the Run API.
+- a34bb69: Introduce RemoteRunner (over HTTPS)
+- c397d53: Add support for multiple graph entry points and start tags.
+- 7de241c: Remove `BoardRunner`.
+- a424c92: Teach remote runner to send fewer bytes over the wire.
+- 79d709c: Introduce Edge event to Local and Remote runners.
+
+### Patch Changes
+
+- 49b3612: Restore preview functionality
+- b201e07: Implement edge-based UI in board-server (and fix a bunch of bugs elsewhere)
+- 15b5659: Teach app view to use RemoteRunner.
+- 0296c89: Teach LLMContentArray check to ignore $metadata
+- 534d67e: Teach Run Store & Data Store about LLM Content Array
+- c2cd40d: Add InspectableRunEdgeEvent
+- 262cefd: Skip metadata events in DataStore and RunStore
+- Updated dependencies [c397d53]
+  - @google-labs/breadboard-schema@1.7.0
+
 ## 0.24.0
 
 ### Minor Changes

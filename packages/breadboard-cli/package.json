@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.10.2",
+  "version": "0.11.0",
   "description": "A suite of tools for interacting with the Breadboard.",
   "bin": {
     "breadboard": "dist/src/index.js"
@@ -89,9 +89,10 @@
       "env": {
         "FORCE_COLOR": "1"
       },
+      "dependencies": [
+        "build:tsc"
+      ],
       "files": [
-        "src/**/*.ts",
-        "tests/**/*.ts",
         ".eslintrc",
         "../../.eslintrc.json"
       ],
@@ -156,12 +157,12 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@breadboard-ai/build": "^0.8.1",
-    "@breadboard-ai/import": "0.1.7",
-    "@breadboard-ai/visual-editor": "^1.15.0",
-    "@google-labs/breadboard": "^0.24.0",
-    "@google-labs/core-kit": "^0.13.0",
-    "@google-labs/template-kit": "^0.3.7",
+    "@breadboard-ai/build": "^0.9.0",
+    "@breadboard-ai/import": "0.1.8",
+    "@breadboard-ai/visual-editor": "^1.17.0",
+    "@google-labs/breadboard": "^0.25.0",
+    "@google-labs/core-kit": "^0.14.0",
+    "@google-labs/template-kit": "^0.3.8",
     "@rollup/plugin-commonjs": "^26.0.1",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
@@ -171,7 +172,7 @@
     "rollup": "^4.21.0",
     "serve": "^14.2.3",
     "urlpattern-polyfill": "^10.0.0",
-    "vite": "^5.4.1",
+    "vite": "^5.4.2",
     "yaml": "^2.5.0"
   }
 }

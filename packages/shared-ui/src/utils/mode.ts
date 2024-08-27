@@ -40,30 +40,25 @@ const removeHardPort = (...names: string[]) => {
 };
 
 const removeWiredPort = (port: InspectablePort) => {
-  return (
-    (port.status === PortStatus.Connected ||
-      port.status === PortStatus.Dangling) &&
-    port.configured
-  );
+  return port.schema.behavior?.includes("config");
+};
+
+const removeStarPort = (port: InspectablePort) => {
+  return !port.star && port.name !== "";
 };
 
 export const filterConfigByMode = (
   ports: InspectableNodePorts,
   mode: EditorMode
 ) => {
-  if (mode === EditorMode.ADVANCED) return ports;
-
   const inputs: InspectablePortList = {
     fixed: ports.inputs.fixed,
-    ports: ports.inputs.ports.filter(removeWiredPort),
+    ports: ports.inputs.ports.filter(
+      mode === EditorMode.ADVANCED ? removeStarPort : removeWiredPort
+    ),
   };
 
-  const outputs: InspectablePortList = {
-    fixed: ports.outputs.fixed,
-    ports: ports.outputs.ports.filter(removeWiredPort),
-  };
-
-  return { inputs, outputs };
+  return { inputs, outputs: ports.outputs };
 };
 
 export const filterPortsByMode = (

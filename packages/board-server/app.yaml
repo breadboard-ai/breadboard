@@ -10,5 +10,8 @@ handlers:
     static_files: dist/client/\1
     upload: dist/client/(.*\..+)$
 
+env_variables:
+  ALLOWED_ORIGINS: ""
+
 build_env_variables:
   GOOGLE_NODE_RUN_SCRIPTS: ""

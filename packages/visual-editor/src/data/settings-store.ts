@@ -127,6 +127,15 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
             value: false,
           },
         ],
+        [
+          "Use Local Secrets Only",
+          {
+            name: "Use Local Secrets Only",
+            description:
+              "When unchecked (default), the board server's secrets and locally-stored secrets will be used to run the board from that server. When checked, only locally-stored secrets will be used.",
+            value: false,
+          },
+        ],
       ]),
     },
     [BreadboardUI.Types.SETTINGS_TYPE.SECRETS]: {

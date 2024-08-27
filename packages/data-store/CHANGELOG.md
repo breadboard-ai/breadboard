@@ -1,5 +1,30 @@
 # @breadboard-ai/data-store
 
+## 0.2.1
+
+### Patch Changes
+
+- 534d67e: Teach Run Store & Data Store about LLM Content Array
+- 262cefd: Skip metadata events in DataStore and RunStore
+- Updated dependencies [49b3612]
+- Updated dependencies [e0dccfe]
+- Updated dependencies [6404cb3]
+- Updated dependencies [9ad0524]
+- Updated dependencies [a4301e6]
+- Updated dependencies [7fdd660]
+- Updated dependencies [b201e07]
+- Updated dependencies [15b5659]
+- Updated dependencies [0296c89]
+- Updated dependencies [a34bb69]
+- Updated dependencies [534d67e]
+- Updated dependencies [c397d53]
+- Updated dependencies [7de241c]
+- Updated dependencies [a424c92]
+- Updated dependencies [c2cd40d]
+- Updated dependencies [262cefd]
+- Updated dependencies [79d709c]
+  - @google-labs/breadboard@0.25.0
+
 ## 0.2.0
 
 ### Minor Changes

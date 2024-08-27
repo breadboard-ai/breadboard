@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "Breadboard Kit that contains nodes for various sorts of templating",
   "type": "module",
   "main": "./dist/src/index.js",
@@ -69,9 +69,10 @@
       "env": {
         "FORCE_COLOR": "1"
       },
+      "dependencies": [
+        "build:tsc"
+      ],
       "files": [
-        "src/**/*.ts",
-        "tests/**/*.ts",
         ".eslintrc",
         "../../.eslintrc.json"
       ],
@@ -116,8 +117,8 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@breadboard-ai/build": "^0.8.1",
-    "@google-labs/breadboard": "^0.24.0",
+    "@breadboard-ai/build": "^0.9.0",
+    "@google-labs/breadboard": "^0.25.0",
     "url-template": "^3.1.0"
   }
 }

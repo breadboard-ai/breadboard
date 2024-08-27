@@ -2,9 +2,12 @@ import { readFile } from "fs/promises";
 import type { IncomingMessage, ServerResponse } from "http";
 import { dirname, extname, resolve } from "path";
 import { fileURLToPath } from "url";
-import { notFound } from "./errors.js";
 import type { ViteDevServer } from "vite";
+
+import type { ServerConfig } from "./config.js";
+import { notFound, serverError } from "./errors.js";
 import type { PageMetadata } from "./types.js";
+import { createReadStream } from "fs";
 
 const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
 const ROOT_PATH = resolve(MODULE_PATH, "../..");
@@ -57,21 +60,35 @@ export const serveFile = async (
   const contentType = CONTENT_TYPE.get(extname(path)) || DEFAULT_CONTENT_TYPE;
   try {
     const resolvedPath = `${root()}${path}`;
-    let contents = await readFile(resolvedPath, "utf-8");
-    if (transformer) contents = await transformer(contents);
-    res.writeHead(200, { "Content-Type": contentType });
-    res.end(contents);
+    if (contentType.startsWith("text/") || contentType === "application/json") {
+      let contents = await readFile(resolvedPath, "utf-8");
+      if (transformer) contents = await transformer(contents);
+      res.writeHead(200, { "Content-Type": contentType });
+      res.end(contents);
+    } else {
+      return new Promise<void>((resolve) => {
+        const fileStream = createReadStream(resolvedPath);
+        res.setHeader("Content-Type", contentType);
+        fileStream.pipe(res);
+        fileStream.on("error", () => {
+          notFound(res, `Static file not found`);
+          resolve();
+        });
+        fileStream.on("end", resolve);
+      });
+    }
   } catch {
     notFound(res, "Static file not found");
   }
 };
 
 export const serveContent = async (
-  vite: ViteDevServer | null,
+  serverConfig: ServerConfig,
   req: IncomingMessage,
   res: ServerResponse
 ) => {
   const pathname = req.url || "/";
+  const vite = serverConfig.viteDevServer;
   if (vite === null) {
     serveFile(res, pathname);
   } else {

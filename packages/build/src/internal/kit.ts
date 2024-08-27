@@ -4,45 +4,68 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  InputValues,
-  Kit,
-  KitConstructor,
-  NodeHandler,
-  NodeHandlerContext,
-  NodeHandlerFunction,
+import {
+  addKit,
+  Board,
+  type BreadboardNode,
+  type ConfigOrGraph,
+  type InputValues,
+  type Kit,
+  type KitConstructor,
+  type NewNodeFactory,
+  type NodeHandler,
+  type NodeHandlerContext,
+  type NodeHandlerFunction,
+  type NodeHandlers,
+  type NewNodeValue,
 } from "@google-labs/breadboard";
+import type {
+  KitTag,
+  SubGraphs,
+} from "@google-labs/breadboard-schema/graph.js";
+import { GraphToKitAdapter, KitBuilder } from "@google-labs/breadboard/kits";
 import type { BoardDefinition } from "./board/board.js";
 import { serialize } from "./board/serialize.js";
 import {
   isDiscreteComponent,
+  type Definition,
   type GenericDiscreteComponent,
 } from "./define/definition.js";
-import type { KitTag } from "@google-labs/breadboard-schema/graph.js";
+import type { Expand } from "./common/type-util.js";
 
-export interface KitOptions {
+type ComponentManifest = Record<
+  string,
+  GenericDiscreteComponent | BoardDefinition
+>;
+
+export interface KitOptions<T extends ComponentManifest = ComponentManifest> {
   title: string;
   description: string;
   version: string;
   url: string;
   tags?: KitTag[];
-  components: Array<GenericDiscreteComponent | BoardDefinition>;
+  components: T;
 }
 
-export function kit(options: KitOptions): KitConstructor<Kit> {
+export function kit<T extends ComponentManifest>(
+  options: KitOptions<T>
+): KitConstructor<Kit> & T & { legacy(): Promise<Expand<LegacyKit<T>>> } {
+  const componentsWithIds = Object.fromEntries(
+    Object.entries(options.components).map(([id, component]) => [
+      id,
+      bindComponentToKit(component, id),
+    ])
+  );
   const handlers: Record<string, NodeHandler> = Object.fromEntries(
-    options.components.map((component) => {
+    Object.values(componentsWithIds).map((component) => {
       if (isDiscreteComponent(component)) {
         return [component.id, component];
       } else {
-        if (!component.id) {
-          // TODO(aomarks) Make id required.
-          throw new Error("To be added to a kit, boards must have an id.");
-        }
         return [
           component.id,
           // TODO(aomarks) Should this just be the invoke() method on Board?
-          makeBoardComponentHandler(component),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          makeBoardComponentHandler(component as any),
         ];
       }
     })
@@ -50,7 +73,7 @@ export function kit(options: KitOptions): KitConstructor<Kit> {
 
   // TODO(aomarks) Unclear why this needs to be a class, and why it needs
   // certain fields on both the static and instance sides.
-  return class GeneratedBreadboardKit {
+  const result = class GeneratedBreadboardKit {
     static handlers = handlers;
     static url = options.url;
     handlers = handlers;
@@ -60,6 +83,11 @@ export function kit(options: KitOptions): KitConstructor<Kit> {
     url = options.url;
     tags = options.tags ?? [];
   };
+  return Object.assign(result, {
+    ...componentsWithIds,
+    legacy: () => makeLegacyKit<T>(options),
+  }) as KitConstructor<Kit> as KitConstructor<Kit> &
+    T & { legacy: () => Promise<Expand<LegacyKit<T>>> };
 }
 
 function makeBoardComponentHandler(board: BoardDefinition): NodeHandler {
@@ -94,3 +122,82 @@ function findInvokeFunctionFromContext(
   }
   return undefined;
 }
+
+/**
+ * Components don't have ids until they are added to a kit. This function
+ * returns a proxy of the component that adds an "id" property.
+ */
+function bindComponentToKit<
+  T extends GenericDiscreteComponent | BoardDefinition,
+>(component: T, id: string): T & { id: string } {
+  return new Proxy(component, {
+    get(target, prop) {
+      return prop === "id"
+        ? id
+        : (target as object as Record<string | symbol, unknown>)[prop];
+    },
+  }) as T & { id: string };
+}
+
+/**
+ * We also expose a "legacy" property, an async function which returns a version
+ * of this Kit that can be used directly in the old API.
+ */
+async function makeLegacyKit<T extends ComponentManifest>({
+  title,
+  description,
+  version,
+  url,
+  components,
+}: KitOptions): Promise<Expand<LegacyKit<T>>> {
+  const kitBoard = new Board({ title, description, version });
+  const { Core } = await import(
+    // Cast to prevent TypeScript from trying to import these types (we don't
+    // want to depend on them in the type system because it's a circular
+    // dependency).
+    "@google-labs/core-kit" as string
+  );
+  const core = kitBoard.addKit(Core) as object as {
+    invoke: (config?: ConfigOrGraph) => BreadboardNode<unknown, unknown>;
+  };
+  const handlers: NodeHandlers = {};
+  const adapter = await GraphToKitAdapter.create(kitBoard, url, []);
+  const graphs: SubGraphs = {};
+  for (const [id, component] of Object.entries(components)) {
+    if (isDiscreteComponent(component)) {
+      handlers[id] = component;
+    } else {
+      core.invoke({
+        $id: id,
+        $board: `#${id}`,
+        $metadata: {
+          title: component.title,
+          description: component.description,
+          ...component.metadata,
+        },
+      });
+      graphs[id] = serialize(component);
+      handlers[id] = adapter.handlerForNode(id);
+    }
+  }
+  kitBoard.graphs = graphs;
+  const builder = new KitBuilder(adapter.populateDescriptor({ url }));
+  return addKit(builder.build(handlers)) as object as Promise<
+    Expand<LegacyKit<T>>
+  >;
+}
+
+type LegacyKit<T extends ComponentManifest> = {
+  [K in keyof T]: LegacyNodeSignature<T[K]>;
+};
+
+type LegacyNodeSignature<T extends GenericDiscreteComponent | BoardDefinition> =
+  T extends
+    | BoardDefinition<infer I, infer O>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    | Definition<infer I, infer O, any, any, any, any, any, any, any>
+    ? NewNodeFactory<
+        Expand<Required<{ [K in keyof I]: NewNodeValue }>>,
+        Expand<Required<{ [K in keyof O]: NewNodeValue }>>
+      >
+    : never;

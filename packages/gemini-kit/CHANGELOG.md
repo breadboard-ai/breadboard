@@ -1,5 +1,45 @@
 # @google-labs/gemini-kit
 
+## 0.6.0
+
+### Minor Changes
+
+- 78a6bcf: Remove example inputs from gemini-generator
+
+### Patch Changes
+
+- cc5f4b6: Updates for new board function API in build package
+- Updated dependencies [cc5f4b6]
+- Updated dependencies [49b3612]
+- Updated dependencies [e0dccfe]
+- Updated dependencies [6404cb3]
+- Updated dependencies [9ad0524]
+- Updated dependencies [a4301e6]
+- Updated dependencies [7fdd660]
+- Updated dependencies [a940b87]
+- Updated dependencies [b201e07]
+- Updated dependencies [15b5659]
+- Updated dependencies [374ea85]
+- Updated dependencies [0296c89]
+- Updated dependencies [a34bb69]
+- Updated dependencies [534d67e]
+- Updated dependencies [c397d53]
+- Updated dependencies [f93ec06]
+- Updated dependencies [cc5f4b6]
+- Updated dependencies [398bf4f]
+- Updated dependencies [7de241c]
+- Updated dependencies [a424c92]
+- Updated dependencies [ee1f9ca]
+- Updated dependencies [c2cd40d]
+- Updated dependencies [262cefd]
+- Updated dependencies [79d709c]
+  - @breadboard-ai/build@0.9.0
+  - @google-labs/breadboard@0.25.0
+  - @google-labs/core-kit@0.14.0
+  - @google-labs/node-nursery-web@1.3.0
+  - @google-labs/json-kit@0.3.6
+  - @google-labs/template-kit@0.3.8
+
 ## 0.5.4
 
 ### Patch Changes

@@ -206,8 +206,11 @@ export type RunConfig = {
    * the `secret` result will start showing up in the run results whenever
    * the secret is asked for. Otherwise, the `secrets` node will try to find
    * the secrets on its own.
+   *
+   * When set to `"fallback"`, the secrets will be asked for interactively
+   * only if the secrets node is not able to find the secrets on its own.
    */
-  interactiveSecrets?: boolean;
+  interactiveSecrets?: boolean | "fallback";
   /**
    * The data store to use for storing data.
    */

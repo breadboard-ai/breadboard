@@ -4,27 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { createServer } from "http";
-import { createServer as createViteServer } from "vite";
-import { env } from "process";
+import { startServer } from "./server.js";
 
-import { makeRouter } from "./router.js";
-
-const PORT = env.PORT || 3000;
-const HOST = env.HOST || "localhost";
-const HOSTNAME = `http://${HOST}:${PORT}`;
-const IS_PROD = env.NODE_ENV === "production";
-
-const vite = IS_PROD
-  ? null
-  : await createViteServer({
-      server: { middlewareMode: true },
-      appType: "custom",
-      optimizeDeps: { esbuildOptions: { target: "esnext" } },
-    });
-
-const server = createServer(makeRouter(HOSTNAME, vite));
-
-server.listen(PORT, () => {
-  console.info(`Running on "${HOSTNAME}"...`);
-});
+// Start the server
+(async () => {
+  try {
+    await startServer();
+  } catch (err) {
+    console.error("Failed to start the server", err);
+    process.exit(1); // Exit with a failure code
+  }
+})();
