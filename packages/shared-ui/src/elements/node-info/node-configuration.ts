@@ -516,7 +516,12 @@ export class NodeConfigurationInfo extends LitElement {
 
         if (data.type === "node") {
           const inputs: UserInputConfiguration[] = data.ports
-            .filter((port) => !port.star && port.name !== "")
+            .filter((port) => {
+              if (port.star || port.name === "") {
+                return false;
+              }
+              return port.schema.behavior?.includes("config");
+            })
             .map((port) => {
               return {
                 name: port.name,
