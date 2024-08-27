@@ -146,7 +146,7 @@
       "output": []
     },
     "test:integration": {
-      "command": "export GOOGLE_CLOUD_PROJECT=foo && STORAGE_BACKEND=sqlite && export SQLITE_DB_PATH=test.db && node --test --enable-source-maps --test-reporter spec dist/tests/integration/board-api.test.js",
+      "command": "export GOOGLE_APPLICATION_CREDENTIALS=foo && STORAGE_BACKEND=sqlite && export SQLITE_DB_PATH=test.db && node --test --enable-source-maps --test-reporter spec dist/tests/integration/board-api.test.js",
       "dependencies": [
         "build:tests",
         "build:vite",
