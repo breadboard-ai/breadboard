@@ -7,7 +7,7 @@
       "from": "combinePictureAndPrompt",
       "to": "describePicture",
       "out": "parts",
-      "in": "parts"
+      "in": "context"
     },
     {
       "from": "describePicture",
@@ -68,7 +68,7 @@
           "properties": {
             "text": {
               "type": "string",
-              "title": "Result"
+              "title": "text"
             }
           }
         }
@@ -78,14 +78,14 @@
       "id": "combinePictureAndPrompt",
       "type": "runJavascript",
       "configuration": {
-        "code": "const combinePictureAndPrompt = ({picture,prompt})=>{const picturePart=picture.parts[0];return{parts:[picturePart,{text:prompt}]}};",
+        "code": "const combinePictureAndPrompt = ({picture,prompt})=>{const picturePart=picture.parts[0];return{parts:[{parts:[picturePart,{text:prompt}]}]}};",
         "name": "combinePictureAndPrompt",
         "raw": true
       }
     },
     {
       "id": "describePicture",
-      "type": "vision",
+      "type": "text",
       "configuration": {}
     }
   ]
