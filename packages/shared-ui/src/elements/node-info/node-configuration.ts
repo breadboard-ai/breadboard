@@ -61,6 +61,9 @@ export class NodeConfigurationInfo extends LitElement {
   editable = false;
 
   @property()
+  editorMode = EditorMode.ADVANCED;
+
+  @property()
   selectedNodeIds: string[] = [];
 
   @property()
@@ -132,7 +135,8 @@ export class NodeConfigurationInfo extends LitElement {
       display: block;
     }
 
-    #multiple-nodes-selected {
+    #multiple-nodes-selected,
+    #loading {
       color: var(--bb-neutral-700);
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
@@ -426,7 +430,7 @@ export class NodeConfigurationInfo extends LitElement {
           const configuration = node.configuration();
           const nodePorts = await node.ports();
 
-          const { inputs } = filterConfigByMode(nodePorts, EditorMode.ADVANCED);
+          const { inputs } = filterConfigByMode(nodePorts, this.editorMode);
           const ports = [...inputs.ports].sort((portA, portB) => {
             const isSchema =
               portA.name === "schema" ||
@@ -501,7 +505,7 @@ export class NodeConfigurationInfo extends LitElement {
     }
 
     return this.#loadTask.render({
-      pending: () => html`Loading...`,
+      pending: () => html`<div id="loading">Loading...</div>`,
       complete: (
         data:
           | NodeConfigurationInfoDetails
@@ -515,25 +519,18 @@ export class NodeConfigurationInfo extends LitElement {
         }
 
         if (data.type === "node") {
-          const inputs: UserInputConfiguration[] = data.ports
-            .filter((port) => {
-              if (port.star || port.name === "") {
-                return false;
-              }
-              return port.schema.behavior?.includes("config");
-            })
-            .map((port) => {
-              return {
-                name: port.name,
-                title: port.title,
-                secret: false,
-                configured: port.configured,
-                value: port.value,
-                schema: port.edges.length === 0 ? port.schema : undefined,
-                status: port.status,
-                type: port.schema.type,
-              };
-            });
+          const inputs: UserInputConfiguration[] = data.ports.map((port) => {
+            return {
+              name: port.name,
+              title: port.title,
+              secret: false,
+              configured: port.configured,
+              value: port.value,
+              schema: port.edges.length === 0 ? port.schema : undefined,
+              status: port.status,
+              type: port.schema.type,
+            };
+          });
 
           return html` <h1>
               <button
