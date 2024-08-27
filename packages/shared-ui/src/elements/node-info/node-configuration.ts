@@ -438,6 +438,11 @@ export class NodeConfigurationInfo extends LitElement {
             return isSchema ? -1 : portA.name > portB.name ? 1 : -1;
           });
 
+          // For some reason, the task does not re-render the component when
+          // it completes for discrete nodes (like fetch or runJavascript).
+          // TODO: Figure out why this is necessary.
+          this.requestUpdate();
+
           return {
             type: "node",
             node,
