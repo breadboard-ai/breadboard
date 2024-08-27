@@ -10,7 +10,7 @@ import type {
   NodeMetadata,
 } from "@google-labs/breadboard-schema/graph.js";
 import type { JSONSchema4 } from "json-schema";
-import type { Value } from "../../index.js";
+import { anyOf, unsafeSchema, unsafeType, type Value } from "../../index.js";
 import {
   InputPort,
   isOutputPortReference,
@@ -25,7 +25,11 @@ import type {
   SerializableOutputPort,
   SerializableOutputPortReference,
 } from "../common/serializable.js";
-import { toJSONSchema, type JsonSerializable } from "../type-system/type.js";
+import {
+  toJSONSchema,
+  type BreadboardType,
+  type JsonSerializable,
+} from "../type-system/type.js";
 import {
   isSpecialInput,
   type GenericSpecialInput,
@@ -84,7 +88,14 @@ export function board<const T extends BoardInit>({
 > {
   const flatInputs = flattenInputs(inputs as any);
   const flatOutputs = flattenOutputs(outputs as any);
-  const defImpl = new BoardDefinitionImpl(flatInputs, flatOutputs);
+  const newInputs = normalizeBoardInputs(inputs);
+  const newOutputs = normalizeBoardOutputs(outputs);
+  const defImpl = new BoardDefinitionImpl(
+    flatInputs,
+    flatOutputs,
+    newInputs,
+    newOutputs
+  );
   const definition = Object.assign(defImpl.instantiate.bind(defImpl), {
     id,
     inputs: flatInputs,
@@ -105,6 +116,48 @@ export function board<const T extends BoardInit>({
   // that we want to return a function that also has data attached.
   defImpl.definition = definition;
   return definition;
+}
+
+/**
+ * Normalize the 3 allowed forms for board `inputs` to just 1.
+ */
+function normalizeBoardInputs(inputs: BoardInit["inputs"]): InputNode[] {
+  if (Array.isArray(inputs)) {
+    return inputs;
+  }
+  if (isInputNode(inputs)) {
+    return [inputs];
+  }
+  return [inputNode(inputs)];
+}
+
+/**
+ * Normalize the 3 allowed forms for board `outputs` to just 1.
+ */
+function normalizeBoardOutputs(outputs: BoardInit["outputs"]): OutputNode[] {
+  if (Array.isArray(outputs)) {
+    return outputs;
+  }
+  if (isOutputNode(outputs)) {
+    return [outputs];
+  }
+  return [outputNode(outputs)];
+}
+
+function isInputNode(value: unknown): value is InputNode {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as InputNode)["isInputNode"] === true
+  );
+}
+
+function isOutputNode(value: unknown): value is OutputNode {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as OutputNode)["isOutputNode"] === true
+  );
 }
 
 function flattenInputs<IPORTS extends BoardInputShape>(
@@ -266,11 +319,20 @@ class BoardDefinitionImpl<
 > {
   readonly #inputs: IPORTS;
   readonly #outputs: OPORTS;
+  readonly #newInputs: InputNode[];
+  readonly #newOutputs: OutputNode[];
   definition?: OldBoardDefinition<IPORTS, OPORTS>;
 
-  constructor(inputs: IPORTS, outputs: OPORTS) {
+  constructor(
+    inputs: IPORTS,
+    outputs: OPORTS,
+    newInputs: InputNode[],
+    newOutputs: OutputNode[]
+  ) {
     this.#inputs = inputs;
     this.#outputs = outputs;
+    this.#newInputs = newInputs;
+    this.#newOutputs = newOutputs;
   }
 
   instantiate(
@@ -285,37 +347,128 @@ class BoardDefinitionImpl<
   }
 
   async describe(): Promise<NodeDescriberResult> {
-    const requiredInputs: string[] = [];
-    const requiredOutputs: string[] = [];
     return {
-      inputSchema: {
-        type: "object",
-        required: requiredInputs,
-        additionalProperties: false,
-        properties: Object.fromEntries(
-          Object.entries(this.#inputs).map(([name, input]) => {
-            const { schema, required } = describeInput(input);
-            if (required) {
-              requiredInputs.push(name);
-            }
-            return [name, schema as Schema];
-          })
-        ),
-      },
-      outputSchema: {
-        type: "object",
-        required: requiredOutputs,
-        additionalProperties: false,
-        properties: Object.fromEntries(
-          Object.entries(this.#outputs).map(([name, output]) => {
-            const { schema, required } = describeOutput(output);
-            if (required) {
-              requiredOutputs.push(name);
-            }
-            return [name, schema as Schema];
-          })
-        ),
-      },
+      inputSchema: this.#describeInputs(),
+      outputSchema: this.#describeOutputs(),
+    };
+  }
+
+  #describeInputs(): Schema {
+    const groups: Record<string, GenericSpecialInput[]> = {};
+    for (const inputNode of this.#newInputs) {
+      for (const [name, value] of Object.entries(
+        // TODO(aomarks) Should not need this cast.
+        inputNode as object as Record<string, GenericSpecialInput>
+      )) {
+        if (name === "$id" || name === "$metadata") {
+          continue;
+        }
+        let group = groups[name];
+        if (group === undefined) {
+          group = [];
+          groups[name] = group;
+        }
+        group.push(value);
+      }
+    }
+
+    const properties: Record<string, Schema> = {};
+    const required: string[] = [];
+    const numInputs = this.#newInputs.length;
+    for (const [name, values] of Object.entries(groups)) {
+      const schemasAndRequireds = values.map((value) => describeInput(value));
+      const schemas = schemasAndRequireds.map(({ schema }) => schema);
+      const requireds = schemasAndRequireds
+        .map(({ required }) => required)
+        .filter((value) => value);
+      if (requireds.length === numInputs) {
+        required.push(name);
+      }
+      const uniqueSchemas = new Set(
+        // TODO(aomarks) This is not an ideal way to compare schemas.
+        schemas.map((schema) => JSON.stringify(schema))
+      );
+      if (uniqueSchemas.size === 1) {
+        properties[name] = schemas[0] as Schema;
+      } else {
+        properties[name] = toJSONSchema(
+          anyOf(
+            ...(values.map((value) => value.type) as [
+              BreadboardType,
+              BreadboardType,
+            ])
+          )
+        ) as Schema;
+      }
+    }
+
+    return {
+      type: "object",
+      properties,
+      required,
+      additionalProperties: false,
+    };
+  }
+
+  #describeOutputs(): Schema {
+    const groups: Record<string, Array<Value | Output>> = {};
+    for (const outputNode of this.#newOutputs) {
+      for (const [name, value] of Object.entries(
+        // TODO(aomarks) Should not need this cast.
+        outputNode as object as Record<string, Value | Output>
+      )) {
+        if (name === "$id" || name === "$metadata") {
+          continue;
+        }
+        let group = groups[name];
+        if (group === undefined) {
+          group = [];
+          groups[name] = group;
+        }
+        group.push(value);
+      }
+    }
+
+    const properties: Record<string, Schema> = {};
+    const required: string[] = [];
+    const numOutputs = this.#newOutputs.length;
+    for (const [name, values] of Object.entries(groups)) {
+      const schemasAndRequireds = values.map((value) =>
+        describeOutput(
+          // TODO(aomarks) Should not need this cast.
+          value as any
+        )
+      );
+      const schemas = schemasAndRequireds.map(({ schema }) => schema);
+      const requireds = schemasAndRequireds
+        .map(({ required }) => required)
+        .filter((value) => value);
+      if (requireds.length === numOutputs) {
+        required.push(name);
+      }
+      const uniqueSchemas = new Set(
+        // TODO(aomarks) This is not an ideal way to compare schemas.
+        schemas.map((schema) => JSON.stringify(schema))
+      );
+      if (uniqueSchemas.size === 1) {
+        properties[name] = schemas[0] as Schema;
+      } else {
+        properties[name] = toJSONSchema(
+          anyOf(
+            ...(schemas.map((schema) => unsafeType(schema)) as object[] as [
+              BreadboardType,
+              BreadboardType,
+            ])
+          )
+        ) as Schema;
+      }
+    }
+
+    return {
+      type: "object",
+      properties,
+      required,
+      additionalProperties: false,
     };
   }
 }
@@ -448,9 +601,9 @@ export function describeInput(
 export function describeOutput(
   output:
     | SerializableOutputPortReference
-    | Output<JsonSerializable>
-    | Input<JsonSerializable>
-    | InputWithDefault<JsonSerializable>
+    | Output<JsonSerializable | undefined>
+    | Input<JsonSerializable | undefined>
+    | InputWithDefault<JsonSerializable | undefined>
 ): {
   schema: JSONSchema4;
   required: boolean;

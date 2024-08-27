@@ -8,7 +8,7 @@
 
 import { defineNodeType, input, output } from "@breadboard-ai/build";
 import { test } from "node:test";
-import { board } from "../internal/board/board.js";
+import { board, inputNode, outputNode } from "../internal/board/board.js";
 import assert from "node:assert/strict";
 
 const inStr = input();
@@ -251,6 +251,57 @@ test("describe board", async () => {
           description: "outStr description",
         },
       },
+    },
+  });
+});
+
+test("polymorphic describe", async () => {
+  const str = input();
+  const num = input({ type: "number" });
+  const bool = input({ type: "boolean" });
+  const testBoard = board({
+    inputs: [
+      inputNode({ foo: str, bar: num }, { id: "in1" }),
+      inputNode({ foo: str, bar: bool, baz: num }),
+    ],
+    outputs: [
+      outputNode({ foo: num, bar: bool }, { id: "out1" }),
+      outputNode({ foo: num, bar: str, baz: bool }),
+    ],
+  });
+  const description = await testBoard.describe();
+  assert.deepEqual(description, {
+    inputSchema: {
+      type: "object",
+      properties: {
+        foo: {
+          type: "string",
+        },
+        bar: {
+          type: ["number", "boolean"],
+        },
+        baz: {
+          type: "number",
+        },
+      },
+      required: ["foo", "bar"],
+      additionalProperties: false,
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        foo: {
+          type: "number",
+        },
+        bar: {
+          type: ["boolean", "string"],
+        },
+        baz: {
+          type: "boolean",
+        },
+      },
+      required: ["foo", "bar"],
+      additionalProperties: false,
     },
   });
 });
