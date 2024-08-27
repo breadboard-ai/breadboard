@@ -79,8 +79,8 @@
   ],
   "graphs": {
     "subgraph-0": {
-      "title": "Gemini Pro Generator",
-      "description": "The text generator board powered by the Gemini Pro model",
+      "title": "Gemini Generator",
+      "description": "Generates text using the Gemini API.",
       "version": "0.1.0",
       "metadata": {
         "help": {
