@@ -115,7 +115,6 @@ export type RunBoardStateStore = {
 };
 
 export type BoardServerStore = {
-  getBoardServerCorsConfig(): Promise<BoardServerCorsConfig | undefined>
   getServerInfo(): Promise<ServerInfo | undefined>
   createUser(username: string, apiKey: string): Promise<CreateUserResult>
   list(userKey: string | null): Promise<BoardListEntry[]>

@@ -66,15 +66,6 @@ export class FirestoreStorageProvider implements RunBoardStateStore, BoardServer
       return state;
     }
   
-    async getBoardServerCorsConfig(): Promise<BoardServerCorsConfig | undefined> {
-      const data = await this.#database
-        .collection("configuration")
-        .doc("board-server-cors")
-        .get();
-      const config = data.data() as BoardServerCorsConfig;
-      return config;
-    }
-  
     async getServerInfo(): Promise<ServerInfo | undefined> {
       const data = await this.#database
         .collection("configuration")

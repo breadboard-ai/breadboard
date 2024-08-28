@@ -90,26 +90,6 @@ export class SQLiteStorageProvider implements RunBoardStateStore, BoardServerSto
       return state;
     }
   
-    async getBoardServerCorsConfig(): Promise<BoardServerCorsConfig | undefined> {
-      const stmt = this.db.prepare(`
-        SELECT value FROM configuration
-        WHERE key = ?
-      `);
-  
-      const row: any = stmt.get('board-server-cors');
-      if (!row) {
-        return undefined;
-      }
-  
-      try {
-        const config: BoardServerCorsConfig = JSON.parse(row.value);
-        return config;
-      } catch (error) {
-        console.error('Error parsing configuration:', error);
-        return undefined;
-      }
-    }
-  
     async getServerInfo(): Promise<ServerInfo | undefined> {
       const stmt = this.db.prepare(`
         SELECT value FROM configuration
