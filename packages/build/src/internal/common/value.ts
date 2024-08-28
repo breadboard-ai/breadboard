@@ -11,6 +11,7 @@ import {
   type InputWithDefault,
 } from "../board/input.js";
 import { isLoopback, type Loopback } from "../board/loopback.js";
+import { isStarInputs, type StarInputs } from "../board/star-inputs.js";
 import { anyOf } from "../type-system/any-of.js";
 import {
   type BreadboardType,
@@ -49,7 +50,7 @@ export type Value<
  * Given a Breadboard {@link Value}, determine its JSON Schema type.
  */
 export function extractTypeFromValue(
-  value: Value<JsonSerializable>
+  value: Value<JsonSerializable> | StarInputs
 ): BreadboardType {
   if (typeof value === "string") {
     return "string";
@@ -80,6 +81,9 @@ export function extractTypeFromValue(
         ...BreadboardType[],
       ])
     );
+  }
+  if (isStarInputs(value)) {
+    return value.type;
   }
   return "unknown";
 }

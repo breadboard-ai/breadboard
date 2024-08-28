@@ -13,6 +13,7 @@ import {
   input,
   loopback,
   serialize,
+  starInputs,
 } from "@breadboard-ai/build";
 import test from "ava";
 import { code } from "@google-labs/core-kit";
@@ -294,5 +295,82 @@ test("exotic inputs", (t) => {
       return { out: "foo" };
     }
   );
+  t.pass();
+});
+
+test("can pass star ports with *", (t) => {
+  const nums = starInputs({ type: "number" });
+  const foo = input();
+  const sum = code(
+    { "*": nums, foo },
+    { sum: "number" },
+    ({
+      // $ExpectType string
+      foo,
+      // $ExpectType { [x: string]: number; }
+      ...nums
+    }) => ({
+      sum:
+        Object.values(nums).reduce((prev, cur) => prev + cur, 0) + Number(foo),
+    })
+  ).outputs.sum;
+  const bgl = serialize(
+    board({ inputs: { foo, "*": nums }, outputs: { sum } })
+  );
+  t.deepEqual(bgl, {
+    edges: [
+      { from: "input-0", to: "runJavascript-0", out: "*", in: "*" },
+      { from: "input-0", to: "runJavascript-0", out: "foo", in: "foo" },
+      { from: "runJavascript-0", to: "output-0", out: "sum", in: "sum" },
+    ],
+    nodes: [
+      {
+        id: "input-0",
+        type: "input",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: { foo: { type: "string" } },
+            required: ["foo"],
+            additionalProperties: { type: "number" },
+          },
+        },
+      },
+      {
+        id: "output-0",
+        type: "output",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: { sum: { type: "number" } },
+            required: ["sum"],
+          },
+        },
+      },
+      {
+        id: "runJavascript-0",
+        type: "runJavascript",
+        configuration: {
+          code:
+            `const run = ({ \n    // $` +
+            `ExpectType string\n    foo, \n    // $` +
+            `ExpectType { [x: string]: number; }\n    ...nums }) => ({\n        sum: Object.values(nums).reduce((prev, cur) => prev + cur, 0) + Number(foo),\n    });`,
+          inputSchema: {
+            type: "object",
+            properties: {
+              foo: { type: "string" },
+            },
+            additionalProperties: { type: "number" },
+          },
+          name: "run",
+          outputSchema: {
+            type: "object",
+            properties: { sum: { type: "number" } },
+          },
+          raw: true,
+        },
+      },
+    ],
+  });
   t.pass();
 });

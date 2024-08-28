@@ -20,6 +20,7 @@ import type {
 import runJavascript from "./run-javascript.js";
 import type { Convergence } from "@breadboard-ai/build/internal/board/converge.js";
 import type { Loopback } from "@breadboard-ai/build/internal/board/loopback.js";
+import { StarInputs } from "@breadboard-ai/build/internal/board/star-inputs.js";
 
 /**
  * The `code` function creates a {@link runJavascript} Breadboard node in a
@@ -39,7 +40,10 @@ import type { Loopback } from "@breadboard-ai/build/internal/board/loopback.js";
  * ```
  */
 export function code<
-  I extends Record<string, Value<JsonSerializable>>,
+  I extends Record<
+    string,
+    Value<JsonSerializable> | StarInputs<JsonSerializable>
+  >,
   O extends Record<string, BreadboardType | CodeOutputConfig>,
 >(
   inputs: I,
@@ -91,12 +95,21 @@ export function code<
       type: "object",
       properties: Object.fromEntries(
         Object.entries(inputs)
-          .filter(([name]) => name !== "$id" && name !== "$metadata")
+          .filter(
+            ([name]) => name !== "$id" && name !== "$metadata" && name !== "*"
+          )
           .map(([name, value]) => [
             name,
             toJSONSchema(extractTypeFromValue(value)),
           ])
       ),
+      ...(inputs["*"] !== undefined
+        ? {
+            additionalProperties: toJSONSchema(
+              extractTypeFromValue(inputs["*"])
+            ),
+          }
+        : {}),
     },
     outputSchema: {
       type: "object",
@@ -146,7 +159,9 @@ export interface CodeOutputConfig {
   optional?: true;
 }
 
-type CodeNodeInputs<I extends Record<string, Value<JsonSerializable>>> = {
+type CodeNodeInputs<
+  I extends Record<string, Value<JsonSerializable> | StarInputs>,
+> = {
   [K in keyof I]: I[K] extends Value<infer T extends JsonSerializable>
     ? T
     : never;
@@ -165,15 +180,15 @@ type ConvertOutput<T extends BreadboardType | CodeOutputConfig> =
       : never;
 
 type StrictCodeFunctionParams<
-  I extends Record<string, Value<JsonSerializable>>,
+  I extends Record<string, Value<JsonSerializable> | StarInputs>,
 > = {
-  [K in keyof I]: I[K] extends
+  [K in keyof I as K extends "*" ? never : K]: I[K] extends
     | Convergence<infer T>
     | Loopback<infer T>
     | Value<infer T>
     ? T
     : never;
-};
+} & (I["*"] extends StarInputs<infer X> ? { [K: string]: X } : object);
 
 type ConvertBreadboardTypes<
   T extends Record<string, BreadboardType | CodeOutputConfig>,
@@ -207,3 +222,6 @@ const serializeFunction = (
   }
   return [code, name];
 };
+
+// eslint-disable-next-line @typescript-eslint/ban-types
+type x = { foo: string } & {};
