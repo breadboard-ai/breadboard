@@ -93,7 +93,3 @@ export const asInfo = (path: string) => {
   }
   return { userStore: userStore.slice(1), boardName };
 };
-
-export type BoardServerCorsConfig = {
-  allow: string[];
-};

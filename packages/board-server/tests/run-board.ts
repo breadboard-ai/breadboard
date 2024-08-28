@@ -20,8 +20,7 @@ import manyOutputsBoard from "./boards/many-outputs.bgl.json" with { type: "json
 import invokeWithBubblingInput from "./boards/invoke-board-with-bubbling-input.bgl.json" with { type: "json" };
 import type { RemoteMessage } from "@google-labs/breadboard/remote";
 import type { RunDiagnosticsLevel } from "@google-labs/breadboard/harness";
-import type { CreateBoardResult, CreateUserResult, RunBoardStateStore } from "../src/server/types.js";
-import type { BoardServerCorsConfig, ServerInfo, BoardListEntry, GetUserStoreResult, OperationResult } from "../src/server/store.js";
+import type { RunBoardStateStore } from "../src/server/types.js";
 
 const mockSecretsKit: Kit = {
   url: import.meta.url,

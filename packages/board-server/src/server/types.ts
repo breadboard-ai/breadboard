@@ -13,7 +13,7 @@ import type {
 import type { RunDiagnosticsLevel } from "@google-labs/breadboard/harness";
 import type { RemoteMessageWriter } from "@google-labs/breadboard/remote";
 import type { IncomingMessage, ServerResponse } from "http";
-import type { BoardListEntry, BoardServerCorsConfig, GetUserStoreResult, OperationResult, ServerInfo } from "./store.js";
+import type { BoardListEntry, GetUserStoreResult, OperationResult, ServerInfo } from "./store.js";
 
 export type GeneralRequestType = "list" | "create";
 
