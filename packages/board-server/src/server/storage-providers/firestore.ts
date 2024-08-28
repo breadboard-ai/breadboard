@@ -1,6 +1,6 @@
 import { Firestore } from "@google-cloud/firestore";
 import { type ReanimationState, type GraphDescriptor, blankLLMContent } from "@google-labs/breadboard";
-import { EXPIRATION_TIME_MS, type BoardServerCorsConfig, type ServerInfo, type GetUserStoreResult, type BoardListEntry, asPath, type OperationResult, asInfo, sanitize, INVITE_EXPIRATION_TIME_MS } from "../store.js";
+import { EXPIRATION_TIME_MS, type ServerInfo, type GetUserStoreResult, type BoardListEntry, asPath, type OperationResult, asInfo, sanitize, INVITE_EXPIRATION_TIME_MS } from "../store.js";
 import type { BoardServerStore, CreateInviteResult, CreateUserResult, ListInviteResult, RunBoardStateStore } from "../types.js";
 
 
@@ -64,15 +64,6 @@ export class FirestoreStorageProvider implements RunBoardStateStore, BoardServer
         return undefined;
       }
       return state;
-    }
-  
-    async getBoardServerCorsConfig(): Promise<BoardServerCorsConfig | undefined> {
-      const data = await this.#database
-        .collection("configuration")
-        .doc("board-server-cors")
-        .get();
-      const config = data.data() as BoardServerCorsConfig;
-      return config;
     }
   
     async getServerInfo(): Promise<ServerInfo | undefined> {

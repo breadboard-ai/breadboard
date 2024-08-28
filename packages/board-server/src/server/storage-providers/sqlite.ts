@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 import type { CreateInviteResult, CreateUserResult, ListInviteResult, RunBoardStateStore, BoardServerStore } from "../types.js";
-import type { BoardListEntry, BoardServerCorsConfig, GetUserStoreResult, OperationResult, ServerInfo } from "../store.js";
+import type { BoardListEntry, GetUserStoreResult, OperationResult, ServerInfo } from "../store.js";
 import { asInfo, asPath, EXPIRATION_TIME_MS, INVITE_EXPIRATION_TIME_MS, sanitize } from "../store.js";
 import type { GraphDescriptor, ReanimationState } from "@google-labs/breadboard";
 import { v4 as uuidv4 } from 'uuid';
@@ -88,26 +88,6 @@ export class SQLiteStorageProvider implements RunBoardStateStore, BoardServerSto
       }
   
       return state;
-    }
-  
-    async getBoardServerCorsConfig(): Promise<BoardServerCorsConfig | undefined> {
-      const stmt = this.db.prepare(`
-        SELECT value FROM configuration
-        WHERE key = ?
-      `);
-  
-      const row: any = stmt.get('board-server-cors');
-      if (!row) {
-        return undefined;
-      }
-  
-      try {
-        const config: BoardServerCorsConfig = JSON.parse(row.value);
-        return config;
-      } catch (error) {
-        console.error('Error parsing configuration:', error);
-        return undefined;
-      }
     }
   
     async getServerInfo(): Promise<ServerInfo | undefined> {
