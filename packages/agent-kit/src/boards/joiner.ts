@@ -5,61 +5,44 @@
  */
 
 import {
-  NewNodeFactory,
-  NewNodeValue,
-  base,
+  annotate,
+  array,
   board,
-} from "@google-labs/breadboard";
-import { combineContexts } from "../context.js";
+  input,
+  output,
+  starInputs,
+} from "@breadboard-ai/build";
+import { code } from "@google-labs/core-kit";
+import { combineContextsFunction, contextType } from "../context.js";
 
-export type JoinerType = NewNodeFactory<
-  {
-    context?: NewNodeValue;
-  },
-  {
-    context: NewNodeValue;
-  }
->;
+const merge = input({
+  title: "Merge Contexts",
+  description: "Merge the last items of all incoming conversation into one.",
+  type: annotate("boolean", { behavior: ["config"] }),
+  default: false,
+});
 
-export default await board(({ merge }) => {
-  merge
-    .isBoolean()
-    .behavior("config")
-    .title("Merge Contexts")
-    .optional()
-    .default("false")
-    .description("Merge the last items of all incoming conversation into one.");
+const contexts = starInputs({ type: contextType });
 
-  const input = base.input({
-    $metadata: { title: "Input", description: "Getting all the data" },
-  });
+const merged = code(
+  { merge, "*": contexts },
+  { context: array(contextType) },
+  combineContextsFunction
+);
 
-  const contextCombiner = combineContexts({
-    $metadata: {
-      title: "Combine Context",
-      description: "Combining context into one",
-    },
-    ...input,
-    merge,
-  });
+const context = output(merged.outputs.context, { title: "Context out" });
 
-  const output = base.output({
-    $metadata: { title: "Output", description: "Returning combined values" },
-    context: contextCombiner.context
-      .isArray()
-      .title("Context out")
-      .behavior("llm-content"),
-  });
-  return output;
-}).serialize({
+export default board({
   title: "Joiner",
+  description:
+    "Joins two or more worker contexts into one. Great for combining results of multiple workers.",
+  version: "0.0.1",
   metadata: {
     icon: "merge-type",
     help: {
       url: "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#joiner",
     },
   },
-  description:
-    "Joins two or more worker contexts into one. Great for combining results of multiple workers.",
-  version: "0.0.1",
+  inputs: { merge, "*": contexts },
+  outputs: { context },
 });

@@ -7,7 +7,11 @@
 import { GraphToKitAdapter, KitBuilder } from "@google-labs/breadboard/kits";
 
 import kit from "./kit.js";
-import { addKit } from "@google-labs/breadboard";
+import {
+  addKit,
+  type NewNodeFactory,
+  type NewNodeValue,
+} from "@google-labs/breadboard";
 import { WorkerType } from "./boards/worker.js";
 import { RepeaterType } from "./boards/repeater.js";
 import { StructuredWorkerType } from "./boards/structured-worker.js";
@@ -15,7 +19,6 @@ import { HumanType } from "./boards/human.js";
 import { ToolWorkerType } from "./boards/tool-worker.js";
 import { SpecialistType } from "./boards/specialist.js";
 import { LooperType } from "./boards/looper.js";
-import { JoinerType } from "./boards/joiner.js";
 
 // TODO: Replace with the actual URL.
 const KIT_BASE_URL =
@@ -83,7 +86,14 @@ export type AgentKitType = {
   /**
    * Combine multiple context into one.
    */
-  joiner: JoinerType;
+  joiner: NewNodeFactory<
+    {
+      context?: NewNodeValue;
+    },
+    {
+      context: NewNodeValue;
+    }
+  >;
 };
 
 export default AgentKit;
