@@ -12,6 +12,7 @@ export { loopback } from "./internal/board/loopback.js";
 export { optionalEdge } from "./internal/board/optional.js";
 export { output } from "./internal/board/output.js";
 export { serialize } from "./internal/board/serialize.js";
+export { starInputs } from "./internal/board/star-inputs.js";
 export { unsafeCast } from "./internal/board/unsafe-cast.js";
 export {
   // TODO() Not quite sure about exporting and/or the name of

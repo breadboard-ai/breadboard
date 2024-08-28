@@ -10,7 +10,7 @@ import type {
   NodeMetadata,
 } from "@google-labs/breadboard-schema/graph.js";
 import type { JSONSchema4 } from "json-schema";
-import { anyOf, unsafeSchema, unsafeType, type Value } from "../../index.js";
+import { anyOf, unsafeType, type Value } from "../../index.js";
 import {
   InputPort,
   isOutputPortReference,
@@ -46,6 +46,7 @@ import type {
   FlattenUnion,
   RemoveReadonly,
 } from "../common/type-util.js";
+import type { StarInputs } from "./star-inputs.js";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -678,7 +679,10 @@ export interface BoardInit {
   metadata?: GraphMetadata;
 }
 
-type AnonymousInputNodeShorthand = Record<string, GenericSpecialInput>;
+type AnonymousInputNodeShorthand = Record<
+  string,
+  GenericSpecialInput | StarInputs
+>;
 
 type AnonymousOutputNodeShorthand = Record<string, Value | Output | undefined>;
 
@@ -744,12 +748,16 @@ export type SimplifyBoardInitOutputs<T extends BoardInit["outputs"]> =
  * in the case of `InputWithDefault`. This is because when there is a default,
  * then it is optional from the caller's perspective.
  */
-type ExtractInputTypes<T extends Record<string, GenericSpecialInput>> = {
+type ExtractInputTypes<
+  T extends Record<string, GenericSpecialInput | StarInputs>,
+> = {
   [K in keyof T]: T[K] extends Input<infer X>
     ? X
     : T[K] extends InputWithDefault<infer X>
       ? X | undefined
-      : never;
+      : T[K] extends StarInputs<infer X>
+        ? X
+        : never;
 };
 
 /**
@@ -773,10 +781,12 @@ type ExtractOutputTypes<T extends Record<string, Value | Output | undefined>> =
     // prettier-ignore-end
   };
 
-export function inputNode<T extends Record<string, GenericSpecialInput>>(
+export function inputNode<
+  T extends Record<string, GenericSpecialInput | StarInputs>,
+>(
   inputs: T,
   metadata?: NodeMetadata & { id?: string }
-): InputNode<ExtractInputTypes<T>> {
+): InputNode<Expand<ExtractInputTypes<T>>> {
   const result: Record<string, unknown> = { ...inputs };
   if (metadata) {
     if (metadata.id) {

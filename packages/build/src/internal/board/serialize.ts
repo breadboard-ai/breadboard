@@ -43,6 +43,7 @@ import {
 import { isLoopback } from "./loopback.js";
 import { OptionalVersionOf, isOptional } from "./optional.js";
 import { isSpecialOutput } from "./output.js";
+import { isStarInputs, type StarInputs } from "./star-inputs.js";
 
 /**
  * Serialize a Breadboard board to Breadboard Graph Language (BGL) so that it
@@ -66,6 +67,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
   const inputObjectsToInputNodeInfo = new Map<
     | Input<JsonSerializable | undefined>
     | InputWithDefault<JsonSerializable | undefined>
+    | StarInputs
     | SerializableInputPort,
     { nodeId: string; portName: string }
   >();
@@ -73,6 +75,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
   const unconnectedInputs = new Set<
     | Input<JsonSerializable | undefined>
     | InputWithDefault<JsonSerializable | undefined>
+    | StarInputs
     | SerializableInputPort
   >();
 
@@ -151,24 +154,27 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
         }
         inputNodes.set(inputNodeId, inputNode);
       }
-      inputNode.configuration.schema.properties[mainInputName] = sortKeys(
-        schema,
-        [
-          "type",
-          "behavior",
-          "title",
-          "description",
-          "default",
-          "examples",
-          "anyOf",
-          "properties",
-          "items",
-          "required",
-          "additionalProperties",
-        ]
-      );
-      if (required) {
-        inputNode.configuration.schema.required.push(mainInputName);
+      const normalizedSchema = sortKeys(schema, [
+        "type",
+        "behavior",
+        "title",
+        "description",
+        "default",
+        "examples",
+        "anyOf",
+        "properties",
+        "items",
+        "required",
+        "additionalProperties",
+      ]);
+      if (mainInputName === "*") {
+        inputNode.configuration.schema.additionalProperties = normalizedSchema;
+      } else {
+        inputNode.configuration.schema.properties[mainInputName] =
+          normalizedSchema;
+        if (required) {
+          inputNode.configuration.schema.required.push(mainInputName);
+        }
       }
       if (isSpecialInput(input)) {
         magicInputResolutions.set(input, {
@@ -450,6 +456,24 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
             // case it would seem to mean that it's *only* possible for that value
             // to be provided externally (e.g. by asking the user at runtime), not
             // through a value wired into the board.
+            errors.push(
+              `${thisNodeId}:${portName} was wired to an input, ` +
+                `but that input was not provided to the board inputs.`
+            );
+          }
+        } else if (isStarInputs(value)) {
+          unconnectedInputs.delete(value);
+          const inputNodeInfo = inputObjectsToInputNodeInfo.get(value);
+          if (inputNodeInfo !== undefined) {
+            addEdge(
+              inputNodeInfo.nodeId,
+              inputNodeInfo.portName,
+              thisNodeId,
+              portName,
+              wasConstant,
+              wasOptional
+            );
+          } else {
             errors.push(
               `${thisNodeId}:${portName} was wired to an input, ` +
                 `but that input was not provided to the board inputs.`

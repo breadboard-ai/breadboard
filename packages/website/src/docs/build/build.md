@@ -400,3 +400,4 @@ export default board({
 - Optional
 - Kits
 - Casting
+- Star Inputs

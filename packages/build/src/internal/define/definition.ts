@@ -53,6 +53,7 @@ import { object } from "../type-system/object.js";
 import { normalizeBreadboardError } from "../common/error.js";
 import type { Convergence } from "../board/converge.js";
 import type { SerializableBoard } from "../common/serializable.js";
+import type { StarInputs } from "../board/star-inputs.js";
 
 export interface Definition<
   /* Static Inputs   */ SI extends { [K: string]: JsonSerializable },
@@ -473,6 +474,7 @@ type StrictInstantiateArgs<
     title?: string;
     description?: string;
   };
+  "*"?: StarInputs<DI>;
 } & {
   [K in keyof Omit<SI, OI | "$id" | "$metadata">]: IM[K extends keyof IM
     ? K
@@ -487,7 +489,7 @@ type StrictInstantiateArgs<
 } & {
   [K in keyof Omit<
     A,
-    keyof SI | "$id" | "$metadata"
+    keyof SI | "$id" | "$metadata" | "*"
   >]: DI extends JsonSerializable ? InstantiateArg<DI> : never;
 };
 
