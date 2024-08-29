@@ -10,7 +10,7 @@ env:
   EXECUTION_IMAGE: debian:bookworm-slim
   BOARD_SERVER_SQLITE_IMAGE_NAME: board-server-sqlite
   BOARD_SERVER_FIRESTORE_IMAGE_NAME: board-server-firestore
-  ALLOWED_ORIGINS: "*"
+  ALLOWED_ORIGINS: ""
 jobs:
   setup:
     name: Setup
