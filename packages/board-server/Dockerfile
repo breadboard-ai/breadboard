@@ -14,11 +14,15 @@ RUN npm run build
 
 # Production stage
 FROM node:20-slim
-WORKDIR /app
+
+ARG STORAGE_BACKEND
+ARG ALLOWED_ORIGINS=""
+
 ENV NODE_ENV=production
-ENV STORAGE_BACKEND="sqlite"
-ENV GOOGLE_CLOUD_PROJECT="n/a"
-ENV ALLOWED_ORIGINS=""
+ENV STORAGE_BACKEND="${STORAGE_BACKEND}"
+ENV ALLOWED_ORIGINS="${ALLOWED_ORIGINS}"
+
+WORKDIR /app
 
 # Copy necessary files from the build stage
 COPY --from=build /build/packages/board-server/dist ./dist
