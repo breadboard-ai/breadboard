@@ -16,6 +16,7 @@ import {
   Edge,
   GraphDescriptor,
   NodeDescriberContext,
+  NodeDescriberFunction,
   NodeDescriberResult,
   NodeIdentifier,
   NodeTypeIdentifier,
@@ -91,6 +92,17 @@ class Graph implements InspectableGraphWithStore {
     return this.#cache.nodes.byType(type);
   }
 
+  async #getDescriber(
+    type: NodeTypeIdentifier
+  ): Promise<NodeDescriberFunction | undefined> {
+    const { kits } = this.#options;
+    const handler = handlersFromKits(kits || [])[type];
+    if (!handler || !("describe" in handler) || !handler.describe) {
+      return undefined;
+    }
+    return handler.describe;
+  }
+
   async describeType(
     type: NodeTypeIdentifier,
     options: NodeTypeDescriberOptions = {}
@@ -105,12 +117,12 @@ class Graph implements InspectableGraphWithStore {
     }
 
     const { kits } = this.#options;
-    const handler = handlersFromKits(kits || [])[type];
+    const handler = await this.#getDescriber(type);
     const asWired = {
       inputSchema: edgesToSchema(EdgeType.In, options?.incoming),
       outputSchema: edgesToSchema(EdgeType.Out, options?.outgoing),
     } satisfies NodeDescriberResult;
-    if (!handler || !("describe" in handler) || !handler.describe) {
+    if (!handler) {
       return asWired;
     }
     const loader = this.#options.loader || createLoader();
@@ -145,7 +157,7 @@ class Graph implements InspectableGraphWithStore {
       context.base = this.#url;
     }
     try {
-      return handler.describe(
+      return handler(
         options?.inputs || undefined,
         asWired.inputSchema,
         asWired.outputSchema,
