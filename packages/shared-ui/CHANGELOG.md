@@ -1,5 +1,21 @@
 # @breadboard-ai/shared-ui
 
+## 1.16.1
+
+### Patch Changes
+
+- fa8a752: Fix a few nagging bugs in the Component Configuration view.
+- 125cf75: Fix bug relating to input events with Google Drive input widgets
+- Updated dependencies [bbcdd2d]
+- Updated dependencies [9ed58cf]
+- Updated dependencies [7f2ef33]
+- Updated dependencies [7d46a63]
+- Updated dependencies [bac2e35]
+- Updated dependencies [ec2fedd]
+  - @breadboard-ai/build@0.9.1
+  - @google-labs/breadboard@0.26.0
+  - @breadboard-ai/data-store@0.2.2
+
 ## 1.16.0
 
 ### Minor Changes

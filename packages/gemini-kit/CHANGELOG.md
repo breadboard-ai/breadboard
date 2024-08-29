@@ -1,5 +1,26 @@
 # @google-labs/gemini-kit
 
+## 0.7.0
+
+### Minor Changes
+
+- 13c27cb: Fully migrate to Build API
+- 3cb60e9: Remove gemini-vision. Use multi-modal instead.
+
+### Patch Changes
+
+- Updated dependencies [bbcdd2d]
+- Updated dependencies [9ed58cf]
+- Updated dependencies [7f2ef33]
+- Updated dependencies [85fb144]
+- Updated dependencies [7d46a63]
+- Updated dependencies [bac2e35]
+- Updated dependencies [ec2fedd]
+  - @breadboard-ai/build@0.9.1
+  - @google-labs/core-kit@0.14.1
+  - @google-labs/breadboard@0.26.0
+  - @google-labs/template-kit@0.3.9
+
 ## 0.6.0
 
 ### Minor Changes

@@ -1,5 +1,12 @@
 # @google-labs/breadboard-manifest
 
+## 0.4.3
+
+### Patch Changes
+
+- Updated dependencies [7d46a63]
+  - @google-labs/breadboard@0.26.0
+
 ## 0.4.2
 
 ### Patch Changes
