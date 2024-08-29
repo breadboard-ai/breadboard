@@ -47,6 +47,12 @@ More than likely, in either case you will want to specify the `ALLOWED_ORIGINS` 
 docker build --build-arg ALLOWED_ORIGINS="list of visual editor urls" ...`
 ```
 
+When building on Apple Silicon, use `platform` flag to specify the right platform:
+
+```sh
+docker build --platform linux/amd64 ...
+```
+
 To run the container:
 
 ```
