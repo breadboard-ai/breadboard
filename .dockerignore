@@ -1,3 +1,5 @@
 node_modules
+.wireit
+**/.wireit
 **/node_modules
 board-server.db
