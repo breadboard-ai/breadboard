@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.14.1
+
+### Patch Changes
+
+- 85fb144: Support passing \* StarInputs to code helper
+- Updated dependencies [bbcdd2d]
+- Updated dependencies [9ed58cf]
+- Updated dependencies [7f2ef33]
+- Updated dependencies [7d46a63]
+- Updated dependencies [bac2e35]
+- Updated dependencies [ec2fedd]
+  - @breadboard-ai/build@0.9.1
+  - @google-labs/breadboard@0.26.0
+
 ## 0.14.0
 
 ### Minor Changes

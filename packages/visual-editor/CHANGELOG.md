@@ -1,5 +1,46 @@
 # @google-labs/breadboard-web
 
+## 1.18.0
+
+### Minor Changes
+
+- 7d46a63: Teach Visual Editor to use board server's node proxy to run boards.
+
+### Patch Changes
+
+- 3b9229d: Teach Specialist to correctly label the tools array as config.
+- fa8a752: Fix a few nagging bugs in the Component Configuration view.
+- c1dc2a4: Deprecate bubbling `model` inputs.
+- 1a70e7d: Make Looper model switchable.
+- Updated dependencies [3b9229d]
+- Updated dependencies [bbcdd2d]
+- Updated dependencies [fa8a752]
+- Updated dependencies [9ed58cf]
+- Updated dependencies [13c27cb]
+- Updated dependencies [7f2ef33]
+- Updated dependencies [3cb60e9]
+- Updated dependencies [85fb144]
+- Updated dependencies [3cb60e9]
+- Updated dependencies [c1dc2a4]
+- Updated dependencies [7d46a63]
+- Updated dependencies [125cf75]
+- Updated dependencies [1a70e7d]
+- Updated dependencies [bac2e35]
+- Updated dependencies [ec2fedd]
+  - @google-labs/agent-kit@0.11.0
+  - @breadboard-ai/build@0.9.1
+  - @breadboard-ai/shared-ui@1.16.1
+  - @google-labs/gemini-kit@0.7.0
+  - @breadboard-ai/example-boards@0.3.1
+  - @google-labs/core-kit@0.14.1
+  - @google-labs/breadboard@0.26.0
+  - @breadboard-ai/data-store@0.2.2
+  - @google-labs/json-kit@0.3.7
+  - @breadboard-ai/manifest@0.4.3
+  - @google-labs/node-nursery-web@1.3.1
+  - @google-labs/palm-kit@0.1.3
+  - @google-labs/template-kit@0.3.9
+
 ## 1.17.0
 
 ### Minor Changes

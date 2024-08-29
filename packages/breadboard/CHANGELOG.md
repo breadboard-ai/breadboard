@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.26.0
+
+### Minor Changes
+
+- 7d46a63: Teach Visual Editor to use board server's node proxy to run boards.
+
 ## 0.25.0
 
 ### Minor Changes

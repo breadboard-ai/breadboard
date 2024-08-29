@@ -1,5 +1,27 @@
 # @google-labs/breadboard-website
 
+## 2.6.1
+
+### Patch Changes
+
+- Updated dependencies [3b9229d]
+- Updated dependencies [fa8a752]
+- Updated dependencies [13c27cb]
+- Updated dependencies [85fb144]
+- Updated dependencies [3cb60e9]
+- Updated dependencies [c1dc2a4]
+- Updated dependencies [7d46a63]
+- Updated dependencies [125cf75]
+- Updated dependencies [1a70e7d]
+  - @google-labs/agent-kit@0.11.0
+  - @breadboard-ai/shared-ui@1.16.1
+  - @google-labs/gemini-kit@0.7.0
+  - @google-labs/core-kit@0.14.1
+  - @google-labs/breadboard@0.26.0
+  - @google-labs/json-kit@0.3.7
+  - @google-labs/palm-kit@0.1.3
+  - @google-labs/template-kit@0.3.9
+
 ## 2.6.0
 
 ### Minor Changes
