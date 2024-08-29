@@ -6,8 +6,8 @@
 
 import { LitElement, css, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { InputPlugin } from "../../plugins/input-plugin.js";
 import { type InputEnterEvent } from "../../events/events.js";
+import { InputChangeEvent, InputPlugin } from "../../plugins/input-plugin.js";
 import "../connection/connection-input.js";
 import { loadDrivePicker } from "./google-apis.js";
 
@@ -134,6 +134,7 @@ export class GoogleDriveFileId extends LitElement {
         console.log(`Shared 1 Google Drive file with Breadboard`);
         if (result.docs.length > 0) {
           this.value = result.docs[0].id;
+          this.dispatchEvent(new InputChangeEvent(this.value));
         }
       }
     }
@@ -150,5 +151,6 @@ export class GoogleDriveFileId extends LitElement {
 
   #onQueryInput(event: { target: HTMLTextAreaElement }) {
     this.value = event.target.value;
+    this.dispatchEvent(new InputChangeEvent(this.value));
   }
 }
