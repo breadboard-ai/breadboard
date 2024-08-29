@@ -10,15 +10,15 @@ import { Task } from "@lit/task";
 import type { JSONSchema4 } from "json-schema";
 import { html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import {
+  type Environment,
+  environmentContext,
+} from "../../contexts/environment.js";
 import type {
   InputChangeEvent,
   InputPlugin,
   InputWidget,
 } from "../../plugins/input-plugin.js";
-import {
-  type Environment,
-  environmentContext,
-} from "../../contexts/environment.js";
 
 /**
  * An input widget which doesn't render anything directly, but instead matches
@@ -114,10 +114,7 @@ export class DelegatingInput
     // widget element via the #widget task, since we can assume it already knows
     // about the value it just dispatched an event for.
     this.#value = event.value;
-    if (!event.composed || !event.bubbles) {
-      // Our parent element won't receive the event unless we re-emit it.
-      this.dispatchEvent(event);
-    }
+    this.dispatchEvent(new Event("input"));
   };
 }
 
