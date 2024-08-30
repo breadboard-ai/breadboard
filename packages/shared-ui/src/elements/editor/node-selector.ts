@@ -358,6 +358,7 @@ export class NodeSelector extends LitElement {
                       .replace(/\W/, "-");
                     const id = nodeTypeInfo.id;
                     const description = nodeTypeInfo.metadata.description;
+                    const title = nodeTypeInfo.metadata.title || id;
                     return html`<li
                       class=${classMap({
                         [className]: true,
@@ -374,7 +375,7 @@ export class NodeSelector extends LitElement {
                         evt.dataTransfer.setData(DATA_TYPE, id);
                       }}
                     >
-                      <div class="node-id">${id}</div>
+                      <div class="node-id">${title}</div>
                       ${description
                         ? html`<div class="node-description">
                             ${description}
