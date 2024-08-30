@@ -28,6 +28,7 @@ type NodeMetaDetailsInfo = {
   type: "node";
   node: InspectableNode;
   metadata: NodeMetadata;
+  nodeTypeTitle: string;
   kitNodeHelp: NodeHandlerMetadata["help"] | null;
   kitNodeDescription: NodeHandlerMetadata["description"] | null;
 };
@@ -104,11 +105,13 @@ export class NodeMetaDetails extends LitElement {
 
       // Node is an InspectableNode.
       if (node) {
+        let nodeTypeTitle: string | null = node.descriptor.type;
         for (const kit of breadboardGraph.kits()) {
           for (const nodeType of kit.nodeTypes) {
             if (nodeType.type() === node.descriptor.type) {
               kitNodeDescription = nodeType.metadata().description || null;
               kitNodeHelp = nodeType.metadata().help || null;
+              nodeTypeTitle = nodeType.metadata().title || nodeType.type();
               break;
             }
           }
@@ -121,6 +124,7 @@ export class NodeMetaDetails extends LitElement {
           metadata,
           kitNodeDescription,
           kitNodeHelp,
+          nodeTypeTitle,
         } as NodeMetaDetailsInfo;
       } else {
         // Node is a CommentNode.
@@ -369,7 +373,7 @@ export class NodeMetaDetails extends LitElement {
               <div id="overview">
                 <h1 ${ref(this.#titleRef)}>
                   ${data.metadata.title ?? data.node.descriptor.id}
-                  (${data.node.descriptor.type})
+                  (${data.nodeTypeTitle})
                 </h1>
                 <p>${data.kitNodeDescription ?? html`No description`}</p>
                 ${data.kitNodeHelp

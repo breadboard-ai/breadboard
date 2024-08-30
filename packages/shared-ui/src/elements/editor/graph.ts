@@ -1141,7 +1141,8 @@ export class Graph extends PIXI.Container {
       const { id } = node.descriptor;
       let graphNode = this.#graphNodeById.get(id);
       if (!graphNode || !(graphNode instanceof GraphNode)) {
-        graphNode = new GraphNode(id, node.descriptor.type, node.title());
+        const type = node.type().metadata().title || node.descriptor.type;
+        graphNode = new GraphNode(id, type, node.title());
         graphNode.showNodeTypeDescriptions = this.showNodeTypeDescriptions;
 
         this.#graphNodeById.set(id, graphNode);
