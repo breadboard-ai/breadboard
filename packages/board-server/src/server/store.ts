@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SQLiteStorageProvider } from "./storage-providers/sqlite.js"
-import { FirestoreStorageProvider } from "./storage-providers/firestore.js"
+import { SQLiteStorageProvider } from "./storage-providers/sqlite.js";
+import { FirestoreStorageProvider } from "./storage-providers/firestore.js";
 
 export const EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 2; // 2 days
 export const INVITE_EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 4; // 4 days
@@ -18,14 +18,20 @@ export type OperationResult =
   | { success: true }
   | { success: false; error: string };
 
+// Use factories here, so that the providers are only instantiated
+// when chosen.
 const providers = {
-  "sqlite": new SQLiteStorageProvider(process.env['SQLITE_DB_PATH'] || 'board-server.db'),
-  "firestore": new FirestoreStorageProvider('board-server')
-}
+  sqlite: () =>
+    new SQLiteStorageProvider(
+      process.env["SQLITE_DB_PATH"] || "board-server.db"
+    ),
+  firestore: () => new FirestoreStorageProvider("board-server"),
+};
 
 export const getStore = () => {
-  const backend = process.env['STORAGE_BACKEND'];
-  return providers[backend === "sqlite" ? "sqlite" : "firestore"];
+  const backend = process.env["STORAGE_BACKEND"];
+  const provider = providers[backend === "sqlite" ? "sqlite" : "firestore"];
+  return provider();
 };
 
 const createAPIKey = async () => {
@@ -38,13 +44,13 @@ const createAPIKey = async () => {
 };
 
 export async function createAccount(username: string) {
-  const store = getStore()
+  const store = getStore();
 
   const key = await createAPIKey();
 
-  await store!.createUser(username, key)
+  await store!.createUser(username, key);
 
-  return { account: username, api_key: key }
+  return { account: username, api_key: key };
 }
 
 export type BoardListEntry = {
