@@ -13,47 +13,35 @@ import { NodeDescriberResult, NodeDescriberWires } from "../../../src/types.js";
 
 describe("getGraphHandler", () => {
   test("returns undefined for non-URL-like type", async () => {
-    const handler = await getGraphHandler(
-      "awesome-node-type",
-      new URL("https://example.com"),
-      {}
-    );
+    const handler = await getGraphHandler("awesome-node-type", {});
     ok(handler === undefined);
   });
 
   test("returns handler for URL-like type", async () => {
-    const handler = await getGraphHandler(
-      "https://example.com",
-      new URL("https://example.com"),
-      {
-        loader: {
-          async load(url: string) {
-            ok(url === "https://example.com");
-            return {
-              nodes: {},
-              edges: {},
-            } as GraphDescriptor;
-          },
+    const handler = await getGraphHandler("https://example.com", {
+      loader: {
+        async load(url: string) {
+          ok(url === "https://example.com");
+          return {
+            nodes: {},
+            edges: {},
+          } as GraphDescriptor;
         },
-      }
-    );
+      },
+    });
     ok(handler !== undefined);
     ok("invoke" in handler);
   });
 
   test("returns handler that can be invoked for URL-like type", async () => {
-    const handler = await getGraphHandler(
-      "https://example.com",
-      new URL("https://example.com"),
-      {
-        loader: {
-          async load(url: string) {
-            ok(url === "https://example.com");
-            return simple as GraphDescriptor;
-          },
+    const handler = await getGraphHandler("https://example.com", {
+      loader: {
+        async load(url: string) {
+          ok(url === "https://example.com");
+          return simple as GraphDescriptor;
         },
-      }
-    );
+      },
+    });
     ok(handler !== undefined);
     ok("invoke" in handler);
     const result = await handler.invoke({ text: "hello" }, {});
@@ -62,18 +50,14 @@ describe("getGraphHandler", () => {
   });
 
   test("returns handler with a describer for URL-like type", async () => {
-    const handler = await getGraphHandler(
-      "https://example.com",
-      new URL("https://example.com"),
-      {
-        loader: {
-          async load(url: string) {
-            ok(url === "https://example.com");
-            return simple as GraphDescriptor;
-          },
+    const handler = await getGraphHandler("https://example.com", {
+      loader: {
+        async load(url: string) {
+          ok(url === "https://example.com");
+          return simple as GraphDescriptor;
         },
-      }
-    );
+      },
+    });
     ok(handler !== undefined);
     ok("describe" in handler);
     const description = await handler.describe?.(

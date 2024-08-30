@@ -5,6 +5,7 @@
  */
 
 import { inspect } from "./inspector/index.js";
+import { SENTINEL_BASE_URL } from "./loader/loader.js";
 import { invokeGraph } from "./run/invoke-graph.js";
 import type {
   InputValues,
@@ -53,11 +54,43 @@ export const handlersFromKits = (kits: Kit[]): NodeHandlers => {
   }, {} as NodeHandlers);
 };
 
+/**
+ * The single entry point for getting a handler for a node type.
+ * The handler can be one of the two types:
+ * - A graph-based handler, where the `type` is actually a
+ *   URL-like string that points to a graph.
+ * - A kit-based handler, where the `type` is a string that
+ *   corresponds to a node type in a kit.
+ *
+ * The function throws an error if no handler is found for the
+ * given node type.
+ *
+ * @param type    -- The node type to get a handler for.
+ * @param context -- The context in which the handler is
+ *                   being requested.
+ * @returns       -- The handler for the node type.
+ */
+export async function getHandler(
+  type: NodeTypeIdentifier,
+  context: NodeHandlerContext
+): Promise<NodeHandler> {
+  const graphHandler = await getGraphHandler(type, context);
+  if (graphHandler) {
+    return graphHandler;
+  }
+  const handlers = handlersFromKits(context.kits ?? []);
+  const kitHandler = handlers[type];
+  if (!kitHandler) {
+    throw new Error(`No handler for node type "${type}"`);
+  }
+  return kitHandler;
+}
+
 export async function getGraphHandler(
   type: NodeTypeIdentifier,
-  base: URL,
   context: NodeHandlerContext
 ): Promise<NodeHandler | undefined> {
+  const { base = SENTINEL_BASE_URL } = context;
   const nodeTypeUrl = graphUrlLike(type) ? new URL(type, base) : undefined;
   if (!nodeTypeUrl) {
     return undefined;
