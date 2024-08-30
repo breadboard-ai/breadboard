@@ -14,22 +14,12 @@
   "type": "module",
   "scripts": {
     "prepack": "npm run build",
-    "dev": "wireit",
-    "dev:samples": "npm run samples --watch",
-    "samples": "wireit",
     "test": "wireit",
     "build": "wireit",
     "lint": "wireit",
     "generate-kit-manifest": "wireit"
   },
   "wireit": {
-    "dev": {
-      "command": "breadboard debug src/boards --watch",
-      "dependencies": [
-        "build",
-        "../breadboard-cli:build"
-      ]
-    },
     "generate-kit-manifest": {
       "command": "tsx src/generate-kit-manifest.ts",
       "dependencies": [
@@ -39,15 +29,8 @@
         "src/generate-kit-manifest.ts"
       ],
       "output": [
-        "agent.kit.json"
-      ]
-    },
-    "samples": {
-      "command": "breadboard debug src/samples --watch -n",
-      "service": true,
-      "dependencies": [
-        "build",
-        "../breadboard-cli:build"
+        "agent.kit.json",
+        "boards/*.bgl.json"
       ]
     },
     "build": {

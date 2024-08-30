@@ -24,6 +24,7 @@ const MANIFEST_NAME = "agent.kit.json";
 
 const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.join(MODULE_DIR, "..");
+const BOARDS_DIR = path.join(ROOT_DIR, "boards");
 const MANIFEST_PATH = path.join(ROOT_DIR, MANIFEST_NAME);
 
 const manifest: KitManifest = {
@@ -39,11 +40,23 @@ const manifest: KitManifest = {
     toolWorker,
     worker,
     looper,
-    joiner: serialize(joiner)
+    joiner: serialize(joiner),
   },
 };
 
 const generate = async () => {
+  // Write individual nodes to the file system
+  const nodes = Object.entries(manifest.nodes);
+  await Promise.all(
+    nodes.map(async ([name, node]) => {
+      if (node.metadata?.deprecated) return;
+      const nodePath = path.join(BOARDS_DIR, `${name}.bgl.json`);
+      const json = JSON.stringify(node, null, 2);
+      return writeFile(nodePath, json);
+    })
+  );
+
+  // Write the manifest to the file system
   const json = JSON.stringify(manifest, null, 2);
   return writeFile(MANIFEST_PATH, json);
 };
