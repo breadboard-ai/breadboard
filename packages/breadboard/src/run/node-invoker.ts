@@ -6,7 +6,7 @@
 
 import { createOutputProvider, RequestedInputsManager } from "../bubble.js";
 import { resolveBoardCapabilitiesInInputs } from "../capability.js";
-import { callHandler, handlersFromKits } from "../handler.js";
+import { callHandler, getGraphHandler, handlersFromKits } from "../handler.js";
 import { SENTINEL_BASE_URL } from "../loader/loader.js";
 import { RunResult } from "../run.js";
 import type {
@@ -19,17 +19,8 @@ import type {
   RunArguments,
   TraversalResult,
 } from "../types.js";
-import { invokeGraph } from "./invoke-graph.js";
 
 type ResultSupplier = (result: RunResult) => Promise<void>;
-
-const asURL = (value: string, base: URL): URL | undefined => {
-  try {
-    return new URL(value, base);
-  } catch (err) {
-    return undefined;
-  }
-};
 
 export class NodeInvoker {
   #requestedInputs: RequestedInputsManager;
@@ -53,37 +44,18 @@ export class NodeInvoker {
   }
 
   async #getHandler(type: NodeTypeIdentifier, base: URL): Promise<NodeHandler> {
-    const nodeTypeUrl = asURL(type, base);
-    if (nodeTypeUrl) {
+    const graphHandler = await getGraphHandler(type, base, this.#context);
+    if (graphHandler) {
       // This is a URL, pointing to a board that represents the node type.
-      // We need to load the board and return the handler.
-      const { loader } = this.#context;
-      if (!loader) {
-        throw new Error(`Cannot load node type "${type}" without a loader.`);
-      }
-      const graph = await loader.load(type, this.#context);
-      if (!graph) {
-        throw new Error(`Cannot load node type for type "${type}"`);
-      }
-      return async (inputs, context) => {
-        const base = context.board?.url && new URL(context.board?.url);
-        const invocationContext = base
-          ? {
-              ...context,
-              base,
-            }
-          : { ...context };
-
-        return await invokeGraph(graph, inputs, invocationContext);
-      };
-    } else {
-      // This is an ordinary node type, we can look up the handler directly.
-      const handler = this.#handlers[type];
-      if (!handler) {
-        throw new Error(`No handler for node type "${type}"`);
-      }
-      return handler;
+      // The handler invokes the board.
+      return graphHandler;
     }
+    // This is an ordinary node type, we can look up the handler directly.
+    const handler = this.#handlers[type];
+    if (!handler) {
+      throw new Error(`No handler for node type "${type}"`);
+    }
+    return handler;
   }
 
   async invokeNode(result: TraversalResult, invocationPath: number[]) {
