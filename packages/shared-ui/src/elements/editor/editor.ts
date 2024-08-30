@@ -7,18 +7,16 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
-  inspect,
   GraphDescriptor,
-  Kit,
   NodeConfiguration,
   InspectableNodePorts,
-  GraphLoader,
   SubGraphs,
   NodeDescriptor,
   NodeValue,
   Edge,
   EditSpec,
   CommentNode,
+  InspectableGraph,
 } from "@google-labs/breadboard";
 import {
   EdgeChangeEvent,
@@ -83,7 +81,7 @@ type EditedNode = {
 @customElement("bb-editor")
 export class Editor extends LitElement {
   @property()
-  graph: GraphDescriptor | null = null;
+  graph: InspectableGraph | null = null;
 
   @property()
   subGraphId: string | null = null;
@@ -102,12 +100,6 @@ export class Editor extends LitElement {
 
   @property()
   mode = EditorMode.ADVANCED;
-
-  @property()
-  kits: Kit[] = [];
-
-  @property()
-  loader: GraphLoader | null = null;
 
   @property()
   highlightedNodeId: string | null = null;
@@ -407,15 +399,11 @@ export class Editor extends LitElement {
     this.#graphRenderer.readOnly = this.readOnly;
     this.#graphRenderer.highlightInvalidWires = this.highlightInvalidWires;
 
-    let breadboardGraph = inspect(this.graph, {
-      kits: this.kits,
-      loader: this.loader || undefined,
-    });
-
+    let selectedGraph = this.graph;
     if (this.subGraphId) {
-      const subgraphs = breadboardGraph.graphs();
+      const subgraphs = selectedGraph.graphs();
       if (subgraphs[this.subGraphId]) {
-        breadboardGraph = subgraphs[this.subGraphId];
+        selectedGraph = subgraphs[this.subGraphId];
       } else {
         console.warn(`Unable to locate subgraph by name: ${this.subGraphId}`);
       }
@@ -429,7 +417,7 @@ export class Editor extends LitElement {
 
     const ports = new Map<string, InspectableNodePorts>();
     const graphVersion = this.#graphVersion;
-    for (const node of breadboardGraph.nodes()) {
+    for (const node of selectedGraph.nodes()) {
       ports.set(
         node.descriptor.id,
         filterPortsByMode(await node.ports(), this.mode)
@@ -444,19 +432,17 @@ export class Editor extends LitElement {
       return this.#graphRenderer;
     }
 
+    const url = this.graph.raw().url || "";
+
     // Attempt to update the graph if it already exists.
-    const updated = this.#graphRenderer.updateGraphByUrl(
-      this.graph.url || "",
-      this.subGraphId,
-      {
-        showNodeTypeDescriptions: this.showNodeTypeDescriptions,
-        collapseNodesByDefault: this.collapseNodesByDefault,
-        ports: ports,
-        edges: breadboardGraph.edges(),
-        nodes: breadboardGraph.nodes(),
-        metadata: breadboardGraph.metadata(),
-      }
-    );
+    const updated = this.#graphRenderer.updateGraphByUrl(url, this.subGraphId, {
+      showNodeTypeDescriptions: this.showNodeTypeDescriptions,
+      collapseNodesByDefault: this.collapseNodesByDefault,
+      ports: ports,
+      edges: selectedGraph.edges(),
+      nodes: selectedGraph.nodes(),
+      metadata: selectedGraph.metadata(),
+    });
 
     if (updated) {
       return this.#graphRenderer;
@@ -473,14 +459,14 @@ export class Editor extends LitElement {
     }
 
     this.#graphRenderer.createGraph({
-      url: this.graph.url || "",
+      url,
       subGraphId: this.subGraphId,
       showNodeTypeDescriptions: this.showNodeTypeDescriptions,
       collapseNodesByDefault: this.collapseNodesByDefault,
       ports: ports,
-      edges: breadboardGraph.edges(),
-      nodes: breadboardGraph.nodes(),
-      metadata: breadboardGraph.metadata() || {},
+      edges: selectedGraph.edges(),
+      nodes: selectedGraph.nodes(),
+      metadata: selectedGraph.metadata() || {},
       visible: false,
     });
 
@@ -628,9 +614,9 @@ export class Editor extends LitElement {
           return;
         }
 
-        let breadboardGraph = this.graph;
-        if (this.subGraphId && this.graph.graphs) {
-          const subgraphs = this.graph.graphs;
+        let breadboardGraph = this.graph.raw();
+        if (this.subGraphId && breadboardGraph.graphs) {
+          const subgraphs = breadboardGraph.graphs;
           if (subgraphs[this.subGraphId]) {
             breadboardGraph = subgraphs[this.subGraphId];
           } else {
@@ -749,9 +735,9 @@ export class Editor extends LitElement {
           });
 
           // Find the current graph.
-          let breadboardGraph = this.graph;
-          if (this.subGraphId && this.graph.graphs) {
-            const subgraphs = this.graph.graphs;
+          let breadboardGraph = this.graph.raw();
+          if (this.subGraphId && breadboardGraph.graphs) {
+            const subgraphs = breadboardGraph.graphs;
             if (subgraphs[this.subGraphId]) {
               breadboardGraph = subgraphs[this.subGraphId];
             } else {
@@ -979,10 +965,8 @@ export class Editor extends LitElement {
       moveEvt.nodes.map((node) => {
         switch (node.type) {
           case "node": {
-            const graphNode = this.graph?.nodes.find(
-              (graphNode) => graphNode.id === node.id
-            );
-            const metadata = (graphNode?.metadata || {}) as Record<
+            const graphNode = this.graph?.nodeById(node.id);
+            const metadata = (graphNode?.metadata() || {}) as Record<
               string,
               unknown
             >;
@@ -1006,10 +990,7 @@ export class Editor extends LitElement {
               throw new Error("No active graph - unable to update");
             }
 
-            this.graph.metadata ??= {};
-            this.graph.metadata.comments ??= [];
-
-            const metadata = this.graph.metadata;
+            const metadata = this.graph.metadata() || {};
             const commentNode = metadata.comments?.find(
               (commentNode) => commentNode.id === node.id
             );
@@ -1124,9 +1105,9 @@ export class Editor extends LitElement {
     }
 
     // Remove comments.
-    let graph = this.graph;
-    if (this.subGraphId && this.graph?.graphs) {
-      graph = this.graph?.graphs[this.subGraphId];
+    let graph = this.graph?.raw();
+    if (this.subGraphId && graph?.graphs) {
+      graph = graph.graphs[this.subGraphId];
     }
     if (graph && graph.metadata) {
       graph.metadata.comments ??= [];
@@ -1255,8 +1236,10 @@ export class Editor extends LitElement {
         this.invertZoomScrollDirection;
     }
 
-    const subGraphs: SubGraphs | null =
-      this.graph && this.graph.graphs ? this.graph.graphs : null;
+    const rawGraph = this.graph?.raw();
+    const subGraphs: SubGraphs | null = rawGraph?.graphs
+      ? rawGraph.graphs
+      : null;
 
     let showSubGraphSelector = true;
     if (
@@ -1384,7 +1367,6 @@ export class Editor extends LitElement {
                       ${ref(this.#nodeSelectorRef)}
                       inert
                       .graph=${this.graph}
-                      .kits=${this.kits}
                       .showExperimentalComponents=${this
                         .showExperimentalComponents}
                       @bbkitnodechosen=${(evt: KitNodeChosenEvent) => {

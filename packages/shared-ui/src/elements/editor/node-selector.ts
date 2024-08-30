@@ -4,12 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  GraphDescriptor,
-  Kit,
-  NodeHandlerMetadata,
-  inspect,
-} from "@google-labs/breadboard";
+import { InspectableGraph, NodeHandlerMetadata } from "@google-labs/breadboard";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
@@ -22,10 +17,7 @@ const DATA_TYPE = "text/plain";
 @customElement("bb-node-selector")
 export class NodeSelector extends LitElement {
   @property()
-  graph: GraphDescriptor | null = null;
-
-  @property()
-  kits: Kit[] = [];
+  graph: InspectableGraph | null = null;
 
   @state()
   filter: string | null = null;
@@ -261,15 +253,11 @@ export class NodeSelector extends LitElement {
   }
 
   render() {
-    if (!this.kits || !this.graph) {
+    if (!this.graph) {
       return nothing;
     }
 
-    const graph = inspect(this.graph, {
-      kits: this.kits,
-    });
-
-    const kits = graph.kits() || [];
+    const kits = this.graph.kits() || [];
     const kitList = new Map<
       string,
       { id: string; metadata: NodeHandlerMetadata }[]
