@@ -5,10 +5,11 @@
  */
 
 import test, { describe } from "node:test";
-import { getGraphHandler } from "../../src/handler.js";
+import { getGraphHandler } from "../../../src/handler.js";
 import { deepStrictEqual, ok } from "node:assert";
 import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
-import simple from "../bgl/simple.bgl.json" with { type: "json" };
+import simple from "../../bgl/simple.bgl.json" with { type: "json" };
+import { NodeDescriberResult, NodeDescriberWires } from "../../../src/types.js";
 
 describe("getGraphHandler", () => {
   test("returns undefined for non-URL-like type", async () => {
@@ -58,5 +59,51 @@ describe("getGraphHandler", () => {
     const result = await handler.invoke({ text: "hello" }, {});
     ok(result !== undefined);
     deepStrictEqual(result, { text: "hello" });
+  });
+
+  test("returns handler with a describer for URL-like type", async () => {
+    const handler = await getGraphHandler(
+      "https://example.com",
+      new URL("https://example.com"),
+      {
+        loader: {
+          async load(url: string) {
+            ok(url === "https://example.com");
+            return simple as GraphDescriptor;
+          },
+        },
+      }
+    );
+    ok(handler !== undefined);
+    ok("describe" in handler);
+    const description = await handler.describe?.(
+      {},
+      {},
+      {},
+      {
+        kits: [],
+        outerGraph: simple,
+        wires: {} as NodeDescriberWires,
+      }
+    );
+    ok(description !== undefined);
+    deepStrictEqual(description, {
+      inputSchema: {
+        additionalProperties: false,
+        properties: {
+          text: { type: "string", examples: [], title: "Text" },
+        },
+        required: [],
+        type: "object",
+      },
+      outputSchema: {
+        additionalProperties: false,
+        properties: {
+          text: { type: "string", examples: [], title: "Text" },
+        },
+        required: [],
+        type: "object",
+      },
+    } as NodeDescriberResult);
   });
 });

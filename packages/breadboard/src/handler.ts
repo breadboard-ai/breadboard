@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { inspect } from "./inspector/index.js";
 import { invokeGraph } from "./run/invoke-graph.js";
 import type {
   InputValues,
@@ -80,6 +81,13 @@ export async function getGraphHandler(
         : { ...context };
 
       return await invokeGraph(graph, inputs, invocationContext);
+    },
+    describe: async (inputs, _inputSchema, _outputSchema, context) => {
+      if (!context) {
+        return { inputSchema: {}, outputSchema: {} };
+      }
+      const inspectableGraph = inspect(graph, context);
+      return inspectableGraph.describe(inputs);
     },
   } as NodeHandlerObject;
 }
