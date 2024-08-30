@@ -84,23 +84,15 @@ export class NodeMetaDetails extends LitElement {
       let type: "node" | "comment" = "node";
       let node: InspectableNode | CommentNode | undefined =
         graph.nodeById(nodeId);
-      let kitNodeDescription: NodeHandlerMetadata["description"] | null = null;
-      let kitNodeHelp: NodeHandlerMetadata["help"] | null = null;
       let metadata: NodeMetadata | null = null;
 
       // Node is an InspectableNode.
       if (node) {
-        let nodeTypeTitle: string | null = node.descriptor.type;
-        for (const kit of graph.kits()) {
-          for (const nodeType of kit.nodeTypes) {
-            if (nodeType.type() === node.descriptor.type) {
-              kitNodeDescription = nodeType.metadata().description || null;
-              kitNodeHelp = nodeType.metadata().help || null;
-              nodeTypeTitle = nodeType.metadata().title || nodeType.type();
-              break;
-            }
-          }
-        }
+        const nodeType = (node as InspectableNode).type();
+        const kitNodeDescription = nodeType.metadata().description || null;
+        const kitNodeHelp = nodeType.metadata().help || null;
+        const nodeTypeTitle = nodeType.metadata().title || nodeType.type();
+
         metadata = node.metadata();
 
         return {
