@@ -62,7 +62,7 @@ export const serveProxyAPI = async (
   req: IncomingMessage,
   res: ServerResponse
 ) => {
-  const url = new URL(req.url || "", "http://localhost");
+  const url = new URL(req.url || "", serverConfig.hostname);
   const isProxy = url.pathname === "/proxy" || url.pathname === "/proxy/";
   if (!isProxy) {
     return false;

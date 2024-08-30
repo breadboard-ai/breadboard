@@ -208,7 +208,6 @@ export class HTTPClientTransport<Request, Response>
       ...options,
       method: "POST",
       credentials: "include",
-      headers: { "Content-Type": "application/json" },
     };
     this.#fetch = this.#options.fetch ?? globalThis.fetch.bind(globalThis);
   }
