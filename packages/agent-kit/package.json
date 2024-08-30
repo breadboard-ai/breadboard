@@ -19,7 +19,8 @@
     "samples": "wireit",
     "test": "wireit",
     "build": "wireit",
-    "lint": "wireit"
+    "lint": "wireit",
+    "generate-kit-manifest": "wireit"
   },
   "wireit": {
     "dev": {

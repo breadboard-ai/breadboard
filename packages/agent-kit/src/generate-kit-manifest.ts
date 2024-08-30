@@ -18,6 +18,7 @@ import { writeFile } from "fs/promises";
 import specialist from "./boards/specialist.js";
 import looper from "./boards/looper.js";
 import joiner from "./boards/joiner.js";
+import { serialize } from "@breadboard-ai/build";
 
 const MANIFEST_NAME = "agent.kit.json";
 
@@ -38,7 +39,7 @@ const manifest: KitManifest = {
     toolWorker,
     worker,
     looper,
-    joiner,
+    joiner: serialize(joiner)
   },
 };
 
