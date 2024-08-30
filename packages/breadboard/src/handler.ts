@@ -89,7 +89,7 @@ export async function getHandler(
 export async function getGraphHandler(
   type: NodeTypeIdentifier,
   context: NodeHandlerContext
-): Promise<NodeHandler | undefined> {
+): Promise<NodeHandlerObject | undefined> {
   const { base = SENTINEL_BASE_URL } = context;
   const nodeTypeUrl = graphUrlLike(type) ? new URL(type, base) : undefined;
   if (!nodeTypeUrl) {

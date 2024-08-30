@@ -4,13 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { getGraphHandler } from "../handler.js";
 import {
-  Kit,
   NodeHandlers,
   NodeHandler,
   NodeDescriberResult,
   NodeHandlerMetadata,
+  NodeDescriptor,
+  NodeHandlerContext,
+  NodeTypeIdentifier,
 } from "../types.js";
+import { graphUrlLike } from "../utils/graph-url-like.js";
 import { collectPortsForType } from "./ports.js";
 import { describeInput, describeOutput } from "./schemas.js";
 import {
@@ -47,9 +51,38 @@ const createBuiltInKit = (): InspectableKit => {
   };
 };
 
-export const collectKits = (kits: Kit[]): InspectableKit[] => {
+const createCustomTypesKit = (
+  nodes: NodeDescriptor[],
+  context: NodeHandlerContext
+): InspectableKit[] => {
+  const urlLikeNodeTypes = nodes
+    .filter((node) => graphUrlLike(node.type))
+    .map((node) => {
+      return new CustomNodeType(node.type, context);
+    });
+  if (urlLikeNodeTypes.length === 0) {
+    return [];
+  }
+  return [
+    {
+      descriptor: {
+        title: "Custom Types",
+        description: "Custom nodes found in the graph",
+        url: "",
+      },
+      nodeTypes: urlLikeNodeTypes,
+    },
+  ];
+};
+
+export const collectKits = (
+  context: NodeHandlerContext,
+  nodes: NodeDescriptor[]
+): InspectableKit[] => {
+  const { kits = [] } = context;
   return [
     createBuiltInKit(),
+    ...createCustomTypesKit(nodes, context),
     ...kits.map((kit) => {
       const descriptor = {
         title: kit.title,
@@ -65,13 +98,45 @@ export const collectKits = (kits: Kit[]): InspectableKit[] => {
   ];
 };
 
+export const createGraphNodeType = (
+  type: NodeTypeIdentifier,
+  context: NodeHandlerContext
+): InspectableNodeType => {
+  return new CustomNodeType(type, context);
+};
+
 const collectNodeTypes = (handlers: NodeHandlers): InspectableNodeType[] => {
   return Object.entries(handlers)
     .sort()
-    .map(([type, handler]) => new NodeType(type, handler));
+    .map(([type, handler]) => new KitNodeType(type, handler));
 };
 
-class NodeType implements InspectableNodeType {
+const portsFromHandler = async (
+  type: NodeTypeIdentifier,
+  handler: NodeHandler | undefined
+): Promise<InspectableNodePorts> => {
+  if (!handler || typeof handler === "function" || !handler.describe) {
+    return emptyPorts();
+  }
+  try {
+    const described = await handler.describe();
+    return {
+      inputs: {
+        fixed: described.inputSchema.additionalProperties === false,
+        ports: collectPortsForType(described.inputSchema, "input"),
+      },
+      outputs: {
+        fixed: described.outputSchema.additionalProperties === false,
+        ports: collectPortsForType(described.outputSchema, "output"),
+      },
+    };
+  } catch (e) {
+    console.warn(`Error describing node type ${type}:`, e);
+    return emptyPorts();
+  }
+};
+
+class KitNodeType implements InspectableNodeType {
   #type: string;
   #handler: NodeHandler;
 
@@ -89,29 +154,11 @@ class NodeType implements InspectableNodeType {
   }
 
   async ports(): Promise<InspectableNodePorts> {
-    if (typeof this.#handler === "function" || !this.#handler.describe) {
-      return emptyPorts();
-    }
-    try {
-      const described = await this.#handler.describe();
-      return {
-        inputs: {
-          fixed: described.inputSchema.additionalProperties === false,
-          ports: collectPortsForType(described.inputSchema, "input"),
-        },
-        outputs: {
-          fixed: described.outputSchema.additionalProperties === false,
-          ports: collectPortsForType(described.outputSchema, "output"),
-        },
-      };
-    } catch (e) {
-      console.warn(`Error describing node type ${this.#type}:`, e);
-      return emptyPorts();
-    }
+    return portsFromHandler(this.#type, this.#handler);
   }
 }
 
-class BuiltInNodeType extends NodeType {
+class BuiltInNodeType extends KitNodeType {
   constructor(
     type: string,
     describer: (options: NodeTypeDescriberOptions) => NodeDescriberResult,
@@ -137,3 +184,33 @@ export const emptyPorts = (): InspectableNodePorts => ({
     fixed: false,
   },
 });
+
+class CustomNodeType implements InspectableNodeType {
+  #type: string;
+  #context: NodeHandlerContext;
+
+  constructor(type: string, context: NodeHandlerContext) {
+    this.#type = type;
+    this.#context = context;
+  }
+
+  #getDescription() {
+    const url = new URL(this.#type);
+    return url.pathname.split("/").pop();
+  }
+
+  metadata(): NodeHandlerMetadata {
+    return {
+      title: this.#getDescription(),
+    };
+  }
+
+  type() {
+    return this.#type;
+  }
+
+  async ports(): Promise<InspectableNodePorts> {
+    const handler = await getGraphHandler(this.#type, this.#context);
+    return portsFromHandler(this.#type, handler);
+  }
+}

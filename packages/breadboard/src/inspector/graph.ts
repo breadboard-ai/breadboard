@@ -24,7 +24,7 @@ import {
   Schema,
 } from "../types.js";
 import { EdgeCache } from "./edge.js";
-import { collectKits } from "./kits.js";
+import { collectKits, createGraphNodeType } from "./kits.js";
 import { NodeCache } from "./node.js";
 import {
   EdgeType,
@@ -44,6 +44,7 @@ import {
   InspectableNodeType,
 } from "./types.js";
 import { invokeGraph } from "../run/invoke-graph.js";
+import { graphUrlLike } from "../utils/graph-url-like.js";
 
 export const inspectableGraph = (
   graph: GraphDescriptor,
@@ -196,7 +197,10 @@ class Graph implements InspectableGraphWithStore {
   }
 
   kits(): InspectableKit[] {
-    return (this.#kits ??= collectKits(this.#options.kits || []));
+    return (this.#kits ??= collectKits(
+      { kits: this.#options.kits, loader: this.#options.loader },
+      this.#graph.nodes
+    ));
   }
 
   typeForNode(id: NodeIdentifier): InspectableNodeType | undefined {
@@ -212,7 +216,14 @@ class Graph implements InspectableGraphWithStore {
     this.#nodeTypes ??= new Map(
       kits.flatMap((kit) => kit.nodeTypes.map((type) => [type.type(), type]))
     );
-    return this.#nodeTypes.get(id);
+    const knownNodeType = this.#nodeTypes.get(id);
+    if (knownNodeType) {
+      return knownNodeType;
+    }
+    if (!graphUrlLike(id)) {
+      return undefined;
+    }
+    return createGraphNodeType(id, this.#options);
   }
 
   incomingForNode(id: NodeIdentifier): InspectableEdge[] {
