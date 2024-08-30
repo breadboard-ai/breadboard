@@ -185,24 +185,37 @@ export const emptyPorts = (): InspectableNodePorts => ({
   },
 });
 
+function shortUrlTitle(url: string) {
+  const urlObj = new URL(url);
+  const path = urlObj.pathname.split("/").pop();
+  return path || urlObj.host;
+}
+
 class CustomNodeType implements InspectableNodeType {
   #type: string;
   #context: NodeHandlerContext;
+  #metadata: NodeHandlerMetadata;
+  #handlerPromise: Promise<NodeHandler | undefined>;
 
   constructor(type: string, context: NodeHandlerContext) {
     this.#type = type;
     this.#context = context;
+    this.#metadata = {
+      title: shortUrlTitle(type),
+    };
+    this.#handlerPromise = this.#update();
   }
 
-  #getDescription() {
-    const url = new URL(this.#type);
-    return url.pathname.split("/").pop();
+  async #update(): Promise<NodeHandler | undefined> {
+    const handler = await getGraphHandler(this.#type, this.#context);
+    if (handler && "metadata" in handler && handler.metadata) {
+      // this.#metadata = handler.metadata;
+    }
+    return handler;
   }
 
   metadata(): NodeHandlerMetadata {
-    return {
-      title: this.#getDescription(),
-    };
+    return this.#metadata;
   }
 
   type() {
@@ -210,7 +223,7 @@ class CustomNodeType implements InspectableNodeType {
   }
 
   async ports(): Promise<InspectableNodePorts> {
-    const handler = await getGraphHandler(this.#type, this.#context);
+    const handler = await this.#handlerPromise;
     return portsFromHandler(this.#type, handler);
   }
 }

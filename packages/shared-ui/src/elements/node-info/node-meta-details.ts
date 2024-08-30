@@ -410,11 +410,7 @@ export class NodeMetaDetails extends LitElement {
                   name="id"
                   .value=${data.node.descriptor.id}
                 />
-                <input
-                  type="hidden"
-                  name="type"
-                  .value=${data.node.descriptor.type}
-                />
+                <input type="hidden" name="type" .value=${data.nodeTypeTitle} />
                 <label>Title</label>
                 <input
                   name="title"
