@@ -9,7 +9,7 @@ import {
   InputValues,
   StartLabel,
 } from "@google-labs/breadboard-schema/graph.js";
-import { handlersFromKits } from "../handler.js";
+import { getHandler } from "../handler.js";
 import { createLoader } from "../loader/index.js";
 import { combineSchemas, removeProperty } from "../schema.js";
 import {
@@ -18,6 +18,7 @@ import {
   NodeDescriberContext,
   NodeDescriberFunction,
   NodeDescriberResult,
+  NodeHandler,
   NodeIdentifier,
   NodeTypeIdentifier,
   Schema,
@@ -96,7 +97,16 @@ class Graph implements InspectableGraphWithStore {
     type: NodeTypeIdentifier
   ): Promise<NodeDescriberFunction | undefined> {
     const { kits } = this.#options;
-    const handler = handlersFromKits(kits || [])[type];
+    const loader = this.#options.loader || createLoader();
+    let handler: NodeHandler | undefined;
+    try {
+      handler = await getHandler(type, {
+        kits,
+        loader,
+      });
+    } catch (e) {
+      console.warn(`Error getting describer for node type ${type}`, e);
+    }
     if (!handler || !("describe" in handler) || !handler.describe) {
       return undefined;
     }
