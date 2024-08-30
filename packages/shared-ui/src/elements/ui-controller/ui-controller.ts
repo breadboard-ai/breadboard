@@ -502,9 +502,7 @@ export class UI extends LitElement {
           .showNodeTypeDescriptions=${showNodeTypeDescriptions}
           .selectedNodeIds=${this.selectedNodeIds}
           .subGraphId=${this.subGraphId}
-          .graph=${this.graph}
-          .kits=${this.kits}
-          .loader=${this.loader}
+          .graph=${graph}
         ></bb-node-meta-details>`;
       }
     );

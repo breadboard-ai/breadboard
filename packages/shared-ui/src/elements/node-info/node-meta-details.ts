@@ -9,12 +9,9 @@ import { NodeMetadataUpdateEvent } from "../../events/events.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { Task } from "@lit/task";
 import {
-  GraphDescriptor,
-  GraphLoader,
+  InspectableGraph,
   InspectableNode,
-  Kit,
   NodeHandlerMetadata,
-  inspect,
 } from "@google-labs/breadboard";
 import {
   CommentNode,
@@ -42,13 +39,7 @@ type CommentMetaDetailsInfo = {
 @customElement("bb-node-meta-details")
 export class NodeMetaDetails extends LitElement {
   @property()
-  graph: GraphDescriptor | null = null;
-
-  @property()
-  kits: Kit[] = [];
-
-  @property()
-  loader: GraphLoader | null = null;
+  graph: InspectableGraph | null = null;
 
   @property()
   selectedNodeIds: string[] = [];
@@ -81,16 +72,10 @@ export class NodeMetaDetails extends LitElement {
         throw new Error("Unable to load node");
       }
 
-      const descriptor = graph;
-      let breadboardGraph = inspect(descriptor, {
-        kits: this.kits,
-        loader: this.loader || undefined,
-      });
-
       if (subGraphId && typeof subGraphId === "string") {
-        const subgraphs = breadboardGraph.graphs();
+        const subgraphs = graph.graphs();
         if (subgraphs[subGraphId]) {
-          breadboardGraph = subgraphs[subGraphId];
+          graph = subgraphs[subGraphId];
         } else {
           console.warn(`Unable to locate subgraph by name: ${this.subGraphId}`);
         }
@@ -98,7 +83,7 @@ export class NodeMetaDetails extends LitElement {
 
       let type: "node" | "comment" = "node";
       let node: InspectableNode | CommentNode | undefined =
-        breadboardGraph.nodeById(nodeId);
+        graph.nodeById(nodeId);
       let kitNodeDescription: NodeHandlerMetadata["description"] | null = null;
       let kitNodeHelp: NodeHandlerMetadata["help"] | null = null;
       let metadata: NodeMetadata | null = null;
@@ -106,7 +91,7 @@ export class NodeMetaDetails extends LitElement {
       // Node is an InspectableNode.
       if (node) {
         let nodeTypeTitle: string | null = node.descriptor.type;
-        for (const kit of breadboardGraph.kits()) {
+        for (const kit of graph.kits()) {
           for (const nodeType of kit.nodeTypes) {
             if (nodeType.type() === node.descriptor.type) {
               kitNodeDescription = nodeType.metadata().description || null;
@@ -128,7 +113,7 @@ export class NodeMetaDetails extends LitElement {
         } as NodeMetaDetailsInfo;
       } else {
         // Node is a CommentNode.
-        node = breadboardGraph
+        node = graph
           .metadata()
           ?.comments?.find((comment) => comment.id === nodeId);
 
