@@ -306,6 +306,10 @@ export type NodeHandlerMetadata = {
    */
   icon?: string;
   /**
+   * The URL of the node type.
+   */
+  url?: string;
+  /**
    * Whether or not the node is deprecated.
    */
   deprecated?: boolean;

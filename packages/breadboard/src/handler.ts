@@ -86,6 +86,19 @@ export async function getHandler(
   throw new Error(`No handler for node type "${type}"`);
 }
 
+/**
+ * A utility function to filter out empty (null or undefined) values from
+ * an object.
+ *
+ * @param obj -- The object to filter.
+ * @returns -- The object with empty values removed.
+ */
+function filterEmptyValues<T extends Record<string, unknown>>(obj: T): T {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, value]) => !!value)
+  ) as T;
+}
+
 export async function getGraphHandler(
   type: NodeTypeIdentifier,
   context: NodeHandlerContext
@@ -122,5 +135,12 @@ export async function getGraphHandler(
       const inspectableGraph = inspect(graph, context);
       return inspectableGraph.describe(inputs);
     },
+    metadata: filterEmptyValues({
+      title: graph.title,
+      description: graph.description,
+      url: graph.url,
+      icon: graph.metadata?.icon,
+      help: graph.metadata?.help,
+    }),
   } as NodeHandlerObject;
 }
