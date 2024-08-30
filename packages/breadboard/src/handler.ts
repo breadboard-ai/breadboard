@@ -74,16 +74,16 @@ export async function getHandler(
   type: NodeTypeIdentifier,
   context: NodeHandlerContext
 ): Promise<NodeHandler> {
+  const handlers = handlersFromKits(context.kits ?? []);
+  const kitHandler = handlers[type];
+  if (kitHandler) {
+    return kitHandler;
+  }
   const graphHandler = await getGraphHandler(type, context);
   if (graphHandler) {
     return graphHandler;
   }
-  const handlers = handlersFromKits(context.kits ?? []);
-  const kitHandler = handlers[type];
-  if (!kitHandler) {
-    throw new Error(`No handler for node type "${type}"`);
-  }
-  return kitHandler;
+  throw new Error(`No handler for node type "${type}"`);
 }
 
 export async function getGraphHandler(
