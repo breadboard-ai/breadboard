@@ -21,6 +21,14 @@ export STORAGE_BACKEND=sqlite
 export SQLITE_DB_PATH=/path/to/board-server.db
 ```
 
+## Initialize the database for local SQLite development
+
+In `sqlite` mode, the board server uses Flyway for database migrations. To initialize the database using docker, run the following command:
+
+```
+npm run migrate
+```
+
 ## Building with docker
 
 The board server can be run as a self-contained docker image.
