@@ -467,9 +467,14 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
           if (inputNodeInfo !== undefined) {
             addEdge(
               inputNodeInfo.nodeId,
-              inputNodeInfo.portName,
+              "*",
               thisNodeId,
-              portName,
+              // TODO(aomarks) Kind of weird. If the input port is also "*",
+              // then the runtime seems to just stop. Only "" works. However, if
+              // you paste some BGL with "" into the Visual Editor it errors,
+              // and the docs say that star ports "can only be wired to other
+              // star ports".
+              "",
               wasConstant,
               wasOptional
             );

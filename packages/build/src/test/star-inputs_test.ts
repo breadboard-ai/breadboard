@@ -104,7 +104,7 @@ test("can serialize when passed to discrete component", () => {
   console.log(JSON.stringify(bgl));
   assert.deepEqual(bgl, {
     edges: [
-      { from: "input-0", to: "lineCombiner-0", out: "*", in: "*" },
+      { from: "input-0", to: "lineCombiner-0", out: "*", in: "" },
       { from: "lineCombiner-0", to: "output-0", out: "joined", in: "joined" },
     ],
     nodes: [
