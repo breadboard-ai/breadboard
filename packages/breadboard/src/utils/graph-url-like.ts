@@ -22,11 +22,14 @@ export function graphUrlLike(s: string): boolean {
       return false;
     }
     return true;
-  }
-  try {
-    new URL(s);
-  } catch (e) {
+  } else if (s.includes(":")) {
+    try {
+      new URL(s);
+    } catch (e) {
+      return false;
+    }
+    return true;
+  } else {
     return false;
   }
-  return true;
 }
