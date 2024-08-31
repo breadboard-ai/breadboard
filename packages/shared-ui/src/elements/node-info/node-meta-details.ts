@@ -26,6 +26,7 @@ type NodeMetaDetailsInfo = {
   node: InspectableNode;
   metadata: NodeMetadata;
   nodeTypeTitle: string;
+  nodeTypeURL: string | null;
   kitNodeHelp: NodeHandlerMetadata["help"] | null;
   kitNodeDescription: NodeHandlerMetadata["description"] | null;
 };
@@ -93,6 +94,7 @@ export class NodeMetaDetails extends LitElement {
         const kitNodeDescription = typeMetadata.description || null;
         const kitNodeHelp = typeMetadata.help || null;
         const nodeTypeTitle = typeMetadata.title || nodeType.type();
+        const nodeTypeURL = typeMetadata.url || null;
 
         metadata = node.metadata();
 
@@ -103,6 +105,7 @@ export class NodeMetaDetails extends LitElement {
           kitNodeDescription,
           kitNodeHelp,
           nodeTypeTitle,
+          nodeTypeURL,
         } as NodeMetaDetailsInfo;
       } else {
         // Node is a CommentNode.
@@ -434,6 +437,16 @@ export class NodeMetaDetails extends LitElement {
                   placeholder="Enter the description for this node"
                   .value=${data.metadata.description || ""}
                 ></textarea>
+
+                ${data.nodeTypeURL
+                  ? html` <label for="url">URL</label>
+                      <input
+                        disabled
+                        name="url"
+                        type="text"
+                        .value=${data.nodeTypeURL || ""}
+                      />`
+                  : nothing}
               </form>
             `
           : html`<div id="overview" class="no-border">
