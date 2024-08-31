@@ -18,10 +18,10 @@ describe("getGraphHandler", () => {
   });
 
   test("returns handler for URL-like type", async () => {
-    const handler = await getGraphHandler("https://example.com", {
+    const handler = await getGraphHandler("https://example.com/1", {
       loader: {
         async load(url: string) {
-          ok(url === "https://example.com");
+          ok(url === "https://example.com/1");
           return {
             nodes: {},
             edges: {},
@@ -34,10 +34,10 @@ describe("getGraphHandler", () => {
   });
 
   test("returns handler that can be invoked for URL-like type", async () => {
-    const handler = await getGraphHandler("https://example.com", {
+    const handler = await getGraphHandler("https://example.com/2", {
       loader: {
         async load(url: string) {
-          ok(url === "https://example.com");
+          ok(url === "https://example.com/2");
           return simple as GraphDescriptor;
         },
       },
@@ -50,10 +50,10 @@ describe("getGraphHandler", () => {
   });
 
   test("returns handler with a describer for URL-like type", async () => {
-    const handler = await getGraphHandler("https://example.com", {
+    const handler = await getGraphHandler("https://example.com/3", {
       loader: {
         async load(url: string) {
-          ok(url === "https://example.com");
+          ok(url === "https://example.com/3");
           return simple as GraphDescriptor;
         },
       },
