@@ -336,7 +336,7 @@ export class NodeSelector extends LitElement {
               ${map(kitContents, (nodeTypeInfo) => {
                 const className = nodeTypeInfo.id
                   .toLocaleLowerCase()
-                  .replace(/\W/, "-");
+                  .replaceAll(/\W/gim, "-");
                 const id = nodeTypeInfo.id;
                 const description = nodeTypeInfo.metadata.description;
                 const title = nodeTypeInfo.metadata.title || id;
