@@ -128,12 +128,12 @@ class Graph implements InspectableGraphWithStore {
     }
 
     const { kits } = this.#options;
-    const handler = await this.#getDescriber(type);
+    const describer = await this.#getDescriber(type);
     const asWired = {
       inputSchema: edgesToSchema(EdgeType.In, options?.incoming),
       outputSchema: edgesToSchema(EdgeType.Out, options?.outgoing),
     } satisfies NodeDescriberResult;
-    if (!handler) {
+    if (!describer) {
       return asWired;
     }
     const loader = this.#options.loader || createLoader();
@@ -168,7 +168,7 @@ class Graph implements InspectableGraphWithStore {
       context.base = this.#url;
     }
     try {
-      return handler(
+      return describer(
         options?.inputs || undefined,
         asWired.inputSchema,
         asWired.outputSchema,
