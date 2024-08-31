@@ -13,6 +13,7 @@ import {
   NodeDescriptor,
   NodeHandlerContext,
   NodeTypeIdentifier,
+  NodeHandlerObject,
 } from "../types.js";
 import { graphUrlLike } from "../utils/graph-url-like.js";
 import { collectPortsForType } from "./ports.js";
@@ -193,28 +194,26 @@ function shortUrlTitle(url: string) {
 
 class CustomNodeType implements InspectableNodeType {
   #type: string;
-  #context: NodeHandlerContext;
-  #metadata: NodeHandlerMetadata;
-  #handlerPromise: Promise<NodeHandler | undefined>;
+  #metadata: NodeHandlerMetadata | null = null;
+  #handlerPromise: Promise<NodeHandlerObject | undefined> | null = null;
 
   constructor(type: string, context: NodeHandlerContext) {
     this.#type = type;
-    this.#context = context;
-    this.#metadata = {
-      title: shortUrlTitle(type),
-    };
-    this.#handlerPromise = this.#update();
+    this.#handlerPromise = getGraphHandler(type, context);
   }
 
-  async #update(): Promise<NodeHandler | undefined> {
-    const handler = await getGraphHandler(this.#type, this.#context);
+  async #readMetadata() {
+    const handler = await this.#handlerPromise;
     if (handler && "metadata" in handler && handler.metadata) {
-      // this.#metadata = handler.metadata;
+      return handler.metadata;
     }
-    return handler;
+    return {
+      title: shortUrlTitle(this.#type),
+    };
   }
 
   async metadata(): Promise<NodeHandlerMetadata> {
+    this.#metadata ??= await this.#readMetadata();
     return this.#metadata;
   }
 
@@ -224,6 +223,6 @@ class CustomNodeType implements InspectableNodeType {
 
   async ports(): Promise<InspectableNodePorts> {
     const handler = await this.#handlerPromise;
-    return portsFromHandler(this.#type, handler);
+    return portsFromHandler(this.#type, handler as NodeHandler);
   }
 }
