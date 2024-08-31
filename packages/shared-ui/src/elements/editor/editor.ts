@@ -17,6 +17,7 @@ import {
   EditSpec,
   CommentNode,
   InspectableGraph,
+  NodeHandlerMetadata,
 } from "@google-labs/breadboard";
 import {
   EdgeChangeEvent,
@@ -416,12 +417,14 @@ export class Editor extends LitElement {
     }
 
     const ports = new Map<string, InspectableNodePorts>();
+    const typeMetadata = new Map<string, NodeHandlerMetadata>();
     const graphVersion = this.#graphVersion;
     for (const node of selectedGraph.nodes()) {
       ports.set(
         node.descriptor.id,
         filterPortsByMode(await node.ports(), this.mode)
       );
+      typeMetadata.set(node.descriptor.type, await node.type().metadata());
       if (this.#graphVersion !== graphVersion) {
         // Another update has come in, bail out.
         return this.#graphRenderer;
@@ -439,6 +442,7 @@ export class Editor extends LitElement {
       showNodeTypeDescriptions: this.showNodeTypeDescriptions,
       collapseNodesByDefault: this.collapseNodesByDefault,
       ports: ports,
+      typeMetadata,
       edges: selectedGraph.edges(),
       nodes: selectedGraph.nodes(),
       metadata: selectedGraph.metadata(),
@@ -464,6 +468,7 @@ export class Editor extends LitElement {
       showNodeTypeDescriptions: this.showNodeTypeDescriptions,
       collapseNodesByDefault: this.collapseNodesByDefault,
       ports: ports,
+      typeMetadata,
       edges: selectedGraph.edges(),
       nodes: selectedGraph.nodes(),
       metadata: selectedGraph.metadata() || {},

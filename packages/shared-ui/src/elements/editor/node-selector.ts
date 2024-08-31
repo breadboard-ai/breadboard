@@ -4,13 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InspectableGraph, NodeHandlerMetadata } from "@google-labs/breadboard";
+import {
+  InspectableGraph,
+  InspectableKit,
+  NodeHandlerMetadata,
+} from "@google-labs/breadboard";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { KitNodeChosenEvent } from "../../events/events.js";
+import { Task } from "@lit/task";
 
 const DATA_TYPE = "text/plain";
 
@@ -28,6 +33,12 @@ export class NodeSelector extends LitElement {
   #searchInputRef: Ref<HTMLInputElement> = createRef();
   #listRef: Ref<HTMLUListElement> = createRef();
   #lastSelectedId: string | null = null;
+  #kitInfoTask = new Task(this, {
+    task: async () => {
+      return this.#createKitList(this.graph?.kits() || []);
+    },
+    args: () => [this.graph?.kits() || []],
+  });
 
   static styles = css`
     * {
@@ -252,12 +263,7 @@ export class NodeSelector extends LitElement {
     firstInput.checked = true;
   }
 
-  render() {
-    if (!this.graph) {
-      return nothing;
-    }
-
-    const kits = this.graph.kits() || [];
+  async #createKitList(kits: InspectableKit[]) {
     const kitList = new Map<
       string,
       { id: string; metadata: NodeHandlerMetadata }[]
@@ -282,102 +288,120 @@ export class NodeSelector extends LitElement {
         continue;
       }
 
-      let kitNodes = kit.nodeTypes;
-      kitNodes = kit.nodeTypes.filter((node) => {
-        if (node.metadata().deprecated) return false;
+      const typeMetadata = await Promise.all(
+        kit.nodeTypes.map(async (node) => {
+          return { id: node.type(), metadata: await node.metadata() };
+        })
+      );
+
+      const available = typeMetadata.filter(({ id, metadata }) => {
+        if (metadata.deprecated) return false;
         if (!this.filter) {
           return true;
         }
         const filter = new RegExp(this.filter, "gim");
-        return filter.test(node.type());
+        return filter.test(id);
       });
 
-      if (kitNodes.length === 0) {
+      if (available.length === 0) {
         continue;
       }
 
-      kitList.set(
-        kit.descriptor.title,
-        kitNodes.map((node) => ({ id: node.type(), metadata: node.metadata() }))
-      );
+      kitList.set(kit.descriptor.title, available);
     }
+    return kitList;
+  }
+
+  #renderKitList(
+    kitList: Map<string, { id: string; metadata: NodeHandlerMetadata }[]>
+  ) {
+    return html`<ul id="kit-list" ${ref(this.#listRef)}>
+      ${map(kitList, ([kitName, kitContents]) => {
+        const kitId = kitName.toLocaleLowerCase().replace(/\W/gim, "-");
+        return html`<li>
+          <input
+            type="radio"
+            name="selected-kit"
+            id="${kitId}"
+            @click=${(evt: Event) => {
+              if (!(evt.target instanceof HTMLElement)) {
+                return;
+              }
+
+              this.#lastSelectedId = evt.target.id;
+            }}
+          /><label for="${kitId}"><span>${kitName}</span></label>
+          <div class="kit-contents">
+            <ul>
+              ${map(kitContents, (nodeTypeInfo) => {
+                const className = nodeTypeInfo.id
+                  .toLocaleLowerCase()
+                  .replace(/\W/, "-");
+                const id = nodeTypeInfo.id;
+                const description = nodeTypeInfo.metadata.description;
+                const title = nodeTypeInfo.metadata.title || id;
+                return html`<li
+                  class=${classMap({
+                    [className]: true,
+                    ["kit-item"]: true,
+                  })}
+                  draggable="true"
+                  @dblclick=${() => {
+                    this.dispatchEvent(new KitNodeChosenEvent(id));
+                  }}
+                  @dragstart=${(evt: DragEvent) => {
+                    if (!evt.dataTransfer) {
+                      return;
+                    }
+                    evt.dataTransfer.setData(DATA_TYPE, id);
+                  }}
+                >
+                  <div class="node-id">${title}</div>
+                  ${description
+                    ? html`<div class="node-description">${description}</div>`
+                    : nothing}
+                </li>`;
+              })}
+            </ul>
+          </div>
+        </li>`;
+      })}
+    </ul>`;
+  }
+
+  render() {
+    if (!this.graph) {
+      return nothing;
+    }
+
+    const kits = this.graph.kits() || [];
 
     this.style.setProperty("--kit-count", kits.length.toString());
 
-    return html` <div
-      id="container"
-      @pointerdown=${(evt: Event) => evt.stopPropagation()}
-    >
-      <input
-        type="search"
-        id="search"
-        placeholder="Search nodes"
-        ${ref(this.#searchInputRef)}
-        @input=${(evt: InputEvent) => {
-          if (!(evt.target instanceof HTMLInputElement)) {
-            return;
-          }
+    return this.#kitInfoTask.render({
+      pending: () => html`<div>Loading...</div>`,
+      complete: (kitList) => {
+        return html` <div
+          id="container"
+          @pointerdown=${(evt: Event) => evt.stopPropagation()}
+        >
+          <input
+            type="search"
+            id="search"
+            placeholder="Search nodes"
+            ${ref(this.#searchInputRef)}
+            @input=${(evt: InputEvent) => {
+              if (!(evt.target instanceof HTMLInputElement)) {
+                return;
+              }
 
-          this.filter = evt.target.value;
-        }}
-      />
-      <form>
-        <ul id="kit-list" ${ref(this.#listRef)}>
-          ${map(kitList, ([kitName, kitContents]) => {
-            const kitId = kitName.toLocaleLowerCase().replace(/\W/gim, "-");
-            return html`<li>
-              <input
-                type="radio"
-                name="selected-kit"
-                id="${kitId}"
-                @click=${(evt: Event) => {
-                  if (!(evt.target instanceof HTMLElement)) {
-                    return;
-                  }
-
-                  this.#lastSelectedId = evt.target.id;
-                }}
-              /><label for="${kitId}"><span>${kitName}</span></label>
-              <div class="kit-contents">
-                <ul>
-                  ${map(kitContents, (nodeTypeInfo) => {
-                    const className = nodeTypeInfo.id
-                      .toLocaleLowerCase()
-                      .replace(/\W/, "-");
-                    const id = nodeTypeInfo.id;
-                    const description = nodeTypeInfo.metadata.description;
-                    const title = nodeTypeInfo.metadata.title || id;
-                    return html`<li
-                      class=${classMap({
-                        [className]: true,
-                        ["kit-item"]: true,
-                      })}
-                      draggable="true"
-                      @dblclick=${() => {
-                        this.dispatchEvent(new KitNodeChosenEvent(id));
-                      }}
-                      @dragstart=${(evt: DragEvent) => {
-                        if (!evt.dataTransfer) {
-                          return;
-                        }
-                        evt.dataTransfer.setData(DATA_TYPE, id);
-                      }}
-                    >
-                      <div class="node-id">${title}</div>
-                      ${description
-                        ? html`<div class="node-description">
-                            ${description}
-                          </div>`
-                        : nothing}
-                    </li>`;
-                  })}
-                </ul>
-              </div>
-            </li>`;
-          })}
-        </ul>
-      </form>
-      <div></div>
-    </div>`;
+              this.filter = evt.target.value;
+            }}
+          />
+          <form>${this.#renderKitList(kitList)}</form>
+          <div></div>
+        </div>`;
+      },
+    });
   }
 }

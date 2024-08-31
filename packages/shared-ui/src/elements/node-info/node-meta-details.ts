@@ -89,9 +89,10 @@ export class NodeMetaDetails extends LitElement {
       // Node is an InspectableNode.
       if (node) {
         const nodeType = (node as InspectableNode).type();
-        const kitNodeDescription = nodeType.metadata().description || null;
-        const kitNodeHelp = nodeType.metadata().help || null;
-        const nodeTypeTitle = nodeType.metadata().title || nodeType.type();
+        const typeMetadata = await nodeType.metadata();
+        const kitNodeDescription = typeMetadata.description || null;
+        const kitNodeHelp = typeMetadata.help || null;
+        const nodeTypeTitle = typeMetadata.title || nodeType.type();
 
         metadata = node.metadata();
 

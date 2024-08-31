@@ -145,7 +145,7 @@ class KitNodeType implements InspectableNodeType {
     this.#handler = handler;
   }
 
-  metadata(): NodeHandlerMetadata {
+  async metadata(): Promise<NodeHandlerMetadata> {
     return "metadata" in this.#handler ? this.#handler.metadata || {} : {};
   }
 
@@ -214,7 +214,7 @@ class CustomNodeType implements InspectableNodeType {
     return handler;
   }
 
-  metadata(): NodeHandlerMetadata {
+  async metadata(): Promise<NodeHandlerMetadata> {
     return this.#metadata;
   }
 
