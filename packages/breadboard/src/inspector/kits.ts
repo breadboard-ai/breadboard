@@ -56,12 +56,10 @@ const createCustomTypesKit = (
   nodes: NodeDescriptor[],
   context: NodeHandlerContext
 ): InspectableKit[] => {
-  const urlLikeNodeTypes = nodes
-    .filter((node) => graphUrlLike(node.type))
-    .map((node) => {
-      return new CustomNodeType(node.type, context);
-    });
-  if (urlLikeNodeTypes.length === 0) {
+  const urlLikeNodeTypes = nodes.filter((node) => graphUrlLike(node.type));
+
+  const uniqueTypes = [...new Set(urlLikeNodeTypes.map((node) => node.type))];
+  if (uniqueTypes.length === 0) {
     return [];
   }
   return [
@@ -71,7 +69,9 @@ const createCustomTypesKit = (
         description: "Custom nodes found in the graph",
         url: "",
       },
-      nodeTypes: urlLikeNodeTypes,
+      nodeTypes: uniqueTypes.map((type) => {
+        return new CustomNodeType(type, context);
+      }),
     },
   ];
 };
