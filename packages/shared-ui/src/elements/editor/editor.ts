@@ -692,9 +692,27 @@ export class Editor extends LitElement {
             return;
           }
 
-          const graph = JSON.parse(data) as GraphDescriptor;
-          if (!("edges" in graph && "nodes" in graph)) {
-            return;
+          let graph;
+          if (typeof data === "string") {
+            // TODO: This is a kludge, let's be more robust here.
+            // Maybe like InspectableGraph.isGraphURL(data) or something.
+            if (!data.endsWith(".bgl.json")) {
+              return;
+            }
+            graph = {
+              edges: [],
+              nodes: [
+                {
+                  id: this.#createRandomID("board"),
+                  type: data,
+                },
+              ],
+            };
+          } else {
+            graph = JSON.parse(data) as GraphDescriptor;
+            if (!("edges" in graph && "nodes" in graph)) {
+              return;
+            }
           }
 
           const comments = graph.metadata?.comments ?? [];
