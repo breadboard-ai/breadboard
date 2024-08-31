@@ -33,6 +33,7 @@ export class GraphNode extends PIXI.Container {
   #type = "";
   #title = "";
   #titleText: PIXI.Text | null = null;
+  #typeTitle: string;
   #borderRadius = 8;
   #color = nodeTextColor;
   #titleTextColor = nodeTextColor;
@@ -91,6 +92,7 @@ export class GraphNode extends PIXI.Container {
     id: string,
     type: string,
     title: string,
+    typeTitle: string,
     public fixedInputs = true,
     public fixedOutputs = true
   ) {
@@ -99,6 +101,7 @@ export class GraphNode extends PIXI.Container {
     this.title = title;
     this.id = id;
     this.type = type;
+    this.#typeTitle = typeTitle;
 
     switch (type) {
       case "input":
@@ -609,7 +612,7 @@ export class GraphNode extends PIXI.Container {
   }
 
   #createTitleTextIfNeeded() {
-    const nodeTitle = `${this.#title}${this.showNodeTypeDescriptions ? ` (${this.#type})` : ""}`;
+    const nodeTitle = `${this.#title}${this.showNodeTypeDescriptions ? ` (${this.#typeTitle})` : ""}`;
     if (this.#titleText) {
       if (this.#titleText.text !== nodeTitle) {
         this.#titleText.text = nodeTitle;
