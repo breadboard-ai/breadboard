@@ -1208,6 +1208,12 @@ export class Editor extends LitElement {
   #createRandomID(type: string) {
     const randomId = globalThis.crypto.randomUUID();
     const nextNodeId = randomId.split("-");
+    // Now that types could be URLs, we need to make them a bit
+    // less verbose.
+    if (type.includes(":") || type.includes("#")) {
+      // probably a URL, so let's just use a random id.
+      return `board-${nextNodeId[0]}`;
+    }
     // TODO: Check for clashes
     return `${type}-${nextNodeId[0]}`;
   }
