@@ -294,14 +294,9 @@ export class NodeSelector extends LitElement {
         })
       );
 
-      const available = typeMetadata.filter(({ id, metadata }) => {
-        if (metadata.deprecated) return false;
-        if (!this.filter) {
-          return true;
-        }
-        const filter = new RegExp(this.filter, "gim");
-        return filter.test(id);
-      });
+      const available = typeMetadata.filter(
+        ({ metadata }) => !metadata.deprecated
+      );
 
       if (available.length === 0) {
         continue;
@@ -312,61 +307,34 @@ export class NodeSelector extends LitElement {
     return kitList;
   }
 
-  #renderKitList(
+  #filterKitList(
     kitList: Map<string, { id: string; metadata: NodeHandlerMetadata }[]>
   ) {
-    return html`<ul id="kit-list" ${ref(this.#listRef)}>
-      ${map(kitList, ([kitName, kitContents]) => {
-        const kitId = kitName.toLocaleLowerCase().replace(/\W/gim, "-");
-        return html`<li>
-          <input
-            type="radio"
-            name="selected-kit"
-            id="${kitId}"
-            @click=${(evt: Event) => {
-              if (!(evt.target instanceof HTMLElement)) {
-                return;
-              }
+    if (!this.filter) {
+      return kitList;
+    }
 
-              this.#lastSelectedId = evt.target.id;
-            }}
-          /><label for="${kitId}"><span>${kitName}</span></label>
-          <div class="kit-contents">
-            <ul>
-              ${map(kitContents, (nodeTypeInfo) => {
-                const className = nodeTypeInfo.id
-                  .toLocaleLowerCase()
-                  .replaceAll(/\W/gim, "-");
-                const id = nodeTypeInfo.id;
-                const description = nodeTypeInfo.metadata.description;
-                const title = nodeTypeInfo.metadata.title || id;
-                return html`<li
-                  class=${classMap({
-                    [className]: true,
-                    ["kit-item"]: true,
-                  })}
-                  draggable="true"
-                  @dblclick=${() => {
-                    this.dispatchEvent(new KitNodeChosenEvent(id));
-                  }}
-                  @dragstart=${(evt: DragEvent) => {
-                    if (!evt.dataTransfer) {
-                      return;
-                    }
-                    evt.dataTransfer.setData(DATA_TYPE, id);
-                  }}
-                >
-                  <div class="node-id">${title}</div>
-                  ${description
-                    ? html`<div class="node-description">${description}</div>`
-                    : nothing}
-                </li>`;
-              })}
-            </ul>
-          </div>
-        </li>`;
-      })}
-    </ul>`;
+    const filteredKitList = new Map<
+      string,
+      { id: string; metadata: NodeHandlerMetadata }[]
+    >();
+
+    const filter = new RegExp(this.filter, "gim");
+
+    for (const [kitName, kitContents] of kitList) {
+      const filteredKitContents = kitContents.filter(
+        (nodeTypeInfo) =>
+          filter.test(nodeTypeInfo.id) ||
+          (nodeTypeInfo.metadata.title &&
+            filter.test(nodeTypeInfo.metadata.title))
+      );
+
+      if (filteredKitContents.length > 0) {
+        filteredKitList.set(kitName, filteredKitContents);
+      }
+    }
+
+    return filteredKitList;
   }
 
   render() {
@@ -381,6 +349,8 @@ export class NodeSelector extends LitElement {
     return this.#kitInfoTask.render({
       pending: () => html`<div>Loading...</div>`,
       complete: (kitList) => {
+        kitList = this.#filterKitList(kitList);
+
         return html` <div
           id="container"
           @pointerdown=${(evt: Event) => evt.stopPropagation()}
@@ -398,7 +368,62 @@ export class NodeSelector extends LitElement {
               this.filter = evt.target.value;
             }}
           />
-          <form>${this.#renderKitList(kitList)}</form>
+          <form>
+            <ul id="kit-list" ${ref(this.#listRef)}>
+              ${map(kitList, ([kitName, kitContents]) => {
+                const kitId = kitName.toLocaleLowerCase().replace(/\W/gim, "-");
+                return html`<li>
+                  <input
+                    type="radio"
+                    name="selected-kit"
+                    id="${kitId}"
+                    @click=${(evt: Event) => {
+                      if (!(evt.target instanceof HTMLElement)) {
+                        return;
+                      }
+
+                      this.#lastSelectedId = evt.target.id;
+                    }}
+                  /><label for="${kitId}"><span>${kitName}</span></label>
+                  <div class="kit-contents">
+                    <ul>
+                      ${map(kitContents, (nodeTypeInfo) => {
+                        const className = nodeTypeInfo.id
+                          .toLocaleLowerCase()
+                          .replaceAll(/\W/gim, "-");
+                        const id = nodeTypeInfo.id;
+                        const description = nodeTypeInfo.metadata.description;
+                        const title = nodeTypeInfo.metadata.title || id;
+                        return html`<li
+                          class=${classMap({
+                            [className]: true,
+                            ["kit-item"]: true,
+                          })}
+                          draggable="true"
+                          @dblclick=${() => {
+                            this.dispatchEvent(new KitNodeChosenEvent(id));
+                          }}
+                          @dragstart=${(evt: DragEvent) => {
+                            if (!evt.dataTransfer) {
+                              return;
+                            }
+                            evt.dataTransfer.setData(DATA_TYPE, id);
+                          }}
+                        >
+                          <div class="node-id">${title}</div>
+                          ${description
+                            ? html`<div class="node-description">
+                                ${description}
+                              </div>`
+                            : nothing}
+                        </li>`;
+                      })}
+                    </ul>
+                  </div>
+                </li>`;
+              })}
+            </ul>
+          </form>
           <div></div>
         </div>`;
       },
