@@ -499,7 +499,7 @@ export type InspectableNodeType = {
   /**
    * Returns the metadata, associated with this node type.
    */
-  metadata(): NodeHandlerMetadata;
+  metadata(): Promise<NodeHandlerMetadata>;
   /**
    * Returns the type of the node.
    */

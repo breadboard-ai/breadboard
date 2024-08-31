@@ -57,6 +57,7 @@ export type {
   AbstractValue as V,
 } from "./new/grammar/types.js";
 export { asyncGen } from "./utils/async-gen.js";
+export { Throttler } from "./utils/throttler.js";
 export { type SemVer, SemanticVersioning } from "./utils/semver.js";
 
 /**

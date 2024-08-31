@@ -32,6 +32,7 @@ import {
   GraphDescriptor,
   GraphLoader,
   GraphProvider,
+  inspect,
   InspectableRun,
   InspectableRunEvent,
   InspectableRunInputs,
@@ -383,6 +384,14 @@ export class UI extends LitElement {
           .items.get("Show Experimental Components")?.value
       : false;
 
+    const graph =
+      this.graph && this.loader
+        ? inspect(this.graph, {
+            kits: this.kits,
+            loader: this.loader,
+          })
+        : null;
+
     /**
      * Create all the elements we need.
      */
@@ -405,10 +414,8 @@ export class UI extends LitElement {
       ],
       () => {
         return html`<bb-editor
-          .graph=${this.graph}
+          .graph=${graph}
           .subGraphId=${this.subGraphId}
-          .kits=${this.kits}
-          .loader=${this.loader}
           .highlightedNodeId=${nodeId}
           .boardId=${this.boardId}
           .collapseNodesByDefault=${collapseNodesByDefault}
@@ -495,9 +502,7 @@ export class UI extends LitElement {
           .showNodeTypeDescriptions=${showNodeTypeDescriptions}
           .selectedNodeIds=${this.selectedNodeIds}
           .subGraphId=${this.subGraphId}
-          .graph=${this.graph}
-          .kits=${this.kits}
-          .loader=${this.loader}
+          .graph=${graph}
         ></bb-node-meta-details>`;
       }
     );

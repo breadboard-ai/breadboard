@@ -11,6 +11,7 @@ import {
   InspectableNode,
   InspectableNodePorts,
   InspectablePort,
+  NodeHandlerMetadata,
   PortStatus,
 } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
@@ -40,6 +41,7 @@ export class Graph extends PIXI.Container {
   #edgeGraphics = new Map<string, GraphEdge>();
   #edges: InspectableEdge[] | null = null;
   #nodes: InspectableNode[] | null = null;
+  #typeMetadata: Map<string, NodeHandlerMetadata> | null = null;
   #comments: CommentNode[] | null = null;
   #ports: Map<string, InspectableNodePorts> | null = null;
   #nodeById = new Map<string, InspectableNode>();
@@ -890,6 +892,15 @@ export class Graph extends PIXI.Container {
     return this.#highlightedNodeId;
   }
 
+  set typeMetadata(metadata: Map<string, NodeHandlerMetadata> | null) {
+    this.#typeMetadata = metadata;
+    this.#isDirty = true;
+  }
+
+  get typeMetadata() {
+    return this.#typeMetadata;
+  }
+
   selectEdge(edge: EdgeData) {
     const edgeGraphic = this.#edgeGraphics.get(inspectableEdgeToString(edge));
     if (!edgeGraphic) {
@@ -1138,10 +1149,12 @@ export class Graph extends PIXI.Container {
     };
 
     for (const node of this.#nodes) {
-      const { id } = node.descriptor;
+      const { id, type } = node.descriptor;
+      const { title: typeTitle = type, icon } =
+        this.#typeMetadata?.get(type) || {};
       let graphNode = this.#graphNodeById.get(id);
       if (!graphNode || !(graphNode instanceof GraphNode)) {
-        graphNode = new GraphNode(id, node.descriptor.type, node.title());
+        graphNode = new GraphNode(id, type, node.title(), typeTitle);
         graphNode.showNodeTypeDescriptions = this.showNodeTypeDescriptions;
 
         this.#graphNodeById.set(id, graphNode);
@@ -1151,7 +1164,6 @@ export class Graph extends PIXI.Container {
         graphNode.title = node.title();
       }
 
-      const icon = node.type().metadata().icon;
       if (icon && GraphAssets.instance().has(icon)) {
         graphNode.icon = icon;
       }

@@ -29,6 +29,7 @@ import {
   InspectableNode,
   InspectableNodePorts,
   InspectablePort,
+  NodeHandlerMetadata,
 } from "@google-labs/breadboard";
 import { GraphNode } from "./graph-node.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -61,6 +62,7 @@ interface GraphOpts {
   showNodeTypeDescriptions: boolean;
   collapseNodesByDefault: boolean;
   ports: Map<string, InspectableNodePorts> | null;
+  typeMetadata: Map<string, NodeHandlerMetadata> | null;
   edges: InspectableEdge[];
   nodes: InspectableNode[];
   metadata: GraphMetadata;
@@ -634,6 +636,10 @@ export class GraphRenderer extends LitElement {
 
     if (opts.nodes !== undefined) {
       graph.nodes = opts.nodes;
+    }
+
+    if (opts.typeMetadata !== undefined) {
+      graph.typeMetadata = opts.typeMetadata;
     }
 
     if (opts.metadata !== undefined) {
