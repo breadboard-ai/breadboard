@@ -359,6 +359,7 @@ export class NodeSelector extends LitElement {
             type="search"
             id="search"
             placeholder="Search nodes"
+            value=${this.filter || ""}
             ${ref(this.#searchInputRef)}
             @input=${(evt: InputEvent) => {
               if (!(evt.target instanceof HTMLInputElement)) {
