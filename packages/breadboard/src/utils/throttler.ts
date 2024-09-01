@@ -36,6 +36,9 @@ export class Throttler<T extends unknown[], R> {
     const now = Date.now();
     // If there's an in-flight request, wait for it.
     if (this.inFlight) {
+      if (this.cachedResult !== null) {
+        return this.cachedResult;
+      }
       return this.inFlight;
     }
 
@@ -49,13 +52,16 @@ export class Throttler<T extends unknown[], R> {
     this.lastCall = now;
     this.inFlight = this.fn.apply(thisObj, args);
 
-    try {
-      const result = await this.inFlight;
-      this.cachedResult = result;
-      return result;
-    } finally {
-      this.inFlight = null;
-    }
+    this.inFlight
+      .then((result) => {
+        this.cachedResult = result;
+        this.inFlight = null;
+      })
+      .catch(() => {
+        this.inFlight = null;
+      });
+
+    return this.cachedResult || this.inFlight;
   }
 
   getCachedResult(): R | null {
