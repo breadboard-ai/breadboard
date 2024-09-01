@@ -693,12 +693,9 @@ export class Editor extends LitElement {
           }
 
           let graph;
-          if (typeof data === "string") {
-            // TODO: This is a kludge, let's be more robust here.
-            // Maybe like InspectableGraph.isGraphURL(data) or something.
-            if (!data.endsWith(".bgl.json")) {
-              return;
-            }
+          // TODO: This is a kludge, let's be more robust here.
+          // Maybe like InspectableGraph.isGraphURL(data) or something.
+          if (data.endsWith(".bgl.json")) {
             graph = {
               edges: [],
               nodes: [
@@ -710,6 +707,7 @@ export class Editor extends LitElement {
             };
           } else {
             graph = JSON.parse(data) as GraphDescriptor;
+            console.log("Pasting graph", graph);
             if (!("edges" in graph && "nodes" in graph)) {
               return;
             }
