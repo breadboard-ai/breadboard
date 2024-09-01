@@ -960,6 +960,9 @@ export class SchemaEditor extends LitElement {
             property.behavior = property.behavior?.filter(
               (item) => item !== "config"
             );
+            if (property.behavior && !property.behavior?.length) {
+              delete property.behavior;
+            }
           }
         }
       }
