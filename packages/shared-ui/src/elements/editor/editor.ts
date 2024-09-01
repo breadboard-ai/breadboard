@@ -707,7 +707,6 @@ export class Editor extends LitElement {
             };
           } else {
             graph = JSON.parse(data) as GraphDescriptor;
-            console.log("Pasting graph", graph);
             if (!("edges" in graph && "nodes" in graph)) {
               return;
             }
