@@ -57,7 +57,7 @@ export class Throttler<T extends unknown[], R> {
         this.cachedResult = result;
         this.inFlight = null;
       })
-      .finally(() => {
+      .catch(() => {
         this.inFlight = null;
       });
 
