@@ -13,7 +13,7 @@ const url = import.meta.url;
 
 const getProjectId = async () => {
   let backend = process.env.STORAGE_BACKEND;
-  if (backend !== "firestore") {
+  if (backend && backend !== "firestore") {
     // For now, return "none" if we're not using Firestore
     // backend.
     // TODO: Implement support for secret managers outside
@@ -90,22 +90,26 @@ const getKey = async (key: string) => {
 };
 
 export const getSecretList = async (): Promise<SecretMapEntry[]> => {
-  const [secrets] = await secretManager.listSecrets({
-    parent: `projects/${PROJECT_ID}`,
-  });
-  const secretNames = secrets
-    .map((s) => s.name?.split("/").pop())
-    .filter(Boolean) as string[];
-  const entries = await Promise.all(
-    secretNames.map(async (name) => {
-      const origin = await getAnnotation(name);
-      if (!origin) {
-        return null;
-      }
-      return { secret: name, origin };
-    })
-  );
-  return entries.filter(Boolean) as SecretMapEntry[];
+  try {
+    const [secrets] = await secretManager.listSecrets({
+      parent: `projects/${PROJECT_ID}`,
+    });
+    const secretNames = secrets
+      .map((s) => s.name?.split("/").pop())
+      .filter(Boolean) as string[];
+    const entries = await Promise.all(
+      secretNames.map(async (name) => {
+        const origin = await getAnnotation(name);
+        if (!origin) {
+          return null;
+        }
+        return { secret: name, origin };
+      })
+    );
+    return entries.filter(Boolean) as SecretMapEntry[];
+  } catch (e) {
+    throw new Error(`Failed to list secrets: ${e}`);
+  }
 };
 
 export const buildSecretsTunnel = async (): Promise<TunnelSpec> => {
