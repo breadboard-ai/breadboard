@@ -143,6 +143,10 @@ export class ActivityLogLite extends LitElement {
       animation: fadeAndSlideIn 0.3s cubic-bezier(0, 0, 0.3, 1) forwards;
     }
 
+    .edge.newest {
+      margin-bottom: var(--bb-grid-size-16);
+    }
+
     .edge.empty {
       height: 0;
       display: flex;
