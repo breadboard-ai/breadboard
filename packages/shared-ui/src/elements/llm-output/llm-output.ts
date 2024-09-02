@@ -44,7 +44,7 @@ export class LLMOutput extends LitElement {
     :host([clamped="true"]) {
       resize: vertical;
       overflow: auto;
-      max-height: 200px;
+      height: 200px;
       min-height: var(--bb-grid-size-6);
     }
 
