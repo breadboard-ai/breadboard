@@ -12,6 +12,14 @@ import { hasOrigin, type TunnelSpec } from "@google-labs/breadboard/remote";
 const url = import.meta.url;
 
 const getProjectId = async () => {
+  let backend = process.env.STORAGE_BACKEND;
+  if (backend !== "firestore") {
+    // For now, return "none" if we're not using Firestore
+    // backend.
+    // TODO: Implement support for secret managers outside
+    // of Cloud Run.
+    return "none";
+  }
   let projectId = process.env.GOOGLE_CLOUD_PROJECT;
   if (projectId) return projectId;
 

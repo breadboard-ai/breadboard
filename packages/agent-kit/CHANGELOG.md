@@ -1,5 +1,22 @@
 # @google-labs/agent-kit
 
+## 0.11.0
+
+### Minor Changes
+
+- c1dc2a4: Deprecate bubbling `model` inputs.
+- 1a70e7d: Make Looper model switchable.
+
+### Patch Changes
+
+- 3b9229d: Teach Specialist to correctly label the tools array as config.
+- Updated dependencies [bbcdd2d]
+- Updated dependencies [9ed58cf]
+- Updated dependencies [7f2ef33]
+- Updated dependencies [bac2e35]
+- Updated dependencies [ec2fedd]
+  - @breadboard-ai/build@0.9.1
+
 ## 0.10.0
 
 ### Minor Changes

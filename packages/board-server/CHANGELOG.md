@@ -1,5 +1,21 @@
 # @breadboard-ai/board-server
 
+## 0.6.0
+
+### Minor Changes
+
+- 7d46a63: Teach Visual Editor to use board server's node proxy to run boards.
+- b11e1b8: Supply an image for the Open Graph card.
+- 109a0af: Adds SQLite storage backend and adds 500 responses for errors
+- 8be43c7: Configure allowed origins from environment var instead of Firestore
+- 2d71df5: Teach dockerfile about firestore build and slim down the build process.
+
+### Patch Changes
+
+- Updated dependencies [7d46a63]
+  - @google-labs/breadboard@0.26.0
+  - @breadboard-ai/data-store@0.2.2
+
 ## 0.5.0
 
 ### Minor Changes

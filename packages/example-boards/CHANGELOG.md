@@ -1,5 +1,33 @@
 # @breadboard-ai/example-boards
 
+## 0.3.1
+
+### Patch Changes
+
+- 3cb60e9: Update gemini-vision example to use regular gemini model
+- Updated dependencies [3b9229d]
+- Updated dependencies [bbcdd2d]
+- Updated dependencies [9ed58cf]
+- Updated dependencies [13c27cb]
+- Updated dependencies [7f2ef33]
+- Updated dependencies [85fb144]
+- Updated dependencies [3cb60e9]
+- Updated dependencies [c1dc2a4]
+- Updated dependencies [7d46a63]
+- Updated dependencies [1a70e7d]
+- Updated dependencies [bac2e35]
+- Updated dependencies [ec2fedd]
+  - @google-labs/agent-kit@0.11.0
+  - @breadboard-ai/build@0.9.1
+  - @google-labs/gemini-kit@0.7.0
+  - @google-labs/core-kit@0.14.1
+  - @google-labs/breadboard@0.26.0
+  - @google-labs/json-kit@0.3.7
+  - @breadboard-ai/manifest@0.4.3
+  - @google-labs/node-nursery-web@1.3.1
+  - @google-labs/palm-kit@0.1.3
+  - @google-labs/template-kit@0.3.9
+
 ## 0.3.0
 
 ### Minor Changes

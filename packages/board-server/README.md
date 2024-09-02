@@ -14,6 +14,7 @@ npm run test:integration
 The board server can be run with different storage backends. The default is `firestore`, but you can also run it with `sqlite`.
 
 To run locally with `sqlite`:
+
 ```
 export GOOGLE_APPLICATION_CREDENTIALS=n/a
 export STORAGE_BACKEND=sqlite
@@ -24,12 +25,32 @@ export SQLITE_DB_PATH=/path/to/board-server.db
 
 The board server can be run as a self-contained docker image.
 
-The docker container build uses `sqlite` as a storage backend. It will keep it's state in a file called `board-server.db` inside the working directory on the container.
-
-To build the container:
+To build the container with the `sqlite` backend:
 
 ```
-docker build --build-context breadboard=../../ -t board-server .
+docker build --build-arg STORAGE_BACKEND=sqlite --build-context breadboard=../../ -t board-server:sqlite .
+```
+
+This container will use `sqlite` as a storage backend. It will keep its state in a file called `board-server.db` inside the working directory on the container.
+
+To build the container with the `firestore` backend:
+
+```
+docker build --build-arg STORAGE_BACKEND=firestore --build-context breadboard=../../ -t board-server:firestore .
+```
+
+This container will use `firestore` backend and connect to Google Cloud Firestore database.
+
+More than likely, in either case you will want to specify the `ALLOWED_ORIGINS` build argument:
+
+```sh
+docker build --build-arg ALLOWED_ORIGINS="list of visual editor urls" ...`
+```
+
+When building on Apple Silicon, use `platform` flag to specify the right platform:
+
+```sh
+docker build --platform linux/amd64 ...
 ```
 
 To run the container:
@@ -38,6 +59,36 @@ To run the container:
 docker run -d -p 3000:3000 --name board-server board-server
 docker exec -it board-server /bin/bash
 # npm run add <username> # add a user and copy your API key
+```
+
+## Deploying container on Cloud Run
+
+[Create repository](https://cloud.google.com/artifact-registry/docs/repositories/create-repos#create-console)
+
+Run credential helper:
+
+```sh
+ gcloud auth configure-docker us-central1-docker.pkg.dev
+```
+
+Get the full image name. See [Tagging the local image](https://cloud.google.com/artifact-registry/docs/docker/pushing-and-pulling#tag) for details.
+
+Tag the local image with the repository name:
+
+```sh
+docker tag source-image image-name
+```
+
+Push image to repository
+
+```sh
+docker push image-name
+```
+
+Deploy to Cloud Run:
+
+```sh
+gcloud run deploy service-name --image image-name
 ```
 
 ## Firestore & App Engine deployment

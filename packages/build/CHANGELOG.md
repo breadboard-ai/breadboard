@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.9.1
+
+### Patch Changes
+
+- bbcdd2d: Ensure descriptions survive kitification
+- 9ed58cf: Add starInputs function to get a handle on the "\*" input port of a board
+- 7f2ef33: Improve generated typings of legacy api bridge function
+- bac2e35: Adds a legacy() function to the result of calling kit(). It's a function that asynchronously returns a kit that is automatically built with and type for the old API, allowing new API kits to be used directly in old boards.
+- ec2fedd: Improvements to the describe() behavior of boards built with the Build API that are polymorphic.
+- Updated dependencies [7d46a63]
+  - @google-labs/breadboard@0.26.0
+
 ## 0.9.0
 
 ### Minor Changes

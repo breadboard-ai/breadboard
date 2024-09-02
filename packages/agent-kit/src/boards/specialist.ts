@@ -39,7 +39,7 @@ export type SpecialistType = NewNodeFactory<
   }
 >;
 
-const specialist = await board(({ in: context, persona, task, tools }) => {
+const specialist = await board(({ in: context, persona, task }) => {
   context
     .title("Context in")
     .description("Incoming conversation context")
@@ -61,15 +61,30 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
     .optional()
     .default(JSON.stringify({}))
     .behavior("llm-content", "config");
-  tools
-    .title("Tools")
-    .description(
-      "(Optional) Add tools to this list for the worker to use when needed"
-    )
-    .isArray()
-    .behavior("board", "config")
-    .optional()
-    .default("[]");
+
+  const toolsInput = base.input({
+    $metadata: {
+      title: "Tools Input",
+      description: "Specify the tools to use",
+    },
+    schema: {
+      type: "object",
+      properties: {
+        tools: {
+          title: "Tools",
+          description:
+            "(Optional) Add tools to this list for the worker to use when needed",
+          type: "array",
+          items: {
+            type: "object",
+            behavior: ["board"],
+          },
+          behavior: ["config"],
+          default: "[]",
+        },
+      },
+    } as Schema,
+  });
 
   const modelInput = base.input({
     $metadata: {
@@ -140,7 +155,7 @@ const specialist = await board(({ in: context, persona, task, tools }) => {
       description: "Turning provided boards into functions",
     },
     board: boardToFunctionWithContext.board,
-    list: tools.isArray(),
+    list: toolsInput.tools.isArray(),
   });
 
   const formatFunctionDeclarations = functionDeclarationsFormatter({

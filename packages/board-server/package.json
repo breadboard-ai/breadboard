@@ -4,7 +4,7 @@
     "registry": "https://wombat-dressing-room.appspot.com"
   },
   "private": true,
-  "version": "0.5.0",
+  "version": "0.6.1",
   "description": "Board Server",
   "main": "./dist/server/index.js",
   "exports": "./dist/server/index.js",
@@ -24,7 +24,6 @@
     "dev:nowatch": "wireit",
     "test": "wireit",
     "test:integration": "wireit"
-
   },
   "wireit": {
     "build": {
@@ -181,10 +180,10 @@
     "wireit": "^0.14.8"
   },
   "dependencies": {
-    "@breadboard-ai/data-store": "^0.2.1",
+    "@breadboard-ai/data-store": "^0.2.2",
     "@google-cloud/firestore": "^7.9.0",
     "@google-cloud/secret-manager": "^5.6.0",
-    "@google-labs/breadboard": "^0.25.0",
+    "@google-labs/breadboard": "^0.26.0",
     "@lit/context": "^1.1.2",
     "better-sqlite3": "^11.1.2",
     "lit": "^3.2.0",

@@ -32,7 +32,6 @@
         "./packages/shared-ui:build",
         "./packages/visual-editor:build",
         "./packages/build:build",
-        "./packages/build-legacy:build",
         "./packages/connection-server:build",
         "./packages/core-kit:build",
         "./packages/data-store:build",
@@ -59,7 +58,6 @@
         "./packages/breadboard:test",
         "./packages/breadboard-cli:test",
         "./packages/build:test",
-        "./packages/build-legacy:test",
         "./packages/connection-server:test",
         "./packages/core-kit:test",
         "./packages/data-store:test",
@@ -80,7 +78,6 @@
         "./packages/breadboard:lint",
         "./packages/breadboard-cli:lint",
         "./packages/build:lint",
-        "./packages/build-legacy:lint",
         "./packages/connection-server:lint",
         "./packages/core-kit:lint",
         "./packages/data-store:lint",
@@ -159,7 +156,7 @@
     "eslint-plugin-expect-type": "^0.4.0",
     "npm-ci": "^0.0.2",
     "rimraf": "^6.0.1",
-    "rollup": "^4.21.1",
+    "rollup": "^4.21.2",
     "rollup-plugin-dts": "^6.1.1",
     "syncpack": "^13.0.0",
     "typescript": "^5.5.4",
@@ -172,7 +169,7 @@
   ],
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.21.1",
-    "@rollup/rollup-linux-x64-gnu": "^4.21.1"
+    "@rollup/rollup-linux-x64-gnu": "^4.21.2"
   },
   "dependencies": {
     "json-schema": "^0.4.0",

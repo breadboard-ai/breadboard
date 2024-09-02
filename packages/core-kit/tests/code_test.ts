@@ -319,7 +319,7 @@ test("can pass star ports with *", (t) => {
   );
   t.deepEqual(bgl, {
     edges: [
-      { from: "input-0", to: "runJavascript-0", out: "*", in: "*" },
+      { from: "input-0", to: "runJavascript-0", out: "*", in: "" },
       { from: "input-0", to: "runJavascript-0", out: "foo", in: "foo" },
       { from: "runJavascript-0", to: "output-0", out: "sum", in: "sum" },
     ],
