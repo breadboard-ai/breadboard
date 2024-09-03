@@ -711,9 +711,16 @@
                   "title": "context"
                 },
                 "json": {
+                  "type": [
+                    "array",
+                    "boolean",
+                    "null",
+                    "number",
+                    "object",
+                    "string"
+                  ],
                   "title": "JSON",
-                  "description": "The validated JSON.",
-                  "type": "string"
+                  "description": "The validated JSON."
                 }
               }
             }
@@ -775,9 +782,12 @@
               "type": "object",
               "properties": {
                 "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "required": [],
+                  "additionalProperties": true,
                   "title": "Schema",
                   "description": "The schema to convert to schemish.",
-                  "type": "object",
                   "behavior": [
                     "json-schema",
                     "config"
@@ -840,32 +850,8 @@
               "type": "object",
               "properties": {
                 "$error": {
-                  "title": "$error",
-                  "description": "The error if the JSON is invalid.",
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "error"
-                      ]
-                    },
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "parsing",
-                            "validation"
-                          ]
-                        },
-                        "message": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  }
+                  "type": "string",
+                  "title": "$error"
                 },
                 "context": {
                   "type": "string",
