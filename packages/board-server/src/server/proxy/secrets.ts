@@ -8,6 +8,12 @@ import { SecretManagerServiceClient } from "@google-cloud/secret-manager";
 import type { Kit } from "@google-labs/breadboard";
 import type { SecretInputs } from "../types.js";
 import { hasOrigin, type TunnelSpec } from "@google-labs/breadboard/remote";
+import { fileURLToPath } from "url";
+import { dirname, resolve } from "path";
+import { readFile } from "fs/promises";
+
+const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
+const ROOT_PATH = resolve(MODULE_PATH, "../../../..");
 
 export type SecretsStore = {
   getList: () => Promise<SecretMapEntry[]>;
@@ -48,14 +54,6 @@ class SecretManagerProvider implements SecretsStore {
   }
 
   async #getProjectId() {
-    let backend = process.env.STORAGE_BACKEND;
-    if (backend && backend !== "firestore") {
-      // For now, return "none" if we're not using Firestore
-      // backend.
-      // TODO: Implement support for secret managers outside
-      // of Cloud Run.
-      return "none";
-    }
     let projectId = process.env.GOOGLE_CLOUD_PROJECT;
     if (projectId) return projectId;
 
@@ -151,11 +149,66 @@ class SecretManagerProvider implements SecretsStore {
   }
 }
 
+class SimpleSecretsProvider implements SecretsStore {
+  #secrets: Promise<Record<string, SecretMapEntry>>;
+
+  constructor() {
+    this.#secrets = this.#readSecretsFile();
+  }
+
+  async #readSecretsFile() {
+    const secretsFile = resolve(ROOT_PATH, "secrets.json");
+    try {
+      const data = await readFile(secretsFile, "utf-8");
+      const parsed = JSON.parse(data) as Record<string, SecretMapEntry>;
+      if (typeof parsed !== "object") {
+        throw new Error(`Invalid secrets file: ${secretsFile}`);
+      }
+      if (
+        Object.values(parsed).some(
+          (entry) =>
+            typeof entry !== "object" || (!entry.secret && !entry.origin)
+        )
+      ) {
+        throw new Error(`Invalid secrets file: ${secretsFile}`);
+      }
+
+      return parsed;
+    } catch (e) {
+      throw new Error(`Failed to load secrets file: ${e}`);
+    }
+  }
+
+  async getList(): Promise<SecretMapEntry[]> {
+    const secrets = await this.#secrets;
+    return Object.entries(secrets).map(([secret, { origin }]) => ({
+      secret,
+      origin,
+    }));
+  }
+
+  async getKey(
+    key: string
+  ): Promise<[name: string, value: string, origin?: string | null] | null> {
+    const secrets = await this.#secrets;
+    const entry = secrets[key];
+    if (!entry) {
+      throw new Error(`Failed to get secret: ${key}`);
+    }
+    return [key, entry.secret, entry.origin];
+  }
+}
+
 class SecretsProvider implements SecretsStore {
   #store: SecretsStore;
 
   constructor() {
-    this.#store = new SecretManagerProvider();
+    let backend = process.env.STORAGE_BACKEND;
+    if (backend && backend !== "firestore") {
+      this.#store = new SimpleSecretsProvider();
+    } else {
+      this.#store = new SecretManagerProvider();
+    }
     this.getKey = this.getKey.bind(this);
   }
 
