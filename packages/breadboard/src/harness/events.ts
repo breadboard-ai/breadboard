@@ -17,6 +17,7 @@ import {
   SkipProbeMessage,
 } from "../types.js";
 import {
+  HarnessRunResult,
   RunEdgeEvent,
   RunEndEvent,
   RunErrorEvent,
@@ -24,6 +25,7 @@ import {
   RunGraphStartEvent,
   RunInputEvent,
   RunLifecycleEvent,
+  RunNextEvent,
   RunNodeEndEvent,
   RunNodeStartEvent,
   RunOutputEvent,
@@ -187,5 +189,13 @@ export class StopEvent extends Event implements RunLifecycleEvent {
     public data: { timestamp: number }
   ) {
     super(StopEvent.eventName, { ...opts });
+  }
+}
+
+export class NextEvent extends Event implements RunNextEvent {
+  static readonly eventName = "next";
+
+  constructor(public data: HarnessRunResult | void) {
+    super(NextEvent.eventName, { ...opts });
   }
 }

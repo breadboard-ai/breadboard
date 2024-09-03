@@ -27,6 +27,7 @@ import {
   ResumeEvent,
   StartEvent,
   EdgeEvent,
+  NextEvent,
 } from "./events.js";
 import { InspectableRunObserver } from "../inspector/types.js";
 import { timestamp } from "../timestamp.js";
@@ -104,6 +105,7 @@ export class LocalRunner
 
     for (;;) {
       const result = await this.#run.next();
+      this.dispatchEvent(new NextEvent(result.value));
       if (result.done) {
         this.#run = null;
         this.#pendingResult = null;
