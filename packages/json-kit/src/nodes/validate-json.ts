@@ -4,12 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { defineNodeType, object } from "@breadboard-ai/build";
 import {
-  NodeHandlerObject,
-  SchemaBuilder,
-  type InputValues,
-  type NodeDescriberFunction,
   type NodeValue,
+  type InputValues,
   type OutputValues,
   type Schema,
 } from "@google-labs/breadboard";
@@ -145,58 +143,8 @@ const invoke = async (inputs: InputValues): Promise<OutputValues> => {
   return validateJson(parsed, parsedSchema as Schema, strictSchema);
 };
 
-const describe: NodeDescriberFunction = async () => {
-  const inputSchema = new SchemaBuilder()
-    .addProperty("json", {
-      title: "JSON string",
-      description: "The string to validate as JSON.",
-      type: "string",
-    })
-    .addProperty("schema", {
-      title: "Schema",
-      description: "Optional schema to validate against.",
-      type: "object",
-      behavior: ["config"],
-    })
-    .addProperty("strictSchema", {
-      title: "Strict",
-      description:
-        "Optional boolean to enforce or turn off strict validation of the supplied schema.",
-      type: "boolean",
-      behavior: ["config"],
-    })
-    .addRequired(["json"])
-    .build();
-
-  const outputSchema = new SchemaBuilder()
-    .addProperty("json", {
-      title: "JSON",
-      description: "The validated JSON.",
-    })
-    .addProperty("$error", {
-      title: "$error",
-      description: "The error if the JSON is invalid.",
-      type: "object",
-      properties: {
-        kind: { type: "string", enum: ["error"] },
-        error: {
-          type: "object",
-          properties: {
-            type: { type: "string", enum: ["parsing", "validation"] },
-            message: { type: "string" },
-          },
-        },
-      },
-    })
-    .build();
-
-  return {
-    inputSchema,
-    outputSchema,
-  };
-};
-
-export default {
+export default defineNodeType({
+  name: "validateJson",
   metadata: {
     title: "Validate JSON",
     description:
@@ -205,6 +153,34 @@ export default {
       url: "https://breadboard-ai.github.io/breadboard/docs/kits/json/#validatejson",
     },
   },
+  inputs: {
+    json: {
+      title: "JSON string",
+      description: "The string to validate as JSON.",
+      type: "string",
+    },
+    schema: {
+      title: "Schema",
+      description: "Optional schema to validate against.",
+      type: object({}, "unknown"),
+      behavior: ["config"],
+      optional: true,
+    },
+    strictSchema: {
+      title: "Strict",
+      description:
+        "Optional boolean to enforce or turn off strict validation of the supplied schema.",
+      type: "boolean",
+      behavior: ["config"],
+      default: false,
+    },
+  },
+  outputs: {
+    json: {
+      title: "JSON",
+      description: "The validated JSON.",
+      type: "unknown",
+    },
+  },
   invoke,
-  describe,
-} as NodeHandlerObject;
+});
