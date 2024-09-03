@@ -163,9 +163,16 @@
                       "title": "context"
                     },
                     "json": {
+                      "type": [
+                        "array",
+                        "boolean",
+                        "null",
+                        "number",
+                        "object",
+                        "string"
+                      ],
                       "title": "JSON",
-                      "description": "The validated JSON.",
-                      "type": "string"
+                      "description": "The validated JSON."
                     }
                   }
                 }

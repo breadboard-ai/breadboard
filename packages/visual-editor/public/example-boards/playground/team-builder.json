@@ -78,7 +78,14 @@
           "type": "object",
           "properties": {
             "json": {
-              "type": "string",
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
+              ],
               "title": "JSON",
               "description": "The validated JSON."
             },
@@ -128,9 +135,16 @@
                     "type": "object",
                     "properties": {
                       "item": {
+                        "type": [
+                          "array",
+                          "boolean",
+                          "null",
+                          "number",
+                          "object",
+                          "string"
+                        ],
                         "title": "JSON",
-                        "description": "The validated JSON.",
-                        "type": "string"
+                        "description": "The validated JSON."
                       }
                     }
                   }
