@@ -1122,7 +1122,14 @@ export class Main extends LitElement {
 
     this.#runner.addEventListener("end", () => {
       this.status = BreadboardUI.Types.STATUS.STOPPED;
-      this.requestUpdate();
+    });
+
+    this.#runner.addEventListener("error", (evt) => {
+      this.toast(
+        BreadboardUI.Utils.formatError(evt.data.error),
+        BreadboardUI.Events.ToastType.ERROR
+      );
+      this.status = BreadboardUI.Types.STATUS.STOPPED;
     });
 
     this.#runner.addEventListener("resume", () => {
@@ -1131,7 +1138,6 @@ export class Main extends LitElement {
 
     this.#runner.addEventListener("pause", () => {
       this.status = BreadboardUI.Types.STATUS.PAUSED;
-      this.requestUpdate();
     });
 
     this.#runner.addEventListener("secret", (evt) => {
@@ -1807,6 +1813,7 @@ export class Main extends LitElement {
                 }
 
                 this.#abortController.abort("Stopped board");
+                this.#runner?.run();
                 this.requestUpdate();
               }}
               @bbedgechange=${(evt: BreadboardUI.Events.EdgeChangeEvent) => {

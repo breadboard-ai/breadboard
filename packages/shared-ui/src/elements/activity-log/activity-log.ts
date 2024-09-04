@@ -5,7 +5,6 @@
  */
 
 import {
-  ErrorObject,
   GraphProvider,
   InspectableRun,
   InspectableRunEvent,
@@ -35,6 +34,7 @@ import {
   isLLMContentArrayBehavior,
   isLLMContentBehavior,
 } from "../../utils/index.js";
+import { formatError } from "../../utils/format-error.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
@@ -632,31 +632,7 @@ export class ActivityLog extends LitElement {
               }
 
               case "error": {
-                const { error } = event;
-                let output = "";
-                if (typeof error === "string") {
-                  output = error;
-                } else {
-                  if ((error.error as Error)?.name === "AbortError") {
-                    console.log("💖 actually aborted");
-                  }
-                  if (typeof error.error === "string") {
-                    output = error.error;
-                  } else {
-                    let messageOutput = "";
-                    let errorData = error;
-                    while (typeof errorData === "object") {
-                      if (errorData && "message" in errorData) {
-                        messageOutput += `${errorData.message}\n`;
-                      }
-
-                      errorData = errorData.error as ErrorObject;
-                    }
-
-                    output = messageOutput;
-                  }
-                }
-
+                const output = formatError(event.error);
                 content = html`${output}`;
                 break;
               }
