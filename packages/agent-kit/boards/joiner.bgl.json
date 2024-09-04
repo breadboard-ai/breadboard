@@ -48,6 +48,9 @@
           },
           "required": [],
           "additionalProperties": {
+            "behavior": [
+              "llm-content"
+            ],
             "anyOf": [
               {
                 "type": "object",
@@ -419,6 +422,9 @@
                       }
                     ]
                   }
+                ],
+                "behavior": [
+                  "llm-content"
                 ]
               },
               "title": "Context out"
@@ -624,6 +630,9 @@
                   }
                 ]
               }
+            ],
+            "behavior": [
+              "llm-content"
             ]
           }
         },
@@ -812,6 +821,9 @@
                       }
                     ]
                   }
+                ],
+                "behavior": [
+                  "llm-content"
                 ]
               }
             }
