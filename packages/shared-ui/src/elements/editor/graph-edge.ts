@@ -11,7 +11,7 @@ import { getGlobalColor } from "./utils.js";
 import { EdgeData, cloneEdgeData } from "../../types/types.js";
 
 const edgeColorSelected = getGlobalColor("--bb-ui-600");
-const edgeColorOrdinary = getGlobalColor("--bb-neutral-300");
+const edgeColorOrdinary = getGlobalColor("--bb-neutral-400");
 const edgeColorConstant = getGlobalColor("--bb-ui-200");
 const edgeColorControl = getGlobalColor("--bb-boards-200");
 const edgeColorStar = getGlobalColor("--bb-inputs-200");
@@ -283,7 +283,7 @@ export class GraphEdge extends PIXI.Graphics {
       edgeColor = edgeColorSelected;
     }
 
-    this.setStrokeStyle({ width: 2, color: edgeColor });
+    this.setStrokeStyle({ width: 1, color: edgeColor });
 
     const midY = Math.round((inLocation.y - outLocation.y) * 0.5);
     const ndx = outLocation.x - inLocation.x;

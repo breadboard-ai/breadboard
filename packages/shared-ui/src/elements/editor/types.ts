@@ -32,4 +32,5 @@ export enum GRAPH_OPERATIONS {
 export enum GraphNodePortType {
   IN = "in",
   OUT = "out",
+  INERT = "inert",
 }
