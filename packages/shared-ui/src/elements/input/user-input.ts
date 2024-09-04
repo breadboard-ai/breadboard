@@ -122,8 +122,8 @@ export class UserInput extends LitElement {
 
     .item.status.connected.configured .title::before,
     .item.status.connected .title::before {
-      background: var(--bb-inputs-200);
-      border: 1px solid var(--bb-inputs-600);
+      background: var(--bb-ui-300);
+      border: 1px solid var(--bb-ui-600);
     }
 
     .item.status.missing .title::before {
