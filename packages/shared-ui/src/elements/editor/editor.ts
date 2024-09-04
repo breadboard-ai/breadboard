@@ -50,7 +50,7 @@ const DATA_TYPE = "text/plain";
 const PASTE_OFFSET = 50;
 
 import { GraphAssets } from "./graph-assets.js";
-import { LogEntry, NodeLogEntry } from "../../types/types.js";
+import { EdgeLogEntry, LogEntry, NodeLogEntry } from "../../types/types.js";
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
   if (type !== "input" && type !== "output") {
@@ -441,6 +441,11 @@ export class Editor extends LitElement {
     }
 
     const url = this.graph.raw().url || "";
+
+    const edgeValues: EdgeLogEntry[] =
+      this.topGraphLog?.filter((entry) => entry.type === "edge") || [];
+
+    this.#graphRenderer.edgeValues = edgeValues;
 
     // Attempt to update the graph if it already exists.
     const updated = this.#graphRenderer.updateGraphByUrl(url, this.subGraphId, {

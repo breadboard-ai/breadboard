@@ -42,7 +42,7 @@ import { styleMap } from "lit/directives/style-map.js";
 import { getGlobalColor } from "./utils.js";
 import { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
 import { GraphComment } from "./graph-comment.js";
-import { EdgeData } from "../../types/types.js";
+import { EdgeData, EdgeLogEntry } from "../../types/types.js";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
 const selectionBoxBackgroundAlpha = 0.05;
@@ -80,6 +80,9 @@ export class GraphRenderer extends LitElement {
 
   @property({ reflect: true })
   highlightInvalidWires = false;
+
+  @property()
+  edgeValues: EdgeLogEntry[] = [];
 
   @property()
   showPortTooltips = false;
