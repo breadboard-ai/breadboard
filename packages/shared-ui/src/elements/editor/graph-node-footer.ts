@@ -77,7 +77,7 @@ export class GraphNodeFooter extends PIXI.Container {
       }
 
       portItem.nodePort.x = this.#width;
-      portItem.nodePort.y = (this.#height - portItem.nodePort.height) * 0.5;
+      portItem.nodePort.y = this.#height * 0.5;
 
       portItem.label.x =
         portItem.nodePort.x + portItem.nodePort.radius * 2 + this.#spacing;

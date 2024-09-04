@@ -33,6 +33,7 @@
         "../agent-kit:build",
         "../breadboard:build:tsc",
         "../visual-editor:build:tsc",
+        "../shared-ui:build:tsc",
         "../build:build:tsc",
         "../core-kit:build:tsc",
         "../gemini-kit:build:tsc",
@@ -85,6 +86,9 @@
       "env": {
         "FORCE_COLOR": "1"
       },
+      "dependencies": [
+        "typescript-files-and-deps"
+      ],
       "files": [
         "src/js/",
         "tsconfig.json",

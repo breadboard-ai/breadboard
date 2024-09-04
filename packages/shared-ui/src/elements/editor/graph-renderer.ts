@@ -59,6 +59,7 @@ enum MODE {
 interface GraphOpts {
   url: string;
   subGraphId: string | null;
+  showNodePreviewValues: boolean;
   showNodeTypeDescriptions: boolean;
   collapseNodesByDefault: boolean;
   ports: Map<string, InspectableNodePorts> | null;
@@ -616,6 +617,10 @@ export class GraphRenderer extends LitElement {
 
     if (opts.showNodeTypeDescriptions !== undefined) {
       graph.showNodeTypeDescriptions = opts.showNodeTypeDescriptions;
+    }
+
+    if (opts.showNodePreviewValues !== undefined) {
+      graph.showNodePreviewValues = opts.showNodePreviewValues;
     }
 
     if (opts.showNodeTypeDescriptions !== undefined) {

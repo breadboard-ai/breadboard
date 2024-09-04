@@ -93,6 +93,15 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
           },
         ],
         [
+          "Show Node Preview Values",
+          {
+            name: "Show Node Preview Values",
+            description:
+              "Toggles the visibility of configuration values in the graph",
+            value: true,
+          },
+        ],
+        [
           "Show Port Tooltips",
           {
             name: "Show Port Tooltips",

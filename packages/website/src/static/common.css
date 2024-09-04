@@ -34,6 +34,8 @@
   --bb-icon-unfold-less: url(/breadboard/static/third_party/icons/unfold-less.svg);
   --bb-icon-unfold-more: url(/breadboard/static/third_party/icons/unfold-more.svg);
 
+  /** UI Colors */
+
   --bb-warning-50: #ffffff;
   --bb-warning-100: #ffcccc;
   --bb-warning-200: #ff9999;
@@ -101,6 +103,96 @@
   --bb-neutral-700: #595959;
   --bb-neutral-800: #333333;
   --bb-neutral-900: #1a1a1a;
+
+  /** Node Colors */
+
+  --bb-human-50: #ede7f6;
+  --bb-human-100: #d1c4e9;
+  --bb-human-200: #b39ddb;
+  --bb-human-300: #9575cd;
+  --bb-human-400: #7e57c2;
+  --bb-human-500: #673ab7;
+  --bb-human-600: #5e35b1;
+  --bb-human-700: #512da8;
+  --bb-human-800: #4527a0;
+  --bb-human-900: #311b92;
+
+  --bb-joiner-50: #fce4ec;
+  --bb-joiner-100: #f8bbd0;
+  --bb-joiner-200: #f48fb1;
+  --bb-joiner-300: #f06292;
+  --bb-joiner-400: #ec407a;
+  --bb-joiner-500: #e91e63;
+  --bb-joiner-600: #d81b60;
+  --bb-joiner-700: #c2185b;
+  --bb-joiner-800: #ad1457;
+  --bb-joiner-900: #880e4f;
+
+  --bb-specialist-50: #ecf5ff;
+  --bb-specialist-100: #c0dfff;
+  --bb-specialist-200: #a1d0ff;
+  --bb-specialist-300: #77bbff;
+  --bb-specialist-400: #5cadff;
+  --bb-specialist-500: #3399ff;
+  --bb-specialist-600: #2e8be8;
+  --bb-specialist-700: #246db5;
+  --bb-specialist-800: #1b548c;
+  --bb-specialist-900: #1b548c;
+
+  --bb-input-50: #eaf7e7;
+  --bb-input-100: #bbe7b0;
+  --bb-input-200: #9adc8a;
+  --bb-input-300: #6ccb55;
+  --bb-input-400: #4fc134;
+  --bb-input-500: #24b202;
+  --bb-input-600: #20a202;
+  --bb-input-700: #1a7e01;
+  --bb-input-800: #136202;
+  --bb-input-900: #0f4b00;
+
+  --bb-output-50: #fff4eb;
+  --bb-output-100: #ffdfc0;
+  --bb-output-200: #ffcea1;
+  --bb-output-300: #feb876;
+  --bb-output-400: #feab5c;
+  --bb-output-500: #fe9533;
+  --bb-output-600: #e7882e;
+  --bb-output-700: #b46b24;
+  --bb-output-800: #8c521b;
+  --bb-output-900: #6b3f15;
+
+  --bb-looper-50: #e0f2f1;
+  --bb-looper-100: #b2dfdb;
+  --bb-looper-200: #80cbc4;
+  --bb-looper-300: #4db6ac;
+  --bb-looper-400: #26a69a;
+  --bb-looper-500: #009688;
+  --bb-looper-600: #00897b;
+  --bb-looper-700: #00796b;
+  --bb-looper-800: #00695c;
+  --bb-looper-900: #004d40;
+
+  --bb-item-2-50: #fbe9e7;
+  --bb-item-2-100: #ffccbc;
+  --bb-item-2-200: #ffab91;
+  --bb-item-2-300: #ff8a65;
+  --bb-item-2-400: #ff7043;
+  --bb-item-2-500: #ff5722;
+  --bb-item-2-600: #f4511e;
+  --bb-item-2-700: #e64a19;
+  --bb-item-2-800: #d84315;
+  --bb-item-2-900: #bf360c;
+
+  --bb-js-50: #fff9e6;
+  --bb-js-100: #ffebb0;
+  --bb-js-200: #ffe28b;
+  --bb-js-300: #ffd454;
+  --bb-js-400: #ffcc33;
+  --bb-js-500: #ffbf00;
+  --bb-js-600: #e8af02;
+  --bb-js-700: #b68902;
+  --bb-js-800: #8c6900;
+  --bb-js-900: #6b5000;
 
   --bb-title-xx-large: 36px;
   --bb-title-line-height-xx-large: 28px;
