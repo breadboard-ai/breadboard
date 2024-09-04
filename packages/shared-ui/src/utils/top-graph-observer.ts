@@ -85,8 +85,10 @@ export class TopGraphObserver {
    */
   #currentInput: EdgeLogEntry | null = null;
 
-  constructor(runner: HarnessRunner, signal: AbortSignal) {
-    signal.addEventListener("abort", this.#abort.bind(this));
+  constructor(runner: HarnessRunner, signal?: AbortSignal) {
+    if (signal) {
+      signal.addEventListener("abort", this.#abort.bind(this));
+    }
     runner.addEventListener("nodestart", this.#nodeStart.bind(this));
     runner.addEventListener("nodeend", this.#nodeEnd.bind(this));
     runner.addEventListener("graphstart", this.#graphStart.bind(this));
