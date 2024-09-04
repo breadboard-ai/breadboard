@@ -4,14 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessProxyConfig, run } from "@google-labs/breadboard/harness";
+import {
+  createRunner,
+  HarnessProxyConfig,
+  HarnessRunner,
+  RunConfig,
+} from "@google-labs/breadboard/harness";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { map } from "lit/directives/map.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import {
   blankLLMContent,
   createLoader,
@@ -20,6 +24,7 @@ import {
   GraphDescriptor,
   GraphLoader,
   GraphProvider,
+  InputValues,
   InspectableRun,
   InspectableRunObserver,
   Kit,
@@ -38,6 +43,7 @@ import { provide } from "@lit/context";
 import PythonWasmKit from "@breadboard-ai/python-wasm";
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 import { RecentBoardStore } from "./data/recent-boards";
+import { SecretsHelper } from "./utils/secrets-helper";
 
 const REPLAY_DELAY_MS = 10;
 const STORAGE_PREFIX = "bb-main";
@@ -167,10 +173,12 @@ export class Main extends LitElement {
   #boardPendingSave = false;
   #lastBoardId = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
+  #runner: HarnessRunner | null = null;
   #runObserver: InspectableRunObserver | null = null;
   #editor: EditableGraph | null = null;
   #providers: GraphProvider[];
   #settings: SettingsStore | null;
+  #secretsHelper: SecretsHelper | null = null;
   /**
    * Optional proxy configuration for the board.
    * This is used to provide additional proxied nodes.
@@ -1076,10 +1084,13 @@ export class Main extends LitElement {
   }
 
   // TODO: Allow this to run boards directly.
-  async #runBoard(runner: ReturnType<typeof run>) {
+  async #runBoard(config: RunConfig) {
     if (!(this.#uiRef.value && this.graph)) {
       return;
     }
+
+    // TODO: Do I need to clear out the previously held runner?
+    this.#runner = createRunner(config);
 
     const ui = this.#uiRef.value;
     ui.graph = this.graph;
@@ -1095,21 +1106,56 @@ export class Main extends LitElement {
       });
     }
 
-    for await (const result of runner) {
-      await this.#runObserver.observe(result);
+    this.#runner.addObserver(this.#runObserver);
+
+    this.#runner.addEventListener("next", () => {
       this.requestUpdate();
 
       if (currentBoardId !== this.#boardId) {
-        return;
+        this.#abortController?.abort();
       }
+    });
 
-      const answer = await ui.handleStateChange(result);
-      if (answer) {
-        await result.reply({ inputs: answer } as InputResolveRequest);
+    this.#runner.addEventListener("start", () => {
+      this.status = BreadboardUI.Types.STATUS.RUNNING;
+    });
+
+    this.#runner.addEventListener("end", () => {
+      this.status = BreadboardUI.Types.STATUS.STOPPED;
+      this.requestUpdate();
+    });
+
+    this.#runner.addEventListener("resume", () => {
+      this.status = BreadboardUI.Types.STATUS.RUNNING;
+    });
+
+    this.#runner.addEventListener("pause", () => {
+      this.status = BreadboardUI.Types.STATUS.PAUSED;
+      this.requestUpdate();
+    });
+
+    this.#runner.addEventListener("secret", (evt) => {
+      const { keys } = evt.data;
+      const result: InputValues = {};
+      const allKeysAreKnown = keys.every((key) => {
+        const savedSecret =
+          this.#settings
+            ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.SECRETS)
+            .items.get(key) ?? null;
+        if (savedSecret) {
+          result[key] = savedSecret.value;
+          return true;
+        }
+        return false;
+      });
+      if (allKeysAreKnown) {
+        this.#runner?.run(result);
+      } else {
+        this.#secretsHelper = new SecretsHelper(this.#settings!, keys);
       }
-    }
+    });
 
-    this.status = BreadboardUI.Types.STATUS.STOPPED;
+    this.#runner.run();
   }
 
   #setUrlParam(param: string, value: string | null) {
@@ -1729,31 +1775,29 @@ export class Main extends LitElement {
                   return;
                 }
 
-                const runner = this.graph;
+                const graph = this.graph;
 
                 this.#abortController = new AbortController();
 
                 this.#runBoard(
-                  run(
-                    addNodeProxyServerConfig(
-                      this.#proxy,
-                      {
-                        url: this.graph.url,
-                        runner,
-                        diagnostics: true,
-                        kits: this.kits,
-                        loader: this.#loader,
-                        store: this.dataStore,
-                        signal: this.#abortController?.signal,
-                        inputs: BreadboardUI.Data.inputsFromSettings(
-                          this.#settings
-                        ),
-                        interactiveSecrets: true,
-                      },
-                      this.#settings,
-                      this.proxyFromUrl,
-                      await this.#getProxyURL(this.graph.url)
-                    )
+                  addNodeProxyServerConfig(
+                    this.#proxy,
+                    {
+                      url: this.graph.url,
+                      runner: graph,
+                      diagnostics: true,
+                      kits: this.kits,
+                      loader: this.#loader,
+                      store: this.dataStore,
+                      signal: this.#abortController?.signal,
+                      inputs: BreadboardUI.Data.inputsFromSettings(
+                        this.#settings
+                      ),
+                      interactiveSecrets: true,
+                    },
+                    this.#settings,
+                    this.proxyFromUrl,
+                    await this.#getProxyURL(this.graph.url)
                   )
                 );
               }}
@@ -1990,37 +2034,32 @@ export class Main extends LitElement {
                 }
 
                 const isSecret = "secret" in event.data;
-                const shouldSaveSecrets =
-                  (event.allowSavingIfSecret &&
-                    this.#settings
-                      .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
-                      .items.get("Save Secrets")?.value) ||
-                  false;
-                if (!shouldSaveSecrets || !isSecret) {
-                  return;
+                const runner = this.#runner;
+                if (!runner) {
+                  throw new Error("Can't send input, no runner");
                 }
-
-                const name = event.id;
-                const value = event.data.secret as string;
-                const secrets = this.#settings.getSection(
-                  BreadboardUI.Types.SETTINGS_TYPE.SECRETS
-                ).items;
-                let shouldSave = false;
-                if (secrets.has(event.id)) {
-                  const secret = secrets.get(event.id);
-                  if (secret && secret.value !== value) {
-                    secret.value = value;
-                    shouldSave = true;
+                if (isSecret) {
+                  if (!this.#secretsHelper) {
+                    throw new Error("No secrets helper to handle secret input");
+                  }
+                  this.#secretsHelper.receiveSecrets(event);
+                  if (
+                    this.#secretsHelper.hasAllSecrets() &&
+                    !this.#runner?.running()
+                  ) {
+                    const secrets = this.#secretsHelper.getSecrets();
+                    this.#secretsHelper = null;
+                    this.#runner?.run(secrets);
                   }
                 } else {
-                  secrets.set(name, { name, value });
-                  shouldSave = true;
+                  const data = event.data as InputValues;
+                  if (runner.running()) {
+                    throw new Error(
+                      "The runner is already running, cannot send input"
+                    );
+                  }
+                  runner.run(data);
                 }
-
-                if (!shouldSave) {
-                  return;
-                }
-                await this.#settings.save(this.#settings.values);
                 this.requestUpdate();
               }}
             ></bb-ui-controller>
