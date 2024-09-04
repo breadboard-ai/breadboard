@@ -75,7 +75,7 @@ const placeInputInLog = (log: LogEntry[], edge: EdgeLogEntry): LogEntry[] => {
  * A lightweight rewrite of the `InspectableRunObserver` that
  * only captures the events that are necessary to drive the app UI.
  */
-export class LightObserver {
+export class TopGraphObserver {
   #log: LogEntry[] | null = null;
   #currentNode: NodeLogEntry | null = null;
   /**
