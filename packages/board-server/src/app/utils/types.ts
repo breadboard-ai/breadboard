@@ -11,7 +11,7 @@ import type {
   OutputValues,
   Schema,
 } from "@google-labs/breadboard";
-import type { TypedEventTarget } from "../../../../breadboard/dist/src/utils/typed-event-target.js";
+import type { TypedEventTarget } from "@google-labs/breadboard";
 
 export type NodeLogEntry = {
   type: "node";
