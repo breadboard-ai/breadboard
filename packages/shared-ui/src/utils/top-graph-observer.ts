@@ -18,7 +18,7 @@ import type {
   RunNodeStartEvent,
   RunOutputEvent,
 } from "@google-labs/breadboard/harness";
-import type { EdgeLogEntry, LogEntry, NodeLogEntry } from "./types.js";
+import type { EdgeLogEntry, LogEntry, NodeLogEntry } from "../types/types.js";
 
 const idFromPath = (path: number[]): string => {
   return `e-${path.join("-")}`;
@@ -75,7 +75,7 @@ const placeInputInLog = (log: LogEntry[], edge: EdgeLogEntry): LogEntry[] => {
  * A lightweight rewrite of the `InspectableRunObserver` that
  * only captures the events that are necessary to drive the app UI.
  */
-export class LightObserver {
+export class TopGraphObserver {
   #log: LogEntry[] | null = null;
   #currentNode: NodeLogEntry | null = null;
   /**
@@ -282,13 +282,13 @@ class Node implements NodeLogEntry {
 }
 
 class Edge implements EdgeLogEntry {
-  type: "edge" = "edge";
+  type = "edge" as const;
   value?: InputValues | undefined;
   end = null;
 }
 
 class BubbledOutputEdge implements EdgeLogEntry {
-  type: "edge" = "edge";
+  type = "edge" as const;
   value?: OutputValues | undefined;
   schema: Schema | undefined;
   end: number;
@@ -301,7 +301,7 @@ class BubbledOutputEdge implements EdgeLogEntry {
 }
 
 class BubbledInputEdge implements EdgeLogEntry {
-  type: "edge" = "edge";
+  type = "edge" as const;
   id: string;
   value: InputValues | undefined;
   schema: Schema | undefined;
@@ -315,7 +315,7 @@ class BubbledInputEdge implements EdgeLogEntry {
 }
 
 class InputEdge implements EdgeLogEntry {
-  type: "edge" = "edge";
+  type = "edge" as const;
   id: string;
   value: InputValues | undefined;
   schema: Schema | undefined;
@@ -341,7 +341,7 @@ class UserNode extends Node {
 }
 
 class EndNode implements NodeLogEntry {
-  type: "node" = "node";
+  type = "node" as const;
   id: string = "end";
   descriptor = {
     id: "end",

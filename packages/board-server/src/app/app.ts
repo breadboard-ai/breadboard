@@ -36,7 +36,6 @@ import AgentKit from "@google-labs/agent-kit";
 
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import "./elements/elements.js";
-import { LightObserver } from "./utils/light-observer.js";
 import {
   VisitorStateManager,
   visitorStateManagerContext,
@@ -136,7 +135,7 @@ export class AppView extends LitElement {
 
   #isSharing = false;
   #abortController: AbortController | null = null;
-  #runObserver: LightObserver | null = null;
+  #runObserver: BreadboardUI.Utils.TopGraphObserver | null = null;
   #runner: HarnessRunner | null = null;
   #runStartTime = 0;
   #message = randomMessage[Math.floor(Math.random() * randomMessage.length)]!;
@@ -590,7 +589,7 @@ export class AppView extends LitElement {
 
     this.#runner = createRunner(config);
 
-    this.#runObserver = new LightObserver(
+    this.#runObserver = new BreadboardUI.Utils.TopGraphObserver(
       this.#runner,
       this.#abortController.signal
     );
