@@ -11,6 +11,7 @@ import { input } from "../internal/board/input.js";
 import { defineNodeType } from "../internal/define/define.js";
 import { kit } from "../internal/kit.js";
 import { board as oldBoard } from "@google-labs/breadboard";
+import { serialize } from "../internal/board/serialize.js";
 
 const testDiscrete = defineNodeType({
   name: "discreteComponent",
@@ -54,7 +55,6 @@ test("kit handles discrete component", () => {
     // $ExpectType Definition<{ str: string; }, { str: string; }, undefined, undefined, never, false, false, false, { str: { board: false; }; }>
     testKit.foo
   );
-  assert.equal(testKit.foo.id, "foo");
   assert.equal(testKit.foo.metadata.description, "Discrete Description");
 });
 
@@ -63,11 +63,10 @@ test("kit handles board component", () => {
     // $ExpectType BoardDefinition<{ num: number; }, { num: number; }>
     testKit.bar
   );
-  assert.equal(testKit.bar.id, "bar");
   assert.equal(testKit.bar.description, "Board Description");
 });
 
-test("can invoke discrete component through board with old API", async () => {
+test("can invoke discrete component with old API", async () => {
   const legacyTestKit = await testKit.legacy();
   const oldBoardInstance = await oldBoard(() => {
     const node = legacyTestKit.foo({ str: "foo" });
@@ -113,12 +112,12 @@ test("can invoke discrete component through board with old API", async () => {
   });
 });
 
-test("can invoke board component through board with old API", async () => {
+test("can invoke board component with old API", async () => {
   const legacyTestKit = await testKit.legacy();
   const oldBoardInstance = await oldBoard(() => {
-    const bb = legacyTestKit.bar({ num: 32 });
+    const num = legacyTestKit.bar({ num: 32 });
     return {
-      num: bb.num,
+      num,
     };
   });
   const bgl = await oldBoardInstance.serialize();
@@ -156,5 +155,85 @@ test("can invoke board component through board with old API", async () => {
       },
     ],
     graphs: {},
+  });
+});
+
+test("can invoke discrete component with new API", () => {
+  const str = testKit.foo({ str: "foo" }).outputs.str;
+  const newBoardInstance = board({ inputs: {}, outputs: { str } });
+  const bgl = serialize(newBoardInstance);
+  assert.deepEqual(bgl, {
+    nodes: [
+      {
+        id: "output-0",
+        type: "output",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {
+              str: {
+                type: "string",
+              },
+            },
+            required: ["str"],
+          },
+        },
+      },
+      {
+        id: "foo-0",
+        type: "foo",
+        configuration: {
+          str: "foo",
+        },
+      },
+    ],
+    edges: [
+      {
+        from: "foo-0",
+        out: "str",
+        to: "output-0",
+        in: "str",
+      },
+    ],
+  });
+});
+
+test("can invoke board component with new API", () => {
+  const num = testKit.bar({ num: 32 }).outputs.num;
+  const newBoardInstance = board({ inputs: {}, outputs: { num } });
+  const bgl = serialize(newBoardInstance);
+  assert.deepEqual(bgl, {
+    nodes: [
+      {
+        id: "output-0",
+        type: "output",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {
+              num: {
+                type: "number",
+              },
+            },
+            required: ["num"],
+          },
+        },
+      },
+      {
+        id: "bar-0",
+        type: "bar",
+        configuration: {
+          num: 32,
+        },
+      },
+    ],
+    edges: [
+      {
+        from: "bar-0",
+        out: "num",
+        to: "output-0",
+        in: "num",
+      },
+    ],
   });
 });
