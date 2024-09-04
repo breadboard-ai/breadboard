@@ -140,6 +140,6 @@
   "devDependencies": {
     "eslint": "^8.57.0",
     "typescript": "^5.5.4",
-    "wireit": "^0.14.8"
+    "wireit": "^0.14.9"
   }
 }
