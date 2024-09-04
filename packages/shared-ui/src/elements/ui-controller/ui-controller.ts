@@ -12,7 +12,12 @@ import {
   nothing,
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { RecentBoard, SETTINGS_TYPE, STATUS } from "../../types/types.js";
+import {
+  LogEntry,
+  RecentBoard,
+  SETTINGS_TYPE,
+  STATUS,
+} from "../../types/types.js";
 import {
   GraphNodeDeselectedEvent,
   GraphNodeSelectedEvent,
@@ -30,7 +35,6 @@ import {
   InspectableRunEvent,
   InspectableRunInputs,
   Kit,
-  NodeIdentifier,
   RemoveNodeSpec,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -75,6 +79,9 @@ export class UI extends LitElement {
 
   @property()
   run: InspectableRun | null = null;
+
+  @property()
+  topGraphLog: LogEntry[] | null = null;
 
   @property()
   inputsFromLastRun: InspectableRunInputs | null = null;
@@ -156,20 +163,6 @@ export class UI extends LitElement {
   }
 
   render() {
-    const currentNode = (): NodeIdentifier | null => {
-      if (this.status === STATUS.STOPPED) return null;
-
-      if (!this.run) return null;
-
-      const currentNodeEvent = this.run.stack()[0];
-
-      if (!currentNodeEvent) return null;
-
-      if (this.subGraphId) return null;
-
-      return currentNodeEvent.node.descriptor.id;
-    };
-
     let boardTitle = this.graph?.title;
     let boardVersion = this.graph?.version;
     let boardDescription = this.graph?.description;
@@ -192,7 +185,6 @@ export class UI extends LitElement {
 
     const events = this.run?.events || [];
     const eventPosition = events.length - 1;
-    const nodeId = currentNode();
 
     let selectedNodeIsInputOrOutput = true;
     if (this.selectedNodeIds.length === 1) {
@@ -296,7 +288,7 @@ export class UI extends LitElement {
         this.graph,
         this.subGraphId,
         this.kits,
-        nodeId,
+        this.topGraphLog,
         this.boardId,
         collapseNodesByDefault,
         hideSubboardSelectorWhenEmpty,
@@ -313,7 +305,7 @@ export class UI extends LitElement {
         return html`<bb-editor
           .graph=${graph}
           .subGraphId=${this.subGraphId}
-          .highlightedNodeId=${nodeId}
+          .topGraphLog=${this.topGraphLog}
           .boardId=${this.boardId}
           .collapseNodesByDefault=${collapseNodesByDefault}
           .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}

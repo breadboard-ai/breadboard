@@ -44,6 +44,7 @@ import PythonWasmKit from "@breadboard-ai/python-wasm";
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 import { RecentBoardStore } from "./data/recent-boards";
 import { SecretsHelper } from "./utils/secrets-helper";
+import { TopGraphObserver } from "../../shared-ui/dist/utils/top-graph-observer";
 
 const REPLAY_DELAY_MS = 10;
 const STORAGE_PREFIX = "bb-main";
@@ -175,6 +176,7 @@ export class Main extends LitElement {
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #runner: HarnessRunner | null = null;
   #runObserver: InspectableRunObserver | null = null;
+  #topGraphObserver: BreadboardUI.Utils.TopGraphObserver | null = null;
   #editor: EditableGraph | null = null;
   #providers: GraphProvider[];
   #settings: SettingsStore | null;
@@ -956,6 +958,7 @@ export class Main extends LitElement {
     }
     this.status = BreadboardUI.Types.STATUS.STOPPED;
     this.#runObserver = null;
+    this.#topGraphObserver = null;
     this.showWelcomePanel = false;
     this.#setBoardPendingSaveState(false);
     this.#setPageTitle();
@@ -1104,6 +1107,10 @@ export class Main extends LitElement {
         dataStore: this.dataStore,
         runStore: this.runStore,
       });
+      this.#topGraphObserver = new TopGraphObserver(
+        this.#runner,
+        this.#abortController?.signal
+      );
     }
 
     this.#runner.addObserver(this.#runObserver);
@@ -1446,6 +1453,7 @@ export class Main extends LitElement {
     let tmpl: HTMLTemplateResult | symbol = nothing;
 
     let runs: Promise<InspectableRun[]> = Promise.resolve([]);
+    const topGraphLog = this.#topGraphObserver?.log() || [];
     if (this.#runObserver) {
       runs = this.#runObserver?.runs();
     }
@@ -1681,6 +1689,7 @@ export class Main extends LitElement {
               .graph=${this.graph}
               .subGraphId=${this.subGraphId}
               .run=${currentRun}
+              .topGraphLog=${topGraphLog}
               .inputsFromLastRun=${inputsFromLastRun}
               .kits=${this.kits}
               .loader=${this.#loader}
