@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InspectablePort } from "@google-labs/breadboard";
+import { InspectablePort, PortStatus } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
 import { getGlobalColor, isConfigurablePort } from "./utils";
 import { GraphNodePort } from "./graph-node-port";
@@ -48,6 +48,10 @@ export class GraphNodeFooter extends PIXI.Container {
 
     for (const port of ports) {
       if (!isConfigurablePort(port)) {
+        continue;
+      }
+
+      if (port.status !== PortStatus.Missing && port.value === undefined) {
         continue;
       }
 
@@ -95,9 +99,16 @@ export class GraphNodeFooter extends PIXI.Container {
     }
 
     for (const [inPortName, portItem] of this.#inPortsData) {
-      if (!ports.find((inPort) => inPort.name === inPortName)) {
+      const port = ports.find((inPort) => inPort.name === inPortName);
+      if (!port) {
+        continue;
+      }
+
+      // Unless the port is missing a value, we can remove it when it has
+      // no value set.
+      if (port.status !== PortStatus.Missing && port.value === undefined) {
         portItem?.label.removeFromParent();
-        portItem?.label?.destroy();
+        portItem?.label.destroy();
 
         portItem?.nodePort.removeFromParent();
         portItem?.nodePort.destroy();
