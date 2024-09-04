@@ -11,6 +11,9 @@ import {
   PortStatus,
   NodeValue,
   NodeConfiguration,
+  NodeDescriptor,
+  InputValues,
+  ErrorResponse,
 } from "@google-labs/breadboard";
 
 export const enum HistoryEventType {
@@ -183,3 +186,29 @@ export interface SettingsStore {
   save(settings: Settings): Promise<void>;
   restore(): Promise<void>;
 }
+
+export type NodeLogEntry = {
+  type: "node";
+  id: string;
+  descriptor: NodeDescriptor;
+  hidden: boolean;
+  start: number;
+  bubbled: boolean;
+  end: number | null;
+  title(): string;
+};
+
+export type EdgeLogEntry = {
+  type: "edge";
+  id?: string;
+  end: number | null;
+  schema?: Schema;
+  value?: InputValues;
+};
+
+export type ErrorLogEntry = {
+  type: "error";
+  error: ErrorResponse["error"];
+};
+
+export type LogEntry = NodeLogEntry | EdgeLogEntry | ErrorLogEntry;
