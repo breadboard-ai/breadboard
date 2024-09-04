@@ -482,7 +482,7 @@ export class GraphNode extends PIXI.Container {
         });
 
         const valuePreview = new PIXI.HTMLText({
-          text: "",
+          text: this.#createTruncatedValue(port),
           style: {
             fontFamily: "Arial",
             fontSize: this.#previewTextSize,
@@ -547,7 +547,10 @@ export class GraphNode extends PIXI.Container {
     for (const [inPortName, portItem] of this.#inPortsData) {
       if (!ports.find((inPort) => inPort.name === inPortName)) {
         portItem?.label.removeFromParent();
-        portItem?.label?.destroy();
+        portItem?.label.destroy();
+
+        portItem?.valuePreview.removeFromParent();
+        portItem?.valuePreview.destroy();
 
         portItem?.nodePort.removeFromParent();
         portItem?.nodePort.destroy();
