@@ -12,7 +12,13 @@ import {
   nothing,
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { RecentBoard, SETTINGS_TYPE, STATUS } from "../../types/types.js";
+import {
+  LogEntry,
+  NodeLogEntry,
+  RecentBoard,
+  SETTINGS_TYPE,
+  STATUS,
+} from "../../types/types.js";
 import {
   GraphNodeDeselectedEvent,
   GraphNodeSelectedEvent,
@@ -75,6 +81,9 @@ export class UI extends LitElement {
 
   @property()
   run: InspectableRun | null = null;
+
+  @property()
+  topGraphLog: LogEntry[] | null = null;
 
   @property()
   inputsFromLastRun: InspectableRunInputs | null = null;
@@ -159,15 +168,18 @@ export class UI extends LitElement {
     const currentNode = (): NodeIdentifier | null => {
       if (this.status === STATUS.STOPPED) return null;
 
-      if (!this.run) return null;
+      if (!this.topGraphLog) return null;
 
-      const currentNodeEvent = this.run.stack()[0];
+      // @ts-expect-error -- TS doesn't know findLastIndex exists
+      const currentNode = this.topGraphLog.findLast((entry) => {
+        return entry.type === "node";
+      }) as NodeLogEntry | undefined;
 
-      if (!currentNodeEvent) return null;
+      if (!currentNode) return null;
 
       if (this.subGraphId) return null;
 
-      return currentNodeEvent.node.descriptor.id;
+      return currentNode.descriptor.id;
     };
 
     let boardTitle = this.graph?.title;
