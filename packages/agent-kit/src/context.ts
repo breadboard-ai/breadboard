@@ -5,6 +5,7 @@
  */
 
 import {
+  annotate,
   anyOf,
   array,
   enumeration,
@@ -148,7 +149,9 @@ export const looperProgressType = unsafeType<
 );
 export type LooperProgress = ConvertBreadboardType<typeof looperProgressType>;
 
-export const contextType = anyOf(llmContentType, metadataType);
+export const contextType = annotate(anyOf(llmContentType, metadataType), {
+  behavior: ["llm-content"],
+});
 export type Context = ConvertBreadboardType<typeof contextType>;
 
 /**
