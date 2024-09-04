@@ -151,12 +151,12 @@ export class TopGraphObserver {
   }
 
   #nodeStart(event: RunNodeStartEvent) {
-    if (!this.#log) {
-      throw new Error("Node started without a graph");
-    }
-
     if (event.data.path.length > 1) {
       return;
+    }
+
+    if (!this.#log) {
+      throw new Error("Node started without a graph");
     }
 
     const type = event.data.node.type;
