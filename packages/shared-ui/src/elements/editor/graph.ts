@@ -786,6 +786,22 @@ export class Graph extends PIXI.Container {
     return this.#layout.get(node);
   }
 
+  storeCommentLayoutPositions() {
+    for (const child of this.children) {
+      if (!(child instanceof GraphComment)) {
+        continue;
+      }
+
+      this.setNodeLayoutPosition(
+        child.label,
+        "comment",
+        this.toGlobal(child.position),
+        child.collapsed,
+        false
+      );
+    }
+  }
+
   setNodeLayoutPosition(
     node: string,
     type: "comment" | "node",
@@ -1068,6 +1084,7 @@ export class Graph extends PIXI.Container {
 
       const childPosition = this.graph.getNodeLayoutPosition(child.label);
       if (!childPosition) {
+        console.log("Child has no position", child.label);
         continue;
       }
 
