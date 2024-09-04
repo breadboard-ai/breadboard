@@ -14,7 +14,6 @@ import {
 import { customElement, property, state } from "lit/decorators.js";
 import {
   LogEntry,
-  NodeLogEntry,
   RecentBoard,
   SETTINGS_TYPE,
   STATUS,
@@ -36,7 +35,6 @@ import {
   InspectableRunEvent,
   InspectableRunInputs,
   Kit,
-  NodeIdentifier,
   RemoveNodeSpec,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -165,23 +163,6 @@ export class UI extends LitElement {
   }
 
   render() {
-    const currentNode = (): NodeIdentifier | null => {
-      if (this.status === STATUS.STOPPED) return null;
-
-      if (!this.topGraphLog) return null;
-
-      // @ts-expect-error -- TS doesn't know findLastIndex exists
-      const currentNode = this.topGraphLog.findLast((entry) => {
-        return entry.type === "node";
-      }) as NodeLogEntry | undefined;
-
-      if (!currentNode) return null;
-
-      if (this.subGraphId) return null;
-
-      return currentNode.descriptor.id;
-    };
-
     let boardTitle = this.graph?.title;
     let boardVersion = this.graph?.version;
     let boardDescription = this.graph?.description;
@@ -204,7 +185,6 @@ export class UI extends LitElement {
 
     const events = this.run?.events || [];
     const eventPosition = events.length - 1;
-    const nodeId = currentNode();
 
     let selectedNodeIsInputOrOutput = true;
     if (this.selectedNodeIds.length === 1) {
@@ -308,7 +288,7 @@ export class UI extends LitElement {
         this.graph,
         this.subGraphId,
         this.kits,
-        nodeId,
+        this.topGraphLog,
         this.boardId,
         collapseNodesByDefault,
         hideSubboardSelectorWhenEmpty,
@@ -325,7 +305,7 @@ export class UI extends LitElement {
         return html`<bb-editor
           .graph=${graph}
           .subGraphId=${this.subGraphId}
-          .highlightedNodeId=${nodeId}
+          .topGraphLog=${this.topGraphLog}
           .boardId=${this.boardId}
           .collapseNodesByDefault=${collapseNodesByDefault}
           .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
