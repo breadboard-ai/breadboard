@@ -78,6 +78,13 @@ const nodeColors = new Map([
       border: getGlobalColor("--bb-neutral-500"),
     },
   ],
+  [
+    "joiner",
+    {
+      text: getGlobalColor("--bb-joiner-600"),
+      border: getGlobalColor("--bb-neutral-500"),
+    },
+  ],
 ]);
 
 const nodeIcons = new Map([
