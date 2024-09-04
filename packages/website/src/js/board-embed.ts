@@ -19,6 +19,7 @@ import {
   KitManifest,
   asRuntimeKit,
   createLoader,
+  inspect,
 } from "@google-labs/breadboard";
 import { until } from "lit/directives/until.js";
 import { fromManifest } from "@google-labs/breadboard/kits";
@@ -115,19 +116,24 @@ export class BoardEmbed extends LitElement {
       fromManifest(AgentKit as KitManifest),
     ];
 
-    const collapseNodesByDefault = this.collapseNodesByDefault === "true";
+    if (!graph) {
+      return html`Unable to load board`;
+    }
 
+    const collapseNodesByDefault = this.collapseNodesByDefault === "true";
+    const inspectableGraph = inspect(graph, { kits, loader });
     return html`<bb-editor
         .loader=${loader}
         .kits=${kits}
         .assetPrefix=${"/breadboard/static"}
-        .graph=${graph}
+        .graph=${inspectableGraph}
         .boardId=${1}
         .editable=${false}
         .showControls=${false}
         .mode=${"minimal"}
         .collapseNodesByDefault=${collapseNodesByDefault}
         .hideSubboardSelectorWhenEmpty=${true}
+        .showNodePreviewValues=${false}
         .readOnly=${true}
       ></bb-editor>
       ${this.url

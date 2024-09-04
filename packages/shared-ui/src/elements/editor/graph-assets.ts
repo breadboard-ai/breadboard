@@ -21,7 +21,7 @@ const ASSET_LIST = new Map([
 type AssetMap = Map<string, PIXI.Texture>;
 
 export class GraphAssets {
-  static assetPrefix = "";
+  static assetPrefix = "~";
   static #instance: GraphAssets;
   static instance() {
     if (!this.#instance) {
@@ -56,9 +56,7 @@ export class GraphAssets {
   }
 
   // Not to be instantiated directly.
-  private constructor() {
-    this.loadAssets("");
-  }
+  private constructor() {}
 
   get loaded() {
     return this.#loaded;

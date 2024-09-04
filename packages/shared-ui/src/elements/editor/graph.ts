@@ -127,6 +127,7 @@ export class Graph extends PIXI.Container {
 
   #isInitialDraw = true;
   #collapseNodesByDefault = false;
+  #showNodePreviewValues = false;
   #showNodeTypeDescriptions = false;
   layoutRect: DOMRectReadOnly | null = null;
 
@@ -884,6 +885,16 @@ export class Graph extends PIXI.Container {
     }
   }
 
+  #setNodesPreviewValues() {
+    for (const child of this.children) {
+      if (!(child instanceof GraphNode)) {
+        continue;
+      }
+
+      child.showNodePreviewValues = this.showNodePreviewValues;
+    }
+  }
+
   #setNodesTypeDescriptions() {
     for (const child of this.children) {
       if (!(child instanceof GraphNode)) {
@@ -906,6 +917,20 @@ export class Graph extends PIXI.Container {
 
   get collapseNodesByDefault() {
     return this.#collapseNodesByDefault;
+  }
+
+  set showNodePreviewValues(showNodePreviewValues: boolean) {
+    if (showNodePreviewValues === this.#showNodePreviewValues) {
+      return;
+    }
+
+    this.#isDirty = true;
+    this.#showNodePreviewValues = showNodePreviewValues;
+    this.#setNodesPreviewValues();
+  }
+
+  get showNodePreviewValues() {
+    return this.#showNodePreviewValues;
   }
 
   set showNodeTypeDescriptions(showNodeTypeDescriptions: boolean) {
@@ -1241,6 +1266,7 @@ export class Graph extends PIXI.Container {
       if (!graphNode || !(graphNode instanceof GraphNode)) {
         graphNode = new GraphNode(id, type, node.title(), typeTitle);
         graphNode.showNodeTypeDescriptions = this.showNodeTypeDescriptions;
+        graphNode.showNodePreviewValues = this.showNodePreviewValues;
 
         const colors = nodeColors.get(type) || defaultNodeColors;
         graphNode.titleTextColor = colors.text;

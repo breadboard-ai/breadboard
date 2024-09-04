@@ -4,17 +4,30 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InspectablePort, PortStatus } from "@google-labs/breadboard";
+import {
+  InspectablePort,
+  isInlineData,
+  isLLMContent,
+  isLLMContentArray,
+  isStoredData,
+  isTextCapabilityPart,
+  PortStatus,
+} from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
 import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
 import { GraphNodePort } from "./graph-node-port.js";
 import { GraphOverflowMenu } from "./graph-overflow-menu.js";
 import { GraphAssets } from "./graph-assets.js";
-import { DBL_CLICK_DELTA, getGlobalColor } from "./utils.js";
+import {
+  DBL_CLICK_DELTA,
+  getGlobalColor,
+  isConfigurablePort,
+} from "./utils.js";
 import { GraphNodeFooter } from "./graph-node-footer.js";
 
 const borderColor = getGlobalColor("--bb-neutral-500");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
+const previewTextColor = getGlobalColor("--bb-neutral-500");
 const segmentDividerColor = getGlobalColor("--bb-neutral-300");
 
 const selectedNodeColor = getGlobalColor("--bb-ui-600");
@@ -38,6 +51,10 @@ export class GraphNode extends PIXI.Container {
   #titleTextColor = nodeTextColor;
   #titleTextSize = 14;
 
+  #previewWidth = 200;
+  #previewTextSize = 12;
+  #previewTextColor = previewTextColor;
+
   #portTextColor = nodeTextColor;
   #borderColor = borderColor;
   #segmentDividerColor = segmentDividerColor;
@@ -48,7 +65,7 @@ export class GraphNode extends PIXI.Container {
   #padding = 12;
   #menuPadding = 4;
   #iconPadding = 8;
-  #portLabelVerticalPadding = 5;
+  #portLabelVerticalPadding = 4;
   #portLabelHorizontalPadding = 20;
   #portPadding = 8;
   #portRadius = 4;
@@ -57,11 +74,17 @@ export class GraphNode extends PIXI.Container {
   #inPorts: InspectablePort[] | null = null;
   #inPortsData: Map<
     string,
-    { port: InspectablePort; label: PIXI.Text; nodePort: GraphNodePort } | null
+    {
+      port: InspectablePort;
+      label: PIXI.Text;
+      valuePreview: PIXI.HTMLText;
+      nodePort: GraphNodePort;
+    } | null
   > = new Map();
   #inPortsSortedByName: Array<{
     port: InspectablePort;
     label: PIXI.Text;
+    valuePreview: PIXI.HTMLText;
     nodePort: GraphNodePort;
   }> = [];
   #outPorts: InspectablePort[] | null = null;
@@ -81,6 +104,7 @@ export class GraphNode extends PIXI.Container {
   #collapsed = false;
   #emitCollapseToggleEventOnNextDraw = false;
 
+  #showNodePreviewValues = false;
   #showNodeTypeDescriptions = false;
   #overflowMenu = new GraphOverflowMenu();
   #headerInPort = new GraphNodePort(GraphNodePortType.IN);
@@ -293,6 +317,19 @@ export class GraphNode extends PIXI.Container {
     this.#isDirty = true;
   }
 
+  set showNodePreviewValues(showNodePreviewValues: boolean) {
+    if (this.#showNodePreviewValues === showNodePreviewValues) {
+      return;
+    }
+
+    this.#showNodePreviewValues = showNodePreviewValues;
+    this.#isDirty = true;
+  }
+
+  get showNodePreviewValues() {
+    return this.#showNodePreviewValues;
+  }
+
   set showNodeTypeDescriptions(showNodeTypeDescriptions: boolean) {
     if (this.#showNodeTypeDescriptions === showNodeTypeDescriptions) {
       return;
@@ -444,14 +481,36 @@ export class GraphNode extends PIXI.Container {
           },
         });
 
+        const valuePreview = new PIXI.HTMLText({
+          text: "",
+          style: {
+            fontFamily: "Arial",
+            fontSize: this.#previewTextSize,
+            tagStyles: {
+              div: {
+                fontStyle: "italic",
+                lineHeight: this.#previewTextSize * 1.5,
+              },
+            },
+            fill: this.#previewTextColor,
+            align: "left",
+            wordWrap: true,
+            wordWrapWidth: this.#previewWidth,
+            breakWords: false,
+          },
+        });
+
         this.addChild(label);
         label.visible = false;
+
+        this.addChild(valuePreview);
+        valuePreview.visible = false;
 
         const nodePort = new GraphNodePort(GraphNodePortType.IN);
         this.addChild(nodePort);
         nodePort.visible = false;
 
-        portItem = { label, port, nodePort };
+        portItem = { label, port, nodePort, valuePreview };
         this.#inPortsData.set(port.name, portItem);
 
         nodePort.addEventListener("mouseover", (event) => {
@@ -475,6 +534,11 @@ export class GraphNode extends PIXI.Container {
 
       if (portItem.label.text !== port.title) {
         portItem.label.text = port.title;
+      }
+
+      const truncatedValue = this.#createTruncatedValue(port);
+      if (portItem.valuePreview.text !== truncatedValue) {
+        portItem.valuePreview.text = truncatedValue;
       }
 
       portItem.port = port;
@@ -607,6 +671,55 @@ export class GraphNode extends PIXI.Container {
     this.#enforceEvenDimensions();
   }
 
+  #createTruncatedValue(port: InspectablePort) {
+    if (!this.#showNodePreviewValues) {
+      return "";
+    }
+
+    let { value } = port;
+    if (value === null || value === undefined) {
+      if (port.status === PortStatus.Missing && isConfigurablePort(port)) {
+        return "(not configured)";
+      }
+      return "";
+    }
+
+    let valStr = "";
+    if (typeof value === "object") {
+      if (isLLMContent(value)) {
+        value = [value];
+      }
+
+      if (isLLMContentArray(value)) {
+        const firstValue = value[0];
+        if (firstValue) {
+          const firstPart = firstValue.parts[0];
+          if (isTextCapabilityPart(firstPart)) {
+            valStr = firstPart.text;
+          } else if (isInlineData(firstPart)) {
+            valStr = firstPart.inlineData.mimeType;
+          } else if (isStoredData(firstPart)) {
+            valStr = firstPart.storedData.mimeType;
+          } else {
+            valStr = "LLM Content Part";
+          }
+        } else {
+          valStr = "0 items";
+        }
+      } else if (Array.isArray(value)) {
+        valStr = `${value.length} item${value.length === 1 ? "" : "s"}`;
+      }
+    } else {
+      valStr = value.toString();
+    }
+
+    if (valStr.length > 60) {
+      valStr = `${valStr.substring(0, 60)}...`;
+    }
+
+    return valStr;
+  }
+
   #createTitleTextIfNeeded() {
     const nodeTitle = `${this.#title}${this.showNodeTypeDescriptions ? ` (${this.#typeTitle})` : ""}`;
     if (this.#titleText) {
@@ -642,7 +755,6 @@ export class GraphNode extends PIXI.Container {
   }
 
   #updateDimensions() {
-    const portRowHeight = this.#textSize + 2 * this.#portLabelVerticalPadding;
     const portCount = Math.max(this.#inPortsData.size, this.#outPortsData.size);
     const footerEmpty = this.#footer.empty;
     const footerDimensions = this.#footer.dimensions;
@@ -651,12 +763,8 @@ export class GraphNode extends PIXI.Container {
     let height = this.#padding + (this.#titleText?.height || 0) + this.#padding;
 
     // Only add the port heights on when the node is expanded.
-    if (!this.collapsed) {
-      height += this.#padding + portCount * portRowHeight + this.#padding;
-    } else {
-      if (!footerEmpty) {
-        height += footerDimensions.height;
-      }
+    if (this.collapsed && !footerEmpty) {
+      height += footerDimensions.height;
     }
 
     // Width calculations.
@@ -668,26 +776,45 @@ export class GraphNode extends PIXI.Container {
       GraphOverflowMenu.width +
       this.#menuPadding;
 
-    if (!footerEmpty && footerDimensions.width > width) {
-      width = footerDimensions.width;
-    }
-
     const inPortLabels = Array.from(this.#inPortsData.values());
     const outPortLabels = Array.from(this.#outPortsData.values());
     for (let p = 0; p < portCount; p++) {
       const inPortWidth = inPortLabels[p]?.label.width || 0;
       const outPortWidth = outPortLabels[p]?.label.width || 0;
+      const inPortPreviewWidth = inPortLabels[p]?.valuePreview.text
+        ? this.#previewWidth
+        : 0;
+
+      const inPortPreviewHeight = inPortLabels[p]?.valuePreview.text
+        ? inPortLabels[p]?.valuePreview.height
+        : 0;
 
       width = Math.max(
         width,
         this.#padding + // Left hand side.
           this.#portPadding + // Left hand port padding on right.
-          inPortWidth + // Left label at this row.
+          Math.max(inPortWidth, inPortPreviewWidth) + // Left label at this row.
           2 * this.#portLabelHorizontalPadding + // Port label padding for both sides.
           outPortWidth + // Right label at this row.
           this.#portPadding + // Right hand port padding on right.
           this.#padding // Right hand side padding.
       );
+
+      if (!this.collapsed) {
+        height +=
+          this.#textSize +
+          this.#portLabelVerticalPadding +
+          (inPortPreviewHeight ?? 0) +
+          2 * this.#portLabelVerticalPadding;
+      }
+    }
+
+    if (!this.collapsed && portCount > 0) {
+      height += 2 * this.#padding;
+    }
+
+    if (!footerEmpty && footerDimensions.width > width) {
+      width = footerDimensions.width;
     }
 
     this.#width = width;
@@ -825,6 +952,7 @@ export class GraphNode extends PIXI.Container {
       }
 
       portItem.label.visible = false;
+      portItem.valuePreview.visible = false;
       portItem.nodePort.visible = false;
     }
 
@@ -938,11 +1066,11 @@ export class GraphNode extends PIXI.Container {
 
   #drawInPorts(portStartY = 0) {
     this.#inPortLocations.clear();
-    const portRowHeight = this.#textSize + 2 * this.#portLabelVerticalPadding;
+    const portRowHeight = this.#textSize + this.#portLabelVerticalPadding;
 
     let portY = portStartY;
     for (const portItem of this.#inPortsSortedByName) {
-      const { port, label, nodePort } = portItem;
+      const { port, label, nodePort, valuePreview } = portItem;
       nodePort.label = port.name;
       nodePort.radius = this.#portRadius;
       nodePort.x = 0;
@@ -959,7 +1087,15 @@ export class GraphNode extends PIXI.Container {
       label.eventMode = "none";
       label.visible = true;
 
-      portY += portRowHeight;
+      valuePreview.x = nodePort.x + this.#portRadius + this.#portPadding;
+      valuePreview.y = portY + portRowHeight;
+      valuePreview.visible = true;
+      valuePreview.eventMode = "none";
+
+      portY +=
+        portRowHeight +
+        (valuePreview.text !== "" ? valuePreview.height : 0) +
+        2 * this.#portLabelVerticalPadding;
     }
   }
 

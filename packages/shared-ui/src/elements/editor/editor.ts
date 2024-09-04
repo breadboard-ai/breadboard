@@ -118,6 +118,9 @@ export class Editor extends LitElement {
   showNodeTypeDescriptions = true;
 
   @property()
+  showNodePreviewValues = true;
+
+  @property()
   assetPrefix = "";
 
   @property()
@@ -387,6 +390,7 @@ export class Editor extends LitElement {
   async #processGraph(): Promise<GraphRenderer> {
     if (GraphAssets.assetPrefix !== this.assetPrefix) {
       GraphAssets.instance().loadAssets(this.assetPrefix);
+      await GraphAssets.instance().loaded;
     }
 
     await this.#graphRenderer.ready;
@@ -440,6 +444,7 @@ export class Editor extends LitElement {
     // Attempt to update the graph if it already exists.
     const updated = this.#graphRenderer.updateGraphByUrl(url, this.subGraphId, {
       showNodeTypeDescriptions: this.showNodeTypeDescriptions,
+      showNodePreviewValues: this.showNodePreviewValues,
       collapseNodesByDefault: this.collapseNodesByDefault,
       ports: ports,
       typeMetadata,
@@ -466,6 +471,7 @@ export class Editor extends LitElement {
       url,
       subGraphId: this.subGraphId,
       showNodeTypeDescriptions: this.showNodeTypeDescriptions,
+      showNodePreviewValues: this.showNodePreviewValues,
       collapseNodesByDefault: this.collapseNodesByDefault,
       ports: ports,
       typeMetadata,

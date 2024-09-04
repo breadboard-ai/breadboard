@@ -222,6 +222,12 @@ export class UI extends LitElement {
           .items.get("Show Node Type Descriptions")?.value
       : false;
 
+    const showNodePreviewValues = this.settings
+      ? this.settings
+          .getSection(SETTINGS_TYPE.GENERAL)
+          .items.get("Show Node Preview Values")?.value
+      : false;
+
     const hideSubboardSelectorWhenEmpty = this.settings
       ? this.settings
           .getSection(SETTINGS_TYPE.GENERAL)
@@ -297,6 +303,7 @@ export class UI extends LitElement {
         editorMode,
         showNodeShortcuts,
         showNodeTypeDescriptions,
+        showNodePreviewValues,
         invertZoomScrollDirection,
         showPortTooltips,
         highlightInvalidWires,
@@ -312,6 +319,7 @@ export class UI extends LitElement {
           .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
           .mode=${editorMode}
           .showNodeShortcuts=${showNodeShortcuts}
+          .showNodePreviewValues=${showNodePreviewValues}
           .showNodeTypeDescriptions=${showNodeTypeDescriptions}
           .invertZoomScrollDirection=${invertZoomScrollDirection}
           .showPortTooltips=${showPortTooltips}
