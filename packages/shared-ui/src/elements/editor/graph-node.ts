@@ -11,16 +11,14 @@ import { GraphNodePort } from "./graph-node-port.js";
 import { GraphOverflowMenu } from "./graph-overflow-menu.js";
 import { GraphAssets } from "./graph-assets.js";
 import { DBL_CLICK_DELTA, getGlobalColor } from "./utils.js";
+import { GraphNodeFooter } from "./graph-node-footer.js";
 
 const borderColor = getGlobalColor("--bb-neutral-500");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
+const segmentDividerColor = getGlobalColor("--bb-neutral-300");
 
-const defaultNodeColor = getGlobalColor("--bb-nodes-100");
-const inputNodeColor = getGlobalColor("--bb-inputs-100");
-const secretNodeColor = getGlobalColor("--bb-inputs-100");
 const selectedNodeColor = getGlobalColor("--bb-ui-600");
 const highlightForAdHocNodeColor = getGlobalColor("--bb-boards-500");
-const outputNodeColor = getGlobalColor("--bb-boards-200");
 
 const ICON_SCALE = 0.42;
 
@@ -36,21 +34,26 @@ export class GraphNode extends PIXI.Container {
   #typeTitle: string;
   #borderRadius = 8;
   #color = nodeTextColor;
+
   #titleTextColor = nodeTextColor;
+  #titleTextSize = 14;
+
   #portTextColor = nodeTextColor;
   #borderColor = borderColor;
+  #segmentDividerColor = segmentDividerColor;
   #selectedColor = selectedNodeColor;
   #highlightForAdHocColor = highlightForAdHocNodeColor;
   #textSize = 12;
   #backgroundColor = 0x333333;
-  #padding = 10;
+  #padding = 12;
   #menuPadding = 4;
   #iconPadding = 8;
   #portLabelVerticalPadding = 5;
   #portLabelHorizontalPadding = 20;
-  #portPadding = 6;
-  #portRadius = 3;
+  #portPadding = 8;
+  #portRadius = 4;
   #background = new PIXI.Graphics();
+  #footer = new GraphNodeFooter();
   #inPorts: InspectablePort[] | null = null;
   #inPortsData: Map<
     string,
@@ -103,24 +106,6 @@ export class GraphNode extends PIXI.Container {
     this.type = type;
     this.#typeTitle = typeTitle;
 
-    switch (type) {
-      case "input":
-        this.color = inputNodeColor;
-        break;
-
-      case "secrets":
-        this.color = secretNodeColor;
-        break;
-
-      case "output":
-        this.color = outputNodeColor;
-        break;
-
-      default:
-        this.color = defaultNodeColor;
-        break;
-    }
-
     this.backgroundColor = 0xffffff;
     this.portTextColor = nodeTextColor;
 
@@ -130,6 +115,7 @@ export class GraphNode extends PIXI.Container {
     this.addChild(this.#background);
     this.addChild(this.#headerInPort);
     this.addChild(this.#headerOutPort);
+    this.addChild(this.#footer);
 
     this.#headerInPort.label = "_header-port-in";
     this.#headerOutPort.label = "_header-port-out";
@@ -272,6 +258,15 @@ export class GraphNode extends PIXI.Container {
 
   set title(title: string) {
     this.#title = title;
+    this.#isDirty = true;
+  }
+
+  get borderColor() {
+    return this.#borderColor;
+  }
+
+  set borderColor(borderColor: number) {
+    this.#borderColor = borderColor;
     this.#isDirty = true;
   }
 
@@ -429,6 +424,7 @@ export class GraphNode extends PIXI.Container {
   }
 
   set inPorts(ports: InspectablePort[] | null) {
+    this.#footer.inPorts = ports;
     this.#inPorts = ports;
     this.#isDirty = true;
     if (!ports) {
@@ -624,7 +620,7 @@ export class GraphNode extends PIXI.Container {
       text: nodeTitle,
       style: {
         fontFamily: "Arial",
-        fontSize: this.#textSize,
+        fontSize: this.#titleTextSize,
         fill: this.#titleTextColor,
         align: "left",
       },
@@ -648,6 +644,8 @@ export class GraphNode extends PIXI.Container {
   #updateDimensions() {
     const portRowHeight = this.#textSize + 2 * this.#portLabelVerticalPadding;
     const portCount = Math.max(this.#inPortsData.size, this.#outPortsData.size);
+    const footerEmpty = this.#footer.empty;
+    const footerDimensions = this.#footer.dimensions;
 
     // Height calculations.
     let height = this.#padding + (this.#titleText?.height || 0) + this.#padding;
@@ -655,6 +653,10 @@ export class GraphNode extends PIXI.Container {
     // Only add the port heights on when the node is expanded.
     if (!this.collapsed) {
       height += this.#padding + portCount * portRowHeight + this.#padding;
+    } else {
+      if (!footerEmpty) {
+        height += footerDimensions.height;
+      }
     }
 
     // Width calculations.
@@ -665,6 +667,11 @@ export class GraphNode extends PIXI.Container {
       this.#padding +
       GraphOverflowMenu.width +
       this.#menuPadding;
+
+    if (!footerEmpty && footerDimensions.width > width) {
+      width = footerDimensions.width;
+    }
+
     const inPortLabels = Array.from(this.#inPortsData.values());
     const outPortLabels = Array.from(this.#outPortsData.values());
     for (let p = 0; p < portCount; p++) {
@@ -701,6 +708,12 @@ export class GraphNode extends PIXI.Container {
       this.#hideHeaderPorts();
     }
     this.#drawOverflowMenu();
+    this.#drawFooterIfNeeded();
+  }
+
+  #drawFooterIfNeeded() {
+    this.#footer.visible = this.collapsed;
+    this.#footer.y = this.#height - this.#footer.dimensions.height;
   }
 
   #drawOverflowMenu() {
@@ -873,28 +886,24 @@ export class GraphNode extends PIXI.Container {
     this.#background.closePath();
     this.#background.fill({ color: this.#backgroundColor });
 
-    if (this.#titleText) {
+    if (this.#titleText && !this.collapsed) {
       const titleHeight =
         this.#padding + this.#titleText.height + this.#padding;
       this.#background.beginPath();
-      this.#background.roundRect(
-        0,
-        0,
-        this.#width,
-        titleHeight,
-        this.#borderRadius
-      );
-
-      if (!this.collapsed) {
-        this.#background.rect(
-          0,
-          titleHeight - 2 * this.#borderRadius,
-          this.#width,
-          2 * this.#borderRadius
-        );
-      }
+      this.#background.moveTo(0, titleHeight);
+      this.#background.lineTo(this.#width, titleHeight);
       this.#background.closePath();
-      this.#background.fill({ color: this.#color });
+      this.#background.stroke({ color: this.#segmentDividerColor });
+    }
+
+    if (this.collapsed && !this.#footer.empty) {
+      const footerDimensions = this.#footer.dimensions;
+      const y = this.#height - footerDimensions.height;
+      this.#background.beginPath();
+      this.#background.moveTo(0, y);
+      this.#background.lineTo(this.#width, y);
+      this.#background.closePath();
+      this.#background.stroke({ color: this.#segmentDividerColor });
     }
   }
 

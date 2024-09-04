@@ -35,6 +35,77 @@ type LayoutInfo = {
 
 const highlightedNodeColor = getGlobalColor("--bb-ui-600");
 
+const nodeColors = new Map([
+  [
+    "specialist",
+    {
+      text: getGlobalColor("--bb-specialist-600"),
+      border: getGlobalColor("--bb-neutral-500"),
+    },
+  ],
+  [
+    "runJavascript",
+    {
+      text: getGlobalColor("--bb-js-700"),
+      border: getGlobalColor("--bb-neutral-500"),
+    },
+  ],
+  [
+    "input",
+    {
+      text: getGlobalColor("--bb-input-600"),
+      border: getGlobalColor("--bb-input-500"),
+    },
+  ],
+  [
+    "output",
+    {
+      text: getGlobalColor("--bb-output-600"),
+      border: getGlobalColor("--bb-output-400"),
+    },
+  ],
+  [
+    "human",
+    {
+      text: getGlobalColor("--bb-human-600"),
+      border: getGlobalColor("--bb-neutral-500"),
+    },
+  ],
+  [
+    "looper",
+    {
+      text: getGlobalColor("--bb-looper-600"),
+      border: getGlobalColor("--bb-neutral-500"),
+    },
+  ],
+]);
+
+const nodeIcons = new Map([
+  [
+    "runJavascript",
+    {
+      name: "js",
+    },
+  ],
+  [
+    "input",
+    {
+      name: "input",
+    },
+  ],
+  [
+    "output",
+    {
+      name: "output",
+    },
+  ],
+]);
+
+const defaultNodeColors = {
+  text: getGlobalColor("--bb-neutral-600"),
+  border: getGlobalColor("--bb-neutral-400"),
+};
+
 export class Graph extends PIXI.Container {
   #isDirty = true;
   #edgeContainer = new PIXI.Container();
@@ -461,7 +532,21 @@ export class Graph extends PIXI.Container {
 
       const toNodePortsIn = inPortDisambiguation || [];
       const possiblePortsIn: InspectablePort[] = toNode.collapsed
-        ? toNodePortsIn.filter((port) => !port.star && port.name !== "")
+        ? toNodePortsIn.filter((port) => {
+            if (port.star) return false;
+            if (port.name === "") return false;
+            if (port.schema.behavior?.includes("config")) return false;
+            const items = port.schema.items;
+            if (
+              items &&
+              !Array.isArray(items) &&
+              items.behavior?.includes("config")
+            ) {
+              return false;
+            }
+
+            return true;
+          })
         : toNodePortsIn.filter(
             (port) =>
               !port.star && port.name !== "" && port.name === targetInPortName
@@ -1157,6 +1242,10 @@ export class Graph extends PIXI.Container {
         graphNode = new GraphNode(id, type, node.title(), typeTitle);
         graphNode.showNodeTypeDescriptions = this.showNodeTypeDescriptions;
 
+        const colors = nodeColors.get(type) || defaultNodeColors;
+        graphNode.titleTextColor = colors.text;
+        graphNode.borderColor = colors.border;
+
         this.#graphNodeById.set(id, graphNode);
       }
 
@@ -1166,6 +1255,11 @@ export class Graph extends PIXI.Container {
 
       if (icon && GraphAssets.instance().has(icon)) {
         graphNode.icon = icon;
+      } else {
+        const icon = nodeIcons.get(type);
+        if (icon) {
+          graphNode.icon = icon.name;
+        }
       }
 
       if (node.descriptor.metadata?.visual) {
