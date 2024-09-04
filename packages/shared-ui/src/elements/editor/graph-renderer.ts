@@ -1043,6 +1043,7 @@ export class GraphRenderer extends LitElement {
       }
 
       graph.clearNodeLayoutPositions();
+      graph.storeCommentLayoutPositions();
       graph.layout();
 
       this.#emitGraphNodeVisualInformation(graph);
