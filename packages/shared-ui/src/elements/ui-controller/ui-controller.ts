@@ -12,21 +12,14 @@ import {
   nothing,
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import {
-  InputCallback,
-  RecentBoard,
-  SETTINGS_TYPE,
-  STATUS,
-} from "../../types/types.js";
+import { RecentBoard, SETTINGS_TYPE, STATUS } from "../../types/types.js";
 import {
   GraphNodeDeselectedEvent,
   GraphNodeSelectedEvent,
-  InputEnterEvent,
   MultiEditEvent,
   RunEvent,
   StopEvent,
 } from "../../events/events.js";
-import { HarnessRunResult } from "@google-labs/breadboard/harness";
 import {
   EditHistory,
   GraphDescriptor,
@@ -128,7 +121,6 @@ export class UI extends LitElement {
   #detailsRef: Ref<HTMLElement> = createRef();
   #controlsActivityRef: Ref<HTMLDivElement> = createRef();
   #nodeRunnerRef: Ref<NodeRunner> = createRef();
-  #handlers: Map<string, InputCallback[]> = new Map();
   #resizeObserver = new ResizeObserver(() => {
     this.isPortrait = window.matchMedia("(orientation: portrait)").matches;
   });
@@ -145,107 +137,6 @@ export class UI extends LitElement {
     this.#resizeObserver.unobserve(this);
   }
 
-  /**
-   * Handler method for registering input.
-   *
-   * Handle a specific input ID and return a promise that resolves with the data received by the handler.
-   *
-   * @param {string} id - Associates a specific input handler with a unique identifier.
-   *
-   * @returns {Promise<Record<string, unknown>>}
-   */
-  async #registerInputHandler(id: string): Promise<Record<string, unknown>> {
-    const handlers = this.#handlers.get(id);
-    if (!handlers) {
-      return Promise.reject(`Unable to set up handler for input ${id}`);
-    }
-
-    return new Promise((resolve) => {
-      handlers.push((data: Record<string, unknown>) => {
-        resolve(data);
-      });
-    });
-  }
-
-  /**
-   * Handler method for registering secret values.
-   *
-   * Asynchronously register handlers for a list of keys and
-   * return a promise that resolves to an object mapping each key to its corresponding secret value.
-   *
-   * @param {string[]} keys - The keys for which secrets need to be
-   * registered.
-   *
-   * @returns {Promise<Record<string, unknown>>}
-   */
-  async #registerSecretsHandler(
-    keys: string[]
-  ): Promise<Record<string, unknown>> {
-    const values = await Promise.all(
-      keys.map((key) => {
-        return new Promise<[string, unknown]>((resolve) => {
-          const callback = ({ secret }: Record<string, unknown>) => {
-            resolve([key, secret]);
-          };
-          this.#handlers.set(key, [callback]);
-        });
-      })
-    );
-
-    return Object.fromEntries(values);
-  }
-
-  /**
-   * Handle state changes.
-   *
-   * Handle different types of messages and perform corresponding
-   * actions based on the message type.
-   *
-   * @param {HarnessRunResult} message - Contains information about the state change with type and data property
-   * @param {number} duration - The duration of the state change.
-   *
-   * @returns {Promise<Record<string, unknown> | void>}
-   */
-  async handleStateChange(
-    message: HarnessRunResult
-  ): Promise<Record<string, unknown> | void> {
-    this.requestUpdate();
-
-    const { data, type } = message;
-    switch (type) {
-      case "nodestart": {
-        if (!this.#handlers.has(data.node.id)) {
-          this.#handlers.set(data.node.id, []);
-        }
-        return;
-      }
-
-      case "nodeend": {
-        this.#handlers.delete(data.node.id);
-        return;
-      }
-
-      case "input": {
-        return this.#registerInputHandler(data.node.id);
-      }
-
-      case "secret": {
-        return this.#registerSecretsHandler(data.keys);
-      }
-    }
-  }
-
-  /**
-   * Called when a user stops a board.
-   */
-  #callAllPendingInputHandlers() {
-    for (const handlers of this.#handlers.values()) {
-      for (const handler of handlers) {
-        handler.call(null, {});
-      }
-    }
-  }
-
   protected willUpdate(
     changedProperties:
       | PropertyValueMap<{ boardId: number; subGraphId: string | null }>
@@ -256,7 +147,6 @@ export class UI extends LitElement {
         return;
       }
 
-      this.#handlers.clear();
       this.selectedNodeIds.length = 0;
     }
 
@@ -637,18 +527,6 @@ export class UI extends LitElement {
 
           this.debugEvent = event;
         }}
-        @bbinputenter=${(event: InputEnterEvent) => {
-          const data = event.data;
-          const handlers = this.#handlers.get(event.id) || [];
-          if (handlers.length === 0) {
-            console.warn(
-              `Received event for input(id="${event.id}") but no handlers were found`
-            );
-          }
-          for (const handler of handlers) {
-            handler.call(null, data);
-          }
-        }}
         name="Board"
       ></bb-activity-log>`;
     });
@@ -744,7 +622,6 @@ export class UI extends LitElement {
                 this.dispatchEvent(new RunEvent());
               } else {
                 this.dispatchEvent(new StopEvent());
-                this.#callAllPendingInputHandlers();
               }
             }}
           >
