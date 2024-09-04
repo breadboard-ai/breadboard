@@ -29,10 +29,11 @@ const core = kit.addKit(Core);
 
 kit.graphs = {
   joiner: serialize(joiner),
+  repeater: serialize(repeater),
 };
 
 core.invoke({ $id: "worker", $board: worker });
-core.invoke({ $id: "repeater", $board: repeater });
+core.invoke({ $id: "repeater", $board: "#repeater" });
 core.invoke({ $id: "structured-worker", $board: structuredWorker });
 core.invoke({ $id: "human", $board: human });
 core.invoke({ $id: "tool-worker", $board: toolWorker });

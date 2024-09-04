@@ -515,7 +515,7 @@
                   "type": "object",
                   "properties": {},
                   "required": [],
-                  "additionalProperties": false,
+                  "additionalProperties": true,
                   "title": "Worker",
                   "description": "Worker to repeat",
                   "behavior": [
