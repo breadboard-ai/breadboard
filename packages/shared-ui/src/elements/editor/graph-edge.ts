@@ -289,7 +289,7 @@ export class GraphEdge extends PIXI.Graphics {
     const ndx = outLocation.x - inLocation.x;
     const ndy = outLocation.y - inLocation.y;
     const nodeDistance = Math.sqrt(ndx * ndx + ndy * ndy);
-    const padding = Math.min(nodeDistance * 0.25, 50);
+    const padding = Math.min(nodeDistance * 0.25, 75);
 
     // Loopback.
     if (
