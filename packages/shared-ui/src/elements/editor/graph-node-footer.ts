@@ -47,7 +47,7 @@ export class GraphNodeFooter extends PIXI.Container {
     this.#width = this.#padding;
 
     for (const port of ports) {
-      if (!isConfigurablePort(port)) {
+      if (!isConfigurablePort(port) || port.value === undefined) {
         continue;
       }
 

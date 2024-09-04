@@ -14,14 +14,14 @@ const danglingColor = getGlobalColor("--bb-warning-300");
 const indeterminateColor = getGlobalColor("--bb-neutral-300");
 const missingColor = getGlobalColor("--bb-warning-200");
 const readyColor = getGlobalColor("--bb-neutral-200");
-const configuredColor = getGlobalColor("--bb-boards-400");
+const configuredColor = getGlobalColor("--bb-inputs-200");
 
 const connectedBorderColor = getGlobalColor("--bb-inputs-600");
 const danglingBorderColor = getGlobalColor("--bb-warning-700");
 const indeterminateBorderColor = getGlobalColor("--bb-neutral-700");
 const missingBorderColor = getGlobalColor("--bb-warning-600");
 const readyBorderColor = getGlobalColor("--bb-neutral-600");
-const configuredBorderColor = getGlobalColor("--bb-boards-600");
+const configuredBorderColor = getGlobalColor("--bb-inputs-600");
 
 export class GraphNodePort extends PIXI.Graphics {
   #isDirty = true;

@@ -120,12 +120,10 @@ export class UserInput extends LitElement {
       box-sizing: border-box;
     }
 
+    .item.status.connected.configured .title::before,
     .item.status.connected .title::before {
-      background: var(--bb-inputs-300);
-    }
-
-    .item.status.connected.configured .title::before {
-      background: var(--bb-boards-500);
+      background: var(--bb-inputs-200);
+      border: 1px solid var(--bb-inputs-600);
     }
 
     .item.status.missing .title::before {
