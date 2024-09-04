@@ -34,6 +34,7 @@ const selectedNodeColor = getGlobalColor("--bb-ui-600");
 const highlightForAdHocNodeColor = getGlobalColor("--bb-boards-500");
 
 const ICON_SCALE = 0.42;
+const PREVIEW_WIDTH = 170;
 
 export class GraphNode extends PIXI.Container {
   #width = 0;
@@ -51,7 +52,6 @@ export class GraphNode extends PIXI.Container {
   #titleTextColor = nodeTextColor;
   #titleTextSize = 14;
 
-  #previewWidth = 200;
   #previewTextSize = 12;
   #previewTextColor = previewTextColor;
 
@@ -495,7 +495,7 @@ export class GraphNode extends PIXI.Container {
             fill: this.#previewTextColor,
             align: "left",
             wordWrap: true,
-            wordWrapWidth: this.#previewWidth,
+            wordWrapWidth: PREVIEW_WIDTH,
             breakWords: false,
           },
         });
@@ -782,7 +782,7 @@ export class GraphNode extends PIXI.Container {
       const inPortWidth = inPortLabels[p]?.label.width || 0;
       const outPortWidth = outPortLabels[p]?.label.width || 0;
       const inPortPreviewWidth = inPortLabels[p]?.valuePreview.text
-        ? this.#previewWidth
+        ? PREVIEW_WIDTH
         : 0;
 
       const inPortPreviewHeight = inPortLabels[p]?.valuePreview.text
