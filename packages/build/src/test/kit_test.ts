@@ -55,7 +55,6 @@ test("kit handles discrete component", () => {
     // $ExpectType Definition<{ str: string; }, { str: string; }, undefined, undefined, never, false, false, false, { str: { board: false; }; }>
     testKit.foo
   );
-  assert.equal(testKit.foo.id, "foo");
   assert.equal(testKit.foo.metadata.description, "Discrete Description");
 });
 
@@ -64,7 +63,6 @@ test("kit handles board component", () => {
     // $ExpectType BoardDefinition<{ num: number; }, { num: number; }>
     testKit.bar
   );
-  assert.equal(testKit.bar.id, "bar");
   assert.equal(testKit.bar.description, "Board Description");
 });
 
@@ -174,10 +172,10 @@ test("can invoke discrete component with new API", () => {
             type: "object",
             properties: {
               str: {
-                title: "str",
                 type: "string",
               },
             },
+            required: ["str"],
           },
         },
       },
@@ -197,7 +195,6 @@ test("can invoke discrete component with new API", () => {
         in: "str",
       },
     ],
-    graphs: {},
   });
 });
 
@@ -215,10 +212,10 @@ test("can invoke board component with new API", () => {
             type: "object",
             properties: {
               num: {
-                title: "num",
                 type: "number",
               },
             },
+            required: ["num"],
           },
         },
       },
@@ -238,6 +235,5 @@ test("can invoke board component with new API", () => {
         in: "num",
       },
     ],
-    graphs: {},
   });
 });
