@@ -31,9 +31,11 @@ import {
   GraphInitialDrawEvent,
   GraphNodeDeleteEvent,
   GraphNodeEdgeChangeEvent,
+  GraphNodePortValueEditEvent,
   GraphNodesVisualUpdateEvent,
   KitNodeChosenEvent,
   MultiEditEvent,
+  NodeConfigurationUpdateRequestEvent,
   NodeCreateEvent,
   NodeDeleteEvent,
   SubGraphChosenEvent,
@@ -166,6 +168,7 @@ export class Editor extends LitElement {
   #onGraphEdgeChangeBound = this.#onGraphEdgeChange.bind(this);
   #onGraphNodeDeleteBound = this.#onGraphNodeDelete.bind(this);
   #onGraphEntityRemoveBound = this.#onGraphEntityRemove.bind(this);
+  #onGraphNodePortValueEditBound = this.#onGraphNodePortValueEdit.bind(this);
   #top = 0;
   #left = 0;
   #addButtonRef: Ref<HTMLInputElement> = createRef();
@@ -543,6 +546,11 @@ export class Editor extends LitElement {
       this.#onGraphEntityRemoveBound
     );
 
+    this.#graphRenderer.addEventListener(
+      GraphNodePortValueEditEvent.eventName,
+      this.#onGraphNodePortValueEditBound
+    );
+
     window.addEventListener("resize", this.#onResizeBound);
     this.addEventListener("keydown", this.#onKeyDownBound);
     this.addEventListener("pointermove", this.#onPointerMoveBound);
@@ -582,6 +590,11 @@ export class Editor extends LitElement {
     this.#graphRenderer.removeEventListener(
       GraphEntityRemoveEvent.eventName,
       this.#onGraphEntityRemoveBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphNodePortValueEditEvent.eventName,
+      this.#onGraphNodePortValueEditBound
     );
 
     window.removeEventListener("resize", this.#onResizeBound);
@@ -1178,6 +1191,13 @@ export class Editor extends LitElement {
         `Delete (${nodesLabel}) (${edgesLabel}) (${commentsLabel})`,
         this.subGraphId
       )
+    );
+  }
+
+  #onGraphNodePortValueEdit(evt: Event) {
+    const { id, port, x, y } = evt as GraphNodePortValueEditEvent;
+    this.dispatchEvent(
+      new NodeConfigurationUpdateRequestEvent(id, this.subGraphId, port, x, y)
     );
   }
 

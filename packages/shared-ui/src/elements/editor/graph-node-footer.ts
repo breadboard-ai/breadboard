@@ -8,9 +8,9 @@ import { InspectablePort, PortStatus } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
 import { getGlobalColor, isConfigurablePort } from "./utils";
 import { GraphNodePort } from "./graph-node-port";
-import { GraphNodePortType } from "./types";
+import { GRAPH_OPERATIONS, GraphNodePortType } from "./types";
 
-const portTextColor = getGlobalColor("--bb-neutral-600");
+const portTextColor = getGlobalColor("--bb-neutral-900");
 
 export class GraphNodeFooter extends PIXI.Container {
   #width = 300;
@@ -25,12 +25,6 @@ export class GraphNodeFooter extends PIXI.Container {
     string,
     { port: InspectablePort; label: PIXI.Text; nodePort: GraphNodePort } | null
   > = new Map();
-
-  constructor() {
-    super();
-
-    this.eventMode = "none";
-  }
 
   get empty() {
     return this.#inPortsData.size === 0;
@@ -65,6 +59,34 @@ export class GraphNodeFooter extends PIXI.Container {
             fill: this.#portTextColor,
             align: "left",
           },
+        });
+
+        label.addEventListener("pointerover", (evt) => {
+          const ptrEvent = evt.nativeEvent as PointerEvent;
+          const [top] = ptrEvent.composedPath();
+          if (!(top instanceof HTMLElement)) {
+            return;
+          }
+
+          if (top.tagName !== "CANVAS") {
+            return;
+          }
+          label.alpha = 1;
+        });
+
+        label.addEventListener("pointerout", () => {
+          label.alpha = 0.65;
+        });
+
+        label.alpha = 0.65;
+        label.cursor = "pointer";
+        label.addEventListener("click", (evt: PIXI.FederatedPointerEvent) => {
+          this.emit(
+            GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
+            port,
+            evt.clientX,
+            evt.clientY
+          );
         });
 
         const nodePort = new GraphNodePort(GraphNodePortType.INERT);

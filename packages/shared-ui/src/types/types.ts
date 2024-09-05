@@ -14,6 +14,7 @@ import {
   NodeDescriptor,
   InputValues,
   ErrorResponse,
+  InspectablePort,
 } from "@google-labs/breadboard";
 
 export const enum HistoryEventType {
@@ -224,4 +225,12 @@ export type TopGraphRunResult = {
 
 export type TopGraphEdgeValues = {
   get(edge: InspectableEdge): NodeValue | undefined;
+};
+
+export type NodePortConfiguration = {
+  id: string;
+  subGraphId: string | null;
+  port: InspectablePort | null;
+  x: number;
+  y: number;
 };
