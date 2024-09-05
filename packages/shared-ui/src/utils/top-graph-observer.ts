@@ -18,7 +18,12 @@ import type {
   RunNodeStartEvent,
   RunOutputEvent,
 } from "@google-labs/breadboard/harness";
-import type { EdgeLogEntry, LogEntry, NodeLogEntry } from "../types/types.js";
+import type {
+  EdgeLogEntry,
+  LogEntry,
+  NodeLogEntry,
+  TopGraphRunResult,
+} from "../types/types.js";
 
 const idFromPath = (path: number[]): string => {
   return `e-${path.join("-")}`;
@@ -77,6 +82,7 @@ const placeInputInLog = (log: LogEntry[], edge: EdgeLogEntry): LogEntry[] => {
  */
 export class TopGraphObserver {
   #log: LogEntry[] | null = null;
+  #currentResult: TopGraphRunResult | null = null;
   #currentNode: NodeLogEntry | null = null;
   /**
    * Need to keep track of input separately, because
@@ -100,6 +106,7 @@ export class TopGraphObserver {
         return;
       }
       this.#log = [...this.#log, { type: "error", error: event.data.error }];
+      this.#currentResult = null;
     });
     runner.addEventListener("resume", (event) => {
       this.#cleanUpPendingInput(event.data.inputs || {});
@@ -116,11 +123,18 @@ export class TopGraphObserver {
 
     if (this.#log) {
       this.#log = [...this.#log];
+      this.#currentResult = null;
     }
   }
 
-  log(): LogEntry[] | null {
-    return this.#log;
+  current(): TopGraphRunResult | null {
+    if (!this.#log) {
+      return null;
+    }
+    if (!this.#currentResult) {
+      this.#currentResult = { log: this.#log };
+    }
+    return this.#currentResult;
   }
 
   #abort() {
@@ -132,6 +146,7 @@ export class TopGraphObserver {
     this.#currentNode = null;
     if (this.#log) {
       this.#log = [...this.#log, new EndNode("Activity stopped")];
+      this.#currentResult = null;
     }
   }
 
@@ -143,6 +158,7 @@ export class TopGraphObserver {
       throw new Error("Graph already started");
     }
     this.#log = [];
+    this.#currentResult = null;
   }
 
   #graphEnd(event: RunGraphEndEvent) {
@@ -173,6 +189,7 @@ export class TopGraphObserver {
       default: {
         this.#currentNode = new Node(event);
         this.#log = [...this.#log, this.#currentNode, new Edge()];
+        this.#currentResult = null;
         return;
       }
     }
@@ -195,6 +212,7 @@ export class TopGraphObserver {
     this.#currentNode = null;
 
     this.#log = [...this.#log];
+    this.#currentResult = null;
   }
 
   #input(event: RunInputEvent) {
@@ -207,10 +225,12 @@ export class TopGraphObserver {
       this.#currentInput = new InputEdge(event);
       const edge = this.#currentInput;
       this.#log = placeInputInLog([...this.#log, this.#currentNode!], edge);
+      this.#currentResult = null;
       return;
     }
     this.#currentInput = new BubbledInputEdge(event);
     this.#log = placeInputInLog(this.#log, this.#currentInput);
+    this.#currentResult = null;
   }
 
   #output(event: RunOutputEvent) {
@@ -230,10 +250,12 @@ export class TopGraphObserver {
         lastEdge.value = event.data.outputs;
       }
       this.#log = [...this.#log];
+      this.#currentResult = null;
       return;
     }
     const output = new BubbledOutputEdge(event);
     this.#log = placeOutputInLog(this.#log, output);
+    this.#currentResult = null;
   }
 }
 

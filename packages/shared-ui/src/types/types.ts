@@ -212,3 +212,11 @@ export type ErrorLogEntry = {
 };
 
 export type LogEntry = NodeLogEntry | EdgeLogEntry | ErrorLogEntry;
+
+/**
+ * The result, returned by the TopGraphObserver, containing the activity log
+ * for the graph's run.
+ */
+export type TopGraphRunResult = {
+  log: LogEntry[];
+};
