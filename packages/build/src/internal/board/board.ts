@@ -47,7 +47,6 @@ import type {
   RemoveReadonly,
 } from "../common/type-util.js";
 import type { StarInputs } from "./star-inputs.js";
-import type { KitBinding } from "../kit.js";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -338,15 +337,13 @@ class BoardDefinitionImpl<
   }
 
   instantiate(
-    values: ValuesOrOutputPorts<ExtractPortTypes<IPORTS>>,
-    kitBinding?: KitBinding
+    values: ValuesOrOutputPorts<ExtractPortTypes<IPORTS>>
   ): OldBoardInstance<IPORTS, OPORTS> {
     return new OldBoardInstance(
       this.#inputs,
       this.#outputs,
       values,
-      this.definition!,
-      kitBinding
+      this.definition!
     );
   }
 
@@ -485,20 +482,17 @@ export class OldBoardInstance<
   readonly outputs: OPORTS;
   readonly values: ValuesOrOutputPorts<ExtractPortTypes<IPORTS>>;
   readonly definition: OldBoardDefinition<IPORTS, OPORTS>;
-  readonly __kitBinding?: KitBinding;
 
   constructor(
     inputs: IPORTS,
     outputs: OPORTS,
     values: ValuesOrOutputPorts<ExtractPortTypes<IPORTS>>,
-    definition: OldBoardDefinition<IPORTS, OPORTS>,
-    kitBinding?: KitBinding
+    definition: OldBoardDefinition<IPORTS, OPORTS>
   ) {
     this.inputs = inputs;
     this.outputs = this.#tagOutputs(outputs);
     this.values = values;
     this.definition = definition;
-    this.__kitBinding = kitBinding;
   }
 
   /**
