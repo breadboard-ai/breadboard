@@ -306,6 +306,7 @@ export class UI extends LitElement {
           .graph=${graph}
           .subGraphId=${this.subGraphId}
           .topGraphLog=${this.topGraphResult?.log}
+          .highlightedNode=${this.topGraphResult?.currentNode}
           .boardId=${this.boardId}
           .collapseNodesByDefault=${collapseNodesByDefault}
           .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}

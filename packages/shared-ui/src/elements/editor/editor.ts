@@ -4,28 +4,33 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
 import {
-  GraphDescriptor,
-  NodeConfiguration,
-  InspectableNodePorts,
-  SubGraphs,
-  NodeDescriptor,
-  NodeValue,
+  CommentNode,
   Edge,
   EditSpec,
-  CommentNode,
+  GraphDescriptor,
   InspectableGraph,
+  InspectableNodePorts,
+  NodeConfiguration,
+  NodeDescriptor,
   NodeHandlerMetadata,
+  NodeValue,
+  SubGraphs,
 } from "@google-labs/breadboard";
+import { LitElement, css, html, nothing } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
+import { map } from "lit/directives/map.js";
+import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { until } from "lit/directives/until.js";
+import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import {
   EdgeChangeEvent,
+  GraphEdgeAttachEvent,
+  GraphEdgeDetachEvent,
+  GraphEntityRemoveEvent,
   GraphInitialDrawEvent,
   GraphNodeDeleteEvent,
-  GraphEdgeAttachEvent,
   GraphNodeEdgeChangeEvent,
-  GraphEdgeDetachEvent,
   GraphNodesVisualUpdateEvent,
   KitNodeChosenEvent,
   MultiEditEvent,
@@ -34,23 +39,18 @@ import {
   SubGraphChosenEvent,
   SubGraphCreateEvent,
   SubGraphDeleteEvent,
-  GraphEntityRemoveEvent,
 } from "../../events/events.js";
-import { GraphRenderer } from "./graph-renderer.js";
-import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { map } from "lit/directives/map.js";
-import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import { EditorMode, filterPortsByMode } from "../../utils/mode.js";
-import type { NodeSelector } from "./node-selector.js";
 import { GraphEdge } from "./graph-edge.js";
+import { GraphRenderer } from "./graph-renderer.js";
+import type { NodeSelector } from "./node-selector.js";
 import { edgeToString } from "./utils.js";
-import { until } from "lit/directives/until.js";
 
 const DATA_TYPE = "text/plain";
 const PASTE_OFFSET = 50;
 
+import { EdgeLogEntry, LogEntry } from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
-import { EdgeLogEntry, LogEntry, NodeLogEntry } from "../../types/types.js";
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
   if (type !== "input" && type !== "output") {
@@ -105,6 +105,9 @@ export class Editor extends LitElement {
 
   @property()
   topGraphLog: LogEntry[] | null = null;
+
+  @property()
+  highlightedNode: NodeDescriptor | null = null;
 
   @state()
   nodeValueBeingEdited: EditedNode | null = null;
@@ -1266,24 +1269,10 @@ export class Editor extends LitElement {
     this.#onResizeBound();
   }
 
-  #currentNode() {
-    if (!this.topGraphLog) return null;
-
-    // @ts-expect-error -- TS doesn't know findLastIndex exists
-    const currentNode = this.topGraphLog.findLast((entry) => {
-      return entry.type === "node";
-    }) as NodeLogEntry | undefined;
-
-    if (!currentNode) return null;
-
-    if (this.subGraphId) return null;
-
-    return currentNode;
-  }
-
   render() {
-    this.#graphRenderer.highlightedNodeId =
-      this.#currentNode()?.descriptor.id || null;
+    this.#graphRenderer.highlightedNodeId = this.subGraphId
+      ? null
+      : this.highlightedNode?.id || null;
 
     if (this.#graphRenderer) {
       this.#graphRenderer.invertZoomScrollDirection =

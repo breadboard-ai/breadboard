@@ -132,7 +132,15 @@ export class TopGraphObserver {
       return null;
     }
     if (!this.#currentResult) {
-      this.#currentResult = { log: this.#log };
+      const currentNodeEntry =
+        // @ts-expect-error -- TS doesn't know findLastIndex exists
+        this.#log.findLast((entry) => {
+          return entry.type === "node";
+        }) as NodeLogEntry | undefined;
+      this.#currentResult = {
+        log: this.#log,
+        currentNode: currentNodeEntry ? currentNodeEntry.descriptor : null,
+      };
     }
     return this.#currentResult;
   }
