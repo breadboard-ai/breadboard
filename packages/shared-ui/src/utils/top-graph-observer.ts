@@ -157,6 +157,9 @@ export class TopGraphObserver {
   }
 
   #edge(event: RunEdgeEvent) {
+    if (event.data.to.length > 1) {
+      return;
+    }
     this.#edgeValues = this.#edgeValues.set(event.data.edge, event.data.value);
   }
 
