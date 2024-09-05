@@ -61,6 +61,7 @@
                   "parts": {
                     "type": "array",
                     "items": {
+                      "type": "object",
                       "anyOf": [
                         {
                           "type": "object",
