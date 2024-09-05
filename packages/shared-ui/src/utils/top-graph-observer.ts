@@ -4,13 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { NodeDescriptor, Schema } from "@google-labs/breadboard";
+import {
+  type InspectableEdge,
+  type NodeDescriptor,
+  type Schema,
+  type Edge as EdgeType,
+  InspectableEdgeType,
+} from "@google-labs/breadboard";
 import type {
   InputValues,
+  NodeValue,
   OutputValues,
 } from "@google-labs/breadboard-schema/graph.js";
 import type {
   HarnessRunner,
+  RunEdgeEvent,
   RunGraphEndEvent,
   RunGraphStartEvent,
   RunInputEvent,
@@ -84,6 +92,7 @@ export class TopGraphObserver {
   #log: LogEntry[] | null = null;
   #currentResult: TopGraphRunResult | null = null;
   #currentNode: NodeLogEntry | null = null;
+  #edgeValues = new EdgeValueStore();
   /**
    * Need to keep track of input separately, because
    * bubbled inputs appear as coming from inside of the
@@ -95,6 +104,7 @@ export class TopGraphObserver {
     if (signal) {
       signal.addEventListener("abort", this.#abort.bind(this));
     }
+    runner.addEventListener("edge", this.#edge.bind(this));
     runner.addEventListener("nodestart", this.#nodeStart.bind(this));
     runner.addEventListener("nodeend", this.#nodeEnd.bind(this));
     runner.addEventListener("graphstart", this.#graphStart.bind(this));
@@ -140,9 +150,14 @@ export class TopGraphObserver {
       this.#currentResult = {
         log: this.#log,
         currentNode: currentNodeEntry ? currentNodeEntry.descriptor : null,
+        edgeValues: this.#edgeValues,
       };
     }
     return this.#currentResult;
+  }
+
+  #edge(event: RunEdgeEvent) {
+    this.#edgeValues = this.#edgeValues.set(event.data.edge, event.data.value);
   }
 
   #abort() {
@@ -393,5 +408,64 @@ class EndNode implements NodeLogEntry {
 
   title(): string {
     return this.descriptor.metadata!.title!;
+  }
+}
+
+type EdgeValueStoreMap = Map<string, NodeValue[]>;
+
+class EdgeValueStore {
+  #values: EdgeValueStoreMap;
+
+  constructor(values: EdgeValueStoreMap = new Map()) {
+    this.#values = values;
+  }
+
+  #key(
+    from: string,
+    out: string,
+    to: string,
+    iN: string,
+    constant: boolean | undefined
+  ) {
+    return `${from}|${out}|${to}|${iN}|${constant === true ? "c" : ""}`;
+  }
+
+  #keyFromEdge(edge: EdgeType): string {
+    return this.#key(
+      edge.from,
+      edge.out || "",
+      edge.to,
+      edge.in || "",
+      edge.constant
+    );
+  }
+
+  #keyFromInspectableEdge(edge: InspectableEdge): string {
+    const from = edge.from.descriptor.id;
+    const out = edge.out;
+    const to = edge.to.descriptor.id;
+    const iN = edge.in;
+    const constant = edge.type === InspectableEdgeType.Constant;
+    return this.#key(from, out, to, iN, constant);
+  }
+
+  set(edge: EdgeType, inputs: InputValues | undefined): EdgeValueStore {
+    if (!inputs) {
+      return this;
+    }
+    const value = edge.out === "*" || !edge.in ? inputs : inputs[edge.in];
+    const key = this.#keyFromEdge(edge);
+    if (!this.#values.has(key)) {
+      this.#values.set(key, [value]);
+    } else {
+      const edgeValues = this.#values.get(key);
+      this.#values.set(key, [...edgeValues!, value]);
+    }
+    return new EdgeValueStore(this.#values);
+  }
+
+  get(edge: InspectableEdge): NodeValue[] {
+    const key = this.#keyFromInspectableEdge(edge);
+    return this.#values.get(key) || [];
   }
 }

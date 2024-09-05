@@ -49,7 +49,7 @@ import { edgeToString } from "./utils.js";
 const DATA_TYPE = "text/plain";
 const PASTE_OFFSET = 50;
 
-import { EdgeLogEntry, LogEntry } from "../../types/types.js";
+import { TopGraphEdgeValues } from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
@@ -104,7 +104,7 @@ export class Editor extends LitElement {
   mode = EditorMode.ADVANCED;
 
   @property()
-  topGraphLog: LogEntry[] | null = null;
+  edgeValues: TopGraphEdgeValues | null = null;
 
   @property()
   highlightedNode: NodeDescriptor | null = null;
@@ -445,10 +445,7 @@ export class Editor extends LitElement {
 
     const url = this.graph.raw().url || "";
 
-    const edgeValues: EdgeLogEntry[] =
-      this.topGraphLog?.filter((entry) => entry.type === "edge") || [];
-
-    this.#graphRenderer.edgeValues = edgeValues;
+    this.#graphRenderer.edgeValues = this.edgeValues;
 
     // Attempt to update the graph if it already exists.
     const updated = this.#graphRenderer.updateGraphByUrl(url, this.subGraphId, {

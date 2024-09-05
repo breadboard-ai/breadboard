@@ -305,7 +305,7 @@ export class UI extends LitElement {
         return html`<bb-editor
           .graph=${graph}
           .subGraphId=${this.subGraphId}
-          .topGraphLog=${this.topGraphResult?.log}
+          .edgeValues=${this.topGraphResult?.edgeValues}
           .highlightedNode=${this.topGraphResult?.currentNode}
           .boardId=${this.boardId}
           .collapseNodesByDefault=${collapseNodesByDefault}
