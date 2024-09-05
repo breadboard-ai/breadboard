@@ -2324,7 +2324,6 @@ export class Main extends LitElement {
         @bbnodepartialupdate=${async (
           evt: BreadboardUI.Events.NodePartialUpdateEvent
         ) => {
-          console.log(evt);
           let editableGraph = this.#getEditor();
           if (editableGraph && evt.subGraphId) {
             editableGraph = editableGraph.getGraph(evt.subGraphId);
@@ -2347,7 +2346,6 @@ export class Main extends LitElement {
             updatedConfiguration[key] = value;
           }
 
-          console.log(configuration, updatedConfiguration);
           const result = await editableGraph.edit(
             [
               {

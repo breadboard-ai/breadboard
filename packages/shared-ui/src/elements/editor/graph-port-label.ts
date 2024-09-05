@@ -100,8 +100,18 @@ export class GraphPortLabel extends PIXI.Container {
       this.#draw();
     };
 
-    this.addEventListener("pointerover", () => {
+    this.addEventListener("pointerover", (evt: PIXI.FederatedPointerEvent) => {
       if (!this.isConfigurable) {
+        return;
+      }
+
+      const ptrEvent = evt.nativeEvent as PointerEvent;
+      const [top] = ptrEvent.composedPath();
+      if (!(top instanceof HTMLElement)) {
+        return;
+      }
+
+      if (top.tagName !== "CANVAS") {
         return;
       }
 
