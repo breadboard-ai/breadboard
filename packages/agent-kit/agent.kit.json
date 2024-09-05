@@ -2992,142 +2992,266 @@
       },
       "edges": [
         {
-          "from": "assembleContext",
-          "to": "output-2",
+          "from": "input-0",
+          "to": "runJavascript-1",
           "out": "context",
           "in": "context"
         },
         {
-          "from": "generate",
-          "to": "assembleContext",
-          "out": "context",
-          "in": "generated"
-        },
-        {
-          "from": "generate",
-          "to": "output-2",
-          "out": "text",
-          "in": "text"
-        },
-        {
-          "from": "buildContext",
-          "to": "generate",
-          "out": "context",
-          "in": "context"
-        },
-        {
-          "from": "buildContext",
-          "to": "assembleContext",
-          "out": "context",
-          "in": "context"
-        },
-        {
-          "from": "input-1",
-          "to": "buildContext",
-          "out": "context",
-          "in": "context"
-        },
-        {
-          "from": "input-1",
-          "to": "buildContext",
+          "from": "input-0",
+          "to": "runJavascript-1",
           "out": "instruction",
           "in": "instruction"
         },
         {
-          "from": "input-1",
-          "to": "generate",
+          "from": "input-0",
+          "to": "text-0",
           "out": "stopSequences",
           "in": "stopSequences"
+        },
+        {
+          "from": "runJavascript-0",
+          "to": "output-0",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "runJavascript-1",
+          "to": "runJavascript-0",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "runJavascript-1",
+          "to": "text-0",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "text-0",
+          "to": "output-0",
+          "out": "text",
+          "in": "text"
+        },
+        {
+          "from": "text-0",
+          "to": "runJavascript-0",
+          "out": "context",
+          "in": "generated"
         }
       ],
       "nodes": [
         {
-          "id": "output-2",
-          "type": "output",
-          "configuration": {
-            "schema": {
-              "type": "object",
-              "properties": {
-                "context": {
-                  "type": "string",
-                  "title": "context"
-                },
-                "text": {
-                  "type": "string",
-                  "title": "Output",
-                  "description": "Agent's output"
-                }
-              }
-            }
-          }
-        },
-        {
-          "id": "assembleContext",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "const assembleContext = ({context,generated})=>{if(!context)throw new Error(\"Context is required\");return{context:[...context,generated]}};",
-            "name": "assembleContext",
-            "raw": true
-          },
-          "metadata": {
-            "title": "Assemble Context",
-            "description": "Assembling the context after generation"
-          }
-        },
-        {
-          "id": "generate",
-          "type": "text",
-          "configuration": {
-            "text": "unused"
-          },
-          "metadata": {
-            "title": "Generate",
-            "description": "Using Gemini to generate worker output"
-          }
-        },
-        {
-          "id": "buildContext",
-          "type": "runJavascript",
-          "configuration": {
-            "code": "const buildContext = ({context,instruction})=>{if(typeof context===\"string\"){context=[{role:\"user\",parts:[{text:context}]}]}const list=context||[];if(list.length>0){const last=list[list.length-1];if(last.role===\"user\"){last.parts.unshift({text:instruction});return{context:list}}}return{context:[...list,{role:\"user\",parts:[{text:instruction}]}]}};",
-            "name": "buildContext",
-            "raw": true
-          },
-          "metadata": {
-            "title": "Build Context",
-            "description": "Building the context for the worker"
-          }
-        },
-        {
-          "id": "input-1",
+          "id": "input-0",
           "type": "input",
           "configuration": {
             "schema": {
               "type": "object",
               "properties": {
                 "context": {
-                  "title": "Context",
                   "type": "array",
+                  "title": "Context",
+                  "examples": [
+                    "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"the universe within us\"\n      }\n    ]\n  }\n]"
+                  ],
                   "items": {
                     "type": "object",
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "role": {
+                            "type": "string",
+                            "enum": [
+                              "user",
+                              "model",
+                              "tool"
+                            ]
+                          },
+                          "parts": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "text": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "text"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "functionCall": {
+                                      "type": "object",
+                                      "properties": {
+                                        "name": {
+                                          "type": "string"
+                                        },
+                                        "args": {
+                                          "type": "object",
+                                          "properties": {},
+                                          "required": [],
+                                          "additionalProperties": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "name",
+                                        "args"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "functionCall"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "parts"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "role": {
+                                "type": "string",
+                                "enum": [
+                                  "$metadata"
+                                ]
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "looper"
+                                ]
+                              },
+                              "data": {
+                                "type": "object",
+                                "properties": {
+                                  "max": {
+                                    "type": "number"
+                                  },
+                                  "todo": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "task": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "task"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "doneMarker": {
+                                    "type": "string"
+                                  },
+                                  "done": {
+                                    "type": "boolean"
+                                  },
+                                  "appendLast": {
+                                    "type": "boolean"
+                                  },
+                                  "returnLast": {
+                                    "type": "boolean"
+                                  },
+                                  "next": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "role",
+                              "type",
+                              "data"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "role": {
+                                "type": "string",
+                                "enum": [
+                                  "$metadata"
+                                ]
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "split"
+                                ]
+                              },
+                              "data": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "start",
+                                      "next",
+                                      "end"
+                                    ]
+                                  },
+                                  "id": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "id"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "role",
+                              "type",
+                              "data"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    ],
                     "behavior": [
                       "llm-content"
                     ]
-                  },
-                  "examples": [
-                    "the universe within us"
-                  ]
+                  }
                 },
                 "instruction": {
-                  "title": "Instruction",
-                  "format": "multiline",
+                  "type": "string",
                   "behavior": [
                     "config"
                   ],
+                  "title": "Instruction",
                   "examples": [
                     "You are a brilliant poet who specializes in two-line rhyming poems.\nGiven any topic, you can quickly whip up a two-line rhyming poem about it.\nLook at the topic below and do your magic"
                   ],
-                  "type": "string"
+                  "format": "multiline"
                 },
                 "stopSequences": {
                   "type": "array",
@@ -3135,13 +3259,9 @@
                     "config"
                   ],
                   "title": "Stop Sequences",
-                  "description": "An array of strings that will stop the output",
                   "default": "[]",
                   "items": {
-                    "type": "object",
-                    "behavior": [
-                      "config"
-                    ]
+                    "type": "string"
                   }
                 }
               },
@@ -3151,9 +3271,1044 @@
               ]
             }
           }
+        },
+        {
+          "id": "output-0",
+          "type": "output",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "role": {
+                            "type": "string",
+                            "enum": [
+                              "user",
+                              "model",
+                              "tool"
+                            ]
+                          },
+                          "parts": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "text": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "text"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "functionCall": {
+                                      "type": "object",
+                                      "properties": {
+                                        "name": {
+                                          "type": "string"
+                                        },
+                                        "args": {
+                                          "type": "object",
+                                          "properties": {},
+                                          "required": [],
+                                          "additionalProperties": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "name",
+                                        "args"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "functionCall"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "parts"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "role": {
+                                "type": "string",
+                                "enum": [
+                                  "$metadata"
+                                ]
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "looper"
+                                ]
+                              },
+                              "data": {
+                                "type": "object",
+                                "properties": {
+                                  "max": {
+                                    "type": "number"
+                                  },
+                                  "todo": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "task": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "task"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "doneMarker": {
+                                    "type": "string"
+                                  },
+                                  "done": {
+                                    "type": "boolean"
+                                  },
+                                  "appendLast": {
+                                    "type": "boolean"
+                                  },
+                                  "returnLast": {
+                                    "type": "boolean"
+                                  },
+                                  "next": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "role",
+                              "type",
+                              "data"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "role": {
+                                "type": "string",
+                                "enum": [
+                                  "$metadata"
+                                ]
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "split"
+                                ]
+                              },
+                              "data": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "start",
+                                      "next",
+                                      "end"
+                                    ]
+                                  },
+                                  "id": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "id"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "role",
+                              "type",
+                              "data"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    ],
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  }
+                },
+                "text": {
+                  "type": "string",
+                  "title": "Text",
+                  "description": "The generated text"
+                }
+              },
+              "required": [
+                "context",
+                "text"
+              ]
+            }
+          }
+        },
+        {
+          "id": "runJavascript-0",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const run = ({context:context2,generated})=>{if(!context2)throw new Error(\"Context is required\");return{context:[...context2,generated]}};",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "role": {
+                            "type": "string",
+                            "enum": [
+                              "user",
+                              "model",
+                              "tool"
+                            ]
+                          },
+                          "parts": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "text": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "text"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "functionCall": {
+                                      "type": "object",
+                                      "properties": {
+                                        "name": {
+                                          "type": "string"
+                                        },
+                                        "args": {
+                                          "type": "object",
+                                          "properties": {},
+                                          "required": [],
+                                          "additionalProperties": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "name",
+                                        "args"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "functionCall"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "parts"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "role": {
+                                "type": "string",
+                                "enum": [
+                                  "$metadata"
+                                ]
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "looper"
+                                ]
+                              },
+                              "data": {
+                                "type": "object",
+                                "properties": {
+                                  "max": {
+                                    "type": "number"
+                                  },
+                                  "todo": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "task": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "task"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "doneMarker": {
+                                    "type": "string"
+                                  },
+                                  "done": {
+                                    "type": "boolean"
+                                  },
+                                  "appendLast": {
+                                    "type": "boolean"
+                                  },
+                                  "returnLast": {
+                                    "type": "boolean"
+                                  },
+                                  "next": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "role",
+                              "type",
+                              "data"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "role": {
+                                "type": "string",
+                                "enum": [
+                                  "$metadata"
+                                ]
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "split"
+                                ]
+                              },
+                              "data": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "start",
+                                      "next",
+                                      "end"
+                                    ]
+                                  },
+                                  "id": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "id"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "role",
+                              "type",
+                              "data"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    ],
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  }
+                },
+                "generated": {
+                  "type": [
+                    "array",
+                    "boolean",
+                    "null",
+                    "number",
+                    "object",
+                    "string"
+                  ]
+                }
+              }
+            },
+            "name": "run",
+            "outputSchema": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "role": {
+                            "type": "string",
+                            "enum": [
+                              "user",
+                              "model",
+                              "tool"
+                            ]
+                          },
+                          "parts": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "text": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "text"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "functionCall": {
+                                      "type": "object",
+                                      "properties": {
+                                        "name": {
+                                          "type": "string"
+                                        },
+                                        "args": {
+                                          "type": "object",
+                                          "properties": {},
+                                          "required": [],
+                                          "additionalProperties": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "name",
+                                        "args"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "functionCall"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "parts"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "role": {
+                                "type": "string",
+                                "enum": [
+                                  "$metadata"
+                                ]
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "looper"
+                                ]
+                              },
+                              "data": {
+                                "type": "object",
+                                "properties": {
+                                  "max": {
+                                    "type": "number"
+                                  },
+                                  "todo": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "task": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "task"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "doneMarker": {
+                                    "type": "string"
+                                  },
+                                  "done": {
+                                    "type": "boolean"
+                                  },
+                                  "appendLast": {
+                                    "type": "boolean"
+                                  },
+                                  "returnLast": {
+                                    "type": "boolean"
+                                  },
+                                  "next": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "role",
+                              "type",
+                              "data"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "role": {
+                                "type": "string",
+                                "enum": [
+                                  "$metadata"
+                                ]
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "split"
+                                ]
+                              },
+                              "data": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "start",
+                                      "next",
+                                      "end"
+                                    ]
+                                  },
+                                  "id": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "id"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "role",
+                              "type",
+                              "data"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    ],
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  }
+                }
+              }
+            },
+            "raw": true
+          },
+          "metadata": {
+            "title": "Assemble Context"
+          }
+        },
+        {
+          "id": "runJavascript-1",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const run = ({context:context2,instruction:instruction2})=>{if(typeof context2===\"string\"){context2=[{role:\"user\",parts:[{text:context2}]}]}const list=context2??[];if(list.length>0){const last=list[list.length-1];if(last.role===\"user\"){last.parts.unshift({text:instruction2});return{context:list}}}return{context:[...list,{role:\"user\",parts:[{text:instruction2}]}]}};",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "role": {
+                            "type": "string",
+                            "enum": [
+                              "user",
+                              "model",
+                              "tool"
+                            ]
+                          },
+                          "parts": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "text": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "text"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "functionCall": {
+                                      "type": "object",
+                                      "properties": {
+                                        "name": {
+                                          "type": "string"
+                                        },
+                                        "args": {
+                                          "type": "object",
+                                          "properties": {},
+                                          "required": [],
+                                          "additionalProperties": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "name",
+                                        "args"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "functionCall"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "parts"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "role": {
+                                "type": "string",
+                                "enum": [
+                                  "$metadata"
+                                ]
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "looper"
+                                ]
+                              },
+                              "data": {
+                                "type": "object",
+                                "properties": {
+                                  "max": {
+                                    "type": "number"
+                                  },
+                                  "todo": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "task": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "task"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "doneMarker": {
+                                    "type": "string"
+                                  },
+                                  "done": {
+                                    "type": "boolean"
+                                  },
+                                  "appendLast": {
+                                    "type": "boolean"
+                                  },
+                                  "returnLast": {
+                                    "type": "boolean"
+                                  },
+                                  "next": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "role",
+                              "type",
+                              "data"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "role": {
+                                "type": "string",
+                                "enum": [
+                                  "$metadata"
+                                ]
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "split"
+                                ]
+                              },
+                              "data": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "start",
+                                      "next",
+                                      "end"
+                                    ]
+                                  },
+                                  "id": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "id"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "role",
+                              "type",
+                              "data"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    ],
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  }
+                },
+                "instruction": {
+                  "type": "string",
+                  "format": "multiline",
+                  "behavior": [
+                    "config"
+                  ]
+                }
+              }
+            },
+            "name": "run",
+            "outputSchema": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "role": {
+                            "type": "string",
+                            "enum": [
+                              "user",
+                              "model",
+                              "tool"
+                            ]
+                          },
+                          "parts": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "text": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "text"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "functionCall": {
+                                      "type": "object",
+                                      "properties": {
+                                        "name": {
+                                          "type": "string"
+                                        },
+                                        "args": {
+                                          "type": "object",
+                                          "properties": {},
+                                          "required": [],
+                                          "additionalProperties": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "name",
+                                        "args"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "functionCall"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "parts"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "role": {
+                                "type": "string",
+                                "enum": [
+                                  "$metadata"
+                                ]
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "looper"
+                                ]
+                              },
+                              "data": {
+                                "type": "object",
+                                "properties": {
+                                  "max": {
+                                    "type": "number"
+                                  },
+                                  "todo": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "task": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "task"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "doneMarker": {
+                                    "type": "string"
+                                  },
+                                  "done": {
+                                    "type": "boolean"
+                                  },
+                                  "appendLast": {
+                                    "type": "boolean"
+                                  },
+                                  "returnLast": {
+                                    "type": "boolean"
+                                  },
+                                  "next": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "role",
+                              "type",
+                              "data"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "role": {
+                                "type": "string",
+                                "enum": [
+                                  "$metadata"
+                                ]
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "split"
+                                ]
+                              },
+                              "data": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "start",
+                                      "next",
+                                      "end"
+                                    ]
+                                  },
+                                  "id": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "id"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "role",
+                              "type",
+                              "data"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    ],
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  }
+                }
+              }
+            },
+            "raw": true
+          },
+          "metadata": {
+            "title": "Build Context"
+          }
+        },
+        {
+          "id": "text-0",
+          "type": "text",
+          "configuration": {}
         }
-      ],
-      "graphs": {}
+      ]
     },
     "looper": {
       "title": "Looper",
