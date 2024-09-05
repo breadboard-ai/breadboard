@@ -796,7 +796,7 @@ export class AppView extends LitElement {
       return graph.description ? html`${graph.description}` : nothing;
     });
 
-    const log = this.#runObserver?.log() ?? [];
+    const log = this.#runObserver?.current()?.log ?? [];
     const status = () => {
       const classes: Record<string, boolean> = { pending: false };
       const newest = log[log.length - 1];
