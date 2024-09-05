@@ -95,8 +95,10 @@ function makeBoardComponentHandler(board: BoardDefinition): NodeHandler {
   return {
     metadata: {
       ...board.metadata,
-      title: board.title,
-      description: board.description,
+      title: board.title ?? (board.metadata?.title as string | undefined),
+      description:
+        board.description ??
+        (board.metadata?.description as string | undefined),
     },
     describe: board.describe.bind(board),
     async invoke(inputs: InputValues, context: NodeHandlerContext) {
@@ -176,8 +178,8 @@ async function makeLegacyKit<T extends ComponentManifest>({
         $board: `#${id}`,
         $metadata: {
           ...component.metadata,
-          title: component.title,
-          description: component.description,
+          title: component.title ?? component.metadata?.title,
+          description: component.description ?? component.metadata?.description,
         },
       });
       graphs[id] = serialize(component);
