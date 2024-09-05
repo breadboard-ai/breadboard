@@ -57,9 +57,6 @@ export function isConfigurablePort(port: InspectablePort) {
   if (port.star) return false;
   if (port.name === "") return false;
 
-  // TODO: Figure out if this is the right call.
-  if (port.schema.behavior?.includes("ports-spec")) return false;
-
   if (port.schema.behavior?.includes("config")) return true;
   const items = port.schema.items;
   if (items && !Array.isArray(items) && items.behavior?.includes("config")) {
