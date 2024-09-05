@@ -334,6 +334,7 @@
                       "parts": {
                         "type": "array",
                         "items": {
+                          "type": "object",
                           "anyOf": [
                             {
                               "type": "object",
@@ -605,6 +606,7 @@
                     "parts": {
                       "type": "array",
                       "items": {
+                        "type": "object",
                         "anyOf": [
                           {
                             "type": "object",
@@ -678,6 +680,7 @@
                     "parts": {
                       "type": "array",
                       "items": {
+                        "type": "object",
                         "anyOf": [
                           {
                             "type": "object",
@@ -806,6 +809,7 @@
                       "parts": {
                         "type": "array",
                         "items": {
+                          "type": "object",
                           "anyOf": [
                             {
                               "type": "object",
@@ -1011,6 +1015,7 @@
                   ]
                 },
                 "retry": {
+                  "type": "number",
                   "anyOf": [
                     {
                       "type": "number",
@@ -1077,6 +1082,7 @@
                       "parts": {
                         "type": "array",
                         "items": {
+                          "type": "object",
                           "anyOf": [
                             {
                               "type": "object",
@@ -1206,6 +1212,7 @@
                         "parts": {
                           "type": "array",
                           "items": {
+                            "type": "object",
                             "anyOf": [
                               {
                                 "type": "object",
@@ -1430,6 +1437,7 @@
                               "parts": {
                                 "type": "array",
                                 "items": {
+                                  "type": "object",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -1499,6 +1507,7 @@
                     "parts": {
                       "type": "array",
                       "items": {
+                        "type": "object",
                         "anyOf": [
                           {
                             "type": "object",
@@ -1583,6 +1592,7 @@
                       "parts": {
                         "type": "array",
                         "items": {
+                          "type": "object",
                           "anyOf": [
                             {
                               "type": "object",
@@ -1712,6 +1722,7 @@
                         "parts": {
                           "type": "array",
                           "items": {
+                            "type": "object",
                             "anyOf": [
                               {
                                 "type": "object",

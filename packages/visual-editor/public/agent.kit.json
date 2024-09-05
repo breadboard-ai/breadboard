@@ -480,6 +480,7 @@
                   "description": "Initial conversation context",
                   "default": "[]",
                   "items": {
+                    "type": "object",
                     "anyOf": [
                       {
                         "type": "object",
@@ -495,6 +496,7 @@
                           "parts": {
                             "type": "array",
                             "items": {
+                              "type": "object",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -548,6 +550,7 @@
                         "additionalProperties": false
                       },
                       {
+                        "type": "object",
                         "anyOf": [
                           {
                             "type": "object",
@@ -728,6 +731,7 @@
                 "context": {
                   "type": "array",
                   "items": {
+                    "type": "object",
                     "anyOf": [
                       {
                         "type": "object",
@@ -743,6 +747,7 @@
                           "parts": {
                             "type": "array",
                             "items": {
+                              "type": "object",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -796,6 +801,7 @@
                         "additionalProperties": false
                       },
                       {
+                        "type": "object",
                         "anyOf": [
                           {
                             "type": "object",
@@ -960,6 +966,7 @@
                 "continue": {
                   "type": "array",
                   "items": {
+                    "type": "object",
                     "anyOf": [
                       {
                         "type": "object",
@@ -975,6 +982,7 @@
                           "parts": {
                             "type": "array",
                             "items": {
+                              "type": "object",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -1028,6 +1036,7 @@
                         "additionalProperties": false
                       },
                       {
+                        "type": "object",
                         "anyOf": [
                           {
                             "type": "object",
@@ -1147,6 +1156,7 @@
                 "stop": {
                   "type": "array",
                   "items": {
+                    "type": "object",
                     "anyOf": [
                       {
                         "type": "object",
@@ -1162,6 +1172,7 @@
                           "parts": {
                             "type": "array",
                             "items": {
+                              "type": "object",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -1215,6 +1226,7 @@
                         "additionalProperties": false
                       },
                       {
+                        "type": "object",
                         "anyOf": [
                           {
                             "type": "object",
@@ -3500,6 +3512,7 @@
               },
               "required": [],
               "additionalProperties": {
+                "type": "object",
                 "behavior": [
                   "llm-content"
                 ],
@@ -3518,6 +3531,7 @@
                       "parts": {
                         "type": "array",
                         "items": {
+                          "type": "object",
                           "anyOf": [
                             {
                               "type": "object",
@@ -3571,6 +3585,7 @@
                     "additionalProperties": false
                   },
                   {
+                    "type": "object",
                     "anyOf": [
                       {
                         "type": "object",
@@ -3696,6 +3711,7 @@
                 "context": {
                   "type": "array",
                   "items": {
+                    "type": "object",
                     "anyOf": [
                       {
                         "type": "object",
@@ -3711,6 +3727,7 @@
                           "parts": {
                             "type": "array",
                             "items": {
+                              "type": "object",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -3764,6 +3781,7 @@
                         "additionalProperties": false
                       },
                       {
+                        "type": "object",
                         "anyOf": [
                           {
                             "type": "object",
@@ -3904,6 +3922,7 @@
                 }
               },
               "additionalProperties": {
+                "type": "object",
                 "anyOf": [
                   {
                     "type": "object",
@@ -3919,6 +3938,7 @@
                       "parts": {
                         "type": "array",
                         "items": {
+                          "type": "object",
                           "anyOf": [
                             {
                               "type": "object",
@@ -3972,6 +3992,7 @@
                     "additionalProperties": false
                   },
                   {
+                    "type": "object",
                     "anyOf": [
                       {
                         "type": "object",
@@ -4095,6 +4116,7 @@
                 "context": {
                   "type": "array",
                   "items": {
+                    "type": "object",
                     "anyOf": [
                       {
                         "type": "object",
@@ -4110,6 +4132,7 @@
                           "parts": {
                             "type": "array",
                             "items": {
+                              "type": "object",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -4163,6 +4186,7 @@
                         "additionalProperties": false
                       },
                       {
+                        "type": "object",
                         "anyOf": [
                           {
                             "type": "object",
