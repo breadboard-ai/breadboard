@@ -1453,7 +1453,7 @@ export class Main extends LitElement {
     let tmpl: HTMLTemplateResult | symbol = nothing;
 
     let runs: Promise<InspectableRun[]> = Promise.resolve([]);
-    const topGraphLog = this.#topGraphObserver?.log() || [];
+    const topGraphResult = this.#topGraphObserver?.current() || null;
     if (this.#runObserver) {
       runs = this.#runObserver?.runs();
     }
@@ -1689,7 +1689,7 @@ export class Main extends LitElement {
               .graph=${this.graph}
               .subGraphId=${this.subGraphId}
               .run=${currentRun}
-              .topGraphLog=${topGraphLog}
+              .topGraphResult=${topGraphResult}
               .inputsFromLastRun=${inputsFromLastRun}
               .kits=${this.kits}
               .loader=${this.#loader}

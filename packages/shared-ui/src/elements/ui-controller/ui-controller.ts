@@ -5,6 +5,18 @@
  */
 
 import {
+  EditHistory,
+  GraphDescriptor,
+  GraphLoader,
+  GraphProvider,
+  InspectableRun,
+  InspectableRunEvent,
+  InspectableRunInputs,
+  Kit,
+  RemoveNodeSpec,
+  inspect,
+} from "@google-labs/breadboard";
+import {
   HTMLTemplateResult,
   LitElement,
   PropertyValueMap,
@@ -12,12 +24,11 @@ import {
   nothing,
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import {
-  LogEntry,
-  RecentBoard,
-  SETTINGS_TYPE,
-  STATUS,
-} from "../../types/types.js";
+import { cache } from "lit/directives/cache.js";
+import { classMap } from "lit/directives/class-map.js";
+import { guard } from "lit/directives/guard.js";
+import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import {
   GraphNodeDeselectedEvent,
   GraphNodeSelectedEvent,
@@ -26,26 +37,15 @@ import {
   StopEvent,
 } from "../../events/events.js";
 import {
-  EditHistory,
-  GraphDescriptor,
-  GraphLoader,
-  GraphProvider,
-  inspect,
-  InspectableRun,
-  InspectableRunEvent,
-  InspectableRunInputs,
-  Kit,
-  RemoveNodeSpec,
-} from "@google-labs/breadboard";
-import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { styles as uiControllerStyles } from "./ui-controller.styles.js";
-import { MAIN_BOARD_ID } from "../../constants/constants.js";
+  RecentBoard,
+  SETTINGS_TYPE,
+  STATUS,
+  SettingsStore,
+  TopGraphRunResult,
+} from "../../types/types.js";
 import { EditorMode } from "../../utils/mode.js";
-import { guard } from "lit/directives/guard.js";
-import { cache } from "lit/directives/cache.js";
-import { classMap } from "lit/directives/class-map.js";
 import { NodeRunner, type NodeConfigurationInfo } from "../elements.js";
-import { SettingsStore } from "../../types/types.js";
+import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 
 /**
  * Breadboard UI controller element.
@@ -81,7 +81,7 @@ export class UI extends LitElement {
   run: InspectableRun | null = null;
 
   @property()
-  topGraphLog: LogEntry[] | null = null;
+  topGraphResult: TopGraphRunResult | null = null;
 
   @property()
   inputsFromLastRun: InspectableRunInputs | null = null;
@@ -288,7 +288,7 @@ export class UI extends LitElement {
         this.graph,
         this.subGraphId,
         this.kits,
-        this.topGraphLog,
+        this.topGraphResult,
         this.boardId,
         collapseNodesByDefault,
         hideSubboardSelectorWhenEmpty,
@@ -305,7 +305,8 @@ export class UI extends LitElement {
         return html`<bb-editor
           .graph=${graph}
           .subGraphId=${this.subGraphId}
-          .topGraphLog=${this.topGraphLog}
+          .edgeValues=${this.topGraphResult?.edgeValues}
+          .highlightedNode=${this.topGraphResult?.currentNode}
           .boardId=${this.boardId}
           .collapseNodesByDefault=${collapseNodesByDefault}
           .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}

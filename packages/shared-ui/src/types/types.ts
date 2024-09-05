@@ -212,3 +212,16 @@ export type ErrorLogEntry = {
 };
 
 export type LogEntry = NodeLogEntry | EdgeLogEntry | ErrorLogEntry;
+
+/**
+ * The result, returned by the TopGraphObserver.
+ */
+export type TopGraphRunResult = {
+  log: LogEntry[];
+  currentNode: NodeDescriptor | null;
+  edgeValues: TopGraphEdgeValues;
+};
+
+export type TopGraphEdgeValues = {
+  get(edge: InspectableEdge): NodeValue | undefined;
+};

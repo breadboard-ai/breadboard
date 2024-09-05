@@ -42,7 +42,7 @@ import { styleMap } from "lit/directives/style-map.js";
 import { getGlobalColor } from "./utils.js";
 import { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
 import { GraphComment } from "./graph-comment.js";
-import { EdgeData, EdgeLogEntry } from "../../types/types.js";
+import { EdgeData, TopGraphEdgeValues } from "../../types/types.js";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
 const selectionBoxBackgroundAlpha = 0.05;
@@ -82,7 +82,7 @@ export class GraphRenderer extends LitElement {
   highlightInvalidWires = false;
 
   @property()
-  edgeValues: EdgeLogEntry[] = [];
+  edgeValues: TopGraphEdgeValues | null = null;
 
   @property()
   showPortTooltips = false;
@@ -610,6 +610,16 @@ export class GraphRenderer extends LitElement {
     subGraphId: string | null,
     opts: Partial<GraphOpts>
   ) {
+    // Paul, this is how you get at the data in the edges.
+    // Returns an array of values for now.
+    // if (opts.edges) {
+    //   console.group("EDGE VALUES");
+    //   for (const edge of opts.edges) {
+    //     const edgeValues = this.edgeValues?.get(edge);
+    //     console.log("EDGE DATA", edge.in, edgeValues);
+    //   }
+    //   console.groupEnd();
+    // }
     const graph = this.#container.children.find(
       (child) => child.label === this.#createUrl(url, subGraphId)
     );
