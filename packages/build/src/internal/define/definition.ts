@@ -54,7 +54,6 @@ import { normalizeBreadboardError } from "../common/error.js";
 import type { Convergence } from "../board/converge.js";
 import type { SerializableBoard } from "../common/serializable.js";
 import type { StarInputs } from "../board/star-inputs.js";
-import type { KitBinding } from "../kit.js";
 
 export interface Definition<
   /* Static Inputs   */ SI extends { [K: string]: JsonSerializable },
@@ -166,8 +165,7 @@ export class DefinitionImpl<
   }
 
   instantiate<A extends LooseInstantiateArgs>(
-    args: A & StrictInstantiateArgs<SI, OI, DI, A, IM>,
-    kitBinding?: KitBinding
+    args: A & StrictInstantiateArgs<SI, OI, DI, A, IM>
   ): Instance<
     InstanceInputs<SI, DI, A>,
     InstanceOutputs<SI, SO, DO, R, A>,
@@ -188,8 +186,7 @@ export class DefinitionImpl<
       this.#reflective,
       // TODO(aomarks) Fix
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      args as any,
-      kitBinding
+      args as any
     );
   }
 

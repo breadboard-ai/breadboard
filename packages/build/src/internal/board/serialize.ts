@@ -358,19 +358,10 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       return descriptor.id;
     }
     let type, metadata, thisNodeId;
-    let isBoardInstanceBoundToKit = false;
     if (isBoardInstance(node)) {
-      const kitBinding = node.__kitBinding;
-      if (kitBinding) {
-        isBoardInstanceBoundToKit = true;
-        type = kitBinding.id;
-        metadata = undefined;
-        thisNodeId = nextIdForType(type);
-      } else {
-        type = "invoke";
-        metadata = undefined;
-        thisNodeId = nextIdForType("invoke");
-      }
+      type = "invoke";
+      metadata = undefined;
+      thisNodeId = nextIdForType("invoke");
     } else {
       const cast = node as SerializableNode;
       type = cast.type;
@@ -396,7 +387,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     nodes.set(node, descriptor);
 
     const configurationEntries: Array<[string, NodeValue]> = [];
-    if (isBoardInstance(node) && !isBoardInstanceBoundToKit) {
+    if (isBoardInstance(node)) {
       configurationEntries.push([
         "$board",
         `#${embedBoardAndReturnItsId(node.definition)}`,
