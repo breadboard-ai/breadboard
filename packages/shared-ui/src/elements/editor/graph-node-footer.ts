@@ -61,23 +61,6 @@ export class GraphNodeFooter extends PIXI.Container {
           },
         });
 
-        label.addEventListener("pointerover", (evt) => {
-          const ptrEvent = evt.nativeEvent as PointerEvent;
-          const [top] = ptrEvent.composedPath();
-          if (!(top instanceof HTMLElement)) {
-            return;
-          }
-
-          if (top.tagName !== "CANVAS") {
-            return;
-          }
-          label.alpha = 1;
-        });
-
-        label.addEventListener("pointerout", () => {
-          label.alpha = 0.65;
-        });
-
         label.alpha = 0.65;
         label.cursor = "pointer";
 
@@ -94,6 +77,10 @@ export class GraphNodeFooter extends PIXI.Container {
         portItem.label.text = port.title;
       }
 
+      portItem.port = port;
+      portItem.nodePort.status = port.status;
+      portItem.nodePort.configured = port.configured;
+
       portItem.nodePort.x = this.#width;
       portItem.nodePort.y = this.#height * 0.5;
 
@@ -107,16 +94,29 @@ export class GraphNodeFooter extends PIXI.Container {
         (evt: PIXI.FederatedPointerEvent) => {
           this.emit(
             GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
-            port,
+            portItem.port,
             evt.clientX,
             evt.clientY
           );
         }
       );
 
-      portItem.port = port;
-      portItem.nodePort.status = port.status;
-      portItem.nodePort.configured = port.configured;
+      portItem.label.addEventListener("pointerover", (evt) => {
+        const ptrEvent = evt.nativeEvent as PointerEvent;
+        const [top] = ptrEvent.composedPath();
+        if (!(top instanceof HTMLElement)) {
+          return;
+        }
+
+        if (top.tagName !== "CANVAS") {
+          return;
+        }
+        portItem.label.alpha = 1;
+      });
+
+      portItem.label.addEventListener("pointerout", () => {
+        portItem.label.alpha = 0.65;
+      });
 
       this.#width +=
         portItem.nodePort.radius * 2 +
