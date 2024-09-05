@@ -1404,6 +1404,13 @@ export class Graph extends PIXI.Container {
           this.emit(GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSELEAVE, ...args)
       );
 
+      graphNode.on(
+        GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
+        (...args: unknown[]) => {
+          this.emit(GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT, ...args);
+        }
+      );
+
       this.addChild(graphNode);
     }
 

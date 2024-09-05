@@ -44,7 +44,6 @@ import PythonWasmKit from "@breadboard-ai/python-wasm";
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 import { RecentBoardStore } from "./data/recent-boards";
 import { SecretsHelper } from "./utils/secrets-helper";
-import { TopGraphObserver } from "../../shared-ui/dist/utils/top-graph-observer";
 
 const REPLAY_DELAY_MS = 10;
 const STORAGE_PREFIX = "bb-main";
@@ -117,6 +116,10 @@ export class Main extends LitElement {
   @state()
   showSaveAsDialog = false;
   #saveAsState: SaveAsConfiguration | null = null;
+
+  @state()
+  showNodeConfigurator = false;
+  #nodeConfiguratorData: BreadboardUI.Types.NodePortConfiguration | null = null;
 
   @state()
   boardEditOverlayInfo: {
@@ -1107,7 +1110,7 @@ export class Main extends LitElement {
         dataStore: this.dataStore,
         runStore: this.runStore,
       });
-      this.#topGraphObserver = new TopGraphObserver(
+      this.#topGraphObserver = new BreadboardUI.Utils.TopGraphObserver(
         this.#runner,
         this.#abortController?.signal
       );
@@ -1504,7 +1507,8 @@ export class Main extends LitElement {
       this.showFirstRun ||
       this.showProviderAddOverlay ||
       this.showSaveAsDialog ||
-      this.showOverflowMenu;
+      this.showOverflowMenu ||
+      this.showNodeConfigurator;
 
     const nav = this.#load.then(() => {
       return html`<bb-nav
@@ -1686,6 +1690,7 @@ export class Main extends LitElement {
 
             return html`<bb-ui-controller
               ${ref(this.#uiRef)}
+              ?inert=${showingOverlay}
               .graph=${this.graph}
               .subGraphId=${this.subGraphId}
               .run=${currentRun}
@@ -1962,6 +1967,12 @@ export class Main extends LitElement {
                   [{ type: "addnode", node: newNode }],
                   `Add node ${id}`
                 );
+              }}
+              @bbnodeconfigurationupdaterequest=${(
+                evt: BreadboardUI.Events.NodeConfigurationUpdateRequestEvent
+              ) => {
+                this.showNodeConfigurator = evt.port !== null;
+                this.#nodeConfiguratorData = { ...evt };
               }}
               @bbcommentupdate=${(
                 evt: BreadboardUI.Events.CommentUpdateEvent
@@ -2299,6 +2310,68 @@ export class Main extends LitElement {
       this.#saveAsState = null;
     }
 
+    let nodeConfiguratorOverlay: HTMLTemplateResult | symbol = nothing;
+    if (this.showNodeConfigurator) {
+      nodeConfiguratorOverlay = html`<bb-node-configuration-overlay
+        .configuration=${this.#nodeConfiguratorData}
+        .graph=${this.graph}
+        .providers=${this.#providers}
+        .providerOps=${this.providerOps}
+        .showTypes=${false}
+        @bboverlaydismissed=${() => {
+          this.showNodeConfigurator = false;
+        }}
+        @bbnodepartialupdate=${async (
+          evt: BreadboardUI.Events.NodePartialUpdateEvent
+        ) => {
+          console.log(evt);
+          let editableGraph = this.#getEditor();
+          if (editableGraph && evt.subGraphId) {
+            editableGraph = editableGraph.getGraph(evt.subGraphId);
+          }
+
+          if (!editableGraph) {
+            console.warn("Unable to create node; no active graph");
+            return;
+          }
+
+          const inspectableNode = editableGraph.inspect().nodeById(evt.id);
+          const configuration = inspectableNode?.descriptor.configuration ?? {};
+          const updatedConfiguration = structuredClone(configuration);
+          for (const [key, value] of Object.entries(evt.configuration)) {
+            if (value === null || value === undefined) {
+              delete updatedConfiguration[key];
+              continue;
+            }
+
+            updatedConfiguration[key] = value;
+          }
+
+          console.log(configuration, updatedConfiguration);
+          const result = await editableGraph.edit(
+            [
+              {
+                type: "changeconfiguration",
+                id: evt.id,
+                configuration: updatedConfiguration,
+                reset: true,
+              },
+            ],
+            `Change configuration for "${evt.id}"`
+          );
+
+          if (result.success) {
+            this.#nodeConfiguratorData = null;
+            this.showNodeConfigurator = false;
+          } else {
+            this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
+          }
+        }}
+      >
+        <div>This should work!</div>
+      </bb-node-configuration-overlay>`;
+    }
+
     let overflowMenu: HTMLTemplateResult | symbol = nothing;
     if (this.showOverflowMenu) {
       const actions: Array<{
@@ -2514,6 +2587,7 @@ export class Main extends LitElement {
       saveAsDialogOverlay,
       overflowMenu,
       previewOverlay,
+      nodeConfiguratorOverlay,
       toasts,
     ];
   }

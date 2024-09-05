@@ -15,6 +15,7 @@ import {
 } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
 import { getGlobalColor, isConfigurablePort } from "./utils";
+import { GRAPH_OPERATIONS } from "./types";
 
 const hoverColor = getGlobalColor("--bb-ui-50");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
@@ -77,7 +78,6 @@ export class GraphPortLabel extends PIXI.Container {
         wordWrapWidth: PREVIEW_WIDTH,
         breakWords: false,
       },
-      width: PREVIEW_WIDTH,
     });
 
     this.#label.eventMode = "none";
@@ -116,10 +116,17 @@ export class GraphPortLabel extends PIXI.Container {
       this.#hoverZone.alpha = 0;
     });
 
-    this.addEventListener("click", () => {
+    this.addEventListener("click", (evt: PIXI.FederatedPointerEvent) => {
       if (!this.isConfigurable) {
         return;
       }
+
+      this.emit(
+        GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
+        this.port,
+        evt.clientX,
+        evt.clientY
+      );
     });
   }
 
@@ -220,6 +227,7 @@ export class GraphPortLabel extends PIXI.Container {
 
     if (this.#valuePreview.text !== "" && this.#showNodePreviewValues) {
       this.#valuePreview.visible = true;
+      this.#width = PREVIEW_WIDTH;
       this.#height += this.#spacing + this.#valuePreview.height;
     }
   }

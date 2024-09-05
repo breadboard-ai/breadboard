@@ -12,7 +12,7 @@ import { GraphOverflowMenu } from "./graph-overflow-menu.js";
 import { GraphAssets } from "./graph-assets.js";
 import { DBL_CLICK_DELTA, getGlobalColor } from "./utils.js";
 import { GraphNodeFooter } from "./graph-node-footer.js";
-import { GraphPortLabel } from "./graph-port-label.js";
+import { GraphPortLabel as GraphNodePortLabel } from "./graph-port-label.js";
 
 const borderColor = getGlobalColor("--bb-neutral-500");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
@@ -60,13 +60,13 @@ export class GraphNode extends PIXI.Container {
     string,
     {
       port: InspectablePort;
-      label: GraphPortLabel;
+      label: GraphNodePortLabel;
       nodePort: GraphNodePort;
     } | null
   > = new Map();
   #inPortsSortedByName: Array<{
     port: InspectablePort;
-    label: GraphPortLabel;
+    label: GraphNodePortLabel;
     nodePort: GraphNodePort;
   }> = [];
   #outPorts: InspectablePort[] | null = null;
@@ -453,7 +453,19 @@ export class GraphNode extends PIXI.Container {
     for (const port of ports) {
       let portItem = this.#inPortsData.get(port.name);
       if (!portItem) {
-        const label = new GraphPortLabel(port);
+        const label = new GraphNodePortLabel(port);
+        label.on(
+          GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
+          (...args: unknown[]) => {
+            // Propagate to the parent graph.
+            this.emit(
+              GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
+              this.label,
+              ...args
+            );
+          }
+        );
+
         this.addChild(label);
         label.visible = false;
 

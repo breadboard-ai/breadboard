@@ -7,6 +7,7 @@
 import type {
   EditSpec,
   GraphDescriptor,
+  InspectablePort,
   NodeConfiguration,
   NodeDescriptor,
 } from "@google-labs/breadboard";
@@ -413,6 +414,32 @@ export class NodeUpdateEvent extends Event {
   }
 }
 
+export class NodePartialUpdateEvent extends Event {
+  static eventName = "bbnodepartialupdate";
+
+  constructor(
+    public readonly id: string,
+    public readonly subGraphId: string | null = null,
+    public readonly configuration: NodeConfiguration
+  ) {
+    super(NodePartialUpdateEvent.eventName, { ...eventInit });
+  }
+}
+
+export class NodeConfigurationUpdateRequestEvent extends Event {
+  static eventName = "bbnodeconfigurationupdaterequest";
+
+  constructor(
+    public readonly id: string,
+    public readonly subGraphId: string | null = null,
+    public readonly port: InspectablePort | null = null,
+    public readonly x: number = 0,
+    public readonly y: number = 0
+  ) {
+    super(NodeConfigurationUpdateRequestEvent.eventName, { ...eventInit });
+  }
+}
+
 export class NodeMetadataUpdateEvent extends Event {
   static eventName = "bbnodemetadataupdate";
 
@@ -474,6 +501,19 @@ export class GraphNodesVisualUpdateEvent extends Event {
     }>
   ) {
     super(GraphNodesVisualUpdateEvent.eventName, { ...eventInit });
+  }
+}
+
+export class GraphNodePortValueEditEvent extends Event {
+  static eventName = "bbgraphnodeportedit";
+
+  constructor(
+    public readonly id: string,
+    public readonly port: InspectablePort | null,
+    public readonly x: number,
+    public readonly y: number
+  ) {
+    super(GraphNodePortValueEditEvent.eventName, { ...eventInit });
   }
 }
 

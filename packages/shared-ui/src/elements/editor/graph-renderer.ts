@@ -20,6 +20,7 @@ import {
   GraphInitialDrawEvent,
   GraphEntityRemoveEvent,
   StartEvent,
+  GraphNodePortValueEditEvent,
 } from "../../events/events.js";
 import { GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
@@ -891,6 +892,13 @@ export class GraphRenderer extends LitElement {
     graph.on(GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSELEAVE, () => {
       this._portTooltip = undefined;
     });
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
+      (id: string, port: InspectablePort | null, x: number, y: number) => {
+        this.dispatchEvent(new GraphNodePortValueEditEvent(id, port, x, y));
+      }
+    );
 
     this.#container.addChild(graph);
   }

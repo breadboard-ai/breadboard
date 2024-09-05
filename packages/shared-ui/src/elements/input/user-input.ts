@@ -45,6 +45,9 @@ export class UserInput extends LitElement {
   inputs: UserInputConfiguration[] = [];
 
   @property()
+  showTitleInfo = true;
+
+  @property()
   showTypes = false;
 
   @property({ reflect: true })
@@ -635,7 +638,9 @@ export class UserInput extends LitElement {
 
         return html`<div class=${classMap(styles)}>
           <label>
-            <span class="title">${input.title} ${typeInfo}</span>
+            ${this.showTitleInfo
+              ? html`<span class="title">${input.title} ${typeInfo}</span>`
+              : nothing}
             ${description}
           </label>
           ${inputField}

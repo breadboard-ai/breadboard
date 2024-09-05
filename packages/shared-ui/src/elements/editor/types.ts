@@ -27,6 +27,7 @@ export enum GRAPH_OPERATIONS {
   GRAPH_NODE_MENU_REQUESTED = "graphnodemenurequested",
   GRAPH_NODE_PORT_MOUSEENTER = "graphnodeportmouseenter",
   GRAPH_NODE_PORT_MOUSELEAVE = "graphnodeportmouseleave",
+  GRAPH_NODE_PORT_VALUE_EDIT = "graphnodeportvalueedit",
 }
 
 export enum GraphNodePortType {
