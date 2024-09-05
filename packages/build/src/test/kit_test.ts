@@ -10,7 +10,13 @@ import { board } from "../internal/board/board.js";
 import { input } from "../internal/board/input.js";
 import { defineNodeType } from "../internal/define/define.js";
 import { kit } from "../internal/kit.js";
-import { board as oldBoard } from "@google-labs/breadboard";
+import {
+  board as oldBoard,
+  type Kit,
+  type KitConstructor,
+  type NodeFactory,
+  type NodeHandlerObject,
+} from "@google-labs/breadboard";
 import { serialize } from "../internal/board/serialize.js";
 
 const testDiscrete = defineNodeType({
@@ -48,6 +54,33 @@ const testKit = kit({
     foo: testDiscrete,
     bar: testBoard,
   },
+});
+
+test("is a kit", () => {
+  testKit satisfies Kit & {
+    handlers: { foo: NodeHandlerObject; bar: NodeHandlerObject };
+  };
+  assert.deepEqual(Object.keys(testKit.handlers), ["foo", "bar"]);
+  const { foo, bar } = testKit.handlers;
+  assert.equal(typeof foo.invoke, "function");
+  assert.equal(typeof bar.invoke, "function");
+  assert.equal(typeof foo.describe, "function");
+  assert.equal(typeof bar.describe, "function");
+});
+
+test("is a kit factory for itself", () => {
+  testKit satisfies KitConstructor<
+    Kit & {
+      handlers: { foo: NodeHandlerObject; bar: NodeHandlerObject };
+    }
+  >;
+  const instantiatedTestKit = new testKit(undefined as unknown as NodeFactory);
+  assert.deepEqual(Object.keys(instantiatedTestKit.handlers), ["foo", "bar"]);
+  const { foo, bar } = instantiatedTestKit.handlers;
+  assert.equal(typeof foo.invoke, "function");
+  assert.equal(typeof bar.invoke, "function");
+  assert.equal(typeof foo.describe, "function");
+  assert.equal(typeof bar.describe, "function");
 });
 
 test("kit handles discrete component", () => {

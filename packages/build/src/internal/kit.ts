@@ -17,6 +17,7 @@ import {
   type NodeHandler,
   type NodeHandlerContext,
   type NodeHandlerFunction,
+  type NodeHandlerObject,
   type NodeHandlers,
 } from "@google-labs/breadboard";
 import type {
@@ -47,9 +48,17 @@ export interface KitOptions<T extends ComponentManifest = ComponentManifest> {
   components: T;
 }
 
+export type BuildKit<T extends ComponentManifest> = KitWithKnownHandlers<T> &
+  KitConstructor<KitWithKnownHandlers<T>> &
+  T & { legacy(): Promise<Expand<LegacyKit<T>>> };
+
+type KitWithKnownHandlers<T extends ComponentManifest> = Kit & {
+  handlers: { [K in keyof T]: NodeHandlerObject };
+};
+
 export function kit<T extends ComponentManifest>(
   options: KitOptions<T>
-): KitConstructor<Kit> & T & { legacy(): Promise<Expand<LegacyKit<T>>> } {
+): BuildKit<T> {
   const handlers: Record<string, NodeHandler> = {};
 
   // TODO(aomarks) Unclear why this needs to be a class, and why it needs
@@ -75,16 +84,11 @@ export function kit<T extends ComponentManifest>(
   Object.assign(
     handlers,
     Object.fromEntries(
-      Object.values(kitBoundComponents).map((component) => {
+      Object.entries(kitBoundComponents).map(([id, component]) => {
         if (isDiscreteComponent(component)) {
-          return [component.id, component];
+          return [id, component];
         } else {
-          return [
-            component.id,
-            // TODO(aomarks) Should this just be the invoke() method on Board?
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            makeBoardComponentHandler(component as any),
-          ];
+          return [id, makeBoardComponentHandler(component)];
         }
       })
     )
@@ -93,8 +97,7 @@ export function kit<T extends ComponentManifest>(
   return Object.assign(kit, {
     ...kitBoundComponents,
     legacy: () => makeLegacyKit<T>(options),
-  }) as KitConstructor<Kit> &
-    T & { legacy: () => Promise<Expand<LegacyKit<T>>> };
+  }) as BuildKit<T>;
 }
 
 function makeBoardComponentHandler(board: BoardDefinition): NodeHandler {
