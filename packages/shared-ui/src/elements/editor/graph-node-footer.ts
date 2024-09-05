@@ -80,14 +80,6 @@ export class GraphNodeFooter extends PIXI.Container {
 
         label.alpha = 0.65;
         label.cursor = "pointer";
-        label.addEventListener("click", (evt: PIXI.FederatedPointerEvent) => {
-          this.emit(
-            GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
-            port,
-            evt.clientX,
-            evt.clientY
-          );
-        });
 
         const nodePort = new GraphNodePort(GraphNodePortType.INERT);
 
@@ -108,6 +100,19 @@ export class GraphNodeFooter extends PIXI.Container {
       portItem.label.x =
         portItem.nodePort.x + portItem.nodePort.radius * 2 + this.#spacing;
       portItem.label.y = (this.#height - portItem.label.height) * 0.5;
+
+      portItem.label.removeAllListeners();
+      portItem.label.addEventListener(
+        "click",
+        (evt: PIXI.FederatedPointerEvent) => {
+          this.emit(
+            GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
+            port,
+            evt.clientX,
+            evt.clientY
+          );
+        }
+      );
 
       portItem.port = port;
       portItem.nodePort.status = port.status;
