@@ -243,7 +243,7 @@ export type ComparableEdge = {
 };
 
 export type TopGraphEdgeValues = {
-  get(edge: InspectableEdge): NodeValue | undefined;
+  get(edge: InspectableEdge): NodeValue[] | undefined;
   current: ComparableEdge | null;
 };
 

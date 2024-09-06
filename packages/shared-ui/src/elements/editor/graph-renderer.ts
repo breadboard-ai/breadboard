@@ -43,11 +43,7 @@ import { styleMap } from "lit/directives/style-map.js";
 import { getGlobalColor } from "./utils.js";
 import { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
 import { GraphComment } from "./graph-comment.js";
-import {
-  ComponentWithActivity,
-  EdgeData,
-  TopGraphEdgeValues,
-} from "../../types/types.js";
+import { EdgeData, TopGraphRunResult } from "../../types/types.js";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
 const selectionBoxBackgroundAlpha = 0.05;
@@ -85,9 +81,6 @@ export class GraphRenderer extends LitElement {
 
   @property({ reflect: true })
   highlightInvalidWires = false;
-
-  @property()
-  edgeValues: TopGraphEdgeValues | null = null;
 
   @property()
   showPortTooltips = false;
@@ -569,26 +562,31 @@ export class GraphRenderer extends LitElement {
     }
   }
 
-  set highlightedNode(node: ComponentWithActivity | null) {
+  set topGraphResult(topGraphResult: TopGraphRunResult | null) {
+    let highlightedNode = null;
+    let edgeValues = null;
+    console.log(topGraphResult);
+    if (topGraphResult && topGraphResult.currentNode) {
+      highlightedNode = topGraphResult.currentNode;
+
+      console.group("HIGHLIGHTED NODE");
+      console.log("id", highlightedNode.descriptor.id);
+      console.log("activity", highlightedNode.activity);
+      console.groupEnd();
+    }
+
+    if (topGraphResult && topGraphResult.edgeValues) {
+      edgeValues = topGraphResult.edgeValues;
+    }
+
     for (const graph of this.#container.children) {
       if (!(graph instanceof Graph)) {
         continue;
       }
 
-      graph.highlightedNode = node;
+      graph.highlightedNode = highlightedNode;
+      graph.edgeValues = edgeValues;
     }
-  }
-
-  get highlightedNode() {
-    for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph)) {
-        continue;
-      }
-
-      return graph.highlightedNode;
-    }
-
-    return null;
   }
 
   createGraph(opts: GraphOpts) {
@@ -615,27 +613,6 @@ export class GraphRenderer extends LitElement {
     subGraphId: string | null,
     opts: Partial<GraphOpts>
   ) {
-    // Paul, this is how you get at the data in the edges.
-    // Returns an array of values for now.
-    // if (opts.edges) {
-    //   console.group("EDGE VALUES");
-    //   for (const edge of opts.edges) {
-    //     const edgeValues = this.edgeValues?.get(edge);
-    //     console.log("EDGE DATA", edge.in, edgeValues);
-    //     console.log(
-    //       "Should highlight",
-    //       !!this.edgeValues?.current?.equals(edge)
-    //     );
-    //   }
-    //   console.groupEnd();
-    // }
-    // And this is how you get activity log in the graph!!!
-    // if (this.highlightedNode) {
-    //   console.group("HIGHLIGHTED NODE");
-    //   console.log("id", this.highlightedNode.descriptor.id);
-    //   console.log("activity", this.highlightedNode.activity);
-    //   console.groupEnd();
-    // }
     const graph = this.#container.children.find(
       (child) => child.label === this.#createUrl(url, subGraphId)
     );

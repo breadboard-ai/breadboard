@@ -259,7 +259,9 @@ export class TopGraphObserver {
       return;
     }
 
-    this.#currentNode!.end = event.data.timestamp;
+    if (this.#currentNode) {
+      this.#currentNode.end = event.data.timestamp;
+    }
     this.#currentNode = null;
 
     this.#log = [...this.#log];

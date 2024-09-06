@@ -1110,11 +1110,13 @@ export class Main extends LitElement {
         dataStore: this.dataStore,
         runStore: this.runStore,
       });
-      this.#topGraphObserver = new BreadboardUI.Utils.TopGraphObserver(
-        this.#runner,
-        this.#abortController?.signal
-      );
     }
+
+    // TODO: Can we re-use the top graph observer.
+    this.#topGraphObserver = new BreadboardUI.Utils.TopGraphObserver(
+      this.#runner,
+      this.#abortController?.signal
+    );
 
     this.#runner.addObserver(this.#runObserver);
 
@@ -1398,6 +1400,8 @@ export class Main extends LitElement {
               dataStore: this.dataStore,
               runStore: this.runStore,
             });
+
+            // TODO: Do we need a TGO here?
           }
 
           evt.preventDefault();

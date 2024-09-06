@@ -51,10 +51,7 @@ import { edgeToString } from "./utils.js";
 const DATA_TYPE = "text/plain";
 const PASTE_OFFSET = 50;
 
-import {
-  ComponentWithActivity,
-  TopGraphEdgeValues,
-} from "../../types/types.js";
+import { TopGraphRunResult } from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
@@ -109,10 +106,7 @@ export class Editor extends LitElement {
   mode = EditorMode.ADVANCED;
 
   @property()
-  edgeValues: TopGraphEdgeValues | null = null;
-
-  @property()
-  highlightedNode: ComponentWithActivity | null = null;
+  topGraphResult: TopGraphRunResult | null = null;
 
   @state()
   nodeValueBeingEdited: EditedNode | null = null;
@@ -451,8 +445,6 @@ export class Editor extends LitElement {
 
     const url = this.graph.raw().url || "";
 
-    this.#graphRenderer.edgeValues = this.edgeValues;
-
     // Attempt to update the graph if it already exists.
     const updated = this.#graphRenderer.updateGraphByUrl(url, this.subGraphId, {
       showNodeTypeDescriptions: this.showNodeTypeDescriptions,
@@ -472,7 +464,7 @@ export class Editor extends LitElement {
     this.#graphRenderer.hideAllGraphs();
     if (this.#lastSubGraphId !== this.subGraphId) {
       // TODO: Need to figure out how to encode the subgraph/node id combo.
-      this.#graphRenderer.highlightedNode = null;
+      this.#graphRenderer.topGraphResult = null;
     }
 
     for (const graph of this.#graphRenderer.getGraphs()) {
@@ -1290,9 +1282,9 @@ export class Editor extends LitElement {
   }
 
   render() {
-    this.#graphRenderer.highlightedNode = this.subGraphId
+    this.#graphRenderer.topGraphResult = this.subGraphId
       ? null
-      : this.highlightedNode || null;
+      : this.topGraphResult;
 
     if (this.#graphRenderer) {
       this.#graphRenderer.invertZoomScrollDirection =
