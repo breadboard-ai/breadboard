@@ -12,7 +12,14 @@ import {
   NewNodeFactory,
   NewNodeValue,
 } from "@google-labs/breadboard";
-import { Context, skipIfDone, userPartsAdder, fun } from "../context.js";
+import {
+  Context,
+  skipIfDone,
+  userPartsAdder,
+  fun,
+  LlmContent,
+} from "../context.js";
+import { AbstractValue } from "../../../breadboard/dist/src/new/grammar/types.js";
 
 export type HumanType = NewNodeFactory<
   {
@@ -387,8 +394,8 @@ export default await board(({ context, title, description }) => {
       title: "Append Context",
       description: "Appending user input to the conversation context",
     },
-    context: routeByMode.input,
-    toAdd: input.text,
+    context: routeByMode.input as AbstractValue<Context | Context[]>,
+    toAdd: input.text as AbstractValue<LlmContent>,
   });
 
   return {

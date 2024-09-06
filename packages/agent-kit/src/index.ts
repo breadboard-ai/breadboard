@@ -13,12 +13,10 @@ import {
   type NewNodeValue,
 } from "@google-labs/breadboard";
 import { WorkerType } from "./boards/worker.js";
-import { RepeaterType } from "./boards/repeater.js";
 import { StructuredWorkerType } from "./boards/structured-worker.js";
 import { HumanType } from "./boards/human.js";
 import { ToolWorkerType } from "./boards/tool-worker.js";
 import { SpecialistType } from "./boards/specialist.js";
-import { LooperType } from "./boards/looper.js";
 
 // TODO: Replace with the actual URL.
 const KIT_BASE_URL =
@@ -58,7 +56,28 @@ export type AgentKitType = {
    * A worker whose job it is to repeat the same thing over and over,
    * until some condition is met or the max count of repetitions is reached.
    */
-  repeater: RepeaterType;
+  repeater: NewNodeFactory<
+    {
+      /**
+       * The initial conversation context.
+       */
+      context?: NewNodeValue;
+      /**
+       * The worker to repeat.
+       */
+      worker: NewNodeValue;
+      /**
+       * The maximum number of repetitions to make (set to -1 to go infinitely).
+       */
+      max?: NewNodeValue;
+    },
+    {
+      /**
+       * The final context after the repetitions.
+       */
+      context: NewNodeValue;
+    }
+  >;
   /**
    * A worker that reliably outputs structured data (JSON). Just give it
    * a JSON schema along with an instruction, and it will stay within the bounds
@@ -82,7 +101,20 @@ export type AgentKitType = {
   /**
    * Facilitate looping, A work in progress.
    */
-  looper: LooperType;
+  looper: NewNodeFactory<
+    {
+      /**
+       * The initial conversation context.
+       */
+      context?: NewNodeValue;
+    },
+    {
+      /**
+       * The final context after the repetitions.
+       */
+      context: NewNodeValue;
+    }
+  >;
   /**
    * Combine multiple context into one.
    */

@@ -31,6 +31,7 @@ kit.graphs = {
   joiner: serialize(joiner),
   repeater: serialize(repeater),
   worker: serialize(worker),
+  looper: serialize(looper),
 };
 
 core.invoke({ $id: "worker", $board: "#worker" });
@@ -39,7 +40,7 @@ core.invoke({ $id: "structured-worker", $board: structuredWorker });
 core.invoke({ $id: "human", $board: human });
 core.invoke({ $id: "tool-worker", $board: toolWorker });
 core.invoke({ $id: "specialist", $board: specialist });
-core.invoke({ $id: "looper", $board: looper });
+core.invoke({ $id: "looper", $board: "#looper" });
 core.invoke({ $id: "joiner", $board: "#joiner" });
 
 export default kit;

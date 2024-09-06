@@ -39,7 +39,7 @@ const manifest: KitManifest = {
     specialist,
     toolWorker,
     worker: serialize(worker),
-    looper,
+    looper: serialize(looper),
     joiner: serialize(joiner),
   },
 };
