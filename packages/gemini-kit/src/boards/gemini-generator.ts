@@ -95,7 +95,11 @@ const model = input({
   title: "Model",
   description: "The model to use for generation",
   type: annotate(
-    enumeration("gemini-1.5-flash-latest", "gemini-1.5-pro-latest"),
+    enumeration(
+      "gemini-1.5-flash-latest",
+      "gemini-1.5-pro-latest",
+      "gemini-1.5-pro-exp-0801"
+    ),
     {
       behavior: ["config"],
     }
