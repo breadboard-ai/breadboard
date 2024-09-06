@@ -19,6 +19,7 @@ import type {
 import type {
   HarnessRunner,
   RunEdgeEvent,
+  RunErrorEvent,
   RunGraphEndEvent,
   RunGraphStartEvent,
   RunInputEvent,
@@ -34,6 +35,7 @@ import type {
   NodeLogEntry,
   TopGraphRunResult,
 } from "../types/types.js";
+import { formatError } from "./format-error.js";
 
 const idFromPath = (path: number[]): string => {
   return `e-${path.join("-")}`;
@@ -86,6 +88,17 @@ const placeInputInLog = (log: LogEntry[], edge: EdgeLogEntry): LogEntry[] => {
   return [...log, edge];
 };
 
+function getActivityType(type: string): ComponentActivityItem["type"] {
+  switch (type) {
+    case "input":
+      return "input";
+    case "output":
+      return "output";
+    default:
+      return "node";
+  }
+}
+
 /**
  * A lightweight rewrite of the `InspectableRunObserver` that
  * only captures the events that are necessary to drive the app UI.
@@ -101,6 +114,10 @@ export class TopGraphObserver {
    * node.
    */
   #currentInput: EdgeLogEntry | null = null;
+  /**
+   * Stores the path of the node that errored.
+   */
+  #errorPath: number[] | null = null;
 
   constructor(runner: HarnessRunner, signal?: AbortSignal) {
     if (signal) {
@@ -113,13 +130,7 @@ export class TopGraphObserver {
     runner.addEventListener("graphend", this.#graphEnd.bind(this));
     runner.addEventListener("input", this.#input.bind(this));
     runner.addEventListener("output", this.#output.bind(this));
-    runner.addEventListener("error", (event) => {
-      if (!this.#log) {
-        return;
-      }
-      this.#log = [...this.#log, { type: "error", error: event.data.error }];
-      this.#currentResult = null;
-    });
+    runner.addEventListener("error", this.#error.bind(this));
     runner.addEventListener("resume", (event) => {
       this.#cleanUpPendingInput(event.data.inputs || {});
     });
@@ -188,6 +199,7 @@ export class TopGraphObserver {
         node.activity.push({
           type: "graph",
           description: item?.description || "Graph started",
+          path: event.data.path,
         });
         this.#currentResult = null;
       }
@@ -207,6 +219,13 @@ export class TopGraphObserver {
     this.#currentNode = null;
   }
 
+  #storeErrorPath(path: number[]) {
+    if (this.#errorPath && this.#errorPath.length > path.length) {
+      return;
+    }
+    this.#errorPath = path;
+  }
+
   #nodeStart(event: RunNodeStartEvent) {
     const pathLength = event.data.path.length;
     if (pathLength > 1) {
@@ -216,7 +235,8 @@ export class TopGraphObserver {
           return;
         }
         node.activity.push({
-          type: "node",
+          type: getActivityType(event.data.node.type),
+          path: event.data.path,
           description: event.data.node.metadata?.title || event.data.node.id,
         });
         this.#currentResult = null;
@@ -248,6 +268,9 @@ export class TopGraphObserver {
 
   #nodeEnd(event: RunNodeEndEvent) {
     if (event.data.path.length > 1) {
+      if (event.data.outputs["$error"]) {
+        this.#storeErrorPath(event.data.path);
+      }
       return;
     }
     if (!this.#log) {
@@ -308,6 +331,27 @@ export class TopGraphObserver {
     }
     const output = new BubbledOutputEdge(event);
     this.#log = placeOutputInLog(this.#log, output);
+    this.#currentResult = null;
+  }
+
+  #error(event: RunErrorEvent) {
+    if (!this.#log) {
+      return;
+    }
+    if (this.#errorPath && this.#errorPath.length > 1) {
+      // @ts-expect-error - findLast is not in the TS lib
+      const lastNode = this.#log.findLast((entry) => entry.type === "node");
+      lastNode?.activity.push({
+        type: "error",
+        description: formatError(event.data.error),
+        path: this.#errorPath || [],
+      });
+    }
+    this.#currentNode = null;
+    this.#log = [
+      ...this.#log,
+      { type: "error", error: event.data.error, path: this.#errorPath || [] },
+    ];
     this.#currentResult = null;
   }
 }
