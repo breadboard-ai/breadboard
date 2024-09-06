@@ -29,6 +29,7 @@ import type {
 import type {
   ComparableEdge,
   EdgeLogEntry,
+  ComponentActivityItem,
   LogEntry,
   NodeLogEntry,
   TopGraphRunResult,
@@ -145,7 +146,7 @@ export class TopGraphObserver {
     if (!this.#currentResult) {
       this.#currentResult = {
         log: this.#log,
-        currentNode: this.#currentNode ? this.#currentNode.descriptor : null,
+        currentNode: this.#currentNode,
         edgeValues: this.#edgeValues,
       };
     }
@@ -174,7 +175,22 @@ export class TopGraphObserver {
   }
 
   #graphStart(event: RunGraphStartEvent) {
-    if (event.data.path.length > 0) {
+    const pathLength = event.data.path.length;
+    if (pathLength > 0) {
+      // For immediately nested graph only, replace the last activity item
+      // with a graph activity.
+      if (pathLength === 2) {
+        const node = this.#currentNode;
+        if (!node) {
+          return;
+        }
+        const item = node.activity.pop();
+        node.activity.push({
+          type: "graph",
+          description: item?.description || "Graph started",
+        });
+        this.#currentResult = null;
+      }
       return;
     }
     if (this.#log) {
@@ -192,7 +208,19 @@ export class TopGraphObserver {
   }
 
   #nodeStart(event: RunNodeStartEvent) {
-    if (event.data.path.length > 1) {
+    const pathLength = event.data.path.length;
+    if (pathLength > 1) {
+      if (pathLength === 2) {
+        const node = this.#currentNode;
+        if (!node) {
+          return;
+        }
+        node.activity.push({
+          type: "node",
+          description: event.data.node.metadata?.title || event.data.node.id,
+        });
+        this.#currentResult = null;
+      }
       return;
     }
 
@@ -292,6 +320,7 @@ class Node implements NodeLogEntry {
   start: number;
   bubbled: boolean;
   end: number | null;
+  activity: ComponentActivityItem[] = [];
 
   constructor(event: RunInputEvent | RunOutputEvent | RunNodeStartEvent) {
     this.type = "node";
@@ -390,6 +419,7 @@ class UserNode extends Node {
 class EndNode implements NodeLogEntry {
   type = "node" as const;
   id: string = "end";
+  activity: ComponentActivityItem[] = [];
   descriptor = {
     id: "end",
     metadata: {

@@ -196,6 +196,7 @@ export type NodeLogEntry = {
   start: number;
   bubbled: boolean;
   end: number | null;
+  activity: ComponentActivityItem[];
   title(): string;
 };
 
@@ -227,7 +228,7 @@ export type TopGraphRunResult = {
    * Returns the current node within the graph. Great for determining the
    * hihglighted node.
    */
-  currentNode: NodeDescriptor | null;
+  currentNode: ComponentWithActivity | null;
   /**
    * Returns the the current edges values within the graph. Think of this as
    * a map of edge to an array of items. Each item in the array is a value that
@@ -244,6 +245,16 @@ export type ComparableEdge = {
 export type TopGraphEdgeValues = {
   get(edge: InspectableEdge): NodeValue | undefined;
   current: ComparableEdge | null;
+};
+
+export type ComponentWithActivity = {
+  descriptor: NodeDescriptor;
+  activity: ComponentActivityItem[];
+};
+
+export type ComponentActivityItem = {
+  type: "input" | "output" | "error" | "node" | "graph";
+  description: string;
 };
 
 export type NodePortConfiguration = {
