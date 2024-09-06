@@ -129,6 +129,7 @@ export class UI extends LitElement {
   #resizeObserver = new ResizeObserver(() => {
     this.isPortrait = window.matchMedia("(orientation: portrait)").matches;
   });
+  #lastEdgeCount = -1;
 
   static styles = uiControllerStyles;
 
@@ -370,6 +371,41 @@ export class UI extends LitElement {
       }
     );
 
+    // Track the number of edges; if it changes we need to inform the node info
+    // element, and force it to re-render.
+    this.#lastEdgeCount = this.graph?.edges.length || -1;
+    const nodeConfiguration = guard(
+      [
+        this.boardId,
+        this.selectedNodeIds,
+        this.#lastEdgeCount,
+        editorMode,
+        // TODO: Figure out a cleaner way of handling this without watching for
+        // all graph changes.
+        this.graph,
+      ],
+      () => {
+        return html`<bb-node-configuration
+          .selectedNodeIds=${this.selectedNodeIds}
+          .subGraphId=${this.subGraphId}
+          .graph=${this.graph}
+          .kits=${this.kits}
+          .loader=${this.loader}
+          .editable=${true}
+          .editorMode=${editorMode}
+          .providers=${this.providers}
+          .providerOps=${this.providerOps}
+          .showTypes=${false}
+          ${ref(this.#nodeConfigurationRef)}
+          name="Selected Node"
+          @bbgraphnodedeselectedall=${() => {
+            this.selectedNodeIds = [];
+            this.requestUpdate();
+          }}
+        ></bb-node-configuration>`;
+      }
+    );
+
     const boardDetails = guard(
       [
         this.boardId,
@@ -472,7 +508,7 @@ export class UI extends LitElement {
 
     const sidePanel = cache(
       this.selectedNodeIds.length
-        ? html`${nodeMetaDetails}`
+        ? html`${nodeMetaDetails}${nodeConfiguration}`
         : html`${boardDetails}${activityLog}`
     );
 
