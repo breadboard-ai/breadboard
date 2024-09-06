@@ -22,7 +22,6 @@ import {
   addUserParts,
   type Context,
   contextType,
-  LlmContent,
   llmContentType,
   LooperPlan,
   looperPlanType,
@@ -52,7 +51,8 @@ const model = input({
     enumeration(
       "gemini-1.5-flash-latest",
       "gemini-1.5-pro-latest",
-      "gemini-1.5-pro-exp-0801"
+      "gemini-1.5-pro-exp-0801",
+      "gemini-1.5-pro-exp-0827"
     ),
     { behavior: ["config"] }
   ),
