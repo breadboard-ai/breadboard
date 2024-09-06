@@ -618,6 +618,10 @@ export class GraphRenderer extends LitElement {
     //   for (const edge of opts.edges) {
     //     const edgeValues = this.edgeValues?.get(edge);
     //     console.log("EDGE DATA", edge.in, edgeValues);
+    //     console.log(
+    //       "Should highlight",
+    //       !!this.edgeValues?.current?.equals(edge)
+    //     );
     //   }
     //   console.groupEnd();
     // }

@@ -27,6 +27,7 @@ import type {
   RunOutputEvent,
 } from "@google-labs/breadboard/harness";
 import type {
+  ComparableEdge,
   EdgeLogEntry,
   LogEntry,
   NodeLogEntry,
@@ -142,14 +143,9 @@ export class TopGraphObserver {
       return null;
     }
     if (!this.#currentResult) {
-      const currentNodeEntry =
-        // @ts-expect-error -- TS doesn't know findLastIndex exists
-        this.#log.findLast((entry) => {
-          return entry.type === "node";
-        }) as NodeLogEntry | undefined;
       this.#currentResult = {
         log: this.#log,
-        currentNode: currentNodeEntry ? currentNodeEntry.descriptor : null,
+        currentNode: this.#currentNode ? this.#currentNode.descriptor : null,
         edgeValues: this.#edgeValues,
       };
     }
@@ -161,6 +157,7 @@ export class TopGraphObserver {
       return;
     }
     this.#edgeValues = this.#edgeValues.set(event.data.edge, event.data.value);
+    this.#currentResult = null;
   }
 
   #abort() {
@@ -418,9 +415,14 @@ type EdgeValueStoreMap = Map<string, NodeValue[]>;
 
 class EdgeValueStore {
   #values: EdgeValueStoreMap;
+  #lastEdge: ComparableEdge | null;
 
-  constructor(values: EdgeValueStoreMap = new Map()) {
+  constructor(
+    values: EdgeValueStoreMap = new Map(),
+    lastEdge: EdgeType | null = null
+  ) {
     this.#values = values;
+    this.#lastEdge = lastEdge ? new ComparableEdgeImpl(lastEdge) : null;
   }
 
   #key(
@@ -464,11 +466,39 @@ class EdgeValueStore {
       const edgeValues = this.#values.get(key);
       this.#values.set(key, [...edgeValues!, value]);
     }
-    return new EdgeValueStore(this.#values);
+    return new EdgeValueStore(this.#values, edge);
+  }
+
+  get current(): ComparableEdge | null {
+    return this.#lastEdge;
   }
 
   get(edge: InspectableEdge): NodeValue[] {
     const key = this.#keyFromInspectableEdge(edge);
     return this.#values.get(key) || [];
+  }
+}
+
+class ComparableEdgeImpl implements ComparableEdge {
+  #edge: EdgeType;
+
+  #fixUpStarEdge(edge: EdgeType): EdgeType {
+    if (edge.out === "*") {
+      return { ...edge, in: "" };
+    }
+    return edge;
+  }
+
+  constructor(edge: EdgeType) {
+    this.#edge = this.#fixUpStarEdge(edge);
+  }
+
+  equals(other: InspectableEdge): boolean {
+    return (
+      this.#edge.from === other.from.descriptor.id &&
+      this.#edge.to === other.to.descriptor.id &&
+      this.#edge.in === other.in &&
+      this.#edge.out === other.out
+    );
   }
 }
