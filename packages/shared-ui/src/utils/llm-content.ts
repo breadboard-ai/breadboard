@@ -132,3 +132,13 @@ export function createAllowListFromProperty(
 
   return allow;
 }
+
+export function isImageURL(
+  nodeValue: unknown
+): nodeValue is { image_url: string } {
+  if (typeof nodeValue !== "object" || !nodeValue) {
+    return false;
+  }
+
+  return "image_url" in nodeValue;
+}

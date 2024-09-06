@@ -26,6 +26,7 @@ import { GraphComment } from "./graph-comment.js";
 import {
   ComponentWithActivity,
   EdgeData,
+  TopGraphEdgeValues,
   cloneEdgeData,
 } from "../../types/types.js";
 
@@ -135,6 +136,7 @@ export class Graph extends PIXI.Container {
   #highlightPadding = 8;
   #autoSelect = new Set<string>();
   #latestPendingValidateRequest = new WeakMap<GraphEdge, symbol>();
+  #edgeValues: TopGraphEdgeValues | null = null;
 
   #isInitialDraw = true;
   #collapseNodesByDefault = false;
@@ -204,6 +206,13 @@ export class Graph extends PIXI.Container {
       }
 
       evt.stopPropagation();
+
+      // Because the edge is made up the wire graphic and the value widget we
+      // need to redirect clicks on the wire graphic itself to the containing
+      // GraphEdge for the purposes of selection.
+      if (evt.target.label === "GraphEdge" && evt.target.parent) {
+        evt.target = evt.target.parent;
+      }
 
       if (
         evt.target instanceof GraphComment ||
@@ -835,7 +844,7 @@ export class Graph extends PIXI.Container {
 
     const g = new Dagre.graphlib.Graph();
     const opts: Partial<Dagre.GraphLabel> = {
-      ranksep: 60,
+      ranksep: 90,
       rankdir: "LR",
       align: "DR",
     };
@@ -982,6 +991,15 @@ export class Graph extends PIXI.Container {
 
   get edges() {
     return this.#edges;
+  }
+
+  set edgeValues(edgeValues: TopGraphEdgeValues | null) {
+    this.#edgeValues = edgeValues;
+    this.#isDirty = true;
+  }
+
+  get edgeValues() {
+    return this.#edgeValues;
   }
 
   set nodes(nodes: InspectableNode[] | null) {
@@ -1571,6 +1589,7 @@ export class Graph extends PIXI.Container {
         this.#edgeContainer.addChild(edgeGraphic);
       }
 
+      edgeGraphic.value = this.#edgeValues?.get(edge) ?? null;
       edgeGraphic.edge = edge;
       edgeGraphic.readOnly = this.readOnly;
       if (this.highlightInvalidWires) {
@@ -1624,7 +1643,6 @@ export class Graph extends PIXI.Container {
         continue;
       }
 
-      edgeGraphic.clear();
       edgeGraphic.removeFromParent();
       edgeGraphic.destroy();
       this.#edgeGraphics.delete(edgeDescription);

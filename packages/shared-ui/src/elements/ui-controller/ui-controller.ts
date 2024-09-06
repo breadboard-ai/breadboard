@@ -44,7 +44,7 @@ import {
   TopGraphRunResult,
 } from "../../types/types.js";
 import { EditorMode } from "../../utils/mode.js";
-import { NodeRunner, type NodeConfigurationInfo } from "../elements.js";
+import { type NodeConfigurationInfo } from "../elements.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 
 /**
@@ -123,11 +123,9 @@ export class UI extends LitElement {
   history: EditHistory | null = null;
 
   #nodeConfigurationRef: Ref<NodeConfigurationInfo> = createRef();
-  #lastEdgeCount = -1;
   #lastBoardId = -1;
   #detailsRef: Ref<HTMLElement> = createRef();
   #controlsActivityRef: Ref<HTMLDivElement> = createRef();
-  #nodeRunnerRef: Ref<NodeRunner> = createRef();
   #resizeObserver = new ResizeObserver(() => {
     this.isPortrait = window.matchMedia("(orientation: portrait)").matches;
   });
@@ -180,25 +178,6 @@ export class UI extends LitElement {
         boardPublished = null;
         boardIsTool = subGraph.metadata?.tags?.includes("tool") ?? false;
         boardHelp = null;
-      }
-    }
-
-    const events = this.run?.events || [];
-    const eventPosition = events.length - 1;
-
-    let selectedNodeIsInputOrOutput = true;
-    if (this.selectedNodeIds.length === 1) {
-      let graph = this.graph;
-      if (this.subGraphId && this.graph && this.graph.graphs) {
-        graph = this.graph.graphs[this.subGraphId];
-      }
-
-      if (graph) {
-        const node = graph.nodes.find(
-          (node) => node.id === this.selectedNodeIds[0]
-        );
-        selectedNodeIsInputOrOutput =
-          node?.type === "input" || node?.type === "output";
       }
     }
 
@@ -299,8 +278,7 @@ export class UI extends LitElement {
         return html`<bb-editor
           .graph=${graph}
           .subGraphId=${this.subGraphId}
-          .edgeValues=${this.topGraphResult?.edgeValues}
-          .highlightedNode=${this.topGraphResult?.currentNode}
+          .topGraphResult=${this.topGraphResult}
           .boardId=${this.boardId}
           .collapseNodesByDefault=${collapseNodesByDefault}
           .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
@@ -392,32 +370,6 @@ export class UI extends LitElement {
       }
     );
 
-    const nodeRunner = guard(
-      [
-        this.boardId,
-        this.selectedNodeIds,
-        this.#lastEdgeCount,
-        // TODO: Figure out a cleaner way of handling this without watching for
-        // all graph changes.
-        this.graph,
-      ],
-      () => {
-        if (this.#nodeRunnerRef.value) {
-          this.#nodeRunnerRef.value.stopComponent();
-        }
-
-        return html`<bb-node-runner
-            ${ref(this.#nodeRunnerRef)}
-            .graph=${this.graph}
-            .settings=${this.settings}
-            .selectedNodeIds=${this.selectedNodeIds}
-            .kits=${this.kits}
-            .loader=${this.loader}
-          ></bb-node-runner>
-        </div>`;
-      }
-    );
-
     const boardDetails = guard(
       [
         this.boardId,
@@ -445,21 +397,13 @@ export class UI extends LitElement {
       }
     );
 
-    const activityLog = guard([this.run?.events], () => {
-      return html`<bb-activity-log
-        .run=${this.run}
-        .inputsFromLastRun=${this.inputsFromLastRun}
-        .events=${events}
-        .eventPosition=${eventPosition}
+    const activityLog = guard([this.topGraphResult], () => {
+      return html`<bb-activity-log-lite
+        .topGraphResult=${this.topGraphResult}
+        .showLogTitle=${true}
+        .showActions=${false}
         .showExtendedInfo=${true}
-        .settings=${this.settings}
-        .logTitle=${"Activity"}
-        .providers=${this.providers}
-        .providerOps=${this.providerOps}
-        @bbinputrequested=${() => {
-          this.selectedNodeIds.length = 0;
-          this.requestUpdate();
-        }}
+        .hideEmptyEdges=${true}
         @pointerdown=${(evt: PointerEvent) => {
           if (!this.#controlsActivityRef.value) {
             return;
@@ -476,7 +420,6 @@ export class UI extends LitElement {
           const event = this.run?.getEventById(id);
 
           if (!event) {
-            // TODO: Offer the user more information.
             console.warn(`Unable to find event with ID "${id}"`);
             return;
           }
@@ -488,7 +431,7 @@ export class UI extends LitElement {
           this.debugEvent = event;
         }}
         name="Board"
-      ></bb-activity-log>`;
+      ></bb-activity-log-lite>`;
     });
 
     const entryDetails = this.debugEvent
@@ -529,9 +472,7 @@ export class UI extends LitElement {
 
     const sidePanel = cache(
       this.selectedNodeIds.length
-        ? html`${nodeMetaDetails}${selectedNodeIsInputOrOutput
-            ? nothing
-            : nodeRunner}`
+        ? html`${nodeMetaDetails}`
         : html`${boardDetails}${activityLog}`
     );
 

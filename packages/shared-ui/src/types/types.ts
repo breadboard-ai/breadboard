@@ -243,7 +243,7 @@ export type ComparableEdge = {
 };
 
 export type TopGraphEdgeValues = {
-  get(edge: InspectableEdge): NodeValue | undefined;
+  get(edge: InspectableEdge): NodeValue[] | undefined;
   current: ComparableEdge | null;
 };
 
@@ -264,3 +264,9 @@ export type NodePortConfiguration = {
   x: number;
   y: number;
 };
+
+export interface UserMessage {
+  srcset: string;
+  src: string;
+  alt: string;
+}
