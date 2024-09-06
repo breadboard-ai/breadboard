@@ -34,10 +34,14 @@ export type FunctionCallPart = ConvertBreadboardType<
 export const llmContentRoleType = enumeration("user", "model", "tool");
 export type LlmContentRole = ConvertBreadboardType<typeof llmContentRoleType>;
 
-export const llmContentType = object({
-  role: optional(llmContentRoleType),
-  parts: array(anyOf(textPartType, functionCallPartType)),
-});
+export const llmContentType = annotate(
+  object({
+    role: optional(llmContentRoleType),
+    parts: array(anyOf(textPartType, functionCallPartType)),
+  }),
+  { behavior: ["llm-content"] }
+);
+
 export type LlmContent = ConvertBreadboardType<typeof llmContentType>;
 
 export const splitMarkerDataType = object({
@@ -168,10 +172,16 @@ export const fun = <
   return f;
 };
 
-export const userPartsAdder = code(({ context, toAdd }) => {
+export const addUserParts = ({
+  context,
+  toAdd,
+}: {
+  context: Context | Context[];
+  toAdd: LlmContent;
+}): { context: Context[] } => {
   if (!context) throw new Error("Context is required");
-  const existing = (Array.isArray(context) ? context : [context]) as Context[];
-  const incoming = toAdd as LlmContent;
+  const existing = Array.isArray(context) ? context : [context];
+  const incoming = toAdd;
   if (!incoming.parts) {
     const containsUserRole =
       existing.filter(
@@ -202,18 +212,26 @@ export const userPartsAdder = code(({ context, toAdd }) => {
     result[index].parts.push(...incoming.parts);
     return { context: result };
   }
-});
+};
 
-export const progressReader = code(({ context, forkOutputs }) => {
-  const fork = forkOutputs as boolean;
-  const existing = (Array.isArray(context) ? context : [context]) as Context[];
+export const userPartsAdder = code(addUserParts);
+
+export const readProgress = ({
+  context,
+  forkOutputs,
+}: {
+  context: Context | Context[];
+  forkOutputs: boolean;
+}) => {
+  const fork = forkOutputs;
+  const existing = Array.isArray(context) ? context : [context];
   const progress: LooperPlan[] = [];
   // Collect all metadata entries in the context.
   // Gives us where we've been and where we're going.
   for (let i = existing.length - 1; i >= 0; i--) {
     const item = existing[i];
     if (item.role === "$metadata" && item.type === "looper") {
-      progress.push(item.data as LooperPlan);
+      progress.push(item.data);
     }
   }
   if (fork) {
@@ -225,7 +243,9 @@ export const progressReader = code(({ context, forkOutputs }) => {
   } else {
     return { context, progress };
   }
-});
+};
+
+export const progressReader = code(readProgress);
 
 export const looperTaskAdder = code(({ context, progress }) => {
   const contents = (Array.isArray(context) ? context : [context]) as Context[];
@@ -249,6 +269,30 @@ export const looperTaskAdder = code(({ context, progress }) => {
   }
   contents.push({ role: "user", parts: [{ text: last.next }] });
   return { context: contents };
+});
+
+export const contextBuilder = code(({ context, instruction }) => {
+  if (typeof context === "string") {
+    // A clever trick. Let's see if this works
+    // A user can supply context as either ContextItem[] or as a string.
+    // When it's a string, let's just conjure up the proper ContextItem[]
+    // from that.
+    context = [{ role: "user", parts: [{ text: context }] }];
+  }
+  const list = (context as unknown[]) || [];
+  if (list.length > 0) {
+    const last = list[list.length - 1] as LlmContent;
+    if (last.role === "user") {
+      // A trick: the instruction typically sits in front of the actual task
+      // that the user requests. So do just that -- add it at the front of the
+      // user part list, rather than at the end.
+      last.parts.unshift({ text: instruction as string });
+      return { context: list };
+    }
+  }
+  return {
+    context: [...list, { role: "user", parts: [{ text: instruction }] }],
+  };
 });
 
 export const contextBuilderWithoutSystemInstruction = code(({ context }) => {
@@ -346,18 +390,6 @@ export const skipIfDoneFunction = fun(({ context }) => {
 export const skipIfDone = code(skipIfDoneFunction);
 
 /**
- * Given a context, removes all metadata from it
- */
-export const cleanUpMetadataFunction = fun(({ context }) => {
-  if (!context) throw new Error("Context is required");
-  const c = context as Context[];
-  const result = c.filter((item) => item.role !== "$metadata");
-  return { context: result };
-});
-
-export const cleanUpMetadata = code(cleanUpMetadataFunction);
-
-/**
  * Given a context, adds a metadata block that contains the
  * split start marker.
  */
@@ -378,7 +410,7 @@ export const splitStartAdderFunction = fun(({ context }) => {
 
 export const splitStartAdder = code(splitStartAdderFunction);
 
-type SplitScanResult = [id: string, index: number];
+export type SplitScanResult = [id: string, index: number];
 
 /**
  * Given a bunch of contexts, combines them all into one.

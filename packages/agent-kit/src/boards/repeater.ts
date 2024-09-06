@@ -17,30 +17,6 @@ import {
 } from "@breadboard-ai/build";
 import { code, invoke } from "@google-labs/core-kit";
 import { contextType } from "../context.js";
-import { NewNodeFactory, NewNodeValue } from "@google-labs/breadboard";
-
-export type RepeaterType = NewNodeFactory<
-  {
-    /**
-     * The initial conversation context.
-     */
-    context?: NewNodeValue;
-    /**
-     * The worker to repeat.
-     */
-    worker: NewNodeValue;
-    /**
-     * The maximum number of repetitions to make (set to -1 to go infinitely).
-     */
-    max?: NewNodeValue;
-  },
-  {
-    /**
-     * The final context after the repetitions.
-     */
-    context: NewNodeValue;
-  }
->;
 
 const inputContext = input({
   title: "Context",
