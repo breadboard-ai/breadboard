@@ -158,6 +158,7 @@ export class GraphEdge extends PIXI.Container {
       this.#valueSprite.scale.x = ICON_SCALE;
       this.#valueSprite.scale.y = ICON_SCALE;
       this.#valueSprite.eventMode = "none";
+      this.#valueSprite.visible = false;
     }
   }
 
@@ -335,7 +336,7 @@ export class GraphEdge extends PIXI.Container {
     const ndx = outLocation.x - inLocation.x;
     const ndy = outLocation.y - inLocation.y;
     const nodeDistance = Math.sqrt(ndx * ndx + ndy * ndy);
-    const padding = Math.min(nodeDistance * 0.25, 75);
+    const padding = Math.min(nodeDistance * 0.18, 65);
 
     // Loopback.
     if (
@@ -738,9 +739,13 @@ export class GraphEdge extends PIXI.Container {
       if (this.#valueSprite) {
         this.#valueSprite.x = x - 10;
         this.#valueSprite.y = y - 10;
+        this.#valueSprite.visible = true;
       }
     } else {
       this.#valueSelector.visible = false;
+      if (this.#valueSprite) {
+        this.#valueSprite.visible = false;
+      }
     }
   }
 }
