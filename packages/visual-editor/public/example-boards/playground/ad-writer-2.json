@@ -171,7 +171,10 @@
                     "required": [
                       "parts"
                     ],
-                    "additionalProperties": false
+                    "additionalProperties": false,
+                    "behavior": [
+                      "llm-content"
+                    ]
                   },
                   {
                     "type": "object",
