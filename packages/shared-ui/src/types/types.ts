@@ -196,6 +196,7 @@ export type NodeLogEntry = {
   start: number;
   bubbled: boolean;
   end: number | null;
+  activity: ComponentActivityItem[];
   title(): string;
 };
 
@@ -218,13 +219,42 @@ export type LogEntry = NodeLogEntry | EdgeLogEntry | ErrorLogEntry;
  * The result, returned by the TopGraphObserver.
  */
 export type TopGraphRunResult = {
+  /**
+   * Returns reshuffled log of nodes and edges. The reshuffling is done to
+   * make inputs and outputs look like edges, rather than nodes.
+   */
   log: LogEntry[];
-  currentNode: NodeDescriptor | null;
+  /**
+   * Returns the current node within the graph. Great for determining the
+   * hihglighted node.
+   */
+  currentNode: ComponentWithActivity | null;
+  /**
+   * Returns the the current edges values within the graph. Think of this as
+   * a map of edge to an array of items. Each item in the array is a value that
+   * has travelled across this edge. The most recent value is the last item in
+   * the array.
+   */
   edgeValues: TopGraphEdgeValues;
+};
+
+export type ComparableEdge = {
+  equals(other: InspectableEdge): boolean;
 };
 
 export type TopGraphEdgeValues = {
   get(edge: InspectableEdge): NodeValue | undefined;
+  current: ComparableEdge | null;
+};
+
+export type ComponentWithActivity = {
+  descriptor: NodeDescriptor;
+  activity: ComponentActivityItem[];
+};
+
+export type ComponentActivityItem = {
+  type: "input" | "output" | "error" | "node" | "graph";
+  description: string;
 };
 
 export type NodePortConfiguration = {

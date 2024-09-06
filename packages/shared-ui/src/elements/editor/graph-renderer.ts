@@ -43,7 +43,11 @@ import { styleMap } from "lit/directives/style-map.js";
 import { getGlobalColor } from "./utils.js";
 import { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
 import { GraphComment } from "./graph-comment.js";
-import { EdgeData, TopGraphEdgeValues } from "../../types/types.js";
+import {
+  ComponentWithActivity,
+  EdgeData,
+  TopGraphEdgeValues,
+} from "../../types/types.js";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
 const selectionBoxBackgroundAlpha = 0.05;
@@ -565,23 +569,23 @@ export class GraphRenderer extends LitElement {
     }
   }
 
-  set highlightedNodeId(highlightedNodeId: string | null) {
+  set highlightedNode(node: ComponentWithActivity | null) {
     for (const graph of this.#container.children) {
       if (!(graph instanceof Graph)) {
         continue;
       }
 
-      graph.highlightedNodeId = highlightedNodeId;
+      graph.highlightedNode = node;
     }
   }
 
-  get highlightedNodeId() {
+  get highlightedNode() {
     for (const graph of this.#container.children) {
       if (!(graph instanceof Graph)) {
         continue;
       }
 
-      return graph.highlightedNodeId;
+      return graph.highlightedNode;
     }
 
     return null;
@@ -618,7 +622,18 @@ export class GraphRenderer extends LitElement {
     //   for (const edge of opts.edges) {
     //     const edgeValues = this.edgeValues?.get(edge);
     //     console.log("EDGE DATA", edge.in, edgeValues);
+    //     console.log(
+    //       "Should highlight",
+    //       !!this.edgeValues?.current?.equals(edge)
+    //     );
     //   }
+    //   console.groupEnd();
+    // }
+    // And this is how you get activity log in the graph!!!
+    // if (this.highlightedNode) {
+    //   console.group("HIGHLIGHTED NODE");
+    //   console.log("id", this.highlightedNode.descriptor.id);
+    //   console.log("activity", this.highlightedNode.activity);
     //   console.groupEnd();
     // }
     const graph = this.#container.children.find(

@@ -23,7 +23,11 @@ import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
 import { GraphAssets } from "./graph-assets.js";
 import { inspectableEdgeToString, getGlobalColor } from "./utils.js";
 import { GraphComment } from "./graph-comment.js";
-import { EdgeData, cloneEdgeData } from "../../types/types.js";
+import {
+  ComponentWithActivity,
+  EdgeData,
+  cloneEdgeData,
+} from "../../types/types.js";
 
 type LayoutInfo = {
   x: number;
@@ -125,7 +129,7 @@ export class Graph extends PIXI.Container {
   #nodeById = new Map<string, InspectableNode>();
   #graphNodeById = new Map<string, GraphNode | GraphComment>();
   #layout = new Map<string, LayoutInfo>();
-  #highlightedNodeId: string | null = null;
+  #highlightedComponent: ComponentWithActivity | null = null;
   #highlightedNode = new PIXI.Graphics();
   #highlightedNodeColor = highlightedNodeColor;
   #highlightPadding = 8;
@@ -1016,13 +1020,13 @@ export class Graph extends PIXI.Container {
     return this.#comments;
   }
 
-  set highlightedNodeId(highlightedNodeId: string | null) {
-    this.#highlightedNodeId = highlightedNodeId;
+  set highlightedNode(node: ComponentWithActivity | null) {
+    this.#highlightedComponent = node;
     this.#drawNodeHighlight();
   }
 
-  get highlightedNodeId() {
-    return this.#highlightedNodeId;
+  get highlightedNode() {
+    return this.#highlightedComponent;
   }
 
   set typeMetadata(metadata: Map<string, NodeHandlerMetadata> | null) {
@@ -1185,12 +1189,14 @@ export class Graph extends PIXI.Container {
       return;
     }
 
-    if (!this.#highlightedNodeId) {
+    if (!this.#highlightedComponent) {
       this.#highlightedNode.clear();
       return;
     }
 
-    const graphNode = this.#graphNodeById.get(this.#highlightedNodeId);
+    const graphNode = this.#graphNodeById.get(
+      this.#highlightedComponent.descriptor.id
+    );
     if (!graphNode || !(graphNode instanceof GraphNode)) {
       this.#highlightedNode.clear();
       return;

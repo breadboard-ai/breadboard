@@ -27,7 +27,9 @@ import type {
   RunOutputEvent,
 } from "@google-labs/breadboard/harness";
 import type {
+  ComparableEdge,
   EdgeLogEntry,
+  ComponentActivityItem,
   LogEntry,
   NodeLogEntry,
   TopGraphRunResult,
@@ -142,14 +144,9 @@ export class TopGraphObserver {
       return null;
     }
     if (!this.#currentResult) {
-      const currentNodeEntry =
-        // @ts-expect-error -- TS doesn't know findLastIndex exists
-        this.#log.findLast((entry) => {
-          return entry.type === "node";
-        }) as NodeLogEntry | undefined;
       this.#currentResult = {
         log: this.#log,
-        currentNode: currentNodeEntry ? currentNodeEntry.descriptor : null,
+        currentNode: this.#currentNode,
         edgeValues: this.#edgeValues,
       };
     }
@@ -161,6 +158,7 @@ export class TopGraphObserver {
       return;
     }
     this.#edgeValues = this.#edgeValues.set(event.data.edge, event.data.value);
+    this.#currentResult = null;
   }
 
   #abort() {
@@ -177,7 +175,22 @@ export class TopGraphObserver {
   }
 
   #graphStart(event: RunGraphStartEvent) {
-    if (event.data.path.length > 0) {
+    const pathLength = event.data.path.length;
+    if (pathLength > 0) {
+      // For immediately nested graph only, replace the last activity item
+      // with a graph activity.
+      if (pathLength === 2) {
+        const node = this.#currentNode;
+        if (!node) {
+          return;
+        }
+        const item = node.activity.pop();
+        node.activity.push({
+          type: "graph",
+          description: item?.description || "Graph started",
+        });
+        this.#currentResult = null;
+      }
       return;
     }
     if (this.#log) {
@@ -195,7 +208,19 @@ export class TopGraphObserver {
   }
 
   #nodeStart(event: RunNodeStartEvent) {
-    if (event.data.path.length > 1) {
+    const pathLength = event.data.path.length;
+    if (pathLength > 1) {
+      if (pathLength === 2) {
+        const node = this.#currentNode;
+        if (!node) {
+          return;
+        }
+        node.activity.push({
+          type: "node",
+          description: event.data.node.metadata?.title || event.data.node.id,
+        });
+        this.#currentResult = null;
+      }
       return;
     }
 
@@ -295,6 +320,7 @@ class Node implements NodeLogEntry {
   start: number;
   bubbled: boolean;
   end: number | null;
+  activity: ComponentActivityItem[] = [];
 
   constructor(event: RunInputEvent | RunOutputEvent | RunNodeStartEvent) {
     this.type = "node";
@@ -393,6 +419,7 @@ class UserNode extends Node {
 class EndNode implements NodeLogEntry {
   type = "node" as const;
   id: string = "end";
+  activity: ComponentActivityItem[] = [];
   descriptor = {
     id: "end",
     metadata: {
@@ -418,9 +445,14 @@ type EdgeValueStoreMap = Map<string, NodeValue[]>;
 
 class EdgeValueStore {
   #values: EdgeValueStoreMap;
+  #lastEdge: ComparableEdge | null;
 
-  constructor(values: EdgeValueStoreMap = new Map()) {
+  constructor(
+    values: EdgeValueStoreMap = new Map(),
+    lastEdge: EdgeType | null = null
+  ) {
     this.#values = values;
+    this.#lastEdge = lastEdge ? new ComparableEdgeImpl(lastEdge) : null;
   }
 
   #key(
@@ -464,11 +496,39 @@ class EdgeValueStore {
       const edgeValues = this.#values.get(key);
       this.#values.set(key, [...edgeValues!, value]);
     }
-    return new EdgeValueStore(this.#values);
+    return new EdgeValueStore(this.#values, edge);
+  }
+
+  get current(): ComparableEdge | null {
+    return this.#lastEdge;
   }
 
   get(edge: InspectableEdge): NodeValue[] {
     const key = this.#keyFromInspectableEdge(edge);
     return this.#values.get(key) || [];
+  }
+}
+
+class ComparableEdgeImpl implements ComparableEdge {
+  #edge: EdgeType;
+
+  #fixUpStarEdge(edge: EdgeType): EdgeType {
+    if (edge.out === "*") {
+      return { ...edge, in: "" };
+    }
+    return edge;
+  }
+
+  constructor(edge: EdgeType) {
+    this.#edge = this.#fixUpStarEdge(edge);
+  }
+
+  equals(other: InspectableEdge): boolean {
+    return (
+      this.#edge.from === other.from.descriptor.id &&
+      this.#edge.to === other.to.descriptor.id &&
+      this.#edge.in === other.in &&
+      this.#edge.out === other.out
+    );
   }
 }

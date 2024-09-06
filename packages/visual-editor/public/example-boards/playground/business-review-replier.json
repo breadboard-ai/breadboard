@@ -3,57 +3,57 @@
   "description": "A board that generates a reply to a business review.",
   "edges": [
     {
-      "from": "fn-27",
-      "to": "fn-28",
+      "from": "fn-26",
+      "to": "fn-27",
       "out": "result",
       "in": "text"
     },
     {
-      "from": "fn-28",
-      "to": "specialist-30",
+      "from": "fn-27",
+      "to": "specialist-29",
       "out": "context",
       "in": "persona"
     },
     {
-      "from": "fn-29",
-      "to": "specialist-30",
+      "from": "fn-28",
+      "to": "specialist-29",
       "out": "context",
       "in": "in"
     },
     {
-      "from": "input-26",
-      "to": "fn-27",
+      "from": "input-25",
+      "to": "fn-26",
       "out": "tone",
       "in": "a"
     },
     {
-      "from": "input-26",
-      "to": "fn-27",
+      "from": "input-25",
+      "to": "fn-26",
       "out": "voice",
       "in": "b"
     },
     {
-      "from": "input-26",
-      "to": "fn-29",
+      "from": "input-25",
+      "to": "fn-28",
       "out": "review",
       "in": "text"
     },
     {
-      "from": "input-26",
-      "to": "specialist-30",
+      "from": "input-25",
+      "to": "specialist-29",
       "out": "task",
       "in": "task"
     },
     {
-      "from": "specialist-30",
-      "to": "output-31",
+      "from": "specialist-29",
+      "to": "output-30",
       "out": "out",
       "in": "reply"
     }
   ],
   "nodes": [
     {
-      "id": "input-26",
+      "id": "input-25",
       "type": "input",
       "configuration": {
         "schema": {
@@ -99,7 +99,7 @@
       }
     },
     {
-      "id": "output-31",
+      "id": "output-30",
       "type": "output",
       "configuration": {
         "schema": {
@@ -121,16 +121,28 @@
       }
     },
     {
-      "id": "fn-27",
+      "id": "fn-26",
       "type": "runJavascript",
       "configuration": {
-        "code": "const fn_27 = ({a,b,delimiter=\" \"})=>{return{result:a+delimiter+b}};",
+        "code": "const fn_26 = ({a,b,delimiter=\" \"})=>{return{result:a+delimiter+b}};",
         "delimiter": "\n\n",
-        "name": "fn_27",
+        "name": "fn_26",
         "raw": true
       },
       "metadata": {
         "title": "Persona"
+      }
+    },
+    {
+      "id": "fn-27",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const fn_27 = inputs=>{const parts=[{text:inputs.text}];return{context:inputs.role?{role:inputs.role,parts}:{parts}}};",
+        "name": "fn_27",
+        "raw": true
+      },
+      "metadata": {
+        "title": "Make persona context"
       }
     },
     {
@@ -139,18 +151,6 @@
       "configuration": {
         "code": "const fn_28 = inputs=>{const parts=[{text:inputs.text}];return{context:inputs.role?{role:inputs.role,parts}:{parts}}};",
         "name": "fn_28",
-        "raw": true
-      },
-      "metadata": {
-        "title": "Make persona context"
-      }
-    },
-    {
-      "id": "fn-29",
-      "type": "runJavascript",
-      "configuration": {
-        "code": "const fn_29 = inputs=>{const parts=[{text:inputs.text}];return{context:inputs.role?{role:inputs.role,parts}:{parts}}};",
-        "name": "fn_29",
         "raw": true,
         "role": "user"
       },
@@ -159,7 +159,7 @@
       }
     },
     {
-      "id": "specialist-30",
+      "id": "specialist-29",
       "type": "specialist",
       "configuration": {
         "model": "gemini-1.5-flash-latest"
