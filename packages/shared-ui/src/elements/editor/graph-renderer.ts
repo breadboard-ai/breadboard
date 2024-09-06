@@ -565,14 +565,8 @@ export class GraphRenderer extends LitElement {
   set topGraphResult(topGraphResult: TopGraphRunResult | null) {
     let highlightedNode = null;
     let edgeValues = null;
-    console.log(topGraphResult);
     if (topGraphResult && topGraphResult.currentNode) {
       highlightedNode = topGraphResult.currentNode;
-
-      console.group("HIGHLIGHTED NODE");
-      console.log("id", highlightedNode.descriptor.id);
-      console.log("activity", highlightedNode.activity);
-      console.groupEnd();
     }
 
     if (topGraphResult && topGraphResult.edgeValues) {

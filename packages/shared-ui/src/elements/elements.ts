@@ -5,6 +5,7 @@
  */
 
 export { ActivityLog } from "./activity-log/activity-log.js";
+export { ActivityLogLite } from "./activity-log/activity-log-lite.js";
 export { ArrayEditor } from "./input/array/array-editor.js";
 export { BoardDetails } from "./board-details/board-details.js";
 export { BoardEditOverlay } from "./overlay/board-edit.js";

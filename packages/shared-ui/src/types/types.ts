@@ -264,3 +264,9 @@ export type NodePortConfiguration = {
   x: number;
   y: number;
 };
+
+export interface UserMessage {
+  srcset: string;
+  src: string;
+  alt: string;
+}
