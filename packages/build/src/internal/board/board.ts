@@ -701,9 +701,11 @@ export type BoardDefinition<
 export type BoardInstantiateFunction<
   I extends Record<string, JsonSerializable | undefined>,
   O extends Record<string, JsonSerializable | undefined>,
-> = (inputs: {
-  [K in keyof I]: Value<I[K]>;
-}) => BoardInstance<I, O>;
+> = (
+  inputs: {
+    [K in keyof I]: Value<I[K]>;
+  } & { $id?: string; $metadata?: NodeMetadata }
+) => BoardInstance<I, O>;
 
 export interface BoardInstance<
   I extends Record<string, JsonSerializable | undefined>,

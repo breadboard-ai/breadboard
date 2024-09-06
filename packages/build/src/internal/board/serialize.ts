@@ -44,6 +44,7 @@ import { isLoopback } from "./loopback.js";
 import { OptionalVersionOf, isOptional } from "./optional.js";
 import { isSpecialOutput } from "./output.js";
 import { isStarInputs, type StarInputs } from "./star-inputs.js";
+import type { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 
 /**
  * Serialize a Breadboard board to Breadboard Graph Language (BGL) so that it
@@ -364,12 +365,14 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       if (kitBinding) {
         isBoardInstanceBoundToKit = true;
         type = kitBinding.id;
-        metadata = undefined;
-        thisNodeId = nextIdForType(type);
+        metadata = node.values["$metadata"] as NodeMetadata | undefined;
+        thisNodeId =
+          (node.values["$id"] as string | undefined) ?? nextIdForType(type);
       } else {
         type = "invoke";
-        metadata = undefined;
-        thisNodeId = nextIdForType("invoke");
+        metadata = node.values["$metadata"] as NodeMetadata | undefined;
+        thisNodeId =
+          (node.values["$id"] as string | undefined) ?? nextIdForType("invoke");
       }
     } else {
       const cast = node as SerializableNode;
@@ -405,6 +408,9 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     for (const [portName, inputPort] of Object.entries(
       isBoardInstance(node) ? node.values : node.inputs
     )) {
+      if (portName === "$id" || portName === "$metadata") {
+        continue;
+      }
       unconnectedInputs.delete(inputPort);
       const values = isConvergence(inputPort.value)
         ? inputPort.value.ports
