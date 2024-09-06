@@ -62,6 +62,9 @@ export class ActivityLogLite extends LitElement {
   neutral = false;
 
   @property({ reflect: true })
+  animateNewItems = false;
+
+  @property({ reflect: true })
   hideEmptyEdges = false;
 
   @property()
@@ -180,11 +183,17 @@ export class ActivityLogLite extends LitElement {
       animation: fadeAndSlideIn 0.3s cubic-bezier(0, 0, 0.3, 1) forwards;
     }
 
+    :host([animatenewitems="false"]) .pending-input.newest,
+    :host([animatenewitems="false"]) .edge.newest {
+      animation-duration: 0s;
+      animation-delay: 0s;
+    }
+
     .edge.newest {
       margin-bottom: var(--bb-grid-size-16);
     }
 
-    :host([hideEmptyEdges="true"]) .edge.empty {
+    :host([hideemptyedges="true"]) .edge.empty {
       height: 0;
       display: flex;
       align-items: center;
@@ -240,6 +249,14 @@ export class ActivityLogLite extends LitElement {
       animation: fadeAndSlideIn 0.3s cubic-bezier(0, 0, 0.3, 1) 0.4s forwards;
     }
 
+    :host([animatenewitems="false"]) .pending-input.newest::before,
+    :host([animatenewitems="false"]) .edge.newest::before,
+    :host([animatenewitems="false"]) .pending-input.newest::after,
+    :host([animatenewitems="false"]) .edge.newest::after {
+      animation-duration: 0s;
+      animation-delay: 0s;
+    }
+
     .pending-input::after {
       background: var(--bb-inputs-300) var(--bb-icon-edit) center center / 20px
         20px no-repeat;
@@ -250,11 +267,11 @@ export class ActivityLogLite extends LitElement {
         20px no-repeat;
     }
 
-    :host([hideEmptyEdges="true"]) .edge.empty::after {
+    :host([hideemptyedges="true"]) .edge.empty::after {
       display: none;
     }
 
-    :host([hideEmptyEdges="false"]) .edge.empty {
+    :host([hideemptyedges="false"]) .edge.empty {
       min-height: var(--bb-grid-size-14);
     }
 
@@ -280,6 +297,10 @@ export class ActivityLogLite extends LitElement {
       padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
       width: max(60%, 300px);
       animation: fadeAndSlideIn 0.3s cubic-bezier(0, 0, 0.3, 1) forwards;
+    }
+
+    :host([animatenewitems="false"]) .entry {
+      animation: none;
     }
 
     .entry.pending::after {
@@ -567,6 +588,18 @@ export class ActivityLogLite extends LitElement {
   #userInputRef: Ref<UserInput> = createRef();
   #activityRef: Ref<HTMLDivElement> = createRef();
 
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    this.#jumpToBottom("instant");
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    this.animateNewItems = false;
+  }
+
   async #renderPendingInput(event: EdgeLogEntry) {
     const schema = event.schema as Schema;
     if (!schema) {
@@ -660,7 +693,6 @@ export class ActivityLogLite extends LitElement {
     }
 
     const properties = schema?.properties ?? {};
-
     return html`<dl class="node-output">
       ${Object.entries(value).map(([name, nodeValue]) => {
         let value: HTMLTemplateResult | symbol = nothing;
@@ -829,8 +861,6 @@ export class ActivityLogLite extends LitElement {
             completed = this.#formatter.format(this.start + end);
           }
 
-          // console.log(entry);
-
           return html` <section
               class=${classMap(classes)}
               completed=${completed ?? nothing}
@@ -887,7 +917,7 @@ export class ActivityLogLite extends LitElement {
     })}`;
   }
 
-  #jumpToBottom() {
+  #jumpToBottom(behavior: ScrollBehavior = "smooth") {
     if (!this.#activityRef.value) {
       return;
     }
@@ -903,7 +933,7 @@ export class ActivityLogLite extends LitElement {
       return;
     }
     entry.scrollIntoView({
-      behavior: "smooth",
+      behavior,
       block: "start",
       inline: "nearest",
     });
@@ -915,6 +945,7 @@ export class ActivityLogLite extends LitElement {
     }
 
     this.#jumpToBottomAfterUpdated = true;
+    this.animateNewItems = true;
   }
 
   protected updated(): void {
