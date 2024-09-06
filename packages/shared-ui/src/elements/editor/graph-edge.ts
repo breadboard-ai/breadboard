@@ -147,14 +147,6 @@ export class GraphEdge extends PIXI.Container {
     const texture = GraphAssets.instance().get("value");
     this.#valueSprite = texture ? new PIXI.Sprite(texture) : null;
 
-    this.#valueSelector.beginPath();
-    this.#valueSelector.circle(0, 0, 12);
-    this.#valueSelector.closePath();
-    this.#valueSelector.fill({ color: edgeColorWithValues });
-    this.#valueSelector.eventMode = "static";
-    this.#valueSelector.cursor = "pointer";
-    this.#valueSelector.visible = false;
-
     this.#edgeGraphic.label = "GraphEdge";
     this.#edgeGraphic.eventMode = "static";
 
@@ -327,6 +319,15 @@ export class GraphEdge extends PIXI.Container {
     if (this.selected) {
       edgeColor = edgeColorSelected;
     }
+
+    this.#valueSelector.clear();
+    this.#valueSelector.beginPath();
+    this.#valueSelector.circle(0, 0, 12);
+    this.#valueSelector.closePath();
+    this.#valueSelector.fill({ color: edgeColor });
+    this.#valueSelector.eventMode = "static";
+    this.#valueSelector.cursor = "pointer";
+    this.#valueSelector.visible = false;
 
     this.#edgeGraphic.setStrokeStyle({ width: 1, color: edgeColor });
 
