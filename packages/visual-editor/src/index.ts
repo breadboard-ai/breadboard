@@ -90,9 +90,6 @@ export class Main extends LitElement {
   kits: Kit[] = [];
 
   @state()
-  runs: InspectableRun[] | null = null;
-
-  @state()
   embed = false;
 
   @state()
