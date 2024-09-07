@@ -16,13 +16,16 @@ import type {
 import { idFromPath } from "./top-graph-observer";
 import type { EdgeLogEntry } from "../../types/types";
 
-export class EdgeEntry implements EdgeLogEntry {
+// List the exports here to make them visible at a glance.
+export { EdgeEntry, BubbledOutputEdge, BubbledInputEdge, InputEdge };
+
+class EdgeEntry implements EdgeLogEntry {
   type = "edge" as const;
   value?: InputValues | undefined;
   end = null;
 }
 
-export class BubbledOutputEdge implements EdgeLogEntry {
+class BubbledOutputEdge implements EdgeLogEntry {
   type = "edge" as const;
   value?: OutputValues | undefined;
   schema: Schema | undefined;
@@ -35,7 +38,7 @@ export class BubbledOutputEdge implements EdgeLogEntry {
   }
 }
 
-export class BubbledInputEdge implements EdgeLogEntry {
+class BubbledInputEdge implements EdgeLogEntry {
   type = "edge" as const;
   id: string;
   value: InputValues | undefined;
@@ -49,7 +52,7 @@ export class BubbledInputEdge implements EdgeLogEntry {
   }
 }
 
-export class InputEdge implements EdgeLogEntry {
+class InputEdge implements EdgeLogEntry {
   type = "edge" as const;
   id: string;
   value: InputValues | undefined;

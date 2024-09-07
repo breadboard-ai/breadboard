@@ -17,7 +17,10 @@ import type {
 import { idFromPath } from "./top-graph-observer";
 import type { NodeLogEntry, ComponentActivityItem } from "../../types/types";
 
-export class NodeEntry implements NodeLogEntry {
+// List the exports here to make them visible at a glance.
+export { NodeEntry, UserNodeEntry, EndNodeEntry };
+
+class NodeEntry implements NodeLogEntry {
   type: "node";
   id: string;
   descriptor: NodeDescriptor;
@@ -64,7 +67,7 @@ export class NodeEntry implements NodeLogEntry {
   }
 }
 
-export class UserNodeEntry extends NodeEntry {
+class UserNodeEntry extends NodeEntry {
   constructor(event: RunInputEvent) {
     super(event);
     this.descriptor = structuredClone(this.descriptor);
@@ -76,7 +79,7 @@ export class UserNodeEntry extends NodeEntry {
   }
 }
 
-export class EndNodeEntry implements NodeLogEntry {
+class EndNodeEntry implements NodeLogEntry {
   type = "node" as const;
   id: string = "end";
   activity: ComponentActivityItem[] = [];

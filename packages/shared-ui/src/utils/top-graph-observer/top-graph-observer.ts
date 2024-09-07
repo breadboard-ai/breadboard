@@ -27,69 +27,10 @@ import {
 import { EdgeValueStore } from "./edge-value-store";
 import { EndNodeEntry, NodeEntry, UserNodeEntry } from "./node-entry";
 
-export const idFromPath = (path: number[]): string => {
-  return `e-${path.join("-")}`;
-};
-/**
- * Places the output edge in the log, according to the following rules:
- * - Until first bubbling input, place output before the last node,
- *   possibly replacing an empty edge.
- * - After first bubbling input, place output after the last node.
- */
-const placeOutputInLog = (log: LogEntry[], edge: EdgeLogEntry): LogEntry[] => {
-  const last = log[log.length - 1];
-  if (last?.type === "edge" && last.value) {
-    return [...log, edge];
-  }
-  // @ts-expect-error - findLastIndex is not in the TS lib
-  const lastNode = log.findLastIndex((entry) => entry.type === "node");
-  if (lastNode === -1) {
-    return [...log, edge];
-  }
-  if (lastNode === 0) {
-    return [edge, ...log];
-  }
-  const maybeReplace = log[lastNode - 1] as LogEntry;
-  if (maybeReplace.type === "edge" && !maybeReplace.value) {
-    return [...log.slice(0, lastNode - 1), edge, ...log.slice(lastNode)];
-  }
-
-  // To avoid there being two edges placed side-by-side we skip this edge if we
-  // intend to place it next to an existing edge.
-  if (lastNode > 0) {
-    const succeedingItemIdx = lastNode + 1;
-    const precedingItemIsEdge = log[lastNode] && log[lastNode].type === "edge";
-    const succeedingItemIsEdge =
-      log[succeedingItemIdx] && log[succeedingItemIdx].type === "edge";
-    if (precedingItemIsEdge || succeedingItemIsEdge) {
-      return [...log];
-    }
-  }
-
-  return [...log.slice(0, lastNode), edge, ...log.slice(lastNode)];
-};
-const placeInputInLog = (log: LogEntry[], edge: EdgeLogEntry): LogEntry[] => {
-  const last = log[log.length - 1];
-  if (last?.type === "edge" && !last.value) {
-    return [...log.slice(0, -1), edge];
-  }
-  return [...log, edge];
-};
-function getActivityType(type: string): ComponentActivityItem["type"] {
-  switch (type) {
-    case "input":
-      return "input";
-    case "output":
-      return "output";
-    default:
-      return "node";
-  }
-}
 /**
  * A lightweight rewrite of the `InspectableRunObserver` that
  * only captures the events that are necessary to drive the app UI.
  */
-
 export class TopGraphObserver {
   #log: LogEntry[] | null = null;
   #currentResult: TopGraphRunResult | null = null;
@@ -340,5 +281,67 @@ export class TopGraphObserver {
       { type: "error", error: event.data.error, path: this.#errorPath || [] },
     ];
     this.#currentResult = null;
+  }
+}
+
+export function idFromPath(path: number[]): string {
+  return `e-${path.join("-")}`;
+}
+
+/**
+ * Places the output edge in the log, according to the following rules:
+ * - Until first bubbling input, place output before the last node,
+ *   possibly replacing an empty edge.
+ * - After first bubbling input, place output after the last node.
+ */
+function placeOutputInLog(log: LogEntry[], edge: EdgeLogEntry): LogEntry[] {
+  const last = log[log.length - 1];
+  if (last?.type === "edge" && last.value) {
+    return [...log, edge];
+  }
+  // @ts-expect-error - findLastIndex is not in the TS lib
+  const lastNode = log.findLastIndex((entry) => entry.type === "node");
+  if (lastNode === -1) {
+    return [...log, edge];
+  }
+  if (lastNode === 0) {
+    return [edge, ...log];
+  }
+  const maybeReplace = log[lastNode - 1] as LogEntry;
+  if (maybeReplace.type === "edge" && !maybeReplace.value) {
+    return [...log.slice(0, lastNode - 1), edge, ...log.slice(lastNode)];
+  }
+
+  // To avoid there being two edges placed side-by-side we skip this edge if we
+  // intend to place it next to an existing edge.
+  if (lastNode > 0) {
+    const succeedingItemIdx = lastNode + 1;
+    const precedingItemIsEdge = log[lastNode] && log[lastNode].type === "edge";
+    const succeedingItemIsEdge =
+      log[succeedingItemIdx] && log[succeedingItemIdx].type === "edge";
+    if (precedingItemIsEdge || succeedingItemIsEdge) {
+      return [...log];
+    }
+  }
+
+  return [...log.slice(0, lastNode), edge, ...log.slice(lastNode)];
+}
+
+function placeInputInLog(log: LogEntry[], edge: EdgeLogEntry): LogEntry[] {
+  const last = log[log.length - 1];
+  if (last?.type === "edge" && !last.value) {
+    return [...log.slice(0, -1), edge];
+  }
+  return [...log, edge];
+}
+
+function getActivityType(type: string): ComponentActivityItem["type"] {
+  switch (type) {
+    case "input":
+      return "input";
+    case "output":
+      return "output";
+    default:
+      return "node";
   }
 }
