@@ -211,6 +211,7 @@ export type EdgeLogEntry = {
 export type ErrorLogEntry = {
   type: "error";
   error: ErrorResponse["error"];
+  path: number[];
 };
 
 export type LogEntry = NodeLogEntry | EdgeLogEntry | ErrorLogEntry;
@@ -255,6 +256,7 @@ export type ComponentWithActivity = {
 export type ComponentActivityItem = {
   type: "input" | "output" | "error" | "node" | "graph";
   description: string;
+  path: number[];
 };
 
 export type NodePortConfiguration = {
