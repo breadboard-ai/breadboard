@@ -19,6 +19,12 @@ export class RunDetails {
     this.#observer = observer;
   }
 
+  /**
+   * Must be called before using the instance, right after the very first
+   * "graphstart". Reason:
+   * The lifetime of runs begins at "graphstart", and the details aren't
+   * available until after that.
+   */
   async initialize() {
     const runs = await this.#observer.runs();
     // Take inputs from the previous run.
