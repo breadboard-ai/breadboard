@@ -1,4 +1,14 @@
-import type { OutputValues, Schema } from "@google-labs/breadboard";
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import type {
+  InspectableRunObserver,
+  OutputValues,
+  Schema,
+} from "@google-labs/breadboard";
 import type {
   HarnessRunner,
   RunEdgeEvent,
@@ -26,6 +36,7 @@ import {
 } from "./edge-entry";
 import { EdgeValueStore } from "./edge-value-store";
 import { EndNodeEntry, NodeEntry, UserNodeEntry } from "./node-entry";
+import { RunDetails } from "./run-details";
 
 /**
  * A lightweight rewrite of the `InspectableRunObserver` that
@@ -46,8 +57,14 @@ export class TopGraphObserver {
    * Stores the path of the node that errored.
    */
   #errorPath: number[] | null = null;
+  #runDetails: RunDetails | null;
 
-  constructor(runner: HarnessRunner, signal?: AbortSignal) {
+  constructor(
+    runner: HarnessRunner,
+    signal?: AbortSignal,
+    observer?: InspectableRunObserver
+  ) {
+    this.#runDetails = observer ? new RunDetails(observer) : null;
     if (signal) {
       signal.addEventListener("abort", this.#abort.bind(this));
     }
@@ -136,6 +153,7 @@ export class TopGraphObserver {
     if (this.#log) {
       throw new Error("Graph already started");
     }
+    this.#runDetails?.initialize();
     this.#log = [];
     this.#currentResult = null;
   }
@@ -226,7 +244,10 @@ export class TopGraphObserver {
 
     if (!event.data.bubbled) {
       this.#currentNode = new UserNodeEntry(event);
-      this.#currentInput = new InputEdge(event);
+      this.#currentInput = new InputEdge(
+        event,
+        this.#runDetails?.lastRunInput(event.data.node.id)
+      );
       const edge = this.#currentInput;
       this.#log = placeInputInLog([...this.#log, this.#currentNode!], edge);
       this.#currentResult = null;

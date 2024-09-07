@@ -1108,10 +1108,10 @@ export class Main extends LitElement {
       });
     }
 
-    // TODO: Can we re-use the top graph observer.
     this.#topGraphObserver = new BreadboardUI.Utils.TopGraphObserver(
       this.#runner,
-      this.#abortController?.signal
+      this.#abortController?.signal,
+      this.#runObserver
     );
 
     this.#runner.addObserver(this.#runObserver);

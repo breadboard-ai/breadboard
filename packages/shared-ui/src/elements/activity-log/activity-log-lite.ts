@@ -614,7 +614,7 @@ export class ActivityLogLite extends LitElement {
     const userInputs: UserInputConfiguration[] = Object.entries(
       schema.properties ?? {}
     ).reduce((prev, [name, schema]) => {
-      let value = undefined;
+      let value = event.value?.[name];
       if (schema.type === "object") {
         if (isLLMContentBehavior(schema)) {
           if (!isLLMContent(value)) {

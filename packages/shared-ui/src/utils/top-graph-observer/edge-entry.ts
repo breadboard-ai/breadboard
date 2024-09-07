@@ -59,9 +59,12 @@ class InputEdge implements EdgeLogEntry {
   schema: Schema | undefined;
   end: number | null;
 
-  constructor(event: RunInputEvent) {
+  constructor(event: RunInputEvent, initialValue?: InputValues | null) {
     this.schema = event.data.inputArguments.schema as Schema;
     this.id = idFromPath(event.data.path);
+    if (initialValue) {
+      this.value = initialValue;
+    }
     this.end = null;
   }
 }
