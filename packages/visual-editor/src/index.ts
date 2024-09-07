@@ -25,7 +25,6 @@ import {
   GraphLoader,
   GraphProvider,
   InputValues,
-  InspectableRun,
   InspectableRunObserver,
   Kit,
   SerializedRun,
@@ -1456,11 +1455,7 @@ export class Main extends LitElement {
 
     let tmpl: HTMLTemplateResult | symbol = nothing;
 
-    let runs: Promise<InspectableRun[]> = Promise.resolve([]);
     const topGraphResult = this.#topGraphObserver?.current() || null;
-    if (this.#runObserver) {
-      runs = this.#runObserver?.runs();
-    }
 
     let saveButton: HTMLTemplateResult | symbol = nothing;
     if (this.graph && this.graph.url) {
@@ -1621,35 +1616,37 @@ export class Main extends LitElement {
           }}
         ></button>
         <div id="tab-container">
-          ${this.graph !== null
-            ? html`<h1>
-                <span
-                  ><button
-                    id="back-to-main-board"
+          ${
+            this.graph !== null
+              ? html`<h1>
+                  <span
+                    ><button
+                      id="back-to-main-board"
+                      @click=${() => {
+                        this.subGraphId = null;
+                      }}
+                      ?disabled=${this.subGraphId === null}
+                    >
+                      ${title}
+                    </button></span
+                  >${subGraphTitle
+                    ? html`<span class="subgraph-name">${subGraphTitle}</span>`
+                    : nothing}
+                  <button
                     @click=${() => {
-                      this.subGraphId = null;
+                      this.#attemptBoardStart(
+                        new BreadboardUI.Events.StartEvent(null, null)
+                      );
                     }}
-                    ?disabled=${this.subGraphId === null}
+                    ?disabled=${this.graph === null}
+                    id="close-board"
+                    title="Close Board"
                   >
-                    ${title}
-                  </button></span
-                >${subGraphTitle
-                  ? html`<span class="subgraph-name">${subGraphTitle}</span>`
-                  : nothing}
-                <button
-                  @click=${() => {
-                    this.#attemptBoardStart(
-                      new BreadboardUI.Events.StartEvent(null, null)
-                    );
-                  }}
-                  ?disabled=${this.graph === null}
-                  id="close-board"
-                  title="Close Board"
-                >
-                  Close
-                </button>
-              </h1>`
-            : nothing}
+                    Close
+                  </button>
+                </h1>`
+              : nothing
+          }
         </div>
         <button
           id="undo"
@@ -1684,19 +1681,12 @@ export class Main extends LitElement {
         </button>
       </div>
       <div id="content" ?inert=${showingOverlay}>
-        ${until(
-          runs.then((runInfo) => {
-            const currentRun = runInfo?.[0];
-            const inputsFromLastRun = runInfo?.[1]?.inputs() || null;
-
-            return html`<bb-ui-controller
+        <bb-ui-controller
               ${ref(this.#uiRef)}
               ?inert=${showingOverlay}
               .graph=${this.graph}
               .subGraphId=${this.subGraphId}
-              .run=${currentRun}
               .topGraphResult=${topGraphResult}
-              .inputsFromLastRun=${inputsFromLastRun}
               .kits=${this.kits}
               .loader=${this.#loader}
               .status=${this.status}
@@ -2091,9 +2081,7 @@ export class Main extends LitElement {
                 this.requestUpdate();
               }}
             ></bb-ui-controller>
-          </div>`;
-          })
-        )}
+          </div>
         ${until(nav)}
       </div>`;
 
