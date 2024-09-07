@@ -5,4 +5,4 @@
  */
 
 export { formatError } from "./format-error";
-export { TopGraphObserver } from "./top-graph-observer";
+export { TopGraphObserver } from "./top-graph-observer/index";

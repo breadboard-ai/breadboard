@@ -1,46 +1,35 @@
-/**
- * @license
- * Copyright 2024 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import {
-  type InspectableEdge,
-  type NodeDescriptor,
-  type Schema,
-  type Edge as EdgeType,
-  InspectableEdgeType,
-} from "@google-labs/breadboard";
-import type {
-  InputValues,
-  NodeValue,
-  OutputValues,
-} from "@google-labs/breadboard-schema/graph.js";
+import type { OutputValues, Schema } from "@google-labs/breadboard";
 import type {
   HarnessRunner,
   RunEdgeEvent,
-  RunErrorEvent,
-  RunGraphEndEvent,
   RunGraphStartEvent,
-  RunInputEvent,
-  RunNodeEndEvent,
+  RunGraphEndEvent,
   RunNodeStartEvent,
+  RunNodeEndEvent,
+  RunInputEvent,
   RunOutputEvent,
+  RunErrorEvent,
 } from "@google-labs/breadboard/harness";
 import type {
-  ComparableEdge,
+  LogEntry,
   EdgeLogEntry,
   ComponentActivityItem,
-  LogEntry,
-  NodeLogEntry,
   TopGraphRunResult,
-} from "../types/types.js";
-import { formatError } from "./format-error.js";
+  NodeLogEntry,
+} from "../../types/types";
+import { formatError } from "../format-error";
+import {
+  EdgeEntry,
+  InputEdge,
+  BubbledInputEdge,
+  BubbledOutputEdge,
+} from "./edge-entry";
+import { EdgeValueStore } from "./edge-value-store";
+import { EndNodeEntry, NodeEntry, UserNodeEntry } from "./node-entry";
 
-const idFromPath = (path: number[]): string => {
+export const idFromPath = (path: number[]): string => {
   return `e-${path.join("-")}`;
 };
-
 /**
  * Places the output edge in the log, according to the following rules:
  * - Until first bubbling input, place output before the last node,
@@ -79,7 +68,6 @@ const placeOutputInLog = (log: LogEntry[], edge: EdgeLogEntry): LogEntry[] => {
 
   return [...log.slice(0, lastNode), edge, ...log.slice(lastNode)];
 };
-
 const placeInputInLog = (log: LogEntry[], edge: EdgeLogEntry): LogEntry[] => {
   const last = log[log.length - 1];
   if (last?.type === "edge" && !last.value) {
@@ -87,7 +75,6 @@ const placeInputInLog = (log: LogEntry[], edge: EdgeLogEntry): LogEntry[] => {
   }
   return [...log, edge];
 };
-
 function getActivityType(type: string): ComponentActivityItem["type"] {
   switch (type) {
     case "input":
@@ -98,11 +85,11 @@ function getActivityType(type: string): ComponentActivityItem["type"] {
       return "node";
   }
 }
-
 /**
  * A lightweight rewrite of the `InspectableRunObserver` that
  * only captures the events that are necessary to drive the app UI.
  */
+
 export class TopGraphObserver {
   #log: LogEntry[] | null = null;
   #currentResult: TopGraphRunResult | null = null;
@@ -180,7 +167,7 @@ export class TopGraphObserver {
     this.#currentNode.end = globalThis.performance.now();
     this.#currentNode = null;
     if (this.#log) {
-      this.#log = [...this.#log, new EndNode("Activity stopped")];
+      this.#log = [...this.#log, new EndNodeEntry("Activity stopped")];
       this.#currentResult = null;
     }
   }
@@ -254,12 +241,12 @@ export class TopGraphObserver {
         return;
       }
       case "output": {
-        this.#log = placeOutputInLog(this.#log, new Edge());
+        this.#log = placeOutputInLog(this.#log, new EdgeEntry());
         return;
       }
       default: {
-        this.#currentNode = new Node(event);
-        this.#log = [...this.#log, this.#currentNode, new Edge()];
+        this.#currentNode = new NodeEntry(event);
+        this.#log = [...this.#log, this.#currentNode, new EdgeEntry()];
         this.#currentResult = null;
         return;
       }
@@ -297,7 +284,7 @@ export class TopGraphObserver {
     }
 
     if (!event.data.bubbled) {
-      this.#currentNode = new UserNode(event);
+      this.#currentNode = new UserNodeEntry(event);
       this.#currentInput = new InputEdge(event);
       const edge = this.#currentInput;
       this.#log = placeInputInLog([...this.#log, this.#currentNode!], edge);
@@ -353,228 +340,5 @@ export class TopGraphObserver {
       { type: "error", error: event.data.error, path: this.#errorPath || [] },
     ];
     this.#currentResult = null;
-  }
-}
-
-class Node implements NodeLogEntry {
-  type: "node";
-  id: string;
-  descriptor: NodeDescriptor;
-  hidden: boolean;
-  outputs: OutputValues | null;
-  inputs?: InputValues;
-  start: number;
-  bubbled: boolean;
-  end: number | null;
-  activity: ComponentActivityItem[] = [];
-
-  constructor(event: RunInputEvent | RunOutputEvent | RunNodeStartEvent) {
-    this.type = "node";
-    this.id = idFromPath(event.data.path);
-    this.descriptor = event.data.node;
-    this.start = event.data.timestamp;
-    this.end = null;
-
-    const type = this.descriptor.type;
-    switch (type) {
-      case "input": {
-        const inputEvent = event as RunInputEvent;
-        this.inputs = inputEvent.data.inputArguments;
-        this.bubbled = inputEvent.data.bubbled;
-        break;
-      }
-      case "output": {
-        const outputEvent = event as RunOutputEvent;
-        this.inputs = outputEvent.data.outputs;
-        this.end = event.data.timestamp;
-        this.bubbled = outputEvent.data.bubbled;
-        break;
-      }
-      default: {
-        this.bubbled = false;
-      }
-    }
-    this.outputs = null;
-    this.hidden = false;
-  }
-
-  title(): string {
-    return this.descriptor.metadata?.title || this.descriptor.id;
-  }
-}
-
-class Edge implements EdgeLogEntry {
-  type = "edge" as const;
-  value?: InputValues | undefined;
-  end = null;
-}
-
-class BubbledOutputEdge implements EdgeLogEntry {
-  type = "edge" as const;
-  value?: OutputValues | undefined;
-  schema: Schema | undefined;
-  end: number;
-
-  constructor(event: RunOutputEvent) {
-    this.schema = event.data.node.configuration?.schema as Schema;
-    this.value = event.data.outputs;
-    this.end = event.data.timestamp;
-  }
-}
-
-class BubbledInputEdge implements EdgeLogEntry {
-  type = "edge" as const;
-  id: string;
-  value: InputValues | undefined;
-  schema: Schema | undefined;
-  end: number | null;
-
-  constructor(event: RunInputEvent) {
-    this.schema = event.data.inputArguments.schema;
-    this.id = idFromPath(event.data.path);
-    this.end = null;
-  }
-}
-
-class InputEdge implements EdgeLogEntry {
-  type = "edge" as const;
-  id: string;
-  value: InputValues | undefined;
-  schema: Schema | undefined;
-  end: number | null;
-
-  constructor(event: RunInputEvent) {
-    this.schema = event.data.inputArguments.schema as Schema;
-    this.id = idFromPath(event.data.path);
-    this.end = null;
-  }
-}
-
-class UserNode extends Node {
-  constructor(event: RunInputEvent) {
-    super(event);
-    this.descriptor = structuredClone(this.descriptor);
-    this.descriptor.type = "user";
-  }
-
-  title(): string {
-    return "User";
-  }
-}
-
-class EndNode implements NodeLogEntry {
-  type = "node" as const;
-  id: string = "end";
-  activity: ComponentActivityItem[] = [];
-  descriptor = {
-    id: "end",
-    metadata: {
-      title: "End",
-    },
-    type: "end",
-  };
-  hidden = false;
-  start = globalThis.performance.now();
-  bubbled = false;
-  end = globalThis.performance.now();
-
-  constructor(reason: string) {
-    this.descriptor.metadata!.title = reason;
-  }
-
-  title(): string {
-    return this.descriptor.metadata!.title!;
-  }
-}
-
-type EdgeValueStoreMap = Map<string, NodeValue[]>;
-
-class EdgeValueStore {
-  #values: EdgeValueStoreMap;
-  #lastEdge: ComparableEdge | null;
-
-  constructor(
-    values: EdgeValueStoreMap = new Map(),
-    lastEdge: EdgeType | null = null
-  ) {
-    this.#values = values;
-    this.#lastEdge = lastEdge ? new ComparableEdgeImpl(lastEdge) : null;
-  }
-
-  #key(
-    from: string,
-    out: string,
-    to: string,
-    iN: string,
-    constant: boolean | undefined
-  ) {
-    return `${from}|${out}|${to}|${iN}|${constant === true ? "c" : ""}`;
-  }
-
-  #keyFromEdge(edge: EdgeType): string {
-    return this.#key(
-      edge.from,
-      edge.out || "",
-      edge.to,
-      edge.in || "",
-      edge.constant
-    );
-  }
-
-  #keyFromInspectableEdge(edge: InspectableEdge): string {
-    const from = edge.from.descriptor.id;
-    const out = edge.out;
-    const to = edge.to.descriptor.id;
-    const iN = edge.in;
-    const constant = edge.type === InspectableEdgeType.Constant;
-    return this.#key(from, out, to, iN, constant);
-  }
-
-  set(edge: EdgeType, inputs: InputValues | undefined): EdgeValueStore {
-    if (!inputs) {
-      return this;
-    }
-    const value = edge.out === "*" || !edge.in ? inputs : inputs[edge.in];
-    const key = this.#keyFromEdge(edge);
-    if (!this.#values.has(key)) {
-      this.#values.set(key, [value]);
-    } else {
-      const edgeValues = this.#values.get(key);
-      this.#values.set(key, [...edgeValues!, value]);
-    }
-    return new EdgeValueStore(this.#values, edge);
-  }
-
-  get current(): ComparableEdge | null {
-    return this.#lastEdge;
-  }
-
-  get(edge: InspectableEdge): NodeValue[] {
-    const key = this.#keyFromInspectableEdge(edge);
-    return this.#values.get(key) || [];
-  }
-}
-
-class ComparableEdgeImpl implements ComparableEdge {
-  #edge: EdgeType;
-
-  #fixUpStarEdge(edge: EdgeType): EdgeType {
-    if (edge.out === "*") {
-      return { ...edge, in: "" };
-    }
-    return edge;
-  }
-
-  constructor(edge: EdgeType) {
-    this.#edge = this.#fixUpStarEdge(edge);
-  }
-
-  equals(other: InspectableEdge): boolean {
-    return (
-      this.#edge.from === other.from.descriptor.id &&
-      this.#edge.to === other.to.descriptor.id &&
-      this.#edge.in === other.in &&
-      this.#edge.out === other.out
-    );
   }
 }
