@@ -36,6 +36,7 @@ import {
 } from "../../events/events.js";
 import {
   RecentBoard,
+  RunIdentifier,
   SETTINGS_TYPE,
   STATUS,
   SettingsStore,
@@ -65,6 +66,9 @@ export class UI extends LitElement {
 
   @property()
   subGraphId: string | null = null;
+
+  @property()
+  runId: RunIdentifier | null = null;
 
   @property()
   kits: Kit[] = [];
@@ -253,6 +257,7 @@ export class UI extends LitElement {
       [
         this.graph,
         this.subGraphId,
+        this.runId,
         this.kits,
         this.topGraphResult,
         this.boardId,
@@ -271,6 +276,7 @@ export class UI extends LitElement {
         return html`<bb-editor
           .graph=${graph}
           .subGraphId=${this.subGraphId}
+          .runId=${this.runId}
           .topGraphResult=${this.topGraphResult}
           .boardId=${this.boardId}
           .collapseNodesByDefault=${collapseNodesByDefault}

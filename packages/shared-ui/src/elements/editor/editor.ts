@@ -51,7 +51,7 @@ import { edgeToString } from "./utils.js";
 const DATA_TYPE = "text/plain";
 const PASTE_OFFSET = 50;
 
-import { TopGraphRunResult } from "../../types/types.js";
+import { RunIdentifier, TopGraphRunResult } from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
@@ -89,6 +89,9 @@ export class Editor extends LitElement {
 
   @property()
   subGraphId: string | null = null;
+
+  @property()
+  runId: RunIdentifier | null = null;
 
   @property()
   boardId: number = -1;

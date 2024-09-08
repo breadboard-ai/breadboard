@@ -272,3 +272,5 @@ export interface UserMessage {
   src: string;
   alt: string;
 }
+
+export type RunIdentifier = string;

@@ -85,6 +85,9 @@ export class Main extends LitElement {
   @property()
   subGraphId: string | null = null;
 
+  @property()
+  runId: BreadboardUI.Types.RunIdentifier | null = null;
+
   @state()
   kits: Kit[] = [];
 
@@ -948,6 +951,7 @@ export class Main extends LitElement {
     this.url = url;
     this.graph = null;
     this.subGraphId = null;
+    this.runId = null;
 
     // TODO: Figure out how to avoid needing to null this out.
     this.#editor = null;
@@ -1686,6 +1690,7 @@ export class Main extends LitElement {
               ?inert=${showingOverlay}
               .graph=${this.graph}
               .subGraphId=${this.subGraphId}
+              .runId=${this.runId}
               .topGraphResult=${topGraphResult}
               .kits=${this.kits}
               .loader=${this.#loader}
