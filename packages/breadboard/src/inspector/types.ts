@@ -850,11 +850,11 @@ export type InspectableRunEvent =
  */
 export type InspectableRun = {
   /**
-   * The id graph that was run.
+   * The id of the graph that was run.
    */
   graphId: GraphUUID;
   /**
-   * The version graph that was run.
+   * The version of the graph that was run.
    */
   graphVersion: number;
   /**
