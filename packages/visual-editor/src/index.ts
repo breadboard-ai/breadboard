@@ -190,6 +190,7 @@ export class Main extends LitElement {
   #proxy: HarnessProxyConfig[];
   #loader: GraphLoader;
   #onKeyDownBound = this.#onKeyDown.bind(this);
+  #downloadRunBound = this.#downloadRun.bind(this);
   #confirmUnloadWithUserFirstIfNeededBound =
     this.#confirmUnloadWithUserFirstIfNeeded.bind(this);
   #failedGraphLoad = false;
@@ -580,12 +581,14 @@ export class Main extends LitElement {
     super.connectedCallback();
 
     window.addEventListener("keydown", this.#onKeyDownBound);
+    window.addEventListener("bbrundownload", this.#downloadRunBound);
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
     window.removeEventListener("keydown", this.#onKeyDownBound);
+    window.removeEventListener("bbrundownload", this.#downloadRunBound);
   }
 
   #setBoardPendingSaveState(boardPendingSave: boolean) {
@@ -717,6 +720,29 @@ export class Main extends LitElement {
       printHistory("Undo");
       return;
     }
+  }
+
+  async #downloadRun() {
+    const currentRun = (await this.#runObserver?.runs())?.at(0);
+    if (!currentRun) {
+      return;
+    }
+
+    const serializedRun = await currentRun.serialize?.();
+    if (!serializedRun) {
+      return;
+    }
+
+    const data = JSON.stringify(serializedRun, null, 2);
+    const fileName = `run-${new Date().toISOString()}.json`;
+    const url = URL.createObjectURL(
+      new Blob([data], { type: "application/json" })
+    );
+
+    const anchor = document.createElement("a");
+    anchor.download = fileName;
+    anchor.href = url;
+    anchor.click();
   }
 
   async #attemptBoardSave() {

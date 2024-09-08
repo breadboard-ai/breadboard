@@ -88,6 +88,18 @@ export class BoardUnloadEvent extends Event {
 }
 
 /**
+ * Run Management
+ */
+
+export class RunDownloadEvent extends Event {
+  static eventName = "bbrundownload";
+
+  constructor() {
+    super(RunDownloadEvent.eventName, { ...eventInit });
+  }
+}
+
+/**
  * General UI
  */
 
