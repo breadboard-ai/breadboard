@@ -1434,10 +1434,13 @@ export class Main extends LitElement {
           runObserver.load(runData).then(async (result) => {
             if (result.success) {
               this.run = result.run;
-              this.showWelcomePanel = false;
               this.#topGraphObserver =
                 await BreadboardUI.Utils.TopGraphObserver.fromRun(this.run);
               this.graph = this.#topGraphObserver?.current()?.graph || null;
+              this.showWelcomePanel = false;
+              this.#editor = null;
+              this.url = null;
+              this.#boardId++;
               this.requestUpdate();
             } else {
               this.toast(
