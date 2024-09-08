@@ -1411,6 +1411,7 @@ export class Main extends LitElement {
               this.showWelcomePanel = false;
               this.#topGraphObserver =
                 await BreadboardUI.Utils.TopGraphObserver.fromRun(this.run);
+              this.graph = this.#topGraphObserver?.current()?.graph || null;
               this.requestUpdate();
             } else {
               this.toast(

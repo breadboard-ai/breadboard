@@ -5,6 +5,7 @@
  */
 
 import type {
+  GraphDescriptor,
   InspectableRun,
   InspectableRunObserver,
   OutputValues,
@@ -50,6 +51,7 @@ export class TopGraphObserver {
    * Only set to `true` from the static `fromRun` method.
    */
   #replay = false;
+  #graph: GraphDescriptor | null = null;
   #log: LogEntry[] | null = null;
   #currentResult: TopGraphRunResult | null = null;
   #currentNode: NodeLogEntry | null = null;
@@ -145,6 +147,7 @@ export class TopGraphObserver {
         log: this.#log,
         currentNode: this.#currentNode,
         edgeValues: this.#edgeValues,
+        graph: this.#graph,
       };
     }
     return this.#currentResult;
@@ -193,6 +196,9 @@ export class TopGraphObserver {
     }
     if (this.#log) {
       throw new Error("Graph already started");
+    }
+    if (this.#replay) {
+      this.#graph = event.data.graph;
     }
     this.#runDetails?.initialize();
     this.#log = [];
@@ -260,8 +266,6 @@ export class TopGraphObserver {
       if (type === "input") {
         this.#currentInput.end = event.data.timestamp;
         this.#currentInput.value = event.data.outputs;
-        console.log("Current input to clean up", this.#currentInput);
-        console.log("Event", event.data);
         this.#currentInput = null;
       }
     }

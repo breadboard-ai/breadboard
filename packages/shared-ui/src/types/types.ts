@@ -15,6 +15,7 @@ import {
   InputValues,
   ErrorResponse,
   InspectablePort,
+  GraphDescriptor,
 } from "@google-labs/breadboard";
 
 export const enum HistoryEventType {
@@ -237,6 +238,12 @@ export type TopGraphRunResult = {
    * the array.
    */
   edgeValues: TopGraphEdgeValues;
+  /**
+   * Returns the GraphDescriptor of the current graph.
+   * Or null if the TopGraphObserver doesn't know what it is yet.
+   * The latter can happen when the graph hasn't run yet.
+   */
+  graph: GraphDescriptor | null;
 };
 
 export type ComparableEdge = {
