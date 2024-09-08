@@ -25,6 +25,7 @@ import {
   GraphLoader,
   GraphProvider,
   InputValues,
+  InspectableRun,
   InspectableRunObserver,
   Kit,
   SerializedRun,
@@ -44,7 +45,6 @@ import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 import { RecentBoardStore } from "./data/recent-boards";
 import { SecretsHelper } from "./utils/secrets-helper";
 
-const REPLAY_DELAY_MS = 10;
 const STORAGE_PREFIX = "bb-main";
 
 type MainArguments = {
@@ -85,8 +85,8 @@ export class Main extends LitElement {
   @property()
   subGraphId: string | null = null;
 
-  @property()
-  runId: BreadboardUI.Types.RunIdentifier | null = null;
+  @state()
+  run: InspectableRun | null = null;
 
   @state()
   kits: Kit[] = [];
@@ -951,7 +951,7 @@ export class Main extends LitElement {
     this.url = url;
     this.graph = null;
     this.subGraphId = null;
-    this.runId = null;
+    this.run = null;
 
     // TODO: Figure out how to avoid needing to null this out.
     this.#editor = null;
@@ -1398,7 +1398,6 @@ export class Main extends LitElement {
             this.#runObserver = createRunObserver({
               logLevel: "debug",
               dataStore: this.dataStore,
-              runStore: this.runStore,
             });
 
             // TODO: Do we need a TGO here?
@@ -1408,12 +1407,11 @@ export class Main extends LitElement {
           const runObserver = this.#runObserver;
           runObserver.load(runData).then(async (result) => {
             if (result.success) {
-              const run = result.run;
-              for await (const result of run.replay()) {
-                await runObserver.observe(result);
-                await new Promise((r) => setTimeout(r, REPLAY_DELAY_MS));
-                this.requestUpdate();
-              }
+              this.run = result.run;
+              this.showWelcomePanel = false;
+              this.#topGraphObserver =
+                await BreadboardUI.Utils.TopGraphObserver.fromRun(this.run);
+              this.requestUpdate();
             } else {
               this.toast(
                 "Unable to load run data",
@@ -1690,7 +1688,7 @@ export class Main extends LitElement {
               ?inert=${showingOverlay}
               .graph=${this.graph}
               .subGraphId=${this.subGraphId}
-              .runId=${this.runId}
+              .run=${this.run}
               .topGraphResult=${topGraphResult}
               .kits=${this.kits}
               .loader=${this.#loader}

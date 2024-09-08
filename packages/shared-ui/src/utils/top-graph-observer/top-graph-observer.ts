@@ -5,6 +5,7 @@
  */
 
 import type {
+  InspectableRun,
   InspectableRunObserver,
   OutputValues,
   Schema,
@@ -19,6 +20,7 @@ import type {
   RunInputEvent,
   RunOutputEvent,
   RunErrorEvent,
+  HarnessRunResult,
 } from "@google-labs/breadboard/harness";
 import type {
   LogEntry,
@@ -43,6 +45,11 @@ import { RunDetails } from "./run-details";
  * only captures the events that are necessary to drive the app UI.
  */
 export class TopGraphObserver {
+  /**
+   * True if this instance is created by replaying a run.
+   * Only set to `true` from the static `fromRun` method.
+   */
+  #replay = false;
   #log: LogEntry[] | null = null;
   #currentResult: TopGraphRunResult | null = null;
   #currentNode: NodeLogEntry | null = null;
@@ -58,6 +65,40 @@ export class TopGraphObserver {
    */
   #errorPath: number[] | null = null;
   #runDetails: RunDetails | null;
+
+  static async fromRun(run: InspectableRun): Promise<TopGraphObserver> {
+    const observer = new TopGraphObserver(new EventTarget() as HarnessRunner);
+    observer.#replay = true;
+    for await (const result of run.replay()) {
+      switch (result.type) {
+        case "graphstart":
+          observer.#graphStart(toEvent(result));
+          break;
+        case "graphend":
+          observer.#graphEnd(toEvent(result));
+          break;
+        case "nodestart":
+          observer.#nodeStart(toEvent(result));
+          break;
+        case "nodeend":
+          observer.#nodeEnd(toEvent(result));
+          break;
+        case "input":
+          observer.#input(toEvent(result));
+          break;
+        case "output":
+          observer.#output(toEvent(result));
+          break;
+        case "edge":
+          observer.#edge(toEvent(result));
+          break;
+        case "error":
+          observer.#error(toEvent(result));
+          break;
+      }
+    }
+    return observer;
+  }
 
   constructor(
     runner: HarnessRunner,
@@ -213,8 +254,19 @@ export class TopGraphObserver {
   }
 
   #nodeEnd(event: RunNodeEndEvent) {
+    const type = event.data.node.type;
+
+    if (this.#replay && this.#currentInput) {
+      if (type === "input") {
+        this.#currentInput.end = event.data.timestamp;
+        this.#currentInput.value = event.data.outputs;
+        console.log("Current input to clean up", this.#currentInput);
+        console.log("Event", event.data);
+        this.#currentInput = null;
+      }
+    }
     if (event.data.path.length > 1) {
-      if (event.data.outputs["$error"]) {
+      if (event.data.outputs?.["$error"]) {
         this.#storeErrorPath(event.data.path);
       }
       return;
@@ -223,7 +275,6 @@ export class TopGraphObserver {
       throw new Error("Node end without a graph");
     }
 
-    const type = event.data.node.type;
     if (type === "output") {
       return;
     }
@@ -365,4 +416,10 @@ function getActivityType(type: string): ComponentActivityItem["type"] {
     default:
       return "node";
   }
+}
+
+function toEvent<E extends Event>(result: HarnessRunResult): E {
+  return {
+    data: result.data,
+  } as unknown as E;
 }

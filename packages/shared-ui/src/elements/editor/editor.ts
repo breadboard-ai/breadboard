@@ -11,6 +11,7 @@ import {
   GraphDescriptor,
   InspectableGraph,
   InspectableNodePorts,
+  InspectableRun,
   NodeConfiguration,
   NodeDescriptor,
   NodeHandlerMetadata,
@@ -51,7 +52,7 @@ import { edgeToString } from "./utils.js";
 const DATA_TYPE = "text/plain";
 const PASTE_OFFSET = 50;
 
-import { RunIdentifier, TopGraphRunResult } from "../../types/types.js";
+import { TopGraphRunResult } from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
@@ -91,7 +92,7 @@ export class Editor extends LitElement {
   subGraphId: string | null = null;
 
   @property()
-  runId: RunIdentifier | null = null;
+  run: InspectableRun | null = null;
 
   @property()
   boardId: number = -1;

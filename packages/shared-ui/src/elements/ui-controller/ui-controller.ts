@@ -9,6 +9,7 @@ import {
   GraphDescriptor,
   GraphLoader,
   GraphProvider,
+  InspectableRun,
   InspectableRunEvent,
   Kit,
   RemoveNodeSpec,
@@ -36,7 +37,6 @@ import {
 } from "../../events/events.js";
 import {
   RecentBoard,
-  RunIdentifier,
   SETTINGS_TYPE,
   STATUS,
   SettingsStore,
@@ -68,7 +68,7 @@ export class UI extends LitElement {
   subGraphId: string | null = null;
 
   @property()
-  runId: RunIdentifier | null = null;
+  run: InspectableRun | null = null;
 
   @property()
   kits: Kit[] = [];
@@ -257,7 +257,7 @@ export class UI extends LitElement {
       [
         this.graph,
         this.subGraphId,
-        this.runId,
+        this.run,
         this.kits,
         this.topGraphResult,
         this.boardId,
@@ -276,7 +276,7 @@ export class UI extends LitElement {
         return html`<bb-editor
           .graph=${graph}
           .subGraphId=${this.subGraphId}
-          .runId=${this.runId}
+          .run=${this.run}
           .topGraphResult=${this.topGraphResult}
           .boardId=${this.boardId}
           .collapseNodesByDefault=${collapseNodesByDefault}
