@@ -7,6 +7,7 @@
 import type {
   GraphDescriptor,
   InspectableRun,
+  InspectableRunEdge,
   InspectableRunObserver,
   OutputValues,
   Schema,
@@ -73,9 +74,16 @@ export class TopGraphObserver {
     observer.#replay = true;
     for await (const result of run.replay()) {
       switch (result.type) {
-        case "graphstart":
+        case "graphstart": {
+          const { path, edges } = result.data;
+          if (path.length === 0 && edges) {
+            for (const edge of edges as InspectableRunEdge[]) {
+              observer.#edgeValues.set(edge.edge, edge.value);
+            }
+          }
           observer.#graphStart(toEvent(result));
           break;
+        }
         case "graphend":
           observer.#graphEnd(toEvent(result));
           break;
