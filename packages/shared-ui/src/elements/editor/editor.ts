@@ -488,6 +488,12 @@ export class Editor extends LitElement {
       metadata: selectedGraph.metadata() || {},
       visible: false,
     });
+    // When we're loading a graph from existing results, we need to
+    // set the topGraphResult again so that it is applied to the newly
+    // created graph.
+    if (this.topGraphResult) {
+      this.#graphRenderer.topGraphResult = this.topGraphResult;
+    }
 
     this.#graphRenderer.addEventListener(
       GraphInitialDrawEvent.eventName,
