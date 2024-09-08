@@ -22,6 +22,7 @@ import {
   SerializedRunLoadingOptions,
   InspectableRunNodeEvent,
   InspectableRunInputs,
+  InspectableRunEdge,
 } from "../types.js";
 import { DataStore, RunTimestamp, RunURL } from "../../data/types.js";
 
@@ -218,7 +219,6 @@ export class Run implements InspectableRun {
   start: number;
   end: number | null = null;
   graphVersion: number;
-  messages: HarnessRunResult[] = [];
   #dataStore: DataStore | null;
 
   constructor(
@@ -236,6 +236,10 @@ export class Run implements InspectableRun {
 
   get events(): InspectableRunEvent[] {
     return this.#events.events;
+  }
+
+  get edges(): InspectableRunEdge[] {
+    return this.#events.edges;
   }
 
   currentNodeEvent(): InspectableRunNodeEvent | null {
