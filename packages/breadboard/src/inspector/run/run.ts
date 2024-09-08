@@ -129,16 +129,24 @@ export class RunObserver implements InspectableRunObserver {
     }
   }
 
+  async #loadStoredRuns(url: string): Promise<RunTimestamp | null> {
+    let timestamp: RunTimestamp | null = null;
+    if (!this.#options.runStore) {
+      return null;
+    }
+    timestamp = await this.#options.runStore.start(url);
+    const runInfo = await this.#options.runStore.getStoredRuns(url);
+    this.#runs = await this.#convertRunInfoToRuns(url, runInfo);
+    return timestamp;
+  }
+
   async observe(result: HarnessRunResult): Promise<void> {
     if (result.type === "graphstart") {
       const { path, timestamp } = result.data;
       if (path.length === 0) {
         this.#url = result.data.graph.url ?? "no-url-graph";
-        if (this.#options.runStore) {
-          this.#timestamp = await this.#options.runStore.start(this.#url);
-          const runInfo = await this.#options.runStore.getStoredRuns(this.#url);
-          this.#runs = await this.#convertRunInfoToRuns(this.#url, runInfo);
-        } else {
+        this.#timestamp = await this.#loadStoredRuns(this.#url);
+        if (!this.#timestamp) {
           this.#timestamp = timestamp;
         }
 
