@@ -750,7 +750,34 @@ export class Main extends LitElement {
 
   async #selectRun(evt: Event) {
     const e = evt as BreadboardUI.Events.RunSelectEvent;
-    console.log("Selecting run", e.runId);
+    if (!this.run) {
+      console.warn("The `bbrunselect` was received but there is no run.");
+      return;
+    }
+    const event = this.run.getEventById(e.runId);
+    if (!event) {
+      console.warn(
+        "The `bbrunselect` was received but the event was not found."
+      );
+      return;
+    }
+
+    if (event.type !== "node") {
+      console.warn(
+        "The `bbrunselect` was received but the event is not a node."
+      );
+      return;
+    }
+
+    const run = event.runs[0];
+    if (!run) {
+      console.warn(
+        "The `bbrunselect` was received but the run was not found in the event."
+      );
+      return;
+    }
+
+    console.log("Selecting run", e.runId, run);
   }
 
   async #attemptBoardSave() {

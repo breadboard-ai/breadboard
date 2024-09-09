@@ -6,8 +6,10 @@
 
 import { HarnessRunResult } from "../../harness/types.js";
 import { asyncGen } from "../../utils/async-gen.js";
+import { GraphStore } from "../graph-store.js";
 import { inspectableGraph } from "../graph.js";
 import {
+  EventIdentifier,
   GraphUUID,
   GraphstartTimelineEntry,
   InspectableGraph,
@@ -19,6 +21,7 @@ import {
   SerializedRunLoadingOptions,
   TimelineEntry,
 } from "../types.js";
+import { RunObserver } from "./run.js";
 
 export const errorResult = (error: string): HarnessRunResult => {
   return {
@@ -37,6 +40,7 @@ export class PastRun implements InspectableRun {
   #timeline: TimelineEntry[];
   #graphs = new Map<number, InspectableGraph>();
   #options: SerializedRunLoadingOptions;
+  #backingRun: InspectableRun | null = null;
 
   edges = [];
 
@@ -49,43 +53,76 @@ export class PastRun implements InspectableRun {
     this.#options = options;
   }
 
+  async initializeBackingRun() {
+    const observer = new RunObserver(new GraphStore(), { logLevel: "debug" });
+    for await (const result of this.replay()) {
+      observer.observe(result);
+    }
+    this.#backingRun = (await observer.runs())[0];
+  }
+
   get graphId(): GraphUUID {
-    throw new Error("Past runs can't yet provide graph IDs");
+    if (!this.#backingRun) {
+      throw new Error("Uninitialized run: can't yet provide graph IDs");
+    }
+    return this.#backingRun.graphId;
   }
 
   get graphVersion(): number {
-    throw new Error("Past runs can't yet provide graph versions");
+    if (!this.#backingRun) {
+      throw new Error("Uninitialized run: can't yet provide graph versions");
+    }
+    return this.#backingRun.graphVersion;
   }
 
   get start(): number {
-    throw new Error("Past runs can't yet provide start times");
+    if (!this.#backingRun) {
+      throw new Error("Uninitialized run: can't yet provide start times");
+    }
+    return this.#backingRun.start;
   }
-  get end(): number {
-    throw new Error("Past runs can't yet provide end times");
+  get end(): number | null {
+    if (!this.#backingRun) {
+      throw new Error("Uninitialized run: can't yet provide end times");
+    }
+    return this.#backingRun.end;
   }
 
   get events(): InspectableRunEvent[] {
-    throw new Error("Past runs can't yet provide events");
-  }
-
-  get dataStoreGroupId(): number {
-    throw new Error("Past runs can't yet provide data store group IDs");
+    if (!this.#backingRun) {
+      throw new Error("Uninitialized run: can't yet provide events");
+    }
+    return this.#backingRun.events;
   }
 
   currentNodeEvent(): InspectableRunNodeEvent | null {
-    throw new Error("Past runs can't yet provide current node events");
+    if (!this.#backingRun) {
+      throw new Error(
+        "Uninitialized run: can't yet provide current node events"
+      );
+    }
+    return this.#backingRun.currentNodeEvent();
   }
 
   stack(): InspectableRunNodeEvent[] {
-    throw new Error("Past runs can't yet provide stack traces");
+    if (!this.#backingRun) {
+      throw new Error("Uninitialized run: can't yet provide stack traces");
+    }
+    return this.#backingRun.stack();
   }
 
-  getEventById(): InspectableRunEvent | null {
-    throw new Error("Past runs can't yet provide event IDs");
+  getEventById(id: EventIdentifier): InspectableRunEvent | null {
+    if (!this.#backingRun) {
+      throw new Error("Uninitialized run: can't yet provide event IDs");
+    }
+    return this.#backingRun.getEventById(id);
   }
 
   inputs(): InspectableRunInputs | null {
-    throw new Error("Past runs can't yet provide inputs");
+    if (!this.#backingRun) {
+      throw new Error("Uninitialized run: can't yet provide inputs");
+    }
+    return this.#backingRun.inputs();
   }
 
   #loadGraphStart(result: GraphstartTimelineEntry): HarnessRunResult {
