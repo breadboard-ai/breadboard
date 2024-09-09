@@ -286,7 +286,8 @@ export class GraphProviderLoadRequestEvent extends Event {
 
   constructor(
     public readonly providerName: string,
-    public readonly url: string
+    public readonly url: string,
+    public readonly newTab = false
   ) {
     super(GraphProviderLoadRequestEvent.eventName, { ...eventInit });
   }

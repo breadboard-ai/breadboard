@@ -293,11 +293,31 @@ export class UI extends LitElement {
             const deletedNodes: RemoveNodeSpec[] = evt.edits.filter(
               (edit) => edit.type === "removenode"
             ) as RemoveNodeSpec[];
-            if (deletedNodes.length === 0) {
+            let graphMetadataChanges = evt.edits.filter(
+              (edit) => edit.type === "changegraphmetadata"
+            );
+            if (
+              deletedNodes.length === 0 &&
+              graphMetadataChanges.length === 0
+            ) {
               return;
             }
 
             const selectedPrior = this.selectedNodeIds.length;
+            if (graphMetadataChanges.length > 0) {
+              graphMetadataChanges = graphMetadataChanges.slice(-1);
+              const comments = graphMetadataChanges[0].metadata.comments ?? [];
+
+              for (const selected of this.selectedNodeIds) {
+                if (comments.find((comment) => comment.id === selected)) {
+                  continue;
+                }
+
+                const idx = this.selectedNodeIds.indexOf(selected);
+                this.selectedNodeIds.splice(idx, 1);
+              }
+            }
+
             for (const deletedNode of deletedNodes) {
               const idx = this.selectedNodeIds.indexOf(deletedNode.id);
               if (idx === -1) {

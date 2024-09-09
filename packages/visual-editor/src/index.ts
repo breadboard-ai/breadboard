@@ -5,10 +5,11 @@
  */
 
 import {
-  createRunner,
   HarnessProxyConfig,
   HarnessRunner,
   RunConfig,
+  RunErrorEvent,
+  RunSecretEvent,
 } from "@google-labs/breadboard/harness";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
@@ -18,21 +19,16 @@ import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
   blankLLMContent,
-  createLoader,
-  edit,
-  EditableGraph,
+  createRunObserver,
   GraphDescriptor,
-  GraphLoader,
   GraphProvider,
   InputValues,
   InspectableRun,
-  InspectableRunObserver,
   Kit,
   SerializedRun,
 } from "@google-labs/breadboard";
 import { getDataStore, getRunStore } from "@breadboard-ai/data-store";
 import { classMap } from "lit/directives/class-map.js";
-import { createRunObserver } from "@google-labs/breadboard";
 import { loadKits } from "./utils/kit-loader";
 import GeminiKit from "@google-labs/gemini-kit";
 import { FileSystemGraphProvider } from "./providers/file-system";
@@ -44,6 +40,8 @@ import PythonWasmKit from "@breadboard-ai/python-wasm";
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 import { RecentBoardStore } from "./data/recent-boards";
 import { SecretsHelper } from "./utils/secrets-helper";
+import { SettingsHelperImpl } from "./utils/settings-helper";
+import * as Runtime from "./runtime/runtime.js";
 
 const STORAGE_PREFIX = "bb-main";
 
@@ -170,16 +168,15 @@ export class Main extends LitElement {
   @state()
   previewOverlayURL: URL | null = null;
 
+  @property()
+  tab: Runtime.Types.VETab | null = null;
+
   #abortController: AbortController | null = null;
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #boardId = 0;
   #boardPendingSave = false;
-  #lastBoardId = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #runner: HarnessRunner | null = null;
-  #runObserver: InspectableRunObserver | null = null;
-  #topGraphObserver: BreadboardUI.Utils.TopGraphObserver | null = null;
-  #editor: EditableGraph | null = null;
   #providers: GraphProvider[];
   #settings: SettingsStore | null;
   #secretsHelper: SecretsHelper | null = null;
@@ -188,7 +185,6 @@ export class Main extends LitElement {
    * This is used to provide additional proxied nodes.
    */
   #proxy: HarnessProxyConfig[];
-  #loader: GraphLoader;
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #downloadRunBound = this.#downloadRun.bind(this);
   #selectRunBound = this.#selectRun.bind(this);
@@ -199,6 +195,8 @@ export class Main extends LitElement {
   #recentBoardStore: RecentBoardStore;
   #recentBoards: BreadboardUI.Types.RecentBoard[] = [];
   #isSaving = false;
+
+  #runtime: Runtime.RuntimeInstance;
 
   static styles = css`
     * {
@@ -397,6 +395,7 @@ export class Main extends LitElement {
       align-items: flex-end;
       margin: 0;
       height: 100%;
+      overflow: hidden;
     }
 
     #tab-container h1 {
@@ -412,20 +411,26 @@ export class Main extends LitElement {
       display: flex;
       align-items: center;
       user-select: none;
+      margin-right: var(--bb-grid-size-2);
     }
 
-    #tab-container #back-to-main-board {
+    #tab-container .back-to-main-board {
       padding: 0;
       margin: 0;
       cursor: pointer;
       background: none;
       border: none;
       color: var(--bb-neutral-800);
+      opacity: 0.6;
     }
 
-    #tab-container #back-to-main-board:disabled {
+    #tab-container .back-to-main-board:disabled {
       cursor: auto;
       color: var(--bb-neutral-800);
+    }
+
+    #tab-container .back-to-main-board.active {
+      opacity: 1;
     }
 
     #tab-container .subgraph-name {
@@ -512,8 +517,6 @@ export class Main extends LitElement {
         ENVIRONMENT
       );
     }
-    // Single loader instance for all boards.
-    this.#loader = createLoader(this.#providers);
 
     const currentUrl = new URL(window.location.href);
     const boardFromUrl = currentUrl.searchParams.get("board");
@@ -523,6 +526,7 @@ export class Main extends LitElement {
     if (firstRunFromUrl && firstRunFromUrl === "true") {
       this.showFirstRun = true;
     }
+
     const proxyFromUrl = currentUrl.searchParams.get("python_proxy");
     if (proxyFromUrl) {
       console.log("Setting python_proxy: %s", proxyFromUrl);
@@ -530,6 +534,143 @@ export class Main extends LitElement {
     }
 
     this.embed = embedFromUrl !== null && embedFromUrl !== "false";
+
+    this.#runtime = Runtime.create({
+      providers: config.providers ?? [],
+      runStore: this.runStore,
+      dataStore: this.dataStore,
+    });
+
+    this.#runtime.board.addEventListener(
+      Runtime.Events.VEEditEvent.eventName,
+      () => {
+        this.requestUpdate();
+      }
+    );
+
+    this.#runtime.board.addEventListener(
+      Runtime.Events.VEBoardLoadErrorEvent.eventName,
+      () => {
+        this.#failedGraphLoad = true;
+        this.toast("Unable to load board", BreadboardUI.Events.ToastType.ERROR);
+      }
+    );
+
+    this.#runtime.board.addEventListener(
+      Runtime.Events.VEErrorEvent.eventName,
+      (evt: Runtime.Events.VEErrorEvent) => {
+        this.toast(evt.message, BreadboardUI.Events.ToastType.ERROR);
+      }
+    );
+
+    this.#runtime.board.addEventListener(
+      Runtime.Events.VETabChangeEvent.eventName,
+      async (evt: Runtime.Events.VETabChangeEvent) => {
+        this.tab = this.#runtime.board.currentTab;
+        this.showWelcomePanel = this.tab === null;
+
+        if (this.tab) {
+          // If there is a TGO in the tab change event, honor it and populate a
+          // run with it before switching to the tab proper.
+          if (evt.topGraphObserver) {
+            this.#runtime.run.create(this.tab.id, evt.topGraphObserver);
+          }
+
+          if (this.tab.graph.url) {
+            this.#setUrlParam("board", this.tab.graph.url);
+            await this.#trackRecentBoard(this.tab.graph.url);
+
+            const base = new URL(window.location.href);
+            const decodedUrl = decodeURIComponent(base.href);
+            window.history.replaceState({ path: decodedUrl }, "", decodedUrl);
+          }
+
+          if (this.tab.graph.title) {
+            this.#setPageTitle(this.tab.graph.title);
+          }
+        }
+      }
+    );
+
+    this.#runtime.run.addEventListener(
+      Runtime.Events.VERunEvent.eventName,
+      (evt: Runtime.Events.VERunEvent) => {
+        if (!this.tab) {
+          return;
+        }
+
+        // TODO: Figure out what to do here; if we change away from the run in
+        // the middle we will lose track of where we are in the run.
+        if (evt.tabId !== this.tab.id) {
+          return;
+        }
+
+        switch (evt.runEvt.type) {
+          case "next": {
+            // TODO: Decide if the run needs to be stopped.
+            this.requestUpdate();
+            break;
+          }
+
+          case "graphstart": {
+            this.requestUpdate();
+            break;
+          }
+
+          case "start": {
+            this.status = BreadboardUI.Types.STATUS.RUNNING;
+            break;
+          }
+
+          case "end": {
+            this.status = BreadboardUI.Types.STATUS.STOPPED;
+            break;
+          }
+
+          case "error": {
+            const runEvt = evt.runEvt as RunErrorEvent;
+            this.toast(
+              BreadboardUI.Utils.formatError(runEvt.data.error),
+              BreadboardUI.Events.ToastType.ERROR
+            );
+            this.status = BreadboardUI.Types.STATUS.STOPPED;
+            break;
+          }
+
+          case "resume": {
+            this.status = BreadboardUI.Types.STATUS.RUNNING;
+            break;
+          }
+
+          case "pause": {
+            this.status = BreadboardUI.Types.STATUS.RUNNING;
+            break;
+          }
+
+          case "secret": {
+            const runEvt = evt.runEvt as RunSecretEvent;
+            const { keys } = runEvt.data;
+            const result: InputValues = {};
+            const allKeysAreKnown = keys.every((key) => {
+              const savedSecret =
+                this.#settings
+                  ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.SECRETS)
+                  .items.get(key) ?? null;
+              if (savedSecret) {
+                result[key] = savedSecret.value;
+                return true;
+              }
+              return false;
+            });
+            if (allKeysAreKnown) {
+              evt.harnessRunner?.run(result);
+            } else {
+              this.#secretsHelper = new SecretsHelper(this.#settings!, keys);
+            }
+          }
+        }
+      }
+    );
 
     // Load the Recent Boards.
     this.#load = this.#recentBoardStore
@@ -560,9 +701,8 @@ export class Main extends LitElement {
               const currentUrl = new URL(window.location.href);
               const boardFromUrl = currentUrl.searchParams.get("board");
               if (boardFromUrl?.endsWith(change.filename)) {
-                this.#onStartBoard(
-                  new BreadboardUI.Events.StartEvent(change.filename)
-                );
+                this.#failedGraphLoad = false;
+                this.#runtime.board.loadFromURL(boardFromUrl, this.kits);
               }
             });
           }
@@ -570,7 +710,8 @@ export class Main extends LitElement {
 
         // Start the board or show the welcome panel.
         if (boardFromUrl) {
-          this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
+          this.#failedGraphLoad = false;
+          this.#runtime.board.loadFromURL(boardFromUrl, this.kits);
           return;
         } else {
           this.showWelcomePanel = true;
@@ -626,7 +767,7 @@ export class Main extends LitElement {
     const isMac = navigator.platform.indexOf("Mac") === 0;
     const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
-    if (evt.key === "v" && isCtrlCommand && !this.graph) {
+    if (evt.key === "v" && isCtrlCommand && !this.tab?.graph) {
       // Only allow a paste when there's nothing else in the composed path that
       // would accept the paste first.
       if (
@@ -646,9 +787,8 @@ export class Main extends LitElement {
             return;
           }
 
-          this.#attemptBoardStart(
-            new BreadboardUI.Events.StartEvent(null, descriptor)
-          );
+          this.#failedGraphLoad = false;
+          this.#runtime.board.loadFromDescriptor(descriptor, this.kits);
         } catch (err) {
           this.toast(
             "Unable to paste board",
@@ -695,12 +835,23 @@ export class Main extends LitElement {
         return;
       }
 
-      const editor = this.#getEditor();
-      if (!editor) {
+      if (!this.tab) {
+        this.toast(
+          "Unable to edit; no active graph",
+          BreadboardUI.Events.ToastType.ERROR
+        );
         return;
       }
 
-      const history = editor.history();
+      const editableGraph = this.#runtime.board.getEditor(
+        this.tab.id,
+        this.kits
+      );
+      if (!editableGraph) {
+        return;
+      }
+
+      const history = editableGraph.history();
 
       // TODO: Make this not a console-only thing.
       const printHistory = (label: string) => {
@@ -726,7 +877,16 @@ export class Main extends LitElement {
   }
 
   async #downloadRun() {
-    const currentRun = (await this.#runObserver?.runs())?.at(0);
+    if (!this.tab) {
+      return;
+    }
+
+    const observers = this.#runtime.run.getObservers(this.tab.id);
+    if (!observers) {
+      return;
+    }
+
+    const currentRun = (await observers.runObserver?.runs())?.at(0);
     if (!currentRun) {
       return;
     }
@@ -749,12 +909,23 @@ export class Main extends LitElement {
   }
 
   async #selectRun(evt: Event) {
-    const e = evt as BreadboardUI.Events.RunSelectEvent;
-    if (!this.run) {
-      console.warn("The `bbrunselect` was received but there is no run.");
+    if (!this.tab) {
       return;
     }
-    const event = this.run.getEventById(e.runId);
+
+    const observers = this.#runtime.run.getObservers(this.tab.id);
+    if (!observers) {
+      return;
+    }
+
+    const currentRun = (await observers.runObserver?.runs())?.at(0);
+    if (!currentRun) {
+      return;
+    }
+
+    const e = evt as BreadboardUI.Events.RunSelectEvent;
+    const event = currentRun.getEventById(e.runId);
+
     if (!event) {
       console.warn(
         "The `bbrunselect` was received but the event was not found."
@@ -777,16 +948,22 @@ export class Main extends LitElement {
       return;
     }
 
-    this.run = run;
-    this.#topGraphObserver = await BreadboardUI.Utils.TopGraphObserver.fromRun(
-      this.run
-    );
-    this.graph = this.#topGraphObserver?.current()?.graph || null;
-    this.showWelcomePanel = false;
-    this.#editor = null;
-    this.url = null;
-    this.#boardId++;
-    this.requestUpdate();
+    const topGraphObserver =
+      await BreadboardUI.Utils.TopGraphObserver.fromRun(run);
+
+    if (!topGraphObserver) {
+      return;
+    }
+
+    const runGraph = topGraphObserver.current()?.graph ?? null;
+    if (runGraph) {
+      this.#failedGraphLoad = false;
+      this.#runtime.board.loadFromDescriptor(
+        runGraph,
+        this.kits,
+        topGraphObserver
+      );
+    }
   }
 
   async #attemptBoardSave() {
@@ -794,19 +971,11 @@ export class Main extends LitElement {
       return;
     }
 
-    this.#isSaving = true;
-    if (!this.graph || !this.graph.url) {
-      return;
-    }
-    const boardUrl = new URL(this.graph.url);
-    const provider = this.#getProviderForURL(boardUrl);
-    if (!provider) {
-      this.showSaveAsDialog = true;
+    if (!this.tab) {
       return;
     }
 
-    const capabilities = provider.canProvide(boardUrl);
-    if (!capabilities || !capabilities.save) {
+    if (!this.#runtime.board.canSave(this.tab.id)) {
       this.showSaveAsDialog = true;
       return;
     }
@@ -817,7 +986,7 @@ export class Main extends LitElement {
       true
     );
     this.#isSaving = true;
-    const { result } = await provider.save(boardUrl, this.graph);
+    const { result } = await this.#runtime.board.save(this.tab.id);
     this.#isSaving = false;
     if (!result) {
       return;
@@ -830,8 +999,6 @@ export class Main extends LitElement {
       false,
       id
     );
-
-    this.#isSaving = false;
   }
 
   async #attemptBoardSaveAs(
@@ -844,35 +1011,22 @@ export class Main extends LitElement {
       return;
     }
 
-    const provider = this.#getProviderByName(providerName);
-    if (!provider) {
-      this.toast(
-        "Unable to find provider",
-        BreadboardUI.Events.ToastType.ERROR
-      );
-      return;
-    }
-    const urlString = await provider.createURL(location, fileName);
-    if (!urlString) {
-      this.toast(
-        "Unable to create a new board",
-        BreadboardUI.Events.ToastType.ERROR
-      );
-      return;
-    }
-
     const id = this.toast(
       "Saving board...",
       BreadboardUI.Events.ToastType.PENDING,
       true
     );
 
-    const url = new URL(urlString);
     this.#isSaving = true;
-    const { result, error } = await provider.create(url, graph);
+    const { result, error, url } = await this.#runtime.board.saveAs(
+      providerName,
+      location,
+      fileName,
+      graph
+    );
     this.#isSaving = false;
 
-    if (!result) {
+    if (!result || !url) {
       this.toast(
         error || "Unable to create board",
         BreadboardUI.Events.ToastType.ERROR
@@ -885,7 +1039,7 @@ export class Main extends LitElement {
 
     // Trigger a re-render.
     this.providerOps++;
-    this.#changeBoard(url.href);
+    this.#changeBoard(url.href, false);
     this.toast(
       "Board saved",
       BreadboardUI.Events.ToastType.INFORMATION,
@@ -907,37 +1061,35 @@ export class Main extends LitElement {
       return;
     }
 
-    const provider = this.#getProviderByName(providerName);
-    if (!provider) {
-      this.toast("Unable to delete file", BreadboardUI.Events.ToastType.ERROR);
-      return;
-    }
-
     const id = this.toast(
       "Deleting board...",
       BreadboardUI.Events.ToastType.PENDING,
       true
     );
 
-    const { result, error } = await provider.delete(new URL(url));
-    await this.#removeRecentUrl(url);
-
-    this.toast(
-      "Board deleted",
-      BreadboardUI.Events.ToastType.INFORMATION,
-      false,
-      id
+    const { result, error } = await this.#runtime.board.delete(
+      providerName,
+      url
     );
-
-    if (!result) {
+    if (result) {
+      this.toast(
+        "Board deleted",
+        BreadboardUI.Events.ToastType.INFORMATION,
+        false,
+        id
+      );
+    } else {
       this.toast(
         error || "Unexpected error",
-        BreadboardUI.Events.ToastType.ERROR
+        BreadboardUI.Events.ToastType.ERROR,
+        false,
+        id
       );
     }
 
-    if (isActive) {
-      this.#attemptBoardStart(new BreadboardUI.Events.StartEvent(null, null));
+    if (this.tab && isActive) {
+      this.#runtime.board.closeTab(this.tab.id);
+      this.#removeRecentUrl(url);
     }
 
     // Trigger a re-render.
@@ -963,154 +1115,24 @@ export class Main extends LitElement {
     this.requestUpdate();
   }
 
-  #canParse(url: string) {
-    // TypeScript assumes that if `canParse` does not exist, then URL is
-    // `never`. However, in older browsers that's not true. We therefore take a
-    // temporary copy of the URL constructor here.
-    const UrlCtor = URL;
-    if ("canParse" in URL) {
-      return URL.canParse(url);
-    }
-
-    try {
-      new UrlCtor(url);
-      return true;
-    } catch (err) {
-      return false;
-    }
-  }
-
-  #makeRelativeToCurrentBoard(boardUrl: string | null) {
-    // An inability to parse the URL below likely means it's an example board,
-    // which doesn't carry a protocol, etc. In such cases we just return the
-    // URL as-is.
-    if (boardUrl && this.#canParse(boardUrl)) {
-      if (this.url) {
-        try {
-          const base = new URL(this.url);
-          const newUrl = new URL(boardUrl, base);
-          return newUrl.href;
-        } catch (e) {
-          console.warn("Unable to parse URL from current board: ", this.url);
-        }
-      }
-    }
-    return boardUrl;
-  }
-
-  async #onStartBoard(startEvent: BreadboardUI.Events.StartEvent) {
-    let url = this.#makeRelativeToCurrentBoard(startEvent.url);
-
-    // Redirect older /graphs examples to /example-boards
-    if (url?.startsWith("/graphs")) {
-      url = url.replace(/^\/graphs/, "/example-boards");
-    }
-
-    // Match any older URLs like /example-boards/blank.json and redirect to the
-    // newer /example-boards/playground/blank.json
-    const pgRegex = /example-boards\/([^\\/]+.json)$/;
-    const matches = pgRegex.exec(url ?? "");
-    if (url && matches && matches.length === 2) {
-      url = `/example-boards/playground/${matches[1]}`;
-    }
-
-    this.#boardId++;
-    this.#setUrlParam("board", url);
-
-    // Loading may take some time so reset the graph here.
-    this.url = url;
-    this.graph = null;
-    this.subGraphId = null;
-    this.run = null;
-
-    // TODO: Figure out how to avoid needing to null this out.
-    this.#editor = null;
-
-    if (startEvent.descriptor) {
-      this.graph = startEvent.descriptor;
-    }
-    this.status = BreadboardUI.Types.STATUS.STOPPED;
-    this.#runObserver = null;
-    this.#topGraphObserver = null;
-    this.showWelcomePanel = false;
-    this.#setBoardPendingSaveState(false);
-    this.#setPageTitle();
-
-    if (startEvent.url === null && startEvent.descriptor === null) {
-      this.showWelcomePanel = true;
-    }
-  }
-
-  protected async updated() {
-    if (!this.url && !this.graph) {
-      return;
-    }
-
-    // Board has already started; don't restart.
-    if (this.#lastBoardId === this.#boardId) {
-      return;
-    }
-
-    this.#failedGraphLoad = false;
-    this.#lastBoardId = this.#boardId;
-    if (this.url) {
-      try {
-        const base = new URL(window.location.href);
-        const decodedUrl = decodeURIComponent(base.href);
-        window.history.replaceState({ path: decodedUrl }, "", decodedUrl);
-        if (URL.canParse(this.url)) {
-          const provider = this.#getProviderForURL(new URL(this.url));
-          if (provider) {
-            // Ensure the the provider has actually loaded fully before
-            // requesting the graph file from it.
-            await provider.ready();
-          }
-        }
-
-        const graph = await this.#loader.load(this.url, { base });
-        if (!graph) {
-          throw new Error(`Unable to load graph: ${this.url}`);
-        }
-        this.graph = graph;
-        this.#setPageTitle();
-        await this.#trackRecentBoard();
-      } catch (err) {
-        this.url = null;
-        this.graph = null;
-        this.#editor = null;
-        this.#failedGraphLoad = true;
-      }
-    } else if (this.graph) {
-      if (!this.graph.url) {
-        this.graph.url = window.location.href;
-      }
-    } else {
-      return;
-    }
-  }
-
-  #setPageTitle() {
+  #setPageTitle(title: string | null) {
     const suffix = "Breadboard - Visual Editor";
-    if (this.graph && this.graph.title) {
-      window.document.title = `${this.graph.title} - ${suffix}`;
+    if (title) {
+      window.document.title = `${title} - ${suffix}`;
       return;
     }
 
     window.document.title = suffix;
   }
 
-  async #trackRecentBoard() {
-    if (!this.graph || !this.graph.url) {
-      return;
-    }
-
-    const url = this.graph.url.replace(window.location.origin, "");
+  async #trackRecentBoard(url: string) {
+    url = url.replace(window.location.origin, "");
     const currentIndex = this.#recentBoards.findIndex(
       (board) => board.url === url
     );
     if (currentIndex === -1) {
       this.#recentBoards.unshift({
-        title: this.graph.title ?? "Untitled Board",
+        title: this.tab?.graph.title ?? "Untitled Board",
         url,
       });
     } else {
@@ -1140,118 +1162,14 @@ export class Main extends LitElement {
     await this.#recentBoardStore.store(this.#recentBoards);
   }
 
-  #getEditor() {
-    if (!this.graph) return null;
-    if (this.#editor) return this.#editor;
-
-    this.#editor = edit(this.graph, { kits: this.kits, loader: this.#loader });
-    this.#editor.addEventListener("graphchange", (evt) => {
-      this.graph = evt.graph;
-      this.#setBoardPendingSaveState(!evt.visualOnly);
-    });
-    this.#editor.addEventListener("graphchangereject", (evt) => {
-      this.graph = evt.graph;
-      const { reason } = evt;
-      if (reason.type === "error") {
-        this.toast(reason.error, BreadboardUI.Events.ToastType.ERROR);
-      }
-    });
-    return this.#editor;
-  }
-
   // TODO: Allow this to run boards directly.
   async #runBoard(config: RunConfig) {
-    if (!(this.#uiRef.value && this.graph)) {
+    if (!this.tab) {
+      console.error("Unable to run board, no active tab");
       return;
     }
 
-    // TODO: Do I need to clear out the previously held runner?
-    this.#runner = createRunner(config);
-
-    const ui = this.#uiRef.value;
-    ui.graph = this.graph;
-
-    const currentBoardId = this.#boardId;
-
-    this.status = BreadboardUI.Types.STATUS.RUNNING;
-    if (!this.#runObserver) {
-      this.#runObserver = createRunObserver({
-        logLevel: "debug",
-        dataStore: this.dataStore,
-        runStore: this.runStore,
-      });
-    }
-
-    this.#topGraphObserver = new BreadboardUI.Utils.TopGraphObserver(
-      this.#runner,
-      this.#abortController?.signal,
-      this.#runObserver
-    );
-
-    this.#runner.addObserver(this.#runObserver);
-
-    this.#runner.addEventListener("next", () => {
-      this.requestUpdate();
-
-      if (currentBoardId !== this.#boardId) {
-        this.#abortController?.abort();
-      }
-    });
-
-    this.#runner.addEventListener("graphstart", async () => {
-      const run = (await this.#runObserver?.runs())?.at(0);
-      if (!run) {
-        return;
-      }
-      this.run = run;
-    });
-
-    this.#runner.addEventListener("start", () => {
-      this.status = BreadboardUI.Types.STATUS.RUNNING;
-    });
-
-    this.#runner.addEventListener("end", () => {
-      this.status = BreadboardUI.Types.STATUS.STOPPED;
-    });
-
-    this.#runner.addEventListener("error", (evt) => {
-      this.toast(
-        BreadboardUI.Utils.formatError(evt.data.error),
-        BreadboardUI.Events.ToastType.ERROR
-      );
-      this.status = BreadboardUI.Types.STATUS.STOPPED;
-    });
-
-    this.#runner.addEventListener("resume", () => {
-      this.status = BreadboardUI.Types.STATUS.RUNNING;
-    });
-
-    this.#runner.addEventListener("pause", () => {
-      this.status = BreadboardUI.Types.STATUS.PAUSED;
-    });
-
-    this.#runner.addEventListener("secret", (evt) => {
-      const { keys } = evt.data;
-      const result: InputValues = {};
-      const allKeysAreKnown = keys.every((key) => {
-        const savedSecret =
-          this.#settings
-            ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.SECRETS)
-            .items.get(key) ?? null;
-        if (savedSecret) {
-          result[key] = savedSecret.value;
-          return true;
-        }
-        return false;
-      });
-      if (allKeysAreKnown) {
-        this.#runner?.run(result);
-      } else {
-        this.#secretsHelper = new SecretsHelper(this.#settings!, keys);
-      }
-    });
-
-    this.#runner.run();
+    this.#runtime.run.runBoard(this.tab.id, config);
   }
 
   #setUrlParam(param: string, value: string | null) {
@@ -1309,12 +1227,12 @@ export class Main extends LitElement {
       return;
     }
 
-    if (!this.graph || !this.graph.url) {
+    if (!this.tab?.graph || !this.tab?.graph.url) {
       return;
     }
 
     try {
-      const url = new URL(this.graph.url, window.location.href);
+      const url = new URL(this.tab?.graph.url, window.location.href);
       const provider = this.#getProviderForURL(url);
       if (!provider) {
         return;
@@ -1340,7 +1258,18 @@ export class Main extends LitElement {
 
   #handleBoardInfoUpdate(evt: BreadboardUI.Events.BoardInfoUpdateEvent) {
     if (evt.subGraphId) {
-      const editableGraph = this.#getEditor();
+      if (!this.tab) {
+        this.toast(
+          "Unable to edit; no active graph",
+          BreadboardUI.Events.ToastType.ERROR
+        );
+        return;
+      }
+
+      const editableGraph = this.#runtime.board.getEditor(
+        this.tab.id,
+        this.kits
+      );
       if (!editableGraph) {
         console.warn("Unable to update board information; no active graph");
         return;
@@ -1372,25 +1301,25 @@ export class Main extends LitElement {
       }
 
       editableGraph.replaceGraph(evt.subGraphId, subGraphDescriptor);
-    } else if (this.graph) {
-      this.graph.title = evt.title;
-      this.graph.version = evt.version;
-      this.graph.description = evt.description;
+    } else if (this.tab?.graph) {
+      this.tab.graph.title = evt.title;
+      this.tab.graph.version = evt.version;
+      this.tab.graph.description = evt.description;
 
       if (evt.status) {
-        this.graph.metadata ??= {};
-        this.graph.metadata.tags ??= [];
+        this.tab.graph.metadata ??= {};
+        this.tab.graph.metadata.tags ??= [];
 
         switch (evt.status) {
           case "published": {
-            if (!this.graph.metadata.tags.includes("published")) {
-              this.graph.metadata.tags.push("published");
+            if (!this.tab.graph.metadata.tags.includes("published")) {
+              this.tab.graph.metadata.tags.push("published");
             }
             break;
           }
 
           case "draft": {
-            this.graph.metadata.tags = this.graph.metadata.tags.filter(
+            this.tab.graph.metadata.tags = this.tab?.graph.metadata.tags.filter(
               (tag) => tag !== "published"
             );
             break;
@@ -1399,15 +1328,15 @@ export class Main extends LitElement {
       }
 
       if (evt.isTool !== null) {
-        this.graph.metadata ??= {};
-        this.graph.metadata.tags ??= [];
+        this.tab.graph.metadata ??= {};
+        this.tab.graph.metadata.tags ??= [];
 
         if (evt.isTool) {
-          if (!this.graph.metadata.tags.includes("tool")) {
-            this.graph.metadata.tags.push("tool");
+          if (!this.tab.graph.metadata.tags.includes("tool")) {
+            this.tab.graph.metadata.tags.push("tool");
           }
         } else {
-          this.graph.metadata.tags = this.graph.metadata.tags.filter(
+          this.tab.graph.metadata.tags = this.tab?.graph.metadata.tags.filter(
             (tag) => tag !== "tool"
           );
         }
@@ -1421,7 +1350,7 @@ export class Main extends LitElement {
     }
   }
 
-  async #changeBoard(url: string) {
+  async #changeBoard(url: string, _newTab: boolean) {
     await this.#confirmSaveWithUserFirstIfNeeded();
 
     if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
@@ -1433,7 +1362,8 @@ export class Main extends LitElement {
     }
 
     try {
-      this.#onStartBoard(new BreadboardUI.Events.StartEvent(url));
+      this.#failedGraphLoad = false;
+      this.#runtime.board.loadFromURL(url, this.kits, this.tab?.graph.url);
     } catch (err) {
       this.toast(
         `Unable to load file: ${url}`,
@@ -1472,26 +1402,32 @@ export class Main extends LitElement {
       try {
         const runData = JSON.parse(data) as SerializedRun | GraphDescriptor;
         if (isSerializedRun(runData)) {
-          if (!this.#runObserver) {
-            this.#runObserver = createRunObserver({
-              logLevel: "debug",
-              dataStore: this.dataStore,
-            });
-          }
+          const runObserver = createRunObserver({
+            logLevel: "debug",
+            dataStore: this.dataStore,
+          });
 
           evt.preventDefault();
-          const runObserver = this.#runObserver;
+
           runObserver.load(runData).then(async (result) => {
             if (result.success) {
               this.run = result.run;
-              this.#topGraphObserver =
+              const topGraphObserver =
                 await BreadboardUI.Utils.TopGraphObserver.fromRun(this.run);
-              this.graph = this.#topGraphObserver?.current()?.graph || null;
-              this.showWelcomePanel = false;
-              this.#editor = null;
-              this.url = null;
-              this.#boardId++;
-              this.requestUpdate();
+              const descriptor = topGraphObserver?.current()?.graph ?? null;
+
+              if (descriptor) {
+                this.#runtime.board.loadFromDescriptor(
+                  descriptor,
+                  this.kits,
+                  topGraphObserver
+                );
+              } else {
+                this.toast(
+                  "Unable to load run data",
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+              }
             } else {
               this.toast(
                 "Unable to load run data",
@@ -1500,7 +1436,7 @@ export class Main extends LitElement {
             }
           });
         } else {
-          this.#onStartBoard(new BreadboardUI.Events.StartEvent(null, runData));
+          this.#runtime.board.loadFromDescriptor(runData, this.kits);
         }
       } catch (err) {
         console.warn(err);
@@ -1518,7 +1454,12 @@ export class Main extends LitElement {
       }
     }
 
-    this.#onStartBoard(evt);
+    this.#failedGraphLoad = false;
+    if (evt.url) {
+      this.#runtime.board.loadFromURL(evt.url, this.kits);
+    } else if (evt.descriptor) {
+      this.#runtime.board.loadFromDescriptor(evt.descriptor, this.kits);
+    }
   }
 
   render() {
@@ -1537,12 +1478,13 @@ export class Main extends LitElement {
 
     let tmpl: HTMLTemplateResult | symbol = nothing;
 
-    const topGraphResult = this.#topGraphObserver?.current() || null;
+    const observers = this.#runtime?.run.getObservers(this.tab?.id ?? null);
+    const topGraphResult = observers?.topGraphObserver?.current() ?? null;
 
     let saveButton: HTMLTemplateResult | symbol = nothing;
-    if (this.graph && this.graph.url) {
+    if (this.tab && this.tab.graph && this.tab.graph.url) {
       try {
-        const url = new URL(this.graph.url);
+        const url = new URL(this.tab.graph.url);
         const provider = this.#getProviderForURL(url);
         const capabilities = provider?.canProvide(url);
         if (provider && capabilities && capabilities.save) {
@@ -1569,14 +1511,10 @@ export class Main extends LitElement {
       }
     }
 
-    const title = this.graph?.title;
-    let subGraphTitle: string | undefined | null = null;
-    if (this.graph && this.graph.graphs && this.subGraphId) {
-      subGraphTitle =
-        this.graph.graphs[this.subGraphId].title || "Untitled Subgraph";
-    }
-
-    const editor = this.#getEditor();
+    const editor = this.#runtime.board.getEditor(
+      this.tab?.id ?? null,
+      this.kits
+    );
     const history = editor?.history();
 
     const showingOverlay =
@@ -1591,7 +1529,7 @@ export class Main extends LitElement {
     const nav = this.#load.then(() => {
       return html`<bb-nav
         .visible=${this.showNav}
-        .url=${this.url}
+        .url=${this.tab?.graph.url ?? null}
         .selectedProvider=${this.selectedProvider}
         .selectedLocation=${this.selectedLocation}
         .providers=${this.#providers}
@@ -1599,9 +1537,11 @@ export class Main extends LitElement {
         ?inert=${showingOverlay}
         @pointerdown=${(evt: Event) => evt.stopPropagation()}
         @bbreset=${() => {
-          this.#attemptBoardStart(
-            new BreadboardUI.Events.StartEvent(null, null)
-          );
+          if (!this.tab) {
+            return;
+          }
+
+          this.#runtime.board.closeTab(this.tab.id);
         }}
         @bbgraphprovideradd=${() => {
           this.showProviderAddOverlay = true;
@@ -1670,7 +1610,7 @@ export class Main extends LitElement {
         @bbgraphproviderloadrequest=${async (
           evt: BreadboardUI.Events.GraphProviderLoadRequestEvent
         ) => {
-          this.#changeBoard(evt.url);
+          this.#changeBoard(evt.url, evt.newTab);
         }}
         @bbgraphproviderselectionchange=${(
           evt: BreadboardUI.Events.GraphProviderSelectionChangeEvent
@@ -1698,42 +1638,51 @@ export class Main extends LitElement {
           }}
         ></button>
         <div id="tab-container">
-          ${
-            this.graph !== null
-              ? html`<h1>
-                  <span
-                    ><button
-                      id="back-to-main-board"
-                      @click=${() => {
-                        this.subGraphId = null;
-                      }}
-                      ?disabled=${this.subGraphId === null}
-                    >
-                      ${title}
-                    </button></span
-                  >${subGraphTitle
-                    ? html`<span class="subgraph-name">${subGraphTitle}</span>`
-                    : nothing}
-                  <button
-                    @click=${() => {
-                      this.#attemptBoardStart(
-                        new BreadboardUI.Events.StartEvent(null, null)
-                      );
-                    }}
-                    ?disabled=${this.graph === null}
-                    id="close-board"
-                    title="Close Board"
-                  >
-                    Close
-                  </button>
-                </h1>`
-              : nothing
-          }
+          ${map(this.#runtime?.board.tabs ?? [], ([id, tab]) => {
+            let subGraphTitle: string | undefined | null = null;
+            if (tab.graph && tab.graph.graphs && tab.subGraphId) {
+              subGraphTitle =
+                tab.graph.graphs[tab.subGraphId].title || "Untitled Subgraph";
+            }
+
+            return html`<h1>
+              <span
+                ><button
+                  class=${classMap({
+                    "back-to-main-board": true,
+                    active: this.tab?.id === tab.id,
+                  })}
+                  @click=${() => {
+                    if (this.tab?.id === tab.id && tab.subGraphId !== null) {
+                      tab.subGraphId = null;
+                      return;
+                    }
+
+                    this.#runtime.board.changeTab(tab.id);
+                  }}
+                >
+                  ${tab.graph.title}
+                </button></span
+              >${subGraphTitle
+                ? html`<span class="subgraph-name">${subGraphTitle}</span>`
+                : nothing}
+              <button
+                @click=${() => {
+                  this.#runtime.board.closeTab(id);
+                }}
+                ?disabled=${tab.graph === null}
+                id="close-board"
+                title="Close Board"
+              >
+                Close
+              </button>
+            </h1>`;
+          })}
         </div>
         <button
           id="undo"
           title="Undo last action"
-          ?disabled=${this.graph === null || (history && !history.canUndo())}
+          ?disabled=${this.tab?.graph === null || (history && !history.canUndo())}
           @click=${() => {
             history?.undo();
           }}
@@ -1743,7 +1692,7 @@ export class Main extends LitElement {
         <button
           id="redo"
           title="Redo last action"
-          ?disabled=${this.graph === null || (history && !history.canRedo())}
+          ?disabled=${this.tab?.graph === null || (history && !history.canRedo())}
           @click=${() => {
             history?.redo();
           }}
@@ -1766,12 +1715,12 @@ export class Main extends LitElement {
         <bb-ui-controller
               ${ref(this.#uiRef)}
               ?inert=${showingOverlay}
-              .graph=${this.graph}
-              .subGraphId=${this.subGraphId}
+              .graph=${this.tab?.graph ?? null}
+              .subGraphId=${this.tab?.subGraphId ?? null}
               .run=${this.run}
               .topGraphResult=${topGraphResult}
               .kits=${this.kits}
-              .loader=${this.#loader}
+              .loader=${this.#runtime.board.loader}
               .status=${this.status}
               .boardId=${this.#boardId}
               .failedToLoad=${this.#failedGraphLoad}
@@ -1808,7 +1757,18 @@ export class Main extends LitElement {
               @bbsubgraphcreate=${async (
                 evt: BreadboardUI.Events.SubGraphCreateEvent
               ) => {
-                const editableGraph = this.#getEditor();
+                if (!this.tab) {
+                  this.toast(
+                    "Unable to edit; no active graph",
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
+                  return;
+                }
+
+                const editableGraph = this.#runtime.board.getEditor(
+                  this.tab.id,
+                  this.kits
+                );
 
                 if (!editableGraph) {
                   console.warn("Unable to create node; no active graph");
@@ -1834,7 +1794,18 @@ export class Main extends LitElement {
               @bbsubgraphdelete=${async (
                 evt: BreadboardUI.Events.SubGraphDeleteEvent
               ) => {
-                const editableGraph = this.#getEditor();
+                if (!this.tab) {
+                  this.toast(
+                    "Unable to edit; no active graph",
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
+                  return;
+                }
+
+                const editableGraph = this.#runtime.board.getEditor(
+                  this.tab.id,
+                  this.kits
+                );
 
                 if (!editableGraph) {
                   console.warn("Unable to create node; no active graph");
@@ -1850,26 +1821,30 @@ export class Main extends LitElement {
                   return;
                 }
 
-                if (evt.subGraphId === this.subGraphId) {
-                  this.subGraphId = null;
+                if (evt.subGraphId === this.tab.subGraphId) {
+                  this.tab.subGraphId = null;
                 }
                 this.requestUpdate();
               }}
               @bbsubgraphchosen=${(
                 evt: BreadboardUI.Events.SubGraphChosenEvent
               ) => {
-                this.subGraphId =
+                if (!this.tab) {
+                  return;
+                }
+
+                this.tab.subGraphId =
                   evt.subGraphId !== BreadboardUI.Constants.MAIN_BOARD_ID
                     ? evt.subGraphId
                     : null;
                 this.requestUpdate();
               }}
               @bbrunboard=${async () => {
-                if (!this.graph?.url) {
+                if (!this.tab?.graph?.url) {
                   return;
                 }
 
-                const graph = this.graph;
+                const graph = this.tab?.graph;
 
                 this.#abortController = new AbortController();
 
@@ -1877,11 +1852,11 @@ export class Main extends LitElement {
                   addNodeProxyServerConfig(
                     this.#proxy,
                     {
-                      url: this.graph.url,
+                      url: this.tab?.graph.url,
                       runner: graph,
                       diagnostics: true,
                       kits: this.kits,
-                      loader: this.#loader,
+                      loader: this.#runtime.board.loader,
                       store: this.dataStore,
                       signal: this.#abortController?.signal,
                       inputs: BreadboardUI.Data.inputsFromSettings(
@@ -1891,7 +1866,7 @@ export class Main extends LitElement {
                     },
                     this.#settings,
                     this.proxyFromUrl,
-                    await this.#getProxyURL(this.graph.url)
+                    await this.#getProxyURL(this.tab?.graph.url)
                   )
                 );
               }}
@@ -1905,7 +1880,19 @@ export class Main extends LitElement {
                 this.requestUpdate();
               }}
               @bbedgechange=${(evt: BreadboardUI.Events.EdgeChangeEvent) => {
-                let editableGraph = this.#getEditor();
+                if (!this.tab) {
+                  this.toast(
+                    "Unable to edit; no active graph",
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
+                  return;
+                }
+
+                let editableGraph = this.#runtime.board.getEditor(
+                  this.tab.id,
+                  this.kits
+                );
+
                 if (editableGraph && evt.subGraphId) {
                   editableGraph = editableGraph.getGraph(evt.subGraphId);
                 }
@@ -1954,7 +1941,19 @@ export class Main extends LitElement {
               @bbnodemetadataupdate=${(
                 evt: BreadboardUI.Events.NodeMetadataUpdateEvent
               ) => {
-                let editableGraph = this.#getEditor();
+                if (!this.tab) {
+                  this.toast(
+                    "Unable to edit; no active graph",
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
+                  return;
+                }
+
+                let editableGraph = this.#runtime.board.getEditor(
+                  this.tab.id,
+                  this.kits
+                );
+
                 if (editableGraph && evt.subGraphId) {
                   editableGraph = editableGraph.getGraph(evt.subGraphId);
                 }
@@ -1981,8 +1980,19 @@ export class Main extends LitElement {
                 );
               }}
               @bbmultiedit=${(evt: BreadboardUI.Events.MultiEditEvent) => {
+                if (!this.tab) {
+                  this.toast(
+                    "Unable to edit; no active graph",
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
+                  return;
+                }
+
                 const { edits, description, subGraphId } = evt;
-                let editableGraph = this.#getEditor();
+                let editableGraph = this.#runtime.board.getEditor(
+                  this.tab.id,
+                  this.kits
+                );
                 if (editableGraph && subGraphId) {
                   editableGraph = editableGraph.getGraph(subGraphId);
                 }
@@ -1995,6 +2005,14 @@ export class Main extends LitElement {
                 editableGraph.edit(edits, description);
               }}
               @bbnodecreate=${(evt: BreadboardUI.Events.NodeCreateEvent) => {
+                if (!this.tab) {
+                  this.toast(
+                    "Unable to edit; no active graph",
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
+                  return;
+                }
+
                 const { id, nodeType, metadata, configuration } = evt;
                 const newNode = {
                   id,
@@ -2003,7 +2021,10 @@ export class Main extends LitElement {
                   configuration: configuration || undefined,
                 };
 
-                let editableGraph = this.#getEditor();
+                let editableGraph = this.#runtime.board.getEditor(
+                  this.tab.id,
+                  this.kits
+                );
                 if (editableGraph && evt.subGraphId) {
                   editableGraph = editableGraph.getGraph(evt.subGraphId);
                 }
@@ -2051,9 +2072,19 @@ export class Main extends LitElement {
               @bbcommentupdate=${(
                 evt: BreadboardUI.Events.CommentUpdateEvent
               ) => {
+                if (!this.tab) {
+                  this.toast(
+                    "Unable to edit; no active graph",
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
+                  return;
+                }
                 const { id, text, subGraphId } = evt;
 
-                let editableGraph = this.#getEditor();
+                let editableGraph = this.#runtime.board.getEditor(
+                  this.tab.id,
+                  this.kits
+                );
                 if (editableGraph && subGraphId) {
                   editableGraph = editableGraph.getGraph(subGraphId);
                 }
@@ -2082,7 +2113,18 @@ export class Main extends LitElement {
                 );
               }}
               @bbnodeupdate=${(evt: BreadboardUI.Events.NodeUpdateEvent) => {
-                let editableGraph = this.#getEditor();
+                if (!this.tab) {
+                  this.toast(
+                    "Unable to edit; no active graph",
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
+                  return;
+                }
+                let editableGraph = this.#runtime.board.getEditor(
+                  this.tab.id,
+                  this.kits
+                );
+
                 if (editableGraph && evt.subGraphId) {
                   editableGraph = editableGraph.getGraph(evt.subGraphId);
                 }
@@ -2105,7 +2147,18 @@ export class Main extends LitElement {
                 );
               }}
               @bbnodedelete=${(evt: BreadboardUI.Events.NodeDeleteEvent) => {
-                let editableGraph = this.#getEditor();
+                if (!this.tab) {
+                  this.toast(
+                    "Unable to edit; no active graph",
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
+                  return;
+                }
+                let editableGraph = this.#runtime.board.getEditor(
+                  this.tab.id,
+                  this.kits
+                );
+
                 if (editableGraph && evt.subGraphId) {
                   editableGraph = editableGraph.getGraph(evt.subGraphId);
                 }
@@ -2130,12 +2183,12 @@ export class Main extends LitElement {
               @bbinputenter=${async (
                 event: BreadboardUI.Events.InputEnterEvent
               ) => {
-                if (!this.#settings) {
+                if (!this.#settings || !this.tab) {
                   return;
                 }
 
                 const isSecret = "secret" in event.data;
-                const runner = this.#runner;
+                const runner = this.#runtime.run.getRunner(this.tab.id);
                 if (!runner) {
                   throw new Error("Can't send input, no runner");
                 }
@@ -2359,7 +2412,7 @@ export class Main extends LitElement {
         .providerOps=${this.providerOps}
         .selectedProvider=${this.selectedProvider}
         .selectedLocation=${this.selectedLocation}
-        .graph=${structuredClone(this.#saveAsState?.graph ?? this.graph)}
+        .graph=${structuredClone(this.#saveAsState?.graph ?? this.tab?.graph)}
         .isNewBoard=${this.#saveAsState?.isNewBoard ?? false}
         @bboverlaydismissed=${() => {
           this.showSaveAsDialog = false;
@@ -2386,7 +2439,7 @@ export class Main extends LitElement {
     if (this.showNodeConfigurator) {
       nodeConfiguratorOverlay = html`<bb-node-configuration-overlay
         .configuration=${this.#nodeConfiguratorData}
-        .graph=${this.graph}
+        .graph=${this.tab?.graph}
         .providers=${this.#providers}
         .providerOps=${this.providerOps}
         .showTypes=${false}
@@ -2396,7 +2449,18 @@ export class Main extends LitElement {
         @bbnodepartialupdate=${async (
           evt: BreadboardUI.Events.NodePartialUpdateEvent
         ) => {
-          let editableGraph = this.#getEditor();
+          if (!this.tab) {
+            this.toast(
+              "Unable to edit; no active graph",
+              BreadboardUI.Events.ToastType.ERROR
+            );
+            return;
+          }
+          let editableGraph = this.#runtime.board.getEditor(
+            this.tab.id,
+            this.kits
+          );
+
           if (editableGraph && evt.subGraphId) {
             editableGraph = editableGraph.getGraph(evt.subGraphId);
           }
@@ -2457,9 +2521,9 @@ export class Main extends LitElement {
         },
       ];
 
-      if (this.graph && this.graph.url) {
+      if (this.tab?.graph && this.tab?.graph.url) {
         try {
-          const url = new URL(this.graph.url);
+          const url = new URL(this.tab?.graph.url);
           const provider = this.#getProviderForURL(url);
           const capabilities = provider?.canProvide(url);
           if (provider && capabilities) {
@@ -2506,7 +2570,7 @@ export class Main extends LitElement {
 
       overflowMenu = html`<bb-overflow-menu
         .actions=${actions}
-        .disabled=${this.graph === null}
+        .disabled=${this.tab?.graph === null}
         @bboverflowmenudismissed=${() => {
           this.showOverflowMenu = false;
         }}
@@ -2515,7 +2579,7 @@ export class Main extends LitElement {
         ) => {
           switch (evt.action) {
             case "copy-to-clipboard": {
-              if (!this.graph || !this.graph.url) {
+              if (!this.tab?.graph || !this.tab?.graph.url) {
                 this.toast(
                   "Unable to copy board URL",
                   BreadboardUI.Events.ToastType.ERROR
@@ -2523,7 +2587,7 @@ export class Main extends LitElement {
                 break;
               }
 
-              await navigator.clipboard.writeText(this.graph.url);
+              await navigator.clipboard.writeText(this.tab?.graph.url);
               this.toast(
                 "Board URL copied",
                 BreadboardUI.Events.ToastType.INFORMATION
@@ -2531,11 +2595,11 @@ export class Main extends LitElement {
               break;
             }
             case "download": {
-              if (!this.graph) {
+              if (!this.tab?.graph) {
                 break;
               }
 
-              const board = structuredClone(this.graph);
+              const board = structuredClone(this.tab?.graph);
               delete board["url"];
 
               const data = JSON.stringify(board, null, 2);
@@ -2580,16 +2644,22 @@ export class Main extends LitElement {
             }
 
             case "delete": {
-              if (!this.graph || !this.graph.url) {
+              if (!this.tab?.graph || !this.tab?.graph.url) {
                 return;
               }
 
-              const provider = this.#getProviderForURL(new URL(this.graph.url));
+              const provider = this.#getProviderForURL(
+                new URL(this.tab?.graph.url)
+              );
               if (!provider) {
                 return;
               }
 
-              this.#attemptBoardDelete(provider.name, this.graph.url, true);
+              this.#attemptBoardDelete(
+                provider.name,
+                this.tab?.graph.url,
+                true
+              );
               break;
             }
 
@@ -2604,18 +2674,20 @@ export class Main extends LitElement {
             }
 
             case "preview": {
-              if (!this.graph || !this.graph.url) {
+              if (!this.tab?.graph || !this.tab?.graph.url) {
                 return;
               }
 
-              const provider = this.#getProviderForURL(new URL(this.graph.url));
+              const provider = this.#getProviderForURL(
+                new URL(this.tab?.graph.url)
+              );
               if (!provider) {
                 return;
               }
 
               try {
                 this.previewOverlayURL = await provider.preview(
-                  new URL(this.graph.url)
+                  new URL(this.tab?.graph.url)
                 );
               } catch (err) {
                 this.toast(
@@ -2660,39 +2732,5 @@ export class Main extends LitElement {
       nodeConfiguratorOverlay,
       toasts,
     ];
-  }
-}
-
-class SettingsHelperImpl implements BreadboardUI.Types.SettingsHelper {
-  #store: SettingsStore;
-
-  constructor(store: SettingsStore) {
-    this.#store = store;
-  }
-
-  get(
-    section: BreadboardUI.Types.SETTINGS_TYPE,
-    name: string
-  ): BreadboardUI.Types.SettingEntry["value"] | undefined {
-    return this.#store.values[section].items.get(name);
-  }
-
-  async set(
-    section: BreadboardUI.Types.SETTINGS_TYPE,
-    name: string,
-    value: BreadboardUI.Types.SettingEntry["value"]
-  ): Promise<void> {
-    const values = this.#store.values;
-    values[section].items.set(name, value);
-    await this.#store.save(values);
-  }
-
-  async delete(
-    section: BreadboardUI.Types.SETTINGS_TYPE,
-    name: string
-  ): Promise<void> {
-    const values = this.#store.values;
-    values[section].items.delete(name);
-    await this.#store.save(values);
   }
 }
