@@ -777,7 +777,16 @@ export class Main extends LitElement {
       return;
     }
 
-    console.log("Selecting run", e.runId, run);
+    this.run = run;
+    this.#topGraphObserver = await BreadboardUI.Utils.TopGraphObserver.fromRun(
+      this.run
+    );
+    this.graph = this.#topGraphObserver?.current()?.graph || null;
+    this.showWelcomePanel = false;
+    this.#editor = null;
+    this.url = null;
+    this.#boardId++;
+    this.requestUpdate();
   }
 
   async #attemptBoardSave() {
@@ -1187,6 +1196,14 @@ export class Main extends LitElement {
       if (currentBoardId !== this.#boardId) {
         this.#abortController?.abort();
       }
+    });
+
+    this.#runner.addEventListener("graphstart", async () => {
+      const run = (await this.#runObserver?.runs())?.at(0);
+      if (!run) {
+        return;
+      }
+      this.run = run;
     });
 
     this.#runner.addEventListener("start", () => {

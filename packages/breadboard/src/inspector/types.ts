@@ -36,6 +36,7 @@ import {
   RunStore,
   SerializedDataStoreGroup,
 } from "../data/types.js";
+import { SequenceEntry } from "./run/serializer.js";
 
 export type GraphVersion = number;
 
@@ -929,6 +930,11 @@ export type RunSerializationOptions = {
   keepSecrets?: boolean;
 };
 
+export type SequenceView = {
+  sequence: SequenceEntry[];
+  start: number;
+};
+
 export type PathRegistryEntry = {
   path: number[];
   parent: PathRegistryEntry | null;
@@ -937,6 +943,7 @@ export type PathRegistryEntry = {
   graphStart: number;
   graphEnd: number | null;
   event: InspectableRunEvent | null;
+  view: SequenceView | null;
   /**
    * Sidecars are events that are displayed at a top-level, but aren't
    * part of the main event list. Currently, sidecar events are:
@@ -964,6 +971,8 @@ export type PathRegistryEntry = {
    * Returns an inspectable graph for the graph, associated with this entry.
    */
   graph: InspectableGraph | null;
+
+  find(path: number[]): PathRegistryEntry | null;
 };
 
 export type RunObserverLogLevel =
