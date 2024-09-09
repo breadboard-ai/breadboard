@@ -99,6 +99,14 @@ export class RunDownloadEvent extends Event {
   }
 }
 
+export class RunSelectEvent extends Event {
+  static eventName = "bbrunselect";
+
+  constructor(public readonly runId: string) {
+    super(RunSelectEvent.eventName, { ...eventInit });
+  }
+}
+
 /**
  * General UI
  */

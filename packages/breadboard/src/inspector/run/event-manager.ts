@@ -22,14 +22,8 @@ import {
   PathRegistry,
   SECRET_PATH,
   createSimpleEntry,
-  idFromPath,
-  pathFromId,
 } from "./path-registry.js";
-import {
-  RunNodeEvent,
-  entryIdFromEventId,
-  eventIdFromEntryId,
-} from "./run-node-event.js";
+import { RunNodeEvent } from "./run-node-event.js";
 import { RunSerializer, SequenceEntry } from "./serializer.js";
 import {
   EventIdentifier,
@@ -46,6 +40,12 @@ import {
   TimelineEntry,
 } from "../types.js";
 import { SerializedDataStoreGroup } from "../../data/types.js";
+import {
+  entryIdFromEventId,
+  eventIdFromEntryId,
+  idFromPath,
+  pathFromId,
+} from "./conversions.js";
 
 const shouldSkipEvent = (
   options: RunObserverOptions,
@@ -88,6 +88,12 @@ export class EventManager {
     const entry = this.#pathRegistry.create(path);
     entry.graphId = graphId;
     entry.graphStart = timestamp;
+    entry.view = {
+      // Math: The start index is the length of the sequence before the
+      // graphstart event is added.
+      start: this.#sequence.length,
+      sequence: this.#sequence,
+    };
     // TODO: Instead of creating a new instance, cache and store them
     // in the GraphStore.
     entry.graph = inspectableGraph(graph, { kits: this.#options.kits });

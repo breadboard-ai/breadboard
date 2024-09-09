@@ -191,6 +191,7 @@ export class Main extends LitElement {
   #loader: GraphLoader;
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #downloadRunBound = this.#downloadRun.bind(this);
+  #selectRunBound = this.#selectRun.bind(this);
   #confirmUnloadWithUserFirstIfNeededBound =
     this.#confirmUnloadWithUserFirstIfNeeded.bind(this);
   #failedGraphLoad = false;
@@ -582,6 +583,7 @@ export class Main extends LitElement {
 
     window.addEventListener("keydown", this.#onKeyDownBound);
     window.addEventListener("bbrundownload", this.#downloadRunBound);
+    window.addEventListener("bbrunselect", this.#selectRunBound);
   }
 
   disconnectedCallback(): void {
@@ -589,6 +591,7 @@ export class Main extends LitElement {
 
     window.removeEventListener("keydown", this.#onKeyDownBound);
     window.removeEventListener("bbrundownload", this.#downloadRunBound);
+    window.removeEventListener("bbrunselect", this.#selectRunBound);
   }
 
   #setBoardPendingSaveState(boardPendingSave: boolean) {
@@ -743,6 +746,47 @@ export class Main extends LitElement {
     anchor.download = fileName;
     anchor.href = url;
     anchor.click();
+  }
+
+  async #selectRun(evt: Event) {
+    const e = evt as BreadboardUI.Events.RunSelectEvent;
+    if (!this.run) {
+      console.warn("The `bbrunselect` was received but there is no run.");
+      return;
+    }
+    const event = this.run.getEventById(e.runId);
+    if (!event) {
+      console.warn(
+        "The `bbrunselect` was received but the event was not found."
+      );
+      return;
+    }
+
+    if (event.type !== "node") {
+      console.warn(
+        "The `bbrunselect` was received but the event is not a node."
+      );
+      return;
+    }
+
+    const run = event.runs[0];
+    if (!run) {
+      console.warn(
+        "The `bbrunselect` was received but the run was not found in the event."
+      );
+      return;
+    }
+
+    this.run = run;
+    this.#topGraphObserver = await BreadboardUI.Utils.TopGraphObserver.fromRun(
+      this.run
+    );
+    this.graph = this.#topGraphObserver?.current()?.graph || null;
+    this.showWelcomePanel = false;
+    this.#editor = null;
+    this.url = null;
+    this.#boardId++;
+    this.requestUpdate();
   }
 
   async #attemptBoardSave() {
@@ -1154,6 +1198,14 @@ export class Main extends LitElement {
       }
     });
 
+    this.#runner.addEventListener("graphstart", async () => {
+      const run = (await this.#runObserver?.runs())?.at(0);
+      if (!run) {
+        return;
+      }
+      this.run = run;
+    });
+
     this.#runner.addEventListener("start", () => {
       this.status = BreadboardUI.Types.STATUS.RUNNING;
     });
@@ -1425,8 +1477,6 @@ export class Main extends LitElement {
               logLevel: "debug",
               dataStore: this.dataStore,
             });
-
-            // TODO: Do we need a TGO here?
           }
 
           evt.preventDefault();
