@@ -26,6 +26,7 @@ export class NestedRun implements InspectableRun {
   end: number | null;
   graphVersion = 0;
   events: InspectableRunEvent[];
+  edges = [];
 
   constructor(entry: PathRegistryEntry) {
     this.graphId = entry.graphId as GraphUUID;

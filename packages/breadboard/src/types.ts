@@ -470,6 +470,7 @@ export type GraphStartProbeData = {
   graph: GraphDescriptor;
   path: number[];
   timestamp: number;
+  edges?: EdgeResponse[];
 };
 
 export type GraphStartProbeMessage = {

@@ -28,7 +28,7 @@ import {
   type UserInputConfiguration,
   type UserMessage,
 } from "../../types/types.js";
-import { InputEnterEvent } from "../../events/events.js";
+import { InputEnterEvent, RunDownloadEvent } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 import { UserInput } from "../input/user-input.js";
 import {
@@ -614,7 +614,7 @@ export class ActivityLogLite extends LitElement {
     const userInputs: UserInputConfiguration[] = Object.entries(
       schema.properties ?? {}
     ).reduce((prev, [name, schema]) => {
-      let value = undefined;
+      let value = event.value?.[name];
       if (schema.type === "object") {
         if (isLLMContentBehavior(schema)) {
           if (!isLLMContent(value)) {
@@ -978,7 +978,15 @@ export class ActivityLogLite extends LitElement {
                 : nothing}
             </div>
           </div>`
-        : nothing}
+        : html`
+            ${log.length
+              ? html`<button
+                  @click=${() => this.dispatchEvent(new RunDownloadEvent())}
+                >
+                  Download
+                </button>`
+              : nothing}
+          `}
       <div id="activity" ${ref(this.#activityRef)}>
         ${log.length
           ? this.#renderLog(log)

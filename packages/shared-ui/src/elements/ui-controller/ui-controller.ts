@@ -11,7 +11,6 @@ import {
   GraphProvider,
   InspectableRun,
   InspectableRunEvent,
-  InspectableRunInputs,
   Kit,
   RemoveNodeSpec,
   inspect,
@@ -69,6 +68,9 @@ export class UI extends LitElement {
   subGraphId: string | null = null;
 
   @property()
+  run: InspectableRun | null = null;
+
+  @property()
   kits: Kit[] = [];
 
   @property()
@@ -78,13 +80,7 @@ export class UI extends LitElement {
   status = STATUS.RUNNING;
 
   @property()
-  run: InspectableRun | null = null;
-
-  @property()
   topGraphResult: TopGraphRunResult | null = null;
-
-  @property()
-  inputsFromLastRun: InspectableRunInputs | null = null;
 
   @property({ reflect: true })
   failedToLoad = false;
@@ -261,6 +257,7 @@ export class UI extends LitElement {
       [
         this.graph,
         this.subGraphId,
+        this.run,
         this.kits,
         this.topGraphResult,
         this.boardId,
@@ -279,6 +276,7 @@ export class UI extends LitElement {
         return html`<bb-editor
           .graph=${graph}
           .subGraphId=${this.subGraphId}
+          .run=${this.run}
           .topGraphResult=${this.topGraphResult}
           .boardId=${this.boardId}
           .collapseNodesByDefault=${collapseNodesByDefault}
@@ -452,19 +450,20 @@ export class UI extends LitElement {
 
           evt.stopImmediatePropagation();
 
-          const id = top.dataset.messageId;
-          const event = this.run?.getEventById(id);
+          // TODO: Bring this back when we have a way to get the event by ID.
+          // const id = top.dataset.messageId;
+          // const event = this.run?.getEventById(id);
 
-          if (!event) {
-            console.warn(`Unable to find event with ID "${id}"`);
-            return;
-          }
+          // if (!event) {
+          //   console.warn(`Unable to find event with ID "${id}"`);
+          //   return;
+          // }
 
-          if (event.type !== "node") {
-            return;
-          }
+          // if (event.type !== "node") {
+          //   return;
+          // }
 
-          this.debugEvent = event;
+          // this.debugEvent = event;
         }}
         name="Board"
       ></bb-activity-log-lite>`;

@@ -38,6 +38,8 @@ export class PastRun implements InspectableRun {
   #graphs = new Map<number, InspectableGraph>();
   #options: SerializedRunLoadingOptions;
 
+  edges = [];
+
   constructor(
     public readonly dataStoreKey = crypto.randomUUID(),
     timeline: TimelineEntry[],
@@ -88,7 +90,7 @@ export class PastRun implements InspectableRun {
 
   #loadGraphStart(result: GraphstartTimelineEntry): HarnessRunResult {
     const [, data] = result;
-    const { index, timestamp, path } = data;
+    const { index, timestamp, path, edges } = data;
     let { graph } = data;
     if (graph !== null) {
       this.#graphs.set(index, inspectableGraph(graph, this.#options));
@@ -97,7 +99,7 @@ export class PastRun implements InspectableRun {
     }
     return {
       type: "graphstart",
-      data: { timestamp, path, graph },
+      data: { timestamp, path, graph, edges },
     } as HarnessRunResult;
   }
 

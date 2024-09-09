@@ -8,6 +8,7 @@ import { OutputValues } from "../../types.js";
 import {
   GraphUUID,
   InspectableGraph,
+  InspectableRunEdge,
   InspectableRunErrorEvent,
   InspectableRunEvent,
   InspectableRunNodeEvent,
@@ -40,6 +41,7 @@ export const createSimpleEntry = (
     sidecars: [],
     empty: () => true,
     events: [],
+    edges: [],
     graph: null,
   };
   return entry;
@@ -63,6 +65,7 @@ class Entry implements PathRegistryEntry {
   graphStart: number = 0;
   graphEnd: number | null = null;
   graph: InspectableGraph | null = null;
+  edges: InspectableRunEdge[] = [];
 
   constructor(
     public path: number[],

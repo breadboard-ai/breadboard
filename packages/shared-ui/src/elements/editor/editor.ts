@@ -11,6 +11,7 @@ import {
   GraphDescriptor,
   InspectableGraph,
   InspectableNodePorts,
+  InspectableRun,
   NodeConfiguration,
   NodeDescriptor,
   NodeHandlerMetadata,
@@ -89,6 +90,9 @@ export class Editor extends LitElement {
 
   @property()
   subGraphId: string | null = null;
+
+  @property()
+  run: InspectableRun | null = null;
 
   @property()
   boardId: number = -1;
@@ -484,6 +488,12 @@ export class Editor extends LitElement {
       metadata: selectedGraph.metadata() || {},
       visible: false,
     });
+    // When we're loading a graph from existing results, we need to
+    // set the topGraphResult again so that it is applied to the newly
+    // created graph.
+    if (this.topGraphResult) {
+      this.#graphRenderer.topGraphResult = this.topGraphResult;
+    }
 
     this.#graphRenderer.addEventListener(
       GraphInitialDrawEvent.eventName,

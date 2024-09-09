@@ -15,6 +15,7 @@ import { GraphLoader } from "../loader/types.js";
 import {
   BehaviorSchema,
   Edge,
+  EdgeResponse,
   ErrorResponse,
   GraphDescriptor,
   InputValues,
@@ -845,16 +846,18 @@ export type InspectableRunEvent =
   | InspectableRunErrorEvent
   | InspectableRunEdgeEvent;
 
+export type InspectableRunEdge = EdgeResponse;
+
 /**
  * Represents a single run of a graph.
  */
 export type InspectableRun = {
   /**
-   * The id graph that was run.
+   * The id of the graph that was run.
    */
   graphId: GraphUUID;
   /**
-   * The version graph that was run.
+   * The version of the graph that was run.
    */
   graphVersion: number;
   /**
@@ -870,6 +873,7 @@ export type InspectableRun = {
    * The nested graph events aren't included.
    */
   events: InspectableRunEvent[];
+  edges: InspectableRunEdge[];
   /**
    * A way to associate data with the run.
    */
@@ -951,6 +955,12 @@ export type PathRegistryEntry = {
    */
   events: InspectableRunEvent[];
   /**
+   * Returns the edges associated with this entry.
+   * These will be the various edges that were traveled when traversing
+   * the graph associated with this entry.
+   */
+  edges: InspectableRunEdge[];
+  /**
    * Returns an inspectable graph for the graph, associated with this entry.
    */
   graph: InspectableGraph | null;
@@ -1000,6 +1010,7 @@ export type GraphstartTimelineEntry = [
     path: number[];
     index: number;
     graph: GraphDescriptor | null;
+    edges: InspectableRunEdge[];
   },
 ];
 

@@ -45,7 +45,6 @@ import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 import { RecentBoardStore } from "./data/recent-boards";
 import { SecretsHelper } from "./utils/secrets-helper";
 
-const REPLAY_DELAY_MS = 10;
 const STORAGE_PREFIX = "bb-main";
 
 type MainArguments = {
@@ -87,10 +86,10 @@ export class Main extends LitElement {
   subGraphId: string | null = null;
 
   @state()
-  kits: Kit[] = [];
+  run: InspectableRun | null = null;
 
   @state()
-  runs: InspectableRun[] | null = null;
+  kits: Kit[] = [];
 
   @state()
   embed = false;
@@ -191,6 +190,7 @@ export class Main extends LitElement {
   #proxy: HarnessProxyConfig[];
   #loader: GraphLoader;
   #onKeyDownBound = this.#onKeyDown.bind(this);
+  #downloadRunBound = this.#downloadRun.bind(this);
   #confirmUnloadWithUserFirstIfNeededBound =
     this.#confirmUnloadWithUserFirstIfNeeded.bind(this);
   #failedGraphLoad = false;
@@ -581,12 +581,14 @@ export class Main extends LitElement {
     super.connectedCallback();
 
     window.addEventListener("keydown", this.#onKeyDownBound);
+    window.addEventListener("bbrundownload", this.#downloadRunBound);
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
     window.removeEventListener("keydown", this.#onKeyDownBound);
+    window.removeEventListener("bbrundownload", this.#downloadRunBound);
   }
 
   #setBoardPendingSaveState(boardPendingSave: boolean) {
@@ -718,6 +720,29 @@ export class Main extends LitElement {
       printHistory("Undo");
       return;
     }
+  }
+
+  async #downloadRun() {
+    const currentRun = (await this.#runObserver?.runs())?.at(0);
+    if (!currentRun) {
+      return;
+    }
+
+    const serializedRun = await currentRun.serialize?.();
+    if (!serializedRun) {
+      return;
+    }
+
+    const data = JSON.stringify(serializedRun, null, 2);
+    const fileName = `run-${new Date().toISOString()}.json`;
+    const url = URL.createObjectURL(
+      new Blob([data], { type: "application/json" })
+    );
+
+    const anchor = document.createElement("a");
+    anchor.download = fileName;
+    anchor.href = url;
+    anchor.click();
   }
 
   async #attemptBoardSave() {
@@ -952,6 +977,7 @@ export class Main extends LitElement {
     this.url = url;
     this.graph = null;
     this.subGraphId = null;
+    this.run = null;
 
     // TODO: Figure out how to avoid needing to null this out.
     this.#editor = null;
@@ -1112,10 +1138,10 @@ export class Main extends LitElement {
       });
     }
 
-    // TODO: Can we re-use the top graph observer.
     this.#topGraphObserver = new BreadboardUI.Utils.TopGraphObserver(
       this.#runner,
-      this.#abortController?.signal
+      this.#abortController?.signal,
+      this.#runObserver
     );
 
     this.#runner.addObserver(this.#runObserver);
@@ -1398,7 +1424,6 @@ export class Main extends LitElement {
             this.#runObserver = createRunObserver({
               logLevel: "debug",
               dataStore: this.dataStore,
-              runStore: this.runStore,
             });
 
             // TODO: Do we need a TGO here?
@@ -1408,12 +1433,15 @@ export class Main extends LitElement {
           const runObserver = this.#runObserver;
           runObserver.load(runData).then(async (result) => {
             if (result.success) {
-              const run = result.run;
-              for await (const result of run.replay()) {
-                await runObserver.observe(result);
-                await new Promise((r) => setTimeout(r, REPLAY_DELAY_MS));
-                this.requestUpdate();
-              }
+              this.run = result.run;
+              this.#topGraphObserver =
+                await BreadboardUI.Utils.TopGraphObserver.fromRun(this.run);
+              this.graph = this.#topGraphObserver?.current()?.graph || null;
+              this.showWelcomePanel = false;
+              this.#editor = null;
+              this.url = null;
+              this.#boardId++;
+              this.requestUpdate();
             } else {
               this.toast(
                 "Unable to load run data",
@@ -1459,11 +1487,7 @@ export class Main extends LitElement {
 
     let tmpl: HTMLTemplateResult | symbol = nothing;
 
-    let runs: Promise<InspectableRun[]> = Promise.resolve([]);
     const topGraphResult = this.#topGraphObserver?.current() || null;
-    if (this.#runObserver) {
-      runs = this.#runObserver?.runs();
-    }
 
     let saveButton: HTMLTemplateResult | symbol = nothing;
     if (this.graph && this.graph.url) {
@@ -1624,35 +1648,37 @@ export class Main extends LitElement {
           }}
         ></button>
         <div id="tab-container">
-          ${this.graph !== null
-            ? html`<h1>
-                <span
-                  ><button
-                    id="back-to-main-board"
+          ${
+            this.graph !== null
+              ? html`<h1>
+                  <span
+                    ><button
+                      id="back-to-main-board"
+                      @click=${() => {
+                        this.subGraphId = null;
+                      }}
+                      ?disabled=${this.subGraphId === null}
+                    >
+                      ${title}
+                    </button></span
+                  >${subGraphTitle
+                    ? html`<span class="subgraph-name">${subGraphTitle}</span>`
+                    : nothing}
+                  <button
                     @click=${() => {
-                      this.subGraphId = null;
+                      this.#attemptBoardStart(
+                        new BreadboardUI.Events.StartEvent(null, null)
+                      );
                     }}
-                    ?disabled=${this.subGraphId === null}
+                    ?disabled=${this.graph === null}
+                    id="close-board"
+                    title="Close Board"
                   >
-                    ${title}
-                  </button></span
-                >${subGraphTitle
-                  ? html`<span class="subgraph-name">${subGraphTitle}</span>`
-                  : nothing}
-                <button
-                  @click=${() => {
-                    this.#attemptBoardStart(
-                      new BreadboardUI.Events.StartEvent(null, null)
-                    );
-                  }}
-                  ?disabled=${this.graph === null}
-                  id="close-board"
-                  title="Close Board"
-                >
-                  Close
-                </button>
-              </h1>`
-            : nothing}
+                    Close
+                  </button>
+                </h1>`
+              : nothing
+          }
         </div>
         <button
           id="undo"
@@ -1687,19 +1713,13 @@ export class Main extends LitElement {
         </button>
       </div>
       <div id="content" ?inert=${showingOverlay}>
-        ${until(
-          runs.then((runInfo) => {
-            const currentRun = runInfo?.[0];
-            const inputsFromLastRun = runInfo?.[1]?.inputs() || null;
-
-            return html`<bb-ui-controller
+        <bb-ui-controller
               ${ref(this.#uiRef)}
               ?inert=${showingOverlay}
               .graph=${this.graph}
               .subGraphId=${this.subGraphId}
-              .run=${currentRun}
+              .run=${this.run}
               .topGraphResult=${topGraphResult}
-              .inputsFromLastRun=${inputsFromLastRun}
               .kits=${this.kits}
               .loader=${this.#loader}
               .status=${this.status}
@@ -2094,9 +2114,7 @@ export class Main extends LitElement {
                 this.requestUpdate();
               }}
             ></bb-ui-controller>
-          </div>`;
-          })
-        )}
+          </div>
         ${until(nav)}
       </div>`;
 
