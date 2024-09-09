@@ -1433,8 +1433,6 @@ export class Main extends LitElement {
               logLevel: "debug",
               dataStore: this.dataStore,
             });
-
-            // TODO: Do we need a TGO here?
           }
 
           evt.preventDefault();
