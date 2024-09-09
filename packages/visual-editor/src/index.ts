@@ -191,6 +191,7 @@ export class Main extends LitElement {
   #loader: GraphLoader;
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #downloadRunBound = this.#downloadRun.bind(this);
+  #selectRunBound = this.#selectRun.bind(this);
   #confirmUnloadWithUserFirstIfNeededBound =
     this.#confirmUnloadWithUserFirstIfNeeded.bind(this);
   #failedGraphLoad = false;
@@ -582,6 +583,7 @@ export class Main extends LitElement {
 
     window.addEventListener("keydown", this.#onKeyDownBound);
     window.addEventListener("bbrundownload", this.#downloadRunBound);
+    window.addEventListener("bbrunselect", this.#selectRunBound);
   }
 
   disconnectedCallback(): void {
@@ -589,6 +591,7 @@ export class Main extends LitElement {
 
     window.removeEventListener("keydown", this.#onKeyDownBound);
     window.removeEventListener("bbrundownload", this.#downloadRunBound);
+    window.removeEventListener("bbrunselect", this.#selectRunBound);
   }
 
   #setBoardPendingSaveState(boardPendingSave: boolean) {
@@ -743,6 +746,11 @@ export class Main extends LitElement {
     anchor.download = fileName;
     anchor.href = url;
     anchor.click();
+  }
+
+  async #selectRun(evt: Event) {
+    const e = evt as BreadboardUI.Events.RunSelectEvent;
+    console.log("Selecting run", e.runId);
   }
 
   async #attemptBoardSave() {
