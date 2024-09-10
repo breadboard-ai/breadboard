@@ -354,27 +354,25 @@ export class ActivityLog extends LitElement {
             id=${id}
             .connectionId=${id.replace(/^connection:/, "")}
           ></bb-connection-input>`;
+        } else {
+          return html`<bb-user-input
+            id=${event.id}
+            .showTypes=${false}
+            .inputs=${userInputs}
+            ${ref(this.#userInputRef)}
+            @keydown=${(evt: KeyboardEvent) => {
+              const isMac = navigator.platform.indexOf("Mac") === 0;
+              const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+              if (!(evt.key === "Enter" && isCtrlCommand)) {
+                return;
+              }
+
+              continueRun();
+            }}
+          ></bb-user-input>`;
         }
-
-        return html``;
       })}
-
-      <bb-user-input
-        id=${event.id}
-        .showTypes=${false}
-        .inputs=${userInputs}
-        ${ref(this.#userInputRef)}
-        @keydown=${(evt: KeyboardEvent) => {
-          const isMac = navigator.platform.indexOf("Mac") === 0;
-          const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
-
-          if (!(evt.key === "Enter" && isCtrlCommand)) {
-            return;
-          }
-
-          continueRun();
-        }}
-      ></bb-user-input>
 
       <button class="continue-button" @click=${() => continueRun()}>
         Continue
