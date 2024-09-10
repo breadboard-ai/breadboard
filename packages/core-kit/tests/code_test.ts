@@ -374,3 +374,14 @@ test("can pass star ports with *", (t) => {
   });
   t.pass();
 });
+
+test("can invoke functions directly with 'test'", (t) => {
+  const num = input({ type: "number" });
+  const increment = code({ num }, { incremented: "number" }, ({ num }) => ({
+    incremented: num + 1,
+  }));
+  // $ExpectType { incremented: number; } | Promise<{ incremented: number; }> | { $error: string | { message: string; }; } | Promise<{ $error: string | { message: string; }; }>
+  const result = increment.test({ num: 3 });
+  t.deepEqual(result, { incremented: 4 });
+  t.pass();
+});
