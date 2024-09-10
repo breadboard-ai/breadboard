@@ -9,7 +9,6 @@ import {
   array,
   board,
   input,
-  inputNode,
   jsonSchema,
   output,
   outputNode,
