@@ -15,7 +15,7 @@ import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { map } from "lit/directives/map.js";
 import { customElement, property, state } from "lit/decorators.js";
-import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
+import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
   blankLLMContent,
@@ -24,23 +24,18 @@ import {
   GraphProvider,
   InputValues,
   InspectableRun,
-  Kit,
   SerializedRun,
 } from "@google-labs/breadboard";
 import { getDataStore, getRunStore } from "@breadboard-ai/data-store";
 import { classMap } from "lit/directives/class-map.js";
-import { loadKits } from "./utils/kit-loader";
-import GeminiKit from "@google-labs/gemini-kit";
 import { FileSystemGraphProvider } from "./providers/file-system";
-import BuildExampleKit from "./build-example-kit";
 import { SettingsStore } from "./data/settings-store";
 import { addNodeProxyServerConfig } from "./data/node-proxy-servers";
 import { provide } from "@lit/context";
-import PythonWasmKit from "@breadboard-ai/python-wasm";
-import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 import { RecentBoardStore } from "./data/recent-boards";
 import { SecretsHelper } from "./utils/secrets-helper";
 import { SettingsHelperImpl } from "./utils/settings-helper";
+import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
 
 const STORAGE_PREFIX = "bb-main";
@@ -85,9 +80,6 @@ export class Main extends LitElement {
 
   @state()
   run: InspectableRun | null = null;
-
-  @state()
-  kits: Kit[] = [];
 
   @state()
   embed = false;
@@ -171,7 +163,6 @@ export class Main extends LitElement {
   @property()
   tab: Runtime.Types.VETab | null = null;
 
-  #abortController: AbortController | null = null;
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #boardId = 0;
   #boardPendingSave = false;
@@ -192,304 +183,16 @@ export class Main extends LitElement {
     this.#confirmUnloadWithUserFirstIfNeeded.bind(this);
   #failedGraphLoad = false;
   #version = "dev";
-  #recentBoardStore: RecentBoardStore;
+  #recentBoardStore = RecentBoardStore.instance();
   #recentBoards: BreadboardUI.Types.RecentBoard[] = [];
   #isSaving = false;
 
-  #runtime: Runtime.RuntimeInstance;
+  #runtime!: Runtime.RuntimeInstance;
 
-  static styles = css`
-    * {
-      box-sizing: border-box;
-    }
-
-    :host {
-      flex: 1 0 auto;
-      display: grid;
-      grid-template-rows: calc(var(--bb-grid-size) * 12) auto;
-    }
-
-    bb-toast {
-      z-index: 2000;
-    }
-
-    :host > header {
-      display: grid;
-      grid-template-columns: auto min-content;
-      padding: calc(var(--bb-grid-size) * 6) calc(var(--bb-grid-size) * 8)
-        calc(var(--bb-grid-size) * 0) calc(var(--bb-grid-size) * 8);
-      font-size: var(--bb-text-default);
-      grid-column: 1 / 3;
-    }
-
-    :host > header a {
-      text-decoration: none;
-      white-space: nowrap;
-    }
-
-    #show-nav {
-      font-size: 0;
-      width: 24px;
-      height: 24px;
-      background: var(--bb-icon-menu) center center no-repeat;
-      border: none;
-      margin-right: calc(var(--bb-grid-size) * 2);
-      cursor: pointer;
-    }
-
-    #close-board {
-      font-size: 0;
-      width: 20px;
-      height: 20px;
-      background: var(--bb-icon-close) center center no-repeat;
-      background-size: 16px 16px;
-      border: 2px solid transparent;
-      margin-left: calc(var(--bb-grid-size) * 2);
-      opacity: 0.6;
-      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
-      border-radius: 50%;
-    }
-
-    #close-board:not([disabled]) {
-      cursor: pointer;
-    }
-
-    #close-board:not([disabled]):hover {
-      transition-duration: 0.1s;
-      opacity: 1;
-      background-color: var(--bb-neutral-300);
-      border: 2px solid var(--bb-neutral-300);
-    }
-
-    #new-board {
-      font-size: var(--bb-text-nano);
-    }
-
-    #undo,
-    #redo,
-    #save-board,
-    #toggle-preview,
-    #toggle-settings,
-    #toggle-overflow-menu {
-      color: var(--bb-neutral-50);
-      padding: 0 16px 0 42px;
-      font-size: var(--bb-text-medium);
-      margin: 0 calc(var(--bb-grid-size) * 3) 0 0;
-      cursor: pointer;
-      background: 12px center var(--bb-icon-download);
-      background-repeat: no-repeat;
-      height: calc(100% - var(--bb-grid-size) * 4);
-      display: flex;
-      align-items: center;
-      text-decoration: none;
-      border-radius: 20px;
-      border: none;
-    }
-
-    #undo:not([disabled]):hover,
-    #redo:not([disabled]):hover,
-    #undo:not([disabled]):focus,
-    #redo:not([disabled]):focus,
-    #save-board:not([disabled]):hover,
-    #toggle-preview:not([disabled]):hover,
-    #toggle-settings:not([disabled]):hover,
-    #toggle-overflow-menu:not([disabled]):hover,
-    #save-board:not([disabled]):focus,
-    #toggle-preview:not([disabled]):focus,
-    #toggle-settings:not([disabled]):focus,
-    #toggle-overflow-menu:not([disabled]):focus {
-      background-color: rgba(0, 0, 0, 0.1);
-    }
-
-    #save-board {
-      background: 12px center var(--bb-icon-save-inverted);
-      background-repeat: no-repeat;
-    }
-
-    #toggle-preview {
-      background: 12px center var(--bb-icon-preview);
-      background-repeat: no-repeat;
-    }
-
-    #undo,
-    #redo,
-    #toggle-overflow-menu {
-      padding: 8px;
-      font-size: 0;
-      margin-right: 0;
-      background: center center var(--bb-icon-more-vert-inverted);
-      background-repeat: no-repeat;
-      width: 32px;
-    }
-
-    #undo {
-      background-image: var(--bb-icon-undo-inverted);
-    }
-
-    #redo {
-      background-image: var(--bb-icon-redo-inverted);
-    }
-
-    #undo[disabled],
-    #redo[disabled] {
-      opacity: 0.5;
-    }
-
-    #toggle-preview.active {
-      background-color: var(--bb-ui-800);
-    }
-
-    #toggle-settings {
-      padding: 8px;
-      font-size: 0;
-      margin-right: 0;
-      background: center center var(--bb-icon-settings);
-      background-repeat: no-repeat;
-      width: 32px;
-    }
-
-    #toggle-settings.active {
-      background-color: var(--bb-ui-800);
-    }
-
-    #new-board {
-      font-size: var(--bb-text-small);
-      text-decoration: underline;
-    }
-
-    #new-board:active {
-      color: rgb(90, 64, 119);
-    }
-
-    #save-board[disabled],
-    #get-log[disabled],
-    #get-board[disabled],
-    #toggle-preview[disabled],
-    #save-board[disabled]:hover,
-    #get-log[disabled]:hover,
-    #get-board[disabled]:hover,
-    #toggle-preview[disabled]:hover {
-      opacity: 0.5;
-      background-color: rgba(0, 0, 0, 0);
-      pointer-events: none;
-      cursor: auto;
-    }
-
-    bb-board-list {
-      grid-column: 1 / 3;
-    }
-
-    #header-bar {
-      background: var(--bb-ui-600);
-      display: flex;
-      align-items: center;
-      color: var(--bb-neutral-50);
-      z-index: 1;
-      height: calc(var(--bb-grid-size) * 12);
-      padding: 0 calc(var(--bb-grid-size) * 2);
-    }
-
-    #header-bar #tab-container {
-      flex: 1;
-      display: flex;
-      align-items: flex-end;
-      margin: 0;
-      height: 100%;
-      overflow: hidden;
-    }
-
-    #tab-container h1 {
-      font-size: var(--bb-label-medium);
-      font-weight: normal;
-      background: var(--bb-neutral-0);
-      color: var(--bb-neutral-800);
-      margin: 0;
-      height: calc(100% - var(--bb-grid-size) * 2);
-      border-radius: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2)
-        0 0;
-      padding: 0 calc(var(--bb-grid-size) * 4);
-      display: flex;
-      align-items: center;
-      user-select: none;
-      margin-right: var(--bb-grid-size-2);
-    }
-
-    #tab-container .back-to-main-board {
-      padding: 0;
-      margin: 0;
-      cursor: pointer;
-      background: none;
-      border: none;
-      color: var(--bb-neutral-800);
-      opacity: 0.6;
-    }
-
-    #tab-container .back-to-main-board:disabled {
-      cursor: auto;
-      color: var(--bb-neutral-800);
-    }
-
-    #tab-container .back-to-main-board.active {
-      opacity: 1;
-    }
-
-    #tab-container .subgraph-name {
-      display: flex;
-      align-items: center;
-    }
-
-    #tab-container .subgraph-name::before {
-      content: "";
-      width: 20px;
-      height: 20px;
-      background: var(--bb-icon-next) center center no-repeat;
-      background-size: 12px 12px;
-    }
-
-    #content {
-      max-height: calc(100svh - var(--bb-grid-size) * 12);
-      display: flex;
-      flex-direction: column;
-    }
-
-    iframe {
-      grid-row: 1 / 3;
-      grid-column: 1 / 3;
-      margin: 0;
-      border: none;
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-
-    bb-overlay iframe {
-      width: 80vw;
-      height: 80vh;
-      border-radius: 8px;
-    }
-
-    #embed {
-      grid-column: 1/3;
-      grid-row: 1/3;
-    }
-
-    #embed iframe {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      border: none;
-      border-radius: 0;
-    }
-
-    #embed header {
-      display: flex;
-      padding: 0 calc(var(--bb-grid-size) * 9);
-      align-items: center;
-    }
-  `;
+  static styles = mainStyles;
   proxyFromUrl: string | undefined;
 
-  #load: Promise<void>;
+  #initialize: Promise<void>;
   constructor(config: MainArguments) {
     super();
 
@@ -505,7 +208,6 @@ export class Main extends LitElement {
       }
     }
 
-    this.#recentBoardStore = RecentBoardStore.instance();
     this.#version = config.version || "dev";
     this.#providers = config.providers || [];
     this.#settings = config.settings || null;
@@ -520,7 +222,6 @@ export class Main extends LitElement {
 
     const currentUrl = new URL(window.location.href);
     const boardFromUrl = currentUrl.searchParams.get("board");
-    const embedFromUrl = currentUrl.searchParams.get("embed");
     const firstRunFromUrl = currentUrl.searchParams.get("firstrun");
 
     if (firstRunFromUrl && firstRunFromUrl === "true") {
@@ -533,185 +234,175 @@ export class Main extends LitElement {
       this.proxyFromUrl = proxyFromUrl;
     }
 
-    this.embed = embedFromUrl !== null && embedFromUrl !== "false";
-
-    this.#runtime = Runtime.create({
-      providers: config.providers ?? [],
-      runStore: this.runStore,
-      dataStore: this.dataStore,
-    });
-
-    this.#runtime.board.addEventListener(
-      Runtime.Events.VEEditEvent.eventName,
-      () => {
-        this.requestUpdate();
-      }
-    );
-
-    this.#runtime.board.addEventListener(
-      Runtime.Events.VEBoardLoadErrorEvent.eventName,
-      () => {
-        this.#failedGraphLoad = true;
-        this.toast("Unable to load board", BreadboardUI.Events.ToastType.ERROR);
-      }
-    );
-
-    this.#runtime.board.addEventListener(
-      Runtime.Events.VEErrorEvent.eventName,
-      (evt: Runtime.Events.VEErrorEvent) => {
-        this.toast(evt.message, BreadboardUI.Events.ToastType.ERROR);
-      }
-    );
-
-    this.#runtime.board.addEventListener(
-      Runtime.Events.VETabChangeEvent.eventName,
-      async (evt: Runtime.Events.VETabChangeEvent) => {
-        this.tab = this.#runtime.board.currentTab;
-        this.showWelcomePanel = this.tab === null;
-
-        if (this.tab) {
-          // If there is a TGO in the tab change event, honor it and populate a
-          // run with it before switching to the tab proper.
-          if (evt.topGraphObserver) {
-            this.#runtime.run.create(this.tab.id, evt.topGraphObserver);
-          }
-
-          if (this.tab.graph.url) {
-            this.#setUrlParam("board", this.tab.graph.url);
-            await this.#trackRecentBoard(this.tab.graph.url);
-
-            const base = new URL(window.location.href);
-            const decodedUrl = decodeURIComponent(base.href);
-            window.history.replaceState({ path: decodedUrl }, "", decodedUrl);
-          }
-
-          if (this.tab.graph.title) {
-            this.#setPageTitle(this.tab.graph.title);
-          }
-        }
-      }
-    );
-
-    this.#runtime.run.addEventListener(
-      Runtime.Events.VERunEvent.eventName,
-      (evt: Runtime.Events.VERunEvent) => {
-        if (!this.tab) {
-          return;
-        }
-
-        // TODO: Figure out what to do here; if we change away from the run in
-        // the middle we will lose track of where we are in the run.
-        if (evt.tabId !== this.tab.id) {
-          return;
-        }
-
-        switch (evt.runEvt.type) {
-          case "next": {
-            // TODO: Decide if the run needs to be stopped.
-            this.requestUpdate();
-            break;
-          }
-
-          case "graphstart": {
-            this.requestUpdate();
-            break;
-          }
-
-          case "start": {
-            this.status = BreadboardUI.Types.STATUS.RUNNING;
-            break;
-          }
-
-          case "end": {
-            this.status = BreadboardUI.Types.STATUS.STOPPED;
-            break;
-          }
-
-          case "error": {
-            const runEvt = evt.runEvt as RunErrorEvent;
-            this.toast(
-              BreadboardUI.Utils.formatError(runEvt.data.error),
-              BreadboardUI.Events.ToastType.ERROR
-            );
-            this.status = BreadboardUI.Types.STATUS.STOPPED;
-            break;
-          }
-
-          case "resume": {
-            this.status = BreadboardUI.Types.STATUS.RUNNING;
-            break;
-          }
-
-          case "pause": {
-            this.status = BreadboardUI.Types.STATUS.RUNNING;
-            break;
-          }
-
-          case "secret": {
-            const runEvt = evt.runEvt as RunSecretEvent;
-            const { keys } = runEvt.data;
-            const result: InputValues = {};
-            const allKeysAreKnown = keys.every((key) => {
-              const savedSecret =
-                this.#settings
-                  ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.SECRETS)
-                  .items.get(key) ?? null;
-              if (savedSecret) {
-                result[key] = savedSecret.value;
-                return true;
-              }
-              return false;
-            });
-            if (allKeysAreKnown) {
-              evt.harnessRunner?.run(result);
-            } else {
-              this.#secretsHelper = new SecretsHelper(this.#settings!, keys);
-            }
-          }
-        }
-      }
-    );
-
-    // Load the Recent Boards.
-    this.#load = this.#recentBoardStore
+    // Initialization order:
+    //  1. Recent boards.
+    //  2. Settings.
+    //  3. Runtime.
+    //
+    // Note: the runtime loads the kits and the initializes the providers.
+    this.#initialize = this.#recentBoardStore
       .restore()
       .then((boards) => {
         this.#recentBoards = boards;
-
-        // Then Kits, Providers and Settings.
-        return Promise.all([
-          loadKits([
-            GeminiKit,
-            // TODO(aomarks) This is presumably not the right way to do this. How do
-            // I get something into this.#providers?
-            BuildExampleKit,
-            PythonWasmKit,
-            GoogleDriveKit,
-          ]),
-          ...this.#providers.map((provider) => provider.restore()),
-          this.#settings?.restore(),
-        ]);
+        return this.#settings?.restore();
       })
-      .then(([kits]) => {
-        // Process all.
-        this.kits = kits;
-        this.#providers.map((provider) => {
-          if (provider.extendedCapabilities().watch) {
-            provider.watch((change) => {
-              const currentUrl = new URL(window.location.href);
-              const boardFromUrl = currentUrl.searchParams.get("board");
-              if (boardFromUrl?.endsWith(change.filename)) {
-                this.#failedGraphLoad = false;
-                this.#runtime.board.loadFromURL(boardFromUrl, this.kits);
-              }
-            });
-          }
+      .then(() => {
+        return Runtime.create({
+          providers: config.providers ?? [],
+          runStore: this.runStore,
+          dataStore: this.dataStore,
         });
+      })
+      .then((runtime) => {
+        this.#runtime = runtime;
+
+        this.#runtime.edit.addEventListener(
+          Runtime.Events.VEEditEvent.eventName,
+          () => {
+            this.#nodeConfiguratorData = null;
+            this.showNodeConfigurator = false;
+            this.requestUpdate();
+          }
+        );
+
+        this.#runtime.board.addEventListener(
+          Runtime.Events.VEBoardLoadErrorEvent.eventName,
+          () => {
+            this.#failedGraphLoad = true;
+            this.toast(
+              "Unable to load board",
+              BreadboardUI.Events.ToastType.ERROR
+            );
+          }
+        );
+
+        this.#runtime.board.addEventListener(
+          Runtime.Events.VEErrorEvent.eventName,
+          (evt: Runtime.Events.VEErrorEvent) => {
+            this.toast(evt.message, BreadboardUI.Events.ToastType.ERROR);
+          }
+        );
+
+        this.#runtime.board.addEventListener(
+          Runtime.Events.VETabChangeEvent.eventName,
+          async (evt: Runtime.Events.VETabChangeEvent) => {
+            this.tab = this.#runtime.board.currentTab;
+            this.showWelcomePanel = this.tab === null;
+
+            if (this.tab) {
+              // If there is a TGO in the tab change event, honor it and populate a
+              // run with it before switching to the tab proper.
+              if (evt.topGraphObserver) {
+                this.#runtime.run.create(this.tab.id, evt.topGraphObserver);
+              }
+
+              if (this.tab.graph.url) {
+                this.#setUrlParam("board", this.tab.graph.url);
+                await this.#trackRecentBoard(this.tab.graph.url);
+
+                const base = new URL(window.location.href);
+                const decodedUrl = decodeURIComponent(base.href);
+                window.history.replaceState(
+                  { path: decodedUrl },
+                  "",
+                  decodedUrl
+                );
+              }
+
+              if (this.tab.graph.title) {
+                this.#setPageTitle(this.tab.graph.title);
+              }
+            }
+          }
+        );
+
+        this.#runtime.run.addEventListener(
+          Runtime.Events.VERunEvent.eventName,
+          (evt: Runtime.Events.VERunEvent) => {
+            if (!this.tab) {
+              return;
+            }
+
+            // TODO: Figure out what to do here; if we change away from the run in
+            // the middle we will lose track of where we are in the run.
+            if (evt.tabId !== this.tab.id) {
+              return;
+            }
+
+            switch (evt.runEvt.type) {
+              case "next": {
+                // TODO: Decide if the run needs to be stopped.
+                this.requestUpdate();
+                break;
+              }
+
+              case "graphstart": {
+                this.requestUpdate();
+                break;
+              }
+
+              case "start": {
+                this.status = BreadboardUI.Types.STATUS.RUNNING;
+                break;
+              }
+
+              case "end": {
+                this.status = BreadboardUI.Types.STATUS.STOPPED;
+                break;
+              }
+
+              case "error": {
+                const runEvt = evt.runEvt as RunErrorEvent;
+                this.toast(
+                  BreadboardUI.Utils.formatError(runEvt.data.error),
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+                this.status = BreadboardUI.Types.STATUS.STOPPED;
+                break;
+              }
+
+              case "resume": {
+                this.status = BreadboardUI.Types.STATUS.RUNNING;
+                break;
+              }
+
+              case "pause": {
+                this.status = BreadboardUI.Types.STATUS.RUNNING;
+                break;
+              }
+
+              case "secret": {
+                const runEvt = evt.runEvt as RunSecretEvent;
+                const { keys } = runEvt.data;
+                const result: InputValues = {};
+                const allKeysAreKnown = keys.every((key) => {
+                  const savedSecret =
+                    this.#settings
+                      ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.SECRETS)
+                      .items.get(key) ?? null;
+                  if (savedSecret) {
+                    result[key] = savedSecret.value;
+                    return true;
+                  }
+                  return false;
+                });
+                if (allKeysAreKnown) {
+                  evt.harnessRunner?.run(result);
+                } else {
+                  this.#secretsHelper = new SecretsHelper(
+                    this.#settings!,
+                    keys
+                  );
+                }
+              }
+            }
+          }
+        );
 
         // Start the board or show the welcome panel.
         if (boardFromUrl) {
           this.#failedGraphLoad = false;
-          this.#runtime.board.loadFromURL(boardFromUrl, this.kits);
+          this.#runtime.board.loadFromURL(boardFromUrl);
           return;
         } else {
           this.showWelcomePanel = true;
@@ -788,7 +479,7 @@ export class Main extends LitElement {
           }
 
           this.#failedGraphLoad = false;
-          this.#runtime.board.loadFromDescriptor(descriptor, this.kits);
+          this.#runtime.board.loadFromDescriptor(descriptor);
         } catch (err) {
           this.toast(
             "Unable to paste board",
@@ -843,35 +534,12 @@ export class Main extends LitElement {
         return;
       }
 
-      const editableGraph = this.#runtime.board.getEditor(
-        this.tab.id,
-        this.kits
-      );
-      if (!editableGraph) {
-        return;
-      }
-
-      const history = editableGraph.history();
-
-      // TODO: Make this not a console-only thing.
-      const printHistory = (label: string) => {
-        const labels = history.entries().map((entry) => entry.label);
-        console.group(`History: ${label}`);
-        labels.forEach((label, index) => {
-          const current = index === history.index() ? ">" : " ";
-          console.log(`${index}:${current} ${label}`);
-        });
-        console.groupEnd();
-      };
-
       if (evt.shiftKey) {
-        history.redo();
-        printHistory("Redo");
+        this.#runtime.edit.redo(this.tab);
         return;
       }
 
-      history.undo();
-      printHistory("Undo");
+      this.#runtime.edit.undo(this.tab);
       return;
     }
   }
@@ -958,11 +626,7 @@ export class Main extends LitElement {
     const runGraph = topGraphObserver.current()?.graph ?? null;
     if (runGraph) {
       this.#failedGraphLoad = false;
-      this.#runtime.board.loadFromDescriptor(
-        runGraph,
-        this.kits,
-        topGraphObserver
-      );
+      this.#runtime.board.loadFromDescriptor(runGraph, topGraphObserver);
     }
   }
 
@@ -1257,96 +921,33 @@ export class Main extends LitElement {
   }
 
   #handleBoardInfoUpdate(evt: BreadboardUI.Events.BoardInfoUpdateEvent) {
-    if (evt.subGraphId) {
-      if (!this.tab) {
-        this.toast(
-          "Unable to edit; no active graph",
-          BreadboardUI.Events.ToastType.ERROR
-        );
-        return;
-      }
-
-      const editableGraph = this.#runtime.board.getEditor(
-        this.tab.id,
-        this.kits
-      );
-      if (!editableGraph) {
-        console.warn("Unable to update board information; no active graph");
-        return;
-      }
-
-      const subGraph = editableGraph.getGraph(evt.subGraphId);
-      if (!subGraph) {
-        console.warn("Unable to update board information; no active graph");
-        return;
-      }
-
-      const subGraphDescriptor = subGraph.raw();
-      subGraphDescriptor.title = evt.title;
-      subGraphDescriptor.version = evt.version;
-      subGraphDescriptor.description = evt.description;
-
-      if (evt.isTool !== null) {
-        subGraphDescriptor.metadata ??= {};
-        subGraphDescriptor.metadata.tags ??= [];
-
-        if (evt.isTool) {
-          if (!subGraphDescriptor.metadata.tags.includes("tool")) {
-            subGraphDescriptor.metadata.tags.push("tool");
-          }
-        } else {
-          subGraphDescriptor.metadata.tags =
-            subGraphDescriptor.metadata.tags.filter((tag) => tag !== "tool");
-        }
-      }
-
-      editableGraph.replaceGraph(evt.subGraphId, subGraphDescriptor);
-    } else if (this.tab?.graph) {
-      this.tab.graph.title = evt.title;
-      this.tab.graph.version = evt.version;
-      this.tab.graph.description = evt.description;
-
-      if (evt.status) {
-        this.tab.graph.metadata ??= {};
-        this.tab.graph.metadata.tags ??= [];
-
-        switch (evt.status) {
-          case "published": {
-            if (!this.tab.graph.metadata.tags.includes("published")) {
-              this.tab.graph.metadata.tags.push("published");
-            }
-            break;
-          }
-
-          case "draft": {
-            this.tab.graph.metadata.tags = this.tab?.graph.metadata.tags.filter(
-              (tag) => tag !== "published"
-            );
-            break;
-          }
-        }
-      }
-
-      if (evt.isTool !== null) {
-        this.tab.graph.metadata ??= {};
-        this.tab.graph.metadata.tags ??= [];
-
-        if (evt.isTool) {
-          if (!this.tab.graph.metadata.tags.includes("tool")) {
-            this.tab.graph.metadata.tags.push("tool");
-          }
-        } else {
-          this.tab.graph.metadata.tags = this.tab?.graph.metadata.tags.filter(
-            (tag) => tag !== "tool"
-          );
-        }
-      }
-    } else {
+    if (!this.tab) {
       this.toast(
-        "Unable to update sub board information - board not found",
-        BreadboardUI.Events.ToastType.INFORMATION
+        "Unable to edit; no active graph",
+        BreadboardUI.Events.ToastType.ERROR
       );
       return;
+    }
+
+    if (evt.subGraphId) {
+      this.#runtime.edit.updateSubBoardInfo(
+        this.tab,
+        evt.subGraphId,
+        evt.title,
+        evt.version,
+        evt.description,
+        evt.status,
+        evt.isTool
+      );
+    } else {
+      this.#runtime.edit.updateBoardInfo(
+        this.tab,
+        evt.title,
+        evt.version,
+        evt.description,
+        evt.status,
+        evt.isTool
+      );
     }
   }
 
@@ -1363,7 +964,7 @@ export class Main extends LitElement {
 
     try {
       this.#failedGraphLoad = false;
-      this.#runtime.board.loadFromURL(url, this.kits, this.tab?.graph.url);
+      this.#runtime.board.loadFromURL(url, this.tab?.graph.url);
     } catch (err) {
       this.toast(
         `Unable to load file: ${url}`,
@@ -1419,7 +1020,6 @@ export class Main extends LitElement {
               if (descriptor) {
                 this.#runtime.board.loadFromDescriptor(
                   descriptor,
-                  this.kits,
                   topGraphObserver
                 );
               } else {
@@ -1436,7 +1036,7 @@ export class Main extends LitElement {
             }
           });
         } else {
-          this.#runtime.board.loadFromDescriptor(runData, this.kits);
+          this.#runtime.board.loadFromDescriptor(runData);
         }
       } catch (err) {
         console.warn(err);
@@ -1456,9 +1056,9 @@ export class Main extends LitElement {
 
     this.#failedGraphLoad = false;
     if (evt.url) {
-      this.#runtime.board.loadFromURL(evt.url, this.kits);
+      this.#runtime.board.loadFromURL(evt.url);
     } else if (evt.descriptor) {
-      this.#runtime.board.loadFromDescriptor(evt.descriptor, this.kits);
+      this.#runtime.board.loadFromDescriptor(evt.descriptor);
     }
   }
 
@@ -1475,8 +1075,6 @@ export class Main extends LitElement {
         ></bb-toast>`;
       }
     )}`;
-
-    let tmpl: HTMLTemplateResult | symbol = nothing;
 
     const observers = this.#runtime?.run.getObservers(this.tab?.id ?? null);
     const topGraphResult = observers?.topGraphObserver?.current() ?? null;
@@ -1511,12 +1109,6 @@ export class Main extends LitElement {
       }
     }
 
-    const editor = this.#runtime.board.getEditor(
-      this.tab?.id ?? null,
-      this.kits
-    );
-    const history = editor?.history();
-
     const showingOverlay =
       this.boardEditOverlayInfo !== null ||
       this.showSettingsOverlay ||
@@ -1526,7 +1118,7 @@ export class Main extends LitElement {
       this.showOverflowMenu ||
       this.showNodeConfigurator;
 
-    const nav = this.#load.then(() => {
+    const nav = this.#initialize.then(() => {
       return html`<bb-nav
         .visible=${this.showNav}
         .url=${this.tab?.graph.url ?? null}
@@ -1623,7 +1215,8 @@ export class Main extends LitElement {
       ></bb-nav> `;
     });
 
-    tmpl = html`<div id="header-bar" ?inert=${showingOverlay}>
+    const tmpl = this.#initialize.then(() => {
+      return html`<div id="header-bar" ?inert=${showingOverlay}>
         <button
           id="show-nav"
           @click=${() => {
@@ -1682,9 +1275,9 @@ export class Main extends LitElement {
         <button
           id="undo"
           title="Undo last action"
-          ?disabled=${this.tab?.graph === null || (history && !history.canUndo())}
+          ?disabled=${this.tab?.graph === null || !this.#runtime.edit.canUndo(this.tab)}
           @click=${() => {
-            history?.undo();
+            this.#runtime.edit.undo(this.tab);
           }}
         >
           Preview
@@ -1692,9 +1285,9 @@ export class Main extends LitElement {
         <button
           id="redo"
           title="Redo last action"
-          ?disabled=${this.tab?.graph === null || (history && !history.canRedo())}
+          ?disabled=${this.tab?.graph === null || !this.#runtime.edit.canRedo(this.tab)}
           @click=${() => {
-            history?.redo();
+            this.#runtime.edit.redo(this.tab);
           }}
         >
           Preview
@@ -1719,7 +1312,7 @@ export class Main extends LitElement {
               .subGraphId=${this.tab?.subGraphId ?? null}
               .run=${this.run}
               .topGraphResult=${topGraphResult}
-              .kits=${this.kits}
+              .kits=${this.#runtime.kits}
               .loader=${this.#runtime.board.loader}
               .status=${this.status}
               .boardId=${this.#boardId}
@@ -1757,30 +1350,11 @@ export class Main extends LitElement {
               @bbsubgraphcreate=${async (
                 evt: BreadboardUI.Events.SubGraphCreateEvent
               ) => {
-                if (!this.tab) {
-                  this.toast(
-                    "Unable to edit; no active graph",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-
-                const editableGraph = this.#runtime.board.getEditor(
-                  this.tab.id,
-                  this.kits
+                const result = this.#runtime.edit.createSubGraph(
+                  this.tab,
+                  evt.subGraphTitle
                 );
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                const id = globalThis.crypto.randomUUID();
-                const board = blankLLMContent();
-                board.title = evt.subGraphTitle;
-
-                const editResult = editableGraph.addGraph(id, board);
-                if (!editResult) {
+                if (!result) {
                   this.toast(
                     "Unable to create sub board",
                     BreadboardUI.Events.ToastType.ERROR
@@ -1788,43 +1362,15 @@ export class Main extends LitElement {
                   return;
                 }
 
-                this.subGraphId = id;
-                this.requestUpdate();
+                if (!this.tab) {
+                  return;
+                }
+                this.tab.subGraphId = result;
               }}
               @bbsubgraphdelete=${async (
                 evt: BreadboardUI.Events.SubGraphDeleteEvent
               ) => {
-                if (!this.tab) {
-                  this.toast(
-                    "Unable to edit; no active graph",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-
-                const editableGraph = this.#runtime.board.getEditor(
-                  this.tab.id,
-                  this.kits
-                );
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                const editResult = editableGraph.removeGraph(evt.subGraphId);
-                if (!editResult.success) {
-                  this.toast(
-                    "Unable to create sub board",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-
-                if (evt.subGraphId === this.tab.subGraphId) {
-                  this.tab.subGraphId = null;
-                }
-                this.requestUpdate();
+                this.#runtime.edit.deleteSubGraph(this.tab, evt.subGraphId);
               }}
               @bbsubgraphchosen=${(
                 evt: BreadboardUI.Events.SubGraphChosenEvent
@@ -1846,8 +1392,6 @@ export class Main extends LitElement {
 
                 const graph = this.tab?.graph;
 
-                this.#abortController = new AbortController();
-
                 this.#runBoard(
                   addNodeProxyServerConfig(
                     this.#proxy,
@@ -1855,10 +1399,9 @@ export class Main extends LitElement {
                       url: this.tab?.graph.url,
                       runner: graph,
                       diagnostics: true,
-                      kits: this.kits,
+                      kits: [], // The kits are added by the runtime.
                       loader: this.#runtime.board.loader,
                       store: this.dataStore,
-                      signal: this.#abortController?.signal,
                       inputs: BreadboardUI.Data.inputsFromSettings(
                         this.#settings
                       ),
@@ -1871,196 +1414,56 @@ export class Main extends LitElement {
                 );
               }}
               @bbstopboard=${() => {
-                if (!this.#abortController) {
+                const abortController = this.#runtime.run.getAbortSignal(
+                  this.tab?.id ?? null
+                );
+                if (!abortController) {
+                  this.toast(
+                    "Unable to stop run - no abort controller found",
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
                   return;
                 }
 
-                this.#abortController.abort("Stopped board");
+                abortController.abort("Stopped board");
                 this.#runner?.run();
                 this.requestUpdate();
               }}
               @bbedgechange=${(evt: BreadboardUI.Events.EdgeChangeEvent) => {
-                if (!this.tab) {
-                  this.toast(
-                    "Unable to edit; no active graph",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-
-                let editableGraph = this.#runtime.board.getEditor(
-                  this.tab.id,
-                  this.kits
+                this.#runtime.edit.changeEdge(
+                  this.tab,
+                  evt.changeType,
+                  evt.from,
+                  evt.to,
+                  evt.subGraphId
                 );
-
-                if (editableGraph && evt.subGraphId) {
-                  editableGraph = editableGraph.getGraph(evt.subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                switch (evt.changeType) {
-                  case "add": {
-                    editableGraph.edit(
-                      [{ type: "addedge", edge: evt.from }],
-                      `Add edge between ${evt.from.from} and ${evt.from.to}`
-                    );
-                    break;
-                  }
-
-                  case "remove": {
-                    editableGraph.edit(
-                      [{ type: "removeedge", edge: evt.from }],
-                      `Remove edge between ${evt.from.from} and ${evt.from.to}`
-                    );
-                    break;
-                  }
-
-                  case "move": {
-                    if (!evt.to) {
-                      throw new Error("Unable to move edge - no `to` provided");
-                    }
-
-                    editableGraph.edit(
-                      [
-                        {
-                          type: "changeedge",
-                          from: evt.from,
-                          to: evt.to,
-                        },
-                      ],
-                      `Change edge from between ${evt.from.from} and ${evt.from.to} to ${evt.to.from} and ${evt.to.to}`
-                    );
-                    break;
-                  }
-                }
               }}
               @bbnodemetadataupdate=${(
                 evt: BreadboardUI.Events.NodeMetadataUpdateEvent
               ) => {
-                if (!this.tab) {
-                  this.toast(
-                    "Unable to edit; no active graph",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-
-                let editableGraph = this.#runtime.board.getEditor(
-                  this.tab.id,
-                  this.kits
-                );
-
-                if (editableGraph && evt.subGraphId) {
-                  editableGraph = editableGraph.getGraph(evt.subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn(
-                    "Unable to update node metadata; no active graph"
-                  );
-                  return;
-                }
-
-                const inspectableGraph = editableGraph.inspect();
-                const { id, metadata } = evt;
-                const existingNode = inspectableGraph.nodeById(id);
-                const existingMetadata = existingNode?.metadata() || {};
-                const newMetadata = {
-                  ...existingMetadata,
-                  ...metadata,
-                };
-
-                editableGraph.edit(
-                  [{ type: "changemetadata", id, metadata: newMetadata }],
-                  `Change metadata for "${id}"`
+                this.#runtime.edit.updateNodeMetadata(
+                  this.tab,
+                  evt.id,
+                  evt.metadata,
+                  evt.subGraphId
                 );
               }}
               @bbmultiedit=${(evt: BreadboardUI.Events.MultiEditEvent) => {
-                if (!this.tab) {
-                  this.toast(
-                    "Unable to edit; no active graph",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-
-                const { edits, description, subGraphId } = evt;
-                let editableGraph = this.#runtime.board.getEditor(
-                  this.tab.id,
-                  this.kits
+                this.#runtime.edit.multiEdit(
+                  this.tab,
+                  evt.edits,
+                  evt.description,
+                  evt.subGraphId
                 );
-                if (editableGraph && subGraphId) {
-                  editableGraph = editableGraph.getGraph(subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn("Unable to multi-edit; no active graph");
-                  return;
-                }
-
-                editableGraph.edit(edits, description);
               }}
               @bbnodecreate=${(evt: BreadboardUI.Events.NodeCreateEvent) => {
-                if (!this.tab) {
-                  this.toast(
-                    "Unable to edit; no active graph",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-
-                const { id, nodeType, metadata, configuration } = evt;
-                const newNode = {
-                  id,
-                  type: nodeType,
-                  metadata: metadata || undefined,
-                  configuration: configuration || undefined,
-                };
-
-                let editableGraph = this.#runtime.board.getEditor(
-                  this.tab.id,
-                  this.kits
-                );
-                if (editableGraph && evt.subGraphId) {
-                  editableGraph = editableGraph.getGraph(evt.subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                // Comment nodes are stored in the metadata for the graph
-                if (nodeType === "comment") {
-                  const inspectableGraph = editableGraph.inspect();
-                  const { id, metadata } = evt;
-
-                  if (!metadata) {
-                    return;
-                  }
-
-                  const graphMetadata = inspectableGraph.metadata() || {};
-                  graphMetadata.comments = graphMetadata.comments || [];
-                  graphMetadata.comments.push({
-                    id,
-                    text: "",
-                    metadata,
-                  });
-
-                  editableGraph.edit(
-                    [{ type: "changegraphmetadata", metadata: graphMetadata }],
-                    `Change metadata for graph - add comment "${id}"`
-                  );
-                  return;
-                }
-
-                editableGraph.edit(
-                  [{ type: "addnode", node: newNode }],
-                  `Add node ${id}`
+                this.#runtime.edit.createNode(
+                  this.tab,
+                  evt.id,
+                  evt.nodeType,
+                  evt.configuration,
+                  evt.metadata,
+                  evt.subGraphId
                 );
               }}
               @bbnodeconfigurationupdaterequest=${(
@@ -2072,112 +1475,25 @@ export class Main extends LitElement {
               @bbcommentupdate=${(
                 evt: BreadboardUI.Events.CommentUpdateEvent
               ) => {
-                if (!this.tab) {
-                  this.toast(
-                    "Unable to edit; no active graph",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-                const { id, text, subGraphId } = evt;
-
-                let editableGraph = this.#runtime.board.getEditor(
-                  this.tab.id,
-                  this.kits
-                );
-                if (editableGraph && subGraphId) {
-                  editableGraph = editableGraph.getGraph(subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                const inspectableGraph = editableGraph.inspect();
-                const graphMetadata = inspectableGraph.metadata() || {};
-                graphMetadata.comments ??= [];
-
-                const comment = graphMetadata.comments.find(
-                  (comment) => comment.id === id
-                );
-                if (!comment) {
-                  console.warn("Unable to update comment; not found");
-                  return;
-                }
-
-                comment.text = text;
-                editableGraph.edit(
-                  [{ type: "changegraphmetadata", metadata: graphMetadata }],
-                  `Change metadata for graph - add comment "${id}"`
+                this.#runtime.edit.changeComment(
+                  this.tab,
+                  evt.id,
+                  evt.text,
+                  evt.subGraphId
                 );
               }}
               @bbnodeupdate=${(evt: BreadboardUI.Events.NodeUpdateEvent) => {
-                if (!this.tab) {
-                  this.toast(
-                    "Unable to edit; no active graph",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-                let editableGraph = this.#runtime.board.getEditor(
-                  this.tab.id,
-                  this.kits
-                );
-
-                if (editableGraph && evt.subGraphId) {
-                  editableGraph = editableGraph.getGraph(evt.subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                editableGraph.edit(
-                  [
-                    {
-                      type: "changeconfiguration",
-                      id: evt.id,
-                      configuration: evt.configuration,
-                      reset: true,
-                    },
-                  ],
-                  `Change configuration for "${evt.id}"`
+                this.#runtime.edit.changeNodeConfiguration(
+                  this.tab,
+                  evt.id,
+                  evt.configuration,
+                  evt.subGraphId
                 );
               }}
               @bbnodedelete=${(evt: BreadboardUI.Events.NodeDeleteEvent) => {
-                if (!this.tab) {
-                  this.toast(
-                    "Unable to edit; no active graph",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-                let editableGraph = this.#runtime.board.getEditor(
-                  this.tab.id,
-                  this.kits
-                );
-
-                if (editableGraph && evt.subGraphId) {
-                  editableGraph = editableGraph.getGraph(evt.subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                editableGraph.edit(
-                  [{ type: "removenode", id: evt.id }],
-                  `Remove node ${evt.id}`
-                );
+                this.#runtime.edit.deleteNode(this.tab, evt.id, evt.subGraphId);
               }}
               @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-                if (!this.#uiRef.value) {
-                  return;
-                }
-
                 this.toast(toastEvent.message, toastEvent.toastType);
               }}
               @bbinputenter=${async (
@@ -2220,12 +1536,7 @@ export class Main extends LitElement {
           </div>
         ${until(nav)}
       </div>`;
-
-    if (this.embed) {
-      tmpl = html`<iframe
-        src="/preview.html?board=${this.url}&embed=true"
-      ></iframe>`;
-    }
+    });
 
     let boardOverlay: HTMLTemplateResult | symbol = nothing;
     if (this.boardEditOverlayInfo) {
@@ -2378,30 +1689,33 @@ export class Main extends LitElement {
     }
 
     let historyOverlay: HTMLTemplateResult | symbol = nothing;
-    if (history && this.showHistory) {
-      historyOverlay = html`<bb-graph-history
-        .entries=${history.entries()}
-        .canRedo=${history.canRedo()}
-        .canUndo=${history.canUndo()}
-        .count=${history.entries().length}
-        .idx=${history.index()}
-        @bbundo=${() => {
-          if (!history.canUndo()) {
-            return;
-          }
+    if (this.showHistory) {
+      const history = this.#runtime.edit.getHistory(this.tab);
+      if (history) {
+        historyOverlay = html`<bb-graph-history
+          .entries=${history.entries()}
+          .canRedo=${history.canRedo()}
+          .canUndo=${history.canUndo()}
+          .count=${history.entries().length}
+          .idx=${history.index()}
+          @bbundo=${() => {
+            if (!history.canUndo()) {
+              return;
+            }
 
-          history.undo();
-          this.requestUpdate();
-        }}
-        @bbredo=${() => {
-          if (!history.canRedo()) {
-            return;
-          }
+            history.undo();
+            this.requestUpdate();
+          }}
+          @bbredo=${() => {
+            if (!history.canRedo()) {
+              return;
+            }
 
-          history.redo();
-          this.requestUpdate();
-        }}
-      ></bb-graph-history>`;
+            history.redo();
+            this.requestUpdate();
+          }}
+        ></bb-graph-history>`;
+      }
     }
 
     let saveAsDialogOverlay: HTMLTemplateResult | symbol = nothing;
@@ -2456,54 +1770,15 @@ export class Main extends LitElement {
             );
             return;
           }
-          let editableGraph = this.#runtime.board.getEditor(
-            this.tab.id,
-            this.kits
+
+          this.#runtime.edit.changeNodeConfigurationPart(
+            this.tab,
+            evt.id,
+            evt.configuration,
+            evt.subGraphId
           );
-
-          if (editableGraph && evt.subGraphId) {
-            editableGraph = editableGraph.getGraph(evt.subGraphId);
-          }
-
-          if (!editableGraph) {
-            console.warn("Unable to create node; no active graph");
-            return;
-          }
-
-          const inspectableNode = editableGraph.inspect().nodeById(evt.id);
-          const configuration = inspectableNode?.descriptor.configuration ?? {};
-          const updatedConfiguration = structuredClone(configuration);
-          for (const [key, value] of Object.entries(evt.configuration)) {
-            if (value === null || value === undefined) {
-              delete updatedConfiguration[key];
-              continue;
-            }
-
-            updatedConfiguration[key] = value;
-          }
-
-          const result = await editableGraph.edit(
-            [
-              {
-                type: "changeconfiguration",
-                id: evt.id,
-                configuration: updatedConfiguration,
-                reset: true,
-              },
-            ],
-            `Change configuration for "${evt.id}"`
-          );
-
-          if (result.success) {
-            this.#nodeConfiguratorData = null;
-            this.showNodeConfigurator = false;
-          } else {
-            this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
-          }
         }}
-      >
-        <div>This should work!</div>
-      </bb-node-configuration-overlay>`;
+      ></bb-node-configuration-overlay>`;
     }
 
     let overflowMenu: HTMLTemplateResult | symbol = nothing;
@@ -2720,7 +1995,7 @@ export class Main extends LitElement {
     }
 
     return [
-      tmpl,
+      until(tmpl),
       boardOverlay,
       settingsOverlay,
       firstRunOverlay,

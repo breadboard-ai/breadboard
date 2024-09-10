@@ -1554,6 +1554,12 @@ export class Graph extends PIXI.Container {
         layout.justAdded = false;
 
         graphComment.position.set(layout.x, layout.y);
+        graphComment.emit(
+          GRAPH_OPERATIONS.GRAPH_NODE_MOVED,
+          layout.x,
+          layout.y,
+          true
+        );
       });
 
       this.addChild(graphComment);
