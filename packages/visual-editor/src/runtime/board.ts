@@ -5,9 +5,6 @@
  */
 
 import {
-  createLoader,
-  edit,
-  EditableGraph,
   GraphDescriptor,
   GraphLoader,
   GraphProvider,
@@ -16,22 +13,20 @@ import {
 import { VETab, VETabId } from "./types";
 import {
   VEBoardLoadErrorEvent,
-  VEEditEvent,
   VEErrorEvent,
   VETabChangeEvent,
 } from "./events";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 
 export class Board extends EventTarget {
-  #editors = new Map<VETabId, EditableGraph>();
   #tabs = new Map<VETabId, VETab>();
   #currentTabId: VETabId | null = null;
-  #loader: GraphLoader;
 
-  constructor(public readonly providers: GraphProvider[]) {
+  constructor(
+    public readonly providers: GraphProvider[],
+    public readonly loader: GraphLoader
+  ) {
     super();
-
-    this.#loader = createLoader(providers);
   }
 
   #canParse(url: string) {
@@ -78,10 +73,6 @@ export class Board extends EventTarget {
 
   #getProviderForURL(url: URL) {
     return this.providers.find((provider) => provider.canProvide(url)) || null;
-  }
-
-  get loader() {
-    return this.#loader;
   }
 
   get tabs() {
@@ -150,7 +141,7 @@ export class Board extends EventTarget {
         }
       }
 
-      const graph = await this.#loader.load(url, { base });
+      const graph = await this.loader.load(url, { base });
       if (!graph) {
         this.dispatchEvent(new VEErrorEvent("Unable to load board"));
         return;
@@ -207,35 +198,6 @@ export class Board extends EventTarget {
 
     this.#tabs.delete(id);
     this.dispatchEvent(new VETabChangeEvent());
-  }
-
-  getEditor(id: VETabId | null, kits: Kit[]): EditableGraph | null {
-    if (!id) return null;
-    if (this.#editors.get(id)) return this.#editors.get(id)!;
-
-    const tab = this.#tabs.get(id);
-    if (!tab?.graph) {
-      return null;
-    }
-
-    const editor = edit(tab.graph, { kits, loader: this.#loader });
-    editor.addEventListener("graphchange", (evt) => {
-      tab.graph = evt.graph;
-
-      this.dispatchEvent(new VEEditEvent(evt.visualOnly));
-    });
-
-    editor.addEventListener("graphchangereject", (evt) => {
-      tab.graph = evt.graph;
-
-      const { reason } = evt;
-      if (reason.type === "error") {
-        this.dispatchEvent(new VEErrorEvent(reason.error));
-      }
-    });
-
-    this.#editors.set(id, editor);
-    return editor;
   }
 
   canSave(id: VETabId | null): boolean {

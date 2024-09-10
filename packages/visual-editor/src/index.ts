@@ -541,9 +541,11 @@ export class Main extends LitElement {
       dataStore: this.dataStore,
     });
 
-    this.#runtime.board.addEventListener(
+    this.#runtime.edit.addEventListener(
       Runtime.Events.VEEditEvent.eventName,
       () => {
+        this.#nodeConfiguratorData = null;
+        this.showNodeConfigurator = false;
         this.requestUpdate();
       }
     );
@@ -843,35 +845,12 @@ export class Main extends LitElement {
         return;
       }
 
-      const editableGraph = this.#runtime.board.getEditor(
-        this.tab.id,
-        this.kits
-      );
-      if (!editableGraph) {
-        return;
-      }
-
-      const history = editableGraph.history();
-
-      // TODO: Make this not a console-only thing.
-      const printHistory = (label: string) => {
-        const labels = history.entries().map((entry) => entry.label);
-        console.group(`History: ${label}`);
-        labels.forEach((label, index) => {
-          const current = index === history.index() ? ">" : " ";
-          console.log(`${index}:${current} ${label}`);
-        });
-        console.groupEnd();
-      };
-
       if (evt.shiftKey) {
-        history.redo();
-        printHistory("Redo");
+        this.#runtime.edit.redo(this.tab, this.kits);
         return;
       }
 
-      history.undo();
-      printHistory("Undo");
+      this.#runtime.edit.undo(this.tab, this.kits);
       return;
     }
   }
@@ -1257,96 +1236,34 @@ export class Main extends LitElement {
   }
 
   #handleBoardInfoUpdate(evt: BreadboardUI.Events.BoardInfoUpdateEvent) {
-    if (evt.subGraphId) {
-      if (!this.tab) {
-        this.toast(
-          "Unable to edit; no active graph",
-          BreadboardUI.Events.ToastType.ERROR
-        );
-        return;
-      }
-
-      const editableGraph = this.#runtime.board.getEditor(
-        this.tab.id,
-        this.kits
-      );
-      if (!editableGraph) {
-        console.warn("Unable to update board information; no active graph");
-        return;
-      }
-
-      const subGraph = editableGraph.getGraph(evt.subGraphId);
-      if (!subGraph) {
-        console.warn("Unable to update board information; no active graph");
-        return;
-      }
-
-      const subGraphDescriptor = subGraph.raw();
-      subGraphDescriptor.title = evt.title;
-      subGraphDescriptor.version = evt.version;
-      subGraphDescriptor.description = evt.description;
-
-      if (evt.isTool !== null) {
-        subGraphDescriptor.metadata ??= {};
-        subGraphDescriptor.metadata.tags ??= [];
-
-        if (evt.isTool) {
-          if (!subGraphDescriptor.metadata.tags.includes("tool")) {
-            subGraphDescriptor.metadata.tags.push("tool");
-          }
-        } else {
-          subGraphDescriptor.metadata.tags =
-            subGraphDescriptor.metadata.tags.filter((tag) => tag !== "tool");
-        }
-      }
-
-      editableGraph.replaceGraph(evt.subGraphId, subGraphDescriptor);
-    } else if (this.tab?.graph) {
-      this.tab.graph.title = evt.title;
-      this.tab.graph.version = evt.version;
-      this.tab.graph.description = evt.description;
-
-      if (evt.status) {
-        this.tab.graph.metadata ??= {};
-        this.tab.graph.metadata.tags ??= [];
-
-        switch (evt.status) {
-          case "published": {
-            if (!this.tab.graph.metadata.tags.includes("published")) {
-              this.tab.graph.metadata.tags.push("published");
-            }
-            break;
-          }
-
-          case "draft": {
-            this.tab.graph.metadata.tags = this.tab?.graph.metadata.tags.filter(
-              (tag) => tag !== "published"
-            );
-            break;
-          }
-        }
-      }
-
-      if (evt.isTool !== null) {
-        this.tab.graph.metadata ??= {};
-        this.tab.graph.metadata.tags ??= [];
-
-        if (evt.isTool) {
-          if (!this.tab.graph.metadata.tags.includes("tool")) {
-            this.tab.graph.metadata.tags.push("tool");
-          }
-        } else {
-          this.tab.graph.metadata.tags = this.tab?.graph.metadata.tags.filter(
-            (tag) => tag !== "tool"
-          );
-        }
-      }
-    } else {
+    if (!this.tab) {
       this.toast(
-        "Unable to update sub board information - board not found",
-        BreadboardUI.Events.ToastType.INFORMATION
+        "Unable to edit; no active graph",
+        BreadboardUI.Events.ToastType.ERROR
       );
       return;
+    }
+
+    if (evt.subGraphId) {
+      this.#runtime.edit.updateSubBoardInfo(
+        this.tab,
+        this.kits,
+        evt.subGraphId,
+        evt.title,
+        evt.version,
+        evt.description,
+        evt.status,
+        evt.isTool
+      );
+    } else {
+      this.#runtime.edit.updateBoardInfo(
+        this.tab,
+        evt.title,
+        evt.version,
+        evt.description,
+        evt.status,
+        evt.isTool
+      );
     }
   }
 
@@ -1510,12 +1427,6 @@ export class Main extends LitElement {
         // If there are any problems with the URL, etc, don't offer the save button.
       }
     }
-
-    const editor = this.#runtime.board.getEditor(
-      this.tab?.id ?? null,
-      this.kits
-    );
-    const history = editor?.history();
 
     const showingOverlay =
       this.boardEditOverlayInfo !== null ||
@@ -1682,9 +1593,9 @@ export class Main extends LitElement {
         <button
           id="undo"
           title="Undo last action"
-          ?disabled=${this.tab?.graph === null || (history && !history.canUndo())}
+          ?disabled=${this.tab?.graph === null || !this.#runtime.edit.canUndo(this.tab, this.kits)}
           @click=${() => {
-            history?.undo();
+            this.#runtime.edit.undo(this.tab, this.kits);
           }}
         >
           Preview
@@ -1692,9 +1603,9 @@ export class Main extends LitElement {
         <button
           id="redo"
           title="Redo last action"
-          ?disabled=${this.tab?.graph === null || (history && !history.canRedo())}
+          ?disabled=${this.tab?.graph === null || !this.#runtime.edit.canRedo(this.tab, this.kits)}
           @click=${() => {
-            history?.redo();
+            this.#runtime.edit.redo(this.tab, this.kits);
           }}
         >
           Preview
@@ -1765,22 +1676,12 @@ export class Main extends LitElement {
                   return;
                 }
 
-                const editableGraph = this.#runtime.board.getEditor(
-                  this.tab.id,
-                  this.kits
+                const result = this.#runtime.edit.createSubGraph(
+                  this.tab,
+                  this.kits,
+                  evt.subGraphTitle
                 );
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                const id = globalThis.crypto.randomUUID();
-                const board = blankLLMContent();
-                board.title = evt.subGraphTitle;
-
-                const editResult = editableGraph.addGraph(id, board);
-                if (!editResult) {
+                if (!result) {
                   this.toast(
                     "Unable to create sub board",
                     BreadboardUI.Events.ToastType.ERROR
@@ -1788,8 +1689,7 @@ export class Main extends LitElement {
                   return;
                 }
 
-                this.subGraphId = id;
-                this.requestUpdate();
+                this.tab.subGraphId = result;
               }}
               @bbsubgraphdelete=${async (
                 evt: BreadboardUI.Events.SubGraphDeleteEvent
@@ -1802,29 +1702,11 @@ export class Main extends LitElement {
                   return;
                 }
 
-                const editableGraph = this.#runtime.board.getEditor(
-                  this.tab.id,
-                  this.kits
+                this.#runtime.edit.deleteSubGraph(
+                  this.tab,
+                  this.kits,
+                  evt.subGraphId
                 );
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                const editResult = editableGraph.removeGraph(evt.subGraphId);
-                if (!editResult.success) {
-                  this.toast(
-                    "Unable to create sub board",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-
-                if (evt.subGraphId === this.tab.subGraphId) {
-                  this.tab.subGraphId = null;
-                }
-                this.requestUpdate();
               }}
               @bbsubgraphchosen=${(
                 evt: BreadboardUI.Events.SubGraphChosenEvent
@@ -1888,55 +1770,14 @@ export class Main extends LitElement {
                   return;
                 }
 
-                let editableGraph = this.#runtime.board.getEditor(
-                  this.tab.id,
-                  this.kits
+                this.#runtime.edit.changeEdge(
+                  this.tab,
+                  this.kits,
+                  evt.changeType,
+                  evt.from,
+                  evt.to,
+                  evt.subGraphId
                 );
-
-                if (editableGraph && evt.subGraphId) {
-                  editableGraph = editableGraph.getGraph(evt.subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                switch (evt.changeType) {
-                  case "add": {
-                    editableGraph.edit(
-                      [{ type: "addedge", edge: evt.from }],
-                      `Add edge between ${evt.from.from} and ${evt.from.to}`
-                    );
-                    break;
-                  }
-
-                  case "remove": {
-                    editableGraph.edit(
-                      [{ type: "removeedge", edge: evt.from }],
-                      `Remove edge between ${evt.from.from} and ${evt.from.to}`
-                    );
-                    break;
-                  }
-
-                  case "move": {
-                    if (!evt.to) {
-                      throw new Error("Unable to move edge - no `to` provided");
-                    }
-
-                    editableGraph.edit(
-                      [
-                        {
-                          type: "changeedge",
-                          from: evt.from,
-                          to: evt.to,
-                        },
-                      ],
-                      `Change edge from between ${evt.from.from} and ${evt.from.to} to ${evt.to.from} and ${evt.to.to}`
-                    );
-                    break;
-                  }
-                }
               }}
               @bbnodemetadataupdate=${(
                 evt: BreadboardUI.Events.NodeMetadataUpdateEvent
@@ -1949,34 +1790,12 @@ export class Main extends LitElement {
                   return;
                 }
 
-                let editableGraph = this.#runtime.board.getEditor(
-                  this.tab.id,
-                  this.kits
-                );
-
-                if (editableGraph && evt.subGraphId) {
-                  editableGraph = editableGraph.getGraph(evt.subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn(
-                    "Unable to update node metadata; no active graph"
-                  );
-                  return;
-                }
-
-                const inspectableGraph = editableGraph.inspect();
-                const { id, metadata } = evt;
-                const existingNode = inspectableGraph.nodeById(id);
-                const existingMetadata = existingNode?.metadata() || {};
-                const newMetadata = {
-                  ...existingMetadata,
-                  ...metadata,
-                };
-
-                editableGraph.edit(
-                  [{ type: "changemetadata", id, metadata: newMetadata }],
-                  `Change metadata for "${id}"`
+                this.#runtime.edit.updateNodeMetadata(
+                  this.tab,
+                  this.kits,
+                  evt.id,
+                  evt.metadata,
+                  evt.subGraphId
                 );
               }}
               @bbmultiedit=${(evt: BreadboardUI.Events.MultiEditEvent) => {
@@ -1988,21 +1807,13 @@ export class Main extends LitElement {
                   return;
                 }
 
-                const { edits, description, subGraphId } = evt;
-                let editableGraph = this.#runtime.board.getEditor(
-                  this.tab.id,
-                  this.kits
+                this.#runtime.edit.multiEdit(
+                  this.tab,
+                  this.kits,
+                  evt.edits,
+                  evt.description,
+                  evt.subGraphId
                 );
-                if (editableGraph && subGraphId) {
-                  editableGraph = editableGraph.getGraph(subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn("Unable to multi-edit; no active graph");
-                  return;
-                }
-
-                editableGraph.edit(edits, description);
               }}
               @bbnodecreate=${(evt: BreadboardUI.Events.NodeCreateEvent) => {
                 if (!this.tab) {
@@ -2013,54 +1824,14 @@ export class Main extends LitElement {
                   return;
                 }
 
-                const { id, nodeType, metadata, configuration } = evt;
-                const newNode = {
-                  id,
-                  type: nodeType,
-                  metadata: metadata || undefined,
-                  configuration: configuration || undefined,
-                };
-
-                let editableGraph = this.#runtime.board.getEditor(
-                  this.tab.id,
-                  this.kits
-                );
-                if (editableGraph && evt.subGraphId) {
-                  editableGraph = editableGraph.getGraph(evt.subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                // Comment nodes are stored in the metadata for the graph
-                if (nodeType === "comment") {
-                  const inspectableGraph = editableGraph.inspect();
-                  const { id, metadata } = evt;
-
-                  if (!metadata) {
-                    return;
-                  }
-
-                  const graphMetadata = inspectableGraph.metadata() || {};
-                  graphMetadata.comments = graphMetadata.comments || [];
-                  graphMetadata.comments.push({
-                    id,
-                    text: "",
-                    metadata,
-                  });
-
-                  editableGraph.edit(
-                    [{ type: "changegraphmetadata", metadata: graphMetadata }],
-                    `Change metadata for graph - add comment "${id}"`
-                  );
-                  return;
-                }
-
-                editableGraph.edit(
-                  [{ type: "addnode", node: newNode }],
-                  `Add node ${id}`
+                this.#runtime.edit.createNode(
+                  this.tab,
+                  this.kits,
+                  evt.id,
+                  evt.nodeType,
+                  evt.configuration,
+                  evt.metadata,
+                  evt.subGraphId
                 );
               }}
               @bbnodeconfigurationupdaterequest=${(
@@ -2079,37 +1850,13 @@ export class Main extends LitElement {
                   );
                   return;
                 }
-                const { id, text, subGraphId } = evt;
 
-                let editableGraph = this.#runtime.board.getEditor(
-                  this.tab.id,
-                  this.kits
-                );
-                if (editableGraph && subGraphId) {
-                  editableGraph = editableGraph.getGraph(subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                const inspectableGraph = editableGraph.inspect();
-                const graphMetadata = inspectableGraph.metadata() || {};
-                graphMetadata.comments ??= [];
-
-                const comment = graphMetadata.comments.find(
-                  (comment) => comment.id === id
-                );
-                if (!comment) {
-                  console.warn("Unable to update comment; not found");
-                  return;
-                }
-
-                comment.text = text;
-                editableGraph.edit(
-                  [{ type: "changegraphmetadata", metadata: graphMetadata }],
-                  `Change metadata for graph - add comment "${id}"`
+                this.#runtime.edit.changeComment(
+                  this.tab,
+                  this.kits,
+                  evt.id,
+                  evt.text,
+                  evt.subGraphId
                 );
               }}
               @bbnodeupdate=${(evt: BreadboardUI.Events.NodeUpdateEvent) => {
@@ -2120,30 +1867,13 @@ export class Main extends LitElement {
                   );
                   return;
                 }
-                let editableGraph = this.#runtime.board.getEditor(
-                  this.tab.id,
-                  this.kits
-                );
 
-                if (editableGraph && evt.subGraphId) {
-                  editableGraph = editableGraph.getGraph(evt.subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                editableGraph.edit(
-                  [
-                    {
-                      type: "changeconfiguration",
-                      id: evt.id,
-                      configuration: evt.configuration,
-                      reset: true,
-                    },
-                  ],
-                  `Change configuration for "${evt.id}"`
+                this.#runtime.edit.changeNodeConfiguration(
+                  this.tab,
+                  this.kits,
+                  evt.id,
+                  evt.configuration,
+                  evt.subGraphId
                 );
               }}
               @bbnodedelete=${(evt: BreadboardUI.Events.NodeDeleteEvent) => {
@@ -2154,23 +1884,11 @@ export class Main extends LitElement {
                   );
                   return;
                 }
-                let editableGraph = this.#runtime.board.getEditor(
-                  this.tab.id,
-                  this.kits
-                );
-
-                if (editableGraph && evt.subGraphId) {
-                  editableGraph = editableGraph.getGraph(evt.subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                editableGraph.edit(
-                  [{ type: "removenode", id: evt.id }],
-                  `Remove node ${evt.id}`
+                this.#runtime.edit.deleteNode(
+                  this.tab,
+                  this.kits,
+                  evt.id,
+                  evt.subGraphId
                 );
               }}
               @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
@@ -2378,30 +2096,33 @@ export class Main extends LitElement {
     }
 
     let historyOverlay: HTMLTemplateResult | symbol = nothing;
-    if (history && this.showHistory) {
-      historyOverlay = html`<bb-graph-history
-        .entries=${history.entries()}
-        .canRedo=${history.canRedo()}
-        .canUndo=${history.canUndo()}
-        .count=${history.entries().length}
-        .idx=${history.index()}
-        @bbundo=${() => {
-          if (!history.canUndo()) {
-            return;
-          }
+    if (this.showHistory) {
+      const history = this.#runtime.edit.getHistory(this.tab, this.kits);
+      if (history) {
+        historyOverlay = html`<bb-graph-history
+          .entries=${history.entries()}
+          .canRedo=${history.canRedo()}
+          .canUndo=${history.canUndo()}
+          .count=${history.entries().length}
+          .idx=${history.index()}
+          @bbundo=${() => {
+            if (!history.canUndo()) {
+              return;
+            }
 
-          history.undo();
-          this.requestUpdate();
-        }}
-        @bbredo=${() => {
-          if (!history.canRedo()) {
-            return;
-          }
+            history.undo();
+            this.requestUpdate();
+          }}
+          @bbredo=${() => {
+            if (!history.canRedo()) {
+              return;
+            }
 
-          history.redo();
-          this.requestUpdate();
-        }}
-      ></bb-graph-history>`;
+            history.redo();
+            this.requestUpdate();
+          }}
+        ></bb-graph-history>`;
+      }
     }
 
     let saveAsDialogOverlay: HTMLTemplateResult | symbol = nothing;
@@ -2456,54 +2177,16 @@ export class Main extends LitElement {
             );
             return;
           }
-          let editableGraph = this.#runtime.board.getEditor(
-            this.tab.id,
-            this.kits
+
+          this.#runtime.edit.changeNodeConfigurationPart(
+            this.tab,
+            this.kits,
+            evt.id,
+            evt.configuration,
+            evt.subGraphId
           );
-
-          if (editableGraph && evt.subGraphId) {
-            editableGraph = editableGraph.getGraph(evt.subGraphId);
-          }
-
-          if (!editableGraph) {
-            console.warn("Unable to create node; no active graph");
-            return;
-          }
-
-          const inspectableNode = editableGraph.inspect().nodeById(evt.id);
-          const configuration = inspectableNode?.descriptor.configuration ?? {};
-          const updatedConfiguration = structuredClone(configuration);
-          for (const [key, value] of Object.entries(evt.configuration)) {
-            if (value === null || value === undefined) {
-              delete updatedConfiguration[key];
-              continue;
-            }
-
-            updatedConfiguration[key] = value;
-          }
-
-          const result = await editableGraph.edit(
-            [
-              {
-                type: "changeconfiguration",
-                id: evt.id,
-                configuration: updatedConfiguration,
-                reset: true,
-              },
-            ],
-            `Change configuration for "${evt.id}"`
-          );
-
-          if (result.success) {
-            this.#nodeConfiguratorData = null;
-            this.showNodeConfigurator = false;
-          } else {
-            this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
-          }
         }}
-      >
-        <div>This should work!</div>
-      </bb-node-configuration-overlay>`;
+      ></bb-node-configuration-overlay>`;
     }
 
     let overflowMenu: HTMLTemplateResult | symbol = nothing;
