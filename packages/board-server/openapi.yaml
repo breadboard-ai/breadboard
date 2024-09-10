@@ -19,7 +19,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/BoardList'
+                  $ref: '#/components/schemas/BoardListEntry'
 
   /boards/@{account}/{boardName}.json:
     get:
@@ -222,10 +222,8 @@ components:
         type: string
 
   schemas:
-    BoardList:
-      type: array
-      items:
-        type: object
+    BoardListEntry:
+      type: object
       properties:
         title:
           type: string
