@@ -30,6 +30,7 @@ export { anyOf } from "./internal/type-system/any-of.js";
 export { array } from "./internal/type-system/array.js";
 export { enumeration } from "./internal/type-system/enumeration.js";
 export { intersect } from "./internal/type-system/intersect.js";
+export { jsonSchema } from "./internal/type-system/json-schema.js";
 export { object, optional } from "./internal/type-system/object.js";
 export { string } from "./internal/type-system/string.js";
 export { toJSONSchema } from "./internal/type-system/type.js";
