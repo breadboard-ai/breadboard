@@ -5,7 +5,7 @@
  */
 
 import { HarnessRunner, RunEventMap } from "@google-labs/breadboard/harness";
-import { TabId, TabURL } from "./types";
+import { TabId } from "./types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { InspectableRunObserver } from "@google-labs/breadboard";
 
@@ -50,11 +50,11 @@ export class RuntimeTabChangeEvent extends Event {
   }
 }
 
-export class RuntimeCloseTabEvent extends Event {
-  static eventName = "runtimeclosetab" as const;
+export class RuntimeTabCloseEvent extends Event {
+  static eventName = "runtimetabclose" as const;
 
-  constructor(public readonly url: TabURL) {
-    super(RuntimeCloseTabEvent.eventName, { ...eventInit });
+  constructor(public readonly tabId: TabId) {
+    super(RuntimeTabCloseEvent.eventName, { ...eventInit });
   }
 }
 
@@ -76,7 +76,7 @@ type RuntimeEvents =
   | RuntimeErrorEvent
   | RuntimeBoardEditEvent
   | RuntimeTabChangeEvent
-  | RuntimeCloseTabEvent
+  | RuntimeTabCloseEvent
   | RuntimeBoardRunEvent;
 
 declare global {

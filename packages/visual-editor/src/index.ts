@@ -6,7 +6,6 @@
 
 import {
   HarnessProxyConfig,
-  HarnessRunner,
   RunConfig,
   RunErrorEvent,
   RunSecretEvent,
@@ -156,7 +155,6 @@ export class Main extends LitElement {
   #boardId = 0;
   #boardPendingSave = false;
   #status = BreadboardUI.Types.STATUS.STOPPED;
-  #runner: HarnessRunner | null = null;
   #providers: GraphProvider[];
   #settings: SettingsStore | null;
   #secretsHelper: SecretsHelper | null = null;
@@ -307,6 +305,24 @@ export class Main extends LitElement {
               if (this.tab.graph.title) {
                 this.#setPageTitle(this.tab.graph.title);
               }
+            }
+          }
+        );
+
+        this.#runtime.board.addEventListener(
+          Runtime.Events.RuntimeTabCloseEvent.eventName,
+          (evt: Runtime.Events.RuntimeTabCloseEvent) => {
+            if (!evt.tabId) {
+              return;
+            }
+
+            if (this.tab?.id !== evt.tabId) {
+              return;
+            }
+
+            if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
+              this.status = BreadboardUI.Types.STATUS.STOPPED;
+              this.#runtime.run.getAbortSignal(evt.tabId)?.abort();
             }
           }
         );
@@ -1421,9 +1437,8 @@ export class Main extends LitElement {
                 );
               }}
               @bbstopboard=${() => {
-                const abortController = this.#runtime.run.getAbortSignal(
-                  this.tab?.id ?? null
-                );
+                const tabId = this.tab?.id ?? null;
+                const abortController = this.#runtime.run.getAbortSignal(tabId);
                 if (!abortController) {
                   this.toast(
                     "Unable to stop run - no abort controller found",
@@ -1433,7 +1448,8 @@ export class Main extends LitElement {
                 }
 
                 abortController.abort("Stopped board");
-                this.#runner?.run();
+                const runner = this.#runtime.run.getRunner(tabId);
+                runner?.run();
                 this.requestUpdate();
               }}
               @bbedgechange=${(evt: BreadboardUI.Events.EdgeChangeEvent) => {
@@ -1522,17 +1538,16 @@ export class Main extends LitElement {
                   throw new Error("Can't send input, no runner");
                 }
                 if (isSecret) {
-                  if (!this.#secretsHelper) {
-                    throw new Error("No secrets helper to handle secret input");
-                  }
-                  this.#secretsHelper.receiveSecrets(event);
-                  if (
-                    this.#secretsHelper.hasAllSecrets() &&
-                    !this.#runner?.running()
-                  ) {
-                    const secrets = this.#secretsHelper.getSecrets();
-                    this.#secretsHelper = null;
-                    this.#runner?.run(secrets);
+                  if (this.#secretsHelper) {
+                    this.#secretsHelper.receiveSecrets(event);
+                    if (
+                      this.#secretsHelper.hasAllSecrets() &&
+                      !runner?.running()
+                    ) {
+                      const secrets = this.#secretsHelper.getSecrets();
+                      this.#secretsHelper = null;
+                      runner?.run(secrets);
+                    }
                   }
                 } else {
                   const data = event.data as InputValues;
