@@ -11,6 +11,8 @@ paths:
   /boards:
     get:
       summary: List boards
+      operationId: boardserver.boards.list
+      security: []
       responses:
         '200':
           description: Successful response
@@ -24,6 +26,8 @@ paths:
   /boards/@{account}/{boardName}.json:
     get:
       summary: Get a board
+      operationId: boardserver.boards.get
+      security: []
       parameters:
         - $ref: '#/components/parameters/AccountParam'
         - $ref: '#/components/parameters/BoardNameParam'
@@ -37,6 +41,8 @@ paths:
     
     post:
       summary: Create or update a board
+      operationId: boardserver.boards.post
+      security: []
       parameters:
         - $ref: '#/components/parameters/AccountParam'
         - $ref: '#/components/parameters/BoardNameParam'
@@ -61,6 +67,8 @@ paths:
   /boards/@{account}/{boardName}.app:
     get:
       summary: Serve frontend app
+      operationId: boardserver.boards.serve
+      security: []
       parameters:
         - $ref: '#/components/parameters/AccountParam'
         - $ref: '#/components/parameters/BoardNameParam'
@@ -75,6 +83,8 @@ paths:
   /boards/@{account}/{boardName}.api:
     get:
       summary: Serve API explorer
+      operationId: boardserver.boards.api.get
+      security: []
       parameters:
         - $ref: '#/components/parameters/AccountParam'
         - $ref: '#/components/parameters/BoardNameParam'
@@ -89,6 +99,8 @@ paths:
   /boards/@{account}/{boardName}.api/invoke:
     post:
       summary: Invoke API
+      operationId: boardserver.boards.api.invoke
+      security: []
       parameters:
         - $ref: '#/components/parameters/AccountParam'
         - $ref: '#/components/parameters/BoardNameParam'
@@ -112,6 +124,8 @@ paths:
   /boards/@{account}/{boardName}.api/describe:
     post:
       summary: Get API description
+      operationId: boardserver.boards.api.describe
+      security: []
       parameters:
         - $ref: '#/components/parameters/AccountParam'
         - $ref: '#/components/parameters/BoardNameParam'
@@ -126,6 +140,8 @@ paths:
   /boards/@{account}/{boardName}.api/run:
     post:
       summary: Execute the board
+      operationId: boardserver.boards.api.run
+      security: []
       parameters:
         - $ref: '#/components/parameters/AccountParam'
         - $ref: '#/components/parameters/BoardNameParam'
@@ -149,6 +165,8 @@ paths:
   /boards/@{account}/{boardName}.invite:
     get:
       summary: List invites
+      operationId: boardserver.boards.invite
+      security: []
       parameters:
         - $ref: '#/components/parameters/AccountParam'
         - $ref: '#/components/parameters/BoardNameParam'
@@ -168,6 +186,8 @@ paths:
 
     post:
       summary: Create or delete an invite
+      operationId: boardserver.boards.invites.post
+      security: []
       parameters:
         - $ref: '#/components/parameters/AccountParam'
         - $ref: '#/components/parameters/BoardNameParam'
