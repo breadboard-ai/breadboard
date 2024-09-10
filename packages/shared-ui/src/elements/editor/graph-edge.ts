@@ -10,6 +10,7 @@ import { GraphNode } from "./graph-node.js";
 import { getGlobalColor } from "./utils.js";
 import { EdgeData, cloneEdgeData } from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
+import { GRAPH_OPERATIONS } from "./types.js";
 
 const edgeColorWithValues = getGlobalColor("--bb-boards-500");
 const edgeColorSelected = getGlobalColor("--bb-ui-600");
@@ -143,6 +144,18 @@ export class GraphEdge extends PIXI.Container {
 
       this.#edgeGraphic.cursor = "pointer";
     });
+
+    this.#valueSelector.addEventListener(
+      "pointerdown",
+      (evt: PIXI.FederatedPointerEvent) => {
+        this.emit(
+          GRAPH_OPERATIONS.GRAPH_EDGE_VALUE_SELECTED,
+          this.value,
+          evt.x,
+          evt.y
+        );
+      }
+    );
 
     const texture = GraphAssets.instance().get("value");
     this.#valueSprite = texture ? new PIXI.Sprite(texture) : null;

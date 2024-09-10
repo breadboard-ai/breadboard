@@ -16,6 +16,7 @@ export { ConnectionInput } from "./connection/connection-input.js";
 export { ConnectionSettings } from "./connection/connection-settings.js";
 export { ConnectionSignin } from "./connection/connection-signin.js";
 export { DrawableInput } from "./input/drawable/drawable.js";
+export { EdgeValueOverlay } from "./overlay/edge-value.js";
 export { Editor } from "./editor/editor.js";
 export { EventDetails } from "./event-details/event-details.js";
 export { FancyJson } from "./editor/fancy-json.js";
