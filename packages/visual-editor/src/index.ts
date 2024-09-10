@@ -69,20 +69,11 @@ const ENVIRONMENT: BreadboardUI.Contexts.Environment = {
 
 @customElement("bb-main")
 export class Main extends LitElement {
-  @property({ reflect: true })
-  url: string | null = null;
-
   @state()
   graph: GraphDescriptor | null = null;
 
   @property()
   subGraphId: string | null = null;
-
-  @state()
-  run: InspectableRun | null = null;
-
-  @state()
-  embed = false;
 
   @state()
   showNav = false;
@@ -146,12 +137,6 @@ export class Main extends LitElement {
   @provide({ context: BreadboardUI.Elements.tokenVendorContext })
   tokenVendor!: BreadboardUI.Elements.TokenVendor;
 
-  @state()
-  dataStore = getDataStore();
-
-  @state()
-  runStore = getRunStore();
-
   @provide({ context: BreadboardUI.Contexts.settingsHelperContext })
   settingsHelper!: SettingsHelperImpl;
 
@@ -190,6 +175,8 @@ export class Main extends LitElement {
   #recentBoardStore = RecentBoardStore.instance();
   #recentBoards: BreadboardUI.Types.RecentBoard[] = [];
   #isSaving = false;
+  #dataStore = getDataStore();
+  #runStore = getRunStore();
 
   #runtime!: Runtime.RuntimeInstance;
 
@@ -253,8 +240,8 @@ export class Main extends LitElement {
       .then(() => {
         return Runtime.create({
           providers: config.providers ?? [],
-          runStore: this.runStore,
-          dataStore: this.dataStore,
+          runStore: this.#runStore,
+          dataStore: this.#dataStore,
         });
       })
       .then((runtime) => {
@@ -297,7 +284,11 @@ export class Main extends LitElement {
               // If there is a TGO in the tab change event, honor it and populate a
               // run with it before switching to the tab proper.
               if (evt.topGraphObserver) {
-                this.#runtime.run.create(this.tab.id, evt.topGraphObserver);
+                this.#runtime.run.create(
+                  this.tab.id,
+                  evt.topGraphObserver,
+                  evt.runObserver
+                );
               }
 
               if (this.tab.graph.url) {
@@ -1009,22 +1000,23 @@ export class Main extends LitElement {
         if (isSerializedRun(runData)) {
           const runObserver = createRunObserver({
             logLevel: "debug",
-            dataStore: this.dataStore,
+            dataStore: this.#dataStore,
           });
 
           evt.preventDefault();
 
           runObserver.load(runData).then(async (result) => {
             if (result.success) {
-              this.run = result.run;
+              // TODO: Append the run to the runObserver so that it can be obtained later.
               const topGraphObserver =
-                await BreadboardUI.Utils.TopGraphObserver.fromRun(this.run);
+                await BreadboardUI.Utils.TopGraphObserver.fromRun(result.run);
               const descriptor = topGraphObserver?.current()?.graph ?? null;
 
               if (descriptor) {
                 this.#runtime.board.loadFromDescriptor(
                   descriptor,
-                  topGraphObserver
+                  topGraphObserver,
+                  runObserver
                 );
               } else {
                 this.toast(
@@ -1416,7 +1408,7 @@ export class Main extends LitElement {
                       diagnostics: true,
                       kits: [], // The kits are added by the runtime.
                       loader: this.#runtime.board.loader,
-                      store: this.dataStore,
+                      store: this.#dataStore,
                       inputs: BreadboardUI.Data.inputsFromSettings(
                         this.#settings
                       ),
@@ -1925,9 +1917,12 @@ export class Main extends LitElement {
               generatedUrls.add(url);
 
               let fileName = `${board.title ?? "Untitled Board"}.json`;
-              if (this.url) {
+              if (this.tab.graph.url) {
                 try {
-                  const boardUrl = new URL(this.url, window.location.href);
+                  const boardUrl = new URL(
+                    this.tab.graph.url,
+                    window.location.href
+                  );
                   const baseName = /[^/]+$/.exec(boardUrl.pathname);
                   if (baseName) {
                     fileName = baseName[0];

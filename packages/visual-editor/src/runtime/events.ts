@@ -7,6 +7,7 @@
 import { HarnessRunner, RunEventMap } from "@google-labs/breadboard/harness";
 import { TabId, TabURL } from "./types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import { InspectableRunObserver } from "@google-labs/breadboard";
 
 const eventInit = {
   bubbles: true,
@@ -42,7 +43,8 @@ export class RuntimeTabChangeEvent extends Event {
   static eventName = "runtimetabchange" as const;
 
   constructor(
-    public readonly topGraphObserver?: BreadboardUI.Utils.TopGraphObserver
+    public readonly topGraphObserver?: BreadboardUI.Utils.TopGraphObserver,
+    public readonly runObserver?: InspectableRunObserver
   ) {
     super(RuntimeTabChangeEvent.eventName, { ...eventInit });
   }
