@@ -16,6 +16,7 @@ import {
   isLLMContentBehavior,
   isPortSpecBehavior,
   isSelect,
+  isEnum,
 } from "../../utils/index.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -539,8 +540,13 @@ export class UserInput extends LitElement {
                   break;
                 }
 
-                if (isSelect(input.schema) && input.schema.enum) {
-                  const enumValue = input.value ?? defaultValue ?? "";
+                if (isSelect(input.schema)) {
+                  const options = isEnum(input.schema)
+                    ? input.schema.enum || []
+                    : input.schema.examples || [];
+
+                  const selectValue = input.value ?? defaultValue ?? "";
+
                   inputField = html`<select
                     id=${id}
                     name=${id}
@@ -548,16 +554,16 @@ export class UserInput extends LitElement {
                     placeholder=${input.schema.description ?? ""}
                     .autofocus=${idx === 0 ? true : false}
                   >
-                    ${input.schema.enum.map(
+                    ${options.map(
                       (item) =>
-                        html`<option ?selected=${item === enumValue}>
+                        html`<option ?selected=${item === selectValue}>
                           ${item}
                         </option>`
                     )}
                   </select>`;
+
                   break;
                 }
-
                 if (
                   input.schema.format === "multiline" ||
                   input.schema.format === "markdown"
