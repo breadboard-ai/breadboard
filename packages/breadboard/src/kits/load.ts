@@ -12,9 +12,11 @@ import {
   InputValues,
   Kit,
   KitManifest,
+  NodeDescriberContext,
   NodeHandlerContext,
   NodeHandlerMetadata,
   NodeHandlerObject,
+  Schema,
 } from "../types.js";
 import { asRuntimeKit } from "./ctors.js";
 
@@ -48,8 +50,15 @@ class GraphDescriptorNodeHandler implements NodeHandlerObject {
     if (metadata?.help) this.metadata.help = metadata.help;
   }
 
-  async describe() {
-    return await inspect(this.#graph).describe();
+  async describe(
+    inputs?: InputValues,
+    _inputSchema?: Schema,
+    _outputSchema?: Schema,
+    context?: NodeDescriberContext
+  ) {
+    return await inspect(this.#graph, {
+      kits: context?.kits,
+    }).describe(inputs);
   }
 
   async invoke(inputs: InputValues, context: NodeHandlerContext) {
