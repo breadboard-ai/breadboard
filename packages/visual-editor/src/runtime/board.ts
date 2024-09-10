@@ -96,6 +96,9 @@ export class Board extends EventTarget {
     runObserver?: InspectableRunObserver
   ) {
     const id = globalThis.crypto.randomUUID();
+    if (this.#currentTabId) {
+      this.closeTab(this.#currentTabId);
+    }
     this.#tabs.clear();
     this.#tabs.set(id, {
       id,
@@ -113,6 +116,9 @@ export class Board extends EventTarget {
   }
 
   async loadFromURL(boardUrl: string, currentUrl: string | null = null) {
+    if (this.#currentTabId) {
+      this.closeTab(this.#currentTabId);
+    }
     let url = this.#makeRelativeToCurrentBoard(boardUrl, currentUrl);
 
     // Redirect older /graphs examples to /example-boards
