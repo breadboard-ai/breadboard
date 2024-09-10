@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "@google-labs/breadboard";
+import { Board, GraphDescriptor } from "@google-labs/breadboard";
 
 import worker from "./boards/worker.js";
 import repeater from "./boards/repeater.js";
@@ -17,6 +17,7 @@ import specialist from "./boards/specialist.js";
 import looper from "./boards/looper.js";
 import joiner from "./boards/joiner.js";
 import { serialize } from "@breadboard-ai/build";
+import content from "../bgl/content.bgl.json" with { type: "application/json" };
 
 // TODO: Convert to new syntax
 const kit = new Board({
@@ -32,6 +33,7 @@ kit.graphs = {
   repeater: serialize(repeater),
   worker: serialize(worker),
   looper: serialize(looper),
+  content: content as GraphDescriptor,
 };
 
 core.invoke({ $id: "worker", $board: "#worker" });
@@ -42,5 +44,6 @@ core.invoke({ $id: "tool-worker", $board: toolWorker });
 core.invoke({ $id: "specialist", $board: specialist });
 core.invoke({ $id: "looper", $board: "#looper" });
 core.invoke({ $id: "joiner", $board: "#joiner" });
+core.invoke({ $id: "content", $board: "#content" });
 
 export default kit;
