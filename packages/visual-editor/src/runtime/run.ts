@@ -40,6 +40,7 @@ export class Run extends EventTarget {
       harnessRunner?: HarnessRunner;
       topGraphObserver?: BreadboardUI.Utils.TopGraphObserver;
       runObserver?: InspectableRunObserver;
+      abortController?: AbortController;
     }
   >();
 
@@ -69,7 +70,20 @@ export class Run extends EventTarget {
       return null;
     }
 
-    return run.harnessRunner;
+    return run.harnessRunner ?? null;
+  }
+
+  getAbortSignal(tabId: VETabId | null) {
+    if (!tabId) {
+      return null;
+    }
+
+    const run = this.#runs.get(tabId);
+    if (!run) {
+      return null;
+    }
+
+    return run.abortController ?? null;
   }
 
   getObservers(tabId: VETabId | null) {
@@ -87,9 +101,9 @@ export class Run extends EventTarget {
   }
 
   runBoard(tabId: VETabId, config: RunConfig) {
-    config = { ...config, kits: this.kits };
-
     const abortController = new AbortController();
+    config = { ...config, kits: this.kits, signal: abortController.signal };
+
     const runner = this.#createBoardRunner(config, abortController);
     this.#runs.set(tabId, runner);
 
@@ -197,7 +211,7 @@ export class Run extends EventTarget {
 
     const topGraphObserver = new BreadboardUI.Utils.TopGraphObserver(
       harnessRunner,
-      abortController.signal,
+      config.signal,
       runObserver
     );
 

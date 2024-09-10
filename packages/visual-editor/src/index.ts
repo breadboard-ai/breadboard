@@ -163,7 +163,6 @@ export class Main extends LitElement {
   @property()
   tab: Runtime.Types.VETab | null = null;
 
-  #abortController: AbortController | null = null;
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #boardId = 0;
   #boardPendingSave = false;
@@ -1351,14 +1350,6 @@ export class Main extends LitElement {
               @bbsubgraphcreate=${async (
                 evt: BreadboardUI.Events.SubGraphCreateEvent
               ) => {
-                if (!this.tab) {
-                  this.toast(
-                    "Unable to edit; no active graph",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-
                 const result = this.#runtime.edit.createSubGraph(
                   this.tab,
                   evt.subGraphTitle
@@ -1371,24 +1362,15 @@ export class Main extends LitElement {
                   return;
                 }
 
+                if (!this.tab) {
+                  return;
+                }
                 this.tab.subGraphId = result;
               }}
               @bbsubgraphdelete=${async (
                 evt: BreadboardUI.Events.SubGraphDeleteEvent
               ) => {
-                if (!this.tab) {
-                  this.toast(
-                    "Unable to edit; no active graph",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-
-                this.#runtime.edit.deleteSubGraph(
-                  this.tab,
-
-                  evt.subGraphId
-                );
+                this.#runtime.edit.deleteSubGraph(this.tab, evt.subGraphId);
               }}
               @bbsubgraphchosen=${(
                 evt: BreadboardUI.Events.SubGraphChosenEvent
@@ -1410,8 +1392,6 @@ export class Main extends LitElement {
 
                 const graph = this.tab?.graph;
 
-                this.#abortController = new AbortController();
-
                 this.#runBoard(
                   addNodeProxyServerConfig(
                     this.#proxy,
@@ -1422,7 +1402,6 @@ export class Main extends LitElement {
                       kits: [], // The kits are added by the runtime.
                       loader: this.#runtime.board.loader,
                       store: this.dataStore,
-                      signal: this.#abortController?.signal,
                       inputs: BreadboardUI.Data.inputsFromSettings(
                         this.#settings
                       ),
@@ -1435,23 +1414,22 @@ export class Main extends LitElement {
                 );
               }}
               @bbstopboard=${() => {
-                if (!this.#abortController) {
-                  return;
-                }
-
-                this.#abortController.abort("Stopped board");
-                this.#runner?.run();
-                this.requestUpdate();
-              }}
-              @bbedgechange=${(evt: BreadboardUI.Events.EdgeChangeEvent) => {
-                if (!this.tab) {
+                const abortController = this.#runtime.run.getAbortSignal(
+                  this.tab?.id ?? null
+                );
+                if (!abortController) {
                   this.toast(
-                    "Unable to edit; no active graph",
+                    "Unable to stop run - no abort controller found",
                     BreadboardUI.Events.ToastType.ERROR
                   );
                   return;
                 }
 
+                abortController.abort("Stopped board");
+                this.#runner?.run();
+                this.requestUpdate();
+              }}
+              @bbedgechange=${(evt: BreadboardUI.Events.EdgeChangeEvent) => {
                 this.#runtime.edit.changeEdge(
                   this.tab,
                   evt.changeType,
@@ -1463,14 +1441,6 @@ export class Main extends LitElement {
               @bbnodemetadataupdate=${(
                 evt: BreadboardUI.Events.NodeMetadataUpdateEvent
               ) => {
-                if (!this.tab) {
-                  this.toast(
-                    "Unable to edit; no active graph",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-
                 this.#runtime.edit.updateNodeMetadata(
                   this.tab,
                   evt.id,
@@ -1479,14 +1449,6 @@ export class Main extends LitElement {
                 );
               }}
               @bbmultiedit=${(evt: BreadboardUI.Events.MultiEditEvent) => {
-                if (!this.tab) {
-                  this.toast(
-                    "Unable to edit; no active graph",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-
                 this.#runtime.edit.multiEdit(
                   this.tab,
                   evt.edits,
@@ -1495,14 +1457,6 @@ export class Main extends LitElement {
                 );
               }}
               @bbnodecreate=${(evt: BreadboardUI.Events.NodeCreateEvent) => {
-                if (!this.tab) {
-                  this.toast(
-                    "Unable to edit; no active graph",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-
                 this.#runtime.edit.createNode(
                   this.tab,
                   evt.id,
@@ -1521,14 +1475,6 @@ export class Main extends LitElement {
               @bbcommentupdate=${(
                 evt: BreadboardUI.Events.CommentUpdateEvent
               ) => {
-                if (!this.tab) {
-                  this.toast(
-                    "Unable to edit; no active graph",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-
                 this.#runtime.edit.changeComment(
                   this.tab,
                   evt.id,
@@ -1537,14 +1483,6 @@ export class Main extends LitElement {
                 );
               }}
               @bbnodeupdate=${(evt: BreadboardUI.Events.NodeUpdateEvent) => {
-                if (!this.tab) {
-                  this.toast(
-                    "Unable to edit; no active graph",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-
                 this.#runtime.edit.changeNodeConfiguration(
                   this.tab,
                   evt.id,
@@ -1553,20 +1491,9 @@ export class Main extends LitElement {
                 );
               }}
               @bbnodedelete=${(evt: BreadboardUI.Events.NodeDeleteEvent) => {
-                if (!this.tab) {
-                  this.toast(
-                    "Unable to edit; no active graph",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
                 this.#runtime.edit.deleteNode(this.tab, evt.id, evt.subGraphId);
               }}
               @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-                if (!this.#uiRef.value) {
-                  return;
-                }
-
                 this.toast(toastEvent.message, toastEvent.toastType);
               }}
               @bbinputenter=${async (
