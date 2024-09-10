@@ -8,6 +8,7 @@ import {
   GraphDescriptor,
   GraphLoader,
   GraphProvider,
+  InspectableRunObserver,
   Kit,
 } from "@google-labs/breadboard";
 import { Tab, TabId } from "./types";
@@ -90,9 +91,11 @@ export class Board extends EventTarget {
 
   async loadFromDescriptor(
     descriptor: GraphDescriptor,
-    topGraphObserver?: BreadboardUI.Utils.TopGraphObserver
+    topGraphObserver?: BreadboardUI.Utils.TopGraphObserver,
+    runObserver?: InspectableRunObserver
   ) {
     const id = globalThis.crypto.randomUUID();
+    this.#tabs.clear();
     this.#tabs.set(id, {
       id,
       kits: this.kits,
@@ -103,7 +106,9 @@ export class Board extends EventTarget {
     });
 
     this.#currentTabId = id;
-    this.dispatchEvent(new RuntimeTabChangeEvent(topGraphObserver));
+    this.dispatchEvent(
+      new RuntimeTabChangeEvent(topGraphObserver, runObserver)
+    );
   }
 
   async loadFromURL(boardUrl: string, currentUrl: string | null = null) {
