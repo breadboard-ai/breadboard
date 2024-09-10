@@ -207,6 +207,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       let nested = isBoardOutput(output) ? output : undefined;
       let port;
       let outputNodeId;
+      let deprecated = false;
       const portMetadata: { title?: string; description?: string } = {};
       if (isSpecialOutput(output)) {
         port = output.port;
@@ -219,6 +220,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
             portMetadata.description = output.description;
           }
         }
+        deprecated = output.deprecated ?? false;
       } else {
         port = output;
       }
@@ -253,12 +255,20 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
         if (nodeMetadata !== undefined) {
           outputNode.metadata = nodeMetadata;
         }
+
         outputNodes.set(outputNodeId, outputNode);
       }
       const { schema, required } = describeOutput(output);
       outputNode.configuration.schema.properties[name] = schema;
+      const behaviors = [];
       if (outputs.$bubble) {
-        outputNode.configuration.schema.behavior = ["bubble"];
+        behaviors.push("bubble");
+      }
+      if (deprecated) {
+        behaviors.push("deprecated");
+      }
+      if (behaviors.length > 0) {
+        outputNode.configuration.schema.behavior = behaviors;
       }
       if (required) {
         outputNode.configuration.schema.required.push(name);
