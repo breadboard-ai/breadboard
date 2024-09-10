@@ -1215,8 +1215,17 @@ export class Main extends LitElement {
       ></bb-nav> `;
     });
 
-    const tmpl = this.#initialize.then(() => {
-      return html`<div id="header-bar" ?inert=${showingOverlay}>
+    const tmpl = this.#initialize
+      .then(() => {
+        if (observers && observers.runObserver) {
+          return observers.runObserver?.runs();
+        }
+
+        return [];
+      })
+      .then((runs: InspectableRun[]) => {
+        const inputsFromLastRun = runs[1]?.inputs() ?? null;
+        return html`<div id="header-bar" ?inert=${showingOverlay}>
         <button
           id="show-nav"
           @click=${() => {
@@ -1310,7 +1319,7 @@ export class Main extends LitElement {
               ?inert=${showingOverlay}
               .graph=${this.tab?.graph ?? null}
               .subGraphId=${this.tab?.subGraphId ?? null}
-              .run=${this.run}
+              .run=${runs[0] ?? null}
               .topGraphResult=${topGraphResult}
               .kits=${this.#runtime.kits}
               .loader=${this.#runtime.board.loader}
@@ -1324,6 +1333,7 @@ export class Main extends LitElement {
               .version=${this.#version}
               .showWelcomePanel=${this.showWelcomePanel}
               .recentBoards=${this.#recentBoards}
+              .inputsFromLastRun=${inputsFromLastRun}
               @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
                 this.#attemptBoardStart(evt);
               }}
@@ -1536,7 +1546,7 @@ export class Main extends LitElement {
           </div>
         ${until(nav)}
       </div>`;
-    });
+      });
 
     let boardOverlay: HTMLTemplateResult | symbol = nothing;
     if (this.boardEditOverlayInfo) {
