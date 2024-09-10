@@ -16,6 +16,7 @@ import {
   RuntimeBoardLoadErrorEvent,
   RuntimeErrorEvent,
   RuntimeTabChangeEvent,
+  RuntimeTabCloseEvent,
 } from "./events";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 
@@ -197,6 +198,7 @@ export class Board extends EventTarget {
       }
     }
 
+    this.dispatchEvent(new RuntimeTabCloseEvent(id));
     this.#tabs.delete(id);
     this.dispatchEvent(new RuntimeTabChangeEvent());
   }

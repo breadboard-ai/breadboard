@@ -309,6 +309,24 @@ export class Main extends LitElement {
           }
         );
 
+        this.#runtime.board.addEventListener(
+          Runtime.Events.RuntimeTabCloseEvent.eventName,
+          (evt: Runtime.Events.RuntimeTabCloseEvent) => {
+            if (!evt.tabId) {
+              return;
+            }
+
+            if (this.tab?.id !== evt.tabId) {
+              return;
+            }
+
+            if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
+              this.status = BreadboardUI.Types.STATUS.STOPPED;
+              this.#runtime.run.getAbortSignal(evt.tabId)?.abort();
+            }
+          }
+        );
+
         this.#runtime.run.addEventListener(
           Runtime.Events.RuntimeBoardRunEvent.eventName,
           (evt: Runtime.Events.RuntimeBoardRunEvent) => {
