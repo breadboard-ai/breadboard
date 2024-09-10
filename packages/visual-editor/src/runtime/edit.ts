@@ -17,12 +17,12 @@ import {
   NodeDescriptor,
   NodeIdentifier,
 } from "@google-labs/breadboard";
-import { VETab, VETabId } from "./types";
-import { VEEditEvent, VEErrorEvent } from "./events";
+import { Tab, TabId } from "./types";
+import { RuntimeBoardEditEvent, RuntimeErrorEvent } from "./events";
 import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 
 export class Edit extends EventTarget {
-  #editors = new Map<VETabId, EditableGraph>();
+  #editors = new Map<TabId, EditableGraph>();
 
   constructor(
     public readonly providers: GraphProvider[],
@@ -32,7 +32,7 @@ export class Edit extends EventTarget {
     super();
   }
 
-  getEditor(tab: VETab | null): EditableGraph | null {
+  getEditor(tab: Tab | null): EditableGraph | null {
     if (!tab) return null;
     if (!tab.graph) return null;
     if (this.#editors.get(tab.id)) return this.#editors.get(tab.id)!;
@@ -41,7 +41,7 @@ export class Edit extends EventTarget {
     editor.addEventListener("graphchange", (evt) => {
       tab.graph = evt.graph;
 
-      this.dispatchEvent(new VEEditEvent(evt.visualOnly));
+      this.dispatchEvent(new RuntimeBoardEditEvent(evt.visualOnly));
     });
 
     editor.addEventListener("graphchangereject", (evt) => {
@@ -49,7 +49,7 @@ export class Edit extends EventTarget {
 
       const { reason } = evt;
       if (reason.type === "error") {
-        this.dispatchEvent(new VEErrorEvent(reason.error));
+        this.dispatchEvent(new RuntimeErrorEvent(reason.error));
       }
     });
 
@@ -57,20 +57,20 @@ export class Edit extends EventTarget {
     return editor;
   }
 
-  getHistory(tab: VETab | null) {
+  getHistory(tab: Tab | null) {
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
-      this.dispatchEvent(new VEErrorEvent("Unable to edit graph"));
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
       return null;
     }
 
     return editableGraph.history();
   }
 
-  canUndo(tab: VETab | null) {
+  canUndo(tab: Tab | null) {
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
-      this.dispatchEvent(new VEErrorEvent("Unable to edit graph"));
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
       return false;
     }
 
@@ -78,10 +78,10 @@ export class Edit extends EventTarget {
     return history.canUndo();
   }
 
-  undo(tab: VETab | null) {
+  undo(tab: Tab | null) {
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
-      this.dispatchEvent(new VEErrorEvent("Unable to edit graph"));
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
       return null;
     }
 
@@ -89,10 +89,10 @@ export class Edit extends EventTarget {
     return history.undo();
   }
 
-  canRedo(tab: VETab | null) {
+  canRedo(tab: Tab | null) {
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
-      this.dispatchEvent(new VEErrorEvent("Unable to edit graph"));
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
       return false;
     }
 
@@ -100,10 +100,10 @@ export class Edit extends EventTarget {
     return history.canRedo();
   }
 
-  redo(tab: VETab | null) {
+  redo(tab: Tab | null) {
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
-      this.dispatchEvent(new VEErrorEvent("Unable to edit graph"));
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
       return null;
     }
 
@@ -112,7 +112,7 @@ export class Edit extends EventTarget {
   }
 
   updateSubBoardInfo(
-    tab: VETab | null,
+    tab: Tab | null,
     subGraphId: string,
     title: string,
     version: string,
@@ -123,7 +123,7 @@ export class Edit extends EventTarget {
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(
-        new VEErrorEvent("Unable to edit subboard; no active board")
+        new RuntimeErrorEvent("Unable to edit subboard; no active board")
       );
       return;
     }
@@ -131,7 +131,7 @@ export class Edit extends EventTarget {
     const subGraph = editableGraph.getGraph(subGraphId);
     if (!subGraph) {
       this.dispatchEvent(
-        new VEErrorEvent(`Unable to find subboard with id ${subGraphId}`)
+        new RuntimeErrorEvent(`Unable to find subboard with id ${subGraphId}`)
       );
       return;
     }
@@ -150,7 +150,7 @@ export class Edit extends EventTarget {
   }
 
   updateBoardInfo(
-    tab: VETab | null,
+    tab: Tab | null,
     title: string,
     version: string,
     description: string,
@@ -158,7 +158,7 @@ export class Edit extends EventTarget {
     isTool: boolean | null
   ) {
     if (!tab) {
-      this.dispatchEvent(new VEErrorEvent("Unable to find tab"));
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find tab"));
       return null;
     }
 
@@ -221,10 +221,10 @@ export class Edit extends EventTarget {
     }
   }
 
-  createSubGraph(tab: VETab | null, subGraphTitle: string) {
+  createSubGraph(tab: Tab | null, subGraphTitle: string) {
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
-      this.dispatchEvent(new VEErrorEvent("Unable to create sub board"));
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to create sub board"));
       return;
     }
 
@@ -240,10 +240,10 @@ export class Edit extends EventTarget {
     return id;
   }
 
-  deleteSubGraph(tab: VETab | null, subGraphId: string) {
+  deleteSubGraph(tab: Tab | null, subGraphId: string) {
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
-      this.dispatchEvent(new VEErrorEvent("Unable to delete sub board"));
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to delete sub board"));
       return;
     }
 
@@ -258,7 +258,7 @@ export class Edit extends EventTarget {
   }
 
   changeEdge(
-    tab: VETab | null,
+    tab: Tab | null,
     changeType: "add" | "remove" | "move",
     from: {
       from: string;
@@ -283,7 +283,7 @@ export class Edit extends EventTarget {
     }
 
     if (!editableGraph) {
-      this.dispatchEvent(new VEErrorEvent("Unable to find board to edit"));
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
       return;
     }
 
@@ -307,7 +307,7 @@ export class Edit extends EventTarget {
       case "move": {
         if (!to) {
           this.dispatchEvent(
-            new VEErrorEvent("Unable to move edge - no `to` provided")
+            new RuntimeErrorEvent("Unable to move edge - no `to` provided")
           );
           return;
         }
@@ -328,7 +328,7 @@ export class Edit extends EventTarget {
   }
 
   createNode(
-    tab: VETab | null,
+    tab: Tab | null,
     id: string,
     nodeType: string,
     configuration: NodeConfiguration | null = null,
@@ -348,7 +348,7 @@ export class Edit extends EventTarget {
     }
 
     if (!editableGraph) {
-      this.dispatchEvent(new VEErrorEvent("Unable to find board to edit"));
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
       return;
     }
 
@@ -379,7 +379,7 @@ export class Edit extends EventTarget {
   }
 
   updateNodeMetadata(
-    tab: VETab | null,
+    tab: Tab | null,
     id: NodeIdentifier,
     metadata: NodeDescriptor["metadata"],
     subGraphId: string | null = null
@@ -390,7 +390,7 @@ export class Edit extends EventTarget {
     }
 
     if (!editableGraph) {
-      this.dispatchEvent(new VEErrorEvent("Unable to find board to edit"));
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
       return;
     }
 
@@ -409,7 +409,7 @@ export class Edit extends EventTarget {
   }
 
   multiEdit(
-    tab: VETab | null,
+    tab: Tab | null,
     edits: EditSpec[],
     description: string,
     subGraphId: string | null = null
@@ -428,7 +428,7 @@ export class Edit extends EventTarget {
   }
 
   changeComment(
-    tab: VETab | null,
+    tab: Tab | null,
     id: string,
     text: string,
     subGraphId: string | null = null
@@ -439,7 +439,7 @@ export class Edit extends EventTarget {
     }
 
     if (!editableGraph) {
-      this.dispatchEvent(new VEErrorEvent("Unable to find board to edit"));
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
       return;
     }
 
@@ -461,7 +461,7 @@ export class Edit extends EventTarget {
   }
 
   changeNodeConfiguration(
-    tab: VETab | null,
+    tab: Tab | null,
     id: string,
     configuration: NodeConfiguration,
     subGraphId: string | null = null
@@ -472,7 +472,7 @@ export class Edit extends EventTarget {
     }
 
     if (!editableGraph) {
-      this.dispatchEvent(new VEErrorEvent("Unable to find board to edit"));
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
       return;
     }
 
@@ -490,7 +490,7 @@ export class Edit extends EventTarget {
   }
 
   changeNodeConfigurationPart(
-    tab: VETab | null,
+    tab: Tab | null,
     id: string,
     configurationPart: NodeConfiguration,
     subGraphId: string | null = null
@@ -501,7 +501,7 @@ export class Edit extends EventTarget {
     }
 
     if (!editableGraph) {
-      this.dispatchEvent(new VEErrorEvent("Unable to find board to edit"));
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
       return;
     }
 
@@ -530,14 +530,14 @@ export class Edit extends EventTarget {
     );
   }
 
-  deleteNode(tab: VETab | null, id: string, subGraphId: string | null = null) {
+  deleteNode(tab: Tab | null, id: string, subGraphId: string | null = null) {
     let editableGraph = this.getEditor(tab);
     if (editableGraph && subGraphId) {
       editableGraph = editableGraph.getGraph(subGraphId);
     }
 
     if (!editableGraph) {
-      this.dispatchEvent(new VEErrorEvent("Unable to find board to edit"));
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
       return;
     }
 

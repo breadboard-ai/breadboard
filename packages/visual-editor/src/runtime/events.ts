@@ -5,7 +5,7 @@
  */
 
 import { HarnessRunner, RunEventMap } from "@google-labs/breadboard/harness";
-import { VETabId, VETabURL } from "./types";
+import { TabId, TabURL } from "./types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 
 const eventInit = {
@@ -14,74 +14,72 @@ const eventInit = {
   composed: true,
 };
 
-export class VEBoardLoadErrorEvent extends Event {
-  static eventName = "veboardloaderror" as const;
+export class RuntimeBoardLoadErrorEvent extends Event {
+  static eventName = "runtimeboardloaderror" as const;
 
   constructor() {
-    super(VEBoardLoadErrorEvent.eventName, { ...eventInit });
+    super(RuntimeBoardLoadErrorEvent.eventName, { ...eventInit });
   }
 }
 
-export class VEErrorEvent extends Event {
-  static eventName = "veerror" as const;
+export class RuntimeErrorEvent extends Event {
+  static eventName = "runtimeerror" as const;
 
   constructor(public readonly message: string) {
-    super(VEErrorEvent.eventName, { ...eventInit });
+    super(RuntimeErrorEvent.eventName, { ...eventInit });
   }
 }
 
-export class VEEditEvent extends Event {
-  static eventName = "veedit" as const;
+export class RuntimeBoardEditEvent extends Event {
+  static eventName = "runtimeboardedit" as const;
 
   constructor(public readonly visualOnly = false) {
-    super(VEEditEvent.eventName, { ...eventInit });
+    super(RuntimeBoardEditEvent.eventName, { ...eventInit });
   }
 }
 
-export class VETabChangeEvent extends Event {
-  static eventName = "vetabchange" as const;
+export class RuntimeTabChangeEvent extends Event {
+  static eventName = "runtimetabchange" as const;
 
   constructor(
     public readonly topGraphObserver?: BreadboardUI.Utils.TopGraphObserver
   ) {
-    super(VETabChangeEvent.eventName, { ...eventInit });
+    super(RuntimeTabChangeEvent.eventName, { ...eventInit });
   }
 }
 
-export class VECloseTabEvent extends Event {
-  static eventName = "veclosetab" as const;
+export class RuntimeCloseTabEvent extends Event {
+  static eventName = "runtimeclosetab" as const;
 
-  constructor(public readonly url: VETabURL) {
-    super(VECloseTabEvent.eventName, { ...eventInit });
+  constructor(public readonly url: TabURL) {
+    super(RuntimeCloseTabEvent.eventName, { ...eventInit });
   }
 }
 
-export class VERunEvent extends Event {
-  static eventName = "verun" as const;
+export class RuntimeBoardRunEvent extends Event {
+  static eventName = "runtimeboardrun" as const;
 
   constructor(
-    public readonly tabId: VETabId,
+    public readonly tabId: TabId,
     public readonly runEvt: RunEventMap[keyof RunEventMap],
     public readonly harnessRunner: HarnessRunner,
     public readonly abortController: AbortController
   ) {
-    super(VERunEvent.eventName, { ...eventInit });
+    super(RuntimeBoardRunEvent.eventName, { ...eventInit });
   }
 }
 
-export class VEGraphChangeEvent extends Event {
-  static eventName = "vegraphchange" as const;
-
-  constructor(public readonly tabId: VETabId) {
-    super(VEGraphChangeEvent.eventName, { ...eventInit });
-  }
-}
-
-type VEEvents = VEErrorEvent | VETabChangeEvent | VECloseTabEvent;
+type RuntimeEvents =
+  | RuntimeBoardLoadErrorEvent
+  | RuntimeErrorEvent
+  | RuntimeBoardEditEvent
+  | RuntimeTabChangeEvent
+  | RuntimeCloseTabEvent
+  | RuntimeBoardRunEvent;
 
 declare global {
   interface EventTarget {
-    addEventListener<E extends VEEvents>(
+    addEventListener<E extends RuntimeEvents>(
       type: string,
       listener: (evt: E) => void,
       options?: boolean | AddEventListenerOptions
