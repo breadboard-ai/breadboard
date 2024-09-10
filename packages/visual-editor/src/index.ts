@@ -1520,18 +1520,16 @@ export class Main extends LitElement {
                   throw new Error("Can't send input, no runner");
                 }
                 if (isSecret) {
-                  if (!this.#secretsHelper) {
-                    throw new Error("No secrets helper to handle secret input");
-                  }
-                  this.#secretsHelper.receiveSecrets(event);
-                  const runner = this.#runtime.run.getRunner(this.tab.id);
-                  if (
-                    this.#secretsHelper.hasAllSecrets() &&
-                    !runner?.running()
-                  ) {
-                    const secrets = this.#secretsHelper.getSecrets();
-                    this.#secretsHelper = null;
-                    runner?.run(secrets);
+                  if (this.#secretsHelper) {
+                    this.#secretsHelper.receiveSecrets(event);
+                    if (
+                      this.#secretsHelper.hasAllSecrets() &&
+                      !runner?.running()
+                    ) {
+                      const secrets = this.#secretsHelper.getSecrets();
+                      this.#secretsHelper = null;
+                      runner?.run(secrets);
+                    }
                   }
                 } else {
                   const data = event.data as InputValues;
