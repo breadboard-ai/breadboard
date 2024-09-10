@@ -821,7 +821,7 @@ export function outputNode<
   T extends Record<string, Value | Output | undefined>,
 >(
   outputs: T,
-  metadata?: NodeMetadata & { id?: string }
+  metadata?: NodeMetadata & { id?: string } & { bubble?: boolean }
 ): OutputNode<Expand<ExtractOutputTypes<T>>> {
   const result: Record<string, unknown> = { ...outputs };
   if (metadata) {
@@ -829,6 +829,11 @@ export function outputNode<
       result.$id = metadata.id;
       metadata = { ...metadata };
       delete metadata["id"];
+    }
+    if (metadata.bubble) {
+      result.$bubble = metadata.bubble;
+      metadata = { ...metadata };
+      delete metadata["bubble"];
     }
     result.$metadata = metadata;
   }
