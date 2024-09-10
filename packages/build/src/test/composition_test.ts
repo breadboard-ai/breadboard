@@ -344,7 +344,6 @@ test("can invoke one board in another (indirect)", () => {
   });
 
   const serialized = serialize(outerBoard);
-  console.log(JSON.stringify(serialized));
   assert.deepEqual(serialized, {
     nodes: [
       {

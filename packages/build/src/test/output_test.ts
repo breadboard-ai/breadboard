@@ -317,3 +317,38 @@ test("bubbling output node", () => {
     ],
   });
 });
+
+test("deprecated output port", () => {
+  const foo = input();
+  // $ExpectType Output<string>
+  const bar = output(foo, { deprecated: true });
+  const bgl = serialize(board({ inputs: { foo }, outputs: { bar } }));
+  assert.deepEqual(bgl, {
+    edges: [{ from: "input-0", to: "output-0", out: "foo", in: "bar" }],
+    nodes: [
+      {
+        id: "input-0",
+        type: "input",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: { foo: { type: "string" } },
+            required: ["foo"],
+          },
+        },
+      },
+      {
+        id: "output-0",
+        type: "output",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: { bar: { type: "string" } },
+            required: ["bar"],
+            behavior: ["deprecated"],
+          },
+        },
+      },
+    ],
+  });
+});

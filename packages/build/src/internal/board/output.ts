@@ -14,10 +14,12 @@ export function output<T extends JsonSerializable | undefined>(
     id,
     title,
     description,
+    deprecated,
   }: {
     id?: string;
     title?: string;
     description?: string;
+    deprecated?: boolean;
   } = {}
 ): Output<T> {
   return {
@@ -26,6 +28,7 @@ export function output<T extends JsonSerializable | undefined>(
     title,
     description,
     port,
+    deprecated,
   };
 }
 
@@ -37,6 +40,7 @@ export interface Output<
   readonly title?: string;
   readonly description?: string;
   readonly port: Value<T>;
+  readonly deprecated?: boolean;
 }
 
 export function isSpecialOutput(value: unknown): value is Output {
