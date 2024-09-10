@@ -834,7 +834,7 @@ export class AppView extends LitElement {
       this.#kitLoad,
       this.#visitorStateInit,
     ]).then(() => {
-      return html`<bb-activity-log-lite
+      return html`<bb-activity-log-lite-app
         .start=${this.#runStartTime}
         .message=${this.#message}
         .log=${log}
@@ -852,7 +852,7 @@ export class AppView extends LitElement {
           }
           runner.run(data);
         }}
-      ></bb-activity-log-lite>`;
+      ></bb-activity-log-lite-app>`;
     });
 
     const nav = (popout: boolean) => {

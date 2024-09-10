@@ -35,7 +35,7 @@ import {
 
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 
-@customElement("bb-activity-log-lite")
+@customElement("bb-activity-log-lite-app")
 export class ActivityLogLite extends LitElement {
   @property()
   start: number = 0;
