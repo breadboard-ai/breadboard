@@ -200,7 +200,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       return iterationOutputId;
     };
     for (const [name, output] of sortedBoardOutputs) {
-      if (name === "$id" || name === "$metadata") {
+      if (name.startsWith("$")) {
         continue;
       }
 
@@ -257,6 +257,9 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       }
       const { schema, required } = describeOutput(output);
       outputNode.configuration.schema.properties[name] = schema;
+      if (outputs.$bubble) {
+        outputNode.configuration.schema.behavior = ["bubble"];
+      }
       if (required) {
         outputNode.configuration.schema.required.push(name);
       }
