@@ -21,6 +21,7 @@ import {
   GraphEntityRemoveEvent,
   StartEvent,
   GraphNodePortValueEditEvent,
+  GraphEdgeValueSelectedEvent,
 } from "../../events/events.js";
 import { GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
@@ -41,7 +42,10 @@ import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { getGlobalColor } from "./utils.js";
-import { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
+import {
+  GraphMetadata,
+  NodeValue,
+} from "@google-labs/breadboard-schema/graph.js";
 import { GraphComment } from "./graph-comment.js";
 import { EdgeData, TopGraphRunResult } from "../../types/types.js";
 
@@ -883,6 +887,13 @@ export class GraphRenderer extends LitElement {
       GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
       (id: string, port: InspectablePort | null, x: number, y: number) => {
         this.dispatchEvent(new GraphNodePortValueEditEvent(id, port, x, y));
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_EDGE_VALUE_SELECTED,
+      (value: NodeValue[], x: number, y: number) => {
+        this.dispatchEvent(new GraphEdgeValueSelectedEvent(value, x, y));
       }
     );
 

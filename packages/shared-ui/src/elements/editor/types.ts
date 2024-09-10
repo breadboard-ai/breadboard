@@ -16,6 +16,7 @@ export enum GRAPH_OPERATIONS {
   GRAPH_NODE_SELECTED = "graphnodeselected",
   GRAPH_NODE_DESELECTED = "graphnodedeselected",
   GRAPH_NODE_DESELECTED_ALL = "graphnodedeselectedall",
+  GRAPH_EDGE_VALUE_SELECTED = "graphedgevalueselected",
   GRAPH_EDGE_ATTACH = "graphedgeattach",
   GRAPH_EDGE_DETACH = "graphedgedetach",
   GRAPH_EDGE_CHANGE = "graphedgechange",

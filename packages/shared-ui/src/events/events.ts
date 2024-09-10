@@ -12,7 +12,10 @@ import type {
   NodeDescriptor,
 } from "@google-labs/breadboard";
 import type { EdgeData, Settings, UserOutputValues } from "../types/types.js";
-import type { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
+import type {
+  NodeMetadata,
+  NodeValue,
+} from "@google-labs/breadboard-schema/graph.js";
 
 const eventInit = {
   bubbles: true,
@@ -509,6 +512,18 @@ export class MultiEditEvent extends Event {
   }
 }
 
+export class EdgeValueSelectedEvent extends Event {
+  static eventName = "bbedgevalueselected";
+
+  constructor(
+    public readonly value: NodeValue[],
+    public readonly x: number,
+    public readonly y: number
+  ) {
+    super(EdgeValueSelectedEvent.eventName, { ...eventInit });
+  }
+}
+
 export class GraphNodesVisualUpdateEvent extends Event {
   static eventName = "bbgraphnodesmove";
 
@@ -567,6 +582,18 @@ export class GraphInitialDrawEvent extends Event {
 
   constructor() {
     super(GraphInitialDrawEvent.eventName, { ...eventInit });
+  }
+}
+
+export class GraphEdgeValueSelectedEvent extends Event {
+  static eventName = "bbgraphedgevalueselected";
+
+  constructor(
+    public readonly value: NodeValue[],
+    public readonly x: number,
+    public readonly y: number
+  ) {
+    super(GraphEdgeValueSelectedEvent.eventName, { ...eventInit });
   }
 }
 

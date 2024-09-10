@@ -26,8 +26,10 @@ import { until } from "lit/directives/until.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import {
   EdgeChangeEvent,
+  EdgeValueSelectedEvent,
   GraphEdgeAttachEvent,
   GraphEdgeDetachEvent,
+  GraphEdgeValueSelectedEvent,
   GraphEntityRemoveEvent,
   GraphInitialDrawEvent,
   GraphNodeDeleteEvent,
@@ -170,6 +172,7 @@ export class Editor extends LitElement {
   #onGraphNodeDeleteBound = this.#onGraphNodeDelete.bind(this);
   #onGraphEntityRemoveBound = this.#onGraphEntityRemove.bind(this);
   #onGraphNodePortValueEditBound = this.#onGraphNodePortValueEdit.bind(this);
+  #onGraphEdgeValueSelectedBound = this.#onGraphEdgeValueSelected.bind(this);
   #top = 0;
   #left = 0;
   #addButtonRef: Ref<HTMLInputElement> = createRef();
@@ -556,6 +559,11 @@ export class Editor extends LitElement {
       this.#onGraphNodePortValueEditBound
     );
 
+    this.#graphRenderer.addEventListener(
+      GraphEdgeValueSelectedEvent.eventName,
+      this.#onGraphEdgeValueSelectedBound
+    );
+
     window.addEventListener("resize", this.#onResizeBound);
     this.addEventListener("keydown", this.#onKeyDownBound);
     this.addEventListener("pointermove", this.#onPointerMoveBound);
@@ -600,6 +608,11 @@ export class Editor extends LitElement {
     this.#graphRenderer.removeEventListener(
       GraphNodePortValueEditEvent.eventName,
       this.#onGraphNodePortValueEditBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphEdgeValueSelectedEvent.eventName,
+      this.#onGraphEdgeValueSelectedBound
     );
 
     window.removeEventListener("resize", this.#onResizeBound);
@@ -1204,6 +1217,11 @@ export class Editor extends LitElement {
     this.dispatchEvent(
       new NodeConfigurationUpdateRequestEvent(id, this.subGraphId, port, x, y)
     );
+  }
+
+  #onGraphEdgeValueSelected(evt: Event) {
+    const { value, x, y } = evt as GraphEdgeValueSelectedEvent;
+    this.dispatchEvent(new EdgeValueSelectedEvent(value, x, y));
   }
 
   #onDragOver(evt: DragEvent) {

@@ -1591,6 +1591,14 @@ export class Graph extends PIXI.Container {
         edgeGraphic = new GraphEdge(fromNode, toNode);
         edgeGraphic.type = edge.type;
 
+        // Propagate edge value clicks to the graph renderer.
+        edgeGraphic.on(
+          GRAPH_OPERATIONS.GRAPH_EDGE_VALUE_SELECTED,
+          (...args: unknown[]) => {
+            this.emit(GRAPH_OPERATIONS.GRAPH_EDGE_VALUE_SELECTED, ...args);
+          }
+        );
+
         this.#edgeGraphics.set(inspectableEdgeToString(edge), edgeGraphic);
         this.#edgeContainer.addChild(edgeGraphic);
       }

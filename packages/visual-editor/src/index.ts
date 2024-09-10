@@ -111,6 +111,10 @@ export class Main extends LitElement {
   #nodeConfiguratorData: BreadboardUI.Types.NodePortConfiguration | null = null;
 
   @state()
+  showEdgeValue = false;
+  #edgeValueData: BreadboardUI.Types.EdgeValueConfiguration | null = null;
+
+  @state()
   boardEditOverlayInfo: {
     title: string;
     version: string;
@@ -1116,7 +1120,8 @@ export class Main extends LitElement {
       this.showProviderAddOverlay ||
       this.showSaveAsDialog ||
       this.showOverflowMenu ||
-      this.showNodeConfigurator;
+      this.showNodeConfigurator ||
+      this.showEdgeValue;
 
     const nav = this.#initialize.then(() => {
       return html`<bb-nav
@@ -1482,6 +1487,12 @@ export class Main extends LitElement {
                 this.showNodeConfigurator = evt.port !== null;
                 this.#nodeConfiguratorData = { ...evt };
               }}
+              @bbedgevalueselected=${(
+                evt: BreadboardUI.Events.EdgeValueSelectedEvent
+              ) => {
+                this.showEdgeValue = evt.value !== null;
+                this.#edgeValueData = { ...evt };
+              }}
               @bbcommentupdate=${(
                 evt: BreadboardUI.Events.CommentUpdateEvent
               ) => {
@@ -1791,6 +1802,16 @@ export class Main extends LitElement {
       ></bb-node-configuration-overlay>`;
     }
 
+    let edgeValueOverlay: HTMLTemplateResult | symbol = nothing;
+    if (this.showEdgeValue) {
+      edgeValueOverlay = html`<bb-edge-value-overlay
+        .edgeValue=${this.#edgeValueData}
+        @bboverlaydismissed=${() => {
+          this.showEdgeValue = false;
+        }}
+      ></bb-edge-value-overlay>`;
+    }
+
     let overflowMenu: HTMLTemplateResult | symbol = nothing;
     if (this.showOverflowMenu) {
       const actions: Array<{
@@ -2015,6 +2036,7 @@ export class Main extends LitElement {
       overflowMenu,
       previewOverlay,
       nodeConfiguratorOverlay,
+      edgeValueOverlay,
       toasts,
     ];
   }

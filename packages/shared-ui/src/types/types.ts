@@ -274,6 +274,12 @@ export type NodePortConfiguration = {
   y: number;
 };
 
+export type EdgeValueConfiguration = {
+  value: NodeValue[] | null;
+  x: number;
+  y: number;
+};
+
 export interface UserMessage {
   srcset: string;
   src: string;
