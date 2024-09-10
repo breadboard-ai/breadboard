@@ -8,6 +8,7 @@ import {
   createRunObserver,
   DataStore,
   InspectableRunObserver,
+  Kit,
   RunStore,
 } from "@google-labs/breadboard";
 import { VETabId } from "./types";
@@ -44,7 +45,8 @@ export class Run extends EventTarget {
 
   constructor(
     public readonly dataStore: DataStore,
-    public readonly runStore: RunStore
+    public readonly runStore: RunStore,
+    public readonly kits: Kit[]
   ) {
     super();
   }
@@ -85,6 +87,8 @@ export class Run extends EventTarget {
   }
 
   runBoard(tabId: VETabId, config: RunConfig) {
+    config = { ...config, kits: this.kits };
+
     const abortController = new AbortController();
     const runner = this.#createBoardRunner(config, abortController);
     this.#runs.set(tabId, runner);

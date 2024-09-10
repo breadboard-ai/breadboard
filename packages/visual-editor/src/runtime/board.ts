@@ -24,7 +24,8 @@ export class Board extends EventTarget {
 
   constructor(
     public readonly providers: GraphProvider[],
-    public readonly loader: GraphLoader
+    public readonly loader: GraphLoader,
+    public readonly kits: Kit[]
   ) {
     super();
   }
@@ -89,13 +90,12 @@ export class Board extends EventTarget {
 
   async loadFromDescriptor(
     descriptor: GraphDescriptor,
-    kits: Kit[],
     topGraphObserver?: BreadboardUI.Utils.TopGraphObserver
   ) {
     const id = globalThis.crypto.randomUUID();
     this.#tabs.set(id, {
       id,
-      kits,
+      kits: this.kits,
       name: descriptor.title ?? "Untitled board",
       graph: descriptor,
       subGraphId: null,
@@ -106,11 +106,7 @@ export class Board extends EventTarget {
     this.dispatchEvent(new VETabChangeEvent(topGraphObserver));
   }
 
-  async loadFromURL(
-    boardUrl: string,
-    kits: Kit[],
-    currentUrl: string | null = null
-  ) {
+  async loadFromURL(boardUrl: string, currentUrl: string | null = null) {
     let url = this.#makeRelativeToCurrentBoard(boardUrl, currentUrl);
 
     // Redirect older /graphs examples to /example-boards
@@ -152,7 +148,7 @@ export class Board extends EventTarget {
       this.#tabs.clear();
       this.#tabs.set(id, {
         id,
-        kits,
+        kits: this.kits,
         name: graph.title ?? "Untitled board",
         graph,
         subGraphId: null,

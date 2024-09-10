@@ -26,17 +26,18 @@ export class Edit extends EventTarget {
 
   constructor(
     public readonly providers: GraphProvider[],
-    public readonly loader: GraphLoader
+    public readonly loader: GraphLoader,
+    public readonly kits: Kit[]
   ) {
     super();
   }
 
-  getEditor(tab: VETab | null, kits: Kit[]): EditableGraph | null {
+  getEditor(tab: VETab | null): EditableGraph | null {
     if (!tab) return null;
     if (!tab.graph) return null;
     if (this.#editors.get(tab.id)) return this.#editors.get(tab.id)!;
 
-    const editor = edit(tab.graph, { kits, loader: this.loader });
+    const editor = edit(tab.graph, { kits: this.kits, loader: this.loader });
     editor.addEventListener("graphchange", (evt) => {
       tab.graph = evt.graph;
 
@@ -56,8 +57,8 @@ export class Edit extends EventTarget {
     return editor;
   }
 
-  getHistory(tab: VETab | null, kits: Kit[]) {
-    const editableGraph = this.getEditor(tab, kits);
+  getHistory(tab: VETab | null) {
+    const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new VEErrorEvent("Unable to edit graph"));
       return null;
@@ -66,8 +67,8 @@ export class Edit extends EventTarget {
     return editableGraph.history();
   }
 
-  canUndo(tab: VETab | null, kits: Kit[]) {
-    const editableGraph = this.getEditor(tab, kits);
+  canUndo(tab: VETab | null) {
+    const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new VEErrorEvent("Unable to edit graph"));
       return false;
@@ -77,8 +78,8 @@ export class Edit extends EventTarget {
     return history.canUndo();
   }
 
-  undo(tab: VETab | null, kits: Kit[]) {
-    const editableGraph = this.getEditor(tab, kits);
+  undo(tab: VETab | null) {
+    const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new VEErrorEvent("Unable to edit graph"));
       return null;
@@ -88,8 +89,8 @@ export class Edit extends EventTarget {
     return history.undo();
   }
 
-  canRedo(tab: VETab | null, kits: Kit[]) {
-    const editableGraph = this.getEditor(tab, kits);
+  canRedo(tab: VETab | null) {
+    const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new VEErrorEvent("Unable to edit graph"));
       return false;
@@ -99,8 +100,8 @@ export class Edit extends EventTarget {
     return history.canRedo();
   }
 
-  redo(tab: VETab | null, kits: Kit[]) {
-    const editableGraph = this.getEditor(tab, kits);
+  redo(tab: VETab | null) {
+    const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new VEErrorEvent("Unable to edit graph"));
       return null;
@@ -112,7 +113,6 @@ export class Edit extends EventTarget {
 
   updateSubBoardInfo(
     tab: VETab | null,
-    kits: Kit[],
     subGraphId: string,
     title: string,
     version: string,
@@ -120,7 +120,7 @@ export class Edit extends EventTarget {
     status: "published" | "draft" | null,
     isTool: boolean | null
   ) {
-    const editableGraph = this.getEditor(tab, kits);
+    const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(
         new VEErrorEvent("Unable to edit subboard; no active board")
@@ -221,8 +221,8 @@ export class Edit extends EventTarget {
     }
   }
 
-  createSubGraph(tab: VETab | null, kits: Kit[], subGraphTitle: string) {
-    const editableGraph = this.getEditor(tab, kits);
+  createSubGraph(tab: VETab | null, subGraphTitle: string) {
+    const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new VEErrorEvent("Unable to create sub board"));
       return;
@@ -240,8 +240,8 @@ export class Edit extends EventTarget {
     return id;
   }
 
-  deleteSubGraph(tab: VETab | null, kits: Kit[], subGraphId: string) {
-    const editableGraph = this.getEditor(tab, kits);
+  deleteSubGraph(tab: VETab | null, subGraphId: string) {
+    const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new VEErrorEvent("Unable to delete sub board"));
       return;
@@ -259,7 +259,6 @@ export class Edit extends EventTarget {
 
   changeEdge(
     tab: VETab | null,
-    kits: Kit[],
     changeType: "add" | "remove" | "move",
     from: {
       from: string;
@@ -277,7 +276,7 @@ export class Edit extends EventTarget {
     },
     subGraphId: string | null = null
   ) {
-    let editableGraph = this.getEditor(tab, kits);
+    let editableGraph = this.getEditor(tab);
 
     if (editableGraph && subGraphId) {
       editableGraph = editableGraph.getGraph(subGraphId);
@@ -330,7 +329,6 @@ export class Edit extends EventTarget {
 
   createNode(
     tab: VETab | null,
-    kits: Kit[],
     id: string,
     nodeType: string,
     configuration: NodeConfiguration | null = null,
@@ -344,7 +342,7 @@ export class Edit extends EventTarget {
       configuration: configuration || undefined,
     };
 
-    let editableGraph = this.getEditor(tab, kits);
+    let editableGraph = this.getEditor(tab);
     if (editableGraph && subGraphId) {
       editableGraph = editableGraph.getGraph(subGraphId);
     }
@@ -382,12 +380,11 @@ export class Edit extends EventTarget {
 
   updateNodeMetadata(
     tab: VETab | null,
-    kits: Kit[],
     id: NodeIdentifier,
     metadata: NodeDescriptor["metadata"],
     subGraphId: string | null = null
   ) {
-    let editableGraph = this.getEditor(tab, kits);
+    let editableGraph = this.getEditor(tab);
     if (editableGraph && subGraphId) {
       editableGraph = editableGraph.getGraph(subGraphId);
     }
@@ -413,12 +410,11 @@ export class Edit extends EventTarget {
 
   multiEdit(
     tab: VETab | null,
-    kits: Kit[],
     edits: EditSpec[],
     description: string,
     subGraphId: string | null = null
   ) {
-    let editableGraph = this.getEditor(tab, kits);
+    let editableGraph = this.getEditor(tab);
     if (editableGraph && subGraphId) {
       editableGraph = editableGraph.getGraph(subGraphId);
     }
@@ -433,12 +429,11 @@ export class Edit extends EventTarget {
 
   changeComment(
     tab: VETab | null,
-    kits: Kit[],
     id: string,
     text: string,
     subGraphId: string | null = null
   ) {
-    let editableGraph = this.getEditor(tab, kits);
+    let editableGraph = this.getEditor(tab);
     if (editableGraph && subGraphId) {
       editableGraph = editableGraph.getGraph(subGraphId);
     }
@@ -467,12 +462,11 @@ export class Edit extends EventTarget {
 
   changeNodeConfiguration(
     tab: VETab | null,
-    kits: Kit[],
     id: string,
     configuration: NodeConfiguration,
     subGraphId: string | null = null
   ) {
-    let editableGraph = this.getEditor(tab, kits);
+    let editableGraph = this.getEditor(tab);
     if (editableGraph && subGraphId) {
       editableGraph = editableGraph.getGraph(subGraphId);
     }
@@ -497,12 +491,11 @@ export class Edit extends EventTarget {
 
   changeNodeConfigurationPart(
     tab: VETab | null,
-    kits: Kit[],
     id: string,
     configurationPart: NodeConfiguration,
     subGraphId: string | null = null
   ) {
-    let editableGraph = this.getEditor(tab, kits);
+    let editableGraph = this.getEditor(tab);
     if (editableGraph && subGraphId) {
       editableGraph = editableGraph.getGraph(subGraphId);
     }
@@ -537,13 +530,8 @@ export class Edit extends EventTarget {
     );
   }
 
-  deleteNode(
-    tab: VETab | null,
-    kits: Kit[],
-    id: string,
-    subGraphId: string | null = null
-  ) {
-    let editableGraph = this.getEditor(tab, kits);
+  deleteNode(tab: VETab | null, id: string, subGraphId: string | null = null) {
+    let editableGraph = this.getEditor(tab);
     if (editableGraph && subGraphId) {
       editableGraph = editableGraph.getGraph(subGraphId);
     }

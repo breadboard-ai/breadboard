@@ -15,7 +15,7 @@ import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { map } from "lit/directives/map.js";
 import { customElement, property, state } from "lit/decorators.js";
-import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
+import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
   blankLLMContent,
@@ -24,23 +24,18 @@ import {
   GraphProvider,
   InputValues,
   InspectableRun,
-  Kit,
   SerializedRun,
 } from "@google-labs/breadboard";
 import { getDataStore, getRunStore } from "@breadboard-ai/data-store";
 import { classMap } from "lit/directives/class-map.js";
-import { loadKits } from "./utils/kit-loader";
-import GeminiKit from "@google-labs/gemini-kit";
 import { FileSystemGraphProvider } from "./providers/file-system";
-import BuildExampleKit from "./build-example-kit";
 import { SettingsStore } from "./data/settings-store";
 import { addNodeProxyServerConfig } from "./data/node-proxy-servers";
 import { provide } from "@lit/context";
-import PythonWasmKit from "@breadboard-ai/python-wasm";
-import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 import { RecentBoardStore } from "./data/recent-boards";
 import { SecretsHelper } from "./utils/secrets-helper";
 import { SettingsHelperImpl } from "./utils/settings-helper";
+import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
 
 const STORAGE_PREFIX = "bb-main";
@@ -85,9 +80,6 @@ export class Main extends LitElement {
 
   @state()
   run: InspectableRun | null = null;
-
-  @state()
-  kits: Kit[] = [];
 
   @state()
   embed = false;
@@ -192,304 +184,16 @@ export class Main extends LitElement {
     this.#confirmUnloadWithUserFirstIfNeeded.bind(this);
   #failedGraphLoad = false;
   #version = "dev";
-  #recentBoardStore: RecentBoardStore;
+  #recentBoardStore = RecentBoardStore.instance();
   #recentBoards: BreadboardUI.Types.RecentBoard[] = [];
   #isSaving = false;
 
-  #runtime: Runtime.RuntimeInstance;
+  #runtime!: Runtime.RuntimeInstance;
 
-  static styles = css`
-    * {
-      box-sizing: border-box;
-    }
-
-    :host {
-      flex: 1 0 auto;
-      display: grid;
-      grid-template-rows: calc(var(--bb-grid-size) * 12) auto;
-    }
-
-    bb-toast {
-      z-index: 2000;
-    }
-
-    :host > header {
-      display: grid;
-      grid-template-columns: auto min-content;
-      padding: calc(var(--bb-grid-size) * 6) calc(var(--bb-grid-size) * 8)
-        calc(var(--bb-grid-size) * 0) calc(var(--bb-grid-size) * 8);
-      font-size: var(--bb-text-default);
-      grid-column: 1 / 3;
-    }
-
-    :host > header a {
-      text-decoration: none;
-      white-space: nowrap;
-    }
-
-    #show-nav {
-      font-size: 0;
-      width: 24px;
-      height: 24px;
-      background: var(--bb-icon-menu) center center no-repeat;
-      border: none;
-      margin-right: calc(var(--bb-grid-size) * 2);
-      cursor: pointer;
-    }
-
-    #close-board {
-      font-size: 0;
-      width: 20px;
-      height: 20px;
-      background: var(--bb-icon-close) center center no-repeat;
-      background-size: 16px 16px;
-      border: 2px solid transparent;
-      margin-left: calc(var(--bb-grid-size) * 2);
-      opacity: 0.6;
-      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
-      border-radius: 50%;
-    }
-
-    #close-board:not([disabled]) {
-      cursor: pointer;
-    }
-
-    #close-board:not([disabled]):hover {
-      transition-duration: 0.1s;
-      opacity: 1;
-      background-color: var(--bb-neutral-300);
-      border: 2px solid var(--bb-neutral-300);
-    }
-
-    #new-board {
-      font-size: var(--bb-text-nano);
-    }
-
-    #undo,
-    #redo,
-    #save-board,
-    #toggle-preview,
-    #toggle-settings,
-    #toggle-overflow-menu {
-      color: var(--bb-neutral-50);
-      padding: 0 16px 0 42px;
-      font-size: var(--bb-text-medium);
-      margin: 0 calc(var(--bb-grid-size) * 3) 0 0;
-      cursor: pointer;
-      background: 12px center var(--bb-icon-download);
-      background-repeat: no-repeat;
-      height: calc(100% - var(--bb-grid-size) * 4);
-      display: flex;
-      align-items: center;
-      text-decoration: none;
-      border-radius: 20px;
-      border: none;
-    }
-
-    #undo:not([disabled]):hover,
-    #redo:not([disabled]):hover,
-    #undo:not([disabled]):focus,
-    #redo:not([disabled]):focus,
-    #save-board:not([disabled]):hover,
-    #toggle-preview:not([disabled]):hover,
-    #toggle-settings:not([disabled]):hover,
-    #toggle-overflow-menu:not([disabled]):hover,
-    #save-board:not([disabled]):focus,
-    #toggle-preview:not([disabled]):focus,
-    #toggle-settings:not([disabled]):focus,
-    #toggle-overflow-menu:not([disabled]):focus {
-      background-color: rgba(0, 0, 0, 0.1);
-    }
-
-    #save-board {
-      background: 12px center var(--bb-icon-save-inverted);
-      background-repeat: no-repeat;
-    }
-
-    #toggle-preview {
-      background: 12px center var(--bb-icon-preview);
-      background-repeat: no-repeat;
-    }
-
-    #undo,
-    #redo,
-    #toggle-overflow-menu {
-      padding: 8px;
-      font-size: 0;
-      margin-right: 0;
-      background: center center var(--bb-icon-more-vert-inverted);
-      background-repeat: no-repeat;
-      width: 32px;
-    }
-
-    #undo {
-      background-image: var(--bb-icon-undo-inverted);
-    }
-
-    #redo {
-      background-image: var(--bb-icon-redo-inverted);
-    }
-
-    #undo[disabled],
-    #redo[disabled] {
-      opacity: 0.5;
-    }
-
-    #toggle-preview.active {
-      background-color: var(--bb-ui-800);
-    }
-
-    #toggle-settings {
-      padding: 8px;
-      font-size: 0;
-      margin-right: 0;
-      background: center center var(--bb-icon-settings);
-      background-repeat: no-repeat;
-      width: 32px;
-    }
-
-    #toggle-settings.active {
-      background-color: var(--bb-ui-800);
-    }
-
-    #new-board {
-      font-size: var(--bb-text-small);
-      text-decoration: underline;
-    }
-
-    #new-board:active {
-      color: rgb(90, 64, 119);
-    }
-
-    #save-board[disabled],
-    #get-log[disabled],
-    #get-board[disabled],
-    #toggle-preview[disabled],
-    #save-board[disabled]:hover,
-    #get-log[disabled]:hover,
-    #get-board[disabled]:hover,
-    #toggle-preview[disabled]:hover {
-      opacity: 0.5;
-      background-color: rgba(0, 0, 0, 0);
-      pointer-events: none;
-      cursor: auto;
-    }
-
-    bb-board-list {
-      grid-column: 1 / 3;
-    }
-
-    #header-bar {
-      background: var(--bb-ui-600);
-      display: flex;
-      align-items: center;
-      color: var(--bb-neutral-50);
-      z-index: 1;
-      height: calc(var(--bb-grid-size) * 12);
-      padding: 0 calc(var(--bb-grid-size) * 2);
-    }
-
-    #header-bar #tab-container {
-      flex: 1;
-      display: flex;
-      align-items: flex-end;
-      margin: 0;
-      height: 100%;
-      overflow: hidden;
-    }
-
-    #tab-container h1 {
-      font-size: var(--bb-label-medium);
-      font-weight: normal;
-      background: var(--bb-neutral-0);
-      color: var(--bb-neutral-800);
-      margin: 0;
-      height: calc(100% - var(--bb-grid-size) * 2);
-      border-radius: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2)
-        0 0;
-      padding: 0 calc(var(--bb-grid-size) * 4);
-      display: flex;
-      align-items: center;
-      user-select: none;
-      margin-right: var(--bb-grid-size-2);
-    }
-
-    #tab-container .back-to-main-board {
-      padding: 0;
-      margin: 0;
-      cursor: pointer;
-      background: none;
-      border: none;
-      color: var(--bb-neutral-800);
-      opacity: 0.6;
-    }
-
-    #tab-container .back-to-main-board:disabled {
-      cursor: auto;
-      color: var(--bb-neutral-800);
-    }
-
-    #tab-container .back-to-main-board.active {
-      opacity: 1;
-    }
-
-    #tab-container .subgraph-name {
-      display: flex;
-      align-items: center;
-    }
-
-    #tab-container .subgraph-name::before {
-      content: "";
-      width: 20px;
-      height: 20px;
-      background: var(--bb-icon-next) center center no-repeat;
-      background-size: 12px 12px;
-    }
-
-    #content {
-      max-height: calc(100svh - var(--bb-grid-size) * 12);
-      display: flex;
-      flex-direction: column;
-    }
-
-    iframe {
-      grid-row: 1 / 3;
-      grid-column: 1 / 3;
-      margin: 0;
-      border: none;
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-
-    bb-overlay iframe {
-      width: 80vw;
-      height: 80vh;
-      border-radius: 8px;
-    }
-
-    #embed {
-      grid-column: 1/3;
-      grid-row: 1/3;
-    }
-
-    #embed iframe {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      border: none;
-      border-radius: 0;
-    }
-
-    #embed header {
-      display: flex;
-      padding: 0 calc(var(--bb-grid-size) * 9);
-      align-items: center;
-    }
-  `;
+  static styles = mainStyles;
   proxyFromUrl: string | undefined;
 
-  #load: Promise<void>;
+  #initialize: Promise<void>;
   constructor(config: MainArguments) {
     super();
 
@@ -505,7 +209,6 @@ export class Main extends LitElement {
       }
     }
 
-    this.#recentBoardStore = RecentBoardStore.instance();
     this.#version = config.version || "dev";
     this.#providers = config.providers || [];
     this.#settings = config.settings || null;
@@ -520,7 +223,6 @@ export class Main extends LitElement {
 
     const currentUrl = new URL(window.location.href);
     const boardFromUrl = currentUrl.searchParams.get("board");
-    const embedFromUrl = currentUrl.searchParams.get("embed");
     const firstRunFromUrl = currentUrl.searchParams.get("firstrun");
 
     if (firstRunFromUrl && firstRunFromUrl === "true") {
@@ -533,187 +235,175 @@ export class Main extends LitElement {
       this.proxyFromUrl = proxyFromUrl;
     }
 
-    this.embed = embedFromUrl !== null && embedFromUrl !== "false";
-
-    this.#runtime = Runtime.create({
-      providers: config.providers ?? [],
-      runStore: this.runStore,
-      dataStore: this.dataStore,
-    });
-
-    this.#runtime.edit.addEventListener(
-      Runtime.Events.VEEditEvent.eventName,
-      () => {
-        this.#nodeConfiguratorData = null;
-        this.showNodeConfigurator = false;
-        this.requestUpdate();
-      }
-    );
-
-    this.#runtime.board.addEventListener(
-      Runtime.Events.VEBoardLoadErrorEvent.eventName,
-      () => {
-        this.#failedGraphLoad = true;
-        this.toast("Unable to load board", BreadboardUI.Events.ToastType.ERROR);
-      }
-    );
-
-    this.#runtime.board.addEventListener(
-      Runtime.Events.VEErrorEvent.eventName,
-      (evt: Runtime.Events.VEErrorEvent) => {
-        this.toast(evt.message, BreadboardUI.Events.ToastType.ERROR);
-      }
-    );
-
-    this.#runtime.board.addEventListener(
-      Runtime.Events.VETabChangeEvent.eventName,
-      async (evt: Runtime.Events.VETabChangeEvent) => {
-        this.tab = this.#runtime.board.currentTab;
-        this.showWelcomePanel = this.tab === null;
-
-        if (this.tab) {
-          // If there is a TGO in the tab change event, honor it and populate a
-          // run with it before switching to the tab proper.
-          if (evt.topGraphObserver) {
-            this.#runtime.run.create(this.tab.id, evt.topGraphObserver);
-          }
-
-          if (this.tab.graph.url) {
-            this.#setUrlParam("board", this.tab.graph.url);
-            await this.#trackRecentBoard(this.tab.graph.url);
-
-            const base = new URL(window.location.href);
-            const decodedUrl = decodeURIComponent(base.href);
-            window.history.replaceState({ path: decodedUrl }, "", decodedUrl);
-          }
-
-          if (this.tab.graph.title) {
-            this.#setPageTitle(this.tab.graph.title);
-          }
-        }
-      }
-    );
-
-    this.#runtime.run.addEventListener(
-      Runtime.Events.VERunEvent.eventName,
-      (evt: Runtime.Events.VERunEvent) => {
-        if (!this.tab) {
-          return;
-        }
-
-        // TODO: Figure out what to do here; if we change away from the run in
-        // the middle we will lose track of where we are in the run.
-        if (evt.tabId !== this.tab.id) {
-          return;
-        }
-
-        switch (evt.runEvt.type) {
-          case "next": {
-            // TODO: Decide if the run needs to be stopped.
-            this.requestUpdate();
-            break;
-          }
-
-          case "graphstart": {
-            this.requestUpdate();
-            break;
-          }
-
-          case "start": {
-            this.status = BreadboardUI.Types.STATUS.RUNNING;
-            break;
-          }
-
-          case "end": {
-            this.status = BreadboardUI.Types.STATUS.STOPPED;
-            break;
-          }
-
-          case "error": {
-            const runEvt = evt.runEvt as RunErrorEvent;
-            this.toast(
-              BreadboardUI.Utils.formatError(runEvt.data.error),
-              BreadboardUI.Events.ToastType.ERROR
-            );
-            this.status = BreadboardUI.Types.STATUS.STOPPED;
-            break;
-          }
-
-          case "resume": {
-            this.status = BreadboardUI.Types.STATUS.RUNNING;
-            break;
-          }
-
-          case "pause": {
-            this.status = BreadboardUI.Types.STATUS.RUNNING;
-            break;
-          }
-
-          case "secret": {
-            const runEvt = evt.runEvt as RunSecretEvent;
-            const { keys } = runEvt.data;
-            const result: InputValues = {};
-            const allKeysAreKnown = keys.every((key) => {
-              const savedSecret =
-                this.#settings
-                  ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.SECRETS)
-                  .items.get(key) ?? null;
-              if (savedSecret) {
-                result[key] = savedSecret.value;
-                return true;
-              }
-              return false;
-            });
-            if (allKeysAreKnown) {
-              evt.harnessRunner?.run(result);
-            } else {
-              this.#secretsHelper = new SecretsHelper(this.#settings!, keys);
-            }
-          }
-        }
-      }
-    );
-
-    // Load the Recent Boards.
-    this.#load = this.#recentBoardStore
+    // Initialization order:
+    //  1. Recent boards.
+    //  2. Settings.
+    //  3. Runtime.
+    //
+    // Note: the runtime loads the kits and the initializes the providers.
+    this.#initialize = this.#recentBoardStore
       .restore()
       .then((boards) => {
         this.#recentBoards = boards;
-
-        // Then Kits, Providers and Settings.
-        return Promise.all([
-          loadKits([
-            GeminiKit,
-            // TODO(aomarks) This is presumably not the right way to do this. How do
-            // I get something into this.#providers?
-            BuildExampleKit,
-            PythonWasmKit,
-            GoogleDriveKit,
-          ]),
-          ...this.#providers.map((provider) => provider.restore()),
-          this.#settings?.restore(),
-        ]);
+        return this.#settings?.restore();
       })
-      .then(([kits]) => {
-        // Process all.
-        this.kits = kits;
-        this.#providers.map((provider) => {
-          if (provider.extendedCapabilities().watch) {
-            provider.watch((change) => {
-              const currentUrl = new URL(window.location.href);
-              const boardFromUrl = currentUrl.searchParams.get("board");
-              if (boardFromUrl?.endsWith(change.filename)) {
-                this.#failedGraphLoad = false;
-                this.#runtime.board.loadFromURL(boardFromUrl, this.kits);
-              }
-            });
-          }
+      .then(() => {
+        return Runtime.create({
+          providers: config.providers ?? [],
+          runStore: this.runStore,
+          dataStore: this.dataStore,
         });
+      })
+      .then((runtime) => {
+        this.#runtime = runtime;
+
+        this.#runtime.edit.addEventListener(
+          Runtime.Events.VEEditEvent.eventName,
+          () => {
+            this.#nodeConfiguratorData = null;
+            this.showNodeConfigurator = false;
+            this.requestUpdate();
+          }
+        );
+
+        this.#runtime.board.addEventListener(
+          Runtime.Events.VEBoardLoadErrorEvent.eventName,
+          () => {
+            this.#failedGraphLoad = true;
+            this.toast(
+              "Unable to load board",
+              BreadboardUI.Events.ToastType.ERROR
+            );
+          }
+        );
+
+        this.#runtime.board.addEventListener(
+          Runtime.Events.VEErrorEvent.eventName,
+          (evt: Runtime.Events.VEErrorEvent) => {
+            this.toast(evt.message, BreadboardUI.Events.ToastType.ERROR);
+          }
+        );
+
+        this.#runtime.board.addEventListener(
+          Runtime.Events.VETabChangeEvent.eventName,
+          async (evt: Runtime.Events.VETabChangeEvent) => {
+            this.tab = this.#runtime.board.currentTab;
+            this.showWelcomePanel = this.tab === null;
+
+            if (this.tab) {
+              // If there is a TGO in the tab change event, honor it and populate a
+              // run with it before switching to the tab proper.
+              if (evt.topGraphObserver) {
+                this.#runtime.run.create(this.tab.id, evt.topGraphObserver);
+              }
+
+              if (this.tab.graph.url) {
+                this.#setUrlParam("board", this.tab.graph.url);
+                await this.#trackRecentBoard(this.tab.graph.url);
+
+                const base = new URL(window.location.href);
+                const decodedUrl = decodeURIComponent(base.href);
+                window.history.replaceState(
+                  { path: decodedUrl },
+                  "",
+                  decodedUrl
+                );
+              }
+
+              if (this.tab.graph.title) {
+                this.#setPageTitle(this.tab.graph.title);
+              }
+            }
+          }
+        );
+
+        this.#runtime.run.addEventListener(
+          Runtime.Events.VERunEvent.eventName,
+          (evt: Runtime.Events.VERunEvent) => {
+            if (!this.tab) {
+              return;
+            }
+
+            // TODO: Figure out what to do here; if we change away from the run in
+            // the middle we will lose track of where we are in the run.
+            if (evt.tabId !== this.tab.id) {
+              return;
+            }
+
+            switch (evt.runEvt.type) {
+              case "next": {
+                // TODO: Decide if the run needs to be stopped.
+                this.requestUpdate();
+                break;
+              }
+
+              case "graphstart": {
+                this.requestUpdate();
+                break;
+              }
+
+              case "start": {
+                this.status = BreadboardUI.Types.STATUS.RUNNING;
+                break;
+              }
+
+              case "end": {
+                this.status = BreadboardUI.Types.STATUS.STOPPED;
+                break;
+              }
+
+              case "error": {
+                const runEvt = evt.runEvt as RunErrorEvent;
+                this.toast(
+                  BreadboardUI.Utils.formatError(runEvt.data.error),
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+                this.status = BreadboardUI.Types.STATUS.STOPPED;
+                break;
+              }
+
+              case "resume": {
+                this.status = BreadboardUI.Types.STATUS.RUNNING;
+                break;
+              }
+
+              case "pause": {
+                this.status = BreadboardUI.Types.STATUS.RUNNING;
+                break;
+              }
+
+              case "secret": {
+                const runEvt = evt.runEvt as RunSecretEvent;
+                const { keys } = runEvt.data;
+                const result: InputValues = {};
+                const allKeysAreKnown = keys.every((key) => {
+                  const savedSecret =
+                    this.#settings
+                      ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.SECRETS)
+                      .items.get(key) ?? null;
+                  if (savedSecret) {
+                    result[key] = savedSecret.value;
+                    return true;
+                  }
+                  return false;
+                });
+                if (allKeysAreKnown) {
+                  evt.harnessRunner?.run(result);
+                } else {
+                  this.#secretsHelper = new SecretsHelper(
+                    this.#settings!,
+                    keys
+                  );
+                }
+              }
+            }
+          }
+        );
 
         // Start the board or show the welcome panel.
         if (boardFromUrl) {
           this.#failedGraphLoad = false;
-          this.#runtime.board.loadFromURL(boardFromUrl, this.kits);
+          this.#runtime.board.loadFromURL(boardFromUrl);
           return;
         } else {
           this.showWelcomePanel = true;
@@ -790,7 +480,7 @@ export class Main extends LitElement {
           }
 
           this.#failedGraphLoad = false;
-          this.#runtime.board.loadFromDescriptor(descriptor, this.kits);
+          this.#runtime.board.loadFromDescriptor(descriptor);
         } catch (err) {
           this.toast(
             "Unable to paste board",
@@ -846,11 +536,11 @@ export class Main extends LitElement {
       }
 
       if (evt.shiftKey) {
-        this.#runtime.edit.redo(this.tab, this.kits);
+        this.#runtime.edit.redo(this.tab);
         return;
       }
 
-      this.#runtime.edit.undo(this.tab, this.kits);
+      this.#runtime.edit.undo(this.tab);
       return;
     }
   }
@@ -937,11 +627,7 @@ export class Main extends LitElement {
     const runGraph = topGraphObserver.current()?.graph ?? null;
     if (runGraph) {
       this.#failedGraphLoad = false;
-      this.#runtime.board.loadFromDescriptor(
-        runGraph,
-        this.kits,
-        topGraphObserver
-      );
+      this.#runtime.board.loadFromDescriptor(runGraph, topGraphObserver);
     }
   }
 
@@ -1247,7 +933,6 @@ export class Main extends LitElement {
     if (evt.subGraphId) {
       this.#runtime.edit.updateSubBoardInfo(
         this.tab,
-        this.kits,
         evt.subGraphId,
         evt.title,
         evt.version,
@@ -1280,7 +965,7 @@ export class Main extends LitElement {
 
     try {
       this.#failedGraphLoad = false;
-      this.#runtime.board.loadFromURL(url, this.kits, this.tab?.graph.url);
+      this.#runtime.board.loadFromURL(url, this.tab?.graph.url);
     } catch (err) {
       this.toast(
         `Unable to load file: ${url}`,
@@ -1336,7 +1021,6 @@ export class Main extends LitElement {
               if (descriptor) {
                 this.#runtime.board.loadFromDescriptor(
                   descriptor,
-                  this.kits,
                   topGraphObserver
                 );
               } else {
@@ -1353,7 +1037,7 @@ export class Main extends LitElement {
             }
           });
         } else {
-          this.#runtime.board.loadFromDescriptor(runData, this.kits);
+          this.#runtime.board.loadFromDescriptor(runData);
         }
       } catch (err) {
         console.warn(err);
@@ -1373,9 +1057,9 @@ export class Main extends LitElement {
 
     this.#failedGraphLoad = false;
     if (evt.url) {
-      this.#runtime.board.loadFromURL(evt.url, this.kits);
+      this.#runtime.board.loadFromURL(evt.url);
     } else if (evt.descriptor) {
-      this.#runtime.board.loadFromDescriptor(evt.descriptor, this.kits);
+      this.#runtime.board.loadFromDescriptor(evt.descriptor);
     }
   }
 
@@ -1392,8 +1076,6 @@ export class Main extends LitElement {
         ></bb-toast>`;
       }
     )}`;
-
-    let tmpl: HTMLTemplateResult | symbol = nothing;
 
     const observers = this.#runtime?.run.getObservers(this.tab?.id ?? null);
     const topGraphResult = observers?.topGraphObserver?.current() ?? null;
@@ -1437,7 +1119,7 @@ export class Main extends LitElement {
       this.showOverflowMenu ||
       this.showNodeConfigurator;
 
-    const nav = this.#load.then(() => {
+    const nav = this.#initialize.then(() => {
       return html`<bb-nav
         .visible=${this.showNav}
         .url=${this.tab?.graph.url ?? null}
@@ -1534,7 +1216,8 @@ export class Main extends LitElement {
       ></bb-nav> `;
     });
 
-    tmpl = html`<div id="header-bar" ?inert=${showingOverlay}>
+    const tmpl = this.#initialize.then(() => {
+      return html`<div id="header-bar" ?inert=${showingOverlay}>
         <button
           id="show-nav"
           @click=${() => {
@@ -1593,9 +1276,9 @@ export class Main extends LitElement {
         <button
           id="undo"
           title="Undo last action"
-          ?disabled=${this.tab?.graph === null || !this.#runtime.edit.canUndo(this.tab, this.kits)}
+          ?disabled=${this.tab?.graph === null || !this.#runtime.edit.canUndo(this.tab)}
           @click=${() => {
-            this.#runtime.edit.undo(this.tab, this.kits);
+            this.#runtime.edit.undo(this.tab);
           }}
         >
           Preview
@@ -1603,9 +1286,9 @@ export class Main extends LitElement {
         <button
           id="redo"
           title="Redo last action"
-          ?disabled=${this.tab?.graph === null || !this.#runtime.edit.canRedo(this.tab, this.kits)}
+          ?disabled=${this.tab?.graph === null || !this.#runtime.edit.canRedo(this.tab)}
           @click=${() => {
-            this.#runtime.edit.redo(this.tab, this.kits);
+            this.#runtime.edit.redo(this.tab);
           }}
         >
           Preview
@@ -1630,7 +1313,7 @@ export class Main extends LitElement {
               .subGraphId=${this.tab?.subGraphId ?? null}
               .run=${this.run}
               .topGraphResult=${topGraphResult}
-              .kits=${this.kits}
+              .kits=${this.#runtime.kits}
               .loader=${this.#runtime.board.loader}
               .status=${this.status}
               .boardId=${this.#boardId}
@@ -1678,7 +1361,6 @@ export class Main extends LitElement {
 
                 const result = this.#runtime.edit.createSubGraph(
                   this.tab,
-                  this.kits,
                   evt.subGraphTitle
                 );
                 if (!result) {
@@ -1704,7 +1386,7 @@ export class Main extends LitElement {
 
                 this.#runtime.edit.deleteSubGraph(
                   this.tab,
-                  this.kits,
+
                   evt.subGraphId
                 );
               }}
@@ -1737,7 +1419,7 @@ export class Main extends LitElement {
                       url: this.tab?.graph.url,
                       runner: graph,
                       diagnostics: true,
-                      kits: this.kits,
+                      kits: [], // The kits are added by the runtime.
                       loader: this.#runtime.board.loader,
                       store: this.dataStore,
                       signal: this.#abortController?.signal,
@@ -1772,7 +1454,6 @@ export class Main extends LitElement {
 
                 this.#runtime.edit.changeEdge(
                   this.tab,
-                  this.kits,
                   evt.changeType,
                   evt.from,
                   evt.to,
@@ -1792,7 +1473,6 @@ export class Main extends LitElement {
 
                 this.#runtime.edit.updateNodeMetadata(
                   this.tab,
-                  this.kits,
                   evt.id,
                   evt.metadata,
                   evt.subGraphId
@@ -1809,7 +1489,6 @@ export class Main extends LitElement {
 
                 this.#runtime.edit.multiEdit(
                   this.tab,
-                  this.kits,
                   evt.edits,
                   evt.description,
                   evt.subGraphId
@@ -1826,7 +1505,6 @@ export class Main extends LitElement {
 
                 this.#runtime.edit.createNode(
                   this.tab,
-                  this.kits,
                   evt.id,
                   evt.nodeType,
                   evt.configuration,
@@ -1853,7 +1531,6 @@ export class Main extends LitElement {
 
                 this.#runtime.edit.changeComment(
                   this.tab,
-                  this.kits,
                   evt.id,
                   evt.text,
                   evt.subGraphId
@@ -1870,7 +1547,6 @@ export class Main extends LitElement {
 
                 this.#runtime.edit.changeNodeConfiguration(
                   this.tab,
-                  this.kits,
                   evt.id,
                   evt.configuration,
                   evt.subGraphId
@@ -1884,12 +1560,7 @@ export class Main extends LitElement {
                   );
                   return;
                 }
-                this.#runtime.edit.deleteNode(
-                  this.tab,
-                  this.kits,
-                  evt.id,
-                  evt.subGraphId
-                );
+                this.#runtime.edit.deleteNode(this.tab, evt.id, evt.subGraphId);
               }}
               @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
                 if (!this.#uiRef.value) {
@@ -1938,12 +1609,7 @@ export class Main extends LitElement {
           </div>
         ${until(nav)}
       </div>`;
-
-    if (this.embed) {
-      tmpl = html`<iframe
-        src="/preview.html?board=${this.url}&embed=true"
-      ></iframe>`;
-    }
+    });
 
     let boardOverlay: HTMLTemplateResult | symbol = nothing;
     if (this.boardEditOverlayInfo) {
@@ -2097,7 +1763,7 @@ export class Main extends LitElement {
 
     let historyOverlay: HTMLTemplateResult | symbol = nothing;
     if (this.showHistory) {
-      const history = this.#runtime.edit.getHistory(this.tab, this.kits);
+      const history = this.#runtime.edit.getHistory(this.tab);
       if (history) {
         historyOverlay = html`<bb-graph-history
           .entries=${history.entries()}
@@ -2180,7 +1846,6 @@ export class Main extends LitElement {
 
           this.#runtime.edit.changeNodeConfigurationPart(
             this.tab,
-            this.kits,
             evt.id,
             evt.configuration,
             evt.subGraphId
@@ -2403,7 +2068,7 @@ export class Main extends LitElement {
     }
 
     return [
-      tmpl,
+      until(tmpl),
       boardOverlay,
       settingsOverlay,
       firstRunOverlay,
