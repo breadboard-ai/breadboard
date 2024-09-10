@@ -11,7 +11,7 @@ import {
   Kit,
   RunStore,
 } from "@google-labs/breadboard";
-import { VETabId } from "./types";
+import { TabId } from "./types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
   createRunner,
@@ -31,11 +31,11 @@ import {
   RunSecretEvent,
   RunSkipEvent,
 } from "@google-labs/breadboard/harness";
-import { VERunEvent } from "./events";
+import { RuntimeBoardRunEvent } from "./events";
 
 export class Run extends EventTarget {
   #runs = new Map<
-    VETabId,
+    TabId,
     {
       harnessRunner?: HarnessRunner;
       topGraphObserver?: BreadboardUI.Utils.TopGraphObserver;
@@ -53,14 +53,14 @@ export class Run extends EventTarget {
   }
 
   create(
-    tabId: VETabId,
+    tabId: TabId,
     topGraphObserver: BreadboardUI.Utils.TopGraphObserver,
     runObserver?: InspectableRunObserver
   ) {
     this.#runs.set(tabId, { topGraphObserver, runObserver });
   }
 
-  getRunner(tabId: VETabId | null) {
+  getRunner(tabId: TabId | null) {
     if (!tabId) {
       return null;
     }
@@ -73,7 +73,7 @@ export class Run extends EventTarget {
     return run.harnessRunner ?? null;
   }
 
-  getAbortSignal(tabId: VETabId | null) {
+  getAbortSignal(tabId: TabId | null) {
     if (!tabId) {
       return null;
     }
@@ -86,7 +86,7 @@ export class Run extends EventTarget {
     return run.abortController ?? null;
   }
 
-  getObservers(tabId: VETabId | null) {
+  getObservers(tabId: TabId | null) {
     if (!tabId) {
       return null;
     }
@@ -100,7 +100,7 @@ export class Run extends EventTarget {
     return { topGraphObserver, runObserver };
   }
 
-  runBoard(tabId: VETabId, config: RunConfig) {
+  runBoard(tabId: TabId, config: RunConfig) {
     const abortController = new AbortController();
     config = { ...config, kits: this.kits, signal: abortController.signal };
 
@@ -110,91 +110,91 @@ export class Run extends EventTarget {
     const { harnessRunner } = runner;
     harnessRunner.addEventListener("start", (evt: RunLifecycleEvent) => {
       this.dispatchEvent(
-        new VERunEvent(tabId, evt, harnessRunner, abortController)
+        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
     });
 
     harnessRunner.addEventListener("pause", (evt: RunLifecycleEvent) => {
       this.dispatchEvent(
-        new VERunEvent(tabId, evt, harnessRunner, abortController)
+        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
     });
 
     harnessRunner.addEventListener("resume", (evt: RunLifecycleEvent) => {
       this.dispatchEvent(
-        new VERunEvent(tabId, evt, harnessRunner, abortController)
+        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
     });
 
     harnessRunner.addEventListener("next", (evt: RunNextEvent) => {
       this.dispatchEvent(
-        new VERunEvent(tabId, evt, harnessRunner, abortController)
+        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
     });
 
     harnessRunner.addEventListener("input", (evt: RunInputEvent) => {
       this.dispatchEvent(
-        new VERunEvent(tabId, evt, harnessRunner, abortController)
+        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
     });
 
     harnessRunner.addEventListener("output", (evt: RunOutputEvent) => {
       this.dispatchEvent(
-        new VERunEvent(tabId, evt, harnessRunner, abortController)
+        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
     });
 
     harnessRunner.addEventListener("secret", (evt: RunSecretEvent) => {
       this.dispatchEvent(
-        new VERunEvent(tabId, evt, harnessRunner, abortController)
+        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
     });
 
     harnessRunner.addEventListener("error", (evt: RunErrorEvent) => {
       this.dispatchEvent(
-        new VERunEvent(tabId, evt, harnessRunner, abortController)
+        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
     });
 
     harnessRunner.addEventListener("skip", (evt: RunSkipEvent) => {
       this.dispatchEvent(
-        new VERunEvent(tabId, evt, harnessRunner, abortController)
+        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
     });
 
     harnessRunner.addEventListener("edge", (evt: RunEdgeEvent) => {
       this.dispatchEvent(
-        new VERunEvent(tabId, evt, harnessRunner, abortController)
+        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
     });
 
     harnessRunner.addEventListener("graphstart", (evt: RunGraphStartEvent) => {
       this.dispatchEvent(
-        new VERunEvent(tabId, evt, harnessRunner, abortController)
+        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
     });
 
     harnessRunner.addEventListener("graphend", (evt: RunGraphEndEvent) => {
       this.dispatchEvent(
-        new VERunEvent(tabId, evt, harnessRunner, abortController)
+        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
     });
 
     harnessRunner.addEventListener("nodestart", (evt: RunNodeStartEvent) => {
       this.dispatchEvent(
-        new VERunEvent(tabId, evt, harnessRunner, abortController)
+        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
     });
 
     harnessRunner.addEventListener("nodeend", (evt: RunNodeEndEvent) => {
       this.dispatchEvent(
-        new VERunEvent(tabId, evt, harnessRunner, abortController)
+        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
     });
 
     harnessRunner.addEventListener("end", (evt: RunEndEvent) => {
       this.dispatchEvent(
-        new VERunEvent(tabId, evt, harnessRunner, abortController)
+        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
     });
 

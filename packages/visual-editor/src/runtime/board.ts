@@ -10,17 +10,17 @@ import {
   GraphProvider,
   Kit,
 } from "@google-labs/breadboard";
-import { VETab, VETabId } from "./types";
+import { Tab, TabId } from "./types";
 import {
-  VEBoardLoadErrorEvent,
-  VEErrorEvent,
-  VETabChangeEvent,
+  RuntimeBoardLoadErrorEvent,
+  RuntimeErrorEvent,
+  RuntimeTabChangeEvent,
 } from "./events";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 
 export class Board extends EventTarget {
-  #tabs = new Map<VETabId, VETab>();
-  #currentTabId: VETabId | null = null;
+  #tabs = new Map<TabId, Tab>();
+  #currentTabId: TabId | null = null;
 
   constructor(
     public readonly providers: GraphProvider[],
@@ -80,7 +80,7 @@ export class Board extends EventTarget {
     return this.#tabs;
   }
 
-  get currentTab(): VETab | null {
+  get currentTab(): Tab | null {
     if (!this.#currentTabId) {
       return null;
     }
@@ -103,7 +103,7 @@ export class Board extends EventTarget {
     });
 
     this.#currentTabId = id;
-    this.dispatchEvent(new VETabChangeEvent(topGraphObserver));
+    this.dispatchEvent(new RuntimeTabChangeEvent(topGraphObserver));
   }
 
   async loadFromURL(boardUrl: string, currentUrl: string | null = null) {
@@ -139,7 +139,7 @@ export class Board extends EventTarget {
 
       const graph = await this.loader.load(url, { base });
       if (!graph) {
-        this.dispatchEvent(new VEErrorEvent("Unable to load board"));
+        this.dispatchEvent(new RuntimeErrorEvent("Unable to load board"));
         return;
       }
 
@@ -156,23 +156,23 @@ export class Board extends EventTarget {
       });
 
       this.#currentTabId = id;
-      this.dispatchEvent(new VETabChangeEvent());
+      this.dispatchEvent(new RuntimeTabChangeEvent());
     } catch (err) {
       console.warn(err);
-      this.dispatchEvent(new VEBoardLoadErrorEvent());
+      this.dispatchEvent(new RuntimeBoardLoadErrorEvent());
     }
   }
 
-  changeTab(id: VETabId) {
+  changeTab(id: TabId) {
     if (!this.#tabs.has(id)) {
       return;
     }
 
     this.#currentTabId = id;
-    this.dispatchEvent(new VETabChangeEvent());
+    this.dispatchEvent(new RuntimeTabChangeEvent());
   }
 
-  closeTab(id: VETabId) {
+  closeTab(id: TabId) {
     this.#currentTabId = null;
 
     const tabList = [...this.#tabs.keys()];
@@ -193,10 +193,10 @@ export class Board extends EventTarget {
     }
 
     this.#tabs.delete(id);
-    this.dispatchEvent(new VETabChangeEvent());
+    this.dispatchEvent(new RuntimeTabChangeEvent());
   }
 
-  canSave(id: VETabId | null): boolean {
+  canSave(id: TabId | null): boolean {
     if (!id) {
       return false;
     }
@@ -224,7 +224,7 @@ export class Board extends EventTarget {
     return true;
   }
 
-  save(id: VETabId | null) {
+  save(id: TabId | null) {
     if (!id) {
       return { result: false, error: "Unable to save" };
     }

@@ -161,7 +161,7 @@ export class Main extends LitElement {
   previewOverlayURL: URL | null = null;
 
   @property()
-  tab: Runtime.Types.VETab | null = null;
+  tab: Runtime.Types.Tab | null = null;
 
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #boardId = 0;
@@ -257,7 +257,7 @@ export class Main extends LitElement {
         this.#runtime = runtime;
 
         this.#runtime.edit.addEventListener(
-          Runtime.Events.VEEditEvent.eventName,
+          Runtime.Events.RuntimeBoardEditEvent.eventName,
           () => {
             this.#nodeConfiguratorData = null;
             this.showNodeConfigurator = false;
@@ -266,7 +266,7 @@ export class Main extends LitElement {
         );
 
         this.#runtime.board.addEventListener(
-          Runtime.Events.VEBoardLoadErrorEvent.eventName,
+          Runtime.Events.RuntimeBoardLoadErrorEvent.eventName,
           () => {
             this.#failedGraphLoad = true;
             this.toast(
@@ -277,15 +277,15 @@ export class Main extends LitElement {
         );
 
         this.#runtime.board.addEventListener(
-          Runtime.Events.VEErrorEvent.eventName,
-          (evt: Runtime.Events.VEErrorEvent) => {
+          Runtime.Events.RuntimeErrorEvent.eventName,
+          (evt: Runtime.Events.RuntimeErrorEvent) => {
             this.toast(evt.message, BreadboardUI.Events.ToastType.ERROR);
           }
         );
 
         this.#runtime.board.addEventListener(
-          Runtime.Events.VETabChangeEvent.eventName,
-          async (evt: Runtime.Events.VETabChangeEvent) => {
+          Runtime.Events.RuntimeTabChangeEvent.eventName,
+          async (evt: Runtime.Events.RuntimeTabChangeEvent) => {
             this.tab = this.#runtime.board.currentTab;
             this.showWelcomePanel = this.tab === null;
 
@@ -317,8 +317,8 @@ export class Main extends LitElement {
         );
 
         this.#runtime.run.addEventListener(
-          Runtime.Events.VERunEvent.eventName,
-          (evt: Runtime.Events.VERunEvent) => {
+          Runtime.Events.RuntimeBoardRunEvent.eventName,
+          (evt: Runtime.Events.RuntimeBoardRunEvent) => {
             if (!this.tab) {
               return;
             }

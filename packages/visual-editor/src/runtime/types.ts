@@ -12,13 +12,13 @@ import {
   RunStore,
 } from "@google-labs/breadboard";
 
-export type VETabId = `${string}-${string}-${string}-${string}-${string}`;
-export type VETabURL = string;
-export type VETabName = string;
-export interface VETab {
-  id: VETabId;
+export type TabId = `${string}-${string}-${string}-${string}-${string}`;
+export type TabURL = string;
+export type TabName = string;
+export interface Tab {
+  id: TabId;
   kits: Kit[];
-  name: VETabName;
+  name: TabName;
   graph: GraphDescriptor;
   subGraphId: string | null;
   version: number;
