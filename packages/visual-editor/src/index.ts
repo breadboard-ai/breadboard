@@ -386,24 +386,29 @@ export class Main extends LitElement {
                 const runEvt = evt.runEvt as RunSecretEvent;
                 const { keys } = runEvt.data;
                 const result: InputValues = {};
-                const allKeysAreKnown = keys.every((key) => {
-                  const savedSecret =
-                    this.#settings
-                      ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.SECRETS)
-                      .items.get(key) ?? null;
-                  if (savedSecret) {
-                    result[key] = savedSecret.value;
-                    return true;
+                if (this.#secretsHelper) {
+                  this.#secretsHelper.setKeys(keys);
+                  if (this.#secretsHelper.hasAllSecrets()) {
+                    evt.harnessRunner?.run(this.#secretsHelper.getSecrets());
                   }
-                  return false;
-                });
-                if (allKeysAreKnown) {
-                  evt.harnessRunner?.run(result);
                 } else {
-                  this.#secretsHelper = new SecretsHelper(
-                    this.#settings!,
-                    keys
-                  );
+                  const allKeysAreKnown = keys.every((key) => {
+                    const savedSecret =
+                      this.#settings
+                        ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.SECRETS)
+                        .items.get(key) ?? null;
+                    if (savedSecret) {
+                      result[key] = savedSecret.value;
+                      return true;
+                    }
+                    return false;
+                  });
+                  if (allKeysAreKnown) {
+                    evt.harnessRunner?.run(result);
+                  } else {
+                    this.#secretsHelper = new SecretsHelper(this.#settings!);
+                    this.#secretsHelper.setKeys(keys);
+                  }
                 }
               }
             }
@@ -1548,6 +1553,16 @@ export class Main extends LitElement {
                       this.#secretsHelper = null;
                       runner?.run(secrets);
                     }
+                  } else {
+                    // This is the case when the "secret" event hasn't yet
+                    // been received.
+                    // Likely, this is a side effect of how the
+                    // activity-log is built: it relies on the run observer
+                    // for the events list, and the run observer updates the
+                    // list of run events before the run API dispatches
+                    // the "secret" event.
+                    this.#secretsHelper = new SecretsHelper(this.#settings!);
+                    this.#secretsHelper.receiveSecrets(event);
                   }
                 } else {
                   const data = event.data as InputValues;

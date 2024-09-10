@@ -10,17 +10,20 @@ import * as BreadboardUI from "@breadboard-ai/shared-ui";
 
 export class SecretsHelper {
   #settings: SettingsStore;
-  #keys: string[];
+  #keys: string[] | null = null;
   #receivedSecrets: InputValues = {};
 
-  constructor(settings: SettingsStore, keys: string[] | null) {
-    this.#keys = keys || [];
+  constructor(settings: SettingsStore) {
     this.#settings = settings;
   }
 
   #getStoredSecrets() {
     return this.#settings.getSection(BreadboardUI.Types.SETTINGS_TYPE.SECRETS)
       .items;
+  }
+
+  setKeys(keys: string[]) {
+    this.#keys = keys;
   }
 
   receiveSecrets(event: BreadboardUI.Events.InputEnterEvent) {
@@ -30,12 +33,15 @@ export class SecretsHelper {
           .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
           .items.get("Save Secrets")?.value) ||
       false;
+    const name = event.id;
+    const value = event.data.secret as string;
+
+    this.#receivedSecrets[name] = value;
+
     if (!shouldSaveSecrets) {
       return;
     }
 
-    const name = event.id;
-    const value = event.data.secret as string;
     const secrets = this.#getStoredSecrets();
     let shouldSave = false;
     if (secrets.has(event.id)) {
@@ -49,8 +55,6 @@ export class SecretsHelper {
       shouldSave = true;
     }
 
-    this.#receivedSecrets[name] = value;
-
     if (!shouldSave) {
       return;
     }
@@ -58,6 +62,9 @@ export class SecretsHelper {
   }
 
   hasAllSecrets(): boolean {
+    if (!this.#keys) {
+      return false;
+    }
     for (const key of this.#keys) {
       if (!this.#receivedSecrets[key]) {
         return false;
