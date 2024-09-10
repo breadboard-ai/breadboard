@@ -33,6 +33,7 @@ export { secret, default as secrets } from "./nodes/secrets.js";
 export { unnest, unnestNode } from "./nodes/unnest.js";
 export { cast, castNode } from "./nodes/cast.js";
 export { default as mapNode, map } from "./nodes/map.js";
+export type { CodeNode } from "./nodes/code.js";
 
 const builder = new KitBuilder({
   title: "Core Kit",
