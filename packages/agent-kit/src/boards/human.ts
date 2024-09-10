@@ -5,99 +5,91 @@
  */
 
 import {
-  Schema,
-  base,
-  code,
+  annotate,
+  array,
   board,
-  NewNodeFactory,
-  NewNodeValue,
-} from "@google-labs/breadboard";
+  input,
+  inputNode,
+  jsonSchema,
+  output,
+  outputNode,
+  rawInput,
+  type Value,
+} from "@breadboard-ai/build";
+import { type Schema } from "@google-labs/breadboard";
+import { code } from "@google-labs/core-kit";
 import {
-  Context,
-  skipIfDone,
-  userPartsAdder,
-  fun,
-  LlmContent,
+  addUserParts,
+  type Context,
+  contextType,
+  type LlmContent,
 } from "../context.js";
-import { AbstractValue } from "../../../breadboard/dist/src/new/grammar/types.js";
 
-export type HumanType = NewNodeFactory<
+export type HumanMode = "input" | "inputOutput" | "choose" | "chooseReject";
+
+const context = input({
+  title: "Context in",
+  description: "Incoming conversation context",
+  type: array(contextType),
+  default: [],
+});
+
+const title = input({
+  title: "Title",
+  description: "The user label",
+  type: annotate("string", { behavior: ["config"] }),
+  default: "User",
+});
+
+const description = input({
+  title: "Description",
+  description: "The user's input",
+  type: annotate("string", { behavior: ["config"] }),
+  default: "A request or response",
+});
+
+const areWeDoneChecker = code(
   {
-    context: NewNodeValue;
-    title?: NewNodeValue;
-    description?: NewNodeValue;
+    $id: "areWeDoneChecker",
+    $metadata: {
+      title: "Done Check",
+      description: "Checking to see if we can skip work altogether",
+    },
+    context,
   },
-  {
-    context: NewNodeValue;
-    again: NewNodeValue;
-    text: NewNodeValue;
-  }
->;
-
-type SchemaInputs = {
-  title: string;
-  action: Action;
-  description: string;
-  context: unknown;
-};
-type SchemaOutputs = { schema: unknown };
-
-/**
- * The action information to be presented to the user.
- */
-export type Action =
-  | undefined
-  | {
-      action: "none";
+  { context: array(contextType), done: array(contextType) },
+  ({ context }) => {
+    if (!context) throw new Error("Context is required");
+    // are there any done:true in the context?
+    let done = false;
+    for (let i = 0; i < context.length; ++i) {
+      const item = context[i];
+      if (item.role === "$metadata" && item.type === "looper") {
+        const plan = item.data;
+        if (plan.done) {
+          done = true;
+          break;
+        }
+      }
     }
-  | {
-      action: "vote";
-      title: string;
-    };
-
-/**
- * Creates custom input schema.
- */
-const inputSchemaBuilder = code<SchemaInputs, SchemaOutputs>(
-  ({ title, action, description, context }) => {
-    const text: Schema = {
-      title,
-      description,
-      type: "object",
-      behavior: ["transient", "llm-content"],
-      examples: [JSON.stringify({ parts: [{ text: "" }] })],
-    };
-    const schema: Schema = {
-      type: "object",
-      properties: { text },
-    } satisfies Schema;
-
-    if (action?.action == "vote") {
-      text.title = action.title;
-      text.enum = ["Yes", "No"];
+    // TODO(aomarks) Casts required until code() supports polymorphism better.
+    type TempUnsafeResult = { done: Context[]; context: Context[] };
+    if (done) {
+      return { done: context } as TempUnsafeResult;
+    } else {
+      return { context } as TempUnsafeResult;
     }
-
-    return { schema, context };
   }
 );
 
-export type ModeRouterIn = {
-  context: unknown;
-};
-export type ModeRouterOut =
-  | {
-      input: Context[];
-    }
-  | {
-      input: Context[];
-      output: Context[];
-    }
-  | {
-      output: Context[];
-      choose: Context[];
-    };
-
-export type HumanMode = "input" | "inputOutput" | "choose" | "chooseReject";
+const doneOutput = outputNode(
+  { context: output(areWeDoneChecker.outputs.done, { title: "Context out" }) },
+  {
+    id: "doneOutput",
+    title: "Done",
+    description: "Skipping because we're done",
+  }
+);
 
 /**
  * Four modes:
@@ -118,19 +110,38 @@ export type HumanMode = "input" | "inputOutput" | "choose" | "chooseReject";
  * - "inputOutput" -- just the context.
  * - "choose" -- the context and the `ChoicePicker` data structure.
  */
-export const modeRouterFunction = fun<ModeRouterIn, ModeRouterOut>(
+export const routeByMode = code(
+  {
+    $id: "routeByMode",
+    $metadata: {
+      title: "Compute Mode",
+      description: "Determining the mode of operation",
+    },
+    context: areWeDoneChecker.outputs.context,
+  },
+  {
+    input: array(contextType),
+    output: array(contextType),
+    choose: array(contextType),
+  },
   ({ context }) => {
+    // TODO(aomarks) Casts required until code() supports polymorphism better.
+    type TempUnsafeResult = {
+      input: Context[];
+      output: Context[];
+      choose: Context[];
+    };
     if (!context) {
-      return { input: [] };
+      return { input: [] } as object as TempUnsafeResult;
     }
     const c = asContextArray(context);
     const mode = computeMode(c);
     if (mode === "input") {
-      return { input: c };
+      return { input: c } as TempUnsafeResult;
     } else if (mode === "inputOutput") {
-      return { input: c, output: c };
+      return { input: c, output: c } as TempUnsafeResult;
     }
-    return { output: onlyChoices(c), choose: c };
+    return { output: onlyChoices(c), choose: c } as TempUnsafeResult;
 
     function asContextArray(context: unknown): Context[] {
       const input = context as Context | Context[];
@@ -188,12 +199,50 @@ export const modeRouterFunction = fun<ModeRouterIn, ModeRouterOut>(
     }
   }
 );
-const modeRouter = code(modeRouterFunction);
 
-export const chooseSchemaBuilderFunction = fun(
+const createSchema = code(
+  {
+    $id: "createSchema",
+    $metadata: {
+      title: "Create Schema",
+      description: "Creating a schema for user input",
+    },
+    title,
+    description,
+    context: routeByMode.outputs.input,
+  },
+  { schema: jsonSchema },
+  ({ title, description }) => {
+    const text: Schema = {
+      title,
+      description,
+      type: "object",
+      behavior: ["transient", "llm-content"],
+      examples: [JSON.stringify({ parts: [{ text: "" }] })],
+    };
+    const schema: Schema = {
+      type: "object",
+      properties: { text },
+    };
+    return { schema };
+  }
+);
+
+export const buildChooseSchema = code(
+  {
+    $id: "buildChooseSchema",
+    $metadata: {
+      title: "Choose Options",
+      description: "Creating the options to choose from",
+    },
+    title,
+    description,
+    context: routeByMode.outputs.choose,
+  },
+  { total: "number", schema: jsonSchema },
   ({ context, title, description }) => {
     const c = asContextArray(context).reverse();
-    const choices: string[] = [];
+    const choices = [];
     for (const item of c) {
       if (item.role === "$metadata" && item.type === "split") {
         const type = item.data.type;
@@ -208,8 +257,8 @@ export const chooseSchemaBuilderFunction = fun(
       type: "object",
       properties: {
         choice: {
-          title: title as string,
-          description: description as string,
+          title,
+          description,
           type: "string",
           enum: choices,
         },
@@ -217,195 +266,121 @@ export const chooseSchemaBuilderFunction = fun(
     };
     return { schema, total: choices.length };
 
-    function asContextArray(context: unknown): Context[] {
-      const input = context as Context | Context[];
-      return Array.isArray(input) ? input : [input];
+    function asContextArray(context: Context | Context[]): Context[] {
+      return Array.isArray(context) ? context : [context];
     }
   }
 );
-const chooseSchemaBuilder = code(chooseSchemaBuilderFunction);
 
-export const choicePickerFunction = fun(({ context, choice, total }) => {
-  const chosenIndex =
-    (total as number) - parseInt((choice as string).split(" ")[1], 10);
-  const c = (context as Context[]).reverse();
-  const current: Context[] = [];
-  let found: "before" | "found" | "after" = "before";
-  let chunkIndex = 0;
-  let startIndex = 0;
-  for (const [i, item] of c.entries()) {
-    if (item.role === "$metadata" && item.type === "split") {
-      const type = item.data.type;
-      if (type === "start") {
-        startIndex = i;
-        break;
-      } else {
-        if (chunkIndex === chosenIndex) {
-          found = "found";
-        } else if (chunkIndex > chosenIndex) {
-          found = "after";
-        } else {
-          found = "before";
-        }
-        chunkIndex++;
-      }
-    } else if (found === "found") {
-      current.push(item);
-    }
-  }
-  const preamble = c.slice(startIndex + 1).reverse();
-  if (!found) {
-    throw new Error(`Integrity error: choice "${choice}" not found`);
-  }
-  return { context: [...preamble, ...current.reverse()] };
+const chooseInput = rawInput({
+  $id: "chooseInput",
+  $metadata: {
+    title: "Look at the choices above and pick one",
+    description: "Asking user to choose an option",
+  },
+  schema: buildChooseSchema.outputs.schema,
 });
-export const choicePicker = code(choicePickerFunction);
 
-export default await board(({ context, title, description }) => {
-  context
-    .title("Context in")
-    .description("Incoming conversation context")
-    .isArray()
-    .behavior("llm-content")
-    .optional()
-    .default("[]");
-  title
-    .title("Title")
-    .description("The user label")
-    .optional()
-    .behavior("config")
-    .default("User");
-  description
-    .title("Description")
-    .description("The user's input")
-    .optional()
-    .behavior("config")
-    .default("A request or response");
-
-  const areWeDoneChecker = skipIfDone({
-    $metadata: {
-      title: "Done Check",
-      description: "Checking to see if we can skip work altogether",
-    },
-    context,
-  });
-
-  base.output({
-    $metadata: { title: "Done", description: "Skipping because we're done" },
-    context: areWeDoneChecker.done.title("Context out"),
-  });
-
-  const routeByMode = modeRouter({
-    $metadata: {
-      title: "Compute Mode",
-      description: "Determining the mode of operation",
-    },
-    context: areWeDoneChecker.context,
-  });
-
-  const createSchema = inputSchemaBuilder({
-    $id: "createSchema",
-    $metadata: {
-      title: "Create Schema",
-      description: "Creating a schema for user input",
-    },
-    title: title.isString(),
-    description: description.isString(),
-    context: routeByMode.input,
-  });
-
-  const buildChooseSchema = chooseSchemaBuilder({
-    $metadata: {
-      title: "Choose Options",
-      description: "Creating the options to choose from",
-    },
-    title: title.isString(),
-    description: description.isString(),
-    context: routeByMode.choose,
-  });
-
-  const chooseInput = base.input({
-    $metadata: {
-      title: "Look at the choices above and pick one",
-      description: "Asking user to choose an option",
-    },
-  });
-
-  buildChooseSchema.schema.to(chooseInput);
-
-  const pickChoice = choicePicker({
+export const pickChoice = code(
+  {
+    $id: "pickChoice",
     $metadata: {
       title: "Read Choice",
       description: "Reading the user's choice",
     },
-    context: routeByMode.choose,
-    choice: chooseInput.choice,
-    total: buildChooseSchema.total,
-  });
+    context: routeByMode.outputs.choose,
+    choice: chooseInput.unsafeOutput("choice") as Value<string>,
+    total: buildChooseSchema.outputs.total,
+  },
+  { context: array(contextType) },
+  ({ context, choice, total }) => {
+    const chosenIndex = total - parseInt(choice.split(" ")[1], 10);
+    const c = context.reverse();
+    const current: Context[] = [];
+    let found: "before" | "found" | "after" = "before";
+    let chunkIndex = 0;
+    let startIndex = 0;
+    for (const [i, item] of c.entries()) {
+      if (item.role === "$metadata" && item.type === "split") {
+        const type = item.data.type;
+        if (type === "start") {
+          startIndex = i;
+          break;
+        } else {
+          if (chunkIndex === chosenIndex) {
+            found = "found";
+          } else if (chunkIndex > chosenIndex) {
+            found = "after";
+          } else {
+            found = "before";
+          }
+          chunkIndex++;
+        }
+      } else if (found === "found") {
+        current.push(item);
+      }
+    }
+    const preamble = c.slice(startIndex + 1).reverse();
+    if (!found) {
+      throw new Error(`Integrity error: choice "${choice}" not found`);
+    }
+    return { context: [...preamble, ...current.reverse()] };
+  }
+);
 
-  base.output({
-    $metadata: {
-      title: "Choice Output",
-      description: "Outputting the user's choice",
-    },
-    context: pickChoice.context
-      .isArray()
-      .behavior("llm-content")
-      .title("Context out"),
-  });
+const choiceOutput = outputNode(
+  { context: output(pickChoice.outputs.context, { title: "Context out" }) },
+  {
+    id: "choiceOutput",
+    title: "Choice Output",
+    description: "Outputting the user's choice",
+  }
+);
 
-  base.output({
-    $id: "output",
-    $metadata: {
+const displayOutput = outputNode(
+  {
+    output: output(routeByMode.outputs.output, {
       title: "Output",
-      description: "Displaying the output the user.",
-    },
-    output: routeByMode.output,
-    schema: {
-      type: "object",
-      behavior: ["bubble"],
-      properties: {
-        output: {
-          title: "Output",
-          description: "The output to display",
-          type: "array",
-          items: {
-            type: "object",
-            behavior: ["llm-content"],
-          },
-        },
-      },
-    } satisfies Schema,
-  });
+      description: "The output to display",
+    }),
+  },
+  {
+    id: "output",
+    title: "Output",
+    description: "Displaying the output to the user.",
+    bubble: true,
+  }
+);
 
-  const input = base.input({
-    $id: "input",
-    $metadata: {
-      title: "Input",
-      description: "Asking user for input",
-    },
-  });
+const userInput = rawInput({
+  $id: "input",
+  $metadata: { title: "Input", description: "Asking user for input" },
+  schema: createSchema.outputs.schema,
+});
 
-  createSchema.schema.to(input);
-
-  const appendContext = userPartsAdder({
+const appendContext = code(
+  {
     $id: "appendContext",
     $metadata: {
       title: "Append Context",
       description: "Appending user input to the conversation context",
     },
-    context: routeByMode.input as AbstractValue<Context | Context[]>,
-    toAdd: input.text as AbstractValue<LlmContent>,
-  });
+    context: routeByMode.outputs.input,
+    toAdd: userInput.unsafeOutput("text") as Value<LlmContent>,
+  },
+  { context: array(contextType) },
+  addUserParts
+);
 
-  return {
-    context: appendContext.context
-      .isArray()
-      .behavior("llm-content")
-      .title("Context out"),
-    text: input.text.title("Text").behavior("deprecated"),
-  };
-}).serialize({
+const contextOutput = outputNode({
+  context: output(appendContext.outputs.context, { title: "Context out" }),
+  text: output(userInput.unsafeOutput("text") as Value<LlmContent>, {
+    id: "contextOutput",
+    deprecated: true,
+  }),
+});
+
+export default board({
   title: "Human",
   metadata: {
     icon: "human",
@@ -416,4 +391,6 @@ export default await board(({ context, title, description }) => {
   description:
     "A human in the loop. Use this node to insert a real person (user input) into your team of synthetic workers.",
   version: "0.0.1",
+  inputs: { context, title, description },
+  outputs: [doneOutput, displayOutput, contextOutput, choiceOutput],
 });
