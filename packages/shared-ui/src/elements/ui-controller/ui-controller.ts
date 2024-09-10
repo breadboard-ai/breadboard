@@ -11,6 +11,7 @@ import {
   GraphProvider,
   InspectableRun,
   InspectableRunEvent,
+  InspectableRunInputs,
   Kit,
   RemoveNodeSpec,
   inspect,
@@ -69,6 +70,9 @@ export class UI extends LitElement {
 
   @property()
   run: InspectableRun | null = null;
+
+  @property()
+  inputsFromLastRun: InspectableRunInputs | null = null;
 
   @property()
   kits: Kit[] = [];
@@ -451,42 +455,46 @@ export class UI extends LitElement {
       }
     );
 
-    const activityLog = guard([this.topGraphResult], () => {
-      return html`<bb-activity-log-lite
-        .topGraphResult=${this.topGraphResult}
-        .showLogTitle=${true}
-        .showActions=${false}
+    const events = this.run?.events || [];
+    const eventPosition = events.length - 1;
+    const activityLog = guard([this.run?.events], () => {
+      return html`<bb-activity-log
+        .run=${this.run}
+        .inputsFromLastRun=${this.inputsFromLastRun}
+        .events=${events}
+        .eventPosition=${eventPosition}
         .showExtendedInfo=${true}
-        .hideEmptyEdges=${true}
+        .settings=${this.settings}
+        .logTitle=${"Activity"}
+        .providers=${this.providers}
+        .providerOps=${this.providerOps}
+        @bbinputrequested=${() => {
+          this.selectedNodeIds.length = 0;
+          this.requestUpdate();
+        }}
         @pointerdown=${(evt: PointerEvent) => {
           if (!this.#controlsActivityRef.value) {
             return;
           }
-
           const [top] = evt.composedPath();
           if (!(top instanceof HTMLElement) || !top.dataset.messageId) {
             return;
           }
-
           evt.stopImmediatePropagation();
-
-          // TODO: Bring this back when we have a way to get the event by ID.
-          // const id = top.dataset.messageId;
-          // const event = this.run?.getEventById(id);
-
-          // if (!event) {
-          //   console.warn(`Unable to find event with ID "${id}"`);
-          //   return;
-          // }
-
-          // if (event.type !== "node") {
-          //   return;
-          // }
-
-          // this.debugEvent = event;
+          const id = top.dataset.messageId;
+          const event = this.run?.getEventById(id);
+          if (!event) {
+            // TODO: Offer the user more information.
+            console.warn(`Unable to find event with ID "${id}"`);
+            return;
+          }
+          if (event.type !== "node") {
+            return;
+          }
+          this.debugEvent = event;
         }}
         name="Board"
-      ></bb-activity-log-lite>`;
+      ></bb-activity-log>`;
     });
 
     const entryDetails = this.debugEvent

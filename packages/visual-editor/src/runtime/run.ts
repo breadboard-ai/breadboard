@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -207,6 +207,7 @@ export class Run extends EventTarget {
       logLevel: "debug",
       dataStore: this.dataStore,
       runStore: this.runStore,
+      kits: this.kits,
     });
 
     const topGraphObserver = new BreadboardUI.Utils.TopGraphObserver(
