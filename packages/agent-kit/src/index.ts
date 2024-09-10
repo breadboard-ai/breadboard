@@ -43,6 +43,7 @@ const AgentKit = builder.build({
   specialist: adapter.handlerForNode("specialist"),
   looper: adapter.handlerForNode("looper"),
   joiner: adapter.handlerForNode("joiner"),
+  content: adapter.handlerForNode("content"),
 });
 
 export type AgentKit = InstanceType<typeof AgentKit>;
