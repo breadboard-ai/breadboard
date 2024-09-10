@@ -36,7 +36,7 @@
       "command": "[ -f ./secrets/local.json ] && export CONNECTIONS_FILE=./secrets/local.json; node --enable-source-maps dist/index.js",
       "service": true,
       "env": {
-        "ALLOWED_ORIGINS": "http://localhost:5173"
+        "ALLOWED_ORIGINS": "http://localhost:5173 http://localhost:3000"
       },
       "dependencies": [
         "build"

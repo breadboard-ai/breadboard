@@ -43,8 +43,20 @@ import {
 import { map } from "lit/directives/map.js";
 import { provide } from "@lit/context";
 import { VisitorState } from "./utils/types.js";
+import { AppSettingsHelper } from "./utils/settings-helper.js";
 
 const RUN_ON_BOARD_SERVER = "run-on-board-server";
+
+const ENVIRONMENT: BreadboardUI.Contexts.Environment = {
+  connectionServerUrl: import.meta.env.VITE_CONNECTION_SERVER_URL,
+  connectionRedirectUrl: "/oauth/",
+  plugins: {
+    input: [
+      BreadboardUI.Elements.googleDriveFileIdInputPlugin,
+      BreadboardUI.Elements.googleDriveQueryInputPlugin,
+    ],
+  },
+};
 
 const randomMessage: UserMessage[] = [
   {
@@ -113,6 +125,15 @@ export class AppView extends LitElement {
 
   @state()
   secretsNeeded: string[] | null = null;
+
+  @provide({ context: BreadboardUI.Contexts.environmentContext })
+  environment = ENVIRONMENT;
+
+  @provide({ context: BreadboardUI.Elements.tokenVendorContext })
+  tokenVendor!: BreadboardUI.Elements.TokenVendor;
+
+  @provide({ context: BreadboardUI.Contexts.settingsHelperContext })
+  settingsHelper!: AppSettingsHelper;
 
   @provide({ context: visitorStateManagerContext })
   visitorStateManager = new VisitorStateManager();
@@ -424,6 +445,15 @@ export class AppView extends LitElement {
       }
     }
   `;
+
+  constructor() {
+    super();
+    this.settingsHelper = new AppSettingsHelper();
+    this.tokenVendor = new BreadboardUI.Elements.TokenVendor(
+      this.settingsHelper,
+      ENVIRONMENT
+    );
+  }
 
   connectedCallback(): void {
     super.connectedCallback();
