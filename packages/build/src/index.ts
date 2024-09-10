@@ -7,7 +7,7 @@
 export { board, inputNode, outputNode } from "./internal/board/board.js";
 export { constant } from "./internal/board/constant.js";
 export { converge } from "./internal/board/converge.js";
-export { input } from "./internal/board/input.js";
+export { input, rawInput } from "./internal/board/input.js";
 export { loopback } from "./internal/board/loopback.js";
 export { optionalEdge } from "./internal/board/optional.js";
 export { output } from "./internal/board/output.js";

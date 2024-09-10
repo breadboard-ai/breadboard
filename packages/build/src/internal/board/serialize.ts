@@ -92,7 +92,6 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       | InputWithDefault<JsonSerializable | undefined>
     >
   >;
-  let i = 0;
   const magicInputResolutions = new Map<
     GenericSpecialInput,
     { nodeId: string; portName: string }
@@ -104,10 +103,8 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     );
     let iterationInputId: string | undefined = undefined;
     const autoId = () => {
-      if (iterationInputId == undefined) {
-        iterationInputId;
-        iterationInputId = `input-${i}`;
-        i++;
+      if (iterationInputId === undefined) {
+        iterationInputId = nextIdForType("input");
       }
       return iterationInputId;
     };
@@ -189,7 +186,6 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
   const outputsArray = Array.isArray(board.outputsForSerialization)
     ? board.outputsForSerialization
     : [board.outputsForSerialization];
-  let j = 0;
   for (const outputs of outputsArray) {
     // Recursively traverse the graph starting from outputs.
     const sortedBoardOutputs = Object.entries(outputs).sort(
@@ -198,10 +194,8 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     );
     let iterationOutputId: string | undefined = undefined;
     const autoId = () => {
-      if (iterationOutputId == undefined) {
-        iterationOutputId;
-        iterationOutputId = `output-${j}`;
-        j++;
+      if (iterationOutputId === undefined) {
+        iterationOutputId = nextIdForType("output");
       }
       return iterationOutputId;
     };
