@@ -164,7 +164,7 @@ const config: RunConfig = {
 };
 
 // Create the runner
-const runner = createRunner(graph);
+const runner = createRunner(config);
 
 // Function to handle user input
 async function getUserInput(schema: Schema): Promise<void> {
