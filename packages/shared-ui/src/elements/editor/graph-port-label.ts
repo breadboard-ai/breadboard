@@ -62,7 +62,7 @@ export class GraphPortLabel extends PIXI.Container {
     });
 
     this.#valuePreview = new PIXI.HTMLText({
-      text: this.#createTruncatedValue(port),
+      text: "(unset)",
       style: {
         fontFamily: "Arial",
         fontSize: this.#previewTextSize,
@@ -96,7 +96,7 @@ export class GraphPortLabel extends PIXI.Container {
         return;
       }
       this.#isDirty = false;
-      this.#positionElements();
+      this.#calculateDimensions();
       this.#draw();
     };
 
@@ -142,6 +142,7 @@ export class GraphPortLabel extends PIXI.Container {
 
   set port(port: InspectablePort | null) {
     this.#port = port;
+    this.#isDirty = true;
 
     const portTitle = port?.title || "";
     if (portTitle !== this.#label.text) {
@@ -151,7 +152,6 @@ export class GraphPortLabel extends PIXI.Container {
     const valuePreview = this.#createTruncatedValue(port);
     if (valuePreview !== this.#valuePreview.text) {
       this.#valuePreview.text = valuePreview;
-      this.#positionElements();
     }
 
     if (!port) {
@@ -171,6 +171,13 @@ export class GraphPortLabel extends PIXI.Container {
   }
 
   set isConfigurable(isConfigurable: boolean) {
+    if (isConfigurable === this.#isConfigurable) {
+      return;
+    }
+
+    this.#isConfigurable = isConfigurable;
+    this.#isDirty = true;
+
     if (isConfigurable) {
       this.eventMode = "static";
       this.#hoverZone.cursor = "pointer";
@@ -178,9 +185,6 @@ export class GraphPortLabel extends PIXI.Container {
       this.eventMode = "none";
       this.#hoverZone.cursor = "default";
     }
-
-    this.#isConfigurable = isConfigurable;
-    this.#isDirty = true;
   }
 
   get isConfigurable() {
@@ -226,7 +230,7 @@ export class GraphPortLabel extends PIXI.Container {
     this.#hoverZone.visible = true;
   }
 
-  #positionElements() {
+  #calculateDimensions() {
     this.#label.x = 0;
     this.#label.y = 0;
     this.#valuePreview.x = 0;
