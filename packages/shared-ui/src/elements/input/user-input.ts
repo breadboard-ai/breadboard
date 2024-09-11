@@ -159,6 +159,13 @@ export class UserInput extends LitElement {
       field-sizing: content;
       max-height: 300px;
     }
+
+    .api-message {
+      color: var(--bb-neutral-800);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      margin: 0 0 var(--bb-grid-size-2) 0;
+    }
   `;
 
   destroyEditors() {
@@ -644,6 +651,12 @@ export class UserInput extends LitElement {
 
         return html`<div class=${classMap(styles)}>
           <label>
+            ${input.secret
+              ? html`<p class="api-message">
+                  When calling an API, the API provider's applicable privacy
+                  policy and terms apply
+                </p>`
+              : nothing}
             ${this.showTitleInfo
               ? html`<span class="title">${input.title} ${typeInfo}</span>`
               : nothing}
