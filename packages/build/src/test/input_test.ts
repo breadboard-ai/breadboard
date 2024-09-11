@@ -540,13 +540,11 @@ test("can create and serialize a raw input", () => {
             type: "object",
             properties: {
               schema: {
-                jsonSchema: {
-                  type: "object",
-                  properties: {},
-                  required: [],
-                  additionalProperties: true,
-                  behavior: ["json-schema"],
-                },
+                type: "object",
+                properties: {},
+                required: [],
+                additionalProperties: true,
+                behavior: ["json-schema"],
               },
             },
             required: ["schema"],
