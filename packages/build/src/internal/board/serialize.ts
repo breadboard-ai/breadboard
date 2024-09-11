@@ -391,11 +391,14 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     const configuration: Record<string, NodeValue> = {};
     descriptor = { id: thisNodeId, type, configuration };
 
-    const { title, description } = metadata ?? {};
+    const { title, description, logLevel } = metadata ?? {};
     if (title || description) {
       descriptor.metadata = {};
       if (title) {
         descriptor.metadata.title = title;
+      }
+      if (logLevel) {
+        descriptor.metadata.logLevel = logLevel;
       }
       if (description) {
         descriptor.metadata.description = description;
