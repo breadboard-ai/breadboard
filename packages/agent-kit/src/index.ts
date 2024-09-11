@@ -14,7 +14,6 @@ import {
 } from "@google-labs/breadboard";
 import { WorkerType } from "./boards/worker.js";
 import { StructuredWorkerType } from "./boards/structured-worker.js";
-import { HumanType } from "./boards/human.js";
 import { ToolWorkerType } from "./boards/tool-worker.js";
 import { SpecialistType } from "./boards/specialist.js";
 
@@ -94,7 +93,18 @@ export type AgentKitType = {
    * A human in the loop. Use this node to to insert a real person (user input)
    * into your team of synthetic team.
    */
-  human: HumanType;
+  human: NewNodeFactory<
+    {
+      context: NewNodeValue;
+      title?: NewNodeValue;
+      description?: NewNodeValue;
+    },
+    {
+      context: NewNodeValue;
+      again: NewNodeValue;
+      text: NewNodeValue;
+    }
+  >;
   /**
    * All-in-one worker. A work in progress, incorporates all the learnings from making previous workers.
    */

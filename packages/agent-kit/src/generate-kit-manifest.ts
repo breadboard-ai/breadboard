@@ -34,7 +34,7 @@ const manifest: KitManifest = {
   version: "0.0.1",
   url: `https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/agent-kit/${MANIFEST_NAME}`,
   nodes: {
-    human,
+    human: serialize(human),
     repeater: serialize(repeater),
     structuredWorker,
     specialist,
