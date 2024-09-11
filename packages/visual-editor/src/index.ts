@@ -331,6 +331,9 @@ export class Main extends LitElement {
               if (this.tab.graph.title) {
                 this.#setPageTitle(this.tab.graph.title);
               }
+            } else {
+              this.#setUrlParam("board", null);
+              this.#setPageTitle(null);
             }
           }
         );

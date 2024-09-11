@@ -636,9 +636,10 @@ export class GraphRenderer extends LitElement {
   }
 
   deleteGraphs() {
-    for (const child of this.#container.children) {
+    for (let c = this.#container.children.length; c >= 0; c--) {
+      const child = this.#container.children[c];
       if (!(child instanceof Graph)) {
-        return false;
+        continue;
       }
 
       child.removeFromParent();
