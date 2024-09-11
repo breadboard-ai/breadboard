@@ -59,7 +59,7 @@
     },
     {
       "from": "input",
-      "to": "contextOutput",
+      "to": "output-0",
       "out": "text",
       "in": "text"
     },
@@ -567,33 +567,6 @@
       "metadata": {
         "title": "Choice Output",
         "description": "Outputting the user's choice"
-      }
-    },
-    {
-      "id": "contextOutput",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": [
-                "array",
-                "boolean",
-                "null",
-                "number",
-                "object",
-                "string"
-              ]
-            }
-          },
-          "required": [
-            "text"
-          ],
-          "behavior": [
-            "deprecated"
-          ]
-        }
       }
     },
     {
@@ -1224,10 +1197,24 @@
                 ]
               },
               "title": "Context out"
+            },
+            "text": {
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
+              ]
             }
           },
           "required": [
-            "context"
+            "context",
+            "text"
+          ],
+          "behavior": [
+            "deprecated"
           ]
         }
       }
