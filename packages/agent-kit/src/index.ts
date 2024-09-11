@@ -13,7 +13,6 @@ import {
   type NewNodeValue,
 } from "@google-labs/breadboard";
 import { WorkerType } from "./boards/worker.js";
-import { StructuredWorkerType } from "./boards/structured-worker.js";
 import { ToolWorkerType } from "./boards/tool-worker.js";
 import { SpecialistType } from "./boards/specialist.js";
 
@@ -83,7 +82,35 @@ export type AgentKitType = {
    * a JSON schema along with an instruction, and it will stay within the bounds
    * of the schema.
    */
-  structuredWorker: StructuredWorkerType;
+  structuredWorker: NewNodeFactory<
+    {
+      /**
+       * The context to use for the worker.
+       */
+      context?: NewNodeValue;
+      /**
+       * The instruction we want to give to the worker so that shapes its
+       * character and orients it a bit toward the task we want to give it.
+       */
+      instruction: NewNodeValue;
+      /**
+       * The JSON schema to use for the worker.
+       */
+      schema?: NewNodeValue;
+    },
+    {
+      /**
+       * The context after generation. Pass this to the next agent when chaining
+       * them together.
+       */
+      context: NewNodeValue;
+      /**
+       * The output from the agent. Use this to just get the output without any
+       * previous context.
+       */
+      json: NewNodeValue;
+    }
+  >;
   /**
    * A worker that can use multiple tools to accomplish a task.
    * Give it a list of boards and an instruction, and watch it do its magic.
