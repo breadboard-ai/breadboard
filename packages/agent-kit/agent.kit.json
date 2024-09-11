@@ -1587,6 +1587,15 @@
                     "json-schema",
                     "config"
                   ],
+                  "jsonSchema": {
+                    "type": "object",
+                    "properties": {},
+                    "required": [],
+                    "additionalProperties": true,
+                    "behavior": [
+                      "json-schema"
+                    ]
+                  },
                   "examples": [
                     "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"poems\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"inspiration\": {\n            \"type\": \"string\",\n            \"description\": \"The inspiration behind the poem\"\n          },\n          \"poem\": {\n            \"type\": \"string\",\n            \"description\": \"The poem itself\"\n          }\n        }\n      }\n    }\n  }\n}"
                   ],
