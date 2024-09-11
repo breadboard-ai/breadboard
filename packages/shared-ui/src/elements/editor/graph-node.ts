@@ -704,6 +704,7 @@ export class GraphNode extends PIXI.Container {
         height: 0,
       };
       const outPortWidth = outPortLabels[p]?.label.width || 0;
+      const outPortHeight = outPortLabels[p]?.label.height || 0;
 
       width = Math.max(
         width,
@@ -719,7 +720,7 @@ export class GraphNode extends PIXI.Container {
       if (!this.collapsed) {
         height +=
           this.#portLabelVerticalPadding +
-          inPortDimension.height +
+          Math.max(inPortDimension.height, outPortHeight) +
           this.#portLabelVerticalPadding;
       }
     }
