@@ -96,10 +96,6 @@ export class Board extends EventTarget {
     runObserver?: InspectableRunObserver
   ) {
     const id = globalThis.crypto.randomUUID();
-    if (this.#currentTabId) {
-      this.closeTab(this.#currentTabId);
-    }
-    this.#tabs.clear();
     this.#tabs.set(id, {
       id,
       kits: this.kits,
@@ -116,9 +112,6 @@ export class Board extends EventTarget {
   }
 
   async loadFromURL(boardUrl: string, currentUrl: string | null = null) {
-    if (this.#currentTabId) {
-      this.closeTab(this.#currentTabId);
-    }
     let url = this.#makeRelativeToCurrentBoard(boardUrl, currentUrl);
 
     // Redirect older /graphs examples to /example-boards
@@ -157,7 +150,6 @@ export class Board extends EventTarget {
 
       // TODO: Enable multiple tabs.
       const id = globalThis.crypto.randomUUID();
-      this.#tabs.clear();
       this.#tabs.set(id, {
         id,
         kits: this.kits,
@@ -185,6 +177,7 @@ export class Board extends EventTarget {
   }
 
   closeTab(id: TabId) {
+    this.dispatchEvent(new RuntimeTabCloseEvent(id));
     this.#currentTabId = null;
 
     const tabList = [...this.#tabs.keys()];
@@ -204,7 +197,6 @@ export class Board extends EventTarget {
       }
     }
 
-    this.dispatchEvent(new RuntimeTabCloseEvent(id));
     this.#tabs.delete(id);
     this.dispatchEvent(new RuntimeTabChangeEvent());
   }

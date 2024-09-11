@@ -1259,6 +1259,9 @@ export class Graph extends PIXI.Container {
       return;
     }
 
+    const isInitialDraw = this.#isInitialDraw;
+    this.#isInitialDraw = false;
+
     /**
      * We only position the graph on the initial draw, and we need the graph to
      * be drawn before we can query its dimensions. So we check the layout map,
@@ -1396,7 +1399,7 @@ export class Graph extends PIXI.Container {
       graphNode.once(GRAPH_OPERATIONS.GRAPH_NODE_DRAWN, onDraw, {
         graphNode,
         layout: this.#layout.get(id) || null,
-        isInitialDraw: this.#isInitialDraw,
+        isInitialDraw,
       });
 
       graphNode.on(GRAPH_OPERATIONS.GRAPH_NODE_EXPAND_COLLAPSE, () => {

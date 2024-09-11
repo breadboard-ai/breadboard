@@ -51,7 +51,7 @@ export class NodeConfigurationOverlay extends LitElement {
 
     :host {
       display: block;
-      position: absolute;
+      position: fixed;
     }
 
     h1 {
