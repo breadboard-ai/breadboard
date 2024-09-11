@@ -1604,6 +1604,9 @@ export class Graph extends PIXI.Container {
       }
 
       edgeGraphic.value = this.#edgeValues?.get(edge) ?? null;
+      edge.inPort().then((port) => {
+        edgeGraphic.schema = port.schema || null;
+      });
       edgeGraphic.edge = edge;
       edgeGraphic.readOnly = this.readOnly;
       if (this.highlightInvalidWires) {

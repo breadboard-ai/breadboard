@@ -10,6 +10,7 @@ import type {
   InspectablePort,
   NodeConfiguration,
   NodeDescriptor,
+  Schema,
 } from "@google-labs/breadboard";
 import type { EdgeData, Settings, UserOutputValues } from "../types/types.js";
 import type {
@@ -517,6 +518,7 @@ export class EdgeValueSelectedEvent extends Event {
 
   constructor(
     public readonly value: NodeValue[],
+    public readonly schema: Schema | null,
     public readonly x: number,
     public readonly y: number
   ) {
@@ -590,6 +592,7 @@ export class GraphEdgeValueSelectedEvent extends Event {
 
   constructor(
     public readonly value: NodeValue[],
+    public readonly schema: Schema | null,
     public readonly x: number,
     public readonly y: number
   ) {
