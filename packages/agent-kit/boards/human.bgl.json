@@ -2463,15 +2463,13 @@
               "type": "number"
             },
             "schema": {
-              "jsonSchema": {
-                "type": "object",
-                "properties": {},
-                "required": [],
-                "additionalProperties": true,
-                "behavior": [
-                  "json-schema"
-                ]
-              }
+              "type": "object",
+              "behavior": [
+                "json-schema"
+              ],
+              "properties": {},
+              "required": [],
+              "additionalProperties": true
             }
           }
         },
@@ -2711,15 +2709,13 @@
           "type": "object",
           "properties": {
             "schema": {
-              "jsonSchema": {
-                "type": "object",
-                "properties": {},
-                "required": [],
-                "additionalProperties": true,
-                "behavior": [
-                  "json-schema"
-                ]
-              }
+              "type": "object",
+              "behavior": [
+                "json-schema"
+              ],
+              "properties": {},
+              "required": [],
+              "additionalProperties": true
             }
           }
         },
