@@ -39,7 +39,7 @@ const isInput = (
 export class RunObserver implements InspectableRunObserver {
   #store: GraphDescriptorStore;
   #options: RunObserverOptions;
-  #runs: Run[] = [];
+  #runs: InspectableRun[] = [];
   #runLimit = 2;
   #url: RunURL | null = null;
   #timestamp: RunTimestamp | null = null;
@@ -192,7 +192,16 @@ export class RunObserver implements InspectableRunObserver {
       await this.#options.dataStore?.replaceDataParts(run.dataStoreKey, result);
     }
 
-    run.addResult(result);
+    const mutableRun = run as Run;
+    if ("addResult" in mutableRun) {
+      mutableRun.addResult(result);
+    } else {
+      console.warn(
+        "Unable to add result to run: this is likely a loaded past run."
+      );
+      return;
+    }
+
     await this.#storeInRunStore(this.#url, this.#timestamp, result);
   }
 
@@ -206,7 +215,11 @@ export class RunObserver implements InspectableRunObserver {
       );
     }
     const loader = new RunLoader(this.#options.dataStore, o, options || {});
-    return await loader.load();
+    const result = await loader.load();
+    if (result.success) {
+      this.#runs.push(result.run);
+    }
+    return result;
   }
 }
 
