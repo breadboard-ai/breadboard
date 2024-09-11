@@ -5,8 +5,6 @@
  */
 
 import { type Schema } from "@google-labs/breadboard";
-import { annotate } from "./annotate.js";
-import { object } from "./object.js";
 import { unsafeType } from "./unsafe.js";
 
 /**
@@ -18,7 +16,11 @@ export const jsonSchema = unsafeType<Schema>(
   // { $ref: "https://json-schema.org/draft-07/schema#" }. But we first need to
   // support $ref schemas more broadly, and possibly align our Schema vs
   // JSONSchema7 types.
-  annotate(object({}, "unknown"), {
+  {
+    type: "object",
     behavior: ["json-schema"],
-  })
+    properties: {},
+    required: [],
+    additionalProperties: true,
+  }
 );
