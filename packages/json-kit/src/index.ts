@@ -61,5 +61,5 @@ export const json = addKit(JSONKit) as unknown as {
 
 export const jsonKit = kit({
   ...metadata,
-  components: { jsonata, validateJson },
+  components: { jsonata, validateJson, schemish },
 });
