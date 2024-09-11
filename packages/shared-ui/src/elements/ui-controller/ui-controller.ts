@@ -307,35 +307,31 @@ export class UI extends LitElement {
               return;
             }
 
-            const selectedPrior = this.selectedNodeIds.length;
             if (graphMetadataChanges.length > 0) {
               graphMetadataChanges = graphMetadataChanges.slice(-1);
+            }
+
+            const newlySelected = this.selectedNodeIds.filter((id) => {
+              if (deletedNodes.find((deleted) => deleted.id === id)) {
+                return false;
+              }
+
               const comments = graphMetadataChanges[0].metadata.comments ?? [];
-
-              for (const selected of this.selectedNodeIds) {
-                if (comments.find((comment) => comment.id === selected)) {
-                  continue;
-                }
-
-                const idx = this.selectedNodeIds.indexOf(selected);
-                this.selectedNodeIds.splice(idx, 1);
-              }
-            }
-
-            for (const deletedNode of deletedNodes) {
-              const idx = this.selectedNodeIds.indexOf(deletedNode.id);
-              if (idx === -1) {
-                continue;
+              if (
+                id.startsWith("comment") &&
+                !comments.find((comment) => comment.id === id)
+              ) {
+                return false;
               }
 
-              this.selectedNodeIds.splice(idx, 1);
-            }
-            const selectedPost = this.selectedNodeIds.length;
-            if (selectedPrior === selectedPost) {
+              return true;
+            });
+
+            if (newlySelected.length === this.selectedNodeIds.length) {
               return;
             }
 
-            this.selectedNodeIds = [...this.selectedNodeIds];
+            this.selectedNodeIds = [...newlySelected];
           }}
           @bbgraphnodeselected=${(evt: GraphNodeSelectedEvent) => {
             if (!this.selectedNodeIds) {
