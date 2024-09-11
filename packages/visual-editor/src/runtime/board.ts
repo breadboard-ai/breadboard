@@ -111,7 +111,11 @@ export class Board extends EventTarget {
     );
   }
 
-  async loadFromURL(boardUrl: string, currentUrl: string | null = null) {
+  async loadFromURL(
+    boardUrl: string,
+    currentUrl: string | null = null,
+    createNewTab = false
+  ) {
     let url = this.#makeRelativeToCurrentBoard(boardUrl, currentUrl);
 
     // Redirect older /graphs examples to /example-boards
@@ -148,7 +152,19 @@ export class Board extends EventTarget {
         return;
       }
 
-      // TODO: Enable multiple tabs.
+      // Re-use an existing tab if possible.
+      if (!createNewTab) {
+        for (const [id, tab] of this.#tabs) {
+          if (tab.graph.url !== boardUrl) {
+            continue;
+          }
+
+          this.#currentTabId = id;
+          this.dispatchEvent(new RuntimeTabChangeEvent());
+          return;
+        }
+      }
+
       const id = globalThis.crypto.randomUUID();
       this.#tabs.set(id, {
         id,
@@ -177,7 +193,13 @@ export class Board extends EventTarget {
   }
 
   closeTab(id: TabId) {
+    this.#tabs.delete(id);
     this.dispatchEvent(new RuntimeTabCloseEvent(id));
+
+    if (id !== this.#currentTabId) {
+      return;
+    }
+
     this.#currentTabId = null;
 
     const tabList = [...this.#tabs.keys()];
@@ -197,7 +219,6 @@ export class Board extends EventTarget {
       }
     }
 
-    this.#tabs.delete(id);
     this.dispatchEvent(new RuntimeTabChangeEvent());
   }
 

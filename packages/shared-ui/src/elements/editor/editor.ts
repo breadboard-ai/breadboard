@@ -467,6 +467,10 @@ export class Editor extends LitElement {
 
     if (updated) {
       this.#graphRenderer.showGraph(url, this.subGraphId);
+      if (this.topGraphResult) {
+        this.#graphRenderer.topGraphResult = this.topGraphResult;
+      }
+
       return this.#graphRenderer;
     }
 
