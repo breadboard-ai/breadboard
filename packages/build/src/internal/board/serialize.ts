@@ -200,7 +200,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       return iterationOutputId;
     };
     for (const [name, output] of sortedBoardOutputs) {
-      if (name.startsWith("$")) {
+      if (name.startsWith("$") && name !== "$error") {
         continue;
       }
 
