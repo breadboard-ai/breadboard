@@ -1262,6 +1262,7 @@ test("node can have metadata", () => {
     $id: "myCustomId1",
     $metadata: {
       title: "my custom title 1",
+      logLevel: "info",
     },
   });
   const i2 = d2({
@@ -1297,6 +1298,7 @@ test("node can have metadata", () => {
         configuration: {},
         metadata: {
           title: "my custom title 1",
+          logLevel: "info",
         },
       },
       {
