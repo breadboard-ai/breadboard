@@ -90,7 +90,7 @@
     "dotenv": "^16.4.5",
     "tsx": "^4.19.0",
     "typescript": "^5.5.4",
-    "vite": "^5.4.3",
+    "vite": "^5.4.4",
     "vite-plugin-full-reload": "^1.2.0",
     "vite-plugin-watch-and-run": "^1.7.0",
     "vitest": "^2.0.5"
