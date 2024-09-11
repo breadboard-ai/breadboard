@@ -341,6 +341,7 @@ export class Main extends LitElement {
             stopCurrentRunIfActive(evt.tabId);
 
             await this.#confirmSaveWithUserFirstIfNeeded();
+            this.requestUpdate();
           }
         );
 
@@ -979,9 +980,9 @@ export class Main extends LitElement {
     }
   }
 
-  async #changeBoard(url: string, _newTab: boolean) {
+  async #changeBoard(url: string, createNewTab = false) {
     try {
-      this.#runtime.board.loadFromURL(url, this.tab?.graph.url);
+      this.#runtime.board.loadFromURL(url, this.tab?.graph.url, createNewTab);
     } catch (err) {
       this.toast(
         `Unable to load file: ${url}`,
@@ -1084,9 +1085,6 @@ export class Main extends LitElement {
         ></bb-toast>`;
       }
     )}`;
-
-    const observers = this.#runtime?.run.getObservers(this.tab?.id ?? null);
-    const topGraphResult = observers?.topGraphObserver?.current() ?? null;
 
     let saveButton: HTMLTemplateResult | symbol = nothing;
     if (this.tab && this.tab.graph && this.tab.graph.url) {
@@ -1227,6 +1225,7 @@ export class Main extends LitElement {
 
     const tmpl = this.#initialize
       .then(() => {
+        const observers = this.#runtime?.run.getObservers(this.tab?.id ?? null);
         if (observers && observers.runObserver) {
           return observers.runObserver?.runs();
         }
@@ -1234,6 +1233,9 @@ export class Main extends LitElement {
         return [];
       })
       .then((runs: InspectableRun[]) => {
+        const observers = this.#runtime?.run.getObservers(this.tab?.id ?? null);
+        const topGraphResult = observers?.topGraphObserver?.current() ?? null;
+
         let tabStatus = BreadboardUI.Types.STATUS.STOPPED;
         if (this.tab) {
           tabStatus =
