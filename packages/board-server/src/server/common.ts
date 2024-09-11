@@ -1,12 +1,15 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { readFile } from "fs/promises";
 import type { IncomingMessage, ServerResponse } from "http";
-import { dirname, extname, resolve } from "path";
-import { fileURLToPath } from "url";
-import type { ViteDevServer } from "vite";
-import { existsSync } from 'fs';
+import { extname } from "path";
 
 import type { ServerConfig } from "./config.js";
-import { notFound, serverError } from "./errors.js";
+import { notFound } from "./errors.js";
 import type { PageMetadata } from "./types.js";
 import { createReadStream } from "fs";
 
@@ -82,11 +85,17 @@ export const serveContent = async (
   req: IncomingMessage,
   res: ServerResponse
 ) => {
-  const pathname = req.url || "/";
+  const pathname = expandImplicitIndex(req.url);
   const vite = serverConfig.viteDevServer;
   if (vite === null) {
     serveFile(serverConfig, res, pathname);
   } else {
+    if (pathname.endsWith(".html") && !req.url?.includes("?html-proxy")) {
+      serveFile(serverConfig, res, pathname, async (contents: string) => {
+        return await vite.transformIndexHtml(pathname, contents);
+      });
+      return;
+    }
     vite.middlewares(req, res);
   }
 };
@@ -103,7 +112,7 @@ function escapeHTML(s: string) {
 function replaceMetadata(contents: string, metadata: PageMetadata) {
   return contents
     .replaceAll("{{title}}", escapeHTML(metadata.title))
-    .replaceAll("{{description}}", escapeHTML(metadata.description || ''));
+    .replaceAll("{{description}}", escapeHTML(metadata.description || ""));
 }
 
 export const serveIndex = async (
@@ -117,9 +126,14 @@ export const serveIndex = async (
   }
   const vite = serverConfig.viteDevServer;
   if (vite === null) {
-    return serveFile(serverConfig, res, "/index.html", async (contents: string) => {
-      return replaceMetadata(contents, metadata);
-    });
+    return serveFile(
+      serverConfig,
+      res,
+      "/index.html",
+      async (contents: string) => {
+        return replaceMetadata(contents, metadata);
+      }
+    );
   }
   serveFile(serverConfig, res, "/", async (contents: string) => {
     return await vite.transformIndexHtml(
@@ -128,3 +142,15 @@ export const serveIndex = async (
     );
   });
 };
+
+function expandImplicitIndex(urlString: string | undefined) {
+  if (!urlString) {
+    return "/";
+  }
+  const url = new URL(urlString, "http://localhost");
+  const path = url.pathname;
+  if (path.endsWith("/")) {
+    return `${path}index.html`;
+  }
+  return path;
+}
