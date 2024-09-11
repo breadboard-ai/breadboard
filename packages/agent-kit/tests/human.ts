@@ -6,9 +6,9 @@
 
 import test, { describe } from "node:test";
 import {
-  pickChoice,
-  buildChooseSchema,
-  routeByMode,
+  choicePickerFunction,
+  chooseSchemaBuilderFunction,
+  modeRouterFunction,
 } from "../src/boards/human.js";
 import { Context, LlmContentRole, SplitMarkerData } from "../src/context.js";
 import { deepStrictEqual } from "node:assert";
@@ -28,28 +28,28 @@ const looper = (): Context => {
 describe("human/modeRouterFunction", () => {
   test("correctly recognizes the `input` mode when context is empty", () => {
     const context: Context[] = [];
-    const result = routeByMode.test({ context });
+    const result = modeRouterFunction({ context });
     deepStrictEqual(result, { input: context });
   });
   test("correctly recognizes the `input` mode", () => {
     const context: Context[] = [text("Hello", "user")];
-    const result = routeByMode.test({ context });
+    const result = modeRouterFunction({ context });
     deepStrictEqual(result, { input: context });
   });
   test("correctly recognizes the `input-output` mode", () => {
     const context: Context[] = [text("Hello", "model")];
-    const result = routeByMode.test({ context });
+    const result = modeRouterFunction({ context });
     deepStrictEqual(result, { input: context, output: context });
   });
   test("correctly recognizes the `choose` mode", () => {
     {
       const context: Context[] = [looper()];
-      const result = routeByMode.test({ context });
+      const result = modeRouterFunction({ context });
       deepStrictEqual(result, { input: context, output: context });
     }
     {
       const context: Context[] = [split("end", "1")];
-      const result = routeByMode.test({ context });
+      const result = modeRouterFunction({ context });
       deepStrictEqual(result, { output: context, input: context });
     }
     {
@@ -58,12 +58,12 @@ describe("human/modeRouterFunction", () => {
         split("next", "1"),
         split("end", "1"),
       ];
-      const result = routeByMode.test({ context });
+      const result = modeRouterFunction({ context });
       deepStrictEqual(result, { output: context, choose: context });
     }
     {
       const context: Context[] = [split("start", "1"), split("end", "1")];
-      const result = routeByMode.test({ context });
+      const result = modeRouterFunction({ context });
       deepStrictEqual(result, { output: context, input: context });
     }
     {
@@ -72,13 +72,13 @@ describe("human/modeRouterFunction", () => {
         split("next", "1"),
         split("end", "1"),
       ];
-      const result = routeByMode.test({ context });
+      const result = modeRouterFunction({ context });
       deepStrictEqual(result, { output: context, input: context });
     }
   });
 });
 
-describe("human/buildChooseSchema", () => {
+describe("human/chooseSchemaBuilderFunction", () => {
   test("correctly builds the schema for the `choose` mode", () => {
     const context: Context[] = [
       split("start", "2"),
@@ -89,7 +89,7 @@ describe("human/buildChooseSchema", () => {
     ];
     const title = "Choose";
     const description = "Choose some options";
-    const result = buildChooseSchema.test({
+    const result = chooseSchemaBuilderFunction({
       context,
       title,
       description,
@@ -111,7 +111,7 @@ describe("human/buildChooseSchema", () => {
   });
 });
 
-describe("human/pickChoice", () => {
+describe("human/choicePickerFunction", () => {
   test("correctly picks the choice", () => {
     const context: Context[] = [
       text("0", "model"),
@@ -126,8 +126,7 @@ describe("human/pickChoice", () => {
     ];
     const choice = "Choice 2";
     const total = 3;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = pickChoice.test({ context, choice, total });
+    const result = choicePickerFunction({ context, choice, total });
     deepStrictEqual(result, {
       context: [text("0", "model"), text("2", "tool"), text("2.5", "tool")],
     });

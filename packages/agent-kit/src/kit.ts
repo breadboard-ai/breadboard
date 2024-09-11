@@ -33,14 +33,13 @@ kit.graphs = {
   repeater: serialize(repeater),
   worker: serialize(worker),
   looper: serialize(looper),
-  human: serialize(human),
   content: content as GraphDescriptor,
 };
 
 core.invoke({ $id: "worker", $board: "#worker" });
 core.invoke({ $id: "repeater", $board: "#repeater" });
 core.invoke({ $id: "structured-worker", $board: structuredWorker });
-core.invoke({ $id: "human", $board: "#human" });
+core.invoke({ $id: "human", $board: human });
 core.invoke({ $id: "tool-worker", $board: toolWorker });
 core.invoke({ $id: "specialist", $board: specialist });
 core.invoke({ $id: "looper", $board: "#looper" });
