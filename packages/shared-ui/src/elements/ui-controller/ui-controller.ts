@@ -267,7 +267,6 @@ export class UI extends LitElement {
         this.boardId,
         collapseNodesByDefault,
         hideSubboardSelectorWhenEmpty,
-        editorMode,
         showNodeShortcuts,
         showNodeTypeDescriptions,
         showNodePreviewValues,
@@ -285,7 +284,6 @@ export class UI extends LitElement {
           .boardId=${this.boardId}
           .collapseNodesByDefault=${collapseNodesByDefault}
           .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
-          .mode=${editorMode}
           .showNodeShortcuts=${showNodeShortcuts}
           .showNodePreviewValues=${showNodePreviewValues}
           .showNodeTypeDescriptions=${showNodeTypeDescriptions}

@@ -45,7 +45,6 @@ import {
   SubGraphCreateEvent,
   SubGraphDeleteEvent,
 } from "../../events/events.js";
-import { EditorMode } from "../../utils/mode.js";
 import { GraphEdge } from "./graph-edge.js";
 import { GraphRenderer } from "./graph-renderer.js";
 import type { NodeSelector } from "./node-selector.js";
@@ -107,9 +106,6 @@ export class Editor extends LitElement {
 
   @property()
   showNodeShortcuts = true;
-
-  @property()
-  mode = EditorMode.ADVANCED;
 
   @property()
   topGraphResult: TopGraphRunResult | null = null;
