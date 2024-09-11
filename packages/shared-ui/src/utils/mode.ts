@@ -18,6 +18,7 @@ export enum EditorMode {
 
 const removeHardPort = (...names: string[]) => {
   return (port: InspectablePort) => {
+    if (port.status === PortStatus.Connected) return true;
     if (port.star) return false;
     if (port.name === "") return false;
     if (names.includes(port.name)) return false;

@@ -45,7 +45,6 @@ import {
   SubGraphCreateEvent,
   SubGraphDeleteEvent,
 } from "../../events/events.js";
-import { EditorMode, filterPortsByMode } from "../../utils/mode.js";
 import { GraphEdge } from "./graph-edge.js";
 import { GraphRenderer } from "./graph-renderer.js";
 import type { NodeSelector } from "./node-selector.js";
@@ -107,9 +106,6 @@ export class Editor extends LitElement {
 
   @property()
   showNodeShortcuts = true;
-
-  @property()
-  mode = EditorMode.ADVANCED;
 
   @property()
   topGraphResult: TopGraphRunResult | null = null;
@@ -435,10 +431,7 @@ export class Editor extends LitElement {
     const typeMetadata = new Map<string, NodeHandlerMetadata>();
     const graphVersion = this.#graphVersion;
     for (const node of selectedGraph.nodes()) {
-      ports.set(
-        node.descriptor.id,
-        filterPortsByMode(await node.ports(), this.mode)
-      );
+      ports.set(node.descriptor.id, await node.ports());
       typeMetadata.set(node.descriptor.type, await node.type().metadata());
       if (this.#graphVersion !== graphVersion) {
         // Another update has come in, bail out.
@@ -862,7 +855,7 @@ export class Editor extends LitElement {
               node.id,
               "node",
               position,
-              this.collapseNodesByDefault,
+              this.collapseNodesByDefault ? "collapsed" : "expanded",
               false
             );
             this.#graphRenderer.addToAutoSelect(node.id);
@@ -954,7 +947,7 @@ export class Editor extends LitElement {
                 comment.id,
                 "comment",
                 position,
-                this.collapseNodesByDefault,
+                this.collapseNodesByDefault ? "collapsed" : "expanded",
                 false
               );
               this.#graphRenderer.addToAutoSelect(comment.id);
@@ -1023,7 +1016,7 @@ export class Editor extends LitElement {
       return (
         prev +
         (idx > 0 ? ", " : "") +
-        `(${curr.id}, {x: ${curr.x}, y: ${curr.y}, collapsed: ${curr.collapsed}})`
+        `(${curr.id}, {x: ${curr.x}, y: ${curr.y}, collapsed: ${curr.expansionState}})`
       );
     }, "");
     const editsEvt = new MultiEditEvent(
@@ -1044,7 +1037,7 @@ export class Editor extends LitElement {
                 visual: {
                   x: node.x,
                   y: node.y,
-                  collapsed: node.collapsed,
+                  collapsed: node.expansionState,
                 },
               },
             };
@@ -1064,7 +1057,7 @@ export class Editor extends LitElement {
               commentNode.metadata.visual = {
                 x: node.x,
                 y: node.y,
-                collapsed: node.collapsed,
+                collapsed: node.expansionState,
               };
             }
 
@@ -1254,7 +1247,7 @@ export class Editor extends LitElement {
       id,
       type === "comment" ? "comment" : "node",
       { x, y },
-      this.collapseNodesByDefault,
+      this.collapseNodesByDefault ? "collapsed" : "expanded",
       true
     );
 

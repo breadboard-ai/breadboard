@@ -6,6 +6,7 @@
 
 import { InspectableEdgeType, InspectablePort } from "@google-labs/breadboard";
 import type { EdgeData } from "../../types/types.js";
+import { ComponentExpansionState, VisualMetadata } from "./types.js";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -64,4 +65,30 @@ export function isConfigurablePort(port: InspectablePort) {
   }
 
   return false;
+}
+
+export function computeNextExpansionState(
+  state: ComponentExpansionState
+): ComponentExpansionState {
+  switch (state) {
+    case "expanded":
+      return "advanced";
+    case "collapsed":
+      return "expanded";
+    case "advanced":
+      return "collapsed";
+    default:
+      return "expanded";
+  }
+}
+
+export function expansionStateFromMetadata(
+  collapsed: VisualMetadata["collapsed"],
+  collapseNodesByDefault: boolean
+): ComponentExpansionState {
+  if (typeof collapsed === "boolean") {
+    return collapsed ? "collapsed" : "expanded";
+  } else {
+    return collapsed ?? (collapseNodesByDefault ? "collapsed" : "expanded");
+  }
 }
