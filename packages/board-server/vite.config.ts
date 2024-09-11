@@ -15,6 +15,7 @@ export default defineConfig({
       entry: {
         index: "./index.html",
         api: "./api.html",
+        oauth: "./oauth/index.html",
       },
       formats: ["es"],
     },

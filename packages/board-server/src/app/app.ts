@@ -684,10 +684,21 @@ export class AppView extends LitElement {
           continue;
         }
 
-        const storedSecret = this.#getSecret(secret);
-        if (storedSecret) {
-          allKnownSecrets.push([secret, storedSecret]);
-          secretsKeysNeeded.splice(i, 1);
+        const isConnection = secret.startsWith("connection:");
+        if (isConnection) {
+          const grant = this.tokenVendor.getToken(
+            secret.slice("connection:".length)
+          );
+          if (grant.state === "valid") {
+            allKnownSecrets.push([secret, grant.grant.access_token]);
+            secretsKeysNeeded.splice(i, 1);
+          }
+        } else {
+          const storedSecret = this.#getSecret(secret);
+          if (storedSecret) {
+            allKnownSecrets.push([secret, storedSecret]);
+            secretsKeysNeeded.splice(i, 1);
+          }
         }
       }
 
