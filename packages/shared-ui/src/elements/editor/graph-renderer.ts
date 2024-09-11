@@ -528,16 +528,12 @@ export class GraphRenderer extends LitElement {
       return;
     }
 
-    this.#storeContainerTransform(visibleGraph);
+    const matrix = this.#container.worldTransform.clone();
+    this.#storeContainerTransform(visibleGraph, matrix);
   }
 
-  #storeContainerTransform(graph: Graph) {
-    graph.getBounds();
-
-    this.#containerTransforms.set(
-      graph.label,
-      this.#container.worldTransform.clone()
-    );
+  #storeContainerTransform(graph: Graph, matrix: PIXI.Matrix) {
+    this.#containerTransforms.set(graph.label, matrix);
   }
 
   #restoreContainerTransformForVisibleGraph() {
@@ -1087,9 +1083,9 @@ export class GraphRenderer extends LitElement {
         x: rendererBounds.width / 2,
         y: rendererBounds.height / 2,
       };
-      this.#scaleContainerAroundPoint(delta, pivot);
+      const matrix = this.#scaleContainerAroundPoint(delta, pivot);
       this.#emitGraphNodeVisualInformation(graph);
-      this.#storeContainerTransform(graph);
+      this.#storeContainerTransform(graph, matrix);
       return;
     }
   }
