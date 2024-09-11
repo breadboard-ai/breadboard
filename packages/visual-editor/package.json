@@ -86,7 +86,9 @@
         "tests/**/*.ts",
         "tsconfig.json",
         "../../core/tsconfig/base.json",
-        "package.json"
+        "package.json",
+        ".env.development",
+        ".env.production"
       ]
     },
     "build:tsc": {
