@@ -330,20 +330,28 @@ export class GraphRenderer extends LitElement {
       margin-right: var(--bb-grid-size-3);
     }
 
-    #overflow-menu #min-max::before {
+    #overflow-menu #min-max.advanced::before {
       background: var(--bb-icon-minimize) center center / 20px 20px no-repeat;
     }
 
-    #overflow-menu #min-max.minimized::before {
+    #overflow-menu #min-max.expanded::before {
       background: var(--bb-icon-maximize) center center / 20px 20px no-repeat;
     }
 
-    #overflow-menu #min-max::after {
-      content: "Minimize component";
+    #overflow-menu #min-max.collapsed::before {
+      background: var(--bb-icon-maximize) center center / 20px 20px no-repeat;
     }
 
-    #overflow-menu #min-max.minimized::after {
-      content: "Maximize component";
+    #overflow-menu #min-max.expanded::after {
+      content: "Show advanced ports";
+    }
+
+    #overflow-menu #min-max.collapsed::after {
+      content: "Show component ports";
+    }
+
+    #overflow-menu #min-max.advanced::after {
+      content: "Minimize component";
     }
 
     #overflow-menu #delete-node::before {
@@ -819,8 +827,16 @@ export class GraphRenderer extends LitElement {
 
         if (this.#overflowMinMaxSingleNode.value) {
           this.#overflowMinMaxSingleNode.value.classList.toggle(
-            "minimized",
-            graphNode.collapsed
+            "expanded",
+            graphNode.expansionState === "expanded"
+          );
+          this.#overflowMinMaxSingleNode.value.classList.toggle(
+            "collapsed",
+            graphNode.expansionState === "collapsed"
+          );
+          this.#overflowMinMaxSingleNode.value.classList.toggle(
+            "advanced",
+            graphNode.expansionState === "advanced"
           );
         }
 
