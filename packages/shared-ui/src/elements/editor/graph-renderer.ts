@@ -23,7 +23,7 @@ import {
   GraphNodePortValueEditEvent,
   GraphEdgeValueSelectedEvent,
 } from "../../events/events.js";
-import { GRAPH_OPERATIONS } from "./types.js";
+import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
 import {
   InspectableEdge,
@@ -42,7 +42,7 @@ import { GraphEdge } from "./graph-edge.js";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { getGlobalColor } from "./utils.js";
+import { computeNextExpansionState, getGlobalColor } from "./utils.js";
 import {
   GraphMetadata,
   NodeValue,
@@ -760,7 +760,7 @@ export class GraphRenderer extends LitElement {
           type: "node" | "comment";
           x: number;
           y: number;
-          collapsed: boolean;
+          expansionState: ComponentExpansionState;
         }>
       ) => {
         this.dispatchEvent(new GraphNodesVisualUpdateEvent(nodes));
@@ -836,8 +836,10 @@ export class GraphRenderer extends LitElement {
             const [topItem] = evt.composedPath();
             switch (topItem) {
               case this.#overflowMinMaxSingleNode.value: {
-                this.#overflowMenuGraphNode.collapsed =
-                  !this.#overflowMenuGraphNode.collapsed;
+                this.#overflowMenuGraphNode.expansionState =
+                  computeNextExpansionState(
+                    this.#overflowMenuGraphNode.expansionState
+                  );
                 break;
               }
 
@@ -1006,7 +1008,7 @@ export class GraphRenderer extends LitElement {
     node: string,
     type: "comment" | "node",
     position: PIXI.PointData,
-    collapsed: boolean,
+    expansionState: ComponentExpansionState,
     justAdded: boolean
   ) {
     for (const graph of this.#container.children) {
@@ -1018,7 +1020,7 @@ export class GraphRenderer extends LitElement {
         node,
         type,
         position,
-        collapsed,
+        expansionState,
         justAdded
       );
     }
@@ -1099,7 +1101,7 @@ export class GraphRenderer extends LitElement {
         type: layout.type,
         x: layout.x,
         y: layout.y,
-        collapsed: layout.collapsed,
+        expansionState: layout.expansionState,
       };
     });
 

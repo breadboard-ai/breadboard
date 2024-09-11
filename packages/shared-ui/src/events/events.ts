@@ -17,6 +17,7 @@ import type {
   NodeMetadata,
   NodeValue,
 } from "@google-labs/breadboard-schema/graph.js";
+import { ComponentExpansionState } from "../elements/editor/types.js";
 
 const eventInit = {
   bubbles: true,
@@ -535,7 +536,7 @@ export class GraphNodesVisualUpdateEvent extends Event {
       readonly type: "node" | "comment";
       readonly x: number;
       readonly y: number;
-      readonly collapsed: boolean;
+      readonly expansionState: ComponentExpansionState;
     }>
   ) {
     super(GraphNodesVisualUpdateEvent.eventName, { ...eventInit });

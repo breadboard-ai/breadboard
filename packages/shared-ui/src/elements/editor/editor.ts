@@ -862,7 +862,7 @@ export class Editor extends LitElement {
               node.id,
               "node",
               position,
-              this.collapseNodesByDefault,
+              this.collapseNodesByDefault ? "collapsed" : "expanded",
               false
             );
             this.#graphRenderer.addToAutoSelect(node.id);
@@ -954,7 +954,7 @@ export class Editor extends LitElement {
                 comment.id,
                 "comment",
                 position,
-                this.collapseNodesByDefault,
+                this.collapseNodesByDefault ? "collapsed" : "expanded",
                 false
               );
               this.#graphRenderer.addToAutoSelect(comment.id);
@@ -1023,7 +1023,7 @@ export class Editor extends LitElement {
       return (
         prev +
         (idx > 0 ? ", " : "") +
-        `(${curr.id}, {x: ${curr.x}, y: ${curr.y}, collapsed: ${curr.collapsed}})`
+        `(${curr.id}, {x: ${curr.x}, y: ${curr.y}, collapsed: ${curr.expansionState}})`
       );
     }, "");
     const editsEvt = new MultiEditEvent(
@@ -1044,7 +1044,7 @@ export class Editor extends LitElement {
                 visual: {
                   x: node.x,
                   y: node.y,
-                  collapsed: node.collapsed,
+                  collapsed: node.expansionState,
                 },
               },
             };
@@ -1064,7 +1064,7 @@ export class Editor extends LitElement {
               commentNode.metadata.visual = {
                 x: node.x,
                 y: node.y,
-                collapsed: node.collapsed,
+                collapsed: node.expansionState,
               };
             }
 
@@ -1254,7 +1254,7 @@ export class Editor extends LitElement {
       id,
       type === "comment" ? "comment" : "node",
       { x, y },
-      this.collapseNodesByDefault,
+      this.collapseNodesByDefault ? "collapsed" : "expanded",
       true
     );
 

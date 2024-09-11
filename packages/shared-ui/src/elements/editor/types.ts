@@ -36,3 +36,19 @@ export enum GraphNodePortType {
   OUT = "out",
   INERT = "inert",
 }
+
+export type ComponentExpansionState = "collapsed" | "expanded";
+
+export type LayoutInfo = {
+  x: number;
+  y: number;
+  type: "comment" | "node";
+  expansionState: ComponentExpansionState;
+  justAdded?: boolean;
+};
+
+export type VisualMetadata = {
+  x: number;
+  y: number;
+  collapsed: ComponentExpansionState | boolean;
+};

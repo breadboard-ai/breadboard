@@ -6,11 +6,19 @@
 
 import { InspectablePort, PortStatus } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
-import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
+import {
+  ComponentExpansionState,
+  GRAPH_OPERATIONS,
+  GraphNodePortType,
+} from "./types.js";
 import { GraphNodePort } from "./graph-node-port.js";
 import { GraphOverflowMenu } from "./graph-overflow-menu.js";
 import { GraphAssets } from "./graph-assets.js";
-import { DBL_CLICK_DELTA, getGlobalColor } from "./utils.js";
+import {
+  computeNextExpansionState,
+  DBL_CLICK_DELTA,
+  getGlobalColor,
+} from "./utils.js";
 import { GraphNodeFooter } from "./graph-node-footer.js";
 import { GraphPortLabel as GraphNodePortLabel } from "./graph-port-label.js";
 
@@ -83,7 +91,7 @@ export class GraphNode extends PIXI.Container {
   #outPortLocations: Map<string, PIXI.ObservablePoint> = new Map();
   #selected = false;
   #highlightForAdHoc = false;
-  #collapsed = false;
+  #expansionState: ComponentExpansionState = "expanded";
   #emitCollapseToggleEventOnNextDraw = false;
 
   #showNodePreviewValues = false;
@@ -199,7 +207,7 @@ export class GraphNode extends PIXI.Container {
         return;
       }
 
-      this.collapsed = !this.collapsed;
+      this.expansionState = computeNextExpansionState(this.expansionState);
       this.#lastClickTime = 0;
     });
 
@@ -359,14 +367,18 @@ export class GraphNode extends PIXI.Container {
     this.#isDirty = true;
   }
 
-  get collapsed() {
-    return this.#collapsed;
+  get expansionState() {
+    return this.#expansionState;
   }
 
-  set collapsed(collapsed: boolean) {
-    this.#collapsed = collapsed;
+  set expansionState(state: ComponentExpansionState) {
+    this.#expansionState = state;
     this.#emitCollapseToggleEventOnNextDraw = true;
     this.#isDirty = true;
+  }
+
+  get collapsed() {
+    return this.#expansionState === "collapsed";
   }
 
   get type() {
@@ -1032,7 +1044,7 @@ export class GraphNode extends PIXI.Container {
   }
 
   inPortLocation(name: string): PIXI.ObservablePoint | null {
-    if (this.collapsed) {
+    if (this.expansionState === "collapsed") {
       return this.#headerInPort.position;
     }
 
@@ -1040,7 +1052,7 @@ export class GraphNode extends PIXI.Container {
   }
 
   outPortLocation(name: string): PIXI.ObservablePoint | null {
-    if (this.collapsed) {
+    if (this.expansionState === "collapsed") {
       return this.#headerOutPort.position;
     }
 
