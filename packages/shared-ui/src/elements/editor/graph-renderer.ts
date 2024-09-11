@@ -32,6 +32,7 @@ import {
   InspectableNodePorts,
   InspectablePort,
   NodeHandlerMetadata,
+  Schema,
 } from "@google-labs/breadboard";
 import { GraphNode } from "./graph-node.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -892,8 +893,10 @@ export class GraphRenderer extends LitElement {
 
     graph.on(
       GRAPH_OPERATIONS.GRAPH_EDGE_VALUE_SELECTED,
-      (value: NodeValue[], x: number, y: number) => {
-        this.dispatchEvent(new GraphEdgeValueSelectedEvent(value, x, y));
+      (value: NodeValue[], schema: Schema | null, x: number, y: number) => {
+        this.dispatchEvent(
+          new GraphEdgeValueSelectedEvent(value, schema, x, y)
+        );
       }
     );
 

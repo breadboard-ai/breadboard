@@ -276,6 +276,7 @@ export type NodePortConfiguration = {
 
 export type EdgeValueConfiguration = {
   value: NodeValue[] | null;
+  schema: Schema | null;
   x: number;
   y: number;
 };

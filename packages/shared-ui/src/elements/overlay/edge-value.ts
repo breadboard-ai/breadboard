@@ -152,6 +152,8 @@ export class EdgeValueOverlay extends LitElement {
       return nothing;
     }
 
+    console.log("💖 edge value schema", this.edgeValue.schema);
+
     return html`<bb-overlay ${ref(this.#overlayRef)} inline>
       <h1>Value Inspector</h1>
       <div id="content">

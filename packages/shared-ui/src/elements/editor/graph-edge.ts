@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InspectableEdgeType, NodeValue } from "@google-labs/breadboard";
+import {
+  InspectableEdgeType,
+  NodeValue,
+  Schema,
+} from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
 import { GraphNode } from "./graph-node.js";
 import { getGlobalColor } from "./utils.js";
@@ -115,6 +119,7 @@ export class GraphEdge extends PIXI.Container {
   #edgeGraphic = new PIXI.Graphics();
   #valueSelector = new PIXI.Graphics();
   #valueSprite: PIXI.Sprite | null;
+  #schema: Schema | null = null;
   #value: NodeValue[] | null = null;
   #hitAreaSpacing = 6;
 
@@ -151,6 +156,7 @@ export class GraphEdge extends PIXI.Container {
         this.emit(
           GRAPH_OPERATIONS.GRAPH_EDGE_VALUE_SELECTED,
           this.value,
+          this.schema,
           evt.x,
           evt.y
         );
@@ -197,6 +203,15 @@ export class GraphEdge extends PIXI.Container {
 
   set value(value: NodeValue[] | null) {
     this.#value = value;
+    this.#isDirty = true;
+  }
+
+  get schema() {
+    return this.#schema;
+  }
+
+  set schema(schema: Schema | null) {
+    this.#schema = schema;
     this.#isDirty = true;
   }
 
