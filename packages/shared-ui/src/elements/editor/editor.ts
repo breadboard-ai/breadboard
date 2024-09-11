@@ -45,7 +45,7 @@ import {
   SubGraphCreateEvent,
   SubGraphDeleteEvent,
 } from "../../events/events.js";
-import { EditorMode, filterPortsByMode } from "../../utils/mode.js";
+import { EditorMode } from "../../utils/mode.js";
 import { GraphEdge } from "./graph-edge.js";
 import { GraphRenderer } from "./graph-renderer.js";
 import type { NodeSelector } from "./node-selector.js";
@@ -435,10 +435,7 @@ export class Editor extends LitElement {
     const typeMetadata = new Map<string, NodeHandlerMetadata>();
     const graphVersion = this.#graphVersion;
     for (const node of selectedGraph.nodes()) {
-      ports.set(
-        node.descriptor.id,
-        filterPortsByMode(await node.ports(), this.mode)
-      );
+      ports.set(node.descriptor.id, await node.ports());
       typeMetadata.set(node.descriptor.type, await node.type().metadata());
       if (this.#graphVersion !== graphVersion) {
         // Another update has come in, bail out.

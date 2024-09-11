@@ -729,7 +729,10 @@ export class GraphNode extends PIXI.Container {
           this.#padding // Right hand side padding.
       );
 
-      if (!this.collapsed) {
+      if (
+        !this.collapsed &&
+        !this.#shouldHidePort(inPortLabels[p]?.port || outPortLabels[p]?.port)
+      ) {
         height +=
           this.#portLabelVerticalPadding +
           Math.max(inPortDimension.height, outPortHeight) +
@@ -996,6 +999,9 @@ export class GraphNode extends PIXI.Container {
 
     let portY = portStartY;
     for (const portItem of this.#inPortsSortedByName) {
+      if (this.#shouldHidePort(portItem.port)) {
+        continue;
+      }
       const { port, label, nodePort } = portItem;
       nodePort.label = port.name;
       nodePort.radius = this.#portRadius;
@@ -1022,6 +1028,10 @@ export class GraphNode extends PIXI.Container {
 
     let portY = portStartY;
     for (const portItem of this.#outPortsSortedByName) {
+      if (this.#shouldHidePort(portItem.port, "$error")) {
+        continue;
+      }
+
       const { port, label, nodePort } = portItem;
       nodePort.label = port.name;
       nodePort.radius = this.#portRadius;
@@ -1057,5 +1067,22 @@ export class GraphNode extends PIXI.Container {
     }
 
     return this.#outPortLocations.get(name) || null;
+  }
+
+  #shouldHidePort(port: InspectablePort | undefined, ...exclude: string[]) {
+    if (!port) return true;
+    if (this.expansionState === "advanced") {
+      return false;
+    }
+    if (port.status === PortStatus.Connected) {
+      return false;
+    }
+    if (port.star || port.name === "") {
+      return true;
+    }
+    if (exclude.includes(port.name)) {
+      return true;
+    }
+    return false;
   }
 }

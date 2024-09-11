@@ -37,7 +37,7 @@ export enum GraphNodePortType {
   INERT = "inert",
 }
 
-export type ComponentExpansionState = "collapsed" | "expanded";
+export type ComponentExpansionState = "collapsed" | "expanded" | "advanced";
 
 export type LayoutInfo = {
   x: number;

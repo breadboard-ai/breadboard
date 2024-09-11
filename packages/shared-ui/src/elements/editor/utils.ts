@@ -72,9 +72,11 @@ export function computeNextExpansionState(
 ): ComponentExpansionState {
   switch (state) {
     case "expanded":
-      return "collapsed";
+      return "advanced";
     case "collapsed":
       return "expanded";
+    case "advanced":
+      return "collapsed";
     default:
       return "expanded";
   }
