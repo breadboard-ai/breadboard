@@ -374,7 +374,6 @@ const appendContext = code(
 const contextOutput = outputNode({
   context: output(appendContext.outputs.context, { title: "Context out" }),
   text: output(userInput.unsafeOutput("text") as Value<LlmContent>, {
-    id: "contextOutput",
     deprecated: true,
   }),
 });
