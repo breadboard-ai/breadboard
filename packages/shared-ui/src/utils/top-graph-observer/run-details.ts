@@ -28,7 +28,7 @@ export class RunDetails {
   async initialize() {
     const runs = await this.#observer.runs();
     // Take inputs from the previous run.
-    this.#lastRunInputs = runs[1].inputs();
+    this.#lastRunInputs = runs.at(1)?.inputs() || null;
   }
 
   lastRunInput(id: NodeIdentifier): InputValues | null {
