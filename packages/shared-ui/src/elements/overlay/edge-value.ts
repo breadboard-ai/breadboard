@@ -34,6 +34,7 @@ export class EdgeValueOverlay extends LitElement {
 
     :host {
       display: block;
+      position: fixed;
     }
 
     h1 {

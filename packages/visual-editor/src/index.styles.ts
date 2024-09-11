@@ -189,7 +189,8 @@ export const styles = css`
 
   #header-bar {
     background: var(--bb-ui-600);
-    display: flex;
+    display: grid;
+    grid-template-columns: 48px auto 32px 32px 90px 32px;
     align-items: center;
     color: var(--bb-neutral-50);
     z-index: 1;

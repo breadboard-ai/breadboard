@@ -45,6 +45,12 @@ export enum STATUS {
   STOPPED = "stopped",
 }
 
+export enum BOARD_LOAD_STATUS {
+  LOADING = "loading",
+  LOADED = "loaded",
+  ERROR = "error",
+}
+
 export type UserInputConfiguration = {
   name: string;
   title: string;

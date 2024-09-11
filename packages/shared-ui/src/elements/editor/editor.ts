@@ -451,6 +451,7 @@ export class Editor extends LitElement {
     }
 
     const url = this.graph.raw().url || "";
+    this.#graphRenderer.hideAllGraphs();
 
     // Attempt to update the graph if it already exists.
     const updated = this.#graphRenderer.updateGraphByUrl(url, this.subGraphId, {
@@ -465,17 +466,13 @@ export class Editor extends LitElement {
     });
 
     if (updated) {
+      this.#graphRenderer.showGraph(url, this.subGraphId);
       return this.#graphRenderer;
     }
 
-    this.#graphRenderer.hideAllGraphs();
     if (this.#lastSubGraphId !== this.subGraphId) {
       // TODO: Need to figure out how to encode the subgraph/node id combo.
       this.#graphRenderer.topGraphResult = null;
-    }
-
-    for (const graph of this.#graphRenderer.getGraphs()) {
-      this.#graphRenderer.removeGraph(graph);
     }
 
     this.#graphRenderer.createGraph({
@@ -491,6 +488,7 @@ export class Editor extends LitElement {
       metadata: selectedGraph.metadata() || {},
       visible: false,
     });
+
     // When we're loading a graph from existing results, we need to
     // set the topGraphResult again so that it is applied to the newly
     // created graph.
@@ -502,7 +500,7 @@ export class Editor extends LitElement {
       GraphInitialDrawEvent.eventName,
       () => {
         this.#ignoreNextUpdate = true;
-        this.#graphRenderer.showAllGraphs();
+        this.#graphRenderer.showGraph(url, this.subGraphId);
         this.#graphRenderer.zoomToFit();
       },
       { once: true }

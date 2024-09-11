@@ -36,6 +36,7 @@ import { SecretsHelper } from "./utils/secrets-helper";
 import { SettingsHelperImpl } from "./utils/settings-helper";
 import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
+import { TabId } from "./runtime/types";
 
 const STORAGE_PREFIX = "bb-main";
 
@@ -154,7 +155,8 @@ export class Main extends LitElement {
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #boardId = 0;
   #boardPendingSave = false;
-  #status = BreadboardUI.Types.STATUS.STOPPED;
+  #tabBoardStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
+  #tabLoadStatus = new Map<TabId, BreadboardUI.Types.BOARD_LOAD_STATUS>();
   #providers: GraphProvider[];
   #settings: SettingsStore | null;
   #secretsHelper: SecretsHelper | null = null;
@@ -168,7 +170,6 @@ export class Main extends LitElement {
   #selectRunBound = this.#selectRun.bind(this);
   #confirmUnloadWithUserFirstIfNeededBound =
     this.#confirmUnloadWithUserFirstIfNeeded.bind(this);
-  #failedGraphLoad = false;
   #version = "dev";
   #recentBoardStore = RecentBoardStore.instance();
   #recentBoards: BreadboardUI.Types.RecentBoard[] = [];
@@ -223,6 +224,25 @@ export class Main extends LitElement {
       this.proxyFromUrl = proxyFromUrl;
     }
 
+    const stopCurrentRunIfActive = (tabId: TabId | null) => {
+      if (!tabId) {
+        return;
+      }
+
+      if (this.tab?.id !== tabId) {
+        return;
+      }
+
+      if (
+        this.#tabBoardStatus.get(tabId) === BreadboardUI.Types.STATUS.STOPPED
+      ) {
+        return;
+      }
+
+      this.#tabBoardStatus.set(tabId, BreadboardUI.Types.STATUS.STOPPED);
+      this.#runtime.run.getAbortSignal(tabId)?.abort();
+    };
+
     // Initialization order:
     //  1. Recent boards.
     //  2. Settings.
@@ -257,7 +277,13 @@ export class Main extends LitElement {
         this.#runtime.board.addEventListener(
           Runtime.Events.RuntimeBoardLoadErrorEvent.eventName,
           () => {
-            this.#failedGraphLoad = true;
+            if (this.tab) {
+              this.#tabLoadStatus.set(
+                this.tab.id,
+                BreadboardUI.Types.BOARD_LOAD_STATUS.ERROR
+              );
+            }
+
             this.toast(
               "Unable to load board",
               BreadboardUI.Events.ToastType.ERROR
@@ -291,8 +317,6 @@ export class Main extends LitElement {
 
               if (this.tab.graph.url) {
                 this.#setUrlParam("board", this.tab.graph.url);
-                await this.#trackRecentBoard(this.tab.graph.url);
-
                 const base = new URL(window.location.href);
                 const decodedUrl = decodeURIComponent(base.href);
                 window.history.replaceState(
@@ -300,6 +324,8 @@ export class Main extends LitElement {
                   "",
                   decodedUrl
                 );
+
+                await this.#trackRecentBoard(this.tab.graph.url);
               }
 
               if (this.tab.graph.title) {
@@ -311,54 +337,44 @@ export class Main extends LitElement {
 
         this.#runtime.board.addEventListener(
           Runtime.Events.RuntimeTabCloseEvent.eventName,
-          (evt: Runtime.Events.RuntimeTabCloseEvent) => {
-            if (!evt.tabId) {
-              return;
-            }
+          async (evt: Runtime.Events.RuntimeTabCloseEvent) => {
+            stopCurrentRunIfActive(evt.tabId);
 
-            if (this.tab?.id !== evt.tabId) {
-              return;
-            }
-
-            if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
-              this.status = BreadboardUI.Types.STATUS.STOPPED;
-              this.#runtime.run.getAbortSignal(evt.tabId)?.abort();
-            }
+            await this.#confirmSaveWithUserFirstIfNeeded();
           }
         );
 
         this.#runtime.run.addEventListener(
           Runtime.Events.RuntimeBoardRunEvent.eventName,
           (evt: Runtime.Events.RuntimeBoardRunEvent) => {
-            if (!this.tab) {
-              return;
-            }
-
-            // TODO: Figure out what to do here; if we change away from the run in
-            // the middle we will lose track of where we are in the run.
-            if (evt.tabId !== this.tab.id) {
-              return;
+            if (this.tab && evt.tabId === this.tab.id) {
+              this.requestUpdate();
             }
 
             switch (evt.runEvt.type) {
               case "next": {
-                // TODO: Decide if the run needs to be stopped.
-                this.requestUpdate();
+                // Noop.
                 break;
               }
 
               case "graphstart": {
-                this.requestUpdate();
+                // Noop.
                 break;
               }
 
               case "start": {
-                this.status = BreadboardUI.Types.STATUS.RUNNING;
+                this.#tabBoardStatus.set(
+                  evt.tabId,
+                  BreadboardUI.Types.STATUS.RUNNING
+                );
                 break;
               }
 
               case "end": {
-                this.status = BreadboardUI.Types.STATUS.STOPPED;
+                this.#tabBoardStatus.set(
+                  evt.tabId,
+                  BreadboardUI.Types.STATUS.STOPPED
+                );
                 break;
               }
 
@@ -368,17 +384,26 @@ export class Main extends LitElement {
                   BreadboardUI.Utils.formatError(runEvt.data.error),
                   BreadboardUI.Events.ToastType.ERROR
                 );
-                this.status = BreadboardUI.Types.STATUS.STOPPED;
+                this.#tabBoardStatus.set(
+                  evt.tabId,
+                  BreadboardUI.Types.STATUS.STOPPED
+                );
                 break;
               }
 
               case "resume": {
-                this.status = BreadboardUI.Types.STATUS.RUNNING;
+                this.#tabBoardStatus.set(
+                  evt.tabId,
+                  BreadboardUI.Types.STATUS.RUNNING
+                );
                 break;
               }
 
               case "pause": {
-                this.status = BreadboardUI.Types.STATUS.RUNNING;
+                this.#tabBoardStatus.set(
+                  evt.tabId,
+                  BreadboardUI.Types.STATUS.PAUSED
+                );
                 break;
               }
 
@@ -417,7 +442,6 @@ export class Main extends LitElement {
 
         // Start the board or show the welcome panel.
         if (boardFromUrl) {
-          this.#failedGraphLoad = false;
           this.#runtime.board.loadFromURL(boardFromUrl);
           return;
         } else {
@@ -494,7 +518,6 @@ export class Main extends LitElement {
             return;
           }
 
-          this.#failedGraphLoad = false;
           this.#runtime.board.loadFromDescriptor(descriptor);
         } catch (err) {
           this.toast(
@@ -641,7 +664,6 @@ export class Main extends LitElement {
 
     const runGraph = topGraphObserver.current()?.graph ?? null;
     if (runGraph) {
-      this.#failedGraphLoad = false;
       this.#runtime.board.loadFromDescriptor(runGraph, topGraphObserver);
     }
   }
@@ -786,15 +808,6 @@ export class Main extends LitElement {
     this.showSaveAsDialog = true;
   }
 
-  get status() {
-    return this.#status;
-  }
-
-  set status(status: BreadboardUI.Types.STATUS) {
-    this.#status = status;
-    this.requestUpdate();
-  }
-
   #setPageTitle(title: string | null) {
     const suffix = "Breadboard - Visual Editor";
     if (title) {
@@ -842,7 +855,6 @@ export class Main extends LitElement {
     await this.#recentBoardStore.store(this.#recentBoards);
   }
 
-  // TODO: Allow this to run boards directly.
   async #runBoard(config: RunConfig) {
     if (!this.tab) {
       console.error("Unable to run board, no active tab");
@@ -968,18 +980,7 @@ export class Main extends LitElement {
   }
 
   async #changeBoard(url: string, _newTab: boolean) {
-    await this.#confirmSaveWithUserFirstIfNeeded();
-
-    if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
-      if (
-        !confirm("A board is currently running. Do you want to load this file?")
-      ) {
-        return;
-      }
-    }
-
     try {
-      this.#failedGraphLoad = false;
       this.#runtime.board.loadFromURL(url, this.tab?.graph.url);
     } catch (err) {
       this.toast(
@@ -1063,15 +1064,6 @@ export class Main extends LitElement {
   }
 
   #attemptBoardStart(evt: BreadboardUI.Events.StartEvent) {
-    if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
-      if (
-        !confirm("A board is currently running. Do you want to load this file?")
-      ) {
-        return;
-      }
-    }
-
-    this.#failedGraphLoad = false;
     if (evt.url) {
       this.#runtime.board.loadFromURL(evt.url);
     } else if (evt.descriptor) {
@@ -1242,6 +1234,20 @@ export class Main extends LitElement {
         return [];
       })
       .then((runs: InspectableRun[]) => {
+        let tabStatus = BreadboardUI.Types.STATUS.STOPPED;
+        if (this.tab) {
+          tabStatus =
+            this.#tabBoardStatus.get(this.tab.id) ??
+            BreadboardUI.Types.STATUS.STOPPED;
+        }
+
+        let tabLoadStatus = BreadboardUI.Types.BOARD_LOAD_STATUS.LOADING;
+        if (this.tab) {
+          tabLoadStatus =
+            this.#tabLoadStatus.get(this.tab.id) ??
+            BreadboardUI.Types.BOARD_LOAD_STATUS.LOADING;
+        }
+
         const inputsFromLastRun = runs[1]?.inputs() ?? null;
         return html`<div id="header-bar" ?inert=${showingOverlay}>
         <button
@@ -1341,9 +1347,9 @@ export class Main extends LitElement {
               .topGraphResult=${topGraphResult}
               .kits=${this.#runtime.kits}
               .loader=${this.#runtime.board.loader}
-              .status=${this.status}
+              .status=${tabStatus}
               .boardId=${this.#boardId}
-              .failedToLoad=${this.#failedGraphLoad}
+              .tabLoadStatus=${tabLoadStatus}
               .settings=${this.#settings}
               .providers=${this.#providers}
               .providerOps=${this.providerOps}
