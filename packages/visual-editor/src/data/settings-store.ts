@@ -150,7 +150,7 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
     [BreadboardUI.Types.SETTINGS_TYPE.SECRETS]: {
       configuration: {
         extensible: true,
-        description: `Secrets that you want to store locally, such as API keys. Please note that items in this list should have unique names.`,
+        description: `Secrets that you want to store locally, such as API keys. When calling an API, the API provider's applicable privacy policy and terms apply. Please note that items in this list should have unique names. `,
         nameEditable: true,
         nameVisible: true,
       },

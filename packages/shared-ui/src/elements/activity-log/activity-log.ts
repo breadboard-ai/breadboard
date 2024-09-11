@@ -281,7 +281,7 @@ export class ActivityLog extends LitElement {
         prev.push({
           name: key,
           title: schema.title ?? key,
-          secret: false,
+          secret: true,
           schema,
           configured: false,
           required: true,
