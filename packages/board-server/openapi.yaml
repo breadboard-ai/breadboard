@@ -269,7 +269,6 @@ components:
           type: string
         description:
           type: string
-        # $schema: This is a string type - should this property be added ????
         version:
           type: string
         edges:
@@ -280,7 +279,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Node'
-        kits: # this is on the GraphDescriptor type, but only appears to be used in the subgraphs in newer boards
+        kits:
           type: array
           items:
             type: object
@@ -308,18 +307,7 @@ components:
             $ref: '#/components/schemas/Board'
         args:
           type: object
-          additionalProperties: true # Any type - is this too open?
-          # type InputIdentifier = string;
-          # export type InputValues = Record<InputIdentifier, NodeValue>;
-          # type NodeValue =
-          # | string
-          # | number
-          # | boolean
-          # | null
-          # | undefined
-          # | NodeValue[]
-          # | Capability
-          # | { [key: string]: NodeValue };
+          additionalProperties: true
       required:
         - nodes
         - edges
@@ -333,18 +321,7 @@ components:
           type: string
         visual:
           type: object
-          additionalProperties: true # Check this
-          # visual?: NodeValue;
-          # ...
-          # type NodeValue =
-          # | string
-          # | number
-          # | boolean
-          # | null
-          # | undefined
-          # | NodeValue[]
-          # | Capability
-          # | { [key: string]: NodeValue };
+          additionalProperties: true
         logLevel:
           type: string
           enum:
@@ -353,7 +330,7 @@ components:
         tags:
           type: array
           items:
-            oneOf: # `start` or StartTag
+            oneOf:
               - type: string
                 enum:
                   - start
@@ -421,16 +398,16 @@ components:
           type: string
         description:
           type: string
-        type: # Either string or string[]
+        type:
           oneOf:
             - type: string
             - type: array
               items:
                 type: string
-        properties: # Record<string, Schema>
+        properties:
           type: object
           additionalProperties:
-              $ref: '#/components/schemas/Schema' # Check this
+              $ref: '#/components/schemas/Schema'
         required:
           type: array
           items:
@@ -462,14 +439,14 @@ components:
             type: string
         default:
           type: string
-        additionalProperties: # boolean | Schema
+        additionalProperties:
           oneOf:
             - type: boolean
             - $ref: '#/components/schemas/Schema'
         items: 
           oneOf:
             - $ref: '#/components/schemas/Schema'
-            - type: array # Check this
+            - type: array
               items:
                 $ref: '#/components/schemas/Schema'
         minItems:
@@ -504,4 +481,4 @@ components:
                   type: string
                 metadata:
                   $ref: '#/components/schemas/NodeMetaData'
-          additionalProperties: true # [name: string]: NodeValue
+          additionalProperties: true
