@@ -193,14 +193,7 @@ export class Board extends EventTarget {
   }
 
   closeTab(id: TabId) {
-    this.#tabs.delete(id);
-    this.dispatchEvent(new RuntimeTabCloseEvent(id));
-
-    if (id !== this.#currentTabId) {
-      return;
-    }
-
-    this.#currentTabId = null;
+    let nextTab = null;
 
     const tabList = [...this.#tabs.keys()];
     for (let t = 0; t < tabList.length; t++) {
@@ -209,16 +202,24 @@ export class Board extends EventTarget {
       }
 
       if (t === 0 && tabList.length > 1) {
-        this.#currentTabId = tabList[t + 1];
+        nextTab = tabList[t + 1];
         break;
       }
 
       if (t > 0) {
-        this.#currentTabId = tabList[t - 1];
+        nextTab = tabList[t - 1];
         break;
       }
     }
 
+    this.#tabs.delete(id);
+    this.dispatchEvent(new RuntimeTabCloseEvent(id));
+
+    if (id !== this.#currentTabId) {
+      return;
+    }
+
+    this.#currentTabId = nextTab;
     this.dispatchEvent(new RuntimeTabChangeEvent());
   }
 
