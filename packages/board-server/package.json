@@ -38,7 +38,9 @@
         "*.html",
         "vite.config.ts",
         "package.json",
-        "src/app/**/*.ts"
+        "src/app/**/*.ts",
+        ".env.development",
+        ".env.production"
       ],
       "output": [
         "dist/client"
