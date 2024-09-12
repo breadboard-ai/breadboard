@@ -8,9 +8,11 @@
 
 // TODO(aomarks) Switch import to schema package
 import type {
+  BehaviorSchema,
   GraphDescriptor,
   NodeDescriptor,
   NodeValue,
+  Schema,
 } from "@google-labs/breadboard";
 import type { JSONSchema4 } from "json-schema";
 import { DefaultValue, OutputPortGetter } from "../common/port.js";
@@ -255,20 +257,16 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
         if (nodeMetadata !== undefined) {
           outputNode.metadata = nodeMetadata;
         }
+        if (outputs.$bubble) {
+          addBehavior(outputNode.configuration.schema, "bubble");
+        }
 
         outputNodes.set(outputNodeId, outputNode);
       }
       const { schema, required } = describeOutput(output);
       outputNode.configuration.schema.properties[name] = schema;
-      const behaviors = [];
-      if (outputs.$bubble) {
-        behaviors.push("bubble");
-      }
       if (deprecated) {
-        behaviors.push("deprecated");
-      }
-      if (behaviors.length > 0) {
-        outputNode.configuration.schema.behavior = behaviors;
+        addBehavior(schema, "deprecated");
       }
       if (required) {
         outputNode.configuration.schema.required.push(name);
@@ -637,4 +635,16 @@ function sortKeys<T extends Record<string, unknown>>(
       return nameA.localeCompare(nameB);
     })
   ) as T;
+}
+
+function addBehavior(
+  schema: Schema | JSONSchema4,
+  behavior: BehaviorSchema
+): void {
+  if (schema.behavior === undefined) {
+    schema.behavior = [behavior];
+  } else if (!schema.behavior.includes(behavior)) {
+    schema.behavior.push(behavior);
+    schema.behavior.sort();
+  }
 }

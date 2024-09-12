@@ -1206,15 +1206,15 @@
                 "number",
                 "object",
                 "string"
+              ],
+              "behavior": [
+                "deprecated"
               ]
             }
           },
           "required": [
             "context",
             "text"
-          ],
-          "behavior": [
-            "deprecated"
           ]
         }
       }
