@@ -111,6 +111,7 @@ const runInBrowser = async ({
       if (data.result) {
         resolve(data.result);
         URL.revokeObjectURL(workerURL);
+        worker.terminate();
         return;
       } else if (data.error) {
         console.log("Error in worker", data.error);
