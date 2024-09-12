@@ -54,12 +54,15 @@ export class Overlay extends LitElement {
 
     :host([inline]) #content {
       position: fixed;
-      left: var(--x, 0px);
-      top: var(--y, 0px);
+      left: var(--left, 0px);
+      top: var(--top, 0px);
       border: 1px solid var(--bb-neutral-300);
       box-shadow:
         0 8px 8px 0 rgba(0, 0, 0, 0.07),
         0 15px 12px 0 rgba(0, 0, 0, 0.09);
+
+      right: var(--right, auto);
+      bottom: var(--bottom, auto);
     }
 
     @keyframes fadeIn {
@@ -91,6 +94,15 @@ export class Overlay extends LitElement {
     }
 
     this.dispatchEvent(new OverlayDismissedEvent());
+  }
+
+  get contentBounds() {
+    if (!this.#contentRef.value) {
+      return 0;
+    }
+
+    const bounds = this.#contentRef.value.getBoundingClientRect();
+    return bounds;
   }
 
   get contentHeight() {
