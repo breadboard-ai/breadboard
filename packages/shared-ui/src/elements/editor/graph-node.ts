@@ -7,6 +7,7 @@
 import { InspectablePort, PortStatus } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
 import {
+  Activity,
   ComponentExpansionState,
   GRAPH_OPERATIONS,
   GraphNodePortType,
@@ -21,6 +22,7 @@ import {
 } from "./utils.js";
 import { GraphNodeFooter } from "./graph-node-footer.js";
 import { GraphPortLabel as GraphNodePortLabel } from "./graph-port-label.js";
+import { GraphNodeActivityMarker } from "./graph-node-activity-marker.js";
 
 const borderColor = getGlobalColor("--bb-neutral-500");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
@@ -55,7 +57,8 @@ export class GraphNode extends PIXI.Container {
   #textSize = 12;
   #backgroundColor = 0x333333;
   #padding = 12;
-  #menuPadding = 4;
+  #activityPadding = 20;
+  #menuPadding = 8;
   #iconPadding = 8;
   #portLabelVerticalPadding = 4;
   #portLabelHorizontalPadding = 20;
@@ -63,6 +66,7 @@ export class GraphNode extends PIXI.Container {
   #portRadius = 4;
   #background = new PIXI.Graphics();
   #footer = new GraphNodeFooter();
+  #activityMarker = new GraphNodeActivityMarker();
   #inPorts: InspectablePort[] | null = null;
   #inPortsData: Map<
     string,
@@ -102,6 +106,7 @@ export class GraphNode extends PIXI.Container {
   #lastClickTime = 0;
   #icon: string | null = null;
   #iconSprite: PIXI.Sprite | null = null;
+  #activity: Activity[] | null = null;
 
   readOnly = false;
 
@@ -130,6 +135,7 @@ export class GraphNode extends PIXI.Container {
     this.addChild(this.#headerInPort);
     this.addChild(this.#headerOutPort);
     this.addChild(this.#footer);
+    this.addChild(this.#activityMarker);
 
     this.#headerInPort.label = "_header-port-in";
     this.#headerOutPort.label = "_header-port-out";
@@ -140,6 +146,17 @@ export class GraphNode extends PIXI.Container {
       GRAPH_OPERATIONS.GRAPH_NODE_MENU_CLICKED,
       (location: PIXI.ObservablePoint) => {
         this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MENU_REQUESTED, this, location);
+      }
+    );
+
+    this.#activityMarker.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_ACTIVITY_SELECTED,
+      (...args: unknown[]) => {
+        this.emit(
+          GRAPH_OPERATIONS.GRAPH_NODE_ACTIVITY_SELECTED,
+          this.title,
+          ...args
+        );
       }
     );
 
@@ -406,6 +423,17 @@ export class GraphNode extends PIXI.Container {
 
   get color() {
     return this.#color;
+  }
+
+  set activity(activity: Activity[] | null) {
+    this.#activity = activity;
+    this.#activityMarker.activity = this.#activity;
+
+    this.#isDirty = true;
+  }
+
+  get activity() {
+    return this.#activity;
   }
 
   set titleTextColor(titleTextColor: number) {
@@ -704,7 +732,9 @@ export class GraphNode extends PIXI.Container {
       this.#padding +
       (this.#icon ? (this.#iconSprite?.width || 0) + this.#iconPadding : 0) +
       (this.#titleText?.width || 0) +
-      this.#padding +
+      this.#activityPadding +
+      this.#activityMarker.dimensions.width +
+      this.#menuPadding +
       GraphOverflowMenu.width +
       this.#menuPadding;
 
@@ -786,7 +816,25 @@ export class GraphNode extends PIXI.Container {
       this.#hideHeaderPorts();
     }
     this.#drawOverflowMenu();
+    this.#drawActivityMarker();
     this.#drawFooterIfNeeded();
+  }
+
+  #drawActivityMarker() {
+    const titleHeight =
+      this.#padding + (this.#titleText?.height || 0) + this.#padding;
+
+    const activityMarkerDimensions = this.#activityMarker.dimensions;
+
+    this.#activityMarker.x =
+      this.#width -
+      this.#activityMarker.dimensions.width -
+      this.#menuPadding -
+      GraphOverflowMenu.width -
+      this.#menuPadding;
+
+    this.#activityMarker.y =
+      (titleHeight - activityMarkerDimensions.height) * 0.5;
   }
 
   #drawFooterIfNeeded() {

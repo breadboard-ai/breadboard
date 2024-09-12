@@ -32,12 +32,14 @@ import {
   GraphEdgeValueSelectedEvent,
   GraphEntityRemoveEvent,
   GraphInitialDrawEvent,
+  GraphNodeActivitySelectedEvent,
   GraphNodeDeleteEvent,
   GraphNodeEdgeChangeEvent,
   GraphNodePortValueEditEvent,
   GraphNodesVisualUpdateEvent,
   KitNodeChosenEvent,
   MultiEditEvent,
+  NodeActivitySelectedEvent,
   NodeConfigurationUpdateRequestEvent,
   NodeCreateEvent,
   NodeDeleteEvent,
@@ -169,6 +171,8 @@ export class Editor extends LitElement {
   #onGraphEntityRemoveBound = this.#onGraphEntityRemove.bind(this);
   #onGraphNodePortValueEditBound = this.#onGraphNodePortValueEdit.bind(this);
   #onGraphEdgeValueSelectedBound = this.#onGraphEdgeValueSelected.bind(this);
+  #onGraphNodeActivitySelectedBound =
+    this.#onGraphNodeActivitySelected.bind(this);
   #top = 0;
   #left = 0;
   #addButtonRef: Ref<HTMLInputElement> = createRef();
@@ -486,19 +490,18 @@ export class Editor extends LitElement {
       visible: false,
     });
 
-    // When we're loading a graph from existing results, we need to
-    // set the topGraphResult again so that it is applied to the newly
-    // created graph.
-    if (this.topGraphResult) {
-      this.#graphRenderer.topGraphResult = this.topGraphResult;
-    }
-
     this.#graphRenderer.addEventListener(
       GraphInitialDrawEvent.eventName,
       () => {
-        this.#ignoreNextUpdate = true;
         this.#graphRenderer.showGraph(url, this.subGraphId);
         this.#graphRenderer.zoomToFit();
+
+        // When we're loading a graph from existing results, we need to
+        // set the topGraphResult again so that it is applied to the newly
+        // created graph.
+        if (this.topGraphResult) {
+          this.#graphRenderer.topGraphResult = this.topGraphResult;
+        }
       },
       { once: true }
     );
@@ -509,6 +512,7 @@ export class Editor extends LitElement {
   #ignoreNextUpdate = false;
   protected shouldUpdate(): boolean {
     if (this.#ignoreNextUpdate) {
+      console.log("Ignoring...");
       this.#ignoreNextUpdate = false;
       return false;
     }
@@ -557,6 +561,11 @@ export class Editor extends LitElement {
     this.#graphRenderer.addEventListener(
       GraphEdgeValueSelectedEvent.eventName,
       this.#onGraphEdgeValueSelectedBound
+    );
+
+    this.#graphRenderer.addEventListener(
+      GraphNodeActivitySelectedEvent.eventName,
+      this.#onGraphNodeActivitySelectedBound
     );
 
     window.addEventListener("resize", this.#onResizeBound);
@@ -608,6 +617,11 @@ export class Editor extends LitElement {
     this.#graphRenderer.removeEventListener(
       GraphEdgeValueSelectedEvent.eventName,
       this.#onGraphEdgeValueSelectedBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphNodeActivitySelectedEvent.eventName,
+      this.#onGraphNodeActivitySelectedBound
     );
 
     window.removeEventListener("resize", this.#onResizeBound);
@@ -1217,6 +1231,11 @@ export class Editor extends LitElement {
   #onGraphEdgeValueSelected(evt: Event) {
     const { value, schema, x, y } = evt as GraphEdgeValueSelectedEvent;
     this.dispatchEvent(new EdgeValueSelectedEvent(value, schema, x, y));
+  }
+
+  #onGraphNodeActivitySelected(evt: Event) {
+    const { nodeTitle, runId } = evt as GraphNodeActivitySelectedEvent;
+    this.dispatchEvent(new NodeActivitySelectedEvent(nodeTitle, runId));
   }
 
   #onDragOver(evt: DragEvent) {

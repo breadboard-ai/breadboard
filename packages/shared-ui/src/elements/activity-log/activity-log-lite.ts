@@ -28,11 +28,7 @@ import {
   type UserInputConfiguration,
   type UserMessage,
 } from "../../types/types.js";
-import {
-  InputEnterEvent,
-  RunDownloadEvent,
-  RunSelectEvent,
-} from "../../events/events.js";
+import { InputEnterEvent, RunDownloadEvent } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 import { UserInput } from "../input/user-input.js";
 import {
@@ -873,11 +869,7 @@ export class ActivityLogLite extends LitElement {
                 ? html`<details>
                     <summary>${entry.title()}</summary>
                     ${entry.activity.length
-                      ? html`<ul
-                          @click=${() => {
-                            this.dispatchEvent(new RunSelectEvent(entry.id));
-                          }}
-                        >
+                      ? html`<ul>
                           ${map(entry.activity, (entry) => {
                             return html`<li
                               class=${classMap({ [entry.type]: true })}

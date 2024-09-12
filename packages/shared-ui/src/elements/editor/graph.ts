@@ -20,6 +20,7 @@ import { GraphEdge } from "./graph-edge.js";
 import { GraphNode } from "./graph-node.js";
 import { GraphNodePort } from "./graph-node-port.js";
 import {
+  Activity,
   ComponentExpansionState,
   GRAPH_OPERATIONS,
   GraphNodePortType,
@@ -139,6 +140,7 @@ export class Graph extends PIXI.Container {
   #autoSelect = new Set<string>();
   #latestPendingValidateRequest = new WeakMap<GraphEdge, symbol>();
   #edgeValues: TopGraphEdgeValues | null = null;
+  #nodeValues: Map<string, Activity[]> | null = null;
 
   #isInitialDraw = true;
   #collapseNodesByDefault = false;
@@ -1008,6 +1010,15 @@ export class Graph extends PIXI.Container {
     return this.#edgeValues;
   }
 
+  set nodeValues(nodeValues: Map<string, Activity[]> | null) {
+    this.#nodeValues = nodeValues;
+    this.#isDirty = true;
+  }
+
+  get nodeValues() {
+    return this.#nodeValues;
+  }
+
   set nodes(nodes: InspectableNode[] | null) {
     this.#nodes = nodes;
     this.#isDirty = true;
@@ -1380,6 +1391,7 @@ export class Graph extends PIXI.Container {
       graphNode.fixedInputs = portInfo.inputs.fixed;
       graphNode.fixedOutputs = portInfo.outputs.fixed;
       graphNode.readOnly = this.readOnly;
+      graphNode.activity = this.#nodeValues?.get(id) ?? null;
 
       graphNode.forceUpdateDimensions();
       graphNode.removeAllListeners();
@@ -1441,6 +1453,13 @@ export class Graph extends PIXI.Container {
         GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
         (...args: unknown[]) => {
           this.emit(GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT, ...args);
+        }
+      );
+
+      graphNode.on(
+        GRAPH_OPERATIONS.GRAPH_NODE_ACTIVITY_SELECTED,
+        (...args: unknown[]) => {
+          this.emit(GRAPH_OPERATIONS.GRAPH_NODE_ACTIVITY_SELECTED, ...args);
         }
       );
 

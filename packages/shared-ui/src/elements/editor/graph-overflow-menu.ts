@@ -15,7 +15,7 @@ export class GraphOverflowMenu extends PIXI.Graphics {
   #radius = 1.5;
   #gap = 2;
 
-  static readonly width = 24;
+  static readonly width = 20;
   static readonly height = 16;
 
   constructor() {
