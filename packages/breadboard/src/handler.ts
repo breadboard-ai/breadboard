@@ -8,8 +8,11 @@ import { inspect } from "./inspector/index.js";
 import { SENTINEL_BASE_URL } from "./loader/loader.js";
 import { invokeGraph } from "./run/invoke-graph.js";
 import type {
+  GraphDescriptor,
   InputValues,
   Kit,
+  NodeDescriberContext,
+  NodeDescriberResult,
   NodeHandler,
   NodeHandlerContext,
   NodeHandlerFunction,
@@ -105,11 +108,22 @@ type GraphHandlerThrottler = Throttler<
   NodeHandlerObject | undefined
 >;
 
-const THROTTLE_DELAY = 10000;
+type NodeDescriberThrottler = Throttler<
+  [InputValues | undefined, GraphDescriptor, NodeDescriberContext],
+  NodeDescriberResult
+>;
+
+const HANDLER_THROTTLE_DELAY = 10000;
+const DESCRIBE_THROTTLE_DELAY = 5000;
 
 const GRAPH_HANDLER_CACHE = new Map<
   NodeTypeIdentifier,
   GraphHandlerThrottler
+>();
+
+const DESCRIBE_RESULT_CACHE = new Map<
+  NodeTypeIdentifier,
+  NodeDescriberThrottler
 >();
 
 export async function getGraphHandler(
@@ -118,7 +132,7 @@ export async function getGraphHandler(
 ): Promise<NodeHandlerObject | undefined> {
   let throttler;
   if (!GRAPH_HANDLER_CACHE.has(type)) {
-    throttler = new Throttler(getGraphHandlerInternal, THROTTLE_DELAY);
+    throttler = new Throttler(getGraphHandlerInternal, HANDLER_THROTTLE_DELAY);
     GRAPH_HANDLER_CACHE.set(type, throttler);
   } else {
     throttler = GRAPH_HANDLER_CACHE.get(type)!;
@@ -159,8 +173,17 @@ async function getGraphHandlerInternal(
       if (!context) {
         return { inputSchema: {}, outputSchema: {} };
       }
-      const inspectableGraph = inspect(graph, context);
-      return inspectableGraph.describe(inputs);
+      let describeThrottler;
+      if (DESCRIBE_RESULT_CACHE.has(type)) {
+        describeThrottler = DESCRIBE_RESULT_CACHE.get(type)!;
+      } else {
+        describeThrottler = new Throttler(
+          describeGraph,
+          DESCRIBE_THROTTLE_DELAY
+        );
+        DESCRIBE_RESULT_CACHE.set(type, describeThrottler);
+      }
+      return describeThrottler.call({}, inputs, graph, context);
     },
     metadata: filterEmptyValues({
       title: graph.title,
@@ -170,4 +193,14 @@ async function getGraphHandlerInternal(
       help: graph.metadata?.help,
     }),
   } as NodeHandlerObject;
+}
+
+async function describeGraph(
+  inputs: InputValues | undefined,
+  graph: GraphDescriptor,
+  context: NodeDescriberContext
+) {
+  const inspectableGraph = inspect(graph, context);
+  const result = await inspectableGraph.describe(inputs);
+  return result;
 }
