@@ -97,6 +97,8 @@ export class NodeConfigurationOverlay extends LitElement {
     #wrapper {
       min-width: 300px;
       width: 400px;
+      min-height: 250px;
+      height: 350px;
       display: flex;
       flex-direction: column;
       resize: both;
