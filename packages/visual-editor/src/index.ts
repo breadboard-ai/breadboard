@@ -169,7 +169,6 @@ export class Main extends LitElement {
   #proxy: HarnessProxyConfig[];
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #downloadRunBound = this.#downloadRun.bind(this);
-  #selectRunBound = this.#selectRun.bind(this);
   #confirmUnloadWithUserFirstIfNeededBound =
     this.#confirmUnloadWithUserFirstIfNeeded.bind(this);
   #version = "dev";
@@ -461,7 +460,6 @@ export class Main extends LitElement {
 
     window.addEventListener("keydown", this.#onKeyDownBound);
     window.addEventListener("bbrundownload", this.#downloadRunBound);
-    window.addEventListener("bbrunselect", this.#selectRunBound);
   }
 
   disconnectedCallback(): void {
@@ -469,7 +467,6 @@ export class Main extends LitElement {
 
     window.removeEventListener("keydown", this.#onKeyDownBound);
     window.removeEventListener("bbrundownload", this.#downloadRunBound);
-    window.removeEventListener("bbrunselect", this.#selectRunBound);
   }
 
   #setBoardPendingSaveState(boardPendingSave: boolean) {
@@ -627,7 +624,7 @@ export class Main extends LitElement {
     anchor.click();
   }
 
-  async #selectRun(evt: Event) {
+  async #selectRun(evt: BreadboardUI.Events.NodeActivitySelectedEvent) {
     if (!this.tab) {
       return;
     }
@@ -642,8 +639,7 @@ export class Main extends LitElement {
       return;
     }
 
-    const e = evt as BreadboardUI.Events.RunSelectEvent;
-    const event = currentRun.getEventById(e.runId);
+    const event = currentRun.getEventById(evt.runId);
 
     if (!event) {
       console.warn(
@@ -676,7 +672,13 @@ export class Main extends LitElement {
 
     const runGraph = topGraphObserver.current()?.graph ?? null;
     if (runGraph) {
-      this.#runtime.board.loadFromDescriptor(runGraph, topGraphObserver);
+      runGraph.title = evt.nodeTitle;
+      console.log(topGraphObserver);
+      this.#runtime.board.loadFromDescriptor(
+        runGraph,
+        topGraphObserver,
+        observers.runObserver
+      );
     }
   }
 
@@ -1519,6 +1521,11 @@ export class Main extends LitElement {
               ) => {
                 this.showEdgeValue = evt.value !== null;
                 this.#edgeValueData = { ...evt };
+              }}
+              @bbnodeactivityselected=${(
+                evt: BreadboardUI.Events.NodeActivitySelectedEvent
+              ) => {
+                this.#selectRun(evt);
               }}
               @bbcommentupdate=${(
                 evt: BreadboardUI.Events.CommentUpdateEvent

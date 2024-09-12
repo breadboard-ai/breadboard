@@ -22,8 +22,13 @@ import {
   StartEvent,
   GraphNodePortValueEditEvent,
   GraphEdgeValueSelectedEvent,
+  GraphNodeActivitySelectedEvent,
 } from "../../events/events.js";
-import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types.js";
+import {
+  Activity,
+  ComponentExpansionState,
+  GRAPH_OPERATIONS,
+} from "./types.js";
 import { Graph } from "./graph.js";
 import {
   InspectableEdge,
@@ -617,12 +622,31 @@ export class GraphRenderer extends LitElement {
   set topGraphResult(topGraphResult: TopGraphRunResult | null) {
     let highlightedNode = null;
     let edgeValues = null;
+    let nodeValues = null;
+
     if (topGraphResult && topGraphResult.currentNode) {
       highlightedNode = topGraphResult.currentNode;
     }
 
     if (topGraphResult && topGraphResult.edgeValues) {
       edgeValues = topGraphResult.edgeValues;
+    }
+
+    if (topGraphResult && topGraphResult.log) {
+      nodeValues = new Map<string, Activity[]>();
+      for (const entry of topGraphResult.log) {
+        if (entry.type !== "node") {
+          continue;
+        }
+
+        let entries = nodeValues.get(entry.descriptor.id);
+        if (!entries) {
+          entries = [];
+          nodeValues.set(entry.descriptor.id, entries);
+        }
+
+        entries.push({ id: entry.id, activity: entry.activity });
+      }
     }
 
     for (const graph of this.#container.children) {
@@ -632,6 +656,7 @@ export class GraphRenderer extends LitElement {
 
       graph.highlightedNode = highlightedNode;
       graph.edgeValues = edgeValues;
+      graph.nodeValues = nodeValues;
     }
   }
 
@@ -963,6 +988,13 @@ export class GraphRenderer extends LitElement {
         this.dispatchEvent(
           new GraphEdgeValueSelectedEvent(value, schema, x, y)
         );
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_ACTIVITY_SELECTED,
+      (nodeName: string, id: string) => {
+        this.dispatchEvent(new GraphNodeActivitySelectedEvent(nodeName, id));
       }
     );
 

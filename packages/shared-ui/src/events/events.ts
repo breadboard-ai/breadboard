@@ -104,14 +104,6 @@ export class RunDownloadEvent extends Event {
   }
 }
 
-export class RunSelectEvent extends Event {
-  static eventName = "bbrunselect";
-
-  constructor(public readonly runId: string) {
-    super(RunSelectEvent.eventName, { ...eventInit });
-  }
-}
-
 /**
  * General UI
  */
@@ -527,6 +519,17 @@ export class EdgeValueSelectedEvent extends Event {
   }
 }
 
+export class NodeActivitySelectedEvent extends Event {
+  static eventName = "bbnodeactivityselected";
+
+  constructor(
+    public readonly nodeTitle: string,
+    public readonly runId: string
+  ) {
+    super(NodeActivitySelectedEvent.eventName, { ...eventInit });
+  }
+}
+
 export class GraphNodesVisualUpdateEvent extends Event {
   static eventName = "bbgraphnodesmove";
 
@@ -598,6 +601,17 @@ export class GraphEdgeValueSelectedEvent extends Event {
     public readonly y: number
   ) {
     super(GraphEdgeValueSelectedEvent.eventName, { ...eventInit });
+  }
+}
+
+export class GraphNodeActivitySelectedEvent extends Event {
+  static eventName = "bbgraphnodeactivityselected";
+
+  constructor(
+    public readonly nodeTitle: string,
+    public readonly runId: string
+  ) {
+    super(GraphNodeActivitySelectedEvent.eventName, { ...eventInit });
   }
 }
 
