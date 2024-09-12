@@ -10,7 +10,6 @@ import worker from "./boards/worker.js";
 import repeater from "./boards/repeater.js";
 import structuredWorker from "./boards/structured-worker.js";
 import human from "./boards/human.js";
-import toolWorker from "./boards/tool-worker.js";
 
 import { Core } from "@google-labs/core-kit";
 import specialist from "./boards/specialist.js";
@@ -42,7 +41,6 @@ core.invoke({ $id: "worker", $board: "#worker" });
 core.invoke({ $id: "repeater", $board: "#repeater" });
 core.invoke({ $id: "structured-worker", $board: "#structured-worker" });
 core.invoke({ $id: "human", $board: "#human" });
-core.invoke({ $id: "tool-worker", $board: toolWorker });
 core.invoke({ $id: "specialist", $board: specialist });
 core.invoke({ $id: "looper", $board: "#looper" });
 core.invoke({ $id: "joiner", $board: "#joiner" });

@@ -13,7 +13,6 @@ import {
   type NewNodeValue,
 } from "@google-labs/breadboard";
 import { WorkerType } from "./boards/worker.js";
-import { ToolWorkerType } from "./boards/tool-worker.js";
 import { SpecialistType } from "./boards/specialist.js";
 
 // TODO: Replace with the actual URL.
@@ -36,7 +35,6 @@ const AgentKit = builder.build({
   worker: adapter.handlerForNode("worker"),
   repeater: adapter.handlerForNode("repeater"),
   structuredWorker: adapter.handlerForNode("structured-worker"),
-  toolWorker: adapter.handlerForNode("tool-worker"),
   human: adapter.handlerForNode("human"),
   specialist: adapter.handlerForNode("specialist"),
   looper: adapter.handlerForNode("looper"),
@@ -111,11 +109,6 @@ export type AgentKitType = {
       json: NewNodeValue;
     }
   >;
-  /**
-   * A worker that can use multiple tools to accomplish a task.
-   * Give it a list of boards and an instruction, and watch it do its magic.
-   */
-  toolWorker: ToolWorkerType;
   /**
    * A human in the loop. Use this node to to insert a real person (user input)
    * into your team of synthetic team.
