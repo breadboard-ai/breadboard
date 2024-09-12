@@ -36,7 +36,7 @@ const manifest: KitManifest = {
   nodes: {
     human: serialize(human),
     repeater: serialize(repeater),
-    structuredWorker,
+    structuredWorker: serialize(structuredWorker),
     specialist,
     toolWorker,
     worker: serialize(worker),
