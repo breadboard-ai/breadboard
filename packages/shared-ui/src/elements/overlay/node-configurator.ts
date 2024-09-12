@@ -245,6 +245,33 @@ export class NodeConfigurationOverlay extends LitElement {
     }
   }
 
+  processData() {
+    this.#pendingSave = false;
+
+    if (
+      !this.#userInputRef.value ||
+      !this.configuration ||
+      !this.configuration.port
+    ) {
+      return;
+    }
+
+    const outputs = this.#userInputRef.value.processData(true);
+    if (!outputs) {
+      return;
+    }
+
+    // The user has deleted the value, so here we will place an explicit
+    // undefined value on the object so that the item is removed from the
+    // configuration.
+    if (Object.keys(outputs).length === 0) {
+      outputs[this.configuration.port.name] = undefined;
+    }
+
+    const { id, subGraphId } = this.configuration;
+    this.dispatchEvent(new NodePartialUpdateEvent(id, subGraphId, outputs));
+  }
+
   render() {
     if (!this.configuration || !this.configuration.port) {
       return nothing;
@@ -263,33 +290,6 @@ export class NodeConfigurationOverlay extends LitElement {
         type: port.schema.type,
       },
     ];
-
-    const updateValues = () => {
-      this.#pendingSave = false;
-
-      if (
-        !this.#userInputRef.value ||
-        !this.configuration ||
-        !this.configuration.port
-      ) {
-        return;
-      }
-
-      const outputs = this.#userInputRef.value.processData(true);
-      if (!outputs) {
-        return;
-      }
-
-      // The user has deleted the value, so here we will place an explicit
-      // undefined value on the object so that the item is removed from the
-      // configuration.
-      if (Object.keys(outputs).length === 0) {
-        outputs[this.configuration.port.name] = undefined;
-      }
-
-      const { id, subGraphId } = this.configuration;
-      this.dispatchEvent(new NodePartialUpdateEvent(id, subGraphId, outputs));
-    };
 
     const contentLocationStart = { x: 0, y: 0 };
     const dragStart = { x: 0, y: 0 };
@@ -378,7 +378,7 @@ export class NodeConfigurationOverlay extends LitElement {
                   return;
                 }
 
-                updateValues();
+                this.processData();
               }}
               .inputs=${inputs}
               .graph=${this.graph}
@@ -403,7 +403,7 @@ export class NodeConfigurationOverlay extends LitElement {
           <button
             id="update"
             @click=${() => {
-              updateValues();
+              this.processData();
             }}
           >
             Update

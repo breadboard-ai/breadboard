@@ -100,6 +100,8 @@ export class Main extends LitElement {
   @state()
   showNodeConfigurator = false;
   #nodeConfiguratorData: BreadboardUI.Types.NodePortConfiguration | null = null;
+  #nodeConfiguratorRef: Ref<BreadboardUI.Elements.NodeConfigurationOverlay> =
+    createRef();
 
   @state()
   showEdgeValue = false;
@@ -541,7 +543,13 @@ export class Main extends LitElement {
         return;
       }
 
-      this.#attemptBoardSave();
+      let saveMessage = "Board saved";
+      if (this.#nodeConfiguratorRef.value) {
+        this.#nodeConfiguratorRef.value.processData();
+        saveMessage = "Board and configuration saved";
+      }
+
+      this.#attemptBoardSave(saveMessage);
       return;
     }
 
@@ -672,7 +680,7 @@ export class Main extends LitElement {
     }
   }
 
-  async #attemptBoardSave() {
+  async #attemptBoardSave(message = "Board saved") {
     if (this.#isSaving) {
       return;
     }
@@ -699,12 +707,7 @@ export class Main extends LitElement {
     }
 
     this.#setBoardPendingSaveState(false);
-    this.toast(
-      "Board saved",
-      BreadboardUI.Events.ToastType.INFORMATION,
-      false,
-      id
-    );
+    this.toast(message, BreadboardUI.Events.ToastType.INFORMATION, false, id);
   }
 
   async #attemptBoardSaveAs(
@@ -1806,6 +1809,7 @@ export class Main extends LitElement {
     let nodeConfiguratorOverlay: HTMLTemplateResult | symbol = nothing;
     if (this.showNodeConfigurator) {
       nodeConfiguratorOverlay = html`<bb-node-configuration-overlay
+        ${ref(this.#nodeConfiguratorRef)}
         .configuration=${this.#nodeConfiguratorData}
         .graph=${this.tab?.graph}
         .providers=${this.#providers}
