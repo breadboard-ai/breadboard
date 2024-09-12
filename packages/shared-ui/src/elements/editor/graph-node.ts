@@ -710,35 +710,55 @@ export class GraphNode extends PIXI.Container {
 
     const inPortLabels = Array.from(this.#inPortsData.values());
     const outPortLabels = Array.from(this.#outPortsData.values());
-    for (let p = 0; p < portCount; p++) {
-      const inPortDimension = inPortLabels[p]?.label.dimensions ?? {
-        width: 0,
-        height: 0,
-      };
-      const outPortWidth = outPortLabels[p]?.label.width || 0;
-      const outPortHeight = outPortLabels[p]?.label.height || 0;
 
-      width = Math.max(
-        width,
-        this.#padding + // Left hand side.
-          this.#portPadding + // Left hand port padding on right.
-          inPortDimension.width + // Left label at this row.
-          2 * this.#portLabelHorizontalPadding + // Port label padding for both sides.
-          outPortWidth + // Right label at this row.
-          this.#portPadding + // Right hand port padding on right.
-          this.#padding // Right hand side padding.
-      );
-
-      if (
-        !this.collapsed &&
-        !this.#shouldHidePort(inPortLabels[p]?.port || outPortLabels[p]?.port)
-      ) {
-        height +=
-          this.#portLabelVerticalPadding +
-          Math.max(inPortDimension.height, outPortHeight) +
-          this.#portLabelVerticalPadding;
+    let maxInPortWidth = 0;
+    let inPortHeight = 0;
+    for (const inPort of inPortLabels) {
+      if (!inPort) {
+        continue;
       }
+
+      maxInPortWidth = Math.max(maxInPortWidth, inPort.label.dimensions.width);
+      if (this.collapsed || this.#shouldHidePort(inPort.port)) {
+        continue;
+      }
+
+      inPortHeight +=
+        this.#portLabelVerticalPadding +
+        inPort.label.dimensions.height +
+        this.#portLabelVerticalPadding;
     }
+
+    let maxOutPortWidth = 0;
+    let outPortHeight = 0;
+    for (const outPort of outPortLabels) {
+      if (!outPort) {
+        continue;
+      }
+
+      maxOutPortWidth = Math.max(maxOutPortWidth, outPort.label.width);
+      if (this.collapsed || this.#shouldHidePort(outPort.port)) {
+        continue;
+      }
+
+      outPortHeight +=
+        this.#portLabelVerticalPadding +
+        outPort.label.height +
+        this.#portLabelVerticalPadding;
+    }
+
+    width = Math.max(
+      width,
+      this.#padding + // Left hand side.
+        this.#portPadding + // Left hand port padding on right.
+        maxInPortWidth + // Left label at this row.
+        2 * this.#portLabelHorizontalPadding + // Port label padding for both sides.
+        maxOutPortWidth + // Right label at this row.
+        this.#portPadding + // Right hand port padding on right.
+        this.#padding // Right hand side padding.
+    );
+
+    height += Math.max(inPortHeight, outPortHeight);
 
     if (!this.collapsed && portCount > 0) {
       height += 2 * this.#padding;
