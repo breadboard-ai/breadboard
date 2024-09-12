@@ -4,7 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
+import {
+  LitElement,
+  html,
+  css,
+  nothing,
+  HTMLTemplateResult,
+  PropertyValues,
+} from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { EdgeValueConfiguration } from "../../types/types.js";
 import { Overlay } from "./overlay.js";
@@ -25,7 +32,15 @@ export class EdgeValueOverlay extends LitElement {
   @property()
   edgeValue: EdgeValueConfiguration | null = null;
 
+  @property({ reflect: true })
+  maximized = false;
+
   #overlayRef: Ref<Overlay> = createRef();
+
+  #minimizedX = 0;
+  #minimizedY = 0;
+  #left: number | null = null;
+  #top: number | null = null;
 
   static styles = css`
     * {
@@ -35,6 +50,7 @@ export class EdgeValueOverlay extends LitElement {
     :host {
       display: block;
       position: fixed;
+      z-index: 20;
     }
 
     h1 {
@@ -47,6 +63,8 @@ export class EdgeValueOverlay extends LitElement {
       margin: 0;
       text-align: left;
       border-bottom: 1px solid var(--bb-neutral-300);
+      user-select: none;
+      cursor: pointer;
     }
 
     h1::before {
@@ -60,9 +78,24 @@ export class EdgeValueOverlay extends LitElement {
     }
 
     #content {
-      width: 400px;
-      max-height: 400px;
+      width: 100%;
+      max-height: none;
+      flex: 1;
       overflow-y: auto;
+    }
+
+    #wrapper {
+      min-width: 300px;
+      width: 400px;
+      display: flex;
+      flex-direction: column;
+      resize: both;
+      overflow: auto;
+    }
+
+    :host([maximized="true"]) #wrapper {
+      width: 100% !important;
+      flex: 1;
     }
 
     #container {
@@ -143,9 +176,66 @@ export class EdgeValueOverlay extends LitElement {
         y = OVERLAY_CLEARANCE;
       }
 
+      this.#minimizedX = Math.round(x);
+      this.#minimizedY = Math.round(y);
+
+      this.#updateOverlayContentPositionAndSize();
+
+      // Once we've calculated the minimized size we can now recall the user's
+      // preferred max/min and use that.
+      this.maximized =
+        globalThis.sessionStorage.getItem("bb-node-configurator-maximized") ===
+        "true";
+
       this.#overlayRef.value.style.setProperty("--x", `${Math.round(x)}px`);
       this.#overlayRef.value.style.setProperty("--y", `${Math.round(y)}px`);
     });
+  }
+
+  protected updated(changedProperties: PropertyValues): void {
+    if (!changedProperties.has("maximized")) {
+      return;
+    }
+
+    this.#updateOverlayContentPositionAndSize();
+  }
+
+  #updateOverlayContentPositionAndSize() {
+    if (!this.#overlayRef.value) {
+      return;
+    }
+
+    if (this.maximized) {
+      this.#overlayRef.value.style.setProperty(
+        "--left",
+        `${OVERLAY_CLEARANCE}px`
+      );
+      this.#overlayRef.value.style.setProperty(
+        "--top",
+        `${OVERLAY_CLEARANCE}px`
+      );
+      this.#overlayRef.value.style.setProperty(
+        "--right",
+        `${OVERLAY_CLEARANCE}px`
+      );
+      this.#overlayRef.value.style.setProperty(
+        "--bottom",
+        `${OVERLAY_CLEARANCE}px`
+      );
+    } else {
+      let left = this.#minimizedX;
+      let top = this.#minimizedY;
+
+      if (this.#left !== null && this.#top !== null) {
+        left = this.#left;
+        top = this.#top;
+      }
+
+      this.#overlayRef.value.style.setProperty("--left", `${left}px`);
+      this.#overlayRef.value.style.setProperty("--top", `${top}px`);
+      this.#overlayRef.value.style.setProperty("--right", "auto");
+      this.#overlayRef.value.style.setProperty("--bottom", "auto");
+    }
   }
 
   render() {
@@ -155,70 +245,130 @@ export class EdgeValueOverlay extends LitElement {
 
     console.log("💖 edge value schema", this.edgeValue.schema);
 
+    const contentLocationStart = { x: 0, y: 0 };
+    const dragStart = { x: 0, y: 0 };
+    const dragDelta = { x: 0, y: 0 };
+    let dragging = false;
+
     return html`<bb-overlay ${ref(this.#overlayRef)} inline>
-      <h1>Value Inspector</h1>
-      <div id="content">
-        <div id="container">
-          ${map(this.edgeValue.value, (edgeValue) => {
-            let value: HTMLTemplateResult | symbol = nothing;
-            if (typeof edgeValue === "object") {
-              if (isLLMContentArray(edgeValue)) {
-                value = html`<bb-llm-output-array
-                  .values=${edgeValue}
-                ></bb-llm-output-array>`;
-              } else if (isLLMContent(edgeValue)) {
-                if (!edgeValue.parts) {
-                  // Special case for "$metadata" item.
-                  // See https://github.com/breadboard-ai/breadboard/issues/1673
-                  // TODO: Make this not ugly.
-                  const data = (edgeValue as unknown as { data: unknown }).data;
-                  value = html`<bb-json-tree .json=${data}></bb-json-tree>`;
+      <div id="wrapper">
+        <h1
+          @pointerdown=${(evt: PointerEvent) => {
+            if (this.maximized) {
+              return;
+            }
+
+            if (!(evt.target instanceof HTMLElement)) {
+              return;
+            }
+
+            const bounds = this.#overlayRef.value?.contentBounds;
+            if (!bounds) {
+              return;
+            }
+
+            contentLocationStart.x = bounds.left;
+            contentLocationStart.y = bounds.top;
+
+            dragStart.x = evt.clientX;
+            dragStart.y = evt.clientY;
+            dragging = true;
+
+            evt.target.setPointerCapture(evt.pointerId);
+          }}
+          @pointermove=${(evt: PointerEvent) => {
+            if (!dragging) {
+              return;
+            }
+
+            dragDelta.x = evt.clientX - dragStart.x;
+            dragDelta.y = evt.clientY - dragStart.y;
+
+            this.#left = contentLocationStart.x + dragDelta.x;
+            this.#top = contentLocationStart.y + dragDelta.y;
+
+            this.#updateOverlayContentPositionAndSize();
+          }}
+          @pointerup=${() => {
+            dragging = false;
+          }}
+          @dblclick=${() => {
+            this.maximized = !this.maximized;
+
+            globalThis.sessionStorage.setItem(
+              "bb-node-configurator-maximized",
+              this.maximized.toString()
+            );
+          }}
+        >
+          Value Inspector
+        </h1>
+        <div id="content">
+          <div id="container">
+            ${map(this.edgeValue.value, (edgeValue) => {
+              let value: HTMLTemplateResult | symbol = nothing;
+              if (typeof edgeValue === "object") {
+                if (isLLMContentArray(edgeValue)) {
+                  value = html`<bb-llm-output-array
+                    .values=${edgeValue}
+                  ></bb-llm-output-array>`;
+                } else if (isLLMContent(edgeValue)) {
+                  if (!edgeValue.parts) {
+                    // Special case for "$metadata" item.
+                    // See https://github.com/breadboard-ai/breadboard/issues/1673
+                    // TODO: Make this not ugly.
+                    const data = (edgeValue as unknown as { data: unknown })
+                      .data;
+                    value = html`<bb-json-tree .json=${data}></bb-json-tree>`;
+                  }
+
+                  if (!edgeValue.parts.length) {
+                    value = html`No data provided`;
+                  }
+
+                  value = edgeValue.parts.length
+                    ? html`<bb-llm-output .value=${edgeValue}></bb-llm-output>`
+                    : html`No data provided`;
+                } else if (isImageURL(edgeValue)) {
+                  value = html`<img src=${edgeValue.image_url} />`;
+                } else {
+                  value = html`<bb-json-tree
+                    .json=${edgeValue}
+                  ></bb-json-tree>`;
+                }
+              } else {
+                let renderableValue: HTMLTemplateResult | symbol = nothing;
+                if (typeof edgeValue === "string") {
+                  renderableValue = html`${markdown(edgeValue)}`;
+                } else {
+                  renderableValue = html`${edgeValue !== undefined
+                    ? edgeValue
+                    : "No value provided"}`;
                 }
 
-                if (!edgeValue.parts.length) {
-                  value = html`No data provided`;
-                }
-
-                value = edgeValue.parts.length
-                  ? html`<bb-llm-output .value=${edgeValue}></bb-llm-output>`
-                  : html`No data provided`;
-              } else if (isImageURL(edgeValue)) {
-                value = html`<img src=${edgeValue.image_url} />`;
-              } else {
-                value = html`<bb-json-tree .json=${edgeValue}></bb-json-tree>`;
-              }
-            } else {
-              let renderableValue: HTMLTemplateResult | symbol = nothing;
-              if (typeof edgeValue === "string") {
-                renderableValue = html`${markdown(edgeValue)}`;
-              } else {
-                renderableValue = html`${edgeValue !== undefined
-                  ? edgeValue
-                  : "No value provided"}`;
-              }
-
-              // prettier-ignore
-              value = html`<div
+                // prettier-ignore
+                value = html`<div
                 class=${classMap({
                   markdown: typeof edgeValue === 'string',
                   value: true,
                 })}
               >${renderableValue}</div>`;
-            }
+              }
 
-            return html`<div>${value}</div>`;
-          })}
+              return html`<div>${value}</div>`;
+            })}
+          </div>
         </div>
-      </div>
-      <div id="buttons">
-        <button
-          id="close"
-          @click=${() => {
-            this.dispatchEvent(new OverlayDismissedEvent());
-          }}
-        >
-          Close
-        </button>
+        <div id="buttons">
+          <button
+            id="close"
+            @click=${() => {
+              this.dispatchEvent(new OverlayDismissedEvent());
+            }}
+          >
+            Close
+          </button>
+        </div>
       </div>
     </bb-overlay>`;
   }

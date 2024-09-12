@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, nothing } from "lit";
+import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import {
   NodePortConfiguration,
@@ -40,9 +40,17 @@ export class NodeConfigurationOverlay extends LitElement {
   @property()
   showTypes = false;
 
+  @property({ reflect: true })
+  maximized = false;
+
   #overlayRef: Ref<Overlay> = createRef();
   #userInputRef: Ref<UserInput> = createRef();
   #pendingSave = false;
+
+  #minimizedX = 0;
+  #minimizedY = 0;
+  #left: number | null = null;
+  #top: number | null = null;
 
   static styles = css`
     * {
@@ -52,6 +60,7 @@ export class NodeConfigurationOverlay extends LitElement {
     :host {
       display: block;
       position: fixed;
+      z-index: 20;
     }
 
     h1 {
@@ -64,6 +73,8 @@ export class NodeConfigurationOverlay extends LitElement {
       margin: 0;
       text-align: left;
       border-bottom: 1px solid var(--bb-neutral-300);
+      user-select: none;
+      cursor: pointer;
     }
 
     h1::before {
@@ -77,9 +88,24 @@ export class NodeConfigurationOverlay extends LitElement {
     }
 
     #content {
-      width: 400px;
-      max-height: 400px;
+      width: 100%;
+      max-height: none;
+      flex: 1;
       overflow-y: auto;
+    }
+
+    #wrapper {
+      min-width: 300px;
+      width: 400px;
+      display: flex;
+      flex-direction: column;
+      resize: both;
+      overflow: auto;
+    }
+
+    :host([maximized="true"]) #wrapper {
+      width: 100% !important;
+      flex: 1;
     }
 
     #container {
@@ -160,9 +186,63 @@ export class NodeConfigurationOverlay extends LitElement {
         y = OVERLAY_CLEARANCE;
       }
 
-      this.#overlayRef.value.style.setProperty("--x", `${Math.round(x)}px`);
-      this.#overlayRef.value.style.setProperty("--y", `${Math.round(y)}px`);
+      this.#minimizedX = Math.round(x);
+      this.#minimizedY = Math.round(y);
+
+      this.#updateOverlayContentPositionAndSize();
+
+      // Once we've calculated the minimized size we can now recall the user's
+      // preferred max/min and use that.
+      this.maximized =
+        globalThis.sessionStorage.getItem("bb-node-configurator-maximized") ===
+        "true";
     });
+  }
+
+  protected updated(changedProperties: PropertyValues): void {
+    if (!changedProperties.has("maximized")) {
+      return;
+    }
+
+    this.#updateOverlayContentPositionAndSize();
+  }
+
+  #updateOverlayContentPositionAndSize() {
+    if (!this.#overlayRef.value) {
+      return;
+    }
+
+    if (this.maximized) {
+      this.#overlayRef.value.style.setProperty(
+        "--left",
+        `${OVERLAY_CLEARANCE}px`
+      );
+      this.#overlayRef.value.style.setProperty(
+        "--top",
+        `${OVERLAY_CLEARANCE}px`
+      );
+      this.#overlayRef.value.style.setProperty(
+        "--right",
+        `${OVERLAY_CLEARANCE}px`
+      );
+      this.#overlayRef.value.style.setProperty(
+        "--bottom",
+        `${OVERLAY_CLEARANCE}px`
+      );
+    } else {
+      let left = this.#minimizedX;
+      let top = this.#minimizedY;
+
+      if (this.#left !== null && this.#top !== null) {
+        left = this.#left;
+        top = this.#top;
+      }
+
+      this.#overlayRef.value.style.setProperty("--left", `${left}px`);
+      this.#overlayRef.value.style.setProperty("--top", `${top}px`);
+      this.#overlayRef.value.style.setProperty("--right", "auto");
+      this.#overlayRef.value.style.setProperty("--bottom", "auto");
+    }
   }
 
   render() {
@@ -211,6 +291,11 @@ export class NodeConfigurationOverlay extends LitElement {
       this.dispatchEvent(new NodePartialUpdateEvent(id, subGraphId, outputs));
     };
 
+    const contentLocationStart = { x: 0, y: 0 };
+    const dragStart = { x: 0, y: 0 };
+    const dragDelta = { x: 0, y: 0 };
+    let dragging = false;
+
     return html`<bb-overlay
       @bboverlaydismissed=${(evt: Event) => {
         if (!this.#pendingSave) {
@@ -226,52 +311,104 @@ export class NodeConfigurationOverlay extends LitElement {
       ${ref(this.#overlayRef)}
       inline
     >
-      <h1>Configure ${this.configuration.port.title}</h1>
-      <div id="content">
-        <div id="container">
-          <bb-user-input
-            ${ref(this.#userInputRef)}
-            @input=${() => {
-              this.#pendingSave = true;
+      <div id="wrapper">
+        <h1
+          @pointerdown=${(evt: PointerEvent) => {
+            if (this.maximized) {
+              return;
+            }
+
+            if (!(evt.target instanceof HTMLElement)) {
+              return;
+            }
+
+            const bounds = this.#overlayRef.value?.contentBounds;
+            if (!bounds) {
+              return;
+            }
+
+            contentLocationStart.x = bounds.left;
+            contentLocationStart.y = bounds.top;
+
+            dragStart.x = evt.clientX;
+            dragStart.y = evt.clientY;
+            dragging = true;
+
+            evt.target.setPointerCapture(evt.pointerId);
+          }}
+          @pointermove=${(evt: PointerEvent) => {
+            if (!dragging) {
+              return;
+            }
+
+            dragDelta.x = evt.clientX - dragStart.x;
+            dragDelta.y = evt.clientY - dragStart.y;
+
+            this.#left = contentLocationStart.x + dragDelta.x;
+            this.#top = contentLocationStart.y + dragDelta.y;
+
+            this.#updateOverlayContentPositionAndSize();
+          }}
+          @pointerup=${() => {
+            dragging = false;
+          }}
+          @dblclick=${() => {
+            this.maximized = !this.maximized;
+
+            globalThis.sessionStorage.setItem(
+              "bb-node-configurator-maximized",
+              this.maximized.toString()
+            );
+          }}
+        >
+          Configure ${this.configuration.port.title}
+        </h1>
+        <div id="content">
+          <div id="container">
+            <bb-user-input
+              ${ref(this.#userInputRef)}
+              @input=${() => {
+                this.#pendingSave = true;
+              }}
+              @keydown=${(evt: KeyboardEvent) => {
+                const isMac = navigator.platform.indexOf("Mac") === 0;
+                const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+                if (!(evt.key === "Enter" && isCtrlCommand)) {
+                  return;
+                }
+
+                updateValues();
+              }}
+              .inputs=${inputs}
+              .graph=${this.graph}
+              .subGraphId=${this.configuration.subGraphId}
+              .providers=${this.providers}
+              .providerOps=${this.providerOps}
+              .showTypes=${this.showTypes}
+              .showTitleInfo=${false}
+              .inlineControls=${true}
+            ></bb-user-input>
+          </div>
+        </div>
+        <div id="buttons">
+          <button
+            id="cancel"
+            @click=${() => {
+              this.dispatchEvent(new OverlayDismissedEvent());
             }}
-            @keydown=${(evt: KeyboardEvent) => {
-              const isMac = navigator.platform.indexOf("Mac") === 0;
-              const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
-
-              if (!(evt.key === "Enter" && isCtrlCommand)) {
-                return;
-              }
-
+          >
+            Cancel
+          </button>
+          <button
+            id="update"
+            @click=${() => {
               updateValues();
             }}
-            .inputs=${inputs}
-            .graph=${this.graph}
-            .subGraphId=${this.configuration.subGraphId}
-            .providers=${this.providers}
-            .providerOps=${this.providerOps}
-            .showTypes=${this.showTypes}
-            .showTitleInfo=${false}
-            .inlineControls=${true}
-          ></bb-user-input>
+          >
+            Update
+          </button>
         </div>
-      </div>
-      <div id="buttons">
-        <button
-          id="cancel"
-          @click=${() => {
-            this.dispatchEvent(new OverlayDismissedEvent());
-          }}
-        >
-          Cancel
-        </button>
-        <button
-          id="update"
-          @click=${() => {
-            updateValues();
-          }}
-        >
-          Update
-        </button>
       </div>
     </bb-overlay>`;
   }
