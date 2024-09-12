@@ -13,7 +13,6 @@ import worker from "./boards/worker.js";
 import human from "./boards/human.js";
 import repeater from "./boards/repeater.js";
 import structuredWorker from "./boards/structured-worker.js";
-import toolWorker from "./boards/tool-worker.js";
 import { writeFile } from "fs/promises";
 import specialist from "./boards/specialist.js";
 import looper from "./boards/looper.js";
@@ -38,7 +37,6 @@ const manifest: KitManifest = {
     repeater: serialize(repeater),
     structuredWorker: serialize(structuredWorker),
     specialist,
-    toolWorker,
     worker: serialize(worker),
     looper: serialize(looper),
     joiner: serialize(joiner),
