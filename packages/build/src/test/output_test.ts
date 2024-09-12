@@ -343,9 +343,10 @@ test("deprecated output port", () => {
         configuration: {
           schema: {
             type: "object",
-            properties: { bar: { type: "string" } },
+            properties: {
+              bar: { type: "string", behavior: ["deprecated"] },
+            },
             required: ["bar"],
-            behavior: ["deprecated"],
           },
         },
       },
