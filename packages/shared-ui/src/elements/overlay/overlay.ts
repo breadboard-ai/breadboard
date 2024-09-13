@@ -96,22 +96,13 @@ export class Overlay extends LitElement {
     this.dispatchEvent(new OverlayDismissedEvent());
   }
 
-  get contentBounds() {
+  get contentBounds(): DOMRect {
     if (!this.#contentRef.value) {
-      return 0;
+      return new DOMRect(0, 0, 0, 0);
     }
 
     const bounds = this.#contentRef.value.getBoundingClientRect();
     return bounds;
-  }
-
-  get contentHeight() {
-    if (!this.#contentRef.value) {
-      return 0;
-    }
-
-    const bounds = this.#contentRef.value.getBoundingClientRect();
-    return bounds.height;
   }
 
   render() {

@@ -18,15 +18,14 @@ import {
   NodePartialUpdateEvent,
   OverlayDismissedEvent,
 } from "../../events/events.js";
+import { EditorMode, filterConfigByMode } from "../../utils/mode.js";
 
-/** To be kept in line with the CSS values below. */
-const MAX_WIDTH = 400;
-const OVERLAY_CLEARANCE = 40;
+const OVERLAY_CLEARANCE = 60;
 
 @customElement("bb-node-configuration-overlay")
 export class NodeConfigurationOverlay extends LitElement {
   @property()
-  configuration: NodePortConfiguration | null = null;
+  value: NodePortConfiguration | null = null;
 
   @property()
   graph: GraphDescriptor | null = null;
@@ -96,9 +95,9 @@ export class NodeConfigurationOverlay extends LitElement {
 
     #wrapper {
       min-width: 300px;
-      width: 400px;
+      width: max(40vw, 450px);
       min-height: 250px;
-      height: 350px;
+      height: max(50vh, 450px);
       display: flex;
       flex-direction: column;
       resize: both;
@@ -167,21 +166,21 @@ export class NodeConfigurationOverlay extends LitElement {
 
   protected firstUpdated(): void {
     requestAnimationFrame(() => {
-      if (!this.#overlayRef.value || !this.configuration) {
+      if (!this.#overlayRef.value || !this.value) {
         return;
       }
 
-      const { contentHeight } = this.#overlayRef.value;
-      let { x, y } = this.configuration;
+      const { contentBounds } = this.#overlayRef.value;
+      let { x, y } = this.value;
       x += OVERLAY_CLEARANCE;
-      y -= contentHeight / 2;
+      y -= contentBounds.height / 2;
 
-      if (x + MAX_WIDTH > window.innerWidth) {
-        x = window.innerWidth - MAX_WIDTH - OVERLAY_CLEARANCE;
+      if (x + contentBounds.width > window.innerWidth) {
+        x = window.innerWidth - contentBounds.width - OVERLAY_CLEARANCE;
       }
 
-      if (y + contentHeight > window.innerHeight) {
-        y = window.innerHeight - contentHeight - OVERLAY_CLEARANCE;
+      if (y + contentBounds.height > window.innerHeight) {
+        y = window.innerHeight - contentBounds.height - OVERLAY_CLEARANCE;
       }
 
       if (y < 0) {
@@ -250,11 +249,7 @@ export class NodeConfigurationOverlay extends LitElement {
   processData() {
     this.#pendingSave = false;
 
-    if (
-      !this.#userInputRef.value ||
-      !this.configuration ||
-      !this.configuration.port
-    ) {
+    if (!this.#userInputRef.value || !this.value || !this.value.ports) {
       return;
     }
 
@@ -263,25 +258,34 @@ export class NodeConfigurationOverlay extends LitElement {
       return;
     }
 
-    // The user has deleted the value, so here we will place an explicit
-    // undefined value on the object so that the item is removed from the
-    // configuration.
-    if (Object.keys(outputs).length === 0) {
-      outputs[this.configuration.port.name] = undefined;
+    // Ensure that all expected values are set. If they are not set in the
+    // outputs we assume that the user wants to remove the value.
+    const { inputs } = filterConfigByMode(this.value.ports, EditorMode.MINIMAL);
+    for (const expectedInput of inputs.ports) {
+      if (!outputs[expectedInput.name]) {
+        outputs[expectedInput.name] = undefined;
+      }
     }
 
-    const { id, subGraphId } = this.configuration;
+    const { id, subGraphId } = this.value;
     this.dispatchEvent(new NodePartialUpdateEvent(id, subGraphId, outputs));
   }
 
   render() {
-    if (!this.configuration || !this.configuration.port) {
+    if (!this.value || !this.value.ports) {
       return nothing;
     }
 
-    const { port } = this.configuration;
-    const inputs: UserInputConfiguration[] = [
-      {
+    const { inputs } = filterConfigByMode(this.value.ports, EditorMode.MINIMAL);
+    const ports = [...inputs.ports].sort((portA, portB) => {
+      const isSchema =
+        portA.name === "schema" ||
+        portA.schema.behavior?.includes("ports-spec");
+      return isSchema ? -1 : portA.name > portB.name ? 1 : -1;
+    });
+
+    const userInputs: UserInputConfiguration[] = ports.map((port) => {
+      return {
         name: port.name,
         title: port.title,
         secret: false,
@@ -290,8 +294,8 @@ export class NodeConfigurationOverlay extends LitElement {
         schema: port.edges.length === 0 ? port.schema : undefined,
         status: port.status,
         type: port.schema.type,
-      },
-    ];
+      };
+    });
 
     const contentLocationStart = { x: 0, y: 0 };
     const dragStart = { x: 0, y: 0 };
@@ -363,7 +367,7 @@ export class NodeConfigurationOverlay extends LitElement {
             );
           }}
         >
-          Configure ${this.configuration.port.title}
+          Configure ${this.value.title}
         </h1>
         <div id="content">
           <div id="container">
@@ -382,14 +386,15 @@ export class NodeConfigurationOverlay extends LitElement {
 
                 this.processData();
               }}
-              .inputs=${inputs}
+              .inputs=${userInputs}
               .graph=${this.graph}
-              .subGraphId=${this.configuration.subGraphId}
+              .subGraphId=${this.value.subGraphId}
               .providers=${this.providers}
               .providerOps=${this.providerOps}
               .showTypes=${this.showTypes}
-              .showTitleInfo=${false}
+              .showTitleInfo=${true}
               .inlineControls=${true}
+              .jumpTo=${this.value.selectedPort}
             ></bb-user-input>
           </div>
         </div>
