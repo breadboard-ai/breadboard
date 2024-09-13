@@ -158,16 +158,22 @@ export class EdgeValueOverlay extends LitElement {
       }
 
       const { contentBounds } = this.#overlayRef.value;
+
+      // We scale up by 1/0.9 because the overlay has an initial scaling down
+      // factor of 0.9 for its animation which we need to correct for.
+      const width = contentBounds.width / 0.9;
+      const height = contentBounds.height / 0.9;
+
       let { x, y } = this.edgeValue;
       x += OVERLAY_CLEARANCE;
-      y -= contentBounds.height / 2;
+      y -= height / 2;
 
-      if (x + contentBounds.width > window.innerWidth) {
-        x = window.innerWidth - contentBounds.width - OVERLAY_CLEARANCE;
+      if (x + width > window.innerWidth) {
+        x = window.innerWidth - width - OVERLAY_CLEARANCE;
       }
 
-      if (y + contentBounds.height > window.innerHeight) {
-        y = window.innerHeight - contentBounds.height - OVERLAY_CLEARANCE;
+      if (y + height > window.innerHeight) {
+        y = window.innerHeight - height - OVERLAY_CLEARANCE;
       }
 
       if (y < 0) {
