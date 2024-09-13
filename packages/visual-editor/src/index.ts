@@ -285,8 +285,6 @@ export class Main extends LitElement {
               "Auto Save Boards"
             ) ?? { value: false };
 
-            console.log(shouldAutoSave.value);
-
             if (!shouldAutoSave.value) {
               if (this.tab) {
                 this.#tabSaveStatus.set(
