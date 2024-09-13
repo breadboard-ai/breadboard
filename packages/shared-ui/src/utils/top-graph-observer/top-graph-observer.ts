@@ -57,6 +57,7 @@ export class TopGraphObserver {
   #currentResult: TopGraphRunResult | null = null;
   #currentNode: NodeLogEntry | null = null;
   #edgeValues = new EdgeValueStore();
+  #nodeActivities = new Map<string, ComponentActivityItem[]>();
   /**
    * Need to keep track of input separately, because
    * bubbled inputs appear as coming from inside of the
@@ -155,6 +156,7 @@ export class TopGraphObserver {
         log: this.#log,
         currentNode: this.#currentNode,
         edgeValues: this.#edgeValues,
+        nodeActivities: this.#nodeActivities,
         graph: this.#graph,
       };
     }
@@ -198,6 +200,7 @@ export class TopGraphObserver {
           description: item?.description || "Graph started",
           path: event.data.path,
         });
+        this.#nodeActivities.set(node.id, node.activity);
         this.#currentResult = null;
       }
       return;
@@ -240,6 +243,7 @@ export class TopGraphObserver {
           path: event.data.path,
           description: event.data.node.metadata?.title || event.data.node.id,
         });
+        this.#nodeActivities.set(node.id, node.activity);
         this.#currentResult = null;
       }
       return;
@@ -358,6 +362,9 @@ export class TopGraphObserver {
         description: formatError(event.data.error),
         path: this.#errorPath || [],
       });
+      if (lastNode) {
+        this.#nodeActivities.set(lastNode.id, lastNode.activity);
+      }
     }
     this.#currentNode = null;
     this.#log = [

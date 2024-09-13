@@ -16,6 +16,7 @@ import {
   ErrorResponse,
   InspectablePort,
   GraphDescriptor,
+  NodeIdentifier,
 } from "@google-labs/breadboard";
 
 export const enum HistoryEventType {
@@ -245,6 +246,13 @@ export type TopGraphRunResult = {
    */
   edgeValues: TopGraphEdgeValues;
   /**
+   * Returns all current node activities within a graph. Think of this as a
+   * map of node to an array of activities. Each activity is a record of what
+   * happened within the node. The most recent activity is the last item
+   * in the array.
+   */
+  nodeActivities: TopGraphNodeActivities;
+  /**
    * Returns the GraphDescriptor of the current graph.
    * Or null if the TopGraphObserver doesn't know what it is yet.
    * The latter can happen when the graph hasn't run yet.
@@ -259,6 +267,10 @@ export type ComparableEdge = {
 export type TopGraphEdgeValues = {
   get(edge: InspectableEdge): NodeValue[] | undefined;
   current: ComparableEdge | null;
+};
+
+export type TopGraphNodeActivities = {
+  get(node: NodeIdentifier): ComponentActivityItem[] | undefined;
 };
 
 export type ComponentWithActivity = {
