@@ -48,7 +48,7 @@ export class GraphPortLabel extends PIXI.Container {
   #showNodePreviewValues = false;
   #isConfigurable = false;
 
-  constructor(port: InspectablePort) {
+  constructor(port: InspectablePort, showNodePreviewValues: boolean) {
     super();
 
     this.#label = new PIXI.Text({
@@ -62,7 +62,7 @@ export class GraphPortLabel extends PIXI.Container {
     });
 
     this.#valuePreview = new PIXI.HTMLText({
-      text: "(unset)",
+      text: this.#createTruncatedValue(port),
       style: {
         fontFamily: "Arial",
         fontSize: this.#previewTextSize,
@@ -89,7 +89,9 @@ export class GraphPortLabel extends PIXI.Container {
 
     this.#hoverZone.visible = false;
     this.#valuePreview.visible = false;
+    this.showNodePreviewValues = showNodePreviewValues;
     this.port = port;
+    this.#calculateDimensions();
 
     this.onRender = () => {
       if (!this.#isDirty) {
@@ -191,11 +193,16 @@ export class GraphPortLabel extends PIXI.Container {
     return this.#isConfigurable;
   }
 
+  get showNodePreviewValues() {
+    return this.#showNodePreviewValues;
+  }
+
   set showNodePreviewValues(showNodePreviewValues: boolean) {
     if (showNodePreviewValues === this.#showNodePreviewValues) {
       return;
     }
 
+    this.#calculateDimensions();
     this.#showNodePreviewValues = showNodePreviewValues;
     this.#isDirty = true;
   }

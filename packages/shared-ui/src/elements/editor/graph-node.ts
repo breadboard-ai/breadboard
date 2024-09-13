@@ -505,7 +505,7 @@ export class GraphNode extends PIXI.Container {
     for (const port of ports) {
       let portItem = this.#inPortsData.get(port.name);
       if (!portItem) {
-        const label = new GraphNodePortLabel(port);
+        const label = new GraphNodePortLabel(port, this.#showNodePreviewValues);
         label.on(
           GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
           (...args: unknown[]) => {
