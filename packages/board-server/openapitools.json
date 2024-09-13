@@ -1,0 +1,63 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenAPITools/openapi-generator-cli/master/apps/generator-cli/src/config.schema.json",
+  "generator-cli": {
+    "generators": {
+      "/clients/java": {
+        "generatorName": "java",
+        "inputSpec": "openapi.yaml",
+        "output": "./generated/clients/java"
+      },
+      "/clients/kotlin": {
+        "generatorName": "kotlin",
+        "inputSpec": "openapi.yaml",
+        "output": "./generated/clients/kotlin"
+      },
+      "/clients/typescript": {
+        "additionalProperties": {
+          "npmName": "board-server-client",
+          "supportsES6": "true",
+          "withInterfaces": true
+        },
+        "generatorName": "typescript",
+        "inputSpec": "openapi.yaml",
+        "output": "./generated/clients/typescript"
+      },
+      "/clients/typescript-fetch": {
+        "additionalProperties": {
+          "npmName": "board-server-client",
+          "supportsES6": true,
+          "withInterfaces": true
+        },
+        "generatorName": "typescript-fetch",
+        "inputSpec": "openapi.yaml",
+        "output": "./generated/clients/typescript-fetch"
+      },
+      "/clients/typescript-node": {
+        "additionalProperties": {
+          "npmName": "board-server-client",
+          "supportsES6": true,
+          "withInterfaces": true
+        },
+        "generatorName": "typescript-node",
+        "inputSpec": "openapi.yaml",
+        "output": "./generated/clients/typescript-node"
+      },
+      "/documentation/openapi-json": {
+        "generatorName": "openapi",
+        "inputSpec": "openapi.yaml",
+        "output": "./generated/documentation/openapi-json"
+      },
+      "/documentation/openapi-yaml": {
+        "generatorName": "openapi-yaml",
+        "inputSpec": "openapi.yaml",
+        "output": "./generated/documentation/openapi-yaml"
+      },
+      "/schemas/protobuf": {
+        "generatorName": "protobuf-schema",
+        "inputSpec": "openapi.yaml",
+        "output": "./generated/schemas/protobuf"
+      }
+    },
+    "version": "7.8.0"
+  }
+}
