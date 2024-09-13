@@ -512,7 +512,6 @@ export class Editor extends LitElement {
   #ignoreNextUpdate = false;
   protected shouldUpdate(): boolean {
     if (this.#ignoreNextUpdate) {
-      console.log("Ignoring...");
       this.#ignoreNextUpdate = false;
       return false;
     }

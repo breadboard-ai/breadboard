@@ -159,6 +159,10 @@ export class Main extends LitElement {
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #boardId = 0;
   #boardPendingSave = false;
+  #tabSaveId = new Map<
+    TabId,
+    ReturnType<typeof globalThis.crypto.randomUUID>
+  >();
   #tabSaveStatus = new Map<TabId, BreadboardUI.Types.BOARD_SAVE_STATUS>();
   #tabBoardStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
   #tabLoadStatus = new Map<TabId, BreadboardUI.Types.BOARD_LOAD_STATUS>();
@@ -269,7 +273,7 @@ export class Main extends LitElement {
       .then((runtime) => {
         this.#runtime = runtime;
 
-        let autoSaveTimeout: ReturnType<typeof globalThis.setTimeout>;
+        // let autoSaveTimeout: ReturnType<typeof globalThis.setTimeout>;
         this.#runtime.edit.addEventListener(
           Runtime.Events.RuntimeBoardEditEvent.eventName,
           () => {
@@ -277,10 +281,16 @@ export class Main extends LitElement {
             this.showNodeConfigurator = false;
             this.requestUpdate();
 
-            clearTimeout(autoSaveTimeout);
-            autoSaveTimeout = setTimeout(async () => {
-              await this.#attemptBoardSave("Saving board", false, false);
-            }, BOARD_AUTO_SAVE_TIMEOUT);
+            // const tabToSave = this.tab;
+            // clearTimeout(autoSaveTimeout);
+            // autoSaveTimeout = setTimeout(async () => {
+            this.#attemptBoardSave(
+              "Saving board",
+              false,
+              false,
+              BOARD_AUTO_SAVE_TIMEOUT
+            );
+            // });
           }
         );
 
@@ -693,13 +703,36 @@ export class Main extends LitElement {
   async #attemptBoardSave(
     message = "Board saved",
     ackUser = true,
-    showSaveAsIfNeeded = true
+    showSaveAsIfNeeded = true,
+    timeout = 0
   ) {
     if (!this.tab) {
       return;
     }
 
-    const saveStatus = this.#tabSaveStatus.get(this.tab.id);
+    const tabToSave = this.tab;
+
+    if (timeout !== 0) {
+      const saveId = globalThis.crypto.randomUUID();
+      this.#tabSaveId.set(tabToSave.id, saveId);
+      await new Promise((r) => setTimeout(r, timeout));
+
+      // Check the tab still exists.
+      if (!this.#runtime.board.tabs.has(tabToSave.id)) {
+        return;
+      }
+
+      // If the stored save ID has changed then the user has made a newer change
+      // and there is another save pending; therefore, ignore this request.
+      const storedSaveId = this.#tabSaveId.get(tabToSave.id);
+      if (!storedSaveId || storedSaveId !== saveId) {
+        return;
+      }
+
+      this.#tabSaveId.delete(tabToSave.id);
+    }
+
+    const saveStatus = this.#tabSaveStatus.get(tabToSave.id);
     if (
       saveStatus &&
       saveStatus === BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING
@@ -707,7 +740,7 @@ export class Main extends LitElement {
       return;
     }
 
-    if (!this.#runtime.board.canSave(this.tab.id)) {
+    if (!this.#runtime.board.canSave(tabToSave.id)) {
       if (showSaveAsIfNeeded) {
         this.showSaveAsDialog = true;
       }
@@ -724,23 +757,23 @@ export class Main extends LitElement {
     }
 
     this.#tabSaveStatus.set(
-      this.tab.id,
+      tabToSave.id,
       BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING
     );
     this.requestUpdate();
 
     try {
-      const { result } = await this.#runtime.board.save(this.tab.id);
+      const { result } = await this.#runtime.board.save(tabToSave.id);
 
       this.#tabSaveStatus.set(
-        this.tab.id,
+        tabToSave.id,
         BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED
       );
       this.requestUpdate();
 
       if (!result) {
         this.#tabSaveStatus.set(
-          this.tab.id,
+          tabToSave.id,
           BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR
         );
         this.requestUpdate();
@@ -758,7 +791,7 @@ export class Main extends LitElement {
       }
     } catch (err) {
       this.#tabSaveStatus.set(
-        this.tab.id,
+        tabToSave.id,
         BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR
       );
       this.requestUpdate();
@@ -1312,124 +1345,131 @@ export class Main extends LitElement {
         }
 
         const inputsFromLastRun = runs[1]?.inputs() ?? null;
-        return html`<div id="header-bar" ?inert=${showingOverlay}>
-        <button
-          id="show-nav"
-          @click=${() => {
-            this.showNav = !this.showNav;
-            window.addEventListener(
-              "pointerdown",
-              () => {
-                this.showNav = false;
-              },
-              { once: true }
-            );
-          }}
-        ></button>
-        <div id="tab-container">
-          ${map(this.#runtime?.board.tabs ?? [], ([id, tab]) => {
-            let subGraphTitle: string | undefined | null = null;
-            if (tab.graph && tab.graph.graphs && tab.subGraphId) {
-              subGraphTitle =
-                tab.graph.graphs[tab.subGraphId].title || "Untitled Subgraph";
-            }
-
-            const saveStatus = this.#tabSaveStatus.get(id) ?? "saved";
-            const remote = tab.graph.url?.startsWith("http") ?? false;
-            let saveTitle = "Saved";
-            switch (saveStatus) {
-              case BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING: {
-                saveTitle = "Saving";
-                break;
+        return html`<header>
+          <div id="header-bar" ?inert=${showingOverlay}>
+          <button
+            id="show-nav"
+            @click=${() => {
+              this.showNav = !this.showNav;
+              window.addEventListener(
+                "pointerdown",
+                () => {
+                  this.showNav = false;
+                },
+                { once: true }
+              );
+            }}
+          ></button>
+          <div id="tab-container">
+            ${map(this.#runtime?.board.tabs ?? [], ([id, tab]) => {
+              let subGraphTitle: string | undefined | null = null;
+              if (tab.graph && tab.graph.graphs && tab.subGraphId) {
+                subGraphTitle =
+                  tab.graph.graphs[tab.subGraphId].title || "Untitled Subgraph";
               }
 
-              case BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED: {
-                saveTitle = remote
-                  ? "Saved on Board Server"
-                  : "Saved on device";
-                break;
+              const canSave = this.#runtime.board.canSave(id);
+              const saveStatus = this.#tabSaveStatus.get(id) ?? "saved";
+              const remote = tab.graph.url?.startsWith("http") ?? false;
+              let saveTitle = "Saved";
+              switch (saveStatus) {
+                case BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING: {
+                  saveTitle = "Saving";
+                  break;
+                }
+
+                case BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED: {
+                  saveTitle = remote
+                    ? "Saved on Board Server"
+                    : "Saved on device";
+                  break;
+                }
+
+                case BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR: {
+                  saveTitle = "Error saving board";
+                  break;
+                }
               }
 
-              case BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR: {
-                saveTitle = "Error saving board";
-                break;
-              }
-            }
-
-            return html`<h1>
-              <span
-                ><button
-                  class=${classMap({
-                    "back-to-main-board": true,
-                    active: this.tab?.id === tab.id,
-                  })}
-                  @click=${() => {
-                    if (this.tab?.id === tab.id && tab.subGraphId !== null) {
-                      tab.subGraphId = null;
-                      return;
-                    }
-
-                    this.#runtime.board.changeTab(tab.id);
-                  }}
-                >
-                  ${tab.graph.title}
-                </button></span
-              >${subGraphTitle
-                ? html`<span class="subgraph-name">${subGraphTitle}</span>`
-                : nothing}
-              <div
+              return html`<h1
                 class=${classMap({
-                  "save-status": true,
-                  remote,
-                  [saveStatus]: true,
+                  active: this.tab?.id === tab.id,
                 })}
-                title=${saveTitle}
-              ></div>
-              <button
-                @click=${() => {
-                  this.#runtime.board.closeTab(id);
-                }}
-                ?disabled=${tab.graph === null}
-                id="close-board"
-                title="Close Board"
               >
-                Close
-              </button>
-            </h1>`;
-          })}
+                <span
+                  ><button
+                    class=${classMap({
+                      "back-to-main-board": true,
+                    })}
+                    @click=${() => {
+                      if (this.tab?.id === tab.id && tab.subGraphId !== null) {
+                        tab.subGraphId = null;
+                        return;
+                      }
+
+                      this.#runtime.board.changeTab(tab.id);
+                    }}
+                  >
+                    ${tab.graph.title}
+                  </button></span
+                >${subGraphTitle
+                  ? html`<span class="subgraph-name">${subGraphTitle}</span>`
+                  : nothing}
+                <div
+                  class=${classMap({
+                    "save-status": true,
+                    "can-save": canSave,
+                    remote,
+                    [saveStatus]: true,
+                  })}
+                  title=${saveTitle}
+                ></div>
+                <button
+                  @click=${() => {
+                    this.#runtime.board.closeTab(id);
+                  }}
+                  ?disabled=${tab.graph === null}
+                  id="close-board"
+                  title="Close Board"
+                >
+                  Close
+                </button>
+              </h1>`;
+            })}
+          </div>
+          <button
+            id="undo"
+            title="Undo last action"
+            ?disabled=${this.tab?.graph === null || !this.#runtime.edit.canUndo(this.tab)}
+            @click=${() => {
+              this.#runtime.edit.undo(this.tab);
+            }}
+          >
+            Preview
+          </button>
+          <button
+            id="redo"
+            title="Redo last action"
+            ?disabled=${this.tab?.graph === null || !this.#runtime.edit.canRedo(this.tab)}
+            @click=${() => {
+              this.#runtime.edit.redo(this.tab);
+            }}
+          >
+            Preview
+          </button>
+          ${saveButton}
+          <button
+            class=${classMap({ active: this.showOverflowMenu })}
+            id="toggle-overflow-menu"
+            title="Toggle Overflow Menu"
+            @click=${() => {
+              this.showOverflowMenu = !this.showOverflowMenu;
+            }}
+          >
+            Toggle Overflow Menu
+          </button>
         </div>
-        <button
-          id="undo"
-          title="Undo last action"
-          ?disabled=${this.tab?.graph === null || !this.#runtime.edit.canUndo(this.tab)}
-          @click=${() => {
-            this.#runtime.edit.undo(this.tab);
-          }}
-        >
-          Preview
-        </button>
-        <button
-          id="redo"
-          title="Redo last action"
-          ?disabled=${this.tab?.graph === null || !this.#runtime.edit.canRedo(this.tab)}
-          @click=${() => {
-            this.#runtime.edit.redo(this.tab);
-          }}
-        >
-          Preview
-        </button>
-        ${saveButton}
-        <button
-          class=${classMap({ active: this.showOverflowMenu })}
-          id="toggle-overflow-menu"
-          title="Toggle Overflow Menu"
-          @click=${() => {
-            this.showOverflowMenu = !this.showOverflowMenu;
-          }}
-        >
-          Toggle Overflow Menu
-        </button>
-      </div>
+      </header>
       <div id="content" ?inert=${showingOverlay}>
         <bb-ui-controller
               ${ref(this.#uiRef)}

@@ -21,20 +21,6 @@ export const styles = css`
     z-index: 2000;
   }
 
-  :host > header {
-    display: grid;
-    grid-template-columns: auto min-content;
-    padding: calc(var(--bb-grid-size) * 6) calc(var(--bb-grid-size) * 8)
-      calc(var(--bb-grid-size) * 0) calc(var(--bb-grid-size) * 8);
-    font-size: var(--bb-text-default);
-    grid-column: 1 / 3;
-  }
-
-  :host > header a {
-    text-decoration: none;
-    white-space: nowrap;
-  }
-
   #show-nav {
     font-size: 0;
     width: 24px;
@@ -92,6 +78,7 @@ export const styles = css`
     text-decoration: none;
     border-radius: 20px;
     border: none;
+    flex: 0 0 auto;
   }
 
   #undo:not([disabled]):hover,
@@ -187,19 +174,26 @@ export const styles = css`
     grid-column: 1 / 3;
   }
 
-  #header-bar {
+  header {
     background: var(--bb-ui-600);
-    display: grid;
-    grid-template-columns: 48px auto 32px 32px 90px 32px;
-    align-items: center;
+    display: block;
     color: var(--bb-neutral-50);
     z-index: 1;
+    width: 100%;
+    overflow: hidden;
     height: calc(var(--bb-grid-size) * 12);
+  }
+
+  #header-bar {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 100%;
     padding: 0 calc(var(--bb-grid-size) * 2);
   }
 
   #header-bar #tab-container {
-    flex: 1;
+    flex-grow: 1;
     display: flex;
     align-items: flex-end;
     margin: 0;
@@ -221,6 +215,16 @@ export const styles = css`
     align-items: center;
     user-select: none;
     margin-right: var(--bb-grid-size-2);
+    opacity: 0.7;
+    transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+  }
+
+  #tab-container h1:hover {
+    transition-duration: 0.1s;
+  }
+
+  #tab-container h1.active {
+    opacity: 1;
   }
 
   #tab-container .save-status {
@@ -228,6 +232,11 @@ export const styles = css`
     width: 20px;
     height: 20px;
     background: transparent;
+    display: none;
+  }
+
+  #tab-container .save-status.can-save {
+    display: block;
   }
 
   #tab-container .save-status.saving {
@@ -257,16 +266,12 @@ export const styles = css`
     background: none;
     border: none;
     color: var(--bb-neutral-800);
-    opacity: 0.6;
+    white-space: nowrap;
   }
 
   #tab-container .back-to-main-board:disabled {
     cursor: auto;
     color: var(--bb-neutral-800);
-  }
-
-  #tab-container .back-to-main-board.active {
-    opacity: 1;
   }
 
   #tab-container .subgraph-name {
