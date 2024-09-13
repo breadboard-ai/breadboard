@@ -223,6 +223,33 @@ export const styles = css`
     margin-right: var(--bb-grid-size-2);
   }
 
+  #tab-container .save-status {
+    margin-left: 8px;
+    width: 20px;
+    height: 20px;
+    background: transparent;
+  }
+
+  #tab-container .save-status.saving {
+    background: transparent url(/images/progress-ui.svg) center center / 20px
+      20px no-repeat;
+  }
+
+  #tab-container .save-status.saved {
+    background: transparent var(--bb-icon-saved-local) center center / 20px 20px
+      no-repeat;
+  }
+
+  #tab-container .save-status.error {
+    background: transparent var(--bb-icon-warning) center center / 20px 20px
+      no-repeat;
+  }
+
+  #tab-container .save-status.saved.remote {
+    background: transparent var(--bb-icon-saved-remote) center center / 20px
+      20px no-repeat;
+  }
+
   #tab-container .back-to-main-board {
     padding: 0;
     margin: 0;
