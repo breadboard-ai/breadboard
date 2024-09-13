@@ -23,7 +23,8 @@
     "dev": "npm run dev:nowatch --watch",
     "dev:nowatch": "wireit",
     "test": "wireit",
-    "test:integration": "wireit"
+    "test:integration": "wireit",
+    "generate": "rimraf generated ; npx -y @openapitools/openapi-generator-cli generate"
   },
   "wireit": {
     "build": {
