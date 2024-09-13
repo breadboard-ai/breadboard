@@ -244,6 +244,11 @@ export const styles = css`
       20px no-repeat;
   }
 
+  #tab-container .save-status.unsaved {
+    background: transparent var(--bb-icon-pending) center center / 12px 12px
+      no-repeat;
+  }
+
   #tab-container .save-status.saved {
     background: transparent var(--bb-icon-saved-local) center center / 20px 20px
       no-repeat;
