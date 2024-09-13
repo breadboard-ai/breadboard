@@ -105,6 +105,8 @@
   --bb-icon-reset-nodes: url(/third_party/icons/reset-nodes.svg);
   --bb-icon-resume-blue: url(/third_party/icons/resume-blue.svg);
   --bb-icon-save: url(/third_party/icons/save.svg);
+  --bb-icon-saved-local: url(/third_party/icons/saved-local.svg);
+  --bb-icon-saved-remote: url(/third_party/icons/saved-remote.svg);
   --bb-icon-save-as: url(/third_party/icons/save-as.svg);
   --bb-icon-save-inverted: url(/third_party/icons/save-inverted.svg);
   --bb-icon-search: url(/third_party/icons/search.svg);

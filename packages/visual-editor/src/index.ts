@@ -67,6 +67,8 @@ const ENVIRONMENT: BreadboardUI.Contexts.Environment = {
   },
 };
 
+const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
+
 @customElement("bb-main")
 export class Main extends LitElement {
   @state()
@@ -157,6 +159,7 @@ export class Main extends LitElement {
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #boardId = 0;
   #boardPendingSave = false;
+  #tabSaveStatus = new Map<TabId, BreadboardUI.Types.BOARD_SAVE_STATUS>();
   #tabBoardStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
   #tabLoadStatus = new Map<TabId, BreadboardUI.Types.BOARD_LOAD_STATUS>();
   #providers: GraphProvider[];
@@ -266,12 +269,18 @@ export class Main extends LitElement {
       .then((runtime) => {
         this.#runtime = runtime;
 
+        let autoSaveTimeout: ReturnType<typeof globalThis.setTimeout>;
         this.#runtime.edit.addEventListener(
           Runtime.Events.RuntimeBoardEditEvent.eventName,
           () => {
             this.#nodeConfiguratorData = null;
             this.showNodeConfigurator = false;
             this.requestUpdate();
+
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(async () => {
+              await this.#attemptBoardSave("Saving board", false, false);
+            }, BOARD_AUTO_SAVE_TIMEOUT);
           }
         );
 
@@ -682,34 +691,79 @@ export class Main extends LitElement {
     }
   }
 
-  async #attemptBoardSave(message = "Board saved") {
-    if (this.#isSaving) {
-      return;
-    }
-
+  async #attemptBoardSave(
+    message = "Board saved",
+    ackUser = true,
+    showSaveAsIfNeeded = true
+  ) {
     if (!this.tab) {
       return;
     }
 
+    const saveStatus = this.#tabSaveStatus.get(this.tab.id);
+    if (
+      saveStatus &&
+      saveStatus === BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING
+    ) {
+      return;
+    }
+
     if (!this.#runtime.board.canSave(this.tab.id)) {
-      this.showSaveAsDialog = true;
+      if (showSaveAsIfNeeded) {
+        this.showSaveAsDialog = true;
+      }
       return;
     }
 
-    const id = this.toast(
-      "Saving board...",
-      BreadboardUI.Events.ToastType.PENDING,
-      true
+    let id;
+    if (ackUser) {
+      id = this.toast(
+        "Saving board...",
+        BreadboardUI.Events.ToastType.PENDING,
+        true
+      );
+    }
+
+    this.#tabSaveStatus.set(
+      this.tab.id,
+      BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING
     );
-    this.#isSaving = true;
-    const { result } = await this.#runtime.board.save(this.tab.id);
-    this.#isSaving = false;
-    if (!result) {
-      return;
-    }
+    this.requestUpdate();
 
-    this.#setBoardPendingSaveState(false);
-    this.toast(message, BreadboardUI.Events.ToastType.INFORMATION, false, id);
+    try {
+      const { result } = await this.#runtime.board.save(this.tab.id);
+
+      this.#tabSaveStatus.set(
+        this.tab.id,
+        BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED
+      );
+      this.requestUpdate();
+
+      if (!result) {
+        this.#tabSaveStatus.set(
+          this.tab.id,
+          BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR
+        );
+        this.requestUpdate();
+        return;
+      }
+
+      this.#setBoardPendingSaveState(false);
+      if (ackUser && id) {
+        this.toast(
+          message,
+          BreadboardUI.Events.ToastType.INFORMATION,
+          false,
+          id
+        );
+      }
+    } catch (err) {
+      this.#tabSaveStatus.set(
+        this.tab.id,
+        BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR
+      );
+      this.requestUpdate();
+    }
   }
 
   async #attemptBoardSaveAs(
@@ -1281,6 +1335,28 @@ export class Main extends LitElement {
                 tab.graph.graphs[tab.subGraphId].title || "Untitled Subgraph";
             }
 
+            const saveStatus = this.#tabSaveStatus.get(id) ?? "saved";
+            const remote = tab.graph.url?.startsWith("http") ?? false;
+            let saveTitle = "Saved";
+            switch (saveStatus) {
+              case BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING: {
+                saveTitle = "Saving";
+                break;
+              }
+
+              case BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED: {
+                saveTitle = remote
+                  ? "Saved on Board Server"
+                  : "Saved on device";
+                break;
+              }
+
+              case BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR: {
+                saveTitle = "Error saving board";
+                break;
+              }
+            }
+
             return html`<h1>
               <span
                 ><button
@@ -1302,6 +1378,14 @@ export class Main extends LitElement {
               >${subGraphTitle
                 ? html`<span class="subgraph-name">${subGraphTitle}</span>`
                 : nothing}
+              <div
+                class=${classMap({
+                  "save-status": true,
+                  remote,
+                  [saveStatus]: true,
+                })}
+                title=${saveTitle}
+              ></div>
               <button
                 @click=${() => {
                   this.#runtime.board.closeTab(id);

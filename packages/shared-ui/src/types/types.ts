@@ -51,6 +51,12 @@ export enum BOARD_LOAD_STATUS {
   ERROR = "error",
 }
 
+export enum BOARD_SAVE_STATUS {
+  SAVING = "saving",
+  SAVED = "saved",
+  ERROR = "error",
+}
+
 export type UserInputConfiguration = {
   name: string;
   title: string;
