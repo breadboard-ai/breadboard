@@ -7,12 +7,13 @@ info:
 servers:
   - url: http://localhost:3000
 
+security: []
+
 paths:
   /boards:
     get:
       summary: List boards
       operationId: boardserver.boards.list
-      security: []
       responses:
         "200":
           description: Successful response
@@ -27,7 +28,6 @@ paths:
     get:
       summary: Get a board
       operationId: boardserver.boards.get
-      security: []
       parameters:
         - $ref: "#/components/parameters/AccountParam"
         - $ref: "#/components/parameters/BoardNameParam"
@@ -42,7 +42,6 @@ paths:
     post:
       summary: Create or update a board
       operationId: boardserver.boards.post
-      security: []
       parameters:
         - $ref: "#/components/parameters/AccountParam"
         - $ref: "#/components/parameters/BoardNameParam"
@@ -68,7 +67,6 @@ paths:
     get:
       summary: Serve frontend app
       operationId: boardserver.boards.serve
-      security: []
       parameters:
         - $ref: "#/components/parameters/AccountParam"
         - $ref: "#/components/parameters/BoardNameParam"
@@ -84,7 +82,6 @@ paths:
     get:
       summary: Serve API explorer
       operationId: boardserver.boards.api.get
-      security: []
       parameters:
         - $ref: "#/components/parameters/AccountParam"
         - $ref: "#/components/parameters/BoardNameParam"
@@ -100,7 +97,6 @@ paths:
     post:
       summary: Invoke API
       operationId: boardserver.boards.api.invoke
-      security: []
       parameters:
         - $ref: "#/components/parameters/AccountParam"
         - $ref: "#/components/parameters/BoardNameParam"
@@ -125,7 +121,6 @@ paths:
     post:
       summary: Get API description
       operationId: boardserver.boards.api.describe
-      security: []
       parameters:
         - $ref: "#/components/parameters/AccountParam"
         - $ref: "#/components/parameters/BoardNameParam"
@@ -141,7 +136,6 @@ paths:
     post:
       summary: Execute the board
       operationId: boardserver.boards.api.run
-      security: []
       parameters:
         - $ref: "#/components/parameters/AccountParam"
         - $ref: "#/components/parameters/BoardNameParam"
@@ -166,7 +160,6 @@ paths:
     get:
       summary: List invites
       operationId: boardserver.boards.invite
-      security: []
       parameters:
         - $ref: "#/components/parameters/AccountParam"
         - $ref: "#/components/parameters/BoardNameParam"
@@ -187,7 +180,6 @@ paths:
     post:
       summary: Create or delete an invite
       operationId: boardserver.boards.invites.post
-      security: []
       parameters:
         - $ref: "#/components/parameters/AccountParam"
         - $ref: "#/components/parameters/BoardNameParam"
