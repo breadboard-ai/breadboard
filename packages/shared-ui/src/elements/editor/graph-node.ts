@@ -7,7 +7,6 @@
 import { InspectablePort, PortStatus } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
 import {
-  Activity,
   ComponentExpansionState,
   GRAPH_OPERATIONS,
   GraphNodePortType,
@@ -23,6 +22,7 @@ import {
 import { GraphNodeFooter } from "./graph-node-footer.js";
 import { GraphPortLabel as GraphNodePortLabel } from "./graph-port-label.js";
 import { GraphNodeActivityMarker } from "./graph-node-activity-marker.js";
+import { ComponentActivityItem } from "../../types/types.js";
 
 const borderColor = getGlobalColor("--bb-neutral-500");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
@@ -106,7 +106,7 @@ export class GraphNode extends PIXI.Container {
   #lastClickTime = 0;
   #icon: string | null = null;
   #iconSprite: PIXI.Sprite | null = null;
-  #activity: Activity[] | null = null;
+  #activity: ComponentActivityItem[] | null = null;
 
   readOnly = false;
 
@@ -425,7 +425,7 @@ export class GraphNode extends PIXI.Container {
     return this.#color;
   }
 
-  set activity(activity: Activity[] | null) {
+  set activity(activity: ComponentActivityItem[] | null) {
     this.#activity = activity;
     this.#activityMarker.activity = this.#activity;
 
