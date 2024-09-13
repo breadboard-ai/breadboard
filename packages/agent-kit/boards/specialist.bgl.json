@@ -590,11 +590,22 @@
               "type": "object",
               "properties": {
                 "item": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {},
+                      "required": [],
+                      "additionalProperties": true
+                    }
+                  ],
                   "title": "Board",
+                  "description": "The board to curry. Can be a BoardCapability, a graph or a URL",
                   "behavior": [
                     "board"
                   ],
-                  "description": "The board to curry. Can be a BoardCapability, a graph or a URL",
                   "type": "string"
                 },
                 "context": {
