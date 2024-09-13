@@ -1643,11 +1643,29 @@ export class Main extends LitElement {
                   evt.subGraphId
                 );
               }}
-              @bbnodeconfigurationupdaterequest=${(
+              @bbnodeconfigurationupdaterequest=${async (
                 evt: BreadboardUI.Events.NodeConfigurationUpdateRequestEvent
               ) => {
+                const title = this.#runtime.edit.getNodeTitle(this.tab, evt.id);
+                const ports = await this.#runtime.edit.getNodePorts(
+                  this.tab,
+                  evt.id
+                );
+
+                if (!ports) {
+                  return;
+                }
+
                 this.showNodeConfigurator = evt.port !== null;
-                this.#nodeConfiguratorData = { ...evt };
+                this.#nodeConfiguratorData = {
+                  id: evt.id,
+                  x: evt.x,
+                  y: evt.y,
+                  title,
+                  selectedPort: evt.port?.title ?? null,
+                  subGraphId: evt.subGraphId,
+                  ports,
+                };
               }}
               @bbedgevalueselected=${(
                 evt: BreadboardUI.Events.EdgeValueSelectedEvent
@@ -1950,7 +1968,7 @@ export class Main extends LitElement {
     if (this.showNodeConfigurator) {
       nodeConfiguratorOverlay = html`<bb-node-configuration-overlay
         ${ref(this.#nodeConfiguratorRef)}
-        .configuration=${this.#nodeConfiguratorData}
+        .value=${this.#nodeConfiguratorData}
         .graph=${this.tab?.graph}
         .providers=${this.#providers}
         .providerOps=${this.providerOps}

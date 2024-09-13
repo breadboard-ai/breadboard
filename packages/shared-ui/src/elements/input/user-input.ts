@@ -3,7 +3,14 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
+import {
+  LitElement,
+  html,
+  css,
+  HTMLTemplateResult,
+  nothing,
+  PropertyValues,
+} from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { UserInputConfiguration, UserOutputValues } from "../../types/types";
 import { map } from "lit/directives/map.js";
@@ -49,6 +56,9 @@ export class UserInput extends LitElement {
   showTitleInfo = true;
 
   @property()
+  jumpTo: string | null = null;
+
+  @property()
   showTypes = false;
 
   @property({ reflect: true })
@@ -84,6 +94,7 @@ export class UserInput extends LitElement {
     }
 
     .item {
+      scroll-margin-top: var(--bb-grid-size-2);
       color: var(--bb-neutral-900);
       margin-bottom: var(--bb-grid-size-2);
     }
@@ -167,6 +178,31 @@ export class UserInput extends LitElement {
       margin: 0 0 var(--bb-grid-size-2) 0;
     }
   `;
+
+  protected firstUpdated(changedProperties: PropertyValues): void {
+    if (!changedProperties.has("jumpTo")) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      if (!this.#formRef.value) {
+        return;
+      }
+
+      if (!this.jumpTo) {
+        return;
+      }
+
+      const item = this.#formRef.value.querySelector(
+        `#container-${this.#createId(this.jumpTo)}`
+      );
+      item?.scrollIntoView({
+        behavior: "instant",
+        block: "start",
+        inline: "start",
+      });
+    });
+  }
 
   destroyEditors() {
     // Here we must unhook the editor *before* it is removed from the DOM,
@@ -291,7 +327,7 @@ export class UserInput extends LitElement {
   }
 
   #createId(name: string) {
-    return name.replace(/^\$/, "__");
+    return name.toLocaleLowerCase().replace(/^\$/, "__");
   }
 
   render() {
@@ -649,7 +685,10 @@ export class UserInput extends LitElement {
           typeInfo = html`<span class="type">(${typeString})</span>`;
         }
 
-        return html`<div class=${classMap(styles)}>
+        return html`<div
+          id=${this.#createId(`container-${input.name}`)}
+          class=${classMap(styles)}
+        >
           <label>
             ${input.secret
               ? html`<p class="api-message">

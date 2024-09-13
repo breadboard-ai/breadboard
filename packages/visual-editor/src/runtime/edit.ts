@@ -67,6 +67,36 @@ export class Edit extends EventTarget {
     return editableGraph.history();
   }
 
+  getNodeTitle(tab: Tab | null, id: string) {
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
+      return null;
+    }
+
+    return editableGraph.inspect().nodeById(id)?.title() ?? null;
+  }
+
+  getNodeConfiguration(tab: Tab | null, id: string) {
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
+      return null;
+    }
+
+    return editableGraph.inspect().nodeById(id)?.configuration() ?? null;
+  }
+
+  getNodePorts(tab: Tab | null, id: string) {
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
+      return null;
+    }
+
+    return editableGraph.inspect().nodeById(id)?.ports() ?? null;
+  }
+
   canUndo(tab: Tab | null) {
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {

@@ -14,9 +14,9 @@ import {
   NodeDescriptor,
   InputValues,
   ErrorResponse,
-  InspectablePort,
   GraphDescriptor,
   NodeIdentifier,
+  InspectableNodePorts,
 } from "@google-labs/breadboard";
 
 export const enum HistoryEventType {
@@ -293,8 +293,10 @@ export type ComponentActivityItem = {
 
 export type NodePortConfiguration = {
   id: string;
+  title: string | null;
   subGraphId: string | null;
-  port: InspectablePort | null;
+  selectedPort: string | null;
+  ports: InspectableNodePorts;
   x: number;
   y: number;
 };

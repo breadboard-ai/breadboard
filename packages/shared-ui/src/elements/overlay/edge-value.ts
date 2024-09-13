@@ -23,9 +23,7 @@ import { markdown } from "../../directives/markdown.js";
 import { classMap } from "lit/directives/class-map.js";
 import { isImageURL } from "../../utils/llm-content.js";
 
-/** To be kept in line with the CSS values below. */
-const MAX_WIDTH = 400;
-const OVERLAY_CLEARANCE = 40;
+const OVERLAY_CLEARANCE = 60;
 
 @customElement("bb-edge-value-overlay")
 export class EdgeValueOverlay extends LitElement {
@@ -159,17 +157,17 @@ export class EdgeValueOverlay extends LitElement {
         return;
       }
 
-      const { contentHeight } = this.#overlayRef.value;
+      const { contentBounds } = this.#overlayRef.value;
       let { x, y } = this.edgeValue;
       x += OVERLAY_CLEARANCE;
-      y -= contentHeight / 2;
+      y -= contentBounds.height / 2;
 
-      if (x + MAX_WIDTH > window.innerWidth) {
-        x = window.innerWidth - MAX_WIDTH - OVERLAY_CLEARANCE;
+      if (x + contentBounds.width > window.innerWidth) {
+        x = window.innerWidth - contentBounds.width - OVERLAY_CLEARANCE;
       }
 
-      if (y + contentHeight > window.innerHeight) {
-        y = window.innerHeight - contentHeight - OVERLAY_CLEARANCE;
+      if (y + contentBounds.height > window.innerHeight) {
+        y = window.innerHeight - contentBounds.height - OVERLAY_CLEARANCE;
       }
 
       if (y < 0) {
@@ -179,13 +177,10 @@ export class EdgeValueOverlay extends LitElement {
       this.#minimizedX = Math.round(x);
       this.#minimizedY = Math.round(y);
 
-      this.#updateOverlayContentPositionAndSize();
-
       // Once we've calculated the minimized size we can now recall the user's
       // preferred max/min and use that.
       this.maximized =
-        globalThis.sessionStorage.getItem("bb-node-configurator-maximized") ===
-        "true";
+        globalThis.sessionStorage.getItem("bb-edge-value-maximized") === "true";
 
       this.#overlayRef.value.style.setProperty("--x", `${Math.round(x)}px`);
       this.#overlayRef.value.style.setProperty("--y", `${Math.round(y)}px`);
@@ -296,7 +291,7 @@ export class EdgeValueOverlay extends LitElement {
             this.maximized = !this.maximized;
 
             globalThis.sessionStorage.setItem(
-              "bb-node-configurator-maximized",
+              "bb-edge-value-maximized",
               this.maximized.toString()
             );
           }}
