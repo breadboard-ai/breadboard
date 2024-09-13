@@ -20,7 +20,6 @@ import { GraphEdge } from "./graph-edge.js";
 import { GraphNode } from "./graph-node.js";
 import { GraphNodePort } from "./graph-node-port.js";
 import {
-  Activity,
   ComponentExpansionState,
   GRAPH_OPERATIONS,
   GraphNodePortType,
@@ -38,6 +37,7 @@ import {
   ComponentWithActivity,
   EdgeData,
   TopGraphEdgeValues,
+  TopGraphNodeActivity,
   cloneEdgeData,
 } from "../../types/types.js";
 
@@ -140,7 +140,7 @@ export class Graph extends PIXI.Container {
   #autoSelect = new Set<string>();
   #latestPendingValidateRequest = new WeakMap<GraphEdge, symbol>();
   #edgeValues: TopGraphEdgeValues | null = null;
-  #nodeValues: Map<string, Activity[]> | null = null;
+  #nodeValues: TopGraphNodeActivity | null = null;
 
   #isInitialDraw = true;
   #collapseNodesByDefault = false;
@@ -1010,7 +1010,7 @@ export class Graph extends PIXI.Container {
     return this.#edgeValues;
   }
 
-  set nodeValues(nodeValues: Map<string, Activity[]> | null) {
+  set nodeValues(nodeValues: TopGraphNodeActivity | null) {
     this.#nodeValues = nodeValues;
     this.#isDirty = true;
   }

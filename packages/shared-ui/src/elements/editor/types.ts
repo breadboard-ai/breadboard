@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ComponentActivityItem } from "../../types/types";
-
 export enum GRAPH_OPERATIONS {
   GRAPH_BOARD_LINK_CLICKED = "graphboardlinkclicked",
   GRAPH_AUTOSELECTED_NODES = "graphautoselectednodes",
@@ -54,9 +52,4 @@ export type VisualMetadata = {
   x: number;
   y: number;
   collapsed: ComponentExpansionState | boolean;
-};
-
-export type Activity = {
-  id: string;
-  activity: ComponentActivityItem[];
 };

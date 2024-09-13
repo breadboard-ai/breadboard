@@ -6,7 +6,8 @@
 
 import * as PIXI from "pixi.js";
 import { getGlobalColor } from "./utils";
-import { Activity, GRAPH_OPERATIONS } from "./types";
+import { GRAPH_OPERATIONS } from "./types";
+import { ComponentActivityItem } from "../../types/types";
 
 const inputColor = getGlobalColor("--bb-inputs-400");
 const nodeColor = getGlobalColor("--bb-nodes-400");
@@ -23,7 +24,7 @@ export class GraphNodeActivityMarker extends PIXI.Container {
   #textSize = 12;
   #type = "";
   #color = 0;
-  #activity: Activity[] | null = null;
+  #activity: ComponentActivityItem[] | null = null;
 
   #label = new PIXI.Text({
     text: "0",
@@ -73,7 +74,7 @@ export class GraphNodeActivityMarker extends PIXI.Container {
 
       this.emit(
         GRAPH_OPERATIONS.GRAPH_NODE_ACTIVITY_SELECTED,
-        newestActivity.id
+        getRunId(newestActivity.path)
       );
     });
   }
@@ -98,7 +99,7 @@ export class GraphNodeActivityMarker extends PIXI.Container {
     return this.#activity;
   }
 
-  set activity(activity: Activity[] | null) {
+  set activity(activity: ComponentActivityItem[] | null) {
     this.#activity = activity;
 
     if (!activity || !activity.length) {
@@ -108,17 +109,12 @@ export class GraphNodeActivityMarker extends PIXI.Container {
 
     this.visible = true;
     const newestActivity = activity[activity.length - 1];
-    if (newestActivity.activity.length === 0) {
-      return;
+
+    if (this.#label.text !== activity.length.toString()) {
+      this.#label.text = activity.length;
     }
 
-    if (this.#label.text !== newestActivity.activity.length.toString()) {
-      this.#label.text = newestActivity.activity.length;
-    }
-
-    const newestEntry =
-      newestActivity.activity[newestActivity.activity.length - 1];
-    switch (newestEntry.type) {
+    switch (newestActivity.type) {
       case "input":
         this.#color = inputColor;
         break;
@@ -153,4 +149,8 @@ export class GraphNodeActivityMarker extends PIXI.Container {
     this.#background.closePath();
     this.#background.fill({ color: this.#color });
   }
+}
+
+function getRunId(path: number[]) {
+  return `e-${path.slice(0, -1).join(".")}`;
 }

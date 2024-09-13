@@ -24,11 +24,7 @@ import {
   GraphEdgeValueSelectedEvent,
   GraphNodeActivitySelectedEvent,
 } from "../../events/events.js";
-import {
-  Activity,
-  ComponentExpansionState,
-  GRAPH_OPERATIONS,
-} from "./types.js";
+import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
 import {
   InspectableEdge,
@@ -632,21 +628,8 @@ export class GraphRenderer extends LitElement {
       edgeValues = topGraphResult.edgeValues;
     }
 
-    if (topGraphResult && topGraphResult.log) {
-      nodeValues = new Map<string, Activity[]>();
-      for (const entry of topGraphResult.log) {
-        if (entry.type !== "node") {
-          continue;
-        }
-
-        let entries = nodeValues.get(entry.descriptor.id);
-        if (!entries) {
-          entries = [];
-          nodeValues.set(entry.descriptor.id, entries);
-        }
-
-        entries.push({ id: entry.id, activity: entry.activity });
-      }
+    if (topGraphResult && topGraphResult.nodeActivity) {
+      nodeValues = topGraphResult.nodeActivity;
     }
 
     for (const graph of this.#container.children) {

@@ -251,7 +251,7 @@ export type TopGraphRunResult = {
    * happened within the node. The most recent activity is the last item
    * in the array.
    */
-  nodeActivities: TopGraphNodeActivities;
+  nodeActivity: TopGraphNodeActivity;
   /**
    * Returns the GraphDescriptor of the current graph.
    * Or null if the TopGraphObserver doesn't know what it is yet.
@@ -269,7 +269,7 @@ export type TopGraphEdgeValues = {
   current: ComparableEdge | null;
 };
 
-export type TopGraphNodeActivities = {
+export type TopGraphNodeActivity = {
   get(node: NodeIdentifier): ComponentActivityItem[] | undefined;
 };
 
