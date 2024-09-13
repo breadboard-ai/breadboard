@@ -673,7 +673,6 @@ export class Main extends LitElement {
     const runGraph = topGraphObserver.current()?.graph ?? null;
     if (runGraph) {
       runGraph.title = evt.nodeTitle;
-      console.log(topGraphObserver);
       this.#runtime.board.loadFromDescriptor(
         runGraph,
         topGraphObserver,
