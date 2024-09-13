@@ -39,6 +39,15 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
           },
         ],
         [
+          "Auto Save Boards",
+          {
+            name: "Auto Save Boards",
+            description:
+              "Whether you wish to try and save boards automatically when they change",
+            value: true,
+          },
+        ],
+        [
           "Collapse Nodes by Default",
           {
             name: "Collapse Nodes by Default",

@@ -273,7 +273,6 @@ export class Main extends LitElement {
       .then((runtime) => {
         this.#runtime = runtime;
 
-        // let autoSaveTimeout: ReturnType<typeof globalThis.setTimeout>;
         this.#runtime.edit.addEventListener(
           Runtime.Events.RuntimeBoardEditEvent.eventName,
           () => {
@@ -281,16 +280,27 @@ export class Main extends LitElement {
             this.showNodeConfigurator = false;
             this.requestUpdate();
 
-            // const tabToSave = this.tab;
-            // clearTimeout(autoSaveTimeout);
-            // autoSaveTimeout = setTimeout(async () => {
+            const shouldAutoSave = this.#settings?.getItem(
+              BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
+              "Auto Save Boards"
+            ) ?? { value: false };
+
+            if (!shouldAutoSave.value) {
+              if (this.tab) {
+                this.#tabSaveStatus.set(
+                  this.tab.id,
+                  BreadboardUI.Types.BOARD_SAVE_STATUS.UNSAVED
+                );
+              }
+              return;
+            }
+
             this.#attemptBoardSave(
               "Saving board",
               false,
               false,
               BOARD_AUTO_SAVE_TIMEOUT
             );
-            // });
           }
         );
 

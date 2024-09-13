@@ -53,6 +53,7 @@ export enum BOARD_LOAD_STATUS {
 }
 
 export enum BOARD_SAVE_STATUS {
+  UNSAVED = "unsaved",
   SAVING = "saving",
   SAVED = "saved",
   ERROR = "error",
