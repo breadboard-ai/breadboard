@@ -22,6 +22,7 @@ import type {
   OutputValues,
 } from "./types.js";
 import { graphUrlLike } from "./utils/graph-url-like.js";
+import { hash } from "./utils/hash.js";
 import { Throttler } from "./utils/throttler.js";
 
 const getHandlerFunction = (handler: NodeHandler): NodeHandlerFunction => {
@@ -121,9 +122,14 @@ const GRAPH_HANDLER_CACHE = new Map<
   GraphHandlerThrottler
 >();
 
+type DescribeThrottlerWithHash = {
+  throttler: NodeDescriberThrottler;
+  hash: number;
+};
+
 const DESCRIBE_RESULT_CACHE = new Map<
   NodeTypeIdentifier,
-  NodeDescriberThrottler
+  DescribeThrottlerWithHash
 >();
 
 export async function getGraphHandler(
@@ -173,17 +179,17 @@ async function getGraphHandlerInternal(
       if (!context) {
         return { inputSchema: {}, outputSchema: {} };
       }
-      let describeThrottler;
-      if (DESCRIBE_RESULT_CACHE.has(type)) {
-        describeThrottler = DESCRIBE_RESULT_CACHE.get(type)!;
-      } else {
-        describeThrottler = new Throttler(
-          describeGraph,
-          DESCRIBE_THROTTLE_DELAY
-        );
+      const inputsHash = hash(inputs);
+      let describeThrottler = DESCRIBE_RESULT_CACHE.get(type);
+      if (!describeThrottler || describeThrottler.hash !== inputsHash) {
+        describeThrottler = {
+          throttler: new Throttler(describeGraph, DESCRIBE_THROTTLE_DELAY),
+          hash: inputsHash,
+        };
+
         DESCRIBE_RESULT_CACHE.set(type, describeThrottler);
       }
-      return describeThrottler.call({}, inputs, graph, context);
+      return describeThrottler.throttler.call({}, inputs, graph, context);
     },
     metadata: filterEmptyValues({
       title: graph.title,

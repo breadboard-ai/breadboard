@@ -24,4 +24,8 @@ describe("hash", () => {
   test("hashes a nested object", () => {
     deepStrictEqual(hash({ a: { b: "hello" } }), 357563268);
   });
+
+  test("hashes a undefined", () => {
+    deepStrictEqual(hash(undefined), 3288676927);
+  });
 });
