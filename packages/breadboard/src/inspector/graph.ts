@@ -307,7 +307,7 @@ class Graph implements InspectableGraphWithStore {
       // describer outputs.
       delete $outputSchema.properties?.inputSchema;
       delete $outputSchema.properties?.outputSchema;
-      return (await invokeGraph(
+      const result = await invokeGraph(
         this.#graph,
         { ...inputs, $inputSchema, $outputSchema },
         {
@@ -316,7 +316,15 @@ class Graph implements InspectableGraphWithStore {
           loader: this.#options.loader,
           start: "describe",
         }
-      )) as NodeDescriberResult;
+      );
+      if ("$error" in result) {
+        console.warn(
+          `Error while invoking graph's describe entry point`,
+          result.$error
+        );
+        return await this.#describeWithStaticAnalysis();
+      }
+      return result as NodeDescriberResult;
     } catch (e) {
       console.warn(`Error while invoking graph's describe entry point`, e);
       return await this.#describeWithStaticAnalysis();
