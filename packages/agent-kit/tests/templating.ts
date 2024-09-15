@@ -5,7 +5,12 @@
  */
 
 import { describe, it } from "node:test";
-import { substitute, content } from "../src/future/templating.js";
+import {
+  substitute,
+  content,
+  describeSpecialist,
+  describeContent,
+} from "../src/future/templating.js";
 import { InlineDataCapabilityPart, LLMContent } from "@google-labs/breadboard";
 import { deepStrictEqual } from "node:assert";
 
@@ -159,7 +164,7 @@ describe("Templating", () => {
   });
 });
 
-describe("Content template", () => {
+describe("Content component", () => {
   it("does simple forwarding of content", () => {
     const context = [llmContent("user", "You're a wizard, Harry.")];
     const template = llmContent("user");
@@ -220,6 +225,73 @@ describe("Content template", () => {
       context: [
         llmContent("user", "You're a wizard, Harry.", "Act like a wizard."),
       ],
+    });
+  });
+});
+
+describe("Specialist v2 describer", () => {
+  it("correctly collects parameters", () => {
+    const $inputSchema = {};
+    const $outputSchema = {};
+    const persona = llmContent("user", "You're a {{character}}, {{name}}.");
+    const task = llmContent("user", "Act like a {{character}}.");
+
+    const result = describeSpecialist({
+      $inputSchema,
+      $outputSchema,
+      persona,
+      task,
+    });
+
+    const paramProps = result.inputSchema.properties;
+    deepStrictEqual(paramProps, {
+      "p-character": {
+        description: 'The value to substitute for the parameter "character"',
+        title: "Character",
+        type: "string",
+      },
+      "p-name": {
+        description: 'The value to substitute for the parameter "name"',
+        title: "Name",
+        type: "string",
+      },
+    });
+  });
+});
+
+describe("Content describer", () => {
+  it("works without params", () => {
+    const $inputSchema = {};
+    const $outputSchema = {};
+    const template = llmContent("user", "Act like a wizard.");
+
+    const result = describeContent({
+      $inputSchema,
+      $outputSchema,
+      template,
+    });
+
+    deepStrictEqual(result.inputSchema.properties, {});
+  });
+
+  it("correctly collects parameters", () => {
+    const $inputSchema = {};
+    const $outputSchema = {};
+    const template = llmContent("user", "Act like a {{role}}.");
+
+    const result = describeContent({
+      $inputSchema,
+      $outputSchema,
+      template,
+    });
+
+    const paramProps = result.inputSchema.properties;
+    deepStrictEqual(paramProps, {
+      "p-role": {
+        description: 'The value to substitute for the parameter "role"',
+        title: "Role",
+        type: "string",
+      },
     });
   });
 });

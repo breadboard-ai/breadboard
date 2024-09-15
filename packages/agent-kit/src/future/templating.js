@@ -4,8 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { substitute, content };
+export { substitute, describeSpecialist, content, describeContent };
 
+/**
+ * Part of the "Specialist" v2 component that does the parameter
+ * substitution.
+ */
 function substitute({ in: context, persona, task, ...inputs }) {
   const params = mergeParams(findParams(persona), findParams(task));
 
@@ -164,6 +168,74 @@ function substitute({ in: context, persona, task, ...inputs }) {
   }
 }
 
+/**
+ * The describer for the "Specialist" v2 component.
+ */
+function describeSpecialist({ $inputSchema, $outputSchema, persona, task }) {
+  const params = unique([
+    ...collectParams(textFromLLMContent(persona)),
+    ...collectParams(textFromLLMContent(task)),
+  ]);
+
+  const props = Object.fromEntries(
+    params.map((param) => [
+      toId(param),
+      {
+        title: toTitle(param),
+        description: `The value to substitute for the parameter "${param}"`,
+        type: "string",
+      },
+    ])
+  );
+
+  const required = params.map(toId);
+
+  return mergeSchemas($inputSchema, $outputSchema, props);
+
+  function mergeSchemas(inputScheme, outputSchema, properties) {
+    return {
+      inputSchema: {
+        ...inputScheme,
+        properties: {
+          ...inputScheme.properties,
+          ...properties,
+        },
+        required: [...(inputScheme.required || []), ...required],
+      },
+      outputSchema: outputSchema,
+    };
+  }
+
+  function toId(param) {
+    return `p-${param}`;
+  }
+
+  function toTitle(id) {
+    const spaced = id?.replace(/[_-]/g, " ");
+    return (
+      (spaced?.at(0)?.toUpperCase() ?? "") +
+      (spaced?.slice(1)?.toLowerCase() ?? "")
+    );
+  }
+
+  function textFromLLMContent(content) {
+    return content?.parts.map((item) => item.text).join("\n") || "";
+  }
+
+  function unique(params) {
+    return Array.from(new Set(params));
+  }
+
+  function collectParams(text) {
+    if (!text) return [];
+    const matches = text.matchAll(/{{(?<name>[\w-]+)}}/g);
+    return Array.from(matches).map((match) => match.groups?.name || "");
+  }
+}
+
+/**
+ * The guts of the "Content" component.
+ */
 function content({ template, context, ...inputs }) {
   const params = mergeParams(findParams(template));
   const values = collectValues(params, inputs);
@@ -344,5 +416,67 @@ function content({ template, context, ...inputs }) {
     if (!Array.isArray(nodeValue)) return false;
     if (nodeValue.length === 0) return true;
     return isLLMContent(nodeValue.at(-1));
+  }
+}
+
+/**
+ * The describer for the "Content" component.
+ */
+function describeContent({ $inputSchema, $outputSchema, template }) {
+  const params = unique([...collectParams(textFromLLMContent(template))]);
+
+  const props = Object.fromEntries(
+    params.map((param) => [
+      toId(param),
+      {
+        title: toTitle(param),
+        description: `The value to substitute for the parameter "${param}"`,
+        type: "string",
+      },
+    ])
+  );
+
+  const required = params.map(toId);
+
+  return mergeSchemas($inputSchema, $outputSchema, props);
+
+  function mergeSchemas(inputScheme, outputSchema, properties) {
+    return {
+      inputSchema: {
+        ...inputScheme,
+        properties: {
+          ...inputScheme.properties,
+          ...properties,
+        },
+        required: [...(inputScheme.required || []), ...required],
+      },
+      outputSchema: outputSchema,
+    };
+  }
+
+  function toId(param) {
+    return `p-${param}`;
+  }
+
+  function toTitle(id) {
+    const spaced = id?.replace(/[_-]/g, " ");
+    return (
+      (spaced?.at(0)?.toUpperCase() ?? "") +
+      (spaced?.slice(1)?.toLowerCase() ?? "")
+    );
+  }
+
+  function textFromLLMContent(content) {
+    return content?.parts.map((item) => item.text).join("\n") || "";
+  }
+
+  function unique(params) {
+    return Array.from(new Set(params));
+  }
+
+  function collectParams(text) {
+    if (!text) return [];
+    const matches = text.matchAll(/{{(?<name>[\w-]+)}}/g);
+    return Array.from(matches).map((match) => match.groups?.name || "");
   }
 }
