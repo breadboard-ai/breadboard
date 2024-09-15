@@ -575,6 +575,19 @@ export class GraphNode extends PIXI.Container {
     }
 
     this.#inPortsSortedByName.sort((portA, portB) => {
+      // This is a bit of a gross hack to group items.
+      // If the port name has dashes, it should be sorted to the bottom.
+      // Enables grouping ports a bit. Just add dashes to the port names to
+      // put them into a separate group.
+      // TODO: Come up with a better way to group ports.
+      const portAHasDashes = portA.port.name.includes("-");
+      const portBHasDashes = portB.port.name.includes("-");
+      if (portAHasDashes && !portBHasDashes) {
+        return 1;
+      }
+      if (!portAHasDashes && portBHasDashes) {
+        return -1;
+      }
       if (portA.label.text > portB.label.text) {
         return 1;
       }
