@@ -6,7 +6,9 @@
       "url": "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#specialist"
     },
     "comments": [],
-    "tags": ["experimental"]
+    "tags": [
+      "experimental"
+    ]
   },
   "description": "Given instructions on how to act, performs a single task, optionally invoking tools. Now with {{param}} support.",
   "edges": [
@@ -210,7 +212,9 @@
               "type": "array",
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               }
             }
           }
@@ -378,7 +382,9 @@
               "type": "array",
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "examples": []
             },
@@ -387,12 +393,18 @@
               "description": "(Optional) Provide a specific task with clear instructions for the worker to complete using the conversation context",
               "type": "object",
               "default": "{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}",
-              "behavior": ["llm-content", "config"],
+              "behavior": [
+                "llm-content",
+                "config"
+              ],
               "examples": []
             },
             "persona": {
               "type": "object",
-              "behavior": ["llm-content", "config"],
+              "behavior": [
+                "llm-content",
+                "config"
+              ],
               "title": "Persona",
               "description": "Describe the worker's skills, capabilities, mindset, and thinking process",
               "default": "{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}",
@@ -410,7 +422,9 @@
         },
         "title": "Context Input",
         "logLevel": "debug",
-        "tags": ["start"]
+        "tags": [
+          "start"
+        ]
       }
     },
     {
@@ -485,8 +499,12 @@
                 "gemini-1.5-pro-exp-0827"
               ],
               "default": "gemini-1.5-flash-latest",
-              "examples": ["gemini-1.5-flash-latest"],
-              "behavior": ["config"]
+              "examples": [
+                "gemini-1.5-flash-latest"
+              ],
+              "behavior": [
+                "config"
+              ]
             }
           }
         }
@@ -499,7 +517,9 @@
           "y": -186.99999999999994,
           "collapsed": "expanded"
         },
-        "tags": ["start"]
+        "tags": [
+          "start"
+        ]
       }
     },
     {
@@ -563,9 +583,13 @@
               "type": "array",
               "items": {
                 "type": "object",
-                "behavior": ["board"]
+                "behavior": [
+                  "board"
+                ]
               },
-              "behavior": ["config"],
+              "behavior": [
+                "config"
+              ],
               "default": "[]"
             }
           }
@@ -579,7 +603,9 @@
           "y": 202.00000000000023,
           "collapsed": "expanded"
         },
-        "tags": ["start"]
+        "tags": [
+          "start"
+        ]
       }
     },
     {
@@ -594,7 +620,9 @@
               "type": "array",
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               }
             }
           }
@@ -722,19 +750,25 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               }
             },
             "persona": {
               "type": "object",
-              "behavior": ["llm-content"],
+              "behavior": [
+                "llm-content"
+              ],
               "title": "Persona",
               "examples": [],
               "default": "null"
             },
             "task": {
               "type": "object",
-              "behavior": ["llm-content"],
+              "behavior": [
+                "llm-content"
+              ],
               "title": "Task",
               "examples": [],
               "default": "null"
@@ -743,7 +777,7 @@
           "type": "object",
           "required": []
         },
-        "code": "function substitute({ in: context, persona, task, ...inputs }) {\n  const params = mergeParams(findParams(persona), findParams(task));\n\n  // Make sure that all params are present in the values and collect\n  // them into a single object.\n  const values = {};\n  for (const param in params) {\n    const id = toId(param);\n    const value = inputs[id];\n    if (!value) {\n      const title = toTitle(param);\n      throw new Error(`Missing required parameter: ${title}`);\n    }\n    values[param] = value;\n  }\n\n  return {\n    in: context,\n    persona: subContent(persona, values),\n    task: subContent(task, values),\n  };\n\n  function unique(params) {\n    return Array.from(new Set(params));\n  }\n\n  function toId(param) {\n    return `p-${param}`;\n  }\n\n  function findParams(content) {\n    const parts = content?.parts;\n    if (!parts) return [];\n    const results = parts.flatMap((part) => {\n      const matches = part.text.matchAll(/{{(?<name>[\\w-]+)}}/g);\n      return unique(Array.from(matches))\n        .map((match) => {\n          const name = match.groups?.name || \"\";\n          if (!name) return null;\n          return { name, locations: [{ part, parts }] };\n        })\n        .filter(Boolean);\n    });\n    return results;\n  }\n\n  function mergeParams(...paramList) {\n    return paramList.reduce((acc, params) => {\n      for (const param of params) {\n        const { name, locations } = param;\n        const existing = acc[name];\n        if (existing) {\n          existing.push(...locations);\n        } else {\n          acc[name] = locations;\n        }\n      }\n      return acc;\n    }, {});\n  }\n\n  function subContent(content, values) {\n    return {\n      parts: mergeTextParts(\n        splitToTemplateParts(content).flatMap((part) => {\n          if (part.param) {\n            const value = values[part.param];\n            if (typeof value === \"string\") {\n              return { text: value };\n            } else if (isLLMContent(value)) {\n              return value.parts;\n            } else if (isLLMContentArray(value)) {\n              const last = value.at(-1);\n              return last.parts;\n            } else {\n              return { text: JSON.stringify(value) };\n            }\n          } else {\n            return part;\n          }\n        })\n      ),\n    };\n  }\n\n  function mergeTextParts(parts) {\n    const merged = [];\n    for (const part of parts) {\n      if (part.text) {\n        const last = merged[merged.length - 1];\n        if (last?.text) {\n          last.text += part.text;\n        } else {\n          merged.push(part);\n        }\n      } else {\n        merged.push(part);\n      }\n    }\n    return merged;\n  }\n\n  function toTitle(id) {\n    const spaced = id?.replace(/[_-]/g, \" \");\n    return (\n      (spaced?.at(0)?.toUpperCase() ?? \"\") +\n      (spaced?.slice(1)?.toLowerCase() ?? \"\")\n    );\n  }\n\n  /**\n   * Takes an LLM Content and splits it further into parts where\n   * each {{param}} substitution is a separate part.\n   */\n  function splitToTemplateParts(content) {\n    const parts = [];\n    for (const part of content.parts) {\n      const matches = part.text.matchAll(/{{(?<name>[\\w-]+)}}/g);\n      let start = 0;\n      for (const match of matches) {\n        const name = match.groups?.name || \"\";\n        const end = match.index;\n        if (end > start) {\n          parts.push({ text: part.text.slice(start, end) });\n        }\n        parts.push({ param: name });\n        start = end + match[0].length;\n      }\n      if (start < part.text.length) {\n        parts.push({ text: part.text.slice(start) });\n      }\n    }\n    return parts;\n  }\n\n  /**\n   * Copied from @google-labs/breadboard\n   */\n  function isLLMContent(nodeValue) {\n    if (typeof nodeValue !== \"object\" || !nodeValue) return false;\n    if (nodeValue === null || nodeValue === undefined) return false;\n\n    return \"parts\" in nodeValue && Array.isArray(nodeValue.parts);\n  }\n\n  function isLLMContentArray(nodeValue) {\n    if (!Array.isArray(nodeValue)) return false;\n    return isLLMContent(nodeValue.at(-1));\n  }\n}\n",
+        "code": "function substitute({ in: context, persona, task, ...inputs }) {\n  const params = mergeParams(findParams(persona), findParams(task));\n\n  // Make sure that all params are present in the values and collect\n  // them into a single object.\n  const values = collectValues(params, inputs);\n\n  return {\n    in: context,\n    persona: subContent(persona, values),\n    task: subContent(task, values),\n  };\n\n  function unique(params) {\n    return Array.from(new Set(params));\n  }\n\n  function toId(param) {\n    return `p-${param}`;\n  }\n\n  function findParams(content) {\n    const parts = content?.parts;\n    if (!parts) return [];\n    const results = parts.flatMap((part) => {\n      const matches = part.text.matchAll(/{{(?<name>[\\w-]+)}}/g);\n      return unique(Array.from(matches))\n        .map((match) => {\n          const name = match.groups?.name || \"\";\n          if (!name) return null;\n          return { name, locations: [{ part, parts }] };\n        })\n        .filter(Boolean);\n    });\n    return results;\n  }\n\n  function mergeParams(...paramList) {\n    return paramList.reduce((acc, params) => {\n      for (const param of params) {\n        const { name, locations } = param;\n        const existing = acc[name];\n        if (existing) {\n          existing.push(...locations);\n        } else {\n          acc[name] = locations;\n        }\n      }\n      return acc;\n    }, {});\n  }\n\n  function subContent(content, values) {\n    if (Array.isArray(content)) {\n      content = content.at(-1);\n    }\n    if (!content) return null;\n    return {\n      role: content.role || \"user\",\n      parts: mergeTextParts(\n        splitToTemplateParts(content).flatMap((part) => {\n          if (part.param) {\n            const value = values[part.param];\n            if (typeof value === \"string\") {\n              return { text: value };\n            } else if (isLLMContent(value)) {\n              return value.parts;\n            } else if (isLLMContentArray(value)) {\n              const last = value.at(-1);\n              return last.parts;\n            } else {\n              return { text: JSON.stringify(value) };\n            }\n          } else {\n            return part;\n          }\n        })\n      ),\n    };\n  }\n\n  function mergeTextParts(parts) {\n    const merged = [];\n    for (const part of parts) {\n      if (part.text) {\n        const last = merged[merged.length - 1];\n        if (last?.text) {\n          last.text += part.text;\n        } else {\n          merged.push(part);\n        }\n      } else {\n        merged.push(part);\n      }\n    }\n    return merged;\n  }\n\n  function toTitle(id) {\n    const spaced = id?.replace(/[_-]/g, \" \");\n    return (\n      (spaced?.at(0)?.toUpperCase() ?? \"\") +\n      (spaced?.slice(1)?.toLowerCase() ?? \"\")\n    );\n  }\n\n  /**\n   * Takes an LLM Content and splits it further into parts where\n   * each {{param}} substitution is a separate part.\n   */\n  function splitToTemplateParts(content) {\n    const parts = [];\n    for (const part of content.parts) {\n      const matches = part.text.matchAll(/{{(?<name>[\\w-]+)}}/g);\n      let start = 0;\n      for (const match of matches) {\n        const name = match.groups?.name || \"\";\n        const end = match.index;\n        if (end > start) {\n          parts.push({ text: part.text.slice(start, end) });\n        }\n        parts.push({ param: name });\n        start = end + match[0].length;\n      }\n      if (start < part.text.length) {\n        parts.push({ text: part.text.slice(start) });\n      }\n    }\n    return parts;\n  }\n\n  function collectValues(params, inputs) {\n    const values = {};\n    for (const param in params) {\n      const id = toId(param);\n      const value = inputs[id];\n      if (!value) {\n        const title = toTitle(param);\n        throw new Error(`Missing required parameter: ${title}`);\n      }\n      values[param] = value;\n    }\n    return values;\n  }\n\n  /**\n   * Copied from @google-labs/breadboard\n   */\n  function isLLMContent(nodeValue) {\n    if (typeof nodeValue !== \"object\" || !nodeValue) return false;\n    if (nodeValue === null || nodeValue === undefined) return false;\n\n    return \"parts\" in nodeValue && Array.isArray(nodeValue.parts);\n  }\n\n  function isLLMContentArray(nodeValue) {\n    if (!Array.isArray(nodeValue)) return false;\n    if (nodeValue.length === 0) return true;\n    return isLLMContent(nodeValue.at(-1));\n  }\n}",
         "name": "substitute",
         "raw": true
       }
@@ -862,7 +896,9 @@
               "properties": {
                 "item": {
                   "title": "Board",
-                  "behavior": ["board"],
+                  "behavior": [
+                    "board"
+                  ],
                   "description": "The board to curry. Can be a BoardCapability, a graph or a URL",
                   "type": "string"
                 },
@@ -871,7 +907,10 @@
                   "title": "context"
                 }
               },
-              "required": ["item", "context"]
+              "required": [
+                "item",
+                "context"
+              ]
             }
           },
           "metadata": {
@@ -882,7 +921,9 @@
             },
             "title": "Context Input",
             "logLevel": "debug",
-            "tags": ["start"]
+            "tags": [
+              "start"
+            ]
           }
         }
       ],
@@ -1042,7 +1083,9 @@
                   "title": "item"
                 }
               },
-              "required": ["item"]
+              "required": [
+                "item"
+              ]
             }
           },
           "metadata": {
@@ -1053,7 +1096,9 @@
             },
             "title": "Context Input",
             "logLevel": "debug",
-            "tags": ["start"]
+            "tags": [
+              "start"
+            ]
           }
         },
         {

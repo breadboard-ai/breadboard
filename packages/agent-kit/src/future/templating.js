@@ -64,6 +64,11 @@ function substitute({ in: context, persona, task, ...inputs }) {
 
   function subContent(content, values) {
     if (!content) return null;
+    // If this is an array, optimistically presume this is an LLM Content array.
+    // Take the last item and use it as the content.
+    if (Array.isArray(content)) {
+      content = content.at(-1);
+    }
     return {
       role: content.role || "user",
       parts: mergeTextParts(
