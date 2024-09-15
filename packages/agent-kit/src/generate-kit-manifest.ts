@@ -19,6 +19,7 @@ import looper from "./boards/looper.js";
 import joiner from "./boards/joiner.js";
 import { serialize } from "@breadboard-ai/build";
 import content from "../bgl/content.bgl.json" with { type: "application/json" };
+import specialist2 from "../bgl/specialist-2.bgl.json" with { type: "application/json" };
 
 const MANIFEST_NAME = "agent.kit.json";
 
@@ -37,6 +38,7 @@ const manifest: KitManifest = {
     repeater: serialize(repeater),
     structuredWorker: serialize(structuredWorker),
     specialist,
+    specialist2: specialist2 as GraphDescriptor,
     worker: serialize(worker),
     looper: serialize(looper),
     joiner: serialize(joiner),

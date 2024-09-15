@@ -59,6 +59,7 @@
       ],
       "files": [
         "src/**/*.ts",
+        "src/future/*.js",
         "bgl/*.bgl.json",
         "!src/samples/**/*.ts",
         "tests/**/*.ts",

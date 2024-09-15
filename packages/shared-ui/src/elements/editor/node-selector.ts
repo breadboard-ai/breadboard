@@ -288,11 +288,20 @@ export class NodeSelector extends LitElement {
         continue;
       }
 
-      const typeMetadata = await Promise.all(
-        kit.nodeTypes.map(async (node) => {
-          return { id: node.type(), metadata: await node.metadata() };
-        })
-      );
+      const typeMetadata = (
+        await Promise.all(
+          kit.nodeTypes.map(async (node) => {
+            const metadata = await node.metadata();
+            if (
+              !this.showExperimentalComponents &&
+              metadata.tags?.includes("experimental")
+            ) {
+              return null;
+            }
+            return { id: node.type(), metadata: await node.metadata() };
+          })
+        )
+      ).filter(Boolean) as { id: string; metadata: NodeHandlerMetadata }[];
 
       const available = typeMetadata.filter(
         ({ metadata }) => !metadata.deprecated

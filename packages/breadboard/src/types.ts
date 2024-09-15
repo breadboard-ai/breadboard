@@ -313,6 +313,10 @@ export type NodeHandlerMetadata = {
    * Whether or not the node is deprecated.
    */
   deprecated?: boolean;
+  /*
+   * The tags associated with the node.
+   */
+  tags?: string[];
   /**
    * The documentation for the graph, expressed as a URL and optional description.
    */
