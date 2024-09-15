@@ -275,8 +275,9 @@ export type GraphInlineMetadata = {
  * - `published`: The graph is published (as opposed to a draft). It may be
  *    used in production and shared with others.
  * - `tool`: The graph is intended to be a tool.
+ * - `experimental`: The graph is experimental and may not be stable.
  */
-export type GraphTag = "published" | "tool";
+export type GraphTag = "published" | "tool" | "experimental";
 
 /**
  * Represents graph metadata.

@@ -5,10 +5,7 @@
     "help": {
       "url": "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#specialist"
     },
-    "comments": [],
-    "tags": [
-      "experimental"
-    ]
+    "comments": []
   },
   "description": "Given instructions on how to act, performs a single task, optionally invoking tools. Now with {{param}} support.",
   "edges": [
@@ -212,9 +209,7 @@
               "type": "array",
               "items": {
                 "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
+                "behavior": ["llm-content"]
               }
             }
           }
@@ -382,9 +377,7 @@
               "type": "array",
               "items": {
                 "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
+                "behavior": ["llm-content"]
               },
               "examples": []
             },
@@ -393,18 +386,12 @@
               "description": "(Optional) Provide a specific task with clear instructions for the worker to complete using the conversation context",
               "type": "object",
               "default": "{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}",
-              "behavior": [
-                "llm-content",
-                "config"
-              ],
+              "behavior": ["llm-content", "config"],
               "examples": []
             },
             "persona": {
               "type": "object",
-              "behavior": [
-                "llm-content",
-                "config"
-              ],
+              "behavior": ["llm-content", "config"],
               "title": "Persona",
               "description": "Describe the worker's skills, capabilities, mindset, and thinking process",
               "default": "{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}",
@@ -422,9 +409,7 @@
         },
         "title": "Context Input",
         "logLevel": "debug",
-        "tags": [
-          "start"
-        ]
+        "tags": ["start"]
       }
     },
     {
@@ -499,12 +484,8 @@
                 "gemini-1.5-pro-exp-0827"
               ],
               "default": "gemini-1.5-flash-latest",
-              "examples": [
-                "gemini-1.5-flash-latest"
-              ],
-              "behavior": [
-                "config"
-              ]
+              "examples": ["gemini-1.5-flash-latest"],
+              "behavior": ["config"]
             }
           }
         }
@@ -517,9 +498,7 @@
           "y": -186.99999999999994,
           "collapsed": "expanded"
         },
-        "tags": [
-          "start"
-        ]
+        "tags": ["start"]
       }
     },
     {
@@ -583,13 +562,9 @@
               "type": "array",
               "items": {
                 "type": "object",
-                "behavior": [
-                  "board"
-                ]
+                "behavior": ["board"]
               },
-              "behavior": [
-                "config"
-              ],
+              "behavior": ["config"],
               "default": "[]"
             }
           }
@@ -603,9 +578,7 @@
           "y": 202.00000000000023,
           "collapsed": "expanded"
         },
-        "tags": [
-          "start"
-        ]
+        "tags": ["start"]
       }
     },
     {
@@ -620,9 +593,7 @@
               "type": "array",
               "items": {
                 "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
+                "behavior": ["llm-content"]
               }
             }
           }
@@ -750,25 +721,19 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
+                "behavior": ["llm-content"]
               }
             },
             "persona": {
               "type": "object",
-              "behavior": [
-                "llm-content"
-              ],
+              "behavior": ["llm-content"],
               "title": "Persona",
               "examples": [],
               "default": "null"
             },
             "task": {
               "type": "object",
-              "behavior": [
-                "llm-content"
-              ],
+              "behavior": ["llm-content"],
               "title": "Task",
               "examples": [],
               "default": "null"
@@ -896,9 +861,7 @@
               "properties": {
                 "item": {
                   "title": "Board",
-                  "behavior": [
-                    "board"
-                  ],
+                  "behavior": ["board"],
                   "description": "The board to curry. Can be a BoardCapability, a graph or a URL",
                   "type": "string"
                 },
@@ -907,10 +870,7 @@
                   "title": "context"
                 }
               },
-              "required": [
-                "item",
-                "context"
-              ]
+              "required": ["item", "context"]
             }
           },
           "metadata": {
@@ -921,9 +881,7 @@
             },
             "title": "Context Input",
             "logLevel": "debug",
-            "tags": [
-              "start"
-            ]
+            "tags": ["start"]
           }
         }
       ],
@@ -1083,9 +1041,7 @@
                   "title": "item"
                 }
               },
-              "required": [
-                "item"
-              ]
+              "required": ["item"]
             }
           },
           "metadata": {
@@ -1096,9 +1052,7 @@
             },
             "title": "Context Input",
             "logLevel": "debug",
-            "tags": [
-              "start"
-            ]
+            "tags": ["start"]
           }
         },
         {
