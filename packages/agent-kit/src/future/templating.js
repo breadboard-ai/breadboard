@@ -63,6 +63,7 @@ function substitute({ in: context, persona, task, ...inputs }) {
   }
 
   function subContent(content, values) {
+    if (!content) return null;
     return {
       role: content.role || "user",
       parts: mergeTextParts(
@@ -275,6 +276,7 @@ function content({ template, context, ...inputs }) {
   }
 
   function subContent(content, values) {
+    if (!content) return null;
     return {
       role: content.role || "user",
       parts: mergeTextParts(

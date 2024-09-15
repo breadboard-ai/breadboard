@@ -183,6 +183,15 @@ describe("Content component", () => {
     });
   });
 
+  it("handles empty template", () => {
+    const context = [llmContent("user", "You're a wizard, Harry.")];
+    const template = undefined;
+    const result = content({ context, template });
+    deepStrictEqual(result, {
+      context: [llmContent("user", "You're a wizard, Harry.")],
+    });
+  });
+
   it("does simple substitution", () => {
     const context: LLMContent[] = [];
     const template = llmContent("user", "Act like a {{role}}.");
