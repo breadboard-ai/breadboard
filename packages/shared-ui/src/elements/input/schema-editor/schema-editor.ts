@@ -955,7 +955,9 @@ export class SchemaEditor extends LitElement {
         if (inConfig) {
           if (inConfig.checked) {
             property.behavior = property.behavior || [];
-            property.behavior.push("config");
+            if (!property.behavior.includes("config")) {
+              property.behavior.push("config");
+            }
           } else {
             property.behavior = property.behavior?.filter(
               (item) => item !== "config"
