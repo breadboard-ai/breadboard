@@ -89,7 +89,7 @@
       "metadata": {
         "visual": {
           "x": 8,
-          "y": -259,
+          "y": -259.0000000000001,
           "collapsed": "expanded"
         },
         "title": "Substitute Placeholders",
