@@ -11,7 +11,7 @@ import {
   InspectableRunObserver,
   Kit,
 } from "@google-labs/breadboard";
-import { Tab, TabId } from "./types";
+import { Tab, TabId, TabType } from "./types";
 import {
   RuntimeBoardLoadErrorEvent,
   RuntimeErrorEvent,
@@ -104,14 +104,14 @@ export class Board extends EventTarget {
       .join("");
   }
 
-  async loadFromDescriptor(
+  async createTabFromRun(
     descriptor: GraphDescriptor,
     topGraphObserver?: BreadboardUI.Utils.TopGraphObserver,
     runObserver?: InspectableRunObserver,
     readOnly = true
   ) {
     const descriptorUrl = await this.#toDigest(descriptor);
-    descriptor.url = `descriptor://${descriptorUrl}`;
+    descriptor.url = `run://${descriptorUrl}`;
 
     for (const [id, tab] of this.#tabs) {
       if (tab.graph.url !== descriptor.url) {
@@ -131,6 +131,7 @@ export class Board extends EventTarget {
       graph: descriptor,
       subGraphId: null,
       version: 1,
+      type: TabType.DESCRIPTOR,
       readOnly,
     });
 
@@ -140,7 +141,43 @@ export class Board extends EventTarget {
     );
   }
 
-  async loadFromURL(
+  async createTabFromDescriptor(
+    descriptor: GraphDescriptor,
+    createNewTab = false
+  ) {
+    const descriptorUrl = await this.#toDigest(descriptor);
+    descriptor.url = `descriptor://${descriptorUrl}`;
+
+    // Re-use an existing tab if possible.
+    if (!createNewTab) {
+      for (const [id, tab] of this.#tabs) {
+        if (tab.graph.url !== descriptor.url) {
+          continue;
+        }
+
+        this.#currentTabId = id;
+        this.dispatchEvent(new RuntimeTabChangeEvent());
+        return;
+      }
+    }
+
+    const id = globalThis.crypto.randomUUID();
+    this.#tabs.set(id, {
+      id,
+      kits: this.kits,
+      name: descriptor.title ?? "Untitled board",
+      graph: descriptor,
+      subGraphId: null,
+      version: 1,
+      type: TabType.DESCRIPTOR,
+      readOnly: false,
+    });
+
+    this.#currentTabId = id;
+    this.dispatchEvent(new RuntimeTabChangeEvent());
+  }
+
+  async createTabFromURL(
     boardUrl: string,
     currentUrl: string | null = null,
     createNewTab = false,
@@ -202,6 +239,7 @@ export class Board extends EventTarget {
         name: graph.title ?? "Untitled board",
         graph,
         subGraphId: null,
+        type: TabType.URL,
         version: 1,
         readOnly,
       });

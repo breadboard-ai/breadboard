@@ -1463,7 +1463,7 @@ export class Editor extends LitElement {
 
     return html`${until(this.#processGraph())}
       ${
-        this.showControls && this.graph !== null
+        this.showControls && this.graph !== null && !this.readOnly
           ? html` <div id="controls">
                 <button
                   title="Zoom to fit"
