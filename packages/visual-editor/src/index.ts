@@ -37,6 +37,7 @@ import { SettingsHelperImpl } from "./utils/settings-helper";
 import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
 import { TabId } from "./runtime/types";
+import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 
 const STORAGE_PREFIX = "bb-main";
 
@@ -1676,6 +1677,10 @@ export class Main extends LitElement {
                   return;
                 }
 
+                const metadata =
+                  (this.#runtime.edit.getNodeConfiguration(this.tab, evt.id)
+                    ?.metadata as NodeMetadata) || null;
+
                 this.showNodeConfigurator = evt.port !== null;
                 this.#nodeConfiguratorData = {
                   id: evt.id,
@@ -1685,6 +1690,7 @@ export class Main extends LitElement {
                   selectedPort: evt.port?.title ?? null,
                   subGraphId: evt.subGraphId,
                   ports,
+                  metadata,
                 };
               }}
               @bbedgevalueselected=${(
