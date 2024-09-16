@@ -6,21 +6,30 @@
 
 import { InspectablePort, PortStatus } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
-import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
+import {
+  ComponentExpansionState,
+  GRAPH_OPERATIONS,
+  GraphNodePortType,
+} from "./types.js";
 import { GraphNodePort } from "./graph-node-port.js";
 import { GraphOverflowMenu } from "./graph-overflow-menu.js";
 import { GraphAssets } from "./graph-assets.js";
-import { DBL_CLICK_DELTA, getGlobalColor } from "./utils.js";
+import {
+  computeNextExpansionState,
+  DBL_CLICK_DELTA,
+  getGlobalColor,
+} from "./utils.js";
+import { GraphNodeFooter } from "./graph-node-footer.js";
+import { GraphPortLabel as GraphNodePortLabel } from "./graph-port-label.js";
+import { GraphNodeActivityMarker } from "./graph-node-activity-marker.js";
+import { ComponentActivityItem } from "../../types/types.js";
 
 const borderColor = getGlobalColor("--bb-neutral-500");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
+const segmentDividerColor = getGlobalColor("--bb-neutral-300");
 
-const defaultNodeColor = getGlobalColor("--bb-nodes-100");
-const inputNodeColor = getGlobalColor("--bb-inputs-100");
-const secretNodeColor = getGlobalColor("--bb-inputs-100");
 const selectedNodeColor = getGlobalColor("--bb-ui-600");
 const highlightForAdHocNodeColor = getGlobalColor("--bb-boards-500");
-const outputNodeColor = getGlobalColor("--bb-boards-200");
 
 const ICON_SCALE = 0.42;
 
@@ -33,31 +42,43 @@ export class GraphNode extends PIXI.Container {
   #type = "";
   #title = "";
   #titleText: PIXI.Text | null = null;
+  #typeTitle: string;
   #borderRadius = 8;
   #color = nodeTextColor;
+
   #titleTextColor = nodeTextColor;
+  #titleTextSize = 14;
+
   #portTextColor = nodeTextColor;
   #borderColor = borderColor;
+  #segmentDividerColor = segmentDividerColor;
   #selectedColor = selectedNodeColor;
   #highlightForAdHocColor = highlightForAdHocNodeColor;
   #textSize = 12;
   #backgroundColor = 0x333333;
-  #padding = 10;
-  #menuPadding = 4;
+  #padding = 12;
+  #activityPadding = 20;
+  #menuPadding = 8;
   #iconPadding = 8;
-  #portLabelVerticalPadding = 5;
+  #portLabelVerticalPadding = 4;
   #portLabelHorizontalPadding = 20;
-  #portPadding = 6;
-  #portRadius = 3;
+  #portPadding = 8;
+  #portRadius = 4;
   #background = new PIXI.Graphics();
+  #footer = new GraphNodeFooter();
+  #activityMarker = new GraphNodeActivityMarker();
   #inPorts: InspectablePort[] | null = null;
   #inPortsData: Map<
     string,
-    { port: InspectablePort; label: PIXI.Text; nodePort: GraphNodePort } | null
+    {
+      port: InspectablePort;
+      label: GraphNodePortLabel;
+      nodePort: GraphNodePort;
+    } | null
   > = new Map();
   #inPortsSortedByName: Array<{
     port: InspectablePort;
-    label: PIXI.Text;
+    label: GraphNodePortLabel;
     nodePort: GraphNodePort;
   }> = [];
   #outPorts: InspectablePort[] | null = null;
@@ -74,9 +95,10 @@ export class GraphNode extends PIXI.Container {
   #outPortLocations: Map<string, PIXI.ObservablePoint> = new Map();
   #selected = false;
   #highlightForAdHoc = false;
-  #collapsed = false;
+  #expansionState: ComponentExpansionState = "expanded";
   #emitCollapseToggleEventOnNextDraw = false;
 
+  #showNodePreviewValues = false;
   #showNodeTypeDescriptions = false;
   #overflowMenu = new GraphOverflowMenu();
   #headerInPort = new GraphNodePort(GraphNodePortType.IN);
@@ -84,6 +106,7 @@ export class GraphNode extends PIXI.Container {
   #lastClickTime = 0;
   #icon: string | null = null;
   #iconSprite: PIXI.Sprite | null = null;
+  #activity: ComponentActivityItem[] | null = null;
 
   readOnly = false;
 
@@ -91,6 +114,7 @@ export class GraphNode extends PIXI.Container {
     id: string,
     type: string,
     title: string,
+    typeTitle: string,
     public fixedInputs = true,
     public fixedOutputs = true
   ) {
@@ -99,24 +123,7 @@ export class GraphNode extends PIXI.Container {
     this.title = title;
     this.id = id;
     this.type = type;
-
-    switch (type) {
-      case "input":
-        this.color = inputNodeColor;
-        break;
-
-      case "secrets":
-        this.color = secretNodeColor;
-        break;
-
-      case "output":
-        this.color = outputNodeColor;
-        break;
-
-      default:
-        this.color = defaultNodeColor;
-        break;
-    }
+    this.#typeTitle = typeTitle;
 
     this.backgroundColor = 0xffffff;
     this.portTextColor = nodeTextColor;
@@ -127,6 +134,8 @@ export class GraphNode extends PIXI.Container {
     this.addChild(this.#background);
     this.addChild(this.#headerInPort);
     this.addChild(this.#headerOutPort);
+    this.addChild(this.#footer);
+    this.addChild(this.#activityMarker);
 
     this.#headerInPort.label = "_header-port-in";
     this.#headerOutPort.label = "_header-port-out";
@@ -137,6 +146,29 @@ export class GraphNode extends PIXI.Container {
       GRAPH_OPERATIONS.GRAPH_NODE_MENU_CLICKED,
       (location: PIXI.ObservablePoint) => {
         this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MENU_REQUESTED, this, location);
+      }
+    );
+
+    this.#activityMarker.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_ACTIVITY_SELECTED,
+      (...args: unknown[]) => {
+        this.emit(
+          GRAPH_OPERATIONS.GRAPH_NODE_ACTIVITY_SELECTED,
+          this.title,
+          ...args
+        );
+      }
+    );
+
+    this.#footer.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
+      (...args: unknown[]) => {
+        // Propagate to the parent graph.
+        this.emit(
+          GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
+          this.label,
+          ...args
+        );
       }
     );
 
@@ -192,7 +224,7 @@ export class GraphNode extends PIXI.Container {
         return;
       }
 
-      this.collapsed = !this.collapsed;
+      this.expansionState = computeNextExpansionState(this.expansionState);
       this.#lastClickTime = 0;
     });
 
@@ -272,6 +304,15 @@ export class GraphNode extends PIXI.Container {
     this.#isDirty = true;
   }
 
+  get borderColor() {
+    return this.#borderColor;
+  }
+
+  set borderColor(borderColor: number) {
+    this.#borderColor = borderColor;
+    this.#isDirty = true;
+  }
+
   get icon() {
     return this.#icon;
   }
@@ -293,6 +334,19 @@ export class GraphNode extends PIXI.Container {
     }
 
     this.#isDirty = true;
+  }
+
+  set showNodePreviewValues(showNodePreviewValues: boolean) {
+    if (this.#showNodePreviewValues === showNodePreviewValues) {
+      return;
+    }
+
+    this.#showNodePreviewValues = showNodePreviewValues;
+    this.#isDirty = true;
+  }
+
+  get showNodePreviewValues() {
+    return this.#showNodePreviewValues;
   }
 
   set showNodeTypeDescriptions(showNodeTypeDescriptions: boolean) {
@@ -330,14 +384,18 @@ export class GraphNode extends PIXI.Container {
     this.#isDirty = true;
   }
 
-  get collapsed() {
-    return this.#collapsed;
+  get expansionState() {
+    return this.#expansionState;
   }
 
-  set collapsed(collapsed: boolean) {
-    this.#collapsed = collapsed;
+  set expansionState(state: ComponentExpansionState) {
+    this.#expansionState = state;
     this.#emitCollapseToggleEventOnNextDraw = true;
     this.#isDirty = true;
+  }
+
+  get collapsed() {
+    return this.#expansionState === "collapsed";
   }
 
   get type() {
@@ -365,6 +423,17 @@ export class GraphNode extends PIXI.Container {
 
   get color() {
     return this.#color;
+  }
+
+  set activity(activity: ComponentActivityItem[] | null) {
+    this.#activity = activity;
+    this.#activityMarker.activity = this.#activity;
+
+    this.#isDirty = true;
+  }
+
+  get activity() {
+    return this.#activity;
   }
 
   set titleTextColor(titleTextColor: number) {
@@ -426,6 +495,8 @@ export class GraphNode extends PIXI.Container {
   }
 
   set inPorts(ports: InspectablePort[] | null) {
+    this.#footer.readOnly = this.readOnly;
+    this.#footer.inPorts = ports;
     this.#inPorts = ports;
     this.#isDirty = true;
     if (!ports) {
@@ -435,15 +506,18 @@ export class GraphNode extends PIXI.Container {
     for (const port of ports) {
       let portItem = this.#inPortsData.get(port.name);
       if (!portItem) {
-        const label = new PIXI.Text({
-          text: port.title,
-          style: {
-            fontFamily: "Arial",
-            fontSize: this.#textSize,
-            fill: this.#portTextColor,
-            align: "left",
-          },
-        });
+        const label = new GraphNodePortLabel(port, this.#showNodePreviewValues);
+        label.on(
+          GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
+          (...args: unknown[]) => {
+            // Propagate to the parent graph.
+            this.emit(
+              GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
+              this.label,
+              ...args
+            );
+          }
+        );
 
         this.addChild(label);
         label.visible = false;
@@ -465,6 +539,7 @@ export class GraphNode extends PIXI.Container {
             event.client
           );
         });
+
         nodePort.addEventListener("mouseleave", (event) => {
           this.emit(
             GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSELEAVE,
@@ -474,17 +549,17 @@ export class GraphNode extends PIXI.Container {
         });
       }
 
-      if (portItem.label.text !== port.title) {
-        portItem.label.text = port.title;
-      }
-
+      portItem.label.readOnly = this.readOnly;
+      portItem.label.showNodePreviewValues = this.showNodePreviewValues;
+      portItem.label.port = port;
       portItem.port = port;
+      portItem.nodePort.readOnly = this.readOnly;
     }
 
     for (const [inPortName, portItem] of this.#inPortsData) {
       if (!ports.find((inPort) => inPort.name === inPortName)) {
         portItem?.label.removeFromParent();
-        portItem?.label?.destroy();
+        portItem?.label.destroy();
 
         portItem?.nodePort.removeFromParent();
         portItem?.nodePort.destroy();
@@ -503,6 +578,19 @@ export class GraphNode extends PIXI.Container {
     }
 
     this.#inPortsSortedByName.sort((portA, portB) => {
+      // This is a bit of a gross hack to group items.
+      // If the port name has dashes, it should be sorted to the bottom.
+      // Enables grouping ports a bit. Just add dashes to the port names to
+      // put them into a separate group.
+      // TODO: Come up with a better way to group ports.
+      const portAHasDashes = portA.port.name.includes("-");
+      const portBHasDashes = portB.port.name.includes("-");
+      if (portAHasDashes && !portBHasDashes) {
+        return 1;
+      }
+      if (!portAHasDashes && portBHasDashes) {
+        return -1;
+      }
       if (portA.label.text > portB.label.text) {
         return 1;
       }
@@ -545,14 +633,14 @@ export class GraphNode extends PIXI.Container {
         portItem = { label, port, nodePort };
         this.#outPortsData.set(port.name, portItem);
 
-        nodePort.addEventListener("mouseover", (event) => {
+        nodePort.addEventListener("pointerover", (event) => {
           this.emit(
             GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSEENTER,
             this.#outPortsData.get(port.name)?.port,
             event.client
           );
         });
-        nodePort.addEventListener("mouseleave", (event) => {
+        nodePort.addEventListener("pointerleave", (event) => {
           this.emit(
             GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSELEAVE,
             this.#outPortsData.get(port.name)?.port,
@@ -609,7 +697,7 @@ export class GraphNode extends PIXI.Container {
   }
 
   #createTitleTextIfNeeded() {
-    const nodeTitle = `${this.#title}${this.showNodeTypeDescriptions ? ` (${this.#type})` : ""}`;
+    const nodeTitle = `${this.#title}${this.showNodeTypeDescriptions ? ` (${this.#typeTitle})` : ""}`;
     if (this.#titleText) {
       if (this.#titleText.text !== nodeTitle) {
         this.#titleText.text = nodeTitle;
@@ -621,7 +709,7 @@ export class GraphNode extends PIXI.Container {
       text: nodeTitle,
       style: {
         fontFamily: "Arial",
-        fontSize: this.#textSize,
+        fontSize: this.#titleTextSize,
         fill: this.#titleTextColor,
         align: "left",
       },
@@ -643,15 +731,16 @@ export class GraphNode extends PIXI.Container {
   }
 
   #updateDimensions() {
-    const portRowHeight = this.#textSize + 2 * this.#portLabelVerticalPadding;
     const portCount = Math.max(this.#inPortsData.size, this.#outPortsData.size);
+    const footerEmpty = this.#footer.empty;
+    const footerDimensions = this.#footer.dimensions;
 
     // Height calculations.
     let height = this.#padding + (this.#titleText?.height || 0) + this.#padding;
 
     // Only add the port heights on when the node is expanded.
-    if (!this.collapsed) {
-      height += this.#padding + portCount * portRowHeight + this.#padding;
+    if (this.collapsed && !footerEmpty) {
+      height += footerDimensions.height;
     }
 
     // Width calculations.
@@ -659,25 +748,70 @@ export class GraphNode extends PIXI.Container {
       this.#padding +
       (this.#icon ? (this.#iconSprite?.width || 0) + this.#iconPadding : 0) +
       (this.#titleText?.width || 0) +
-      this.#padding +
+      this.#activityPadding +
+      this.#activityMarker.dimensions.width +
+      this.#menuPadding +
       GraphOverflowMenu.width +
       this.#menuPadding;
+
     const inPortLabels = Array.from(this.#inPortsData.values());
     const outPortLabels = Array.from(this.#outPortsData.values());
-    for (let p = 0; p < portCount; p++) {
-      const inPortWidth = inPortLabels[p]?.label.width || 0;
-      const outPortWidth = outPortLabels[p]?.label.width || 0;
 
-      width = Math.max(
-        width,
-        this.#padding + // Left hand side.
-          this.#portPadding + // Left hand port padding on right.
-          inPortWidth + // Left label at this row.
-          2 * this.#portLabelHorizontalPadding + // Port label padding for both sides.
-          outPortWidth + // Right label at this row.
-          this.#portPadding + // Right hand port padding on right.
-          this.#padding // Right hand side padding.
-      );
+    let maxInPortWidth = 0;
+    let inPortHeight = 0;
+    for (const inPort of inPortLabels) {
+      if (!inPort) {
+        continue;
+      }
+
+      maxInPortWidth = Math.max(maxInPortWidth, inPort.label.dimensions.width);
+      if (this.collapsed || this.#shouldHidePort(inPort.port)) {
+        continue;
+      }
+
+      inPortHeight +=
+        this.#portLabelVerticalPadding +
+        inPort.label.dimensions.height +
+        this.#portLabelVerticalPadding;
+    }
+
+    let maxOutPortWidth = 0;
+    let outPortHeight = 0;
+    for (const outPort of outPortLabels) {
+      if (!outPort) {
+        continue;
+      }
+
+      maxOutPortWidth = Math.max(maxOutPortWidth, outPort.label.width);
+      if (this.collapsed || this.#shouldHidePort(outPort.port)) {
+        continue;
+      }
+
+      outPortHeight +=
+        this.#portLabelVerticalPadding +
+        outPort.label.height +
+        this.#portLabelVerticalPadding;
+    }
+
+    width = Math.max(
+      width,
+      this.#padding + // Left hand side.
+        this.#portPadding + // Left hand port padding on right.
+        maxInPortWidth + // Left label at this row.
+        2 * this.#portLabelHorizontalPadding + // Port label padding for both sides.
+        maxOutPortWidth + // Right label at this row.
+        this.#portPadding + // Right hand port padding on right.
+        this.#padding // Right hand side padding.
+    );
+
+    height += Math.max(inPortHeight, outPortHeight);
+
+    if (!this.collapsed && portCount > 0) {
+      height += 2 * this.#padding;
+    }
+
+    if (!footerEmpty && footerDimensions.width > width) {
+      width = footerDimensions.width;
     }
 
     this.#width = width;
@@ -698,6 +832,30 @@ export class GraphNode extends PIXI.Container {
       this.#hideHeaderPorts();
     }
     this.#drawOverflowMenu();
+    this.#drawActivityMarker();
+    this.#drawFooterIfNeeded();
+  }
+
+  #drawActivityMarker() {
+    const titleHeight =
+      this.#padding + (this.#titleText?.height || 0) + this.#padding;
+
+    const activityMarkerDimensions = this.#activityMarker.dimensions;
+
+    this.#activityMarker.x =
+      this.#width -
+      this.#activityMarker.dimensions.width -
+      this.#menuPadding -
+      GraphOverflowMenu.width -
+      this.#menuPadding;
+
+    this.#activityMarker.y =
+      (titleHeight - activityMarkerDimensions.height) * 0.5;
+  }
+
+  #drawFooterIfNeeded() {
+    this.#footer.visible = this.collapsed;
+    this.#footer.y = this.#height - this.#footer.dimensions.height;
   }
 
   #drawOverflowMenu() {
@@ -870,28 +1028,24 @@ export class GraphNode extends PIXI.Container {
     this.#background.closePath();
     this.#background.fill({ color: this.#backgroundColor });
 
-    if (this.#titleText) {
+    if (this.#titleText && !this.collapsed) {
       const titleHeight =
         this.#padding + this.#titleText.height + this.#padding;
       this.#background.beginPath();
-      this.#background.roundRect(
-        0,
-        0,
-        this.#width,
-        titleHeight,
-        this.#borderRadius
-      );
-
-      if (!this.collapsed) {
-        this.#background.rect(
-          0,
-          titleHeight - 2 * this.#borderRadius,
-          this.#width,
-          2 * this.#borderRadius
-        );
-      }
+      this.#background.moveTo(0, titleHeight);
+      this.#background.lineTo(this.#width, titleHeight);
       this.#background.closePath();
-      this.#background.fill({ color: this.#color });
+      this.#background.stroke({ color: this.#segmentDividerColor });
+    }
+
+    if (this.collapsed && !this.#footer.empty) {
+      const footerDimensions = this.#footer.dimensions;
+      const y = this.#height - footerDimensions.height;
+      this.#background.beginPath();
+      this.#background.moveTo(0, y);
+      this.#background.lineTo(this.#width, y);
+      this.#background.closePath();
+      this.#background.stroke({ color: this.#segmentDividerColor });
     }
   }
 
@@ -926,15 +1080,17 @@ export class GraphNode extends PIXI.Container {
 
   #drawInPorts(portStartY = 0) {
     this.#inPortLocations.clear();
-    const portRowHeight = this.#textSize + 2 * this.#portLabelVerticalPadding;
 
     let portY = portStartY;
     for (const portItem of this.#inPortsSortedByName) {
+      if (this.#shouldHidePort(portItem.port)) {
+        continue;
+      }
       const { port, label, nodePort } = portItem;
       nodePort.label = port.name;
       nodePort.radius = this.#portRadius;
       nodePort.x = 0;
-      nodePort.y = portY + label.height * 0.5;
+      nodePort.y = portY + this.#textSize * 0.5 + 0.5;
       nodePort.overrideStatus = null;
       nodePort.status = port.status;
       nodePort.configured = port.configured && port.edges.length === 0;
@@ -944,10 +1100,9 @@ export class GraphNode extends PIXI.Container {
 
       label.x = nodePort.x + this.#portRadius + this.#portPadding;
       label.y = portY;
-      label.eventMode = "none";
       label.visible = true;
 
-      portY += portRowHeight;
+      portY += label.dimensions.height + 2 * this.#portLabelVerticalPadding;
     }
   }
 
@@ -957,6 +1112,10 @@ export class GraphNode extends PIXI.Container {
 
     let portY = portStartY;
     for (const portItem of this.#outPortsSortedByName) {
+      if (this.#shouldHidePort(portItem.port, "$error")) {
+        continue;
+      }
+
       const { port, label, nodePort } = portItem;
       nodePort.label = port.name;
       nodePort.radius = this.#portRadius;
@@ -979,7 +1138,7 @@ export class GraphNode extends PIXI.Container {
   }
 
   inPortLocation(name: string): PIXI.ObservablePoint | null {
-    if (this.collapsed) {
+    if (this.expansionState === "collapsed") {
       return this.#headerInPort.position;
     }
 
@@ -987,10 +1146,27 @@ export class GraphNode extends PIXI.Container {
   }
 
   outPortLocation(name: string): PIXI.ObservablePoint | null {
-    if (this.collapsed) {
+    if (this.expansionState === "collapsed") {
       return this.#headerOutPort.position;
     }
 
     return this.#outPortLocations.get(name) || null;
+  }
+
+  #shouldHidePort(port: InspectablePort | undefined, ...exclude: string[]) {
+    if (!port) return true;
+    if (this.expansionState === "advanced") {
+      return false;
+    }
+    if (port.status === PortStatus.Connected) {
+      return false;
+    }
+    if (port.star || port.name === "") {
+      return true;
+    }
+    if (exclude.includes(port.name)) {
+      return true;
+    }
+    return false;
   }
 }

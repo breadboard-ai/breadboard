@@ -3,7 +3,14 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
+import {
+  LitElement,
+  html,
+  css,
+  HTMLTemplateResult,
+  nothing,
+  PropertyValues,
+} from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { UserInputConfiguration, UserOutputValues } from "../../types/types";
 import { map } from "lit/directives/map.js";
@@ -16,6 +23,7 @@ import {
   isLLMContentBehavior,
   isPortSpecBehavior,
   isSelect,
+  isEnum,
 } from "../../utils/index.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -43,6 +51,12 @@ import "./delegating-input.js";
 export class UserInput extends LitElement {
   @property()
   inputs: UserInputConfiguration[] = [];
+
+  @property()
+  showTitleInfo = true;
+
+  @property()
+  jumpTo: string | null = null;
 
   @property()
   showTypes = false;
@@ -80,6 +94,7 @@ export class UserInput extends LitElement {
     }
 
     .item {
+      scroll-margin-top: var(--bb-grid-size-2);
       color: var(--bb-neutral-900);
       margin-bottom: var(--bb-grid-size-2);
     }
@@ -120,12 +135,10 @@ export class UserInput extends LitElement {
       box-sizing: border-box;
     }
 
+    .item.status.connected.configured .title::before,
     .item.status.connected .title::before {
-      background: var(--bb-inputs-300);
-    }
-
-    .item.status.connected.configured .title::before {
-      background: var(--bb-boards-500);
+      background: var(--bb-ui-300);
+      border: 1px solid var(--bb-ui-600);
     }
 
     .item.status.missing .title::before {
@@ -157,7 +170,39 @@ export class UserInput extends LitElement {
       field-sizing: content;
       max-height: 300px;
     }
+
+    .api-message {
+      color: var(--bb-neutral-800);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      margin: 0 0 var(--bb-grid-size-2) 0;
+    }
   `;
+
+  protected firstUpdated(changedProperties: PropertyValues): void {
+    if (!changedProperties.has("jumpTo")) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      if (!this.#formRef.value) {
+        return;
+      }
+
+      if (!this.jumpTo) {
+        return;
+      }
+
+      const item = this.#formRef.value.querySelector(
+        `#container-${this.#createId(this.jumpTo)}`
+      );
+      item?.scrollIntoView({
+        behavior: "instant",
+        block: "start",
+        inline: "start",
+      });
+    });
+  }
 
   destroyEditors() {
     // Here we must unhook the editor *before* it is removed from the DOM,
@@ -282,7 +327,7 @@ export class UserInput extends LitElement {
   }
 
   #createId(name: string) {
-    return name.replace(/^\$/, "__");
+    return name.toLocaleLowerCase().replace(/^\$/, "__");
   }
 
   render() {
@@ -538,8 +583,13 @@ export class UserInput extends LitElement {
                   break;
                 }
 
-                if (isSelect(input.schema) && input.schema.enum) {
-                  const enumValue = input.value ?? defaultValue ?? "";
+                if (isSelect(input.schema)) {
+                  const options = isEnum(input.schema)
+                    ? input.schema.enum || []
+                    : input.schema.examples || [];
+
+                  const selectValue = input.value ?? defaultValue ?? "";
+
                   inputField = html`<select
                     id=${id}
                     name=${id}
@@ -547,16 +597,16 @@ export class UserInput extends LitElement {
                     placeholder=${input.schema.description ?? ""}
                     .autofocus=${idx === 0 ? true : false}
                   >
-                    ${input.schema.enum.map(
+                    ${options.map(
                       (item) =>
-                        html`<option ?selected=${item === enumValue}>
+                        html`<option ?selected=${item === selectValue}>
                           ${item}
                         </option>`
                     )}
                   </select>`;
+
                   break;
                 }
-
                 if (
                   input.schema.format === "multiline" ||
                   input.schema.format === "markdown"
@@ -635,9 +685,20 @@ export class UserInput extends LitElement {
           typeInfo = html`<span class="type">(${typeString})</span>`;
         }
 
-        return html`<div class=${classMap(styles)}>
+        return html`<div
+          id=${this.#createId(`container-${input.name}`)}
+          class=${classMap(styles)}
+        >
           <label>
-            <span class="title">${input.title} ${typeInfo}</span>
+            ${input.secret
+              ? html`<p class="api-message">
+                  When calling an API, the API provider's applicable privacy
+                  policy and terms apply
+                </p>`
+              : nothing}
+            ${this.showTitleInfo
+              ? html`<span class="title">${input.title} ${typeInfo}</span>`
+              : nothing}
             ${description}
           </label>
           ${inputField}

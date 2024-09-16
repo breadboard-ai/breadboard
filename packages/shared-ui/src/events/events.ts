@@ -7,11 +7,17 @@
 import type {
   EditSpec,
   GraphDescriptor,
+  InspectablePort,
   NodeConfiguration,
   NodeDescriptor,
+  Schema,
 } from "@google-labs/breadboard";
 import type { EdgeData, Settings, UserOutputValues } from "../types/types.js";
-import type { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
+import type {
+  NodeMetadata,
+  NodeValue,
+} from "@google-labs/breadboard-schema/graph.js";
+import { ComponentExpansionState } from "../elements/editor/types.js";
 
 const eventInit = {
   bubbles: true,
@@ -83,6 +89,18 @@ export class BoardUnloadEvent extends Event {
 
   constructor() {
     super(BoardUnloadEvent.eventName, { ...eventInit });
+  }
+}
+
+/**
+ * Run Management
+ */
+
+export class RunDownloadEvent extends Event {
+  static eventName = "bbrundownload";
+
+  constructor() {
+    super(RunDownloadEvent.eventName, { ...eventInit });
   }
 }
 
@@ -265,7 +283,8 @@ export class GraphProviderLoadRequestEvent extends Event {
 
   constructor(
     public readonly providerName: string,
-    public readonly url: string
+    public readonly url: string,
+    public readonly newTab = false
   ) {
     super(GraphProviderLoadRequestEvent.eventName, { ...eventInit });
   }
@@ -413,6 +432,32 @@ export class NodeUpdateEvent extends Event {
   }
 }
 
+export class NodePartialUpdateEvent extends Event {
+  static eventName = "bbnodepartialupdate";
+
+  constructor(
+    public readonly id: string,
+    public readonly subGraphId: string | null = null,
+    public readonly configuration: NodeConfiguration
+  ) {
+    super(NodePartialUpdateEvent.eventName, { ...eventInit });
+  }
+}
+
+export class NodeConfigurationUpdateRequestEvent extends Event {
+  static eventName = "bbnodeconfigurationupdaterequest";
+
+  constructor(
+    public readonly id: string,
+    public readonly subGraphId: string | null = null,
+    public readonly port: InspectablePort | null = null,
+    public readonly x: number = 0,
+    public readonly y: number = 0
+  ) {
+    super(NodeConfigurationUpdateRequestEvent.eventName, { ...eventInit });
+  }
+}
+
 export class NodeMetadataUpdateEvent extends Event {
   static eventName = "bbnodemetadataupdate";
 
@@ -461,6 +506,30 @@ export class MultiEditEvent extends Event {
   }
 }
 
+export class EdgeValueSelectedEvent extends Event {
+  static eventName = "bbedgevalueselected";
+
+  constructor(
+    public readonly value: NodeValue[],
+    public readonly schema: Schema | null,
+    public readonly x: number,
+    public readonly y: number
+  ) {
+    super(EdgeValueSelectedEvent.eventName, { ...eventInit });
+  }
+}
+
+export class NodeActivitySelectedEvent extends Event {
+  static eventName = "bbnodeactivityselected";
+
+  constructor(
+    public readonly nodeTitle: string,
+    public readonly runId: string
+  ) {
+    super(NodeActivitySelectedEvent.eventName, { ...eventInit });
+  }
+}
+
 export class GraphNodesVisualUpdateEvent extends Event {
   static eventName = "bbgraphnodesmove";
 
@@ -470,10 +539,23 @@ export class GraphNodesVisualUpdateEvent extends Event {
       readonly type: "node" | "comment";
       readonly x: number;
       readonly y: number;
-      readonly collapsed: boolean;
+      readonly expansionState: ComponentExpansionState;
     }>
   ) {
     super(GraphNodesVisualUpdateEvent.eventName, { ...eventInit });
+  }
+}
+
+export class GraphNodePortValueEditEvent extends Event {
+  static eventName = "bbgraphnodeportedit";
+
+  constructor(
+    public readonly id: string,
+    public readonly port: InspectablePort | null,
+    public readonly x: number,
+    public readonly y: number
+  ) {
+    super(GraphNodePortValueEditEvent.eventName, { ...eventInit });
   }
 }
 
@@ -506,6 +588,30 @@ export class GraphInitialDrawEvent extends Event {
 
   constructor() {
     super(GraphInitialDrawEvent.eventName, { ...eventInit });
+  }
+}
+
+export class GraphEdgeValueSelectedEvent extends Event {
+  static eventName = "bbgraphedgevalueselected";
+
+  constructor(
+    public readonly value: NodeValue[],
+    public readonly schema: Schema | null,
+    public readonly x: number,
+    public readonly y: number
+  ) {
+    super(GraphEdgeValueSelectedEvent.eventName, { ...eventInit });
+  }
+}
+
+export class GraphNodeActivitySelectedEvent extends Event {
+  static eventName = "bbgraphnodeactivityselected";
+
+  constructor(
+    public readonly nodeTitle: string,
+    public readonly runId: string
+  ) {
+    super(GraphNodeActivitySelectedEvent.eventName, { ...eventInit });
   }
 }
 

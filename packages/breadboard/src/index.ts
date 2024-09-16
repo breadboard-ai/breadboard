@@ -57,7 +57,9 @@ export type {
   AbstractValue as V,
 } from "./new/grammar/types.js";
 export { asyncGen } from "./utils/async-gen.js";
+export { Throttler } from "./utils/throttler.js";
 export { type SemVer, SemanticVersioning } from "./utils/semver.js";
+export type * from "./utils/typed-event-target.js";
 
 /**
  * Helpers for handling BreadboardCapability.

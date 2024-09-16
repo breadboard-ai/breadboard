@@ -306,9 +306,17 @@ export type NodeHandlerMetadata = {
    */
   icon?: string;
   /**
+   * The URL of the node type.
+   */
+  url?: string;
+  /**
    * Whether or not the node is deprecated.
    */
   deprecated?: boolean;
+  /*
+   * The tags associated with the node.
+   */
+  tags?: string[];
   /**
    * The documentation for the graph, expressed as a URL and optional description.
    */
@@ -466,6 +474,7 @@ export type GraphStartProbeData = {
   graph: GraphDescriptor;
   path: number[];
   timestamp: number;
+  edges?: EdgeResponse[];
 };
 
 export type GraphStartProbeMessage = {

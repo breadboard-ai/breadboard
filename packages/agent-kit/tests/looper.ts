@@ -18,7 +18,8 @@ const tasks = (...tasks: string[]): LooperPlan => {
 describe("planReader", () => {
   test("throws when no plan is supplied", () => {
     throws(() => {
-      planReaderFunction({});
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      planReaderFunction({} as any);
     });
   });
 

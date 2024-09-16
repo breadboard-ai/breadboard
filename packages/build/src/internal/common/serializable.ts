@@ -72,7 +72,11 @@ export interface SerializableNode {
   id?: string;
   type: string;
   inputs: Record<string, SerializableInputPort>;
-  metadata?: { title?: string; description?: string };
+  metadata?: {
+    title?: string;
+    description?: string;
+    logLevel?: "debug" | "info";
+  };
 }
 
 export interface SerializableInputPort {

@@ -14,6 +14,30 @@ import { JsonSerializable } from "@breadboard-ai/build/internal/type-system/type
 import type { InputValues } from "@google-labs/breadboard";
 import { JSONSchema4 } from "json-schema";
 
+const runner = (code: string, functionName: string, args: string) => {
+  // The addition of `globalThis.__name = () => {}` is to ensure that
+  // if the function is compiled with esbuild --keep-names, the added "__name"
+  // call does not cause a runtime error.
+  // See https://github.com/privatenumber/tsx/issues/113 and
+  // https://github.com/evanw/esbuild/issues/1031 for more details.
+  return `${code}
+  globalThis.__name = () => {};
+  self.onmessage = async () => {
+    try {
+      self.postMessage({
+        result: JSON.stringify((await ${functionName}(${args})))
+      });
+    } catch (e) {
+      self.postMessage({
+        error: e.message
+      })
+    }
+  };
+  self.onerror = (e) => self.postMessage({
+    error: e.message
+  })`;
+};
+
 // https://regex101.com/r/PeEmEW/1
 const stripCodeBlock = (code: string) =>
   code.replace(/(?:```(?:js|javascript)?\n+)(.*)(?:\n+```)/gms, "$1");
@@ -85,16 +109,7 @@ const runInBrowser = async ({
   functionName: string;
   args: string;
 }): Promise<string> => {
-  const runner = (code: string, functionName: string) => {
-    // The addition of `globalThis.__name = () => {}` is to ensure that
-    // if the function is compiled with esbuild --keep-names, the added "__name"
-    // call does not cause a runtime error.
-    // See https://github.com/privatenumber/tsx/issues/113 and
-    // https://github.com/evanw/esbuild/issues/1031 for more details.
-    return `${code}\nglobalThis.__name = () => {};\nself.onmessage = async () => {try { self.postMessage({ result: JSON.stringify((await ${functionName}(${args}))) }); } catch (e) { self.postMessage({ error: e.message })}};self.onerror = (e) => self.postMessage({ error: e.message })`;
-  };
-
-  const blob = new Blob([runner(code, functionName)], {
+  const blob = new Blob([runner(code, functionName, args)], {
     type: "text/javascript",
   });
 
@@ -104,13 +119,14 @@ const runInBrowser = async ({
   };
 
   const workerURL = URL.createObjectURL(blob);
-  const worker = new Worker(workerURL);
+  const worker = new Worker(workerURL, { type: "module" });
   const result = new Promise<string>((resolve, reject) => {
     worker.onmessage = (e) => {
       const data = e.data as WebWorkerResult;
       if (data.result) {
         resolve(data.result);
         URL.revokeObjectURL(workerURL);
+        worker.terminate();
         return;
       } else if (data.error) {
         console.log("Error in worker", data.error);

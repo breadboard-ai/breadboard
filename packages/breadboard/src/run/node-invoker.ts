@@ -6,13 +6,12 @@
 
 import { createOutputProvider, RequestedInputsManager } from "../bubble.js";
 import { resolveBoardCapabilitiesInInputs } from "../capability.js";
-import { callHandler, handlersFromKits } from "../handler.js";
+import { callHandler, getHandler } from "../handler.js";
 import { SENTINEL_BASE_URL } from "../loader/loader.js";
 import { RunResult } from "../run.js";
 import type {
   GraphDescriptor,
   NodeHandlerContext,
-  NodeHandlers,
   OutputValues,
   RunArguments,
   TraversalResult,
@@ -25,7 +24,6 @@ export class NodeInvoker {
   #resultSupplier: ResultSupplier;
   #graph: GraphDescriptor;
   #context: NodeHandlerContext;
-  #handlers: NodeHandlers;
 
   constructor(
     args: RunArguments,
@@ -38,7 +36,6 @@ export class NodeInvoker {
     this.#resultSupplier = next;
     this.#graph = graph;
     this.#context = context;
-    this.#handlers = handlersFromKits(context.kits ?? []);
   }
 
   async invokeNode(result: TraversalResult, invocationPath: number[]) {
@@ -46,9 +43,7 @@ export class NodeInvoker {
     const { kits = [], base = SENTINEL_BASE_URL, state } = this.#context;
     let outputs: OutputValues | undefined = undefined;
 
-    const handler = this.#handlers[descriptor.type];
-    if (!handler)
-      throw new Error(`No handler for node type "${descriptor.type}"`);
+    const handler = await getHandler(descriptor.type, this.#context);
 
     const newContext: NodeHandlerContext = {
       ...this.#context,

@@ -20,8 +20,11 @@ import {
   GraphInitialDrawEvent,
   GraphEntityRemoveEvent,
   StartEvent,
+  GraphNodePortValueEditEvent,
+  GraphEdgeValueSelectedEvent,
+  GraphNodeActivitySelectedEvent,
 } from "../../events/events.js";
-import { GRAPH_OPERATIONS } from "./types.js";
+import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
 import {
   InspectableEdge,
@@ -29,6 +32,8 @@ import {
   InspectableNode,
   InspectableNodePorts,
   InspectablePort,
+  NodeHandlerMetadata,
+  Schema,
 } from "@google-labs/breadboard";
 import { GraphNode } from "./graph-node.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -38,10 +43,13 @@ import { GraphEdge } from "./graph-edge.js";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { getGlobalColor } from "./utils.js";
-import { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
+import { computeNextExpansionState, getGlobalColor } from "./utils.js";
+import {
+  GraphMetadata,
+  NodeValue,
+} from "@google-labs/breadboard-schema/graph.js";
 import { GraphComment } from "./graph-comment.js";
-import { EdgeData } from "../../types/types.js";
+import { EdgeData, TopGraphRunResult } from "../../types/types.js";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
 const selectionBoxBackgroundAlpha = 0.05;
@@ -58,9 +66,11 @@ enum MODE {
 interface GraphOpts {
   url: string;
   subGraphId: string | null;
+  showNodePreviewValues: boolean;
   showNodeTypeDescriptions: boolean;
   collapseNodesByDefault: boolean;
   ports: Map<string, InspectableNodePorts> | null;
+  typeMetadata: Map<string, NodeHandlerMetadata> | null;
   edges: InspectableEdge[];
   nodes: InspectableNode[];
   metadata: GraphMetadata;
@@ -90,8 +100,6 @@ export class GraphRenderer extends LitElement {
   #app = new PIXI.Application();
   #appInitialized = false;
 
-  #graphMask = new PIXI.Graphics();
-
   #overflowDeleteNode: Ref<HTMLButtonElement> = createRef();
   #overflowMinMaxSingleNode: Ref<HTMLButtonElement> = createRef();
   #overflowMenuRef: Ref<HTMLDivElement> = createRef();
@@ -115,6 +123,8 @@ export class GraphRenderer extends LitElement {
   #container = new PIXI.Container({
     isRenderGroup: true,
   });
+  #containerTransforms = new Map<string, PIXI.Matrix>();
+
   #nodeSelection: PIXI.Graphics | null = null;
   #background: PIXI.TilingSprite | null = null;
   #lastContentRect: DOMRectReadOnly | null = null;
@@ -321,20 +331,28 @@ export class GraphRenderer extends LitElement {
       margin-right: var(--bb-grid-size-3);
     }
 
-    #overflow-menu #min-max::before {
+    #overflow-menu #min-max.advanced::before {
       background: var(--bb-icon-minimize) center center / 20px 20px no-repeat;
     }
 
-    #overflow-menu #min-max.minimized::before {
+    #overflow-menu #min-max.expanded::before {
       background: var(--bb-icon-maximize) center center / 20px 20px no-repeat;
     }
 
-    #overflow-menu #min-max::after {
-      content: "Minimize component";
+    #overflow-menu #min-max.collapsed::before {
+      background: var(--bb-icon-maximize) center center / 20px 20px no-repeat;
     }
 
-    #overflow-menu #min-max.minimized::after {
-      content: "Maximize component";
+    #overflow-menu #min-max.expanded::after {
+      content: "Show advanced ports";
+    }
+
+    #overflow-menu #min-max.collapsed::after {
+      content: "Show component ports";
+    }
+
+    #overflow-menu #min-max.advanced::after {
+      content: "Minimize component";
     }
 
     #overflow-menu #delete-node::before {
@@ -408,7 +426,7 @@ export class GraphRenderer extends LitElement {
       });
 
       for (const graph of this.#container.children) {
-        if (!(graph instanceof Graph)) {
+        if (!(graph instanceof Graph) || !graph.visible) {
           continue;
         }
 
@@ -424,7 +442,7 @@ export class GraphRenderer extends LitElement {
         }
 
         for (const graph of this.#container.children) {
-          if (!(graph instanceof Graph)) {
+          if (!(graph instanceof Graph) || !graph.visible) {
             continue;
           }
 
@@ -469,6 +487,8 @@ export class GraphRenderer extends LitElement {
         this.#nodeSelection.destroy();
         this.#nodeSelection = null;
       }
+
+      this.#storeContainerTransformForVisibleGraph();
     };
     this.#app.stage.addListener("pointerup", onPointerUp);
     this.#app.stage.addListener("pointerupoutside", onPointerUp);
@@ -504,9 +524,39 @@ export class GraphRenderer extends LitElement {
         this.#container.x -= evt.deltaX;
         this.#container.y -= evt.deltaY;
       }
+
+      this.#storeContainerTransformForVisibleGraph();
     };
 
     this.#app.stage.on("wheel", onWheel);
+  }
+
+  #storeContainerTransformForVisibleGraph() {
+    const visibleGraph = this.#getVisibleGraph();
+    if (!visibleGraph) {
+      return;
+    }
+
+    const matrix = this.#container.worldTransform.clone();
+    this.#storeContainerTransform(visibleGraph, matrix);
+  }
+
+  #storeContainerTransform(graph: Graph, matrix: PIXI.Matrix) {
+    this.#containerTransforms.set(graph.label, matrix);
+  }
+
+  #restoreContainerTransformForVisibleGraph() {
+    const visibleGraph = this.#getVisibleGraph();
+    if (!visibleGraph) {
+      return;
+    }
+
+    const matrix = this.#containerTransforms.get(visibleGraph.label);
+    if (!matrix) {
+      return;
+    }
+
+    this.#container.setFromMatrix(matrix);
   }
 
   #scaleContainerAroundPoint(delta: number, pivot: PIXI.PointData) {
@@ -544,54 +594,68 @@ export class GraphRenderer extends LitElement {
         continue;
       }
 
-      graph.mask = this.#graphMask;
+      graph.visible = false;
     }
   }
 
-  showAllGraphs() {
+  showGraph(url: string, subGraphId: string | null) {
+    const label = this.#createUrl(url, subGraphId);
     for (const graph of this.#container.children) {
       if (!(graph instanceof Graph)) {
         continue;
       }
 
-      graph.mask = null;
-    }
-  }
-
-  set highlightedNodeId(highlightedNodeId: string | null) {
-    for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph)) {
+      if (graph.label !== label) {
         continue;
       }
 
-      graph.highlightedNodeId = highlightedNodeId;
+      graph.visible = true;
     }
+
+    this.#restoreContainerTransformForVisibleGraph();
   }
 
-  get highlightedNodeId() {
+  set topGraphResult(topGraphResult: TopGraphRunResult | null) {
+    let highlightedNode = null;
+    let edgeValues = null;
+    let nodeValues = null;
+
+    if (topGraphResult && topGraphResult.currentNode) {
+      highlightedNode = topGraphResult.currentNode;
+    }
+
+    if (topGraphResult && topGraphResult.edgeValues) {
+      edgeValues = topGraphResult.edgeValues;
+    }
+
+    if (topGraphResult && topGraphResult.nodeActivity) {
+      nodeValues = topGraphResult.nodeActivity;
+    }
+
     for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph)) {
+      if (!(graph instanceof Graph) || !graph.visible) {
         continue;
       }
 
-      return graph.highlightedNodeId;
+      graph.highlightedNode = highlightedNode;
+      graph.edgeValues = edgeValues;
+      graph.nodeValues = nodeValues;
     }
-
-    return null;
   }
 
   createGraph(opts: GraphOpts) {
     const graph = new Graph();
     graph.label = this.#createUrl(opts.url, opts.subGraphId);
 
-    this.addGraph(graph);
+    this.#addGraph(graph);
     this.updateGraphByUrl(opts.url, opts.subGraphId, opts);
   }
 
   deleteGraphs() {
-    for (const child of this.#container.children) {
+    for (let c = this.#container.children.length; c >= 0; c--) {
+      const child = this.#container.children[c];
       if (!(child instanceof Graph)) {
-        return false;
+        continue;
       }
 
       child.removeFromParent();
@@ -612,8 +676,15 @@ export class GraphRenderer extends LitElement {
       return false;
     }
 
+    graph.readOnly = this.readOnly;
+    graph.highlightInvalidWires = this.highlightInvalidWires;
+
     if (opts.showNodeTypeDescriptions !== undefined) {
       graph.showNodeTypeDescriptions = opts.showNodeTypeDescriptions;
+    }
+
+    if (opts.showNodePreviewValues !== undefined) {
+      graph.showNodePreviewValues = opts.showNodePreviewValues;
     }
 
     if (opts.showNodeTypeDescriptions !== undefined) {
@@ -636,20 +707,17 @@ export class GraphRenderer extends LitElement {
       graph.nodes = opts.nodes;
     }
 
+    if (opts.typeMetadata !== undefined) {
+      graph.typeMetadata = opts.typeMetadata;
+    }
+
     if (opts.metadata !== undefined) {
       graph.comments = opts.metadata.comments || null;
     }
 
     if (opts.visible !== undefined) {
-      if (opts.visible) {
-        graph.mask = null;
-      } else {
-        graph.mask = this.#graphMask;
-      }
+      graph.visible = opts.visible;
     }
-
-    graph.readOnly = this.readOnly;
-    graph.highlightInvalidWires = this.highlightInvalidWires;
 
     return true;
   }
@@ -664,11 +732,23 @@ export class GraphRenderer extends LitElement {
     ) as Graph[];
   }
 
+  #getVisibleGraph(): Graph | null {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph) || !graph.visible) {
+        continue;
+      }
+
+      return graph;
+    }
+
+    return null;
+  }
+
   #emitSelectionState() {
     this.dispatchEvent(new GraphNodeDeselectedAllEvent());
 
     for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph)) {
+      if (!(graph instanceof Graph) || !graph.visible) {
         continue;
       }
 
@@ -683,7 +763,7 @@ export class GraphRenderer extends LitElement {
     }
   }
 
-  addGraph(graph: Graph) {
+  #addGraph(graph: Graph) {
     graph.on(GRAPH_OPERATIONS.GRAPH_NODE_EXPAND_COLLAPSE, () => {
       this.#emitGraphNodeVisualInformation(graph);
     });
@@ -696,7 +776,7 @@ export class GraphRenderer extends LitElement {
           type: "node" | "comment";
           x: number;
           y: number;
-          collapsed: boolean;
+          expansionState: ComponentExpansionState;
         }>
       ) => {
         this.dispatchEvent(new GraphNodesVisualUpdateEvent(nodes));
@@ -755,8 +835,16 @@ export class GraphRenderer extends LitElement {
 
         if (this.#overflowMinMaxSingleNode.value) {
           this.#overflowMinMaxSingleNode.value.classList.toggle(
-            "minimized",
-            graphNode.collapsed
+            "expanded",
+            graphNode.expansionState === "expanded"
+          );
+          this.#overflowMinMaxSingleNode.value.classList.toggle(
+            "collapsed",
+            graphNode.expansionState === "collapsed"
+          );
+          this.#overflowMinMaxSingleNode.value.classList.toggle(
+            "advanced",
+            graphNode.expansionState === "advanced"
           );
         }
 
@@ -772,8 +860,10 @@ export class GraphRenderer extends LitElement {
             const [topItem] = evt.composedPath();
             switch (topItem) {
               case this.#overflowMinMaxSingleNode.value: {
-                this.#overflowMenuGraphNode.collapsed =
-                  !this.#overflowMenuGraphNode.collapsed;
+                this.#overflowMenuGraphNode.expansionState =
+                  computeNextExpansionState(
+                    this.#overflowMenuGraphNode.expansionState
+                  );
                 break;
               }
 
@@ -868,6 +958,29 @@ export class GraphRenderer extends LitElement {
       this._portTooltip = undefined;
     });
 
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
+      (id: string, port: InspectablePort | null, x: number, y: number) => {
+        this.dispatchEvent(new GraphNodePortValueEditEvent(id, port, x, y));
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_EDGE_VALUE_SELECTED,
+      (value: NodeValue[], schema: Schema | null, x: number, y: number) => {
+        this.dispatchEvent(
+          new GraphEdgeValueSelectedEvent(value, schema, x, y)
+        );
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_ACTIVITY_SELECTED,
+      (nodeName: string, id: string) => {
+        this.dispatchEvent(new GraphNodeActivitySelectedEvent(nodeName, id));
+      }
+    );
+
     this.#container.addChild(graph);
   }
 
@@ -890,7 +1003,7 @@ export class GraphRenderer extends LitElement {
     const selected: Array<GraphNode | GraphComment | GraphEdge> = [];
 
     for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph)) {
+      if (!(graph instanceof Graph) || !graph.visible) {
         continue;
       }
 
@@ -902,7 +1015,7 @@ export class GraphRenderer extends LitElement {
 
   deselectAllChildren() {
     for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph)) {
+      if (!(graph instanceof Graph) || !graph.visible) {
         continue;
       }
 
@@ -926,11 +1039,11 @@ export class GraphRenderer extends LitElement {
     node: string,
     type: "comment" | "node",
     position: PIXI.PointData,
-    collapsed: boolean,
+    expansionState: ComponentExpansionState,
     justAdded: boolean
   ) {
     for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph)) {
+      if (!(graph instanceof Graph) || !graph.visible) {
         continue;
       }
 
@@ -938,7 +1051,7 @@ export class GraphRenderer extends LitElement {
         node,
         type,
         position,
-        collapsed,
+        expansionState,
         justAdded
       );
     }
@@ -948,7 +1061,7 @@ export class GraphRenderer extends LitElement {
 
   getNodeLayoutPosition(node: string) {
     for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph)) {
+      if (!(graph instanceof Graph) || !graph.visible) {
         continue;
       }
 
@@ -960,7 +1073,7 @@ export class GraphRenderer extends LitElement {
 
   addToAutoSelect(node: string) {
     for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph)) {
+      if (!(graph instanceof Graph) || !graph.visible) {
         continue;
       }
 
@@ -973,7 +1086,7 @@ export class GraphRenderer extends LitElement {
 
     // Find the first graph in the container and size to it.
     for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph)) {
+      if (!(graph instanceof Graph) || !graph.visible) {
         continue;
       }
 
@@ -1004,8 +1117,9 @@ export class GraphRenderer extends LitElement {
         x: rendererBounds.width / 2,
         y: rendererBounds.height / 2,
       };
-      this.#scaleContainerAroundPoint(delta, pivot);
+      const matrix = this.#scaleContainerAroundPoint(delta, pivot);
       this.#emitGraphNodeVisualInformation(graph);
+      this.#storeContainerTransform(graph, matrix);
       return;
     }
   }
@@ -1018,7 +1132,7 @@ export class GraphRenderer extends LitElement {
         type: layout.type,
         x: layout.x,
         y: layout.y,
-        collapsed: layout.collapsed,
+        expansionState: layout.expansionState,
       };
     });
 
@@ -1027,11 +1141,12 @@ export class GraphRenderer extends LitElement {
 
   resetGraphLayout() {
     for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph)) {
+      if (!(graph instanceof Graph) || !graph.visible) {
         continue;
       }
 
       graph.clearNodeLayoutPositions();
+      graph.storeCommentLayoutPositions();
       graph.layout();
 
       this.#emitGraphNodeVisualInformation(graph);
@@ -1040,7 +1155,7 @@ export class GraphRenderer extends LitElement {
 
   selectAll() {
     for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph)) {
+      if (!(graph instanceof Graph) || !graph.visible) {
         continue;
       }
 
@@ -1073,7 +1188,7 @@ export class GraphRenderer extends LitElement {
     }
 
     for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph)) {
+      if (!(graph instanceof Graph) || !graph.visible) {
         continue;
       }
 

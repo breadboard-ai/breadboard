@@ -8,9 +8,11 @@
 
 // TODO(aomarks) Switch import to schema package
 import type {
+  BehaviorSchema,
   GraphDescriptor,
   NodeDescriptor,
   NodeValue,
+  Schema,
 } from "@google-labs/breadboard";
 import type { JSONSchema4 } from "json-schema";
 import { DefaultValue, OutputPortGetter } from "../common/port.js";
@@ -44,6 +46,7 @@ import { isLoopback } from "./loopback.js";
 import { OptionalVersionOf, isOptional } from "./optional.js";
 import { isSpecialOutput } from "./output.js";
 import { isStarInputs, type StarInputs } from "./star-inputs.js";
+import type { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 
 /**
  * Serialize a Breadboard board to Breadboard Graph Language (BGL) so that it
@@ -91,7 +94,6 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       | InputWithDefault<JsonSerializable | undefined>
     >
   >;
-  let i = 0;
   const magicInputResolutions = new Map<
     GenericSpecialInput,
     { nodeId: string; portName: string }
@@ -103,10 +105,8 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     );
     let iterationInputId: string | undefined = undefined;
     const autoId = () => {
-      if (iterationInputId == undefined) {
-        iterationInputId;
-        iterationInputId = `input-${i}`;
-        i++;
+      if (iterationInputId === undefined) {
+        iterationInputId = nextIdForType("input");
       }
       return iterationInputId;
     };
@@ -188,7 +188,6 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
   const outputsArray = Array.isArray(board.outputsForSerialization)
     ? board.outputsForSerialization
     : [board.outputsForSerialization];
-  let j = 0;
   for (const outputs of outputsArray) {
     // Recursively traverse the graph starting from outputs.
     const sortedBoardOutputs = Object.entries(outputs).sort(
@@ -197,21 +196,20 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     );
     let iterationOutputId: string | undefined = undefined;
     const autoId = () => {
-      if (iterationOutputId == undefined) {
-        iterationOutputId;
-        iterationOutputId = `output-${j}`;
-        j++;
+      if (iterationOutputId === undefined) {
+        iterationOutputId = nextIdForType("output");
       }
       return iterationOutputId;
     };
     for (const [name, output] of sortedBoardOutputs) {
-      if (name === "$id" || name === "$metadata") {
+      if (name.startsWith("$") && name !== "$error") {
         continue;
       }
 
       let nested = isBoardOutput(output) ? output : undefined;
       let port;
       let outputNodeId;
+      let deprecated = false;
       const portMetadata: { title?: string; description?: string } = {};
       if (isSpecialOutput(output)) {
         port = output.port;
@@ -224,6 +222,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
             portMetadata.description = output.description;
           }
         }
+        deprecated = output.deprecated ?? false;
       } else {
         port = output;
       }
@@ -258,10 +257,17 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
         if (nodeMetadata !== undefined) {
           outputNode.metadata = nodeMetadata;
         }
+        if (outputs.$bubble) {
+          addBehavior(outputNode.configuration.schema, "bubble");
+        }
+
         outputNodes.set(outputNodeId, outputNode);
       }
       const { schema, required } = describeOutput(output);
       outputNode.configuration.schema.properties[name] = schema;
+      if (deprecated) {
+        addBehavior(schema, "deprecated");
+      }
       if (required) {
         outputNode.configuration.schema.required.push(name);
       }
@@ -358,10 +364,21 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
       return descriptor.id;
     }
     let type, metadata, thisNodeId;
+    let isBoardInstanceBoundToKit = false;
     if (isBoardInstance(node)) {
-      type = "invoke";
-      metadata = undefined;
-      thisNodeId = nextIdForType("invoke");
+      const kitBinding = node.__kitBinding;
+      if (kitBinding) {
+        isBoardInstanceBoundToKit = true;
+        type = kitBinding.id;
+        metadata = node.values["$metadata"] as NodeMetadata | undefined;
+        thisNodeId =
+          (node.values["$id"] as string | undefined) ?? nextIdForType(type);
+      } else {
+        type = "invoke";
+        metadata = node.values["$metadata"] as NodeMetadata | undefined;
+        thisNodeId =
+          (node.values["$id"] as string | undefined) ?? nextIdForType("invoke");
+      }
     } else {
       const cast = node as SerializableNode;
       type = cast.type;
@@ -372,11 +389,14 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     const configuration: Record<string, NodeValue> = {};
     descriptor = { id: thisNodeId, type, configuration };
 
-    const { title, description } = metadata ?? {};
+    const { title, description, logLevel } = metadata ?? {};
     if (title || description) {
       descriptor.metadata = {};
       if (title) {
         descriptor.metadata.title = title;
+      }
+      if (logLevel) {
+        descriptor.metadata.logLevel = logLevel;
       }
       if (description) {
         descriptor.metadata.description = description;
@@ -387,7 +407,7 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     nodes.set(node, descriptor);
 
     const configurationEntries: Array<[string, NodeValue]> = [];
-    if (isBoardInstance(node)) {
+    if (isBoardInstance(node) && !isBoardInstanceBoundToKit) {
       configurationEntries.push([
         "$board",
         `#${embedBoardAndReturnItsId(node.definition)}`,
@@ -396,6 +416,9 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     for (const [portName, inputPort] of Object.entries(
       isBoardInstance(node) ? node.values : node.inputs
     )) {
+      if (portName === "$id" || portName === "$metadata") {
+        continue;
+      }
       unconnectedInputs.delete(inputPort);
       const values = isConvergence(inputPort.value)
         ? inputPort.value.ports
@@ -612,4 +635,16 @@ function sortKeys<T extends Record<string, unknown>>(
       return nameA.localeCompare(nameB);
     })
   ) as T;
+}
+
+function addBehavior(
+  schema: Schema | JSONSchema4,
+  behavior: BehaviorSchema
+): void {
+  if (schema.behavior === undefined) {
+    schema.behavior = [behavior];
+  } else if (!schema.behavior.includes(behavior)) {
+    schema.behavior.push(behavior);
+    schema.behavior.sort();
+  }
 }

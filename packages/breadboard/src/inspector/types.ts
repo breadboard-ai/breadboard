@@ -15,6 +15,7 @@ import { GraphLoader } from "../loader/types.js";
 import {
   BehaviorSchema,
   Edge,
+  EdgeResponse,
   ErrorResponse,
   GraphDescriptor,
   InputValues,
@@ -35,6 +36,7 @@ import {
   RunStore,
   SerializedDataStoreGroup,
 } from "../data/types.js";
+import { SequenceEntry } from "./run/serializer.js";
 
 export type GraphVersion = number;
 
@@ -499,7 +501,7 @@ export type InspectableNodeType = {
   /**
    * Returns the metadata, associated with this node type.
    */
-  metadata(): NodeHandlerMetadata;
+  metadata(): Promise<NodeHandlerMetadata>;
   /**
    * Returns the type of the node.
    */
@@ -845,16 +847,18 @@ export type InspectableRunEvent =
   | InspectableRunErrorEvent
   | InspectableRunEdgeEvent;
 
+export type InspectableRunEdge = EdgeResponse;
+
 /**
  * Represents a single run of a graph.
  */
 export type InspectableRun = {
   /**
-   * The id graph that was run.
+   * The id of the graph that was run.
    */
   graphId: GraphUUID;
   /**
-   * The version graph that was run.
+   * The version of the graph that was run.
    */
   graphVersion: number;
   /**
@@ -870,6 +874,7 @@ export type InspectableRun = {
    * The nested graph events aren't included.
    */
   events: InspectableRunEvent[];
+  edges: InspectableRunEdge[];
   /**
    * A way to associate data with the run.
    */
@@ -925,6 +930,11 @@ export type RunSerializationOptions = {
   keepSecrets?: boolean;
 };
 
+export type SequenceView = {
+  sequence: SequenceEntry[];
+  start: number;
+};
+
 export type PathRegistryEntry = {
   path: number[];
   parent: PathRegistryEntry | null;
@@ -933,6 +943,7 @@ export type PathRegistryEntry = {
   graphStart: number;
   graphEnd: number | null;
   event: InspectableRunEvent | null;
+  view: SequenceView | null;
   /**
    * Sidecars are events that are displayed at a top-level, but aren't
    * part of the main event list. Currently, sidecar events are:
@@ -951,9 +962,17 @@ export type PathRegistryEntry = {
    */
   events: InspectableRunEvent[];
   /**
+   * Returns the edges associated with this entry.
+   * These will be the various edges that were traveled when traversing
+   * the graph associated with this entry.
+   */
+  edges: InspectableRunEdge[];
+  /**
    * Returns an inspectable graph for the graph, associated with this entry.
    */
   graph: InspectableGraph | null;
+
+  find(path: number[]): PathRegistryEntry | null;
 };
 
 export type RunObserverLogLevel =
@@ -1000,6 +1019,7 @@ export type GraphstartTimelineEntry = [
     path: number[];
     index: number;
     graph: GraphDescriptor | null;
+    edges: InspectableRunEdge[];
   },
 ];
 

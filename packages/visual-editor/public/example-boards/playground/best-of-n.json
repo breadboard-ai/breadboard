@@ -172,7 +172,14 @@
               "title": "list"
             },
             "rank": {
-              "type": "string",
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
+              ],
               "title": "JSON",
               "description": "The validated JSON."
             }

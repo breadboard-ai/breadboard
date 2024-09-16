@@ -5,10 +5,9 @@
  */
 
 import {
-  GraphDescriptor,
-  Kit,
+  InspectableGraph,
+  InspectableKit,
   NodeHandlerMetadata,
-  inspect,
 } from "@google-labs/breadboard";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
@@ -16,16 +15,14 @@ import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { KitNodeChosenEvent } from "../../events/events.js";
+import { Task } from "@lit/task";
 
 const DATA_TYPE = "text/plain";
 
 @customElement("bb-node-selector")
 export class NodeSelector extends LitElement {
   @property()
-  graph: GraphDescriptor | null = null;
-
-  @property()
-  kits: Kit[] = [];
+  graph: InspectableGraph | null = null;
 
   @state()
   filter: string | null = null;
@@ -36,6 +33,12 @@ export class NodeSelector extends LitElement {
   #searchInputRef: Ref<HTMLInputElement> = createRef();
   #listRef: Ref<HTMLUListElement> = createRef();
   #lastSelectedId: string | null = null;
+  #kitInfoTask = new Task(this, {
+    task: async () => {
+      return this.#createKitList(this.graph?.kits() || []);
+    },
+    args: () => [this.graph?.kits() || []],
+  });
 
   static styles = css`
     * {
@@ -260,16 +263,7 @@ export class NodeSelector extends LitElement {
     firstInput.checked = true;
   }
 
-  render() {
-    if (!this.kits || !this.graph) {
-      return nothing;
-    }
-
-    const graph = inspect(this.graph, {
-      kits: this.kits,
-    });
-
-    const kits = graph.kits() || [];
+  async #createKitList(kits: InspectableKit[]) {
     const kitList = new Map<
       string,
       { id: string; metadata: NodeHandlerMetadata }[]
@@ -294,101 +288,155 @@ export class NodeSelector extends LitElement {
         continue;
       }
 
-      let kitNodes = kit.nodeTypes;
-      kitNodes = kit.nodeTypes.filter((node) => {
-        if (node.metadata().deprecated) return false;
-        if (!this.filter) {
-          return true;
-        }
-        const filter = new RegExp(this.filter, "gim");
-        return filter.test(node.type());
-      });
+      const typeMetadata = (
+        await Promise.all(
+          kit.nodeTypes.map(async (node) => {
+            const metadata = await node.metadata();
+            if (
+              !this.showExperimentalComponents &&
+              metadata.tags?.includes("experimental")
+            ) {
+              return null;
+            }
+            return { id: node.type(), metadata: await node.metadata() };
+          })
+        )
+      ).filter(Boolean) as { id: string; metadata: NodeHandlerMetadata }[];
 
-      if (kitNodes.length === 0) {
+      const available = typeMetadata.filter(
+        ({ metadata }) => !metadata.deprecated
+      );
+
+      if (available.length === 0) {
         continue;
       }
 
-      kitList.set(
-        kit.descriptor.title,
-        kitNodes.map((node) => ({ id: node.type(), metadata: node.metadata() }))
-      );
+      kitList.set(kit.descriptor.title, available);
     }
+    return kitList;
+  }
+
+  #filterKitList(
+    kitList: Map<string, { id: string; metadata: NodeHandlerMetadata }[]>
+  ) {
+    if (!this.filter) {
+      return kitList;
+    }
+
+    const filteredKitList = new Map<
+      string,
+      { id: string; metadata: NodeHandlerMetadata }[]
+    >();
+
+    const filter = new RegExp(this.filter, "gim");
+
+    for (const [kitName, kitContents] of kitList) {
+      const filteredKitContents = kitContents.filter(
+        (nodeTypeInfo) =>
+          filter.test(nodeTypeInfo.id) ||
+          (nodeTypeInfo.metadata.title &&
+            filter.test(nodeTypeInfo.metadata.title))
+      );
+
+      if (filteredKitContents.length > 0) {
+        filteredKitList.set(kitName, filteredKitContents);
+      }
+    }
+
+    return filteredKitList;
+  }
+
+  render() {
+    if (!this.graph) {
+      return nothing;
+    }
+
+    const kits = this.graph.kits() || [];
 
     this.style.setProperty("--kit-count", kits.length.toString());
 
-    return html` <div
-      id="container"
-      @pointerdown=${(evt: Event) => evt.stopPropagation()}
-    >
-      <input
-        type="search"
-        id="search"
-        placeholder="Search nodes"
-        ${ref(this.#searchInputRef)}
-        @input=${(evt: InputEvent) => {
-          if (!(evt.target instanceof HTMLInputElement)) {
-            return;
-          }
+    return this.#kitInfoTask.render({
+      pending: () => html`<div>Loading...</div>`,
+      complete: (kitList) => {
+        kitList = this.#filterKitList(kitList);
 
-          this.filter = evt.target.value;
-        }}
-      />
-      <form>
-        <ul id="kit-list" ${ref(this.#listRef)}>
-          ${map(kitList, ([kitName, kitContents]) => {
-            const kitId = kitName.toLocaleLowerCase().replace(/\W/gim, "-");
-            return html`<li>
-              <input
-                type="radio"
-                name="selected-kit"
-                id="${kitId}"
-                @click=${(evt: Event) => {
-                  if (!(evt.target instanceof HTMLElement)) {
-                    return;
-                  }
+        return html` <div
+          id="container"
+          @pointerdown=${(evt: Event) => evt.stopPropagation()}
+        >
+          <input
+            type="search"
+            id="search"
+            placeholder="Search nodes"
+            value=${this.filter || ""}
+            ${ref(this.#searchInputRef)}
+            @input=${(evt: InputEvent) => {
+              if (!(evt.target instanceof HTMLInputElement)) {
+                return;
+              }
 
-                  this.#lastSelectedId = evt.target.id;
-                }}
-              /><label for="${kitId}"><span>${kitName}</span></label>
-              <div class="kit-contents">
-                <ul>
-                  ${map(kitContents, (nodeTypeInfo) => {
-                    const className = nodeTypeInfo.id
-                      .toLocaleLowerCase()
-                      .replace(/\W/, "-");
-                    const id = nodeTypeInfo.id;
-                    const description = nodeTypeInfo.metadata.description;
-                    return html`<li
-                      class=${classMap({
-                        [className]: true,
-                        ["kit-item"]: true,
+              this.filter = evt.target.value;
+            }}
+          />
+          <form>
+            <ul id="kit-list" ${ref(this.#listRef)}>
+              ${map(kitList, ([kitName, kitContents]) => {
+                const kitId = kitName.toLocaleLowerCase().replace(/\W/gim, "-");
+                return html`<li>
+                  <input
+                    type="radio"
+                    name="selected-kit"
+                    id="${kitId}"
+                    @click=${(evt: Event) => {
+                      if (!(evt.target instanceof HTMLElement)) {
+                        return;
+                      }
+
+                      this.#lastSelectedId = evt.target.id;
+                    }}
+                  /><label for="${kitId}"><span>${kitName}</span></label>
+                  <div class="kit-contents">
+                    <ul>
+                      ${map(kitContents, (nodeTypeInfo) => {
+                        const className = nodeTypeInfo.id
+                          .toLocaleLowerCase()
+                          .replaceAll(/\W/gim, "-");
+                        const id = nodeTypeInfo.id;
+                        const description = nodeTypeInfo.metadata.description;
+                        const title = nodeTypeInfo.metadata.title || id;
+                        return html`<li
+                          class=${classMap({
+                            [className]: true,
+                            ["kit-item"]: true,
+                          })}
+                          draggable="true"
+                          @dblclick=${() => {
+                            this.dispatchEvent(new KitNodeChosenEvent(id));
+                          }}
+                          @dragstart=${(evt: DragEvent) => {
+                            if (!evt.dataTransfer) {
+                              return;
+                            }
+                            evt.dataTransfer.setData(DATA_TYPE, id);
+                          }}
+                        >
+                          <div class="node-id">${title}</div>
+                          ${description
+                            ? html`<div class="node-description">
+                                ${description}
+                              </div>`
+                            : nothing}
+                        </li>`;
                       })}
-                      draggable="true"
-                      @dblclick=${() => {
-                        this.dispatchEvent(new KitNodeChosenEvent(id));
-                      }}
-                      @dragstart=${(evt: DragEvent) => {
-                        if (!evt.dataTransfer) {
-                          return;
-                        }
-                        evt.dataTransfer.setData(DATA_TYPE, id);
-                      }}
-                    >
-                      <div class="node-id">${id}</div>
-                      ${description
-                        ? html`<div class="node-description">
-                            ${description}
-                          </div>`
-                        : nothing}
-                    </li>`;
-                  })}
-                </ul>
-              </div>
-            </li>`;
-          })}
-        </ul>
-      </form>
-      <div></div>
-    </div>`;
+                    </ul>
+                  </div>
+                </li>`;
+              })}
+            </ul>
+          </form>
+          <div></div>
+        </div>`;
+      },
+    });
   }
 }

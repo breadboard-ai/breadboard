@@ -9,20 +9,22 @@ import {
   InputValues,
   StartLabel,
 } from "@google-labs/breadboard-schema/graph.js";
-import { handlersFromKits } from "../handler.js";
+import { getHandler } from "../handler.js";
 import { createLoader } from "../loader/index.js";
 import { combineSchemas, removeProperty } from "../schema.js";
 import {
   Edge,
   GraphDescriptor,
   NodeDescriberContext,
+  NodeDescriberFunction,
   NodeDescriberResult,
+  NodeHandler,
   NodeIdentifier,
   NodeTypeIdentifier,
   Schema,
 } from "../types.js";
 import { EdgeCache } from "./edge.js";
-import { collectKits } from "./kits.js";
+import { collectKits, createGraphNodeType } from "./kits.js";
 import { NodeCache } from "./node.js";
 import {
   EdgeType,
@@ -42,6 +44,7 @@ import {
   InspectableNodeType,
 } from "./types.js";
 import { invokeGraph } from "../run/invoke-graph.js";
+import { graphUrlLike } from "../utils/graph-url-like.js";
 
 export const inspectableGraph = (
   graph: GraphDescriptor,
@@ -91,6 +94,26 @@ class Graph implements InspectableGraphWithStore {
     return this.#cache.nodes.byType(type);
   }
 
+  async #getDescriber(
+    type: NodeTypeIdentifier
+  ): Promise<NodeDescriberFunction | undefined> {
+    const { kits } = this.#options;
+    const loader = this.#options.loader || createLoader();
+    let handler: NodeHandler | undefined;
+    try {
+      handler = await getHandler(type, {
+        kits,
+        loader,
+      });
+    } catch (e) {
+      console.warn(`Error getting describer for node type ${type}`, e);
+    }
+    if (!handler || !("describe" in handler) || !handler.describe) {
+      return undefined;
+    }
+    return handler.describe;
+  }
+
   async describeType(
     type: NodeTypeIdentifier,
     options: NodeTypeDescriberOptions = {}
@@ -105,12 +128,12 @@ class Graph implements InspectableGraphWithStore {
     }
 
     const { kits } = this.#options;
-    const handler = handlersFromKits(kits || [])[type];
+    const describer = await this.#getDescriber(type);
     const asWired = {
       inputSchema: edgesToSchema(EdgeType.In, options?.incoming),
       outputSchema: edgesToSchema(EdgeType.Out, options?.outgoing),
     } satisfies NodeDescriberResult;
-    if (!handler || !("describe" in handler) || !handler.describe) {
+    if (!describer) {
       return asWired;
     }
     const loader = this.#options.loader || createLoader();
@@ -145,7 +168,7 @@ class Graph implements InspectableGraphWithStore {
       context.base = this.#url;
     }
     try {
-      return handler.describe(
+      return describer(
         options?.inputs || undefined,
         asWired.inputSchema,
         asWired.outputSchema,
@@ -174,7 +197,10 @@ class Graph implements InspectableGraphWithStore {
   }
 
   kits(): InspectableKit[] {
-    return (this.#kits ??= collectKits(this.#options.kits || []));
+    return (this.#kits ??= collectKits(
+      { kits: this.#options.kits, loader: this.#options.loader },
+      this.#graph.nodes
+    ));
   }
 
   typeForNode(id: NodeIdentifier): InspectableNodeType | undefined {
@@ -190,7 +216,14 @@ class Graph implements InspectableGraphWithStore {
     this.#nodeTypes ??= new Map(
       kits.flatMap((kit) => kit.nodeTypes.map((type) => [type.type(), type]))
     );
-    return this.#nodeTypes.get(id);
+    const knownNodeType = this.#nodeTypes.get(id);
+    if (knownNodeType) {
+      return knownNodeType;
+    }
+    if (!graphUrlLike(id)) {
+      return undefined;
+    }
+    return createGraphNodeType(id, this.#options);
   }
 
   incomingForNode(id: NodeIdentifier): InspectableEdge[] {
@@ -266,14 +299,32 @@ class Graph implements InspectableGraphWithStore {
   ): Promise<NodeDescriberResult> {
     // invoke graph
     try {
+      const { inputSchema: $inputSchema, outputSchema: $outputSchema } =
+        await this.#describeWithStaticAnalysis();
       const base = this.#url;
-      return (await invokeGraph(this.#graph, inputs, {
-        // Fill out
-        base,
-        kits: this.#options.kits,
-        loader: this.#options.loader,
-        start: "describe",
-      })) as NodeDescriberResult;
+      // Remove the artifacts of the describer from the input/output schemas.
+      // TODO: The right fix here is for static describer to not include
+      // describer outputs.
+      delete $outputSchema.properties?.inputSchema;
+      delete $outputSchema.properties?.outputSchema;
+      const result = await invokeGraph(
+        this.#graph,
+        { ...inputs, $inputSchema, $outputSchema },
+        {
+          base,
+          kits: this.#options.kits,
+          loader: this.#options.loader,
+          start: "describe",
+        }
+      );
+      if ("$error" in result) {
+        console.warn(
+          `Error while invoking graph's describe entry point`,
+          result.$error
+        );
+        return await this.#describeWithStaticAnalysis();
+      }
+      return result as NodeDescriberResult;
     } catch (e) {
       console.warn(`Error while invoking graph's describe entry point`, e);
       return await this.#describeWithStaticAnalysis();

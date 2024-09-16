@@ -11,6 +11,12 @@ import {
   PortStatus,
   NodeValue,
   NodeConfiguration,
+  NodeDescriptor,
+  InputValues,
+  ErrorResponse,
+  GraphDescriptor,
+  NodeIdentifier,
+  InspectableNodePorts,
 } from "@google-labs/breadboard";
 
 export const enum HistoryEventType {
@@ -38,6 +44,19 @@ export enum STATUS {
   RUNNING = "running",
   PAUSED = "paused",
   STOPPED = "stopped",
+}
+
+export enum BOARD_LOAD_STATUS {
+  LOADING = "loading",
+  LOADED = "loaded",
+  ERROR = "error",
+}
+
+export enum BOARD_SAVE_STATUS {
+  UNSAVED = "unsaved",
+  SAVING = "saving",
+  SAVED = "saved",
+  ERROR = "error",
 }
 
 export type UserInputConfiguration = {
@@ -183,3 +202,116 @@ export interface SettingsStore {
   save(settings: Settings): Promise<void>;
   restore(): Promise<void>;
 }
+
+export type NodeLogEntry = {
+  type: "node";
+  id: string;
+  descriptor: NodeDescriptor;
+  hidden: boolean;
+  start: number;
+  bubbled: boolean;
+  end: number | null;
+  activity: ComponentActivityItem[];
+  title(): string;
+};
+
+export type EdgeLogEntry = {
+  type: "edge";
+  id?: string;
+  end: number | null;
+  schema?: Schema;
+  value?: InputValues;
+};
+
+export type ErrorLogEntry = {
+  type: "error";
+  error: ErrorResponse["error"];
+  path: number[];
+};
+
+export type LogEntry = NodeLogEntry | EdgeLogEntry | ErrorLogEntry;
+
+/**
+ * The result, returned by the TopGraphObserver.
+ */
+export type TopGraphRunResult = {
+  /**
+   * Returns reshuffled log of nodes and edges. The reshuffling is done to
+   * make inputs and outputs look like edges, rather than nodes.
+   */
+  log: LogEntry[];
+  /**
+   * Returns the current node within the graph. Great for determining the
+   * hihglighted node.
+   */
+  currentNode: ComponentWithActivity | null;
+  /**
+   * Returns the the current edges values within the graph. Think of this as
+   * a map of edge to an array of items. Each item in the array is a value that
+   * has travelled across this edge. The most recent value is the last item in
+   * the array.
+   */
+  edgeValues: TopGraphEdgeValues;
+  /**
+   * Returns all current node activities within a graph. Think of this as a
+   * map of node to an array of activities. Each activity is a record of what
+   * happened within the node. The most recent activity is the last item
+   * in the array.
+   */
+  nodeActivity: TopGraphNodeActivity;
+  /**
+   * Returns the GraphDescriptor of the current graph.
+   * Or null if the TopGraphObserver doesn't know what it is yet.
+   * The latter can happen when the graph hasn't run yet.
+   */
+  graph: GraphDescriptor | null;
+};
+
+export type ComparableEdge = {
+  equals(other: InspectableEdge): boolean;
+};
+
+export type TopGraphEdgeValues = {
+  get(edge: InspectableEdge): NodeValue[] | undefined;
+  current: ComparableEdge | null;
+};
+
+export type TopGraphNodeActivity = {
+  get(node: NodeIdentifier): ComponentActivityItem[] | undefined;
+};
+
+export type ComponentWithActivity = {
+  descriptor: NodeDescriptor;
+  activity: ComponentActivityItem[];
+};
+
+export type ComponentActivityItem = {
+  type: "input" | "output" | "error" | "node" | "graph";
+  description: string;
+  path: number[];
+};
+
+export type NodePortConfiguration = {
+  id: string;
+  title: string | null;
+  subGraphId: string | null;
+  selectedPort: string | null;
+  ports: InspectableNodePorts;
+  x: number;
+  y: number;
+};
+
+export type EdgeValueConfiguration = {
+  value: NodeValue[] | null;
+  schema: Schema | null;
+  x: number;
+  y: number;
+};
+
+export interface UserMessage {
+  srcset: string;
+  src: string;
+  alt: string;
+}
+
+export type RunIdentifier = string;

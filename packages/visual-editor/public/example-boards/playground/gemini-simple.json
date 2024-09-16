@@ -331,6 +331,7 @@
                       "parts": {
                         "type": "array",
                         "items": {
+                          "type": "object",
                           "anyOf": [
                             {
                               "type": "object",
@@ -465,7 +466,11 @@
                   ],
                   "enum": [
                     "gemini-1.5-flash-latest",
-                    "gemini-1.5-pro-latest"
+                    "gemini-1.5-pro-latest",
+                    "gemini-1.5-pro-exp-0801",
+                    "gemini-1.5-pro-exp-0827",
+                    "gemini-1.5-flash-8b-exp-0827",
+                    "gemini-1.5-flash-exp-0827"
                   ]
                 },
                 "responseMimeType": {
@@ -602,6 +607,7 @@
                     "parts": {
                       "type": "array",
                       "items": {
+                        "type": "object",
                         "anyOf": [
                           {
                             "type": "object",
@@ -675,6 +681,7 @@
                     "parts": {
                       "type": "array",
                       "items": {
+                        "type": "object",
                         "anyOf": [
                           {
                             "type": "object",
@@ -803,6 +810,7 @@
                       "parts": {
                         "type": "array",
                         "items": {
+                          "type": "object",
                           "anyOf": [
                             {
                               "type": "object",
@@ -937,7 +945,11 @@
                   "type": "string",
                   "enum": [
                     "gemini-1.5-flash-latest",
-                    "gemini-1.5-pro-latest"
+                    "gemini-1.5-pro-latest",
+                    "gemini-1.5-pro-exp-0801",
+                    "gemini-1.5-pro-exp-0827",
+                    "gemini-1.5-flash-8b-exp-0827",
+                    "gemini-1.5-flash-exp-0827"
                   ],
                   "behavior": [
                     "config"
@@ -1008,6 +1020,7 @@
                   ]
                 },
                 "retry": {
+                  "type": "number",
                   "anyOf": [
                     {
                       "type": "number",
@@ -1074,6 +1087,7 @@
                       "parts": {
                         "type": "array",
                         "items": {
+                          "type": "object",
                           "anyOf": [
                             {
                               "type": "object",
@@ -1203,6 +1217,7 @@
                         "parts": {
                           "type": "array",
                           "items": {
+                            "type": "object",
                             "anyOf": [
                               {
                                 "type": "object",
@@ -1427,6 +1442,7 @@
                               "parts": {
                                 "type": "array",
                                 "items": {
+                                  "type": "object",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -1496,6 +1512,7 @@
                     "parts": {
                       "type": "array",
                       "items": {
+                        "type": "object",
                         "anyOf": [
                           {
                             "type": "object",
@@ -1580,6 +1597,7 @@
                       "parts": {
                         "type": "array",
                         "items": {
+                          "type": "object",
                           "anyOf": [
                             {
                               "type": "object",
@@ -1709,6 +1727,7 @@
                         "parts": {
                           "type": "array",
                           "items": {
+                            "type": "object",
                             "anyOf": [
                               {
                                 "type": "object",

@@ -18,47 +18,60 @@ export enum EditorMode {
 
 const removeHardPort = (...names: string[]) => {
   return (port: InspectablePort) => {
-    if (port.edges.length > 0) {
-      return true;
-    }
-
-    if (
-      (port.status === PortStatus.Connected ||
-        port.status === PortStatus.Dangling) &&
-      !port.configured
-    )
-      return true;
+    if (port.status === PortStatus.Connected) return true;
     if (port.star) return false;
-    if (port.schema.behavior?.includes("config")) return false;
-    const items = port.schema.items;
-    if (items && !Array.isArray(items) && items.behavior?.includes("config")) {
-      return false;
-    }
+    if (port.name === "") return false;
     if (names.includes(port.name)) return false;
+
     return true;
   };
-};
-
-const removeWiredPort = (port: InspectablePort) => {
-  return port.schema.behavior?.includes("config");
-};
-
-const removeStarPort = (port: InspectablePort) => {
-  return !port.star && port.name !== "";
 };
 
 export const filterConfigByMode = (
   ports: InspectableNodePorts,
   mode: EditorMode
-) => {
+): InspectableNodePorts => {
+  const outputs = ports.outputs;
+
+  if (mode === EditorMode.ADVANCED) {
+    return {
+      inputs: {
+        fixed: ports.inputs.fixed,
+        ports: ports.inputs.ports.filter(removeStarPort),
+      },
+      outputs,
+    };
+  }
+
+  let containedConfig;
+  let inputPorts = ports.inputs.ports.filter(filterForConfigAware);
+
+  if (!containedConfig) {
+    inputPorts = ports.inputs.ports.filter(filterForConfigUnaware);
+  }
+
   const inputs: InspectablePortList = {
     fixed: ports.inputs.fixed,
-    ports: ports.inputs.ports.filter(
-      mode === EditorMode.ADVANCED ? removeStarPort : removeWiredPort
-    ),
+    ports: inputPorts,
   };
 
   return { inputs, outputs: ports.outputs };
+
+  function filterForConfigAware(port: InspectablePort) {
+    const hasConfig = port.schema.behavior?.includes("config");
+    if (hasConfig && !port.name.startsWith("$")) {
+      containedConfig = true;
+    }
+    return hasConfig;
+  }
+
+  function filterForConfigUnaware(port: InspectablePort) {
+    return removeStarPort(port) && port.status !== PortStatus.Dangling;
+  }
+
+  function removeStarPort(port: InspectablePort) {
+    return !port.star && port.name !== "";
+  }
 };
 
 export const filterPortsByMode = (

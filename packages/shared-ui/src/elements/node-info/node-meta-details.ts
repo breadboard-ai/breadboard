@@ -9,12 +9,9 @@ import { NodeMetadataUpdateEvent } from "../../events/events.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { Task } from "@lit/task";
 import {
-  GraphDescriptor,
-  GraphLoader,
+  InspectableGraph,
   InspectableNode,
-  Kit,
   NodeHandlerMetadata,
-  inspect,
 } from "@google-labs/breadboard";
 import {
   CommentNode,
@@ -28,6 +25,8 @@ type NodeMetaDetailsInfo = {
   type: "node";
   node: InspectableNode;
   metadata: NodeMetadata;
+  nodeTypeTitle: string;
+  nodeTypeURL: string | null;
   kitNodeHelp: NodeHandlerMetadata["help"] | null;
   kitNodeDescription: NodeHandlerMetadata["description"] | null;
 };
@@ -41,13 +40,7 @@ type CommentMetaDetailsInfo = {
 @customElement("bb-node-meta-details")
 export class NodeMetaDetails extends LitElement {
   @property()
-  graph: GraphDescriptor | null = null;
-
-  @property()
-  kits: Kit[] = [];
-
-  @property()
-  loader: GraphLoader | null = null;
+  graph: InspectableGraph | null = null;
 
   @property()
   selectedNodeIds: string[] = [];
@@ -56,7 +49,7 @@ export class NodeMetaDetails extends LitElement {
   subGraphId: string | null = null;
 
   @state()
-  expanded = false;
+  expanded = true;
 
   #ignoreNextUpdate = false;
   #titleRef: Ref<HTMLSpanElement> = createRef();
@@ -80,16 +73,10 @@ export class NodeMetaDetails extends LitElement {
         throw new Error("Unable to load node");
       }
 
-      const descriptor = graph;
-      let breadboardGraph = inspect(descriptor, {
-        kits: this.kits,
-        loader: this.loader || undefined,
-      });
-
       if (subGraphId && typeof subGraphId === "string") {
-        const subgraphs = breadboardGraph.graphs();
+        const subgraphs = graph.graphs();
         if (subgraphs[subGraphId]) {
-          breadboardGraph = subgraphs[subGraphId];
+          graph = subgraphs[subGraphId];
         } else {
           console.warn(`Unable to locate subgraph by name: ${this.subGraphId}`);
         }
@@ -97,22 +84,18 @@ export class NodeMetaDetails extends LitElement {
 
       let type: "node" | "comment" = "node";
       let node: InspectableNode | CommentNode | undefined =
-        breadboardGraph.nodeById(nodeId);
-      let kitNodeDescription: NodeHandlerMetadata["description"] | null = null;
-      let kitNodeHelp: NodeHandlerMetadata["help"] | null = null;
+        graph.nodeById(nodeId);
       let metadata: NodeMetadata | null = null;
 
       // Node is an InspectableNode.
       if (node) {
-        for (const kit of breadboardGraph.kits()) {
-          for (const nodeType of kit.nodeTypes) {
-            if (nodeType.type() === node.descriptor.type) {
-              kitNodeDescription = nodeType.metadata().description || null;
-              kitNodeHelp = nodeType.metadata().help || null;
-              break;
-            }
-          }
-        }
+        const nodeType = (node as InspectableNode).type();
+        const typeMetadata = await nodeType.metadata();
+        const kitNodeDescription = typeMetadata.description || null;
+        const kitNodeHelp = typeMetadata.help || null;
+        const nodeTypeTitle = typeMetadata.title || nodeType.type();
+        const nodeTypeURL = typeMetadata.url || null;
+
         metadata = node.metadata();
 
         return {
@@ -121,10 +104,12 @@ export class NodeMetaDetails extends LitElement {
           metadata,
           kitNodeDescription,
           kitNodeHelp,
+          nodeTypeTitle,
+          nodeTypeURL,
         } as NodeMetaDetailsInfo;
       } else {
         // Node is a CommentNode.
-        node = breadboardGraph
+        node = graph
           .metadata()
           ?.comments?.find((comment) => comment.id === nodeId);
 
@@ -283,7 +268,7 @@ export class NodeMetaDetails extends LitElement {
       `${STORAGE_PREFIX}-expanded`
     );
 
-    this.expanded = isExpanded === "true";
+    this.expanded = isExpanded ? isExpanded === "true" : this.expanded;
   }
 
   protected shouldUpdate(): boolean {
@@ -369,7 +354,7 @@ export class NodeMetaDetails extends LitElement {
               <div id="overview">
                 <h1 ${ref(this.#titleRef)}>
                   ${data.metadata.title ?? data.node.descriptor.id}
-                  (${data.node.descriptor.type})
+                  (${data.nodeTypeTitle})
                 </h1>
                 <p>${data.kitNodeDescription ?? html`No description`}</p>
                 ${data.kitNodeHelp
@@ -421,11 +406,7 @@ export class NodeMetaDetails extends LitElement {
                   name="id"
                   .value=${data.node.descriptor.id}
                 />
-                <input
-                  type="hidden"
-                  name="type"
-                  .value=${data.node.descriptor.type}
-                />
+                <input type="hidden" name="type" .value=${data.nodeTypeTitle} />
                 <label>Title</label>
                 <input
                   name="title"
@@ -456,6 +437,16 @@ export class NodeMetaDetails extends LitElement {
                   placeholder="Enter the description for this node"
                   .value=${data.metadata.description || ""}
                 ></textarea>
+
+                ${data.nodeTypeURL
+                  ? html` <label for="url">URL</label>
+                      <input
+                        disabled
+                        name="url"
+                        type="text"
+                        .value=${data.nodeTypeURL || ""}
+                      />`
+                  : nothing}
               </form>
             `
           : html`<div id="overview" class="no-border">

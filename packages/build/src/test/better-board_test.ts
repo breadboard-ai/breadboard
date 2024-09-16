@@ -152,7 +152,7 @@ describe("instantiate function", () => {
     const bar = input({ type: "number", optional: true });
     // $ExpectType BoardDefinition<{ bar?: number | undefined; foo: string; }, { bar?: number | undefined; foo: string; }>
     const b = board({ inputs: { foo, bar }, outputs: { foo, bar } });
-    // $ExpectType { bar?: Value<number | undefined>; foo: Value<string>; }
+    // $ExpectType { bar?: Value<number | undefined>; foo: Value<string>; } & { $id?: string | undefined; $metadata?: NodeMetadata | undefined; }
     const x = {} as Parameters<typeof b>[0];
 
     test("instance types", () => {
@@ -284,7 +284,7 @@ describe("instantiate function", () => {
       inputs: [inputNode({ foo }), inputNode({ bar })],
       outputs: {},
     });
-    // $ExpectType { foo: Value<string>; } | { bar: Value<number>; }
+    // $ExpectType ({ foo: Value<string>; } | { bar: Value<number>; }) & { $id?: string | undefined; $metadata?: NodeMetadata | undefined; }
     const x = {} as Parameters<typeof b>[0];
 
     test("instantiate function types", () => {

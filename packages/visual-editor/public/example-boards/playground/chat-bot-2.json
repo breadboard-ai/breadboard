@@ -93,7 +93,197 @@
                     "type": "object",
                     "properties": {
                       "context": {
-                        "type": "string",
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "role": {
+                                  "type": "string",
+                                  "enum": [
+                                    "user",
+                                    "model",
+                                    "tool"
+                                  ]
+                                },
+                                "parts": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "text": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "text"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "functionCall": {
+                                            "type": "object",
+                                            "properties": {
+                                              "name": {
+                                                "type": "string"
+                                              },
+                                              "args": {
+                                                "type": "object",
+                                                "properties": {},
+                                                "required": [],
+                                                "additionalProperties": {
+                                                  "type": "string"
+                                                }
+                                              }
+                                            },
+                                            "required": [
+                                              "name",
+                                              "args"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "functionCall"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    ]
+                                  }
+                                }
+                              },
+                              "required": [
+                                "parts"
+                              ],
+                              "additionalProperties": false,
+                              "behavior": [
+                                "llm-content"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "role": {
+                                      "type": "string",
+                                      "enum": [
+                                        "$metadata"
+                                      ]
+                                    },
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "looper"
+                                      ]
+                                    },
+                                    "data": {
+                                      "type": "object",
+                                      "properties": {
+                                        "max": {
+                                          "type": "number"
+                                        },
+                                        "todo": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "task": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "task"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "doneMarker": {
+                                          "type": "string"
+                                        },
+                                        "done": {
+                                          "type": "boolean"
+                                        },
+                                        "appendLast": {
+                                          "type": "boolean"
+                                        },
+                                        "returnLast": {
+                                          "type": "boolean"
+                                        },
+                                        "next": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "role",
+                                    "type",
+                                    "data"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "role": {
+                                      "type": "string",
+                                      "enum": [
+                                        "$metadata"
+                                      ]
+                                    },
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "split"
+                                      ]
+                                    },
+                                    "data": {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "start",
+                                            "next",
+                                            "end"
+                                          ]
+                                        },
+                                        "id": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "type",
+                                        "id"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "role",
+                                    "type",
+                                    "data"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            }
+                          ],
+                          "behavior": [
+                            "llm-content"
+                          ]
+                        },
                         "title": "context"
                       }
                     }
@@ -121,27 +311,211 @@
                     "type": "object",
                     "properties": {
                       "context": {
+                        "type": "array",
                         "title": "Context in",
                         "description": "Incoming conversation context",
-                        "type": "array",
+                        "default": "[]",
                         "items": {
                           "type": "object",
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "role": {
+                                  "type": "string",
+                                  "enum": [
+                                    "user",
+                                    "model",
+                                    "tool"
+                                  ]
+                                },
+                                "parts": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "text": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "text"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "functionCall": {
+                                            "type": "object",
+                                            "properties": {
+                                              "name": {
+                                                "type": "string"
+                                              },
+                                              "args": {
+                                                "type": "object",
+                                                "properties": {},
+                                                "required": [],
+                                                "additionalProperties": {
+                                                  "type": "string"
+                                                }
+                                              }
+                                            },
+                                            "required": [
+                                              "name",
+                                              "args"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "functionCall"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    ]
+                                  }
+                                }
+                              },
+                              "required": [
+                                "parts"
+                              ],
+                              "additionalProperties": false,
+                              "behavior": [
+                                "llm-content"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "role": {
+                                      "type": "string",
+                                      "enum": [
+                                        "$metadata"
+                                      ]
+                                    },
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "looper"
+                                      ]
+                                    },
+                                    "data": {
+                                      "type": "object",
+                                      "properties": {
+                                        "max": {
+                                          "type": "number"
+                                        },
+                                        "todo": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "task": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "task"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "doneMarker": {
+                                          "type": "string"
+                                        },
+                                        "done": {
+                                          "type": "boolean"
+                                        },
+                                        "appendLast": {
+                                          "type": "boolean"
+                                        },
+                                        "returnLast": {
+                                          "type": "boolean"
+                                        },
+                                        "next": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "role",
+                                    "type",
+                                    "data"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "role": {
+                                      "type": "string",
+                                      "enum": [
+                                        "$metadata"
+                                      ]
+                                    },
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "split"
+                                      ]
+                                    },
+                                    "data": {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "start",
+                                            "next",
+                                            "end"
+                                          ]
+                                        },
+                                        "id": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "type",
+                                        "id"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "role",
+                                    "type",
+                                    "data"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            }
+                          ],
                           "behavior": [
                             "llm-content"
                           ]
-                        },
-                        "default": "[]"
+                        }
                       },
                       "instruction": {
-                        "title": "Instruction",
-                        "format": "multiline",
+                        "type": "string",
                         "behavior": [
                           "config"
                         ],
+                        "title": "Instruction",
                         "examples": [
                           "You are a brilliant poet who specializes in two-line rhyming poems.\nGiven any topic, you can quickly whip up a two-line rhyming poem about it.\nLook at the topic below and do your magic"
                         ],
-                        "type": "string"
+                        "format": "multiline"
                       }
                     },
                     "required": [

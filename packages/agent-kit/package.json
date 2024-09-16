@@ -14,22 +14,13 @@
   "type": "module",
   "scripts": {
     "prepack": "npm run build",
-    "dev": "wireit",
-    "dev:samples": "npm run samples --watch",
-    "samples": "wireit",
     "test": "wireit",
     "build": "wireit",
     "lint": "wireit",
-    "generate-kit-manifest": "wireit"
+    "generate-kit-manifest": "wireit",
+    "generate:graphs": "wireit"
   },
   "wireit": {
-    "dev": {
-      "command": "breadboard debug src/boards --watch",
-      "dependencies": [
-        "build",
-        "../breadboard-cli:build"
-      ]
-    },
     "generate-kit-manifest": {
       "command": "tsx src/generate-kit-manifest.ts",
       "dependencies": [
@@ -39,15 +30,8 @@
         "src/generate-kit-manifest.ts"
       ],
       "output": [
-        "agent.kit.json"
-      ]
-    },
-    "samples": {
-      "command": "breadboard debug src/samples --watch -n",
-      "service": true,
-      "dependencies": [
-        "build",
-        "../breadboard-cli:build"
+        "agent.kit.json",
+        "boards/*.bgl.json"
       ]
     },
     "build": {
@@ -75,6 +59,8 @@
       ],
       "files": [
         "src/**/*.ts",
+        "src/future/*.js",
+        "bgl/*.bgl.json",
         "!src/samples/**/*.ts",
         "tests/**/*.ts",
         "tsconfig.json",
@@ -110,6 +96,16 @@
         "../../.eslintrc.json"
       ],
       "output": []
+    },
+    "generate:graphs": {
+      "command": "mkdir graphs && ls dist/src/boards/*.js | xargs -n1 -r -I{} ../breadboard-cli/dist/src/index.js make \"$PWD/{}\" -o \"$PWD/graphs/\" --format",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": [
+        "graphs/"
+      ]
     }
   },
   "repository": {

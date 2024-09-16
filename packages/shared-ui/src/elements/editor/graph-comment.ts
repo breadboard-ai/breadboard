@@ -6,7 +6,7 @@
 
 import * as PIXI from "pixi.js";
 import { getGlobalColor } from "./utils.js";
-import { GRAPH_OPERATIONS } from "./types.js";
+import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types.js";
 import MarkdownIt from "markdown-it";
 
 const markdown = MarkdownIt();
@@ -149,7 +149,7 @@ export class GraphComment extends PIXI.Container {
   #hitAreaData: LinkData[] = [];
   #hitAreas = new PIXI.Container();
 
-  collapsed = false;
+  expansionState: ComponentExpansionState = "expanded";
   readOnly = false;
 
   constructor() {

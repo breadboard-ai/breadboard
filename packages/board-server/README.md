@@ -153,3 +153,55 @@ npm run deploy
 ```
 
 This will build the project and deploy it to App Engine.
+
+## Using secrets
+
+If you wish to run boards on the server, you will need to store secrets on the board server.
+
+Currently, there are two choices: using [Google Cloud Secret Manager](https://cloud.google.com/security/products/secret-manager?hl=en) and using the `secrets.json` file.
+
+The choice is based on the value of the `STORAGE_BACKEND` variable.
+
+If the value is `sqlite`, the `secrets.json` file will be used to retrieve the secrets.
+
+If the value is `firestore`, the Google Cloud Secret Manager will be used.
+
+Each secret must contain three pieces of information:
+
+- **name**, such as `GEMINI_KEY`. This name should match the key that the boards use to ask for this secret.
+
+- **value** -- the value of the secret.
+
+- **origin** -- the associated [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) of the key. The secrets are most often used to gain access to various service APIs. To ensure that only those services can see their secret, the secrets are bound to the origin of the service.
+
+### Storing secrets with `secrets.json`
+
+At the root of the repository, place the file named `secrets.json`.
+
+The file format is as follows:
+
+```json
+{
+  "SECRET_NAME_GOES_HERE": {
+    "secret": "SECRET_VALUE_GOES_HERE",
+    "origin": "origin/of/secret/consumer/goes/here"
+  }
+}
+```
+
+For example:
+
+```json
+{
+  "GEMINI_KEY": {
+    "secret": " ...value elided..",
+    "origin": "https://generativelanguage.googleapis.com"
+  }
+}
+```
+
+### Storing secrets with Google Cloud Secret Manager
+
+Store secrets in the Secret Manager per [GCP docs](https://cloud.google.com/secret-manager/docs/creating-and-accessing-secrets).
+
+For each secret, add annotation named `origin` to specify the origin of secret consumer.

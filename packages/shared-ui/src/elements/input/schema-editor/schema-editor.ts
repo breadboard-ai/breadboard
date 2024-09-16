@@ -709,6 +709,15 @@ export class SchemaEditor extends LitElement {
             id="${id}-description"
             .value="${value.description || ""}"
           ></textarea>
+
+          <label for="${id}-config">Configured</label>
+          <input
+            name="${id}-config"
+            id="${id}-config"
+            type="checkbox"
+            ?checked=${value.behavior?.includes("config")}
+          />
+
           <button class="show-less" @click=${() => this.#toggleExpanded(id)}>
             Show less
           </button>
@@ -760,6 +769,9 @@ export class SchemaEditor extends LitElement {
         ) as HTMLTextAreaElement | null;
         const inRequired = form.querySelector(
           `#${id}-required`
+        ) as HTMLInputElement | null;
+        const inConfig = form.querySelector(
+          `#${id}-config`
         ) as HTMLInputElement | null;
 
         const oldType = property.type;
@@ -938,6 +950,22 @@ export class SchemaEditor extends LitElement {
           }
 
           schema.required = [...required];
+        }
+
+        if (inConfig) {
+          if (inConfig.checked) {
+            property.behavior = property.behavior || [];
+            if (!property.behavior.includes("config")) {
+              property.behavior.push("config");
+            }
+          } else {
+            property.behavior = property.behavior?.filter(
+              (item) => item !== "config"
+            );
+            if (property.behavior && !property.behavior?.length) {
+              delete property.behavior;
+            }
+          }
         }
       }
 

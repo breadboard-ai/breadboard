@@ -11,6 +11,7 @@ import {
   InspectableNode,
   InspectableNodePorts,
   InspectablePort,
+  NodeHandlerMetadata,
   PortStatus,
 } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
@@ -18,21 +19,107 @@ import * as Dagre from "@dagrejs/dagre";
 import { GraphEdge } from "./graph-edge.js";
 import { GraphNode } from "./graph-node.js";
 import { GraphNodePort } from "./graph-node-port.js";
-import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
+import {
+  ComponentExpansionState,
+  GRAPH_OPERATIONS,
+  GraphNodePortType,
+  LayoutInfo,
+  VisualMetadata,
+} from "./types.js";
 import { GraphAssets } from "./graph-assets.js";
-import { inspectableEdgeToString, getGlobalColor } from "./utils.js";
+import {
+  inspectableEdgeToString,
+  getGlobalColor,
+  expansionStateFromMetadata,
+} from "./utils.js";
 import { GraphComment } from "./graph-comment.js";
-import { EdgeData, cloneEdgeData } from "../../types/types.js";
-
-type LayoutInfo = {
-  x: number;
-  y: number;
-  type: "comment" | "node";
-  collapsed: boolean;
-  justAdded?: boolean;
-};
+import {
+  ComponentWithActivity,
+  EdgeData,
+  TopGraphEdgeValues,
+  TopGraphNodeActivity,
+  cloneEdgeData,
+} from "../../types/types.js";
 
 const highlightedNodeColor = getGlobalColor("--bb-ui-600");
+
+const nodeColors = new Map([
+  [
+    "specialist",
+    {
+      text: getGlobalColor("--bb-specialist-600"),
+      border: getGlobalColor("--bb-neutral-500"),
+    },
+  ],
+  [
+    "runJavascript",
+    {
+      text: getGlobalColor("--bb-js-700"),
+      border: getGlobalColor("--bb-neutral-500"),
+    },
+  ],
+  [
+    "input",
+    {
+      text: getGlobalColor("--bb-input-600"),
+      border: getGlobalColor("--bb-input-500"),
+    },
+  ],
+  [
+    "output",
+    {
+      text: getGlobalColor("--bb-output-600"),
+      border: getGlobalColor("--bb-output-400"),
+    },
+  ],
+  [
+    "human",
+    {
+      text: getGlobalColor("--bb-human-600"),
+      border: getGlobalColor("--bb-neutral-500"),
+    },
+  ],
+  [
+    "looper",
+    {
+      text: getGlobalColor("--bb-looper-600"),
+      border: getGlobalColor("--bb-neutral-500"),
+    },
+  ],
+  [
+    "joiner",
+    {
+      text: getGlobalColor("--bb-joiner-600"),
+      border: getGlobalColor("--bb-neutral-500"),
+    },
+  ],
+]);
+
+const nodeIcons = new Map([
+  [
+    "runJavascript",
+    {
+      name: "js",
+    },
+  ],
+  [
+    "input",
+    {
+      name: "input",
+    },
+  ],
+  [
+    "output",
+    {
+      name: "output",
+    },
+  ],
+]);
+
+const defaultNodeColors = {
+  text: getGlobalColor("--bb-neutral-600"),
+  border: getGlobalColor("--bb-neutral-400"),
+};
 
 export class Graph extends PIXI.Container {
   #isDirty = true;
@@ -40,20 +127,24 @@ export class Graph extends PIXI.Container {
   #edgeGraphics = new Map<string, GraphEdge>();
   #edges: InspectableEdge[] | null = null;
   #nodes: InspectableNode[] | null = null;
+  #typeMetadata: Map<string, NodeHandlerMetadata> | null = null;
   #comments: CommentNode[] | null = null;
   #ports: Map<string, InspectableNodePorts> | null = null;
   #nodeById = new Map<string, InspectableNode>();
   #graphNodeById = new Map<string, GraphNode | GraphComment>();
   #layout = new Map<string, LayoutInfo>();
-  #highlightedNodeId: string | null = null;
+  #highlightedComponent: ComponentWithActivity | null = null;
   #highlightedNode = new PIXI.Graphics();
   #highlightedNodeColor = highlightedNodeColor;
   #highlightPadding = 8;
   #autoSelect = new Set<string>();
   #latestPendingValidateRequest = new WeakMap<GraphEdge, symbol>();
+  #edgeValues: TopGraphEdgeValues | null = null;
+  #nodeValues: TopGraphNodeActivity | null = null;
 
   #isInitialDraw = true;
   #collapseNodesByDefault = false;
+  #showNodePreviewValues = false;
   #showNodeTypeDescriptions = false;
   layoutRect: DOMRectReadOnly | null = null;
 
@@ -119,6 +210,13 @@ export class Graph extends PIXI.Container {
       }
 
       evt.stopPropagation();
+
+      // Because the edge is made up the wire graphic and the value widget we
+      // need to redirect clicks on the wire graphic itself to the containing
+      // GraphEdge for the purposes of selection.
+      if (evt.target.label === "GraphEdge" && evt.target.parent) {
+        evt.target = evt.target.parent;
+      }
 
       if (
         evt.target instanceof GraphComment ||
@@ -459,7 +557,21 @@ export class Graph extends PIXI.Container {
 
       const toNodePortsIn = inPortDisambiguation || [];
       const possiblePortsIn: InspectablePort[] = toNode.collapsed
-        ? toNodePortsIn.filter((port) => !port.star && port.name !== "")
+        ? toNodePortsIn.filter((port) => {
+            if (port.star) return false;
+            if (port.name === "") return false;
+            if (port.schema.behavior?.includes("config")) return false;
+            const items = port.schema.items;
+            if (
+              items &&
+              !Array.isArray(items) &&
+              items.behavior?.includes("config")
+            ) {
+              return false;
+            }
+
+            return true;
+          })
         : toNodePortsIn.filter(
             (port) =>
               !port.star && port.name !== "" && port.name === targetInPortName
@@ -698,17 +810,33 @@ export class Graph extends PIXI.Container {
     return this.#layout.get(node);
   }
 
+  storeCommentLayoutPositions() {
+    for (const child of this.children) {
+      if (!(child instanceof GraphComment)) {
+        continue;
+      }
+
+      this.setNodeLayoutPosition(
+        child.label,
+        "comment",
+        this.toGlobal(child.position),
+        child.expansionState,
+        false
+      );
+    }
+  }
+
   setNodeLayoutPosition(
     node: string,
     type: "comment" | "node",
     position: PIXI.PointData,
-    collapsed: boolean,
+    expansionState: ComponentExpansionState,
     justAdded = false
   ) {
     this.#layout.set(node, {
       ...this.toLocal(position),
       type,
-      collapsed,
+      expansionState,
       justAdded,
     });
   }
@@ -720,7 +848,7 @@ export class Graph extends PIXI.Container {
 
     const g = new Dagre.graphlib.Graph();
     const opts: Partial<Dagre.GraphLabel> = {
-      ranksep: 60,
+      ranksep: 90,
       rankdir: "LR",
       align: "DR",
     };
@@ -768,7 +896,9 @@ export class Graph extends PIXI.Container {
           x: Math.round(x - width / 2),
           y: Math.round(y - height / 2),
           type: "node",
-          collapsed: this.collapseNodesByDefault,
+          expansionState: this.collapseNodesByDefault
+            ? "collapsed"
+            : "expanded",
         });
       }
     }
@@ -781,7 +911,7 @@ export class Graph extends PIXI.Container {
       }
 
       graphNode.position.set(layout.x, layout.y);
-      graphNode.collapsed = layout.collapsed;
+      graphNode.expansionState = layout.expansionState;
     }
 
     this.#drawEdges();
@@ -793,7 +923,19 @@ export class Graph extends PIXI.Container {
         continue;
       }
 
-      child.collapsed = this.collapseNodesByDefault;
+      child.expansionState = this.collapseNodesByDefault
+        ? "collapsed"
+        : "expanded";
+    }
+  }
+
+  #setNodesPreviewValues() {
+    for (const child of this.children) {
+      if (!(child instanceof GraphNode)) {
+        continue;
+      }
+
+      child.showNodePreviewValues = this.showNodePreviewValues;
     }
   }
 
@@ -821,6 +963,20 @@ export class Graph extends PIXI.Container {
     return this.#collapseNodesByDefault;
   }
 
+  set showNodePreviewValues(showNodePreviewValues: boolean) {
+    if (showNodePreviewValues === this.#showNodePreviewValues) {
+      return;
+    }
+
+    this.#isDirty = true;
+    this.#showNodePreviewValues = showNodePreviewValues;
+    this.#setNodesPreviewValues();
+  }
+
+  get showNodePreviewValues() {
+    return this.#showNodePreviewValues;
+  }
+
   set showNodeTypeDescriptions(showNodeTypeDescriptions: boolean) {
     if (showNodeTypeDescriptions === this.#showNodeTypeDescriptions) {
       return;
@@ -843,6 +999,24 @@ export class Graph extends PIXI.Container {
 
   get edges() {
     return this.#edges;
+  }
+
+  set edgeValues(edgeValues: TopGraphEdgeValues | null) {
+    this.#edgeValues = edgeValues;
+    this.#isDirty = true;
+  }
+
+  get edgeValues() {
+    return this.#edgeValues;
+  }
+
+  set nodeValues(nodeValues: TopGraphNodeActivity | null) {
+    this.#nodeValues = nodeValues;
+    this.#isDirty = true;
+  }
+
+  get nodeValues() {
+    return this.#nodeValues;
   }
 
   set nodes(nodes: InspectableNode[] | null) {
@@ -881,13 +1055,22 @@ export class Graph extends PIXI.Container {
     return this.#comments;
   }
 
-  set highlightedNodeId(highlightedNodeId: string | null) {
-    this.#highlightedNodeId = highlightedNodeId;
+  set highlightedNode(node: ComponentWithActivity | null) {
+    this.#highlightedComponent = node;
     this.#drawNodeHighlight();
   }
 
-  get highlightedNodeId() {
-    return this.#highlightedNodeId;
+  get highlightedNode() {
+    return this.#highlightedComponent;
+  }
+
+  set typeMetadata(metadata: Map<string, NodeHandlerMetadata> | null) {
+    this.#typeMetadata = metadata;
+    this.#isDirty = true;
+  }
+
+  get typeMetadata() {
+    return this.#typeMetadata;
   }
 
   selectEdge(edge: EdgeData) {
@@ -947,6 +1130,7 @@ export class Graph extends PIXI.Container {
 
       const childPosition = this.graph.getNodeLayoutPosition(child.label);
       if (!childPosition) {
+        console.log("Child has no position", child.label);
         continue;
       }
 
@@ -959,7 +1143,7 @@ export class Graph extends PIXI.Container {
         child.label,
         child instanceof GraphNode ? "node" : "comment",
         this.graph.toGlobal(newPosition),
-        child.collapsed
+        child.expansionState
       );
 
       if (child.label === this.id) {
@@ -983,7 +1167,7 @@ export class Graph extends PIXI.Container {
       type: "node" | "comment";
       x: number;
       y: number;
-      collapsed: boolean;
+      expansionState: ComponentExpansionState;
     }> = [];
     for (const child of this.graph.getSelectedChildren()) {
       if (!(child instanceof GraphNode || child instanceof GraphComment)) {
@@ -995,7 +1179,7 @@ export class Graph extends PIXI.Container {
         type: child instanceof GraphNode ? "node" : "comment",
         x: child.position.x,
         y: child.position.y,
-        collapsed: child.collapsed,
+        expansionState: child.expansionState,
       });
     }
 
@@ -1040,12 +1224,14 @@ export class Graph extends PIXI.Container {
       return;
     }
 
-    if (!this.#highlightedNodeId) {
+    if (!this.#highlightedComponent) {
       this.#highlightedNode.clear();
       return;
     }
 
-    const graphNode = this.#graphNodeById.get(this.#highlightedNodeId);
+    const graphNode = this.#graphNodeById.get(
+      this.#highlightedComponent.descriptor.id
+    );
     if (!graphNode || !(graphNode instanceof GraphNode)) {
       this.#highlightedNode.clear();
       return;
@@ -1090,6 +1276,9 @@ export class Graph extends PIXI.Container {
       return;
     }
 
+    const isInitialDraw = this.#isInitialDraw;
+    this.#isInitialDraw = false;
+
     /**
      * We only position the graph on the initial draw, and we need the graph to
      * be drawn before we can query its dimensions. So we check the layout map,
@@ -1114,7 +1303,7 @@ export class Graph extends PIXI.Container {
 
         this.graphNode.selected = true;
         this.graphNode.position.set(this.layout.x, this.layout.y);
-        this.graphNode.collapsed = this.layout.collapsed;
+        this.graphNode.expansionState = this.layout.expansionState;
 
         this.graphNode.parent.emit(
           GRAPH_OPERATIONS.GRAPH_NODE_SELECTED,
@@ -1138,11 +1327,18 @@ export class Graph extends PIXI.Container {
     };
 
     for (const node of this.#nodes) {
-      const { id } = node.descriptor;
+      const { id, type } = node.descriptor;
+      const { title: typeTitle = type, icon } =
+        this.#typeMetadata?.get(type) || {};
       let graphNode = this.#graphNodeById.get(id);
       if (!graphNode || !(graphNode instanceof GraphNode)) {
-        graphNode = new GraphNode(id, node.descriptor.type, node.title());
+        graphNode = new GraphNode(id, type, node.title(), typeTitle);
         graphNode.showNodeTypeDescriptions = this.showNodeTypeDescriptions;
+        graphNode.showNodePreviewValues = this.showNodePreviewValues;
+
+        const colors = nodeColors.get(type) || defaultNodeColors;
+        graphNode.titleTextColor = colors.text;
+        graphNode.borderColor = colors.border;
 
         this.#graphNodeById.set(id, graphNode);
       }
@@ -1151,17 +1347,18 @@ export class Graph extends PIXI.Container {
         graphNode.title = node.title();
       }
 
-      const icon = node.type().metadata().icon;
       if (icon && GraphAssets.instance().has(icon)) {
         graphNode.icon = icon;
+      } else {
+        const icon = nodeIcons.get(type);
+        if (icon) {
+          graphNode.icon = icon.name;
+        }
       }
 
       if (node.descriptor.metadata?.visual) {
-        const { x, y, collapsed } = node.descriptor.metadata.visual as {
-          x?: number;
-          y?: number;
-          collapsed: boolean;
-        };
+        const { x, y, collapsed } = node.descriptor.metadata
+          .visual as VisualMetadata;
 
         // We may receive visual values for the node, but we may also have
         // marked the node as having just been added to the editor. So we go
@@ -1172,11 +1369,14 @@ export class Graph extends PIXI.Container {
         if (existingLayout) {
           justAdded = existingLayout.justAdded || false;
         }
-        const nodeCollapsed = collapsed ?? this.collapseNodesByDefault;
+        const expansionState = expansionStateFromMetadata(
+          collapsed,
+          this.collapseNodesByDefault
+        );
         const pos = this.toGlobal({ x: x ?? 0, y: y ?? 0 });
-        this.setNodeLayoutPosition(id, "node", pos, nodeCollapsed, justAdded);
+        this.setNodeLayoutPosition(id, "node", pos, expansionState, justAdded);
 
-        graphNode.collapsed = nodeCollapsed;
+        graphNode.expansionState = expansionState;
       }
 
       const portInfo = this.#ports.get(id);
@@ -1186,11 +1386,12 @@ export class Graph extends PIXI.Container {
       }
 
       graphNode.label = id;
+      graphNode.readOnly = this.readOnly;
       graphNode.inPorts = portInfo.inputs.ports;
       graphNode.outPorts = portInfo.outputs.ports;
       graphNode.fixedInputs = portInfo.inputs.fixed;
       graphNode.fixedOutputs = portInfo.outputs.fixed;
-      graphNode.readOnly = this.readOnly;
+      graphNode.activity = this.#nodeValues?.get(id) ?? null;
 
       graphNode.forceUpdateDimensions();
       graphNode.removeAllListeners();
@@ -1216,7 +1417,7 @@ export class Graph extends PIXI.Container {
       graphNode.once(GRAPH_OPERATIONS.GRAPH_NODE_DRAWN, onDraw, {
         graphNode,
         layout: this.#layout.get(id) || null,
-        isInitialDraw: this.#isInitialDraw,
+        isInitialDraw,
       });
 
       graphNode.on(GRAPH_OPERATIONS.GRAPH_NODE_EXPAND_COLLAPSE, () => {
@@ -1228,11 +1429,11 @@ export class Graph extends PIXI.Container {
           return;
         }
 
-        if (layout.collapsed === graphNode.collapsed) {
+        if (layout.expansionState === graphNode.expansionState) {
           return;
         }
 
-        layout.collapsed = graphNode.collapsed;
+        layout.expansionState = graphNode.expansionState;
         this.emit(GRAPH_OPERATIONS.GRAPH_NODE_EXPAND_COLLAPSE);
       });
 
@@ -1246,6 +1447,20 @@ export class Graph extends PIXI.Container {
         GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSELEAVE,
         (...args: unknown[]) =>
           this.emit(GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSELEAVE, ...args)
+      );
+
+      graphNode.on(
+        GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
+        (...args: unknown[]) => {
+          this.emit(GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT, ...args);
+        }
+      );
+
+      graphNode.on(
+        GRAPH_OPERATIONS.GRAPH_NODE_ACTIVITY_SELECTED,
+        (...args: unknown[]) => {
+          this.emit(GRAPH_OPERATIONS.GRAPH_NODE_ACTIVITY_SELECTED, ...args);
+        }
       );
 
       this.addChild(graphNode);
@@ -1309,11 +1524,7 @@ export class Graph extends PIXI.Container {
       }
 
       if (node.metadata?.visual) {
-        const { x, y, collapsed } = node.metadata.visual as {
-          x: number;
-          y: number;
-          collapsed: boolean;
-        };
+        const { x, y, collapsed } = node.metadata.visual as VisualMetadata;
 
         // We may receive visual values for the node, but we may also have
         // marked the node as having just been added to the editor. So we go
@@ -1324,17 +1535,21 @@ export class Graph extends PIXI.Container {
         if (existingLayout) {
           justAdded = existingLayout.justAdded || false;
         }
-        const nodeCollapsed = collapsed ?? this.collapseNodesByDefault;
+        const expansionState = expansionStateFromMetadata(
+          collapsed,
+          this.collapseNodesByDefault
+        );
+
         const pos = this.toGlobal({ x, y });
         this.setNodeLayoutPosition(
           id,
           "comment",
           pos,
-          nodeCollapsed,
+          expansionState,
           justAdded
         );
 
-        graphComment.collapsed = nodeCollapsed;
+        graphComment.expansionState = expansionState;
       }
 
       graphComment.label = id;
@@ -1367,6 +1582,12 @@ export class Graph extends PIXI.Container {
         layout.justAdded = false;
 
         graphComment.position.set(layout.x, layout.y);
+        graphComment.emit(
+          GRAPH_OPERATIONS.GRAPH_NODE_MOVED,
+          layout.x,
+          layout.y,
+          true
+        );
       });
 
       this.addChild(graphComment);
@@ -1398,10 +1619,22 @@ export class Graph extends PIXI.Container {
         edgeGraphic = new GraphEdge(fromNode, toNode);
         edgeGraphic.type = edge.type;
 
+        // Propagate edge value clicks to the graph renderer.
+        edgeGraphic.on(
+          GRAPH_OPERATIONS.GRAPH_EDGE_VALUE_SELECTED,
+          (...args: unknown[]) => {
+            this.emit(GRAPH_OPERATIONS.GRAPH_EDGE_VALUE_SELECTED, ...args);
+          }
+        );
+
         this.#edgeGraphics.set(inspectableEdgeToString(edge), edgeGraphic);
         this.#edgeContainer.addChild(edgeGraphic);
       }
 
+      edgeGraphic.value = this.#edgeValues?.get(edge) ?? null;
+      edge.inPort().then((port) => {
+        edgeGraphic.schema = port.schema || null;
+      });
       edgeGraphic.edge = edge;
       edgeGraphic.readOnly = this.readOnly;
       if (this.highlightInvalidWires) {
@@ -1455,7 +1688,6 @@ export class Graph extends PIXI.Container {
         continue;
       }
 
-      edgeGraphic.clear();
       edgeGraphic.removeFromParent();
       edgeGraphic.destroy();
       this.#edgeGraphics.delete(edgeDescription);

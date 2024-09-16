@@ -610,6 +610,8 @@ export class LLMInput extends LitElement {
     this.showInlineControls = null;
     this.value.parts.push({ text: "" });
     this.#focusLastPart = true;
+
+    this.#forceReRender();
     this.requestUpdate();
   }
 

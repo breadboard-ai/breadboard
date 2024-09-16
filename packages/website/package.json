@@ -33,6 +33,7 @@
         "../agent-kit:build",
         "../breadboard:build:tsc",
         "../visual-editor:build:tsc",
+        "../shared-ui:build:tsc",
         "../build:build:tsc",
         "../core-kit:build:tsc",
         "../gemini-kit:build:tsc",
@@ -85,6 +86,9 @@
       "env": {
         "FORCE_COLOR": "1"
       },
+      "dependencies": [
+        "typescript-files-and-deps"
+      ],
       "files": [
         "src/js/",
         "tsconfig.json",
@@ -125,7 +129,7 @@
     "@google-labs/palm-kit": "^0.1.3",
     "@google-labs/template-kit": "^0.3.9",
     "@breadboard-ai/shared-ui": "^1.16.1",
-    "eleventy-plugin-youtube-embed": "^1.10.2",
+    "eleventy-plugin-youtube-embed": "^1.11.0",
     "esbuild": "^0.23.1",
     "typescript": "^5.5.4"
   },
@@ -142,6 +146,6 @@
     "markdown-it-github-alerts": "^0.3.0",
     "markdown-it-github-headings": "^2.0.1",
     "rollup-plugin-import-assert": "^3.0.1",
-    "wireit": "^0.14.8"
+    "wireit": "^0.14.9"
   }
 }

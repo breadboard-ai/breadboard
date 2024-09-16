@@ -6,6 +6,7 @@
 
 import { HarnessRunResult, SecretResult } from "../../harness/types.js";
 import {
+  EdgeResponse,
   ErrorResponse,
   GraphEndProbeData,
   GraphStartProbeData,
@@ -21,18 +22,13 @@ import {
   PathRegistry,
   SECRET_PATH,
   createSimpleEntry,
-  idFromPath,
-  pathFromId,
 } from "./path-registry.js";
-import {
-  RunNodeEvent,
-  entryIdFromEventId,
-  eventIdFromEntryId,
-} from "./run-node-event.js";
+import { RunNodeEvent } from "./run-node-event.js";
 import { RunSerializer, SequenceEntry } from "./serializer.js";
 import {
   EventIdentifier,
   GraphDescriptorStore,
+  InspectableRunEdge,
   InspectableRunErrorEvent,
   InspectableRunEvent,
   InspectableRunNodeEvent,
@@ -44,6 +40,12 @@ import {
   TimelineEntry,
 } from "../types.js";
 import { SerializedDataStoreGroup } from "../../data/types.js";
+import {
+  entryIdFromEventId,
+  eventIdFromEntryId,
+  idFromPath,
+  pathFromId,
+} from "./conversions.js";
 
 const shouldSkipEvent = (
   options: RunObserverOptions,
@@ -86,6 +88,12 @@ export class EventManager {
     const entry = this.#pathRegistry.create(path);
     entry.graphId = graphId;
     entry.graphStart = timestamp;
+    entry.view = {
+      // Math: The start index is the length of the sequence before the
+      // graphstart event is added.
+      start: this.#sequence.length,
+      sequence: this.#sequence,
+    };
     // TODO: Instead of creating a new instance, cache and store them
     // in the GraphStore.
     entry.graph = inspectableGraph(graph, { kits: this.#options.kits });
@@ -105,6 +113,22 @@ export class EventManager {
     }
     entry.graphEnd = timestamp;
     this.#addToSequence("graphend", entry);
+  }
+
+  #addEdge(data: EdgeResponse) {
+    const { edge, to, value: allValues } = data;
+    const entry = this.#pathRegistry.create(to.slice(0, -1));
+    // Only store the value for this particular edge.
+    let value = allValues;
+    if (!edge.in) {
+      if (!edge.out) {
+        value = undefined;
+      }
+    } else {
+      const edgeValue = allValues ? allValues[edge.in] : null;
+      value = edgeValue ? { [edge.in]: edgeValue } : undefined;
+    }
+    entry.edges.push({ ...data, value });
   }
 
   #addNodestart(data: NodeStartResponse) {
@@ -232,6 +256,8 @@ export class EventManager {
     switch (result.type) {
       case "graphstart":
         return this.#addGraphstart(result.data);
+      case "edge":
+        return this.#addEdge(result.data);
       case "graphend":
         return this.#addGraphend(result.data);
       case "nodestart":
@@ -251,6 +277,10 @@ export class EventManager {
 
   get events(): InspectableRunEvent[] {
     return this.#pathRegistry.events;
+  }
+
+  get edges(): InspectableRunEdge[] {
+    return this.#pathRegistry.edges;
   }
 
   currentEvent(): InspectableRunNodeEvent | null {

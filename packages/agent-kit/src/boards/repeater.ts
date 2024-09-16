@@ -5,104 +5,89 @@
  */
 
 import {
-  NewNodeFactory,
-  NewNodeValue,
-  base,
+  annotate,
+  array,
   board,
-  code,
-} from "@google-labs/breadboard";
-import { core } from "@google-labs/core-kit";
+  constant,
+  converge,
+  input,
+  loopback,
+  object,
+  outputNode,
+} from "@breadboard-ai/build";
+import { code, invoke } from "@google-labs/core-kit";
+import { contextType } from "../context.js";
 
-export type RepeaterType = NewNodeFactory<
-  {
-    /**
-     * The initial conversation context.
-     */
-    context?: NewNodeValue;
-    /**
-     * The worker to repeat.
-     */
-    worker: NewNodeValue;
-    /**
-     * The maximum number of repetitions to make (set to -1 to go infinitely).
-     */
-    max?: NewNodeValue;
-  },
-  {
-    /**
-     * The final context after the repetitions.
-     */
-    context: NewNodeValue;
-  }
->;
-
-const counter = code(({ context, count }) => {
-  const num = (count as number) - 1;
-  if (num != 0) {
-    return { continue: context, count: num };
-  }
-  return { stop: context };
+const inputContext = input({
+  title: "Context",
+  type: array(contextType),
+  description: "Initial conversation context",
+  default: [],
 });
 
-export default await board(({ context, worker, max }) => {
-  context
-    .title("Context")
-    .isArray()
-    .format("multiline")
-    .behavior("llm-content")
-    .optional()
-    .default("[]")
-    .description("Initial conversation context");
-  max
-    .title("Max")
-    .description(
-      "The maximum number of repetitions to make (set to -1 to go infinitely)"
-    )
-    .isNumber()
-    .optional()
-    .default("-1")
-    .examples("3");
+const max = input({
+  title: "Max",
+  description:
+    "The maximum number of repetitions to make (set to -1 to go infinitely)",
+  type: "number",
+  default: -1,
+  examples: [3],
+});
 
-  worker
-    .title("Worker")
-    .description("Worker to repeat")
-    .isObject()
-    .behavior("board");
+const worker = input({
+  title: "Worker",
+  description: "Worker to repeat",
+  type: annotate(object({}), {
+    behavior: ["board"],
+  }),
+});
 
-  const invokeAgent = core.invoke({
-    $id: "invokeAgent",
-    $metadata: {
-      title: "Invoke Worker",
-      description: "Invoking the worker",
-    },
-    $board: worker.memoize(),
-    context,
-  });
+const counterContinue = loopback({ type: array(contextType) });
+const workerInvoke = invoke({
+  $metadata: { title: "Invoke Worker" },
+  $board: constant(worker),
+  context: converge(inputContext, counterContinue),
+});
 
-  base.output({
-    $id: "exit",
-    $metadata: {
-      title: "Exit",
-      description: "Exiting early from the repeater",
-    },
-    context: invokeAgent.exit,
-  });
+const workerExitOutput = outputNode(
+  { context: workerInvoke.unsafeOutput("exit") },
+  { title: "Exit" }
+);
 
-  const count = counter({
-    $id: "counter",
-    $metadata: {
-      title: "Counter",
-      description: "Counting the number of repetitions",
-    },
-    context: invokeAgent.context,
-    count: max,
-  });
+const counterCount = loopback({ type: "number" });
+const counter = code(
+  {
+    $metadata: { title: "Counter" },
+    context: workerInvoke.unsafeOutput("context"),
+    count: converge(max, counterCount),
+  },
+  {
+    continue: array(contextType),
+    stop: array(contextType),
+    count: "number",
+  },
+  ({ context, count }) => {
+    const num = count - 1;
+    if (num !== 0) {
+      // TODO(aomarks) This cast is because we don't support optional outputs
+      // from the code helper yet.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return { continue: context, count: num } as any;
+    }
+    // TODO(aomarks) This cast is because we don't support optional outputs
+    // from the code helper yet.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return { stop: context } as any;
+  }
+);
+counterCount.resolve(counter.outputs.count);
+counterContinue.resolve(counter.outputs.continue);
 
-  count.continue.as("context").to(invokeAgent);
-  count.count.to(count);
+const counterExitOutput = outputNode({
+  context: counter.outputs.stop,
+});
 
-  return { context: count.stop };
-}).serialize({
+export default board({
   title: "Repeater",
   description:
     "A worker whose job it is to repeat the same thing over and over, until some condition is met or the max count of repetitions is reached.",
@@ -110,4 +95,6 @@ export default await board(({ context, worker, max }) => {
   metadata: {
     deprecated: true,
   },
+  inputs: { max, context: inputContext, worker },
+  outputs: [workerExitOutput, counterExitOutput],
 });

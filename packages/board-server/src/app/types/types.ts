@@ -11,14 +11,6 @@ import type {
   PortStatus,
   Schema,
 } from "@google-labs/breadboard";
-import type {
-  RunErrorEvent,
-  RunInputEvent,
-  RunNodeEndEvent,
-  RunNodeStartEvent,
-  RunOutputEvent,
-  RunSecretEvent,
-} from "@google-labs/breadboard/harness";
 
 export type InputCallback = (data: InputValues) => void;
 

@@ -101,7 +101,6 @@ test("can serialize when passed to discrete component", () => {
   const { joined } = lineCombiner({ "*": lines }).outputs;
   const testBoard = board({ inputs: { "*": lines }, outputs: { joined } });
   const bgl = serialize(testBoard);
-  console.log(JSON.stringify(bgl));
   assert.deepEqual(bgl, {
     edges: [
       { from: "input-0", to: "lineCombiner-0", out: "*", in: "" },

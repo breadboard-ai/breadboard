@@ -7,6 +7,8 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
 import type { BroadenBasicType, Defined } from "../common/type-util.js";
+import { defineNodeType } from "../define/define.js";
+import { jsonSchema } from "../type-system/json-schema.js";
 import type {
   BreadboardType,
   ConvertBreadboardType,
@@ -229,3 +231,46 @@ export function isSpecialInput(value: unknown): value is GenericSpecialInput {
     "__SpecialInputBrand" in value
   );
 }
+
+/**
+ * Usually, inputs are created with the {@link input} and {@link inputNode}
+ * functions, which abstract Breadboard inputs to make them more powerful and
+ * ergonomic while using the Build API.
+ *
+ * This `rawInput` function, in contrast, creates an input component that
+ * behaves like a totally normal component that happens to have the type
+ * "input".
+ *
+ * This gives you full freedom to wire an input node up in arbitrary ways in a
+ * board, for example if you need the schema to be provided by the output of
+ * another component, rather than being statically defined.
+ *
+ * Note that you will need to use {@link unsafeOutput} to access any output
+ * ports of this component.
+ */
+export const rawInput = defineNodeType({
+  name: "input",
+  inputs: {
+    schema: {
+      type: jsonSchema,
+    },
+  },
+  outputs: {
+    "*": {
+      type: "unknown",
+    },
+  },
+  describe: () => {
+    // TODO(aomarks) Replace this with Breadboard interfaces when they exist.
+    //
+    // These definitions are stubs. They exist only so that we have a way to
+    // declare input and output nodes using the Build API. Every runtime is
+    // responsible for providing its own real implementation of "input" and
+    // "output". So,  we throw here and below in case this implementations
+    // somehow make their way into a runtime environment.
+    throw new Error("Unexpected call to stub input describe()");
+  },
+  invoke: () => {
+    throw new Error("Unexpected call to stub input invoke()");
+  },
+});

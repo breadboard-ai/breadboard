@@ -16,16 +16,19 @@ import objectToSchema from "./nodes/object-to-schema.js";
 import schemish from "./nodes/schemish.js";
 import validateJson from "./nodes/validate-json.js";
 import xmlToJson from "./nodes/xml-to-json.js";
+import { kit } from "@breadboard-ai/build";
 
 export { default as jsonata } from "./nodes/jsonata.js";
 
-const JSONKit = new KitBuilder({
+const metadata = {
   title: "JSON Kit",
   description:
     "A Breadboard Kit containing nodes that facilitate wrangling JSON objects",
   version: "0.0.1",
   url: "npm:@google-labs/json-kit",
-}).build({
+};
+
+const JSONKit = new KitBuilder(metadata).build({
   validateJson,
   schemish,
   jsonata,
@@ -55,3 +58,8 @@ export const json = addKit(JSONKit) as unknown as {
   xmlToJson: NodeFactory<{ xml: string }, { json: NodeValue }>;
   objectToSchema: NodeFactory<{ object: unknown }, { objectSchema: NodeValue }>;
 };
+
+export const jsonKit = kit({
+  ...metadata,
+  components: { jsonata, validateJson, schemish },
+});

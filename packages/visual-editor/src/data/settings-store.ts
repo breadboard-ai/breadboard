@@ -39,6 +39,15 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
           },
         ],
         [
+          "Auto Save Boards",
+          {
+            name: "Auto Save Boards",
+            description:
+              "Whether you wish to try and save boards automatically when they change",
+            value: true,
+          },
+        ],
+        [
           "Collapse Nodes by Default",
           {
             name: "Collapse Nodes by Default",
@@ -93,6 +102,15 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
           },
         ],
         [
+          "Show Node Preview Values",
+          {
+            name: "Show Node Preview Values",
+            description:
+              "Toggles the visibility of configuration values in the graph",
+            value: true,
+          },
+        ],
+        [
           "Show Port Tooltips",
           {
             name: "Show Port Tooltips",
@@ -141,7 +159,7 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
     [BreadboardUI.Types.SETTINGS_TYPE.SECRETS]: {
       configuration: {
         extensible: true,
-        description: `Secrets that you want to store locally, such as API keys. Please note that items in this list should have unique names.`,
+        description: `Secrets that you want to store locally, such as API keys. When calling an API, the API provider's applicable privacy policy and terms apply. Please note that items in this list should have unique names. `,
         nameEditable: true,
         nameVisible: true,
       },

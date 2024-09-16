@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
     "composite": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "resolveJsonModule": true
   },
-  "include": ["src/**/*", "tests/**/*"],
+  "include": ["src/**/*", "tests/**/*", "bgl/*.bgl.json"],
   "extends": "@google-labs/tsconfig/base.json"
 }

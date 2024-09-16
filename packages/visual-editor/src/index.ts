@@ -4,42 +4,40 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessProxyConfig, run } from "@google-labs/breadboard/harness";
+import {
+  HarnessProxyConfig,
+  RunConfig,
+  RunErrorEvent,
+  RunSecretEvent,
+} from "@google-labs/breadboard/harness";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { map } from "lit/directives/map.js";
 import { customElement, property, state } from "lit/decorators.js";
-import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
+import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import {
   blankLLMContent,
-  createLoader,
-  edit,
-  EditableGraph,
+  createRunObserver,
   GraphDescriptor,
-  GraphLoader,
   GraphProvider,
+  InputValues,
   InspectableRun,
-  InspectableRunObserver,
-  Kit,
   SerializedRun,
 } from "@google-labs/breadboard";
 import { getDataStore, getRunStore } from "@breadboard-ai/data-store";
 import { classMap } from "lit/directives/class-map.js";
-import { createRunObserver } from "@google-labs/breadboard";
-import { loadKits } from "./utils/kit-loader";
-import GeminiKit from "@google-labs/gemini-kit";
 import { FileSystemGraphProvider } from "./providers/file-system";
-import BuildExampleKit from "./build-example-kit";
 import { SettingsStore } from "./data/settings-store";
 import { addNodeProxyServerConfig } from "./data/node-proxy-servers";
 import { provide } from "@lit/context";
-import PythonWasmKit from "@breadboard-ai/python-wasm";
-import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 import { RecentBoardStore } from "./data/recent-boards";
+import { SecretsHelper } from "./utils/secrets-helper";
+import { SettingsHelperImpl } from "./utils/settings-helper";
+import { styles as mainStyles } from "./index.styles.js";
+import * as Runtime from "./runtime/runtime.js";
+import { TabId } from "./runtime/types";
 
-const REPLAY_DELAY_MS = 10;
 const STORAGE_PREFIX = "bb-main";
 
 type MainArguments = {
@@ -69,25 +67,15 @@ const ENVIRONMENT: BreadboardUI.Contexts.Environment = {
   },
 };
 
+const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
+
 @customElement("bb-main")
 export class Main extends LitElement {
-  @property({ reflect: true })
-  url: string | null = null;
-
   @state()
   graph: GraphDescriptor | null = null;
 
   @property()
   subGraphId: string | null = null;
-
-  @state()
-  kits: Kit[] = [];
-
-  @state()
-  runs: InspectableRun[] | null = null;
-
-  @state()
-  embed = false;
 
   @state()
   showNav = false;
@@ -110,6 +98,16 @@ export class Main extends LitElement {
   @state()
   showSaveAsDialog = false;
   #saveAsState: SaveAsConfiguration | null = null;
+
+  @state()
+  showNodeConfigurator = false;
+  #nodeConfiguratorData: BreadboardUI.Types.NodePortConfiguration | null = null;
+  #nodeConfiguratorRef: Ref<BreadboardUI.Elements.NodeConfigurationOverlay> =
+    createRef();
+
+  @state()
+  showEdgeValue = false;
+  #edgeValueData: BreadboardUI.Types.EdgeValueConfiguration | null = null;
 
   @state()
   boardEditOverlayInfo: {
@@ -143,12 +141,6 @@ export class Main extends LitElement {
   @provide({ context: BreadboardUI.Elements.tokenVendorContext })
   tokenVendor!: BreadboardUI.Elements.TokenVendor;
 
-  @state()
-  dataStore = getDataStore();
-
-  @state()
-  runStore = getRunStore();
-
   @provide({ context: BreadboardUI.Contexts.settingsHelperContext })
   settingsHelper!: SettingsHelperImpl;
 
@@ -161,316 +153,44 @@ export class Main extends LitElement {
   @state()
   previewOverlayURL: URL | null = null;
 
-  #abortController: AbortController | null = null;
+  @property()
+  tab: Runtime.Types.Tab | null = null;
+
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #boardId = 0;
   #boardPendingSave = false;
-  #lastBoardId = 0;
-  #status = BreadboardUI.Types.STATUS.STOPPED;
-  #runObserver: InspectableRunObserver | null = null;
-  #editor: EditableGraph | null = null;
+  #tabSaveId = new Map<
+    TabId,
+    ReturnType<typeof globalThis.crypto.randomUUID>
+  >();
+  #tabSaveStatus = new Map<TabId, BreadboardUI.Types.BOARD_SAVE_STATUS>();
+  #tabBoardStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
+  #tabLoadStatus = new Map<TabId, BreadboardUI.Types.BOARD_LOAD_STATUS>();
   #providers: GraphProvider[];
   #settings: SettingsStore | null;
+  #secretsHelper: SecretsHelper | null = null;
   /**
    * Optional proxy configuration for the board.
    * This is used to provide additional proxied nodes.
    */
   #proxy: HarnessProxyConfig[];
-  #loader: GraphLoader;
   #onKeyDownBound = this.#onKeyDown.bind(this);
+  #downloadRunBound = this.#downloadRun.bind(this);
   #confirmUnloadWithUserFirstIfNeededBound =
     this.#confirmUnloadWithUserFirstIfNeeded.bind(this);
-  #failedGraphLoad = false;
   #version = "dev";
-  #recentBoardStore: RecentBoardStore;
+  #recentBoardStore = RecentBoardStore.instance();
   #recentBoards: BreadboardUI.Types.RecentBoard[] = [];
   #isSaving = false;
+  #dataStore = getDataStore();
+  #runStore = getRunStore();
 
-  static styles = css`
-    * {
-      box-sizing: border-box;
-    }
+  #runtime!: Runtime.RuntimeInstance;
 
-    :host {
-      flex: 1 0 auto;
-      display: grid;
-      grid-template-rows: calc(var(--bb-grid-size) * 12) auto;
-    }
-
-    bb-toast {
-      z-index: 2000;
-    }
-
-    :host > header {
-      display: grid;
-      grid-template-columns: auto min-content;
-      padding: calc(var(--bb-grid-size) * 6) calc(var(--bb-grid-size) * 8)
-        calc(var(--bb-grid-size) * 0) calc(var(--bb-grid-size) * 8);
-      font-size: var(--bb-text-default);
-      grid-column: 1 / 3;
-    }
-
-    :host > header a {
-      text-decoration: none;
-      white-space: nowrap;
-    }
-
-    #show-nav {
-      font-size: 0;
-      width: 24px;
-      height: 24px;
-      background: var(--bb-icon-menu) center center no-repeat;
-      border: none;
-      margin-right: calc(var(--bb-grid-size) * 2);
-      cursor: pointer;
-    }
-
-    #close-board {
-      font-size: 0;
-      width: 20px;
-      height: 20px;
-      background: var(--bb-icon-close) center center no-repeat;
-      background-size: 16px 16px;
-      border: 2px solid transparent;
-      margin-left: calc(var(--bb-grid-size) * 2);
-      opacity: 0.6;
-      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
-      border-radius: 50%;
-    }
-
-    #close-board:not([disabled]) {
-      cursor: pointer;
-    }
-
-    #close-board:not([disabled]):hover {
-      transition-duration: 0.1s;
-      opacity: 1;
-      background-color: var(--bb-neutral-300);
-      border: 2px solid var(--bb-neutral-300);
-    }
-
-    #new-board {
-      font-size: var(--bb-text-nano);
-    }
-
-    #undo,
-    #redo,
-    #save-board,
-    #toggle-preview,
-    #toggle-settings,
-    #toggle-overflow-menu {
-      color: var(--bb-neutral-50);
-      padding: 0 16px 0 42px;
-      font-size: var(--bb-text-medium);
-      margin: 0 calc(var(--bb-grid-size) * 3) 0 0;
-      cursor: pointer;
-      background: 12px center var(--bb-icon-download);
-      background-repeat: no-repeat;
-      height: calc(100% - var(--bb-grid-size) * 4);
-      display: flex;
-      align-items: center;
-      text-decoration: none;
-      border-radius: 20px;
-      border: none;
-    }
-
-    #undo:not([disabled]):hover,
-    #redo:not([disabled]):hover,
-    #undo:not([disabled]):focus,
-    #redo:not([disabled]):focus,
-    #save-board:not([disabled]):hover,
-    #toggle-preview:not([disabled]):hover,
-    #toggle-settings:not([disabled]):hover,
-    #toggle-overflow-menu:not([disabled]):hover,
-    #save-board:not([disabled]):focus,
-    #toggle-preview:not([disabled]):focus,
-    #toggle-settings:not([disabled]):focus,
-    #toggle-overflow-menu:not([disabled]):focus {
-      background-color: rgba(0, 0, 0, 0.1);
-    }
-
-    #save-board {
-      background: 12px center var(--bb-icon-save-inverted);
-      background-repeat: no-repeat;
-    }
-
-    #toggle-preview {
-      background: 12px center var(--bb-icon-preview);
-      background-repeat: no-repeat;
-    }
-
-    #undo,
-    #redo,
-    #toggle-overflow-menu {
-      padding: 8px;
-      font-size: 0;
-      margin-right: 0;
-      background: center center var(--bb-icon-more-vert-inverted);
-      background-repeat: no-repeat;
-      width: 32px;
-    }
-
-    #undo {
-      background-image: var(--bb-icon-undo-inverted);
-    }
-
-    #redo {
-      background-image: var(--bb-icon-redo-inverted);
-    }
-
-    #undo[disabled],
-    #redo[disabled] {
-      opacity: 0.5;
-    }
-
-    #toggle-preview.active {
-      background-color: var(--bb-ui-800);
-    }
-
-    #toggle-settings {
-      padding: 8px;
-      font-size: 0;
-      margin-right: 0;
-      background: center center var(--bb-icon-settings);
-      background-repeat: no-repeat;
-      width: 32px;
-    }
-
-    #toggle-settings.active {
-      background-color: var(--bb-ui-800);
-    }
-
-    #new-board {
-      font-size: var(--bb-text-small);
-      text-decoration: underline;
-    }
-
-    #new-board:active {
-      color: rgb(90, 64, 119);
-    }
-
-    #save-board[disabled],
-    #get-log[disabled],
-    #get-board[disabled],
-    #toggle-preview[disabled],
-    #save-board[disabled]:hover,
-    #get-log[disabled]:hover,
-    #get-board[disabled]:hover,
-    #toggle-preview[disabled]:hover {
-      opacity: 0.5;
-      background-color: rgba(0, 0, 0, 0);
-      pointer-events: none;
-      cursor: auto;
-    }
-
-    bb-board-list {
-      grid-column: 1 / 3;
-    }
-
-    #header-bar {
-      background: var(--bb-ui-600);
-      display: flex;
-      align-items: center;
-      color: var(--bb-neutral-50);
-      z-index: 1;
-      height: calc(var(--bb-grid-size) * 12);
-      padding: 0 calc(var(--bb-grid-size) * 2);
-    }
-
-    #header-bar #tab-container {
-      flex: 1;
-      display: flex;
-      align-items: flex-end;
-      margin: 0;
-      height: 100%;
-    }
-
-    #tab-container h1 {
-      font-size: var(--bb-label-medium);
-      font-weight: normal;
-      background: var(--bb-neutral-0);
-      color: var(--bb-neutral-800);
-      margin: 0;
-      height: calc(100% - var(--bb-grid-size) * 2);
-      border-radius: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2)
-        0 0;
-      padding: 0 calc(var(--bb-grid-size) * 4);
-      display: flex;
-      align-items: center;
-      user-select: none;
-    }
-
-    #tab-container #back-to-main-board {
-      padding: 0;
-      margin: 0;
-      cursor: pointer;
-      background: none;
-      border: none;
-      color: var(--bb-neutral-800);
-    }
-
-    #tab-container #back-to-main-board:disabled {
-      cursor: auto;
-      color: var(--bb-neutral-800);
-    }
-
-    #tab-container .subgraph-name {
-      display: flex;
-      align-items: center;
-    }
-
-    #tab-container .subgraph-name::before {
-      content: "";
-      width: 20px;
-      height: 20px;
-      background: var(--bb-icon-next) center center no-repeat;
-      background-size: 12px 12px;
-    }
-
-    #content {
-      max-height: calc(100svh - var(--bb-grid-size) * 12);
-      display: flex;
-      flex-direction: column;
-    }
-
-    iframe {
-      grid-row: 1 / 3;
-      grid-column: 1 / 3;
-      margin: 0;
-      border: none;
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-
-    bb-overlay iframe {
-      width: 80vw;
-      height: 80vh;
-      border-radius: 8px;
-    }
-
-    #embed {
-      grid-column: 1/3;
-      grid-row: 1/3;
-    }
-
-    #embed iframe {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      border: none;
-      border-radius: 0;
-    }
-
-    #embed header {
-      display: flex;
-      padding: 0 calc(var(--bb-grid-size) * 9);
-      align-items: center;
-    }
-  `;
+  static styles = mainStyles;
   proxyFromUrl: string | undefined;
 
-  #load: Promise<void>;
+  #initialize: Promise<void>;
   constructor(config: MainArguments) {
     super();
 
@@ -486,7 +206,6 @@ export class Main extends LitElement {
       }
     }
 
-    this.#recentBoardStore = RecentBoardStore.instance();
     this.#version = config.version || "dev";
     this.#providers = config.providers || [];
     this.#settings = config.settings || null;
@@ -498,65 +217,266 @@ export class Main extends LitElement {
         ENVIRONMENT
       );
     }
-    // Single loader instance for all boards.
-    this.#loader = createLoader(this.#providers);
 
     const currentUrl = new URL(window.location.href);
     const boardFromUrl = currentUrl.searchParams.get("board");
-    const embedFromUrl = currentUrl.searchParams.get("embed");
     const firstRunFromUrl = currentUrl.searchParams.get("firstrun");
 
     if (firstRunFromUrl && firstRunFromUrl === "true") {
       this.showFirstRun = true;
     }
+
     const proxyFromUrl = currentUrl.searchParams.get("python_proxy");
     if (proxyFromUrl) {
       console.log("Setting python_proxy: %s", proxyFromUrl);
       this.proxyFromUrl = proxyFromUrl;
     }
 
-    this.embed = embedFromUrl !== null && embedFromUrl !== "false";
+    const stopCurrentRunIfActive = (tabId: TabId | null) => {
+      if (!tabId) {
+        return;
+      }
 
-    // Load the Recent Boards.
-    this.#load = this.#recentBoardStore
+      if (this.tab?.id !== tabId) {
+        return;
+      }
+
+      if (
+        this.#tabBoardStatus.get(tabId) === BreadboardUI.Types.STATUS.STOPPED
+      ) {
+        return;
+      }
+
+      this.#tabBoardStatus.set(tabId, BreadboardUI.Types.STATUS.STOPPED);
+      this.#runtime.run.getAbortSignal(tabId)?.abort();
+    };
+
+    // Initialization order:
+    //  1. Recent boards.
+    //  2. Settings.
+    //  3. Runtime.
+    //
+    // Note: the runtime loads the kits and the initializes the providers.
+    this.#initialize = this.#recentBoardStore
       .restore()
       .then((boards) => {
         this.#recentBoards = boards;
-
-        // Then Kits, Providers and Settings.
-        return Promise.all([
-          loadKits([
-            GeminiKit,
-            // TODO(aomarks) This is presumably not the right way to do this. How do
-            // I get something into this.#providers?
-            BuildExampleKit,
-            PythonWasmKit,
-            GoogleDriveKit,
-          ]),
-          ...this.#providers.map((provider) => provider.restore()),
-          this.#settings?.restore(),
-        ]);
+        return this.#settings?.restore();
       })
-      .then(([kits]) => {
-        // Process all.
-        this.kits = kits;
-        this.#providers.map((provider) => {
-          if (provider.extendedCapabilities().watch) {
-            provider.watch((change) => {
-              const currentUrl = new URL(window.location.href);
-              const boardFromUrl = currentUrl.searchParams.get("board");
-              if (boardFromUrl?.endsWith(change.filename)) {
-                this.#onStartBoard(
-                  new BreadboardUI.Events.StartEvent(change.filename)
+      .then(() => {
+        return Runtime.create({
+          providers: config.providers ?? [],
+          runStore: this.#runStore,
+          dataStore: this.#dataStore,
+        });
+      })
+      .then((runtime) => {
+        this.#runtime = runtime;
+
+        this.#runtime.edit.addEventListener(
+          Runtime.Events.RuntimeBoardEditEvent.eventName,
+          () => {
+            this.#nodeConfiguratorData = null;
+            this.showNodeConfigurator = false;
+            this.requestUpdate();
+
+            const shouldAutoSave = this.#settings?.getItem(
+              BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
+              "Auto Save Boards"
+            ) ?? { value: false };
+
+            if (!shouldAutoSave.value) {
+              if (this.tab) {
+                this.#tabSaveStatus.set(
+                  this.tab.id,
+                  BreadboardUI.Types.BOARD_SAVE_STATUS.UNSAVED
                 );
               }
-            });
+              return;
+            }
+
+            this.#attemptBoardSave(
+              "Saving board",
+              false,
+              false,
+              BOARD_AUTO_SAVE_TIMEOUT
+            );
           }
-        });
+        );
+
+        this.#runtime.board.addEventListener(
+          Runtime.Events.RuntimeBoardLoadErrorEvent.eventName,
+          () => {
+            if (this.tab) {
+              this.#tabLoadStatus.set(
+                this.tab.id,
+                BreadboardUI.Types.BOARD_LOAD_STATUS.ERROR
+              );
+            }
+
+            this.toast(
+              "Unable to load board",
+              BreadboardUI.Events.ToastType.ERROR
+            );
+          }
+        );
+
+        this.#runtime.board.addEventListener(
+          Runtime.Events.RuntimeErrorEvent.eventName,
+          (evt: Runtime.Events.RuntimeErrorEvent) => {
+            this.toast(evt.message, BreadboardUI.Events.ToastType.ERROR);
+          }
+        );
+
+        this.#runtime.board.addEventListener(
+          Runtime.Events.RuntimeTabChangeEvent.eventName,
+          async (evt: Runtime.Events.RuntimeTabChangeEvent) => {
+            this.tab = this.#runtime.board.currentTab;
+            this.showWelcomePanel = this.tab === null;
+
+            if (this.tab) {
+              // If there is a TGO in the tab change event, honor it and populate a
+              // run with it before switching to the tab proper.
+              if (evt.topGraphObserver) {
+                this.#runtime.run.create(
+                  this.tab.id,
+                  evt.topGraphObserver,
+                  evt.runObserver
+                );
+              }
+
+              if (this.tab.graph.url) {
+                this.#setUrlParam("board", this.tab.graph.url);
+                const base = new URL(window.location.href);
+                const decodedUrl = decodeURIComponent(base.href);
+                window.history.replaceState(
+                  { path: decodedUrl },
+                  "",
+                  decodedUrl
+                );
+
+                await this.#trackRecentBoard(this.tab.graph.url);
+              }
+
+              if (this.tab.graph.title) {
+                this.#setPageTitle(this.tab.graph.title);
+              }
+            } else {
+              this.#setUrlParam("board", null);
+              this.#setPageTitle(null);
+            }
+          }
+        );
+
+        this.#runtime.board.addEventListener(
+          Runtime.Events.RuntimeTabCloseEvent.eventName,
+          async (evt: Runtime.Events.RuntimeTabCloseEvent) => {
+            stopCurrentRunIfActive(evt.tabId);
+
+            await this.#confirmSaveWithUserFirstIfNeeded();
+            this.requestUpdate();
+          }
+        );
+
+        this.#runtime.run.addEventListener(
+          Runtime.Events.RuntimeBoardRunEvent.eventName,
+          (evt: Runtime.Events.RuntimeBoardRunEvent) => {
+            if (this.tab && evt.tabId === this.tab.id) {
+              this.requestUpdate();
+            }
+
+            switch (evt.runEvt.type) {
+              case "next": {
+                // Noop.
+                break;
+              }
+
+              case "graphstart": {
+                // Noop.
+                break;
+              }
+
+              case "start": {
+                this.#tabBoardStatus.set(
+                  evt.tabId,
+                  BreadboardUI.Types.STATUS.RUNNING
+                );
+                break;
+              }
+
+              case "end": {
+                this.#tabBoardStatus.set(
+                  evt.tabId,
+                  BreadboardUI.Types.STATUS.STOPPED
+                );
+                break;
+              }
+
+              case "error": {
+                const runEvt = evt.runEvt as RunErrorEvent;
+                this.toast(
+                  BreadboardUI.Utils.formatError(runEvt.data.error),
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+                this.#tabBoardStatus.set(
+                  evt.tabId,
+                  BreadboardUI.Types.STATUS.STOPPED
+                );
+                break;
+              }
+
+              case "resume": {
+                this.#tabBoardStatus.set(
+                  evt.tabId,
+                  BreadboardUI.Types.STATUS.RUNNING
+                );
+                break;
+              }
+
+              case "pause": {
+                this.#tabBoardStatus.set(
+                  evt.tabId,
+                  BreadboardUI.Types.STATUS.PAUSED
+                );
+                break;
+              }
+
+              case "secret": {
+                const runEvt = evt.runEvt as RunSecretEvent;
+                const { keys } = runEvt.data;
+                const result: InputValues = {};
+                if (this.#secretsHelper) {
+                  this.#secretsHelper.setKeys(keys);
+                  if (this.#secretsHelper.hasAllSecrets()) {
+                    evt.harnessRunner?.run(this.#secretsHelper.getSecrets());
+                  }
+                } else {
+                  const allKeysAreKnown = keys.every((key) => {
+                    const savedSecret =
+                      this.#settings
+                        ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.SECRETS)
+                        .items.get(key) ?? null;
+                    if (savedSecret) {
+                      result[key] = savedSecret.value;
+                      return true;
+                    }
+                    return false;
+                  });
+                  if (allKeysAreKnown) {
+                    evt.harnessRunner?.run(result);
+                  } else {
+                    this.#secretsHelper = new SecretsHelper(this.#settings!);
+                    this.#secretsHelper.setKeys(keys);
+                  }
+                }
+              }
+            }
+          }
+        );
 
         // Start the board or show the welcome panel.
         if (boardFromUrl) {
-          this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
+          this.#runtime.board.loadFromURL(boardFromUrl);
           return;
         } else {
           this.showWelcomePanel = true;
@@ -568,12 +488,14 @@ export class Main extends LitElement {
     super.connectedCallback();
 
     window.addEventListener("keydown", this.#onKeyDownBound);
+    window.addEventListener("bbrundownload", this.#downloadRunBound);
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
     window.removeEventListener("keydown", this.#onKeyDownBound);
+    window.removeEventListener("bbrundownload", this.#downloadRunBound);
   }
 
   #setBoardPendingSaveState(boardPendingSave: boolean) {
@@ -608,7 +530,7 @@ export class Main extends LitElement {
     const isMac = navigator.platform.indexOf("Mac") === 0;
     const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
-    if (evt.key === "v" && isCtrlCommand && !this.graph) {
+    if (evt.key === "v" && isCtrlCommand && !this.tab?.graph) {
       // Only allow a paste when there's nothing else in the composed path that
       // would accept the paste first.
       if (
@@ -628,9 +550,7 @@ export class Main extends LitElement {
             return;
           }
 
-          this.#attemptBoardStart(
-            new BreadboardUI.Events.StartEvent(null, descriptor)
-          );
+          this.#runtime.board.loadFromDescriptor(descriptor);
         } catch (err) {
           this.toast(
             "Unable to paste board",
@@ -649,7 +569,13 @@ export class Main extends LitElement {
         return;
       }
 
-      this.#attemptBoardSave();
+      let saveMessage = "Board saved";
+      if (this.#nodeConfiguratorRef.value) {
+        this.#nodeConfiguratorRef.value.processData();
+        saveMessage = "Board and configuration saved";
+      }
+
+      this.#attemptBoardSave(saveMessage);
       return;
     }
 
@@ -677,79 +603,213 @@ export class Main extends LitElement {
         return;
       }
 
-      const editor = this.#getEditor();
-      if (!editor) {
+      if (!this.tab) {
+        this.toast(
+          "Unable to edit; no active graph",
+          BreadboardUI.Events.ToastType.ERROR
+        );
         return;
       }
-
-      const history = editor.history();
-
-      // TODO: Make this not a console-only thing.
-      const printHistory = (label: string) => {
-        const labels = history.entries().map((entry) => entry.label);
-        console.group(`History: ${label}`);
-        labels.forEach((label, index) => {
-          const current = index === history.index() ? ">" : " ";
-          console.log(`${index}:${current} ${label}`);
-        });
-        console.groupEnd();
-      };
 
       if (evt.shiftKey) {
-        history.redo();
-        printHistory("Redo");
+        this.#runtime.edit.redo(this.tab);
         return;
       }
 
-      history.undo();
-      printHistory("Undo");
+      this.#runtime.edit.undo(this.tab);
       return;
     }
   }
 
-  async #attemptBoardSave() {
-    if (this.#isSaving) {
+  async #downloadRun() {
+    if (!this.tab) {
       return;
     }
 
-    this.#isSaving = true;
-    if (!this.graph || !this.graph.url) {
-      return;
-    }
-    const boardUrl = new URL(this.graph.url);
-    const provider = this.#getProviderForURL(boardUrl);
-    if (!provider) {
-      this.showSaveAsDialog = true;
+    const observers = this.#runtime.run.getObservers(this.tab.id);
+    if (!observers) {
       return;
     }
 
-    const capabilities = provider.canProvide(boardUrl);
-    if (!capabilities || !capabilities.save) {
-      this.showSaveAsDialog = true;
+    const currentRun = (await observers.runObserver?.runs())?.at(0);
+    if (!currentRun) {
       return;
     }
 
-    const id = this.toast(
-      "Saving board...",
-      BreadboardUI.Events.ToastType.PENDING,
-      true
-    );
-    this.#isSaving = true;
-    const { result } = await provider.save(boardUrl, this.graph);
-    this.#isSaving = false;
-    if (!result) {
+    const serializedRun = await currentRun.serialize?.();
+    if (!serializedRun) {
       return;
     }
 
-    this.#setBoardPendingSaveState(false);
-    this.toast(
-      "Board saved",
-      BreadboardUI.Events.ToastType.INFORMATION,
-      false,
-      id
+    const data = JSON.stringify(serializedRun, null, 2);
+    const fileName = `run-${new Date().toISOString()}.json`;
+    const url = URL.createObjectURL(
+      new Blob([data], { type: "application/json" })
     );
 
-    this.#isSaving = false;
+    const anchor = document.createElement("a");
+    anchor.download = fileName;
+    anchor.href = url;
+    anchor.click();
+  }
+
+  async #selectRun(evt: BreadboardUI.Events.NodeActivitySelectedEvent) {
+    if (!this.tab) {
+      return;
+    }
+
+    const observers = this.#runtime.run.getObservers(this.tab.id);
+    if (!observers) {
+      return;
+    }
+
+    const currentRun = (await observers.runObserver?.runs())?.at(0);
+    if (!currentRun) {
+      return;
+    }
+
+    const event = currentRun.getEventById(evt.runId);
+
+    if (!event) {
+      console.warn(
+        "The `bbrunselect` was received but the event was not found."
+      );
+      return;
+    }
+
+    if (event.type !== "node") {
+      console.warn(
+        "The `bbrunselect` was received but the event is not a node."
+      );
+      return;
+    }
+
+    const run = event.runs[0];
+    if (!run) {
+      console.warn(
+        "The `bbrunselect` was received but the run was not found in the event."
+      );
+      return;
+    }
+
+    const topGraphObserver =
+      await BreadboardUI.Utils.TopGraphObserver.fromRun(run);
+
+    if (!topGraphObserver) {
+      return;
+    }
+
+    const runGraph = topGraphObserver.current()?.graph ?? null;
+    if (runGraph) {
+      runGraph.title = evt.nodeTitle;
+      this.#runtime.board.loadFromDescriptor(
+        runGraph,
+        topGraphObserver,
+        observers.runObserver,
+        true
+      );
+    }
+  }
+
+  async #attemptBoardSave(
+    message = "Board saved",
+    ackUser = true,
+    showSaveAsIfNeeded = true,
+    timeout = 0
+  ) {
+    if (!this.tab) {
+      return;
+    }
+
+    const tabToSave = this.tab;
+    if (tabToSave.readOnly) {
+      return;
+    }
+
+    if (timeout !== 0) {
+      const saveId = globalThis.crypto.randomUUID();
+      this.#tabSaveId.set(tabToSave.id, saveId);
+      await new Promise((r) => setTimeout(r, timeout));
+
+      // Check the tab still exists.
+      if (!this.#runtime.board.tabs.has(tabToSave.id)) {
+        return;
+      }
+
+      // If the stored save ID has changed then the user has made a newer change
+      // and there is another save pending; therefore, ignore this request.
+      const storedSaveId = this.#tabSaveId.get(tabToSave.id);
+      if (!storedSaveId || storedSaveId !== saveId) {
+        return;
+      }
+
+      this.#tabSaveId.delete(tabToSave.id);
+    }
+
+    const saveStatus = this.#tabSaveStatus.get(tabToSave.id);
+    if (
+      saveStatus &&
+      saveStatus === BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING
+    ) {
+      return;
+    }
+
+    if (!this.#runtime.board.canSave(tabToSave.id)) {
+      if (showSaveAsIfNeeded) {
+        this.showSaveAsDialog = true;
+      }
+      return;
+    }
+
+    let id;
+    if (ackUser) {
+      id = this.toast(
+        "Saving board...",
+        BreadboardUI.Events.ToastType.PENDING,
+        true
+      );
+    }
+
+    this.#tabSaveStatus.set(
+      tabToSave.id,
+      BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING
+    );
+    this.requestUpdate();
+
+    try {
+      const { result } = await this.#runtime.board.save(tabToSave.id);
+
+      this.#tabSaveStatus.set(
+        tabToSave.id,
+        BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED
+      );
+      this.requestUpdate();
+
+      if (!result) {
+        this.#tabSaveStatus.set(
+          tabToSave.id,
+          BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR
+        );
+        this.requestUpdate();
+        return;
+      }
+
+      this.#setBoardPendingSaveState(false);
+      if (ackUser && id) {
+        this.toast(
+          message,
+          BreadboardUI.Events.ToastType.INFORMATION,
+          false,
+          id
+        );
+      }
+    } catch (err) {
+      this.#tabSaveStatus.set(
+        tabToSave.id,
+        BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR
+      );
+      this.requestUpdate();
+    }
   }
 
   async #attemptBoardSaveAs(
@@ -762,35 +822,22 @@ export class Main extends LitElement {
       return;
     }
 
-    const provider = this.#getProviderByName(providerName);
-    if (!provider) {
-      this.toast(
-        "Unable to find provider",
-        BreadboardUI.Events.ToastType.ERROR
-      );
-      return;
-    }
-    const urlString = await provider.createURL(location, fileName);
-    if (!urlString) {
-      this.toast(
-        "Unable to create a new board",
-        BreadboardUI.Events.ToastType.ERROR
-      );
-      return;
-    }
-
     const id = this.toast(
       "Saving board...",
       BreadboardUI.Events.ToastType.PENDING,
       true
     );
 
-    const url = new URL(urlString);
     this.#isSaving = true;
-    const { result, error } = await provider.create(url, graph);
+    const { result, error, url } = await this.#runtime.board.saveAs(
+      providerName,
+      location,
+      fileName,
+      graph
+    );
     this.#isSaving = false;
 
-    if (!result) {
+    if (!result || !url) {
       this.toast(
         error || "Unable to create board",
         BreadboardUI.Events.ToastType.ERROR
@@ -803,7 +850,7 @@ export class Main extends LitElement {
 
     // Trigger a re-render.
     this.providerOps++;
-    this.#changeBoard(url.href);
+    this.#changeBoard(url.href, false);
     this.toast(
       "Board saved",
       BreadboardUI.Events.ToastType.INFORMATION,
@@ -825,37 +872,35 @@ export class Main extends LitElement {
       return;
     }
 
-    const provider = this.#getProviderByName(providerName);
-    if (!provider) {
-      this.toast("Unable to delete file", BreadboardUI.Events.ToastType.ERROR);
-      return;
-    }
-
     const id = this.toast(
       "Deleting board...",
       BreadboardUI.Events.ToastType.PENDING,
       true
     );
 
-    const { result, error } = await provider.delete(new URL(url));
-    await this.#removeRecentUrl(url);
-
-    this.toast(
-      "Board deleted",
-      BreadboardUI.Events.ToastType.INFORMATION,
-      false,
-      id
+    const { result, error } = await this.#runtime.board.delete(
+      providerName,
+      url
     );
-
-    if (!result) {
+    if (result) {
+      this.toast(
+        "Board deleted",
+        BreadboardUI.Events.ToastType.INFORMATION,
+        false,
+        id
+      );
+    } else {
       this.toast(
         error || "Unexpected error",
-        BreadboardUI.Events.ToastType.ERROR
+        BreadboardUI.Events.ToastType.ERROR,
+        false,
+        id
       );
     }
 
-    if (isActive) {
-      this.#attemptBoardStart(new BreadboardUI.Events.StartEvent(null, null));
+    if (this.tab && isActive) {
+      this.#runtime.board.closeTab(this.tab.id);
+      this.#removeRecentUrl(url);
     }
 
     // Trigger a re-render.
@@ -872,161 +917,24 @@ export class Main extends LitElement {
     this.showSaveAsDialog = true;
   }
 
-  get status() {
-    return this.#status;
-  }
-
-  set status(status: BreadboardUI.Types.STATUS) {
-    this.#status = status;
-    this.requestUpdate();
-  }
-
-  #canParse(url: string) {
-    // TypeScript assumes that if `canParse` does not exist, then URL is
-    // `never`. However, in older browsers that's not true. We therefore take a
-    // temporary copy of the URL constructor here.
-    const UrlCtor = URL;
-    if ("canParse" in URL) {
-      return URL.canParse(url);
-    }
-
-    try {
-      new UrlCtor(url);
-      return true;
-    } catch (err) {
-      return false;
-    }
-  }
-
-  #makeRelativeToCurrentBoard(boardUrl: string | null) {
-    // An inability to parse the URL below likely means it's an example board,
-    // which doesn't carry a protocol, etc. In such cases we just return the
-    // URL as-is.
-    if (boardUrl && this.#canParse(boardUrl)) {
-      if (this.url) {
-        try {
-          const base = new URL(this.url);
-          const newUrl = new URL(boardUrl, base);
-          return newUrl.href;
-        } catch (e) {
-          console.warn("Unable to parse URL from current board: ", this.url);
-        }
-      }
-    }
-    return boardUrl;
-  }
-
-  async #onStartBoard(startEvent: BreadboardUI.Events.StartEvent) {
-    let url = this.#makeRelativeToCurrentBoard(startEvent.url);
-
-    // Redirect older /graphs examples to /example-boards
-    if (url?.startsWith("/graphs")) {
-      url = url.replace(/^\/graphs/, "/example-boards");
-    }
-
-    // Match any older URLs like /example-boards/blank.json and redirect to the
-    // newer /example-boards/playground/blank.json
-    const pgRegex = /example-boards\/([^\\/]+.json)$/;
-    const matches = pgRegex.exec(url ?? "");
-    if (url && matches && matches.length === 2) {
-      url = `/example-boards/playground/${matches[1]}`;
-    }
-
-    this.#boardId++;
-    this.#setUrlParam("board", url);
-
-    // Loading may take some time so reset the graph here.
-    this.url = url;
-    this.graph = null;
-    this.subGraphId = null;
-
-    // TODO: Figure out how to avoid needing to null this out.
-    this.#editor = null;
-
-    if (startEvent.descriptor) {
-      this.graph = startEvent.descriptor;
-    }
-    this.status = BreadboardUI.Types.STATUS.STOPPED;
-    this.#runObserver = null;
-    this.showWelcomePanel = false;
-    this.#setBoardPendingSaveState(false);
-    this.#setPageTitle();
-
-    if (startEvent.url === null && startEvent.descriptor === null) {
-      this.showWelcomePanel = true;
-    }
-  }
-
-  protected async updated() {
-    if (!this.url && !this.graph) {
-      return;
-    }
-
-    // Board has already started; don't restart.
-    if (this.#lastBoardId === this.#boardId) {
-      return;
-    }
-
-    this.#failedGraphLoad = false;
-    this.#lastBoardId = this.#boardId;
-    if (this.url) {
-      try {
-        const base = new URL(window.location.href);
-        const decodedUrl = decodeURIComponent(base.href);
-        window.history.replaceState({ path: decodedUrl }, "", decodedUrl);
-        if (URL.canParse(this.url)) {
-          const provider = this.#getProviderForURL(new URL(this.url));
-          if (provider) {
-            // Ensure the the provider has actually loaded fully before
-            // requesting the graph file from it.
-            await provider.ready();
-          }
-        }
-
-        const graph = await this.#loader.load(this.url, { base });
-        if (!graph) {
-          throw new Error(`Unable to load graph: ${this.url}`);
-        }
-        this.graph = graph;
-        this.#setPageTitle();
-        await this.#trackRecentBoard();
-      } catch (err) {
-        this.url = null;
-        this.graph = null;
-        this.#editor = null;
-        this.#failedGraphLoad = true;
-      }
-    } else if (this.graph) {
-      if (!this.graph.url) {
-        this.graph.url = window.location.href;
-      }
-    } else {
-      return;
-    }
-  }
-
-  #setPageTitle() {
+  #setPageTitle(title: string | null) {
     const suffix = "Breadboard - Visual Editor";
-    if (this.graph && this.graph.title) {
-      window.document.title = `${this.graph.title} - ${suffix}`;
+    if (title) {
+      window.document.title = `${title} - ${suffix}`;
       return;
     }
 
     window.document.title = suffix;
   }
 
-  async #trackRecentBoard() {
-    if (!this.graph || !this.graph.url) {
-      return;
-    }
-
-    const url = this.graph.url.replace(window.location.origin, "");
+  async #trackRecentBoard(url: string) {
+    url = url.replace(window.location.origin, "");
     const currentIndex = this.#recentBoards.findIndex(
       (board) => board.url === url
     );
     if (currentIndex === -1) {
       this.#recentBoards.unshift({
-        title: this.graph.title ?? "Untitled Board",
+        title: this.tab?.graph.title ?? "Untitled Board",
         url,
       });
     } else {
@@ -1056,60 +964,13 @@ export class Main extends LitElement {
     await this.#recentBoardStore.store(this.#recentBoards);
   }
 
-  #getEditor() {
-    if (!this.graph) return null;
-    if (this.#editor) return this.#editor;
-
-    this.#editor = edit(this.graph, { kits: this.kits, loader: this.#loader });
-    this.#editor.addEventListener("graphchange", (evt) => {
-      this.graph = evt.graph;
-      this.#setBoardPendingSaveState(!evt.visualOnly);
-    });
-    this.#editor.addEventListener("graphchangereject", (evt) => {
-      this.graph = evt.graph;
-      const { reason } = evt;
-      if (reason.type === "error") {
-        this.toast(reason.error, BreadboardUI.Events.ToastType.ERROR);
-      }
-    });
-    return this.#editor;
-  }
-
-  // TODO: Allow this to run boards directly.
-  async #runBoard(runner: ReturnType<typeof run>) {
-    if (!(this.#uiRef.value && this.graph)) {
+  async #runBoard(config: RunConfig) {
+    if (!this.tab) {
+      console.error("Unable to run board, no active tab");
       return;
     }
 
-    const ui = this.#uiRef.value;
-    ui.graph = this.graph;
-
-    const currentBoardId = this.#boardId;
-
-    this.status = BreadboardUI.Types.STATUS.RUNNING;
-    if (!this.#runObserver) {
-      this.#runObserver = createRunObserver({
-        logLevel: "debug",
-        dataStore: this.dataStore,
-        runStore: this.runStore,
-      });
-    }
-
-    for await (const result of runner) {
-      await this.#runObserver.observe(result);
-      this.requestUpdate();
-
-      if (currentBoardId !== this.#boardId) {
-        return;
-      }
-
-      const answer = await ui.handleStateChange(result);
-      if (answer) {
-        await result.reply({ inputs: answer } as InputResolveRequest);
-      }
-    }
-
-    this.status = BreadboardUI.Types.STATUS.STOPPED;
+    this.#runtime.run.runBoard(this.tab.id, config);
   }
 
   #setUrlParam(param: string, value: string | null) {
@@ -1167,12 +1028,12 @@ export class Main extends LitElement {
       return;
     }
 
-    if (!this.graph || !this.graph.url) {
+    if (!this.tab?.graph || !this.tab?.graph.url) {
       return;
     }
 
     try {
-      const url = new URL(this.graph.url, window.location.href);
+      const url = new URL(this.tab?.graph.url, window.location.href);
       const provider = this.#getProviderForURL(url);
       if (!provider) {
         return;
@@ -1197,101 +1058,39 @@ export class Main extends LitElement {
   }
 
   #handleBoardInfoUpdate(evt: BreadboardUI.Events.BoardInfoUpdateEvent) {
-    if (evt.subGraphId) {
-      const editableGraph = this.#getEditor();
-      if (!editableGraph) {
-        console.warn("Unable to update board information; no active graph");
-        return;
-      }
-
-      const subGraph = editableGraph.getGraph(evt.subGraphId);
-      if (!subGraph) {
-        console.warn("Unable to update board information; no active graph");
-        return;
-      }
-
-      const subGraphDescriptor = subGraph.raw();
-      subGraphDescriptor.title = evt.title;
-      subGraphDescriptor.version = evt.version;
-      subGraphDescriptor.description = evt.description;
-
-      if (evt.isTool !== null) {
-        subGraphDescriptor.metadata ??= {};
-        subGraphDescriptor.metadata.tags ??= [];
-
-        if (evt.isTool) {
-          if (!subGraphDescriptor.metadata.tags.includes("tool")) {
-            subGraphDescriptor.metadata.tags.push("tool");
-          }
-        } else {
-          subGraphDescriptor.metadata.tags =
-            subGraphDescriptor.metadata.tags.filter((tag) => tag !== "tool");
-        }
-      }
-
-      editableGraph.replaceGraph(evt.subGraphId, subGraphDescriptor);
-    } else if (this.graph) {
-      this.graph.title = evt.title;
-      this.graph.version = evt.version;
-      this.graph.description = evt.description;
-
-      if (evt.status) {
-        this.graph.metadata ??= {};
-        this.graph.metadata.tags ??= [];
-
-        switch (evt.status) {
-          case "published": {
-            if (!this.graph.metadata.tags.includes("published")) {
-              this.graph.metadata.tags.push("published");
-            }
-            break;
-          }
-
-          case "draft": {
-            this.graph.metadata.tags = this.graph.metadata.tags.filter(
-              (tag) => tag !== "published"
-            );
-            break;
-          }
-        }
-      }
-
-      if (evt.isTool !== null) {
-        this.graph.metadata ??= {};
-        this.graph.metadata.tags ??= [];
-
-        if (evt.isTool) {
-          if (!this.graph.metadata.tags.includes("tool")) {
-            this.graph.metadata.tags.push("tool");
-          }
-        } else {
-          this.graph.metadata.tags = this.graph.metadata.tags.filter(
-            (tag) => tag !== "tool"
-          );
-        }
-      }
-    } else {
+    if (!this.tab) {
       this.toast(
-        "Unable to update sub board information - board not found",
-        BreadboardUI.Events.ToastType.INFORMATION
+        "Unable to edit; no active graph",
+        BreadboardUI.Events.ToastType.ERROR
       );
       return;
     }
+
+    if (evt.subGraphId) {
+      this.#runtime.edit.updateSubBoardInfo(
+        this.tab,
+        evt.subGraphId,
+        evt.title,
+        evt.version,
+        evt.description,
+        evt.status,
+        evt.isTool
+      );
+    } else {
+      this.#runtime.edit.updateBoardInfo(
+        this.tab,
+        evt.title,
+        evt.version,
+        evt.description,
+        evt.status,
+        evt.isTool
+      );
+    }
   }
 
-  async #changeBoard(url: string) {
-    await this.#confirmSaveWithUserFirstIfNeeded();
-
-    if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
-      if (
-        !confirm("A board is currently running. Do you want to load this file?")
-      ) {
-        return;
-      }
-    }
-
+  async #changeBoard(url: string, createNewTab = false) {
     try {
-      this.#onStartBoard(new BreadboardUI.Events.StartEvent(url));
+      this.#runtime.board.loadFromURL(url, this.tab?.graph.url, createNewTab);
     } catch (err) {
       this.toast(
         `Unable to load file: ${url}`,
@@ -1330,23 +1129,32 @@ export class Main extends LitElement {
       try {
         const runData = JSON.parse(data) as SerializedRun | GraphDescriptor;
         if (isSerializedRun(runData)) {
-          if (!this.#runObserver) {
-            this.#runObserver = createRunObserver({
-              logLevel: "debug",
-              dataStore: this.dataStore,
-              runStore: this.runStore,
-            });
-          }
+          const runObserver = createRunObserver({
+            logLevel: "debug",
+            dataStore: this.#dataStore,
+          });
 
           evt.preventDefault();
-          const runObserver = this.#runObserver;
+
           runObserver.load(runData).then(async (result) => {
             if (result.success) {
-              const run = result.run;
-              for await (const result of run.replay()) {
-                await runObserver.observe(result);
-                await new Promise((r) => setTimeout(r, REPLAY_DELAY_MS));
-                this.requestUpdate();
+              // TODO: Append the run to the runObserver so that it can be obtained later.
+              const topGraphObserver =
+                await BreadboardUI.Utils.TopGraphObserver.fromRun(result.run);
+              const descriptor = topGraphObserver?.current()?.graph ?? null;
+
+              if (descriptor) {
+                this.#runtime.board.loadFromDescriptor(
+                  descriptor,
+                  topGraphObserver,
+                  runObserver,
+                  true
+                );
+              } else {
+                this.toast(
+                  "Unable to load run data",
+                  BreadboardUI.Events.ToastType.ERROR
+                );
               }
             } else {
               this.toast(
@@ -1356,7 +1164,7 @@ export class Main extends LitElement {
             }
           });
         } else {
-          this.#onStartBoard(new BreadboardUI.Events.StartEvent(null, runData));
+          this.#runtime.board.loadFromDescriptor(runData);
         }
       } catch (err) {
         console.warn(err);
@@ -1366,15 +1174,11 @@ export class Main extends LitElement {
   }
 
   #attemptBoardStart(evt: BreadboardUI.Events.StartEvent) {
-    if (this.status !== BreadboardUI.Types.STATUS.STOPPED) {
-      if (
-        !confirm("A board is currently running. Do you want to load this file?")
-      ) {
-        return;
-      }
+    if (evt.url) {
+      this.#runtime.board.loadFromURL(evt.url);
+    } else if (evt.descriptor) {
+      this.#runtime.board.loadFromDescriptor(evt.descriptor);
     }
-
-    this.#onStartBoard(evt);
   }
 
   render() {
@@ -1391,17 +1195,10 @@ export class Main extends LitElement {
       }
     )}`;
 
-    let tmpl: HTMLTemplateResult | symbol = nothing;
-
-    let runs: Promise<InspectableRun[]> = Promise.resolve([]);
-    if (this.#runObserver) {
-      runs = this.#runObserver?.runs();
-    }
-
     let saveButton: HTMLTemplateResult | symbol = nothing;
-    if (this.graph && this.graph.url) {
+    if (this.tab && this.tab.graph && this.tab.graph.url) {
       try {
-        const url = new URL(this.graph.url);
+        const url = new URL(this.tab.graph.url);
         const provider = this.#getProviderForURL(url);
         const capabilities = provider?.canProvide(url);
         if (provider && capabilities && capabilities.save) {
@@ -1428,28 +1225,20 @@ export class Main extends LitElement {
       }
     }
 
-    const title = this.graph?.title;
-    let subGraphTitle: string | undefined | null = null;
-    if (this.graph && this.graph.graphs && this.subGraphId) {
-      subGraphTitle =
-        this.graph.graphs[this.subGraphId].title || "Untitled Subgraph";
-    }
-
-    const editor = this.#getEditor();
-    const history = editor?.history();
-
     const showingOverlay =
       this.boardEditOverlayInfo !== null ||
       this.showSettingsOverlay ||
       this.showFirstRun ||
       this.showProviderAddOverlay ||
       this.showSaveAsDialog ||
-      this.showOverflowMenu;
+      this.showOverflowMenu ||
+      this.showNodeConfigurator ||
+      this.showEdgeValue;
 
-    const nav = this.#load.then(() => {
+    const nav = this.#initialize.then(() => {
       return html`<bb-nav
         .visible=${this.showNav}
-        .url=${this.url}
+        .url=${this.tab?.graph.url ?? null}
         .selectedProvider=${this.selectedProvider}
         .selectedLocation=${this.selectedLocation}
         .providers=${this.#providers}
@@ -1457,9 +1246,11 @@ export class Main extends LitElement {
         ?inert=${showingOverlay}
         @pointerdown=${(evt: Event) => evt.stopPropagation()}
         @bbreset=${() => {
-          this.#attemptBoardStart(
-            new BreadboardUI.Events.StartEvent(null, null)
-          );
+          if (!this.tab) {
+            return;
+          }
+
+          this.#runtime.board.closeTab(this.tab.id);
         }}
         @bbgraphprovideradd=${() => {
           this.showProviderAddOverlay = true;
@@ -1528,7 +1319,7 @@ export class Main extends LitElement {
         @bbgraphproviderloadrequest=${async (
           evt: BreadboardUI.Events.GraphProviderLoadRequestEvent
         ) => {
-          this.#changeBoard(evt.url);
+          this.#changeBoard(evt.url, evt.newTab);
         }}
         @bbgraphproviderselectionchange=${(
           evt: BreadboardUI.Events.GraphProviderSelectionChangeEvent
@@ -1541,100 +1332,180 @@ export class Main extends LitElement {
       ></bb-nav> `;
     });
 
-    tmpl = html`<div id="header-bar" ?inert=${showingOverlay}>
-        <button
-          id="show-nav"
-          @click=${() => {
-            this.showNav = !this.showNav;
-            window.addEventListener(
-              "pointerdown",
-              () => {
-                this.showNav = false;
-              },
-              { once: true }
-            );
-          }}
-        ></button>
-        <div id="tab-container">
-          ${this.graph !== null
-            ? html`<h1>
+    const tmpl = this.#initialize
+      .then(() => {
+        const observers = this.#runtime?.run.getObservers(this.tab?.id ?? null);
+        if (observers && observers.runObserver) {
+          return observers.runObserver?.runs();
+        }
+
+        return [];
+      })
+      .then((runs: InspectableRun[]) => {
+        const observers = this.#runtime?.run.getObservers(this.tab?.id ?? null);
+        const topGraphResult = observers?.topGraphObserver?.current() ?? null;
+
+        let tabStatus = BreadboardUI.Types.STATUS.STOPPED;
+        if (this.tab) {
+          tabStatus =
+            this.#tabBoardStatus.get(this.tab.id) ??
+            BreadboardUI.Types.STATUS.STOPPED;
+        }
+
+        let tabLoadStatus = BreadboardUI.Types.BOARD_LOAD_STATUS.LOADING;
+        if (this.tab) {
+          tabLoadStatus =
+            this.#tabLoadStatus.get(this.tab.id) ??
+            BreadboardUI.Types.BOARD_LOAD_STATUS.LOADING;
+        }
+
+        const inputsFromLastRun = runs[1]?.inputs() ?? null;
+        return html`<header>
+          <div id="header-bar" ?inert=${showingOverlay}>
+          <button
+            id="show-nav"
+            @click=${() => {
+              this.showNav = !this.showNav;
+              window.addEventListener(
+                "pointerdown",
+                () => {
+                  this.showNav = false;
+                },
+                { once: true }
+              );
+            }}
+          ></button>
+          <div id="tab-container">
+            ${map(this.#runtime?.board.tabs ?? [], ([id, tab]) => {
+              let subGraphTitle: string | undefined | null = null;
+              if (tab.graph && tab.graph.graphs && tab.subGraphId) {
+                subGraphTitle =
+                  tab.graph.graphs[tab.subGraphId].title || "Untitled Subgraph";
+              }
+
+              const canSave = this.#runtime.board.canSave(id) && !tab.readOnly;
+              const saveStatus = this.#tabSaveStatus.get(id) ?? "saved";
+              const remote = tab.graph.url?.startsWith("http") ?? false;
+              const readonly = tab.readOnly;
+
+              let saveTitle = "Saved";
+              switch (saveStatus) {
+                case BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING: {
+                  saveTitle = "Saving";
+                  break;
+                }
+
+                case BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED: {
+                  saveTitle = remote
+                    ? "Saved on Board Server"
+                    : "Saved on device";
+
+                  if (readonly) {
+                    saveTitle += " - read-only";
+                  }
+                  break;
+                }
+
+                case BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR: {
+                  saveTitle = "Error saving board";
+                  break;
+                }
+              }
+
+              return html`<h1
+                class=${classMap({
+                  active: this.tab?.id === tab.id,
+                })}
+              >
                 <span
                   ><button
-                    id="back-to-main-board"
+                    class=${classMap({
+                      "back-to-main-board": true,
+                    })}
                     @click=${() => {
-                      this.subGraphId = null;
+                      if (this.tab?.id === tab.id && tab.subGraphId !== null) {
+                        tab.subGraphId = null;
+                        return;
+                      }
+
+                      this.#runtime.board.changeTab(tab.id);
                     }}
-                    ?disabled=${this.subGraphId === null}
                   >
-                    ${title}
+                    ${tab.graph.title}
                   </button></span
                 >${subGraphTitle
                   ? html`<span class="subgraph-name">${subGraphTitle}</span>`
                   : nothing}
+                <div
+                  class=${classMap({
+                    "save-status": true,
+                    "can-save": canSave,
+                    remote,
+                    [saveStatus]: true,
+                    readonly,
+                  })}
+                  title=${saveTitle}
+                ></div>
                 <button
                   @click=${() => {
-                    this.#attemptBoardStart(
-                      new BreadboardUI.Events.StartEvent(null, null)
-                    );
+                    this.#runtime.board.closeTab(id);
                   }}
-                  ?disabled=${this.graph === null}
+                  ?disabled=${tab.graph === null}
                   id="close-board"
                   title="Close Board"
                 >
                   Close
                 </button>
-              </h1>`
-            : nothing}
+              </h1>`;
+            })}
+          </div>
+          <button
+            id="undo"
+            title="Undo last action"
+            ?disabled=${this.tab?.graph === null || !this.#runtime.edit.canUndo(this.tab)}
+            @click=${() => {
+              this.#runtime.edit.undo(this.tab);
+            }}
+          >
+            Preview
+          </button>
+          <button
+            id="redo"
+            title="Redo last action"
+            ?disabled=${this.tab?.graph === null || !this.#runtime.edit.canRedo(this.tab)}
+            @click=${() => {
+              this.#runtime.edit.redo(this.tab);
+            }}
+          >
+            Preview
+          </button>
+          ${saveButton}
+          <button
+            class=${classMap({ active: this.showOverflowMenu })}
+            id="toggle-overflow-menu"
+            title="Toggle Overflow Menu"
+            @click=${() => {
+              this.showOverflowMenu = !this.showOverflowMenu;
+            }}
+          >
+            Toggle Overflow Menu
+          </button>
         </div>
-        <button
-          id="undo"
-          title="Undo last action"
-          ?disabled=${this.graph === null || (history && !history.canUndo())}
-          @click=${() => {
-            history?.undo();
-          }}
-        >
-          Preview
-        </button>
-        <button
-          id="redo"
-          title="Redo last action"
-          ?disabled=${this.graph === null || (history && !history.canRedo())}
-          @click=${() => {
-            history?.redo();
-          }}
-        >
-          Preview
-        </button>
-        ${saveButton}
-        <button
-          class=${classMap({ active: this.showOverflowMenu })}
-          id="toggle-overflow-menu"
-          title="Toggle Overflow Menu"
-          @click=${() => {
-            this.showOverflowMenu = !this.showOverflowMenu;
-          }}
-        >
-          Toggle Overflow Menu
-        </button>
-      </div>
+      </header>
       <div id="content" ?inert=${showingOverlay}>
-        ${until(
-          runs.then((runInfo) => {
-            const currentRun = runInfo?.[0];
-            const inputsFromLastRun = runInfo?.[1]?.inputs() || null;
-
-            return html`<bb-ui-controller
+        <bb-ui-controller
               ${ref(this.#uiRef)}
-              .graph=${this.graph}
-              .subGraphId=${this.subGraphId}
-              .run=${currentRun}
-              .inputsFromLastRun=${inputsFromLastRun}
-              .kits=${this.kits}
-              .loader=${this.#loader}
-              .status=${this.status}
+              ?inert=${showingOverlay}
+              .readOnly=${this.tab?.readOnly ?? true}
+              .graph=${this.tab?.graph ?? null}
+              .subGraphId=${this.tab?.subGraphId ?? null}
+              .run=${runs[0] ?? null}
+              .topGraphResult=${topGraphResult}
+              .kits=${this.#runtime.kits}
+              .loader=${this.#runtime.board.loader}
+              .status=${tabStatus}
               .boardId=${this.#boardId}
-              .failedToLoad=${this.#failedGraphLoad}
+              .tabLoadStatus=${tabLoadStatus}
               .settings=${this.#settings}
               .providers=${this.#providers}
               .providerOps=${this.providerOps}
@@ -1642,6 +1513,7 @@ export class Main extends LitElement {
               .version=${this.#version}
               .showWelcomePanel=${this.showWelcomePanel}
               .recentBoards=${this.#recentBoards}
+              .inputsFromLastRun=${inputsFromLastRun}
               @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
                 this.#attemptBoardStart(evt);
               }}
@@ -1668,19 +1540,11 @@ export class Main extends LitElement {
               @bbsubgraphcreate=${async (
                 evt: BreadboardUI.Events.SubGraphCreateEvent
               ) => {
-                const editableGraph = this.#getEditor();
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                const id = globalThis.crypto.randomUUID();
-                const board = blankLLMContent();
-                board.title = evt.subGraphTitle;
-
-                const editResult = editableGraph.addGraph(id, board);
-                if (!editResult) {
+                const result = this.#runtime.edit.createSubGraph(
+                  this.tab,
+                  evt.subGraphTitle
+                );
+                if (!result) {
                   this.toast(
                     "Unable to create sub board",
                     BreadboardUI.Events.ToastType.ERROR
@@ -1688,353 +1552,219 @@ export class Main extends LitElement {
                   return;
                 }
 
-                this.subGraphId = id;
-                this.requestUpdate();
+                if (!this.tab) {
+                  return;
+                }
+                this.tab.subGraphId = result;
               }}
               @bbsubgraphdelete=${async (
                 evt: BreadboardUI.Events.SubGraphDeleteEvent
               ) => {
-                const editableGraph = this.#getEditor();
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                const editResult = editableGraph.removeGraph(evt.subGraphId);
-                if (!editResult.success) {
-                  this.toast(
-                    "Unable to create sub board",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-
-                if (evt.subGraphId === this.subGraphId) {
-                  this.subGraphId = null;
-                }
-                this.requestUpdate();
+                this.#runtime.edit.deleteSubGraph(this.tab, evt.subGraphId);
               }}
               @bbsubgraphchosen=${(
                 evt: BreadboardUI.Events.SubGraphChosenEvent
               ) => {
-                this.subGraphId =
+                if (!this.tab) {
+                  return;
+                }
+
+                this.tab.subGraphId =
                   evt.subGraphId !== BreadboardUI.Constants.MAIN_BOARD_ID
                     ? evt.subGraphId
                     : null;
                 this.requestUpdate();
               }}
               @bbrunboard=${async () => {
-                if (!this.graph?.url) {
+                if (!this.tab?.graph?.url) {
                   return;
                 }
 
-                const runner = this.graph;
-
-                this.#abortController = new AbortController();
+                const graph = this.tab?.graph;
 
                 this.#runBoard(
-                  run(
-                    addNodeProxyServerConfig(
-                      this.#proxy,
-                      {
-                        url: this.graph.url,
-                        runner,
-                        diagnostics: true,
-                        kits: this.kits,
-                        loader: this.#loader,
-                        store: this.dataStore,
-                        signal: this.#abortController?.signal,
-                        inputs: BreadboardUI.Data.inputsFromSettings(
-                          this.#settings
-                        ),
-                        interactiveSecrets: true,
-                      },
-                      this.#settings,
-                      this.proxyFromUrl,
-                      await this.#getProxyURL(this.graph.url)
-                    )
+                  addNodeProxyServerConfig(
+                    this.#proxy,
+                    {
+                      url: this.tab?.graph.url,
+                      runner: graph,
+                      diagnostics: true,
+                      kits: [], // The kits are added by the runtime.
+                      loader: this.#runtime.board.loader,
+                      store: this.#dataStore,
+                      inputs: BreadboardUI.Data.inputsFromSettings(
+                        this.#settings
+                      ),
+                      interactiveSecrets: true,
+                    },
+                    this.#settings,
+                    this.proxyFromUrl,
+                    await this.#getProxyURL(this.tab?.graph.url)
                   )
                 );
               }}
               @bbstopboard=${() => {
-                if (!this.#abortController) {
+                const tabId = this.tab?.id ?? null;
+                const abortController = this.#runtime.run.getAbortSignal(tabId);
+                if (!abortController) {
+                  this.toast(
+                    "Unable to stop run - no abort controller found",
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
                   return;
                 }
 
-                this.#abortController.abort("Stopped board");
+                abortController.abort("Stopped board");
+                const runner = this.#runtime.run.getRunner(tabId);
+                runner?.run();
                 this.requestUpdate();
               }}
               @bbedgechange=${(evt: BreadboardUI.Events.EdgeChangeEvent) => {
-                let editableGraph = this.#getEditor();
-                if (editableGraph && evt.subGraphId) {
-                  editableGraph = editableGraph.getGraph(evt.subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                switch (evt.changeType) {
-                  case "add": {
-                    editableGraph.edit(
-                      [{ type: "addedge", edge: evt.from }],
-                      `Add edge between ${evt.from.from} and ${evt.from.to}`
-                    );
-                    break;
-                  }
-
-                  case "remove": {
-                    editableGraph.edit(
-                      [{ type: "removeedge", edge: evt.from }],
-                      `Remove edge between ${evt.from.from} and ${evt.from.to}`
-                    );
-                    break;
-                  }
-
-                  case "move": {
-                    if (!evt.to) {
-                      throw new Error("Unable to move edge - no `to` provided");
-                    }
-
-                    editableGraph.edit(
-                      [
-                        {
-                          type: "changeedge",
-                          from: evt.from,
-                          to: evt.to,
-                        },
-                      ],
-                      `Change edge from between ${evt.from.from} and ${evt.from.to} to ${evt.to.from} and ${evt.to.to}`
-                    );
-                    break;
-                  }
-                }
+                this.#runtime.edit.changeEdge(
+                  this.tab,
+                  evt.changeType,
+                  evt.from,
+                  evt.to,
+                  evt.subGraphId
+                );
               }}
               @bbnodemetadataupdate=${(
                 evt: BreadboardUI.Events.NodeMetadataUpdateEvent
               ) => {
-                let editableGraph = this.#getEditor();
-                if (editableGraph && evt.subGraphId) {
-                  editableGraph = editableGraph.getGraph(evt.subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn(
-                    "Unable to update node metadata; no active graph"
-                  );
-                  return;
-                }
-
-                const inspectableGraph = editableGraph.inspect();
-                const { id, metadata } = evt;
-                const existingNode = inspectableGraph.nodeById(id);
-                const existingMetadata = existingNode?.metadata() || {};
-                const newMetadata = {
-                  ...existingMetadata,
-                  ...metadata,
-                };
-
-                editableGraph.edit(
-                  [{ type: "changemetadata", id, metadata: newMetadata }],
-                  `Change metadata for "${id}"`
+                this.#runtime.edit.updateNodeMetadata(
+                  this.tab,
+                  evt.id,
+                  evt.metadata,
+                  evt.subGraphId
                 );
               }}
               @bbmultiedit=${(evt: BreadboardUI.Events.MultiEditEvent) => {
-                const { edits, description, subGraphId } = evt;
-                let editableGraph = this.#getEditor();
-                if (editableGraph && subGraphId) {
-                  editableGraph = editableGraph.getGraph(subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn("Unable to multi-edit; no active graph");
-                  return;
-                }
-
-                editableGraph.edit(edits, description);
+                this.#runtime.edit.multiEdit(
+                  this.tab,
+                  evt.edits,
+                  evt.description,
+                  evt.subGraphId
+                );
               }}
               @bbnodecreate=${(evt: BreadboardUI.Events.NodeCreateEvent) => {
-                const { id, nodeType, metadata, configuration } = evt;
-                const newNode = {
-                  id,
-                  type: nodeType,
-                  metadata: metadata || undefined,
-                  configuration: configuration || undefined,
-                };
-
-                let editableGraph = this.#getEditor();
-                if (editableGraph && evt.subGraphId) {
-                  editableGraph = editableGraph.getGraph(evt.subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                // Comment nodes are stored in the metadata for the graph
-                if (nodeType === "comment") {
-                  const inspectableGraph = editableGraph.inspect();
-                  const { id, metadata } = evt;
-
-                  if (!metadata) {
-                    return;
-                  }
-
-                  const graphMetadata = inspectableGraph.metadata() || {};
-                  graphMetadata.comments = graphMetadata.comments || [];
-                  graphMetadata.comments.push({
-                    id,
-                    text: "",
-                    metadata,
-                  });
-
-                  editableGraph.edit(
-                    [{ type: "changegraphmetadata", metadata: graphMetadata }],
-                    `Change metadata for graph - add comment "${id}"`
-                  );
-                  return;
-                }
-
-                editableGraph.edit(
-                  [{ type: "addnode", node: newNode }],
-                  `Add node ${id}`
+                this.#runtime.edit.createNode(
+                  this.tab,
+                  evt.id,
+                  evt.nodeType,
+                  evt.configuration,
+                  evt.metadata,
+                  evt.subGraphId
                 );
+              }}
+              @bbnodeconfigurationupdaterequest=${async (
+                evt: BreadboardUI.Events.NodeConfigurationUpdateRequestEvent
+              ) => {
+                const title = this.#runtime.edit.getNodeTitle(this.tab, evt.id);
+                const ports = await this.#runtime.edit.getNodePorts(
+                  this.tab,
+                  evt.id
+                );
+
+                if (!ports) {
+                  return;
+                }
+
+                this.showNodeConfigurator = evt.port !== null;
+                this.#nodeConfiguratorData = {
+                  id: evt.id,
+                  x: evt.x,
+                  y: evt.y,
+                  title,
+                  selectedPort: evt.port?.title ?? null,
+                  subGraphId: evt.subGraphId,
+                  ports,
+                };
+              }}
+              @bbedgevalueselected=${(
+                evt: BreadboardUI.Events.EdgeValueSelectedEvent
+              ) => {
+                this.showEdgeValue = evt.value !== null;
+                this.#edgeValueData = { ...evt };
+              }}
+              @bbnodeactivityselected=${(
+                evt: BreadboardUI.Events.NodeActivitySelectedEvent
+              ) => {
+                this.#selectRun(evt);
               }}
               @bbcommentupdate=${(
                 evt: BreadboardUI.Events.CommentUpdateEvent
               ) => {
-                const { id, text, subGraphId } = evt;
-
-                let editableGraph = this.#getEditor();
-                if (editableGraph && subGraphId) {
-                  editableGraph = editableGraph.getGraph(subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                const inspectableGraph = editableGraph.inspect();
-                const graphMetadata = inspectableGraph.metadata() || {};
-                graphMetadata.comments ??= [];
-
-                const comment = graphMetadata.comments.find(
-                  (comment) => comment.id === id
-                );
-                if (!comment) {
-                  console.warn("Unable to update comment; not found");
-                  return;
-                }
-
-                comment.text = text;
-                editableGraph.edit(
-                  [{ type: "changegraphmetadata", metadata: graphMetadata }],
-                  `Change metadata for graph - add comment "${id}"`
+                this.#runtime.edit.changeComment(
+                  this.tab,
+                  evt.id,
+                  evt.text,
+                  evt.subGraphId
                 );
               }}
               @bbnodeupdate=${(evt: BreadboardUI.Events.NodeUpdateEvent) => {
-                let editableGraph = this.#getEditor();
-                if (editableGraph && evt.subGraphId) {
-                  editableGraph = editableGraph.getGraph(evt.subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                editableGraph.edit(
-                  [
-                    {
-                      type: "changeconfiguration",
-                      id: evt.id,
-                      configuration: evt.configuration,
-                      reset: true,
-                    },
-                  ],
-                  `Change configuration for "${evt.id}"`
+                this.#runtime.edit.changeNodeConfiguration(
+                  this.tab,
+                  evt.id,
+                  evt.configuration,
+                  evt.subGraphId
                 );
               }}
               @bbnodedelete=${(evt: BreadboardUI.Events.NodeDeleteEvent) => {
-                let editableGraph = this.#getEditor();
-                if (editableGraph && evt.subGraphId) {
-                  editableGraph = editableGraph.getGraph(evt.subGraphId);
-                }
-
-                if (!editableGraph) {
-                  console.warn("Unable to create node; no active graph");
-                  return;
-                }
-
-                editableGraph.edit(
-                  [{ type: "removenode", id: evt.id }],
-                  `Remove node ${evt.id}`
-                );
+                this.#runtime.edit.deleteNode(this.tab, evt.id, evt.subGraphId);
               }}
               @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-                if (!this.#uiRef.value) {
-                  return;
-                }
-
                 this.toast(toastEvent.message, toastEvent.toastType);
               }}
               @bbinputenter=${async (
                 event: BreadboardUI.Events.InputEnterEvent
               ) => {
-                if (!this.#settings) {
+                if (!this.#settings || !this.tab) {
                   return;
                 }
 
                 const isSecret = "secret" in event.data;
-                const shouldSaveSecrets =
-                  (event.allowSavingIfSecret &&
-                    this.#settings
-                      .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
-                      .items.get("Save Secrets")?.value) ||
-                  false;
-                if (!shouldSaveSecrets || !isSecret) {
-                  return;
+                const runner = this.#runtime.run.getRunner(this.tab.id);
+                if (!runner) {
+                  throw new Error("Can't send input, no runner");
                 }
-
-                const name = event.id;
-                const value = event.data.secret as string;
-                const secrets = this.#settings.getSection(
-                  BreadboardUI.Types.SETTINGS_TYPE.SECRETS
-                ).items;
-                let shouldSave = false;
-                if (secrets.has(event.id)) {
-                  const secret = secrets.get(event.id);
-                  if (secret && secret.value !== value) {
-                    secret.value = value;
-                    shouldSave = true;
+                if (isSecret) {
+                  if (this.#secretsHelper) {
+                    this.#secretsHelper.receiveSecrets(event);
+                    if (
+                      this.#secretsHelper.hasAllSecrets() &&
+                      !runner?.running()
+                    ) {
+                      const secrets = this.#secretsHelper.getSecrets();
+                      this.#secretsHelper = null;
+                      runner?.run(secrets);
+                    }
+                  } else {
+                    // This is the case when the "secret" event hasn't yet
+                    // been received.
+                    // Likely, this is a side effect of how the
+                    // activity-log is built: it relies on the run observer
+                    // for the events list, and the run observer updates the
+                    // list of run events before the run API dispatches
+                    // the "secret" event.
+                    this.#secretsHelper = new SecretsHelper(this.#settings!);
+                    this.#secretsHelper.receiveSecrets(event);
                   }
                 } else {
-                  secrets.set(name, { name, value });
-                  shouldSave = true;
+                  const data = event.data as InputValues;
+                  if (runner.running()) {
+                    throw new Error(
+                      "The runner is already running, cannot send input"
+                    );
+                  }
+                  runner.run(data);
                 }
-
-                if (!shouldSave) {
-                  return;
-                }
-                await this.#settings.save(this.#settings.values);
                 this.requestUpdate();
               }}
             ></bb-ui-controller>
-          </div>`;
-          })
-        )}
+          </div>
         ${until(nav)}
       </div>`;
-
-    if (this.embed) {
-      tmpl = html`<iframe
-        src="/preview.html?board=${this.url}&embed=true"
-      ></iframe>`;
-    }
+      });
 
     let boardOverlay: HTMLTemplateResult | symbol = nothing;
     if (this.boardEditOverlayInfo) {
@@ -2187,30 +1917,33 @@ export class Main extends LitElement {
     }
 
     let historyOverlay: HTMLTemplateResult | symbol = nothing;
-    if (history && this.showHistory) {
-      historyOverlay = html`<bb-graph-history
-        .entries=${history.entries()}
-        .canRedo=${history.canRedo()}
-        .canUndo=${history.canUndo()}
-        .count=${history.entries().length}
-        .idx=${history.index()}
-        @bbundo=${() => {
-          if (!history.canUndo()) {
-            return;
-          }
+    if (this.showHistory) {
+      const history = this.#runtime.edit.getHistory(this.tab);
+      if (history) {
+        historyOverlay = html`<bb-graph-history
+          .entries=${history.entries()}
+          .canRedo=${history.canRedo()}
+          .canUndo=${history.canUndo()}
+          .count=${history.entries().length}
+          .idx=${history.index()}
+          @bbundo=${() => {
+            if (!history.canUndo()) {
+              return;
+            }
 
-          history.undo();
-          this.requestUpdate();
-        }}
-        @bbredo=${() => {
-          if (!history.canRedo()) {
-            return;
-          }
+            history.undo();
+            this.requestUpdate();
+          }}
+          @bbredo=${() => {
+            if (!history.canRedo()) {
+              return;
+            }
 
-          history.redo();
-          this.requestUpdate();
-        }}
-      ></bb-graph-history>`;
+            history.redo();
+            this.requestUpdate();
+          }}
+        ></bb-graph-history>`;
+      }
     }
 
     let saveAsDialogOverlay: HTMLTemplateResult | symbol = nothing;
@@ -2221,7 +1954,7 @@ export class Main extends LitElement {
         .providerOps=${this.providerOps}
         .selectedProvider=${this.selectedProvider}
         .selectedLocation=${this.selectedLocation}
-        .graph=${structuredClone(this.#saveAsState?.graph ?? this.graph)}
+        .graph=${structuredClone(this.#saveAsState?.graph ?? this.tab?.graph)}
         .isNewBoard=${this.#saveAsState?.isNewBoard ?? false}
         @bboverlaydismissed=${() => {
           this.showSaveAsDialog = false;
@@ -2244,6 +1977,49 @@ export class Main extends LitElement {
       this.#saveAsState = null;
     }
 
+    let nodeConfiguratorOverlay: HTMLTemplateResult | symbol = nothing;
+    if (this.showNodeConfigurator) {
+      nodeConfiguratorOverlay = html`<bb-node-configuration-overlay
+        ${ref(this.#nodeConfiguratorRef)}
+        .value=${this.#nodeConfiguratorData}
+        .graph=${this.tab?.graph}
+        .providers=${this.#providers}
+        .providerOps=${this.providerOps}
+        .showTypes=${false}
+        @bboverlaydismissed=${() => {
+          this.showNodeConfigurator = false;
+        }}
+        @bbnodepartialupdate=${async (
+          evt: BreadboardUI.Events.NodePartialUpdateEvent
+        ) => {
+          if (!this.tab) {
+            this.toast(
+              "Unable to edit; no active graph",
+              BreadboardUI.Events.ToastType.ERROR
+            );
+            return;
+          }
+
+          this.#runtime.edit.changeNodeConfigurationPart(
+            this.tab,
+            evt.id,
+            evt.configuration,
+            evt.subGraphId
+          );
+        }}
+      ></bb-node-configuration-overlay>`;
+    }
+
+    let edgeValueOverlay: HTMLTemplateResult | symbol = nothing;
+    if (this.showEdgeValue) {
+      edgeValueOverlay = html`<bb-edge-value-overlay
+        .edgeValue=${this.#edgeValueData}
+        @bboverlaydismissed=${() => {
+          this.showEdgeValue = false;
+        }}
+      ></bb-edge-value-overlay>`;
+    }
+
     let overflowMenu: HTMLTemplateResult | symbol = nothing;
     if (this.showOverflowMenu) {
       const actions: Array<{
@@ -2259,9 +2035,9 @@ export class Main extends LitElement {
         },
       ];
 
-      if (this.graph && this.graph.url) {
+      if (this.tab?.graph && this.tab?.graph.url) {
         try {
-          const url = new URL(this.graph.url);
+          const url = new URL(this.tab?.graph.url);
           const provider = this.#getProviderForURL(url);
           const capabilities = provider?.canProvide(url);
           if (provider && capabilities) {
@@ -2308,7 +2084,7 @@ export class Main extends LitElement {
 
       overflowMenu = html`<bb-overflow-menu
         .actions=${actions}
-        .disabled=${this.graph === null}
+        .disabled=${this.tab?.graph === null}
         @bboverflowmenudismissed=${() => {
           this.showOverflowMenu = false;
         }}
@@ -2317,7 +2093,7 @@ export class Main extends LitElement {
         ) => {
           switch (evt.action) {
             case "copy-to-clipboard": {
-              if (!this.graph || !this.graph.url) {
+              if (!this.tab?.graph || !this.tab?.graph.url) {
                 this.toast(
                   "Unable to copy board URL",
                   BreadboardUI.Events.ToastType.ERROR
@@ -2325,7 +2101,7 @@ export class Main extends LitElement {
                 break;
               }
 
-              await navigator.clipboard.writeText(this.graph.url);
+              await navigator.clipboard.writeText(this.tab?.graph.url);
               this.toast(
                 "Board URL copied",
                 BreadboardUI.Events.ToastType.INFORMATION
@@ -2333,11 +2109,11 @@ export class Main extends LitElement {
               break;
             }
             case "download": {
-              if (!this.graph) {
+              if (!this.tab?.graph) {
                 break;
               }
 
-              const board = structuredClone(this.graph);
+              const board = structuredClone(this.tab?.graph);
               delete board["url"];
 
               const data = JSON.stringify(board, null, 2);
@@ -2357,9 +2133,12 @@ export class Main extends LitElement {
               generatedUrls.add(url);
 
               let fileName = `${board.title ?? "Untitled Board"}.json`;
-              if (this.url) {
+              if (this.tab.graph.url) {
                 try {
-                  const boardUrl = new URL(this.url, window.location.href);
+                  const boardUrl = new URL(
+                    this.tab.graph.url,
+                    window.location.href
+                  );
                   const baseName = /[^/]+$/.exec(boardUrl.pathname);
                   if (baseName) {
                     fileName = baseName[0];
@@ -2382,16 +2161,22 @@ export class Main extends LitElement {
             }
 
             case "delete": {
-              if (!this.graph || !this.graph.url) {
+              if (!this.tab?.graph || !this.tab?.graph.url) {
                 return;
               }
 
-              const provider = this.#getProviderForURL(new URL(this.graph.url));
+              const provider = this.#getProviderForURL(
+                new URL(this.tab?.graph.url)
+              );
               if (!provider) {
                 return;
               }
 
-              this.#attemptBoardDelete(provider.name, this.graph.url, true);
+              this.#attemptBoardDelete(
+                provider.name,
+                this.tab?.graph.url,
+                true
+              );
               break;
             }
 
@@ -2406,18 +2191,20 @@ export class Main extends LitElement {
             }
 
             case "preview": {
-              if (!this.graph || !this.graph.url) {
+              if (!this.tab?.graph || !this.tab?.graph.url) {
                 return;
               }
 
-              const provider = this.#getProviderForURL(new URL(this.graph.url));
+              const provider = this.#getProviderForURL(
+                new URL(this.tab?.graph.url)
+              );
               if (!provider) {
                 return;
               }
 
               try {
                 this.previewOverlayURL = await provider.preview(
-                  new URL(this.graph.url)
+                  new URL(this.tab?.graph.url)
                 );
               } catch (err) {
                 this.toast(
@@ -2450,7 +2237,7 @@ export class Main extends LitElement {
     }
 
     return [
-      tmpl,
+      until(tmpl),
       boardOverlay,
       settingsOverlay,
       firstRunOverlay,
@@ -2459,41 +2246,9 @@ export class Main extends LitElement {
       saveAsDialogOverlay,
       overflowMenu,
       previewOverlay,
+      nodeConfiguratorOverlay,
+      edgeValueOverlay,
       toasts,
     ];
-  }
-}
-
-class SettingsHelperImpl implements BreadboardUI.Types.SettingsHelper {
-  #store: SettingsStore;
-
-  constructor(store: SettingsStore) {
-    this.#store = store;
-  }
-
-  get(
-    section: BreadboardUI.Types.SETTINGS_TYPE,
-    name: string
-  ): BreadboardUI.Types.SettingEntry["value"] | undefined {
-    return this.#store.values[section].items.get(name);
-  }
-
-  async set(
-    section: BreadboardUI.Types.SETTINGS_TYPE,
-    name: string,
-    value: BreadboardUI.Types.SettingEntry["value"]
-  ): Promise<void> {
-    const values = this.#store.values;
-    values[section].items.set(name, value);
-    await this.#store.save(values);
-  }
-
-  async delete(
-    section: BreadboardUI.Types.SETTINGS_TYPE,
-    name: string
-  ): Promise<void> {
-    const values = this.#store.values;
-    values[section].items.delete(name);
-    await this.#store.save(values);
   }
 }

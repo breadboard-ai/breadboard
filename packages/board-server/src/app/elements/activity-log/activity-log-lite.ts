@@ -34,9 +34,8 @@ import {
 } from "../../utils/content-schema.js";
 
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import type { EdgeLogEntry, LogEntry } from "../../utils/types.js";
 
-@customElement("bb-activity-log-lite")
+@customElement("bb-activity-log-lite-app")
 export class ActivityLogLite extends LitElement {
   @property()
   start: number = 0;
@@ -45,7 +44,7 @@ export class ActivityLogLite extends LitElement {
   message: UserMessage | null = null;
 
   @property()
-  log: LogEntry[] = [];
+  log: BreadboardUI.Types.LogEntry[] = [];
 
   static styles = css`
     * {
@@ -141,6 +140,10 @@ export class ActivityLogLite extends LitElement {
     .pending-input.newest,
     .edge.newest {
       animation: fadeAndSlideIn 0.3s cubic-bezier(0, 0, 0.3, 1) forwards;
+    }
+
+    .edge.newest {
+      margin-bottom: var(--bb-grid-size-16);
     }
 
     .edge.empty {
@@ -435,7 +438,7 @@ export class ActivityLogLite extends LitElement {
   #userInputRef: Ref<BreadboardUI.Elements.UserInput> = createRef();
   #activityRef: Ref<HTMLDivElement> = createRef();
 
-  async #renderPendingInput(event: EdgeLogEntry) {
+  async #renderPendingInput(event: BreadboardUI.Types.EdgeLogEntry) {
     const schema = event.schema as Schema;
     if (!schema) {
       return html`Unable to render`;
@@ -520,7 +523,7 @@ export class ActivityLogLite extends LitElement {
       </button>`;
   }
 
-  async #renderCompletedInputOrOutput(event: EdgeLogEntry) {
+  async #renderCompletedInputOrOutput(event: BreadboardUI.Types.EdgeLogEntry) {
     const { value, schema } = event;
     const type = event.id ? "input" : "output";
     if (!value) {
@@ -618,7 +621,7 @@ export class ActivityLogLite extends LitElement {
     </dl>`;
   }
 
-  #renderLog(entries: LogEntry[]) {
+  #renderLog(entries: BreadboardUI.Types.LogEntry[]) {
     return html`${map(entries, (entry, idx) => {
       const newest = idx === entries.length - 1;
       switch (entry.type) {

@@ -109,7 +109,6 @@ test("can pass nested board", () => {
   }).outputs;
   const boardDef = board({ inputs: {}, outputs: { result1, result2 } });
   const serialized = serialize(boardDef);
-  console.log(JSON.stringify(serialized, null));
   assert.deepEqual(serialized, {
     edges: [
       { from: "boardnode-0", to: "output-0", out: "result", in: "result1" },

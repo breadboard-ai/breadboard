@@ -39,6 +39,7 @@ export function isFunctionResponseCapabilityPart(
 
 export function isLLMContent(nodeValue: unknown): nodeValue is LLMContent {
   if (typeof nodeValue !== "object" || !nodeValue) return false;
+  if (nodeValue === null || nodeValue === undefined) return false;
 
   return "parts" in nodeValue && Array.isArray(nodeValue.parts);
 }
@@ -48,8 +49,12 @@ export function isLLMContentArray(
 ): nodeValue is LLMContent[] {
   if (typeof nodeValue !== "object" || !nodeValue) return false;
   if (!Array.isArray(nodeValue)) return false;
+  if (nodeValue === null || nodeValue === undefined) return false;
 
-  nodeValue = nodeValue.filter((item) => item.role !== "$metadata");
+  nodeValue = nodeValue.filter((item) => {
+    if (item === null || item === undefined) return false;
+    return item.role !== "$metadata";
+  });
 
   return (
     Array.isArray(nodeValue) && nodeValue.every((entry) => isLLMContent(entry))
