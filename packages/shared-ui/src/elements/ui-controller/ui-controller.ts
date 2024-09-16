@@ -585,7 +585,7 @@ export class UI extends LitElement {
           <button
             id="run"
             title="Run this board"
-            ?disabled=${this.failedToLoad || !this.graph}
+            ?disabled=${this.failedToLoad || !this.graph || this.readOnly}
             @click=${() => {
               this.selectedNodeIds.length = 0;
               if (this.status === STATUS.STOPPED) {
