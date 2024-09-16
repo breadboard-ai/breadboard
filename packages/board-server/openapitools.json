@@ -20,7 +20,22 @@
         },
         "generatorName": "typescript",
         "inputSpec": "openapi.yaml",
-        "output": "./generated/clients/typescript"
+        "output": "./generated/clients/typescript/typescript"
+      },
+      "/clients/typescript-angular": {
+        "generatorName": "typescript-angular",
+        "inputSpec": "openapi.yaml",
+        "output": "./generated/clients/typescript/angular"
+      },
+      "/clients/typescript-aurelia": {
+        "generatorName": "typescript-aurelia",
+        "inputSpec": "openapi.yaml",
+        "output": "./generated/clients/typescript/aurelia"
+      },
+      "/clients/typescript-axios": {
+        "generatorName": "typescript-axios",
+        "inputSpec": "openapi.yaml",
+        "output": "./generated/clients/typescript/axios"
       },
       "/clients/typescript-fetch": {
         "additionalProperties": {
@@ -30,7 +45,22 @@
         },
         "generatorName": "typescript-fetch",
         "inputSpec": "openapi.yaml",
-        "output": "./generated/clients/typescript-fetch"
+        "output": "./generated/clients/typescript/fetch"
+      },
+      "/clients/typescript-inversify": {
+        "generatorName": "typescript-inversify",
+        "inputSpec": "openapi.yaml",
+        "output": "./generated/clients/typescript/inversify"
+      },
+      "/clients/typescript-jquery": {
+        "generatorName": "typescript-jquery",
+        "inputSpec": "openapi.yaml",
+        "output": "./generated/clients/typescript/jquery"
+      },
+      "/clients/typescript-nestjs": {
+        "generatorName": "typescript-nestjs",
+        "inputSpec": "openapi.yaml",
+        "output": "./generated/clients/typescript/nestjs"
       },
       "/clients/typescript-node": {
         "additionalProperties": {
@@ -40,7 +70,27 @@
         },
         "generatorName": "typescript-node",
         "inputSpec": "openapi.yaml",
-        "output": "./generated/clients/typescript-node"
+        "output": "./generated/clients/typescript/node"
+      },
+      "/clients/typescript-redux-query": {
+        "generatorName": "typescript-redux-query",
+        "inputSpec": "openapi.yaml",
+        "output": "./generated/clients/typescript/redux-query"
+      },
+      "/clients/typescript-rxjs": {
+        "additionalProperties": {
+          "npmName": "board-server-client",
+          "supportsES6": true,
+          "withInterfaces": true
+        },
+        "generatorName": "typescript-rxjs",
+        "inputSpec": "openapi.yaml",
+        "output": "./generated/clients/typescript/rxjs"
+      },
+      "/documentation/markdown": {
+        "generatorName": "markdown",
+        "inputSpec": "openapi.yaml",
+        "output": "./generated/documentation/markdown"
       },
       "/documentation/openapi-json": {
         "generatorName": "openapi",
@@ -56,6 +106,11 @@
         "generatorName": "protobuf-schema",
         "inputSpec": "openapi.yaml",
         "output": "./generated/schemas/protobuf"
+      },
+      "/servers/nodejs-express-server/": {
+        "generatorName": "nodejs-express-server",
+        "inputSpec": "openapi.yaml",
+        "output": "./generated/server/nodejs-express-server"
       }
     },
     "version": "7.8.0"
