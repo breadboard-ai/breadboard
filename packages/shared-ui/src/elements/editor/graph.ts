@@ -1385,8 +1385,6 @@ export class Graph extends PIXI.Container {
         continue;
       }
 
-      console.log(id);
-
       graphNode.label = id;
       graphNode.readOnly = this.readOnly;
       graphNode.inPorts = portInfo.inputs.ports;
