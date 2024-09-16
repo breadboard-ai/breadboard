@@ -26,7 +26,8 @@
     "test:integration": "wireit",
     "generate": "rimraf generated ; npx -y @openapitools/openapi-generator-cli generate",
     "lint": "wireit",
-    "lint:spec": "npx -y @redocly/cli lint --skip-rule=no-server-example.com openapi.yaml"
+    "lint:spec": "npx -y @redocly/cli lint --skip-rule=no-server-example.com openapi.yaml",
+    "preview:spec": "npx -y @redocly/cli preview-docs openapi.yaml"
   },
   "wireit": {
     "build": {
