@@ -1097,7 +1097,7 @@ export class GraphRenderer extends LitElement {
   }
 
   zoomToNode(id: string) {
-    this.zoomToFit();
+    this.zoomToFit(false);
 
     for (const graph of this.#container.children) {
       if (!(graph instanceof Graph) || !graph.visible) {
@@ -1106,7 +1106,7 @@ export class GraphRenderer extends LitElement {
 
       const graphNode = graph.getChildByLabel(id);
       if (!graphNode) {
-        return;
+        continue;
       }
 
       const graphBounds = graph.getBounds();
@@ -1150,7 +1150,7 @@ export class GraphRenderer extends LitElement {
     }
   }
 
-  zoomToFit() {
+  zoomToFit(emitGraphNodeVisualInformation = true) {
     this.#container.scale.set(1, 1);
 
     // Find the first graph in the container and size to it.
@@ -1186,8 +1186,12 @@ export class GraphRenderer extends LitElement {
         x: rendererBounds.width / 2,
         y: rendererBounds.height / 2,
       };
+
       const matrix = this.#scaleContainerAroundPoint(delta, pivot);
-      this.#emitGraphNodeVisualInformation(graph);
+      if (emitGraphNodeVisualInformation) {
+        this.#emitGraphNodeVisualInformation(graph);
+      }
+
       this.#storeContainerTransform(graph, matrix);
       return;
     }
