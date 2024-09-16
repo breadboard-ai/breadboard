@@ -3,6 +3,9 @@ info:
   title: Board Server API
   version: 1.0.0
   description: API for managing and interacting with boards
+  license:
+    name: Apache 2.0
+    identifier: Apache-2.0
 servers:
   - url: http://localhost:3000
 paths:
