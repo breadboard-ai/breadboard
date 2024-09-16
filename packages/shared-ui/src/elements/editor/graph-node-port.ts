@@ -45,12 +45,12 @@ export class GraphNodePort extends PIXI.Graphics {
     configured: configuredBorderColor,
   };
   #overrideStatus: PortStatus | null = null;
+  #readOnly = false;
 
   constructor(public type: GraphNodePortType) {
     super();
 
     this.eventMode = "static";
-    this.cursor = "pointer";
     this.onRender = () => {
       if (!this.#isDirty) {
         return;
@@ -59,6 +59,21 @@ export class GraphNodePort extends PIXI.Graphics {
       this.clear();
       this.#draw();
     };
+  }
+
+  set readOnly(readOnly: boolean) {
+    if (readOnly === this.#readOnly) {
+      return;
+    }
+
+    this.cursor = readOnly ? "auto" : "pointer";
+
+    this.#readOnly = readOnly;
+    this.#isDirty = true;
+  }
+
+  get readOnly() {
+    return this.#readOnly;
   }
 
   set radius(radius: number) {

@@ -676,6 +676,9 @@ export class GraphRenderer extends LitElement {
       return false;
     }
 
+    graph.readOnly = this.readOnly;
+    graph.highlightInvalidWires = this.highlightInvalidWires;
+
     if (opts.showNodeTypeDescriptions !== undefined) {
       graph.showNodeTypeDescriptions = opts.showNodeTypeDescriptions;
     }
@@ -715,9 +718,6 @@ export class GraphRenderer extends LitElement {
     if (opts.visible !== undefined) {
       graph.visible = opts.visible;
     }
-
-    graph.readOnly = this.readOnly;
-    graph.highlightInvalidWires = this.highlightInvalidWires;
 
     return true;
   }

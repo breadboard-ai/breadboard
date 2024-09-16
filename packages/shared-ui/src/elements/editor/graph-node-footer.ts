@@ -26,6 +26,8 @@ export class GraphNodeFooter extends PIXI.Container {
     { port: InspectablePort; label: PIXI.Text; nodePort: GraphNodePort } | null
   > = new Map();
 
+  readOnly = false;
+
   get empty() {
     return this.#inPortsData.size === 0;
   }
@@ -61,9 +63,6 @@ export class GraphNodeFooter extends PIXI.Container {
           },
         });
 
-        label.alpha = 0.65;
-        label.cursor = "pointer";
-
         const nodePort = new GraphNodePort(GraphNodePortType.INERT);
 
         this.addChild(label);
@@ -88,7 +87,22 @@ export class GraphNodeFooter extends PIXI.Container {
         portItem.nodePort.x + portItem.nodePort.radius * 2 + this.#spacing;
       portItem.label.y = (this.#height - portItem.label.height) * 0.5;
 
+      this.#width +=
+        portItem.nodePort.radius * 2 +
+        this.#spacing +
+        portItem.label.width +
+        this.#itemPadding;
+
+      // Now that all the render-centric stuff is set up, check the read-only
+      // state to determine if click handlers etc should be added.
       portItem.label.removeAllListeners();
+      if (this.readOnly) {
+        return;
+      }
+
+      portItem.label.alpha = 0.65;
+      portItem.label.cursor = "pointer";
+
       portItem.label.addEventListener(
         "click",
         (evt: PIXI.FederatedPointerEvent) => {
@@ -117,12 +131,6 @@ export class GraphNodeFooter extends PIXI.Container {
       portItem.label.addEventListener("pointerout", () => {
         portItem.label.alpha = 0.65;
       });
-
-      this.#width +=
-        portItem.nodePort.radius * 2 +
-        this.#spacing +
-        portItem.label.width +
-        this.#itemPadding;
     }
 
     for (const [inPortName, portItem] of this.#inPortsData) {

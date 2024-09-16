@@ -188,8 +188,8 @@ export class EdgeValueOverlay extends LitElement {
       this.maximized =
         globalThis.sessionStorage.getItem("bb-edge-value-maximized") === "true";
 
-      this.#overlayRef.value.style.setProperty("--x", `${Math.round(x)}px`);
-      this.#overlayRef.value.style.setProperty("--y", `${Math.round(y)}px`);
+      this.#overlayRef.value.style.setProperty("--left", `${Math.round(x)}px`);
+      this.#overlayRef.value.style.setProperty("--top", `${Math.round(y)}px`);
     });
   }
 
@@ -243,8 +243,6 @@ export class EdgeValueOverlay extends LitElement {
     if (!this.edgeValue || !this.edgeValue.value) {
       return nothing;
     }
-
-    console.log("💖 edge value schema", this.edgeValue.schema);
 
     const contentLocationStart = { x: 0, y: 0 };
     const dragStart = { x: 0, y: 0 };
