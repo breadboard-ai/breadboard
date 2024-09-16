@@ -303,6 +303,7 @@ export class UI extends LitElement {
           .showExperimentalComponents=${showExperimentalComponents}
           .readOnly=${this.readOnly}
           .showReadOnlyOverlay=${true}
+          .zoomToHighlightedNodeDuringRuns=${true}
           @bbmultiedit=${(evt: MultiEditEvent) => {
             const deletedNodes: RemoveNodeSpec[] = evt.edits.filter(
               (edit) => edit.type === "removenode"

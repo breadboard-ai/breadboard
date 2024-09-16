@@ -23,6 +23,7 @@ import {
   GraphNodePortValueEditEvent,
   GraphEdgeValueSelectedEvent,
   GraphNodeActivitySelectedEvent,
+  GraphInteractionEvent,
 } from "../../events/events.js";
 import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
@@ -167,6 +168,7 @@ export class GraphRenderer extends LitElement {
   #onWheelBound = this.#onWheel.bind(this);
 
   ready = this.#loadTexturesAndInitializeRenderer();
+  zoomToHighlightedNode = false;
 
   static styles = css`
     * {
@@ -502,6 +504,10 @@ export class GraphRenderer extends LitElement {
         this.#app.stage.off("wheel", onWheel);
       }
 
+      // The user has interacted – stop the auto-zoom/pan.
+      this.zoomToHighlightedNode = false;
+      this.dispatchEvent(new GraphInteractionEvent());
+
       if (evt.metaKey || evt.ctrlKey) {
         let delta =
           1 -
@@ -641,6 +647,12 @@ export class GraphRenderer extends LitElement {
       graph.edgeValues = edgeValues;
       graph.nodeValues = nodeValues;
     }
+
+    if (!this.zoomToHighlightedNode || !highlightedNode) {
+      return;
+    }
+
+    this.zoomToNode(highlightedNode.descriptor.id);
   }
 
   createGraph(opts: GraphOpts) {
@@ -1078,6 +1090,60 @@ export class GraphRenderer extends LitElement {
       }
 
       return graph.addToAutoSelect(node);
+    }
+  }
+
+  zoomToNode(id: string) {
+    this.zoomToFit();
+
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph) || !graph.visible) {
+        continue;
+      }
+
+      const graphNode = graph.getChildByLabel(id);
+      if (!graphNode) {
+        return;
+      }
+
+      const graphBounds = graph.getBounds();
+      const graphNodeBounds = graphNode.getBounds();
+      const rendererBounds = this.getBoundingClientRect();
+
+      const xShift =
+        (0.5 -
+          (graphNodeBounds.x - graphBounds.x + graphNodeBounds.width * 0.5) /
+            graphBounds.width) *
+        graphBounds.width;
+      this.#container.x += xShift;
+
+      const yShift =
+        (0.5 -
+          (graphNodeBounds.y - graphBounds.y + graphNodeBounds.height * 0.5) /
+            graphBounds.height) *
+        graphBounds.height;
+      this.#container.y += yShift;
+
+      let delta = Math.min(
+        (rendererBounds.width - 2 * this.#padding) / graphNodeBounds.width,
+        (rendererBounds.height - 2 * this.#padding) / graphNodeBounds.height
+      );
+
+      const zoomNodeMaxScale = this.maxScale * 0.5;
+      if (delta < this.minScale) {
+        delta = this.minScale;
+      } else if (delta > zoomNodeMaxScale) {
+        delta = zoomNodeMaxScale;
+      }
+
+      const pivot = {
+        x: rendererBounds.width / 2,
+        y: rendererBounds.height / 2,
+      };
+
+      const matrix = this.#scaleContainerAroundPoint(delta, pivot);
+      this.#storeContainerTransform(graph, matrix);
+      return;
     }
   }
 

@@ -530,6 +530,14 @@ export class NodeActivitySelectedEvent extends Event {
   }
 }
 
+export class GraphInteractionEvent extends Event {
+  static eventName = "bbgraphinteraction";
+
+  constructor() {
+    super(GraphInteractionEvent.eventName, { ...eventInit });
+  }
+}
+
 export class GraphNodesVisualUpdateEvent extends Event {
   static eventName = "bbgraphnodesmove";
 
