@@ -6,19 +6,12 @@
 
 import type { Request, Response } from 'express';
 import type { GraphDescriptor } from "@google-labs/breadboard";
-// import { authenticate } from "../auth.js";
-// import { serverError } from "../errors.js";
 import { getStore } from '../../../server/store.js';
 
 
 const update = async (req: Request, res: Response): Promise<void> => {
   const { user, boardName } = req.params;
 
-  // @todo move authentiation to middleware
-  // const userKey = authenticate(req, res);
-  // if (!userKey) {
-  //   return;
-  // }
   const store = getStore();
   const userStore = await store.getUserStore(user!);
 

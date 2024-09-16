@@ -13,25 +13,14 @@ export type CreateRequest = {
 };
 
 const create = async (req: Request, res: Response): Promise<void> => {
-  // @todo: implement auth middleware
-  // const userKey = authenticate(req, res);
-  // if (!userKey) {
-  //   return;
-  // }
   const store = getStore();
 
-  const userKey = req.query.API_KEY as string;
-
-  const userStore = await store.getUserStore(userKey);
-  if (!userStore.success) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
+  const username = res.locals.username;
 
   const request = req.body as CreateRequest;
   const boardName = request.name;
 
-  const result = await store.create(userStore.store!, boardName, !!request.dryRun);
+  const result = await store.create(username, boardName, !!request.dryRun);
 
   if (!result.success) {
     res.status(400).json({ error: result.error });

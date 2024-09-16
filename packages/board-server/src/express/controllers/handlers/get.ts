@@ -12,10 +12,12 @@ const get = async (req: Request, res: Response) => {
   const store = getStore();
 
   const board = await store.get(userName!, boardName!);
-
-  res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(board);
-  return true;
+  
+  if (!board) {
+    return res.status(404).json({ error: 'Board not found' });
+  }
+  
+  res.json(board);
 };
 
 export default get;

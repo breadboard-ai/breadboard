@@ -1,6 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import { BoardController } from './controllers/boardController.js';
+import authenticate from './auth/auth.js';
 
 const app = express();
 const port = 3000;
@@ -26,9 +27,9 @@ const boardController = new BoardController();
 
 // Board API Routes
 app.get('/boards', boardController.list);
-app.post('/boards', boardController.create);
+app.post('/boards', authenticate, boardController.create);
 app.get('/boards/@:user/:boardName.json', boardController.get);
-app.post('/boards/@:user/:boardName.json', boardController.update);
+app.post('/boards/@:user/:boardName.json', authenticate, boardController.update);
 // app.delete('/boards/@:user/:boardName.json', boardController.delete);
 // app.get('/boards/@:user/:boardName.app', boardController.serve);
 // app.get('/boards/@:user/:boardName.api', boardController.describe);

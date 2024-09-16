@@ -7,14 +7,11 @@
 import type{ Request, Response } from 'express';
 import { getStore } from '../../../server/store.js';
 
-const list = async (req: Request, res: Response): Promise<boolean> => {
+const list = async (req: Request, res: Response) => {
   const store = getStore();
   const userApiKey = req.query.API_KEY as string;
   const boards = await store.list(userApiKey);
-
-  res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(boards));
-  return true;
+  res.json(boards);
 };
 
 export default list;
