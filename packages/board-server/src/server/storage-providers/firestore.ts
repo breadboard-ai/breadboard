@@ -127,20 +127,17 @@ export class FirestoreStorageProvider implements RunBoardStateStore, BoardServer
     }
   
     async update(
-      userStore: string,
-      path: string,
+      username: string,
+      boardName: string,
       graph: GraphDescriptor
     ): Promise<OperationResult> {
-      const { userStore: pathUserStore, boardName } = asInfo(path);
-      if (pathUserStore !== userStore) {
-        return { success: false, error: "Unauthorized" };
-      }
+ 
       const { title: maybeTitle, metadata } = graph;
       const tags = metadata?.tags || [];
       const title = maybeTitle || boardName;
   
       await this.#database
-        .doc(`workspaces/${userStore}/boards/${boardName}`)
+        .doc(`workspaces/${username}/boards/${boardName}`)
         .set({ graph: JSON.stringify(graph), tags, title });
       return { success: true };
     }

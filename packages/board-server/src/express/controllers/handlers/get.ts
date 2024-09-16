@@ -7,12 +7,12 @@ import type { Request, Response } from 'express';
 import { getStore } from '../../../server/store.js';
 
 const get = async (req: Request, res: Response) => {
-  const { userName, boardName } = req.params;
+  const { user, boardName } = req.params;
 
   const store = getStore();
 
-  const board = await store.get(userName!, boardName!);
-  
+  const board = await store.get(user!, boardName!);
+
   if (!board) {
     return res.status(404).json({ error: 'Board not found' });
   }

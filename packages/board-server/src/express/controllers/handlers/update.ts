@@ -13,11 +13,6 @@ const update = async (req: Request, res: Response): Promise<void> => {
   const { user, boardName } = req.params;
 
   const store = getStore();
-  const userStore = await store.getUserStore(user!);
-
-  if (!userStore.success) {
-    res.status(401).json({ error: "Unauthorized" });
-  }
 
   const maybeGraph = req.body as GraphDescriptor;
 
@@ -29,6 +24,7 @@ const update = async (req: Request, res: Response): Promise<void> => {
   const result = await store.update(user!, boardName!, maybeGraph);
   if (!result.success) {
     res.status(500).json({ error: result.error });
+    return;
   }
 
   res.status(200).json({ created: `@${user}/${boardName}` });
