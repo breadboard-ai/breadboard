@@ -50,7 +50,6 @@ export class GraphNodePort extends PIXI.Graphics {
   constructor(public type: GraphNodePortType) {
     super();
 
-    this.eventMode = "static";
     this.onRender = () => {
       if (!this.#isDirty) {
         return;
@@ -65,8 +64,6 @@ export class GraphNodePort extends PIXI.Graphics {
     if (readOnly === this.#readOnly) {
       return;
     }
-
-    this.cursor = readOnly ? "auto" : "pointer";
 
     this.#readOnly = readOnly;
     this.#isDirty = true;
@@ -154,5 +151,8 @@ export class GraphNodePort extends PIXI.Graphics {
     });
     this.stroke();
     this.closePath();
+
+    this.eventMode = "static";
+    this.cursor = this.#readOnly ? undefined : "pointer";
   }
 }
