@@ -146,7 +146,6 @@ export class BoardEmbed extends LitElement {
         .hideSubboardSelectorWhenEmpty=${true}
         .showNodePreviewValues=${false}
         .readOnly=${true}
-        .disallowPanZoom=${true}
       ></bb-editor>
       <div id="overlay"></div>
       ${this.url

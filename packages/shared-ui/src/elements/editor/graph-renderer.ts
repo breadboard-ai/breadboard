@@ -92,9 +92,6 @@ export class GraphRenderer extends LitElement {
   @property()
   showPortTooltips = false;
 
-  @property()
-  disallowPanZoom = false;
-
   @state()
   private _portTooltip?: {
     location: PIXI.ObservablePoint;
@@ -498,15 +495,7 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.addListener("pointerup", onPointerUp);
     this.#app.stage.addListener("pointerupoutside", onPointerUp);
 
-    if (this.disallowPanZoom) {
-      return;
-    }
-
     const onWheel = (evt: PIXI.FederatedWheelEvent) => {
-      if (this.disallowPanZoom) {
-        this.#app.stage.off("wheel", onWheel);
-      }
-
       // The user has interacted – stop the auto-zoom/pan.
       this.zoomToHighlightedNode = false;
       this.dispatchEvent(new GraphInteractionEvent());

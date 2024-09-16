@@ -140,9 +140,6 @@ export class Editor extends LitElement {
   readOnly = false;
 
   @property()
-  disallowPanZoom = false;
-
-  @property()
   showReadOnlyOverlay = false;
 
   @property()
@@ -497,7 +494,6 @@ export class Editor extends LitElement {
     }
 
     this.#graphVersion++;
-    this.#graphRenderer.disallowPanZoom = this.disallowPanZoom;
     this.#graphRenderer.readOnly = this.readOnly;
     this.#graphRenderer.highlightInvalidWires = this.highlightInvalidWires;
 
