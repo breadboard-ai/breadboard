@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { anyOf } from "@breadboard-ai/build";
+import { anyOf, object } from "@breadboard-ai/build";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
@@ -37,5 +37,26 @@ test("anyOf", () => {
   type t3 = ConvertBreadboardType<typeof with3>;
   assert.deepEqual(toJSONSchema(with3), {
     type: ["number", "boolean", "string"],
+  });
+});
+
+test("hoists common type", () => {
+  const any = anyOf(object({}), object({}));
+  assert.deepEqual(toJSONSchema(any), {
+    type: "object",
+    anyOf: [
+      {
+        additionalProperties: false,
+        properties: {},
+        required: [],
+        type: "object",
+      },
+      {
+        additionalProperties: false,
+        properties: {},
+        required: [],
+        type: "object",
+      },
+    ],
   });
 });

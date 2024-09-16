@@ -8,8 +8,11 @@ import { inspect } from "./inspector/index.js";
 import { SENTINEL_BASE_URL } from "./loader/loader.js";
 import { invokeGraph } from "./run/invoke-graph.js";
 import type {
+  GraphDescriptor,
   InputValues,
   Kit,
+  NodeDescriberContext,
+  NodeDescriberResult,
   NodeHandler,
   NodeHandlerContext,
   NodeHandlerFunction,
@@ -19,6 +22,7 @@ import type {
   OutputValues,
 } from "./types.js";
 import { graphUrlLike } from "./utils/graph-url-like.js";
+import { hash } from "./utils/hash.js";
 import { Throttler } from "./utils/throttler.js";
 
 const getHandlerFunction = (handler: NodeHandler): NodeHandlerFunction => {
@@ -105,11 +109,27 @@ type GraphHandlerThrottler = Throttler<
   NodeHandlerObject | undefined
 >;
 
-const THROTTLE_DELAY = 10000;
+type NodeDescriberThrottler = Throttler<
+  [InputValues | undefined, GraphDescriptor, NodeDescriberContext],
+  NodeDescriberResult
+>;
+
+const HANDLER_THROTTLE_DELAY = 10000;
+const DESCRIBE_THROTTLE_DELAY = 5000;
 
 const GRAPH_HANDLER_CACHE = new Map<
   NodeTypeIdentifier,
   GraphHandlerThrottler
+>();
+
+type DescribeThrottlerWithHash = {
+  throttler: NodeDescriberThrottler;
+  hash: number;
+};
+
+const DESCRIBE_RESULT_CACHE = new Map<
+  NodeTypeIdentifier,
+  DescribeThrottlerWithHash
 >();
 
 export async function getGraphHandler(
@@ -118,7 +138,7 @@ export async function getGraphHandler(
 ): Promise<NodeHandlerObject | undefined> {
   let throttler;
   if (!GRAPH_HANDLER_CACHE.has(type)) {
-    throttler = new Throttler(getGraphHandlerInternal, THROTTLE_DELAY);
+    throttler = new Throttler(getGraphHandlerInternal, HANDLER_THROTTLE_DELAY);
     GRAPH_HANDLER_CACHE.set(type, throttler);
   } else {
     throttler = GRAPH_HANDLER_CACHE.get(type)!;
@@ -159,8 +179,17 @@ async function getGraphHandlerInternal(
       if (!context) {
         return { inputSchema: {}, outputSchema: {} };
       }
-      const inspectableGraph = inspect(graph, context);
-      return inspectableGraph.describe(inputs);
+      const inputsHash = hash(inputs);
+      let describeThrottler = DESCRIBE_RESULT_CACHE.get(type);
+      if (!describeThrottler || describeThrottler.hash !== inputsHash) {
+        describeThrottler = {
+          throttler: new Throttler(describeGraph, DESCRIBE_THROTTLE_DELAY),
+          hash: inputsHash,
+        };
+
+        DESCRIBE_RESULT_CACHE.set(type, describeThrottler);
+      }
+      return describeThrottler.throttler.call({}, inputs, graph, context);
     },
     metadata: filterEmptyValues({
       title: graph.title,
@@ -170,4 +199,14 @@ async function getGraphHandlerInternal(
       help: graph.metadata?.help,
     }),
   } as NodeHandlerObject;
+}
+
+async function describeGraph(
+  inputs: InputValues | undefined,
+  graph: GraphDescriptor,
+  context: NodeDescriberContext
+) {
+  const inspectableGraph = inspect(graph, context);
+  const result = await inspectableGraph.describe(inputs);
+  return result;
 }

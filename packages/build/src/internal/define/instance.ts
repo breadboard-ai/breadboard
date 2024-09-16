@@ -15,6 +15,7 @@ import {
   type OutputPortReference,
 } from "../common/port.js";
 import type { SerializableNode } from "../common/serializable.js";
+import type { KitBinding } from "../kit.js";
 import type { BreadboardType, JsonSerializable } from "../type-system/type.js";
 import type {
   DynamicInputPortConfig,
@@ -60,9 +61,10 @@ export class Instance<
     reflective: boolean,
     args: {
       [K: string]: JsonSerializable | OutputPortReference<JsonSerializable>;
-    } & { $id?: string }
+    } & { $id?: string },
+    kitBinding?: KitBinding
   ) {
-    this.type = type;
+    this.type = kitBinding?.id ?? type;
     this.#dynamicInputType = dynamicInputs?.type;
     this.#dynamicOutputType = dynamicOutputs?.type;
     this.#reflective = reflective;

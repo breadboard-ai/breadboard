@@ -18,23 +18,11 @@ export enum EditorMode {
 
 const removeHardPort = (...names: string[]) => {
   return (port: InspectablePort) => {
-    if (port.edges.length > 0) {
-      return true;
-    }
-
-    if (
-      (port.status === PortStatus.Connected ||
-        port.status === PortStatus.Dangling) &&
-      !port.configured
-    )
-      return true;
+    if (port.status === PortStatus.Connected) return true;
     if (port.star) return false;
-    if (port.schema.behavior?.includes("config")) return false;
-    const items = port.schema.items;
-    if (items && !Array.isArray(items) && items.behavior?.includes("config")) {
-      return false;
-    }
+    if (port.name === "") return false;
     if (names.includes(port.name)) return false;
+
     return true;
   };
 };

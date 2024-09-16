@@ -7,18 +7,19 @@
 import path from "path";
 import { fileURLToPath } from "url";
 
-import { KitManifest } from "@google-labs/breadboard";
+import { GraphDescriptor, KitManifest } from "@google-labs/breadboard";
 
 import worker from "./boards/worker.js";
 import human from "./boards/human.js";
 import repeater from "./boards/repeater.js";
 import structuredWorker from "./boards/structured-worker.js";
-import toolWorker from "./boards/tool-worker.js";
 import { writeFile } from "fs/promises";
 import specialist from "./boards/specialist.js";
 import looper from "./boards/looper.js";
 import joiner from "./boards/joiner.js";
 import { serialize } from "@breadboard-ai/build";
+import content from "../bgl/content.bgl.json" with { type: "application/json" };
+import specialist2 from "../bgl/specialist-2.bgl.json" with { type: "application/json" };
 
 const MANIFEST_NAME = "agent.kit.json";
 
@@ -33,14 +34,15 @@ const manifest: KitManifest = {
   version: "0.0.1",
   url: `https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/agent-kit/${MANIFEST_NAME}`,
   nodes: {
-    human,
-    repeater,
-    structuredWorker,
+    human: serialize(human),
+    repeater: serialize(repeater),
+    structuredWorker: serialize(structuredWorker),
     specialist,
-    toolWorker,
-    worker,
-    looper,
+    specialist2: specialist2 as GraphDescriptor,
+    worker: serialize(worker),
+    looper: serialize(looper),
     joiner: serialize(joiner),
+    content: content as GraphDescriptor,
   },
 };
 

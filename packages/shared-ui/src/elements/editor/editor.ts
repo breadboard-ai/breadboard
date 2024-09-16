@@ -4,52 +4,62 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
 import {
-  GraphDescriptor,
-  NodeConfiguration,
-  InspectableNodePorts,
-  SubGraphs,
-  NodeDescriptor,
-  NodeValue,
+  CommentNode,
   Edge,
   EditSpec,
-  CommentNode,
+  GraphDescriptor,
   InspectableGraph,
+  InspectableNodePorts,
+  InspectableRun,
+  NodeConfiguration,
+  NodeDescriptor,
   NodeHandlerMetadata,
+  NodeValue,
+  SubGraphs,
 } from "@google-labs/breadboard";
+import { LitElement, PropertyValues, css, html, nothing } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
+import { map } from "lit/directives/map.js";
+import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { until } from "lit/directives/until.js";
+import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import {
   EdgeChangeEvent,
-  GraphInitialDrawEvent,
-  GraphNodeDeleteEvent,
+  EdgeValueSelectedEvent,
   GraphEdgeAttachEvent,
-  GraphNodeEdgeChangeEvent,
   GraphEdgeDetachEvent,
+  GraphEdgeValueSelectedEvent,
+  GraphEntityRemoveEvent,
+  GraphInitialDrawEvent,
+  GraphInteractionEvent,
+  GraphNodeActivitySelectedEvent,
+  GraphNodeDeleteEvent,
+  GraphNodeEdgeChangeEvent,
+  GraphNodePortValueEditEvent,
   GraphNodesVisualUpdateEvent,
   KitNodeChosenEvent,
   MultiEditEvent,
+  NodeActivitySelectedEvent,
+  NodeConfigurationUpdateRequestEvent,
   NodeCreateEvent,
   NodeDeleteEvent,
   SubGraphChosenEvent,
   SubGraphCreateEvent,
   SubGraphDeleteEvent,
-  GraphEntityRemoveEvent,
 } from "../../events/events.js";
-import { GraphRenderer } from "./graph-renderer.js";
-import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { map } from "lit/directives/map.js";
-import { MAIN_BOARD_ID } from "../../constants/constants.js";
-import { EditorMode, filterPortsByMode } from "../../utils/mode.js";
-import type { NodeSelector } from "./node-selector.js";
 import { GraphEdge } from "./graph-edge.js";
+import { GraphRenderer } from "./graph-renderer.js";
+import type { NodeSelector } from "./node-selector.js";
 import { edgeToString } from "./utils.js";
-import { until } from "lit/directives/until.js";
 
+const ZOOM_KEY = "bb-editor-zoom-to-highlighted-node-during-runs";
 const DATA_TYPE = "text/plain";
 const PASTE_OFFSET = 50;
 
+import { TopGraphRunResult } from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
+import { classMap } from "lit/directives/class-map.js";
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
   if (type !== "input" && type !== "output") {
@@ -88,6 +98,9 @@ export class Editor extends LitElement {
   subGraphId: string | null = null;
 
   @property()
+  run: InspectableRun | null = null;
+
+  @property()
   boardId: number = -1;
 
   @property()
@@ -100,10 +113,7 @@ export class Editor extends LitElement {
   showNodeShortcuts = true;
 
   @property()
-  mode = EditorMode.ADVANCED;
-
-  @property()
-  highlightedNodeId: string | null = null;
+  topGraphResult: TopGraphRunResult | null = null;
 
   @state()
   nodeValueBeingEdited: EditedNode | null = null;
@@ -118,6 +128,9 @@ export class Editor extends LitElement {
   showNodeTypeDescriptions = true;
 
   @property()
+  showNodePreviewValues = true;
+
+  @property()
   assetPrefix = "";
 
   @property()
@@ -127,10 +140,16 @@ export class Editor extends LitElement {
   readOnly = false;
 
   @property()
+  showReadOnlyOverlay = false;
+
+  @property()
   highlightInvalidWires = false;
 
   @property()
   showExperimentalComponents = false;
+
+  @property()
+  zoomToHighlightedNodeDuringRuns = false;
 
   @property()
   set showPortTooltips(value: boolean) {
@@ -147,6 +166,7 @@ export class Editor extends LitElement {
   #graphVersion = 0;
   #lastBoardId: number = -1;
   #lastSubGraphId: string | null = null;
+
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #onDropBound = this.#onDrop.bind(this);
   #onDragOverBound = this.#onDragOver.bind(this);
@@ -159,6 +179,12 @@ export class Editor extends LitElement {
   #onGraphEdgeChangeBound = this.#onGraphEdgeChange.bind(this);
   #onGraphNodeDeleteBound = this.#onGraphNodeDelete.bind(this);
   #onGraphEntityRemoveBound = this.#onGraphEntityRemove.bind(this);
+  #onGraphNodePortValueEditBound = this.#onGraphNodePortValueEdit.bind(this);
+  #onGraphEdgeValueSelectedBound = this.#onGraphEdgeValueSelected.bind(this);
+  #onGraphNodeActivitySelectedBound =
+    this.#onGraphNodeActivitySelected.bind(this);
+  #onGraphInteractionBound = this.#onGraphInteraction.bind(this);
+
   #top = 0;
   #left = 0;
   #addButtonRef: Ref<HTMLInputElement> = createRef();
@@ -296,7 +322,8 @@ export class Editor extends LitElement {
       top: calc(var(--bb-grid-size) * 3);
       background: #fff;
       border-radius: 40px;
-      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 3);
+      padding: var(--bb-grid-size-2) var(--bb-grid-size) var(--bb-grid-size-2)
+        var(--bb-grid-size-3);
       border: 1px solid var(--bb-neutral-300);
       display: flex;
       align-items: center;
@@ -382,11 +409,81 @@ export class Editor extends LitElement {
       opacity: 0.3;
       cursor: auto;
     }
+
+    #readonly-overlay {
+      display: flex;
+      align-items: center;
+      height: var(--bb-grid-size-9);
+      position: absolute;
+      top: var(--bb-grid-size-3);
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--bb-boards-900);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      background: var(--bb-boards-300);
+      border-radius: var(--bb-grid-size-10);
+      padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-3);
+    }
+
+    #readonly-overlay::before {
+      content: "";
+      width: 20px;
+      height: 20px;
+      background: var(--bb-icon-saved-readonly) center center / 20px 20px
+        no-repeat;
+      margin-right: var(--bb-grid-size);
+      mix-blend-mode: difference;
+    }
+
+    #active-component {
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      display: flex;
+      align-items: center;
+      border: none;
+      padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size);
+      display: flex;
+      align-items: center;
+      background: var(--bb-ui-50);
+      border-radius: var(--bb-grid-size-10);
+      height: 24px;
+      cursor: pointer;
+    }
+
+    #controls #active-component {
+      margin-left: 0;
+    }
+
+    #active-component:hover,
+    #active-component:focus {
+      background: var(--bb-ui-100);
+    }
+
+    #active-component::before {
+      content: "";
+      width: 20px;
+      height: 20px;
+      padding-right: var(--bb-grid-size);
+      background: var(--bb-icon-directions) left center / 20px 20px no-repeat;
+    }
+
+    #active-component.active {
+      opacity: 1;
+      background: var(--bb-ui-600);
+      color: var(--bb-neutral-0);
+    }
+
+    #active-component.active::before {
+      background: var(--bb-icon-directions-inverted) left center / 20px 20px
+        no-repeat;
+    }
   `;
 
   async #processGraph(): Promise<GraphRenderer> {
     if (GraphAssets.assetPrefix !== this.assetPrefix) {
       GraphAssets.instance().loadAssets(this.assetPrefix);
+      await GraphAssets.instance().loaded;
     }
 
     await this.#graphRenderer.ready;
@@ -420,10 +517,7 @@ export class Editor extends LitElement {
     const typeMetadata = new Map<string, NodeHandlerMetadata>();
     const graphVersion = this.#graphVersion;
     for (const node of selectedGraph.nodes()) {
-      ports.set(
-        node.descriptor.id,
-        filterPortsByMode(await node.ports(), this.mode)
-      );
+      ports.set(node.descriptor.id, await node.ports());
       typeMetadata.set(node.descriptor.type, await node.type().metadata());
       if (this.#graphVersion !== graphVersion) {
         // Another update has come in, bail out.
@@ -436,10 +530,12 @@ export class Editor extends LitElement {
     }
 
     const url = this.graph.raw().url || "";
+    this.#graphRenderer.hideAllGraphs();
 
     // Attempt to update the graph if it already exists.
     const updated = this.#graphRenderer.updateGraphByUrl(url, this.subGraphId, {
       showNodeTypeDescriptions: this.showNodeTypeDescriptions,
+      showNodePreviewValues: this.showNodePreviewValues,
       collapseNodesByDefault: this.collapseNodesByDefault,
       ports: ports,
       typeMetadata,
@@ -449,23 +545,24 @@ export class Editor extends LitElement {
     });
 
     if (updated) {
+      this.#graphRenderer.showGraph(url, this.subGraphId);
+      if (this.topGraphResult) {
+        this.#graphRenderer.topGraphResult = this.topGraphResult;
+      }
+
       return this.#graphRenderer;
     }
 
-    this.#graphRenderer.hideAllGraphs();
     if (this.#lastSubGraphId !== this.subGraphId) {
       // TODO: Need to figure out how to encode the subgraph/node id combo.
-      this.#graphRenderer.highlightedNodeId = null;
-    }
-
-    for (const graph of this.#graphRenderer.getGraphs()) {
-      this.#graphRenderer.removeGraph(graph);
+      this.#graphRenderer.topGraphResult = null;
     }
 
     this.#graphRenderer.createGraph({
       url,
       subGraphId: this.subGraphId,
       showNodeTypeDescriptions: this.showNodeTypeDescriptions,
+      showNodePreviewValues: this.showNodePreviewValues,
       collapseNodesByDefault: this.collapseNodesByDefault,
       ports: ports,
       typeMetadata,
@@ -478,9 +575,15 @@ export class Editor extends LitElement {
     this.#graphRenderer.addEventListener(
       GraphInitialDrawEvent.eventName,
       () => {
-        this.#ignoreNextUpdate = true;
-        this.#graphRenderer.showAllGraphs();
+        this.#graphRenderer.showGraph(url, this.subGraphId);
         this.#graphRenderer.zoomToFit();
+
+        // When we're loading a graph from existing results, we need to
+        // set the topGraphResult again so that it is applied to the newly
+        // created graph.
+        if (this.topGraphResult) {
+          this.#graphRenderer.topGraphResult = this.topGraphResult;
+        }
       },
       { once: true }
     );
@@ -496,6 +599,13 @@ export class Editor extends LitElement {
     }
 
     return true;
+  }
+
+  constructor() {
+    super();
+
+    this.zoomToHighlightedNodeDuringRuns =
+      globalThis.sessionStorage.getItem(ZOOM_KEY) === "true" ?? true;
   }
 
   connectedCallback(): void {
@@ -529,6 +639,26 @@ export class Editor extends LitElement {
     this.#graphRenderer.addEventListener(
       GraphEntityRemoveEvent.eventName,
       this.#onGraphEntityRemoveBound
+    );
+
+    this.#graphRenderer.addEventListener(
+      GraphNodePortValueEditEvent.eventName,
+      this.#onGraphNodePortValueEditBound
+    );
+
+    this.#graphRenderer.addEventListener(
+      GraphEdgeValueSelectedEvent.eventName,
+      this.#onGraphEdgeValueSelectedBound
+    );
+
+    this.#graphRenderer.addEventListener(
+      GraphNodeActivitySelectedEvent.eventName,
+      this.#onGraphNodeActivitySelectedBound
+    );
+
+    this.#graphRenderer.addEventListener(
+      GraphInteractionEvent.eventName,
+      this.#onGraphInteractionBound
     );
 
     window.addEventListener("resize", this.#onResizeBound);
@@ -572,12 +702,50 @@ export class Editor extends LitElement {
       this.#onGraphEntityRemoveBound
     );
 
+    this.#graphRenderer.removeEventListener(
+      GraphNodePortValueEditEvent.eventName,
+      this.#onGraphNodePortValueEditBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphEdgeValueSelectedEvent.eventName,
+      this.#onGraphEdgeValueSelectedBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphNodeActivitySelectedEvent.eventName,
+      this.#onGraphNodeActivitySelectedBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphInteractionEvent.eventName,
+      this.#onGraphInteractionBound
+    );
+
     window.removeEventListener("resize", this.#onResizeBound);
     this.removeEventListener("keydown", this.#onKeyDownBound);
     this.removeEventListener("pointermove", this.#onPointerMoveBound);
     this.removeEventListener("pointerdown", this.#onPointerDownBound);
     this.removeEventListener("dragover", this.#onDragOverBound);
     this.removeEventListener("drop", this.#onDropBound);
+  }
+
+  protected willUpdate(changedProperties: PropertyValues): void {
+    if (!changedProperties.has("run")) {
+      return;
+    }
+
+    this.#graphRenderer.zoomToHighlightedNode =
+      this.zoomToHighlightedNodeDuringRuns;
+  }
+
+  #onGraphInteraction() {
+    // Only switch off the flag if there is a run active.
+    if (!this.topGraphResult?.currentNode) {
+      return;
+    }
+
+    this.zoomToHighlightedNodeDuringRuns = false;
   }
 
   #onPointerMove(evt: PointerEvent) {
@@ -817,7 +985,7 @@ export class Editor extends LitElement {
               node.id,
               "node",
               position,
-              this.collapseNodesByDefault,
+              this.collapseNodesByDefault ? "collapsed" : "expanded",
               false
             );
             this.#graphRenderer.addToAutoSelect(node.id);
@@ -909,7 +1077,7 @@ export class Editor extends LitElement {
                 comment.id,
                 "comment",
                 position,
-                this.collapseNodesByDefault,
+                this.collapseNodesByDefault ? "collapsed" : "expanded",
                 false
               );
               this.#graphRenderer.addToAutoSelect(comment.id);
@@ -978,7 +1146,7 @@ export class Editor extends LitElement {
       return (
         prev +
         (idx > 0 ? ", " : "") +
-        `(${curr.id}, {x: ${curr.x}, y: ${curr.y}, collapsed: ${curr.collapsed}})`
+        `(${curr.id}, {x: ${curr.x}, y: ${curr.y}, collapsed: ${curr.expansionState}})`
       );
     }, "");
     const editsEvt = new MultiEditEvent(
@@ -999,7 +1167,7 @@ export class Editor extends LitElement {
                 visual: {
                   x: node.x,
                   y: node.y,
-                  collapsed: node.collapsed,
+                  collapsed: node.expansionState,
                 },
               },
             };
@@ -1019,7 +1187,7 @@ export class Editor extends LitElement {
               commentNode.metadata.visual = {
                 x: node.x,
                 y: node.y,
-                collapsed: node.collapsed,
+                collapsed: node.expansionState,
               };
             }
 
@@ -1169,6 +1337,23 @@ export class Editor extends LitElement {
     );
   }
 
+  #onGraphNodePortValueEdit(evt: Event) {
+    const { id, port, x, y } = evt as GraphNodePortValueEditEvent;
+    this.dispatchEvent(
+      new NodeConfigurationUpdateRequestEvent(id, this.subGraphId, port, x, y)
+    );
+  }
+
+  #onGraphEdgeValueSelected(evt: Event) {
+    const { value, schema, x, y } = evt as GraphEdgeValueSelectedEvent;
+    this.dispatchEvent(new EdgeValueSelectedEvent(value, schema, x, y));
+  }
+
+  #onGraphNodeActivitySelected(evt: Event) {
+    const { nodeTitle, runId } = evt as GraphNodeActivitySelectedEvent;
+    this.dispatchEvent(new NodeActivitySelectedEvent(nodeTitle, runId));
+  }
+
   #onDragOver(evt: DragEvent) {
     evt.preventDefault();
   }
@@ -1182,7 +1367,6 @@ export class Editor extends LitElement {
     evt.preventDefault();
     const type = evt.dataTransfer?.getData(DATA_TYPE);
     if (!type || !this.#graphRenderer) {
-      console.warn("No data in dropped node");
       return;
     }
 
@@ -1197,7 +1381,7 @@ export class Editor extends LitElement {
       id,
       type === "comment" ? "comment" : "node",
       { x, y },
-      this.collapseNodesByDefault,
+      this.collapseNodesByDefault ? "collapsed" : "expanded",
       true
     );
 
@@ -1255,7 +1439,9 @@ export class Editor extends LitElement {
   }
 
   render() {
-    this.#graphRenderer.highlightedNodeId = this.highlightedNodeId;
+    this.#graphRenderer.topGraphResult = this.subGraphId
+      ? null
+      : this.topGraphResult;
 
     if (this.#graphRenderer) {
       this.#graphRenderer.invertZoomScrollDirection =
@@ -1277,7 +1463,7 @@ export class Editor extends LitElement {
 
     return html`${until(this.#processGraph())}
       ${
-        this.showControls && this.graph !== null
+        this.showControls && this.graph !== null && !this.readOnly
           ? html` <div id="controls">
                 <button
                   title="Zoom to fit"
@@ -1360,133 +1546,171 @@ export class Editor extends LitElement {
                 >
                   Delete sub board
                 </button>
+                <div class="divider"></div>
+                <button
+                  title="Zoom to highlighted component during runs"
+                  id="active-component"
+                  class=${classMap({
+                    active: this.zoomToHighlightedNodeDuringRuns,
+                  })}
+                  @click=${() => {
+                    const shouldZoom = !this.zoomToHighlightedNodeDuringRuns;
+                    this.zoomToHighlightedNodeDuringRuns = shouldZoom;
+                    this.#graphRenderer.zoomToHighlightedNode = shouldZoom;
+                    globalThis.sessionStorage.setItem(
+                      ZOOM_KEY,
+                      shouldZoom.toString()
+                    );
+
+                    if (!shouldZoom) {
+                      return;
+                    }
+
+                    if (this.topGraphResult?.currentNode) {
+                      this.#graphRenderer.zoomToNode(
+                        this.topGraphResult.currentNode.descriptor.id
+                      );
+                    }
+                  }}
+                >
+                  Follow run
+                </button>
               </div>
 
               ${this.graph !== null
-                ? html` <div id="nodes">
-                    <input
-                      ${ref(this.#addButtonRef)}
-                      name="add-node"
-                      id="add-node"
-                      type="checkbox"
-                      @input=${(evt: InputEvent) => {
-                        if (!(evt.target instanceof HTMLInputElement)) {
-                          return;
-                        }
+                ? html`
+                    <div id="nodes">
+                      <input
+                        ${ref(this.#addButtonRef)}
+                        name="add-node"
+                        id="add-node"
+                        type="checkbox"
+                        @input=${(evt: InputEvent) => {
+                          if (!(evt.target instanceof HTMLInputElement)) {
+                            return;
+                          }
 
-                        if (!this.#nodeSelectorRef.value) {
-                          return;
-                        }
+                          if (!this.#nodeSelectorRef.value) {
+                            return;
+                          }
 
-                        const nodeSelector = this.#nodeSelectorRef.value;
-                        nodeSelector.inert = !evt.target.checked;
+                          const nodeSelector = this.#nodeSelectorRef.value;
+                          nodeSelector.inert = !evt.target.checked;
 
-                        if (!evt.target.checked) {
-                          return;
-                        }
-                        nodeSelector.selectSearchInput();
-                      }}
-                    />
-                    <label for="add-node">Components</label>
+                          if (!evt.target.checked) {
+                            return;
+                          }
+                          nodeSelector.selectSearchInput();
+                        }}
+                      />
+                      <label for="add-node">Components</label>
 
-                    <bb-node-selector
-                      ${ref(this.#nodeSelectorRef)}
-                      inert
-                      .graph=${this.graph}
-                      .showExperimentalComponents=${this
-                        .showExperimentalComponents}
-                      @bbkitnodechosen=${(evt: KitNodeChosenEvent) => {
-                        const id = this.#createRandomID(evt.nodeType);
-                        this.dispatchEvent(
-                          new NodeCreateEvent(id, evt.nodeType)
-                        );
-                      }}
-                    ></bb-node-selector>
+                      <bb-node-selector
+                        ${ref(this.#nodeSelectorRef)}
+                        inert
+                        .graph=${this.graph}
+                        .showExperimentalComponents=${this
+                          .showExperimentalComponents}
+                        @bbkitnodechosen=${(evt: KitNodeChosenEvent) => {
+                          const id = this.#createRandomID(evt.nodeType);
+                          this.dispatchEvent(
+                            new NodeCreateEvent(id, evt.nodeType)
+                          );
+                        }}
+                      ></bb-node-selector>
 
-                    ${this.showNodeShortcuts
-                      ? html`<div class="divider"></div>
-                          <button
-                            draggable="true"
-                            title="Add Specialist"
-                            id="shortcut-add-specialist"
-                            @dblclick=${() => {
-                              const id = this.#createRandomID("specialist");
-                              this.#graphRenderer.deselectAllChildren();
-                              this.dispatchEvent(
-                                new NodeCreateEvent(id, "specialist")
-                              );
-                            }}
-                            @dragstart=${(evt: DragEvent) => {
-                              if (!evt.dataTransfer) {
-                                return;
-                              }
-                              evt.dataTransfer.setData(DATA_TYPE, "specialist");
-                            }}
-                          >
-                            Add Specialist
-                          </button>
-                          <button
-                            draggable="true"
-                            title="Add human"
-                            id="shortcut-add-human"
-                            @dblclick=${() => {
-                              const id = this.#createRandomID("human");
-                              this.#graphRenderer.deselectAllChildren();
-                              this.dispatchEvent(
-                                new NodeCreateEvent(id, "human")
-                              );
-                            }}
-                            @dragstart=${(evt: DragEvent) => {
-                              if (!evt.dataTransfer) {
-                                return;
-                              }
-                              evt.dataTransfer.setData(DATA_TYPE, "human");
-                            }}
-                          >
-                            Add Human
-                          </button>
-                          <button
-                            draggable="true"
-                            title="Add looper"
-                            id="shortcut-add-looper"
-                            @dblclick=${() => {
-                              const id = this.#createRandomID("looper");
-                              this.#graphRenderer.deselectAllChildren();
-                              this.dispatchEvent(
-                                new NodeCreateEvent(id, "looper")
-                              );
-                            }}
-                            @dragstart=${(evt: DragEvent) => {
-                              if (!evt.dataTransfer) {
-                                return;
-                              }
-                              evt.dataTransfer.setData(DATA_TYPE, "looper");
-                            }}
-                          >
-                            Add Human
-                          </button>
-                          <button
-                            draggable="true"
-                            title="Add comment"
-                            id="shortcut-add-comment"
-                            @dblclick=${() => {
-                              const id = this.#createRandomID("comment");
-                              this.#graphRenderer.deselectAllChildren();
-                              this.dispatchEvent(
-                                new NodeCreateEvent(id, "comment")
-                              );
-                            }}
-                            @dragstart=${(evt: DragEvent) => {
-                              if (!evt.dataTransfer) {
-                                return;
-                              }
-                              evt.dataTransfer.setData(DATA_TYPE, "comment");
-                            }}
-                          >
-                            Add Human
-                          </button>`
+                      ${this.showNodeShortcuts
+                        ? html`<div class="divider"></div>
+                            <button
+                              draggable="true"
+                              title="Add Specialist"
+                              id="shortcut-add-specialist"
+                              @dblclick=${() => {
+                                const id = this.#createRandomID("specialist");
+                                this.#graphRenderer.deselectAllChildren();
+                                this.dispatchEvent(
+                                  new NodeCreateEvent(id, "specialist")
+                                );
+                              }}
+                              @dragstart=${(evt: DragEvent) => {
+                                if (!evt.dataTransfer) {
+                                  return;
+                                }
+                                evt.dataTransfer.setData(
+                                  DATA_TYPE,
+                                  "specialist"
+                                );
+                              }}
+                            >
+                              Add Specialist
+                            </button>
+                            <button
+                              draggable="true"
+                              title="Add human"
+                              id="shortcut-add-human"
+                              @dblclick=${() => {
+                                const id = this.#createRandomID("human");
+                                this.#graphRenderer.deselectAllChildren();
+                                this.dispatchEvent(
+                                  new NodeCreateEvent(id, "human")
+                                );
+                              }}
+                              @dragstart=${(evt: DragEvent) => {
+                                if (!evt.dataTransfer) {
+                                  return;
+                                }
+                                evt.dataTransfer.setData(DATA_TYPE, "human");
+                              }}
+                            >
+                              Add Human
+                            </button>
+                            <button
+                              draggable="true"
+                              title="Add looper"
+                              id="shortcut-add-looper"
+                              @dblclick=${() => {
+                                const id = this.#createRandomID("looper");
+                                this.#graphRenderer.deselectAllChildren();
+                                this.dispatchEvent(
+                                  new NodeCreateEvent(id, "looper")
+                                );
+                              }}
+                              @dragstart=${(evt: DragEvent) => {
+                                if (!evt.dataTransfer) {
+                                  return;
+                                }
+                                evt.dataTransfer.setData(DATA_TYPE, "looper");
+                              }}
+                            >
+                              Add Human
+                            </button>
+                            <button
+                              draggable="true"
+                              title="Add comment"
+                              id="shortcut-add-comment"
+                              @dblclick=${() => {
+                                const id = this.#createRandomID("comment");
+                                this.#graphRenderer.deselectAllChildren();
+                                this.dispatchEvent(
+                                  new NodeCreateEvent(id, "comment")
+                                );
+                              }}
+                              @dragstart=${(evt: DragEvent) => {
+                                if (!evt.dataTransfer) {
+                                  return;
+                                }
+                                evt.dataTransfer.setData(DATA_TYPE, "comment");
+                              }}
+                            >
+                              Add Human
+                            </button>`
+                        : nothing}
+                    </div>
+
+                    ${this.readOnly
+                      ? html`<section id="readonly-overlay">Read-only View</div>`
                       : nothing}
-                  </div>`
+                  `
                 : nothing}`
           : nothing
       }

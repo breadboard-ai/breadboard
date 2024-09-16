@@ -36,7 +36,6 @@ import AgentKit from "@google-labs/agent-kit";
 
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import "./elements/elements.js";
-import { LightObserver } from "./utils/light-observer.js";
 import {
   VisitorStateManager,
   visitorStateManagerContext,
@@ -44,8 +43,20 @@ import {
 import { map } from "lit/directives/map.js";
 import { provide } from "@lit/context";
 import { VisitorState } from "./utils/types.js";
+import { AppSettingsHelper } from "./utils/settings-helper.js";
 
 const RUN_ON_BOARD_SERVER = "run-on-board-server";
+
+const ENVIRONMENT: BreadboardUI.Contexts.Environment = {
+  connectionServerUrl: import.meta.env.VITE_CONNECTION_SERVER_URL,
+  connectionRedirectUrl: "/oauth/",
+  plugins: {
+    input: [
+      BreadboardUI.Elements.googleDriveFileIdInputPlugin,
+      BreadboardUI.Elements.googleDriveQueryInputPlugin,
+    ],
+  },
+};
 
 const randomMessage: UserMessage[] = [
   {
@@ -115,6 +126,15 @@ export class AppView extends LitElement {
   @state()
   secretsNeeded: string[] | null = null;
 
+  @provide({ context: BreadboardUI.Contexts.environmentContext })
+  environment = ENVIRONMENT;
+
+  @provide({ context: BreadboardUI.Elements.tokenVendorContext })
+  tokenVendor!: BreadboardUI.Elements.TokenVendor;
+
+  @provide({ context: BreadboardUI.Contexts.settingsHelperContext })
+  settingsHelper!: AppSettingsHelper;
+
   @provide({ context: visitorStateManagerContext })
   visitorStateManager = new VisitorStateManager();
 
@@ -136,7 +156,7 @@ export class AppView extends LitElement {
 
   #isSharing = false;
   #abortController: AbortController | null = null;
-  #runObserver: LightObserver | null = null;
+  #runObserver: BreadboardUI.Utils.TopGraphObserver | null = null;
   #runner: HarnessRunner | null = null;
   #runStartTime = 0;
   #message = randomMessage[Math.floor(Math.random() * randomMessage.length)]!;
@@ -426,6 +446,15 @@ export class AppView extends LitElement {
     }
   `;
 
+  constructor() {
+    super();
+    this.settingsHelper = new AppSettingsHelper();
+    this.tokenVendor = new BreadboardUI.Elements.TokenVendor(
+      this.settingsHelper,
+      ENVIRONMENT
+    );
+  }
+
   connectedCallback(): void {
     super.connectedCallback();
 
@@ -590,7 +619,7 @@ export class AppView extends LitElement {
 
     this.#runner = createRunner(config);
 
-    this.#runObserver = new LightObserver(
+    this.#runObserver = new BreadboardUI.Utils.TopGraphObserver(
       this.#runner,
       this.#abortController.signal
     );
@@ -655,10 +684,21 @@ export class AppView extends LitElement {
           continue;
         }
 
-        const storedSecret = this.#getSecret(secret);
-        if (storedSecret) {
-          allKnownSecrets.push([secret, storedSecret]);
-          secretsKeysNeeded.splice(i, 1);
+        const isConnection = secret.startsWith("connection:");
+        if (isConnection) {
+          const grant = this.tokenVendor.getToken(
+            secret.slice("connection:".length)
+          );
+          if (grant.state === "valid") {
+            allKnownSecrets.push([secret, grant.grant.access_token]);
+            secretsKeysNeeded.splice(i, 1);
+          }
+        } else {
+          const storedSecret = this.#getSecret(secret);
+          if (storedSecret) {
+            allKnownSecrets.push([secret, storedSecret]);
+            secretsKeysNeeded.splice(i, 1);
+          }
         }
       }
 
@@ -797,7 +837,7 @@ export class AppView extends LitElement {
       return graph.description ? html`${graph.description}` : nothing;
     });
 
-    const log = this.#runObserver?.log() ?? [];
+    const log = this.#runObserver?.current()?.log ?? [];
     const status = () => {
       const classes: Record<string, boolean> = { pending: false };
       const newest = log[log.length - 1];
@@ -835,7 +875,7 @@ export class AppView extends LitElement {
       this.#kitLoad,
       this.#visitorStateInit,
     ]).then(() => {
-      return html`<bb-activity-log-lite
+      return html`<bb-activity-log-lite-app
         .start=${this.#runStartTime}
         .message=${this.#message}
         .log=${log}
@@ -853,7 +893,7 @@ export class AppView extends LitElement {
           }
           runner.run(data);
         }}
-      ></bb-activity-log-lite>`;
+      ></bb-activity-log-lite-app>`;
     });
 
     const nav = (popout: boolean) => {

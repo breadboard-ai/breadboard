@@ -12,13 +12,18 @@ import {
   SingleEditResult,
 } from "../types.js";
 import { InspectableGraph } from "../../inspector/types.js";
-import { fixUpStarEdge, fixupConstantEdge } from "../../inspector/edge.js";
+import {
+  fixUpStarEdge,
+  fixupConstantEdge,
+  unfixUpStarEdge,
+} from "../../inspector/edge.js";
 
 export class AddEdge implements EditOperation {
   async can(
     edge: EditableEdgeSpec,
     inspector: InspectableGraph
   ): Promise<SingleEditResult> {
+    edge = unfixUpStarEdge(edge);
     if (inspector.hasEdge(edge)) {
       return {
         success: false,

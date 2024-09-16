@@ -11,6 +11,7 @@ import { output } from "../internal/board/output.js";
 import { defineNodeType } from "../internal/define/define.js";
 import { anyOf } from "../internal/type-system/any-of.js";
 import { serialize } from "../internal/board/serialize.js";
+import { input } from "../internal/board/input.js";
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
@@ -264,4 +265,91 @@ test("multi-output", () => {
       });
     }
   }
+});
+
+test("bubbling output node", () => {
+  const foo = input();
+  // $ExpectType OutputNode<{ foo: string; }>
+  const bar = outputNode({ foo }, { bubble: true });
+  const bgl = serialize(board({ inputs: { foo }, outputs: [bar] }));
+  assert.deepEqual(bgl, {
+    edges: [
+      {
+        from: "input-0",
+        in: "foo",
+        out: "foo",
+        to: "output-0",
+      },
+    ],
+    nodes: [
+      {
+        configuration: {
+          schema: {
+            properties: {
+              foo: {
+                type: "string",
+              },
+            },
+            required: ["foo"],
+            type: "object",
+          },
+        },
+        id: "input-0",
+        type: "input",
+      },
+      {
+        configuration: {
+          schema: {
+            behavior: ["bubble"],
+            properties: {
+              foo: {
+                type: "string",
+              },
+            },
+            required: ["foo"],
+            type: "object",
+          },
+        },
+        id: "output-0",
+        metadata: {},
+        type: "output",
+      },
+    ],
+  });
+});
+
+test("deprecated output port", () => {
+  const foo = input();
+  // $ExpectType Output<string>
+  const bar = output(foo, { deprecated: true });
+  const bgl = serialize(board({ inputs: { foo }, outputs: { bar } }));
+  assert.deepEqual(bgl, {
+    edges: [{ from: "input-0", to: "output-0", out: "foo", in: "bar" }],
+    nodes: [
+      {
+        id: "input-0",
+        type: "input",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: { foo: { type: "string" } },
+            required: ["foo"],
+          },
+        },
+      },
+      {
+        id: "output-0",
+        type: "output",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {
+              bar: { type: "string", behavior: ["deprecated"] },
+            },
+            required: ["bar"],
+          },
+        },
+      },
+    ],
+  });
 });

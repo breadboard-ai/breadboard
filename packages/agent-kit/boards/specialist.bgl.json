@@ -389,7 +389,10 @@
               "enum": [
                 "gemini-1.5-flash-latest",
                 "gemini-1.5-pro-latest",
-                "gemini-1.5-pro-exp-0801"
+                "gemini-1.5-pro-exp-0801",
+                "gemini-1.5-pro-exp-0827",
+                "gemini-1.5-flash-8b-exp-0827",
+                "gemini-1.5-flash-exp-0827"
               ],
               "default": "gemini-1.5-flash-latest",
               "examples": [
@@ -587,11 +590,22 @@
               "type": "object",
               "properties": {
                 "item": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {},
+                      "required": [],
+                      "additionalProperties": true
+                    }
+                  ],
                   "title": "Board",
+                  "description": "The board to curry. Can be a BoardCapability, a graph or a URL",
                   "behavior": [
                     "board"
                   ],
-                  "description": "The board to curry. Can be a BoardCapability, a graph or a URL",
                   "type": "string"
                 },
                 "context": {

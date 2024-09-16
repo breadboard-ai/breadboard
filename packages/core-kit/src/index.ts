@@ -33,6 +33,7 @@ export { secret, default as secrets } from "./nodes/secrets.js";
 export { unnest, unnestNode } from "./nodes/unnest.js";
 export { cast, castNode } from "./nodes/cast.js";
 export { default as mapNode, map } from "./nodes/map.js";
+export type { CodeNode } from "./nodes/code.js";
 
 const builder = new KitBuilder({
   title: "Core Kit",
@@ -230,7 +231,7 @@ import {
   NewOutputValues as OutputValues,
   NewNodeFactory as NodeFactory,
 } from "@google-labs/breadboard";
-import curry, { CurryInputs, CurryOutputs } from "./nodes/curry.js";
+import curry from "./nodes/curry.js";
 import deflate from "./nodes/deflate.js";
 import inflate from "./nodes/inflate.js";
 import { NodeFactoryFromDefinition } from "@breadboard-ai/build";
@@ -306,7 +307,15 @@ export type CoreKitType = {
    * The arguments in that board will run as part of board invocation as if
    * they were supplied as inputs.
    */
-  curry: NodeFactory<CurryInputs, CurryOutputs>;
+  curry: NodeFactory<
+    {
+      $board: unknown;
+      [key: string]: unknown;
+    },
+    {
+      board: unknown;
+    }
+  >;
   fetch: NodeFactory<
     { url: string },
     {

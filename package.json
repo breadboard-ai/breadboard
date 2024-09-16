@@ -145,7 +145,7 @@
   "author": "Google Labs Team",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@changesets/cli": "^2.27.7",
+    "@changesets/cli": "^2.27.8",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^22.0.0",
@@ -153,14 +153,14 @@
     "@typescript-eslint/parser": "^7.18.0",
     "ava": "^5.2.0",
     "eslint": "^8.57.0",
-    "eslint-plugin-expect-type": "^0.4.0",
+    "eslint-plugin-expect-type": "^0.4.3",
     "npm-ci": "^0.0.2",
     "rimraf": "^6.0.1",
-    "rollup": "^4.21.2",
+    "rollup": "^4.21.3",
     "rollup-plugin-dts": "^6.1.1",
     "syncpack": "^13.0.0",
     "typescript": "^5.5.4",
-    "wireit": "^0.14.8"
+    "wireit": "^0.14.9"
   },
   "workspaces": [
     "./core/*",

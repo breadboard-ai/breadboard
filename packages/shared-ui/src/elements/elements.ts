@@ -5,6 +5,7 @@
  */
 
 export { ActivityLog } from "./activity-log/activity-log.js";
+export { ActivityLogLite } from "./activity-log/activity-log-lite.js";
 export { ArrayEditor } from "./input/array/array-editor.js";
 export { BoardDetails } from "./board-details/board-details.js";
 export { BoardEditOverlay } from "./overlay/board-edit.js";
@@ -15,6 +16,7 @@ export { ConnectionInput } from "./connection/connection-input.js";
 export { ConnectionSettings } from "./connection/connection-settings.js";
 export { ConnectionSignin } from "./connection/connection-signin.js";
 export { DrawableInput } from "./input/drawable/drawable.js";
+export { EdgeValueOverlay } from "./overlay/edge-value.js";
 export { Editor } from "./editor/editor.js";
 export { EventDetails } from "./event-details/event-details.js";
 export { FancyJson } from "./editor/fancy-json.js";
@@ -29,6 +31,7 @@ export { LLMInputArray } from "./input/llm-input/llm-input-array.js";
 export { LLMOutput } from "./llm-output/llm-output.js";
 export { LLMOutputArray } from "./llm-output/llm-output-array.js";
 export { Navigation } from "./nav/nav.js";
+export { NodeConfigurationOverlay } from "./overlay/node-configurator.js";
 export { NodeMetaDetails } from "./node-info/node-meta-details.js";
 export { NodeConfigurationInfo } from "./node-info/node-configuration.js";
 export { NodeRunner } from "./node-runner/node-runner.js";

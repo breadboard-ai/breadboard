@@ -592,9 +592,16 @@ export class Navigation extends LitElement {
     ]: BoardInfo) => {
       return html`<li>
         <button
-          @click=${() => {
+          @click=${(evt: PointerEvent) => {
+            const isMac = navigator.platform.indexOf("Mac") === 0;
+            const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
             this.dispatchEvent(
-              new GraphProviderLoadRequestEvent(provider.name, url)
+              new GraphProviderLoadRequestEvent(
+                provider.name,
+                url,
+                isCtrlCommand
+              )
             );
           }}
           data-url=${url}

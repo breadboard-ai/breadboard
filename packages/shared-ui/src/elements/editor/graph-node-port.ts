@@ -1,25 +1,31 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import * as PIXI from "pixi.js";
 import { GraphNodePortType } from "./types.js";
 import { PortStatus } from "@google-labs/breadboard";
 import { getGlobalColor } from "./utils.js";
 
-const connectedColor = getGlobalColor("--bb-inputs-300");
-const danglingColor = getGlobalColor("--bb-warning-400");
-const indeterminateColor = getGlobalColor("--bb-neutral-400");
-const missingColor = getGlobalColor("--bb-warning-300");
+const connectedColor = getGlobalColor("--bb-inputs-200");
+const danglingColor = getGlobalColor("--bb-warning-300");
+const indeterminateColor = getGlobalColor("--bb-neutral-300");
+const missingColor = getGlobalColor("--bb-warning-200");
 const readyColor = getGlobalColor("--bb-neutral-200");
-const configuredColor = getGlobalColor("--bb-boards-500");
+const configuredColor = getGlobalColor("--bb-ui-300");
 
-const connectedBorderColor = getGlobalColor("--bb-inputs-700");
-const danglingBorderColor = getGlobalColor("--bb-warning-800");
-const indeterminateBorderColor = getGlobalColor("--bb-neutral-800");
-const missingBorderColor = getGlobalColor("--bb-warning-700");
-const readyBorderColor = getGlobalColor("--bb-neutral-700");
-const configuredBorderColor = getGlobalColor("--bb-boards-700");
+const connectedBorderColor = getGlobalColor("--bb-inputs-600");
+const danglingBorderColor = getGlobalColor("--bb-warning-700");
+const indeterminateBorderColor = getGlobalColor("--bb-neutral-700");
+const missingBorderColor = getGlobalColor("--bb-warning-600");
+const readyBorderColor = getGlobalColor("--bb-neutral-600");
+const configuredBorderColor = getGlobalColor("--bb-ui-600");
 
 export class GraphNodePort extends PIXI.Graphics {
   #isDirty = true;
-  #radius = 3;
+  #radius = 4;
   #status: PortStatus = PortStatus.Indeterminate;
   #configured = false;
   #colors: { [K in PortStatus]: number } & { configured: number } = {
@@ -39,12 +45,12 @@ export class GraphNodePort extends PIXI.Graphics {
     configured: configuredBorderColor,
   };
   #overrideStatus: PortStatus | null = null;
+  #readOnly = false;
 
   constructor(public type: GraphNodePortType) {
     super();
 
     this.eventMode = "static";
-    this.cursor = "pointer";
     this.onRender = () => {
       if (!this.#isDirty) {
         return;
@@ -53,6 +59,21 @@ export class GraphNodePort extends PIXI.Graphics {
       this.clear();
       this.#draw();
     };
+  }
+
+  set readOnly(readOnly: boolean) {
+    if (readOnly === this.#readOnly) {
+      return;
+    }
+
+    this.cursor = readOnly ? "auto" : "pointer";
+
+    this.#readOnly = readOnly;
+    this.#isDirty = true;
+  }
+
+  get readOnly() {
+    return this.#readOnly;
   }
 
   set radius(radius: number) {

@@ -7,18 +7,22 @@
 import * as PIXI from "pixi.js";
 
 const ASSET_LIST = new Map([
-  ["smart-toy", "/third_party/icons/smart-toy-48px.svg"],
-  ["merge-type", "/third_party/icons/merge-type-48px.svg"],
-  ["human", "/third_party/icons/human-48px.svg"],
-  ["laps", "/third_party/icons/laps-48px.svg"],
-  ["nano", "/third_party/icons/nano-48px.svg"],
-  ["google-drive", "/third_party/icons/google-drive-48px.svg"],
+  ["value", "/third_party/icons/graph/value-48px.svg"],
+  ["input", "/third_party/icons/graph/input-48px.svg"],
+  ["output", "/third_party/icons/graph/output-48px.svg"],
+  ["js", "/third_party/icons/graph/js-48px.svg"],
+  ["smart-toy", "/third_party/icons/graph/smart-toy-48px.svg"],
+  ["merge-type", "/third_party/icons/graph/merge-type-48px.svg"],
+  ["human", "/third_party/icons/graph/human-48px.svg"],
+  ["laps", "/third_party/icons/graph/laps-48px.svg"],
+  ["nano", "/third_party/icons/graph/nano-48px.svg"],
+  ["google-drive", "/third_party/icons/graph/google-drive-48px.svg"],
 ]);
 
 type AssetMap = Map<string, PIXI.Texture>;
 
 export class GraphAssets {
-  static assetPrefix = "";
+  static assetPrefix = "~";
   static #instance: GraphAssets;
   static instance() {
     if (!this.#instance) {
@@ -53,9 +57,7 @@ export class GraphAssets {
   }
 
   // Not to be instantiated directly.
-  private constructor() {
-    this.loadAssets("");
-  }
+  private constructor() {}
 
   get loaded() {
     return this.#loaded;

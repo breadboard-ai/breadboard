@@ -26,9 +26,29 @@ export function anyOf<
     (member) =>
       typeof member.type === "string" && Object.keys(member).length === 1
   );
+  if (allTypesAreBasic) {
+    return {
+      jsonSchema: {
+        type: types.map((member) => member.type as JSONSchema4TypeName),
+      },
+    };
+  }
+  const uniqueCoreTypes = new Set(types.map(({ type }) => type));
+  if (uniqueCoreTypes.size === 1) {
+    // TODO(aomarks) Remove this when we no longer have this limitation.
+    // This is a no-op according to JSON Schema, but it's helpful in Breadboard
+    // right now because we have some code that assumes there is always a
+    // top-level core "type", and doesn't understand "anyOf". In the case where
+    // all the "anyOf" core types are the same, we can hoist it up to make that
+    // code happy.
+    return {
+      jsonSchema: {
+        type: [...uniqueCoreTypes][0],
+        anyOf: types,
+      },
+    };
+  }
   return {
-    jsonSchema: allTypesAreBasic
-      ? { type: types.map((member) => member.type as JSONSchema4TypeName) }
-      : { anyOf: types },
+    jsonSchema: { anyOf: types },
   };
 }

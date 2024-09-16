@@ -4,14 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  NodeHandlerObject,
-  SchemaBuilder,
-  type InputValues,
-  type NodeValue,
-  type OutputValues,
-  type Schema,
-} from "@google-labs/breadboard";
+import { defineNodeType, jsonSchema } from "@breadboard-ai/build";
+import type { NodeValue, Schema } from "@google-labs/breadboard";
 
 export const convert = (schema: Schema): NodeValue => {
   if (!schema.type) {
@@ -48,54 +42,27 @@ export const convert = (schema: Schema): NodeValue => {
   );
 };
 
-export type SchemishInputs = InputValues & {
-  /**
-   * The schema to convert to schemish.
-   */
-  schema: NodeValue;
-};
-
-export type SchemishOutputs = OutputValues & {
-  /**
-   * The schemish object.
-   */
-  schemish: NodeValue;
-};
-
-const invoke = async (inputs: InputValues): Promise<OutputValues> => {
-  const { schema } = inputs;
-  return { schemish: convert(schema as Schema) };
-};
-
-const describe = async () => {
-  const inputSchema = new SchemaBuilder()
-    .addProperty("schema", {
-      title: "schema",
-      description: "The schema to convert to schemish.",
-      type: "object",
-    })
-    .addRequired("schema")
-    .build();
-
-  const outputSchema = new SchemaBuilder()
-    .addProperty("schemish", {
-      title: "schemish",
-      description: "The schemish object.",
-      type: "object",
-    })
-    .addRequired("schemish")
-    .build();
-
-  return { inputSchema, outputSchema };
-};
-
-export default {
+export default defineNodeType({
+  name: "schemish",
   metadata: {
     title: "Schemish",
     description:
       "Converts a JSON schema to Schemish (https://glazkov.com/2023/05/06/schemish/)",
     deprecated: true,
   },
-  invoke,
-  describe,
-} as NodeHandlerObject;
+  inputs: {
+    schema: {
+      title: "schemish",
+      description: "The schema to convert to schemish.",
+      type: jsonSchema,
+    },
+  },
+  outputs: {
+    schemish: {
+      title: "schemish",
+      description: "The schemish object.",
+      type: "unknown",
+    },
+  },
+  invoke: ({ schema }) => ({ schemish: convert(schema) }),
+});

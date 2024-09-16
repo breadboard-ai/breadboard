@@ -15,12 +15,17 @@ import {
   output,
   serialize,
 } from "../index.js";
-import { input, type GenericSpecialInput } from "../internal/board/input.js";
+import { inputNode } from "../internal/board/board.js";
+import {
+  input,
+  rawInput,
+  type GenericSpecialInput,
+} from "../internal/board/input.js";
+import { jsonSchema } from "../internal/type-system/json-schema.js";
 import type {
   BreadboardType,
   JsonSerializable,
 } from "../internal/type-system/type.js";
-import { inputNode } from "../internal/board/board.js";
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
@@ -504,6 +509,75 @@ test("input directly to output with description", () => {
             required: ["barOut", "fooOut"],
           },
         },
+      },
+    ],
+  });
+});
+
+test("can create and serialize a raw input", () => {
+  const schema = input({ type: jsonSchema });
+  // $ExpectType Instance<{ schema: Schema; }, {}, JsonSerializable, false, false, false>
+  const raw = rawInput({ $metadata: { title: "A regular old input" }, schema });
+  const bgl = serialize(
+    board({
+      inputs: { schema },
+      outputs: {
+        foo: raw.unsafeOutput("foo"),
+      },
+    })
+  );
+  assert.deepEqual(bgl, {
+    edges: [
+      { from: "input-0", to: "input-1", out: "schema", in: "schema" },
+      { from: "input-1", to: "output-0", out: "foo", in: "foo" },
+    ],
+    nodes: [
+      {
+        id: "input-0",
+        type: "input",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {
+              schema: {
+                type: "object",
+                properties: {},
+                required: [],
+                additionalProperties: true,
+                behavior: ["json-schema"],
+              },
+            },
+            required: ["schema"],
+          },
+        },
+      },
+      {
+        id: "output-0",
+        type: "output",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {
+              foo: {
+                type: [
+                  "array",
+                  "boolean",
+                  "null",
+                  "number",
+                  "object",
+                  "string",
+                ],
+              },
+            },
+            required: ["foo"],
+          },
+        },
+      },
+      {
+        id: "input-1",
+        type: "input",
+        configuration: {},
+        metadata: { title: "A regular old input" },
       },
     ],
   });

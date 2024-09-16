@@ -231,6 +231,7 @@ export type RunEventMap = {
   start: RunLifecycleEvent;
   pause: RunLifecycleEvent;
   resume: RunLifecycleEvent;
+  next: RunNextEvent;
   input: RunInputEvent;
   output: RunOutputEvent;
   secret: RunSecretEvent;
@@ -247,6 +248,10 @@ export type RunEventMap = {
 export type RunLifecycleEvent = Event & {
   running: boolean;
   data: { timestamp: number; inputs?: InputValues };
+};
+
+export type RunNextEvent = Event & {
+  data: HarnessRunResult | void;
 };
 
 export type RunInputEvent = Event & {

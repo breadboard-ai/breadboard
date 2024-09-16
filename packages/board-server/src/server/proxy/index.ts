@@ -97,10 +97,13 @@ export const serveProxyAPI = async (
   const server = new ProxyServer(
     new HTTPServerTransport({ body }, new ResponseAdapter(res))
   );
+  const store = getDataStore();
+  store.createGroup("run-board");
+
   const tunnel = await buildSecretsTunnel();
   const config: ProxyServerConfig = {
     kits: [secretsKit, asRuntimeKit(Core)],
-    store: getDataStore(),
+    store,
     proxy: ["fetch", { node: "secrets", tunnel }],
   };
 
@@ -109,6 +112,8 @@ export const serveProxyAPI = async (
   } catch (e) {
     serverError(res, (e as Error).message);
   }
+
+  store.releaseAll();
 
   return true;
 };

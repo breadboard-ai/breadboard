@@ -139,7 +139,7 @@ const runStateStore: RunBoardStateStore = {
   },
   async saveReanimationState(user: string, state: any) {
     return JSON.stringify(state);
-  }
+  },
 };
 
 const scriptedRun = async (
@@ -339,6 +339,7 @@ describe("Board Server Runs Boards", () => {
             { type: "edge", from: [2, 1], to: [2, 2] },
             { type: "nodestart", path: [2, 2] },
             { type: "nodeend", path: [2, 2] },
+            { type: "edge", from: [2, 1], to: [2, 3] },
             { type: "edge", from: [2, 2], to: [2, 4] },
             { type: "nodestart", path: [2, 4] },
             { type: "nodeend", path: [2, 4] },

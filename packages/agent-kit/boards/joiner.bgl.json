@@ -48,6 +48,10 @@
           },
           "required": [],
           "additionalProperties": {
+            "type": "object",
+            "behavior": [
+              "llm-content"
+            ],
             "anyOf": [
               {
                 "type": "object",
@@ -63,6 +67,7 @@
                   "parts": {
                     "type": "array",
                     "items": {
+                      "type": "object",
                       "anyOf": [
                         {
                           "type": "object",
@@ -113,9 +118,13 @@
                 "required": [
                   "parts"
                 ],
-                "additionalProperties": false
+                "additionalProperties": false,
+                "behavior": [
+                  "llm-content"
+                ]
               },
               {
+                "type": "object",
                 "anyOf": [
                   {
                     "type": "object",
@@ -241,6 +250,7 @@
             "context": {
               "type": "array",
               "items": {
+                "type": "object",
                 "anyOf": [
                   {
                     "type": "object",
@@ -256,6 +266,7 @@
                       "parts": {
                         "type": "array",
                         "items": {
+                          "type": "object",
                           "anyOf": [
                             {
                               "type": "object",
@@ -306,9 +317,13 @@
                     "required": [
                       "parts"
                     ],
-                    "additionalProperties": false
+                    "additionalProperties": false,
+                    "behavior": [
+                      "llm-content"
+                    ]
                   },
                   {
+                    "type": "object",
                     "anyOf": [
                       {
                         "type": "object",
@@ -419,6 +434,9 @@
                       }
                     ]
                   }
+                ],
+                "behavior": [
+                  "llm-content"
                 ]
               },
               "title": "Context out"
@@ -446,6 +464,7 @@
             }
           },
           "additionalProperties": {
+            "type": "object",
             "anyOf": [
               {
                 "type": "object",
@@ -461,6 +480,7 @@
                   "parts": {
                     "type": "array",
                     "items": {
+                      "type": "object",
                       "anyOf": [
                         {
                           "type": "object",
@@ -511,9 +531,13 @@
                 "required": [
                   "parts"
                 ],
-                "additionalProperties": false
+                "additionalProperties": false,
+                "behavior": [
+                  "llm-content"
+                ]
               },
               {
+                "type": "object",
                 "anyOf": [
                   {
                     "type": "object",
@@ -624,6 +648,9 @@
                   }
                 ]
               }
+            ],
+            "behavior": [
+              "llm-content"
             ]
           }
         },
@@ -634,6 +661,7 @@
             "context": {
               "type": "array",
               "items": {
+                "type": "object",
                 "anyOf": [
                   {
                     "type": "object",
@@ -649,6 +677,7 @@
                       "parts": {
                         "type": "array",
                         "items": {
+                          "type": "object",
                           "anyOf": [
                             {
                               "type": "object",
@@ -699,9 +728,13 @@
                     "required": [
                       "parts"
                     ],
-                    "additionalProperties": false
+                    "additionalProperties": false,
+                    "behavior": [
+                      "llm-content"
+                    ]
                   },
                   {
+                    "type": "object",
                     "anyOf": [
                       {
                         "type": "object",
@@ -812,6 +845,9 @@
                       }
                     ]
                   }
+                ],
+                "behavior": [
+                  "llm-content"
                 ]
               }
             }

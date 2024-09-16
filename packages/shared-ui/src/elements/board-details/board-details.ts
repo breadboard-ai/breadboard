@@ -18,6 +18,9 @@ export class BoardDetails extends LitElement {
   expanded = false;
 
   @property()
+  readOnly = false;
+
+  @property()
   boardTitle: string | null = null;
 
   @property()
@@ -34,9 +37,6 @@ export class BoardDetails extends LitElement {
 
   @property()
   boardHelp: GraphMetadata["help"] | null = null;
-
-  @property()
-  active = true;
 
   @property()
   subGraphId: string | null = null;
@@ -252,7 +252,7 @@ export class BoardDetails extends LitElement {
           type="text"
           placeholder="The title for this board"
           required
-          ?disabled=${!this.active}
+          ?disabled=${this.readOnly}
           .value=${this.boardTitle || ""}
         />
 
@@ -263,7 +263,7 @@ export class BoardDetails extends LitElement {
           type="text"
           placeholder="The semver version for this board, e.g. 0.0.1"
           required
-          ?disabled=${!this.active}
+          ?disabled=${this.readOnly}
           .value=${this.boardVersion || ""}
         />
 
@@ -271,7 +271,7 @@ export class BoardDetails extends LitElement {
         <textarea
           name="description"
           placeholder="The description for this board"
-          ?disabled=${!this.active}
+          ?disabled=${this.readOnly}
           .value=${this.boardDescription || ""}
         ></textarea>
 
@@ -302,7 +302,7 @@ export class BoardDetails extends LitElement {
                     }}
                     name="status"
                     .value=${this.boardPublished ? "published" : "draft"}
-                    ?disabled=${!this.active}
+                    ?disabled=${this.readOnly}
                   >
                     <option value="draft" ?selected=${!this.boardPublished}>
                       Draft
@@ -323,7 +323,7 @@ export class BoardDetails extends LitElement {
                     type="checkbox"
                     .value="on"
                     ?checked=${this.boardIsTool}
-                    ?disabled=${!this.active}
+                    ?disabled=${this.readOnly}
                   />
                 </div>
               `

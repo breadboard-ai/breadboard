@@ -17,7 +17,8 @@
     "test": "wireit",
     "build": "wireit",
     "lint": "wireit",
-    "generate-kit-manifest": "wireit"
+    "generate-kit-manifest": "wireit",
+    "generate:graphs": "wireit"
   },
   "wireit": {
     "generate-kit-manifest": {
@@ -58,6 +59,8 @@
       ],
       "files": [
         "src/**/*.ts",
+        "src/future/*.js",
+        "bgl/*.bgl.json",
         "!src/samples/**/*.ts",
         "tests/**/*.ts",
         "tsconfig.json",
@@ -93,6 +96,16 @@
         "../../.eslintrc.json"
       ],
       "output": []
+    },
+    "generate:graphs": {
+      "command": "mkdir graphs && ls dist/src/boards/*.js | xargs -n1 -r -I{} ../breadboard-cli/dist/src/index.js make \"$PWD/{}\" -o \"$PWD/graphs/\" --format",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": [
+        "graphs/"
+      ]
     }
   },
   "repository": {

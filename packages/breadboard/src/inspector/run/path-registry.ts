@@ -8,22 +8,17 @@ import { OutputValues } from "../../types.js";
 import {
   GraphUUID,
   InspectableGraph,
+  InspectableRunEdge,
   InspectableRunErrorEvent,
   InspectableRunEvent,
   InspectableRunNodeEvent,
   PathRegistryEntry,
+  SequenceView,
 } from "../types.js";
+import { idFromPath } from "./conversions.js";
 
 export const SECRET_PATH = [-2];
 export const ERROR_PATH = [-3];
-
-export const idFromPath = (path: number[]): string => {
-  return path.join("-");
-};
-
-export const pathFromId = (id: string): number[] => {
-  return id.length ? id.split("-").map((s) => parseInt(s, 10)) : [];
-};
 
 export const createSimpleEntry = (
   path: number[],
@@ -40,7 +35,10 @@ export const createSimpleEntry = (
     sidecars: [],
     empty: () => true,
     events: [],
+    edges: [],
     graph: null,
+    view: null,
+    find: () => null,
   };
   return entry;
 };
@@ -63,6 +61,8 @@ class Entry implements PathRegistryEntry {
   graphStart: number = 0;
   graphEnd: number | null = null;
   graph: InspectableGraph | null = null;
+  edges: InspectableRunEdge[] = [];
+  view: SequenceView | null = null;
 
   constructor(
     public path: number[],

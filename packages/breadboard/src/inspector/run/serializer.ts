@@ -27,9 +27,9 @@ import {
   NodeEndResponse,
   OutputResponse,
 } from "../../types.js";
-import { idFromPath } from "./path-registry.js";
 import { SecretResult } from "../../harness/types.js";
 import { SerializedDataStoreGroup } from "../../data/types.js";
+import { idFromPath } from "./conversions.js";
 
 export type SequenceEntry = [type: TimelineEntry[0], entry: PathRegistryEntry];
 
@@ -77,6 +77,7 @@ export class RunSerializer {
     } else {
       index = this.#seenGraphs.get(graphId) || 0;
     }
+    const edges = entry.edges;
     return [
       "graphstart",
       {
@@ -84,6 +85,7 @@ export class RunSerializer {
         path: entry.path,
         index,
         graph,
+        edges,
       },
     ];
   }

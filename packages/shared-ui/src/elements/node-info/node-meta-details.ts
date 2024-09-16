@@ -49,7 +49,7 @@ export class NodeMetaDetails extends LitElement {
   subGraphId: string | null = null;
 
   @state()
-  expanded = false;
+  expanded = true;
 
   #ignoreNextUpdate = false;
   #titleRef: Ref<HTMLSpanElement> = createRef();
@@ -268,7 +268,7 @@ export class NodeMetaDetails extends LitElement {
       `${STORAGE_PREFIX}-expanded`
     );
 
-    this.expanded = isExpanded === "true";
+    this.expanded = isExpanded ? isExpanded === "true" : this.expanded;
   }
 
   protected shouldUpdate(): boolean {

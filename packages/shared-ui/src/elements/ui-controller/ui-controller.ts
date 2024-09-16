@@ -5,6 +5,18 @@
  */
 
 import {
+  EditHistory,
+  GraphDescriptor,
+  GraphLoader,
+  GraphProvider,
+  InspectableRun,
+  InspectableRunEvent,
+  InspectableRunInputs,
+  Kit,
+  RemoveNodeSpec,
+  inspect,
+} from "@google-labs/breadboard";
+import {
   HTMLTemplateResult,
   LitElement,
   PropertyValueMap,
@@ -12,43 +24,28 @@ import {
   nothing,
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import {
-  InputCallback,
-  RecentBoard,
-  SETTINGS_TYPE,
-  STATUS,
-} from "../../types/types.js";
+import { cache } from "lit/directives/cache.js";
+import { classMap } from "lit/directives/class-map.js";
+import { guard } from "lit/directives/guard.js";
+import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import {
   GraphNodeDeselectedEvent,
   GraphNodeSelectedEvent,
-  InputEnterEvent,
   MultiEditEvent,
   RunEvent,
   StopEvent,
 } from "../../events/events.js";
-import { HarnessRunResult } from "@google-labs/breadboard/harness";
 import {
-  EditHistory,
-  GraphDescriptor,
-  GraphLoader,
-  GraphProvider,
-  inspect,
-  InspectableRun,
-  InspectableRunEvent,
-  InspectableRunInputs,
-  Kit,
-  NodeIdentifier,
-  RemoveNodeSpec,
-} from "@google-labs/breadboard";
-import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { styles as uiControllerStyles } from "./ui-controller.styles.js";
-import { MAIN_BOARD_ID } from "../../constants/constants.js";
+  RecentBoard,
+  SETTINGS_TYPE,
+  STATUS,
+  SettingsStore,
+  TopGraphRunResult,
+} from "../../types/types.js";
 import { EditorMode } from "../../utils/mode.js";
-import { guard } from "lit/directives/guard.js";
-import { cache } from "lit/directives/cache.js";
-import { classMap } from "lit/directives/class-map.js";
-import { NodeRunner, type NodeConfigurationInfo } from "../elements.js";
-import { SettingsStore } from "../../types/types.js";
+import { type NodeConfigurationInfo } from "../elements.js";
+import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 
 /**
  * Breadboard UI controller element.
@@ -72,6 +69,12 @@ export class UI extends LitElement {
   subGraphId: string | null = null;
 
   @property()
+  run: InspectableRun | null = null;
+
+  @property()
+  inputsFromLastRun: InspectableRunInputs | null = null;
+
+  @property()
   kits: Kit[] = [];
 
   @property()
@@ -81,16 +84,16 @@ export class UI extends LitElement {
   status = STATUS.RUNNING;
 
   @property()
-  run: InspectableRun | null = null;
-
-  @property()
-  inputsFromLastRun: InspectableRunInputs | null = null;
+  topGraphResult: TopGraphRunResult | null = null;
 
   @property({ reflect: true })
   failedToLoad = false;
 
   @property()
   boardId = -1;
+
+  @property()
+  readOnly = false;
 
   @property()
   showWelcomePanel = false;
@@ -123,15 +126,13 @@ export class UI extends LitElement {
   history: EditHistory | null = null;
 
   #nodeConfigurationRef: Ref<NodeConfigurationInfo> = createRef();
-  #lastEdgeCount = -1;
   #lastBoardId = -1;
   #detailsRef: Ref<HTMLElement> = createRef();
   #controlsActivityRef: Ref<HTMLDivElement> = createRef();
-  #nodeRunnerRef: Ref<NodeRunner> = createRef();
-  #handlers: Map<string, InputCallback[]> = new Map();
   #resizeObserver = new ResizeObserver(() => {
     this.isPortrait = window.matchMedia("(orientation: portrait)").matches;
   });
+  #lastEdgeCount = -1;
 
   static styles = uiControllerStyles;
 
@@ -145,110 +146,13 @@ export class UI extends LitElement {
     this.#resizeObserver.unobserve(this);
   }
 
-  /**
-   * Handler method for registering input.
-   *
-   * Handle a specific input ID and return a promise that resolves with the data received by the handler.
-   *
-   * @param {string} id - Associates a specific input handler with a unique identifier.
-   *
-   * @returns {Promise<Record<string, unknown>>}
-   */
-  async #registerInputHandler(id: string): Promise<Record<string, unknown>> {
-    const handlers = this.#handlers.get(id);
-    if (!handlers) {
-      return Promise.reject(`Unable to set up handler for input ${id}`);
-    }
-
-    return new Promise((resolve) => {
-      handlers.push((data: Record<string, unknown>) => {
-        resolve(data);
-      });
-    });
-  }
-
-  /**
-   * Handler method for registering secret values.
-   *
-   * Asynchronously register handlers for a list of keys and
-   * return a promise that resolves to an object mapping each key to its corresponding secret value.
-   *
-   * @param {string[]} keys - The keys for which secrets need to be
-   * registered.
-   *
-   * @returns {Promise<Record<string, unknown>>}
-   */
-  async #registerSecretsHandler(
-    keys: string[]
-  ): Promise<Record<string, unknown>> {
-    const values = await Promise.all(
-      keys.map((key) => {
-        return new Promise<[string, unknown]>((resolve) => {
-          const callback = ({ secret }: Record<string, unknown>) => {
-            resolve([key, secret]);
-          };
-          this.#handlers.set(key, [callback]);
-        });
-      })
-    );
-
-    return Object.fromEntries(values);
-  }
-
-  /**
-   * Handle state changes.
-   *
-   * Handle different types of messages and perform corresponding
-   * actions based on the message type.
-   *
-   * @param {HarnessRunResult} message - Contains information about the state change with type and data property
-   * @param {number} duration - The duration of the state change.
-   *
-   * @returns {Promise<Record<string, unknown> | void>}
-   */
-  async handleStateChange(
-    message: HarnessRunResult
-  ): Promise<Record<string, unknown> | void> {
-    this.requestUpdate();
-
-    const { data, type } = message;
-    switch (type) {
-      case "nodestart": {
-        if (!this.#handlers.has(data.node.id)) {
-          this.#handlers.set(data.node.id, []);
-        }
-        return;
-      }
-
-      case "nodeend": {
-        this.#handlers.delete(data.node.id);
-        return;
-      }
-
-      case "input": {
-        return this.#registerInputHandler(data.node.id);
-      }
-
-      case "secret": {
-        return this.#registerSecretsHandler(data.keys);
-      }
-    }
-  }
-
-  /**
-   * Called when a user stops a board.
-   */
-  #callAllPendingInputHandlers() {
-    for (const handlers of this.#handlers.values()) {
-      for (const handler of handlers) {
-        handler.call(null, {});
-      }
-    }
-  }
-
   protected willUpdate(
     changedProperties:
-      | PropertyValueMap<{ boardId: number; subGraphId: string | null }>
+      | PropertyValueMap<{
+          boardId: number;
+          subGraphId: string | null;
+          readOnly: boolean | null;
+        }>
       | Map<PropertyKey, unknown>
   ): void {
     if (changedProperties.has("boardId")) {
@@ -256,30 +160,18 @@ export class UI extends LitElement {
         return;
       }
 
-      this.#handlers.clear();
-      this.selectedNodeIds.length = 0;
+      this.selectedNodeIds = [];
     }
 
-    if (changedProperties.has("subGraphId")) {
-      this.selectedNodeIds.length = 0;
+    if (
+      changedProperties.has("subGraphId") ||
+      changedProperties.has("readOnly")
+    ) {
+      this.selectedNodeIds = [];
     }
   }
 
   render() {
-    const currentNode = (): NodeIdentifier | null => {
-      if (this.status === STATUS.STOPPED) return null;
-
-      if (!this.run) return null;
-
-      const currentNodeEvent = this.run.stack()[0];
-
-      if (!currentNodeEvent) return null;
-
-      if (this.subGraphId) return null;
-
-      return currentNodeEvent.node.descriptor.id;
-    };
-
     let boardTitle = this.graph?.title;
     let boardVersion = this.graph?.version;
     let boardDescription = this.graph?.description;
@@ -300,26 +192,6 @@ export class UI extends LitElement {
       }
     }
 
-    const events = this.run?.events || [];
-    const eventPosition = events.length - 1;
-    const nodeId = currentNode();
-
-    let selectedNodeIsInputOrOutput = true;
-    if (this.selectedNodeIds.length === 1) {
-      let graph = this.graph;
-      if (this.subGraphId && this.graph && this.graph.graphs) {
-        graph = this.graph.graphs[this.subGraphId];
-      }
-
-      if (graph) {
-        const node = graph.nodes.find(
-          (node) => node.id === this.selectedNodeIds[0]
-        );
-        selectedNodeIsInputOrOutput =
-          node?.type === "input" || node?.type === "output";
-      }
-    }
-
     const collapseNodesByDefault = this.settings
       ? this.settings
           .getSection(SETTINGS_TYPE.GENERAL)
@@ -330,6 +202,12 @@ export class UI extends LitElement {
       ? this.settings
           .getSection(SETTINGS_TYPE.GENERAL)
           .items.get("Show Node Type Descriptions")?.value
+      : false;
+
+    const showNodePreviewValues = this.settings
+      ? this.settings
+          .getSection(SETTINGS_TYPE.GENERAL)
+          .items.get("Show Node Preview Values")?.value
       : false;
 
     const hideSubboardSelectorWhenEmpty = this.settings
@@ -372,12 +250,6 @@ export class UI extends LitElement {
           .items.get("Highlight Invalid Wires")?.value
       : false;
 
-    const showPortTypesInConfiguration = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Show Port Types in Configuration")?.value
-      : false;
-
     const showExperimentalComponents = this.settings
       ? this.settings
           .getSection(SETTINGS_TYPE.GENERAL)
@@ -399,14 +271,15 @@ export class UI extends LitElement {
       [
         this.graph,
         this.subGraphId,
+        this.run,
         this.kits,
-        nodeId,
+        this.topGraphResult,
         this.boardId,
         collapseNodesByDefault,
         hideSubboardSelectorWhenEmpty,
-        editorMode,
         showNodeShortcuts,
         showNodeTypeDescriptions,
+        showNodePreviewValues,
         invertZoomScrollDirection,
         showPortTooltips,
         highlightInvalidWires,
@@ -416,40 +289,60 @@ export class UI extends LitElement {
         return html`<bb-editor
           .graph=${graph}
           .subGraphId=${this.subGraphId}
-          .highlightedNodeId=${nodeId}
+          .run=${this.run}
+          .topGraphResult=${this.topGraphResult}
           .boardId=${this.boardId}
           .collapseNodesByDefault=${collapseNodesByDefault}
           .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
-          .mode=${editorMode}
           .showNodeShortcuts=${showNodeShortcuts}
+          .showNodePreviewValues=${showNodePreviewValues}
           .showNodeTypeDescriptions=${showNodeTypeDescriptions}
           .invertZoomScrollDirection=${invertZoomScrollDirection}
           .showPortTooltips=${showPortTooltips}
           .highlightInvalidWires=${highlightInvalidWires}
           .showExperimentalComponents=${showExperimentalComponents}
+          .readOnly=${this.readOnly}
+          .showReadOnlyOverlay=${true}
+          .zoomToHighlightedNodeDuringRuns=${true}
           @bbmultiedit=${(evt: MultiEditEvent) => {
             const deletedNodes: RemoveNodeSpec[] = evt.edits.filter(
               (edit) => edit.type === "removenode"
             ) as RemoveNodeSpec[];
-            if (deletedNodes.length === 0) {
+            let graphMetadataChanges = evt.edits.filter(
+              (edit) => edit.type === "changegraphmetadata"
+            );
+            if (
+              deletedNodes.length === 0 &&
+              graphMetadataChanges.length === 0
+            ) {
               return;
             }
 
-            const selectedPrior = this.selectedNodeIds.length;
-            for (const deletedNode of deletedNodes) {
-              const idx = this.selectedNodeIds.indexOf(deletedNode.id);
-              if (idx === -1) {
-                continue;
+            if (graphMetadataChanges.length > 0) {
+              graphMetadataChanges = graphMetadataChanges.slice(-1);
+            }
+
+            const newlySelected = this.selectedNodeIds.filter((id) => {
+              if (deletedNodes.find((deleted) => deleted.id === id)) {
+                return false;
               }
 
-              this.selectedNodeIds.splice(idx, 1);
-            }
-            const selectedPost = this.selectedNodeIds.length;
-            if (selectedPrior === selectedPost) {
+              const comments = graphMetadataChanges[0].metadata.comments ?? [];
+              if (
+                id.startsWith("comment") &&
+                !comments.find((comment) => comment.id === id)
+              ) {
+                return false;
+              }
+
+              return true;
+            });
+
+            if (newlySelected.length === this.selectedNodeIds.length) {
               return;
             }
 
-            this.selectedNodeIds = [...this.selectedNodeIds];
+            this.selectedNodeIds = [...newlySelected];
           }}
           @bbgraphnodeselected=${(evt: GraphNodeSelectedEvent) => {
             if (!this.selectedNodeIds) {
@@ -531,7 +424,7 @@ export class UI extends LitElement {
           .editorMode=${editorMode}
           .providers=${this.providers}
           .providerOps=${this.providerOps}
-          .showTypes=${showPortTypesInConfiguration}
+          .showTypes=${false}
           ${ref(this.#nodeConfigurationRef)}
           name="Selected Node"
           @bbgraphnodedeselectedall=${() => {
@@ -539,32 +432,6 @@ export class UI extends LitElement {
             this.requestUpdate();
           }}
         ></bb-node-configuration>`;
-      }
-    );
-
-    const nodeRunner = guard(
-      [
-        this.boardId,
-        this.selectedNodeIds,
-        this.#lastEdgeCount,
-        // TODO: Figure out a cleaner way of handling this without watching for
-        // all graph changes.
-        this.graph,
-      ],
-      () => {
-        if (this.#nodeRunnerRef.value) {
-          this.#nodeRunnerRef.value.stopComponent();
-        }
-
-        return html`<bb-node-runner
-            ${ref(this.#nodeRunnerRef)}
-            .graph=${this.graph}
-            .settings=${this.settings}
-            .selectedNodeIds=${this.selectedNodeIds}
-            .kits=${this.kits}
-            .loader=${this.loader}
-          ></bb-node-runner>
-        </div>`;
       }
     );
 
@@ -582,6 +449,7 @@ export class UI extends LitElement {
       ],
       () => {
         return html`<bb-board-details
+          .readOnly=${this.readOnly}
           .boardTitle=${boardTitle}
           .boardVersion=${boardVersion}
           .boardDescription=${boardDescription}
@@ -595,6 +463,8 @@ export class UI extends LitElement {
       }
     );
 
+    const events = this.run?.events || [];
+    const eventPosition = events.length - 1;
     const activityLog = guard([this.run?.events], () => {
       return html`<bb-activity-log
         .run=${this.run}
@@ -614,40 +484,22 @@ export class UI extends LitElement {
           if (!this.#controlsActivityRef.value) {
             return;
           }
-
           const [top] = evt.composedPath();
           if (!(top instanceof HTMLElement) || !top.dataset.messageId) {
             return;
           }
-
           evt.stopImmediatePropagation();
-
           const id = top.dataset.messageId;
           const event = this.run?.getEventById(id);
-
           if (!event) {
             // TODO: Offer the user more information.
             console.warn(`Unable to find event with ID "${id}"`);
             return;
           }
-
           if (event.type !== "node") {
             return;
           }
-
           this.debugEvent = event;
-        }}
-        @bbinputenter=${(event: InputEnterEvent) => {
-          const data = event.data;
-          const handlers = this.#handlers.get(event.id) || [];
-          if (handlers.length === 0) {
-            console.warn(
-              `Received event for input(id="${event.id}") but no handlers were found`
-            );
-          }
-          for (const handler of handlers) {
-            handler.call(null, data);
-          }
         }}
         name="Board"
       ></bb-activity-log>`;
@@ -691,9 +543,7 @@ export class UI extends LitElement {
 
     const sidePanel = cache(
       this.selectedNodeIds.length
-        ? html`${nodeMetaDetails}${nodeConfiguration}${selectedNodeIsInputOrOutput
-            ? nothing
-            : nodeRunner}`
+        ? html`${nodeMetaDetails}${nodeConfiguration}`
         : html`${boardDetails}${activityLog}`
     );
 
@@ -737,14 +587,13 @@ export class UI extends LitElement {
           <button
             id="run"
             title="Run this board"
-            ?disabled=${this.failedToLoad || !this.graph}
+            ?disabled=${this.failedToLoad || !this.graph || this.readOnly}
             @click=${() => {
               this.selectedNodeIds.length = 0;
               if (this.status === STATUS.STOPPED) {
                 this.dispatchEvent(new RunEvent());
               } else {
                 this.dispatchEvent(new StopEvent());
-                this.#callAllPendingInputHandlers();
               }
             }}
           >

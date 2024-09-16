@@ -203,4 +203,9 @@ export const styles = css`
     max-width: 320px;
     text-align: center;
   }
+
+  bb-activity-log-lite {
+    padding: 0 var(--bb-grid-size-4) var(--bb-grid-size-10)
+      var(--bb-grid-size-4);
+  }
 `;

@@ -5,7 +5,6 @@
  */
 
 import {
-  ErrorObject,
   GraphProvider,
   InspectableRun,
   InspectableRunEvent,
@@ -35,6 +34,7 @@ import {
   isLLMContentArrayBehavior,
   isLLMContentBehavior,
 } from "../../utils/index.js";
+import { formatError } from "../../utils/format-error.js";
 
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
@@ -281,7 +281,7 @@ export class ActivityLog extends LitElement {
         prev.push({
           name: key,
           title: schema.title ?? key,
-          secret: false,
+          secret: true,
           schema,
           configured: false,
           required: true,
@@ -354,27 +354,25 @@ export class ActivityLog extends LitElement {
             id=${id}
             .connectionId=${id.replace(/^connection:/, "")}
           ></bb-connection-input>`;
+        } else {
+          return html`<bb-user-input
+            id=${event.id}
+            .showTypes=${false}
+            .inputs=${userInputs}
+            ${ref(this.#userInputRef)}
+            @keydown=${(evt: KeyboardEvent) => {
+              const isMac = navigator.platform.indexOf("Mac") === 0;
+              const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+              if (!(evt.key === "Enter" && isCtrlCommand)) {
+                return;
+              }
+
+              continueRun();
+            }}
+          ></bb-user-input>`;
         }
-
-        return html``;
       })}
-
-      <bb-user-input
-        id=${event.id}
-        .showTypes=${false}
-        .inputs=${userInputs}
-        ${ref(this.#userInputRef)}
-        @keydown=${(evt: KeyboardEvent) => {
-          const isMac = navigator.platform.indexOf("Mac") === 0;
-          const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
-
-          if (!(evt.key === "Enter" && isCtrlCommand)) {
-            return;
-          }
-
-          continueRun();
-        }}
-      ></bb-user-input>
 
       <button class="continue-button" @click=${() => continueRun()}>
         Continue
@@ -632,31 +630,7 @@ export class ActivityLog extends LitElement {
               }
 
               case "error": {
-                const { error } = event;
-                let output = "";
-                if (typeof error === "string") {
-                  output = error;
-                } else {
-                  if ((error.error as Error)?.name === "AbortError") {
-                    console.log("💖 actually aborted");
-                  }
-                  if (typeof error.error === "string") {
-                    output = error.error;
-                  } else {
-                    let messageOutput = "";
-                    let errorData = error;
-                    while (typeof errorData === "object") {
-                      if (errorData && "message" in errorData) {
-                        messageOutput += `${errorData.message}\n`;
-                      }
-
-                      errorData = errorData.error as ErrorObject;
-                    }
-
-                    output = messageOutput;
-                  }
-                }
-
+                const output = formatError(event.error);
                 content = html`${output}`;
                 break;
               }

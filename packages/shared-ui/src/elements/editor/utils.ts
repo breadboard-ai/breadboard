@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InspectableEdgeType } from "@google-labs/breadboard";
+import { InspectableEdgeType, InspectablePort } from "@google-labs/breadboard";
 import type { EdgeData } from "../../types/types.js";
+import { ComponentExpansionState, VisualMetadata } from "./types.js";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -16,7 +17,11 @@ export function getGlobalColor(
   defaultValue: ValidColorStrings = "#333333"
 ) {
   const value = documentStyles.getPropertyValue(name)?.replace(/^#/, "");
-  return parseInt(value || defaultValue, 16);
+  const valueAsNumber = parseInt(value || defaultValue, 16);
+  if (Number.isNaN(valueAsNumber)) {
+    return 0xff00ff;
+  }
+  return valueAsNumber;
 }
 
 export function inspectableEdgeToString(edge: EdgeData): string {
@@ -48,3 +53,42 @@ export function edgeToString(edge: {
 }
 
 export const DBL_CLICK_DELTA = 450;
+
+export function isConfigurablePort(port: InspectablePort) {
+  if (port.star) return false;
+  if (port.name === "") return false;
+
+  if (port.schema.behavior?.includes("config")) return true;
+  const items = port.schema.items;
+  if (items && !Array.isArray(items) && items.behavior?.includes("config")) {
+    return true;
+  }
+
+  return false;
+}
+
+export function computeNextExpansionState(
+  state: ComponentExpansionState
+): ComponentExpansionState {
+  switch (state) {
+    case "expanded":
+      return "advanced";
+    case "collapsed":
+      return "expanded";
+    case "advanced":
+      return "collapsed";
+    default:
+      return "expanded";
+  }
+}
+
+export function expansionStateFromMetadata(
+  collapsed: VisualMetadata["collapsed"],
+  collapseNodesByDefault: boolean
+): ComponentExpansionState {
+  if (typeof collapsed === "boolean") {
+    return collapsed ? "collapsed" : "expanded";
+  } else {
+    return collapsed ?? (collapseNodesByDefault ? "collapsed" : "expanded");
+  }
+}

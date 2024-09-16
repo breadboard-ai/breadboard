@@ -19,7 +19,7 @@ import {
   unsafeCast,
   type SerializableBoard,
 } from "../index.js";
-import { board } from "../internal/board/board.js";
+import { board, outputNode } from "../internal/board/board.js";
 import { constant } from "../internal/board/constant.js";
 import { input } from "../internal/board/input.js";
 import { loopback } from "../internal/board/loopback.js";
@@ -1262,6 +1262,7 @@ test("node can have metadata", () => {
     $id: "myCustomId1",
     $metadata: {
       title: "my custom title 1",
+      logLevel: "info",
     },
   });
   const i2 = d2({
@@ -1297,6 +1298,7 @@ test("node can have metadata", () => {
         configuration: {},
         metadata: {
           title: "my custom title 1",
+          logLevel: "info",
         },
       },
       {
@@ -2204,6 +2206,67 @@ test("optional output", () => {
               type: "object",
               properties: { boardOut: { type: "string" } },
               required: [],
+            },
+          },
+        },
+        { id: "foo-0", type: "foo", configuration: {} },
+      ],
+    }
+  );
+});
+
+test("$error can be wired to $error", () => {
+  const foo = defineNodeType({
+    name: "foo",
+    inputs: {},
+    outputs: {
+      foo: { type: "string" },
+    },
+    invoke: () => ({ foo: "foo" }),
+  })({});
+
+  checkSerialization(
+    board({
+      inputs: {},
+      outputs: [outputNode({ $error: output(foo.outputs.$error) })],
+    }),
+    {
+      edges: [{ from: "foo-0", to: "output-0", out: "$error", in: "$error" }],
+      nodes: [
+        {
+          id: "output-0",
+          type: "output",
+          configuration: {
+            schema: {
+              type: "object",
+              properties: {
+                $error: {
+                  type: "object",
+                  anyOf: [
+                    {
+                      type: "object",
+                      properties: { message: { type: "string" } },
+                      required: ["message"],
+                      additionalProperties: false,
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        kind: { type: "string" },
+                        error: {
+                          type: "object",
+                          properties: { message: { type: "string" } },
+                          required: ["message"],
+                          additionalProperties: false,
+                        },
+                      },
+                      required: ["kind", "error"],
+                      additionalProperties: false,
+                    },
+                  ],
+                },
+              },
+              required: ["$error"],
             },
           },
         },

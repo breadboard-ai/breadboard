@@ -4,9 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NewNodeFactory, NewNodeValue, board } from "@google-labs/breadboard";
-import { gemini } from "@google-labs/gemini-kit";
-import { contextAssembler, contextBuilder } from "../context.js";
+import { annotate, array, board, input, string } from "@breadboard-ai/build";
+import { NewNodeFactory, NewNodeValue } from "@google-labs/breadboard";
+import { code } from "@google-labs/core-kit";
+import gemini from "@google-labs/gemini-kit";
+import { Context, contextType } from "../context.js";
 
 export type WorkerType = NewNodeFactory<
   {
@@ -38,74 +40,94 @@ export type WorkerType = NewNodeFactory<
   }
 >;
 
-const sampleInstruction = `You are a brilliant poet who specializes in two-line rhyming poems.
+const context = input({
+  title: "Context",
+  type: array(contextType),
+  examples: [[{ role: "user", parts: [{ text: "the universe within us" }] }]],
+});
+
+const instruction = input({
+  title: "Instruction",
+  type: annotate(string({ format: "multiline" }), { behavior: ["config"] }),
+  examples: [
+    `You are a brilliant poet who specializes in two-line rhyming poems.
 Given any topic, you can quickly whip up a two-line rhyming poem about it.
-Look at the topic below and do your magic`;
+Look at the topic below and do your magic`,
+  ],
+});
 
-const sampleContext = `the universe within us`;
+const stopSequences = input({
+  title: "Stop Sequences",
+  type: annotate(array("string"), { behavior: ["config"] }),
+  default: [],
+});
 
-export default await board(({ context, instruction, stopSequences }) => {
-  context
-    .title("Context")
-    .isArray()
-    .behavior("llm-content")
-    .examples(sampleContext);
-  instruction
-    .title("Instruction")
-    .format("multiline")
-    .behavior("config")
-    .examples(sampleInstruction);
-  stopSequences
-    .title("Stop Sequences")
-    .isArray()
-    .optional()
-    .default("[]")
-    .behavior("config");
+const contextBuilder = code(
+  { $metadata: { title: "Build Context" }, context, instruction },
+  { context: array(contextType) },
+  ({ context, instruction }) => {
+    if (typeof context === "string") {
+      // TODO(aomarks) Let's remove this and make all context array ports
+      // totally consistent in their schemas, and create some helpers for
+      // quickly doing e.g. string -> user text part.
+      context = [{ role: "user", parts: [{ text: context }] }];
+    }
+    const list = context ?? [];
+    if (list.length > 0) {
+      const last = list[list.length - 1];
+      if (last.role === "user") {
+        // A trick: the instruction typically sits in front of the actual task
+        // that the user requests. So do just that -- add it at the front of the
+        // user part list, rather than at the end.
+        last.parts.unshift({ text: instruction });
+        return { context: list };
+      }
+    }
+    return {
+      context: [
+        ...list,
+        { role: "user", parts: [{ text: instruction }] },
+      ] as const,
+    };
+  }
+);
 
-  const buildContext = contextBuilder({
-    $id: "buildContext",
-    $metadata: {
-      title: "Build Context",
-      description: "Building the context for the worker",
-    },
-    context,
-    instruction,
-  });
+const generator = gemini.text({
+  context: contextBuilder.outputs.context,
+  stopSequences,
+});
 
-  const { context: generated, text: output } = gemini.text({
-    $id: "generate",
-    $metadata: {
-      title: "Generate",
-      description: "Using Gemini to generate worker output",
-    },
-    context: buildContext.context,
-    stopSequences,
-    text: "unused", // A gross hack (see TODO in gemini-generator.ts)
-  });
+const contextAssembler = code(
+  {
+    $metadata: { title: "Assemble Context" },
+    context: contextBuilder.outputs.context,
+    generated: generator.outputs.context,
+  },
+  { context: array(contextType) },
+  ({ context, generated }) => {
+    if (!context) throw new Error("Context is required");
+    return {
+      context: [
+        ...context,
+        // TODO(aomarks) The types shared by gemini-kit and agent-kit have some
+        // (probably minor) incompatibility. They should both use a common type
+        // defined in some package.
+        generated as Context,
+      ],
+    };
+  }
+);
 
-  const assembleContext = contextAssembler({
-    $id: "assembleContext",
-    $metadata: {
-      title: "Assemble Context",
-      description: "Assembling the context after generation",
-    },
-    generated,
-    context: buildContext.context,
-  });
-
-  assembleContext.context
-    .title("Context")
-    .isArray()
-    .behavior("llm-content")
-    .description("Agent context after generation");
-  output.title("Output").isString().description("Agent's output");
-
-  return { context: assembleContext.context, text: output };
-}).serialize({
+export default board({
   title: "Worker",
   description: "The essential Agent building block",
   version: "0.0.1",
   metadata: {
     deprecated: true,
+  },
+  inputs: { context, instruction, stopSequences },
+  outputs: {
+    context: contextAssembler.outputs.context,
+    text: generator.outputs.text,
   },
 });

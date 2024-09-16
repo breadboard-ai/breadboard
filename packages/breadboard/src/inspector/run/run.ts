@@ -22,6 +22,7 @@ import {
   SerializedRunLoadingOptions,
   InspectableRunNodeEvent,
   InspectableRunInputs,
+  InspectableRunEdge,
 } from "../types.js";
 import { DataStore, RunTimestamp, RunURL } from "../../data/types.js";
 
@@ -38,7 +39,7 @@ const isInput = (
 export class RunObserver implements InspectableRunObserver {
   #store: GraphDescriptorStore;
   #options: RunObserverOptions;
-  #runs: Run[] = [];
+  #runs: InspectableRun[] = [];
   #runLimit = 2;
   #url: RunURL | null = null;
   #timestamp: RunTimestamp | null = null;
@@ -129,16 +130,24 @@ export class RunObserver implements InspectableRunObserver {
     }
   }
 
+  async #loadStoredRuns(url: string): Promise<RunTimestamp | null> {
+    let timestamp: RunTimestamp | null = null;
+    if (!this.#options.runStore) {
+      return null;
+    }
+    timestamp = await this.#options.runStore.start(url);
+    const runInfo = await this.#options.runStore.getStoredRuns(url);
+    this.#runs = await this.#convertRunInfoToRuns(url, runInfo);
+    return timestamp;
+  }
+
   async observe(result: HarnessRunResult): Promise<void> {
     if (result.type === "graphstart") {
       const { path, timestamp } = result.data;
       if (path.length === 0) {
         this.#url = result.data.graph.url ?? "no-url-graph";
-        if (this.#options.runStore) {
-          this.#timestamp = await this.#options.runStore.start(this.#url);
-          const runInfo = await this.#options.runStore.getStoredRuns(this.#url);
-          this.#runs = await this.#convertRunInfoToRuns(this.#url, runInfo);
-        } else {
+        this.#timestamp = await this.#loadStoredRuns(this.#url);
+        if (!this.#timestamp) {
           this.#timestamp = timestamp;
         }
 
@@ -183,7 +192,16 @@ export class RunObserver implements InspectableRunObserver {
       await this.#options.dataStore?.replaceDataParts(run.dataStoreKey, result);
     }
 
-    run.addResult(result);
+    const mutableRun = run as Run;
+    if ("addResult" in mutableRun) {
+      mutableRun.addResult(result);
+    } else {
+      console.warn(
+        "Unable to add result to run: this is likely a loaded past run."
+      );
+      return;
+    }
+
     await this.#storeInRunStore(this.#url, this.#timestamp, result);
   }
 
@@ -197,7 +215,11 @@ export class RunObserver implements InspectableRunObserver {
       );
     }
     const loader = new RunLoader(this.#options.dataStore, o, options || {});
-    return await loader.load();
+    const result = await loader.load();
+    if (result.success) {
+      this.#runs.push(result.run);
+    }
+    return result;
   }
 }
 
@@ -210,7 +232,6 @@ export class Run implements InspectableRun {
   start: number;
   end: number | null = null;
   graphVersion: number;
-  messages: HarnessRunResult[] = [];
   #dataStore: DataStore | null;
 
   constructor(
@@ -228,6 +249,10 @@ export class Run implements InspectableRun {
 
   get events(): InspectableRunEvent[] {
     return this.#events.events;
+  }
+
+  get edges(): InspectableRunEdge[] {
+    return this.#events.edges;
   }
 
   currentNodeEvent(): InspectableRunNodeEvent | null {

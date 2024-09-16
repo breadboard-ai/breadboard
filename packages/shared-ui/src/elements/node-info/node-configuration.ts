@@ -16,19 +16,15 @@ import {
   Schema,
 } from "@google-labs/breadboard";
 import { Task } from "@lit/task";
-import { LitElement, html, css, PropertyValueMap } from "lit";
+import { LitElement, html, css, PropertyValueMap, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { EditorMode, filterConfigByMode } from "../../utils/mode";
 import {
   CommentUpdateEvent,
   GraphNodeDeselectedAllEvent,
-  NodeUpdateEvent,
-  UserOutputEvent,
 } from "../../events/events";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { UserInputConfiguration } from "../../types/types";
 import { UserInput } from "../elements";
-import { classMap } from "lit/directives/class-map.js";
 import { behaviorsMatch, itemsMatch } from "../../utils";
 
 type NodeConfigurationInfoDetails = {
@@ -524,77 +520,7 @@ export class NodeConfigurationInfo extends LitElement {
         }
 
         if (data.type === "node") {
-          const inputs: UserInputConfiguration[] = data.ports.map((port) => {
-            return {
-              name: port.name,
-              title: port.title,
-              secret: false,
-              configured: port.configured,
-              value: port.value,
-              schema: port.edges.length === 0 ? port.schema : undefined,
-              status: port.status,
-              type: port.schema.type,
-            };
-          });
-
-          return html` <h1>
-              <button
-                class=${classMap({
-                  unfold: true,
-                  visible: this.#expanded,
-                })}
-                @click=${(evt: Event) => {
-                  const [top] = evt.composedPath();
-                  // If the user clicks on the "stale data" marker, refresh the
-                  // data, otherwise do the expand-collapse behavior.
-                  if (top instanceof HTMLElement && top.id === "stale-data") {
-                    this.ensureRenderOnNextUpdate();
-                  } else {
-                    this.#expanded = !this.#expanded;
-
-                    globalThis.sessionStorage.setItem(
-                      EXPANDED_KEY,
-                      this.#expanded.toString()
-                    );
-                  }
-
-                  this.requestUpdate();
-                }}
-              >
-                <div>
-                  Component configuration
-                  <span id="stale-data" ${ref(this.#staleDataWarningRef)}>
-                    Refresh
-                  </span>
-                </div>
-              </button>
-            </h1>
-            <div
-              class=${classMap({
-                details: true,
-                visible: this.#expanded,
-              })}
-            >
-              <bb-user-input
-                ${ref(this.#userInputRef)}
-                .inputs=${inputs}
-                .graph=${this.graph}
-                .subGraphId=${this.subGraphId}
-                .providers=${this.providers}
-                .providerOps=${this.providerOps}
-                .showTypes=${this.showTypes}
-                .inlineControls=${true}
-                @bbuseroutput=${(evt: UserOutputEvent) => {
-                  this.dispatchEvent(
-                    new NodeUpdateEvent(
-                      data.node.descriptor.id,
-                      this.subGraphId,
-                      evt.values
-                    )
-                  );
-                }}
-              ></bb-user-input>
-            </div>`;
+          return nothing;
         } else if (data.type === "comment") {
           return html`<div class="node-properties">
             <form

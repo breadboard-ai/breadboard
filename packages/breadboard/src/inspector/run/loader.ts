@@ -160,6 +160,7 @@ export class RunLoader {
         ? await this.#inflateData(timeline, run.data)
         : timeline;
       const pastRun = new PastRun(runId, timeline, this.#options);
+      await pastRun.initializeBackingRun();
       return { success: true, run: pastRun };
     } catch (e) {
       const error = e as Error;

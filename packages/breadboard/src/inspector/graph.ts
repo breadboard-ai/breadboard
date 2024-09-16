@@ -299,14 +299,32 @@ class Graph implements InspectableGraphWithStore {
   ): Promise<NodeDescriberResult> {
     // invoke graph
     try {
+      const { inputSchema: $inputSchema, outputSchema: $outputSchema } =
+        await this.#describeWithStaticAnalysis();
       const base = this.#url;
-      return (await invokeGraph(this.#graph, inputs, {
-        // Fill out
-        base,
-        kits: this.#options.kits,
-        loader: this.#options.loader,
-        start: "describe",
-      })) as NodeDescriberResult;
+      // Remove the artifacts of the describer from the input/output schemas.
+      // TODO: The right fix here is for static describer to not include
+      // describer outputs.
+      delete $outputSchema.properties?.inputSchema;
+      delete $outputSchema.properties?.outputSchema;
+      const result = await invokeGraph(
+        this.#graph,
+        { ...inputs, $inputSchema, $outputSchema },
+        {
+          base,
+          kits: this.#options.kits,
+          loader: this.#options.loader,
+          start: "describe",
+        }
+      );
+      if ("$error" in result) {
+        console.warn(
+          `Error while invoking graph's describe entry point`,
+          result.$error
+        );
+        return await this.#describeWithStaticAnalysis();
+      }
+      return result as NodeDescriberResult;
     } catch (e) {
       console.warn(`Error while invoking graph's describe entry point`, e);
       return await this.#describeWithStaticAnalysis();

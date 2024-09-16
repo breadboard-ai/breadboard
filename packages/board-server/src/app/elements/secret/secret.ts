@@ -192,6 +192,12 @@ export class SecretRequester extends LitElement {
         }}
       >
         ${this.secrets.map((secret) => {
+          if (secret.startsWith("connection:")) {
+            return html`<bb-connection-input
+              id=${secret}
+              .connectionId=${secret.slice("connection:".length)}
+            ></bb-connection-input>`;
+          }
           return html`<div class="secret">
             <label for=${secret}>${secret}</label>
             <input

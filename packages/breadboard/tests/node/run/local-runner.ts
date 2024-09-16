@@ -162,6 +162,7 @@ describe("LocalRunner", async () => {
         "edge",
         "nodestart",
         "nodeend",
+        "edge",
         "skip",
         "edge",
         "nodestart",

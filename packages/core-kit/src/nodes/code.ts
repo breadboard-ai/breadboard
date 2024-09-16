@@ -138,6 +138,11 @@ export function code<
       (type as CodeOutputConfig)["type"] ?? type;
     (node.outputs as Record<string, OutputPort<JsonSerializable>>)[name] = port;
   }
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  node.test = fn as Function as CodeNode<
+    Expand<CodeNodeInputs<I>>,
+    ConvertBreadboardTypes<O>
+  >["test"];
   return node;
 }
 
@@ -152,7 +157,15 @@ export type CodeNode<
     false,
     never,
     false
-  >;
+  > & {
+    test: (
+      params: Expand<StrictCodeFunctionParams<I>>
+    ) =>
+      | Expand<O>
+      | { $error: string | { message: string } }
+      | Promise<Expand<O>>
+      | Promise<{ $error: string | { message: string } }>;
+  };
 
 export interface CodeOutputConfig {
   type: BreadboardType;
@@ -182,7 +195,13 @@ type ConvertOutput<T extends BreadboardType | CodeOutputConfig> =
 type StrictCodeFunctionParams<
   I extends Record<string, Value<JsonSerializable> | StarInputs>,
 > = {
-  [K in keyof I as K extends "*" ? never : K]: I[K] extends
+  [K in keyof I as K extends "*"
+    ? never
+    : K extends "$id"
+      ? never
+      : K extends "$metadata"
+        ? never
+        : K]: I[K] extends
     | Convergence<infer T>
     | Loopback<infer T>
     | Value<infer T>

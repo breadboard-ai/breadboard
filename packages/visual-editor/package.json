@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/visual-editor",
-  "version": "1.18.1",
+  "version": "1.18.7",
   "description": "The Visual Editor for Breadboard",
   "main": "./build/index.js",
   "exports": {
@@ -86,7 +86,9 @@
         "tests/**/*.ts",
         "tsconfig.json",
         "../../core/tsconfig/base.json",
-        "package.json"
+        "package.json",
+        ".env.development",
+        ".env.production"
       ]
     },
     "build:tsc": {
@@ -259,7 +261,7 @@
     "typescript": "^5.5.4",
     "vite-plugin-full-reload": "^1.2.0",
     "vite-plugin-watch-and-run": "^1.7.0",
-    "vite": "^5.4.2",
+    "vite": "^5.4.5",
     "vitest": "^2.0.5"
   },
   "dependencies": {
@@ -271,7 +273,7 @@
     "@breadboard-ai/shared-ui": "^1.16.1",
     "@breadboard-ai/python-wasm": "0.1.5",
     "@codemirror/autocomplete": "^6.18.0",
-    "@codemirror/commands": "^6.6.0",
+    "@codemirror/commands": "^6.6.1",
     "@codemirror/lang-javascript": "^6.2.2",
     "@dagrejs/dagre": "^1.1.4",
     "@google-labs/agent-kit": "^0.11.0",
