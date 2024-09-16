@@ -21,7 +21,7 @@ paths:
   /boards:
     get:
       summary: List boards
-      operationId: boardserver.boards.list
+      operationId: boardserver_boards_list
       responses:
         "200":
           description: Successful response
@@ -43,7 +43,7 @@ paths:
       - $ref: "#/components/parameters/BoardNameParam"
     get:
       summary: Get a board
-      operationId: boardserver.boards.get
+      operationId: boardserver_boards_get
       responses:
         "200":
           description: Successful response
@@ -59,7 +59,7 @@ paths:
                 $ref: "#/components/schemas/Error"
     post:
       summary: Create or update a board
-      operationId: boardserver.boards.post
+      operationId: boardserver_boards_post
       security:
         - ApiKeyAuth: []
       requestBody:
@@ -87,7 +87,7 @@ paths:
       - $ref: "#/components/parameters/BoardNameParam"
     get:
       summary: Serve frontend app
-      operationId: boardserver.boards.serve
+      operationId: boardserver_boards_serve
       responses:
         "200":
           description: Successful response
@@ -107,7 +107,7 @@ paths:
       - $ref: "#/components/parameters/BoardNameParam"
     get:
       summary: Serve API explorer
-      operationId: boardserver.boards.api.get
+      operationId: boardserver_boards_api_get
       responses:
         "200":
           description: Successful response
@@ -127,7 +127,7 @@ paths:
       - $ref: "#/components/parameters/BoardNameParam"
     post:
       summary: Invoke API
-      operationId: boardserver.boards.api.invoke
+      operationId: boardserver_boards_api_invoke
       requestBody:
         required: true
         content:
@@ -153,7 +153,7 @@ paths:
       - $ref: "#/components/parameters/BoardNameParam"
     get:
       summary: Get API description
-      operationId: boardserver.boards.api.describe
+      operationId: boardserver_boards_api_describe
       responses:
         "200":
           description: Successful response
@@ -173,7 +173,7 @@ paths:
       - $ref: "#/components/parameters/BoardNameParam"
     post:
       summary: Execute the board
-      operationId: boardserver.boards.api.run
+      operationId: boardserver_boards_api_run
       requestBody:
         required: true
         content:
@@ -199,7 +199,7 @@ paths:
       - $ref: "#/components/parameters/BoardNameParam"
     get:
       summary: List invites
-      operationId: boardserver.boards.invite
+      operationId: boardserver_boards_invite
       security:
         - ApiKeyAuth: []
       responses:
@@ -217,7 +217,7 @@ paths:
                 $ref: "#/components/schemas/Error"
     post:
       summary: Create or delete an invite
-      operationId: boardserver.boards.invites.post
+      operationId: boardserver_boards_invites_post
       security:
         - ApiKeyAuth: []
       requestBody:
