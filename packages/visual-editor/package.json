@@ -272,7 +272,7 @@
     "@breadboard-ai/manifest": "^0.4.3",
     "@breadboard-ai/shared-ui": "^1.16.1",
     "@breadboard-ai/python-wasm": "0.1.5",
-    "@codemirror/autocomplete": "^6.18.0",
+    "@codemirror/autocomplete": "^6.18.1",
     "@codemirror/commands": "^6.6.1",
     "@codemirror/lang-javascript": "^6.2.2",
     "@dagrejs/dagre": "^1.1.4",
