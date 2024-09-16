@@ -345,8 +345,8 @@ export class Main extends LitElement {
                 );
               }
 
-              // TODO: Confirm run URL.
-              const isRun = this.tab.graph.url?.startsWith("run://");
+              // TODO: Confirm descriptor URL.
+              const isRun = this.tab.graph.url?.startsWith("descriptor://");
               if (this.tab.graph.url && !isRun) {
                 this.#setUrlParam("board", this.tab.graph.url);
                 const base = new URL(window.location.href);
