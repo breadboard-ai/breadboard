@@ -705,7 +705,8 @@ export class Main extends LitElement {
       this.#runtime.board.loadFromDescriptor(
         runGraph,
         topGraphObserver,
-        observers.runObserver
+        observers.runObserver,
+        true
       );
     }
   }
@@ -721,6 +722,9 @@ export class Main extends LitElement {
     }
 
     const tabToSave = this.tab;
+    if (tabToSave.readOnly) {
+      return;
+    }
 
     if (timeout !== 0) {
       const saveId = globalThis.crypto.randomUUID();
@@ -1143,7 +1147,8 @@ export class Main extends LitElement {
                 this.#runtime.board.loadFromDescriptor(
                   descriptor,
                   topGraphObserver,
-                  runObserver
+                  runObserver,
+                  true
                 );
               } else {
                 this.toast(
@@ -1378,9 +1383,11 @@ export class Main extends LitElement {
                   tab.graph.graphs[tab.subGraphId].title || "Untitled Subgraph";
               }
 
-              const canSave = this.#runtime.board.canSave(id);
+              const canSave = this.#runtime.board.canSave(id) && !tab.readOnly;
               const saveStatus = this.#tabSaveStatus.get(id) ?? "saved";
               const remote = tab.graph.url?.startsWith("http") ?? false;
+              const readonly = tab.readOnly;
+
               let saveTitle = "Saved";
               switch (saveStatus) {
                 case BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING: {
@@ -1392,6 +1399,10 @@ export class Main extends LitElement {
                   saveTitle = remote
                     ? "Saved on Board Server"
                     : "Saved on device";
+
+                  if (readonly) {
+                    saveTitle += " - read-only";
+                  }
                   break;
                 }
 
@@ -1431,6 +1442,7 @@ export class Main extends LitElement {
                     "can-save": canSave,
                     remote,
                     [saveStatus]: true,
+                    readonly,
                   })}
                   title=${saveTitle}
                 ></div>
@@ -1484,6 +1496,7 @@ export class Main extends LitElement {
         <bb-ui-controller
               ${ref(this.#uiRef)}
               ?inert=${showingOverlay}
+              .readOnly=${this.tab?.readOnly ?? true}
               .graph=${this.tab?.graph ?? null}
               .subGraphId=${this.tab?.subGraphId ?? null}
               .run=${runs[0] ?? null}

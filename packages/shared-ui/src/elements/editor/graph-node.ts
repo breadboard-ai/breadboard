@@ -495,6 +495,7 @@ export class GraphNode extends PIXI.Container {
   }
 
   set inPorts(ports: InspectablePort[] | null) {
+    this.#footer.readOnly = this.readOnly;
     this.#footer.inPorts = ports;
     this.#inPorts = ports;
     this.#isDirty = true;
@@ -548,9 +549,11 @@ export class GraphNode extends PIXI.Container {
         });
       }
 
+      portItem.label.readOnly = this.readOnly;
       portItem.label.showNodePreviewValues = this.showNodePreviewValues;
       portItem.label.port = port;
       portItem.port = port;
+      portItem.nodePort.readOnly = this.readOnly;
     }
 
     for (const [inPortName, portItem] of this.#inPortsData) {

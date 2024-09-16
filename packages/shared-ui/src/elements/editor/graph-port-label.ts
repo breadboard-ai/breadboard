@@ -48,6 +48,8 @@ export class GraphPortLabel extends PIXI.Container {
   #showNodePreviewValues = false;
   #isConfigurable = false;
 
+  readOnly = false;
+
   constructor(port: InspectablePort, showNodePreviewValues: boolean) {
     super();
 
@@ -129,7 +131,7 @@ export class GraphPortLabel extends PIXI.Container {
     });
 
     this.addEventListener("click", (evt: PIXI.FederatedPointerEvent) => {
-      if (!this.isConfigurable) {
+      if (!this.isConfigurable || this.readOnly) {
         return;
       }
 
@@ -180,7 +182,7 @@ export class GraphPortLabel extends PIXI.Container {
     this.#isConfigurable = isConfigurable;
     this.#isDirty = true;
 
-    if (isConfigurable) {
+    if (isConfigurable && !this.readOnly) {
       this.eventMode = "static";
       this.#hoverZone.cursor = "pointer";
     } else {
@@ -218,7 +220,7 @@ export class GraphPortLabel extends PIXI.Container {
   #draw() {
     this.#hoverZone.clear();
 
-    if (!this.isConfigurable) {
+    if (!this.isConfigurable || this.readOnly) {
       return;
     }
 

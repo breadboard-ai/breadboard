@@ -93,8 +93,14 @@ export class Board extends EventTarget {
   async loadFromDescriptor(
     descriptor: GraphDescriptor,
     topGraphObserver?: BreadboardUI.Utils.TopGraphObserver,
-    runObserver?: InspectableRunObserver
+    runObserver?: InspectableRunObserver,
+    readOnly = true
   ) {
+    // TODO: Figure out the actual URLs to use for runs.
+    if (descriptor.url) {
+      descriptor.url = `run://${globalThis.crypto.randomUUID()}`;
+    }
+
     const id = globalThis.crypto.randomUUID();
     this.#tabs.set(id, {
       id,
@@ -103,6 +109,7 @@ export class Board extends EventTarget {
       graph: descriptor,
       subGraphId: null,
       version: 1,
+      readOnly,
     });
 
     this.#currentTabId = id;
@@ -114,7 +121,8 @@ export class Board extends EventTarget {
   async loadFromURL(
     boardUrl: string,
     currentUrl: string | null = null,
-    createNewTab = false
+    createNewTab = false,
+    readOnly = false
   ) {
     let url = this.#makeRelativeToCurrentBoard(boardUrl, currentUrl);
 
@@ -173,6 +181,7 @@ export class Board extends EventTarget {
         graph,
         subGraphId: null,
         version: 1,
+        readOnly,
       });
 
       this.#currentTabId = id;

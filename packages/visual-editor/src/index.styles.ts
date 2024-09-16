@@ -235,7 +235,8 @@ export const styles = css`
     display: none;
   }
 
-  #tab-container .save-status.can-save {
+  #tab-container .save-status.can-save,
+  #tab-container .save-status.readonly {
     display: block;
   }
 
@@ -261,6 +262,11 @@ export const styles = css`
 
   #tab-container .save-status.saved.remote {
     background: transparent var(--bb-icon-saved-remote) center center / 20px
+      20px no-repeat;
+  }
+
+  #tab-container .save-status.readonly {
+    background: transparent var(--bb-icon-saved-readonly) center center / 20px
       20px no-repeat;
   }
 

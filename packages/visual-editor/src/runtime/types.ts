@@ -22,6 +22,7 @@ export interface Tab {
   graph: GraphDescriptor;
   subGraphId: string | null;
   version: number;
+  readOnly: boolean;
 }
 
 export interface VERuntimeConfig {
