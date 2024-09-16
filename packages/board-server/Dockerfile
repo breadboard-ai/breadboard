@@ -13,7 +13,7 @@ WORKDIR /build/packages/board-server
 RUN npm run build
 
 # Production stage
-FROM node:20-slim
+FROM node:20
 
 ARG STORAGE_BACKEND
 ARG ALLOWED_ORIGINS=""
