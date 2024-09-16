@@ -24,7 +24,9 @@
     "dev:nowatch": "wireit",
     "test": "wireit",
     "test:integration": "wireit",
-    "generate": "rimraf generated ; npx -y @openapitools/openapi-generator-cli generate"
+    "generate": "rimraf generated ; npx -y @openapitools/openapi-generator-cli generate",
+    "lint": "wireit",
+    "lint:spec": "npx -y @redocly/cli lint openapi.yaml"
   },
   "wireit": {
     "build": {
@@ -156,6 +158,11 @@
       ],
       "files": [],
       "output": []
+    },
+    "lint": {
+      "dependencies": [
+        "lint:spec"
+      ]
     }
   },
   "repository": {
