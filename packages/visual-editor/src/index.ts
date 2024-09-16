@@ -345,7 +345,9 @@ export class Main extends LitElement {
                 );
               }
 
-              if (this.tab.graph.url) {
+              // TODO: Confirm run URL.
+              const isRun = this.tab.graph.url?.startsWith("run://");
+              if (this.tab.graph.url && !isRun) {
                 this.#setUrlParam("board", this.tab.graph.url);
                 const base = new URL(window.location.href);
                 const decodedUrl = decodeURIComponent(base.href);
