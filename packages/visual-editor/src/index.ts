@@ -345,9 +345,10 @@ export class Main extends LitElement {
                 );
               }
 
-              // TODO: Confirm descriptor URL.
-              const isRun = this.tab.graph.url?.startsWith("descriptor://");
-              if (this.tab.graph.url && !isRun) {
+              if (
+                this.tab.graph.url &&
+                this.tab.type === Runtime.Types.TabType.URL
+              ) {
                 this.#setUrlParam("board", this.tab.graph.url);
                 const base = new URL(window.location.href);
                 const decodedUrl = decodeURIComponent(base.href);
@@ -478,7 +479,7 @@ export class Main extends LitElement {
 
         // Start the board or show the welcome panel.
         if (boardFromUrl) {
-          this.#runtime.board.loadFromURL(boardFromUrl);
+          this.#runtime.board.createTabFromURL(boardFromUrl);
           return;
         } else {
           this.showWelcomePanel = true;
@@ -552,7 +553,7 @@ export class Main extends LitElement {
             return;
           }
 
-          this.#runtime.board.loadFromDescriptor(descriptor);
+          this.#runtime.board.createTabFromDescriptor(descriptor);
         } catch (err) {
           this.toast(
             "Unable to paste board",
@@ -704,7 +705,7 @@ export class Main extends LitElement {
     const runGraph = topGraphObserver.current()?.graph ?? null;
     if (runGraph) {
       runGraph.title = evt.nodeTitle;
-      this.#runtime.board.loadFromDescriptor(
+      this.#runtime.board.createTabFromRun(
         runGraph,
         topGraphObserver,
         observers.runObserver,
@@ -1092,7 +1093,11 @@ export class Main extends LitElement {
 
   async #changeBoard(url: string, createNewTab = false) {
     try {
-      this.#runtime.board.loadFromURL(url, this.tab?.graph.url, createNewTab);
+      this.#runtime.board.createTabFromURL(
+        url,
+        this.tab?.graph.url,
+        createNewTab
+      );
     } catch (err) {
       this.toast(
         `Unable to load file: ${url}`,
@@ -1146,7 +1151,7 @@ export class Main extends LitElement {
               const descriptor = topGraphObserver?.current()?.graph ?? null;
 
               if (descriptor) {
-                this.#runtime.board.loadFromDescriptor(
+                this.#runtime.board.createTabFromRun(
                   descriptor,
                   topGraphObserver,
                   runObserver,
@@ -1166,7 +1171,7 @@ export class Main extends LitElement {
             }
           });
         } else {
-          this.#runtime.board.loadFromDescriptor(runData);
+          this.#runtime.board.createTabFromDescriptor(runData);
         }
       } catch (err) {
         console.warn(err);
@@ -1177,9 +1182,9 @@ export class Main extends LitElement {
 
   #attemptBoardStart(evt: BreadboardUI.Events.StartEvent) {
     if (evt.url) {
-      this.#runtime.board.loadFromURL(evt.url);
+      this.#runtime.board.createTabFromURL(evt.url);
     } else if (evt.descriptor) {
-      this.#runtime.board.loadFromDescriptor(evt.descriptor);
+      this.#runtime.board.createTabFromDescriptor(evt.descriptor);
     }
   }
 

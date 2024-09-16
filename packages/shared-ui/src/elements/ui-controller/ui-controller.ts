@@ -449,6 +449,7 @@ export class UI extends LitElement {
       ],
       () => {
         return html`<bb-board-details
+          .readOnly=${this.readOnly}
           .boardTitle=${boardTitle}
           .boardVersion=${boardVersion}
           .boardDescription=${boardDescription}

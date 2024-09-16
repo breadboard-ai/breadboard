@@ -12,6 +12,12 @@ import {
   RunStore,
 } from "@google-labs/breadboard";
 
+export enum TabType {
+  URL,
+  DESCRIPTOR,
+  RUN,
+}
+
 export type TabId = `${string}-${string}-${string}-${string}-${string}`;
 export type TabURL = string;
 export type TabName = string;
@@ -23,6 +29,7 @@ export interface Tab {
   subGraphId: string | null;
   version: number;
   readOnly: boolean;
+  type: TabType;
 }
 
 export interface VERuntimeConfig {
