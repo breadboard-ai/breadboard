@@ -31,6 +31,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/BoardListEntry"
+        "4xx":
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /boards/@{account}/{boardName}.json:
     parameters:
       - $ref: "#/components/parameters/AccountParam"
@@ -45,6 +51,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Board"
+        "4xx":
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
     post:
       summary: Create or update a board
       operationId: boardserver.boards.post
@@ -63,6 +75,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BoardCreationResponse"
+        "4xx":
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /boards/@{account}/{boardName}.app:
     parameters:
       - $ref: "#/components/parameters/AccountParam"
@@ -77,6 +95,12 @@ paths:
             text/html:
               schema:
                 type: string
+        "4xx":
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /boards/@{account}/{boardName}.api:
     parameters:
       - $ref: "#/components/parameters/AccountParam"
@@ -91,6 +115,12 @@ paths:
             text/html:
               schema:
                 type: string
+        "4xx":
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /boards/@{account}/{boardName}.api/invoke:
     parameters:
       - $ref: "#/components/parameters/AccountParam"
@@ -111,6 +141,12 @@ paths:
             application/json:
               schema:
                 type: object
+        "4xx":
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /boards/@{account}/{boardName}.api/describe:
     parameters:
       - $ref: "#/components/parameters/AccountParam"
@@ -125,6 +161,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiDescription"
+        "4xx":
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /boards/@{account}/{boardName}.api/run:
     parameters:
       - $ref: "#/components/parameters/AccountParam"
@@ -145,6 +187,12 @@ paths:
             text/event-stream:
               schema:
                 type: string
+        "4xx":
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /boards/@{account}/{boardName}.invite:
     parameters:
       - $ref: "#/components/parameters/AccountParam"
@@ -161,6 +209,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/InviteListResponse"
+        "4xx":
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
     post:
       summary: Create or delete an invite
       operationId: boardserver.boards.invites.post
@@ -179,6 +233,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/InviteResponse"
+        "4xx":
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -471,3 +531,8 @@ components:
           properties:
             error:
               type: string
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
