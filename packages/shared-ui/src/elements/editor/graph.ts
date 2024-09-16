@@ -205,7 +205,7 @@ export class Graph extends PIXI.Container {
     });
 
     this.addListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
-      if (!evt.isPrimary || this.readOnly) {
+      if (!evt.isPrimary) {
         return;
       }
 

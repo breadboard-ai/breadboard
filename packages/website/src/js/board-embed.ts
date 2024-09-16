@@ -72,6 +72,17 @@ export class BoardEmbed extends LitElement {
       display: block;
     }
 
+    #overlay {
+      border-radius: 8px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: transparent;
+      z-index: 1;
+    }
+
     #see-in-ve {
       position: absolute;
       bottom: var(--bb-grid-size-2);
@@ -135,7 +146,9 @@ export class BoardEmbed extends LitElement {
         .hideSubboardSelectorWhenEmpty=${true}
         .showNodePreviewValues=${false}
         .readOnly=${true}
+        .disallowPanZoom=${true}
       ></bb-editor>
+      <div id="overlay"></div>
       ${this.url
         ? html`<a
             id="see-in-ve"

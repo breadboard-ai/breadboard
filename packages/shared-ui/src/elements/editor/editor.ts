@@ -140,6 +140,9 @@ export class Editor extends LitElement {
   readOnly = false;
 
   @property()
+  disallowPanZoom = false;
+
+  @property()
   showReadOnlyOverlay = false;
 
   @property()
@@ -494,6 +497,7 @@ export class Editor extends LitElement {
     }
 
     this.#graphVersion++;
+    this.#graphRenderer.disallowPanZoom = this.disallowPanZoom;
     this.#graphRenderer.readOnly = this.readOnly;
     this.#graphRenderer.highlightInvalidWires = this.highlightInvalidWires;
 
@@ -772,6 +776,10 @@ export class Editor extends LitElement {
   }
 
   async #onKeyDown(evt: KeyboardEvent) {
+    if (this.readOnly) {
+      return;
+    }
+
     const isMac = navigator.platform.indexOf("Mac") === 0;
     const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
@@ -1202,6 +1210,10 @@ export class Editor extends LitElement {
       this.subGraphId
     );
 
+    if (this.readOnly) {
+      return;
+    }
+
     this.#ignoreNextUpdate = true;
     this.dispatchEvent(editsEvt);
   }
@@ -1463,255 +1475,256 @@ export class Editor extends LitElement {
 
     return html`${until(this.#processGraph())}
       ${
-        this.showControls && this.graph !== null && !this.readOnly
-          ? html` <div id="controls">
-                <button
-                  title="Zoom to fit"
-                  id="zoom-to-fit"
-                  @click=${() => this.#graphRenderer.zoomToFit()}
-                >
-                  Zoom to fit
-                </button>
-                <button
-                  title="Reset Layout"
-                  id="reset-layout"
-                  @click=${() => {
-                    this.#graphRenderer.resetGraphLayout();
-                  }}
-                >
-                  Reset Layout
-                </button>
+        this.showControls && this.graph !== null
+          ? html` ${this.readOnly
+              ? nothing
+              : html`
+                  <div id="controls">
+                    <button
+                      title="Zoom to fit"
+                      id="zoom-to-fit"
+                      @click=${() => this.#graphRenderer.zoomToFit()}
+                    >
+                      Zoom to fit
+                    </button>
+                    <button
+                      title="Reset Layout"
+                      id="reset-layout"
+                      @click=${() => {
+                        this.#graphRenderer.resetGraphLayout();
+                      }}
+                    >
+                      Reset Layout
+                    </button>
 
-                ${showSubGraphSelector
-                  ? html`<div class="divider"></div>
-                      <select
-                        id="subgraph-selector"
-                        @input=${(evt: Event) => {
-                          if (!(evt.target instanceof HTMLSelectElement)) {
-                            return;
-                          }
+                    ${showSubGraphSelector
+                      ? html`<div class="divider"></div>
+                          <select
+                            id="subgraph-selector"
+                            @input=${(evt: Event) => {
+                              if (!(evt.target instanceof HTMLSelectElement)) {
+                                return;
+                              }
 
-                          this.dispatchEvent(
-                            new SubGraphChosenEvent(evt.target.value)
-                          );
-                        }}
-                      >
-                        <option
-                          ?selected=${this.subGraphId === null}
-                          value="${MAIN_BOARD_ID}"
-                        >
-                          Main board
-                        </option>
-                        ${map(
-                          Object.entries(subGraphs || []),
-                          ([subGraphId, subGraph]) => {
-                            return html`<option
-                              value="${subGraphId}"
-                              ?selected=${subGraphId === this.subGraphId}
+                              this.dispatchEvent(
+                                new SubGraphChosenEvent(evt.target.value)
+                              );
+                            }}
+                          >
+                            <option
+                              ?selected=${this.subGraphId === null}
+                              value="${MAIN_BOARD_ID}"
                             >
-                              ${subGraph.title || subGraphId}
-                            </option>`;
-                          }
-                        )}
-                      </select>`
-                  : nothing}
-                <button
-                  id="add-sub-board"
-                  title="Add new sub board"
-                  @click=${() => this.#proposeNewSubGraph()}
-                >
-                  Add sub board
-                </button>
-                <button
-                  id="delete-sub-board"
-                  title="Delete this sub board"
-                  ?disabled=${this.subGraphId === null}
-                  @click=${() => {
-                    if (!this.subGraphId) {
-                      return;
-                    }
-
-                    if (
-                      !confirm(
-                        "Are you sure you wish to delete this sub board?"
-                      )
-                    ) {
-                      return;
-                    }
-
-                    this.dispatchEvent(
-                      new SubGraphDeleteEvent(this.subGraphId)
-                    );
-                  }}
-                >
-                  Delete sub board
-                </button>
-                <div class="divider"></div>
-                <button
-                  title="Zoom to highlighted component during runs"
-                  id="active-component"
-                  class=${classMap({
-                    active: this.zoomToHighlightedNodeDuringRuns,
-                  })}
-                  @click=${() => {
-                    const shouldZoom = !this.zoomToHighlightedNodeDuringRuns;
-                    this.zoomToHighlightedNodeDuringRuns = shouldZoom;
-                    this.#graphRenderer.zoomToHighlightedNode = shouldZoom;
-                    globalThis.sessionStorage.setItem(
-                      ZOOM_KEY,
-                      shouldZoom.toString()
-                    );
-
-                    if (!shouldZoom) {
-                      return;
-                    }
-
-                    if (this.topGraphResult?.currentNode) {
-                      this.#graphRenderer.zoomToNode(
-                        this.topGraphResult.currentNode.descriptor.id
-                      );
-                    }
-                  }}
-                >
-                  Follow run
-                </button>
-              </div>
-
-              ${this.graph !== null
-                ? html`
-                    <div id="nodes">
-                      <input
-                        ${ref(this.#addButtonRef)}
-                        name="add-node"
-                        id="add-node"
-                        type="checkbox"
-                        @input=${(evt: InputEvent) => {
-                          if (!(evt.target instanceof HTMLInputElement)) {
-                            return;
-                          }
-
-                          if (!this.#nodeSelectorRef.value) {
-                            return;
-                          }
-
-                          const nodeSelector = this.#nodeSelectorRef.value;
-                          nodeSelector.inert = !evt.target.checked;
-
-                          if (!evt.target.checked) {
-                            return;
-                          }
-                          nodeSelector.selectSearchInput();
-                        }}
-                      />
-                      <label for="add-node">Components</label>
-
-                      <bb-node-selector
-                        ${ref(this.#nodeSelectorRef)}
-                        inert
-                        .graph=${this.graph}
-                        .showExperimentalComponents=${this
-                          .showExperimentalComponents}
-                        @bbkitnodechosen=${(evt: KitNodeChosenEvent) => {
-                          const id = this.#createRandomID(evt.nodeType);
-                          this.dispatchEvent(
-                            new NodeCreateEvent(id, evt.nodeType)
-                          );
-                        }}
-                      ></bb-node-selector>
-
-                      ${this.showNodeShortcuts
-                        ? html`<div class="divider"></div>
-                            <button
-                              draggable="true"
-                              title="Add Specialist"
-                              id="shortcut-add-specialist"
-                              @dblclick=${() => {
-                                const id = this.#createRandomID("specialist");
-                                this.#graphRenderer.deselectAllChildren();
-                                this.dispatchEvent(
-                                  new NodeCreateEvent(id, "specialist")
-                                );
-                              }}
-                              @dragstart=${(evt: DragEvent) => {
-                                if (!evt.dataTransfer) {
-                                  return;
-                                }
-                                evt.dataTransfer.setData(
-                                  DATA_TYPE,
-                                  "specialist"
-                                );
-                              }}
-                            >
-                              Add Specialist
-                            </button>
-                            <button
-                              draggable="true"
-                              title="Add human"
-                              id="shortcut-add-human"
-                              @dblclick=${() => {
-                                const id = this.#createRandomID("human");
-                                this.#graphRenderer.deselectAllChildren();
-                                this.dispatchEvent(
-                                  new NodeCreateEvent(id, "human")
-                                );
-                              }}
-                              @dragstart=${(evt: DragEvent) => {
-                                if (!evt.dataTransfer) {
-                                  return;
-                                }
-                                evt.dataTransfer.setData(DATA_TYPE, "human");
-                              }}
-                            >
-                              Add Human
-                            </button>
-                            <button
-                              draggable="true"
-                              title="Add looper"
-                              id="shortcut-add-looper"
-                              @dblclick=${() => {
-                                const id = this.#createRandomID("looper");
-                                this.#graphRenderer.deselectAllChildren();
-                                this.dispatchEvent(
-                                  new NodeCreateEvent(id, "looper")
-                                );
-                              }}
-                              @dragstart=${(evt: DragEvent) => {
-                                if (!evt.dataTransfer) {
-                                  return;
-                                }
-                                evt.dataTransfer.setData(DATA_TYPE, "looper");
-                              }}
-                            >
-                              Add Human
-                            </button>
-                            <button
-                              draggable="true"
-                              title="Add comment"
-                              id="shortcut-add-comment"
-                              @dblclick=${() => {
-                                const id = this.#createRandomID("comment");
-                                this.#graphRenderer.deselectAllChildren();
-                                this.dispatchEvent(
-                                  new NodeCreateEvent(id, "comment")
-                                );
-                              }}
-                              @dragstart=${(evt: DragEvent) => {
-                                if (!evt.dataTransfer) {
-                                  return;
-                                }
-                                evt.dataTransfer.setData(DATA_TYPE, "comment");
-                              }}
-                            >
-                              Add Human
-                            </button>`
-                        : nothing}
-                    </div>
-
-                    ${this.readOnly
-                      ? html`<section id="readonly-overlay">Read-only View</div>`
+                              Main board
+                            </option>
+                            ${map(
+                              Object.entries(subGraphs || []),
+                              ([subGraphId, subGraph]) => {
+                                return html`<option
+                                  value="${subGraphId}"
+                                  ?selected=${subGraphId === this.subGraphId}
+                                >
+                                  ${subGraph.title || subGraphId}
+                                </option>`;
+                              }
+                            )}
+                          </select>`
                       : nothing}
-                  `
-                : nothing}`
+                    <button
+                      id="add-sub-board"
+                      title="Add new sub board"
+                      @click=${() => this.#proposeNewSubGraph()}
+                    >
+                      Add sub board
+                    </button>
+                    <button
+                      id="delete-sub-board"
+                      title="Delete this sub board"
+                      ?disabled=${this.subGraphId === null}
+                      @click=${() => {
+                        if (!this.subGraphId) {
+                          return;
+                        }
+
+                        if (
+                          !confirm(
+                            "Are you sure you wish to delete this sub board?"
+                          )
+                        ) {
+                          return;
+                        }
+
+                        this.dispatchEvent(
+                          new SubGraphDeleteEvent(this.subGraphId)
+                        );
+                      }}
+                    >
+                      Delete sub board
+                    </button>
+                    <div class="divider"></div>
+                    <button
+                      title="Zoom to highlighted component during runs"
+                      id="active-component"
+                      class=${classMap({
+                        active: this.zoomToHighlightedNodeDuringRuns,
+                      })}
+                      @click=${() => {
+                        const shouldZoom =
+                          !this.zoomToHighlightedNodeDuringRuns;
+                        this.zoomToHighlightedNodeDuringRuns = shouldZoom;
+                        this.#graphRenderer.zoomToHighlightedNode = shouldZoom;
+                        globalThis.sessionStorage.setItem(
+                          ZOOM_KEY,
+                          shouldZoom.toString()
+                        );
+
+                        if (!shouldZoom) {
+                          return;
+                        }
+
+                        if (this.topGraphResult?.currentNode) {
+                          this.#graphRenderer.zoomToNode(
+                            this.topGraphResult.currentNode.descriptor.id
+                          );
+                        }
+                      }}
+                    >
+                      Follow run
+                    </button>
+                  </div>
+                `}
+            ${this.graph !== null
+              ? html`
+                  <div id="nodes">
+                    <input
+                      ${ref(this.#addButtonRef)}
+                      name="add-node"
+                      id="add-node"
+                      type="checkbox"
+                      @input=${(evt: InputEvent) => {
+                        if (!(evt.target instanceof HTMLInputElement)) {
+                          return;
+                        }
+
+                        if (!this.#nodeSelectorRef.value) {
+                          return;
+                        }
+
+                        const nodeSelector = this.#nodeSelectorRef.value;
+                        nodeSelector.inert = !evt.target.checked;
+
+                        if (!evt.target.checked) {
+                          return;
+                        }
+                        nodeSelector.selectSearchInput();
+                      }}
+                    />
+                    <label for="add-node">Components</label>
+
+                    <bb-node-selector
+                      ${ref(this.#nodeSelectorRef)}
+                      inert
+                      .graph=${this.graph}
+                      .showExperimentalComponents=${this
+                        .showExperimentalComponents}
+                      @bbkitnodechosen=${(evt: KitNodeChosenEvent) => {
+                        const id = this.#createRandomID(evt.nodeType);
+                        this.dispatchEvent(
+                          new NodeCreateEvent(id, evt.nodeType)
+                        );
+                      }}
+                    ></bb-node-selector>
+
+                    ${this.showNodeShortcuts
+                      ? html`<div class="divider"></div>
+                          <button
+                            draggable="true"
+                            title="Add Specialist"
+                            id="shortcut-add-specialist"
+                            @dblclick=${() => {
+                              const id = this.#createRandomID("specialist");
+                              this.#graphRenderer.deselectAllChildren();
+                              this.dispatchEvent(
+                                new NodeCreateEvent(id, "specialist")
+                              );
+                            }}
+                            @dragstart=${(evt: DragEvent) => {
+                              if (!evt.dataTransfer) {
+                                return;
+                              }
+                              evt.dataTransfer.setData(DATA_TYPE, "specialist");
+                            }}
+                          >
+                            Add Specialist
+                          </button>
+                          <button
+                            draggable="true"
+                            title="Add human"
+                            id="shortcut-add-human"
+                            @dblclick=${() => {
+                              const id = this.#createRandomID("human");
+                              this.#graphRenderer.deselectAllChildren();
+                              this.dispatchEvent(
+                                new NodeCreateEvent(id, "human")
+                              );
+                            }}
+                            @dragstart=${(evt: DragEvent) => {
+                              if (!evt.dataTransfer) {
+                                return;
+                              }
+                              evt.dataTransfer.setData(DATA_TYPE, "human");
+                            }}
+                          >
+                            Add Human
+                          </button>
+                          <button
+                            draggable="true"
+                            title="Add looper"
+                            id="shortcut-add-looper"
+                            @dblclick=${() => {
+                              const id = this.#createRandomID("looper");
+                              this.#graphRenderer.deselectAllChildren();
+                              this.dispatchEvent(
+                                new NodeCreateEvent(id, "looper")
+                              );
+                            }}
+                            @dragstart=${(evt: DragEvent) => {
+                              if (!evt.dataTransfer) {
+                                return;
+                              }
+                              evt.dataTransfer.setData(DATA_TYPE, "looper");
+                            }}
+                          >
+                            Add Human
+                          </button>
+                          <button
+                            draggable="true"
+                            title="Add comment"
+                            id="shortcut-add-comment"
+                            @dblclick=${() => {
+                              const id = this.#createRandomID("comment");
+                              this.#graphRenderer.deselectAllChildren();
+                              this.dispatchEvent(
+                                new NodeCreateEvent(id, "comment")
+                              );
+                            }}
+                            @dragstart=${(evt: DragEvent) => {
+                              if (!evt.dataTransfer) {
+                                return;
+                              }
+                              evt.dataTransfer.setData(DATA_TYPE, "comment");
+                            }}
+                          >
+                            Add Human
+                          </button>`
+                      : nothing}
+                  </div>
+
+                  ${this.readOnly
+                    ? html`<section id="readonly-overlay">Read-only View</div>`
+                    : nothing}
+                `
+              : nothing}`
           : nothing
       }
       </div>`;

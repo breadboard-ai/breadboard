@@ -193,10 +193,6 @@ export class GraphNode extends PIXI.Container {
     let hasMoved = false;
 
     this.addEventListener("click", (evt: PIXI.FederatedPointerEvent) => {
-      if (this.readOnly) {
-        return;
-      }
-
       const clickDelta = window.performance.now() - this.#lastClickTime;
       this.#lastClickTime = window.performance.now();
 
@@ -229,19 +225,11 @@ export class GraphNode extends PIXI.Container {
     });
 
     this.addEventListener("pointerover", () => {
-      if (this.readOnly) {
-        return;
-      }
-
       this.cursor = "pointer";
     });
 
     this.addEventListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
-      if (
-        !(evt.target instanceof GraphNode) ||
-        !evt.isPrimary ||
-        this.readOnly
-      ) {
+      if (!(evt.target instanceof GraphNode) || !evt.isPrimary) {
         return;
       }
 

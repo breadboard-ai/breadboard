@@ -396,6 +396,7 @@ export class UI extends LitElement {
           .selectedNodeIds=${this.selectedNodeIds}
           .subGraphId=${this.subGraphId}
           .graph=${graph}
+          .readOnly=${this.readOnly}
         ></bb-node-meta-details>`;
       }
     );

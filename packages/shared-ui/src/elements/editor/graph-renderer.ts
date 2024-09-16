@@ -92,6 +92,9 @@ export class GraphRenderer extends LitElement {
   @property()
   showPortTooltips = false;
 
+  @property()
+  disallowPanZoom = false;
+
   @state()
   private _portTooltip?: {
     location: PIXI.ObservablePoint;
@@ -439,7 +442,7 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.addListener(
       "pointerdown",
       (evt: PIXI.FederatedPointerEvent) => {
-        if (!evt.isPrimary || this.readOnly) {
+        if (!evt.isPrimary) {
           return;
         }
 
@@ -464,7 +467,7 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.addListener(
       "pointermove",
       (evt: PIXI.FederatedPointerEvent) => {
-        if (!evt.isPrimary || this.readOnly) {
+        if (!evt.isPrimary) {
           return;
         }
 
@@ -495,12 +498,12 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.addListener("pointerup", onPointerUp);
     this.#app.stage.addListener("pointerupoutside", onPointerUp);
 
-    if (this.readOnly) {
+    if (this.disallowPanZoom) {
       return;
     }
 
     const onWheel = (evt: PIXI.FederatedWheelEvent) => {
-      if (this.readOnly) {
+      if (this.disallowPanZoom) {
         this.#app.stage.off("wheel", onWheel);
       }
 
