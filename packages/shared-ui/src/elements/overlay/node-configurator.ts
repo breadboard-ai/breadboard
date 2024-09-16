@@ -19,6 +19,7 @@ import {
   OverlayDismissedEvent,
 } from "../../events/events.js";
 import { EditorMode, filterConfigByMode } from "../../utils/mode.js";
+import { classMap } from "lit/directives/class-map.js";
 
 const OVERLAY_CLEARANCE = 60;
 
@@ -84,6 +85,10 @@ export class NodeConfigurationOverlay extends LitElement {
       background: transparent var(--bb-icon-wrench) center center / 20px 20px
         no-repeat;
       margin-right: var(--bb-grid-size-2);
+    }
+
+    h1 span {
+      flex: 1;
     }
 
     #content {
@@ -161,6 +166,23 @@ export class NodeConfigurationOverlay extends LitElement {
     #update:focus {
       background: var(--bb-ui-600);
       transition-duration: 0.1s;
+    }
+
+    #minmax {
+      width: 20px;
+      height: 20px;
+      border: none;
+      padding: 0;
+      margin: 0;
+      font-size: 0;
+      cursor: pointer;
+      background: transparent var(--bb-icon-maximize) center center / 20px 20px
+        no-repeat;
+    }
+
+    #minmax.maximized {
+      background: transparent var(--bb-icon-minimize) center center / 20px 20px
+        no-repeat;
     }
   `;
 
@@ -277,6 +299,15 @@ export class NodeConfigurationOverlay extends LitElement {
     this.dispatchEvent(new NodePartialUpdateEvent(id, subGraphId, outputs));
   }
 
+  #toggleMaximize() {
+    this.maximized = !this.maximized;
+
+    globalThis.sessionStorage.setItem(
+      "bb-node-configurator-maximized",
+      this.maximized.toString()
+    );
+  }
+
   render() {
     if (!this.value || !this.value.ports) {
       return nothing;
@@ -365,15 +396,20 @@ export class NodeConfigurationOverlay extends LitElement {
             dragging = false;
           }}
           @dblclick=${() => {
-            this.maximized = !this.maximized;
-
-            globalThis.sessionStorage.setItem(
-              "bb-node-configurator-maximized",
-              this.maximized.toString()
-            );
+            this.#toggleMaximize();
           }}
         >
-          Configure ${this.value.title}
+          <span>Configure ${this.value.title}</span>
+          <button
+            id="minmax"
+            title=${this.maximized ? "Minimize overlay" : "Maximize overlay"}
+            class=${classMap({ maximized: this.maximized })}
+            @click=${() => {
+              this.#toggleMaximize();
+            }}
+          >
+            ${this.maximized ? "Minimize" : "Maximize"}
+          </button>
         </h1>
         <div id="content">
           <div id="container">
