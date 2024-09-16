@@ -18,7 +18,7 @@ import {
   NodeValue,
   SubGraphs,
 } from "@google-labs/breadboard";
-import { LitElement, css, html, nothing } from "lit";
+import { LitElement, PropertyValues, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -32,6 +32,7 @@ import {
   GraphEdgeValueSelectedEvent,
   GraphEntityRemoveEvent,
   GraphInitialDrawEvent,
+  GraphInteractionEvent,
   GraphNodeActivitySelectedEvent,
   GraphNodeDeleteEvent,
   GraphNodeEdgeChangeEvent,
@@ -52,11 +53,13 @@ import { GraphRenderer } from "./graph-renderer.js";
 import type { NodeSelector } from "./node-selector.js";
 import { edgeToString } from "./utils.js";
 
+const ZOOM_KEY = "bb-editor-zoom-to-highlighted-node-during-runs";
 const DATA_TYPE = "text/plain";
 const PASTE_OFFSET = 50;
 
 import { TopGraphRunResult } from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
+import { classMap } from "lit/directives/class-map.js";
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
   if (type !== "input" && type !== "output") {
@@ -146,6 +149,9 @@ export class Editor extends LitElement {
   showExperimentalComponents = false;
 
   @property()
+  zoomToHighlightedNodeDuringRuns = false;
+
+  @property()
   set showPortTooltips(value: boolean) {
     this.#graphRenderer.showPortTooltips = value;
   }
@@ -160,6 +166,7 @@ export class Editor extends LitElement {
   #graphVersion = 0;
   #lastBoardId: number = -1;
   #lastSubGraphId: string | null = null;
+
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #onDropBound = this.#onDrop.bind(this);
   #onDragOverBound = this.#onDragOver.bind(this);
@@ -176,6 +183,8 @@ export class Editor extends LitElement {
   #onGraphEdgeValueSelectedBound = this.#onGraphEdgeValueSelected.bind(this);
   #onGraphNodeActivitySelectedBound =
     this.#onGraphNodeActivitySelected.bind(this);
+  #onGraphInteractionBound = this.#onGraphInteraction.bind(this);
+
   #top = 0;
   #left = 0;
   #addButtonRef: Ref<HTMLInputElement> = createRef();
@@ -313,7 +322,8 @@ export class Editor extends LitElement {
       top: calc(var(--bb-grid-size) * 3);
       background: #fff;
       border-radius: 40px;
-      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 3);
+      padding: var(--bb-grid-size-2) var(--bb-grid-size) var(--bb-grid-size-2)
+        var(--bb-grid-size-3);
       border: 1px solid var(--bb-neutral-300);
       display: flex;
       align-items: center;
@@ -424,6 +434,49 @@ export class Editor extends LitElement {
         no-repeat;
       margin-right: var(--bb-grid-size);
       mix-blend-mode: difference;
+    }
+
+    #active-component {
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      display: flex;
+      align-items: center;
+      border: none;
+      padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size);
+      display: flex;
+      align-items: center;
+      background: var(--bb-ui-50);
+      border-radius: var(--bb-grid-size-10);
+      height: 24px;
+      cursor: pointer;
+    }
+
+    #controls #active-component {
+      margin-left: 0;
+    }
+
+    #active-component:hover,
+    #active-component:focus {
+      background: var(--bb-ui-100);
+    }
+
+    #active-component::before {
+      content: "";
+      width: 20px;
+      height: 20px;
+      padding-right: var(--bb-grid-size);
+      background: var(--bb-icon-directions) left center / 20px 20px no-repeat;
+    }
+
+    #active-component.active {
+      opacity: 1;
+      background: var(--bb-ui-600);
+      color: var(--bb-neutral-0);
+    }
+
+    #active-component.active::before {
+      background: var(--bb-icon-directions-inverted) left center / 20px 20px
+        no-repeat;
     }
   `;
 
@@ -548,6 +601,13 @@ export class Editor extends LitElement {
     return true;
   }
 
+  constructor() {
+    super();
+
+    this.zoomToHighlightedNodeDuringRuns =
+      globalThis.sessionStorage.getItem(ZOOM_KEY) === "true" ?? true;
+  }
+
   connectedCallback(): void {
     super.connectedCallback();
 
@@ -594,6 +654,11 @@ export class Editor extends LitElement {
     this.#graphRenderer.addEventListener(
       GraphNodeActivitySelectedEvent.eventName,
       this.#onGraphNodeActivitySelectedBound
+    );
+
+    this.#graphRenderer.addEventListener(
+      GraphInteractionEvent.eventName,
+      this.#onGraphInteractionBound
     );
 
     window.addEventListener("resize", this.#onResizeBound);
@@ -652,12 +717,35 @@ export class Editor extends LitElement {
       this.#onGraphNodeActivitySelectedBound
     );
 
+    this.#graphRenderer.removeEventListener(
+      GraphInteractionEvent.eventName,
+      this.#onGraphInteractionBound
+    );
+
     window.removeEventListener("resize", this.#onResizeBound);
     this.removeEventListener("keydown", this.#onKeyDownBound);
     this.removeEventListener("pointermove", this.#onPointerMoveBound);
     this.removeEventListener("pointerdown", this.#onPointerDownBound);
     this.removeEventListener("dragover", this.#onDragOverBound);
     this.removeEventListener("drop", this.#onDropBound);
+  }
+
+  protected willUpdate(changedProperties: PropertyValues): void {
+    if (!changedProperties.has("run")) {
+      return;
+    }
+
+    this.#graphRenderer.zoomToHighlightedNode =
+      this.zoomToHighlightedNodeDuringRuns;
+  }
+
+  #onGraphInteraction() {
+    // Only switch off the flag if there is a run active.
+    if (!this.topGraphResult?.currentNode) {
+      return;
+    }
+
+    this.zoomToHighlightedNodeDuringRuns = false;
   }
 
   #onPointerMove(evt: PointerEvent) {
@@ -1457,6 +1545,35 @@ export class Editor extends LitElement {
                   }}
                 >
                   Delete sub board
+                </button>
+                <div class="divider"></div>
+                <button
+                  title="Zoom to highlighted component during runs"
+                  id="active-component"
+                  class=${classMap({
+                    active: this.zoomToHighlightedNodeDuringRuns,
+                  })}
+                  @click=${() => {
+                    const shouldZoom = !this.zoomToHighlightedNodeDuringRuns;
+                    this.zoomToHighlightedNodeDuringRuns = shouldZoom;
+                    this.#graphRenderer.zoomToHighlightedNode = shouldZoom;
+                    globalThis.sessionStorage.setItem(
+                      ZOOM_KEY,
+                      shouldZoom.toString()
+                    );
+
+                    if (!shouldZoom) {
+                      return;
+                    }
+
+                    if (this.topGraphResult?.currentNode) {
+                      this.#graphRenderer.zoomToNode(
+                        this.topGraphResult.currentNode.descriptor.id
+                      );
+                    }
+                  }}
+                >
+                  Follow run
                 </button>
               </div>
 
