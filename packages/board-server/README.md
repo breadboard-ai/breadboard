@@ -1,5 +1,15 @@
 # Breadboard Board Server Reference Implementation
 
+## Getting started
+
+To run the board server locally with SQLite backend:
+```
+export GOOGLE_APPLICATION_CREDENTIALS=n/a
+export STORAGE_BACKEND=sqlite
+npm run migrate
+npm run dev
+```
+
 ## Running tests
 
 To run the tests:
