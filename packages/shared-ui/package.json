@@ -98,7 +98,7 @@
   "dependencies": {
     "@breadboard-ai/build": "^0.9.1",
     "@breadboard-ai/data-store": "^0.2.2",
-    "@codemirror/autocomplete": "^6.18.0",
+    "@codemirror/autocomplete": "^6.18.1",
     "@codemirror/commands": "^6.6.1",
     "@codemirror/lang-javascript": "^6.2.2",
     "@dagrejs/dagre": "^1.1.4",
