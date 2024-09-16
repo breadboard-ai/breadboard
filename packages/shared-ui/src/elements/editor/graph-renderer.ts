@@ -439,7 +439,7 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.addListener(
       "pointerdown",
       (evt: PIXI.FederatedPointerEvent) => {
-        if (!evt.isPrimary || this.readOnly) {
+        if (!evt.isPrimary) {
           return;
         }
 
@@ -464,7 +464,7 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.addListener(
       "pointermove",
       (evt: PIXI.FederatedPointerEvent) => {
-        if (!evt.isPrimary || this.readOnly) {
+        if (!evt.isPrimary) {
           return;
         }
 
@@ -495,15 +495,7 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.addListener("pointerup", onPointerUp);
     this.#app.stage.addListener("pointerupoutside", onPointerUp);
 
-    if (this.readOnly) {
-      return;
-    }
-
     const onWheel = (evt: PIXI.FederatedWheelEvent) => {
-      if (this.readOnly) {
-        this.#app.stage.off("wheel", onWheel);
-      }
-
       // The user has interacted – stop the auto-zoom/pan.
       this.zoomToHighlightedNode = false;
       this.dispatchEvent(new GraphInteractionEvent());
@@ -1094,7 +1086,7 @@ export class GraphRenderer extends LitElement {
   }
 
   zoomToNode(id: string) {
-    this.zoomToFit();
+    this.zoomToFit(false);
 
     for (const graph of this.#container.children) {
       if (!(graph instanceof Graph) || !graph.visible) {
@@ -1103,7 +1095,7 @@ export class GraphRenderer extends LitElement {
 
       const graphNode = graph.getChildByLabel(id);
       if (!graphNode) {
-        return;
+        continue;
       }
 
       const graphBounds = graph.getBounds();
@@ -1147,7 +1139,7 @@ export class GraphRenderer extends LitElement {
     }
   }
 
-  zoomToFit() {
+  zoomToFit(emitGraphNodeVisualInformation = true) {
     this.#container.scale.set(1, 1);
 
     // Find the first graph in the container and size to it.
@@ -1183,8 +1175,12 @@ export class GraphRenderer extends LitElement {
         x: rendererBounds.width / 2,
         y: rendererBounds.height / 2,
       };
+
       const matrix = this.#scaleContainerAroundPoint(delta, pivot);
-      this.#emitGraphNodeVisualInformation(graph);
+      if (emitGraphNodeVisualInformation) {
+        this.#emitGraphNodeVisualInformation(graph);
+      }
+
       this.#storeContainerTransform(graph, matrix);
       return;
     }
