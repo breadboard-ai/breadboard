@@ -1,5 +1,5 @@
 # Build stage
-FROM node:20-slim AS build
+FROM node:20 AS build
 WORKDIR /build
 
 # Copy the entire monorepo
