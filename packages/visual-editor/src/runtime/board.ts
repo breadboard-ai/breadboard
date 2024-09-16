@@ -90,15 +90,37 @@ export class Board extends EventTarget {
     return this.#tabs.get(this.#currentTabId) ?? null;
   }
 
+  async #toDigest(descriptor: GraphDescriptor) {
+    const graph = structuredClone(descriptor);
+    delete graph.url;
+
+    const str = JSON.stringify(graph, null, 2);
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(str);
+
+    const digest = await globalThis.crypto.subtle.digest("SHA-256", bytes);
+    return [...new Uint8Array(digest)]
+      .map((v) => v.toString(16).padStart(2, "0"))
+      .join("");
+  }
+
   async loadFromDescriptor(
     descriptor: GraphDescriptor,
     topGraphObserver?: BreadboardUI.Utils.TopGraphObserver,
     runObserver?: InspectableRunObserver,
     readOnly = true
   ) {
-    // TODO: Figure out the actual URLs to use for runs.
-    if (descriptor.url) {
-      descriptor.url = `run://${globalThis.crypto.randomUUID()}`;
+    const descriptorUrl = await this.#toDigest(descriptor);
+    descriptor.url = `descriptor://${descriptorUrl}`;
+
+    for (const [id, tab] of this.#tabs) {
+      if (tab.graph.url !== descriptor.url) {
+        continue;
+      }
+
+      this.#currentTabId = id;
+      this.dispatchEvent(new RuntimeTabChangeEvent());
+      return;
     }
 
     const id = globalThis.crypto.randomUUID();
