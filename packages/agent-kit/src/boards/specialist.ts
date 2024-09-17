@@ -5,263 +5,324 @@
  */
 
 import {
-  NewNodeFactory,
-  NewNodeValue,
-  Schema,
-  base,
+  annotate,
+  anyOf,
+  array,
   board,
-} from "@google-labs/breadboard";
-import { core } from "@google-labs/core-kit";
-import { gemini } from "@google-labs/gemini-kit";
+  enumeration,
+  input,
+  inputNode,
+  object,
+  output,
+  outputNode,
+  Value,
+} from "@breadboard-ai/build";
+import { code, coreKit } from "@google-labs/core-kit";
+import geminiKit from "@google-labs/gemini-kit";
 import {
-  checkAreWeDone,
-  combineContexts,
-  LlmContent,
-  looperTaskAdder,
-  progressReader,
-  splitStartAdder,
-  userPartsAdder,
-  type Context,
+  addUserParts,
+  checkAreWeDoneFunction,
+  combineContextsFunction,
+  contextType,
+  functionCallType,
+  type LlmContent,
+  llmContentType,
+  looperProgressType,
+  looperTaskAdderFn,
+  readProgress as readProgressFn,
+  splitStartAdderFunction,
 } from "../context.js";
 import {
-  boardInvocationAssembler,
-  boardToFunction,
-  functionDeclarationsFormatter,
-  functionOrTextRouter,
-  invokeBoardWithArgs,
-  responseCollator,
+  boardInvocationArgsType,
+  boardInvocationAssemblerFunction,
+  functionDeclarationsFormatterFn,
+  functionOrTextRouterFunction,
+  type FunctionSignatureItem,
+  responseCollatorFunction,
+  type ToolResponse,
+  urlMapType,
 } from "../function-calling.js";
+import boardToFunction from "./internal/board-to-function.js";
+import invokeBoardWithArgs from "./internal/invoke-board-with-args.js";
 
-export type SpecialistType = NewNodeFactory<
+const context = input({
+  title: "Context in",
+  description: "Incoming conversation context",
+  type: array(contextType),
+});
+
+const persona = input({
+  title: "Persona",
+  description:
+    "Describe the worker's skills, capabilities, mindset, and thinking process",
+  type: annotate(
+    anyOf("string", object({ parts: array(object({ text: "string" })) })),
+    {
+      behavior: ["config"],
+    }
+  ),
+});
+
+const task = input({
+  title: "Task",
+  description:
+    "(Optional) Provide a specific task with clear instructions for the worker to complete using the conversation context",
+  type: llmContentType,
+  default: {} as LlmContent,
+});
+
+const tools = input({
+  title: "Tools",
+  description:
+    "(Optional) Add tools to this list for the worker to use when needed",
+  type: annotate(
+    array(annotate(object({}, "unknown"), { behavior: ["board"] })),
+    { behavior: ["config"] }
+  ),
+  default: [],
+});
+
+const model = input({
+  title: "Model",
+  description: "Choose the model to use for this specialist.",
+  type: annotate(
+    enumeration(
+      "gemini-1.5-flash-latest",
+      "gemini-1.5-pro-latest",
+      "gemini-1.5-pro-exp-0801",
+      "gemini-1.5-pro-exp-0827",
+      "gemini-1.5-flash-8b-exp-0827",
+      "gemini-1.5-flash-exp-0827"
+    ),
+    {
+      behavior: ["config"],
+    }
+  ),
+  default: "gemini-1.5-flash-latest",
+  examples: ["gemini-1.5-flash-latest"],
+});
+
+const addTask = code(
   {
-    in: NewNodeValue;
+    $id: "fn-5",
+    $metadata: {
+      title: "Add Task",
+      description: "Adding task to the prompt.",
+    },
+    context,
+    toAdd: task,
+  },
+  { context: array(contextType) },
+  addUserParts
+);
+
+const readProgress = code(
+  {
+    $id: "fn-6",
+    $metadata: { title: "Read Progress so far" },
+    context,
+    forkOutputs: false,
   },
   {
-    out: NewNodeValue;
-  }
->;
+    progress: array(looperProgressType),
+    context: array(contextType),
+  },
+  readProgressFn
+);
 
-const specialist = await board<{ in: Context[]; task: LlmContent }>(
-  ({ in: context, persona, task }) => {
-    context
-      .title("Context in")
-      .description("Incoming conversation context")
-      .isArray()
-      .behavior("llm-content");
-    persona
-      .title("Persona")
-      .description(
-        "Describe the worker's skills, capabilities, mindset, and thinking process"
-      )
-      .isObject()
-      .behavior("llm-content", "config");
-    task
-      .title("Task")
-      .description(
-        "(Optional) Provide a specific task with clear instructions for the worker to complete using the conversation context"
-      )
-      .isObject()
-      .optional()
-      .default(JSON.stringify({}))
-      .behavior("llm-content", "config");
+const addLooperTask = code(
+  {
+    $id: "fn-7",
+    $metadata: {
+      title: "Add Looper Task",
+      description: "If there is a pending Looper task, add it.",
+    },
+    context: addTask.outputs.context,
+    progress: readProgress.outputs.progress,
+  },
+  {
+    context: array(contextType),
+  },
+  looperTaskAdderFn
+);
 
-    const toolsInput = base.input({
-      $metadata: {
-        title: "Tools Input",
-        description: "Specify the tools to use",
-      },
-      schema: {
-        type: "object",
-        properties: {
-          tools: {
-            title: "Tools",
-            description:
-              "(Optional) Add tools to this list for the worker to use when needed",
-            type: "array",
-            items: {
-              type: "object",
-              behavior: ["board"],
-            },
-            behavior: ["config"],
-            default: "[]",
-          },
-        },
-      } as Schema,
-    });
+const addSplitStart = code(
+  {
+    $id: "fn-8",
+    $metadata: {
+      title: "Add Split Start",
+      description: "Marking the start of parallel processing in the context",
+    },
+    context: addLooperTask.outputs.context,
+  },
+  {
+    id: "string",
+    context: array(contextType),
+  },
+  splitStartAdderFunction
+);
 
-    const modelInput = base.input({
-      $metadata: {
-        title: "Model Input",
-        description: "Ask which model to use",
-      },
-      schema: {
-        type: "object",
-        properties: {
-          model: {
-            type: "string",
-            title: "Model",
-            description: "Choose the model to use for this specialist.",
-            enum: [
-              "gemini-1.5-flash-latest",
-              "gemini-1.5-pro-latest",
-              "gemini-1.5-pro-exp-0801",
-              "gemini-1.5-pro-exp-0827",
-              "gemini-1.5-flash-8b-exp-0827",
-              "gemini-1.5-flash-exp-0827",
-            ],
-            default: "gemini-1.5-flash-latest",
-            examples: ["gemini-1.5-flash-latest"],
-            behavior: ["config"],
-          },
-        },
-      } as Schema,
-    });
+const boardToFunctionWithContext = coreKit.curry({
+  $id: "curry-9",
+  $metadata: {
+    title: "Add Context",
+    description: "Adding context to the board to function converter",
+  },
+  $board: boardToFunction,
+  context: addSplitStart.outputs.context,
+});
 
-    const addTask = userPartsAdder({
-      $metadata: {
-        title: "Add Task",
-        description: "Adding task to the prompt.",
-      },
-      context,
-      toAdd: task,
-    });
+const turnBoardsToFunctions = coreKit.map({
+  $id: "turnBoardsToFunctions",
+  $metadata: {
+    title: "Turn Boards into Functions",
+    description: "Turning provided boards into functions",
+  },
+  board: boardToFunctionWithContext.outputs.board,
+  list: tools,
+});
 
-    const readProgress = progressReader({
-      $metadata: { title: "Read Progress so far" },
-      context,
-    });
+const formatFunctionDeclarations = code(
+  {
+    $id: "formatFunctionDeclarations",
+    $metadata: {
+      title: "Format Function Declarations",
+      description: "Formatting the function declarations",
+    },
+    // TODO(aomarks) Cast needed because coreKit.map doesn't know the schema of
+    // the board that was passed to it (interfaces would fix this).
+    list: turnBoardsToFunctions.outputs.list as Value<FunctionSignatureItem[]>,
+  },
+  {
+    tools: array("unknown"),
+    urlMap: urlMapType,
+  },
+  functionDeclarationsFormatterFn
+);
 
-    const addLooperTask = looperTaskAdder({
-      $metadata: {
-        title: "Add Looper Task",
-        description: "If there is a pending Looper task, add it.",
-      },
-      context: addTask.context,
-      progress: readProgress.progress,
-    });
+const generator = geminiKit.text({
+  $id: "text-10",
+  $metadata: {
+    title: "Gemini API Call",
+    description: "Applying Gemini to do work",
+  },
+  systemInstruction: persona,
+  tools: formatFunctionDeclarations.outputs.tools,
+  context: addLooperTask.outputs.context,
+  model,
+});
 
-    const addSplitStart = splitStartAdder({
-      $metadata: {
-        title: "Add Split Start",
-        description: "Marking the start of parallel processing in the context",
-      },
-      context: addLooperTask.context,
-    });
+const routeToFunctionsOrText = code(
+  {
+    $id: "router",
+    $metadata: {
+      title: "Router",
+      description: "Routing to either function call invocation or text reply",
+    },
+    // TODO(aomarks) Our types and gemini's types seem not aligned.
+    context: generator.outputs.context as Value<LlmContent>,
+  },
+  {
+    context: llmContentType,
+    text: "string",
+    functionCalls: array(functionCallType),
+  },
+  functionOrTextRouterFunction
+);
 
-    const boardToFunctionWithContext = core.curry({
-      $metadata: {
-        title: "Add Context",
-        description: "Adding context to the board to function converter",
-      },
-      $board: "#boardToFunction",
-      context: addSplitStart.context,
-    });
+const assembleInvocations = code(
+  {
+    $id: "assembleBoardInvoke",
+    $metadata: {
+      title: "Assemble Tool Invoke",
+      description: "Assembling the tool invocation based on Gemini response",
+    },
+    urlMap: formatFunctionDeclarations.outputs.urlMap,
+    context: routeToFunctionsOrText.outputs.context,
+    functionCalls: routeToFunctionsOrText.outputs.functionCalls,
+  },
+  { list: array(boardInvocationArgsType) },
+  boardInvocationAssemblerFunction
+);
 
-    const turnBoardsToFunctions = core.map({
-      $id: "turnBoardsToFunctions",
-      $metadata: {
-        title: "Turn Boards into Functions",
-        description: "Turning provided boards into functions",
-      },
-      board: boardToFunctionWithContext.board,
-      list: toolsInput.tools.isArray(),
-    });
+const mapInvocations = coreKit.map({
+  $id: "map-11",
+  $metadata: {
+    title: "Invoke Tools in Parallel",
+    description: "Invoking tools in parallel",
+  },
+  list: assembleInvocations.outputs.list,
+  board: invokeBoardWithArgs,
+});
 
-    const formatFunctionDeclarations = functionDeclarationsFormatter({
-      $id: "formatFunctionDeclarations",
-      $metadata: {
-        title: "Format Function Declarations",
-        description: "Formatting the function declarations",
-      },
-      list: turnBoardsToFunctions.list,
-    });
+const formatToolResponse = code(
+  {
+    $id: "fn-12",
+    $metadata: {
+      title: "Format Tool Response",
+      description: "Formatting tool response",
+    },
+    // TODO(aomarks) There's inconsistency between use of LlmContent and Context
+    // across these nodes. Sometimes we need to cast to the other type because
+    // of that.
+    context: addSplitStart.outputs.context as Value<LlmContent[]>,
+    response: mapInvocations.outputs.list as Value<ToolResponse[]>,
+  },
+  {},
+  responseCollatorFunction
+);
 
-    const generator = gemini.text({
-      $metadata: {
-        title: "Gemini API Call",
-        description: "Applying Gemini to do work",
-      },
-      systemInstruction: persona,
-      tools: formatFunctionDeclarations.tools,
-      context: addLooperTask.context,
-      model: modelInput.model,
-    });
+const addToolResponseToContext = code(
+  {
+    $id: "fn-13",
+    $metadata: {
+      title: "Add Tool Response",
+      description: "Adding tool response to context",
+    },
+    "*": formatToolResponse.unsafeOutput("*"),
+  },
+  {
+    context: array(contextType),
+  },
+  combineContextsFunction
+);
 
-    const routeToFunctionsOrText = functionOrTextRouter({
-      $id: "router",
-      $metadata: {
-        title: "Router",
-        description: "Routing to either function call invocation or text reply",
-      },
-      context: generator.context,
-    });
+const toolOutput = outputNode({
+  $id: "output-14",
+  $metadata: {
+    title: "Tool Output",
+    description: "Return tool results as output",
+  },
+  out: output(addToolResponseToContext.outputs.context, {
+    title: "Context out",
+  }),
+});
 
-    const assembleInvocations = boardInvocationAssembler({
-      $id: "assembleBoardInvoke",
-      $metadata: {
-        title: "Assemble Tool Invoke",
-        description: "Assembling the tool invocation based on Gemini response",
-      },
-      urlMap: formatFunctionDeclarations.urlMap,
-      context: routeToFunctionsOrText.context,
-      functionCalls: routeToFunctionsOrText.functionCalls,
-    });
+const areWeDoneChecker = code(
+  {
+    $id: "fn-15",
+    $metadata: {
+      title: "Done Check",
+      description: "Checking for the 'Done' marker",
+    },
+    context: addLooperTask.outputs.context,
+    generated: routeToFunctionsOrText.outputs.context,
+    text: routeToFunctionsOrText.outputs.text,
+  },
+  {
+    context: array(contextType),
+  },
+  checkAreWeDoneFunction
+);
 
-    const mapInvocations = core.map({
-      $metadata: {
-        title: "Invoke Tools in Parallel",
-        description: "Invoking tools in parallel",
-      },
-      list: assembleInvocations.list.isArray(),
-      board: "#invokeBoardWithArgs",
-    });
+const mainOutput = outputNode(
+  {
+    out: output(areWeDoneChecker.outputs.context, { title: "Context out" }),
+  },
+  { id: "output-2" }
+);
 
-    const formatToolResponse = responseCollator({
-      $metadata: {
-        title: "Format Tool Response",
-        description: "Formatting tool response",
-      },
-      context: addSplitStart.context,
-      response: mapInvocations.list,
-    });
-
-    const addToolResponseToContext = combineContexts({
-      $metadata: {
-        title: "Add Tool Response",
-        description: "Adding tool response to context",
-      },
-      ...formatToolResponse,
-    });
-
-    base.output({
-      $metadata: {
-        title: "Tool Output",
-        description: "Return tool results as output",
-      },
-      out: addToolResponseToContext.context
-        .title("Context out")
-        .isArray()
-        .behavior("llm-content"),
-    });
-
-    const areWeDoneChecker = checkAreWeDone({
-      $metadata: {
-        title: "Done Check",
-        description: "Checking for the 'Done' marker",
-      },
-      context: addLooperTask.context,
-      generated: routeToFunctionsOrText.context,
-      text: routeToFunctionsOrText.text,
-    });
-
-    return {
-      out: areWeDoneChecker.context
-        .title("Context out")
-        .isArray()
-        .behavior("llm-content"),
-    };
-  }
-).serialize({
+export default board({
   title: "Specialist",
   metadata: {
     icon: "smart-toy",
@@ -271,8 +332,24 @@ const specialist = await board<{ in: Context[]; task: LlmContent }>(
   },
   description:
     "Given instructions on how to act, performs a single task, optionally invoking tools.",
+  inputs: [
+    inputNode({ in: context, persona, task }, { id: "input-1" }),
+    inputNode(
+      { tools },
+      {
+        id: "input-3",
+        title: "Tools Input",
+        description: "Specify the tools to use",
+      }
+    ),
+    inputNode(
+      { model },
+      {
+        id: "input-4",
+        title: "Model Input",
+        description: "Ask which model to use",
+      }
+    ),
+  ],
+  outputs: [toolOutput, mainOutput],
 });
-
-specialist.graphs = { boardToFunction, invokeBoardWithArgs };
-
-export default specialist;

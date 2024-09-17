@@ -73,12 +73,7 @@ const progressReader = code(
     progress: array(looperPlanType),
     context: array(contextType),
   },
-  // TODO(aomarks) TypeScript is unhappy with the signature of this function
-  // because we don't support optional/polymorphic outputs from the code helper
-  // function right now.
-  //
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  readProgress as any
+  readProgress
 );
 
 const taskAdder = code(
