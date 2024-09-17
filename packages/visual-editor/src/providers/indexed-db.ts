@@ -326,8 +326,6 @@ export class IDBGraphProvider implements GraphProvider {
       title: store.title,
       items,
     });
-
-    console.log(this.#stores);
   }
 
   async #refreshAllItems() {

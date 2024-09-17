@@ -605,7 +605,9 @@ export class Editor extends LitElement {
     super();
 
     this.zoomToHighlightedNodeDuringRuns =
-      globalThis.sessionStorage.getItem(ZOOM_KEY) === "true" ?? true;
+      globalThis.localStorage.getItem(ZOOM_KEY) === "true" ?? true;
+
+    console.log(this.zoomToHighlightedNodeDuringRuns);
   }
 
   connectedCallback(): void {
@@ -734,6 +736,8 @@ export class Editor extends LitElement {
     if (!changedProperties.has("run")) {
       return;
     }
+
+    console.log(this.zoomToHighlightedNodeDuringRuns);
 
     this.#graphRenderer.zoomToHighlightedNode =
       this.zoomToHighlightedNodeDuringRuns;
@@ -1582,7 +1586,7 @@ export class Editor extends LitElement {
                           !this.zoomToHighlightedNodeDuringRuns;
                         this.zoomToHighlightedNodeDuringRuns = shouldZoom;
                         this.#graphRenderer.zoomToHighlightedNode = shouldZoom;
-                        globalThis.sessionStorage.setItem(
+                        globalThis.localStorage.setItem(
                           ZOOM_KEY,
                           shouldZoom.toString()
                         );
