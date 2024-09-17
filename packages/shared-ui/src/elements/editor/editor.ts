@@ -872,7 +872,7 @@ export class Editor extends LitElement {
               edges: [],
               nodes: [
                 {
-                  id: this.#createRandomID("board"),
+                  id: this.#createRandomID(data),
                   type: data,
                 },
               ],
@@ -1418,7 +1418,20 @@ export class Editor extends LitElement {
     // Now that types could be URLs, we need to make them a bit
     // less verbose.
     if (type.includes(":") || type.includes("#")) {
-      // probably a URL, so let's just use a random id.
+      // probably a URL, so let's create a nice short name from the URL
+      try {
+        const url = new URL(type);
+        const name = url.pathname
+          .split("/")
+          .pop()
+          ?.replace(".bgl.json", "")
+          .slice(0, 15);
+        if (name) {
+          return `${name}-${nextNodeId[0]}`;
+        }
+      } catch (e) {
+        // Ignore.
+      }
       return `board-${nextNodeId[0]}`;
     }
     // TODO: Check for clashes
