@@ -257,7 +257,7 @@
     "@typescript-eslint/parser": "^7.18.0",
     "ava": "^5.2.0",
     "dotenv": "^16.4.5",
-    "tsx": "^4.19.0",
+    "tsx": "^4.19.1",
     "typescript": "^5.5.4",
     "vite-plugin-full-reload": "^1.2.0",
     "vite-plugin-watch-and-run": "^1.7.0",
