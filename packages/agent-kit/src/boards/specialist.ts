@@ -104,7 +104,6 @@ const model = input({
 
 const addTask = code(
   {
-    $id: "fn-5",
     $metadata: {
       title: "Add Task",
       description: "Adding task to the prompt.",
@@ -118,7 +117,6 @@ const addTask = code(
 
 const readProgress = code(
   {
-    $id: "fn-6",
     $metadata: { title: "Read Progress so far" },
     context,
     forkOutputs: false,
@@ -132,7 +130,6 @@ const readProgress = code(
 
 const addLooperTask = code(
   {
-    $id: "fn-7",
     $metadata: {
       title: "Add Looper Task",
       description: "If there is a pending Looper task, add it.",
@@ -148,7 +145,6 @@ const addLooperTask = code(
 
 const addSplitStart = code(
   {
-    $id: "fn-8",
     $metadata: {
       title: "Add Split Start",
       description: "Marking the start of parallel processing in the context",
@@ -163,7 +159,6 @@ const addSplitStart = code(
 );
 
 const boardToFunctionWithContext = coreKit.curry({
-  $id: "curry-9",
   $metadata: {
     title: "Add Context",
     description: "Adding context to the board to function converter",
@@ -201,7 +196,6 @@ const formatFunctionDeclarations = code(
 );
 
 const generator = geminiKit.text({
-  $id: "text-10",
   $metadata: {
     title: "Gemini API Call",
     description: "Applying Gemini to do work",
@@ -246,7 +240,6 @@ const assembleInvocations = code(
 );
 
 const mapInvocations = coreKit.map({
-  $id: "map-11",
   $metadata: {
     title: "Invoke Tools in Parallel",
     description: "Invoking tools in parallel",
@@ -257,7 +250,6 @@ const mapInvocations = coreKit.map({
 
 const formatToolResponse = code(
   {
-    $id: "fn-12",
     $metadata: {
       title: "Format Tool Response",
       description: "Formatting tool response",
@@ -274,7 +266,6 @@ const formatToolResponse = code(
 
 const addToolResponseToContext = code(
   {
-    $id: "fn-13",
     $metadata: {
       title: "Add Tool Response",
       description: "Adding tool response to context",
@@ -288,7 +279,6 @@ const addToolResponseToContext = code(
 );
 
 const toolOutput = outputNode({
-  $id: "output-14",
   $metadata: {
     title: "Tool Output",
     description: "Return tool results as output",
@@ -300,7 +290,6 @@ const toolOutput = outputNode({
 
 const areWeDoneChecker = code(
   {
-    $id: "fn-15",
     $metadata: {
       title: "Done Check",
       description: "Checking for the 'Done' marker",
@@ -315,12 +304,9 @@ const areWeDoneChecker = code(
   checkAreWeDoneFunction
 );
 
-const mainOutput = outputNode(
-  {
-    out: output(areWeDoneChecker.outputs.context, { title: "Context out" }),
-  },
-  { id: "output-2" }
-);
+const mainOutput = outputNode({
+  out: output(areWeDoneChecker.outputs.context, { title: "Context out" }),
+});
 
 export default board({
   title: "Specialist",
@@ -333,11 +319,10 @@ export default board({
   description:
     "Given instructions on how to act, performs a single task, optionally invoking tools.",
   inputs: [
-    inputNode({ in: context, persona, task }, { id: "input-1" }),
+    inputNode({ in: context, persona, task }),
     inputNode(
       { tools },
       {
-        id: "input-3",
         title: "Tools Input",
         description: "Specify the tools to use",
       }
@@ -345,7 +330,6 @@ export default board({
     inputNode(
       { model },
       {
-        id: "input-4",
         title: "Model Input",
         description: "Ask which model to use",
       }

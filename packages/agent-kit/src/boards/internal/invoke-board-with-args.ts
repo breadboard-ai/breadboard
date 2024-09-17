@@ -4,13 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  board,
-  input,
-  inputNode,
-  object,
-  outputNode,
-} from "@breadboard-ai/build";
+import { board, input, object } from "@breadboard-ai/build";
 import {
   type ConvertBreadboardType,
   type JsonSerializable,
@@ -26,7 +20,6 @@ const item = input({ type: itemType });
 
 const unpackArgs = code(
   {
-    $id: "fn-3",
     $metadata: {
       title: "Unpack args",
       description: "Unpacking board arguments",
@@ -43,7 +36,6 @@ const unpackArgs = code(
 
 const getFlags = code(
   {
-    $id: "fn-4",
     $metadata: {
       title: "Get flags",
       description: "Getting flags for the board invocation",
@@ -58,7 +50,6 @@ const getFlags = code(
 );
 
 const invoker = coreKit.invoke({
-  $id: "invoke-5",
   $metadata: {
     title: "Invoke board",
     description: "Invoking the board with unpacked arguments",
@@ -68,7 +59,6 @@ const invoker = coreKit.invoke({
 
 const packResults = code(
   {
-    $id: "fn-6",
     $metadata: { title: "Pack results", description: "Packing results" },
     "*": invoker.unsafeOutput("*"),
   },
@@ -78,7 +68,6 @@ const packResults = code(
 
 const formatResults = code(
   {
-    $id: "fn-7",
     $metadata: { title: "Format results", description: "Formatting results" },
     result: packResults.outputs.result,
     flags: getFlags.outputs.flags,
@@ -94,6 +83,6 @@ export default board({
   description:
     "Takes one item of `boardInvocationAssembler` output and invokes it as a board with arguments.",
   version: "0.0.1",
-  inputs: inputNode({ item }, { id: "input-1" }),
-  outputs: outputNode({ item: formatResults.outputs.item }, { id: "output-2" }),
+  inputs: { item },
+  outputs: { item: formatResults.outputs.item },
 });
