@@ -611,6 +611,7 @@ export class Navigation extends LitElement {
             tool: tags?.includes("tool") ?? false,
             published: tags?.includes("published") ?? false,
           })}
+          title=${url}
         >
           <span class="name">${title ?? name}</span>
           ${username && !mine

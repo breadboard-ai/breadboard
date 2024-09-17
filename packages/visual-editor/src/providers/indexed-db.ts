@@ -289,8 +289,17 @@ export class IDBGraphProvider implements GraphProvider {
       graphs = await db.getAll("graphs");
     }
 
-    const itemsByUrl = graphs.map(
-      (descriptor): [string, GraphProviderItem & { handle: void }] => {
+    const itemsByUrl = graphs
+      .sort((g1, g2) => {
+        if (g1.title && !g2.title) return 1;
+        if (!g1.title && g2.title) return -1;
+        if (!g1.title && !g2.title) return 0;
+
+        if (g1.title! > g2.title!) return 1;
+        if (g1.title! < g2.title!) return -1;
+        return 0;
+      })
+      .map((descriptor): [string, GraphProviderItem & { handle: void }] => {
         const url = descriptor.url || "";
         const { fileName } = this.parseURL(new URL(url));
 
@@ -298,14 +307,14 @@ export class IDBGraphProvider implements GraphProvider {
           fileName,
           {
             url,
+            title: descriptor.title,
             tags: descriptor.metadata?.tags,
             mine: true,
             readonly: false,
             handle: void 0,
           },
         ];
-      }
-    );
+      });
 
     const items: Map<
       string,
@@ -317,6 +326,8 @@ export class IDBGraphProvider implements GraphProvider {
       title: store.title,
       items,
     });
+
+    console.log(this.#stores);
   }
 
   async #refreshAllItems() {
