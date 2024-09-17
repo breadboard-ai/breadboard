@@ -375,45 +375,40 @@
               }
             },
             "persona": {
+              "type": "object",
               "behavior": [
+                "llm-content",
                 "config"
               ],
               "title": "Persona",
               "description": "Describe the worker's skills, capabilities, mindset, and thinking process",
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "parts": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "text": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "text"
-                        ],
-                        "additionalProperties": false
+              "properties": {
+                "parts": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "text": {
+                        "type": "string"
                       }
-                    }
-                  },
-                  "required": [
-                    "parts"
-                  ],
-                  "additionalProperties": false
+                    },
+                    "required": [
+                      "text"
+                    ],
+                    "additionalProperties": false
+                  }
                 }
-              ]
+              },
+              "required": [
+                "parts"
+              ],
+              "additionalProperties": false
             },
             "task": {
               "type": "object",
               "behavior": [
-                "llm-content"
+                "llm-content",
+                "config"
               ],
               "title": "Task",
               "description": "(Optional) Provide a specific task with clear instructions for the worker to complete using the conversation context",
@@ -2994,7 +2989,8 @@
               ],
               "additionalProperties": false,
               "behavior": [
-                "llm-content"
+                "llm-content",
+                "config"
               ]
             }
           }

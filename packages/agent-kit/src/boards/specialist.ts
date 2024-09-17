@@ -6,7 +6,6 @@
 
 import {
   annotate,
-  anyOf,
   array,
   board,
   enumeration,
@@ -55,19 +54,16 @@ const persona = input({
   title: "Persona",
   description:
     "Describe the worker's skills, capabilities, mindset, and thinking process",
-  type: annotate(
-    anyOf("string", object({ parts: array(object({ text: "string" })) })),
-    {
-      behavior: ["config"],
-    }
-  ),
+  type: annotate(object({ parts: array(object({ text: "string" })) }), {
+    behavior: ["llm-content", "config"],
+  }),
 });
 
 const task = input({
   title: "Task",
   description:
     "(Optional) Provide a specific task with clear instructions for the worker to complete using the conversation context",
-  type: llmContentType,
+  type: annotate(llmContentType, { behavior: ["config"] }),
   default: {} as LlmContent,
 });
 
