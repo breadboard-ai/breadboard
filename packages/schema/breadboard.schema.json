@@ -237,6 +237,38 @@
 					],
 					"additionalProperties": false,
 					"description": "The documentation for the graph, expressed as a URL and optional description."
+				},
+				"visual": {
+					"type": "object",
+					"properties": {
+						"window": {
+							"type": "object",
+							"properties": {
+								"x": {
+									"type": "number"
+								},
+								"y": {
+									"type": "number"
+								},
+								"width": {
+									"type": "number"
+								},
+								"height": {
+									"type": "number"
+								}
+							},
+							"required": [
+								"x",
+								"y",
+								"width",
+								"height"
+							],
+							"additionalProperties": false,
+							"description": "Last known position of the graph in the editor."
+						}
+					},
+					"additionalProperties": false,
+					"description": "The metadata associated with the visual representation of the graph."
 				}
 			},
 			"additionalProperties": {
