@@ -3,81 +3,81 @@
   "description": "Iterate over an array and run a subgraph for each item in the array.",
   "edges": [
     {
-      "from": "fn-18",
-      "to": "fn-18",
+      "from": "fn-15",
+      "to": "fn-15",
       "out": "array",
       "in": "array"
     },
     {
-      "from": "fn-18",
-      "to": "fn-20",
+      "from": "fn-15",
+      "to": "fn-17",
       "out": "array",
       "in": "a"
     },
     {
-      "from": "fn-18",
-      "to": "passthrough-15",
+      "from": "fn-15",
+      "to": "passthrough-12",
       "out": "item",
       "in": "item"
     },
     {
-      "from": "fn-19",
-      "to": "fn-19",
+      "from": "fn-16",
+      "to": "fn-16",
       "out": "*",
       "in": ""
     },
     {
-      "from": "fn-19",
-      "to": "fn-20",
+      "from": "fn-16",
+      "to": "fn-17",
       "out": "array",
       "in": "b"
     },
     {
-      "from": "fn-20",
-      "to": "output-17",
+      "from": "fn-17",
+      "to": "output-14",
       "out": "emit",
       "in": "outputs"
     },
     {
-      "from": "input-14",
-      "to": "fn-18",
+      "from": "input-11",
+      "to": "fn-15",
       "out": "array",
       "in": "array"
     },
     {
-      "from": "input-14",
-      "to": "passthrough-15",
+      "from": "input-11",
+      "to": "passthrough-12",
       "out": "board",
       "in": "board"
     },
     {
-      "from": "invoke-16",
-      "to": "fn-19",
+      "from": "invoke-13",
+      "to": "fn-16",
       "out": "object",
       "in": "item"
     },
     {
-      "from": "passthrough-15",
-      "to": "invoke-16",
+      "from": "passthrough-12",
+      "to": "invoke-13",
       "out": "board",
       "in": "$board"
     },
     {
-      "from": "passthrough-15",
-      "to": "invoke-16",
+      "from": "passthrough-12",
+      "to": "invoke-13",
       "out": "item",
       "in": "object"
     },
     {
-      "from": "passthrough-15",
-      "to": "passthrough-15",
+      "from": "passthrough-12",
+      "to": "passthrough-12",
       "out": "board",
       "in": "board"
     }
   ],
   "nodes": [
     {
-      "id": "input-14",
+      "id": "input-11",
       "type": "input",
       "configuration": {
         "schema": {
@@ -102,7 +102,7 @@
       }
     },
     {
-      "id": "output-17",
+      "id": "output-14",
       "type": "output",
       "configuration": {
         "schema": {
@@ -120,11 +120,11 @@
       }
     },
     {
-      "id": "fn-18",
+      "id": "fn-15",
       "type": "runJavascript",
       "configuration": {
-        "code": "const fn_18 = inputs=>{const{array}=inputs;const[item,...rest]=array;if(item){return{array:rest,item}}return{}};",
-        "name": "fn_18",
+        "code": "const fn_15 = inputs=>{const{array}=inputs;const[item,...rest]=array;if(item){return{array:rest,item}}return{}};",
+        "name": "fn_15",
         "raw": true
       },
       "metadata": {
@@ -132,11 +132,11 @@
       }
     },
     {
-      "id": "fn-19",
+      "id": "fn-16",
       "type": "runJavascript",
       "configuration": {
-        "code": "const fn_19 = inputs2=>{const{item,array=[]}=inputs2;return{array:[...array,item]}};",
-        "name": "fn_19",
+        "code": "const fn_16 = inputs2=>{const{item,array=[]}=inputs2;return{array:[...array,item]}};",
+        "name": "fn_16",
         "raw": true
       },
       "metadata": {
@@ -144,11 +144,11 @@
       }
     },
     {
-      "id": "fn-20",
+      "id": "fn-17",
       "type": "runJavascript",
       "configuration": {
-        "code": "const fn_20 = inputs=>{let emit=void 0;if(!inputs.a||inputs.a.length===0){emit=inputs.b}return{emit,a:inputs.a,b:inputs.b}};",
-        "name": "fn_20",
+        "code": "const fn_17 = inputs=>{let emit=void 0;if(!inputs.a||inputs.a.length===0){emit=inputs.b}return{emit,a:inputs.a,b:inputs.b}};",
+        "name": "fn_17",
         "raw": true
       },
       "metadata": {
@@ -156,7 +156,7 @@
       }
     },
     {
-      "id": "invoke-16",
+      "id": "invoke-13",
       "type": "invoke",
       "configuration": {},
       "metadata": {
@@ -164,7 +164,7 @@
       }
     },
     {
-      "id": "passthrough-15",
+      "id": "passthrough-12",
       "type": "passthrough",
       "configuration": {},
       "metadata": {
