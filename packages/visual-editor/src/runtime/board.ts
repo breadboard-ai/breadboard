@@ -90,6 +90,51 @@ export class Board extends EventTarget {
     return this.#tabs.get(this.#currentTabId) ?? null;
   }
 
+  createURLFromTabs() {
+    const params = new URLSearchParams();
+    let t = 0;
+    for (const tab of this.#tabs.values()) {
+      if (tab.type !== TabType.URL || !tab.graph.url) {
+        continue;
+      }
+
+      params.set(`tab${t++}`, tab.graph.url);
+    }
+
+    const url = new URL(window.location.href);
+    url.search = params.toString();
+    return url;
+  }
+
+  async createTabsFromURL(url: URL) {
+    const params = new URLSearchParams(url.search);
+
+    let t = 0;
+    const board = params.get("board");
+    if (board) {
+      params.set(`tab${t++}`, board);
+      params.delete("board");
+    }
+
+    const tabs = [...params].sort(([idA], [idB]) => {
+      if (idA > idB) return 1;
+      if (idA < idB) return -1;
+      return 0;
+    });
+
+    if (tabs.length > 0) {
+      for (const [, tab] of tabs) {
+        if (tab.startsWith("run://") || tab.startsWith("descriptor://")) {
+          continue;
+        }
+
+        await this.createTabFromURL(tab, url.href, true, false, false);
+      }
+    }
+
+    this.dispatchEvent(new RuntimeTabChangeEvent());
+  }
+
   async #toDigest(descriptor: GraphDescriptor) {
     const graph = structuredClone(descriptor);
     delete graph.url;
@@ -143,7 +188,8 @@ export class Board extends EventTarget {
 
   async createTabFromDescriptor(
     descriptor: GraphDescriptor,
-    createNewTab = false
+    createNewTab = false,
+    dispatchTabChangeEvent = true
   ) {
     const descriptorUrl = await this.#toDigest(descriptor);
     descriptor.url = `descriptor://${descriptorUrl}`;
@@ -174,6 +220,10 @@ export class Board extends EventTarget {
     });
 
     this.#currentTabId = id;
+    if (!dispatchTabChangeEvent) {
+      return;
+    }
+
     this.dispatchEvent(new RuntimeTabChangeEvent());
   }
 
@@ -181,7 +231,8 @@ export class Board extends EventTarget {
     boardUrl: string,
     currentUrl: string | null = null,
     createNewTab = false,
-    readOnly = false
+    readOnly = false,
+    dispatchTabChangeEvent = true
   ) {
     let url = this.#makeRelativeToCurrentBoard(boardUrl, currentUrl);
 
@@ -245,6 +296,13 @@ export class Board extends EventTarget {
       });
 
       this.#currentTabId = id;
+
+      // When we create multiple tabs at once we dispatch the event elsewhere,
+      // which means we don't want to do it here.
+      if (!dispatchTabChangeEvent) {
+        return;
+      }
+
       this.dispatchEvent(new RuntimeTabChangeEvent());
     } catch (err) {
       console.warn(err);
