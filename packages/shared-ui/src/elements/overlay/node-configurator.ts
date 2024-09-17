@@ -274,6 +274,21 @@ export class NodeConfigurationOverlay extends LitElement {
     }
   }
 
+  #editorMode(): EditorMode {
+    const metadata = this.value?.metadata;
+    if (!metadata || !metadata.visual) {
+      return EditorMode.MINIMAL;
+    }
+    const visual = metadata.visual as {
+      collapsed: "advanced";
+    };
+    console.log("visual", visual);
+    if (visual.collapsed === "advanced") {
+      return EditorMode.ADVANCED;
+    }
+    return EditorMode.MINIMAL;
+  }
+
   processData() {
     this.#pendingSave = false;
 
@@ -288,7 +303,7 @@ export class NodeConfigurationOverlay extends LitElement {
 
     // Ensure that all expected values are set. If they are not set in the
     // outputs we assume that the user wants to remove the value.
-    const { inputs } = filterConfigByMode(this.value.ports, EditorMode.MINIMAL);
+    const { inputs } = filterConfigByMode(this.value.ports, this.#editorMode());
     for (const expectedInput of inputs.ports) {
       if (!outputs[expectedInput.name]) {
         outputs[expectedInput.name] = undefined;
@@ -313,7 +328,7 @@ export class NodeConfigurationOverlay extends LitElement {
       return nothing;
     }
 
-    const { inputs } = filterConfigByMode(this.value.ports, EditorMode.MINIMAL);
+    const { inputs } = filterConfigByMode(this.value.ports, this.#editorMode());
     const ports = [...inputs.ports].sort((portA, portB) => {
       const isSchema =
         portA.name === "schema" ||
