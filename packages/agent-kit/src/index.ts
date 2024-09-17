@@ -13,6 +13,7 @@ import {
   type NewNodeValue,
 } from "@google-labs/breadboard";
 import { WorkerType } from "./boards/worker.js";
+import { SpecialistType } from "./boards/specialist.js";
 
 // TODO: Replace with the actual URL.
 const KIT_BASE_URL =
@@ -127,14 +128,7 @@ export type AgentKitType = {
   /**
    * All-in-one worker. A work in progress, incorporates all the learnings from making previous workers.
    */
-  specialist: NewNodeFactory<
-    {
-      in: NewNodeValue;
-    },
-    {
-      out: NewNodeValue;
-    }
-  >;
+  specialist: SpecialistType;
   /**
    * Facilitate looping, A work in progress.
    */

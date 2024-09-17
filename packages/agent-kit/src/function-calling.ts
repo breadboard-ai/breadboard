@@ -4,119 +4,109 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { array, jsonSchema, object, optional } from "@breadboard-ai/build";
 import {
-  type ConvertBreadboardType,
-  type JsonSerializable,
-} from "@breadboard-ai/build/internal/type-system/type.js";
-import {
-  type GraphDescriptor,
-  type OutputValues,
-  type Schema,
+  OutputValues,
+  GraphDescriptor,
+  Schema,
+  board,
   code,
 } from "@google-labs/breadboard";
 import {
-  type Context,
-  type FunctionCall,
-  type LlmContent,
+  LlmContent,
+  FunctionCallPart,
   fun,
-  llmContentType,
+  TextPart,
+  Context,
 } from "./context.js";
+import { core } from "@google-labs/core-kit";
 
-export const functionOrTextRouterFunction = ({
-  context,
-}: {
-  context: LlmContent;
-}): { context: LlmContent; text: string; functionCalls: FunctionCall[] } => {
-  type TempUnsafeResult = {
-    context: LlmContent;
-    text: string;
-    functionCalls: FunctionCall[];
-  };
+export const functionOrTextRouterFunction = fun(({ context }) => {
   if (!context) throw new Error("Context is a required input");
-  const item = context;
+  const item = context as LlmContent;
   const functionCallParts = item.parts
     .filter((part) => "functionCall" in part)
-    .map((part) => part.functionCall);
+    .map((part) => (part as FunctionCallPart).functionCall);
   if (functionCallParts.length === 0) {
-    const textPart = item.parts.find((part) => "text" in part);
+    const textPart = item.parts.find((part) => "text" in part) as TextPart;
     if (!textPart) throw new Error("No text or function call found in context");
-    return { context, text: textPart.text } as TempUnsafeResult;
+    return { context, text: textPart.text };
   }
-  return { context, functionCalls: functionCallParts } as TempUnsafeResult;
-};
+  return { context, functionCalls: functionCallParts };
+});
 
 export const functionOrTextRouter = code(functionOrTextRouterFunction);
 
-export const functionCallFlagsType = object({
-  inputLLMContent: optional("string"),
-  inputLLMContentArray: optional("string"),
-  outputLLMContent: optional("string"),
-  outputLLMContentArray: optional("string"),
+export type URLMap = Record<
+  string,
+  {
+    url: string;
+    flags: FunctionCallFlags;
+  }
+>;
+
+export type BoardInvocationArgs = {
+  $board: string;
+  $flags: FunctionCallFlags;
+} & Record<string, unknown>;
+
+export const boardInvocationAssemblerFunction = fun(
+  ({ functionCalls, urlMap }) => {
+    if (!functionCalls) {
+      throw new Error("Function call array is a required input");
+    }
+    if (!urlMap) {
+      throw new Error("URL map is a required input");
+    }
+    const calls = functionCalls as FunctionCallPart["functionCall"][];
+    if (calls.length === 0) {
+      throw new Error("Function call array must not be empty.");
+    }
+    const list: BoardInvocationArgs[] = [];
+    for (const call of calls) {
+      const item = (urlMap as URLMap)[call.name];
+      const $board = item.url;
+      const $flags = item.flags;
+      const llmContentProperty =
+        $flags.inputLLMContent || $flags.inputLLMContentArray;
+      const invokeArgs: BoardInvocationArgs = { $board, $flags, ...call.args };
+      if (llmContentProperty) {
+        // convert args into LLMContent.
+        const args = call.args as OutputValues;
+        const text = args[llmContentProperty] as string;
+        const parts = [{ text }];
+        const llmContent: LlmContent = { parts, role: "user" };
+        if ($flags.inputLLMContentArray) {
+          invokeArgs[llmContentProperty] = [llmContent];
+        } else {
+          invokeArgs[llmContentProperty] = llmContent;
+        }
+      }
+      list.push(invokeArgs);
+    }
+    return { list };
+  }
+);
+
+export type FunctionResponse = {
+  role: "function";
+  parts: { functionResponse: { name: string; response: unknown }[] }[];
+};
+export const boardInvocationAssembler = code(boardInvocationAssemblerFunction);
+
+const argsUnpacker = code(({ item }) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { $flags, ...result } = item as OutputValues;
+  return result;
 });
 
-export type FunctionCallFlags = ConvertBreadboardType<
-  typeof functionCallFlagsType
->;
+const resultPacker = code((result) => {
+  return { result };
+});
 
-export const urlMapType = object(
-  {},
-  object({ url: "string", flags: functionCallFlagsType })
-);
-export type URLMap = ConvertBreadboardType<typeof urlMapType>;
-
-export const boardInvocationArgsType = object(
-  {
-    $board: "string",
-    $flags: functionCallFlagsType,
-  },
-  "unknown"
-);
-export type BoardInvocationArgs = ConvertBreadboardType<
-  typeof boardInvocationArgsType
->;
-
-export const boardInvocationAssemblerFunction = ({
-  functionCalls,
-  urlMap,
-}: {
-  functionCalls: FunctionCall[];
-  urlMap: URLMap;
-}): { list: BoardInvocationArgs[] } => {
-  if (!functionCalls) {
-    throw new Error("Function call array is a required input");
-  }
-  if (!urlMap) {
-    throw new Error("URL map is a required input");
-  }
-  const calls = functionCalls;
-  if (calls.length === 0) {
-    throw new Error("Function call array must not be empty.");
-  }
-  const list: BoardInvocationArgs[] = [];
-  for (const call of calls) {
-    const item = urlMap[call.name];
-    const $board = item.url;
-    const $flags = item.flags;
-    const llmContentProperty =
-      $flags.inputLLMContent || $flags.inputLLMContentArray;
-    const invokeArgs: BoardInvocationArgs = { $board, $flags, ...call.args };
-    if (llmContentProperty) {
-      // convert args into LLMContent.
-      const args = call.args;
-      const text = args[llmContentProperty];
-      const parts = [{ text }];
-      const llmContent: LlmContent = { parts, role: "user" };
-      if ($flags.inputLLMContentArray) {
-        invokeArgs[llmContentProperty] = [llmContent];
-      } else {
-        invokeArgs[llmContentProperty] = llmContent;
-      }
-    }
-    list.push(invokeArgs);
-  }
-  return { list };
-};
+const flagGetter = code(({ item }) => {
+  const { $flags } = item as OutputValues;
+  return { flags: $flags };
+});
 
 export const resultFormatterFunction = fun(({ result, flags }) => {
   let contentDetected = false;
@@ -164,25 +154,109 @@ export const resultFormatterFunction = fun(({ result, flags }) => {
   return { item };
 });
 
-export const functionDeclarationType = object({
-  name: "string",
-  description: optional("string"),
-  parameters: optional(jsonSchema),
-});
-export type FunctionDeclaration = ConvertBreadboardType<
-  typeof functionDeclarationType
->;
+const resultFormatter = code(resultFormatterFunction);
 
-export const functionSignatureFromBoardFunction = ({
-  board,
-}: {
-  board: Record<string, JsonSerializable>;
-}): {
-  function: FunctionDeclaration;
-  returns: Schema;
-  flags: FunctionCallFlags;
-  board: Record<string, JsonSerializable>;
-} => {
+export const invokeBoardWithArgs = await board(({ item }) => {
+  const unpackArgs = argsUnpacker({
+    $metadata: {
+      title: "Unpack args",
+      description: "Unpacking board arguments",
+    },
+    item,
+  });
+
+  const getFlags = flagGetter({
+    $metadata: {
+      title: "Get flags",
+      description: "Getting flags for the board invocation",
+    },
+    item,
+  });
+
+  const invoker = core.invoke({
+    $metadata: {
+      title: "Invoke board",
+      description: "Invoking the board with unpacked arguments",
+    },
+    ...unpackArgs,
+  });
+
+  const packResults = resultPacker({
+    $metadata: { title: "Pack results", description: "Packing results" },
+    ...invoker,
+  });
+
+  const formatResults = resultFormatter({
+    $metadata: { title: "Format results", description: "Formatting results" },
+    result: packResults.result,
+    flags: getFlags.flags,
+  });
+
+  return { item: formatResults.item };
+}).serialize({
+  title: "Invoke Board With Args",
+  description:
+    "Takes one item of `boardInvocationAssembler` output and invokes it as a board with arguments.",
+  version: "0.0.1",
+});
+
+// TODO: Deprecate this. Only used by toolWorker. Remove when removing
+// the toolWorker node.
+export const boardInvokeAssembler = code(({ functionCalls, urlMap }) => {
+  if (!functionCalls)
+    throw new Error("Function call array is a required input");
+  if (!urlMap) throw new Error("URL map is a required input");
+  const calls = functionCalls as FunctionCallPart["functionCall"][];
+  if (calls.length === 0)
+    throw new Error("Function call array must not be empty.");
+  const call = calls[0];
+  const $board = (urlMap as URLMap)[call.name];
+  // This is a hack that is only needed because we currently invoke older-style
+  // boards that ask for a generator URL (math and search-summarizer)
+  // TODO: Remove this expectation and this hack.
+  const generator =
+    "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/visual-editor/public/graphs/gemini-generator.json";
+  return { $board, generator, ...call.args };
+});
+
+export const boardResponseExtractor = code((inputs) => {
+  // Pluck out schema from inputs
+  // See https://github.com/breadboard-ai/breadboard/issues/924
+  const { schema, ...response } = inputs;
+  schema;
+  return { response };
+});
+
+export const functionResponseFormatter = code(
+  ({ context, generated, functionCall, response }) => {
+    const call = functionCall as FunctionCallPart["functionCall"];
+    return {
+      context: [
+        ...(context as LlmContent[]),
+        generated,
+        {
+          role: "function",
+          parts: [{ functionResponse: { name: call.name, response } }],
+        },
+      ],
+    };
+  }
+);
+
+export type FunctionCallFlags = {
+  inputLLMContent?: string;
+  inputLLMContentArray?: string;
+  outputLLMContent?: string;
+  outputLLMContentArray?: string;
+};
+
+export type FunctionDeclaration = {
+  name: string;
+  description?: string;
+  parameters?: Schema;
+};
+
+export const functionSignatureFromBoardFunction = fun(({ board }) => {
   const b = board as GraphDescriptor;
   const inputs = b.nodes.filter((node) => node.type === "input") || [];
   const outputs = b.nodes.filter((node) => node.type === "output");
@@ -264,44 +338,65 @@ export const functionSignatureFromBoardFunction = ({
     flags,
     board,
   };
-};
+});
 
-export type FunctionSignatureItem = {
+export const functionSignatureFromBoard = code(
+  functionSignatureFromBoardFunction
+);
+
+export const boardToFunction = await board(({ item, context }) => {
+  const url = item.isString();
+
+  const importBoard = core.curry({
+    $board: url,
+    context,
+  });
+
+  const getFunctionSignature = functionSignatureFromBoard({
+    $metadata: { title: "Get Function Signature from board" },
+    board: importBoard.board,
+  });
+
+  return {
+    function: getFunctionSignature.function,
+    boardURL: getFunctionSignature.board,
+    flags: getFunctionSignature.flags,
+  };
+}).serialize({
+  title: "Board to functions",
+  description:
+    "Use this board to convert specified boards into function-calling signatures",
+});
+
+type FunctionSignatureItem = {
   function: { name: string };
   boardURL: string;
   flags: FunctionCallFlags;
 };
 
-export const functionDeclarationsFormatterFn = ({
-  list,
-}: {
-  list: FunctionSignatureItem[];
-}): { tools: JsonSerializable[]; urlMap: URLMap } => {
-  const tools: JsonSerializable[] = [];
+export const functionDeclarationsFormatter = code(({ list }) => {
+  const tools: unknown[] = [];
   const urlMap: URLMap = {};
-  list.forEach((item) => {
+  (list as FunctionSignatureItem[]).forEach((item) => {
     tools.push(item.function);
     const flags = item.flags;
     urlMap[item.function.name] = { url: item.boardURL, flags };
   });
   return { tools, urlMap };
-};
+});
 
-export const toolResponseType = object({ item: array(llmContentType) });
-export type ToolResponse = ConvertBreadboardType<typeof toolResponseType>;
+export type ToolResponse = { item: LlmContent[] };
 
-export const responseCollatorFunction = ({
-  response,
-  context,
-}: {
-  response: ToolResponse[];
-  context?: LlmContent[];
-}): Record<string, LlmContent[] | string> => {
-  const result = Object.fromEntries(
-    response.map((item, i) => [`context-${i + 1}`, item.item])
+export const responseCollatorFunction = fun(({ response, context }) => {
+  const r = response as ToolResponse[];
+  const c = context as LlmContent[];
+  const result: Record<string, LlmContent[] | string> = Object.fromEntries(
+    r.map((item, i) => [`context-${i + 1}`, item.item])
   );
-  if (context) {
-    result["context-0"] = context;
+  if (c) {
+    result["context-0"] = c;
   }
   return result;
-};
+});
+
+export const responseCollator = code(responseCollatorFunction);

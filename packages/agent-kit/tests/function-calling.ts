@@ -17,7 +17,6 @@ import {
 } from "../src/function-calling.js";
 import { deepStrictEqual, ok, throws } from "node:assert";
 import {
-  FunctionCall,
   FunctionCallPart,
   LlmContent,
   splitStartAdderFunction,
@@ -29,8 +28,7 @@ import { resolve } from "path";
 describe("function-calling/functionOrTextRouterFunction", () => {
   test("throws when no context is supplied", () => {
     throws(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      functionOrTextRouterFunction({} as any);
+      functionOrTextRouterFunction({});
     });
   });
 
@@ -180,12 +178,10 @@ describe("function-calling/functionOrTextRouterFunction", () => {
 describe("function-calling/boardInvocationAssembler", () => {
   test("throws when the args are missing", () => {
     throws(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      boardInvocationAssemblerFunction({} as any);
+      boardInvocationAssemblerFunction({});
     }, 'Must have "functionCalls".');
     throws(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      boardInvocationAssemblerFunction({ functionCalls: [] } as any);
+      boardInvocationAssemblerFunction({ functionCalls: [] });
     }, 'Must have "urlMap"');
     throws(() => {
       boardInvocationAssemblerFunction({ functionCalls: [], urlMap: {} });
@@ -193,7 +189,7 @@ describe("function-calling/boardInvocationAssembler", () => {
   });
 
   test("correctly packs the invocation args", () => {
-    const functionCalls: FunctionCall[] = [
+    const functionCalls = [
       {
         name: "Get_Web_Page_Content",
         args: { url: "https://example.com/" },
@@ -219,7 +215,7 @@ describe("function-calling/boardInvocationAssembler", () => {
   });
 
   test("correctly packs the invocation args with flags", () => {
-    const functionCalls: FunctionCall[] = [
+    const functionCalls = [
       {
         name: "Get_Web_Page_Content",
         args: { url: "https://example.com/" },
@@ -259,7 +255,7 @@ describe("function-calling/boardInvocationAssembler", () => {
   });
 
   test("correctly packs the invocation args with array input flag", () => {
-    const functionCalls: FunctionCall[] = [
+    const functionCalls = [
       {
         name: "Get_Web_Page_Content",
         args: { url: "https://example.com/" },
@@ -270,7 +266,7 @@ describe("function-calling/boardInvocationAssembler", () => {
           country: "LT",
         },
       },
-    ];
+    ] satisfies FunctionCallPart["functionCall"][];
     const urlMap = {
       Get_Web_Page_Content: {
         url: "get/web/page",
@@ -382,8 +378,7 @@ const loadBoard = async (name: string) => {
 describe("function-calling/functionSignatureFromBoardFunction", () => {
   test("throws when no board is supplied", () => {
     throws(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      functionSignatureFromBoardFunction({} as any);
+      functionSignatureFromBoardFunction({});
     });
   });
 
@@ -393,7 +388,7 @@ describe("function-calling/functionSignatureFromBoardFunction", () => {
       board,
     });
     deepStrictEqual(result.board, board);
-    delete (result as Partial<typeof result>).board;
+    delete result.board;
     deepStrictEqual(result, {
       function: {
         name: "Get_Today",
@@ -459,7 +454,7 @@ describe("function-calling/functionSignatureFromBoardFunction", () => {
       board,
     });
     deepStrictEqual(result.board, board);
-    delete (result as Partial<typeof result>).board;
+    delete result.board;
     deepStrictEqual(result, {
       function: {
         name: "Nager_Date_Next_Public_Holiday",
@@ -539,8 +534,7 @@ describe("function-calling/functionSignatureFromBoardFunction", () => {
     const board = await loadBoard("context-arg");
     const result = functionSignatureFromBoardFunction({
       board,
-      // eslint-disable-next-line @typescript-eslint/ban-types
-    }) as {} as { board: GraphDescriptor };
+    }) as { board: GraphDescriptor };
     ok(result.board.args?.["property-1"]);
   });
 });
@@ -551,10 +545,10 @@ describe("function-calling/responseCollator", () => {
   const howdy: LlmContent = { parts: [{ text: "Howdy" }], role: "tool" };
   const realm: LlmContent = { parts: [{ text: "Realm" }], role: "tool" };
   test("correctly collates responses", () => {
-    const response: ToolResponse[] = [
+    const response = [
       { item: [hello, world] },
       { item: [howdy, realm] },
-    ];
+    ] satisfies ToolResponse[];
     const result = responseCollatorFunction({ response });
     deepStrictEqual(result, {
       "context-1": [hello, world],

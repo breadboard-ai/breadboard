@@ -21,14 +21,11 @@ import { code } from "@google-labs/breadboard";
 export const textPartType = object({ text: "string" });
 export type TextPart = ConvertBreadboardType<typeof textPartType>;
 
-export const functionCallType = object({
-  name: "string",
-  args: object({}, "string"),
-});
-export type FunctionCall = ConvertBreadboardType<typeof functionCallType>;
-
 export const functionCallPartType = object({
-  functionCall: functionCallType,
+  functionCall: object({
+    name: "string",
+    args: object({}, "string"),
+  }),
 });
 export type FunctionCallPart = ConvertBreadboardType<
   typeof functionCallPartType
@@ -225,10 +222,7 @@ export const readProgress = ({
 }: {
   context: Context | Context[];
   forkOutputs: boolean;
-}): {
-  progress: LooperProgress[];
-  context: Context[];
-} => {
+}) => {
   const fork = forkOutputs;
   const existing = Array.isArray(context) ? context : [context];
   const progress: LooperPlan[] = [];
@@ -240,33 +234,24 @@ export const readProgress = ({
       progress.push(item.data);
     }
   }
-  // TODO(aomarks) Casts required until code() supports polymorphism better.
-  type TempUnsafeResult = {
-    progress: LooperProgress[];
-    context: Context[];
-  };
   if (fork) {
     if (progress.length) {
-      return { progress } as TempUnsafeResult;
+      return { progress };
     } else {
-      return { context } as TempUnsafeResult;
+      return { context };
     }
   } else {
-    return { context, progress } as TempUnsafeResult;
+    return { context, progress };
   }
 };
 
 export const progressReader = code(readProgress);
 
-export const looperTaskAdderFn = ({
-  context,
-  progress,
-}: {
-  context: Context[];
-  progress: LooperProgress[];
-}): { context: Context[] } => {
-  const contents = Array.isArray(context) ? context : [context];
-  const plans = Array.isArray(progress) ? progress : [progress];
+export const looperTaskAdder = code(({ context, progress }) => {
+  const contents = (Array.isArray(context) ? context : [context]) as Context[];
+  const plans = (
+    Array.isArray(progress) ? progress : [progress]
+  ) as LooperProgress[];
   const last = plans[0];
   if (!last || !last.next) {
     return { context };
@@ -284,8 +269,7 @@ export const looperTaskAdderFn = ({
   }
   contents.push({ role: "user", parts: [{ text: last.next }] });
   return { context: contents };
-};
-export const looperTaskAdder = code(looperTaskAdderFn);
+});
 
 export const contextBuilder = code(({ context, instruction }) => {
   if (typeof context === "string") {
@@ -409,13 +393,9 @@ export const skipIfDone = code(skipIfDoneFunction);
  * Given a context, adds a metadata block that contains the
  * split start marker.
  */
-export const splitStartAdderFunction = ({
-  context,
-}: {
-  context: Context[];
-}): { id: string; context: Context[] } => {
+export const splitStartAdderFunction = fun(({ context }) => {
   if (!context) throw new Error("Context is required");
-  const c = context;
+  const c = context as Context[];
   const id = Math.random().toString(36).substring(7);
   const metadata: Metadata = {
     role: "$metadata",
@@ -426,7 +406,7 @@ export const splitStartAdderFunction = ({
     },
   };
   return { context: [...c, metadata], id };
-};
+});
 
 export const splitStartAdder = code(splitStartAdderFunction);
 
@@ -459,109 +439,94 @@ export type SplitScanResult = [id: string, index: number];
  * - "Simple". Concatenate all contexts as-is, adding "start", "next" and "end"
  * markers.
  */
-export const combineContextsFunction = fun(
-  ({ merge, ...inputs }): { context: Context[] } => {
-    const entries = Object.entries(inputs).sort() as [string, Context[]][];
-    if (merge) {
-      const context: Context[] = [];
-      const parts: LlmContent["parts"] = [];
-      for (const [, input] of entries) {
-        const c = asContextArray(input);
-        let lastIndex = c.length - 1;
-        let last;
-        do {
-          last = c[lastIndex--];
-        } while (lastIndex >= 0 && last.role === "$metadata");
-        if (last) {
-          parts.push(...(last as LlmContent).parts);
-        }
+export const combineContextsFunction = fun(({ merge, ...inputs }) => {
+  const entries = Object.entries(inputs).sort() as [string, Context[]][];
+  if (merge) {
+    const context: Context[] = [];
+    const parts: LlmContent["parts"] = [];
+    for (const [, input] of entries) {
+      const c = asContextArray(input);
+      let lastIndex = c.length - 1;
+      let last;
+      do {
+        last = c[lastIndex--];
+      } while (lastIndex >= 0 && last.role === "$metadata");
+      if (last) {
+        parts.push(...(last as LlmContent).parts);
       }
-      context.push({ parts, role: "user" });
-      return { context };
+    }
+    context.push({ parts, role: "user" });
+    return { context };
+  } else {
+    let mode: "single" | "preamble" | "adhoc" | "simple";
+    const [f, ...rest] = entries;
+    if (!f) {
+      return { context: [] };
+    }
+    const first = asContextArray(f[1]);
+    const firstOpenSplits = scanForSplits(first);
+    const preambleIndices: number[] = [];
+    for (const [, input] of rest) {
+      const c = asContextArray(input);
+      const hasOpenSplits = scanForSplits(c);
+      if (hasOpenSplits) {
+        preambleIndices.push(hasOpenSplits[1]);
+      }
+    }
+    if (!firstOpenSplits) {
+      if (preambleIndices.length === 0) {
+        mode = "simple";
+      } else {
+        mode = "adhoc";
+      }
     } else {
-      let mode: "single" | "preamble" | "adhoc" | "simple";
-      const [f, ...rest] = entries;
-      if (!f) {
-        return { context: [] };
-      }
-      const first = asContextArray(f[1]);
-      const firstOpenSplits = scanForSplits(first);
-      const preambleIndices: number[] = [];
-      for (const [, input] of rest) {
-        const c = asContextArray(input);
-        const hasOpenSplits = scanForSplits(c);
-        if (hasOpenSplits) {
-          preambleIndices.push(hasOpenSplits[1]);
-        }
-      }
-      if (!firstOpenSplits) {
-        if (preambleIndices.length === 0) {
-          mode = "simple";
+      const preamblesMatch =
+        preambleIndices.length > 0 &&
+        preambleIndices.every((value) => value === firstOpenSplits[1]);
+      if (preamblesMatch) {
+        mode = "preamble";
+      } else {
+        if (firstOpenSplits[1] === first.length - 1) {
+          mode = "single";
         } else {
           mode = "adhoc";
         }
-      } else {
-        const preamblesMatch =
-          preambleIndices.length > 0 &&
-          preambleIndices.every((value) => value === firstOpenSplits[1]);
-        if (preamblesMatch) {
-          mode = "preamble";
-        } else {
-          if (firstOpenSplits[1] === first.length - 1) {
-            mode = "single";
-          } else {
-            mode = "adhoc";
-          }
-        }
       }
-      const context: Context[] = [];
-      if (mode === "adhoc") {
-        for (const [, input] of entries) {
-          const c = asContextArray(input);
-          context.push(...c);
-        }
-        return { context };
-      } else if (mode === "simple") {
-        const splitId = Math.random().toString(36).substring(7);
+    }
+    const context: Context[] = [];
+    if (mode === "adhoc") {
+      for (const [, input] of entries) {
+        const c = asContextArray(input);
+        context.push(...c);
+      }
+      return { context };
+    } else if (mode === "simple") {
+      const splitId = Math.random().toString(36).substring(7);
+      context.push({
+        role: "$metadata",
+        type: "split",
+        data: { type: "start", id: splitId },
+      });
+      for (const [, input] of entries) {
+        const c = asContextArray(input);
+        context.push(...c);
         context.push({
           role: "$metadata",
           type: "split",
-          data: { type: "start", id: splitId },
+          data: { type: "next", id: splitId },
         });
-        for (const [, input] of entries) {
-          const c = asContextArray(input);
-          context.push(...c);
-          context.push({
-            role: "$metadata",
-            type: "split",
-            data: { type: "next", id: splitId },
-          });
+      }
+    } else if (mode === "preamble") {
+      const preambleIndex = firstOpenSplits?.[1] || 0;
+      const preamble = entries[0][1].slice(0, preambleIndex + 1);
+      context.push(...preamble);
+      const splitId = (preamble[preamble.length - 1] as SplitMetadata).data.id;
+      for (const [, input] of entries) {
+        let c = asContextArray(input);
+        if (preambleIndex >= 0) {
+          c = c.slice(preambleIndex + 1);
         }
-      } else if (mode === "preamble") {
-        const preambleIndex = firstOpenSplits?.[1] || 0;
-        const preamble = entries[0][1].slice(0, preambleIndex + 1);
-        context.push(...preamble);
-        const splitId = (preamble[preamble.length - 1] as SplitMetadata).data
-          .id;
-        for (const [, input] of entries) {
-          let c = asContextArray(input);
-          if (preambleIndex >= 0) {
-            c = c.slice(preambleIndex + 1);
-          }
-          if (c.length) {
-            context.push(...c);
-            context.push({
-              role: "$metadata",
-              type: "split",
-              data: { type: "next", id: splitId },
-            });
-          }
-        }
-      } else if (mode === "single") {
-        const splitId = (first[first.length - 1] as SplitMetadata).data.id;
-        context.push(...first);
-        for (const [, input] of rest) {
-          const c = asContextArray(input);
+        if (c.length) {
           context.push(...c);
           context.push({
             role: "$metadata",
@@ -570,40 +535,52 @@ export const combineContextsFunction = fun(
           });
         }
       }
-      const last = context[context.length - 1] as SplitMetadata;
-      last.data.type = "end";
-      return { context };
-    }
-
-    function asContextArray(input: Context | Context[]): Context[] {
-      return Array.isArray(input) ? input : [input];
-    }
-
-    function scanForSplits(c: Context[]): SplitScanResult | null {
-      const stack: SplitScanResult[] = [];
-      for (const [i, item] of c.entries()) {
-        if (item.role !== "$metadata") continue;
-        if (item.type !== "split") continue;
-        if (item.data.type === "start") {
-          stack.push([item.data.id, i]);
-        }
-        if (item.data.type === "end") {
-          const [id] = stack.pop() || [];
-          if (id !== item.data.id) {
-            console.warn(
-              "Split integrity error: mismatched split start/end markers. Start:",
-              id,
-              "End:",
-              item.data.id
-            );
-            return null;
-          }
-        }
+    } else if (mode === "single") {
+      const splitId = (first[first.length - 1] as SplitMetadata).data.id;
+      context.push(...first);
+      for (const [, input] of rest) {
+        const c = asContextArray(input);
+        context.push(...c);
+        context.push({
+          role: "$metadata",
+          type: "split",
+          data: { type: "next", id: splitId },
+        });
       }
-      return stack.pop() || null;
     }
+    const last = context[context.length - 1] as SplitMetadata;
+    last.data.type = "end";
+    return { context };
   }
-);
+
+  function asContextArray(input: Context | Context[]): Context[] {
+    return Array.isArray(input) ? input : [input];
+  }
+
+  function scanForSplits(c: Context[]): SplitScanResult | null {
+    const stack: SplitScanResult[] = [];
+    for (const [i, item] of c.entries()) {
+      if (item.role !== "$metadata") continue;
+      if (item.type !== "split") continue;
+      if (item.data.type === "start") {
+        stack.push([item.data.id, i]);
+      }
+      if (item.data.type === "end") {
+        const [id] = stack.pop() || [];
+        if (id !== item.data.id) {
+          console.warn(
+            "Split integrity error: mismatched split start/end markers. Start:",
+            id,
+            "End:",
+            item.data.id
+          );
+          return null;
+        }
+      }
+    }
+    return stack.pop() || null;
+  }
+});
 export const combineContexts = code(combineContextsFunction);
 
 /**
