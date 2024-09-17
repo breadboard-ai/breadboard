@@ -7029,7 +7029,7 @@
           "from": "runJavascript-1",
           "to": "runJavascript-0",
           "out": "*",
-          "in": "*"
+          "in": ""
         },
         {
           "from": "runJavascript-2",
@@ -8338,16 +8338,17 @@
             "code": "const run = ({merge,...inputs})=>{const entries=Object.entries(inputs).sort();if(merge){const context=[];const parts=[];for(const[,input]of entries){const c=asContextArray(input);let lastIndex=c.length-1;let last;do{last=c[lastIndex--]}while(lastIndex>=0&&last.role===\"$metadata\");if(last){parts.push(...last.parts)}}context.push({parts,role:\"user\"});return{context}}else{let mode;const[f,...rest]=entries;if(!f){return{context:[]}}const first=asContextArray(f[1]);const firstOpenSplits=scanForSplits(first);const preambleIndices=[];for(const[,input]of rest){const c=asContextArray(input);const hasOpenSplits=scanForSplits(c);if(hasOpenSplits){preambleIndices.push(hasOpenSplits[1])}}if(!firstOpenSplits){if(preambleIndices.length===0){mode=\"simple\"}else{mode=\"adhoc\"}}else{const preamblesMatch=preambleIndices.length>0&&preambleIndices.every(value=>value===firstOpenSplits[1]);if(preamblesMatch){mode=\"preamble\"}else{if(firstOpenSplits[1]===first.length-1){mode=\"single\"}else{mode=\"adhoc\"}}}const context=[];if(mode===\"adhoc\"){for(const[,input]of entries){const c=asContextArray(input);context.push(...c)}return{context}}else if(mode===\"simple\"){const splitId=Math.random().toString(36).substring(7);context.push({role:\"$metadata\",type:\"split\",data:{type:\"start\",id:splitId}});for(const[,input]of entries){const c=asContextArray(input);context.push(...c);context.push({role:\"$metadata\",type:\"split\",data:{type:\"next\",id:splitId}})}}else if(mode===\"preamble\"){const preambleIndex=firstOpenSplits?.[1]||0;const preamble=entries[0][1].slice(0,preambleIndex+1);context.push(...preamble);const splitId=preamble[preamble.length-1].data.id;for(const[,input]of entries){let c=asContextArray(input);if(preambleIndex>=0){c=c.slice(preambleIndex+1)}if(c.length){context.push(...c);context.push({role:\"$metadata\",type:\"split\",data:{type:\"next\",id:splitId}})}}}else if(mode===\"single\"){const splitId=first[first.length-1].data.id;context.push(...first);for(const[,input]of rest){const c=asContextArray(input);context.push(...c);context.push({role:\"$metadata\",type:\"split\",data:{type:\"next\",id:splitId}})}}const last=context[context.length-1];last.data.type=\"end\";return{context}}function asContextArray(input){return Array.isArray(input)?input:[input]}__name(asContextArray,\"asContextArray\");function scanForSplits(c){const stack=[];for(const[i,item]of c.entries()){if(item.role!==\"$metadata\")continue;if(item.type!==\"split\")continue;if(item.data.type===\"start\"){stack.push([item.data.id,i])}if(item.data.type===\"end\"){const[id]=stack.pop()||[];if(id!==item.data.id){console.warn(\"Split integrity error: mismatched split start/end markers. Start:\",id,\"End:\",item.data.id);return null}}}return stack.pop()||null}__name(scanForSplits,\"scanForSplits\")};",
             "inputSchema": {
               "type": "object",
-              "properties": {},
-              "additionalProperties": {
-                "type": [
-                  "array",
-                  "boolean",
-                  "null",
-                  "number",
-                  "object",
-                  "string"
-                ]
+              "properties": {
+                "": {
+                  "type": [
+                    "array",
+                    "boolean",
+                    "null",
+                    "number",
+                    "object",
+                    "string"
+                  ]
+                }
               }
             },
             "name": "run",
@@ -11390,7 +11391,7 @@
               "from": "invoke-0",
               "to": "runJavascript-1",
               "out": "*",
-              "in": "*"
+              "in": ""
             },
             {
               "from": "runJavascript-0",
@@ -11408,7 +11409,7 @@
               "from": "runJavascript-2",
               "to": "invoke-0",
               "out": "*",
-              "in": "*"
+              "in": ""
             },
             {
               "from": "runJavascript-3",
@@ -11544,16 +11545,17 @@
                 "code": "const run = result=>({result});",
                 "inputSchema": {
                   "type": "object",
-                  "properties": {},
-                  "additionalProperties": {
-                    "type": [
-                      "array",
-                      "boolean",
-                      "null",
-                      "number",
-                      "object",
-                      "string"
-                    ]
+                  "properties": {
+                    "": {
+                      "type": [
+                        "array",
+                        "boolean",
+                        "null",
+                        "number",
+                        "object",
+                        "string"
+                      ]
+                    }
                   }
                 },
                 "name": "run",
