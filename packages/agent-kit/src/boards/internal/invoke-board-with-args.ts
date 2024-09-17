@@ -54,13 +54,17 @@ const invoker = coreKit.invoke({
     title: "Invoke board",
     description: "Invoking the board with unpacked arguments",
   },
-  ["*" as string]: unpackArgs.unsafeOutput("*"),
+  // TODO(aomarks) A nicer way to do star wiring. Also, why does the input port have
+  // to be "" instead of "*" (it doesn't work with "*").
+  "": unpackArgs.unsafeOutput("*"),
 });
 
 const packResults = code(
   {
     $metadata: { title: "Pack results", description: "Packing results" },
-    "*": invoker.unsafeOutput("*"),
+    // TODO(aomarks) A nicer way to do star wiring. Also, why does the input port have
+    // to be "" instead of "*" (it doesn't work with "*").
+    "": invoker.unsafeOutput("*"),
   },
   { result: "unknown" },
   (result) => ({ result })

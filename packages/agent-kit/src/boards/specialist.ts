@@ -270,7 +270,9 @@ const addToolResponseToContext = code(
       title: "Add Tool Response",
       description: "Adding tool response to context",
     },
-    "*": formatToolResponse.unsafeOutput("*"),
+    // TODO(aomarks) A nicer way to do star wiring. Also, why does the input port have
+    // to be "" instead of "*" (it doesn't work with "*").
+    "": formatToolResponse.unsafeOutput("*"),
   },
   {
     context: array(contextType),
