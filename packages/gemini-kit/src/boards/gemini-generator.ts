@@ -75,7 +75,7 @@ const functionDeclaration = object({
 });
 
 const systemInstruction = input({
-  type: annotate("string", {
+  type: annotate(anyOf("string", object({ parts: array(partType) })), {
     behavior: ["config"],
   }),
   title: "System Instruction",
