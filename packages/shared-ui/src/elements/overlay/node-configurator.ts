@@ -282,7 +282,6 @@ export class NodeConfigurationOverlay extends LitElement {
     const visual = metadata.visual as {
       collapsed: "advanced";
     };
-    console.log("visual", visual);
     if (visual.collapsed === "advanced") {
       return EditorMode.ADVANCED;
     }
