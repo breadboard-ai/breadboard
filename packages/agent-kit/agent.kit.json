@@ -14747,7 +14747,8 @@
                     "behavior": [
                       "llm-content"
                     ]
-                  }
+                  },
+                  "title": "Done"
                 }
               },
               "required": [
@@ -14957,7 +14958,8 @@
                     "behavior": [
                       "llm-content"
                     ]
-                  }
+                  },
+                  "title": "Loop"
                 }
               },
               "required": [
