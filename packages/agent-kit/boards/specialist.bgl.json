@@ -321,14 +321,142 @@
               ]
             },
             "persona": {
-              "type": "object",
               "behavior": [
                 "llm-content",
                 "config"
               ],
               "title": "Persona",
               "description": "Describe the worker's skills, capabilities, mindset, and thinking process",
-              "default": ""
+              "default": "",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "parts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "text": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "text"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "inlineData": {
+                                "type": "object",
+                                "properties": {
+                                  "mimeType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/heic",
+                                      "image/heif",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "data": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "mimeType",
+                                  "data"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "inlineData"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "function_call": {
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "args": {
+                                    "type": "object",
+                                    "properties": {},
+                                    "required": [],
+                                    "additionalProperties": {
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "name",
+                                  "args"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "function_call"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "function_response": {
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "response": {
+                                    "type": [
+                                      "array",
+                                      "boolean",
+                                      "null",
+                                      "number",
+                                      "object",
+                                      "string"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "name",
+                                  "response"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "function_response"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "parts"
+                  ],
+                  "additionalProperties": false
+                }
+              ],
+              "type": "object"
             }
           },
           "required": [
