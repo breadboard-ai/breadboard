@@ -1235,7 +1235,7 @@ export class GraphRenderer extends LitElement {
       return;
     }
 
-    if (evt.code === "Space" && !this.readOnly) {
+    if (evt.code === "Space") {
       this.#mode = MODE.MOVE;
       return;
     }
@@ -1277,17 +1277,14 @@ export class GraphRenderer extends LitElement {
   }
 
   #onKeyUp(evt: KeyboardEvent) {
-    if (evt.code === "Space" && !this.readOnly) {
-      this.#mode = MODE.SELECT;
+    if (evt.code !== "Space") {
       return;
     }
+
+    this.#mode = MODE.SELECT;
   }
 
   #onWheel(evt: WheelEvent) {
-    if (this.readOnly) {
-      return;
-    }
-
     evt.preventDefault();
   }
 
