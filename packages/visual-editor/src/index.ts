@@ -219,7 +219,6 @@ export class Main extends LitElement {
     }
 
     const currentUrl = new URL(window.location.href);
-    const boardFromUrl = currentUrl.searchParams.get("board");
     const firstRunFromUrl = currentUrl.searchParams.get("firstrun");
 
     if (firstRunFromUrl && firstRunFromUrl === "true") {
@@ -349,9 +348,8 @@ export class Main extends LitElement {
                 this.tab.graph.url &&
                 this.tab.type === Runtime.Types.TabType.URL
               ) {
-                this.#setUrlParam("board", this.tab.graph.url);
-                const base = new URL(window.location.href);
-                const decodedUrl = decodeURIComponent(base.href);
+                const url = this.#runtime.board.createURLFromTabs();
+                const decodedUrl = decodeURIComponent(url.href);
                 window.history.replaceState(
                   { path: decodedUrl },
                   "",
@@ -365,7 +363,7 @@ export class Main extends LitElement {
                 this.#setPageTitle(this.tab.graph.title);
               }
             } else {
-              this.#setUrlParam("board", null);
+              this.#clearTabParams();
               this.#setPageTitle(null);
             }
           }
@@ -477,13 +475,7 @@ export class Main extends LitElement {
           }
         );
 
-        // Start the board or show the welcome panel.
-        if (boardFromUrl) {
-          this.#runtime.board.createTabFromURL(boardFromUrl);
-          return;
-        } else {
-          this.showWelcomePanel = true;
-        }
+        return this.#runtime.board.createTabsFromURL(currentUrl);
       });
   }
 
@@ -974,6 +966,19 @@ export class Main extends LitElement {
     }
 
     this.#runtime.run.runBoard(this.tab.id, config);
+  }
+
+  #clearTabParams() {
+    const pageUrl = new URL(window.location.href);
+    const tabs = [...pageUrl.searchParams].filter(([id]) =>
+      id.startsWith("tab")
+    );
+
+    for (const [id] of tabs) {
+      pageUrl.searchParams.delete(id);
+    }
+
+    window.history.replaceState(null, "", pageUrl);
   }
 
   #setUrlParam(param: string, value: string | null) {
@@ -2114,13 +2119,17 @@ export class Main extends LitElement {
                 break;
               }
 
-              await navigator.clipboard.writeText(this.tab?.graph.url);
+              const url = new URL(window.location.href);
+              url.search = `?tab0=${this.tab.graph.url}`;
+
+              await navigator.clipboard.writeText(url.href);
               this.toast(
                 "Board URL copied",
                 BreadboardUI.Events.ToastType.INFORMATION
               );
               break;
             }
+
             case "download": {
               if (!this.tab?.graph) {
                 break;
