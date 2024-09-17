@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { array, defineNodeType, object } from "@breadboard-ai/build";
+import { anyOf, array, defineNodeType, object } from "@breadboard-ai/build";
 import type {
   BoardOutputPorts,
   GenericBoardDefinition,
@@ -87,10 +87,12 @@ const mapNode = defineNodeType({
     },
     board: {
       title: "Board",
-      type:
+      type: anyOf(
+        "string",
         // TODO(aomarks) An embedded board. Should have a better schema to use
         // here. Maybe with a JSON schema ID reference?
-        object({}, "unknown"),
+        object({}, "unknown")
+      ),
       // TODO(aomarks) There should alsobe a way to specify what the interface of
       // the board must be.
       behavior: ["board"],
