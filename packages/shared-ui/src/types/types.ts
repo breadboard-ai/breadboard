@@ -18,6 +18,7 @@ import {
   NodeIdentifier,
   InspectableNodePorts,
 } from "@google-labs/breadboard";
+import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 
 export const enum HistoryEventType {
   DONE = "done",
@@ -296,6 +297,7 @@ export type NodePortConfiguration = {
   title: string | null;
   subGraphId: string | null;
   selectedPort: string | null;
+  metadata: NodeMetadata | null;
   ports: InspectableNodePorts;
   x: number;
   y: number;

@@ -1676,6 +1676,11 @@ export class Main extends LitElement {
                   return;
                 }
 
+                const metadata = this.#runtime.edit.getNodeMetadata(
+                  this.tab,
+                  evt.id
+                );
+
                 this.showNodeConfigurator = evt.port !== null;
                 this.#nodeConfiguratorData = {
                   id: evt.id,
@@ -1685,6 +1690,7 @@ export class Main extends LitElement {
                   selectedPort: evt.port?.title ?? null,
                   subGraphId: evt.subGraphId,
                   ports,
+                  metadata,
                 };
               }}
               @bbedgevalueselected=${(

@@ -380,6 +380,11 @@ export class GraphNode extends PIXI.Container {
     this.#expansionState = state;
     this.#emitCollapseToggleEventOnNextDraw = true;
     this.#isDirty = true;
+    for (const child of this.children) {
+      if (child instanceof GraphNodePortLabel) {
+        child.expansionState = state;
+      }
+    }
   }
 
   get collapsed() {
@@ -495,6 +500,7 @@ export class GraphNode extends PIXI.Container {
       let portItem = this.#inPortsData.get(port.name);
       if (!portItem) {
         const label = new GraphNodePortLabel(port, this.#showNodePreviewValues);
+        label.expansionState = this.#expansionState;
         label.on(
           GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
           (...args: unknown[]) => {

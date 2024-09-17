@@ -54,9 +54,14 @@ export function edgeToString(edge: {
 
 export const DBL_CLICK_DELTA = 450;
 
-export function isConfigurablePort(port: InspectablePort) {
+export function isConfigurablePort(
+  port: InspectablePort,
+  expansionState: ComponentExpansionState = "expanded"
+): boolean {
   if (port.star) return false;
   if (port.name === "") return false;
+
+  if (expansionState === "advanced") return true;
 
   if (port.schema.behavior?.includes("config")) return true;
   const items = port.schema.items;
