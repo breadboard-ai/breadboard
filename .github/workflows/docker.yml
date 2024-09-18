@@ -112,9 +112,9 @@ jobs:
           context: .
           file: ./packages/board-server/Dockerfile
           cache-from: |
-            type=gha,ref=${{ needs.setup.outputs.board_server_sqlite_image_name }}
-            type=registry,ref=${{ needs.setup.outputs.board_server_sqlite_image_path }}
-          cache-to: type=gha,mode=max,ref=${{ needs.setup.outputs.board_server_sqlite_image_name }}
+            ${{ github.event_name != 'pull_request' && format('type=gha,ref={0}', needs.setup.outputs.board_server_sqlite_image_name) || 'type=gha,scope=pr' }}
+            ${{ github.event_name != 'pull_request' && format('type=registry,ref={0}', needs.setup.outputs.board_server_sqlite_image_path) || '' }}
+          cache-to: ${{ github.event_name != 'pull_request' && format('type=gha,mode=max,ref={0}', needs.setup.outputs.board_server_sqlite_image_name) || 'type=gha,mode=max,scope=pr' }}
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.pull_request.head.repo.fork }}
           provenance: true
           platforms: linux/amd64,linux/arm64
@@ -173,11 +173,9 @@ jobs:
           context: .
           file: ./packages/board-server/Dockerfile
           cache-from: |
-            type=gha,ref=${{ needs.setup.outputs.board_server_firestore_image_name }}
-            type=registry,ref=${{ needs.setup.outputs.board_server_firestore_image_path }}
-          cache-to: |
-            type=gha,mode=max,ref=${{ needs.setup.outputs.board_server_firestore_image_name }}
-            type=registry,mode=max,ref=${{ needs.setup.outputs.board_server_firestore_image_path }}
+            ${{ github.event_name != 'pull_request' && format('type=gha,ref={0}', needs.setup.outputs.board_server_firestore_image_name) || 'type=gha,scope=pr' }}
+            ${{ github.event_name != 'pull_request' && format('type=registry,ref={0}', needs.setup.outputs.board_server_firestore_image_path) || '' }}
+          cache-to: ${{ github.event_name != 'pull_request' && format('type=gha,mode=max,ref={0}|type=registry,mode=max,ref={1}', needs.setup.outputs.board_server_firestore_image_name, needs.setup.outputs.board_server_firestore_image_path) || 'type=gha,mode=max,scope=pr' }}
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.pull_request.head.repo.fork }}
           provenance: true
           platforms: linux/amd64,linux/arm64
