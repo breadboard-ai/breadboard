@@ -2095,6 +2095,12 @@ export class Main extends LitElement {
       });
 
       actions.push({
+        title: "Copy Tab URL",
+        name: "copy-tab-to-clipboard",
+        icon: "copy",
+      });
+
+      actions.push({
         title: "Settings",
         name: "settings",
         icon: "settings",
@@ -2119,12 +2125,29 @@ export class Main extends LitElement {
                 break;
               }
 
+              await navigator.clipboard.writeText(this.tab.graph.url);
+              this.toast(
+                "Board URL copied",
+                BreadboardUI.Events.ToastType.INFORMATION
+              );
+              break;
+            }
+
+            case "copy-tab-to-clipboard": {
+              if (!this.tab?.graph || !this.tab?.graph.url) {
+                this.toast(
+                  "Unable to copy board URL",
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+                break;
+              }
+
               const url = new URL(window.location.href);
               url.search = `?tab0=${this.tab.graph.url}`;
 
               await navigator.clipboard.writeText(url.href);
               this.toast(
-                "Board URL copied",
+                "Tab URL copied",
                 BreadboardUI.Events.ToastType.INFORMATION
               );
               break;
