@@ -352,7 +352,7 @@ export type CoreKitType = {
  */
 export const core = addKit(Core) as unknown as CoreKitType;
 
-export const coreKit = kit({
+export const coreKit = await kit({
   ...metadata,
   components: {
     cast: castNode,

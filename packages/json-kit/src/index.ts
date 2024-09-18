@@ -59,7 +59,7 @@ export const json = addKit(JSONKit) as unknown as {
   objectToSchema: NodeFactory<{ object: unknown }, { objectSchema: NodeValue }>;
 };
 
-export const jsonKit = kit({
+export const jsonKit = await kit({
   ...metadata,
   components: { jsonata, validateJson, schemish },
 });

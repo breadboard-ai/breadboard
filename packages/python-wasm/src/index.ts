@@ -7,7 +7,7 @@
 import { kit } from "@breadboard-ai/build";
 import { runPython } from "./run-python.js";
 
-export default kit({
+export default await kit({
   title: "Python Wasm Kit",
   description: "An example kit",
   version: "0.1.0",
