@@ -12,6 +12,7 @@ import { defineNodeType } from "../internal/define/define.js";
 import { kit } from "../internal/kit.js";
 import {
   board as oldBoard,
+  type GraphDescriptor,
   type Kit,
   type KitConstructor,
   type NodeFactory,
@@ -45,6 +46,16 @@ const testBoard = board({
   outputs: { num: numInput },
 });
 
+const testDescriptor: GraphDescriptor = {
+  title: "BGL Title",
+  description: "BGL Description",
+  metadata: {
+    icon: "robot",
+  },
+  nodes: [],
+  edges: [],
+};
+
 const testKit = await kit({
   title: "test_title",
   url: "test_url",
@@ -53,6 +64,7 @@ const testKit = await kit({
   components: {
     foo: testDiscrete,
     bar: testBoard,
+    baz: testDescriptor,
   },
 });
 
@@ -60,12 +72,14 @@ test("is a kit", () => {
   testKit satisfies Kit & {
     handlers: { foo: NodeHandlerObject; bar: NodeHandlerObject };
   };
-  assert.deepEqual(Object.keys(testKit.handlers), ["foo", "bar"]);
-  const { foo, bar } = testKit.handlers;
+  assert.deepEqual(Object.keys(testKit.handlers), ["foo", "bar", "baz"]);
+  const { foo, bar, baz } = testKit.handlers;
   assert.equal(typeof foo.invoke, "function");
   assert.equal(typeof bar.invoke, "function");
+  assert.equal(typeof baz.invoke, "function");
   assert.equal(typeof foo.describe, "function");
   assert.equal(typeof bar.describe, "function");
+  assert.equal(typeof baz.describe, "function");
 });
 
 test("is a kit factory for itself", () => {
@@ -75,12 +89,18 @@ test("is a kit factory for itself", () => {
     }
   >;
   const instantiatedTestKit = new testKit(undefined as unknown as NodeFactory);
-  assert.deepEqual(Object.keys(instantiatedTestKit.handlers), ["foo", "bar"]);
-  const { foo, bar } = instantiatedTestKit.handlers;
+  assert.deepEqual(Object.keys(instantiatedTestKit.handlers), [
+    "foo",
+    "bar",
+    "baz",
+  ]);
+  const { foo, bar, baz } = instantiatedTestKit.handlers;
   assert.equal(typeof foo.invoke, "function");
   assert.equal(typeof bar.invoke, "function");
+  assert.equal(typeof baz.invoke, "function");
   assert.equal(typeof foo.describe, "function");
   assert.equal(typeof bar.describe, "function");
+  assert.equal(typeof baz.describe, "function");
 });
 
 test("kit handles discrete component", () => {
@@ -97,6 +117,16 @@ test("kit handles board component", () => {
     testKit.bar
   );
   assert.equal(testKit.bar.description, "Board Description");
+});
+
+test("kit handles BGL component", () => {
+  assert.ok(
+    // $ExpectType GraphDescriptor
+    testKit.baz
+  );
+  assert.equal(testKit.baz.title, "BGL Title");
+  assert.equal(testKit.baz.description, "BGL Description");
+  assert.equal(testKit.baz.metadata?.icon, "robot");
 });
 
 test("can invoke discrete component with old API", async () => {
