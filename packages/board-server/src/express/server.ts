@@ -39,6 +39,15 @@ app.post('/boards/@:user/:boardName.json', authenticate, boardController.update)
 // app.get('/boards/@:user/:boardName.invite', boardController.inviteList);
 // app.post('/boards/@:user/:boardName.invite', boardController.inviteUpdate);
 
+app.get('/boards/@:user/:boardName.app', boardController.serve);
+app.get('/boards/@:user/:boardName.api', boardController.describe);
+
+// Global error handling middleware
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Internal Server Error' });
+});
+
 app.listen(port, () => {
   console.log(`Board server listening at http://localhost:${port}`);
 });
