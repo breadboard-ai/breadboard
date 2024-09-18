@@ -256,13 +256,20 @@ export class UI extends LitElement {
           .items.get("Show Experimental Components")?.value
       : false;
 
-    const graph =
-      this.graph && this.loader
-        ? inspect(this.graph, {
-            kits: this.kits,
-            loader: this.loader,
-          })
-        : null;
+    let graph;
+    try {
+      graph =
+        this.graph && this.loader
+          ? inspect(this.graph, {
+              kits: this.kits,
+              loader: this.loader,
+            })
+          : null;
+      console.log(graph);
+    } catch (err) {
+      console.log(err);
+      return;
+    }
 
     /**
      * Create all the elements we need.

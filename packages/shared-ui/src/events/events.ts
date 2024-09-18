@@ -470,6 +470,17 @@ export class NodeMetadataUpdateEvent extends Event {
   }
 }
 
+export class NodeTypeRetrievalErrorEvent extends Event {
+  static eventName = "bbnodetyperetrievalerror";
+
+  constructor(
+    public readonly id: string,
+    public readonly subGraphId: string | null = null
+  ) {
+    super(NodeTypeRetrievalErrorEvent.eventName, { ...eventInit });
+  }
+}
+
 export class EdgeChangeEvent extends Event {
   static eventName = "bbedgechange";
 

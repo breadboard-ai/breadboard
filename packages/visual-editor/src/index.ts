@@ -1778,6 +1778,14 @@ export class Main extends LitElement {
                 }
                 this.requestUpdate();
               }}
+              @bbnodetyperetrievalerror=${(
+                evt: BreadboardUI.Events.NodeTypeRetrievalErrorEvent
+              ) => {
+                this.toast(
+                  `Error retrieving type information for ${evt.id}; try removing the component from the board`,
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+              }}
             ></bb-ui-controller>
           </div>
         ${until(nav)}
