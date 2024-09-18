@@ -48,6 +48,14 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
           },
         ],
         [
+          "Show Tooltips",
+          {
+            name: "Show Tooltips",
+            description: "Toggles the tooltips on UI items",
+            value: true,
+          },
+        ],
+        [
           "Collapse Nodes by Default",
           {
             name: "Collapse Nodes by Default",

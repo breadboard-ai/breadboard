@@ -502,6 +502,14 @@ export class Main extends LitElement {
       return;
     }
 
+    const tooltips = this.#settings?.getItem(
+      BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
+      "Show Tooltips"
+    );
+    if (!tooltips?.value) {
+      return;
+    }
+
     // Add a little clearance onto the value.
     this.#tooltipRef.value.x = Math.max(tooltipEvent.x, 100);
     this.#tooltipRef.value.y = Math.max(tooltipEvent.y, 100);
