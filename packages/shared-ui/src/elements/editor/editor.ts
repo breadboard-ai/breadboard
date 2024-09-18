@@ -31,6 +31,7 @@ import {
   GraphEdgeDetachEvent,
   GraphEdgeValueSelectedEvent,
   GraphEntityRemoveEvent,
+  GraphHideTooltipEvent,
   GraphInitialDrawEvent,
   GraphInteractionEvent,
   GraphNodeActivitySelectedEvent,
@@ -38,6 +39,8 @@ import {
   GraphNodeEdgeChangeEvent,
   GraphNodePortValueEditEvent,
   GraphNodesVisualUpdateEvent,
+  GraphShowTooltipEvent,
+  HideTooltipEvent,
   KitNodeChosenEvent,
   MultiEditEvent,
   NodeActivitySelectedEvent,
@@ -45,6 +48,7 @@ import {
   NodeCreateEvent,
   NodeDeleteEvent,
   NodeTypeRetrievalErrorEvent,
+  ShowTooltipEvent,
   SubGraphChosenEvent,
   SubGraphCreateEvent,
   SubGraphDeleteEvent,
@@ -185,6 +189,8 @@ export class Editor extends LitElement {
   #onGraphNodeActivitySelectedBound =
     this.#onGraphNodeActivitySelected.bind(this);
   #onGraphInteractionBound = this.#onGraphInteraction.bind(this);
+  #onGraphShowTooltipBound = this.#onGraphShowTooltip.bind(this);
+  #onGraphHideTooltipBound = this.#onGraphHideTooltip.bind(this);
 
   #top = 0;
   #left = 0;
@@ -672,6 +678,16 @@ export class Editor extends LitElement {
       this.#onGraphInteractionBound
     );
 
+    this.#graphRenderer.addEventListener(
+      GraphShowTooltipEvent.eventName,
+      this.#onGraphShowTooltipBound
+    );
+
+    this.#graphRenderer.addEventListener(
+      GraphHideTooltipEvent.eventName,
+      this.#onGraphHideTooltipBound
+    );
+
     window.addEventListener("resize", this.#onResizeBound);
     this.addEventListener("keydown", this.#onKeyDownBound);
     this.addEventListener("pointermove", this.#onPointerMoveBound);
@@ -733,6 +749,16 @@ export class Editor extends LitElement {
       this.#onGraphInteractionBound
     );
 
+    this.#graphRenderer.removeEventListener(
+      GraphShowTooltipEvent.eventName,
+      this.#onGraphShowTooltipBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphHideTooltipEvent.eventName,
+      this.#onGraphHideTooltipBound
+    );
+
     window.removeEventListener("resize", this.#onResizeBound);
     this.removeEventListener("keydown", this.#onKeyDownBound);
     this.removeEventListener("pointermove", this.#onPointerMoveBound);
@@ -757,6 +783,17 @@ export class Editor extends LitElement {
     }
 
     this.zoomToHighlightedNodeDuringRuns = false;
+  }
+
+  #onGraphShowTooltip(evt: Event) {
+    const tooltipEvt = evt as GraphShowTooltipEvent;
+    this.dispatchEvent(
+      new ShowTooltipEvent(tooltipEvt.message, tooltipEvt.x, tooltipEvt.y)
+    );
+  }
+
+  #onGraphHideTooltip() {
+    this.dispatchEvent(new HideTooltipEvent());
   }
 
   #onPointerMove(evt: PointerEvent) {
@@ -1659,8 +1696,19 @@ export class Editor extends LitElement {
                       ? html`<div class="divider"></div>
                           <button
                             draggable="true"
-                            title="Add Specialist"
                             id="shortcut-add-specialist"
+                            @pointerover=${(evt: PointerEvent) => {
+                              this.dispatchEvent(
+                                new ShowTooltipEvent(
+                                  "Add Specialist Component",
+                                  evt.clientX,
+                                  evt.clientY
+                                )
+                              );
+                            }}
+                            @pointerout=${() => {
+                              this.dispatchEvent(new HideTooltipEvent());
+                            }}
                             @dblclick=${() => {
                               const id = this.#createRandomID("specialist");
                               this.#graphRenderer.deselectAllChildren();
@@ -1679,8 +1727,19 @@ export class Editor extends LitElement {
                           </button>
                           <button
                             draggable="true"
-                            title="Add human"
                             id="shortcut-add-human"
+                            @pointerover=${(evt: PointerEvent) => {
+                              this.dispatchEvent(
+                                new ShowTooltipEvent(
+                                  "Add Human Component",
+                                  evt.clientX,
+                                  evt.clientY
+                                )
+                              );
+                            }}
+                            @pointerout=${() => {
+                              this.dispatchEvent(new HideTooltipEvent());
+                            }}
                             @dblclick=${() => {
                               const id = this.#createRandomID("human");
                               this.#graphRenderer.deselectAllChildren();
@@ -1699,8 +1758,19 @@ export class Editor extends LitElement {
                           </button>
                           <button
                             draggable="true"
-                            title="Add looper"
                             id="shortcut-add-looper"
+                            @pointerover=${(evt: PointerEvent) => {
+                              this.dispatchEvent(
+                                new ShowTooltipEvent(
+                                  "Add Looper Component",
+                                  evt.clientX,
+                                  evt.clientY
+                                )
+                              );
+                            }}
+                            @pointerout=${() => {
+                              this.dispatchEvent(new HideTooltipEvent());
+                            }}
                             @dblclick=${() => {
                               const id = this.#createRandomID("looper");
                               this.#graphRenderer.deselectAllChildren();
@@ -1719,8 +1789,19 @@ export class Editor extends LitElement {
                           </button>
                           <button
                             draggable="true"
-                            title="Add comment"
                             id="shortcut-add-comment"
+                            @pointerover=${(evt: PointerEvent) => {
+                              this.dispatchEvent(
+                                new ShowTooltipEvent(
+                                  "Add Comment Component",
+                                  evt.clientX,
+                                  evt.clientY
+                                )
+                              );
+                            }}
+                            @pointerout=${() => {
+                              this.dispatchEvent(new HideTooltipEvent());
+                            }}
                             @dblclick=${() => {
                               const id = this.#createRandomID("comment");
                               this.#graphRenderer.deselectAllChildren();

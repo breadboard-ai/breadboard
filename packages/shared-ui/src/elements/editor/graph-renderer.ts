@@ -24,6 +24,8 @@ import {
   GraphEdgeValueSelectedEvent,
   GraphNodeActivitySelectedEvent,
   GraphInteractionEvent,
+  GraphShowTooltipEvent,
+  GraphHideTooltipEvent,
 } from "../../events/events.js";
 import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
@@ -984,6 +986,17 @@ export class GraphRenderer extends LitElement {
         this.dispatchEvent(new GraphNodeActivitySelectedEvent(nodeName, id));
       }
     );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_SHOW_TOOLTIP,
+      (message: string, x: number, y: number) => {
+        this.dispatchEvent(new GraphShowTooltipEvent(message, x, y));
+      }
+    );
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_HIDE_TOOLTIP, () => {
+      this.dispatchEvent(new GraphHideTooltipEvent());
+    });
 
     this.#container.addChild(graph);
   }
