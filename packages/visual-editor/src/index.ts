@@ -106,6 +106,10 @@ export class Main extends LitElement {
     createRef();
 
   @state()
+  showCommentEditor = false;
+  #commentValueData: BreadboardUI.Types.CommentConfiguration | null = null;
+
+  @state()
   showEdgeValue = false;
   #edgeValueData: BreadboardUI.Types.EdgeValueConfiguration | null = null;
 
@@ -280,6 +284,10 @@ export class Main extends LitElement {
           () => {
             this.#nodeConfiguratorData = null;
             this.showNodeConfigurator = false;
+
+            this.#commentValueData = null;
+            this.showCommentEditor = false;
+
             this.requestUpdate();
 
             const shouldAutoSave = this.#settings?.getItem(
@@ -1283,7 +1291,8 @@ export class Main extends LitElement {
       this.showSaveAsDialog ||
       this.showOverflowMenu ||
       this.showNodeConfigurator ||
-      this.showEdgeValue;
+      this.showEdgeValue ||
+      this.showCommentEditor;
 
     const nav = this.#initialize.then(() => {
       return html`<bb-nav
@@ -1724,16 +1733,32 @@ export class Main extends LitElement {
                   evt.id
                 );
 
-                this.showNodeConfigurator = evt.port !== null;
+                this.showNodeConfigurator = true;
                 this.#nodeConfiguratorData = {
                   id: evt.id,
                   x: evt.x,
                   y: evt.y,
                   title,
-                  selectedPort: evt.port?.title ?? null,
+                  selectedPort: evt.port?.name ?? null,
                   subGraphId: evt.subGraphId,
                   ports,
                   metadata,
+                  addHorizontalClickClearance: evt.addHorizontalClickClearance,
+                };
+              }}
+              @bbcommenteditrequest=${(
+                evt: BreadboardUI.Events.CommentEditRequestEvent
+              ) => {
+                this.showCommentEditor = true;
+                const value = this.#runtime.edit.getGraphComment(
+                  this.tab,
+                  evt.id
+                );
+                this.#commentValueData = {
+                  x: evt.x,
+                  y: evt.y,
+                  value,
+                  subGraphId: evt.subGraphId,
                 };
               }}
               @bbedgevalueselected=${(
@@ -2068,7 +2093,8 @@ export class Main extends LitElement {
             this.tab,
             evt.id,
             evt.configuration,
-            evt.subGraphId
+            evt.subGraphId,
+            evt.metadata
           );
         }}
       ></bb-node-configuration-overlay>`;
@@ -2082,6 +2108,24 @@ export class Main extends LitElement {
           this.showEdgeValue = false;
         }}
       ></bb-edge-value-overlay>`;
+    }
+
+    let commentOverlay: HTMLTemplateResult | symbol = nothing;
+    if (this.showCommentEditor) {
+      commentOverlay = html`<bb-comment-overlay
+        .commentValue=${this.#commentValueData}
+        @bbcommentupdate=${(evt: BreadboardUI.Events.CommentUpdateEvent) => {
+          this.#runtime.edit.changeComment(
+            this.tab,
+            evt.id,
+            evt.text,
+            evt.subGraphId
+          );
+        }}
+        @bboverlaydismissed=${() => {
+          this.showCommentEditor = false;
+        }}
+      ></bb-comment-overlay>`;
     }
 
     let overflowMenu: HTMLTemplateResult | symbol = nothing;
@@ -2341,6 +2385,7 @@ export class Main extends LitElement {
       previewOverlay,
       nodeConfiguratorOverlay,
       edgeValueOverlay,
+      commentOverlay,
       tooltip,
       toasts,
     ];

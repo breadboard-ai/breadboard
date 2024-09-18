@@ -25,8 +25,10 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import {
+  CommentEditRequestEvent,
   EdgeChangeEvent,
   EdgeValueSelectedEvent,
+  GraphCommentEditRequestEvent,
   GraphEdgeAttachEvent,
   GraphEdgeDetachEvent,
   GraphEdgeValueSelectedEvent,
@@ -37,7 +39,7 @@ import {
   GraphNodeActivitySelectedEvent,
   GraphNodeDeleteEvent,
   GraphNodeEdgeChangeEvent,
-  GraphNodePortValueEditEvent,
+  GraphNodeEditEvent,
   GraphNodesVisualUpdateEvent,
   GraphShowTooltipEvent,
   HideTooltipEvent,
@@ -184,13 +186,14 @@ export class Editor extends LitElement {
   #onGraphEdgeChangeBound = this.#onGraphEdgeChange.bind(this);
   #onGraphNodeDeleteBound = this.#onGraphNodeDelete.bind(this);
   #onGraphEntityRemoveBound = this.#onGraphEntityRemove.bind(this);
-  #onGraphNodePortValueEditBound = this.#onGraphNodePortValueEdit.bind(this);
+  #onGraphNodeEditBound = this.#onGraphNodeEdit.bind(this);
   #onGraphEdgeValueSelectedBound = this.#onGraphEdgeValueSelected.bind(this);
   #onGraphNodeActivitySelectedBound =
     this.#onGraphNodeActivitySelected.bind(this);
   #onGraphInteractionBound = this.#onGraphInteraction.bind(this);
   #onGraphShowTooltipBound = this.#onGraphShowTooltip.bind(this);
   #onGraphHideTooltipBound = this.#onGraphHideTooltip.bind(this);
+  #onGraphCommentEditRequestBound = this.#onGraphCommentEditRequest.bind(this);
 
   #top = 0;
   #left = 0;
@@ -659,8 +662,8 @@ export class Editor extends LitElement {
     );
 
     this.#graphRenderer.addEventListener(
-      GraphNodePortValueEditEvent.eventName,
-      this.#onGraphNodePortValueEditBound
+      GraphNodeEditEvent.eventName,
+      this.#onGraphNodeEditBound
     );
 
     this.#graphRenderer.addEventListener(
@@ -686,6 +689,11 @@ export class Editor extends LitElement {
     this.#graphRenderer.addEventListener(
       GraphHideTooltipEvent.eventName,
       this.#onGraphHideTooltipBound
+    );
+
+    this.#graphRenderer.addEventListener(
+      GraphCommentEditRequestEvent.eventName,
+      this.#onGraphCommentEditRequestBound
     );
 
     window.addEventListener("resize", this.#onResizeBound);
@@ -730,8 +738,8 @@ export class Editor extends LitElement {
     );
 
     this.#graphRenderer.removeEventListener(
-      GraphNodePortValueEditEvent.eventName,
-      this.#onGraphNodePortValueEditBound
+      GraphNodeEditEvent.eventName,
+      this.#onGraphNodeEditBound
     );
 
     this.#graphRenderer.removeEventListener(
@@ -757,6 +765,11 @@ export class Editor extends LitElement {
     this.#graphRenderer.removeEventListener(
       GraphHideTooltipEvent.eventName,
       this.#onGraphHideTooltipBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphCommentEditRequestEvent.eventName,
+      this.#onGraphCommentEditRequestBound
     );
 
     window.removeEventListener("resize", this.#onResizeBound);
@@ -794,6 +807,18 @@ export class Editor extends LitElement {
 
   #onGraphHideTooltip() {
     this.dispatchEvent(new HideTooltipEvent());
+  }
+
+  #onGraphCommentEditRequest(evt: Event) {
+    const commentEvt = evt as GraphCommentEditRequestEvent;
+    this.dispatchEvent(
+      new CommentEditRequestEvent(
+        commentEvt.id,
+        commentEvt.x,
+        commentEvt.y,
+        this.subGraphId
+      )
+    );
   }
 
   #onPointerMove(evt: PointerEvent) {
@@ -1393,10 +1418,19 @@ export class Editor extends LitElement {
     );
   }
 
-  #onGraphNodePortValueEdit(evt: Event) {
-    const { id, port, x, y } = evt as GraphNodePortValueEditEvent;
+  #onGraphNodeEdit(evt: Event) {
+    const { id, port, x, y, addHorizontalClickClearance } =
+      evt as GraphNodeEditEvent;
+
     this.dispatchEvent(
-      new NodeConfigurationUpdateRequestEvent(id, this.subGraphId, port, x, y)
+      new NodeConfigurationUpdateRequestEvent(
+        id,
+        this.subGraphId,
+        port,
+        x,
+        y,
+        addHorizontalClickClearance
+      )
     );
   }
 

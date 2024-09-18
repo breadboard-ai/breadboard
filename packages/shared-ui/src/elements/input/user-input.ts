@@ -327,7 +327,10 @@ export class UserInput extends LitElement {
   }
 
   #createId(name: string) {
-    return name.toLocaleLowerCase().replace(/^\$/, "__");
+    return name
+      .toLocaleLowerCase()
+      .replace(/[\s\W]/gi, "-")
+      .replace(/^\$/, "__");
   }
 
   render() {

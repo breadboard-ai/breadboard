@@ -6,54 +6,34 @@
 
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import {
-  NodePortConfiguration,
-  UserInputConfiguration,
-} from "../../types/types.js";
+import { CommentConfiguration } from "../../types/types.js";
 import { Overlay } from "./overlay.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { UserInput } from "../elements.js";
-import { GraphDescriptor, GraphProvider } from "@google-labs/breadboard";
 import {
-  NodePartialUpdateEvent,
+  CommentUpdateEvent,
   OverlayDismissedEvent,
 } from "../../events/events.js";
-import { EditorMode, filterConfigByMode } from "../../utils/mode.js";
 import { classMap } from "lit/directives/class-map.js";
-import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 
 const OVERLAY_CLEARANCE = 60;
+const MAXIMIZE_KEY = "bb-comment-overlay-maximized";
 
-@customElement("bb-node-configuration-overlay")
-export class NodeConfigurationOverlay extends LitElement {
+@customElement("bb-comment-overlay")
+export class CommentOverlay extends LitElement {
   @property()
-  value: NodePortConfiguration | null = null;
-
-  @property()
-  graph: GraphDescriptor | null = null;
-
-  @property()
-  providers: GraphProvider[] = [];
-
-  @property()
-  providerOps = 0;
-
-  @property()
-  showTypes = false;
+  commentValue: CommentConfiguration | null = null;
 
   @property({ reflect: true })
   maximized = false;
 
   #overlayRef: Ref<Overlay> = createRef();
-  #userInputRef: Ref<UserInput> = createRef();
   #formRef: Ref<HTMLFormElement> = createRef();
-  #pendingSave = false;
-  #onKeyDownBound = this.#onKeyDown.bind(this);
 
   #minimizedX = 0;
   #minimizedY = 0;
   #left: number | null = null;
   #top: number | null = null;
+  #pendingSave = false;
 
   static styles = css`
     * {
@@ -85,7 +65,7 @@ export class NodeConfigurationOverlay extends LitElement {
       display: block;
       width: 20px;
       height: 20px;
-      background: transparent var(--bb-icon-wrench) center center / 20px 20px
+      background: transparent var(--bb-icon-comment) center center / 20px 20px
         no-repeat;
       margin-right: var(--bb-grid-size-2);
     }
@@ -103,9 +83,7 @@ export class NodeConfigurationOverlay extends LitElement {
 
     #wrapper {
       min-width: 300px;
-      width: max(40vw, 450px);
-      min-height: 250px;
-      height: max(50vh, 450px);
+      width: 400px;
       display: flex;
       flex-direction: column;
       resize: both;
@@ -120,6 +98,7 @@ export class NodeConfigurationOverlay extends LitElement {
     #container {
       padding: var(--bb-grid-size-4) var(--bb-grid-size-4) var(--bb-grid-size)
         var(--bb-grid-size-4);
+      height: 100%;
     }
 
     #buttons {
@@ -189,11 +168,10 @@ export class NodeConfigurationOverlay extends LitElement {
     }
 
     form {
-      display: grid;
-      grid-template-rows: 16px 28px;
+      display: flex;
       row-gap: 4px;
-      padding: 0 0 var(--bb-grid-size-4) 0;
-      border-bottom: 1px solid var(--bb-neutral-300);
+      flex-direction: column;
+      height: 100%;
     }
 
     input[type="text"],
@@ -209,7 +187,7 @@ export class NodeConfigurationOverlay extends LitElement {
     textarea {
       resize: none;
       field-sizing: content;
-      max-height: 300px;
+      flex: 1;
     }
 
     label {
@@ -218,32 +196,9 @@ export class NodeConfigurationOverlay extends LitElement {
     }
   `;
 
-  #onKeyDown(evt: KeyboardEvent) {
-    const isMac = navigator.platform.indexOf("Mac") === 0;
-    const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
-
-    if (!(evt.key === "Enter" && isCtrlCommand)) {
-      return;
-    }
-
-    this.processData();
-  }
-
-  connectedCallback(): void {
-    super.connectedCallback();
-
-    this.addEventListener("keydown", this.#onKeyDownBound);
-  }
-
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-
-    this.removeEventListener("keydown", this.#onKeyDownBound);
-  }
-
   protected firstUpdated(): void {
     requestAnimationFrame(() => {
-      if (!this.#overlayRef.value || !this.value) {
+      if (!this.#overlayRef.value || !this.commentValue) {
         return;
       }
 
@@ -254,11 +209,8 @@ export class NodeConfigurationOverlay extends LitElement {
       const width = contentBounds.width / 0.9;
       const height = contentBounds.height / 0.9;
 
-      let { x, y } = this.value;
-      if (this.value.addHorizontalClickClearance) {
-        x += OVERLAY_CLEARANCE;
-      }
-
+      let { x, y } = this.commentValue;
+      x += OVERLAY_CLEARANCE;
       y -= height / 2;
 
       if (x + width > window.innerWidth) {
@@ -276,13 +228,13 @@ export class NodeConfigurationOverlay extends LitElement {
       this.#minimizedX = Math.round(x);
       this.#minimizedY = Math.round(y);
 
-      this.#updateOverlayContentPositionAndSize();
-
       // Once we've calculated the minimized size we can now recall the user's
       // preferred max/min and use that.
       this.maximized =
-        globalThis.sessionStorage.getItem("bb-node-configurator-maximized") ===
-        "true";
+        globalThis.sessionStorage.getItem("bb-edge-value-maximized") === "true";
+
+      this.#overlayRef.value.style.setProperty("--left", `${Math.round(x)}px`);
+      this.#overlayRef.value.style.setProperty("--top", `${Math.round(y)}px`);
     });
   }
 
@@ -332,99 +284,37 @@ export class NodeConfigurationOverlay extends LitElement {
     }
   }
 
-  #editorMode(): EditorMode {
-    const metadata = this.value?.metadata;
-    if (!metadata || !metadata.visual) {
-      return EditorMode.MINIMAL;
-    }
-    const visual = metadata.visual as {
-      collapsed: "advanced";
-    };
-    if (visual.collapsed === "advanced") {
-      return EditorMode.ADVANCED;
-    }
-    return EditorMode.MINIMAL;
+  #toggleMaximize() {
+    this.maximized = !this.maximized;
+
+    globalThis.sessionStorage.setItem(MAXIMIZE_KEY, this.maximized.toString());
   }
 
   processData() {
     this.#pendingSave = false;
 
     if (
-      !this.#userInputRef.value ||
-      !this.value ||
-      !this.value.ports ||
-      !this.#formRef.value
+      !this.#formRef.value ||
+      !this.commentValue ||
+      !this.commentValue.value
     ) {
       return;
     }
 
-    const outputs = this.#userInputRef.value.processData(true);
-    if (!outputs) {
-      return;
-    }
+    const commentEl =
+      this.#formRef.value.querySelector<HTMLInputElement>("#comment");
 
-    // Ensure that all expected values are set. If they are not set in the
-    // outputs we assume that the user wants to remove the value.
-    const { inputs } = filterConfigByMode(this.value.ports, this.#editorMode());
-    for (const expectedInput of inputs.ports) {
-      if (!outputs[expectedInput.name]) {
-        outputs[expectedInput.name] = undefined;
-      }
-    }
+    const id = this.commentValue.value.id;
+    const text = commentEl?.value ?? "";
+    const subGraphId = this.commentValue.subGraphId;
 
-    const { id, subGraphId } = this.value;
-    const titleEl =
-      this.#formRef.value.querySelector<HTMLInputElement>("#title");
-    const logLevelEl =
-      this.#formRef.value.querySelector<HTMLSelectElement>("#log-level");
-    const descriptionEl =
-      this.#formRef.value.querySelector<HTMLTextAreaElement>("#description");
-
-    const metadata: NodeMetadata = {};
-    if (titleEl?.value) metadata.title = titleEl.value;
-    if (descriptionEl?.value) metadata.description = descriptionEl.value;
-    if (logLevelEl?.value)
-      metadata.logLevel = logLevelEl?.value as "info" | "debug";
-
-    this.dispatchEvent(
-      new NodePartialUpdateEvent(id, subGraphId, outputs, metadata)
-    );
-  }
-
-  #toggleMaximize() {
-    this.maximized = !this.maximized;
-
-    globalThis.sessionStorage.setItem(
-      "bb-node-configurator-maximized",
-      this.maximized.toString()
-    );
+    this.dispatchEvent(new CommentUpdateEvent(id, text, subGraphId));
   }
 
   render() {
-    if (!this.value || !this.value.ports) {
+    if (!this.commentValue || !this.commentValue.value) {
       return nothing;
     }
-
-    const { inputs } = filterConfigByMode(this.value.ports, this.#editorMode());
-    const ports = [...inputs.ports].sort((portA, portB) => {
-      const isSchema =
-        portA.name === "schema" ||
-        portA.schema.behavior?.includes("ports-spec");
-      return isSchema ? -1 : portA.name > portB.name ? 1 : -1;
-    });
-
-    const userInputs: UserInputConfiguration[] = ports.map((port) => {
-      return {
-        name: port.name,
-        title: port.title,
-        secret: false,
-        configured: port.configured,
-        value: structuredClone(port.value),
-        schema: port.edges.length === 0 ? port.schema : undefined,
-        status: port.status,
-        type: port.schema.type,
-      };
-    });
 
     const contentLocationStart = { x: 0, y: 0 };
     const dragStart = { x: 0, y: 0 };
@@ -437,7 +327,7 @@ export class NodeConfigurationOverlay extends LitElement {
           return;
         }
 
-        if (confirm("Close configurator without saving first?")) {
+        if (confirm("Close comment without saving first?")) {
           return;
         }
 
@@ -491,7 +381,7 @@ export class NodeConfigurationOverlay extends LitElement {
             this.#toggleMaximize();
           }}
         >
-          <span>Configure ${this.value.title}</span>
+          <span>Comment</span>
           <button
             id="minmax"
             title=${this.maximized ? "Minimize overlay" : "Maximize overlay"}
@@ -513,55 +403,25 @@ export class NodeConfigurationOverlay extends LitElement {
               @input=${() => {
                 this.#pendingSave = true;
               }}
+              @keydown=${(evt: KeyboardEvent) => {
+                const isMac = navigator.platform.indexOf("Mac") === 0;
+                const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+                if (!(evt.key === "Enter" && isCtrlCommand)) {
+                  return;
+                }
+
+                this.processData();
+              }}
             >
-              <label>Title</label>
-              <input
-                name="title"
-                id="title"
-                type="text"
-                placeholder="Enter the title for this node"
-                .value=${this.value.metadata?.title || ""}
-              />
-
-              <label>Log Level</label>
-              <select type="text" id="log-level" name="log-level">
-                <option
-                  value="debug"
-                  ?selected=${this.value.metadata?.logLevel === "debug"}
-                >
-                  Debug
-                </option>
-                <option
-                  value="info"
-                  ?selected=${this.value.metadata?.logLevel === "info"}
-                >
-                  Information
-                </option>
-              </select>
-
-              <label>Description</label>
+              <label>Enter your comment below</label>
               <textarea
-                id="description"
-                name="description"
-                placeholder="Enter the description for this node"
-                .value=${this.value.metadata?.description || ""}
+                id="comment"
+                name="comment"
+                placeholder="Enter your comment"
+                .value=${this.commentValue.value.text || ""}
               ></textarea>
             </form>
-            <bb-user-input
-              ${ref(this.#userInputRef)}
-              @input=${() => {
-                this.#pendingSave = true;
-              }}
-              .inputs=${userInputs}
-              .graph=${this.graph}
-              .subGraphId=${this.value.subGraphId}
-              .providers=${this.providers}
-              .providerOps=${this.providerOps}
-              .showTypes=${this.showTypes}
-              .showTitleInfo=${true}
-              .inlineControls=${true}
-              .jumpTo=${this.value.selectedPort}
-            ></bb-user-input>
           </div>
         </div>
         <div id="buttons">

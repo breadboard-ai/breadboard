@@ -43,7 +43,6 @@ import {
   SettingsStore,
   TopGraphRunResult,
 } from "../../types/types.js";
-import { EditorMode } from "../../utils/mode.js";
 import { type NodeConfigurationInfo } from "../elements.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 
@@ -216,21 +215,11 @@ export class UI extends LitElement {
           .items.get("Hide Embedded Board Selector When Empty")?.value
       : false;
 
-    const hideAdvancedPortsOnNodes = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Hide Advanced Ports on Nodes")?.value
-      : false;
-
     const invertZoomScrollDirection = this.settings
       ? this.settings
           .getSection(SETTINGS_TYPE.GENERAL)
           .items.get("Invert Zoom Scroll Direction")?.value
       : false;
-
-    const editorMode = hideAdvancedPortsOnNodes
-      ? EditorMode.MINIMAL
-      : EditorMode.ADVANCED;
 
     const showNodeShortcuts = this.settings
       ? this.settings
@@ -382,59 +371,6 @@ export class UI extends LitElement {
       }
     );
 
-    const nodeMetaDetails = guard(
-      [
-        this.boardId,
-        this.selectedNodeIds,
-        showNodeTypeDescriptions,
-        this.graph,
-      ],
-      () => {
-        return html`<bb-node-meta-details
-          .showNodeTypeDescriptions=${showNodeTypeDescriptions}
-          .selectedNodeIds=${this.selectedNodeIds}
-          .subGraphId=${this.subGraphId}
-          .graph=${graph}
-          .readOnly=${this.readOnly}
-        ></bb-node-meta-details>`;
-      }
-    );
-
-    // Track the number of edges; if it changes we need to inform the node info
-    // element, and force it to re-render.
-    this.#lastEdgeCount = this.graph?.edges.length || -1;
-    const nodeConfiguration = guard(
-      [
-        this.boardId,
-        this.selectedNodeIds,
-        this.#lastEdgeCount,
-        editorMode,
-        // TODO: Figure out a cleaner way of handling this without watching for
-        // all graph changes.
-        this.graph,
-      ],
-      () => {
-        return html`<bb-node-configuration
-          .selectedNodeIds=${this.selectedNodeIds}
-          .subGraphId=${this.subGraphId}
-          .graph=${this.graph}
-          .kits=${this.kits}
-          .loader=${this.loader}
-          .editable=${true}
-          .editorMode=${editorMode}
-          .providers=${this.providers}
-          .providerOps=${this.providerOps}
-          .showTypes=${false}
-          ${ref(this.#nodeConfigurationRef)}
-          name="Selected Node"
-          @bbgraphnodedeselectedall=${() => {
-            this.selectedNodeIds = [];
-            this.requestUpdate();
-          }}
-        ></bb-node-configuration>`;
-      }
-    );
-
     const boardDetails = guard(
       [
         this.boardId,
@@ -541,11 +477,7 @@ export class UI extends LitElement {
       this.#nodeConfigurationRef.value.ensureRenderOnNextUpdate();
     }
 
-    const sidePanel = cache(
-      this.selectedNodeIds.length
-        ? html`${nodeMetaDetails}${nodeConfiguration}`
-        : html`${boardDetails}${activityLog}`
-    );
+    const sidePanel = cache(html`${boardDetails}${activityLog}`);
 
     const breadcrumbs = [MAIN_BOARD_ID];
     if (this.subGraphId) {
