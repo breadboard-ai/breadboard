@@ -45,7 +45,7 @@ const testBoard = board({
   outputs: { num: numInput },
 });
 
-const testKit = kit({
+const testKit = await kit({
   title: "test_title",
   url: "test_url",
   version: "test_version",

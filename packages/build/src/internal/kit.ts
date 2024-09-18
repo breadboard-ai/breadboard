@@ -56,9 +56,9 @@ type KitWithKnownHandlers<T extends ComponentManifest> = Kit & {
   handlers: { [K in keyof T]: NodeHandlerObject };
 };
 
-export function kit<T extends ComponentManifest>(
+export async function kit<T extends ComponentManifest>(
   options: KitOptions<T>
-): BuildKit<T> {
+): Promise<BuildKit<T>> {
   const handlers: Record<string, NodeHandler> = {};
 
   // TODO(aomarks) Unclear why this needs to be a class, and why it needs
