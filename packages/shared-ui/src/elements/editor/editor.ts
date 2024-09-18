@@ -44,6 +44,7 @@ import {
   NodeConfigurationUpdateRequestEvent,
   NodeCreateEvent,
   NodeDeleteEvent,
+  NodeTypeRetrievalErrorEvent,
   SubGraphChosenEvent,
   SubGraphCreateEvent,
   SubGraphDeleteEvent,
@@ -516,9 +517,19 @@ export class Editor extends LitElement {
     const ports = new Map<string, InspectableNodePorts>();
     const typeMetadata = new Map<string, NodeHandlerMetadata>();
     const graphVersion = this.#graphVersion;
+
     for (const node of selectedGraph.nodes()) {
       ports.set(node.descriptor.id, await node.ports());
-      typeMetadata.set(node.descriptor.type, await node.type().metadata());
+      try {
+        typeMetadata.set(node.descriptor.type, await node.type().metadata());
+      } catch (err) {
+        // In the event of failing to get the type info, suggest removing the
+        // node from the graph.
+        this.dispatchEvent(
+          new NodeTypeRetrievalErrorEvent(node.descriptor.id, this.subGraphId)
+        );
+      }
+
       if (this.#graphVersion !== graphVersion) {
         // Another update has come in, bail out.
         return this.#graphRenderer;
@@ -606,8 +617,6 @@ export class Editor extends LitElement {
 
     this.zoomToHighlightedNodeDuringRuns =
       globalThis.localStorage.getItem(ZOOM_KEY) === "true" ?? true;
-
-    console.log(this.zoomToHighlightedNodeDuringRuns);
   }
 
   connectedCallback(): void {
@@ -736,8 +745,6 @@ export class Editor extends LitElement {
     if (!changedProperties.has("run")) {
       return;
     }
-
-    console.log(this.zoomToHighlightedNodeDuringRuns);
 
     this.#graphRenderer.zoomToHighlightedNode =
       this.zoomToHighlightedNodeDuringRuns;
