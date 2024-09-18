@@ -178,7 +178,7 @@ jobs:
           cache-to: |
             type=gha,mode=max,ref=${{ needs.setup.outputs.board_server_firestore_image_name }}
             type=registry,mode=max,ref=${{ needs.setup.outputs.board_server_firestore_image_path }}
-          push: true
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.pull_request.head.repo.fork }}
           provenance: true
           platforms: linux/amd64,linux/arm64
           tags: >
