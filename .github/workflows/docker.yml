@@ -117,7 +117,7 @@ jobs:
           cache-to: type=gha,mode=max,ref=${{ needs.setup.outputs.board_server_sqlite_image_name }}
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.pull_request.head.repo.fork }}
           provenance: true
-          platforms: linux/amd64,linux/arm64,darwin/amd64,darwin/arm64
+          platforms: linux/amd64,linux/arm64
           tags: >
             ${{ needs.setup.outputs.board_server_sqlite_image_path }}:${{ needs.setup.outputs.package_version }},
             ${{ needs.setup.outputs.board_server_sqlite_image_path }}:latest
