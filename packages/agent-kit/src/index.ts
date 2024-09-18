@@ -6,8 +6,8 @@
 
 import { kit } from "@breadboard-ai/build";
 import type { GraphDescriptor } from "@google-labs/breadboard";
-import content from "../bgl/content.bgl.json" with { type: "application/json" };
-import specialist2 from "../bgl/specialist-2.bgl.json" with { type: "application/json" };
+import content from "../bgl/content.bgl.json" with { type: "json" };
+import specialist2 from "../bgl/specialist-2.bgl.json" with { type: "json" };
 import human from "./boards/human.js";
 import joiner from "./boards/joiner.js";
 import looper from "./boards/looper.js";
