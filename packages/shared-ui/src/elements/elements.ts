@@ -15,6 +15,7 @@ export { ConnectionBroker } from "./connection/connection-broker.js";
 export { ConnectionInput } from "./connection/connection-input.js";
 export { ConnectionSettings } from "./connection/connection-settings.js";
 export { ConnectionSignin } from "./connection/connection-signin.js";
+export { CommentOverlay } from "./overlay/comment.js";
 export { DrawableInput } from "./input/drawable/drawable.js";
 export { EdgeValueOverlay } from "./overlay/edge-value.js";
 export { Editor } from "./editor/editor.js";

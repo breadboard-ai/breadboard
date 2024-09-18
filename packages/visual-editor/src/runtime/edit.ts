@@ -67,6 +67,21 @@ export class Edit extends EventTarget {
     return editableGraph.history();
   }
 
+  getGraphComment(tab: Tab | null, id: string) {
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
+      return null;
+    }
+
+    return (
+      editableGraph
+        .inspect()
+        .metadata()
+        ?.comments?.find((comment) => comment.id === id) ?? null
+    );
+  }
+
   getNodeTitle(tab: Tab | null, id: string) {
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
@@ -553,7 +568,8 @@ export class Edit extends EventTarget {
     tab: Tab | null,
     id: string,
     configurationPart: NodeConfiguration,
-    subGraphId: string | null = null
+    subGraphId: string | null = null,
+    metadata: NodeMetadata | null = null
   ) {
     if (tab?.readOnly) {
       return;
@@ -581,17 +597,27 @@ export class Edit extends EventTarget {
       updatedConfiguration[key] = value;
     }
 
-    editableGraph.edit(
-      [
-        {
-          type: "changeconfiguration",
-          id: id,
-          configuration: updatedConfiguration,
-          reset: true,
-        },
-      ],
-      `Change partial configuration for "${id}"`
-    );
+    const edits: EditSpec[] = [
+      {
+        type: "changeconfiguration",
+        id: id,
+        configuration: updatedConfiguration,
+        reset: true,
+      },
+    ];
+
+    if (metadata) {
+      const existingMetadata = inspectableNode?.metadata() || {};
+      const newMetadata = {
+        ...existingMetadata,
+        ...metadata,
+      };
+
+      edits.push({ type: "changemetadata", id, metadata: newMetadata }),
+        `Change metadata for "${id}"`;
+    }
+
+    editableGraph.edit(edits, `Change partial configuration for "${id}"`);
   }
 
   deleteNode(tab: Tab | null, id: string, subGraphId: string | null = null) {

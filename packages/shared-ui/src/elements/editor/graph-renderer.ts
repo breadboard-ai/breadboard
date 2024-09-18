@@ -20,12 +20,13 @@ import {
   GraphInitialDrawEvent,
   GraphEntityRemoveEvent,
   StartEvent,
-  GraphNodePortValueEditEvent,
+  GraphNodeEditEvent,
   GraphEdgeValueSelectedEvent,
   GraphNodeActivitySelectedEvent,
   GraphInteractionEvent,
   GraphShowTooltipEvent,
   GraphHideTooltipEvent,
+  GraphCommentEditRequestEvent,
 } from "../../events/events.js";
 import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
@@ -103,6 +104,7 @@ export class GraphRenderer extends LitElement {
   #app = new PIXI.Application();
   #appInitialized = false;
 
+  #overflowEditNode: Ref<HTMLButtonElement> = createRef();
   #overflowDeleteNode: Ref<HTMLButtonElement> = createRef();
   #overflowMinMaxSingleNode: Ref<HTMLButtonElement> = createRef();
   #overflowMenuRef: Ref<HTMLDivElement> = createRef();
@@ -361,6 +363,10 @@ export class GraphRenderer extends LitElement {
 
     #overflow-menu #delete-node::before {
       background: var(--bb-icon-delete) center center / 20px 20px no-repeat;
+    }
+
+    #overflow-menu #edit-node::before {
+      background: var(--bb-icon-edit) center center / 20px 20px no-repeat;
     }
   `;
 
@@ -858,7 +864,7 @@ export class GraphRenderer extends LitElement {
 
         window.addEventListener(
           "pointerdown",
-          (evt: Event) => {
+          (evt: PointerEvent) => {
             if (!this.#overflowMenuGraphNode) {
               return;
             }
@@ -870,6 +876,24 @@ export class GraphRenderer extends LitElement {
                   computeNextExpansionState(
                     this.#overflowMenuGraphNode.expansionState
                   );
+                break;
+              }
+
+              case this.#overflowEditNode.value: {
+                if (!this.#overflowMenuGraphNode.label) {
+                  console.warn("Tried to delete unnamed node");
+                  break;
+                }
+
+                this.dispatchEvent(
+                  new GraphNodeEditEvent(
+                    this.#overflowMenuGraphNode.label,
+                    null,
+                    evt.clientX,
+                    evt.clientY,
+                    false
+                  )
+                );
                 break;
               }
 
@@ -967,7 +991,7 @@ export class GraphRenderer extends LitElement {
     graph.on(
       GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
       (id: string, port: InspectablePort | null, x: number, y: number) => {
-        this.dispatchEvent(new GraphNodePortValueEditEvent(id, port, x, y));
+        this.dispatchEvent(new GraphNodeEditEvent(id, port, x, y));
       }
     );
 
@@ -997,6 +1021,13 @@ export class GraphRenderer extends LitElement {
     graph.on(GRAPH_OPERATIONS.GRAPH_HIDE_TOOLTIP, () => {
       this.dispatchEvent(new GraphHideTooltipEvent());
     });
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_COMMENT_EDIT_REQUESTED,
+      (label: string, x: number, y: number) => {
+        this.dispatchEvent(new GraphCommentEditRequestEvent(label, x, y));
+      }
+    );
 
     this.#container.addChild(graph);
   }
@@ -1510,9 +1541,14 @@ export class GraphRenderer extends LitElement {
       ${ref(this.#overflowMenuRef)}
       id="overflow-menu"
     >
+      ${!this.readOnly
+        ? html` <button id="edit-node" ${ref(this.#overflowEditNode)}>
+            Edit component
+          </button>`
+        : nothing}
       <button id="min-max" ${ref(this.#overflowMinMaxSingleNode)}></button>
       ${!this.readOnly
-        ? html`<button id="delete-node" ${ref(this.#overflowDeleteNode)}>
+        ? html` <button id="delete-node" ${ref(this.#overflowDeleteNode)}>
             Delete component
           </button>`
         : nothing}

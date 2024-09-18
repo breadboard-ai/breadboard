@@ -456,7 +456,8 @@ export class NodePartialUpdateEvent extends Event {
   constructor(
     public readonly id: string,
     public readonly subGraphId: string | null = null,
-    public readonly configuration: NodeConfiguration
+    public readonly configuration: NodeConfiguration,
+    public readonly metadata: NodeMetadata | null = null
   ) {
     super(NodePartialUpdateEvent.eventName, { ...eventInit });
   }
@@ -470,7 +471,8 @@ export class NodeConfigurationUpdateRequestEvent extends Event {
     public readonly subGraphId: string | null = null,
     public readonly port: InspectablePort | null = null,
     public readonly x: number = 0,
-    public readonly y: number = 0
+    public readonly y: number = 0,
+    public readonly addHorizontalClickClearance = true
   ) {
     super(NodeConfigurationUpdateRequestEvent.eventName, { ...eventInit });
   }
@@ -559,6 +561,19 @@ export class NodeActivitySelectedEvent extends Event {
   }
 }
 
+export class CommentEditRequestEvent extends Event {
+  static eventName = "bbcommenteditrequest";
+
+  constructor(
+    public readonly id: string,
+    public readonly x: number,
+    public readonly y: number,
+    public readonly subGraphId: string | null = null
+  ) {
+    super(CommentEditRequestEvent.eventName, { ...eventInit });
+  }
+}
+
 export class GraphInteractionEvent extends Event {
   static eventName = "bbgraphinteraction";
 
@@ -583,16 +598,17 @@ export class GraphNodesVisualUpdateEvent extends Event {
   }
 }
 
-export class GraphNodePortValueEditEvent extends Event {
-  static eventName = "bbgraphnodeportedit";
+export class GraphNodeEditEvent extends Event {
+  static eventName = "bbgraphnodeedit";
 
   constructor(
     public readonly id: string,
     public readonly port: InspectablePort | null,
     public readonly x: number,
-    public readonly y: number
+    public readonly y: number,
+    public readonly addHorizontalClickClearance = true
   ) {
-    super(GraphNodePortValueEditEvent.eventName, { ...eventInit });
+    super(GraphNodeEditEvent.eventName, { ...eventInit });
   }
 }
 
@@ -717,5 +733,17 @@ export class GraphHideTooltipEvent extends Event {
 
   constructor() {
     super(GraphHideTooltipEvent.eventName, { ...eventInit });
+  }
+}
+
+export class GraphCommentEditRequestEvent extends Event {
+  static eventName = "bbgraphcommenteditrequest";
+
+  constructor(
+    public readonly id: string,
+    public readonly x: number,
+    public readonly y: number
+  ) {
+    super(GraphCommentEditRequestEvent.eventName, { ...eventInit });
   }
 }

@@ -5,7 +5,7 @@
  */
 
 import * as PIXI from "pixi.js";
-import { getGlobalColor } from "./utils.js";
+import { DBL_CLICK_DELTA, getGlobalColor } from "./utils.js";
 import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types.js";
 import MarkdownIt from "markdown-it";
 
@@ -148,6 +148,7 @@ export class GraphComment extends PIXI.Container {
   #selectedBorderColor = selectedBorderColor;
   #hitAreaData: LinkData[] = [];
   #hitAreas = new PIXI.Container();
+  #lastClickTime = 0;
 
   expansionState: ComponentExpansionState = "expanded";
   readOnly = false;
@@ -187,6 +188,26 @@ export class GraphComment extends PIXI.Container {
     let dragStart: PIXI.PointData | null = null;
     let originalPosition: PIXI.ObservablePoint | null = null;
     let hasMoved = false;
+
+    this.addEventListener("click", (evt: PIXI.FederatedMouseEvent) => {
+      if (this.readOnly) {
+        return;
+      }
+
+      const clickDelta = window.performance.now() - this.#lastClickTime;
+      this.#lastClickTime = window.performance.now();
+
+      if (clickDelta > DBL_CLICK_DELTA) {
+        return;
+      }
+
+      this.emit(
+        GRAPH_OPERATIONS.GRAPH_COMMENT_EDIT_REQUESTED,
+        this.label,
+        evt.clientX,
+        evt.clientY
+      );
+    });
 
     this.addEventListener("pointerover", () => {
       if (this.readOnly) {

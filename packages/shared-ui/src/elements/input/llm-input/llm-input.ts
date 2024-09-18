@@ -253,7 +253,7 @@ export class LLMInput extends LitElement {
     }
 
     #container {
-      border: var(--bb-border-size, 2px) solid var(--bb-neutral-300);
+      border: 1px solid var(--bb-neutral-300);
       border-radius: 0 0 var(--bb-grid-size) var(--bb-grid-size);
       padding: var(--bb-grid-size-3) 0 var(--bb-grid-size) 0;
       background: #fff;

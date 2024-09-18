@@ -18,7 +18,10 @@ import {
   NodeIdentifier,
   InspectableNodePorts,
 } from "@google-labs/breadboard";
-import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
+import {
+  CommentNode,
+  NodeMetadata,
+} from "@google-labs/breadboard-schema/graph.js";
 
 export const enum HistoryEventType {
   DONE = "done",
@@ -301,11 +304,19 @@ export type NodePortConfiguration = {
   ports: InspectableNodePorts;
   x: number;
   y: number;
+  addHorizontalClickClearance: boolean;
 };
 
 export type EdgeValueConfiguration = {
   value: NodeValue[] | null;
   schema: Schema | null;
+  x: number;
+  y: number;
+};
+
+export type CommentConfiguration = {
+  value: CommentNode | null;
+  subGraphId: string | null;
   x: number;
   y: number;
 };

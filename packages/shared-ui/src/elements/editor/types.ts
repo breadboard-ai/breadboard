@@ -9,6 +9,7 @@ export enum GRAPH_OPERATIONS {
   GRAPH_AUTOSELECTED_NODES = "graphautoselectednodes",
   GRAPH_NODE_DRAWN = "graphnodedrawn",
   GRAPH_COMMENT_DRAWN = "graphcommentdrawn",
+  GRAPH_COMMENT_EDIT_REQUESTED = "graphcommenteditrequested",
   GRAPH_NODE_MOVED = "graphnodemoved",
   GRAPH_NODES_MOVED = "graphnodesmoved",
   GRAPH_INITIAL_DRAW = "graphinitialdraw",

@@ -37,6 +37,17 @@ export class Overlay extends LitElement {
       background: rgba(0, 0, 0, 0.15);
     }
 
+    #wrapper {
+      min-width: 300px;
+      width: max(40vw, 450px);
+      min-height: 250px;
+      height: max(50vh, 450px);
+      display: flex;
+      flex-direction: column;
+      resize: both;
+      overflow: auto;
+    }
+
     #content {
       border-radius: calc(var(--bb-grid-size) * 3);
       background: #fff;
