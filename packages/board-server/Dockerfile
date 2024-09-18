@@ -29,6 +29,7 @@ COPY --from=build /build/packages/board-server/dist ./dist
 COPY --from=build /build/packages/board-server/src ./src
 COPY --from=build /build/packages/board-server/package.json ./
 COPY --from=build /build/packages/board-server/public ./public
+COPY --from=build /build/packages/board-server/scripts ./scripts
 
 # Install production dependencies and tsx
 RUN npm install --only=production && \
