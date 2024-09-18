@@ -180,7 +180,7 @@ jobs:
             type=registry,mode=max,ref=${{ needs.setup.outputs.board_server_firestore_image_path }}
           push: true
           provenance: true
-          platforms: linux/amd64,linux/arm64,darwin/amd64,darwin/arm64
+          platforms: linux/amd64,linux/arm64
           tags: >
             ${{ needs.setup.outputs.board_server_firestore_image_path }}:${{ needs.setup.outputs.package_version }},
             ${{ needs.setup.outputs.board_server_firestore_image_path }}:latest
