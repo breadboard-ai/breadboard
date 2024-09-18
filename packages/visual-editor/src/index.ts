@@ -348,14 +348,7 @@ export class Main extends LitElement {
                 this.tab.graph.url &&
                 this.tab.type === Runtime.Types.TabType.URL
               ) {
-                const url = this.#runtime.board.createURLFromTabs();
-                const decodedUrl = decodeURIComponent(url.href);
-                window.history.replaceState(
-                  { path: decodedUrl },
-                  "",
-                  decodedUrl
-                );
-
+                this.#updatePageURL();
                 await this.#trackRecentBoard(this.tab.graph.url);
               }
 
@@ -375,6 +368,7 @@ export class Main extends LitElement {
             stopCurrentRunIfActive(evt.tabId);
 
             await this.#confirmSaveWithUserFirstIfNeeded();
+            this.#updatePageURL();
             this.requestUpdate();
           }
         );
@@ -491,6 +485,12 @@ export class Main extends LitElement {
 
     window.removeEventListener("keydown", this.#onKeyDownBound);
     window.removeEventListener("bbrundownload", this.#downloadRunBound);
+  }
+
+  #updatePageURL() {
+    const url = this.#runtime.board.createURLFromTabs();
+    const decodedUrl = decodeURIComponent(url.href);
+    window.history.replaceState(null, "", decodedUrl);
   }
 
   #setBoardPendingSaveState(boardPendingSave: boolean) {
