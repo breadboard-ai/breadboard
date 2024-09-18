@@ -62,7 +62,19 @@ export class GraphNodeActivityMarker extends PIXI.Container {
       this.#draw();
     };
 
-    this.addEventListener("click", (_evt: PIXI.FederatedPointerEvent) => {
+    this.addListener("pointerover", (evt: PIXI.FederatedPointerEvent) => {
+      const message = "Click for component activity";
+      const x = evt.clientX;
+      const y = evt.clientY;
+
+      this.emit(GRAPH_OPERATIONS.GRAPH_SHOW_TOOLTIP, message, x, y);
+    });
+
+    this.addListener("pointerout", () => {
+      this.emit(GRAPH_OPERATIONS.GRAPH_HIDE_TOOLTIP);
+    });
+
+    this.addEventListener("click", () => {
       if (!this.#activity) {
         return;
       }

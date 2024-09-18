@@ -108,6 +108,24 @@ export class RunDownloadEvent extends Event {
  * General UI
  */
 
+export class ShowTooltipEvent extends Event {
+  static eventName = "bbshowtooltip";
+  constructor(
+    public readonly message: string,
+    public readonly x: number,
+    public readonly y: number
+  ) {
+    super(ShowTooltipEvent.eventName, { ...eventInit });
+  }
+}
+
+export class HideTooltipEvent extends Event {
+  static eventName = "bbhidetooltip";
+  constructor() {
+    super(HideTooltipEvent.eventName, { ...eventInit });
+  }
+}
+
 export class ResetEvent extends Event {
   static eventName = "bbreset";
   constructor() {
@@ -679,5 +697,25 @@ export class GraphNodeDeleteEvent extends Event {
 
   constructor(public readonly id: string) {
     super(GraphNodeDeleteEvent.eventName, { ...eventInit });
+  }
+}
+
+export class GraphShowTooltipEvent extends Event {
+  static eventName = "bbgraphshowtooltip";
+
+  constructor(
+    public readonly message: string,
+    public readonly x: number,
+    public readonly y: number
+  ) {
+    super(GraphShowTooltipEvent.eventName, { ...eventInit });
+  }
+}
+
+export class GraphHideTooltipEvent extends Event {
+  static eventName = "bbgraphhidetooltip";
+
+  constructor() {
+    super(GraphHideTooltipEvent.eventName, { ...eventInit });
   }
 }

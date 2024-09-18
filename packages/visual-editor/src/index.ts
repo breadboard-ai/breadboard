@@ -157,6 +157,7 @@ export class Main extends LitElement {
   tab: Runtime.Types.Tab | null = null;
 
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
+  #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
   #boardId = 0;
   #boardPendingSave = false;
   #tabSaveId = new Map<
@@ -174,6 +175,8 @@ export class Main extends LitElement {
    * This is used to provide additional proxied nodes.
    */
   #proxy: HarnessProxyConfig[];
+  #onShowTooltipBound = this.#onShowTooltip.bind(this);
+  #onHideTooltipBound = this.#onHideTooltip.bind(this);
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #downloadRunBound = this.#downloadRun.bind(this);
   #confirmUnloadWithUserFirstIfNeededBound =
@@ -476,6 +479,9 @@ export class Main extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
 
+    window.addEventListener("bbshowtooltip", this.#onShowTooltipBound);
+    window.addEventListener("bbhidetooltip", this.#onHideTooltipBound);
+    window.addEventListener("pointerdown", this.#onHideTooltipBound);
     window.addEventListener("keydown", this.#onKeyDownBound);
     window.addEventListener("bbrundownload", this.#downloadRunBound);
   }
@@ -483,8 +489,40 @@ export class Main extends LitElement {
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
+    window.removeEventListener("bbshowtooltip", this.#onShowTooltipBound);
+    window.removeEventListener("bbhidetooltip", this.#onHideTooltipBound);
+    window.removeEventListener("pointerdown", this.#onHideTooltipBound);
     window.removeEventListener("keydown", this.#onKeyDownBound);
     window.removeEventListener("bbrundownload", this.#downloadRunBound);
+  }
+
+  #onShowTooltip(evt: Event) {
+    const tooltipEvent = evt as BreadboardUI.Events.ShowTooltipEvent;
+    if (!this.#tooltipRef.value) {
+      return;
+    }
+
+    const tooltips = this.#settings?.getItem(
+      BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
+      "Show Tooltips"
+    );
+    if (!tooltips?.value) {
+      return;
+    }
+
+    // Add a little clearance onto the value.
+    this.#tooltipRef.value.x = Math.max(tooltipEvent.x, 100);
+    this.#tooltipRef.value.y = Math.max(tooltipEvent.y, 100);
+    this.#tooltipRef.value.message = tooltipEvent.message;
+    this.#tooltipRef.value.visible = true;
+  }
+
+  #onHideTooltip() {
+    if (!this.#tooltipRef.value) {
+      return;
+    }
+
+    this.#tooltipRef.value.visible = false;
   }
 
   #updatePageURL() {
@@ -2289,6 +2327,8 @@ export class Main extends LitElement {
       }}><iframe src=${this.previewOverlayURL.href}></bb-overlay>`;
     }
 
+    const tooltip = html`<bb-tooltip ${ref(this.#tooltipRef)}></bb-tooltip>`;
+
     return [
       until(tmpl),
       boardOverlay,
@@ -2301,6 +2341,7 @@ export class Main extends LitElement {
       previewOverlay,
       nodeConfiguratorOverlay,
       edgeValueOverlay,
+      tooltip,
       toasts,
     ];
   }
