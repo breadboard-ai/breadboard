@@ -42,7 +42,7 @@ export class EdgeValueStore {
       edge.from,
       edge.out || "",
       edge.to,
-      edge.in || "",
+      (edge.out === "*" ? "*" : edge.in) || "",
       edge.constant
     );
   }
