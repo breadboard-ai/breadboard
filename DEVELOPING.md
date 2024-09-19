@@ -373,9 +373,3 @@ package.
    ```
 
 9. Merge the PR from step 3.
-
-10. If one of the packages released was `hello-world`, please update the Replit project template:
-
-    - Go to [Breadboard Starter Project](https://replit.com/@dglazkov/Breadboard-Starter-Project) template.
-    - Run `npx degit breadboard-ai/breadboard/packages/hello-world --force`.
-    - Doing so will overwrite existing and add new files. Clean up deleted files.
