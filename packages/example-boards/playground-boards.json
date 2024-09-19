@@ -53,11 +53,6 @@
       "version": "0.0.1"
     },
     {
-      "title": "Drawable",
-      "reference": "/example-boards/playground/drawable.json",
-      "version": "0.0.2"
-    },
-    {
       "title": "Error Board",
       "reference": "/example-boards/playground/error.json",
       "version": "0.1.0"
@@ -200,11 +195,6 @@
       "title": "Open Alex Entity Search Results",
       "reference": "/example-boards/playground/open-alex-entity-search-list.json",
       "version": "0.1.0"
-    },
-    {
-      "title": "OpenAI DALL-E Image Generator",
-      "reference": "/example-boards/playground/openai-dall-e.json",
-      "version": "0.0.1"
     },
     {
       "title": "OpenAI GPT-3.5-turbo",
