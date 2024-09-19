@@ -74,7 +74,7 @@ docker build --platform linux/amd64 ...
 To run the container:
 
 ```
-docker run -d -p 3000:3000 --name board-server board-server
+docker run -d -p 3000:3000 --name board-server board-server:sqlite
 docker exec -it board-server /bin/bash
 # npm run add <username> # add a user and copy your API key
 ```
