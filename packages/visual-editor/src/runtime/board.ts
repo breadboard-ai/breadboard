@@ -11,7 +11,7 @@ import {
   InspectableRunObserver,
   Kit,
 } from "@google-labs/breadboard";
-import { RuntimeConfigProjectStores, Tab, TabId, TabType } from "./types";
+import { RuntimeConfigBoardServers, Tab, TabId, TabType } from "./types";
 import {
   RuntimeBoardLoadErrorEvent,
   RuntimeErrorEvent,
@@ -19,7 +19,7 @@ import {
   RuntimeTabCloseEvent,
 } from "./events";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { ProjectStore } from "@breadboard-ai/project-store";
+import { IDBBoardServer } from "@breadboard-ai/idb-board-server";
 
 export class Board extends EventTarget {
   #tabs = new Map<TabId, Tab>();
@@ -29,7 +29,7 @@ export class Board extends EventTarget {
     private readonly providers: GraphProvider[],
     private readonly loader: GraphLoader,
     private readonly kits: Kit[],
-    private readonly projectStores?: RuntimeConfigProjectStores
+    private readonly boardServers?: RuntimeConfigBoardServers
   ) {
     super();
   }
@@ -73,9 +73,9 @@ export class Board extends EventTarget {
   }
 
   #getProviderByName(name: string) {
-    if (this.projectStores) {
+    if (this.boardServers) {
       return (
-        this.projectStores.stores.find((store) => store.name === name) || null
+        this.boardServers.servers.find((server) => server.name === name) || null
       );
     }
 
@@ -83,9 +83,10 @@ export class Board extends EventTarget {
   }
 
   #getProviderForURL(url: URL) {
-    if (this.projectStores) {
+    if (this.boardServers) {
       return (
-        this.projectStores.stores.find((store) => store.canProvide(url)) || null
+        this.boardServers.servers.find((server) => server.canProvide(url)) ||
+        null
       );
     }
 
@@ -93,16 +94,16 @@ export class Board extends EventTarget {
   }
 
   getProviders(): GraphProvider[] {
-    if (this.projectStores) {
-      return this.projectStores.stores;
+    if (this.boardServers) {
+      return this.boardServers.servers;
     }
 
     return this.providers;
   }
 
   getLoader(): GraphLoader {
-    if (this.projectStores) {
-      return this.projectStores.loader;
+    if (this.boardServers) {
+      return this.boardServers.loader;
     }
 
     return this.loader;
@@ -296,9 +297,9 @@ export class Board extends EventTarget {
           await provider.ready();
         }
 
-        if (this.projectStores) {
-          kits = (provider as ProjectStore).kits ?? this.kits;
-          graph = await this.projectStores.loader.load(url, { base });
+        if (this.boardServers) {
+          kits = (provider as IDBBoardServer).kits ?? this.kits;
+          graph = await this.boardServers.loader.load(url, { base });
         } else {
           graph = await this.loader.load(url, { base });
         }

@@ -163,11 +163,11 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
           },
         ],
         [
-          "Use Experimental Project Store",
+          "Use Experimental Board Server",
           {
-            name: "Use Experimental Project Store",
+            name: "Use Experimental Board Server",
             description:
-              "[Unstable] Allows the runtime to use a local Project Store",
+              "[Unstable] Allows the runtime to use a local Board Server",
             value: false,
           },
         ],

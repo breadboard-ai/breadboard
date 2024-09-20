@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ProjectStore } from "@breadboard-ai/project-store";
 import {
+  BoardServer,
   DataStore,
   GraphDescriptor,
   GraphLoader,
@@ -39,11 +39,11 @@ export interface RuntimeConfig {
   dataStore: DataStore;
   runStore: RunStore;
   experiments: {
-    projectStores: boolean;
+    boardServers: boolean;
   };
 }
 
-export interface RuntimeConfigProjectStores {
-  stores: ProjectStore[];
+export interface RuntimeConfigBoardServers {
+  servers: BoardServer[];
   loader: GraphLoader;
 }

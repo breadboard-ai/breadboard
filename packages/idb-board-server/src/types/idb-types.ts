@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "@google-labs/breadboard";
 import {
+  BoardServerCapabilities,
   EntityMetadata,
   Evaluation,
-  ProjectStoreCapabilities,
+  GraphDescriptor,
   Run,
   Secrets,
   User,
-} from "./types";
+} from "@google-labs/breadboard";
 import type * as idb from "idb";
 
 export interface IDBProjectStoreConfiguration {
@@ -21,14 +21,14 @@ export interface IDBProjectStoreConfiguration {
   users: User[];
   secrets: Secrets;
   extensions: string[];
-  capabilities: ProjectStoreCapabilities;
+  capabilities: BoardServerCapabilities;
 }
 
 export interface IDBProjectStoreBoard {
   theme?: string;
   descriptor: GraphDescriptor;
-  runs?: Array<Run>;
-  evaluations?: Array<Evaluation>;
+  runs?: Run[];
+  evaluations?: Evaluation[];
   url: string;
   metadata: EntityMetadata;
 }

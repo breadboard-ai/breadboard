@@ -276,10 +276,10 @@ export class Main extends LitElement {
           runStore: this.#runStore,
           dataStore: this.#dataStore,
           experiments: {
-            projectStores:
+            boardServers:
               this.#settings?.getItem(
                 BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
-                "Use Experimental Project Store"
+                "Use Experimental Board Server"
               )?.value === true,
           },
         });

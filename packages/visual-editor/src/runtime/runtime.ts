@@ -8,12 +8,12 @@ import { createLoader, Kit } from "@google-labs/breadboard";
 import { Board } from "./board.js";
 import { Run } from "./run.js";
 import { Edit } from "./edit.js";
-import { RuntimeConfig, RuntimeConfigProjectStores } from "./types.js";
+import { RuntimeConfig, RuntimeConfigBoardServers } from "./types.js";
 
 import {
-  createDefaultLocalProjectStore,
-  getStores,
-} from "@breadboard-ai/project-store";
+  createDefaultLocalBoardServer,
+  getBoardServers,
+} from "@breadboard-ai/idb-board-server";
 
 import { loadKits } from "../utils/kit-loader";
 import GeminiKit from "@google-labs/gemini-kit";
@@ -36,22 +36,22 @@ export async function create(config: RuntimeConfig): Promise<{
     ...config.providers.map((provider) => provider.restore()),
   ]);
 
-  let projectStores: RuntimeConfigProjectStores | undefined = undefined;
-  if (config.experiments.projectStores) {
-    let stores = await getStores();
+  let boardServers: RuntimeConfigBoardServers | undefined = undefined;
+  if (config.experiments.boardServers) {
+    let stores = await getBoardServers();
     if (stores.length === 0) {
-      await createDefaultLocalProjectStore();
-      stores = await getStores();
+      await createDefaultLocalBoardServer();
+      stores = await getBoardServers();
     }
 
-    projectStores = {
-      stores,
+    boardServers = {
+      servers: stores,
       loader: createLoader(stores),
     };
   }
 
   return {
-    board: new Board(config.providers, loader, kits, projectStores),
+    board: new Board(config.providers, loader, kits, boardServers),
     edit: new Edit(config.providers, loader, kits),
     run: new Run(config.dataStore, config.runStore, kits),
     kits,

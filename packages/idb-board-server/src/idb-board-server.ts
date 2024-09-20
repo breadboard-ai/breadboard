@@ -5,25 +5,23 @@
  */
 
 import {
+  BoardServer,
+  BoardServerProject,
+  BoardServerCapabilities,
+  BoardServerConfiguration,
+  BoardServerExtension,
   ChangeNotificationCallback,
   GraphDescriptor,
   GraphProviderExtendedCapabilities,
   GraphProviderStore,
   Kit,
-} from "@google-labs/breadboard";
-import {
   Permission,
-  Project,
-  ProjectStore,
-  ProjectStoreCapabilities,
-  ProjectStoreConfiguration,
-  ProjectStoreExtension,
   User,
-} from "../types/types";
+} from "@google-labs/breadboard";
 
 import * as idb from "idb";
 
-import { loadKits } from "./kit-loader.js";
+import { loadKits } from "./utils/kit-loader.js";
 import GeminiKit from "@google-labs/gemini-kit";
 import PythonWasmKit from "@breadboard-ai/python-wasm";
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
@@ -31,9 +29,9 @@ import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 import { blankLLMContent } from "@google-labs/breadboard";
 import {
   IDBProjectStoreConfiguration,
-  IDBProjectStoreProject,
+  IDBProjectStoreProject as IDBBoardServerProject,
   LocalStoreData,
-} from "../types/idb-types";
+} from "./types/idb-types.js";
 
 const loadedKits = loadKits([
   GeminiKit,
@@ -47,8 +45,8 @@ const loadedKits = loadKits([
 
 async function inflateConfiguration(
   configuration: IDBProjectStoreConfiguration
-): Promise<ProjectStoreConfiguration> {
-  const secrets = new Map(configuration.secrets);
+): Promise<BoardServerConfiguration> {
+  const secrets = new Map<string, string>(configuration.secrets);
   const allKits = await loadedKits;
   const kits: Kit[] = configuration.kits
     .map((url) => {
@@ -74,7 +72,7 @@ async function inflateConfiguration(
 }
 
 async function deflateConfiguration(
-  configuration: ProjectStoreConfiguration
+  configuration: BoardServerConfiguration
 ): Promise<IDBProjectStoreConfiguration> {
   return {
     url: configuration.url.href,
@@ -87,8 +85,8 @@ async function deflateConfiguration(
 }
 
 async function inflateProject(
-  project: IDBProjectStoreProject
-): Promise<Project> {
+  project: IDBBoardServerProject
+): Promise<BoardServerProject> {
   return {
     url: new URL(project.url),
     metadata: project.metadata,
@@ -104,8 +102,8 @@ async function inflateProject(
 }
 
 async function deflateProject(
-  project: Project
-): Promise<IDBProjectStoreProject> {
+  project: BoardServerProject
+): Promise<IDBBoardServerProject> {
   return {
     url: project.url.href,
     metadata: project.metadata,
@@ -121,7 +119,7 @@ async function deflateProject(
 }
 
 async function createLocalStoreDBIfNeeded(url: string) {
-  return idb.openDB<LocalStoreData>(LocalStore.parseURL(url), 1, {
+  return idb.openDB<LocalStoreData>(IDBBoardServer.parseURL(url), 1, {
     upgrade(db) {
       db.createObjectStore("configuration", { keyPath: "url" });
       db.createObjectStore("projects", { keyPath: "url" });
@@ -129,13 +127,13 @@ async function createLocalStoreDBIfNeeded(url: string) {
   });
 }
 
-export class LocalStore extends EventTarget implements ProjectStore {
+export class IDBBoardServer extends EventTarget implements BoardServer {
   public readonly url: URL;
   public readonly kits: Kit[];
   public readonly users: User[];
   public readonly secrets = new Map<string, string>();
-  public readonly extensions: ProjectStoreExtension[] = [];
-  public readonly capabilities: ProjectStoreCapabilities = {
+  public readonly extensions: BoardServerExtension[] = [];
+  public readonly capabilities: BoardServerCapabilities = {
     connect: false,
     disconnect: false,
     refresh: false,
@@ -143,7 +141,7 @@ export class LocalStore extends EventTarget implements ProjectStore {
     preview: false,
   };
 
-  projects: Promise<Project[]>;
+  projects: Promise<BoardServerProject[]>;
 
   static readonly PROTOCOL = "idb://";
 
@@ -169,14 +167,14 @@ export class LocalStore extends EventTarget implements ProjectStore {
       }
 
       const configuration = await inflateConfiguration(idbConfiguration);
-      return new LocalStore("Browser Storage", configuration, user);
+      return new IDBBoardServer("Browser Storage", configuration, user);
     } catch (err) {
       console.warn(err);
       return null;
     }
   }
 
-  static async #create(configuration: ProjectStoreConfiguration) {
+  static async #create(configuration: BoardServerConfiguration) {
     const db = await createLocalStoreDBIfNeeded(configuration.url.href);
 
     const idbConfiguration = await deflateConfiguration(configuration);
@@ -244,7 +242,7 @@ export class LocalStore extends EventTarget implements ProjectStore {
 
   constructor(
     public readonly name: string,
-    configuration: ProjectStoreConfiguration,
+    configuration: BoardServerConfiguration,
     public readonly user: User
   ) {
     super();
@@ -260,7 +258,7 @@ export class LocalStore extends EventTarget implements ProjectStore {
 
   // This is a workaround for items() being sync. Since we expect ready() to be
   // awaited we know #projects will be populated by the time items() is called.
-  #projects: Project[] = [];
+  #projects: BoardServerProject[] = [];
   async ready(): Promise<void> {
     this.#projects = await this.projects;
   }
@@ -357,7 +355,7 @@ export class LocalStore extends EventTarget implements ProjectStore {
       evaluations: [],
     };
 
-    const project: Project = {
+    const project: BoardServerProject = {
       board,
       url,
       metadata: {
@@ -449,7 +447,7 @@ export class LocalStore extends EventTarget implements ProjectStore {
   }
 
   canProvide(url: URL) {
-    if (!url.href.startsWith(LocalStore.PROTOCOL)) {
+    if (!url.href.startsWith(IDBBoardServer.PROTOCOL)) {
       return false;
     }
 
