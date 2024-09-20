@@ -8,7 +8,12 @@ import { createLoader, Kit } from "@google-labs/breadboard";
 import { Board } from "./board.js";
 import { Run } from "./run.js";
 import { Edit } from "./edit.js";
-import { VERuntimeConfig } from "./types.js";
+import { RuntimeConfig, RuntimeConfigProjectStores } from "./types.js";
+
+import {
+  createDefaultLocalProjectStore,
+  getStores,
+} from "@breadboard-ai/project-store";
 
 import { loadKits } from "../utils/kit-loader";
 import GeminiKit from "@google-labs/gemini-kit";
@@ -19,7 +24,7 @@ import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 export * as Events from "./events.js";
 export * as Types from "./types.js";
 
-export async function create(config: VERuntimeConfig): Promise<{
+export async function create(config: RuntimeConfig): Promise<{
   board: Board;
   run: Run;
   edit: Edit;
@@ -31,8 +36,22 @@ export async function create(config: VERuntimeConfig): Promise<{
     ...config.providers.map((provider) => provider.restore()),
   ]);
 
+  let projectStores: RuntimeConfigProjectStores | undefined = undefined;
+  if (config.experiments.projectStores) {
+    let stores = await getStores();
+    if (stores.length === 0) {
+      await createDefaultLocalProjectStore();
+      stores = await getStores();
+    }
+
+    projectStores = {
+      stores,
+      loader: createLoader(stores),
+    };
+  }
+
   return {
-    board: new Board(config.providers, loader, kits),
+    board: new Board(config.providers, loader, kits, projectStores),
     edit: new Edit(config.providers, loader, kits),
     run: new Run(config.dataStore, config.runStore, kits),
     kits,

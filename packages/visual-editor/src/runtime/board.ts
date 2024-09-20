@@ -11,7 +11,7 @@ import {
   InspectableRunObserver,
   Kit,
 } from "@google-labs/breadboard";
-import { Tab, TabId, TabType } from "./types";
+import { RuntimeConfigProjectStores, Tab, TabId, TabType } from "./types";
 import {
   RuntimeBoardLoadErrorEvent,
   RuntimeErrorEvent,
@@ -19,15 +19,17 @@ import {
   RuntimeTabCloseEvent,
 } from "./events";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import { ProjectStore } from "@breadboard-ai/project-store";
 
 export class Board extends EventTarget {
   #tabs = new Map<TabId, Tab>();
   #currentTabId: TabId | null = null;
 
   constructor(
-    public readonly providers: GraphProvider[],
-    public readonly loader: GraphLoader,
-    public readonly kits: Kit[]
+    private readonly providers: GraphProvider[],
+    private readonly loader: GraphLoader,
+    private readonly kits: Kit[],
+    private readonly projectStores?: RuntimeConfigProjectStores
   ) {
     super();
   }
@@ -71,11 +73,39 @@ export class Board extends EventTarget {
   }
 
   #getProviderByName(name: string) {
+    if (this.projectStores) {
+      return (
+        this.projectStores.stores.find((store) => store.name === name) || null
+      );
+    }
+
     return this.providers.find((provider) => provider.name === name) || null;
   }
 
   #getProviderForURL(url: URL) {
+    if (this.projectStores) {
+      return (
+        this.projectStores.stores.find((store) => store.canProvide(url)) || null
+      );
+    }
+
     return this.providers.find((provider) => provider.canProvide(url)) || null;
+  }
+
+  getProviders(): GraphProvider[] {
+    if (this.projectStores) {
+      return this.projectStores.stores;
+    }
+
+    return this.providers;
+  }
+
+  getLoader(): GraphLoader {
+    if (this.projectStores) {
+      return this.projectStores.loader;
+    }
+
+    return this.loader;
   }
 
   get tabs() {
@@ -255,6 +285,9 @@ export class Board extends EventTarget {
 
     try {
       const base = new URL(window.location.href);
+
+      let kits = this.kits;
+      let graph: GraphDescriptor | null = null;
       if (this.#canParse(url)) {
         const provider = this.#getProviderForURL(new URL(url));
         if (provider) {
@@ -262,12 +295,13 @@ export class Board extends EventTarget {
           // requesting the graph file from it.
           await provider.ready();
         }
-      }
 
-      const graph = await this.loader.load(url, { base });
-      if (!graph) {
-        this.dispatchEvent(new RuntimeErrorEvent("Unable to load board"));
-        return;
+        if (this.projectStores) {
+          kits = (provider as ProjectStore).kits ?? this.kits;
+          graph = await this.projectStores.loader.load(url, { base });
+        } else {
+          graph = await this.loader.load(url, { base });
+        }
       }
 
       // Re-use an existing tab if possible.
@@ -283,10 +317,15 @@ export class Board extends EventTarget {
         }
       }
 
+      if (!graph) {
+        this.dispatchEvent(new RuntimeErrorEvent("Unable to load board"));
+        return;
+      }
+
       const id = globalThis.crypto.randomUUID();
       this.#tabs.set(id, {
         id,
-        kits: this.kits,
+        kits,
         name: graph.title ?? "Untitled board",
         graph,
         subGraphId: null,

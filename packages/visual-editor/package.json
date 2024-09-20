@@ -58,6 +58,7 @@
         "../template-kit:build",
         "../node-nursery-web:build",
         "../palm-kit:build",
+        "../project-store:build",
         "../python-wasm:build",
         "../manifest:build",
         "build:vite",
@@ -79,6 +80,7 @@
         "../template-kit:build:tsc",
         "../node-nursery-web:build:tsc",
         "../palm-kit:build:tsc",
+        "../project-store:build:tsc",
         "../python-wasm:build:tsc"
       ],
       "files": [
@@ -271,6 +273,7 @@
     "@breadboard-ai/google-drive-kit": "0.2.3",
     "@breadboard-ai/manifest": "^0.4.3",
     "@breadboard-ai/shared-ui": "^1.16.1",
+    "@breadboard-ai/project-store": "^1.16.1",
     "@breadboard-ai/python-wasm": "0.1.5",
     "@codemirror/autocomplete": "^6.18.1",
     "@codemirror/commands": "^6.6.2",

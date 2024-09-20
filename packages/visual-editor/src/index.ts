@@ -215,7 +215,7 @@ export class Main extends LitElement {
     }
 
     this.#version = config.version || "dev";
-    this.#providers = config.providers || [];
+    this.#providers = [];
     this.#settings = config.settings || null;
     this.#proxy = config.proxy || [];
     if (this.#settings) {
@@ -275,10 +275,18 @@ export class Main extends LitElement {
           providers: config.providers ?? [],
           runStore: this.#runStore,
           dataStore: this.#dataStore,
+          experiments: {
+            projectStores:
+              this.#settings?.getItem(
+                BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
+                "Use Experimental Project Store"
+              )?.value === true,
+          },
         });
       })
       .then((runtime) => {
         this.#runtime = runtime;
+        this.#providers = runtime.board.getProviders() || [];
 
         this.#runtime.edit.addEventListener(
           Runtime.Events.RuntimeBoardEditEvent.eventName,
@@ -1562,7 +1570,7 @@ export class Main extends LitElement {
               .run=${runs[0] ?? null}
               .topGraphResult=${topGraphResult}
               .kits=${this.#runtime.kits}
-              .loader=${this.#runtime.board.loader}
+              .loader=${this.#runtime.board.getLoader()}
               .status=${tabStatus}
               .boardId=${this.#boardId}
               .tabLoadStatus=${tabLoadStatus}
@@ -1650,7 +1658,7 @@ export class Main extends LitElement {
                       runner: graph,
                       diagnostics: true,
                       kits: [], // The kits are added by the runtime.
-                      loader: this.#runtime.board.loader,
+                      loader: this.#runtime.board.getLoader(),
                       store: this.#dataStore,
                       inputs: BreadboardUI.Data.inputsFromSettings(
                         this.#settings

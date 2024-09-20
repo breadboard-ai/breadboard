@@ -44,6 +44,7 @@
         "./packages/template-kit:build",
         "./packages/node-nursery-web:build",
         "./packages/palm-kit:build",
+        "./packages/project-store:build",
         "./packages/python-wasm:build",
         "./packages/website:build",
         "./packages/schema:build",

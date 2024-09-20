@@ -4,9 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ProjectStore } from "@breadboard-ai/project-store";
 import {
   DataStore,
   GraphDescriptor,
+  GraphLoader,
   GraphProvider,
   Kit,
   RunStore,
@@ -32,8 +34,16 @@ export interface Tab {
   type: TabType;
 }
 
-export interface VERuntimeConfig {
+export interface RuntimeConfig {
   providers: GraphProvider[];
   dataStore: DataStore;
   runStore: RunStore;
+  experiments: {
+    projectStores: boolean;
+  };
+}
+
+export interface RuntimeConfigProjectStores {
+  stores: ProjectStore[];
+  loader: GraphLoader;
 }
