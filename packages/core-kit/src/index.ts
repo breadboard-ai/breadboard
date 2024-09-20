@@ -8,14 +8,14 @@ import { KitBuilder } from "@google-labs/breadboard/kits";
 
 import append from "./nodes/append.js";
 import batch from "./nodes/batch.js";
-import { cast, castNode } from "./nodes/cast.js";
+import { castNode } from "./nodes/cast.js";
 import fetch from "./nodes/fetch.js";
 import importHandler from "./nodes/import.js";
 import include from "./nodes/include.js";
 import invoke from "./nodes/invoke.js";
 import map from "./nodes/map.js";
 import passthrough from "./nodes/passthrough.js";
-import reduce, { ReduceInputs, ReduceOutputs } from "./nodes/reduce.js";
+import reduce from "./nodes/reduce.js";
 import reflect from "./nodes/reflect.js";
 import resolve from "./nodes/resolve.js";
 import runJavascript from "./nodes/run-javascript.js";
@@ -303,7 +303,35 @@ export type CoreKitType = {
     },
     { list: NodeValue[] }
   >;
-  reduce: NodeFactory<ReduceInputs, ReduceOutputs>;
+  reduce: NodeFactory<
+    {
+      /**
+       * The list to iterate over.
+       */
+      list: unknown[];
+
+      /**
+       * The board to run for each element of the list.
+       */
+      board?: unknown;
+
+      /**
+       * The initial value for the accumulator.
+       */
+      accumulator?: unknown;
+    },
+    {
+      /**
+       * The current value of the accumulator.
+       */
+      accumulator: NodeValue;
+
+      /**
+       * The current item from the list.
+       */
+      item: NodeValue;
+    }
+  >;
   /**
    * Combines a board with some arguments to create a new board (aka currying).
    * The arguments in that board will run as part of board invocation as if
@@ -363,6 +391,7 @@ export const coreKit = await kit({
     invoke,
     map,
     passthrough,
+    reduce,
     runJavascript,
     secrets,
     service,
