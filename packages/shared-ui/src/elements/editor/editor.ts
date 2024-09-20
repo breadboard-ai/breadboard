@@ -625,7 +625,7 @@ export class Editor extends LitElement {
     super();
 
     this.zoomToHighlightedNodeDuringRuns =
-      globalThis.localStorage.getItem(ZOOM_KEY) === "true" ?? true;
+      (globalThis.localStorage.getItem(ZOOM_KEY) ?? "true") === "true";
   }
 
   connectedCallback(): void {
