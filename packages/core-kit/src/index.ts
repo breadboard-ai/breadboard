@@ -392,6 +392,7 @@ export const coreKit = await kit({
     map,
     passthrough,
     reduce,
+    resolve,
     runJavascript,
     secrets,
     service,
