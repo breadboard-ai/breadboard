@@ -91,7 +91,6 @@
         "./packages/template-kit:lint",
         "./packages/node-nursery-web:lint",
         "./packages/palm-kit:lint",
-        "./packages/project-store:lint",
         "./packages/python-wasm:lint"
       ]
     },
