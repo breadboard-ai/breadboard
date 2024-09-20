@@ -1,7 +1,7 @@
 {
-  "name": "@breadboard-ai/project-store",
+  "name": "@breadboard-ai/idb-board-server",
   "version": "1.16.1",
-  "description": "Project Handling in Breadboard",
+  "description": "IDB Board Server for Breadboard",
   "main": "./dist/index.js",
   "exports": {
     ".": {
@@ -68,7 +68,7 @@
     }
   },
   "repository": {
-    "directory": "packages/project-store",
+    "directory": "packages/idb-board-server",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
@@ -81,7 +81,7 @@
   "bugs": {
     "url": "https://github.com/breadboard-ai/breadboard/issues"
   },
-  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/project-store#readme",
+  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/idb-board-server#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",

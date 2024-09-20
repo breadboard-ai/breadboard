@@ -58,7 +58,7 @@
         "../template-kit:build",
         "../node-nursery-web:build",
         "../palm-kit:build",
-        "../project-store:build",
+        "../idb-board-server:build",
         "../python-wasm:build",
         "../manifest:build",
         "build:vite",
@@ -80,7 +80,7 @@
         "../template-kit:build:tsc",
         "../node-nursery-web:build:tsc",
         "../palm-kit:build:tsc",
-        "../project-store:build:tsc",
+        "../idb-board-server:build:tsc",
         "../python-wasm:build:tsc"
       ],
       "files": [
@@ -271,9 +271,9 @@
     "@breadboard-ai/data-store": "^0.2.2",
     "@breadboard-ai/example-boards": "0.3.1",
     "@breadboard-ai/google-drive-kit": "0.2.3",
+    "@breadboard-ai/idb-board-server": "^1.16.1",
     "@breadboard-ai/manifest": "^0.4.3",
     "@breadboard-ai/shared-ui": "^1.16.1",
-    "@breadboard-ai/project-store": "^1.16.1",
     "@breadboard-ai/python-wasm": "0.1.5",
     "@codemirror/autocomplete": "^6.18.1",
     "@codemirror/commands": "^6.6.2",
