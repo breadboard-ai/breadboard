@@ -44,6 +44,7 @@
         "./packages/template-kit:build",
         "./packages/node-nursery-web:build",
         "./packages/palm-kit:build",
+        "./packages/project-store:build",
         "./packages/python-wasm:build",
         "./packages/website:build",
         "./packages/schema:build",
@@ -90,6 +91,7 @@
         "./packages/template-kit:lint",
         "./packages/node-nursery-web:lint",
         "./packages/palm-kit:lint",
+        "./packages/project-store:lint",
         "./packages/python-wasm:lint"
       ]
     },

@@ -162,6 +162,15 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
             value: false,
           },
         ],
+        [
+          "Use Experimental Project Store",
+          {
+            name: "Use Experimental Project Store",
+            description:
+              "[Unstable] Allows the runtime to use a local Project Store",
+            value: false,
+          },
+        ],
       ]),
     },
     [BreadboardUI.Types.SETTINGS_TYPE.SECRETS]: {

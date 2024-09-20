@@ -18,6 +18,7 @@
     { "path": "packages/node-nursery-web" },
     { "path": "packages/node-proxy-server" },
     { "path": "packages/palm-kit" },
+    { "path": "packages/project-store" },
     { "path": "packages/schema" },
     { "path": "packages/shared-ui" },
     { "path": "packages/template-kit" },
