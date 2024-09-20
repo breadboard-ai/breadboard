@@ -4,23 +4,22 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "input-1",
-      "to": "output-2",
+      "from": "input-0",
+      "to": "output-0",
       "out": "text",
       "in": "text"
     }
   ],
   "nodes": [
     {
-      "id": "input-1",
+      "id": "input-0",
       "type": "input",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
             "text": {
-              "type": "string",
-              "title": "text"
+              "type": "string"
             }
           },
           "required": [
@@ -30,17 +29,19 @@
       }
     },
     {
-      "id": "output-2",
+      "id": "output-0",
       "type": "output",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
             "text": {
-              "type": "string",
-              "title": "text"
+              "type": "string"
             }
-          }
+          },
+          "required": [
+            "text"
+          ]
         }
       }
     }
