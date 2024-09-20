@@ -4,42 +4,60 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import test from "ava";
-
-import reduce from "../src/nodes/reduce.js";
-import Core, { core } from "../src/index.js";
+import { board, input, serialize } from "@breadboard-ai/build";
 import {
   asRuntimeKit,
-  code,
-  board,
+  createLoader,
   invokeGraph,
 } from "@google-labs/breadboard";
+import test from "ava";
+import Core, { code, coreKit } from "../src/index.js";
 
 test("reduce with no board just outputs accumulator", async (t) => {
   const inputs = {
     list: [1, 2, 3],
     accumulator: 0,
   };
-  const outputs = await reduce.invoke(inputs, {});
+  const outputs = await coreKit.reduce.invoke(inputs, {});
   t.deepEqual(outputs, { accumulator: 0 });
 });
 
 test("using reduce as part of a board", async (t) => {
-  const reducer = await board(({ value }) => {
-    const { accumulator } = core.reduce({
+  const innerBoard = (() => {
+    const accumulator = input({ type: "number" });
+    const item = input({ type: "number" });
+    const adder = code(
+      { accumulator, item },
+      { accumulator: "number" },
+      ({ accumulator, item }) => {
+        const sum = (accumulator || 0) + (item || 0);
+        return { accumulator: sum };
+      }
+    );
+    return board({
+      inputs: { accumulator, item },
+      outputs: { accumulator: adder.outputs.accumulator },
+    });
+  })();
+
+  const outerBoard = (() => {
+    const value = input({ type: "number" });
+    const reducer = coreKit.reduce({
       list: [1, 2, 3],
       accumulator: value,
-      board: code(({ accumulator, item }) => {
-        const sum = ((accumulator || 0) as number) + ((item || 0) as number);
-        return { accumulator: sum };
-      }),
+      board: innerBoard,
     });
-    return { value: accumulator.isNumber() };
-  }).serialize();
-  const { value } = await invokeGraph(
-    reducer,
+    return board({
+      inputs: { value },
+      outputs: { value: reducer.outputs.accumulator },
+    });
+  })();
+
+  const result = await invokeGraph(
+    serialize(outerBoard),
     { value: 4 },
-    { kits: [asRuntimeKit(Core)] }
+    { kits: [asRuntimeKit(Core)], loader: createLoader() }
   );
-  t.is(value, 10);
+  t.falsy(result.$error);
+  t.is(result.value, 10);
 });

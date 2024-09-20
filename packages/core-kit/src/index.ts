@@ -391,10 +391,10 @@ export const coreKit = await kit({
     invoke,
     map,
     passthrough,
+    reduce,
     runJavascript,
     secrets,
     service,
     unnest: unnestNode,
-    reduce,
   },
 });
