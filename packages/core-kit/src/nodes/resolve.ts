@@ -4,21 +4,31 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { defineNodeType } from "@breadboard-ai/build";
 import type {
   InputValues,
   NodeHandlerContext,
-  NodeHandlerObject,
   OutputValues,
 } from "@google-labs/breadboard";
 
-export default {
+export default defineNodeType({
+  name: "resolve",
   metadata: {
     deprecated: true,
   },
-  invoke: async (
+  inputs: { "*": { type: "unknown" } },
+  outputs: { "*": { type: "unknown" } },
+  describe: () => {
+    return {
+      inputs: { "*": { type: "unknown" } },
+      outputs: { "*": { type: "unknown" } },
+    };
+  },
+  invoke: (
+    _,
     inputs: InputValues,
     context: NodeHandlerContext
-  ): Promise<OutputValues> => {
+  ): OutputValues => {
     const base = inputs.$base ?? context.base?.href;
     if (!base) {
       throw new Error(
@@ -43,4 +53,4 @@ export default {
     }
     return resolved;
   },
-} satisfies NodeHandlerObject;
+});
