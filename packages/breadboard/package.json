@@ -168,7 +168,7 @@
     "@typescript-eslint/parser": "^7.18.0",
     "ava": "^5.2.0",
     "jsonschema": "^1.4.1",
-    "rollup": "^4.21.3",
+    "rollup": "^4.22.2",
     "rollup-plugin-dts": "^6.1.1",
     "@rollup/plugin-json": "^6.1.0",
     "typescript": "^5.5.4"
