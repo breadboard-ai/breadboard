@@ -1727,10 +1727,15 @@ export class Main extends LitElement {
               @bbnodeconfigurationupdaterequest=${async (
                 evt: BreadboardUI.Events.NodeConfigurationUpdateRequestEvent
               ) => {
-                const title = this.#runtime.edit.getNodeTitle(this.tab, evt.id);
+                const title = this.#runtime.edit.getNodeTitle(
+                  this.tab,
+                  evt.id,
+                  evt.subGraphId
+                );
                 const ports = await this.#runtime.edit.getNodePorts(
                   this.tab,
-                  evt.id
+                  evt.id,
+                  evt.subGraphId
                 );
 
                 if (!ports) {
@@ -1739,7 +1744,8 @@ export class Main extends LitElement {
 
                 const metadata = this.#runtime.edit.getNodeMetadata(
                   this.tab,
-                  evt.id
+                  evt.id,
+                  evt.subGraphId
                 );
 
                 this.showNodeConfigurator = true;
