@@ -238,6 +238,10 @@
 					"additionalProperties": false,
 					"description": "The documentation for the graph, expressed as a URL and optional description."
 				},
+				"describer": {
+					"type": "string",
+					"description": "The URL of the graph that will act as the describer for this graph. Can be a relative URL and refer to a sub-graph within this graph."
+				},
 				"visual": {
 					"type": "object",
 					"properties": {
