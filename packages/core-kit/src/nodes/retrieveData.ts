@@ -18,6 +18,7 @@ export const retrieveDataNode = defineNodeType({
   inputs: {
     key: {
       type: "string",
+      title: "Key",
       description: "The key to retrieve the value for.",
       behavior: ["config"],
     },

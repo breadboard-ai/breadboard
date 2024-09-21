@@ -4,12 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  defineNodeType,
-  enumeration,
-  object,
-  string,
-} from "@breadboard-ai/build";
+import { defineNodeType, enumeration, object } from "@breadboard-ai/build";
 
 export const storeDataNode = defineNodeType({
   name: "storeData",
@@ -22,16 +17,20 @@ export const storeDataNode = defineNodeType({
   },
   inputs: {
     key: {
-      type: string({}),
+      type: "string",
       description: "The key to store the value under.",
+      title: "Key",
       behavior: ["config"],
     },
     scope: {
       type: enumeration("run", "session", "client"),
+      description: "The scope to store the data in.",
+      title: "Scope",
       behavior: ["config"],
     },
     value: {
       type: object({}, "unknown"),
+      title: "Value",
       description: "The value to store.",
     },
   },
