@@ -68,6 +68,7 @@ test("inspector API can describe the input in simplest.json", async (t) => {
       properties: {
         schema: {
           type: "object",
+          title: "Schema",
           behavior: ["json-schema", "ports-spec", "config"],
         },
       },
@@ -103,6 +104,7 @@ test("inspector API can describe the input in simplest-no-schema.json", async (t
       properties: {
         schema: {
           type: "object",
+          title: "Schema",
           behavior: ["json-schema", "ports-spec", "config"],
         },
       },
@@ -130,6 +132,7 @@ test("inspector API can describe the input in simplest-no-schema-strict.json", a
       properties: {
         schema: {
           type: "object",
+          title: "Schema",
           behavior: ["json-schema", "ports-spec", "config"],
         },
       },
@@ -159,6 +162,7 @@ test("inspector API can describe the output in simplest.json", async (t) => {
         "*": { type: "string" },
         schema: {
           type: "object",
+          title: "Schema",
           behavior: ["json-schema", "ports-spec", "config"],
         },
         text: {
@@ -192,6 +196,7 @@ test("inspector API can describe the output in simplest-no-schema.json", async (
       properties: {
         schema: {
           type: "object",
+          title: "Schema",
           behavior: ["json-schema", "ports-spec", "config"],
         },
         "*": { type: "string" },
@@ -220,6 +225,7 @@ test("inspector API can describe the output in simplest-no-schema-strict.json", 
       properties: {
         schema: {
           type: "object",
+          title: "Schema",
           behavior: ["json-schema", "ports-spec", "config"],
         },
         text: { type: "string" },

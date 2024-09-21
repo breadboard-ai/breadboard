@@ -4,30 +4,38 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  DataStore,
-  isInlineData,
-  isLLMContent,
-  isStoredData,
-  LLMContent,
-  SerializedDataStoreGroup,
-  SerializedStoredData,
-  StoredDataCapabilityPart,
-} from "@google-labs/breadboard";
-import { HarnessRunResult } from "@google-labs/breadboard/harness";
+import { HarnessRunResult } from "../harness/types.js";
+import { Schema } from "../types.js";
 import {
   asBase64,
   toStoredDataPart,
   retrieveAsBlob as genericRetrieveAsBlob,
   isLLMContentArray,
   isMetadataEntry,
+  isLLMContent,
+  isInlineData,
+  isStoredData,
 } from "./common.js";
+import {
+  DataStore,
+  LLMContent,
+  RetrieveDataResult,
+  SerializedDataStoreGroup,
+  SerializedStoredData,
+  StoreDataResult,
+  StoredDataCapabilityPart,
+} from "./types.js";
 
 export type GroupID = string;
 export type NodeTimeStamp = string;
 export type OutputProperty = string;
 export type OutputPropertyIndex = number;
 export type OutputPropertyPartIndex = number;
+
+type StoredDataEntry = {
+  value: object | null;
+  schema: Schema;
+};
 
 export class DefaultDataStore implements DataStore {
   #lastGroupId: string | null = null;
@@ -44,6 +52,7 @@ export class DefaultDataStore implements DataStore {
       >
     >
   >();
+  #keyValueStore = new Map<string, StoredDataEntry>();
 
   createGroup(groupId: string) {
     let dataStore = this.#dataStores.get(groupId);
@@ -261,5 +270,24 @@ export class DefaultDataStore implements DataStore {
     this.releaseAll();
     this.#dataStores.clear();
     return;
+  }
+
+  async storeData(
+    key: string,
+    value: object | null,
+    schema: Schema
+  ): Promise<StoreDataResult> {
+    // TODO: Implement scope handling.
+    // Corresponds to the "session" scope.
+    this.#keyValueStore.set(key, { value, schema });
+    return { success: true };
+  }
+
+  async retrieveData(key: string): Promise<RetrieveDataResult> {
+    const entry = this.#keyValueStore.get(key);
+    if (!entry) {
+      return { success: false, error: `No value found for key: ${key}` };
+    }
+    return { success: true, value: entry.value, schema: entry.schema };
   }
 }
