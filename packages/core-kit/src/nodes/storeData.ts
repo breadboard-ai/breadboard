@@ -20,6 +20,7 @@ export const storeDataNode = defineNodeType({
     help: {
       url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-store-data-component",
     },
+    tags: ["experimental"],
   },
   inputs: {
     $schema: {
@@ -33,6 +34,7 @@ export const storeDataNode = defineNodeType({
       description: "The scope to store the data in.",
       title: "Scope",
       behavior: ["config"],
+      default: "session",
     },
     "*": {
       type: "unknown",
@@ -49,12 +51,11 @@ export const storeDataNode = defineNodeType({
       throw new Error("Unable to store data: The data store not available.");
     }
     const properties = ($schema as Schema)?.properties;
-    if (!properties) {
-      throw new Error("Unable to store data: Schema is missing properties.");
-    }
-    const entries = Object.entries(properties);
-    if (entries.length === 0) {
-      throw new Error("Unable to store data: Schema has no properties.");
+    const entries = Object.entries(properties || {});
+    if (!properties || entries.length === 0) {
+      throw new Error(
+        "Unable to store data: no properties were specified in Schema."
+      );
     }
     for (const [key, propertySchema] of entries) {
       const value = values[key] as object | null;

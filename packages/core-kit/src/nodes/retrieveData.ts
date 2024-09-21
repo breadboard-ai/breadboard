@@ -15,6 +15,7 @@ export const retrieveDataNode = defineNodeType({
     help: {
       url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-retrieve-data-component",
     },
+    tags: ["experimental"],
   },
   inputs: {
     schema: {
@@ -40,12 +41,11 @@ export const retrieveDataNode = defineNodeType({
       throw new Error("Unable to retrieve data: The data store not available.");
     }
     const properties = (schema as Schema)?.properties;
-    if (!properties) {
-      throw new Error("Unable to store data: Schema is missing properties.");
-    }
-    const keys = Object.keys(properties);
-    if (keys.length === 0) {
-      throw new Error("Unable to store data: Schema has no properties.");
+    const keys = Object.keys(properties || {});
+    if (!properties || keys.length === 0) {
+      throw new Error(
+        "Unable to retrieve data: no properties were specified in Schema."
+      );
     }
     const notFound: [property: string, schema: Schema][] = [];
     const values: Record<string, object | null> = {};
@@ -60,7 +60,6 @@ export const retrieveDataNode = defineNodeType({
     }
 
     if (notFound.length > 0) {
-      console.log("Not found", notFound);
       return {
         $notFound: {
           properties: Object.fromEntries(notFound),
@@ -70,7 +69,6 @@ export const retrieveDataNode = defineNodeType({
         ...values,
       };
     }
-    console.log("All found", values);
     return values;
   },
   describe: async ({ schema }) => {

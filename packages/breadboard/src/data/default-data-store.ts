@@ -288,6 +288,7 @@ export class DefaultDataStore implements DataStore {
     if (!entry) {
       return { success: false, error: `No value found for key: ${key}` };
     }
+    console.log("entry", entry);
     return { success: true, value: entry.value, schema: entry.schema };
   }
 }
