@@ -4,24 +4,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  DataStore,
-  isInlineData,
-  isLLMContent,
-  isStoredData,
-  LLMContent,
-  SerializedDataStoreGroup,
-  SerializedStoredData,
-  StoredDataCapabilityPart,
-} from "@google-labs/breadboard";
-import { HarnessRunResult } from "@google-labs/breadboard/harness";
+import { HarnessRunResult } from "../harness/types.js";
 import {
   asBase64,
   toStoredDataPart,
   retrieveAsBlob as genericRetrieveAsBlob,
   isLLMContentArray,
   isMetadataEntry,
+  isLLMContent,
+  isInlineData,
+  isStoredData,
 } from "./common.js";
+import {
+  DataStore,
+  LLMContent,
+  RetrieveDataResult,
+  SerializedDataStoreGroup,
+  SerializedStoredData,
+  StoreDataResult,
+  StoredDataCapabilityPart,
+} from "./types.js";
 
 export type GroupID = string;
 export type NodeTimeStamp = string;
@@ -44,6 +46,7 @@ export class DefaultDataStore implements DataStore {
       >
     >
   >();
+  #keyValueStore = new Map<string, object>();
 
   createGroup(groupId: string) {
     let dataStore = this.#dataStores.get(groupId);
@@ -261,5 +264,19 @@ export class DefaultDataStore implements DataStore {
     this.releaseAll();
     this.#dataStores.clear();
     return;
+  }
+
+  async storeData(key: string, value: object): Promise<StoreDataResult> {
+    // Corresponds to the "session" scope.
+    this.#keyValueStore.set(key, value);
+    return { success: true };
+  }
+
+  async retrieveData(key: string): Promise<RetrieveDataResult> {
+    const value = this.#keyValueStore.get(key);
+    if (!value) {
+      return { success: false, error: `No value found for key: ${key}` };
+    }
+    return { success: true, value };
   }
 }

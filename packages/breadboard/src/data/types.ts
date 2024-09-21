@@ -110,9 +110,30 @@ export type DataStore = {
     storeId?: string
   ): Promise<SerializedDataStoreGroup | null>;
   store(blob: Blob, storeId?: string): Promise<StoredDataCapabilityPart>;
+  storeData(key: string, value: object): Promise<StoreDataResult>;
+  retrieveData(key: string): Promise<RetrieveDataResult>;
 };
 
 export type StateStore = {
   load(key?: string): Promise<ReanimationState | undefined>;
   save(state: ReanimationState): Promise<string>;
 };
+
+export type StoreDataResult =
+  | {
+      success: true;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+export type RetrieveDataResult =
+  | {
+      success: true;
+      value: object;
+    }
+  | {
+      success: false;
+      error: string;
+    };
