@@ -285,7 +285,6 @@ export class DefaultDataStore implements DataStore {
 
   async retrieveData(key: string): Promise<RetrieveDataResult> {
     const entry = this.#keyValueStore.get(key);
-    console.log(key, entry);
     if (!entry) {
       return { success: false, error: `No value found for key: ${key}` };
     }

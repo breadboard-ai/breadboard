@@ -29,9 +29,9 @@ export const retrieveDataNode = defineNodeType({
       type: "unknown",
     },
     $notFound: {
-      type: "string",
+      type: object({}, "unknown"),
       title: "Not Found",
-      description: "The key is routed here when the value is not found.",
+      description: "The schema of keys that were not found.",
     },
   },
   invoke: async ({ schema }, _, context) => {
@@ -47,21 +47,30 @@ export const retrieveDataNode = defineNodeType({
     if (keys.length === 0) {
       throw new Error("Unable to store data: Schema has no properties.");
     }
-    const $notFound: string[] = [];
+    const notFound: [property: string, schema: Schema][] = [];
     const values: Record<string, object | null> = {};
     for (const key of keys) {
       const result = await store.retrieveData(key);
       if (!result.success) {
-        $notFound.push(key);
+        notFound.push([key, properties[key]]);
       } else {
         // TODO: Implement schema comparison.
         values[key] = result.value;
       }
     }
 
-    if ($notFound.length > 0) {
-      return { $notFound, ...values };
+    if (notFound.length > 0) {
+      console.log("Not found", notFound);
+      return {
+        $notFound: {
+          properties: Object.fromEntries(notFound),
+          type: "object",
+          required: notFound.map(([key]) => key),
+        },
+        ...values,
+      };
     }
+    console.log("All found", values);
     return values;
   },
   describe: async ({ schema }) => {
