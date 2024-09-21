@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { defineNodeType } from "@breadboard-ai/build";
+import { defineNodeType, object, unsafeSchema } from "@breadboard-ai/build";
+import { Schema } from "@google-labs/breadboard";
 
 export const retrieveDataNode = defineNodeType({
   name: "retrieveData",
@@ -16,38 +17,57 @@ export const retrieveDataNode = defineNodeType({
     },
   },
   inputs: {
-    key: {
-      type: "string",
-      title: "Key",
-      description: "The key to retrieve the value for.",
-      behavior: ["config"],
+    schema: {
+      type: object({}, "unknown"),
+      title: "Schema",
+      description: "The schema of the data to retrieve.",
+      behavior: ["ports-spec", "config"],
     },
   },
   outputs: {
-    value: {
+    "*": {
       type: "unknown",
-      description: "The stored value.",
-      title: "Value",
     },
-    notFound: {
+    $notFound: {
       type: "string",
       title: "Not Found",
       description: "The key is routed here when the value is not found.",
     },
   },
-  invoke: async ({ key }, _, context) => {
+  invoke: async ({ schema }, _, context) => {
     const store = context.store;
     if (!store) {
       throw new Error("Unable to retrieve data: The data store not available.");
     }
-    const result = await store.retrieveData(key);
-    if (!result.success) {
-      return {
-        notFound: key,
-      };
+    const properties = (schema as Schema)?.properties;
+    if (!properties) {
+      throw new Error("Unable to store data: Schema is missing properties.");
     }
+    const keys = Object.keys(properties);
+    if (keys.length === 0) {
+      throw new Error("Unable to store data: Schema has no properties.");
+    }
+    const $notFound: string[] = [];
+    const values: Record<string, object | null> = {};
+    for (const key of keys) {
+      const result = await store.retrieveData(key);
+      if (!result.success) {
+        $notFound.push(key);
+      } else {
+        // TODO: Implement schema comparison.
+        values[key] = result.value;
+      }
+    }
+
+    if ($notFound.length > 0) {
+      return { $notFound, ...values };
+    }
+    return values;
+  },
+  describe: async ({ schema }) => {
+    const outputs = schema ? unsafeSchema(schema) : { "*": "unknown" };
     return {
-      value: result.value,
+      outputs,
     };
   },
 });

@@ -5,6 +5,7 @@
  */
 
 import { HarnessRunResult } from "../harness/types.js";
+import { Schema } from "../types.js";
 import {
   asBase64,
   toStoredDataPart,
@@ -31,6 +32,11 @@ export type OutputProperty = string;
 export type OutputPropertyIndex = number;
 export type OutputPropertyPartIndex = number;
 
+type StoredDataEntry = {
+  value: object | null;
+  schema: Schema;
+};
+
 export class DefaultDataStore implements DataStore {
   #lastGroupId: string | null = null;
   #dataStores = new Map<
@@ -46,7 +52,7 @@ export class DefaultDataStore implements DataStore {
       >
     >
   >();
-  #keyValueStore = new Map<string, object>();
+  #keyValueStore = new Map<string, StoredDataEntry>();
 
   createGroup(groupId: string) {
     let dataStore = this.#dataStores.get(groupId);
@@ -266,17 +272,23 @@ export class DefaultDataStore implements DataStore {
     return;
   }
 
-  async storeData(key: string, value: object): Promise<StoreDataResult> {
+  async storeData(
+    key: string,
+    value: object | null,
+    schema: Schema
+  ): Promise<StoreDataResult> {
+    // TODO: Implement scope handling.
     // Corresponds to the "session" scope.
-    this.#keyValueStore.set(key, value);
+    this.#keyValueStore.set(key, { value, schema });
     return { success: true };
   }
 
   async retrieveData(key: string): Promise<RetrieveDataResult> {
-    const value = this.#keyValueStore.get(key);
-    if (!value) {
+    const entry = this.#keyValueStore.get(key);
+    console.log(key, entry);
+    if (!entry) {
       return { success: false, error: `No value found for key: ${key}` };
     }
-    return { success: true, value };
+    return { success: true, value: entry.value, schema: entry.schema };
   }
 }
