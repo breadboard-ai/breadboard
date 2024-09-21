@@ -15,9 +15,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -77,
-          "y": -120,
-          "collapsed": false
+          "x": -210,
+          "y": -319,
+          "collapsed": "expanded"
         },
         "tags": [
           {
@@ -46,9 +46,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 259.0000000000001,
-          "y": -119,
-          "collapsed": false
+          "x": 452,
+          "y": -302,
+          "collapsed": "expanded"
         }
       }
     },
@@ -57,9 +57,9 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": 44,
-          "y": -120,
-          "collapsed": false
+          "x": 34,
+          "y": -361,
+          "collapsed": "expanded"
         },
         "title": "Substitute Placeholders",
         "logLevel": "debug"
@@ -68,97 +68,6 @@
         "code": "function run({template, ... inputs}) {\n  const toId = (param) => `p-${param}`;\n  const toName = (id) => id.slice(2);\n\n  const stringify = (value) => {\n    if (typeof value === \"string\") return value;\n    if (value === undefined) return \"undefined\";\n    return JSON.stringify(value, null, 2);\n  };\n  \n  const substitute = (template, values) => {\n    return Object.entries(values).reduce(\n      (acc, [key, value]) => acc.replace(`{{${key}}}`, stringify(value)),\n      template\n    );\n  };\n  \n  const parametersFromTemplate = (template) => {\n    if (!template) return [];\n    const matches = template.matchAll(/{{(?<name>[\\w-]+)}}/g);\n    const parameters = Array.from(matches).map(\n      (match) => match.groups?.name || \"\"\n    );\n    const unique = Array.from(new Set(parameters));\n    return unique;\n  };\n  \n  const parameters = parametersFromTemplate(template);\n  if (!parameters.length) return template;\n\n  const substitutes = parameters.reduce((acc, parameter) => {\n    if (inputs[toId(parameter)] === undefined)\n      throw new Error(`Input is missing parameter \"${parameter}\"`);\n    return { ...acc, [parameter]: inputs[toId(parameter)] };\n  }, {});\n\n  const prompt = substitute(template, substitutes);\n  console.log(\"PROMPT\", prompt);\n  return prompt;\n}",
         "name": "run",
         "raw": false
-      }
-    },
-    {
-      "id": "input-58c1588f",
-      "type": "input",
-      "metadata": {
-        "visual": {
-          "x": -103,
-          "y": 74,
-          "collapsed": false
-        },
-        "tags": [
-          {
-            "type": "start",
-            "label": "describe"
-          }
-        ],
-        "title": "Describe",
-        "logLevel": "debug"
-      },
-      "configuration": {
-        "schema": {
-          "properties": {},
-          "type": "object",
-          "required": []
-        }
-      }
-    },
-    {
-      "id": "runJavascript-4e04e982",
-      "type": "runJavascript",
-      "metadata": {
-        "visual": {
-          "x": 31,
-          "y": 71,
-          "collapsed": false
-        },
-        "title": "Schema from Inputs",
-        "logLevel": "debug"
-      },
-      "configuration": {
-        "outputSchema": {
-          "properties": {
-            "outputSchema": {
-              "type": "object",
-              "title": "Output Schema",
-              "examples": []
-            },
-            "inputSchema": {
-              "type": "object",
-              "title": "Input Schema",
-              "examples": []
-            }
-          },
-          "type": "object",
-          "required": []
-        },
-        "code": "function run({ template }) {\n  const toId = (param) => `p-${param}`;\n  const parametersFromTemplate = (template) => {\n    if (!template) return [];\n    const matches = template.matchAll(/{{(?<name>[\\w-]+)}}/g);\n    const parameters = Array.from(matches).map(\n      (match) => match.groups?.name || \"\"\n    );\n    const unique = Array.from(new Set(parameters));\n    return unique;\n  };\n\n  const parameters = parametersFromTemplate(template);\n\n  const required = [ \"template\", ...parameters.map(toId)];\n\n  const inputSchema = {\n    type: \"object\",\n    properties: {\n      ...Object.fromEntries(\n        parameters.map((parameter) => [\n          toId(parameter),\n          {\n            title: parameter,\n            description: `The value to substitute for the parameter \"${parameter}\"`,\n            type: \"string\",\n          },\n        ])\n      ),\n      template: {\n        title: \"Template\",\n        description: \"The template string to substitute the parameters into\",\n        type: \"string\",\n        format: \"multiline\",\n      },\n    },\n    required,\n  };\n\n  const outputSchema = {\n    type: \"object\",\n    properties: {\n      prompt: {\n        type: \"string\",\n        format: \"multiline\",\n        title: \"Prompt\",\n        description: \"The prompt string with the parameters substituted\",        \n      },\n    },\n  };\n\n  return {\n    inputSchema,\n    outputSchema,\n  };\n}\n",
-        "name": "run",
-        "raw": true
-      }
-    },
-    {
-      "id": "output-acc3ef03",
-      "type": "output",
-      "metadata": {
-        "visual": {
-          "x": 262,
-          "y": 72,
-          "collapsed": false
-        },
-        "title": "Schemas",
-        "logLevel": "debug"
-      },
-      "configuration": {
-        "schema": {
-          "properties": {
-            "inputSchema": {
-              "type": "object",
-              "title": "Input Schema",
-              "examples": []
-            },
-            "outputSchema": {
-              "type": "object",
-              "title": "Output Schema",
-              "examples": []
-            }
-          },
-          "type": "object",
-          "required": []
-        }
       }
     }
   ],
@@ -170,24 +79,6 @@
       "in": ""
     },
     {
-      "from": "input-58c1588f",
-      "to": "runJavascript-4e04e982",
-      "out": "*",
-      "in": ""
-    },
-    {
-      "from": "runJavascript-4e04e982",
-      "to": "output-acc3ef03",
-      "out": "inputSchema",
-      "in": "inputSchema"
-    },
-    {
-      "from": "runJavascript-4e04e982",
-      "to": "output-acc3ef03",
-      "out": "outputSchema",
-      "in": "outputSchema"
-    },
-    {
       "from": "runJavascript-2655506c",
       "to": "output",
       "out": "result",
@@ -195,6 +86,121 @@
     }
   ],
   "metadata": {
-    "comments": []
+    "comments": [],
+    "describer": "#7f933743-00fa-4047-9e18-84714adf84a0"
+  },
+  "graphs": {
+    "7f933743-00fa-4047-9e18-84714adf84a0": {
+      "title": "Describer",
+      "description": "Custom Describer for the Prompt Template",
+      "version": "0.0.1",
+      "nodes": [
+        {
+          "type": "input",
+          "id": "input",
+          "metadata": {
+            "visual": {
+              "x": -87,
+              "y": 45.00000000000006,
+              "collapsed": "expanded"
+            },
+            "tags": [
+              {
+                "type": "start",
+                "label": "default"
+              }
+            ]
+          }
+        },
+        {
+          "id": "runJavascript-4e04e982",
+          "type": "runJavascript",
+          "metadata": {
+            "visual": {
+              "x": 176,
+              "y": -62.99999999999994,
+              "collapsed": "expanded"
+            },
+            "title": "Schema from Inputs",
+            "logLevel": "debug"
+          },
+          "configuration": {
+            "outputSchema": {
+              "properties": {
+                "outputSchema": {
+                  "type": "object",
+                  "title": "Output Schema",
+                  "examples": []
+                },
+                "inputSchema": {
+                  "type": "object",
+                  "title": "Input Schema",
+                  "examples": []
+                }
+              },
+              "type": "object",
+              "required": []
+            },
+            "code": "function run({ template }) {\n  const toId = (param) => `p-${param}`;\n  const parametersFromTemplate = (template) => {\n    if (!template) return [];\n    const matches = template.matchAll(/{{(?<name>[\\w-]+)}}/g);\n    const parameters = Array.from(matches).map(\n      (match) => match.groups?.name || \"\"\n    );\n    const unique = Array.from(new Set(parameters));\n    return unique;\n  };\n\n  const parameters = parametersFromTemplate(template);\n\n  const required = [ \"template\", ...parameters.map(toId)];\n\n  const inputSchema = {\n    type: \"object\",\n    properties: {\n      ...Object.fromEntries(\n        parameters.map((parameter) => [\n          toId(parameter),\n          {\n            title: parameter,\n            description: `The value to substitute for the parameter \"${parameter}\"`,\n            type: \"string\",\n          },\n        ])\n      ),\n      template: {\n        title: \"Template\",\n        description: \"The template string to substitute the parameters into\",\n        type: \"string\",\n        format: \"multiline\",\n      },\n    },\n    required,\n  };\n\n  const outputSchema = {\n    type: \"object\",\n    properties: {\n      prompt: {\n        type: \"string\",\n        format: \"multiline\",\n        title: \"Prompt\",\n        description: \"The prompt string with the parameters substituted\",        \n      },\n    },\n  };\n\n  return {\n    inputSchema,\n    outputSchema,\n  };\n}\n",
+            "name": "run",
+            "raw": true
+          }
+        },
+        {
+          "id": "output-acc3ef03",
+          "type": "output",
+          "metadata": {
+            "visual": {
+              "x": 645.4438806230096,
+              "y": -42.74531749166499,
+              "collapsed": "expanded"
+            },
+            "title": "Schemas",
+            "logLevel": "debug"
+          },
+          "configuration": {
+            "schema": {
+              "properties": {
+                "inputSchema": {
+                  "type": "object",
+                  "title": "Input Schema",
+                  "examples": []
+                },
+                "outputSchema": {
+                  "type": "object",
+                  "title": "Output Schema",
+                  "examples": []
+                }
+              },
+              "type": "object",
+              "required": []
+            }
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "input",
+          "to": "runJavascript-4e04e982",
+          "in": "",
+          "out": "*"
+        },
+        {
+          "from": "runJavascript-4e04e982",
+          "to": "output-acc3ef03",
+          "in": "inputSchema",
+          "out": "inputSchema"
+        },
+        {
+          "from": "runJavascript-4e04e982",
+          "to": "output-acc3ef03",
+          "in": "outputSchema",
+          "out": "outputSchema"
+        }
+      ],
+      "metadata": {
+        "comments": []
+      }
+    }
   }
 }
