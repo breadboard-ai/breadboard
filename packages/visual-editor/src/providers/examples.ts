@@ -51,10 +51,11 @@ export class ExamplesGraphProvider implements GraphProvider {
           if (!isReference(board)) {
             throw new Error("Expected board to be a reference.");
           }
+          const url = new URL(board.reference!, window.location.href);
           return [
             board.title,
             {
-              url: board.reference!,
+              url: url.href,
               readonly: true,
               mine: false,
               handle: undefined,
