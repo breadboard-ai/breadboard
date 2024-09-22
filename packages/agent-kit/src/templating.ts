@@ -592,12 +592,12 @@ function describeContent(inputs: unknown) {
       },
       template: {
         type: "object",
-        title: "Text",
+        title: "Template",
         examples: [],
         behavior: ["llm-content", "config"],
         default: "null",
         description:
-          "(Optional) The text that will initialize or be added to existing conversation context. Use mustache-style {{params}} to add parameters.",
+          "(Optional) Content that will initialize a new conversation contenxt or be appended to the existing one. Use mustache-style {{params}} to add parameters.",
       },
     },
     type: "object",
