@@ -5,7 +5,8 @@
     "icon": "smart-toy",
     "help": {
       "url": "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#specialist"
-    }
+    },
+    "describer": "#subgraph-2"
   },
   "edges": [
     {
@@ -34,27 +35,9 @@
     },
     {
       "from": "input-0",
-      "to": "runJavascript-4",
-      "out": "in",
-      "in": "context"
-    },
-    {
-      "from": "input-0",
-      "to": "runJavascript-4",
-      "out": "task",
-      "in": "toAdd"
-    },
-    {
-      "from": "input-0",
       "to": "runJavascript-5",
-      "out": "in",
-      "in": "context"
-    },
-    {
-      "from": "input-0",
-      "to": "text-0",
-      "out": "persona",
-      "in": "systemInstruction"
+      "out": "*",
+      "in": ""
     },
     {
       "from": "input-1",
@@ -88,13 +71,13 @@
     },
     {
       "from": "router",
-      "to": "runJavascript-6",
+      "to": "runJavascript-7",
       "out": "context",
       "in": "generated"
     },
     {
       "from": "router",
-      "to": "runJavascript-6",
+      "to": "runJavascript-7",
       "out": "text",
       "in": "text"
     },
@@ -130,7 +113,7 @@
     },
     {
       "from": "runJavascript-3",
-      "to": "runJavascript-6",
+      "to": "runJavascript-7",
       "out": "context",
       "in": "context"
     },
@@ -148,12 +131,36 @@
     },
     {
       "from": "runJavascript-5",
+      "to": "runJavascript-4",
+      "out": "in",
+      "in": "context"
+    },
+    {
+      "from": "runJavascript-5",
+      "to": "runJavascript-4",
+      "out": "task",
+      "in": "toAdd"
+    },
+    {
+      "from": "runJavascript-5",
+      "to": "runJavascript-6",
+      "out": "in",
+      "in": "context"
+    },
+    {
+      "from": "runJavascript-5",
+      "to": "text-0",
+      "out": "persona",
+      "in": "systemInstruction"
+    },
+    {
+      "from": "runJavascript-6",
       "to": "runJavascript-3",
       "out": "progress",
       "in": "progress"
     },
     {
-      "from": "runJavascript-6",
+      "from": "runJavascript-7",
       "to": "output-1",
       "out": "context",
       "in": "out"
@@ -178,311 +185,14 @@
       "configuration": {
         "schema": {
           "type": "object",
-          "properties": {
-            "in": {
-              "type": "array",
-              "title": "Context in",
-              "description": "Incoming conversation context",
-              "items": {
-                "type": "object",
-                "anyOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "role": {
-                        "type": "string",
-                        "enum": [
-                          "user",
-                          "model",
-                          "tool"
-                        ]
-                      },
-                      "parts": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "text": {
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "text"
-                              ],
-                              "additionalProperties": false
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "functionCall": {
-                                  "type": "object",
-                                  "properties": {
-                                    "name": {
-                                      "type": "string"
-                                    },
-                                    "args": {
-                                      "type": "object",
-                                      "properties": {},
-                                      "required": [],
-                                      "additionalProperties": {
-                                        "type": "string"
-                                      }
-                                    }
-                                  },
-                                  "required": [
-                                    "name",
-                                    "args"
-                                  ],
-                                  "additionalProperties": false
-                                }
-                              },
-                              "required": [
-                                "functionCall"
-                              ],
-                              "additionalProperties": false
-                            }
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "parts"
-                    ],
-                    "additionalProperties": false,
-                    "behavior": [
-                      "llm-content"
-                    ]
-                  },
-                  {
-                    "type": "object",
-                    "anyOf": [
-                      {
-                        "type": "object",
-                        "properties": {
-                          "role": {
-                            "type": "string",
-                            "enum": [
-                              "$metadata"
-                            ]
-                          },
-                          "type": {
-                            "type": "string",
-                            "enum": [
-                              "looper"
-                            ]
-                          },
-                          "data": {
-                            "type": "object",
-                            "properties": {
-                              "max": {
-                                "type": "number"
-                              },
-                              "todo": {
-                                "type": "array",
-                                "items": {
-                                  "type": "object",
-                                  "properties": {
-                                    "task": {
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "task"
-                                  ],
-                                  "additionalProperties": false
-                                }
-                              },
-                              "doneMarker": {
-                                "type": "string"
-                              },
-                              "done": {
-                                "type": "boolean"
-                              },
-                              "appendLast": {
-                                "type": "boolean"
-                              },
-                              "returnLast": {
-                                "type": "boolean"
-                              },
-                              "next": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [],
-                            "additionalProperties": false
-                          }
-                        },
-                        "required": [
-                          "role",
-                          "type",
-                          "data"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "role": {
-                            "type": "string",
-                            "enum": [
-                              "$metadata"
-                            ]
-                          },
-                          "type": {
-                            "type": "string",
-                            "enum": [
-                              "split"
-                            ]
-                          },
-                          "data": {
-                            "type": "object",
-                            "properties": {
-                              "type": {
-                                "type": "string",
-                                "enum": [
-                                  "start",
-                                  "next",
-                                  "end"
-                                ]
-                              },
-                              "id": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "type",
-                              "id"
-                            ],
-                            "additionalProperties": false
-                          }
-                        },
-                        "required": [
-                          "role",
-                          "type",
-                          "data"
-                        ],
-                        "additionalProperties": false
-                      }
-                    ]
-                  }
-                ],
-                "behavior": [
-                  "llm-content"
-                ]
-              }
-            },
-            "persona": {
-              "type": "object",
-              "behavior": [
-                "llm-content",
-                "config"
-              ],
-              "title": "Persona",
-              "description": "Describe the worker's skills, capabilities, mindset, and thinking process",
-              "properties": {
-                "parts": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "text": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "text"
-                    ],
-                    "additionalProperties": false
-                  }
-                }
-              },
-              "required": [
-                "parts"
-              ],
-              "additionalProperties": false
-            },
-            "task": {
-              "type": "object",
-              "behavior": [
-                "llm-content",
-                "config"
-              ],
-              "title": "Task",
-              "description": "(Optional) Provide a specific task with clear instructions for the worker to complete using the conversation context",
-              "default": "{}",
-              "properties": {
-                "role": {
-                  "type": "string",
-                  "enum": [
-                    "user",
-                    "model",
-                    "tool"
-                  ]
-                },
-                "parts": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "anyOf": [
-                      {
-                        "type": "object",
-                        "properties": {
-                          "text": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "text"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "functionCall": {
-                            "type": "object",
-                            "properties": {
-                              "name": {
-                                "type": "string"
-                              },
-                              "args": {
-                                "type": "object",
-                                "properties": {},
-                                "required": [],
-                                "additionalProperties": {
-                                  "type": "string"
-                                }
-                              }
-                            },
-                            "required": [
-                              "name",
-                              "args"
-                            ],
-                            "additionalProperties": false
-                          }
-                        },
-                        "required": [
-                          "functionCall"
-                        ],
-                        "additionalProperties": false
-                      }
-                    ]
-                  }
-                }
-              },
-              "required": [
-                "parts"
-              ],
-              "additionalProperties": false
-            }
-          },
-          "required": [
-            "in",
-            "persona"
-          ]
+          "properties": {},
+          "required": [],
+          "additionalProperties": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": true
+          }
         }
       }
     },
@@ -2725,7 +2435,7 @@
       "id": "runJavascript-4",
       "type": "runJavascript",
       "configuration": {
-        "code": "const run = ({context,toAdd})=>{if(!context)throw new Error(\"Context is required\");const existing=Array.isArray(context)?context:[context];const incoming=toAdd;if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role!==\"model\"&&item.role!==\"$metadata\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context:existing}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==incoming.role){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
+        "code": "const run = ({context,toAdd})=>{if(!context)throw new Error(\"Context is required\");const existing=Array.isArray(context)?context:[context];const incoming=toAdd;if(typeof incoming===\"string\"){return{context:existing}}if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role!==\"model\"&&item.role!==\"$metadata\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context:existing}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==incoming.role){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -2923,74 +2633,80 @@
               }
             },
             "toAdd": {
-              "type": "object",
-              "properties": {
-                "role": {
-                  "type": "string",
-                  "enum": [
-                    "user",
-                    "model",
-                    "tool"
-                  ]
-                },
-                "parts": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "anyOf": [
-                      {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "role": {
+                      "type": "string",
+                      "enum": [
+                        "user",
+                        "model",
+                        "tool"
+                      ]
+                    },
+                    "parts": {
+                      "type": "array",
+                      "items": {
                         "type": "object",
-                        "properties": {
-                          "text": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "text"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "functionCall": {
+                        "anyOf": [
+                          {
                             "type": "object",
                             "properties": {
-                              "name": {
+                              "text": {
                                 "type": "string"
-                              },
-                              "args": {
-                                "type": "object",
-                                "properties": {},
-                                "required": [],
-                                "additionalProperties": {
-                                  "type": "string"
-                                }
                               }
                             },
                             "required": [
-                              "name",
-                              "args"
+                              "text"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "functionCall": {
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "args": {
+                                    "type": "object",
+                                    "properties": {},
+                                    "required": [],
+                                    "additionalProperties": {
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "name",
+                                  "args"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "functionCall"
                             ],
                             "additionalProperties": false
                           }
-                        },
-                        "required": [
-                          "functionCall"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
-                    ]
-                  }
+                    }
+                  },
+                  "required": [
+                    "parts"
+                  ],
+                  "additionalProperties": false,
+                  "behavior": [
+                    "llm-content"
+                  ]
+                },
+                {
+                  "type": "string"
                 }
-              },
-              "required": [
-                "parts"
-              ],
-              "additionalProperties": false,
-              "behavior": [
-                "llm-content",
-                "config"
               ]
             }
           }
@@ -3203,6 +2919,381 @@
     },
     {
       "id": "runJavascript-5",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const run = function substitute(inputParams) {\n  const { in: context, persona, task, ...inputs } = inputParams;\n  const params = mergeParams(findParams(persona), findParams(task));\n\n  // Make sure that all params are present in the values and collect\n  // them into a single object.\n  const values = collectValues(params, inputs);\n\n  return {\n    in: context,\n    persona: subContent(persona, values),\n    task: subContent(task, values),\n  };\n\n  function unique(params) {\n    return Array.from(new Set(params));\n  }\n\n  function toId(param) {\n    return `p-${param}`;\n  }\n\n  function findParams(content) {\n    const parts = content?.parts;\n    if (!parts) return [];\n    const results = parts.flatMap((part) => {\n      const matches = part.text.matchAll(/{{(?<name>[\\w-]+)}}/g);\n      return unique(Array.from(matches))\n        .map((match) => {\n          const name = match.groups?.name || \"\";\n          if (!name) return null;\n          return { name, locations: [{ part, parts }] };\n        })\n        .filter(Boolean);\n    });\n    return results;\n  }\n\n  function mergeParams(...paramList) {\n    return paramList.reduce((acc, params) => {\n      for (const param of params) {\n        const { name, locations } = param;\n        const existing = acc[name];\n        if (existing) {\n          existing.push(...locations);\n        } else {\n          acc[name] = locations;\n        }\n      }\n      return acc;\n    }, {});\n  }\n\n  function subContent(content, values) {\n    if (!content) return \"\";\n    // If this is an array, optimistically presume this is an LLM Content array.\n    // Take the last item and use it as the content.\n    if (Array.isArray(content)) {\n      content = content.at(-1);\n    }\n    return {\n      role: content.role || \"user\",\n      parts: mergeTextParts(\n        splitToTemplateParts(content).flatMap((part) => {\n          if (part.param) {\n            const value = values[part.param];\n            if (typeof value === \"string\") {\n              return { text: value };\n            } else if (isLLMContent(value)) {\n              return value.parts;\n            } else if (isLLMContentArray(value)) {\n              const last = value.at(-1);\n              return last.parts;\n            } else {\n              return { text: JSON.stringify(value) };\n            }\n          } else {\n            return part;\n          }\n        })\n      ),\n    };\n  }\n\n  function mergeTextParts(parts) {\n    const merged = [];\n    for (const part of parts) {\n      if (part.text) {\n        const last = merged[merged.length - 1];\n        if (last?.text) {\n          last.text += part.text;\n        } else {\n          merged.push(part);\n        }\n      } else {\n        merged.push(part);\n      }\n    }\n    return merged;\n  }\n\n  function toTitle(id) {\n    const spaced = id?.replace(/[_-]/g, \" \");\n    return (\n      (spaced?.at(0)?.toUpperCase() ?? \"\") +\n      (spaced?.slice(1)?.toLowerCase() ?? \"\")\n    );\n  }\n\n  /**\n   * Takes an LLM Content and splits it further into parts where\n   * each {{param}} substitution is a separate part.\n   */\n  function splitToTemplateParts(content) {\n    const parts = [];\n    for (const part of content.parts) {\n      const matches = part.text.matchAll(/{{(?<name>[\\w-]+)}}/g);\n      let start = 0;\n      for (const match of matches) {\n        const name = match.groups?.name || \"\";\n        const end = match.index;\n        if (end > start) {\n          parts.push({ text: part.text.slice(start, end) });\n        }\n        parts.push({ param: name });\n        start = end + match[0].length;\n      }\n      if (start < part.text.length) {\n        parts.push({ text: part.text.slice(start) });\n      }\n    }\n    return parts;\n  }\n\n  function collectValues(params, inputs) {\n    const values = {};\n    for (const param in params) {\n      const id = toId(param);\n      const value = inputs[id];\n      if (!value) {\n        const title = toTitle(param);\n        throw new Error(`Missing required parameter: ${title}`);\n      }\n      values[param] = value;\n    }\n    return values;\n  }\n\n  /**\n   * Copied from @google-labs/breadboard\n   */\n  function isLLMContent(nodeValue) {\n    if (typeof nodeValue !== \"object\" || !nodeValue) return false;\n    if (nodeValue === null || nodeValue === undefined) return false;\n\n    return \"parts\" in nodeValue && Array.isArray(nodeValue.parts);\n  }\n\n  function isLLMContentArray(nodeValue) {\n    if (!Array.isArray(nodeValue)) return false;\n    if (nodeValue.length === 0) return true;\n    return isLLMContent(nodeValue.at(-1));\n  }\n};",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": true
+          }
+        },
+        "name": "run",
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "in": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "role": {
+                        "type": "string",
+                        "enum": [
+                          "user",
+                          "model",
+                          "tool"
+                        ]
+                      },
+                      "parts": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "text": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "text"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "functionCall": {
+                                  "type": "object",
+                                  "properties": {
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "args": {
+                                      "type": "object",
+                                      "properties": {},
+                                      "required": [],
+                                      "additionalProperties": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "name",
+                                    "args"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "functionCall"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "parts"
+                    ],
+                    "additionalProperties": false,
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "role": {
+                            "type": "string",
+                            "enum": [
+                              "$metadata"
+                            ]
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "looper"
+                            ]
+                          },
+                          "data": {
+                            "type": "object",
+                            "properties": {
+                              "max": {
+                                "type": "number"
+                              },
+                              "todo": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "task": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "task"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "doneMarker": {
+                                "type": "string"
+                              },
+                              "done": {
+                                "type": "boolean"
+                              },
+                              "appendLast": {
+                                "type": "boolean"
+                              },
+                              "returnLast": {
+                                "type": "boolean"
+                              },
+                              "next": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "role",
+                          "type",
+                          "data"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "role": {
+                            "type": "string",
+                            "enum": [
+                              "$metadata"
+                            ]
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "split"
+                            ]
+                          },
+                          "data": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "start",
+                                  "next",
+                                  "end"
+                                ]
+                              },
+                              "id": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "id"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "role",
+                          "type",
+                          "data"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                ],
+                "behavior": [
+                  "llm-content"
+                ]
+              }
+            },
+            "persona": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "role": {
+                      "type": "string",
+                      "enum": [
+                        "user",
+                        "model",
+                        "tool"
+                      ]
+                    },
+                    "parts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "text": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "text"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "functionCall": {
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "args": {
+                                    "type": "object",
+                                    "properties": {},
+                                    "required": [],
+                                    "additionalProperties": {
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "name",
+                                  "args"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "functionCall"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "parts"
+                  ],
+                  "additionalProperties": false,
+                  "behavior": [
+                    "llm-content"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "task": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "role": {
+                      "type": "string",
+                      "enum": [
+                        "user",
+                        "model",
+                        "tool"
+                      ]
+                    },
+                    "parts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "text": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "text"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "functionCall": {
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "args": {
+                                    "type": "object",
+                                    "properties": {},
+                                    "required": [],
+                                    "additionalProperties": {
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "name",
+                                  "args"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "functionCall"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "parts"
+                  ],
+                  "additionalProperties": false,
+                  "behavior": [
+                    "llm-content"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        "raw": true
+      },
+      "metadata": {
+        "title": "Substitute Parameters",
+        "description": "Collecting inputs and performing parameter substitution."
+      }
+    },
+    {
+      "id": "runJavascript-6",
       "type": "runJavascript",
       "configuration": {
         "code": "const run = ({context,forkOutputs})=>{const fork=forkOutputs;const existing=Array.isArray(context)?context:[context];const progress=[];for(let i=existing.length-1;i>=0;i--){const item=existing[i];if(item.role===\"$metadata\"&&item.type===\"looper\"){progress.push(item.data)}}if(fork){if(progress.length){return{progress}}else{return{context}}}else{return{context,progress}}};",
@@ -3659,7 +3750,7 @@
       }
     },
     {
-      "id": "runJavascript-6",
+      "id": "runJavascript-7",
       "type": "runJavascript",
       "configuration": {
         "code": "const run = ({context,generated})=>{if(!context)throw new Error(\"Context is required\");if(!generated)throw new Error(\"Generated is required\");const c=context;const g=generated;let doneMarker=null;for(let i=0;i<c.length;++i){const item=c[i];if(item.role===\"$metadata\"&&item.type===\"looper\"){const plan=item.data;if(plan.doneMarker){doneMarker=plan.doneMarker;break}}}if(!doneMarker){return{context:[...c,g]}}let containsMarkers=false;for(let i=0;i<g.parts.length;++i){const part=g.parts[i];if(\"text\"in part&&part.text.includes(doneMarker)){containsMarkers=true;part.text=part.text.replaceAll(doneMarker,\"\").trim();break}}if(!containsMarkers){return{context:[...c,g]}}const metadata={role:\"$metadata\",type:\"looper\",data:{done:true}};return{context:[...c,g,metadata]}};",
@@ -4747,6 +4838,117 @@
           "metadata": {
             "title": "Get flags",
             "description": "Getting flags for the board invocation"
+          }
+        }
+      ]
+    },
+    "subgraph-2": {
+      "title": "Specialist Describer",
+      "description": "A custom describer for the Specialist component",
+      "version": "0.1.0",
+      "edges": [
+        {
+          "from": "input-0",
+          "to": "runJavascript-0",
+          "out": "*",
+          "in": ""
+        },
+        {
+          "from": "runJavascript-0",
+          "to": "output-0",
+          "out": "inputSchema",
+          "in": "inputSchema"
+        },
+        {
+          "from": "runJavascript-0",
+          "to": "output-0",
+          "out": "outputSchema",
+          "in": "outputSchema"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "input-0",
+          "type": "input",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        {
+          "id": "output-0",
+          "type": "output",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "inputSchema": {
+                  "type": "object",
+                  "properties": {},
+                  "required": [],
+                  "additionalProperties": true
+                },
+                "outputSchema": {
+                  "type": "object",
+                  "properties": {},
+                  "required": [],
+                  "additionalProperties": true
+                }
+              },
+              "required": [
+                "inputSchema",
+                "outputSchema"
+              ]
+            }
+          }
+        },
+        {
+          "id": "runJavascript-0",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const run = function describeSpecialist(inputs) {\n  const { $inputSchema, $outputSchema, persona, task } = inputs;\n\n  const inputSchema = {\n    type: \"object\",\n    properties: {\n      ...$inputSchema.properties,\n      in: {\n        title: \"Context in\",\n        description: \"Incoming conversation context\",\n        type: \"array\",\n        items: {\n          type: \"object\",\n          behavior: [\"llm-content\"],\n        },\n        examples: [],\n      },\n      task: {\n        title: \"Task\",\n        description:\n          \"(Optional) Provide a specific task with clear instructions for the worker to complete using the conversation context. Use mustache-style {{params}} to add parameters.\",\n        type: \"object\",\n        default: '{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}',\n        behavior: [\"llm-content\", \"config\"],\n        examples: [],\n      },\n      persona: {\n        type: \"object\",\n        behavior: [\"llm-content\", \"config\"],\n        title: \"Persona\",\n        description:\n          \"Describe the worker's skills, capabilities, mindset, and thinking process. Use mustache-style {{params}} to add parameters.\",\n        default: '{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}',\n        examples: [],\n      },\n    },\n    required: [],\n  };\n\n  const params = unique([\n    ...collectParams(textFromLLMContent(persona)),\n    ...collectParams(textFromLLMContent(task)),\n  ]);\n\n  const props = Object.fromEntries(\n    params.map((param) => [\n      toId(param),\n      {\n        title: toTitle(param),\n        description: `The value to substitute for the parameter \"${param}\"`,\n        type: \"string\",\n      },\n    ])\n  );\n\n  const required = params.map(toId);\n\n  return mergeSchemas(inputSchema, $outputSchema, props);\n\n  function mergeSchemas(inputSchema, outputSchema, properties) {\n    return {\n      inputSchema: {\n        ...inputSchema,\n        properties: {\n          ...inputSchema.properties,\n          ...properties,\n        },\n        required: [...(inputSchema.required || []), ...required],\n      },\n      outputSchema: outputSchema,\n    };\n  }\n\n  function toId(param) {\n    return `p-${param}`;\n  }\n\n  function toTitle(id) {\n    const spaced = id?.replace(/[_-]/g, \" \");\n    return (\n      (spaced?.at(0)?.toUpperCase() ?? \"\") +\n      (spaced?.slice(1)?.toLowerCase() ?? \"\")\n    );\n  }\n\n  function textFromLLMContent(content) {\n    return content?.parts.map((item) => item.text).join(\"\\n\") || \"\";\n  }\n\n  function unique(params) {\n    return Array.from(new Set(params));\n  }\n\n  function collectParams(text) {\n    if (!text) return [];\n    const matches = text.matchAll(/{{(?<name>[\\w-]+)}}/g);\n    return Array.from(matches).map((match) => match.groups?.name || \"\");\n  }\n};",
+            "inputSchema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": true
+              }
+            },
+            "name": "run",
+            "outputSchema": {
+              "type": "object",
+              "properties": {
+                "inputSchema": {
+                  "type": "object",
+                  "properties": {},
+                  "required": [],
+                  "additionalProperties": true
+                },
+                "outputSchema": {
+                  "type": "object",
+                  "properties": {},
+                  "required": [],
+                  "additionalProperties": true
+                }
+              }
+            },
+            "raw": true
+          },
+          "metadata": {
+            "title": "Describe",
+            "description": "Describes the Specialist"
           }
         }
       ]

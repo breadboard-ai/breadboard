@@ -10,7 +10,8 @@ export { substitute, describeSpecialist, content, describeContent };
  * Part of the "Specialist" v2 component that does the parameter
  * substitution.
  */
-function substitute({ in: context, persona, task, ...inputs }) {
+function substitute(inputParams) {
+  const { in: context, persona, task, ...inputs } = inputParams;
   const params = mergeParams(findParams(persona), findParams(task));
 
   // Make sure that all params are present in the values and collect
@@ -63,7 +64,7 @@ function substitute({ in: context, persona, task, ...inputs }) {
   }
 
   function subContent(content, values) {
-    if (!content) return null;
+    if (!content) return "";
     // If this is an array, optimistically presume this is an LLM Content array.
     // Take the last item and use it as the content.
     if (Array.isArray(content)) {
@@ -177,7 +178,45 @@ function substitute({ in: context, persona, task, ...inputs }) {
 /**
  * The describer for the "Specialist" v2 component.
  */
-function describeSpecialist({ $inputSchema, $outputSchema, persona, task }) {
+function describeSpecialist(inputs) {
+  const { $inputSchema, $outputSchema, persona, task } = inputs;
+
+  const inputSchema = {
+    type: "object",
+    properties: {
+      ...$inputSchema.properties,
+      in: {
+        title: "Context in",
+        description: "Incoming conversation context",
+        type: "array",
+        items: {
+          type: "object",
+          behavior: ["llm-content"],
+        },
+        examples: [],
+      },
+      task: {
+        title: "Task",
+        description:
+          "(Optional) Provide a specific task with clear instructions for the worker to complete using the conversation context. Use mustache-style {{params}} to add parameters.",
+        type: "object",
+        default: '{"role":"user","parts":[{"text":""}]}',
+        behavior: ["llm-content", "config"],
+        examples: [],
+      },
+      persona: {
+        type: "object",
+        behavior: ["llm-content", "config"],
+        title: "Persona",
+        description:
+          "Describe the worker's skills, capabilities, mindset, and thinking process. Use mustache-style {{params}} to add parameters.",
+        default: '{"role":"user","parts":[{"text":""}]}',
+        examples: [],
+      },
+    },
+    required: [],
+  };
+
   const params = unique([
     ...collectParams(textFromLLMContent(persona)),
     ...collectParams(textFromLLMContent(task)),
@@ -196,17 +235,17 @@ function describeSpecialist({ $inputSchema, $outputSchema, persona, task }) {
 
   const required = params.map(toId);
 
-  return mergeSchemas($inputSchema, $outputSchema, props);
+  return mergeSchemas(inputSchema, $outputSchema, props);
 
-  function mergeSchemas(inputScheme, outputSchema, properties) {
+  function mergeSchemas(inputSchema, outputSchema, properties) {
     return {
       inputSchema: {
-        ...inputScheme,
+        ...inputSchema,
         properties: {
-          ...inputScheme.properties,
+          ...inputSchema.properties,
           ...properties,
         },
-        required: [...(inputScheme.required || []), ...required],
+        required: [...(inputSchema.required || []), ...required],
       },
       outputSchema: outputSchema,
     };
@@ -465,7 +504,7 @@ function describeContent(inputs) {
         behavior: ["llm-content", "config"],
         default: "null",
         description:
-          "(Optional) The text that will initialize or be added to existing conversation context. Use mustache-style {{params}} to add variables.",
+          "(Optional) The text that will initialize or be added to existing conversation context. Use mustache-style {{params}} to add parameters.",
       },
     },
     type: "object",
