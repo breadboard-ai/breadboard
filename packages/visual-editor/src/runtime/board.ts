@@ -34,17 +34,17 @@ export class Board extends EventTarget {
     super();
   }
 
-  #canParse(url: string) {
+  #canParse(url: string, base?: string) {
     // TypeScript assumes that if `canParse` does not exist, then URL is
     // `never`. However, in older browsers that's not true. We therefore take a
     // temporary copy of the URL constructor here.
     const UrlCtor = URL;
     if ("canParse" in URL) {
-      return URL.canParse(url);
+      return URL.canParse(url, base);
     }
 
     try {
-      new UrlCtor(url);
+      new UrlCtor(url, base);
       return true;
     } catch (err) {
       return false;
@@ -289,8 +289,8 @@ export class Board extends EventTarget {
 
       let kits = this.kits;
       let graph: GraphDescriptor | null = null;
-      if (this.#canParse(url)) {
-        const provider = this.#getProviderForURL(new URL(url));
+      if (this.#canParse(url, base.href)) {
+        const provider = this.#getProviderForURL(new URL(url, base));
         if (provider) {
           // Ensure the the provider has actually loaded fully before
           // requesting the graph file from it.

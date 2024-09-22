@@ -66,6 +66,12 @@ export interface SerializableBoard {
   description?: string;
   version?: string;
   metadata?: GraphMetadata;
+  /**
+   * A custom describer. It's a separate board that can be
+   * used to describe the input and output schemas of this
+   * board.
+   */
+  describer?: GenericBoardDefinition;
 }
 
 export interface SerializableNode {

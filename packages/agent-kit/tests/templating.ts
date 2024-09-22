@@ -5,18 +5,19 @@
  */
 
 import { describe, it } from "node:test";
+import { InlineDataCapabilityPart } from "@google-labs/breadboard";
+import { deepStrictEqual } from "node:assert";
 import {
+  describeSpecialist,
   substitute,
   content,
-  describeSpecialist,
   describeContent,
-} from "../src/future/templating.js";
-import { InlineDataCapabilityPart, LLMContent } from "@google-labs/breadboard";
-import { deepStrictEqual } from "node:assert";
+} from "../src/templating.js";
+import { LlmContent } from "../src/context.js";
 
 describe("Templating", () => {
   it("does simple substitution", async () => {
-    const context: LLMContent[] = [];
+    const context: LlmContent[] = [];
     const persona = llmContent("user", "You're a {{character}}, {{name}}.");
     const task = llmContent("user", "Act like a {{character}}.");
     const character = "wizard";
@@ -35,7 +36,7 @@ describe("Templating", () => {
   });
 
   it("does simple LLM Content object substitution", async () => {
-    const context: LLMContent[] = [];
+    const context: LlmContent[] = [];
     const persona = llmContent("user", "You're a {{character}}, {{name}}.");
     const task = llmContent("user", "Act like a {{character}}.");
     const character = llmContent("user", "wizard");
@@ -55,7 +56,7 @@ describe("Templating", () => {
   });
 
   it("does part-splicing LLM Content object substitution", async () => {
-    const context: LLMContent[] = [];
+    const context: LlmContent[] = [];
     const persona = llmContent("user", "You're a {{character}}, {{name}}.");
     const task = llmContent("user", "Act like a {{character}}.");
     const character = llmContent("user", "wizard");
@@ -75,7 +76,7 @@ describe("Templating", () => {
   });
 
   it("works with LLM Content Array arguments", async () => {
-    const context: LLMContent[] = [];
+    const context: LlmContent[] = [];
     const persona = llmContent("user", "You're a {{character}}, {{name}}.");
     const task = llmContent("user", "Act like a {{character}}.");
     const character = [llmContent("user", "wizard")];
@@ -95,7 +96,7 @@ describe("Templating", () => {
   });
 
   it("works with other primitive types", async () => {
-    const context: LLMContent[] = [];
+    const context: LlmContent[] = [];
     const persona = llmContent("user", "You're a {{character}}, {{name}}.");
     const task = llmContent("user", "Act like a {{character}}.");
     const character = true;
@@ -115,7 +116,7 @@ describe("Templating", () => {
   });
 
   it("works with arbitrary objects", async () => {
-    const context: LLMContent[] = [];
+    const context: LlmContent[] = [];
     const persona = llmContent("user", "You're a {{character}}, {{name}}.");
     const task = llmContent("user", "Act like a {{character}}.");
     const character = { wizard: true };
@@ -135,7 +136,7 @@ describe("Templating", () => {
   });
 
   it("works with other part types", async () => {
-    const context: LLMContent[] = [];
+    const context: LlmContent[] = [];
     const persona = llmContent("user", "You're a {{character}}, {{name}}.");
     const task = llmContent("user", "Act like a {{character}}.");
     const character = llmContent("user", "wizard");
@@ -175,7 +176,7 @@ describe("Content component", () => {
   });
 
   it("correcly elides empty context", () => {
-    const context: LLMContent[] = [];
+    const context: LlmContent[] = [];
     const template = llmContent("user", "You're a wizard, Harry.");
     const result = content({ context, template });
     deepStrictEqual(result, {
@@ -193,7 +194,7 @@ describe("Content component", () => {
   });
 
   it("does simple substitution", () => {
-    const context: LLMContent[] = [];
+    const context: LlmContent[] = [];
     const template = llmContent("user", "Act like a {{role}}.");
     const role = "wizard";
     const result = content({ context, template, "p-role": role });
@@ -203,7 +204,7 @@ describe("Content component", () => {
   });
 
   it("does simple LLM Content object substitution", () => {
-    const context: LLMContent[] = [];
+    const context: LlmContent[] = [];
     const template = llmContent("user", "Act like a {{role}}.");
     const role = llmContent("user", "wizard");
     const result = content({ context, template, "p-role": role });
@@ -253,6 +254,9 @@ describe("Specialist v2 describer", () => {
     });
 
     const paramProps = result.inputSchema.properties;
+    delete paramProps.in;
+    delete paramProps.persona;
+    delete paramProps.task;
     deepStrictEqual(paramProps, {
       "p-character": {
         description: 'The value to substitute for the parameter "character"',
@@ -280,7 +284,11 @@ describe("Content describer", () => {
       template,
     });
 
-    deepStrictEqual(result.inputSchema.properties, {});
+    const paramProps = result.inputSchema.properties;
+    delete paramProps.context;
+    delete paramProps.template;
+
+    deepStrictEqual(paramProps, {});
   });
 
   it("correctly collects parameters", () => {
@@ -295,6 +303,8 @@ describe("Content describer", () => {
     });
 
     const paramProps = result.inputSchema.properties;
+    delete paramProps.context;
+    delete paramProps.template;
     deepStrictEqual(paramProps, {
       "p-role": {
         description: 'The value to substitute for the parameter "role"',
@@ -317,7 +327,7 @@ function inlineData(data: string, mimeType: string): InlineDataCapabilityPart {
 function llmContent(
   role: "user" | "model",
   ...text: (string | InlineDataCapabilityPart)[]
-): LLMContent {
+): LlmContent {
   if (text.length === 0) {
     return { parts: [{ text: "" }], role };
   }
@@ -329,5 +339,5 @@ function llmContent(
       }
       return t;
     }),
-  };
+  } as LlmContent;
 }

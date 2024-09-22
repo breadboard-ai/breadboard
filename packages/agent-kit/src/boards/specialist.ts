@@ -6,6 +6,7 @@
 
 import {
   annotate,
+  anyOf,
   array,
   board,
   enumeration,
@@ -14,6 +15,8 @@ import {
   object,
   output,
   outputNode,
+  starInputs,
+  string,
   Value,
 } from "@breadboard-ai/build";
 import { code, coreKit } from "@google-labs/core-kit";
@@ -43,29 +46,11 @@ import {
 } from "../function-calling.js";
 import boardToFunction from "./internal/board-to-function.js";
 import invokeBoardWithArgs from "./internal/invoke-board-with-args.js";
+import specialistDescriber from "./internal/specialist-describer.js";
+import { GenericBoardDefinition } from "@breadboard-ai/build/internal/board/board.js";
+import { substitute } from "../templating.js";
 
-const context = input({
-  title: "Context in",
-  description: "Incoming conversation context",
-  type: array(contextType),
-});
-
-const persona = input({
-  title: "Persona",
-  description:
-    "Describe the worker's skills, capabilities, mindset, and thinking process",
-  type: annotate(object({ parts: array(object({ text: "string" })) }), {
-    behavior: ["llm-content", "config"],
-  }),
-});
-
-const task = input({
-  title: "Task",
-  description:
-    "(Optional) Provide a specific task with clear instructions for the worker to complete using the conversation context",
-  type: annotate(llmContentType, { behavior: ["config"] }),
-  default: {} as LlmContent,
-});
+const inputs = starInputs({ type: object({}, "unknown") });
 
 const tools = input({
   title: "Tools",
@@ -98,14 +83,30 @@ const model = input({
   examples: ["gemini-1.5-flash-latest"],
 });
 
+const substituteParams = code(
+  {
+    $metadata: {
+      title: "Substitute Parameters",
+      description: "Performing parameter substitution, if needed.",
+    },
+    "*": inputs,
+  },
+  {
+    in: array(contextType),
+    persona: anyOf(llmContentType, string({})),
+    task: anyOf(llmContentType, string({})),
+  },
+  substitute
+);
+
 const addTask = code(
   {
     $metadata: {
       title: "Add Task",
       description: "Adding task to the prompt.",
     },
-    context,
-    toAdd: task,
+    context: substituteParams.outputs.in,
+    toAdd: substituteParams.outputs.task,
   },
   { context: array(contextType) },
   addUserParts
@@ -114,7 +115,7 @@ const addTask = code(
 const readProgress = code(
   {
     $metadata: { title: "Read Progress so far" },
-    context,
+    context: substituteParams.outputs.in,
     forkOutputs: false,
   },
   {
@@ -196,7 +197,7 @@ const generator = geminiKit.text({
     title: "Gemini API Call",
     description: "Applying Gemini to do work",
   },
-  systemInstruction: persona,
+  systemInstruction: substituteParams.outputs.persona,
   tools: formatFunctionDeclarations.outputs.tools,
   context: addLooperTask.outputs.context,
   model,
@@ -314,10 +315,13 @@ export default board({
       url: "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#specialist",
     },
   },
+  version: "2.0.0",
   description:
-    "Given instructions on how to act, performs a single task, optionally invoking tools.",
+    "Given instructions on how to act, makes a single LLM call, optionally invoking tools.",
   inputs: [
-    inputNode({ in: context, persona, task }),
+    inputNode({
+      "*": inputs,
+    }),
     inputNode(
       { tools },
       {
@@ -334,4 +338,5 @@ export default board({
     ),
   ],
   outputs: [toolOutput, mainOutput],
+  describer: specialistDescriber as GenericBoardDefinition,
 });

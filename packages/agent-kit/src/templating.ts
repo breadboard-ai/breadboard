@@ -4,18 +4,66 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Schema } from "@google-labs/breadboard";
+import { Context, LlmContent } from "./context.js";
+
 export { substitute, describeSpecialist, content, describeContent };
+
+type SubstituteInputParams = {
+  in?: Context[];
+  persona?: LlmContent;
+  task?: LlmContent;
+  [param: string]: unknown;
+};
+
+type Location = {
+  part: LlmContent;
+  parts: LlmContent[];
+};
+
+type ParamLocationMap = Record<string, Location[]>;
+
+type ParamInfo = {
+  name: string;
+  locations: Location[];
+};
+
+type TemplatePart = LlmContent["parts"][0] | { param: string };
+
+type SpecialistDescriberInputs = {
+  $inputSchema: Schema;
+  $outputSchema: Schema;
+  persona?: LlmContent;
+  task?: LlmContent;
+};
+
+type ContentInputs = {
+  template: LlmContent;
+  context?: LlmContent[];
+  [param: string]: unknown;
+};
+
+type DescribeContentInputs = {
+  template?: LlmContent;
+};
 
 /**
  * Part of the "Specialist" v2 component that does the parameter
  * substitution.
  */
-function substitute({ in: context, persona, task, ...inputs }) {
+function substitute(inputParams: SubstituteInputParams) {
+  const { in: context = [], persona, task, ...inputs } = inputParams;
   const params = mergeParams(findParams(persona), findParams(task));
 
   // Make sure that all params are present in the values and collect
   // them into a single object.
   const values = collectValues(params, inputs);
+
+  if (context.length === 0 && !task) {
+    throw new Error(
+      "Both conversation context and task are empty. Specify at least one of them."
+    );
+  }
 
   return {
     in: context,
@@ -23,18 +71,19 @@ function substitute({ in: context, persona, task, ...inputs }) {
     task: subContent(task, values),
   };
 
-  function unique(params) {
+  function unique<T>(params: T[]): T[] {
     return Array.from(new Set(params));
   }
 
-  function toId(param) {
+  function toId(param: string) {
     return `p-${param}`;
   }
 
-  function findParams(content) {
+  function findParams(content: LlmContent | undefined): ParamInfo[] {
     const parts = content?.parts;
     if (!parts) return [];
     const results = parts.flatMap((part) => {
+      if (!("text" in part)) return [];
       const matches = part.text.matchAll(/{{(?<name>[\w-]+)}}/g);
       return unique(Array.from(matches))
         .map((match) => {
@@ -43,11 +92,11 @@ function substitute({ in: context, persona, task, ...inputs }) {
           return { name, locations: [{ part, parts }] };
         })
         .filter(Boolean);
-    });
+    }) as unknown as ParamInfo[];
     return results;
   }
 
-  function mergeParams(...paramList) {
+  function mergeParams(...paramList: ParamInfo[][]) {
     return paramList.reduce((acc, params) => {
       for (const param of params) {
         const { name, locations } = param;
@@ -59,21 +108,24 @@ function substitute({ in: context, persona, task, ...inputs }) {
         }
       }
       return acc;
-    }, {});
+    }, {} as ParamLocationMap);
   }
 
-  function subContent(content, values) {
-    if (!content) return null;
+  function subContent(
+    content: LlmContent | undefined,
+    values: Record<string, unknown>
+  ): LlmContent | string {
     // If this is an array, optimistically presume this is an LLM Content array.
     // Take the last item and use it as the content.
     if (Array.isArray(content)) {
       content = content.at(-1);
     }
+    if (!content) return "";
     return {
       role: content.role || "user",
       parts: mergeTextParts(
         splitToTemplateParts(content).flatMap((part) => {
-          if (part.param) {
+          if ("param" in part) {
             const value = values[part.param];
             if (typeof value === "string") {
               return { text: value };
@@ -81,7 +133,7 @@ function substitute({ in: context, persona, task, ...inputs }) {
               return value.parts;
             } else if (isLLMContentArray(value)) {
               const last = value.at(-1);
-              return last.parts;
+              return last ? last.parts : [];
             } else {
               return { text: JSON.stringify(value) };
             }
@@ -93,12 +145,12 @@ function substitute({ in: context, persona, task, ...inputs }) {
     };
   }
 
-  function mergeTextParts(parts) {
+  function mergeTextParts(parts: TemplatePart[]) {
     const merged = [];
     for (const part of parts) {
-      if (part.text) {
+      if ("text" in part) {
         const last = merged[merged.length - 1];
-        if (last?.text) {
+        if (last && "text" in last) {
           last.text += part.text;
         } else {
           merged.push(part);
@@ -107,10 +159,10 @@ function substitute({ in: context, persona, task, ...inputs }) {
         merged.push(part);
       }
     }
-    return merged;
+    return merged as LlmContent["parts"];
   }
 
-  function toTitle(id) {
+  function toTitle(id: string) {
     const spaced = id?.replace(/[_-]/g, " ");
     return (
       (spaced?.at(0)?.toUpperCase() ?? "") +
@@ -122,9 +174,13 @@ function substitute({ in: context, persona, task, ...inputs }) {
    * Takes an LLM Content and splits it further into parts where
    * each {{param}} substitution is a separate part.
    */
-  function splitToTemplateParts(content) {
+  function splitToTemplateParts(content: LlmContent): TemplatePart[] {
     const parts = [];
     for (const part of content.parts) {
+      if (!("text" in part)) {
+        parts.push(part);
+        continue;
+      }
       const matches = part.text.matchAll(/{{(?<name>[\w-]+)}}/g);
       let start = 0;
       for (const match of matches) {
@@ -143,8 +199,11 @@ function substitute({ in: context, persona, task, ...inputs }) {
     return parts;
   }
 
-  function collectValues(params, inputs) {
-    const values = {};
+  function collectValues(
+    params: ParamLocationMap,
+    inputs: Record<string, unknown>
+  ) {
+    const values: Record<string, unknown> = {};
     for (const param in params) {
       const id = toId(param);
       const value = inputs[id];
@@ -160,14 +219,14 @@ function substitute({ in: context, persona, task, ...inputs }) {
   /**
    * Copied from @google-labs/breadboard
    */
-  function isLLMContent(nodeValue) {
+  function isLLMContent(nodeValue: unknown): nodeValue is LlmContent {
     if (typeof nodeValue !== "object" || !nodeValue) return false;
     if (nodeValue === null || nodeValue === undefined) return false;
 
     return "parts" in nodeValue && Array.isArray(nodeValue.parts);
   }
 
-  function isLLMContentArray(nodeValue) {
+  function isLLMContentArray(nodeValue: unknown): nodeValue is LlmContent[] {
     if (!Array.isArray(nodeValue)) return false;
     if (nodeValue.length === 0) return true;
     return isLLMContent(nodeValue.at(-1));
@@ -177,7 +236,46 @@ function substitute({ in: context, persona, task, ...inputs }) {
 /**
  * The describer for the "Specialist" v2 component.
  */
-function describeSpecialist({ $inputSchema, $outputSchema, persona, task }) {
+function describeSpecialist(inputs: unknown) {
+  const { $inputSchema, $outputSchema, persona, task } =
+    inputs as SpecialistDescriberInputs;
+
+  const inputSchema: Schema = {
+    type: "object",
+    properties: {
+      ...$inputSchema.properties,
+      in: {
+        title: "Context in",
+        description: "Incoming conversation context",
+        type: "array",
+        items: {
+          type: "object",
+          behavior: ["llm-content"],
+        },
+        examples: [],
+      },
+      task: {
+        title: "Task",
+        description:
+          "(Optional) Provide a specific task with clear instructions for the worker to complete using the conversation context. Use mustache-style {{params}} to add parameters.",
+        type: "object",
+        default: '{"role":"user","parts":[{"text":""}]}',
+        behavior: ["llm-content", "config"],
+        examples: [],
+      },
+      persona: {
+        type: "object",
+        behavior: ["llm-content", "config"],
+        title: "Persona",
+        description:
+          "Describe the worker's skills, capabilities, mindset, and thinking process. Use mustache-style {{params}} to add parameters.",
+        default: '{"role":"user","parts":[{"text":""}]}',
+        examples: [],
+      },
+    },
+    required: [],
+  };
+
   const params = unique([
     ...collectParams(textFromLLMContent(persona)),
     ...collectParams(textFromLLMContent(task)),
@@ -196,27 +294,31 @@ function describeSpecialist({ $inputSchema, $outputSchema, persona, task }) {
 
   const required = params.map(toId);
 
-  return mergeSchemas($inputSchema, $outputSchema, props);
+  return mergeSchemas(inputSchema, $outputSchema, props);
 
-  function mergeSchemas(inputScheme, outputSchema, properties) {
+  function mergeSchemas(
+    inputSchema: Schema,
+    outputSchema: Schema,
+    properties: Record<string, Schema>
+  ) {
     return {
       inputSchema: {
-        ...inputScheme,
+        ...inputSchema,
         properties: {
-          ...inputScheme.properties,
+          ...inputSchema.properties,
           ...properties,
         },
-        required: [...(inputScheme.required || []), ...required],
+        required: [...(inputSchema.required || []), ...required],
       },
       outputSchema: outputSchema,
     };
   }
 
-  function toId(param) {
+  function toId(param: string) {
     return `p-${param}`;
   }
 
-  function toTitle(id) {
+  function toTitle(id: string) {
     const spaced = id?.replace(/[_-]/g, " ");
     return (
       (spaced?.at(0)?.toUpperCase() ?? "") +
@@ -224,15 +326,21 @@ function describeSpecialist({ $inputSchema, $outputSchema, persona, task }) {
     );
   }
 
-  function textFromLLMContent(content) {
-    return content?.parts.map((item) => item.text).join("\n") || "";
+  function textFromLLMContent(content: LlmContent | undefined) {
+    return (
+      content?.parts
+        .map((item) => {
+          return "text" in item ? item.text : "";
+        })
+        .join("\n") || ""
+    );
   }
 
-  function unique(params) {
+  function unique<T>(params: T[]): T[] {
     return Array.from(new Set(params));
   }
 
-  function collectParams(text) {
+  function collectParams(text: string) {
     if (!text) return [];
     const matches = text.matchAll(/{{(?<name>[\w-]+)}}/g);
     return Array.from(matches).map((match) => match.groups?.name || "");
@@ -242,7 +350,8 @@ function describeSpecialist({ $inputSchema, $outputSchema, persona, task }) {
 /**
  * The guts of the "Content" component.
  */
-function content({ template, context, ...inputs }) {
+function content(starInputs: unknown) {
+  const { template, context, ...inputs } = starInputs as ContentInputs;
   const params = mergeParams(findParams(template));
   const values = collectValues(params, inputs);
 
@@ -250,9 +359,12 @@ function content({ template, context, ...inputs }) {
     context: prependContext(context, subContent(template, values)),
   };
 
-  function prependContext(context, content) {
-    content = isEmptyContent(content) ? [] : [content];
-    if (!context) return [...content];
+  function prependContext(
+    context: LlmContent[] | undefined,
+    c: LlmContent | string
+  ): LlmContent[] {
+    const content = (isEmptyContent(c) ? [] : [c]) as LlmContent[];
+    if (!context) return [...content] as LlmContent[];
     if (isLLMContentArray(context)) {
       // If the last item in the context has a user rule,
       // merge the new content with it instead of creating a new item.
@@ -262,31 +374,44 @@ function content({ template, context, ...inputs }) {
           ...context.slice(0, -1),
           {
             role: "user",
-            parts: [...last.parts, ...(content.at(0)?.parts || [])],
+            parts: [
+              ...last.parts,
+              ...((content.at(0) as LlmContent)?.parts || []),
+            ],
           },
         ];
       }
-      return [...context, ...content];
+      return [...context, ...content] as LlmContent[];
     }
-    return [content];
+    return content;
   }
 
-  function isEmptyContent(content) {
+  function isEmptyContent(content: LlmContent | string | undefined) {
     if (!content) return true;
+    if (typeof content === "string") return true;
     if (!content.parts?.length) return true;
-    if (content.parts.length === 1 && !content.parts[0].text) return true;
-    if (content.parts.length === 1 && content.parts[0].text.trim() === "")
-      return true;
+    if (content.parts.length > 1) return false;
+    const part = content.parts[0];
+    if (!("text" in part)) return true;
+    if (part.text.trim() === "") return true;
     return false;
   }
 
-  function subContent(content, values) {
-    if (!content) return null;
+  function subContent(
+    content: LlmContent | undefined,
+    values: Record<string, unknown>
+  ): LlmContent | string {
+    // If this is an array, optimistically presume this is an LLM Content array.
+    // Take the last item and use it as the content.
+    if (Array.isArray(content)) {
+      content = content.at(-1);
+    }
+    if (!content) return "";
     return {
       role: content.role || "user",
       parts: mergeTextParts(
         splitToTemplateParts(content).flatMap((part) => {
-          if (part.param) {
+          if ("param" in part) {
             const value = values[part.param];
             if (typeof value === "string") {
               return { text: value };
@@ -294,7 +419,7 @@ function content({ template, context, ...inputs }) {
               return value.parts;
             } else if (isLLMContentArray(value)) {
               const last = value.at(-1);
-              return last.parts;
+              return last ? last.parts : [];
             } else {
               return { text: JSON.stringify(value) };
             }
@@ -306,10 +431,11 @@ function content({ template, context, ...inputs }) {
     };
   }
 
-  function findParams(content) {
+  function findParams(content: LlmContent | undefined): ParamInfo[] {
     const parts = content?.parts;
     if (!parts) return [];
     const results = parts.flatMap((part) => {
+      if (!("text" in part)) return [];
       const matches = part.text.matchAll(/{{(?<name>[\w-]+)}}/g);
       return unique(Array.from(matches))
         .map((match) => {
@@ -318,11 +444,11 @@ function content({ template, context, ...inputs }) {
           return { name, locations: [{ part, parts }] };
         })
         .filter(Boolean);
-    });
+    }) as unknown as ParamInfo[];
     return results;
   }
 
-  function mergeParams(...paramList) {
+  function mergeParams(...paramList: ParamInfo[][]) {
     return paramList.reduce((acc, params) => {
       for (const param of params) {
         const { name, locations } = param;
@@ -334,19 +460,19 @@ function content({ template, context, ...inputs }) {
         }
       }
       return acc;
-    }, {});
+    }, {} as ParamLocationMap);
   }
 
-  function unique(params) {
+  function unique<T>(params: T[]): T[] {
     return Array.from(new Set(params));
   }
 
-  function mergeTextParts(parts) {
+  function mergeTextParts(parts: TemplatePart[]) {
     const merged = [];
     for (const part of parts) {
-      if (part.text) {
+      if ("text" in part) {
         const last = merged[merged.length - 1];
-        if (last?.text) {
+        if (last && "text" in last) {
           last.text += part.text;
         } else {
           merged.push(part);
@@ -355,14 +481,14 @@ function content({ template, context, ...inputs }) {
         merged.push(part);
       }
     }
-    return merged;
+    return merged as LlmContent["parts"];
   }
 
-  function toId(param) {
+  function toId(param: string) {
     return `p-${param}`;
   }
 
-  function toTitle(id) {
+  function toTitle(id: string) {
     const spaced = id?.replace(/[_-]/g, " ");
     return (
       (spaced?.at(0)?.toUpperCase() ?? "") +
@@ -374,9 +500,13 @@ function content({ template, context, ...inputs }) {
    * Takes an LLM Content and splits it further into parts where
    * each {{param}} substitution is a separate part.
    */
-  function splitToTemplateParts(content) {
+  function splitToTemplateParts(content: LlmContent): TemplatePart[] {
     const parts = [];
     for (const part of content.parts) {
+      if (!("text" in part)) {
+        parts.push(part);
+        continue;
+      }
       const matches = part.text.matchAll(/{{(?<name>[\w-]+)}}/g);
       let start = 0;
       for (const match of matches) {
@@ -395,8 +525,11 @@ function content({ template, context, ...inputs }) {
     return parts;
   }
 
-  function collectValues(params, inputs) {
-    const values = {};
+  function collectValues(
+    params: ParamLocationMap,
+    inputs: Record<string, unknown>
+  ) {
+    const values: Record<string, unknown> = {};
     for (const param in params) {
       const id = toId(param);
       const value = inputs[id];
@@ -412,14 +545,14 @@ function content({ template, context, ...inputs }) {
   /**
    * Copied from @google-labs/breadboard
    */
-  function isLLMContent(nodeValue) {
+  function isLLMContent(nodeValue: unknown): nodeValue is LlmContent {
     if (typeof nodeValue !== "object" || !nodeValue) return false;
     if (nodeValue === null || nodeValue === undefined) return false;
 
     return "parts" in nodeValue && Array.isArray(nodeValue.parts);
   }
 
-  function isLLMContentArray(nodeValue) {
+  function isLLMContentArray(nodeValue: unknown): nodeValue is LlmContent[] {
     if (!Array.isArray(nodeValue)) return false;
     if (nodeValue.length === 0) return true;
     return isLLMContent(nodeValue.at(-1));
@@ -429,7 +562,8 @@ function content({ template, context, ...inputs }) {
 /**
  * The describer for the "Content" component.
  */
-function describeContent({ $inputSchema, $outputSchema, template }) {
+function describeContent(inputs: unknown) {
+  const { template } = inputs as DescribeContentInputs;
   const params = unique([...collectParams(textFromLLMContent(template))]);
 
   const props = Object.fromEntries(
@@ -443,29 +577,78 @@ function describeContent({ $inputSchema, $outputSchema, template }) {
     ])
   );
 
+  const $inputSchema: Schema = {
+    properties: {
+      context: {
+        type: "array",
+        title: "Context in",
+        examples: [],
+        items: {
+          type: "object",
+          behavior: ["llm-content"],
+        },
+        default: '[{"role":"user","parts":[{"text":""}]}]',
+        description: "The optional incoming conversation context",
+      },
+      template: {
+        type: "object",
+        title: "Template",
+        examples: [],
+        behavior: ["llm-content", "config"],
+        default: "null",
+        description:
+          "(Optional) Content that will initialize a new conversation contenxt or be appended to the existing one. Use mustache-style {{params}} to add parameters.",
+      },
+    },
+    type: "object",
+    required: [],
+  };
+
+  const $outputSchema: Schema = {
+    type: "object",
+    properties: {
+      context: {
+        type: "array",
+        title: "Context out",
+        examples: [],
+        items: {
+          type: "object",
+          behavior: ["llm-content"],
+        },
+        description:
+          "The resulting context, created from the template and parameters.",
+      },
+    },
+    required: [],
+  };
+
   const required = params.map(toId);
 
   return mergeSchemas($inputSchema, $outputSchema, props);
 
-  function mergeSchemas(inputScheme, outputSchema, properties) {
+  function mergeSchemas(
+    inputSchema: Schema,
+    outputSchema: Schema,
+    properties: Record<string, Schema>
+  ) {
     return {
       inputSchema: {
-        ...inputScheme,
+        ...inputSchema,
         properties: {
-          ...inputScheme.properties,
+          ...inputSchema.properties,
           ...properties,
         },
-        required: [...(inputScheme.required || []), ...required],
+        required: [...(inputSchema.required || []), ...required],
       },
       outputSchema: outputSchema,
     };
   }
 
-  function toId(param) {
+  function toId(param: string) {
     return `p-${param}`;
   }
 
-  function toTitle(id) {
+  function toTitle(id: string) {
     const spaced = id?.replace(/[_-]/g, " ");
     return (
       (spaced?.at(0)?.toUpperCase() ?? "") +
@@ -473,15 +656,21 @@ function describeContent({ $inputSchema, $outputSchema, template }) {
     );
   }
 
-  function textFromLLMContent(content) {
-    return content?.parts.map((item) => item.text).join("\n") || "";
+  function textFromLLMContent(content: LlmContent | undefined) {
+    return (
+      content?.parts
+        .map((item) => {
+          return "text" in item ? item.text : "";
+        })
+        .join("\n") || ""
+    );
   }
 
-  function unique(params) {
+  function unique<T>(params: T[]): T[] {
     return Array.from(new Set(params));
   }
 
-  function collectParams(text) {
+  function collectParams(text: string) {
     if (!text) return [];
     const matches = text.matchAll(/{{(?<name>[\w-]+)}}/g);
     return Array.from(matches).map((match) => match.groups?.name || "");

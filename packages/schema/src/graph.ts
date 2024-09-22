@@ -301,6 +301,12 @@ export type GraphMetadata = {
     url: string;
   };
   /**
+   * The URL of the graph that will act as the describer for
+   * this graph. Can be a relative URL and refer to a sub-graph
+   * within this graph.
+   */
+  describer?: string;
+  /**
    * The metadata associated with the visual representation of the graph.
    */
   visual?: {

@@ -180,11 +180,14 @@ export const addUserParts = ({
   toAdd,
 }: {
   context: Context | Context[];
-  toAdd: LlmContent;
+  toAdd: LlmContent | string;
 }): { context: Context[] } => {
   if (!context) throw new Error("Context is required");
   const existing = Array.isArray(context) ? context : [context];
   const incoming = toAdd;
+  if (typeof incoming === "string") {
+    return { context: existing };
+  }
   if (!incoming.parts) {
     const containsUserRole =
       existing.filter(

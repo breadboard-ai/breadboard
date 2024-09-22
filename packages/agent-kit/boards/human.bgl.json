@@ -1223,7 +1223,7 @@
       "id": "appendContext",
       "type": "runJavascript",
       "configuration": {
-        "code": "const appendContext = ({context,toAdd})=>{if(!context)throw new Error(\"Context is required\");const existing=Array.isArray(context)?context:[context];const incoming=toAdd;if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role!==\"model\"&&item.role!==\"$metadata\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context:existing}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==incoming.role){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
+        "code": "const appendContext = ({context,toAdd})=>{if(!context)throw new Error(\"Context is required\");const existing=Array.isArray(context)?context:[context];const incoming=toAdd;if(typeof incoming===\"string\"){return{context:existing}}if(!incoming.parts){const containsUserRole=existing.filter(item=>item.role!==\"model\"&&item.role!==\"$metadata\").length>0;if(!containsUserRole){return{context:[...existing,{role:\"user\",parts:[{text:\"Do your magic\"}]}]}}return{context:existing}}if(!incoming.role){incoming.role=\"user\"}const last=existing[existing.length-1];if(!last){return{context:[incoming]}}if(last.role!==incoming.role){return{context:[...existing,incoming]}}else{const result=structuredClone(existing);const index=result.length-1;result[index].parts.push(...incoming.parts);return{context:result}}};",
         "inputSchema": {
           "type": "object",
           "properties": {

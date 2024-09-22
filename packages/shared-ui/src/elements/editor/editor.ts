@@ -76,13 +76,18 @@ function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
   return {
     schema: {
       properties: {
-        content: {
-          type: "object",
-          title: "Content",
-          examples: [],
-          behavior: ["llm-content"],
-          default:
-            type === "input" ? '{"role":"user","parts":[{"text":""}]}' : "null",
+        context: {
+          type: "array",
+          title: "Context",
+          items: {
+            type: "object",
+            examples: [],
+            behavior: ["llm-content"],
+            default:
+              type === "input"
+                ? '{"role":"user","parts":[{"text":""}]}'
+                : "null",
+          },
         },
       },
       type: "object",
