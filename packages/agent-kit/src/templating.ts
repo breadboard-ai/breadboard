@@ -435,7 +435,7 @@ function content(starInputs: unknown) {
             } else if (isLLMContent(value)) {
               return value.parts;
             } else if (isLLMContentArray(value)) {
-              const last = value.at(-1);
+              const last = getLastNonMetadata(value);
               return last ? last.parts : [];
             } else {
               return { text: JSON.stringify(value) };
@@ -446,6 +446,15 @@ function content(starInputs: unknown) {
         })
       ),
     };
+  }
+
+  function getLastNonMetadata(content: Context[]): LlmContent | null {
+    for (let i = content.length - 1; i >= 0; i--) {
+      if (content[i].role !== "$metadata") {
+        return content[i] as LlmContent;
+      }
+    }
+    return null;
   }
 
   function findParams(content: LlmContent | undefined): ParamInfo[] {
