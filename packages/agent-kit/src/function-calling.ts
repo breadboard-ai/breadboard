@@ -96,6 +96,11 @@ export const boardInvocationAssemblerFunction = ({
   const list: BoardInvocationArgs[] = [];
   for (const call of calls) {
     const item = urlMap[call.name];
+    if (!item) {
+      throw new Error(
+        `Invalid function call: "${call.name}". More than likely, the LLM hallucinated a function call that doesn't exist.`
+      );
+    }
     const $board = item.url;
     const $flags = item.flags;
     const llmContentProperty =
@@ -104,7 +109,7 @@ export const boardInvocationAssemblerFunction = ({
     if (llmContentProperty) {
       // convert args into LLMContent.
       const args = call.args;
-      const text = args[llmContentProperty];
+      const text = args[llmContentProperty] || "";
       const parts = [{ text }];
       const llmContent: LlmContent = { parts, role: "user" };
       if ($flags.inputLLMContentArray) {
@@ -293,15 +298,18 @@ export type ToolResponse = ConvertBreadboardType<typeof toolResponseType>;
 export const responseCollatorFunction = ({
   response,
   context,
+  generated,
 }: {
   response: ToolResponse[];
   context?: LlmContent[];
+  generated: LlmContent;
 }): Record<string, LlmContent[] | string> => {
   const result = Object.fromEntries(
-    response.map((item, i) => [`context-${i + 1}`, item.item])
+    response.map((item, i) => [`context-${i + 2}`, item.item])
   );
   if (context) {
     result["context-0"] = context;
   }
+  result["context-1"] = [generated];
   return result;
 };

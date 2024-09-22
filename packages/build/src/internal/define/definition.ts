@@ -205,8 +205,7 @@ export class DefinitionImpl<
     } catch (e) {
       return {
         $error: {
-          message: `Internal Exception: ${String(e instanceof Error ? e.stack : e).replace(/^Error:\s*/, "")}
-}`,
+          message: `Internal Exception: ${String(e instanceof Error ? e.stack : e).replace(/^Error:\s*/, "")}`,
         },
       };
     }

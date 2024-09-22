@@ -16,9 +16,8 @@ const inputs = starInputs({ type: object({}, "unknown") });
 const substituteParams = code(
   {
     $metadata: {
-      title: "Content (Build API)",
-      description:
-        "Use it as a way to initialize or add to conversation context, optionally applying extra arguments with mustache-style {{placeholders}}.",
+      title: "Substitute Parameters",
+      description: "Performing parameter substitution, if needed.",
     },
     "*": inputs,
   },

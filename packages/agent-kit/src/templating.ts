@@ -236,6 +236,10 @@ function substitute(inputParams: SubstituteInputParams) {
     if (typeof nodeValue !== "object" || !nodeValue) return false;
     if (nodeValue === null || nodeValue === undefined) return false;
 
+    if ("role" in nodeValue && nodeValue.role === "$metadata") {
+      return true;
+    }
+
     return "parts" in nodeValue && Array.isArray(nodeValue.parts);
   }
 
@@ -431,7 +435,7 @@ function content(starInputs: unknown) {
             } else if (isLLMContent(value)) {
               return value.parts;
             } else if (isLLMContentArray(value)) {
-              const last = value.at(-1);
+              const last = getLastNonMetadata(value);
               return last ? last.parts : [];
             } else {
               return { text: JSON.stringify(value) };
@@ -442,6 +446,15 @@ function content(starInputs: unknown) {
         })
       ),
     };
+  }
+
+  function getLastNonMetadata(content: Context[]): LlmContent | null {
+    for (let i = content.length - 1; i >= 0; i--) {
+      if (content[i].role !== "$metadata") {
+        return content[i] as LlmContent;
+      }
+    }
+    return null;
   }
 
   function findParams(content: LlmContent | undefined): ParamInfo[] {
@@ -561,6 +574,10 @@ function content(starInputs: unknown) {
   function isLLMContent(nodeValue: unknown): nodeValue is LlmContent {
     if (typeof nodeValue !== "object" || !nodeValue) return false;
     if (nodeValue === null || nodeValue === undefined) return false;
+
+    if ("role" in nodeValue && nodeValue.role === "$metadata") {
+      return true;
+    }
 
     return "parts" in nodeValue && Array.isArray(nodeValue.parts);
   }
