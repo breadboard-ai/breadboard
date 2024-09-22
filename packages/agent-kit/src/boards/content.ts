@@ -34,7 +34,7 @@ export default board({
     "Use it as a way to initialize or add to conversation context, optionally applying extra arguments with mustache-style {{placeholders}}.",
   version: "0.1.0",
   metadata: {
-    icon: "content",
+    icon: "code-blocks",
     help: {
       url: "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#content",
     },
