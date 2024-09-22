@@ -445,7 +445,6 @@ export class Edit extends EventTarget {
 
     // Comment nodes are stored in the metadata for the graph
     if (nodeType === "comment") {
-      console.log("Creating comment", metadata);
       if (!metadata) {
         return;
       }
