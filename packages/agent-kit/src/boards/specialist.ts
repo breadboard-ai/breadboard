@@ -317,7 +317,7 @@ export default board({
   },
   version: "2.0.0",
   description:
-    "Given instructions on how to act, performs a single task, optionally invoking tools.",
+    "Given instructions on how to act, makes a single LLM call, optionally invoking tools.",
   inputs: [
     inputNode({
       "*": inputs,

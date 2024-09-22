@@ -1,6 +1,6 @@
 {
   "title": "Specialist",
-  "description": "Given instructions on how to act, performs a single task, optionally invoking tools.",
+  "description": "Given instructions on how to act, makes a single LLM call, optionally invoking tools.",
   "version": "2.0.0",
   "metadata": {
     "icon": "smart-toy",
