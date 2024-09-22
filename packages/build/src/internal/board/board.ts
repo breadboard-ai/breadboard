@@ -84,6 +84,7 @@ export function board<const T extends BoardInit>({
   description,
   version,
   metadata,
+  describer,
 }: T): BoardDefinition<
   Expand<AutoOptional<RemoveReadonly<SimplifyBoardInitInputs<T["inputs"]>>>>,
   Expand<AutoOptional<RemoveReadonly<SimplifyBoardInitOutputs<T["outputs"]>>>>
@@ -112,6 +113,7 @@ export function board<const T extends BoardInit>({
     metadata,
     isBoard: true,
     describe: defImpl.describe.bind(defImpl),
+    describer,
   });
   // TODO(aomarks) This is a bit silly, need a small refactor here so that we
   // aren't juggling all these objects. The complexity here comes from the fact
@@ -683,6 +685,7 @@ export interface BoardInit {
   description?: string;
   version?: string;
   metadata?: GraphMetadata;
+  describer?: GenericBoardDefinition;
 }
 
 type AnonymousInputNodeShorthand = Record<

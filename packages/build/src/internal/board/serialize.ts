@@ -316,6 +316,12 @@ export function serialize(board: SerializableBoard): GraphDescriptor {
     }
   }
 
+  if (board.describer) {
+    const describerId = embedBoardAndReturnItsId(board.describer);
+    board.metadata ??= {};
+    board.metadata.describer = `#${describerId}`;
+  }
+
   if (errors.length > 0) {
     // TODO(aomarks) Refactor this to a Result<> return, because these errors are
     // expected as part of the normal course of operation.
