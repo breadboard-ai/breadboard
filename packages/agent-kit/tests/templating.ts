@@ -5,10 +5,10 @@
  */
 
 import { describe, it } from "node:test";
-import { content, describeContent } from "../src/future/templating.js";
+import { describeContent } from "../src/future/templating.js";
 import { InlineDataCapabilityPart } from "@google-labs/breadboard";
 import { deepStrictEqual } from "node:assert";
-import { describeSpecialist, substitute } from "../src/templating.js";
+import { describeSpecialist, substitute, content } from "../src/templating.js";
 import { LlmContent } from "../src/context.js";
 
 describe("Templating", () => {

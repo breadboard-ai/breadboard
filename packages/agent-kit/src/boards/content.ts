@@ -5,10 +5,11 @@
  */
 
 import { starInputs, board, object, array } from "@breadboard-ai/build";
-import { content } from "../future/templating.js";
+import { content } from "../templating.js";
 import { code } from "@google-labs/core-kit";
 import contentDescriber from "./internal/content-describer.js";
 import { GenericBoardDefinition } from "@breadboard-ai/build/internal/board/board.js";
+import { llmContentType } from "../context.js";
 
 const inputs = starInputs({ type: object({}, "unknown") });
 
@@ -22,7 +23,7 @@ const substituteParams = code(
     "*": inputs,
   },
   {
-    context: array(object({}, "unknown")),
+    context: array(llmContentType),
   },
   content
 );
