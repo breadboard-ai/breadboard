@@ -4,14 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Schema } from "@google-labs/breadboard";
 import { Context, LlmContent } from "./context.js";
 
-export { substitute };
+export { substitute, describeSpecialist };
 
 type SubstituteInputParams = {
   in?: Context[];
   persona?: LlmContent;
   task?: LlmContent;
+  [param: string]: unknown;
 };
 
 type Location = {
@@ -27,6 +29,13 @@ type ParamInfo = {
 };
 
 type TemplatePart = LlmContent["parts"][0] | { param: string };
+
+type SpecialistDescriberInputs = {
+  $inputSchema: Schema;
+  $outputSchema: Schema;
+  persona?: LlmContent;
+  task?: LlmContent;
+};
 
 /**
  * Part of the "Specialist" v2 component that does the parameter
@@ -211,5 +220,119 @@ function substitute(inputParams: SubstituteInputParams) {
     if (!Array.isArray(nodeValue)) return false;
     if (nodeValue.length === 0) return true;
     return isLLMContent(nodeValue.at(-1));
+  }
+}
+
+/**
+ * The describer for the "Specialist" v2 component.
+ */
+function describeSpecialist(inputs: unknown) {
+  const { $inputSchema, $outputSchema, persona, task } =
+    inputs as SpecialistDescriberInputs;
+
+  const inputSchema: Schema = {
+    type: "object",
+    properties: {
+      ...$inputSchema.properties,
+      in: {
+        title: "Context in",
+        description: "Incoming conversation context",
+        type: "array",
+        items: {
+          type: "object",
+          behavior: ["llm-content"],
+        },
+        examples: [],
+      },
+      task: {
+        title: "Task",
+        description:
+          "(Optional) Provide a specific task with clear instructions for the worker to complete using the conversation context. Use mustache-style {{params}} to add parameters.",
+        type: "object",
+        default: '{"role":"user","parts":[{"text":""}]}',
+        behavior: ["llm-content", "config"],
+        examples: [],
+      },
+      persona: {
+        type: "object",
+        behavior: ["llm-content", "config"],
+        title: "Persona",
+        description:
+          "Describe the worker's skills, capabilities, mindset, and thinking process. Use mustache-style {{params}} to add parameters.",
+        default: '{"role":"user","parts":[{"text":""}]}',
+        examples: [],
+      },
+    },
+    required: [],
+  };
+
+  const params = unique([
+    ...collectParams(textFromLLMContent(persona)),
+    ...collectParams(textFromLLMContent(task)),
+  ]);
+
+  const props = Object.fromEntries(
+    params.map((param) => [
+      toId(param),
+      {
+        title: toTitle(param),
+        description: `The value to substitute for the parameter "${param}"`,
+        type: "string",
+      },
+    ])
+  );
+
+  const required = params.map(toId);
+
+  return mergeSchemas(inputSchema, $outputSchema, props);
+
+  function mergeSchemas(
+    inputSchema: Schema,
+    outputSchema: Schema,
+    properties: Record<string, Schema>
+  ) {
+    return {
+      inputSchema: {
+        ...inputSchema,
+        properties: {
+          ...inputSchema.properties,
+          ...properties,
+        },
+        required: [...(inputSchema.required || []), ...required],
+      },
+      outputSchema: outputSchema,
+    };
+  }
+
+  function toId(param: string) {
+    return `p-${param}`;
+  }
+
+  function toTitle(id: string) {
+    const spaced = id?.replace(/[_-]/g, " ");
+    return (
+      (spaced?.at(0)?.toUpperCase() ?? "") +
+      (spaced?.slice(1)?.toLowerCase() ?? "")
+    );
+  }
+
+  function textFromLLMContent(content: LlmContent | undefined) {
+    return (
+      content?.parts
+        .map((item) => {
+          return "text" in item ? item.text : "";
+        })
+        .join("\n") || ""
+    );
+  }
+
+  function unique<T>(params: T[]): T[] {
+    return Array.from(new Set(params));
+  }
+
+  function collectParams(text: string) {
+    if (!text) return [];
+    const matches = text.matchAll(/{{(?<name>[\w-]+)}}/g);
+    return Array.from(matches).map((match) => match.groups?.name || "");
   }
 }

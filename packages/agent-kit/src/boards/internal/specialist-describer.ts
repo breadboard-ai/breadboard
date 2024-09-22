@@ -6,7 +6,7 @@
 
 import { board, object, starInputs } from "@breadboard-ai/build";
 import { code } from "@google-labs/core-kit";
-import { describeSpecialist } from "../../future/templating.js";
+import { describeSpecialist } from "../../templating.js";
 
 const inputs = starInputs({ type: object({}, "unknown") });
 
