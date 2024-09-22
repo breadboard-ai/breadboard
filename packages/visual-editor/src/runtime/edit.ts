@@ -405,7 +405,7 @@ export class Edit extends EventTarget {
     }
   }
 
-  createNode(
+  async createNode(
     tab: Tab | null,
     id: string,
     nodeType: string,
@@ -417,13 +417,6 @@ export class Edit extends EventTarget {
       return;
     }
 
-    const newNode = {
-      id,
-      type: nodeType,
-      metadata: metadata || undefined,
-      configuration: configuration || undefined,
-    };
-
     let editableGraph = this.getEditor(tab);
     if (editableGraph && subGraphId) {
       editableGraph = editableGraph.getGraph(subGraphId);
@@ -434,10 +427,25 @@ export class Edit extends EventTarget {
       return;
     }
 
+    const inspectableGraph = editableGraph.inspect();
+    const title = (await inspectableGraph.typeById(nodeType)?.metadata())
+      ?.title;
+
+    if (title) {
+      metadata ??= {};
+      metadata.title = title;
+    }
+
+    const newNode = {
+      id,
+      type: nodeType,
+      metadata: metadata || undefined,
+      configuration: configuration || undefined,
+    };
+
     // Comment nodes are stored in the metadata for the graph
     if (nodeType === "comment") {
       console.log("Creating comment", metadata);
-      const inspectableGraph = editableGraph.inspect();
       if (!metadata) {
         return;
       }
