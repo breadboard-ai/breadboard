@@ -242,7 +242,8 @@ function describeSpecialist({ $inputSchema, $outputSchema, persona, task }) {
 /**
  * The guts of the "Content" component.
  */
-function content({ template, context, ...inputs }) {
+function content(starInputs) {
+  const { template, context, ...inputs } = starInputs;
   const params = mergeParams(findParams(template));
   const values = collectValues(params, inputs);
 
@@ -474,7 +475,7 @@ function describeContent(inputs) {
   const $outputSchema = {
     type: "object",
     properties: {
-      prompt: {
+      context: {
         type: "array",
         title: "Context out",
         examples: [],

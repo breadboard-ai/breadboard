@@ -4,15 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { input, starInputs, board, object, array } from "@breadboard-ai/build";
+import { starInputs, board, object, array } from "@breadboard-ai/build";
 import { content } from "../future/templating.js";
 import { code } from "@google-labs/core-kit";
 import contentDescriber from "./internal/content-describer.js";
 import { GenericBoardDefinition } from "@breadboard-ai/build/internal/board/board.js";
-
-const text = input({ type: "string" });
-
-const context = input({ type: object({}, "unknown") });
 
 const inputs = starInputs({ type: object({}, "unknown") });
 
@@ -23,8 +19,6 @@ const substituteParams = code(
       description:
         "Use it as a way to initialize or add to conversation context, optionally applying extra arguments with mustache-style {{placeholders}}.",
     },
-    template: text,
-    context,
     "*": inputs,
   },
   {
@@ -45,8 +39,6 @@ export default board({
     },
   },
   inputs: {
-    text,
-    context,
     "*": inputs,
   },
   outputs: {
