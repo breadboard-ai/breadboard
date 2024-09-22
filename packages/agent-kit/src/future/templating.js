@@ -11,12 +11,18 @@ export { substitute, describeSpecialist, content, describeContent };
  * substitution.
  */
 function substitute(inputParams) {
-  const { in: context, persona, task, ...inputs } = inputParams;
+  const { in: context = [], persona, task, ...inputs } = inputParams;
   const params = mergeParams(findParams(persona), findParams(task));
 
   // Make sure that all params are present in the values and collect
   // them into a single object.
   const values = collectValues(params, inputs);
+
+  if (context.length === 0 && !task) {
+    throw new Error(
+      "Both conversation context and task are empty. Specify at least one of them."
+    );
+  }
 
   return {
     in: context,

@@ -56,7 +56,7 @@ const substituteParams = code(
   {
     $metadata: {
       title: "Substitute Parameters",
-      description: "Collecting inputs and performing parameter substitution.",
+      description: "Performing parameter substitution (if present).",
     },
     "*": inputs,
   },
