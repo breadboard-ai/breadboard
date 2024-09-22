@@ -315,6 +315,7 @@ export default board({
       url: "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#specialist",
     },
   },
+  version: "2.0.0",
   description:
     "Given instructions on how to act, performs a single task, optionally invoking tools.",
   inputs: [
