@@ -30,8 +30,7 @@
         "src/generate-kit-manifest.ts"
       ],
       "output": [
-        "agent.kit.json",
-        "boards/*.bgl.json"
+        "agent.kit.json"
       ]
     },
     "build": {
@@ -59,8 +58,6 @@
       ],
       "files": [
         "src/**/*.ts",
-        "src/future/*.js",
-        "bgl/*.bgl.json",
         "!src/samples/**/*.ts",
         "tests/**/*.ts",
         "tsconfig.json",

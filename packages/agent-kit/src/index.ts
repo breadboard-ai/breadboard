@@ -5,9 +5,6 @@
  */
 
 import { kit } from "@breadboard-ai/build";
-import type { GraphDescriptor } from "@google-labs/breadboard";
-import content from "../bgl/content.bgl.json" with { type: "json" };
-import specialist2 from "../bgl/specialist-2.bgl.json" with { type: "json" };
 import human from "./boards/human.js";
 import joiner from "./boards/joiner.js";
 import looper from "./boards/looper.js";
@@ -15,6 +12,7 @@ import repeater from "./boards/repeater.js";
 import specialist from "./boards/specialist.js";
 import structuredWorker from "./boards/structured-worker.js";
 import worker from "./boards/worker.js";
+import content from "./boards/content.js";
 
 const agentKit = await kit({
   title: "Agent Kit",
@@ -22,13 +20,12 @@ const agentKit = await kit({
   version: "0.0.1",
   url: "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/agent-kit/graphs/kit.json",
   components: {
-    content: content as GraphDescriptor,
+    content,
     human,
     joiner,
     looper,
     repeater,
     specialist,
-    specialist2: specialist2 as GraphDescriptor,
     structuredWorker,
     worker,
   },

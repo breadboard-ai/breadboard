@@ -4,6 +4,6 @@
     "outDir": "./dist",
     "resolveJsonModule": true
   },
-  "include": ["src/**/*", "tests/**/*", "bgl/*.bgl.json"],
+  "include": ["src/**/*", "tests/**/*"],
   "extends": "@google-labs/tsconfig/base.json"
 }
