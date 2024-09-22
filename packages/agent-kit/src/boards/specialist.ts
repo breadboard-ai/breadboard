@@ -48,25 +48,9 @@ import boardToFunction from "./internal/board-to-function.js";
 import invokeBoardWithArgs from "./internal/invoke-board-with-args.js";
 import specialistDescriber from "./internal/specialist-describer.js";
 import { GenericBoardDefinition } from "@breadboard-ai/build/internal/board/board.js";
-import { substitute } from "../future/templating.js";
+import { substitute } from "../templating.js";
 
 const inputs = starInputs({ type: object({}, "unknown") });
-
-const substituteParams = code(
-  {
-    $metadata: {
-      title: "Substitute Parameters",
-      description: "Performing parameter substitution (if present).",
-    },
-    "*": inputs,
-  },
-  {
-    in: array(contextType),
-    persona: anyOf(llmContentType, string({})),
-    task: anyOf(llmContentType, string({})),
-  },
-  substitute
-);
 
 const tools = input({
   title: "Tools",
@@ -98,6 +82,22 @@ const model = input({
   default: "gemini-1.5-flash-latest",
   examples: ["gemini-1.5-flash-latest"],
 });
+
+const substituteParams = code(
+  {
+    $metadata: {
+      title: "Substitute Parameters",
+      description: "Performing parameter substitution, if needed.",
+    },
+    "*": inputs,
+  },
+  {
+    in: array(contextType),
+    persona: anyOf(llmContentType, string({})),
+    task: anyOf(llmContentType, string({})),
+  },
+  substitute
+);
 
 const addTask = code(
   {
