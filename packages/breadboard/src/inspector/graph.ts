@@ -352,6 +352,13 @@ class Graph implements InspectableGraphWithStore {
         );
         return { success: false };
       }
+      if (!result.inputSchema || !result.outputSchema) {
+        console.warn(
+          `Custom describer did not return input/output schemas`,
+          result
+        );
+        return { success: false };
+      }
       return { success: true, result };
     } catch (e) {
       console.warn(`Error while invoking graph's custom describer`, e);
