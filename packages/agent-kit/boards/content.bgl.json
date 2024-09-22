@@ -1,249 +1,253 @@
 {
   "title": "Content",
   "description": "Use it as a way to initialize or add to conversation context, optionally applying extra arguments with mustache-style {{placeholders}}.",
-  "version": "0.0.1",
+  "version": "0.1.0",
+  "metadata": {
+    "icon": "content",
+    "help": {
+      "url": "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#content"
+    },
+    "describer": "#subgraph-0"
+  },
+  "edges": [
+    {
+      "from": "input-0",
+      "to": "runJavascript-0",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "input-0",
+      "to": "runJavascript-0",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input-0",
+      "to": "runJavascript-0",
+      "out": "text",
+      "in": "template"
+    },
+    {
+      "from": "runJavascript-0",
+      "to": "output-0",
+      "out": "context",
+      "in": "context"
+    }
+  ],
   "nodes": [
     {
+      "id": "input-0",
       "type": "input",
-      "id": "input",
       "configuration": {
         "schema": {
+          "type": "object",
           "properties": {
             "context": {
-              "type": "array",
-              "title": "Context in",
-              "examples": [],
-              "items": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]",
-              "description": "The optional incoming conversation context"
-            },
-            "template": {
               "type": "object",
-              "title": "Text",
-              "examples": [],
-              "behavior": [
-                "llm-content",
-                "config"
-              ],
-              "default": "null",
-              "description": "(Optional) The text that will initialize or be added to existing conversation context. Use mustache-style {{params}} to add variables."
+              "properties": {},
+              "required": [],
+              "additionalProperties": true
+            },
+            "text": {
+              "type": "string"
             }
           },
-          "type": "object",
-          "required": []
-        }
-      },
-      "metadata": {
-        "visual": {
-          "x": -273,
-          "y": -267,
-          "collapsed": "expanded"
-        },
-        "tags": [
-          {
-            "type": "start",
-            "label": "default"
+          "required": [
+            "context",
+            "text"
+          ],
+          "additionalProperties": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": true
           }
-        ]
+        }
       }
     },
     {
+      "id": "output-0",
       "type": "output",
-      "id": "output",
       "configuration": {
         "schema": {
-          "properties": {
-            "prompt": {
-              "type": "array",
-              "title": "Context out",
-              "examples": [],
-              "items": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "description": "The resulting context, created from the template and parameters."
-            }
-          },
           "type": "object",
-          "required": []
-        }
-      },
-      "metadata": {
-        "visual": {
-          "x": 506,
-          "y": -264,
-          "collapsed": "expanded"
-        }
-      }
-    },
-    {
-      "id": "runJavascript-2655506c",
-      "type": "runJavascript",
-      "metadata": {
-        "visual": {
-          "x": 8,
-          "y": -259.0000000000001,
-          "collapsed": "expanded"
-        },
-        "title": "Substitute Placeholders",
-        "logLevel": "debug"
-      },
-      "configuration": {
-        "code": "function content({ template, context, ...inputs }) {\n  const params = mergeParams(findParams(template));\n  const values = collectValues(params, inputs);\n\n  return {\n    context: prependContext(context, subContent(template, values)),\n  };\n\n  function prependContext(context, content) {\n    content = isEmptyContent(content) ? [] : [content];\n    if (!context) return [...content];\n    if (isLLMContentArray(context)) {\n      // If the last item in the context has a user rule,\n      // merge the new content with it instead of creating a new item.\n      const last = context.at(-1);\n      if (last && last.role === \"user\") {\n        return [\n          ...context.slice(0, -1),\n          {\n            role: \"user\",\n            parts: [...last.parts, ...(content.at(0)?.parts || [])],\n          },\n        ];\n      }\n      return [...context, ...content];\n    }\n    return [content];\n  }\n\n  function isEmptyContent(content) {\n    if (!content) return true;\n    if (!content.parts?.length) return true;\n    if (content.parts.length === 1 && !content.parts[0].text) return true;\n    if (content.parts.length === 1 && content.parts[0].text.trim() === \"\")\n      return true;\n    return false;\n  }\n\n  function subContent(content, values) {\n    if (!content) return null;\n    return {\n      role: content.role || \"user\",\n      parts: mergeTextParts(\n        splitToTemplateParts(content).flatMap((part) => {\n          if (part.param) {\n            const value = values[part.param];\n            if (typeof value === \"string\") {\n              return { text: value };\n            } else if (isLLMContent(value)) {\n              return value.parts;\n            } else if (isLLMContentArray(value)) {\n              const last = value.at(-1);\n              return last.parts;\n            } else {\n              return { text: JSON.stringify(value) };\n            }\n          } else {\n            return part;\n          }\n        })\n      ),\n    };\n  }\n\n  function findParams(content) {\n    const parts = content?.parts;\n    if (!parts) return [];\n    const results = parts.flatMap((part) => {\n      const matches = part.text.matchAll(/{{(?<name>[\\w-]+)}}/g);\n      return unique(Array.from(matches))\n        .map((match) => {\n          const name = match.groups?.name || \"\";\n          if (!name) return null;\n          return { name, locations: [{ part, parts }] };\n        })\n        .filter(Boolean);\n    });\n    return results;\n  }\n\n  function mergeParams(...paramList) {\n    return paramList.reduce((acc, params) => {\n      for (const param of params) {\n        const { name, locations } = param;\n        const existing = acc[name];\n        if (existing) {\n          existing.push(...locations);\n        } else {\n          acc[name] = locations;\n        }\n      }\n      return acc;\n    }, {});\n  }\n\n  function unique(params) {\n    return Array.from(new Set(params));\n  }\n\n  function mergeTextParts(parts) {\n    const merged = [];\n    for (const part of parts) {\n      if (part.text) {\n        const last = merged[merged.length - 1];\n        if (last?.text) {\n          last.text += part.text;\n        } else {\n          merged.push(part);\n        }\n      } else {\n        merged.push(part);\n      }\n    }\n    return merged;\n  }\n\n  function toId(param) {\n    return `p-${param}`;\n  }\n\n  function toTitle(id) {\n    const spaced = id?.replace(/[_-]/g, \" \");\n    return (\n      (spaced?.at(0)?.toUpperCase() ?? \"\") +\n      (spaced?.slice(1)?.toLowerCase() ?? \"\")\n    );\n  }\n\n  /**\n   * Takes an LLM Content and splits it further into parts where\n   * each {{param}} substitution is a separate part.\n   */\n  function splitToTemplateParts(content) {\n    const parts = [];\n    for (const part of content.parts) {\n      const matches = part.text.matchAll(/{{(?<name>[\\w-]+)}}/g);\n      let start = 0;\n      for (const match of matches) {\n        const name = match.groups?.name || \"\";\n        const end = match.index;\n        if (end > start) {\n          parts.push({ text: part.text.slice(start, end) });\n        }\n        parts.push({ param: name });\n        start = end + match[0].length;\n      }\n      if (start < part.text.length) {\n        parts.push({ text: part.text.slice(start) });\n      }\n    }\n    return parts;\n  }\n\n  function collectValues(params, inputs) {\n    const values = {};\n    for (const param in params) {\n      const id = toId(param);\n      const value = inputs[id];\n      if (!value) {\n        const title = toTitle(param);\n        throw new Error(`Missing required parameter: ${title}`);\n      }\n      values[param] = value;\n    }\n    return values;\n  }\n\n  /**\n   * Copied from @google-labs/breadboard\n   */\n  function isLLMContent(nodeValue) {\n    if (typeof nodeValue !== \"object\" || !nodeValue) return false;\n    if (nodeValue === null || nodeValue === undefined) return false;\n\n    return \"parts\" in nodeValue && Array.isArray(nodeValue.parts);\n  }\n\n  function isLLMContentArray(nodeValue) {\n    if (!Array.isArray(nodeValue)) return false;\n    if (nodeValue.length === 0) return true;\n    return isLLMContent(nodeValue.at(-1));\n  }\n}\n",
-        "name": "content",
-        "raw": true,
-        "outputSchema": {
           "properties": {
             "context": {
               "type": "array",
-              "title": "Context out",
-              "examples": [],
               "items": {
                 "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
+                "properties": {},
+                "required": [],
+                "additionalProperties": true
               }
             }
           },
-          "type": "object",
-          "required": []
+          "required": [
+            "context"
+          ]
         }
       }
     },
     {
-      "id": "input-58c1588f",
-      "type": "input",
-      "metadata": {
-        "visual": {
-          "x": -303,
-          "y": 81,
-          "collapsed": "expanded"
-        },
-        "tags": [
-          {
-            "type": "start",
-            "label": "describe"
-          }
-        ],
-        "title": "Describe",
-        "logLevel": "debug"
-      },
-      "configuration": {
-        "schema": {
-          "properties": {},
-          "type": "object",
-          "required": []
-        }
-      }
-    },
-    {
-      "id": "runJavascript-4e04e982",
+      "id": "runJavascript-0",
       "type": "runJavascript",
-      "metadata": {
-        "visual": {
-          "x": 11,
-          "y": 64,
-          "collapsed": "expanded"
-        },
-        "title": "Schema from Inputs",
-        "logLevel": "debug"
-      },
       "configuration": {
+        "code": "const run = function content({ template, context, ...inputs }) {\n  const params = mergeParams(findParams(template));\n  const values = collectValues(params, inputs);\n\n  return {\n    context: prependContext(context, subContent(template, values)),\n  };\n\n  function prependContext(context, content) {\n    content = isEmptyContent(content) ? [] : [content];\n    if (!context) return [...content];\n    if (isLLMContentArray(context)) {\n      // If the last item in the context has a user rule,\n      // merge the new content with it instead of creating a new item.\n      const last = context.at(-1);\n      if (last && last.role === \"user\") {\n        return [\n          ...context.slice(0, -1),\n          {\n            role: \"user\",\n            parts: [...last.parts, ...(content.at(0)?.parts || [])],\n          },\n        ];\n      }\n      return [...context, ...content];\n    }\n    return [content];\n  }\n\n  function isEmptyContent(content) {\n    if (!content) return true;\n    if (!content.parts?.length) return true;\n    if (content.parts.length === 1 && !content.parts[0].text) return true;\n    if (content.parts.length === 1 && content.parts[0].text.trim() === \"\")\n      return true;\n    return false;\n  }\n\n  function subContent(content, values) {\n    if (!content) return null;\n    return {\n      role: content.role || \"user\",\n      parts: mergeTextParts(\n        splitToTemplateParts(content).flatMap((part) => {\n          if (part.param) {\n            const value = values[part.param];\n            if (typeof value === \"string\") {\n              return { text: value };\n            } else if (isLLMContent(value)) {\n              return value.parts;\n            } else if (isLLMContentArray(value)) {\n              const last = value.at(-1);\n              return last.parts;\n            } else {\n              return { text: JSON.stringify(value) };\n            }\n          } else {\n            return part;\n          }\n        })\n      ),\n    };\n  }\n\n  function findParams(content) {\n    const parts = content?.parts;\n    if (!parts) return [];\n    const results = parts.flatMap((part) => {\n      const matches = part.text.matchAll(/{{(?<name>[\\w-]+)}}/g);\n      return unique(Array.from(matches))\n        .map((match) => {\n          const name = match.groups?.name || \"\";\n          if (!name) return null;\n          return { name, locations: [{ part, parts }] };\n        })\n        .filter(Boolean);\n    });\n    return results;\n  }\n\n  function mergeParams(...paramList) {\n    return paramList.reduce((acc, params) => {\n      for (const param of params) {\n        const { name, locations } = param;\n        const existing = acc[name];\n        if (existing) {\n          existing.push(...locations);\n        } else {\n          acc[name] = locations;\n        }\n      }\n      return acc;\n    }, {});\n  }\n\n  function unique(params) {\n    return Array.from(new Set(params));\n  }\n\n  function mergeTextParts(parts) {\n    const merged = [];\n    for (const part of parts) {\n      if (part.text) {\n        const last = merged[merged.length - 1];\n        if (last?.text) {\n          last.text += part.text;\n        } else {\n          merged.push(part);\n        }\n      } else {\n        merged.push(part);\n      }\n    }\n    return merged;\n  }\n\n  function toId(param) {\n    return `p-${param}`;\n  }\n\n  function toTitle(id) {\n    const spaced = id?.replace(/[_-]/g, \" \");\n    return (\n      (spaced?.at(0)?.toUpperCase() ?? \"\") +\n      (spaced?.slice(1)?.toLowerCase() ?? \"\")\n    );\n  }\n\n  /**\n   * Takes an LLM Content and splits it further into parts where\n   * each {{param}} substitution is a separate part.\n   */\n  function splitToTemplateParts(content) {\n    const parts = [];\n    for (const part of content.parts) {\n      const matches = part.text.matchAll(/{{(?<name>[\\w-]+)}}/g);\n      let start = 0;\n      for (const match of matches) {\n        const name = match.groups?.name || \"\";\n        const end = match.index;\n        if (end > start) {\n          parts.push({ text: part.text.slice(start, end) });\n        }\n        parts.push({ param: name });\n        start = end + match[0].length;\n      }\n      if (start < part.text.length) {\n        parts.push({ text: part.text.slice(start) });\n      }\n    }\n    return parts;\n  }\n\n  function collectValues(params, inputs) {\n    const values = {};\n    for (const param in params) {\n      const id = toId(param);\n      const value = inputs[id];\n      if (!value) {\n        const title = toTitle(param);\n        throw new Error(`Missing required parameter: ${title}`);\n      }\n      values[param] = value;\n    }\n    return values;\n  }\n\n  /**\n   * Copied from @google-labs/breadboard\n   */\n  function isLLMContent(nodeValue) {\n    if (typeof nodeValue !== \"object\" || !nodeValue) return false;\n    if (nodeValue === null || nodeValue === undefined) return false;\n\n    return \"parts\" in nodeValue && Array.isArray(nodeValue.parts);\n  }\n\n  function isLLMContentArray(nodeValue) {\n    if (!Array.isArray(nodeValue)) return false;\n    if (nodeValue.length === 0) return true;\n    return isLLMContent(nodeValue.at(-1));\n  }\n};",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "template": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": true
+          }
+        },
+        "name": "run",
         "outputSchema": {
-          "properties": {
-            "outputSchema": {
-              "type": "object",
-              "title": "Output Schema",
-              "examples": []
-            },
-            "inputSchema": {
-              "type": "object",
-              "title": "Input Schema",
-              "examples": []
-            }
-          },
           "type": "object",
-          "required": []
+          "properties": {
+            "context": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": true
+              }
+            }
+          }
         },
-        "code": "function describeContent({ $inputSchema, $outputSchema, template }) {\n  const params = unique([...collectParams(textFromLLMContent(template))]);\n\n  const props = Object.fromEntries(\n    params.map((param) => [\n      toId(param),\n      {\n        title: toTitle(param),\n        description: `The value to substitute for the parameter \"${param}\"`,\n        type: \"string\",\n      },\n    ])\n  );\n\n  const required = params.map(toId);\n\n  return mergeSchemas($inputSchema, $outputSchema, props);\n\n  function mergeSchemas(inputScheme, outputSchema, properties) {\n    return {\n      inputSchema: {\n        ...inputScheme,\n        properties: {\n          ...inputScheme.properties,\n          ...properties,\n        },\n        required: [...(inputScheme.required || []), ...required],\n      },\n      outputSchema: outputSchema,\n    };\n  }\n\n  function toId(param) {\n    return `p-${param}`;\n  }\n\n  function toTitle(id) {\n    const spaced = id?.replace(/[_-]/g, \" \");\n    return (\n      (spaced?.at(0)?.toUpperCase() ?? \"\") +\n      (spaced?.slice(1)?.toLowerCase() ?? \"\")\n    );\n  }\n\n  function textFromLLMContent(content) {\n    return content?.parts.map((item) => item.text).join(\"\\n\") || \"\";\n  }\n\n  function unique(params) {\n    return Array.from(new Set(params));\n  }\n\n  function collectParams(text) {\n    if (!text) return [];\n    const matches = text.matchAll(/{{(?<name>[\\w-]+)}}/g);\n    return Array.from(matches).map((match) => match.groups?.name || \"\");\n  }\n}\n",
-        "name": "describeContent",
         "raw": true
-      }
-    },
-    {
-      "id": "output-acc3ef03",
-      "type": "output",
-      "metadata": {
-        "visual": {
-          "x": 483,
-          "y": 62,
-          "collapsed": "expanded"
-        },
-        "title": "Schemas",
-        "logLevel": "debug"
       },
-      "configuration": {
-        "schema": {
-          "properties": {
+      "metadata": {
+        "title": "Content (Build API)",
+        "description": "Use it as a way to initialize or add to conversation context, optionally applying extra arguments with mustache-style {{placeholders}}."
+      }
+    }
+  ],
+  "graphs": {
+    "subgraph-0": {
+      "title": "Content Describer",
+      "description": "A custom describer for the Content component",
+      "version": "0.1.0",
+      "edges": [
+        {
+          "from": "input-0",
+          "to": "runJavascript-0",
+          "out": "*",
+          "in": ""
+        },
+        {
+          "from": "runJavascript-0",
+          "to": "output-0",
+          "out": "inputSchema",
+          "in": "inputSchema"
+        },
+        {
+          "from": "runJavascript-0",
+          "to": "output-0",
+          "out": "outputSchema",
+          "in": "outputSchema"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "input-0",
+          "type": "input",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        {
+          "id": "output-0",
+          "type": "output",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "inputSchema": {
+                  "type": "object",
+                  "properties": {},
+                  "required": [],
+                  "additionalProperties": true
+                },
+                "outputSchema": {
+                  "type": "object",
+                  "properties": {},
+                  "required": [],
+                  "additionalProperties": true
+                }
+              },
+              "required": [
+                "inputSchema",
+                "outputSchema"
+              ]
+            }
+          }
+        },
+        {
+          "id": "runJavascript-0",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const run = function describeContent(inputs) {\n  const { template } = inputs;\n  const params = unique([...collectParams(textFromLLMContent(template))]);\n\n  const props = Object.fromEntries(\n    params.map((param) => [\n      toId(param),\n      {\n        title: toTitle(param),\n        description: `The value to substitute for the parameter \"${param}\"`,\n        type: \"string\",\n      },\n    ])\n  );\n\n  const $inputSchema = {\n    properties: {\n      context: {\n        type: \"array\",\n        title: \"Context in\",\n        examples: [],\n        items: {\n          type: \"object\",\n          behavior: [\"llm-content\"],\n        },\n        default: '[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]',\n        description: \"The optional incoming conversation context\",\n      },\n      template: {\n        type: \"object\",\n        title: \"Text\",\n        examples: [],\n        behavior: [\"llm-content\", \"config\"],\n        default: \"null\",\n        description:\n          \"(Optional) The text that will initialize or be added to existing conversation context. Use mustache-style {{params}} to add variables.\",\n      },\n    },\n    type: \"object\",\n    required: [],\n  };\n\n  const $outputSchema = {\n    type: \"object\",\n    properties: {\n      prompt: {\n        type: \"array\",\n        title: \"Context out\",\n        examples: [],\n        items: {\n          type: \"object\",\n          behavior: [\"llm-content\"],\n        },\n        description:\n          \"The resulting context, created from the template and parameters.\",\n      },\n    },\n    required: [],\n  };\n\n  const required = params.map(toId);\n\n  return mergeSchemas($inputSchema, $outputSchema, props);\n\n  function mergeSchemas(inputSchema, outputSchema, properties) {\n    return {\n      inputSchema: {\n        ...inputSchema,\n        properties: {\n          ...inputSchema.properties,\n          ...properties,\n        },\n        required: [...(inputSchema.required || []), ...required],\n      },\n      outputSchema: outputSchema,\n    };\n  }\n\n  function toId(param) {\n    return `p-${param}`;\n  }\n\n  function toTitle(id) {\n    const spaced = id?.replace(/[_-]/g, \" \");\n    return (\n      (spaced?.at(0)?.toUpperCase() ?? \"\") +\n      (spaced?.slice(1)?.toLowerCase() ?? \"\")\n    );\n  }\n\n  function textFromLLMContent(content) {\n    return content?.parts.map((item) => item.text).join(\"\\n\") || \"\";\n  }\n\n  function unique(params) {\n    return Array.from(new Set(params));\n  }\n\n  function collectParams(text) {\n    if (!text) return [];\n    const matches = text.matchAll(/{{(?<name>[\\w-]+)}}/g);\n    return Array.from(matches).map((match) => match.groups?.name || \"\");\n  }\n};",
             "inputSchema": {
               "type": "object",
-              "title": "Input Schema",
-              "examples": []
+              "properties": {},
+              "additionalProperties": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": true
+              }
             },
+            "name": "run",
             "outputSchema": {
               "type": "object",
-              "title": "Output Schema",
-              "examples": []
-            }
+              "properties": {
+                "inputSchema": {
+                  "type": "object",
+                  "properties": {},
+                  "required": [],
+                  "additionalProperties": true
+                },
+                "outputSchema": {
+                  "type": "object",
+                  "properties": {},
+                  "required": [],
+                  "additionalProperties": true
+                }
+              }
+            },
+            "raw": true
           },
-          "type": "object",
-          "required": []
+          "metadata": {
+            "title": "Describe",
+            "description": "Describes the content"
+          }
         }
-      }
+      ]
     }
-  ],
-  "edges": [
-    {
-      "from": "input",
-      "to": "runJavascript-2655506c",
-      "out": "*",
-      "in": ""
-    },
-    {
-      "from": "input-58c1588f",
-      "to": "runJavascript-4e04e982",
-      "out": "*",
-      "in": ""
-    },
-    {
-      "from": "runJavascript-4e04e982",
-      "to": "output-acc3ef03",
-      "out": "inputSchema",
-      "in": "inputSchema"
-    },
-    {
-      "from": "runJavascript-4e04e982",
-      "to": "output-acc3ef03",
-      "out": "outputSchema",
-      "in": "outputSchema"
-    },
-    {
-      "from": "runJavascript-2655506c",
-      "to": "output",
-      "out": "context",
-      "in": "prompt"
-    }
-  ],
-  "metadata": {
-    "comments": [],
-    "tags": []
   }
 }

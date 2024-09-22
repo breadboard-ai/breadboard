@@ -429,7 +429,8 @@ function content({ template, context, ...inputs }) {
 /**
  * The describer for the "Content" component.
  */
-function describeContent({ $inputSchema, $outputSchema, template }) {
+function describeContent(inputs) {
+  const { template } = inputs;
   const params = unique([...collectParams(textFromLLMContent(template))]);
 
   const props = Object.fromEntries(
@@ -443,19 +444,64 @@ function describeContent({ $inputSchema, $outputSchema, template }) {
     ])
   );
 
+  const $inputSchema = {
+    properties: {
+      context: {
+        type: "array",
+        title: "Context in",
+        examples: [],
+        items: {
+          type: "object",
+          behavior: ["llm-content"],
+        },
+        default: '[{"role":"user","parts":[{"text":""}]}]',
+        description: "The optional incoming conversation context",
+      },
+      template: {
+        type: "object",
+        title: "Text",
+        examples: [],
+        behavior: ["llm-content", "config"],
+        default: "null",
+        description:
+          "(Optional) The text that will initialize or be added to existing conversation context. Use mustache-style {{params}} to add variables.",
+      },
+    },
+    type: "object",
+    required: [],
+  };
+
+  const $outputSchema = {
+    type: "object",
+    properties: {
+      prompt: {
+        type: "array",
+        title: "Context out",
+        examples: [],
+        items: {
+          type: "object",
+          behavior: ["llm-content"],
+        },
+        description:
+          "The resulting context, created from the template and parameters.",
+      },
+    },
+    required: [],
+  };
+
   const required = params.map(toId);
 
   return mergeSchemas($inputSchema, $outputSchema, props);
 
-  function mergeSchemas(inputScheme, outputSchema, properties) {
+  function mergeSchemas(inputSchema, outputSchema, properties) {
     return {
       inputSchema: {
-        ...inputScheme,
+        ...inputSchema,
         properties: {
-          ...inputScheme.properties,
+          ...inputSchema.properties,
           ...properties,
         },
-        required: [...(inputScheme.required || []), ...required],
+        required: [...(inputSchema.required || []), ...required],
       },
       outputSchema: outputSchema,
     };
