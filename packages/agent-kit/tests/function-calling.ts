@@ -546,6 +546,16 @@ describe("function-calling/functionSignatureFromBoardFunction", () => {
 });
 
 describe("function-calling/responseCollator", () => {
+  const generated: LlmContent = {
+    parts: [
+      {
+        functionCall: {
+          name: "Get_Web_Page_Content",
+          args: { url: "https://example.com/" },
+        },
+      },
+    ],
+  };
   const hello: LlmContent = { parts: [{ text: "Hello" }], role: "tool" };
   const world: LlmContent = { parts: [{ text: "World" }], role: "tool" };
   const howdy: LlmContent = { parts: [{ text: "Howdy" }], role: "tool" };
@@ -555,19 +565,21 @@ describe("function-calling/responseCollator", () => {
       { item: [hello, world] },
       { item: [howdy, realm] },
     ];
-    const result = responseCollatorFunction({ response });
+    const result = responseCollatorFunction({ response, generated });
     deepStrictEqual(result, {
-      "context-1": [hello, world],
-      "context-2": [howdy, realm],
+      "context-1": [generated],
+      "context-2": [hello, world],
+      "context-3": [howdy, realm],
     });
   });
   test("correctly adds context", () => {
     const context: LlmContent[] = [hello, world];
     const response = [{ item: [howdy, realm] }] satisfies ToolResponse[];
-    const result = responseCollatorFunction({ response, context });
+    const result = responseCollatorFunction({ response, context, generated });
     deepStrictEqual(result, {
       "context-0": [hello, world],
-      "context-1": [howdy, realm],
+      "context-1": [generated],
+      "context-2": [howdy, realm],
     });
   });
 });

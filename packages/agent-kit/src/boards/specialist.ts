@@ -256,6 +256,7 @@ const formatToolResponse = code(
     // of that.
     context: addSplitStart.outputs.context as Value<LlmContent[]>,
     response: mapInvocations.outputs.list as Value<ToolResponse[]>,
+    generated: generator.outputs.context as Value<LlmContent>,
   },
   {},
   responseCollatorFunction

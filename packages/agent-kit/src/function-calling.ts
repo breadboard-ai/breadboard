@@ -293,15 +293,18 @@ export type ToolResponse = ConvertBreadboardType<typeof toolResponseType>;
 export const responseCollatorFunction = ({
   response,
   context,
+  generated,
 }: {
   response: ToolResponse[];
   context?: LlmContent[];
+  generated: LlmContent;
 }): Record<string, LlmContent[] | string> => {
   const result = Object.fromEntries(
-    response.map((item, i) => [`context-${i + 1}`, item.item])
+    response.map((item, i) => [`context-${i + 2}`, item.item])
   );
   if (context) {
     result["context-0"] = context;
   }
+  result["context-1"] = [generated];
   return result;
 };

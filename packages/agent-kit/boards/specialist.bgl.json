@@ -173,6 +173,12 @@
       "in": "context"
     },
     {
+      "from": "text-0",
+      "to": "runJavascript-1",
+      "out": "context",
+      "in": "generated"
+    },
+    {
       "from": "turnBoardsToFunctions",
       "to": "formatFunctionDeclarations",
       "out": "list",
@@ -1346,7 +1352,7 @@
       "id": "runJavascript-1",
       "type": "runJavascript",
       "configuration": {
-        "code": "const run = ({response,context})=>{const result=Object.fromEntries(response.map((item,i)=>[`context-${i+1}`,item.item]));if(context){result[\"context-0\"]=context}return result};",
+        "code": "const run = ({response,context,generated})=>{const result=Object.fromEntries(response.map((item,i)=>[`context-${i+2}`,item.item]));if(context){result[\"context-0\"]=context}result[\"context-1\"]=[generated];return result};",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -1551,6 +1557,16 @@
                 "required": [],
                 "additionalProperties": true
               }
+            },
+            "generated": {
+              "type": [
+                "array",
+                "boolean",
+                "null",
+                "number",
+                "object",
+                "string"
+              ]
             }
           }
         },
