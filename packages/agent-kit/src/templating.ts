@@ -61,7 +61,7 @@ function substitute(inputParams: SubstituteInputParams) {
 
   if (context.length === 0 && !task) {
     throw new Error(
-      "Both conversation context and task are empty. Specify at least one of them."
+      "Both conversation Context and Task are empty. Specify at least one of them."
     );
   }
 
@@ -120,7 +120,7 @@ function substitute(inputParams: SubstituteInputParams) {
     if (Array.isArray(content)) {
       content = content.at(-1);
     }
-    if (!content) return "";
+    if (isEmptyContent(content)) return "";
     return {
       role: content.role || "user",
       parts: mergeTextParts(
@@ -214,6 +214,19 @@ function substitute(inputParams: SubstituteInputParams) {
       values[param] = value;
     }
     return values;
+  }
+
+  function isEmptyContent(
+    content: LlmContent | string | undefined
+  ): content is undefined {
+    if (!content) return true;
+    if (typeof content === "string") return true;
+    if (!content.parts?.length) return true;
+    if (content.parts.length > 1) return false;
+    const part = content.parts[0];
+    if (!("text" in part)) return true;
+    if (part.text.trim() === "") return true;
+    return false;
   }
 
   /**

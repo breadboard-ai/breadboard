@@ -304,6 +304,12 @@ export class GraphEdge extends PIXI.Container {
       return;
     }
 
+    if (!this.fromNode?.position || !this.toNode?.position) {
+      // Occasionally, we might be drawing an edge between nodes that have
+      // been destroyed. In this case, we should not attempt to draw the edge.
+      return;
+    }
+
     // Take a copy rather than modifying the original values.
     outLocation = outLocation.clone();
     inLocation = inLocation.clone();
