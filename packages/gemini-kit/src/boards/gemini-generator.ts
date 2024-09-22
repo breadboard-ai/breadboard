@@ -385,7 +385,7 @@ const body = code(
         parts = [{ text: systemInstruction }];
       } else {
         parts = systemInstruction.parts;
-        if (!parts) {
+        if (!parts || parts.length === 0) {
           throw new Error(
             `Malformed system instruction: ${JSON.stringify(systemInstruction)}`
           );
