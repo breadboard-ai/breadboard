@@ -7,7 +7,7 @@
 import { Schema } from "@google-labs/breadboard";
 import { Context, LlmContent } from "./context.js";
 
-export { substitute, describeSpecialist, content };
+export { substitute, describeSpecialist, content, describeContent };
 
 type SubstituteInputParams = {
   in?: Context[];
@@ -41,6 +41,10 @@ type ContentInputs = {
   template: LlmContent;
   context?: LlmContent[];
   [param: string]: unknown;
+};
+
+type DescribeContentInputs = {
+  template?: LlmContent;
 };
 
 /**
@@ -552,5 +556,123 @@ function content(starInputs: unknown) {
     if (!Array.isArray(nodeValue)) return false;
     if (nodeValue.length === 0) return true;
     return isLLMContent(nodeValue.at(-1));
+  }
+}
+
+/**
+ * The describer for the "Content" component.
+ */
+function describeContent(inputs: unknown) {
+  const { template } = inputs as DescribeContentInputs;
+  const params = unique([...collectParams(textFromLLMContent(template))]);
+
+  const props = Object.fromEntries(
+    params.map((param) => [
+      toId(param),
+      {
+        title: toTitle(param),
+        description: `The value to substitute for the parameter "${param}"`,
+        type: "string",
+      },
+    ])
+  );
+
+  const $inputSchema: Schema = {
+    properties: {
+      context: {
+        type: "array",
+        title: "Context in",
+        examples: [],
+        items: {
+          type: "object",
+          behavior: ["llm-content"],
+        },
+        default: '[{"role":"user","parts":[{"text":""}]}]',
+        description: "The optional incoming conversation context",
+      },
+      template: {
+        type: "object",
+        title: "Text",
+        examples: [],
+        behavior: ["llm-content", "config"],
+        default: "null",
+        description:
+          "(Optional) The text that will initialize or be added to existing conversation context. Use mustache-style {{params}} to add parameters.",
+      },
+    },
+    type: "object",
+    required: [],
+  };
+
+  const $outputSchema: Schema = {
+    type: "object",
+    properties: {
+      context: {
+        type: "array",
+        title: "Context out",
+        examples: [],
+        items: {
+          type: "object",
+          behavior: ["llm-content"],
+        },
+        description:
+          "The resulting context, created from the template and parameters.",
+      },
+    },
+    required: [],
+  };
+
+  const required = params.map(toId);
+
+  return mergeSchemas($inputSchema, $outputSchema, props);
+
+  function mergeSchemas(
+    inputSchema: Schema,
+    outputSchema: Schema,
+    properties: Record<string, Schema>
+  ) {
+    return {
+      inputSchema: {
+        ...inputSchema,
+        properties: {
+          ...inputSchema.properties,
+          ...properties,
+        },
+        required: [...(inputSchema.required || []), ...required],
+      },
+      outputSchema: outputSchema,
+    };
+  }
+
+  function toId(param: string) {
+    return `p-${param}`;
+  }
+
+  function toTitle(id: string) {
+    const spaced = id?.replace(/[_-]/g, " ");
+    return (
+      (spaced?.at(0)?.toUpperCase() ?? "") +
+      (spaced?.slice(1)?.toLowerCase() ?? "")
+    );
+  }
+
+  function textFromLLMContent(content: LlmContent | undefined) {
+    return (
+      content?.parts
+        .map((item) => {
+          return "text" in item ? item.text : "";
+        })
+        .join("\n") || ""
+    );
+  }
+
+  function unique<T>(params: T[]): T[] {
+    return Array.from(new Set(params));
+  }
+
+  function collectParams(text: string) {
+    if (!text) return [];
+    const matches = text.matchAll(/{{(?<name>[\w-]+)}}/g);
+    return Array.from(matches).map((match) => match.groups?.name || "");
   }
 }

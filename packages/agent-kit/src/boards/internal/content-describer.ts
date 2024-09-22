@@ -6,7 +6,7 @@
 
 import { board, object, starInputs } from "@breadboard-ai/build";
 import { code } from "@google-labs/core-kit";
-import { describeContent } from "../../future/templating.js";
+import { describeContent } from "../../templating.js";
 
 // A board that acts as a custom describer for the
 // Content component.

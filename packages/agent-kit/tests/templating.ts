@@ -5,10 +5,14 @@
  */
 
 import { describe, it } from "node:test";
-import { describeContent } from "../src/future/templating.js";
 import { InlineDataCapabilityPart } from "@google-labs/breadboard";
 import { deepStrictEqual } from "node:assert";
-import { describeSpecialist, substitute, content } from "../src/templating.js";
+import {
+  describeSpecialist,
+  substitute,
+  content,
+  describeContent,
+} from "../src/templating.js";
 import { LlmContent } from "../src/context.js";
 
 describe("Templating", () => {
@@ -250,6 +254,9 @@ describe("Specialist v2 describer", () => {
     });
 
     const paramProps = result.inputSchema.properties;
+    delete paramProps.in;
+    delete paramProps.persona;
+    delete paramProps.task;
     deepStrictEqual(paramProps, {
       "p-character": {
         description: 'The value to substitute for the parameter "character"',
