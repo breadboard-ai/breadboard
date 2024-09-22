@@ -236,6 +236,10 @@ function substitute(inputParams: SubstituteInputParams) {
     if (typeof nodeValue !== "object" || !nodeValue) return false;
     if (nodeValue === null || nodeValue === undefined) return false;
 
+    if ("role" in nodeValue && nodeValue.role === "$metadata") {
+      return true;
+    }
+
     return "parts" in nodeValue && Array.isArray(nodeValue.parts);
   }
 
@@ -561,6 +565,10 @@ function content(starInputs: unknown) {
   function isLLMContent(nodeValue: unknown): nodeValue is LlmContent {
     if (typeof nodeValue !== "object" || !nodeValue) return false;
     if (nodeValue === null || nodeValue === undefined) return false;
+
+    if ("role" in nodeValue && nodeValue.role === "$metadata") {
+      return true;
+    }
 
     return "parts" in nodeValue && Array.isArray(nodeValue.parts);
   }

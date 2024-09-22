@@ -104,7 +104,7 @@ export const boardInvocationAssemblerFunction = ({
     if (llmContentProperty) {
       // convert args into LLMContent.
       const args = call.args;
-      const text = args[llmContentProperty];
+      const text = args[llmContentProperty] || "";
       const parts = [{ text }];
       const llmContent: LlmContent = { parts, role: "user" };
       if ($flags.inputLLMContentArray) {

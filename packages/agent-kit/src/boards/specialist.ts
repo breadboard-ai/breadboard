@@ -226,7 +226,7 @@ const assembleInvocations = code(
     $id: "assembleBoardInvoke",
     $metadata: {
       title: "Assemble Tool Invoke",
-      description: "Assembling the tool invocation based on Gemini response",
+      description: "Assembling tool invocation based on Gemini response",
     },
     urlMap: formatFunctionDeclarations.outputs.urlMap,
     context: routeToFunctionsOrText.outputs.context,
