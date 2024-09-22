@@ -96,6 +96,11 @@ export const boardInvocationAssemblerFunction = ({
   const list: BoardInvocationArgs[] = [];
   for (const call of calls) {
     const item = urlMap[call.name];
+    if (!item) {
+      throw new Error(
+        `Invalid function call: "${call.name}". More than likely, the LLM hallucinated a function call that doesn't exist.`
+      );
+    }
     const $board = item.url;
     const $flags = item.flags;
     const llmContentProperty =
