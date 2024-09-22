@@ -61,7 +61,7 @@ function substitute(inputParams: SubstituteInputParams) {
 
   if (context.length === 0 && !task) {
     throw new Error(
-      "Both conversation context and task are empty. Specify at least one of them."
+      "Both conversation Context and Task are empty. Specify at least one of them."
     );
   }
 
