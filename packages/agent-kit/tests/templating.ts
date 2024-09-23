@@ -35,6 +35,25 @@ describe("Templating", () => {
     });
   });
 
+  it("does simple substitution with whitespaces in params", async () => {
+    const context: LlmContent[] = [];
+    const persona = llmContent("user", "You're a {{ character}}, {{ name }}.");
+    const task = llmContent("user", "Act like a {{character     }}.");
+    const character = "wizard";
+    const result = substitute({
+      in: context,
+      persona,
+      task,
+      "p-character": character,
+      "p-name": "Harry",
+    });
+    deepStrictEqual(result, {
+      in: [],
+      persona: llmContent("user", "You're a wizard, Harry."),
+      task: llmContent("user", "Act like a wizard."),
+    });
+  });
+
   it("does simple LLM Content object substitution", async () => {
     const context: LlmContent[] = [];
     const persona = llmContent("user", "You're a {{character}}, {{name}}.");
@@ -270,6 +289,37 @@ describe("Specialist v2 describer", () => {
       },
     });
   });
+
+  it("handles whitespace in parameter names", () => {
+    const $inputSchema = {};
+    const $outputSchema = {};
+    const persona = llmContent("user", "You're a {{ character}}, {{ name }}.");
+    const task = llmContent("user", "Act like a {{character }}.");
+
+    const result = describeSpecialist({
+      $inputSchema,
+      $outputSchema,
+      persona,
+      task,
+    });
+
+    const paramProps = result.inputSchema.properties;
+    delete paramProps.in;
+    delete paramProps.persona;
+    delete paramProps.task;
+    deepStrictEqual(paramProps, {
+      "p-character": {
+        description: 'The value to substitute for the parameter "character"',
+        title: "Character",
+        type: "string",
+      },
+      "p-name": {
+        description: 'The value to substitute for the parameter "name"',
+        title: "Name",
+        type: "string",
+      },
+    });
+  });
 });
 
 describe("Content describer", () => {
@@ -295,6 +345,29 @@ describe("Content describer", () => {
     const $inputSchema = {};
     const $outputSchema = {};
     const template = llmContent("user", "Act like a {{role}}.");
+
+    const result = describeContent({
+      $inputSchema,
+      $outputSchema,
+      template,
+    });
+
+    const paramProps = result.inputSchema.properties;
+    delete paramProps.context;
+    delete paramProps.template;
+    deepStrictEqual(paramProps, {
+      "p-role": {
+        description: 'The value to substitute for the parameter "role"',
+        title: "Role",
+        type: "string",
+      },
+    });
+  });
+
+  it("handles whitespace in parameter names", () => {
+    const $inputSchema = {};
+    const $outputSchema = {};
+    const template = llmContent("user", "Act like a {{ role  }}.");
 
     const result = describeContent({
       $inputSchema,

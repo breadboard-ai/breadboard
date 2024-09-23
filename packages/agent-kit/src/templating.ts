@@ -84,7 +84,7 @@ function substitute(inputParams: SubstituteInputParams) {
     if (!parts) return [];
     const results = parts.flatMap((part) => {
       if (!("text" in part)) return [];
-      const matches = part.text.matchAll(/{{(?<name>[\w-]+)}}/g);
+      const matches = part.text.matchAll(/{{\s*(?<name>[\w-]+)\s*}}/g);
       return unique(Array.from(matches))
         .map((match) => {
           const name = match.groups?.name || "";
@@ -181,7 +181,7 @@ function substitute(inputParams: SubstituteInputParams) {
         parts.push(part);
         continue;
       }
-      const matches = part.text.matchAll(/{{(?<name>[\w-]+)}}/g);
+      const matches = part.text.matchAll(/{{\s*(?<name>[\w-]+)\s*}}/g);
       let start = 0;
       for (const match of matches) {
         const name = match.groups?.name || "";
@@ -360,7 +360,7 @@ function describeSpecialist(inputs: unknown) {
 
   function collectParams(text: string) {
     if (!text) return [];
-    const matches = text.matchAll(/{{(?<name>[\w-]+)}}/g);
+    const matches = text.matchAll(/{{\s*(?<name>[\w-]+)\s*}}/g);
     return Array.from(matches).map((match) => match.groups?.name || "");
   }
 }
@@ -463,7 +463,7 @@ function content(starInputs: unknown) {
     if (!parts) return [];
     const results = parts.flatMap((part) => {
       if (!("text" in part)) return [];
-      const matches = part.text.matchAll(/{{(?<name>[\w-]+)}}/g);
+      const matches = part.text.matchAll(/{{\s*(?<name>[\w-]+)\s*}}/g);
       return unique(Array.from(matches))
         .map((match) => {
           const name = match.groups?.name || "";
@@ -534,7 +534,7 @@ function content(starInputs: unknown) {
         parts.push(part);
         continue;
       }
-      const matches = part.text.matchAll(/{{(?<name>[\w-]+)}}/g);
+      const matches = part.text.matchAll(/{{\s*(?<name>[\w-]+)\s*}}/g);
       let start = 0;
       for (const match of matches) {
         const name = match.groups?.name || "";
@@ -703,7 +703,7 @@ function describeContent(inputs: unknown) {
 
   function collectParams(text: string) {
     if (!text) return [];
-    const matches = text.matchAll(/{{(?<name>[\w-]+)}}/g);
+    const matches = text.matchAll(/{{\s*(?<name>[\w-]+)\s*}}/g);
     return Array.from(matches).map((match) => match.groups?.name || "");
   }
 }
