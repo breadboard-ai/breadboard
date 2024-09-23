@@ -18,8 +18,8 @@ type SubstituteInputParams = {
 };
 
 type Location = {
-  part: LlmContent;
-  parts: LlmContent[];
+  part: LlmContent["parts"][0];
+  parts: LlmContent["parts"];
 };
 
 type ParamLocationMap = Record<string, Location[]>;
@@ -104,7 +104,7 @@ function substitute(inputParams: SubstituteInputParams) {
       const toolName = `TOOL_${name.toLocaleUpperCase()}`;
       return {
         name: toolName,
-        description: `Call this function when asked to invoke the "${name.toLocaleUpperCase()}" tool.`,
+        description: `Call this function when asked to invoke the "${toolName}" tool.`,
       } satisfies FunctionDeclaration;
     });
   }
@@ -113,7 +113,7 @@ function substitute(inputParams: SubstituteInputParams) {
     const parts = content?.parts;
     if (!parts) return [];
     const results = parts.flatMap((part) => {
-      if (!("text" in part)) return [];
+      if (!("text" in part)) return [] as ParamInfo[];
       const matches = part.text.matchAll(
         /{{\s*(?<name>[\w-]+)(?:\s*\|\s*(?<op>[\w-]*)(?::\s*"(?<arg>[\w-]+)")?)?\s*}}/g
       );
@@ -123,17 +123,17 @@ function substitute(inputParams: SubstituteInputParams) {
           const op = match.groups?.op || "";
           const arg = match.groups?.arg || "";
           if (!name) return null;
-          return { name, op, arg, locations: [{ part, parts }] };
+          return { name, op, arg, locations: [{ part, parts }] } as ParamInfo;
         })
         .filter(Boolean);
-    }) as unknown as ParamInfo[];
+    }) as ParamInfo[];
     return results;
   }
 
   function mergeParams(...paramList: ParamInfo[][]) {
-    return paramList.reduce((acc, params) => {
+    const result = paramList.reduce((acc, params) => {
       for (const param of params) {
-        if (param.op !== "in") {
+        if (param.op && param.op !== "in") {
           continue;
         }
         const { name, locations } = param;
@@ -146,6 +146,7 @@ function substitute(inputParams: SubstituteInputParams) {
       }
       return acc;
     }, {} as ParamLocationMap);
+    return result;
   }
 
   function subContent(

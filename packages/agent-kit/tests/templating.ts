@@ -77,7 +77,7 @@ describe("Templating", () => {
       task: llmContent("user", 'Act like a "TOOL_CHARACTER".'),
       outs: [
         {
-          name: "character",
+          name: "TOOL_CHARACTER",
           description:
             'Call this function when asked to invoke the "TOOL_CHARACTER" tool.',
         },
@@ -391,7 +391,7 @@ describe("Specialist v2 describer", () => {
     ok(outputProps);
     delete outputProps.out;
     deepStrictEqual(outputProps, {
-      "p-character": {
+      "p-TOOL_CHARACTER": {
         description: 'The output chosen when the "character" tool is invoked',
         title: "Character",
         type: "string",

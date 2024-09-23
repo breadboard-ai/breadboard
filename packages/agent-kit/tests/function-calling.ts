@@ -215,6 +215,7 @@ describe("function-calling/boardInvocationAssembler", () => {
         { $board: "get/web/page", url: "https://example.com/", $flags: {} },
         { $board: "get/next/holiday", country: "LT", $flags: {} },
       ],
+      routes: [],
     });
   });
 
@@ -255,6 +256,7 @@ describe("function-calling/boardInvocationAssembler", () => {
           $flags: { outputLLMContent: "holidays" },
         },
       ],
+      routes: [],
     });
   });
 
@@ -295,6 +297,7 @@ describe("function-calling/boardInvocationAssembler", () => {
           $flags: { outputLLMContent: "holidays" },
         },
       ],
+      routes: [],
     });
   });
 });
