@@ -1031,20 +1031,20 @@ export class LLMInput extends LitElement {
                 <span id="insert">Insert:</span>
                 ${this.allow.textInline
                   ? html`<button
-                      title="Add text field"
+                      title="Add text"
                       id="add-text"
                       @click=${this.#addTextPart}
                     >
-                      Add text field
+                      Add text
                     </button>`
                   : nothing}
                 ${this.allow.imageWebcam
                   ? html`<button
-                      title="Add image from webcam"
+                      title="Add webcam image"
                       id="add-image-webcam"
                       @click=${() => this.#addPart("image-webcam")}
                     >
-                      Add image from webcam
+                      Add webcam image
                     </button>`
                   : nothing}
                 ${this.allow.imageDrawable
@@ -1137,44 +1137,43 @@ export class LLMInput extends LitElement {
                   <button
                     class="add-part-after"
                     @click=${() => this.#addPartAfter(idx)}
-                    title="Add part after"
+                    title="Add text after"
                   >
-                    Add part after
+                    Add text after
                   </button>
                   <button
                     class="move-part-up"
                     @click=${() => this.#movePartUp(idx)}
                     ?disabled=${idx === 0}
-                    title="Move part up"
+                    title="Move up"
                   >
-                    Move part up
+                    Move up
                   </button>
                   <button
                     class="move-part-down"
                     @click=${() => this.#movePartDown(idx)}
                     ?disabled=${isLastPart}
-                    title="Move part down"
+                    title="Move down"
                   >
-                    Move part down
+                    Move down
                   </button>
                   <button
                     class="delete-part"
                     @click=${() => this.#deletePart(idx)}
-                    title="Delete part"
+                    title="Delete"
                   >
-                    Delete part
+                    Delete
                   </button>
                 </div>
               </div>`;
             })
           : html`<div id="no-parts">
-              No parts set.
               <button
-                title="Add text field"
+                title="Add text"
                 class="add-text"
                 @click=${this.#addTextPart}
               >
-                Add a text part
+                Add text
               </button>
             </div>`}
       </div>`;

@@ -1740,6 +1740,11 @@ export class Editor extends LitElement {
         disabled?: boolean;
       }> = [
         {
+          title: "Edit Board Details",
+          name: "edit-board-details",
+          icon: "edit",
+        },
+        {
           title: "Copy Board URL",
           name: "copy-to-clipboard",
           icon: "copy",
