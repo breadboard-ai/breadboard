@@ -151,6 +151,7 @@ export class GraphRenderer extends LitElement {
       delta.y = (contentRect.height - this.#lastContentRect.height) * 0.5;
     }
 
+    const ratio = 1 / this.#container.scale.x;
     for (const child of this.#container.children) {
       if (!(child instanceof Graph)) {
         continue;
@@ -161,9 +162,13 @@ export class GraphRenderer extends LitElement {
       child.layoutRect = contentRect;
 
       // Reposition it to retain its center.
-      const ratio = 1 / this.#container.scale.x;
       child.position.x += delta.x * ratio;
       child.position.y += delta.y * ratio;
+    }
+
+    if (this.#background) {
+      this.#background.tilePosition.x += delta.x * ratio;
+      this.#background.tilePosition.y += delta.y * ratio;
     }
 
     this.#lastContentRect = contentRect;

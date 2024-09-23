@@ -59,6 +59,7 @@ export class OverflowMenu extends LitElement {
       text-align: left;
       border-bottom: 1px solid var(--bb-neutral-300);
       cursor: pointer;
+      min-width: 130px;
     }
 
     button:first-of-type {

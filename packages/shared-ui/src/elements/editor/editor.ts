@@ -366,10 +366,10 @@ export class Editor extends LitElement {
     }
 
     #controls {
-      height: calc(var(--bb-grid-size) * 9);
+      height: var(--bb-grid-size-9);
       position: absolute;
-      bottom: calc(var(--bb-grid-size) * 3);
-      right: calc(var(--bb-grid-size) * 42);
+      top: var(--bb-grid-size-3);
+      left: var(--bb-grid-size-3);
       background: #fff;
       border-radius: 40px;
       padding: 0 var(--bb-grid-size) 0 var(--bb-grid-size-3);
@@ -503,9 +503,9 @@ export class Editor extends LitElement {
 
     bb-overflow-menu {
       position: absolute;
-      top: auto;
-      bottom: calc(var(--bb-grid-size) * 11);
-      right: calc(var(--bb-grid-size) * 40);
+      top: calc(var(--bb-grid-size) * 11);
+      right: auto;
+      left: calc(var(--bb-grid-size) * 40);
     }
 
     #subgraph-selector {
@@ -574,30 +574,31 @@ export class Editor extends LitElement {
 
     #active-component {
       position: absolute;
-      top: calc(var(--bb-grid-size) * 3);
-      left: calc(var(--bb-grid-size) * 3);
+      bottom: calc(var(--bb-grid-size) * 3);
+      right: calc(var(--bb-grid-size) * 42);
       border-radius: 50px;
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
-      display: flex;
-      align-items: center;
       border: none;
-      padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size);
+      padding: 0 var(--bb-grid-size-5) 0 var(--bb-grid-size-2);
       display: flex;
       align-items: center;
-      background: var(--bb-ui-100);
+      background: var(--bb-neutral-0);
       border-radius: var(--bb-grid-size-10);
-      height: 24px;
+      height: var(--bb-grid-size-9);
       cursor: pointer;
+      color: var(--bb-neutral-500);
+      border: 1px solid var(--bb-neutral-300);
+      transition: all 0.3s cubic-bezier(0, 0, 0.3, 1);
     }
 
     #controls #active-component {
       margin-left: 0;
     }
 
-    #active-component:hover,
-    #active-component:focus {
-      background: var(--bb-ui-100);
+    #active-component:hover {
+      color: var(--bb-inputs-600);
+      border: 1px solid var(--bb-inputs-300);
     }
 
     #active-component::before {
@@ -610,12 +611,14 @@ export class Editor extends LitElement {
 
     #active-component.active {
       opacity: 1;
-      background: var(--bb-ui-600);
-      color: var(--bb-neutral-0);
+      color: var(--bb-inputs-700);
+      background: var(--bb-inputs-50);
+      border: 1px solid var(--bb-inputs-500);
     }
 
+    #active-component:hover::before,
     #active-component.active::before {
-      background: var(--bb-icon-directions-inverted) left center / 20px 20px
+      background: var(--bb-icon-directions-active) left center / 20px 20px
         no-repeat;
     }
   `;
@@ -1835,7 +1838,7 @@ export class Editor extends LitElement {
                   }
                 }}
               >
-                Follow run
+                Follow active component
               </button>
 
               ${this.readOnly
