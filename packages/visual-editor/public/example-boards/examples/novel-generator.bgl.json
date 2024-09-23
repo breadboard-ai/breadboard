@@ -2,42 +2,6 @@
   "title": "Guide: Novel Generator",
   "description": "Generates a novel based on an idea.",
   "version": "0.0.1",
-  "metadata": {
-    "comments": [
-      {
-        "id": "comment-d234a397",
-        "text": "Read the guide: [Building a Novel Generator with the Agent Kit](https://breadboard-ai.github.io/breadboard/docs/guides/novel-generator/)",
-        "metadata": {
-          "visual": {
-            "x": -0.9999999999999787,
-            "y": -119,
-            "collapsed": "collapsed"
-          }
-        }
-      }
-    ],
-    "tags": []
-  },
-  "edges": [
-    {
-      "from": "input",
-      "to": "specialist-9c080a8c",
-      "in": "in",
-      "out": "context"
-    },
-    {
-      "from": "specialist-8efe9743",
-      "to": "output",
-      "in": "context",
-      "out": "out"
-    },
-    {
-      "from": "specialist-9c080a8c",
-      "to": "specialist-8efe9743",
-      "in": "in",
-      "out": "out"
-    }
-  ],
   "nodes": [
     {
       "type": "input",
@@ -51,7 +15,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
             }
@@ -62,9 +28,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 7.105427357601002e-15,
-          "y": 5.684341886080802e-14,
-          "collapsed": "collapsed"
+          "x": 100.71093750000003,
+          "y": -107.34375000000006,
+          "collapsed": true
         }
       }
     },
@@ -80,7 +46,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "null"
             }
@@ -91,9 +59,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 1086.0000000000005,
-          "y": 5.684341886080802e-14,
-          "collapsed": "collapsed"
+          "x": 790.7109375000001,
+          "y": -105.34375000000006,
+          "collapsed": true
         }
       }
     },
@@ -102,9 +70,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 283.99999999999994,
-          "y": 5.684341886080802e-14,
-          "collapsed": "collapsed"
+          "x": 298.99999999999994,
+          "y": -107.99999999999994,
+          "collapsed": true
         },
         "title": "Outliner",
         "logLevel": "debug"
@@ -136,9 +104,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 685,
-          "y": 5.684341886080802e-14,
-          "collapsed": "collapsed"
+          "x": 521.7109375000001,
+          "y": -108.34374999999983,
+          "collapsed": true
         },
         "title": "Developer",
         "logLevel": "debug"
@@ -165,5 +133,41 @@
         ]
       }
     }
-  ]
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "specialist-9c080a8c",
+      "in": "in",
+      "out": "context"
+    },
+    {
+      "from": "specialist-8efe9743",
+      "to": "output",
+      "in": "context",
+      "out": "out"
+    },
+    {
+      "from": "specialist-9c080a8c",
+      "to": "specialist-8efe9743",
+      "in": "in",
+      "out": "out"
+    }
+  ],
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-d234a397",
+        "text": "Read the guide: [Building a Novel Generator with the Agent Kit](https://breadboard-ai.github.io/breadboard/docs/guides/novel-generator/)",
+        "metadata": {
+          "visual": {
+            "x": 119,
+            "y": -265.9999999999999,
+            "collapsed": true
+          }
+        }
+      }
+    ],
+    "tags": []
+  }
 }
