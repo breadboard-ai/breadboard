@@ -6,7 +6,7 @@
 
 import { describe, it } from "node:test";
 import { InlineDataCapabilityPart } from "@google-labs/breadboard";
-import { deepStrictEqual } from "node:assert";
+import { deepStrictEqual, ok } from "node:assert";
 import {
   describeSpecialist,
   substitute,
@@ -353,6 +353,47 @@ describe("Specialist v2 describer", () => {
       "p-name": {
         description: 'The value to substitute for the parameter "name"',
         title: "Name",
+        type: "string",
+      },
+    });
+  });
+
+  it("recognizes outputs", () => {
+    const $inputSchema = {};
+    const $outputSchema = {};
+    const persona = llmContent("user", "You're a {{character}}, {{name}}.");
+    const task = llmContent("user", "Act like a {{character | out}}.");
+
+    const result = describeSpecialist({
+      $inputSchema,
+      $outputSchema,
+      persona,
+      task,
+    });
+
+    const paramProps = result.inputSchema.properties;
+    delete paramProps.in;
+    delete paramProps.persona;
+    delete paramProps.task;
+    deepStrictEqual(paramProps, {
+      "p-character": {
+        description: 'The value to substitute for the parameter "character"',
+        title: "Character",
+        type: "string",
+      },
+      "p-name": {
+        description: 'The value to substitute for the parameter "name"',
+        title: "Name",
+        type: "string",
+      },
+    });
+    const outputProps = result.outputSchema.properties;
+    ok(outputProps);
+    delete outputProps.out;
+    deepStrictEqual(outputProps, {
+      "p-character": {
+        description: 'The output chosen when the "character" tool is invoked',
+        title: "Character",
         type: "string",
       },
     });

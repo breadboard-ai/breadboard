@@ -336,13 +336,24 @@ function describeSpecialist(inputs: unknown) {
     required: [],
   };
 
-  const params = unique([
+  const all = [
     ...collectParams(textFromLLMContent(persona)),
     ...collectParams(textFromLLMContent(task)),
-  ]);
+  ];
+  const params: string[] = [];
+  const outs: string[] = [];
 
-  const props = Object.fromEntries(
-    params.map((param) => [
+  for (const param of all) {
+    const { op = "in" } = param;
+    if (op === "in") {
+      params.push(param.name);
+    } else {
+      outs.push(param.name);
+    }
+  }
+
+  const inputProps = Object.fromEntries(
+    unique(params).map((param) => [
       toId(param),
       {
         title: toTitle(param),
@@ -352,14 +363,26 @@ function describeSpecialist(inputs: unknown) {
     ])
   );
 
+  const outputProps = Object.fromEntries(
+    unique(outs).map((param) => [
+      toId(param),
+      {
+        title: toTitle(param),
+        description: `The output chosen when the "${param}" tool is invoked`,
+        type: "string",
+      },
+    ])
+  );
+
   const required = params.map(toId);
 
-  return mergeSchemas(inputSchema, $outputSchema, props);
+  return mergeSchemas(inputSchema, $outputSchema, inputProps, outputProps);
 
   function mergeSchemas(
     inputSchema: Schema,
     outputSchema: Schema,
-    properties: Record<string, Schema>
+    properties: Record<string, Schema>,
+    outputProps: Record<string, Schema>
   ) {
     return {
       inputSchema: {
@@ -370,7 +393,13 @@ function describeSpecialist(inputs: unknown) {
         },
         required: [...(inputSchema.required || []), ...required],
       },
-      outputSchema: outputSchema,
+      outputSchema: {
+        ...outputSchema,
+        properties: {
+          ...outputSchema.properties,
+          ...outputProps,
+        },
+      },
     };
   }
 
@@ -400,12 +429,17 @@ function describeSpecialist(inputs: unknown) {
     return Array.from(new Set(params));
   }
 
-  function collectParams(text: string) {
+  function collectParams(text: string): ParamInfo[] {
     if (!text) return [];
     const matches = text.matchAll(
       /{{\s*(?<name>[\w-]+)(?:\s*\|\s*(?<op>[\w-]*)(?::\s*"(?<arg>[\w-]+)")?)?\s*}}/g
     );
-    return Array.from(matches).map((match) => match.groups?.name || "");
+    return Array.from(matches).map((match) => {
+      const name = match.groups?.name || "";
+      const op = match.groups?.op;
+      const arg = match.groups?.arg;
+      return { name, op, arg, locations: [] } as ParamInfo;
+    });
   }
 }
 
