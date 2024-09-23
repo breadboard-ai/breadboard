@@ -2,6 +2,9 @@
   "title": "Basics: Blank board",
   "description": "A blank board. Use it to start a new board",
   "version": "0.0.1",
+  "metadata": {
+    "comments": []
+  },
   "edges": [
     {
       "from": "input-0",
@@ -22,9 +25,14 @@
               "type": "string"
             }
           },
-          "required": [
-            "text"
-          ]
+          "required": ["text"]
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 0,
+          "y": 0,
+          "collapsed": "collapsed"
         }
       }
     },
@@ -39,9 +47,14 @@
               "type": "string"
             }
           },
-          "required": [
-            "text"
-          ]
+          "required": ["text"]
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 296,
+          "y": 0,
+          "collapsed": "collapsed"
         }
       }
     }
