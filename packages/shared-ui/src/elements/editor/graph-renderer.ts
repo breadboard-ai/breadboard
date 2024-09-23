@@ -56,6 +56,8 @@ import { GraphComment } from "./graph-comment.js";
 import { EdgeData, TopGraphRunResult } from "../../types/types.js";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
+const backgroundGridColor = getGlobalColor("--bb-ui-100");
+const backgroundGridAlpha = 0.25;
 const selectionBoxBackgroundAlpha = 0.05;
 const selectionBoxBackgroundColor = getGlobalColor("--bb-neutral-900");
 const selectionBoxBorderColor = getGlobalColor("--bb-neutral-500");
@@ -472,15 +474,14 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.addListener(
       "pointermove",
       (evt: PIXI.FederatedPointerEvent) => {
-        if (!evt.isPrimary) {
-          return;
-        }
-
         if (this.#mode === MODE.MOVE) {
           onStageMove(evt);
           return;
         }
 
+        if (!evt.isPrimary) {
+          return;
+        }
         onDragSelect(evt);
       }
     );
@@ -529,6 +530,11 @@ export class GraphRenderer extends LitElement {
       } else {
         this.#container.x -= evt.deltaX;
         this.#container.y -= evt.deltaY;
+
+        if (this.#background) {
+          this.#background.tilePosition.x -= evt.deltaX;
+          this.#background.tilePosition.y -= evt.deltaY;
+        }
       }
 
       this.#storeContainerTransformForVisibleGraph();
@@ -1382,15 +1388,27 @@ export class GraphRenderer extends LitElement {
 
     if (!this.#background) {
       const canvas = document.createElement("canvas");
-      canvas.width = 1;
-      canvas.height = 1;
+      canvas.width = 32;
+      canvas.height = 32;
       const ctx = canvas.getContext("2d");
       if (!ctx) {
         console.warn("Unable to create background texture");
         return;
       }
+
+      // Solid blue background.
       ctx.fillStyle = `#${backgroundColor.toString(16)}`;
-      ctx.fillRect(0, 0, 1, 1);
+      ctx.fillRect(0, 0, 32, 32);
+
+      // Grid.
+      ctx.save();
+      ctx.strokeStyle = `#${backgroundGridColor.toString(16)}`;
+      ctx.beginPath();
+      ctx.rect(0.5, 0.5, 32, 32);
+      ctx.globalAlpha = backgroundGridAlpha;
+      ctx.stroke();
+      ctx.closePath();
+      ctx.restore();
 
       const texture = PIXI.Texture.from(canvas);
 

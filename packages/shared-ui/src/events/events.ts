@@ -69,6 +69,22 @@ export class StopEvent extends Event {
   }
 }
 
+export class SaveEvent extends Event {
+  static eventName = "bbsave";
+
+  constructor() {
+    super(SaveEvent.eventName, { ...eventInit });
+  }
+}
+
+export class SaveAsEvent extends Event {
+  static eventName = "bbsaveas";
+
+  constructor() {
+    super(SaveAsEvent.eventName, { ...eventInit });
+  }
+}
+
 export class BoardInfoUpdateEvent extends Event {
   static eventName = "bbboardinfoupdate";
 
