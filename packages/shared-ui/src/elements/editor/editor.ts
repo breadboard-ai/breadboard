@@ -580,7 +580,7 @@ export class Editor extends LitElement {
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
       border: none;
-      padding: 0 var(--bb-grid-size-5) 0 var(--bb-grid-size-2);
+      padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-2);
       display: flex;
       align-items: center;
       background: var(--bb-neutral-0);
@@ -1843,7 +1843,7 @@ export class Editor extends LitElement {
                   }
                 }}
               >
-                Follow active component
+                Follow
               </button>
 
               ${this.readOnly
