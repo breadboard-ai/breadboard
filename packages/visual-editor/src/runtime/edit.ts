@@ -43,6 +43,8 @@ export class Edit extends EventTarget {
       if (subGraphId) {
         return editor.getGraph(subGraphId);
       }
+
+      return editor;
     }
 
     const editor = edit(tab.graph, { kits: this.kits, loader: this.loader });

@@ -10,7 +10,7 @@ import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types.js";
 import MarkdownIt from "markdown-it";
 
 const markdown = MarkdownIt();
-const backgroundColor = getGlobalColor("--bb-ui-50");
+const backgroundColor = getGlobalColor("--bb-neutral-0");
 const emptyTextColor = getGlobalColor("--bb-neutral-600");
 const textColor = getGlobalColor("--bb-neutral-800");
 const linkColor = getGlobalColor("--bb-ui-500");
@@ -331,7 +331,7 @@ export class GraphComment extends PIXI.Container {
     this.#background.beginPath();
     this.#background.roundRect(0, 0, width, height, this.#borderRadius);
     this.#background.stroke({ color: borderColor, width: borderWidth });
-    this.#background.fill({ color: backgroundColor, alpha: 0.1 });
+    this.#background.fill({ color: backgroundColor, alpha: 1 });
     this.#background.closePath();
 
     this.#drawHitAreas();

@@ -70,6 +70,10 @@ export class OverflowMenu extends LitElement {
       border-bottom: none;
     }
 
+    button:only-child {
+      border-radius: var(--bb-grid-size-2);
+    }
+
     button[disabled] {
       opacity: 0.5;
       cursor: auto;

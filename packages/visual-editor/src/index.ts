@@ -1248,6 +1248,23 @@ export class Main extends LitElement {
     }
   }
 
+  #showBoardEditOverlay() {
+    if (!this.tab) {
+      return;
+    }
+
+    const { description, title, version, metadata } = this.tab.graph;
+
+    this.boardEditOverlayInfo = {
+      description: description ?? "",
+      isTool: metadata?.tags?.includes("tool") ?? false,
+      published: metadata?.tags?.includes("published") ?? false,
+      subGraphId: this.tab.subGraphId,
+      title: title ?? "",
+      version: version ?? "",
+    };
+  }
+
   render() {
     const toasts = html`${map(
       this.toasts,
@@ -1261,36 +1278,6 @@ export class Main extends LitElement {
         ></bb-toast>`;
       }
     )}`;
-
-    let saveButton: HTMLTemplateResult | symbol = nothing;
-    if (this.tab && this.tab.graph && this.tab.graph.url) {
-      try {
-        const url = new URL(this.tab.graph.url);
-        const provider = this.#getProviderForURL(url);
-        const capabilities = provider?.canProvide(url);
-        if (provider && capabilities && capabilities.save) {
-          saveButton = html`<button
-            id="save-board"
-            title="Save Board BGL"
-            @click=${this.#attemptBoardSave}
-          >
-            Save
-          </button>`;
-        } else {
-          saveButton = html`<button
-            id="save-board"
-            title="Save Board BGL"
-            @click=${() => {
-              this.showSaveAsDialog = true;
-            }}
-          >
-            Save As...
-          </button>`;
-        }
-      } catch (err) {
-        // If there are any problems with the URL, etc, don't offer the save button.
-      }
-    }
 
     const showingOverlay =
       this.boardEditOverlayInfo !== null ||
@@ -1490,13 +1477,25 @@ export class Main extends LitElement {
                     class=${classMap({
                       "back-to-main-board": true,
                     })}
-                    @click=${() => {
+                    @click=${(evt: PointerEvent) => {
+                      if (evt.metaKey) {
+                        this.#showBoardEditOverlay();
+                        return;
+                      }
+
                       if (this.tab?.id === tab.id && tab.subGraphId !== null) {
                         tab.subGraphId = null;
                         return;
                       }
 
                       this.#runtime.board.changeTab(tab.id);
+                    }}
+                    @dblclick=${() => {
+                      if (!this.tab) {
+                        return;
+                      }
+
+                      this.#showBoardEditOverlay();
                     }}
                   >
                     ${tab.graph.title}
@@ -1528,27 +1527,6 @@ export class Main extends LitElement {
             })}
           </div>
           <button
-            id="undo"
-            title="Undo last action"
-            ?disabled=${this.tab?.graph === null || !this.#runtime.edit.canUndo(this.tab)}
-            @click=${() => {
-              this.#runtime.edit.undo(this.tab);
-            }}
-          >
-            Preview
-          </button>
-          <button
-            id="redo"
-            title="Redo last action"
-            ?disabled=${this.tab?.graph === null || !this.#runtime.edit.canRedo(this.tab)}
-            @click=${() => {
-              this.#runtime.edit.redo(this.tab);
-            }}
-          >
-            Preview
-          </button>
-          ${saveButton}
-          <button
             class=${classMap({ active: this.showOverflowMenu })}
             id="toggle-overflow-menu"
             title="Toggle Overflow Menu"
@@ -1577,13 +1555,188 @@ export class Main extends LitElement {
               .settings=${this.#settings}
               .providers=${this.#providers}
               .providerOps=${this.providerOps}
-              .history=${history}
+              .history=${this.#runtime.edit.getHistory(this.tab)}
               .version=${this.#version}
               .showWelcomePanel=${this.showWelcomePanel}
               .recentBoards=${this.#recentBoards}
               .inputsFromLastRun=${inputsFromLastRun}
+              @bbsave=${() => {
+                this.#attemptBoardSave();
+              }}
+              @bbsaveas=${() => {
+                this.showSaveAsDialog = true;
+              }}
+              @bbundo=${() => {
+                if (!this.#runtime.edit.canUndo(this.tab)) {
+                  return;
+                }
+
+                this.#runtime.edit.undo(this.tab);
+              }}
+              @bbredo=${() => {
+                if (!this.#runtime.edit.canRedo(this.tab)) {
+                  return;
+                }
+
+                this.#runtime.edit.redo(this.tab);
+              }}
               @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
                 this.#attemptBoardStart(evt);
+              }}
+              @bboverflowmenuaction=${async (
+                evt: BreadboardUI.Events.OverflowMenuActionEvent
+              ) => {
+                switch (evt.action) {
+                  case "copy-to-clipboard": {
+                    if (!this.tab?.graph || !this.tab?.graph.url) {
+                      this.toast(
+                        "Unable to copy board URL",
+                        BreadboardUI.Events.ToastType.ERROR
+                      );
+                      break;
+                    }
+
+                    await navigator.clipboard.writeText(this.tab.graph.url);
+                    this.toast(
+                      "Board URL copied",
+                      BreadboardUI.Events.ToastType.INFORMATION
+                    );
+                    break;
+                  }
+
+                  case "copy-tab-to-clipboard": {
+                    if (!this.tab?.graph || !this.tab?.graph.url) {
+                      this.toast(
+                        "Unable to copy board URL",
+                        BreadboardUI.Events.ToastType.ERROR
+                      );
+                      break;
+                    }
+
+                    const url = new URL(window.location.href);
+                    url.search = `?tab0=${this.tab.graph.url}`;
+
+                    await navigator.clipboard.writeText(url.href);
+                    this.toast(
+                      "Tab URL copied",
+                      BreadboardUI.Events.ToastType.INFORMATION
+                    );
+                    break;
+                  }
+
+                  case "download": {
+                    if (!this.tab?.graph) {
+                      break;
+                    }
+
+                    const board = structuredClone(this.tab?.graph);
+                    delete board["url"];
+
+                    const data = JSON.stringify(board, null, 2);
+                    const url = URL.createObjectURL(
+                      new Blob([data], { type: "application/json" })
+                    );
+
+                    for (const url of generatedUrls) {
+                      try {
+                        URL.revokeObjectURL(url);
+                      } catch (err) {
+                        console.warn(err);
+                      }
+                    }
+
+                    generatedUrls.clear();
+                    generatedUrls.add(url);
+
+                    let fileName = `${board.title ?? "Untitled Board"}.json`;
+                    if (this.tab.graph.url) {
+                      try {
+                        const boardUrl = new URL(
+                          this.tab.graph.url,
+                          window.location.href
+                        );
+                        const baseName = /[^/]+$/.exec(boardUrl.pathname);
+                        if (baseName) {
+                          fileName = baseName[0];
+                        }
+                      } catch (err) {
+                        // Ignore errors - this is best-effort to get the file name from the URL.
+                      }
+                    }
+
+                    const anchor = document.createElement("a");
+                    anchor.download = fileName;
+                    anchor.href = url;
+                    anchor.click();
+                    break;
+                  }
+
+                  case "delete": {
+                    if (!this.tab?.graph || !this.tab?.graph.url) {
+                      return;
+                    }
+
+                    const provider = this.#getProviderForURL(
+                      new URL(this.tab?.graph.url)
+                    );
+                    if (!provider) {
+                      return;
+                    }
+
+                    this.#attemptBoardDelete(
+                      provider.name,
+                      this.tab?.graph.url,
+                      true
+                    );
+                    break;
+                  }
+
+                  case "save-as": {
+                    this.showSaveAsDialog = true;
+                    break;
+                  }
+
+                  case "preview": {
+                    if (!this.tab?.graph || !this.tab?.graph.url) {
+                      return;
+                    }
+
+                    const provider = this.#getProviderForURL(
+                      new URL(this.tab?.graph.url)
+                    );
+                    if (!provider) {
+                      return;
+                    }
+
+                    try {
+                      const previewUrl = await provider.preview(
+                        new URL(this.tab?.graph.url)
+                      );
+
+                      await navigator.clipboard.writeText(previewUrl.href);
+                      this.toast(
+                        "Preview URL copied",
+                        BreadboardUI.Events.ToastType.INFORMATION
+                      );
+                    } catch (err) {
+                      this.toast(
+                        "Unable to create preview",
+                        BreadboardUI.Events.ToastType.ERROR
+                      );
+                    }
+                    break;
+                  }
+
+                  default: {
+                    this.toast(
+                      "Unknown action",
+                      BreadboardUI.Events.ToastType.WARNING
+                    );
+                    break;
+                  }
+                }
+
+                this.showOverflowMenu = false;
               }}
               @dragover=${(evt: DragEvent) => {
                 evt.preventDefault();
@@ -2150,60 +2303,7 @@ export class Main extends LitElement {
         name: string;
         icon: string;
         disabled?: boolean;
-      }> = [
-        {
-          title: "Download Board",
-          name: "download",
-          icon: "download",
-        },
-      ];
-
-      if (this.tab?.graph && this.tab?.graph.url) {
-        try {
-          const url = new URL(this.tab?.graph.url);
-          const provider = this.#getProviderForURL(url);
-          const capabilities = provider?.canProvide(url);
-          if (provider && capabilities) {
-            if (capabilities.save) {
-              actions.push({
-                title: "Save As...",
-                name: "save-as",
-                icon: "save-as",
-              });
-            }
-
-            if (capabilities.delete) {
-              actions.push({
-                title: "Delete Board",
-                name: "delete",
-                icon: "delete",
-              });
-            }
-
-            const extendedCapabilities = provider?.extendedCapabilities();
-            actions.push({
-              title: "Preview Board",
-              name: "preview",
-              icon: "preview",
-              disabled: !extendedCapabilities.preview,
-            });
-          }
-        } catch (err) {
-          // If there are any problems with the URL, etc, don't offer the save button.
-        }
-      }
-
-      actions.push({
-        title: "Copy Board URL",
-        name: "copy-to-clipboard",
-        icon: "copy",
-      });
-
-      actions.push({
-        title: "Copy Tab URL",
-        name: "copy-tab-to-clipboard",
-        icon: "copy",
-      });
+      }> = [];
 
       actions.push({
         title: "Settings",
@@ -2221,147 +2321,8 @@ export class Main extends LitElement {
           evt: BreadboardUI.Events.OverflowMenuActionEvent
         ) => {
           switch (evt.action) {
-            case "copy-to-clipboard": {
-              if (!this.tab?.graph || !this.tab?.graph.url) {
-                this.toast(
-                  "Unable to copy board URL",
-                  BreadboardUI.Events.ToastType.ERROR
-                );
-                break;
-              }
-
-              await navigator.clipboard.writeText(this.tab.graph.url);
-              this.toast(
-                "Board URL copied",
-                BreadboardUI.Events.ToastType.INFORMATION
-              );
-              break;
-            }
-
-            case "copy-tab-to-clipboard": {
-              if (!this.tab?.graph || !this.tab?.graph.url) {
-                this.toast(
-                  "Unable to copy board URL",
-                  BreadboardUI.Events.ToastType.ERROR
-                );
-                break;
-              }
-
-              const url = new URL(window.location.href);
-              url.search = `?tab0=${this.tab.graph.url}`;
-
-              await navigator.clipboard.writeText(url.href);
-              this.toast(
-                "Tab URL copied",
-                BreadboardUI.Events.ToastType.INFORMATION
-              );
-              break;
-            }
-
-            case "download": {
-              if (!this.tab?.graph) {
-                break;
-              }
-
-              const board = structuredClone(this.tab?.graph);
-              delete board["url"];
-
-              const data = JSON.stringify(board, null, 2);
-              const url = URL.createObjectURL(
-                new Blob([data], { type: "application/json" })
-              );
-
-              for (const url of generatedUrls) {
-                try {
-                  URL.revokeObjectURL(url);
-                } catch (err) {
-                  console.warn(err);
-                }
-              }
-
-              generatedUrls.clear();
-              generatedUrls.add(url);
-
-              let fileName = `${board.title ?? "Untitled Board"}.json`;
-              if (this.tab.graph.url) {
-                try {
-                  const boardUrl = new URL(
-                    this.tab.graph.url,
-                    window.location.href
-                  );
-                  const baseName = /[^/]+$/.exec(boardUrl.pathname);
-                  if (baseName) {
-                    fileName = baseName[0];
-                  }
-                } catch (err) {
-                  // Ignore errors - this is best-effort to get the file name from the URL.
-                }
-              }
-
-              const anchor = document.createElement("a");
-              anchor.download = fileName;
-              anchor.href = url;
-              anchor.click();
-              break;
-            }
-
-            case "save": {
-              await this.#attemptBoardSave();
-              break;
-            }
-
-            case "delete": {
-              if (!this.tab?.graph || !this.tab?.graph.url) {
-                return;
-              }
-
-              const provider = this.#getProviderForURL(
-                new URL(this.tab?.graph.url)
-              );
-              if (!provider) {
-                return;
-              }
-
-              this.#attemptBoardDelete(
-                provider.name,
-                this.tab?.graph.url,
-                true
-              );
-              break;
-            }
-
-            case "save-as": {
-              this.showSaveAsDialog = true;
-              break;
-            }
-
             case "settings": {
               this.showSettingsOverlay = true;
-              break;
-            }
-
-            case "preview": {
-              if (!this.tab?.graph || !this.tab?.graph.url) {
-                return;
-              }
-
-              const provider = this.#getProviderForURL(
-                new URL(this.tab?.graph.url)
-              );
-              if (!provider) {
-                return;
-              }
-
-              try {
-                this.previewOverlayURL = await provider.preview(
-                  new URL(this.tab?.graph.url)
-                );
-              } catch (err) {
-                this.toast(
-                  "Unable to create preview",
-                  BreadboardUI.Events.ToastType.ERROR
-                );
-              }
               break;
             }
 

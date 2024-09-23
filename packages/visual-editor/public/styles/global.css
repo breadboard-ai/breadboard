@@ -67,6 +67,7 @@
   --bb-icon-confirm-blue: url(/third_party/icons/confirm-blue.svg);
   --bb-icon-copy-to-clipboard: url(/third_party/icons/copy-to-clipboard.svg);
   --bb-icon-delete: url(/third_party/icons/delete.svg);
+  --bb-icon-debug-inverted: url(/third_party/icons/debug-inverted.svg);
   --bb-icon-directions: url(/third_party/icons/directions.svg);
   --bb-icon-directions-inverted: url(/third_party/icons/directions-inverted.svg);
   --bb-icon-download: url(/third_party/icons/download.svg);
@@ -94,6 +95,7 @@
   --bb-icon-minimize: url(/third_party/icons/minimize.svg);
   --bb-icon-menu: url(/third_party/icons/menu.svg);
   --bb-icon-model: url(/third_party/icons/model.svg);
+  --bb-icon-more-vert: url(/third_party/icons/more-vert.svg);
   --bb-icon-more-vert-inverted: url(/third_party/icons/more-vert-inverted.svg);
   --bb-icon-move-up: url(/third_party/icons/move-up.svg);
   --bb-icon-move-down: url(/third_party/icons/move-down.svg);
@@ -103,6 +105,7 @@
   --bb-icon-preview: url(/third_party/icons/preview.svg);
   --bb-icon-public: url(/third_party/icons/public.svg);
   --bb-icon-quick-jump: url(/third_party/icons/quick-jump.svg);
+  --bb-icon-redo: url(/third_party/icons/redo.svg);
   --bb-icon-redo-inverted: url(/third_party/icons/redo-inverted.svg);
   --bb-icon-refresh: url(/third_party/icons/refresh.svg);
   --bb-icon-reset-image: url(/third_party/icons/reset-image.svg);
@@ -121,6 +124,7 @@
   --bb-icon-sound: url(/third_party/icons/sound.svg);
   --bb-icon-stop-circle: url(/third_party/icons/stop-circle.svg);
   --bb-icon-tool: url(/third_party/icons/tool.svg);
+  --bb-icon-undo: url(/third_party/icons/undo.svg);
   --bb-icon-undo-inverted: url(/third_party/icons/undo-inverted.svg);
   --bb-icon-unfold-less: url(/third_party/icons/unfold-less.svg);
   --bb-icon-unfold-more: url(/third_party/icons/unfold-more.svg);
