@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphProvider, SubGraphs } from "@google-labs/breadboard";
+import {
+  GraphDescriptor,
+  GraphProvider,
+  SubGraphs,
+} from "@google-labs/breadboard";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
@@ -13,6 +17,9 @@ import { SubGraphChosenEvent } from "../../../events/events.js";
 
 @customElement("bb-board-selector")
 export class BoardSelector extends LitElement {
+  @property()
+  graph: GraphDescriptor | null = null;
+
   @property()
   providers: GraphProvider[] = [];
 
@@ -136,6 +143,12 @@ export class BoardSelector extends LitElement {
 
   render() {
     const showQuickSwitch = this.#board && this.#board.startsWith("#");
+    const providers = this.providers.filter((provider) =>
+      this.graph && this.graph.url
+        ? provider.canProvide(new URL(this.graph.url))
+        : false
+    );
+
     return html`<section>
       <div id="board-selector">
         <select
@@ -173,22 +186,31 @@ export class BoardSelector extends LitElement {
                 })}
               </optgroup>`
             : nothing}
-          ${map(this.providers, (provider) => {
+          ${map(providers, (provider) => {
             return html`${map(provider.items(), ([, store]) => {
-              const storeItems = [...store.items].filter(([, storeItem]) => {
-                return (storeItem.tags ?? []).includes("tool");
-              });
+              const storeItems = [...store.items]
+                .filter(([, storeItem]) => {
+                  return (storeItem.tags ?? []).includes("tool");
+                })
+                .sort(([, { title: titleA }], [, { title: titleB }]) => {
+                  if (!titleA && titleB) return 1;
+                  if (titleA && !titleB) return -1;
+                  if (!titleA && !titleB) return 0;
+                  if (titleA! > titleB!) return 1;
+                  if (titleA! < titleB!) return -1;
+                  return 0;
+                });
 
-              return html`<optgroup label="${store.title}">
+              return html`<optgroup label="${store.title} boards">
                 ${storeItems.length
-                  ? map(storeItems, ([name, { url }]) => {
+                  ? map(storeItems, ([name, { url, title, username }]) => {
                       // TODO: Figure out whether URLs should be expanded here.
                       const expandedUrl = new URL(url, window.location.href);
                       return html`<option
                         ?selected=${expandedUrl.href === this.#board}
                         value=${expandedUrl.href}
                       >
-                        ${name}
+                        ${title ?? name}${username ? ` (@${username})` : ""}
                       </option>`;
                     })
                   : html`<option disabled>

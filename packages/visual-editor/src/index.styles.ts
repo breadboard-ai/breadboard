@@ -135,12 +135,13 @@ export const styles = css`
   }
 
   #toggle-settings {
-    padding: 8px;
-    font-size: 0;
+    padding: var(--bb-grid-size-2) var(--bb-grid-size-3) var(--bb-grid-size-2)
+      var(--bb-grid-size-8);
     margin-right: 0;
-    background: center center var(--bb-icon-settings);
-    background-repeat: no-repeat;
-    width: 32px;
+    background: var(--bb-icon-settings-inverted) 8px center / 20px 20px
+      no-repeat;
+    font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+      var(--bb-font-family);
   }
 
   #toggle-settings.active {

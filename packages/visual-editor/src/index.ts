@@ -1527,14 +1527,14 @@ export class Main extends LitElement {
             })}
           </div>
           <button
-            class=${classMap({ active: this.showOverflowMenu })}
-            id="toggle-overflow-menu"
-            title="Toggle Overflow Menu"
+            class=${classMap({ active: this.showSettingsOverlay })}
+            id="toggle-settings"
+            title="Edit your Visual Editor settings"
             @click=${() => {
-              this.showOverflowMenu = !this.showOverflowMenu;
+              this.showSettingsOverlay = true;
             }}
           >
-            Toggle Overflow Menu
+            Edit Settings
           </button>
         </div>
       </header>
@@ -1587,6 +1587,11 @@ export class Main extends LitElement {
                 evt: BreadboardUI.Events.OverflowMenuActionEvent
               ) => {
                 switch (evt.action) {
+                  case "edit-board-details": {
+                    this.#showBoardEditOverlay();
+                    break;
+                  }
+
                   case "copy-to-clipboard": {
                     if (!this.tab?.graph || !this.tab?.graph.url) {
                       this.toast(
@@ -2296,50 +2301,6 @@ export class Main extends LitElement {
       ></bb-comment-overlay>`;
     }
 
-    let overflowMenu: HTMLTemplateResult | symbol = nothing;
-    if (this.showOverflowMenu) {
-      const actions: Array<{
-        title: string;
-        name: string;
-        icon: string;
-        disabled?: boolean;
-      }> = [];
-
-      actions.push({
-        title: "Settings",
-        name: "settings",
-        icon: "settings",
-      });
-
-      overflowMenu = html`<bb-overflow-menu
-        .actions=${actions}
-        .disabled=${this.tab?.graph === null}
-        @bboverflowmenudismissed=${() => {
-          this.showOverflowMenu = false;
-        }}
-        @bboverflowmenuaction=${async (
-          evt: BreadboardUI.Events.OverflowMenuActionEvent
-        ) => {
-          switch (evt.action) {
-            case "settings": {
-              this.showSettingsOverlay = true;
-              break;
-            }
-
-            default: {
-              this.toast(
-                "Unknown action",
-                BreadboardUI.Events.ToastType.WARNING
-              );
-              break;
-            }
-          }
-
-          this.showOverflowMenu = false;
-        }}
-      ></bb-overflow-menu>`;
-    }
-
     let previewOverlay: HTMLTemplateResult | symbol = nothing;
     if (this.previewOverlayURL) {
       previewOverlay = html`<bb-overlay @bboverlaydismissed=${() => {
@@ -2357,7 +2318,6 @@ export class Main extends LitElement {
       historyOverlay,
       providerAddOverlay,
       saveAsDialogOverlay,
-      overflowMenu,
       previewOverlay,
       nodeConfiguratorOverlay,
       edgeValueOverlay,

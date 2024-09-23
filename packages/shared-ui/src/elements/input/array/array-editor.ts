@@ -393,6 +393,7 @@ export class ArrayEditor extends LitElement {
                       name="item-${idx}"
                       id="item-${idx}"
                       class="entry"
+                      .graph=${this.graph}
                       .subGraphs=${this.graph?.graphs ?? null}
                       .providers=${this.providers}
                       .providerOps=${this.providerOps}

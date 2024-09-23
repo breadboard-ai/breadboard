@@ -113,6 +113,10 @@ export class OverflowMenu extends LitElement {
     button.preview {
       background-image: var(--bb-icon-preview);
     }
+
+    button.edit {
+      background-image: var(--bb-icon-edit);
+    }
   `;
 
   connectedCallback(): void {
