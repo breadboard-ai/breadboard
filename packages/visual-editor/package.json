@@ -47,6 +47,7 @@
       "dependencies": [
         "../agent-kit:build",
         "../breadboard:build",
+        "../board-server-utils:build",
         "../build:build",
         "../shared-ui:build",
         "../core-kit:build",
@@ -69,6 +70,7 @@
       "dependencies": [
         "../agent-kit:build:tsc",
         "../breadboard:build:tsc",
+        "../board-server-utils:build:tsc",
         "../shared-ui:build:tsc",
         "../build:build:tsc",
         "../core-kit:build:tsc",
@@ -268,6 +270,7 @@
   },
   "dependencies": {
     "@breadboard-ai/build": "^0.9.1",
+    "@breadboard-ai/board-server-utils": "^0.1.0",
     "@breadboard-ai/data-store": "^0.2.2",
     "@breadboard-ai/example-boards": "0.3.1",
     "@breadboard-ai/google-drive-kit": "0.2.3",

@@ -38,15 +38,15 @@ export async function create(config: RuntimeConfig): Promise<{
 
   let boardServers: RuntimeConfigBoardServers | undefined = undefined;
   if (config.experiments.boardServers) {
-    let stores = await getBoardServers();
-    if (stores.length === 0) {
+    let servers = await getBoardServers();
+    if (servers.length === 0) {
       await createDefaultLocalBoardServer();
-      stores = await getBoardServers();
+      servers = await getBoardServers();
     }
 
     boardServers = {
-      servers: stores,
-      loader: createLoader(stores),
+      servers,
+      loader: createLoader(servers),
     };
   }
 

@@ -1,0 +1,83 @@
+{
+  "name": "@breadboard-ai/board-server-utils",
+  "version": "0.1.0",
+  "description": "Board Server Utilities",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "default": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "prepack": "npm run build",
+    "build": "wireit",
+    "build:tsc": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "../breadboard:build",
+        "../build:build",
+        "build:tsc"
+      ]
+    },
+    "typescript-files-and-deps": {
+      "dependencies": [
+        "../breadboard:build:tsc",
+        "../build:build:tsc"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc -b --pretty",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "typescript-files-and-deps"
+      ],
+      "files": [],
+      "output": [
+        "dist/",
+        "!dist/**/*.min.js{,.map}"
+      ],
+      "clean": "if-file-deleted"
+    }
+  },
+  "repository": {
+    "directory": "packages/board-server-utils",
+    "type": "git",
+    "url": "git+https://github.com/breadboard-ai/breadboard.git"
+  },
+  "files": [
+    "dist/"
+  ],
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/breadboard-ai/breadboard/issues"
+  },
+  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/board-server-utils#readme",
+  "devDependencies": {
+    "@google-labs/tsconfig": "^0.0.1",
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "@breadboard-ai/build": "^0.9.1",
+    "@breadboard-ai/data-store": "^0.2.2",
+    "@google-labs/agent-kit": "^0.11.0",
+    "@google-labs/breadboard": "^0.26.0",
+    "@google-labs/breadboard-schema": "^1.7.0"
+  }
+}
