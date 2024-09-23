@@ -1687,7 +1687,8 @@ export class Editor extends LitElement {
     }
 
     const isRunning = this.topGraphResult
-      ? this.topGraphResult.currentNode !== null
+      ? this.topGraphResult.status === "running" ||
+        this.topGraphResult.status === "paused"
       : false;
 
     let saveButton: HTMLTemplateResult | symbol = nothing;
