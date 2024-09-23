@@ -73,13 +73,13 @@ describe("Templating", () => {
     });
     deepStrictEqual(result, {
       in: [],
-      persona: llmContent("user", 'You\'re a "CHARACTER", Harry.'),
-      task: llmContent("user", 'Act like a "CHARACTER".'),
+      persona: llmContent("user", 'You\'re a "TOOL_CHARACTER", Harry.'),
+      task: llmContent("user", 'Act like a "TOOL_CHARACTER".'),
       outs: [
         {
           name: "character",
           description:
-            'Call this function when asked to invoke the "CHARACTER" tool.',
+            'Call this function when asked to invoke the "TOOL_CHARACTER" tool.',
         },
       ],
     });

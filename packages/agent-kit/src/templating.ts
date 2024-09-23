@@ -103,7 +103,7 @@ function substitute(inputParams: SubstituteInputParams) {
     return functionNames.map((name) => {
       return {
         name: name,
-        description: `Call this function when asked to invoke the "${name.toLocaleUpperCase()}" tool.`,
+        description: `Call this function when asked to invoke the "TOOL_${name.toLocaleUpperCase()}" tool.`,
       } satisfies FunctionDeclaration;
     });
   }
@@ -173,7 +173,7 @@ function substitute(inputParams: SubstituteInputParams) {
                 return { text: JSON.stringify(value) };
               }
             } else {
-              return { text: `"${part.param.toLocaleUpperCase()}"` };
+              return { text: `"TOOL_${part.param.toLocaleUpperCase()}"` };
             }
           } else {
             return part;
