@@ -25,6 +25,7 @@ import {
   addUserParts,
   checkAreWeDoneFunction,
   combineContextsFunction,
+  Context,
   contextType,
   functionCallType,
   type LlmContent,
@@ -38,6 +39,7 @@ import {
   boardInvocationArgsType,
   boardInvocationAssemblerFunction,
   functionDeclarationsFormatterFn,
+  functionDeclarationType,
   functionOrTextRouterFunction,
   type FunctionSignatureItem,
   responseCollatorFunction,
@@ -95,6 +97,7 @@ const substituteParams = code(
     in: array(contextType),
     persona: anyOf(llmContentType, string({})),
     task: anyOf(llmContentType, string({})),
+    outs: array(functionDeclarationType),
   },
   substitute
 );
@@ -184,6 +187,7 @@ const formatFunctionDeclarations = code(
     // TODO(aomarks) Cast needed because coreKit.map doesn't know the schema of
     // the board that was passed to it (interfaces would fix this).
     list: turnBoardsToFunctions.outputs.list as Value<FunctionSignatureItem[]>,
+    routes: substituteParams.outputs.outs,
   },
   {
     tools: array("unknown"),
@@ -232,7 +236,10 @@ const assembleInvocations = code(
     context: routeToFunctionsOrText.outputs.context,
     functionCalls: routeToFunctionsOrText.outputs.functionCalls,
   },
-  { list: array(boardInvocationArgsType) },
+  {
+    list: array(boardInvocationArgsType),
+    routes: array("string"),
+  },
   boardInvocationAssemblerFunction
 );
 
@@ -278,14 +285,43 @@ const addToolResponseToContext = code(
   combineContextsFunction
 );
 
+const routeToolOutput = code(
+  {
+    $metadata: {
+      title: "Route Tool Output",
+      description: "Routing tool output as needed",
+    },
+    context: addToolResponseToContext.outputs.context,
+    routes: assembleInvocations.outputs.routes,
+  },
+  {},
+  ({ context, routes }) => {
+    const out: Record<string, Context[]> = {};
+    let hasRoutes = false;
+    for (const route of routes) {
+      out[`p-${route}`] = context;
+      hasRoutes = true;
+    }
+    if (!hasRoutes) {
+      return { out: context };
+    }
+    for (let i = context.length - 1; i >= 0; i--) {
+      const item = context[i];
+      if (item.role === "model") {
+        item.parts = item.parts.filter((part) => !("functionCall" in part));
+        break;
+      }
+    }
+    return out;
+  }
+);
+
 const toolOutput = outputNode({
   $metadata: {
     title: "Tool Output",
     description: "Return tool results as output",
   },
-  out: output(addToolResponseToContext.outputs.context, {
-    title: "Context out",
-  }),
+  "": routeToolOutput.unsafeOutput("*"),
 });
 
 const areWeDoneChecker = code(
@@ -316,7 +352,7 @@ export default board({
       url: "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#specialist",
     },
   },
-  version: "2.0.0",
+  version: "2.1.0",
   description:
     "Given instructions on how to act, makes a single LLM call, optionally invoking tools.",
   inputs: [

@@ -82,7 +82,7 @@ export const boardInvocationAssemblerFunction = ({
 }: {
   functionCalls: FunctionCall[];
   urlMap: URLMap;
-}): { list: BoardInvocationArgs[] } => {
+}): { list: BoardInvocationArgs[]; routes: string[] } => {
   if (!functionCalls) {
     throw new Error("Function call array is a required input");
   }
@@ -94,12 +94,17 @@ export const boardInvocationAssemblerFunction = ({
     throw new Error("Function call array must not be empty.");
   }
   const list: BoardInvocationArgs[] = [];
+  const routes: string[] = [];
   for (const call of calls) {
     const item = urlMap[call.name];
     if (!item) {
       throw new Error(
         `Invalid function call: "${call.name}". More than likely, the LLM hallucinated a function call that doesn't exist.`
       );
+    }
+    if (!item.url) {
+      routes.push(call.name);
+      continue;
     }
     const $board = item.url;
     const $flags = item.flags;
@@ -120,7 +125,7 @@ export const boardInvocationAssemblerFunction = ({
     }
     list.push(invokeArgs);
   }
-  return { list };
+  return { list, routes };
 };
 
 export const resultFormatterFunction = fun(({ result, flags }) => {
@@ -279,8 +284,10 @@ export type FunctionSignatureItem = {
 
 export const functionDeclarationsFormatterFn = ({
   list,
+  routes,
 }: {
   list: FunctionSignatureItem[];
+  routes: FunctionDeclaration[];
 }): { tools: JsonSerializable[]; urlMap: URLMap } => {
   const tools: JsonSerializable[] = [];
   const urlMap: URLMap = {};
@@ -288,6 +295,10 @@ export const functionDeclarationsFormatterFn = ({
     tools.push(item.function);
     const flags = item.flags;
     urlMap[item.function.name] = { url: item.boardURL, flags };
+  });
+  routes.forEach((route) => {
+    tools.push(route);
+    urlMap[route.name] = { url: "", flags: {} };
   });
   return { tools, urlMap };
 };

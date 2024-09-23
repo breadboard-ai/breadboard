@@ -6,6 +6,7 @@
 
 import { Schema } from "@google-labs/breadboard";
 import { Context, LlmContent } from "./context.js";
+import { FunctionDeclaration } from "./function-calling.js";
 
 export { substitute, describeSpecialist, content, describeContent };
 
@@ -17,18 +18,24 @@ type SubstituteInputParams = {
 };
 
 type Location = {
-  part: LlmContent;
-  parts: LlmContent[];
+  part: LlmContent["parts"][0];
+  parts: LlmContent["parts"];
 };
 
 type ParamLocationMap = Record<string, Location[]>;
 
+type Operation = "in" | "out";
+
 type ParamInfo = {
   name: string;
   locations: Location[];
+  op?: Operation;
+  arg?: string;
 };
 
-type TemplatePart = LlmContent["parts"][0] | { param: string };
+type TemplatePart =
+  | LlmContent["parts"][0]
+  | { param: string; op?: Operation; arg?: string };
 
 type SpecialistDescriberInputs = {
   $inputSchema: Schema;
@@ -53,7 +60,9 @@ type DescribeContentInputs = {
  */
 function substitute(inputParams: SubstituteInputParams) {
   const { in: context = [], persona, task, ...inputs } = inputParams;
-  const params = mergeParams(findParams(persona), findParams(task));
+  const personaParams = findParams(persona);
+  const taskParams = findParams(task);
+  const params = mergeParams(personaParams, taskParams);
 
   // Make sure that all params are present in the values and collect
   // them into a single object.
@@ -69,6 +78,7 @@ function substitute(inputParams: SubstituteInputParams) {
     in: context,
     persona: subContent(persona, values),
     task: subContent(task, values),
+    outs: collectOuts(personaParams, taskParams),
   };
 
   function unique<T>(params: T[]): T[] {
@@ -79,26 +89,53 @@ function substitute(inputParams: SubstituteInputParams) {
     return `p-${param}`;
   }
 
+  function collectOuts(...paramsList: ParamInfo[][]) {
+    const functionNames = unique(
+      paramsList
+        .flat()
+        .map((param) => {
+          const { name, op } = param;
+          if (op !== "out") return null;
+          return name;
+        })
+        .filter(Boolean)
+    ) as string[];
+    return functionNames.map((name) => {
+      const toolName = `TOOL_${name.toLocaleUpperCase()}`;
+      return {
+        name: toolName,
+        description: `Call this function when asked to invoke the "${toolName}" tool.`,
+      } satisfies FunctionDeclaration;
+    });
+  }
+
   function findParams(content: LlmContent | undefined): ParamInfo[] {
     const parts = content?.parts;
     if (!parts) return [];
     const results = parts.flatMap((part) => {
-      if (!("text" in part)) return [];
-      const matches = part.text.matchAll(/{{(?<name>[\w-]+)}}/g);
+      if (!("text" in part)) return [] as ParamInfo[];
+      const matches = part.text.matchAll(
+        /{{\s*(?<name>[\w-]+)(?:\s*\|\s*(?<op>[\w-]*)(?::\s*"(?<arg>[\w-]+)")?)?\s*}}/g
+      );
       return unique(Array.from(matches))
         .map((match) => {
           const name = match.groups?.name || "";
+          const op = match.groups?.op || "";
+          const arg = match.groups?.arg || "";
           if (!name) return null;
-          return { name, locations: [{ part, parts }] };
+          return { name, op, arg, locations: [{ part, parts }] } as ParamInfo;
         })
         .filter(Boolean);
-    }) as unknown as ParamInfo[];
+    }) as ParamInfo[];
     return results;
   }
 
   function mergeParams(...paramList: ParamInfo[][]) {
-    return paramList.reduce((acc, params) => {
+    const result = paramList.reduce((acc, params) => {
       for (const param of params) {
+        if (param.op && param.op !== "in") {
+          continue;
+        }
         const { name, locations } = param;
         const existing = acc[name];
         if (existing) {
@@ -109,6 +146,7 @@ function substitute(inputParams: SubstituteInputParams) {
       }
       return acc;
     }, {} as ParamLocationMap);
+    return result;
   }
 
   function subContent(
@@ -126,16 +164,21 @@ function substitute(inputParams: SubstituteInputParams) {
       parts: mergeTextParts(
         splitToTemplateParts(content).flatMap((part) => {
           if ("param" in part) {
-            const value = values[part.param];
-            if (typeof value === "string") {
-              return { text: value };
-            } else if (isLLMContent(value)) {
-              return value.parts;
-            } else if (isLLMContentArray(value)) {
-              const last = value.at(-1);
-              return last ? last.parts : [];
+            const { op = "in" } = part;
+            if (op === "in") {
+              const value = values[part.param];
+              if (typeof value === "string") {
+                return { text: value };
+              } else if (isLLMContent(value)) {
+                return value.parts;
+              } else if (isLLMContentArray(value)) {
+                const last = value.at(-1);
+                return last ? last.parts : [];
+              } else {
+                return { text: JSON.stringify(value) };
+              }
             } else {
-              return { text: JSON.stringify(value) };
+              return { text: `"TOOL_${part.param.toLocaleUpperCase()}"` };
             }
           } else {
             return part;
@@ -175,21 +218,25 @@ function substitute(inputParams: SubstituteInputParams) {
    * each {{param}} substitution is a separate part.
    */
   function splitToTemplateParts(content: LlmContent): TemplatePart[] {
-    const parts = [];
+    const parts: TemplatePart[] = [];
     for (const part of content.parts) {
       if (!("text" in part)) {
         parts.push(part);
         continue;
       }
-      const matches = part.text.matchAll(/{{(?<name>[\w-]+)}}/g);
+      const matches = part.text.matchAll(
+        /{{\s*(?<name>[\w-]+)(?:\s*\|\s*(?<op>[\w-]*)(?::\s*"(?<arg>[\w-]+)")?)?\s*}}/g
+      );
       let start = 0;
       for (const match of matches) {
         const name = match.groups?.name || "";
+        const op = match.groups?.op as Operation;
+        const arg = match.groups?.arg;
         const end = match.index;
         if (end > start) {
           parts.push({ text: part.text.slice(start, end) });
         }
-        parts.push({ param: name });
+        parts.push({ param: name, op, arg });
         start = end + match[0].length;
       }
       if (start < part.text.length) {
@@ -294,13 +341,24 @@ function describeSpecialist(inputs: unknown) {
     required: [],
   };
 
-  const params = unique([
+  const all = [
     ...collectParams(textFromLLMContent(persona)),
     ...collectParams(textFromLLMContent(task)),
-  ]);
+  ];
+  const params: string[] = [];
+  const outs: string[] = [];
 
-  const props = Object.fromEntries(
-    params.map((param) => [
+  for (const param of all) {
+    const { op = "in" } = param;
+    if (op === "in") {
+      params.push(param.name);
+    } else {
+      outs.push(param.name);
+    }
+  }
+
+  const inputProps = Object.fromEntries(
+    unique(params).map((param) => [
       toId(param),
       {
         title: toTitle(param),
@@ -310,14 +368,26 @@ function describeSpecialist(inputs: unknown) {
     ])
   );
 
+  const outputProps = Object.fromEntries(
+    unique(outs).map((param) => [
+      toId(`TOOL_${param.toLocaleUpperCase()}`),
+      {
+        title: toTitle(param),
+        description: `The output chosen when the "${param}" tool is invoked`,
+        type: "string",
+      },
+    ])
+  );
+
   const required = params.map(toId);
 
-  return mergeSchemas(inputSchema, $outputSchema, props);
+  return mergeSchemas(inputSchema, $outputSchema, inputProps, outputProps);
 
   function mergeSchemas(
     inputSchema: Schema,
     outputSchema: Schema,
-    properties: Record<string, Schema>
+    properties: Record<string, Schema>,
+    outputProps: Record<string, Schema>
   ) {
     return {
       inputSchema: {
@@ -328,7 +398,13 @@ function describeSpecialist(inputs: unknown) {
         },
         required: [...(inputSchema.required || []), ...required],
       },
-      outputSchema: outputSchema,
+      outputSchema: {
+        ...outputSchema,
+        properties: {
+          ...outputSchema.properties,
+          ...outputProps,
+        },
+      },
     };
   }
 
@@ -358,10 +434,17 @@ function describeSpecialist(inputs: unknown) {
     return Array.from(new Set(params));
   }
 
-  function collectParams(text: string) {
+  function collectParams(text: string): ParamInfo[] {
     if (!text) return [];
-    const matches = text.matchAll(/{{(?<name>[\w-]+)}}/g);
-    return Array.from(matches).map((match) => match.groups?.name || "");
+    const matches = text.matchAll(
+      /{{\s*(?<name>[\w-]+)(?:\s*\|\s*(?<op>[\w-]*)(?::\s*"(?<arg>[\w-]+)")?)?\s*}}/g
+    );
+    return Array.from(matches).map((match) => {
+      const name = match.groups?.name || "";
+      const op = match.groups?.op;
+      const arg = match.groups?.arg;
+      return { name, op, arg, locations: [] } as ParamInfo;
+    });
   }
 }
 
@@ -463,7 +546,9 @@ function content(starInputs: unknown) {
     if (!parts) return [];
     const results = parts.flatMap((part) => {
       if (!("text" in part)) return [];
-      const matches = part.text.matchAll(/{{(?<name>[\w-]+)}}/g);
+      const matches = part.text.matchAll(
+        /{{\s*(?<name>[\w-]+)(?:\s*\|\s*(?<op>[\w-]*)(?::\s*"(?<arg>[\w-]+)")?)?\s*}}/g
+      );
       return unique(Array.from(matches))
         .map((match) => {
           const name = match.groups?.name || "";
@@ -534,7 +619,9 @@ function content(starInputs: unknown) {
         parts.push(part);
         continue;
       }
-      const matches = part.text.matchAll(/{{(?<name>[\w-]+)}}/g);
+      const matches = part.text.matchAll(
+        /{{\s*(?<name>[\w-]+)(?:\s*\|\s*(?<op>[\w-]*)(?::\s*"(?<arg>[\w-]+)")?)?\s*}}/g
+      );
       let start = 0;
       for (const match of matches) {
         const name = match.groups?.name || "";
@@ -703,7 +790,9 @@ function describeContent(inputs: unknown) {
 
   function collectParams(text: string) {
     if (!text) return [];
-    const matches = text.matchAll(/{{(?<name>[\w-]+)}}/g);
+    const matches = text.matchAll(
+      /{{\s*(?<name>[\w-]+)(?:\s*\|\s*(?<op>[\w-]*)(?::\s*"(?<arg>[\w-]+)")?)?\s*}}/g
+    );
     return Array.from(matches).map((match) => match.groups?.name || "");
   }
 }
