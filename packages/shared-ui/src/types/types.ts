@@ -235,6 +235,8 @@ export type ErrorLogEntry = {
 
 export type LogEntry = NodeLogEntry | EdgeLogEntry | ErrorLogEntry;
 
+export type TopGraphObserverRunStatus = "running" | "paused" | "stopped";
+
 /**
  * The result, returned by the TopGraphObserver.
  */
@@ -269,6 +271,13 @@ export type TopGraphRunResult = {
    * The latter can happen when the graph hasn't run yet.
    */
   graph: GraphDescriptor | null;
+  /**
+   * Returns the status of the run, which can be one of:
+   * - "running": The run is currently running.
+   * - "paused": The run is paused.
+   * - "stopped": The run is stopped.
+   */
+  status: TopGraphObserverRunStatus;
 };
 
 export type ComparableEdge = {
