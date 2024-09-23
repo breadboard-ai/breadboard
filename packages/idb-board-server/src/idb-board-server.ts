@@ -17,6 +17,7 @@ import {
   Kit,
   Permission,
   User,
+  GraphProviderItem,
 } from "@google-labs/breadboard";
 
 import * as idb from "idb";
@@ -291,7 +292,6 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
   }
 
   async load(url: URL): Promise<GraphDescriptor | null> {
-    console.log("Attempt load", this.url);
     const projects = await this.projects;
     const project = projects.find((project) => {
       return url.pathname.startsWith(project.url.pathname);
@@ -395,8 +395,9 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
     throw new Error("Method not implemented.");
   }
 
-  refresh(_location: string): Promise<boolean> {
-    throw new Error("Method not implemented.");
+  async refresh(_location: string): Promise<boolean> {
+    await this.projects;
+    return true;
   }
 
   async createURL(_location: string, fileName: string): Promise<string | null> {
@@ -407,26 +408,38 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
     throw new Error("Method not implemented.");
   }
 
-  restore(): Promise<void> {
-    throw new Error("Method not implemented.");
+  async restore(): Promise<void> {
+    await this.projects;
   }
 
   items(): Map<string, GraphProviderStore> {
     const items = new Map<string, GraphProviderStore>();
+    const projects: [string, GraphProviderItem][] = [];
+
+    const projectNames = new Set<string>();
+    for (const project of this.#projects) {
+      let title = project.board.descriptor.title ?? "Untitled Board";
+      if (projectNames.has(title) && project.board.descriptor.url) {
+        const suffix = new URL(project.board.descriptor.url).pathname
+          .split("/")
+          .at(-1);
+        title = `${project.board.descriptor.title ?? "Untitled Board"} [${suffix}]`;
+      }
+
+      projectNames.add(title);
+      projects.push([
+        title,
+        {
+          url: project.url.href,
+          mine: project.metadata.owner === this.user.username,
+          readonly: false,
+          handle: null,
+        },
+      ]);
+    }
+
     items.set(this.name, {
-      items: new Map(
-        this.#projects.map((project) => {
-          return [
-            project.board.descriptor.title ?? "Untitled Board",
-            {
-              url: project.url.href,
-              mine: project.metadata.owner === this.user.username,
-              readonly: false,
-              handle: null,
-            },
-          ];
-        })
-      ),
+      items: new Map(projects),
       permission: "granted",
       title: this.name,
     });
