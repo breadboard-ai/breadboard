@@ -7914,7 +7914,7 @@
           "id": "runJavascript-0",
           "type": "runJavascript",
           "configuration": {
-            "code": "const run = ({context,routes})=>{const out={};let hasRoutes=false;for(const route of routes){out[`p-${route}`]=context;hasRoutes=true}if(!hasRoutes){return{out:context}}return out};",
+            "code": "const run = ({context,routes})=>{const out={};let hasRoutes=false;for(const route of routes){out[`p-${route}`]=context;hasRoutes=true}if(!hasRoutes){return{out:context}}for(let i=context.length-1;i>=0;i--){const item=context[i];if(item.role===\"model\"){item.parts=item.parts.filter(part=>!(\"functionCall\"in part));break}}return out};",
             "inputSchema": {
               "type": "object",
               "properties": {

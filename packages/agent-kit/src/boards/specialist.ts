@@ -305,6 +305,13 @@ const routeToolOutput = code(
     if (!hasRoutes) {
       return { out: context };
     }
+    for (let i = context.length - 1; i >= 0; i--) {
+      const item = context[i];
+      if (item.role === "model") {
+        item.parts = item.parts.filter((part) => !("functionCall" in part));
+        break;
+      }
+    }
     return out;
   }
 );
