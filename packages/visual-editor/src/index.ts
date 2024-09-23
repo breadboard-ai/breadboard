@@ -528,8 +528,8 @@ export class Main extends LitElement {
     }
 
     // Add a little clearance onto the value.
-    this.#tooltipRef.value.x = Math.max(tooltipEvent.x, 100);
-    this.#tooltipRef.value.y = Math.max(tooltipEvent.y, 100);
+    this.#tooltipRef.value.x = Math.max(tooltipEvent.x, 80);
+    this.#tooltipRef.value.y = Math.max(tooltipEvent.y, 30);
     this.#tooltipRef.value.message = tooltipEvent.message;
     this.#tooltipRef.value.visible = true;
   }
