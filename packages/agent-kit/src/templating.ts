@@ -259,6 +259,7 @@ function describeSpecialist(inputs: unknown) {
 
   const inputSchema: Schema = {
     type: "object",
+    additionalProperties: false,
     properties: {
       ...$inputSchema.properties,
       in: {
