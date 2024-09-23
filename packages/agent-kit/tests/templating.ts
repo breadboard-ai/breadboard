@@ -54,6 +54,28 @@ describe("Templating", () => {
     });
   });
 
+  it("does simple substitution with op and arg", async () => {
+    const context: LlmContent[] = [];
+    const persona = llmContent(
+      "user",
+      "You're a {{ character | out }}, {{ name | in }}."
+    );
+    const task = llmContent("user", 'Act like a {{character | out: "test" }}.');
+    const character = "wizard";
+    const result = substitute({
+      in: context,
+      persona,
+      task,
+      "p-character": character,
+      "p-name": "Harry",
+    });
+    deepStrictEqual(result, {
+      in: [],
+      persona: llmContent("user", 'You\'re a "CHARACTER", Harry.'),
+      task: llmContent("user", 'Act like a "CHARACTER".'),
+    });
+  });
+
   it("does simple LLM Content object substitution", async () => {
     const context: LlmContent[] = [];
     const persona = llmContent("user", "You're a {{character}}, {{name}}.");

@@ -23,12 +23,18 @@ type Location = {
 
 type ParamLocationMap = Record<string, Location[]>;
 
+type Operation = "in" | "out";
+
 type ParamInfo = {
   name: string;
   locations: Location[];
+  op?: Operation;
+  arg?: string;
 };
 
-type TemplatePart = LlmContent["parts"][0] | { param: string };
+type TemplatePart =
+  | LlmContent["parts"][0]
+  | { param: string; op?: Operation; arg?: string };
 
 type SpecialistDescriberInputs = {
   $inputSchema: Schema;
@@ -84,12 +90,16 @@ function substitute(inputParams: SubstituteInputParams) {
     if (!parts) return [];
     const results = parts.flatMap((part) => {
       if (!("text" in part)) return [];
-      const matches = part.text.matchAll(/{{\s*(?<name>[\w-]+)\s*}}/g);
+      const matches = part.text.matchAll(
+        /{{\s*(?<name>[\w-]+)(?:\s*\|\s*(?<op>[\w-]*)(?::\s*"(?<arg>[\w-]+)")?)?\s*}}/g
+      );
       return unique(Array.from(matches))
         .map((match) => {
           const name = match.groups?.name || "";
+          const op = match.groups?.op || "";
+          const arg = match.groups?.arg || "";
           if (!name) return null;
-          return { name, locations: [{ part, parts }] };
+          return { name, op, arg, locations: [{ part, parts }] };
         })
         .filter(Boolean);
     }) as unknown as ParamInfo[];
@@ -126,16 +136,21 @@ function substitute(inputParams: SubstituteInputParams) {
       parts: mergeTextParts(
         splitToTemplateParts(content).flatMap((part) => {
           if ("param" in part) {
-            const value = values[part.param];
-            if (typeof value === "string") {
-              return { text: value };
-            } else if (isLLMContent(value)) {
-              return value.parts;
-            } else if (isLLMContentArray(value)) {
-              const last = value.at(-1);
-              return last ? last.parts : [];
+            const { op = "in" } = part;
+            if (op === "in") {
+              const value = values[part.param];
+              if (typeof value === "string") {
+                return { text: value };
+              } else if (isLLMContent(value)) {
+                return value.parts;
+              } else if (isLLMContentArray(value)) {
+                const last = value.at(-1);
+                return last ? last.parts : [];
+              } else {
+                return { text: JSON.stringify(value) };
+              }
             } else {
-              return { text: JSON.stringify(value) };
+              return { text: `"${part.param.toLocaleUpperCase()}"` };
             }
           } else {
             return part;
@@ -175,21 +190,25 @@ function substitute(inputParams: SubstituteInputParams) {
    * each {{param}} substitution is a separate part.
    */
   function splitToTemplateParts(content: LlmContent): TemplatePart[] {
-    const parts = [];
+    const parts: TemplatePart[] = [];
     for (const part of content.parts) {
       if (!("text" in part)) {
         parts.push(part);
         continue;
       }
-      const matches = part.text.matchAll(/{{\s*(?<name>[\w-]+)\s*}}/g);
+      const matches = part.text.matchAll(
+        /{{\s*(?<name>[\w-]+)(?:\s*\|\s*(?<op>[\w-]*)(?::\s*"(?<arg>[\w-]+)")?)?\s*}}/g
+      );
       let start = 0;
       for (const match of matches) {
         const name = match.groups?.name || "";
+        const op = match.groups?.op as Operation;
+        const arg = match.groups?.arg;
         const end = match.index;
         if (end > start) {
           parts.push({ text: part.text.slice(start, end) });
         }
-        parts.push({ param: name });
+        parts.push({ param: name, op, arg });
         start = end + match[0].length;
       }
       if (start < part.text.length) {
@@ -360,7 +379,9 @@ function describeSpecialist(inputs: unknown) {
 
   function collectParams(text: string) {
     if (!text) return [];
-    const matches = text.matchAll(/{{\s*(?<name>[\w-]+)\s*}}/g);
+    const matches = text.matchAll(
+      /{{\s*(?<name>[\w-]+)(?:\s*\|\s*(?<op>[\w-]*)(?::\s*"(?<arg>[\w-]+)")?)?\s*}}/g
+    );
     return Array.from(matches).map((match) => match.groups?.name || "");
   }
 }
@@ -463,7 +484,9 @@ function content(starInputs: unknown) {
     if (!parts) return [];
     const results = parts.flatMap((part) => {
       if (!("text" in part)) return [];
-      const matches = part.text.matchAll(/{{\s*(?<name>[\w-]+)\s*}}/g);
+      const matches = part.text.matchAll(
+        /{{\s*(?<name>[\w-]+)(?:\s*\|\s*(?<op>[\w-]*)(?::\s*"(?<arg>[\w-]+)")?)?\s*}}/g
+      );
       return unique(Array.from(matches))
         .map((match) => {
           const name = match.groups?.name || "";
@@ -534,7 +557,9 @@ function content(starInputs: unknown) {
         parts.push(part);
         continue;
       }
-      const matches = part.text.matchAll(/{{\s*(?<name>[\w-]+)\s*}}/g);
+      const matches = part.text.matchAll(
+        /{{\s*(?<name>[\w-]+)(?:\s*\|\s*(?<op>[\w-]*)(?::\s*"(?<arg>[\w-]+)")?)?\s*}}/g
+      );
       let start = 0;
       for (const match of matches) {
         const name = match.groups?.name || "";
@@ -703,7 +728,9 @@ function describeContent(inputs: unknown) {
 
   function collectParams(text: string) {
     if (!text) return [];
-    const matches = text.matchAll(/{{\s*(?<name>[\w-]+)\s*}}/g);
+    const matches = text.matchAll(
+      /{{\s*(?<name>[\w-]+)(?:\s*\|\s*(?<op>[\w-]*)(?::\s*"(?<arg>[\w-]+)")?)?\s*}}/g
+    );
     return Array.from(matches).map((match) => match.groups?.name || "");
   }
 }
