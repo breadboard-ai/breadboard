@@ -101,9 +101,10 @@ function substitute(inputParams: SubstituteInputParams) {
         .filter(Boolean)
     ) as string[];
     return functionNames.map((name) => {
+      const toolName = `TOOL_${name.toLocaleUpperCase()}`;
       return {
-        name: name,
-        description: `Call this function when asked to invoke the "TOOL_${name.toLocaleUpperCase()}" tool.`,
+        name: toolName,
+        description: `Call this function when asked to invoke the "${name.toLocaleUpperCase()}" tool.`,
       } satisfies FunctionDeclaration;
     });
   }
@@ -132,6 +133,9 @@ function substitute(inputParams: SubstituteInputParams) {
   function mergeParams(...paramList: ParamInfo[][]) {
     return paramList.reduce((acc, params) => {
       for (const param of params) {
+        if (param.op !== "in") {
+          continue;
+        }
         const { name, locations } = param;
         const existing = acc[name];
         if (existing) {
@@ -365,7 +369,7 @@ function describeSpecialist(inputs: unknown) {
 
   const outputProps = Object.fromEntries(
     unique(outs).map((param) => [
-      toId(param),
+      toId(`TOOL_${param.toLocaleUpperCase()}`),
       {
         title: toTitle(param),
         description: `The output chosen when the "${param}" tool is invoked`,
