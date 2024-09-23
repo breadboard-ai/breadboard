@@ -2,217 +2,37 @@
   "title": "Tool: Novel Developer",
   "description": "Develops a novel based on an outline.",
   "version": "0.0.1",
-  "nodes": [
-    {
-      "type": "input",
-      "id": "input",
-      "configuration": {
-        "schema": {
-          "properties": {
-            "context": {
-              "type": "array",
-              "title": "Context",
-              "examples": [],
-              "items": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
-            }
-          },
-          "type": "object",
-          "required": []
-        }
-      },
-      "metadata": {
-        "visual": {
-          "x": 202.05468749999983,
-          "y": -28.183593749999943,
-          "collapsed": true
-        }
-      }
+  "metadata": {
+    "help": {
+      "description": "Read the guide",
+      "url": "https://breadboard-ai.github.io/breadboard/docs/guides/novel-generator/"
     },
-    {
-      "type": "output",
-      "id": "output",
-      "configuration": {
-        "schema": {
-          "properties": {
-            "context": {
-              "type": "array",
-              "title": "Context",
-              "examples": [],
-              "items": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
-              },
-              "default": "null"
-            }
-          },
-          "type": "object",
-          "required": []
+    "comments": [
+      {
+        "id": "comment-7f904f21",
+        "text": "Develops the novel chapter by chapter",
+        "metadata": {
+          "visual": {
+            "x": 44,
+            "y": -70,
+            "collapsed": "collapsed"
+          }
         }
       },
-      "metadata": {
-        "visual": {
-          "x": 967.04248046875,
-          "y": -28.34941482543951,
-          "collapsed": true
+      {
+        "id": "comment-d234a397",
+        "text": "Read the guide: [Building a Novel Generator with the Agent Kit](https://breadboard-ai.github.io/breadboard/docs/guides/novel-generator/)",
+        "metadata": {
+          "visual": {
+            "x": 44,
+            "y": -172,
+            "collapsed": "collapsed"
+          }
         }
       }
-    },
-    {
-      "id": "looper-020e2fb5",
-      "type": "looper",
-      "metadata": {
-        "visual": {
-          "x": 433.0546875,
-          "y": -29.183593749999773,
-          "collapsed": true
-        },
-        "title": "Literary Agent",
-        "logLevel": "debug"
-      },
-      "configuration": {
-        "task": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "Chapter-by-chapter, generate a draft for the novel. Use single-paragraph micro chapters for quick iterations."
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "specialist-3df0b1c6",
-      "type": "specialist",
-      "metadata": {
-        "visual": {
-          "x": 672.0546874999999,
-          "y": 278.8164062500002,
-          "collapsed": true
-        },
-        "title": "Writer (revise)",
-        "logLevel": "debug"
-      },
-      "configuration": {
-        "persona": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "You are a professional novelist."
-            }
-          ]
-        },
-        "task": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "Revise the chapter following the suggestions."
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "specialist-bbb00f97",
-      "type": "specialist",
-      "metadata": {
-        "visual": {
-          "x": 710.0424804687501,
-          "y": -28.34941482543951,
-          "collapsed": true
-        },
-        "title": "Publisher",
-        "logLevel": "debug"
-      },
-      "configuration": {
-        "persona": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "You are a professional book publisher."
-            }
-          ]
-        },
-        "task": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "Format the manuscript into a novel, ready for digital consumption. Omit any scribbles and annotations not intended for the reading public."
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "specialist-47601c04",
-      "type": "specialist",
-      "metadata": {
-        "visual": {
-          "x": 458.0546874999998,
-          "y": 278.8164062500002,
-          "collapsed": true
-        },
-        "title": "Editor",
-        "logLevel": "debug"
-      },
-      "configuration": {
-        "persona": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "You are a professional line editor of novels."
-            }
-          ]
-        },
-        "task": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "Give feedback on the chapter. Include 3 detailed suggestions to improve clarity, flow, and impact."
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "specialist-88d52299",
-      "type": "specialist",
-      "metadata": {
-        "visual": {
-          "x": 243.05468749999994,
-          "y": 277.81640625,
-          "collapsed": true
-        },
-        "title": "Writer (draft)",
-        "logLevel": "debug"
-      },
-      "configuration": {
-        "persona": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "You are a professional novelist."
-            }
-          ]
-        },
-        "task": {
-          "role": "user",
-          "parts": [
-            {
-              "text": ""
-            }
-          ]
-        }
-      }
-    }
-  ],
+    ],
+    "tags": ["tool"]
+  },
   "edges": [
     {
       "from": "looper-020e2fb5",
@@ -257,37 +77,211 @@
       "out": "out"
     }
   ],
-  "metadata": {
-    "help": {
-      "description": "Read the guide",
-      "url": "https://breadboard-ai.github.io/breadboard/docs/guides/novel-generator/"
-    },
-    "comments": [
-      {
-        "id": "comment-7f904f21",
-        "text": "Develops the novel chapter by chapter",
-        "metadata": {
-          "visual": {
-            "x": 436.0424804687499,
-            "y": -116.34941482543957,
-            "collapsed": true
-          }
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": ["llm-content"]
+              },
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
+            }
+          },
+          "type": "object",
+          "required": []
         }
       },
-      {
-        "id": "comment-d234a397",
-        "text": "Read the guide: [Building a Novel Generator with the Agent Kit](https://breadboard-ai.github.io/breadboard/docs/guides/novel-generator/)",
-        "metadata": {
-          "visual": {
-            "x": 203.9999999999999,
-            "y": -213,
-            "collapsed": true
-          }
+      "metadata": {
+        "visual": {
+          "x": 44,
+          "y": 15,
+          "collapsed": "collapsed"
         }
       }
-    ],
-    "tags": [
-      "tool"
-    ]
-  }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "examples": [],
+              "items": {
+                "type": "object",
+                "behavior": ["llm-content"]
+              },
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 1058,
+          "y": 14,
+          "collapsed": "collapsed"
+        }
+      }
+    },
+    {
+      "id": "looper-020e2fb5",
+      "type": "looper",
+      "metadata": {
+        "visual": {
+          "x": 332,
+          "y": 15,
+          "collapsed": "collapsed"
+        },
+        "title": "Literary Agent",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "task": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Chapter-by-chapter, generate a draft for the novel. Use single-paragraph micro chapters for quick iterations."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "specialist-3df0b1c6",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": 815,
+          "y": 182,
+          "collapsed": "collapsed"
+        },
+        "title": "Writer (revise)",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "persona": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are a professional novelist."
+            }
+          ]
+        },
+        "task": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Revise the chapter following the suggestions."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "specialist-bbb00f97",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": 679,
+          "y": 15,
+          "collapsed": "collapsed"
+        },
+        "title": "Publisher",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "persona": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are a professional book publisher."
+            }
+          ]
+        },
+        "task": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Format the manuscript into a novel, ready for digital consumption. Omit any scribbles and annotations not intended for the reading public."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "specialist-47601c04",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": 455,
+          "y": 206,
+          "collapsed": "collapsed"
+        },
+        "title": "Editor",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "persona": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are a professional line editor of novels."
+            }
+          ]
+        },
+        "task": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Give feedback on the chapter. Include 3 detailed suggestions to improve clarity, flow, and impact."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "specialist-88d52299",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": 71,
+          "y": 254,
+          "collapsed": "collapsed"
+        },
+        "title": "Writer (draft)",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "persona": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are a professional novelist."
+            }
+          ]
+        },
+        "task": {
+          "role": "user",
+          "parts": [
+            {
+              "text": ""
+            }
+          ]
+        }
+      }
+    }
+  ]
 }
