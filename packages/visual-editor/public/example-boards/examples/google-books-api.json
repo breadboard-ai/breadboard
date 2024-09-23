@@ -13,9 +13,9 @@
         "text": "Encodes the user's input into the URL",
         "metadata": {
           "visual": {
-            "x": 37,
-            "y": -115,
-            "collapsed": "collapsed"
+            "x": 87,
+            "y": -104,
+            "collapsed": true
           }
         }
       },
@@ -24,9 +24,9 @@
         "text": "Makes a request to the remote service or API",
         "metadata": {
           "visual": {
-            "x": 365,
-            "y": -131,
-            "collapsed": "collapsed"
+            "x": 376,
+            "y": -138,
+            "collapsed": true
           }
         }
       },
@@ -35,9 +35,9 @@
         "text": "Read the explanation: [Fetching data](https://breadboard-ai.github.io/breadboard/docs/guides/cookbook/#fetching-data)",
         "metadata": {
           "visual": {
-            "x": -249,
-            "y": -102,
-            "collapsed": "collapsed"
+            "x": -122,
+            "y": -192,
+            "collapsed": true
           }
         }
       }
@@ -82,9 +82,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -235,
-          "y": -4,
-          "collapsed": "expanded"
+          "x": -123,
+          "y": 3,
+          "collapsed": false
         }
       }
     },
@@ -108,7 +108,7 @@
         "visual": {
           "x": 643,
           "y": 28,
-          "collapsed": "collapsed"
+          "collapsed": true
         }
       }
     },
@@ -117,9 +117,9 @@
       "type": "urlTemplate",
       "metadata": {
         "visual": {
-          "x": -3,
-          "y": -29,
-          "collapsed": "expanded"
+          "x": 88,
+          "y": -18,
+          "collapsed": false
         },
         "title": "Google Books API",
         "logLevel": "debug"
@@ -133,9 +133,9 @@
       "type": "fetch",
       "metadata": {
         "visual": {
-          "x": 362,
+          "x": 382,
           "y": -47,
-          "collapsed": "expanded"
+          "collapsed": false
         },
         "title": "Data Fetcher",
         "logLevel": "debug"

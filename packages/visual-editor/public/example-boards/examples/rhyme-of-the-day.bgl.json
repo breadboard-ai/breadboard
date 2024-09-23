@@ -13,9 +13,9 @@
         "text": "Read the guide: [Building our First Tool](https://breadboard-ai.github.io/breadboard/docs/guides/first-tool/)",
         "metadata": {
           "visual": {
-            "x": 0,
-            "y": -99,
-            "collapsed": "collapsed"
+            "x": 296,
+            "y": -111,
+            "collapsed": true
           }
         }
       }
@@ -67,7 +67,7 @@
         "visual": {
           "x": 0,
           "y": 0,
-          "collapsed": "collapsed"
+          "collapsed": true
         }
       }
     },
@@ -94,9 +94,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 1086,
+          "x": 695,
           "y": 0,
-          "collapsed": "collapsed"
+          "collapsed": true
         }
       }
     },
@@ -105,9 +105,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 685,
+          "x": 448,
           "y": 0,
-          "collapsed": "collapsed"
+          "collapsed": true
         },
         "title": "Poet",
         "logLevel": "debug"
@@ -136,9 +136,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 284,
+          "x": 173,
           "y": 0,
-          "collapsed": "collapsed"
+          "collapsed": true
         },
         "title": "Date Retriever",
         "logLevel": "debug"
