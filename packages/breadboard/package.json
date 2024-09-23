@@ -161,7 +161,7 @@
     "@ava/typescript": "^4.0.0",
     "@definitelytyped/dtslint": "^0.2.23",
     "@google-labs/tsconfig": "^0.0.1",
-    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-node-resolve": "^15.2.4",
     "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
