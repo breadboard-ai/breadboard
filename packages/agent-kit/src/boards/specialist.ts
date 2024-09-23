@@ -352,7 +352,7 @@ export default board({
       url: "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#specialist",
     },
   },
-  version: "2.0.0",
+  version: "2.1.0",
   description:
     "Given instructions on how to act, makes a single LLM call, optionally invoking tools.",
   inputs: [
