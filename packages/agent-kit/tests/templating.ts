@@ -32,6 +32,7 @@ describe("Templating", () => {
       in: [],
       persona: llmContent("user", "You're a wizard, Harry."),
       task: llmContent("user", "Act like a wizard."),
+      outs: [],
     });
   });
 
@@ -51,6 +52,7 @@ describe("Templating", () => {
       in: [],
       persona: llmContent("user", "You're a wizard, Harry."),
       task: llmContent("user", "Act like a wizard."),
+      outs: [],
     });
   });
 
@@ -73,6 +75,13 @@ describe("Templating", () => {
       in: [],
       persona: llmContent("user", 'You\'re a "CHARACTER", Harry.'),
       task: llmContent("user", 'Act like a "CHARACTER".'),
+      outs: [
+        {
+          name: "character",
+          description:
+            'Call this function when asked to invoke the "CHARACTER" tool.',
+        },
+      ],
     });
   });
 
@@ -93,6 +102,7 @@ describe("Templating", () => {
       in: [],
       persona: llmContent("user", "You're a wizard, Harry."),
       task: llmContent("user", "Act like a wizard."),
+      outs: [],
     });
   });
 
@@ -113,6 +123,7 @@ describe("Templating", () => {
       in: [],
       persona: llmContent("user", "You're a wizard, Harry Potter."),
       task: llmContent("user", "Act like a wizard."),
+      outs: [],
     });
   });
 
@@ -133,6 +144,7 @@ describe("Templating", () => {
       in: [],
       persona: llmContent("user", "You're a wizard, Harry Potter."),
       task: llmContent("user", "Act like a wizard."),
+      outs: [],
     });
   });
 
@@ -153,6 +165,7 @@ describe("Templating", () => {
       in: [],
       persona: llmContent("user", "You're a true, 42."),
       task: llmContent("user", "Act like a true."),
+      outs: [],
     });
   });
 
@@ -173,6 +186,7 @@ describe("Templating", () => {
       in: [],
       persona: llmContent("user", 'You\'re a {"wizard":true}, Harry.'),
       task: llmContent("user", 'Act like a {"wizard":true}.'),
+      outs: [],
     });
   });
 
@@ -202,6 +216,7 @@ describe("Templating", () => {
         "."
       ),
       task: llmContent("user", "Act like a wizard."),
+      outs: [],
     });
   });
 });

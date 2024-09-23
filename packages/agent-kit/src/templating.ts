@@ -6,6 +6,7 @@
 
 import { Schema } from "@google-labs/breadboard";
 import { Context, LlmContent } from "./context.js";
+import { FunctionDeclaration } from "./function-calling.js";
 
 export { substitute, describeSpecialist, content, describeContent };
 
@@ -59,7 +60,9 @@ type DescribeContentInputs = {
  */
 function substitute(inputParams: SubstituteInputParams) {
   const { in: context = [], persona, task, ...inputs } = inputParams;
-  const params = mergeParams(findParams(persona), findParams(task));
+  const personaParams = findParams(persona);
+  const taskParams = findParams(task);
+  const params = mergeParams(personaParams, taskParams);
 
   // Make sure that all params are present in the values and collect
   // them into a single object.
@@ -75,6 +78,7 @@ function substitute(inputParams: SubstituteInputParams) {
     in: context,
     persona: subContent(persona, values),
     task: subContent(task, values),
+    outs: collectOuts(personaParams, taskParams),
   };
 
   function unique<T>(params: T[]): T[] {
@@ -83,6 +87,25 @@ function substitute(inputParams: SubstituteInputParams) {
 
   function toId(param: string) {
     return `p-${param}`;
+  }
+
+  function collectOuts(...paramsList: ParamInfo[][]) {
+    const functionNames = unique(
+      paramsList
+        .flat()
+        .map((param) => {
+          const { name, op } = param;
+          if (op !== "out") return null;
+          return name;
+        })
+        .filter(Boolean)
+    ) as string[];
+    return functionNames.map((name) => {
+      return {
+        name: name,
+        description: `Call this function when asked to invoke the "${name.toLocaleUpperCase()}" tool.`,
+      } satisfies FunctionDeclaration;
+    });
   }
 
   function findParams(content: LlmContent | undefined): ParamInfo[] {
