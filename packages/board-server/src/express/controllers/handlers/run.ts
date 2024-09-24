@@ -65,7 +65,7 @@ const run = async (req: Request, res: Response) => {
   }
   await runBoard({
     url: href,
-    path: board,
+    path: userAndBoardName,
     user: keyVerificationResult.user!,
     inputs,
     loader: loadFromStore,

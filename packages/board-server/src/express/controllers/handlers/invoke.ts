@@ -31,7 +31,7 @@ const invoke = async (req: Request, res: Response) => {
 
     const result = await invokeBoard({
         url: href,
-        path: boardName!,
+        path: userAndBoardName,
         inputs,
         loader: loadFromStore,
         kitOverrides: [secretsKit],
