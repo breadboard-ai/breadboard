@@ -165,7 +165,7 @@
     "@google-labs/template-kit": "^0.3.9",
     "@rollup/plugin-commonjs": "^26.0.1",
     "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-node-resolve": "^15.2.4",
+    "@rollup/plugin-node-resolve": "^15.3.0",
     "@rollup/plugin-virtual": "^3.0.2",
     "commander": "^12.1.0",
     "esbuild": "^0.24.0",
