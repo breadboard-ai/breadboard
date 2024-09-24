@@ -368,6 +368,7 @@ export class TopGraphObserver {
   }
 
   #error(event: RunErrorEvent) {
+    this.#status = "stopped";
     if (!this.#log) {
       return;
     }
