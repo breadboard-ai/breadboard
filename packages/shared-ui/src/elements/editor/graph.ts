@@ -68,7 +68,7 @@ const nodeColors = new Map([
   [
     "output",
     {
-      text: getGlobalColor("--bb-neutral-600"),
+      text: getGlobalColor("--bb-output-600"),
       border: getGlobalColor("--bb-neutral-400"),
     },
   ],
