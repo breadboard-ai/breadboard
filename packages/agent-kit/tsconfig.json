@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "composite": true,
+    "rootDir": ".",
     "outDir": "./dist",
     "resolveJsonModule": true
   },
