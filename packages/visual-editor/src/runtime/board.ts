@@ -415,7 +415,17 @@ export class Board extends EventTarget {
       return false;
     }
 
-    return true;
+    for (const store of provider.items().values()) {
+      for (const item of store.items.values()) {
+        if (item.url !== tab.graph.url) {
+          continue;
+        }
+
+        return item.mine && !item.readonly;
+      }
+    }
+
+    return false;
   }
 
   save(id: TabId | null) {
