@@ -11,7 +11,7 @@ import { getStore } from '../../../server/store.js';
 
 const update = async (req: Request, res: Response): Promise<void> => {
   const { user, boardName } = req.params;
-
+  
   const store = getStore();
 
   const maybeGraph = req.body as GraphDescriptor;

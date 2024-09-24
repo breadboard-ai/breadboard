@@ -41,6 +41,10 @@ app.post('/boards/@:user/:boardName.json', authenticate, boardController.update)
 
 app.get('/boards/@:user/:boardName.app', boardController.serve);
 app.get('/boards/@:user/:boardName.api', boardController.describe);
+app.post('/boards/@:user/:boardName.api/invoke', boardController.invoke);
+app.post('/boards/@:user/:boardName.api/run', boardController.run);
+app.get('/boards/@:user/:boardName.invite', boardController.inviteList);
+app.post('/boards/@:user/:boardName.invite', boardController.inviteUpdate);
 
 // Global error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
