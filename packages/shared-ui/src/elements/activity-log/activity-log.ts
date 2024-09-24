@@ -293,27 +293,8 @@ export class ActivityLog extends LitElement {
       [] as UserInputConfiguration[]
     );
 
-    // Potentially do the autosubmit.
+    // If there aren't any secrets to enter, we can skip rendering the control.
     if (userInputs.every((secret) => secret.value !== undefined)) {
-      for (const input of userInputs) {
-        if (typeof input.value !== "string") {
-          console.warn(
-            `Expected secret as string, instead received ${typeof input.value}`
-          );
-          continue;
-        }
-
-        // Dispatch an event for each secret received.
-        this.dispatchEvent(
-          new InputEnterEvent(
-            input.name,
-            { secret: input.value },
-            /* allowSavingIfSecret */ true
-          )
-        );
-      }
-
-      // If we have chosen to autosubmit do not render the control.
       return html``;
     }
 
