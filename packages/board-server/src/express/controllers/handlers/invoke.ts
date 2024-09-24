@@ -7,7 +7,7 @@ import { getStore } from '../../../server/store.js';
 
 const invoke = async (req: Request, res: Response) => {
     const { user, boardName } = req.params;
-    const { inputs } = req.body as Record<string, any>;
+    const { ...inputs } = req.body as Record<string, any>;
     const keyVerificationResult = await verifyKey(user!, boardName!, inputs);
     if (!keyVerificationResult.success) {
         res.status(403).json({ $error: keyVerificationResult.error }); // TODO(Tina): The original status code was 200
