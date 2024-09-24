@@ -565,7 +565,23 @@ export class ActivityLog extends LitElement {
                   >`
               : nothing}
           </h1>`
-        : nothing}
+        : html`${showLogDownload
+            ? downloadReady
+              ? html`<aside id="download-container">
+                  <a
+                    class="download"
+                    @click=${(evt: Event) => this.#download(evt)}
+                    >Click to Download</a
+                  >
+                </aside>`
+              : html`<aside id="download-container">
+                  <a
+                    class="download"
+                    @click=${(evt: Event) => this.#getRunLog(evt)}
+                    >Download</a
+                  >
+                </aside>`
+            : nothing}`}
       ${this.events && this.events.length
         ? this.events.map((event, idx) => {
             const isNew = this.#seenItems.has(event.id);

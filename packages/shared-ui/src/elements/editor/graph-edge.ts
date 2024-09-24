@@ -16,7 +16,7 @@ import { EdgeData, cloneEdgeData } from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
 import { GRAPH_OPERATIONS } from "./types.js";
 
-const edgeColorWithValues = getGlobalColor("--bb-boards-500");
+const edgeColorWithValues = getGlobalColor("--bb-input-600");
 const edgeColorSelected = getGlobalColor("--bb-ui-600");
 const edgeColorOrdinary = getGlobalColor("--bb-neutral-400");
 const edgeColorConstant = getGlobalColor("--bb-ui-200");
@@ -24,7 +24,7 @@ const edgeColorControl = getGlobalColor("--bb-boards-200");
 const edgeColorStar = getGlobalColor("--bb-inputs-200");
 const edgeColorInvalid = getGlobalColor("--bb-warning-500");
 
-const ICON_SCALE = 0.42;
+const ICON_SCALE = 0.33;
 
 /**
  * Calculates an [x,y] pair of points from start to end via the control point.
@@ -321,6 +321,7 @@ export class GraphEdge extends PIXI.Container {
     inLocation.x += this.toNode.position.x;
     inLocation.y += this.toNode.position.y;
 
+    let edgeWidth = 1;
     let edgeColor = edgeColorOrdinary;
     switch (this.#type) {
       case "control": {
@@ -349,6 +350,7 @@ export class GraphEdge extends PIXI.Container {
 
     if (this.value && this.value.length > 0) {
       edgeColor = edgeColorWithValues;
+      edgeWidth = 2;
     }
 
     if (this.selected) {
@@ -357,14 +359,14 @@ export class GraphEdge extends PIXI.Container {
 
     this.#valueSelector.clear();
     this.#valueSelector.beginPath();
-    this.#valueSelector.circle(0, 0, 12);
+    this.#valueSelector.circle(0, 0, 10);
     this.#valueSelector.closePath();
     this.#valueSelector.fill({ color: edgeColor });
     this.#valueSelector.eventMode = "static";
     this.#valueSelector.cursor = "pointer";
     this.#valueSelector.visible = false;
 
-    this.#edgeGraphic.setStrokeStyle({ width: 1, color: edgeColor });
+    this.#edgeGraphic.setStrokeStyle({ width: edgeWidth, color: edgeColor });
 
     const midY = Math.round((inLocation.y - outLocation.y) * 0.5);
     const ndx = outLocation.x - inLocation.x;
@@ -771,8 +773,8 @@ export class GraphEdge extends PIXI.Container {
       this.#valueSelector.y = y;
 
       if (this.#valueSprite) {
-        this.#valueSprite.x = x - 10;
-        this.#valueSprite.y = y - 10;
+        this.#valueSprite.x = x - 8;
+        this.#valueSprite.y = y - 8;
         this.#valueSprite.visible = true;
       }
     } else {

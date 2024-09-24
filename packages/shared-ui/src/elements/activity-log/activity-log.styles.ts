@@ -40,7 +40,8 @@ export const styles = css`
     background: #f6f6f6;
   }
 
-  :host > h1 > a {
+  :host > h1 > a,
+  a.download {
     font-size: var(--bb-label-small);
     color: var(--bb-neutral-500);
     text-decoration: none;
@@ -49,8 +50,15 @@ export const styles = css`
   }
 
   :host > h1 > a:hover,
-  :host > h1 > a:active {
+  :host > h1 > a:active,
+  a.download:hover,
+  a.download:active {
     color: var(--bb-neutral-700);
+  }
+
+  #download-container {
+    display: flex;
+    justify-content: flex-end;
   }
 
   .activity-entry {
@@ -66,7 +74,7 @@ export const styles = css`
   }
 
   :host > .activity-entry:last-of-type {
-    margin-bottom: 100px;
+    margin-bottom: 20px;
   }
 
   .activity-entry.error {

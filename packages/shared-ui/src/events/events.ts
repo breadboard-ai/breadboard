@@ -135,6 +135,17 @@ export class ShowTooltipEvent extends Event {
   }
 }
 
+export class ToggleBoardActivityEvent extends Event {
+  static eventName = "bbtoggleboardactivity";
+  constructor(
+    public readonly x: number,
+    public readonly y: number,
+    public readonly forceOn = false
+  ) {
+    super(ToggleBoardActivityEvent.eventName, { ...eventInit });
+  }
+}
+
 export class HideTooltipEvent extends Event {
   static eventName = "bbhidetooltip";
   constructor() {

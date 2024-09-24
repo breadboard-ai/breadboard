@@ -330,6 +330,11 @@ export type CommentConfiguration = {
   y: number;
 };
 
+export type BoardActivityLocation = {
+  x: number;
+  y: number;
+};
+
 export interface UserMessage {
   srcset: string;
   src: string;

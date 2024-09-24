@@ -62,14 +62,14 @@ const nodeColors = new Map([
     "input",
     {
       text: getGlobalColor("--bb-input-600"),
-      border: getGlobalColor("--bb-input-500"),
+      border: getGlobalColor("--bb-neutral-500"),
     },
   ],
   [
     "output",
     {
-      text: getGlobalColor("--bb-output-600"),
-      border: getGlobalColor("--bb-output-400"),
+      text: getGlobalColor("--bb-neutral-600"),
+      border: getGlobalColor("--bb-neutral-400"),
     },
   ],
   [

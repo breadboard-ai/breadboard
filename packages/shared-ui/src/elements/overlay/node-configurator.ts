@@ -22,6 +22,7 @@ import { EditorMode, filterConfigByMode } from "../../utils/mode.js";
 import { classMap } from "lit/directives/class-map.js";
 import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 
+const MAXIMIZE_KEY = "bb-node-configuration-overlay-maximized";
 const OVERLAY_CLEARANCE = 60;
 
 @customElement("bb-node-configuration-overlay")
@@ -281,8 +282,7 @@ export class NodeConfigurationOverlay extends LitElement {
       // Once we've calculated the minimized size we can now recall the user's
       // preferred max/min and use that.
       this.maximized =
-        globalThis.sessionStorage.getItem("bb-node-configurator-maximized") ===
-        "true";
+        globalThis.sessionStorage.getItem(MAXIMIZE_KEY) === "true";
     });
   }
 
@@ -394,10 +394,7 @@ export class NodeConfigurationOverlay extends LitElement {
   #toggleMaximize() {
     this.maximized = !this.maximized;
 
-    globalThis.sessionStorage.setItem(
-      "bb-node-configurator-maximized",
-      this.maximized.toString()
-    );
+    globalThis.sessionStorage.setItem(MAXIMIZE_KEY, this.maximized.toString());
   }
 
   render() {

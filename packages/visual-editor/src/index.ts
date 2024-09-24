@@ -85,7 +85,9 @@ export class Main extends LitElement {
   showProviderAddOverlay = false;
 
   @state()
-  showOverflowMenu = false;
+  showBoardActivityOverlay = false;
+  #boardActivityLocation: BreadboardUI.Types.BoardActivityLocation | null =
+    null;
 
   @state()
   showHistory = false;
@@ -1285,7 +1287,6 @@ export class Main extends LitElement {
       this.showFirstRun ||
       this.showProviderAddOverlay ||
       this.showSaveAsDialog ||
-      this.showOverflowMenu ||
       this.showNodeConfigurator ||
       this.showEdgeValue ||
       this.showCommentEditor;
@@ -1740,8 +1741,20 @@ export class Main extends LitElement {
                     break;
                   }
                 }
+              }}
+              @bbtoggleboardactivity=${(
+                evt: BreadboardUI.Events.ToggleBoardActivityEvent
+              ) => {
+                if (evt.forceOn) {
+                  this.showBoardActivityOverlay = true;
+                } else {
+                  this.showBoardActivityOverlay =
+                    !this.showBoardActivityOverlay;
+                }
 
-                this.showOverflowMenu = false;
+                this.#boardActivityLocation = this.showBoardActivityOverlay
+                  ? { x: evt.x, y: evt.y }
+                  : null;
               }}
               @dragover=${(evt: DragEvent) => {
                 evt.preventDefault();
@@ -1969,51 +1982,6 @@ export class Main extends LitElement {
               @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
                 this.toast(toastEvent.message, toastEvent.toastType);
               }}
-              @bbinputenter=${async (
-                event: BreadboardUI.Events.InputEnterEvent
-              ) => {
-                if (!this.#settings || !this.tab) {
-                  return;
-                }
-
-                const isSecret = "secret" in event.data;
-                const runner = this.#runtime.run.getRunner(this.tab.id);
-                if (!runner) {
-                  throw new Error("Can't send input, no runner");
-                }
-                if (isSecret) {
-                  if (this.#secretsHelper) {
-                    this.#secretsHelper.receiveSecrets(event);
-                    if (
-                      this.#secretsHelper.hasAllSecrets() &&
-                      !runner?.running()
-                    ) {
-                      const secrets = this.#secretsHelper.getSecrets();
-                      this.#secretsHelper = null;
-                      runner?.run(secrets);
-                    }
-                  } else {
-                    // This is the case when the "secret" event hasn't yet
-                    // been received.
-                    // Likely, this is a side effect of how the
-                    // activity-log is built: it relies on the run observer
-                    // for the events list, and the run observer updates the
-                    // list of run events before the run API dispatches
-                    // the "secret" event.
-                    this.#secretsHelper = new SecretsHelper(this.#settings!);
-                    this.#secretsHelper.receiveSecrets(event);
-                  }
-                } else {
-                  const data = event.data as InputValues;
-                  if (runner.running()) {
-                    throw new Error(
-                      "The runner is already running, cannot send input"
-                    );
-                  }
-                  runner.run(data);
-                }
-                this.requestUpdate();
-              }}
               @bbnodetyperetrievalerror=${(
                 evt: BreadboardUI.Events.NodeTypeRetrievalErrorEvent
               ) => {
@@ -2178,6 +2146,83 @@ export class Main extends LitElement {
       ></bb-provider-overlay>`;
     }
 
+    let boardActivityOverlay: Promise<HTMLTemplateResult> | symbol = nothing;
+    if (this.showBoardActivityOverlay) {
+      boardActivityOverlay = this.#initialize
+        .then(() => {
+          const observers = this.#runtime?.run.getObservers(
+            this.tab?.id ?? null
+          );
+          if (observers && observers.runObserver) {
+            return observers.runObserver?.runs();
+          }
+
+          return [];
+        })
+        .then((runs: InspectableRun[]) => {
+          const inputsFromLastRun = runs[1]?.inputs() ?? null;
+
+          return html`<bb-board-activity-overlay
+            .location=${this.#boardActivityLocation}
+            .run=${runs[0] ?? null}
+            .events=${runs[0]?.events ?? []}
+            .settings=${this.#settings}
+            .providers=${this.#providers}
+            .providerOps=${this.providerOps}
+            .inputsFromLastRun=${inputsFromLastRun}
+            @bboverlaydismissed=${() => {
+              this.showBoardActivityOverlay = false;
+              this.#boardActivityLocation = null;
+            }}
+            @bbinputenter=${async (
+              event: BreadboardUI.Events.InputEnterEvent
+            ) => {
+              if (!this.#settings || !this.tab) {
+                return;
+              }
+
+              const isSecret = "secret" in event.data;
+              const runner = this.#runtime.run.getRunner(this.tab.id);
+              if (!runner) {
+                throw new Error("Can't send input, no runner");
+              }
+              if (isSecret) {
+                if (this.#secretsHelper) {
+                  this.#secretsHelper.receiveSecrets(event);
+                  if (
+                    this.#secretsHelper.hasAllSecrets() &&
+                    !runner?.running()
+                  ) {
+                    const secrets = this.#secretsHelper.getSecrets();
+                    this.#secretsHelper = null;
+                    runner?.run(secrets);
+                  }
+                } else {
+                  // This is the case when the "secret" event hasn't yet
+                  // been received.
+                  // Likely, this is a side effect of how the
+                  // activity-log is built: it relies on the run observer
+                  // for the events list, and the run observer updates the
+                  // list of run events before the run API dispatches
+                  // the "secret" event.
+                  this.#secretsHelper = new SecretsHelper(this.#settings!);
+                  this.#secretsHelper.receiveSecrets(event);
+                }
+              } else {
+                const data = event.data as InputValues;
+                if (runner.running()) {
+                  throw new Error(
+                    "The runner is already running, cannot send input"
+                  );
+                }
+                runner.run(data);
+              }
+              this.requestUpdate();
+            }}
+          ></bb-board-activity-overlay>`;
+        });
+    }
+
     let historyOverlay: HTMLTemplateResult | symbol = nothing;
     if (this.showHistory) {
       const history = this.#runtime.edit.getHistory(this.tab);
@@ -2317,11 +2362,12 @@ export class Main extends LitElement {
       firstRunOverlay,
       historyOverlay,
       providerAddOverlay,
-      saveAsDialogOverlay,
       previewOverlay,
+      until(boardActivityOverlay),
       nodeConfiguratorOverlay,
       edgeValueOverlay,
       commentOverlay,
+      saveAsDialogOverlay,
       tooltip,
       toasts,
     ];
