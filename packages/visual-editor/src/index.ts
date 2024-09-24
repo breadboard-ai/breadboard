@@ -2217,7 +2217,6 @@ export class Main extends LitElement {
                 }
                 runner.run(data);
               }
-              this.requestUpdate();
             }}
           ></bb-board-activity-overlay>`;
         });
