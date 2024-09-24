@@ -14,7 +14,7 @@
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
   "bin": {
-    "build-code": "bin/build-code.js"
+    "build-code": "bin/build-code"
   },
   "type": "module",
   "main": "dist/index.js",
@@ -38,6 +38,7 @@
     }
   },
   "files": [
+    "bin/*",
     "dist/**/*.{js,js.map,d.ts}",
     "!dist/test/",
     "CHANGELOG.md"

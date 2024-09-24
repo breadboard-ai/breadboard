@@ -17,7 +17,7 @@ await mkdir(config.outputDir, { recursive: true });
 // dependencies like esbuild. We could have a separate "support" package, but
 // then we'd have to tell the user to install that. So, the simplest solution is
 // just to copy the support library directly to the user's output folder.
-const supportOutputPath = join(config.outputDir, "support.js");
+const supportOutputPath = join(config.outputDir, "support.ts");
 console.log(`Writing support module to ${supportOutputPath}`);
 await cp(
   join(import.meta.dirname, "..", "src", "support.ts"),
