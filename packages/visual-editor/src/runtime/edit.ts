@@ -299,6 +299,8 @@ export class Edit extends EventTarget {
         );
       }
     }
+
+    this.dispatchEvent(new RuntimeBoardEditEvent(false));
   }
 
   createSubGraph(tab: Tab | null, subGraphTitle: string) {
