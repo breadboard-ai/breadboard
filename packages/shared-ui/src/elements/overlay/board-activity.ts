@@ -237,8 +237,6 @@ export class BoardActivityOverlay extends LitElement {
       this.#normalizedY = this.#top / containerEntry.contentRect.height;
     }
 
-    // console.log(normalizedX, normalizedY);
-
     this.#left = this.#normalizedX * containerEntry.contentRect.width;
     this.#top = this.#normalizedY * containerEntry.contentRect.height;
 
