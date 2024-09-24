@@ -36,7 +36,7 @@ export class PastRun implements InspectableRun {
   async initializeBackingRun() {
     const observer = new RunObserver(new GraphStore(), { logLevel: "debug" });
     for await (const result of this.replay()) {
-      observer.observe(result);
+      await observer.observe(result);
     }
     this.#backingRun = (await observer.runs())[0];
   }

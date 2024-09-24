@@ -131,6 +131,7 @@ export class IDBGraphProvider implements GraphProvider {
       }
     }
 
+    storeDb.close();
     this.#storeLocations = storeList;
     this.#ready = this.#refreshAllItems();
   }
@@ -168,6 +169,8 @@ export class IDBGraphProvider implements GraphProvider {
       }
       const db = await idb.openDB<GraphDB>(store.name, store.version);
       const graph = (await db.get("graphs", url.href)) || null;
+      db.close();
+
       return graph;
     } catch (err) {
       // Failed to load.
@@ -206,6 +209,8 @@ export class IDBGraphProvider implements GraphProvider {
       const db = await idb.openDB<GraphDB>(store.name, store.version);
       descriptor.url = url.href;
       await db.put("graphs", descriptor);
+      db.close();
+
       await this.#refreshAllItems();
       return { result: true };
     } catch (err) {
@@ -225,6 +230,8 @@ export class IDBGraphProvider implements GraphProvider {
       }
       const db = await idb.openDB<GraphDB>(store.name, store.version);
       await db.delete("graphs", url.href);
+      db.close();
+
       await this.#refreshAllItems();
       return { result: true };
     } catch (err) {
@@ -288,6 +295,7 @@ export class IDBGraphProvider implements GraphProvider {
       await db.put("graphs", blankBoard);
       graphs = await db.getAll("graphs");
     }
+    db.close();
 
     const itemsByUrl = graphs
       .sort((g1, g2) => {
