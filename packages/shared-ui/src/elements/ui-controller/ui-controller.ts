@@ -374,49 +374,6 @@ export class UI extends LitElement {
       }
     );
 
-    const events = this.run?.events || [];
-    const eventPosition = events.length - 1;
-    const activityLog = guard([this.run?.events], () => {
-      return html`<bb-activity-log
-        .run=${this.run}
-        .inputsFromLastRun=${this.inputsFromLastRun}
-        .events=${events}
-        .eventPosition=${eventPosition}
-        .showExtendedInfo=${true}
-        .settings=${this.settings}
-        .logTitle=${"Debug Board"}
-        .waitingMessage=${'Click "Debug Board" to get started'}
-        .providers=${this.providers}
-        .providerOps=${this.providerOps}
-        @bbinputrequested=${() => {
-          this.selectedNodeIds.length = 0;
-          this.requestUpdate();
-        }}
-        @pointerdown=${(evt: PointerEvent) => {
-          if (!this.#controlsActivityRef.value) {
-            return;
-          }
-          const [top] = evt.composedPath();
-          if (!(top instanceof HTMLElement) || !top.dataset.messageId) {
-            return;
-          }
-          evt.stopImmediatePropagation();
-          const id = top.dataset.messageId;
-          const event = this.run?.getEventById(id);
-          if (!event) {
-            // TODO: Offer the user more information.
-            console.warn(`Unable to find event with ID "${id}"`);
-            return;
-          }
-          if (event.type !== "node") {
-            return;
-          }
-          this.debugEvent = event;
-        }}
-        name="Board"
-      ></bb-activity-log>`;
-    });
-
     const entryDetails = this.debugEvent
       ? html`<div
           id="details"
@@ -466,29 +423,14 @@ export class UI extends LitElement {
       ></bb-welcome-panel>`;
     }
 
-    return html`<bb-splitter
-      direction=${this.isPortrait ? "vertical" : "horizontal"}
-      name="layout-main"
-      split="[0.75, 0.25]"
-      .showQuickExpandCollapse=${true}
-    >
-      <section id="diagram" slot="slot-0">
-        ${this.graph === null && this.failedToLoad
-          ? html`<div class="failed-to-load">
-              <h1>Unable to load board</h1>
-              <p>Please try again, or load a different board</p>
-            </div>`
-          : editor}
-        ${entryDetails} ${welcomePanel}
-      </section>
-
-      <section
-        ${ref(this.#controlsActivityRef)}
-        id="controls-activity"
-        slot="slot-1"
-      >
-        <div id="controls-activity-content">${activityLog}</div>
-      </section>
-    </bb-splitter>`;
+    return html`<section id="diagram" slot="slot-0">
+      ${this.graph === null && this.failedToLoad
+        ? html`<div class="failed-to-load">
+            <h1>Unable to load board</h1>
+            <p>Please try again, or load a different board</p>
+          </div>`
+        : editor}
+      ${entryDetails} ${welcomePanel}
+    </section>`;
   }
 }

@@ -8,6 +8,7 @@ export { ActivityLog } from "./activity-log/activity-log.js";
 export { ActivityLogLite } from "./activity-log/activity-log-lite.js";
 export { ArrayEditor } from "./input/array/array-editor.js";
 export { BoardDetails } from "./board-details/board-details.js";
+export { BoardActivityOverlay } from "./overlay/board-activity.js";
 export { BoardEditOverlay } from "./overlay/board-edit.js";
 export { BoardSelector } from "./input/board-selector/board-selector.js";
 export { CodeEditor } from "./input/code-editor/code-editor.js";

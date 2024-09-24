@@ -663,7 +663,7 @@ export class GraphRenderer extends LitElement {
       return;
     }
 
-    this.zoomToNode(highlightedNode.descriptor.id);
+    this.zoomToNode(highlightedNode.descriptor.id, -0.1);
   }
 
   createGraph(opts: GraphOpts) {
@@ -1140,7 +1140,7 @@ export class GraphRenderer extends LitElement {
     }
   }
 
-  zoomToNode(id: string) {
+  zoomToNode(id: string, offset = 0) {
     this.zoomToFit(false);
 
     for (const graph of this.#container.children) {
@@ -1158,7 +1158,8 @@ export class GraphRenderer extends LitElement {
       const rendererBounds = this.getBoundingClientRect();
 
       const xShift =
-        (0.5 -
+        (0.5 +
+          offset -
           (graphNodeBounds.x - graphBounds.x + graphNodeBounds.width * 0.5) /
             graphBounds.width) *
         graphBounds.width;

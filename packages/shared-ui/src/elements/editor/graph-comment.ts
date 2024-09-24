@@ -10,7 +10,7 @@ import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types.js";
 import MarkdownIt from "markdown-it";
 
 const markdown = MarkdownIt();
-const backgroundColor = getGlobalColor("--bb-neutral-0");
+const backgroundColor = getGlobalColor("--bb-ui-50");
 const emptyTextColor = getGlobalColor("--bb-neutral-600");
 const textColor = getGlobalColor("--bb-neutral-800");
 const linkColor = getGlobalColor("--bb-ui-500");

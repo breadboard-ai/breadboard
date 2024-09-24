@@ -68,6 +68,7 @@ import {
   SubGraphChosenEvent,
   SubGraphCreateEvent,
   SubGraphDeleteEvent,
+  ToggleBoardActivityEvent,
   UndoEvent,
 } from "../../events/events.js";
 import { GraphEdge } from "./graph-edge.js";
@@ -234,6 +235,7 @@ export class Editor extends LitElement {
   #left = 0;
   #addButtonRef: Ref<HTMLInputElement> = createRef();
   #nodeSelectorRef: Ref<NodeSelector> = createRef();
+  #activityMarkerRef: Ref<HTMLElement> = createRef();
 
   #writingToClipboard = false;
   #readingFromClipboard = false;
@@ -572,10 +574,79 @@ export class Editor extends LitElement {
       mix-blend-mode: difference;
     }
 
+    #activity-marker {
+      align-items: center;
+      background: var(--bb-neutral-50);
+      border-radius: var(--bb-grid-size-10);
+      border: 1px solid var(--bb-neutral-300);
+      bottom: calc(var(--bb-grid-size) * 3);
+      color: var(--bb-neutral-900);
+      cursor: pointer;
+      display: flex;
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      height: var(--bb-grid-size-9);
+      justify-content: center;
+      position: absolute;
+      right: calc(var(--bb-grid-size) * 42);
+      transition: all 0.3s cubic-bezier(0, 0, 0.3, 1);
+      width: var(--bb-grid-size-9);
+    }
+
+    #activity-marker::after {
+      content: "";
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      opacity: 0.4;
+      top: -8px;
+      left: -8px;
+      border-radius: 50%;
+      position: absolute;
+    }
+
+    #activity-marker.pending {
+      border: 1px solid var(--bb-inputs-700);
+      background: var(--bb-inputs-500);
+      color: var(--bb-neutral-0);
+    }
+
+    #activity-marker.pending::after {
+      animation: expand 3s cubic-bezier(0, 0, 0.3, 1) forwards infinite;
+    }
+
+    #activity-marker.error {
+      background: var(--bb-warning-500);
+      color: var(--bb-warning-900);
+    }
+
+    @keyframes expand {
+      0% {
+        opacity: 0;
+        transform: scale(1);
+        border: 8px solid var(--bb-inputs-500);
+      }
+
+      5% {
+        opacity: 0.4;
+      }
+
+      50% {
+        opacity: 0;
+        transform: scale(1.5) translate(4px, 4px);
+      }
+
+      100% {
+        opacity: 0;
+        transform: scale(1.5) translate(4px, 4px);
+        border: 0px solid var(--bb-inputs-500);
+      }
+    }
+
     #active-component {
       position: absolute;
       bottom: calc(var(--bb-grid-size) * 3);
-      right: calc(var(--bb-grid-size) * 42);
+      right: calc(var(--bb-grid-size) * 54);
       border-radius: 50px;
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
@@ -1659,6 +1730,21 @@ export class Editor extends LitElement {
     this.dispatchEvent(new SubGraphCreateEvent(newSubGraphName));
   }
 
+  #dispatchActivityMarkerEvent(forceOn = false) {
+    if (!this.#activityMarkerRef.value) {
+      return;
+    }
+
+    const bounds = this.#activityMarkerRef.value.getBoundingClientRect();
+    this.dispatchEvent(
+      new ToggleBoardActivityEvent(
+        bounds.left + bounds.width / 2,
+        bounds.top - 10,
+        forceOn
+      )
+    );
+  }
+
   firstUpdated(): void {
     this.#onResizeBound();
   }
@@ -1800,6 +1886,16 @@ export class Editor extends LitElement {
       ></bb-overflow-menu>`;
     }
 
+    let isInputPending = false;
+    let isError = false;
+    const newestEvent = this.run?.events.at(-1);
+    if (newestEvent) {
+      isInputPending =
+        newestEvent.type === "node" &&
+        newestEvent.node.descriptor.type === "input";
+      isError = newestEvent.type === "error";
+    }
+
     return html`${until(this.#processGraph())}
       ${
         this.showControls && this.graph !== null
@@ -1811,6 +1907,7 @@ export class Editor extends LitElement {
                   if (isRunning) {
                     this.dispatchEvent(new StopEvent());
                   } else {
+                    this.#dispatchActivityMarkerEvent(true);
                     this.dispatchEvent(new RunEvent());
                   }
                 }}
@@ -1823,6 +1920,7 @@ export class Editor extends LitElement {
                 id="active-component"
                 class=${classMap({
                   active: this.zoomToHighlightedNodeDuringRuns,
+                  visible: isRunning,
                 })}
                 @click=${() => {
                   const shouldZoom = !this.zoomToHighlightedNodeDuringRuns;
@@ -1839,12 +1937,40 @@ export class Editor extends LitElement {
 
                   if (this.topGraphResult?.currentNode) {
                     this.#graphRenderer.zoomToNode(
-                      this.topGraphResult.currentNode.descriptor.id
+                      this.topGraphResult.currentNode.descriptor.id,
+                      -0.1
                     );
                   }
                 }}
               >
                 Follow
+              </button>
+
+              <button
+                id="activity-marker"
+                ${ref(this.#activityMarkerRef)}
+                class=${classMap({
+                  pending: isInputPending,
+                  error: isError,
+                  visible: isRunning,
+                })}
+                @click=${() => {
+                  this.#dispatchActivityMarkerEvent();
+                }}
+                @pointerover=${(evt: PointerEvent) => {
+                  this.dispatchEvent(
+                    new ShowTooltipEvent(
+                      "See board activity",
+                      evt.clientX,
+                      evt.clientY
+                    )
+                  );
+                }}
+                @pointerout=${() => {
+                  this.dispatchEvent(new HideTooltipEvent());
+                }}
+              >
+                ${this.run ? this.run.events.length : 0}
               </button>
 
               ${this.readOnly
