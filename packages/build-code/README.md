@@ -19,7 +19,7 @@ bundled and schema is automaticaly generated from TypeScript types.
     - A type/interface called `Outputs`
     - A function called `run`
 
-    For example, the file `src/js-components/is-foo.js`:
+    For example, the file `src/js-components/is-foo.ts`:
 
     ```ts
     export interface Inputs {
@@ -75,33 +75,31 @@ bundled and schema is automaticaly generated from TypeScript types.
     ```json
     {
       "nodes": {
-        {
-          "id": "runJavascript-0",
-          "type:" "runJavascript",
-          "configuration": {
-            "raw": true,
-            "name": "run",
-            "code": "export const run = ({ str }) => {\n  return { isFoo: strIsFoo(str) };\n};\n\nfunction strIsFoo(str) {\n  return str === \"foo\";\n}\n",
-            "inputSchema": {
-              "type": "object",
-              "properties": {
-                "str": {
-                  "type": "string"
-                }
-              },
-              "required": ["str"],
-              "additionalProperties": false
+        "id": "runJavascript-0",
+        "type": "runJavascript",
+        "configuration": {
+          "raw": true,
+          "name": "run",
+          "code": "export const run = ({ str }) => {\n  return { isFoo: strIsFoo(str) };\n};\n\nfunction strIsFoo(str) {\n  return str === \"foo\";\n}\n",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "str": {
+                "type": "string"
+              }
             },
-            "outputSchema": {
-              "type": "object",
-              "properties": {
-                "isFoo": {
-                  "type": "boolean"
-                }
-              },
-              "required": ["isFoo"],
-              "additionalProperties": false
-            }
+            "required": ["str"],
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "isFoo": {
+                "type": "boolean"
+              }
+            },
+            "required": ["isFoo"],
+            "additionalProperties": false
           }
         }
       }

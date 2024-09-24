@@ -6,9 +6,8 @@
 
 import type { Definition, Value } from "@breadboard-ai/build";
 import { unsafeType, type JsonSerializable } from "@breadboard-ai/build";
-import type { OutputPort } from "@breadboard-ai/build/internal/common/port.js";
-import type { JSONSchema4, JSONSchema7 } from "json-schema";
 import { runJavascript } from "@google-labs/core-kit";
+import type { JSONSchema4, JSONSchema7 } from "json-schema";
 
 export interface MakeCodeComponentParams {
   code: string;
@@ -47,8 +46,8 @@ export function makeRunJavascriptComponent<
       name: "run",
       raw: true,
       // TODO(aomarks) Upgrade to the JSONSchema7 type everywhere.
-      inputSchema: inputSchema as JSONSchema4,
-      outputSchema: outputSchema as JSONSchema4,
+      inputSchema: inputSchema as object as JSONSchema4,
+      outputSchema: outputSchema as object as JSONSchema4,
     });
     // TODO(aomarks) We should have a proper API for this. We're initializing
     // the ports and setting their schemas.
@@ -56,9 +55,10 @@ export function makeRunJavascriptComponent<
       outputSchema.properties ?? {}
     )) {
       const port = instance.unsafeOutput(name);
-      (port as Writable<typeof port>).type = unsafeType(schema as JSONSchema4);
-      (instance.outputs as Record<string, OutputPort<JsonSerializable>>)[name] =
-        port;
+      (port as Writable<typeof port>).type = unsafeType(
+        schema as object as JSONSchema4
+      );
+      (instance.outputs as Record<string, Value>)[name] = port;
     }
     return instance as object as ThisInstance;
   };

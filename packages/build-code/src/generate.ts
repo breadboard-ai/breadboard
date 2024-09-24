@@ -18,25 +18,50 @@ export async function generate(config: Config, inputPath: string) {
     inputPath,
     config.outputDir
   );
-  const formatted = await prettier.format(generated, { parser: "typescript" });
+  let formatted: string;
+  try {
+    formatted = await prettier.format(generated, { parser: "typescript" });
+  } catch (e) {
+    throw new AggregateError(
+      [e],
+      `Error from prettier while formatting ${inputPath}`
+    );
+  }
   return formatted;
 }
 
 async function bundleCode(inputPath: string): Promise<string> {
-  const bundle = await esbuild.build({
+  const config: esbuild.BuildOptions = {
     entryPoints: [inputPath],
     format: "esm",
     bundle: true,
     write: false,
     legalComments: "inline",
-  });
-  if (bundle.errors.length > 0) {
-    throw new Error(`Error bundling file ${inputPath}: ${bundle.errors}`);
+  };
+  let bundle;
+  try {
+    bundle = await esbuild.build(config);
+  } catch (e) {
+    throw new AggregateError(
+      [e],
+      `Error from esbuild with config ${JSON.stringify(config)}`
+    );
   }
-  if (bundle.outputFiles.length !== 1) {
+  for (const warning of bundle.warnings) {
+    console.warn(
+      `Warning from esbuild while bundling ${inputPath}: ` +
+        `${JSON.stringify(warning)}`
+    );
+  }
+  if (bundle.errors.length > 0) {
+    throw new Error(
+      `Error bundling file ${inputPath}: ${JSON.stringify(bundle.errors)}`
+    );
+  }
+  if (bundle.outputFiles === undefined || bundle.outputFiles.length !== 1) {
     throw new Error(
       `Error bundling file ${inputPath}: ` +
-        `Expected 1 output file, got ${bundle.outputFiles.length}.`
+        `Expected 1 output file, got ${bundle.outputFiles?.length ?? 0}.`
     );
   }
   return bundle.outputFiles[0]!.text;
@@ -48,12 +73,24 @@ interface Schemas {
 }
 
 function extractSchemas(inputPath: string, tsconfigPath: string): Schemas {
-  const generator = tsj.createGenerator({
+  const config: tsj.Config = {
     path: inputPath,
     tsconfig: tsconfigPath,
     type: "*",
-  });
-  const schema = generator.createSchema("*");
+    skipTypeCheck: true,
+  };
+  let schema: JSONSchema7;
+  try {
+    schema = tsj.createGenerator(config).createSchema("*");
+  } catch (e) {
+    if (e instanceof tsj.BuildError) {
+      console.error(e.diagnostic);
+    }
+    throw new AggregateError(
+      [e],
+      `Error from ts-json-schema-generator with config ${JSON.stringify(config)}`
+    );
+  }
   const inputSchema = schema.definitions?.["Inputs"];
   const outputSchema = schema.definitions?.["Outputs"];
   if (inputSchema === undefined || outputSchema === undefined) {
@@ -80,7 +117,7 @@ function generateSource(
   );
   const functionName = kebabToCamel(basename(inputPath).replace(/\.ts/, ""));
   return `
-    import {makeRunJavascriptComponent} from "@breadboard-ai/build-code";
+    import {makeRunJavascriptComponent} from "./support.js";
     import type {Inputs, Outputs} from "${sourceImportSpecifier}";
 
     /**

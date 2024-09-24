@@ -1,4 +1,4 @@
-import { makeRunJavascriptComponent } from "@breadboard-ai/build-code";
+import { makeRunJavascriptComponent } from "./support.js";
 import type { Inputs, Outputs } from "../str-is-foo.js";
 
 /**

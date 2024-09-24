@@ -107,6 +107,7 @@
     "@google-labs/core-kit": "^0.14.1",
     "@types/node": "^22.0.0",
     "esbuild": "^0.24.0",
+    "json-schema": "^0.4.0",
     "prettier": "^3.3.3",
     "ts-json-schema-generator": "^2.3.0"
   },
