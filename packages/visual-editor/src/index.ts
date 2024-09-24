@@ -1388,7 +1388,7 @@ export class Main extends LitElement {
       ></bb-nav> `;
     });
 
-    const tmpl = this.#initialize
+    const uiController = this.#initialize
       .then(() => {
         const observers = this.#runtime?.run.getObservers(this.tab?.id ?? null);
         if (observers && observers.runObserver) {
@@ -1400,6 +1400,7 @@ export class Main extends LitElement {
       .then((runs: InspectableRun[]) => {
         const observers = this.#runtime?.run.getObservers(this.tab?.id ?? null);
         const topGraphResult = observers?.topGraphObserver?.current() ?? null;
+        const inputsFromLastRun = runs[1]?.inputs() ?? null;
 
         let tabStatus = BreadboardUI.Types.STATUS.STOPPED;
         if (this.tab) {
@@ -1415,8 +1416,352 @@ export class Main extends LitElement {
             BreadboardUI.Types.BOARD_LOAD_STATUS.LOADING;
         }
 
-        const inputsFromLastRun = runs[1]?.inputs() ?? null;
-        return html`<header>
+        let boardOverlay: HTMLTemplateResult | symbol = nothing;
+        if (this.boardEditOverlayInfo) {
+          boardOverlay = html`<bb-board-edit-overlay
+            .boardTitle=${this.boardEditOverlayInfo.title}
+            .boardVersion=${this.boardEditOverlayInfo.version}
+            .boardDescription=${this.boardEditOverlayInfo.description}
+            .boardPublished=${this.boardEditOverlayInfo.published}
+            .boardIsTool=${this.boardEditOverlayInfo.isTool}
+            .subGraphId=${this.boardEditOverlayInfo.subGraphId}
+            @bboverlaydismissed=${() => {
+              this.boardEditOverlayInfo = null;
+            }}
+            @bbboardinfoupdate=${(
+              evt: BreadboardUI.Events.BoardInfoUpdateEvent
+            ) => {
+              this.#handleBoardInfoUpdate(evt);
+              this.boardEditOverlayInfo = null;
+              this.requestUpdate();
+            }}
+          ></bb-board-edit-overlay>`;
+        }
+
+        let settingsOverlay: HTMLTemplateResult | symbol = nothing;
+        if (this.showSettingsOverlay) {
+          settingsOverlay = html`<bb-settings-edit-overlay
+            class="settings"
+            .settings=${this.#settings?.values || null}
+            @bbsettingsupdate=${async (
+              evt: BreadboardUI.Events.SettingsUpdateEvent
+            ) => {
+              if (!this.#settings) {
+                return;
+              }
+
+              try {
+                await this.#settings.save(evt.settings);
+                this.toast(
+                  "Saved settings",
+                  BreadboardUI.Events.ToastType.INFORMATION
+                );
+              } catch (err) {
+                console.warn(err);
+                this.toast(
+                  "Unable to save settings",
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+              }
+
+              this.requestUpdate();
+            }}
+            @bboverlaydismissed=${() => {
+              this.showSettingsOverlay = false;
+            }}
+          ></bb-settings-edit-overlay>`;
+        }
+
+        let firstRunOverlay: HTMLTemplateResult | symbol = nothing;
+        if (this.showFirstRun) {
+          const currentUrl = new URL(window.location.href);
+          const boardServerUrl = currentUrl.searchParams.get("boardserver");
+
+          firstRunOverlay = html`<bb-first-run-overlay
+            class="settings"
+            .settings=${this.#settings?.values || null}
+            .boardServerUrl=${boardServerUrl}
+            @bbgraphproviderconnectrequest=${async (
+              evt: BreadboardUI.Events.GraphProviderConnectRequestEvent
+            ) => {
+              const provider = this.#getProviderByName(evt.providerName);
+              if (!provider || !provider.extendedCapabilities().connect) {
+                return;
+              }
+
+              try {
+                await provider.connect(evt.location, evt.apiKey);
+              } catch (err) {
+                return;
+              }
+            }}
+            @bbsettingsupdate=${async (
+              evt: BreadboardUI.Events.SettingsUpdateEvent
+            ) => {
+              if (!this.#settings) {
+                return;
+              }
+
+              try {
+                await this.#settings.save(evt.settings);
+                this.toast(
+                  "Welcome to Breadboard!",
+                  BreadboardUI.Events.ToastType.INFORMATION
+                );
+              } catch (err) {
+                console.warn(err);
+                this.toast(
+                  "Unable to save settings",
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+              }
+
+              this.#setUrlParam("firstrun", null);
+              this.#setUrlParam("boardserver", null);
+              this.showFirstRun = false;
+              this.requestUpdate();
+            }}
+            @bboverlaydismissed=${() => {
+              this.#setUrlParam("firstrun", null);
+              this.#setUrlParam("boardserver", null);
+              this.showFirstRun = false;
+            }}
+          ></bb-first-run-overlay>`;
+        }
+
+        let providerAddOverlay: HTMLTemplateResult | symbol = nothing;
+        if (this.showProviderAddOverlay) {
+          providerAddOverlay = html`<bb-provider-overlay
+            .providers=${this.#providers}
+            .providerOps=${this.providerOps}
+            @bboverlaydismissed=${() => {
+              this.showProviderAddOverlay = false;
+            }}
+            @bbgraphproviderconnectrequest=${async (
+              evt: BreadboardUI.Events.GraphProviderConnectRequestEvent
+            ) => {
+              const provider = this.#getProviderByName(evt.providerName);
+              if (!provider || !provider.extendedCapabilities().connect) {
+                return;
+              }
+
+              let success = false;
+              try {
+                success = await provider.connect(evt.location, evt.apiKey);
+              } catch (err) {
+                this.toast(
+                  "Unable to connect to provider",
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+              }
+
+              if (!success) {
+                return;
+              }
+
+              // Trigger a re-render.
+              this.showProviderAddOverlay = false;
+              this.providerOps++;
+            }}
+          ></bb-provider-overlay>`;
+        }
+
+        let boardActivityOverlay: HTMLTemplateResult | symbol = nothing;
+        if (this.showBoardActivityOverlay) {
+          boardActivityOverlay = html`<bb-board-activity-overlay
+            .location=${this.#boardActivityLocation}
+            .run=${runs[0] ?? null}
+            .events=${runs[0]?.events ?? []}
+            .settings=${this.#settings}
+            .providers=${this.#providers}
+            .providerOps=${this.providerOps}
+            .inputsFromLastRun=${inputsFromLastRun}
+            @bboverlaydismissed=${() => {
+              this.showBoardActivityOverlay = false;
+              this.#boardActivityLocation = null;
+            }}
+            @bbinputenter=${async (
+              event: BreadboardUI.Events.InputEnterEvent
+            ) => {
+              if (!this.#settings || !this.tab) {
+                return;
+              }
+
+              const isSecret = "secret" in event.data;
+              const runner = this.#runtime.run.getRunner(this.tab.id);
+              if (!runner) {
+                throw new Error("Can't send input, no runner");
+              }
+              if (isSecret) {
+                if (this.#secretsHelper) {
+                  this.#secretsHelper.receiveSecrets(event);
+                  if (
+                    this.#secretsHelper.hasAllSecrets() &&
+                    !runner?.running()
+                  ) {
+                    const secrets = this.#secretsHelper.getSecrets();
+                    this.#secretsHelper = null;
+                    runner?.run(secrets);
+                  }
+                } else {
+                  // This is the case when the "secret" event hasn't yet
+                  // been received.
+                  // Likely, this is a side effect of how the
+                  // activity-log is built: it relies on the run observer
+                  // for the events list, and the run observer updates the
+                  // list of run events before the run API dispatches
+                  // the "secret" event.
+                  this.#secretsHelper = new SecretsHelper(this.#settings!);
+                  this.#secretsHelper.receiveSecrets(event);
+                }
+              } else {
+                const data = event.data as InputValues;
+                if (runner.running()) {
+                  throw new Error(
+                    "The runner is already running, cannot send input"
+                  );
+                }
+                runner.run(data);
+              }
+            }}
+          ></bb-board-activity-overlay>`;
+        }
+
+        let historyOverlay: HTMLTemplateResult | symbol = nothing;
+        if (this.showHistory) {
+          const history = this.#runtime.edit.getHistory(this.tab);
+          if (history) {
+            historyOverlay = html`<bb-graph-history
+              .entries=${history.entries()}
+              .canRedo=${history.canRedo()}
+              .canUndo=${history.canUndo()}
+              .count=${history.entries().length}
+              .idx=${history.index()}
+              @bbundo=${() => {
+                if (!history.canUndo()) {
+                  return;
+                }
+
+                history.undo();
+                this.requestUpdate();
+              }}
+              @bbredo=${() => {
+                if (!history.canRedo()) {
+                  return;
+                }
+
+                history.redo();
+                this.requestUpdate();
+              }}
+            ></bb-graph-history>`;
+          }
+        }
+
+        let saveAsDialogOverlay: HTMLTemplateResult | symbol = nothing;
+        if (this.showSaveAsDialog) {
+          saveAsDialogOverlay = html`<bb-save-as-overlay
+            .panelTitle=${this.#saveAsState?.title ?? "Save As..."}
+            .providers=${this.#providers}
+            .providerOps=${this.providerOps}
+            .selectedProvider=${this.selectedProvider}
+            .selectedLocation=${this.selectedLocation}
+            .graph=${structuredClone(
+              this.#saveAsState?.graph ?? this.tab?.graph
+            )}
+            .isNewBoard=${this.#saveAsState?.isNewBoard ?? false}
+            @bboverlaydismissed=${() => {
+              this.showSaveAsDialog = false;
+            }}
+            @bbgraphprovidersaveboard=${async (
+              evt: BreadboardUI.Events.GraphProviderSaveBoardEvent
+            ) => {
+              this.showSaveAsDialog = false;
+
+              const { providerName, location, fileName, graph } = evt;
+              await this.#attemptBoardSaveAs(
+                providerName,
+                location,
+                fileName,
+                graph
+              );
+            }}
+          ></bb-save-as-overlay>`;
+
+          this.#saveAsState = null;
+        }
+
+        let nodeConfiguratorOverlay: HTMLTemplateResult | symbol = nothing;
+        if (this.showNodeConfigurator) {
+          nodeConfiguratorOverlay = html`<bb-node-configuration-overlay
+            ${ref(this.#nodeConfiguratorRef)}
+            .value=${this.#nodeConfiguratorData}
+            .graph=${this.tab?.graph}
+            .providers=${this.#providers}
+            .providerOps=${this.providerOps}
+            .showTypes=${false}
+            @bboverlaydismissed=${() => {
+              this.showNodeConfigurator = false;
+            }}
+            @bbnodepartialupdate=${async (
+              evt: BreadboardUI.Events.NodePartialUpdateEvent
+            ) => {
+              if (!this.tab) {
+                this.toast(
+                  "Unable to edit; no active graph",
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+                return;
+              }
+
+              this.#runtime.edit.changeNodeConfigurationPart(
+                this.tab,
+                evt.id,
+                evt.configuration,
+                evt.subGraphId,
+                evt.metadata
+              );
+            }}
+          ></bb-node-configuration-overlay>`;
+        }
+
+        let edgeValueOverlay: HTMLTemplateResult | symbol = nothing;
+        if (this.showEdgeValue) {
+          edgeValueOverlay = html`<bb-edge-value-overlay
+            .edgeValue=${this.#edgeValueData}
+            @bboverlaydismissed=${() => {
+              this.showEdgeValue = false;
+            }}
+          ></bb-edge-value-overlay>`;
+        }
+
+        let commentOverlay: HTMLTemplateResult | symbol = nothing;
+        if (this.showCommentEditor) {
+          commentOverlay = html`<bb-comment-overlay
+            .commentValue=${this.#commentValueData}
+            @bbcommentupdate=${(
+              evt: BreadboardUI.Events.CommentUpdateEvent
+            ) => {
+              this.#runtime.edit.changeComment(
+                this.tab,
+                evt.id,
+                evt.text,
+                evt.subGraphId
+              );
+            }}
+            @bboverlaydismissed=${() => {
+              this.showCommentEditor = false;
+            }}
+          ></bb-comment-overlay>`;
+        }
+
+        let previewOverlay: HTMLTemplateResult | symbol = nothing;
+        if (this.previewOverlayURL) {
+          previewOverlay = html`<bb-overlay @bboverlaydismissed=${() => {
+            this.previewOverlayURL = null;
+          }}><iframe src=${this.previewOverlayURL.href}></bb-overlay>`;
+        }
+
+        const ui = html`<header>
           <div id="header-bar" ?inert=${showingOverlay}>
           <button
             id="show-nav"
@@ -1994,381 +2339,25 @@ export class Main extends LitElement {
           </div>
         ${until(nav)}
       </div>`;
+
+        return [
+          ui,
+          boardOverlay,
+          settingsOverlay,
+          firstRunOverlay,
+          historyOverlay,
+          providerAddOverlay,
+          previewOverlay,
+          boardActivityOverlay,
+          nodeConfiguratorOverlay,
+          edgeValueOverlay,
+          commentOverlay,
+          saveAsDialogOverlay,
+        ];
       });
-
-    let boardOverlay: HTMLTemplateResult | symbol = nothing;
-    if (this.boardEditOverlayInfo) {
-      boardOverlay = html`<bb-board-edit-overlay
-        .boardTitle=${this.boardEditOverlayInfo.title}
-        .boardVersion=${this.boardEditOverlayInfo.version}
-        .boardDescription=${this.boardEditOverlayInfo.description}
-        .boardPublished=${this.boardEditOverlayInfo.published}
-        .boardIsTool=${this.boardEditOverlayInfo.isTool}
-        .subGraphId=${this.boardEditOverlayInfo.subGraphId}
-        @bboverlaydismissed=${() => {
-          this.boardEditOverlayInfo = null;
-        }}
-        @bbboardinfoupdate=${(
-          evt: BreadboardUI.Events.BoardInfoUpdateEvent
-        ) => {
-          this.#handleBoardInfoUpdate(evt);
-          this.boardEditOverlayInfo = null;
-          this.requestUpdate();
-        }}
-      ></bb-board-edit-overlay>`;
-    }
-
-    let settingsOverlay: HTMLTemplateResult | symbol = nothing;
-    if (this.showSettingsOverlay) {
-      settingsOverlay = html`<bb-settings-edit-overlay
-        class="settings"
-        .settings=${this.#settings?.values || null}
-        @bbsettingsupdate=${async (
-          evt: BreadboardUI.Events.SettingsUpdateEvent
-        ) => {
-          if (!this.#settings) {
-            return;
-          }
-
-          try {
-            await this.#settings.save(evt.settings);
-            this.toast(
-              "Saved settings",
-              BreadboardUI.Events.ToastType.INFORMATION
-            );
-          } catch (err) {
-            console.warn(err);
-            this.toast(
-              "Unable to save settings",
-              BreadboardUI.Events.ToastType.ERROR
-            );
-          }
-
-          this.requestUpdate();
-        }}
-        @bboverlaydismissed=${() => {
-          this.showSettingsOverlay = false;
-        }}
-      ></bb-settings-edit-overlay>`;
-    }
-
-    let firstRunOverlay: HTMLTemplateResult | symbol = nothing;
-    if (this.showFirstRun) {
-      const currentUrl = new URL(window.location.href);
-      const boardServerUrl = currentUrl.searchParams.get("boardserver");
-
-      firstRunOverlay = html`<bb-first-run-overlay
-        class="settings"
-        .settings=${this.#settings?.values || null}
-        .boardServerUrl=${boardServerUrl}
-        @bbgraphproviderconnectrequest=${async (
-          evt: BreadboardUI.Events.GraphProviderConnectRequestEvent
-        ) => {
-          const provider = this.#getProviderByName(evt.providerName);
-          if (!provider || !provider.extendedCapabilities().connect) {
-            return;
-          }
-
-          try {
-            await provider.connect(evt.location, evt.apiKey);
-          } catch (err) {
-            return;
-          }
-        }}
-        @bbsettingsupdate=${async (
-          evt: BreadboardUI.Events.SettingsUpdateEvent
-        ) => {
-          if (!this.#settings) {
-            return;
-          }
-
-          try {
-            await this.#settings.save(evt.settings);
-            this.toast(
-              "Welcome to Breadboard!",
-              BreadboardUI.Events.ToastType.INFORMATION
-            );
-          } catch (err) {
-            console.warn(err);
-            this.toast(
-              "Unable to save settings",
-              BreadboardUI.Events.ToastType.ERROR
-            );
-          }
-
-          this.#setUrlParam("firstrun", null);
-          this.#setUrlParam("boardserver", null);
-          this.showFirstRun = false;
-          this.requestUpdate();
-        }}
-        @bboverlaydismissed=${() => {
-          this.#setUrlParam("firstrun", null);
-          this.#setUrlParam("boardserver", null);
-          this.showFirstRun = false;
-        }}
-      ></bb-first-run-overlay>`;
-    }
-
-    let providerAddOverlay: HTMLTemplateResult | symbol = nothing;
-    if (this.showProviderAddOverlay) {
-      providerAddOverlay = html`<bb-provider-overlay
-        .providers=${this.#providers}
-        .providerOps=${this.providerOps}
-        @bboverlaydismissed=${() => {
-          this.showProviderAddOverlay = false;
-        }}
-        @bbgraphproviderconnectrequest=${async (
-          evt: BreadboardUI.Events.GraphProviderConnectRequestEvent
-        ) => {
-          const provider = this.#getProviderByName(evt.providerName);
-          if (!provider || !provider.extendedCapabilities().connect) {
-            return;
-          }
-
-          let success = false;
-          try {
-            success = await provider.connect(evt.location, evt.apiKey);
-          } catch (err) {
-            this.toast(
-              "Unable to connect to provider",
-              BreadboardUI.Events.ToastType.ERROR
-            );
-          }
-
-          if (!success) {
-            return;
-          }
-
-          // Trigger a re-render.
-          this.showProviderAddOverlay = false;
-          this.providerOps++;
-        }}
-      ></bb-provider-overlay>`;
-    }
-
-    let boardActivityOverlay: Promise<HTMLTemplateResult> | symbol = nothing;
-    if (this.showBoardActivityOverlay) {
-      boardActivityOverlay = this.#initialize
-        .then(() => {
-          const observers = this.#runtime?.run.getObservers(
-            this.tab?.id ?? null
-          );
-          if (observers && observers.runObserver) {
-            return observers.runObserver?.runs();
-          }
-
-          return [];
-        })
-        .then((runs: InspectableRun[]) => {
-          const inputsFromLastRun = runs[1]?.inputs() ?? null;
-
-          return html`<bb-board-activity-overlay
-            .location=${this.#boardActivityLocation}
-            .run=${runs[0] ?? null}
-            .events=${runs[0]?.events ?? []}
-            .settings=${this.#settings}
-            .providers=${this.#providers}
-            .providerOps=${this.providerOps}
-            .inputsFromLastRun=${inputsFromLastRun}
-            @bboverlaydismissed=${() => {
-              this.showBoardActivityOverlay = false;
-              this.#boardActivityLocation = null;
-            }}
-            @bbinputenter=${async (
-              event: BreadboardUI.Events.InputEnterEvent
-            ) => {
-              if (!this.#settings || !this.tab) {
-                return;
-              }
-
-              const isSecret = "secret" in event.data;
-              const runner = this.#runtime.run.getRunner(this.tab.id);
-              if (!runner) {
-                throw new Error("Can't send input, no runner");
-              }
-              if (isSecret) {
-                if (this.#secretsHelper) {
-                  this.#secretsHelper.receiveSecrets(event);
-                  if (
-                    this.#secretsHelper.hasAllSecrets() &&
-                    !runner?.running()
-                  ) {
-                    const secrets = this.#secretsHelper.getSecrets();
-                    this.#secretsHelper = null;
-                    runner?.run(secrets);
-                  }
-                } else {
-                  // This is the case when the "secret" event hasn't yet
-                  // been received.
-                  // Likely, this is a side effect of how the
-                  // activity-log is built: it relies on the run observer
-                  // for the events list, and the run observer updates the
-                  // list of run events before the run API dispatches
-                  // the "secret" event.
-                  this.#secretsHelper = new SecretsHelper(this.#settings!);
-                  this.#secretsHelper.receiveSecrets(event);
-                }
-              } else {
-                const data = event.data as InputValues;
-                if (runner.running()) {
-                  throw new Error(
-                    "The runner is already running, cannot send input"
-                  );
-                }
-                runner.run(data);
-              }
-            }}
-          ></bb-board-activity-overlay>`;
-        });
-    }
-
-    let historyOverlay: HTMLTemplateResult | symbol = nothing;
-    if (this.showHistory) {
-      const history = this.#runtime.edit.getHistory(this.tab);
-      if (history) {
-        historyOverlay = html`<bb-graph-history
-          .entries=${history.entries()}
-          .canRedo=${history.canRedo()}
-          .canUndo=${history.canUndo()}
-          .count=${history.entries().length}
-          .idx=${history.index()}
-          @bbundo=${() => {
-            if (!history.canUndo()) {
-              return;
-            }
-
-            history.undo();
-            this.requestUpdate();
-          }}
-          @bbredo=${() => {
-            if (!history.canRedo()) {
-              return;
-            }
-
-            history.redo();
-            this.requestUpdate();
-          }}
-        ></bb-graph-history>`;
-      }
-    }
-
-    let saveAsDialogOverlay: HTMLTemplateResult | symbol = nothing;
-    if (this.showSaveAsDialog) {
-      saveAsDialogOverlay = html`<bb-save-as-overlay
-        .panelTitle=${this.#saveAsState?.title ?? "Save As..."}
-        .providers=${this.#providers}
-        .providerOps=${this.providerOps}
-        .selectedProvider=${this.selectedProvider}
-        .selectedLocation=${this.selectedLocation}
-        .graph=${structuredClone(this.#saveAsState?.graph ?? this.tab?.graph)}
-        .isNewBoard=${this.#saveAsState?.isNewBoard ?? false}
-        @bboverlaydismissed=${() => {
-          this.showSaveAsDialog = false;
-        }}
-        @bbgraphprovidersaveboard=${async (
-          evt: BreadboardUI.Events.GraphProviderSaveBoardEvent
-        ) => {
-          this.showSaveAsDialog = false;
-
-          const { providerName, location, fileName, graph } = evt;
-          await this.#attemptBoardSaveAs(
-            providerName,
-            location,
-            fileName,
-            graph
-          );
-        }}
-      ></bb-save-as-overlay>`;
-
-      this.#saveAsState = null;
-    }
-
-    let nodeConfiguratorOverlay: HTMLTemplateResult | symbol = nothing;
-    if (this.showNodeConfigurator) {
-      nodeConfiguratorOverlay = html`<bb-node-configuration-overlay
-        ${ref(this.#nodeConfiguratorRef)}
-        .value=${this.#nodeConfiguratorData}
-        .graph=${this.tab?.graph}
-        .providers=${this.#providers}
-        .providerOps=${this.providerOps}
-        .showTypes=${false}
-        @bboverlaydismissed=${() => {
-          this.showNodeConfigurator = false;
-        }}
-        @bbnodepartialupdate=${async (
-          evt: BreadboardUI.Events.NodePartialUpdateEvent
-        ) => {
-          if (!this.tab) {
-            this.toast(
-              "Unable to edit; no active graph",
-              BreadboardUI.Events.ToastType.ERROR
-            );
-            return;
-          }
-
-          this.#runtime.edit.changeNodeConfigurationPart(
-            this.tab,
-            evt.id,
-            evt.configuration,
-            evt.subGraphId,
-            evt.metadata
-          );
-        }}
-      ></bb-node-configuration-overlay>`;
-    }
-
-    let edgeValueOverlay: HTMLTemplateResult | symbol = nothing;
-    if (this.showEdgeValue) {
-      edgeValueOverlay = html`<bb-edge-value-overlay
-        .edgeValue=${this.#edgeValueData}
-        @bboverlaydismissed=${() => {
-          this.showEdgeValue = false;
-        }}
-      ></bb-edge-value-overlay>`;
-    }
-
-    let commentOverlay: HTMLTemplateResult | symbol = nothing;
-    if (this.showCommentEditor) {
-      commentOverlay = html`<bb-comment-overlay
-        .commentValue=${this.#commentValueData}
-        @bbcommentupdate=${(evt: BreadboardUI.Events.CommentUpdateEvent) => {
-          this.#runtime.edit.changeComment(
-            this.tab,
-            evt.id,
-            evt.text,
-            evt.subGraphId
-          );
-        }}
-        @bboverlaydismissed=${() => {
-          this.showCommentEditor = false;
-        }}
-      ></bb-comment-overlay>`;
-    }
-
-    let previewOverlay: HTMLTemplateResult | symbol = nothing;
-    if (this.previewOverlayURL) {
-      previewOverlay = html`<bb-overlay @bboverlaydismissed=${() => {
-        this.previewOverlayURL = null;
-      }}><iframe src=${this.previewOverlayURL.href}></bb-overlay>`;
-    }
 
     const tooltip = html`<bb-tooltip ${ref(this.#tooltipRef)}></bb-tooltip>`;
 
-    return [
-      until(tmpl),
-      boardOverlay,
-      settingsOverlay,
-      firstRunOverlay,
-      historyOverlay,
-      providerAddOverlay,
-      previewOverlay,
-      until(boardActivityOverlay),
-      nodeConfiguratorOverlay,
-      edgeValueOverlay,
-      commentOverlay,
-      saveAsDialogOverlay,
-      tooltip,
-      toasts,
-    ];
+    return [until(uiController), tooltip, toasts];
   }
 }
