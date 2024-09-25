@@ -253,6 +253,14 @@ export class BoardActivityOverlay extends LitElement {
     this.#resizeObserver.unobserve(this);
   }
 
+  protected willUpdate(changedProperties: PropertyValues): void {
+    if (!changedProperties.has("run")) {
+      return;
+    }
+
+    this.debugEvent = null;
+  }
+
   protected firstUpdated(): void {
     requestAnimationFrame(() => {
       if (!this.#overlayRef.value || !this.location) {
