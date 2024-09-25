@@ -7,6 +7,7 @@
 import * as idb from "idb";
 import { IDBBoardServer } from "@breadboard-ai/idb-board-server";
 import { BoardServer, GraphDescriptor, User } from "@google-labs/breadboard";
+import { RemoteBoardServer } from "@breadboard-ai/remote-board-server";
 
 const BOARD_SERVER_LISTING_DB = "board-server";
 const BOARD_SERVER_LISTING_VERSION = 1;
@@ -39,6 +40,10 @@ export async function getBoardServers(): Promise<BoardServer[]> {
     storeUrls.map(({ url, user }) => {
       if (url.startsWith(IDBBoardServer.PROTOCOL)) {
         return IDBBoardServer.from(url, user);
+      }
+
+      if (url.startsWith(RemoteBoardServer.PROTOCOL)) {
+        return RemoteBoardServer.from(url, user);
       }
 
       console.warn(`Unsupported store URL: ${url}`);

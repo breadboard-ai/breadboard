@@ -6,6 +6,7 @@
 
 import {
   GraphDescriptor,
+  GraphTag,
   NodeConfiguration,
   NodeIdentifier,
 } from "@google-labs/breadboard-schema/graph.js";
@@ -15,7 +16,7 @@ export type GraphProviderItem = {
   url: string;
   username?: string;
   title?: string;
-  tags?: string[];
+  tags?: GraphTag[];
   mine: boolean;
   readonly: boolean;
   handle: unknown;
@@ -292,6 +293,7 @@ export interface EntityMetadata {
   title?: string;
   description?: string;
   icon?: string;
+  tags?: GraphTag[];
 }
 
 export interface Entity {
@@ -319,7 +321,7 @@ export interface BoardServerExtension extends Entity {
 }
 
 export interface BoardServerProject extends Entity {
-  board: Board;
+  board?: Board;
 }
 
 export interface User {

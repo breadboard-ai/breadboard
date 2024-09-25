@@ -104,6 +104,10 @@ async function inflateProject(
 async function deflateProject(
   project: BoardServerProject
 ): Promise<IDBBoardServerProject> {
+  if (!project.board) {
+    throw new Error("Board not set - unable to deflate");
+  }
+
   return {
     url: project.url.href,
     metadata: project.metadata,
@@ -263,7 +267,7 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
     const project = projects.find((project) => {
       return url.pathname.startsWith(project.url.pathname);
     });
-    if (!project) {
+    if (!project || !project.board) {
       return null;
     }
 
@@ -282,7 +286,7 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
     const project = projects.find((project) => {
       return url.pathname.startsWith(project.url.pathname);
     });
-    if (!project || project.board.url.href !== url.href) {
+    if (!project || project.board?.url.href !== url.href) {
       return { result: false, error: "Unable to find project" };
     }
 
@@ -385,6 +389,11 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
 
     const projectNames = new Set<string>();
     for (const project of this.#projects) {
+      if (!project.board) {
+        console.warn(`No board set for ${project.url}`);
+        continue;
+      }
+
       let title = project.board.descriptor.title ?? "Untitled Board";
       if (projectNames.has(title) && project.board.descriptor.url) {
         const suffix = new URL(project.board.descriptor.url).pathname
