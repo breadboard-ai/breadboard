@@ -76,6 +76,10 @@ export type ServerInfo = {
   title?: string;
   description?: string;
   capabilities?: Partial<Record<ServerCapability, ServerCapabilityInfo>>;
+  /**
+   * The URL of the server
+   */
+  url?: string;
 };
 
 export const asPath = (userStore: string, boardName: string) => {
