@@ -1481,6 +1481,7 @@ export class Main extends LitElement {
             class="settings"
             .settings=${this.#settings?.values || null}
             .boardServerUrl=${boardServerUrl}
+            .providers=${this.#providers}
             @bbgraphproviderconnectrequest=${async (
               evt: BreadboardUI.Events.GraphProviderConnectRequestEvent
             ) => {
@@ -1492,6 +1493,10 @@ export class Main extends LitElement {
               try {
                 await provider.connect(evt.location, evt.apiKey);
               } catch (err) {
+                this.toast(
+                  `Unable to connect to ${boardServerUrl}. Check your API key and try again.`,
+                  BreadboardUI.Events.ToastType.ERROR
+                );
                 return;
               }
             }}

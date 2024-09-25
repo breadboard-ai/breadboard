@@ -27,7 +27,7 @@ export function makeRouter(serverConfig: ServerConfig) {
     res: ServerResponse
   ): Promise<void> {
     try {
-      if (await serveHome(req, res)) {
+      if (await serveHome(serverConfig, req, res)) {
         return;
       }
 

@@ -8,8 +8,10 @@ import { IncomingMessage, ServerResponse } from "http";
 import packageInfo from "../../../package.json" with { type: "json" };
 
 import { getStore } from "../store.js";
+import type { ServerConfig } from "../config.js";
 
 export const serveHome = async (
+  config: ServerConfig,
   req: IncomingMessage,
   res: ServerResponse
 ): Promise<boolean> => {
@@ -19,9 +21,23 @@ export const serveHome = async (
   if (url.pathname !== "/") {
     return false;
   }
-
   const store = getStore();
   const info = await store.getServerInfo();
+
+  if (info?.url && config.allowedOrigins.size > 0) {
+    const firstOrigin = config.allowedOrigins.values().next().value;
+    if (firstOrigin) {
+      // Redirect to the first origin with the first run experience url
+      const firstRunUrl = new URL(
+        `?firstrun=true&boardserver=${info.url}`,
+        firstOrigin
+      );
+      res.writeHead(302, {
+        Location: firstRunUrl.href,
+      });
+    }
+  }
+
   const title = info?.title ?? "Board Server";
   const description =
     info?.description ??

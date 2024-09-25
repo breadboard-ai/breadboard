@@ -156,11 +156,13 @@ export class Board extends EventTarget {
       params.delete("board");
     }
 
-    const tabs = [...params].sort(([idA], [idB]) => {
-      if (idA > idB) return 1;
-      if (idA < idB) return -1;
-      return 0;
-    });
+    const tabs = [...params]
+      .filter((param) => param[0] === "tab")
+      .sort(([idA], [idB]) => {
+        if (idA > idB) return 1;
+        if (idA < idB) return -1;
+        return 0;
+      });
 
     if (tabs.length > 0) {
       for (const [, tab] of tabs) {

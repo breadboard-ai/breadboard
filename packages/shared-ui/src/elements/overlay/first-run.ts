@@ -13,6 +13,24 @@ import {
 } from "../../events/events.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { SETTINGS_TYPE, Settings } from "../../types/types.js";
+import { Task } from "@lit/task";
+import { GraphProvider } from "@google-labs/breadboard";
+
+type FetchServerInfoResult =
+  | {
+      success: true;
+      connected: false;
+      title: string;
+      description: string;
+    }
+  | {
+      success: true;
+      connected: true;
+    }
+  | {
+      success: false;
+      error: string;
+    };
 
 @customElement("bb-first-run-overlay")
 export class FirstRunOverlay extends LitElement {
@@ -21,6 +39,9 @@ export class FirstRunOverlay extends LitElement {
 
   @property()
   boardServerUrl: string | null = null;
+
+  @property()
+  providers: GraphProvider[] = [];
 
   #formRef: Ref<HTMLFormElement> = createRef();
 
@@ -131,6 +152,58 @@ export class FirstRunOverlay extends LitElement {
     }
   `;
 
+  #fetchBoardInfoTask = new Task(this, {
+    task: async (
+      [boardServerUrl],
+      { signal }
+    ): Promise<FetchServerInfoResult> => {
+      const provider = this.providers.find(
+        ({ name }) => name === "RemoteGraphProvider"
+      );
+      if (!provider) {
+        return {
+          success: false,
+          error: "Can't use board servers with this Visual Editor instance.",
+        };
+      }
+      await provider.ready();
+      const registeredBoardServers = provider.items();
+      if (registeredBoardServers.has(boardServerUrl as string)) {
+        return {
+          success: true,
+          connected: true,
+        };
+      }
+      try {
+        const response = await fetch(`${boardServerUrl}/info`, {
+          signal,
+        });
+        const json = await response.json();
+        if (!response.ok) {
+          return {
+            success: false,
+            error: `The server is inaccessible. Response status: ${response.status}`,
+          };
+        }
+        const { title, description } = json;
+        if (typeof title !== "string" || typeof description !== "string") {
+          return {
+            success: false,
+            error: "The server is not returning valid information.",
+          };
+        }
+        return { success: true, title, description, connected: false };
+      } catch {
+        // The server is inaccessible.
+        return {
+          success: false,
+          error: "The server is inaccessible.",
+        };
+      }
+    },
+    args: () => [this.boardServerUrl],
+  });
+
   protected firstUpdated(): void {
     if (!this.#formRef.value) {
       return;
@@ -202,7 +275,6 @@ export class FirstRunOverlay extends LitElement {
           }
 
           const defaultToTrue = [
-            "Collapse Nodes by Default",
             "Hide Embedded Board Selector When Empty",
             "Hide Advanced Ports on Nodes",
             "Show Node Shortcuts",
@@ -215,15 +287,6 @@ export class FirstRunOverlay extends LitElement {
               : { name, value: true };
 
             settings[SETTINGS_TYPE.GENERAL].items.set(name, setting);
-          }
-
-          const modelSetting =
-            settings[SETTINGS_TYPE.INPUTS].items.get("model");
-          if (!modelSetting) {
-            settings[SETTINGS_TYPE.INPUTS].items.set("model", {
-              name: "model",
-              value: "gemini-1.5-flash-latest",
-            });
           }
 
           this.dispatchEvent(new SettingsUpdateEvent(settings));
@@ -241,45 +304,82 @@ export class FirstRunOverlay extends LitElement {
             Close
           </button>
         </header>
-
-        <p>
-          To help you quickly prototype your next generative AI experience, you
-          can enter your Gemini key below. It's optional, but it will make
-          things a bit smoother for you.
-        </p>
-
-        <p>
-          Your key will be stored locally in your browser and can be changed or
-          removed at any time in the app's settings. If you're not sure what
-          this is, no worries, you can skip it for now.
-        </p>
-
-        <input
-          name="gemini-key"
-          type="text"
-          placeholder="Enter your Gemini key here (optional)"
-        />
-
         ${this.boardServerUrl
-          ? html`<input
-              name="board-server-api-key"
-              type="text"
-              placeholder="Enter your Board Server API key here (optional)"
-            />`
-          : nothing}
+          ? this.#fetchBoardInfoTask.render({
+              pending: () => html`<p>Checking board server info ...</p>`,
+              complete: (info) => {
+                if (!info.success) {
+                  return html`<p>Error: ${info.error}</p>
+                    <div id="controls">
+                      <button
+                        @click=${() => {
+                          this.dispatchEvent(new OverlayDismissedEvent());
+                        }}
+                        class="cancel"
+                        type="button"
+                      >
+                        Continue without connecting
+                      </button>
+                    </div>`;
+                }
+                if (info.connected) {
+                  this.dispatchEvent(new OverlayDismissedEvent());
+                  return nothing;
+                }
+                return html` <p>
+                    You're about to connect to the following board server:
+                  </p>
+                  <p><b>${info.title}</b></h2>
+                  <p><em>${info.description}</em></p>
+                  <input
+                    name="board-server-api-key"
+                    type="text"
+                    required
+                    placeholder="Enter your Board Server API key here"
+                  />
+                  <div id="controls">
+                    <button
+                      @click=${() => {
+                        this.dispatchEvent(new OverlayDismissedEvent());
+                      }}
+                      class="cancel"
+                      type="button"
+                    >
+                      Skip connecting
+                    </button>
+                    <input type="submit" value="Let's Go!" />
+                  </div>`;
+              },
+            })
+          : html`<p>
+                To help you quickly prototype your next generative AI
+                experience, you can enter your Gemini key below. It's optional,
+                but it will make things a bit smoother for you.
+              </p>
 
-        <div id="controls">
-          <button
-            @click=${() => {
-              this.dispatchEvent(new OverlayDismissedEvent());
-            }}
-            class="cancel"
-            type="button"
-          >
-            Skip for now
-          </button>
-          <input type="submit" value="Let's Go!" />
-        </div>
+              <p>
+                Your key will be stored locally in your browser and can be
+                changed or removed at any time in the app's settings. If you're
+                not sure what this is, no worries, you can skip it for now.
+              </p>
+
+              <input
+                name="gemini-key"
+                type="text"
+                placeholder="Enter your Gemini key here (optional)"
+              />
+              <div id="controls">
+                <button
+                  @click=${() => {
+                    this.dispatchEvent(new OverlayDismissedEvent());
+                  }}
+                  class="cancel"
+                  type="button"
+                >
+                  Skip for now
+                </button>
+                <input type="submit" value="Let's Go!" />
+              </div>`}
       </form>
     </bb-overlay>`;
   }
