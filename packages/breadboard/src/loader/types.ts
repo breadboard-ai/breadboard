@@ -282,6 +282,7 @@ export interface BoardServerConfiguration {
 }
 
 export interface BoardServer extends GraphProvider, BoardServerConfiguration {
+  user: User;
   getAccess(url: URL, user: User): Promise<Permission>;
 }
 
