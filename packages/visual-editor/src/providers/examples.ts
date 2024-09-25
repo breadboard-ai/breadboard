@@ -13,6 +13,7 @@ import {
   GraphProviderItem,
 } from "@google-labs/breadboard";
 import { GraphProviderStore } from "./types.js";
+import { GraphTag } from "@google-labs/breadboard-schema/graph.js";
 
 export class ExamplesGraphProvider implements GraphProvider {
   name = "ExamplesGraphProvider";
@@ -59,7 +60,7 @@ export class ExamplesGraphProvider implements GraphProvider {
               readonly: true,
               mine: false,
               handle: undefined,
-              tags: board.tags,
+              tags: board.tags as GraphTag[] | undefined,
             },
           ];
         })
