@@ -4,4 +4,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { IDBBoardServer } from "./idb-board-server.js";
+export const RemoteBoardServer = 0;

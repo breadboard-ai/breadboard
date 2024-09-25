@@ -1,3 +1,3 @@
-# Breadboard Project Store
+# IDB Board Server
 
-Handles projects for Breadboard.
+A Board Server implementation backed by IDB.

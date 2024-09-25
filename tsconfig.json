@@ -5,6 +5,7 @@
     { "path": "packages/agent-kit" },
     { "path": "packages/breadboard" },
     { "path": "packages/breadboard-cli" },
+    { "path": "packages/board-server-management" },
     { "path": "packages/connection-server" },
     { "path": "packages/core-kit" },
     { "path": "packages/data-store" },
