@@ -36,6 +36,7 @@ export { object, optional } from "./internal/type-system/object.js";
 export { string } from "./internal/type-system/string.js";
 export {
   toJSONSchema,
+  type ConvertBreadboardType,
   type JsonSerializable,
 } from "./internal/type-system/type.js";
 export { unsafeType } from "./internal/type-system/unsafe.js";

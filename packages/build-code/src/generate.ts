@@ -8,16 +8,15 @@ import * as esbuild from "esbuild";
 import type { JSONSchema7 } from "json-schema";
 import { basename, relative } from "node:path";
 import * as prettier from "prettier";
-import * as tsj from "ts-json-schema-generator";
+import * as tjs from "typescript-json-schema";
 import type { Config } from "./config.js";
 
 export async function generate(config: Config, inputPath: string) {
-  const generated = generateSource(
-    await bundleCode(inputPath),
+  const [code, schemas] = await Promise.all([
+    bundleCode(inputPath),
     extractSchemas(inputPath, config.tsconfigPath),
-    inputPath,
-    config.outputDir
-  );
+  ]);
+  const generated = generateSource(code, schemas, inputPath, config.outputDir);
   let formatted: string;
   try {
     formatted = await prettier.format(generated, { parser: "typescript" });
@@ -72,36 +71,39 @@ interface Schemas {
   outputSchema: JSONSchema7;
 }
 
-function extractSchemas(inputPath: string, tsconfigPath: string): Schemas {
-  const config: tsj.Config = {
-    path: inputPath,
-    tsconfig: tsconfigPath,
-    type: "*",
-    skipTypeCheck: true,
+export async function extractSchemas(
+  inputPath: string,
+  tsconfigPath: string
+): Promise<Schemas> {
+  const tjsProgram = tjs.programFromConfig(tsconfigPath, [inputPath]);
+  const tjsConfig: tjs.PartialArgs = {
+    required: true,
+    skipLibCheck: true,
   };
-  let schema: JSONSchema7;
+  let tjsGenerator;
   try {
-    schema = tsj.createGenerator(config).createSchema("*");
+    tjsGenerator = tjs.buildGenerator(tjsProgram, tjsConfig);
   } catch (e) {
-    if (e instanceof tsj.BuildError) {
-      console.error(e.diagnostic);
-    }
     throw new AggregateError(
       [e],
-      `Error from ts-json-schema-generator with config ${JSON.stringify(config)}`
+      `Error from typescript-json-schema with config ${JSON.stringify(tjsConfig)}`
     );
   }
-  const inputSchema = schema.definitions?.["Inputs"];
-  const outputSchema = schema.definitions?.["Outputs"];
+  if (tjsGenerator === null) {
+    throw new Error("Generator is null");
+  }
+  const inputSchema = tjsGenerator.getSchemaForSymbol("Inputs") as
+    | JSONSchema7
+    | undefined;
+  const outputSchema = tjsGenerator.getSchemaForSymbol("Outputs") as
+    | JSONSchema7
+    | undefined;
   if (inputSchema === undefined || outputSchema === undefined) {
     throw new Error("Expected exported types called Inputs and Outputs");
   }
-  if (typeof inputSchema !== "object" || typeof outputSchema !== "object") {
-    throw new Error(
-      `Internal error: unexpected types of inputSchema/outputSchema ` +
-        `(${typeof inputSchema}/${typeof outputSchema})`
-    );
-  }
+  // We don't need `$schema: "http://json-schema.org/draft-07/schema#"`
+  delete inputSchema["$schema"];
+  delete outputSchema["$schema"];
   return { inputSchema, outputSchema };
 }
 

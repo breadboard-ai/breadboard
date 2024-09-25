@@ -11,15 +11,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 import type { Config } from "../config.js";
 import { generate } from "../generate.js";
-
-const testDataDir = join(
-  import.meta.dirname,
-  "..",
-  "..",
-  "src",
-  "test",
-  "testdata"
-);
+import { testDataDir } from "./test-data-dir.js";
 
 test("generates module", async () => {
   const fooPath = join(testDataDir, "str-is-foo.ts");
@@ -121,15 +113,12 @@ export {
                     type: "object",
                     properties: { bar: { type: "string" } },
                     required: ["bar"],
-                    additionalProperties: false,
                   },
                 },
                 required: ["foo"],
-                additionalProperties: false,
               },
             },
-            required: ["str", "numArr", "deepObj"],
-            additionalProperties: false,
+            required: ["deepObj", "numArr", "str"],
           },
           outputSchema: {
             type: "object",
@@ -138,7 +127,6 @@ export {
               opt: { type: "string" },
             },
             required: ["bool"],
-            additionalProperties: false,
           },
         },
       },
