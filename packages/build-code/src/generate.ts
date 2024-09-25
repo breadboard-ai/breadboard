@@ -6,6 +6,7 @@
 
 import * as esbuild from "esbuild";
 import type { JSONSchema7 } from "json-schema";
+import RefParser from "json-schema-ref-parser";
 import { basename, relative } from "node:path";
 import * as prettier from "prettier";
 import * as tjs from "typescript-json-schema";
@@ -92,18 +93,62 @@ export async function extractSchemas(
   if (tjsGenerator === null) {
     throw new Error("Generator is null");
   }
-  const inputSchema = tjsGenerator.getSchemaForSymbol("Inputs") as
+
+  let inputSchema = tjsGenerator.getSchemaForSymbol("Inputs") as
     | JSONSchema7
     | undefined;
-  const outputSchema = tjsGenerator.getSchemaForSymbol("Outputs") as
+  let outputSchema = tjsGenerator.getSchemaForSymbol("Outputs") as
     | JSONSchema7
     | undefined;
+
   if (inputSchema === undefined || outputSchema === undefined) {
     throw new Error("Expected exported types called Inputs and Outputs");
   }
-  // We don't need `$schema: "http://json-schema.org/draft-07/schema#"`
+
+  // json-schema-ref-parser has a bug where it incorrectly parses certain refs,
+  // and then fails to look them up.
+  simplifyRefNames(inputSchema);
+  simplifyRefNames(outputSchema);
+
+  // tjs generates $refs to refer to named types. To keep things simple, since
+  // we don't have great support for $refs in Breadboard yet, inline them all.
+  const refParserOptions: RefParser.Options = {
+    dereference: {
+      // Sometimes there are cycles in the schemas, and that's OK. In that case,
+      // the "ignore" option means it will preserve circular $refs but inline
+      // all the others.
+      circular: "ignore",
+    },
+  };
+  try {
+    inputSchema = (await RefParser.default.dereference(
+      inputSchema,
+      refParserOptions
+    )) as JSONSchema7;
+  } catch (e) {
+    throw new AggregateError(
+      [e],
+      `Error from json-schema-ref-parser with schema ${JSON.stringify(inputSchema)}`
+    );
+  }
+  try {
+    outputSchema = (await RefParser.default.dereference(
+      outputSchema,
+      refParserOptions
+    )) as JSONSchema7;
+  } catch (e) {
+    throw new AggregateError(
+      [e],
+      `Error from json-schema-ref-parser with schema ${JSON.stringify(outputSchema)}`
+    );
+  }
+
+  // A little cleanup.
   delete inputSchema["$schema"];
   delete outputSchema["$schema"];
+  cleanUpDefinitions(inputSchema);
+  cleanUpDefinitions(outputSchema);
+
   return { inputSchema, outputSchema };
 }
 
@@ -142,4 +187,81 @@ function kebabToCamel(kebab: string): string {
 
 function escapeForTemplateLiteral(str: string): string {
   return str.replace(/`/g, "\\`").replace(/\${/g, "\\${");
+}
+
+const DEFINITIONS_PREFIX = "#/definitions/";
+
+/**
+ * Replace all $refs with a simple unique name.
+ */
+function simplifyRefNames(root: JSONSchema7) {
+  if (root.definitions === undefined) {
+    return;
+  }
+
+  const aliases = new Map<string, string>();
+  let nextId = 0;
+
+  for (const [oldName, def] of Object.entries(root.definitions)) {
+    const newName = `def-${nextId++}`;
+    aliases.set(DEFINITIONS_PREFIX + oldName, DEFINITIONS_PREFIX + newName);
+    root.definitions[newName] = def;
+    delete root.definitions[oldName];
+  }
+  if (aliases.size === 0) {
+    return;
+  }
+
+  const visit = (schema: JSONSchema7) => {
+    if (Array.isArray(schema)) {
+      for (const item of schema) {
+        visit(item);
+      }
+    } else if (typeof schema === "object" && schema !== null) {
+      for (const val of Object.values(schema)) {
+        visit(val);
+      }
+      if (schema.$ref !== undefined) {
+        const alias = aliases.get(schema.$ref);
+        if (alias !== undefined) {
+          schema.$ref = alias;
+        }
+      }
+    }
+  };
+  visit(root);
+}
+
+/**
+ * Remove any `definitions` that aren't referenced in the schema, and then if
+ * there are none left, remove `definitions` all together.
+ */
+function cleanUpDefinitions(root: JSONSchema7) {
+  if (root.definitions === undefined) {
+    return;
+  }
+  const usedRefs = new Set<string>();
+  const visit = (schema: JSONSchema7) => {
+    if (Array.isArray(schema)) {
+      for (const item of schema) {
+        visit(item);
+      }
+    } else if (typeof schema === "object" && schema !== null) {
+      for (const val of Object.values(schema)) {
+        visit(val);
+      }
+      if (schema.$ref !== undefined) {
+        usedRefs.add(schema.$ref);
+      }
+    }
+  };
+  visit(root);
+  for (const ref of Object.keys(root.definitions)) {
+    if (!usedRefs.has(DEFINITIONS_PREFIX + ref)) {
+      delete root.definitions[ref];
+    }
+  }
+  if (Object.keys(root.definitions).length === 0) {
+    delete root.definitions;
+  }
 }

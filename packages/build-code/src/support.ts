@@ -23,8 +23,8 @@ export interface MakeCodeComponentParams {
  * build-code.
  */
 export function makeRunJavascriptComponent<
-  I extends Record<string, JsonSerializable>,
-  O extends Record<string, JsonSerializable>,
+  I extends Record<string, JsonSerializable | undefined>,
+  O extends Record<string, JsonSerializable | undefined>,
 >({ code, inputSchema, outputSchema }: MakeCodeComponentParams) {
   type ThisDefinition = Definition<
     I,
