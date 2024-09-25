@@ -1,5 +1,4 @@
 ---
-"@breadboard-ai/project-store": minor
 "@breadboard-ai/visual-editor": minor
 ---
 
