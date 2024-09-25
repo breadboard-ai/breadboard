@@ -10,7 +10,6 @@ import type {
   GraphLoader,
   GraphLoaderContext,
 } from "./types.js";
-import { DefaultGraphProvider } from "./default.js";
 
 export const SENTINEL_BASE_URL = new URL("sentinel://sentinel/sentinel");
 
@@ -36,7 +35,7 @@ export class Loader implements GraphLoader {
   #graphProviders: GraphProvider[];
 
   constructor(graphProviders: GraphProvider[]) {
-    this.#graphProviders = [...graphProviders, new DefaultGraphProvider()];
+    this.#graphProviders = graphProviders;
   }
 
   async #loadWithProviders(url: URL): Promise<GraphDescriptor | null> {
