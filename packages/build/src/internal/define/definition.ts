@@ -57,8 +57,12 @@ import type { StarInputs } from "../board/star-inputs.js";
 import type { KitBinding } from "../kit.js";
 
 export interface Definition<
-  /* Static Inputs   */ SI extends { [K: string]: JsonSerializable },
-  /* Static Outputs  */ SO extends { [K: string]: JsonSerializable },
+  /* Static Inputs   */ SI extends {
+    [K: string]: JsonSerializable | undefined;
+  },
+  /* Static Outputs  */ SO extends {
+    [K: string]: JsonSerializable | undefined;
+  },
   /* Dynamic Inputs  */ DI extends JsonSerializable | undefined,
   /* Dynamic Outputs */ DO extends JsonSerializable | undefined,
   /* Optional Inputs */ OI extends keyof SI,
