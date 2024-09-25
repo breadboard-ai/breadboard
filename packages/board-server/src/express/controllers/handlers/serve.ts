@@ -12,7 +12,7 @@ const serve = async (req: Request, res: Response, next: NextFunction) => {
     return board ? JSON.parse(board) : null;
   };
 
-  await serveIndex({ hostname: req.hostname }, res, getMetadata);
+  await serveIndex({ hostname: req.hostname, rootPath: req.rootPath }, res, getMetadata);
 };
 
 export default serve;

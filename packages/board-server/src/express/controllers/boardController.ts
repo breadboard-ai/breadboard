@@ -9,6 +9,7 @@ import run from './handlers/run.js';
 import invoke from './handlers/invoke.js';
 import inviteList from './handlers/invite-list.js';
 import inviteUpdate from './handlers/invite-update.js';
+import serveApi from './handlers/serve-api.js';
 
 const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) => 
     (req: Request, res: Response, next: NextFunction) => {
@@ -22,6 +23,7 @@ export class BoardController {
     get = asyncHandler(get);
     create = asyncHandler(create);
     update = asyncHandler(update);
+    serveApi = asyncHandler(serveApi);
     invoke = asyncHandler(invoke);
     serve = asyncHandler(serve);
     describe = asyncHandler(describe);

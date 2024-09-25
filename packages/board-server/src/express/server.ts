@@ -2,6 +2,8 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import { BoardController } from './controllers/boardController.js';
 import authenticate from './auth/auth.js';
+import { dirname, resolve } from 'path';
+import { fileURLToPath } from 'url';
 
 const app = express();
 const port = 3000;
@@ -24,6 +26,14 @@ app.use(bodyParser.json());
 
 const boardController = new BoardController();
 
+const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
+const ROOT_PATH = resolve(MODULE_PATH, "../../");
+
+// Attach the root path to the request
+app.use((req, res, next) => {
+  req.rootPath = ROOT_PATH;
+  next();
+});
 
 // Board API Routes
 app.get('/boards', boardController.list);
@@ -31,19 +41,13 @@ app.post('/boards', authenticate, boardController.create);
 app.get('/boards/@:user/:boardName.json', boardController.get);
 app.post('/boards/@:user/:boardName.json', authenticate, boardController.update);
 // app.delete('/boards/@:user/:boardName.json', boardController.delete);
-// app.get('/boards/@:user/:boardName.app', boardController.serve);
-// app.get('/boards/@:user/:boardName.api', boardController.describe);
-// app.post('/boards/@:user/:boardName.api/invoke', boardController.invoke);
-// app.post('/boards/@:user/:boardName.api/describe', boardController.describe);
-// app.post('/boards/@:user/:boardName.api/run', boardController.run);
-// app.get('/boards/@:user/:boardName.invite', boardController.inviteList);
-// app.post('/boards/@:user/:boardName.invite', boardController.inviteUpdate);
+app.post('/boards/@:user/:boardName.api/describe', boardController.serveApi);
 
 app.get('/boards/@:user/:boardName.app', boardController.serve);
-app.get('/boards/@:user/:boardName.api', boardController.describe);
+app.get('/boards/@:user/:boardName.api', boardController.describe); // TODO(Tina): Does this need to be switched with the `/describe` path?
 app.post('/boards/@:user/:boardName.api/invoke', boardController.invoke);
 app.post('/boards/@:user/:boardName.api/run', boardController.run);
-app.get('/boards/@:user/:boardName.invite', boardController.inviteList);
+app.get('/boards/@:user/:boardName.invite', authenticate, boardController.inviteList);
 app.post('/boards/@:user/:boardName.invite', authenticate, boardController.inviteUpdate);
 
 // Global error handling middleware
