@@ -91,6 +91,25 @@ Deploy to Cloud Run:
 gcloud run deploy service-name --image image-name
 ```
 
+## Express server
+You will need to set the appropriate storage backend for the board-server. To run locally with `sqlite`:
+
+```
+export GOOGLE_APPLICATION_CREDENTIALS=n/a
+export STORAGE_BACKEND=sqlite
+export SQLITE_DB_PATH=/path/to/board-server.db
+```
+
+Then, start the Express server:
+```
+npm run express
+```
+
+To create an account (and generate an API key), then - from the root of the `board-server` package - run the following command:
+```
+# npm run add <username> # add a user and copy your API key
+```
+
 ## Firestore & App Engine deployment
 
 Uses Firestore. Deploys to App Engine.
