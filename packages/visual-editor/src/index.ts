@@ -1492,6 +1492,10 @@ export class Main extends LitElement {
               try {
                 await provider.connect(evt.location, evt.apiKey);
               } catch (err) {
+                this.toast(
+                  `Unable to connect to ${boardServerUrl}. Check your API key and try again.`,
+                  BreadboardUI.Events.ToastType.ERROR
+                );
                 return;
               }
             }}
