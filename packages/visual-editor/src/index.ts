@@ -1938,6 +1938,25 @@ export class Main extends LitElement {
                     break;
                   }
 
+                  case "copy-board-contents": {
+                    if (!this.tab?.graph || !this.tab?.graph.url) {
+                      this.toast(
+                        "Unable to copy board URL",
+                        BreadboardUI.Events.ToastType.ERROR
+                      );
+                      break;
+                    }
+
+                    await navigator.clipboard.writeText(
+                      JSON.stringify(this.tab.graph, null, 2)
+                    );
+                    this.toast(
+                      "Board contents copied",
+                      BreadboardUI.Events.ToastType.INFORMATION
+                    );
+                    break;
+                  }
+
                   case "copy-to-clipboard": {
                     if (!this.tab?.graph || !this.tab?.graph.url) {
                       this.toast(

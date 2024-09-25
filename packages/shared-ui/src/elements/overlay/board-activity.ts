@@ -92,8 +92,8 @@ export class BoardActivityOverlay extends LitElement {
       display: block;
       width: 20px;
       height: 20px;
-      background: transparent var(--bb-icon-eye) center center / 20px 20px
-        no-repeat;
+      background: transparent var(--bb-icon-vital-signs) center center / 20px
+        20px no-repeat;
       margin-right: var(--bb-grid-size-2);
     }
 

@@ -616,8 +616,9 @@ export class Editor extends LitElement {
     }
 
     #activity-marker.error {
-      background: var(--bb-warning-500);
-      color: var(--bb-warning-900);
+      border: 1px solid var(--bb-warning-700);
+      background: var(--bb-warning-600);
+      color: var(--bb-neutral-0);
     }
 
     @keyframes expand {
@@ -1830,6 +1831,11 @@ export class Editor extends LitElement {
           title: "Edit Board Details",
           name: "edit-board-details",
           icon: "edit",
+        },
+        {
+          title: "Copy Board Contents",
+          name: "copy-board-contents",
+          icon: "copy",
         },
         {
           title: "Copy Board URL",
