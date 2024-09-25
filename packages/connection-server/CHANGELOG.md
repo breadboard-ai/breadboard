@@ -1,5 +1,11 @@
 # @breadboard-ai/connection-server
 
+## 0.3.2
+
+### Patch Changes
+
+- 90f1662: Teach App View about OAuth connection secrets.
+
 ## 0.3.1
 
 ### Patch Changes

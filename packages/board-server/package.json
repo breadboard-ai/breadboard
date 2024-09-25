@@ -4,7 +4,7 @@
     "registry": "https://wombat-dressing-room.appspot.com"
   },
   "private": true,
-  "version": "0.6.3",
+  "version": "0.7.0",
   "description": "Board Server",
   "main": "./dist/server/index.js",
   "exports": "./dist/server/index.js",
@@ -182,10 +182,10 @@
     "wireit": "^0.14.9"
   },
   "dependencies": {
-    "@breadboard-ai/data-store": "^0.2.2",
+    "@breadboard-ai/data-store": "^0.2.3",
     "@google-cloud/firestore": "^7.10.0",
     "@google-cloud/secret-manager": "^5.6.0",
-    "@google-labs/breadboard": "^0.26.0",
+    "@google-labs/breadboard": "^0.27.0",
     "@lit/context": "^1.1.2",
     "better-sqlite3": "^11.3.0",
     "lit": "^3.2.0",

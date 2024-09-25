@@ -1,5 +1,50 @@
 # @breadboard-ai/board-server
 
+## 0.7.0
+
+### Minor Changes
+
+- 8f9fddf: Move LightObserver to shared-ui as TopGraphObserver.
+- 7e5ae47: Teach board server to expose oauth redirect.
+- f55b0f6: Implement support for simple secret provider.
+- 90f1662: Teach App View about OAuth connection secrets.
+
+### Patch Changes
+
+- 927cb32: Add a margin to the newest edge entry in the app view
+- 703f17d: Various fixes to make board server work again.
+- e543b2e: Unbreak the app view and only store top graph edge values.
+- f10e709: Update build deps.
+- 1f4ced4: Don't display title when the graph is title-less.
+- 19ae55b: Teach board server node proxy about data store groups.
+- 41122ea: Show the actual title, not just "true" in App View.
+- Updated dependencies [703f17d]
+- Updated dependencies [6136d87]
+- Updated dependencies [cb8c99a]
+- Updated dependencies [4dadf16]
+- Updated dependencies [8f9fddf]
+- Updated dependencies [f61ccf3]
+- Updated dependencies [e61fa66]
+- Updated dependencies [a104fa7]
+- Updated dependencies [8a1b8c4]
+- Updated dependencies [9797718]
+- Updated dependencies [8540b93]
+- Updated dependencies [81eafad]
+- Updated dependencies [4c03455]
+- Updated dependencies [3137076]
+- Updated dependencies [157c31e]
+- Updated dependencies [4cc71ee]
+- Updated dependencies [a039d2e]
+- Updated dependencies [9783ba8]
+- Updated dependencies [aafec7f]
+- Updated dependencies [1ad3001]
+- Updated dependencies [d7606d3]
+- Updated dependencies [84ca649]
+- Updated dependencies [d9fd0ab]
+- Updated dependencies [a6128a3]
+  - @google-labs/breadboard@0.27.0
+  - @breadboard-ai/data-store@0.2.3
+
 ## 0.6.0
 
 ### Minor Changes
