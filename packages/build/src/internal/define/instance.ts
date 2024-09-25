@@ -25,7 +25,7 @@ import type {
 } from "./config.js";
 
 export class Instance<
-  /* Inputs         */ I extends { [K: string]: JsonSerializable },
+  /* Inputs         */ I extends { [K: string]: JsonSerializable | undefined },
   /* Outputs        */ O extends { [K: string]: JsonSerializable | undefined },
   /* Dynamic Output */ DO extends JsonSerializable | undefined,
   /* Primary Input  */ PI extends string | false,
@@ -35,13 +35,15 @@ export class Instance<
 {
   readonly id?: string;
   readonly type: string;
-  readonly inputs: { [K in keyof I]: InputPort<I[K]> };
+  readonly inputs: { [K in keyof I]: InputPort<Exclude<I[K], undefined>> };
   readonly outputs: {
     [K in keyof O | "$error"]: K extends "$error"
       ? OutputPort<BreadboardError>
       : OutputPort<O[K]>;
   };
-  readonly primaryInput: PI extends keyof I ? InputPort<I[PI]> : undefined;
+  readonly primaryInput: PI extends keyof I
+    ? InputPort<Exclude<I[PI], undefined>>
+    : undefined;
   readonly primaryOutput: PO extends keyof O ? OutputPort<O[PO]> : undefined;
   // TODO(aomarks) Clean up output port getter
   readonly [OutputPortGetter]: PO extends keyof O
