@@ -10,7 +10,7 @@ const inviteUpdate = async (req: Request, res: Response) => {
     const username = res.locals.username;
     const store = getStore();
 
-    if (!req.body) {
+    if (!req.body || Object.keys(req.body).length === 0) {
         // create new invite
         const result = await store.createInvite(username, boardPath);
         if (!result.success) {
