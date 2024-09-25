@@ -7,3 +7,5 @@
 export function strIsFoo(str: string): boolean {
   return str === "foo";
 }
+
+export type BoolArr = boolean[];
