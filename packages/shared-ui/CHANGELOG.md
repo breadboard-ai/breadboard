@@ -1,5 +1,136 @@
 # @breadboard-ai/shared-ui
 
+## 1.17.0
+
+### Minor Changes
+
+- ab92d99: Plumb edge value data to the GraphRenderer.
+- 8f9fddf: Move LightObserver to shared-ui as TopGraphObserver.
+- 508c4b3: Plumb through edge highlighting and inner activity.
+- 033d656: Teach VE to autosave boards
+- f61ccf3: Introduce URL-based component types.
+- 12cdec3: Improve tab handling
+- 9a9f5c2: Move activity to overlay
+- 65c0449: Teach TopGraphObserver about various activity types, especially errors.
+- 9c878e2: Start work on a runtime API
+- 2f68f71: Move node meta into configurator
+- 8540b93: Convert Content to Build API and merge Specialist 2 to Specialist.
+- 81eafad: Implement selecting runs and viewing them.
+- 4c03455: Introduce Specialist 2 and make Content component support LLM Content.
+- d0f99b4: Restyle graph nodes
+- 392d7cd: Switch global configurator for per-port
+- 3e5f3dc: Add support for "Configured" in property schema editor.
+- 77dd2a4: Provide node acitivities out of TopGraphObserver.
+- 9fe7d4f: Add multi-tab support
+- 8c73da3: Integrate TopGraphObserver into Visual Editor.
+- 8572be4: Update UI ready for Runs
+- df9b158: Add indicators on edges; use activity log lite
+- 93a1d7c: Make "advanced ports" a per-component setting.
+- 28e0262: Plumb edge value schema to edge overlay
+- a049abf: Move more things into runtime
+- ec55e54: Automatically pan/zoom to currently running node
+- d7606d3: Implement plumbing for visualizing runs as graphs.
+- a6128a3: Switch Visual Editor to use Run API.
+- 0088ede: Allow configuring all ports (except start/control) in advanced expansion state.
+- d0e894d: Add Edge Value overlay
+
+### Patch Changes
+
+- 7fd41bb: Some minor UI tweaks
+- 2726cb8: Add minimize/maximize button to overlays
+- fe61245: Fix node dimension calculations
+- 3d4ca21: Make port preview more robust
+- bc967e3: Re-render and emit input event when adding parts in llm-input.
+- e6e165d: Show star values in edge inspector
+- 981bd9e: Align IDB with Board Servers in nav
+- 5bf9e8d: More tab improvements
+- e543b2e: Unbreak the app view and only store top graph edge values.
+- 7929eee: Reset debugEvent when changing runs
+- fd69479: Recover from bad node types
+- b8547b8: Fix pinch zoom in read-only mode
+- 1f11bf3: Switch follow to using Local Storage
+- 77fab49: Account for output ports in node height calc
+- 4e00d85: Update URL whenever a tab closes
+- 2ccac87: Fix a bug where BGL wouldn't paste into the editor.
+- 8efca60: Unclamp llm-output height
+- 2ebed5f: Make some minor tweaks to port labels
+- 4f4f3ee: Include all ports in configurator
+- b84b71b: Fix bug with port selection
+- 9254424: Add setting for autosave
+- 3e68ec2: Save pending configuration with board
+- 5990fd0: Add message for secrets and API keys
+- b6eeb3e: Show Activity Marker on graph nodes
+- ee56556: Fix comment deletion behavior
+- e63b5dd: Polish Specialist and Content.
+- 0b78f92: Recognize that sometimes there are no prior runs when initializing RunDetails.
+- cbc418b: Ensure that the final node is included in TGO
+- e723c09: Couple of minor tweaks
+- edefaf9: Add tooltip support
+- 409a07e: Restore comment edit ability
+- 502e6d5: Show configured nodes as blue rather green
+- c36391c: Various small fixes
+- 0ab2355: Account for "error" in TGO state.
+- f0ce284: Provide accurate run status information via TopGraphObserver.
+- cc72dcc: Set runs to be read-only
+- 890b8a2: Fix layout reset bug
+- 1ad3001: Show configuration previews underneath ports
+- 863c3e8: Remove the spurious null-coalescing operator.
+- 77d9497: Restore Activity Log
+- 09b1a4e: Generate friendlier ID for Graph-based component types.
+- 3abc5f6: Teach node-selector to remember search value.
+- cac51cb: Teach runtime about tab types
+- 679119f: Remove auto-submit machinery
+- 852160e: Allow overlays to move & resize
+- 71b8727: Teach the sidebar not to jump in vertical mode.
+- 40988de: Teach SecretsHelper about the timing of secrets-related events.
+- Updated dependencies [49e2740]
+- Updated dependencies [54c8197]
+- Updated dependencies [703f17d]
+- Updated dependencies [8d06f3c]
+- Updated dependencies [6136d87]
+- Updated dependencies [cb8c99a]
+- Updated dependencies [2f1b85c]
+- Updated dependencies [4dadf16]
+- Updated dependencies [c145fdd]
+- Updated dependencies [226be62]
+- Updated dependencies [8f9fddf]
+- Updated dependencies [2fa05f0]
+- Updated dependencies [f61ccf3]
+- Updated dependencies [e61fa66]
+- Updated dependencies [f71bcfb]
+- Updated dependencies [a104fa7]
+- Updated dependencies [8a1b8c4]
+- Updated dependencies [3188607]
+- Updated dependencies [9797718]
+- Updated dependencies [8540b93]
+- Updated dependencies [81eafad]
+- Updated dependencies [4c03455]
+- Updated dependencies [3137076]
+- Updated dependencies [157c31e]
+- Updated dependencies [4cc71ee]
+- Updated dependencies [8330f0c]
+- Updated dependencies [a039d2e]
+- Updated dependencies [1423647]
+- Updated dependencies [9783ba8]
+- Updated dependencies [6cdf20c]
+- Updated dependencies [f63a497]
+- Updated dependencies [aafec7f]
+- Updated dependencies [1ad3001]
+- Updated dependencies [91fe8bb]
+- Updated dependencies [100fc95]
+- Updated dependencies [cab83ce]
+- Updated dependencies [e19f046]
+- Updated dependencies [5834c81]
+- Updated dependencies [d7606d3]
+- Updated dependencies [0ef793f]
+- Updated dependencies [84ca649]
+- Updated dependencies [d9fd0ab]
+- Updated dependencies [a6128a3]
+  - @breadboard-ai/build@0.10.0
+  - @google-labs/breadboard@0.27.0
+  - @google-labs/breadboard-schema@1.8.0
+  - @breadboard-ai/data-store@0.2.3
+
 ## 1.16.1
 
 ### Patch Changes

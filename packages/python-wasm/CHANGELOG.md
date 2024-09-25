@@ -1,5 +1,31 @@
 # @breadboard-ai/python-wasm
 
+## 0.1.6
+
+### Patch Changes
+
+- 54c8197: Make build API kit function async
+- Updated dependencies [49e2740]
+- Updated dependencies [54c8197]
+- Updated dependencies [2f1b85c]
+- Updated dependencies [c145fdd]
+- Updated dependencies [226be62]
+- Updated dependencies [2fa05f0]
+- Updated dependencies [f71bcfb]
+- Updated dependencies [3188607]
+- Updated dependencies [8540b93]
+- Updated dependencies [8330f0c]
+- Updated dependencies [1423647]
+- Updated dependencies [6cdf20c]
+- Updated dependencies [f63a497]
+- Updated dependencies [91fe8bb]
+- Updated dependencies [100fc95]
+- Updated dependencies [cab83ce]
+- Updated dependencies [e19f046]
+- Updated dependencies [5834c81]
+- Updated dependencies [0ef793f]
+  - @breadboard-ai/build@0.10.0
+
 ## 0.1.5
 
 ### Patch Changes

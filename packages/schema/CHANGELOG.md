@@ -1,5 +1,15 @@
 # @google-labs/breadboard-schema
 
+## 1.8.0
+
+### Minor Changes
+
+- 8540b93: Convert Content to Build API and merge Specialist 2 to Specialist.
+
+### Patch Changes
+
+- 8d06f3c: Introduce GraphMetadata.visual.window.
+
 ## 1.7.0
 
 ### Minor Changes

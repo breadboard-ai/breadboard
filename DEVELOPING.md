@@ -331,6 +331,10 @@ package.
    npx changeset version
    ```
 
+   > [!NOTE]
+   > Sometimes, the command may fail with a fairly cryptic error like "TypeError: Cannot destructure property 'packageJson' of 'undefined' as it is undefined.". This typically means that a package was renamed sometime between the last release and now. To fix, look through the `.md` files in the `./.changeset` directory, and remove all lines that reference the package by its
+   > old name.
+
 3. Check what is planned to be published by looking at the latest commit which
    Changesets created in the previous step. Make sure it looks reasonable, and
    send a PR with the changes so that others can see what will be published.
