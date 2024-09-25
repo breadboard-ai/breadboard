@@ -27,7 +27,6 @@ import GeminiKit from "@google-labs/gemini-kit";
 import PythonWasmKit from "@breadboard-ai/python-wasm";
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 
-import { blankLLMContent } from "@google-labs/breadboard";
 import {
   IDBProjectStoreConfiguration,
   IDBProjectStoreProject as IDBBoardServerProject,
@@ -192,41 +191,9 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
 
   static async createDefault(url: URL, user: User) {
     const kits = await loadedKits;
-    const descriptor = blankLLMContent();
-    const access = new Map([
-      [
-        user.username,
-        { create: true, retrieve: true, update: true, delete: true },
-      ],
-    ]);
-
-    const boardUrl = new URL(`${url.href}/sample-project/sample.bgl.json`);
-    const board = {
-      metadata: {
-        owner: user.username,
-        access,
-      },
-      url: boardUrl,
-      descriptor,
-      runs: [],
-      evaluations: [],
-    };
-
     this.#create({
       url: new URL(url),
-      projects: Promise.resolve([
-        {
-          board,
-          url: boardUrl,
-          metadata: {
-            owner: user.username,
-            access,
-            title: "",
-            description: undefined,
-            icon: undefined,
-          },
-        },
-      ]),
+      projects: Promise.resolve([]),
       kits,
       users: [user],
       secrets: new Map(),

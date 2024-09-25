@@ -13,7 +13,9 @@ import { RuntimeConfig, RuntimeConfigBoardServers } from "./types.js";
 import {
   createDefaultLocalBoardServer,
   getBoardServers,
-} from "@breadboard-ai/idb-board-server";
+  migrateIDBGraphProviders,
+  migrateRemoteGraphProviders,
+} from "@breadboard-ai/board-server-management";
 
 import { loadKits } from "../utils/kit-loader";
 import GeminiKit from "@google-labs/gemini-kit";
@@ -39,8 +41,12 @@ export async function create(config: RuntimeConfig): Promise<{
   let boardServers: RuntimeConfigBoardServers | undefined = undefined;
   if (config.experiments.boardServers) {
     let servers = await getBoardServers();
+
+    // First run - set everything up and migrate the data.
     if (servers.length === 0) {
-      await createDefaultLocalBoardServer({ idb: true });
+      await createDefaultLocalBoardServer();
+      await migrateIDBGraphProviders();
+      await migrateRemoteGraphProviders();
       servers = await getBoardServers();
     }
 
