@@ -9,9 +9,9 @@ import type { RemoteMessage } from '@google-labs/breadboard/remote';
 const run = async (req: Request, res: Response) => {
   const { user, boardName } = req.params;
   const API_ENTRY = "/boards";
-  const userAndBoardName = `@${user}/${boardName}`;
+  const boardPath = `@${user}/${boardName}`;
   const url = new URL(`${req.protocol}://${req.get('host')}${req.originalUrl}`);
-  url.pathname = `${API_ENTRY}/${userAndBoardName}`;
+  url.pathname = `${API_ENTRY}/${boardPath}`;
   url.search = "";
   const href = url.href.endsWith(".json") ? url.href : `${url.href}.json`;
 
@@ -65,7 +65,7 @@ const run = async (req: Request, res: Response) => {
   }
   await runBoard({
     url: href,
-    path: userAndBoardName,
+    path: boardPath,
     user: keyVerificationResult.user!,
     inputs,
     loader: loadFromStore,

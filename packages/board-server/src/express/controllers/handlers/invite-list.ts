@@ -4,7 +4,6 @@ import { getStore } from '../../../server/store.js';
 const inviteList = async (req: Request, res: Response) => {
     const { user, boardName } = req.params;
 
-    // TODO(Tina): See `parse` in board-api-parser. `const board = `@${user}/${name}`;`
     const boardPath = `@${user}/${boardName}`;
 
     const username = res.locals.username;
