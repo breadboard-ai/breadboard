@@ -6,9 +6,11 @@
 
 import { Loader } from "./loader.js";
 import { GraphLoader, GraphProvider } from "./types.js";
+import { DefaultGraphProvider } from "./default.js";
 
 export const createLoader = (graphProviders?: GraphProvider[]): GraphLoader => {
-  return new Loader(graphProviders ?? []);
+  const providers = [...(graphProviders ?? []), new DefaultGraphProvider()];
+  return new Loader(providers);
 };
 
 export { SENTINEL_BASE_URL } from "./loader.js";
