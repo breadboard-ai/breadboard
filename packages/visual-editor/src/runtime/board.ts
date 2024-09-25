@@ -5,6 +5,7 @@
  */
 
 import {
+  BoardServer,
   GraphDescriptor,
   GraphLoader,
   GraphProvider,
@@ -91,6 +92,14 @@ export class Board extends EventTarget {
     }
 
     return this.providers.find((provider) => provider.canProvide(url)) || null;
+  }
+
+  getBoardServers(): BoardServer[] {
+    if (this.boardServers) {
+      return this.boardServers.servers;
+    }
+
+    return [];
   }
 
   getProviders(): GraphProvider[] {

@@ -40,7 +40,7 @@ export async function create(config: RuntimeConfig): Promise<{
   if (config.experiments.boardServers) {
     let servers = await getBoardServers();
     if (servers.length === 0) {
-      await createDefaultLocalBoardServer();
+      await createDefaultLocalBoardServer({ idb: true });
       servers = await getBoardServers();
     }
 

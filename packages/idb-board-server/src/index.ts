@@ -6,7 +6,7 @@
 
 import * as idb from "idb";
 import { IDBBoardServer } from "./idb-board-server.js";
-import { BoardServer, User } from "@google-labs/breadboard";
+import { BoardServer, GraphDescriptor, User } from "@google-labs/breadboard";
 
 export { IDBBoardServer } from "./idb-board-server.js";
 
@@ -50,7 +50,9 @@ export async function getBoardServers(): Promise<BoardServer[]> {
   return stores.filter((store) => store !== null);
 }
 
-export async function createDefaultLocalBoardServer() {
+export async function createDefaultLocalBoardServer(migrations: {
+  idb: boolean;
+}) {
   try {
     const db = await idb.openDB<BoardServerListing>(
       BOARD_SERVER_LISTING_DB,
@@ -72,5 +74,31 @@ export async function createDefaultLocalBoardServer() {
     await IDBBoardServer.createDefault(new URL(url), user);
   } catch (err) {
     console.warn(err);
+  }
+
+  // Copy the existing IDB graphs.
+  if (migrations.idb) {
+    const db = await idb.openDB("default");
+    const graphs: GraphDescriptor[] = await db.getAll("graphs");
+    db.close();
+
+    const boardServers = await getBoardServers();
+    const idbBoardServer = boardServers.find(
+      (bbs) => bbs.name === "Browser Storage"
+    );
+
+    if (idbBoardServer) {
+      for (let i = 0; i < graphs.length; i++) {
+        const descriptor = graphs[i];
+        const boardSlug = descriptor.url?.split("/").at(-1) ?? "board.bgl.json";
+        const boardUrl = new URL(
+          `${idbBoardServer.url.href}/project-${i}/${boardSlug}`
+        );
+
+        await idbBoardServer.create(boardUrl, descriptor);
+      }
+    } else {
+      console.warn("Unable to find local Board Server");
+    }
   }
 }
