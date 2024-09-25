@@ -501,7 +501,7 @@ export class AppView extends LitElement {
           const response = await fetch(this.url);
           const graph = (await response.json()) as GraphDescriptor;
           const title = !!graph.title;
-          document.title = `${title ? `${title} - ` : ""}Breadboard App View`;
+          document.title = `${title ? `${graph.title} - ` : ""}Breadboard App View`;
           resolve(graph);
           this.startRun();
         } catch (err) {
