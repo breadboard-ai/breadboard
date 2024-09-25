@@ -1481,6 +1481,7 @@ export class Main extends LitElement {
             class="settings"
             .settings=${this.#settings?.values || null}
             .boardServerUrl=${boardServerUrl}
+            .providers=${this.#providers}
             @bbgraphproviderconnectrequest=${async (
               evt: BreadboardUI.Events.GraphProviderConnectRequestEvent
             ) => {

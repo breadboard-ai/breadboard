@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import {
   GraphProviderConnectRequestEvent,
@@ -14,12 +14,18 @@ import {
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { SETTINGS_TYPE, Settings } from "../../types/types.js";
 import { Task } from "@lit/task";
+import { GraphProvider } from "@google-labs/breadboard";
 
 type FetchServerInfoResult =
   | {
       success: true;
+      connected: false;
       title: string;
       description: string;
+    }
+  | {
+      success: true;
+      connected: true;
     }
   | {
       success: false;
@@ -33,6 +39,9 @@ export class FirstRunOverlay extends LitElement {
 
   @property()
   boardServerUrl: string | null = null;
+
+  @property()
+  providers: GraphProvider[] = [];
 
   #formRef: Ref<HTMLFormElement> = createRef();
 
@@ -148,6 +157,23 @@ export class FirstRunOverlay extends LitElement {
       [boardServerUrl],
       { signal }
     ): Promise<FetchServerInfoResult> => {
+      const provider = this.providers.find(
+        ({ name }) => name === "RemoteGraphProvider"
+      );
+      if (!provider) {
+        return {
+          success: false,
+          error: "Can't use board servers with this Visual Editor instance.",
+        };
+      }
+      await provider.ready();
+      const registeredBoardServers = provider.items();
+      if (registeredBoardServers.has(boardServerUrl as string)) {
+        return {
+          success: true,
+          connected: true,
+        };
+      }
       try {
         const response = await fetch(`${boardServerUrl}/info`, {
           signal,
@@ -166,7 +192,7 @@ export class FirstRunOverlay extends LitElement {
             error: "The server is not returning valid information.",
           };
         }
-        return { success: true, title, description };
+        return { success: true, title, description, connected: false };
       } catch {
         // The server is inaccessible.
         return {
@@ -295,6 +321,10 @@ export class FirstRunOverlay extends LitElement {
                         Continue without connecting
                       </button>
                     </div>`;
+                }
+                if (info.connected) {
+                  this.dispatchEvent(new OverlayDismissedEvent());
+                  return nothing;
                 }
                 return html` <p>
                     You're about to connect to the following board server:
