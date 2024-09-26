@@ -6,26 +6,34 @@
 
 import { Schema } from "@google-labs/breadboard";
 import { Context, LlmContent } from "./context.js";
+import { FunctionDeclaration } from "./function-calling.js";
 
-export { describeSpecialist, content, describeContent };
+export { substitute, describeSpecialist, content, describeContent };
+
+type SubstituteInputParams = {
+  in?: Context[];
+  persona?: LlmContent;
+  task?: LlmContent;
+  [param: string]: unknown;
+};
 
 type Location = {
   part: LlmContent["parts"][0];
   parts: LlmContent["parts"];
 };
 
-export type ParamLocationMap = Record<string, Location[]>;
+type ParamLocationMap = Record<string, Location[]>;
 
-export type Operation = "in" | "out";
+type Operation = "in" | "out";
 
-export type ParamInfo = {
+type ParamInfo = {
   name: string;
   locations: Location[];
   op?: Operation;
   arg?: string;
 };
 
-export type TemplatePart =
+type TemplatePart =
   | LlmContent["parts"][0]
   | { param: string; op?: Operation; arg?: string };
 
@@ -45,6 +53,249 @@ type ContentInputs = {
 type DescribeContentInputs = {
   template?: LlmContent;
 };
+
+/**
+ * Part of the "Specialist" v2 component that does the parameter
+ * substitution.
+ */
+function substitute(inputParams: SubstituteInputParams) {
+  const { in: context = [], persona, task, ...inputs } = inputParams;
+  const personaParams = findParams(persona);
+  const taskParams = findParams(task);
+  const params = mergeParams(personaParams, taskParams);
+
+  // Make sure that all params are present in the values and collect
+  // them into a single object.
+  const values = collectValues(params, inputs);
+
+  if (context.length === 0 && !task) {
+    throw new Error(
+      "Both conversation Context and Task are empty. Specify at least one of them."
+    );
+  }
+
+  return {
+    in: context,
+    persona: subContent(persona, values),
+    task: subContent(task, values),
+    outs: collectOuts(personaParams, taskParams),
+  };
+
+  function unique<T>(params: T[]): T[] {
+    return Array.from(new Set(params));
+  }
+
+  function toId(param: string) {
+    return `p-${param}`;
+  }
+
+  function collectOuts(...paramsList: ParamInfo[][]) {
+    const functionNames = unique(
+      paramsList
+        .flat()
+        .map((param) => {
+          const { name, op } = param;
+          if (op !== "out") return null;
+          return name;
+        })
+        .filter(Boolean)
+    ) as string[];
+    return functionNames.map((name) => {
+      const toolName = `TOOL_${name.toLocaleUpperCase()}`;
+      return {
+        name: toolName,
+        description: `Call this function when asked to invoke the "${toolName}" tool.`,
+      } satisfies FunctionDeclaration;
+    });
+  }
+
+  function findParams(content: LlmContent | undefined): ParamInfo[] {
+    const parts = content?.parts;
+    if (!parts) return [];
+    const results = parts.flatMap((part) => {
+      if (!("text" in part)) return [] as ParamInfo[];
+      const matches = part.text.matchAll(
+        /{{\s*(?<name>[\w-]+)(?:\s*\|\s*(?<op>[\w-]*)(?::\s*"(?<arg>[\w-]+)")?)?\s*}}/g
+      );
+      return unique(Array.from(matches))
+        .map((match) => {
+          const name = match.groups?.name || "";
+          const op = match.groups?.op || "";
+          const arg = match.groups?.arg || "";
+          if (!name) return null;
+          return { name, op, arg, locations: [{ part, parts }] } as ParamInfo;
+        })
+        .filter(Boolean);
+    }) as ParamInfo[];
+    return results;
+  }
+
+  function mergeParams(...paramList: ParamInfo[][]) {
+    const result = paramList.reduce((acc, params) => {
+      for (const param of params) {
+        if (param.op && param.op !== "in") {
+          continue;
+        }
+        const { name, locations } = param;
+        const existing = acc[name];
+        if (existing) {
+          existing.push(...locations);
+        } else {
+          acc[name] = locations;
+        }
+      }
+      return acc;
+    }, {} as ParamLocationMap);
+    return result;
+  }
+
+  function subContent(
+    content: LlmContent | undefined,
+    values: Record<string, unknown>
+  ): LlmContent | string {
+    // If this is an array, optimistically presume this is an LLM Content array.
+    // Take the last item and use it as the content.
+    if (Array.isArray(content)) {
+      content = content.at(-1);
+    }
+    if (isEmptyContent(content)) return "";
+    return {
+      role: content.role || "user",
+      parts: mergeTextParts(
+        splitToTemplateParts(content).flatMap((part) => {
+          if ("param" in part) {
+            const { op = "in" } = part;
+            if (op === "in") {
+              const value = values[part.param];
+              if (typeof value === "string") {
+                return { text: value };
+              } else if (isLLMContent(value)) {
+                return value.parts;
+              } else if (isLLMContentArray(value)) {
+                const last = value.at(-1);
+                return last ? last.parts : [];
+              } else {
+                return { text: JSON.stringify(value) };
+              }
+            } else {
+              return { text: `"TOOL_${part.param.toLocaleUpperCase()}"` };
+            }
+          } else {
+            return part;
+          }
+        })
+      ),
+    };
+  }
+
+  function mergeTextParts(parts: TemplatePart[]) {
+    const merged = [];
+    for (const part of parts) {
+      if ("text" in part) {
+        const last = merged[merged.length - 1];
+        if (last && "text" in last) {
+          last.text += part.text;
+        } else {
+          merged.push(part);
+        }
+      } else {
+        merged.push(part);
+      }
+    }
+    return merged as LlmContent["parts"];
+  }
+
+  function toTitle(id: string) {
+    const spaced = id?.replace(/[_-]/g, " ");
+    return (
+      (spaced?.at(0)?.toUpperCase() ?? "") +
+      (spaced?.slice(1)?.toLowerCase() ?? "")
+    );
+  }
+
+  /**
+   * Takes an LLM Content and splits it further into parts where
+   * each {{param}} substitution is a separate part.
+   */
+  function splitToTemplateParts(content: LlmContent): TemplatePart[] {
+    const parts: TemplatePart[] = [];
+    for (const part of content.parts) {
+      if (!("text" in part)) {
+        parts.push(part);
+        continue;
+      }
+      const matches = part.text.matchAll(
+        /{{\s*(?<name>[\w-]+)(?:\s*\|\s*(?<op>[\w-]*)(?::\s*"(?<arg>[\w-]+)")?)?\s*}}/g
+      );
+      let start = 0;
+      for (const match of matches) {
+        const name = match.groups?.name || "";
+        const op = match.groups?.op as Operation;
+        const arg = match.groups?.arg;
+        const end = match.index;
+        if (end > start) {
+          parts.push({ text: part.text.slice(start, end) });
+        }
+        parts.push({ param: name, op, arg });
+        start = end + match[0].length;
+      }
+      if (start < part.text.length) {
+        parts.push({ text: part.text.slice(start) });
+      }
+    }
+    return parts;
+  }
+
+  function collectValues(
+    params: ParamLocationMap,
+    inputs: Record<string, unknown>
+  ) {
+    const values: Record<string, unknown> = {};
+    for (const param in params) {
+      const id = toId(param);
+      const value = inputs[id];
+      if (!value) {
+        const title = toTitle(param);
+        throw new Error(`Missing required parameter: ${title}`);
+      }
+      values[param] = value;
+    }
+    return values;
+  }
+
+  function isEmptyContent(
+    content: LlmContent | string | undefined
+  ): content is undefined {
+    if (!content) return true;
+    if (typeof content === "string") return true;
+    if (!content.parts?.length) return true;
+    if (content.parts.length > 1) return false;
+    const part = content.parts[0];
+    if (!("text" in part)) return true;
+    if (part.text.trim() === "") return true;
+    return false;
+  }
+
+  /**
+   * Copied from @google-labs/breadboard
+   */
+  function isLLMContent(nodeValue: unknown): nodeValue is LlmContent {
+    if (typeof nodeValue !== "object" || !nodeValue) return false;
+    if (nodeValue === null || nodeValue === undefined) return false;
+
+    if ("role" in nodeValue && nodeValue.role === "$metadata") {
+      return true;
+    }
+
+    return "parts" in nodeValue && Array.isArray(nodeValue.parts);
+  }
+
+  function isLLMContentArray(nodeValue: unknown): nodeValue is LlmContent[] {
+    if (!Array.isArray(nodeValue)) return false;
+    if (nodeValue.length === 0) return true;
+    return isLLMContent(nodeValue.at(-1));
+  }
+}
 
 /**
  * The describer for the "Specialist" v2 component.

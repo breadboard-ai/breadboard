@@ -6,6 +6,7 @@
 
 import {
   annotate,
+  anyOf,
   array,
   board,
   enumeration,
@@ -15,6 +16,7 @@ import {
   output,
   outputNode,
   starInputs,
+  string,
   Value,
 } from "@breadboard-ai/build";
 import { code, coreKit } from "@google-labs/core-kit";
@@ -37,6 +39,7 @@ import {
   boardInvocationArgsType,
   boardInvocationAssemblerFunction,
   functionDeclarationsFormatterFn,
+  functionDeclarationType,
   functionOrTextRouterFunction,
   type FunctionSignatureItem,
   responseCollatorFunction,
@@ -47,7 +50,7 @@ import boardToFunction from "./internal/board-to-function.js";
 import invokeBoardWithArgs from "./internal/invoke-board-with-args.js";
 import specialistDescriber from "./internal/specialist-describer.js";
 import { GenericBoardDefinition } from "@breadboard-ai/build/internal/board/board.js";
-import { substitute } from "../generated/substitute.js";
+import { substitute } from "../templating.js";
 
 const inputs = starInputs({ type: object({}, "unknown") });
 
@@ -82,13 +85,22 @@ const model = input({
   examples: ["gemini-1.5-flash-latest"],
 });
 
-const substituteParams = substitute({
-  $metadata: {
-    title: "Substitute Parameters",
-    description: "Performing parameter substitution, if needed.",
+const substituteParams = code(
+  {
+    $metadata: {
+      title: "Substitute Parameters",
+      description: "Performing parameter substitution, if needed.",
+    },
+    "*": inputs,
   },
-  "*": inputs,
-});
+  {
+    in: array(contextType),
+    persona: anyOf(llmContentType, string({})),
+    task: anyOf(llmContentType, string({})),
+    outs: array(functionDeclarationType),
+  },
+  substitute
+);
 
 const addTask = code(
   {
