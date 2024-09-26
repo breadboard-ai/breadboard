@@ -431,7 +431,7 @@ export type InputValues = Record<InputIdentifier, NodeValue>;
 /**
  * Values that the `NodeHandler` outputs.
  */
-export type OutputValues = Partial<Record<OutputIdentifier, NodeValue>>;
+export type OutputValues = Record<OutputIdentifier, NodeValue>;
 
 /**
  * Values that are supplied as part of the graph. These values are merged with
