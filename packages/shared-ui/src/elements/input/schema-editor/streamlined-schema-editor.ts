@@ -13,6 +13,7 @@ import {
   createAllowListFromProperty,
   getMinItemsFromProperty,
 } from "../../../utils/llm-content";
+import { HideTooltipEvent, ShowTooltipEvent } from "../../../events/events";
 
 const CUSTOM: Schema = {
   type: "object",
@@ -52,6 +53,7 @@ export class StreamlinedSchemaEditor extends LitElement {
   static styles = css`
     :host {
       display: block;
+      position: relative;
     }
 
     form {
@@ -61,6 +63,44 @@ export class StreamlinedSchemaEditor extends LitElement {
       row-gap: var(--bb-grid-size-2);
     }
 
+    .delete-property {
+      display: grid;
+      grid-column: 1/3;
+      grid-template-columns: 90px 1fr;
+      column-gap: var(--bb-grid-size-4);
+      margin: var(--bb-grid-size-2) 0 var(--bb-grid-size) 0;
+    }
+
+    .delete-property-container {
+      grid-column: 2;
+      align-self: end;
+      width: auto;
+      display: flex;
+      justify-content: flex-end;
+      container: size;
+    }
+
+    .delete-property-container button {
+      height: var(--bb-grid-size-7);
+      width: var(--bb-grid-size-7);
+      border-radius: 50%;
+      background: var(--bb-neutral-100) var(--bb-icon-delete) center center /
+        20px 20px no-repeat;
+      border: 1px solid var(--bb-neutral-400);
+      font-size: 0;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0, 0, 0.2, 1);
+      opacity: 0.6;
+      pointer-events: auto;
+    }
+
+    .delete-property-container button:hover,
+    .delete-property-container button:focus {
+      opacity: 1;
+      background-color: var(--bb-warning-100);
+      border: 1px solid var(--bb-warning-300);
+    }
+
     .input-type {
       display: grid;
       grid-template-rows: 28px;
@@ -68,10 +108,17 @@ export class StreamlinedSchemaEditor extends LitElement {
       container: size;
     }
 
-    @container (min-width: 480px) {
+    @container (min-width: 500px) {
       .input-type {
         grid-template-columns: min-content min-content min-content;
         column-gap: 8px;
+      }
+
+      .delete-property-container {
+        height: 0;
+        margin-bottom: calc(var(--bb-grid-size-3) * -1);
+        z-index: 1;
+        pointer-events: none;
       }
     }
 
@@ -301,6 +348,19 @@ export class StreamlinedSchemaEditor extends LitElement {
     }
 
     delete this.schema.properties;
+    this.requestUpdate();
+  }
+
+  #deleteSchemaProperty(name: string) {
+    if (!this.schema || !this.schema.properties) {
+      return;
+    }
+
+    if (!confirm("Are you sure you want to remove this item?")) {
+      return;
+    }
+
+    delete this.schema.properties[name];
     this.requestUpdate();
   }
 
@@ -534,7 +594,31 @@ export class StreamlinedSchemaEditor extends LitElement {
                     ></textarea>`;
                   }
 
-                  return html`<label>Type</label>
+                  return html`<div class="delete-property">
+                      <div class="delete-property-container">
+                        <button
+                          @click=${() => {
+                            this.#deleteSchemaProperty(name);
+                          }}
+                          @pointerover=${(evt: PointerEvent) => {
+                            this.dispatchEvent(
+                              new ShowTooltipEvent(
+                                "Delete item",
+                                evt.clientX,
+                                evt.clientY
+                              )
+                            );
+                          }}
+                          @pointerout=${() => {
+                            this.dispatchEvent(new HideTooltipEvent());
+                          }}
+                        >
+                          Remove this item
+                        </button>
+                      </div>
+                    </div>
+
+                    <label>Type</label>
                     <div
                       class="input-type"
                       @click=${(evt: InputEvent) => {
