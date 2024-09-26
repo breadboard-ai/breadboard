@@ -157,7 +157,7 @@ export class Board extends EventTarget {
     }
 
     const tabs = [...params]
-      .filter((param) => param[0] === "tab")
+      .filter((param) => param[0].startsWith("tab"))
       .sort(([idA], [idB]) => {
         if (idA > idB) return 1;
         if (idA < idB) return -1;

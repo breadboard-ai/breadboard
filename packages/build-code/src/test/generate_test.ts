@@ -28,6 +28,21 @@ test("generates module", async () => {
   assert.equal(actual, expected);
 });
 
+test("generates module with regex escaping", async () => {
+  const fooPath = join(testDataDir, "regex.ts");
+  const config: Config = {
+    inputPaths: [fooPath],
+    outputDir: join(testDataDir, "out"),
+    tsconfigPath: join(testDataDir, "tsconfig.json"),
+  };
+  const actual = await generate(config, fooPath);
+  const expected = await readFile(
+    join(testDataDir, "generated", "regex.ts"),
+    "utf8"
+  );
+  assert.equal(actual, expected);
+});
+
 test("serializes to BGL", async () => {
   const { strIsFoo } = await import("./testdata/generated/str-is-foo.js");
   const str = input();
