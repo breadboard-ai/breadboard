@@ -111,6 +111,7 @@ export class NodeConfigurationOverlay extends LitElement {
       flex-direction: column;
       resize: both;
       overflow: auto;
+      container-type: size;
     }
 
     :host([maximized="true"]) #wrapper {
@@ -191,17 +192,36 @@ export class NodeConfigurationOverlay extends LitElement {
 
     form {
       display: grid;
-      grid-template-rows: 16px 28px;
-      row-gap: 4px;
+      grid-template-columns: 90px auto;
+      grid-template-rows: var(--bb-grid-size-7);
+      align-items: center;
+      row-gap: var(--bb-grid-size-2);
       padding: 0 0 var(--bb-grid-size-4) 0;
-      border-bottom: 1px solid var(--bb-neutral-300);
+      border-bottom: 1px solid var(--bb-neutral-200);
+      column-gap: var(--bb-grid-size-4);
+    }
+
+    @container (min-width: 600px) {
+      form {
+        grid-template-columns: 90px auto 90px auto;
+        grid-template-rows: var(--bb-grid-size-7);
+        column-gap: var(--bb-grid-size-4);
+      }
+
+      form textarea {
+        grid-column: 2/5;
+      }
+
+      label[for="log-level"] {
+        justify-self: end;
+      }
     }
 
     input[type="text"],
     select,
     textarea {
-      padding: var(--bb-grid-size);
-      font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+      padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
       border: 1px solid var(--bb-neutral-300);
       border-radius: var(--bb-grid-size);
@@ -216,6 +236,10 @@ export class NodeConfigurationOverlay extends LitElement {
     label {
       font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
+    }
+
+    bb-user-input {
+      padding-top: var(--bb-grid-size-4);
     }
   `;
 
@@ -511,36 +535,36 @@ export class NodeConfigurationOverlay extends LitElement {
                 this.#pendingSave = true;
               }}
             >
-              <label>Title</label>
+              <label for="title">Title</label>
               <input
                 name="title"
                 id="title"
                 type="text"
-                placeholder="Enter the title for this node"
+                placeholder="Enter the title for this component"
                 .value=${this.value.metadata?.title || ""}
               />
 
-              <label>Log Level</label>
+              <label for="log-level">Log values</label>
               <select type="text" id="log-level" name="log-level">
                 <option
                   value="debug"
                   ?selected=${this.value.metadata?.logLevel === "debug"}
                 >
-                  Debug
+                  Only when debugging
                 </option>
                 <option
                   value="info"
                   ?selected=${this.value.metadata?.logLevel === "info"}
                 >
-                  Information
+                  All the time
                 </option>
               </select>
 
-              <label>Description</label>
+              <label for="description">Description</label>
               <textarea
                 id="description"
                 name="description"
-                placeholder="Enter the description for this node"
+                placeholder="Enter the description for this component"
                 .value=${this.value.metadata?.description || ""}
               ></textarea>
             </form>

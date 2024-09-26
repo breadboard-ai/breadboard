@@ -43,6 +43,7 @@ export { Overlay } from "./overlay/overlay.js";
 export { PortTooltip } from "./editor/port-tooltip.js";
 export { ProviderOverlay } from "./overlay/provider.js";
 export { SaveAsOverlay } from "./overlay/save-as.js";
+export { StreamlinedSchemaEditor } from "./input/schema-editor/streamlined-schema-editor.js";
 export { SchemaEditor } from "./input/schema-editor/schema-editor.js";
 export { SettingsEditOverlay } from "./overlay/settings-edit.js";
 export { Splitter } from "./splitter/splitter.js";

@@ -55,6 +55,7 @@
   --bb-icon-add-image-webcam: url(/third_party/icons/add-image-webcam.svg);
   --bb-icon-add-image: url(/third_party/icons/add-image.svg);
   --bb-icon-add-text: url(/third_party/icons/add-text.svg);
+  --bb-icon-add-text-ui: url(/third_party/icons/add-text-ui.svg);
   --bb-icon-add-video: url(/third_party/icons/add-video.svg);
   --bb-icon-arrow-back: url(/third_party/icons/arrow-back.svg);
   --bb-icon-arrow-right: url(/third_party/icons/arrow-right.svg);
@@ -76,6 +77,7 @@
   --bb-icon-draft: url(/third_party/icons/draft.svg);
   --bb-icon-edge-connector: url(/third_party/icons/edge-connector.svg);
   --bb-icon-edit: url(/third_party/icons/edit.svg);
+  --bb-icon-edit-ui: url(/third_party/icons/edit-ui.svg);
   --bb-icon-eject: url(/third_party/icons/eject.svg);
   --bb-icon-error: url(/third_party/icons/error.svg);
   --bb-icon-expand: url(/third_party/icons/expand.svg);
@@ -89,6 +91,8 @@
   --bb-icon-input: url(/third_party/icons/input.svg);
   --bb-icon-info: url(/third_party/icons/info.svg);
   --bb-icon-javascript: url(/third_party/icons/js.svg);
+  --bb-icon-library-add: url(/third_party/icons/library-add.svg);
+  --bb-icon-library-add-ui: url(/third_party/icons/library-add-ui.svg);
   --bb-icon-laps: url(/third_party/icons/laps.svg);
   --bb-icon-lan: url(/third_party/icons/lan.svg);
   --bb-icon-maximize: url(/third_party/icons/maximize.svg);
