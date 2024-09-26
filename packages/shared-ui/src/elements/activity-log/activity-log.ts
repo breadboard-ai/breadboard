@@ -396,6 +396,10 @@ export class ActivityLog extends LitElement {
         }
       }
 
+      if (schema.type === "string" && typeof value === "object") {
+        value = undefined;
+      }
+
       prev.push({
         name,
         title: schema.title ?? name,

@@ -32,6 +32,7 @@ import {
   GraphDescriptor,
   GraphProvider,
   isLLMContent,
+  isLLMContentArray,
   LLMContent,
   NodeValue,
 } from "@google-labs/breadboard";
@@ -357,12 +358,19 @@ export class UserInput extends LitElement {
             >`;
           }
 
-          const unparsedDefaultValue =
-            input.schema.examples && input.schema.examples.length > 0
-              ? input.schema.examples[0]
-              : typeof input.schema.default === "string"
-                ? input.schema.default
-                : "";
+          let unparsedDefaultValue = "";
+          if (input.schema.examples && input.schema.examples.length > 0) {
+            unparsedDefaultValue = input.schema.examples[0];
+          } else if (typeof input.schema.default === "string") {
+            unparsedDefaultValue = input.schema.default;
+          } else if (isLLMContentArrayBehavior(input.schema)) {
+            if (
+              typeof input.schema.items === "object" &&
+              !Array.isArray(input.schema.items)
+            ) {
+              unparsedDefaultValue = input.schema.items.default ?? "";
+            }
+          }
 
           let defaultValue: unknown = unparsedDefaultValue;
           try {
@@ -373,7 +381,11 @@ export class UserInput extends LitElement {
               input.schema.type === "array"
             ) {
               if (defaultValue !== "") {
-                defaultValue = JSON.parse(unparsedDefaultValue);
+                try {
+                  defaultValue = JSON.parse(unparsedDefaultValue);
+                } catch (err) {
+                  defaultValue = null;
+                }
               } else {
                 defaultValue = null;
               }
@@ -382,6 +394,7 @@ export class UserInput extends LitElement {
                 try {
                   assertIsLLMContent(defaultValue);
                 } catch (err) {
+                  console.warn(err);
                   defaultValue = null;
                 }
               }
@@ -410,11 +423,8 @@ export class UserInput extends LitElement {
                 if (isLLMContentArrayBehavior(input.schema)) {
                   let value: LLMContent[] | null =
                     (input.value as LLMContent[]) ?? null;
-                  if (!value) {
-                    const unparsedValue = input.schema.default;
-                    value = unparsedValue
-                      ? JSON.parse(unparsedValue)
-                      : [{ parts: [], role: "user" }];
+                  if (!value && isLLMContentArray(defaultValue)) {
+                    value = defaultValue;
                   }
 
                   const allow = createAllowListFromProperty(input.schema);
@@ -466,13 +476,13 @@ export class UserInput extends LitElement {
 
               case "object": {
                 if (isPortSpecBehavior(input.schema)) {
-                  inputField = html`<bb-schema-editor
+                  inputField = html`<bb-streamlined-schema-editor
                     id=${id}
                     name=${id}
                     .nodeId=${input.name}
                     .schema=${input.value}
                     .schemaVersion=${0}
-                  ></bb-schema-editor>`;
+                  ></bb-streamlined-schema-editor>`;
                   break;
                 } else if (isLLMContentBehavior(input.schema)) {
                   if (!isLLMContent(input.value)) {
