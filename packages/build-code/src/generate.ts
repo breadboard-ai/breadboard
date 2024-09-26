@@ -33,7 +33,9 @@ export async function generate(config: Config, inputPath: string) {
 async function bundleCode(inputPath: string): Promise<string> {
   const config: esbuild.BuildOptions = {
     entryPoints: [inputPath],
-    format: "esm",
+    // TODO(aomarks) We should use "esm" here, but runJavascript doesn't support
+    // JS modules, so we need a legacy script instead, which iife gives us.
+    format: "iife",
     bundle: true,
     write: false,
     legalComments: "inline",
@@ -64,7 +66,23 @@ async function bundleCode(inputPath: string): Promise<string> {
         `Expected 1 output file, got ${bundle.outputFiles?.length ?? 0}.`
     );
   }
-  return bundle.outputFiles[0]!.text;
+  // TODO(aomarks) Remove this once we support JS modules in runJavascript.
+  // runJavascript does some regexp processing of the code which is broken with
+  // the iife wrapper (convertToNamedFunction). We don't actually need the iife
+  // wrapper since we run with an isolated scope, so we can just remove it. The
+  // wrapper will be the first and last lines (actually second-to-last because
+  // there's a trailing newline).
+  const iifeWrapped = bundle.outputFiles[0]!.text;
+  const lines = iifeWrapped.split("\n");
+  const unwrapped =
+    lines
+      .slice(1, lines.length - 2)
+      // Unindent.
+      .map((line) => line.replace(/^ {2}/, ""))
+      .join("\n") +
+    // Add the trailing newline back.
+    "\n";
+  return unwrapped;
 }
 
 interface Schemas {

@@ -25,9 +25,6 @@ function strIsFoo(str) {
 var run = ({ str }) => {
   return { bool: strIsFoo(str) };
 };
-export {
-  run
-};
 `,
   inputSchema: {
     type: "object",
