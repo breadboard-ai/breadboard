@@ -16,8 +16,10 @@
     "prepack": "npm run build",
     "test": "wireit",
     "build": "wireit",
+    "build:tsc": "wireit",
     "lint": "wireit",
     "generate-kit-manifest": "wireit",
+    "generate:js-components": "wireit",
     "generate:graphs": "wireit"
   },
   "wireit": {
@@ -54,7 +56,8 @@
         "../core-kit:build:tsc",
         "../json-kit:build:tsc",
         "../template-kit:build:tsc",
-        "../gemini-kit:build:tsc"
+        "../gemini-kit:build:tsc",
+        "generate:js-components"
       ],
       "files": [
         "src/**/*.ts",
@@ -68,6 +71,19 @@
         "!dist/**/*.min.js{,.map}"
       ],
       "clean": "if-file-deleted"
+    },
+    "generate:js-components": {
+      "command": "build-code --tsconfig=tsconfig.json --out=src/generated/ src/js-components/*.ts",
+      "files": [
+        "src/**/*.ts",
+        "!src/generated/"
+      ],
+      "output": [
+        "src/generated/"
+      ],
+      "dependencies": [
+        "../build-code:build"
+      ]
     },
     "test": {
       "command": "node --test --enable-source-maps --test-reporter spec dist/tests/*.js",
@@ -95,7 +111,7 @@
       "output": []
     },
     "generate:graphs": {
-      "command": "mkdir graphs && ls dist/src/boards/**/*.js | xargs -n1 -r -I{} ../breadboard-cli/dist/src/index.js make \"$PWD/{}\" -o \"$PWD/graphs/\" --format",
+      "command": "mkdir graphs && ls dist/src/boards/*.js | xargs -n1 -r -I{} ../breadboard-cli/dist/src/index.js make \"$PWD/{}\" -o \"$PWD/graphs/\" --format",
       "dependencies": [
         "build:tsc"
       ],

@@ -9,11 +9,11 @@ import { InlineDataCapabilityPart } from "@google-labs/breadboard";
 import { deepStrictEqual, ok } from "node:assert";
 import {
   describeSpecialist,
-  substitute,
   content,
   describeContent,
 } from "../src/templating.js";
 import { LlmContent } from "../src/context.js";
+import { run as substitute } from "../src/js-components/substitute.js";
 
 describe("Templating", () => {
   it("does simple substitution", async () => {
@@ -25,8 +25,8 @@ describe("Templating", () => {
       in: context,
       persona,
       task,
-      "p-character": character,
-      "p-name": "Harry",
+      ["p-character" as never]: character,
+      ["p-name" as never]: "Harry",
     });
     deepStrictEqual(result, {
       in: [],
@@ -45,8 +45,8 @@ describe("Templating", () => {
       in: context,
       persona,
       task,
-      "p-character": character,
-      "p-name": "Harry",
+      ["p-character" as never]: character,
+      ["p-name" as never]: "Harry",
     });
     deepStrictEqual(result, {
       in: [],
@@ -68,8 +68,8 @@ describe("Templating", () => {
       in: context,
       persona,
       task,
-      "p-character": character,
-      "p-name": "Harry",
+      ["p-character" as never]: character,
+      ["p-name" as never]: "Harry",
     });
     deepStrictEqual(result, {
       in: [],
@@ -95,8 +95,8 @@ describe("Templating", () => {
       in: context,
       persona,
       task,
-      "p-character": character,
-      "p-name": name,
+      ["p-character" as never]: character,
+      ["p-name" as never]: name,
     });
     deepStrictEqual(result, {
       in: [],
@@ -116,8 +116,8 @@ describe("Templating", () => {
       in: context,
       persona,
       task,
-      "p-character": character,
-      "p-name": name,
+      ["p-character" as never]: character,
+      ["p-name" as never]: name,
     });
     deepStrictEqual(result, {
       in: [],
@@ -137,8 +137,8 @@ describe("Templating", () => {
       in: context,
       persona,
       task,
-      "p-character": character,
-      "p-name": name,
+      ["p-character" as never]: character,
+      ["p-name" as never]: name,
     });
     deepStrictEqual(result, {
       in: [],
@@ -158,8 +158,8 @@ describe("Templating", () => {
       in: context,
       persona,
       task,
-      "p-character": character,
-      "p-name": name,
+      ["p-character" as never]: character,
+      ["p-name" as never]: name,
     });
     deepStrictEqual(result, {
       in: [],
@@ -179,8 +179,8 @@ describe("Templating", () => {
       in: context,
       persona,
       task,
-      "p-character": character,
-      "p-name": name,
+      ["p-character" as never]: character,
+      ["p-name" as never]: name,
     });
     deepStrictEqual(result, {
       in: [],
@@ -204,8 +204,8 @@ describe("Templating", () => {
       in: context,
       persona,
       task,
-      "p-character": character,
-      "p-name": name,
+      ["p-character" as never]: character,
+      ["p-name" as never]: name,
     });
     deepStrictEqual(result, {
       in: [],
