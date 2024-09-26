@@ -69,19 +69,18 @@ async function bundleCode(inputPath: string): Promise<string> {
   // TODO(aomarks) Remove this once we support JS modules in runJavascript.
   // runJavascript does some regexp processing of the code which is broken with
   // the iife wrapper (convertToNamedFunction). We don't actually need the iife
-  // wrapper since we run with an isolated scope, so we can just remove it. The
-  // wrapper will be the first and last lines (actually second-to-last because
-  // there's a trailing newline).
+  // wrapper since we run with an isolated scope, so we can just remove it
   const iifeWrapped = bundle.outputFiles[0]!.text;
   const lines = iifeWrapped.split("\n");
-  const unwrapped =
-    lines
-      .slice(1, lines.length - 2)
-      // Unindent.
-      .map((line) => line.replace(/^ {2}/, ""))
-      .join("\n") +
-    // Add the trailing newline back.
-    "\n";
+  const unwrapped = lines
+    // Since the inner code is indented, we can assume that un-indented IIFE
+    // lines are from the top-level IIFE. Note that sometimes esbuild will
+    // include a `"use strict";` depending on the tsconfig, so we can't assume
+    // that the IIFE will start on the first line.
+    .filter((line) => line !== "(() => {" && line !== "})();")
+    // Now we can unindent.
+    .map((line) => line.replace(/^ {2}/, ""))
+    .join("\n");
   return unwrapped;
 }
 
