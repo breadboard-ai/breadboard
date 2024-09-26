@@ -436,6 +436,7 @@ export class ActivityLog extends LitElement {
       <h1 ?data-message-idx=${this.showExtendedInfo ? idx : nothing}>
         ${node.title()}
       </h1>
+      ${node.description() ? html`<h2>${node.description()}</h2>` : nothing}
       <bb-user-input
         id="${descriptor.id}"
         .providers=${this.providers}
@@ -614,6 +615,9 @@ export class ActivityLog extends LitElement {
                     >
                       ${node.title()}
                     </h1>
+                    ${node.description()
+                      ? html`<h2>${node.description()}</h2>`
+                      : nothing}
                     ${until(additionalData)} ${this.#createRunInfo(event.runs)}
                   </section>`;
                   break;
