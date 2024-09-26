@@ -24,9 +24,6 @@ var run = ({ before }) => {
   });
   return { after: JSON.stringify(all) };
 };
-export {
-  run
-};
 `,
   inputSchema: {
     type: "object",
