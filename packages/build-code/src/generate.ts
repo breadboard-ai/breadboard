@@ -172,7 +172,7 @@ function generateSource(
      * ${relative(process.cwd(), inputPath)}
      */
     export const ${functionName} = makeRunJavascriptComponent<Inputs, Outputs>({
-      code: \`${escapeForTemplateLiteral(bundledCode)}\`,
+      code: \`${escapeForTemplateLiteral(escapeEscapeChars(bundledCode))}\`,
       inputSchema: ${JSON.stringify(inputSchema)},
       outputSchema: ${JSON.stringify(outputSchema)},
     });
@@ -183,6 +183,10 @@ function kebabToCamel(kebab: string): string {
   return kebab
     .toLowerCase()
     .replace(/[-_][a-z]/g, (group) => group.slice(-1).toUpperCase());
+}
+
+function escapeEscapeChars(str: string): string {
+  return str.replace(/\\/g, "\\\\");
 }
 
 function escapeForTemplateLiteral(str: string): string {
