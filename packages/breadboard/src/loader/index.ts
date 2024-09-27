@@ -13,4 +13,10 @@ export const createLoader = (graphProviders?: GraphProvider[]): GraphLoader => {
   return new Loader(providers);
 };
 
+export const createCustomLoader = (
+  graphProviders: GraphProvider[]
+): GraphLoader => {
+  return new Loader([...graphProviders]);
+};
+
 export { SENTINEL_BASE_URL } from "./loader.js";
