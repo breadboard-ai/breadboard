@@ -4,21 +4,29 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css } from "lit";
-import { customElement } from "lit/decorators.js";
+import { LitElement, html, css, nothing } from "lit";
+import { customElement, property } from "lit/decorators.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { EditorView, minimalSetup } from "codemirror";
 import { keymap } from "@codemirror/view";
 import { javascript } from "@codemirror/lang-javascript";
+import { json } from "@codemirror/lang-json";
 import { closeBrackets } from "@codemirror/autocomplete";
 import { indentWithTab } from "@codemirror/commands";
 import { CodeChangeEvent } from "../../../events/events.js";
 
 @customElement("bb-code-editor")
 export class CodeEditor extends LitElement {
+  @property()
+  language: "javascript" | "json" = "javascript";
+
+  @property()
+  showMessage = false;
+
   #editor: EditorView | null = null;
   #content: Ref<HTMLDivElement> = createRef();
   #value: string | null = null;
+  #message = "";
 
   #onKeyUpBound = this.#onKeyUp.bind(this);
 
@@ -26,6 +34,7 @@ export class CodeEditor extends LitElement {
     :host {
       display: block;
       font-size: 11px;
+      position: relative;
     }
 
     .cm-editor {
@@ -55,6 +64,34 @@ export class CodeEditor extends LitElement {
       padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
       resize: none;
       width: 100%;
+    }
+
+    .validation-message {
+      padding: var(--bb-grid-size-2);
+      background: var(--bb-warning-100);
+      border: 1px solid var(--bb-warning-300);
+      color: var(--bb-warning-700);
+      pointer-events: none;
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      position: absolute;
+      top: 0px;
+      left: 0;
+      transform: translate(4px, -100%) translate(0, -12px);
+      width: min(calc(100% - var(--bb-grid-size-7)), 360px);
+      border-radius: var(--bb-grid-size-2);
+      opacity: 0;
+      animation: fade 0.3s cubic-bezier(0, 0, 0.3, 1) forwards;
+    }
+
+    @keyframes fade {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
     }
   `;
 
@@ -86,10 +123,12 @@ export class CodeEditor extends LitElement {
   }
 
   protected firstUpdated(): void {
+    const lang = this.language === "javascript" ? javascript : json;
+
     this.#editor = new EditorView({
       extensions: [
         minimalSetup,
-        javascript(),
+        lang(),
         closeBrackets(),
         keymap.of([indentWithTab]),
       ],
@@ -116,7 +155,10 @@ export class CodeEditor extends LitElement {
   }
 
   render() {
-    return html`<div ${ref(this.#content)}></div>`;
+    return html` ${this.showMessage
+        ? html`<div class="validation-message">${this.#message}</div>`
+        : nothing}
+      <div ${ref(this.#content)}></div>`;
   }
 
   destroy() {
@@ -126,5 +168,29 @@ export class CodeEditor extends LitElement {
 
     this.#editor.destroy();
     this.#editor = null;
+  }
+
+  setCustomValidity(message: string) {
+    if (message === this.#message) {
+      return;
+    }
+
+    if (message === "") {
+      this.showMessage = false;
+    }
+
+    this.#message = message;
+  }
+
+  reportValidity() {
+    if (this.#message === "") {
+      return;
+    }
+
+    this.showMessage = true;
+  }
+
+  checkValidity() {
+    return this.#message === "";
   }
 }
