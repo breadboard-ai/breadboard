@@ -3,7 +3,7 @@ import { getStore } from '../../../server/store.js';
 import { createLoader, inspect, type GraphDescriptor, type NodeDescriberResult } from "@google-labs/breadboard";
 import { addKeyInput } from '../../../server/boards/describe.js';
 
-const describe = async (req: Request, res: Response) => {
+const describe = async (req: Request, res: Response): Promise<void> => {
   const { user, boardName } = req.params;
 
   const store = getStore();
@@ -11,7 +11,8 @@ const describe = async (req: Request, res: Response) => {
   const board = JSON.parse(await store.get(user!, boardName!)) as GraphDescriptor | undefined;
 
   if (!board) {
-    return res.status(404).json({ error: 'Board not found' });
+    res.status(404).json({ error: 'Board not found' });
+    return;
   }
 
   const loader = createLoader();
