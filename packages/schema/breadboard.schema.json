@@ -188,6 +188,9 @@
 			"additionalProperties": {
 				"$ref": "#/definitions/NodeValue"
 			},
+			"propertyNames": {
+				"description": "Unique identifier of a node's output."
+			},
 			"description": "Values that the `NodeHandler` outputs."
 		},
 		"NodeIdentifier": {
