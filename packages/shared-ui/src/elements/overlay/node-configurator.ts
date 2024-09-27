@@ -410,6 +410,7 @@ export class NodeConfigurationOverlay extends LitElement {
     if (logLevelEl?.value)
       metadata.logLevel = logLevelEl?.value as "info" | "debug";
 
+    this.#destroyCodeEditors();
     this.dispatchEvent(
       new NodePartialUpdateEvent(id, subGraphId, outputs, metadata)
     );
@@ -419,6 +420,14 @@ export class NodeConfigurationOverlay extends LitElement {
     this.maximized = !this.maximized;
 
     globalThis.sessionStorage.setItem(MAXIMIZE_KEY, this.maximized.toString());
+  }
+
+  #destroyCodeEditors() {
+    if (!this.#userInputRef.value) {
+      return;
+    }
+
+    this.#userInputRef.value.destroyEditors();
   }
 
   render() {
@@ -454,11 +463,11 @@ export class NodeConfigurationOverlay extends LitElement {
 
     return html`<bb-overlay
       @bboverlaydismissed=${(evt: Event) => {
-        if (!this.#pendingSave) {
-          return;
-        }
-
-        if (confirm("Close configurator without saving first?")) {
+        if (
+          !this.#pendingSave ||
+          confirm("Close configurator without saving first?")
+        ) {
+          this.#destroyCodeEditors();
           return;
         }
 

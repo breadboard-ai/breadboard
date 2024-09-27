@@ -14,6 +14,7 @@ import {
   getMinItemsFromProperty,
 } from "../../../utils/llm-content";
 import { HideTooltipEvent, ShowTooltipEvent } from "../../../events/events";
+import { CodeEditor } from "../code-editor/code-editor";
 
 const CUSTOM: Schema = {
   type: "object",
@@ -54,11 +55,15 @@ export class StreamlinedSchemaEditor extends LitElement {
     :host {
       display: block;
       position: relative;
+      width: 100%;
+      overflow: auto;
     }
 
     form {
+      max-width: 100%;
+      overflow: auto;
       display: grid;
-      grid-template-columns: 90px 1fr;
+      grid-template-columns: 90px minmax(0, 1fr);
       column-gap: var(--bb-grid-size-4);
       row-gap: var(--bb-grid-size-2);
     }
@@ -280,8 +285,16 @@ export class StreamlinedSchemaEditor extends LitElement {
     }
 
     #controls button#delete-schema-items {
-      background: var(--bb-ui-50) var(--bb-icon-delete) 4px center / 20px 20px
-        no-repeat;
+      background: var(--bb-neutral-100) var(--bb-icon-delete) 4px center / 20px
+        20px no-repeat;
+      border: 1px solid var(--bb-neutral-400);
+    }
+
+    #controls button#delete-schema-items:hover,
+    #controls button#delete-schema-items:focus {
+      opacity: 1;
+      background-color: var(--bb-warning-100);
+      border: 1px solid var(--bb-warning-300);
     }
 
     #controls button#unset-schema {
@@ -311,6 +324,8 @@ export class StreamlinedSchemaEditor extends LitElement {
 
     let property = this.schema.properties[name];
     const title = property.title;
+
+    this.#destroyEditorIfNeeded(name);
 
     switch (type) {
       case "llm-content-array": {
@@ -422,6 +437,46 @@ export class StreamlinedSchemaEditor extends LitElement {
     }
 
     return [{ parts: [], role: "user" }];
+  }
+
+  #getEditors() {
+    if (!this.#formRef.value) {
+      return [];
+    }
+
+    return this.#formRef.value.querySelectorAll<CodeEditor>("bb-code-editor");
+  }
+
+  destroyEditorsIfNeeded() {
+    const editors = this.#getEditors();
+    for (const editor of editors) {
+      editor.destroy();
+    }
+  }
+
+  #destroyEditorIfNeeded(id: string) {
+    const editors = this.#getEditors();
+    for (const editor of editors) {
+      if (editor.id !== id) {
+        continue;
+      }
+
+      editor.destroy();
+    }
+  }
+
+  checkValidity(): boolean {
+    if (!this.#formRef.value) {
+      return true;
+    }
+
+    const editors = [...this.#getEditors()];
+    const codeEditorValidity =
+      editors.length > 0
+        ? editors.every((editor) => editor.checkValidity())
+        : true;
+
+    return this.#formRef.value.checkValidity() && codeEditorValidity;
   }
 
   #updateSchemaValue() {
@@ -554,14 +609,15 @@ export class StreamlinedSchemaEditor extends LitElement {
                   } else {
                     hint = html`Enter a valid schema here`;
 
-                    defaultValueInput = html`<textarea
+                    defaultValueInput = html`<bb-code-editor
                       id="${id}-value"
                       name="${id}-value"
                       class="schema-editor"
                       placeholder="Enter a valid schema for this item"
                       .value=${JSON.stringify(property, null, 2) ?? null}
-                      @input=${(evt: Event) => {
-                        if (!(evt.target instanceof HTMLTextAreaElement)) {
+                      .language=${"json"}
+                      @bbcodechange=${(evt: Event) => {
+                        if (!(evt.target instanceof CodeEditor)) {
                           return;
                         }
                         // We only want to attempt to parse the value when the
@@ -570,12 +626,12 @@ export class StreamlinedSchemaEditor extends LitElement {
                         evt.target.setCustomValidity("");
                       }}
                       @blur=${(evt: Event) => {
-                        if (!(evt.target instanceof HTMLTextAreaElement)) {
+                        if (!(evt.target instanceof CodeEditor)) {
                           return;
                         }
 
                         try {
-                          JSON.parse(evt.target.value);
+                          JSON.parse(evt.target.value ?? "null");
                           if (!this.#formRef.value) {
                             return;
                           }
@@ -591,7 +647,7 @@ export class StreamlinedSchemaEditor extends LitElement {
                           evt.target.reportValidity();
                         }
                       }}
-                    ></textarea>`;
+                    ></bb-code-editor>`;
                   }
 
                   return html`<div class="delete-property">

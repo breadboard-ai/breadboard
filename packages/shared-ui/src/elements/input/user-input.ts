@@ -27,7 +27,12 @@ import {
 } from "../../utils/index.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { CodeEditor, LLMInput, LLMInputArray } from "../elements";
+import {
+  CodeEditor,
+  LLMInput,
+  LLMInputArray,
+  StreamlinedSchemaEditor,
+} from "../elements";
 import {
   GraphDescriptor,
   GraphProvider,
@@ -217,6 +222,12 @@ export class UserInput extends LitElement {
     )) {
       editor.destroy();
     }
+
+    for (const editor of this.#formRef.value.querySelectorAll<StreamlinedSchemaEditor>(
+      "bb-streamlined-schema-editor"
+    )) {
+      editor.destroyEditorsIfNeeded();
+    }
   }
 
   #onFormSubmit(evt: SubmitEvent) {
@@ -233,6 +244,14 @@ export class UserInput extends LitElement {
         this.#formRef.value.reportValidity();
       }
       return null;
+    }
+
+    for (const editor of this.#formRef.value.querySelectorAll<StreamlinedSchemaEditor>(
+      "bb-streamlined-schema-editor"
+    )) {
+      if (!editor.checkValidity()) {
+        return null;
+      }
     }
 
     const outputs: UserOutputValues = this.inputs
