@@ -110,7 +110,7 @@ export class BoardActivityOverlay extends LitElement {
 
     #wrapper {
       min-width: 300px;
-      width: var(--width, 450px);
+      width: var(--width, 500px);
       display: flex;
       flex-direction: column;
       resize: both;

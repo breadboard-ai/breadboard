@@ -495,6 +495,14 @@ export class UserInput extends LitElement {
 
               case "object": {
                 if (isPortSpecBehavior(input.schema)) {
+                  if (typeof input.value === "string") {
+                    try {
+                      input.value = JSON.parse(input.value);
+                    } catch (err) {
+                      console.warn(`Unable to convert value`);
+                    }
+                  }
+
                   inputField = html`<bb-streamlined-schema-editor
                     id=${id}
                     name=${id}

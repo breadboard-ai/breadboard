@@ -30,9 +30,7 @@ import { styleMap } from "lit/directives/style-map.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 
-const OVERFLOW_MENU_HEIGHT = 224;
-const OVERFLOW_MENU_WIDTH = 220;
-const OVERFLOW_MENU_PADDING = 20;
+const OVERFLOW_MENU_WIDTH = 180;
 
 type MultiModalInput = AudioInput | DrawableInput | WebcamInput;
 
@@ -980,13 +978,8 @@ export class LLMInput extends LitElement {
 
     const styles: Record<string, string> = {};
     if (this.showInlineControls) {
-      let top = this.showInlineControls.y;
-      if (top + OVERFLOW_MENU_HEIGHT > window.innerHeight) {
-        top = window.innerHeight - OVERFLOW_MENU_HEIGHT - OVERFLOW_MENU_PADDING;
-      }
-
       styles.left = `${this.showInlineControls.x - OVERFLOW_MENU_WIDTH}px`;
-      styles.top = `${top}px`;
+      styles.top = `${this.showInlineControls.y}px`;
     }
 
     return html` <header
@@ -1006,14 +999,25 @@ export class LLMInput extends LitElement {
                   return;
                 }
 
-                if (evt.clientX === 0 || evt.clientY === 0) {
-                  const bounds = (
-                    evt.target as HTMLElement
-                  ).getBoundingClientRect();
-                  this.showInlineControls = { x: bounds.left, y: bounds.top };
-                } else {
-                  this.showInlineControls = { x: evt.clientX, y: evt.clientY };
+                const bounds = (
+                  evt.target as HTMLElement
+                ).getBoundingClientRect();
+
+                const styles = window.getComputedStyle(this);
+                let left = Number.parseInt(styles.getPropertyValue("--left"));
+                let top = Number.parseInt(styles.getPropertyValue("--top"));
+                if (Number.isNaN(left)) {
+                  left = 0;
                 }
+
+                if (Number.isNaN(top)) {
+                  top = 0;
+                }
+
+                this.showInlineControls = {
+                  x: bounds.left - left,
+                  y: bounds.top - top,
+                };
               }}
             >
               Toggle
