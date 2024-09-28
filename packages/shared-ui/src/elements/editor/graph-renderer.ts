@@ -23,6 +23,7 @@ import {
   GraphNodePortValueEditEvent,
   GraphEdgeValueSelectedEvent,
   GraphNodeActivitySelectedEvent,
+  GraphInteractionEvent,
 } from "../../events/events.js";
 import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
@@ -167,6 +168,7 @@ export class GraphRenderer extends LitElement {
   #onWheelBound = this.#onWheel.bind(this);
 
   ready = this.#loadTexturesAndInitializeRenderer();
+  zoomToHighlightedNode = false;
 
   static styles = css`
     * {
@@ -437,7 +439,7 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.addListener(
       "pointerdown",
       (evt: PIXI.FederatedPointerEvent) => {
-        if (!evt.isPrimary || this.readOnly) {
+        if (!evt.isPrimary) {
           return;
         }
 
@@ -462,7 +464,7 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.addListener(
       "pointermove",
       (evt: PIXI.FederatedPointerEvent) => {
-        if (!evt.isPrimary || this.readOnly) {
+        if (!evt.isPrimary) {
           return;
         }
 
@@ -493,14 +495,10 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.addListener("pointerup", onPointerUp);
     this.#app.stage.addListener("pointerupoutside", onPointerUp);
 
-    if (this.readOnly) {
-      return;
-    }
-
     const onWheel = (evt: PIXI.FederatedWheelEvent) => {
-      if (this.readOnly) {
-        this.#app.stage.off("wheel", onWheel);
-      }
+      // The user has interacted – stop the auto-zoom/pan.
+      this.zoomToHighlightedNode = false;
+      this.dispatchEvent(new GraphInteractionEvent());
 
       if (evt.metaKey || evt.ctrlKey) {
         let delta =
@@ -641,6 +639,12 @@ export class GraphRenderer extends LitElement {
       graph.edgeValues = edgeValues;
       graph.nodeValues = nodeValues;
     }
+
+    if (!this.zoomToHighlightedNode || !highlightedNode) {
+      return;
+    }
+
+    this.zoomToNode(highlightedNode.descriptor.id);
   }
 
   createGraph(opts: GraphOpts) {
@@ -675,6 +679,9 @@ export class GraphRenderer extends LitElement {
     if (!(graph instanceof Graph)) {
       return false;
     }
+
+    graph.readOnly = this.readOnly;
+    graph.highlightInvalidWires = this.highlightInvalidWires;
 
     if (opts.showNodeTypeDescriptions !== undefined) {
       graph.showNodeTypeDescriptions = opts.showNodeTypeDescriptions;
@@ -715,9 +722,6 @@ export class GraphRenderer extends LitElement {
     if (opts.visible !== undefined) {
       graph.visible = opts.visible;
     }
-
-    graph.readOnly = this.readOnly;
-    graph.highlightInvalidWires = this.highlightInvalidWires;
 
     return true;
   }
@@ -1081,7 +1085,61 @@ export class GraphRenderer extends LitElement {
     }
   }
 
-  zoomToFit() {
+  zoomToNode(id: string) {
+    this.zoomToFit(false);
+
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph) || !graph.visible) {
+        continue;
+      }
+
+      const graphNode = graph.getChildByLabel(id);
+      if (!graphNode) {
+        continue;
+      }
+
+      const graphBounds = graph.getBounds();
+      const graphNodeBounds = graphNode.getBounds();
+      const rendererBounds = this.getBoundingClientRect();
+
+      const xShift =
+        (0.5 -
+          (graphNodeBounds.x - graphBounds.x + graphNodeBounds.width * 0.5) /
+            graphBounds.width) *
+        graphBounds.width;
+      this.#container.x += xShift;
+
+      const yShift =
+        (0.5 -
+          (graphNodeBounds.y - graphBounds.y + graphNodeBounds.height * 0.5) /
+            graphBounds.height) *
+        graphBounds.height;
+      this.#container.y += yShift;
+
+      let delta = Math.min(
+        (rendererBounds.width - 2 * this.#padding) / graphNodeBounds.width,
+        (rendererBounds.height - 2 * this.#padding) / graphNodeBounds.height
+      );
+
+      const zoomNodeMaxScale = this.maxScale * 0.5;
+      if (delta < this.minScale) {
+        delta = this.minScale;
+      } else if (delta > zoomNodeMaxScale) {
+        delta = zoomNodeMaxScale;
+      }
+
+      const pivot = {
+        x: rendererBounds.width / 2,
+        y: rendererBounds.height / 2,
+      };
+
+      const matrix = this.#scaleContainerAroundPoint(delta, pivot);
+      this.#storeContainerTransform(graph, matrix);
+      return;
+    }
+  }
+
+  zoomToFit(emitGraphNodeVisualInformation = true) {
     this.#container.scale.set(1, 1);
 
     // Find the first graph in the container and size to it.
@@ -1117,8 +1175,12 @@ export class GraphRenderer extends LitElement {
         x: rendererBounds.width / 2,
         y: rendererBounds.height / 2,
       };
+
       const matrix = this.#scaleContainerAroundPoint(delta, pivot);
-      this.#emitGraphNodeVisualInformation(graph);
+      if (emitGraphNodeVisualInformation) {
+        this.#emitGraphNodeVisualInformation(graph);
+      }
+
       this.#storeContainerTransform(graph, matrix);
       return;
     }
@@ -1173,7 +1235,7 @@ export class GraphRenderer extends LitElement {
       return;
     }
 
-    if (evt.code === "Space" && !this.readOnly) {
+    if (evt.code === "Space") {
       this.#mode = MODE.MOVE;
       return;
     }
@@ -1215,17 +1277,14 @@ export class GraphRenderer extends LitElement {
   }
 
   #onKeyUp(evt: KeyboardEvent) {
-    if (evt.code === "Space" && !this.readOnly) {
-      this.#mode = MODE.SELECT;
+    if (evt.code !== "Space") {
       return;
     }
+
+    this.#mode = MODE.SELECT;
   }
 
   #onWheel(evt: WheelEvent) {
-    if (this.readOnly) {
-      return;
-    }
-
     evt.preventDefault();
   }
 

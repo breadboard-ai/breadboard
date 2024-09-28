@@ -93,6 +93,9 @@ export class UI extends LitElement {
   boardId = -1;
 
   @property()
+  readOnly = false;
+
+  @property()
   showWelcomePanel = false;
 
   @property()
@@ -145,7 +148,11 @@ export class UI extends LitElement {
 
   protected willUpdate(
     changedProperties:
-      | PropertyValueMap<{ boardId: number; subGraphId: string | null }>
+      | PropertyValueMap<{
+          boardId: number;
+          subGraphId: string | null;
+          readOnly: boolean | null;
+        }>
       | Map<PropertyKey, unknown>
   ): void {
     if (changedProperties.has("boardId")) {
@@ -153,11 +160,14 @@ export class UI extends LitElement {
         return;
       }
 
-      this.selectedNodeIds.length = 0;
+      this.selectedNodeIds = [];
     }
 
-    if (changedProperties.has("subGraphId")) {
-      this.selectedNodeIds.length = 0;
+    if (
+      changedProperties.has("subGraphId") ||
+      changedProperties.has("readOnly")
+    ) {
+      this.selectedNodeIds = [];
     }
   }
 
@@ -291,6 +301,8 @@ export class UI extends LitElement {
           .showPortTooltips=${showPortTooltips}
           .highlightInvalidWires=${highlightInvalidWires}
           .showExperimentalComponents=${showExperimentalComponents}
+          .readOnly=${this.readOnly}
+          .showReadOnlyOverlay=${true}
           @bbmultiedit=${(evt: MultiEditEvent) => {
             const deletedNodes: RemoveNodeSpec[] = evt.edits.filter(
               (edit) => edit.type === "removenode"
@@ -383,6 +395,7 @@ export class UI extends LitElement {
           .selectedNodeIds=${this.selectedNodeIds}
           .subGraphId=${this.subGraphId}
           .graph=${graph}
+          .readOnly=${this.readOnly}
         ></bb-node-meta-details>`;
       }
     );
@@ -436,6 +449,7 @@ export class UI extends LitElement {
       ],
       () => {
         return html`<bb-board-details
+          .readOnly=${this.readOnly}
           .boardTitle=${boardTitle}
           .boardVersion=${boardVersion}
           .boardDescription=${boardDescription}
@@ -573,7 +587,7 @@ export class UI extends LitElement {
           <button
             id="run"
             title="Run this board"
-            ?disabled=${this.failedToLoad || !this.graph}
+            ?disabled=${this.failedToLoad || !this.graph || this.readOnly}
             @click=${() => {
               this.selectedNodeIds.length = 0;
               if (this.status === STATUS.STOPPED) {

@@ -37,7 +37,7 @@ const manifest: KitManifest = {
     human: serialize(human),
     repeater: serialize(repeater),
     structuredWorker: serialize(structuredWorker),
-    specialist,
+    specialist: serialize(specialist),
     specialist2: specialist2 as GraphDescriptor,
     worker: serialize(worker),
     looper: serialize(looper),

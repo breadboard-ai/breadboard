@@ -3,69 +3,69 @@
   "description": "A board to demonstrate the business review replier.",
   "edges": [
     {
-      "from": "fn-28",
-      "to": "fn-30",
+      "from": "fn-25",
+      "to": "fn-27",
       "out": "item",
       "in": "b"
     },
     {
-      "from": "fn-30",
-      "to": "invoke-32",
+      "from": "fn-27",
+      "to": "invoke-29",
       "out": "item",
       "in": "review"
     },
     {
-      "from": "fn-30",
-      "to": "output-31",
+      "from": "fn-27",
+      "to": "output-28",
       "out": "item",
       "in": "review"
     },
     {
-      "from": "input-27",
-      "to": "invoke-32",
+      "from": "input-24",
+      "to": "invoke-29",
       "out": "task",
       "in": "task"
     },
     {
-      "from": "input-27",
-      "to": "invoke-32",
+      "from": "input-24",
+      "to": "invoke-29",
       "out": "tone",
       "in": "tone"
     },
     {
-      "from": "input-27",
-      "to": "invoke-32",
+      "from": "input-24",
+      "to": "invoke-29",
       "out": "voice",
       "in": "voice"
     },
     {
-      "from": "input-27",
-      "to": "passthrough-29",
+      "from": "input-24",
+      "to": "passthrough-26",
       "out": "",
       "in": ""
     },
     {
-      "from": "input-27",
-      "to": "passthrough-29",
+      "from": "input-24",
+      "to": "passthrough-26",
       "out": "review",
       "in": "a"
     },
     {
-      "from": "invoke-32",
-      "to": "output-31",
+      "from": "invoke-29",
+      "to": "output-28",
       "out": "reply",
       "in": "reply"
     },
     {
-      "from": "passthrough-29",
-      "to": "fn-30",
+      "from": "passthrough-26",
+      "to": "fn-27",
       "out": "*",
       "in": ""
     }
   ],
   "nodes": [
     {
-      "id": "input-27",
+      "id": "input-24",
       "type": "input",
       "configuration": {
         "schema": {
@@ -111,7 +111,7 @@
       }
     },
     {
-      "id": "output-31",
+      "id": "output-28",
       "type": "output",
       "configuration": {
         "schema": {
@@ -133,7 +133,7 @@
       }
     },
     {
-      "id": "fn-28",
+      "id": "fn-25",
       "type": "runJavascript",
       "configuration": {
         "array": [
@@ -148,8 +148,8 @@
           "I had a mixed experience at the salon. The haircut was fine, but the stylist seemed rushed and didn't really listen to what I wanted.\"",
           "Shopping at the supermarket is convenient, but the aisles are often cluttered and it’s hard to find certain items. Prices are reasonable though.\""
         ],
-        "code": "const fn_28 = inputs=>{console.log({inputs});const randomIndex=Math.floor(Math.random()*inputs.array.length);return{item:inputs.array[randomIndex]}};",
-        "name": "fn_28",
+        "code": "const fn_25 = inputs=>{console.log({inputs});const randomIndex=Math.floor(Math.random()*inputs.array.length);return{item:inputs.array[randomIndex]}};",
+        "name": "fn_25",
         "raw": true
       },
       "metadata": {
@@ -157,11 +157,11 @@
       }
     },
     {
-      "id": "fn-30",
+      "id": "fn-27",
       "type": "runJavascript",
       "configuration": {
-        "code": "const fn_30 = inputs=>{if(\"a\"in inputs){return{item:inputs[\"a\"]}}if(\"b\"in inputs){return{item:inputs[\"b\"]}}throw new Error(\"No value\")};",
-        "name": "fn_30",
+        "code": "const fn_27 = inputs=>{if(\"a\"in inputs){return{item:inputs[\"a\"]}}if(\"b\"in inputs){return{item:inputs[\"b\"]}}throw new Error(\"No value\")};",
+        "name": "fn_27",
         "raw": true
       },
       "metadata": {
@@ -169,7 +169,7 @@
       }
     },
     {
-      "id": "invoke-32",
+      "id": "invoke-29",
       "type": "invoke",
       "configuration": {
         "$board": {
@@ -177,57 +177,57 @@
           "description": "A board that generates a reply to a business review.",
           "edges": [
             {
-              "from": "input-21",
-              "to": "fn-22",
+              "from": "input-18",
+              "to": "fn-19",
               "out": "tone",
               "in": "a"
             },
             {
-              "from": "input-21",
-              "to": "fn-22",
+              "from": "input-18",
+              "to": "fn-19",
               "out": "voice",
               "in": "b"
             },
             {
-              "from": "input-21",
-              "to": "fn-24",
+              "from": "input-18",
+              "to": "fn-21",
               "out": "review",
               "in": "text"
             },
             {
-              "from": "input-21",
-              "to": "specialist-25",
+              "from": "input-18",
+              "to": "specialist-22",
               "out": "task",
               "in": "task"
             },
             {
-              "from": "fn-22",
-              "to": "fn-23",
+              "from": "fn-19",
+              "to": "fn-20",
               "out": "result",
               "in": "text"
             },
             {
-              "from": "fn-24",
-              "to": "specialist-25",
+              "from": "fn-21",
+              "to": "specialist-22",
               "out": "context",
               "in": "in"
             },
             {
-              "from": "specialist-25",
-              "to": "output-26",
+              "from": "specialist-22",
+              "to": "output-23",
               "out": "out",
               "in": "reply"
             },
             {
-              "from": "fn-23",
-              "to": "specialist-25",
+              "from": "fn-20",
+              "to": "specialist-22",
               "out": "context",
               "in": "persona"
             }
           ],
           "nodes": [
             {
-              "id": "input-21",
+              "id": "input-18",
               "type": "input",
               "configuration": {
                 "schema": {
@@ -273,12 +273,12 @@
               }
             },
             {
-              "id": "fn-22",
+              "id": "fn-19",
               "type": "runJavascript",
               "configuration": {
                 "delimiter": "\n\n",
-                "code": "const fn_22 = ({a,b,delimiter=\" \"})=>{return{result:a+delimiter+b}};",
-                "name": "fn_22",
+                "code": "const fn_19 = ({a,b,delimiter=\" \"})=>{return{result:a+delimiter+b}};",
+                "name": "fn_19",
                 "raw": true
               },
               "metadata": {
@@ -286,12 +286,12 @@
               }
             },
             {
-              "id": "fn-24",
+              "id": "fn-21",
               "type": "runJavascript",
               "configuration": {
                 "role": "user",
-                "code": "const fn_24 = inputs=>{const parts=[{text:inputs.text}];return{context:inputs.role?{role:inputs.role,parts}:{parts}}};",
-                "name": "fn_24",
+                "code": "const fn_21 = inputs=>{const parts=[{text:inputs.text}];return{context:inputs.role?{role:inputs.role,parts}:{parts}}};",
+                "name": "fn_21",
                 "raw": true
               },
               "metadata": {
@@ -299,7 +299,7 @@
               }
             },
             {
-              "id": "specialist-25",
+              "id": "specialist-22",
               "type": "specialist",
               "configuration": {
                 "model": "gemini-1.5-flash-latest"
@@ -309,11 +309,11 @@
               }
             },
             {
-              "id": "fn-23",
+              "id": "fn-20",
               "type": "runJavascript",
               "configuration": {
-                "code": "const fn_23 = inputs=>{const parts=[{text:inputs.text}];return{context:inputs.role?{role:inputs.role,parts}:{parts}}};",
-                "name": "fn_23",
+                "code": "const fn_20 = inputs=>{const parts=[{text:inputs.text}];return{context:inputs.role?{role:inputs.role,parts}:{parts}}};",
+                "name": "fn_20",
                 "raw": true
               },
               "metadata": {
@@ -321,7 +321,7 @@
               }
             },
             {
-              "id": "output-26",
+              "id": "output-23",
               "type": "output",
               "configuration": {
                 "schema": {
@@ -351,7 +351,7 @@
       }
     },
     {
-      "id": "passthrough-29",
+      "id": "passthrough-26",
       "type": "passthrough",
       "configuration": {},
       "metadata": {

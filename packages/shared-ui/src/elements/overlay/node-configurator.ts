@@ -19,6 +19,7 @@ import {
   OverlayDismissedEvent,
 } from "../../events/events.js";
 import { EditorMode, filterConfigByMode } from "../../utils/mode.js";
+import { classMap } from "lit/directives/class-map.js";
 
 const OVERLAY_CLEARANCE = 60;
 
@@ -84,6 +85,10 @@ export class NodeConfigurationOverlay extends LitElement {
       background: transparent var(--bb-icon-wrench) center center / 20px 20px
         no-repeat;
       margin-right: var(--bb-grid-size-2);
+    }
+
+    h1 span {
+      flex: 1;
     }
 
     #content {
@@ -161,6 +166,23 @@ export class NodeConfigurationOverlay extends LitElement {
     #update:focus {
       background: var(--bb-ui-600);
       transition-duration: 0.1s;
+    }
+
+    #minmax {
+      width: 20px;
+      height: 20px;
+      border: none;
+      padding: 0;
+      margin: 0;
+      font-size: 0;
+      cursor: pointer;
+      background: transparent var(--bb-icon-maximize) center center / 20px 20px
+        no-repeat;
+    }
+
+    #minmax.maximized {
+      background: transparent var(--bb-icon-minimize) center center / 20px 20px
+        no-repeat;
     }
   `;
 
@@ -252,6 +274,20 @@ export class NodeConfigurationOverlay extends LitElement {
     }
   }
 
+  #editorMode(): EditorMode {
+    const metadata = this.value?.metadata;
+    if (!metadata || !metadata.visual) {
+      return EditorMode.MINIMAL;
+    }
+    const visual = metadata.visual as {
+      collapsed: "advanced";
+    };
+    if (visual.collapsed === "advanced") {
+      return EditorMode.ADVANCED;
+    }
+    return EditorMode.MINIMAL;
+  }
+
   processData() {
     this.#pendingSave = false;
 
@@ -266,7 +302,7 @@ export class NodeConfigurationOverlay extends LitElement {
 
     // Ensure that all expected values are set. If they are not set in the
     // outputs we assume that the user wants to remove the value.
-    const { inputs } = filterConfigByMode(this.value.ports, EditorMode.MINIMAL);
+    const { inputs } = filterConfigByMode(this.value.ports, this.#editorMode());
     for (const expectedInput of inputs.ports) {
       if (!outputs[expectedInput.name]) {
         outputs[expectedInput.name] = undefined;
@@ -277,12 +313,21 @@ export class NodeConfigurationOverlay extends LitElement {
     this.dispatchEvent(new NodePartialUpdateEvent(id, subGraphId, outputs));
   }
 
+  #toggleMaximize() {
+    this.maximized = !this.maximized;
+
+    globalThis.sessionStorage.setItem(
+      "bb-node-configurator-maximized",
+      this.maximized.toString()
+    );
+  }
+
   render() {
     if (!this.value || !this.value.ports) {
       return nothing;
     }
 
-    const { inputs } = filterConfigByMode(this.value.ports, EditorMode.MINIMAL);
+    const { inputs } = filterConfigByMode(this.value.ports, this.#editorMode());
     const ports = [...inputs.ports].sort((portA, portB) => {
       const isSchema =
         portA.name === "schema" ||
@@ -365,15 +410,20 @@ export class NodeConfigurationOverlay extends LitElement {
             dragging = false;
           }}
           @dblclick=${() => {
-            this.maximized = !this.maximized;
-
-            globalThis.sessionStorage.setItem(
-              "bb-node-configurator-maximized",
-              this.maximized.toString()
-            );
+            this.#toggleMaximize();
           }}
         >
-          Configure ${this.value.title}
+          <span>Configure ${this.value.title}</span>
+          <button
+            id="minmax"
+            title=${this.maximized ? "Minimize overlay" : "Maximize overlay"}
+            class=${classMap({ maximized: this.maximized })}
+            @click=${() => {
+              this.#toggleMaximize();
+            }}
+          >
+            ${this.maximized ? "Minimize" : "Maximize"}
+          </button>
         </h1>
         <div id="content">
           <div id="container">

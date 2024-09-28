@@ -18,7 +18,7 @@ import {
   NodeValue,
   SubGraphs,
 } from "@google-labs/breadboard";
-import { LitElement, css, html, nothing } from "lit";
+import { LitElement, PropertyValues, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -32,6 +32,7 @@ import {
   GraphEdgeValueSelectedEvent,
   GraphEntityRemoveEvent,
   GraphInitialDrawEvent,
+  GraphInteractionEvent,
   GraphNodeActivitySelectedEvent,
   GraphNodeDeleteEvent,
   GraphNodeEdgeChangeEvent,
@@ -43,6 +44,7 @@ import {
   NodeConfigurationUpdateRequestEvent,
   NodeCreateEvent,
   NodeDeleteEvent,
+  NodeTypeRetrievalErrorEvent,
   SubGraphChosenEvent,
   SubGraphCreateEvent,
   SubGraphDeleteEvent,
@@ -52,11 +54,13 @@ import { GraphRenderer } from "./graph-renderer.js";
 import type { NodeSelector } from "./node-selector.js";
 import { edgeToString } from "./utils.js";
 
+const ZOOM_KEY = "bb-editor-zoom-to-highlighted-node-during-runs";
 const DATA_TYPE = "text/plain";
 const PASTE_OFFSET = 50;
 
 import { TopGraphRunResult } from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
+import { classMap } from "lit/directives/class-map.js";
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
   if (type !== "input" && type !== "output") {
@@ -137,10 +141,16 @@ export class Editor extends LitElement {
   readOnly = false;
 
   @property()
+  showReadOnlyOverlay = false;
+
+  @property()
   highlightInvalidWires = false;
 
   @property()
   showExperimentalComponents = false;
+
+  @property()
+  zoomToHighlightedNodeDuringRuns = false;
 
   @property()
   set showPortTooltips(value: boolean) {
@@ -157,6 +167,7 @@ export class Editor extends LitElement {
   #graphVersion = 0;
   #lastBoardId: number = -1;
   #lastSubGraphId: string | null = null;
+
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #onDropBound = this.#onDrop.bind(this);
   #onDragOverBound = this.#onDragOver.bind(this);
@@ -173,6 +184,8 @@ export class Editor extends LitElement {
   #onGraphEdgeValueSelectedBound = this.#onGraphEdgeValueSelected.bind(this);
   #onGraphNodeActivitySelectedBound =
     this.#onGraphNodeActivitySelected.bind(this);
+  #onGraphInteractionBound = this.#onGraphInteraction.bind(this);
+
   #top = 0;
   #left = 0;
   #addButtonRef: Ref<HTMLInputElement> = createRef();
@@ -310,7 +323,8 @@ export class Editor extends LitElement {
       top: calc(var(--bb-grid-size) * 3);
       background: #fff;
       border-radius: 40px;
-      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 3);
+      padding: var(--bb-grid-size-2) var(--bb-grid-size) var(--bb-grid-size-2)
+        var(--bb-grid-size-3);
       border: 1px solid var(--bb-neutral-300);
       display: flex;
       align-items: center;
@@ -396,6 +410,75 @@ export class Editor extends LitElement {
       opacity: 0.3;
       cursor: auto;
     }
+
+    #readonly-overlay {
+      display: flex;
+      align-items: center;
+      height: var(--bb-grid-size-9);
+      position: absolute;
+      top: var(--bb-grid-size-3);
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--bb-boards-900);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      background: var(--bb-boards-300);
+      border-radius: var(--bb-grid-size-10);
+      padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-3);
+    }
+
+    #readonly-overlay::before {
+      content: "";
+      width: 20px;
+      height: 20px;
+      background: var(--bb-icon-saved-readonly) center center / 20px 20px
+        no-repeat;
+      margin-right: var(--bb-grid-size);
+      mix-blend-mode: difference;
+    }
+
+    #active-component {
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      display: flex;
+      align-items: center;
+      border: none;
+      padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size);
+      display: flex;
+      align-items: center;
+      background: var(--bb-ui-50);
+      border-radius: var(--bb-grid-size-10);
+      height: 24px;
+      cursor: pointer;
+    }
+
+    #controls #active-component {
+      margin-left: 0;
+    }
+
+    #active-component:hover,
+    #active-component:focus {
+      background: var(--bb-ui-100);
+    }
+
+    #active-component::before {
+      content: "";
+      width: 20px;
+      height: 20px;
+      padding-right: var(--bb-grid-size);
+      background: var(--bb-icon-directions) left center / 20px 20px no-repeat;
+    }
+
+    #active-component.active {
+      opacity: 1;
+      background: var(--bb-ui-600);
+      color: var(--bb-neutral-0);
+    }
+
+    #active-component.active::before {
+      background: var(--bb-icon-directions-inverted) left center / 20px 20px
+        no-repeat;
+    }
   `;
 
   async #processGraph(): Promise<GraphRenderer> {
@@ -434,9 +517,19 @@ export class Editor extends LitElement {
     const ports = new Map<string, InspectableNodePorts>();
     const typeMetadata = new Map<string, NodeHandlerMetadata>();
     const graphVersion = this.#graphVersion;
+
     for (const node of selectedGraph.nodes()) {
       ports.set(node.descriptor.id, await node.ports());
-      typeMetadata.set(node.descriptor.type, await node.type().metadata());
+      try {
+        typeMetadata.set(node.descriptor.type, await node.type().metadata());
+      } catch (err) {
+        // In the event of failing to get the type info, suggest removing the
+        // node from the graph.
+        this.dispatchEvent(
+          new NodeTypeRetrievalErrorEvent(node.descriptor.id, this.subGraphId)
+        );
+      }
+
       if (this.#graphVersion !== graphVersion) {
         // Another update has come in, bail out.
         return this.#graphRenderer;
@@ -519,6 +612,13 @@ export class Editor extends LitElement {
     return true;
   }
 
+  constructor() {
+    super();
+
+    this.zoomToHighlightedNodeDuringRuns =
+      globalThis.localStorage.getItem(ZOOM_KEY) === "true" ?? true;
+  }
+
   connectedCallback(): void {
     super.connectedCallback();
 
@@ -565,6 +665,11 @@ export class Editor extends LitElement {
     this.#graphRenderer.addEventListener(
       GraphNodeActivitySelectedEvent.eventName,
       this.#onGraphNodeActivitySelectedBound
+    );
+
+    this.#graphRenderer.addEventListener(
+      GraphInteractionEvent.eventName,
+      this.#onGraphInteractionBound
     );
 
     window.addEventListener("resize", this.#onResizeBound);
@@ -623,12 +728,35 @@ export class Editor extends LitElement {
       this.#onGraphNodeActivitySelectedBound
     );
 
+    this.#graphRenderer.removeEventListener(
+      GraphInteractionEvent.eventName,
+      this.#onGraphInteractionBound
+    );
+
     window.removeEventListener("resize", this.#onResizeBound);
     this.removeEventListener("keydown", this.#onKeyDownBound);
     this.removeEventListener("pointermove", this.#onPointerMoveBound);
     this.removeEventListener("pointerdown", this.#onPointerDownBound);
     this.removeEventListener("dragover", this.#onDragOverBound);
     this.removeEventListener("drop", this.#onDropBound);
+  }
+
+  protected willUpdate(changedProperties: PropertyValues): void {
+    if (!changedProperties.has("run")) {
+      return;
+    }
+
+    this.#graphRenderer.zoomToHighlightedNode =
+      this.zoomToHighlightedNodeDuringRuns;
+  }
+
+  #onGraphInteraction() {
+    // Only switch off the flag if there is a run active.
+    if (!this.topGraphResult?.currentNode) {
+      return;
+    }
+
+    this.zoomToHighlightedNodeDuringRuns = false;
   }
 
   #onPointerMove(evt: PointerEvent) {
@@ -655,6 +783,10 @@ export class Editor extends LitElement {
   }
 
   async #onKeyDown(evt: KeyboardEvent) {
+    if (this.readOnly) {
+      return;
+    }
+
     const isMac = navigator.platform.indexOf("Mac") === 0;
     const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
@@ -751,7 +883,7 @@ export class Editor extends LitElement {
               edges: [],
               nodes: [
                 {
-                  id: this.#createRandomID("board"),
+                  id: this.#createRandomID(data),
                   type: data,
                 },
               ],
@@ -1085,6 +1217,10 @@ export class Editor extends LitElement {
       this.subGraphId
     );
 
+    if (this.readOnly) {
+      return;
+    }
+
     this.#ignoreNextUpdate = true;
     this.dispatchEvent(editsEvt);
   }
@@ -1250,7 +1386,6 @@ export class Editor extends LitElement {
     evt.preventDefault();
     const type = evt.dataTransfer?.getData(DATA_TYPE);
     if (!type || !this.#graphRenderer) {
-      console.warn("No data in dropped node");
       return;
     }
 
@@ -1294,7 +1429,20 @@ export class Editor extends LitElement {
     // Now that types could be URLs, we need to make them a bit
     // less verbose.
     if (type.includes(":") || type.includes("#")) {
-      // probably a URL, so let's just use a random id.
+      // probably a URL, so let's create a nice short name from the URL
+      try {
+        const url = new URL(type);
+        const name = url.pathname
+          .split("/")
+          .pop()
+          ?.replace(".bgl.json", "")
+          .slice(0, 15);
+        if (name) {
+          return `${name}-${nextNodeId[0]}`;
+        }
+      } catch (e) {
+        // Ignore.
+      }
       return `board-${nextNodeId[0]}`;
     }
     // TODO: Check for clashes
@@ -1348,92 +1496,126 @@ export class Editor extends LitElement {
     return html`${until(this.#processGraph())}
       ${
         this.showControls && this.graph !== null
-          ? html` <div id="controls">
-                <button
-                  title="Zoom to fit"
-                  id="zoom-to-fit"
-                  @click=${() => this.#graphRenderer.zoomToFit()}
-                >
-                  Zoom to fit
-                </button>
-                <button
-                  title="Reset Layout"
-                  id="reset-layout"
-                  @click=${() => {
-                    this.#graphRenderer.resetGraphLayout();
-                  }}
-                >
-                  Reset Layout
-                </button>
+          ? html` ${this.readOnly
+              ? nothing
+              : html`
+                  <div id="controls">
+                    <button
+                      title="Zoom to fit"
+                      id="zoom-to-fit"
+                      @click=${() => this.#graphRenderer.zoomToFit()}
+                    >
+                      Zoom to fit
+                    </button>
+                    <button
+                      title="Reset Layout"
+                      id="reset-layout"
+                      @click=${() => {
+                        this.#graphRenderer.resetGraphLayout();
+                      }}
+                    >
+                      Reset Layout
+                    </button>
 
-                ${showSubGraphSelector
-                  ? html`<div class="divider"></div>
-                      <select
-                        id="subgraph-selector"
-                        @input=${(evt: Event) => {
-                          if (!(evt.target instanceof HTMLSelectElement)) {
-                            return;
-                          }
+                    ${showSubGraphSelector
+                      ? html`<div class="divider"></div>
+                          <select
+                            id="subgraph-selector"
+                            @input=${(evt: Event) => {
+                              if (!(evt.target instanceof HTMLSelectElement)) {
+                                return;
+                              }
 
-                          this.dispatchEvent(
-                            new SubGraphChosenEvent(evt.target.value)
-                          );
-                        }}
-                      >
-                        <option
-                          ?selected=${this.subGraphId === null}
-                          value="${MAIN_BOARD_ID}"
-                        >
-                          Main board
-                        </option>
-                        ${map(
-                          Object.entries(subGraphs || []),
-                          ([subGraphId, subGraph]) => {
-                            return html`<option
-                              value="${subGraphId}"
-                              ?selected=${subGraphId === this.subGraphId}
+                              this.dispatchEvent(
+                                new SubGraphChosenEvent(evt.target.value)
+                              );
+                            }}
+                          >
+                            <option
+                              ?selected=${this.subGraphId === null}
+                              value="${MAIN_BOARD_ID}"
                             >
-                              ${subGraph.title || subGraphId}
-                            </option>`;
-                          }
-                        )}
-                      </select>`
-                  : nothing}
-                <button
-                  id="add-sub-board"
-                  title="Add new sub board"
-                  @click=${() => this.#proposeNewSubGraph()}
-                >
-                  Add sub board
-                </button>
-                <button
-                  id="delete-sub-board"
-                  title="Delete this sub board"
-                  ?disabled=${this.subGraphId === null}
-                  @click=${() => {
-                    if (!this.subGraphId) {
-                      return;
-                    }
+                              Main board
+                            </option>
+                            ${map(
+                              Object.entries(subGraphs || []),
+                              ([subGraphId, subGraph]) => {
+                                return html`<option
+                                  value="${subGraphId}"
+                                  ?selected=${subGraphId === this.subGraphId}
+                                >
+                                  ${subGraph.title || subGraphId}
+                                </option>`;
+                              }
+                            )}
+                          </select>`
+                      : nothing}
+                    <button
+                      id="add-sub-board"
+                      title="Add new sub board"
+                      @click=${() => this.#proposeNewSubGraph()}
+                    >
+                      Add sub board
+                    </button>
+                    <button
+                      id="delete-sub-board"
+                      title="Delete this sub board"
+                      ?disabled=${this.subGraphId === null}
+                      @click=${() => {
+                        if (!this.subGraphId) {
+                          return;
+                        }
 
-                    if (
-                      !confirm(
-                        "Are you sure you wish to delete this sub board?"
-                      )
-                    ) {
-                      return;
-                    }
+                        if (
+                          !confirm(
+                            "Are you sure you wish to delete this sub board?"
+                          )
+                        ) {
+                          return;
+                        }
 
-                    this.dispatchEvent(
-                      new SubGraphDeleteEvent(this.subGraphId)
-                    );
-                  }}
-                >
-                  Delete sub board
-                </button>
-              </div>
+                        this.dispatchEvent(
+                          new SubGraphDeleteEvent(this.subGraphId)
+                        );
+                      }}
+                    >
+                      Delete sub board
+                    </button>
+                    <div class="divider"></div>
+                    <button
+                      title="Zoom to highlighted component during runs"
+                      id="active-component"
+                      class=${classMap({
+                        active: this.zoomToHighlightedNodeDuringRuns,
+                      })}
+                      @click=${() => {
+                        const shouldZoom =
+                          !this.zoomToHighlightedNodeDuringRuns;
+                        this.zoomToHighlightedNodeDuringRuns = shouldZoom;
+                        this.#graphRenderer.zoomToHighlightedNode = shouldZoom;
+                        globalThis.localStorage.setItem(
+                          ZOOM_KEY,
+                          shouldZoom.toString()
+                        );
 
-              ${this.graph !== null
-                ? html` <div id="nodes">
+                        if (!shouldZoom) {
+                          return;
+                        }
+
+                        if (this.topGraphResult?.currentNode) {
+                          this.#graphRenderer.zoomToNode(
+                            this.topGraphResult.currentNode.descriptor.id
+                          );
+                        }
+                      }}
+                    >
+                      Follow run
+                    </button>
+                  </div>
+                `}
+            ${this.graph !== null
+              ? html`
+                  <div id="nodes">
                     <input
                       ${ref(this.#addButtonRef)}
                       name="add-node"
@@ -1556,8 +1738,13 @@ export class Editor extends LitElement {
                             Add Human
                           </button>`
                       : nothing}
-                  </div>`
-                : nothing}`
+                  </div>
+
+                  ${this.readOnly
+                    ? html`<section id="readonly-overlay">Read-only View</div>`
+                    : nothing}
+                `
+              : nothing}`
           : nothing
       }
       </div>`;

@@ -11,7 +11,7 @@ import {
   InspectableRunObserver,
   Kit,
 } from "@google-labs/breadboard";
-import { Tab, TabId } from "./types";
+import { Tab, TabId, TabType } from "./types";
 import {
   RuntimeBoardLoadErrorEvent,
   RuntimeErrorEvent,
@@ -90,11 +90,84 @@ export class Board extends EventTarget {
     return this.#tabs.get(this.#currentTabId) ?? null;
   }
 
-  async loadFromDescriptor(
+  createURLFromTabs() {
+    const params = new URLSearchParams();
+    let t = 0;
+    for (const tab of this.#tabs.values()) {
+      if (tab.type !== TabType.URL || !tab.graph.url) {
+        continue;
+      }
+
+      params.set(`tab${t++}`, tab.graph.url);
+    }
+
+    const url = new URL(window.location.href);
+    url.search = params.toString();
+    return url;
+  }
+
+  async createTabsFromURL(url: URL) {
+    const params = new URLSearchParams(url.search);
+
+    let t = 0;
+    const board = params.get("board");
+    if (board) {
+      params.set(`tab${t++}`, board);
+      params.delete("board");
+    }
+
+    const tabs = [...params].sort(([idA], [idB]) => {
+      if (idA > idB) return 1;
+      if (idA < idB) return -1;
+      return 0;
+    });
+
+    if (tabs.length > 0) {
+      for (const [, tab] of tabs) {
+        if (tab.startsWith("run://") || tab.startsWith("descriptor://")) {
+          continue;
+        }
+
+        await this.createTabFromURL(tab, url.href, true, false, false);
+      }
+    }
+
+    this.dispatchEvent(new RuntimeTabChangeEvent());
+  }
+
+  async #toDigest(descriptor: GraphDescriptor) {
+    const graph = structuredClone(descriptor);
+    delete graph.url;
+
+    const str = JSON.stringify(graph, null, 2);
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(str);
+
+    const digest = await globalThis.crypto.subtle.digest("SHA-256", bytes);
+    return [...new Uint8Array(digest)]
+      .map((v) => v.toString(16).padStart(2, "0"))
+      .join("");
+  }
+
+  async createTabFromRun(
     descriptor: GraphDescriptor,
     topGraphObserver?: BreadboardUI.Utils.TopGraphObserver,
-    runObserver?: InspectableRunObserver
+    runObserver?: InspectableRunObserver,
+    readOnly = true
   ) {
+    const descriptorUrl = await this.#toDigest(descriptor);
+    descriptor.url = `run://${descriptorUrl}`;
+
+    for (const [id, tab] of this.#tabs) {
+      if (tab.graph.url !== descriptor.url) {
+        continue;
+      }
+
+      this.#currentTabId = id;
+      this.dispatchEvent(new RuntimeTabChangeEvent());
+      return;
+    }
+
     const id = globalThis.crypto.randomUUID();
     this.#tabs.set(id, {
       id,
@@ -103,6 +176,8 @@ export class Board extends EventTarget {
       graph: descriptor,
       subGraphId: null,
       version: 1,
+      type: TabType.DESCRIPTOR,
+      readOnly,
     });
 
     this.#currentTabId = id;
@@ -111,10 +186,53 @@ export class Board extends EventTarget {
     );
   }
 
-  async loadFromURL(
+  async createTabFromDescriptor(
+    descriptor: GraphDescriptor,
+    createNewTab = false,
+    dispatchTabChangeEvent = true
+  ) {
+    const descriptorUrl = await this.#toDigest(descriptor);
+    descriptor.url = `descriptor://${descriptorUrl}`;
+
+    // Re-use an existing tab if possible.
+    if (!createNewTab) {
+      for (const [id, tab] of this.#tabs) {
+        if (tab.graph.url !== descriptor.url) {
+          continue;
+        }
+
+        this.#currentTabId = id;
+        this.dispatchEvent(new RuntimeTabChangeEvent());
+        return;
+      }
+    }
+
+    const id = globalThis.crypto.randomUUID();
+    this.#tabs.set(id, {
+      id,
+      kits: this.kits,
+      name: descriptor.title ?? "Untitled board",
+      graph: descriptor,
+      subGraphId: null,
+      version: 1,
+      type: TabType.DESCRIPTOR,
+      readOnly: false,
+    });
+
+    this.#currentTabId = id;
+    if (!dispatchTabChangeEvent) {
+      return;
+    }
+
+    this.dispatchEvent(new RuntimeTabChangeEvent());
+  }
+
+  async createTabFromURL(
     boardUrl: string,
     currentUrl: string | null = null,
-    createNewTab = false
+    createNewTab = false,
+    readOnly = false,
+    dispatchTabChangeEvent = true
   ) {
     let url = this.#makeRelativeToCurrentBoard(boardUrl, currentUrl);
 
@@ -172,10 +290,19 @@ export class Board extends EventTarget {
         name: graph.title ?? "Untitled board",
         graph,
         subGraphId: null,
+        type: TabType.URL,
         version: 1,
+        readOnly,
       });
 
       this.#currentTabId = id;
+
+      // When we create multiple tabs at once we dispatch the event elsewhere,
+      // which means we don't want to do it here.
+      if (!dispatchTabChangeEvent) {
+        return;
+      }
+
       this.dispatchEvent(new RuntimeTabChangeEvent());
     } catch (err) {
       console.warn(err);

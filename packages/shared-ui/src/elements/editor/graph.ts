@@ -205,7 +205,7 @@ export class Graph extends PIXI.Container {
     });
 
     this.addListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
-      if (!evt.isPrimary || this.readOnly) {
+      if (!evt.isPrimary) {
         return;
       }
 
@@ -1386,11 +1386,11 @@ export class Graph extends PIXI.Container {
       }
 
       graphNode.label = id;
+      graphNode.readOnly = this.readOnly;
       graphNode.inPorts = portInfo.inputs.ports;
       graphNode.outPorts = portInfo.outputs.ports;
       graphNode.fixedInputs = portInfo.inputs.fixed;
       graphNode.fixedOutputs = portInfo.outputs.fixed;
-      graphNode.readOnly = this.readOnly;
       graphNode.activity = this.#nodeValues?.get(id) ?? null;
 
       graphNode.forceUpdateDimensions();

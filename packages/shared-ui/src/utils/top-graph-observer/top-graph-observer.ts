@@ -342,6 +342,7 @@ export class TopGraphObserver {
         lastEdge.value = event.data.outputs;
       }
       this.#log = [...this.#log];
+      this.#currentNode = new NodeEntry(event);
       this.#currentResult = null;
       return;
     }

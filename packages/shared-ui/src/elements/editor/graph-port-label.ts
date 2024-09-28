@@ -15,7 +15,7 @@ import {
 } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
 import { getGlobalColor, isConfigurablePort } from "./utils";
-import { GRAPH_OPERATIONS } from "./types";
+import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types";
 
 const hoverColor = getGlobalColor("--bb-ui-50");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
@@ -36,6 +36,7 @@ export class GraphPortLabel extends PIXI.Container {
   #paddingTop = 4;
   #paddingBottom = 4;
   #paddingRight = 8;
+  #expansionState: ComponentExpansionState = "expanded";
 
   #previewTextSize = 12;
   #previewTextColor = previewTextColor;
@@ -47,6 +48,8 @@ export class GraphPortLabel extends PIXI.Container {
 
   #showNodePreviewValues = false;
   #isConfigurable = false;
+
+  readOnly = false;
 
   constructor(port: InspectablePort, showNodePreviewValues: boolean) {
     super();
@@ -129,7 +132,7 @@ export class GraphPortLabel extends PIXI.Container {
     });
 
     this.addEventListener("click", (evt: PIXI.FederatedPointerEvent) => {
-      if (!this.isConfigurable) {
+      if (!this.isConfigurable || this.readOnly) {
         return;
       }
 
@@ -140,6 +143,21 @@ export class GraphPortLabel extends PIXI.Container {
         evt.clientY
       );
     });
+  }
+
+  set expansionState(expansionState: ComponentExpansionState) {
+    if (expansionState === this.#expansionState) {
+      return;
+    }
+
+    this.#expansionState = expansionState;
+    this.isConfigurable =
+      !!this.#port && isConfigurablePort(this.#port, this.#expansionState);
+    this.#isDirty = true;
+  }
+
+  get expansionState() {
+    return this.#expansionState;
   }
 
   set port(port: InspectablePort | null) {
@@ -161,7 +179,7 @@ export class GraphPortLabel extends PIXI.Container {
       return;
     }
 
-    this.isConfigurable = isConfigurablePort(port);
+    this.isConfigurable = isConfigurablePort(port, this.#expansionState);
   }
 
   get port() {
@@ -180,7 +198,7 @@ export class GraphPortLabel extends PIXI.Container {
     this.#isConfigurable = isConfigurable;
     this.#isDirty = true;
 
-    if (isConfigurable) {
+    if (isConfigurable && !this.readOnly) {
       this.eventMode = "static";
       this.#hoverZone.cursor = "pointer";
     } else {
@@ -218,7 +236,7 @@ export class GraphPortLabel extends PIXI.Container {
   #draw() {
     this.#hoverZone.clear();
 
-    if (!this.isConfigurable) {
+    if (!this.isConfigurable || this.readOnly) {
       return;
     }
 
@@ -264,7 +282,10 @@ export class GraphPortLabel extends PIXI.Container {
 
     let { value } = port;
     if (value === null || value === undefined) {
-      if (port.status === PortStatus.Missing && isConfigurablePort(port)) {
+      if (
+        port.status === PortStatus.Missing &&
+        isConfigurablePort(port, this.#expansionState)
+      ) {
         return "(not configured)";
       }
       return "";

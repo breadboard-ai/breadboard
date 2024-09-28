@@ -219,7 +219,6 @@ export class Main extends LitElement {
     }
 
     const currentUrl = new URL(window.location.href);
-    const boardFromUrl = currentUrl.searchParams.get("board");
     const firstRunFromUrl = currentUrl.searchParams.get("firstrun");
 
     if (firstRunFromUrl && firstRunFromUrl === "true") {
@@ -345,16 +344,11 @@ export class Main extends LitElement {
                 );
               }
 
-              if (this.tab.graph.url) {
-                this.#setUrlParam("board", this.tab.graph.url);
-                const base = new URL(window.location.href);
-                const decodedUrl = decodeURIComponent(base.href);
-                window.history.replaceState(
-                  { path: decodedUrl },
-                  "",
-                  decodedUrl
-                );
-
+              if (
+                this.tab.graph.url &&
+                this.tab.type === Runtime.Types.TabType.URL
+              ) {
+                this.#updatePageURL();
                 await this.#trackRecentBoard(this.tab.graph.url);
               }
 
@@ -362,7 +356,7 @@ export class Main extends LitElement {
                 this.#setPageTitle(this.tab.graph.title);
               }
             } else {
-              this.#setUrlParam("board", null);
+              this.#clearTabParams();
               this.#setPageTitle(null);
             }
           }
@@ -374,6 +368,7 @@ export class Main extends LitElement {
             stopCurrentRunIfActive(evt.tabId);
 
             await this.#confirmSaveWithUserFirstIfNeeded();
+            this.#updatePageURL();
             this.requestUpdate();
           }
         );
@@ -474,13 +469,7 @@ export class Main extends LitElement {
           }
         );
 
-        // Start the board or show the welcome panel.
-        if (boardFromUrl) {
-          this.#runtime.board.loadFromURL(boardFromUrl);
-          return;
-        } else {
-          this.showWelcomePanel = true;
-        }
+        return this.#runtime.board.createTabsFromURL(currentUrl);
       });
   }
 
@@ -496,6 +485,12 @@ export class Main extends LitElement {
 
     window.removeEventListener("keydown", this.#onKeyDownBound);
     window.removeEventListener("bbrundownload", this.#downloadRunBound);
+  }
+
+  #updatePageURL() {
+    const url = this.#runtime.board.createURLFromTabs();
+    const decodedUrl = decodeURIComponent(url.href);
+    window.history.replaceState(null, "", decodedUrl);
   }
 
   #setBoardPendingSaveState(boardPendingSave: boolean) {
@@ -550,7 +545,7 @@ export class Main extends LitElement {
             return;
           }
 
-          this.#runtime.board.loadFromDescriptor(descriptor);
+          this.#runtime.board.createTabFromDescriptor(descriptor);
         } catch (err) {
           this.toast(
             "Unable to paste board",
@@ -702,10 +697,11 @@ export class Main extends LitElement {
     const runGraph = topGraphObserver.current()?.graph ?? null;
     if (runGraph) {
       runGraph.title = evt.nodeTitle;
-      this.#runtime.board.loadFromDescriptor(
+      this.#runtime.board.createTabFromRun(
         runGraph,
         topGraphObserver,
-        observers.runObserver
+        observers.runObserver,
+        true
       );
     }
   }
@@ -721,6 +717,9 @@ export class Main extends LitElement {
     }
 
     const tabToSave = this.tab;
+    if (tabToSave.readOnly) {
+      return;
+    }
 
     if (timeout !== 0) {
       const saveId = globalThis.crypto.randomUUID();
@@ -969,6 +968,19 @@ export class Main extends LitElement {
     this.#runtime.run.runBoard(this.tab.id, config);
   }
 
+  #clearTabParams() {
+    const pageUrl = new URL(window.location.href);
+    const tabs = [...pageUrl.searchParams].filter(([id]) =>
+      id.startsWith("tab")
+    );
+
+    for (const [id] of tabs) {
+      pageUrl.searchParams.delete(id);
+    }
+
+    window.history.replaceState(null, "", pageUrl);
+  }
+
   #setUrlParam(param: string, value: string | null) {
     const pageUrl = new URL(window.location.href);
     if (value === null) {
@@ -1086,7 +1098,11 @@ export class Main extends LitElement {
 
   async #changeBoard(url: string, createNewTab = false) {
     try {
-      this.#runtime.board.loadFromURL(url, this.tab?.graph.url, createNewTab);
+      this.#runtime.board.createTabFromURL(
+        url,
+        this.tab?.graph.url,
+        createNewTab
+      );
     } catch (err) {
       this.toast(
         `Unable to load file: ${url}`,
@@ -1140,10 +1156,11 @@ export class Main extends LitElement {
               const descriptor = topGraphObserver?.current()?.graph ?? null;
 
               if (descriptor) {
-                this.#runtime.board.loadFromDescriptor(
+                this.#runtime.board.createTabFromRun(
                   descriptor,
                   topGraphObserver,
-                  runObserver
+                  runObserver,
+                  true
                 );
               } else {
                 this.toast(
@@ -1159,7 +1176,7 @@ export class Main extends LitElement {
             }
           });
         } else {
-          this.#runtime.board.loadFromDescriptor(runData);
+          this.#runtime.board.createTabFromDescriptor(runData);
         }
       } catch (err) {
         console.warn(err);
@@ -1170,9 +1187,9 @@ export class Main extends LitElement {
 
   #attemptBoardStart(evt: BreadboardUI.Events.StartEvent) {
     if (evt.url) {
-      this.#runtime.board.loadFromURL(evt.url);
+      this.#runtime.board.createTabFromURL(evt.url);
     } else if (evt.descriptor) {
-      this.#runtime.board.loadFromDescriptor(evt.descriptor);
+      this.#runtime.board.createTabFromDescriptor(evt.descriptor);
     }
   }
 
@@ -1378,9 +1395,11 @@ export class Main extends LitElement {
                   tab.graph.graphs[tab.subGraphId].title || "Untitled Subgraph";
               }
 
-              const canSave = this.#runtime.board.canSave(id);
+              const canSave = this.#runtime.board.canSave(id) && !tab.readOnly;
               const saveStatus = this.#tabSaveStatus.get(id) ?? "saved";
               const remote = tab.graph.url?.startsWith("http") ?? false;
+              const readonly = tab.readOnly;
+
               let saveTitle = "Saved";
               switch (saveStatus) {
                 case BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING: {
@@ -1392,6 +1411,10 @@ export class Main extends LitElement {
                   saveTitle = remote
                     ? "Saved on Board Server"
                     : "Saved on device";
+
+                  if (readonly) {
+                    saveTitle += " - read-only";
+                  }
                   break;
                 }
 
@@ -1431,6 +1454,7 @@ export class Main extends LitElement {
                     "can-save": canSave,
                     remote,
                     [saveStatus]: true,
+                    readonly,
                   })}
                   title=${saveTitle}
                 ></div>
@@ -1484,6 +1508,7 @@ export class Main extends LitElement {
         <bb-ui-controller
               ${ref(this.#uiRef)}
               ?inert=${showingOverlay}
+              .readOnly=${this.tab?.readOnly ?? true}
               .graph=${this.tab?.graph ?? null}
               .subGraphId=${this.tab?.subGraphId ?? null}
               .run=${runs[0] ?? null}
@@ -1656,6 +1681,11 @@ export class Main extends LitElement {
                   return;
                 }
 
+                const metadata = this.#runtime.edit.getNodeMetadata(
+                  this.tab,
+                  evt.id
+                );
+
                 this.showNodeConfigurator = evt.port !== null;
                 this.#nodeConfiguratorData = {
                   id: evt.id,
@@ -1665,6 +1695,7 @@ export class Main extends LitElement {
                   selectedPort: evt.port?.title ?? null,
                   subGraphId: evt.subGraphId,
                   ports,
+                  metadata,
                 };
               }}
               @bbedgevalueselected=${(
@@ -1746,6 +1777,14 @@ export class Main extends LitElement {
                   runner.run(data);
                 }
                 this.requestUpdate();
+              }}
+              @bbnodetyperetrievalerror=${(
+                evt: BreadboardUI.Events.NodeTypeRetrievalErrorEvent
+              ) => {
+                this.toast(
+                  `Error retrieving type information for ${evt.id}; try removing the component from the board`,
+                  BreadboardUI.Events.ToastType.ERROR
+                );
               }}
             ></bb-ui-controller>
           </div>
@@ -2064,6 +2103,12 @@ export class Main extends LitElement {
       });
 
       actions.push({
+        title: "Copy Tab URL",
+        name: "copy-tab-to-clipboard",
+        icon: "copy",
+      });
+
+      actions.push({
         title: "Settings",
         name: "settings",
         icon: "settings",
@@ -2088,13 +2133,34 @@ export class Main extends LitElement {
                 break;
               }
 
-              await navigator.clipboard.writeText(this.tab?.graph.url);
+              await navigator.clipboard.writeText(this.tab.graph.url);
               this.toast(
                 "Board URL copied",
                 BreadboardUI.Events.ToastType.INFORMATION
               );
               break;
             }
+
+            case "copy-tab-to-clipboard": {
+              if (!this.tab?.graph || !this.tab?.graph.url) {
+                this.toast(
+                  "Unable to copy board URL",
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+                break;
+              }
+
+              const url = new URL(window.location.href);
+              url.search = `?tab0=${this.tab.graph.url}`;
+
+              await navigator.clipboard.writeText(url.href);
+              this.toast(
+                "Tab URL copied",
+                BreadboardUI.Events.ToastType.INFORMATION
+              );
+              break;
+            }
+
             case "download": {
               if (!this.tab?.graph) {
                 break;

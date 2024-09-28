@@ -3,57 +3,57 @@
   "description": "A board that generates a reply to a business review.",
   "edges": [
     {
-      "from": "fn-22",
-      "to": "fn-23",
+      "from": "fn-19",
+      "to": "fn-20",
       "out": "result",
       "in": "text"
     },
     {
-      "from": "fn-23",
-      "to": "specialist-25",
+      "from": "fn-20",
+      "to": "specialist-22",
       "out": "context",
       "in": "persona"
     },
     {
-      "from": "fn-24",
-      "to": "specialist-25",
+      "from": "fn-21",
+      "to": "specialist-22",
       "out": "context",
       "in": "in"
     },
     {
-      "from": "input-21",
-      "to": "fn-22",
+      "from": "input-18",
+      "to": "fn-19",
       "out": "tone",
       "in": "a"
     },
     {
-      "from": "input-21",
-      "to": "fn-22",
+      "from": "input-18",
+      "to": "fn-19",
       "out": "voice",
       "in": "b"
     },
     {
-      "from": "input-21",
-      "to": "fn-24",
+      "from": "input-18",
+      "to": "fn-21",
       "out": "review",
       "in": "text"
     },
     {
-      "from": "input-21",
-      "to": "specialist-25",
+      "from": "input-18",
+      "to": "specialist-22",
       "out": "task",
       "in": "task"
     },
     {
-      "from": "specialist-25",
-      "to": "output-26",
+      "from": "specialist-22",
+      "to": "output-23",
       "out": "out",
       "in": "reply"
     }
   ],
   "nodes": [
     {
-      "id": "input-21",
+      "id": "input-18",
       "type": "input",
       "configuration": {
         "schema": {
@@ -99,7 +99,7 @@
       }
     },
     {
-      "id": "output-26",
+      "id": "output-23",
       "type": "output",
       "configuration": {
         "schema": {
@@ -121,12 +121,12 @@
       }
     },
     {
-      "id": "fn-22",
+      "id": "fn-19",
       "type": "runJavascript",
       "configuration": {
-        "code": "const fn_22 = ({a,b,delimiter=\" \"})=>{return{result:a+delimiter+b}};",
+        "code": "const fn_19 = ({a,b,delimiter=\" \"})=>{return{result:a+delimiter+b}};",
         "delimiter": "\n\n",
-        "name": "fn_22",
+        "name": "fn_19",
         "raw": true
       },
       "metadata": {
@@ -134,11 +134,11 @@
       }
     },
     {
-      "id": "fn-23",
+      "id": "fn-20",
       "type": "runJavascript",
       "configuration": {
-        "code": "const fn_23 = inputs=>{const parts=[{text:inputs.text}];return{context:inputs.role?{role:inputs.role,parts}:{parts}}};",
-        "name": "fn_23",
+        "code": "const fn_20 = inputs=>{const parts=[{text:inputs.text}];return{context:inputs.role?{role:inputs.role,parts}:{parts}}};",
+        "name": "fn_20",
         "raw": true
       },
       "metadata": {
@@ -146,11 +146,11 @@
       }
     },
     {
-      "id": "fn-24",
+      "id": "fn-21",
       "type": "runJavascript",
       "configuration": {
-        "code": "const fn_24 = inputs=>{const parts=[{text:inputs.text}];return{context:inputs.role?{role:inputs.role,parts}:{parts}}};",
-        "name": "fn_24",
+        "code": "const fn_21 = inputs=>{const parts=[{text:inputs.text}];return{context:inputs.role?{role:inputs.role,parts}:{parts}}};",
+        "name": "fn_21",
         "raw": true,
         "role": "user"
       },
@@ -159,7 +159,7 @@
       }
     },
     {
-      "id": "specialist-25",
+      "id": "specialist-22",
       "type": "specialist",
       "configuration": {
         "model": "gemini-1.5-flash-latest"

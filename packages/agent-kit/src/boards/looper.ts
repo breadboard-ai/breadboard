@@ -12,6 +12,7 @@ import {
   enumeration,
   input,
   inputNode,
+  output,
   outputNode,
   type Value,
 } from "@breadboard-ai/build";
@@ -73,12 +74,7 @@ const progressReader = code(
     progress: array(looperPlanType),
     context: array(contextType),
   },
-  // TODO(aomarks) TypeScript is unhappy with the signature of this function
-  // because we don't support optional/polymorphic outputs from the code helper
-  // function right now.
-  //
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  readProgress as any
+  readProgress
 );
 
 const taskAdder = code(
@@ -357,9 +353,12 @@ export default board({
   ],
   outputs: [
     outputNode(
-      { done: cleaner.outputs.context },
+      { done: output(cleaner.outputs.context, { title: "Done" }) },
       { title: "Exit", id: "exitOutput" }
     ),
-    outputNode({ loop: planReader.outputs.context }, { id: "output-2" }),
+    outputNode(
+      { loop: output(planReader.outputs.context, { title: "Loop" }) },
+      { id: "output-2" }
+    ),
   ],
 });

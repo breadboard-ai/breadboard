@@ -66,6 +66,8 @@
   --bb-icon-confirm-blue: url(/third_party/icons/confirm-blue.svg);
   --bb-icon-copy-to-clipboard: url(/third_party/icons/copy-to-clipboard.svg);
   --bb-icon-delete: url(/third_party/icons/delete.svg);
+  --bb-icon-directions: url(/third_party/icons/directions.svg);
+  --bb-icon-directions-inverted: url(/third_party/icons/directions-inverted.svg);
   --bb-icon-download: url(/third_party/icons/download.svg);
   --bb-icon-draft: url(/third_party/icons/draft.svg);
   --bb-icon-edge-connector: url(/third_party/icons/edge-connector.svg);
@@ -107,6 +109,7 @@
   --bb-icon-resume-blue: url(/third_party/icons/resume-blue.svg);
   --bb-icon-save: url(/third_party/icons/save.svg);
   --bb-icon-saved-local: url(/third_party/icons/saved-local.svg);
+  --bb-icon-saved-readonly: url(/third_party/icons/saved-readonly.svg);
   --bb-icon-saved-remote: url(/third_party/icons/saved-remote.svg);
   --bb-icon-save-as: url(/third_party/icons/save-as.svg);
   --bb-icon-save-inverted: url(/third_party/icons/save-inverted.svg);

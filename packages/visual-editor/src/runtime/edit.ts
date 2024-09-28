@@ -77,6 +77,16 @@ export class Edit extends EventTarget {
     return editableGraph.inspect().nodeById(id)?.title() ?? null;
   }
 
+  getNodeMetadata(tab: Tab | null, id: string) {
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
+      return null;
+    }
+
+    return editableGraph.inspect().nodeById(id)?.metadata() ?? null;
+  }
+
   getNodeConfiguration(tab: Tab | null, id: string) {
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
@@ -365,6 +375,10 @@ export class Edit extends EventTarget {
     metadata: NodeMetadata | null = null,
     subGraphId: string | null = null
   ) {
+    if (tab?.readOnly) {
+      return;
+    }
+
     const newNode = {
       id,
       type: nodeType,
@@ -414,6 +428,10 @@ export class Edit extends EventTarget {
     metadata: NodeDescriptor["metadata"],
     subGraphId: string | null = null
   ) {
+    if (tab?.readOnly) {
+      return;
+    }
+
     let editableGraph = this.getEditor(tab);
     if (editableGraph && subGraphId) {
       editableGraph = editableGraph.getGraph(subGraphId);
@@ -444,6 +462,10 @@ export class Edit extends EventTarget {
     description: string,
     subGraphId: string | null = null
   ) {
+    if (tab?.readOnly) {
+      return;
+    }
+
     let editableGraph = this.getEditor(tab);
     if (editableGraph && subGraphId) {
       editableGraph = editableGraph.getGraph(subGraphId);
@@ -463,6 +485,10 @@ export class Edit extends EventTarget {
     text: string,
     subGraphId: string | null = null
   ) {
+    if (tab?.readOnly) {
+      return;
+    }
+
     let editableGraph = this.getEditor(tab);
     if (editableGraph && subGraphId) {
       editableGraph = editableGraph.getGraph(subGraphId);
@@ -496,6 +522,10 @@ export class Edit extends EventTarget {
     configuration: NodeConfiguration,
     subGraphId: string | null = null
   ) {
+    if (tab?.readOnly) {
+      return;
+    }
+
     let editableGraph = this.getEditor(tab);
     if (editableGraph && subGraphId) {
       editableGraph = editableGraph.getGraph(subGraphId);
@@ -525,6 +555,10 @@ export class Edit extends EventTarget {
     configurationPart: NodeConfiguration,
     subGraphId: string | null = null
   ) {
+    if (tab?.readOnly) {
+      return;
+    }
+
     let editableGraph = this.getEditor(tab);
     if (editableGraph && subGraphId) {
       editableGraph = editableGraph.getGraph(subGraphId);
@@ -561,6 +595,10 @@ export class Edit extends EventTarget {
   }
 
   deleteNode(tab: Tab | null, id: string, subGraphId: string | null = null) {
+    if (tab?.readOnly) {
+      return;
+    }
+
     let editableGraph = this.getEditor(tab);
     if (editableGraph && subGraphId) {
       editableGraph = editableGraph.getGraph(subGraphId);

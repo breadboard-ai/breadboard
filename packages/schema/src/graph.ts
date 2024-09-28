@@ -300,6 +300,20 @@ export type GraphMetadata = {
     description?: string;
     url: string;
   };
+  /**
+   * The metadata associated with the visual representation of the graph.
+   */
+  visual?: {
+    /**
+     * Last known position of the graph in the editor.
+     */
+    window?: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    };
+  };
 };
 
 /**

@@ -48,6 +48,9 @@ export class NodeMetaDetails extends LitElement {
   @property()
   subGraphId: string | null = null;
 
+  @property()
+  readOnly = false;
+
   @state()
   expanded = true;
 
@@ -291,6 +294,10 @@ export class NodeMetaDetails extends LitElement {
       return;
     }
 
+    if (this.readOnly) {
+      return;
+    }
+
     const getAsStringOrUndefined = (
       formData: FormData,
       key: string
@@ -413,10 +420,16 @@ export class NodeMetaDetails extends LitElement {
                   type="text"
                   placeholder="Enter the title for this node"
                   .value=${data.metadata.title || ""}
+                  ?disabled=${this.readOnly}
                 />
 
                 <label>Log Level</label>
-                <select type="text" id="log-level" name="log-level">
+                <select
+                  type="text"
+                  id="log-level"
+                  name="log-level"
+                  ?disabled=${this.readOnly}
+                >
                   <option
                     value="debug"
                     ?selected=${data.metadata.logLevel === "debug"}
@@ -436,6 +449,7 @@ export class NodeMetaDetails extends LitElement {
                   name="description"
                   placeholder="Enter the description for this node"
                   .value=${data.metadata.description || ""}
+                  ?disabled=${this.readOnly}
                 ></textarea>
 
                 ${data.nodeTypeURL
