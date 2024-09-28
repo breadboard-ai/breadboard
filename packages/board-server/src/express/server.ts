@@ -1,6 +1,6 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import { BoardController } from './controllers/boardController.js';
+import { BoardController } from './boards/boardController.js';
 import authenticate from './auth/auth.js';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
