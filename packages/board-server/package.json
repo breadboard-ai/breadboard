@@ -24,7 +24,8 @@
     "dev": "npm run dev:nowatch --watch",
     "dev:nowatch": "wireit",
     "test": "wireit",
-    "test:integration": "wireit"
+    "test:integration": "wireit",
+    "express": "tsx src/express/server.ts"
   },
   "wireit": {
     "build": {

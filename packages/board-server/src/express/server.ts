@@ -1,11 +1,14 @@
 import express from 'express';
 import bodyParser from 'body-parser';
+import { ProxyController } from './proxy/proxyController.js'
 import { BoardController } from './boards/boardController.js';
 import authenticate from './auth/auth.js';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 import type { ServerConfig } from '../server/config.js';
+import { homeHandler } from './home/handlers/home.js';
+import { infoHandler } from './info/handlers/info.js';
 
 export async function startServer(port: number = 3000) {
   const app = express();
@@ -13,6 +16,7 @@ export async function startServer(port: number = 3000) {
   app.use(bodyParser.json());
 
   const boardController = new BoardController();
+  const proxyController = new ProxyController();
 
   const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
   const ROOT_PATH = resolve(MODULE_PATH, "../../../");
@@ -58,6 +62,8 @@ export async function startServer(port: number = 3000) {
    * POST /boards/@:user/:name.invite -> Create a new or delete existing invite
    */
 
+  app.get('/', homeHandler);
+  app.get('/info', infoHandler);
   // Board API Routes
   app.get('/boards', boardController.list);
   app.post('/boards', authenticate, boardController.create);
@@ -72,6 +78,9 @@ export async function startServer(port: number = 3000) {
   app.post('/boards/@:user/:boardName.api/run', boardController.run);
   app.get('/boards/@:user/:boardName.invite', authenticate, boardController.inviteList);
   app.post('/boards/@:user/:boardName.invite', authenticate, boardController.inviteUpdate);
+
+  // Proxy API Routes
+  app.post('/proxy', proxyController.proxy);
 
   // Global error handling middleware
   app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
