@@ -24,8 +24,7 @@
     "dev": "npm run dev:nowatch --watch",
     "dev:nowatch": "wireit",
     "test": "wireit",
-    "test:integration": "wireit",
-    "express": "npx tsx src/express/server.ts"
+    "test:integration": "wireit"
   },
   "wireit": {
     "build": {
@@ -149,7 +148,7 @@
       "output": []
     },
     "test:integration": {
-      "command": "export GOOGLE_APPLICATION_CREDENTIALS=foo && export GOOGLE_CLOUD_PROJECT=foo && export STORAGE_BACKEND=sqlite && export SQLITE_DB_PATH=test.db && node --test --enable-source-maps --test-reporter spec dist/tests/integration/board-api.test.js",
+      "command": "export GOOGLE_APPLICATION_CREDENTIALS=foo && export GOOGLE_CLOUD_PROJECT=foo && export STORAGE_BACKEND=sqlite && export SQLITE_DB_PATH=test.db && node --test --enable-source-maps --test-reporter tap dist/tests/integration/board-api.test.js",
       "dependencies": [
         "build:tests",
         "build:vite",
