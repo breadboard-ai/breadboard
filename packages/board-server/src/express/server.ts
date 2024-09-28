@@ -64,10 +64,10 @@ export async function startServer(port: number = 3000) {
   app.get('/boards/@:user/:boardName.json', boardController.get);
   app.post('/boards/@:user/:boardName.json', authenticate, boardController.update);
   // app.delete('/boards/@:user/:boardName.json', boardController.delete);
-  app.post('/boards/@:user/:boardName.api/describe', boardController.serveApi);
+  app.post('/boards/@:user/:boardName.api/describe', boardController.describe);
 
   app.get('/boards/@:user/:boardName.app', boardController.serve);
-  app.get('/boards/@:user/:boardName.api', boardController.describe);
+  app.get('/boards/@:user/:boardName.api', boardController.serveApi);
   app.post('/boards/@:user/:boardName.api/invoke', boardController.invoke);
   app.post('/boards/@:user/:boardName.api/run', boardController.run);
   app.get('/boards/@:user/:boardName.invite', authenticate, boardController.inviteList);
