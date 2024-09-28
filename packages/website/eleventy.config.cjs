@@ -18,7 +18,9 @@ module.exports = function (eleventyConfig) {
   eleventyConfig.addFilter("board", require("./filters/filter-board.cjs"));
   eleventyConfig.addPlugin(syntaxHighlight);
   eleventyConfig.addPlugin(pluginRss);
-  eleventyConfig.addPlugin(youtube);
+  eleventyConfig.addPlugin(youtube, {
+    lite: true,
+  });
 
   eleventyConfig.amendLibrary("md", (mdLib) => {
     mdLib.use(markdownItGitHubAlerts, { icons: "" });
