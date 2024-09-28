@@ -27,7 +27,7 @@ const create = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  res.status(200).json({ path: result.path });
+  res.status(200).json({ created: `${result.path}.json`});
 };
 
 export default create;

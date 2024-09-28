@@ -27,7 +27,7 @@ const update = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  res.status(200).json({ created: `@${user}/${boardName}` });
+  res.status(200).json({ created: `@${user}/${boardName}.json` });
 };
 
 export default update;
