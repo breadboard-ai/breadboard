@@ -98,6 +98,8 @@ function makeRequest({
         data += chunk;
       });
 
+      console.log("Response data:", data);
+
       res.on("end", () => {
         resolve({ statusCode: res.statusCode || 500, data });
       });
@@ -304,7 +306,7 @@ suite("Board API Integration tests", async () => {
         path: `/boards/@${account.account}/simple.json?API_KEY=${account.api_key}`,
         method: "POST",
         body: readBoard("simple-published.bgl.json"),
-        headers: {},
+        headers: {"Content-Type": "application/json"},
       });
       assert.strictEqual(statusCode, 200);
       assert.deepStrictEqual(JSON.parse(body), {

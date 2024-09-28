@@ -18,7 +18,7 @@ const get = async (req: Request, res: Response): Promise<void> => {
     return;
   }
   
-  res.json(board);
+  res.json(JSON.parse(board));
 };
 
 export default get;
