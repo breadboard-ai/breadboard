@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
-import { getStore } from '../../../server/store.js';
-import { serveIndex } from '../../../server/common.js';
+import { getStore } from '../../server/store.js';
+import { serveIndex } from '../../server/common.js';
+import { asyncHandler } from '../support.js';
 
 const serve = async (req: Request, res: Response, next: NextFunction) => {
   const { user, boardName } = req.params;
@@ -15,4 +16,5 @@ const serve = async (req: Request, res: Response, next: NextFunction) => {
   await serveIndex(res.locals.serverConfig, res, getMetadata);
 };
 
-export default serve;
+const boardServe = asyncHandler(serve);
+export { boardServe as serve };

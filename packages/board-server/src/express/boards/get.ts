@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import type { Request, Response } from 'express';
-import { getStore } from '../../../server/store.js';
+import { getStore } from '../../server/store.js';
+import { asyncHandler } from '../support.js';
 
 const get = async (req: Request, res: Response): Promise<void> => {
   const { user, boardName } = req.params;
@@ -21,4 +22,5 @@ const get = async (req: Request, res: Response): Promise<void> => {
   res.json(JSON.parse(board));
 };
 
-export default get;
+const boardGet = asyncHandler(get);
+export { boardGet as get };

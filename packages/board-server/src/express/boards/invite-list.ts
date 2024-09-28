@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
-import { getStore } from '../../../server/store.js';
+import { getStore } from '../../server/store.js';
+import { asyncHandler } from '../support.js';
 
 const inviteList = async (req: Request, res: Response) => {
     const { user, boardName } = req.params;
@@ -17,4 +18,5 @@ const inviteList = async (req: Request, res: Response) => {
     res.json({ invites: result.invites });
 };
 
-export default inviteList;
+const boardInviteList = asyncHandler(inviteList);
+export { boardInviteList as inviteList };

@@ -1,8 +1,9 @@
 import type { Request, Response } from 'express';
-import packageInfo from "../../../../package.json";
-import { getStore } from "../../../server/store.js";
+import packageInfo from "../../../package.json" with { type: "json" };
+import { getStore } from "../../server/store.js";
+import { asyncHandler } from "../support.js";
 
-export const homeHandler = async (req: Request, res: Response): Promise<void> => {
+const home = async (req: Request, res: Response): Promise<void> => {
   const store = getStore();
   const info = await store.getServerInfo();
   const title = info?.title ?? "Board Server";
@@ -20,3 +21,6 @@ export const homeHandler = async (req: Request, res: Response): Promise<void> =>
       </body>
     </html>`);
 };
+
+const homeHandler = asyncHandler(home);
+export { homeHandler as home };

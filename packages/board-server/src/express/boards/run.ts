@@ -1,11 +1,11 @@
 import type { Request, Response } from 'express';
-import { getStore } from '../../../server/store.js';
-import { verifyKey } from '../../../server/boards/utils/verify-key.js';
-import { runBoard, timestamp } from '../../../server/boards/utils/run-board.js';
-import { loadFromStore } from '../../../server/boards/utils/board-server-provider.js';
-import { secretsKit } from '../../../server/proxy/secrets.js';
+import { getStore } from '../../server/store.js';
+import { verifyKey } from '../../server/boards/utils/verify-key.js';
+import { runBoard, timestamp } from '../../server/boards/utils/run-board.js';
+import { loadFromStore } from '../../server/boards/utils/board-server-provider.js';
+import { secretsKit } from '../../server/proxy/secrets.js';
 import type { RemoteMessage } from '@google-labs/breadboard/remote';
-
+import { asyncHandler } from '../support.js';
 const run = async (req: Request, res: Response) => {
   const { user, boardName } = req.params;
   const API_ENTRY = "/boards";
@@ -78,4 +78,5 @@ const run = async (req: Request, res: Response) => {
   res.end();
 };
 
-export default run;
+const boardRun = asyncHandler(run);
+export { boardRun as run };

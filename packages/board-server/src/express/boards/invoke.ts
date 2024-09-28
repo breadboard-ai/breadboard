@@ -1,9 +1,10 @@
 import type { Request, Response } from 'express';
-import { verifyKey } from '../../../server/boards/utils/verify-key.js';
-import { secretsKit } from '../../../server/proxy/secrets.js';
-import { loadFromStore } from '../../../server/boards/utils/board-server-provider.js';
-import { invokeBoard } from '../../../server/boards/utils/invoke-board.js';
-import { getStore } from '../../../server/store.js';
+import { verifyKey } from '../../server/boards/utils/verify-key.js';
+import { secretsKit } from '../../server/proxy/secrets.js';
+import { loadFromStore } from '../../server/boards/utils/board-server-provider.js';
+import { invokeBoard } from '../../server/boards/utils/invoke-board.js';
+import { getStore } from '../../server/store.js';
+import { asyncHandler } from '../support.js';
 
 const invoke = async (req: Request, res: Response) => {
     const { user, boardName } = req.params;
@@ -39,4 +40,5 @@ const invoke = async (req: Request, res: Response) => {
     res.json(result);
 };
 
-export default invoke;
+const boardInvoke = asyncHandler(invoke);
+export { boardInvoke as invoke };

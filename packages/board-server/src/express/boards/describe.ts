@@ -1,7 +1,8 @@
 import type { Request, Response } from 'express';
-import { getStore } from '../../../server/store.js';
+import { getStore } from '../../server/store.js';
 import { createLoader, inspect, type GraphDescriptor, type NodeDescriberResult } from "@google-labs/breadboard";
-import { addKeyInput } from '../../../server/boards/describe.js';
+import { addKeyInput } from '../../server/boards/describe.js';
+import { asyncHandler } from '../support.js';
 
 const describe = async (req: Request, res: Response): Promise<void> => {
   const { user, boardName } = req.params;
@@ -30,4 +31,5 @@ const describe = async (req: Request, res: Response): Promise<void> => {
   res.json(result);
 };
 
-export default describe;
+const boardDescribe = asyncHandler(describe);
+export { boardDescribe as describe };

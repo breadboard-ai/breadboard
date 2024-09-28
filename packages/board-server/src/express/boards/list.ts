@@ -5,11 +5,12 @@
  */
 
 import type { Request, Response } from 'express';
-import { getStore } from '../../../server/store.js';
-import type { BoardListEntry } from '../../../server/store.js';
+import { getStore } from '../../server/store.js';
+import type { BoardListEntry } from '../../server/store.js';
+import { asyncHandler } from '../support.js';
 
 const list = async (req: Request, res: Response) => {
-  const store = getStore();
+    const store = getStore();
   const userApiKey = req.query.API_KEY as string;
   const boards = await store.list(userApiKey);
 
@@ -22,4 +23,5 @@ const list = async (req: Request, res: Response) => {
   res.json(boardsWithJsonExt);
 };
 
-export default list;
+const boardList = asyncHandler(list);
+export { boardList as list };

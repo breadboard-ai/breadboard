@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
-import { getStore } from '../../../server/store.js';
+import { getStore } from '../../server/store.js';
+import { asyncHandler } from '../support.js';
 
 const inviteUpdate = async (req: Request, res: Response) => {
     const { user, boardName } = req.params;
@@ -35,4 +36,5 @@ const inviteUpdate = async (req: Request, res: Response) => {
     }
 };
 
-export default inviteUpdate;
+const boardInviteUpdate = asyncHandler(inviteUpdate);
+export { boardInviteUpdate as inviteUpdate };

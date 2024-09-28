@@ -6,8 +6,8 @@
 
 import type { Request, Response } from 'express';
 import type { GraphDescriptor } from "@google-labs/breadboard";
-import { getStore } from '../../../server/store.js';
-
+import { getStore } from '../../server/store.js';
+import { asyncHandler } from '../support.js';
 
 const update = async (req: Request, res: Response): Promise<void> => {
   const { user, boardName } = req.params;
@@ -30,4 +30,5 @@ const update = async (req: Request, res: Response): Promise<void> => {
   res.status(200).json({ created: `@${user}/${boardName}.json` });
 };
 
-export default update;
+const boardUpdate = asyncHandler(update);
+export { boardUpdate as update };

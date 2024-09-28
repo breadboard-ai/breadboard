@@ -5,7 +5,8 @@
  */
 
 import type { Request, Response } from 'express';
-import { getStore } from '../../../server/store.js';
+import { getStore } from '../../server/store.js';
+import { asyncHandler } from '../support.js';
 
 export type CreateRequest = {
   name: string;
@@ -30,4 +31,5 @@ const create = async (req: Request, res: Response): Promise<void> => {
   res.status(200).json({ created: `${result.path}.json`});
 };
 
-export default create;
+const boardCreate = asyncHandler(create);
+export { boardCreate as create };

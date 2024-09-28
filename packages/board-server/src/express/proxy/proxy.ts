@@ -9,9 +9,10 @@ import { ProxyServer, HTTPServerTransport, type ProxyServerConfig, type ServerRe
 import { asRuntimeKit } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import { getDataStore } from "@breadboard-ai/data-store";
-import { buildSecretsTunnel, secretsKit } from "../../../server/proxy/secrets.js";
-import { getUserKey } from "../../../server/auth.js";
-import { timestamp } from "../../../server/boards/utils/run-board.js";
+import { buildSecretsTunnel, secretsKit } from "../../server/proxy/secrets.js";
+import { getUserKey } from "../../server/auth.js";
+import { timestamp } from "../../server/boards/utils/run-board.js";
+import { asyncHandler } from "../support.js";
 
 class ResponseAdapter implements ProxyServerResponse {
   #response: Response;
@@ -66,4 +67,5 @@ const proxy = async (req: Request, res: Response): Promise<void> => {
   store.releaseAll();
 };
 
-export default proxy;
+const proxyHandler = asyncHandler(proxy);
+export { proxyHandler as proxy };
