@@ -36,7 +36,7 @@ const invoke = async (req: Request, res: Response) => {
         loader: loadFromStore,
         kitOverrides: [secretsKit],
     });
-    res.json({ result })
+    res.json(result);
 };
 
 export default invoke;
