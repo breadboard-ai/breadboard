@@ -80,7 +80,7 @@ export async function startServer(port: number = 3000) {
   });
 
   const server = app.listen(port, () => {
-    console.log(`Board server listening at ${HOSTNAME}`);
+    console.log(`[Express] Board server listening at ${HOSTNAME}`);
   });
 
   return { app, server, serverConfig };
