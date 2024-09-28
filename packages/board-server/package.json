@@ -15,6 +15,7 @@
     "build": "wireit",
     "build:vite": "wireit",
     "build:esbuild": "wireit",
+    "build:tests": "wireit",
     "build:docker": "docker build --build-context breadboard=../../ -t board-server .",
     "deploy": "npm run build && gcloud app deploy",
     "deploy:gcr": "npm run build && gcloud run deploy --source .",
