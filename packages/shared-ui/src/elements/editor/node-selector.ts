@@ -487,23 +487,22 @@ export class NodeSelector extends LitElement {
           id="container"
           @pointerdown=${(evt: Event) => evt.stopPropagation()}
         >
-          <h1
-            @pointerover=${(evt: PointerEvent) => {
-              this.dispatchEvent(
-                new ShowTooltipEvent(
-                  "Close Component Selector",
-                  evt.clientX,
-                  evt.clientY
-                )
-              );
-            }}
-            @pointerout=${() => {
-              this.dispatchEvent(new HideTooltipEvent());
-            }}
-          >
+          <h1>
             <span>Components</span>
             <button
               id="close"
+              @pointerover=${(evt: PointerEvent) => {
+                this.dispatchEvent(
+                  new ShowTooltipEvent(
+                    "Close Component Selector",
+                    evt.clientX,
+                    evt.clientY
+                  )
+                );
+              }}
+              @pointerout=${() => {
+                this.dispatchEvent(new HideTooltipEvent());
+              }}
               @click=${() => {
                 this.dispatchEvent(new DismissedEvent());
               }}
