@@ -191,6 +191,7 @@
     "@lit/context": "^1.1.2",
     "@types/express": "^4.17.21",
     "better-sqlite3": "^11.3.0",
+    "cors": "^2.8.5",
     "express": "^4.21.0",
     "lit": "^3.2.0",
     "uuid": "^10.0.0",

@@ -19,6 +19,8 @@ import { invoke } from './boards/invoke.js';
 import { run } from './boards/run.js';
 import { inviteList } from './boards/invite-list.js';
 import { inviteUpdate } from './boards/invite-update.js';
+import cors from 'cors';
+import { type CorsOptions } from 'cors';
 
 export async function startServer(port: number = 3000) {
   const app = express();
@@ -31,6 +33,19 @@ export async function startServer(port: number = 3000) {
     res.locals.serverConfig = serverConfig;
     next();
   });
+
+  const corsOptions: CorsOptions = {
+    origin: (origin, callback) => {
+      if (serverConfig.allowedOrigins.has(origin ?? "") || !origin) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    }
+  };
+
+  // Apply CORS middleware to all routes
+  app.use(cors(corsOptions));
 
   // Home routes
   app.get('/', home);
