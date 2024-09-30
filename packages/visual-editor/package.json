@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/visual-editor",
-  "version": "1.19.0",
+  "version": "1.20.0",
   "description": "The Visual Editor for Breadboard",
   "main": "./build/index.js",
   "exports": {
@@ -269,7 +269,7 @@
     "vitest": "^2.1.1"
   },
   "dependencies": {
-    "@breadboard-ai/build": "^0.10.0",
+    "@breadboard-ai/build": "^0.10.1",
     "@breadboard-ai/board-server-management": "^1.17.0",
     "@breadboard-ai/board-server-utils": "^0.1.1",
     "@breadboard-ai/data-store": "^0.2.3",
@@ -277,14 +277,14 @@
     "@breadboard-ai/google-drive-kit": "0.2.4",
     "@breadboard-ai/idb-board-server": "^1.17.0",
     "@breadboard-ai/manifest": "^0.4.4",
-    "@breadboard-ai/shared-ui": "^1.17.0",
+    "@breadboard-ai/shared-ui": "^1.18.0",
     "@breadboard-ai/python-wasm": "0.1.6",
     "@codemirror/autocomplete": "^6.18.1",
     "@codemirror/commands": "^6.6.2",
     "@codemirror/lang-javascript": "^6.2.2",
     "@dagrejs/dagre": "^1.1.4",
-    "@google-labs/agent-kit": "^0.12.0",
-    "@google-labs/breadboard": "^0.27.0",
+    "@google-labs/agent-kit": "^0.12.1",
+    "@google-labs/breadboard": "^0.27.1",
     "@google-labs/core-kit": "^0.15.0",
     "@google-labs/gemini-kit": "^0.8.0",
     "@google-labs/json-kit": "^0.3.8",

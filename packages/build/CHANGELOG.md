@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.10.1
+
+### Patch Changes
+
+- 690ebe6: Allow definition inputs/outputs to be optional
+- Updated dependencies [5c015f2]
+  - @google-labs/breadboard@0.27.1
+
 ## 0.10.0
 
 ### Minor Changes

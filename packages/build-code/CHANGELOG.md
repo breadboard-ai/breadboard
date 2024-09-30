@@ -1,5 +1,16 @@
 # @breadboard-ai/build-code
 
+## 0.1.1
+
+### Patch Changes
+
+- e3a469e: Don't assume IIFE starts on first line
+- 296aa5b: Emit a legacy script instead of module
+- 1e7fafd: Various bug fixes
+- b173079: Dereference all (non-circular) references in generated schemas
+- Updated dependencies [690ebe6]
+  - @breadboard-ai/build@0.10.1
+
 ## 0.1.0
 
 ### Minor Changes

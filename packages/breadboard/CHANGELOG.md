@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.27.1
+
+### Patch Changes
+
+- 5c015f2: Add an options object to createLoader. Allows suppressing the default loading behavior.
+
 ## 0.27.0
 
 ### Minor Changes

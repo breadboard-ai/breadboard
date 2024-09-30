@@ -1,5 +1,13 @@
 # @breadboard-ai/board-server
 
+## 0.7.2
+
+### Patch Changes
+
+- 786063c: Add a script for batch-creating accounts
+- Updated dependencies [5c015f2]
+  - @google-labs/breadboard@0.27.1
+
 ## 0.7.0
 
 ### Minor Changes
