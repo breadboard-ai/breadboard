@@ -171,15 +171,10 @@ export class SQLiteStorageProvider implements RunBoardStateStore, BoardServerSto
     }
   
     async update(
-      userStore: string,
-      path: string,
+      username: string,
+      boardName: string,
       graph: GraphDescriptor
     ): Promise<OperationResult> {
-      const { userStore: pathUserStore, boardName } = asInfo(path);
-      if (pathUserStore !== userStore) {
-        return { success: false, error: "Unauthorized" };
-      }
-  
       const { title: maybeTitle, metadata } = graph;
       const tags = metadata?.tags || [];
       const title = maybeTitle || boardName;
@@ -194,7 +189,7 @@ export class SQLiteStorageProvider implements RunBoardStateStore, BoardServerSto
           ON CONFLICT(workspace_id, board_id)
           DO UPDATE SET title = excluded.title, tags = excluded.tags, graph = excluded.graph
         `);
-        stmt.run(userStore, boardName, title, tagsString, JSON.stringify(graph));
+        stmt.run(username, boardName, title, tagsString, JSON.stringify(graph));
   
         return { success: true };
       } catch (error) {

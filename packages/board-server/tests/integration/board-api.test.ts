@@ -1,40 +1,47 @@
 import { suite, test } from "node:test";
 import assert from "node:assert";
 import { request } from "node:http";
-import { startServer, stopServer } from "../../src/server.js";
+import { startServer } from "../../src/express/server.js";
+import { createAccount } from "../../src/server/store.js";
 
 import fs from "fs";
 import path, { resolve } from "path";
-
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-
-import { createAccount } from "../../src/server/store.js";
-
-let serverInstance: { server: any; port: string | number };
-
-var account: { api_key: any; account?: string };
-
 import { deepStrictEqual } from "assert";
 
 const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
 const ROOT_PATH = resolve(MODULE_PATH, "../../../");
 
+let serverInstance: { app: any; server: any };
+let account: { api_key: any; account?: string };
+
 test.before(async () => {
-  serverInstance = await startServer(ROOT_PATH);
+  const { app, server } = await startServer(3000);
+  serverInstance = { app, server };
   account = await createAccount("test");
 });
 
 test.after(async () => {
-  await stopServer(serverInstance.server);
-  console.log("Server stopped");
-  process.exit(0);
+  if (serverInstance && serverInstance.server) {
+    await new Promise<void>((resolve) => {
+      serverInstance.server.close(() => {
+        console.log("Server stopped");
+        resolve();
+      });
+    });
+    // Force close any remaining connections
+    setTimeout(() => {
+      console.log("Forcing process to exit");
+      process.exit(0);
+    }, 1000);
+  }
 });
 
 process.on("uncaughtException", async (err) => {
   console.error("Uncaught Exception:", err);
   if (serverInstance) {
-    await stopServer(serverInstance.server);
+    await new Promise<void>((resolve) => serverInstance.server.close(resolve));
   }
   process.exit(1);
 });
@@ -42,7 +49,7 @@ process.on("uncaughtException", async (err) => {
 process.on("unhandledRejection", async (reason) => {
   console.error("Unhandled Rejection:", reason);
   if (serverInstance) {
-    await stopServer(serverInstance.server);
+    await new Promise<void>((resolve) => serverInstance.server.close(resolve));
   }
   process.exit(1);
 });
@@ -90,6 +97,8 @@ function makeRequest({
       res.on("data", (chunk) => {
         data += chunk;
       });
+
+      console.log("Response data:", data);
 
       res.on("end", () => {
         resolve({ statusCode: res.statusCode || 500, data });
@@ -297,7 +306,7 @@ suite("Board API Integration tests", async () => {
         path: `/boards/@${account.account}/simple.json?API_KEY=${account.api_key}`,
         method: "POST",
         body: readBoard("simple-published.bgl.json"),
-        headers: {},
+        headers: {"Content-Type": "application/json"},
       });
       assert.strictEqual(statusCode, 200);
       assert.deepStrictEqual(JSON.parse(body), {

@@ -45,7 +45,8 @@ export class Loader implements GraphLoader {
         continue;
       }
       if (capabilities.load) {
-        const graph = await provider.load(url);
+        const response = await provider.load(url);
+        const graph: GraphDescriptor = typeof response == "string" ? JSON.parse(response) : response;
         if (graph !== null) {
           // TODO: Remove this on 2024/9/1. By then, surely all of the graphs
           // would have migrated to use the new name.
