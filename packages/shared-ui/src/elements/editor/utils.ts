@@ -97,3 +97,29 @@ export function expansionStateFromMetadata(
     return collapsed ?? (collapseNodesByDefault ? "collapsed" : "expanded");
   }
 }
+
+export function createRandomID(type: string) {
+  const randomId = globalThis.crypto.randomUUID();
+  const nextNodeId = randomId.split("-");
+  // Now that types could be URLs, we need to make them a bit
+  // less verbose.
+  if (type.includes(":") || type.includes("#")) {
+    // probably a URL, so let's create a nice short name from the URL
+    try {
+      const url = new URL(type);
+      const name = url.pathname
+        .split("/")
+        .pop()
+        ?.replace(".bgl.json", "")
+        .slice(0, 15);
+      if (name) {
+        return `${name}-${nextNodeId[0]}`;
+      }
+    } catch (e) {
+      // Ignore.
+    }
+    return `board-${nextNodeId[0]}`;
+  }
+  // TODO: Check for clashes
+  return `${type}-${nextNodeId[0]}`;
+}

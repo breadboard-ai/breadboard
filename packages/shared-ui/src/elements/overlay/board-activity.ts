@@ -17,7 +17,7 @@ import {
   InspectableRunInputs,
 } from "@google-labs/breadboard";
 
-const OVERLAY_CLEARANCE = 60;
+const OVERLAY_CLEARANCE = 16;
 const MAXIMIZE_KEY = "bb-board-activity-overlay-maximized";
 
 @customElement("bb-board-activity-overlay")
@@ -56,8 +56,6 @@ export class BoardActivityOverlay extends LitElement {
   #minimizedY = 0;
   #left: number | null = null;
   #top: number | null = null;
-  #normalizedX: number | null = null;
-  #normalizedY: number | null = null;
 
   static styles = css`
     * {
@@ -115,7 +113,7 @@ export class BoardActivityOverlay extends LitElement {
       flex-direction: column;
       resize: both;
       overflow: auto;
-      height: var(--height, 70vh);
+      height: var(--height, calc(100svh - 120px));
     }
 
     :host([maximized="true"]) #wrapper {
@@ -216,43 +214,6 @@ export class BoardActivityOverlay extends LitElement {
     }
   `;
 
-  #resizeObserver = new ResizeObserver((entries) => {
-    if (!this.#overlayRef.value || !this.#wrapperRef.value) {
-      return;
-    }
-
-    const containerEntry = entries.at(-1);
-    if (!containerEntry) {
-      return;
-    }
-
-    if (!this.#left || !this.#top) {
-      const overlayBounds = this.#overlayRef.value.contentBounds;
-      this.#left = overlayBounds.left;
-      this.#top = overlayBounds.top;
-    }
-
-    if (!this.#normalizedX || !this.#normalizedY) {
-      this.#normalizedX = this.#left / containerEntry.contentRect.width;
-      this.#normalizedY = this.#top / containerEntry.contentRect.height;
-    }
-
-    this.#left = this.#normalizedX * containerEntry.contentRect.width;
-    this.#top = this.#normalizedY * containerEntry.contentRect.height;
-
-    this.#updateOverlayContentPositionAndSize();
-  });
-
-  connectedCallback(): void {
-    super.connectedCallback();
-    this.#resizeObserver.observe(this);
-  }
-
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this.#resizeObserver.unobserve(this);
-  }
-
   protected willUpdate(changedProperties: PropertyValues): void {
     if (!changedProperties.has("run")) {
       return;
@@ -275,8 +236,6 @@ export class BoardActivityOverlay extends LitElement {
       const height = contentBounds.height / 0.9;
 
       let { x, y } = this.location;
-      x -= width / 2;
-      y -= height + OVERLAY_CLEARANCE;
 
       if (x + width > window.innerWidth) {
         x = window.innerWidth - width - OVERLAY_CLEARANCE;
@@ -405,13 +364,6 @@ export class BoardActivityOverlay extends LitElement {
           }}
           @pointerup=${() => {
             dragging = false;
-
-            if (!this.#left || !this.#top) {
-              return;
-            }
-
-            this.#normalizedX = this.#left / window.innerWidth;
-            this.#normalizedY = this.#top / window.innerHeight;
           }}
           @dblclick=${() => {
             this.#toggleMaximize();
