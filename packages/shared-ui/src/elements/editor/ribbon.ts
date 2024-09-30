@@ -171,7 +171,8 @@ export class RibbonMenu extends LitElement {
     bb-node-selector {
       display: none;
       position: absolute;
-      top: calc(100% + 20px);
+      top: calc(100% + 10px);
+      height: calc(100svh - 122px);
     }
 
     #save {
@@ -729,6 +730,9 @@ export class RibbonMenu extends LitElement {
         @bbkitnodechosen=${(evt: KitNodeChosenEvent) => {
           const id = createRandomID(evt.nodeType);
           this.dispatchEvent(new NodeCreateEvent(id, evt.nodeType));
+        }}
+        @bbdismissed=${() => {
+          this.showComponentSelector = false;
         }}
       ></bb-node-selector>
       <div id="component-toggle-container">
