@@ -39,10 +39,10 @@ export class NodeSelector extends LitElement {
   #listRef: Ref<HTMLUListElement> = createRef();
   #lastSelectedId: string | null = null;
   #kitInfoTask = new Task(this, {
-    task: async () => {
-      return this.#createKitList(this.graph?.kits() || []);
+    task: async ([graph]) => {
+      return this.#createKitList(graph?.kits() || []);
     },
-    args: () => [this.graph?.kits() || []],
+    args: () => [this.graph],
   });
 
   static styles = css`
