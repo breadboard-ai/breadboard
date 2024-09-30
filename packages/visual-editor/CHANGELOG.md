@@ -1,5 +1,36 @@
 # @google-labs/breadboard-web
 
+## 1.20.0
+
+### Minor Changes
+
+- 2781bae: Offer super-nice board server first-run experience.
+- 1799348: Introduce Streamlined Schema Editor
+
+### Patch Changes
+
+- 4667d78: Add "delete property" button
+- 33f5f83: Update node selector
+- 1e7fafd: Various bug fixes
+- b5cada9: Introduce ribbon menu
+- Updated dependencies [3fcecff]
+- Updated dependencies [418c586]
+- Updated dependencies [564850b]
+- Updated dependencies [a2503de]
+- Updated dependencies [2781bae]
+- Updated dependencies [690ebe6]
+- Updated dependencies [1799348]
+- Updated dependencies [5c015f2]
+- Updated dependencies [4667d78]
+- Updated dependencies [33f5f83]
+- Updated dependencies [1e7fafd]
+- Updated dependencies [b5cada9]
+- Updated dependencies [e3a469e]
+  - @breadboard-ai/shared-ui@1.18.0
+  - @breadboard-ai/build@0.10.1
+  - @google-labs/breadboard@0.27.1
+  - @google-labs/agent-kit@0.12.1
+
 ## 1.19.0
 
 ### Minor Changes

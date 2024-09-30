@@ -133,7 +133,7 @@
     }
   },
   "dependencies": {
-    "@breadboard-ai/build": "^0.10.0",
+    "@breadboard-ai/build": "0.10.1",
     "@google-labs/core-kit": "^0.15.0",
     "@google-labs/template-kit": "^0.3.10"
   },

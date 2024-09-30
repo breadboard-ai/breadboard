@@ -128,7 +128,7 @@
     "@google-labs/json-kit": "^0.3.8",
     "@google-labs/palm-kit": "^0.1.4",
     "@google-labs/template-kit": "^0.3.10",
-    "@breadboard-ai/shared-ui": "^1.17.0",
+    "@breadboard-ai/shared-ui": "1.18.0",
     "eleventy-plugin-youtube-embed": "^1.11.0",
     "esbuild": "^0.24.0",
     "typescript": "^5.6.2"

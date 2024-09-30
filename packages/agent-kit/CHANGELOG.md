@@ -1,5 +1,14 @@
 # @google-labs/agent-kit
 
+## 0.12.1
+
+### Patch Changes
+
+- 1e7fafd: Various bug fixes
+- e3a469e: Use new build-code package to implement agent-kit substitute component
+- Updated dependencies [690ebe6]
+  - @breadboard-ai/build@0.10.1
+
 ## 0.12.0
 
 ### Minor Changes

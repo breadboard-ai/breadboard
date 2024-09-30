@@ -1,5 +1,26 @@
 # @breadboard-ai/shared-ui
 
+## 1.18.0
+
+### Minor Changes
+
+- 2781bae: Offer super-nice board server first-run experience.
+- 1799348: Introduce Streamlined Schema Editor
+
+### Patch Changes
+
+- 3fcecff: Teach Streamlined Schema Editor to use CodeMirror
+- 418c586: Various UI fixes
+- 564850b: Fix the death loop with node selector in the new ribbon UI.
+- a2503de: Show node description in Activity Log outputs
+- 4667d78: Add "delete property" button
+- 33f5f83: Update node selector
+- b5cada9: Introduce ribbon menu
+- Updated dependencies [690ebe6]
+- Updated dependencies [5c015f2]
+  - @breadboard-ai/build@0.10.1
+  - @google-labs/breadboard@0.27.1
+
 ## 1.17.0
 
 ### Minor Changes
