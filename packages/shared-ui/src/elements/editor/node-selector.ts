@@ -121,6 +121,7 @@ export class NodeSelector extends LitElement {
     li.kit-item .node-description {
       font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
         var(--bb-font-family);
+      white-space: normal;
     }
 
     #kit-list li:hover label::before {

@@ -117,6 +117,34 @@ export class OverflowMenu extends LitElement {
     button.edit {
       background-image: var(--bb-icon-edit);
     }
+
+    button.undo {
+      background-image: var(--bb-icon-undo);
+    }
+
+    button.redo {
+      background-image: var(--bb-icon-redo);
+    }
+
+    button.zoom-to-fit {
+      background-image: var(--bb-icon-fit);
+    }
+
+    button.reset-nodes {
+      background-image: var(--bb-icon-reset-nodes);
+    }
+
+    button.edit-board-details {
+      background-image: var(--bb-icon-data-info-alert);
+    }
+
+    button.board {
+      background-image: var(--bb-icon-board);
+    }
+
+    button.add-circle {
+      background-image: var(--bb-icon-add-circle);
+    }
   `;
 
   connectedCallback(): void {

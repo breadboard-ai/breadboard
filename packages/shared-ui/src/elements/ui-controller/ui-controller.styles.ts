@@ -40,10 +40,6 @@ export const styles = css`
     scrollbar-gutter: stable;
   }
 
-  #diagram {
-    border-right: 1px solid #d9d9d9;
-  }
-
   #stop {
     background: #fff var(--bb-icon-stop-circle) center center / 24px 24px
       no-repeat;

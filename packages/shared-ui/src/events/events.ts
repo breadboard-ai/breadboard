@@ -146,6 +146,34 @@ export class ToggleBoardActivityEvent extends Event {
   }
 }
 
+export class AddSubgraphEvent extends Event {
+  static eventName = "bbaddsubgraph";
+  constructor() {
+    super(AddSubgraphEvent.eventName, { ...eventInit });
+  }
+}
+
+export class ZoomToFitEvent extends Event {
+  static eventName = "bbzoomtofit";
+  constructor() {
+    super(ZoomToFitEvent.eventName, { ...eventInit });
+  }
+}
+
+export class ToggleFollowEvent extends Event {
+  static eventName = "bbtogglefollow";
+  constructor() {
+    super(ToggleFollowEvent.eventName, { ...eventInit });
+  }
+}
+
+export class ResetLayoutEvent extends Event {
+  static eventName = "bbresetlayout";
+  constructor() {
+    super(ResetLayoutEvent.eventName, { ...eventInit });
+  }
+}
+
 export class HideTooltipEvent extends Event {
   static eventName = "bbhidetooltip";
   constructor() {

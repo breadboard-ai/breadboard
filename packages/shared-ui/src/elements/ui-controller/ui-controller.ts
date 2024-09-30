@@ -111,6 +111,9 @@ export class UI extends LitElement {
   @property()
   providerOps = 0;
 
+  @property()
+  isShowingBoardActivityOverlay = false;
+
   @state()
   selectedNodeIds: string[] = [];
 
@@ -144,12 +147,14 @@ export class UI extends LitElement {
     this.#resizeObserver.unobserve(this);
   }
 
+  editorRender = 0;
   protected willUpdate(
     changedProperties:
       | PropertyValueMap<{
           boardId: number;
           subGraphId: string | null;
           readOnly: boolean | null;
+          isShowingBoardActivityOverlay: boolean | null;
         }>
       | Map<PropertyKey, unknown>
   ): void {
@@ -166,6 +171,10 @@ export class UI extends LitElement {
       changedProperties.has("readOnly")
     ) {
       this.selectedNodeIds = [];
+    }
+
+    if (changedProperties.has("isShowingBoardActivityOverlay")) {
+      this.editorRender++;
     }
   }
 
@@ -244,6 +253,7 @@ export class UI extends LitElement {
         this.topGraphResult,
         this.boardId,
         this.history,
+        this.editorRender,
         collapseNodesByDefault,
         hideSubboardSelectorWhenEmpty,
         showNodeShortcuts,
@@ -295,6 +305,7 @@ export class UI extends LitElement {
           .showExperimentalComponents=${showExperimentalComponents}
           .readOnly=${this.readOnly}
           .showReadOnlyOverlay=${true}
+          .isShowingBoardActivityOverlay=${this.isShowingBoardActivityOverlay}
           @bbmultiedit=${(evt: MultiEditEvent) => {
             const deletedNodes: RemoveNodeSpec[] = evt.edits.filter(
               (edit) => edit.type === "removenode"
@@ -423,7 +434,7 @@ export class UI extends LitElement {
       ></bb-welcome-panel>`;
     }
 
-    return html`<section id="diagram" slot="slot-0">
+    return html`<section id="diagram">
       ${this.graph === null && this.failedToLoad
         ? html`<div class="failed-to-load">
             <h1>Unable to load board</h1>

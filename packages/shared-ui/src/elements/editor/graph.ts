@@ -47,49 +47,49 @@ const nodeColors = new Map([
   [
     "specialist",
     {
-      text: getGlobalColor("--bb-specialist-600"),
+      text: getGlobalColor("--bb-neutral-900"),
       border: getGlobalColor("--bb-neutral-500"),
     },
   ],
   [
     "runJavascript",
     {
-      text: getGlobalColor("--bb-js-700"),
+      text: getGlobalColor("--bb-neutral-900"),
       border: getGlobalColor("--bb-neutral-500"),
     },
   ],
   [
     "input",
     {
-      text: getGlobalColor("--bb-input-600"),
+      text: getGlobalColor("--bb-neutral-900"),
       border: getGlobalColor("--bb-neutral-500"),
     },
   ],
   [
     "output",
     {
-      text: getGlobalColor("--bb-output-600"),
-      border: getGlobalColor("--bb-neutral-400"),
+      text: getGlobalColor("--bb-neutral-900"),
+      border: getGlobalColor("--bb-neutral-500"),
     },
   ],
   [
     "human",
     {
-      text: getGlobalColor("--bb-human-600"),
+      text: getGlobalColor("--bb-neutral-900"),
       border: getGlobalColor("--bb-neutral-500"),
     },
   ],
   [
     "looper",
     {
-      text: getGlobalColor("--bb-looper-600"),
+      text: getGlobalColor("--bb-neutral-900"),
       border: getGlobalColor("--bb-neutral-500"),
     },
   ],
   [
     "joiner",
     {
-      text: getGlobalColor("--bb-joiner-600"),
+      text: getGlobalColor("--bb-neutral-900"),
       border: getGlobalColor("--bb-neutral-500"),
     },
   ],
