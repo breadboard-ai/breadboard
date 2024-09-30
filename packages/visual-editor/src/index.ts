@@ -1781,6 +1781,9 @@ export class Main extends LitElement {
               );
             }}
           ></button>
+          <h1 id="breadboard-logo">
+            Breadboard
+          </h1>
           <div id="tab-container">
             ${map(this.#runtime?.board.tabs ?? [], ([id, tab]) => {
               let subGraphTitle: string | undefined | null = null;
@@ -1885,7 +1888,7 @@ export class Main extends LitElement {
               this.showSettingsOverlay = true;
             }}
           >
-            Edit Settings
+            Settings
           </button>
         </div>
       </header>
@@ -1911,6 +1914,7 @@ export class Main extends LitElement {
               .showWelcomePanel=${this.showWelcomePanel}
               .recentBoards=${this.#recentBoards}
               .inputsFromLastRun=${inputsFromLastRun}
+              .isShowingBoardActivityOverlay=${this.showBoardActivityOverlay}
               @bbsave=${() => {
                 this.#attemptBoardSave();
               }}
@@ -2063,6 +2067,11 @@ export class Main extends LitElement {
                       this.tab?.graph.url,
                       true
                     );
+                    break;
+                  }
+
+                  case "save": {
+                    this.#attemptBoardSave();
                     break;
                   }
 

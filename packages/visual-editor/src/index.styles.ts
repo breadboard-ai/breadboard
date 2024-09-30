@@ -27,7 +27,7 @@ export const styles = css`
     height: 24px;
     background: var(--bb-icon-menu) center center no-repeat;
     border: none;
-    margin-right: calc(var(--bb-grid-size) * 2);
+    margin-right: var(--bb-grid-size-2);
     cursor: pointer;
   }
 
@@ -190,7 +190,19 @@ export const styles = css`
     align-items: center;
     width: 100%;
     height: 100%;
-    padding: 0 calc(var(--bb-grid-size) * 2);
+    padding: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size-3);
+  }
+
+  #header-bar h1 {
+    font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
+      var(--bb-font-family);
+    margin-right: var(--bb-grid-size-6);
+    padding-left: var(--bb-grid-size-7);
+    margin-left: var(--bb-grid-size-2);
+    background: url(/images/bb-logo-inverted.svg) left center no-repeat;
+    height: 100%;
+    display: flex;
+    align-items: center;
   }
 
   #header-bar #tab-container {

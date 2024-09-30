@@ -45,7 +45,7 @@ export class Tooltip extends LitElement {
     :host {
       display: none;
       position: fixed;
-      background: var(--bb-neutral-600);
+      background: var(--bb-neutral-700);
       color: var(--bb-neutral-100);
       padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
       border-radius: var(--bb-grid-size);
