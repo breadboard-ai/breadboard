@@ -96,8 +96,8 @@
     "vitest": "^2.1.1"
   },
   "dependencies": {
-    "@breadboard-ai/build": "^0.10.1",
-    "@breadboard-ai/data-store": "^0.2.3",
+    "@breadboard-ai/build": "0.10.1",
+    "@breadboard-ai/data-store": "0.2.3",
     "@codemirror/autocomplete": "^6.18.1",
     "@codemirror/commands": "^6.6.2",
     "@codemirror/lang-javascript": "^6.2.2",

@@ -100,7 +100,7 @@
     "typescript": "^5.6.2"
   },
   "dependencies": {
-    "@breadboard-ai/build": "^0.10.0",
+    "@breadboard-ai/build": "0.10.1",
     "@google-labs/breadboard": "^0.27.0",
     "@rgrove/parse-xml": "^4.1.0",
     "@types/json-schema": "^7.0.15",

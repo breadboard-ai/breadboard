@@ -104,7 +104,7 @@
     }
   },
   "dependencies": {
-    "@breadboard-ai/build": "^0.10.1",
+    "@breadboard-ai/build": "0.10.1",
     "@google-labs/core-kit": "^0.15.0",
     "@types/node": "^22.0.0",
     "esbuild": "^0.24.0",
