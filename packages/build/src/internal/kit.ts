@@ -7,6 +7,7 @@
 import {
   addKit,
   Board,
+  inspect,
   type BreadboardNode,
   type ConfigOrGraph,
   type InputValues,
@@ -21,6 +22,7 @@ import {
   type NodeHandlers,
 } from "@google-labs/breadboard";
 import type {
+  GraphDescriptor,
   KitTag,
   SubGraphs,
 } from "@google-labs/breadboard-schema/graph.js";
@@ -36,7 +38,7 @@ import {
 
 type ComponentManifest = Record<
   string,
-  GenericDiscreteComponent | BoardDefinition
+  GenericDiscreteComponent | BoardDefinition | GraphDescriptor
 >;
 
 export interface KitOptions<T extends ComponentManifest = ComponentManifest> {
@@ -56,9 +58,9 @@ type KitWithKnownHandlers<T extends ComponentManifest> = Kit & {
   handlers: { [K in keyof T]: NodeHandlerObject };
 };
 
-export function kit<T extends ComponentManifest>(
+export async function kit<T extends ComponentManifest>(
   options: KitOptions<T>
-): BuildKit<T> {
+): Promise<BuildKit<T>> {
   const handlers: Record<string, NodeHandler> = {};
 
   // TODO(aomarks) Unclear why this needs to be a class, and why it needs
@@ -77,22 +79,21 @@ export function kit<T extends ComponentManifest>(
   const kitBoundComponents = Object.fromEntries(
     Object.entries(options.components).map(([id, component]) => [
       id,
-      bindComponentToKit(component, { kit, id }),
+      isGraphDescriptor(component)
+        ? component
+        : bindComponentToKit(component, { kit, id }),
     ])
   );
 
-  Object.assign(
-    handlers,
-    Object.fromEntries(
-      Object.entries(kitBoundComponents).map(([id, component]) => {
-        if (isDiscreteComponent(component)) {
-          return [id, component];
-        } else {
-          return [id, makeBoardComponentHandler(component)];
-        }
-      })
-    )
-  );
+  for (const [id, component] of Object.entries(kitBoundComponents)) {
+    if (isDiscreteComponent(component)) {
+      handlers[id] = component;
+    } else if (isGraphDescriptor(component)) {
+      handlers[id] = await makeGraphDescriptorComponentHandler(id, component);
+    } else {
+      handlers[id] = makeBoardComponentHandler(component);
+    }
+  }
 
   return Object.assign(kit, {
     ...kitBoundComponents,
@@ -123,6 +124,34 @@ function makeBoardComponentHandler(board: BoardDefinition): NodeHandler {
         };
       }
       return invoke({ ...inputs, $board: serialized }, context);
+    },
+  };
+}
+
+async function makeGraphDescriptorComponentHandler(
+  id: string,
+  descriptor: GraphDescriptor
+): Promise<NodeHandler> {
+  const description = await inspect(descriptor).describe();
+  return {
+    metadata: {
+      ...descriptor.metadata,
+      title: descriptor.title,
+      description: descriptor.description,
+    },
+    describe: () => Promise.resolve(description),
+    async invoke(inputs: InputValues, context: NodeHandlerContext) {
+      // Assume that invoke is available, since that's part of core kit, and use
+      // that to execute our serialized board.
+      const invoke = findInvokeFunctionFromContext(context);
+      if (invoke === undefined) {
+        return {
+          $error:
+            `Could not find an "invoke" node in the given context while ` +
+            `trying to execute the board with id "${id}" as component.`,
+        };
+      }
+      return invoke({ ...inputs, $board: descriptor }, context);
     },
   };
 }
@@ -204,7 +233,9 @@ async function makeLegacyKit<T extends ComponentManifest>({
           description: component.description ?? component.metadata?.description,
         },
       });
-      graphs[id] = serialize(component);
+      graphs[id] = isGraphDescriptor(component)
+        ? component
+        : serialize(component);
       handlers[id] = adapter.handlerForNode(id);
     }
   }
@@ -219,13 +250,23 @@ type LegacyKit<T extends ComponentManifest> = {
   [K in keyof T]: LegacyNodeSignature<T[K]>;
 };
 
-type LegacyNodeSignature<T extends GenericDiscreteComponent | BoardDefinition> =
-  T extends
-    | BoardDefinition<infer I, infer O>
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    | Definition<infer I, infer O, any, any, any, any, any, any, any>
-    ? NewNodeFactory<
-        Expand<Required<{ [K in keyof I]: NewNodeValue }>>,
-        Expand<Required<{ [K in keyof O]: NewNodeValue }>>
-      >
-    : never;
+type LegacyNodeSignature<
+  T extends GenericDiscreteComponent | BoardDefinition | GraphDescriptor,
+> = T extends
+  | BoardDefinition<infer I, infer O>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  | Definition<infer I, infer O, any, any, any, any, any, any, any>
+  ? NewNodeFactory<
+      Expand<Required<{ [K in keyof I]: NewNodeValue }>>,
+      Expand<Required<{ [K in keyof O]: NewNodeValue }>>
+    >
+  : NewNodeFactory;
+
+function isGraphDescriptor(value: unknown): value is GraphDescriptor {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "nodes" in value &&
+    "edges" in value
+  );
+}

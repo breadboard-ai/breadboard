@@ -48,6 +48,14 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
           },
         ],
         [
+          "Show Tooltips",
+          {
+            name: "Show Tooltips",
+            description: "Toggles the tooltips on UI items",
+            value: true,
+          },
+        ],
+        [
           "Collapse Nodes by Default",
           {
             name: "Collapse Nodes by Default",
@@ -151,6 +159,15 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
             name: "Use Local Secrets Only",
             description:
               "When unchecked (default), the board server's secrets and locally-stored secrets will be used to run the board from that server. When checked, only locally-stored secrets will be used.",
+            value: false,
+          },
+        ],
+        [
+          "Use Experimental Board Server",
+          {
+            name: "Use Experimental Board Server",
+            description:
+              "[Unstable] Allows the runtime to use a local Board Server",
             value: false,
           },
         ],

@@ -293,27 +293,8 @@ export class ActivityLog extends LitElement {
       [] as UserInputConfiguration[]
     );
 
-    // Potentially do the autosubmit.
+    // If there aren't any secrets to enter, we can skip rendering the control.
     if (userInputs.every((secret) => secret.value !== undefined)) {
-      for (const input of userInputs) {
-        if (typeof input.value !== "string") {
-          console.warn(
-            `Expected secret as string, instead received ${typeof input.value}`
-          );
-          continue;
-        }
-
-        // Dispatch an event for each secret received.
-        this.dispatchEvent(
-          new InputEnterEvent(
-            input.name,
-            { secret: input.value },
-            /* allowSavingIfSecret */ true
-          )
-        );
-      }
-
-      // If we have chosen to autosubmit do not render the control.
       return html``;
     }
 
@@ -415,6 +396,10 @@ export class ActivityLog extends LitElement {
         }
       }
 
+      if (schema.type === "string" && typeof value === "object") {
+        value = undefined;
+      }
+
       prev.push({
         name,
         title: schema.title ?? name,
@@ -451,6 +436,7 @@ export class ActivityLog extends LitElement {
       <h1 ?data-message-idx=${this.showExtendedInfo ? idx : nothing}>
         ${node.title()}
       </h1>
+      ${node.description() ? html`<h2>${node.description()}</h2>` : nothing}
       <bb-user-input
         id="${descriptor.id}"
         .providers=${this.providers}
@@ -565,7 +551,23 @@ export class ActivityLog extends LitElement {
                   >`
               : nothing}
           </h1>`
-        : nothing}
+        : html`${showLogDownload
+            ? downloadReady
+              ? html`<aside id="download-container">
+                  <a
+                    class="download"
+                    @click=${(evt: Event) => this.#download(evt)}
+                    >Click to Download</a
+                  >
+                </aside>`
+              : html`<aside id="download-container">
+                  <a
+                    class="download"
+                    @click=${(evt: Event) => this.#getRunLog(evt)}
+                    >Download</a
+                  >
+                </aside>`
+            : nothing}`}
       ${this.events && this.events.length
         ? this.events.map((event, idx) => {
             const isNew = this.#seenItems.has(event.id);
@@ -613,6 +615,9 @@ export class ActivityLog extends LitElement {
                     >
                       ${node.title()}
                     </h1>
+                    ${node.description()
+                      ? html`<h2>${node.description()}</h2>`
+                      : nothing}
                     ${until(additionalData)} ${this.#createRunInfo(event.runs)}
                   </section>`;
                   break;

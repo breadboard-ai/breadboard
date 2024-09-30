@@ -43,10 +43,10 @@ const createAPIKey = async () => {
   return `bb-${hashHex.slice(0, 50)}`;
 };
 
-export async function createAccount(username: string) {
+export async function createAccount(username: string, key?: string) {
   const store = getStore();
 
-  const key = await createAPIKey();
+  key ??= await createAPIKey();
 
   await store!.createUser(username, key);
 
@@ -76,6 +76,10 @@ export type ServerInfo = {
   title?: string;
   description?: string;
   capabilities?: Partial<Record<ServerCapability, ServerCapabilityInfo>>;
+  /**
+   * The URL of the server
+   */
+  url?: string;
 };
 
 export const asPath = (userStore: string, boardName: string) => {

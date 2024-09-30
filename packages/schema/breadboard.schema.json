@@ -1,5 +1,5 @@
 {
-	"$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.7.0/packages/schema/breadboard.schema.json",
+	"$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.8.0/packages/schema/breadboard.schema.json",
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"$ref": "#/definitions/GraphDescriptor",
 	"definitions": {
@@ -188,6 +188,9 @@
 			"additionalProperties": {
 				"$ref": "#/definitions/NodeValue"
 			},
+			"propertyNames": {
+				"description": "Unique identifier of a node's output."
+			},
 			"description": "Values that the `NodeHandler` outputs."
 		},
 		"NodeIdentifier": {
@@ -237,6 +240,10 @@
 					],
 					"additionalProperties": false,
 					"description": "The documentation for the graph, expressed as a URL and optional description."
+				},
+				"describer": {
+					"type": "string",
+					"description": "The URL of the graph that will act as the describer for this graph. Can be a relative URL and refer to a sub-graph within this graph."
 				},
 				"visual": {
 					"type": "object",

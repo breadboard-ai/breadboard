@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "A Breadboard kit for using Gemini API",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -100,16 +100,16 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@google-labs/breadboard-cli": "^0.11.1",
+    "@google-labs/breadboard-cli": "^0.11.2",
     "@google-labs/tsconfig": "^0.0.1",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.6.2"
   },
   "dependencies": {
-    "@breadboard-ai/build": "^0.9.1",
-    "@google-labs/breadboard": "^0.26.0",
-    "@google-labs/core-kit": "^0.14.1",
-    "@google-labs/template-kit": "^0.3.9"
+    "@breadboard-ai/build": "^0.10.0",
+    "@google-labs/breadboard": "^0.27.0",
+    "@google-labs/core-kit": "^0.15.0",
+    "@google-labs/template-kit": "^0.3.10"
   }
 }

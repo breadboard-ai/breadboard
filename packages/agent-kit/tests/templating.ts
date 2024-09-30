@@ -5,18 +5,19 @@
  */
 
 import { describe, it } from "node:test";
+import { InlineDataCapabilityPart } from "@google-labs/breadboard";
+import { deepStrictEqual, ok } from "node:assert";
 import {
-  substitute,
-  content,
   describeSpecialist,
+  content,
   describeContent,
-} from "../src/future/templating.js";
-import { InlineDataCapabilityPart, LLMContent } from "@google-labs/breadboard";
-import { deepStrictEqual } from "node:assert";
+} from "../src/templating.js";
+import { LlmContent } from "../src/context.js";
+import { run as substitute } from "../src/js-components/substitute.js";
 
 describe("Templating", () => {
   it("does simple substitution", async () => {
-    const context: LLMContent[] = [];
+    const context: LlmContent[] = [];
     const persona = llmContent("user", "You're a {{character}}, {{name}}.");
     const task = llmContent("user", "Act like a {{character}}.");
     const character = "wizard";
@@ -24,18 +25,68 @@ describe("Templating", () => {
       in: context,
       persona,
       task,
-      "p-character": character,
-      "p-name": "Harry",
+      ["p-character" as never]: character,
+      ["p-name" as never]: "Harry",
     });
     deepStrictEqual(result, {
       in: [],
       persona: llmContent("user", "You're a wizard, Harry."),
       task: llmContent("user", "Act like a wizard."),
+      outs: [],
+    });
+  });
+
+  it("does simple substitution with whitespaces in params", async () => {
+    const context: LlmContent[] = [];
+    const persona = llmContent("user", "You're a {{ character}}, {{ name }}.");
+    const task = llmContent("user", "Act like a {{character     }}.");
+    const character = "wizard";
+    const result = substitute({
+      in: context,
+      persona,
+      task,
+      ["p-character" as never]: character,
+      ["p-name" as never]: "Harry",
+    });
+    deepStrictEqual(result, {
+      in: [],
+      persona: llmContent("user", "You're a wizard, Harry."),
+      task: llmContent("user", "Act like a wizard."),
+      outs: [],
+    });
+  });
+
+  it("does simple substitution with op and arg", async () => {
+    const context: LlmContent[] = [];
+    const persona = llmContent(
+      "user",
+      "You're a {{ character | out }}, {{ name | in }}."
+    );
+    const task = llmContent("user", 'Act like a {{character | out: "test" }}.');
+    const character = "wizard";
+    const result = substitute({
+      in: context,
+      persona,
+      task,
+      ["p-character" as never]: character,
+      ["p-name" as never]: "Harry",
+    });
+    deepStrictEqual(result, {
+      in: [],
+      persona: llmContent("user", 'You\'re a "TOOL_CHARACTER", Harry.'),
+      task: llmContent("user", 'Act like a "TOOL_CHARACTER".'),
+      outs: [
+        {
+          name: "TOOL_CHARACTER",
+          description:
+            'Call this function when asked to invoke the "TOOL_CHARACTER" tool.',
+        },
+      ],
     });
   });
 
   it("does simple LLM Content object substitution", async () => {
-    const context: LLMContent[] = [];
+    const context: LlmContent[] = [];
     const persona = llmContent("user", "You're a {{character}}, {{name}}.");
     const task = llmContent("user", "Act like a {{character}}.");
     const character = llmContent("user", "wizard");
@@ -44,18 +95,19 @@ describe("Templating", () => {
       in: context,
       persona,
       task,
-      "p-character": character,
-      "p-name": name,
+      ["p-character" as never]: character,
+      ["p-name" as never]: name,
     });
     deepStrictEqual(result, {
       in: [],
       persona: llmContent("user", "You're a wizard, Harry."),
       task: llmContent("user", "Act like a wizard."),
+      outs: [],
     });
   });
 
   it("does part-splicing LLM Content object substitution", async () => {
-    const context: LLMContent[] = [];
+    const context: LlmContent[] = [];
     const persona = llmContent("user", "You're a {{character}}, {{name}}.");
     const task = llmContent("user", "Act like a {{character}}.");
     const character = llmContent("user", "wizard");
@@ -64,18 +116,19 @@ describe("Templating", () => {
       in: context,
       persona,
       task,
-      "p-character": character,
-      "p-name": name,
+      ["p-character" as never]: character,
+      ["p-name" as never]: name,
     });
     deepStrictEqual(result, {
       in: [],
       persona: llmContent("user", "You're a wizard, Harry Potter."),
       task: llmContent("user", "Act like a wizard."),
+      outs: [],
     });
   });
 
   it("works with LLM Content Array arguments", async () => {
-    const context: LLMContent[] = [];
+    const context: LlmContent[] = [];
     const persona = llmContent("user", "You're a {{character}}, {{name}}.");
     const task = llmContent("user", "Act like a {{character}}.");
     const character = [llmContent("user", "wizard")];
@@ -84,18 +137,19 @@ describe("Templating", () => {
       in: context,
       persona,
       task,
-      "p-character": character,
-      "p-name": name,
+      ["p-character" as never]: character,
+      ["p-name" as never]: name,
     });
     deepStrictEqual(result, {
       in: [],
       persona: llmContent("user", "You're a wizard, Harry Potter."),
       task: llmContent("user", "Act like a wizard."),
+      outs: [],
     });
   });
 
   it("works with other primitive types", async () => {
-    const context: LLMContent[] = [];
+    const context: LlmContent[] = [];
     const persona = llmContent("user", "You're a {{character}}, {{name}}.");
     const task = llmContent("user", "Act like a {{character}}.");
     const character = true;
@@ -104,18 +158,19 @@ describe("Templating", () => {
       in: context,
       persona,
       task,
-      "p-character": character,
-      "p-name": name,
+      ["p-character" as never]: character,
+      ["p-name" as never]: name,
     });
     deepStrictEqual(result, {
       in: [],
       persona: llmContent("user", "You're a true, 42."),
       task: llmContent("user", "Act like a true."),
+      outs: [],
     });
   });
 
   it("works with arbitrary objects", async () => {
-    const context: LLMContent[] = [];
+    const context: LlmContent[] = [];
     const persona = llmContent("user", "You're a {{character}}, {{name}}.");
     const task = llmContent("user", "Act like a {{character}}.");
     const character = { wizard: true };
@@ -124,18 +179,19 @@ describe("Templating", () => {
       in: context,
       persona,
       task,
-      "p-character": character,
-      "p-name": name,
+      ["p-character" as never]: character,
+      ["p-name" as never]: name,
     });
     deepStrictEqual(result, {
       in: [],
       persona: llmContent("user", 'You\'re a {"wizard":true}, Harry.'),
       task: llmContent("user", 'Act like a {"wizard":true}.'),
+      outs: [],
     });
   });
 
   it("works with other part types", async () => {
-    const context: LLMContent[] = [];
+    const context: LlmContent[] = [];
     const persona = llmContent("user", "You're a {{character}}, {{name}}.");
     const task = llmContent("user", "Act like a {{character}}.");
     const character = llmContent("user", "wizard");
@@ -148,8 +204,8 @@ describe("Templating", () => {
       in: context,
       persona,
       task,
-      "p-character": character,
-      "p-name": name,
+      ["p-character" as never]: character,
+      ["p-name" as never]: name,
     });
     deepStrictEqual(result, {
       in: [],
@@ -160,6 +216,7 @@ describe("Templating", () => {
         "."
       ),
       task: llmContent("user", "Act like a wizard."),
+      outs: [],
     });
   });
 });
@@ -175,7 +232,7 @@ describe("Content component", () => {
   });
 
   it("correcly elides empty context", () => {
-    const context: LLMContent[] = [];
+    const context: LlmContent[] = [];
     const template = llmContent("user", "You're a wizard, Harry.");
     const result = content({ context, template });
     deepStrictEqual(result, {
@@ -193,7 +250,7 @@ describe("Content component", () => {
   });
 
   it("does simple substitution", () => {
-    const context: LLMContent[] = [];
+    const context: LlmContent[] = [];
     const template = llmContent("user", "Act like a {{role}}.");
     const role = "wizard";
     const result = content({ context, template, "p-role": role });
@@ -203,7 +260,7 @@ describe("Content component", () => {
   });
 
   it("does simple LLM Content object substitution", () => {
-    const context: LLMContent[] = [];
+    const context: LlmContent[] = [];
     const template = llmContent("user", "Act like a {{role}}.");
     const role = llmContent("user", "wizard");
     const result = content({ context, template, "p-role": role });
@@ -253,6 +310,9 @@ describe("Specialist v2 describer", () => {
     });
 
     const paramProps = result.inputSchema.properties;
+    delete paramProps.in;
+    delete paramProps.persona;
+    delete paramProps.task;
     deepStrictEqual(paramProps, {
       "p-character": {
         description: 'The value to substitute for the parameter "character"',
@@ -262,6 +322,78 @@ describe("Specialist v2 describer", () => {
       "p-name": {
         description: 'The value to substitute for the parameter "name"',
         title: "Name",
+        type: "string",
+      },
+    });
+  });
+
+  it("handles whitespace in parameter names", () => {
+    const $inputSchema = {};
+    const $outputSchema = {};
+    const persona = llmContent("user", "You're a {{ character}}, {{ name }}.");
+    const task = llmContent("user", "Act like a {{character }}.");
+
+    const result = describeSpecialist({
+      $inputSchema,
+      $outputSchema,
+      persona,
+      task,
+    });
+
+    const paramProps = result.inputSchema.properties;
+    delete paramProps.in;
+    delete paramProps.persona;
+    delete paramProps.task;
+    deepStrictEqual(paramProps, {
+      "p-character": {
+        description: 'The value to substitute for the parameter "character"',
+        title: "Character",
+        type: "string",
+      },
+      "p-name": {
+        description: 'The value to substitute for the parameter "name"',
+        title: "Name",
+        type: "string",
+      },
+    });
+  });
+
+  it("recognizes outputs", () => {
+    const $inputSchema = {};
+    const $outputSchema = {};
+    const persona = llmContent("user", "You're a {{character}}, {{name}}.");
+    const task = llmContent("user", "Act like a {{character | out}}.");
+
+    const result = describeSpecialist({
+      $inputSchema,
+      $outputSchema,
+      persona,
+      task,
+    });
+
+    const paramProps = result.inputSchema.properties;
+    delete paramProps.in;
+    delete paramProps.persona;
+    delete paramProps.task;
+    deepStrictEqual(paramProps, {
+      "p-character": {
+        description: 'The value to substitute for the parameter "character"',
+        title: "Character",
+        type: "string",
+      },
+      "p-name": {
+        description: 'The value to substitute for the parameter "name"',
+        title: "Name",
+        type: "string",
+      },
+    });
+    const outputProps = result.outputSchema.properties;
+    ok(outputProps);
+    delete outputProps.out;
+    deepStrictEqual(outputProps, {
+      "p-TOOL_CHARACTER": {
+        description: 'The output chosen when the "character" tool is invoked',
+        title: "Character",
         type: "string",
       },
     });
@@ -280,7 +412,11 @@ describe("Content describer", () => {
       template,
     });
 
-    deepStrictEqual(result.inputSchema.properties, {});
+    const paramProps = result.inputSchema.properties;
+    delete paramProps.context;
+    delete paramProps.template;
+
+    deepStrictEqual(paramProps, {});
   });
 
   it("correctly collects parameters", () => {
@@ -295,6 +431,31 @@ describe("Content describer", () => {
     });
 
     const paramProps = result.inputSchema.properties;
+    delete paramProps.context;
+    delete paramProps.template;
+    deepStrictEqual(paramProps, {
+      "p-role": {
+        description: 'The value to substitute for the parameter "role"',
+        title: "Role",
+        type: "string",
+      },
+    });
+  });
+
+  it("handles whitespace in parameter names", () => {
+    const $inputSchema = {};
+    const $outputSchema = {};
+    const template = llmContent("user", "Act like a {{ role  }}.");
+
+    const result = describeContent({
+      $inputSchema,
+      $outputSchema,
+      template,
+    });
+
+    const paramProps = result.inputSchema.properties;
+    delete paramProps.context;
+    delete paramProps.template;
     deepStrictEqual(paramProps, {
       "p-role": {
         description: 'The value to substitute for the parameter "role"',
@@ -317,7 +478,7 @@ function inlineData(data: string, mimeType: string): InlineDataCapabilityPart {
 function llmContent(
   role: "user" | "model",
   ...text: (string | InlineDataCapabilityPart)[]
-): LLMContent {
+): LlmContent {
   if (text.length === 0) {
     return { parts: [{ text: "" }], role };
   }
@@ -329,5 +490,5 @@ function llmContent(
       }
       return t;
     }),
-  };
+  } as LlmContent;
 }

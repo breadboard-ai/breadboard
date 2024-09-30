@@ -301,6 +301,12 @@ export type GraphMetadata = {
     url: string;
   };
   /**
+   * The URL of the graph that will act as the describer for
+   * this graph. Can be a relative URL and refer to a sub-graph
+   * within this graph.
+   */
+  describer?: string;
+  /**
    * The metadata associated with the visual representation of the graph.
    */
   visual?: {
@@ -425,7 +431,7 @@ export type InputValues = Record<InputIdentifier, NodeValue>;
 /**
  * Values that the `NodeHandler` outputs.
  */
-export type OutputValues = Partial<Record<OutputIdentifier, NodeValue>>;
+export type OutputValues = Record<OutputIdentifier, NodeValue>;
 
 /**
  * Values that are supplied as part of the graph. These values are merged with

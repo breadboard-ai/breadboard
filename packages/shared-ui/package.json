@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/shared-ui",
-  "version": "1.16.1",
+  "version": "1.17.0",
   "description": "Shared UI components for Breadboard",
   "main": "./dist/index.js",
   "exports": {
@@ -89,21 +89,22 @@
     "ava": "^5.2.0",
     "dotenv": "^16.4.5",
     "tsx": "^4.19.1",
-    "typescript": "^5.5.4",
-    "vite": "^5.4.6",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.8",
     "vite-plugin-full-reload": "^1.2.0",
     "vite-plugin-watch-and-run": "^1.7.0",
-    "vitest": "^2.0.5"
+    "vitest": "^2.1.1"
   },
   "dependencies": {
-    "@breadboard-ai/build": "^0.9.1",
-    "@breadboard-ai/data-store": "^0.2.2",
+    "@breadboard-ai/build": "^0.10.0",
+    "@breadboard-ai/data-store": "^0.2.3",
     "@codemirror/autocomplete": "^6.18.1",
-    "@codemirror/commands": "^6.6.1",
+    "@codemirror/commands": "^6.6.2",
     "@codemirror/lang-javascript": "^6.2.2",
+    "@codemirror/lang-json": "^6.0.1",
     "@dagrejs/dagre": "^1.1.4",
-    "@google-labs/breadboard": "^0.26.0",
-    "@google-labs/breadboard-schema": "^1.7.0",
+    "@google-labs/breadboard": "^0.27.0",
+    "@google-labs/breadboard-schema": "^1.8.0",
     "@lit/context": "^1.1.2",
     "@lit/task": "^1.0.1",
     "@types/gapi": "^0.0.47",
@@ -115,6 +116,6 @@
     "idb-keyval": "^6.2.1",
     "lit": "^3.2.0",
     "markdown-it": "^14.1.0",
-    "pixi.js": "^8.3.4"
+    "pixi.js": "^8.4.1"
   }
 }

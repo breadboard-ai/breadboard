@@ -40,7 +40,8 @@ export const styles = css`
     background: #f6f6f6;
   }
 
-  :host > h1 > a {
+  :host > h1 > a,
+  a.download {
     font-size: var(--bb-label-small);
     color: var(--bb-neutral-500);
     text-decoration: none;
@@ -49,8 +50,15 @@ export const styles = css`
   }
 
   :host > h1 > a:hover,
-  :host > h1 > a:active {
+  :host > h1 > a:active,
+  a.download:hover,
+  a.download:active {
     color: var(--bb-neutral-700);
+  }
+
+  #download-container {
+    display: flex;
+    justify-content: flex-end;
   }
 
   .activity-entry {
@@ -66,7 +74,7 @@ export const styles = css`
   }
 
   :host > .activity-entry:last-of-type {
-    margin-bottom: 100px;
+    margin-bottom: 20px;
   }
 
   .activity-entry.error {
@@ -78,6 +86,13 @@ export const styles = css`
     font-size: var(--bb-text-regular);
     margin: 0;
     font-weight: 400;
+  }
+
+  .activity-entry h2 {
+    font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+      var(--bb-font-family);
+    color: var(--bb-neutral-600);
+    margin: var(--bb-grid-size) 0 var(--bb-grid-size-2) 0;
   }
 
   .activity-entry h1 .newest-task {
@@ -260,13 +275,13 @@ export const styles = css`
 
   h1[data-message-id] {
     cursor: pointer;
-    opacity: 0.65;
-    transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+    opacity: 1;
+    transition: color 0.3s cubic-bezier(0, 0, 0.3, 1);
   }
 
   h1[data-message-id]:hover,
   h1[data-message-id]:focus {
-    opacity: 1;
+    color: var(--bb-ui-800);
     transition-duration: 0.1s;
   }
 
@@ -307,9 +322,12 @@ export const styles = css`
   }
 
   dd {
-    display: block;
-    margin: var(--bb-grid-size-2) 0 var(--bb-grid-size) 0;
-    font-size: var(--bb-text-small);
+    display: flex;
+    align-items: center;
+    font: 600 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+      var(--bb-font-family);
+    padding: var(--bb-grid-size-2) 0 var(--bb-grid-size) 0;
+    margin: 0;
   }
 
   dt {

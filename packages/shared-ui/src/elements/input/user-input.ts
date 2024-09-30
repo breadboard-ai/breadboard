@@ -27,11 +27,17 @@ import {
 } from "../../utils/index.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { CodeEditor, LLMInput, LLMInputArray } from "../elements";
+import {
+  CodeEditor,
+  LLMInput,
+  LLMInputArray,
+  StreamlinedSchemaEditor,
+} from "../elements";
 import {
   GraphDescriptor,
   GraphProvider,
   isLLMContent,
+  isLLMContentArray,
   LLMContent,
   NodeValue,
 } from "@google-labs/breadboard";
@@ -216,6 +222,12 @@ export class UserInput extends LitElement {
     )) {
       editor.destroy();
     }
+
+    for (const editor of this.#formRef.value.querySelectorAll<StreamlinedSchemaEditor>(
+      "bb-streamlined-schema-editor"
+    )) {
+      editor.destroyEditorsIfNeeded();
+    }
   }
 
   #onFormSubmit(evt: SubmitEvent) {
@@ -232,6 +244,14 @@ export class UserInput extends LitElement {
         this.#formRef.value.reportValidity();
       }
       return null;
+    }
+
+    for (const editor of this.#formRef.value.querySelectorAll<StreamlinedSchemaEditor>(
+      "bb-streamlined-schema-editor"
+    )) {
+      if (!editor.checkValidity()) {
+        return null;
+      }
     }
 
     const outputs: UserOutputValues = this.inputs
@@ -327,7 +347,10 @@ export class UserInput extends LitElement {
   }
 
   #createId(name: string) {
-    return name.toLocaleLowerCase().replace(/^\$/, "__");
+    return name
+      .toLocaleLowerCase()
+      .replace(/[\s\W]/gi, "-")
+      .replace(/^\$/, "__");
   }
 
   render() {
@@ -354,12 +377,19 @@ export class UserInput extends LitElement {
             >`;
           }
 
-          const unparsedDefaultValue =
-            input.schema.examples && input.schema.examples.length > 0
-              ? input.schema.examples[0]
-              : typeof input.schema.default === "string"
-                ? input.schema.default
-                : "";
+          let unparsedDefaultValue = "";
+          if (input.schema.examples && input.schema.examples.length > 0) {
+            unparsedDefaultValue = input.schema.examples[0];
+          } else if (typeof input.schema.default === "string") {
+            unparsedDefaultValue = input.schema.default;
+          } else if (isLLMContentArrayBehavior(input.schema)) {
+            if (
+              typeof input.schema.items === "object" &&
+              !Array.isArray(input.schema.items)
+            ) {
+              unparsedDefaultValue = input.schema.items.default ?? "";
+            }
+          }
 
           let defaultValue: unknown = unparsedDefaultValue;
           try {
@@ -370,7 +400,11 @@ export class UserInput extends LitElement {
               input.schema.type === "array"
             ) {
               if (defaultValue !== "") {
-                defaultValue = JSON.parse(unparsedDefaultValue);
+                try {
+                  defaultValue = JSON.parse(unparsedDefaultValue);
+                } catch (err) {
+                  defaultValue = null;
+                }
               } else {
                 defaultValue = null;
               }
@@ -379,6 +413,7 @@ export class UserInput extends LitElement {
                 try {
                   assertIsLLMContent(defaultValue);
                 } catch (err) {
+                  console.warn(err);
                   defaultValue = null;
                 }
               }
@@ -407,11 +442,8 @@ export class UserInput extends LitElement {
                 if (isLLMContentArrayBehavior(input.schema)) {
                   let value: LLMContent[] | null =
                     (input.value as LLMContent[]) ?? null;
-                  if (!value) {
-                    const unparsedValue = input.schema.default;
-                    value = unparsedValue
-                      ? JSON.parse(unparsedValue)
-                      : [{ parts: [], role: "user" }];
+                  if (!value && isLLMContentArray(defaultValue)) {
+                    value = defaultValue;
                   }
 
                   const allow = createAllowListFromProperty(input.schema);
@@ -463,13 +495,21 @@ export class UserInput extends LitElement {
 
               case "object": {
                 if (isPortSpecBehavior(input.schema)) {
-                  inputField = html`<bb-schema-editor
+                  if (typeof input.value === "string") {
+                    try {
+                      input.value = JSON.parse(input.value);
+                    } catch (err) {
+                      console.warn(`Unable to convert value`);
+                    }
+                  }
+
+                  inputField = html`<bb-streamlined-schema-editor
                     id=${id}
                     name=${id}
                     .nodeId=${input.name}
                     .schema=${input.value}
                     .schemaVersion=${0}
-                  ></bb-schema-editor>`;
+                  ></bb-streamlined-schema-editor>`;
                   break;
                 } else if (isLLMContentBehavior(input.schema)) {
                   if (!isLLMContent(input.value)) {

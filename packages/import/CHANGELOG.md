@@ -1,5 +1,35 @@
 # @breadboard-ai/import
 
+## 0.1.10
+
+### Patch Changes
+
+- Updated dependencies [703f17d]
+- Updated dependencies [6136d87]
+- Updated dependencies [cb8c99a]
+- Updated dependencies [4dadf16]
+- Updated dependencies [8f9fddf]
+- Updated dependencies [f61ccf3]
+- Updated dependencies [e61fa66]
+- Updated dependencies [a104fa7]
+- Updated dependencies [8a1b8c4]
+- Updated dependencies [9797718]
+- Updated dependencies [8540b93]
+- Updated dependencies [81eafad]
+- Updated dependencies [4c03455]
+- Updated dependencies [3137076]
+- Updated dependencies [157c31e]
+- Updated dependencies [4cc71ee]
+- Updated dependencies [a039d2e]
+- Updated dependencies [9783ba8]
+- Updated dependencies [aafec7f]
+- Updated dependencies [1ad3001]
+- Updated dependencies [d7606d3]
+- Updated dependencies [84ca649]
+- Updated dependencies [d9fd0ab]
+- Updated dependencies [a6128a3]
+  - @google-labs/breadboard@0.27.0
+
 ## 0.1.9
 
 ### Patch Changes

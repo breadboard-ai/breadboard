@@ -9,7 +9,7 @@ import exportFile from "./components/export-file.js";
 import getFileContent from "./components/get-file-content.js";
 import listFiles from "./components/list-files.js";
 
-export default kit({
+export default await kit({
   title: "Google Drive Kit",
   url: "npm:@breadboard-ai/google-drive-kit",
   description:

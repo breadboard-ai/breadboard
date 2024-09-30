@@ -37,6 +37,17 @@ export class Overlay extends LitElement {
       background: rgba(0, 0, 0, 0.15);
     }
 
+    #wrapper {
+      min-width: 300px;
+      width: max(40vw, 450px);
+      min-height: 250px;
+      height: max(50vh, 450px);
+      display: flex;
+      flex-direction: column;
+      resize: both;
+      overflow: auto;
+    }
+
     #content {
       border-radius: calc(var(--bb-grid-size) * 3);
       background: #fff;
@@ -54,8 +65,8 @@ export class Overlay extends LitElement {
 
     :host([inline]) #content {
       position: fixed;
-      left: var(--left, 0px);
-      top: var(--top, 0px);
+      left: var(--left, auto);
+      top: var(--top, auto);
       border: 1px solid var(--bb-neutral-300);
       box-shadow:
         0 8px 8px 0 rgba(0, 0, 0, 0.07),
@@ -63,6 +74,18 @@ export class Overlay extends LitElement {
 
       right: var(--right, auto);
       bottom: var(--bottom, auto);
+    }
+
+    :host([passthru]) {
+      pointer-events: none;
+    }
+
+    :host([passthru]) #background {
+      display: none;
+    }
+
+    :host([passthru]) #content {
+      pointer-events: auto;
     }
 
     @keyframes fadeIn {

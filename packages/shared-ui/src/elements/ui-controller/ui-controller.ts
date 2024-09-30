@@ -9,6 +9,8 @@ import {
   GraphDescriptor,
   GraphLoader,
   GraphProvider,
+  GraphProviderCapabilities,
+  GraphProviderExtendedCapabilities,
   InspectableRun,
   InspectableRunEvent,
   InspectableRunInputs,
@@ -24,7 +26,6 @@ import {
   nothing,
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { cache } from "lit/directives/cache.js";
 import { classMap } from "lit/directives/class-map.js";
 import { guard } from "lit/directives/guard.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -33,8 +34,6 @@ import {
   GraphNodeDeselectedEvent,
   GraphNodeSelectedEvent,
   MultiEditEvent,
-  RunEvent,
-  StopEvent,
 } from "../../events/events.js";
 import {
   RecentBoard,
@@ -43,7 +42,6 @@ import {
   SettingsStore,
   TopGraphRunResult,
 } from "../../types/types.js";
-import { EditorMode } from "../../utils/mode.js";
 import { type NodeConfigurationInfo } from "../elements.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 
@@ -172,26 +170,6 @@ export class UI extends LitElement {
   }
 
   render() {
-    let boardTitle = this.graph?.title;
-    let boardVersion = this.graph?.version;
-    let boardDescription = this.graph?.description;
-    let boardPublished: boolean | null =
-      this.graph?.metadata?.tags?.includes("published") ?? false;
-    let boardIsTool: boolean | null =
-      this.graph?.metadata?.tags?.includes("tool") ?? false;
-    let boardHelp = this.graph?.metadata?.help ?? null;
-    if (this.subGraphId && this.graph && this.graph.graphs) {
-      const subGraph = this.graph.graphs[this.subGraphId];
-      if (subGraph) {
-        boardTitle = subGraph.title;
-        boardVersion = subGraph.version;
-        boardDescription = subGraph.description;
-        boardPublished = null;
-        boardIsTool = subGraph.metadata?.tags?.includes("tool") ?? false;
-        boardHelp = null;
-      }
-    }
-
     const collapseNodesByDefault = this.settings
       ? this.settings
           .getSection(SETTINGS_TYPE.GENERAL)
@@ -216,21 +194,11 @@ export class UI extends LitElement {
           .items.get("Hide Embedded Board Selector When Empty")?.value
       : false;
 
-    const hideAdvancedPortsOnNodes = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Hide Advanced Ports on Nodes")?.value
-      : false;
-
     const invertZoomScrollDirection = this.settings
       ? this.settings
           .getSection(SETTINGS_TYPE.GENERAL)
           .items.get("Invert Zoom Scroll Direction")?.value
       : false;
-
-    const editorMode = hideAdvancedPortsOnNodes
-      ? EditorMode.MINIMAL
-      : EditorMode.ADVANCED;
 
     const showNodeShortcuts = this.settings
       ? this.settings
@@ -275,6 +243,7 @@ export class UI extends LitElement {
         this.kits,
         this.topGraphResult,
         this.boardId,
+        this.history,
         collapseNodesByDefault,
         hideSubboardSelectorWhenEmpty,
         showNodeShortcuts,
@@ -286,10 +255,33 @@ export class UI extends LitElement {
         showExperimentalComponents,
       ],
       () => {
+        let capabilities: false | GraphProviderCapabilities = false;
+        let extendedCapabilities: false | GraphProviderExtendedCapabilities =
+          false;
+        for (const provider of this.providers) {
+          if (!this.graph || !this.graph.url) {
+            continue;
+          }
+
+          const canProvide = provider.canProvide(new URL(this.graph.url));
+          if (canProvide) {
+            capabilities = canProvide;
+            extendedCapabilities = provider.extendedCapabilities();
+            break;
+          }
+        }
+
+        const canUndo = this.history?.canUndo() ?? false;
+        const canRedo = this.history?.canRedo() ?? false;
+
         return html`<bb-editor
           .graph=${graph}
           .subGraphId=${this.subGraphId}
           .run=${this.run}
+          .capabilities=${capabilities}
+          .extendedCapabilities=${extendedCapabilities}
+          .canUndo=${canUndo}
+          .canRedo=${canRedo}
           .topGraphResult=${this.topGraphResult}
           .boardId=${this.boardId}
           .collapseNodesByDefault=${collapseNodesByDefault}
@@ -382,129 +374,6 @@ export class UI extends LitElement {
       }
     );
 
-    const nodeMetaDetails = guard(
-      [
-        this.boardId,
-        this.selectedNodeIds,
-        showNodeTypeDescriptions,
-        this.graph,
-      ],
-      () => {
-        return html`<bb-node-meta-details
-          .showNodeTypeDescriptions=${showNodeTypeDescriptions}
-          .selectedNodeIds=${this.selectedNodeIds}
-          .subGraphId=${this.subGraphId}
-          .graph=${graph}
-          .readOnly=${this.readOnly}
-        ></bb-node-meta-details>`;
-      }
-    );
-
-    // Track the number of edges; if it changes we need to inform the node info
-    // element, and force it to re-render.
-    this.#lastEdgeCount = this.graph?.edges.length || -1;
-    const nodeConfiguration = guard(
-      [
-        this.boardId,
-        this.selectedNodeIds,
-        this.#lastEdgeCount,
-        editorMode,
-        // TODO: Figure out a cleaner way of handling this without watching for
-        // all graph changes.
-        this.graph,
-      ],
-      () => {
-        return html`<bb-node-configuration
-          .selectedNodeIds=${this.selectedNodeIds}
-          .subGraphId=${this.subGraphId}
-          .graph=${this.graph}
-          .kits=${this.kits}
-          .loader=${this.loader}
-          .editable=${true}
-          .editorMode=${editorMode}
-          .providers=${this.providers}
-          .providerOps=${this.providerOps}
-          .showTypes=${false}
-          ${ref(this.#nodeConfigurationRef)}
-          name="Selected Node"
-          @bbgraphnodedeselectedall=${() => {
-            this.selectedNodeIds = [];
-            this.requestUpdate();
-          }}
-        ></bb-node-configuration>`;
-      }
-    );
-
-    const boardDetails = guard(
-      [
-        this.boardId,
-        this.graph,
-        this.subGraphId,
-        boardTitle,
-        boardVersion,
-        boardDescription,
-        boardPublished,
-        boardIsTool,
-        boardHelp,
-      ],
-      () => {
-        return html`<bb-board-details
-          .readOnly=${this.readOnly}
-          .boardTitle=${boardTitle}
-          .boardVersion=${boardVersion}
-          .boardDescription=${boardDescription}
-          .boardPublished=${boardPublished}
-          .boardIsTool=${boardIsTool}
-          .boardHelp=${boardHelp}
-          .subGraphId=${this.subGraphId}
-          .active=${this.graph !== null}
-        >
-        </bb-board-details>`;
-      }
-    );
-
-    const events = this.run?.events || [];
-    const eventPosition = events.length - 1;
-    const activityLog = guard([this.run?.events], () => {
-      return html`<bb-activity-log
-        .run=${this.run}
-        .inputsFromLastRun=${this.inputsFromLastRun}
-        .events=${events}
-        .eventPosition=${eventPosition}
-        .showExtendedInfo=${true}
-        .settings=${this.settings}
-        .logTitle=${"Activity"}
-        .providers=${this.providers}
-        .providerOps=${this.providerOps}
-        @bbinputrequested=${() => {
-          this.selectedNodeIds.length = 0;
-          this.requestUpdate();
-        }}
-        @pointerdown=${(evt: PointerEvent) => {
-          if (!this.#controlsActivityRef.value) {
-            return;
-          }
-          const [top] = evt.composedPath();
-          if (!(top instanceof HTMLElement) || !top.dataset.messageId) {
-            return;
-          }
-          evt.stopImmediatePropagation();
-          const id = top.dataset.messageId;
-          const event = this.run?.getEventById(id);
-          if (!event) {
-            // TODO: Offer the user more information.
-            console.warn(`Unable to find event with ID "${id}"`);
-            return;
-          }
-          if (event.type !== "node") {
-            return;
-          }
-          this.debugEvent = event;
-        }}
-        name="Board"
-      ></bb-activity-log>`;
-    });
-
     const entryDetails = this.debugEvent
       ? html`<div
           id="details"
@@ -541,12 +410,6 @@ export class UI extends LitElement {
       this.#nodeConfigurationRef.value.ensureRenderOnNextUpdate();
     }
 
-    const sidePanel = cache(
-      this.selectedNodeIds.length
-        ? html`${nodeMetaDetails}${nodeConfiguration}`
-        : html`${boardDetails}${activityLog}`
-    );
-
     const breadcrumbs = [MAIN_BOARD_ID];
     if (this.subGraphId) {
       breadcrumbs.push(this.subGraphId);
@@ -560,47 +423,14 @@ export class UI extends LitElement {
       ></bb-welcome-panel>`;
     }
 
-    return html`<bb-splitter
-      direction=${this.isPortrait ? "vertical" : "horizontal"}
-      name="layout-main"
-      split="[0.75, 0.25]"
-      .showQuickExpandCollapse=${true}
-    >
-      <section id="diagram" slot="slot-0">
-        ${this.graph === null && this.failedToLoad
-          ? html`<div class="failed-to-load">
-              <h1>Unable to load board</h1>
-              <p>Please try again, or load a different board</p>
-            </div>`
-          : editor}
-        ${entryDetails} ${welcomePanel}
-      </section>
-
-      <section
-        ${ref(this.#controlsActivityRef)}
-        id="controls-activity"
-        slot="slot-1"
-      >
-        <div id="controls-activity-content">${sidePanel}</div>
-
-        <div id="controls">
-          <button
-            id="run"
-            title="Run this board"
-            ?disabled=${this.failedToLoad || !this.graph || this.readOnly}
-            @click=${() => {
-              this.selectedNodeIds.length = 0;
-              if (this.status === STATUS.STOPPED) {
-                this.dispatchEvent(new RunEvent());
-              } else {
-                this.dispatchEvent(new StopEvent());
-              }
-            }}
-          >
-            ${this.status === STATUS.STOPPED ? "Run Board" : "Stop Board"}
-          </button>
-        </div>
-      </section>
-    </bb-splitter>`;
+    return html`<section id="diagram" slot="slot-0">
+      ${this.graph === null && this.failedToLoad
+        ? html`<div class="failed-to-load">
+            <h1>Unable to load board</h1>
+            <p>Please try again, or load a different board</p>
+          </div>`
+        : editor}
+      ${entryDetails} ${welcomePanel}
+    </section>`;
   }
 }

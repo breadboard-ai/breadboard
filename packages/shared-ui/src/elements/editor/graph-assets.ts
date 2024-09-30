@@ -17,6 +17,7 @@ const ASSET_LIST = new Map([
   ["laps", "/third_party/icons/graph/laps-48px.svg"],
   ["nano", "/third_party/icons/graph/nano-48px.svg"],
   ["google-drive", "/third_party/icons/graph/google-drive-48px.svg"],
+  ["code-blocks", "/third_party/icons/graph/code-blocks-48px.svg"],
 ]);
 
 type AssetMap = Map<string, PIXI.Texture>;

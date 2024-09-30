@@ -62,6 +62,15 @@ const maybeURL = (url?: string): URL | undefined => {
   }
 };
 
+type CustomDescriberResult =
+  | {
+      success: true;
+      result: NodeDescriberResult;
+    }
+  | {
+      success: false;
+    };
+
 class Graph implements InspectableGraphWithStore {
   #url?: URL;
   #kits?: InspectableKit[];
@@ -294,47 +303,73 @@ class Graph implements InspectableGraphWithStore {
     return { inputSchema, outputSchema };
   }
 
-  async #describeWithEntryPoint(
+  async #tryDescribingWithCustomDescriber(
     inputs: InputValues
-  ): Promise<NodeDescriberResult> {
+  ): Promise<CustomDescriberResult> {
+    const customDescriber = this.#graph.metadata?.describer;
+    if (!customDescriber) {
+      return { success: false };
+    }
     // invoke graph
     try {
+      const base = this.#url;
+      // try loading the describer graph.
+      const { loader } = this.#options;
+      if (!loader) {
+        return { success: false };
+      }
+      const describerGraph = await loader.load(customDescriber, {
+        base,
+        board: this.#graph,
+        outerGraph: this.#graph,
+      });
+      if (!describerGraph) {
+        console.warn(
+          `Could not load custom describer graph ${customDescriber}`
+        );
+        return { success: false };
+      }
       const { inputSchema: $inputSchema, outputSchema: $outputSchema } =
         await this.#describeWithStaticAnalysis();
-      const base = this.#url;
       // Remove the artifacts of the describer from the input/output schemas.
       // TODO: The right fix here is for static describer to not include
       // describer outputs.
-      delete $outputSchema.properties?.inputSchema;
-      delete $outputSchema.properties?.outputSchema;
-      const result = await invokeGraph(
-        this.#graph,
+      // delete $outputSchema.properties?.inputSchema;
+      // delete $outputSchema.properties?.outputSchema;
+      const result = (await invokeGraph(
+        describerGraph,
         { ...inputs, $inputSchema, $outputSchema },
         {
           base,
           kits: this.#options.kits,
-          loader: this.#options.loader,
-          start: "describe",
+          loader,
         }
-      );
+      )) as NodeDescriberResult;
       if ("$error" in result) {
         console.warn(
-          `Error while invoking graph's describe entry point`,
+          `Error while invoking graph's custom describer`,
           result.$error
         );
-        return await this.#describeWithStaticAnalysis();
+        return { success: false };
       }
-      return result as NodeDescriberResult;
+      if (!result.inputSchema || !result.outputSchema) {
+        console.warn(
+          `Custom describer did not return input/output schemas`,
+          result
+        );
+        return { success: false };
+      }
+      return { success: true, result };
     } catch (e) {
-      console.warn(`Error while invoking graph's describe entry point`, e);
-      return await this.#describeWithStaticAnalysis();
+      console.warn(`Error while invoking graph's custom describer`, e);
+      return { success: false };
     }
   }
 
   async describe(inputs?: InputValues): Promise<NodeDescriberResult> {
-    const describers = this.entries("describe");
-    if (describers.length > 0) {
-      return this.#describeWithEntryPoint(inputs || {});
+    const result = await this.#tryDescribingWithCustomDescriber(inputs || {});
+    if (result.success) {
+      return result.result;
     }
     return this.#describeWithStaticAnalysis();
   }

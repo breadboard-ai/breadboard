@@ -8,14 +8,14 @@ import { KitBuilder } from "@google-labs/breadboard/kits";
 
 import append from "./nodes/append.js";
 import batch from "./nodes/batch.js";
-import { cast, castNode } from "./nodes/cast.js";
+import { castNode } from "./nodes/cast.js";
 import fetch from "./nodes/fetch.js";
 import importHandler from "./nodes/import.js";
 import include from "./nodes/include.js";
 import invoke from "./nodes/invoke.js";
 import map from "./nodes/map.js";
 import passthrough from "./nodes/passthrough.js";
-import reduce, { ReduceInputs, ReduceOutputs } from "./nodes/reduce.js";
+import reduce from "./nodes/reduce.js";
 import reflect from "./nodes/reflect.js";
 import resolve from "./nodes/resolve.js";
 import runJavascript from "./nodes/run-javascript.js";
@@ -34,6 +34,8 @@ export { default as passthrough } from "./nodes/passthrough.js";
 export { default as runJavascript } from "./nodes/run-javascript.js";
 export { secret, default as secrets } from "./nodes/secrets.js";
 export { unnest, unnestNode } from "./nodes/unnest.js";
+import { storeDataNode } from "./nodes/storeData.js";
+import { retrieveDataNode } from "./nodes/retrieveData.js";
 
 const metadata = {
   title: "Core Kit",
@@ -214,6 +216,9 @@ export const Core = builder.build({
   cast: castNode,
 
   service,
+
+  storeData: storeDataNode,
+  retrieveData: retrieveDataNode,
 });
 
 export type Core = InstanceType<typeof Core>;
@@ -303,7 +308,35 @@ export type CoreKitType = {
     },
     { list: NodeValue[] }
   >;
-  reduce: NodeFactory<ReduceInputs, ReduceOutputs>;
+  reduce: NodeFactory<
+    {
+      /**
+       * The list to iterate over.
+       */
+      list: unknown[];
+
+      /**
+       * The board to run for each element of the list.
+       */
+      board?: unknown;
+
+      /**
+       * The initial value for the accumulator.
+       */
+      accumulator?: unknown;
+    },
+    {
+      /**
+       * The current value of the accumulator.
+       */
+      accumulator: NodeValue;
+
+      /**
+       * The current item from the list.
+       */
+      item: NodeValue;
+    }
+  >;
   /**
    * Combines a board with some arguments to create a new board (aka currying).
    * The arguments in that board will run as part of board invocation as if
@@ -352,7 +385,7 @@ export type CoreKitType = {
  */
 export const core = addKit(Core) as unknown as CoreKitType;
 
-export const coreKit = kit({
+export const coreKit = await kit({
   ...metadata,
   components: {
     cast: castNode,
@@ -363,9 +396,13 @@ export const coreKit = kit({
     invoke,
     map,
     passthrough,
+    reduce,
+    resolve,
     runJavascript,
     secrets,
     service,
     unnest: unnestNode,
+    storeData: storeDataNode,
+    retrieveData: retrieveDataNode,
   },
 });

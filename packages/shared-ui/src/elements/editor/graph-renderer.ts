@@ -20,10 +20,13 @@ import {
   GraphInitialDrawEvent,
   GraphEntityRemoveEvent,
   StartEvent,
-  GraphNodePortValueEditEvent,
+  GraphNodeEditEvent,
   GraphEdgeValueSelectedEvent,
   GraphNodeActivitySelectedEvent,
   GraphInteractionEvent,
+  GraphShowTooltipEvent,
+  GraphHideTooltipEvent,
+  GraphCommentEditRequestEvent,
 } from "../../events/events.js";
 import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
@@ -53,6 +56,8 @@ import { GraphComment } from "./graph-comment.js";
 import { EdgeData, TopGraphRunResult } from "../../types/types.js";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
+const backgroundGridColor = getGlobalColor("--bb-ui-100");
+const backgroundGridAlpha = 0.25;
 const selectionBoxBackgroundAlpha = 0.05;
 const selectionBoxBackgroundColor = getGlobalColor("--bb-neutral-900");
 const selectionBoxBorderColor = getGlobalColor("--bb-neutral-500");
@@ -101,6 +106,7 @@ export class GraphRenderer extends LitElement {
   #app = new PIXI.Application();
   #appInitialized = false;
 
+  #overflowEditNode: Ref<HTMLButtonElement> = createRef();
   #overflowDeleteNode: Ref<HTMLButtonElement> = createRef();
   #overflowMinMaxSingleNode: Ref<HTMLButtonElement> = createRef();
   #overflowMenuRef: Ref<HTMLDivElement> = createRef();
@@ -145,6 +151,7 @@ export class GraphRenderer extends LitElement {
       delta.y = (contentRect.height - this.#lastContentRect.height) * 0.5;
     }
 
+    const ratio = 1 / this.#container.scale.x;
     for (const child of this.#container.children) {
       if (!(child instanceof Graph)) {
         continue;
@@ -155,9 +162,13 @@ export class GraphRenderer extends LitElement {
       child.layoutRect = contentRect;
 
       // Reposition it to retain its center.
-      const ratio = 1 / this.#container.scale.x;
       child.position.x += delta.x * ratio;
       child.position.y += delta.y * ratio;
+    }
+
+    if (this.#background) {
+      this.#background.tilePosition.x += delta.x * ratio;
+      this.#background.tilePosition.y += delta.y * ratio;
     }
 
     this.#lastContentRect = contentRect;
@@ -360,6 +371,10 @@ export class GraphRenderer extends LitElement {
     #overflow-menu #delete-node::before {
       background: var(--bb-icon-delete) center center / 20px 20px no-repeat;
     }
+
+    #overflow-menu #edit-node::before {
+      background: var(--bb-icon-edit) center center / 20px 20px no-repeat;
+    }
   `;
 
   constructor(
@@ -464,15 +479,14 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.addListener(
       "pointermove",
       (evt: PIXI.FederatedPointerEvent) => {
-        if (!evt.isPrimary) {
-          return;
-        }
-
         if (this.#mode === MODE.MOVE) {
           onStageMove(evt);
           return;
         }
 
+        if (!evt.isPrimary) {
+          return;
+        }
         onDragSelect(evt);
       }
     );
@@ -521,6 +535,11 @@ export class GraphRenderer extends LitElement {
       } else {
         this.#container.x -= evt.deltaX;
         this.#container.y -= evt.deltaY;
+
+        if (this.#background) {
+          this.#background.tilePosition.x -= evt.deltaX;
+          this.#background.tilePosition.y -= evt.deltaY;
+        }
       }
 
       this.#storeContainerTransformForVisibleGraph();
@@ -644,7 +663,7 @@ export class GraphRenderer extends LitElement {
       return;
     }
 
-    this.zoomToNode(highlightedNode.descriptor.id);
+    this.zoomToNode(highlightedNode.descriptor.id, -0.1);
   }
 
   createGraph(opts: GraphOpts) {
@@ -856,7 +875,7 @@ export class GraphRenderer extends LitElement {
 
         window.addEventListener(
           "pointerdown",
-          (evt: Event) => {
+          (evt: PointerEvent) => {
             if (!this.#overflowMenuGraphNode) {
               return;
             }
@@ -868,6 +887,24 @@ export class GraphRenderer extends LitElement {
                   computeNextExpansionState(
                     this.#overflowMenuGraphNode.expansionState
                   );
+                break;
+              }
+
+              case this.#overflowEditNode.value: {
+                if (!this.#overflowMenuGraphNode.label) {
+                  console.warn("Tried to delete unnamed node");
+                  break;
+                }
+
+                this.dispatchEvent(
+                  new GraphNodeEditEvent(
+                    this.#overflowMenuGraphNode.label,
+                    null,
+                    evt.clientX,
+                    evt.clientY,
+                    false
+                  )
+                );
                 break;
               }
 
@@ -965,7 +1002,7 @@ export class GraphRenderer extends LitElement {
     graph.on(
       GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
       (id: string, port: InspectablePort | null, x: number, y: number) => {
-        this.dispatchEvent(new GraphNodePortValueEditEvent(id, port, x, y));
+        this.dispatchEvent(new GraphNodeEditEvent(id, port, x, y));
       }
     );
 
@@ -982,6 +1019,24 @@ export class GraphRenderer extends LitElement {
       GRAPH_OPERATIONS.GRAPH_NODE_ACTIVITY_SELECTED,
       (nodeName: string, id: string) => {
         this.dispatchEvent(new GraphNodeActivitySelectedEvent(nodeName, id));
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_SHOW_TOOLTIP,
+      (message: string, x: number, y: number) => {
+        this.dispatchEvent(new GraphShowTooltipEvent(message, x, y));
+      }
+    );
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_HIDE_TOOLTIP, () => {
+      this.dispatchEvent(new GraphHideTooltipEvent());
+    });
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_COMMENT_EDIT_REQUESTED,
+      (label: string, x: number, y: number) => {
+        this.dispatchEvent(new GraphCommentEditRequestEvent(label, x, y));
       }
     );
 
@@ -1085,7 +1140,7 @@ export class GraphRenderer extends LitElement {
     }
   }
 
-  zoomToNode(id: string) {
+  zoomToNode(id: string, offset = 0) {
     this.zoomToFit(false);
 
     for (const graph of this.#container.children) {
@@ -1103,7 +1158,8 @@ export class GraphRenderer extends LitElement {
       const rendererBounds = this.getBoundingClientRect();
 
       const xShift =
-        (0.5 -
+        (0.5 +
+          offset -
           (graphNodeBounds.x - graphBounds.x + graphNodeBounds.width * 0.5) /
             graphBounds.width) *
         graphBounds.width;
@@ -1338,15 +1394,27 @@ export class GraphRenderer extends LitElement {
 
     if (!this.#background) {
       const canvas = document.createElement("canvas");
-      canvas.width = 1;
-      canvas.height = 1;
+      canvas.width = 32;
+      canvas.height = 32;
       const ctx = canvas.getContext("2d");
       if (!ctx) {
         console.warn("Unable to create background texture");
         return;
       }
+
+      // Solid blue background.
       ctx.fillStyle = `#${backgroundColor.toString(16)}`;
-      ctx.fillRect(0, 0, 1, 1);
+      ctx.fillRect(0, 0, 32, 32);
+
+      // Grid.
+      ctx.save();
+      ctx.strokeStyle = `#${backgroundGridColor.toString(16)}`;
+      ctx.beginPath();
+      ctx.rect(0.5, 0.5, 32, 32);
+      ctx.globalAlpha = backgroundGridAlpha;
+      ctx.stroke();
+      ctx.closePath();
+      ctx.restore();
 
       const texture = PIXI.Texture.from(canvas);
 
@@ -1497,9 +1565,14 @@ export class GraphRenderer extends LitElement {
       ${ref(this.#overflowMenuRef)}
       id="overflow-menu"
     >
+      ${!this.readOnly
+        ? html` <button id="edit-node" ${ref(this.#overflowEditNode)}>
+            Edit component
+          </button>`
+        : nothing}
       <button id="min-max" ${ref(this.#overflowMinMaxSingleNode)}></button>
       ${!this.readOnly
-        ? html`<button id="delete-node" ${ref(this.#overflowDeleteNode)}>
+        ? html` <button id="delete-node" ${ref(this.#overflowDeleteNode)}>
             Delete component
           </button>`
         : nothing}

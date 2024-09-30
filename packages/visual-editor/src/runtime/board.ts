@@ -5,13 +5,14 @@
  */
 
 import {
+  BoardServer,
   GraphDescriptor,
   GraphLoader,
   GraphProvider,
   InspectableRunObserver,
   Kit,
 } from "@google-labs/breadboard";
-import { Tab, TabId, TabType } from "./types";
+import { RuntimeConfigBoardServers, Tab, TabId, TabType } from "./types";
 import {
   RuntimeBoardLoadErrorEvent,
   RuntimeErrorEvent,
@@ -19,30 +20,32 @@ import {
   RuntimeTabCloseEvent,
 } from "./events";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import { IDBBoardServer } from "@breadboard-ai/idb-board-server";
 
 export class Board extends EventTarget {
   #tabs = new Map<TabId, Tab>();
   #currentTabId: TabId | null = null;
 
   constructor(
-    public readonly providers: GraphProvider[],
-    public readonly loader: GraphLoader,
-    public readonly kits: Kit[]
+    private readonly providers: GraphProvider[],
+    private readonly loader: GraphLoader,
+    private readonly kits: Kit[],
+    private readonly boardServers?: RuntimeConfigBoardServers
   ) {
     super();
   }
 
-  #canParse(url: string) {
+  #canParse(url: string, base?: string) {
     // TypeScript assumes that if `canParse` does not exist, then URL is
     // `never`. However, in older browsers that's not true. We therefore take a
     // temporary copy of the URL constructor here.
     const UrlCtor = URL;
     if ("canParse" in URL) {
-      return URL.canParse(url);
+      return URL.canParse(url, base);
     }
 
     try {
-      new UrlCtor(url);
+      new UrlCtor(url, base);
       return true;
     } catch (err) {
       return false;
@@ -71,11 +74,48 @@ export class Board extends EventTarget {
   }
 
   #getProviderByName(name: string) {
+    if (this.boardServers) {
+      return (
+        this.boardServers.servers.find((server) => server.name === name) || null
+      );
+    }
+
     return this.providers.find((provider) => provider.name === name) || null;
   }
 
   #getProviderForURL(url: URL) {
+    if (this.boardServers) {
+      return (
+        this.boardServers.servers.find((server) => server.canProvide(url)) ||
+        null
+      );
+    }
+
     return this.providers.find((provider) => provider.canProvide(url)) || null;
+  }
+
+  getBoardServers(): BoardServer[] {
+    if (this.boardServers) {
+      return this.boardServers.servers;
+    }
+
+    return [];
+  }
+
+  getProviders(): GraphProvider[] {
+    if (this.boardServers) {
+      return this.boardServers.servers;
+    }
+
+    return this.providers;
+  }
+
+  getLoader(): GraphLoader {
+    if (this.boardServers) {
+      return this.boardServers.loader;
+    }
+
+    return this.loader;
   }
 
   get tabs() {
@@ -116,11 +156,13 @@ export class Board extends EventTarget {
       params.delete("board");
     }
 
-    const tabs = [...params].sort(([idA], [idB]) => {
-      if (idA > idB) return 1;
-      if (idA < idB) return -1;
-      return 0;
-    });
+    const tabs = [...params]
+      .filter((param) => param[0].startsWith("tab"))
+      .sort(([idA], [idB]) => {
+        if (idA > idB) return 1;
+        if (idA < idB) return -1;
+        return 0;
+      });
 
     if (tabs.length > 0) {
       for (const [, tab] of tabs) {
@@ -255,19 +297,23 @@ export class Board extends EventTarget {
 
     try {
       const base = new URL(window.location.href);
-      if (this.#canParse(url)) {
-        const provider = this.#getProviderForURL(new URL(url));
+
+      let kits = this.kits;
+      let graph: GraphDescriptor | null = null;
+      if (this.#canParse(url, base.href)) {
+        const provider = this.#getProviderForURL(new URL(url, base));
         if (provider) {
           // Ensure the the provider has actually loaded fully before
           // requesting the graph file from it.
           await provider.ready();
         }
-      }
 
-      const graph = await this.loader.load(url, { base });
-      if (!graph) {
-        this.dispatchEvent(new RuntimeErrorEvent("Unable to load board"));
-        return;
+        if (this.boardServers) {
+          kits = (provider as IDBBoardServer).kits ?? this.kits;
+          graph = await this.boardServers.loader.load(url, { base });
+        } else {
+          graph = await this.loader.load(url, { base });
+        }
       }
 
       // Re-use an existing tab if possible.
@@ -283,10 +329,15 @@ export class Board extends EventTarget {
         }
       }
 
+      if (!graph) {
+        this.dispatchEvent(new RuntimeErrorEvent("Unable to load board"));
+        return;
+      }
+
       const id = globalThis.crypto.randomUUID();
       this.#tabs.set(id, {
         id,
-        kits: this.kits,
+        kits,
         name: graph.title ?? "Untitled board",
         graph,
         subGraphId: null,
@@ -375,7 +426,17 @@ export class Board extends EventTarget {
       return false;
     }
 
-    return true;
+    for (const store of provider.items().values()) {
+      for (const item of store.items.values()) {
+        if (item.url !== tab.graph.url) {
+          continue;
+        }
+
+        return item.mine && !item.readonly;
+      }
+    }
+
+    return false;
   }
 
   save(id: TabId | null) {

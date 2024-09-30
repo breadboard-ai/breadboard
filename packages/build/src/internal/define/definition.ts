@@ -57,8 +57,12 @@ import type { StarInputs } from "../board/star-inputs.js";
 import type { KitBinding } from "../kit.js";
 
 export interface Definition<
-  /* Static Inputs   */ SI extends { [K: string]: JsonSerializable },
-  /* Static Outputs  */ SO extends { [K: string]: JsonSerializable },
+  /* Static Inputs   */ SI extends {
+    [K: string]: JsonSerializable | undefined;
+  },
+  /* Static Outputs  */ SO extends {
+    [K: string]: JsonSerializable | undefined;
+  },
   /* Dynamic Inputs  */ DI extends JsonSerializable | undefined,
   /* Dynamic Outputs */ DO extends JsonSerializable | undefined,
   /* Optional Inputs */ OI extends keyof SI,
@@ -105,8 +109,12 @@ export function isDiscreteComponent(
 }
 
 export class DefinitionImpl<
-  /* Static Inputs   */ SI extends { [K: string]: JsonSerializable },
-  /* Static Outputs  */ SO extends { [K: string]: JsonSerializable },
+  /* Static Inputs   */ SI extends {
+    [K: string]: JsonSerializable | undefined;
+  },
+  /* Static Outputs  */ SO extends {
+    [K: string]: JsonSerializable | undefined;
+  },
   /* Dynamic Inputs  */ DI extends JsonSerializable | undefined,
   /* Dynamic Outputs */ DO extends JsonSerializable | undefined,
   /* Optional Inputs */ OI extends keyof SI,
@@ -205,8 +213,7 @@ export class DefinitionImpl<
     } catch (e) {
       return {
         $error: {
-          message: `Internal Exception: ${String(e instanceof Error ? e.stack : e).replace(/^Error:\s*/, "")}
-}`,
+          message: `Internal Exception: ${String(e instanceof Error ? e.stack : e).replace(/^Error:\s*/, "")}`,
         },
       };
     }
@@ -466,7 +473,7 @@ function parseDynamicPorts(
 type LooseInstantiateArgs = object;
 
 type StrictInstantiateArgs<
-  SI extends { [K: string]: JsonSerializable },
+  SI extends { [K: string]: JsonSerializable | undefined },
   OI extends keyof SI,
   DI extends JsonSerializable | undefined,
   A extends LooseInstantiateArgs,
@@ -497,7 +504,7 @@ type StrictInstantiateArgs<
 };
 
 type InstanceInputs<
-  SI extends { [K: string]: JsonSerializable },
+  SI extends { [K: string]: JsonSerializable | undefined },
   DI extends JsonSerializable | undefined,
   A extends LooseInstantiateArgs,
 > = Expand<
@@ -507,8 +514,8 @@ type InstanceInputs<
 >;
 
 type InstanceOutputs<
-  SI extends { [K: string]: JsonSerializable },
-  SO extends { [K: string]: JsonSerializable },
+  SI extends { [K: string]: JsonSerializable | undefined },
+  SO extends { [K: string]: JsonSerializable | undefined },
   DO extends JsonSerializable | undefined,
   R extends boolean,
   A extends LooseInstantiateArgs,

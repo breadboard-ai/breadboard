@@ -1,34 +1,9 @@
 {
   "boards": [
     {
-      "title": "Simple chatbot (accumulating context)",
-      "reference": "/example-boards/playground/accumulating-context.json",
-      "version": "0.0.2"
-    },
-    {
-      "title": "Ad Writer (variant 2)",
-      "reference": "/example-boards/playground/ad-writer-2.json",
-      "version": "0.0.2"
-    },
-    {
-      "title": "Ad Writer",
-      "reference": "/example-boards/playground/ad-writer.json",
-      "version": "0.0.3"
-    },
-    {
-      "title": "Agent Chain",
-      "reference": "/example-boards/playground/agent-chain.json",
-      "version": "0.0.2"
-    },
-    {
       "title": "Audio",
       "reference": "/example-boards/playground/audio.json",
       "version": "0.1.0"
-    },
-    {
-      "title": "Best of N",
-      "reference": "/example-boards/playground/best-of-n.json",
-      "version": "0.0.2"
     },
     {
       "title": "Blank board",
@@ -36,36 +11,9 @@
       "version": "0.0.1"
     },
     {
-      "title": "Board for Each",
-      "reference": "/example-boards/playground/board-for-each.json"
-    },
-    {
-      "title": "Business Review Replier Demo",
-      "reference": "/example-boards/playground/business-review-replier-demo.json"
-    },
-    {
-      "title": "Business Review Reply Generator",
-      "reference": "/example-boards/playground/business-review-replier.json"
-    },
-    {
-      "title": "Chat bot 2.0",
-      "reference": "/example-boards/playground/chat-bot-2.json",
-      "version": "0.0.1"
-    },
-    {
-      "title": "Drawable",
-      "reference": "/example-boards/playground/drawable.json",
-      "version": "0.0.2"
-    },
-    {
       "title": "Error Board",
       "reference": "/example-boards/playground/error.json",
       "version": "0.1.0"
-    },
-    {
-      "title": "Gemini Pro Generator",
-      "reference": "/example-boards/playground/gemini-generator.json",
-      "version": "0.0.2"
     },
     {
       "title": "Gemini Simple",
@@ -143,16 +91,6 @@
       "version": ""
     },
     {
-      "title": "Looper Chat Testing Grounds",
-      "reference": "/example-boards/playground/looper-chat-test.json",
-      "version": "0.0.1"
-    },
-    {
-      "title": "Looper Testing Grounds",
-      "reference": "/example-boards/playground/looper-test.json",
-      "version": "0.0.1"
-    },
-    {
       "title": "The Calculator Board",
       "reference": "/example-boards/playground/math.json",
       "version": "0.0.4"
@@ -193,18 +131,9 @@
       "version": "0.1.0"
     },
     {
-      "title": "Object Manipulator",
-      "reference": "/example-boards/playground/object-manipulator.json"
-    },
-    {
       "title": "Open Alex Entity Search Results",
       "reference": "/example-boards/playground/open-alex-entity-search-list.json",
       "version": "0.1.0"
-    },
-    {
-      "title": "OpenAI DALL-E Image Generator",
-      "reference": "/example-boards/playground/openai-dall-e.json",
-      "version": "0.0.1"
     },
     {
       "title": "OpenAI GPT-3.5-turbo",
@@ -227,6 +156,89 @@
       "version": "0.1.0"
     },
     {
+      "title": "Text Generator",
+      "reference": "/example-boards/playground/text-generator.json",
+      "version": "0.1.0"
+    },
+    {
+      "title": "Webcam",
+      "reference": "/example-boards/playground/webcam.json",
+      "version": "0.1.0"
+    },
+    {
+      "title": "Simple chatbot (accumulating context)",
+      "reference": "/example-boards/playground/accumulating-context.json",
+      "version": "0.0.2"
+    },
+    {
+      "title": "Ad Writer (variant 2)",
+      "reference": "/example-boards/playground/ad-writer-2.json",
+      "version": "0.0.2"
+    },
+    {
+      "title": "Ad Writer",
+      "reference": "/example-boards/playground/ad-writer.json",
+      "version": "0.0.3"
+    },
+    {
+      "title": "Agent Chain",
+      "reference": "/example-boards/playground/agent-chain.json",
+      "version": "0.0.2"
+    },
+    {
+      "title": "Best of N",
+      "reference": "/example-boards/playground/best-of-n.json",
+      "version": "0.0.2"
+    },
+    {
+      "title": "Board for Each",
+      "reference": "/example-boards/playground/board-for-each.json",
+      "version": "0.0.1"
+    },
+    {
+      "title": "Business Review Replier Demo",
+      "reference": "/example-boards/playground/business-review-replier-demo.json",
+      "version": "0.0.1"
+    },
+    {
+      "title": "Business Review Reply Generator",
+      "reference": "/example-boards/playground/business-review-replier.json",
+      "version": "0.0.1"
+    },
+    {
+      "title": "Chat bot 2.0",
+      "reference": "/example-boards/playground/chat-bot-2.json",
+      "version": "0.0.1"
+    },
+    {
+      "title": "Gemini Pro Generator",
+      "reference": "/example-boards/playground/gemini-generator.json",
+      "version": "0.0.2"
+    },
+    {
+      "title": "Tool: Get Wiki Article",
+      "reference": "/example-boards/playground/get-wiki-article-tool.bgl.json",
+      "version": "0.0.1",
+      "tags": [
+        "tool"
+      ]
+    },
+    {
+      "title": "Looper Chat Testing Grounds",
+      "reference": "/example-boards/playground/looper-chat-test.json",
+      "version": "0.0.1"
+    },
+    {
+      "title": "Looper Testing Grounds",
+      "reference": "/example-boards/playground/looper-test.json",
+      "version": "0.0.1"
+    },
+    {
+      "title": "Object Manipulator",
+      "reference": "/example-boards/playground/object-manipulator.json",
+      "version": "0.0.1"
+    },
+    {
       "title": "Dense text summarizer (single iteration)",
       "reference": "/example-boards/playground/summarize-single-iteration.json",
       "version": "0.0.1"
@@ -247,27 +259,9 @@
       "version": "0.0.1"
     },
     {
-      "title": "Text Generator",
-      "reference": "/example-boards/playground/text-generator.json",
-      "version": "0.1.0"
-    },
-    {
       "title": "Tour Guide Writer",
       "reference": "/example-boards/playground/tour-guide-writer.json",
       "version": "0.0.3"
-    },
-    {
-      "title": "Webcam",
-      "reference": "/example-boards/playground/webcam.json",
-      "version": "0.1.0"
-    },
-    {
-      "title": "Tool: Get Wiki Article",
-      "reference": "/example-boards/playground/get-wiki-article-tool.bgl.json",
-      "version": "0.0.1",
-      "tags": [
-        "tool"
-      ]
     },
     {
       "title": "Tool: Wiki Search",

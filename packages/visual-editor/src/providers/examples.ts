@@ -13,6 +13,7 @@ import {
   GraphProviderItem,
 } from "@google-labs/breadboard";
 import { GraphProviderStore } from "./types.js";
+import { GraphTag } from "@google-labs/breadboard-schema/graph.js";
 
 export class ExamplesGraphProvider implements GraphProvider {
   name = "ExamplesGraphProvider";
@@ -51,14 +52,15 @@ export class ExamplesGraphProvider implements GraphProvider {
           if (!isReference(board)) {
             throw new Error("Expected board to be a reference.");
           }
+          const url = new URL(board.reference!, window.location.href);
           return [
             board.title,
             {
-              url: board.reference!,
+              url: url.href,
               readonly: true,
               mine: false,
               handle: undefined,
-              tags: board.tags,
+              tags: board.tags as GraphTag[] | undefined,
             },
           ];
         })

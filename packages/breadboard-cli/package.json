@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.11.1",
+  "version": "0.11.2",
   "description": "A suite of tools for interacting with the Breadboard.",
   "bin": {
     "breadboard": "dist/src/index.js"
@@ -154,25 +154,25 @@
     "@typescript-eslint/parser": "^7.18.0",
     "ava": "^5.2.0",
     "openapi-types": "^12.1.3",
-    "typescript": "^5.5.4"
+    "typescript": "^5.6.2"
   },
   "dependencies": {
-    "@breadboard-ai/build": "^0.9.1",
-    "@breadboard-ai/import": "0.1.9",
-    "@breadboard-ai/visual-editor": "^1.18.0",
-    "@google-labs/breadboard": "^0.26.0",
-    "@google-labs/core-kit": "^0.14.1",
-    "@google-labs/template-kit": "^0.3.9",
-    "@rollup/plugin-commonjs": "^26.0.1",
+    "@breadboard-ai/build": "^0.10.0",
+    "@breadboard-ai/import": "0.1.10",
+    "@breadboard-ai/visual-editor": "^1.19.0",
+    "@google-labs/breadboard": "^0.27.0",
+    "@google-labs/core-kit": "^0.15.0",
+    "@google-labs/template-kit": "^0.3.10",
+    "@rollup/plugin-commonjs": "^28.0.0",
     "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-node-resolve": "^15.3.0",
     "@rollup/plugin-virtual": "^3.0.2",
     "commander": "^12.1.0",
-    "esbuild": "^0.23.1",
-    "rollup": "^4.21.3",
+    "esbuild": "^0.24.0",
+    "rollup": "^4.22.5",
     "serve": "^14.2.3",
     "urlpattern-polyfill": "^10.0.0",
-    "vite": "^5.4.6",
+    "vite": "^5.4.8",
     "yaml": "^2.5.1"
   }
 }

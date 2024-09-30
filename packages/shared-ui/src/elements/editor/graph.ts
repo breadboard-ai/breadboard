@@ -62,14 +62,14 @@ const nodeColors = new Map([
     "input",
     {
       text: getGlobalColor("--bb-input-600"),
-      border: getGlobalColor("--bb-input-500"),
+      border: getGlobalColor("--bb-neutral-500"),
     },
   ],
   [
     "output",
     {
       text: getGlobalColor("--bb-output-600"),
-      border: getGlobalColor("--bb-output-400"),
+      border: getGlobalColor("--bb-neutral-400"),
     },
   ],
   [
@@ -1463,6 +1463,20 @@ export class Graph extends PIXI.Container {
         }
       );
 
+      graphNode.on(
+        GRAPH_OPERATIONS.GRAPH_SHOW_TOOLTIP,
+        (...args: unknown[]) => {
+          this.emit(GRAPH_OPERATIONS.GRAPH_SHOW_TOOLTIP, ...args);
+        }
+      );
+
+      graphNode.on(
+        GRAPH_OPERATIONS.GRAPH_HIDE_TOOLTIP,
+        (...args: unknown[]) => {
+          this.emit(GRAPH_OPERATIONS.GRAPH_HIDE_TOOLTIP, ...args);
+        }
+      );
+
       this.addChild(graphNode);
     }
 
@@ -1567,6 +1581,13 @@ export class Graph extends PIXI.Container {
         (board: string) => {
           // Re-emit for the renderer to pick up.
           this.emit(GRAPH_OPERATIONS.GRAPH_BOARD_LINK_CLICKED, board);
+        }
+      );
+
+      graphComment.on(
+        GRAPH_OPERATIONS.GRAPH_COMMENT_EDIT_REQUESTED,
+        (...args: unknown[]) => {
+          this.emit(GRAPH_OPERATIONS.GRAPH_COMMENT_EDIT_REQUESTED, ...args);
         }
       );
 

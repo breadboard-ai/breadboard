@@ -135,6 +135,7 @@ packages/example-boards/example-boards
 *.local.ts
 *.local.json
 *.local.md
+*.local.txt
 
 .wireit
 *.vsix

@@ -24,6 +24,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { isImageURL } from "../../utils/llm-content.js";
 
 const OVERLAY_CLEARANCE = 60;
+const MAXIMIZE_KEY = "bb-edge-value-overlay-maximized";
 
 @customElement("bb-edge-value-overlay")
 export class EdgeValueOverlay extends LitElement {
@@ -207,7 +208,7 @@ export class EdgeValueOverlay extends LitElement {
       // Once we've calculated the minimized size we can now recall the user's
       // preferred max/min and use that.
       this.maximized =
-        globalThis.sessionStorage.getItem("bb-edge-value-maximized") === "true";
+        globalThis.sessionStorage.getItem(MAXIMIZE_KEY) === "true";
 
       this.#overlayRef.value.style.setProperty("--left", `${Math.round(x)}px`);
       this.#overlayRef.value.style.setProperty("--top", `${Math.round(y)}px`);
@@ -263,10 +264,7 @@ export class EdgeValueOverlay extends LitElement {
   #toggleMaximize() {
     this.maximized = !this.maximized;
 
-    globalThis.sessionStorage.setItem(
-      "bb-node-configurator-maximized",
-      this.maximized.toString()
-    );
+    globalThis.sessionStorage.setItem(MAXIMIZE_KEY, this.maximized.toString());
   }
 
   render() {

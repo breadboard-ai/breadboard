@@ -20,7 +20,9 @@ import {
 } from "../../events/events.js";
 import { EditorMode, filterConfigByMode } from "../../utils/mode.js";
 import { classMap } from "lit/directives/class-map.js";
+import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 
+const MAXIMIZE_KEY = "bb-node-configuration-overlay-maximized";
 const OVERLAY_CLEARANCE = 60;
 
 @customElement("bb-node-configuration-overlay")
@@ -45,7 +47,9 @@ export class NodeConfigurationOverlay extends LitElement {
 
   #overlayRef: Ref<Overlay> = createRef();
   #userInputRef: Ref<UserInput> = createRef();
+  #formRef: Ref<HTMLFormElement> = createRef();
   #pendingSave = false;
+  #onKeyDownBound = this.#onKeyDown.bind(this);
 
   #minimizedX = 0;
   #minimizedY = 0;
@@ -99,7 +103,7 @@ export class NodeConfigurationOverlay extends LitElement {
     }
 
     #wrapper {
-      min-width: 300px;
+      min-width: 410px;
       width: max(40vw, 450px);
       min-height: 250px;
       height: max(50vh, 450px);
@@ -107,6 +111,7 @@ export class NodeConfigurationOverlay extends LitElement {
       flex-direction: column;
       resize: both;
       overflow: auto;
+      container-type: size;
     }
 
     :host([maximized="true"]) #wrapper {
@@ -184,7 +189,82 @@ export class NodeConfigurationOverlay extends LitElement {
       background: transparent var(--bb-icon-minimize) center center / 20px 20px
         no-repeat;
     }
+
+    form {
+      display: grid;
+      grid-template-columns: 90px auto;
+      grid-template-rows: var(--bb-grid-size-7);
+      align-items: center;
+      row-gap: var(--bb-grid-size-2);
+      padding: 0 0 var(--bb-grid-size-4) 0;
+      border-bottom: 1px solid var(--bb-neutral-200);
+      column-gap: var(--bb-grid-size-4);
+    }
+
+    @container (min-width: 600px) {
+      form {
+        grid-template-columns: 90px auto 90px auto;
+        grid-template-rows: var(--bb-grid-size-7);
+        column-gap: var(--bb-grid-size-4);
+      }
+
+      form textarea {
+        grid-column: 2/5;
+      }
+
+      label[for="log-level"] {
+        justify-self: end;
+      }
+    }
+
+    input[type="text"],
+    select,
+    textarea {
+      padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      border: 1px solid var(--bb-neutral-300);
+      border-radius: var(--bb-grid-size);
+    }
+
+    textarea {
+      resize: none;
+      field-sizing: content;
+      max-height: 300px;
+    }
+
+    label {
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
+    }
+
+    bb-user-input {
+      padding-top: var(--bb-grid-size-4);
+    }
   `;
+
+  #onKeyDown(evt: KeyboardEvent) {
+    const isMac = navigator.platform.indexOf("Mac") === 0;
+    const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+    if (!(evt.key === "Enter" && isCtrlCommand)) {
+      return;
+    }
+
+    this.processData();
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    this.addEventListener("keydown", this.#onKeyDownBound);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    this.removeEventListener("keydown", this.#onKeyDownBound);
+  }
 
   protected firstUpdated(): void {
     requestAnimationFrame(() => {
@@ -200,7 +280,10 @@ export class NodeConfigurationOverlay extends LitElement {
       const height = contentBounds.height / 0.9;
 
       let { x, y } = this.value;
-      x += OVERLAY_CLEARANCE;
+      if (this.value.addHorizontalClickClearance) {
+        x += OVERLAY_CLEARANCE;
+      }
+
       y -= height / 2;
 
       if (x + width > window.innerWidth) {
@@ -223,8 +306,7 @@ export class NodeConfigurationOverlay extends LitElement {
       // Once we've calculated the minimized size we can now recall the user's
       // preferred max/min and use that.
       this.maximized =
-        globalThis.sessionStorage.getItem("bb-node-configurator-maximized") ===
-        "true";
+        globalThis.sessionStorage.getItem(MAXIMIZE_KEY) === "true";
     });
   }
 
@@ -291,7 +373,12 @@ export class NodeConfigurationOverlay extends LitElement {
   processData() {
     this.#pendingSave = false;
 
-    if (!this.#userInputRef.value || !this.value || !this.value.ports) {
+    if (
+      !this.#userInputRef.value ||
+      !this.value ||
+      !this.value.ports ||
+      !this.#formRef.value
+    ) {
       return;
     }
 
@@ -310,16 +397,37 @@ export class NodeConfigurationOverlay extends LitElement {
     }
 
     const { id, subGraphId } = this.value;
-    this.dispatchEvent(new NodePartialUpdateEvent(id, subGraphId, outputs));
+    const titleEl =
+      this.#formRef.value.querySelector<HTMLInputElement>("#title");
+    const logLevelEl =
+      this.#formRef.value.querySelector<HTMLSelectElement>("#log-level");
+    const descriptionEl =
+      this.#formRef.value.querySelector<HTMLTextAreaElement>("#description");
+
+    const metadata: NodeMetadata = {};
+    if (titleEl?.value) metadata.title = titleEl.value;
+    if (descriptionEl?.value) metadata.description = descriptionEl.value;
+    if (logLevelEl?.value)
+      metadata.logLevel = logLevelEl?.value as "info" | "debug";
+
+    this.#destroyCodeEditors();
+    this.dispatchEvent(
+      new NodePartialUpdateEvent(id, subGraphId, outputs, metadata)
+    );
   }
 
   #toggleMaximize() {
     this.maximized = !this.maximized;
 
-    globalThis.sessionStorage.setItem(
-      "bb-node-configurator-maximized",
-      this.maximized.toString()
-    );
+    globalThis.sessionStorage.setItem(MAXIMIZE_KEY, this.maximized.toString());
+  }
+
+  #destroyCodeEditors() {
+    if (!this.#userInputRef.value) {
+      return;
+    }
+
+    this.#userInputRef.value.destroyEditors();
   }
 
   render() {
@@ -355,11 +463,11 @@ export class NodeConfigurationOverlay extends LitElement {
 
     return html`<bb-overlay
       @bboverlaydismissed=${(evt: Event) => {
-        if (!this.#pendingSave) {
-          return;
-        }
-
-        if (confirm("Close configurator without saving first?")) {
+        if (
+          !this.#pendingSave ||
+          confirm("Close configurator without saving first?")
+        ) {
+          this.#destroyCodeEditors();
           return;
         }
 
@@ -427,20 +535,52 @@ export class NodeConfigurationOverlay extends LitElement {
         </h1>
         <div id="content">
           <div id="container">
+            <form
+              ${ref(this.#formRef)}
+              @submit=${(evt: Event) => {
+                evt.preventDefault();
+              }}
+              @input=${() => {
+                this.#pendingSave = true;
+              }}
+            >
+              <label for="title">Title</label>
+              <input
+                name="title"
+                id="title"
+                type="text"
+                placeholder="Enter the title for this component"
+                .value=${this.value.metadata?.title || ""}
+              />
+
+              <label for="log-level">Log values</label>
+              <select type="text" id="log-level" name="log-level">
+                <option
+                  value="debug"
+                  ?selected=${this.value.metadata?.logLevel === "debug"}
+                >
+                  Only when debugging
+                </option>
+                <option
+                  value="info"
+                  ?selected=${this.value.metadata?.logLevel === "info"}
+                >
+                  All the time
+                </option>
+              </select>
+
+              <label for="description">Description</label>
+              <textarea
+                id="description"
+                name="description"
+                placeholder="Enter the description for this component"
+                .value=${this.value.metadata?.description || ""}
+              ></textarea>
+            </form>
             <bb-user-input
               ${ref(this.#userInputRef)}
               @input=${() => {
                 this.#pendingSave = true;
-              }}
-              @keydown=${(evt: KeyboardEvent) => {
-                const isMac = navigator.platform.indexOf("Mac") === 0;
-                const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
-
-                if (!(evt.key === "Enter" && isCtrlCommand)) {
-                  return;
-                }
-
-                this.processData();
               }}
               .inputs=${userInputs}
               .graph=${this.graph}

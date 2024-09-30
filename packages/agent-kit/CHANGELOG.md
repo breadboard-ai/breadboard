@@ -1,5 +1,53 @@
 # @google-labs/agent-kit
 
+## 0.12.0
+
+### Minor Changes
+
+- f61ccf3: Introduce URL-based component types.
+- f0b5ccc: Delete tool-worker
+- 8540b93: Convert Content to Build API and merge Specialist 2 to Specialist.
+- 4c03455: Introduce Specialist 2 and make Content component support LLM Content.
+- 84ca649: Introduce the "Content" component.
+- 94759f7: Teach Specialist about routing.
+
+### Patch Changes
+
+- f94f498: Convert structured worker to build API
+- 4e0a4f6: Convert looper to build API
+- 58d2e8c: The joiner board has been converted to the new Build API. Should have no functional effect.
+- 679719b: Convert specialist to build api
+- 9b62fc2: Use new build API kit function
+- e63b5dd: Polish Specialist and Content.
+- 74d50d4: Convert repeater to Build API (should be a no-op).
+- 9ce8ad3: Fix schemas of persona and task
+- 7fdf9c2: Add "gemini-1.5-pro-exp-0827" to the choices in Gemini-calling components.
+- e38bf19: Set titles for done and loop outputs of looper
+- 100fc95: Various fixes and polish.
+- e026112: Remind Specialist that it doesn't accept dynamic wires.
+- 281ab28: Convert human to build API
+- 5fc6e8b: Convert worker board to build API
+- Updated dependencies [49e2740]
+- Updated dependencies [54c8197]
+- Updated dependencies [2f1b85c]
+- Updated dependencies [c145fdd]
+- Updated dependencies [226be62]
+- Updated dependencies [2fa05f0]
+- Updated dependencies [f71bcfb]
+- Updated dependencies [3188607]
+- Updated dependencies [8540b93]
+- Updated dependencies [8330f0c]
+- Updated dependencies [1423647]
+- Updated dependencies [6cdf20c]
+- Updated dependencies [f63a497]
+- Updated dependencies [91fe8bb]
+- Updated dependencies [100fc95]
+- Updated dependencies [cab83ce]
+- Updated dependencies [e19f046]
+- Updated dependencies [5834c81]
+- Updated dependencies [0ef793f]
+  - @breadboard-ai/build@0.10.0
+
 ## 0.11.0
 
 ### Minor Changes

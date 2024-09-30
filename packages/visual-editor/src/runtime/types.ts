@@ -5,8 +5,10 @@
  */
 
 import {
+  BoardServer,
   DataStore,
   GraphDescriptor,
+  GraphLoader,
   GraphProvider,
   Kit,
   RunStore,
@@ -32,8 +34,16 @@ export interface Tab {
   type: TabType;
 }
 
-export interface VERuntimeConfig {
+export interface RuntimeConfig {
   providers: GraphProvider[];
   dataStore: DataStore;
   runStore: RunStore;
+  experiments: {
+    boardServers: boolean;
+  };
+}
+
+export interface RuntimeConfigBoardServers {
+  servers: BoardServer[];
+  loader: GraphLoader;
 }

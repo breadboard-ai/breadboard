@@ -97,7 +97,7 @@ The response is a Server-Sent Events (SSE) stream. Each event in the stream is a
 
 ### Event Format
 
-Each event is an array with two elements: `[type, data]`
+Each event is an array with two or three elements: `[type, data, next]`. The `next` element is only present when the `type` value is `"input"`.
 
 The `type` can be one of the following:
 
@@ -111,23 +111,33 @@ The `type` can be one of the following:
 
 ```json
 ["input", {
-  "schema": { ... },
-  "next": "RESUMPTION_STATE"
-}]
+  "node": { ... },
+  "inputArguments": {
+    "schema": { ... },
+  },
+  ...
+},
+"NEXT_TOKEN"
+]
 ```
 
-- `schema` (object): Describes the expected input schema.
-- `next` (string): A token representing the state to use when resuming the interaction.
+- `node` (object): An object describing the the input component that is requesting input. This information can be used to better identify the particular input. For instance, if we're making a frontend app that uses this API, it can use the `id` of the input to associate it with a particular UI element.
+- `schema` (object): Describes the expected input schema for the input component. This information can be used to understand the structure of the input being requested.
+
+- `NEXT` (string): A token representing the state to use when resuming the interaction.
 
 2. Output Event
 
 ```json
 ["output", {
-  "output": [ ... ]
+  "node": { ... },
+  "outputs": { ... },
+  ...
 }]
 ```
 
-- `output` (array): Contains the output data from the board.
+- `node` (object): Same as above, but for the output component.
+- `outputs` (object): Contains the output data from this output component.
 
 3. Error Event
 

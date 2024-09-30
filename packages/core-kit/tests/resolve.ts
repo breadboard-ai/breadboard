@@ -6,9 +6,10 @@
 
 import test from "ava";
 import { run } from "@google-labs/breadboard/harness";
-import { board, asRuntimeKit } from "@google-labs/breadboard";
-import Core, { core } from "@google-labs/core-kit";
+import { asRuntimeKit } from "@google-labs/breadboard";
+import Core, { core, coreKit } from "@google-labs/core-kit";
 import resolve from "../src/nodes/resolve.js";
+import { board, input, serialize } from "@breadboard-ai/build";
 
 test("resolve resolves paths relative to the board base by default", async (t) => {
   t.deepEqual(
@@ -85,54 +86,36 @@ test("resolve can be used to fully qualify a path prior to passing to a graph wi
 });
 
 test("resolve generates expected BGL", async (t) => {
-  const serialized = await board(({ path }) => {
-    const resolve = core.resolve();
-    path.to(resolve);
-    return { resolved: resolve.resolved };
-  }).serialize();
+  const path = input();
+  const resolver = coreKit.resolve({ path });
+  const b = board({
+    inputs: { path },
+    outputs: { resolved: resolver.unsafeOutput("resolved") },
+  });
+  const serialized = serialize(b);
   t.deepEqual(serialized, {
     edges: [
       {
-        from: "resolve-3",
-        in: "resolved",
-        out: "resolved",
-        to: "output-2",
-      },
-      {
-        from: "input-1",
+        from: "input-0",
         in: "path",
         out: "path",
-        to: "resolve-3",
+        to: "resolve-0",
+      },
+      {
+        from: "resolve-0",
+        in: "resolved",
+        out: "resolved",
+        to: "output-0",
       },
     ],
-    graphs: {},
     nodes: [
       {
-        configuration: {
-          schema: {
-            properties: {
-              resolved: {
-                title: "resolved",
-                type: "string",
-              },
-            },
-            type: "object",
-          },
-        },
-        id: "output-2",
-        type: "output",
-      },
-      {
-        configuration: {},
-        id: "resolve-3",
-        type: "resolve",
-      },
-      {
+        id: "input-0",
+        type: "input",
         configuration: {
           schema: {
             properties: {
               path: {
-                title: "path",
                 type: "string",
               },
             },
@@ -140,8 +123,33 @@ test("resolve generates expected BGL", async (t) => {
             type: "object",
           },
         },
-        id: "input-1",
-        type: "input",
+      },
+      {
+        id: "output-0",
+        type: "output",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: {
+              resolved: {
+                type: [
+                  "array",
+                  "boolean",
+                  "null",
+                  "number",
+                  "object",
+                  "string",
+                ],
+              },
+            },
+            required: ["resolved"],
+          },
+        },
+      },
+      {
+        id: "resolve-0",
+        type: "resolve",
+        configuration: {},
       },
     ],
   });

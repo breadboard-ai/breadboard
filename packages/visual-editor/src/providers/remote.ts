@@ -14,6 +14,7 @@ import {
 } from "@google-labs/breadboard";
 import { GraphProviderStore } from "./types";
 import { GraphProviderExtendedCapabilities } from "@google-labs/breadboard";
+import { GraphTag } from "@google-labs/breadboard-schema/graph.js";
 
 interface GraphDBStore {
   url: string;
@@ -322,7 +323,7 @@ export class RemoteGraphProvider implements GraphProvider {
         let file: string;
         let readonly: boolean;
         let mine: boolean;
-        let tags: string[] | undefined;
+        let tags: GraphTag[] | undefined;
         let username: string | undefined;
         let title: string | undefined;
         if (typeof item === "string") {
@@ -333,7 +334,7 @@ export class RemoteGraphProvider implements GraphProvider {
           file = item.path;
           readonly = item.readonly;
           mine = item.mine;
-          tags = item.tags;
+          tags = item.tags as GraphTag[] | undefined;
           username = item.username;
           title = item.title;
         }

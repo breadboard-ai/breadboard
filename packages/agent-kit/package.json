@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "A Breadboard Kit for building agent-like experiences",
   "main": "./dist/src/index.js",
   "exports": {
@@ -16,8 +16,10 @@
     "prepack": "npm run build",
     "test": "wireit",
     "build": "wireit",
+    "build:tsc": "wireit",
     "lint": "wireit",
     "generate-kit-manifest": "wireit",
+    "generate:js-components": "wireit",
     "generate:graphs": "wireit"
   },
   "wireit": {
@@ -30,8 +32,7 @@
         "src/generate-kit-manifest.ts"
       ],
       "output": [
-        "agent.kit.json",
-        "boards/*.bgl.json"
+        "agent.kit.json"
       ]
     },
     "build": {
@@ -55,12 +56,11 @@
         "../core-kit:build:tsc",
         "../json-kit:build:tsc",
         "../template-kit:build:tsc",
-        "../gemini-kit:build:tsc"
+        "../gemini-kit:build:tsc",
+        "generate:js-components"
       ],
       "files": [
         "src/**/*.ts",
-        "src/future/*.js",
-        "bgl/*.bgl.json",
         "!src/samples/**/*.ts",
         "tests/**/*.ts",
         "tsconfig.json",
@@ -71,6 +71,19 @@
         "!dist/**/*.min.js{,.map}"
       ],
       "clean": "if-file-deleted"
+    },
+    "generate:js-components": {
+      "command": "build-code --tsconfig=tsconfig.json --out=src/generated/ src/js-components/*.ts",
+      "files": [
+        "src/**/*.ts",
+        "!src/generated/"
+      ],
+      "output": [
+        "src/generated/"
+      ],
+      "dependencies": [
+        "../build-code:build"
+      ]
     },
     "test": {
       "command": "node --test --enable-source-maps --test-reporter spec dist/tests/*.js",
@@ -98,7 +111,7 @@
       "output": []
     },
     "generate:graphs": {
-      "command": "mkdir graphs && ls dist/src/boards/**/*.js | xargs -n1 -r -I{} ../breadboard-cli/dist/src/index.js make \"$PWD/{}\" -o \"$PWD/graphs/\" --format",
+      "command": "mkdir graphs && ls dist/src/boards/*.js | xargs -n1 -r -I{} ../breadboard-cli/dist/src/index.js make \"$PWD/{}\" -o \"$PWD/graphs/\" --format",
       "dependencies": [
         "build:tsc"
       ],
@@ -139,20 +152,20 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@google-labs/breadboard": "^0.26.0",
-    "@google-labs/core-kit": "^0.14.1",
-    "@google-labs/gemini-kit": "^0.7.0",
-    "@google-labs/json-kit": "^0.3.7",
-    "@google-labs/template-kit": "^0.3.9",
+    "@google-labs/breadboard": "^0.27.0",
+    "@google-labs/core-kit": "^0.15.0",
+    "@google-labs/gemini-kit": "^0.8.0",
+    "@google-labs/json-kit": "^0.3.8",
+    "@google-labs/template-kit": "^0.3.10",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "ava": "^5.2.0",
     "tsx": "^4.19.1",
-    "typescript": "^5.5.4"
+    "typescript": "^5.6.2"
   },
   "dependencies": {
-    "@breadboard-ai/build": "^0.9.1"
+    "@breadboard-ai/build": "^0.10.0"
   }
 }

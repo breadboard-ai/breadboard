@@ -160,6 +160,20 @@ export class GraphNode extends PIXI.Container {
       }
     );
 
+    this.#activityMarker.on(
+      GRAPH_OPERATIONS.GRAPH_SHOW_TOOLTIP,
+      (...args: unknown[]) => {
+        this.emit(GRAPH_OPERATIONS.GRAPH_SHOW_TOOLTIP, ...args);
+      }
+    );
+
+    this.#activityMarker.on(
+      GRAPH_OPERATIONS.GRAPH_HIDE_TOOLTIP,
+      (...args: unknown[]) => {
+        this.emit(GRAPH_OPERATIONS.GRAPH_HIDE_TOOLTIP, ...args);
+      }
+    );
+
     this.#footer.on(
       GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
       (...args: unknown[]) => {

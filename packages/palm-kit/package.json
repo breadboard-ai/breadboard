@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "A Breadboard Kit with nodes to access PaLM APIs.",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -98,11 +98,11 @@
     "@typescript-eslint/parser": "^7.18.0",
     "@types/node": "^22.0.0",
     "ava": "^5.2.0",
-    "typescript": "^5.5.4",
+    "typescript": "^5.6.2",
     "@google-labs/tsconfig": "^0.0.1"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.26.0",
+    "@google-labs/breadboard": "^0.27.0",
     "@google-labs/palm-lite": "^0.0.3"
   }
 }

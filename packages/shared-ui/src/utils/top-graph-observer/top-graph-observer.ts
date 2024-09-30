@@ -30,6 +30,7 @@ import type {
   ComponentActivityItem,
   TopGraphRunResult,
   NodeLogEntry,
+  TopGraphObserverRunStatus,
 } from "../../types/types";
 import { formatError } from "../format-error";
 import {
@@ -53,6 +54,7 @@ export class TopGraphObserver {
    */
   #replay = false;
   #graph: GraphDescriptor | null = null;
+  #status: TopGraphObserverRunStatus = "stopped";
   #log: LogEntry[] | null = null;
   #currentResult: TopGraphRunResult | null = null;
   #currentNode: NodeLogEntry | null = null;
@@ -120,6 +122,18 @@ export class TopGraphObserver {
     if (signal) {
       signal.addEventListener("abort", this.#abort.bind(this));
     }
+    runner.addEventListener("start", () => {
+      this.#status = "running";
+      this.#currentResult = null;
+    });
+    runner.addEventListener("pause", () => {
+      this.#status = "paused";
+      this.#currentResult = null;
+    });
+    runner.addEventListener("end", () => {
+      this.#status = "stopped";
+      this.#currentResult = null;
+    });
     runner.addEventListener("edge", this.#edge.bind(this));
     runner.addEventListener("nodestart", this.#nodeStart.bind(this));
     runner.addEventListener("nodeend", this.#nodeEnd.bind(this));
@@ -129,6 +143,8 @@ export class TopGraphObserver {
     runner.addEventListener("output", this.#output.bind(this));
     runner.addEventListener("error", this.#error.bind(this));
     runner.addEventListener("resume", (event) => {
+      this.#status = "running";
+      this.#currentResult = null;
       this.#cleanUpPendingInput(event.data.inputs || {});
     });
   }
@@ -143,7 +159,6 @@ export class TopGraphObserver {
 
     if (this.#log) {
       this.#log = [...this.#log];
-      this.#currentResult = null;
     }
   }
 
@@ -158,6 +173,7 @@ export class TopGraphObserver {
         edgeValues: this.#edgeValues,
         nodeActivity: this.#nodeActivity,
         graph: this.#graph,
+        status: this.#status,
       };
     }
     return this.#currentResult;
@@ -352,6 +368,7 @@ export class TopGraphObserver {
   }
 
   #error(event: RunErrorEvent) {
+    this.#status = "stopped";
     if (!this.#log) {
       return;
     }

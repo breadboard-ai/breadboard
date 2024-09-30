@@ -7,7 +7,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
 
-import { GraphDescriptor, KitManifest } from "@google-labs/breadboard";
+import { KitManifest } from "@google-labs/breadboard";
 
 import worker from "./boards/worker.js";
 import human from "./boards/human.js";
@@ -18,8 +18,7 @@ import specialist from "./boards/specialist.js";
 import looper from "./boards/looper.js";
 import joiner from "./boards/joiner.js";
 import { serialize } from "@breadboard-ai/build";
-import content from "../bgl/content.bgl.json" with { type: "application/json" };
-import specialist2 from "../bgl/specialist-2.bgl.json" with { type: "application/json" };
+import content from "./boards/content.js";
 
 const MANIFEST_NAME = "agent.kit.json";
 
@@ -38,11 +37,10 @@ const manifest: KitManifest = {
     repeater: serialize(repeater),
     structuredWorker: serialize(structuredWorker),
     specialist: serialize(specialist),
-    specialist2: specialist2 as GraphDescriptor,
     worker: serialize(worker),
     looper: serialize(looper),
     joiner: serialize(joiner),
-    content: content as GraphDescriptor,
+    content: serialize(content),
   },
 };
 

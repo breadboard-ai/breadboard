@@ -45,6 +45,10 @@ export function isLLMContentArrayBehavior(schema: Schema) {
   return true;
 }
 
+export function isTextBehavior(schema: Schema) {
+  return schema.type === "string";
+}
+
 export function behaviorsMatch(schema1: Schema, schema2: Schema): boolean {
   if (schema1.behavior?.length !== schema2.behavior?.length) {
     return false;

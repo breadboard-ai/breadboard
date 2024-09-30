@@ -14,6 +14,7 @@ import {
   object,
   output,
   outputNode,
+  starInputs,
   Value,
 } from "@breadboard-ai/build";
 import { code, coreKit } from "@google-labs/core-kit";
@@ -22,6 +23,7 @@ import {
   addUserParts,
   checkAreWeDoneFunction,
   combineContextsFunction,
+  Context,
   contextType,
   functionCallType,
   type LlmContent,
@@ -43,29 +45,11 @@ import {
 } from "../function-calling.js";
 import boardToFunction from "./internal/board-to-function.js";
 import invokeBoardWithArgs from "./internal/invoke-board-with-args.js";
+import specialistDescriber from "./internal/specialist-describer.js";
+import { GenericBoardDefinition } from "@breadboard-ai/build/internal/board/board.js";
+import { substitute } from "../generated/substitute.js";
 
-const context = input({
-  title: "Context in",
-  description: "Incoming conversation context",
-  type: array(contextType),
-});
-
-const persona = input({
-  title: "Persona",
-  description:
-    "Describe the worker's skills, capabilities, mindset, and thinking process",
-  type: annotate(object({ parts: array(object({ text: "string" })) }), {
-    behavior: ["llm-content", "config"],
-  }),
-});
-
-const task = input({
-  title: "Task",
-  description:
-    "(Optional) Provide a specific task with clear instructions for the worker to complete using the conversation context",
-  type: annotate(llmContentType, { behavior: ["config"] }),
-  default: {} as LlmContent,
-});
+const inputs = starInputs({ type: object({}, "unknown") });
 
 const tools = input({
   title: "Tools",
@@ -98,14 +82,22 @@ const model = input({
   examples: ["gemini-1.5-flash-latest"],
 });
 
+const substituteParams = substitute({
+  $metadata: {
+    title: "Substitute Parameters",
+    description: "Performing parameter substitution, if needed.",
+  },
+  "*": inputs,
+});
+
 const addTask = code(
   {
     $metadata: {
       title: "Add Task",
       description: "Adding task to the prompt.",
     },
-    context,
-    toAdd: task,
+    context: substituteParams.outputs.in,
+    toAdd: substituteParams.outputs.task,
   },
   { context: array(contextType) },
   addUserParts
@@ -114,7 +106,7 @@ const addTask = code(
 const readProgress = code(
   {
     $metadata: { title: "Read Progress so far" },
-    context,
+    context: substituteParams.outputs.in,
     forkOutputs: false,
   },
   {
@@ -183,6 +175,7 @@ const formatFunctionDeclarations = code(
     // TODO(aomarks) Cast needed because coreKit.map doesn't know the schema of
     // the board that was passed to it (interfaces would fix this).
     list: turnBoardsToFunctions.outputs.list as Value<FunctionSignatureItem[]>,
+    routes: substituteParams.outputs.outs,
   },
   {
     tools: array("unknown"),
@@ -196,7 +189,7 @@ const generator = geminiKit.text({
     title: "Gemini API Call",
     description: "Applying Gemini to do work",
   },
-  systemInstruction: persona,
+  systemInstruction: substituteParams.outputs.persona,
   tools: formatFunctionDeclarations.outputs.tools,
   context: addLooperTask.outputs.context,
   model,
@@ -225,13 +218,16 @@ const assembleInvocations = code(
     $id: "assembleBoardInvoke",
     $metadata: {
       title: "Assemble Tool Invoke",
-      description: "Assembling the tool invocation based on Gemini response",
+      description: "Assembling tool invocation based on Gemini response",
     },
     urlMap: formatFunctionDeclarations.outputs.urlMap,
     context: routeToFunctionsOrText.outputs.context,
     functionCalls: routeToFunctionsOrText.outputs.functionCalls,
   },
-  { list: array(boardInvocationArgsType) },
+  {
+    list: array(boardInvocationArgsType),
+    routes: array("string"),
+  },
   boardInvocationAssemblerFunction
 );
 
@@ -255,6 +251,7 @@ const formatToolResponse = code(
     // of that.
     context: addSplitStart.outputs.context as Value<LlmContent[]>,
     response: mapInvocations.outputs.list as Value<ToolResponse[]>,
+    generated: generator.outputs.context as Value<LlmContent>,
   },
   {},
   responseCollatorFunction
@@ -276,14 +273,43 @@ const addToolResponseToContext = code(
   combineContextsFunction
 );
 
+const routeToolOutput = code(
+  {
+    $metadata: {
+      title: "Route Tool Output",
+      description: "Routing tool output as needed",
+    },
+    context: addToolResponseToContext.outputs.context,
+    routes: assembleInvocations.outputs.routes,
+  },
+  {},
+  ({ context, routes }) => {
+    const out: Record<string, Context[]> = {};
+    let hasRoutes = false;
+    for (const route of routes) {
+      out[`p-${route}`] = context;
+      hasRoutes = true;
+    }
+    if (!hasRoutes) {
+      return { out: context };
+    }
+    for (let i = context.length - 1; i >= 0; i--) {
+      const item = context[i];
+      if (item.role === "model") {
+        item.parts = item.parts.filter((part) => !("functionCall" in part));
+        break;
+      }
+    }
+    return out;
+  }
+);
+
 const toolOutput = outputNode({
   $metadata: {
     title: "Tool Output",
     description: "Return tool results as output",
   },
-  out: output(addToolResponseToContext.outputs.context, {
-    title: "Context out",
-  }),
+  "": routeToolOutput.unsafeOutput("*"),
 });
 
 const areWeDoneChecker = code(
@@ -314,10 +340,13 @@ export default board({
       url: "https://breadboard-ai.github.io/breadboard/docs/kits/agents/#specialist",
     },
   },
+  version: "2.1.0",
   description:
-    "Given instructions on how to act, performs a single task, optionally invoking tools.",
+    "Given instructions on how to act, makes a single LLM call, optionally invoking tools.",
   inputs: [
-    inputNode({ in: context, persona, task }),
+    inputNode({
+      "*": inputs,
+    }),
     inputNode(
       { tools },
       {
@@ -334,4 +363,5 @@ export default board({
     ),
   ],
   outputs: [toolOutput, mainOutput],
+  describer: specialistDescriber as GenericBoardDefinition,
 });

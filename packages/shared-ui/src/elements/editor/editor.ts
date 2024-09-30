@@ -9,6 +9,8 @@ import {
   Edge,
   EditSpec,
   GraphDescriptor,
+  GraphProviderCapabilities,
+  GraphProviderExtendedCapabilities,
   InspectableGraph,
   InspectableNodePorts,
   InspectableRun,
@@ -18,26 +20,38 @@ import {
   NodeValue,
   SubGraphs,
 } from "@google-labs/breadboard";
-import { LitElement, PropertyValues, css, html, nothing } from "lit";
+import {
+  HTMLTemplateResult,
+  LitElement,
+  PropertyValues,
+  css,
+  html,
+  nothing,
+} from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import {
+  CommentEditRequestEvent,
   EdgeChangeEvent,
   EdgeValueSelectedEvent,
+  GraphCommentEditRequestEvent,
   GraphEdgeAttachEvent,
   GraphEdgeDetachEvent,
   GraphEdgeValueSelectedEvent,
   GraphEntityRemoveEvent,
+  GraphHideTooltipEvent,
   GraphInitialDrawEvent,
   GraphInteractionEvent,
   GraphNodeActivitySelectedEvent,
   GraphNodeDeleteEvent,
   GraphNodeEdgeChangeEvent,
-  GraphNodePortValueEditEvent,
+  GraphNodeEditEvent,
   GraphNodesVisualUpdateEvent,
+  GraphShowTooltipEvent,
+  HideTooltipEvent,
   KitNodeChosenEvent,
   MultiEditEvent,
   NodeActivitySelectedEvent,
@@ -45,9 +59,17 @@ import {
   NodeCreateEvent,
   NodeDeleteEvent,
   NodeTypeRetrievalErrorEvent,
+  RedoEvent,
+  RunEvent,
+  SaveAsEvent,
+  SaveEvent,
+  ShowTooltipEvent,
+  StopEvent,
   SubGraphChosenEvent,
   SubGraphCreateEvent,
   SubGraphDeleteEvent,
+  ToggleBoardActivityEvent,
+  UndoEvent,
 } from "../../events/events.js";
 import { GraphEdge } from "./graph-edge.js";
 import { GraphRenderer } from "./graph-renderer.js";
@@ -70,13 +92,18 @@ function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
   return {
     schema: {
       properties: {
-        content: {
-          type: "object",
-          title: "Content",
-          examples: [],
-          behavior: ["llm-content"],
-          default:
-            type === "input" ? '{"role":"user","parts":[{"text":""}]}' : "null",
+        context: {
+          type: "array",
+          title: "Context",
+          items: {
+            type: "object",
+            examples: [],
+            behavior: ["llm-content"],
+            default:
+              type === "input"
+                ? '{"role":"user","parts":[{"text":""}]}'
+                : "null",
+          },
         },
       },
       type: "object",
@@ -103,6 +130,18 @@ export class Editor extends LitElement {
 
   @property()
   boardId: number = -1;
+
+  @property()
+  capabilities: false | GraphProviderCapabilities = false;
+
+  @property()
+  extendedCapabilities: false | GraphProviderExtendedCapabilities = false;
+
+  @property()
+  canUndo = false;
+
+  @property()
+  canRedo = false;
 
   @property()
   collapseNodesByDefault = false;
@@ -161,6 +200,9 @@ export class Editor extends LitElement {
     return this.#graphRenderer.showPortTooltips;
   }
 
+  @state()
+  showOverflowMenu = false;
+
   #graphRenderer = new GraphRenderer();
   // Incremented each time a graph is updated, used to avoid extra work
   // inspecting ports when the graph is updated.
@@ -180,16 +222,20 @@ export class Editor extends LitElement {
   #onGraphEdgeChangeBound = this.#onGraphEdgeChange.bind(this);
   #onGraphNodeDeleteBound = this.#onGraphNodeDelete.bind(this);
   #onGraphEntityRemoveBound = this.#onGraphEntityRemove.bind(this);
-  #onGraphNodePortValueEditBound = this.#onGraphNodePortValueEdit.bind(this);
+  #onGraphNodeEditBound = this.#onGraphNodeEdit.bind(this);
   #onGraphEdgeValueSelectedBound = this.#onGraphEdgeValueSelected.bind(this);
   #onGraphNodeActivitySelectedBound =
     this.#onGraphNodeActivitySelected.bind(this);
   #onGraphInteractionBound = this.#onGraphInteraction.bind(this);
+  #onGraphShowTooltipBound = this.#onGraphShowTooltip.bind(this);
+  #onGraphHideTooltipBound = this.#onGraphHideTooltip.bind(this);
+  #onGraphCommentEditRequestBound = this.#onGraphCommentEditRequest.bind(this);
 
   #top = 0;
   #left = 0;
   #addButtonRef: Ref<HTMLInputElement> = createRef();
   #nodeSelectorRef: Ref<NodeSelector> = createRef();
+  #activityMarkerRef: Ref<HTMLElement> = createRef();
 
   #writingToClipboard = false;
   #readingFromClipboard = false;
@@ -220,7 +266,7 @@ export class Editor extends LitElement {
       visibility: hidden;
       pointer-events: none;
       position: absolute;
-      bottom: 52px;
+      bottom: var(--bb-grid-size-12);
       left: 0;
     }
 
@@ -235,7 +281,7 @@ export class Editor extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 3);
+      padding: 0 var(--bb-grid-size) 0 var(--bb-grid-size-3);
     }
 
     #shortcut-add-comment,
@@ -278,21 +324,26 @@ export class Editor extends LitElement {
     }
 
     label[for="add-node"] {
-      font: 500 var(--bb-label-large) / var(--bb-label-line-height-large)
-        var(--bb-font-family);
+      font-size: 0;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-right: var(--bb-grid-size);
     }
 
     label[for="add-node"]::before {
       content: "";
-      width: 16px;
-      height: 16px;
-      background: var(--bb-icon-add) center center / 16px 16px no-repeat;
-      margin-right: calc(var(--bb-grid-size) * 2);
+      width: 24px;
+      height: 24px;
+      background: var(--bb-ui-100) var(--bb-icon-more-vert) center center / 20px
+        20px no-repeat;
+      border-radius: 50%;
+      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+      opacity: 0.5;
+    }
+
+    label[for="add-node"]:hover::before {
+      opacity: 1;
     }
 
     #add-node {
@@ -317,14 +368,14 @@ export class Editor extends LitElement {
     }
 
     #controls {
-      height: calc(var(--bb-grid-size) * 9);
+      height: var(--bb-grid-size-9);
       position: absolute;
-      left: calc(var(--bb-grid-size) * 3);
-      top: calc(var(--bb-grid-size) * 3);
+      top: var(--bb-grid-size-3);
+      left: var(--bb-grid-size-3);
       background: #fff;
       border-radius: 40px;
-      padding: var(--bb-grid-size-2) var(--bb-grid-size) var(--bb-grid-size-2)
-        var(--bb-grid-size-3);
+      padding: 0 var(--bb-grid-size) 0 var(--bb-grid-size-3);
+
       border: 1px solid var(--bb-neutral-300);
       display: flex;
       align-items: center;
@@ -334,22 +385,72 @@ export class Editor extends LitElement {
       margin-left: calc(var(--bb-grid-size) * 2);
     }
 
-    #controls button:first-of-type {
+    #controls button:first-of-type,
+    #controls .divider + button {
       margin-left: 0;
     }
 
+    #debug {
+      width: 140px;
+
+      height: calc(var(--bb-grid-size) * 9);
+      position: absolute;
+      bottom: calc(var(--bb-grid-size) * 3);
+      right: calc(var(--bb-grid-size) * 2);
+
+      background: var(--bb-ui-600) var(--bb-icon-debug-inverted) 12px center /
+        20px 20px no-repeat;
+      color: #fff;
+      border-radius: 20px;
+      border: none;
+      font-size: var(--bb-label-large);
+      padding: var(--bb-grid-size-2) var(--bb-grid-size-5) var(--bb-grid-size-2)
+        var(--bb-grid-size-9);
+      margin-right: var(--bb-grid-size-2);
+      cursor: pointer;
+      opacity: 0.8;
+      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+    }
+
+    #debug:hover,
+    #debug:focus {
+      opacity: 1;
+    }
+
+    #debug[disabled] {
+      opacity: 0.4;
+      cursor: auto;
+    }
+
     #reset-layout,
-    #zoom-to-fit {
+    #zoom-to-fit,
+    #undo,
+    #redo,
+    #save-board,
+    #overflow {
       width: 20px;
       height: 20px;
-      cursor: pointer;
       background: center center no-repeat;
       background-size: 20px 20px;
       font-size: 0;
-      cursor: pointer;
       transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
       opacity: 0.5;
       border: none;
+    }
+
+    #overflow {
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+    }
+
+    #reset-layout[disabled],
+    #zoom-to-fit[disabled],
+    #undo[disabled],
+    #redo[disabled],
+    #save-board[disabled],
+    #overflow[disabled] {
+      opacity: 0.45;
     }
 
     #reset-layout {
@@ -360,10 +461,39 @@ export class Editor extends LitElement {
       background-image: var(--bb-icon-fit);
     }
 
-    #reset-layout:hover,
-    #zoom-to-fit:hover {
+    #undo {
+      margin: 0;
+      background-image: var(--bb-icon-undo);
+    }
+
+    #redo {
+      background-image: var(--bb-icon-redo);
+    }
+
+    #save-board {
+      background-image: var(--bb-icon-save);
+    }
+
+    #overflow {
+      background: var(--bb-ui-100) var(--bb-icon-more-vert) center center / 20px
+        20px no-repeat;
+    }
+
+    #reset-layout:not([disabled]):hover,
+    #zoom-to-fit:not([disabled]):hover,
+    #undo:not([disabled]):hover,
+    #redo:not([disabled]):hover,
+    #save-board:not([disabled]):hover,
+    #overflow:not([disabled]):hover,
+    #reset-layout:not([disabled]):focus,
+    #zoom-to-fit:not([disabled]):focus,
+    #undo:not([disabled]):focus,
+    #redo:not([disabled]):focus,
+    #save-board:not([disabled]):focus,
+    #overflow:not([disabled]):focus {
       transition-duration: 0.1s;
       opacity: 1;
+      cursor: pointer;
     }
 
     .divider {
@@ -371,6 +501,13 @@ export class Editor extends LitElement {
       height: calc(var(--bb-grid-size) * 5);
       background: var(--bb-neutral-300);
       margin: 0px calc(var(--bb-grid-size) * 3);
+    }
+
+    bb-overflow-menu {
+      position: absolute;
+      top: calc(var(--bb-grid-size) * 11);
+      right: auto;
+      left: calc(var(--bb-grid-size) * 40);
     }
 
     #subgraph-selector {
@@ -437,28 +574,103 @@ export class Editor extends LitElement {
       mix-blend-mode: difference;
     }
 
-    #active-component {
+    #activity-marker {
+      align-items: center;
+      background: var(--bb-neutral-50);
+      border-radius: var(--bb-grid-size-10);
+      border: 1px solid var(--bb-neutral-300);
+      bottom: calc(var(--bb-grid-size) * 3);
+      color: var(--bb-neutral-900);
+      cursor: pointer;
+      display: flex;
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
-      display: flex;
-      align-items: center;
+      height: var(--bb-grid-size-9);
+      justify-content: center;
+      position: absolute;
+      right: calc(var(--bb-grid-size) * 42);
+      transition: all 0.3s cubic-bezier(0, 0, 0.3, 1);
+      width: var(--bb-grid-size-9);
+    }
+
+    #activity-marker::after {
+      content: "";
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      opacity: 0.4;
+      top: -8px;
+      left: -8px;
+      border-radius: 50%;
+      position: absolute;
+    }
+
+    #activity-marker.pending {
+      border: 1px solid var(--bb-inputs-700);
+      background: var(--bb-inputs-500);
+      color: var(--bb-neutral-0);
+    }
+
+    #activity-marker.pending::after {
+      animation: expand 3s cubic-bezier(0, 0, 0.3, 1) forwards infinite;
+    }
+
+    #activity-marker.error {
+      border: 1px solid var(--bb-warning-700);
+      background: var(--bb-warning-600);
+      color: var(--bb-neutral-0);
+    }
+
+    @keyframes expand {
+      0% {
+        opacity: 0;
+        transform: scale(1);
+        border: 8px solid var(--bb-inputs-500);
+      }
+
+      5% {
+        opacity: 0.4;
+      }
+
+      50% {
+        opacity: 0;
+        transform: scale(1.5) translate(4px, 4px);
+      }
+
+      100% {
+        opacity: 0;
+        transform: scale(1.5) translate(4px, 4px);
+        border: 0px solid var(--bb-inputs-500);
+      }
+    }
+
+    #active-component {
+      position: absolute;
+      bottom: calc(var(--bb-grid-size) * 3);
+      right: calc(var(--bb-grid-size) * 54);
+      border-radius: 50px;
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
       border: none;
-      padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size);
+      padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-2);
       display: flex;
       align-items: center;
-      background: var(--bb-ui-50);
+      background: var(--bb-neutral-0);
       border-radius: var(--bb-grid-size-10);
-      height: 24px;
+      height: var(--bb-grid-size-9);
       cursor: pointer;
+      color: var(--bb-neutral-500);
+      border: 1px solid var(--bb-neutral-300);
+      transition: all 0.3s cubic-bezier(0, 0, 0.3, 1);
     }
 
     #controls #active-component {
       margin-left: 0;
     }
 
-    #active-component:hover,
-    #active-component:focus {
-      background: var(--bb-ui-100);
+    #active-component:hover {
+      color: var(--bb-inputs-600);
+      border: 1px solid var(--bb-inputs-300);
     }
 
     #active-component::before {
@@ -471,12 +683,14 @@ export class Editor extends LitElement {
 
     #active-component.active {
       opacity: 1;
-      background: var(--bb-ui-600);
-      color: var(--bb-neutral-0);
+      color: var(--bb-inputs-700);
+      background: var(--bb-inputs-50);
+      border: 1px solid var(--bb-inputs-500);
     }
 
+    #active-component:hover::before,
     #active-component.active::before {
-      background: var(--bb-icon-directions-inverted) left center / 20px 20px
+      background: var(--bb-icon-directions-active) left center / 20px 20px
         no-repeat;
     }
   `;
@@ -602,21 +816,11 @@ export class Editor extends LitElement {
     return this.#graphRenderer;
   }
 
-  #ignoreNextUpdate = false;
-  protected shouldUpdate(): boolean {
-    if (this.#ignoreNextUpdate) {
-      this.#ignoreNextUpdate = false;
-      return false;
-    }
-
-    return true;
-  }
-
   constructor() {
     super();
 
     this.zoomToHighlightedNodeDuringRuns =
-      globalThis.localStorage.getItem(ZOOM_KEY) === "true" ?? true;
+      (globalThis.localStorage.getItem(ZOOM_KEY) ?? "true") === "true";
   }
 
   connectedCallback(): void {
@@ -653,8 +857,8 @@ export class Editor extends LitElement {
     );
 
     this.#graphRenderer.addEventListener(
-      GraphNodePortValueEditEvent.eventName,
-      this.#onGraphNodePortValueEditBound
+      GraphNodeEditEvent.eventName,
+      this.#onGraphNodeEditBound
     );
 
     this.#graphRenderer.addEventListener(
@@ -670,6 +874,21 @@ export class Editor extends LitElement {
     this.#graphRenderer.addEventListener(
       GraphInteractionEvent.eventName,
       this.#onGraphInteractionBound
+    );
+
+    this.#graphRenderer.addEventListener(
+      GraphShowTooltipEvent.eventName,
+      this.#onGraphShowTooltipBound
+    );
+
+    this.#graphRenderer.addEventListener(
+      GraphHideTooltipEvent.eventName,
+      this.#onGraphHideTooltipBound
+    );
+
+    this.#graphRenderer.addEventListener(
+      GraphCommentEditRequestEvent.eventName,
+      this.#onGraphCommentEditRequestBound
     );
 
     window.addEventListener("resize", this.#onResizeBound);
@@ -714,8 +933,8 @@ export class Editor extends LitElement {
     );
 
     this.#graphRenderer.removeEventListener(
-      GraphNodePortValueEditEvent.eventName,
-      this.#onGraphNodePortValueEditBound
+      GraphNodeEditEvent.eventName,
+      this.#onGraphNodeEditBound
     );
 
     this.#graphRenderer.removeEventListener(
@@ -731,6 +950,21 @@ export class Editor extends LitElement {
     this.#graphRenderer.removeEventListener(
       GraphInteractionEvent.eventName,
       this.#onGraphInteractionBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphShowTooltipEvent.eventName,
+      this.#onGraphShowTooltipBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphHideTooltipEvent.eventName,
+      this.#onGraphHideTooltipBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphCommentEditRequestEvent.eventName,
+      this.#onGraphCommentEditRequestBound
     );
 
     window.removeEventListener("resize", this.#onResizeBound);
@@ -757,6 +991,29 @@ export class Editor extends LitElement {
     }
 
     this.zoomToHighlightedNodeDuringRuns = false;
+  }
+
+  #onGraphShowTooltip(evt: Event) {
+    const tooltipEvt = evt as GraphShowTooltipEvent;
+    this.dispatchEvent(
+      new ShowTooltipEvent(tooltipEvt.message, tooltipEvt.x, tooltipEvt.y)
+    );
+  }
+
+  #onGraphHideTooltip() {
+    this.dispatchEvent(new HideTooltipEvent());
+  }
+
+  #onGraphCommentEditRequest(evt: Event) {
+    const commentEvt = evt as GraphCommentEditRequestEvent;
+    this.dispatchEvent(
+      new CommentEditRequestEvent(
+        commentEvt.id,
+        commentEvt.x,
+        commentEvt.y,
+        this.subGraphId
+      )
+    );
   }
 
   #onPointerMove(evt: PointerEvent) {
@@ -1221,7 +1478,6 @@ export class Editor extends LitElement {
       return;
     }
 
-    this.#ignoreNextUpdate = true;
     this.dispatchEvent(editsEvt);
   }
 
@@ -1356,10 +1612,19 @@ export class Editor extends LitElement {
     );
   }
 
-  #onGraphNodePortValueEdit(evt: Event) {
-    const { id, port, x, y } = evt as GraphNodePortValueEditEvent;
+  #onGraphNodeEdit(evt: Event) {
+    const { id, port, x, y, addHorizontalClickClearance } =
+      evt as GraphNodeEditEvent;
+
     this.dispatchEvent(
-      new NodeConfigurationUpdateRequestEvent(id, this.subGraphId, port, x, y)
+      new NodeConfigurationUpdateRequestEvent(
+        id,
+        this.subGraphId,
+        port,
+        x,
+        y,
+        addHorizontalClickClearance
+      )
     );
   }
 
@@ -1466,6 +1731,21 @@ export class Editor extends LitElement {
     this.dispatchEvent(new SubGraphCreateEvent(newSubGraphName));
   }
 
+  #dispatchActivityMarkerEvent(forceOn = false) {
+    if (!this.#activityMarkerRef.value) {
+      return;
+    }
+
+    const bounds = this.#activityMarkerRef.value.getBoundingClientRect();
+    this.dispatchEvent(
+      new ToggleBoardActivityEvent(
+        bounds.left + bounds.width / 2,
+        bounds.top - 10,
+        forceOn
+      )
+    );
+  }
+
   firstUpdated(): void {
     this.#onResizeBound();
   }
@@ -1493,258 +1773,579 @@ export class Editor extends LitElement {
       showSubGraphSelector = false;
     }
 
+    const isRunning = this.topGraphResult
+      ? this.topGraphResult.status === "running" ||
+        this.topGraphResult.status === "paused"
+      : false;
+
+    let saveButton: HTMLTemplateResult | symbol = nothing;
+    try {
+      if (this.capabilities && this.capabilities.save) {
+        saveButton = html`<button
+          id="save-board"
+          @click=${() => {
+            this.dispatchEvent(new SaveEvent());
+          }}
+          @pointerover=${(evt: PointerEvent) => {
+            this.dispatchEvent(
+              new ShowTooltipEvent("Save board", evt.clientX, evt.clientY)
+            );
+          }}
+          @pointerout=${() => {
+            this.dispatchEvent(new HideTooltipEvent());
+          }}
+        >
+          Save
+        </button>`;
+      } else {
+        saveButton = html`<button
+          id="save-board"
+          @click=${() => {
+            this.dispatchEvent(new SaveAsEvent());
+          }}
+          @pointerover=${(evt: PointerEvent) => {
+            this.dispatchEvent(
+              new ShowTooltipEvent("Save board as...", evt.clientX, evt.clientY)
+            );
+          }}
+          @pointerout=${() => {
+            this.dispatchEvent(new HideTooltipEvent());
+          }}
+        >
+          Save As...
+        </button>`;
+      }
+    } catch (err) {
+      // If there are any problems with the URL, etc, don't offer the save button.
+    }
+
+    let overflowMenu: HTMLTemplateResult | symbol = nothing;
+    if (this.showOverflowMenu) {
+      const actions: Array<{
+        title: string;
+        name: string;
+        icon: string;
+        disabled?: boolean;
+      }> = [
+        {
+          title: "Edit Board Details",
+          name: "edit-board-details",
+          icon: "edit",
+        },
+        {
+          title: "Copy Board Contents",
+          name: "copy-board-contents",
+          icon: "copy",
+        },
+        {
+          title: "Copy Board URL",
+          name: "copy-to-clipboard",
+          icon: "copy",
+        },
+        {
+          title: "Copy Tab URL",
+          name: "copy-tab-to-clipboard",
+          icon: "copy",
+        },
+        {
+          title: "Download Board",
+          name: "download",
+          icon: "download",
+        },
+      ];
+
+      if (this.capabilities) {
+        if (this.capabilities.delete) {
+          actions.push({
+            title: "Delete Board",
+            name: "delete",
+            icon: "delete",
+          });
+        }
+
+        if (this.capabilities.save) {
+          actions.push({
+            title: "Save As...",
+            name: "save-as",
+            icon: "save",
+          });
+        }
+      }
+
+      if (this.extendedCapabilities && this.extendedCapabilities.preview) {
+        actions.push({
+          title: "Copy Preview URL",
+          name: "preview",
+          icon: "preview",
+        });
+      }
+
+      overflowMenu = html`<bb-overflow-menu
+        .actions=${actions}
+        .disabled=${this.graph === null}
+        @bboverflowmenudismissed=${() => {
+          this.showOverflowMenu = false;
+        }}
+        @bboverflowmenuaction=${() => {
+          this.showOverflowMenu = false;
+        }}
+      ></bb-overflow-menu>`;
+    }
+
+    let isInputPending = false;
+    let isError = false;
+    const newestEvent = this.run?.events.at(-1);
+    if (newestEvent) {
+      isInputPending =
+        newestEvent.type === "node" &&
+        newestEvent.node.descriptor.type === "input";
+      isError = newestEvent.type === "error";
+    }
+
     return html`${until(this.#processGraph())}
       ${
         this.showControls && this.graph !== null
-          ? html` ${this.readOnly
-              ? nothing
-              : html`
-                  <div id="controls">
-                    <button
-                      title="Zoom to fit"
-                      id="zoom-to-fit"
-                      @click=${() => this.#graphRenderer.zoomToFit()}
-                    >
-                      Zoom to fit
-                    </button>
-                    <button
-                      title="Reset Layout"
-                      id="reset-layout"
-                      @click=${() => {
-                        this.#graphRenderer.resetGraphLayout();
-                      }}
-                    >
-                      Reset Layout
-                    </button>
+          ? html` <button
+                id="debug"
+                title="Debug this board"
+                ?disabled=${!this.graph || this.readOnly}
+                @click=${() => {
+                  if (isRunning) {
+                    this.dispatchEvent(new StopEvent());
+                  } else {
+                    this.#dispatchActivityMarkerEvent(true);
+                    this.dispatchEvent(new RunEvent());
+                  }
+                }}
+              >
+                ${isRunning ? "Stop Board" : "Debug Board"}
+              </button>
 
-                    ${showSubGraphSelector
-                      ? html`<div class="divider"></div>
-                          <select
-                            id="subgraph-selector"
-                            @input=${(evt: Event) => {
-                              if (!(evt.target instanceof HTMLSelectElement)) {
-                                return;
-                              }
+              <button
+                title="Zoom to highlighted component during runs"
+                id="active-component"
+                class=${classMap({
+                  active: this.zoomToHighlightedNodeDuringRuns,
+                  visible: isRunning,
+                })}
+                @click=${() => {
+                  const shouldZoom = !this.zoomToHighlightedNodeDuringRuns;
+                  this.zoomToHighlightedNodeDuringRuns = shouldZoom;
+                  this.#graphRenderer.zoomToHighlightedNode = shouldZoom;
+                  globalThis.localStorage.setItem(
+                    ZOOM_KEY,
+                    shouldZoom.toString()
+                  );
 
-                              this.dispatchEvent(
-                                new SubGraphChosenEvent(evt.target.value)
-                              );
-                            }}
-                          >
-                            <option
-                              ?selected=${this.subGraphId === null}
-                              value="${MAIN_BOARD_ID}"
-                            >
-                              Main board
-                            </option>
-                            ${map(
-                              Object.entries(subGraphs || []),
-                              ([subGraphId, subGraph]) => {
-                                return html`<option
-                                  value="${subGraphId}"
-                                  ?selected=${subGraphId === this.subGraphId}
-                                >
-                                  ${subGraph.title || subGraphId}
-                                </option>`;
-                              }
-                            )}
-                          </select>`
-                      : nothing}
-                    <button
-                      id="add-sub-board"
-                      title="Add new sub board"
-                      @click=${() => this.#proposeNewSubGraph()}
-                    >
-                      Add sub board
-                    </button>
-                    <button
-                      id="delete-sub-board"
-                      title="Delete this sub board"
-                      ?disabled=${this.subGraphId === null}
-                      @click=${() => {
-                        if (!this.subGraphId) {
-                          return;
-                        }
+                  if (!shouldZoom) {
+                    return;
+                  }
 
-                        if (
-                          !confirm(
-                            "Are you sure you wish to delete this sub board?"
-                          )
-                        ) {
-                          return;
-                        }
+                  if (this.topGraphResult?.currentNode) {
+                    this.#graphRenderer.zoomToNode(
+                      this.topGraphResult.currentNode.descriptor.id,
+                      -0.1
+                    );
+                  }
+                }}
+              >
+                Follow
+              </button>
 
-                        this.dispatchEvent(
-                          new SubGraphDeleteEvent(this.subGraphId)
-                        );
-                      }}
-                    >
-                      Delete sub board
-                    </button>
-                    <div class="divider"></div>
-                    <button
-                      title="Zoom to highlighted component during runs"
-                      id="active-component"
-                      class=${classMap({
-                        active: this.zoomToHighlightedNodeDuringRuns,
-                      })}
-                      @click=${() => {
-                        const shouldZoom =
-                          !this.zoomToHighlightedNodeDuringRuns;
-                        this.zoomToHighlightedNodeDuringRuns = shouldZoom;
-                        this.#graphRenderer.zoomToHighlightedNode = shouldZoom;
-                        globalThis.localStorage.setItem(
-                          ZOOM_KEY,
-                          shouldZoom.toString()
-                        );
+              <button
+                id="activity-marker"
+                ${ref(this.#activityMarkerRef)}
+                class=${classMap({
+                  pending: isInputPending,
+                  error: isError,
+                  visible: isRunning,
+                })}
+                @click=${() => {
+                  this.#dispatchActivityMarkerEvent();
+                }}
+                @pointerover=${(evt: PointerEvent) => {
+                  this.dispatchEvent(
+                    new ShowTooltipEvent(
+                      "See board activity",
+                      evt.clientX,
+                      evt.clientY
+                    )
+                  );
+                }}
+                @pointerout=${() => {
+                  this.dispatchEvent(new HideTooltipEvent());
+                }}
+              >
+                ${this.run ? this.run.events.length : 0}
+              </button>
 
-                        if (!shouldZoom) {
-                          return;
-                        }
-
-                        if (this.topGraphResult?.currentNode) {
-                          this.#graphRenderer.zoomToNode(
-                            this.topGraphResult.currentNode.descriptor.id
+              ${this.readOnly
+                ? nothing
+                : html`
+                    <div id="controls">
+                      <button
+                        id="zoom-to-fit"
+                        @click=${() => this.#graphRenderer.zoomToFit()}
+                        @pointerover=${(evt: PointerEvent) => {
+                          this.dispatchEvent(
+                            new ShowTooltipEvent(
+                              "Zoom board to fit",
+                              evt.clientX,
+                              evt.clientY
+                            )
                           );
-                        }
-                      }}
-                    >
-                      Follow run
-                    </button>
-                  </div>
-                `}
-            ${this.graph !== null
-              ? html`
-                  <div id="nodes">
-                    <input
-                      ${ref(this.#addButtonRef)}
-                      name="add-node"
-                      id="add-node"
-                      type="checkbox"
-                      @input=${(evt: InputEvent) => {
-                        if (!(evt.target instanceof HTMLInputElement)) {
-                          return;
-                        }
+                        }}
+                        @pointerout=${() => {
+                          this.dispatchEvent(new HideTooltipEvent());
+                        }}
+                      >
+                        Zoom to fit
+                      </button>
+                      <button
+                        id="reset-layout"
+                        @click=${() => {
+                          this.#graphRenderer.resetGraphLayout();
+                        }}
+                        @pointerover=${(evt: PointerEvent) => {
+                          this.dispatchEvent(
+                            new ShowTooltipEvent(
+                              "Reset board layout",
+                              evt.clientX,
+                              evt.clientY
+                            )
+                          );
+                        }}
+                        @pointerout=${() => {
+                          this.dispatchEvent(new HideTooltipEvent());
+                        }}
+                      >
+                        Reset Layout
+                      </button>
 
-                        if (!this.#nodeSelectorRef.value) {
-                          return;
-                        }
+                      ${showSubGraphSelector
+                        ? html`<div class="divider"></div>
+                            <select
+                              id="subgraph-selector"
+                              @input=${(evt: Event) => {
+                                if (
+                                  !(evt.target instanceof HTMLSelectElement)
+                                ) {
+                                  return;
+                                }
 
-                        const nodeSelector = this.#nodeSelectorRef.value;
-                        nodeSelector.inert = !evt.target.checked;
+                                this.dispatchEvent(
+                                  new SubGraphChosenEvent(evt.target.value)
+                                );
+                              }}
+                              @pointerover=${(evt: PointerEvent) => {
+                                this.dispatchEvent(
+                                  new ShowTooltipEvent(
+                                    "Change board",
+                                    evt.clientX,
+                                    evt.clientY
+                                  )
+                                );
+                              }}
+                              @pointerout=${() => {
+                                this.dispatchEvent(new HideTooltipEvent());
+                              }}
+                            >
+                              <option
+                                ?selected=${this.subGraphId === null}
+                                value="${MAIN_BOARD_ID}"
+                              >
+                                Main board
+                              </option>
+                              ${map(
+                                Object.entries(subGraphs || []),
+                                ([subGraphId, subGraph]) => {
+                                  return html`<option
+                                    value="${subGraphId}"
+                                    ?selected=${subGraphId === this.subGraphId}
+                                  >
+                                    ${subGraph.title || subGraphId}
+                                  </option>`;
+                                }
+                              )}
+                            </select>`
+                        : nothing}
+                      <button
+                        id="add-sub-board"
+                        @click=${() => this.#proposeNewSubGraph()}
+                        @pointerover=${(evt: PointerEvent) => {
+                          this.dispatchEvent(
+                            new ShowTooltipEvent(
+                              "Add Sub board",
+                              evt.clientX,
+                              evt.clientY
+                            )
+                          );
+                        }}
+                        @pointerout=${() => {
+                          this.dispatchEvent(new HideTooltipEvent());
+                        }}
+                      >
+                        Add sub board
+                      </button>
+                      <button
+                        id="delete-sub-board"
+                        ?disabled=${this.subGraphId === null}
+                        @click=${() => {
+                          if (!this.subGraphId) {
+                            return;
+                          }
 
-                        if (!evt.target.checked) {
-                          return;
-                        }
-                        nodeSelector.selectSearchInput();
-                      }}
-                    />
-                    <label for="add-node">Components</label>
+                          if (
+                            !confirm(
+                              "Are you sure you wish to delete this sub board?"
+                            )
+                          ) {
+                            return;
+                          }
 
-                    <bb-node-selector
-                      ${ref(this.#nodeSelectorRef)}
-                      inert
-                      .graph=${this.graph}
-                      .showExperimentalComponents=${this
-                        .showExperimentalComponents}
-                      @bbkitnodechosen=${(evt: KitNodeChosenEvent) => {
-                        const id = this.#createRandomID(evt.nodeType);
-                        this.dispatchEvent(
-                          new NodeCreateEvent(id, evt.nodeType)
-                        );
-                      }}
-                    ></bb-node-selector>
+                          this.dispatchEvent(
+                            new SubGraphDeleteEvent(this.subGraphId)
+                          );
+                        }}
+                        @pointerover=${(evt: PointerEvent) => {
+                          this.dispatchEvent(
+                            new ShowTooltipEvent(
+                              "Delete sub board",
+                              evt.clientX,
+                              evt.clientY
+                            )
+                          );
+                        }}
+                        @pointerout=${() => {
+                          this.dispatchEvent(new HideTooltipEvent());
+                        }}
+                      >
+                        Delete sub board
+                      </button>
+                      <div class="divider"></div>
 
-                    ${this.showNodeShortcuts
-                      ? html`<div class="divider"></div>
-                          <button
-                            draggable="true"
-                            title="Add Specialist"
-                            id="shortcut-add-specialist"
-                            @dblclick=${() => {
-                              const id = this.#createRandomID("specialist");
-                              this.#graphRenderer.deselectAllChildren();
-                              this.dispatchEvent(
-                                new NodeCreateEvent(id, "specialist")
-                              );
-                            }}
-                            @dragstart=${(evt: DragEvent) => {
-                              if (!evt.dataTransfer) {
-                                return;
-                              }
-                              evt.dataTransfer.setData(DATA_TYPE, "specialist");
-                            }}
-                          >
-                            Add Specialist
-                          </button>
-                          <button
-                            draggable="true"
-                            title="Add human"
-                            id="shortcut-add-human"
-                            @dblclick=${() => {
-                              const id = this.#createRandomID("human");
-                              this.#graphRenderer.deselectAllChildren();
-                              this.dispatchEvent(
-                                new NodeCreateEvent(id, "human")
-                              );
-                            }}
-                            @dragstart=${(evt: DragEvent) => {
-                              if (!evt.dataTransfer) {
-                                return;
-                              }
-                              evt.dataTransfer.setData(DATA_TYPE, "human");
-                            }}
-                          >
-                            Add Human
-                          </button>
-                          <button
-                            draggable="true"
-                            title="Add looper"
-                            id="shortcut-add-looper"
-                            @dblclick=${() => {
-                              const id = this.#createRandomID("looper");
-                              this.#graphRenderer.deselectAllChildren();
-                              this.dispatchEvent(
-                                new NodeCreateEvent(id, "looper")
-                              );
-                            }}
-                            @dragstart=${(evt: DragEvent) => {
-                              if (!evt.dataTransfer) {
-                                return;
-                              }
-                              evt.dataTransfer.setData(DATA_TYPE, "looper");
-                            }}
-                          >
-                            Add Human
-                          </button>
-                          <button
-                            draggable="true"
-                            title="Add comment"
-                            id="shortcut-add-comment"
-                            @dblclick=${() => {
-                              const id = this.#createRandomID("comment");
-                              this.#graphRenderer.deselectAllChildren();
-                              this.dispatchEvent(
-                                new NodeCreateEvent(id, "comment")
-                              );
-                            }}
-                            @dragstart=${(evt: DragEvent) => {
-                              if (!evt.dataTransfer) {
-                                return;
-                              }
-                              evt.dataTransfer.setData(DATA_TYPE, "comment");
-                            }}
-                          >
-                            Add Human
-                          </button>`
+                      <button
+                        id="undo"
+                        ?disabled=${!this.canUndo}
+                        @click=${() => {
+                          this.dispatchEvent(new UndoEvent());
+                        }}
+                        @pointerover=${(evt: PointerEvent) => {
+                          this.dispatchEvent(
+                            new ShowTooltipEvent(
+                              `Undo last action${this.canUndo ? "" : " (unavailable)"}`,
+                              evt.clientX,
+                              evt.clientY
+                            )
+                          );
+                        }}
+                        @pointerout=${() => {
+                          this.dispatchEvent(new HideTooltipEvent());
+                        }}
+                      >
+                        Undo
+                      </button>
+                      <button
+                        id="redo"
+                        ?disabled=${!this.canRedo}
+                        @click=${() => {
+                          this.dispatchEvent(new RedoEvent());
+                        }}
+                        @pointerover=${(evt: PointerEvent) => {
+                          this.dispatchEvent(
+                            new ShowTooltipEvent(
+                              `Redo last action${this.canRedo ? "" : " (unavailable)"}`,
+                              evt.clientX,
+                              evt.clientY
+                            )
+                          );
+                        }}
+                        @pointerout=${() => {
+                          this.dispatchEvent(new HideTooltipEvent());
+                        }}
+                      >
+                        Redo
+                      </button>
+                      ${saveButton}
+                      <button
+                        id="overflow"
+                        @click=${() => {
+                          this.showOverflowMenu = true;
+                        }}
+                      >
+                        More...
+                      </button>
+                    </div>
+                    ${overflowMenu}
+                  `}
+              ${this.graph !== null
+                ? html`
+                    <div id="nodes">
+                      <button
+                        draggable="true"
+                        id="shortcut-add-specialist"
+                        @pointerover=${(evt: PointerEvent) => {
+                          this.dispatchEvent(
+                            new ShowTooltipEvent(
+                              "Add Specialist Component",
+                              evt.clientX,
+                              evt.clientY
+                            )
+                          );
+                        }}
+                        @pointerout=${() => {
+                          this.dispatchEvent(new HideTooltipEvent());
+                        }}
+                        @dblclick=${() => {
+                          const id = this.#createRandomID("specialist");
+                          this.#graphRenderer.deselectAllChildren();
+                          this.dispatchEvent(
+                            new NodeCreateEvent(id, "specialist")
+                          );
+                        }}
+                        @dragstart=${(evt: DragEvent) => {
+                          if (!evt.dataTransfer) {
+                            return;
+                          }
+                          evt.dataTransfer.setData(DATA_TYPE, "specialist");
+                        }}
+                      >
+                        Add Specialist
+                      </button>
+                      <button
+                        draggable="true"
+                        id="shortcut-add-human"
+                        @pointerover=${(evt: PointerEvent) => {
+                          this.dispatchEvent(
+                            new ShowTooltipEvent(
+                              "Add Human Component",
+                              evt.clientX,
+                              evt.clientY
+                            )
+                          );
+                        }}
+                        @pointerout=${() => {
+                          this.dispatchEvent(new HideTooltipEvent());
+                        }}
+                        @dblclick=${() => {
+                          const id = this.#createRandomID("human");
+                          this.#graphRenderer.deselectAllChildren();
+                          this.dispatchEvent(new NodeCreateEvent(id, "human"));
+                        }}
+                        @dragstart=${(evt: DragEvent) => {
+                          if (!evt.dataTransfer) {
+                            return;
+                          }
+                          evt.dataTransfer.setData(DATA_TYPE, "human");
+                        }}
+                      >
+                        Add Human
+                      </button>
+                      <button
+                        draggable="true"
+                        id="shortcut-add-looper"
+                        @pointerover=${(evt: PointerEvent) => {
+                          this.dispatchEvent(
+                            new ShowTooltipEvent(
+                              "Add Looper Component",
+                              evt.clientX,
+                              evt.clientY
+                            )
+                          );
+                        }}
+                        @pointerout=${() => {
+                          this.dispatchEvent(new HideTooltipEvent());
+                        }}
+                        @dblclick=${() => {
+                          const id = this.#createRandomID("looper");
+                          this.#graphRenderer.deselectAllChildren();
+                          this.dispatchEvent(new NodeCreateEvent(id, "looper"));
+                        }}
+                        @dragstart=${(evt: DragEvent) => {
+                          if (!evt.dataTransfer) {
+                            return;
+                          }
+                          evt.dataTransfer.setData(DATA_TYPE, "looper");
+                        }}
+                      >
+                        Add Human
+                      </button>
+                      <button
+                        draggable="true"
+                        id="shortcut-add-comment"
+                        @pointerover=${(evt: PointerEvent) => {
+                          this.dispatchEvent(
+                            new ShowTooltipEvent(
+                              "Add Comment Component",
+                              evt.clientX,
+                              evt.clientY
+                            )
+                          );
+                        }}
+                        @pointerout=${() => {
+                          this.dispatchEvent(new HideTooltipEvent());
+                        }}
+                        @dblclick=${() => {
+                          const id = this.#createRandomID("comment");
+                          this.#graphRenderer.deselectAllChildren();
+                          this.dispatchEvent(
+                            new NodeCreateEvent(id, "comment")
+                          );
+                        }}
+                        @dragstart=${(evt: DragEvent) => {
+                          if (!evt.dataTransfer) {
+                            return;
+                          }
+                          evt.dataTransfer.setData(DATA_TYPE, "comment");
+                        }}
+                      >
+                        Add Human
+                      </button>
+                      <input
+                        ${ref(this.#addButtonRef)}
+                        name="add-node"
+                        id="add-node"
+                        type="checkbox"
+                        @input=${(evt: InputEvent) => {
+                          if (!(evt.target instanceof HTMLInputElement)) {
+                            return;
+                          }
+
+                          if (!this.#nodeSelectorRef.value) {
+                            return;
+                          }
+
+                          const nodeSelector = this.#nodeSelectorRef.value;
+                          nodeSelector.inert = !evt.target.checked;
+
+                          if (!evt.target.checked) {
+                            return;
+                          }
+                          nodeSelector.selectSearchInput();
+                        }}
+                      />
+                      <label for="add-node">Components</label>
+
+                      <bb-node-selector
+                        ${ref(this.#nodeSelectorRef)}
+                        inert
+                        .graph=${this.graph}
+                        .showExperimentalComponents=${this
+                          .showExperimentalComponents}
+                        @bbkitnodechosen=${(evt: KitNodeChosenEvent) => {
+                          const id = this.#createRandomID(evt.nodeType);
+                          this.dispatchEvent(
+                            new NodeCreateEvent(id, evt.nodeType)
+                          );
+                        }}
+                      ></bb-node-selector>
+                    </div>
+
+                    ${this.readOnly
+                      ? html`<section id="readonly-overlay">Read-only View</div>`
                       : nothing}
-                  </div>
-
-                  ${this.readOnly
-                    ? html`<section id="readonly-overlay">Read-only View</div>`
-                    : nothing}
-                `
-              : nothing}`
+                  `
+                : nothing}`
           : nothing
       }
       </div>`;

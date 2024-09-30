@@ -66,6 +66,10 @@ export class LLMInputArray extends LitElement {
       margin: 0 0 var(--bb-grid-size-2) 0;
     }
 
+    header::empty {
+      margin: 0;
+    }
+
     #controls {
       display: flex;
       flex-direction: row;
@@ -194,10 +198,8 @@ export class LLMInputArray extends LitElement {
   }
 
   render() {
-    return html`<header>
-        ${this.description ? html`${this.description}` : nothing}
-      </header>
-
+    return html`
+      ${this.description ? html`<header>${this.description}</header>` : nothing}
       ${this.showEntrySelector
         ? html`<div id="controls">
             <h1>Role</h1>
@@ -253,6 +255,7 @@ export class LLMInputArray extends LitElement {
               ></bb-llm-input>`;
             })
           : html`No items specified`}
-      </div> `;
+      </div>
+    `;
   }
 }

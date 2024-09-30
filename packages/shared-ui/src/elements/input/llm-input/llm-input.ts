@@ -30,9 +30,7 @@ import { styleMap } from "lit/directives/style-map.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 
-const OVERFLOW_MENU_HEIGHT = 224;
-const OVERFLOW_MENU_WIDTH = 220;
-const OVERFLOW_MENU_PADDING = 20;
+const OVERFLOW_MENU_WIDTH = 180;
 
 type MultiModalInput = AudioInput | DrawableInput | WebcamInput;
 
@@ -253,7 +251,7 @@ export class LLMInput extends LitElement {
     }
 
     #container {
-      border: var(--bb-border-size, 2px) solid var(--bb-neutral-300);
+      border: 1px solid var(--bb-neutral-300);
       border-radius: 0 0 var(--bb-grid-size) var(--bb-grid-size);
       padding: var(--bb-grid-size-3) 0 var(--bb-grid-size) 0;
       background: #fff;
@@ -980,13 +978,8 @@ export class LLMInput extends LitElement {
 
     const styles: Record<string, string> = {};
     if (this.showInlineControls) {
-      let top = this.showInlineControls.y;
-      if (top + OVERFLOW_MENU_HEIGHT > window.innerHeight) {
-        top = window.innerHeight - OVERFLOW_MENU_HEIGHT - OVERFLOW_MENU_PADDING;
-      }
-
       styles.left = `${this.showInlineControls.x - OVERFLOW_MENU_WIDTH}px`;
-      styles.top = `${top}px`;
+      styles.top = `${this.showInlineControls.y}px`;
     }
 
     return html` <header
@@ -1006,14 +999,25 @@ export class LLMInput extends LitElement {
                   return;
                 }
 
-                if (evt.clientX === 0 || evt.clientY === 0) {
-                  const bounds = (
-                    evt.target as HTMLElement
-                  ).getBoundingClientRect();
-                  this.showInlineControls = { x: bounds.left, y: bounds.top };
-                } else {
-                  this.showInlineControls = { x: evt.clientX, y: evt.clientY };
+                const bounds = (
+                  evt.target as HTMLElement
+                ).getBoundingClientRect();
+
+                const styles = window.getComputedStyle(this);
+                let left = Number.parseInt(styles.getPropertyValue("--left"));
+                let top = Number.parseInt(styles.getPropertyValue("--top"));
+                if (Number.isNaN(left)) {
+                  left = 0;
                 }
+
+                if (Number.isNaN(top)) {
+                  top = 0;
+                }
+
+                this.showInlineControls = {
+                  x: bounds.left - left,
+                  y: bounds.top - top,
+                };
               }}
             >
               Toggle
@@ -1031,20 +1035,20 @@ export class LLMInput extends LitElement {
                 <span id="insert">Insert:</span>
                 ${this.allow.textInline
                   ? html`<button
-                      title="Add text field"
+                      title="Add text"
                       id="add-text"
                       @click=${this.#addTextPart}
                     >
-                      Add text field
+                      Add text
                     </button>`
                   : nothing}
                 ${this.allow.imageWebcam
                   ? html`<button
-                      title="Add image from webcam"
+                      title="Add webcam image"
                       id="add-image-webcam"
                       @click=${() => this.#addPart("image-webcam")}
                     >
-                      Add image from webcam
+                      Add webcam image
                     </button>`
                   : nothing}
                 ${this.allow.imageDrawable
@@ -1137,44 +1141,43 @@ export class LLMInput extends LitElement {
                   <button
                     class="add-part-after"
                     @click=${() => this.#addPartAfter(idx)}
-                    title="Add part after"
+                    title="Add text after"
                   >
-                    Add part after
+                    Add text after
                   </button>
                   <button
                     class="move-part-up"
                     @click=${() => this.#movePartUp(idx)}
                     ?disabled=${idx === 0}
-                    title="Move part up"
+                    title="Move up"
                   >
-                    Move part up
+                    Move up
                   </button>
                   <button
                     class="move-part-down"
                     @click=${() => this.#movePartDown(idx)}
                     ?disabled=${isLastPart}
-                    title="Move part down"
+                    title="Move down"
                   >
-                    Move part down
+                    Move down
                   </button>
                   <button
                     class="delete-part"
                     @click=${() => this.#deletePart(idx)}
-                    title="Delete part"
+                    title="Delete"
                   >
-                    Delete part
+                    Delete
                   </button>
                 </div>
               </div>`;
             })
           : html`<div id="no-parts">
-              No parts set.
               <button
-                title="Add text field"
+                title="Add text"
                 class="add-text"
                 @click=${this.#addTextPart}
               >
-                Add a text part
+                Add text
               </button>
             </div>`}
       </div>`;
