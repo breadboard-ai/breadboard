@@ -85,6 +85,14 @@ export class SaveAsEvent extends Event {
   }
 }
 
+export class DismissedEvent extends Event {
+  static eventName = "bbdismissed";
+
+  constructor() {
+    super(DismissedEvent.eventName, { ...eventInit });
+  }
+}
+
 export class BoardInfoUpdateEvent extends Event {
   static eventName = "bbboardinfoupdate";
 

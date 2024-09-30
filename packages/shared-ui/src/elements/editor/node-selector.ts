@@ -14,7 +14,12 @@ import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { KitNodeChosenEvent } from "../../events/events.js";
+import {
+  DismissedEvent,
+  HideTooltipEvent,
+  KitNodeChosenEvent,
+  ShowTooltipEvent,
+} from "../../events/events.js";
 import { Task } from "@lit/task";
 
 const DATA_TYPE = "text/plain";
@@ -46,33 +51,111 @@ export class NodeSelector extends LitElement {
     }
 
     :host {
-      display: grid;
-      background: #ededed;
-      border-radius: 12px;
+      background: var(--bb-neutral-0);
+      border-radius: var(--bb-grid-size-2);
+      border: 1px solid var(--bb-neutral-300);
       box-shadow:
-        0px 1px 2px rgba(0, 0, 0, 0.3),
-        0px 1px 3px 1px rgba(0, 0, 0, 0.15);
-      padding: 8px;
+        0 8px 8px 0 rgba(0, 0, 0, 0.07),
+        0 15px 12px 0 rgba(0, 0, 0, 0.09);
 
-      --border-radius: 32px;
+      width: 25vw;
+      min-width: 220px;
+      max-width: 340px;
+
       --kit-height: 24px;
       --kit-margin: 1px;
       --kit-count: 2;
       --height: calc(var(--kit-count) * (var(--kit-height)));
     }
 
-    #container {
-      display: grid;
+    h1 {
+      display: flex;
+      align-items: center;
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
+      margin: 0;
+      padding: var(--bb-grid-size-3) var(--bb-grid-size) var(--bb-grid-size-3)
+        var(--bb-grid-size-3);
+      border-bottom: 1px solid var(--bb-neutral-300);
+    }
+
+    h1 span {
+      flex: 1;
+    }
+
+    #close {
+      width: 24px;
+      height: 24px;
+      background: transparent var(--bb-icon-close) center center / 20px 20px
+        no-repeat;
+      border: none;
+      font-size: 0;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+    }
+
+    #close:hover,
+    #close:focus {
+      transition-duration: 0.1s;
+      opacity: 1;
     }
 
     #search {
-      margin-bottom: 8px;
-      border-radius: 8px;
       border: none;
+      border-radius: 0;
       height: 24px;
-      padding-left: 24px;
-      background: #fff var(--bb-icon-search) 4px center no-repeat;
+      padding: 0 20px 0 8px;
+      background: var(--bb-neutral-0) var(--bb-icon-search) calc(100% - 4px)
+        center no-repeat;
       background-size: 16px 16px;
+      font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
+        var(--bb-font-family);
+      margin: var(--bb-grid-size-2) var(--bb-grid-size);
+    }
+
+    #container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      flex: 0 0 auto;
+      overflow: hidden;
+      border-radius: var(--bb-grid-size-2);
+    }
+
+    details {
+      margin: var(--bb-grid-size);
+    }
+
+    summary {
+      height: 28px;
+      background: var(--bb-neutral-100) var(--bb-icon-unfold-more)
+        calc(100% - 4px) center / 20px 20px no-repeat;
+      list-style: none;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
+      cursor: pointer;
+    }
+
+    details[open] summary {
+      background: var(--bb-neutral-100) var(--bb-icon-unfold-less)
+        calc(100% - 4px) center / 20px 20px no-repeat;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    form {
+      border-top: 1px solid var(--bb-neutral-300);
+      overflow-y: scroll;
+      border-radius: 0 0 var(--bb-grid-size-2) var(--bb-grid-size-2);
+      flex: 1;
+      padding-top: 8px;
     }
 
     #kit-list {
@@ -111,9 +194,9 @@ export class NodeSelector extends LitElement {
     }
 
     li.kit-item .node-id {
+      position: relative;
       white-space: nowrap;
-      height: var(--kit-height);
-      line-height: var(--kit-height);
+      margin: var(--bb-grid-size) 0;
       font: 600 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
     }
@@ -122,11 +205,13 @@ export class NodeSelector extends LitElement {
       font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
         var(--bb-font-family);
       white-space: normal;
+      position: relative;
+      overflow: hidden;
     }
 
     #kit-list li:hover label::before {
       content: "";
-      background: #000;
+      background: var(--bb-ui-50);
       position: absolute;
       left: 1px;
       top: 1px;
@@ -134,7 +219,7 @@ export class NodeSelector extends LitElement {
       right: 8px;
       border-radius: var(--bb-grid-size-12);
       z-index: 0;
-      opacity: 0.1;
+      opacity: 1;
     }
 
     #kit-list li:hover label span {
@@ -176,7 +261,10 @@ export class NodeSelector extends LitElement {
     }
 
     .kit-contents ul {
+      margin: 0;
+      padding: 0 0 var(--bb-grid-size-3) 0;
       display: block;
+      list-style: none;
     }
 
     #kit-list
@@ -191,11 +279,6 @@ export class NodeSelector extends LitElement {
       border-radius: 8px 8px 8px 0;
     }
 
-    .kit-contents ul {
-      padding: 0;
-      margin: 0;
-    }
-
     li.kit-item {
       margin: var(--bb-grid-size) 0;
       padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
@@ -204,11 +287,14 @@ export class NodeSelector extends LitElement {
       position: relative;
       background: #fff;
       cursor: grab;
+      display: grid;
+      grid-template-columns: 28px minmax(0, auto);
+      column-gap: var(--bb-grid-size-2);
     }
 
     li.kit-item:hover::before {
       content: "";
-      background: #000;
+      background: var(--bb-ui-50);
       position: absolute;
       left: var(--bb-grid-size-2);
       top: 1px;
@@ -216,7 +302,7 @@ export class NodeSelector extends LitElement {
       right: var(--bb-grid-size-2);
       border-radius: var(--bb-grid-size);
       z-index: 0;
-      opacity: 0.05;
+      opacity: 1;
     }
 
     li.kit-item:active {
@@ -226,6 +312,40 @@ export class NodeSelector extends LitElement {
     li.kit-item span {
       position: relative;
       z-index: 1;
+    }
+
+    li.kit-item .node-icon {
+      position: relative;
+    }
+
+    li.kit-item .node-icon::before {
+      content: "";
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      background: var(--bb-icon-board) top left / 28px 28px no-repeat;
+      top: 0;
+      left: 0;
+    }
+
+    li.kit-item .node-icon.code-blocks::before {
+      background: var(--bb-icon-code-blocks) top left / 28px 28px no-repeat;
+    }
+
+    li.kit-item .node-icon.smart-toy::before {
+      background: var(--bb-icon-smart-toy) top left / 28px 28px no-repeat;
+    }
+
+    li.kit-item .node-icon.human::before {
+      background: var(--bb-icon-human) top left / 28px 28px no-repeat;
+    }
+
+    li.kit-item .node-icon.merge-type::before {
+      background: var(--bb-icon-merge-type) top left / 28px 28px no-repeat;
+    }
+
+    li.kit-item .node-icon.laps::before {
+      background: var(--bb-icon-laps) top left / 28px 28px no-repeat;
     }
   `;
 
@@ -359,12 +479,36 @@ export class NodeSelector extends LitElement {
     return this.#kitInfoTask.render({
       pending: () => html`<div>Loading...</div>`,
       complete: (kitList) => {
+        const before = kitList.size;
         kitList = this.#filterKitList(kitList);
+        const expandAll = before > kitList.size;
 
         return html` <div
           id="container"
           @pointerdown=${(evt: Event) => evt.stopPropagation()}
         >
+          <h1
+            @pointerover=${(evt: PointerEvent) => {
+              this.dispatchEvent(
+                new ShowTooltipEvent(
+                  "Close Component Selector",
+                  evt.clientX,
+                  evt.clientY
+                )
+              );
+            }}
+            @pointerout=${() => {
+              this.dispatchEvent(new HideTooltipEvent());
+            }}
+          >
+            <span>Components</span>
+            <button
+              id="close"
+              @click=${() => {
+                this.dispatchEvent(new DismissedEvent());
+              }}
+            ></button>
+          </h1>
           <input
             type="search"
             id="search"
@@ -380,62 +524,56 @@ export class NodeSelector extends LitElement {
             }}
           />
           <form>
-            <ul id="kit-list" ${ref(this.#listRef)}>
-              ${map(kitList, ([kitName, kitContents]) => {
-                const kitId = kitName.toLocaleLowerCase().replace(/\W/gim, "-");
-                return html`<li>
-                  <input
-                    type="radio"
-                    name="selected-kit"
-                    id="${kitId}"
-                    @click=${(evt: Event) => {
-                      if (!(evt.target instanceof HTMLElement)) {
-                        return;
-                      }
-
-                      this.#lastSelectedId = evt.target.id;
-                    }}
-                  /><label for="${kitId}"><span>${kitName}</span></label>
-                  <div class="kit-contents">
-                    <ul>
-                      ${map(kitContents, (nodeTypeInfo) => {
-                        const className = nodeTypeInfo.id
-                          .toLocaleLowerCase()
-                          .replaceAll(/\W/gim, "-");
-                        const id = nodeTypeInfo.id;
-                        const description = nodeTypeInfo.metadata.description;
-                        const title = nodeTypeInfo.metadata.title || id;
-                        return html`<li
-                          class=${classMap({
-                            [className]: true,
-                            ["kit-item"]: true,
-                          })}
-                          draggable="true"
-                          @dblclick=${() => {
-                            this.dispatchEvent(new KitNodeChosenEvent(id));
-                          }}
-                          @dragstart=${(evt: DragEvent) => {
-                            if (!evt.dataTransfer) {
-                              return;
-                            }
-                            evt.dataTransfer.setData(DATA_TYPE, id);
-                          }}
-                        >
+            ${map(kitList, ([kitName, kitContents]) => {
+              const kitId = kitName.toLocaleLowerCase().replace(/\W/gim, "-");
+              return html`<details
+                ?open=${expandAll || kitName === "Agent Kit"}
+              >
+                <summary for="${kitId}"><span>${kitName}</span></summary>
+                <div class="kit-contents">
+                  <ul>
+                    ${map(kitContents, (nodeTypeInfo) => {
+                      const className = nodeTypeInfo.id
+                        .toLocaleLowerCase()
+                        .replaceAll(/\W/gim, "-");
+                      const id = nodeTypeInfo.id;
+                      const description = nodeTypeInfo.metadata.description;
+                      const title = nodeTypeInfo.metadata.title || id;
+                      const icon = nodeTypeInfo.metadata.icon ?? "generic";
+                      return html`<li
+                        class=${classMap({
+                          [className]: true,
+                          ["kit-item"]: true,
+                        })}
+                        draggable="true"
+                        @dblclick=${() => {
+                          this.dispatchEvent(new KitNodeChosenEvent(id));
+                        }}
+                        @dragstart=${(evt: DragEvent) => {
+                          if (!evt.dataTransfer) {
+                            return;
+                          }
+                          evt.dataTransfer.setData(DATA_TYPE, id);
+                        }}
+                      >
+                        <div
+                          class=${classMap({ "node-icon": true, [icon]: true })}
+                        ></div>
+                        <div>
                           <div class="node-id">${title}</div>
                           ${description
                             ? html`<div class="node-description">
                                 ${description}
                               </div>`
                             : nothing}
-                        </li>`;
-                      })}
-                    </ul>
-                  </div>
-                </li>`;
-              })}
-            </ul>
+                        </div>
+                      </li>`;
+                    })}
+                  </ul>
+                </div>
+              </details>`;
+            })}
           </form>
-          <div></div>
         </div>`;
       },
     });
