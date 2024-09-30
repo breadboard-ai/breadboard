@@ -1355,6 +1355,6 @@ export class Editor extends LitElement {
         ? html`<aside id="readonly-overlay">Read-only View</aside>`
         : nothing;
 
-    return [ribbonMenu, editor, readOnlyFlag];
+    return [this.graph ? ribbonMenu : nothing, editor, readOnlyFlag];
   }
 }
