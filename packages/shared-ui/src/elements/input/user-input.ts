@@ -442,8 +442,15 @@ export class UserInput extends LitElement {
                 if (isLLMContentArrayBehavior(input.schema)) {
                   let value: LLMContent[] | null =
                     (input.value as LLMContent[]) ?? null;
+                  // First, check to see if the default value is available and
+                  // use that if the value is not set.
                   if (!value && isLLMContentArray(defaultValue)) {
                     value = defaultValue;
+                  }
+                  // Finally, if there is no default value, set the value to an
+                  // array consisting of a single empty LLMContent.
+                  if (!value || value.length === 0) {
+                    value = [{ role: "user", parts: [] }];
                   }
 
                   const allow = createAllowListFromProperty(input.schema);
