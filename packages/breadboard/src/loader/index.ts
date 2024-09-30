@@ -10,7 +10,7 @@ import { DefaultGraphProvider } from "./default.js";
 
 export const createLoader = (
   graphProviders?: GraphProvider[],
-  opts?: { disableDefaultLoader: boolean }
+  opts?: { disableDefaultLoader?: boolean }
 ): GraphLoader => {
   const providers = [...(graphProviders ?? [])];
   if (!opts?.disableDefaultLoader) {
