@@ -424,6 +424,20 @@ const body = code(
     }
     if (responseMimeType) {
       generationConfig.responseMimeType = responseMimeType;
+      if (responseMimeType === "application/json") {
+        // Filter out any function calls in the context to avoid the 400 error.
+        // Currently, gemini doesn't support function calls when the
+        // responseMimeType is set to application/json.
+        result.contents = contents.filter((item) => {
+          if (item.role === "model") {
+            item.parts = item.parts.filter((part) => !("functionCall" in part));
+            if (item.parts.length === 0) {
+              return false;
+            }
+          }
+          return true;
+        });
+      }
     }
     if (Object.keys(generationConfig).length > 0) {
       result.generationConfig = generationConfig;
