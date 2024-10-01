@@ -50,7 +50,8 @@
         "./packages/website:build",
         "./packages/schema:build",
         "./packages/board-server:build",
-        "./packages/manifest:build"
+        "./packages/manifest:build",
+        "./packages/types:build"
       ]
     },
     "test": {
