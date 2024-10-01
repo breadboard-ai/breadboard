@@ -49,7 +49,7 @@ export class Overlay extends LitElement {
     }
 
     #content {
-      border-radius: calc(var(--bb-grid-size) * 3);
+      border-radius: var(--bb-grid-size-2);
       background: #fff;
 
       display: flex;
