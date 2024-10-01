@@ -628,6 +628,11 @@ export class RibbonMenu extends LitElement {
                 icon: "copy",
               },
               {
+                title: "Copy Preview URL",
+                name: "copy-preview-to-clipboard",
+                icon: "copy",
+              },
+              {
                 title: "Delete this board",
                 name: "delete",
                 icon: "delete",
@@ -960,6 +965,11 @@ export class RibbonMenu extends LitElement {
         {
           title: "Copy Tab URL",
           name: "copy-tab-to-clipboard",
+          icon: "copy",
+        },
+        {
+          title: "Copy Preview URL",
+          name: "copy-preview-to-clipboard",
           icon: "copy",
         },
       ];
