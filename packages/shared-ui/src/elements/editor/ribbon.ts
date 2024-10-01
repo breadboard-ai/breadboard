@@ -271,7 +271,7 @@ export class RibbonMenu extends LitElement {
     }
 
     #left button {
-      margin-right: var(--bb-grid-size-2);
+      margin-right: var(--bb-grid-size-3);
     }
 
     #right button {
