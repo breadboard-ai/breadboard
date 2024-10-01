@@ -139,6 +139,11 @@ export class RibbonMenu extends LitElement {
       white-space: nowrap;
     }
 
+    #component-toggle {
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
+    }
+
     #component-toggle-container,
     #components,
     #board-management,

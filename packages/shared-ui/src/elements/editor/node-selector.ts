@@ -74,8 +74,8 @@ export class NodeSelector extends LitElement {
       font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
       margin: 0;
-      padding: var(--bb-grid-size-3) var(--bb-grid-size) var(--bb-grid-size-3)
-        var(--bb-grid-size-3);
+      padding: 0 var(--bb-grid-size) 0 var(--bb-grid-size-3);
+      height: var(--bb-grid-size-9);
       border-bottom: 1px solid var(--bb-neutral-300);
     }
 
@@ -109,7 +109,7 @@ export class NodeSelector extends LitElement {
       background: var(--bb-neutral-0) var(--bb-icon-search) calc(100% - 4px)
         center no-repeat;
       background-size: 16px 16px;
-      font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
       margin: var(--bb-grid-size-2) var(--bb-grid-size);
     }

@@ -73,11 +73,12 @@ export class BoardActivityOverlay extends LitElement {
 
     h1 {
       width: 100%;
+      height: var(--bb-grid-size-9);
       display: flex;
       align-items: center;
-      font: 400 var(--bb-title-medium) / var(--bb-title-line-height-medium)
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
-      padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
+      padding: 0 var(--bb-grid-size-3);
       margin: 0;
       text-align: left;
       border-bottom: 1px solid var(--bb-neutral-300);
