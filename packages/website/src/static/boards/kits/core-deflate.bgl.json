@@ -29,7 +29,7 @@
         "visual": {
           "x": 237,
           "y": -165,
-          "collapsed": false
+          "collapsed": "expanded"
         }
       }
     },
@@ -38,9 +38,9 @@
       "type": "fetch",
       "metadata": {
         "visual": {
-          "x": -212,
-          "y": -187,
-          "collapsed": false
+          "x": -372,
+          "y": -155,
+          "collapsed": "expanded"
         },
         "title": "Get Inline Data",
         "logLevel": "debug"
@@ -55,9 +55,9 @@
       "type": "deflate",
       "metadata": {
         "visual": {
-          "x": 50,
-          "y": -164,
-          "collapsed": false
+          "x": 38,
+          "y": -145,
+          "collapsed": "expanded"
         },
         "title": "Deflate It",
         "logLevel": "debug"
@@ -89,7 +89,7 @@
           "visual": {
             "x": -270,
             "y": -244,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -100,7 +100,7 @@
           "visual": {
             "x": 39,
             "y": -228,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       }

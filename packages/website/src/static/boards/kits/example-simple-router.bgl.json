@@ -23,9 +23,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -153,
-          "y": 23,
-          "collapsed": false
+          "x": -316,
+          "y": 409,
+          "collapsed": "expanded"
         },
         "title": "Ask For Topics",
         "logLevel": "debug"
@@ -52,9 +52,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 286,
-          "y": 95,
-          "collapsed": false
+          "x": 532,
+          "y": 309,
+          "collapsed": "expanded"
         },
         "title": "Show List",
         "logLevel": "debug"
@@ -65,9 +65,9 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": 52,
-          "y": 27,
-          "collapsed": false
+          "x": -27,
+          "y": 255,
+          "collapsed": "expanded"
         },
         "title": "Split Topics",
         "logLevel": "debug"
@@ -128,9 +128,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 282,
-          "y": -13,
-          "collapsed": false
+          "x": 602,
+          "y": -57,
+          "collapsed": "expanded"
         },
         "title": "Show Message",
         "logLevel": "debug"
@@ -164,9 +164,9 @@
         "text": "Use JS to split a string into a list of topics.\n\nIf there's only one topic, route to **Message**.\n\nOtherwise, route to **Topic List**.",
         "metadata": {
           "visual": {
-            "x": 40,
-            "y": -136,
-            "collapsed": false
+            "x": 46,
+            "y": 71,
+            "collapsed": "expanded"
           }
         }
       }

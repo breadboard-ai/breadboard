@@ -23,9 +23,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -138,
-          "y": -4,
-          "collapsed": false
+          "x": -325,
+          "y": 10,
+          "collapsed": "expanded"
         }
       }
     },
@@ -48,9 +48,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 334,
-          "y": -68,
-          "collapsed": false
+          "x": 363,
+          "y": -43,
+          "collapsed": "expanded"
         }
       }
     },
@@ -59,9 +59,9 @@
       "type": "urlTemplate",
       "metadata": {
         "visual": {
-          "x": 20,
-          "y": -95,
-          "collapsed": false
+          "x": -13,
+          "y": -80,
+          "collapsed": "expanded"
         },
         "title": "Query Google Books API",
         "logLevel": "debug"
@@ -95,7 +95,7 @@
           "visual": {
             "x": -202,
             "y": -125,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -106,7 +106,7 @@
           "visual": {
             "x": 387,
             "y": -111,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -117,7 +117,7 @@
           "visual": {
             "x": 74,
             "y": -315,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -126,9 +126,9 @@
         "text": "💡 Input ports on this node are dynamic: they will pop up as soon as you specify them as `{inputName}` in the template.",
         "metadata": {
           "visual": {
-            "x": 63,
-            "y": 1,
-            "collapsed": false
+            "x": 29,
+            "y": 106,
+            "collapsed": "expanded"
           }
         }
       }

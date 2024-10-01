@@ -30,9 +30,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -206,
-          "y": -135,
-          "collapsed": false
+          "x": -328,
+          "y": -116,
+          "collapsed": "expanded"
         }
       }
     },
@@ -55,9 +55,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 276,
-          "y": -107,
-          "collapsed": false
+          "x": 321,
+          "y": -170,
+          "collapsed": "expanded"
         }
       }
     },
@@ -66,9 +66,9 @@
       "type": "promptTemplate",
       "metadata": {
         "visual": {
-          "x": -19,
-          "y": -199,
-          "collapsed": false
+          "x": -90,
+          "y": -182,
+          "collapsed": "expanded"
         },
         "title": "Question Maker",
         "logLevel": "debug"
@@ -108,7 +108,7 @@
           "visual": {
             "x": -265,
             "y": -253,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -117,9 +117,9 @@
         "text": "Looks for `{{question}}` and `{{thought}}` in the template and replaces them with the supplied values. ",
         "metadata": {
           "visual": {
-            "x": 16,
-            "y": -298,
-            "collapsed": false
+            "x": -27,
+            "y": -293,
+            "collapsed": "expanded"
           }
         }
       },
@@ -128,9 +128,9 @@
         "text": "Outputs \nthe resulting\nprompt.",
         "metadata": {
           "visual": {
-            "x": 331,
-            "y": -189,
-            "collapsed": false
+            "x": 289,
+            "y": -269,
+            "collapsed": "expanded"
           }
         }
       },
@@ -139,9 +139,9 @@
         "text": "💡 Input ports on this node are dynamic: they will pop up as soon as you specify them as `{{inputName}}` in the template.",
         "metadata": {
           "visual": {
-            "x": 8,
-            "y": -84,
-            "collapsed": false
+            "x": -5,
+            "y": 4,
+            "collapsed": "expanded"
           }
         }
       }

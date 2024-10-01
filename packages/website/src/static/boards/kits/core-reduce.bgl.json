@@ -22,9 +22,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -275,
-          "y": -159,
-          "collapsed": false
+          "x": -439,
+          "y": -56,
+          "collapsed": "expanded"
         }
       }
     },
@@ -47,9 +47,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 331,
-          "y": -177,
-          "collapsed": false
+          "x": 416,
+          "y": -170,
+          "collapsed": "expanded"
         }
       }
     },
@@ -58,9 +58,9 @@
       "type": "reduce",
       "metadata": {
         "visual": {
-          "x": 100,
-          "y": -200,
-          "collapsed": false
+          "x": 124,
+          "y": -7,
+          "collapsed": "expanded"
         },
         "title": "Search All Results",
         "logLevel": "debug"
@@ -78,9 +78,9 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": -134,
-          "y": -171,
-          "collapsed": false
+          "x": -233,
+          "y": -150,
+          "collapsed": "expanded"
         },
         "title": "Split Topics",
         "logLevel": "debug"
@@ -122,7 +122,7 @@
           "visual": {
             "x": -119,
             "y": -231,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -131,9 +131,9 @@
         "text": "Call [Search Wikipedia](https://breadboard-ai.web.app/?board=https%3A%2Fbreadboard-ai.github.io%2Fbreadboard%2Fstatic%2Fboards%2Fkits%2Fexample-search-wikipedia.bgl.json) board for each item in the list.",
         "metadata": {
           "visual": {
-            "x": 60,
-            "y": -258,
-            "collapsed": false
+            "x": 107,
+            "y": -93,
+            "collapsed": "expanded"
           }
         }
       }

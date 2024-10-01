@@ -9,7 +9,7 @@
         "visual": {
           "x": 62,
           "y": -8,
-          "collapsed": false
+          "collapsed": "expanded"
         },
         "title": "Snippet Joiner",
         "logLevel": "debug"
@@ -23,9 +23,9 @@
       "type": "input",
       "metadata": {
         "visual": {
-          "x": -111,
-          "y": 13,
-          "collapsed": false
+          "x": -218,
+          "y": 37,
+          "collapsed": "expanded"
         },
         "title": "Input",
         "logLevel": "debug"
@@ -50,9 +50,9 @@
       "type": "output",
       "metadata": {
         "visual": {
-          "x": 271,
-          "y": 18,
-          "collapsed": false
+          "x": 436,
+          "y": 8,
+          "collapsed": "expanded"
         },
         "title": "Output",
         "logLevel": "debug"
@@ -95,9 +95,9 @@
         "text": "Snippet Joiner takes \nthe JSON input and applies the\n `$join(snippet, '\\n')`\nJSONata expression to it, which joins all `snippet` properties in input into lines of text.",
         "metadata": {
           "visual": {
-            "x": 15,
-            "y": -163,
-            "collapsed": false
+            "x": 92,
+            "y": -188,
+            "collapsed": "expanded"
           }
         }
       },
@@ -108,7 +108,7 @@
           "visual": {
             "x": -171,
             "y": -50,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -117,9 +117,9 @@
         "text": "Output returns \nthe resulting string",
         "metadata": {
           "visual": {
-            "x": 315,
-            "y": -43,
-            "collapsed": false
+            "x": 414,
+            "y": -80,
+            "collapsed": "expanded"
           }
         }
       }

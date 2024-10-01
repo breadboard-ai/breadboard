@@ -22,9 +22,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -119,
-          "y": -4,
-          "collapsed": false
+          "x": -200,
+          "y": -9,
+          "collapsed": "expanded"
         }
       }
     },
@@ -48,7 +48,7 @@
         "visual": {
           "x": 245,
           "y": -13,
-          "collapsed": false
+          "collapsed": "expanded"
         }
       }
     },
@@ -59,7 +59,7 @@
         "visual": {
           "x": 46,
           "y": -21,
-          "collapsed": false
+          "collapsed": "expanded"
         },
         "title": "Nano",
         "logLevel": "debug"

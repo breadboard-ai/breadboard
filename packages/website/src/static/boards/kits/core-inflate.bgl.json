@@ -27,9 +27,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -110,
-          "y": -92,
-          "collapsed": false
+          "x": -205,
+          "y": -74,
+          "collapsed": "expanded"
         }
       }
     },
@@ -60,7 +60,7 @@
         "visual": {
           "x": 238,
           "y": -92,
-          "collapsed": false
+          "collapsed": "expanded"
         }
       }
     },
@@ -69,9 +69,9 @@
       "type": "inflate",
       "metadata": {
         "visual": {
-          "x": 63,
-          "y": -90,
-          "collapsed": false
+          "x": 32,
+          "y": -79,
+          "collapsed": "expanded"
         },
         "title": "Inflate",
         "logLevel": "debug"
@@ -103,7 +103,7 @@
           "visual": {
             "x": 31,
             "y": -170,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       }

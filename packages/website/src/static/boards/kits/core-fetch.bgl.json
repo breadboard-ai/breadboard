@@ -19,9 +19,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -159,
-          "y": -68,
-          "collapsed": false
+          "x": -307,
+          "y": -65,
+          "collapsed": "expanded"
         }
       }
     },
@@ -30,9 +30,9 @@
       "type": "fetch",
       "metadata": {
         "visual": {
-          "x": 237,
-          "y": -168,
-          "collapsed": false
+          "x": 224,
+          "y": -143,
+          "collapsed": "expanded"
         },
         "title": "Search Wikipedia",
         "logLevel": "debug"
@@ -43,9 +43,9 @@
       "type": "urlTemplate",
       "metadata": {
         "visual": {
-          "x": 0,
-          "y": -109,
-          "collapsed": false
+          "x": -89,
+          "y": -92,
+          "collapsed": "expanded"
         },
         "title": "Make URL",
         "logLevel": "debug"
@@ -61,7 +61,7 @@
         "visual": {
           "x": 496,
           "y": -133,
-          "collapsed": false
+          "collapsed": "expanded"
         },
         "title": "output",
         "logLevel": "debug"
@@ -112,7 +112,7 @@
           "visual": {
             "x": -29,
             "y": -191,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -123,7 +123,7 @@
           "visual": {
             "x": 313,
             "y": -225,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       }

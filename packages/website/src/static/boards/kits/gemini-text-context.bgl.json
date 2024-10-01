@@ -27,9 +27,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -220,
-          "y": -89,
-          "collapsed": false
+          "x": -368,
+          "y": -58,
+          "collapsed": "expanded"
         }
       }
     },
@@ -60,7 +60,7 @@
         "visual": {
           "x": 211,
           "y": -98,
-          "collapsed": false
+          "collapsed": "expanded"
         }
       }
     },
@@ -69,9 +69,9 @@
       "type": "text",
       "metadata": {
         "visual": {
-          "x": -13,
-          "y": -109,
-          "collapsed": false
+          "x": -103,
+          "y": -97,
+          "collapsed": "expanded"
         },
         "title": "Generate Text",
         "logLevel": "debug"
