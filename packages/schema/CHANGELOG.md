@@ -1,5 +1,11 @@
 # @google-labs/breadboard-schema
 
+## 1.8.1
+
+### Patch Changes
+
+- 7921983: Introduce `@breadboard-ai/types` package.
+
 ## 1.8.0
 
 ### Minor Changes

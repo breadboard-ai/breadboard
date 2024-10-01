@@ -1,5 +1,20 @@
 # @breadboard-ai/shared-ui
 
+## 1.18.1
+
+### Patch Changes
+
+- 6ab0acd: Introduce drag-dock-overlay
+- 7921983: Introduce `@breadboard-ai/types` package.
+- 6b3ba07: Provide a single empty LLM Content to `bb-llm-input-array` when no default.
+- f89b60e: Tweak corner radius
+- Updated dependencies [370b7ca]
+- Updated dependencies [7921983]
+  - @google-labs/breadboard@0.27.2
+  - @breadboard-ai/types@0.1.0
+  - @google-labs/breadboard-schema@1.8.1
+  - @breadboard-ai/build@0.10.2
+
 ## 1.18.0
 
 ### Minor Changes

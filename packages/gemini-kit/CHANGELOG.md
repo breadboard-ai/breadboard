@@ -1,5 +1,17 @@
 # @google-labs/gemini-kit
 
+## 0.8.1
+
+### Patch Changes
+
+- cae7e34: Strip function calls when response mime type is set to `application/json`.
+- Updated dependencies [370b7ca]
+- Updated dependencies [7921983]
+  - @google-labs/breadboard@0.27.2
+  - @breadboard-ai/build@0.10.2
+  - @google-labs/core-kit@0.15.1
+  - @google-labs/template-kit@0.3.11
+
 ## 0.8.0
 
 ### Minor Changes
