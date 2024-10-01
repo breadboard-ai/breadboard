@@ -2080,7 +2080,7 @@ export class Main extends LitElement {
                     break;
                   }
 
-                  case "preview": {
+                  case "copy-preview-to-clipboard": {
                     if (!this.tab?.graph || !this.tab?.graph.url) {
                       return;
                     }
