@@ -5,10 +5,7 @@
  */
 
 import type { NodeDescriberResult, Schema } from "@google-labs/breadboard";
-import type {
-  GraphMetadata,
-  NodeMetadata,
-} from "@google-labs/breadboard-schema/graph.js";
+import type { GraphMetadata, NodeMetadata } from "@breadboard-ai/types";
 import type { JSONSchema4 } from "json-schema";
 import { anyOf, unsafeType, type Value } from "../../index.js";
 import {

@@ -18,10 +18,7 @@ import {
   NodeIdentifier,
   InspectableNodePorts,
 } from "@google-labs/breadboard";
-import {
-  CommentNode,
-  NodeMetadata,
-} from "@google-labs/breadboard-schema/graph.js";
+import { CommentNode, NodeMetadata } from "@breadboard-ai/types";
 
 export const enum HistoryEventType {
   DONE = "done",

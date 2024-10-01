@@ -12,7 +12,7 @@ import {
   blankLLMContent,
 } from "@google-labs/breadboard";
 import { GraphProviderStore } from "./types";
-import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
+import { GraphDescriptor } from "@breadboard-ai/types";
 import { GraphProviderExtendedCapabilities } from "@google-labs/breadboard";
 
 interface GraphDBStore {
