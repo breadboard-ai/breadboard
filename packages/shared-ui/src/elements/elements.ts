@@ -17,6 +17,7 @@ export { ConnectionInput } from "./connection/connection-input.js";
 export { ConnectionSettings } from "./connection/connection-settings.js";
 export { ConnectionSignin } from "./connection/connection-signin.js";
 export { CommentOverlay } from "./overlay/comment.js";
+export { DragDockOverlay } from "./overlay/drag-dock-overlay.js";
 export { DrawableInput } from "./input/drawable/drawable.js";
 export { EdgeValueOverlay } from "./overlay/edge-value.js";
 export { Editor } from "./editor/editor.js";

@@ -2391,6 +2391,20 @@ export class Main extends LitElement {
 
     const tooltip = html`<bb-tooltip ${ref(this.#tooltipRef)}></bb-tooltip>`;
 
-    return [until(uiController), tooltip, toasts];
+    // const dOverlay = html`<bb-drag-dock-overlay
+    //   .dockable=${true}
+    //   .overlayTitle=${"Draggable"}
+    // >
+    //   <div style="padding: 8px">
+    //     This is a draggable, dockable overlay
+    //   </div></bb-drag-dock-overlay
+    // >`;
+
+    return [
+      until(uiController),
+      //dOverlay,
+      tooltip,
+      toasts,
+    ];
   }
 }
