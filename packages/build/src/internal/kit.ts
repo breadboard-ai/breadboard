@@ -8,6 +8,7 @@ import {
   addKit,
   Board,
   inspect,
+  invokeGraph,
   type BreadboardNode,
   type ConfigOrGraph,
   type InputValues,
@@ -17,7 +18,6 @@ import {
   type NewNodeValue,
   type NodeHandler,
   type NodeHandlerContext,
-  type NodeHandlerFunction,
   type NodeHandlerObject,
   type NodeHandlers,
 } from "@google-labs/breadboard";
@@ -87,7 +87,7 @@ export async function kit<T extends ComponentManifest>(
     } else if (isGraphDescriptor(component)) {
       handlers[id] = await makeGraphDescriptorComponentHandler(id, component);
     } else {
-      handlers[id] = makeBoardComponentHandler(component);
+      handlers[id] = makeBoardComponentHandler(component, options.url);
     }
   }
 
@@ -97,7 +97,10 @@ export async function kit<T extends ComponentManifest>(
   }) as BuildKit<T>;
 }
 
-function makeBoardComponentHandler(board: BoardDefinition): NodeHandler {
+function makeBoardComponentHandler(
+  board: BoardDefinition,
+  url: string
+): NodeHandler {
   const serialized = serialize(board);
   return {
     metadata: {
@@ -109,17 +112,7 @@ function makeBoardComponentHandler(board: BoardDefinition): NodeHandler {
     },
     describe: board.describe.bind(board),
     async invoke(inputs: InputValues, context: NodeHandlerContext) {
-      // Assume that invoke is available, since that's part of core kit, and use
-      // that to execute our serialized board.
-      const invoke = findInvokeFunctionFromContext(context);
-      if (invoke === undefined) {
-        return {
-          $error:
-            `Could not find an "invoke" node in the given context while ` +
-            `trying to execute the board with id "${board.id}" as component.`,
-        };
-      }
-      return invoke({ ...inputs, $board: serialized }, context);
+      return invokeGraph({ ...serialized, url }, inputs, context);
     },
   };
 }
@@ -137,31 +130,9 @@ async function makeGraphDescriptorComponentHandler(
     },
     describe: () => Promise.resolve(description),
     async invoke(inputs: InputValues, context: NodeHandlerContext) {
-      // Assume that invoke is available, since that's part of core kit, and use
-      // that to execute our serialized board.
-      const invoke = findInvokeFunctionFromContext(context);
-      if (invoke === undefined) {
-        return {
-          $error:
-            `Could not find an "invoke" node in the given context while ` +
-            `trying to execute the board with id "${id}" as component.`,
-        };
-      }
-      return invoke({ ...inputs, $board: descriptor }, context);
+      return invokeGraph(descriptor, inputs, context);
     },
   };
-}
-
-function findInvokeFunctionFromContext(
-  context: NodeHandlerContext
-): NodeHandlerFunction | undefined {
-  for (const kit of context.kits ?? []) {
-    const invoke = kit.handlers["invoke"];
-    if (invoke !== undefined) {
-      return "invoke" in invoke ? invoke.invoke : invoke;
-    }
-  }
-  return undefined;
 }
 
 /**
