@@ -1,5 +1,35 @@
 # @google-labs/breadboard-web
 
+## 1.20.1
+
+### Patch Changes
+
+- 6ab0acd: Introduce drag-dock-overlay
+- cae7e34: Strip function calls when response mime type is set to `application/json`.
+- 7921983: Introduce `@breadboard-ai/types` package.
+- Updated dependencies [6ab0acd]
+- Updated dependencies [370b7ca]
+- Updated dependencies [cae7e34]
+- Updated dependencies [7921983]
+- Updated dependencies [6b3ba07]
+- Updated dependencies [f89b60e]
+  - @breadboard-ai/shared-ui@1.18.1
+  - @google-labs/breadboard@0.27.2
+  - @google-labs/gemini-kit@0.8.1
+  - @breadboard-ai/types@0.1.0
+  - @breadboard-ai/manifest@0.4.5
+  - @breadboard-ai/build@0.10.2
+  - @breadboard-ai/example-boards@0.3.3
+  - @google-labs/agent-kit@0.12.2
+  - @breadboard-ai/board-server-management@1.17.1
+  - @breadboard-ai/board-server-utils@0.1.2
+  - @google-labs/core-kit@0.15.1
+  - @breadboard-ai/google-drive-kit@0.2.5
+  - @breadboard-ai/idb-board-server@1.17.1
+  - @google-labs/json-kit@0.3.9
+  - @breadboard-ai/python-wasm@0.1.7
+  - @google-labs/template-kit@0.3.11
+
 ## 1.20.0
 
 ### Minor Changes

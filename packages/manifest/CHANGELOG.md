@@ -1,5 +1,15 @@
 # @google-labs/breadboard-manifest
 
+## 0.4.5
+
+### Patch Changes
+
+- 7921983: Introduce `@breadboard-ai/types` package.
+- Updated dependencies [370b7ca]
+- Updated dependencies [7921983]
+  - @google-labs/breadboard@0.27.2
+  - @google-labs/breadboard-schema@1.8.1
+
 ## 0.4.4
 
 ### Patch Changes
