@@ -1,8 +1,5 @@
 {
   "name": "@breadboard-ai/types",
-  "publishConfig": {
-    "registry": "https://wombat-dressing-room.appspot.com"
-  },
   "version": "0.1.0",
   "description": "TypeScript type definitions for Breadboard.",
   "main": "./dist/src/index.js",
