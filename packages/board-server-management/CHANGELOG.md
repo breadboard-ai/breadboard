@@ -1,5 +1,16 @@
 # @breadboard-ai/board-server-management
 
+## 1.17.1
+
+### Patch Changes
+
+- Updated dependencies [370b7ca]
+- Updated dependencies [7921983]
+  - @google-labs/breadboard@0.27.2
+  - @breadboard-ai/build@0.10.2
+  - @breadboard-ai/idb-board-server@1.17.1
+  - @breadboard-ai/remote-board-server@1.17.1
+
 ## 1.17.0
 
 ### Minor Changes

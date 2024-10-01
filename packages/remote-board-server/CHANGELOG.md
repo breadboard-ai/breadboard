@@ -1,5 +1,21 @@
 # @breadboard-ai/remote-board-server
 
+## 1.17.1
+
+### Patch Changes
+
+- Updated dependencies [370b7ca]
+- Updated dependencies [cae7e34]
+- Updated dependencies [7921983]
+  - @google-labs/breadboard@0.27.2
+  - @google-labs/gemini-kit@0.8.1
+  - @google-labs/breadboard-schema@1.8.1
+  - @breadboard-ai/build@0.10.2
+  - @google-labs/agent-kit@0.12.2
+  - @google-labs/core-kit@0.15.1
+  - @google-labs/json-kit@0.3.9
+  - @google-labs/template-kit@0.3.11
+
 ## 1.17.0
 
 ### Minor Changes

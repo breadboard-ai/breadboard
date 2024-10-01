@@ -1,5 +1,23 @@
 # @breadboard-ai/example-boards
 
+## 0.3.3
+
+### Patch Changes
+
+- Updated dependencies [370b7ca]
+- Updated dependencies [cae7e34]
+- Updated dependencies [7921983]
+  - @google-labs/breadboard@0.27.2
+  - @google-labs/gemini-kit@0.8.1
+  - @breadboard-ai/manifest@0.4.5
+  - @breadboard-ai/build@0.10.2
+  - @google-labs/agent-kit@0.12.2
+  - @google-labs/core-kit@0.15.1
+  - @breadboard-ai/google-drive-kit@0.2.5
+  - @google-labs/json-kit@0.3.9
+  - @breadboard-ai/python-wasm@0.1.7
+  - @google-labs/template-kit@0.3.11
+
 ## 0.3.2
 
 ### Patch Changes

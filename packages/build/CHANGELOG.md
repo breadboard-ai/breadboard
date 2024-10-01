@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.10.2
+
+### Patch Changes
+
+- 7921983: Introduce `@breadboard-ai/types` package.
+- Updated dependencies [370b7ca]
+- Updated dependencies [7921983]
+  - @google-labs/breadboard@0.27.2
+  - @breadboard-ai/types@0.1.0
+
 ## 0.10.1
 
 ### Patch Changes

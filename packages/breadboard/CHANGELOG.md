@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.27.2
+
+### Patch Changes
+
+- 370b7ca: Change option name
+- 7921983: Introduce `@breadboard-ai/types` package.
+- Updated dependencies [7921983]
+  - @breadboard-ai/types@0.1.0
+  - @google-labs/breadboard-schema@1.8.1
+
 ## 0.27.1
 
 ### Patch Changes

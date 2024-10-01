@@ -1,5 +1,13 @@
 # @breadboard-ai/build-code
 
+## 0.1.2
+
+### Patch Changes
+
+- Updated dependencies [7921983]
+  - @breadboard-ai/build@0.10.2
+  - @google-labs/core-kit@0.15.1
+
 ## 0.1.1
 
 ### Patch Changes
