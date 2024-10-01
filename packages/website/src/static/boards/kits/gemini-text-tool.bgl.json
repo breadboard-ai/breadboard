@@ -21,9 +21,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -249,
-          "y": -131,
-          "collapsed": false
+          "x": -355,
+          "y": -19,
+          "collapsed": "expanded"
         }
       }
     },
@@ -34,7 +34,7 @@
         "visual": {
           "x": -44,
           "y": -63,
-          "collapsed": false
+          "collapsed": "expanded"
         },
         "title": "Generate Text",
         "logLevel": "debug"
@@ -45,9 +45,9 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": -299,
-          "y": 124,
-          "collapsed": false
+          "x": -446,
+          "y": 118,
+          "collapsed": "expanded"
         },
         "title": "Declare Tools",
         "logLevel": "debug"
@@ -63,9 +63,9 @@
       "type": "output",
       "metadata": {
         "visual": {
-          "x": 162,
-          "y": -62,
-          "collapsed": false
+          "x": 249,
+          "y": -47,
+          "collapsed": "expanded"
         }
       },
       "configuration": {

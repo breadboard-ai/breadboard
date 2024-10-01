@@ -26,9 +26,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -250,
-          "y": -123,
-          "collapsed": false
+          "x": -343,
+          "y": -160,
+          "collapsed": "expanded"
         }
       }
     },
@@ -37,9 +37,9 @@
       "type": "fetch",
       "metadata": {
         "visual": {
-          "x": 181,
-          "y": 12,
-          "collapsed": false
+          "x": 172,
+          "y": 190,
+          "collapsed": "expanded"
         },
         "title": "Search Wikipedia",
         "logLevel": "debug"
@@ -50,9 +50,9 @@
       "type": "urlTemplate",
       "metadata": {
         "visual": {
-          "x": -36,
-          "y": 48,
-          "collapsed": false
+          "x": -159,
+          "y": 70,
+          "collapsed": "expanded"
         },
         "title": "Make URL",
         "logLevel": "debug"
@@ -66,9 +66,9 @@
       "type": "output",
       "metadata": {
         "visual": {
-          "x": 472,
-          "y": 142,
-          "collapsed": false
+          "x": 791,
+          "y": -123,
+          "collapsed": "expanded"
         },
         "title": "output",
         "logLevel": "debug"
@@ -93,9 +93,9 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": 416,
+          "x": 424,
           "y": -120,
-          "collapsed": false
+          "collapsed": "expanded"
         },
         "title": "Append Results",
         "logLevel": "debug"
@@ -147,7 +147,7 @@
           "visual": {
             "x": -57,
             "y": -33,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -156,9 +156,9 @@
         "text": "Make a `fetch` call \nto Wikipedia.",
         "metadata": {
           "visual": {
-            "x": 200,
-            "y": -47,
-            "collapsed": false
+            "x": 178,
+            "y": 404,
+            "collapsed": "expanded"
           }
         }
       },
@@ -169,7 +169,7 @@
           "visual": {
             "x": -114,
             "y": -302,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -180,7 +180,7 @@
           "visual": {
             "x": 267,
             "y": -210,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -189,9 +189,9 @@
         "text": "... and pass it as the new accumulated result.",
         "metadata": {
           "visual": {
-            "x": 484,
-            "y": 84,
-            "collapsed": false
+            "x": 672,
+            "y": -219,
+            "collapsed": "expanded"
           }
         }
       }
