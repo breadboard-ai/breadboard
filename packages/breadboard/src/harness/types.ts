@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { StartLabel } from "@google-labs/breadboard-schema/graph.js";
+import { StartLabel } from "@breadboard-ai/types";
 import type { DataStore } from "../data/types.js";
 import { InspectableRunObserver } from "../inspector/types.js";
 import type { GraphLoader } from "../loader/types.js";

@@ -21,10 +21,7 @@ import {
   NodeDescriptor,
   OutputValues,
 } from "../types.js";
-import {
-  NodeMetadata,
-  StartLabel,
-} from "@google-labs/breadboard-schema/graph.js";
+import { NodeMetadata, StartLabel } from "@breadboard-ai/types";
 
 /**
  * This is a special kind of an `InspectableNode`, representing a bubbled

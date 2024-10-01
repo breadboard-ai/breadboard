@@ -6,7 +6,7 @@
 
 import test from "ava";
 import { EditHistoryManager } from "../../src/editor/history.js";
-import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
+import { GraphDescriptor } from "@breadboard-ai/types";
 
 test("EditHistoryManager correctly adds new items", (t) => {
   const mockGraph1 = { m: "1" } as unknown as GraphDescriptor;

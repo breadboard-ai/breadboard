@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  GraphMetadata,
-  InputValues,
-  StartLabel,
-} from "@google-labs/breadboard-schema/graph.js";
+import { GraphMetadata, InputValues, StartLabel } from "@breadboard-ai/types";
 import { getHandler } from "../handler.js";
 import { createLoader } from "../loader/index.js";
 import { combineSchemas, removeProperty } from "../schema.js";

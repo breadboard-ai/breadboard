@@ -7,7 +7,7 @@
 import test from "ava";
 
 import { editGraph } from "../../src/editor/index.js";
-import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
+import { NodeMetadata } from "@breadboard-ai/types";
 
 const testEditGraph = () => {
   return editGraph(

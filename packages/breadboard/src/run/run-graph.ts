@@ -4,10 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  GraphDescriptor,
-  OutputValues,
-} from "@google-labs/breadboard-schema/graph.js";
+import type { GraphDescriptor, OutputValues } from "@breadboard-ai/types";
 import { bubbleUpInputsIfNeeded, bubbleUpOutputsIfNeeded } from "../bubble.js";
 import { resolveBoardCapabilities } from "../capability.js";
 import { InputStageResult, OutputStageResult } from "../run.js";

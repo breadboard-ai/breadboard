@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
+import { GraphDescriptor } from "@breadboard-ai/types";
 import { inspectableGraph } from "../../src/inspector/graph.js";
 import { PortType } from "../../src/inspector/ports.js";
 import { Schema } from "../../src/types.js";

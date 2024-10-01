@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
+import { GraphDescriptor } from "@breadboard-ai/types";
 import { HarnessRunResult } from "../../harness/types.js";
 import type {
   EventIdentifier,

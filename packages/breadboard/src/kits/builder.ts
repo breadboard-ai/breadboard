@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { KitDescriptor, KitTag } from "@google-labs/breadboard-schema/graph.js";
+import { KitDescriptor, KitTag } from "@breadboard-ai/types";
 import {
   ConfigOrGraph,
   GenericKit,

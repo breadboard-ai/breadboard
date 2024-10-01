@@ -8,7 +8,7 @@ import {
   GraphDescriptor,
   NodeDescriptor,
   NodeValue,
-} from "@google-labs/breadboard-schema/graph.js";
+} from "@breadboard-ai/types";
 import {
   GraphUUID,
   TimelineEntry,

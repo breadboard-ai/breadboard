@@ -8,7 +8,7 @@ import {
   GraphIdentifier,
   GraphMetadata,
   NodeMetadata,
-} from "@google-labs/breadboard-schema/graph.js";
+} from "@breadboard-ai/types";
 import {
   GraphStoreMutator,
   InspectableGraph,

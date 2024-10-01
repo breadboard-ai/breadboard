@@ -7,7 +7,7 @@
 import test, { describe } from "node:test";
 import { getGraphHandler } from "../../../src/handler.js";
 import { deepStrictEqual, ok } from "node:assert";
-import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
+import { GraphDescriptor } from "@breadboard-ai/types";
 import simple from "../../bgl/simple.bgl.json" with { type: "json" };
 import { NodeDescriberResult, NodeDescriberWires } from "../../../src/types.js";
 

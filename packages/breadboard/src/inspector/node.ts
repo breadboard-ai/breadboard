@@ -8,7 +8,7 @@ import {
   GraphDescriptor,
   NodeMetadata,
   StartLabel,
-} from "@google-labs/breadboard-schema/graph.js";
+} from "@breadboard-ai/types";
 import {
   InputValues,
   NodeConfiguration,

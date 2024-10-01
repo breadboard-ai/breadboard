@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
+import type { GraphDescriptor } from "@breadboard-ai/types";
 
 const graphFieldOrder = [
   "title",

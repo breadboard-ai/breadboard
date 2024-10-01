@@ -4,10 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  NodeIdentifier,
-  NodeMetadata,
-} from "@google-labs/breadboard-schema/graph.js";
+import { NodeIdentifier, NodeMetadata } from "@breadboard-ai/types";
 import {
   EditOperation,
   EditOperationContext,

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
+import { GraphMetadata } from "@breadboard-ai/types";
 import {
   BreadboardCapability,
   NodeDescriberFunction,

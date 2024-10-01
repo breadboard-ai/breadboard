@@ -9,7 +9,7 @@ import {
   SENTINEL_BASE_URL,
   baseURLFromContext,
 } from "../../src/loader/loader.js";
-import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
+import { GraphDescriptor } from "@breadboard-ai/types";
 
 test("relativeBasePath is relative to invoking board", (t) => {
   t.is(

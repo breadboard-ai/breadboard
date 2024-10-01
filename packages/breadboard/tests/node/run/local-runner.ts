@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
+import { GraphDescriptor } from "@breadboard-ai/types";
 import { deepStrictEqual, ok } from "node:assert";
 import test, { describe } from "node:test";
 import { LocalRunner } from "../../../src/harness/local-runner.js";

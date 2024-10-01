@@ -8,7 +8,7 @@ import {
   GraphDescriptor,
   InputValues,
   OutputValues,
-} from "@google-labs/breadboard-schema/graph.js";
+} from "@breadboard-ai/types";
 import { deepStrictEqual, fail } from "assert";
 import {
   createLoader,

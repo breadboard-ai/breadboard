@@ -7,7 +7,7 @@
 import test from "ava";
 
 import { inspectableGraph } from "../../src/inspector/graph.js";
-import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
+import { GraphDescriptor } from "@breadboard-ai/types";
 
 test("inspectableGraph correctly reacts to edits", (t) => {
   const graph: GraphDescriptor = {
