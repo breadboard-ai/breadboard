@@ -39,7 +39,8 @@
         "../breadboard:build:tsc",
         "../build:build:tsc",
         "../data-store:build:tsc",
-        "../schema:build:tsc"
+        "../schema:build:tsc",
+        "../types:build:tsc"
       ],
       "files": [
         "src/**/*.ts",

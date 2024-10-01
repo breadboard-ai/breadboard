@@ -83,7 +83,8 @@
         "../template-kit:build:tsc",
         "../node-nursery-web:build:tsc",
         "../palm-kit:build:tsc",
-        "../python-wasm:build:tsc"
+        "../python-wasm:build:tsc",
+        "../types:build:tsc"
       ],
       "files": [
         "src/**/*.ts",

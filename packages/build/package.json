@@ -60,7 +60,8 @@
     "build:tsc": {
       "command": "tsc --pretty",
       "dependencies": [
-        "../breadboard:build:tsc"
+        "../breadboard:build:tsc",
+        "../types:build:tsc"
       ],
       "files": [
         "src/",
