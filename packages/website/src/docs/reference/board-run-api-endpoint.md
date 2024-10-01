@@ -1,23 +1,165 @@
 ---
 layout: docs.liquid
-title: Board Run API Endpoint Protocol
+title: Board Server API Endpoints
 tags:
   - reference
   - miscellaneous
 ---
 
-This doc describes how to use the Board Run API Endpoint. This API endpoint is different from the ["invoke"](../bse/#the-invoke-path) API endpoint in that it follows the ["Run" mode semantics](/breadboard/docs/reference/runtime-semantics#run-mode).
+This doc describes how to use the Board Server API Endpoints.
 
-> [!TIP]
-> What's the difference between "invoke" and "run"? They are two different ways to execute a board. The "invoke" bails on the first "[Output](/breadboard/docs/reference/kits/built-in/#the-output-component)" component it encounters, which makes it very similar to calling a function: any "Output" in the board acts as a `return` statement.
->
-> Conversely, "run" continues to run past the "Output" and only stops when the board finishes (which may be never). Use "invoke" when you have a simple board (like a tool) and "run" for boards that have multiple turns or multiple outputs.
+Every board has two endpoints:
 
-## Endpoint location
+1. The "invoke" API endpoint that follows the ["Run as component" mode](/breadboard/docs/reference/runtime-semantics#run-as-component-mode) runtime semantics.
+2. The "run" API endpoint that follows the ["Run" mode](/breadboard/docs/reference/runtime-semantics#run-mode) runtime semantics.
+
+What's the difference between "invoke" and "run"?
+
+The "invoke" bails on the first "[Output](/breadboard/docs/reference/kits/built-in/#the-output-component)" component it encounters, which makes it very similar to calling a function: any "Output" in the board acts as a `return` statement.
+
+Conversely, "run" continues to run past the "Output" and only stops when the board finishes (which may be never). Use "invoke" when you have a simple board (like a tool) and "run" for boards that have multiple turns or multiple outputs.
+
+# Invoke API Endpoint
 
 `POST {API_URL}`
 
-When using a Board Server, it will be the URL of the board, with the `json` extension replaced by `api/run`. For example a board at this location:
+When using a Board Server, the `API_URL` will be the URL of the board, with the `json` extension replaced by `api/invoke`. For example a board at this location:
+
+```url
+http://mycoolboardserver.example.com/boards/@pluto/chat-agent.bgl.json
+```
+
+Will have the API endpoint at:
+
+```url
+http://mycoolboardserver.example.com/boards/@pluto/chat-agent.bgl.api/invoke
+```
+
+The invoke API endpoint is a simple request/response API. The request is a JSON object and a response is a JSON object.
+
+## Authentication
+
+Authentication is performed using the Board Server API key. Include the key in the request body as a property named `$key`.
+
+## Request
+
+### Headers
+
+- `Content-Type: application/json`
+
+### Body
+
+The request body should be a JSON object with the following structure:
+
+```json
+{
+  "$key": "BOARD_SERVER_API_KEY",
+  ...inputs
+}
+```
+
+- `$key` (string, required): The API key. When accessing this endpoint on a Board Server, the Board Server API Key.
+- `...inputs` (object, required): The inputs to the board.
+
+### Providing inputs
+
+The structure of `inputs` depends on the "Input" component that is the entry point into the board. In Breadboard, every "Input" component defines its [input ports](/breadboard/docs/reference/kits/built-in/#input-ports). Most of the time, an "Input" will have just one port, but it is also possible to define many ports per "Input".
+
+> [!TIP]
+> A good analogy is to think of the "Input" component as a function call and ports as named arguments for this function call.
+
+Each port has a unique id that helps to distinguish it from other ports within this "Input". This id can be found by looking up the "ID" field in the Schema editor for the "Input" component. For example, this port has the id of `property-1`:
+
+![Input Schema editor expanded](/breadboard/static/images/built-in-kit/input-schema-expanded.png)
+
+The port also has a type that defines the format of the data that the port is expecting. The port definition above expects a "String" type, which is just a string. Supplying valid inputs for the "Input" component with this port will look like this:
+
+```json
+{
+  "$key": "BOARD_SERVER_API_KEY",
+  "property-2": "Mountain View, CA"
+}
+```
+
+Another common port type used in Breadboard is LLM Content Array. It's a bit of a mouthful, but it's effectively a way to pass conversation context between components. Most of the time, you'll be working with this type, so it's very likely that the input you're encountering will ask for the data in this format. This format is [defined in more detail](https://ai.google.dev/api/caching#Content) in Gemini API reference. In Breadboard, its definition looks like this:
+
+![Input Schema editor of LLM Content Array](/breadboard/static/images/endpoint-docs/llm-content-array-schema.png)
+
+If you just want to send text to the "Input" component with this port type, it will look something like this:
+
+```json
+{
+  "$key": "BOARD_SERVER_API_KEY",
+  "property-3": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "A place with all the views and mountains"
+        }
+      ]
+    }
+  ]
+}
+```
+
+> [!TIP]
+> To find out what ports the "Input" expects, click on its "Schema" field in Visual Editor and look at the configured ports.
+
+## Response
+
+The response body is a JSON object with the port vlues of the "Output" component.
+
+```json
+{
+  ... outputs
+}
+```
+
+- `... outputs`: the key/value pairs of the "Output" component.
+
+### Invoke API Endpoint Examples
+
+For instance, let's suppose we have a board that has a single "Input" component with "Question" and "Thought" ports and a single "Output" component with the "Prompt" port.
+
+![promptTemplate component input ports](/breadboard/static/images/template-kit/prompt-template-inputs.png)
+
+This board is a good candidate for using with the Invoke API endpoint: it's linear (has no cycles), and it only has one output.
+
+When we look at the schema of the "Input", we see that the ids of the inputs are, respectively, "question" and "thought":
+
+![Invoke Example Schema editor expanded](/breadboard/static/images/endpoint-docs/invoke-example-schema.png)
+
+Thus, the structure of the request will be:
+
+```json
+{
+  "$key": "BOARD_SERVER_API_KEY",
+  "question": "What's the distance between Earth and Moon?",
+  "thought": "I need to research the distance between Earth and Moon"
+}
+```
+
+Now, when we look at the schema of the "Output" component, we see that the id of its single port is "prompt":
+
+![Invoke Example Schema editor expanded](/breadboard/static/images/endpoint-docs/invoke-example-out-schema.png)
+
+So the response we'll get will be:
+
+```json
+{
+  "prompt": "Question: What's the distance between Earth and Moon?\nThought: I need to research the distance between Earth and Moon"
+}
+```
+
+> [!TIP]
+> By looking at the schemas of "Input" and "Output" component, we can determine the shape of the request and the response of the "invoke" API endpoint.
+
+# Run API Endpoint
+
+`POST {API_URL}`
+
+When using a Board Server, the `API_URL` will be the URL of the board, with the `json` extension replaced by `api/run`. For example a board at this location:
 
 ```url
 http://mycoolboardserver.example.com/boards/@pluto/chat-agent.bgl.json
@@ -29,8 +171,6 @@ Will have the API endpoint at:
 http://mycoolboardserver.example.com/boards/@pluto/chat-agent.bgl.api/run
 ```
 
-Thus, every board has its own API endpoint.
-
 ## Life of a run
 
 A good mental model for a using the "run" API endpoint is that of having a multi-turn conversation with it: you give it a request, it runs for a little bit, and then comes back with a response. Based on the response, you formulate the next request and send it back to the endpoint. It runs again and gives you the next response.
@@ -39,7 +179,7 @@ In effect, the endpoint pauses the run of the board and hands the control over t
 
 ### When the endpoint pauses
 
-The "run" API endpoint will pause the board whenever it comes across an "[Input](/breadboard/docs/reference/kits/built-in/#the-input-component)" component. Using the multi-turn conversation analogy, the endpoint yield control to you to provide the input values for the "Input" component, and then resumes running with the provided input values.
+The "run" API endpoint will pause the board whenever it comes across an "[Input](/breadboard/docs/reference/kits/built-in/#the-input-component)" component. Using the multi-turn conversation analogy, the endpoint yields the control of execution to you to provide the input values for the "Input" component, and then resumes running with the provided input values.
 
 ### The "next" token
 
@@ -81,52 +221,7 @@ The request body should be a JSON object with the following structure:
 - `$next` (string, optional): The state to resume from, if continuing a previous interaction.
 - `...inputs` (object, required): The inputs to the board.
 
-### Providing inputs
-
-The structure of `inputs` depends on the "Input" component that at which the board is currently paused. In Breadboard, every "Input" component defines its [input ports](/breadboard/docs/reference/kits/built-in/#input-ports). Most of the time, an "Input" will have just one port, but it is also possible to define many ports per "Input".
-
-> [!TIP]
-> A good analogy is to think of the "Input" component as a function call and ports as named arguments for this function call.
-
-Each port has a unique id that helps to distinguish it from other ports within this "Input". This id can be found by looking up the "ID" field in the Schema editor for the "Input" component. For example, this port has the id of `property-1`:
-
-![Input Schema editor expanded](/breadboard/static/images/built-in-kit/input-schema-expanded.png)
-
-The port also has a type that defines the format of the data that the port is expecting. The port definition above expects a "String" type, which is just a string. Supplying valid inputs for the "Input" component with this port will look like this:
-
-```json
-{
-  "$key": "BOARD_SERVER_API_KEY",
-  "$next": "OPTIONAL_RESUMPTION_STATE",
-  "property-2": "Mountain View, CA"
-}
-```
-
-Another common port type used in Breadboard is LLM Content Array. It's a bit of a mouthful, but it's effectively a way to pass conversation context between components. Most of the time, you'll be working with this type, so it's very likely that the input you're encountering will ask for the data in this format. This format is [defined in more detail](https://ai.google.dev/api/caching#Content) in Gemini API reference. In Breadboard, its definition looks like this:
-
-![Input Schema editor of LLM Content Array](/breadboard/static/images/endpoint-docs/llm-content-array-schema.png)
-
-If you just want to send text to the "Input" component with this port type, it will look something like this:
-
-```json
-{
-  "$key": "BOARD_SERVER_API_KEY",
-  "$next": "OPTIONAL_RESUMPTION_STATE",
-  "property-3": [
-    {
-      "role": "user",
-      "parts": [
-        {
-          "text": "A place with all the views and mountains"
-        }
-      ]
-    }
-  ]
-}
-```
-
-> [!TIP]
-> To find out what ports the "Input" expects, click on its "Schema" field in Visual Editor and look at the configured ports.
+The structure of `inputs` depends on the "Input" component that at which the board is currently paused and follows the same rules as describe in the "[Providing Inputs](#providing-inputs)" section above.
 
 ### Request examples
 
@@ -237,7 +332,7 @@ To continue an interaction:
 1. Extract the `next` value from the most recent input event.
 2. Include this value as `$next` in your next request body.
 
-## Examples
+### Run API Endpoint Examples
 
 ### Initiating a conversation
 
