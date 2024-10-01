@@ -46,7 +46,7 @@ import { isLoopback } from "./loopback.js";
 import { OptionalVersionOf, isOptional } from "./optional.js";
 import { isSpecialOutput } from "./output.js";
 import { isStarInputs, type StarInputs } from "./star-inputs.js";
-import type { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
+import type { NodeMetadata } from "@breadboard-ai/types";
 
 /**
  * Serialize a Breadboard board to Breadboard Graph Language (BGL) so that it

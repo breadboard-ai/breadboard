@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { base } from "@google-labs/breadboard";
+import { base, GraphDescriptor } from "@google-labs/breadboard";
 import Ajv, { type ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
 import fs from "fs";
@@ -72,7 +72,9 @@ const manifestArray: BreadboardManifest[] = [
   },
   {
     title: "Manifest with a generated board",
-    boards: [await base.input().to(base.output()).serialize({})],
+    boards: [
+      (await base.input().to(base.output()).serialize({})) as GraphDescriptor,
+    ],
   },
   {
     title: "Manifest with empty boards and manifests arrays",

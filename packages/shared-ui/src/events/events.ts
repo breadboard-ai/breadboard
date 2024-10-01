@@ -13,10 +13,7 @@ import type {
   Schema,
 } from "@google-labs/breadboard";
 import type { EdgeData, Settings, UserOutputValues } from "../types/types.js";
-import type {
-  NodeMetadata,
-  NodeValue,
-} from "@google-labs/breadboard-schema/graph.js";
+import type { NodeMetadata, NodeValue } from "@breadboard-ai/types";
 import { ComponentExpansionState } from "../elements/editor/types.js";
 
 const eventInit = {

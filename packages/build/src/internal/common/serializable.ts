@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
+import type { GraphMetadata } from "@breadboard-ai/types";
 import type { GenericBoardDefinition } from "../board/board.js";
 import type { Convergence } from "../board/converge.js";
 import type {

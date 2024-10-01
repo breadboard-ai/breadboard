@@ -9,7 +9,7 @@ import {
   GraphMetadata,
   NodeMetadata,
   StartLabel,
-} from "@google-labs/breadboard-schema/graph.js";
+} from "@breadboard-ai/types";
 import { HarnessRunResult, SecretResult } from "../harness/types.js";
 import { GraphLoader } from "../loader/types.js";
 import {

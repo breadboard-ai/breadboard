@@ -19,7 +19,7 @@ import {
 } from "@google-labs/breadboard";
 import { Tab, TabId } from "./types";
 import { RuntimeBoardEditEvent, RuntimeErrorEvent } from "./events";
-import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
+import { NodeMetadata } from "@breadboard-ai/types";
 
 export class Edit extends EventTarget {
   #editors = new Map<TabId, EditableGraph>();

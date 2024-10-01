@@ -16,7 +16,7 @@ import type {
   NodeValue,
   OutputValues,
   StartLabel,
-} from "@google-labs/breadboard-schema/graph.js";
+} from "@breadboard-ai/types";
 import { GraphLoader } from "./loader/types.js";
 import {
   DataStore,
@@ -45,7 +45,7 @@ export type {
   OutputIdentifier,
   OutputValues,
   SubGraphs,
-} from "@google-labs/breadboard-schema/graph.js";
+} from "@breadboard-ai/types";
 
 export type BehaviorSchema =
   /**

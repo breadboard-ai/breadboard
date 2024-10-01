@@ -27,7 +27,7 @@ import {
 import { Scope } from "./scope.js";
 
 import { IdVendor } from "../../id.js";
-import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
+import { NodeMetadata } from "@breadboard-ai/types";
 
 const nodeIdVendor = new IdVendor();
 

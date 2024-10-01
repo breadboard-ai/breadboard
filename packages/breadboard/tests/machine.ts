@@ -17,7 +17,7 @@ import {
   OutputValues,
 } from "../src/types.js";
 import { MachineResult } from "../src/traversal/result.js";
-import { StartLabel } from "@google-labs/breadboard-schema/graph.js";
+import { StartLabel } from "@breadboard-ai/types";
 
 const IN_DIR = "./tests/data/";
 

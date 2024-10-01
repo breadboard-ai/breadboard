@@ -83,7 +83,8 @@
         "../template-kit:build:tsc",
         "../node-nursery-web:build:tsc",
         "../palm-kit:build:tsc",
-        "../python-wasm:build:tsc"
+        "../python-wasm:build:tsc",
+        "../types:build:tsc"
       ],
       "files": [
         "src/**/*.ts",
@@ -279,6 +280,7 @@
     "@breadboard-ai/manifest": "0.4.4",
     "@breadboard-ai/shared-ui": "1.18.0",
     "@breadboard-ai/python-wasm": "0.1.6",
+    "@breadboard-ai/types": "0.0.1",
     "@codemirror/autocomplete": "^6.18.1",
     "@codemirror/commands": "^6.6.2",
     "@codemirror/lang-javascript": "^6.2.2",

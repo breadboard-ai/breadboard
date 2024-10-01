@@ -9,7 +9,7 @@ import {
   GraphTag,
   NodeConfiguration,
   NodeIdentifier,
-} from "@google-labs/breadboard-schema/graph.js";
+} from "@breadboard-ai/types";
 import { Kit } from "../types.js";
 
 export type GraphProviderItem = {

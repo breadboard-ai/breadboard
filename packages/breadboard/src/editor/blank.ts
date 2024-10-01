@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphTag } from "@google-labs/breadboard-schema/graph.js";
+import { GraphTag } from "@breadboard-ai/types";
 import { GraphDescriptor, Schema } from "../types.js";
 
 const CONFIGURATION = {

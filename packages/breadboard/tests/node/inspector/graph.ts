@@ -6,7 +6,7 @@
 
 import test, { describe } from "node:test";
 import promptTemplate from "../../bgl/prompt-template.bgl.json" with { type: "json" };
-import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
+import { GraphDescriptor } from "@breadboard-ai/types";
 import { inspectableGraph } from "../../../src/inspector/graph.js";
 import { testKit } from "../test-kit.js";
 import { createLoader } from "../../../src/index.js";

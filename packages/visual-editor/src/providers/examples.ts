@@ -13,7 +13,7 @@ import {
   GraphProviderItem,
 } from "@google-labs/breadboard";
 import { GraphProviderStore } from "./types.js";
-import { GraphTag } from "@google-labs/breadboard-schema/graph.js";
+import { GraphTag } from "@breadboard-ai/types";
 
 export class ExamplesGraphProvider implements GraphProvider {
   name = "ExamplesGraphProvider";

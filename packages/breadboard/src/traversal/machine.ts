@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { StartLabel } from "@google-labs/breadboard-schema/graph.js";
+import { StartLabel } from "@breadboard-ai/types";
 import type { GraphDescriptor, TraversalResult } from "../types.js";
 import { TraversalMachineIterator } from "./iterator.js";
 import { GraphRepresentation } from "./representation.js";

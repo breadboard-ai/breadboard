@@ -60,7 +60,8 @@
     "build:tsc": {
       "command": "tsc --pretty",
       "dependencies": [
-        "../breadboard:build:tsc"
+        "../breadboard:build:tsc",
+        "../types:build:tsc"
       ],
       "files": [
         "src/",
@@ -119,6 +120,7 @@
     }
   },
   "dependencies": {
+    "@breadboard-ai/types": "0.0.1",
     "@google-labs/breadboard": "^0.27.1",
     "@types/json-schema": "^7.0.15"
   },

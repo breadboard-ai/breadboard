@@ -21,11 +21,7 @@ import {
   type NodeHandlerObject,
   type NodeHandlers,
 } from "@google-labs/breadboard";
-import type {
-  GraphDescriptor,
-  KitTag,
-  SubGraphs,
-} from "@google-labs/breadboard-schema/graph.js";
+import type { GraphDescriptor, KitTag, SubGraphs } from "@breadboard-ai/types";
 import { GraphToKitAdapter, KitBuilder } from "@google-labs/breadboard/kits";
 import type { BoardDefinition } from "./board/board.js";
 import { serialize } from "./board/serialize.js";

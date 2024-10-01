@@ -74,6 +74,9 @@
         "tsconfig.json",
         "../../core/tsconfig/base.json"
       ],
+      "dependencies": [
+        "../types:build:tsc"
+      ],
       "output": [
         "dist/",
         "tsconfig.tsbuildinfo"

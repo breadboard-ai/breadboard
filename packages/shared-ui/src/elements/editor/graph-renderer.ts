@@ -48,10 +48,7 @@ import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { computeNextExpansionState, getGlobalColor } from "./utils.js";
-import {
-  GraphMetadata,
-  NodeValue,
-} from "@google-labs/breadboard-schema/graph.js";
+import { GraphMetadata, NodeValue } from "@breadboard-ai/types";
 import { GraphComment } from "./graph-comment.js";
 import { EdgeData, TopGraphRunResult } from "../../types/types.js";
 

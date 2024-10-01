@@ -39,7 +39,8 @@
         "../breadboard:build:tsc",
         "../build:build:tsc",
         "../data-store:build:tsc",
-        "../schema:build:tsc"
+        "../schema:build:tsc",
+        "../types:build:tsc"
       ],
       "files": [
         "src/**/*.ts",
@@ -98,6 +99,7 @@
   "dependencies": {
     "@breadboard-ai/build": "0.10.1",
     "@breadboard-ai/data-store": "0.2.3",
+    "@breadboard-ai/types": "0.0.1",
     "@codemirror/autocomplete": "^6.18.1",
     "@codemirror/commands": "^6.6.2",
     "@codemirror/lang-javascript": "^6.2.2",

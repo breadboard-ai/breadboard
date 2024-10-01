@@ -13,10 +13,7 @@ import {
   InspectableNode,
   NodeHandlerMetadata,
 } from "@google-labs/breadboard";
-import {
-  CommentNode,
-  NodeMetadata,
-} from "@google-labs/breadboard-schema/graph.js";
+import { CommentNode, NodeMetadata } from "@breadboard-ai/types";
 import { classMap } from "lit/directives/class-map.js";
 
 const STORAGE_PREFIX = "bb-node-meta-details";

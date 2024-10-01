@@ -20,7 +20,7 @@ import {
 } from "../../events/events.js";
 import { EditorMode, filterConfigByMode } from "../../utils/mode.js";
 import { classMap } from "lit/directives/class-map.js";
-import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
+import { NodeMetadata } from "@breadboard-ai/types";
 
 const MAXIMIZE_KEY = "bb-node-configuration-overlay-maximized";
 const OVERLAY_CLEARANCE = 60;

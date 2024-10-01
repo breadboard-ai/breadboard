@@ -8,7 +8,7 @@ import { customElement, property } from "lit/decorators.js";
 import { BoardInfoUpdateEvent } from "../../events/events.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { classMap } from "lit/directives/class-map.js";
-import { GraphMetadata } from "@google-labs/breadboard-schema/graph.js";
+import { GraphMetadata } from "@breadboard-ai/types";
 
 const STORAGE_PREFIX = "bb-board-details";
 

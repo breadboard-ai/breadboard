@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { StartLabel, StartTag } from "@google-labs/breadboard-schema/graph.js";
+import { StartLabel, StartTag } from "@breadboard-ai/types";
 import type {
   Edge,
   GraphDescriptor,

@@ -14,7 +14,7 @@ import {
 } from "@google-labs/breadboard";
 import { GraphProviderStore } from "./types";
 import { GraphProviderExtendedCapabilities } from "@google-labs/breadboard";
-import { GraphTag } from "@google-labs/breadboard-schema/graph.js";
+import { GraphTag } from "@breadboard-ai/types";
 
 interface GraphDBStore {
   url: string;

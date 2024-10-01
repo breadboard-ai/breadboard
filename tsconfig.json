@@ -23,6 +23,7 @@
     { "path": "packages/schema" },
     { "path": "packages/shared-ui" },
     { "path": "packages/template-kit" },
+    { "path": "packages/types" },
     { "path": "packages/visual-editor" },
     { "path": "packages/website" }
   ]

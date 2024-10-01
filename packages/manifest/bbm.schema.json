@@ -89,6 +89,334 @@
 			},
 			"type": "object"
 		},
+		"Capability": {
+			"additionalProperties": false,
+			"properties": {
+				"kind": {
+					"type": "string"
+				}
+			},
+			"required": [
+				"kind"
+			],
+			"type": "object"
+		},
+		"CommentNode": {
+			"additionalProperties": false,
+			"properties": {
+				"id": {
+					"$ref": "#/definitions/NodeIdentifier",
+					"description": "Unique id of the comment node in graph metadata."
+				},
+				"metadata": {
+					"$ref": "#/definitions/NodeMetadata",
+					"description": "The metadata of the comment node. Use this to provide additional information about the comment node."
+				},
+				"text": {
+					"description": "The text content of the comment.",
+					"type": "string"
+				}
+			},
+			"required": [
+				"id",
+				"text"
+			],
+			"type": "object"
+		},
+		"Edge": {
+			"additionalProperties": false,
+			"description": "Represents an edge in a graph.",
+			"properties": {
+				"constant": {
+					"description": "If true, this edge acts as a constant: the data that passes through it remains available even after the node has consumed it.",
+					"type": "boolean"
+				},
+				"from": {
+					"$ref": "#/definitions/NodeIdentifier",
+					"description": "The node that the edge is coming from."
+				},
+				"in": {
+					"$ref": "#/definitions/InputIdentifier",
+					"description": "The input of the `to` node. If this value is undefined, then the then no data is passed as output of the `from` node."
+				},
+				"optional": {
+					"description": "If true, this edge is optional: the data that passes through it is not considered a required input to the node.",
+					"type": "boolean"
+				},
+				"out": {
+					"$ref": "#/definitions/OutputIdentifier",
+					"description": "The output of the `from` node. If this value is \"*\", then all outputs of the `from` node are passed to the `to` node. If this value is undefined, then no data is passed to any inputs of the `to` node."
+				},
+				"to": {
+					"$ref": "#/definitions/NodeIdentifier",
+					"description": "The node that the edge is going to."
+				}
+			},
+			"required": [
+				"from",
+				"to"
+			],
+			"type": "object"
+		},
+		"GraphDescriptor": {
+			"additionalProperties": false,
+			"description": "Represents a graph.",
+			"properties": {
+				"$schema": {
+					"description": "The schema of the graph.",
+					"type": "string"
+				},
+				"args": {
+					"$ref": "#/definitions/InputValues",
+					"description": "Arguments that are passed to the graph, useful to bind values to graphs."
+				},
+				"description": {
+					"description": "The description of the graph.",
+					"type": "string"
+				},
+				"edges": {
+					"description": "The collection of all edges in the graph.",
+					"items": {
+						"$ref": "#/definitions/Edge"
+					},
+					"type": "array"
+				},
+				"expectedLabels": {
+					"deprecated": "For internal testing only. Do not use.",
+					"description": "For internal testing only. Do not use.",
+					"items": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"type": "array"
+				},
+				"explanation": {
+					"deprecated": "For internal testing only. Do not use.",
+					"description": "For internal testing only. Do not use.",
+					"type": "string"
+				},
+				"graphs": {
+					"$ref": "#/definitions/SubGraphs",
+					"description": "Sub-graphs that are also described by this graph representation."
+				},
+				"inputs": {
+					"$ref": "#/definitions/InputValues",
+					"deprecated": "For internal testing only. Do not use.",
+					"description": "For internal testing only. Do not use."
+				},
+				"kits": {
+					"description": "All the kits (collections of node handlers) that are used by the graph.",
+					"items": {
+						"$ref": "#/definitions/KitDescriptor"
+					},
+					"type": "array"
+				},
+				"metadata": {
+					"$ref": "#/definitions/GraphMetadata",
+					"description": "Metadata associated with the graph."
+				},
+				"nodes": {
+					"description": "The collection of all nodes in the graph.",
+					"items": {
+						"$ref": "#/definitions/NodeDescriptor"
+					},
+					"type": "array"
+				},
+				"outputs": {
+					"anyOf": [
+						{
+							"$ref": "#/definitions/OutputValues"
+						},
+						{
+							"items": {
+								"$ref": "#/definitions/OutputValues"
+							},
+							"type": "array"
+						}
+					],
+					"deprecated": "For internal testing only. Do not use.",
+					"description": "For internal testing only. Do not use."
+				},
+				"safe": {
+					"deprecated": "For internal testing only. Do not use.",
+					"description": "For internal testing only. Do not use.",
+					"type": "boolean"
+				},
+				"sequence": {
+					"deprecated": "For internal testing only. Do not use.",
+					"description": "For internal testing only. Do not use.",
+					"items": {
+						"$ref": "#/definitions/NodeIdentifier"
+					},
+					"type": "array"
+				},
+				"start": {
+					"$ref": "#/definitions/StartLabel",
+					"deprecated": "For internal testing only. Do not use.",
+					"description": "For internal testing only. Do not use."
+				},
+				"throws": {
+					"deprecated": "For internal testing only. Do not use.",
+					"description": "For internal testing only. Do not use.",
+					"type": "boolean"
+				},
+				"title": {
+					"description": "The title of the graph.",
+					"type": "string"
+				},
+				"url": {
+					"description": "The URL pointing to the location of the graph. This URL is used to resolve relative paths in the graph. If not specified, the paths are assumed to be relative to the current working directory.",
+					"type": "string"
+				},
+				"version": {
+					"description": "Version of the graph. [semver](https://semver.org/) format is encouraged.",
+					"type": "string"
+				}
+			},
+			"required": [
+				"edges",
+				"nodes"
+			],
+			"type": "object"
+		},
+		"GraphMetadata": {
+			"additionalProperties": {
+				"$ref": "#/definitions/NodeValue"
+			},
+			"description": "Represents graph metadata.",
+			"properties": {
+				"comments": {
+					"items": {
+						"$ref": "#/definitions/CommentNode"
+					},
+					"type": "array"
+				},
+				"describer": {
+					"description": "The URL of the graph that will act as the describer for this graph. Can be a relative URL and refer to a sub-graph within this graph.",
+					"type": "string"
+				},
+				"help": {
+					"additionalProperties": false,
+					"description": "The documentation for the graph, expressed as a URL and optional description.",
+					"properties": {
+						"description": {
+							"type": "string"
+						},
+						"url": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"url"
+					],
+					"type": "object"
+				},
+				"icon": {
+					"description": "The icon that identifies the graph. Can be a URL or a Material Design id.",
+					"type": "string"
+				},
+				"tags": {
+					"description": "Tags associated with the graph. At this moment, free-form strings.",
+					"items": {
+						"$ref": "#/definitions/GraphTag"
+					},
+					"type": "array"
+				},
+				"visual": {
+					"additionalProperties": false,
+					"description": "The metadata associated with the visual representation of the graph.",
+					"properties": {
+						"window": {
+							"additionalProperties": false,
+							"description": "Last known position of the graph in the editor.",
+							"properties": {
+								"height": {
+									"type": "number"
+								},
+								"width": {
+									"type": "number"
+								},
+								"x": {
+									"type": "number"
+								},
+								"y": {
+									"type": "number"
+								}
+							},
+							"required": [
+								"height",
+								"width",
+								"x",
+								"y"
+							],
+							"type": "object"
+						}
+					},
+					"type": "object"
+				}
+			},
+			"type": "object"
+		},
+		"GraphTag": {
+			"description": "A tag that can be associated with a graph.\n- `published`: The graph is published (as opposed to a draft). It may be    used in production and shared with others.\n- `tool`: The graph is intended to be a tool.\n- `experimental`: The graph is experimental and may not be stable.",
+			"enum": [
+				"experimental",
+				"published",
+				"tool"
+			],
+			"type": "string"
+		},
+		"InputIdentifier": {
+			"description": "Unique identifier of a node's input.",
+			"type": "string"
+		},
+		"InputValues": {
+			"$ref": "#/definitions/Record%3CInputIdentifier%2CNodeValue%3E",
+			"description": "Values that are supplied as inputs to the `NodeHandler`."
+		},
+		"KitDescriptor": {
+			"additionalProperties": false,
+			"properties": {
+				"description": {
+					"description": "The description of the kit.",
+					"type": "string"
+				},
+				"tags": {
+					"description": "Tags, associated with the kit.",
+					"items": {
+						"$ref": "#/definitions/KitTag"
+					},
+					"type": "array"
+				},
+				"title": {
+					"description": "The title of the kit.",
+					"type": "string"
+				},
+				"url": {
+					"description": "The URL pointing to the location of the kit.",
+					"type": "string"
+				},
+				"version": {
+					"description": "Version of the kit. [semver](https://semver.org/) format is encouraged.",
+					"pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+					"type": "string"
+				}
+			},
+			"required": [
+				"url"
+			],
+			"type": "object"
+		},
+		"KitTag": {
+			"description": "Represents various tags that can be associated with a kit.\n- `deprecated`: The kit is deprecated and should not be used.\n- `experimental`: The kit is experimental and may not be stable.",
+			"enum": [
+				"deprecated",
+				"experimental"
+			],
+			"type": "string"
+		},
 		"ManifestReference": {
 			"anyOf": [
 				{
@@ -99,6 +427,195 @@
 				}
 			],
 			"description": "Union of  {@link  ResourceReference }  and  {@link  BreadboardManifest }"
+		},
+		"NodeConfiguration": {
+			"$ref": "#/definitions/Record%3Cstring%2CNodeValue%3E",
+			"description": "Values that are supplied as part of the graph. These values are merged with the `InputValues` and supplied as inputs to the `NodeHandler`."
+		},
+		"NodeDescriptor": {
+			"additionalProperties": false,
+			"description": "Represents a node in a graph.",
+			"properties": {
+				"configuration": {
+					"$ref": "#/definitions/NodeConfiguration",
+					"description": "Configuration of the node."
+				},
+				"id": {
+					"$ref": "#/definitions/NodeIdentifier",
+					"description": "Unique id of the node in graph."
+				},
+				"metadata": {
+					"$ref": "#/definitions/NodeMetadata",
+					"description": "The metadata of the node. Use this provide additional information about the node."
+				},
+				"type": {
+					"$ref": "#/definitions/NodeTypeIdentifier",
+					"description": "Type of the node. Used to look up the handler for the node."
+				}
+			},
+			"required": [
+				"id",
+				"type"
+			],
+			"type": "object"
+		},
+		"NodeIdentifier": {
+			"description": "Unique identifier of a node in a graph.",
+			"type": "string"
+		},
+		"NodeMetadata": {
+			"additionalProperties": false,
+			"description": "Represents metadata of a node. This is an optional part of the `NodeDescriptor` that can be used to provide additional information about the node.",
+			"properties": {
+				"description": {
+					"description": "A more detailed description of the node.",
+					"type": "string"
+				},
+				"logLevel": {
+					"description": "Logging level.",
+					"enum": [
+						"debug",
+						"info"
+					],
+					"type": "string"
+				},
+				"tags": {
+					"description": "Tags associated with the node. Can be either a string or a structured tag, like a `StartTag`.",
+					"items": {
+						"$ref": "#/definitions/NodeTag"
+					},
+					"type": "array"
+				},
+				"title": {
+					"description": "The title of the node.",
+					"type": "string"
+				},
+				"visual": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "number"
+						},
+						{
+							"type": "boolean"
+						},
+						{
+							"type": "null"
+						},
+						{
+							"items": {
+								"$ref": "#/definitions/NodeValue"
+							},
+							"type": "array"
+						},
+						{
+							"$ref": "#/definitions/Capability"
+						},
+						{
+							"additionalProperties": {
+								"$ref": "#/definitions/NodeValue"
+							},
+							"type": "object"
+						}
+					],
+					"description": "Metadata that conveys visual information about the node. Can be used by visual editors to store information about the node's appearance, current position, etc."
+				}
+			},
+			"type": "object"
+		},
+		"NodeTag": {
+			"anyOf": [
+				{
+					"const": "start",
+					"type": "string"
+				},
+				{
+					"$ref": "#/definitions/StartTag"
+				}
+			],
+			"description": "Represents a tag that can be associated with a node."
+		},
+		"NodeTypeIdentifier": {
+			"description": "Unique identifier of a node's type.",
+			"type": "string"
+		},
+		"NodeValue": {
+			"anyOf": [
+				{
+					"type": "string"
+				},
+				{
+					"type": "number"
+				},
+				{
+					"type": "boolean"
+				},
+				{
+					"type": "null"
+				},
+				{
+					"not": {}
+				},
+				{
+					"items": {
+						"$ref": "#/definitions/NodeValue"
+					},
+					"type": "array"
+				},
+				{
+					"$ref": "#/definitions/Capability"
+				},
+				{
+					"additionalProperties": {
+						"$ref": "#/definitions/NodeValue"
+					},
+					"type": "object"
+				}
+			],
+			"description": "A type representing a valid JSON value."
+		},
+		"OutputIdentifier": {
+			"description": "Unique identifier of a node's output.",
+			"type": "string"
+		},
+		"OutputValues": {
+			"$ref": "#/definitions/Record%3COutputIdentifier%2CNodeValue%3E",
+			"description": "Values that the `NodeHandler` outputs."
+		},
+		"Record<GraphIdentifier,GraphDescriptor>": {
+			"additionalProperties": {
+				"$ref": "#/definitions/GraphDescriptor"
+			},
+			"propertyNames": {
+				"description": "Unique identifier of a graph."
+			},
+			"type": "object"
+		},
+		"Record<InputIdentifier,NodeValue>": {
+			"additionalProperties": {
+				"$ref": "#/definitions/NodeValue"
+			},
+			"propertyNames": {
+				"description": "Unique identifier of a node's input."
+			},
+			"type": "object"
+		},
+		"Record<OutputIdentifier,NodeValue>": {
+			"additionalProperties": {
+				"$ref": "#/definitions/NodeValue"
+			},
+			"propertyNames": {
+				"description": "Unique identifier of a node's output."
+			},
+			"type": "object"
+		},
+		"Record<string,NodeValue>": {
+			"additionalProperties": {
+				"$ref": "#/definitions/NodeValue"
+			},
+			"type": "object"
 		},
 		"Reference": {
 			"anyOf": [
@@ -142,6 +659,35 @@
 				"reference"
 			],
 			"type": "object"
+		},
+		"StartLabel": {
+			"description": "Valid start labels.",
+			"enum": [
+				"default",
+				"describe"
+			],
+			"type": "string"
+		},
+		"StartTag": {
+			"additionalProperties": false,
+			"description": "Represents a start tag, which is a special tag that can be associated with a node. It is used to indicate that the node is a starting point for traversal. The `label` field allows the user to specify additional way to specify the kind of traversal they are looking for.",
+			"properties": {
+				"label": {
+					"$ref": "#/definitions/StartLabel"
+				},
+				"type": {
+					"const": "start",
+					"type": "string"
+				}
+			},
+			"required": [
+				"type"
+			],
+			"type": "object"
+		},
+		"SubGraphs": {
+			"$ref": "#/definitions/Record%3CGraphIdentifier%2CGraphDescriptor%3E",
+			"description": "Represents a collection of sub-graphs. The key is the identifier of the sub-graph. The value is the descriptor of the sub-graph."
 		},
 		"Tags": {
 			"description": "The tags for this board",
