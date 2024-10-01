@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.12
+
+### Patch Changes
+
+- @google-labs/breadboard@0.27.3
+- @breadboard-ai/build@0.10.3
+
 ## 0.3.11
 
 ### Patch Changes

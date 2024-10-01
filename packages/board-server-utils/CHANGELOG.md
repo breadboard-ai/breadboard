@@ -1,5 +1,13 @@
 # @breadboard-ai/board-server-utils
 
+## 0.1.3
+
+### Patch Changes
+
+- @google-labs/breadboard@0.27.3
+- @breadboard-ai/build@0.10.3
+- @google-labs/agent-kit@0.12.3
+
 ## 0.1.2
 
 ### Patch Changes

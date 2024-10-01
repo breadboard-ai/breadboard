@@ -1,5 +1,13 @@
 # @breadboard-ai/google-drive-kit
 
+## 0.2.6
+
+### Patch Changes
+
+- @breadboard-ai/build@0.10.3
+- @google-labs/core-kit@0.15.2
+- @google-labs/template-kit@0.3.12
+
 ## 0.2.5
 
 ### Patch Changes
