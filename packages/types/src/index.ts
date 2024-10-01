@@ -1,7 +1,7 @@
 /**
  * @license
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
-console.log("code goes here");
+export type * from "./graph-descriptor.js";
