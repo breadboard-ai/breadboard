@@ -174,7 +174,7 @@
   ],
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.22.5",
-    "@rollup/rollup-linux-x64-gnu": "^4.21.2"
+    "@rollup/rollup-linux-x64-gnu": "^4.23.0"
   },
   "dependencies": {
     "json-schema": "^0.4.0",
