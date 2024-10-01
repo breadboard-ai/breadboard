@@ -108,7 +108,7 @@ If you just want to send text to the "Input" component with this port type, it w
 
 ## Response
 
-The response body is a JSON object with the port vlues of the "Output" component.
+The response body is a JSON object with the port values of the "Output" component.
 
 ```json
 {
@@ -187,7 +187,7 @@ To facilitate this multi-turn interaction, the API endpoint has a concept of a "
 
 ![Sequence Diagram of the Run API endpoint](/breadboard/static/images/endpoint-docs/run-sequence-diagram.png)
 
-When sending a request to the endpoint -- unless this is a very first request -- you typically supply the "next" token alogn with the request. In return, the board will send you back a new "next" token as part of its response.
+When sending a request to the endpoint -- unless this is a very first request -- you typically supply the "next" token along with the request. In return, the board will send you back a new "next" token as part of its response.
 
 When (if) the board finished running, it will return without handing you back a "next" token, indicating that it is done running.
 
