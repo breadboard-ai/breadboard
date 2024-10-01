@@ -27,9 +27,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -297,
-          "y": -87,
-          "collapsed": false
+          "x": -455,
+          "y": 5,
+          "collapsed": "expanded"
         }
       }
     },
@@ -52,9 +52,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 349,
-          "y": -102,
-          "collapsed": false
+          "x": 422,
+          "y": -16,
+          "collapsed": "expanded"
         }
       }
     },
@@ -63,9 +63,9 @@
       "type": "curry",
       "metadata": {
         "visual": {
-          "x": -119,
-          "y": -104,
-          "collapsed": false
+          "x": -168,
+          "y": -93,
+          "collapsed": "expanded"
         },
         "title": "Curry Location",
         "logLevel": "debug"
@@ -84,7 +84,7 @@
         "visual": {
           "x": 101,
           "y": -103,
-          "collapsed": false
+          "collapsed": "expanded"
         },
         "title": "Greet Each Name",
         "logLevel": "debug"
@@ -95,9 +95,9 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": -134,
-          "y": 46,
-          "collapsed": false
+          "x": -225,
+          "y": 219,
+          "collapsed": "expanded"
         },
         "title": "Split Names",
         "logLevel": "debug"
@@ -111,9 +111,9 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": 144,
-          "y": 39,
-          "collapsed": false
+          "x": 167,
+          "y": 224,
+          "collapsed": "expanded"
         },
         "title": "Join Greetings",
         "logLevel": "debug"
@@ -172,7 +172,7 @@
           "visual": {
             "x": -173,
             "y": -164,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -183,7 +183,7 @@
           "visual": {
             "x": 85,
             "y": -205,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -194,7 +194,7 @@
           "visual": {
             "x": -153,
             "y": 139,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -203,9 +203,9 @@
         "text": "... and some more JS to join the resulting greetings back into a string.",
         "metadata": {
           "visual": {
-            "x": 134,
-            "y": 130,
-            "collapsed": false
+            "x": 101,
+            "y": 89,
+            "collapsed": "expanded"
           }
         }
       }

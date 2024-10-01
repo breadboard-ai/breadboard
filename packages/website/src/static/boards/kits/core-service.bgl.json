@@ -20,9 +20,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -136,
-          "y": -95,
-          "collapsed": false
+          "x": -310,
+          "y": -67,
+          "collapsed": "expanded"
         }
       }
     },
@@ -46,7 +46,7 @@
         "visual": {
           "x": 286,
           "y": -96,
-          "collapsed": false
+          "collapsed": "expanded"
         }
       }
     },
@@ -55,9 +55,9 @@
       "type": "service",
       "metadata": {
         "visual": {
-          "x": 61,
-          "y": -93,
-          "collapsed": false
+          "x": -76,
+          "y": -66,
+          "collapsed": "expanded"
         },
         "title": "News",
         "logLevel": "debug"
@@ -92,7 +92,7 @@
           "visual": {
             "x": 15,
             "y": -168,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       }

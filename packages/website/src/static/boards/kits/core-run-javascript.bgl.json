@@ -22,9 +22,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -86,
-          "y": -79,
-          "collapsed": false
+          "x": -268,
+          "y": 39,
+          "collapsed": "expanded"
         }
       }
     },
@@ -49,9 +49,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 270,
-          "y": -100,
-          "collapsed": false
+          "x": 367,
+          "y": -93,
+          "collapsed": "expanded"
         }
       }
     },
@@ -60,9 +60,9 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": 52,
-          "y": -107,
-          "collapsed": false
+          "x": 3,
+          "y": -90,
+          "collapsed": "expanded"
         },
         "title": "Split Topics",
         "logLevel": "debug"
@@ -98,7 +98,7 @@
           "visual": {
             "x": 34,
             "y": -168,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       }

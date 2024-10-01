@@ -28,7 +28,7 @@
         "visual": {
           "x": 113,
           "y": 36,
-          "collapsed": false
+          "collapsed": "expanded"
         }
       }
     }
@@ -44,7 +44,7 @@
           "visual": {
             "x": 52,
             "y": -67,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -55,7 +55,7 @@
           "visual": {
             "x": 61,
             "y": 148,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       }

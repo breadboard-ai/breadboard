@@ -8,9 +8,9 @@
         "text": "*Example type*:\n\n`{`\n`  \"type\": \"object\",`\n`  \"properties\": {`\n`    \"foo\": {`\n`      \"type\": \"string\"`\n`    },`\n`    \"bar\": {`\n`      \"type\": \"number\"`\n`    }`\n`  }`\n`}`",
         "metadata": {
           "visual": {
-            "x": 62,
-            "y": -92,
-            "collapsed": false
+            "x": 25,
+            "y": -49,
+            "collapsed": "expanded"
           }
         }
       },
@@ -19,9 +19,9 @@
         "text": "*Example response*:\n\n`{`\n`  \"foo\": \"hello\",`\n`  \"bar\": 42`\n`}`",
         "metadata": {
           "visual": {
-            "x": -240,
-            "y": -157,
-            "collapsed": false
+            "x": -261,
+            "y": -183,
+            "collapsed": "expanded"
           }
         }
       },
@@ -32,7 +32,7 @@
           "visual": {
             "x": 140,
             "y": -273,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       }
@@ -80,7 +80,7 @@
         "visual": {
           "x": 395,
           "y": -35,
-          "collapsed": false
+          "collapsed": "expanded"
         },
         "title": "Output",
         "logLevel": "debug"
@@ -91,9 +91,9 @@
       "type": "fetch",
       "metadata": {
         "visual": {
-          "x": -182,
-          "y": -314,
-          "collapsed": false
+          "x": -286,
+          "y": -505,
+          "collapsed": "expanded"
         },
         "title": "Fetch Some URL",
         "logLevel": "debug"
@@ -112,7 +112,7 @@
         "visual": {
           "x": 168,
           "y": -176,
-          "collapsed": false
+          "collapsed": "expanded"
         },
         "title": "Cast Fetch Result",
         "logLevel": "debug"

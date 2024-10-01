@@ -27,9 +27,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -99,
-          "y": -51,
-          "collapsed": false
+          "x": -178,
+          "y": -34,
+          "collapsed": "expanded"
         }
       }
     },
@@ -60,7 +60,7 @@
         "visual": {
           "x": 299,
           "y": -52,
-          "collapsed": false
+          "collapsed": "expanded"
         }
       }
     },
@@ -71,7 +71,7 @@
         "visual": {
           "x": 53,
           "y": -51,
-          "collapsed": false
+          "collapsed": "expanded"
         },
         "title": "Pass it through",
         "logLevel": "debug"
@@ -103,7 +103,7 @@
           "visual": {
             "x": 47,
             "y": -110,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       }

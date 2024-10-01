@@ -122,7 +122,7 @@ The response body is a JSON object with the port values of the "Output" componen
 
 For instance, let's suppose we have a board that has a single "Input" component with "Question" and "Thought" ports and a single "Output" component with the "Prompt" port.
 
-![promptTemplate component input ports](/breadboard/static/images/template-kit/prompt-template-inputs.png)
+{{ "/breadboard/static/boards/kits/template-prompt-template.bgl.json" | board }}
 
 This board is a good candidate for using with the Invoke API endpoint: it's linear (has no cycles), and it only has one output.
 

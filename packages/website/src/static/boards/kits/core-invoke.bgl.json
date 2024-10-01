@@ -20,9 +20,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -117,
-          "y": -122,
-          "collapsed": false
+          "x": -296,
+          "y": -118,
+          "collapsed": "expanded"
         }
       }
     },
@@ -46,7 +46,7 @@
         "visual": {
           "x": 249,
           "y": -141,
-          "collapsed": false
+          "collapsed": "expanded"
         }
       }
     },
@@ -55,9 +55,9 @@
       "type": "invoke",
       "metadata": {
         "visual": {
-          "x": 42,
-          "y": -144,
-          "collapsed": false
+          "x": -101,
+          "y": -127,
+          "collapsed": "expanded"
         },
         "title": "Greetings",
         "logLevel": "debug"
@@ -96,7 +96,7 @@
           "visual": {
             "x": 20,
             "y": -205,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       }

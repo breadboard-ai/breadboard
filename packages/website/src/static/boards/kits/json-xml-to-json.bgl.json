@@ -23,9 +23,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -71,
-          "y": -10,
-          "collapsed": false
+          "x": -188,
+          "y": 19,
+          "collapsed": "expanded"
         }
       }
     },
@@ -47,9 +47,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 189,
-          "y": -15,
-          "collapsed": false
+          "x": 278,
+          "y": 25,
+          "collapsed": "expanded"
         }
       }
     },
@@ -60,7 +60,7 @@
         "visual": {
           "x": -2,
           "y": -137,
-          "collapsed": false
+          "collapsed": "expanded"
         },
         "title": "Convert XML to JSON",
         "logLevel": "debug"
@@ -90,7 +90,7 @@
           "visual": {
             "x": -188,
             "y": -63,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -101,7 +101,7 @@
           "visual": {
             "x": 45,
             "y": -260,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -112,7 +112,7 @@
           "visual": {
             "x": 280,
             "y": -69,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       }

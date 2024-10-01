@@ -7,9 +7,9 @@
       "type": "input",
       "metadata": {
         "visual": {
-          "x": -189,
-          "y": 25,
-          "collapsed": false
+          "x": -299,
+          "y": 49,
+          "collapsed": "expanded"
         },
         "title": "Input",
         "logLevel": "debug"
@@ -36,9 +36,9 @@
       "type": "output",
       "metadata": {
         "visual": {
-          "x": 314,
-          "y": 7,
-          "collapsed": false
+          "x": 342,
+          "y": 32,
+          "collapsed": "expanded"
         },
         "title": "Output",
         "logLevel": "debug"
@@ -64,7 +64,7 @@
         "visual": {
           "x": 16,
           "y": -22,
-          "collapsed": false
+          "collapsed": "expanded"
         },
         "title": "Snippet Validator",
         "logLevel": "debug"
@@ -90,7 +90,7 @@
         "visual": {
           "x": 299,
           "y": -152,
-          "collapsed": false
+          "collapsed": "expanded"
         },
         "title": "Error",
         "logLevel": "debug"
@@ -141,7 +141,7 @@
           "visual": {
             "x": -31,
             "y": -181,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -152,7 +152,7 @@
           "visual": {
             "x": -299,
             "y": -97,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -161,9 +161,9 @@
         "text": "Output returns \nthe validated JSON",
         "metadata": {
           "visual": {
-            "x": 347,
-            "y": -55,
-            "collapsed": false
+            "x": 406,
+            "y": 146,
+            "collapsed": "expanded"
           }
         }
       },
@@ -172,9 +172,9 @@
         "text": "If JSON is invalid,\nreturns the error message",
         "metadata": {
           "visual": {
-            "x": 357,
-            "y": -212,
-            "collapsed": false
+            "x": 367,
+            "y": -242,
+            "collapsed": "expanded"
           }
         }
       },
@@ -183,9 +183,9 @@
         "text": "💡 the **validateJson** will also know to only look inside the markdown JSON delimiters that commonly appear in LLM JSON output -- and ignore the rest of the string.",
         "metadata": {
           "visual": {
-            "x": 54,
-            "y": 73,
-            "collapsed": false
+            "x": 43,
+            "y": 121,
+            "collapsed": "expanded"
           }
         }
       }
