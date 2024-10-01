@@ -1,5 +1,14 @@
 # @breadboard-ai/shared-ui
 
+## 1.18.2
+
+### Patch Changes
+
+- Updated dependencies [d20e867]
+  - @breadboard-ai/types@0.1.1
+  - @google-labs/breadboard@0.27.3
+  - @breadboard-ai/build@0.10.3
+
 ## 1.18.1
 
 ### Patch Changes

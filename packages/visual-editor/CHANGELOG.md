@@ -1,5 +1,26 @@
 # @google-labs/breadboard-web
 
+## 1.20.2
+
+### Patch Changes
+
+- Updated dependencies [d20e867]
+  - @breadboard-ai/types@0.1.1
+  - @google-labs/breadboard@0.27.3
+  - @breadboard-ai/build@0.10.3
+  - @breadboard-ai/shared-ui@1.18.2
+  - @google-labs/agent-kit@0.12.3
+  - @breadboard-ai/board-server-management@1.17.2
+  - @breadboard-ai/board-server-utils@0.1.3
+  - @google-labs/core-kit@0.15.2
+  - @breadboard-ai/example-boards@0.3.4
+  - @google-labs/gemini-kit@0.8.2
+  - @breadboard-ai/google-drive-kit@0.2.6
+  - @breadboard-ai/idb-board-server@1.17.2
+  - @google-labs/json-kit@0.3.10
+  - @breadboard-ai/python-wasm@0.1.8
+  - @google-labs/template-kit@0.3.12
+
 ## 1.20.1
 
 ### Patch Changes

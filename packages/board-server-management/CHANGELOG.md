@@ -1,5 +1,14 @@
 # @breadboard-ai/board-server-management
 
+## 1.17.2
+
+### Patch Changes
+
+- @google-labs/breadboard@0.27.3
+- @breadboard-ai/build@0.10.3
+- @breadboard-ai/idb-board-server@1.17.2
+- @breadboard-ai/remote-board-server@1.17.2
+
 ## 1.17.1
 
 ### Patch Changes

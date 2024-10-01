@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.10.3
+
+### Patch Changes
+
+- Updated dependencies [d20e867]
+  - @breadboard-ai/types@0.1.1
+  - @google-labs/breadboard@0.27.3
+
 ## 0.10.2
 
 ### Patch Changes

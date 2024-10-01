@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.27.3
+
+### Patch Changes
+
+- Updated dependencies [d20e867]
+  - @breadboard-ai/types@0.1.1
+
 ## 0.27.2
 
 ### Patch Changes

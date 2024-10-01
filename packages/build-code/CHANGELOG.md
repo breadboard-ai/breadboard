@@ -1,5 +1,12 @@
 # @breadboard-ai/build-code
 
+## 0.1.3
+
+### Patch Changes
+
+- @breadboard-ai/build@0.10.3
+- @google-labs/core-kit@0.15.2
+
 ## 0.1.2
 
 ### Patch Changes
