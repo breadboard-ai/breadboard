@@ -7,7 +7,6 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { CommentConfiguration } from "../../types/types.js";
-import { Overlay } from "./overlay.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
   CommentUpdateEvent,
@@ -22,7 +21,6 @@ export class CommentOverlay extends LitElement {
   @property()
   commentValue: CommentConfiguration | null = null;
 
-  #overlayRef: Ref<Overlay> = createRef();
   #formRef: Ref<HTMLFormElement> = createRef();
 
   #pendingSave = false;
@@ -174,7 +172,6 @@ export class CommentOverlay extends LitElement {
 
         evt.stopImmediatePropagation();
       }}
-      ${ref(this.#overlayRef)}
     >
       <div id="content">
         <div id="container">
