@@ -53,7 +53,6 @@ import {
 } from "../../events/events.js";
 import { GraphEdge } from "./graph-edge.js";
 import { GraphRenderer } from "./graph-renderer.js";
-import type { NodeSelector } from "./node-selector.js";
 import { createRandomID, edgeToString } from "./utils.js";
 
 const ZOOM_KEY = "bb-editor-zoom-to-highlighted-node-during-runs";
@@ -216,8 +215,6 @@ export class Editor extends LitElement {
   #top = 0;
   #left = 0;
   #addButtonRef: Ref<HTMLInputElement> = createRef();
-  #nodeSelectorRef: Ref<NodeSelector> = createRef();
-  #activityMarkerRef: Ref<HTMLElement> = createRef();
 
   #writingToClipboard = false;
   #readingFromClipboard = false;
