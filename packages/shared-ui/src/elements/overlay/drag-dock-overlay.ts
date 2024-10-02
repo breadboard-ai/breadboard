@@ -352,7 +352,6 @@ export class DragDockOverlay extends LitElement {
   }
 
   protected firstUpdated(changedProperties: PropertyValues): void {
-    console.log("first updated");
     if (!this.#left || !this.#top) {
       this.#contentBounds =
         this.#contentRef.value?.getBoundingClientRect() ?? null;
@@ -381,7 +380,6 @@ export class DragDockOverlay extends LitElement {
           globalThis.localStorage.getItem(this.maximizeKey) === "true";
 
         if (maximized) {
-          console.log("first set max");
           this.#setMaximized();
         } else {
           this.#setDocked();
@@ -452,7 +450,6 @@ export class DragDockOverlay extends LitElement {
   }
 
   #undockContent() {
-    console.log("Undocking...");
     this.dock.top = this.dock.bottom = this.dock.left = this.dock.right = false;
     this.#dock = structuredClone(this.dock);
 
@@ -464,7 +461,6 @@ export class DragDockOverlay extends LitElement {
   }
 
   #dockIfIntersectingWithZones(bounds: DOMRect) {
-    console.log("dockIfIntersectingWithZones");
     if (this.dockable) {
       if (this.#intersects(this.dockZones.left, bounds)) {
         this.#dockLeft(true);
@@ -511,8 +507,6 @@ export class DragDockOverlay extends LitElement {
   }
 
   #updateStyles() {
-    console.log(this.#dock);
-
     const left = this.dockZones.left.left + this.dockZones.left.width * 0.5;
     const right = this.dockZones.right.width * 0.5;
     const top = this.dockZones.top.top + this.dockZones.top.height * 0.5;

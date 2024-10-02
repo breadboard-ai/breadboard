@@ -479,6 +479,15 @@ export class StreamlinedSchemaEditor extends LitElement {
     return this.#formRef.value.checkValidity() && codeEditorValidity;
   }
 
+  #isText(property: Schema) {
+    return (
+      isTextBehavior(property) &&
+      Object.keys(property).every(
+        (key) => key === "format" || key === "title" || key === "type"
+      )
+    );
+  }
+
   #updateSchemaValue() {
     if (!this.#formRef.value) {
       return;
@@ -489,11 +498,7 @@ export class StreamlinedSchemaEditor extends LitElement {
       const id = this.#createId(name);
 
       const isLLMContentArray = isLLMContentArrayBehavior(property);
-      const isText =
-        isTextBehavior(property) &&
-        Object.keys(property).every(
-          (key) => key === "format" || key === "title" || key === "type"
-        );
+      const isText = this.#isText(property);
       const isCustom = !isLLMContentArray && !isText;
 
       const title = this.#formRef.value.querySelector<HTMLInputElement>(
@@ -568,7 +573,7 @@ export class StreamlinedSchemaEditor extends LitElement {
             ? html`${map(properties, ([name, property], idx) => {
                   const id = this.#createId(name);
                   const isLLMContentArray = isLLMContentArrayBehavior(property);
-                  const isText = isTextBehavior(property);
+                  const isText = this.#isText(property);
                   const isCustom = !isLLMContentArray && !isText;
 
                   let defaultValueInput: HTMLTemplateResult | symbol =
