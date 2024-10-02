@@ -489,7 +489,11 @@ export class StreamlinedSchemaEditor extends LitElement {
       const id = this.#createId(name);
 
       const isLLMContentArray = isLLMContentArrayBehavior(property);
-      const isText = isTextBehavior(property);
+      const isText =
+        isTextBehavior(property) &&
+        Object.keys(property).every(
+          (key) => key === "format" || key === "title" || key === "type"
+        );
       const isCustom = !isLLMContentArray && !isText;
 
       const title = this.#formRef.value.querySelector<HTMLInputElement>(
