@@ -13,6 +13,8 @@ import {
   CommentUpdateEvent,
   OverlayDismissedEvent,
 } from "../../events/events.js";
+
+const DOCK_KEY = "bb-comment-overlay-docked";
 const MAXIMIZE_KEY = "bb-comment-overlay-maximized";
 
 @customElement("bb-comment-overlay")
@@ -155,9 +157,12 @@ export class CommentOverlay extends LitElement {
 
     return html`<bb-drag-dock-overlay
       .dockable=${true}
+      .x=${this.commentValue.x + 20}
+      .y=${this.commentValue.y - 100}
       .overlayIcon=${"comment"}
       .overlayTitle=${"Comment"}
       .maximizeKey=${MAXIMIZE_KEY}
+      .dockKey=${DOCK_KEY}
       @bboverlaydismissed=${(evt: Event) => {
         if (!this.#pendingSave) {
           return;
