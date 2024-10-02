@@ -299,6 +299,14 @@ export class ComponentSelectorOverlay extends LitElement {
     return filteredKitList;
   }
 
+  selectSearchInput() {
+    if (!this.#searchInputRef.value) {
+      return;
+    }
+
+    this.#searchInputRef.value.select();
+  }
+
   render() {
     return this.#kitInfoTask.render({
       pending: () => html`<div>Loading...</div>`,
