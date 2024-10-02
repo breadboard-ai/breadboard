@@ -13,6 +13,7 @@ import {
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { map } from "lit/directives/map.js";
+import { guard } from "lit/directives/guard.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
@@ -84,7 +85,7 @@ export class Main extends LitElement {
   @state()
   showProviderAddOverlay = false;
 
-  @state()
+  @property({ reflect: true })
   showBoardActivityOverlay = false;
   #boardActivityLocation: BreadboardUI.Types.BoardActivityLocation | null =
     null;
@@ -165,6 +166,8 @@ export class Main extends LitElement {
 
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
+  #boardActivityRef: Ref<BreadboardUI.Elements.BoardActivityOverlay> =
+    createRef();
   #boardId = 0;
   #boardPendingSave = false;
   #tabSaveId = new Map<
@@ -1571,12 +1574,14 @@ export class Main extends LitElement {
           ></bb-provider-overlay>`;
         }
 
-        let boardActivityOverlay: HTMLTemplateResult | symbol = nothing;
-        if (this.showBoardActivityOverlay) {
-          boardActivityOverlay = html`<bb-board-activity-overlay
+        const run = runs[0] ?? null;
+        const events = runs[0]?.events ?? [];
+        const boardActivityOverlay = html`${guard([], () => {
+          return html`<bb-board-activity-overlay
+            ${ref(this.#boardActivityRef)}
             .location=${this.#boardActivityLocation}
-            .run=${runs[0] ?? null}
-            .events=${runs[0]?.events ?? []}
+            .run=${run}
+            .events=${events}
             .settings=${this.#settings}
             .providers=${this.#providers}
             .providerOps=${this.providerOps}
@@ -1630,6 +1635,15 @@ export class Main extends LitElement {
               }
             }}
           ></bb-board-activity-overlay>`;
+        })}`;
+
+        // We placed a guard around the board activity overlay to prevent it
+        // from re-rendering on every change (which triggers the entry
+        // animation). This means we need to "manually" send it the run and
+        // events on each pass.
+        if (this.#boardActivityRef.value) {
+          this.#boardActivityRef.value.run = run;
+          this.#boardActivityRef.value.events = events;
         }
 
         let historyOverlay: HTMLTemplateResult | symbol = nothing;
@@ -2123,6 +2137,7 @@ export class Main extends LitElement {
               @bbtoggleboardactivity=${(
                 evt: BreadboardUI.Events.ToggleBoardActivityEvent
               ) => {
+                console.log(evt);
                 if (evt.forceOn) {
                   this.showBoardActivityOverlay = true;
                 } else {
@@ -2390,21 +2405,6 @@ export class Main extends LitElement {
       });
 
     const tooltip = html`<bb-tooltip ${ref(this.#tooltipRef)}></bb-tooltip>`;
-
-    // const dOverlay = html`<bb-drag-dock-overlay
-    //   .dockable=${true}
-    //   .overlayTitle=${"Draggable"}
-    // >
-    //   <div style="padding: 8px">
-    //     This is a draggable, dockable overlay
-    //   </div></bb-drag-dock-overlay
-    // >`;
-
-    return [
-      until(uiController),
-      //dOverlay,
-      tooltip,
-      toasts,
-    ];
+    return [until(uiController), tooltip, toasts];
   }
 }
