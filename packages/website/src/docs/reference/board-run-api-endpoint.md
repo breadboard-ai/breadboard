@@ -77,7 +77,7 @@ The port also has a type that defines the format of the data that the port is ex
 ```json
 {
   "$key": "BOARD_SERVER_API_KEY",
-  "property-2": "Mountain View, CA"
+  "property-1": "Mountain View, CA"
 }
 ```
 
