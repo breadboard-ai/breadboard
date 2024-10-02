@@ -33,10 +33,11 @@ import {
 } from "../../events/events";
 import { createRandomID } from "./utils";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { NodeSelector } from "./node-selector";
 import { InspectableGraph, SubGraphs } from "@google-labs/breadboard";
 import { classMap } from "lit/directives/class-map.js";
 import { MAIN_BOARD_ID } from "../../constants/constants";
+import { guard } from "lit/directives/guard.js";
+import { type ComponentSelectorOverlay } from "../elements";
 
 const COLLAPSED_MENU_BUFFER = 60;
 
@@ -168,11 +169,14 @@ export class RibbonMenu extends LitElement {
       margin-right: 0;
     }
 
-    bb-node-selector {
+    bb-component-selector-overlay {
       display: none;
       position: absolute;
-      top: calc(100% + 10px);
-      height: calc(100svh - 122px);
+    }
+
+    :host([showcomponentselector="true"]) bb-component-selector-overlay {
+      display: block;
+      pointer-events: auto;
     }
 
     #save {
@@ -207,11 +211,6 @@ export class RibbonMenu extends LitElement {
       margin: 0 var(--bb-grid-size-4) 0 0;
       height: var(--bb-grid-size-5);
       border-left: 1px solid var(--bb-neutral-300);
-    }
-
-    :host([showcomponentselector="true"]) bb-node-selector {
-      display: grid;
-      pointer-events: auto;
     }
 
     #component-toggle {
@@ -541,7 +540,7 @@ export class RibbonMenu extends LitElement {
   }> = [];
   #boardActivityRef: Ref<HTMLButtonElement> = createRef();
   #overflowMenuToggleRef: Ref<HTMLButtonElement> = createRef();
-  #nodeSelectorRef: Ref<NodeSelector> = createRef();
+  #componentSelectorRef: Ref<ComponentSelectorOverlay> = createRef();
   #segmentThresholds = new WeakMap<Element, { left: number; right: number }>();
   #resizeObserver = new ResizeObserver((entries) => {
     if (entries.length === 0) {
@@ -704,11 +703,11 @@ export class RibbonMenu extends LitElement {
       return;
     }
 
-    if (!this.#nodeSelectorRef.value) {
+    if (!this.#componentSelectorRef.value) {
       return;
     }
 
-    this.#nodeSelectorRef.value.selectSearchInput();
+    this.#componentSelectorRef.value.selectSearchInput();
   }
 
   #dispatchActivityMarkerEvent(forceOn = false) {
@@ -727,25 +726,29 @@ export class RibbonMenu extends LitElement {
   }
 
   render() {
+    const componentSelector: HTMLTemplateResult = html`${guard(
+      [],
+      () =>
+        html`<bb-component-selector-overlay
+          .graph=${this.graph}
+          .showExperimentalComponents=${this.showExperimentalComponents}
+          @bbkitnodechosen=${(evt: KitNodeChosenEvent) => {
+            const id = createRandomID(evt.nodeType);
+            this.dispatchEvent(new NodeCreateEvent(id, evt.nodeType));
+          }}
+          @bboverlaydismissed=${() => {
+            this.showComponentSelector = false;
+          }}
+        ></bb-component-selector-overlay>`
+    )}`;
+
     const components = html`
-      <bb-node-selector
-        ${ref(this.#nodeSelectorRef)}
-        .graph=${this.graph}
-        .showExperimentalComponents=${this.showExperimentalComponents}
-        @bbkitnodechosen=${(evt: KitNodeChosenEvent) => {
-          const id = createRandomID(evt.nodeType);
-          this.dispatchEvent(new NodeCreateEvent(id, evt.nodeType));
-        }}
-        @bbdismissed=${() => {
-          this.showComponentSelector = false;
-        }}
-      ></bb-node-selector>
       <div id="component-toggle-container">
         <button
           id="component-toggle"
           class=${classMap({ active: this.showComponentSelector })}
           @click=${() => {
-            this.showComponentSelector = !this.showComponentSelector;
+            this.showComponentSelector = true;
           }}
         >
           Components
@@ -1274,6 +1277,7 @@ export class RibbonMenu extends LitElement {
     }
 
     const left = [
+      componentSelector,
       components,
       boardManagement,
       editControls,

@@ -142,7 +142,7 @@ export class DragDockOverlay extends LitElement {
       flex: 1 0 auto;
     }
 
-    #wrapper > h1::before {
+    :host([overlayicon="comment"]) #wrapper > h1::before {
       content: "";
       display: block;
       width: 20px;
@@ -352,6 +352,7 @@ export class DragDockOverlay extends LitElement {
   }
 
   protected firstUpdated(changedProperties: PropertyValues): void {
+    console.log("first updated");
     if (!this.#left || !this.#top) {
       this.#contentBounds =
         this.#contentRef.value?.getBoundingClientRect() ?? null;
@@ -380,6 +381,7 @@ export class DragDockOverlay extends LitElement {
           globalThis.localStorage.getItem(this.maximizeKey) === "true";
 
         if (maximized) {
+          console.log("first set max");
           this.#setMaximized();
         } else {
           this.#setDocked();
@@ -423,12 +425,6 @@ export class DragDockOverlay extends LitElement {
     return bounds;
   }
 
-  #isMaximized() {
-    return (
-      this.#dock.left && this.#dock.right && this.#dock.top && this.#dock.bottom
-    );
-  }
-
   #setMaximized() {
     this.#dock.top = true;
     this.#dock.left = true;
@@ -456,10 +452,9 @@ export class DragDockOverlay extends LitElement {
   }
 
   #undockContent() {
-    this.#dock.top = false;
-    this.#dock.right = false;
-    this.#dock.bottom = false;
-    this.#dock.left = false;
+    console.log("Undocking...");
+    this.dock.top = this.dock.bottom = this.dock.left = this.dock.right = false;
+    this.#dock = structuredClone(this.dock);
 
     if (this.dockKey) {
       globalThis.localStorage.removeItem(this.dockKey);
@@ -469,6 +464,7 @@ export class DragDockOverlay extends LitElement {
   }
 
   #dockIfIntersectingWithZones(bounds: DOMRect) {
+    console.log("dockIfIntersectingWithZones");
     if (this.dockable) {
       if (this.#intersects(this.dockZones.left, bounds)) {
         this.#dockLeft(true);
@@ -483,7 +479,9 @@ export class DragDockOverlay extends LitElement {
   }
 
   #dockLeft(skipUpdate = false) {
-    this.#dock.top = this.#dock.bottom = this.#dock.left = true;
+    this.dock.top = this.dock.bottom = this.dock.left = true;
+    this.dock.right = false;
+    this.#dock = structuredClone(this.dock);
 
     if (this.dockKey) {
       globalThis.localStorage.setItem(this.dockKey, "left");
@@ -497,7 +495,9 @@ export class DragDockOverlay extends LitElement {
   }
 
   #dockRight(skipUpdate = false) {
-    this.#dock.top = this.#dock.bottom = this.#dock.right = true;
+    this.dock.top = this.dock.bottom = this.dock.right = true;
+    this.dock.left = false;
+    this.#dock = structuredClone(this.dock);
 
     if (this.dockKey) {
       globalThis.localStorage.setItem(this.dockKey, "right");
@@ -511,6 +511,8 @@ export class DragDockOverlay extends LitElement {
   }
 
   #updateStyles() {
+    console.log(this.#dock);
+
     const left = this.dockZones.left.left + this.dockZones.left.width * 0.5;
     const right = this.dockZones.right.width * 0.5;
     const top = this.dockZones.top.top + this.dockZones.top.height * 0.5;
@@ -612,7 +614,6 @@ export class DragDockOverlay extends LitElement {
 
     this.dockedLeft = this.#dock.left;
     this.dockedRight = this.#dock.right;
-    this.maximized = this.#isMaximized();
   }
 
   #intersects(r1: DOMRect, r2: DOMRect) {
@@ -640,14 +641,6 @@ export class DragDockOverlay extends LitElement {
       this.dockZones.bottom.top +
       this.dockZones.bottom.height * 0.5 -
       this.#contentBounds.height;
-
-    console.log(
-      this.dockZones.right.left,
-      this.dockZones.right.width * 0.5,
-      this.#contentBounds.width
-    );
-
-    console.log(minX, minY, maxX, maxY);
 
     if (this.#left < minX) {
       this.#left = minX;
@@ -683,15 +676,8 @@ export class DragDockOverlay extends LitElement {
         <div id="wrapper">
           ${this.overlayTitle
             ? html`<h1
-                @dblclick=${() => {
-                  if (this.#isMaximized()) {
-                    this.#setDocked();
-                  } else {
-                    this.#setMaximized();
-                  }
-                }}
                 @pointerdown=${(evt: PointerEvent) => {
-                  if (this.#isMaximized()) {
+                  if (this.maximized) {
                     return;
                   }
 
@@ -760,10 +746,18 @@ export class DragDockOverlay extends LitElement {
                 <button
                   id="minmax"
                   class=${classMap({ maximized: this.maximized })}
+                  @pointerdown=${(evt: PointerEvent) => {
+                    evt.stopImmediatePropagation();
+                  }}
+                  @pointerup=${(evt: PointerEvent) => {
+                    evt.stopImmediatePropagation();
+                  }}
                   @click=${() => {
                     if (this.maximized) {
+                      this.maximized = false;
                       this.#setDocked();
                     } else {
+                      this.maximized = true;
                       this.#setMaximized();
                     }
                   }}
