@@ -10,6 +10,8 @@ import { OverlayDismissedEvent } from "../../events/events";
 import { classMap } from "lit/directives/class-map.js";
 
 const DOCK_ZONE_SIZE = 32;
+const DOCK_ZONE_CLEARANCE = 91;
+
 interface DockStatus {
   top: boolean;
   right: boolean;
@@ -29,7 +31,16 @@ export class DragDockOverlay extends LitElement {
   maximizeKey: string | null = null;
 
   @property()
+  dockKey: string | null = null;
+
+  @property()
   dockable = false;
+
+  @property()
+  x: number | null = null;
+
+  @property()
+  y: number | null = null;
 
   @property()
   dock: DockStatus = {
@@ -41,10 +52,25 @@ export class DragDockOverlay extends LitElement {
 
   @property()
   dockZones = {
-    left: new DOMRect(0, 91, DOCK_ZONE_SIZE, 0),
-    right: new DOMRect(0, 91, DOCK_ZONE_SIZE, 0),
-    top: new DOMRect(0, 91, 0, DOCK_ZONE_SIZE),
-    bottom: new DOMRect(0, 0, 0, DOCK_ZONE_SIZE),
+    left: new DOMRect(
+      0,
+      DOCK_ZONE_CLEARANCE,
+      DOCK_ZONE_SIZE,
+      window.innerHeight - DOCK_ZONE_CLEARANCE
+    ),
+    right: new DOMRect(
+      window.innerWidth - DOCK_ZONE_CLEARANCE,
+      DOCK_ZONE_CLEARANCE,
+      DOCK_ZONE_SIZE,
+      window.innerHeight - DOCK_ZONE_CLEARANCE
+    ),
+    top: new DOMRect(0, DOCK_ZONE_CLEARANCE, window.innerWidth, DOCK_ZONE_SIZE),
+    bottom: new DOMRect(
+      0,
+      window.innerHeight - DOCK_ZONE_SIZE,
+      window.innerWidth,
+      DOCK_ZONE_SIZE
+    ),
   };
 
   @property({ reflect: true })
@@ -54,10 +80,10 @@ export class DragDockOverlay extends LitElement {
   maximized = false;
 
   @property({ reflect: true })
-  dropZoneLeft = false;
+  highlightDropZoneLeft = false;
 
   @property({ reflect: true })
-  dropZoneRight = false;
+  highlightDropZoneRight = false;
 
   @property({ reflect: true })
   dockedLeft = false;
@@ -77,8 +103,6 @@ export class DragDockOverlay extends LitElement {
   #dragging = false;
   #dragStart = { x: 0, y: 0 };
   #dragDelta = { x: 0, y: 0 };
-  #preferredWidth = 260;
-  #preferredHeight = 260;
 
   static styles = css`
     * {
@@ -205,10 +229,10 @@ export class DragDockOverlay extends LitElement {
       opacity: 0.4;
     }
 
-    :host([showdockdropzones="true"][dropzoneleft="true"]) .drop-zone.left,
-    :host([showdockdropzones="true"][dropzonetop="true"]) .drop-zone.top,
-    :host([showdockdropzones="true"][dropzoneright="true"]) .drop-zone.right,
-    :host([showdockdropzones="true"][dropzonebottom="true"]) .drop-zone.bottom {
+    :host([showdockdropzones="true"][highlightdropzoneleft="true"])
+      .drop-zone.left,
+    :host([showdockdropzones="true"][highlightdropzoneright="true"])
+      .drop-zone.right {
       opacity: 1;
     }
 
@@ -317,17 +341,6 @@ export class DragDockOverlay extends LitElement {
 
     window.addEventListener("pointerdown", this.#onWindowPointerDownBound);
     window.addEventListener("keydown", this.#onKeyDownBound);
-
-    if (this.maximizeKey) {
-      const maximized =
-        globalThis.localStorage.getItem(this.maximizeKey) === "true";
-
-      if (maximized) {
-        this.#setMaximized();
-      } else {
-        this.#setDocked();
-      }
-    }
   }
 
   disconnectedCallback(): void {
@@ -342,8 +355,15 @@ export class DragDockOverlay extends LitElement {
     if (!this.#left || !this.#top) {
       this.#contentBounds =
         this.#contentRef.value?.getBoundingClientRect() ?? null;
-      this.#left = this.#contentBounds?.x ?? null;
-      this.#top = this.#contentBounds?.y ?? null;
+      if (this.x !== null && this.y !== null) {
+        this.#left = this.x;
+        this.#top = this.y;
+      } else {
+        this.#left = this.#contentBounds?.x ?? null;
+        this.#top = this.#contentBounds?.y ?? null;
+      }
+
+      this.#clampLeftAndTopValues();
     }
 
     if (!changedProperties.has("dock")) {
@@ -355,7 +375,30 @@ export class DragDockOverlay extends LitElement {
     }
 
     requestAnimationFrame(() => {
-      this.#setDocked();
+      if (this.maximizeKey) {
+        const maximized =
+          globalThis.localStorage.getItem(this.maximizeKey) === "true";
+
+        if (maximized) {
+          this.#setMaximized();
+        } else {
+          this.#setDocked();
+        }
+      } else {
+        this.#setDocked();
+      }
+
+      if (this.dockKey) {
+        const dockStatus = globalThis.localStorage.getItem(this.dockKey);
+
+        if (dockStatus) {
+          if (dockStatus === "left") {
+            this.#dockLeft();
+          } else if (dockStatus === "right") {
+            this.#dockRight();
+          }
+        }
+      }
     });
   }
 
@@ -418,18 +461,50 @@ export class DragDockOverlay extends LitElement {
     this.#dock.bottom = false;
     this.#dock.left = false;
 
+    if (this.dockKey) {
+      globalThis.localStorage.removeItem(this.dockKey);
+    }
+
     this.#updateStyles();
   }
 
-  #dockContent(bounds: DOMRect) {
+  #dockIfIntersectingWithZones(bounds: DOMRect) {
     if (this.dockable) {
       if (this.#intersects(this.dockZones.left, bounds)) {
-        this.#dock.top = this.#dock.bottom = this.#dock.left = true;
+        this.#dockLeft(true);
       }
 
       if (this.#intersects(this.dockZones.right, bounds)) {
-        this.#dock.top = this.#dock.bottom = this.#dock.right = true;
+        this.#dockRight(true);
       }
+    }
+
+    this.#updateStyles();
+  }
+
+  #dockLeft(skipUpdate = false) {
+    this.#dock.top = this.#dock.bottom = this.#dock.left = true;
+
+    if (this.dockKey) {
+      globalThis.localStorage.setItem(this.dockKey, "left");
+    }
+
+    if (skipUpdate) {
+      return;
+    }
+
+    this.#updateStyles();
+  }
+
+  #dockRight(skipUpdate = false) {
+    this.#dock.top = this.#dock.bottom = this.#dock.right = true;
+
+    if (this.dockKey) {
+      globalThis.localStorage.setItem(this.dockKey, "right");
+    }
+
+    if (skipUpdate) {
+      return;
     }
 
     this.#updateStyles();
@@ -465,9 +540,9 @@ export class DragDockOverlay extends LitElement {
       this.#dock.bottom ? `${bottom}px` : "auto"
     );
 
-    this.dropZoneLeft =
+    this.highlightDropZoneLeft =
       this.#left !== null && this.#left < this.dockZones.left.right;
-    this.dropZoneRight =
+    this.highlightDropZoneRight =
       this.#left !== null &&
       this.#contentBounds !== null &&
       this.#left + this.#contentBounds.width > this.dockZones.right.left;
@@ -548,6 +623,49 @@ export class DragDockOverlay extends LitElement {
     return (leftInside && topInside) || (rightInside && bottomInside);
   }
 
+  #clampLeftAndTopValues() {
+    if (!this.#contentBounds || !this.#left || !this.#top) {
+      return;
+    }
+
+    const minX = this.dockZones.left.left + this.dockZones.left.width * 0.5;
+    const minY = this.dockZones.top.top + this.dockZones.top.height * 0.5;
+
+    const maxX =
+      this.dockZones.right.left +
+      this.dockZones.right.width * 0.5 -
+      this.#contentBounds.width;
+
+    const maxY =
+      this.dockZones.bottom.top +
+      this.dockZones.bottom.height * 0.5 -
+      this.#contentBounds.height;
+
+    console.log(
+      this.dockZones.right.left,
+      this.dockZones.right.width * 0.5,
+      this.#contentBounds.width
+    );
+
+    console.log(minX, minY, maxX, maxY);
+
+    if (this.#left < minX) {
+      this.#left = minX;
+    }
+
+    if (this.#left > maxX) {
+      this.#left = maxX;
+    }
+
+    if (this.#top < minY) {
+      this.#top = minY;
+    }
+
+    if (this.#top > maxY) {
+      this.#top = maxY;
+    }
+  }
+
   render() {
     return html`
       <div class="drop-zone left"></div>
@@ -615,37 +733,7 @@ export class DragDockOverlay extends LitElement {
                   this.#left = this.#contentBounds.x + this.#dragDelta.x;
                   this.#top = this.#contentBounds.y + this.#dragDelta.y;
 
-                  // Lock to drop zones.
-                  const minX =
-                    this.dockZones.left.left + this.dockZones.left.width * 0.5;
-                  const minY =
-                    this.dockZones.top.top + this.dockZones.top.height * 0.5;
-
-                  const maxX =
-                    this.dockZones.right.left +
-                    this.dockZones.right.width * 0.5 -
-                    this.#contentBounds.width;
-
-                  const maxY =
-                    this.dockZones.bottom.top +
-                    this.dockZones.bottom.height * 0.5 -
-                    this.#contentBounds.height;
-
-                  if (this.#left < minX) {
-                    this.#left = minX;
-                  }
-
-                  if (this.#left > maxX) {
-                    this.#left = maxX;
-                  }
-
-                  if (this.#top < minY) {
-                    this.#top = minY;
-                  }
-
-                  if (this.#top > maxY) {
-                    this.#top = maxY;
-                  }
+                  this.#clampLeftAndTopValues();
 
                   if (this.dockable) {
                     this.showDockDropZones = true;
@@ -665,7 +753,7 @@ export class DragDockOverlay extends LitElement {
                     return;
                   }
 
-                  this.#dockContent(bounds);
+                  this.#dockIfIntersectingWithZones(bounds);
                 }}
               >
                 <span>${this.overlayTitle}</span>
