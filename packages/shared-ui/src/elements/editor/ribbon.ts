@@ -1335,6 +1335,12 @@ export class RibbonMenu extends LitElement {
         title="Debug this board"
         ?disabled=${!this.graph || this.readOnly}
         class=${classMap({ running: this.isRunning })}
+        @pointerdown=${(evt: PointerEvent) => {
+          // We do this to prevent the pointer event firing and dismissing the
+          // board activity overlay. Otherwise the overlay disappears and then
+          // immediately reappears.
+          evt.stopImmediatePropagation();
+        }}
         @click=${() => {
           if (this.isRunning) {
             this.dispatchEvent(new StopEvent());

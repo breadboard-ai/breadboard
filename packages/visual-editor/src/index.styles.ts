@@ -332,4 +332,12 @@ export const styles = css`
     height: 80vh;
     border-radius: 8px;
   }
+
+  bb-board-activity-overlay {
+    display: none;
+  }
+
+  :host([showboardactivityoverlay="true"]) bb-board-activity-overlay {
+    display: block;
+  }
 `;
