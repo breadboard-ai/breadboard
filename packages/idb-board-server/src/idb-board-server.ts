@@ -18,6 +18,9 @@ import {
   Permission,
   User,
   GraphProviderItem,
+  NodeDescriptor,
+  inspect,
+  createLoader,
 } from "@google-labs/breadboard";
 
 import * as idb from "idb";
@@ -32,6 +35,7 @@ import {
   IDBProjectStoreProject as IDBBoardServerProject,
   LocalStoreData,
 } from "./types/idb-types.js";
+import { GraphMetadata } from "../../types/dist/src/graph-descriptor.js";
 
 const loadedKits = loadKits([
   GeminiKit,
@@ -212,6 +216,14 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
     });
   }
 
+  #boardServerKit: Kit = {
+    url: "",
+    description: "Board Server Kit",
+    version: "0.0.1",
+    title: "Board Server Kit",
+    handlers: {},
+  };
+
   constructor(
     public readonly name: string,
     configuration: BoardServerConfiguration,
@@ -222,6 +234,9 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
     this.url = configuration.url;
     this.projects = this.#refreshProjects();
     this.kits = configuration.kits;
+    this.kits.push(this.#boardServerKit);
+    this.#boardServerKit.url = this.url.href;
+
     this.users = configuration.users;
     this.secrets = configuration.secrets;
     this.extensions = configuration.extensions;
@@ -259,7 +274,69 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
     });
 
     db.close();
+    await this.#refreshBoardServerKit(projects);
     return projects;
+  }
+
+  async #refreshBoardServerKit(projects: BoardServerProject[]) {
+    if (!projects.length) {
+      return;
+    }
+
+    // TODO: Replace this with a more cohesive way of generating kits.
+    const nodeMetadata = new Map<string, GraphMetadata>();
+    const nodes: NodeDescriptor[] = [];
+    for (let idx = 0; idx < projects.length; idx++) {
+      const project = projects[idx];
+      if (!project.board?.descriptor.url) {
+        continue;
+      }
+
+      const id = idx.toString();
+      const type = project.board.descriptor.url;
+
+      if (
+        !project.board.descriptor.metadata?.tags ||
+        !project.board.descriptor.metadata?.tags.includes("tool")
+      ) {
+        continue;
+      }
+
+      nodeMetadata.set(type, {
+        title: project.board?.descriptor.title,
+        description: project.board?.descriptor.description,
+        tags: project.board.descriptor.metadata?.tags,
+        icon: project.board.descriptor.metadata?.icon ?? "generic",
+      });
+      nodes.push({ id, type });
+    }
+
+    const desc: GraphDescriptor = {
+      nodes,
+      edges: [],
+    };
+
+    const boardServerProxyGraph = inspect(desc, {
+      loader: createLoader([this]),
+    });
+    const boardServerProxyKits = boardServerProxyGraph.kits();
+    for (const kit of boardServerProxyKits) {
+      if (kit.descriptor.title !== "Custom Types") {
+        continue;
+      }
+
+      for (const node of kit.nodeTypes) {
+        this.#boardServerKit.handlers[node.type()] = {
+          async invoke() {
+            throw new Error("Not implemented.");
+          },
+          async describe() {
+            return boardServerProxyGraph.describeType(node.type());
+          },
+          metadata: nodeMetadata.get(node.type()) ?? {},
+        };
+      }
+    }
   }
 
   async load(url: URL): Promise<GraphDescriptor | null> {

@@ -1915,7 +1915,7 @@ export class Main extends LitElement {
               .subGraphId=${this.tab?.subGraphId ?? null}
               .run=${runs[0] ?? null}
               .topGraphResult=${topGraphResult}
-              .kits=${this.#runtime.kits}
+              .kits=${this.tab?.kits ?? []}
               .loader=${this.#runtime.board.getLoader()}
               .status=${tabStatus}
               .boardId=${this.#boardId}
@@ -2137,7 +2137,6 @@ export class Main extends LitElement {
               @bbtoggleboardactivity=${(
                 evt: BreadboardUI.Events.ToggleBoardActivityEvent
               ) => {
-                console.log(evt);
                 if (evt.forceOn) {
                   this.showBoardActivityOverlay = true;
                 } else {
