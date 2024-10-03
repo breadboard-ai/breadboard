@@ -312,9 +312,13 @@ export class RemoteGraphProvider implements GraphProvider {
     }
   }
 
-  async #refreshItems(store: GraphDBStore) {
+  async #refreshItems(graphStore: GraphDBStore) {
     try {
-      const request = createRequest(`${store.url}/boards`, store.apiKey, "GET");
+      const request = createRequest(
+        `${graphStore.url}/boards`,
+        graphStore.apiKey,
+        "GET"
+      );
       const response = await fetch(request);
       const files: RemoteFileListing[] = await response.json();
 
@@ -339,7 +343,7 @@ export class RemoteGraphProvider implements GraphProvider {
           title = item.title;
         }
         items.set(file, {
-          url: `${store.url}/boards/${file}`,
+          url: `${graphStore.url}/boards/${file}`,
           readonly,
           mine,
           username,
@@ -349,14 +353,15 @@ export class RemoteGraphProvider implements GraphProvider {
         });
       }
 
-      this.#stores.set(store.url, {
-        permission: "granted",
-        title: store.url,
-        items,
-      });
+      const store = this.#stores.get(graphStore.url);
+      if (!store) {
+        throw new Error(`Unexpected store: ${graphStore.url}`);
+      }
+
+      store.items = items;
     } catch (err) {
       console.warn(
-        `[RemoteGraphProvider]: Unable to connect to ${store.url}`,
+        `[RemoteGraphProvider]: Unable to connect to ${graphStore.url}`,
         err
       );
     }
@@ -364,6 +369,17 @@ export class RemoteGraphProvider implements GraphProvider {
 
   async #refreshAllItems() {
     this.#stores.clear();
+
+    // In some cases it can take a while to retrieve the board listings, so we
+    // create the store here. That way it exists while we wait for the contents
+    // to load.
+    for (const store of this.#locations) {
+      this.#stores.set(store.url, {
+        permission: "granted",
+        title: store.url,
+        items: new Map(),
+      });
+    }
 
     for (const store of this.#locations) {
       await this.#refreshItems(store);
