@@ -25,7 +25,6 @@ const llmContentConfig = (type: string) => ({
       context: {
         type: "array",
         title: "Context",
-        examples: [],
         items: {
           type: "object",
           behavior: ["llm-content"],
