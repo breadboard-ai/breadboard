@@ -250,6 +250,7 @@ export class UserInput extends LitElement {
       "bb-streamlined-schema-editor"
     )) {
       if (!editor.checkValidity()) {
+        editor.reportValidity();
         return null;
       }
     }

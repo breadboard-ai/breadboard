@@ -470,6 +470,14 @@ export class StreamlinedSchemaEditor extends LitElement {
     }
   }
 
+  reportValidity() {
+    if (!this.#formRef.value) {
+      return;
+    }
+
+    this.#formRef.value.reportValidity();
+  }
+
   checkValidity(): boolean {
     if (!this.#formRef.value) {
       return true;
@@ -581,6 +589,42 @@ export class StreamlinedSchemaEditor extends LitElement {
         }
       } else {
         console.warn("Unable to update schema");
+      }
+
+      const existingId = this.#formRef.value.querySelector<HTMLInputElement>(
+        `#${id}-existing-property-id`
+      );
+      const propertyId = this.#formRef.value.querySelector<HTMLInputElement>(
+        `#${id}-property-id`
+      );
+
+      if (
+        this.schema &&
+        this.schema.properties &&
+        propertyId &&
+        existingId &&
+        propertyId.value !== existingId.value
+      ) {
+        const existingPropertyId = this.#createId(existingId.value);
+        const property = this.schema.properties[existingPropertyId];
+        if (property) {
+          const newId = this.#createId(propertyId.value);
+          if (!this.schema.properties[newId]) {
+            this.schema.properties[newId] = property;
+            delete this.schema.properties[existingId.value];
+
+            this.requestUpdate();
+          } else {
+            propertyId.setCustomValidity(
+              "A property with this ID already exists"
+            );
+            propertyId.reportValidity();
+          }
+        } else {
+          console.warn(
+            `Unable to locate property with ID ${existingPropertyId}`
+          );
+        }
       }
     }
   }
@@ -771,12 +815,26 @@ export class StreamlinedSchemaEditor extends LitElement {
 
                     <aside class="hint">${hint}</aside>
 
+                    <input
+                      type="hidden"
+                      id=${`${id}-existing-property-id`}
+                      .value=${id ?? ""}
+                    />
+
                     <label>ID</label>
                     <input
                       type="text"
-                      id="${id}-id"
+                      id="${id}-property-id"
+                      @input=${(evt: InputEvent) => {
+                        if (!(evt.target instanceof HTMLInputElement)) {
+                          return;
+                        }
+                        evt.target.setCustomValidity("");
+                      }}
                       .value=${id ?? ""}
-                      disabled="true"
+                      required
+                      autocomplete="off"
+                      pattern="^[a-z0-9\\-]+$"
                     />
 
                     ${isLLMContentArray || isText
