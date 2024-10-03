@@ -29,8 +29,11 @@ export const loadFromStore = async (
 };
 
 export class BoardServerProvider implements GraphProvider {
+  #initialized = false;
+  #serverUrl: string | undefined;
   #path: string;
   #loader: BoardServerLoadFunction;
+  #cache: Map<string, GraphDescriptor> = new Map();
 
   name = "Board Server Provider";
 
@@ -39,8 +42,20 @@ export class BoardServerProvider implements GraphProvider {
     this.#loader = loader;
   }
 
+  async #initialize(): Promise<void> {
+    if (this.#initialized) {
+      return;
+    }
+    const store = getStore();
+    const info = await store.getServerInfo();
+    if (info) {
+      this.#serverUrl = info.url;
+    }
+    this.#initialized = true;
+  }
+
   async ready(): Promise<void> {
-    return;
+    await this.#initialize();
   }
 
   isSupported(): boolean {
@@ -48,7 +63,8 @@ export class BoardServerProvider implements GraphProvider {
   }
 
   canProvide(url: URL): false | GraphProviderCapabilities {
-    return url.href.endsWith(this.#path)
+    const sameServer = url.origin === this.#serverUrl;
+    return url.href.endsWith(this.#path) || sameServer
       ? {
           load: true,
           save: false,
@@ -68,8 +84,21 @@ export class BoardServerProvider implements GraphProvider {
     };
   }
 
-  async load(_url: URL): Promise<GraphDescriptor | null> {
-    return this.#loader(this.#path);
+  async load(url: URL): Promise<GraphDescriptor | null> {
+    // This check is necessary because this.#path might actually be of a
+    // different origin than the URL (commonly the case when board server is
+    // running from local server).
+    const sameServer = url.origin === this.#serverUrl;
+    const key = sameServer ? url.pathname : this.#path;
+    if (this.#cache.has(key)) {
+      return this.#cache.get(key)!;
+    }
+    const path = sameServer ? url.pathname : this.#path;
+    const graph = await this.#loader(path);
+    if (graph) {
+      this.#cache.set(key, graph);
+    }
+    return graph;
   }
 
   async save(

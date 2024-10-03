@@ -36,6 +36,9 @@ export const runBoard = async ({
   // TODO: Figure out if this is the right thing to do here.
   store.createGroup("run-board");
 
+  const boardServerProvider = new BoardServerProvider(path, loader);
+  await boardServerProvider.ready();
+
   return handleRunGraphRequest(
     {
       inputs,
@@ -46,7 +49,7 @@ export const runBoard = async ({
       url,
       kits: createKits(kitOverrides),
       writer,
-      loader: createLoader([new BoardServerProvider(path, loader)]),
+      loader: createLoader([boardServerProvider]),
       dataStore: store,
       stateStore: {
         async load(next?: string) {
