@@ -4,8 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { LLMContent, Schema } from "@google-labs/breadboard";
-import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import {
+  LitElement,
+  html,
+  css,
+  nothing,
+  HTMLTemplateResult,
+  PropertyValues,
+} from "lit";
+import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { isLLMContentArrayBehavior, isTextBehavior } from "../../../utils";
@@ -15,11 +22,6 @@ import {
 } from "../../../utils/llm-content";
 import { HideTooltipEvent, ShowTooltipEvent } from "../../../events/events";
 import { CodeEditor } from "../code-editor/code-editor";
-
-const CUSTOM: Schema = {
-  type: "object",
-  title: "Custom",
-};
 
 const LLM_CONTENT_ARRAY: Schema = {
   type: "array",
@@ -46,8 +48,8 @@ export class StreamlinedSchemaEditor extends LitElement {
   @property()
   schema: Schema | null = null;
 
-  @state()
-  type: "llm-content-array" | "text" | "custom" = "llm-content-array";
+  @property()
+  showAsCustom = new Set<string>();
 
   #formRef: Ref<HTMLFormElement> = createRef();
 
@@ -307,45 +309,48 @@ export class StreamlinedSchemaEditor extends LitElement {
     return this.schema;
   }
 
+  protected willUpdate(changedProperties: PropertyValues): void {
+    if (!changedProperties.has("schema")) {
+      return;
+    }
+
+    this.showAsCustom.clear();
+  }
+
   #processTypeChange(name: string, type: string) {
     if (!this.schema || !this.schema.properties) {
       return;
     }
 
-    if (type === this.schema.properties[name]?.type) {
-      return;
-    }
-
-    if (
-      !confirm("This will delete the existing configuration. Are you sure?")
-    ) {
-      return false;
-    }
-
     let property = this.schema.properties[name];
     const title = property.title;
 
-    this.#destroyEditorIfNeeded(name);
-
     switch (type) {
+      case "text":
       case "llm-content-array": {
-        property = structuredClone(LLM_CONTENT_ARRAY);
-        break;
-      }
+        if (
+          !confirm("This will delete the existing configuration. Are you sure?")
+        ) {
+          return false;
+        }
 
-      case "text": {
-        property = structuredClone(MARKDOWN_TEXT);
+        this.showAsCustom.delete(name);
+
+        property = structuredClone(
+          type === "llm-content-array" ? LLM_CONTENT_ARRAY : MARKDOWN_TEXT
+        );
+        this.#destroyEditorIfNeeded(name);
+
+        if (title) {
+          property.title = title;
+        }
         break;
       }
 
       case "custom": {
-        property = structuredClone(CUSTOM);
+        this.showAsCustom.add(name);
         break;
       }
-    }
-
-    if (title) {
-      property.title = title;
     }
 
     this.schema.properties[name] = property;
@@ -480,11 +485,17 @@ export class StreamlinedSchemaEditor extends LitElement {
   }
 
   #isText(property: Schema) {
+    const validProperties = [
+      "format",
+      "title",
+      "type",
+      "description",
+      "default",
+    ];
+
     return (
       isTextBehavior(property) &&
-      Object.keys(property).every(
-        (key) => key === "format" || key === "title" || key === "type"
-      )
+      Object.keys(property).every((key) => validProperties.includes(key))
     );
   }
 
@@ -497,9 +508,17 @@ export class StreamlinedSchemaEditor extends LitElement {
     for (const [name, property] of properties) {
       const id = this.#createId(name);
 
-      const isLLMContentArray = isLLMContentArrayBehavior(property);
-      const isText = this.#isText(property);
-      const isCustom = !isLLMContentArray && !isText;
+      // Start by inferring the type from the property.
+      let isLLMContentArray = isLLMContentArrayBehavior(property);
+      let isText = this.#isText(property);
+      let isCustom = !isLLMContentArray && !isText;
+
+      // If the user has requested an override we use that instead.
+      if (this.showAsCustom.has(name)) {
+        isLLMContentArray = false;
+        isText = false;
+        isCustom = true;
+      }
 
       const title = this.#formRef.value.querySelector<HTMLInputElement>(
         `#${id}-title`
@@ -572,9 +591,16 @@ export class StreamlinedSchemaEditor extends LitElement {
         ? html`${this.schema.properties
             ? html`${map(properties, ([name, property], idx) => {
                   const id = this.#createId(name);
-                  const isLLMContentArray = isLLMContentArrayBehavior(property);
-                  const isText = this.#isText(property);
-                  const isCustom = !isLLMContentArray && !isText;
+                  let isLLMContentArray = isLLMContentArrayBehavior(property);
+                  let isText = this.#isText(property);
+                  let isCustom = !isLLMContentArray && !isText;
+
+                  // If the user has requested an override we use that instead.
+                  if (this.showAsCustom.has(name)) {
+                    isLLMContentArray = false;
+                    isText = false;
+                    isCustom = true;
+                  }
 
                   let defaultValueInput: HTMLTemplateResult | symbol =
                     html`TODO`;
