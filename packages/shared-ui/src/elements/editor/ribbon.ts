@@ -727,11 +727,12 @@ export class RibbonMenu extends LitElement {
 
   render() {
     const componentSelector: HTMLTemplateResult = html`${guard(
-      [],
-      () =>
-        html`<bb-component-selector-overlay
+      [this.graph?.raw().url],
+      () => {
+        return html`<bb-component-selector-overlay
           .graph=${this.graph}
           .showExperimentalComponents=${this.showExperimentalComponents}
+          ${ref(this.#componentSelectorRef)}
           @bbkitnodechosen=${(evt: KitNodeChosenEvent) => {
             const id = createRandomID(evt.nodeType);
             this.dispatchEvent(new NodeCreateEvent(id, evt.nodeType));
@@ -739,7 +740,8 @@ export class RibbonMenu extends LitElement {
           @bboverlaydismissed=${() => {
             this.showComponentSelector = false;
           }}
-        ></bb-component-selector-overlay>`
+        ></bb-component-selector-overlay>`;
+      }
     )}`;
 
     const components = html`
