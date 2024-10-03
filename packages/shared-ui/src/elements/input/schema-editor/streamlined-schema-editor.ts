@@ -613,6 +613,11 @@ export class StreamlinedSchemaEditor extends LitElement {
             this.schema.properties[newId] = property;
             delete this.schema.properties[existingId.value];
 
+            if (this.showAsCustom.has(existingPropertyId)) {
+              this.showAsCustom.delete(existingPropertyId);
+              this.showAsCustom.add(newId);
+            }
+
             this.requestUpdate();
           } else {
             propertyId.setCustomValidity(
