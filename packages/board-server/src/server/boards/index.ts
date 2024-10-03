@@ -82,7 +82,8 @@ export const serveBoardsAPI = async (
 
   switch (parsed.type) {
     case "options": {
-      return corsAll(req, res);
+      corsAll(req, res);
+      return true;
     }
     case "list": {
       if (!cors(req, res, serverConfig.allowedOrigins)) return true;
