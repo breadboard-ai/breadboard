@@ -5,7 +5,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from "http";
-import { methodNotAllowed, serverError } from "../errors.js";
+import { badRequest, methodNotAllowed } from "../errors.js";
 import { buildSecretsTunnel, secretsKit } from "./secrets.js";
 import {
   ProxyServer,
@@ -110,7 +110,7 @@ export const serveProxyAPI = async (
   try {
     await server.serve(config);
   } catch (e) {
-    serverError(res, (e as Error).message);
+    badRequest(res, (e as Error).message);
   }
 
   store.releaseAll();

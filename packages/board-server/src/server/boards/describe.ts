@@ -10,8 +10,8 @@ import {
   type GraphDescriptor,
   type NodeDescriberResult,
 } from "@google-labs/breadboard";
-import { serverError } from "../errors.js";
-import { asInfo, getStore } from "../store.js";
+import { notFound } from "../errors.js";
+import { getStore } from "../store.js";
 import type { ApiHandler, BoardParseResult } from "../types.js";
 
 export const addKeyInput = (describeResult: NodeDescriberResult) => {
@@ -36,7 +36,7 @@ const describe: ApiHandler = async (parsed, _req, res) => {
     | GraphDescriptor
     | undefined;
   if (!board) {
-    serverError(res, "Board not found");
+    notFound(res, "Board not found");
     return true;
   }
 

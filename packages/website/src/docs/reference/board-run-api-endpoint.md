@@ -68,7 +68,7 @@ The structure of `inputs` depends on the "Input" component that is the entry poi
 > [!TIP]
 > A good analogy is to think of the "Input" component as a function call and ports as named arguments for this function call.
 
-Each port has a unique id that helps to distinguish it from other ports within this "Input". This id can be found by looking up the "ID" field in the Schema editor for the "Input" component. For example, this port has the id of `property-1`:
+Each port has a unique id that helps to distinguish it from other ports within this "Input". This id can be found by looking up the "ID" field in the Schema editor for the "Input" component. For example, this port has the id of `location`:
 
 ![Location input schema](/breadboard/static/images/endpoint-docs/location-input-schema.png)
 
@@ -77,7 +77,7 @@ The port also has a type that defines the format of the data that the port is ex
 ```json
 {
   "$key": "BOARD_SERVER_API_KEY",
-  "property-1": "Mountain View, CA"
+  "location": "Mountain View, CA"
 }
 ```
 

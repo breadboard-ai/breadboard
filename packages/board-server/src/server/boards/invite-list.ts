@@ -5,7 +5,7 @@
  */
 
 import { authenticate } from "../auth.js";
-import { serverError, unauthorized } from "../errors.js";
+import { unauthorized } from "../errors.js";
 import { getStore } from "../store.js";
 import type { ApiHandler, BoardParseResult } from "../types.js";
 
