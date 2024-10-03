@@ -72,9 +72,13 @@ export class BoardAPIParser {
     }
     const isGET = this.#method === "GET";
     const isPOST = this.#method === "POST";
+    const isOPTIONS = this.#method === "OPTIONS";
     const { pathname } = this.#url;
     const parts = pathname.split("/").slice(2);
     if (parts.length === 0) {
+      if (isOPTIONS) {
+        return { success: true, type: "options" };
+      }
       if (isGET) {
         return { success: true, type: "list" };
       } else if (isPOST) {
@@ -102,6 +106,9 @@ export class BoardAPIParser {
         const board = `@${user}/${name}`;
         const url = this.#getAdjustedBoardURL(board);
         if (isInvoke) {
+          if (isOPTIONS) {
+            return { success: true, type: "options" };
+          }
           if (isPOST) {
             return { success: true, type: "invoke", board, url, user, name };
           } else {
@@ -109,6 +116,9 @@ export class BoardAPIParser {
           }
         }
         if (isDescribe) {
+          if (isOPTIONS) {
+            return { success: true, type: "options" };
+          }
           if (isPOST) {
             return { success: true, type: "describe", board, url, user, name };
           } else {
@@ -116,6 +126,9 @@ export class BoardAPIParser {
           }
         }
         if (isRun) {
+          if (isOPTIONS) {
+            return { success: true, type: "options" };
+          }
           if (isPOST) {
             return { success: true, type: "run", board, url, user, name };
           } else {
@@ -132,6 +145,9 @@ export class BoardAPIParser {
         const name = maybeName;
         const board = `@${user}/${name}`;
         const url = this.#getAdjustedBoardURL(board);
+        if (isOPTIONS) {
+          return { success: true, type: "options" };
+        }
         if (this.#method === "GET") {
           return { success: true, type: "get", board, url, user, name };
         } else if (this.#method === "POST") {
@@ -141,6 +157,9 @@ export class BoardAPIParser {
         const name = `${maybeName.slice(0, -".invite".length)}.json`;
         const board = `@${user}/${name}`;
         const url = this.#getAdjustedBoardURL(board);
+        if (isOPTIONS) {
+          return { success: true, type: "options" };
+        }
         if (this.#method === "GET") {
           return { success: true, type: "invite-list", board, url, user, name };
         } else if (this.#method === "POST") {
