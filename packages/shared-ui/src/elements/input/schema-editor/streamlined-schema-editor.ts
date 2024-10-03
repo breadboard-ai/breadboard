@@ -771,6 +771,14 @@ export class StreamlinedSchemaEditor extends LitElement {
 
                     <aside class="hint">${hint}</aside>
 
+                    <label>ID</label>
+                    <input
+                      type="text"
+                      id="${id}-id"
+                      .value=${id ?? ""}
+                      disabled="true"
+                    />
+
                     ${isLLMContentArray || isText
                       ? html`
                           <label>Title</label>
