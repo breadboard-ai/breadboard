@@ -499,6 +499,21 @@ export class StreamlinedSchemaEditor extends LitElement {
     );
   }
 
+  #isLLMContentArray(property: Schema) {
+    const validProperties = [
+      "items",
+      "title",
+      "type",
+      "description",
+      "default",
+    ];
+
+    return (
+      isLLMContentArrayBehavior(property) &&
+      Object.keys(property).every((key) => validProperties.includes(key))
+    );
+  }
+
   #updateSchemaValue() {
     if (!this.#formRef.value) {
       return;
@@ -509,7 +524,7 @@ export class StreamlinedSchemaEditor extends LitElement {
       const id = this.#createId(name);
 
       // Start by inferring the type from the property.
-      let isLLMContentArray = isLLMContentArrayBehavior(property);
+      let isLLMContentArray = this.#isLLMContentArray(property);
       let isText = this.#isText(property);
       let isCustom = !isLLMContentArray && !isText;
 
@@ -591,7 +606,7 @@ export class StreamlinedSchemaEditor extends LitElement {
         ? html`${this.schema.properties
             ? html`${map(properties, ([name, property], idx) => {
                   const id = this.#createId(name);
-                  let isLLMContentArray = isLLMContentArrayBehavior(property);
+                  let isLLMContentArray = this.#isLLMContentArray(property);
                   let isText = this.#isText(property);
                   let isCustom = !isLLMContentArray && !isText;
 
