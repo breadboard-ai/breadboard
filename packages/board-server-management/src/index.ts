@@ -54,7 +54,7 @@ export async function getBoardServers(): Promise<BoardServer[]> {
   return stores.filter((store) => store !== null);
 }
 
-export async function createBoardServer(url: URL, user: User) {
+export async function storeBoardServer(url: URL, user: User) {
   const db = await idb.openDB<BoardServerListing>(
     BOARD_SERVER_LISTING_DB,
     BOARD_SERVER_LISTING_VERSION,
@@ -78,8 +78,8 @@ export async function createDefaultLocalBoardServer() {
       secrets: new Map(),
     };
 
-    await createBoardServer(new URL(url), user);
     await IDBBoardServer.createDefault(new URL(url), user);
+    await storeBoardServer(new URL(url), user);
   } catch (err) {
     console.warn(err);
   }
@@ -148,7 +148,7 @@ export async function migrateRemoteGraphProviders() {
       secrets: new Map(),
     };
 
-    await createBoardServer(new URL(store.url), user);
+    await storeBoardServer(new URL(store.url), user);
   }
   db.close();
 }
