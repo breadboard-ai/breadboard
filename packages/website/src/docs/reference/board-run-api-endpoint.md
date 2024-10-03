@@ -3,7 +3,7 @@ layout: docs.liquid
 title: Board Server API Endpoints
 tags:
   - reference
-  - miscellaneous
+  - api
 ---
 
 This doc describes how to use the Board Server API Endpoints.
