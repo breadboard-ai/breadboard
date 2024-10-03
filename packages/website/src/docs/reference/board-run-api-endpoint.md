@@ -70,7 +70,7 @@ The structure of `inputs` depends on the "Input" component that is the entry poi
 
 Each port has a unique id that helps to distinguish it from other ports within this "Input". This id can be found by looking up the "ID" field in the Schema editor for the "Input" component. For example, this port has the id of `property-1`:
 
-![Input Schema editor expanded](/breadboard/static/images/built-in-kit/input-schema-expanded.png)
+![Location input schema](/breadboard/static/images/endpoint-docs/location-input-schema.png)
 
 The port also has a type that defines the format of the data that the port is expecting. The port definition above expects a "String" type, which is just a string. Supplying valid inputs for the "Input" component with this port will look like this:
 
@@ -81,16 +81,16 @@ The port also has a type that defines the format of the data that the port is ex
 }
 ```
 
-Another common port type used in Breadboard is LLM Content Array. It's a bit of a mouthful, but it's effectively a way to pass conversation context between components. Most of the time, you'll be working with this type, so it's very likely that the input you're encountering will ask for the data in this format. This format is [defined in more detail](https://ai.google.dev/api/caching#Content) in Gemini API reference. In Breadboard, its definition looks like this:
+Another common port type used in Breadboard is Conversation Context. It's a way to pass LLM conversation context between components. Most of the time, you'll be working with this type, so it's very likely that the input you're encountering will ask for the data in this format. This format is [defined in more detail](https://ai.google.dev/api/caching#Content) in Gemini API reference. In Breadboard, its definition looks like this:
 
-![Input Schema editor of LLM Content Array](/breadboard/static/images/endpoint-docs/llm-content-array-schema.png)
+![Input Schema editor of Conversation Context](/breadboard/static/images/endpoint-docs/conversation-context-schema.png)
 
-If you just want to send text to the "Input" component with this port type, it will look something like this:
+If you just want to send text to the "Input" component with this port, it will look something like this:
 
 ```json
 {
   "$key": "BOARD_SERVER_API_KEY",
-  "property-3": [
+  "description": [
     {
       "role": "user",
       "parts": [
