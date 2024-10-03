@@ -56,12 +56,14 @@ export async function create(config: RuntimeConfig): Promise<{
     };
   }
 
-  return {
+  const runtime = {
     board: new Board(config.providers, loader, kits, boardServers),
     edit: new Edit(config.providers, loader, kits),
     run: new Run(config.dataStore, config.runStore, kits),
     kits,
   } as const;
+
+  return runtime;
 }
 
 export type RuntimeInstance = Awaited<ReturnType<typeof create>>;

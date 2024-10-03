@@ -229,6 +229,22 @@ export class Edit extends EventTarget {
     editableGraph.replaceGraph(subGraphId, subGraphDescriptor);
   }
 
+  deleteComment(tab: Tab | null, id: string) {
+    if (!tab) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find tab"));
+      return null;
+    }
+
+    const graph = tab.graph;
+    graph.metadata ??= {};
+    graph.metadata.comments ??= [];
+
+    graph.metadata.comments = graph.metadata.comments.filter(
+      (comment) => comment.id !== id
+    );
+    this.dispatchEvent(new RuntimeBoardEditEvent(false));
+  }
+
   updateBoardInfo(
     tab: Tab | null,
     title: string,

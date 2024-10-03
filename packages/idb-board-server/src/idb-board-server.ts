@@ -35,7 +35,7 @@ import {
   IDBProjectStoreProject as IDBBoardServerProject,
   LocalStoreData,
 } from "./types/idb-types.js";
-import { GraphMetadata } from "../../types/dist/src/graph-descriptor.js";
+import { GraphMetadata } from "@breadboard-ai/types";
 
 const loadedKits = loadKits([
   GeminiKit,
@@ -43,6 +43,8 @@ const loadedKits = loadKits([
   PythonWasmKit,
   GoogleDriveKit,
 ]);
+
+const loadedExtensions: BoardServerExtension[] = [];
 
 // Since IDB does not support various items, like functions, we use
 // inflate and deflate functions to handle going into and out of IDB.
@@ -56,7 +58,7 @@ async function inflateConfiguration(
     .map((url) => {
       const kit = allKits.find((kit) => kit.url === url);
       if (!kit) {
-        console.warn(`Unable to find kit for ${kit.url}`);
+        console.warn(`Unable to find kit for ${url}`);
         return null;
       }
 
@@ -64,9 +66,23 @@ async function inflateConfiguration(
     })
     .filter((kit) => kit !== null);
 
+  const extensions: BoardServerExtension[] = configuration.extensions
+    .map((url) => {
+      const extension = loadedExtensions.find(
+        (extension) => extension.url.href === url
+      );
+      if (!extension) {
+        console.warn(`Unable to find extension for ${url}`);
+        return null;
+      }
+
+      return extension;
+    })
+    .filter((extension) => extension !== null);
+
   return {
     capabilities: configuration.capabilities,
-    extensions: [], // TODO.
+    extensions,
     projects: Promise.resolve([]),
     kits,
     secrets,
@@ -81,7 +97,7 @@ async function deflateConfiguration(
   return {
     url: configuration.url.href,
     capabilities: configuration.capabilities,
-    extensions: [], // TODO.
+    extensions: configuration.extensions.map((extension) => extension.url.href),
     kits: configuration.kits.map((kit) => kit.url),
     secrets: configuration.secrets,
     users: configuration.users,
@@ -199,13 +215,14 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
 
   static async createDefault(url: URL, user: User) {
     const kits = await loadedKits;
+    const extensions = loadedExtensions;
     this.#create({
       url: new URL(url),
       projects: Promise.resolve([]),
       kits,
       users: [user],
       secrets: new Map(),
-      extensions: [],
+      extensions,
       capabilities: {
         connect: false,
         disconnect: false,
@@ -226,7 +243,7 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
 
   constructor(
     public readonly name: string,
-    configuration: BoardServerConfiguration,
+    public readonly configuration: BoardServerConfiguration,
     public readonly user: User
   ) {
     super();
