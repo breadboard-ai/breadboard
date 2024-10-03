@@ -846,12 +846,16 @@ export class Editor extends LitElement {
               continue;
             }
 
-            const newEdge = {
+            const newEdge: Edge = {
               from: remappedNodeIds.get(edge.from) ?? edge.from,
               to: remappedNodeIds.get(edge.to) ?? edge.to,
               in: edge.in ?? "MISSING_WIRE",
               out: edge.out ?? "MISSING_WIRE",
             };
+
+            if (edge.constant) {
+              newEdge.constant = edge.constant;
+            }
 
             const existingEdge = breadboardGraph.edges.find(
               (graphEdge) =>
