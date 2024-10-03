@@ -642,7 +642,7 @@ export class StreamlinedSchemaEditor extends LitElement {
   }
 
   render() {
-    const properties = Object.entries(this.schema?.properties ?? {});
+    const properties = Object.entries(this.schema?.properties ?? {}).sort();
 
     return html`<form
       ${ref(this.#formRef)}
