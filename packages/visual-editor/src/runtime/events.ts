@@ -5,7 +5,7 @@
  */
 
 import { HarnessRunner, RunEventMap } from "@google-labs/breadboard/harness";
-import { TabId } from "./types";
+import { Tab, TabId } from "./types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { InspectableRunObserver } from "@google-labs/breadboard";
 
@@ -68,6 +68,18 @@ export class RuntimeBoardRunEvent extends Event {
     public readonly abortController: AbortController
   ) {
     super(RuntimeBoardRunEvent.eventName, { ...eventInit });
+  }
+}
+
+export class RuntimeHostAPIEvent extends Event {
+  static eventName = "runtimehostapi" as const;
+
+  constructor(
+    public readonly tab: Tab,
+    public readonly message: string,
+    public readonly args: unknown[]
+  ) {
+    super(RuntimeHostAPIEvent.eventName, { ...eventInit });
   }
 }
 

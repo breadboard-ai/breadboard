@@ -122,7 +122,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
 
   constructor(
     public readonly name: string,
-    configuration: BoardServerConfiguration,
+    public readonly configuration: BoardServerConfiguration,
     public readonly user: User
   ) {
     super();

@@ -305,20 +305,38 @@ export interface HostAPI {
   send(method: string, args: unknown[]): Promise<void>;
 }
 
-export interface BoardServerExtension extends Entity {
-  node: {
-    onEditStart(
-      api: HostAPI,
-      id: NodeIdentifier,
-      type: string,
-      configuration: NodeConfiguration
-    ): Promise<void>;
-  };
-  graph: {
-    onGraphStart(api: HostAPI): Promise<void>;
-    onGraphStop(api: HostAPI): Promise<void>;
-  };
+interface BoardServerGraphActions {
+  onStart(api: HostAPI): Promise<void>;
+  onStop(api: HostAPI): Promise<void>;
 }
+
+interface BoardServerNodeActions {
+  onSelect(
+    api: HostAPI,
+    id: NodeIdentifier,
+    type: string,
+    configuration: NodeConfiguration
+  ): Promise<void>;
+  onAction(
+    api: HostAPI,
+    action: string,
+    kits: Kit[],
+    id: NodeIdentifier,
+    type: string,
+    configuration: NodeConfiguration
+  ): Promise<void>;
+  onDeselect(api: HostAPI, id: NodeIdentifier): Promise<void>;
+}
+
+export interface BoardServerExtension extends Entity {
+  node: BoardServerNodeActions;
+  graph: BoardServerGraphActions;
+}
+
+export type BoardServerExtensionNamespace = keyof Pick<
+  BoardServerExtension,
+  "node" | "graph"
+>;
 
 export interface BoardServerProject extends Entity {
   board?: Board;
