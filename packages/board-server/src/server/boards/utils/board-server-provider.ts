@@ -46,10 +46,14 @@ export class BoardServerProvider implements GraphProvider {
     if (this.#initialized) {
       return;
     }
-    const store = getStore();
-    const info = await store.getServerInfo();
-    if (info) {
-      this.#serverUrl = info.url;
+    try {
+      const store = getStore();
+      const info = await store.getServerInfo();
+      if (info) {
+        this.#serverUrl = info.url;
+      }
+    } catch (e) {
+      // Ignore errors.
     }
     this.#initialized = true;
   }
