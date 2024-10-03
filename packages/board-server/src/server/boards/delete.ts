@@ -5,7 +5,7 @@
  */
 
 import { authenticate } from "../auth.js";
-import { serverError } from "../errors.js";
+import { badRequest, unauthorized } from "../errors.js";
 import { getStore } from "../store.js";
 import type { ApiHandler, BoardParseResult } from "../types.js";
 
@@ -20,12 +20,12 @@ const del: ApiHandler = async (parsed, req, res, body) => {
   const store = getStore();
   const userStore = await store.getUserStore(userKey);
   if (!userStore.success) {
-    serverError(res, "Unauthorized");
+    unauthorized(res, userStore.error);
     return true;
   }
 
   if (!body) {
-    serverError(res, "No body provided");
+    badRequest(res, "No body provided");
     return true;
   }
 
@@ -37,7 +37,7 @@ const del: ApiHandler = async (parsed, req, res, body) => {
 
   const result = await store.delete(userStore.store, path);
   if (!result.success) {
-    serverError(res, result.error!);
+    badRequest(res, result.error!);
     return true;
   }
 

@@ -11,6 +11,11 @@ export const serverError = (res: ServerResponse, error: string) => {
   res.end(error);
 };
 
+export const badRequest = (res: ServerResponse, error: string) => {
+  res.writeHead(400, "Bad Request");
+  res.end(error || "Bad Request");
+};
+
 export const methodNotAllowed = (res: ServerResponse, error: string) => {
   res.writeHead(405, "Method Not Allowed");
   res.end(error);

@@ -6,7 +6,7 @@
 
 import type { GraphDescriptor } from "@google-labs/breadboard";
 import { authenticate } from "../auth.js";
-import { serverError } from "../errors.js";
+import { badRequest, unauthorized } from "../errors.js";
 import { getStore } from "../store.js";
 import type { ApiHandler, BoardParseResult } from "../types.js";
 
@@ -15,19 +15,19 @@ const post: ApiHandler = async (parsed, req, res, body) => {
 
   const userKey = authenticate(req, res);
   if (!userKey) {
-    serverError(res, "Unauthorized");
+    unauthorized(res, "Unauthorized");
     return true;
   }
   const store = getStore();
   const userStore = await store.getUserStore(userKey);
 
   if (!userStore.success) {
-    serverError(res, "Unauthorized");
+    unauthorized(res, userStore.error);
     return true;
   }
 
   if (!body) {
-    serverError(res, "No body provided");
+    badRequest(res, "No body provided");
     return true;
   }
 
@@ -39,7 +39,7 @@ const post: ApiHandler = async (parsed, req, res, body) => {
 
   const result = await store.update(userStore.store!, path, maybeGraph);
   if (!result.success) {
-    serverError(res, result.error);
+    badRequest(res, result.error);
     return true;
   }
 
