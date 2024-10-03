@@ -34,8 +34,6 @@ export class ComponentSelectorOverlay extends LitElement {
   showExperimentalComponents = false;
 
   #searchInputRef: Ref<HTMLInputElement> = createRef();
-  #listRef: Ref<HTMLUListElement> = createRef();
-  #lastSelectedId: string | null = null;
   #kitInfoTask = new Task(this, {
     task: async ([graph]) => {
       return this.#createKitList(graph?.kits() || []);
@@ -352,6 +350,12 @@ export class ComponentSelectorOverlay extends LitElement {
                     <div class="kit-contents">
                       <ul>
                         ${map(kitContents, (nodeTypeInfo) => {
+                          // Prevent the user from accidentally embedding the
+                          // current tool graph inside of itself.
+                          if (nodeTypeInfo.id === this.graph?.raw().url) {
+                            return nothing;
+                          }
+
                           const className = nodeTypeInfo.id
                             .toLocaleLowerCase()
                             .replaceAll(/\W/gim, "-");

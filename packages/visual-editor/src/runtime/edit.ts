@@ -47,7 +47,7 @@ export class Edit extends EventTarget {
       return editor;
     }
 
-    const editor = edit(tab.graph, { kits: this.kits, loader: this.loader });
+    const editor = edit(tab.graph, { kits: tab.kits, loader: this.loader });
     editor.addEventListener("graphchange", (evt) => {
       tab.graph = evt.graph;
 
