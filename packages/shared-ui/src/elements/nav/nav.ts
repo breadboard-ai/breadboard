@@ -426,6 +426,12 @@ export class Navigation extends LitElement {
       height: 20px;
       margin-right: var(--bb-grid-size);
     }
+
+    #loading-message {
+      margin: var(--bb-grid-size-2) 0;
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+    }
   `;
 
   connectedCallback(): void {
@@ -780,7 +786,10 @@ export class Navigation extends LitElement {
               </button>
             </div>
           </header>
-          ${until(this.#providerContents, html`Loading...`)}
+          ${until(
+            this.#providerContents,
+            html`<div id="loading-message">Loading...</div>`
+          )}
         </section>
       </nav>
 
