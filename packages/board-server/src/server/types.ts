@@ -13,9 +13,14 @@ import type {
 import type { RunDiagnosticsLevel } from "@google-labs/breadboard/harness";
 import type { RemoteMessageWriter } from "@google-labs/breadboard/remote";
 import type { IncomingMessage, ServerResponse } from "http";
-import type { BoardListEntry, GetUserStoreResult, OperationResult, ServerInfo } from "./store.js";
+import type {
+  BoardListEntry,
+  GetUserStoreResult,
+  OperationResult,
+  ServerInfo,
+} from "./store.js";
 
-export type GeneralRequestType = "list" | "create";
+export type GeneralRequestType = "list" | "create" | "options";
 
 export type UserRequestType =
   | "list"
@@ -115,16 +120,28 @@ export type RunBoardStateStore = {
 };
 
 export type BoardServerStore = {
-  getServerInfo(): Promise<ServerInfo | undefined>
-  createUser(username: string, apiKey: string): Promise<CreateUserResult>
-  list(userKey: string | null): Promise<BoardListEntry[]>
-  getUserStore(userKey: string | null): Promise<GetUserStoreResult>
-  get(userStore: string, boardName: string): Promise<string>
-  update(userStore: string, path: string, graph: GraphDescriptor): Promise<OperationResult>
-  create(userKey: string, name: string, dryRun: boolean): Promise<CreateBoardResult>
+  getServerInfo(): Promise<ServerInfo | undefined>;
+  createUser(username: string, apiKey: string): Promise<CreateUserResult>;
+  list(userKey: string | null): Promise<BoardListEntry[]>;
+  getUserStore(userKey: string | null): Promise<GetUserStoreResult>;
+  get(userStore: string, boardName: string): Promise<string>;
+  update(
+    userStore: string,
+    path: string,
+    graph: GraphDescriptor
+  ): Promise<OperationResult>;
+  create(
+    userKey: string,
+    name: string,
+    dryRun: boolean
+  ): Promise<CreateBoardResult>;
 };
 
-export type CreateBoardResult = {success: boolean, path: string | undefined, error: string | undefined}
+export type CreateBoardResult = {
+  success: boolean;
+  path: string | undefined;
+  error: string | undefined;
+};
 
 export type CreateUserResult =
   | { success: true; apiKey: string }
