@@ -4,19 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as idb from "idb";
-import { HarnessRunResult } from "@google-labs/breadboard/harness";
+import type { LLMContent } from "@breadboard-ai/types";
 import {
   isLLMContent,
   isLLMContentArray,
   isMetadataEntry,
   isStoredData,
-  LLMContent,
   RunStore,
   RunTimestamp,
   RunURL,
   toInlineDataPart,
 } from "@google-labs/breadboard";
+import { HarnessRunResult } from "@google-labs/breadboard/harness";
+import * as idb from "idb";
 
 const RUN_LISTING_DB = "run-listing";
 const RUN_LISTING_VERSION = 1;
