@@ -13,9 +13,9 @@
         "text": "Encodes the user's input into the URL",
         "metadata": {
           "visual": {
-            "x": 87,
-            "y": -104,
-            "collapsed": true
+            "x": 148,
+            "y": -133,
+            "collapsed": "collapsed"
           }
         }
       },
@@ -24,9 +24,9 @@
         "text": "Makes a request to the remote service or API",
         "metadata": {
           "visual": {
-            "x": 376,
-            "y": -138,
-            "collapsed": true
+            "x": 508,
+            "y": -145,
+            "collapsed": "collapsed"
           }
         }
       },
@@ -35,9 +35,9 @@
         "text": "Read the explanation: [Fetching data](https://breadboard-ai.github.io/breadboard/docs/guides/cookbook/#fetching-data)",
         "metadata": {
           "visual": {
-            "x": -122,
-            "y": -192,
-            "collapsed": true
+            "x": -179,
+            "y": -130,
+            "collapsed": "collapsed"
           }
         }
       }
@@ -82,9 +82,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -123,
-          "y": 3,
-          "collapsed": false
+          "x": -180,
+          "y": -21,
+          "collapsed": "expanded"
         }
       }
     },
@@ -106,9 +106,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 643,
-          "y": 28,
-          "collapsed": true
+          "x": 807,
+          "y": 23,
+          "collapsed": "collapsed"
         }
       }
     },
@@ -117,9 +117,9 @@
       "type": "urlTemplate",
       "metadata": {
         "visual": {
-          "x": 88,
-          "y": -18,
-          "collapsed": false
+          "x": 111,
+          "y": -45,
+          "collapsed": "expanded"
         },
         "title": "Google Books API",
         "logLevel": "debug"
@@ -133,9 +133,9 @@
       "type": "fetch",
       "metadata": {
         "visual": {
-          "x": 382,
-          "y": -47,
-          "collapsed": false
+          "x": 503,
+          "y": -54,
+          "collapsed": "expanded"
         },
         "title": "Data Fetcher",
         "logLevel": "debug"

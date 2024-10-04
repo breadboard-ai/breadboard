@@ -13,9 +13,9 @@
         "text": "This is a **Greeter** Specialist. It has a persona that tells it how to behave.",
         "metadata": {
           "visual": {
-            "x": -49,
-            "y": 32,
-            "collapsed": true
+            "x": 306,
+            "y": 94,
+            "collapsed": "collapsed"
           }
         }
       },
@@ -24,9 +24,9 @@
         "text": "This is our board's **input**. For this board it accepts a greeting as a string.",
         "metadata": {
           "visual": {
-            "x": -188,
-            "y": -193,
-            "collapsed": true
+            "x": -22,
+            "y": -105,
+            "collapsed": "collapsed"
           }
         }
       },
@@ -35,9 +35,9 @@
         "text": "This is our board's **output** where we see the response from our Specialist",
         "metadata": {
           "visual": {
-            "x": 91,
-            "y": -193,
-            "collapsed": true
+            "x": 626,
+            "y": -105,
+            "collapsed": "collapsed"
           }
         }
       },
@@ -46,9 +46,9 @@
         "text": "Read the guide: [Getting Started](https://breadboard-ai.github.io/breadboard/docs/getting-started/)",
         "metadata": {
           "visual": {
-            "x": -45,
-            "y": -323,
-            "collapsed": true
+            "x": -21,
+            "y": -187,
+            "collapsed": "collapsed"
           }
         }
       }
@@ -92,9 +92,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -81.953125,
-          "y": -93.20703125,
-          "collapsed": true
+          "x": 0,
+          "y": 0,
+          "collapsed": "collapsed"
         }
       }
     },
@@ -121,9 +121,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 91.046875,
-          "y": -93.20703125,
-          "collapsed": true
+          "x": 657,
+          "y": 0,
+          "collapsed": "collapsed"
         }
       }
     },
@@ -132,9 +132,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": -33.953125,
-          "y": -18.20703125,
-          "collapsed": true
+          "x": 255,
+          "y": 0,
+          "collapsed": "collapsed"
         },
         "title": "Greeter",
         "logLevel": "debug"

@@ -34,12 +34,7 @@ import {
 } from "./types/idb-types.js";
 import { fromManifest } from "@google-labs/breadboard/kits";
 
-const loadedKits = loadKits([
-  GeminiKit,
-  // TODO: BuildExampleKit,
-  PythonWasmKit,
-  GoogleDriveKit,
-]);
+const loadedKits = loadKits([GeminiKit, PythonWasmKit, GoogleDriveKit]);
 
 const loadedExtensions: BoardServerExtension[] = [];
 
@@ -229,14 +224,6 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
       },
     });
   }
-
-  #boardServerKit: Kit = {
-    url: "",
-    description: "Board Server Kit",
-    version: "0.0.1",
-    title: "Board Server Kit",
-    handlers: {},
-  };
 
   constructor(
     public readonly name: string,

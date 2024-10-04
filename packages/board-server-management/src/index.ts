@@ -8,7 +8,10 @@ import * as idb from "idb";
 import { IDBBoardServer } from "@breadboard-ai/idb-board-server";
 import { BoardServer, GraphDescriptor, User } from "@google-labs/breadboard";
 import { RemoteBoardServer } from "@breadboard-ai/remote-board-server";
+import { ExampleBoardServer } from "@breadboard-ai/example-board-server";
 
+const PLAYGROUND_BOARDS = "example://playground-boards";
+const EXAMPLE_BOARDS = "example://example-boards";
 const BOARD_SERVER_LISTING_DB = "board-server";
 const BOARD_SERVER_LISTING_VERSION = 1;
 
@@ -22,7 +25,9 @@ interface BoardServerListing extends idb.DBSchema {
   };
 }
 
-export async function getBoardServers(): Promise<BoardServer[]> {
+export async function getBoardServers(
+  skipPlaygroundExamples = false
+): Promise<BoardServer[]> {
   const db = await idb.openDB<BoardServerListing>(
     BOARD_SERVER_LISTING_DB,
     BOARD_SERVER_LISTING_VERSION,
@@ -44,6 +49,14 @@ export async function getBoardServers(): Promise<BoardServer[]> {
 
       if (url.startsWith(RemoteBoardServer.PROTOCOL)) {
         return RemoteBoardServer.from(url, user);
+      }
+
+      if (url.startsWith(ExampleBoardServer.PROTOCOL)) {
+        if (url === PLAYGROUND_BOARDS && skipPlaygroundExamples) {
+          return null;
+        }
+
+        return ExampleBoardServer.from(url, user);
       }
 
       console.warn(`Unsupported store URL: ${url}`);
@@ -151,4 +164,16 @@ export async function migrateRemoteGraphProviders() {
     await storeBoardServer(new URL(store.url), user);
   }
   db.close();
+}
+
+export async function migrateExampleGraphProviders() {
+  const user = {
+    // TODO: Replace this with the actual username.
+    username: "example-board-builder",
+    apiKey: "",
+    secrets: new Map(),
+  };
+
+  await storeBoardServer(new URL(EXAMPLE_BOARDS), user);
+  await storeBoardServer(new URL(PLAYGROUND_BOARDS), user);
 }

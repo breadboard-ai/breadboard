@@ -27,12 +27,7 @@ import PythonWasmKit from "@breadboard-ai/python-wasm";
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 
 // TODO: Get these kits from each board server.
-const loadedKits = loadKits([
-  GeminiKit,
-  // TODO: BuildExampleKit,
-  PythonWasmKit,
-  GoogleDriveKit,
-]);
+const loadedKits = loadKits([GeminiKit, PythonWasmKit, GoogleDriveKit]);
 
 /**
  * For now, make a flag that controls whether to use simple requests or not.
