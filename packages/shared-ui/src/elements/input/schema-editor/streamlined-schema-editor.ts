@@ -53,6 +53,7 @@ export class StreamlinedSchemaEditor extends LitElement {
   showAsCustom = new Set<string>();
 
   #formRef: Ref<HTMLFormElement> = createRef();
+  #schemaPropertiesOrder: string[] = [];
 
   static styles = css`
     :host {
@@ -381,6 +382,10 @@ export class StreamlinedSchemaEditor extends LitElement {
       return;
     }
 
+    this.#schemaPropertiesOrder = this.#schemaPropertiesOrder.filter(
+      (item) => item !== name
+    );
+
     delete this.schema.properties[name];
     this.requestUpdate();
   }
@@ -609,15 +614,27 @@ export class StreamlinedSchemaEditor extends LitElement {
         const existingPropertyId = this.#createId(existingId.value);
         const property = this.schema.properties[existingPropertyId];
         if (property) {
-          const newId = this.#createId(propertyId.value);
-          if (!this.schema.properties[newId]) {
-            this.schema.properties[newId] = property;
+          const newPropertyId = this.#createId(propertyId.value);
+          if (!this.schema.properties[newPropertyId]) {
+            this.schema.properties[newPropertyId] = property;
             delete this.schema.properties[existingId.value];
 
             if (this.showAsCustom.has(existingPropertyId)) {
               this.showAsCustom.delete(existingPropertyId);
-              this.showAsCustom.add(newId);
+              this.showAsCustom.add(newPropertyId);
             }
+
+            // Ensure stable property order by updating the property name in the
+            // ordered listing.
+            this.#schemaPropertiesOrder = this.#schemaPropertiesOrder.map(
+              (property) => {
+                if (property === existingPropertyId) {
+                  return newPropertyId;
+                }
+
+                return property;
+              }
+            );
 
             this.requestUpdate();
           } else {
@@ -643,7 +660,16 @@ export class StreamlinedSchemaEditor extends LitElement {
   }
 
   render() {
-    const properties = Object.entries(this.schema?.properties ?? {}).sort();
+    const properties = this.schema?.properties ?? {};
+
+    // The only times these are expected to be unmatched are:
+    // 1. We have an entirely new Schema and the current order is unknown.
+    // 2. When we traverse the history.
+    //
+    // In such cases we (re)create the schema property order.
+    if (Object.keys(properties).length !== this.#schemaPropertiesOrder.length) {
+      this.#schemaPropertiesOrder = Object.keys(properties);
+    }
 
     return html`<form
       ${ref(this.#formRef)}
@@ -654,7 +680,8 @@ export class StreamlinedSchemaEditor extends LitElement {
     >
       ${this.schema
         ? html`${this.schema.properties
-            ? html`${map(properties, ([name, property], idx) => {
+            ? html`${map(this.#schemaPropertiesOrder, (name, idx) => {
+                  const property = properties[name];
                   const id = this.#createId(name);
                   let isLLMContentArray = this.#isLLMContentArray(property);
                   let isText = this.#isText(property);
@@ -864,7 +891,7 @@ export class StreamlinedSchemaEditor extends LitElement {
                         `
                       : nothing}
                     ${defaultValueInput}
-                    ${idx < properties.length - 1
+                    ${idx < this.#schemaPropertiesOrder.length - 1
                       ? html`<div class="divider"></div>`
                       : ``}`;
                 })}
