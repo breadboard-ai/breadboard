@@ -75,7 +75,7 @@ export class Board extends EventTarget {
     return boardUrl;
   }
 
-  #getProviderByName(name: string) {
+  getProviderByName(name: string) {
     if (this.boardServers) {
       return (
         this.boardServers.servers.find((server) => server.name === name) || null
@@ -85,7 +85,7 @@ export class Board extends EventTarget {
     return this.providers.find((provider) => provider.name === name) || null;
   }
 
-  #getProviderForURL(url: URL) {
+  getProviderForURL(url: URL) {
     if (this.boardServers) {
       return (
         this.boardServers.servers.find((server) => server.canProvide(url)) ||
@@ -96,7 +96,7 @@ export class Board extends EventTarget {
     return this.providers.find((provider) => provider.canProvide(url)) || null;
   }
 
-  #getBoardServerForURL(url: URL) {
+  getBoardServerForURL(url: URL) {
     if (this.boardServers) {
       return (
         this.boardServers.servers.find((server) => server.canProvide(url)) ||
@@ -314,7 +314,7 @@ export class Board extends EventTarget {
       let kits = this.kits;
       let graph: GraphDescriptor | null = null;
       if (this.#canParse(url, base.href)) {
-        const provider = this.#getProviderForURL(new URL(url, base));
+        const provider = this.getProviderForURL(new URL(url, base));
         if (provider) {
           // Ensure the the provider has actually loaded fully before
           // requesting the graph file from it.
@@ -322,7 +322,6 @@ export class Board extends EventTarget {
         }
 
         if (provider && this.boardServers) {
-          console.log(provider as BoardServer);
           kits = (provider as BoardServer).kits ?? this.kits;
           graph = await this.boardServers.loader.load(url, { base });
         } else {
@@ -430,7 +429,7 @@ export class Board extends EventTarget {
     }
 
     const boardUrl = new URL(tab.graph.url);
-    const provider = this.#getProviderForURL(boardUrl);
+    const provider = this.getProviderForURL(boardUrl);
     if (!provider) {
       return false;
     }
@@ -468,7 +467,7 @@ export class Board extends EventTarget {
     }
 
     const boardUrl = new URL(tab.graph.url);
-    const provider = this.#getProviderForURL(boardUrl);
+    const provider = this.getProviderForURL(boardUrl);
     if (!provider) {
       return { result: false, error: "Unable to save" };
     }
@@ -488,7 +487,7 @@ export class Board extends EventTarget {
     graph: GraphDescriptor
   ) {
     const fail = { result: false, error: "Unable to save", url: undefined };
-    const provider = this.#getProviderByName(providerName);
+    const provider = this.getProviderByName(providerName);
     if (!provider) {
       return fail;
     }
@@ -505,7 +504,7 @@ export class Board extends EventTarget {
 
   async delete(providerName: string, url: string) {
     const fail = { result: false, error: "Unable to delete" };
-    const provider = this.#getProviderByName(providerName);
+    const provider = this.getProviderByName(providerName);
     if (!provider) {
       return fail;
     }
@@ -597,7 +596,7 @@ export class Board extends EventTarget {
     }
 
     const boardUrl = new URL(tab.graph.url);
-    const boardServer = this.#getBoardServerForURL(boardUrl);
+    const boardServer = this.getBoardServerForURL(boardUrl);
     if (!boardServer) {
       return;
     }

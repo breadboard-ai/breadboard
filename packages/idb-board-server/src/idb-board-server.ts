@@ -22,11 +22,6 @@ import {
 
 import * as idb from "idb";
 
-import { loadKits } from "./utils/kit-loader.js";
-import GeminiKit from "@google-labs/gemini-kit";
-import PythonWasmKit from "@breadboard-ai/python-wasm";
-import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
-
 import {
   IDBProjectStoreConfiguration,
   IDBProjectStoreProject as IDBBoardServerProject,
@@ -34,21 +29,19 @@ import {
 } from "./types/idb-types.js";
 import { fromManifest } from "@google-labs/breadboard/kits";
 
-const loadedKits = loadKits([GeminiKit, PythonWasmKit, GoogleDriveKit]);
-
 const loadedExtensions: BoardServerExtension[] = [];
 
 // Since IDB does not support various items, like functions, we use
 // inflate and deflate functions to handle going into and out of IDB.
 
 async function inflateConfiguration(
-  configuration: IDBProjectStoreConfiguration
+  configuration: IDBProjectStoreConfiguration,
+  loadedKits: Kit[]
 ): Promise<BoardServerConfiguration> {
   const secrets = new Map<string, string>(configuration.secrets);
-  const allKits = await loadedKits;
   const kits: Kit[] = configuration.kits
     .map((url) => {
-      const kit = allKits.find((kit) => kit.url === url);
+      const kit = loadedKits.find((kit) => kit.url === url);
       if (!kit) {
         console.warn(`Unable to find kit for ${url}`);
         return null;
@@ -169,7 +162,7 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
     return url.replace(/^idb:\/\//, "");
   }
 
-  static async from(url: string, user: User) {
+  static async from(url: string, title: string, user: User, kits: Kit[]) {
     try {
       const db = await createLocalStoreDBIfNeeded(url);
 
@@ -182,8 +175,8 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
         throw new Error(`Unable to retrieve configuration for ${url}`);
       }
 
-      const configuration = await inflateConfiguration(idbConfiguration);
-      return new IDBBoardServer("Browser Storage", configuration, user);
+      const configuration = await inflateConfiguration(idbConfiguration, kits);
+      return new IDBBoardServer(title, configuration, user);
     } catch (err) {
       console.warn(err);
       return null;
@@ -205,8 +198,7 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
     db.close();
   }
 
-  static async createDefault(url: URL, user: User) {
-    const kits = await loadedKits;
+  static async createDefault(url: URL, user: User, kits: Kit[]) {
     const extensions = loadedExtensions;
     this.#create({
       url: new URL(url),

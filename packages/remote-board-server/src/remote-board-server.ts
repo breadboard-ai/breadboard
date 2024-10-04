@@ -21,13 +21,6 @@ import {
   type Permission,
   type User,
 } from "@google-labs/breadboard";
-import { loadKits } from "./utils/kit-loader";
-import GeminiKit from "@google-labs/gemini-kit";
-import PythonWasmKit from "@breadboard-ai/python-wasm";
-import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
-
-// TODO: Get these kits from each board server.
-const loadedKits = loadKits([GeminiKit, PythonWasmKit, GoogleDriveKit]);
 
 /**
  * For now, make a flag that controls whether to use simple requests or not.
@@ -82,20 +75,12 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
 
   static readonly PROTOCOL = "https://";
 
-  static parseURL(url: string) {
-    if (!url.startsWith(this.PROTOCOL)) {
-      throw new Error(`Not a local store URL: ${url}`);
-    }
-
-    return url.replace(/^idb:\/\//, "");
-  }
-
-  static async from(url: string, user: User) {
+  static async from(url: string, title: string, user: User, kits: Kit[]) {
     try {
       const configuration = {
         url: new URL(url),
         projects: Promise.resolve([]),
-        kits: await loadedKits,
+        kits,
         users: [],
         secrets: new Map(),
         extensions: [],
@@ -108,7 +93,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
         },
       };
 
-      return new RemoteBoardServer(url, configuration, user);
+      return new RemoteBoardServer(title, configuration, user);
     } catch (err) {
       console.warn(err);
       return null;
@@ -426,5 +411,13 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
     }
 
     return projects;
+  }
+
+  async canProxy(url: URL): Promise<string | false> {
+    if (!this.canProvide(url)) {
+      return false;
+    }
+
+    return `${this.url.href}/proxy?API_KEY=${this.user.apiKey}`;
   }
 }

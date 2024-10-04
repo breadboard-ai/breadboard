@@ -19,13 +19,7 @@ import {
   type Permission,
   type User,
 } from "@google-labs/breadboard";
-import { loadKits } from "./utils/kit-loader";
-import GeminiKit from "@google-labs/gemini-kit";
-import PythonWasmKit from "@breadboard-ai/python-wasm";
-import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 import { BreadboardManifest, isReference } from "@breadboard-ai/manifest";
-
-const loadedKits = loadKits([GeminiKit, PythonWasmKit, GoogleDriveKit]);
 
 import examplesBoards from "@breadboard-ai/example-boards/examples-boards.json" assert { type: "json" };
 import playgroundBoards from "@breadboard-ai/example-boards/playground-boards.json" assert { type: "json" };
@@ -43,20 +37,12 @@ export class ExampleBoardServer extends EventTarget implements BoardServer {
 
   static readonly PROTOCOL = "example://";
 
-  static parseURL(url: string) {
-    if (!url.startsWith(this.PROTOCOL)) {
-      throw new Error(`Not a local store URL: ${url}`);
-    }
-
-    return url.replace(/^idb:\/\//, "");
-  }
-
-  static async from(url: string, user: User) {
+  static async from(url: string, title: string, user: User, kits: Kit[]) {
     try {
       const configuration = {
         url: new URL(url),
         projects: Promise.resolve([]),
-        kits: await loadedKits,
+        kits,
         users: [],
         secrets: new Map(),
         extensions: [],
@@ -69,17 +55,14 @@ export class ExampleBoardServer extends EventTarget implements BoardServer {
         },
       };
 
-      let title = "Examples";
       let manifest = examplesBoards;
       switch (url) {
         case "example://example-boards": {
-          title = "Example Boards";
           manifest = examplesBoards;
           break;
         }
 
         case "example://playground-boards": {
-          title = "Playground Boards";
           manifest = playgroundBoards;
           break;
         }
