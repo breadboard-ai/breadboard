@@ -83,7 +83,6 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
     const userRequest = createRequest(`${url}/me`, apiKey ?? null, "GET");
     const infoRequest = createRequest(`${url}/info`, null, "GET");
 
-    console.log(infoRequest);
     try {
       const [infoRes, userRes] = await Promise.all([
         fetch(infoRequest),
