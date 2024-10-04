@@ -215,8 +215,8 @@ export const styles = css`
   }
 
   #tab-container h1 {
-    font-size: var(--bb-label-medium);
-    font-weight: normal;
+    font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+      var(--bb-font-family);
     background: var(--bb-neutral-0);
     color: var(--bb-neutral-800);
     margin: 0;
@@ -291,6 +291,8 @@ export const styles = css`
     border: none;
     color: var(--bb-neutral-800);
     white-space: nowrap;
+    font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+      var(--bb-font-family);
   }
 
   #tab-container .back-to-main-board:disabled {

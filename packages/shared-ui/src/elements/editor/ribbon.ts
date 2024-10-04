@@ -140,6 +140,11 @@ export class RibbonMenu extends LitElement {
       white-space: nowrap;
     }
 
+    #component-toggle {
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
+    }
+
     #component-toggle-container,
     #components,
     #board-management,
@@ -270,7 +275,7 @@ export class RibbonMenu extends LitElement {
     }
 
     #left button {
-      margin-right: var(--bb-grid-size-2);
+      margin-right: var(--bb-grid-size-3);
     }
 
     #right button {
