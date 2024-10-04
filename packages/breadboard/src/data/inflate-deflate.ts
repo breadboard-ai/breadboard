@@ -4,12 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { InlineDataCapabilityPart } from "@breadboard-ai/types";
 import { asBase64, asBlob, isInlineData, isStoredData } from "./common.js";
-import {
-  DataStore,
-  InlineDataCapabilityPart,
-  SerializedDataStoreGroup,
-} from "./types.js";
+import { DataStore, SerializedDataStoreGroup } from "./types.js";
 
 /**
  * Recursively descends into the data object and inflates any

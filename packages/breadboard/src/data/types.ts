@@ -4,61 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type {
+  DataStoreHandle,
+  InlineDataCapabilityPart,
+  StoredDataCapabilityPart,
+} from "@breadboard-ai/types";
 import { HarnessRunResult } from "../harness/types.js";
 import { ReanimationState } from "../run/types.js";
 import { Schema } from "../types.js";
-
-export type FunctionCallCapabilityPart = {
-  functionCall: {
-    name: string;
-    args: object;
-  };
-};
-
-export type FunctionResponseCapabilityPart = {
-  functionResponse: {
-    name: string;
-    response: object;
-  };
-};
-
-export type TextCapabilityPart = {
-  text: string;
-};
-
-export type DataPart =
-  | InlineDataCapabilityPart
-  | StoredDataCapabilityPart
-  | FunctionCallCapabilityPart
-  | FunctionResponseCapabilityPart
-  | TextCapabilityPart;
-
-export type LLMContent = {
-  role?: string;
-  parts: DataPart[];
-};
-
-/**
- * Represents inline data, encoded as a base64 string.
- */
-export type InlineDataCapabilityPart = {
-  inlineData: {
-    mimeType: string;
-    data: string;
-  };
-};
-
-/**
- * Represents data that is stored by a DataStoreProvider.
- */
-export type StoredDataCapabilityPart = {
-  storedData: {
-    handle: DataStoreHandle;
-    mimeType: string;
-  };
-};
-
-export type DataStoreHandle = string;
 
 export type StoredData = {
   asInline(): Promise<InlineDataCapabilityPart>;

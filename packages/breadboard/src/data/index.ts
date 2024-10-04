@@ -33,13 +33,3 @@ export {
   toInlineDataPart,
   toStoredDataPart,
 } from "./common.js";
-
-export type {
-  DataStore,
-  FunctionCallCapabilityPart,
-  FunctionResponseCapabilityPart,
-  LLMContent,
-  TextCapabilityPart,
-  StoredDataCapabilityPart,
-  InlineDataCapabilityPart,
-} from "./types.js";

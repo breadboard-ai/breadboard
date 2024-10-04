@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
   FunctionCallCapabilityPart,
   FunctionResponseCapabilityPart,
   InlineDataCapabilityPart,
   LLMContent,
   StoredDataCapabilityPart,
   TextCapabilityPart,
-} from "./types.js";
+} from "@breadboard-ai/types";
 import { DataCapability } from "../types.js";
 
 // Helpers for handling DataCapability objects.

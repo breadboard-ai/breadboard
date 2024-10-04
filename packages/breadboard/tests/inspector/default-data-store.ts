@@ -11,10 +11,10 @@ import {
   isInlineData,
   isLLMContent,
   isStoredData,
-  StoredDataCapabilityPart,
 } from "../../src/index.js";
 import { HarnessRunResult } from "../../src/harness/types.js";
 import { isLLMContentArray } from "../../src/data/common.js";
+import type { StoredDataCapabilityPart } from "@breadboard-ai/types";
 
 const inputResult: HarnessRunResult = {
   type: "nodeend",
