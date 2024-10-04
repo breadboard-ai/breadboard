@@ -1,10 +1,12 @@
-import { LitElement, css, html } from "lit";
-import { customElement, property } from "lit/decorators.js";
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-type SettingsData = {
-  url: string;
-  key: string;
-};
+import { LitElement, css, html, nothing } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { SettingsData } from "./types";
 
 const SETTINGS_LOCAL_STORAGE_KEY = "settings";
 
@@ -22,10 +24,10 @@ export class Settings extends LitElement {
         <label
           >Board URL:
           <input
-            type="text"
+            type="url"
             name="url"
             placeholder="e.g. example.com/boards/@name/board.bgl.json"
-            .value=${url}
+            value=${url || nothing}
           />
         </label>
         <label
@@ -33,7 +35,7 @@ export class Settings extends LitElement {
           <input
             type="text"
             name="key"
-            .value=${key}
+            value=${key || nothing}
             placeholder="e.g. bb-<long-number>"
           />
         </label>
@@ -44,7 +46,6 @@ export class Settings extends LitElement {
 
   #updateSettings(data: SettingsData) {
     localStorage.setItem(SETTINGS_LOCAL_STORAGE_KEY, JSON.stringify(data));
-    this.data = data;
   }
 
   #readSettings() {
@@ -53,18 +54,43 @@ export class Settings extends LitElement {
     ) as SettingsData;
   }
 
+  #dispatchLoadSettingsEvent() {
+    this.dispatchEvent(
+      new CustomEvent("bbdloadsettings", {
+        detail: this.data,
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    const { url, key } = this.data;
+    if (!url || !key) {
+      return;
+    }
+    requestAnimationFrame(() => this.#dispatchLoadSettingsEvent());
+  }
+
   #onSubmit(event: Event) {
     event.preventDefault();
     const form = event.target as HTMLFormElement;
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries()) as SettingsData;
     this.#updateSettings(data);
+    this.data = data;
+    this.#dispatchLoadSettingsEvent();
   }
 
   static styles = css`
     :host {
       display: block;
-      padding: 1rem;
+      padding-bottom: 2rem;
+    }
+
+    * {
+      box-sizing: border-box;
     }
 
     label {
