@@ -16,6 +16,7 @@ import {
   migrateIDBGraphProviders,
   migrateRemoteGraphProviders,
   migrateExampleGraphProviders,
+  migrateFileSystemProviders,
 } from "@breadboard-ai/board-server-management";
 
 import { loadKits } from "../utils/kit-loader";
@@ -50,6 +51,7 @@ export async function create(config: RuntimeConfig): Promise<{
       await migrateIDBGraphProviders();
       await migrateRemoteGraphProviders();
       await migrateExampleGraphProviders();
+      await migrateFileSystemProviders();
       servers = await getBoardServers();
     }
 

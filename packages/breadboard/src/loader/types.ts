@@ -26,6 +26,7 @@ export type GraphProviderStore = {
   permission: "unknown" | "prompt" | "granted";
   title: string;
   items: Map<string, GraphProviderItem>;
+  url?: string;
 };
 
 export type GraphProviderChange = {

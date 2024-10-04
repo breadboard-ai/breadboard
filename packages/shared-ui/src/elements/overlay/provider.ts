@@ -213,12 +213,7 @@ export class ProviderOverlay extends LitElement {
       }
     }
 
-    const supportsFileSystem =
-      this.providers.find((provider) => {
-        return (
-          provider.name === "FileSystemGraphProvider" && provider.isSupported()
-        );
-      }) !== undefined;
+    const supportsFileSystem = "showDirectoryPicker" in window;
 
     return html`<bb-overlay>
       <form

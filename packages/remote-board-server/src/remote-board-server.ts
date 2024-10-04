@@ -75,6 +75,29 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
 
   static readonly PROTOCOL = "https://";
 
+  static async connect(url: string, apiKey?: string) {
+    if (url.endsWith("/")) {
+      url = url.replace(/\/$/, "");
+    }
+
+    const userRequest = createRequest(`${url}/me`, apiKey ?? null, "GET");
+    const infoRequest = createRequest(`${url}/info`, null, "GET");
+
+    console.log(infoRequest);
+    try {
+      const [infoRes, userRes] = await Promise.all([
+        fetch(infoRequest),
+        fetch(userRequest),
+      ]);
+
+      const [info, user] = await Promise.all([infoRes.json(), userRes.json()]);
+      return { title: info.title, username: user.username };
+    } catch (err) {
+      console.warn(err);
+      return false;
+    }
+  }
+
   static async from(url: string, title: string, user: User, kits: Kit[]) {
     try {
       const configuration = {
@@ -328,6 +351,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
       items: new Map(projects),
       permission: "granted",
       title: this.name,
+      url: this.url.href,
     });
 
     return items;

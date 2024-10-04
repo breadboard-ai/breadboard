@@ -92,7 +92,84 @@ export async function getBoardServers(
   return stores.filter((store) => store !== null);
 }
 
-export async function storeBoardServer(
+export async function connectToBoardServer(location?: string, apiKey?: string) {
+  const existingServers = await getBoardServers();
+  if (location && location.startsWith(RemoteBoardServer.PROTOCOL)) {
+    const existingServer = existingServers.find(
+      (server) => server.url.origin === location
+    );
+
+    if (existingServer) {
+      console.warn("Server already connected");
+      return false;
+    }
+
+    const response = await RemoteBoardServer.connect(location, apiKey);
+    if (response) {
+      await storeBoardServer(new URL(location), response.title, {
+        apiKey: apiKey ?? "",
+        secrets: new Map(),
+        username: response.username,
+      });
+      return true;
+    }
+
+    return false;
+  } else {
+    const handle = await FileSystemBoardServer.connect();
+    if (!handle) {
+      return false;
+    }
+
+    const url = FileSystemBoardServer.createURL(handle.name);
+    const boardServerUrl = new URL(url);
+    const existingServer = existingServers.find((server) => {
+      return server.url.href === boardServerUrl.href;
+    });
+
+    if (existingServer) {
+      console.warn("Server already connected");
+      return false;
+    }
+
+    try {
+      await storeBoardServer(
+        boardServerUrl,
+        handle.name,
+        {
+          apiKey: apiKey ?? "",
+          secrets: new Map(),
+          username: "board-builder",
+        },
+        handle
+      );
+
+      return true;
+    } catch (err) {
+      console.warn(err);
+      return false;
+    }
+  }
+}
+
+export async function disconnectFromBoardServer(location: string) {
+  const db = await idb.openDB<BoardServerListing>(
+    BOARD_SERVER_LISTING_DB,
+    BOARD_SERVER_LISTING_VERSION,
+    {
+      upgrade(db) {
+        db.createObjectStore("servers", { keyPath: "url" });
+      },
+    }
+  );
+
+  const url = new URL(location);
+  await db.delete("servers", IDBKeyRange.only(url.href));
+  db.close();
+  return true;
+}
+
+async function storeBoardServer(
   url: URL,
   title: string,
   user: User,
@@ -199,7 +276,8 @@ export async function migrateRemoteGraphProviders() {
       secrets: new Map(),
     };
 
-    await storeBoardServer(new URL(store.url), store.url, user);
+    const url = new URL(store.url);
+    await storeBoardServer(url, url.href, user);
   }
 }
 
@@ -237,7 +315,7 @@ export async function migrateFileSystemProviders() {
       secrets: new Map(),
     };
 
-    const url = `${FileSystemBoardServer.PROTOCOL}${encodeURIComponent(store.name.toLocaleLowerCase())}`;
+    const url = FileSystemBoardServer.createURL(store.name);
     await storeBoardServer(new URL(url), store.name, user, store);
   }
   db.close();
