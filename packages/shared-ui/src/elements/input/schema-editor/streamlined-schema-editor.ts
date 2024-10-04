@@ -3,24 +3,25 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LLMContent, Schema } from "@google-labs/breadboard";
+import type { LLMContent } from "@breadboard-ai/types";
+import { Schema } from "@google-labs/breadboard";
 import {
-  LitElement,
-  html,
   css,
-  nothing,
+  html,
   HTMLTemplateResult,
+  LitElement,
+  nothing,
   PropertyValues,
 } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { HideTooltipEvent, ShowTooltipEvent } from "../../../events/events";
 import { isLLMContentArrayBehavior, isTextBehavior } from "../../../utils";
 import {
   createAllowListFromProperty,
   getMinItemsFromProperty,
 } from "../../../utils/llm-content";
-import { HideTooltipEvent, ShowTooltipEvent } from "../../../events/events";
 import { CodeEditor } from "../code-editor/code-editor";
 
 const LLM_CONTENT_ARRAY: Schema = {

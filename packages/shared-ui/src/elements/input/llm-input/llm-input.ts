@@ -15,18 +15,20 @@ import type { AudioInput } from "../audio/audio.js";
 import type { DrawableInput } from "../drawable/drawable.js";
 import type { WebcamInput } from "../webcam/webcam.js";
 import {
-  InlineDataCapabilityPart,
   isFunctionCallCapabilityPart,
   isFunctionResponseCapabilityPart,
   isInlineData,
   isStoredData,
   isTextCapabilityPart,
-  LLMContent,
-  StoredDataCapabilityPart,
   toInlineDataPart,
 } from "@google-labs/breadboard";
 import { asBase64 } from "../../../utils/as-base-64.js";
 import { styleMap } from "lit/directives/style-map.js";
+import type {
+  InlineDataCapabilityPart,
+  LLMContent,
+  StoredDataCapabilityPart,
+} from "@breadboard-ai/types";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 

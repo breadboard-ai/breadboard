@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LLMContent } from "@google-labs/breadboard";
-import { LitElement, html, css } from "lit";
+import type { LLMContent } from "@breadboard-ai/types";
+import { LitElement, css, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 

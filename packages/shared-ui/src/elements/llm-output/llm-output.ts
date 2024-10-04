@@ -3,21 +3,21 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, TemplateResult, nothing } from "lit";
-import { customElement, property } from "lit/decorators.js";
-import { map } from "lit/directives/map.js";
-import { markdown } from "../../directives/markdown.js";
-import { until } from "lit/directives/until.js";
-import { cache } from "lit/directives/cache.js";
+import type { LLMContent } from "@breadboard-ai/types";
 import {
   isFunctionCallCapabilityPart,
   isFunctionResponseCapabilityPart,
   isInlineData,
   isStoredData,
   isTextCapabilityPart,
-  LLMContent,
 } from "@google-labs/breadboard";
+import { LitElement, TemplateResult, css, html, nothing } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { cache } from "lit/directives/cache.js";
 import { classMap } from "lit/directives/class-map.js";
+import { map } from "lit/directives/map.js";
+import { until } from "lit/directives/until.js";
+import { markdown } from "../../directives/markdown.js";
 
 @customElement("bb-llm-output")
 export class LLMOutput extends LitElement {

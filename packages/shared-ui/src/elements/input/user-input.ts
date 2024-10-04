@@ -3,54 +3,54 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import {
-  LitElement,
-  html,
-  css,
-  HTMLTemplateResult,
-  nothing,
-  PropertyValues,
-} from "lit";
-import { customElement, property } from "lit/decorators.js";
-import { UserInputConfiguration, UserOutputValues } from "../../types/types";
-import { map } from "lit/directives/map.js";
-import {
-  isLLMContentArrayBehavior,
-  isBoardBehavior,
-  isCodeBehavior,
-  isGoogleDriveFileId,
-  isGoogleDriveQuery,
-  isLLMContentBehavior,
-  isPortSpecBehavior,
-  isSelect,
-  isEnum,
-} from "../../utils/index.js";
-import { classMap } from "lit/directives/class-map.js";
-import { createRef, ref, Ref } from "lit/directives/ref.js";
-import {
-  CodeEditor,
-  LLMInput,
-  LLMInputArray,
-  StreamlinedSchemaEditor,
-} from "../elements";
+import { LLMContent } from "@breadboard-ai/types";
 import {
   GraphDescriptor,
   GraphProvider,
   isLLMContent,
   isLLMContentArray,
-  LLMContent,
   NodeValue,
 } from "@google-labs/breadboard";
+import {
+  css,
+  html,
+  HTMLTemplateResult,
+  LitElement,
+  nothing,
+  PropertyValues,
+} from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
+import { map } from "lit/directives/map.js";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { UserOutputEvent } from "../../events/events";
+import { UserInputConfiguration, UserOutputValues } from "../../types/types";
+import {
+  isBoardBehavior,
+  isCodeBehavior,
+  isEnum,
+  isGoogleDriveFileId,
+  isGoogleDriveQuery,
+  isLLMContentArrayBehavior,
+  isLLMContentBehavior,
+  isPortSpecBehavior,
+  isSelect,
+} from "../../utils/index.js";
+import {
+  createAllowListFromProperty,
+  getMinItemsFromProperty,
+} from "../../utils/llm-content";
 import {
   assertIsLLMContent,
   resolveArrayType,
   resolveBehaviorType,
 } from "../../utils/schema";
 import {
-  createAllowListFromProperty,
-  getMinItemsFromProperty,
-} from "../../utils/llm-content";
-import { UserOutputEvent } from "../../events/events";
+  CodeEditor,
+  LLMInput,
+  LLMInputArray,
+  StreamlinedSchemaEditor,
+} from "../elements";
 import "./delegating-input.js";
 
 @customElement("bb-user-input")
