@@ -112,8 +112,6 @@ export class ExampleBoardServer extends EventTarget implements BoardServer {
     this.secrets = configuration.secrets;
     this.extensions = configuration.extensions;
     this.capabilities = configuration.capabilities;
-
-    console.log(this.kits);
   }
 
   #blank: URL | null = null;
@@ -217,7 +215,7 @@ export class ExampleBoardServer extends EventTarget implements BoardServer {
       ]);
     }
 
-    items.set(this.name, {
+    items.set(this.url.href, {
       items: new Map(projects),
       permission: "granted",
       title: this.name,
