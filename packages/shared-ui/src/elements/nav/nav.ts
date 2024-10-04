@@ -564,7 +564,12 @@ export class Navigation extends LitElement {
 
     await provider.ready();
 
-    const store = provider.items().get(this.selectedLocation);
+    let store = provider.items().get(this.selectedLocation);
+    if (!store) {
+      store = [...provider.items().values()].find(
+        (provider) => provider.url && provider.url === this.selectedLocation
+      );
+    }
     if (!store) {
       this.#returnToDefaultStore();
       return html`<nav id="menu">Error loading store</nav>`;
@@ -767,7 +772,7 @@ export class Navigation extends LitElement {
               >
                 ${map(this.providers, (provider) => {
                   return html`${map(provider.items(), ([location, store]) => {
-                    const value = `${provider.name}::${location}`;
+                    const value = `${provider.name}::${store.url ?? location}`;
                     const isSelectedOption = value === selected;
                     return html`<option
                       ?selected=${isSelectedOption}

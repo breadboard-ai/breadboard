@@ -353,6 +353,15 @@ export class Main extends LitElement {
         );
 
         this.#runtime.board.addEventListener(
+          Runtime.Events.RuntimeBoardServerChangeEvent.eventName,
+          () => {
+            this.showProviderAddOverlay = false;
+            this.#providers = runtime.board.getProviders() || [];
+            this.providerOps++;
+          }
+        );
+
+        this.#runtime.board.addEventListener(
           Runtime.Events.RuntimeTabChangeEvent.eventName,
           async (evt: Runtime.Events.RuntimeTabChangeEvent) => {
             this.tab = this.#runtime.board.currentTab;
@@ -1063,14 +1072,6 @@ export class Main extends LitElement {
     return id;
   }
 
-  #getProviderByName(name: string) {
-    return this.#providers.find((provider) => provider.name === name) || null;
-  }
-
-  #getProviderForURL(url: URL) {
-    return this.#providers.find((provider) => provider.canProvide(url)) || null;
-  }
-
   async #getProxyURL(urlString: string): Promise<string | null> {
     const url = new URL(urlString, window.location.href);
     for (const provider of this.#providers) {
@@ -1102,7 +1103,7 @@ export class Main extends LitElement {
 
     try {
       const url = new URL(this.tab?.graph.url, window.location.href);
-      const provider = this.#getProviderForURL(url);
+      const provider = this.#runtime.board.getProviderForURL(url);
       if (!provider) {
         return;
       }
@@ -1328,7 +1329,9 @@ export class Main extends LitElement {
         @bbgraphproviderrefresh=${async (
           evt: BreadboardUI.Events.GraphProviderRefreshEvent
         ) => {
-          const provider = this.#getProviderByName(evt.providerName);
+          const provider = this.#runtime.board.getProviderByName(
+            evt.providerName
+          );
           if (!provider) {
             return;
           }
@@ -1352,14 +1355,8 @@ export class Main extends LitElement {
         @bbgraphproviderdisconnect=${async (
           evt: BreadboardUI.Events.GraphProviderDisconnectEvent
         ) => {
-          const provider = this.#getProviderByName(evt.providerName);
-          if (!provider) {
-            return;
-          }
+          await this.#runtime.board.disconnect(evt.providerName, evt.location);
 
-          await provider.disconnect(evt.location);
-
-          // Trigger a re-render.
           this.providerOps++;
         }}
         @bbgraphproviderrenewaccesssrequest=${async (
@@ -1495,20 +1492,23 @@ export class Main extends LitElement {
             @bbgraphproviderconnectrequest=${async (
               evt: BreadboardUI.Events.GraphProviderConnectRequestEvent
             ) => {
-              const provider = this.#getProviderByName(evt.providerName);
-              if (!provider || !provider.extendedCapabilities().connect) {
+              const result = await this.#runtime.board.connect(
+                evt.providerName,
+                evt.location,
+                evt.apiKey
+              );
+
+              if (result.error) {
+                this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
+              }
+
+              if (!result.success) {
                 return;
               }
 
-              try {
-                await provider.connect(evt.location, evt.apiKey);
-              } catch (err) {
-                this.toast(
-                  `Unable to connect to ${boardServerUrl}. Check your API key and try again.`,
-                  BreadboardUI.Events.ToastType.ERROR
-                );
-                return;
-              }
+              // Trigger a re-render.
+              this.showProviderAddOverlay = false;
+              this.providerOps++;
             }}
             @bbsettingsupdate=${async (
               evt: BreadboardUI.Events.SettingsUpdateEvent
@@ -1555,22 +1555,17 @@ export class Main extends LitElement {
             @bbgraphproviderconnectrequest=${async (
               evt: BreadboardUI.Events.GraphProviderConnectRequestEvent
             ) => {
-              const provider = this.#getProviderByName(evt.providerName);
-              if (!provider || !provider.extendedCapabilities().connect) {
-                return;
+              const result = await this.#runtime.board.connect(
+                evt.providerName,
+                evt.location,
+                evt.apiKey
+              );
+
+              if (result.error) {
+                this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
               }
 
-              let success = false;
-              try {
-                success = await provider.connect(evt.location, evt.apiKey);
-              } catch (err) {
-                this.toast(
-                  "Unable to connect to provider",
-                  BreadboardUI.Events.ToastType.ERROR
-                );
-              }
-
-              if (!success) {
+              if (!result.success) {
                 return;
               }
 
@@ -2076,7 +2071,7 @@ export class Main extends LitElement {
                       return;
                     }
 
-                    const provider = this.#getProviderForURL(
+                    const provider = this.#runtime.board.getProviderForURL(
                       new URL(this.tab?.graph.url)
                     );
                     if (!provider) {
@@ -2106,7 +2101,7 @@ export class Main extends LitElement {
                       return;
                     }
 
-                    const provider = this.#getProviderForURL(
+                    const provider = this.#runtime.board.getProviderForURL(
                       new URL(this.tab?.graph.url)
                     );
                     if (!provider) {

@@ -21,8 +21,14 @@ import {
   RuntimeErrorEvent,
   RuntimeTabChangeEvent,
   RuntimeTabCloseEvent,
+  RuntimeBoardServerChangeEvent,
 } from "./events";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import {
+  connectToBoardServer,
+  disconnectFromBoardServer,
+  getBoardServers,
+} from "@breadboard-ai/board-server-management";
 
 export class Board extends EventTarget {
   #tabs = new Map<TabId, Tab>();
@@ -73,6 +79,78 @@ export class Board extends EventTarget {
       }
     }
     return boardUrl;
+  }
+
+  async connect(
+    providerName: string,
+    location?: string,
+    apiKey?: string
+  ): Promise<{ success: boolean; error?: string }> {
+    if (this.boardServers) {
+      const success = await connectToBoardServer(location, apiKey);
+      if (!success) {
+        this.dispatchEvent(
+          new RuntimeErrorEvent("Unable to connect to Board Server")
+        );
+
+        // We return true here because we don't need the toast from the Visual
+        // Editor. Instead we use the above RuntimeErrorEvent to ensure that
+        // the user is notified.
+        return { success: false };
+      } else {
+        this.boardServers.servers = await getBoardServers();
+        this.dispatchEvent(new RuntimeBoardServerChangeEvent());
+      }
+    } else {
+      const provider = this.getProviderByName(providerName);
+      if (!provider || !provider.extendedCapabilities().connect) {
+        return {
+          success: false,
+          error: "Provider does not support connections",
+        };
+      }
+
+      let success = false;
+      try {
+        success = await provider.connect(location, apiKey);
+      } catch (err) {
+        return { success: false, error: "Unable to connect to Provider" };
+      }
+
+      if (!success) {
+        return { success: false, error: "Unable to connect to Provider" };
+      }
+
+      return { success };
+    }
+
+    return { success: false };
+  }
+
+  async disconnect(providerName: string, location: string) {
+    if (this.boardServers) {
+      const success = await disconnectFromBoardServer(location);
+      if (!success) {
+        this.dispatchEvent(
+          new RuntimeErrorEvent("Unable to disconnect from Board Server")
+        );
+
+        // We return true here because we don't need the toast from the Visual
+        // Editor. Instead we use the above RuntimeErrorEvent to ensure that
+        // the user is notified.
+        return { success: false };
+      }
+      this.boardServers.servers = await getBoardServers();
+      this.dispatchEvent(new RuntimeBoardServerChangeEvent());
+    } else {
+      const provider = this.getProviderByName(providerName);
+      if (!provider) {
+        return { success: false };
+      }
+
+      await provider.disconnect(location);
+      return { success: true };
+    }
   }
 
   getProviderByName(name: string) {

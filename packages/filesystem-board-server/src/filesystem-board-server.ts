@@ -83,6 +83,20 @@ export class FileSystemBoardServer extends EventTarget implements BoardServer {
 
   static readonly PROTOCOL = "file://";
 
+  static async connect() {
+    try {
+      return await window.showDirectoryPicker({
+        mode: "readwrite",
+      });
+    } catch (err) {
+      return null;
+    }
+  }
+
+  static createURL(name: string) {
+    return `${this.PROTOCOL}${encodeURIComponent(name.toLocaleLowerCase())}`;
+  }
+
   static async from(
     url: string,
     title: string,
@@ -252,7 +266,7 @@ export class FileSystemBoardServer extends EventTarget implements BoardServer {
   }
 
   isSupported(): boolean {
-    return "showDirectoryPicker" in window;
+    return true;
   }
 
   canProvide(url: URL): false | GraphProviderCapabilities {
@@ -396,10 +410,9 @@ export class FileSystemBoardServer extends EventTarget implements BoardServer {
   }
 
   async connect(_location?: string | undefined): Promise<boolean> {
-    const handle = await window.showDirectoryPicker({
-      mode: "readwrite",
-    });
-    throw new Error("");
+    throw new Error(
+      "The `FileSystemBoardServer` should not be called to connect."
+    );
   }
 
   async disconnect(_location?: string | undefined): Promise<boolean> {

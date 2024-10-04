@@ -39,6 +39,14 @@ export class RuntimeBoardEditEvent extends Event {
   }
 }
 
+export class RuntimeBoardServerChangeEvent extends Event {
+  static eventName = "runtimeboardserverchange" as const;
+
+  constructor() {
+    super(RuntimeBoardServerChangeEvent.eventName, { ...eventInit });
+  }
+}
+
 export class RuntimeTabChangeEvent extends Event {
   static eventName = "runtimetabchange" as const;
 
