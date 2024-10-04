@@ -311,7 +311,7 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
         continue;
       }
 
-      nodes[type] = {
+      nodes[id] = {
         title: project.board?.descriptor.title,
         description: project.board?.descriptor.description,
         metadata: {
@@ -329,7 +329,7 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
     }
 
     const boardServerKit = fromManifest({
-      url: this.url.href,
+      url: `${this.url.href}/bsk`,
       version: "0.0.1",
       title: "Board Server Kit",
       nodes,
