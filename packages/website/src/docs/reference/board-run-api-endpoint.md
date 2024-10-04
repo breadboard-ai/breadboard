@@ -332,6 +332,50 @@ To continue an interaction:
 1. Extract the `next` value from the most recent input event.
 2. Include this value as `$next` in your next request body.
 
+## Handling Human component inputs/outputs
+
+One of the cases that will come up frequently is the use of the "[Human](/breadboard/docs/kits/agents/#human)" component in the board. This component is able to produce outputs directly to the user and request input in return. Because this happens in the middle of a component, it is not possible to just examine the input and output schemas as we've seen above to determine the port ids and their type.
+
+Here's a cheat sheet:
+
+The "Human" component output will be shaped as a single conversation context (array of [LLM Content](https://ai.google.dev/api/caching#Content)) port named `output`:
+
+```json
+{
+  "output": [{ "parts": [{ "text": "CHAT BOT RESPONSE" }] }]
+}
+```
+
+So, the output event will look something like this:
+
+```json
+["output", {
+  "node": { ... },
+  "outputs": {
+    "output": [{ "parts": [{ "text": "CHAT BOT RESPONSE" }] }, ... ]
+  },
+  ...
+}]
+```
+
+As input, the "Human" will look for a single [LLM Content](https://ai.google.dev/api/caching#Content) port with id `text`:
+
+```json
+{
+  "text": { "parts": [{ "text": "USER REPLY" }] }
+}
+```
+
+So, request that resumes the conversation will look something like this:
+
+```json
+{
+  "$key": "BOARD_SERVER_API_KEY",
+  "$next": "PREVIOUS_NEXT_VALUE",
+  "text": { "parts": [{ "text": "USER REPLY" }] }
+}
+```
+
 ### Run API Endpoint Examples
 
 ### Initiating a conversation
