@@ -1,5 +1,6 @@
 {
   "title": "Guide: My Librarian",
+  "description": "A simple agent that helps me find interesting books.",
   "version": "0.0.1",
   "metadata": {
     "help": {
@@ -12,9 +13,9 @@
         "text": "Comes up with a plan for a short (3-5 question) interview based on the initial topic, then runs the loop through\nall steps of the plan.",
         "metadata": {
           "visual": {
-            "x": -126,
-            "y": -208,
-            "collapsed": false
+            "x": -345,
+            "y": -243,
+            "collapsed": "expanded"
           }
         }
       },
@@ -23,9 +24,9 @@
         "text": "Starts by asking\nfor the topic.",
         "metadata": {
           "visual": {
-            "x": -321.9999999999999,
-            "y": -146,
-            "collapsed": false
+            "x": -614,
+            "y": -169,
+            "collapsed": "expanded"
           }
         }
       },
@@ -34,9 +35,9 @@
         "text": "Formulates a question based on the current step of the plan and the interview answers so far. ",
         "metadata": {
           "visual": {
-            "x": -142,
-            "y": 189.99999999999955,
-            "collapsed": false
+            "x": -324,
+            "y": 359,
+            "collapsed": "expanded"
           }
         }
       },
@@ -45,9 +46,9 @@
         "text": "Based on the interview results, formulates and makes 3 varying queries\nto Google Books API.",
         "metadata": {
           "visual": {
-            "x": 124,
-            "y": -218,
-            "collapsed": false
+            "x": 88,
+            "y": -335,
+            "collapsed": "expanded"
           }
         }
       },
@@ -57,8 +58,8 @@
         "metadata": {
           "visual": {
             "x": 277,
-            "y": 152,
-            "collapsed": false
+            "y": 212,
+            "collapsed": "expanded"
           }
         }
       },
@@ -67,9 +68,9 @@
         "text": "Summarizes the results and formats them nicely for final output.",
         "metadata": {
           "visual": {
-            "x": 368,
-            "y": -235,
-            "collapsed": false
+            "x": 431,
+            "y": -309,
+            "collapsed": "expanded"
           }
         }
       },
@@ -78,9 +79,9 @@
         "text": "Ends by presenting recommendations.",
         "metadata": {
           "visual": {
-            "x": 504,
-            "y": 82,
-            "collapsed": false
+            "x": 743,
+            "y": 180,
+            "collapsed": "expanded"
           }
         }
       },
@@ -89,9 +90,9 @@
         "text": "📚 THE LIBRARIAN 📚\nHelps you find\nthe next book \nor your reading list.",
         "metadata": {
           "visual": {
-            "x": -302,
-            "y": 8.999999999999886,
-            "collapsed": false
+            "x": -615,
+            "y": 20,
+            "collapsed": "expanded"
           }
         }
       },
@@ -100,9 +101,9 @@
         "text": "< goes back to planner",
         "metadata": {
           "visual": {
-            "x": 216,
-            "y": 4,
-            "collapsed": false
+            "x": 112,
+            "y": -85,
+            "collapsed": "expanded"
           }
         }
       },
@@ -111,9 +112,9 @@
         "text": "Read the guide: [Building a Librarian with the Agent Kit](https://breadboard-ai.github.io/breadboard/docs/guides/librarian/)",
         "metadata": {
           "visual": {
-            "x": -322,
-            "y": -316,
-            "collapsed": true
+            "x": -614,
+            "y": -266,
+            "collapsed": "collapsed"
           }
         }
       }
@@ -189,9 +190,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -281.9999999999998,
-          "y": -92,
-          "collapsed": false
+          "x": -615,
+          "y": -85,
+          "collapsed": "expanded"
         }
       }
     },
@@ -200,9 +201,9 @@
       "type": "looper",
       "metadata": {
         "visual": {
-          "x": -78.99999999999989,
-          "y": -99,
-          "collapsed": false
+          "x": -347,
+          "y": -98,
+          "collapsed": "expanded"
         },
         "title": "Interview Planner",
         "logLevel": "debug"
@@ -223,9 +224,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": -56,
-          "y": 120,
-          "collapsed": false
+          "x": -365,
+          "y": 137,
+          "collapsed": "expanded"
         },
         "title": "Interviewer",
         "logLevel": "debug"
@@ -246,9 +247,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 149,
-          "y": -118,
-          "collapsed": false
+          "x": 45,
+          "y": -207,
+          "collapsed": "expanded"
         },
         "title": "Researcher",
         "logLevel": "debug"
@@ -280,9 +281,9 @@
       "type": "human",
       "metadata": {
         "visual": {
-          "x": 179,
-          "y": 79.99999999999977,
-          "collapsed": false
+          "x": 26,
+          "y": 186,
+          "collapsed": "expanded"
         },
         "title": "Interviewee",
         "logLevel": "debug"
@@ -311,9 +312,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 472,
-          "y": 12.999999999999886,
-          "collapsed": false
+          "x": 776,
+          "y": 56,
+          "collapsed": "expanded"
         }
       }
     },
@@ -322,9 +323,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 392,
-          "y": -157.99999999999994,
-          "collapsed": false
+          "x": 390,
+          "y": -205,
+          "collapsed": "expanded"
         },
         "title": "Summarizer",
         "logLevel": "debug"
@@ -348,6 +349,5 @@
         }
       }
     }
-  ],
-  "description": "A simple agent that helps me find interesting books."
+  ]
 }

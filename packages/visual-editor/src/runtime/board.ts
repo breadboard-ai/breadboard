@@ -23,7 +23,6 @@ import {
   RuntimeTabCloseEvent,
 } from "./events";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { IDBBoardServer } from "@breadboard-ai/idb-board-server";
 
 export class Board extends EventTarget {
   #tabs = new Map<TabId, Tab>();
@@ -322,8 +321,9 @@ export class Board extends EventTarget {
           await provider.ready();
         }
 
-        if (this.boardServers) {
-          kits = (provider as IDBBoardServer).kits ?? this.kits;
+        if (provider && this.boardServers) {
+          console.log(provider as BoardServer);
+          kits = (provider as BoardServer).kits ?? this.kits;
           graph = await this.boardServers.loader.load(url, { base });
         } else {
           graph = await this.loader.load(url, { base });

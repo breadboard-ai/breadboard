@@ -20,6 +20,7 @@
     "build": {
       "dependencies": [
         "../breadboard:build",
+        "../example-board-server:build",
         "../idb-board-server:build",
         "../remote-board-server:build",
         "build:tsc"
@@ -28,6 +29,7 @@
     "typescript-files-and-deps": {
       "dependencies": [
         "../breadboard:build:tsc",
+        "../example-board-server:build:tsc",
         "../idb-board-server:build:tsc",
         "../remote-board-server:build:tsc"
       ],
@@ -80,6 +82,7 @@
     "@breadboard-ai/build": "0.10.3",
     "@breadboard-ai/idb-board-server": "1.17.2",
     "@breadboard-ai/remote-board-server": "1.17.2",
+    "@breadboard-ai/example-board-server": "1.17.2",
     "@google-labs/breadboard": "^0.27.3",
     "idb": "^8.0.0"
   }

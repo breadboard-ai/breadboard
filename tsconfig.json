@@ -11,6 +11,7 @@
     { "path": "packages/data-store" },
     { "path": "packages/discovery-types" },
     { "path": "packages/example-boards" },
+    { "path": "packages/example-board-server" },
     { "path": "packages/gemini-kit" },
     { "path": "packages/google-drive-kit" },
     { "path": "packages/idb-board-server" },

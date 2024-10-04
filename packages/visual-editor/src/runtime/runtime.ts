@@ -15,6 +15,7 @@ import {
   getBoardServers,
   migrateIDBGraphProviders,
   migrateRemoteGraphProviders,
+  migrateExampleGraphProviders,
 } from "@breadboard-ai/board-server-management";
 
 import { loadKits } from "../utils/kit-loader";
@@ -40,13 +41,15 @@ export async function create(config: RuntimeConfig): Promise<{
 
   let boardServers: RuntimeConfigBoardServers | undefined = undefined;
   if (config.experiments.boardServers) {
-    let servers = await getBoardServers();
+    const skipPlaygroundExamples = import.meta.env.MODE !== "development";
+    let servers = await getBoardServers(skipPlaygroundExamples);
 
     // First run - set everything up and migrate the data.
     if (servers.length === 0) {
       await createDefaultLocalBoardServer();
       await migrateIDBGraphProviders();
       await migrateRemoteGraphProviders();
+      await migrateExampleGraphProviders();
       servers = await getBoardServers();
     }
 
