@@ -232,6 +232,10 @@ export class ComponentSelectorOverlay extends LitElement {
         continue;
       }
 
+      if (kit.descriptor.title === "Custom Types") {
+        continue;
+      }
+
       if (kit.descriptor.tags?.includes("deprecated")) {
         continue;
       }
