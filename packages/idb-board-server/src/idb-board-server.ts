@@ -18,9 +18,6 @@ import {
   Permission,
   User,
   GraphProviderItem,
-  NodeDescriptor,
-  inspect,
-  createLoader,
 } from "@google-labs/breadboard";
 
 import * as idb from "idb";
@@ -35,7 +32,7 @@ import {
   IDBProjectStoreProject as IDBBoardServerProject,
   LocalStoreData,
 } from "./types/idb-types.js";
-import { GraphMetadata } from "@breadboard-ai/types";
+import { fromManifest } from "@google-labs/breadboard/kits";
 
 const loadedKits = loadKits([
   GeminiKit,
@@ -153,7 +150,6 @@ async function createLocalStoreDBIfNeeded(url: string) {
 
 export class IDBBoardServer extends EventTarget implements BoardServer {
   public readonly url: URL;
-  public readonly kits: Kit[];
   public readonly users: User[];
   public readonly secrets = new Map<string, string>();
   public readonly extensions: BoardServerExtension[] = [];
@@ -165,6 +161,7 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
     preview: false,
   };
 
+  kits: Kit[];
   projects: Promise<BoardServerProject[]>;
 
   static readonly PROTOCOL = "idb://";
@@ -249,10 +246,8 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
     super();
 
     this.url = configuration.url;
-    this.projects = this.#refreshProjects();
     this.kits = configuration.kits;
-    this.kits.push(this.#boardServerKit);
-    this.#boardServerKit.url = this.url.href;
+    this.projects = this.#refreshProjects();
 
     this.users = configuration.users;
     this.secrets = configuration.secrets;
@@ -300,18 +295,15 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
       return;
     }
 
-    // TODO: Replace this with a more cohesive way of generating kits.
-    const nodeMetadata = new Map<string, GraphMetadata>();
-    const nodes: NodeDescriptor[] = [];
+    const nodes: Record<string, GraphDescriptor> = {};
     for (let idx = 0; idx < projects.length; idx++) {
       const project = projects[idx];
       if (!project.board?.descriptor.url) {
         continue;
       }
 
-      const id = idx.toString();
       const type = project.board.descriptor.url;
-
+      const id = `${type}-${globalThis.crypto.randomUUID()}`;
       if (
         !project.board.descriptor.metadata?.tags ||
         !project.board.descriptor.metadata?.tags.includes("tool")
@@ -319,41 +311,32 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
         continue;
       }
 
-      nodeMetadata.set(type, {
+      nodes[id] = {
         title: project.board?.descriptor.title,
         description: project.board?.descriptor.description,
-        tags: project.board.descriptor.metadata?.tags,
-        icon: project.board.descriptor.metadata?.icon ?? "generic",
-      });
-      nodes.push({ id, type });
+        metadata: {
+          tags: project.board.descriptor.metadata?.tags,
+          icon: project.board.descriptor.metadata?.icon ?? "generic",
+        },
+        edges: [],
+        nodes: [
+          {
+            id,
+            type,
+          },
+        ],
+      };
     }
 
-    const desc: GraphDescriptor = {
+    const boardServerKit = fromManifest({
+      url: `${this.url.href}/bsk`,
+      version: "0.0.1",
+      title: "Board Server Kit",
       nodes,
-      edges: [],
-    };
-
-    const boardServerProxyGraph = inspect(desc, {
-      loader: createLoader([this]),
     });
-    const boardServerProxyKits = boardServerProxyGraph.kits();
-    for (const kit of boardServerProxyKits) {
-      if (kit.descriptor.title !== "Custom Types") {
-        continue;
-      }
 
-      for (const node of kit.nodeTypes) {
-        this.#boardServerKit.handlers[node.type()] = {
-          async invoke() {
-            throw new Error("Not implemented.");
-          },
-          async describe() {
-            return boardServerProxyGraph.describeType(node.type());
-          },
-          metadata: nodeMetadata.get(node.type()) ?? {},
-        };
-      }
-    }
+    this.kits = this.kits.filter((kit) => kit.title !== "Board Server Kit");
+    this.kits.push(boardServerKit);
   }
 
   async load(url: URL): Promise<GraphDescriptor | null> {
