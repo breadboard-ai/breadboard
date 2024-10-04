@@ -4,26 +4,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BehaviorSchema, LLMContent, Schema } from "@google-labs/breadboard";
+import { LLMContent } from "@breadboard-ai/types";
+import { BehaviorSchema, Schema } from "@google-labs/breadboard";
 import {
-  LitElement,
-  html,
   css,
+  html,
   HTMLTemplateResult,
+  LitElement,
   nothing,
   PropertyValueMap,
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
+import { guard } from "lit/directives/guard.js";
 import { map } from "lit/directives/map.js";
-import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { createRef, Ref, ref } from "lit/directives/ref.js";
+import { createAllowListFromProperty } from "../../../utils/llm-content.js";
 import {
   assertIsLLMContent,
   resolveArrayType,
   resolveBehaviorType,
 } from "../../../utils/schema.js";
-import { createAllowListFromProperty } from "../../../utils/llm-content.js";
-import { classMap } from "lit/directives/class-map.js";
-import { guard } from "lit/directives/guard.js";
 
 const STORAGE_PREFIX = "bb-schema-editor";
 

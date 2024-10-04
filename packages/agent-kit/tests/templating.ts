@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { describe, it } from "node:test";
-import { InlineDataCapabilityPart } from "@google-labs/breadboard";
+import type { InlineDataCapabilityPart } from "@breadboard-ai/types";
 import { deepStrictEqual, ok } from "node:assert";
-import {
-  describeSpecialist,
-  content,
-  describeContent,
-} from "../src/templating.js";
+import { describe, it } from "node:test";
 import { LlmContent } from "../src/context.js";
 import { run as substitute } from "../src/js-components/substitute.js";
+import {
+  content,
+  describeContent,
+  describeSpecialist,
+} from "../src/templating.js";
 
 describe("Templating", () => {
   it("does simple substitution", async () => {

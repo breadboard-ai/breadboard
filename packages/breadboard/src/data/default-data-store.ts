@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { LLMContent, StoredDataCapabilityPart } from "@breadboard-ai/types";
 import { HarnessRunResult } from "../harness/types.js";
 import { Schema } from "../types.js";
 import {
@@ -16,14 +17,12 @@ import {
   isInlineData,
   isStoredData,
 } from "./common.js";
-import {
+import type {
   DataStore,
-  LLMContent,
   RetrieveDataResult,
   SerializedDataStoreGroup,
   SerializedStoredData,
   StoreDataResult,
-  StoredDataCapabilityPart,
 } from "./types.js";
 
 export type GroupID = string;

@@ -8,6 +8,7 @@ import type {
   Capability,
   Edge,
   GraphDescriptor,
+  InlineDataCapabilityPart,
   InputValues,
   KitDescriptor,
   NodeDescriptor,
@@ -16,13 +17,10 @@ import type {
   NodeValue,
   OutputValues,
   StartLabel,
+  StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 import { GraphLoader } from "./loader/types.js";
-import {
-  DataStore,
-  InlineDataCapabilityPart,
-  StoredDataCapabilityPart,
-} from "./data/types.js";
+import { DataStore } from "./data/types.js";
 import { ManagedRunState, RunState } from "./run/types.js";
 
 export type {
