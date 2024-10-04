@@ -13,6 +13,7 @@ import { serveHome } from "./server/home/index.js";
 import { serveInfoAPI } from "./server/info/index.js";
 import { serveProxyAPI } from "./server/proxy/index.js";
 import { serverError } from "./server/errors.js";
+import { serveMeAPI } from "./server/info/me.js";
 
 const handleError = (err: Error, res: ServerResponse) => {
   console.error("Server Error:", err);
@@ -36,6 +37,10 @@ export function makeRouter(serverConfig: ServerConfig) {
       }
 
       if (await serveInfoAPI(req, res)) {
+        return;
+      }
+
+      if (await serveMeAPI(serverConfig, req, res)) {
         return;
       }
 
