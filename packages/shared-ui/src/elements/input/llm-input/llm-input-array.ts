@@ -3,14 +3,14 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, nothing, PropertyValueMap } from "lit";
+import type { LLMContent } from "@breadboard-ai/types";
+import { LitElement, PropertyValueMap, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { AllowedLLMContentTypes } from "../../../types/types.js";
+import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { AllowedLLMContentTypes } from "../../../types/types.js";
 import { LLMInput } from "./llm-input.js";
-import { classMap } from "lit/directives/class-map.js";
-import { LLMContent } from "@google-labs/breadboard";
 
 @customElement("bb-llm-input-array")
 export class LLMInputArray extends LitElement {
