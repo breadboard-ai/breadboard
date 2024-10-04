@@ -12,11 +12,11 @@ The expected input that the board expects is shaped as a single [LLM Content](ht
 }
 ```
 
-The board output is shaped as a single conversation context (array of [LLM Content](https://ai.google.dev/api/caching#Content)) port named `output`:
+The board output is shaped as a single conversation context (array of [LLM Content](https://ai.google.dev/api/caching#Content)) port named `output`, and will contain the entire conversation history so far. You can look for the last item in the conversation context to find the latest reply, or render the entire history.
 
 ```json
 {
-  "output": [{ "parts": [{ "text": "CHAT BOT RESPONSE" }] }]
+  "output": [ ..., { "parts": [{ "text": "LAST CHAT BOT RESPONSE" }] }]
 }
 ```
 
