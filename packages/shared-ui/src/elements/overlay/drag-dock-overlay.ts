@@ -765,6 +765,7 @@ export class DragDockOverlay extends LitElement {
                 </button>
               </h1>`
             : nothing}
+          <slot name="search"></slot>
           <slot></slot>
         </div>
       </div>

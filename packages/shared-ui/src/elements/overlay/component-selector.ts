@@ -61,25 +61,31 @@ export class ComponentSelectorOverlay extends LitElement {
     }
 
     #container {
-      height: 100%;
+      height: 70svh;
       display: flex;
       flex-direction: column;
       flex: 0 0 auto;
-      overflow: hidden;
       border-radius: var(--bb-grid-size-2);
     }
 
     #search {
       border: none;
       border-radius: 0;
-      height: 24px;
-      padding: 0 10px 0 8px;
+      height: var(--bb-grid-size-10);
+      padding: var(--bb-grid-size-2) calc(var(--bb-grid-size-3) + 2px)
+        var(--bb-grid-size-2) var(--bb-grid-size-3);
       background: var(--bb-neutral-0) var(--bb-icon-search) calc(100% - 8px)
         center no-repeat;
       background-size: 16px 16px;
       font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
         var(--bb-font-family);
-      margin: var(--bb-grid-size-2) var(--bb-grid-size);
+      margin: 0;
+      border-bottom: 1px solid var(--bb-neutral-300);
+    }
+
+    #search:focus {
+      outline: none;
+      box-shadow: inset 0 0 0 4px var(--bb-ui-50);
     }
 
     #search:not(:placeholder-shown) {
@@ -114,8 +120,6 @@ export class ComponentSelectorOverlay extends LitElement {
     }
 
     form {
-      border-top: 1px solid var(--bb-neutral-300);
-      overflow-y: scroll;
       border-radius: 0 0 var(--bb-grid-size-2) var(--bb-grid-size-2);
       flex: 1;
       padding-top: 8px;
@@ -322,22 +326,23 @@ export class ComponentSelectorOverlay extends LitElement {
           .dockKey=${DOCK_KEY}
           ${ref(this.#overlayRef)}
         >
+          <input
+            type="search"
+            id="search"
+            slot="search"
+            placeholder="Search nodes"
+            value=${this.filter || ""}
+            ${ref(this.#searchInputRef)}
+            @input=${(evt: InputEvent) => {
+              if (!(evt.target instanceof HTMLInputElement)) {
+                return;
+              }
+
+              this.filter = evt.target.value;
+            }}
+          />
           <div id="content">
             <div id="container">
-              <input
-                type="search"
-                id="search"
-                placeholder="Search nodes"
-                value=${this.filter || ""}
-                ${ref(this.#searchInputRef)}
-                @input=${(evt: InputEvent) => {
-                  if (!(evt.target instanceof HTMLInputElement)) {
-                    return;
-                  }
-
-                  this.filter = evt.target.value;
-                }}
-              />
               <form>
                 ${map(kitList, ([kitName, kitContents]) => {
                   const kitId = kitName
