@@ -28,7 +28,6 @@ import {
 } from "@google-labs/breadboard";
 import { getDataStore, getRunStore } from "@breadboard-ai/data-store";
 import { classMap } from "lit/directives/class-map.js";
-import { FileSystemGraphProvider } from "./providers/file-system";
 import { SettingsStore } from "./data/settings-store";
 import { addNodeProxyServerConfig } from "./data/node-proxy-servers";
 import { provide } from "@lit/context";
@@ -39,6 +38,7 @@ import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
 import { TabId } from "./runtime/types";
 import { createPastRunObserver } from "./utils/past-run-observer";
+import { FileSystemGraphProvider } from "./providers/file-system";
 
 const STORAGE_PREFIX = "bb-main";
 
@@ -1365,12 +1365,19 @@ export class Main extends LitElement {
         @bbgraphproviderrenewaccesssrequest=${async (
           evt: BreadboardUI.Events.GraphProviderRenewAccessRequestEvent
         ) => {
-          const provider = this.#getProviderByName(evt.providerName);
-          if (!(provider instanceof FileSystemGraphProvider)) {
+          const provider = this.#runtime.board.getProviderByName(
+            evt.providerName
+          );
+
+          if (!provider) {
             return;
           }
 
-          await provider.renewAccessRequest(evt.location);
+          if (provider instanceof FileSystemGraphProvider) {
+            await provider.renewAccessRequest(evt.location);
+          } else if (provider.renewAccess) {
+            await provider.renewAccess();
+          }
 
           // Trigger a re-render.
           this.providerOps++;

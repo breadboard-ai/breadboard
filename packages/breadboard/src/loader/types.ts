@@ -213,6 +213,10 @@ export type GraphProvider = {
    * Provides a way to watch for changes in the store.
    */
   preview: (url: URL) => Promise<URL>;
+  /**
+   * Provides a way to watch for changes in the store.
+   */
+  renewAccess?: () => Promise<void>;
 };
 
 /**
@@ -340,6 +344,7 @@ export type BoardServerExtensionNamespace = keyof Pick<
 
 export interface BoardServerProject extends Entity {
   board?: Board;
+  handle?: unknown;
 }
 
 export interface User {

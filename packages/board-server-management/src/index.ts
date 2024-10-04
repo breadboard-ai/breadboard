@@ -9,19 +9,33 @@ import { IDBBoardServer } from "@breadboard-ai/idb-board-server";
 import { BoardServer, GraphDescriptor, User } from "@google-labs/breadboard";
 import { RemoteBoardServer } from "@breadboard-ai/remote-board-server";
 import { ExampleBoardServer } from "@breadboard-ai/example-board-server";
+import {
+  FileSystemBoardServer,
+  type FileSystemDirectoryHandle,
+} from "@breadboard-ai/filesystem-board-server";
+
+import { loadKits } from "./utils/kit-loader.js";
+import GeminiKit from "@google-labs/gemini-kit";
+import PythonWasmKit from "@breadboard-ai/python-wasm";
+import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
+const loadedKits = loadKits([GeminiKit, PythonWasmKit, GoogleDriveKit]);
 
 const PLAYGROUND_BOARDS = "example://playground-boards";
 const EXAMPLE_BOARDS = "example://example-boards";
 const BOARD_SERVER_LISTING_DB = "board-server";
 const BOARD_SERVER_LISTING_VERSION = 1;
 
+interface BoardServerItem {
+  url: string;
+  title: string;
+  user: User;
+  handle?: FileSystemDirectoryHandle;
+}
+
 interface BoardServerListing extends idb.DBSchema {
   servers: {
     key: "url";
-    value: {
-      url: string;
-      user: User;
-    };
+    value: BoardServerItem;
   };
 }
 
@@ -41,14 +55,21 @@ export async function getBoardServers(
   const storeUrls = await db.getAll("servers");
   db.close();
 
+  // TODO: Figure out a better solution for kits. As it stands we duplicate
+  // the kits across all of the Board Servers, so we can afford to load them
+  // in here and then populate the Board Servers with them. If we devolve it to
+  // the Board Server entirely then each one would load a separate copy of the
+  // same kits.
+  const kits = await loadedKits;
+
   const stores = await Promise.all(
-    storeUrls.map(({ url, user }) => {
+    storeUrls.map(({ url, title, user, handle }) => {
       if (url.startsWith(IDBBoardServer.PROTOCOL)) {
-        return IDBBoardServer.from(url, user);
+        return IDBBoardServer.from(url, title, user, kits);
       }
 
       if (url.startsWith(RemoteBoardServer.PROTOCOL)) {
-        return RemoteBoardServer.from(url, user);
+        return RemoteBoardServer.from(url, title, user, kits);
       }
 
       if (url.startsWith(ExampleBoardServer.PROTOCOL)) {
@@ -56,7 +77,11 @@ export async function getBoardServers(
           return null;
         }
 
-        return ExampleBoardServer.from(url, user);
+        return ExampleBoardServer.from(url, title, user, kits);
+      }
+
+      if (url.startsWith(FileSystemBoardServer.PROTOCOL)) {
+        return FileSystemBoardServer.from(url, title, user, kits, handle);
       }
 
       console.warn(`Unsupported store URL: ${url}`);
@@ -67,7 +92,12 @@ export async function getBoardServers(
   return stores.filter((store) => store !== null);
 }
 
-export async function storeBoardServer(url: URL, user: User) {
+export async function storeBoardServer(
+  url: URL,
+  title: string,
+  user: User,
+  handle?: FileSystemDirectoryHandle
+) {
   const db = await idb.openDB<BoardServerListing>(
     BOARD_SERVER_LISTING_DB,
     BOARD_SERVER_LISTING_VERSION,
@@ -78,7 +108,12 @@ export async function storeBoardServer(url: URL, user: User) {
     }
   );
 
-  await db.put("servers", { url: url.href, user });
+  const server: BoardServerItem = { url: url.href, title, user };
+  if (handle) {
+    server["handle"] = handle;
+  }
+
+  await db.put("servers", server);
   db.close();
 }
 
@@ -91,8 +126,9 @@ export async function createDefaultLocalBoardServer() {
       secrets: new Map(),
     };
 
-    await IDBBoardServer.createDefault(new URL(url), user);
-    await storeBoardServer(new URL(url), user);
+    const kits = await loadedKits;
+    await IDBBoardServer.createDefault(new URL(url), user, kits);
+    await storeBoardServer(new URL(url), "Browser Storage", user);
   } catch (err) {
     console.warn(err);
   }
@@ -135,13 +171,13 @@ interface RemoteGraphProviderStoreList extends idb.DBSchema {
   };
 }
 
-const STORE_LIST = "remote-store-list";
-const STORE_LIST_VERSION = 1;
+const REMOTE_GRAPH_PROVIDER = "remote-store-list";
+const REMOTE_GRAPH_PROVIDER_VERSION = 1;
 
 export async function migrateRemoteGraphProviders() {
   const db = await idb.openDB<RemoteGraphProviderStoreList>(
-    STORE_LIST,
-    STORE_LIST_VERSION,
+    REMOTE_GRAPH_PROVIDER,
+    REMOTE_GRAPH_PROVIDER_VERSION,
     {
       upgrade(database) {
         database.createObjectStore("stores", {
@@ -153,6 +189,8 @@ export async function migrateRemoteGraphProviders() {
   );
 
   const stores = await db.getAll("stores");
+  db.close();
+
   for (const store of stores) {
     const user = {
       // TODO: Replace this with the actual username.
@@ -161,7 +199,46 @@ export async function migrateRemoteGraphProviders() {
       secrets: new Map(),
     };
 
-    await storeBoardServer(new URL(store.url), user);
+    await storeBoardServer(new URL(store.url), store.url, user);
+  }
+}
+
+const FILE_SYSTEM_PROVIDER = "keyval-store";
+const FILE_SYSTEM_PROVIDER_VERSION = 1;
+
+interface FileSystemProviderStoreList extends idb.DBSchema {
+  keyval: {
+    key: string;
+    value: FileSystemDirectoryHandle;
+  };
+}
+
+export async function migrateFileSystemProviders() {
+  const db = await idb.openDB<FileSystemProviderStoreList>(
+    FILE_SYSTEM_PROVIDER,
+    FILE_SYSTEM_PROVIDER_VERSION,
+    {
+      upgrade(database) {
+        database.createObjectStore("keyval", {
+          keyPath: "Key",
+          autoIncrement: true,
+        });
+      },
+    }
+  );
+
+  const stores = await db.getAll("keyval");
+  db.close();
+
+  for (const store of stores) {
+    const user = {
+      username: "board-builder",
+      apiKey: "",
+      secrets: new Map(),
+    };
+
+    const url = `${FileSystemBoardServer.PROTOCOL}${encodeURIComponent(store.name.toLocaleLowerCase())}`;
+    await storeBoardServer(new URL(url), store.name, user, store);
   }
   db.close();
 }
@@ -174,6 +251,6 @@ export async function migrateExampleGraphProviders() {
     secrets: new Map(),
   };
 
-  await storeBoardServer(new URL(EXAMPLE_BOARDS), user);
-  await storeBoardServer(new URL(PLAYGROUND_BOARDS), user);
+  await storeBoardServer(new URL(EXAMPLE_BOARDS), "Example Boards", user);
+  await storeBoardServer(new URL(PLAYGROUND_BOARDS), "Playground Boards", user);
 }
