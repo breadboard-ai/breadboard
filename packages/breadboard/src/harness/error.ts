@@ -33,8 +33,8 @@ export const formatRunError = (e: unknown) => {
   if (typeof error === "string") {
     return error;
   }
-  if (error instanceof Error) {
-    return error.message;
+  if ("message" in (error as Error)) {
+    return (error as Error).message;
   }
   return JSON.stringify(error);
 };
