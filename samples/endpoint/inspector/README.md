@@ -10,10 +10,11 @@ To use this sample as a starting point, run [degit](https://github.com/Rich-Harr
 npx degit breadboard-ai/breadboard/samples/endpoint/inspector
 ```
 
-To try the sample, start a simple HTTP server in that directory:
+To try the sample, install all dependencies and start vite server.
 
 ```bash
-npx http-server
+npm i
+npm run dev
 ```
 
 Then go to the URL provided by the server.
