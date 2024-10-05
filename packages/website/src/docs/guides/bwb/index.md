@@ -377,5 +377,12 @@ If you’d like to learn more about all the different components that come with 
 - [Template Kit](https://breadboard-ai.github.io/breadboard/docs/kits/template/)
 - [Built-in Kit](https://breadboard-ai.github.io/breadboard/docs/reference/kits/built-in/)
 
+If you'd like to learn more about how to use Board Server as an API endpoint, check out these links:
+
+ - [Board Server API Endpoints](/breadboard/docs/reference/board-run-api-endpoint/)
+ - [A sample of calling API Endpoint from a Browser](https://github.com/breadboard-ai/breadboard/tree/main/samples/endpoint/browser)
+ - [A sample of calling API Endpoint from Deno](https://github.com/breadboard-ai/breadboard/tree/main/samples/endpoint/deno)
+ - [An API inspector for the API Endpoint](https://github.com/breadboard-ai/breadboard/tree/main/samples/endpoint/inspector) -- great for troubleshooting your board's endpoint.
+
 > [!NOTE]
 > 🌵 some of the screenshots in the guides are showing the previous-generation UI, but the basics of building are still the same.
