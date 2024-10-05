@@ -112,7 +112,10 @@ export function isLLMContentArraySchema(schema: Schema): boolean {
   );
 }
 
-export function describeType(schema: Schema) {
+export function describeType(schema?: Schema) {
+  if (!schema) {
+    return "No Schema";
+  }
   if (isLLMContentArraySchema(schema)) {
     return "Conversation Context";
   }

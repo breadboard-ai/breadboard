@@ -56,6 +56,9 @@ export type RunOutputEvent = [
   {
     node: {
       id: string;
+      configuration?: {
+        schema?: Schema;
+      };
     };
     outputs: Record<string, unknown>;
   },
