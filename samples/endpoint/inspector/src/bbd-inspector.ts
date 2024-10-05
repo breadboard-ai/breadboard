@@ -31,6 +31,7 @@ export class Debugger extends LitElement {
     :host {
       display: block;
       padding: 1rem;
+      max-width: 1024px;
     }
   `;
 }
