@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { html, LitElement, nothing, TemplateResult } from "lit";
+import { css, html, LitElement, nothing, TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import type { RunEvent } from "./types";
 
@@ -46,6 +46,15 @@ export class ResponseEvent extends LitElement {
     return html`<div id="info">${info}</div>
       <div id="raw">${raw}</div>`;
   }
+
+  static styles = css`
+    :host {
+      display: block;
+      padding-bottom: 1.5rem;
+      padding-left: 1rem;
+      border-left: 1px solid #ccc;
+    }
+  `;
 }
 
 declare global {

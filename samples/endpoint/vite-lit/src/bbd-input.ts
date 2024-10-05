@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { html, LitElement, nothing } from "lit";
+import { css, html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { LLMContent, RunInputEvent, Schema } from "./types";
 import {
@@ -31,14 +31,16 @@ export class Input extends LitElement {
         } = this.#readTypeInfo(type);
         return html`<div>
           <label
-            >${title}:
-            <input
-              type="text"
-              name=${name}
-              placeholder=${placeholder}
-              required
-            />
-            <span>${typeDescription}</span>
+            ><span id="title">${title}:</span>
+            <span id="data">
+              <textarea
+                type="text"
+                name=${name}
+                placeholder=${placeholder}
+                required
+              ></textarea>
+              <span id="type">${typeDescription}</span>
+            </span>
           </label>
           <div>
             <input type="submit" value="Continue" />
@@ -59,11 +61,11 @@ export class Input extends LitElement {
   }
 
   #disableInputs(form: HTMLFormElement) {
-    for (const input of Array.from(form.elements) as HTMLInputElement[]) {
-      if (input.type === "submit") {
-        input.remove();
-      } else {
-        input.disabled = true;
+    for (const element of Array.from(form.elements)) {
+      if (element instanceof HTMLInputElement && element.type === "submit") {
+        element.remove();
+      } else if (element instanceof HTMLTextAreaElement) {
+        element.disabled = true;
       }
     }
   }
@@ -106,8 +108,7 @@ export class Input extends LitElement {
       return nothing;
     }
     const { id } = this.data.node;
-    return html`<h4>Input</h4>
-      <div id="id">Node ID: ${id}</div>
+    return html` <div id="id">Node ID: <b>${id}</b></div>
       <form
         @submit=${(evt: Event) => {
           evt.preventDefault();
@@ -117,6 +118,52 @@ export class Input extends LitElement {
         ${this.#renderPorts(this.data.inputArguments.schema)}
       </form>`;
   }
+
+  static styles = css`
+    :host {
+      display: block;
+      padding-bottom: 1.5rem;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    textarea {
+      resize: none;
+      field-sizing: content;
+      margin: 0;
+      padding: 0.5rem;
+      border: none;
+      width: 100%;
+      outline: none;
+      border: 1px solid #ccc;
+      flex: 1;
+    }
+
+    label {
+      display: block;
+    }
+
+    div#id {
+      padding-bottom: 0.5rem;
+    }
+
+    span#title {
+      display: block;
+      padding-bottom: 0.5rem;
+    }
+
+    span#data {
+      display: flex;
+    }
+
+    span#type {
+      display: block;
+      padding: 0.5rem;
+      width: 200px;
+    }
+  `;
 }
 
 declare global {

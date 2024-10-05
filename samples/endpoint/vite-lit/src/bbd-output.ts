@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { html, LitElement, nothing } from "lit";
+import { css, html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { LLMContent, RunOutputEvent, Schema } from "./types";
 import {
@@ -25,7 +25,7 @@ export class Output extends LitElement {
     const { node, outputs } = this.data;
     const { id } = node;
     return html`<div>
-      <div id="id">Node ID: ${id}</div>
+      <div id="id">Node ID: <b>${id}</b></div>
       <div id="output">
         ${this.#renderPorts(outputs, node.configuration?.schema)}</div>
       </div>
@@ -70,14 +70,47 @@ export class Output extends LitElement {
       const typeDescription = describeType(type);
       const { title } = type || { title: name };
       return html`<div>
-        <label>${title}:</label>
-        <div id="valueAndType">
+        <div id="title">${title}:</div>
+        <div id="data">
           <div id="value">${this.#renderValue(value, type)}</div>
           <div id="type">${typeDescription}</div>
         </div>
       </div>`;
     });
   }
+
+  static styles = css`
+    :host {
+      display: block;
+      padding-bottom: 1.5rem;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    #id,
+    #title {
+      padding-bottom: 0.5rem;
+    }
+
+    #data {
+      display: flex;
+    }
+
+    #data > div {
+      padding: 0.5rem;
+    }
+
+    #type {
+      width: 200px;
+    }
+
+    #value {
+      flex: 1;
+      border: 1px solid #ccc;
+    }
+  `;
 }
 
 declare global {

@@ -16,7 +16,7 @@ export class Debugger extends LitElement {
   settings: SettingsData | null = null;
 
   render() {
-    return html`<h1>Inspector</h1>
+    return html`<h1>Breadboard API Endpoint Inspector</h1>
       <bbd-settings
         @bbdloadsettings=${this.#onLoadSettings.bind(this)}
       ></bbd-settings>
