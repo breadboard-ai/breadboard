@@ -10,8 +10,8 @@ import type { InspectorRequestEvent } from "./types";
 
 import "./bbd-json-tree";
 
-@customElement("bbd-request")
-export class Request extends LitElement {
+@customElement("bbd-run-request")
+export class RunRequest extends LitElement {
   @property()
   event: InspectorRequestEvent | null = null;
 
@@ -39,6 +39,6 @@ export class Request extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "bbd-request": Request;
+    "bbd-run-request": RunRequest;
   }
 }

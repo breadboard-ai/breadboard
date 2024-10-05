@@ -8,10 +8,10 @@ import { html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import type { InspectorResponseEvent } from "./types";
 
-import "./bbd-json-tree";
+import "./bbd-response-event";
 
-@customElement("bbd-response")
-export class Response extends LitElement {
+@customElement("bbd-run-response")
+export class RunResponse extends LitElement {
   @property()
   event: InspectorResponseEvent | null = null;
 
@@ -26,7 +26,9 @@ export class Response extends LitElement {
       <h3>Events</h3>
       <div id="events">
         ${events.map((event) => {
-          return html`<bbd-json-tree .json=${event}></bbd-json-tree>`;
+          return html`<bbd-response-event
+            .event=${event}
+          ></bbd-response-event>`;
         })}
       </div>
     </div>`;
@@ -35,6 +37,6 @@ export class Response extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "bbd-response": Request;
+    "bbd-run-response": Request;
   }
 }

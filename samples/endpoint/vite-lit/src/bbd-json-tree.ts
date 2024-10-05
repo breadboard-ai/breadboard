@@ -191,9 +191,13 @@ export class JSONTree extends LitElement {
       return nothing;
     }
 
-    return html`{
+    const isArray = Array.isArray(this.json);
+    const openBracket = isArray ? "[" : "{";
+    const closeBracket = isArray ? "]" : "}";
+
+    return html`${openBracket}
       <div id="top-level">${this.#convertToHtml(this.json)}</div>
-      }
+      ${closeBracket}
       <button
         id="copy-to-clipboard"
         @click=${this.#copyToClipboard}

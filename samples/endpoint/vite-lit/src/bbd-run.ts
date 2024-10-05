@@ -9,8 +9,8 @@ import { customElement, property, state } from "lit/decorators.js";
 import type { InspectorEvent, SettingsData } from "./types";
 import { createRequestEvent, makeRunRequest } from "./common";
 
-import "./bbd-request";
-import "./bbd-response";
+import "./bbd-run-request";
+import "./bbd-run-response";
 
 @customElement("bbd-run")
 export class Run extends LitElement {
@@ -23,6 +23,14 @@ export class Run extends LitElement {
   @state()
   events: InspectorEvent[] = [];
 
+  connectedCallback(): void {
+    super.connectedCallback();
+    this.addEventListener("bbdinput", (evt) => {
+      const { detail } = evt as CustomEvent;
+      this.#nextTurn(detail.inputs, detail.next);
+    });
+  }
+
   render() {
     if (!this.settings) {
       return nothing;
@@ -31,13 +39,13 @@ export class Run extends LitElement {
       return html`${this.events.map((event) => {
         switch (event.type) {
           case "request":
-            return html`<bbd-request .event=${event}></bbd-request>`;
+            return html`<bbd-run-request .event=${event}></bbd-run-request>`;
           case "response":
-            return html`<bbd-response .event=${event}></bbd-response>`;
+            return html`<bbd-run-response .event=${event}></bbd-run-response>`;
         }
       })}`;
     } else {
-      return html`<button @click=${this.startRun}>Start</button>`;
+      return html`<button @click=${this.#startRun}>Start</button>`;
     }
   }
 
@@ -61,13 +69,21 @@ export class Run extends LitElement {
     this.#jumpToBottom();
   }
 
-  async startRun() {
+  async #startRun() {
     this.running = true;
-    const requestEvent = createRequestEvent("run", this.settings!);
+    this.#nextTurn({});
+  }
+
+  async #nextTurn(inputs: Record<string, unknown>, next?: string) {
+    const requestEvent = createRequestEvent(
+      "run",
+      this.settings!,
+      inputs,
+      next
+    );
     this.#appendEvent(requestEvent);
-    await makeRunRequest(requestEvent).then((responseEvent) => {
-      this.#appendEvent(responseEvent);
-    });
+    const responseEvent = await makeRunRequest(requestEvent);
+    this.#appendEvent(responseEvent);
   }
 }
 

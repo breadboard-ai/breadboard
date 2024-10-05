@@ -10,6 +10,7 @@ import type {
   InspectorResponseEvent,
   RunEvent,
   RunRequestBody,
+  Schema,
   SettingsData,
 } from "./types";
 
@@ -86,4 +87,27 @@ function toEndpointURL(url: string, type: InspectorRequestType): string {
   } else {
     return url.replace(/.bgl.json$/, ".bgl.api/invoke");
   }
+}
+
+export function isStringSchema(schema: Schema): boolean {
+  return schema && schema.type === "string";
+}
+
+export function isLLMContentSchema(schema: Schema): boolean {
+  return !!(
+    schema &&
+    schema.type === "object" &&
+    schema.behavior &&
+    schema.behavior.includes("llm-content")
+  );
+}
+
+export function isLLMContentArraySchema(schema: Schema): boolean {
+  return !!(
+    schema &&
+    schema.type === "array" &&
+    schema.items &&
+    !Array.isArray(schema.items) &&
+    isLLMContentSchema(schema.items)
+  );
 }
