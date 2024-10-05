@@ -47,7 +47,7 @@ export class JSONTree extends LitElement {
       width: 24px;
       height: 24px;
       font-size: 0;
-      background: var(--bb-icon-copy-to-clipboard) center center no-repeat;
+      background: url(/copy-to-clipboard.svg) center center no-repeat;
       vertical-align: middle;
       border: none;
       cursor: pointer;

@@ -8,9 +8,9 @@ import { html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { LLMContent, RunInputEvent, Schema } from "./types";
 import {
+  describeType,
   isLLMContentArraySchema,
   isLLMContentSchema,
-  isStringSchema,
 } from "./common";
 
 @customElement("bbd-input")
@@ -50,13 +50,7 @@ export class Input extends LitElement {
   }
 
   #readTypeInfo(type: Schema) {
-    const typeDescription = isLLMContentArraySchema(type)
-      ? "Conversation Context"
-      : isLLMContentSchema(type)
-        ? "LLM Content"
-        : isStringSchema(type)
-          ? "Text"
-          : "Other";
+    const typeDescription = describeType(type);
     return {
       title: type.title,
       placeholder: type.description || type.title || "",
@@ -77,7 +71,6 @@ export class Input extends LitElement {
   #onInput(form: HTMLFormElement) {
     const data = new FormData(form);
     const next = this.next;
-    console.log("next", next);
     const inputs: Record<string, string | LLMContent | LLMContent[]> = {};
     for (const [key, value] of data) {
       // Find the corresponding schema in this.data.inputArguments.schema

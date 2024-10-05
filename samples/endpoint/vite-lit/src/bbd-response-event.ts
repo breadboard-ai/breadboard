@@ -10,6 +10,7 @@ import type { RunEvent } from "./types";
 
 import "./bbd-json-tree";
 import "./bbd-input";
+import "./bbd-output";
 
 @customElement("bbd-response-event")
 export class ResponseEvent extends LitElement {
@@ -26,9 +27,8 @@ export class ResponseEvent extends LitElement {
     let info: TemplateResult | symbol = nothing;
     switch (type) {
       case "output": {
-        const { id } = data.node;
         info = html`<h4>Output</h4>
-          <div id="id">Node ID: ${id}</div>`;
+          <bbd-output .data=${data}></bbd-output>`;
         break;
       }
       case "input": {
