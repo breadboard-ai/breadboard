@@ -25,9 +25,7 @@ export class RunRequest extends LitElement {
         <div id="request">${method} ${url}</div>
         <h3>Headers</h3>
         <div id="headers">
-          ${Object.entries(headers).map(([name, value]) => {
-            return html`<div>${name}: ${value}</div>`;
-          })}
+          <bbd-json-tree .json=${headers}></bbd-json-tree>
         </div>
         <h3>Body</h3>
         <div id="body">
@@ -45,6 +43,11 @@ export class RunRequest extends LitElement {
     :host > div {
       padding-left: 1rem;
       border-left: 1px solid #ccc;
+    }
+
+    #request {
+      font-family: var(--bb-font-family-mono, monospace);
+      font-size: var(--bb-text-nano, 0.8rem);
     }
 
     h2,
