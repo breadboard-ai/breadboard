@@ -1,6 +1,13 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import Link from "next/link";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -28,6 +35,18 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <header className="p-4 bg-gray-800 text-white">
+          <h1>Story Teller</h1>
+          <p>Writes children's stories based on a topic.</p>
+          <ol>
+            <li>
+              <a href="/">Home</a>
+            </li>
+            <li>
+              <Link href="/about">About</Link>
+            </li>
+          </ol>
+        </header>
         {children}
       </body>
     </html>
