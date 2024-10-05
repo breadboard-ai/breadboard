@@ -7,7 +7,11 @@
 import { html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { LLMContent, RunInputEvent, Schema } from "./types";
-import { isLLMContentArraySchema, isLLMContentSchema } from "./common";
+import {
+  isLLMContentArraySchema,
+  isLLMContentSchema,
+  isStringSchema,
+} from "./common";
 
 @customElement("bbd-input")
 export class Input extends LitElement {
@@ -20,7 +24,11 @@ export class Input extends LitElement {
   #renderPorts(schema: Schema) {
     const ports = Object.entries(schema.properties || {}).map(
       ([name, type]) => {
-        const { title = name, placeholder } = this.#readTypeInfo(type);
+        const {
+          title = name,
+          placeholder,
+          typeDescription,
+        } = this.#readTypeInfo(type);
         return html`<div>
           <label
             >${title}:
@@ -30,6 +38,7 @@ export class Input extends LitElement {
               placeholder=${placeholder}
               required
             />
+            <span>${typeDescription}</span>
           </label>
           <div>
             <input type="submit" value="Continue" />
@@ -41,9 +50,17 @@ export class Input extends LitElement {
   }
 
   #readTypeInfo(type: Schema) {
+    const typeDescription = isLLMContentArraySchema(type)
+      ? "Conversation Context"
+      : isLLMContentSchema(type)
+        ? "LLM Content"
+        : isStringSchema(type)
+          ? "Text"
+          : "Other";
     return {
       title: type.title,
       placeholder: type.description || type.title || "",
+      typeDescription,
     };
   }
 
