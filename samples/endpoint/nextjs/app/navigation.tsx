@@ -12,7 +12,7 @@ import { usePathname } from "next/navigation";
 const globalNavigation = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
-  { href: "/new", label: "Start a New Story", highlight: true },
+  { href: "/new", label: "Tell a New Story", highlight: true },
 ];
 
 export default function Navigation() {

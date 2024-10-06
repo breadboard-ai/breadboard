@@ -29,11 +29,13 @@ export default function Form() {
   ) : (
     <form onSubmit={onSubmit}>
       <div className="flex pt-5 gap-3">
-        <label htmlFor="topic">Topic:</label>
+        <label className="pt-1" htmlFor="topic">
+          Topic:
+        </label>
         <textarea
           required
           name="topic"
-          className="flex-1 border-2 rounded-xl"
+          className="flex-1 border-2 rounded-xl px-2 py-1"
         ></textarea>
       </div>
       <button
