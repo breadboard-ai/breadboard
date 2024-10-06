@@ -25,3 +25,7 @@ body {
     text-wrap: balance;
   }
 }
+
+textarea {
+  field-sizing: content;
+}

@@ -13,12 +13,7 @@ export default function Form() {
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    try {
-      console.log("submit");
-      router.push("/about");
-    } catch (error) {
-      console.error(error);
-    }
+    console.log("submit");
     // const result = await fetch("/api/create", {
     //   method: "POST",
     //   body: new FormData(event.currentTarget),
@@ -27,13 +22,19 @@ export default function Form() {
   }
   return (
     <form onSubmit={onSubmit}>
-      <label htmlFor="topic">Topic:</label>
-      <textarea id="topic" name="topic"></textarea>
+      <div className="flex pt-5 gap-3">
+        <label htmlFor="topic">Topic:</label>
+        <textarea
+          required
+          name="topic"
+          className="flex-1 border-2 rounded-xl"
+        ></textarea>
+      </div>
       <button
-        className="block bg-slate-500 rounded-full py-2 px-8 text-white mt-3"
+        className="hover:bg-fuchsia-100 block mt-5 py-2 px-4 border-2 rounded-full"
         type="submit"
       >
-        Create
+        Start
       </button>
     </form>
   );
