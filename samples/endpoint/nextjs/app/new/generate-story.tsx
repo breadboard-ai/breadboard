@@ -8,11 +8,7 @@
 
 import { useEffect, useState } from "react";
 import Form from "./form";
-import {
-  StartStoryProgress,
-  StoryMakingProgress,
-  StoryMakingState,
-} from "../types";
+import { StoryMakingProgress, StoryMakingState } from "../types";
 import { chunkRepairTransform } from "./chunk-repair";
 import Link from "next/link";
 
