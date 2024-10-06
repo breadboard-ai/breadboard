@@ -5,20 +5,18 @@
  */
 
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Amatic_SC } from "next/font/google";
+
 import "./globals.css";
 import Link from "next/link";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
+// If loading a variable font, you don't need to specify the font weight
+const amatic = Amatic_SC({ weight: "700", subsets: ["latin"] });
+
+const globalNavigation = [
+  { href: "/", label: "Home" },
+  { href: "/about", label: "About" },
+];
 
 export const metadata: Metadata = {
   title: "Story Teller",
@@ -32,21 +30,27 @@ export default function RootLayout({
 }>) {
   const title = metadata.title as string;
   return (
-    <html lang="en">
+    <html lang="en" className="flex justify-center">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${amatic.className} text-3xl antialiased max-w-screen-md w-screen`}
       >
-        <header className="p-4 bg-gray-800 text-white">
+        <header className="p-4">
           <h1>{title}</h1>
           <p>{metadata.description}</p>
-          <ol>
-            <li>
-              <a href="/">Home</a>
-            </li>
-            <li>
-              <Link href="/about">About</Link>
-            </li>
-          </ol>
+          <nav>
+            <ol className="flex pt-2">
+              {globalNavigation.map(({ href, label }, i) => (
+                <li key={i}>
+                  <Link
+                    className="block py-2 px-4 hover:bg-slate-100 rounded-full"
+                    href={href}
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </nav>
         </header>
         {children}
       </body>

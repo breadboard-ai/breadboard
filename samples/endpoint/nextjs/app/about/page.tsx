@@ -6,10 +6,12 @@
 
 export default function About() {
   return (
-    <main>
-      <section className="pb-2">
-        <h2>About</h2>
-        <p>Learn more about the Hacker News Researcher project</p>
+    <main className="p-7">
+      <section>
+        <h2 className="font-bold">About</h2>
+        <p className="grid grid-cols-3">
+          Learn more about the Story Teller project
+        </p>
       </section>
     </main>
   );
