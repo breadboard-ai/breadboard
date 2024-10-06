@@ -7,20 +7,26 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function Form() {
+  const [creating, setCreating] = useState(false);
   const router = useRouter();
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     console.log("submit");
-    // const result = await fetch("/api/create", {
-    //   method: "POST",
-    //   body: new FormData(event.currentTarget),
-    // });
-    // console.log(await result.text());
+    setCreating(true);
+    const result = await fetch("/api/create", {
+      method: "POST",
+      body: new FormData(event.currentTarget),
+    });
+    console.log(await result.text());
+    setCreating(false);
   }
-  return (
+  return creating ? (
+    <div>Creating...</div>
+  ) : (
     <form onSubmit={onSubmit}>
       <div className="flex pt-5 gap-3">
         <label htmlFor="topic">Topic:</label>

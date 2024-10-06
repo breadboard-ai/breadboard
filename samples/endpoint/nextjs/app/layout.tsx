@@ -15,7 +15,7 @@ const amatic = Amatic_SC({ weight: "700", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "The Story Teller",
-  description: "Writes children's stories based on a topic.",
+  description: "Writes children's stories based on a topic",
 };
 
 export default function RootLayout({

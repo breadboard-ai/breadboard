@@ -11,10 +11,10 @@ export default function New() {
     <main className="p-7">
       <section>
         <h2 className="font-bold">Start a New Story</h2>
-        <p className="pt-5 text-slate-500">
-          Enter the topic for the story. It can be something very short like
-          "the old clock" or as long as you desire. The Story Teller will use
-          all of it as inspiration.
+        <p className="pt-5 text-slate-400">
+          Enter the topic around which to build the story. It can be short like
+          "the old clock" or long. The Story Teller will use all of it as
+          inspiration.
         </p>
         <Form></Form>
       </section>
