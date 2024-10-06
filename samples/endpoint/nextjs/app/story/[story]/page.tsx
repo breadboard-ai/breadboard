@@ -42,12 +42,9 @@ export default function Story() {
         <h2>{story.title}</h2>
         <ol>
           {story.chapters.map((chapter, index) => (
-            <li
-              key={index}
-              className="flex relative items-start rounded-xl my-5"
-            >
+            <li key={index} className="flex relative items-start my-5">
               <div
-                className="absolute top-0 left-0 w-full h-full bg-cover rounded-xl opacity-30"
+                className="absolute top-0 left-0 w-full h-full bg-cover rounded-3xl opacity-30"
                 style={{
                   backgroundImage: `url(${chapter.img})`,
                   backgroundSize: "cover",

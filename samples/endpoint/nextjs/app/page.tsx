@@ -49,13 +49,13 @@ export default function Home() {
         <h2 className="pl-5 pt-4 pb-7">Recent Stories</h2>
         <ul className="grid grid-cols-3">
           {stories.map((story) => (
-            <li key={story.id} className="p-5 hover:bg-slate-100 rounded-xl">
+            <li key={story.id} className="p-5 hover:bg-slate-100 rounded-3xl">
               <Link
                 href={`/story/${story.id}`}
                 className="font-bold text-slate-700"
               >
                 <img
-                  className="block rounded-lg bg-gradient-to-r from-slate-100 to-slate-200"
+                  className="block rounded-xl bg-gradient-to-r from-slate-100 to-slate-200"
                   width="200"
                   height="200"
                   src={story.img}
