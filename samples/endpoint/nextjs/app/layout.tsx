@@ -19,7 +19,7 @@ const globalNavigation = [
 ];
 
 export const metadata: Metadata = {
-  title: "Story Teller",
+  title: "The Story Teller",
   description: "Writes children's stories based on a topic.",
 };
 
@@ -34,9 +34,11 @@ export default function RootLayout({
       <body
         className={`${amatic.className} text-3xl antialiased max-w-screen-md w-screen`}
       >
-        <header className="p-4">
-          <h1>{title}</h1>
-          <p>{metadata.description}</p>
+        <header className="p-4 border-b-2">
+          <section className="p-3">
+            <h1 className="text-6xl">{title}</h1>
+            <p>{metadata.description}</p>
+          </section>
           <nav>
             <ol className="flex pt-2">
               {globalNavigation.map(({ href, label }, i) => (

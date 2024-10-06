@@ -13,3 +13,9 @@ export type StoryType = {
   title: string;
   chapters: Chapter[];
 };
+
+export type StoryListType = {
+  id: number;
+  title: string;
+  img: string;
+};

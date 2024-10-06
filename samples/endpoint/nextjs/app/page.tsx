@@ -5,8 +5,9 @@
  */
 
 import Link from "next/link";
+import { StoryListType } from "./types";
 
-const STORIES = [
+const STORIES: StoryListType[] = [
   {
     id: 1,
     title: "The Amazing Grace",
@@ -41,13 +42,14 @@ const STORIES = [
 ];
 
 export default function Home() {
+  const stories = STORIES;
   return (
-    <main className="p-7">
+    <main className="p-3">
       <section>
-        <h2 className="font-bold">Recent Stories</h2>
+        <h2 className="pl-5 pt-4 pb-7">Recent Stories</h2>
         <ul className="grid grid-cols-3">
-          {STORIES.map((story) => (
-            <li key={story.id} className="pb-5">
+          {stories.map((story) => (
+            <li key={story.id} className="p-5 hover:bg-slate-100 rounded-xl">
               <Link
                 href={`/story/${story.id}`}
                 className="font-bold text-slate-700"
