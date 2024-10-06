@@ -5,9 +5,10 @@
  */
 
 import { StoryType } from "@/app/types";
-import Carousel from "./carousel";
 
 const STORY: StoryType = {
+  id: "774cb78f-0e46-4206-be41-0e4b8df65d2c",
+  topic: "amazing grace",
   title: "Amazing Grace",
   chapters: [
     {

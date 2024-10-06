@@ -6,28 +6,18 @@
 
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-
-export default function Form() {
-  const [creating, setCreating] = useState(false);
-  const router = useRouter();
-
-  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+export default function Form({
+  onSubmit,
+}: {
+  onSubmit: (data: FormData) => void;
+}) {
+  async function internalSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    console.log("submit");
-    setCreating(true);
-    const result = await fetch("/api/create", {
-      method: "POST",
-      body: new FormData(event.currentTarget),
-    });
-    console.log(await result.text());
-    setCreating(false);
+    onSubmit(new FormData(event.target as HTMLFormElement));
   }
-  return creating ? (
-    <div>Creating...</div>
-  ) : (
-    <form onSubmit={onSubmit}>
+
+  return (
+    <form onSubmit={internalSubmit}>
       <div className="flex pt-5 gap-3">
         <label className="pt-1" htmlFor="topic">
           Topic:
@@ -36,6 +26,7 @@ export default function Form() {
           required
           name="topic"
           className="flex-1 border-2 rounded-xl px-2 py-1"
+          defaultValue={"Amazing Grace"}
         ></textarea>
       </div>
       <button
