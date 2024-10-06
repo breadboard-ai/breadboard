@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -21,8 +21,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Hacker News Researcher",
-  description: "Adds depth to Hacker News top stories",
+  title: "Story Teller",
+  description: "Writes children's stories based on a topic.",
 };
 
 export default function RootLayout({
@@ -30,14 +30,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const title = metadata.title as string;
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <header className="p-4 bg-gray-800 text-white">
-          <h1>Story Teller</h1>
-          <p>Writes children's stories based on a topic.</p>
+          <h1>{title}</h1>
+          <p>{metadata.description}</p>
           <ol>
             <li>
               <a href="/">Home</a>
