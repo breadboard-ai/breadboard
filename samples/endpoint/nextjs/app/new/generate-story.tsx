@@ -111,7 +111,7 @@ export default function GenerateStory() {
               );
             case "done":
               return (
-                <div className="col-span-6">
+                <div key={i} className="col-span-6">
                   <h2>Story Created</h2>
                   <Link
                     href={`/story/${event.id}`}
@@ -135,7 +135,7 @@ export default function GenerateStory() {
 
   return (
     <>
-      <h2 className="font-bold">Tell a New Story</h2>
+      <h2 className="font-bold">Ask The Story Teller for a New Story</h2>
       <p className="pt-5 text-slate-400">
         Enter the topic around which to build the story. It can be short like
         "the old clock" or long. The Story Teller will use it as inspiration.

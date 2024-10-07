@@ -43,6 +43,9 @@ const STORIES: StoryListType[] = [
 ];
 
 export function getStoryList(): StoryListType[] {
+  if (!globalThis.localStorage) {
+    return [];
+  }
   const storyData = localStorage.getItem(STORY_STORAGE_KEY);
   return storyData ? JSON.parse(storyData) : [];
 }
