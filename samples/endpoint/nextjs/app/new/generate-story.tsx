@@ -106,7 +106,7 @@ export default function GenerateStory() {
                     className="block rounded-full bg-gradient-to-r from-slate-100 to-slate-200"
                     width="100"
                     height="100"
-                    src={`/${event.chapter.img}.png`}
+                    src={`/api/image/${event.chapter.img}`}
                     alt={event.chapter.text}
                   />
                 </div>

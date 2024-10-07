@@ -68,3 +68,9 @@ export type StoryParams = {
     story: string;
   };
 };
+
+export type ImageParams = {
+  params: {
+    image: string;
+  };
+};

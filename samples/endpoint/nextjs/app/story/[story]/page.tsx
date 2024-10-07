@@ -19,12 +19,12 @@ export default async function Story({ params }: StoryParams) {
               <div
                 className="absolute top-0 left-0 w-full h-full bg-cover rounded-3xl opacity-30"
                 style={{
-                  backgroundImage: `url(${chapter.img})`,
+                  backgroundImage: `url(/api/image/${chapter.img})`,
                   backgroundSize: "cover",
                 }}
               ></div>
               <img
-                src={chapter.img}
+                src={`/api/image/${chapter.img}`}
                 className="relative ml-5 mt-5 rounded-xl shadow-2xl"
                 width={300}
                 height={300}

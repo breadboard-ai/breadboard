@@ -42,7 +42,7 @@ export default function StoryList() {
                     className="block rounded-xl bg-gradient-to-r from-slate-100 to-slate-200"
                     width="200"
                     height="200"
-                    src={story.img}
+                    src={`/api/image/${story.img}`}
                     alt={story.title}
                   />
                   {story.title}

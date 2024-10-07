@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { StoryListType, StoryType } from "../types";
+import path from "path";
+import { StoryType } from "../types";
+import { readFile } from "fs/promises";
+
+const MODULE_DIR = new URL(import.meta.url).pathname;
+const ROOT_DIR = path.resolve(MODULE_DIR, "../../../");
 
 const STORY: StoryType = {
   id: "774cb78f-0e46-4206-be41-0e4b8df65d2c",
@@ -41,4 +46,24 @@ export async function getStory(id: string): Promise<StoryType> {
     ...STORY,
     id,
   };
+}
+
+export async function getImage(id: string): Promise<Buffer | null> {
+  if (!isUUID(id)) {
+    return null;
+  }
+
+  try {
+    console.log("DIR", `${ROOT_DIR}/store/${id}.png`);
+    const image = await readFile(`${ROOT_DIR}/store/${id}.png`);
+    return image;
+  } catch (e) {
+    return null;
+  }
+}
+
+function isUUID(input: string): boolean {
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(input);
 }

@@ -20,13 +20,15 @@ export default function Navigation() {
   const pathname = usePathname();
   const stories = getStoryList();
 
+  const nav = [...globalNavigation];
+  if (stories.length === 0) {
+    nav.pop();
+  }
+
   return (
     <nav>
       <ol className="flex pt-2 gap-5">
-        {globalNavigation.map(({ href, label, highlight }, i) => {
-          if (href === "/new" && stories.length === 0) {
-            return null;
-          }
+        {nav.map(({ href, label, highlight }, i) => {
           return (
             <li key={i}>
               <Link
