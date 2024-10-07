@@ -547,6 +547,7 @@ export class RibbonMenu extends LitElement {
   #overflowMenuToggleRef: Ref<HTMLButtonElement> = createRef();
   #componentSelectorRef: Ref<ComponentSelectorOverlay> = createRef();
   #segmentThresholds = new WeakMap<Element, { left: number; right: number }>();
+  #animateComponentSelector = false;
   #resizeObserver = new ResizeObserver((entries) => {
     if (entries.length === 0) {
       return;
@@ -699,6 +700,25 @@ export class RibbonMenu extends LitElement {
     this.#resizeObserver.disconnect();
   }
 
+  protected willUpdate(changedProperties: PropertyValues): void {
+    // If the graph has changed and:
+    //  - 1. showComponentSelector is true, do not animate
+    //  - 2. showComponentSelector is false, animate
+    if (changedProperties.has("graph")) {
+      this.#animateComponentSelector = !this.showComponentSelector;
+    } else if (changedProperties.has("showComponentSelector")) {
+      // If the user has toggled the component selector, animate.
+      this.#animateComponentSelector = true;
+    }
+
+    if (this.#componentSelectorRef.value) {
+      // Because there is a guard preventing re-rendering of the component
+      // selector unless the current graph changes, we directly update its
+      // static property here.
+      this.#componentSelectorRef.value.static = !this.#animateComponentSelector;
+    }
+  }
+
   protected firstUpdated(): void {
     this.#resizeObserver.observe(this);
   }
@@ -737,6 +757,7 @@ export class RibbonMenu extends LitElement {
         return html`<bb-component-selector-overlay
           .graph=${this.graph}
           .showExperimentalComponents=${this.showExperimentalComponents}
+          .static=${!this.#animateComponentSelector}
           ${ref(this.#componentSelectorRef)}
           @bbkitnodechosen=${(evt: KitNodeChosenEvent) => {
             const id = createRandomID(evt.nodeType);

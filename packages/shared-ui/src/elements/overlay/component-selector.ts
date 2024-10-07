@@ -37,6 +37,9 @@ export class ComponentSelectorOverlay extends LitElement {
   @property()
   persist = false;
 
+  @property()
+  static = false;
+
   #searchInputRef: Ref<HTMLInputElement> = createRef();
   #kitInfoTask = new Task(this, {
     task: async ([graph]) => {
@@ -340,6 +343,7 @@ export class ComponentSelectorOverlay extends LitElement {
           .dockKey=${DOCK_KEY}
           .persistable=${true}
           .persist=${this.persist}
+          .static=${this.static}
           @bbpersisttoggle=${() => {
             this.persist = !this.persist;
             globalThis.localStorage.setItem(

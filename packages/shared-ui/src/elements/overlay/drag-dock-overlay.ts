@@ -53,6 +53,9 @@ export class DragDockOverlay extends LitElement {
   @property()
   y: number | null = null;
 
+  @property({ reflect: true })
+  static = false;
+
   @property()
   dock: DockStatus = {
     top: false,
@@ -203,6 +206,11 @@ export class DragDockOverlay extends LitElement {
       right: var(--right, auto);
       bottom: var(--bottom, auto);
       pointer-events: auto;
+    }
+
+    :host([static="true"]) #content {
+      opacity: 1;
+      animation: none;
     }
 
     :host([dockedleft="true"][dockedright="true"]) #content {
