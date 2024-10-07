@@ -30,7 +30,7 @@ export default function StoryList() {
         </div>
       ) : (
         <>
-          <h2 className="pl-5 pt-4 pb-7">Recent Stories</h2>
+          <h2 className="pl-5 pt-4 pb-7">Story Library</h2>
           <ul className="grid grid-cols-3">
             {stories.map((story, i) => (
               <li key={i} className="p-5 hover:bg-slate-100 rounded-3xl">

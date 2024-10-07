@@ -53,6 +53,8 @@ export default function GenerateStory() {
                   storyItem.img = json.chapter.img;
                 } else if (json.type === "start") {
                   storyItem.title = json.title;
+                } else if (json.type === "rejected") {
+                  setState("error");
                 }
                 setProgress((progress) => [...progress, json]);
               },
@@ -104,7 +106,7 @@ export default function GenerateStory() {
                     className="block rounded-full bg-gradient-to-r from-slate-100 to-slate-200"
                     width="100"
                     height="100"
-                    src={event.chapter.img}
+                    src={`/${event.chapter.img}.png`}
                     alt={event.chapter.text}
                   />
                 </div>
