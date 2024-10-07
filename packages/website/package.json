@@ -120,7 +120,7 @@
     }
   },
   "dependencies": {
-    "@11ty/eleventy-plugin-vite": "^4.0.0",
+    "@11ty/eleventy-plugin-vite": "^5.0.0",
     "@google-labs/agent-kit": "^0.12.3",
     "@google-labs/breadboard": "^0.27.3",
     "@google-labs/core-kit": "^0.15.2",
