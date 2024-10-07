@@ -61,3 +61,9 @@ export type StoryMakingState =
   | "creating"
   | "error"
   | "done";
+
+export type StoryParams = {
+  params: {
+    story: string;
+  };
+};
