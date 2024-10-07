@@ -16,6 +16,7 @@ import {
 
 const MAXIMIZE_KEY = "bb-board-activity-overlay-maximized";
 const DOCK_KEY = "bb-board-activity-overlay-docked";
+const PERSIST_KEY = "bb-board-activity-overlay-persist";
 
 @customElement("bb-board-activity-overlay")
 export class BoardActivityOverlay extends LitElement {
@@ -36,6 +37,9 @@ export class BoardActivityOverlay extends LitElement {
 
   @property()
   providerOps = 0;
+
+  @property()
+  persist = false;
 
   @property()
   events: InspectableRunEvent[] | null = null;
@@ -88,6 +92,12 @@ export class BoardActivityOverlay extends LitElement {
     }
   `;
 
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    this.persist = globalThis.localStorage.getItem(PERSIST_KEY) === "true";
+  }
+
   protected willUpdate(changedProperties: PropertyValues): void {
     if (!changedProperties.has("run")) {
       return;
@@ -107,6 +117,12 @@ export class BoardActivityOverlay extends LitElement {
       .overlayTitle=${"Board activity"}
       .maximizeKey=${MAXIMIZE_KEY}
       .dockKey=${DOCK_KEY}
+      .persistable=${true}
+      .persist=${this.persist}
+      @bbpersisttoggle=${() => {
+        this.persist = !this.persist;
+        globalThis.localStorage.setItem(PERSIST_KEY, this.persist.toString());
+      }}
     >
       <div id="content">
         <div id="container">

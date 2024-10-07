@@ -21,6 +21,7 @@ import { classMap } from "lit/directives/class-map.js";
 const DATA_TYPE = "text/plain";
 const DOCK_KEY = "bb-component-selector-overlay-docked";
 const MAXIMIZE_KEY = "bb-component-selector-overlay-maximized";
+const PERSIST_KEY = "bb-component-selector-overlay-persist";
 
 @customElement("bb-component-selector-overlay")
 export class ComponentSelectorOverlay extends LitElement {
@@ -32,6 +33,9 @@ export class ComponentSelectorOverlay extends LitElement {
 
   @property()
   showExperimentalComponents = false;
+
+  @property()
+  persist = false;
 
   #searchInputRef: Ref<HTMLInputElement> = createRef();
   #kitInfoTask = new Task(this, {
@@ -218,6 +222,12 @@ export class ComponentSelectorOverlay extends LitElement {
     }
   `;
 
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    this.persist = globalThis.localStorage.getItem(PERSIST_KEY) === "true";
+  }
+
   async #createKitList(kits: InspectableKit[]) {
     const kitList = new Map<
       string,
@@ -328,6 +338,15 @@ export class ComponentSelectorOverlay extends LitElement {
           .overlayTitle=${"Components"}
           .maximizeKey=${MAXIMIZE_KEY}
           .dockKey=${DOCK_KEY}
+          .persistable=${true}
+          .persist=${this.persist}
+          @bbpersisttoggle=${() => {
+            this.persist = !this.persist;
+            globalThis.localStorage.setItem(
+              PERSIST_KEY,
+              this.persist.toString()
+            );
+          }}
           ${ref(this.#overlayRef)}
         >
           <input

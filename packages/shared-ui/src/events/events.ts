@@ -288,6 +288,14 @@ export class InputErrorEvent extends Event {
   }
 }
 
+export class PersistToggleEvent extends Event {
+  static eventName = "bbpersisttoggle";
+
+  constructor() {
+    super(PersistToggleEvent.eventName, { ...eventInit });
+  }
+}
+
 /**
  * Graph Editing
  */

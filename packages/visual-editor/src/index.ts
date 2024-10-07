@@ -1589,6 +1589,14 @@ export class Main extends LitElement {
             .providerOps=${this.providerOps}
             .inputsFromLastRun=${inputsFromLastRun}
             @bboverlaydismissed=${() => {
+              if (!this.#boardActivityRef.value) {
+                return;
+              }
+
+              if (this.#boardActivityRef.value.persist) {
+                return;
+              }
+
               this.showBoardActivityOverlay = false;
               this.#boardActivityLocation = null;
             }}
