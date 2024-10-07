@@ -55,6 +55,7 @@ export async function createAccount(username: string, key?: string) {
 
 export type BoardListEntry = {
   title: string;
+  description?: string;
   path: string;
   username: string;
   readonly: boolean;
