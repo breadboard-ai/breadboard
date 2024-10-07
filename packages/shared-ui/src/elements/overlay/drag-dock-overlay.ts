@@ -6,7 +6,12 @@
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { OverlayDismissedEvent } from "../../events/events";
+import {
+  HideTooltipEvent,
+  OverlayDismissedEvent,
+  PersistToggleEvent,
+  ShowTooltipEvent,
+} from "../../events/events";
 import { classMap } from "lit/directives/class-map.js";
 
 const DOCK_ZONE_SIZE = 32;
@@ -29,6 +34,12 @@ export class DragDockOverlay extends LitElement {
 
   @property()
   maximizeKey: string | null = null;
+
+  @property()
+  persistable = false;
+
+  @property({ reflect: true })
+  persist = false;
 
   @property()
   dockKey: string | null = null;
@@ -294,6 +305,36 @@ export class DragDockOverlay extends LitElement {
     #minmax.maximized {
       background: transparent var(--bb-icon-minimize) center center / 20px 20px
         no-repeat;
+    }
+
+    #persist {
+      border-radius: var(--bb-grid-size);
+      padding: 0;
+      height: var(--bb-grid-size-5);
+      width: var(--bb-grid-size-5);
+      cursor: pointer;
+      border: 1px solid var(--bb-neutral-300);
+      transition: all 0.3s cubic-bezier(0, 0, 0.3, 1);
+      font-size: 0;
+      background: var(--bb-neutral-0) var(--bb-icon-anchor) center center / 16px
+        16px no-repeat;
+      margin-right: var(--bb-grid-size-2);
+    }
+
+    #persist:focus,
+    #persist:hover {
+      color: var(--bb-neutral-600);
+      background: var(--bb-neutral-0) var(--bb-icon-anchor-active) center center /
+        16px 16px no-repeat;
+      border: 1px solid var(--bb-neutral-300);
+    }
+
+    #persist.active {
+      opacity: 1;
+      color: var(--bb-neutral-700);
+      background: var(--bb-neutral-50) var(--bb-icon-anchor-active) center
+        center / 16px 16px no-repeat;
+      border: 1px solid var(--bb-neutral-500);
     }
 
     @keyframes fadeIn {
@@ -742,6 +783,36 @@ export class DragDockOverlay extends LitElement {
                 }}
               >
                 <span>${this.overlayTitle}</span>
+                ${this.persistable
+                  ? html`<button
+                      id="persist"
+                      class=${classMap({ active: this.persist })}
+                      @pointerover=${(evt: PointerEvent) => {
+                        this.dispatchEvent(
+                          new ShowTooltipEvent(
+                            "Keep open",
+                            evt.clientX,
+                            evt.clientY
+                          )
+                        );
+                      }}
+                      @pointerout=${() => {
+                        this.dispatchEvent(new HideTooltipEvent());
+                      }}
+                      @pointerdown=${(evt: PointerEvent) => {
+                        evt.stopImmediatePropagation();
+                      }}
+                      @pointerup=${(evt: PointerEvent) => {
+                        evt.stopImmediatePropagation();
+                      }}
+                      @click=${() => {
+                        this.dispatchEvent(new PersistToggleEvent());
+                      }}
+                    >
+                      Keep Open
+                    </button>`
+                  : nothing}
+
                 <button
                   id="minmax"
                   class=${classMap({ maximized: this.maximized })}

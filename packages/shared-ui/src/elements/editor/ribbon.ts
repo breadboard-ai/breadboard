@@ -715,7 +715,7 @@ export class RibbonMenu extends LitElement {
     this.#componentSelectorRef.value.selectSearchInput();
   }
 
-  #dispatchActivityMarkerEvent(forceOn = false) {
+  #showBoardActivity(forceOn = false) {
     if (!this.#boardActivityRef.value) {
       return;
     }
@@ -743,6 +743,14 @@ export class RibbonMenu extends LitElement {
             this.dispatchEvent(new NodeCreateEvent(id, evt.nodeType));
           }}
           @bboverlaydismissed=${() => {
+            if (!this.#componentSelectorRef.value) {
+              return;
+            }
+
+            if (this.#componentSelectorRef.value.persist) {
+              return;
+            }
+
             this.showComponentSelector = false;
           }}
         ></bb-component-selector-overlay>`;
@@ -755,7 +763,7 @@ export class RibbonMenu extends LitElement {
           id="component-toggle"
           class=${classMap({ active: this.showComponentSelector })}
           @click=${() => {
-            this.showComponentSelector = true;
+            this.showComponentSelector = !this.showComponentSelector;
           }}
         >
           Components
@@ -1326,7 +1334,7 @@ export class RibbonMenu extends LitElement {
           this.dispatchEvent(new HideTooltipEvent());
         }}
         @click=${() => {
-          this.#dispatchActivityMarkerEvent();
+          this.#showBoardActivity();
         }}
       >
         <span
@@ -1352,7 +1360,7 @@ export class RibbonMenu extends LitElement {
           if (this.isRunning) {
             this.dispatchEvent(new StopEvent());
           } else {
-            this.#dispatchActivityMarkerEvent(true);
+            this.#showBoardActivity(true);
             this.dispatchEvent(new RunEvent());
           }
         }}
