@@ -101,7 +101,7 @@
     "@breadboard-ai/data-store": "0.2.3",
     "@breadboard-ai/types": "0.1.1",
     "@codemirror/autocomplete": "^6.18.1",
-    "@codemirror/commands": "^6.6.2",
+    "@codemirror/commands": "^6.7.0",
     "@codemirror/lang-javascript": "^6.2.2",
     "@codemirror/lang-json": "^6.0.1",
     "@dagrejs/dagre": "^1.1.4",
