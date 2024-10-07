@@ -8,9 +8,10 @@
 
 import { useEffect, useState } from "react";
 import Form from "./form";
-import { StoryMakingProgress, StoryMakingState } from "../types";
+import { StoryListType, StoryMakingProgress, StoryMakingState } from "../types";
 import { chunkRepairTransform } from "./chunk-repair";
 import Link from "next/link";
+import { rememberStory } from "../utils/local-store";
 
 export default function GenerateStory() {
   const [state, setState] = useState<StoryMakingState>("idle");
@@ -19,6 +20,11 @@ export default function GenerateStory() {
 
   useEffect(() => {
     async function startFetching() {
+      const storyItem: StoryListType = {
+        id: "",
+        title: "",
+        img: "",
+      };
       try {
         const result = await fetch("/api/create", {
           method: "POST",
@@ -40,11 +46,19 @@ export default function GenerateStory() {
           .pipeTo(
             new WritableStream({
               write(chunk) {
-                const json = JSON.parse(chunk);
+                const json = JSON.parse(chunk) as StoryMakingProgress;
+                if (json.type === "done") {
+                  storyItem.id = json.id;
+                } else if (json.type === "chapter") {
+                  storyItem.img = json.chapter.img;
+                } else if (json.type === "start") {
+                  storyItem.title = json.title;
+                }
                 setProgress((progress) => [...progress, json]);
               },
               close() {
                 setState("done");
+                rememberStory(storyItem);
               },
             })
           );
