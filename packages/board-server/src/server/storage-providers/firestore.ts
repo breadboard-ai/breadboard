@@ -127,6 +127,7 @@ export class FirestoreStorageProvider
       docs.forEach((doc) => {
         const path = asPath(store.id, doc.id);
         const title = doc.get("title") || path;
+        const description = doc.get("description") || undefined;
         const tags = (doc.get("tags") as string[]) || ["published"];
         const published = tags.includes("published");
         const readonly = userStore !== store.id;
@@ -135,7 +136,15 @@ export class FirestoreStorageProvider
         if (!published && !mine) {
           return;
         }
-        storeBoards.push({ title, path, username, readonly, mine, tags });
+        storeBoards.push({
+          title,
+          description,
+          path,
+          username,
+          readonly,
+          mine,
+          tags,
+        });
       });
       boards.push(...storeBoards);
     }
@@ -158,13 +167,13 @@ export class FirestoreStorageProvider
     if (pathUserStore !== userStore) {
       return { success: false, error: "Unauthorized" };
     }
-    const { title: maybeTitle, metadata } = graph;
+    const { title: maybeTitle, metadata, description } = graph;
     const tags = metadata?.tags || [];
     const title = maybeTitle || boardName;
 
     await this.#database
       .doc(`workspaces/${userStore}/boards/${boardName}`)
-      .set({ graph: JSON.stringify(graph), tags, title });
+      .set({ graph: JSON.stringify(graph), tags, title, description });
     return { success: true };
   }
 
