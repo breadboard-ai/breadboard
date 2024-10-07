@@ -9,6 +9,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getStoryList } from "./utils/local-store";
+import { useEffect, useState } from "react";
+import { StoryListType } from "./types";
 
 const globalNavigation = [
   { href: "/", label: "Home" },
@@ -18,17 +20,19 @@ const globalNavigation = [
 
 export default function Navigation() {
   const pathname = usePathname();
-  const stories = getStoryList();
+  const [stories, setStories] = useState<StoryListType[]>([]);
 
-  const nav = [...globalNavigation];
-  if (stories.length === 0) {
-    nav.pop();
-  }
+  useEffect(() => {
+    setStories(getStoryList());
+  }, []);
 
   return (
     <nav>
       <ol className="flex pt-2 gap-5">
-        {nav.map(({ href, label, highlight }, i) => {
+        {globalNavigation.map(({ href, label, highlight }, i) => {
+          if (href === "/new" && stories.length === 0) {
+            return null;
+          }
           return (
             <li key={i}>
               <Link

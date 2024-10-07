@@ -9,6 +9,9 @@ import { getStory } from "@/app/utils/store";
 
 export default async function Story({ params }: StoryParams) {
   const story = await getStory(params.story);
+  if (!story) {
+    return <div className="p-7">Story not found</div>;
+  }
   return (
     <main className="p-7">
       <section>
