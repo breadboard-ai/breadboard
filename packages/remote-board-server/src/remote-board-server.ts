@@ -21,6 +21,7 @@ import {
   type Permission,
   type User,
 } from "@google-labs/breadboard";
+import { fromManifest } from "@google-labs/breadboard/kits";
 
 /**
  * For now, make a flag that controls whether to use simple requests or not.
@@ -65,13 +66,13 @@ const createRequest = (
 
 export class RemoteBoardServer extends EventTarget implements BoardServer {
   public readonly url: URL;
-  public readonly kits: Kit[];
   public readonly users: User[];
   public readonly secrets = new Map<string, string>();
   public readonly extensions: BoardServerExtension[] = [];
   public readonly capabilities: BoardServerCapabilities;
 
   projects: Promise<BoardServerProject[]>;
+  kits: Kit[];
 
   static readonly PROTOCOL = "https://";
 
@@ -433,7 +434,54 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
       );
     }
 
+    this.#refreshBoardServerKit(projects);
     return projects;
+  }
+
+  async #refreshBoardServerKit(projects: BoardServerProject[]) {
+    if (!projects.length) {
+      return;
+    }
+
+    const nodes: Record<string, GraphDescriptor> = {};
+    for (let idx = 0; idx < projects.length; idx++) {
+      const project = projects[idx];
+      if (!project.url) {
+        continue;
+      }
+
+      const id = `node-${globalThis.crypto.randomUUID()}`;
+      const type = project.url.href;
+      if (!project.metadata?.tags || !project.metadata?.tags.includes("tool")) {
+        continue;
+      }
+
+      nodes[type] = {
+        title: `@${project.metadata.owner} - ${project.metadata.title} `,
+        description: project.metadata.description,
+        metadata: {
+          tags: project.metadata?.tags,
+          icon: project.metadata?.icon ?? "generic",
+        },
+        edges: [],
+        nodes: [
+          {
+            id,
+            type,
+          },
+        ],
+      };
+    }
+
+    const boardServerKit = fromManifest({
+      url: `${this.url.href}/bsk`,
+      version: "0.0.1",
+      title: "Board Server Kit",
+      nodes,
+    });
+
+    this.kits = this.kits.filter((kit) => kit.title !== "Board Server Kit");
+    this.kits.push(boardServerKit);
   }
 
   async canProxy(url: URL): Promise<string | false> {

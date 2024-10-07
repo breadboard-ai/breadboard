@@ -282,7 +282,7 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
       }
 
       const type = project.board.descriptor.url;
-      const id = `${type}-${globalThis.crypto.randomUUID()}`;
+      const id = `node-${globalThis.crypto.randomUUID()}`;
       if (
         !project.board.descriptor.metadata?.tags ||
         !project.board.descriptor.metadata?.tags.includes("tool")
@@ -290,7 +290,7 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
         continue;
       }
 
-      nodes[id] = {
+      nodes[type] = {
         title: project.board?.descriptor.title,
         description: project.board?.descriptor.description,
         metadata: {
