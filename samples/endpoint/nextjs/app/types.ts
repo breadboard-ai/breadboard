@@ -31,6 +31,7 @@ export type StoryMakingProgress =
 
 export type RejectedStoryProgress = {
   type: "rejected";
+  message: string;
 };
 
 export type ErrorStoryProgress = {

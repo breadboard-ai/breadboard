@@ -81,8 +81,8 @@ export default function GenerateStory() {
           switch (event.type) {
             case "rejected":
               return (
-                <h2 key={i} className="font-bold">
-                  Story Rejected
+                <h2 key={i} className="col-span-6 text-red-500">
+                  {event.message}
                 </h2>
               );
             case "error":
