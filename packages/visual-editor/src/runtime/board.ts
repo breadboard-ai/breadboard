@@ -232,13 +232,20 @@ export class Board extends EventTarget {
   createURLFromTabs() {
     const params = new URLSearchParams();
     let t = 0;
+    let activeTab = 0;
     for (const tab of this.#tabs.values()) {
       if (tab.type !== TabType.URL || !tab.graph.url) {
         continue;
       }
 
+      if (tab.id === this.#currentTabId) {
+        activeTab = t;
+      }
+
       params.set(`tab${t++}`, tab.graph.url);
     }
+
+    params.set(`activeTab`, activeTab.toString());
 
     const url = new URL(window.location.href);
     url.search = params.toString();
@@ -263,13 +270,34 @@ export class Board extends EventTarget {
         return 0;
       });
 
+    let activeTab: number | null = null;
+    const activeTabParam = params.get("activeTab");
+    if (activeTabParam) {
+      activeTab = Number.parseInt(activeTabParam);
+      if (Number.isNaN(activeTab)) {
+        activeTab = null;
+      }
+    }
+
+    let activeTabId: TabId | null = null;
     if (tabs.length > 0) {
-      for (const [, tab] of tabs) {
+      for (let t = 0; t < tabs.length; t++) {
+        const [, tab] = tabs[t];
         if (tab.startsWith("run://") || tab.startsWith("descriptor://")) {
           continue;
         }
 
         await this.createTabFromURL(tab, url.href, true, false, false);
+
+        // Capture the current tab ID so we can restore it after creating all
+        // the tabs again.
+        if (t === activeTab) {
+          activeTabId = this.#currentTabId;
+        }
+      }
+
+      if (activeTabId && this.#currentTabId !== activeTabId) {
+        this.#currentTabId = activeTabId;
       }
     }
 
