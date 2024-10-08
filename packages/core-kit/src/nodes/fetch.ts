@@ -49,6 +49,7 @@ const createBody = async (
   store?: DataStore
 ) => {
   if (!body) return undefined;
+  if (typeof body === "string") return body;
   const contentType = headers["Content-Type"];
   if (contentType === "multipart/form-data") {
     const values = body as Record<string, JsonSerializable>;
