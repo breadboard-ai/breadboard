@@ -167,7 +167,7 @@ export class FirestoreStorageProvider
     if (pathUserStore !== userStore) {
       return { success: false, error: "Unauthorized" };
     }
-    const { title: maybeTitle, metadata, description } = graph;
+    const { title: maybeTitle, metadata, description = "" } = graph;
     const tags = metadata?.tags || [];
     const title = maybeTitle || boardName;
 
@@ -221,7 +221,7 @@ export class FirestoreStorageProvider
       // Create a blank board with the proposed name.
       await this.#database
         .doc(`workspaces/${userStore.store}/boards/${proposal}.bgl.json`)
-        .set({ graph: blankLLMContent() });
+        .set({ graph: JSON.stringify(blankLLMContent()) });
     }
     const path = asPath(userStore.store, `${proposal}.bgl.json`);
     return { success: true, path, error: undefined };
