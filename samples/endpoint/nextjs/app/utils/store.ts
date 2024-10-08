@@ -6,11 +6,16 @@
 
 import path from "path";
 import { StoryType } from "../types";
-import { readFile, writeFile } from "fs/promises";
+import { mkdir, readFile, writeFile } from "fs/promises";
 
 const MODULE_DIR = new URL(import.meta.url).pathname;
 const ROOT_DIR = path.resolve(MODULE_DIR, "../../../");
 const STORE_DIR = path.resolve(ROOT_DIR, "store");
+
+(async () => {
+  await mkdir(`${STORE_DIR}/images`, { recursive: true });
+  await mkdir(`${STORE_DIR}/stories`, { recursive: true });
+})();
 
 export async function getStory(id: string): Promise<StoryType | null> {
   if (!isUUID(id)) {
