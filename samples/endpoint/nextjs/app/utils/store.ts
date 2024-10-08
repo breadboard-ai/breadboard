@@ -7,7 +7,6 @@
 import path from "path";
 import { StoryType } from "../types";
 import { readFile, writeFile } from "fs/promises";
-import { UUID } from "crypto";
 
 const MODULE_DIR = new URL(import.meta.url).pathname;
 const ROOT_DIR = path.resolve(MODULE_DIR, "../../../");

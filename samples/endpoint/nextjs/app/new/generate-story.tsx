@@ -12,6 +12,7 @@ import { StoryListType, StoryMakingProgress, StoryMakingState } from "../types";
 import { chunkRepairTransform } from "./chunk-repair";
 import Link from "next/link";
 import { rememberStory } from "../utils/local-store";
+import { serverStreamEventDecoder } from "../utils/stream";
 
 export default function GenerateStory() {
   const [state, setState] = useState<StoryMakingState>("idle");
@@ -150,14 +151,4 @@ export default function GenerateStory() {
       ></Form>
     </>
   );
-}
-
-function serverStreamEventDecoder() {
-  return new TransformStream<string, string>({
-    transform(chunk, controller) {
-      if (chunk.startsWith("data: ")) {
-        controller.enqueue(chunk.slice(6));
-      }
-    },
-  });
 }
