@@ -503,7 +503,10 @@ export class Graph extends PIXI.Container {
 
       // If the pointer target is the same at pointerdown and pointerup, the
       // user has clicked on a node port, and we should avoid creating a wire.
-      if (topTarget === nodePortBeingEdited) {
+      if (topTarget === targetNodePort) {
+        if (topTarget instanceof GraphNodePort) {
+          topTarget.overrideStatus = null;
+        }
         return;
       }
 
