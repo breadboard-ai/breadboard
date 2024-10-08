@@ -76,6 +76,7 @@ export class LLMInput extends LitElement {
   #lastInputRef: Ref<HTMLInputElement> = createRef();
   #containerRef: Ref<HTMLDivElement> = createRef();
   #controlsRef: Ref<HTMLDivElement> = createRef();
+  #locationProxyRef: Ref<HTMLDivElement> = createRef();
 
   #partDataURLs = new Map<number, string>();
   #onWindowPointerDownBound = this.#onWindowPointerDown.bind(this);
@@ -506,6 +507,14 @@ export class LLMInput extends LitElement {
       height: var(--bb-grid-size-6);
       padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-7);
       margin: var(--bb-grid-size-2) 0 var(--bb-grid-size) 0;
+    }
+
+    #location-proxy {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 0;
     }
   `;
 
@@ -1001,24 +1010,19 @@ export class LLMInput extends LitElement {
                   return;
                 }
 
-                const bounds = (
+                if (!this.#locationProxyRef.value) {
+                  return;
+                }
+
+                const containerBounds =
+                  this.#locationProxyRef.value.getBoundingClientRect();
+                const buttonBounds = (
                   evt.target as HTMLElement
                 ).getBoundingClientRect();
 
-                const styles = window.getComputedStyle(this);
-                let left = Number.parseInt(styles.getPropertyValue("--left"));
-                let top = Number.parseInt(styles.getPropertyValue("--top"));
-                if (Number.isNaN(left)) {
-                  left = 0;
-                }
-
-                if (Number.isNaN(top)) {
-                  top = 0;
-                }
-
                 this.showInlineControls = {
-                  x: bounds.left - left,
-                  y: bounds.top - top,
+                  x: buttonBounds.left - containerBounds.left,
+                  y: buttonBounds.top - containerBounds.top,
                 };
               }}
             >
@@ -1028,6 +1032,7 @@ export class LLMInput extends LitElement {
         ${!this.inlineControls || this.showInlineControls
           ? html` <div
               id="controls-container"
+              class=${classMap({ inline: this.showInlineControls !== null })}
               style=${styleMap(styles)}
               @click=${(evt: Event) => {
                 evt.stopImmediatePropagation();
@@ -1182,6 +1187,8 @@ export class LLMInput extends LitElement {
                 Add text
               </button>
             </div>`}
-      </div>`;
+      </div>
+
+      <div id="location-proxy" ${ref(this.#locationProxyRef)}></div>`;
   }
 }
