@@ -399,6 +399,7 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
     await db.put("projects", idbProject);
 
     this.projects = this.#refreshProjects();
+    await this.#projects;
     return { result: true };
   }
 

@@ -341,10 +341,17 @@ export class SaveAsOverlay extends LitElement {
         <label>Provider</label>
         <select name="provider" .value=${this.selectedProvider}>
           ${map(this.providers, (provider) => {
-            return html`${map(provider.items(), ([location, store]) => {
-              const value = `${provider.name}::${location}`;
+            const stores = [...provider.items()].filter(
+              ([, store]) => store.permission === "granted"
+            );
+            return html`${map(stores, ([location, store]) => {
+              const value = `${provider.name}::${store.url ?? location}`;
               const isSelectedOption = value === selected;
-              return html`<option ?selected=${isSelectedOption} .value=${value}>
+              return html`<option
+                ?disabled=${store.permission !== "granted"}
+                ?selected=${isSelectedOption}
+                .value=${value}
+              >
                 ${store.title}
               </option>`;
             })}`;

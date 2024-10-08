@@ -297,6 +297,10 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
   }
 
   async createURL(location: string, fileName: string): Promise<string | null> {
+    // Ensure we don't have a trailing slash on the location so that the URLs
+    // we create below work out.
+    location = location.replace(/\/$/, "");
+
     const request = createRequest(
       `${location}/boards`,
       this.user.apiKey,
@@ -347,7 +351,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
       ]);
     }
 
-    items.set(this.name, {
+    items.set(this.url.href, {
       items: new Map(projects),
       permission: "granted",
       title: this.name,

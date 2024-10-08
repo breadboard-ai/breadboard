@@ -92,7 +92,10 @@ export async function getBoardServers(
   return stores.filter((store) => store !== null);
 }
 
-export async function connectToBoardServer(location?: string, apiKey?: string) {
+export async function connectToBoardServer(
+  location?: string,
+  apiKey?: string
+): Promise<{ title: string; url: string } | null> {
   const existingServers = await getBoardServers();
   if (location && location.startsWith(RemoteBoardServer.PROTOCOL)) {
     const existingServer = existingServers.find(
@@ -101,24 +104,25 @@ export async function connectToBoardServer(location?: string, apiKey?: string) {
 
     if (existingServer) {
       console.warn("Server already connected");
-      return false;
+      return null;
     }
 
     const response = await RemoteBoardServer.connect(location, apiKey);
     if (response) {
-      await storeBoardServer(new URL(location), response.title, {
+      const url = new URL(location);
+      await storeBoardServer(url, response.title, {
         apiKey: apiKey ?? "",
         secrets: new Map(),
         username: response.username,
       });
-      return true;
+      return { title: response.title, url: url.href };
     }
 
-    return false;
+    return null;
   } else {
     const handle = await FileSystemBoardServer.connect();
     if (!handle) {
-      return false;
+      return null;
     }
 
     const url = FileSystemBoardServer.createURL(handle.name);
@@ -129,7 +133,7 @@ export async function connectToBoardServer(location?: string, apiKey?: string) {
 
     if (existingServer) {
       console.warn("Server already connected");
-      return false;
+      return null;
     }
 
     try {
@@ -144,10 +148,10 @@ export async function connectToBoardServer(location?: string, apiKey?: string) {
         handle
       );
 
-      return true;
+      return { title: handle.name, url };
     } catch (err) {
       console.warn(err);
-      return false;
+      return null;
     }
   }
 }

@@ -8,6 +8,7 @@ import {
   BoardServer,
   BoardServerExtension,
   BoardServerExtensionNamespace,
+  createLoader,
   GraphDescriptor,
   GraphLoader,
   GraphProvider,
@@ -87,8 +88,8 @@ export class Board extends EventTarget {
     apiKey?: string
   ): Promise<{ success: boolean; error?: string }> {
     if (this.boardServers) {
-      const success = await connectToBoardServer(location, apiKey);
-      if (!success) {
+      const boardServerInfo = await connectToBoardServer(location, apiKey);
+      if (!boardServerInfo) {
         this.dispatchEvent(
           new RuntimeErrorEvent("Unable to connect to Board Server")
         );
@@ -99,7 +100,13 @@ export class Board extends EventTarget {
         return { success: false };
       } else {
         this.boardServers.servers = await getBoardServers();
-        this.dispatchEvent(new RuntimeBoardServerChangeEvent());
+        this.boardServers.loader = createLoader(this.boardServers.servers);
+        this.dispatchEvent(
+          new RuntimeBoardServerChangeEvent(
+            boardServerInfo.title,
+            boardServerInfo.url
+          )
+        );
       }
     } else {
       const provider = this.getProviderByName(providerName);
@@ -141,6 +148,7 @@ export class Board extends EventTarget {
         return { success: false };
       }
       this.boardServers.servers = await getBoardServers();
+      this.boardServers.loader = createLoader(this.boardServers.servers);
       this.dispatchEvent(new RuntimeBoardServerChangeEvent());
     } else {
       const provider = this.getProviderByName(providerName);
@@ -577,6 +585,7 @@ export class Board extends EventTarget {
 
     const url = new URL(urlString);
     const response = await provider.create(url, graph);
+    console.log(url, graph);
     return { ...response, url };
   }
 

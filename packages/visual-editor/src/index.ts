@@ -354,9 +354,15 @@ export class Main extends LitElement {
 
         this.#runtime.board.addEventListener(
           Runtime.Events.RuntimeBoardServerChangeEvent.eventName,
-          () => {
+          (evt: Runtime.Events.RuntimeBoardServerChangeEvent) => {
             this.showProviderAddOverlay = false;
             this.#providers = runtime.board.getProviders() || [];
+
+            if (evt.connectedBoardServerName && evt.connectedBoardServerURL) {
+              this.selectedProvider = evt.connectedBoardServerName;
+              this.selectedLocation = evt.connectedBoardServerURL;
+            }
+
             this.providerOps++;
           }
         );
@@ -904,7 +910,9 @@ export class Main extends LitElement {
     if (!result || !url) {
       this.toast(
         error || "Unable to create board",
-        BreadboardUI.Events.ToastType.ERROR
+        BreadboardUI.Events.ToastType.ERROR,
+        false,
+        id
       );
       return;
     }

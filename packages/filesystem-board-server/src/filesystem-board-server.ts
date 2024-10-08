@@ -94,7 +94,9 @@ export class FileSystemBoardServer extends EventTarget implements BoardServer {
   }
 
   static createURL(name: string) {
-    return `${this.PROTOCOL}${encodeURIComponent(name.toLocaleLowerCase())}`;
+    return new URL(
+      `${this.PROTOCOL}${encodeURIComponent(name.toLocaleLowerCase())}`
+    ).href;
   }
 
   static async from(
@@ -158,7 +160,6 @@ export class FileSystemBoardServer extends EventTarget implements BoardServer {
   }
 
   async getAccess(url: URL, user: User): Promise<Permission> {
-    console.log(url, user);
     const project = this.#projects.find((project) => {
       return url.pathname.startsWith(project.url.pathname);
     });

@@ -241,6 +241,32 @@ export class Editor extends LitElement {
       position: relative;
     }
 
+    #readonly-overlay {
+      display: flex;
+      align-items: center;
+      height: var(--bb-grid-size-9);
+      position: absolute;
+      top: 52px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--bb-boards-900);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      background: var(--bb-boards-300);
+      border-radius: var(--bb-grid-size-10);
+      padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-3);
+    }
+
+    #readonly-overlay::before {
+      content: "";
+      width: 20px;
+      height: 20px;
+      background: var(--bb-icon-saved-readonly) center center / 20px 20px
+        no-repeat;
+      margin-right: var(--bb-grid-size);
+      mix-blend-mode: difference;
+    }
+
     bb-ribbon-menu {
       position: absolute;
       top: 0;
