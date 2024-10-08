@@ -791,6 +791,7 @@ export class DragDockOverlay extends LitElement {
                 }}
               >
                 <span>${this.overlayTitle}</span>
+                <slot name="back-button"></slot>
                 ${this.persistable
                   ? html`<button
                       id="persist"

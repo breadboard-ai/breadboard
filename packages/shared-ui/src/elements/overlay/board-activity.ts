@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, PropertyValues } from "lit";
+import { LitElement, html, css, PropertyValues, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { SettingsStore } from "../../types/types.js";
 import {
@@ -124,6 +124,23 @@ export class BoardActivityOverlay extends LitElement {
         globalThis.localStorage.setItem(PERSIST_KEY, this.persist.toString());
       }}
     >
+      ${this.debugEvent
+        ? html`<button
+            id="back-to-activity"
+            slot="back-button"
+            @pointerdown=${(evt: PointerEvent) => {
+              evt.stopImmediatePropagation();
+            }}
+            @pointerup=${(evt: PointerEvent) => {
+              evt.stopImmediatePropagation();
+            }}
+            @click=${() => {
+              this.debugEvent = null;
+            }}
+          >
+            Back
+          </button>`
+        : nothing}
       <div id="content">
         <div id="container">
           ${this.debugEvent
