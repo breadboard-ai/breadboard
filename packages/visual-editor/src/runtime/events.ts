@@ -42,7 +42,10 @@ export class RuntimeBoardEditEvent extends Event {
 export class RuntimeBoardServerChangeEvent extends Event {
   static eventName = "runtimeboardserverchange" as const;
 
-  constructor() {
+  constructor(
+    public readonly connectedBoardServerName?: string,
+    public readonly connectedBoardServerURL?: string
+  ) {
     super(RuntimeBoardServerChangeEvent.eventName, { ...eventInit });
   }
 }
