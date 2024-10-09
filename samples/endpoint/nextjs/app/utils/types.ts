@@ -32,6 +32,9 @@ export type RunOutputEvent = [
         }
       | {
           chapter: LLMContent[];
+        }
+      | {
+          title: LLMContent[];
         };
   },
   next: string,

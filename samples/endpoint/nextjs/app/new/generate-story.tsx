@@ -61,7 +61,9 @@ export default function GenerateStory() {
               },
               close() {
                 setState("done");
-                rememberStory(storyItem);
+                if (storyItem.id) {
+                  rememberStory(storyItem);
+                }
               },
             })
           );
@@ -77,9 +79,12 @@ export default function GenerateStory() {
     }
   }, [state, form]);
 
-  if (progress.length > 0) {
+  if (state !== "idle") {
     return (
       <section className="grid grid-cols-6 gap-5">
+        {state === "creating" && (
+          <h2 className="col-span-6 animate-bounce">Writing chapters...</h2>
+        )}
         {progress.map((event, i) => {
           switch (event.type) {
             case "rejected":

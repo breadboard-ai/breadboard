@@ -31,9 +31,6 @@ export async function POST(req: Request) {
   const stream = (await generateStory(topic))
     .pipeThrough(
       new TransformStream<RunEvent, StoryMakingProgress>({
-        start(controller) {
-          controller.enqueue({ type: "start", title: topic });
-        },
         async transform(chunk, controller) {
           const [type, data] = chunk;
           switch (type) {
@@ -53,6 +50,13 @@ export async function POST(req: Request) {
                     outputs.reject,
                     "This topic is not appropriate for a children's story"
                   ),
+                });
+                hasErrors = true;
+              } else if ("title" in outputs) {
+                story.title = toText(outputs.title, topic);
+                controller.enqueue({
+                  type: "start",
+                  title: story.title,
                 });
               } else if ("chapter" in outputs) {
                 const [image, text] = outputs.chapter.at(-1)?.parts || [];
