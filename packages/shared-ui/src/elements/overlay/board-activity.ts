@@ -13,6 +13,8 @@ import {
   InspectableRunEvent,
   InspectableRunInputs,
 } from "@google-labs/breadboard";
+import { classMap } from "lit/directives/class-map.js";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
 
 const MAXIMIZE_KEY = "bb-board-activity-overlay-maximized";
 const DOCK_KEY = "bb-board-activity-overlay-docked";
@@ -47,6 +49,9 @@ export class BoardActivityOverlay extends LitElement {
   @state()
   debugEvent: InspectableRunEvent | null = null;
 
+  #contentScrollTop = 0;
+  #contentRef: Ref<HTMLDivElement> = createRef();
+
   static styles = css`
     * {
       box-sizing: border-box;
@@ -63,6 +68,7 @@ export class BoardActivityOverlay extends LitElement {
       max-height: none;
       flex: 1;
       overflow-y: auto;
+      position: relative;
     }
 
     #container {
@@ -90,6 +96,22 @@ export class BoardActivityOverlay extends LitElement {
     #back-to-activity:focus {
       background-color: var(--bb-ui-100);
     }
+
+    bb-activity-log.collapsed {
+      overflow: hidden;
+      height: 0;
+    }
+
+    bb-event-details {
+      background: var(--bb-neutral-0);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      min-height: 100%;
+      z-index: 1;
+      padding: var(--bb-grid-size-2);
+    }
   `;
 
   connectedCallback(): void {
@@ -104,6 +126,16 @@ export class BoardActivityOverlay extends LitElement {
     }
 
     this.debugEvent = null;
+  }
+
+  protected updated(changedProperties: PropertyValues): void {
+    if (changedProperties.has("debugEvent") && this.#contentRef.value) {
+      if (changedProperties.get("debugEvent") === null) {
+        this.#contentRef.value.scrollTop = 0;
+      } else {
+        this.#contentRef.value.scrollTop = this.#contentScrollTop;
+      }
+    }
   }
 
   render() {
@@ -141,44 +173,48 @@ export class BoardActivityOverlay extends LitElement {
             Back
           </button>`
         : nothing}
-      <div id="content">
+      <div id="content" ${ref(this.#contentRef)}>
         <div id="container">
+          <bb-activity-log
+            class=${classMap({ collapsed: this.debugEvent !== null })}
+            .run=${this.run}
+            .events=${events}
+            .eventPosition=${eventPosition}
+            .inputsFromLastRun=${this.inputsFromLastRun}
+            .showExtendedInfo=${true}
+            .settings=${this.settings}
+            .showLogTitle=${false}
+            .logTitle=${"Debug Board"}
+            .waitingMessage=${'Click "Debug Board" to get started'}
+            .providers=${this.providers}
+            .providerOps=${this.providerOps}
+            @pointerdown=${(evt: PointerEvent) => {
+              const [top] = evt.composedPath();
+              if (!(top instanceof HTMLElement) || !top.dataset.messageId) {
+                return;
+              }
+              evt.stopImmediatePropagation();
+              const id = top.dataset.messageId;
+              const event = this.run?.getEventById(id);
+              if (!event) {
+                // TODO: Offer the user more information.
+                console.warn(`Unable to find event with ID "${id}"`);
+                return;
+              }
+              if (event.type !== "node") {
+                return;
+              }
+
+              this.#contentScrollTop = this.#contentRef.value?.scrollTop ?? 0;
+              this.debugEvent = event;
+            }}
+            name="Board"
+          ></bb-activity-log>
           ${this.debugEvent
-            ? html` <bb-event-details
+            ? html`<bb-event-details
                 .event=${this.debugEvent}
               ></bb-event-details>`
-            : html`<bb-activity-log
-                .run=${this.run}
-                .events=${events}
-                .eventPosition=${eventPosition}
-                .inputsFromLastRun=${this.inputsFromLastRun}
-                .showExtendedInfo=${true}
-                .settings=${this.settings}
-                .showLogTitle=${false}
-                .logTitle=${"Debug Board"}
-                .waitingMessage=${'Click "Debug Board" to get started'}
-                .providers=${this.providers}
-                .providerOps=${this.providerOps}
-                @pointerdown=${(evt: PointerEvent) => {
-                  const [top] = evt.composedPath();
-                  if (!(top instanceof HTMLElement) || !top.dataset.messageId) {
-                    return;
-                  }
-                  evt.stopImmediatePropagation();
-                  const id = top.dataset.messageId;
-                  const event = this.run?.getEventById(id);
-                  if (!event) {
-                    // TODO: Offer the user more information.
-                    console.warn(`Unable to find event with ID "${id}"`);
-                    return;
-                  }
-                  if (event.type !== "node") {
-                    return;
-                  }
-                  this.debugEvent = event;
-                }}
-                name="Board"
-              ></bb-activity-log>`}
+            : nothing}
         </div>
       </div>
     </bb-drag-dock-overlay>`;

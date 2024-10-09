@@ -570,7 +570,7 @@ export class ActivityLog extends LitElement {
             : nothing}`}
       ${this.events && this.events.length
         ? this.events.map((event, idx) => {
-            const isNew = this.#seenItems.has(event.id);
+            const isNew = !this.#seenItems.has(event.id);
             this.#seenItems.add(event.id);
 
             let content:
@@ -615,7 +615,7 @@ export class ActivityLog extends LitElement {
                     >
                       ${node.title()}
                     </h1>
-                    ${node.description()
+                    ${node.description() && node.description() !== node.title()
                       ? html`<h2>${node.description()}</h2>`
                       : nothing}
                     ${until(additionalData)} ${this.#createRunInfo(event.runs)}
