@@ -414,7 +414,6 @@ export class UserInput extends LitElement {
                 try {
                   assertIsLLMContent(defaultValue);
                 } catch (err) {
-                  console.warn(err);
                   defaultValue = null;
                 }
               }

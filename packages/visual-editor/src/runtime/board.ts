@@ -252,6 +252,12 @@ export class Board extends EventTarget {
     return url;
   }
 
+  getTabURLs(): string[] {
+    return [...this.#tabs.values()]
+      .filter((tab) => tab.graph.url !== undefined)
+      .map((tab) => tab.graph.url as string);
+  }
+
   async createTabsFromURL(url: URL) {
     const params = new URLSearchParams(url.search);
 
@@ -613,7 +619,6 @@ export class Board extends EventTarget {
 
     const url = new URL(urlString);
     const response = await provider.create(url, graph);
-    console.log(url, graph);
     return { ...response, url };
   }
 

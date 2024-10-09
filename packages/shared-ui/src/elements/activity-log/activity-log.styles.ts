@@ -74,7 +74,7 @@ export const styles = css`
   }
 
   :host > .activity-entry:last-of-type {
-    margin-bottom: 20px;
+    padding-bottom: 120px;
   }
 
   .activity-entry.error {
@@ -281,7 +281,7 @@ export const styles = css`
 
   h1[data-message-id]:hover,
   h1[data-message-id]:focus {
-    color: var(--bb-ui-800);
+    color: var(--bb-ui-600);
     transition-duration: 0.1s;
   }
 

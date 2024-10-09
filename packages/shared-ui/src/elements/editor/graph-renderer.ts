@@ -123,7 +123,7 @@ export class GraphRenderer extends LitElement {
   } | null = null;
 
   #mode = MODE.SELECT;
-  #padding = 50;
+  #padding = 100;
   #container = new PIXI.Container({
     isRenderGroup: true,
   });
@@ -1045,6 +1045,20 @@ export class GraphRenderer extends LitElement {
     graph.destroy();
   }
 
+  removeGraphs(keepList: string[]) {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      if (keepList.includes(graph.label)) {
+        continue;
+      }
+
+      this.removeGraph(graph);
+    }
+  }
+
   removeAllGraphs() {
     for (const graph of this.#container.children) {
       if (!(graph instanceof Graph)) {
@@ -1192,7 +1206,10 @@ export class GraphRenderer extends LitElement {
     }
   }
 
-  zoomToFit(emitGraphNodeVisualInformation = true) {
+  zoomToFit(
+    emitGraphNodeVisualInformation = true,
+    reduceRenderBoundsWidth = 0
+  ) {
     this.#container.scale.set(1, 1);
 
     // Find the first graph in the container and size to it.
@@ -1204,6 +1221,9 @@ export class GraphRenderer extends LitElement {
       const graphPosition = graph.getGlobalPosition();
       const graphBounds = graph.getBounds();
       const rendererBounds = this.getBoundingClientRect();
+      if (reduceRenderBoundsWidth) {
+        rendererBounds.width -= reduceRenderBoundsWidth;
+      }
 
       // Dagre isn't guaranteed to start the layout at 0, 0, so we adjust things
       // back here so that the scaling calculations work out.

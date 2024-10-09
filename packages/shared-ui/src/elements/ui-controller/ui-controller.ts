@@ -12,29 +12,20 @@ import {
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
   InspectableRun,
-  InspectableRunEvent,
   InspectableRunInputs,
   Kit,
-  RemoveNodeSpec,
   inspect,
 } from "@google-labs/breadboard";
 import {
   HTMLTemplateResult,
   LitElement,
-  PropertyValueMap,
+  PropertyValues,
   html,
   nothing,
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { classMap } from "lit/directives/class-map.js";
 import { guard } from "lit/directives/guard.js";
-import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
-import {
-  GraphNodeDeselectedEvent,
-  GraphNodeSelectedEvent,
-  MultiEditEvent,
-} from "../../events/events.js";
 import {
   RecentBoard,
   SETTINGS_TYPE,
@@ -42,22 +33,8 @@ import {
   SettingsStore,
   TopGraphRunResult,
 } from "../../types/types.js";
-import { type NodeConfigurationInfo } from "../elements.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 
-/**
- * Breadboard UI controller element.
- *
- * @export
- * @class UI
- * @extends {LitElement}
- *
- * @property {GraphDescriptor | null} graph
- * @property {Kit[]} kits - an array of kits to use by a board
- * @property {string | null} url
- * @property {STATUS}
- * @property {Board[]}
- **/
 @customElement("bb-ui-controller")
 export class UI extends LitElement {
   @property()
@@ -88,9 +65,6 @@ export class UI extends LitElement {
   failedToLoad = false;
 
   @property()
-  boardId = -1;
-
-  @property()
   readOnly = false;
 
   @property()
@@ -114,65 +88,16 @@ export class UI extends LitElement {
   @property()
   isShowingBoardActivityOverlay = false;
 
-  @state()
-  selectedNodeIds: string[] = [];
-
-  @state()
-  isPortrait = window.matchMedia("(orientation: portrait)").matches;
-
-  @state()
-  debugEvent: InspectableRunEvent | null = null;
+  @property()
+  tabURLs: string[] = [];
 
   @state()
   history: EditHistory | null = null;
 
-  #nodeConfigurationRef: Ref<NodeConfigurationInfo> = createRef();
-  #lastBoardId = -1;
-  #detailsRef: Ref<HTMLElement> = createRef();
-  #controlsActivityRef: Ref<HTMLDivElement> = createRef();
-  #resizeObserver = new ResizeObserver(() => {
-    this.isPortrait = window.matchMedia("(orientation: portrait)").matches;
-  });
-  #lastEdgeCount = -1;
-
   static styles = uiControllerStyles;
 
-  connectedCallback(): void {
-    super.connectedCallback();
-    this.#resizeObserver.observe(this);
-  }
-
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this.#resizeObserver.unobserve(this);
-  }
-
   editorRender = 0;
-  protected willUpdate(
-    changedProperties:
-      | PropertyValueMap<{
-          boardId: number;
-          subGraphId: string | null;
-          readOnly: boolean | null;
-          isShowingBoardActivityOverlay: boolean | null;
-        }>
-      | Map<PropertyKey, unknown>
-  ): void {
-    if (changedProperties.has("boardId")) {
-      if (this.boardId === this.#lastBoardId) {
-        return;
-      }
-
-      this.selectedNodeIds = [];
-    }
-
-    if (
-      changedProperties.has("subGraphId") ||
-      changedProperties.has("readOnly")
-    ) {
-      this.selectedNodeIds = [];
-    }
-
+  protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("isShowingBoardActivityOverlay")) {
       this.editorRender++;
     }
@@ -251,7 +176,6 @@ export class UI extends LitElement {
         this.run,
         this.kits,
         this.topGraphResult,
-        this.boardId,
         this.history,
         this.editorRender,
         collapseNodesByDefault,
@@ -285,141 +209,30 @@ export class UI extends LitElement {
         const canRedo = this.history?.canRedo() ?? false;
 
         return html`<bb-editor
-          .graph=${graph}
-          .subGraphId=${this.subGraphId}
-          .run=${this.run}
-          .capabilities=${capabilities}
-          .extendedCapabilities=${extendedCapabilities}
-          .canUndo=${canUndo}
           .canRedo=${canRedo}
-          .topGraphResult=${this.topGraphResult}
-          .boardId=${this.boardId}
+          .canUndo=${canUndo}
+          .capabilities=${capabilities}
           .collapseNodesByDefault=${collapseNodesByDefault}
+          .extendedCapabilities=${extendedCapabilities}
+          .graph=${graph}
           .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
-          .showNodeShortcuts=${showNodeShortcuts}
-          .showNodePreviewValues=${showNodePreviewValues}
-          .showNodeTypeDescriptions=${showNodeTypeDescriptions}
-          .invertZoomScrollDirection=${invertZoomScrollDirection}
-          .showPortTooltips=${showPortTooltips}
           .highlightInvalidWires=${highlightInvalidWires}
-          .showExperimentalComponents=${showExperimentalComponents}
-          .readOnly=${this.readOnly}
-          .showReadOnlyOverlay=${true}
+          .invertZoomScrollDirection=${invertZoomScrollDirection}
           .isShowingBoardActivityOverlay=${this.isShowingBoardActivityOverlay}
-          @bbmultiedit=${(evt: MultiEditEvent) => {
-            const deletedNodes: RemoveNodeSpec[] = evt.edits.filter(
-              (edit) => edit.type === "removenode"
-            ) as RemoveNodeSpec[];
-            let graphMetadataChanges = evt.edits.filter(
-              (edit) => edit.type === "changegraphmetadata"
-            );
-            if (
-              deletedNodes.length === 0 &&
-              graphMetadataChanges.length === 0
-            ) {
-              return;
-            }
-
-            if (graphMetadataChanges.length > 0) {
-              graphMetadataChanges = graphMetadataChanges.slice(-1);
-            }
-
-            const newlySelected = this.selectedNodeIds.filter((id) => {
-              if (deletedNodes.find((deleted) => deleted.id === id)) {
-                return false;
-              }
-
-              const comments = graphMetadataChanges[0].metadata.comments ?? [];
-              if (
-                id.startsWith("comment") &&
-                !comments.find((comment) => comment.id === id)
-              ) {
-                return false;
-              }
-
-              return true;
-            });
-
-            if (newlySelected.length === this.selectedNodeIds.length) {
-              return;
-            }
-
-            this.selectedNodeIds = [...newlySelected];
-          }}
-          @bbgraphnodeselected=${(evt: GraphNodeSelectedEvent) => {
-            if (!this.selectedNodeIds) {
-              this.selectedNodeIds = [];
-            }
-
-            if (!evt.id) {
-              return;
-            }
-
-            const idx = this.selectedNodeIds.indexOf(evt.id);
-            if (idx !== -1) {
-              return;
-            }
-
-            this.selectedNodeIds = [...this.selectedNodeIds, evt.id];
-            this.requestUpdate();
-          }}
-          @bbgraphnodedeselected=${(evt: GraphNodeDeselectedEvent) => {
-            if (!this.selectedNodeIds) {
-              return;
-            }
-
-            if (!evt.id) {
-              return;
-            }
-
-            this.selectedNodeIds = this.selectedNodeIds.filter(
-              (id) => id !== evt.id
-            );
-            this.requestUpdate();
-          }}
-          @bbgraphnodedeselectedall=${() => {
-            this.selectedNodeIds = [];
-            this.requestUpdate();
-          }}
+          .readOnly=${this.readOnly}
+          .run=${this.run}
+          .showExperimentalComponents=${showExperimentalComponents}
+          .showNodePreviewValues=${showNodePreviewValues}
+          .showNodeShortcuts=${showNodeShortcuts}
+          .showNodeTypeDescriptions=${showNodeTypeDescriptions}
+          .showPortTooltips=${showPortTooltips}
+          .showReadOnlyOverlay=${true}
+          .subGraphId=${this.subGraphId}
+          .tabURLs=${this.tabURLs}
+          .topGraphResult=${this.topGraphResult}
         ></bb-editor>`;
       }
     );
-
-    const entryDetails = this.debugEvent
-      ? html`<div
-          id="details"
-          class=${classMap({ portrait: this.isPortrait })}
-          ${ref(this.#detailsRef)}
-          @pointerdown=${(evt: PointerEvent) => {
-            evt.stopImmediatePropagation();
-          }}
-        >
-          <bb-event-details .event=${this.debugEvent}></bb-event-details>
-        </div>`
-      : nothing;
-
-    if (this.debugEvent) {
-      this.addEventListener(
-        "pointerdown",
-        () => {
-          this.debugEvent = null;
-        },
-        { once: true }
-      );
-    }
-
-    // If we are about to re-render and remove the node configuration element
-    // we need to make sure that we are destroying all instances of the Code
-    // Editor before that happens. If not, CodeMirror will retain focus and a
-    // user won't be able to edit their inputs.
-    //
-    // If there is an "internal switch" from one node configuration view to
-    // another the element will take care of destroying the editors when it
-    // sees fit.
-    if (this.selectedNodeIds.length === 0 && this.#nodeConfigurationRef.value) {
-      this.#nodeConfigurationRef.value.destroyEditors();
-      this.#nodeConfigurationRef.value.ensureRenderOnNextUpdate();
-    }
 
     const breadcrumbs = [MAIN_BOARD_ID];
     if (this.subGraphId) {
@@ -441,7 +254,7 @@ export class UI extends LitElement {
             <p>Please try again, or load a different board</p>
           </div>`
         : editor}
-      ${entryDetails} ${welcomePanel}
+      ${welcomePanel}
     </section>`;
   }
 }

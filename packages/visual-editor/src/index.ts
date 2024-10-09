@@ -1416,6 +1416,7 @@ export class Main extends LitElement {
         const observers = this.#runtime?.run.getObservers(this.tab?.id ?? null);
         const topGraphResult = observers?.topGraphObserver?.current() ?? null;
         const inputsFromLastRun = runs[1]?.inputs() ?? null;
+        const tabURLs = this.#runtime.board.getTabURLs();
 
         let tabStatus = BreadboardUI.Types.STATUS.STOPPED;
         if (this.tab) {
@@ -1947,6 +1948,7 @@ export class Main extends LitElement {
               .recentBoards=${this.#recentBoards}
               .inputsFromLastRun=${inputsFromLastRun}
               .isShowingBoardActivityOverlay=${this.showBoardActivityOverlay}
+              .tabURLs=${tabURLs}
               @bbsave=${() => {
                 this.#attemptBoardSave();
               }}

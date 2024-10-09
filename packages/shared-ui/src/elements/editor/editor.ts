@@ -170,6 +170,9 @@ export class Editor extends LitElement {
   zoomToHighlightedNodeDuringRuns = false;
 
   @property()
+  tabURLs: string[] = [];
+
+  @property()
   set showPortTooltips(value: boolean) {
     this.#graphRenderer.showPortTooltips = value;
   }
@@ -314,11 +317,7 @@ export class Editor extends LitElement {
     }
 
     // Force a reset when the board changes.
-    if (this.boardId !== this.#lastBoardId) {
-      this.#graphRenderer.removeAllGraphs();
-      this.#lastBoardId = this.boardId;
-    }
-
+    const url = this.graph.raw().url || "";
     const ports = new Map<string, InspectableNodePorts>();
     const typeMetadata = new Map<string, NodeHandlerMetadata>();
     const graphVersion = this.#graphVersion;
@@ -345,8 +344,8 @@ export class Editor extends LitElement {
       return this.#graphRenderer;
     }
 
-    const url = this.graph.raw().url || "";
     this.#graphRenderer.hideAllGraphs();
+    this.#graphRenderer.removeGraphs(this.tabURLs);
 
     // Attempt to update the graph if it already exists.
     const updated = this.#graphRenderer.updateGraphByUrl(url, this.subGraphId, {
@@ -392,7 +391,10 @@ export class Editor extends LitElement {
       GraphInitialDrawEvent.eventName,
       () => {
         this.#graphRenderer.showGraph(url, this.subGraphId);
-        this.#graphRenderer.zoomToFit();
+        this.#graphRenderer.zoomToFit(
+          true,
+          this.isShowingBoardActivityOverlay ? 400 : 0
+        );
 
         // When we're loading a graph from existing results, we need to
         // set the topGraphResult again so that it is applied to the newly
@@ -1349,7 +1351,10 @@ export class Editor extends LitElement {
         this.#graphRenderer.deselectAllChildren();
       }}
       @bbzoomtofit=${() => {
-        this.#graphRenderer.zoomToFit();
+        this.#graphRenderer.zoomToFit(
+          true,
+          this.isShowingBoardActivityOverlay ? 400 : 0
+        );
       }}
       @bbresetlayout=${() => {
         this.#graphRenderer.resetGraphLayout();

@@ -610,7 +610,7 @@ export class Graph extends PIXI.Container {
             targetEdgeDescriptor.to.descriptor.id,
             possiblePortsOut,
             possiblePortsIn,
-            evt.client
+            evt.client.clone()
           );
           return;
         }
