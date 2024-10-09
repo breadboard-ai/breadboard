@@ -14,7 +14,7 @@ const BOARD_API_ENDPOINT =
 const BOARD_SERVER_API_KEY = process.env.BOARD_SERVER_API_KEY;
 
 export function toText(context: LLMContent[], defaultText: string): string {
-  const last = context.at(-1);
+  const last = context.filter((item) => item.role === "model").at(-1);
   if (!last) {
     return defaultText;
   }
