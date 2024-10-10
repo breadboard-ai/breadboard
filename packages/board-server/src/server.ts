@@ -21,6 +21,8 @@ export const startServer = async (rootPath: string = ROOT_PATH) => {
   const HOSTNAME = `http://${HOST}:${PORT}`;
   const IS_PROD = env.NODE_ENV === "production";
 
+  const storageBucket = env["STORAGE_BUCKET"] || undefined;
+
   const serverConfig: ServerConfig = {
     allowedOrigins: new Set(
       (process.env["ALLOWED_ORIGINS"] ?? "")
@@ -35,7 +37,8 @@ export const startServer = async (rootPath: string = ROOT_PATH) => {
           appType: "custom",
           optimizeDeps: { esbuildOptions: { target: "esnext" } },
         }),
-      rootPath
+    rootPath,
+    storageBucket,
   };
 
   const server = createServer(makeRouter(serverConfig));

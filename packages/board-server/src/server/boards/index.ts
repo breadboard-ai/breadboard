@@ -8,7 +8,7 @@ import type { IncomingMessage, ServerResponse } from "http";
 import type { ViteDevServer } from "vite";
 
 import { methodNotAllowed } from "../errors.js";
-import { serveFile, serveIndex } from "../common.js";
+import { getBody, serveFile, serveIndex } from "../common.js";
 import type { ServerConfig } from "../config.js";
 import { cors, corsAll } from "../cors.js";
 import { getStore } from "../store.js";
@@ -25,28 +25,6 @@ import inviteList from "./invite-list.js";
 import inviteUpdate from "./invite-update.js";
 import { parse } from "./utils/board-api-parser.js";
 import run from "./run.js";
-
-const getBody = async (req: IncomingMessage): Promise<unknown> => {
-  const chunks: string[] = [];
-
-  return new Promise<unknown>((resolve) => {
-    req.on("data", (chunk) => {
-      chunks.push(chunk.toString());
-    });
-
-    req.on("end", () => {
-      const body = chunks.join("");
-      if (!body) {
-        resolve(undefined);
-      }
-      try {
-        resolve(JSON.parse(body));
-      } catch (e) {
-        resolve(undefined);
-      }
-    });
-  });
-};
 
 const getMetadata = (parsed: BoardParseResult) => {
   const { user, name } = parsed;

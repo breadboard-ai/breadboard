@@ -11,4 +11,5 @@ export interface ServerConfig {
   hostname: string;
   viteDevServer: ViteDevServer | null;
   rootPath: string;
+  storageBucket?: string;
 }
