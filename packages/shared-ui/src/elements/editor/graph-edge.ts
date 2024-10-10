@@ -109,8 +109,8 @@ export class GraphEdge extends PIXI.Container {
   #isDirty = true;
   #edge: EdgeData | null = null;
   #overrideColor: number | null = null;
-  #loopBackPaddingLeft = 30;
-  #loopBackPaddingRight = 80;
+  #edgePaddingRight = 40;
+  #loopBackPadding = 30;
   #loopBackCurveRadius = 10;
   #overrideInLocation: PIXI.ObservablePoint | null = null;
   #overrideOutLocation: PIXI.ObservablePoint | null = null;
@@ -123,6 +123,9 @@ export class GraphEdge extends PIXI.Container {
   #schema: Schema | null = null;
   #value: NodeValue[] | null = null;
   #hitAreaSpacing = 6;
+
+  #debugHitArea = true;
+  #debugHitAreaGraphic = new PIXI.Graphics();
 
   readOnly = false;
 
@@ -179,6 +182,11 @@ export class GraphEdge extends PIXI.Container {
       this.#valueSprite.scale.y = ICON_SCALE;
       this.#valueSprite.eventMode = "none";
       this.#valueSprite.visible = false;
+    }
+
+    if (this.#debugHitArea) {
+      this.addChild(this.#debugHitAreaGraphic);
+      this.#debugHitAreaGraphic.eventMode = "none";
     }
   }
 
@@ -316,7 +324,7 @@ export class GraphEdge extends PIXI.Container {
     inLocation = inLocation.clone();
 
     // Convert to graph-centric values.
-    outLocation.x += this.fromNode.position.x;
+    outLocation.x += this.fromNode.position.x + this.#edgePaddingRight;
     outLocation.y += this.fromNode.position.y;
 
     inLocation.x += this.toNode.position.x;
@@ -375,6 +383,8 @@ export class GraphEdge extends PIXI.Container {
     const nodeDistance = Math.sqrt(ndx * ndx + ndy * ndy);
     const padding = Math.min(nodeDistance * 0.18, 65);
 
+    let hitArea: PIXI.Polygon;
+
     // Loopback.
     if (
       this.fromNode === this.toNode &&
@@ -383,53 +393,57 @@ export class GraphEdge extends PIXI.Container {
     ) {
       // Line.
       this.#edgeGraphic.beginPath();
-      this.#edgeGraphic.moveTo(outLocation.x, outLocation.y);
+      this.#edgeGraphic.moveTo(
+        outLocation.x - this.#edgePaddingRight,
+        outLocation.y
+      );
+      this.#edgeGraphic.lineTo(outLocation.x, outLocation.y);
       this.#edgeGraphic.lineTo(
-        outLocation.x + this.#loopBackPaddingRight - this.#loopBackCurveRadius,
+        outLocation.x + this.#loopBackPadding - this.#loopBackCurveRadius,
         outLocation.y
       );
       this.#edgeGraphic.quadraticCurveTo(
-        outLocation.x + this.#loopBackPaddingRight,
+        outLocation.x + this.#loopBackPadding,
         outLocation.y,
-        outLocation.x + this.#loopBackPaddingRight,
+        outLocation.x + this.#loopBackPadding,
         outLocation.y + this.#loopBackCurveRadius
       );
       this.#edgeGraphic.lineTo(
-        outLocation.x + this.#loopBackPaddingRight,
+        outLocation.x + this.#loopBackPadding,
         this.fromNode.y +
           this.fromNode.height +
-          this.#loopBackPaddingRight -
+          this.#loopBackPadding -
           this.#loopBackCurveRadius
       );
       this.#edgeGraphic.quadraticCurveTo(
-        outLocation.x + this.#loopBackPaddingRight,
-        this.fromNode.y + this.fromNode.height + this.#loopBackPaddingRight,
-        outLocation.x + this.#loopBackPaddingRight - this.#loopBackCurveRadius,
-        this.fromNode.y + this.fromNode.height + this.#loopBackPaddingRight
+        outLocation.x + this.#loopBackPadding,
+        this.fromNode.y + this.fromNode.height + this.#loopBackPadding,
+        outLocation.x + this.#loopBackPadding - this.#loopBackCurveRadius,
+        this.fromNode.y + this.fromNode.height + this.#loopBackPadding
       );
 
       this.#edgeGraphic.lineTo(
-        inLocation.x - this.#loopBackPaddingLeft + this.#loopBackCurveRadius,
-        this.fromNode.y + this.fromNode.height + this.#loopBackPaddingRight
+        inLocation.x - this.#loopBackPadding + this.#loopBackCurveRadius,
+        this.fromNode.y + this.fromNode.height + this.#loopBackPadding
       );
       this.#edgeGraphic.quadraticCurveTo(
-        inLocation.x - this.#loopBackPaddingLeft,
-        this.fromNode.y + this.fromNode.height + this.#loopBackPaddingRight,
-        inLocation.x - this.#loopBackPaddingLeft,
+        inLocation.x - this.#loopBackPadding,
+        this.fromNode.y + this.fromNode.height + this.#loopBackPadding,
+        inLocation.x - this.#loopBackPadding,
         this.fromNode.y +
           this.fromNode.height +
-          this.#loopBackPaddingRight -
+          this.#loopBackPadding -
           this.#loopBackCurveRadius
       );
 
       this.#edgeGraphic.lineTo(
-        inLocation.x - this.#loopBackPaddingLeft,
+        inLocation.x - this.#loopBackPadding,
         inLocation.y + this.#loopBackCurveRadius
       );
       this.#edgeGraphic.quadraticCurveTo(
-        inLocation.x - this.#loopBackPaddingLeft,
+        inLocation.x - this.#loopBackPadding,
         inLocation.y,
-        inLocation.x - this.#loopBackPaddingLeft + this.#loopBackCurveRadius,
+        inLocation.x - this.#loopBackPadding + this.#loopBackCurveRadius,
         inLocation.y
       );
 
@@ -438,26 +452,29 @@ export class GraphEdge extends PIXI.Container {
       this.#edgeGraphic.closePath();
 
       // Hit Area.
-      this.#edgeGraphic.hitArea = new PIXI.Polygon([
+      hitArea = new PIXI.Polygon([
+        outLocation.x - this.#edgePaddingRight,
+        outLocation.y - this.#hitAreaSpacing,
+
         outLocation.x,
         outLocation.y - this.#hitAreaSpacing,
 
-        outLocation.x + this.#loopBackPaddingRight + this.#hitAreaSpacing,
+        outLocation.x + this.#loopBackPadding + this.#hitAreaSpacing,
         outLocation.y - this.#hitAreaSpacing,
 
-        outLocation.x + this.#loopBackPaddingRight + this.#hitAreaSpacing,
+        outLocation.x + this.#loopBackPadding + this.#hitAreaSpacing,
         this.fromNode.y +
           this.fromNode.height +
-          this.#loopBackPaddingRight +
+          this.#loopBackPadding +
           this.#hitAreaSpacing,
 
-        inLocation.x - this.#loopBackPaddingRight - this.#hitAreaSpacing,
+        inLocation.x - this.#loopBackPadding - this.#hitAreaSpacing,
         this.fromNode.y +
           this.fromNode.height +
-          this.#loopBackPaddingRight +
+          this.#loopBackPadding +
           this.#hitAreaSpacing,
 
-        inLocation.x - this.#loopBackPaddingRight - this.#hitAreaSpacing,
+        inLocation.x - this.#loopBackPadding - this.#hitAreaSpacing,
         inLocation.y - this.#hitAreaSpacing,
 
         inLocation.x,
@@ -466,304 +483,316 @@ export class GraphEdge extends PIXI.Container {
         inLocation.x,
         inLocation.y + this.#hitAreaSpacing,
 
-        inLocation.x - this.#loopBackPaddingRight + this.#hitAreaSpacing,
+        inLocation.x - this.#loopBackPadding + this.#hitAreaSpacing,
         inLocation.y + this.#hitAreaSpacing,
 
-        inLocation.x - this.#loopBackPaddingRight + this.#hitAreaSpacing,
+        inLocation.x - this.#loopBackPadding + this.#hitAreaSpacing,
         this.fromNode.y +
           this.fromNode.height +
-          this.#loopBackPaddingRight -
+          this.#loopBackPadding -
           this.#hitAreaSpacing,
 
-        outLocation.x + this.#loopBackPaddingRight - this.#hitAreaSpacing,
+        outLocation.x + this.#loopBackPadding - this.#hitAreaSpacing,
         this.fromNode.y +
           this.fromNode.height +
-          this.#loopBackPaddingRight -
+          this.#loopBackPadding -
           this.#hitAreaSpacing,
 
-        outLocation.x + this.#loopBackPaddingRight - this.#hitAreaSpacing,
+        outLocation.x + this.#loopBackPadding - this.#hitAreaSpacing,
         outLocation.y + this.#hitAreaSpacing,
 
         outLocation.x,
         outLocation.y + this.#hitAreaSpacing,
-      ]);
-      return;
-    }
 
-    // All other cases.
-    // First calculate the line segments.
-    const pivotA = {
-      x:
-        outLocation.x +
-        Math.max(padding, (inLocation.x - outLocation.x) * 0.25),
-      y: outLocation.y + midY * 0.5,
-    };
-
-    const midA = {
-      x: Math.max(
-        outLocation.x,
-        outLocation.x + (inLocation.x - outLocation.x) * 0.5
-      ),
-      y: outLocation.y + midY,
-    };
-
-    const midB = {
-      x: Math.min(
-        inLocation.x,
-        inLocation.x - (inLocation.x - outLocation.x) * 0.5
-      ),
-      y: outLocation.y + midY,
-    };
-
-    const pivotB = {
-      x:
-        inLocation.x - Math.max(padding, (inLocation.x - outLocation.x) * 0.25),
-      y: outLocation.y + midY + (inLocation.y - (outLocation.y + midY)) * 0.5,
-    };
-
-    // Next calculate the control points.
-    const angleA = Math.atan2(midA.y - outLocation.y, midA.x - outLocation.x);
-    const angleB = angleA + Math.PI;
-    const dx = Math.abs(pivotA.x - outLocation.x);
-    const dy = Math.abs(pivotA.y - outLocation.y);
-    const distance = Math.min(dy, Math.sqrt(dx * dx + dy * dy));
-
-    const cpA1 = {
-      x: pivotA.x - Math.cos(angleA) * distance,
-      y: pivotA.y - Math.sin(angleA) * distance,
-    };
-
-    const cpA2 = {
-      x: pivotA.x + Math.cos(angleA) * distance,
-      y: pivotA.y + Math.sin(angleA) * distance,
-    };
-
-    const cpB1 = {
-      x: pivotB.x + Math.cos(angleB) * distance,
-      y: pivotB.y + Math.sin(angleB) * distance,
-    };
-
-    const cpB2 = {
-      x: pivotB.x - Math.cos(angleB) * distance,
-      y: pivotB.y - Math.sin(angleB) * distance,
-    };
-
-    // Lines.
-    this.#edgeGraphic.beginPath();
-    this.#edgeGraphic.moveTo(outLocation.x, outLocation.y);
-    if (Math.abs(midA.x - midB.x) > 0.5) {
-      this.#edgeGraphic.bezierCurveTo(
-        cpA1.x,
-        cpA1.y,
-        cpA2.x,
-        cpA2.y,
-        midA.x,
-        midA.y
-      );
-      this.#edgeGraphic.lineTo(midB.x, midB.y);
-      this.#edgeGraphic.bezierCurveTo(
-        cpB1.x,
-        cpB1.y,
-        cpB2.x,
-        cpB2.y,
-        inLocation.x,
-        inLocation.y
-      );
-    } else {
-      this.#edgeGraphic.quadraticCurveTo(
-        pivotA.x,
-        outLocation.y,
-        midA.x,
-        midA.y
-      );
-      this.#edgeGraphic.quadraticCurveTo(
-        pivotB.x,
-        inLocation.y,
-        inLocation.x,
-        inLocation.y
-      );
-    }
-    this.#edgeGraphic.stroke();
-    this.#edgeGraphic.closePath();
-
-    // Circles at the start & end.
-    this.#edgeGraphic.beginPath();
-    this.#edgeGraphic.circle(outLocation.x, outLocation.y, 2);
-    this.#edgeGraphic.circle(inLocation.x, inLocation.y, 2);
-    this.#edgeGraphic.closePath();
-    this.#edgeGraphic.fill({ color: edgeColor });
-
-    // Hit Area.
-    if (Math.abs(midA.x - midB.x) > 0.5) {
-      const hitAreaSpacingX =
-        this.#hitAreaSpacing * (outLocation.y < inLocation.y ? 1 : -1);
-      const hitAreaSpacingY = this.#hitAreaSpacing;
-
-      this.#edgeGraphic.hitArea = new PIXI.Polygon([
-        outLocation.x,
-        outLocation.y - hitAreaSpacingY,
-
-        ...calculatePointsOnCubicBezierCurve(
-          outLocation.x,
-          outLocation.y - hitAreaSpacingY,
-          cpA1.x + hitAreaSpacingX,
-          cpA1.y,
-          cpA2.x + hitAreaSpacingX,
-          cpA2.y,
-          midA.x,
-          midA.y + hitAreaSpacingY,
-          0.0,
-          1,
-          0.1
-        ),
-
-        midA.x,
-        midA.y + hitAreaSpacingY,
-
-        midB.x,
-        midB.y + hitAreaSpacingY,
-
-        ...calculatePointsOnCubicBezierCurve(
-          midB.x,
-          midB.y + hitAreaSpacingY,
-          cpB1.x + hitAreaSpacingX,
-          cpB1.y,
-          cpB2.x + hitAreaSpacingX,
-          cpB2.y,
-          inLocation.x,
-          inLocation.y - hitAreaSpacingY,
-          0.0,
-          1,
-          0.1
-        ),
-
-        inLocation.x,
-        inLocation.y + hitAreaSpacingY,
-
-        ...calculatePointsOnCubicBezierCurve(
-          inLocation.x,
-          inLocation.y + hitAreaSpacingY,
-          cpB2.x - hitAreaSpacingX,
-          cpB2.y,
-          cpB1.x - hitAreaSpacingX,
-          cpB1.y,
-          midB.x,
-          midB.y - hitAreaSpacingY,
-          0.0,
-          1,
-          0.1
-        ),
-
-        midA.x,
-        midA.y - hitAreaSpacingY,
-
-        ...calculatePointsOnCubicBezierCurve(
-          midA.x,
-          midA.y - hitAreaSpacingY,
-          cpA2.x - hitAreaSpacingX,
-          cpA2.y,
-          cpA1.x - hitAreaSpacingX,
-          cpA1.y,
-          outLocation.x,
-          outLocation.y + hitAreaSpacingY,
-          0.0,
-          1,
-          0.1
-        ),
+        outLocation.x - this.#edgePaddingRight,
+        outLocation.y + this.#hitAreaSpacing,
       ]);
     } else {
-      const angle = Math.atan2(
-        inLocation.y - outLocation.y,
-        inLocation.x - outLocation.x
-      );
-      const xDist = Math.sin(angle) * this.#hitAreaSpacing;
-      const yDist = Math.cos(angle) * this.#hitAreaSpacing;
+      // All other cases.
+      // First calculate the line segments.
+      const pivotA = {
+        x:
+          outLocation.x +
+          Math.max(padding, (inLocation.x - outLocation.x) * 0.25),
+        y: outLocation.y + midY * 0.5,
+      };
 
-      this.#edgeGraphic.hitArea = new PIXI.Polygon([
-        outLocation.x,
-        outLocation.y - this.#hitAreaSpacing,
+      const midA = {
+        x: Math.max(
+          outLocation.x,
+          outLocation.x + (inLocation.x - outLocation.x) * 0.5
+        ),
+        y: outLocation.y + midY,
+      };
 
-        ...calculatePointsOnQuadraticBezierCurve(
-          // Start
+      const midB = {
+        x: Math.min(
+          inLocation.x,
+          inLocation.x - (inLocation.x - outLocation.x) * 0.5
+        ),
+        y: outLocation.y + midY,
+      };
+
+      const pivotB = {
+        x:
+          inLocation.x -
+          Math.max(padding, (inLocation.x - outLocation.x) * 0.25),
+        y: outLocation.y + midY + (inLocation.y - (outLocation.y + midY)) * 0.5,
+      };
+
+      // Next calculate the control points.
+      if (Math.abs(midA.x - midB.x) < 0.5) {
+        const angleA = Math.atan2(
+          midA.y - outLocation.y,
+          midA.x - outLocation.x
+        );
+        const angleB = angleA + Math.PI;
+        const dx = Math.abs(pivotA.x - outLocation.x);
+        const dy = Math.abs(pivotA.y - outLocation.y);
+        const distance = Math.min(dy, Math.sqrt(dx * dx + dy * dy));
+
+        const cpA1 = {
+          x: pivotA.x - Math.cos(angleA) * distance,
+          y: pivotA.y - Math.sin(angleA) * distance,
+        };
+
+        const cpA2 = {
+          x: pivotA.x + Math.cos(angleA) * distance,
+          y: pivotA.y + Math.sin(angleA) * distance,
+        };
+
+        const cpB1 = {
+          x: pivotB.x + Math.cos(angleB) * distance,
+          y: pivotB.y + Math.sin(angleB) * distance,
+        };
+
+        const cpB2 = {
+          x: pivotB.x - Math.cos(angleB) * distance,
+          y: pivotB.y - Math.sin(angleB) * distance,
+        };
+
+        // Lines.
+        this.#edgeGraphic.beginPath();
+        this.#edgeGraphic.moveTo(
+          outLocation.x - this.#edgePaddingRight,
+          outLocation.y
+        );
+        this.#edgeGraphic.lineTo(outLocation.x, outLocation.y);
+        if (Math.abs(midA.x - midB.x) > 0.5) {
+          this.#edgeGraphic.bezierCurveTo(
+            cpA1.x,
+            cpA1.y,
+            cpA2.x,
+            cpA2.y,
+            midA.x,
+            midA.y
+          );
+          this.#edgeGraphic.lineTo(midB.x, midB.y);
+          this.#edgeGraphic.bezierCurveTo(
+            cpB1.x,
+            cpB1.y,
+            cpB2.x,
+            cpB2.y,
+            inLocation.x,
+            inLocation.y
+          );
+        } else {
+          this.#edgeGraphic.quadraticCurveTo(
+            pivotA.x,
+            outLocation.y,
+            midA.x,
+            midA.y
+          );
+          this.#edgeGraphic.quadraticCurveTo(
+            pivotB.x,
+            inLocation.y,
+            inLocation.x,
+            inLocation.y
+          );
+        }
+        this.#edgeGraphic.stroke();
+        this.#edgeGraphic.closePath();
+
+        // Hit Area.
+
+        const angle = Math.atan2(
+          inLocation.y - outLocation.y,
+          inLocation.x - outLocation.x
+        );
+        const xDist = Math.sin(angle) * this.#hitAreaSpacing;
+        const yDist = Math.cos(angle) * this.#hitAreaSpacing;
+
+        hitArea = new PIXI.Polygon([
+          outLocation.x - this.#edgePaddingRight,
+          outLocation.y - this.#hitAreaSpacing,
+
           outLocation.x,
           outLocation.y - this.#hitAreaSpacing,
 
-          // Control
-          pivotA.x + xDist,
-          outLocation.y - this.#hitAreaSpacing,
+          ...calculatePointsOnQuadraticBezierCurve(
+            // Start
+            outLocation.x,
+            outLocation.y - this.#hitAreaSpacing,
 
-          // End
-          midA.x + xDist,
-          midA.y - yDist,
+            // Control
+            pivotA.x + xDist,
+            outLocation.y - this.#hitAreaSpacing,
 
-          0.2,
-          0.8,
-          0.1
-        ),
+            // End
+            midA.x + xDist,
+            midA.y - yDist,
 
-        ...calculatePointsOnQuadraticBezierCurve(
-          // Start
-          midA.x + xDist,
-          midA.y - yDist,
+            0.2,
+            0.8,
+            0.1
+          ),
 
-          // Control
-          pivotB.x + xDist,
-          inLocation.y - this.#hitAreaSpacing,
+          ...calculatePointsOnQuadraticBezierCurve(
+            // Start
+            midA.x + xDist,
+            midA.y - yDist,
 
-          // End
+            // Control
+            pivotB.x + xDist,
+            inLocation.y - this.#hitAreaSpacing,
+
+            // End
+            inLocation.x,
+            inLocation.y - this.#hitAreaSpacing,
+
+            0.2,
+            0.8,
+            0.1
+          ),
+
           inLocation.x,
           inLocation.y - this.#hitAreaSpacing,
 
-          0.2,
-          0.8,
-          0.1
-        ),
-
-        inLocation.x,
-        inLocation.y - this.#hitAreaSpacing,
-
-        inLocation.x,
-        inLocation.y + this.#hitAreaSpacing,
-
-        ...calculatePointsOnQuadraticBezierCurve(
-          // Start
           inLocation.x,
           inLocation.y + this.#hitAreaSpacing,
 
-          // Control
-          pivotB.x - xDist,
-          inLocation.y + this.#hitAreaSpacing,
+          ...calculatePointsOnQuadraticBezierCurve(
+            // Start
+            inLocation.x,
+            inLocation.y + this.#hitAreaSpacing,
 
-          // End
-          midA.x - xDist,
-          midA.y + yDist,
+            // Control
+            pivotB.x - xDist,
+            inLocation.y + this.#hitAreaSpacing,
 
-          0.2,
-          0.8,
-          0.1
-        ),
+            // End
+            midA.x - xDist,
+            midA.y + yDist,
 
-        ...calculatePointsOnQuadraticBezierCurve(
-          // Start
-          midA.x - xDist,
-          midA.y + yDist,
+            0.2,
+            0.8,
+            0.1
+          ),
 
-          // Control
-          pivotA.x - xDist,
-          outLocation.y + this.#hitAreaSpacing,
+          ...calculatePointsOnQuadraticBezierCurve(
+            // Start
+            midA.x - xDist,
+            midA.y + yDist,
 
-          // End
+            // Control
+            pivotA.x - xDist,
+            outLocation.y + this.#hitAreaSpacing,
+
+            // End
+            outLocation.x,
+            outLocation.y + this.#hitAreaSpacing,
+
+            0.2,
+            0.8,
+            0.1
+          ),
+
           outLocation.x,
           outLocation.y + this.#hitAreaSpacing,
 
-          0.2,
-          0.8,
-          0.1
-        ),
+          outLocation.x - this.#edgePaddingRight,
+          outLocation.y + this.#hitAreaSpacing,
+        ]);
+      } else {
+        // const hitAreaSpacingX =
+        //   this.#hitAreaSpacing * (outLocation.y < inLocation.y ? 1 : -1);
+        // const hitAreaSpacingY = this.#hitAreaSpacing;
+        // const hitArea = new PIXI.Polygon([
+        //   outLocation.x,
+        //   outLocation.y - hitAreaSpacingY,
+        //   ...calculatePointsOnCubicBezierCurve(
+        //     outLocation.x,
+        //     outLocation.y - hitAreaSpacingY,
+        //     cpA1.x + hitAreaSpacingX,
+        //     cpA1.y,
+        //     cpA2.x + hitAreaSpacingX,
+        //     cpA2.y,
+        //     midA.x,
+        //     midA.y + hitAreaSpacingY,
+        //     0.0,
+        //     1,
+        //     0.1
+        //   ),
+        //   midA.x,
+        //   midA.y + hitAreaSpacingY,
+        //   midB.x,
+        //   midB.y + hitAreaSpacingY,
+        //   ...calculatePointsOnCubicBezierCurve(
+        //     midB.x,
+        //     midB.y + hitAreaSpacingY,
+        //     cpB1.x + hitAreaSpacingX,
+        //     cpB1.y,
+        //     cpB2.x + hitAreaSpacingX,
+        //     cpB2.y,
+        //     inLocation.x,
+        //     inLocation.y - hitAreaSpacingY,
+        //     0.0,
+        //     1,
+        //     0.1
+        //   ),
+        //   inLocation.x,
+        //   inLocation.y + hitAreaSpacingY,
+        //   ...calculatePointsOnCubicBezierCurve(
+        //     inLocation.x,
+        //     inLocation.y + hitAreaSpacingY,
+        //     cpB2.x - hitAreaSpacingX,
+        //     cpB2.y,
+        //     cpB1.x - hitAreaSpacingX,
+        //     cpB1.y,
+        //     midB.x,
+        //     midB.y - hitAreaSpacingY,
+        //     0.0,
+        //     1,
+        //     0.1
+        //   ),
+        //   midA.x,
+        //   midA.y - hitAreaSpacingY,
+        //   ...calculatePointsOnCubicBezierCurve(
+        //     midA.x,
+        //     midA.y - hitAreaSpacingY,
+        //     cpA2.x - hitAreaSpacingX,
+        //     cpA2.y,
+        //     cpA1.x - hitAreaSpacingX,
+        //     cpA1.y,
+        //     outLocation.x,
+        //     outLocation.y + hitAreaSpacingY,
+        //     0.0,
+        //     1,
+        //     0.1
+        //   ),
+        // ]);
+        hitArea = new PIXI.Polygon([]);
+      }
+    }
 
-        outLocation.x,
-        outLocation.y + this.#hitAreaSpacing,
-      ]);
+    this.#edgeGraphic.hitArea = hitArea;
+    if (this.#debugHitArea) {
+      this.#debugHitAreaGraphic.clear();
+      this.#debugHitAreaGraphic.beginPath();
+      this.#debugHitAreaGraphic.poly(hitArea.points);
+      this.#debugHitAreaGraphic.closePath();
+      this.#debugHitAreaGraphic.fill({ color: 0xff00ff, alpha: 0.1 });
+      this.addChild(this.#debugHitAreaGraphic);
     }
 
     if (this.value && this.value.length) {
