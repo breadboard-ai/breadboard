@@ -1766,6 +1766,10 @@ export class Main extends LitElement {
         if (this.showEdgeValue) {
           edgeValueOverlay = html`<bb-edge-value-overlay
             .edgeValue=${this.#edgeValueData}
+            .graph=${this.tab?.graph}
+            .subGraphId=${this.tab?.subGraphId}
+            .providers=${this.#providers}
+            .providerOps=${this.providerOps}
             @bboverlaydismissed=${() => {
               this.showEdgeValue = false;
             }}
@@ -2362,7 +2366,7 @@ export class Main extends LitElement {
               @bbedgevalueselected=${(
                 evt: BreadboardUI.Events.EdgeValueSelectedEvent
               ) => {
-                this.showEdgeValue = evt.value !== null;
+                this.showEdgeValue = true;
                 this.#edgeValueData = { ...evt };
               }}
               @bbnodeactivityselected=${(

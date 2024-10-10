@@ -65,7 +65,7 @@ export class GraphEdge extends PIXI.Container {
   #isDirty = true;
   #edge: EdgeData | null = null;
   #overrideColor: number | null = null;
-  #edgePaddingRight = 60;
+  #edgePaddingRight = 48;
   #loopBackPadding = 30;
   #loopBackCurveRadius = 20;
   #overrideInLocation: PIXI.ObservablePoint | null = null;

@@ -4,24 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  LitElement,
-  html,
-  css,
-  nothing,
-  HTMLTemplateResult,
-  PropertyValues,
-} from "lit";
+import { LitElement, html, css, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { EdgeValueConfiguration } from "../../types/types.js";
+import {
+  EdgeValueConfiguration,
+  UserInputConfiguration,
+} from "../../types/types.js";
 import { Overlay } from "./overlay.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { OverlayDismissedEvent } from "../../events/events.js";
-import { map } from "lit/directives/map.js";
-import { isLLMContent, isLLMContentArray } from "@google-labs/breadboard";
-import { markdown } from "../../directives/markdown.js";
 import { classMap } from "lit/directives/class-map.js";
-import { isImageURL } from "../../utils/llm-content.js";
+import { UserInput } from "../elements.js";
+import { GraphDescriptor, GraphProvider } from "@google-labs/breadboard";
 
 const OVERLAY_CLEARANCE = 60;
 const MAXIMIZE_KEY = "bb-edge-value-overlay-maximized";
@@ -31,10 +25,23 @@ export class EdgeValueOverlay extends LitElement {
   @property()
   edgeValue: EdgeValueConfiguration | null = null;
 
+  @property()
+  graph: GraphDescriptor | null = null;
+
+  @property()
+  subGraphId: string | null = null;
+
+  @property()
+  providers: GraphProvider[] = [];
+
+  @property()
+  providerOps = 0;
+
   @property({ reflect: true })
   maximized = false;
 
   #overlayRef: Ref<Overlay> = createRef();
+  #userInputRef: Ref<UserInput> = createRef();
 
   #minimizedX = 0;
   #minimizedY = 0;
@@ -268,14 +275,37 @@ export class EdgeValueOverlay extends LitElement {
   }
 
   render() {
-    if (!this.edgeValue || !this.edgeValue.value) {
-      return nothing;
-    }
-
     const contentLocationStart = { x: 0, y: 0 };
     const dragStart = { x: 0, y: 0 };
     const dragDelta = { x: 0, y: 0 };
     let dragging = false;
+
+    const userInputs: UserInputConfiguration[] = [
+      {
+        name: "edge-value",
+        secret: false,
+        title: this.edgeValue?.schema?.title ?? "Untitled Value",
+        configured: true,
+        value: this.edgeValue?.value ? this.edgeValue?.value[0] : null,
+        required: true,
+        schema: this.edgeValue?.schema,
+      },
+    ];
+
+    console.log(userInputs);
+
+    const input = html`<bb-user-input
+      ${ref(this.#userInputRef)}
+      .inputs=${userInputs}
+      .graph=${this.graph}
+      .subGraphId=${this.subGraphId}
+      .providers=${this.providers}
+      .providerOps=${this.providerOps}
+      .showTypes=${false}
+      .showTitleInfo=${false}
+      .inlineControls=${true}
+      .llmInputShowEntrySelector=${false}
+    ></bb-user-input>`;
 
     return html`<bb-overlay ${ref(this.#overlayRef)} inline>
       <div id="wrapper">
@@ -336,60 +366,7 @@ export class EdgeValueOverlay extends LitElement {
           </button>
         </h1>
         <div id="content">
-          <div id="container">
-            ${map(this.edgeValue.value, (edgeValue) => {
-              let value: HTMLTemplateResult | symbol = nothing;
-              if (typeof edgeValue === "object") {
-                if (isLLMContentArray(edgeValue)) {
-                  value = html`<bb-llm-output-array
-                    .values=${edgeValue}
-                  ></bb-llm-output-array>`;
-                } else if (isLLMContent(edgeValue)) {
-                  if (!edgeValue.parts) {
-                    // Special case for "$metadata" item.
-                    // See https://github.com/breadboard-ai/breadboard/issues/1673
-                    // TODO: Make this not ugly.
-                    const data = (edgeValue as unknown as { data: unknown })
-                      .data;
-                    value = html`<bb-json-tree .json=${data}></bb-json-tree>`;
-                  }
-
-                  if (!edgeValue.parts.length) {
-                    value = html`No data provided`;
-                  }
-
-                  value = edgeValue.parts.length
-                    ? html`<bb-llm-output .value=${edgeValue}></bb-llm-output>`
-                    : html`No data provided`;
-                } else if (isImageURL(edgeValue)) {
-                  value = html`<img src=${edgeValue.image_url} />`;
-                } else {
-                  value = html`<bb-json-tree
-                    .json=${edgeValue}
-                  ></bb-json-tree>`;
-                }
-              } else {
-                let renderableValue: HTMLTemplateResult | symbol = nothing;
-                if (typeof edgeValue === "string") {
-                  renderableValue = html`${markdown(edgeValue)}`;
-                } else {
-                  renderableValue = html`${edgeValue !== undefined
-                    ? edgeValue
-                    : "No value provided"}`;
-                }
-
-                // prettier-ignore
-                value = html`<div
-                class=${classMap({
-                  markdown: typeof edgeValue === 'string',
-                  value: true,
-                })}
-              >${renderableValue}</div>`;
-              }
-
-              return html`<div>${value}</div>`;
-            })}
-          </div>
+          <div id="container">${input}</div>
         </div>
         <div id="buttons">
           <button

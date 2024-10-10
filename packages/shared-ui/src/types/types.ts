@@ -67,7 +67,7 @@ export type UserInputConfiguration = {
   required?: boolean;
   configured?: boolean;
   value?: NodeValue;
-  schema?: Schema;
+  schema?: Schema | null;
   status?: PortStatus;
   type?: Schema["type"];
 };
