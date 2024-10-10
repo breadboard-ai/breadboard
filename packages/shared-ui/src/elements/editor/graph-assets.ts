@@ -8,6 +8,7 @@ import * as PIXI from "pixi.js";
 
 const ASSET_LIST = new Map([
   ["value", "/third_party/icons/graph/value-48px.svg"],
+  ["edit", "/third_party/icons/graph/edit-48px.svg"],
   ["input", "/third_party/icons/graph/input-48px.svg"],
   ["output", "/third_party/icons/graph/output-48px.svg"],
   ["js", "/third_party/icons/graph/js-48px.svg"],

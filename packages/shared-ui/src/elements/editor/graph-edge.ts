@@ -76,6 +76,7 @@ export class GraphEdge extends PIXI.Container {
   #edgeGraphic = new PIXI.Graphics();
   #valueSelector = new PIXI.Graphics();
   #valueSprite: PIXI.Sprite | null;
+  #editSprite: PIXI.Sprite | null;
   #schema: Schema | null = null;
   #value: NodeValue[] | null = null;
   #hitAreaSpacing = 6;
@@ -123,8 +124,10 @@ export class GraphEdge extends PIXI.Container {
       }
     );
 
-    const texture = GraphAssets.instance().get("value");
-    this.#valueSprite = texture ? new PIXI.Sprite(texture) : null;
+    const valueTexture = GraphAssets.instance().get("value");
+    const editTexture = GraphAssets.instance().get("edit");
+    this.#valueSprite = valueTexture ? new PIXI.Sprite(valueTexture) : null;
+    this.#editSprite = editTexture ? new PIXI.Sprite(editTexture) : null;
 
     this.#edgeGraphic.label = "GraphEdge";
     this.#edgeGraphic.eventMode = "static";
@@ -138,6 +141,14 @@ export class GraphEdge extends PIXI.Container {
       this.#valueSprite.scale.y = ICON_SCALE;
       this.#valueSprite.eventMode = "none";
       this.#valueSprite.visible = false;
+    }
+
+    if (this.#editSprite) {
+      this.addChild(this.#editSprite);
+      this.#editSprite.scale.x = ICON_SCALE;
+      this.#editSprite.scale.y = ICON_SCALE;
+      this.#editSprite.eventMode = "none";
+      this.#editSprite.visible = false;
     }
 
     if (this.#debugHitArea) {
@@ -784,23 +795,23 @@ export class GraphEdge extends PIXI.Container {
       this.addChild(this.#debugHitAreaGraphic);
     }
 
-    if (this.value && this.value.length) {
-      const x = outLocation.x + (inLocation.x - outLocation.x) * 0.5;
-      const y = outLocation.y + (inLocation.y - outLocation.y) * 0.5;
-      this.#valueSelector.visible = true;
-      this.#valueSelector.x = x;
-      this.#valueSelector.y = y;
+    const x = outLocation.x - this.#edgePaddingRight * 0.5;
+    const y = outLocation.y;
 
-      if (this.#valueSprite) {
-        this.#valueSprite.x = x - 8;
-        this.#valueSprite.y = y - 8;
-        this.#valueSprite.visible = true;
-      }
-    } else {
-      this.#valueSelector.visible = false;
-      if (this.#valueSprite) {
-        this.#valueSprite.visible = false;
-      }
+    this.#valueSelector.visible = true;
+    this.#valueSelector.x = x;
+    this.#valueSelector.y = y;
+
+    if (this.#valueSprite) {
+      this.#valueSprite.x = x - 8;
+      this.#valueSprite.y = y - 8;
+      this.#valueSprite.visible = this.value !== null && this.value.length > 0;
+    }
+
+    if (this.#editSprite) {
+      this.#editSprite.x = x - 8;
+      this.#editSprite.y = y - 8;
+      this.#editSprite.visible = this.value === null || this.value.length === 0;
     }
   }
 }
