@@ -1,5 +1,11 @@
 # @breadboard-ai/types
 
+## 0.1.2
+
+### Patch Changes
+
+- 7adeed8: Move LLMContent to types package.
+
 ## 0.1.1
 
 ### Patch Changes

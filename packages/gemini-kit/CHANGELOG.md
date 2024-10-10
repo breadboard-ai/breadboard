@@ -1,5 +1,24 @@
 # @google-labs/gemini-kit
 
+## 0.8.3
+
+### Patch Changes
+
+- 84b824e: Merge contiguous user turns in Gemini text.
+- Updated dependencies [5aded4a]
+- Updated dependencies [b640cd2]
+- Updated dependencies [ffbcf09]
+- Updated dependencies [7adeed8]
+- Updated dependencies [ca5f932]
+- Updated dependencies [b5981d0]
+- Updated dependencies [413992d]
+- Updated dependencies [049a83b]
+- Updated dependencies [c031dd6]
+  - @google-labs/breadboard@0.28.0
+  - @breadboard-ai/build@0.10.4
+  - @google-labs/core-kit@0.15.3
+  - @google-labs/template-kit@0.3.13
+
 ## 0.8.2
 
 ### Patch Changes

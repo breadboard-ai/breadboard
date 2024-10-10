@@ -1,5 +1,5 @@
 {
-	"$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@breadboard-ai/manifest@0.4.5/packages/manifest/bbm.schema.json",
+	"$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@breadboard-ai/manifest@0.4.6/packages/manifest/bbm.schema.json",
 	"$ref": "#/definitions/BreadboardManifest",
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"definitions": {

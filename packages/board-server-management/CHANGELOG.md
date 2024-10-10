@@ -1,5 +1,47 @@
 # @breadboard-ai/board-server-management
 
+## 1.18.0
+
+### Minor Changes
+
+- 4857c1e: Lots of smaller board server fixes
+- 049a83b: Add FileSystemBoardServer
+
+### Patch Changes
+
+- 8b14d0e: Add Examples Board Server
+- ffbcf09: Allow management of Board Servers
+- c031dd6: Do some plumbing work for extensions
+- Updated dependencies [358d116]
+- Updated dependencies [5aded4a]
+- Updated dependencies [84b824e]
+- Updated dependencies [4857c1e]
+- Updated dependencies [e4a9453]
+- Updated dependencies [dd24baa]
+- Updated dependencies [8b14d0e]
+- Updated dependencies [b640cd2]
+- Updated dependencies [fa87883]
+- Updated dependencies [ffbcf09]
+- Updated dependencies [7adeed8]
+- Updated dependencies [ca5f932]
+- Updated dependencies [b5981d0]
+- Updated dependencies [413992d]
+- Updated dependencies [049a83b]
+- Updated dependencies [c031dd6]
+  - @breadboard-ai/idb-board-server@1.18.0
+  - @google-labs/breadboard@0.28.0
+  - @google-labs/gemini-kit@0.8.3
+  - @breadboard-ai/filesystem-board-server@1.18.0
+  - @breadboard-ai/remote-board-server@1.18.0
+  - @breadboard-ai/example-board-server@1.18.0
+  - @breadboard-ai/build@0.10.4
+  - @google-labs/core-kit@0.15.3
+  - @google-labs/agent-kit@0.12.4
+  - @google-labs/json-kit@0.3.11
+  - @google-labs/node-nursery-web@1.3.3
+  - @google-labs/palm-kit@0.1.5
+  - @google-labs/template-kit@0.3.13
+
 ## 1.17.2
 
 ### Patch Changes

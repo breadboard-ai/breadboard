@@ -1,5 +1,51 @@
 # @breadboard-ai/shared-ui
 
+## 1.19.0
+
+### Minor Changes
+
+- 9d31e85: Update edge rendering
+- 4630d8c: Teach paste machinery about constant edges.
+- 4857c1e: Lots of smaller board server fixes
+- 646504f: Display ID of the property in the Schema editor.
+
+### Patch Changes
+
+- b1dfa20: Add back button to board activity overlay
+- 358d116: Add initial support for Board Server Kits
+- be6656d: Support ID editing in streamlined schema editor
+- 250dc44: Move Component Selector to overlay
+- 0884913: Various QoL improvements
+- e4a9453: Tidy up Board Server Kit
+- 3e04cb3: Teach drag-dock-overlay to recall dock position
+- a53f7e7: Teach drag-dock-overlay about persistence
+- 71bd9a7: Update streamlined schema editor
+- 683bab9: Teach component selector to avoid animating when persistent
+- 4ec74a0: Teach streamlined schema editor to have stable property ordering
+- 2db4eeb: Add location proxy to LLM Input
+- 54eb2f3: Improve remote provider load behavior
+- 8e793ad: Retain custom view when ID changes
+- acf554c: Be stricter with isText checking
+- fa87883: Ensure nav copes with Provider -> BSS switch
+- ffbcf09: Allow management of Board Servers
+- 7adeed8: Move LLMContent to types package.
+- b5981d0: Set url for the component board.
+- 51c2c39: Fix star port loop
+- d447a7f: Visual tweaks for drag-dock & component selector
+- 1d6d7a3: Teach board activity to be dockable
+- Updated dependencies [5aded4a]
+- Updated dependencies [b640cd2]
+- Updated dependencies [ffbcf09]
+- Updated dependencies [7adeed8]
+- Updated dependencies [ca5f932]
+- Updated dependencies [b5981d0]
+- Updated dependencies [049a83b]
+- Updated dependencies [c031dd6]
+  - @google-labs/breadboard@0.28.0
+  - @breadboard-ai/data-store@0.2.4
+  - @breadboard-ai/types@0.1.2
+  - @breadboard-ai/build@0.10.4
+
 ## 1.18.2
 
 ### Patch Changes

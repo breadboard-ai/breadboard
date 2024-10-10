@@ -1,5 +1,30 @@
 # @breadboard-ai/remote-board-server
 
+## 1.18.0
+
+### Minor Changes
+
+- 4857c1e: Lots of smaller board server fixes
+- 049a83b: Add FileSystemBoardServer
+
+### Patch Changes
+
+- dd24baa: Add BSK to remote board server
+- 8b14d0e: Add Examples Board Server
+- ffbcf09: Allow management of Board Servers
+- c031dd6: Do some plumbing work for extensions
+- Updated dependencies [5aded4a]
+- Updated dependencies [b640cd2]
+- Updated dependencies [ffbcf09]
+- Updated dependencies [7adeed8]
+- Updated dependencies [ca5f932]
+- Updated dependencies [b5981d0]
+- Updated dependencies [049a83b]
+- Updated dependencies [c031dd6]
+  - @google-labs/breadboard@0.28.0
+  - @breadboard-ai/data-store@0.2.4
+  - @breadboard-ai/build@0.10.4
+
 ## 1.17.2
 
 ### Patch Changes

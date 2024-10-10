@@ -1,5 +1,31 @@
 # @breadboard-ai/board-server
 
+## 0.8.0
+
+### Minor Changes
+
+- 3c2be9c: Teach board server to serve own boards internally.
+- 7ad6e15: Add a `/me` API endpoint.
+- 6fcd3d9: Return more informative errors.
+- 23b8215: Provide board descriptions when listing boards.
+- d2ec275: Teach board server to allow OPTION verb.
+- ca5f932: Introduce board server blobs API endpoint
+
+### Patch Changes
+
+- c599557: Allow undefined descriptions.
+- 7adeed8: Move LLMContent to types package.
+- Updated dependencies [5aded4a]
+- Updated dependencies [b640cd2]
+- Updated dependencies [ffbcf09]
+- Updated dependencies [7adeed8]
+- Updated dependencies [ca5f932]
+- Updated dependencies [049a83b]
+- Updated dependencies [c031dd6]
+  - @google-labs/breadboard@0.28.0
+  - @breadboard-ai/data-store@0.2.4
+  - @breadboard-ai/types@0.1.2
+
 ## 0.7.2
 
 ### Patch Changes
