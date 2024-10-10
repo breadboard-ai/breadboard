@@ -367,17 +367,28 @@ const body = code(
         throw new Error("Either `text` or `context` parameter is required");
       }
     } else {
+      // Filter out the special "$metadata" role.
+      contents = contents.filter((item) => item.role !== "$metadata");
       // Replace the "tool" role with "user".
       contents = contents.map((item) =>
         item.role === "tool" ? ((item.role = "user"), item) : item
       );
-      const last = contents[contents.length - 1];
-      if (last.role === "model") {
+      if (text) {
+        // Add the user turn.
         contents.push(turn);
       }
+      // Merge contiquous user turns.
+      const merged = [];
+      for (const item of contents) {
+        const { role } = item;
+        if (role === "user" && merged.at(-1)?.role === "user") {
+          merged[merged.length - 1].parts.push(...item.parts);
+        } else {
+          merged.push(item);
+        }
+      }
+      contents = merged;
     }
-    // Filter out the special "$metadata" role.
-    contents = contents.filter((item) => item.role !== "$metadata");
     const result: ConvertBreadboardType<typeof requestBodyType> = { contents };
     if (systemInstruction) {
       let parts;
