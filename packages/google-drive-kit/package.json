@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/google-drive-kit",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "Nodes for reading & writing to files in Google Drive, including Docs and Sheets",
   "license": "Apache-2.0",
   "author": "Google LLC",
@@ -133,9 +133,9 @@
     }
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.10.3",
-    "@google-labs/core-kit": "^0.15.2",
-    "@google-labs/template-kit": "^0.3.12"
+    "@breadboard-ai/build": "0.10.4",
+    "@google-labs/core-kit": "^0.15.3",
+    "@google-labs/template-kit": "^0.3.13"
   },
   "devDependencies": {
     "eslint": "^8.57.1",

@@ -1,5 +1,33 @@
 # @breadboard-ai/example-boards
 
+## 0.3.5
+
+### Patch Changes
+
+- 8b14d0e: Add Examples Board Server
+- Updated dependencies [5aded4a]
+- Updated dependencies [84b824e]
+- Updated dependencies [b640cd2]
+- Updated dependencies [ffbcf09]
+- Updated dependencies [7adeed8]
+- Updated dependencies [ca5f932]
+- Updated dependencies [b5981d0]
+- Updated dependencies [413992d]
+- Updated dependencies [049a83b]
+- Updated dependencies [c031dd6]
+  - @google-labs/breadboard@0.28.0
+  - @google-labs/gemini-kit@0.8.3
+  - @breadboard-ai/build@0.10.4
+  - @google-labs/core-kit@0.15.3
+  - @google-labs/agent-kit@0.12.4
+  - @google-labs/json-kit@0.3.11
+  - @breadboard-ai/manifest@0.4.6
+  - @google-labs/node-nursery-web@1.3.3
+  - @google-labs/palm-kit@0.1.5
+  - @google-labs/template-kit@0.3.13
+  - @breadboard-ai/google-drive-kit@0.2.7
+  - @breadboard-ai/python-wasm@0.1.9
+
 ## 0.3.4
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @google-labs/agent-kit
 
+## 0.12.4
+
+### Patch Changes
+
+- Updated dependencies [b5981d0]
+  - @breadboard-ai/build@0.10.4
+
 ## 0.12.3
 
 ### Patch Changes

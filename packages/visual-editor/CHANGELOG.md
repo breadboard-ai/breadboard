@@ -1,5 +1,81 @@
 # @google-labs/breadboard-web
 
+## 1.21.0
+
+### Minor Changes
+
+- 9d31e85: Update edge rendering
+- 4857c1e: Lots of smaller board server fixes
+- 049a83b: Add FileSystemBoardServer
+
+### Patch Changes
+
+- 358d116: Add initial support for Board Server Kits
+- 0884913: Various QoL improvements
+- 84b824e: Merge contiguous user turns in Gemini text.
+- 8b14d0e: Add Examples Board Server
+- a53f7e7: Teach drag-dock-overlay about persistence
+- 3033a0d: Track the active tab
+- 54eb2f3: Improve remote provider load behavior
+- ffbcf09: Allow management of Board Servers
+- b5981d0: Set url for the component board.
+- c031dd6: Do some plumbing work for extensions
+- 1d6d7a3: Teach board activity to be dockable
+- Updated dependencies [b1dfa20]
+- Updated dependencies [9d31e85]
+- Updated dependencies [358d116]
+- Updated dependencies [be6656d]
+- Updated dependencies [5aded4a]
+- Updated dependencies [250dc44]
+- Updated dependencies [4630d8c]
+- Updated dependencies [0884913]
+- Updated dependencies [84b824e]
+- Updated dependencies [4857c1e]
+- Updated dependencies [e4a9453]
+- Updated dependencies [dd24baa]
+- Updated dependencies [8b14d0e]
+- Updated dependencies [3e04cb3]
+- Updated dependencies [a53f7e7]
+- Updated dependencies [71bd9a7]
+- Updated dependencies [683bab9]
+- Updated dependencies [4ec74a0]
+- Updated dependencies [b640cd2]
+- Updated dependencies [2db4eeb]
+- Updated dependencies [54eb2f3]
+- Updated dependencies [8e793ad]
+- Updated dependencies [acf554c]
+- Updated dependencies [fa87883]
+- Updated dependencies [ffbcf09]
+- Updated dependencies [7adeed8]
+- Updated dependencies [ca5f932]
+- Updated dependencies [b5981d0]
+- Updated dependencies [51c2c39]
+- Updated dependencies [413992d]
+- Updated dependencies [d447a7f]
+- Updated dependencies [049a83b]
+- Updated dependencies [c031dd6]
+- Updated dependencies [646504f]
+- Updated dependencies [1d6d7a3]
+  - @breadboard-ai/shared-ui@1.19.0
+  - @breadboard-ai/idb-board-server@1.18.0
+  - @google-labs/breadboard@0.28.0
+  - @google-labs/gemini-kit@0.8.3
+  - @breadboard-ai/board-server-management@1.18.0
+  - @breadboard-ai/example-boards@0.3.5
+  - @breadboard-ai/data-store@0.2.4
+  - @breadboard-ai/types@0.1.2
+  - @breadboard-ai/build@0.10.4
+  - @google-labs/core-kit@0.15.3
+  - @google-labs/agent-kit@0.12.4
+  - @breadboard-ai/board-server-utils@0.1.4
+  - @google-labs/json-kit@0.3.11
+  - @breadboard-ai/manifest@0.4.6
+  - @google-labs/node-nursery-web@1.3.3
+  - @google-labs/palm-kit@0.1.5
+  - @google-labs/template-kit@0.3.13
+  - @breadboard-ai/google-drive-kit@0.2.7
+  - @breadboard-ai/python-wasm@0.1.9
+
 ## 1.20.2
 
 ### Patch Changes

@@ -1,5 +1,51 @@
 # @google-labs/breadboard-website
 
+## 2.6.5
+
+### Patch Changes
+
+- Updated dependencies [b1dfa20]
+- Updated dependencies [9d31e85]
+- Updated dependencies [358d116]
+- Updated dependencies [be6656d]
+- Updated dependencies [5aded4a]
+- Updated dependencies [250dc44]
+- Updated dependencies [4630d8c]
+- Updated dependencies [0884913]
+- Updated dependencies [84b824e]
+- Updated dependencies [4857c1e]
+- Updated dependencies [e4a9453]
+- Updated dependencies [3e04cb3]
+- Updated dependencies [a53f7e7]
+- Updated dependencies [71bd9a7]
+- Updated dependencies [683bab9]
+- Updated dependencies [4ec74a0]
+- Updated dependencies [b640cd2]
+- Updated dependencies [2db4eeb]
+- Updated dependencies [54eb2f3]
+- Updated dependencies [8e793ad]
+- Updated dependencies [acf554c]
+- Updated dependencies [fa87883]
+- Updated dependencies [ffbcf09]
+- Updated dependencies [7adeed8]
+- Updated dependencies [ca5f932]
+- Updated dependencies [b5981d0]
+- Updated dependencies [51c2c39]
+- Updated dependencies [413992d]
+- Updated dependencies [d447a7f]
+- Updated dependencies [049a83b]
+- Updated dependencies [c031dd6]
+- Updated dependencies [646504f]
+- Updated dependencies [1d6d7a3]
+  - @breadboard-ai/shared-ui@1.19.0
+  - @google-labs/breadboard@0.28.0
+  - @google-labs/gemini-kit@0.8.3
+  - @google-labs/core-kit@0.15.3
+  - @google-labs/agent-kit@0.12.4
+  - @google-labs/json-kit@0.3.11
+  - @google-labs/palm-kit@0.1.5
+  - @google-labs/template-kit@0.3.13
+
 ## 2.6.4
 
 ### Patch Changes

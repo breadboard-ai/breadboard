@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.28.0
+
+### Minor Changes
+
+- ca5f932: Introduce board server blobs API endpoint
+- 049a83b: Add FileSystemBoardServer
+
+### Patch Changes
+
+- 5aded4a: Change for shape rather than instance when formatting errors.
+- b640cd2: Remove spurious "examples" property from blank LLM Content config.
+- ffbcf09: Allow management of Board Servers
+- 7adeed8: Move LLMContent to types package.
+- c031dd6: Do some plumbing work for extensions
+- Updated dependencies [7adeed8]
+  - @breadboard-ai/types@0.1.2
+
 ## 0.27.3
 
 ### Patch Changes
