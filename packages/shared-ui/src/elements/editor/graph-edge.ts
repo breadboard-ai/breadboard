@@ -109,7 +109,8 @@ export class GraphEdge extends PIXI.Container {
   #isDirty = true;
   #edge: EdgeData | null = null;
   #overrideColor: number | null = null;
-  #loopBackPadding = 30;
+  #loopBackPaddingLeft = 30;
+  #loopBackPaddingRight = 80;
   #loopBackCurveRadius = 10;
   #overrideInLocation: PIXI.ObservablePoint | null = null;
   #overrideOutLocation: PIXI.ObservablePoint | null = null;
@@ -384,51 +385,51 @@ export class GraphEdge extends PIXI.Container {
       this.#edgeGraphic.beginPath();
       this.#edgeGraphic.moveTo(outLocation.x, outLocation.y);
       this.#edgeGraphic.lineTo(
-        outLocation.x + this.#loopBackPadding - this.#loopBackCurveRadius,
+        outLocation.x + this.#loopBackPaddingRight - this.#loopBackCurveRadius,
         outLocation.y
       );
       this.#edgeGraphic.quadraticCurveTo(
-        outLocation.x + this.#loopBackPadding,
+        outLocation.x + this.#loopBackPaddingRight,
         outLocation.y,
-        outLocation.x + this.#loopBackPadding,
+        outLocation.x + this.#loopBackPaddingRight,
         outLocation.y + this.#loopBackCurveRadius
       );
       this.#edgeGraphic.lineTo(
-        outLocation.x + this.#loopBackPadding,
+        outLocation.x + this.#loopBackPaddingRight,
         this.fromNode.y +
           this.fromNode.height +
-          this.#loopBackPadding -
+          this.#loopBackPaddingRight -
           this.#loopBackCurveRadius
       );
       this.#edgeGraphic.quadraticCurveTo(
-        outLocation.x + this.#loopBackPadding,
-        this.fromNode.y + this.fromNode.height + this.#loopBackPadding,
-        outLocation.x + this.#loopBackPadding - this.#loopBackCurveRadius,
-        this.fromNode.y + this.fromNode.height + this.#loopBackPadding
+        outLocation.x + this.#loopBackPaddingRight,
+        this.fromNode.y + this.fromNode.height + this.#loopBackPaddingRight,
+        outLocation.x + this.#loopBackPaddingRight - this.#loopBackCurveRadius,
+        this.fromNode.y + this.fromNode.height + this.#loopBackPaddingRight
       );
 
       this.#edgeGraphic.lineTo(
-        inLocation.x - this.#loopBackPadding + this.#loopBackCurveRadius,
-        this.fromNode.y + this.fromNode.height + this.#loopBackPadding
+        inLocation.x - this.#loopBackPaddingLeft + this.#loopBackCurveRadius,
+        this.fromNode.y + this.fromNode.height + this.#loopBackPaddingRight
       );
       this.#edgeGraphic.quadraticCurveTo(
-        inLocation.x - this.#loopBackPadding,
-        this.fromNode.y + this.fromNode.height + this.#loopBackPadding,
-        inLocation.x - this.#loopBackPadding,
+        inLocation.x - this.#loopBackPaddingLeft,
+        this.fromNode.y + this.fromNode.height + this.#loopBackPaddingRight,
+        inLocation.x - this.#loopBackPaddingLeft,
         this.fromNode.y +
           this.fromNode.height +
-          this.#loopBackPadding -
+          this.#loopBackPaddingRight -
           this.#loopBackCurveRadius
       );
 
       this.#edgeGraphic.lineTo(
-        inLocation.x - this.#loopBackPadding,
+        inLocation.x - this.#loopBackPaddingLeft,
         inLocation.y + this.#loopBackCurveRadius
       );
       this.#edgeGraphic.quadraticCurveTo(
-        inLocation.x - this.#loopBackPadding,
+        inLocation.x - this.#loopBackPaddingLeft,
         inLocation.y,
-        inLocation.x - this.#loopBackPadding + this.#loopBackCurveRadius,
+        inLocation.x - this.#loopBackPaddingLeft + this.#loopBackCurveRadius,
         inLocation.y
       );
 
@@ -441,22 +442,22 @@ export class GraphEdge extends PIXI.Container {
         outLocation.x,
         outLocation.y - this.#hitAreaSpacing,
 
-        outLocation.x + this.#loopBackPadding + this.#hitAreaSpacing,
+        outLocation.x + this.#loopBackPaddingRight + this.#hitAreaSpacing,
         outLocation.y - this.#hitAreaSpacing,
 
-        outLocation.x + this.#loopBackPadding + this.#hitAreaSpacing,
+        outLocation.x + this.#loopBackPaddingRight + this.#hitAreaSpacing,
         this.fromNode.y +
           this.fromNode.height +
-          this.#loopBackPadding +
+          this.#loopBackPaddingRight +
           this.#hitAreaSpacing,
 
-        inLocation.x - this.#loopBackPadding - this.#hitAreaSpacing,
+        inLocation.x - this.#loopBackPaddingRight - this.#hitAreaSpacing,
         this.fromNode.y +
           this.fromNode.height +
-          this.#loopBackPadding +
+          this.#loopBackPaddingRight +
           this.#hitAreaSpacing,
 
-        inLocation.x - this.#loopBackPadding - this.#hitAreaSpacing,
+        inLocation.x - this.#loopBackPaddingRight - this.#hitAreaSpacing,
         inLocation.y - this.#hitAreaSpacing,
 
         inLocation.x,
@@ -465,22 +466,22 @@ export class GraphEdge extends PIXI.Container {
         inLocation.x,
         inLocation.y + this.#hitAreaSpacing,
 
-        inLocation.x - this.#loopBackPadding + this.#hitAreaSpacing,
+        inLocation.x - this.#loopBackPaddingRight + this.#hitAreaSpacing,
         inLocation.y + this.#hitAreaSpacing,
 
-        inLocation.x - this.#loopBackPadding + this.#hitAreaSpacing,
+        inLocation.x - this.#loopBackPaddingRight + this.#hitAreaSpacing,
         this.fromNode.y +
           this.fromNode.height +
-          this.#loopBackPadding -
+          this.#loopBackPaddingRight -
           this.#hitAreaSpacing,
 
-        outLocation.x + this.#loopBackPadding - this.#hitAreaSpacing,
+        outLocation.x + this.#loopBackPaddingRight - this.#hitAreaSpacing,
         this.fromNode.y +
           this.fromNode.height +
-          this.#loopBackPadding -
+          this.#loopBackPaddingRight -
           this.#hitAreaSpacing,
 
-        outLocation.x + this.#loopBackPadding - this.#hitAreaSpacing,
+        outLocation.x + this.#loopBackPaddingRight - this.#hitAreaSpacing,
         outLocation.y + this.#hitAreaSpacing,
 
         outLocation.x,
