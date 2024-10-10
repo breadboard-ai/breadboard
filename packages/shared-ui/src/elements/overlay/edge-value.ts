@@ -292,8 +292,6 @@ export class EdgeValueOverlay extends LitElement {
       },
     ];
 
-    console.log(userInputs);
-
     const input = html`<bb-user-input
       ${ref(this.#userInputRef)}
       .inputs=${userInputs}
