@@ -1663,6 +1663,7 @@ export class Main extends LitElement {
         if (this.#boardActivityRef.value) {
           this.#boardActivityRef.value.run = run;
           this.#boardActivityRef.value.events = events;
+          this.#boardActivityRef.value.inputsFromLastRun = inputsFromLastRun;
         }
 
         let historyOverlay: HTMLTemplateResult | symbol = nothing;
