@@ -19,6 +19,9 @@ import { DataStore, SerializedDataStoreGroup } from "./types.js";
 export const inflateData = async (store: DataStore, data: unknown) => {
   const descender = async (value: unknown): Promise<unknown> => {
     if (isStoredData(value)) {
+      if (value.storedData.handle.startsWith("https://")) {
+        return value;
+      }
       const blob = await store.retrieveAsBlob(value);
       const data = await asBase64(blob);
       const mimeType = blob.type;

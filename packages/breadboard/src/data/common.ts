@@ -165,6 +165,11 @@ export async function toInlineDataPart(
 export async function toStoredDataPart(
   part: InlineDataCapabilityPart | StoredDataCapabilityPart | Blob
 ): Promise<StoredDataCapabilityPart> {
+  if (isStoredData(part)) {
+    if (part.storedData.handle.startsWith("https://")) {
+      return part;
+    }
+  }
   const blob = part instanceof Blob ? part : await asBlob(part);
   const handle = URL.createObjectURL(blob);
 

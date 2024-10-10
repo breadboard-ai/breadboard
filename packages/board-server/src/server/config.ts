@@ -9,6 +9,16 @@ import type { ViteDevServer } from "vite";
 export interface ServerConfig {
   allowedOrigins: Set<string>;
   hostname: string;
+  /**
+   * The public-facing URL of the server, which
+   * will be different from the `hostname` when the
+   * server is hosted behind a reverse proxy
+   * (e.g. Cloud Run or Google App Engine).
+   * Overrides the value of the `url` field in the
+   * server info API response.
+   */
+  serverUrl?: string;
   viteDevServer: ViteDevServer | null;
   rootPath: string;
+  storageBucket?: string;
 }
