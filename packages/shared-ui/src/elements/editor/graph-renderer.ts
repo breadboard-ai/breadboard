@@ -1055,6 +1055,22 @@ export class GraphRenderer extends LitElement {
         continue;
       }
 
+      // This is a subgraph, so do a further check to ensure whether it should
+      // be retained or removed.
+      if (graph.label.includes("#")) {
+        let keep = false;
+        searchLoop: for (const tabURL of keepList) {
+          if (graph.label.startsWith(tabURL)) {
+            keep = true;
+            break searchLoop;
+          }
+        }
+
+        if (keep) {
+          continue;
+        }
+      }
+
       this.removeGraph(graph);
     }
   }
