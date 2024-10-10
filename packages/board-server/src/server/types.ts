@@ -19,6 +19,10 @@ import type {
   OperationResult,
   ServerInfo,
 } from "./store.js";
+import type {
+  InlineDataCapabilityPart,
+  StoredDataCapabilityPart,
+} from "@breadboard-ai/types";
 
 export type GeneralRequestType = "list" | "create" | "options";
 
@@ -136,6 +140,32 @@ export type BoardServerStore = {
     dryRun: boolean
   ): Promise<CreateBoardResult>;
 };
+
+export type BlobStore = {
+  saveBlob(data: InlineDataCapabilityPart): Promise<BlobStoreSaveResult>;
+  getBlob(blobId: string): Promise<BlobStoreGetResult>;
+};
+
+export type BlobStoreSaveResult =
+  | {
+      success: true;
+      data: StoredDataCapabilityPart;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+export type BlobStoreGetResult =
+  | {
+      success: true;
+      data: Buffer;
+      mimeType?: string;
+    }
+  | {
+      success: false;
+      error: string;
+    };
 
 export type CreateBoardResult = {
   success: boolean;

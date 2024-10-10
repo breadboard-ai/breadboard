@@ -6,13 +6,22 @@
 
 import type { IncomingMessage, ServerResponse } from "http";
 import { getBody } from "../common.js";
-import { badRequest } from "../errors.js";
+import { badRequest, serverError } from "../errors.js";
 import { isLLMContent } from "@google-labs/breadboard";
+import type { DataPart } from "@breadboard-ai/types";
+import { GoogleStorageBlobStore } from "../boards/utils/blob-store.js";
+import { getStore } from "../store.js";
+import type { ServerConfig } from "../config.js";
 
 export { createBlob };
 
-async function createBlob(req: IncomingMessage, res: ServerResponse) {
+async function createBlob(
+  config: ServerConfig,
+  req: IncomingMessage,
+  res: ServerResponse
+) {
   const body = await getBody(req);
+  const { serverUrl, storageBucket } = config;
   if (!body) {
     badRequest(res, "No body provided");
     return;
@@ -32,20 +41,32 @@ async function createBlob(req: IncomingMessage, res: ServerResponse) {
     );
     return;
   }
-  const blobs = parts
-    .filter((part) => "inlineData" in part)
-    .map((part) => part.inlineData);
-  if (blobs.length === 0) {
-    badRequest(
-      res,
-      JSON.stringify(
-        "Invalid body format. Must contain at least one `inlineData` part"
-      )
-    );
-  }
-  // Store blobs in the bucket.
-  // Return unique id for each Blob, in the same order as they were received.
 
+  const store = getStore();
+  let url = serverUrl;
+  if (!url) {
+    const serverInfo = await store.getServerInfo();
+    if (!serverInfo || !serverInfo.url) {
+      serverError(res, "Unable to get server info or server URL.");
+      return;
+    }
+    url = serverInfo.url;
+  }
+  const blobStore = new GoogleStorageBlobStore(storageBucket!, url);
+
+  const replacedParts: DataPart[] = [];
+  for (const part of parts) {
+    if ("inlineData" in part) {
+      const result = await blobStore.saveBlob(part);
+      if (!result.success) {
+        serverError(res, result.error);
+        return;
+      }
+      replacedParts.push(result.data);
+    } else {
+      replacedParts.push(part);
+    }
+  }
   res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({ blobs }));
+  res.end(JSON.stringify({ parts: replacedParts, role: body.role }));
 }

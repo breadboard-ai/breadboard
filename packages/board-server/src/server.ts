@@ -30,6 +30,7 @@ export const startServer = async (rootPath: string = ROOT_PATH) => {
         .filter((origin) => origin !== "")
     ),
     hostname: HOSTNAME,
+    serverUrl: env["SERVER_URL"],
     viteDevServer: IS_PROD
       ? null
       : await createViteServer({

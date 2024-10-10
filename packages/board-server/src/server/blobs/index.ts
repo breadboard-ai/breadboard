@@ -19,7 +19,6 @@ async function serveBlobsAPI(
   req: IncomingMessage,
   res: ServerResponse
 ) {
-  console.log("🌻 serveBlobsAPI", config.storageBucket);
   if (!config.storageBucket) {
     return false;
   }
@@ -29,17 +28,16 @@ async function serveBlobsAPI(
     return false;
   }
 
-  if (!authenticate(req, res)) {
-    return true;
-  }
-
   if (!blob) {
     if (req.method === "POST") {
+      if (!authenticate(req, res)) {
+        return true;
+      }
       if (!corsAll(req, res)) {
         return true;
       }
 
-      await createBlob(req, res);
+      await createBlob(config, req, res);
       return true;
     }
     badRequest(res, "Invalid blob request");
@@ -51,11 +49,7 @@ async function serveBlobsAPI(
   }
 
   if (req.method === "GET") {
-    if (!corsAll(req, res)) {
-      return true;
-    }
-
-    return serveBlob(blob, req, res);
+    return serveBlob(config.storageBucket, blob, req, res);
   }
   return false;
 }

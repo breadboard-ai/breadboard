@@ -5,13 +5,24 @@
  */
 
 import type { IncomingMessage, ServerResponse } from "http";
+import { GoogleStorageBlobStore } from "../boards/utils/blob-store.js";
 
 export { serveBlob };
 
 async function serveBlob(
-  blob: string,
+  bucketId: string,
+  blobId: string,
   req: IncomingMessage,
   res: ServerResponse
 ) {
-  // ...
+  const store = new GoogleStorageBlobStore(bucketId);
+  const result = await store.getBlob(blobId);
+  if (result.success) {
+    res.writeHead(200, {
+      "Content-Type": result.mimeType || "application/octet-stream",
+      "content-disposition": "inline",
+    });
+    res.end(result.data);
+  }
+  return true;
 }
