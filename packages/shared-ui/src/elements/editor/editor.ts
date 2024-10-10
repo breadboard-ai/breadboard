@@ -317,7 +317,11 @@ export class Editor extends LitElement {
     }
 
     // Force a reset when the board changes.
-    const url = this.graph.raw().url || "";
+    const mainGraphUrl = this.graph.raw().url ?? "";
+    const url = this.subGraphId
+      ? `${mainGraphUrl}#${this.subGraphId}`
+      : mainGraphUrl;
+
     const ports = new Map<string, InspectableNodePorts>();
     const typeMetadata = new Map<string, NodeHandlerMetadata>();
     const graphVersion = this.#graphVersion;
@@ -340,7 +344,7 @@ export class Editor extends LitElement {
       }
     }
 
-    if (!this.graph) {
+    if (!selectedGraph) {
       return this.#graphRenderer;
     }
 

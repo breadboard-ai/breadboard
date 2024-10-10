@@ -25,7 +25,6 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { guard } from "lit/directives/guard.js";
-import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import {
   RecentBoard,
   SETTINGS_TYPE,
@@ -234,11 +233,6 @@ export class UI extends LitElement {
       }
     );
 
-    const breadcrumbs = [MAIN_BOARD_ID];
-    if (this.subGraphId) {
-      breadcrumbs.push(this.subGraphId);
-    }
-
     let welcomePanel: HTMLTemplateResult | symbol = nothing;
     if (this.showWelcomePanel) {
       welcomePanel = html`<bb-welcome-panel
@@ -247,14 +241,6 @@ export class UI extends LitElement {
       ></bb-welcome-panel>`;
     }
 
-    return html`<section id="diagram">
-      ${this.graph === null && this.failedToLoad
-        ? html`<div class="failed-to-load">
-            <h1>Unable to load board</h1>
-            <p>Please try again, or load a different board</p>
-          </div>`
-        : editor}
-      ${welcomePanel}
-    </section>`;
+    return html`<section id="diagram">${editor} ${welcomePanel}</section>`;
   }
 }

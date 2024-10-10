@@ -17,9 +17,9 @@ export function getDataStore(): DataStore {
   return createDefaultDataStore();
 }
 
-export function getRunStore(forceInMemoryStore = false): RunStore {
-  if (forceInMemoryStore) {
-    console.log("[Breadboard Run Store] Using In-Memory Store (forced)");
+export function getRunStore(useInMemoryStore = true): RunStore {
+  if (useInMemoryStore) {
+    console.log("[Breadboard Run Store] Using In-Memory Store");
     return createDefaultRunStore();
   }
 
