@@ -61,57 +61,13 @@ function calculatePointsOnQuadraticBezierCurve(
   return points;
 }
 
-/**
- * Calculates an [x,y] pair of points from start to end via two control points.
- * Per the math, this is defined as:
- *
- * (1-t)³ * start + 3(1 - t)² * t * cp + 3(1 - t) * t² * cp + t³ * end.
- *
- * @see https://en.wikipedia.org/wiki/B%C3%A9zier_curve
- */
-function calculatePointsOnCubicBezierCurve(
-  startX: number,
-  startY: number,
-  cp1X: number,
-  cp1Y: number,
-  cp2X: number,
-  cp2Y: number,
-  endX: number,
-  endY: number,
-  from: number,
-  to: number,
-  step: number
-) {
-  if (from > to || from < 0 || from > 1 || to < 0 || to > 1) {
-    throw new Error(
-      "from must be less than to, and both must be between 0 and 1"
-    );
-  }
-
-  const points: number[] = [];
-  for (let t = from; t <= to; t += step) {
-    points.push(
-      (1 - t) ** 3 * startX +
-        3 * (1 - t) ** 2 * t * cp1X +
-        3 * (1 - t) * t ** 2 * cp2X +
-        t ** 3 * endX,
-
-      (1 - t) ** 3 * startY +
-        3 * (1 - t) ** 2 * t * cp1Y +
-        3 * (1 - t) * t ** 2 * cp2Y +
-        t ** 3 * endY
-    );
-  }
-  return points;
-}
-
 export class GraphEdge extends PIXI.Container {
   #isDirty = true;
   #edge: EdgeData | null = null;
   #overrideColor: number | null = null;
-  #edgePaddingRight = 40;
+  #edgePaddingRight = 60;
   #loopBackPadding = 30;
-  #loopBackCurveRadius = 10;
+  #loopBackCurveRadius = 20;
   #overrideInLocation: PIXI.ObservablePoint | null = null;
   #overrideOutLocation: PIXI.ObservablePoint | null = null;
   #type: InspectableEdgeType | null = null;
@@ -124,7 +80,7 @@ export class GraphEdge extends PIXI.Container {
   #value: NodeValue[] | null = null;
   #hitAreaSpacing = 6;
 
-  #debugHitArea = true;
+  #debugHitArea = false;
   #debugHitAreaGraphic = new PIXI.Graphics();
 
   readOnly = false;
@@ -508,8 +464,7 @@ export class GraphEdge extends PIXI.Container {
         outLocation.y + this.#hitAreaSpacing,
       ]);
     } else {
-      // All other cases.
-      // First calculate the line segments.
+      // Control points.
       const pivotA = {
         x:
           outLocation.x +
@@ -540,8 +495,9 @@ export class GraphEdge extends PIXI.Container {
         y: outLocation.y + midY + (inLocation.y - (outLocation.y + midY)) * 0.5,
       };
 
-      // Next calculate the control points.
+      // Standard curve.
       if (Math.abs(midA.x - midB.x) < 0.5) {
+        // Line.
         const angleA = Math.atan2(
           midA.y - outLocation.y,
           midA.x - outLocation.x
@@ -614,7 +570,6 @@ export class GraphEdge extends PIXI.Container {
         this.#edgeGraphic.closePath();
 
         // Hit Area.
-
         const angle = Math.atan2(
           inLocation.y - outLocation.y,
           inLocation.x - outLocation.x
@@ -714,74 +669,108 @@ export class GraphEdge extends PIXI.Container {
           outLocation.y + this.#hitAreaSpacing,
         ]);
       } else {
-        // const hitAreaSpacingX =
-        //   this.#hitAreaSpacing * (outLocation.y < inLocation.y ? 1 : -1);
-        // const hitAreaSpacingY = this.#hitAreaSpacing;
-        // const hitArea = new PIXI.Polygon([
-        //   outLocation.x,
-        //   outLocation.y - hitAreaSpacingY,
-        //   ...calculatePointsOnCubicBezierCurve(
-        //     outLocation.x,
-        //     outLocation.y - hitAreaSpacingY,
-        //     cpA1.x + hitAreaSpacingX,
-        //     cpA1.y,
-        //     cpA2.x + hitAreaSpacingX,
-        //     cpA2.y,
-        //     midA.x,
-        //     midA.y + hitAreaSpacingY,
-        //     0.0,
-        //     1,
-        //     0.1
-        //   ),
-        //   midA.x,
-        //   midA.y + hitAreaSpacingY,
-        //   midB.x,
-        //   midB.y + hitAreaSpacingY,
-        //   ...calculatePointsOnCubicBezierCurve(
-        //     midB.x,
-        //     midB.y + hitAreaSpacingY,
-        //     cpB1.x + hitAreaSpacingX,
-        //     cpB1.y,
-        //     cpB2.x + hitAreaSpacingX,
-        //     cpB2.y,
-        //     inLocation.x,
-        //     inLocation.y - hitAreaSpacingY,
-        //     0.0,
-        //     1,
-        //     0.1
-        //   ),
-        //   inLocation.x,
-        //   inLocation.y + hitAreaSpacingY,
-        //   ...calculatePointsOnCubicBezierCurve(
-        //     inLocation.x,
-        //     inLocation.y + hitAreaSpacingY,
-        //     cpB2.x - hitAreaSpacingX,
-        //     cpB2.y,
-        //     cpB1.x - hitAreaSpacingX,
-        //     cpB1.y,
-        //     midB.x,
-        //     midB.y - hitAreaSpacingY,
-        //     0.0,
-        //     1,
-        //     0.1
-        //   ),
-        //   midA.x,
-        //   midA.y - hitAreaSpacingY,
-        //   ...calculatePointsOnCubicBezierCurve(
-        //     midA.x,
-        //     midA.y - hitAreaSpacingY,
-        //     cpA2.x - hitAreaSpacingX,
-        //     cpA2.y,
-        //     cpA1.x - hitAreaSpacingX,
-        //     cpA1.y,
-        //     outLocation.x,
-        //     outLocation.y + hitAreaSpacingY,
-        //     0.0,
-        //     1,
-        //     0.1
-        //   ),
-        // ]);
-        hitArea = new PIXI.Polygon([]);
+        // S-curve Line.
+        let curveRadius = Math.min(
+          this.#loopBackCurveRadius,
+          Math.abs(outLocation.y - inLocation.y) * 0.25
+        );
+        if (inLocation.y < outLocation.y) {
+          curveRadius *= -1;
+        }
+
+        this.#edgeGraphic.beginPath();
+
+        this.#edgeGraphic.moveTo(
+          outLocation.x - this.#edgePaddingRight,
+          outLocation.y
+        );
+        this.#edgeGraphic.lineTo(
+          outLocation.x - this.#loopBackCurveRadius,
+          outLocation.y
+        );
+
+        this.#edgeGraphic.quadraticCurveTo(
+          outLocation.x,
+          outLocation.y,
+          outLocation.x,
+          outLocation.y + curveRadius
+        );
+
+        this.#edgeGraphic.lineTo(outLocation.x, midA.y - curveRadius);
+        this.#edgeGraphic.quadraticCurveTo(
+          outLocation.x,
+          midA.y,
+          outLocation.x - this.#loopBackCurveRadius,
+          midA.y
+        );
+
+        this.#edgeGraphic.lineTo(
+          inLocation.x - this.#loopBackPadding + this.#loopBackCurveRadius,
+          midB.y
+        );
+
+        this.#edgeGraphic.quadraticCurveTo(
+          inLocation.x - this.#loopBackPadding,
+          midB.y,
+          inLocation.x - this.#loopBackPadding,
+          midB.y + curveRadius
+        );
+
+        this.#edgeGraphic.lineTo(
+          inLocation.x - this.#loopBackPadding,
+          inLocation.y - curveRadius
+        );
+
+        this.#edgeGraphic.quadraticCurveTo(
+          inLocation.x - this.#loopBackPadding,
+          inLocation.y,
+          inLocation.x - this.#loopBackPadding + this.#loopBackCurveRadius,
+          inLocation.y
+        );
+
+        this.#edgeGraphic.lineTo(inLocation.x, inLocation.y);
+
+        this.#edgeGraphic.stroke();
+        this.#edgeGraphic.closePath();
+
+        // Hit Area.
+        hitArea = new PIXI.Polygon([
+          outLocation.x - this.#edgePaddingRight,
+          outLocation.y - this.#hitAreaSpacing,
+
+          outLocation.x + this.#hitAreaSpacing,
+          outLocation.y - this.#hitAreaSpacing,
+
+          outLocation.x + this.#hitAreaSpacing,
+          midA.y + this.#hitAreaSpacing,
+
+          inLocation.x - this.#loopBackPadding + this.#hitAreaSpacing,
+          midA.y + this.#hitAreaSpacing,
+
+          inLocation.x - this.#loopBackPadding + this.#hitAreaSpacing,
+          inLocation.y - this.#hitAreaSpacing,
+
+          inLocation.x,
+          inLocation.y - this.#hitAreaSpacing,
+
+          inLocation.x,
+          inLocation.y + this.#hitAreaSpacing,
+
+          inLocation.x - this.#loopBackPadding - this.#hitAreaSpacing,
+          inLocation.y + this.#hitAreaSpacing,
+
+          inLocation.x - this.#loopBackPadding - this.#hitAreaSpacing,
+          midB.y - this.#hitAreaSpacing,
+
+          outLocation.x - this.#hitAreaSpacing,
+          midB.y - this.#hitAreaSpacing,
+
+          outLocation.x - this.#hitAreaSpacing,
+          outLocation.y + this.#hitAreaSpacing,
+
+          outLocation.x - this.#edgePaddingRight,
+          outLocation.y + this.#hitAreaSpacing,
+        ]);
       }
     }
 
