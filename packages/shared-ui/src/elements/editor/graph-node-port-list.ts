@@ -12,7 +12,7 @@ import { GRAPH_OPERATIONS, GraphNodePortType } from "./types";
 
 const portTextColor = getGlobalColor("--bb-neutral-900");
 
-export class GraphNodeFooter extends PIXI.Container {
+export class GraphNodePortList extends PIXI.Container {
   #width = 300;
   #height = 40;
   #textSize = 12;

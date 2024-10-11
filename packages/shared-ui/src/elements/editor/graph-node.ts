@@ -19,7 +19,7 @@ import {
   DBL_CLICK_DELTA,
   getGlobalColor,
 } from "./utils.js";
-import { GraphNodeFooter } from "./graph-node-footer.js";
+import { GraphNodePortList } from "./graph-node-port-list.js";
 import { GraphPortLabel as GraphNodePortLabel } from "./graph-port-label.js";
 import { GraphNodeActivityMarker } from "./graph-node-activity-marker.js";
 import { ComponentActivityItem } from "../../types/types.js";
@@ -65,7 +65,7 @@ export class GraphNode extends PIXI.Container {
   #portPadding = 8;
   #portRadius = 4;
   #background = new PIXI.Graphics();
-  #footer = new GraphNodeFooter();
+  #collapsedPortList = new GraphNodePortList();
   #activityMarker = new GraphNodeActivityMarker();
   #inPorts: InspectablePort[] | null = null;
   #inPortsData: Map<
@@ -134,7 +134,7 @@ export class GraphNode extends PIXI.Container {
     this.addChild(this.#background);
     this.addChild(this.#headerInPort);
     this.addChild(this.#headerOutPort);
-    this.addChild(this.#footer);
+    this.addChild(this.#collapsedPortList);
     this.addChild(this.#activityMarker);
 
     this.#headerInPort.label = "_header-port-in";
@@ -174,7 +174,7 @@ export class GraphNode extends PIXI.Container {
       }
     );
 
-    this.#footer.on(
+    this.#collapsedPortList.on(
       GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
       (...args: unknown[]) => {
         // Propagate to the parent graph.
@@ -502,8 +502,8 @@ export class GraphNode extends PIXI.Container {
   }
 
   set inPorts(ports: InspectablePort[] | null) {
-    this.#footer.readOnly = this.readOnly;
-    this.#footer.inPorts = ports;
+    this.#collapsedPortList.readOnly = this.readOnly;
+    this.#collapsedPortList.inPorts = ports;
     this.#inPorts = ports;
     this.#isDirty = true;
     if (!ports) {
@@ -740,8 +740,8 @@ export class GraphNode extends PIXI.Container {
 
   #updateDimensions() {
     const portCount = Math.max(this.#inPortsData.size, this.#outPortsData.size);
-    const footerEmpty = this.#footer.empty;
-    const footerDimensions = this.#footer.dimensions;
+    const footerEmpty = this.#collapsedPortList.empty;
+    const footerDimensions = this.#collapsedPortList.dimensions;
 
     // Height calculations.
     let height = this.#padding + (this.#titleText?.height || 0) + this.#padding;
@@ -862,8 +862,9 @@ export class GraphNode extends PIXI.Container {
   }
 
   #drawFooterIfNeeded() {
-    this.#footer.visible = this.collapsed;
-    this.#footer.y = this.#height - this.#footer.dimensions.height;
+    this.#collapsedPortList.visible = this.collapsed;
+    this.#collapsedPortList.y =
+      this.#height - this.#collapsedPortList.dimensions.height;
   }
 
   #drawOverflowMenu() {
@@ -1046,8 +1047,8 @@ export class GraphNode extends PIXI.Container {
       this.#background.stroke({ color: this.#segmentDividerColor });
     }
 
-    if (this.collapsed && !this.#footer.empty) {
-      const footerDimensions = this.#footer.dimensions;
+    if (this.collapsed && !this.#collapsedPortList.empty) {
+      const footerDimensions = this.#collapsedPortList.dimensions;
       const y = this.#height - footerDimensions.height;
       this.#background.beginPath();
       this.#background.moveTo(0, y);
