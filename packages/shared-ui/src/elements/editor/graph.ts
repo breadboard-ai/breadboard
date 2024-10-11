@@ -42,84 +42,8 @@ import {
 } from "../../types/types.js";
 
 const highlightedNodeColor = getGlobalColor("--bb-ui-600");
-
-const nodeColors = new Map([
-  [
-    "specialist",
-    {
-      text: getGlobalColor("--bb-neutral-900"),
-      border: getGlobalColor("--bb-neutral-500"),
-    },
-  ],
-  [
-    "runJavascript",
-    {
-      text: getGlobalColor("--bb-neutral-900"),
-      border: getGlobalColor("--bb-neutral-500"),
-    },
-  ],
-  [
-    "input",
-    {
-      text: getGlobalColor("--bb-neutral-900"),
-      border: getGlobalColor("--bb-neutral-500"),
-    },
-  ],
-  [
-    "output",
-    {
-      text: getGlobalColor("--bb-neutral-900"),
-      border: getGlobalColor("--bb-neutral-500"),
-    },
-  ],
-  [
-    "human",
-    {
-      text: getGlobalColor("--bb-neutral-900"),
-      border: getGlobalColor("--bb-neutral-500"),
-    },
-  ],
-  [
-    "looper",
-    {
-      text: getGlobalColor("--bb-neutral-900"),
-      border: getGlobalColor("--bb-neutral-500"),
-    },
-  ],
-  [
-    "joiner",
-    {
-      text: getGlobalColor("--bb-neutral-900"),
-      border: getGlobalColor("--bb-neutral-500"),
-    },
-  ],
-]);
-
-const nodeIcons = new Map([
-  [
-    "runJavascript",
-    {
-      name: "js",
-    },
-  ],
-  [
-    "input",
-    {
-      name: "input",
-    },
-  ],
-  [
-    "output",
-    {
-      name: "output",
-    },
-  ],
-]);
-
-const defaultNodeColors = {
-  text: getGlobalColor("--bb-neutral-600"),
-  border: getGlobalColor("--bb-neutral-400"),
-};
+const nodeTextColor = getGlobalColor("--bb-neutral-900");
+const nodeBorderColor = getGlobalColor("--bb-neutral-500");
 
 export class Graph extends PIXI.Container {
   #isDirty = true;
@@ -1339,9 +1263,8 @@ export class Graph extends PIXI.Container {
         graphNode.showNodeTypeDescriptions = this.showNodeTypeDescriptions;
         graphNode.showNodePreviewValues = this.showNodePreviewValues;
 
-        const colors = nodeColors.get(type) || defaultNodeColors;
-        graphNode.titleTextColor = colors.text;
-        graphNode.borderColor = colors.border;
+        graphNode.titleTextColor = nodeTextColor;
+        graphNode.borderColor = nodeBorderColor;
 
         this.#graphNodeById.set(id, graphNode);
       }
@@ -1352,11 +1275,8 @@ export class Graph extends PIXI.Container {
 
       if (icon && GraphAssets.instance().has(icon)) {
         graphNode.icon = icon;
-      } else {
-        const icon = nodeIcons.get(type);
-        if (icon) {
-          graphNode.icon = icon.name;
-        }
+      } else if (GraphAssets.instance().has(type)) {
+        graphNode.icon = type;
       }
 
       if (node.descriptor.metadata?.visual) {

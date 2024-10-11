@@ -7,18 +7,22 @@
 import * as PIXI from "pixi.js";
 
 const ASSET_LIST = new Map([
-  ["value", "/third_party/icons/graph/value-48px.svg"],
-  ["edit", "/third_party/icons/graph/edit-48px.svg"],
-  ["input", "/third_party/icons/graph/input-48px.svg"],
-  ["output", "/third_party/icons/graph/output-48px.svg"],
-  ["js", "/third_party/icons/graph/js-48px.svg"],
-  ["smart-toy", "/third_party/icons/graph/smart-toy-48px.svg"],
-  ["merge-type", "/third_party/icons/graph/merge-type-48px.svg"],
-  ["human", "/third_party/icons/graph/human-48px.svg"],
-  ["laps", "/third_party/icons/graph/laps-48px.svg"],
-  ["nano", "/third_party/icons/graph/nano-48px.svg"],
-  ["google-drive", "/third_party/icons/graph/google-drive-48px.svg"],
   ["code-blocks", "/third_party/icons/graph/code-blocks-48px.svg"],
+  ["edit", "/third_party/icons/graph/edit-48px.svg"],
+  ["fetch", "/third_party/icons/graph/fetch-48px.svg"],
+  ["google-drive", "/third_party/icons/graph/google-drive-48px.svg"],
+  ["human", "/third_party/icons/graph/human-48px.svg"],
+  ["input", "/third_party/icons/graph/input-48px.svg"],
+  ["jsonata", "/third_party/icons/graph/jsonata-48px.svg"],
+  ["laps", "/third_party/icons/graph/laps-48px.svg"],
+  ["joiner", "/third_party/icons/graph/merge-type-48px.svg"],
+  ["nano", "/third_party/icons/graph/nano-48px.svg"],
+  ["output", "/third_party/icons/graph/output-48px.svg"],
+  ["runJavascript", "/third_party/icons/graph/js-48px.svg"],
+  ["secrets", "/third_party/icons/graph/secrets-48px.svg"],
+  ["smart-toy", "/third_party/icons/graph/smart-toy-48px.svg"],
+  ["urlTemplate", "/third_party/icons/graph/http-48px.svg"],
+  ["value", "/third_party/icons/graph/value-48px.svg"],
 ]);
 
 type AssetMap = Map<string, PIXI.Texture>;
