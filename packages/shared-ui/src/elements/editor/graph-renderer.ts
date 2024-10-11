@@ -1038,14 +1038,21 @@ export class GraphRenderer extends LitElement {
 
     graph.on(
       GRAPH_OPERATIONS.GRAPH_COMMENT_EDIT_REQUESTED,
-      (label: string, x: number, y: number) => {
-        this.dispatchEvent(new GraphCommentEditRequestEvent(label, x, y));
+      (id: string, x: number, y: number) => {
+        this.dispatchEvent(new GraphCommentEditRequestEvent(id, x, y));
       }
     );
 
-    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_RUN_REQUESTED, (label: string) => {
-      this.dispatchEvent(new GraphNodeRunRequestEvent(label));
+    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_RUN_REQUESTED, (id: string) => {
+      this.dispatchEvent(new GraphNodeRunRequestEvent(id));
     });
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_EDIT,
+      (id: string, x: number, y: number) => {
+        this.dispatchEvent(new GraphNodeEditEvent(id, null, x, y, false));
+      }
+    );
 
     this.#container.addChild(graph);
   }

@@ -14,6 +14,7 @@ export enum GRAPH_OPERATIONS {
   GRAPH_NODES_MOVED = "graphnodesmoved",
   GRAPH_INITIAL_DRAW = "graphinitialdraw",
   GRAPH_DRAW = "graphdraw",
+  GRAPH_NODE_EDIT = "graphnodeedit",
   GRAPH_NODE_SELECTED = "graphnodeselected",
   GRAPH_NODE_DESELECTED = "graphnodedeselected",
   GRAPH_NODE_DESELECTED_ALL = "graphnodedeselectedall",

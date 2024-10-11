@@ -247,19 +247,22 @@ export class GraphNode extends PIXI.Container {
         return;
       }
 
-      this.expansionState = computeNextExpansionState(this.expansionState);
+      const isMac = navigator.platform.indexOf("Mac") === 0;
+      const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+      if (isCtrlCommand) {
+        this.expansionState = computeNextExpansionState(this.expansionState);
+      } else {
+        this.emit(
+          GRAPH_OPERATIONS.GRAPH_NODE_EDIT,
+          this.label,
+          evt.clientX,
+          evt.clientY
+        );
+      }
       this.#lastClickTime = 0;
     });
 
-    this.addEventListener("pointerover", () => {
-      this.cursor = "pointer";
-      this.showFooter = true;
-    });
-
-    this.addEventListener("pointerout", () => {
-      // TODO: Consider if we want to toggle this.
-      this.showFooter = true;
-    });
+    this.cursor = "pointer";
 
     this.addEventListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
       if (!(evt.target instanceof GraphNode) || !evt.isPrimary) {
