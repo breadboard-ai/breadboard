@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { InspectableRunSequenceEntry } from "../inspector/types.js";
 import type {
   Edge,
   NodeIdentifier,
@@ -99,6 +100,11 @@ export type ReanimationStateVisits = [NodeIdentifier, number[]][];
 export type ReanimationState = {
   states?: ReanimationStateCache;
   visits?: ReanimationStateVisits;
+  /**
+   * A run that consists of the events that preceded the point at which
+   * the reanimation state was captured.
+   */
+  history?: InspectableRunSequenceEntry[];
 };
 
 export type ReanimationMode =

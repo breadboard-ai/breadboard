@@ -24,6 +24,7 @@ import {
   OutputResponse,
   OutputValues,
   SkipProbeMessage,
+  TraversalResult,
 } from "../types.js";
 
 /**
@@ -211,8 +212,6 @@ type ReplyFunction = {
   reply: (chunk: AnyRunRequestMessage[1]) => Promise<void>;
 };
 
-export type RunStateFunction = () => Promise<RunState>;
-
 type ClientRunResultFromMessage<ResponseMessage> = ResponseMessage extends [
   string,
   object,
@@ -221,6 +220,7 @@ type ClientRunResultFromMessage<ResponseMessage> = ResponseMessage extends [
   ? {
       type: ResponseMessage[0];
       data: ResponseMessage[1];
+      result?: TraversalResult;
     } & ReplyFunction
   : never;
 

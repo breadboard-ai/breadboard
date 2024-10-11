@@ -143,7 +143,7 @@ export async function* runGraph(
           path: path(),
           timestamp: timestamp(),
         },
-        state: lifecycle?.state(),
+        result,
       });
 
       let outputs: OutputValues | undefined = undefined;

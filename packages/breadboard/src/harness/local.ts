@@ -22,18 +22,11 @@ import { HarnessRunResult, RunConfig } from "./types.js";
 import { baseURL } from "./url.js";
 
 const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
-  const loadStateIfAny = () => {
-    if (probe.type === "nodestart") {
-      return probe.state;
-    }
-    return undefined;
-  };
-  const state = loadStateIfAny();
   const data = structuredClone(probe.data);
   return {
     type: probe.type,
     data,
-    state,
+    result: probe.type === "nodestart" ? probe.result : undefined,
     reply: async () => {
       // Do nothing
     },

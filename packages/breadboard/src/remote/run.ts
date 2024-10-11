@@ -60,7 +60,7 @@ export class RunServer {
             const { type, data } = message;
             const response = [type, stubOutStreams(data)];
             if (type == "nodestart") {
-              response.push(message.state);
+              response.push(message.result);
             }
             await responses.write(response as RemoteMessage);
           })

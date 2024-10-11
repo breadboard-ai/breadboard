@@ -23,8 +23,10 @@ import {
   InspectableRunNodeEvent,
   InspectableRunInputs,
   InspectableRunEdge,
+  InspectableRunSequenceEntry,
 } from "../types.js";
 import { DataStore, RunTimestamp, RunURL } from "../../data/types.js";
+import { eventsAsHarnessRunResults } from "./conversions.js";
 
 const isInput = (
   event: InspectableRunEvent
@@ -143,6 +145,7 @@ export class RunObserver implements InspectableRunObserver {
 
   async observe(result: HarnessRunResult): Promise<void> {
     if (result.type === "graphstart") {
+      console.log("🌻 graphstar", result);
       const { path, timestamp } = result.data;
       if (path.length === 0) {
         this.#url = result.data.graph.url ?? "no-url-graph";
@@ -163,6 +166,7 @@ export class RunObserver implements InspectableRunObserver {
         }
 
         this.#runs.unshift(run);
+        console.log("🌻 graphstar add new run", this.#runs);
 
         if (this.#options.runStore) {
           await this.#options.runStore.truncate(this.#url, this.#runLimit);
@@ -220,6 +224,13 @@ export class RunObserver implements InspectableRunObserver {
       this.#runs.push(result.run);
     }
     return result;
+  }
+
+  async append(history: InspectableRunSequenceEntry[]): Promise<void> {
+    for await (const result of eventsAsHarnessRunResults(history)) {
+      console.log("🌻 appending", result);
+      await this.observe(result);
+    }
   }
 }
 
@@ -310,5 +321,9 @@ export class Run implements InspectableRun {
 
   replay(): AsyncGenerator<HarnessRunResult> {
     throw new Error("Runs can't yet be replayed.");
+  }
+
+  async reanimationStateAt(id: EventIdentifier) {
+    return this.#events.reanimationStateAt(id);
   }
 }
