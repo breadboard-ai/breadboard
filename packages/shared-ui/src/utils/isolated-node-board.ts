@@ -96,11 +96,13 @@ export async function getIsolatedNodeGraphDescriptor(
 
   const inputSchema = await generatePortSpec(node, "inputs");
   const outputSchema = await generatePortSpec(node, "outputs");
+  const inputID = `input-${globalThis.crypto.randomUUID()}`;
+  const outputID = `input-${globalThis.crypto.randomUUID()}`;
 
   const inputEdges = Object.keys(inputSchema.schema.properties ?? {}).map(
     (port) => {
       return {
-        from: "input",
+        from: inputID,
         to: nodeId,
         out: port,
         in: port,
@@ -111,7 +113,7 @@ export async function getIsolatedNodeGraphDescriptor(
     (port) => {
       return {
         from: nodeId,
-        to: "output",
+        to: outputID,
         out: port,
         in: port,
       };
@@ -126,7 +128,10 @@ export async function getIsolatedNodeGraphDescriptor(
     nodes: [
       {
         type: "input",
-        id: "input",
+        id: inputID,
+        metadata: {
+          title: `Input for ${node.title()}`,
+        },
         configuration: {
           schema: inputSchema.schema,
         },
@@ -134,7 +139,10 @@ export async function getIsolatedNodeGraphDescriptor(
       node.descriptor,
       {
         type: "output",
-        id: "output",
+        id: outputID,
+        metadata: {
+          title: `Output for ${node.title()}`,
+        },
         configuration: {
           schema: outputSchema.schema,
         },

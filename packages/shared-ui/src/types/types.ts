@@ -314,6 +314,7 @@ export type NodePortConfiguration = {
 };
 
 export type EdgeValueConfiguration = {
+  id: string;
   value: NodeValue[] | null;
   schema: Schema | null;
   x: number;

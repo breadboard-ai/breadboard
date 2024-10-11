@@ -531,6 +531,17 @@ export class NodePartialUpdateEvent extends Event {
   }
 }
 
+export class EdgeValueUpdateEvent extends Event {
+  static eventName = "bbedgevalueupdate";
+
+  constructor(
+    public readonly id: string,
+    public readonly value: NodeValue
+  ) {
+    super(EdgeValueUpdateEvent.eventName, { ...eventInit });
+  }
+}
+
 export class NodeConfigurationUpdateRequestEvent extends Event {
   static eventName = "bbnodeconfigurationupdaterequest";
 
