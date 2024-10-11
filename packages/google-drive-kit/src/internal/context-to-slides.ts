@@ -6,7 +6,12 @@
 
 import { type LLMContent } from "@breadboard-ai/types";
 
-export { contextToSlides, isCreateSlideRequest, isInsertTextRequest };
+export {
+  contextToSlides,
+  isCreateSlideRequest,
+  isInsertTextRequest,
+  isCreateImageRequest,
+};
 
 function contextToSlides(context: LLMContent[]): SlidesRequest[] {
   const requests: SlidesRequest[] = [];
@@ -26,11 +31,74 @@ function contextToSlides(context: LLMContent[]): SlidesRequest[] {
       slideId = prevSlideId;
       requests.push(...newRequests);
     } else if ("storedData" in part) {
-      throw new Error("Not implemented yet.");
+      const { handle } = part.storedData;
+      if (handle) {
+        const id = `Slide-${++slideId}`;
+        requests.push(createSlide(id, "", "BLANK"), createImage(id, handle));
+      }
     }
   });
 
   return requests;
+
+  function insertText(
+    objectId: string,
+    text: string
+  ): { insertText: SlidesInsertTextRequest } {
+    return { insertText: { objectId, text, insertionIndex: 0 } };
+  }
+
+  function createImage(
+    objectId: string,
+    url: string
+  ): { createImage: SlidesCreateImageRequest } {
+    return {
+      createImage: {
+        url,
+        elementProperties: {
+          pageObjectId: objectId,
+        },
+      },
+    };
+  }
+
+  function createSlide(
+    slideId: string,
+    placeholderId: string,
+    layout: SlidesPredefinedLayout
+  ) {
+    const result: SlidesCreateSlideRequest = {
+      objectId: slideId,
+      slideLayoutReference: { predefinedLayout: layout },
+      placeholderIdMappings: [],
+    };
+
+    switch (layout) {
+      case "TITLE": {
+        result.placeholderIdMappings.push({
+          layoutPlaceholder: { type: "CENTERED_TITLE", index: 0 },
+          objectId: `${slideId}-title`,
+        });
+        result.placeholderIdMappings.push({
+          layoutPlaceholder: { type: "SUBTITLE", index: 0 },
+          objectId: placeholderId,
+        });
+        break;
+      }
+      case "TITLE_AND_BODY": {
+        result.placeholderIdMappings.push({
+          layoutPlaceholder: { type: "TITLE", index: 0 },
+          objectId: `${slideId}-title`,
+        });
+        result.placeholderIdMappings.push({
+          layoutPlaceholder: { type: "BODY", index: 0 },
+          objectId: placeholderId,
+        });
+        break;
+      }
+    }
+    return { createSlide: result };
+  }
 
   function textToSlideRequests(
     startId: number,
@@ -53,74 +121,29 @@ function contextToSlides(context: LLMContent[]): SlidesRequest[] {
         if (textLines.length > 0) {
           const placeholderId = prevPlaceholderId;
           if (placeholderId) {
-            requests.push({
-              insertText: {
-                objectId: placeholderId,
-                text: textLines.join("\n"),
-                insertionIndex: 0,
-              },
-            });
+            requests.push(insertText(placeholderId, textLines.join("\n")));
           }
           textLines.length = 0;
         }
         const level = heading.length;
         if (level == 1) {
+          if (!text) {
+            return;
+          }
           // For level 1 headings, create a new TITLE slide
           const slideId = createObjectId();
           prevPlaceholderId = `${slideId}-subtitle`;
           requests.push(
-            {
-              createSlide: {
-                objectId: slideId,
-                slideLayoutReference: { predefinedLayout: "TITLE" },
-                placeholderIdMappings: [
-                  {
-                    layoutPlaceholder: { type: "CENTERED_TITLE", index: 0 },
-                    objectId: `${slideId}-title`,
-                  },
-                  {
-                    layoutPlaceholder: { type: "SUBTITLE", index: 0 },
-                    objectId: prevPlaceholderId,
-                  },
-                ],
-              },
-            },
-            {
-              insertText: {
-                objectId: `${slideId}-title`,
-                text,
-                insertionIndex: 0,
-              },
-            }
+            createSlide(slideId, prevPlaceholderId, "TITLE"),
+            insertText(`${slideId}-title`, text!)
           );
         } else {
           // For level 2+ headings, create a new TITLE_AND_BODY slide
           const slideId = createObjectId();
           prevPlaceholderId = `${slideId}-body`;
           requests.push(
-            {
-              createSlide: {
-                objectId: slideId,
-                slideLayoutReference: { predefinedLayout: "TITLE_AND_BODY" },
-                placeholderIdMappings: [
-                  {
-                    layoutPlaceholder: { type: "TITLE", index: 0 },
-                    objectId: `${slideId}-title`,
-                  },
-                  {
-                    layoutPlaceholder: { type: "BODY", index: 0 },
-                    objectId: prevPlaceholderId,
-                  },
-                ],
-              },
-            },
-            {
-              insertText: {
-                objectId: `${slideId}-title`,
-                text: text,
-                insertionIndex: 0,
-              },
-            }
+            createSlide(slideId, prevPlaceholderId, "TITLE_AND_BODY"),
+            insertText(`${slideId}-title`, text!)
           );
         }
       } else {
@@ -133,13 +156,7 @@ function contextToSlides(context: LLMContent[]): SlidesRequest[] {
     });
     // Flush the last textLines
     if (textLines.length > 0 && prevPlaceholderId) {
-      requests.push({
-        insertText: {
-          objectId: prevPlaceholderId,
-          text: textLines.join("\n"),
-          insertionIndex: 0,
-        },
-      });
+      requests.push(insertText(prevPlaceholderId, textLines.join("\n")));
     }
     return { requests, prevSlideId };
 
@@ -159,6 +176,12 @@ function isInsertTextRequest(
   request: SlidesRequest
 ): request is { insertText: SlidesInsertTextRequest } {
   return "insertText" in request;
+}
+
+function isCreateImageRequest(
+  request: SlidesRequest
+): request is { createImage: SlidesCreateImageRequest } {
+  return "createImage" in request;
 }
 
 type TextToSlideRequestsResult = {
@@ -363,7 +386,7 @@ type SlidesPredefinedLayout =
   /*
    * Layout with a caption at the bottom.
    */
-  | "CAPTION_ONLY	"
+  | "CAPTION_ONLY"
   /*
    * Layout with a title and a subtitle.
    */
@@ -405,4 +428,4 @@ type SlidesRequest =
   | { deleteObject: SlidesDeleteObjectRequest }
   | { createSlide: SlidesCreateSlideRequest }
   | { insertText: SlidesInsertTextRequest }
-  | { createImate: SlidesCreateImageRequest };
+  | { createImage: SlidesCreateImageRequest };
