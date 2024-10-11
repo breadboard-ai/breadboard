@@ -163,6 +163,17 @@ export class GraphNode extends PIXI.Container {
     );
 
     this.#footer.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_RUN_REQUESTED,
+      (...args: unknown[]) => {
+        this.emit(
+          GRAPH_OPERATIONS.GRAPH_NODE_RUN_REQUESTED,
+          this.label,
+          ...args
+        );
+      }
+    );
+
+    this.#footer.on(
       GRAPH_OPERATIONS.GRAPH_SHOW_TOOLTIP,
       (...args: unknown[]) => {
         this.emit(GRAPH_OPERATIONS.GRAPH_SHOW_TOOLTIP, ...args);

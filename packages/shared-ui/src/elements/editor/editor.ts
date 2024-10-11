@@ -39,6 +39,7 @@ import {
   GraphNodeDeleteEvent,
   GraphNodeEdgeChangeEvent,
   GraphNodeEditEvent,
+  GraphNodeRunRequestEvent,
   GraphNodesVisualUpdateEvent,
   GraphShowTooltipEvent,
   HideTooltipEvent,
@@ -47,6 +48,7 @@ import {
   NodeConfigurationUpdateRequestEvent,
   NodeCreateEvent,
   NodeDeleteEvent,
+  NodeRunRequestEvent,
   NodeTypeRetrievalErrorEvent,
   ShowTooltipEvent,
   SubGraphCreateEvent,
@@ -217,6 +219,7 @@ export class Editor extends LitElement {
   #onGraphShowTooltipBound = this.#onGraphShowTooltip.bind(this);
   #onGraphHideTooltipBound = this.#onGraphHideTooltip.bind(this);
   #onGraphCommentEditRequestBound = this.#onGraphCommentEditRequest.bind(this);
+  #onGraphNodeRunRequestBound = this.#onGraphNodeRunRequest.bind(this);
 
   #top = 0;
   #left = 0;
@@ -493,6 +496,11 @@ export class Editor extends LitElement {
       this.#onGraphCommentEditRequestBound
     );
 
+    this.#graphRenderer.addEventListener(
+      GraphNodeRunRequestEvent.eventName,
+      this.#onGraphNodeRunRequestBound
+    );
+
     window.addEventListener("resize", this.#onResizeBound);
     this.addEventListener("keydown", this.#onKeyDownBound);
     this.addEventListener("pointermove", this.#onPointerMoveBound);
@@ -569,6 +577,11 @@ export class Editor extends LitElement {
       this.#onGraphCommentEditRequestBound
     );
 
+    this.#graphRenderer.removeEventListener(
+      GraphNodeRunRequestEvent.eventName,
+      this.#onGraphNodeRunRequestBound
+    );
+
     window.removeEventListener("resize", this.#onResizeBound);
     this.removeEventListener("keydown", this.#onKeyDownBound);
     this.removeEventListener("pointermove", this.#onPointerMoveBound);
@@ -615,6 +628,13 @@ export class Editor extends LitElement {
         commentEvt.y,
         this.subGraphId
       )
+    );
+  }
+
+  #onGraphNodeRunRequest(evt: Event) {
+    const runRequestEvt = evt as GraphNodeRunRequestEvent;
+    this.dispatchEvent(
+      new NodeRunRequestEvent(runRequestEvt.id, this.subGraphId)
     );
   }
 

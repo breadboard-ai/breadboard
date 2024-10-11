@@ -642,6 +642,17 @@ export class CommentEditRequestEvent extends Event {
   }
 }
 
+export class NodeRunRequestEvent extends Event {
+  static eventName = "bbnoderunrequest";
+
+  constructor(
+    public readonly id: string,
+    public readonly subGraphId: string | null = null
+  ) {
+    super(NodeRunRequestEvent.eventName, { ...eventInit });
+  }
+}
+
 export class GraphInteractionEvent extends Event {
   static eventName = "bbgraphinteraction";
 
@@ -813,5 +824,13 @@ export class GraphCommentEditRequestEvent extends Event {
     public readonly y: number
   ) {
     super(GraphCommentEditRequestEvent.eventName, { ...eventInit });
+  }
+}
+
+export class GraphNodeRunRequestEvent extends Event {
+  static eventName = "bbgraphnoderunrequest";
+
+  constructor(public readonly id: string) {
+    super(GraphNodeRunRequestEvent.eventName, { ...eventInit });
   }
 }

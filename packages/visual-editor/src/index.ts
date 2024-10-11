@@ -2231,6 +2231,14 @@ export class Main extends LitElement {
                     : null;
                 this.requestUpdate();
               }}
+              @bbnoderunrequest=${async (
+                evt: BreadboardUI.Events.NodeRunRequestEvent
+              ) => {
+                console.log(
+                  `Run requested for ${evt.id} ${evt.subGraphId ? evt.subGraphId : `- no subgraph`}`
+                );
+              }}
+
               @bbrunboard=${async () => {
                 if (!this.tab?.graph?.url) {
                   return;

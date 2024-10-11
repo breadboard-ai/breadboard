@@ -31,6 +31,7 @@ export enum GRAPH_OPERATIONS {
   GRAPH_NODE_PORT_MOUSEENTER = "graphnodeportmouseenter",
   GRAPH_NODE_PORT_MOUSELEAVE = "graphnodeportmouseleave",
   GRAPH_NODE_PORT_VALUE_EDIT = "graphnodeportvalueedit",
+  GRAPH_NODE_RUN_REQUESTED = "graphnoderunrequested",
   GRAPH_SHOW_TOOLTIP = "graphshowtooltip",
   GRAPH_HIDE_TOOLTIP = "graphhidetooltip",
 }

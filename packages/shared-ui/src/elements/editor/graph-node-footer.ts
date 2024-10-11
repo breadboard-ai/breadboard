@@ -51,6 +51,10 @@ export class GraphNodeFooter extends PIXI.Container {
         }
       );
 
+      this.#nodeRunnerButton.addEventListener("click", () => {
+        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_RUN_REQUESTED);
+      });
+
       this.addChild(this.#nodeRunnerButton);
     }
 

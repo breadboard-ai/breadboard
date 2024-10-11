@@ -1426,6 +1426,13 @@ export class Graph extends PIXI.Container {
         }
       );
 
+      graphNode.on(
+        GRAPH_OPERATIONS.GRAPH_NODE_RUN_REQUESTED,
+        (...args: unknown[]) => {
+          this.emit(GRAPH_OPERATIONS.GRAPH_NODE_RUN_REQUESTED, ...args);
+        }
+      );
+
       this.addChild(graphNode);
     }
 

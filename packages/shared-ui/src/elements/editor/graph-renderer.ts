@@ -27,6 +27,7 @@ import {
   GraphShowTooltipEvent,
   GraphHideTooltipEvent,
   GraphCommentEditRequestEvent,
+  GraphNodeRunRequestEvent,
 } from "../../events/events.js";
 import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
@@ -1041,6 +1042,10 @@ export class GraphRenderer extends LitElement {
         this.dispatchEvent(new GraphCommentEditRequestEvent(label, x, y));
       }
     );
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_RUN_REQUESTED, (label: string) => {
+      this.dispatchEvent(new GraphNodeRunRequestEvent(label));
+    });
 
     this.#container.addChild(graph);
   }
