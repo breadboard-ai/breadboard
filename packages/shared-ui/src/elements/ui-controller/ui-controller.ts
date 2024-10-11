@@ -157,6 +157,12 @@ export class UI extends LitElement {
           .items.get("Show Experimental Components")?.value
       : false;
 
+    const showNodeRunnerButton = this.settings
+      ? this.settings
+          .getSection(SETTINGS_TYPE.GENERAL)
+          .items.get("Show Component Run Button")?.value
+      : false;
+
     const graph =
       this.graph && this.loader
         ? inspect(this.graph, {
@@ -182,6 +188,7 @@ export class UI extends LitElement {
         showNodeShortcuts,
         showNodeTypeDescriptions,
         showNodePreviewValues,
+        showNodeRunnerButton,
         invertZoomScrollDirection,
         showPortTooltips,
         highlightInvalidWires,
@@ -220,6 +227,7 @@ export class UI extends LitElement {
           .isShowingBoardActivityOverlay=${this.isShowingBoardActivityOverlay}
           .readOnly=${this.readOnly}
           .run=${this.run}
+          .showNodeRunnerButton=${showNodeRunnerButton}
           .showExperimentalComponents=${showExperimentalComponents}
           .showNodePreviewValues=${showNodePreviewValues}
           .showNodeShortcuts=${showNodeShortcuts}
