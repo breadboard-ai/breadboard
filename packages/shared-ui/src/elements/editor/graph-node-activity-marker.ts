@@ -13,7 +13,7 @@ const inputColor = getGlobalColor("--bb-inputs-400");
 const nodeColor = getGlobalColor("--bb-nodes-400");
 const outputColor = getGlobalColor("--bb-boards-500");
 const errorColor = getGlobalColor("--bb-warning-600");
-const neutralColor = getGlobalColor("--bb-neutral-400");
+const neutralColor = getGlobalColor("--bb-inputs-500");
 const textColor = getGlobalColor("--bb-neutral-0");
 
 export class GraphNodeActivityMarker extends PIXI.Container {
