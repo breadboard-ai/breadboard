@@ -329,7 +329,7 @@ export class EventManager {
           }
           if (event.id === id) {
             const reanimationState = manager.reanimationState();
-            reanimationState.history = this.#sequence.slice(0, index);
+            reanimationState.history = this.#sequence.slice(0, index + 1);
             return reanimationState;
           }
           break;
