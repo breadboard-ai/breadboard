@@ -55,6 +55,7 @@ export class Tooltip extends LitElement {
       user-select: none;
       animation: none;
       pointer-events: none;
+      white-space: nowrap;
     }
 
     :host([visible="true"]) {

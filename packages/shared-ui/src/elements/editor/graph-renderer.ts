@@ -27,6 +27,7 @@ import {
   GraphShowTooltipEvent,
   GraphHideTooltipEvent,
   GraphCommentEditRequestEvent,
+  GraphNodeRunRequestEvent,
 } from "../../events/events.js";
 import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types.js";
 import { Graph } from "./graph.js";
@@ -69,6 +70,7 @@ enum MODE {
 interface GraphOpts {
   url: string;
   subGraphId: string | null;
+  showNodeRunnerButton: boolean;
   showNodePreviewValues: boolean;
   showNodeTypeDescriptions: boolean;
   collapseNodesByDefault: boolean;
@@ -739,6 +741,10 @@ export class GraphRenderer extends LitElement {
       graph.visible = opts.visible;
     }
 
+    if (opts.showNodeRunnerButton !== undefined) {
+      graph.showNodeRunnerButton = opts.showNodeRunnerButton;
+    }
+
     return true;
   }
 
@@ -1032,8 +1038,19 @@ export class GraphRenderer extends LitElement {
 
     graph.on(
       GRAPH_OPERATIONS.GRAPH_COMMENT_EDIT_REQUESTED,
-      (label: string, x: number, y: number) => {
-        this.dispatchEvent(new GraphCommentEditRequestEvent(label, x, y));
+      (id: string, x: number, y: number) => {
+        this.dispatchEvent(new GraphCommentEditRequestEvent(id, x, y));
+      }
+    );
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_RUN_REQUESTED, (id: string) => {
+      this.dispatchEvent(new GraphNodeRunRequestEvent(id));
+    });
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_EDIT,
+      (id: string, x: number, y: number) => {
+        this.dispatchEvent(new GraphNodeEditEvent(id, null, x, y, false));
       }
     );
 

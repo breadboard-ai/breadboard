@@ -531,6 +531,17 @@ export class NodePartialUpdateEvent extends Event {
   }
 }
 
+export class EdgeValueUpdateEvent extends Event {
+  static eventName = "bbedgevalueupdate";
+
+  constructor(
+    public readonly id: string,
+    public readonly value: NodeValue
+  ) {
+    super(EdgeValueUpdateEvent.eventName, { ...eventInit });
+  }
+}
+
 export class NodeConfigurationUpdateRequestEvent extends Event {
   static eventName = "bbnodeconfigurationupdaterequest";
 
@@ -639,6 +650,17 @@ export class CommentEditRequestEvent extends Event {
     public readonly subGraphId: string | null = null
   ) {
     super(CommentEditRequestEvent.eventName, { ...eventInit });
+  }
+}
+
+export class NodeRunRequestEvent extends Event {
+  static eventName = "bbnoderunrequest";
+
+  constructor(
+    public readonly id: string,
+    public readonly subGraphId: string | null = null
+  ) {
+    super(NodeRunRequestEvent.eventName, { ...eventInit });
   }
 }
 
@@ -813,5 +835,13 @@ export class GraphCommentEditRequestEvent extends Event {
     public readonly y: number
   ) {
     super(GraphCommentEditRequestEvent.eventName, { ...eventInit });
+  }
+}
+
+export class GraphNodeRunRequestEvent extends Event {
+  static eventName = "bbgraphnoderunrequest";
+
+  constructor(public readonly id: string) {
+    super(GraphNodeRunRequestEvent.eventName, { ...eventInit });
   }
 }

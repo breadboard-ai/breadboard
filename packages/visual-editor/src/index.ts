@@ -781,6 +781,19 @@ export class Main extends LitElement {
     }
   }
 
+  #attemptBoardStop() {
+    const tabId = this.tab?.id ?? null;
+    const abortController = this.#runtime.run.getAbortSignal(tabId);
+    if (!abortController) {
+      return;
+    }
+
+    abortController.abort("Stopped board");
+    const runner = this.#runtime.run.getRunner(tabId);
+    runner?.run();
+    this.requestUpdate();
+  }
+
   async #attemptBoardSave(
     message = "Board saved",
     ackUser = true,
@@ -1771,6 +1784,13 @@ export class Main extends LitElement {
             .subGraphId=${this.tab?.subGraphId}
             .providers=${this.#providers}
             .providerOps=${this.providerOps}
+            @bbedgevalueupdate=${(
+              evt: BreadboardUI.Events.EdgeValueUpdateEvent
+            ) => {
+              // TODO: Process this for the EditableRun.
+              console.log(evt);
+              this.showEdgeValue = false;
+            }}
             @bboverlaydismissed=${() => {
               this.showEdgeValue = false;
             }}
@@ -2231,6 +2251,55 @@ export class Main extends LitElement {
                     : null;
                 this.requestUpdate();
               }}
+              @bbnoderunrequest=${async (
+                evt: BreadboardUI.Events.NodeRunRequestEvent
+              ) => {
+                // TODO: Replace this with an EditableRun.
+                const graph = this.tab?.graph;
+                if (!graph?.url) {
+                  return;
+                }
+
+                const kits = this.tab?.kits ?? [];
+                const url = this.graph?.url ?? globalThis.location.href;
+                const runner =
+                  await BreadboardUI.Utils.getIsolatedNodeGraphDescriptor(
+                    graph,
+                    kits,
+                    this.#runtime.board.getLoader(),
+                    evt.id
+                  );
+
+                if (!runner) {
+                  return;
+                }
+
+                // If there's something running, stop it.
+                this.#attemptBoardStop();
+
+                this.showBoardActivityOverlay = true;
+                this.#runBoard(
+                  addNodeProxyServerConfig(
+                    this.#proxy,
+                    {
+                      url,
+                      runner,
+                      diagnostics: true,
+                      kits: [], // The kits are added by the runtime.
+                      loader: this.#runtime.board.getLoader(),
+                      store: this.#dataStore,
+                      inputs: BreadboardUI.Data.inputsFromSettings(
+                        this.#settings
+                      ),
+                      interactiveSecrets: true,
+                    },
+                    this.#settings,
+                    this.proxyFromUrl,
+                    await this.#getProxyURL(url)
+                  )
+                );
+              }}
+
               @bbrunboard=${async () => {
                 if (!this.tab?.graph?.url) {
                   return;
@@ -2260,20 +2329,7 @@ export class Main extends LitElement {
                 );
               }}
               @bbstopboard=${() => {
-                const tabId = this.tab?.id ?? null;
-                const abortController = this.#runtime.run.getAbortSignal(tabId);
-                if (!abortController) {
-                  this.toast(
-                    "Unable to stop run - no abort controller found",
-                    BreadboardUI.Events.ToastType.ERROR
-                  );
-                  return;
-                }
-
-                abortController.abort("Stopped board");
-                const runner = this.#runtime.run.getRunner(tabId);
-                runner?.run();
-                this.requestUpdate();
+                this.#attemptBoardStop();
               }}
               @bbedgechange=${(evt: BreadboardUI.Events.EdgeChangeEvent) => {
                 this.#runtime.edit.changeEdge(
@@ -2368,7 +2424,8 @@ export class Main extends LitElement {
                 evt: BreadboardUI.Events.EdgeValueSelectedEvent
               ) => {
                 this.showEdgeValue = true;
-                this.#edgeValueData = { ...evt };
+                // TODO: Figure out what ID to apply here so that the edge update event is meaningful.
+                this.#edgeValueData = { id: "unknown-edge", ...evt };
               }}
               @bbnodeactivityselected=${(
                 evt: BreadboardUI.Events.NodeActivitySelectedEvent

@@ -4,157 +4,132 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InspectablePort, PortStatus } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
-import { getGlobalColor, isConfigurablePort } from "./utils";
-import { GraphNodePort } from "./graph-node-port";
-import { GRAPH_OPERATIONS, GraphNodePortType } from "./types";
+import { GraphNodeActivityMarker } from "./graph-node-activity-marker";
+import { GRAPH_OPERATIONS } from "./types";
+import { ComponentActivityItem } from "../../types/types";
+import { GraphAssets } from "./graph-assets";
 
-const portTextColor = getGlobalColor("--bb-neutral-900");
+const ICON_SCALE = 0.33;
+const ICON_ALPHA_OUT = 0.3;
+const ICON_ALPHA_OVER = 0.6;
 
 export class GraphNodeFooter extends PIXI.Container {
-  #width = 300;
+  #width = 48;
   #height = 40;
-  #textSize = 12;
-  #portTextColor = portTextColor;
   #padding = 12;
-  #itemPadding = 16;
-  #spacing = 4;
-  #inPorts: InspectablePort[] | null = null;
-  #inPortsData: Map<
-    string,
-    { port: InspectablePort; label: PIXI.Text; nodePort: GraphNodePort } | null
-  > = new Map();
+  #activityMarker = new GraphNodeActivityMarker();
+  #nodeRunnerButton: PIXI.Sprite | null = null;
+  #activity: ComponentActivityItem[] | null = null;
+  #isDirty = false;
+  #showNodeRunnerButton = false;
 
   readOnly = false;
 
-  get empty() {
-    return this.#inPortsData.size === 0;
-  }
+  constructor() {
+    super();
 
-  set inPorts(ports: InspectablePort[] | null) {
-    this.#inPorts = ports;
-    this.#width = 0;
+    const playIcon = GraphAssets.instance().get("play-filled");
+    if (playIcon) {
+      this.#nodeRunnerButton = new PIXI.Sprite(playIcon);
+      this.#nodeRunnerButton.scale.x = ICON_SCALE;
+      this.#nodeRunnerButton.scale.y = ICON_SCALE;
+      this.#nodeRunnerButton.alpha = ICON_ALPHA_OUT;
+      this.#nodeRunnerButton.cursor = "pointer";
 
-    if (!ports) {
-      return;
-    }
-
-    this.#width = this.#padding;
-
-    for (const port of ports) {
-      if (!isConfigurablePort(port)) {
-        continue;
-      }
-
-      if (port.status !== PortStatus.Missing && port.value === undefined) {
-        continue;
-      }
-
-      let portItem = this.#inPortsData.get(port.name);
-      if (!portItem) {
-        const label = new PIXI.Text({
-          text: port.title,
-          style: {
-            fontFamily: "Arial",
-            fontSize: this.#textSize,
-            fill: this.#portTextColor,
-            align: "left",
-          },
-        });
-
-        const nodePort = new GraphNodePort(GraphNodePortType.INERT);
-
-        this.addChild(label);
-        this.addChild(nodePort);
-
-        portItem = { label, port, nodePort };
-        this.#inPortsData.set(port.name, portItem);
-      }
-
-      if (portItem.label.text !== port.title) {
-        portItem.label.text = port.title;
-      }
-
-      portItem.port = port;
-      portItem.nodePort.status = port.status;
-      portItem.nodePort.configured = port.configured;
-
-      portItem.nodePort.x = this.#width;
-      portItem.nodePort.y = this.#height * 0.5;
-
-      portItem.label.x =
-        portItem.nodePort.x + portItem.nodePort.radius * 2 + this.#spacing;
-      portItem.label.y = (this.#height - portItem.label.height) * 0.5;
-
-      this.#width +=
-        portItem.nodePort.radius * 2 +
-        this.#spacing +
-        portItem.label.width +
-        this.#itemPadding;
-
-      // Now that all the render-centric stuff is set up, check the read-only
-      // state to determine if click handlers etc should be added.
-      portItem.label.removeAllListeners();
-      if (this.readOnly) {
-        return;
-      }
-
-      portItem.label.alpha = 0.65;
-      portItem.label.cursor = "pointer";
-
-      portItem.label.addEventListener(
-        "click",
+      this.#nodeRunnerButton.addEventListener(
+        "pointerover",
         (evt: PIXI.FederatedPointerEvent) => {
-          this.emit(
-            GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
-            portItem.port,
-            evt.clientX,
-            evt.clientY
-          );
+          evt.target.alpha = ICON_ALPHA_OVER;
         }
       );
 
-      portItem.label.addEventListener("pointerover", (evt) => {
-        const ptrEvent = evt.nativeEvent as PointerEvent;
-        const [top] = ptrEvent.composedPath();
-        if (!(top instanceof HTMLElement)) {
-          return;
+      this.#nodeRunnerButton.addEventListener(
+        "pointerout",
+        (evt: PIXI.FederatedPointerEvent) => {
+          evt.target.alpha = ICON_ALPHA_OUT;
         }
+      );
 
-        if (top.tagName !== "CANVAS") {
-          return;
-        }
-        portItem.label.alpha = 1;
+      this.#nodeRunnerButton.addEventListener("click", () => {
+        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_RUN_REQUESTED);
       });
 
-      portItem.label.addEventListener("pointerout", () => {
-        portItem.label.alpha = 0.65;
-      });
+      this.addChild(this.#nodeRunnerButton);
     }
 
-    for (const [inPortName, portItem] of this.#inPortsData) {
-      const port = ports.find((inPort) => inPort.name === inPortName);
-      if (!port) {
-        continue;
+    this.addChild(this.#activityMarker);
+
+    this.#activityMarker.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_ACTIVITY_SELECTED,
+      (...args: unknown[]) => {
+        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_ACTIVITY_SELECTED, ...args);
       }
+    );
 
-      // Unless the port is missing a value, we can remove it when it has
-      // no value set.
-      if (port.status !== PortStatus.Missing && port.value === undefined) {
-        portItem?.label.removeFromParent();
-        portItem?.label.destroy();
-
-        portItem?.nodePort.removeFromParent();
-        portItem?.nodePort.destroy();
-
-        this.#inPortsData.delete(inPortName);
+    this.#activityMarker.on(
+      GRAPH_OPERATIONS.GRAPH_SHOW_TOOLTIP,
+      (...args: unknown[]) => {
+        this.emit(GRAPH_OPERATIONS.GRAPH_SHOW_TOOLTIP, ...args);
       }
-    }
+    );
+
+    this.#activityMarker.on(
+      GRAPH_OPERATIONS.GRAPH_HIDE_TOOLTIP,
+      (...args: unknown[]) => {
+        this.emit(GRAPH_OPERATIONS.GRAPH_HIDE_TOOLTIP, ...args);
+      }
+    );
+
+    this.onRender = () => {
+      if (this.#isDirty) {
+        this.#isDirty = false;
+        this.#draw();
+      }
+    };
   }
 
-  get inPorts() {
-    return this.#inPorts;
+  #draw() {
+    if (this.#nodeRunnerButton) {
+      this.#nodeRunnerButton.visible = this.#showNodeRunnerButton;
+      this.#nodeRunnerButton.x = this.#padding;
+      this.#nodeRunnerButton.y =
+        (this.#height - this.#nodeRunnerButton.height) * 0.5;
+    }
+
+    this.#activityMarker.x =
+      this.#width - this.#activityMarker.dimensions.width - this.#padding;
+    this.#activityMarker.y =
+      (this.#height - this.#activityMarker.dimensions.height) * 0.5;
+  }
+
+  set showNodeRunnerButton(showNodeRunnerButton: boolean) {
+    if (showNodeRunnerButton === this.#showNodeRunnerButton) {
+      return;
+    }
+
+    this.#showNodeRunnerButton = showNodeRunnerButton;
+    this.#isDirty = true;
+  }
+
+  set footerWidth(width: number) {
+    this.#width = width;
+    this.#isDirty = true;
+  }
+
+  get footerWidth() {
+    return this.#width;
+  }
+
+  set activity(activity: ComponentActivityItem[] | null) {
+    this.#activity = activity;
+    this.#activityMarker.activity = this.#activity;
+
+    this.#isDirty = true;
+  }
+
+  get activity() {
+    return this.#activity;
   }
 
   get dimensions() {

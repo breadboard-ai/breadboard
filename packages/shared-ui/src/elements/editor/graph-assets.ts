@@ -18,6 +18,7 @@ const ASSET_LIST = new Map([
   ["joiner", "/third_party/icons/graph/merge-type-48px.svg"],
   ["nano", "/third_party/icons/graph/nano-48px.svg"],
   ["output", "/third_party/icons/graph/output-48px.svg"],
+  ["play-filled", "/third_party/icons/graph/play-filled-48px.svg"],
   ["runJavascript", "/third_party/icons/graph/js-48px.svg"],
   ["secrets", "/third_party/icons/graph/secrets-48px.svg"],
   ["smart-toy", "/third_party/icons/graph/smart-toy-48px.svg"],

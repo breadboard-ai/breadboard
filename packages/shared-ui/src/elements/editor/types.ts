@@ -14,6 +14,7 @@ export enum GRAPH_OPERATIONS {
   GRAPH_NODES_MOVED = "graphnodesmoved",
   GRAPH_INITIAL_DRAW = "graphinitialdraw",
   GRAPH_DRAW = "graphdraw",
+  GRAPH_NODE_EDIT = "graphnodeedit",
   GRAPH_NODE_SELECTED = "graphnodeselected",
   GRAPH_NODE_DESELECTED = "graphnodedeselected",
   GRAPH_NODE_DESELECTED_ALL = "graphnodedeselectedall",
@@ -31,6 +32,7 @@ export enum GRAPH_OPERATIONS {
   GRAPH_NODE_PORT_MOUSEENTER = "graphnodeportmouseenter",
   GRAPH_NODE_PORT_MOUSELEAVE = "graphnodeportmouseleave",
   GRAPH_NODE_PORT_VALUE_EDIT = "graphnodeportvalueedit",
+  GRAPH_NODE_RUN_REQUESTED = "graphnoderunrequested",
   GRAPH_SHOW_TOOLTIP = "graphshowtooltip",
   GRAPH_HIDE_TOOLTIP = "graphhidetooltip",
 }

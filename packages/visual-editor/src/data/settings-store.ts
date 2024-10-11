@@ -171,6 +171,14 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
             value: false,
           },
         ],
+        [
+          "Show Component Run Button",
+          {
+            name: "Show Component Run Button",
+            description: "Toggles showing the component runner button",
+            value: false,
+          },
+        ],
       ]),
     },
     [BreadboardUI.Types.SETTINGS_TYPE.SECRETS]: {

@@ -9,10 +9,14 @@ import { customElement, property } from "lit/decorators.js";
 import {
   EdgeValueConfiguration,
   UserInputConfiguration,
+  UserOutputValues,
 } from "../../types/types.js";
 import { Overlay } from "./overlay.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { OverlayDismissedEvent } from "../../events/events.js";
+import {
+  EdgeValueUpdateEvent,
+  OverlayDismissedEvent,
+} from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 import { UserInput } from "../elements.js";
 import { GraphDescriptor, GraphProvider } from "@google-labs/breadboard";
@@ -42,11 +46,14 @@ export class EdgeValueOverlay extends LitElement {
 
   #overlayRef: Ref<Overlay> = createRef();
   #userInputRef: Ref<UserInput> = createRef();
+  #formRef: Ref<HTMLFormElement> = createRef();
 
   #minimizedX = 0;
   #minimizedY = 0;
   #left: number | null = null;
   #top: number | null = null;
+  #pendingSave = false;
+  #onKeyDownBound = this.#onKeyDown.bind(this);
 
   static styles = css`
     * {
@@ -121,7 +128,7 @@ export class EdgeValueOverlay extends LitElement {
       align-items: center;
     }
 
-    #close {
+    #cancel {
       background: transparent;
       border: none;
       font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
@@ -179,6 +186,18 @@ export class EdgeValueOverlay extends LitElement {
         no-repeat;
     }
   `;
+
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    this.addEventListener("keydown", this.#onKeyDownBound);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    this.removeEventListener("keydown", this.#onKeyDownBound);
+  }
 
   protected firstUpdated(): void {
     requestAnimationFrame(() => {
@@ -274,19 +293,47 @@ export class EdgeValueOverlay extends LitElement {
     globalThis.sessionStorage.setItem(MAXIMIZE_KEY, this.maximized.toString());
   }
 
+  #onKeyDown(evt: KeyboardEvent) {
+    const isMac = navigator.platform.indexOf("Mac") === 0;
+    const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+    if (!(evt.key === "Enter" && isCtrlCommand)) {
+      return;
+    }
+
+    this.processData();
+  }
+
+  processData() {
+    this.#pendingSave = false;
+
+    if (!this.#userInputRef.value || !this.#formRef.value || !this.edgeValue) {
+      return;
+    }
+
+    const outputs: UserOutputValues | null =
+      this.#userInputRef.value.processData(true);
+    if (!outputs) {
+      return;
+    }
+
+    this.dispatchEvent(new EdgeValueUpdateEvent(this.edgeValue.id, outputs));
+  }
+
   render() {
     const contentLocationStart = { x: 0, y: 0 };
     const dragStart = { x: 0, y: 0 };
     const dragDelta = { x: 0, y: 0 };
     let dragging = false;
 
+    const value = this.edgeValue?.value ? this.edgeValue?.value[0] : null;
     const userInputs: UserInputConfiguration[] = [
       {
         name: "edge-value",
         secret: false,
         title: this.edgeValue?.schema?.title ?? "Untitled Value",
         configured: true,
-        value: this.edgeValue?.value ? this.edgeValue?.value[0] : null,
+        value: structuredClone(value),
         required: true,
         schema: this.edgeValue?.schema,
       },
@@ -294,6 +341,9 @@ export class EdgeValueOverlay extends LitElement {
 
     const input = html`<bb-user-input
       ${ref(this.#userInputRef)}
+      @input=${() => {
+        this.#pendingSave = true;
+      }}
       .inputs=${userInputs}
       .graph=${this.graph}
       .subGraphId=${this.subGraphId}
@@ -305,7 +355,20 @@ export class EdgeValueOverlay extends LitElement {
       .llmInputShowEntrySelector=${false}
     ></bb-user-input>`;
 
-    return html`<bb-overlay ${ref(this.#overlayRef)} inline>
+    return html`<bb-overlay
+      ${ref(this.#overlayRef)}
+      inline
+      @bboverlaydismissed=${(evt: Event) => {
+        if (
+          !this.#pendingSave ||
+          confirm("Close edge value without saving first?")
+        ) {
+          return;
+        }
+
+        evt.stopImmediatePropagation();
+      }}
+    >
       <div id="wrapper">
         <h1
           @pointerdown=${(evt: PointerEvent) => {
@@ -364,16 +427,36 @@ export class EdgeValueOverlay extends LitElement {
           </button>
         </h1>
         <div id="content">
-          <div id="container">${input}</div>
+          <div id="container">
+            <form
+              ${ref(this.#formRef)}
+              @submit=${(evt: Event) => {
+                evt.preventDefault();
+              }}
+              @input=${() => {
+                this.#pendingSave = true;
+              }}
+            >
+              ${input}
+            </form>
+          </div>
         </div>
         <div id="buttons">
           <button
-            id="close"
+            id="cancel"
             @click=${() => {
               this.dispatchEvent(new OverlayDismissedEvent());
             }}
           >
-            Close
+            Cancel
+          </button>
+          <button
+            id="update"
+            @click=${() => {
+              this.processData();
+            }}
+          >
+            Update
           </button>
         </div>
       </div>
