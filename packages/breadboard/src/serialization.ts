@@ -5,6 +5,7 @@
  */
 
 import { MachineResult } from "./traversal/result.js";
+import { MachineEdgeState } from "./traversal/state.js";
 import { TraversalResult } from "./types.js";
 
 export const replacer = (key: string, value: unknown) => {
@@ -34,4 +35,33 @@ export const loadRunnerState = (s: string) => {
   const { state: o, type } = JSON.parse(s, reviver);
   const state = MachineResult.fromObject(o);
   return { state, type };
+};
+
+export const cloneState = (result: TraversalResult): TraversalResult => {
+  const {
+    descriptor,
+    inputs,
+    missingInputs,
+    current,
+    opportunities,
+    newOpportunities,
+    state,
+    outputs,
+    partialOutputs,
+  } = result;
+  const clonedValueState = new MachineEdgeState();
+  clonedValueState.constants = structuredClone(state.constants);
+  clonedValueState.state = structuredClone(state.state);
+  const clone = new MachineResult(
+    descriptor,
+    inputs,
+    [...missingInputs],
+    current,
+    [...opportunities],
+    [...newOpportunities],
+    clonedValueState,
+    partialOutputs
+  );
+  clone.outputs = outputs;
+  return clone;
 };

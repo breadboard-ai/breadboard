@@ -17,6 +17,7 @@ import type {
 } from "../types.js";
 import { asyncGen } from "../utils/async-gen.js";
 import { NodeInvoker } from "./node-invoker.js";
+import { cloneState } from "../serialization.js";
 
 /**
  * Runs a graph in "run" mode. See
@@ -143,7 +144,7 @@ export async function* runGraph(
           path: path(),
           timestamp: timestamp(),
         },
-        result,
+        result: cloneState(result),
       });
 
       let outputs: OutputValues | undefined = undefined;
