@@ -112,7 +112,7 @@ export class Run extends EventTarget {
     const runner = this.#createBoardRunner(config, abortController);
     this.#runs.set(tabId, runner);
 
-    const { harnessRunner, runObserver } = runner;
+    const { harnessRunner, runObserver, topGraphObserver } = runner;
     harnessRunner.addEventListener("start", (evt: RunLifecycleEvent) => {
       this.dispatchEvent(
         new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
@@ -205,6 +205,7 @@ export class Run extends EventTarget {
 
     if (history) {
       await runObserver.append(history);
+      topGraphObserver.startWith(history);
     }
     harnessRunner.run();
   }

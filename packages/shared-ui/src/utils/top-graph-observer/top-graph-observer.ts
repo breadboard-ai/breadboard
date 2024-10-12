@@ -4,13 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  GraphDescriptor,
-  InspectableRun,
-  InspectableRunEdge,
-  InspectableRunObserver,
-  OutputValues,
-  Schema,
+import {
+  sequenceEntryToHarnessRunResult,
+  type GraphDescriptor,
+  type InspectableRun,
+  type InspectableRunEdge,
+  type InspectableRunObserver,
+  type InspectableRunSequenceEntry,
+  type OutputValues,
+  type Schema,
 } from "@google-labs/breadboard";
 import type {
   HarnessRunner,
@@ -390,6 +392,57 @@ export class TopGraphObserver {
       { type: "error", error: event.data.error, path: this.#errorPath || [] },
     ];
     this.#currentResult = null;
+  }
+
+  startWith(entries: InspectableRunSequenceEntry[]) {
+    for (const entry of entries) {
+      const [type, data] = entry;
+      switch (type) {
+        case "graphstart": {
+          const { path, edges } = data;
+          if (path.length === 0 && edges) {
+            for (const edge of edges as InspectableRunEdge[]) {
+              this.#edgeValues.set(edge.edge, edge.value);
+            }
+          }
+          this.#graphStart(toEvent(entry));
+          break;
+        }
+        case "graphend":
+          this.#graphEnd(toEvent(entry));
+          break;
+        case "nodestart":
+          this.#nodeStart(toEvent(entry));
+          break;
+        case "nodeend":
+          this.#nodeEnd(toEvent(entry));
+          break;
+        case "input":
+          this.#input(toEvent(entry));
+          break;
+        case "output":
+          this.#output(toEvent(entry));
+          break;
+        // case "edge":
+        //   this.#edge(toEvent(result));
+        //   break;
+        case "error":
+          this.#error(toEvent(entry));
+          break;
+      }
+    }
+
+    function toEvent<E extends Event>(entry: InspectableRunSequenceEntry): E {
+      const result = sequenceEntryToHarnessRunResult(entry);
+      if (!result) {
+        throw new Error(
+          `Unable to create harness run result from "${entry[0]}"`
+        );
+      }
+      return {
+        data: result.data,
+      } as unknown as E;
+    }
   }
 }
 
