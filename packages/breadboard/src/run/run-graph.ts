@@ -67,12 +67,58 @@ export async function* runGraph(
           let outputs: OutputValues | undefined = undefined;
 
           const type = result.descriptor.type;
-          if (!(type === "input" || type === "output")) {
+          const descriptor = result.descriptor;
+          const outputHasValues = Object.keys(result.outputs || {}).length > 0;
+          if (type === "input") {
+            if (outputHasValues) {
+              outputs = result.outputs;
+            } else {
+              await next(
+                new InputStageResult(
+                  result,
+                  lifecycle?.state(),
+                  invocationId,
+                  invocationPath
+                )
+              );
+              await bubbleUpInputsIfNeeded(
+                graph,
+                context,
+                descriptor,
+                result,
+                invocationPath,
+                lifecycle?.state()
+              );
+              outputs = result.outputs
+                ? await resolveBoardCapabilities(
+                    result.outputs,
+                    context,
+                    graph.url
+                  )
+                : undefined;
+            }
+          } else if (descriptor.type === "output") {
+            if (outputHasValues) {
+              outputs = result.outputs;
+            } else {
+              if (
+                !(await bubbleUpOutputsIfNeeded(
+                  result.inputs,
+                  descriptor,
+                  context,
+                  invocationPath
+                ))
+              ) {
+                await next(
+                  new OutputStageResult(result, invocationId, invocationPath)
+                );
+              }
+              outputs = result.outputs;
+            }
+          } else {
             outputs = await nodeInvoker.invokeNode(result, invocationPath);
             result.outputs = outputs;
             resumeFrom = result;
-          } else {
-            outputs = result.outputs;
           }
 
           lifecycle?.dispatchNodeEnd(outputs, invocationPath);

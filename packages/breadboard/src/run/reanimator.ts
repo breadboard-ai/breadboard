@@ -43,8 +43,6 @@ export class Reanimator implements ReanimationController {
     this.#inputs = undefined;
     const replayOutputs = entry.outputs ? [entry.outputs] : [];
 
-    console.log("🌻 reanimator enter:", replayOutputs, replayOutputs.length);
-
     // Always return the new instance:
     // wraps the actual ReanimationFrame, if any.
     return new FrameReanimator({

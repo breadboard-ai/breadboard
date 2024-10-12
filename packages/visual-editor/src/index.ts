@@ -2292,8 +2292,6 @@ export class Main extends LitElement {
                   return;
                 }
                 const { config, history } = configResult.result;
-                console.log("🌻 config", config);
-                console.log("🌻 history", history);
 
                 if (!this.tab?.graph?.url) {
                   return;
