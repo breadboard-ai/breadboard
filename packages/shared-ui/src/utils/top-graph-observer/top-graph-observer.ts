@@ -411,9 +411,16 @@ export class TopGraphObserver {
         case "graphend":
           this.#graphEnd(toEvent(entry));
           break;
-        case "nodestart":
+        case "nodestart": {
+          const edges = entry[1].edges;
+          for (const edge of edges) {
+            this.#edge({
+              data: edge,
+            } as unknown as RunEdgeEvent);
+          }
           this.#nodeStart(toEvent(entry));
           break;
+        }
         case "nodeend":
           this.#nodeEnd(toEvent(entry));
           break;
