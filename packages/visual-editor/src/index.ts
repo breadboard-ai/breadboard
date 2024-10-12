@@ -428,6 +428,11 @@ export class Main extends LitElement {
                 break;
               }
 
+              case "skip": {
+                console.log("🌻 skipping", evt.runEvt.data);
+                break;
+              }
+
               case "graphstart": {
                 // Noop.
                 break;
@@ -2271,8 +2276,8 @@ export class Main extends LitElement {
                   );
                   return;
                 }
-                const lastRun = (await runObserver.runs())?.at(-1);
-                if (!lastRun) {
+                const firstRun = (await runObserver.runs())?.at(0);
+                if (!firstRun) {
                   console.warn("TODO: Implement running node with no last run");
                   return;
                 }
@@ -2281,7 +2286,7 @@ export class Main extends LitElement {
                 const configResult = await getRunNodeConfig(
                   evt.id,
                   undefined,
-                  lastRun
+                  firstRun
                 );
                 if (!configResult.success) {
                   return;
