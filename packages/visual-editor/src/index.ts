@@ -2276,6 +2276,7 @@ export class Main extends LitElement {
                   console.warn("TODO: Implement running node with no last run");
                   return;
                 }
+                console.log("🌻💖 RUNNING NODE =====");
                 // TODO: Feed changed `inputs` here.
                 const configResult = await getRunNodeConfig(
                   evt.id,
@@ -2286,7 +2287,8 @@ export class Main extends LitElement {
                   return;
                 }
                 const { config, history } = configResult.result;
-                console.log("config", config);
+                console.log("🌻 config", config);
+                console.log("🌻 history", history);
 
                 if (!this.tab?.graph?.url) {
                   return;

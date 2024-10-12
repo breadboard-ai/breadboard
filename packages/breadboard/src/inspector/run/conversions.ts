@@ -50,6 +50,7 @@ function sequenceEntryToHarnessRunResult(
         node,
         inputs,
         start: timestamp,
+        traversalResult,
       } = data.event as InspectableRunNodeEvent;
       return {
         type,
@@ -59,6 +60,7 @@ function sequenceEntryToHarnessRunResult(
           path: trimPath(path),
           timestamp,
         },
+        result: traversalResult,
         async reply() {},
       };
     }
@@ -180,7 +182,9 @@ async function* eventsAsHarnessRunResults(
           node,
           inputs,
           start: timestamp,
+          traversalResult,
         } = data.event as InspectableRunNodeEvent;
+        console.log("🌻 TRAVERSAL RESULT", traversalResult);
         yield {
           type,
           data: {
@@ -189,6 +193,7 @@ async function* eventsAsHarnessRunResults(
             path: trimPath(path),
             timestamp,
           },
+          result: traversalResult,
           async reply() {},
         };
         break;

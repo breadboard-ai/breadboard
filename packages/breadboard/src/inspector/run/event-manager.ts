@@ -142,6 +142,8 @@ export class EventManager {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
 
+    console.log("🌻 node", node.id, "traversal result", result);
+
     const event = new RunNodeEvent(entry, node.id, timestamp, inputs, result);
     event.hidden = shouldSkipEvent(
       this.#options,
