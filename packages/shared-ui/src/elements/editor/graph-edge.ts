@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  InspectableEdgeType,
-  NodeValue,
-  Schema,
-} from "@google-labs/breadboard";
+import { InspectableEdgeType, Schema } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
 import { GraphNode } from "./graph-node.js";
 import { getGlobalColor } from "./utils.js";
-import { EdgeData, cloneEdgeData } from "../../types/types.js";
+import {
+  EdgeData,
+  TopGraphEdgeInfo,
+  cloneEdgeData,
+} from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
 import { GRAPH_OPERATIONS } from "./types.js";
 
@@ -78,7 +78,7 @@ export class GraphEdge extends PIXI.Container {
   #valueSprite: PIXI.Sprite | null;
   #editSprite: PIXI.Sprite | null;
   #schema: Schema | null = null;
-  #value: NodeValue[] | null = null;
+  #value: TopGraphEdgeInfo[] | null = null;
   #hitAreaSpacing = 6;
 
   #debugHitArea = false;
@@ -177,7 +177,7 @@ export class GraphEdge extends PIXI.Container {
     return this.#value;
   }
 
-  set value(value: NodeValue[] | null) {
+  set value(value: TopGraphEdgeInfo[] | null) {
     this.#value = value;
     this.#isDirty = true;
   }

@@ -5,16 +5,15 @@
  */
 
 import {
-  type NodeValue,
   type Edge,
   type InspectableEdge,
   InspectableEdgeType,
   type InputValues,
 } from "@google-labs/breadboard";
-import type { ComparableEdge } from "../../types/types";
+import type { ComparableEdge, TopGraphEdgeInfo } from "../../types/types";
 import { ComparableEdgeImpl } from "./comparable-edge";
 
-type EdgeValueStoreMap = Map<string, NodeValue[]>;
+type EdgeValueStoreMap = Map<string, TopGraphEdgeInfo[]>;
 export class EdgeValueStore {
   #values: EdgeValueStoreMap;
   #lastEdge: ComparableEdge | null;
@@ -56,6 +55,7 @@ export class EdgeValueStore {
     return this.#key(from, out, to, iN, constant);
   }
 
+  // TODO: Rename to setStored
   setAll(edges: Edge[], inputs?: InputValues): EdgeValueStore {
     if (!inputs) {
       return this;
@@ -65,11 +65,12 @@ export class EdgeValueStore {
       const name = edge.out;
       const value = name === "*" || !name ? inputs : inputs[name];
       const key = this.#keyFromEdge(edge);
+      const info: TopGraphEdgeInfo = { status: "stored", value };
       if (!this.#values.has(key)) {
-        this.#values.set(key, [value]);
+        this.#values.set(key, [info]);
       } else {
         const edgeValues = this.#values.get(key);
-        this.#values.set(key, [...edgeValues!, value]);
+        this.#values.set(key, [...edgeValues!, info]);
       }
       lastEdge = edge;
     });
@@ -81,7 +82,7 @@ export class EdgeValueStore {
     return this.#lastEdge;
   }
 
-  get(edge: InspectableEdge): NodeValue[] {
+  get(edge: InspectableEdge): TopGraphEdgeInfo[] {
     const key = this.#keyFromInspectableEdge(edge);
     return this.#values.get(key) || [];
   }

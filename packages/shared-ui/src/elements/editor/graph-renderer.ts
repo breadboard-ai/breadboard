@@ -49,9 +49,13 @@ import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { computeNextExpansionState, getGlobalColor } from "./utils.js";
-import { GraphMetadata, NodeValue } from "@breadboard-ai/types";
+import { GraphMetadata } from "@breadboard-ai/types";
 import { GraphComment } from "./graph-comment.js";
-import { EdgeData, TopGraphRunResult } from "../../types/types.js";
+import {
+  EdgeData,
+  TopGraphEdgeInfo,
+  TopGraphRunResult,
+} from "../../types/types.js";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
 const backgroundGridColor = getGlobalColor("--bb-ui-100");
@@ -1011,10 +1015,13 @@ export class GraphRenderer extends LitElement {
 
     graph.on(
       GRAPH_OPERATIONS.GRAPH_EDGE_VALUE_SELECTED,
-      (value: NodeValue[], schema: Schema | null, x: number, y: number) => {
-        this.dispatchEvent(
-          new GraphEdgeValueSelectedEvent(value, schema, x, y)
-        );
+      (
+        info: TopGraphEdgeInfo[],
+        schema: Schema | null,
+        x: number,
+        y: number
+      ) => {
+        this.dispatchEvent(new GraphEdgeValueSelectedEvent(info, schema, x, y));
       }
     );
 

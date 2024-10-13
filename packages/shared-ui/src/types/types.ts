@@ -66,7 +66,7 @@ export type UserInputConfiguration = {
   secret: boolean;
   required?: boolean;
   configured?: boolean;
-  value?: NodeValue;
+  value: NodeValue;
   schema?: Schema | null;
   status?: PortStatus;
   type?: Schema["type"];
@@ -281,8 +281,13 @@ export type ComparableEdge = {
   equals(other: InspectableEdge): boolean;
 };
 
+export type TopGraphEdgeInfo = {
+  status: "initial" | "stored" | "consumed";
+  value: NodeValue;
+};
+
 export type TopGraphEdgeValues = {
-  get(edge: InspectableEdge): NodeValue[] | undefined;
+  get(edge: InspectableEdge): TopGraphEdgeInfo[] | undefined;
   current: ComparableEdge | null;
 };
 
@@ -315,7 +320,7 @@ export type NodePortConfiguration = {
 
 export type EdgeValueConfiguration = {
   id: string;
-  value: NodeValue[] | null;
+  info: TopGraphEdgeInfo[] | null;
   schema: Schema | null;
   x: number;
   y: number;
