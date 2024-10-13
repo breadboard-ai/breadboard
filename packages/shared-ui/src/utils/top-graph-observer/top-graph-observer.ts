@@ -401,7 +401,7 @@ export class TopGraphObserver {
         case "graphstart": {
           const { path, edges } = data;
           if (path.length === 0 && edges) {
-            for (const edge of edges as InspectableRunEdge[]) {
+            for (const edge of edges) {
               this.#edgeValues.set(edge.edge, edge.value);
             }
           }
