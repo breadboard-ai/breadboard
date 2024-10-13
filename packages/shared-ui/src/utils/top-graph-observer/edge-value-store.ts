@@ -9,20 +9,25 @@ import {
   type InspectableEdge,
   InspectableEdgeType,
   type InputValues,
+  NodeIdentifier,
 } from "@google-labs/breadboard";
 import type { ComparableEdge, TopGraphEdgeInfo } from "../../types/types";
 import { ComparableEdgeImpl } from "./comparable-edge";
 
 type EdgeValueStoreMap = Map<string, TopGraphEdgeInfo[]>;
+type IncomingEdgeMap = Map<NodeIdentifier, Edge[]>;
 export class EdgeValueStore {
   #values: EdgeValueStoreMap;
   #lastEdge: ComparableEdge | null;
+  #incomingEdges: IncomingEdgeMap;
 
   constructor(
     values: EdgeValueStoreMap = new Map(),
+    incomingEdges: IncomingEdgeMap = new Map(),
     lastEdge: Edge | null = null
   ) {
     this.#values = values;
+    this.#incomingEdges = incomingEdges;
     this.#lastEdge = lastEdge ? new ComparableEdgeImpl(lastEdge) : null;
   }
 
@@ -55,24 +60,40 @@ export class EdgeValueStore {
     return this.#key(from, out, to, iN, constant);
   }
 
-  setConsumed(edge: Edge): EdgeValueStore {
-    const key = this.#keyFromEdge(edge);
-    if (!this.#values.has(key)) {
-      console.warn(
-        "A value that wasn't stored was received. This is likely a bug elsewhere"
-      );
-      return this;
+  #getIncomingEdges(nodeId: NodeIdentifier) {
+    return this.#incomingEdges.get(nodeId) || [];
+  }
+
+  #addIncomingEdge(edge: Edge) {
+    const { to } = edge;
+    if (!this.#incomingEdges.has(to)) {
+      this.#incomingEdges.set(to, [edge]);
+    } else {
+      this.#incomingEdges.get(to)!.push(edge);
     }
-    const edgeValues = this.#values.get(key)!;
-    const lastInfo = edgeValues.at(-1);
-    if (!lastInfo) {
-      console.warn(
-        `Empty values for "${key}" is very unlikely. Probably a bug somwehere`
-      );
-      return this;
+  }
+
+  setConsumed(nodeId: NodeIdentifier): EdgeValueStore {
+    const consumedEdges = this.#getIncomingEdges(nodeId);
+    for (const edge of consumedEdges) {
+      const key = this.#keyFromEdge(edge);
+      if (!this.#values.has(key)) {
+        console.warn(
+          "A value that wasn't stored was received. This is likely a bug elsewhere"
+        );
+        return this;
+      }
+      const edgeValues = this.#values.get(key)!;
+      const lastInfo = edgeValues.at(-1);
+      if (!lastInfo) {
+        console.warn(
+          `Empty values for "${key}" is very unlikely. Probably a bug somwehere`
+        );
+        return this;
+      }
+      lastInfo.status = "consumed";
     }
-    lastInfo.status = "consumed";
-    return new EdgeValueStore(this.#values);
+    return new EdgeValueStore(this.#values, this.#incomingEdges);
   }
 
   setStored(edges: Edge[], inputs?: InputValues): EdgeValueStore {
@@ -81,6 +102,7 @@ export class EdgeValueStore {
     }
     let lastEdge;
     edges.forEach((edge) => {
+      this.#addIncomingEdge(edge);
       const name = edge.out;
       const value = name === "*" || !name ? inputs : inputs[name];
       const key = this.#keyFromEdge(edge);
@@ -94,7 +116,7 @@ export class EdgeValueStore {
       lastEdge = edge;
     });
 
-    return new EdgeValueStore(this.#values, lastEdge);
+    return new EdgeValueStore(this.#values, this.#incomingEdges, lastEdge);
   }
 
   get current(): ComparableEdge | null {
