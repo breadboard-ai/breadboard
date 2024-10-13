@@ -184,7 +184,6 @@ async function* eventsAsHarnessRunResults(
           start: timestamp,
           traversalResult,
         } = data.event as InspectableRunNodeEvent;
-        console.log("🌻 TRAVERSAL RESULT", traversalResult);
         yield {
           type,
           data: {

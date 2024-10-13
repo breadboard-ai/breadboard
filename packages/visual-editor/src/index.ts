@@ -429,7 +429,7 @@ export class Main extends LitElement {
               }
 
               case "skip": {
-                console.log("🌻 skipping", evt.runEvt.data);
+                // Noop.
                 break;
               }
 
@@ -2281,7 +2281,6 @@ export class Main extends LitElement {
                   console.warn("TODO: Implement running node with no last run");
                   return;
                 }
-                console.log("🌻💖 RUNNING NODE =====");
                 // TODO: Feed changed `inputs` here.
                 const configResult = await getRunNodeConfig(
                   evt.id,
