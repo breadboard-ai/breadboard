@@ -56,19 +56,25 @@ export class EdgeValueStore {
     return this.#key(from, out, to, iN, constant);
   }
 
-  set(edge: Edge, inputs: InputValues | undefined): EdgeValueStore {
+  setAll(edges: Edge[], inputs?: InputValues): EdgeValueStore {
     if (!inputs) {
       return this;
     }
-    const value = edge.out === "*" || !edge.in ? inputs : inputs[edge.in];
-    const key = this.#keyFromEdge(edge);
-    if (!this.#values.has(key)) {
-      this.#values.set(key, [value]);
-    } else {
-      const edgeValues = this.#values.get(key);
-      this.#values.set(key, [...edgeValues!, value]);
-    }
-    return new EdgeValueStore(this.#values, edge);
+    let lastEdge;
+    edges.forEach((edge) => {
+      const name = edge.out;
+      const value = name === "*" || !name ? inputs : inputs[name];
+      const key = this.#keyFromEdge(edge);
+      if (!this.#values.has(key)) {
+        this.#values.set(key, [value]);
+      } else {
+        const edgeValues = this.#values.get(key);
+        this.#values.set(key, [...edgeValues!, value]);
+      }
+      lastEdge = edge;
+    });
+
+    return new EdgeValueStore(this.#values, lastEdge);
   }
 
   get current(): ComparableEdge | null {

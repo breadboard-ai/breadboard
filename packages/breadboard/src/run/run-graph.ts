@@ -131,7 +131,7 @@ export async function* runGraph(
               outputs: outputs as OutputValues,
               path: invocationPath,
               timestamp: timestamp(),
-              newOpportunities: result.newOpportunities,
+              newOpportunities: structuredClone(result.newOpportunities),
             },
           });
         }

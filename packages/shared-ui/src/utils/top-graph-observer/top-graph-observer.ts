@@ -8,7 +8,6 @@ import {
   sequenceEntryToHarnessRunResult,
   type GraphDescriptor,
   type InspectableRun,
-  type InspectableRunEdge,
   type InspectableRunObserver,
   type InspectableRunSequenceEntry,
   type OutputValues,
@@ -16,7 +15,6 @@ import {
 } from "@google-labs/breadboard";
 import type {
   HarnessRunner,
-  RunEdgeEvent,
   RunGraphStartEvent,
   RunGraphEndEvent,
   RunNodeStartEvent,
@@ -80,12 +78,6 @@ export class TopGraphObserver {
     for await (const result of run.replay()) {
       switch (result.type) {
         case "graphstart": {
-          const { path, edges } = result.data;
-          if (path.length === 0 && edges) {
-            for (const edge of edges as InspectableRunEdge[]) {
-              observer.#edgeValues.set(edge.edge, edge.value);
-            }
-          }
           observer.#graphStart(toEvent(result));
           break;
         }
@@ -103,9 +95,6 @@ export class TopGraphObserver {
           break;
         case "output":
           observer.#output(toEvent(result));
-          break;
-        case "edge":
-          observer.#edge(toEvent(result));
           break;
         case "error":
           observer.#error(toEvent(result));
@@ -142,7 +131,6 @@ export class TopGraphObserver {
       this.#status = "stopped";
       this.#currentResult = null;
     });
-    runner.addEventListener("edge", this.#edge.bind(this));
     runner.addEventListener("nodestart", this.#nodeStart.bind(this));
     runner.addEventListener("nodeend", this.#nodeEnd.bind(this));
     runner.addEventListener("graphstart", this.#graphStart.bind(this));
@@ -185,14 +173,6 @@ export class TopGraphObserver {
       };
     }
     return this.#currentResult;
-  }
-
-  #edge(event: RunEdgeEvent) {
-    if (event.data.to.length > 1) {
-      return;
-    }
-    this.#edgeValues = this.#edgeValues.set(event.data.edge, event.data.value);
-    this.#currentResult = null;
   }
 
   #abort() {
@@ -325,6 +305,8 @@ export class TopGraphObserver {
     this.#currentNode = null;
 
     this.#log = [...this.#log];
+
+    this.#edgeValues.setAll(event.data.newOpportunities, event.data.outputs);
     this.#currentResult = null;
   }
 
@@ -404,15 +386,9 @@ export class TopGraphObserver {
     // This code is roughly equivalent to `fromRun`.
     // TODO: Reconcile and unify.
     for (const entry of entries) {
-      const [type, data] = entry;
+      const [type] = entry;
       switch (type) {
         case "graphstart": {
-          const { path, edges } = data;
-          if (path.length === 0 && edges) {
-            for (const edge of edges) {
-              this.#edgeValues.set(edge.edge, edge.value);
-            }
-          }
           this.#graphStart(toEvent(entry));
           break;
         }
@@ -420,12 +396,6 @@ export class TopGraphObserver {
           this.#graphEnd(toEvent(entry));
           break;
         case "nodestart": {
-          const edges = entry[1].edges;
-          for (const edge of edges) {
-            this.#edge({
-              data: edge,
-            } as unknown as RunEdgeEvent);
-          }
           this.#nodeStart(toEvent(entry));
           break;
         }
