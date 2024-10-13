@@ -26,7 +26,6 @@ import {
   PauseEvent,
   ResumeEvent,
   StartEvent,
-  EdgeEvent,
   NextEvent,
 } from "./events.js";
 import { InspectableRunObserver } from "../inspector/types.js";
@@ -162,10 +161,6 @@ export class LocalRunner
           }
           case "skip": {
             this.dispatchEvent(new SkipEvent(data));
-            break;
-          }
-          case "edge": {
-            this.dispatchEvent(new EdgeEvent(data));
             break;
           }
           case "graphstart": {

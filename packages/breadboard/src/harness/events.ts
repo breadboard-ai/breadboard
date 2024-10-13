@@ -5,7 +5,6 @@
  */
 
 import {
-  EdgeResponse,
   ErrorResponse,
   GraphEndProbeData,
   GraphStartProbeData,
@@ -18,7 +17,6 @@ import {
 } from "../types.js";
 import {
   HarnessRunResult,
-  RunEdgeEvent,
   RunEndEvent,
   RunErrorEvent,
   RunGraphEndEvent,
@@ -104,15 +102,6 @@ export class SkipEvent extends Event implements RunSkipEvent {
 
   constructor(public data: SkipProbeMessage["data"]) {
     super(SkipEvent.eventName, { ...opts });
-  }
-}
-
-export class EdgeEvent extends Event implements RunEdgeEvent {
-  static readonly eventName = "edge";
-  readonly running = true;
-
-  constructor(public data: EdgeResponse) {
-    super(EdgeEvent.eventName, { ...opts });
   }
 }
 

@@ -18,7 +18,6 @@ import {
   createRunner,
   HarnessRunner,
   RunConfig,
-  RunEdgeEvent,
   RunEndEvent,
   RunErrorEvent,
   RunGraphEndEvent,
@@ -162,12 +161,6 @@ export class Run extends EventTarget {
     });
 
     harnessRunner.addEventListener("skip", (evt: RunSkipEvent) => {
-      this.dispatchEvent(
-        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
-      );
-    });
-
-    harnessRunner.addEventListener("edge", (evt: RunEdgeEvent) => {
       this.dispatchEvent(
         new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
