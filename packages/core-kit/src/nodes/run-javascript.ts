@@ -134,7 +134,9 @@ const runInBrowser = async ({
       }
     };
     worker.onerror = (e) => {
-      reject(new Error(e.message));
+      const error =
+        e.message ?? "Unknown script error (check syntax or grammar)";
+      reject(new Error(error));
     };
   });
   worker.postMessage("please");
