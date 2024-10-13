@@ -568,6 +568,7 @@ export type NodeEndResponse = {
   validatorMetadata?: BreadboardValidatorMetadata[];
   path: number[];
   timestamp: number;
+  newOpportunities: Edge[];
 };
 
 export type EdgeResponse = {
