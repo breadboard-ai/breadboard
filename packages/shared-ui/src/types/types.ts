@@ -281,8 +281,19 @@ export type ComparableEdge = {
   equals(other: InspectableEdge): boolean;
 };
 
+/**
+ * Reflects the current status of the edge:
+ * - "initilal" -- the edge is in its initial state: no
+ *   values have been stored on or consumed from this edge.
+ * - "stored" -- a value was stored on the edge, but not yet consumed by the
+ *   receiving node.
+ * - "consumed" -- the value that was stored on the edge was consumed by the
+ *   receiving edge. Constant wires never reach this state.
+ */
+export type TopGraphEdgeInfoStatus = "initial" | "stored" | "consumed";
+
 export type TopGraphEdgeInfo = {
-  status: "initial" | "stored" | "consumed";
+  status: TopGraphEdgeInfoStatus;
   value: NodeValue;
 };
 
