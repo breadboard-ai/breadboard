@@ -113,6 +113,12 @@ export class TopGraphObserver {
       }
     }
     return observer;
+
+    function toEvent<E extends Event>(result: HarnessRunResult): E {
+      return {
+        data: result.data,
+      } as unknown as E;
+    }
   }
 
   constructor(
@@ -395,6 +401,8 @@ export class TopGraphObserver {
   }
 
   startWith(entries: InspectableRunSequenceEntry[]) {
+    // This code is roughly equivalent to `fromRun`.
+    // TODO: Reconcile and unify.
     for (const entry of entries) {
       const [type, data] = entry;
       switch (type) {
@@ -430,9 +438,6 @@ export class TopGraphObserver {
         case "output":
           this.#output(toEvent(entry));
           break;
-        // case "edge":
-        //   this.#edge(toEvent(result));
-        //   break;
         case "error":
           this.#error(toEvent(entry));
           break;
@@ -513,10 +518,4 @@ function getActivityType(type: string): ComponentActivityItem["type"] {
     default:
       return "node";
   }
-}
-
-function toEvent<E extends Event>(result: HarnessRunResult): E {
-  return {
-    data: result.data,
-  } as unknown as E;
 }
