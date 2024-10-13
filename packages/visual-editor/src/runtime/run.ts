@@ -204,6 +204,7 @@ export class Run extends EventTarget {
     });
 
     if (history) {
+      console.log("🌻 history", history);
       await runObserver.append(history);
       topGraphObserver.startWith(history);
     }
