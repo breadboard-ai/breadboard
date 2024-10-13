@@ -5,7 +5,12 @@
  */
 
 import type { HarnessRunResult } from "../../harness/types.js";
-import type { InputValues, NodeIdentifier, OutputValues } from "../../types.js";
+import type {
+  InputValues,
+  NodeIdentifier,
+  OutputValues,
+  TraversalResult,
+} from "../../types.js";
 import type {
   EventIdentifier,
   InspectableGraph,
@@ -42,11 +47,17 @@ export class RunNodeEvent implements InspectableRunNodeEvent {
    */
   #node: InspectableNode | null = null;
 
+  /**
+   * The TraversalResult associated with with this event
+   */
+  traversalResult?: TraversalResult;
+
   constructor(
     entry: PathRegistryEntry,
     id: NodeIdentifier,
     start: number,
-    inputs: InputValues
+    inputs: InputValues,
+    traversalResult?: TraversalResult
   ) {
     if (!entry.parent) {
       throw new Error(
@@ -69,6 +80,7 @@ export class RunNodeEvent implements InspectableRunNodeEvent {
     this.result = null;
     this.bubbled = false;
     this.hidden = false;
+    this.traversalResult = traversalResult;
   }
 
   get id(): EventIdentifier {

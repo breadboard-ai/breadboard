@@ -24,6 +24,7 @@ import {
   GraphProvider,
   InputValues,
   InspectableRun,
+  InspectableRunSequenceEntry,
   SerializedRun,
 } from "@google-labs/breadboard";
 import { getDataStore, getRunStore } from "@breadboard-ai/data-store";
@@ -39,6 +40,7 @@ import * as Runtime from "./runtime/runtime.js";
 import { TabId } from "./runtime/types";
 import { createPastRunObserver } from "./utils/past-run-observer";
 import { FileSystemGraphProvider } from "./providers/file-system";
+import { getRunNodeConfig } from "./utils/run-node";
 
 const STORAGE_PREFIX = "bb-main";
 
@@ -422,6 +424,11 @@ export class Main extends LitElement {
 
             switch (evt.runEvt.type) {
               case "next": {
+                // Noop.
+                break;
+              }
+
+              case "skip": {
                 // Noop.
                 break;
               }
@@ -1049,13 +1056,13 @@ export class Main extends LitElement {
     await this.#recentBoardStore.store(this.#recentBoards);
   }
 
-  async #runBoard(config: RunConfig) {
+  async #runBoard(config: RunConfig, history?: InspectableRunSequenceEntry[]) {
     if (!this.tab) {
       console.error("Unable to run board, no active tab");
       return;
     }
 
-    this.#runtime.run.runBoard(this.tab.id, config);
+    this.#runtime.run.runBoard(this.tab.id, config, history);
   }
 
   #clearTabParams() {
@@ -2254,36 +2261,49 @@ export class Main extends LitElement {
               @bbnoderunrequest=${async (
                 evt: BreadboardUI.Events.NodeRunRequestEvent
               ) => {
-                // TODO: Replace this with an EditableRun.
-                const graph = this.tab?.graph;
-                if (!graph?.url) {
-                  return;
-                }
-
-                const kits = this.tab?.kits ?? [];
-                const url = this.graph?.url ?? globalThis.location.href;
-                const runner =
-                  await BreadboardUI.Utils.getIsolatedNodeGraphDescriptor(
-                    graph,
-                    kits,
-                    this.#runtime.board.getLoader(),
-                    evt.id
+                if (!this.tab) {
+                  console.warn(
+                    "NodeRunRequestEvent dispatched, but no current tab is present. Likely a bug somewhere."
                   );
+                  return;
+                }
+                const runObserver = this.#runtime.run.getObservers(
+                  this.tab.id
+                )?.runObserver;
+                if (!runObserver) {
+                  console.warn(
+                    "TODO: Implement running node with no previous runs"
+                  );
+                  return;
+                }
+                const firstRun = (await runObserver.runs())?.at(0);
+                if (!firstRun) {
+                  console.warn("TODO: Implement running node with no last run");
+                  return;
+                }
+                // TODO: Feed changed `inputs` here.
+                const configResult = await getRunNodeConfig(
+                  evt.id,
+                  undefined,
+                  firstRun
+                );
+                if (!configResult.success) {
+                  return;
+                }
+                const { config, history } = configResult.result;
 
-                if (!runner) {
+                if (!this.tab?.graph?.url) {
                   return;
                 }
 
-                // If there's something running, stop it.
-                this.#attemptBoardStop();
+                const graph = this.tab?.graph;
 
-                this.showBoardActivityOverlay = true;
                 this.#runBoard(
                   addNodeProxyServerConfig(
                     this.#proxy,
                     {
-                      url,
-                      runner,
+                      url: this.tab.graph.url!,
+                      runner: graph,
                       diagnostics: true,
                       kits: [], // The kits are added by the runtime.
                       loader: this.#runtime.board.getLoader(),
@@ -2292,12 +2312,60 @@ export class Main extends LitElement {
                         this.#settings
                       ),
                       interactiveSecrets: true,
+                      ...config,
                     },
                     this.#settings,
                     this.proxyFromUrl,
-                    await this.#getProxyURL(url)
-                  )
+                    await this.#getProxyURL(this.tab?.graph.url)
+                  ),
+                  history
                 );
+
+                // -------
+                // // TODO: Replace this with an EditableRun.
+                // const graph = this.tab?.graph;
+                // if (!graph?.url) {
+                //   return;
+                // }
+
+                // const kits = this.tab?.kits ?? [];
+                // const url = this.graph?.url ?? globalThis.location.href;
+                // const runner =
+                //   await BreadboardUI.Utils.getIsolatedNodeGraphDescriptor(
+                //     graph,
+                //     kits,
+                //     this.#runtime.board.getLoader(),
+                //     evt.id
+                //   );
+
+                // if (!runner) {
+                //   return;
+                // }
+
+                // // If there's something running, stop it.
+                // this.#attemptBoardStop();
+
+                // this.showBoardActivityOverlay = true;
+                // this.#runBoard(
+                //   addNodeProxyServerConfig(
+                //     this.#proxy,
+                //     {
+                //       url,
+                //       runner,
+                //       diagnostics: true,
+                //       kits: [], // The kits are added by the runtime.
+                //       loader: this.#runtime.board.getLoader(),
+                //       store: this.#dataStore,
+                //       inputs: BreadboardUI.Data.inputsFromSettings(
+                //         this.#settings
+                //       ),
+                //       interactiveSecrets: true,
+                //     },
+                //     this.#settings,
+                //     this.proxyFromUrl,
+                //     await this.#getProxyURL(url)
+                //   )
+                // );
               }}
 
               @bbrunboard=${async () => {

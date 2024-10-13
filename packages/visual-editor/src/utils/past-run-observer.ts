@@ -27,5 +27,8 @@ function createPastRunObserver(run: InspectableRun): InspectableRunObserver {
     load: async () => {
       throw new Error("Attempting to load in read-only tab.");
     },
+    append: async () => {
+      throw new Error("Do not append to a past run observer.");
+    },
   };
 }

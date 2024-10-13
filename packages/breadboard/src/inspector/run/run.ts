@@ -23,8 +23,10 @@ import {
   InspectableRunNodeEvent,
   InspectableRunInputs,
   InspectableRunEdge,
+  InspectableRunSequenceEntry,
 } from "../types.js";
 import { DataStore, RunTimestamp, RunURL } from "../../data/types.js";
+import { eventsAsHarnessRunResults } from "./conversions.js";
 
 const isInput = (
   event: InspectableRunEvent
@@ -221,6 +223,12 @@ export class RunObserver implements InspectableRunObserver {
     }
     return result;
   }
+
+  async append(history: InspectableRunSequenceEntry[]): Promise<void> {
+    for await (const result of eventsAsHarnessRunResults(history)) {
+      await this.observe(result);
+    }
+  }
 }
 
 export class Run implements InspectableRun {
@@ -310,5 +318,9 @@ export class Run implements InspectableRun {
 
   replay(): AsyncGenerator<HarnessRunResult> {
     throw new Error("Runs can't yet be replayed.");
+  }
+
+  async reanimationStateAt(id: EventIdentifier) {
+    return this.#events.reanimationStateAt(id);
   }
 }

@@ -15,6 +15,7 @@ import {
   NodeEndResponse,
   NodeStartResponse,
   OutputResponse,
+  TraversalResult,
 } from "../../types.js";
 import { inspectableGraph } from "../graph.js";
 import {
@@ -46,6 +47,8 @@ import {
   idFromPath,
   pathFromId,
 } from "./conversions.js";
+import { ReanimationState } from "../../run/types.js";
+import { LifecycleManager } from "../../run/lifecycle.js";
 
 const shouldSkipEvent = (
   options: RunObserverOptions,
@@ -131,7 +134,7 @@ export class EventManager {
     entry.edges.push({ ...data, value });
   }
 
-  #addNodestart(data: NodeStartResponse) {
+  #addNodestart(data: NodeStartResponse, result?: TraversalResult) {
     const { node, timestamp, inputs, path } = data;
     const entry = this.#pathRegistry.create(path);
 
@@ -139,7 +142,7 @@ export class EventManager {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
 
-    const event = new RunNodeEvent(entry, node.id, timestamp, inputs);
+    const event = new RunNodeEvent(entry, node.id, timestamp, inputs, result);
     event.hidden = shouldSkipEvent(
       this.#options,
       node,
@@ -261,7 +264,7 @@ export class EventManager {
       case "graphend":
         return this.#addGraphend(result.data);
       case "nodestart":
-        return this.#addNodestart(result.data);
+        return this.#addNodestart(result.data, result.result);
       case "input":
         return this.#addInput(result.data);
       case "output":
@@ -304,5 +307,42 @@ export class EventManager {
     const path = pathFromId(entryId);
     const entry = this.#pathRegistry.find(path);
     return entry?.event || null;
+  }
+
+  async reanimationStateAt(id: EventIdentifier): Promise<ReanimationState> {
+    const manager = new LifecycleManager();
+    for (const [index, entry] of this.#sequence.entries()) {
+      const [type, data] = entry;
+      switch (type) {
+        case "graphstart": {
+          // TODO: Figure out if I need to do anything about the URL here.
+          manager.dispatchGraphStart("", data.path);
+          break;
+        }
+        case "nodestart": {
+          const event = data.event as RunNodeEvent;
+          const traversalResult = event.traversalResult;
+          if (!traversalResult) {
+            console.warn(`No traversal result for ${data.event?.id}`);
+          } else {
+            manager.dispatchNodeStart(traversalResult, data.path);
+          }
+          if (event.id === id) {
+            const reanimationState = manager.reanimationState();
+            reanimationState.history = this.#sequence.slice(0, index + 1);
+            return reanimationState;
+          }
+          break;
+        }
+        case "nodeend": {
+          // const event = data.event as RunNodeEvent;
+          // manager.dispatchNodeEnd(event.outputs!, data.path);
+          break;
+        }
+      }
+    }
+    throw new Error(
+      `The event identifier "${id}" was not found in event sequence`
+    );
   }
 }

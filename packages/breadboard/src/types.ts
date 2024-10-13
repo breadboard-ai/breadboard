@@ -504,7 +504,7 @@ export type SkipProbeMessage = {
 export type NodeStartProbeMessage = {
   type: "nodestart";
   data: NodeStartResponse;
-  state?: RunState;
+  result?: TraversalResult;
 };
 
 export type NodeEndProbeMessage = {

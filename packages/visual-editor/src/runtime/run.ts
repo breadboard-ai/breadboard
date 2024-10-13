@@ -8,6 +8,7 @@ import {
   createRunObserver,
   DataStore,
   InspectableRunObserver,
+  InspectableRunSequenceEntry,
   Kit,
   RunStore,
 } from "@google-labs/breadboard";
@@ -100,14 +101,18 @@ export class Run extends EventTarget {
     return { topGraphObserver, runObserver };
   }
 
-  runBoard(tabId: TabId, config: RunConfig) {
+  async runBoard(
+    tabId: TabId,
+    config: RunConfig,
+    history?: InspectableRunSequenceEntry[]
+  ) {
     const abortController = new AbortController();
     config = { ...config, kits: this.kits, signal: abortController.signal };
 
     const runner = this.#createBoardRunner(config, abortController);
     this.#runs.set(tabId, runner);
 
-    const { harnessRunner } = runner;
+    const { harnessRunner, runObserver, topGraphObserver } = runner;
     harnessRunner.addEventListener("start", (evt: RunLifecycleEvent) => {
       this.dispatchEvent(
         new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
@@ -198,6 +203,10 @@ export class Run extends EventTarget {
       );
     });
 
+    if (history) {
+      await runObserver.append(history);
+      topGraphObserver.startWith(history);
+    }
     harnessRunner.run();
   }
 

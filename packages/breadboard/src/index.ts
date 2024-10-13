@@ -119,3 +119,8 @@ export type * from "./run/types.js";
 export { createRunStateManager } from "./run/index.js";
 export { invokeGraph } from "./run/invoke-graph.js";
 export { runGraph } from "./run/run-graph.js";
+
+/**
+ * Conversion helpers
+ */
+export { sequenceEntryToHarnessRunResult } from "./inspector/run/conversions.js";

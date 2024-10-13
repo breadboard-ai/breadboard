@@ -30,6 +30,7 @@ import {
   NodeValue,
   OutputValues,
   Schema,
+  TraversalResult,
 } from "../types.js";
 import {
   DataStore,
@@ -37,6 +38,7 @@ import {
   SerializedDataStoreGroup,
 } from "../data/types.js";
 import { SequenceEntry } from "./run/serializer.js";
+import { ReanimationState } from "../run/types.js";
 
 export type GraphVersion = number;
 
@@ -660,6 +662,13 @@ export type InspectableRunObserver = {
     o: unknown,
     options?: SerializedRunLoadingOptions
   ): Promise<InspectableRunLoadResult>;
+
+  /**
+   * Appends previously observed events to runs and creates
+   * new runs if needed.
+   * @param history -- inspectable run events to append
+   */
+  append(history: InspectableRunSequenceEntry[]): Promise<void>;
 };
 
 /**
@@ -771,6 +780,11 @@ export type InspectableRunNodeEvent = {
    * this node was (is being) invoked.
    */
   runs: InspectableRun[];
+
+  /**
+   * The TraversalResult associated with with this event
+   */
+  traversalResult?: TraversalResult;
 };
 
 /**
@@ -916,6 +930,13 @@ export type InspectableRun = {
    * the run.
    */
   replay(): AsyncGenerator<HarnessRunResult>;
+  /**
+   * Return the ReanimationState at a given event Id. Useful for starting
+   * a run from a given point in the run.
+   * Optional, since not all InspectableRun implemenations can offer this
+   * capability.
+   */
+  reanimationStateAt?(id: EventIdentifier): Promise<ReanimationState>;
 };
 
 /**
@@ -931,9 +952,11 @@ export type RunSerializationOptions = {
 };
 
 export type SequenceView = {
-  sequence: SequenceEntry[];
+  sequence: InspectableRunSequenceEntry[];
   start: number;
 };
+
+export type InspectableRunSequenceEntry = SequenceEntry;
 
 export type PathRegistryEntry = {
   path: number[];
