@@ -339,6 +339,8 @@ export class EdgeValueOverlay extends LitElement {
       },
     ];
 
+    const status = info?.status ?? "initial";
+
     const input = html`<bb-user-input
       ${ref(this.#userInputRef)}
       @input=${() => {
@@ -428,6 +430,7 @@ export class EdgeValueOverlay extends LitElement {
         </h1>
         <div id="content">
           <div id="container">
+            <div>🍪 STATUS: ${status}</div>
             <form
               ${ref(this.#formRef)}
               @submit=${(evt: Event) => {

@@ -55,8 +55,27 @@ export class EdgeValueStore {
     return this.#key(from, out, to, iN, constant);
   }
 
-  // TODO: Rename to setStored
-  setAll(edges: Edge[], inputs?: InputValues): EdgeValueStore {
+  setConsumed(edge: Edge): EdgeValueStore {
+    const key = this.#keyFromEdge(edge);
+    if (!this.#values.has(key)) {
+      console.warn(
+        "A value that wasn't stored was received. This is likely a bug elsewhere"
+      );
+      return this;
+    }
+    const edgeValues = this.#values.get(key)!;
+    const lastInfo = edgeValues.at(-1);
+    if (!lastInfo) {
+      console.warn(
+        `Empty values for "${key}" is very unlikely. Probably a bug somwehere`
+      );
+      return this;
+    }
+    lastInfo.status = "consumed";
+    return new EdgeValueStore(this.#values);
+  }
+
+  setStored(edges: Edge[], inputs?: InputValues): EdgeValueStore {
     if (!inputs) {
       return this;
     }

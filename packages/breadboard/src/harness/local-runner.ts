@@ -172,7 +172,7 @@ export class LocalRunner
             break;
           }
           case "nodestart": {
-            this.dispatchEvent(new NodeStartEvent(data));
+            this.dispatchEvent(new NodeStartEvent(data, result.value.result));
             break;
           }
           case "nodeend": {

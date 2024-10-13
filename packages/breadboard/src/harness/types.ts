@@ -34,6 +34,7 @@ import type {
   NodeStartResponse,
   Schema,
   NodeIdentifier,
+  TraversalResult,
 } from "../types.js";
 import {
   TypedEventTargetType,
@@ -301,6 +302,7 @@ export type RunGraphEndEvent = Event & {
 
 export type RunNodeStartEvent = Event & {
   data: NodeStartResponse;
+  result?: TraversalResult;
   running: true;
 };
 

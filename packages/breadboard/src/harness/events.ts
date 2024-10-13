@@ -14,6 +14,7 @@ import {
   NodeStartResponse,
   OutputResponse,
   SkipProbeMessage,
+  TraversalResult,
 } from "../types.js";
 import {
   HarnessRunResult,
@@ -127,7 +128,10 @@ export class NodeStartEvent extends Event implements RunNodeStartEvent {
   static readonly eventName = "nodestart";
   readonly running = true;
 
-  constructor(public data: NodeStartResponse) {
+  constructor(
+    public data: NodeStartResponse,
+    public result?: TraversalResult
+  ) {
     super(NodeStartEvent.eventName, { ...opts });
   }
 }
