@@ -41,6 +41,7 @@ import { TabId } from "./runtime/types";
 import { createPastRunObserver } from "./utils/past-run-observer";
 import { FileSystemGraphProvider } from "./providers/file-system";
 import { getRunNodeConfig } from "./utils/run-node";
+import { TopGraphObserver } from "../../shared-ui/dist/utils/top-graph-observer";
 
 const STORAGE_PREFIX = "bb-main";
 
@@ -1434,7 +1435,9 @@ export class Main extends LitElement {
       })
       .then((runs: InspectableRun[]) => {
         const observers = this.#runtime?.run.getObservers(this.tab?.id ?? null);
-        const topGraphResult = observers?.topGraphObserver?.current() ?? null;
+        const topGraphResult =
+          observers?.topGraphObserver?.current() ??
+          TopGraphObserver.entryResult(this.tab?.graph);
         const inputsFromLastRun = runs[1]?.inputs() ?? null;
         const tabURLs = this.#runtime.board.getTabURLs();
         const showNodeTypeDescriptions =
@@ -2300,20 +2303,11 @@ export class Main extends LitElement {
                   );
                   return;
                 }
-                const runObserver = this.#runtime.run.getObservers(
-                  this.tab.id
-                )?.runObserver;
-                if (!runObserver) {
-                  console.warn(
-                    "TODO: Implement running node with no previous runs"
-                  );
-                  return;
-                }
-                const firstRun = (await runObserver.runs())?.at(0);
-                if (!firstRun) {
-                  console.warn("TODO: Implement running node with no last run");
-                  return;
-                }
+                const firstRun = (
+                  await this.#runtime.run
+                    .getObservers(this.tab.id)
+                    ?.runObserver?.runs()
+                )?.at(0);
                 // TODO: Feed changed `inputs` here.
                 const configResult = await getRunNodeConfig(
                   evt.id,

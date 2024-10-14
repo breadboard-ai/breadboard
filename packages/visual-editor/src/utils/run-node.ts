@@ -23,11 +23,14 @@ function error<T>(message: string): Result<T> {
   };
 }
 
-async function getRunNodeConfig(
+function success<T>(result: T): Result<T> {
+  return { success: true, result };
+}
+
+async function reanimationStateFromRun(
   nodeId: NodeIdentifier,
-  inputs: InputValues | undefined,
   run: InspectableRun
-): Promise<Result<Partial<RunNodeConfig>>> {
+): Promise<Result<ReanimationState>> {
   // Might have multiple of those.
   const targets = run.events.filter(
     (event) => event.type === "node" && event.node.descriptor.id === nodeId
@@ -42,6 +45,22 @@ async function getRunNodeConfig(
   if (!reanimationState) {
     return error(`Unable to create resume point for target "${target.id}"`);
   }
+  return success(reanimationState);
+}
+
+async function getRunNodeConfig(
+  nodeId: NodeIdentifier,
+  inputs: InputValues | undefined,
+  run: InspectableRun | undefined
+): Promise<Result<Partial<RunNodeConfig>>> {
+  if (!run) {
+    return success<Partial<RunNodeConfig>>({ config: { stopAfter: nodeId } });
+  }
+  const reanimationStateResult = await reanimationStateFromRun(nodeId, run);
+  if (!reanimationStateResult.success) {
+    return error(reanimationStateResult.error);
+  }
+  const reanimationState = reanimationStateResult.result;
   const history = reanimationState.history;
   const config: Partial<RunConfig> = {
     state: createRunStateManager(reanimationState, inputs),

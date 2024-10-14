@@ -5,6 +5,7 @@
  */
 
 import {
+  inspect,
   NodeIdentifier,
   sequenceEntryToHarnessRunResult,
   type GraphDescriptor,
@@ -111,6 +112,33 @@ export class TopGraphObserver {
         data: result.data,
       } as unknown as E;
     }
+  }
+
+  static entryResult(graph: GraphDescriptor | undefined): TopGraphRunResult {
+    const entryId = graph && inspect(graph).entries().at(0)?.descriptor.id;
+    if (!entryId) {
+      console.warn("No entry nodes detected");
+    }
+    return {
+      log: [],
+      currentNode: null,
+      edgeValues: {
+        get() {
+          return undefined;
+        },
+        current: null,
+      },
+      nodeInformation: {
+        getActivity() {
+          return undefined;
+        },
+        canRunNode(id: NodeIdentifier) {
+          return id === entryId;
+        },
+      },
+      graph: graph || null,
+      status: "stopped",
+    };
   }
 
   constructor(
