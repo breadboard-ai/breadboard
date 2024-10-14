@@ -18,7 +18,7 @@ type EdgeValueStoreMap = Map<string, TopGraphEdgeInfo[]>;
 type IncomingEdgeMap = Map<NodeIdentifier, Edge[]>;
 export class EdgeValueStore {
   #values: EdgeValueStoreMap;
-  #lastEdge: ComparableEdge | null;
+  #lastEdge: ComparableEdgeImpl | null;
   #incomingEdges: IncomingEdgeMap;
 
   constructor(
@@ -93,7 +93,11 @@ export class EdgeValueStore {
       }
       lastInfo.status = "consumed";
     }
-    return new EdgeValueStore(this.#values, this.#incomingEdges);
+    return new EdgeValueStore(
+      this.#values,
+      this.#incomingEdges,
+      this.#lastEdge?.edge()
+    );
   }
 
   setStored(edges: Edge[], inputs?: InputValues): EdgeValueStore {

@@ -21,6 +21,10 @@ export class ComparableEdgeImpl implements ComparableEdge {
     this.#edge = this.#fixUpStarEdge(edge);
   }
 
+  edge() {
+    return this.#edge;
+  }
+
   equals(other: InspectableEdge): boolean {
     return (
       this.#edge.from === other.from.descriptor.id &&
