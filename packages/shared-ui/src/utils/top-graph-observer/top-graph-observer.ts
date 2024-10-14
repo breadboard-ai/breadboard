@@ -5,6 +5,7 @@
  */
 
 import {
+  inspect,
   NodeIdentifier,
   sequenceEntryToHarnessRunResult,
   type GraphDescriptor,
@@ -43,6 +44,7 @@ import {
 import { EdgeValueStore } from "./edge-value-store";
 import { EndNodeEntry, NodeEntry, UserNodeEntry } from "./node-entry";
 import { RunDetails } from "./run-details";
+import { NodeInformation } from "./node-information";
 
 /**
  * A lightweight rewrite of the `InspectableRunObserver` that
@@ -112,6 +114,33 @@ export class TopGraphObserver {
     }
   }
 
+  static entryResult(graph: GraphDescriptor | undefined): TopGraphRunResult {
+    const entryId = graph && inspect(graph).entries().at(0)?.descriptor.id;
+    if (!entryId) {
+      console.warn("No entry nodes detected");
+    }
+    return {
+      log: [],
+      currentNode: null,
+      edgeValues: {
+        get() {
+          return undefined;
+        },
+        current: null,
+      },
+      nodeInformation: {
+        getActivity() {
+          return undefined;
+        },
+        canRunNode(id: NodeIdentifier) {
+          return id === entryId;
+        },
+      },
+      graph: graph || null,
+      status: "stopped",
+    };
+  }
+
   constructor(
     runner: HarnessRunner,
     signal?: AbortSignal,
@@ -169,14 +198,10 @@ export class TopGraphObserver {
         log: this.#log,
         currentNode: this.#currentNode,
         edgeValues: this.#edgeValues,
-        nodeInformation: {
-          getActivity: (node) => {
-            return this.#nodeActivity.get(node);
-          },
-          canRunNode: (node) => {
-            return !!this.#canRunState.get(node);
-          },
-        },
+        nodeInformation: new NodeInformation(
+          this.#nodeActivity,
+          this.#canRunState
+        ),
         graph: this.#graph,
         status: this.#status,
       };
@@ -272,10 +297,14 @@ export class TopGraphObserver {
     const type = event.data.node.type;
     switch (type) {
       case "input": {
+        this.#currentNode = new NodeEntry(event);
+        this.#currentResult = null;
         return;
       }
       case "output": {
+        this.#currentNode = new NodeEntry(event);
         this.#log = placeOutputInLog(this.#log, new EdgeEntry());
+        this.#currentResult = null;
         return;
       }
       default: {

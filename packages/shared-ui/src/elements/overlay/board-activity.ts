@@ -26,6 +26,9 @@ export class BoardActivityOverlay extends LitElement {
   run: InspectableRun | null = null;
 
   @property()
+  hideLast = false;
+
+  @property()
   location = { x: 10, y: 10 };
 
   @property()
@@ -139,7 +142,7 @@ export class BoardActivityOverlay extends LitElement {
   }
 
   render() {
-    const events = this.run?.events ?? [];
+    const events = maybeTrimNodestart(this.run?.events ?? [], this.hideLast);
     const eventPosition = events.length - 1;
 
     return html`<bb-drag-dock-overlay
@@ -219,4 +222,19 @@ export class BoardActivityOverlay extends LitElement {
       </div>
     </bb-drag-dock-overlay>`;
   }
+}
+
+/**
+ * A helper that trims the last incomplete event (the event that does not have
+ * a closing `nodeend`) when asked.
+ *
+ * This is used to remove the "next up" item in the activity log when we are
+ * stepping through the nodes step by step.
+ */
+function maybeTrimNodestart(events: InspectableRunEvent[], hideLast: boolean) {
+  const last = events.at(-1);
+  if (last?.type === "node" && !last.end && hideLast) {
+    return events.slice(0, -1);
+  }
+  return events;
 }

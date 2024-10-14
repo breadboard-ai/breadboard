@@ -41,6 +41,8 @@ export async function* runGraph(
 
     let invocationId = 0;
 
+    let prepareToStopAtStartNode = false;
+
     const reanimation = state?.reanimation();
     if (reanimation) {
       const frame = reanimation.enter(invocationPath);
@@ -136,7 +138,7 @@ export async function* runGraph(
           });
 
           if (stopAfter === result.descriptor.id) {
-            return;
+            prepareToStopAtStartNode = true;
           }
         }
       }
@@ -198,6 +200,10 @@ export async function* runGraph(
         result: cloneState(result),
       });
 
+      if (prepareToStopAtStartNode) {
+        return;
+      }
+
       let outputs: OutputValues | undefined = undefined;
 
       if (descriptor.type === "input") {
@@ -243,7 +249,7 @@ export async function* runGraph(
       result.outputs = outputs;
 
       if (stopAfter == descriptor.id) {
-        return;
+        prepareToStopAtStartNode = true;
       }
     }
 
