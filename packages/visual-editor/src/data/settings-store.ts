@@ -183,7 +183,7 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
           "Offer Configuration Enhancements",
           {
             name: "Offer Configuration Enhancements",
-            description: "Toggles showing the component enhancemne button",
+            description: "Toggles showing the component enhancement button",
             value: false,
           },
         ],
