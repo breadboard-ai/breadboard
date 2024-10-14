@@ -12,7 +12,12 @@ import type {
   NodeDescriptor,
   Schema,
 } from "@google-labs/breadboard";
-import type { EdgeData, Settings, UserOutputValues } from "../types/types.js";
+import type {
+  EdgeData,
+  Settings,
+  TopGraphEdgeInfo,
+  UserOutputValues,
+} from "../types/types.js";
 import type { NodeMetadata, NodeValue } from "@breadboard-ai/types";
 import { ComponentExpansionState } from "../elements/editor/types.js";
 
@@ -620,7 +625,7 @@ export class EdgeValueSelectedEvent extends Event {
   static eventName = "bbedgevalueselected";
 
   constructor(
-    public readonly value: NodeValue[],
+    public readonly info: TopGraphEdgeInfo[],
     public readonly schema: Schema | null,
     public readonly x: number,
     public readonly y: number
@@ -738,7 +743,7 @@ export class GraphEdgeValueSelectedEvent extends Event {
   static eventName = "bbgraphedgevalueselected";
 
   constructor(
-    public readonly value: NodeValue[],
+    public readonly info: TopGraphEdgeInfo[],
     public readonly schema: Schema | null,
     public readonly x: number,
     public readonly y: number

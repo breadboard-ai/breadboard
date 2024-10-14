@@ -472,7 +472,7 @@ export type GraphStartProbeData = {
   graph: GraphDescriptor;
   path: number[];
   timestamp: number;
-  edges?: EdgeResponse[];
+  edges?: { edge: Edge; value: NodeValue }[];
 };
 
 export type GraphStartProbeMessage = {
@@ -568,6 +568,7 @@ export type NodeEndResponse = {
   validatorMetadata?: BreadboardValidatorMetadata[];
   path: number[];
   timestamp: number;
+  newOpportunities: Edge[];
 };
 
 export type EdgeResponse = {

@@ -51,6 +51,7 @@ export async function invokeGraph(
             outputs,
             path: [...path, result.invocationId],
             timestamp: timestamp(),
+            newOpportunities: result.state.newOpportunities,
           },
         });
         lifecycle?.dispatchNodeEnd(outputs, [...path, result.invocationId]);

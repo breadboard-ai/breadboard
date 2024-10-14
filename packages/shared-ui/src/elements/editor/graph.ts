@@ -1613,7 +1613,7 @@ export class Graph extends PIXI.Container {
       }
 
       edgeGraphic.value = this.#edgeValues?.get(edge) ?? null;
-      edge.inPort().then((port) => {
+      edge.outPort().then((port) => {
         edgeGraphic.schema = port.schema || null;
       });
       edgeGraphic.edge = edge;

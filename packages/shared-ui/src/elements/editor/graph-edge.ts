@@ -4,19 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  InspectableEdgeType,
-  NodeValue,
-  Schema,
-} from "@google-labs/breadboard";
+import { InspectableEdgeType, Schema } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
 import { GraphNode } from "./graph-node.js";
 import { getGlobalColor } from "./utils.js";
-import { EdgeData, cloneEdgeData } from "../../types/types.js";
+import {
+  EdgeData,
+  TopGraphEdgeInfo,
+  cloneEdgeData,
+} from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
 import { GRAPH_OPERATIONS } from "./types.js";
 
-const edgeColorWithValues = getGlobalColor("--bb-input-600");
+// Value is on the wire, but hasn't been consumed by receiving component yet.
+const edgeColorValueStored = getGlobalColor("--bb-human-700");
+// Value is no longer on the wire, because it was consumed by the receiving
+// component. Constant wires never reach this state.
+const edgeColorValueConsumed = getGlobalColor("--bb-input-600");
 const edgeColorSelected = getGlobalColor("--bb-ui-600");
 const edgeColorOrdinary = getGlobalColor("--bb-neutral-400");
 const edgeColorConstant = getGlobalColor("--bb-ui-200");
@@ -78,7 +82,7 @@ export class GraphEdge extends PIXI.Container {
   #valueSprite: PIXI.Sprite | null;
   #editSprite: PIXI.Sprite | null;
   #schema: Schema | null = null;
-  #value: NodeValue[] | null = null;
+  #value: TopGraphEdgeInfo[] | null = null;
   #hitAreaSpacing = 6;
 
   #debugHitArea = false;
@@ -177,7 +181,7 @@ export class GraphEdge extends PIXI.Container {
     return this.#value;
   }
 
-  set value(value: NodeValue[] | null) {
+  set value(value: TopGraphEdgeInfo[] | null) {
     this.#value = value;
     this.#isDirty = true;
   }
@@ -325,7 +329,11 @@ export class GraphEdge extends PIXI.Container {
     }
 
     if (this.value && this.value.length > 0) {
-      edgeColor = edgeColorWithValues;
+      if (this.value.at(-1)?.status === "stored") {
+        edgeColor = edgeColorValueStored;
+      } else {
+        edgeColor = edgeColorValueConsumed;
+      }
       edgeWidth = 2;
     }
 

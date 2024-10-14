@@ -326,18 +326,20 @@ export class EdgeValueOverlay extends LitElement {
     const dragDelta = { x: 0, y: 0 };
     let dragging = false;
 
-    const value = this.edgeValue?.value ? this.edgeValue?.value[0] : null;
+    const info = this.edgeValue?.info ? this.edgeValue?.info[0] : null;
     const userInputs: UserInputConfiguration[] = [
       {
         name: "edge-value",
         secret: false,
         title: this.edgeValue?.schema?.title ?? "Untitled Value",
         configured: true,
-        value: structuredClone(value),
+        value: structuredClone(info?.value),
         required: true,
         schema: this.edgeValue?.schema,
       },
     ];
+
+    const status = info?.status ?? "initial";
 
     const input = html`<bb-user-input
       ${ref(this.#userInputRef)}
@@ -428,6 +430,7 @@ export class EdgeValueOverlay extends LitElement {
         </h1>
         <div id="content">
           <div id="container">
+            <div>🍪 STATUS: ${status}</div>
             <form
               ${ref(this.#formRef)}
               @submit=${(evt: Event) => {

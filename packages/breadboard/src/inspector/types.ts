@@ -15,7 +15,6 @@ import { GraphLoader } from "../loader/types.js";
 import {
   BehaviorSchema,
   Edge,
-  EdgeResponse,
   ErrorResponse,
   GraphDescriptor,
   InputValues,
@@ -861,7 +860,10 @@ export type InspectableRunEvent =
   | InspectableRunErrorEvent
   | InspectableRunEdgeEvent;
 
-export type InspectableRunEdge = EdgeResponse;
+export type InspectableRunEdge = {
+  edge: Edge;
+  value: NodeValue;
+};
 
 /**
  * Represents a single run of a graph.

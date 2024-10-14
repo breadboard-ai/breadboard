@@ -33,8 +33,8 @@ import type {
   NodeEndResponse,
   NodeStartResponse,
   Schema,
-  EdgeResponse,
   NodeIdentifier,
+  TraversalResult,
 } from "../types.js";
 import {
   TypedEventTargetType,
@@ -244,7 +244,6 @@ export type RunEventMap = {
   secret: RunSecretEvent;
   error: RunErrorEvent;
   skip: RunSkipEvent;
-  edge: RunEdgeEvent;
   graphstart: RunGraphStartEvent;
   graphend: RunGraphEndEvent;
   nodestart: RunNodeStartEvent;
@@ -291,11 +290,6 @@ export type RunSkipEvent = Event & {
   running: true;
 };
 
-export type RunEdgeEvent = Event & {
-  data: EdgeResponse;
-  running: true;
-};
-
 export type RunGraphStartEvent = Event & {
   data: GraphStartProbeData;
   running: true;
@@ -308,6 +302,7 @@ export type RunGraphEndEvent = Event & {
 
 export type RunNodeStartEvent = Event & {
   data: NodeStartResponse;
+  result?: TraversalResult;
   running: true;
 };
 

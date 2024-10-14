@@ -39,6 +39,7 @@ const inputResult: HarnessRunResult = {
         ],
       },
     },
+    newOpportunities: [],
   },
   async reply() {},
 };
@@ -79,6 +80,7 @@ const inputResultArray: HarnessRunResult = {
         },
       ],
     },
+    newOpportunities: [],
   },
   async reply() {},
 };

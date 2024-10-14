@@ -5,25 +5,29 @@
  */
 
 import {
-  type NodeValue,
   type Edge,
   type InspectableEdge,
   InspectableEdgeType,
   type InputValues,
+  NodeIdentifier,
 } from "@google-labs/breadboard";
-import type { ComparableEdge } from "../../types/types";
+import type { ComparableEdge, TopGraphEdgeInfo } from "../../types/types";
 import { ComparableEdgeImpl } from "./comparable-edge";
 
-type EdgeValueStoreMap = Map<string, NodeValue[]>;
+type EdgeValueStoreMap = Map<string, TopGraphEdgeInfo[]>;
+type IncomingEdgeMap = Map<NodeIdentifier, Edge[]>;
 export class EdgeValueStore {
   #values: EdgeValueStoreMap;
-  #lastEdge: ComparableEdge | null;
+  #lastEdge: ComparableEdgeImpl | null;
+  #incomingEdges: IncomingEdgeMap;
 
   constructor(
     values: EdgeValueStoreMap = new Map(),
+    incomingEdges: IncomingEdgeMap = new Map(),
     lastEdge: Edge | null = null
   ) {
     this.#values = values;
+    this.#incomingEdges = incomingEdges;
     this.#lastEdge = lastEdge ? new ComparableEdgeImpl(lastEdge) : null;
   }
 
@@ -56,26 +60,83 @@ export class EdgeValueStore {
     return this.#key(from, out, to, iN, constant);
   }
 
-  set(edge: Edge, inputs: InputValues | undefined): EdgeValueStore {
+  #getIncomingEdges(nodeId: NodeIdentifier) {
+    return this.#incomingEdges.get(nodeId) || [];
+  }
+
+  #addIncomingEdge(edge: Edge) {
+    const { to } = edge;
+    if (!this.#incomingEdges.has(to)) {
+      this.#incomingEdges.set(to, [edge]);
+    } else {
+      this.#incomingEdges.get(to)!.push(edge);
+    }
+  }
+
+  setConsumed(nodeId: NodeIdentifier): EdgeValueStore {
+    const consumedEdges = this.#getIncomingEdges(nodeId);
+    for (const edge of consumedEdges) {
+      if (edge.constant) {
+        // Constant edges never reach the consumed state.
+        continue;
+      }
+      const key = this.#keyFromEdge(edge);
+      if (!this.#values.has(key)) {
+        console.warn(
+          "A value that wasn't stored was received. This is likely a bug elsewhere"
+        );
+        return this;
+      }
+      const edgeValues = this.#values.get(key)!;
+      const lastInfo = edgeValues.at(-1);
+      if (!lastInfo) {
+        console.warn(
+          `Empty values for "${key}" is very unlikely. Probably a bug somwehere`
+        );
+        return this;
+      }
+      lastInfo.status = "consumed";
+    }
+    return new EdgeValueStore(
+      this.#values,
+      this.#incomingEdges,
+      this.#lastEdge?.edge()
+    );
+  }
+
+  setStored(edges: Edge[], inputs?: InputValues): EdgeValueStore {
     if (!inputs) {
       return this;
     }
-    const value = edge.out === "*" || !edge.in ? inputs : inputs[edge.in];
-    const key = this.#keyFromEdge(edge);
-    if (!this.#values.has(key)) {
-      this.#values.set(key, [value]);
-    } else {
-      const edgeValues = this.#values.get(key);
-      this.#values.set(key, [...edgeValues!, value]);
-    }
-    return new EdgeValueStore(this.#values, edge);
+    let lastEdge;
+    edges.forEach((edge) => {
+      this.#addIncomingEdge(edge);
+      const name = edge.out;
+      const value = name === "*" || !name ? inputs : inputs[name];
+      if (value === null || value === undefined) {
+        // This is the "Missing" value case. Not an error -- very common
+        // with router patterns.
+        return;
+      }
+      const key = this.#keyFromEdge(edge);
+      const info: TopGraphEdgeInfo = { status: "stored", value };
+      if (!this.#values.has(key)) {
+        this.#values.set(key, [info]);
+      } else {
+        const edgeValues = this.#values.get(key);
+        this.#values.set(key, [...edgeValues!, info]);
+      }
+      lastEdge = edge;
+    });
+
+    return new EdgeValueStore(this.#values, this.#incomingEdges, lastEdge);
   }
 
   get current(): ComparableEdge | null {
     return this.#lastEdge;
   }
 
-  get(edge: InspectableEdge): NodeValue[] {
+  get(edge: InspectableEdge): TopGraphEdgeInfo[] {
     const key = this.#keyFromInspectableEdge(edge);
     return this.#values.get(key) || [];
   }

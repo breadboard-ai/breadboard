@@ -66,7 +66,7 @@ export type UserInputConfiguration = {
   secret: boolean;
   required?: boolean;
   configured?: boolean;
-  value?: NodeValue;
+  value: NodeValue;
   schema?: Schema | null;
   status?: PortStatus;
   type?: Schema["type"];
@@ -281,8 +281,24 @@ export type ComparableEdge = {
   equals(other: InspectableEdge): boolean;
 };
 
+/**
+ * Reflects the current status of the edge:
+ * - "initilal" -- the edge is in its initial state: no
+ *   values have been stored on or consumed from this edge.
+ * - "stored" -- a value was stored on the edge, but not yet consumed by the
+ *   receiving node.
+ * - "consumed" -- the value that was stored on the edge was consumed by the
+ *   receiving edge. Constant wires never reach this state.
+ */
+export type TopGraphEdgeInfoStatus = "initial" | "stored" | "consumed";
+
+export type TopGraphEdgeInfo = {
+  status: TopGraphEdgeInfoStatus;
+  value: NodeValue;
+};
+
 export type TopGraphEdgeValues = {
-  get(edge: InspectableEdge): NodeValue[] | undefined;
+  get(edge: InspectableEdge): TopGraphEdgeInfo[] | undefined;
   current: ComparableEdge | null;
 };
 
@@ -315,7 +331,7 @@ export type NodePortConfiguration = {
 
 export type EdgeValueConfiguration = {
   id: string;
-  value: NodeValue[] | null;
+  info: TopGraphEdgeInfo[] | null;
   schema: Schema | null;
   x: number;
   y: number;
