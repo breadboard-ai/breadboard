@@ -304,6 +304,7 @@ export type TopGraphEdgeValues = {
 
 export type TopGraphNodeInfo = {
   getActivity(node: NodeIdentifier): ComponentActivityItem[] | undefined;
+  canRunNode(node: NodeIdentifier): boolean;
 };
 
 export type ComponentWithActivity = {

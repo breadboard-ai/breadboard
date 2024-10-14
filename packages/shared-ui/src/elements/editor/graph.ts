@@ -70,7 +70,6 @@ export class Graph extends PIXI.Container {
   #collapseNodesByDefault = false;
   #showNodePreviewValues = false;
   #showNodeTypeDescriptions = false;
-  #showNodeRunnerButton = false;
   layoutRect: DOMRectReadOnly | null = null;
 
   readOnly = false;
@@ -879,16 +878,6 @@ export class Graph extends PIXI.Container {
     }
   }
 
-  #setNodeRunnerButton() {
-    for (const child of this.children) {
-      if (!(child instanceof GraphNode)) {
-        continue;
-      }
-
-      child.showNodeRunnerButton = this.showNodeRunnerButton;
-    }
-  }
-
   set collapseNodesByDefault(collapseNodesByDefault: boolean) {
     if (collapseNodesByDefault === this.#collapseNodesByDefault) {
       return;
@@ -901,20 +890,6 @@ export class Graph extends PIXI.Container {
 
   get collapseNodesByDefault() {
     return this.#collapseNodesByDefault;
-  }
-
-  set showNodeRunnerButton(showNodeRunnerButton: boolean) {
-    if (showNodeRunnerButton === this.#showNodeRunnerButton) {
-      return;
-    }
-
-    this.#isDirty = true;
-    this.#showNodeRunnerButton = showNodeRunnerButton;
-    this.#setNodeRunnerButton();
-  }
-
-  get showNodeRunnerButton() {
-    return this.#showNodeRunnerButton;
   }
 
   set showNodePreviewValues(showNodePreviewValues: boolean) {
@@ -1289,7 +1264,6 @@ export class Graph extends PIXI.Container {
         graphNode = new GraphNode(id, type, node.title(), typeTitle);
         graphNode.showNodeTypeDescriptions = this.showNodeTypeDescriptions;
         graphNode.showNodePreviewValues = this.showNodePreviewValues;
-        graphNode.showNodeRunnerButton = this.showNodeRunnerButton;
 
         graphNode.titleTextColor = nodeTextColor;
         graphNode.borderColor = nodeBorderColor;
@@ -1342,7 +1316,14 @@ export class Graph extends PIXI.Container {
       graphNode.outPorts = portInfo.outputs.ports;
       graphNode.fixedInputs = portInfo.inputs.fixed;
       graphNode.fixedOutputs = portInfo.outputs.fixed;
-      graphNode.activity = this.#nodeInfo?.getActivity(id) ?? null;
+      const info = this.#nodeInfo;
+      if (info) {
+        graphNode.activity = info.getActivity(id) ?? null;
+        graphNode.showNodeRunnerButton = info.canRunNode(id);
+      } else {
+        graphNode.activity = null;
+        graphNode.showNodeRunnerButton = false;
+      }
 
       graphNode.forceUpdateDimensions();
       graphNode.removeAllListeners();

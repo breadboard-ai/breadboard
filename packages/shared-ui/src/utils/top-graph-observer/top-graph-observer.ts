@@ -171,6 +171,9 @@ export class TopGraphObserver {
           getActivity: (node) => {
             return this.#nodeActivity.get(node);
           },
+          canRunNode: (_node) => {
+            return true;
+          },
         },
         graph: this.#graph,
         status: this.#status,

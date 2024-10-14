@@ -74,7 +74,6 @@ enum MODE {
 interface GraphOpts {
   url: string;
   subGraphId: string | null;
-  showNodeRunnerButton: boolean;
   showNodePreviewValues: boolean;
   showNodeTypeDescriptions: boolean;
   collapseNodesByDefault: boolean;
@@ -763,10 +762,6 @@ export class GraphRenderer extends LitElement {
 
     if (opts.visible !== undefined) {
       graph.visible = opts.visible;
-    }
-
-    if (opts.showNodeRunnerButton !== undefined) {
-      graph.showNodeRunnerButton = opts.showNodeRunnerButton;
     }
 
     return true;
