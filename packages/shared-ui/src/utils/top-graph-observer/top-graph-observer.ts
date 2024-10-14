@@ -43,6 +43,7 @@ import {
 import { EdgeValueStore } from "./edge-value-store";
 import { EndNodeEntry, NodeEntry, UserNodeEntry } from "./node-entry";
 import { RunDetails } from "./run-details";
+import { NodeInformation } from "./node-information";
 
 /**
  * A lightweight rewrite of the `InspectableRunObserver` that
@@ -169,14 +170,10 @@ export class TopGraphObserver {
         log: this.#log,
         currentNode: this.#currentNode,
         edgeValues: this.#edgeValues,
-        nodeInformation: {
-          getActivity: (node) => {
-            return this.#nodeActivity.get(node);
-          },
-          canRunNode: (node) => {
-            return !!this.#canRunState.get(node);
-          },
-        },
+        nodeInformation: new NodeInformation(
+          this.#nodeActivity,
+          this.#canRunState
+        ),
         graph: this.#graph,
         status: this.#status,
       };
