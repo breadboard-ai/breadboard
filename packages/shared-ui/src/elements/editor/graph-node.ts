@@ -751,7 +751,13 @@ export class GraphNode extends PIXI.Container {
   }
 
   #createTitleTextIfNeeded() {
-    const nodeTitle = `${this.#title}${this.showNodeTypeDescriptions ? ` (${this.#typeTitle})` : ""}`;
+    const typeDiffersToTitle =
+      this.#typeTitle.toLocaleLowerCase() !== this.#title.toLocaleLowerCase();
+    const nodeType =
+      this.showNodeTypeDescriptions && typeDiffersToTitle
+        ? ` (${this.#typeTitle})`
+        : "";
+    const nodeTitle = `${this.#title}${nodeType}`;
     if (this.#titleText) {
       if (this.#titleText.text !== nodeTitle) {
         this.#titleText.text = nodeTitle;
