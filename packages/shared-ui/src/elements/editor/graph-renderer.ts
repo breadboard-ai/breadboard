@@ -658,7 +658,7 @@ export class GraphRenderer extends LitElement {
   set topGraphResult(topGraphResult: TopGraphRunResult | null) {
     let highlightedNode = null;
     let edgeValues = null;
-    let nodeValues = null;
+    let nodeInfo = null;
 
     if (topGraphResult && topGraphResult.currentNode) {
       highlightedNode = topGraphResult.currentNode;
@@ -668,8 +668,8 @@ export class GraphRenderer extends LitElement {
       edgeValues = topGraphResult.edgeValues;
     }
 
-    if (topGraphResult && topGraphResult.nodeActivity) {
-      nodeValues = topGraphResult.nodeActivity;
+    if (topGraphResult && topGraphResult.nodeInformation) {
+      nodeInfo = topGraphResult.nodeInformation;
     }
 
     for (const graph of this.#container.children) {
@@ -679,7 +679,7 @@ export class GraphRenderer extends LitElement {
 
       graph.highlightedNode = highlightedNode;
       graph.edgeValues = edgeValues;
-      graph.nodeValues = nodeValues;
+      graph.nodeInfo = nodeInfo;
     }
 
     if (!this.zoomToHighlightedNode || !highlightedNode) {

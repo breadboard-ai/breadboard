@@ -167,7 +167,11 @@ export class TopGraphObserver {
         log: this.#log,
         currentNode: this.#currentNode,
         edgeValues: this.#edgeValues,
-        nodeActivity: this.#nodeActivity,
+        nodeInformation: {
+          getActivity: (node) => {
+            return this.#nodeActivity.get(node);
+          },
+        },
         graph: this.#graph,
         status: this.#status,
       };

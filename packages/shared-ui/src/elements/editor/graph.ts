@@ -37,7 +37,7 @@ import {
   ComponentWithActivity,
   EdgeData,
   TopGraphEdgeValues,
-  TopGraphNodeActivity,
+  TopGraphNodeInfo,
   cloneEdgeData,
 } from "../../types/types.js";
 
@@ -64,7 +64,7 @@ export class Graph extends PIXI.Container {
   #autoSelect = new Set<string>();
   #latestPendingValidateRequest = new WeakMap<GraphEdge, symbol>();
   #edgeValues: TopGraphEdgeValues | null = null;
-  #nodeValues: TopGraphNodeActivity | null = null;
+  #nodeInfo: TopGraphNodeInfo | null = null;
 
   #isInitialDraw = true;
   #collapseNodesByDefault = false;
@@ -964,13 +964,13 @@ export class Graph extends PIXI.Container {
     return this.#edgeValues;
   }
 
-  set nodeValues(nodeValues: TopGraphNodeActivity | null) {
-    this.#nodeValues = nodeValues;
+  set nodeInfo(nodeInfo: TopGraphNodeInfo | null) {
+    this.#nodeInfo = nodeInfo;
     this.#isDirty = true;
   }
 
-  get nodeValues() {
-    return this.#nodeValues;
+  get nodeInfo() {
+    return this.#nodeInfo;
   }
 
   set nodes(nodes: InspectableNode[] | null) {
@@ -1342,7 +1342,7 @@ export class Graph extends PIXI.Container {
       graphNode.outPorts = portInfo.outputs.ports;
       graphNode.fixedInputs = portInfo.inputs.fixed;
       graphNode.fixedOutputs = portInfo.outputs.fixed;
-      graphNode.activity = this.#nodeValues?.get(id) ?? null;
+      graphNode.activity = this.#nodeInfo?.getActivity(id) ?? null;
 
       graphNode.forceUpdateDimensions();
       graphNode.removeAllListeners();
