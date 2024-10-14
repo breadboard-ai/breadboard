@@ -140,6 +140,9 @@
   --bb-icon-unfold-less: url(/third_party/icons/unfold-less.svg);
   --bb-icon-unfold-more: url(/third_party/icons/unfold-more.svg);
   --bb-icon-value: url(/third_party/icons/value.svg);
+  --bb-icon-value-inverted: url(/third_party/icons/value-inverted.svg);
+  --bb-icon-unknown-value: url(/third_party/icons/unknown-value.svg);
+  --bb-icon-unknown-value-inverted: url(/third_party/icons/unknown-value-inverted.svg);
   --bb-icon-vital-signs: url(/third_party/icons/vital-signs.svg);
   --bb-icon-visibility-off: url(/third_party/icons/visibility-off.svg);
   --bb-icon-warning: url(/third_party/icons/warning.svg);

@@ -85,13 +85,38 @@ export class EdgeValueOverlay extends LitElement {
       display: block;
       width: 20px;
       height: 20px;
-      background: transparent var(--bb-icon-eye) center center / 20px 20px
-        no-repeat;
       margin-right: var(--bb-grid-size-2);
+      border-radius: 50%;
+    }
+
+    h1.initial::before {
+      background: var(--bb-neutral-400) var(--bb-icon-unknown-value-inverted)
+        center center / 16px 16px no-repeat;
+    }
+
+    h1.stored::before {
+      background: var(--bb-human-600) var(--bb-icon-value-inverted) center
+        center / 16px 16px no-repeat;
+    }
+
+    h1.consumed::before {
+      background: var(--bb-input-600) var(--bb-icon-value-inverted) center
+        center / 16px 16px no-repeat;
     }
 
     h1 span {
       flex: 1;
+    }
+
+    .edge-status p {
+      margin: 0;
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      color: var(--bb-neutral-600);
+    }
+
+    .edge-status {
+      margin-bottom: var(--bb-grid-size-4);
     }
 
     #content {
@@ -116,7 +141,7 @@ export class EdgeValueOverlay extends LitElement {
     }
 
     #container {
-      padding: var(--bb-grid-size-4) var(--bb-grid-size-4) var(--bb-grid-size)
+      padding: var(--bb-grid-size-3) var(--bb-grid-size-4) var(--bb-grid-size)
         var(--bb-grid-size-4);
     }
 
@@ -340,6 +365,25 @@ export class EdgeValueOverlay extends LitElement {
     ];
 
     const status = info?.status ?? "initial";
+    let statusDescription = "";
+    switch (status) {
+      case "consumed": {
+        statusDescription =
+          "This value has been consumed by the receiving component(s).";
+        break;
+      }
+
+      case "stored": {
+        statusDescription =
+          "This value has been created, but is yet to be consumed by the receiving component(s).";
+        break;
+      }
+
+      default: {
+        statusDescription = "There is currently no value set.";
+        break;
+      }
+    }
 
     const input = html`<bb-user-input
       ${ref(this.#userInputRef)}
@@ -373,6 +417,7 @@ export class EdgeValueOverlay extends LitElement {
     >
       <div id="wrapper">
         <h1
+          class=${classMap({ [status]: true })}
           @pointerdown=${(evt: PointerEvent) => {
             if (this.maximized) {
               return;
@@ -430,7 +475,9 @@ export class EdgeValueOverlay extends LitElement {
         </h1>
         <div id="content">
           <div id="container">
-            <div>🍪 STATUS: ${status}</div>
+            <div class="edge-status">
+              <p>${statusDescription}</p>
+            </div>
             <form
               ${ref(this.#formRef)}
               @submit=${(evt: Event) => {
