@@ -1442,6 +1442,12 @@ export class Main extends LitElement {
             ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
             .items.get("Show Node Type Descriptions")?.value ?? false;
 
+        const offerConfigurationEnhancements =
+          this.#settings?.getItem(
+            BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
+            "Offer Configuration Enhancements"
+          )?.value ?? false;
+
         let tabStatus = BreadboardUI.Types.STATUS.STOPPED;
         if (this.tab) {
           tabStatus =
@@ -1762,6 +1768,21 @@ export class Main extends LitElement {
             .providers=${this.#providers}
             .providerOps=${this.providerOps}
             .showTypes=${false}
+            .offerConfigurationEnhancements=${offerConfigurationEnhancements}
+            @bbenhancenodeconfiguration=${(
+              evt: BreadboardUI.Events.EnhanceNodeConfigurationEvent
+            ) => {
+              if (!this.tab) {
+                return;
+              }
+
+              this.#runtime.edit.enhanceNodeConfiguration(
+                this.tab,
+                this.tab.subGraphId,
+                evt.id,
+                evt.property
+              );
+            }}
             @bboverlaydismissed=${() => {
               this.showNodeConfigurator = false;
             }}

@@ -131,6 +131,21 @@ export class RunDownloadEvent extends Event {
 }
 
 /**
+ * Enhancement
+ */
+
+export class EnhanceNodeConfigurationEvent extends Event {
+  static eventName = "bbenhancenodeconfiguration";
+
+  constructor(
+    public readonly id: string,
+    public readonly property: string
+  ) {
+    super(EnhanceNodeConfigurationEvent.eventName, { ...eventInit });
+  }
+}
+
+/**
  * General UI
  */
 
