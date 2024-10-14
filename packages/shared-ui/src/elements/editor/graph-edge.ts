@@ -16,6 +16,7 @@ import {
 import { GraphAssets } from "./graph-assets.js";
 import { GRAPH_OPERATIONS } from "./types.js";
 
+const edgeColorValueStored = getGlobalColor("--bb-human-700");
 const edgeColorWithValues = getGlobalColor("--bb-input-600");
 const edgeColorSelected = getGlobalColor("--bb-ui-600");
 const edgeColorOrdinary = getGlobalColor("--bb-neutral-400");
@@ -325,7 +326,11 @@ export class GraphEdge extends PIXI.Container {
     }
 
     if (this.value && this.value.length > 0) {
-      edgeColor = edgeColorWithValues;
+      if (this.value.at(-1)?.status === "stored") {
+        edgeColor = edgeColorValueStored;
+      } else {
+        edgeColor = edgeColorWithValues;
+      }
       edgeWidth = 2;
     }
 

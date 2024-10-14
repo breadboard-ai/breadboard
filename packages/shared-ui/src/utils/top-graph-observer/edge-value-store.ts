@@ -109,6 +109,11 @@ export class EdgeValueStore {
       this.#addIncomingEdge(edge);
       const name = edge.out;
       const value = name === "*" || !name ? inputs : inputs[name];
+      if (value === null || value === undefined) {
+        // This is the "Missing" value case. Not an error -- very common
+        // with router patterns.
+        return;
+      }
       const key = this.#keyFromEdge(edge);
       const info: TopGraphEdgeInfo = { status: "stored", value };
       if (!this.#values.has(key)) {
