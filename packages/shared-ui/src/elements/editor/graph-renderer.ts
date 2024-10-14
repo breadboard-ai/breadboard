@@ -394,6 +394,17 @@ export class GraphRenderer extends LitElement {
     let dragStart: PIXI.PointData | null = null;
     let originalPosition: PIXI.ObservablePoint | null = null;
     let tilePosition: PIXI.ObservablePoint | null = null;
+    let modeWhenInteractionStarted: MODE | null = null;
+
+    const removeNodeSelection = () => {
+      if (!this.#nodeSelection) {
+        return;
+      }
+
+      this.#nodeSelection.removeFromParent();
+      this.#nodeSelection.destroy();
+      this.#nodeSelection = null;
+    };
 
     const onStageMove = (evt: PIXI.FederatedPointerEvent) => {
       if (!dragStart || !originalPosition) {
@@ -454,58 +465,67 @@ export class GraphRenderer extends LitElement {
       }
     };
 
+    const setStartValues = (evt: PIXI.FederatedPointerEvent) => {
+      dragStart = this.#app.stage.toLocal(evt.global);
+      originalPosition = this.#container.position.clone();
+      modeWhenInteractionStarted = this.#mode;
+
+      if (!this.#background) {
+        return;
+      }
+      tilePosition = this.#background.tilePosition.clone();
+    };
+
+    const removeStartValues = () => {
+      dragStart = null;
+      originalPosition = null;
+      tilePosition = null;
+      modeWhenInteractionStarted = null;
+    };
+
     this.#app.stage.addListener(
       "pointerdown",
       (evt: PIXI.FederatedPointerEvent) => {
-        if (!evt.isPrimary) {
-          return;
-        }
+        if (evt.nativeEvent.button === 1) {
+          this.#mode = MODE.MOVE;
+        } else {
+          for (const graph of this.#container.children) {
+            if (!(graph instanceof Graph) || !graph.visible) {
+              continue;
+            }
 
-        for (const graph of this.#container.children) {
-          if (!(graph instanceof Graph) || !graph.visible) {
-            continue;
+            graph.deselectAllChildren();
           }
-
-          graph.deselectAllChildren();
         }
 
-        dragStart = this.#app.stage.toLocal(evt.global);
-        originalPosition = this.#container.position.clone();
-
-        if (!this.#background) {
-          return;
-        }
-        tilePosition = this.#background.tilePosition.clone();
+        setStartValues(evt);
       }
     );
 
     this.#app.stage.addListener(
       "pointermove",
       (evt: PIXI.FederatedPointerEvent) => {
+        // Reset if the mode changes part way through the interaction.
+        if (dragStart && this.#mode !== modeWhenInteractionStarted) {
+          setStartValues(evt);
+        }
+
         if (this.#mode === MODE.MOVE) {
+          removeNodeSelection();
           onStageMove(evt);
           return;
         }
 
-        if (!evt.isPrimary) {
-          return;
-        }
         onDragSelect(evt);
       }
     );
 
     const onPointerUp = () => {
-      dragStart = null;
-      originalPosition = null;
-      tilePosition = null;
-
+      this.#mode = MODE.SELECT;
       this.classList.remove("moving");
 
-      if (this.#nodeSelection) {
-        this.#nodeSelection.removeFromParent();
-        this.#nodeSelection.destroy();
-        this.#nodeSelection = null;
-      }
+      removeNodeSelection();
+      removeStartValues();
 
       this.#storeContainerTransformForVisibleGraph();
     };
@@ -1353,7 +1373,7 @@ export class GraphRenderer extends LitElement {
       return;
     }
 
-    if (evt.code !== "Backspace") {
+    if (evt.code !== "Backspace" && evt.code !== "Delete") {
       return;
     }
 

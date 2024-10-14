@@ -477,7 +477,9 @@ export class Graph extends PIXI.Container {
       // Update the edge if either of the nodes is collapsed.
       const fromNodePortsOut = outPortDisambiguation || [];
       const possiblePortsOut: InspectablePort[] = fromNode.collapsed
-        ? fromNodePortsOut.filter((port) => !port.star && port.name !== "")
+        ? fromNodePortsOut.filter(
+            (port) => !port.star && port.name !== "" && port.name !== "$error"
+          )
         : fromNodePortsOut.filter(
             (port) =>
               !port.star && port.name !== "" && port.name === targetOutPortName
