@@ -45,6 +45,9 @@ export class NodeConfigurationOverlay extends LitElement {
   @property({ reflect: true })
   maximized = false;
 
+  @property()
+  offerConfigurationEnhancements = false;
+
   #overlayRef: Ref<Overlay> = createRef();
   #userInputRef: Ref<UserInput> = createRef();
   #formRef: Ref<HTMLFormElement> = createRef();
@@ -453,6 +456,13 @@ export class NodeConfigurationOverlay extends LitElement {
         schema: port.edges.length === 0 ? port.schema : undefined,
         status: port.status,
         type: port.schema.type,
+        offer: {
+          // TODO: Make this configurable.
+          enhance:
+            this.offerConfigurationEnhancements &&
+            port.name === "persona" &&
+            this.value?.type === "Specialist",
+        },
       };
     });
 
@@ -589,6 +599,7 @@ export class NodeConfigurationOverlay extends LitElement {
               @input=${() => {
                 this.#pendingSave = true;
               }}
+              .nodeId=${this.value.id}
               .inputs=${userInputs}
               .graph=${this.graph}
               .subGraphId=${this.value.subGraphId}

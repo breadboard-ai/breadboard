@@ -23,7 +23,10 @@ import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { UserOutputEvent } from "../../events/events";
+import {
+  EnhanceNodeConfigurationEvent,
+  UserOutputEvent,
+} from "../../events/events";
 import { UserInputConfiguration, UserOutputValues } from "../../types/types";
 import {
   isBoardBehavior,
@@ -55,6 +58,9 @@ import "./delegating-input.js";
 
 @customElement("bb-user-input")
 export class UserInput extends LitElement {
+  @property()
+  nodeId: string | null = null;
+
   @property()
   inputs: UserInputConfiguration[] = [];
 
@@ -182,6 +188,23 @@ export class UserInput extends LitElement {
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
       margin: 0 0 var(--bb-grid-size-2) 0;
+    }
+
+    .title-value {
+      flex: 1;
+    }
+
+    .enhance {
+      border: none;
+      border-radius: var(--bb-grid-size-6);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      background: var(--bb-ui-400) var(--bb-icon-enhance-inverted) 4px center /
+        16px 16px no-repeat;
+      height: var(--bb-grid-size-6);
+      padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-5);
+      color: var(--bb-neutral-0);
+      cursor: pointer;
     }
   `;
 
@@ -732,6 +755,24 @@ export class UserInput extends LitElement {
           typeInfo = html`<span class="type">(${typeString})</span>`;
         }
 
+        const enhance =
+          input.offer && input.offer.enhance
+            ? html`<button
+                class="enhance"
+                @click=${() => {
+                  if (!this.nodeId) {
+                    return;
+                  }
+
+                  this.dispatchEvent(
+                    new EnhanceNodeConfigurationEvent(this.nodeId, input.name)
+                  );
+                }}
+              >
+                Enhance
+              </button>`
+            : nothing;
+
         return html`<div
           id=${this.#createId(`container-${input.name}`)}
           class=${classMap(styles)}
@@ -744,8 +785,11 @@ export class UserInput extends LitElement {
                 </p>`
               : nothing}
             ${this.showTitleInfo
-              ? html`<span class="title">${input.title} ${typeInfo}</span>`
-              : nothing}
+              ? html`<span class="title">
+                  <span class="title-value">${input.title} ${typeInfo}</span>
+                  ${enhance}
+                </span>`
+              : enhance}
             ${description}
           </label>
           ${inputField}

@@ -624,6 +624,36 @@ export class Edit extends EventTarget {
     );
   }
 
+  enhanceNodeConfiguration(
+    tab: Tab | null,
+    subGraphId: string | null,
+    id: string,
+    property: string
+  ) {
+    if (tab?.readOnly) {
+      return;
+    }
+
+    console.warn(`TODO: enhance ${id}.${property}`);
+
+    let editableGraph = this.getEditor(tab);
+    if (editableGraph && subGraphId) {
+      editableGraph = editableGraph.getGraph(subGraphId);
+    }
+
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
+      return;
+    }
+
+    const inspectableNode = editableGraph.inspect().nodeById(id);
+    const configuration = inspectableNode?.descriptor.configuration ?? {};
+    const updatedConfiguration = structuredClone(configuration);
+
+    // TODO: Enhance the configuration
+    updatedConfiguration;
+  }
+
   changeNodeConfigurationPart(
     tab: Tab | null,
     id: string,

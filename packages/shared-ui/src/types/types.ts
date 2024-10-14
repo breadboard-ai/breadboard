@@ -70,6 +70,9 @@ export type UserInputConfiguration = {
   schema?: Schema | null;
   status?: PortStatus;
   type?: Schema["type"];
+  offer?: {
+    enhance?: boolean;
+  };
 };
 
 export type UserOutputValues = NodeConfiguration;
