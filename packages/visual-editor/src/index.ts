@@ -2298,6 +2298,8 @@ export class Main extends LitElement {
 
                 const graph = this.tab?.graph;
 
+                this.showBoardActivityOverlay = true;
+
                 this.#runBoard(
                   addNodeProxyServerConfig(
                     this.#proxy,
@@ -2320,52 +2322,6 @@ export class Main extends LitElement {
                   ),
                   history
                 );
-
-                // -------
-                // // TODO: Replace this with an EditableRun.
-                // const graph = this.tab?.graph;
-                // if (!graph?.url) {
-                //   return;
-                // }
-
-                // const kits = this.tab?.kits ?? [];
-                // const url = this.graph?.url ?? globalThis.location.href;
-                // const runner =
-                //   await BreadboardUI.Utils.getIsolatedNodeGraphDescriptor(
-                //     graph,
-                //     kits,
-                //     this.#runtime.board.getLoader(),
-                //     evt.id
-                //   );
-
-                // if (!runner) {
-                //   return;
-                // }
-
-                // // If there's something running, stop it.
-                // this.#attemptBoardStop();
-
-                // this.showBoardActivityOverlay = true;
-                // this.#runBoard(
-                //   addNodeProxyServerConfig(
-                //     this.#proxy,
-                //     {
-                //       url,
-                //       runner,
-                //       diagnostics: true,
-                //       kits: [], // The kits are added by the runtime.
-                //       loader: this.#runtime.board.getLoader(),
-                //       store: this.#dataStore,
-                //       inputs: BreadboardUI.Data.inputsFromSettings(
-                //         this.#settings
-                //       ),
-                //       interactiveSecrets: true,
-                //     },
-                //     this.#settings,
-                //     this.proxyFromUrl,
-                //     await this.#getProxyURL(url)
-                //   )
-                // );
               }}
 
               @bbrunboard=${async () => {

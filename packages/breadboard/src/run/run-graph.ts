@@ -30,7 +30,7 @@ export async function* runGraph(
   resumeFrom?: TraversalResult
 ): AsyncGenerator<BreadboardRunResult> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { inputs, start, ...context } = args;
+  const { inputs, start, stopAfter, ...context } = args;
   const { probe, state, invocationPath = [] } = context;
 
   const lifecycle = state?.lifecycle();
@@ -134,6 +134,10 @@ export async function* runGraph(
               newOpportunities: structuredClone(result.newOpportunities),
             },
           });
+
+          if (stopAfter === result.descriptor.id) {
+            return;
+          }
         }
       }
     }
@@ -237,6 +241,10 @@ export async function* runGraph(
       });
 
       result.outputs = outputs;
+
+      if (stopAfter == descriptor.id) {
+        return;
+      }
     }
 
     lifecycle?.dispatchGraphEnd();

@@ -121,7 +121,7 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
     const runner = config.runner || (await load(config));
     const loader = config.loader || createLoader();
     const store = config.store || createDefaultDataStore();
-    const { base, signal, inputs, state, start } = config;
+    const { base, signal, inputs, state, start, stopAfter } = config;
 
     try {
       let last: LastNode | undefined;
@@ -143,6 +143,7 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
         inputs,
         state,
         start,
+        stopAfter,
       })) {
         last = maybeSaveResult(data, last);
         await next(fromRunnerResult(data));

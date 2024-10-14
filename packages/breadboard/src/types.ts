@@ -755,6 +755,12 @@ export type RunArguments = NodeHandlerContext & {
    * edges will be used.
    */
   start?: StartLabel;
+  /**
+   * The id of the node to stop the run after. In combination with `state`, can
+   * be used to run parts of the board.
+   * If not specified, runs the whole board.
+   */
+  stopAfter?: NodeIdentifier;
 };
 
 export interface BreadboardNode<Inputs, Outputs> {
