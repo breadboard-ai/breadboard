@@ -5,6 +5,7 @@
  */
 
 import {
+  NodeIdentifier,
   sequenceEntryToHarnessRunResult,
   type GraphDescriptor,
   type InspectableRun,
@@ -59,7 +60,8 @@ export class TopGraphObserver {
   #currentResult: TopGraphRunResult | null = null;
   #currentNode: NodeLogEntry | null = null;
   #edgeValues = new EdgeValueStore();
-  #nodeActivity = new Map<string, ComponentActivityItem[]>();
+  #nodeActivity = new Map<NodeIdentifier, ComponentActivityItem[]>();
+  #canRunState = new Map<NodeIdentifier, boolean>();
   /**
    * Need to keep track of input separately, because
    * bubbled inputs appear as coming from inside of the
@@ -171,8 +173,8 @@ export class TopGraphObserver {
           getActivity: (node) => {
             return this.#nodeActivity.get(node);
           },
-          canRunNode: (_node) => {
-            return true;
+          canRunNode: (node) => {
+            return !!this.#canRunState.get(node);
           },
         },
         graph: this.#graph,
@@ -265,6 +267,7 @@ export class TopGraphObserver {
     }
 
     this.#edgeValues = this.#edgeValues.setConsumed(event.data.node.id);
+    this.#canRunState.set(event.data.node.id, true);
 
     const type = event.data.node.type;
     switch (type) {
