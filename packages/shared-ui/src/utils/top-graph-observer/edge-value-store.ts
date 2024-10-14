@@ -76,6 +76,10 @@ export class EdgeValueStore {
   setConsumed(nodeId: NodeIdentifier): EdgeValueStore {
     const consumedEdges = this.#getIncomingEdges(nodeId);
     for (const edge of consumedEdges) {
+      if (edge.constant) {
+        // Constant edges never reach the consumed state.
+        continue;
+      }
       const key = this.#keyFromEdge(edge);
       if (!this.#values.has(key)) {
         console.warn(

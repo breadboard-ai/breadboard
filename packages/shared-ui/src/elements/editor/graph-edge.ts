@@ -16,8 +16,11 @@ import {
 import { GraphAssets } from "./graph-assets.js";
 import { GRAPH_OPERATIONS } from "./types.js";
 
+// Value is on the wire, but hasn't been consumed by receiving component yet.
 const edgeColorValueStored = getGlobalColor("--bb-human-700");
-const edgeColorWithValues = getGlobalColor("--bb-input-600");
+// Value is no longer on the wire, because it was consumed by the receiving
+// component. Constant wires never reach this state.
+const edgeColorValueConsumed = getGlobalColor("--bb-input-600");
 const edgeColorSelected = getGlobalColor("--bb-ui-600");
 const edgeColorOrdinary = getGlobalColor("--bb-neutral-400");
 const edgeColorConstant = getGlobalColor("--bb-ui-200");
@@ -329,7 +332,7 @@ export class GraphEdge extends PIXI.Container {
       if (this.value.at(-1)?.status === "stored") {
         edgeColor = edgeColorValueStored;
       } else {
-        edgeColor = edgeColorWithValues;
+        edgeColor = edgeColorValueConsumed;
       }
       edgeWidth = 2;
     }
