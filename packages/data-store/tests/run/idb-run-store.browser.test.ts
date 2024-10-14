@@ -45,6 +45,7 @@ const inputResult: HarnessRunResult = {
         ],
       },
     },
+    newOpportunities: [],
   },
   async reply() {},
 };
