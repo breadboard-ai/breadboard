@@ -45,7 +45,7 @@ async function getRunNodeConfig(
   const history = reanimationState.history;
   const config: Partial<RunConfig> = {
     state: createRunStateManager(reanimationState, inputs),
-    // stopAfter: nodeId,
+    stopAfter: nodeId,
   };
   return { success: true, result: { config, history } };
 
