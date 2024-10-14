@@ -1617,7 +1617,14 @@ export class Main extends LitElement {
 
         const run = runs[0] ?? null;
         const events = runs[0]?.events ?? [];
-        const boardActivityOverlay = html`${guard([], () => {
+
+        // Maybe a hack, not sure yet. When the run status is "STOPPED",
+        // it more than likely means we're in the "step-by-step" mode,
+        // and so any incomplete nodes (the ones that are next in the step)
+        // should be hidden.
+        const hideLast = tabStatus === BreadboardUI.Types.STATUS.STOPPED;
+
+        const boardActivityOverlay = html`${guard([hideLast], () => {
           return html`<bb-board-activity-overlay
             ${ref(this.#boardActivityRef)}
             .location=${this.#boardActivityLocation}
@@ -1626,6 +1633,7 @@ export class Main extends LitElement {
             .settings=${this.#settings}
             .providers=${this.#providers}
             .providerOps=${this.providerOps}
+            .hideLast=${hideLast}
             .inputsFromLastRun=${inputsFromLastRun}
             @bboverlaydismissed=${() => {
               if (!this.#boardActivityRef.value) {
