@@ -269,10 +269,14 @@ export class TopGraphObserver {
     const type = event.data.node.type;
     switch (type) {
       case "input": {
+        this.#currentNode = new NodeEntry(event);
+        this.#currentResult = null;
         return;
       }
       case "output": {
+        this.#currentNode = new NodeEntry(event);
         this.#log = placeOutputInLog(this.#log, new EdgeEntry());
+        this.#currentResult = null;
         return;
       }
       default: {
