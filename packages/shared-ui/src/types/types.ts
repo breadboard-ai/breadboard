@@ -259,12 +259,9 @@ export type TopGraphRunResult = {
    */
   edgeValues: TopGraphEdgeValues;
   /**
-   * Returns all current node activities within a graph. Think of this as a
-   * map of node to an array of activities. Each activity is a record of what
-   * happened within the node. The most recent activity is the last item
-   * in the array.
+   * Returns all current node info within a graph.
    */
-  nodeActivity: TopGraphNodeActivity;
+  nodeInformation: TopGraphNodeInfo;
   /**
    * Returns the GraphDescriptor of the current graph.
    * Or null if the TopGraphObserver doesn't know what it is yet.
@@ -305,8 +302,9 @@ export type TopGraphEdgeValues = {
   current: ComparableEdge | null;
 };
 
-export type TopGraphNodeActivity = {
-  get(node: NodeIdentifier): ComponentActivityItem[] | undefined;
+export type TopGraphNodeInfo = {
+  getActivity(node: NodeIdentifier): ComponentActivityItem[] | undefined;
+  canRunNode(node: NodeIdentifier): boolean;
 };
 
 export type ComponentWithActivity = {
@@ -314,6 +312,10 @@ export type ComponentWithActivity = {
   activity: ComponentActivityItem[];
 };
 
+/**
+ * Each activity is a record of what happened within the node.
+ * The most recent activity is the last item in the array.
+ */
 export type ComponentActivityItem = {
   type: "input" | "output" | "error" | "node" | "graph";
   description: string;

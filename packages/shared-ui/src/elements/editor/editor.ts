@@ -157,9 +157,6 @@ export class Editor extends LitElement {
   showControls = true;
 
   @property()
-  showNodeRunnerButton = true;
-
-  @property()
   readOnly = false;
 
   @property()
@@ -359,7 +356,6 @@ export class Editor extends LitElement {
 
     // Attempt to update the graph if it already exists.
     const updated = this.#graphRenderer.updateGraphByUrl(url, this.subGraphId, {
-      showNodeRunnerButton: this.showNodeRunnerButton,
       showNodeTypeDescriptions: this.showNodeTypeDescriptions,
       showNodePreviewValues: this.showNodePreviewValues,
       collapseNodesByDefault: this.collapseNodesByDefault,
@@ -387,7 +383,6 @@ export class Editor extends LitElement {
     this.#graphRenderer.createGraph({
       url,
       subGraphId: this.subGraphId,
-      showNodeRunnerButton: this.showNodeRunnerButton,
       showNodeTypeDescriptions: this.showNodeTypeDescriptions,
       showNodePreviewValues: this.showNodePreviewValues,
       collapseNodesByDefault: this.collapseNodesByDefault,
