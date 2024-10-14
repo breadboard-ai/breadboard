@@ -1437,6 +1437,10 @@ export class Main extends LitElement {
         const topGraphResult = observers?.topGraphObserver?.current() ?? null;
         const inputsFromLastRun = runs[1]?.inputs() ?? null;
         const tabURLs = this.#runtime.board.getTabURLs();
+        const showNodeTypeDescriptions =
+          this.#settings
+            ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
+            .items.get("Show Node Type Descriptions")?.value ?? false;
 
         let tabStatus = BreadboardUI.Types.STATUS.STOPPED;
         if (this.tab) {
@@ -2400,21 +2404,28 @@ export class Main extends LitElement {
                   evt.id,
                   evt.subGraphId
                 );
-                const ports = await this.#runtime.edit.getNodePorts(
-                  this.tab,
-                  evt.id,
-                  evt.subGraphId
-                );
+
+                const [ports, nodeType, metadata] = await Promise.all([
+                  this.#runtime.edit.getNodePorts(
+                    this.tab,
+                    evt.id,
+                    evt.subGraphId
+                  ),
+                  this.#runtime.edit.getNodeType(
+                    this.tab,
+                    evt.id,
+                    evt.subGraphId
+                  ),
+                  this.#runtime.edit.getNodeMetadata(
+                    this.tab,
+                    evt.id,
+                    evt.subGraphId
+                  ),
+                ]);
 
                 if (!ports) {
                   return;
                 }
-
-                const metadata = this.#runtime.edit.getNodeMetadata(
-                  this.tab,
-                  evt.id,
-                  evt.subGraphId
-                );
 
                 this.showNodeConfigurator = true;
                 this.#nodeConfiguratorData = {
@@ -2422,6 +2433,10 @@ export class Main extends LitElement {
                   x: evt.x,
                   y: evt.y,
                   title,
+                  type:
+                    showNodeTypeDescriptions && nodeType?.title
+                      ? nodeType?.title
+                      : null,
                   selectedPort: evt.port?.name ?? null,
                   subGraphId: evt.subGraphId,
                   ports,

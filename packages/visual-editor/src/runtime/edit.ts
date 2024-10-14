@@ -109,6 +109,16 @@ export class Edit extends EventTarget {
     return editableGraph.inspect().nodeById(id)?.title() ?? null;
   }
 
+  getNodeType(tab: Tab | null, id: string, subGraphId: string | null = null) {
+    const editableGraph = this.getEditor(tab, subGraphId);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
+      return null;
+    }
+
+    return editableGraph.inspect().nodeById(id)?.type().metadata() ?? null;
+  }
+
   getNodeMetadata(
     tab: Tab | null,
     id: string,

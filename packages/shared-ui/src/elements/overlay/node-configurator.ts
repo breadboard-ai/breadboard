@@ -521,7 +521,14 @@ export class NodeConfigurationOverlay extends LitElement {
             this.#toggleMaximize();
           }}
         >
-          <span>Configure ${this.value.title}</span>
+          <span
+            >Configure ${this.value.title}
+            ${this.value.type &&
+            this.value.title?.toLocaleLowerCase() !==
+              this.value.type.toLocaleLowerCase()
+              ? `(${this.value.type})`
+              : nothing}</span
+          >
           <button
             id="minmax"
             title=${this.maximized ? "Minimize overlay" : "Maximize overlay"}

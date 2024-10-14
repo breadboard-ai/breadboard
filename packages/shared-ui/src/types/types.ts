@@ -320,6 +320,7 @@ export type ComponentActivityItem = {
 export type NodePortConfiguration = {
   id: string;
   title: string | null;
+  type: string | null;
   subGraphId: string | null;
   selectedPort: string | null;
   metadata: NodeMetadata | null;
