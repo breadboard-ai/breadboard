@@ -637,6 +637,10 @@ export class Edit extends EventTarget {
     property: string,
     sideboard: EnhanceSideboard
   ) {
+    if (!tab) {
+      return;
+    }
+
     if (tab?.readOnly) {
       return;
     }
@@ -668,6 +672,9 @@ export class Edit extends EventTarget {
     console.log("🌻 enhanced: ", enhancedConfiguration);
 
     this.changeNodeConfiguration(tab, id, enhancedConfiguration);
+
+    // TODO: Somehow teach the edits to propagate to the current overlay.
+    this.dispatchEvent(new RuntimeBoardEditEvent(tab.id, [id], false));
   }
 
   changeNodeConfigurationPart(

@@ -1887,17 +1887,20 @@ export class Main extends LitElement {
                   // Inputs: { config }
                   // Outputs: { config }
                   // We should probably have some way to codify the shape.
-                  const result = await this.#runtime.run.invokeSideboard(
-                    "/side-boards/enhance-configuration.bgl.json",
-                    this.#runtime.board.getLoader(),
-                    { config }
-                  );
-                  if (!result.success) {
-                    return result;
+                  const invocationResult =
+                    await this.#runtime.run.invokeSideboard(
+                      "/side-boards/enhance-configuration.bgl.json",
+                      this.#runtime.board.getLoader(),
+                      { config }
+                    );
+                  if (!invocationResult.success) {
+                    return invocationResult;
                   }
+                  const result = invocationResult.result
+                    .config as NodeConfiguration;
                   return {
                     success: true,
-                    result: result.result.config as NodeConfiguration,
+                    result,
                   };
                 },
               };
