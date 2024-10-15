@@ -171,8 +171,8 @@ export interface SettingsHelper {
  * {@link cloneEdgeData} should be used for cloning.
  */
 export interface EdgeData {
-  from: { descriptor: { id: string } };
-  to: { descriptor: { id: string } };
+  from: { descriptor: { id: string; type?: string } };
+  to: { descriptor: { id: string; type?: string } };
   out: string;
   in: string;
   type: InspectableEdgeType;
@@ -180,13 +180,23 @@ export interface EdgeData {
 
 ({}) as InspectableEdge satisfies EdgeData;
 
-export function cloneEdgeData<T extends EdgeData | null>(edge: T): T {
+export function cloneEdgeData<T extends InspectableEdge | null>(edge: T): T {
   return (
     edge === null
       ? null
       : {
-          from: { descriptor: { id: edge.from.descriptor.id } },
-          to: { descriptor: { id: edge.to.descriptor.id } },
+          from: {
+            descriptor: {
+              id: edge.from.descriptor.id,
+              type: edge.from.descriptor.type,
+            },
+          },
+          to: {
+            descriptor: {
+              id: edge.to.descriptor.id,
+              type: edge.from.descriptor.type,
+            },
+          },
           out: edge.out,
           in: edge.in,
           type: edge.type,
