@@ -180,7 +180,7 @@ export interface EdgeData {
 
 ({}) as InspectableEdge satisfies EdgeData;
 
-export function cloneEdgeData<T extends InspectableEdge | null>(edge: T): T {
+export function cloneEdgeData<T extends EdgeData | null>(edge: T): T {
   return (
     edge === null
       ? null
