@@ -7,12 +7,17 @@
 import {
   createRunObserver,
   DataStore,
+  GraphLoader,
+  InputValues,
   InspectableRunObserver,
   InspectableRunSequenceEntry,
+  invokeGraph,
   Kit,
+  OutputValues,
+  RunArguments,
   RunStore,
 } from "@google-labs/breadboard";
-import { TabId } from "./types";
+import { Result, TabId } from "./types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
   createRunner,
@@ -221,5 +226,28 @@ export class Run extends EventTarget {
     harnessRunner.addObserver(runObserver);
 
     return { harnessRunner, topGraphObserver, runObserver, abortController };
+  }
+
+  async invokeSideboard(
+    url: string,
+    loader: GraphLoader,
+    inputs: InputValues
+  ): Promise<Result<OutputValues>> {
+    const sideboard = await loader.load(url, {
+      base: new URL(window.location.href),
+    });
+    if (!sideboard) {
+      return {
+        success: false,
+        error: `Unable to load sidebard at "${url}`,
+      };
+    }
+    const args: RunArguments = {
+      kits: this.kits,
+      loader: loader,
+      store: this.dataStore,
+    };
+    const result = await invokeGraph(sideboard, inputs, args);
+    return { success: true, result };
   }
 }

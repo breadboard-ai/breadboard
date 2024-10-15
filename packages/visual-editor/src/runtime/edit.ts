@@ -17,7 +17,7 @@ import {
   NodeDescriptor,
   NodeIdentifier,
 } from "@google-labs/breadboard";
-import { Tab, TabId } from "./types";
+import { EnhanceSideboard, Tab, TabId } from "./types";
 import { RuntimeBoardEditEvent, RuntimeErrorEvent } from "./events";
 import { NodeMetadata } from "@breadboard-ai/types";
 
@@ -630,12 +630,17 @@ export class Edit extends EventTarget {
     );
   }
 
-  enhanceNodeConfiguration(
+  async enhanceNodeConfiguration(
     tab: Tab | null,
     subGraphId: string | null,
     id: string,
-    property: string
+    property: string,
+    sideboard: EnhanceSideboard
   ) {
+    if (!tab) {
+      return;
+    }
+
     if (tab?.readOnly) {
       return;
     }
@@ -654,10 +659,19 @@ export class Edit extends EventTarget {
 
     const inspectableNode = editableGraph.inspect().nodeById(id);
     const configuration = inspectableNode?.descriptor.configuration ?? {};
-    const updatedConfiguration = structuredClone(configuration);
+    const result = await sideboard.enhance(structuredClone(configuration));
 
-    // TODO: Enhance the configuration
-    updatedConfiguration;
+    if (!result.success) {
+      this.dispatchEvent(
+        new RuntimeErrorEvent(`Enhancing failed with error: ${result.error}`)
+      );
+      return;
+    }
+
+    this.changeNodeConfiguration(tab, id, result.result);
+
+    // TODO: Somehow teach the edits to propagate to the current overlay.
+    this.dispatchEvent(new RuntimeBoardEditEvent(tab.id, [id], false));
   }
 
   changeNodeConfigurationPart(

@@ -26,6 +26,7 @@ import {
   InspectableEdge,
   InspectableRun,
   InspectableRunSequenceEntry,
+  NodeConfiguration,
   SerializedRun,
 } from "@google-labs/breadboard";
 import { getDataStore, getRunStore } from "@breadboard-ai/data-store";
@@ -38,7 +39,7 @@ import { SecretsHelper } from "./utils/secrets-helper";
 import { SettingsHelperImpl } from "./utils/settings-helper";
 import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
-import { TabId } from "./runtime/types";
+import { EnhanceSideboard, TabId } from "./runtime/types";
 import { createPastRunObserver } from "./utils/past-run-observer";
 import { FileSystemGraphProvider } from "./providers/file-system";
 import { getRunNodeConfig } from "./utils/run-node";
@@ -1880,11 +1881,36 @@ export class Main extends LitElement {
                 return;
               }
 
+              const enhancer: EnhanceSideboard = {
+                enhance: async (config) => {
+                  // Currently, the API of the board is fixed.
+                  // Inputs: { config }
+                  // Outputs: { config }
+                  // We should probably have some way to codify the shape.
+                  const invocationResult =
+                    await this.#runtime.run.invokeSideboard(
+                      "/side-boards/enhance-configuration.bgl.json",
+                      this.#runtime.board.getLoader(),
+                      { config }
+                    );
+                  if (!invocationResult.success) {
+                    return invocationResult;
+                  }
+                  const result = invocationResult.result
+                    .config as NodeConfiguration;
+                  return {
+                    success: true,
+                    result,
+                  };
+                },
+              };
+
               this.#runtime.edit.enhanceNodeConfiguration(
                 this.tab,
                 this.tab.subGraphId,
                 evt.id,
-                evt.property
+                evt.property,
+                enhancer
               );
             }}
             @bboverlaydismissed=${() => {

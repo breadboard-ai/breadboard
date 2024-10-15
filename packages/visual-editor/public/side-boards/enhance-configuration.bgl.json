@@ -1,0 +1,96 @@
+{
+  "title": "Sideboard: Enhance Specialist Configuration",
+  "description": "Takes existing specialist config and enhances it.",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "input-0",
+      "to": "runJavascript-5a563f59",
+      "out": "config",
+      "in": "config"
+    },
+    {
+      "from": "runJavascript-5a563f59",
+      "to": "output-0",
+      "out": "result",
+      "in": "config"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input-0",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "config": {
+              "type": "object",
+              "title": "Config"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -228,
+          "y": -110,
+          "collapsed": "expanded"
+        },
+        "logLevel": "debug"
+      }
+    },
+    {
+      "id": "output-0",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "config": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 423,
+          "y": -141,
+          "collapsed": "expanded"
+        }
+      }
+    },
+    {
+      "id": "runJavascript-5a563f59",
+      "type": "runJavascript",
+      "metadata": {
+        "visual": {
+          "x": 61,
+          "y": -114,
+          "collapsed": "expanded"
+        },
+        "title": "Run Javascript",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "config": {
+              "type": "object",
+              "title": "Config"
+            }
+          },
+          "required": []
+        },
+        "code": "function run({config}) {\n  const task = `${config.task.parts[0].text} hey!`\n  config.task.parts[0].text = task;\n  return config;\n}",
+        "name": "run"
+      }
+    }
+  ],
+  "metadata": {
+    "tags": [],
+    "comments": []
+  }
+}
