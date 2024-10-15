@@ -1882,7 +1882,11 @@ export class Main extends LitElement {
 
               const enhancer: EnhanceSideboard = {
                 enhance: async (config) => {
-                  return { success: true, result: config };
+                  return this.#runtime.run.invokeSideboard(
+                    "https://raw.githubusercontent.com/breadboard-ai/breadboard/refs/heads/main/packages/visual-editor/public/example-boards/examples/blank.json",
+                    this.#runtime.board.getLoader(),
+                    { text: config }
+                  );
                 },
               };
 
