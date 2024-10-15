@@ -221,6 +221,7 @@ export type NodeLogEntry = {
 
 export type EdgeLogEntry = {
   type: "edge";
+  descriptor?: NodeDescriptor;
   id?: string;
   end: number | null;
   schema?: Schema;

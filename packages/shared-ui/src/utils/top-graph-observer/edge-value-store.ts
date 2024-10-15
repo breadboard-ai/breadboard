@@ -140,4 +140,9 @@ export class EdgeValueStore {
     const key = this.#keyFromInspectableEdge(edge);
     return this.#values.get(key) || [];
   }
+
+  delete(id: NodeIdentifier) {
+    this.#values.delete(id);
+    this.#incomingEdges.delete(id);
+  }
 }

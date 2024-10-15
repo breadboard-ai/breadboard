@@ -385,6 +385,7 @@ export class TopGraphObserver {
       );
       if (lastEdge) {
         lastEdge.end = event.data.timestamp;
+        lastEdge.descriptor = event.data.node;
         lastEdge.schema = event.data.node.configuration?.schema as Schema;
         lastEdge.value = event.data.outputs;
       }
@@ -465,6 +466,34 @@ export class TopGraphObserver {
       return {
         data: result.data,
       } as unknown as E;
+    }
+  }
+
+  updateAffected(affectedNodes: NodeIdentifier[]) {
+    if (!this.#log) {
+      return;
+    }
+    const nodes = new Set(affectedNodes);
+    let stopHere: number | undefined = undefined;
+    for (const [index, entry] of this.#log.entries()) {
+      if (entry.type === "error") continue;
+      if (entry instanceof UserNodeEntry) continue;
+
+      const id = entry.descriptor?.id;
+      if (!id) continue;
+
+      if (stopHere === undefined) {
+        if (nodes.has(id)) {
+          stopHere = index;
+        }
+      } else {
+        this.#edgeValues.delete(id);
+        this.#canRunState.delete(id);
+      }
+    }
+    if (stopHere !== undefined) {
+      this.#currentResult = null;
+      this.#currentNode = null;
     }
   }
 }

@@ -298,7 +298,7 @@ export class Main extends LitElement {
 
         this.#runtime.edit.addEventListener(
           Runtime.Events.RuntimeBoardEditEvent.eventName,
-          () => {
+          (evt: Runtime.Events.RuntimeBoardEditEvent) => {
             this.#nodeConfiguratorData = null;
             this.showNodeConfigurator = false;
 
@@ -306,6 +306,11 @@ export class Main extends LitElement {
             this.showCommentEditor = false;
 
             this.requestUpdate();
+
+            const observers = this.#runtime.run.getObservers(evt.tabId);
+            if (observers) {
+              observers.topGraphObserver?.updateAffected(evt.affectedNodes);
+            }
 
             const shouldAutoSave = this.#settings?.getItem(
               BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
