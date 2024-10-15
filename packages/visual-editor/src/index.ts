@@ -26,7 +26,6 @@ import {
   InspectableEdge,
   InspectableRun,
   InspectableRunSequenceEntry,
-  NodeConfiguration,
   SerializedRun,
 } from "@google-labs/breadboard";
 import { getDataStore, getRunStore } from "@breadboard-ai/data-store";
@@ -329,6 +328,13 @@ export class Main extends LitElement {
               false,
               BOARD_AUTO_SAVE_TIMEOUT
             );
+          }
+        );
+
+        this.#runtime.edit.addEventListener(
+          Runtime.Events.RuntimeErrorEvent.eventName,
+          (evt: Runtime.Events.RuntimeErrorEvent) => {
+            this.toast(evt.message, BreadboardUI.Events.ToastType.ERROR);
           }
         );
 
@@ -1896,8 +1902,15 @@ export class Main extends LitElement {
                   if (!invocationResult.success) {
                     return invocationResult;
                   }
-                  const result = invocationResult.result
-                    .config as NodeConfiguration;
+                  const result = invocationResult.result;
+                  if ("$error" in result) {
+                    return {
+                      success: false,
+                      error: BreadboardUI.Utils.formatError(
+                        result.$error as string
+                      ),
+                    };
+                  }
                   return {
                     success: true,
                     result,
