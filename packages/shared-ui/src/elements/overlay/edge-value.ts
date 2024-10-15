@@ -31,6 +31,9 @@ export class EdgeValueOverlay extends LitElement {
   readOnly = false;
 
   @property()
+  showRegenerateEdgeValueButton = false;
+
+  @property()
   canRunNode = false;
 
   @property()
@@ -549,22 +552,25 @@ export class EdgeValueOverlay extends LitElement {
           </div>
         </div>
         <div id="buttons">
-          <button
-            id="regenerate"
-            ?disabled=${!this.canRunNode || this.readOnly}
-            @click=${() => {
-              if (!this.edgeValue) {
-                return;
-              }
-              this.dispatchEvent(
-                new RunIsolatedNodeEvent(
-                  this.edgeValue.edge?.from.descriptor.id ?? "unknown-edge"
-                )
-              );
-            }}
-          >
-            Regenerate value
-          </button>
+          ${this.showRegenerateEdgeValueButton
+            ? html`<button
+                id="regenerate"
+                ?disabled=${!this.canRunNode || this.readOnly}
+                @click=${() => {
+                  if (!this.edgeValue) {
+                    return;
+                  }
+                  this.dispatchEvent(
+                    new RunIsolatedNodeEvent(
+                      this.edgeValue.edge?.from.descriptor.id ?? "unknown-edge"
+                    )
+                  );
+                }}
+              >
+                Regenerate value
+              </button>`
+            : html`<div id="spacer"></div>`}
+
           <div>
             <button
               id="cancel"

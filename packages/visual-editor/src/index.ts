@@ -1909,6 +1909,7 @@ export class Main extends LitElement {
           // Ensure that the edge has the latest values.
           const edge = this.#edgeValueData?.edge ?? null;
           const nodeValue = edge?.from.descriptor.id ?? null;
+          const nodeType = edge?.from.descriptor.type ?? "unknown";
           const canRunNode = nodeValue
             ? topGraphResult.nodeInformation.canRunNode(nodeValue)
             : false;
@@ -1921,6 +1922,7 @@ export class Main extends LitElement {
 
           edgeValueOverlay = html`<bb-edge-value-overlay
             .canRunNode=${canRunNode}
+            .showRegenerateEdgeValueButton=${nodeType !== "input"}
             .readOnly=${topGraphResult.status !== "stopped"}
             .edgeValue=${this.#edgeValueData}
             .graph=${this.tab?.graph}
