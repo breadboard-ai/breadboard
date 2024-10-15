@@ -172,14 +172,6 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
           },
         ],
         [
-          "Show Component Run Button",
-          {
-            name: "Show Component Run Button",
-            description: "Toggles showing the component runner button",
-            value: false,
-          },
-        ],
-        [
           "Offer Configuration Enhancements",
           {
             name: "Offer Configuration Enhancements",
@@ -266,6 +258,7 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
     }
 
     this.#settings = settings;
+    settingsDb.close();
   }
 
   async restore() {
@@ -296,9 +289,19 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
           continue;
         }
 
+        if (
+          store === BreadboardUI.Types.SETTINGS_TYPE.GENERAL &&
+          !this.#settings[store].items.get(item.name)
+        ) {
+          console.info(`[Settings: Removing ${item.name}]`);
+          continue;
+        }
+
         this.#settings[store].items.set(item.name, item);
       }
     }
+
+    settingsDb.close();
 
     if (!settingsFound) {
       // Store the initial copy of the settings.
