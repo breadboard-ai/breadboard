@@ -6,7 +6,7 @@
 
 import { inspectableGraph } from "../inspector/graph.js";
 import { InspectableGraphWithStore } from "../inspector/types.js";
-import { GraphDescriptor, GraphIdentifier } from "../types.js";
+import { GraphDescriptor, GraphIdentifier, NodeIdentifier } from "../types.js";
 import {
   SingleEditResult,
   EditableGraph,
@@ -84,7 +84,7 @@ export class Graph implements EditableGraph {
         this.#version++;
         this.#inspector.resetGraph(graph);
         this.#eventTarget.dispatchEvent(
-          new ChangeEvent(this.#graph, this.#version, false, "history")
+          new ChangeEvent(this.#graph, this.#version, false, "history", [])
         );
       },
     });
@@ -96,11 +96,11 @@ export class Graph implements EditableGraph {
     this.#graphs = {};
   }
 
-  #updateGraph(visualOnly: boolean) {
+  #updateGraph(visualOnly: boolean, affectedNodes: NodeIdentifier[]) {
     if (this.#parent) {
       this.#graph = { ...this.#graph };
       // Update parent version.
-      this.#parent.#updateGraph(visualOnly);
+      this.#parent.#updateGraph(visualOnly, []);
     } else {
       if (!this.#graphs) {
         throw new Error(
@@ -121,7 +121,13 @@ export class Graph implements EditableGraph {
     }
     this.#inspector.updateGraph(this.#graph);
     this.#eventTarget.dispatchEvent(
-      new ChangeEvent(this.#graph, this.#version, visualOnly, "edit")
+      new ChangeEvent(
+        this.#graph,
+        this.#version,
+        visualOnly,
+        "edit",
+        affectedNodes
+      )
     );
   }
 
@@ -206,6 +212,8 @@ export class Graph implements EditableGraph {
     let noChange = true;
     // Presume that all edits will be visual only.
     let visualOnly = true;
+    // Collect affected nodes
+    const affectedNodes: NodeIdentifier[][] = [];
     for (const edit of edits) {
       const result = await this.#singleEdit(edit, context);
       log.push({ edit: edit.type, result });
@@ -213,6 +221,7 @@ export class Graph implements EditableGraph {
         error = result.error;
         break;
       }
+      affectedNodes.push(result.affectedNodes);
       if (!result.noChange) {
         noChange = false;
       }
@@ -232,7 +241,8 @@ export class Graph implements EditableGraph {
 
     this.#history.addEdit(this.#graph, checkpoint, label, this.#version);
 
-    !dryRun && this.#updateGraph(visualOnly);
+    !dryRun &&
+      this.#updateGraph(visualOnly, [...new Set(affectedNodes.flat())]);
     return { success: true, log };
   }
 
@@ -258,7 +268,7 @@ export class Graph implements EditableGraph {
 
     const editable = new Graph(graph, this.#options, this);
     this.#graphs[id] = editable;
-    this.#updateGraph(false);
+    this.#updateGraph(false, []);
 
     return editable;
   }
@@ -277,8 +287,8 @@ export class Graph implements EditableGraph {
       };
     }
     delete this.#graphs[id];
-    this.#updateGraph(false);
-    return { success: true };
+    this.#updateGraph(false, []);
+    return { success: true, affectedNodes: [] };
   }
 
   replaceGraph(
@@ -297,7 +307,7 @@ export class Graph implements EditableGraph {
 
     const editable = new Graph(graph, this.#options, this);
     this.#graphs[id] = editable;
-    this.#updateGraph(false);
+    this.#updateGraph(false, []);
 
     return editable;
   }
