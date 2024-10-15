@@ -664,7 +664,10 @@ export class Edit extends EventTarget {
       return;
     }
 
-    console.log("🌻 enhanced: ", result.result);
+    const enhancedConfiguration = result.result;
+    console.log("🌻 enhanced: ", enhancedConfiguration);
+
+    this.changeNodeConfiguration(tab, id, enhancedConfiguration);
   }
 
   changeNodeConfigurationPart(
