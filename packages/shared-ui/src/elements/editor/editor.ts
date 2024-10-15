@@ -1253,8 +1253,8 @@ export class Editor extends LitElement {
   }
 
   #onGraphEdgeValueSelected(evt: Event) {
-    const { info, schema, x, y } = evt as GraphEdgeValueSelectedEvent;
-    this.dispatchEvent(new EdgeValueSelectedEvent(info, schema, x, y));
+    const { info, schema, edge, x, y } = evt as GraphEdgeValueSelectedEvent;
+    this.dispatchEvent(new EdgeValueSelectedEvent(info, schema, edge, x, y));
   }
 
   #onGraphNodeActivitySelected(evt: Event) {

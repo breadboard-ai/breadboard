@@ -1034,10 +1034,13 @@ export class GraphRenderer extends LitElement {
       (
         info: TopGraphEdgeInfo[],
         schema: Schema | null,
+        edge: EdgeData | null,
         x: number,
         y: number
       ) => {
-        this.dispatchEvent(new GraphEdgeValueSelectedEvent(info, schema, x, y));
+        this.dispatchEvent(
+          new GraphEdgeValueSelectedEvent(info, schema, edge, x, y)
+        );
       }
     );
 

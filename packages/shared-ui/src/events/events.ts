@@ -562,6 +562,14 @@ export class EdgeValueUpdateEvent extends Event {
   }
 }
 
+export class RegenerateEdgeValueEvent extends Event {
+  static eventName = "bbregenerateedgevalue";
+
+  constructor(public readonly id: string) {
+    super(RegenerateEdgeValueEvent.eventName, { ...eventInit });
+  }
+}
+
 export class NodeConfigurationUpdateRequestEvent extends Event {
   static eventName = "bbnodeconfigurationupdaterequest";
 
@@ -642,6 +650,7 @@ export class EdgeValueSelectedEvent extends Event {
   constructor(
     public readonly info: TopGraphEdgeInfo[],
     public readonly schema: Schema | null,
+    public readonly edge: EdgeData | null,
     public readonly x: number,
     public readonly y: number
   ) {
@@ -768,6 +777,7 @@ export class GraphEdgeValueSelectedEvent extends Event {
   constructor(
     public readonly info: TopGraphEdgeInfo[],
     public readonly schema: Schema | null,
+    public readonly edge: EdgeData | null,
     public readonly x: number,
     public readonly y: number
   ) {
