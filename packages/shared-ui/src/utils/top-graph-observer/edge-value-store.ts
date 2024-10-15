@@ -88,7 +88,6 @@ export class EdgeValueStore {
   setConsumed(nodeId: NodeIdentifier): EdgeValueStore {
     const consumedEdges = this.#getIncomingEdges(nodeId);
     for (const edge of consumedEdges) {
-      this.#addOutgoingEdge(edge);
       if (edge.constant) {
         // Constant edges never reach the consumed state.
         continue;
@@ -120,6 +119,7 @@ export class EdgeValueStore {
     let lastEdge;
     edges.forEach((edge) => {
       this.#addIncomingEdge(edge);
+      this.#addOutgoingEdge(edge);
       const name = edge.out;
       const value = name === "*" || !name ? inputs : inputs[name];
       if (value === null || value === undefined) {
