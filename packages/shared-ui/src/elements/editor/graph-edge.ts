@@ -69,7 +69,7 @@ export class GraphEdge extends PIXI.Container {
   #isDirty = true;
   #edge: EdgeData | null = null;
   #overrideColor: number | null = null;
-  #edgePaddingRight = 48;
+  #edgePaddingRight = 24;
   #loopBackPadding = 30;
   #loopBackCurveRadius = 20;
   #overrideInLocation: PIXI.ObservablePoint | null = null;
@@ -122,6 +122,7 @@ export class GraphEdge extends PIXI.Container {
           GRAPH_OPERATIONS.GRAPH_EDGE_VALUE_SELECTED,
           this.value,
           this.schema,
+          this.edge,
           evt.x,
           evt.y
         );
@@ -689,6 +690,7 @@ export class GraphEdge extends PIXI.Container {
         ]);
       } else {
         // S-curve Line.
+        const startPaddingRight = 1.5 * this.#edgePaddingRight;
         let curveRadius = Math.min(
           this.#loopBackCurveRadius,
           Math.abs(outLocation.y - inLocation.y) * 0.25
@@ -704,22 +706,25 @@ export class GraphEdge extends PIXI.Container {
           outLocation.y
         );
         this.#edgeGraphic.lineTo(
-          outLocation.x - this.#loopBackCurveRadius,
+          outLocation.x + startPaddingRight - this.#loopBackCurveRadius,
           outLocation.y
         );
 
         this.#edgeGraphic.quadraticCurveTo(
-          outLocation.x,
+          outLocation.x + startPaddingRight,
           outLocation.y,
-          outLocation.x,
+          outLocation.x + startPaddingRight,
           outLocation.y + curveRadius
         );
 
-        this.#edgeGraphic.lineTo(outLocation.x, midA.y - curveRadius);
+        this.#edgeGraphic.lineTo(
+          outLocation.x + startPaddingRight,
+          midA.y - curveRadius
+        );
         this.#edgeGraphic.quadraticCurveTo(
-          outLocation.x,
+          outLocation.x + startPaddingRight,
           midA.y,
-          outLocation.x - this.#loopBackCurveRadius,
+          outLocation.x + startPaddingRight - this.#loopBackCurveRadius,
           midA.y
         );
 
@@ -803,7 +808,7 @@ export class GraphEdge extends PIXI.Container {
       this.addChild(this.#debugHitAreaGraphic);
     }
 
-    const x = outLocation.x - this.#edgePaddingRight * 0.5;
+    const x = outLocation.x - 4;
     const y = outLocation.y;
 
     this.#valueSelector.visible = true;

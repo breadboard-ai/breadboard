@@ -23,6 +23,7 @@ import {
   GraphDescriptor,
   GraphProvider,
   InputValues,
+  InspectableEdge,
   InspectableRun,
   InspectableRunSequenceEntry,
   SerializedRun,
@@ -1297,6 +1298,59 @@ export class Main extends LitElement {
     }
   }
 
+  async #attemptNodeRun(id: string) {
+    if (!this.tab) {
+      console.warn(
+        "NodeRunRequestEvent dispatched, but no current tab is present. Likely a bug somewhere."
+      );
+      return;
+    }
+    const firstRun = (
+      await this.#runtime.run.getObservers(this.tab.id)?.runObserver?.runs()
+    )?.at(0);
+
+    const nodeConfig = this.#runtime.edit
+      .getEditor(this.tab)
+      ?.inspect()
+      ?.nodeById(id)
+      ?.configuration();
+
+    const configResult = await getRunNodeConfig(id, nodeConfig, firstRun);
+    if (!configResult.success) {
+      return;
+    }
+    const { config, history } = configResult.result;
+
+    if (!this.tab?.graph?.url) {
+      return;
+    }
+
+    const graph = this.tab?.graph;
+
+    this.showBoardActivityOverlay = true;
+
+    this.#runBoard(
+      addNodeProxyServerConfig(
+        this.#proxy,
+        {
+          url: this.tab.graph.url!,
+          runner: graph,
+          diagnostics: true,
+          kits: [], // The kits are added by the runtime.
+          loader: this.#runtime.board.getLoader(),
+          store: this.#dataStore,
+          inputs: BreadboardUI.Data.inputsFromSettings(this.#settings),
+          interactiveSecrets: true,
+          ...config,
+        },
+        this.#settings,
+        this.proxyFromUrl,
+        await this.#getProxyURL(this.tab?.graph.url)
+      ),
+      history
+    );
+  }
+
   #showBoardEditOverlay() {
     if (!this.tab) {
       return;
@@ -1835,12 +1889,32 @@ export class Main extends LitElement {
 
         let edgeValueOverlay: HTMLTemplateResult | symbol = nothing;
         if (this.showEdgeValue) {
+          // Ensure that the edge has the latest values.
+          const edge = this.#edgeValueData?.edge ?? null;
+          const nodeValue = edge?.from.descriptor.id ?? null;
+          const canRunNode = nodeValue
+            ? topGraphResult.nodeInformation.canRunNode(nodeValue)
+            : false;
+          if (this.#edgeValueData && edge) {
+            const info =
+              topGraphResult.edgeValues.get(edge as InspectableEdge) ?? null;
+
+            this.#edgeValueData = { ...this.#edgeValueData, info };
+          }
+
           edgeValueOverlay = html`<bb-edge-value-overlay
+            .canRunNode=${canRunNode}
+            .readOnly=${topGraphResult.status !== "stopped"}
             .edgeValue=${this.#edgeValueData}
             .graph=${this.tab?.graph}
             .subGraphId=${this.tab?.subGraphId}
             .providers=${this.#providers}
             .providerOps=${this.providerOps}
+            @bbregenerateedgevalue=${async (
+              evt: BreadboardUI.Events.RegenerateEdgeValueEvent
+            ) => {
+              await this.#attemptNodeRun(evt.id);
+            }}
             @bbedgevalueupdate=${(
               evt: BreadboardUI.Events.EdgeValueUpdateEvent
             ) => {
@@ -2314,64 +2388,7 @@ export class Main extends LitElement {
               @bbnoderunrequest=${async (
                 evt: BreadboardUI.Events.NodeRunRequestEvent
               ) => {
-                if (!this.tab) {
-                  console.warn(
-                    "NodeRunRequestEvent dispatched, but no current tab is present. Likely a bug somewhere."
-                  );
-                  return;
-                }
-                const firstRun = (
-                  await this.#runtime.run
-                    .getObservers(this.tab.id)
-                    ?.runObserver?.runs()
-                )?.at(0);
-
-                const nodeConfig = this.#runtime.edit
-                  .getEditor(this.tab)
-                  ?.inspect()
-                  ?.nodeById(evt.id)
-                  ?.configuration();
-
-                const configResult = await getRunNodeConfig(
-                  evt.id,
-                  nodeConfig,
-                  firstRun
-                );
-                if (!configResult.success) {
-                  return;
-                }
-                const { config, history } = configResult.result;
-
-                if (!this.tab?.graph?.url) {
-                  return;
-                }
-
-                const graph = this.tab?.graph;
-
-                this.showBoardActivityOverlay = true;
-
-                this.#runBoard(
-                  addNodeProxyServerConfig(
-                    this.#proxy,
-                    {
-                      url: this.tab.graph.url!,
-                      runner: graph,
-                      diagnostics: true,
-                      kits: [], // The kits are added by the runtime.
-                      loader: this.#runtime.board.getLoader(),
-                      store: this.#dataStore,
-                      inputs: BreadboardUI.Data.inputsFromSettings(
-                        this.#settings
-                      ),
-                      interactiveSecrets: true,
-                      ...config,
-                    },
-                    this.#settings,
-                    this.proxyFromUrl,
-                    await this.#getProxyURL(this.tab?.graph.url)
-                  ),
-                  history
-                );
+                await this.#attemptNodeRun(evt.id);
               }}
 
               @bbrunboard=${async () => {

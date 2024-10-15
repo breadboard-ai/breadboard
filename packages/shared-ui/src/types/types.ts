@@ -340,6 +340,7 @@ export type EdgeValueConfiguration = {
   id: string;
   info: TopGraphEdgeInfo[] | null;
   schema: Schema | null;
+  edge: EdgeData | null;
   x: number;
   y: number;
 };

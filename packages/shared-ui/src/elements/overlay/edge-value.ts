@@ -16,6 +16,7 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
   EdgeValueUpdateEvent,
   OverlayDismissedEvent,
+  RegenerateEdgeValueEvent,
 } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 import { UserInput } from "../elements.js";
@@ -26,6 +27,12 @@ const MAXIMIZE_KEY = "bb-edge-value-overlay-maximized";
 
 @customElement("bb-edge-value-overlay")
 export class EdgeValueOverlay extends LitElement {
+  @property()
+  readOnly = false;
+
+  @property()
+  canRunNode = false;
+
   @property()
   edgeValue: EdgeValueConfiguration | null = null;
 
@@ -149,8 +156,51 @@ export class EdgeValueOverlay extends LitElement {
       padding: var(--bb-grid-size-2) var(--bb-grid-size-4) var(--bb-grid-size-4)
         var(--bb-grid-size-4);
       display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #buttons > div {
+      display: flex;
+      flex: 0 0 auto;
+    }
+
+    #regenerate {
+      background: var(--bb-neutral-100);
+      border: none;
+      font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
+        var(--bb-font-family);
+      color: var(--bb-neutral-600);
+      padding: var(--bb-grid-size) var(--bb-grid-size-4) var(--bb-grid-size)
+        var(--bb-grid-size-2);
+      border-radius: var(--bb-grid-size-12);
+      display: flex;
       justify-content: flex-end;
       align-items: center;
+      cursor: pointer;
+      transition: background-color 0.3s cubic-bezier(0, 0, 0.3, 1);
+    }
+
+    #regenerate::before {
+      content: "";
+      display: block;
+      width: 20px;
+      height: 20px;
+      background: transparent var(--bb-icon-refresh) center center / 20px 20px
+        no-repeat;
+      opacity: 0.7;
+      margin-right: var(--bb-grid-size);
+    }
+
+    #regenerate:not([disabled]):hover,
+    #regenerate:not([disabled]):focus {
+      background: var(--bb-neutral-300);
+      transition-duration: 0.1s;
+    }
+
+    #regenerate[disabled] {
+      opacity: 0.3;
+      cursor: initial;
     }
 
     #cancel {
@@ -168,8 +218,8 @@ export class EdgeValueOverlay extends LitElement {
       font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
         var(--bb-font-family);
       color: var(--bb-neutral-0);
-      padding: var(--bb-grid-size-2) var(--bb-grid-size-6) var(--bb-grid-size-2)
-        var(--bb-grid-size-3);
+      padding: var(--bb-grid-size) var(--bb-grid-size-4) var(--bb-grid-size)
+        var(--bb-grid-size-2);
       border-radius: var(--bb-grid-size-12);
       display: flex;
       justify-content: flex-end;
@@ -188,10 +238,15 @@ export class EdgeValueOverlay extends LitElement {
       margin-right: var(--bb-grid-size-2);
     }
 
-    #update:hover,
-    #update:focus {
+    #update:not([disabled]):hover,
+    #update:not([disabled]):focus {
       background: var(--bb-ui-600);
       transition-duration: 0.1s;
+    }
+
+    #update[disabled] {
+      opacity: 0.3;
+      cursor: initial;
     }
 
     #minmax {
@@ -493,21 +548,40 @@ export class EdgeValueOverlay extends LitElement {
         </div>
         <div id="buttons">
           <button
-            id="cancel"
+            id="regenerate"
+            ?disabled=${!this.canRunNode || this.readOnly}
             @click=${() => {
-              this.dispatchEvent(new OverlayDismissedEvent());
+              if (!this.edgeValue) {
+                return;
+              }
+              this.dispatchEvent(
+                new RegenerateEdgeValueEvent(
+                  this.edgeValue.edge?.from.descriptor.id ?? "unknown-edge"
+                )
+              );
             }}
           >
-            Cancel
+            Regenerate value
           </button>
-          <button
-            id="update"
-            @click=${() => {
-              this.processData();
-            }}
-          >
-            Update
-          </button>
+          <div>
+            <button
+              id="cancel"
+              @click=${() => {
+                this.dispatchEvent(new OverlayDismissedEvent());
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              ?disabled=${this.readOnly}
+              id="update"
+              @click=${() => {
+                this.processData();
+              }}
+            >
+              Update
+            </button>
+          </div>
         </div>
       </div>
     </bb-overlay>`;
