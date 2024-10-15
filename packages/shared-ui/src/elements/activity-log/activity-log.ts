@@ -21,7 +21,11 @@ import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { InputEnterEvent, InputRequestedEvent } from "../../events/events.js";
+import {
+  InputEnterEvent,
+  InputRequestedEvent,
+  RunIsolatedNodeEvent,
+} from "../../events/events.js";
 import { map } from "lit/directives/map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { until } from "lit/directives/until.js";
@@ -70,6 +74,12 @@ export class ActivityLog extends LitElement {
 
   @property()
   providerOps = 0;
+
+  @property()
+  showDebugControls = false;
+
+  @property()
+  nextNodeId: string | null = null;
 
   #seenItems = new Set<string>();
   #newestEntry: Ref<HTMLElement> = createRef();
@@ -538,6 +548,20 @@ export class ActivityLog extends LitElement {
 
     const downloadReady = !!this.#serializedRun;
 
+    const newestEvent = this.events?.at(-1);
+    let allowRerun = null;
+    let allowContinue = null;
+    let allowStepNext = null;
+
+    if (newestEvent && newestEvent.type === "node") {
+      allowRerun = newestEvent.node.descriptor.id;
+    }
+
+    if (this.nextNodeId) {
+      allowContinue = this.nextNodeId;
+      allowStepNext = this.nextNodeId;
+    }
+
     return html`
       ${this.showLogTitle
         ? html`<h1>
@@ -569,7 +593,7 @@ export class ActivityLog extends LitElement {
                 </aside>`
             : nothing}`}
       ${this.events && this.events.length
-        ? this.events.map((event, idx) => {
+        ? html`${this.events.map((event, idx) => {
             const isNew = !this.#seenItems.has(event.id);
             this.#seenItems.add(event.id);
 
@@ -679,7 +703,50 @@ export class ActivityLog extends LitElement {
             >
               <div class="content">${until(content)}</div>
             </div>`;
-          })
+          })}
+          ${this.showDebugControls
+            ? html`<div id="debug-controls">
+                <button
+                  id="debug-rerun"
+                  @click=${() => {
+                    if (!allowRerun) {
+                      return;
+                    }
+                    this.dispatchEvent(
+                      new RunIsolatedNodeEvent(allowRerun, true)
+                    );
+                  }}
+                >
+                  Re-run
+                </button>
+                <button
+                  id="debug-stepnext"
+                  @click=${() => {
+                    if (!allowStepNext) {
+                      return;
+                    }
+                    this.dispatchEvent(
+                      new RunIsolatedNodeEvent(allowStepNext, true)
+                    );
+                  }}
+                >
+                  Step to next
+                </button>
+                <button
+                  id="debug-continue"
+                  @click=${() => {
+                    if (!allowContinue) {
+                      return;
+                    }
+                    this.dispatchEvent(
+                      new RunIsolatedNodeEvent(allowContinue, false)
+                    );
+                  }}
+                >
+                  Continue
+                </button>
+              </div>`
+            : nothing} `
         : html`<div id="click-run">${this.waitingMessage}</div>`}
     `;
   }
