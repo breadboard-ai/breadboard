@@ -15,19 +15,22 @@ import type { ComparableEdge, TopGraphEdgeInfo } from "../../types/types";
 import { ComparableEdgeImpl } from "./comparable-edge";
 
 type EdgeValueStoreMap = Map<string, TopGraphEdgeInfo[]>;
-type IncomingEdgeMap = Map<NodeIdentifier, Edge[]>;
+type NodeToEdgeMap = Map<NodeIdentifier, Edge[]>;
 export class EdgeValueStore {
   #values: EdgeValueStoreMap;
   #lastEdge: ComparableEdgeImpl | null;
-  #incomingEdges: IncomingEdgeMap;
+  #incomingEdges: NodeToEdgeMap;
+  #outgoingEdges: NodeToEdgeMap;
 
   constructor(
     values: EdgeValueStoreMap = new Map(),
-    incomingEdges: IncomingEdgeMap = new Map(),
+    incomingEdges: NodeToEdgeMap = new Map(),
+    outgoingEdges: NodeToEdgeMap = new Map(),
     lastEdge: Edge | null = null
   ) {
     this.#values = values;
     this.#incomingEdges = incomingEdges;
+    this.#outgoingEdges = outgoingEdges;
     this.#lastEdge = lastEdge ? new ComparableEdgeImpl(lastEdge) : null;
   }
 
@@ -73,9 +76,19 @@ export class EdgeValueStore {
     }
   }
 
+  #addOutgoingEdge(edge: Edge) {
+    const { from } = edge;
+    if (!this.#outgoingEdges.has(from)) {
+      this.#outgoingEdges.set(from, [edge]);
+    } else {
+      this.#outgoingEdges.get(from)!.push(edge);
+    }
+  }
+
   setConsumed(nodeId: NodeIdentifier): EdgeValueStore {
     const consumedEdges = this.#getIncomingEdges(nodeId);
     for (const edge of consumedEdges) {
+      this.#addOutgoingEdge(edge);
       if (edge.constant) {
         // Constant edges never reach the consumed state.
         continue;
@@ -97,11 +110,7 @@ export class EdgeValueStore {
       }
       lastInfo.status = "consumed";
     }
-    return new EdgeValueStore(
-      this.#values,
-      this.#incomingEdges,
-      this.#lastEdge?.edge()
-    );
+    return this.clone();
   }
 
   setStored(edges: Edge[], inputs?: InputValues): EdgeValueStore {
@@ -129,7 +138,12 @@ export class EdgeValueStore {
       lastEdge = edge;
     });
 
-    return new EdgeValueStore(this.#values, this.#incomingEdges, lastEdge);
+    return new EdgeValueStore(
+      this.#values,
+      this.#incomingEdges,
+      this.#outgoingEdges,
+      lastEdge
+    );
   }
 
   get current(): ComparableEdge | null {
@@ -139,5 +153,22 @@ export class EdgeValueStore {
   get(edge: InspectableEdge): TopGraphEdgeInfo[] {
     const key = this.#keyFromInspectableEdge(edge);
     return this.#values.get(key) || [];
+  }
+
+  delete(id: NodeIdentifier) {
+    const edges = this.#outgoingEdges.get(id);
+    for (const edge of edges || []) {
+      this.#values.delete(this.#keyFromEdge(edge));
+    }
+    this.#outgoingEdges.delete(id);
+  }
+
+  clone() {
+    return new EdgeValueStore(
+      this.#values,
+      this.#incomingEdges,
+      this.#outgoingEdges,
+      this.#lastEdge?.edge()
+    );
   }
 }

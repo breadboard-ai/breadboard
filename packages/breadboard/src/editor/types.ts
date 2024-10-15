@@ -29,6 +29,7 @@ export type GraphChangeEvent = Event & {
   version: number;
   visualOnly: boolean;
   changeType: ChangeEventType;
+  affectedNodes: NodeIdentifier[];
 };
 
 export type ErrorRejection = {
@@ -286,6 +287,7 @@ export type SingleEditResult =
     }
   | {
       success: true;
+      affectedNodes: NodeIdentifier[];
       /**
        * Indicates that the edit was successful, and
        * resulted in no change.

@@ -7,6 +7,7 @@
 import { InspectableRunSequenceEntry } from "../inspector/types.js";
 import type {
   Edge,
+  NodeConfiguration,
   NodeIdentifier,
   OutputValues,
   TraversalResult,
@@ -105,6 +106,10 @@ export type ReanimationState = {
    * the reanimation state was captured.
    */
   history?: InspectableRunSequenceEntry[];
+  /**
+   * Node configuration that overrides what's in the current state
+   */
+  nodeConfig?: NodeConfiguration;
 };
 
 export type ReanimationMode =

@@ -5,7 +5,7 @@
  */
 
 import { HarnessRunResult } from "../../harness/types.js";
-import { GraphDescriptor } from "../../types.js";
+import { GraphDescriptor, NodeConfiguration } from "../../types.js";
 import { EventManager } from "./event-manager.js";
 import { RunLoader } from "./loader.js";
 import {
@@ -320,7 +320,7 @@ export class Run implements InspectableRun {
     throw new Error("Runs can't yet be replayed.");
   }
 
-  async reanimationStateAt(id: EventIdentifier) {
-    return this.#events.reanimationStateAt(id);
+  async reanimationStateAt(id: EventIdentifier, nodeConfig: NodeConfiguration) {
+    return this.#events.reanimationStateAt(id, nodeConfig);
   }
 }

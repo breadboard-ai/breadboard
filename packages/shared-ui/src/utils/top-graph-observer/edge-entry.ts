@@ -6,6 +6,7 @@
 
 import type {
   InputValues,
+  NodeDescriptor,
   OutputValues,
   Schema,
 } from "@google-labs/breadboard";
@@ -30,8 +31,10 @@ class BubbledOutputEdge implements EdgeLogEntry {
   value?: OutputValues | undefined;
   schema: Schema | undefined;
   end: number;
+  descriptor?: NodeDescriptor | undefined;
 
   constructor(event: RunOutputEvent) {
+    this.descriptor = event.data.node;
     this.schema = event.data.node.configuration?.schema as Schema;
     this.value = event.data.outputs;
     this.end = event.data.timestamp;
@@ -44,8 +47,10 @@ class BubbledInputEdge implements EdgeLogEntry {
   value: InputValues | undefined;
   schema: Schema | undefined;
   end: number | null;
+  descriptor?: NodeDescriptor | undefined;
 
   constructor(event: RunInputEvent) {
+    this.descriptor = event.data.node;
     this.schema = event.data.inputArguments.schema;
     this.id = idFromPath(event.data.path);
     this.end = null;
@@ -58,8 +63,10 @@ class InputEdge implements EdgeLogEntry {
   value: InputValues | undefined;
   schema: Schema | undefined;
   end: number | null;
+  descriptor?: NodeDescriptor | undefined;
 
   constructor(event: RunInputEvent, initialValue?: InputValues | null) {
+    this.descriptor = event.data.node;
     this.schema = event.data.inputArguments.schema as Schema;
     this.id = idFromPath(event.data.path);
     if (initialValue) {

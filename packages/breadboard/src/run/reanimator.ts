@@ -41,6 +41,9 @@ export class Reanimator implements ReanimationController {
       ...result.partialOutputs,
     };
     this.#inputs = undefined;
+    if (this.#resumeFrom.nodeConfig) {
+      result.inputs = { ...result.inputs, ...this.#resumeFrom.nodeConfig };
+    }
     const replayOutputs = entry.outputs ? [entry.outputs] : [];
 
     // Always return the new instance:

@@ -938,7 +938,10 @@ export type InspectableRun = {
    * Optional, since not all InspectableRun implemenations can offer this
    * capability.
    */
-  reanimationStateAt?(id: EventIdentifier): Promise<ReanimationState>;
+  reanimationStateAt?(
+    id: EventIdentifier,
+    nodeConfig: NodeConfiguration | undefined
+  ): Promise<ReanimationState>;
 };
 
 /**

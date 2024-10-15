@@ -50,8 +50,13 @@ export class Edit extends EventTarget {
     const editor = edit(tab.graph, { kits: tab.kits, loader: this.loader });
     editor.addEventListener("graphchange", (evt) => {
       tab.graph = evt.graph;
-
-      this.dispatchEvent(new RuntimeBoardEditEvent(evt.visualOnly));
+      this.dispatchEvent(
+        new RuntimeBoardEditEvent(
+          tab.id,
+          evt.visualOnly ? [] : evt.affectedNodes,
+          evt.visualOnly
+        )
+      );
     });
 
     editor.addEventListener("graphchangereject", (evt) => {
@@ -252,7 +257,7 @@ export class Edit extends EventTarget {
     graph.metadata.comments = graph.metadata.comments.filter(
       (comment) => comment.id !== id
     );
-    this.dispatchEvent(new RuntimeBoardEditEvent(false));
+    this.dispatchEvent(new RuntimeBoardEditEvent(tab.id, [], false));
   }
 
   updateBoardInfo(
@@ -326,7 +331,8 @@ export class Edit extends EventTarget {
       }
     }
 
-    this.dispatchEvent(new RuntimeBoardEditEvent(false));
+    // TODO: Plumb Tab ID here.
+    this.dispatchEvent(new RuntimeBoardEditEvent(null, [], false));
   }
 
   createSubGraph(tab: Tab | null, subGraphTitle: string) {

@@ -7,7 +7,10 @@
 import { HarnessRunner, RunEventMap } from "@google-labs/breadboard/harness";
 import { Tab, TabId } from "./types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { InspectableRunObserver } from "@google-labs/breadboard";
+import {
+  InspectableRunObserver,
+  NodeIdentifier,
+} from "@google-labs/breadboard";
 
 const eventInit = {
   bubbles: true,
@@ -34,7 +37,11 @@ export class RuntimeErrorEvent extends Event {
 export class RuntimeBoardEditEvent extends Event {
   static eventName = "runtimeboardedit" as const;
 
-  constructor(public readonly visualOnly = false) {
+  constructor(
+    public readonly tabId: TabId | null,
+    public readonly affectedNodes: NodeIdentifier[],
+    public readonly visualOnly = false
+  ) {
     super(RuntimeBoardEditEvent.eventName, { ...eventInit });
   }
 }
