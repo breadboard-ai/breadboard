@@ -668,10 +668,7 @@ export class Edit extends EventTarget {
       return;
     }
 
-    const enhancedConfiguration = result.result;
-    console.log("🌻 enhanced: ", enhancedConfiguration);
-
-    this.changeNodeConfiguration(tab, id, enhancedConfiguration);
+    this.changeNodeConfiguration(tab, id, result.result);
 
     // TODO: Somehow teach the edits to propagate to the current overlay.
     this.dispatchEvent(new RuntimeBoardEditEvent(tab.id, [id], false));
