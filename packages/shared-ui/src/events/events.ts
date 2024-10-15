@@ -566,7 +566,10 @@ export class EdgeValueUpdateEvent extends Event {
 export class RunIsolatedNodeEvent extends Event {
   static eventName = "bbrunisolatednode";
 
-  constructor(public readonly id: string) {
+  constructor(
+    public readonly id: string,
+    public readonly stopAfter = true
+  ) {
     super(RunIsolatedNodeEvent.eventName, { ...eventInit });
   }
 }

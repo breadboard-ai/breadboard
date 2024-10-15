@@ -29,6 +29,12 @@ export class BoardActivityOverlay extends LitElement {
   hideLast = false;
 
   @property()
+  showDebugControls = false;
+
+  @property()
+  nextNodeId: string | null = null;
+
+  @property()
   location = { x: 10, y: 10 };
 
   @property()
@@ -191,6 +197,8 @@ export class BoardActivityOverlay extends LitElement {
             .waitingMessage=${'Click "Debug Board" to get started'}
             .providers=${this.providers}
             .providerOps=${this.providerOps}
+            .showDebugControls=${this.showDebugControls}
+            .nextNodeId=${this.nextNodeId}
             @pointerdown=${(evt: PointerEvent) => {
               const [top] = evt.composedPath();
               if (!(top instanceof HTMLElement) || !top.dataset.messageId) {

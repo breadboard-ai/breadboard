@@ -8,7 +8,8 @@ import { css } from "lit";
 export const styles = css`
   :host {
     display: block;
-    background: #fff;
+    background: var(--bb-neutral-0);
+    position: relative;
 
     --padding-x: calc(var(--bb-grid-size) * 4);
     --padding-y: var(--bb-grid-size-2);
@@ -435,6 +436,50 @@ export const styles = css`
     height: var(--bb-grid-size-6);
     padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-7);
     margin: var(--bb-grid-size-2) 0 var(--bb-grid-size) 0;
+  }
+
+  #debug-rerun,
+  #debug-stepnext,
+  #debug-continue {
+    color: var(--bb-input-700);
+    border-radius: var(--bb-grid-size-5);
+    border: none;
+    height: var(--bb-grid-size-7);
+    padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-7);
+    margin: 0 var(--bb-grid-size) 0 0;
+    cursor: pointer;
+    transition: background-color 0.1s cubic-bezier(0, 0, 0.3, 1);
+  }
+
+  #debug-rerun {
+    background: var(--bb-input-100) var(--bb-icon-rerun) 8px center / 16px 16px
+      no-repeat;
+  }
+
+  #debug-stepnext {
+    background: var(--bb-input-100) var(--bb-icon-step-next) 8px center / 16px
+      16px no-repeat;
+  }
+
+  #debug-continue {
+    background: var(--bb-input-100) var(--bb-icon-continue) 8px center / 16px
+      16px no-repeat;
+  }
+
+  #debug-rerun:focus,
+  #debug-rerun:hover,
+  #debug-stepnext:focus,
+  #debug-stepnext:hover,
+  #debug-continue:focus,
+  #debug-continue:hover {
+    background-color: var(--bb-input-200);
+  }
+
+  #debug-controls {
+    height: var(--bb-grid-size-7);
+    background: var(--bb-neutral-0);
+    position: sticky;
+    bottom: 0;
   }
 
   @keyframes slideIn {

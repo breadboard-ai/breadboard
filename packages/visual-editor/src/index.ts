@@ -1720,6 +1720,11 @@ export class Main extends LitElement {
               this.showBoardActivityOverlay = false;
               this.#boardActivityLocation = null;
             }}
+            @bbrunisolatednode=${async (
+              evt: BreadboardUI.Events.RunIsolatedNodeEvent
+            ) => {
+              await this.#attemptNodeRun(evt.id, evt.stopAfter);
+            }}
             @bbinputenter=${async (
               event: BreadboardUI.Events.InputEnterEvent
             ) => {
@@ -1769,10 +1774,19 @@ export class Main extends LitElement {
 
         // Update board activity values.
         if (this.#boardActivityRef.value) {
+          const latest = events.at(-1);
+          let showDebugControls = false;
+          if (latest && latest.type === "node") {
+            showDebugControls = tabStatus === "stopped" && latest.end === null;
+          }
+
           this.#boardActivityRef.value.run = run;
           this.#boardActivityRef.value.events = events;
           this.#boardActivityRef.value.inputsFromLastRun = inputsFromLastRun;
           this.#boardActivityRef.value.hideLast = hideLast;
+          this.#boardActivityRef.value.showDebugControls = showDebugControls;
+          this.#boardActivityRef.value.nextNodeId =
+            topGraphResult.currentNode?.descriptor.id ?? null;
         }
 
         let historyOverlay: HTMLTemplateResult | symbol = nothing;

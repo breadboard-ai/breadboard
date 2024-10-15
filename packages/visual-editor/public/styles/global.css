@@ -71,6 +71,7 @@
   --bb-icon-comment: url(/third_party/icons/comment.svg);
   --bb-icon-confirm-blue: url(/third_party/icons/confirm-blue.svg);
   --bb-icon-code-blocks: url(/third_party/icons/code-blocks.svg);
+  --bb-icon-continue: url(/third_party/icons/continue.svg);
   --bb-icon-copy-to-clipboard: url(/third_party/icons/copy-to-clipboard.svg);
   --bb-icon-data-info-alert: url(/third_party/icons/data-info-alert.svg);
   --bb-icon-delete: url(/third_party/icons/delete.svg);
@@ -122,6 +123,7 @@
   --bb-icon-redo: url(/third_party/icons/redo.svg);
   --bb-icon-redo-inverted: url(/third_party/icons/redo-inverted.svg);
   --bb-icon-refresh: url(/third_party/icons/refresh.svg);
+  --bb-icon-rerun: url(/third_party/icons/rerun.svg);
   --bb-icon-reset-image: url(/third_party/icons/reset-image.svg);
   --bb-icon-reset-nodes: url(/third_party/icons/reset-nodes.svg);
   --bb-icon-resume-blue: url(/third_party/icons/resume-blue.svg);
@@ -136,6 +138,7 @@
   --bb-icon-settings-inverted: url(/third_party/icons/settings-inverted.svg);
   --bb-icon-smart-toy: url(/third_party/icons/smart-toy.svg);
   --bb-icon-sound: url(/third_party/icons/sound.svg);
+  --bb-icon-step-next: url(/third_party/icons/step-next.svg);
   --bb-icon-stop-circle: url(/third_party/icons/stop-circle.svg);
   --bb-icon-tool: url(/third_party/icons/tool.svg);
   --bb-icon-undo: url(/third_party/icons/undo.svg);
