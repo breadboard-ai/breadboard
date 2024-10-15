@@ -545,7 +545,8 @@ export class NodePartialUpdateEvent extends Event {
     public readonly id: string,
     public readonly subGraphId: string | null = null,
     public readonly configuration: NodeConfiguration,
-    public readonly metadata: NodeMetadata | null = null
+    public readonly metadata: NodeMetadata | null = null,
+    public readonly debugging = false
   ) {
     super(NodePartialUpdateEvent.eventName, { ...eventInit });
   }
@@ -562,11 +563,11 @@ export class EdgeValueUpdateEvent extends Event {
   }
 }
 
-export class RegenerateEdgeValueEvent extends Event {
-  static eventName = "bbregenerateedgevalue";
+export class RunIsolatedNodeEvent extends Event {
+  static eventName = "bbrunisolatednode";
 
   constructor(public readonly id: string) {
-    super(RegenerateEdgeValueEvent.eventName, { ...eventInit });
+    super(RunIsolatedNodeEvent.eventName, { ...eventInit });
   }
 }
 

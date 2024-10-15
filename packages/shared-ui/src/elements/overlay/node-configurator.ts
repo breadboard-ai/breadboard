@@ -17,6 +17,7 @@ import { GraphDescriptor, GraphProvider } from "@google-labs/breadboard";
 import {
   NodePartialUpdateEvent,
   OverlayDismissedEvent,
+  RunIsolatedNodeEvent,
 } from "../../events/events.js";
 import { EditorMode, filterConfigByMode } from "../../utils/mode.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -27,6 +28,9 @@ const OVERLAY_CLEARANCE = 60;
 
 @customElement("bb-node-configuration-overlay")
 export class NodeConfigurationOverlay extends LitElement {
+  @property()
+  canRunNode = false;
+
   @property()
   value: NodePortConfiguration | null = null;
 
@@ -131,8 +135,51 @@ export class NodeConfigurationOverlay extends LitElement {
       padding: var(--bb-grid-size-2) var(--bb-grid-size-4) var(--bb-grid-size-4)
         var(--bb-grid-size-4);
       display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #buttons > div {
+      display: flex;
+      flex: 0 0 auto;
+    }
+
+    #run-node {
+      background: var(--bb-neutral-100);
+      border: none;
+      font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
+        var(--bb-font-family);
+      color: var(--bb-neutral-600);
+      padding: var(--bb-grid-size) var(--bb-grid-size-4) var(--bb-grid-size)
+        var(--bb-grid-size-2);
+      border-radius: var(--bb-grid-size-12);
+      display: flex;
       justify-content: flex-end;
       align-items: center;
+      cursor: pointer;
+      transition: background-color 0.3s cubic-bezier(0, 0, 0.3, 1);
+    }
+
+    #run-node::before {
+      content: "";
+      display: block;
+      width: 20px;
+      height: 20px;
+      background: transparent var(--bb-icon-play-filled) center center / 20px
+        20px no-repeat;
+      opacity: 0.4;
+      margin-right: var(--bb-grid-size);
+    }
+
+    #run-node:not([disabled]):hover,
+    #run-node:not([disabled]):focus {
+      background: var(--bb-neutral-300);
+      transition-duration: 0.1s;
+    }
+
+    #run-node[disabled] {
+      opacity: 0.3;
+      cursor: initial;
     }
 
     #cancel {
@@ -150,8 +197,8 @@ export class NodeConfigurationOverlay extends LitElement {
       font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
         var(--bb-font-family);
       color: var(--bb-neutral-0);
-      padding: var(--bb-grid-size-2) var(--bb-grid-size-6) var(--bb-grid-size-2)
-        var(--bb-grid-size-3);
+      padding: var(--bb-grid-size) var(--bb-grid-size-4) var(--bb-grid-size)
+        var(--bb-grid-size-2);
       border-radius: var(--bb-grid-size-12);
       display: flex;
       justify-content: flex-end;
@@ -373,7 +420,7 @@ export class NodeConfigurationOverlay extends LitElement {
     return EditorMode.MINIMAL;
   }
 
-  processData() {
+  processData(debugging = false) {
     this.#pendingSave = false;
 
     if (
@@ -413,9 +460,12 @@ export class NodeConfigurationOverlay extends LitElement {
     if (logLevelEl?.value)
       metadata.logLevel = logLevelEl?.value as "info" | "debug";
 
-    this.#destroyCodeEditors();
+    if (!debugging) {
+      this.#destroyCodeEditors();
+    }
+
     this.dispatchEvent(
-      new NodePartialUpdateEvent(id, subGraphId, outputs, metadata)
+      new NodePartialUpdateEvent(id, subGraphId, outputs, metadata, debugging)
     );
   }
 
@@ -614,21 +664,37 @@ export class NodeConfigurationOverlay extends LitElement {
         </div>
         <div id="buttons">
           <button
-            id="cancel"
+            id="run-node"
+            ?disabled=${!this.canRunNode}
             @click=${() => {
-              this.dispatchEvent(new OverlayDismissedEvent());
+              if (!this.value) {
+                return;
+              }
+
+              this.processData(true);
+              this.dispatchEvent(new RunIsolatedNodeEvent(this.value.id));
             }}
           >
-            Cancel
+            Run
           </button>
-          <button
-            id="update"
-            @click=${() => {
-              this.processData();
-            }}
-          >
-            Update
-          </button>
+          <div>
+            <button
+              id="cancel"
+              @click=${() => {
+                this.dispatchEvent(new OverlayDismissedEvent());
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              id="update"
+              @click=${() => {
+                this.processData();
+              }}
+            >
+              Update
+            </button>
+          </div>
         </div>
       </div>
     </bb-overlay>`;

@@ -94,6 +94,9 @@ export class UserInput extends LitElement {
   @property()
   providerOps = 0;
 
+  @property({ reflect: true })
+  readOnly = false;
+
   #formRef: Ref<HTMLFormElement> = createRef();
 
   static styles = css`
@@ -103,6 +106,19 @@ export class UserInput extends LitElement {
 
     :host {
       display: block;
+      position: relative;
+    }
+
+    :host([readonly="true"])::after {
+      content: "";
+      position: absolute;
+      background: var(--bb-neutral-0);
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1;
+      opacity: 0.4;
     }
 
     .item {
