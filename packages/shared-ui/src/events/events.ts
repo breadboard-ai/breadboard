@@ -684,6 +684,14 @@ export class NodeRunRequestEvent extends Event {
   }
 }
 
+export class InteractionEvent extends Event {
+  static eventName = "bbinteraction";
+
+  constructor() {
+    super(InteractionEvent.eventName, { ...eventInit });
+  }
+}
+
 export class GraphInteractionEvent extends Event {
   static eventName = "bbgraphinteraction";
 

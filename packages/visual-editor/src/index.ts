@@ -807,6 +807,15 @@ export class Main extends LitElement {
     this.requestUpdate();
   }
 
+  async #clearBoardSave() {
+    if (!this.tab) {
+      return;
+    }
+
+    const tabToSave = this.tab;
+    this.#tabSaveId.delete(tabToSave.id);
+  }
+
   async #attemptBoardSave(
     message = "Board saved",
     ackUser = true,
@@ -2022,6 +2031,9 @@ export class Main extends LitElement {
               .inputsFromLastRun=${inputsFromLastRun}
               .isShowingBoardActivityOverlay=${this.showBoardActivityOverlay}
               .tabURLs=${tabURLs}
+              @bbinteraction=${() => {
+                this.#clearBoardSave();
+              }}
               @bbsave=${() => {
                 this.#attemptBoardSave();
               }}

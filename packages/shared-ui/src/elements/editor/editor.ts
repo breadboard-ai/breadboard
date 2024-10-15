@@ -43,6 +43,7 @@ import {
   GraphNodesVisualUpdateEvent,
   GraphShowTooltipEvent,
   HideTooltipEvent,
+  InteractionEvent,
   MultiEditEvent,
   NodeActivitySelectedEvent,
   NodeConfigurationUpdateRequestEvent,
@@ -595,6 +596,8 @@ export class Editor extends LitElement {
   }
 
   #onGraphInteraction() {
+    this.dispatchEvent(new InteractionEvent());
+
     // Only switch off the flag if there is a run active.
     if (!this.topGraphResult?.currentNode) {
       return;
