@@ -11,6 +11,7 @@ import {
   GraphLoader,
   GraphProvider,
   Kit,
+  NodeConfiguration,
   RunStore,
 } from "@google-labs/breadboard";
 
@@ -47,3 +48,17 @@ export interface RuntimeConfigBoardServers {
   servers: BoardServer[];
   loader: GraphLoader;
 }
+
+export type Result<T> =
+  | {
+      success: false;
+      error: string;
+    }
+  | {
+      success: true;
+      result: T;
+    };
+
+export type EnhanceSideboard = {
+  enhance(config: NodeConfiguration): Promise<Result<NodeConfiguration>>;
+};

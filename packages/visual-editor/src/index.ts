@@ -38,7 +38,7 @@ import { SecretsHelper } from "./utils/secrets-helper";
 import { SettingsHelperImpl } from "./utils/settings-helper";
 import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
-import { TabId } from "./runtime/types";
+import { EnhanceSideboard, TabId } from "./runtime/types";
 import { createPastRunObserver } from "./utils/past-run-observer";
 import { FileSystemGraphProvider } from "./providers/file-system";
 import { getRunNodeConfig } from "./utils/run-node";
@@ -1880,11 +1880,18 @@ export class Main extends LitElement {
                 return;
               }
 
+              const enhancer: EnhanceSideboard = {
+                enhance: async (config) => {
+                  return { success: true, result: config };
+                },
+              };
+
               this.#runtime.edit.enhanceNodeConfiguration(
                 this.tab,
                 this.tab.subGraphId,
                 evt.id,
-                evt.property
+                evt.property,
+                enhancer
               );
             }}
             @bboverlaydismissed=${() => {
