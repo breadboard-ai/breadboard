@@ -485,6 +485,7 @@ export class TopGraphObserver {
       if (stopHere === undefined) {
         if (nodes.has(id)) {
           stopHere = index;
+          this.#edgeValues.delete(id);
         }
       } else {
         this.#edgeValues.delete(id);
@@ -494,6 +495,7 @@ export class TopGraphObserver {
     if (stopHere !== undefined) {
       this.#currentResult = null;
       this.#currentNode = null;
+      this.#edgeValues = this.#edgeValues.clone();
     }
   }
 }
