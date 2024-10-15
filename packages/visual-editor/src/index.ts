@@ -26,6 +26,7 @@ import {
   InspectableEdge,
   InspectableRun,
   InspectableRunSequenceEntry,
+  NodeConfiguration,
   SerializedRun,
 } from "@google-labs/breadboard";
 import { getDataStore, getRunStore } from "@breadboard-ai/data-store";
@@ -1882,11 +1883,22 @@ export class Main extends LitElement {
 
               const enhancer: EnhanceSideboard = {
                 enhance: async (config) => {
-                  return this.#runtime.run.invokeSideboard(
-                    "https://raw.githubusercontent.com/breadboard-ai/breadboard/refs/heads/main/packages/visual-editor/public/example-boards/examples/blank.json",
+                  // Currently, the API of the board is fixed.
+                  // Inputs: { config }
+                  // Outputs: { config }
+                  // We should probably have some way to codify the shape.
+                  const result = await this.#runtime.run.invokeSideboard(
+                    "/side-boards/enhance-configuration.bgl.json",
                     this.#runtime.board.getLoader(),
-                    { text: config }
+                    { config }
                   );
+                  if (!result.success) {
+                    return result;
+                  }
+                  return {
+                    success: true,
+                    result: result.result.config as NodeConfiguration,
+                  };
                 },
               };
 
