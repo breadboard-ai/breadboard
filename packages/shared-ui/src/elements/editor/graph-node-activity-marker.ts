@@ -16,6 +16,8 @@ const errorColor = getGlobalColor("--bb-warning-600");
 const neutralColor = getGlobalColor("--bb-inputs-500");
 const textColor = getGlobalColor("--bb-neutral-0");
 
+const LABEL_HEIGHT = 14;
+
 export class GraphNodeActivityMarker extends PIXI.Container {
   #isDirty = false;
   #background = new PIXI.Graphics();
@@ -35,7 +37,6 @@ export class GraphNodeActivityMarker extends PIXI.Container {
       fontSize: this.#textSize,
       fill: textColor,
       align: "center",
-      textBaseline: "bottom",
       whiteSpace: "pre",
     },
   });
@@ -96,7 +97,7 @@ export class GraphNodeActivityMarker extends PIXI.Container {
   get dimensions() {
     return {
       width: this.#label.width + 2 * this.#paddingHorizonal,
-      height: this.#label.height + 2 * this.#paddingVertical,
+      height: LABEL_HEIGHT + 2 * this.#paddingVertical,
     };
   }
 
@@ -163,9 +164,10 @@ export class GraphNodeActivityMarker extends PIXI.Container {
       0,
       0,
       this.#label.width + 2 * this.#paddingHorizonal,
-      this.#label.height + 2 * this.#paddingVertical,
+      LABEL_HEIGHT + 2 * this.#paddingVertical,
       this.#radius
     );
+
     this.#background.closePath();
     this.#background.fill({ color: this.#color });
   }
