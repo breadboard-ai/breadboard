@@ -179,6 +179,7 @@ export class GraphRenderer extends LitElement {
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #onKeyUpBound = this.#onKeyUp.bind(this);
   #onWheelBound = this.#onWheel.bind(this);
+  #onPointerDownBound = this.#onPointerDown.bind(this);
 
   ready = this.#loadTexturesAndInitializeRenderer();
   zoomToHighlightedNode = false;
@@ -1353,6 +1354,10 @@ export class GraphRenderer extends LitElement {
     }
   }
 
+  #onPointerDown() {
+    this.dispatchEvent(new GraphInteractionEvent());
+  }
+
   #onKeyDown(evt: KeyboardEvent) {
     if (evt.code === "KeyA" && evt.metaKey) {
       if (evt.composedPath()[0] !== this) {
@@ -1420,6 +1425,7 @@ export class GraphRenderer extends LitElement {
     super.connectedCallback();
 
     this.#resizeObserver.observe(this);
+    window.addEventListener("pointerdown", this.#onPointerDownBound);
     window.addEventListener("keyup", this.#onKeyUpBound);
     window.addEventListener("keydown", this.#onKeyDownBound);
     this.addEventListener("wheel", this.#onWheelBound, { passive: false });
@@ -1433,6 +1439,7 @@ export class GraphRenderer extends LitElement {
     }
 
     this.#resizeObserver.disconnect();
+    window.removeEventListener("pointerdown", this.#onPointerDownBound);
     window.removeEventListener("keyup", this.#onKeyUpBound);
     window.removeEventListener("keydown", this.#onKeyDownBound);
     this.removeEventListener("wheel", this.#onWheelBound);
