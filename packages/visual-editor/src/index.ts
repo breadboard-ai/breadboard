@@ -300,12 +300,6 @@ export class Main extends LitElement {
         this.#runtime.edit.addEventListener(
           Runtime.Events.RuntimeBoardEditEvent.eventName,
           (evt: Runtime.Events.RuntimeBoardEditEvent) => {
-            this.#nodeConfiguratorData = null;
-            this.showNodeConfigurator = false;
-
-            this.#commentValueData = null;
-            this.showCommentEditor = false;
-
             this.requestUpdate();
 
             const observers = this.#runtime.run.getObservers(evt.tabId);
@@ -1298,7 +1292,7 @@ export class Main extends LitElement {
     }
   }
 
-  async #attemptNodeRun(id: string) {
+  async #attemptNodeRun(id: string, stopAfter = true) {
     if (!this.tab) {
       console.warn(
         "NodeRunRequestEvent dispatched, but no current tab is present. Likely a bug somewhere."
@@ -1320,6 +1314,9 @@ export class Main extends LitElement {
       return;
     }
     const { config, history } = configResult.result;
+    if (!stopAfter && config) {
+      delete config.stopAfter;
+    }
 
     if (!this.tab?.graph?.url) {
       return;
@@ -1695,12 +1692,17 @@ export class Main extends LitElement {
         // should be hidden.
         const hideLast = tabStatus === BreadboardUI.Types.STATUS.STOPPED;
 
-        const boardActivityOverlay = html`${guard([hideLast], () => {
+        // We have a guard around the board activity overlay to prevent it
+        // from re-rendering on every change (which triggers the entry
+        // animation). This means we need to "manually" send it the run and
+        // events on each pass, which is done immediately after this.
+        const boardActivityOverlay = html`${guard([], () => {
           return html`<bb-board-activity-overlay
             ${ref(this.#boardActivityRef)}
             .location=${this.#boardActivityLocation}
             .run=${run}
             .events=${events}
+            .topGraphResult=${topGraphResult}
             .settings=${this.#settings}
             .providers=${this.#providers}
             .providerOps=${this.providerOps}
@@ -1765,14 +1767,12 @@ export class Main extends LitElement {
           ></bb-board-activity-overlay>`;
         })}`;
 
-        // We placed a guard around the board activity overlay to prevent it
-        // from re-rendering on every change (which triggers the entry
-        // animation). This means we need to "manually" send it the run and
-        // events on each pass.
+        // Update board activity values.
         if (this.#boardActivityRef.value) {
           this.#boardActivityRef.value.run = run;
           this.#boardActivityRef.value.events = events;
           this.#boardActivityRef.value.inputsFromLastRun = inputsFromLastRun;
+          this.#boardActivityRef.value.hideLast = hideLast;
         }
 
         let historyOverlay: HTMLTemplateResult | symbol = nothing;
@@ -1840,14 +1840,25 @@ export class Main extends LitElement {
 
         let nodeConfiguratorOverlay: HTMLTemplateResult | symbol = nothing;
         if (this.showNodeConfigurator) {
+          const canRunNode = this.#nodeConfiguratorData
+            ? topGraphResult.nodeInformation.canRunNode(
+                this.#nodeConfiguratorData.id
+              )
+            : false;
           nodeConfiguratorOverlay = html`<bb-node-configuration-overlay
             ${ref(this.#nodeConfiguratorRef)}
+            .canRunNode=${canRunNode}
             .value=${this.#nodeConfiguratorData}
             .graph=${this.tab?.graph}
             .providers=${this.#providers}
             .providerOps=${this.providerOps}
             .showTypes=${false}
             .offerConfigurationEnhancements=${offerConfigurationEnhancements}
+            @bbrunisolatednode=${async (
+              evt: BreadboardUI.Events.RunIsolatedNodeEvent
+            ) => {
+              await this.#attemptNodeRun(evt.id);
+            }}
             @bbenhancenodeconfiguration=${(
               evt: BreadboardUI.Events.EnhanceNodeConfigurationEvent
             ) => {
@@ -1863,6 +1874,7 @@ export class Main extends LitElement {
               );
             }}
             @bboverlaydismissed=${() => {
+              this.#nodeConfiguratorData = null;
               this.showNodeConfigurator = false;
             }}
             @bbnodepartialupdate=${async (
@@ -1874,6 +1886,11 @@ export class Main extends LitElement {
                   BreadboardUI.Events.ToastType.ERROR
                 );
                 return;
+              }
+
+              if (!evt.debugging) {
+                this.#nodeConfiguratorData = null;
+                this.showNodeConfigurator = false;
               }
 
               this.#runtime.edit.changeNodeConfigurationPart(
@@ -1910,8 +1927,8 @@ export class Main extends LitElement {
             .subGraphId=${this.tab?.subGraphId}
             .providers=${this.#providers}
             .providerOps=${this.providerOps}
-            @bbregenerateedgevalue=${async (
-              evt: BreadboardUI.Events.RegenerateEdgeValueEvent
+            @bbrunisolatednode=${async (
+              evt: BreadboardUI.Events.RunIsolatedNodeEvent
             ) => {
               await this.#attemptNodeRun(evt.id);
             }}
@@ -1935,6 +1952,9 @@ export class Main extends LitElement {
             @bbcommentupdate=${(
               evt: BreadboardUI.Events.CommentUpdateEvent
             ) => {
+              this.#commentValueData = null;
+              this.showCommentEditor = false;
+
               this.#runtime.edit.changeComment(
                 this.tab,
                 evt.id,
@@ -1943,6 +1963,7 @@ export class Main extends LitElement {
               );
             }}
             @bboverlaydismissed=${() => {
+              this.#commentValueData = null;
               this.showCommentEditor = false;
             }}
           ></bb-comment-overlay>`;
@@ -2390,7 +2411,6 @@ export class Main extends LitElement {
               ) => {
                 await this.#attemptNodeRun(evt.id);
               }}
-
               @bbrunboard=${async () => {
                 if (!this.tab?.graph?.url) {
                   return;

@@ -41,6 +41,11 @@ export class GraphNodeFooter extends PIXI.Container {
         "pointerover",
         (evt: PIXI.FederatedPointerEvent) => {
           evt.target.alpha = ICON_ALPHA_OVER;
+          const message = "Run";
+          const x = evt.clientX;
+          const y = evt.clientY;
+
+          this.emit(GRAPH_OPERATIONS.GRAPH_SHOW_TOOLTIP, message, x, y);
         }
       );
 
@@ -48,6 +53,8 @@ export class GraphNodeFooter extends PIXI.Container {
         "pointerout",
         (evt: PIXI.FederatedPointerEvent) => {
           evt.target.alpha = ICON_ALPHA_OUT;
+
+          this.emit(GRAPH_OPERATIONS.GRAPH_HIDE_TOOLTIP);
         }
       );
 

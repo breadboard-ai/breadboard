@@ -16,7 +16,7 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
   EdgeValueUpdateEvent,
   OverlayDismissedEvent,
-  RegenerateEdgeValueEvent,
+  RunIsolatedNodeEvent,
 } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 import { UserInput } from "../elements.js";
@@ -134,7 +134,7 @@ export class EdgeValueOverlay extends LitElement {
     }
 
     #wrapper {
-      min-width: 300px;
+      min-width: 360px;
       width: 400px;
       display: flex;
       flex-direction: column;
@@ -445,6 +445,8 @@ export class EdgeValueOverlay extends LitElement {
       @input=${() => {
         this.#pendingSave = true;
       }}
+      ?inert=${this.readOnly}
+      .readOnly=${this.readOnly}
       .inputs=${userInputs}
       .graph=${this.graph}
       .subGraphId=${this.subGraphId}
@@ -555,7 +557,7 @@ export class EdgeValueOverlay extends LitElement {
                 return;
               }
               this.dispatchEvent(
-                new RegenerateEdgeValueEvent(
+                new RunIsolatedNodeEvent(
                   this.edgeValue.edge?.from.descriptor.id ?? "unknown-edge"
                 )
               );
