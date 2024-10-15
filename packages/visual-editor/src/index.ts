@@ -2313,10 +2313,16 @@ export class Main extends LitElement {
                     .getObservers(this.tab.id)
                     ?.runObserver?.runs()
                 )?.at(0);
-                // TODO: Feed changed `inputs` here.
+
+                const nodeConfig = this.#runtime.edit
+                  .getEditor(this.tab)
+                  ?.inspect()
+                  ?.nodeById(evt.id)
+                  ?.configuration();
+
                 const configResult = await getRunNodeConfig(
                   evt.id,
-                  undefined,
+                  nodeConfig,
                   firstRun
                 );
                 if (!configResult.success) {

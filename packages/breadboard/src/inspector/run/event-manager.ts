@@ -11,6 +11,7 @@ import {
   GraphEndProbeData,
   GraphStartProbeData,
   InputResponse,
+  NodeConfiguration,
   NodeDescriptor,
   NodeEndResponse,
   NodeStartResponse,
@@ -309,7 +310,10 @@ export class EventManager {
     return entry?.event || null;
   }
 
-  async reanimationStateAt(id: EventIdentifier): Promise<ReanimationState> {
+  async reanimationStateAt(
+    id: EventIdentifier,
+    nodeConfig: NodeConfiguration
+  ): Promise<ReanimationState> {
     const manager = new LifecycleManager();
     for (const [index, entry] of this.#sequence.entries()) {
       const [type, data] = entry;
@@ -330,6 +334,7 @@ export class EventManager {
           if (event.id === id) {
             const reanimationState = manager.reanimationState();
             reanimationState.history = this.#sequence.slice(0, index + 1);
+            reanimationState.nodeConfig = nodeConfig;
             return reanimationState;
           }
           break;
