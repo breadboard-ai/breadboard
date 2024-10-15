@@ -486,10 +486,12 @@ export class TopGraphObserver {
         if (nodes.has(id)) {
           stopHere = index;
           this.#edgeValues.delete(id);
+          this.#nodeActivity.delete(id);
         }
       } else {
         this.#edgeValues.delete(id);
         this.#canRunState.delete(id);
+        this.#nodeActivity.delete(id);
       }
     }
     if (stopHere !== undefined) {
