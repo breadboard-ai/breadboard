@@ -333,8 +333,10 @@ export class Main extends LitElement {
 
         this.#runtime.edit.addEventListener(
           Runtime.Events.RuntimeErrorEvent.eventName,
-          (evt: Runtime.Events.RuntimeErrorEvent) => {
-            this.toast(evt.message, BreadboardUI.Events.ToastType.ERROR);
+          (_evt: Runtime.Events.RuntimeErrorEvent) => {
+            // This causes infinite loop on blank page.
+            // TODO: Figure out why.
+            // this.toast(evt.message, BreadboardUI.Events.ToastType.ERROR);
           }
         );
 
@@ -1897,7 +1899,8 @@ export class Main extends LitElement {
                     await this.#runtime.run.invokeSideboard(
                       "/side-boards/enhance-configuration.bgl.json",
                       this.#runtime.board.getLoader(),
-                      { config }
+                      { config },
+                      this.#settings
                     );
                   if (!invocationResult.success) {
                     return invocationResult;

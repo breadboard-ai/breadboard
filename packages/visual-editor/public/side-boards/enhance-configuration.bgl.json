@@ -11,6 +11,30 @@
     },
     {
       "from": "runJavascript-5a563f59",
+      "to": "specialist-fe5cfce2",
+      "out": "persona",
+      "in": "p-instruction"
+    },
+    {
+      "from": "specialist-fe5cfce2",
+      "to": "runJavascript-a40e61a7",
+      "out": "out",
+      "in": "persona"
+    },
+    {
+      "from": "runJavascript-5a563f59",
+      "to": "runJavascript-a40e61a7",
+      "out": "task",
+      "in": "task"
+    },
+    {
+      "from": "input-0",
+      "to": "runJavascript-a40e61a7",
+      "out": "config",
+      "in": "rest"
+    },
+    {
+      "from": "runJavascript-a40e61a7",
       "to": "output-0",
       "out": "result",
       "in": "config"
@@ -55,8 +79,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 423,
-          "y": -141,
+          "x": 1264,
+          "y": -74,
           "collapsed": "expanded"
         }
       }
@@ -66,8 +90,8 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": 61,
-          "y": -114,
+          "x": -17,
+          "y": -441,
           "collapsed": "expanded"
         },
         "title": "Run Javascript",
@@ -84,7 +108,107 @@
           },
           "required": []
         },
-        "code": "function run({config}) {\n  const task = `${config.task.parts[0].text} hey!`\n  config.task.parts[0].text = task;\n  return config;\n}",
+        "code": "function run({config}) {\n  if (!config) {\n    throw new Error(\"No config provided\");\n  }\n  const taskParts = config.task?.parts || [];\n  const personaParts = config.persona?.parts || [];\n  return { task: [ { parts: taskParts, role: \"user\" } ], persona: [ { parts: personaParts, role: \"user\" } ] };\n}",
+        "name": "run",
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "task": {
+              "type": "object",
+              "title": "Task"
+            },
+            "persona": {
+              "type": "object",
+              "title": "Persona"
+            }
+          },
+          "required": []
+        },
+        "raw": true
+      }
+    },
+    {
+      "id": "specialist-fe5cfce2",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": 678,
+          "y": -586,
+          "collapsed": "expanded"
+        },
+        "title": "Specialist",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "model": "gemini-1.5-flash-latest",
+        "persona": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are a prompt writer. You are an expert at crafting text-to-text system instructions for large language models.\n\nYour job is to take an existing system instruction and apply your expertise to enrich it with more detail with the goal of generating better results from a large language model."
+            }
+          ]
+        },
+        "task": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Improve the following system instruction:\n\n{{instruction}}\n\nDo not ask user for feedback. You are part of an automated system, so your output must be just the improved system instruction, written in plain text."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "runJavascript-a40e61a7",
+      "type": "runJavascript",
+      "metadata": {
+        "visual": {
+          "x": 837,
+          "y": 124,
+          "collapsed": "expanded"
+        },
+        "title": "Run Javascript",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "persona": {
+              "type": "array",
+              "title": "Persona",
+              "items": {
+                "type": "object",
+                "examples": [],
+                "behavior": [
+                  "llm-content"
+                ],
+                "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
+              },
+              "description": ""
+            },
+            "task": {
+              "type": "array",
+              "title": "Task",
+              "items": {
+                "type": "object",
+                "examples": [],
+                "behavior": [
+                  "llm-content"
+                ],
+                "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
+              },
+              "description": ""
+            },
+            "rest": {
+              "type": "object",
+              "title": "Config"
+            }
+          },
+          "required": []
+        },
+        "code": "function run({persona, task, rest}) {\n  return {\n    ... rest,\n    persona: persona.at(-1),\n    task: task.at(-1)\n  }\n}",
         "name": "run"
       }
     }

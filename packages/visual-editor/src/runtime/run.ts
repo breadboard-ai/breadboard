@@ -13,6 +13,7 @@ import {
   InspectableRunSequenceEntry,
   invokeGraph,
   Kit,
+  NodeConfiguration,
   OutputValues,
   RunArguments,
   RunStore,
@@ -231,7 +232,8 @@ export class Run extends EventTarget {
   async invokeSideboard(
     url: string,
     loader: GraphLoader,
-    inputs: InputValues
+    inputs: InputValues,
+    settings: BreadboardUI.Types.SettingsStore | null
   ): Promise<Result<OutputValues>> {
     const sideboard = await loader.load(url, {
       base: new URL(window.location.href),
@@ -243,11 +245,33 @@ export class Run extends EventTarget {
       };
     }
     const args: RunArguments = {
-      kits: this.kits,
+      kits: [sideboardSecretsKit(settings), ...this.kits],
       loader: loader,
       store: this.dataStore,
     };
     const result = await invokeGraph(sideboard, inputs, args);
-    return { success: true, result };
+    console.log("🌻 result", result, inputs);
+    return { success: true, result: result.config as NodeConfiguration };
   }
+}
+
+function sideboardSecretsKit(
+  settings: BreadboardUI.Types.SettingsStore | null
+): Kit {
+  // TODO: Make this not a total hack like this.
+  const GEMINI_KEY = settings
+    ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.SECRETS)
+    .items.get("GEMINI_KEY")?.value;
+  return {
+    url: import.meta.url,
+    handlers: {
+      secrets: async (inputs) => {
+        const keys = (inputs.keys || []) as string[];
+        if (keys.length === 1 && keys[0] === "GEMINI_KEY") {
+          return { GEMINI_KEY };
+        }
+        throw new Error(`Unknown keys: ${keys.join(", ")}`);
+      },
+    },
+  };
 }

@@ -668,6 +668,8 @@ export class Edit extends EventTarget {
       return;
     }
 
+    console.log("🌻 enhanced", result.result);
+
     this.changeNodeConfiguration(tab, id, result.result);
 
     // TODO: Somehow teach the edits to propagate to the current overlay.
