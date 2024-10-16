@@ -589,6 +589,7 @@ export class UserInput extends LitElement {
                   ></bb-board-selector>`;
                   break;
                 }
+
                 inputField = html`<textarea
                   @blur=${(evt: Event) => {
                     if (!(evt.target instanceof HTMLTextAreaElement)) {
@@ -627,7 +628,7 @@ export class UserInput extends LitElement {
                   autocomplete="off"
                   placeholder=${input.schema.description ?? ""}
                   .autofocus=${idx === 0 ? true : false}
-                  .value=${input.value ?? defaultValue ?? ""}
+                  .value=${stringifyObject(input.value, defaultValue)}
                 ></textarea>`;
                 break;
               }
@@ -812,5 +813,20 @@ export class UserInput extends LitElement {
         </div>`;
       })}
     </form> `;
+  }
+}
+
+function stringifyObject(o: unknown, defaultValue?: unknown): string {
+  if (o) {
+    if (typeof o === "string") {
+      return o;
+    }
+    return JSON.stringify(o, null, 2);
+  } else {
+    if (defaultValue) {
+      return stringifyObject(defaultValue);
+    } else {
+      return "";
+    }
   }
 }
