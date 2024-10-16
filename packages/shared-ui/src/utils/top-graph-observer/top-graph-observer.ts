@@ -472,8 +472,8 @@ export class TopGraphObserver {
       return;
     }
     const nodes = new Set(affectedNodes);
-    let stopHere: number | undefined = undefined;
-    for (const [index, entry] of this.#log.entries()) {
+    let stopHere: LogEntry | undefined = undefined;
+    for (const entry of this.#log) {
       if (entry.type === "error") continue;
       if (entry instanceof UserNodeEntry) continue;
 
@@ -482,7 +482,7 @@ export class TopGraphObserver {
 
       if (stopHere === undefined) {
         if (nodes.has(id)) {
-          stopHere = index;
+          stopHere = entry;
           this.#edgeValues.unconsume(id);
           this.#edgeValues.delete(id);
           this.#nodeActivity.delete(id);
@@ -495,7 +495,7 @@ export class TopGraphObserver {
     }
     if (stopHere !== undefined) {
       this.#currentResult = null;
-      this.#currentNode = null;
+      this.#currentNode = stopHere.type === "node" ? stopHere : null;
       this.#edgeValues = this.#edgeValues.clone();
     }
   }
