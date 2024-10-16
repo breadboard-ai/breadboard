@@ -163,15 +163,6 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
           },
         ],
         [
-          "Use Experimental Board Server",
-          {
-            name: "Use Experimental Board Server",
-            description:
-              "[Unstable] Allows the runtime to use a local Board Server",
-            value: false,
-          },
-        ],
-        [
           "Offer Configuration Enhancements",
           {
             name: "Offer Configuration Enhancements",
@@ -282,6 +273,7 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
       }
     );
 
+    let skippedSettings = false;
     for (const store of settingsDb.objectStoreNames) {
       const items = await settingsDb.getAll(store);
       for (const item of items) {
@@ -293,7 +285,8 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
           store === BreadboardUI.Types.SETTINGS_TYPE.GENERAL &&
           !this.#settings[store].items.get(item.name)
         ) {
-          console.info(`[Settings: Removing ${item.name}]`);
+          skippedSettings = true;
+          console.info(`[Settings] Skipping setting "${item.name}"`);
           continue;
         }
 
@@ -302,6 +295,12 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
     }
 
     settingsDb.close();
+
+    if (skippedSettings) {
+      console.info(
+        `[Settings] Re-save your settings to remove deprecated values`
+      );
+    }
 
     if (!settingsFound) {
       // Store the initial copy of the settings.

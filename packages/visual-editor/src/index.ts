@@ -285,13 +285,7 @@ export class Main extends LitElement {
           providers: config.providers ?? [],
           runStore: this.#runStore,
           dataStore: this.#dataStore,
-          experiments: {
-            boardServers:
-              this.#settings?.getItem(
-                BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
-                "Use Experimental Board Server"
-              )?.value === true,
-          },
+          experiments: {},
         });
       })
       .then((runtime) => {

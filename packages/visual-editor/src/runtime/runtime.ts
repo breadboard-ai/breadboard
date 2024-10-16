@@ -41,25 +41,23 @@ export async function create(config: RuntimeConfig): Promise<{
   ]);
 
   let boardServers: RuntimeConfigBoardServers | undefined = undefined;
-  if (config.experiments.boardServers) {
-    const skipPlaygroundExamples = import.meta.env.MODE !== "development";
-    let servers = await getBoardServers(skipPlaygroundExamples);
+  const skipPlaygroundExamples = import.meta.env.MODE !== "development";
+  let servers = await getBoardServers(skipPlaygroundExamples);
 
-    // First run - set everything up and migrate the data.
-    if (servers.length === 0) {
-      await createDefaultLocalBoardServer();
-      await migrateIDBGraphProviders();
-      await migrateRemoteGraphProviders();
-      await migrateExampleGraphProviders();
-      await migrateFileSystemProviders();
-      servers = await getBoardServers();
-    }
-
-    boardServers = {
-      servers,
-      loader: createLoader(servers),
-    };
+  // First run - set everything up and migrate the data.
+  if (servers.length === 0) {
+    await createDefaultLocalBoardServer();
+    await migrateIDBGraphProviders();
+    await migrateRemoteGraphProviders();
+    await migrateExampleGraphProviders();
+    await migrateFileSystemProviders();
+    servers = await getBoardServers();
   }
+
+  boardServers = {
+    servers,
+    loader: createLoader(servers),
+  };
 
   const runtime = {
     board: new Board(config.providers, loader, kits, boardServers),
