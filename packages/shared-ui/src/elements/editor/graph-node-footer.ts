@@ -41,7 +41,7 @@ export class GraphNodeFooter extends PIXI.Container {
         "pointerover",
         (evt: PIXI.FederatedPointerEvent) => {
           evt.target.alpha = ICON_ALPHA_OVER;
-          const message = "Run";
+          const message = "Run this component";
           const x = evt.clientX;
           const y = evt.clientY;
 

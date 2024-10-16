@@ -446,7 +446,7 @@ export const styles = css`
     border: none;
     height: var(--bb-grid-size-7);
     padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-7);
-    margin: 0 var(--bb-grid-size) 0 0;
+    margin: var(--bb-grid-size) var(--bb-grid-size) 0 0;
     cursor: pointer;
     transition: background-color 0.1s cubic-bezier(0, 0, 0.3, 1);
   }
@@ -480,6 +480,31 @@ export const styles = css`
     background: var(--bb-neutral-0);
     position: sticky;
     bottom: 0;
+    padding: var(--bb-grid-size-4) var(--bb-grid-size-2) var(--bb-grid-size-10)
+      var(--bb-grid-size-14);
+    z-index: 1;
+  }
+
+  #debug-controls::before {
+    content: "";
+    height: var(--bb-grid-size-8);
+    width: 2px;
+    background: var(--bb-neutral-300);
+    top: 0;
+    left: calc(var(--bb-grid-size-8) + 1px);
+    position: absolute;
+  }
+
+  #debug-controls::after {
+    content: "";
+    width: calc(var(--bb-grid-size-2) + 2px);
+    height: calc(var(--bb-grid-size-2) + 2px);
+    border-radius: 50%;
+    top: var(--bb-grid-size-7);
+    left: calc(var(--bb-grid-size-7) - 1px);
+    position: absolute;
+    background: var(--bb-neutral-0);
+    border: 2px solid var(--bb-neutral-500);
   }
 
   @keyframes slideIn {
