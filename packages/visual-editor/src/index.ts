@@ -1130,6 +1130,10 @@ export class Main extends LitElement {
     persistent = false,
     id = globalThis.crypto.randomUUID()
   ) {
+    if (message.length > 70) {
+      message = message.slice(0, 67) + "...";
+    }
+
     this.toasts.set(id, { message, type, persistent });
     this.requestUpdate();
 

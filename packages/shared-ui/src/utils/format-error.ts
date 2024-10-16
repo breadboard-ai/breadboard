@@ -30,5 +30,5 @@ export function formatError(error: string | ErrorObject): string {
       output = messageOutput;
     }
   }
-  return output;
+  return output.trim();
 }
