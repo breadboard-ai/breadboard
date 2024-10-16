@@ -332,6 +332,9 @@ export class TopGraphObserver {
       throw new Error("Node end without a graph");
     }
 
+    this.#edgeValues = this.#edgeValues.setConsumed(event.data.node.id);
+    this.#edgeValues.setStored(event.data.newOpportunities, event.data.outputs);
+
     if (type === "output") {
       return;
     }
@@ -343,8 +346,6 @@ export class TopGraphObserver {
 
     this.#log = [...this.#log];
 
-    this.#edgeValues = this.#edgeValues.setConsumed(event.data.node.id);
-    this.#edgeValues.setStored(event.data.newOpportunities, event.data.outputs);
     this.#currentResult = null;
   }
 
