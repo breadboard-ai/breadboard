@@ -7,6 +7,7 @@
 import {
   InspectableRun,
   InspectableRunObserver,
+  NodeIdentifier,
 } from "@google-labs/breadboard";
 
 export { createPastRunObserver };
@@ -29,6 +30,19 @@ function createPastRunObserver(run: InspectableRun): InspectableRunObserver {
     },
     append: async () => {
       throw new Error("Do not append to a past run observer.");
+    },
+    async replay(stopAt: NodeIdentifier[]): Promise<void> {
+      for await (const result of run.replay()) {
+        await this.observe(result);
+        const { type, data } = result;
+        if (
+          type === "nodestart" &&
+          data.path.length === 1 &&
+          stopAt.includes(data.node.id)
+        ) {
+          break;
+        }
+      }
     },
   };
 }
