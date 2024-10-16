@@ -18,7 +18,11 @@ import {
   NodeIdentifier,
 } from "@google-labs/breadboard";
 import { EnhanceSideboard, Tab, TabId } from "./types";
-import { RuntimeBoardEditEvent, RuntimeErrorEvent } from "./events";
+import {
+  RuntimeBoardEditEvent,
+  RuntimeBoardEnhanceEvent,
+  RuntimeErrorEvent,
+} from "./events";
 import { NodeMetadata } from "@breadboard-ai/types";
 
 export class Edit extends EventTarget {
@@ -634,7 +638,6 @@ export class Edit extends EventTarget {
     tab: Tab | null,
     subGraphId: string | null,
     id: string,
-    property: string,
     sideboard: EnhanceSideboard
   ) {
     if (!tab) {
@@ -644,8 +647,6 @@ export class Edit extends EventTarget {
     if (tab?.readOnly) {
       return;
     }
-
-    console.warn(`TODO: enhance ${id}.${property}`);
 
     let editableGraph = this.getEditor(tab);
     if (editableGraph && subGraphId) {
@@ -668,12 +669,9 @@ export class Edit extends EventTarget {
       return;
     }
 
-    console.log("🌻 enhanced", result.result);
-
-    this.changeNodeConfiguration(tab, id, result.result);
-
-    // TODO: Somehow teach the edits to propagate to the current overlay.
-    this.dispatchEvent(new RuntimeBoardEditEvent(tab.id, [id], false));
+    this.dispatchEvent(
+      new RuntimeBoardEnhanceEvent(tab.id, [id], result.result)
+    );
   }
 
   changeNodeConfigurationPart(

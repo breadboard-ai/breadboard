@@ -52,6 +52,9 @@ export class NodeConfigurationOverlay extends LitElement {
   @property()
   offerConfigurationEnhancements = false;
 
+  @property()
+  showNodeTypeDescriptions = false;
+
   #overlayRef: Ref<Overlay> = createRef();
   #userInputRef: Ref<UserInput> = createRef();
   #formRef: Ref<HTMLFormElement> = createRef();
@@ -497,12 +500,21 @@ export class NodeConfigurationOverlay extends LitElement {
     });
 
     const userInputs: UserInputConfiguration[] = ports.map((port) => {
+      // Use the overrides if they're set.
+      let value = port.value;
+      if (
+        this.value?.nodeConfiguration &&
+        this.value.nodeConfiguration[port.name]
+      ) {
+        value = this.value.nodeConfiguration[port.name];
+      }
+
       return {
         name: port.name,
         title: port.title,
         secret: false,
         configured: port.configured,
-        value: structuredClone(port.value),
+        value: structuredClone(value),
         schema: port.edges.length === 0 ? port.schema : undefined,
         status: port.status,
         type: port.schema.type,
@@ -583,7 +595,8 @@ export class NodeConfigurationOverlay extends LitElement {
         >
           <span
             >Configure ${this.value.title}
-            ${this.value.type &&
+            ${this.showNodeTypeDescriptions &&
+            this.value.type &&
             this.value.title?.toLocaleLowerCase() !==
               this.value.type.toLocaleLowerCase()
               ? `(${this.value.type})`
@@ -659,6 +672,7 @@ export class NodeConfigurationOverlay extends LitElement {
               .showTitleInfo=${true}
               .inlineControls=${true}
               .jumpTo=${this.value.selectedPort}
+              .enhancingValue=${false}
             ></bb-user-input>
           </div>
         </div>
