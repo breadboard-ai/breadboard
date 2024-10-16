@@ -822,7 +822,8 @@ export class GraphNode extends PIXI.Container {
     const outPortLabels = Array.from(this.#outPortsData.values());
 
     let maxInPortWidth = 0;
-    let inPortHeight = this.collapsed ? this.#padding : 0;
+    let inPortHeight =
+      this.collapsed || inPortLabels.length === 0 ? this.#padding : 0;
     for (let i = 0; i < inPortLabels.length; i++) {
       const inPort = inPortLabels[i];
       if (!inPort) {
@@ -840,7 +841,7 @@ export class GraphNode extends PIXI.Container {
     }
 
     let maxOutPortWidth = 0;
-    let outPortHeight = this.collapsed ? 0 : this.#padding;
+    let outPortHeight = 0;
     for (let i = 0; i < outPortLabels.length; i++) {
       const outPort = outPortLabels[i];
       if (!outPort) {
@@ -857,6 +858,11 @@ export class GraphNode extends PIXI.Container {
         (i < outPortLabels.length - 1 ? this.#portLabelVerticalPadding : 0);
     }
 
+    // If we have any output ports showing, add some padding.
+    if (outPortHeight > 0) {
+      outPortHeight += this.#padding;
+    }
+
     width = Math.max(
       MIN_NODE_WIDTH,
 
@@ -870,7 +876,14 @@ export class GraphNode extends PIXI.Container {
     );
 
     if (!this.collapsed && portCount > 0) {
-      height += inPortHeight + outPortHeight + 3 * this.#padding;
+      height += inPortHeight + outPortHeight;
+      if (inPortHeight > 0) {
+        height += 2 * this.#padding;
+      }
+
+      if (outPortHeight > 0) {
+        height += this.#padding;
+      }
     }
 
     if (!collapsedPortListEmpty && collapsedPortListDimension.width > width) {
