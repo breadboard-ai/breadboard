@@ -21,7 +21,7 @@ const hoverColor = getGlobalColor("--bb-ui-50");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
 const previewTextColor = getGlobalColor("--bb-neutral-500");
 
-const PREVIEW_WIDTH = 170;
+const PREVIEW_WIDTH = 270;
 
 export class GraphPortLabel extends PIXI.Container {
   #isDirty = false;
@@ -35,7 +35,7 @@ export class GraphPortLabel extends PIXI.Container {
   #paddingLeft = 4;
   #paddingTop = 4;
   #paddingBottom = 4;
-  #paddingRight = 8;
+  #paddingRight = 4;
   #expansionState: ComponentExpansionState = "expanded";
 
   #previewTextSize = 12;
@@ -243,7 +243,7 @@ export class GraphPortLabel extends PIXI.Container {
     this.#hoverZone.beginPath();
     this.#hoverZone.roundRect(
       -this.#paddingLeft,
-      -this.#paddingLeft,
+      -this.#paddingTop,
       this.#width + this.#paddingLeft + this.#paddingRight,
       this.#height + this.#paddingTop + this.#paddingBottom,
       this.#radius
