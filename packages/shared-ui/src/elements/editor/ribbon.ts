@@ -387,6 +387,9 @@ export class RibbonMenu extends LitElement {
     #redo {
       background: var(--bb-neutral-0) var(--bb-icon-redo) center center / 20px
         20px no-repeat;
+    }
+
+    #left button#redo {
       margin-right: 0;
     }
 

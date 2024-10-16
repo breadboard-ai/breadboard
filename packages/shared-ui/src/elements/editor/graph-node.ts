@@ -938,11 +938,16 @@ export class GraphNode extends PIXI.Container {
     this.#headerInPort.x = 0;
     this.#headerOutPort.x = this.#width;
 
+    let missingInPorts = 0;
     let connectedInPorts = 0;
     let inPortConfigured = false;
     for (const inPort of this.#inPortsData.values()) {
       if (!inPort) {
         continue;
+      }
+
+      if (inPort.port.status === PortStatus.Missing) {
+        missingInPorts++;
       }
 
       if (inPort.port.status === PortStatus.Connected) {
@@ -954,7 +959,9 @@ export class GraphNode extends PIXI.Container {
       }
     }
 
-    if (connectedInPorts > 0) {
+    if (missingInPorts > 0) {
+      this.#headerInPort.status = PortStatus.Missing;
+    } else if (connectedInPorts > 0) {
       if (this.#headerInPort.status !== PortStatus.Connected) {
         this.#headerInPort.status = PortStatus.Connected;
       }
