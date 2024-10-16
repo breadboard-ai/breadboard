@@ -483,6 +483,7 @@ export class TopGraphObserver {
       if (stopHere === undefined) {
         if (nodes.has(id)) {
           stopHere = index;
+          this.#edgeValues.unconsume(id);
           this.#edgeValues.delete(id);
           this.#nodeActivity.delete(id);
         }

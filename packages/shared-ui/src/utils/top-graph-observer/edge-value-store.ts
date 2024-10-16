@@ -163,6 +163,18 @@ export class EdgeValueStore {
     this.#outgoingEdges.delete(id);
   }
 
+  unconsume(id: NodeIdentifier) {
+    const edges = this.#incomingEdges.get(id);
+    if (!edges) return;
+
+    for (const edge of edges) {
+      const last = this.#values.get(this.#keyFromEdge(edge))?.at(-1);
+      if (last) {
+        last.status = "stored";
+      }
+    }
+  }
+
   clone() {
     return new EdgeValueStore(
       this.#values,
