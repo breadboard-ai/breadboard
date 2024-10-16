@@ -27,11 +27,13 @@ import { GraphNodeFooter } from "./graph-node-footer.js";
 const borderColor = getGlobalColor("--bb-neutral-500");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
 const segmentDividerColor = getGlobalColor("--bb-neutral-300");
+const portsDividerColor = getGlobalColor("--bb-neutral-100");
 
 const selectedNodeColor = getGlobalColor("--bb-ui-600");
 const highlightForAdHocNodeColor = getGlobalColor("--bb-boards-500");
 
 const ICON_SCALE = 0.42;
+const MIN_NODE_WIDTH = 200;
 
 export class GraphNode extends PIXI.Container {
   #width = 0;
@@ -52,6 +54,7 @@ export class GraphNode extends PIXI.Container {
   #portTextColor = nodeTextColor;
   #borderColor = borderColor;
   #segmentDividerColor = segmentDividerColor;
+  #portsDividerColor = portsDividerColor;
   #selectedColor = selectedNodeColor;
   #highlightForAdHocColor = highlightForAdHocNodeColor;
   #textSize = 12;
@@ -59,9 +62,7 @@ export class GraphNode extends PIXI.Container {
   #padding = 12;
   #menuPadding = 8;
   #iconPadding = 8;
-  #portLabelVerticalPadding = 4;
-  #portLabelHorizontalPadding = 20;
-  #portPadding = 8;
+  #portLabelVerticalPadding = 8;
   #portRadius = 4;
   #background = new PIXI.Graphics();
   #collapsedPortList = new GraphNodePortList();
@@ -821,8 +822,9 @@ export class GraphNode extends PIXI.Container {
     const outPortLabels = Array.from(this.#outPortsData.values());
 
     let maxInPortWidth = 0;
-    let inPortHeight = 0;
-    for (const inPort of inPortLabels) {
+    let inPortHeight = this.collapsed ? this.#padding : 0;
+    for (let i = 0; i < inPortLabels.length; i++) {
+      const inPort = inPortLabels[i];
       if (!inPort) {
         continue;
       }
@@ -833,44 +835,42 @@ export class GraphNode extends PIXI.Container {
       }
 
       inPortHeight +=
-        this.#portLabelVerticalPadding +
         inPort.label.dimensions.height +
-        this.#portLabelVerticalPadding;
+        (i < inPortLabels.length - 1 ? this.#portLabelVerticalPadding : 0);
     }
 
     let maxOutPortWidth = 0;
-    let outPortHeight = 0;
-    for (const outPort of outPortLabels) {
+    let outPortHeight = this.collapsed ? 0 : this.#padding;
+    for (let i = 0; i < outPortLabels.length; i++) {
+      const outPort = outPortLabels[i];
       if (!outPort) {
         continue;
       }
 
       maxOutPortWidth = Math.max(maxOutPortWidth, outPort.label.width);
-      if (this.collapsed || this.#shouldHidePort(outPort.port)) {
+      if (this.collapsed || this.#shouldHidePort(outPort.port, "$error")) {
         continue;
       }
 
       outPortHeight +=
-        this.#portLabelVerticalPadding +
         outPort.label.height +
-        this.#portLabelVerticalPadding;
+        (i < outPortLabels.length - 1 ? this.#portLabelVerticalPadding : 0);
     }
 
     width = Math.max(
+      MIN_NODE_WIDTH,
+
       width,
-      this.#padding + // Left hand side.
-        this.#portPadding + // Left hand port padding on right.
-        maxInPortWidth + // Left label at this row.
-        2 * this.#portLabelHorizontalPadding + // Port label padding for both sides.
-        maxOutPortWidth + // Right label at this row.
-        this.#portPadding + // Right hand port padding on right.
-        this.#padding // Right hand side padding.
+
+      // Input Ports.
+      2 * this.#padding + maxInPortWidth,
+
+      // Output ports.
+      2 * this.#padding + maxOutPortWidth
     );
 
-    height += Math.max(inPortHeight, outPortHeight);
-
     if (!this.collapsed && portCount > 0) {
-      height += 2 * this.#padding;
+      height += inPortHeight + outPortHeight + 3 * this.#padding;
     }
 
     if (!collapsedPortListEmpty && collapsedPortListDimension.width > width) {
@@ -883,17 +883,18 @@ export class GraphNode extends PIXI.Container {
 
   #draw() {
     this.forceUpdateDimensions();
-    this.#drawBackground();
     const portStartY = this.#drawTitle();
 
+    let portsOutStartY = null;
     if (this.collapsed) {
       this.#hideAllPorts();
       this.#showHeaderPorts();
     } else {
-      this.#drawInPorts(portStartY);
-      this.#drawOutPorts(portStartY);
+      portsOutStartY = this.#drawInPorts(portStartY + this.#padding);
+      this.#drawOutPorts(portsOutStartY + this.#padding);
       this.#hideHeaderPorts();
     }
+    this.#drawBackground(portsOutStartY);
     this.#drawOverflowMenu();
     this.#drawCollapsedPortListIfNeeded();
     this.#drawFooter();
@@ -1038,7 +1039,7 @@ export class GraphNode extends PIXI.Container {
     this.#outPortLocations.clear();
   }
 
-  #drawBackground() {
+  #drawBackground(portsDivider: number | null = null) {
     // Toggling cacheAsBitmap back to false for the background seems to trip up
     // PIXI, so instead we swap it out for a new Graphics instance, and we
     // schedule its removal in the next frame.
@@ -1095,7 +1096,9 @@ export class GraphNode extends PIXI.Container {
 
     // Collapsed Port List.
     const footerTop =
-      this.#height - (this.#showFooter ? this.#footer.dimensions.height : 0);
+      Math.round(
+        this.#height - (this.#showFooter ? this.#footer.dimensions.height : 0)
+      ) + 0.5;
     if (this.collapsed && !this.#collapsedPortList.empty) {
       const y = footerTop - this.#collapsedPortList.dimensions.height;
       this.#background.beginPath();
@@ -1112,6 +1115,17 @@ export class GraphNode extends PIXI.Container {
       this.#background.lineTo(this.#width, footerTop);
       this.#background.closePath();
       this.#background.stroke({ color: this.#segmentDividerColor });
+    }
+
+    if (portsDivider !== null) {
+      // Ensure a clean line.
+      portsDivider = Math.round(portsDivider) + 0.5;
+
+      this.#background.beginPath();
+      this.#background.moveTo(0, portsDivider);
+      this.#background.lineTo(this.#width, portsDivider);
+      this.#background.closePath();
+      this.#background.stroke({ color: this.#portsDividerColor });
     }
   }
 
@@ -1138,7 +1152,7 @@ export class GraphNode extends PIXI.Container {
       this.addChild(this.#titleText);
 
       // Move the labels a padding's distance from the bottom of the title.
-      portStartY += titleHeight + this.#padding;
+      portStartY += titleHeight;
     }
 
     return portStartY;
@@ -1148,7 +1162,8 @@ export class GraphNode extends PIXI.Container {
     this.#inPortLocations.clear();
 
     let portY = portStartY;
-    for (const portItem of this.#inPortsSortedByName) {
+    for (let p = 0; p < this.#inPortsSortedByName.length; p++) {
+      const portItem = this.#inPortsSortedByName[p];
       if (this.#shouldHidePort(portItem.port)) {
         continue;
       }
@@ -1164,20 +1179,26 @@ export class GraphNode extends PIXI.Container {
 
       this.#inPortLocations.set(port.name, nodePort.position);
 
-      label.x = nodePort.x + this.#portRadius + this.#portPadding;
+      label.x = this.#padding;
       label.y = portY;
       label.visible = true;
 
-      portY += label.dimensions.height + 2 * this.#portLabelVerticalPadding;
+      portY +=
+        label.dimensions.height +
+        (p < this.#inPortsSortedByName.length - 1
+          ? this.#portLabelVerticalPadding
+          : 0);
     }
+
+    return portY + this.#padding;
   }
 
   #drawOutPorts(portStartY = 0) {
     this.#outPortLocations.clear();
-    const portRowHeight = this.#textSize + 2 * this.#portLabelVerticalPadding;
 
     let portY = portStartY;
-    for (const portItem of this.#outPortsSortedByName) {
+    for (let p = 0; p < this.#outPortsSortedByName.length; p++) {
+      const portItem = this.#outPortsSortedByName[p];
       if (this.#shouldHidePort(portItem.port, "$error")) {
         continue;
       }
@@ -1194,12 +1215,16 @@ export class GraphNode extends PIXI.Container {
 
       this.#outPortLocations.set(port.name, nodePort.position);
 
-      label.x = nodePort.x - this.#portRadius - this.#portPadding - label.width;
+      label.x = nodePort.x - this.#padding - label.width;
       label.y = portY;
       label.eventMode = "none";
       label.visible = true;
 
-      portY += portRowHeight;
+      portY +=
+        this.#textSize +
+        (p < this.#outPortsSortedByName.length - 1
+          ? this.#portLabelVerticalPadding
+          : 0);
     }
   }
 
