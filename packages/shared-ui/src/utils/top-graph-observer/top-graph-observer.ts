@@ -288,7 +288,6 @@ export class TopGraphObserver {
       throw new Error("Node started without a graph");
     }
 
-    this.#edgeValues = this.#edgeValues.setConsumed(event.data.node.id);
     this.#canRunState.set(event.data.node.id, true);
 
     const type = event.data.node.type;
@@ -344,6 +343,7 @@ export class TopGraphObserver {
 
     this.#log = [...this.#log];
 
+    this.#edgeValues = this.#edgeValues.setConsumed(event.data.node.id);
     this.#edgeValues.setStored(event.data.newOpportunities, event.data.outputs);
     this.#currentResult = null;
   }
