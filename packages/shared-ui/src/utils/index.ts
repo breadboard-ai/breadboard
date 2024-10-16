@@ -89,13 +89,6 @@ export function isMultiline(schema: Schema) {
   );
 }
 
-export function isSelect(schema: Schema) {
-  return (
-    (schema.enum && schema.enum.length > 0) ||
-    (schema.examples && schema.examples.length > 0)
-  );
-}
-
 export function isEnum(schema: Schema) {
   return schema.enum && schema.enum.length > 0;
 }

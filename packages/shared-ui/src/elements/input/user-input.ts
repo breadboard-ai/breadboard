@@ -37,7 +37,6 @@ import {
   isLLMContentArrayBehavior,
   isLLMContentBehavior,
   isPortSpecBehavior,
-  isSelect,
 } from "../../utils/index.js";
 import {
   createAllowListFromProperty,
@@ -695,7 +694,7 @@ export class UserInput extends LitElement {
                   break;
                 }
 
-                if (isSelect(input.schema)) {
+                if (isEnum(input.schema)) {
                   const options = isEnum(input.schema)
                     ? input.schema.enum || []
                     : input.schema.examples || [];
@@ -719,10 +718,36 @@ export class UserInput extends LitElement {
 
                   break;
                 }
+
+                const hasExamples =
+                  input.schema.examples && input.schema.examples.length;
+                let presetList: HTMLTemplateResult | symbol = nothing;
+                if (hasExamples) {
+                  presetList = html`<datalist id=${`${id}-presets`}>
+                    ${input.schema.examples!.map((item) => {
+                      return html`<option value="${item}"></option>`;
+                    })}
+                  </datalist>`;
+                }
+
                 if (
                   input.schema.format === "multiline" ||
                   input.schema.format === "markdown"
                 ) {
+                  if (hasExamples) {
+                    inputField = html`${presetList}<input
+                        type="text"
+                        list=${`${id}-presets`}
+                        id=${id}
+                        name=${id}
+                        autocomplete="off"
+                        placeholder=${input.schema.description ?? ""}
+                        .autofocus=${idx === 0 ? true : false}
+                        .value=${input.value ?? defaultValue ?? ""}
+                      />`;
+                    break;
+                  }
+
                   inputField = html`<textarea
                     id=${id}
                     name=${id}
@@ -734,16 +759,17 @@ export class UserInput extends LitElement {
                   break;
                 }
 
-                inputField = html`<input
-                  .type=${input.secret ? "password" : "text"}
-                  id=${id}
-                  name=${id}
-                  autocomplete="off"
-                  placeholder=${input.schema.description ?? ""}
-                  ?required=${input.required}
-                  .autofocus=${idx === 0 ? true : false}
-                  .value=${input.value ?? defaultValue ?? ""}
-                />`;
+                inputField = html`${presetList}<input
+                    .type=${input.secret ? "password" : "text"}
+                    list=${hasExamples ? `${id}-presets` : nothing}
+                    id=${id}
+                    name=${id}
+                    autocomplete="off"
+                    placeholder=${input.schema.description ?? ""}
+                    ?required=${input.required}
+                    .autofocus=${idx === 0 ? true : false}
+                    .value=${input.value ?? defaultValue ?? ""}
+                  />`;
                 break;
               }
             }
