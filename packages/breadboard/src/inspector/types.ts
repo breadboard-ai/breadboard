@@ -668,6 +668,13 @@ export type InspectableRunObserver = {
    * @param history -- inspectable run events to append
    */
   append(history: InspectableRunSequenceEntry[]): Promise<void>;
+
+  /**
+   * Replays the current run as a new run, stopping at the first encountered in
+   * a given list of nodes.
+   * If no run exists, does nothing.
+   */
+  replay(stopAt: NodeIdentifier[]): Promise<void>;
 };
 
 /**

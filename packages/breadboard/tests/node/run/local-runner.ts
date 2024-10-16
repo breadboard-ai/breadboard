@@ -254,6 +254,7 @@ describe("LocalRunner", async () => {
         observed = true;
       },
       async append() {},
+      async replay() {},
     });
     const result = await runner.run();
     ok(observed);
@@ -278,6 +279,7 @@ describe("LocalRunner", async () => {
         throw new Error("I'm an observer that throws an error");
       },
       async append() {},
+      async replay() {},
     });
     const result = await runner.run();
     ok(!result);
