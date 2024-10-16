@@ -660,7 +660,7 @@ export class ActivityLog extends LitElement {
 
               case "error": {
                 const output = formatError(event.error);
-                content = html`${output}`;
+                content = html`<div class="error-content">${output}</div>`;
                 break;
               }
 

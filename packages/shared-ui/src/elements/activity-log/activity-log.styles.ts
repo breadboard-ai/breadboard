@@ -83,6 +83,17 @@ export const styles = css`
     user-select: text;
   }
 
+  .activity-entry.error .error-content {
+    white-space: pre;
+    border: 1px solid var(--bb-warning-200);
+    background-color: var(--bb-warning-50);
+    border-radius: var(--bb-grid-size-2);
+    padding: var(--bb-grid-size-4);
+    overflow-x: scroll;
+    font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
+      var(--bb-font-family-mono);
+  }
+
   .activity-entry h1 {
     font-size: var(--bb-text-regular);
     margin: 0;
