@@ -5,7 +5,11 @@
  */
 
 import { HarnessRunResult } from "../../harness/types.js";
-import { GraphDescriptor, NodeConfiguration } from "../../types.js";
+import {
+  GraphDescriptor,
+  NodeConfiguration,
+  NodeIdentifier,
+} from "../../types.js";
 import { EventManager } from "./event-manager.js";
 import { RunLoader } from "./loader.js";
 import {
@@ -229,6 +233,23 @@ export class RunObserver implements InspectableRunObserver {
       await this.observe(result);
     }
   }
+
+  async replay(stopAt: NodeIdentifier[]): Promise<void> {
+    const lastRun = this.#runs.at(0);
+    if (!lastRun) return;
+
+    for await (const result of lastRun.replay()) {
+      await this.observe(result);
+      const { type, data } = result;
+      if (
+        type === "nodestart" &&
+        data.path.length === 1 &&
+        stopAt.includes(data.node.id)
+      ) {
+        break;
+      }
+    }
+  }
 }
 
 export class Run implements InspectableRun {
@@ -316,8 +337,8 @@ export class Run implements InspectableRun {
     return result.size > 0 ? result : null;
   }
 
-  replay(): AsyncGenerator<HarnessRunResult> {
-    throw new Error("Runs can't yet be replayed.");
+  async *replay(): AsyncGenerator<HarnessRunResult> {
+    yield* this.#events.replay();
   }
 
   async reanimationStateAt(id: EventIdentifier, nodeConfig: NodeConfiguration) {

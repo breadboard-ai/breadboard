@@ -316,6 +316,7 @@ export class Main extends LitElement {
             const observers = this.#runtime.run.getObservers(evt.tabId);
             if (observers) {
               observers.topGraphObserver?.updateAffected(evt.affectedNodes);
+              observers.runObserver?.replay(evt.affectedNodes);
             }
 
             const shouldAutoSave = this.#settings?.getItem(

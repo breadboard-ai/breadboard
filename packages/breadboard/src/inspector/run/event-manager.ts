@@ -45,6 +45,7 @@ import { SerializedDataStoreGroup } from "../../data/types.js";
 import {
   entryIdFromEventId,
   eventIdFromEntryId,
+  eventsAsHarnessRunResults,
   idFromPath,
   pathFromId,
 } from "./conversions.js";
@@ -300,6 +301,10 @@ export class EventManager {
 
   serializer() {
     return this.#serializer;
+  }
+
+  async *replay() {
+    yield* eventsAsHarnessRunResults(this.#sequence);
   }
 
   getEventById(id: EventIdentifier): InspectableRunEvent | null {
