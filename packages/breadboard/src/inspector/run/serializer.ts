@@ -171,6 +171,7 @@ export class RunSerializer {
         timestamp: event.end as number,
         outputs: event.outputs,
         node: { type: event.node.descriptor.type },
+        newOpportunities: event.traversalResult?.newOpportunities || [],
       },
     ];
   }
