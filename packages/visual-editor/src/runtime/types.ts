@@ -39,9 +39,7 @@ export interface RuntimeConfig {
   providers: GraphProvider[];
   dataStore: DataStore;
   runStore: RunStore;
-  experiments: {
-    boardServers: boolean;
-  };
+  experiments: Record<string, boolean>;
 }
 
 export interface RuntimeConfigBoardServers {
