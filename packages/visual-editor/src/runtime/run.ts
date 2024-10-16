@@ -250,7 +250,6 @@ export class Run extends EventTarget {
       store: this.dataStore,
     };
     const result = await invokeGraph(sideboard, inputs, args);
-    console.log("🌻 result", result, inputs);
     return { success: true, result: result.config as NodeConfiguration };
   }
 }

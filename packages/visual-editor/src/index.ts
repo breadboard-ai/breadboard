@@ -26,6 +26,7 @@ import {
   InspectableEdge,
   InspectableRun,
   InspectableRunSequenceEntry,
+  NodeConfiguration,
   SerializedRun,
 } from "@google-labs/breadboard";
 import { getDataStore, getRunStore } from "@breadboard-ai/data-store";
@@ -296,6 +297,22 @@ export class Main extends LitElement {
       .then((runtime) => {
         this.#runtime = runtime;
         this.#providers = runtime.board.getProviders() || [];
+
+        this.#runtime.edit.addEventListener(
+          Runtime.Events.RuntimeBoardEnhanceEvent.eventName,
+          async (evt: Runtime.Events.RuntimeBoardEnhanceEvent) => {
+            if (!this.#nodeConfiguratorData) {
+              return;
+            }
+
+            await this.#setNodeDataForConfiguration(
+              this.#nodeConfiguratorData,
+              evt.configuration
+            );
+
+            this.requestUpdate();
+          }
+        );
 
         this.#runtime.edit.addEventListener(
           Runtime.Events.RuntimeBoardEditEvent.eventName,
@@ -1374,6 +1391,46 @@ export class Main extends LitElement {
     };
   }
 
+  async #setNodeDataForConfiguration(
+    configuration: Partial<BreadboardUI.Types.NodePortConfiguration>,
+    nodeConfiguration: NodeConfiguration | null
+  ) {
+    if (!configuration.id) {
+      console.warn("Unable to set node data, no ID");
+      return;
+    }
+
+    const { id, subGraphId } = configuration;
+
+    const title = this.#runtime.edit.getNodeTitle(this.tab, id, subGraphId);
+
+    const [ports, nodeType, metadata] = await Promise.all([
+      this.#runtime.edit.getNodePorts(this.tab, id, subGraphId),
+      this.#runtime.edit.getNodeType(this.tab, id, subGraphId),
+      this.#runtime.edit.getNodeMetadata(this.tab, id, subGraphId),
+    ]);
+
+    if (!ports) {
+      return;
+    }
+
+    this.showNodeConfigurator = true;
+    this.#nodeConfiguratorData = {
+      id,
+      x: configuration.x ?? 0,
+      y: configuration.y ?? 0,
+      title,
+      type: nodeType?.title ? nodeType?.title : null,
+      selectedPort: configuration.selectedPort ?? null,
+      subGraphId: subGraphId ?? null,
+      ports,
+      metadata,
+      nodeConfiguration,
+      addHorizontalClickClearance:
+        configuration.addHorizontalClickClearance ?? false,
+    };
+  }
+
   render() {
     const toasts = html`${map(
       this.toasts,
@@ -1515,9 +1572,10 @@ export class Main extends LitElement {
         const inputsFromLastRun = runs[1]?.inputs() ?? null;
         const tabURLs = this.#runtime.board.getTabURLs();
         const showNodeTypeDescriptions =
-          this.#settings
+          (this.#settings
             ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
-            .items.get("Show Node Type Descriptions")?.value ?? false;
+            .items.get("Show Node Type Descriptions")?.value as boolean) ??
+          false;
 
         const offerConfigurationEnhancements =
           this.#settings?.getItem(
@@ -1877,6 +1935,7 @@ export class Main extends LitElement {
             .providerOps=${this.providerOps}
             .showTypes=${false}
             .offerConfigurationEnhancements=${offerConfigurationEnhancements}
+            .showNodeTypeDescriptions=${showNodeTypeDescriptions}
             @bbrunisolatednode=${async (
               evt: BreadboardUI.Events.RunIsolatedNodeEvent
             ) => {
@@ -1925,7 +1984,6 @@ export class Main extends LitElement {
                 this.tab,
                 this.tab.subGraphId,
                 evt.id,
-                evt.property,
                 enhancer
               );
             }}
@@ -2540,50 +2598,15 @@ export class Main extends LitElement {
               @bbnodeconfigurationupdaterequest=${async (
                 evt: BreadboardUI.Events.NodeConfigurationUpdateRequestEvent
               ) => {
-                const title = this.#runtime.edit.getNodeTitle(
-                  this.tab,
-                  evt.id,
-                  evt.subGraphId
-                );
-
-                const [ports, nodeType, metadata] = await Promise.all([
-                  this.#runtime.edit.getNodePorts(
-                    this.tab,
-                    evt.id,
-                    evt.subGraphId
-                  ),
-                  this.#runtime.edit.getNodeType(
-                    this.tab,
-                    evt.id,
-                    evt.subGraphId
-                  ),
-                  this.#runtime.edit.getNodeMetadata(
-                    this.tab,
-                    evt.id,
-                    evt.subGraphId
-                  ),
-                ]);
-
-                if (!ports) {
-                  return;
-                }
-
-                this.showNodeConfigurator = true;
-                this.#nodeConfiguratorData = {
+                const configuration = {
                   id: evt.id,
+                  subGraphId: evt.subGraphId,
+                  port: evt.port,
                   x: evt.x,
                   y: evt.y,
-                  title,
-                  type:
-                    showNodeTypeDescriptions && nodeType?.title
-                      ? nodeType?.title
-                      : null,
-                  selectedPort: evt.port?.name ?? null,
-                  subGraphId: evt.subGraphId,
-                  ports,
-                  metadata,
                   addHorizontalClickClearance: evt.addHorizontalClickClearance,
                 };
+                await this.#setNodeDataForConfiguration(configuration, null);
               }}
               @bbcommenteditrequest=${(
                 evt: BreadboardUI.Events.CommentEditRequestEvent

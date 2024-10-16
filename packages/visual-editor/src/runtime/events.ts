@@ -9,6 +9,7 @@ import { Tab, TabId } from "./types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
   InspectableRunObserver,
+  NodeConfiguration,
   NodeIdentifier,
 } from "@google-labs/breadboard";
 
@@ -31,6 +32,18 @@ export class RuntimeErrorEvent extends Event {
 
   constructor(public readonly message: string) {
     super(RuntimeErrorEvent.eventName, { ...eventInit });
+  }
+}
+
+export class RuntimeBoardEnhanceEvent extends Event {
+  static eventName = "runtimeboardenhance" as const;
+
+  constructor(
+    public readonly tabId: TabId | null,
+    public readonly affectedNodes: NodeIdentifier[],
+    public readonly configuration: NodeConfiguration
+  ) {
+    super(RuntimeBoardEnhanceEvent.eventName, { ...eventInit });
   }
 }
 

@@ -97,6 +97,9 @@ export class UserInput extends LitElement {
   @property({ reflect: true })
   readOnly = false;
 
+  @property()
+  enhancingValue = false;
+
   #formRef: Ref<HTMLFormElement> = createRef();
 
   static styles = css`
@@ -215,12 +218,28 @@ export class UserInput extends LitElement {
       border-radius: var(--bb-grid-size-6);
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
-      background: var(--bb-ui-400) var(--bb-icon-enhance-inverted) 4px center /
+      background: var(--bb-ui-400) var(--bb-icon-enhance-inverted) 6px center /
         16px 16px no-repeat;
       height: var(--bb-grid-size-6);
-      padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-5);
+      padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-6);
       color: var(--bb-neutral-0);
       cursor: pointer;
+      transition: background-color 0.1s cubic-bezier(0, 0, 0.3, 1);
+    }
+
+    .enhance:hover,
+    .enhance:focus {
+      background-color: var(--bb-ui-500);
+    }
+
+    .enhance[disabled] {
+      opacity: 0.8;
+      cursor: normal;
+    }
+
+    .enhance.active {
+      background: var(--bb-ui-400) url(/images/progress-ui-inverted.svg) 4px
+        center / 16px 16px no-repeat;
     }
   `;
 
@@ -391,6 +410,12 @@ export class UserInput extends LitElement {
       .toLocaleLowerCase()
       .replace(/[\s\W]/gi, "-")
       .replace(/^\$/, "__");
+  }
+
+  protected willUpdate(changedProperties: PropertyValues): void {
+    if (changedProperties.has("inputs")) {
+      this.enhancingValue = false;
+    }
   }
 
   render() {
@@ -775,11 +800,17 @@ export class UserInput extends LitElement {
         const enhance =
           input.offer && input.offer.enhance
             ? html`<button
-                class="enhance"
+                class=${classMap({
+                  enhance: true,
+                  active: this.enhancingValue,
+                })}
+                ?disabled=${this.enhancingValue}
                 @click=${() => {
                   if (!this.nodeId) {
                     return;
                   }
+
+                  this.enhancingValue = true;
 
                   this.dispatchEvent(
                     new EnhanceNodeConfigurationEvent(this.nodeId, input.name)

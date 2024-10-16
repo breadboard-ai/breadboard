@@ -341,6 +341,11 @@ export type NodePortConfiguration = {
   selectedPort: string | null;
   metadata: NodeMetadata | null;
   ports: InspectableNodePorts;
+  /**
+   * If the node configuration is set its values will be used in preference
+   * to those found in the InspectableNodePorts (`ports`) list.
+   */
+  nodeConfiguration: NodeConfiguration | null;
   x: number;
   y: number;
   addHorizontalClickClearance: boolean;
