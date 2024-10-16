@@ -431,6 +431,10 @@ export class UserInput extends LitElement {
         let description: HTMLTemplateResult | symbol = nothing;
 
         if (input.schema) {
+          if (Array.isArray(input.schema.type)) {
+            input.schema.type = typeof input.value;
+          }
+
           if (
             input.schema.description &&
             !isLLMContentBehavior(input.schema) &&
