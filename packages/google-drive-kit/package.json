@@ -153,7 +153,7 @@
     "@google-labs/template-kit": "^0.3.13"
   },
   "devDependencies": {
-    "@breadboard-ai/build-code": "^0.1.4",
+    "@breadboard-ai/build-code": "0.1.4",
     "@types/node": "^22.0.0",
     "eslint": "^8.57.1",
     "typescript": "^5.6.3",

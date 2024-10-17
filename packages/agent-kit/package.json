@@ -152,7 +152,7 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@breadboard-ai/build-code": "^0.1.4",
+    "@breadboard-ai/build-code": "0.1.4",
     "@google-labs/breadboard": "^0.28.0",
     "@google-labs/core-kit": "^0.15.3",
     "@google-labs/gemini-kit": "^0.8.3",
