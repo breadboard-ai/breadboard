@@ -1111,7 +1111,7 @@ export class LLMInput extends LitElement {
 
                     part.text = evt.target.value;
                   }}
-                  .value=${part.text}
+                  .value=${part.text.trim()}
                   ${isLastPart ? ref(this.#lastPartRef) : nothing}
                 ></textarea>`;
               } else if (isFunctionCallCapabilityPart(part)) {

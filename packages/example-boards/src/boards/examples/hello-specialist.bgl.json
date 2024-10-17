@@ -14,7 +14,7 @@
         "metadata": {
           "visual": {
             "x": 306,
-            "y": 94,
+            "y": 93.99999999999989,
             "collapsed": "collapsed"
           }
         }
@@ -24,7 +24,7 @@
         "text": "This is our board's **input**. For this board it accepts a greeting as a string.",
         "metadata": {
           "visual": {
-            "x": -22,
+            "x": -14,
             "y": -105,
             "collapsed": "collapsed"
           }
@@ -35,8 +35,8 @@
         "text": "This is our board's **output** where we see the response from our Specialist",
         "metadata": {
           "visual": {
-            "x": 626,
-            "y": -105,
+            "x": 669,
+            "y": -104,
             "collapsed": "collapsed"
           }
         }
@@ -46,7 +46,7 @@
         "text": "Read the guide: [Getting Started](https://breadboard-ai.github.io/breadboard/docs/getting-started/)",
         "metadata": {
           "visual": {
-            "x": -21,
+            "x": -13,
             "y": -187,
             "collapsed": "collapsed"
           }
@@ -56,48 +56,19 @@
   },
   "edges": [
     {
-      "from": "input",
-      "to": "specialist-465c8d47",
-      "in": "in",
-      "out": "context"
-    },
-    {
       "from": "specialist-465c8d47",
       "to": "output",
       "in": "context",
       "out": "out"
+    },
+    {
+      "from": "input-0e72953e",
+      "to": "specialist-465c8d47",
+      "out": "context",
+      "in": "in"
     }
   ],
   "nodes": [
-    {
-      "type": "input",
-      "id": "input",
-      "configuration": {
-        "schema": {
-          "properties": {
-            "context": {
-              "type": "array",
-              "title": "Context",
-              "examples": [],
-              "items": {
-                "type": "object",
-                "behavior": ["llm-content"]
-              },
-              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
-            }
-          },
-          "type": "object",
-          "required": []
-        }
-      },
-      "metadata": {
-        "visual": {
-          "x": 0,
-          "y": 0,
-          "collapsed": "collapsed"
-        }
-      }
-    },
     {
       "type": "output",
       "id": "output",
@@ -121,7 +92,7 @@
       },
       "metadata": {
         "visual": {
-          "x": 657,
+          "x": 674,
           "y": 0,
           "collapsed": "collapsed"
         }
@@ -132,7 +103,7 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 255,
+          "x": 290,
           "y": 0,
           "collapsed": "collapsed"
         },
@@ -147,6 +118,36 @@
               "text": "You are a cheery greeter who always responds with a fun fact."
             }
           ]
+        }
+      }
+    },
+    {
+      "id": "input-0e72953e",
+      "type": "input",
+      "metadata": {
+        "visual": {
+          "x": 0,
+          "y": 0,
+          "collapsed": "collapsed"
+        },
+        "title": "Input"
+      },
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "items": {
+                "type": "object",
+                "examples": [],
+                "behavior": ["llm-content"],
+                "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
+              }
+            }
+          },
+          "type": "object",
+          "required": []
         }
       }
     }
