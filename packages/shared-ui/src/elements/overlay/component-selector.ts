@@ -223,6 +223,10 @@ export class ComponentSelectorOverlay extends LitElement {
     .kit-contents ul li.kit-item .node-icon.laps::before {
       background: var(--bb-icon-laps) top left / 28px 28px no-repeat;
     }
+
+    .kit-contents ul li.kit-item .node-icon.google-drive::before {
+      background: var(--bb-icon-google-drive) top left / 28px 28px no-repeat;
+    }
   `;
 
   connectedCallback(): void {
