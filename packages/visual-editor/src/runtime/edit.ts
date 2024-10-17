@@ -639,6 +639,7 @@ export class Edit extends EventTarget {
     subGraphId: string | null,
     id: string,
     sideboard: EnhanceSideboard,
+    property?: string,
     value?: NodeValue
   ) {
     if (!tab) {
@@ -666,8 +667,8 @@ export class Edit extends EventTarget {
 
     // If there is a value to use over and above the current configuration
     // value we apply it here.
-    if (value) {
-      configuration[id] = value;
+    if (property && value) {
+      configuration[property] = value;
     }
 
     const result = await sideboard.enhance(configuration);

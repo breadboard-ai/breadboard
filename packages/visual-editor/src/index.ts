@@ -1984,6 +1984,7 @@ export class Main extends LitElement {
                 this.tab.subGraphId,
                 evt.id,
                 enhancer,
+                evt.property,
                 evt.value
               );
             }}
