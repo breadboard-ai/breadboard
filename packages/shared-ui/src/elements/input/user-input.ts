@@ -25,6 +25,7 @@ import { map } from "lit/directives/map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
   EnhanceNodeConfigurationEvent,
+  EnhanceNodeResetEvent,
   UserOutputEvent,
 } from "../../events/events";
 import { UserInputConfiguration, UserOutputValues } from "../../types/types";
@@ -97,7 +98,7 @@ export class UserInput extends LitElement {
   readOnly = false;
 
   @property()
-  enhancingValue = false;
+  enhancingInput = new Set<string>();
 
   #formRef: Ref<HTMLFormElement> = createRef();
 
@@ -239,6 +240,34 @@ export class UserInput extends LitElement {
     .enhance.active {
       background: var(--bb-ui-400) url(/images/progress-ui-inverted.svg) 4px
         center / 16px 16px no-repeat;
+    }
+
+    .enhance-container {
+      display: flex;
+      flex: 0 0 auto;
+    }
+
+    .reset {
+      border: none;
+      border-radius: var(--bb-grid-size-6);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      background: transparent;
+      height: var(--bb-grid-size-6);
+      padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-6);
+      color: var(--bb-neutral-500);
+      cursor: pointer;
+      transition: color 0.1s cubic-bezier(0, 0, 0.3, 1);
+      display: none;
+    }
+
+    .enhance:hover,
+    .enhance:focus {
+      background-color: var(--bb-ui-500);
+    }
+
+    .reset.visible {
+      display: block;
     }
   `;
 
@@ -413,7 +442,7 @@ export class UserInput extends LitElement {
 
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("inputs")) {
-      this.enhancingValue = false;
+      this.enhancingInput.clear();
     }
   }
 
@@ -827,28 +856,49 @@ export class UserInput extends LitElement {
           typeInfo = html`<span class="type">(${typeString})</span>`;
         }
 
+        const id = this.#createId(input.name);
+        const reset = html`<button
+          class=${classMap({
+            reset: true,
+            visible: input.originalValue !== null,
+          })}
+          id=${`${id}-reset`}
+          @click=${() => {
+            this.dispatchEvent(new EnhanceNodeResetEvent(input.name));
+          }}
+        >
+          Reset
+        </button>`;
+
         const enhance =
           input.offer && input.offer.enhance
-            ? html`<button
-                class=${classMap({
-                  enhance: true,
-                  active: this.enhancingValue,
-                })}
-                ?disabled=${this.enhancingValue}
-                @click=${() => {
-                  if (!this.nodeId) {
-                    return;
-                  }
+            ? html`
+                <button
+                  class=${classMap({
+                    enhance: true,
+                    active: this.enhancingInput.has(input.name),
+                  })}
+                  ?disabled=${this.enhancingInput.has(input.name)}
+                  @click=${() => {
+                    if (!this.nodeId) {
+                      return;
+                    }
 
-                  this.enhancingValue = true;
+                    this.enhancingInput.add(input.name);
+                    this.requestUpdate();
 
-                  this.dispatchEvent(
-                    new EnhanceNodeConfigurationEvent(this.nodeId, input.name)
-                  );
-                }}
-              >
-                Enhance
-              </button>`
+                    this.dispatchEvent(
+                      new EnhanceNodeConfigurationEvent(
+                        this.nodeId,
+                        input.name,
+                        input.value
+                      )
+                    );
+                  }}
+                >
+                  Enhance
+                </button>
+              `
             : nothing;
 
         return html`<div
@@ -865,9 +915,9 @@ export class UserInput extends LitElement {
             ${this.showTitleInfo
               ? html`<span class="title">
                   <span class="title-value">${input.title} ${typeInfo}</span>
-                  ${enhance}
+                  ${reset} ${enhance}
                 </span>`
-              : enhance}
+              : html`${reset} ${enhance}`}
             ${description}
           </label>
           ${inputField}

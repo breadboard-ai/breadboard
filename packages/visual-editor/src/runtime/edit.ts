@@ -23,7 +23,7 @@ import {
   RuntimeBoardEnhanceEvent,
   RuntimeErrorEvent,
 } from "./events";
-import { NodeMetadata } from "@breadboard-ai/types";
+import { NodeMetadata, NodeValue } from "@breadboard-ai/types";
 
 export class Edit extends EventTarget {
   #editors = new Map<TabId, EditableGraph>();
@@ -638,7 +638,9 @@ export class Edit extends EventTarget {
     tab: Tab | null,
     subGraphId: string | null,
     id: string,
-    sideboard: EnhanceSideboard
+    sideboard: EnhanceSideboard,
+    property?: string,
+    value?: NodeValue
   ) {
     if (!tab) {
       return;
@@ -659,8 +661,17 @@ export class Edit extends EventTarget {
     }
 
     const inspectableNode = editableGraph.inspect().nodeById(id);
-    const configuration = inspectableNode?.descriptor.configuration ?? {};
-    const result = await sideboard.enhance(structuredClone(configuration));
+    const configuration = structuredClone(
+      inspectableNode?.descriptor.configuration ?? {}
+    );
+
+    // If there is a value to use over and above the current configuration
+    // value we apply it here.
+    if (property && value) {
+      configuration[property] = value;
+    }
+
+    const result = await sideboard.enhance(configuration);
 
     if (!result.success) {
       this.dispatchEvent(

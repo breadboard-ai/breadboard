@@ -15,6 +15,7 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { UserInput } from "../elements.js";
 import { GraphDescriptor, GraphProvider } from "@google-labs/breadboard";
 import {
+  EnhanceNodeResetEvent,
   NodePartialUpdateEvent,
   OverlayDismissedEvent,
   RunIsolatedNodeEvent,
@@ -502,11 +503,13 @@ export class NodeConfigurationOverlay extends LitElement {
     const userInputs: UserInputConfiguration[] = ports.map((port) => {
       // Use the overrides if they're set.
       let value = port.value;
+      let hasValueOverride = false;
       if (
         this.value?.nodeConfiguration &&
         this.value.nodeConfiguration[port.name]
       ) {
         value = this.value.nodeConfiguration[port.name];
+        hasValueOverride = true;
       }
 
       return {
@@ -515,6 +518,7 @@ export class NodeConfigurationOverlay extends LitElement {
         secret: false,
         configured: port.configured,
         value: structuredClone(value),
+        originalValue: hasValueOverride ? port.value : null,
         schema: port.edges.length === 0 ? port.schema : undefined,
         status: port.status,
         type: port.schema.type,
@@ -661,6 +665,14 @@ export class NodeConfigurationOverlay extends LitElement {
               ${ref(this.#userInputRef)}
               @input=${() => {
                 this.#pendingSave = true;
+              }}
+              @bbenhancenodereset=${(evt: EnhanceNodeResetEvent) => {
+                if (!this.value || !this.value.nodeConfiguration) {
+                  return;
+                }
+
+                delete this.value.nodeConfiguration[evt.id];
+                this.requestUpdate();
               }}
               .nodeId=${this.value.id}
               .inputs=${userInputs}

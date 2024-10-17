@@ -139,9 +139,18 @@ export class EnhanceNodeConfigurationEvent extends Event {
 
   constructor(
     public readonly id: string,
-    public readonly property: string
+    public readonly property: string,
+    public readonly value: NodeValue
   ) {
     super(EnhanceNodeConfigurationEvent.eventName, { ...eventInit });
+  }
+}
+
+export class EnhanceNodeResetEvent extends Event {
+  static eventName = "bbenhancenodereset";
+
+  constructor(public readonly id: string) {
+    super(EnhanceNodeResetEvent.eventName, { ...eventInit });
   }
 }
 

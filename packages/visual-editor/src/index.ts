@@ -1983,7 +1983,9 @@ export class Main extends LitElement {
                 this.tab,
                 this.tab.subGraphId,
                 evt.id,
-                enhancer
+                enhancer,
+                evt.property,
+                evt.value
               );
             }}
             @bboverlaydismissed=${() => {
