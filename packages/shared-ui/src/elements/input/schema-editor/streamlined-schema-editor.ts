@@ -441,9 +441,7 @@ export class StreamlinedSchemaEditor extends LitElement {
             const defaultValue = JSON.parse(
               property.items.default
             ) as LLMContent[];
-            console.log(defaultValue);
             assertIsLLMContentArray(defaultValue);
-            console.log();
             return defaultValue;
           } catch (err) {
             return [{ parts: [], role: "user" }];
