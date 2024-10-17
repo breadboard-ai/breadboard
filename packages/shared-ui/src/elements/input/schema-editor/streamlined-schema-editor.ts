@@ -23,6 +23,7 @@ import {
   getMinItemsFromProperty,
 } from "../../../utils/llm-content";
 import { CodeEditor } from "../code-editor/code-editor";
+import { assertIsLLMContentArray } from "../../../utils/schema";
 
 const LLM_CONTENT_ARRAY: Schema = {
   type: "array",
@@ -437,7 +438,11 @@ export class StreamlinedSchemaEditor extends LitElement {
           property.items.default
         ) {
           try {
-            return JSON.parse(property.items.default) as LLMContent[];
+            const defaultValue = JSON.parse(
+              property.items.default
+            ) as LLMContent[];
+            assertIsLLMContentArray(defaultValue);
+            return defaultValue;
           } catch (err) {
             return [{ parts: [], role: "user" }];
           }

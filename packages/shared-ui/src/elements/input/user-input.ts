@@ -45,6 +45,7 @@ import {
 } from "../../utils/llm-content";
 import {
   assertIsLLMContent,
+  assertIsLLMContentArray,
   resolveArrayType,
   resolveBehaviorType,
 } from "../../utils/schema";
@@ -128,10 +129,6 @@ export class UserInput extends LitElement {
       scroll-margin-top: var(--bb-grid-size-2);
       color: var(--bb-neutral-900);
       margin-bottom: var(--bb-grid-size-2);
-    }
-
-    .item label > * {
-      display: block;
     }
 
     .item label .title {
@@ -513,6 +510,14 @@ export class UserInput extends LitElement {
                   defaultValue = null;
                 }
               }
+
+              if (isLLMContentArrayBehavior(input.schema)) {
+                try {
+                  assertIsLLMContentArray(defaultValue);
+                } catch (err) {
+                  defaultValue = null;
+                }
+              }
             }
           } catch (err) {
             console.warn(`Unable to parse default value for "${input.name}"`);
@@ -860,7 +865,8 @@ export class UserInput extends LitElement {
         const reset = html`<button
           class=${classMap({
             reset: true,
-            visible: input.originalValue !== null,
+            visible:
+              input.originalValue !== null && input.originalValue !== undefined,
           })}
           id=${`${id}-reset`}
           @click=${() => {
