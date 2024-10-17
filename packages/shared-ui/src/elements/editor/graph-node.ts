@@ -171,7 +171,7 @@ export class GraphNode extends PIXI.Container {
       );
 
       this.#runnerButton.addEventListener("click", () => {
-        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_RUN_REQUESTED);
+        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_RUN_REQUESTED, this.label);
       });
 
       this.addChild(this.#runnerButton);
