@@ -18,17 +18,21 @@ export type Outputs = {
 };
 
 export function run(inputs: Inputs): Outputs {
-  let context = inputs.context as LLMContent | LLMContent[];
-  if (!Array.isArray(context)) {
-    context = [context];
-  }
-  const last = context.at(-1);
+  let context = inputs.context as string | LLMContent | LLMContent[];
   const result = {
     body: {
       title: "Untitled Slide Deck",
     },
   };
-  if (!last || !last.parts || last.parts.length > 0) {
+  if (typeof context === "string") {
+    result.body.title = context;
+    return result;
+  }
+  if (!Array.isArray(context)) {
+    context = [context];
+  }
+  const last = context.at(-1);
+  if (!last || !last.parts || !last.parts.length) {
     return result;
   }
   result.body.title = last.parts
