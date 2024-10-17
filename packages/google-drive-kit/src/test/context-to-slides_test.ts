@@ -11,6 +11,7 @@ import {
   contextToSlides,
   isCreateImageRequest,
   isCreateSlideRequest,
+  isDeleteObjectRequest,
   isInsertTextRequest,
 } from "../js-components/context-to-slides.js";
 
@@ -23,21 +24,24 @@ describe("contextToSlides", () => {
       },
     ];
     const requests = contextToSlides(context, "delete");
-    equal(requests.length, 3);
-    if (isCreateSlideRequest(requests[0]!)) {
-      equal(requests[0].createSlide.objectId, "Slide-1");
+    equal(requests.length, 4);
+    if (isDeleteObjectRequest(requests[0]!)) {
+      equal(requests[0].deleteObject.objectId, "delete");
+    }
+    if (isCreateSlideRequest(requests[1]!)) {
+      equal(requests[1].createSlide.objectId, "Slide-1");
     } else {
       fail("Expected a createSlide request");
     }
-    if (isInsertTextRequest(requests[1]!)) {
-      equal(requests[1].insertText.objectId, "Slide-1-title");
-      equal(requests[1].insertText.text, "Heading");
+    if (isInsertTextRequest(requests[2]!)) {
+      equal(requests[2].insertText.objectId, "Slide-1-title");
+      equal(requests[2].insertText.text, "Heading");
     } else {
       fail("Expected an insertText request");
     }
-    if (isInsertTextRequest(requests[2]!)) {
-      equal(requests[2].insertText.objectId, "Slide-1-subtitle");
-      equal(requests[2].insertText.text, "Body");
+    if (isInsertTextRequest(requests[3]!)) {
+      equal(requests[3].insertText.objectId, "Slide-1-subtitle");
+      equal(requests[3].insertText.text, "Body");
     } else {
       fail("Expected an insertText request");
     }
@@ -51,7 +55,11 @@ describe("contextToSlides", () => {
       },
     ];
     const requests = contextToSlides(context, "delete");
-    equal(requests.length, 6);
+    equal(requests.length, 7);
+    if (isDeleteObjectRequest(requests[0]!)) {
+      equal(requests[0].deleteObject.objectId, "delete");
+    }
+    requests.shift();
     if (isCreateSlideRequest(requests[0]!)) {
       equal(requests[0].createSlide.objectId, "Slide-1");
       equal(
@@ -100,7 +108,11 @@ describe("contextToSlides", () => {
       },
     ];
     const requests = contextToSlides(context, "delete");
-    equal(requests.length, 3);
+    equal(requests.length, 4);
+    if (isDeleteObjectRequest(requests[0]!)) {
+      equal(requests[0].deleteObject.objectId, "delete");
+    }
+    requests.shift();
     if (isCreateSlideRequest(requests[0]!)) {
       equal(requests[0].createSlide.objectId, "Slide-1");
       equal(
@@ -138,7 +150,11 @@ describe("contextToSlides", () => {
       },
     ];
     const requests = contextToSlides(context, "delete");
-    equal(requests.length, 5);
+    equal(requests.length, 6);
+    if (isDeleteObjectRequest(requests[0]!)) {
+      equal(requests[0].deleteObject.objectId, "delete");
+    }
+    requests.shift();
     if (isCreateSlideRequest(requests[0]!)) {
       equal(requests[0].createSlide.objectId, "Slide-1");
       equal(

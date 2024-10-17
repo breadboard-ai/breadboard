@@ -9,6 +9,7 @@ import { type LLMContent } from "@breadboard-ai/types";
 
 export {
   contextToSlides,
+  isDeleteObjectRequest,
   isCreateSlideRequest,
   isInsertTextRequest,
   isCreateImageRequest,
@@ -193,6 +194,12 @@ function contextToSlides(
       return `Slide-${++prevSlideId}`;
     }
   }
+}
+
+function isDeleteObjectRequest(
+  request: SlidesRequest
+): request is { deleteObject: SlidesDeleteObjectRequest } {
+  return "deleteObject" in request;
 }
 
 function isCreateSlideRequest(
