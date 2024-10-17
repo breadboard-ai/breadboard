@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { JsonSerializable } from "@breadboard-ai/build";
 import { type LLMContent } from "@breadboard-ai/types";
 
 export {
@@ -12,6 +13,22 @@ export {
   isInsertTextRequest,
   isCreateImageRequest,
 };
+
+export type Inputs = {
+  context: JsonSerializable;
+};
+
+export type Outputs = {
+  context: JsonSerializable;
+};
+
+export function run(inputs: Inputs): Outputs {
+  return {
+    context: contextToSlides(
+      inputs.context as LLMContent[]
+    ) as JsonSerializable,
+  };
+}
 
 function contextToSlides(context: LLMContent[]): SlidesRequest[] {
   const requests: SlidesRequest[] = [];

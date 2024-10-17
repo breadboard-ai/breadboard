@@ -12,7 +12,7 @@ import {
   isCreateImageRequest,
   isCreateSlideRequest,
   isInsertTextRequest,
-} from "../internal/context-to-slides.js";
+} from "../js-components/context-to-slides.js";
 
 describe("contextToSlides", () => {
   test("converts simple header and body to slide requests", () => {

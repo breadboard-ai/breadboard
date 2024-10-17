@@ -49,6 +49,7 @@
     "lint": "wireit",
     "test-and-lint": "wireit",
     "dev": "npm run test-and-lint --watch",
+    "generate:js-components": "wireit",
     "generate:graphs": "wireit"
   },
   "wireit": {
@@ -65,7 +66,8 @@
       "dependencies": [
         "../build:build:tsc",
         "../core-kit:build:tsc",
-        "../template-kit:build:tsc"
+        "../template-kit:build:tsc",
+        "generate:js-components"
       ],
       "files": [
         "src/",
@@ -130,6 +132,19 @@
       "output": [
         "graphs/"
       ]
+    },
+    "generate:js-components": {
+      "command": "build-code --tsconfig=tsconfig.json --out=src/generated/ src/js-components/*.ts",
+      "files": [
+        "src/**/*.ts",
+        "!src/generated/"
+      ],
+      "output": [
+        "src/generated/"
+      ],
+      "dependencies": [
+        "../build-code:build"
+      ]
     }
   },
   "dependencies": {
@@ -138,6 +153,7 @@
     "@google-labs/template-kit": "^0.3.13"
   },
   "devDependencies": {
+    "@breadboard-ai/build-code": "^0.1.4",
     "eslint": "^8.57.1",
     "typescript": "^5.6.3",
     "wireit": "^0.14.9"
