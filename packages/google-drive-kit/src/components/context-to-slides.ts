@@ -23,13 +23,13 @@ import { headers } from "../internal/headers.js";
 const context = input({
   title: "Context in",
   description:
-    "The conversation context to convert to Google Slides. Only the last item in the context will be used for conversion.",
+    "The conversation context to convert to a new Google Slides presentation. Only the last item in the context will be used for conversion.",
   type: array(annotate(object({}), { behavior: ["llm-content"] })),
 });
 
 const title = input({
   title: "Title",
-  description: "The title of the Google Slide deck",
+  description: "The title of the new Google Slide presentatio",
   type: array(annotate(object({}), { behavior: ["llm-content", "config"] })),
 });
 
@@ -52,10 +52,10 @@ const createSlidesDoc = fetch({
   body: createSlidesBody.outputs.body,
 });
 
-const metadata = getDeckMetadata({
+const getMetadata = getDeckMetadata({
   $metadata: {
-    title: "Get Deck Metadata",
-    description: "Get metadata of the newly created slide deck",
+    title: "Get Presentation Metadata",
+    description: "Get metadata of the newly created slide presentation",
   },
   presentation: createSlidesDoc.outputs.response,
 });
@@ -63,7 +63,7 @@ const metadata = getDeckMetadata({
 const { url } = urlTemplate({
   template:
     "https://slides.googleapis.com/v1/presentations/{presentationId}:batchUpdate",
-  presentationId: metadata.outputs.presentationId,
+  presentationId: getMetadata.outputs.presentationId,
 }).outputs;
 
 const toSlideRequests = contextToSlides({
@@ -72,13 +72,13 @@ const toSlideRequests = contextToSlides({
     description: "Converting LLM Content to Slide Requests",
   },
   context,
-  slideId: metadata.outputs.slideId,
+  slideId: getMetadata.outputs.slideId,
 });
 
 const callBatchUpdate = fetch({
   $metadata: {
     title: "Call Batch Update API",
-    description: "Populating the slide deck.",
+    description: "Populating the slides.",
   },
   method: "POST",
   url,
@@ -98,13 +98,15 @@ const contextToSlidesBoard = board({
   id: "contextToSlides",
   metadata: {
     title: "Context to Slides",
-    description: "Turns LLM Conversation Context into a Google Slides deck",
+    description:
+      "Turns LLM Conversation Context into a Google Slides presentation",
     icon: "google-drive",
   },
   inputs: { context, title },
   outputs: {
     context: output(getUrl.outputs.url, {
-      title: "Result",
+      title: "URL",
+      description: "The URL of the newly created presentation",
     }),
   },
 });
