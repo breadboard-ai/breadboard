@@ -2603,10 +2603,12 @@ export class Main extends LitElement {
                   id: evt.id,
                   subGraphId: evt.subGraphId,
                   port: evt.port,
+                  selectedPort: evt.selectedPort,
                   x: evt.x,
                   y: evt.y,
                   addHorizontalClickClearance: evt.addHorizontalClickClearance,
                 };
+
                 await this.#setNodeDataForConfiguration(configuration, null);
               }}
               @bbcommenteditrequest=${(

@@ -1237,7 +1237,7 @@ export class Editor extends LitElement {
   }
 
   #onGraphNodeEdit(evt: Event) {
-    const { id, port, x, y, addHorizontalClickClearance } =
+    const { id, port, selectedPort, x, y, addHorizontalClickClearance } =
       evt as GraphNodeEditEvent;
 
     this.dispatchEvent(
@@ -1245,6 +1245,7 @@ export class Editor extends LitElement {
         id,
         this.subGraphId,
         port,
+        selectedPort,
         x,
         y,
         addHorizontalClickClearance

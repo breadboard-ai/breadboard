@@ -590,6 +590,7 @@ export class NodeConfigurationUpdateRequestEvent extends Event {
     public readonly id: string,
     public readonly subGraphId: string | null = null,
     public readonly port: InspectablePort | null = null,
+    public readonly selectedPort: string | null,
     public readonly x: number = 0,
     public readonly y: number = 0,
     public readonly addHorizontalClickClearance = true
@@ -744,6 +745,7 @@ export class GraphNodeEditEvent extends Event {
   constructor(
     public readonly id: string,
     public readonly port: InspectablePort | null,
+    public readonly selectedPort: string | null,
     public readonly x: number,
     public readonly y: number,
     public readonly addHorizontalClickClearance = true
