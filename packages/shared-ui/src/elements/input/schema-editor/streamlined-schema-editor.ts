@@ -447,6 +447,7 @@ export class StreamlinedSchemaEditor extends LitElement {
             return [{ parts: [], role: "user" }];
           }
         }
+        return [{ parts: [], role: "user" }];
       } else {
         return [{ parts: [], role: "user" }];
       }
@@ -525,6 +526,7 @@ export class StreamlinedSchemaEditor extends LitElement {
       "type",
       "description",
       "default",
+      "examples",
     ];
 
     return (

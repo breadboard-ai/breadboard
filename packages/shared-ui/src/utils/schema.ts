@@ -155,8 +155,7 @@ export function assertIsLLMContentArray(item: unknown) {
   }
 
   const isLLMContentArray = item.every((entry) => {
-    const result = validate(entry, LLMContentSchema);
-    return result.errors;
+    return validate(entry, LLMContentSchema).valid;
   });
 
   if (isLLMContentArray) {

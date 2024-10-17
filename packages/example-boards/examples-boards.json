@@ -1,15 +1,15 @@
 {
   "boards": [
     {
-      "title": "Basics: Blank board",
-      "reference": "/example-boards/examples/blank.json",
-      "version": "0.0.1"
-    },
-    {
       "title": "Cookbook: Split an Array with JSONata",
       "reference": "/example-boards/examples/array-split-jsonata.bgl.json",
       "version": "0.0.1",
       "tags": []
+    },
+    {
+      "title": "Basics: Blank board",
+      "reference": "/example-boards/examples/blank.bgl.json",
+      "version": "0.0.1"
     },
     {
       "title": "Cookbook: Fetch Data",
