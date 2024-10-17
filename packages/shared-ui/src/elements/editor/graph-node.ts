@@ -1156,7 +1156,9 @@ export class GraphNode extends PIXI.Container {
       this.#background.stroke({ color: this.#segmentDividerColor });
     }
 
-    if (portsDivider !== null) {
+    // Outputs never have output ports themselves, so we avoid drawing this
+    // divider line.
+    if (portsDivider !== null && this.type !== "output") {
       // Ensure a clean line.
       portsDivider = Math.round(portsDivider) + 0.5;
 
