@@ -80,11 +80,11 @@ function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
             type: "object",
             examples: [],
             behavior: ["llm-content"],
-            default:
-              type === "input"
-                ? '[{"role":"user","parts":[{"text":""}]}]'
-                : "null",
           },
+          default:
+            type === "input"
+              ? '[{"role":"user","parts":[{"text":""}]}]'
+              : "null",
         },
       },
       type: "object",

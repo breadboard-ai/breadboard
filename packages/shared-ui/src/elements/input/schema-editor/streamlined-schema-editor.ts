@@ -435,12 +435,10 @@ export class StreamlinedSchemaEditor extends LitElement {
         if (
           typeof property.items === "object" &&
           !Array.isArray(property.items) &&
-          property.items.default
+          property.default
         ) {
           try {
-            const defaultValue = JSON.parse(
-              property.items.default
-            ) as LLMContent[];
+            const defaultValue = JSON.parse(property.default) as LLMContent[];
             assertIsLLMContentArray(defaultValue);
             return defaultValue;
           } catch (err) {
@@ -578,7 +576,7 @@ export class StreamlinedSchemaEditor extends LitElement {
           typeof property.items === "object" &&
           !Array.isArray(property.items)
         ) {
-          property.items.default = JSON.stringify(value.value);
+          property.default = JSON.stringify(value.value);
         }
       } else if (isText) {
         if (!title || !description || !value) {
