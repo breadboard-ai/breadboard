@@ -442,11 +442,11 @@ export class RibbonMenu extends LitElement {
       display: none;
     }
 
-    #debug {
-      width: 130px;
+    #run {
+      width: 116px;
       height: var(--bb-grid-size-7);
-      background: var(--bb-ui-600) var(--bb-icon-debug-inverted) 8px center /
-        20px 20px no-repeat;
+      background: var(--bb-ui-600) var(--bb-icon-play-filled-inverted) 8px
+        center / 20px 20px no-repeat;
       color: #fff;
       border-radius: 20px;
       border: none;
@@ -456,7 +456,7 @@ export class RibbonMenu extends LitElement {
       cursor: pointer;
     }
 
-    #debug.running {
+    #run.running {
       background: var(--bb-ui-600) url(/images/progress-ui-inverted.svg) 8px
         center / 16px 16px no-repeat;
     }
@@ -1370,8 +1370,8 @@ export class RibbonMenu extends LitElement {
         >
       </button>`,
       html`<button
-        id="debug"
-        title="Debug this board"
+        id="run"
+        title="Run this board"
         ?disabled=${!this.graph || this.readOnly}
         class=${classMap({ running: this.isRunning })}
         @pointerdown=${(evt: PointerEvent) => {
@@ -1389,7 +1389,7 @@ export class RibbonMenu extends LitElement {
           }
         }}
       >
-        ${this.isRunning ? "Stop Board" : "Debug Board"}
+        ${this.isRunning ? "Stop Board" : "Run Board"}
       </button>`,
     ];
 
