@@ -923,6 +923,7 @@ export class GraphRenderer extends LitElement {
                   new GraphNodeEditEvent(
                     this.#overflowMenuGraphNode.label,
                     null,
+                    null,
                     evt.clientX,
                     evt.clientY,
                     false
@@ -1024,8 +1025,16 @@ export class GraphRenderer extends LitElement {
 
     graph.on(
       GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
-      (id: string, port: InspectablePort | null, x: number, y: number) => {
-        this.dispatchEvent(new GraphNodeEditEvent(id, port, x, y));
+      (
+        id: string,
+        port: InspectablePort | null,
+        selectedPort: string | null,
+        x: number,
+        y: number
+      ) => {
+        this.dispatchEvent(
+          new GraphNodeEditEvent(id, port, selectedPort, x, y)
+        );
       }
     );
 
@@ -1076,7 +1085,7 @@ export class GraphRenderer extends LitElement {
     graph.on(
       GRAPH_OPERATIONS.GRAPH_NODE_EDIT,
       (id: string, x: number, y: number) => {
-        this.dispatchEvent(new GraphNodeEditEvent(id, null, x, y, false));
+        this.dispatchEvent(new GraphNodeEditEvent(id, null, null, x, y, false));
       }
     );
 

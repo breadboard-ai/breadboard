@@ -109,6 +109,7 @@ export class GraphNodePortList extends PIXI.Container {
           this.emit(
             GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
             portItem.port,
+            portItem.port.name,
             evt.clientX,
             evt.clientY
           );
