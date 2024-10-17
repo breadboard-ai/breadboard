@@ -82,7 +82,7 @@ function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
             behavior: ["llm-content"],
             default:
               type === "input"
-                ? '{"role":"user","parts":[{"text":""}]}'
+                ? '[{"role":"user","parts":[{"text":""}]}]'
                 : "null",
           },
         },

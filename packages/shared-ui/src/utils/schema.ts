@@ -148,3 +148,20 @@ export function assertIsLLMContent(item: unknown) {
 
   throw new Error(result.errors);
 }
+
+export function assertIsLLMContentArray(item: unknown) {
+  if (typeof item !== "object" || item === null || !Array.isArray(item)) {
+    throw new Error("Not an array");
+  }
+
+  const isLLMContentArray = item.every((entry) => {
+    const result = validate(entry, LLMContentSchema);
+    return result.errors;
+  });
+
+  if (isLLMContentArray) {
+    return;
+  }
+
+  throw new Error("Not an LLM Content Array");
+}
