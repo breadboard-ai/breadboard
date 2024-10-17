@@ -16,22 +16,34 @@ export {
 
 export type Inputs = {
   context: JsonSerializable;
+  slideId: string;
 };
 
 export type Outputs = {
-  context: JsonSerializable;
+  body: JsonSerializable;
 };
 
 export function run(inputs: Inputs): Outputs {
+  const requests = contextToSlides(
+    inputs.context as LLMContent[],
+    inputs.slideId
+  );
   return {
-    context: contextToSlides(
-      inputs.context as LLMContent[]
-    ) as JsonSerializable,
+    body: { requests } as JsonSerializable,
   };
 }
 
-function contextToSlides(context: LLMContent[]): SlidesRequest[] {
-  const requests: SlidesRequest[] = [];
+function contextToSlides(
+  context: LLMContent[],
+  slideToDelete: string
+): SlidesRequest[] {
+  const requests: SlidesRequest[] = [
+    {
+      deleteObject: {
+        objectId: slideToDelete,
+      },
+    },
+  ];
   const last = context.at(-1);
   if (!last || !last.parts) {
     return requests;

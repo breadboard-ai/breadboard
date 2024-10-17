@@ -134,7 +134,7 @@
       ]
     },
     "generate:js-components": {
-      "command": "build-code --tsconfig=tsconfig.json --out=src/generated/ src/js-components/*.ts",
+      "command": "build-code --tsconfig=tsconfig-code-build.json --out=src/generated/ src/js-components/*.ts",
       "files": [
         "src/**/*.ts",
         "!src/generated/"

@@ -22,7 +22,7 @@ describe("contextToSlides", () => {
         role: "user",
       },
     ];
-    const requests = contextToSlides(context);
+    const requests = contextToSlides(context, "delete");
     equal(requests.length, 3);
     if (isCreateSlideRequest(requests[0]!)) {
       equal(requests[0].createSlide.objectId, "Slide-1");
@@ -50,7 +50,7 @@ describe("contextToSlides", () => {
         role: "user",
       },
     ];
-    const requests = contextToSlides(context);
+    const requests = contextToSlides(context, "delete");
     equal(requests.length, 6);
     if (isCreateSlideRequest(requests[0]!)) {
       equal(requests[0].createSlide.objectId, "Slide-1");
@@ -99,7 +99,7 @@ describe("contextToSlides", () => {
         role: "user",
       },
     ];
-    const requests = contextToSlides(context);
+    const requests = contextToSlides(context, "delete");
     equal(requests.length, 3);
     if (isCreateSlideRequest(requests[0]!)) {
       equal(requests[0].createSlide.objectId, "Slide-1");
@@ -137,7 +137,7 @@ describe("contextToSlides", () => {
         ],
       },
     ];
-    const requests = contextToSlides(context);
+    const requests = contextToSlides(context, "delete");
     equal(requests.length, 5);
     if (isCreateSlideRequest(requests[0]!)) {
       equal(requests[0].createSlide.objectId, "Slide-1");
