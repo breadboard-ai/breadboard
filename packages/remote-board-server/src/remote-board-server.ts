@@ -75,6 +75,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
   kits: Kit[];
 
   static readonly PROTOCOL = "https://";
+  static readonly LOCALHOST = "http://localhost";
 
   static async connect(url: string, apiKey?: string) {
     if (url.endsWith("/")) {
@@ -493,6 +494,6 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
       return false;
     }
 
-    return `${this.url.href}/proxy?API_KEY=${this.user.apiKey}`;
+    return `${this.url.href}proxy?API_KEY=${this.user.apiKey}`;
   }
 }

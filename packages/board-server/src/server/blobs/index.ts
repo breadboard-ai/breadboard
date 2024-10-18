@@ -7,10 +7,11 @@
 import type { IncomingMessage, ServerResponse } from "http";
 import { authenticate } from "../auth.js";
 import type { ServerConfig } from "../config.js";
-import { badRequest, unauthorized } from "../errors.js";
+import { badRequest } from "../errors.js";
 import { createBlob } from "./create.js";
 import { serveBlob } from "./serve.js";
 import { corsAll } from "../cors.js";
+import { isUUID } from "../blob-store.js";
 
 export { serveBlobsAPI };
 
@@ -52,11 +53,4 @@ async function serveBlobsAPI(
     return serveBlob(config.storageBucket, blob, req, res);
   }
   return false;
-}
-
-function isUUID(blob: string) {
-  return (
-    blob &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(blob)
-  );
 }

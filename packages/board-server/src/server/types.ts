@@ -142,7 +142,8 @@ export type BoardServerStore = {
 };
 
 export type BlobStore = {
-  saveBlob(data: InlineDataCapabilityPart): Promise<BlobStoreSaveResult>;
+  saveData(data: InlineDataCapabilityPart): Promise<BlobStoreSaveResult>;
+  saveBuffer(buffer: Buffer, contentType: string): Promise<Result<string>>;
   getBlob(blobId: string): Promise<BlobStoreGetResult>;
 };
 
@@ -201,3 +202,13 @@ export type PageMetadata = {
   title: string;
   description: string;
 };
+
+export type Result<T> =
+  | {
+      success: false;
+      error: string;
+    }
+  | {
+      success: true;
+      result: T;
+    };
