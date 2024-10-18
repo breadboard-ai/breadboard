@@ -61,6 +61,11 @@ export const styles = css`
     display: none;
   }
 
+  .activity-entry.secret {
+    padding-top: 0;
+    margin-top: calc(var(--bb-grid-size) * -2);
+  }
+
   .activity-entry .node-info details {
     margin-left: var(--bb-grid-size-3);
     font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)

@@ -264,7 +264,7 @@ export class BoardActivity extends LitElement {
     this.requestUpdate();
   }
 
-  async #renderSecretInput(idx: number, event: InspectableRunSecretEvent) {
+  async #renderSecretInput(event: InspectableRunSecretEvent) {
     const userInputs: UserInputConfiguration[] = event.keys.reduce(
       (prev, key) => {
         const schema: Schema = {
@@ -335,38 +335,41 @@ export class BoardActivity extends LitElement {
       }
     };
 
-    return html`<section class=${classMap({ "user-required": this.#isHidden })}>
-      <h1 data-message-idx=${idx}>${event.type}</h1>
-      ${event.keys.map((id) => {
-        if (id.startsWith("connection:")) {
-          return html`<bb-connection-input
-            id=${id}
-            .connectionId=${id.replace(/^connection:/, "")}
-          ></bb-connection-input>`;
-        } else {
-          return html`<bb-user-input
-            id=${event.id}
-            .showTypes=${false}
-            .inputs=${userInputs}
-            ${ref(this.#userInputRef)}
-            @keydown=${(evt: KeyboardEvent) => {
-              const isMac = navigator.platform.indexOf("Mac") === 0;
-              const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+    return html`<div class=${classMap({ "user-required": this.#isHidden })}>
+      <div class="edge">
+        ${event.keys.map((id) => {
+          if (id.startsWith("connection:")) {
+            return html`<bb-connection-input
+              id=${id}
+              .connectionId=${id.replace(/^connection:/, "")}
+            ></bb-connection-input>`;
+          } else {
+            return html`<bb-user-input
+              id=${event.id}
+              .showTypes=${false}
+              .inputs=${userInputs}
+              ${ref(this.#userInputRef)}
+              @keydown=${(evt: KeyboardEvent) => {
+                const isMac = navigator.platform.indexOf("Mac") === 0;
+                const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
-              if (!(evt.key === "Enter" && isCtrlCommand)) {
-                return;
-              }
+                if (!(evt.key === "Enter" && isCtrlCommand)) {
+                  return;
+                }
 
-              continueRun();
-            }}
-          ></bb-user-input>`;
-        }
-      })}
+                continueRun();
+              }}
+            ></bb-user-input>`;
+          }
+        })}
+
+        <div class="edge-status"></div>
+      </div>
 
       <button class="continue-button" @click=${() => continueRun()}>
         Continue
       </button>
-    </section>`;
+    </div>`;
   }
 
   async #renderPendingInput(idx: number, event: InspectableRunNodeEvent) {
@@ -728,7 +731,7 @@ export class BoardActivity extends LitElement {
                     return nothing;
                   }
 
-                  content = this.#renderSecretInput(idx, event);
+                  content = this.#renderSecretInput(event);
                   break;
                 }
 
