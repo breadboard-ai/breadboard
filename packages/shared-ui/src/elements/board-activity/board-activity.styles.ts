@@ -335,7 +335,7 @@ export const styles = css`
   }
 
   .activity-entry .node-output summary {
-    padding: var(--bb-grid-size-4) 0 var(--bb-grid-size-3) 0;
+    padding: var(--bb-grid-size-6) 0 var(--bb-grid-size-3) 0;
     cursor: pointer;
     color: var(--bb-neutral-600);
     transition: color 0.1s cubic-bezier(0, 0, 0.3, 1);
@@ -366,7 +366,7 @@ export const styles = css`
   }
 
   summary .title {
-    font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+    font: 600 var(--bb-body-small) / var(--bb-body-line-height-small)
       var(--bb-font-family);
     margin-bottom: 2px;
   }

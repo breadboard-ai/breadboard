@@ -511,10 +511,9 @@ export class BoardActivity extends LitElement {
           class=${classMap({ "with-description": description !== null })}
         >
           ${description ? html`<h2>${description}</h2>` : nothing}
-          <span class="title">Component Outputs</span>
-          <span class="size"
-            >${portList.length} value${portList.length === 1 ? "" : "s"}</span
-          >
+          <span class="title">
+            ${portList.length} output${portList.length === 1 ? "" : "s"}
+          </span>
         </summary>
         ${portList.map((port) => {
           const nodeValue = port.value;
@@ -711,8 +710,7 @@ export class BoardActivity extends LitElement {
                                 ${description
                                   ? html`<h2>${description}</h2>`
                                   : nothing}
-                                <span class="title">Component Outputs</span>
-                                <span class="size">Retrieving values...</span>
+                                <span class="title">Retrieving values...</span>
                               </summary>
                             </details>
                             <div class="node-status"></div>

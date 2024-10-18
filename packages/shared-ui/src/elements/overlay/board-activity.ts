@@ -119,7 +119,7 @@ export class BoardActivityOverlay extends LitElement {
       width: 100%;
       min-height: 100%;
       z-index: 1;
-      padding: var(--bb-grid-size-2);
+      padding: var(--bb-grid-size-4);
     }
   `;
 
