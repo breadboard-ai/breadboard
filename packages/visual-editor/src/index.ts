@@ -397,6 +397,10 @@ export class Main extends LitElement {
             this.tab = this.#runtime.board.currentTab;
             this.showWelcomePanel = this.tab === null;
 
+            if (this.showWelcomePanel) {
+              this.#hideAllOverlays();
+            }
+
             if (this.tab) {
               // If there is a TGO in the tab change event, honor it and populate a
               // run with it before switching to the tab proper.
@@ -560,6 +564,18 @@ export class Main extends LitElement {
     window.removeEventListener("pointerdown", this.#onHideTooltipBound);
     window.removeEventListener("keydown", this.#onKeyDownBound);
     window.removeEventListener("bbrundownload", this.#downloadRunBound);
+  }
+
+  #hideAllOverlays() {
+    this.showBoardActivityOverlay = false;
+    this.boardEditOverlayInfo = null;
+    this.showSettingsOverlay = false;
+    this.showFirstRun = false;
+    this.showProviderAddOverlay = false;
+    this.showSaveAsDialog = false;
+    this.showNodeConfigurator = false;
+    this.showEdgeValue = false;
+    this.showCommentEditor = false;
   }
 
   #onShowTooltip(evt: Event) {

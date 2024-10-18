@@ -91,13 +91,16 @@
   --bb-icon-expand: url(/third_party/icons/expand.svg);
   --bb-icon-experiment: url(/third_party/icons/experiment.svg);
   --bb-icon-eye: url(/third_party/icons/eye.svg);
+  --bb-icon-fetch: url(/third_party/icons/fetch.svg);
   --bb-icon-file-add: url(/third_party/icons/file-add.svg);
   --bb-icon-fit: url(/third_party/icons/fit.svg);
   --bb-icon-folder-managed: url(/third_party/icons/folder-managed.svg);
   --bb-icon-help: url(/third_party/icons/help.svg);
+  --bb-icon-http: url(/third_party/icons/http.svg);
   --bb-icon-human: url(/third_party/icons/human.svg);
   --bb-icon-input: url(/third_party/icons/input.svg);
   --bb-icon-info: url(/third_party/icons/info.svg);
+  --bb-icon-jsonata: url(/third_party/icons/jsonata.svg);
   --bb-icon-javascript: url(/third_party/icons/js.svg);
   --bb-icon-library-add: url(/third_party/icons/library-add.svg);
   --bb-icon-library-add-ui: url(/third_party/icons/library-add-ui.svg);
@@ -115,6 +118,7 @@
   --bb-icon-move-down: url(/third_party/icons/move-down.svg);
   --bb-icon-next: url(/third_party/icons/next.svg);
   --bb-icon-open-new: url(/third_party/icons/open-new.svg);
+  --bb-icon-output: url(/third_party/icons/output.svg);
   --bb-icon-pending: url(/third_party/icons/pending.svg);
   --bb-icon-play-filled: url(/third_party/icons/play-filled.svg);
   --bb-icon-play-filled-inverted: url(/third_party/icons/play-filled-inverted.svg);
@@ -134,6 +138,7 @@
   --bb-icon-saved-remote: url(/third_party/icons/saved-remote.svg);
   --bb-icon-save-as: url(/third_party/icons/save-as.svg);
   --bb-icon-save-inverted: url(/third_party/icons/save-inverted.svg);
+  --bb-icon-secrets: url(/third_party/icons/secrets.svg);
   --bb-icon-search: url(/third_party/icons/search.svg);
   --bb-icon-settings: url(/third_party/icons/settings.svg);
   --bb-icon-settings-inverted: url(/third_party/icons/settings-inverted.svg);
