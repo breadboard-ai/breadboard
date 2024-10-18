@@ -494,6 +494,6 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
       return false;
     }
 
-    return `${this.url.href}/proxy?API_KEY=${this.user.apiKey}`;
+    return `${this.url.href}proxy?API_KEY=${this.user.apiKey}`;
   }
 }
