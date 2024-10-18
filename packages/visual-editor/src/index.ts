@@ -570,7 +570,6 @@ export class Main extends LitElement {
     this.showBoardActivityOverlay = false;
     this.boardEditOverlayInfo = null;
     this.showSettingsOverlay = false;
-    this.showFirstRun = false;
     this.showProviderAddOverlay = false;
     this.showSaveAsDialog = false;
     this.showNodeConfigurator = false;
