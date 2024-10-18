@@ -9,7 +9,7 @@ import { getBody } from "../common.js";
 import { badRequest, serverError } from "../errors.js";
 import { isLLMContent } from "@google-labs/breadboard";
 import type { DataPart } from "@breadboard-ai/types";
-import { GoogleStorageBlobStore } from "../boards/utils/blob-store.js";
+import { GoogleStorageBlobStore } from "../blob-store.js";
 import { getStore } from "../store.js";
 import type { ServerConfig } from "../config.js";
 
@@ -57,7 +57,7 @@ async function createBlob(
   const replacedParts: DataPart[] = [];
   for (const part of parts) {
     if ("inlineData" in part) {
-      const result = await blobStore.saveBlob(part);
+      const result = await blobStore.saveData(part);
       if (!result.success) {
         serverError(res, result.error);
         return;

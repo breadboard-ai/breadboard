@@ -5,14 +5,14 @@
  */
 
 import type { IncomingMessage, ServerResponse } from "http";
-import { GoogleStorageBlobStore } from "../boards/utils/blob-store.js";
+import { GoogleStorageBlobStore } from "../blob-store.js";
 
 export { serveBlob };
 
 async function serveBlob(
   bucketId: string,
   blobId: string,
-  req: IncomingMessage,
+  _req: IncomingMessage,
   res: ServerResponse
 ) {
   const store = new GoogleStorageBlobStore(bucketId);
