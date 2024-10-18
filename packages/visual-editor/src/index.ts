@@ -570,7 +570,6 @@ export class Main extends LitElement {
     this.showBoardActivityOverlay = false;
     this.boardEditOverlayInfo = null;
     this.showSettingsOverlay = false;
-    this.showFirstRun = false;
     this.showProviderAddOverlay = false;
     this.showSaveAsDialog = false;
     this.showNodeConfigurator = false;
@@ -1669,10 +1668,12 @@ export class Main extends LitElement {
         }
 
         let firstRunOverlay: HTMLTemplateResult | symbol = nothing;
+        console.log(11111, this.showFirstRun);
         if (this.showFirstRun) {
           const currentUrl = new URL(window.location.href);
           const boardServerUrl = currentUrl.searchParams.get("boardserver");
 
+          console.log("first run overlauy");
           firstRunOverlay = html`<bb-first-run-overlay
             class="settings"
             .settings=${this.#settings?.values || null}

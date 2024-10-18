@@ -14,7 +14,7 @@ import {
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { SETTINGS_TYPE, Settings } from "../../types/types.js";
 import { Task } from "@lit/task";
-import { GraphProvider } from "@google-labs/breadboard";
+import { BoardServer, GraphProvider } from "@google-labs/breadboard";
 
 type FetchServerInfoResult =
   | {
@@ -157,23 +157,15 @@ export class FirstRunOverlay extends LitElement {
       [boardServerUrl],
       { signal }
     ): Promise<FetchServerInfoResult> => {
-      const provider = this.providers.find(
-        ({ name }) => name === "RemoteGraphProvider"
-      );
-      if (!provider) {
-        return {
-          success: false,
-          error: "Can't use board servers with this Visual Editor instance.",
-        };
-      }
-      await provider.ready();
-      const registeredBoardServers = provider.items();
-      if (registeredBoardServers.has(boardServerUrl as string)) {
+      const providers = this.providers as BoardServer[];
+      const provider = providers.find(({ url }) => url.href === boardServerUrl);
+      if (provider) {
         return {
           success: true,
           connected: true,
         };
       }
+
       try {
         const response = await fetch(`${boardServerUrl}/info`, {
           signal,
