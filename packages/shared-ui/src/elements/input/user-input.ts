@@ -128,7 +128,11 @@ export class UserInput extends LitElement {
     .item {
       scroll-margin-top: var(--bb-grid-size-2);
       color: var(--bb-neutral-900);
-      margin-bottom: var(--bb-grid-size-2);
+      margin-bottom: var(--bb-grid-size-3);
+    }
+
+    .item:last-of-type {
+      margin-bottom: 0;
     }
 
     .item label .title {
@@ -136,7 +140,7 @@ export class UserInput extends LitElement {
       align-items: center;
       font: 600 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
-      padding: var(--bb-grid-size-2) 0 var(--bb-grid-size) 0;
+      padding: 0 0 var(--bb-grid-size) 0;
     }
 
     .item label .title .type {

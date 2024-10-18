@@ -81,8 +81,8 @@ export class BoardActivityOverlay extends LitElement {
     }
 
     #container {
-      padding: var(--bb-grid-size-4) var(--bb-grid-size-4) var(--bb-grid-size)
-        var(--bb-grid-size-4);
+      padding: var(--bb-grid-size-4) var(--bb-grid-size-3) var(--bb-grid-size)
+        var(--bb-grid-size-3);
       height: 40svh;
     }
 
@@ -184,7 +184,7 @@ export class BoardActivityOverlay extends LitElement {
         : nothing}
       <div id="content" ${ref(this.#contentRef)}>
         <div id="container">
-          <bb-activity-log
+          <bb-board-activity
             class=${classMap({ collapsed: this.debugEvent !== null })}
             .run=${this.run}
             .events=${events}
@@ -193,8 +193,7 @@ export class BoardActivityOverlay extends LitElement {
             .showExtendedInfo=${true}
             .settings=${this.settings}
             .showLogTitle=${false}
-            .logTitle=${"Debug Board"}
-            .waitingMessage=${'Click "Debug Board" to get started'}
+            .logTitle=${"Run Board"}
             .providers=${this.providers}
             .providerOps=${this.providerOps}
             .showDebugControls=${this.showDebugControls}
@@ -220,7 +219,7 @@ export class BoardActivityOverlay extends LitElement {
               this.debugEvent = event;
             }}
             name="Board"
-          ></bb-activity-log>
+          ></bb-board-activity>
           ${this.debugEvent
             ? html`<bb-event-details
                 .event=${this.debugEvent}
