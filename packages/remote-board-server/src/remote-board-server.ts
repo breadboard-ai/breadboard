@@ -75,6 +75,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
   kits: Kit[];
 
   static readonly PROTOCOL = "https://";
+  static readonly LOCALHOST = "http://localhost";
 
   static async connect(url: string, apiKey?: string) {
     if (url.endsWith("/")) {

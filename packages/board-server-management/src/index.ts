@@ -68,7 +68,10 @@ export async function getBoardServers(
         return IDBBoardServer.from(url, title, user, kits);
       }
 
-      if (url.startsWith(RemoteBoardServer.PROTOCOL)) {
+      if (
+        url.startsWith(RemoteBoardServer.PROTOCOL) ||
+        url.startsWith(RemoteBoardServer.LOCALHOST)
+      ) {
         return RemoteBoardServer.from(url, title, user, kits);
       }
 
@@ -97,7 +100,11 @@ export async function connectToBoardServer(
   apiKey?: string
 ): Promise<{ title: string; url: string } | null> {
   const existingServers = await getBoardServers();
-  if (location && location.startsWith(RemoteBoardServer.PROTOCOL)) {
+  if (
+    location &&
+    (location.startsWith(RemoteBoardServer.PROTOCOL) ||
+      location.startsWith(RemoteBoardServer.LOCALHOST))
+  ) {
     const existingServer = existingServers.find(
       (server) => server.url.origin === location
     );
