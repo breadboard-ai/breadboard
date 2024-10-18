@@ -14,13 +14,18 @@ import {
   HTTPServerTransport,
   type ProxyServerConfig,
 } from "@google-labs/breadboard/remote";
-import { asRuntimeKit } from "@google-labs/breadboard";
+import {
+  asRuntimeKit,
+  createDefaultDataStore,
+  type DataStore,
+} from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import { getDataStore } from "@breadboard-ai/data-store";
 import type { ServerConfig } from "../config.js";
 import { cors } from "../cors.js";
 import { getUserKey } from "../auth.js";
 import { timestamp } from "../boards/utils/run-board.js";
+import { BlobDataStore, GoogleStorageBlobStore } from "../blob-store.js";
 
 class ResponseAdapter implements ProxyServerResponse {
   #response: ServerResponse;
@@ -97,7 +102,7 @@ export const serveProxyAPI = async (
   const server = new ProxyServer(
     new HTTPServerTransport({ body }, new ResponseAdapter(res))
   );
-  const store = getDataStore();
+  const store = createDataStore(serverConfig);
   store.createGroup("run-board");
 
   const tunnel = await buildSecretsTunnel();
@@ -117,3 +122,14 @@ export const serveProxyAPI = async (
 
   return true;
 };
+
+function createDataStore(config: ServerConfig): DataStore {
+  const { storageBucket, serverUrl } = config;
+  if (!storageBucket || !serverUrl) {
+    return getDataStore();
+  }
+  return new BlobDataStore(
+    new GoogleStorageBlobStore(storageBucket, serverUrl),
+    serverUrl
+  );
+}

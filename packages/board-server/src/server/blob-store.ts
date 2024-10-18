@@ -26,7 +26,7 @@ import type {
 } from "@google-labs/breadboard";
 import type { HarnessRunResult } from "@google-labs/breadboard/harness";
 
-export { GoogleStorageBlobStore, isUUID };
+export { GoogleStorageBlobStore, isUUID, BlobDataStore };
 
 class GoogleStorageBlobStore implements BlobStore {
   #storage: Storage;
