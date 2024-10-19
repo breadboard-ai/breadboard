@@ -394,7 +394,11 @@ describe("Specialist v2 describer", () => {
       "p-TOOL_CHARACTER": {
         description: 'The output chosen when the "character" tool is invoked',
         title: "Character",
-        type: "string",
+        type: "array",
+        items: {
+          type: "object",
+          behavior: ["llm-content"],
+        },
       },
     });
   });

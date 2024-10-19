@@ -123,8 +123,11 @@ function describeSpecialist(inputs: unknown) {
       {
         title: toTitle(param),
         description: `The output chosen when the "${param}" tool is invoked`,
-        type: "object",
-        behavior: ["llm-content"],
+        type: "array",
+        items: {
+          type: "object",
+          behavior: ["llm-content"],
+        },
       },
     ])
   );
