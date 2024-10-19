@@ -139,6 +139,7 @@ export class GraphPortLabel extends PIXI.Container {
       this.emit(
         GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
         this.port,
+        this.#port?.name,
         evt.clientX,
         evt.clientY
       );

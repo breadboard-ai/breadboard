@@ -117,13 +117,17 @@ function describeSpecialist(inputs: unknown) {
     ])
   );
 
-  const outputProps = Object.fromEntries(
+  const outputProps: Record<string, Schema> = Object.fromEntries(
     unique(outs).map((param) => [
       toId(`TOOL_${param.toLocaleUpperCase()}`),
       {
         title: toTitle(param),
         description: `The output chosen when the "${param}" tool is invoked`,
-        type: "string",
+        type: "array",
+        items: {
+          type: "object",
+          behavior: ["llm-content"],
+        },
       },
     ])
   );
