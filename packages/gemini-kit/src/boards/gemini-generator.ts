@@ -324,8 +324,7 @@ const countRetries = code(
     }
     if (retry < 0) {
       return {
-        $error:
-          "Exceeded retry count, was unable to produce a useful response from the Gemini API.",
+        $error: `Gemini API retry failed: ${errorResponse.error?.code} ${errorResponse.error?.message}`,
       };
     }
     retry = retry - 1;
