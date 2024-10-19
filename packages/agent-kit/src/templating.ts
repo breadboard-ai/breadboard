@@ -36,8 +36,11 @@ type SpecialistDescriberInputs = {
   task?: LlmContent;
 };
 
+type ContentRole = "user" | "model";
+
 type ContentInputs = {
   template: LlmContent;
+  role?: ContentRole;
   context?: LlmContent[];
   [param: string]: unknown;
 };
@@ -205,9 +208,13 @@ function describeSpecialist(inputs: unknown) {
  * The guts of the "Content" component.
  */
 function content(starInputs: unknown) {
-  const { template, context, ...inputs } = starInputs as ContentInputs;
+  const { template, role, context, ...inputs } = starInputs as ContentInputs;
   const params = mergeParams(findParams(template));
   const values = collectValues(params, inputs);
+
+  if (role) {
+    template.role = role;
+  }
 
   return {
     context: prependContext(context, subContent(template, values)),
@@ -223,7 +230,7 @@ function content(starInputs: unknown) {
       // If the last item in the context has a user rule,
       // merge the new content with it instead of creating a new item.
       const last = context.at(-1);
-      if (last && last.role === "user") {
+      if (last && last.role === "user" && content.at(-1)?.role !== "model") {
         return [
           ...context.slice(0, -1),
           {
@@ -469,6 +476,15 @@ function describeContent(inputs: unknown) {
         default: "null",
         description:
           "(Optional) Content that will initialize a new conversation contenxt or be appended to the existing one. Use mustache-style {{params}} to add parameters.",
+      },
+      role: {
+        type: "string",
+        title: "Role",
+        default: "user",
+        enum: ["user", "model"],
+        description:
+          "(Optional) The conversation turn role that will be assigned to content created from the template.",
+        behavior: ["config"],
       },
     },
     type: "object",
