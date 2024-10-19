@@ -285,21 +285,32 @@ const routeToolOutput = code(
   {},
   ({ context, routes }) => {
     const out: Record<string, Context[]> = {};
-    let hasRoutes = false;
-    for (const route of routes) {
-      out[`p-${route}`] = context;
-      hasRoutes = true;
-    }
+    const hasRoutes = routes.length > 0;
     if (!hasRoutes) {
       return { out: context };
     }
-    for (let i = context.length - 1; i >= 0; i--) {
-      const item = context[i];
-      if (item.role === "model") {
-        item.parts = item.parts.filter((part) => !("functionCall" in part));
-        break;
-      }
+
+    // filter out $metadata: it's not useful for routes
+    context = context.filter((item) => item.role !== "$metadata");
+    // filter out the functionCall from the last "model"
+    // @ts-expect-error - TS doesn't know about findLastIndex
+    const modelIndex = context.findLastIndex((item) => item.role === "model");
+    if (modelIndex < 0) {
+      throw new Error("Unable to find model response when routing.");
     }
+    const model = context[modelIndex] as LlmContent;
+    const parts = model.parts.filter((part) => !("functionCall" in part));
+    // If there aren't any text parts, clip both the model and user response
+    if (!parts.length) {
+      context.splice(modelIndex - 1, 2);
+    } else {
+      model.parts = parts;
+    }
+
+    for (const route of routes) {
+      out[`p-${route}`] = context;
+    }
+
     return out;
   }
 );
