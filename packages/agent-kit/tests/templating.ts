@@ -419,6 +419,7 @@ describe("Content describer", () => {
     const paramProps = result.inputSchema.properties;
     delete paramProps.context;
     delete paramProps.template;
+    delete paramProps.role;
 
     deepStrictEqual(paramProps, {});
   });
@@ -437,6 +438,7 @@ describe("Content describer", () => {
     const paramProps = result.inputSchema.properties;
     delete paramProps.context;
     delete paramProps.template;
+    delete paramProps.role;
     deepStrictEqual(paramProps, {
       "p-role": {
         description: 'The value to substitute for the parameter "role"',
@@ -460,6 +462,7 @@ describe("Content describer", () => {
     const paramProps = result.inputSchema.properties;
     delete paramProps.context;
     delete paramProps.template;
+    delete paramProps.role;
     deepStrictEqual(paramProps, {
       "p-role": {
         description: 'The value to substitute for the parameter "role"',
