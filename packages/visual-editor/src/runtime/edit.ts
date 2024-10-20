@@ -23,7 +23,7 @@ import {
   RuntimeBoardEnhanceEvent,
   RuntimeErrorEvent,
 } from "./events";
-import { NodeMetadata, NodeValue } from "@breadboard-ai/types";
+import { GraphTag, NodeMetadata, NodeValue } from "@breadboard-ai/types";
 
 export class Edit extends EventTarget {
   #editors = new Map<TabId, EditableGraph>();
@@ -217,7 +217,8 @@ export class Edit extends EventTarget {
     version: string,
     description: string,
     status: "published" | "draft" | null,
-    isTool: boolean | null
+    isTool: boolean | null,
+    isComponent: boolean | null
   ) {
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
@@ -242,7 +243,8 @@ export class Edit extends EventTarget {
       version,
       description,
       status,
-      isTool
+      isTool,
+      isComponent
     );
 
     editableGraph.replaceGraph(subGraphId, subGraphDescriptor);
@@ -270,7 +272,8 @@ export class Edit extends EventTarget {
     version: string,
     description: string,
     status: "published" | "draft" | null,
-    isTool: boolean | null
+    isTool: boolean | null,
+    isComponent: boolean | null
   ) {
     if (!tab) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to find tab"));
@@ -283,7 +286,8 @@ export class Edit extends EventTarget {
       version,
       description,
       status,
-      isTool
+      isTool,
+      isComponent
     );
   }
 
@@ -293,7 +297,8 @@ export class Edit extends EventTarget {
     version: string,
     description: string,
     status: "published" | "draft" | null,
-    isTool: boolean | null
+    isTool: boolean | null,
+    isComponent: boolean | null
   ) {
     graph.title = title;
     graph.version = version;
@@ -320,23 +325,28 @@ export class Edit extends EventTarget {
       }
     }
 
-    if (isTool !== null) {
-      graph.metadata ??= {};
-      graph.metadata.tags ??= [];
-
-      if (isTool) {
-        if (!graph.metadata.tags.includes("tool")) {
-          graph.metadata.tags.push("tool");
-        }
-      } else {
-        graph.metadata.tags = graph.metadata.tags.filter(
-          (tag) => tag !== "tool"
-        );
-      }
-    }
+    updateTag("tool", isTool);
+    updateTag("component", isComponent);
 
     // TODO: Plumb Tab ID here.
     this.dispatchEvent(new RuntimeBoardEditEvent(null, [], false));
+
+    function updateTag(tagName: GraphTag, value: boolean | null) {
+      if (value !== null) {
+        graph.metadata ??= {};
+        graph.metadata.tags ??= [];
+
+        if (value) {
+          if (!graph.metadata.tags.includes(tagName)) {
+            graph.metadata.tags.push(tagName);
+          }
+        } else {
+          graph.metadata.tags = graph.metadata.tags.filter(
+            (tag) => tag !== tagName
+          );
+        }
+      }
+    }
   }
 
   createSubGraph(tab: Tab | null, subGraphTitle: string) {

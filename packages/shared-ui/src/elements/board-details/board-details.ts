@@ -203,6 +203,7 @@ export class BoardDetails extends LitElement {
         data.get("description") as string,
         data.get("status") as "published" | "draft" | null,
         data.get("tool") === "on",
+        data.get("component") === "on",
         this.subGraphId
       )
     );

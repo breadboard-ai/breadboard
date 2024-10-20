@@ -1222,7 +1222,8 @@ export class Main extends LitElement {
         evt.version,
         evt.description,
         evt.status,
-        evt.isTool
+        evt.isTool,
+        evt.isComponent
       );
     } else {
       this.#runtime.edit.updateBoardInfo(
@@ -1231,7 +1232,8 @@ export class Main extends LitElement {
         evt.version,
         evt.description,
         evt.status,
-        evt.isTool
+        evt.isTool,
+        evt.isComponent
       );
     }
   }
@@ -1621,6 +1623,7 @@ export class Main extends LitElement {
             .boardDescription=${this.boardEditOverlayInfo.description}
             .boardPublished=${this.boardEditOverlayInfo.published}
             .boardIsTool=${this.boardEditOverlayInfo.isTool}
+            .boardIsComponent=${this.boardEditOverlayInfo.isComponent}
             .subGraphId=${this.boardEditOverlayInfo.subGraphId}
             @bboverlaydismissed=${() => {
               this.boardEditOverlayInfo = null;
