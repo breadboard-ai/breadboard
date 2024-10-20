@@ -104,6 +104,7 @@ export class BoardInfoUpdateEvent extends Event {
     public readonly description: string,
     public readonly status: "published" | "draft" | null = null,
     public readonly isTool: boolean | null = null,
+    public readonly isComponent: boolean | null = null,
     public readonly subGraphId: string | null = null
   ) {
     super(BoardInfoUpdateEvent.eventName, { ...eventInit });

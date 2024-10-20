@@ -93,7 +93,7 @@ export const collectKits = (
       };
       return {
         descriptor,
-        nodeTypes: collectNodeTypes(kit.handlers),
+        nodeTypes: collectNodeTypes(kit.handlers, context),
       };
     }),
   ];
@@ -106,10 +106,18 @@ export const createGraphNodeType = (
   return new CustomNodeType(type, context);
 };
 
-const collectNodeTypes = (handlers: NodeHandlers): InspectableNodeType[] => {
+const collectNodeTypes = (
+  handlers: NodeHandlers,
+  context: NodeHandlerContext
+): InspectableNodeType[] => {
   return Object.entries(handlers)
     .sort()
-    .map(([type, handler]) => new KitNodeType(type, handler));
+    .map(([type, handler]) => {
+      if (graphUrlLike(type)) {
+        return new CustomNodeType(type, context);
+      }
+      return new KitNodeType(type, handler);
+    });
 };
 
 const portsFromHandler = async (

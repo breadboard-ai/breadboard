@@ -276,8 +276,9 @@ export type GraphInlineMetadata = {
  *    used in production and shared with others.
  * - `tool`: The graph is intended to be a tool.
  * - `experimental`: The graph is experimental and may not be stable.
+ * - `component`: The graph is intended to be a component.
  */
-export type GraphTag = "published" | "tool" | "experimental";
+export type GraphTag = "published" | "tool" | "experimental" | "component";
 
 /**
  * Represents graph metadata.

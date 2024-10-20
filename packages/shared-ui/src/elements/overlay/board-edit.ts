@@ -30,6 +30,9 @@ export class BoardEditOverlay extends LitElement {
   boardIsTool: boolean | null = null;
 
   @property()
+  boardIsComponent: boolean | null = null;
+
+  @property()
   subGraphId: string | null = null;
 
   #formRef: Ref<HTMLFormElement> = createRef();
@@ -133,7 +136,7 @@ export class BoardEditOverlay extends LitElement {
 
     .split {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       column-gap: var(--bb-grid-size-2);
       align-items: center;
     }
@@ -201,6 +204,7 @@ export class BoardEditOverlay extends LitElement {
               data.get("description") as string,
               data.get("status") as "published" | "draft" | null,
               data.get("tool") === "on",
+              data.get("component") === "on",
               this.subGraphId
             )
           );
@@ -292,6 +296,19 @@ export class BoardEditOverlay extends LitElement {
                     type="checkbox"
                     .value="on"
                     ?checked=${this.boardIsTool}
+                  />
+                </div>
+              `
+            : nothing}
+          ${this.boardIsComponent !== null
+            ? html`
+                <div>
+                  <label>Component</label>
+                  <input
+                    name="component"
+                    type="checkbox"
+                    .value="on"
+                    ?checked=${this.boardIsComponent}
                   />
                 </div>
               `

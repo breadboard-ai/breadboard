@@ -6,6 +6,7 @@
 
 import {
   blankLLMContent,
+  NodeIdentifier,
   type BoardServer,
   type BoardServerCapabilities,
   type BoardServerConfiguration,
@@ -21,7 +22,6 @@ import {
   type Permission,
   type User,
 } from "@google-labs/breadboard";
-import { fromManifest } from "@google-labs/breadboard/kits";
 
 /**
  * For now, make a flag that controls whether to use simple requests or not.
@@ -439,54 +439,60 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
       );
     }
 
-    this.#refreshBoardServerKit(projects);
+    this.#refreshBoardServerKits(projects);
     return projects;
   }
 
-  async #refreshBoardServerKit(projects: BoardServerProject[]) {
+  async #refreshBoardServerKits(projects: BoardServerProject[]) {
     if (!projects.length) {
       return;
     }
 
-    const nodes: Record<string, GraphDescriptor> = {};
+    const kits = new Map<string, NodeIdentifier[]>();
+
     for (let idx = 0; idx < projects.length; idx++) {
       const project = projects[idx];
       if (!project.url) {
         continue;
       }
 
-      const id = `node-${globalThis.crypto.randomUUID()}`;
+      // const id = `node-${globalThis.crypto.randomUUID()}`;
       const type = project.url.href;
-      if (!project.metadata?.tags || !project.metadata?.tags.includes("tool")) {
+      const owner = project.metadata.owner;
+      if (
+        !project.metadata?.tags ||
+        !project.metadata?.tags.includes("component")
+      ) {
         continue;
       }
 
-      nodes[type] = {
-        title: `@${project.metadata.owner} - ${project.metadata.title} `,
-        description: project.metadata.description,
-        metadata: {
-          tags: project.metadata?.tags,
-          icon: project.metadata?.icon ?? "generic",
-        },
-        edges: [],
-        nodes: [
-          {
-            id,
-            type,
-          },
-        ],
-      };
+      let nodes: NodeIdentifier[] | undefined = kits.get(owner);
+      if (!nodes) {
+        nodes = [];
+        kits.set(owner, nodes);
+      }
+      nodes.push(type);
     }
 
-    const boardServerKit = fromManifest({
-      url: `${this.url.href}/bsk`,
-      version: "0.0.1",
-      title: "Board Server Kit",
-      nodes,
-    });
-
-    this.kits = this.kits.filter((kit) => kit.title !== "Board Server Kit");
-    this.kits.push(boardServerKit);
+    for (const [owner, nodes] of kits.entries()) {
+      const title = `@${owner}'s Components`;
+      const url = `${this.url.origin}/kits/@${owner}/all`;
+      this.kits = this.kits.filter((kit) => kit.title !== title);
+      this.kits.push({
+        title,
+        url,
+        handlers: Object.fromEntries(
+          nodes.map((node) => [
+            node,
+            () => {
+              throw new Error(
+                `Integrity error: "${title}" kit's node handlers should never be called`
+              );
+            },
+          ])
+        ),
+      });
+    }
   }
 
   async canProxy(url: URL): Promise<string | false> {

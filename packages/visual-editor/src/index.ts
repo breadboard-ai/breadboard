@@ -129,6 +129,7 @@ export class Main extends LitElement {
     description: string;
     published: boolean | null;
     isTool: boolean | null;
+    isComponent: boolean | null;
     subGraphId: string | null;
   } | null = null;
 
@@ -1221,7 +1222,8 @@ export class Main extends LitElement {
         evt.version,
         evt.description,
         evt.status,
-        evt.isTool
+        evt.isTool,
+        evt.isComponent
       );
     } else {
       this.#runtime.edit.updateBoardInfo(
@@ -1230,7 +1232,8 @@ export class Main extends LitElement {
         evt.version,
         evt.description,
         evt.status,
-        evt.isTool
+        evt.isTool,
+        evt.isComponent
       );
     }
   }
@@ -1398,6 +1401,7 @@ export class Main extends LitElement {
     this.boardEditOverlayInfo = {
       description: description ?? "",
       isTool: metadata?.tags?.includes("tool") ?? false,
+      isComponent: metadata?.tags?.includes("component") ?? false,
       published: metadata?.tags?.includes("published") ?? false,
       subGraphId: this.tab.subGraphId,
       title: title ?? "",
@@ -1619,6 +1623,7 @@ export class Main extends LitElement {
             .boardDescription=${this.boardEditOverlayInfo.description}
             .boardPublished=${this.boardEditOverlayInfo.published}
             .boardIsTool=${this.boardEditOverlayInfo.isTool}
+            .boardIsComponent=${this.boardEditOverlayInfo.isComponent}
             .subGraphId=${this.boardEditOverlayInfo.subGraphId}
             @bboverlaydismissed=${() => {
               this.boardEditOverlayInfo = null;
