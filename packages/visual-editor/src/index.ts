@@ -129,6 +129,7 @@ export class Main extends LitElement {
     description: string;
     published: boolean | null;
     isTool: boolean | null;
+    isComponent: boolean | null;
     subGraphId: string | null;
   } | null = null;
 
@@ -1398,6 +1399,7 @@ export class Main extends LitElement {
     this.boardEditOverlayInfo = {
       description: description ?? "",
       isTool: metadata?.tags?.includes("tool") ?? false,
+      isComponent: metadata?.tags?.includes("component") ?? false,
       published: metadata?.tags?.includes("published") ?? false,
       subGraphId: this.tab.subGraphId,
       title: title ?? "",
