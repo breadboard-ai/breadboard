@@ -22,11 +22,9 @@ https://www.youtube.com/watch?v=IWMd1RpGKhw&list=PLH7s1qvZKUeLampPQdBggg8LK31heB
 
 For this workshop, you will be working on a community board server. To get access to the server:
 
-1️⃣ Go to the spreadsheet provided by the workshop facilitators and find the username that you like and that hasn’t been claimed yet. To claim the username, enter your name and email address next to it.
+1️⃣ Follow instructions to get the Board Server API key. This key will serve as a password that lets you access the board server.
 
-2️⃣ Once you’ve claimed the username, copy the associated Board Server API key. This key will serve as a password that lets you access the board server.
-
-3️⃣ Once you have the Board Server API key, join the server by going to the Board Server URL, provided by facilitators.
+2️⃣ Once you have the Board Server API key, join the server by going to the Board Server URL, provided in the instructions.
 
 You will see something like this:
 
@@ -363,6 +361,7 @@ https://www.youtube.com/watch?v=tJAAgcnr9kg&list=PLH7s1qvZKUeLampPQdBggg8LK31heB
 
 For a more elaborate walkthrough on how to build a board from scratch, check out these guides:
 
+- [What's new in Specialist](/breadboard/updates/2024-10-21/) -- a guide to parameters and routes in Specialist.
 - [Building a Librarian](https://breadboard-ai.github.io/breadboard/docs/guides/librarian/)
 - [Building a Novel Generator](https://breadboard-ai.github.io/breadboard/docs/guides/novel-generator/)
 - [Building a Social Media Post Creator](https://breadboard-ai.github.io/breadboard/docs/guides/social-post/)
@@ -379,10 +378,10 @@ If you’d like to learn more about all the different components that come with 
 
 If you'd like to learn more about how to use Board Server as an API endpoint, check out these links:
 
- - [Board Server API Endpoints](/breadboard/docs/reference/board-run-api-endpoint/)
- - [A sample of calling API Endpoint from a Browser](https://github.com/breadboard-ai/breadboard/tree/main/samples/endpoint/browser)
- - [A sample of calling API Endpoint from Deno](https://github.com/breadboard-ai/breadboard/tree/main/samples/endpoint/deno)
- - [An API inspector for the API Endpoint](https://github.com/breadboard-ai/breadboard/tree/main/samples/endpoint/inspector) -- great for troubleshooting your board's endpoint.
+- [Board Server API Endpoints](/breadboard/docs/reference/board-run-api-endpoint/)
+- [A sample of calling API Endpoint from a Browser](https://github.com/breadboard-ai/breadboard/tree/main/samples/endpoint/browser)
+- [A sample of calling API Endpoint from Deno](https://github.com/breadboard-ai/breadboard/tree/main/samples/endpoint/deno)
+- [An API inspector for the API Endpoint](https://github.com/breadboard-ai/breadboard/tree/main/samples/endpoint/inspector) -- great for troubleshooting your board's endpoint.
 
 > [!NOTE]
 > 🌵 some of the screenshots in the guides are showing the previous-generation UI, but the basics of building are still the same.
