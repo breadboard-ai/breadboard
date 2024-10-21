@@ -1137,6 +1137,14 @@ export class Main extends LitElement {
       message = message.slice(0, 67) + "...";
     }
 
+    // Don't toast a repeat message.
+    for (const toast of this.toasts.values()) {
+      if (toast.message === message) {
+        console.warn(`Ignoring toast with message "${message}"`);
+        return;
+      }
+    }
+
     this.toasts.set(id, { message, type, persistent });
     this.requestUpdate();
 

@@ -34,8 +34,7 @@ export async function create(config: RuntimeConfig): Promise<{
   edit: Edit;
   kits: Kit[];
 }> {
-  const loader = createLoader([]);
-  const [kits] = await loadKits([
+  const kits = await loadKits([
     GeminiKit,
     BuildExampleKit,
     PythonWasmKit,
@@ -55,9 +54,10 @@ export async function create(config: RuntimeConfig): Promise<{
     servers = await getBoardServers();
   }
 
+  const loader = createLoader(servers);
   const boardServers = {
     servers,
-    loader: createLoader(servers),
+    loader,
   };
 
   const runtime = {
