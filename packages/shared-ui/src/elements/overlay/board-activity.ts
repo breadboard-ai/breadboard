@@ -8,7 +8,7 @@ import { LitElement, html, css, PropertyValues, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { SettingsStore } from "../../types/types.js";
 import {
-  GraphProvider,
+  BoardServer,
   InspectableRun,
   InspectableRunEvent,
   InspectableRunInputs,
@@ -44,10 +44,7 @@ export class BoardActivityOverlay extends LitElement {
   settings: SettingsStore | null = null;
 
   @property()
-  providers: GraphProvider[] = [];
-
-  @property()
-  providerOps = 0;
+  boardServers: BoardServer[] = [];
 
   @property()
   persist = false;
@@ -193,8 +190,7 @@ export class BoardActivityOverlay extends LitElement {
             .settings=${this.settings}
             .showLogTitle=${false}
             .logTitle=${"Run Board"}
-            .providers=${this.providers}
-            .providerOps=${this.providerOps}
+            .providers=${this.boardServers}
             .showDebugControls=${this.showDebugControls}
             .nextNodeId=${this.nextNodeId}
             @pointerdown=${(evt: PointerEvent) => {

@@ -5,8 +5,8 @@
  */
 import { LLMContent } from "@breadboard-ai/types";
 import {
+  BoardServer,
   GraphDescriptor,
-  GraphProvider,
   isLLMContent,
   isLLMContentArray,
   NodeValue,
@@ -90,10 +90,7 @@ export class UserInput extends LitElement {
   subGraphId: string | null = null;
 
   @property()
-  providers: GraphProvider[] = [];
-
-  @property()
-  providerOps = 0;
+  boardServers: BoardServer[] = [];
 
   @property({ reflect: true })
   readOnly = false;
@@ -598,8 +595,7 @@ export class UserInput extends LitElement {
                         : input.schema
                     )}
                     .graph=${this.graph}
-                    .providers=${this.providers}
-                    .providerOps=${this.providerOps}
+                    .boardServers=${this.boardServers}
                   ></bb-array-editor>`;
                 }
                 break;
@@ -648,8 +644,7 @@ export class UserInput extends LitElement {
                     name="${id}"
                     .graph=${this.graph}
                     .subGraphs=${this.graph?.graphs ?? null}
-                    .providers=${this.providers}
-                    .providerOps=${this.providerOps}
+                    .boardServers=${this.boardServers}
                     .value=${board}
                     }
                   ></bb-board-selector>`;

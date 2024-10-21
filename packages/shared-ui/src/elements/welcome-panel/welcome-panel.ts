@@ -8,7 +8,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import {
-  GraphProviderBlankBoardEvent,
+  GraphBoardServerBlankBoardEvent,
   StartEvent,
 } from "../../events/events.js";
 import { RecentBoard } from "../../types/types.js";
@@ -325,7 +325,7 @@ export class WelcomePanel extends LitElement {
         <button
           id="new-board"
           @click=${() => {
-            this.dispatchEvent(new GraphProviderBlankBoardEvent());
+            this.dispatchEvent(new GraphBoardServerBlankBoardEvent());
           }}
         >
           New board

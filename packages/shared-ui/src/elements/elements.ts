@@ -43,7 +43,7 @@ export { NodeRunner } from "./node-runner/node-runner.js";
 export { OverflowMenu } from "./overflow-menu/overflow-menu.js";
 export { Overlay } from "./overlay/overlay.js";
 export { PortTooltip } from "./editor/port-tooltip.js";
-export { ProviderOverlay } from "./overlay/provider.js";
+export { BoardServerOverlay } from "./overlay/provider.js";
 export { RibbonMenu } from "./editor/ribbon.js";
 export { SaveAsOverlay } from "./overlay/save-as.js";
 export { StreamlinedSchemaEditor } from "./input/schema-editor/streamlined-schema-editor.js";

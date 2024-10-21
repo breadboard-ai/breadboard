@@ -5,7 +5,7 @@
  */
 
 import {
-  GraphProvider,
+  BoardServer,
   InspectableRun,
   InspectableRunEvent,
   InspectableRunInputs,
@@ -70,10 +70,7 @@ export class ActivityLog extends LitElement {
   settings: SettingsStore | null = null;
 
   @property()
-  providers: GraphProvider[] = [];
-
-  @property()
-  providerOps = 0;
+  boardServers: BoardServer[] = [];
 
   @property()
   showDebugControls = false;
@@ -449,8 +446,7 @@ export class ActivityLog extends LitElement {
       ${node.description() ? html`<h2>${node.description()}</h2>` : nothing}
       <bb-user-input
         id="${descriptor.id}"
-        .providers=${this.providers}
-        .providerOps=${this.providerOps}
+        .boardServers=${this.boardServers}
         .showTypes=${false}
         .inputs=${userInputs}
         .inlineControls=${true}

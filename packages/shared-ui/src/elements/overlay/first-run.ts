@@ -7,14 +7,14 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import {
-  GraphProviderConnectRequestEvent,
+  GraphBoardServerConnectRequestEvent,
   OverlayDismissedEvent,
   SettingsUpdateEvent,
 } from "../../events/events.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { SETTINGS_TYPE, Settings } from "../../types/types.js";
 import { Task } from "@lit/task";
-import { BoardServer, GraphProvider } from "@google-labs/breadboard";
+import { BoardServer } from "@google-labs/breadboard";
 
 type FetchServerInfoResult =
   | {
@@ -41,7 +41,7 @@ export class FirstRunOverlay extends LitElement {
   boardServerUrl: string | null = null;
 
   @property()
-  providers: GraphProvider[] = [];
+  boardServers: BoardServer[] = [];
 
   #formRef: Ref<HTMLFormElement> = createRef();
 
@@ -157,9 +157,10 @@ export class FirstRunOverlay extends LitElement {
       [boardServerUrl],
       { signal }
     ): Promise<FetchServerInfoResult> => {
-      const providers = this.providers as BoardServer[];
-      const provider = providers.find(({ url }) => url.href === boardServerUrl);
-      if (provider) {
+      const boardServer = this.boardServers.find(
+        ({ url }) => url.href === boardServerUrl
+      );
+      if (boardServer) {
         return {
           success: true,
           connected: true,
@@ -256,8 +257,8 @@ export class FirstRunOverlay extends LitElement {
           const boardServerApiKey = data.get("board-server-api-key");
           if (this.boardServerUrl && URL.canParse(this.boardServerUrl)) {
             this.dispatchEvent(
-              new GraphProviderConnectRequestEvent(
-                "RemoteGraphProvider",
+              new GraphBoardServerConnectRequestEvent(
+                "RemoteGraphProvider", // Deprecated.
                 this.boardServerUrl,
                 boardServerApiKey && typeof boardServerApiKey === "string"
                   ? boardServerApiKey

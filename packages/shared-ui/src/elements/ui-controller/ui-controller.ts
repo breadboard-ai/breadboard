@@ -5,10 +5,10 @@
  */
 
 import {
+  BoardServer,
   EditHistory,
   GraphDescriptor,
   GraphLoader,
-  GraphProvider,
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
   InspectableRun,
@@ -79,10 +79,7 @@ export class UI extends LitElement {
   settings: SettingsStore | null = null;
 
   @property()
-  providers: GraphProvider[] = [];
-
-  @property()
-  providerOps = 0;
+  boardServers: BoardServer[] = [];
 
   @property()
   isShowingBoardActivityOverlay = false;
@@ -191,7 +188,7 @@ export class UI extends LitElement {
         let capabilities: false | GraphProviderCapabilities = false;
         let extendedCapabilities: false | GraphProviderExtendedCapabilities =
           false;
-        for (const provider of this.providers) {
+        for (const provider of this.boardServers) {
           if (!this.graph || !this.graph.url) {
             continue;
           }

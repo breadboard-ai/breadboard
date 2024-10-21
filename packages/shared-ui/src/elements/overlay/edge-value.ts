@@ -20,7 +20,7 @@ import {
 } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 import { UserInput } from "../elements.js";
-import { GraphDescriptor, GraphProvider } from "@google-labs/breadboard";
+import { BoardServer, GraphDescriptor } from "@google-labs/breadboard";
 
 const OVERLAY_CLEARANCE = 60;
 const MAXIMIZE_KEY = "bb-edge-value-overlay-maximized";
@@ -46,10 +46,7 @@ export class EdgeValueOverlay extends LitElement {
   subGraphId: string | null = null;
 
   @property()
-  providers: GraphProvider[] = [];
-
-  @property()
-  providerOps = 0;
+  boardServers: BoardServer[] = [];
 
   @property({ reflect: true })
   maximized = false;
@@ -453,8 +450,7 @@ export class EdgeValueOverlay extends LitElement {
       .inputs=${userInputs}
       .graph=${this.graph}
       .subGraphId=${this.subGraphId}
-      .providers=${this.providers}
-      .providerOps=${this.providerOps}
+      .boardServers=${this.boardServers}
       .showTypes=${false}
       .showTitleInfo=${false}
       .inlineControls=${true}

@@ -7,13 +7,13 @@
 import { LitElement, html, css, PropertyValueMap } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import {
-  GraphProviderSaveBoardEvent,
+  GraphBoardServerSaveBoardEvent,
   OverlayDismissedEvent,
 } from "../../events/events.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import {
   GraphDescriptor,
-  GraphProvider,
+  BoardServer,
   blankLLMContent,
 } from "@google-labs/breadboard";
 import { map } from "lit/directives/map.js";
@@ -30,16 +30,13 @@ export class SaveAsOverlay extends LitElement {
   boardFileName: string | null = null;
 
   @property()
-  providers: GraphProvider[] = [];
+  boardServers: BoardServer[] = [];
 
   @property()
-  selectedProvider = "IDBGraphProvider";
+  selectedBoardServer = "Browser Storage";
 
   @property()
-  selectedLocation = "default";
-
-  @property()
-  providerOps = 0;
+  selectedLocation = "idb://board-server-local";
 
   @property()
   isNewBoard = false;
@@ -169,12 +166,12 @@ export class SaveAsOverlay extends LitElement {
 
   protected willUpdate(
     changedProperties:
-      | PropertyValueMap<{ providers: GraphProvider[] }>
+      | PropertyValueMap<{ providers: BoardServer[] }>
       | Map<PropertyKey, unknown>
   ): void {
     // Only show providers to which the user can send files.
     if (changedProperties.has("providers")) {
-      this.providers = [...this.providers].filter(
+      this.boardServers = [...this.boardServers].filter(
         (provider) => provider.extendedCapabilities().modify
       );
     }
@@ -223,7 +220,7 @@ export class SaveAsOverlay extends LitElement {
 
   render() {
     const selected = this.#createUrl(
-      this.selectedProvider,
+      this.selectedBoardServer,
       this.selectedLocation
     );
 
@@ -269,7 +266,7 @@ export class SaveAsOverlay extends LitElement {
           }
 
           const [providerName, location] = this.#parseUrl(provider);
-          const chosenProvider = this.providers.find(
+          const chosenProvider = this.boardServers.find(
             (provider) => provider.name === providerName
           );
           const chosenLocation = chosenProvider?.items().get(location);
@@ -316,7 +313,7 @@ export class SaveAsOverlay extends LitElement {
 
           graph.title = title;
           this.dispatchEvent(
-            new GraphProviderSaveBoardEvent(
+            new GraphBoardServerSaveBoardEvent(
               providerName,
               location,
               fileName,
@@ -339,8 +336,8 @@ export class SaveAsOverlay extends LitElement {
         </header>
 
         <label>Provider</label>
-        <select name="provider" .value=${this.selectedProvider}>
-          ${map(this.providers, (provider) => {
+        <select name="provider" .value=${this.selectedBoardServer}>
+          ${map(this.boardServers, (provider) => {
             const stores = [...provider.items()].filter(
               ([, store]) => store.permission === "granted"
             );

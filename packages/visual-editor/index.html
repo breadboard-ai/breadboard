@@ -25,12 +25,6 @@
     }
 
     const config = {
-      providers: [
-        FileSystemGraphProvider.instance(),
-        IDBGraphProvider.instance(),
-        RemoteGraphProvider.instance(),
-        new ExamplesGraphProvider(boards),
-      ],
       settings: SettingsStore.instance(),
       version: pkg.version,
     };

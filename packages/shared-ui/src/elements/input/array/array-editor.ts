@@ -7,7 +7,7 @@
 import {
   BehaviorSchema,
   GraphDescriptor,
-  GraphProvider,
+  BoardServer,
 } from "@google-labs/breadboard";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -36,10 +36,7 @@ export class ArrayEditor extends LitElement {
   behavior: BehaviorSchema | null = null;
 
   @property()
-  providers: GraphProvider[] = [];
-
-  @property()
-  providerOps = 0;
+  boardServers: BoardServer[] = [];
 
   @property()
   graph: GraphDescriptor | null = null;
@@ -395,8 +392,7 @@ export class ArrayEditor extends LitElement {
                       class="entry"
                       .graph=${this.graph}
                       .subGraphs=${this.graph?.graphs ?? null}
-                      .providers=${this.providers}
-                      .providerOps=${this.providerOps}
+                      .boardServers=${this.boardServers}
                       .value=${item ?? ""}
                     ></bb-board-selector>`;
                     break;

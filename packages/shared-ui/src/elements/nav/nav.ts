@@ -14,18 +14,18 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
-  GraphProviderAddEvent,
-  GraphProviderBlankBoardEvent,
-  GraphProviderDeleteRequestEvent,
-  GraphProviderDisconnectEvent,
-  GraphProviderLoadRequestEvent,
-  GraphProviderRefreshEvent,
-  GraphProviderRenewAccessRequestEvent,
-  GraphProviderSelectionChangeEvent,
+  GraphBoardServerAddEvent,
+  GraphBoardServerBlankBoardEvent,
+  GraphBoardServerDeleteRequestEvent,
+  GraphBoardServerDisconnectEvent,
+  GraphBoardServerLoadRequestEvent,
+  GraphBoardServerRefreshEvent,
+  GraphBoardServerRenewAccessRequestEvent,
+  GraphBoardServerSelectionChangeEvent,
   ResetEvent,
 } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
-import { GraphProvider } from "@google-labs/breadboard";
+import { BoardServer } from "@google-labs/breadboard";
 import { classMap } from "lit/directives/class-map.js";
 import { until } from "lit/directives/until.js";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
@@ -33,10 +33,7 @@ import { createRef, Ref, ref } from "lit/directives/ref.js";
 @customElement("bb-nav")
 export class Navigation extends LitElement {
   @property()
-  providers: GraphProvider[] = [];
-
-  @property()
-  providerOps = 0;
+  boardServers: BoardServer[] = [];
 
   @property({ reflect: true })
   visible = false;
@@ -45,19 +42,20 @@ export class Navigation extends LitElement {
   url: string | null = null;
 
   @property()
-  selectedProvider = "IDBGraphProvider";
+  selectedBoardServer = "Example Boards";
 
   @property()
-  selectedLocation = "default";
+  selectedLocation = "example://example-boards";
 
   @state()
   filter: string | null = null;
 
   @state()
-  showProviderOverflowMenu = false;
+  showBoardServerOverflowMenu = false;
 
-  #providerRef: Ref<HTMLElement> = createRef();
-  #hideProviderOverflowMenuBound = this.#hideProviderOverflowMenu.bind(this);
+  #boardServerRef: Ref<HTMLElement> = createRef();
+  #hideBoardServerOverflowMenuBound =
+    this.#hideBoardServerOverflowMenu.bind(this);
 
   static styles = css`
     * {
@@ -437,30 +435,38 @@ export class Navigation extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
 
-    window.addEventListener("keydown", this.#hideProviderOverflowMenuBound);
-    window.addEventListener("pointerdown", this.#hideProviderOverflowMenuBound);
-    this.addEventListener("pointerdown", this.#hideProviderOverflowMenuBound);
+    window.addEventListener("keydown", this.#hideBoardServerOverflowMenuBound);
+    window.addEventListener(
+      "pointerdown",
+      this.#hideBoardServerOverflowMenuBound
+    );
+    this.addEventListener(
+      "pointerdown",
+      this.#hideBoardServerOverflowMenuBound
+    );
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
-    window.removeEventListener("keydown", this.#hideProviderOverflowMenuBound);
+    window.removeEventListener(
+      "keydown",
+      this.#hideBoardServerOverflowMenuBound
+    );
     window.removeEventListener(
       "pointerdown",
-      this.#hideProviderOverflowMenuBound
+      this.#hideBoardServerOverflowMenuBound
     );
     this.removeEventListener(
       "pointerdown",
-      this.#hideProviderOverflowMenuBound
+      this.#hideBoardServerOverflowMenuBound
     );
   }
 
   protected willUpdate(
     changedProperties:
       | PropertyValueMap<{
-          providerOps: number;
-          providers: GraphProvider[];
+          providers: BoardServer[];
           selectedProvider: string;
           selectedLocation: string;
           url: string | null;
@@ -469,7 +475,6 @@ export class Navigation extends LitElement {
       | Map<PropertyKey, unknown>
   ): void {
     if (
-      changedProperties.has("providerOps") ||
       changedProperties.has("providers") ||
       changedProperties.has("selectedLocation") ||
       changedProperties.has("selectedProvider") ||
@@ -481,11 +486,11 @@ export class Navigation extends LitElement {
 
   protected updated(): void {
     requestAnimationFrame(() => {
-      if (!this.#providerRef.value) {
+      if (!this.#boardServerRef.value) {
         return;
       }
 
-      for (const item of this.#providerRef.value.querySelectorAll<HTMLElement>(
+      for (const item of this.#boardServerRef.value.querySelectorAll<HTMLElement>(
         "button.board"
       )) {
         item.classList.toggle("selected", item.dataset.url === this.url);
@@ -501,7 +506,7 @@ export class Navigation extends LitElement {
     return url.split("::");
   }
 
-  #hideProviderOverflowMenu(evt: Event) {
+  #hideBoardServerOverflowMenu(evt: Event) {
     if (evt instanceof KeyboardEvent && evt.key !== "Escape") {
       return;
     }
@@ -515,15 +520,15 @@ export class Navigation extends LitElement {
       return;
     }
 
-    this.showProviderOverflowMenu = false;
+    this.showBoardServerOverflowMenu = false;
   }
 
   #returnToDefaultStore() {
-    if (!this.providers.length) {
+    if (!this.boardServers.length) {
       return;
     }
 
-    const mainProvider = this.providers[0];
+    const mainProvider = this.boardServers[0];
     const selectedProvider = mainProvider.name;
     if (mainProvider.items().size === 0) {
       return;
@@ -533,15 +538,15 @@ export class Navigation extends LitElement {
     const selectedLocation = providerNames[0];
 
     if (
-      selectedProvider !== this.selectedProvider &&
+      selectedProvider !== this.selectedBoardServer &&
       selectedLocation !== this.selectedLocation
     ) {
-      this.selectedProvider = selectedProvider;
+      this.selectedBoardServer = selectedProvider;
       this.selectedLocation = selectedLocation;
 
       this.dispatchEvent(
-        new GraphProviderSelectionChangeEvent(
-          this.selectedProvider,
+        new GraphBoardServerSelectionChangeEvent(
+          this.selectedBoardServer,
           this.selectedLocation
         )
       );
@@ -551,9 +556,9 @@ export class Navigation extends LitElement {
   #providerContents: Promise<TemplateResult<1>> | null = null;
   async #loadProviderContents() {
     const provider =
-      this.providers.find(
-        (provider) => provider.name === this.selectedProvider
-      ) || this.providers[0];
+      this.boardServers.find(
+        (provider) => provider.name === this.selectedBoardServer
+      ) || this.boardServers[0];
 
     if (!provider) {
       this.#returnToDefaultStore();
@@ -610,7 +615,7 @@ export class Navigation extends LitElement {
             const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
             this.dispatchEvent(
-              new GraphProviderLoadRequestEvent(
+              new GraphBoardServerLoadRequestEvent(
                 provider.name,
                 url,
                 isCtrlCommand
@@ -636,8 +641,8 @@ export class Navigation extends LitElement {
               class="delete"
               @click=${() => {
                 this.dispatchEvent(
-                  new GraphProviderDeleteRequestEvent(
-                    this.selectedProvider,
+                  new GraphBoardServerDeleteRequestEvent(
+                    this.selectedBoardServer,
                     url,
                     url === this.url
                   )
@@ -688,8 +693,8 @@ export class Navigation extends LitElement {
             id="request-renewed-access"
             @click=${() => {
               this.dispatchEvent(
-                new GraphProviderRenewAccessRequestEvent(
-                  this.selectedProvider,
+                new GraphBoardServerRenewAccessRequestEvent(
+                  this.selectedBoardServer,
                   this.selectedLocation
                 )
               );
@@ -702,9 +707,9 @@ export class Navigation extends LitElement {
 
   render() {
     const provider =
-      this.providers.find(
-        (provider) => provider.name === this.selectedProvider
-      ) || this.providers[0];
+      this.boardServers.find(
+        (provider) => provider.name === this.selectedBoardServer
+      ) || this.boardServers[0];
 
     if (!provider) {
       this.#returnToDefaultStore();
@@ -714,7 +719,7 @@ export class Navigation extends LitElement {
     const extendedCapabilities = provider.extendedCapabilities();
 
     const selected = this.#createUrl(
-      this.selectedProvider,
+      this.selectedBoardServer,
       this.selectedLocation
     );
 
@@ -733,7 +738,7 @@ export class Navigation extends LitElement {
           <button
             id="new-board"
             @click=${() => {
-              this.dispatchEvent(new GraphProviderBlankBoardEvent());
+              this.dispatchEvent(new GraphBoardServerBlankBoardEvent());
             }}
           >
             New board
@@ -751,9 +756,9 @@ export class Navigation extends LitElement {
             }}
           />
         </header>
-        <section id="provider" ${ref(this.#providerRef)}>
+        <section id="provider" ${ref(this.#boardServerRef)}>
           <header>
-            <h1>Provider</h1>
+            <h1>Board Server</h1>
             <div id="provider-chooser">
               <select
                 @input=${(evt: Event) => {
@@ -762,20 +767,20 @@ export class Navigation extends LitElement {
                   }
 
                   const [provider, location] = this.#parseUrl(evt.target.value);
-                  this.selectedProvider = provider;
+                  this.selectedBoardServer = provider;
                   this.selectedLocation = location;
 
                   this.dispatchEvent(
-                    new GraphProviderSelectionChangeEvent(provider, location)
+                    new GraphBoardServerSelectionChangeEvent(provider, location)
                   );
                 }}
               >
-                ${map(this.providers, (provider) => {
+                ${map(this.boardServers, (provider) => {
                   return html`${map(provider.items(), ([location, store]) => {
                     const value = `${provider.name}::${store.url ?? location}`;
                     const isSelectedOption = value === selected;
                     return html`<option
-                      ?selected=${isSelectedOption}
+                      .selected=${isSelectedOption}
                       .value=${value}
                     >
                       ${store.title}
@@ -786,7 +791,7 @@ export class Navigation extends LitElement {
               <button
                 id="provider-settings"
                 @click=${() => {
-                  this.showProviderOverflowMenu = true;
+                  this.showBoardServerOverflowMenu = true;
                 }}
               >
                 Provider Settings
@@ -800,7 +805,7 @@ export class Navigation extends LitElement {
         </section>
       </nav>
 
-      ${this.showProviderOverflowMenu
+      ${this.showBoardServerOverflowMenu
         ? html` <div
             id="overflow-menu"
             @pointerdown=${(evt: Event) => {
@@ -810,20 +815,20 @@ export class Navigation extends LitElement {
           >
             <button
               @click=${() => {
-                this.dispatchEvent(new GraphProviderAddEvent());
-                this.showProviderOverflowMenu = false;
+                this.dispatchEvent(new GraphBoardServerAddEvent());
+                this.showBoardServerOverflowMenu = false;
               }}
               id="add-new-provider"
             >
-              Add new provider
+              Add new Board Server
             </button>
             ${extendedCapabilities.refresh
               ? html`<button
                   @click=${() => {
-                    this.showProviderOverflowMenu = false;
+                    this.showBoardServerOverflowMenu = false;
                     this.dispatchEvent(
-                      new GraphProviderRefreshEvent(
-                        this.selectedProvider,
+                      new GraphBoardServerRefreshEvent(
+                        this.selectedBoardServer,
                         this.selectedLocation
                       )
                     );
@@ -842,12 +847,12 @@ export class Navigation extends LitElement {
                       return;
                     }
                     this.dispatchEvent(
-                      new GraphProviderDisconnectEvent(
-                        this.selectedProvider,
+                      new GraphBoardServerDisconnectEvent(
+                        this.selectedBoardServer,
                         this.selectedLocation
                       )
                     );
-                    this.showProviderOverflowMenu = false;
+                    this.showBoardServerOverflowMenu = false;
                     this.#returnToDefaultStore();
                   }}
                   id="remove-provider"

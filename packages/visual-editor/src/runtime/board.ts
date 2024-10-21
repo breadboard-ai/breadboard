@@ -36,10 +36,11 @@ export class Board extends EventTarget {
   #currentTabId: TabId | null = null;
 
   constructor(
+    /** @deprecated */
     private readonly providers: GraphProvider[],
     private readonly loader: GraphLoader,
     private readonly kits: Kit[],
-    private readonly boardServers?: RuntimeConfigBoardServers
+    private readonly boardServers: RuntimeConfigBoardServers
   ) {
     super();
   }
@@ -83,138 +84,92 @@ export class Board extends EventTarget {
   }
 
   async connect(
-    providerName: string,
+    _providerName: string,
     location?: string,
     apiKey?: string
   ): Promise<{ success: boolean; error?: string }> {
-    if (this.boardServers) {
-      const boardServerInfo = await connectToBoardServer(location, apiKey);
-      if (!boardServerInfo) {
-        this.dispatchEvent(
-          new RuntimeErrorEvent("Unable to connect to Board Server")
-        );
+    const boardServerInfo = await connectToBoardServer(location, apiKey);
+    if (!boardServerInfo) {
+      this.dispatchEvent(
+        new RuntimeErrorEvent("Unable to connect to Board Server")
+      );
 
-        // We return true here because we don't need the toast from the Visual
-        // Editor. Instead we use the above RuntimeErrorEvent to ensure that
-        // the user is notified.
-        return { success: false };
-      } else {
-        this.boardServers.servers = await getBoardServers();
-        this.boardServers.loader = createLoader(this.boardServers.servers);
-        this.dispatchEvent(
-          new RuntimeBoardServerChangeEvent(
-            boardServerInfo.title,
-            boardServerInfo.url
-          )
-        );
-      }
+      // We return true here because we don't need the toast from the Visual
+      // Editor. Instead we use the above RuntimeErrorEvent to ensure that
+      // the user is notified.
+      return { success: false };
     } else {
-      const provider = this.getProviderByName(providerName);
-      if (!provider || !provider.extendedCapabilities().connect) {
-        return {
-          success: false,
-          error: "Provider does not support connections",
-        };
-      }
-
-      let success = false;
-      try {
-        success = await provider.connect(location, apiKey);
-      } catch (err) {
-        return { success: false, error: "Unable to connect to Provider" };
-      }
-
-      if (!success) {
-        return { success: false, error: "Unable to connect to Provider" };
-      }
-
-      return { success };
+      this.boardServers.servers = await getBoardServers();
+      this.boardServers.loader = createLoader(this.boardServers.servers);
+      this.dispatchEvent(
+        new RuntimeBoardServerChangeEvent(
+          boardServerInfo.title,
+          boardServerInfo.url
+        )
+      );
     }
 
     return { success: false };
   }
 
-  async disconnect(providerName: string, location: string) {
-    if (this.boardServers) {
-      const success = await disconnectFromBoardServer(location);
-      if (!success) {
-        this.dispatchEvent(
-          new RuntimeErrorEvent("Unable to disconnect from Board Server")
-        );
+  async disconnect(_providerName: string, location: string) {
+    const success = await disconnectFromBoardServer(location);
+    if (!success) {
+      this.dispatchEvent(
+        new RuntimeErrorEvent("Unable to disconnect from Board Server")
+      );
 
-        // We return true here because we don't need the toast from the Visual
-        // Editor. Instead we use the above RuntimeErrorEvent to ensure that
-        // the user is notified.
-        return { success: false };
-      }
-      this.boardServers.servers = await getBoardServers();
-      this.boardServers.loader = createLoader(this.boardServers.servers);
-      this.dispatchEvent(new RuntimeBoardServerChangeEvent());
-    } else {
-      const provider = this.getProviderByName(providerName);
-      if (!provider) {
-        return { success: false };
-      }
-
-      await provider.disconnect(location);
-      return { success: true };
+      // We return true here because we don't need the toast from the Visual
+      // Editor. Instead we use the above RuntimeErrorEvent to ensure that
+      // the user is notified.
+      return { success: false };
     }
+    this.boardServers.servers = await getBoardServers();
+    this.boardServers.loader = createLoader(this.boardServers.servers);
+    this.dispatchEvent(new RuntimeBoardServerChangeEvent());
   }
 
-  getProviderByName(name: string) {
-    if (this.boardServers) {
-      return (
-        this.boardServers.servers.find((server) => server.name === name) || null
-      );
-    }
+  getBoardServerByName(name: string) {
+    return (
+      this.boardServers.servers.find((server) => server.name === name) || null
+    );
+  }
 
+  /**
+   * @deprecated Use getBoardServerByName instead.
+   */
+  getProviderByName(name: string) {
     return this.providers.find((provider) => provider.name === name) || null;
   }
 
+  /**
+   * @deprecated Use getBoardServerForURL instead.
+   */
   getProviderForURL(url: URL) {
-    if (this.boardServers) {
-      return (
-        this.boardServers.servers.find((server) => server.canProvide(url)) ||
-        null
-      );
-    }
-
     return this.providers.find((provider) => provider.canProvide(url)) || null;
   }
 
   getBoardServerForURL(url: URL) {
-    if (this.boardServers) {
-      return (
-        this.boardServers.servers.find((server) => server.canProvide(url)) ||
-        null
-      );
-    }
-
-    return null;
+    return (
+      this.boardServers.servers.find((server) => server.canProvide(url)) || null
+    );
   }
 
   getBoardServers(): BoardServer[] {
-    if (this.boardServers) {
-      return this.boardServers.servers;
-    }
-
-    return [];
+    return this.boardServers.servers;
   }
 
+  /**
+   *
+   * @deprecated Use getBoardServers() instead.
+   */
   getProviders(): GraphProvider[] {
-    if (this.boardServers) {
-      return this.boardServers.servers;
-    }
-
+    console.warn("getProviders is deprecated - use getBoardServers instead.");
     return this.providers;
   }
 
   getLoader(): GraphLoader {
-    if (this.boardServers) {
-      return this.boardServers.loader;
-    }
-
-    return this.loader;
+    return this.boardServers.loader;
   }
 
   get tabs() {
@@ -601,13 +556,13 @@ export class Board extends EventTarget {
   }
 
   async saveAs(
-    providerName: string,
+    boardServerName: string,
     location: string,
     fileName: string,
     graph: GraphDescriptor
   ) {
     const fail = { result: false, error: "Unable to save", url: undefined };
-    const provider = this.getProviderByName(providerName);
+    const provider = this.getProviderByName(boardServerName);
     if (!provider) {
       return fail;
     }

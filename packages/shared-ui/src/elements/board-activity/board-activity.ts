@@ -5,7 +5,7 @@
  */
 
 import {
-  GraphProvider,
+  BoardServer,
   InspectableRun,
   InspectableRunEvent,
   InspectableRunInputs,
@@ -72,10 +72,7 @@ export class BoardActivity extends LitElement {
   settings: SettingsStore | null = null;
 
   @property()
-  providers: GraphProvider[] = [];
-
-  @property()
-  providerOps = 0;
+  boardServers: BoardServer[] = [];
 
   @property({ reflect: true })
   showDebugControls = false;
@@ -455,8 +452,7 @@ export class BoardActivity extends LitElement {
           : nothing}
         <bb-user-input
           id="${descriptor.id}"
-          .providers=${this.providers}
-          .providerOps=${this.providerOps}
+          .boardServers=${this.boardServers}
           .showTypes=${false}
           .inputs=${userInputs}
           .inlineControls=${true}

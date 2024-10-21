@@ -9,7 +9,6 @@ import {
   DataStore,
   GraphDescriptor,
   GraphLoader,
-  GraphProvider,
   Kit,
   NodeConfiguration,
   RunStore,
@@ -36,7 +35,6 @@ export interface Tab {
 }
 
 export interface RuntimeConfig {
-  providers: GraphProvider[];
   dataStore: DataStore;
   runStore: RunStore;
   experiments: Record<string, boolean>;

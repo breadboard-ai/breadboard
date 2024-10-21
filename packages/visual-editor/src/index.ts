@@ -21,7 +21,7 @@ import {
   blankLLMContent,
   createRunObserver,
   GraphDescriptor,
-  GraphProvider,
+  BoardServer,
   InputValues,
   InspectableEdge,
   InspectableRun,
@@ -41,7 +41,6 @@ import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
 import { EnhanceSideboard, TabId } from "./runtime/types";
 import { createPastRunObserver } from "./utils/past-run-observer";
-import { FileSystemGraphProvider } from "./providers/file-system";
 import { getRunNodeConfig } from "./utils/run-node";
 import { TopGraphObserver } from "../../shared-ui/dist/utils/top-graph-observer";
 
@@ -49,7 +48,7 @@ const STORAGE_PREFIX = "bb-main";
 
 type MainArguments = {
   boards: BreadboardUI.Types.Board[];
-  providers?: GraphProvider[];
+  providers?: BoardServer[]; // Deprecated.
   settings?: SettingsStore;
   proxy?: HarnessProxyConfig[];
   version?: string;
@@ -88,7 +87,7 @@ export class Main extends LitElement {
   showNav = false;
 
   @state()
-  showProviderAddOverlay = false;
+  showBoardServerAddOverlay = false;
 
   @property({ reflect: true })
   showBoardActivityOverlay = false;
@@ -146,9 +145,6 @@ export class Main extends LitElement {
     }
   >();
 
-  @state()
-  providerOps = 0;
-
   @provide({ context: BreadboardUI.Contexts.environmentContext })
   environment = ENVIRONMENT;
 
@@ -159,10 +155,10 @@ export class Main extends LitElement {
   settingsHelper!: SettingsHelperImpl;
 
   @state()
-  selectedProvider = "IDBGraphProvider";
+  selectedBoardServer = "Example Boards";
 
   @state()
-  selectedLocation = "default";
+  selectedLocation = "example://example-boards";
 
   @state()
   previewOverlayURL: URL | null = null;
@@ -183,7 +179,7 @@ export class Main extends LitElement {
   #tabSaveStatus = new Map<TabId, BreadboardUI.Types.BOARD_SAVE_STATUS>();
   #tabBoardStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
   #tabLoadStatus = new Map<TabId, BreadboardUI.Types.BOARD_LOAD_STATUS>();
-  #providers: GraphProvider[];
+  #boardServers: BoardServer[];
   #settings: SettingsStore | null;
   #secretsHelper: SecretsHelper | null = null;
   /**
@@ -213,20 +209,20 @@ export class Main extends LitElement {
   constructor(config: MainArguments) {
     super();
 
-    const providerLocation = globalThis.sessionStorage.getItem(
-      `${STORAGE_PREFIX}-provider`
+    const boardServerLocation = globalThis.sessionStorage.getItem(
+      `${STORAGE_PREFIX}-board-server`
     );
-    if (providerLocation) {
-      const [provider, location] = providerLocation.split("::");
+    if (boardServerLocation) {
+      const [boardServer, location] = boardServerLocation.split("::");
 
-      if (provider && location) {
-        this.selectedProvider = provider;
+      if (boardServer && location) {
+        this.selectedBoardServer = boardServer;
         this.selectedLocation = location;
       }
     }
 
     this.#version = config.version || "dev";
-    this.#providers = [];
+    this.#boardServers = [];
     this.#settings = config.settings || null;
     this.#proxy = config.proxy || [];
     if (this.#settings) {
@@ -274,7 +270,7 @@ export class Main extends LitElement {
     //  2. Settings.
     //  3. Runtime.
     //
-    // Note: the runtime loads the kits and the initializes the providers.
+    // Note: the runtime loads the kits and the initializes the board servers.
     this.#initialize = this.#recentBoardStore
       .restore()
       .then((boards) => {
@@ -283,7 +279,6 @@ export class Main extends LitElement {
       })
       .then(() => {
         return Runtime.create({
-          providers: config.providers ?? [],
           runStore: this.#runStore,
           dataStore: this.#dataStore,
           experiments: {},
@@ -291,7 +286,7 @@ export class Main extends LitElement {
       })
       .then((runtime) => {
         this.#runtime = runtime;
-        this.#providers = runtime.board.getProviders() || [];
+        this.#boardServers = runtime.board.getBoardServers() || [];
 
         this.#runtime.edit.addEventListener(
           Runtime.Events.RuntimeBoardEnhanceEvent.eventName,
@@ -380,15 +375,15 @@ export class Main extends LitElement {
         this.#runtime.board.addEventListener(
           Runtime.Events.RuntimeBoardServerChangeEvent.eventName,
           (evt: Runtime.Events.RuntimeBoardServerChangeEvent) => {
-            this.showProviderAddOverlay = false;
-            this.#providers = runtime.board.getProviders() || [];
+            this.showBoardServerAddOverlay = false;
+            this.#boardServers = runtime.board.getBoardServers() || [];
 
             if (evt.connectedBoardServerName && evt.connectedBoardServerURL) {
-              this.selectedProvider = evt.connectedBoardServerName;
+              this.selectedBoardServer = evt.connectedBoardServerName;
               this.selectedLocation = evt.connectedBoardServerURL;
             }
 
-            this.providerOps++;
+            this.requestUpdate();
           }
         );
 
@@ -571,7 +566,7 @@ export class Main extends LitElement {
     this.showBoardActivityOverlay = false;
     this.boardEditOverlayInfo = null;
     this.showSettingsOverlay = false;
-    this.showProviderAddOverlay = false;
+    this.showBoardServerAddOverlay = false;
     this.showSaveAsDialog = false;
     this.showNodeConfigurator = false;
     this.showEdgeValue = false;
@@ -950,7 +945,7 @@ export class Main extends LitElement {
   }
 
   async #attemptBoardSaveAs(
-    providerName: string,
+    boardServerName: string,
     location: string,
     fileName: string,
     graph: GraphDescriptor
@@ -967,7 +962,7 @@ export class Main extends LitElement {
 
     this.#isSaving = true;
     const { result, error, url } = await this.#runtime.board.saveAs(
-      providerName,
+      boardServerName,
       location,
       fileName,
       graph
@@ -985,10 +980,8 @@ export class Main extends LitElement {
     }
 
     this.#setBoardPendingSaveState(false);
-    this.#persistProviderAndLocation(providerName, location);
+    this.#persistBoardServerAndLocation(boardServerName, location);
 
-    // Trigger a re-render.
-    this.providerOps++;
     this.#changeBoard(url.href, false);
     this.toast(
       "Board saved",
@@ -999,7 +992,7 @@ export class Main extends LitElement {
   }
 
   async #attemptBoardDelete(
-    providerName: string,
+    boardServerName: string,
     url: string,
     isActive: boolean
   ) {
@@ -1018,7 +1011,7 @@ export class Main extends LitElement {
     );
 
     const { result, error } = await this.#runtime.board.delete(
-      providerName,
+      boardServerName,
       url
     );
     if (result) {
@@ -1042,8 +1035,7 @@ export class Main extends LitElement {
       this.#removeRecentUrl(url);
     }
 
-    // Trigger a re-render.
-    this.providerOps++;
+    this.requestUpdate();
   }
 
   #attemptBoardCreate(graph: GraphDescriptor) {
@@ -1153,8 +1145,8 @@ export class Main extends LitElement {
 
   async #getProxyURL(urlString: string): Promise<string | null> {
     const url = new URL(urlString, window.location.href);
-    for (const provider of this.#providers) {
-      const proxyURL = await provider.canProxy?.(url);
+    for (const boardServer of this.#boardServers) {
+      const proxyURL = await boardServer.canProxy?.(url);
       if (proxyURL) {
         return proxyURL;
       }
@@ -1182,12 +1174,12 @@ export class Main extends LitElement {
 
     try {
       const url = new URL(this.tab?.graph.url, window.location.href);
-      const provider = this.#runtime.board.getProviderForURL(url);
-      if (!provider) {
+      const boardServer = this.#runtime.board.getBoardServerForURL(url);
+      if (!boardServer) {
         return;
       }
 
-      const capabilities = provider.canProvide(url);
+      const capabilities = boardServer.canProvide(url);
       if (!capabilities || !capabilities.save) {
         return;
       }
@@ -1253,13 +1245,13 @@ export class Main extends LitElement {
     }
   }
 
-  #persistProviderAndLocation(providerName: string, location: string) {
-    this.selectedProvider = providerName;
+  #persistBoardServerAndLocation(boardServerName: string, location: string) {
+    this.selectedBoardServer = boardServerName;
     this.selectedLocation = location;
 
     globalThis.sessionStorage.setItem(
-      `${STORAGE_PREFIX}-provider`,
-      `${providerName}::${location}`
+      `${STORAGE_PREFIX}-board-server`,
+      `${boardServerName}::${location}`
     );
   }
 
@@ -1467,7 +1459,7 @@ export class Main extends LitElement {
       this.boardEditOverlayInfo !== null ||
       this.showSettingsOverlay ||
       this.showFirstRun ||
-      this.showProviderAddOverlay ||
+      this.showBoardServerAddOverlay ||
       this.showSaveAsDialog ||
       this.showNodeConfigurator ||
       this.showEdgeValue ||
@@ -1477,10 +1469,9 @@ export class Main extends LitElement {
       return html`<bb-nav
         .visible=${this.showNav}
         .url=${this.tab?.graph.url ?? null}
-        .selectedProvider=${this.selectedProvider}
+        .selectedBoardServer=${this.selectedBoardServer}
         .selectedLocation=${this.selectedLocation}
-        .providers=${this.#providers}
-        .providerOps=${this.providerOps}
+        .boardServers=${this.#boardServers}
         ?inert=${showingOverlay}
         @pointerdown=${(evt: Event) => evt.stopPropagation()}
         @bbreset=${() => {
@@ -1490,31 +1481,31 @@ export class Main extends LitElement {
 
           this.#runtime.board.closeTab(this.tab.id);
         }}
-        @bbgraphprovideradd=${() => {
-          this.showProviderAddOverlay = true;
+        @bbgraphboardserveradd=${() => {
+          this.showBoardServerAddOverlay = true;
         }}
-        @bbgraphproviderblankboard=${() => {
+        @bbgraphboardserverblankboard=${() => {
           this.#attemptBoardCreate(blankLLMContent());
         }}
-        @bbgraphproviderdeleterequest=${async (
-          evt: BreadboardUI.Events.GraphProviderDeleteRequestEvent
+        @bbgraphboardserverdeleterequest=${async (
+          evt: BreadboardUI.Events.GraphBoardServerDeleteRequestEvent
         ) => {
-          this.#attemptBoardDelete(evt.providerName, evt.url, evt.isActive);
+          this.#attemptBoardDelete(evt.boardServerName, evt.url, evt.isActive);
         }}
         @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
           this.#attemptBoardStart(evt);
         }}
-        @bbgraphproviderrefresh=${async (
-          evt: BreadboardUI.Events.GraphProviderRefreshEvent
+        @bbgraphboardserverrefresh=${async (
+          evt: BreadboardUI.Events.GraphBoardServerRefreshEvent
         ) => {
-          const provider = this.#runtime.board.getProviderByName(
-            evt.providerName
+          const boardServer = this.#runtime.board.getBoardServerByName(
+            evt.boardServerName
           );
-          if (!provider) {
+          if (!boardServer) {
             return;
           }
 
-          const refreshed = await provider.refresh(evt.location);
+          const refreshed = await boardServer.refresh(evt.location);
           if (refreshed) {
             this.toast(
               "Source files refreshed",
@@ -1527,46 +1518,44 @@ export class Main extends LitElement {
             );
           }
 
-          // Trigger a re-render.
-          this.providerOps++;
+          this.requestUpdate();
         }}
-        @bbgraphproviderdisconnect=${async (
-          evt: BreadboardUI.Events.GraphProviderDisconnectEvent
+        @bbgraphboardserverdisconnect=${async (
+          evt: BreadboardUI.Events.GraphBoardServerDisconnectEvent
         ) => {
-          await this.#runtime.board.disconnect(evt.providerName, evt.location);
-
-          this.providerOps++;
+          await this.#runtime.board.disconnect(
+            evt.boardServerName,
+            evt.location
+          );
+          this.requestUpdate();
         }}
-        @bbgraphproviderrenewaccesssrequest=${async (
-          evt: BreadboardUI.Events.GraphProviderRenewAccessRequestEvent
+        @bbgraphboardserverrenewaccesssrequest=${async (
+          evt: BreadboardUI.Events.GraphBoardServerRenewAccessRequestEvent
         ) => {
-          const provider = this.#runtime.board.getProviderByName(
-            evt.providerName
+          const boardServer = this.#runtime.board.getBoardServerByName(
+            evt.boardServerName
           );
 
-          if (!provider) {
+          if (!boardServer) {
             return;
           }
 
-          if (provider instanceof FileSystemGraphProvider) {
-            await provider.renewAccessRequest(evt.location);
-          } else if (provider.renewAccess) {
-            await provider.renewAccess();
+          if (boardServer.renewAccess) {
+            await boardServer.renewAccess();
           }
 
-          // Trigger a re-render.
-          this.providerOps++;
+          this.requestUpdate();
         }}
-        @bbgraphproviderloadrequest=${async (
-          evt: BreadboardUI.Events.GraphProviderLoadRequestEvent
+        @bbgraphboardserverloadrequest=${async (
+          evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
         ) => {
           this.#changeBoard(evt.url, evt.newTab);
         }}
-        @bbgraphproviderselectionchange=${(
-          evt: BreadboardUI.Events.GraphProviderSelectionChangeEvent
+        @bbgraphboardserverselectionchange=${(
+          evt: BreadboardUI.Events.GraphBoardServerSelectionChangeEvent
         ) => {
-          this.#persistProviderAndLocation(
-            evt.selectedProvider,
+          this.#persistBoardServerAndLocation(
+            evt.selectedBoardServer,
             evt.selectedLocation
           );
         }}
@@ -1681,12 +1670,12 @@ export class Main extends LitElement {
             class="settings"
             .settings=${this.#settings?.values || null}
             .boardServerUrl=${boardServerUrl}
-            .providers=${this.#providers}
-            @bbgraphproviderconnectrequest=${async (
-              evt: BreadboardUI.Events.GraphProviderConnectRequestEvent
+            .boardServers=${this.#boardServers}
+            @bbgraphboardserverconnectrequest=${async (
+              evt: BreadboardUI.Events.GraphBoardServerConnectRequestEvent
             ) => {
               const result = await this.#runtime.board.connect(
-                evt.providerName,
+                evt.boardServerName,
                 evt.location,
                 evt.apiKey
               );
@@ -1699,9 +1688,7 @@ export class Main extends LitElement {
                 return;
               }
 
-              // Trigger a re-render.
-              this.showProviderAddOverlay = false;
-              this.providerOps++;
+              this.showBoardServerAddOverlay = false;
             }}
             @bbsettingsupdate=${async (
               evt: BreadboardUI.Events.SettingsUpdateEvent
@@ -1737,19 +1724,18 @@ export class Main extends LitElement {
           ></bb-first-run-overlay>`;
         }
 
-        let providerAddOverlay: HTMLTemplateResult | symbol = nothing;
-        if (this.showProviderAddOverlay) {
-          providerAddOverlay = html`<bb-provider-overlay
-            .providers=${this.#providers}
-            .providerOps=${this.providerOps}
+        let boardServerAddOverlay: HTMLTemplateResult | symbol = nothing;
+        if (this.showBoardServerAddOverlay) {
+          boardServerAddOverlay = html`<bb-board-server-overlay
+            .boardServers=${this.#boardServers}
             @bboverlaydismissed=${() => {
-              this.showProviderAddOverlay = false;
+              this.showBoardServerAddOverlay = false;
             }}
-            @bbgraphproviderconnectrequest=${async (
-              evt: BreadboardUI.Events.GraphProviderConnectRequestEvent
+            @bbgraphboardserverconnectrequest=${async (
+              evt: BreadboardUI.Events.GraphBoardServerConnectRequestEvent
             ) => {
               const result = await this.#runtime.board.connect(
-                evt.providerName,
+                evt.boardServerName, // Deprecated.
                 evt.location,
                 evt.apiKey
               );
@@ -1763,10 +1749,9 @@ export class Main extends LitElement {
               }
 
               // Trigger a re-render.
-              this.showProviderAddOverlay = false;
-              this.providerOps++;
+              this.showBoardServerAddOverlay = false;
             }}
-          ></bb-provider-overlay>`;
+          ></bb-board-server-overlay>`;
         }
 
         const run = runs[0] ?? null;
@@ -1790,8 +1775,7 @@ export class Main extends LitElement {
             .events=${events}
             .topGraphResult=${topGraphResult}
             .settings=${this.#settings}
-            .providers=${this.#providers}
-            .providerOps=${this.providerOps}
+            .boardServers=${this.#boardServers}
             .hideLast=${hideLast}
             .inputsFromLastRun=${inputsFromLastRun}
             @bboverlaydismissed=${() => {
@@ -1909,9 +1893,8 @@ export class Main extends LitElement {
         if (this.showSaveAsDialog) {
           saveAsDialogOverlay = html`<bb-save-as-overlay
             .panelTitle=${this.#saveAsState?.title ?? "Save As..."}
-            .providers=${this.#providers}
-            .providerOps=${this.providerOps}
-            .selectedProvider=${this.selectedProvider}
+            .boardServers=${this.#boardServers}
+            .selectedBoardServer=${this.selectedBoardServer}
             .selectedLocation=${this.selectedLocation}
             .graph=${structuredClone(
               this.#saveAsState?.graph ?? this.tab?.graph
@@ -1920,14 +1903,14 @@ export class Main extends LitElement {
             @bboverlaydismissed=${() => {
               this.showSaveAsDialog = false;
             }}
-            @bbgraphprovidersaveboard=${async (
-              evt: BreadboardUI.Events.GraphProviderSaveBoardEvent
+            @bbgraphboardserversaveboard=${async (
+              evt: BreadboardUI.Events.GraphBoardServerSaveBoardEvent
             ) => {
               this.showSaveAsDialog = false;
 
-              const { providerName, location, fileName, graph } = evt;
+              const { boardServerName, location, fileName, graph } = evt;
               await this.#attemptBoardSaveAs(
-                providerName,
+                boardServerName,
                 location,
                 fileName,
                 graph
@@ -1950,8 +1933,7 @@ export class Main extends LitElement {
             .canRunNode=${canRunNode}
             .value=${this.#nodeConfiguratorData}
             .graph=${this.tab?.graph}
-            .providers=${this.#providers}
-            .providerOps=${this.providerOps}
+            .boardServers=${this.#boardServers}
             .showTypes=${false}
             .offerConfigurationEnhancements=${offerConfigurationEnhancements}
             .showNodeTypeDescriptions=${showNodeTypeDescriptions}
@@ -2062,8 +2044,7 @@ export class Main extends LitElement {
             .edgeValue=${this.#edgeValueData}
             .graph=${this.tab?.graph}
             .subGraphId=${this.tab?.subGraphId}
-            .providers=${this.#providers}
-            .providerOps=${this.providerOps}
+            .boardServers=${this.#boardServers}
             @bbrunisolatednode=${async (
               evt: BreadboardUI.Events.RunIsolatedNodeEvent
             ) => {
@@ -2254,8 +2235,7 @@ export class Main extends LitElement {
               .boardId=${this.#boardId}
               .tabLoadStatus=${tabLoadStatus}
               .settings=${this.#settings}
-              .providers=${this.#providers}
-              .providerOps=${this.providerOps}
+              .boardServers=${this.#boardServers}
               .history=${this.#runtime.edit.getHistory(this.tab)}
               .version=${this.#version}
               .showWelcomePanel=${this.showWelcomePanel}
@@ -2406,15 +2386,16 @@ export class Main extends LitElement {
                       return;
                     }
 
-                    const provider = this.#runtime.board.getProviderForURL(
-                      new URL(this.tab?.graph.url)
-                    );
-                    if (!provider) {
+                    const boardServer =
+                      this.#runtime.board.getBoardServerForURL(
+                        new URL(this.tab?.graph.url)
+                      );
+                    if (!boardServer) {
                       return;
                     }
 
                     this.#attemptBoardDelete(
-                      provider.name,
+                      boardServer.name,
                       this.tab?.graph.url,
                       true
                     );
@@ -2436,15 +2417,16 @@ export class Main extends LitElement {
                       return;
                     }
 
-                    const provider = this.#runtime.board.getProviderForURL(
-                      new URL(this.tab?.graph.url)
-                    );
-                    if (!provider) {
+                    const boardServer =
+                      this.#runtime.board.getBoardServerForURL(
+                        new URL(this.tab?.graph.url)
+                      );
+                    if (!boardServer) {
                       return;
                     }
 
                     try {
-                      const previewUrl = await provider.preview(
+                      const previewUrl = await boardServer.preview(
                         new URL(this.tab?.graph.url)
                       );
 
@@ -2502,7 +2484,7 @@ export class Main extends LitElement {
                 this.#handleBoardInfoUpdate(evt);
                 this.requestUpdate();
               }}
-              @bbgraphproviderblankboard=${() => {
+              @bbgraphboardserverblankboard=${() => {
                 this.#attemptBoardCreate(blankLLMContent());
               }}
               @bbsubgraphcreate=${async (
@@ -2701,7 +2683,7 @@ export class Main extends LitElement {
           settingsOverlay,
           firstRunOverlay,
           historyOverlay,
-          providerAddOverlay,
+          boardServerAddOverlay,
           previewOverlay,
           boardActivityOverlay,
           nodeConfiguratorOverlay,
