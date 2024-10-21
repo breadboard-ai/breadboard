@@ -367,115 +367,115 @@ export class SubGraphCreateEvent extends Event {
 }
 
 /**
- * Graph Providers
+ * Board Servers
  */
 
-export class GraphProviderConnectRequestEvent extends Event {
-  static eventName = "bbgraphproviderconnectrequest";
+export class GraphBoardServerConnectRequestEvent extends Event {
+  static eventName = "bbgraphboardserverconnectrequest";
 
   constructor(
-    public readonly providerName: string,
+    public readonly boardServerName: string,
     public readonly location?: string,
     public readonly apiKey?: string
   ) {
-    super(GraphProviderConnectRequestEvent.eventName, { ...eventInit });
+    super(GraphBoardServerConnectRequestEvent.eventName, { ...eventInit });
   }
 }
 
-export class GraphProviderDeleteRequestEvent extends Event {
-  static eventName = "bbgraphproviderdeleterequest";
+export class GraphBoardServerDeleteRequestEvent extends Event {
+  static eventName = "bbgraphboardserverdeleterequest";
 
   constructor(
-    public readonly providerName: string,
+    public readonly boardServerName: string,
     public readonly url: string,
     public readonly isActive: boolean
   ) {
-    super(GraphProviderDeleteRequestEvent.eventName, { ...eventInit });
+    super(GraphBoardServerDeleteRequestEvent.eventName, { ...eventInit });
   }
 }
 
-export class GraphProviderLoadRequestEvent extends Event {
-  static eventName = "bbgraphproviderloadrequest";
+export class GraphBoardServerLoadRequestEvent extends Event {
+  static eventName = "bbgraphboardserverloadrequest";
 
   constructor(
-    public readonly providerName: string,
+    public readonly boardServerName: string,
     public readonly url: string,
     public readonly newTab = false
   ) {
-    super(GraphProviderLoadRequestEvent.eventName, { ...eventInit });
+    super(GraphBoardServerLoadRequestEvent.eventName, { ...eventInit });
   }
 }
 
-export class GraphProviderRenewAccessRequestEvent extends Event {
-  static eventName = "bbgraphproviderrenewaccesssrequest";
+export class GraphBoardServerRenewAccessRequestEvent extends Event {
+  static eventName = "bbgraphboardserverrenewaccesssrequest";
 
   constructor(
-    public readonly providerName: string,
+    public readonly boardServerName: string,
     public readonly location: string
   ) {
-    super(GraphProviderRenewAccessRequestEvent.eventName, { ...eventInit });
+    super(GraphBoardServerRenewAccessRequestEvent.eventName, { ...eventInit });
   }
 }
 
-export class GraphProviderDisconnectEvent extends Event {
-  static eventName = "bbgraphproviderdisconnect";
+export class GraphBoardServerDisconnectEvent extends Event {
+  static eventName = "bbgraphboardserverdisconnect";
 
   constructor(
-    public readonly providerName: string,
+    public readonly boardServerName: string,
     public readonly location: string
   ) {
-    super(GraphProviderDisconnectEvent.eventName, { ...eventInit });
+    super(GraphBoardServerDisconnectEvent.eventName, { ...eventInit });
   }
 }
 
-export class GraphProviderBlankBoardEvent extends Event {
-  static eventName = "bbgraphproviderblankboard";
+export class GraphBoardServerBlankBoardEvent extends Event {
+  static eventName = "bbgraphboardserverblankboard";
 
   constructor() {
-    super(GraphProviderBlankBoardEvent.eventName, { ...eventInit });
+    super(GraphBoardServerBlankBoardEvent.eventName, { ...eventInit });
   }
 }
 
-export class GraphProviderSaveBoardEvent extends Event {
-  static eventName = "bbgraphprovidersaveboard";
+export class GraphBoardServerSaveBoardEvent extends Event {
+  static eventName = "bbgraphboardserversaveboard";
 
   constructor(
-    public readonly providerName: string,
+    public readonly boardServerName: string,
     public readonly location: string,
     public readonly fileName: string,
     public readonly graph: GraphDescriptor
   ) {
-    super(GraphProviderSaveBoardEvent.eventName, { ...eventInit });
+    super(GraphBoardServerSaveBoardEvent.eventName, { ...eventInit });
   }
 }
 
-export class GraphProviderRefreshEvent extends Event {
-  static eventName = "bbgraphproviderrefresh";
+export class GraphBoardServerRefreshEvent extends Event {
+  static eventName = "bbgraphboardserverrefresh";
 
   constructor(
-    public readonly providerName: string,
+    public readonly boardServerName: string,
     public readonly location: string
   ) {
-    super(GraphProviderRefreshEvent.eventName, { ...eventInit });
+    super(GraphBoardServerRefreshEvent.eventName, { ...eventInit });
   }
 }
 
-export class GraphProviderAddEvent extends Event {
-  static eventName = "bbgraphprovideradd";
+export class GraphBoardServerAddEvent extends Event {
+  static eventName = "bbgraphboardserveradd";
 
   constructor() {
-    super(GraphProviderAddEvent.eventName, { ...eventInit });
+    super(GraphBoardServerAddEvent.eventName, { ...eventInit });
   }
 }
 
-export class GraphProviderSelectionChangeEvent extends Event {
-  static eventName = "bbgraphproviderselectionchange";
+export class GraphBoardServerSelectionChangeEvent extends Event {
+  static eventName = "bbgraphboardserverselectionchange";
 
   constructor(
-    public readonly selectedProvider: string,
+    public readonly selectedBoardServer: string,
     public readonly selectedLocation: string
   ) {
-    super(GraphProviderSelectionChangeEvent.eventName, { ...eventInit });
+    super(GraphBoardServerSelectionChangeEvent.eventName, { ...eventInit });
   }
 }
 

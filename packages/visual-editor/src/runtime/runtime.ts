@@ -8,7 +8,7 @@ import { createLoader, Kit } from "@google-labs/breadboard";
 import { Board } from "./board.js";
 import { Run } from "./run.js";
 import { Edit } from "./edit.js";
-import { RuntimeConfig, RuntimeConfigBoardServers } from "./types.js";
+import { RuntimeConfig } from "./types.js";
 
 import {
   createDefaultLocalBoardServer,
@@ -34,13 +34,14 @@ export async function create(config: RuntimeConfig): Promise<{
   edit: Edit;
   kits: Kit[];
 }> {
-  const loader = createLoader(config.providers);
-  const [kits] = await Promise.all([
-    loadKits([GeminiKit, BuildExampleKit, PythonWasmKit, GoogleDriveKit]),
-    ...config.providers.map((provider) => provider.restore()),
+  const loader = createLoader([]);
+  const [kits] = await loadKits([
+    GeminiKit,
+    BuildExampleKit,
+    PythonWasmKit,
+    GoogleDriveKit,
   ]);
 
-  let boardServers: RuntimeConfigBoardServers | undefined = undefined;
   const skipPlaygroundExamples = import.meta.env.MODE !== "development";
   let servers = await getBoardServers(skipPlaygroundExamples);
 
@@ -54,14 +55,14 @@ export async function create(config: RuntimeConfig): Promise<{
     servers = await getBoardServers();
   }
 
-  boardServers = {
+  const boardServers = {
     servers,
     loader: createLoader(servers),
   };
 
   const runtime = {
-    board: new Board(config.providers, loader, kits, boardServers),
-    edit: new Edit(config.providers, loader, kits),
+    board: new Board([], loader, kits, boardServers),
+    edit: new Edit([], loader, kits),
     run: new Run(config.dataStore, config.runStore, kits),
     kits,
   } as const;

@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
+  BoardServer,
   CommentNode,
   GraphDescriptor,
   GraphLoader,
-  GraphProvider,
   inspect,
   InspectableNode,
   InspectablePort,
@@ -66,10 +66,7 @@ export class NodeConfigurationInfo extends LitElement {
   subGraphId: string | null = null;
 
   @property()
-  providers: GraphProvider[] = [];
-
-  @property()
-  providerOps = 0;
+  boardServers: BoardServer[] = [];
 
   @property()
   showTypes = false;

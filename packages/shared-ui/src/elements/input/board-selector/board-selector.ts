@@ -6,7 +6,7 @@
 
 import {
   GraphDescriptor,
-  GraphProvider,
+  BoardServer,
   SubGraphs,
 } from "@google-labs/breadboard";
 import { LitElement, html, css, nothing } from "lit";
@@ -21,10 +21,7 @@ export class BoardSelector extends LitElement {
   graph: GraphDescriptor | null = null;
 
   @property()
-  providers: GraphProvider[] = [];
-
-  @property()
-  providerOps = 0;
+  boardServers: BoardServer[] = [];
 
   @property()
   subGraphs: SubGraphs | null = null;
@@ -122,7 +119,7 @@ export class BoardSelector extends LitElement {
       return;
     }
 
-    for (const provider of this.providers) {
+    for (const provider of this.boardServers) {
       for (const [, store] of provider.items()) {
         for (const [, { url, tags }] of store.items) {
           const expandedUrl = new URL(url, window.location.href);
@@ -143,7 +140,7 @@ export class BoardSelector extends LitElement {
 
   render() {
     const showQuickSwitch = this.#board && this.#board.startsWith("#");
-    const providers = this.providers.filter((provider) =>
+    const providers = this.boardServers.filter((provider) =>
       this.graph && this.graph.url
         ? provider.canProvide(new URL(this.graph.url))
         : false

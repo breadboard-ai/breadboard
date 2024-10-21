@@ -7,22 +7,19 @@
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
-  GraphProviderConnectRequestEvent,
+  GraphBoardServerConnectRequestEvent,
   OverlayDismissedEvent,
 } from "../../events/events.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
-import { GraphProvider } from "@google-labs/breadboard";
+import { BoardServer } from "@google-labs/breadboard";
 
-@customElement("bb-provider-overlay")
-export class ProviderOverlay extends LitElement {
+@customElement("bb-board-server-overlay")
+export class BoardServerOverlay extends LitElement {
   @property()
-  providers: GraphProvider[] = [];
-
-  @property()
-  providerOps = 0;
+  boardServers: BoardServer[] = [];
 
   @state()
-  providerType: "FileSystem" | "BoardServer" = "BoardServer";
+  serverType: "FileSystem" | "BoardServer" = "BoardServer";
 
   #formRef: Ref<HTMLFormElement> = createRef();
 
@@ -177,14 +174,16 @@ export class ProviderOverlay extends LitElement {
 
   render() {
     let fields: HTMLTemplateResult | symbol = nothing;
-    switch (this.providerType) {
+    switch (this.serverType) {
       case "FileSystem": {
         fields = html` <div>
           <button
             id="select-source-directory"
             @click=${() => {
               this.dispatchEvent(
-                new GraphProviderConnectRequestEvent("FileSystemGraphProvider")
+                new GraphBoardServerConnectRequestEvent(
+                  "FileSystemGraphProvider"
+                )
               );
             }}
           >
@@ -236,7 +235,7 @@ export class ProviderOverlay extends LitElement {
           }
 
           const data = new FormData(evt.target);
-          const type = data.get("type") as typeof this.providerType;
+          const type = data.get("type") as typeof this.serverType;
           if (!type) {
             return;
           }
@@ -256,7 +255,7 @@ export class ProviderOverlay extends LitElement {
               url = url.replace(/\/$/, "");
 
               this.dispatchEvent(
-                new GraphProviderConnectRequestEvent(
+                new GraphBoardServerConnectRequestEvent(
                   "RemoteGraphProvider",
                   url,
                   apiKey
@@ -272,7 +271,7 @@ export class ProviderOverlay extends LitElement {
         }}
       >
         <header>
-          <h1>Add new Provider</h1>
+          <h1>Add new Board Server</h1>
           <button
             @click=${() => {
               this.dispatchEvent(new OverlayDismissedEvent());
@@ -292,19 +291,19 @@ export class ProviderOverlay extends LitElement {
               return;
             }
 
-            this.providerType = evt.target.value as typeof this.providerType;
+            this.serverType = evt.target.value as typeof this.serverType;
           }}
         >
           <option
             value="BoardServer"
-            ?selected=${this.providerType === "BoardServer"}
+            ?selected=${this.serverType === "BoardServer"}
           >
             Board server
           </option>
           ${supportsFileSystem
             ? html`<option
                 value="FileSystem"
-                ?selected=${this.providerType === "FileSystem"}
+                ?selected=${this.serverType === "FileSystem"}
               >
                 File System
               </option>`

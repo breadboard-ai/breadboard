@@ -13,7 +13,7 @@ import {
 import { Overlay } from "./overlay.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { UserInput } from "../elements.js";
-import { GraphDescriptor, GraphProvider } from "@google-labs/breadboard";
+import { BoardServer, GraphDescriptor } from "@google-labs/breadboard";
 import {
   EnhanceNodeResetEvent,
   NodePartialUpdateEvent,
@@ -39,10 +39,7 @@ export class NodeConfigurationOverlay extends LitElement {
   graph: GraphDescriptor | null = null;
 
   @property()
-  providers: GraphProvider[] = [];
-
-  @property()
-  providerOps = 0;
+  boardServers: BoardServer[] = [];
 
   @property()
   showTypes = false;
@@ -678,8 +675,7 @@ export class NodeConfigurationOverlay extends LitElement {
               .inputs=${userInputs}
               .graph=${this.graph}
               .subGraphId=${this.value.subGraphId}
-              .providers=${this.providers}
-              .providerOps=${this.providerOps}
+              .boardServers=${this.boardServers}
               .showTypes=${this.showTypes}
               .showTitleInfo=${true}
               .inlineControls=${true}
