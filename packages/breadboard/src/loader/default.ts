@@ -25,7 +25,11 @@ export const loadFromFile = async (path: string) => {
     const { readFile } = require("node:fs/promises");
     readFileFn = readFile;
   } else {
-    const { readFile } = await import(/* vite-ignore */ "node:fs/promises");
+    const { readFile } = await import(
+      /* vite-ignore */
+      /* webpackIgnore: true */
+      "node:fs/promises"
+    );
     readFileFn = readFile;
   }
 
