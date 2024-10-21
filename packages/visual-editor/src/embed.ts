@@ -114,7 +114,7 @@ export class Embed extends LitElement {
     }
   `;
 
-  #loadBoardServerContents() {
+  render() {
     if (!this.url) {
       return nothing;
     }
