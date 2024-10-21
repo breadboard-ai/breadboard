@@ -62,7 +62,7 @@ export class Preview extends LitElement {
     this.#url = boardFromUrl;
   }
 
-  render() {
+  #loadBoardServerContents() {
     if (!this.#url) {
       return nothing;
     }

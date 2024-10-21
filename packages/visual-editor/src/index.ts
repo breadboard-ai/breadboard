@@ -1441,7 +1441,7 @@ export class Main extends LitElement {
     };
   }
 
-  render() {
+  #loadBoardServerContents() {
     const toasts = html`${map(
       this.toasts,
       ([, { message, type, persistent }], idx) => {

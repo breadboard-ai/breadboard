@@ -297,7 +297,7 @@ export class PreviewRun extends LitElement {
     }
   }
 
-  render() {
+  #loadBoardServerContents() {
     if (!this.url) {
       return nothing;
     }

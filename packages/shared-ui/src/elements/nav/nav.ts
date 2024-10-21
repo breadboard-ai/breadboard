@@ -161,7 +161,7 @@ export class Navigation extends LitElement {
       margin-right: var(--bb-grid-size);
     }
 
-    #provider {
+    #board-server {
       padding: var(--bb-grid-size-3);
       flex: 1;
       overflow: auto;
@@ -169,11 +169,11 @@ export class Navigation extends LitElement {
       flex-direction: column;
     }
 
-    #provider header {
+    #board-server header {
       flex: 0;
     }
 
-    #provider header h1 {
+    #board-server header h1 {
       font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
       color: var(--bb-neutral-500);
@@ -181,13 +181,13 @@ export class Navigation extends LitElement {
       grid-column: 1 / 3;
     }
 
-    #provider #provider-chooser {
+    #board-server #board-server-chooser {
       width: 100%;
       display: flex;
       height: 32px;
     }
 
-    #provider header select {
+    #board-server header select {
       border-radius: var(--bb-grid-size);
       background: var(--bb-ui-50);
       border: none;
@@ -197,7 +197,7 @@ export class Navigation extends LitElement {
       margin-right: var(--bb-grid-size-2);
     }
 
-    #provider header #provider-settings {
+    #board-server header #board-server-settings {
       width: 32px;
       height: 32px;
       background: var(--bb-ui-100) var(--bb-icon-folder-managed) center center /
@@ -208,7 +208,7 @@ export class Navigation extends LitElement {
       flex: 0 0 auto;
     }
 
-    #provider .boards {
+    #board-server .boards {
       padding: 0;
       list-style: none;
       flex: 1;
@@ -216,22 +216,22 @@ export class Navigation extends LitElement {
       margin: var(--bb-grid-size-4) 0;
     }
 
-    #provider summary::-webkit-details-marker {
+    #board-server summary::-webkit-details-marker {
       display: none;
     }
 
-    #provider summary {
+    #board-server summary {
       list-style: none;
     }
 
-    #provider summary {
+    #board-server summary {
       color: var(--bb-neutral-600);
       font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
         var(--bb-font-family);
       margin-bottom: var(--bb-grid-size-2);
     }
 
-    #provider summary::before {
+    #board-server summary::before {
       content: "";
       width: 20px;
       height: 20px;
@@ -240,23 +240,23 @@ export class Navigation extends LitElement {
       margin: 0;
     }
 
-    #provider details[open] > summary::before {
+    #board-server details[open] > summary::before {
       background: var(--bb-icon-arrow-drop-down) -1px 6px / 20px 20px no-repeat;
     }
 
-    #provider ul {
+    #board-server ul {
       padding: 0 var(--bb-grid-size-4);
       list-style: none;
       margin: 0 0 var(--bb-grid-size-3) 0;
     }
 
-    #provider ul li {
+    #board-server ul li {
       display: flex;
       min-height: var(--bb-grid-size-7);
       margin-bottom: var(--bb-grid-size);
     }
 
-    #provider ul li .board {
+    #board-server ul li .board {
       display: grid;
       background: transparent var(--bb-icon-draft) var(--bb-grid-size)
         var(--bb-grid-size) / 20px 20px no-repeat;
@@ -275,39 +275,39 @@ export class Navigation extends LitElement {
       grid-template-columns: auto 1fr;
     }
 
-    #provider ul li .board.tool {
+    #board-server ul li .board.tool {
       background: transparent var(--bb-icon-tool) var(--bb-grid-size)
         var(--bb-grid-size) / 20px 20px no-repeat;
     }
 
-    #provider ul li .board.selected {
+    #board-server ul li .board.selected {
       color: var(--bb-neutral-900);
     }
 
-    #provider ul li .board.selected .name {
+    #board-server ul li .board.selected .name {
       font-weight: 500;
     }
 
-    #provider ul li .board .name {
+    #board-serverrverrver ul li .board .name {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    #provider ul li .board .username {
+    #board-server ul li .board .username {
       color: var(--bb-neutral-600);
       white-space: no-wrap;
       padding-left: var(--bb-grid-size-3);
     }
 
-    #provider ul li .board.mine.published::after {
+    #board-server ul li .board.mine.published::after {
       content: "";
       width: calc(20px + var(--bb-grid-size-2));
       height: 20px;
       background: var(--bb-icon-public) right center / 20px 20px no-repeat;
     }
 
-    #provider ul li .delete {
+    #board-server ul li .delete {
       width: 24px;
       height: 24px;
       background: transparent var(--bb-icon-delete) center center / 20px 20px
@@ -320,8 +320,8 @@ export class Navigation extends LitElement {
       cursor: pointer;
     }
 
-    #provider ul li .delete:hover,
-    #provider ul li .delete:focus {
+    #board-server ul li .delete:hover,
+    #board-server ul li .delete:focus {
       opacity: 1;
     }
 
@@ -371,23 +371,23 @@ export class Navigation extends LitElement {
       margin-right: var(--bb-grid-size-3);
     }
 
-    #overflow-menu #add-new-provider::before {
+    #overflow-menu #add-new-board-server::before {
       background: var(--bb-icon-add) center center / 20px 20px no-repeat;
     }
 
-    #overflow-menu #rename-provider::before {
+    #overflow-menu #rename-board-server::before {
       background: var(--bb-icon-edit) center center / 20px 20px no-repeat;
     }
 
-    #overflow-menu #refresh-provider::before {
+    #overflow-menu #refresh-board-server::before {
       background: var(--bb-icon-refresh) center center / 20px 20px no-repeat;
     }
 
-    #overflow-menu #remove-provider::before {
+    #overflow-menu #remove-board-server::before {
       background: var(--bb-icon-delete) center center / 20px 20px no-repeat;
     }
 
-    #empty-provider {
+    #empty-board-server {
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
       margin-top: var(--bb-grid-size-2);
@@ -466,8 +466,8 @@ export class Navigation extends LitElement {
   protected willUpdate(
     changedProperties:
       | PropertyValueMap<{
-          providers: BoardServer[];
-          selectedProvider: string;
+          boardServers: BoardServer[];
+          selectedBoardServer: string;
           selectedLocation: string;
           url: string | null;
           filter: string | null;
@@ -475,12 +475,12 @@ export class Navigation extends LitElement {
       | Map<PropertyKey, unknown>
   ): void {
     if (
-      changedProperties.has("providers") ||
+      changedProperties.has("boardServers") ||
       changedProperties.has("selectedLocation") ||
-      changedProperties.has("selectedProvider") ||
+      changedProperties.has("selectedBoardServer") ||
       changedProperties.has("filter")
     ) {
-      this.#providerContents = this.#loadProviderContents();
+      this.#boardServerContents = this.#loadBoardServerContents();
     }
   }
 
@@ -498,8 +498,8 @@ export class Navigation extends LitElement {
     });
   }
 
-  #createUrl(provider: string, location: string) {
-    return `${provider}::${location}`;
+  #createUrl(boardServer: string, location: string) {
+    return `${boardServer}::${location}`;
   }
 
   #parseUrl(url: string) {
@@ -515,7 +515,7 @@ export class Navigation extends LitElement {
     if (
       top &&
       top instanceof HTMLButtonElement &&
-      top.id === "provider-settings"
+      top.id === "board-server-settings"
     ) {
       return;
     }
@@ -528,20 +528,20 @@ export class Navigation extends LitElement {
       return;
     }
 
-    const mainProvider = this.boardServers[0];
-    const selectedProvider = mainProvider.name;
-    if (mainProvider.items().size === 0) {
+    const mainBoardServer = this.boardServers[0];
+    const selectedBoardServer = mainBoardServer.name;
+    if (mainBoardServer.items().size === 0) {
       return;
     }
 
-    const providerNames = [...mainProvider.items().keys()];
-    const selectedLocation = providerNames[0];
+    const boardServerNames = [...mainBoardServer.items().keys()];
+    const selectedLocation = boardServerNames[0];
 
     if (
-      selectedProvider !== this.selectedBoardServer &&
+      selectedBoardServer !== this.selectedBoardServer &&
       selectedLocation !== this.selectedLocation
     ) {
-      this.selectedBoardServer = selectedProvider;
+      this.selectedBoardServer = selectedBoardServer;
       this.selectedLocation = selectedLocation;
 
       this.dispatchEvent(
@@ -553,26 +553,27 @@ export class Navigation extends LitElement {
     }
   }
 
-  #providerContents: Promise<TemplateResult<1>> | null = null;
-  async #loadProviderContents() {
-    const provider =
+  #boardServerContents: Promise<TemplateResult<1>> | null = null;
+  async #loadBoardServerContents() {
+    const boardServer =
       this.boardServers.find(
-        (provider) => provider.name === this.selectedBoardServer
+        (boardServer) => boardServer.name === this.selectedBoardServer
       ) || this.boardServers[0];
 
-    if (!provider) {
+    if (!boardServer) {
       this.#returnToDefaultStore();
-      return html`<nav id="menu">Error loading provider</nav>`;
+      return html`<nav id="menu">Error loading Board Server</nav>`;
     }
 
-    const extendedCapabilities = provider.extendedCapabilities();
+    const extendedCapabilities = boardServer.extendedCapabilities();
 
-    await provider.ready();
+    await boardServer.ready();
 
-    let store = provider.items().get(this.selectedLocation);
+    let store = boardServer.items().get(this.selectedLocation);
     if (!store) {
-      store = [...provider.items().values()].find(
-        (provider) => provider.url && provider.url === this.selectedLocation
+      store = [...boardServer.items().values()].find(
+        (boardServer) =>
+          boardServer.url && boardServer.url === this.selectedLocation
       );
     }
     if (!store) {
@@ -616,7 +617,7 @@ export class Navigation extends LitElement {
 
             this.dispatchEvent(
               new GraphBoardServerLoadRequestEvent(
-                provider.name,
+                boardServer.name,
                 url,
                 isCtrlCommand
               )
@@ -680,15 +681,15 @@ export class Navigation extends LitElement {
     } else if (myItems.length === 0 && otherItems.length > 0) {
       boardListing = html`<div class="boards">${otherBoards}</div>`;
     } else {
-      boardListing = html`<div id="empty-provider">
-        No boards in this provider
+      boardListing = html`<div id="empty-board-server">
+        No boards in this Board Server
       </div>`;
     }
 
     return permission === "granted"
       ? boardListing
       : html`<div id="renew-access">
-          <span>Access has expired for this source</span>
+          <span>Access has expired for this Board Server</span>
           <button
             id="request-renewed-access"
             @click=${() => {
@@ -706,17 +707,17 @@ export class Navigation extends LitElement {
   }
 
   render() {
-    const provider =
+    const boardServer =
       this.boardServers.find(
-        (provider) => provider.name === this.selectedBoardServer
+        (boardServer) => boardServer.name === this.selectedBoardServer
       ) || this.boardServers[0];
 
-    if (!provider) {
+    if (!boardServer) {
       this.#returnToDefaultStore();
-      return html`<nav id="menu">Error loading provider</nav>`;
+      return html`<nav id="menu">Error loading Board Server</nav>`;
     }
 
-    const extendedCapabilities = provider.extendedCapabilities();
+    const extendedCapabilities = boardServer.extendedCapabilities();
 
     const selected = this.#createUrl(
       this.selectedBoardServer,
@@ -756,50 +757,58 @@ export class Navigation extends LitElement {
             }}
           />
         </header>
-        <section id="provider" ${ref(this.#boardServerRef)}>
+        <section id="board-server" ${ref(this.#boardServerRef)}>
           <header>
             <h1>Board Server</h1>
-            <div id="provider-chooser">
+            <div id="board-server-chooser">
               <select
                 @input=${(evt: Event) => {
                   if (!(evt.target instanceof HTMLSelectElement)) {
                     return;
                   }
 
-                  const [provider, location] = this.#parseUrl(evt.target.value);
-                  this.selectedBoardServer = provider;
+                  const [boardServer, location] = this.#parseUrl(
+                    evt.target.value
+                  );
+                  this.selectedBoardServer = boardServer;
                   this.selectedLocation = location;
 
                   this.dispatchEvent(
-                    new GraphBoardServerSelectionChangeEvent(provider, location)
+                    new GraphBoardServerSelectionChangeEvent(
+                      boardServer,
+                      location
+                    )
                   );
                 }}
               >
-                ${map(this.boardServers, (provider) => {
-                  return html`${map(provider.items(), ([location, store]) => {
-                    const value = `${provider.name}::${store.url ?? location}`;
-                    const isSelectedOption = value === selected;
-                    return html`<option
-                      .selected=${isSelectedOption}
-                      .value=${value}
-                    >
-                      ${store.title}
-                    </option>`;
-                  })}`;
+                ${map(this.boardServers, (boardServer) => {
+                  return html`${map(
+                    boardServer.items(),
+                    ([location, store]) => {
+                      const value = `${boardServer.name}::${store.url ?? location}`;
+                      const isSelectedOption = value === selected;
+                      return html`<option
+                        .selected=${isSelectedOption}
+                        .value=${value}
+                      >
+                        ${store.title}
+                      </option>`;
+                    }
+                  )}`;
                 })}
               </select>
               <button
-                id="provider-settings"
+                id="board-server-settings"
                 @click=${() => {
                   this.showBoardServerOverflowMenu = true;
                 }}
               >
-                Provider Settings
+                Board Server Settings
               </button>
             </div>
           </header>
           ${until(
-            this.#providerContents,
+            this.#boardServerContents,
             html`<div id="loading-message">Loading...</div>`
           )}
         </section>
@@ -818,7 +827,7 @@ export class Navigation extends LitElement {
                 this.dispatchEvent(new GraphBoardServerAddEvent());
                 this.showBoardServerOverflowMenu = false;
               }}
-              id="add-new-provider"
+              id="add-new-board-server"
             >
               Add new Board Server
             </button>
@@ -833,16 +842,18 @@ export class Navigation extends LitElement {
                       )
                     );
                   }}
-                  id="refresh-provider"
+                  id="refresh-board-server"
                 >
-                  Refresh provider
+                  Refresh Board Server
                 </button>`
               : nothing}
             ${extendedCapabilities.disconnect
               ? html`<button
                   @click=${() => {
                     if (
-                      !confirm("Are you sure you want to remove this provider?")
+                      !confirm(
+                        "Are you sure you want to remove this Board Server?"
+                      )
                     ) {
                       return;
                     }
@@ -855,9 +866,9 @@ export class Navigation extends LitElement {
                     this.showBoardServerOverflowMenu = false;
                     this.#returnToDefaultStore();
                   }}
-                  id="remove-provider"
+                  id="remove-board-server"
                 >
-                  Remove provider
+                  Remove Board Server
                 </button>`
               : nothing}
           </div>`
