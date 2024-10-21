@@ -15,11 +15,11 @@ const environment = (): Environment =>
       ? "browser"
       : "worker";
 
-export type SecretInputs = {
+type SecretInputs = {
   keys: string[];
 };
 
-export type SecretWorkerResponse = {
+type SecretWorkerResponse = {
   type: "secret";
   data: string;
 };
@@ -40,33 +40,12 @@ const getEnvironmentValue = (key: string) => {
   }
 };
 
-export const requireNonEmpty = (key: string, value?: string | null) => {
+const requireNonEmpty = (key: string, value?: string | null) => {
   if (!value)
     throw new Error(
       `Key "${key}" was not specified. Please check your environment and make sure it is set.`
     );
   return value;
-};
-
-const getKeys = (
-  inputs: { keys: string[] } = { keys: [] },
-  safe: boolean
-): string[] => {
-  const { keys } = inputs as SecretInputs;
-  if (typeof keys === "string") {
-    try {
-      return JSON.parse(keys);
-    } catch (e) {
-      const error = e as Error;
-      const message = `Error parsing keys: ${error.message}`;
-      if (safe) {
-        console.error(message);
-        return [];
-      }
-      throw new Error(message);
-    }
-  }
-  return keys;
 };
 
 const secrets = defineNodeType({
@@ -94,13 +73,12 @@ const secrets = defineNodeType({
   describe: (inputs) => ({
     outputs: inputs.keys ?? [],
   }),
-  invoke: (inputs) =>
-    Object.fromEntries(
-      getKeys(inputs, false).map((key) => [
-        key,
-        requireNonEmpty(key, getEnvironmentValue(key)),
-      ])
-    ),
+  invoke: (inputs) => {
+    const { keys } = inputs as SecretInputs;
+    return Object.fromEntries(
+      keys.map((key) => [key, requireNonEmpty(key, getEnvironmentValue(key))])
+    );
+  },
 });
 export default secrets;
 
