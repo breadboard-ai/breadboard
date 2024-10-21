@@ -282,7 +282,7 @@
     "@breadboard-ai/python-wasm": "0.1.9",
     "@breadboard-ai/types": "0.1.2",
     "@codemirror/autocomplete": "^6.18.1",
-    "@codemirror/commands": "^6.7.0",
+    "@codemirror/commands": "^6.7.1",
     "@codemirror/lang-javascript": "^6.2.2",
     "@dagrejs/dagre": "^1.1.4",
     "@google-labs/agent-kit": "^0.12.4",
