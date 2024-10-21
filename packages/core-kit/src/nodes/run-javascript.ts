@@ -92,7 +92,8 @@ const runInServiceWorker: ScriptRunner = async ({
   functionName,
   args,
 }) => {
-  // @vite-ignore
+  /* @vite-ignore */
+  /* webpackIgnore: true */
   const body = `return (async function() { \n${code};\nreturn await ${functionName}(${args}) })();`;
   // Very very sorry.
   const f = new Function(body);
