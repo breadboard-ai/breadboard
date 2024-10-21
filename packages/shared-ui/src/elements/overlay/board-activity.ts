@@ -81,8 +81,7 @@ export class BoardActivityOverlay extends LitElement {
     }
 
     #container {
-      padding: var(--bb-grid-size-4) var(--bb-grid-size-3) var(--bb-grid-size)
-        var(--bb-grid-size-3);
+      padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
       height: 40svh;
     }
 

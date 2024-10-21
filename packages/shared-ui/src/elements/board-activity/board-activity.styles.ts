@@ -560,6 +560,63 @@ export const styles = css`
     z-index: 1;
   }
 
+  #download-export,
+  #export {
+    color: var(--bb-neutral-700);
+    border-radius: var(--bb-grid-size-5);
+    border: none;
+    height: var(--bb-grid-size-6);
+    padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-7);
+    margin: 0 0 var(--bb-grid-size) var(--bb-grid-size-2);
+    cursor: pointer;
+    transition: background-color 0.1s cubic-bezier(0, 0, 0.3, 1);
+    font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+      var(--bb-font-family);
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+  }
+
+  #export {
+    background: var(--bb-neutral-100) var(--bb-icon-file-export) 8px center /
+      16px 16px no-repeat;
+  }
+
+  #download-export:hover,
+  #download-export:focus,
+  #export:hover,
+  #export:focus {
+    background-color: var(--bb-neutral-200);
+  }
+
+  #download-export {
+    background: var(--bb-neutral-100) var(--bb-icon-download) 8px center / 16px
+      16px no-repeat;
+  }
+
+  .export-container {
+    font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+      var(--bb-font-family);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    height: var(--bb-grid-size-8);
+    color: var(--bb-neutral-700);
+  }
+
+  #clear-export {
+    color: var(--bb-neutral-600);
+    height: var(--bb-grid-size-6);
+    padding: 0 var(--bb-grid-size);
+    margin: 0 0 0 var(--bb-grid-size-2);
+    cursor: pointer;
+    transition: background-color 0.1s cubic-bezier(0, 0, 0.3, 1);
+    font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+      var(--bb-font-family);
+    border: none;
+    background: var(--bb-neutral-0);
+  }
+
   @keyframes fadeOut {
     0% {
       opacity: 0;

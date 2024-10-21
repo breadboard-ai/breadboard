@@ -18,7 +18,7 @@ import {
   SerializedRun,
 } from "@google-labs/breadboard";
 import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -83,11 +83,16 @@ export class BoardActivity extends LitElement {
   @property()
   nextNodeId: string | null = null;
 
+  @state()
+  downloadStatus: "initial" | "generating" | "ready" = "initial";
+
   #seenItems = new Set<string>();
   #newestEntry: Ref<HTMLElement> = createRef();
   #userInputRef: Ref<UserInput> = createRef();
   #isHidden = false;
   #serializedRun: SerializedRun | null = null;
+  #serializedRunUrl: string | null = null;
+
   #observer = new IntersectionObserver((entries) => {
     if (entries.length === 0) {
       return;
@@ -226,42 +231,37 @@ export class BoardActivity extends LitElement {
     >`;
   }
 
-  #download(evt: Event) {
-    if (!(evt.target instanceof HTMLAnchorElement)) {
-      return;
-    }
-
-    if (!this.#serializedRun) {
-      return;
-    }
-
-    const data = JSON.stringify(this.#serializedRun, null, 2);
-
-    evt.target.download = `run-${new Date().toISOString()}.json`;
-    evt.target.href = URL.createObjectURL(
-      new Blob([data], { type: "application/json" })
-    );
-    this.#serializedRun = null;
-    this.requestUpdate();
-  }
-
-  async #getRunLog(evt: Event) {
-    if (!(evt.target instanceof HTMLAnchorElement)) {
-      return;
-    }
-
+  async #createExportFromCurrentRun() {
     if (!this.run || !this.run.serialize) {
+      this.downloadStatus = "initial";
       return;
     }
 
-    if (evt.target.href) {
-      URL.revokeObjectURL(evt.target.href);
-    }
+    this.downloadStatus = "generating";
 
-    evt.target.textContent = "Creating Download...";
+    if (this.#serializedRunUrl) {
+      URL.revokeObjectURL(this.#serializedRunUrl);
+    }
 
     this.#serializedRun = await this.run.serialize();
-    this.requestUpdate();
+    const data = JSON.stringify(this.#serializedRun, null, 2);
+    this.#serializedRunUrl = URL.createObjectURL(
+      new Blob([data], { type: "application/json" })
+    );
+
+    this.downloadStatus = "ready";
+  }
+
+  #deleteCurrentExport() {
+    if (this.#serializedRun) {
+      this.#serializedRun = null;
+    }
+
+    if (this.#serializedRunUrl) {
+      URL.revokeObjectURL(this.#serializedRunUrl);
+    }
+
+    this.downloadStatus = "initial";
   }
 
   async #renderSecretInput(event: InspectableRunSecretEvent) {
@@ -600,35 +600,102 @@ export class BoardActivity extends LitElement {
         ? nothing
         : html`<div id="click-run">${this.waitingMessage}</div>`;
 
+    let exportMessage: HTMLTemplateResult | symbol = nothing;
+    switch (this.downloadStatus) {
+      case "generating": {
+        exportMessage = html`Generating export...`;
+        break;
+      }
+
+      case "ready": {
+        exportMessage = html`<button
+            id="clear-export"
+            @click=${() => this.#deleteCurrentExport()}
+          >
+            Clear
+          </button>
+          <a
+            id="download-export"
+            .download=${`run-${new Date().toISOString()}.json`}
+            .href=${this.#serializedRunUrl}
+            >Download</a
+          >`;
+        break;
+      }
+
+      default: {
+        exportMessage = html`<button
+          id="export"
+          @click=${() => this.#createExportFromCurrentRun()}
+        >
+          Create export
+        </button>`;
+        break;
+      }
+    }
+
     const events =
       this.events && this.events.length
-        ? html`${repeat(
-            this.events,
-            (event) => event.id,
-            (event, idx) => {
-              const isNew = !this.#seenItems.has(event.id);
-              this.#seenItems.add(event.id);
+        ? html`
+            <div class="export-container">${exportMessage}</div>
+            ${repeat(
+              this.events,
+              (event) => event.id,
+              (event, idx) => {
+                const isNew = !this.#seenItems.has(event.id);
+                this.#seenItems.add(event.id);
 
-              let content:
-                | HTMLTemplateResult
-                | Promise<HTMLTemplateResult>
-                | symbol = nothing;
-              switch (event.type) {
-                case "node": {
-                  const { node, end } = event;
-                  const { type } = node.descriptor;
-                  // `end` is null if the node is still running
-                  // that is, the `nodeend` for this node hasn't yet
-                  // been received.
-                  if (end === null) {
-                    if (type === "input") {
-                      content = this.#renderPendingInput(idx, event);
-                      break;
-                    }
+                let content:
+                  | HTMLTemplateResult
+                  | Promise<HTMLTemplateResult>
+                  | symbol = nothing;
+                switch (event.type) {
+                  case "node": {
+                    const { node, end } = event;
+                    const { type } = node.descriptor;
+                    // `end` is null if the node is still running
+                    // that is, the `nodeend` for this node hasn't yet
+                    // been received.
+                    if (end === null) {
+                      if (type === "input") {
+                        content = this.#renderPendingInput(idx, event);
+                        break;
+                      }
 
-                    if (event.hidden) {
-                      content = html`<h1>Working</h1>`;
+                      if (event.hidden) {
+                        content = html`<h1>Working</h1>`;
+                      } else {
+                        const hasComponentActivity =
+                          event.runs.length && event.runs[0].events.length;
+                        content = html`
+                          <div>
+                            <details class="node-info">
+                              <summary>
+                                <span
+                                  class=${classMap({
+                                    expandable: hasComponentActivity,
+                                  })}
+                                  >${node.title()}</span
+                                >
+                              </summary>
+                              ${this.#renderComponentActivity(event.runs)}
+                            </details>
+                            <h2>${this.#getNewestSubtask(event.runs)}</h2>
+                          </div>
+                        `;
+                      }
                     } else {
+                      const description =
+                        node.description() &&
+                        node.description() !== node.title()
+                          ? node.description()
+                          : null;
+                      const outputs = this.#renderNodeOutputs(
+                        event,
+                        description,
+                        event === newestEvent && this.showDebugControls,
+                        event !== newestEvent
+                      );
                       const hasComponentActivity =
                         event.runs.length && event.runs[0].events.length;
                       content = html`
@@ -641,167 +708,138 @@ export class BoardActivity extends LitElement {
                                 })}
                                 >${node.title()}</span
                               >
+                              <button
+                                class="run-component"
+                                @click=${() => {
+                                  this.dispatchEvent(
+                                    new RunIsolatedNodeEvent(
+                                      event.node.descriptor.id,
+                                      true
+                                    )
+                                  );
+                                }}
+                              >
+                                Re-run
+                              </button>
+                              ${this.showExtendedInfo
+                                ? html`<button
+                                    class="details"
+                                    data-message-id=${event.id}
+                                  >
+                                    Details
+                                  </button>`
+                                : nothing}
                             </summary>
                             ${this.#renderComponentActivity(event.runs)}
                           </details>
-                          <h2>${this.#getNewestSubtask(event.runs)}</h2>
+                          ${until(
+                            outputs,
+                            html`<div
+                              class=${classMap({
+                                "node-output-container": true,
+                                stored: false,
+                                consumed: true,
+                              })}
+                            >
+                              <details class="node-output">
+                                <summary
+                                  class=${classMap({
+                                    "with-description": description !== null,
+                                  })}
+                                >
+                                  ${description
+                                    ? html`<h2>${description}</h2>`
+                                    : nothing}
+                                  <span class="title"
+                                    >Retrieving values...</span
+                                  >
+                                </summary>
+                              </details>
+                              <div class="node-status"></div>
+                            </div>`
+                          )}
                         </div>
                       `;
+                      break;
                     }
-                  } else {
-                    const description =
-                      node.description() && node.description() !== node.title()
-                        ? node.description()
-                        : null;
-                    const outputs = this.#renderNodeOutputs(
-                      event,
-                      description,
-                      event === newestEvent && this.showDebugControls,
-                      event !== newestEvent
-                    );
-                    const hasComponentActivity =
-                      event.runs.length && event.runs[0].events.length;
-                    content = html`
-                      <div>
-                        <details class="node-info">
-                          <summary>
-                            <span
-                              class=${classMap({
-                                expandable: hasComponentActivity,
-                              })}
-                              >${node.title()}</span
-                            >
-                            <button
-                              class="run-component"
-                              @click=${() => {
-                                this.dispatchEvent(
-                                  new RunIsolatedNodeEvent(
-                                    event.node.descriptor.id,
-                                    true
-                                  )
-                                );
-                              }}
-                            >
-                              Re-run
-                            </button>
-                            ${this.showExtendedInfo
-                              ? html`<button
-                                  class="details"
-                                  data-message-id=${event.id}
-                                >
-                                  Details
-                                </button>`
-                              : nothing}
-                          </summary>
-                          ${this.#renderComponentActivity(event.runs)}
-                        </details>
-                        ${until(
-                          outputs,
-                          html`<div
-                            class=${classMap({
-                              "node-output-container": true,
-                              stored: false,
-                              consumed: true,
-                            })}
-                          >
-                            <details class="node-output">
-                              <summary
-                                class=${classMap({
-                                  "with-description": description !== null,
-                                })}
-                              >
-                                ${description
-                                  ? html`<h2>${description}</h2>`
-                                  : nothing}
-                                <span class="title">Retrieving values...</span>
-                              </summary>
-                            </details>
-                            <div class="node-status"></div>
-                          </div>`
-                        )}
-                      </div>
-                    `;
                     break;
                   }
-                  break;
-                }
 
-                case "secret": {
-                  if (event.end !== null) {
-                    return nothing;
+                  case "secret": {
+                    if (event.end !== null) {
+                      return nothing;
+                    }
+
+                    content = this.#renderSecretInput(event);
+                    break;
                   }
 
-                  content = this.#renderSecretInput(event);
-                  break;
+                  case "error": {
+                    const output = formatError(event.error);
+                    content = html`<div class="error-content">${output}</div>`;
+                    break;
+                  }
+
+                  default: {
+                    return nothing;
+                  }
                 }
 
-                case "error": {
-                  const output = formatError(event.error);
-                  content = html`<div class="error-content">${output}</div>`;
-                  break;
+                const classes: Record<string, boolean> = {
+                  "activity-entry": true,
+                  running: event.type === "node" && event.end === null,
+                  new: isNew,
+                  [event.type]: true,
+                };
+
+                if (event.type === "node") {
+                  classes[event.node.descriptor.type] = true;
                 }
 
-                default: {
-                  return nothing;
+                const styles: Record<string, string> = {};
+                if (
+                  event.type === "node" &&
+                  event.node.descriptor.metadata &&
+                  event.node.descriptor.metadata.visual &&
+                  typeof event.node.descriptor.metadata.visual === "object"
+                ) {
+                  const visual = event.node.descriptor.metadata
+                    .visual as Record<string, string>;
+                  if (visual.icon) {
+                    classes.icon = true;
+                    styles["--node-icon"] = `url(${visual.icon})`;
+                  }
                 }
-              }
 
-              const classes: Record<string, boolean> = {
-                "activity-entry": true,
-                running: event.type === "node" && event.end === null,
-                new: isNew,
-                [event.type]: true,
-              };
-
-              if (event.type === "node") {
-                classes[event.node.descriptor.type] = true;
-              }
-
-              const styles: Record<string, string> = {};
-              if (
-                event.type === "node" &&
-                event.node.descriptor.metadata &&
-                event.node.descriptor.metadata.visual &&
-                typeof event.node.descriptor.metadata.visual === "object"
-              ) {
-                const visual = event.node.descriptor.metadata.visual as Record<
-                  string,
-                  string
-                >;
-                if (visual.icon) {
-                  classes.icon = true;
-                  styles["--node-icon"] = `url(${visual.icon})`;
+                if (event.type === "node") {
+                  return guard(
+                    [
+                      event.end,
+                      event === newestEvent,
+                      event.runs.length,
+                      event.runs[0]?.events.length ?? 0,
+                    ],
+                    () =>
+                      html`<section
+                        ${ref(this.#newestEntry)}
+                        style="${styleMap(styles)}"
+                        class="${classMap(classes)}"
+                      >
+                        ${until(content)}
+                      </section>`
+                  );
                 }
-              }
 
-              if (event.type === "node") {
-                return guard(
-                  [
-                    event.end,
-                    event === newestEvent,
-                    event.runs.length,
-                    event.runs[0]?.events.length ?? 0,
-                  ],
-                  () =>
-                    html`<section
-                      ${ref(this.#newestEntry)}
-                      style="${styleMap(styles)}"
-                      class="${classMap(classes)}"
-                    >
-                      ${until(content)}
-                    </section>`
-                );
+                return html`<section
+                  ${ref(this.#newestEntry)}
+                  style="${styleMap(styles)}"
+                  class="${classMap(classes)}"
+                >
+                  ${until(content)}
+                </section>`;
               }
-
-              return html`<section
-                ${ref(this.#newestEntry)}
-                style="${styleMap(styles)}"
-                class="${classMap(classes)}"
-              >
-                ${until(content)}
-              </section>`;
-            }
-          )} `
+            )}
+          `
         : nothing;
 
     const debugControls = this.showDebugControls
