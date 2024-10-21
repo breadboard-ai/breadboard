@@ -190,7 +190,7 @@ export class BoardActivityOverlay extends LitElement {
             .settings=${this.settings}
             .showLogTitle=${false}
             .logTitle=${"Run Board"}
-            .providers=${this.boardServers}
+            .boardServers=${this.boardServers}
             .showDebugControls=${this.showDebugControls}
             .nextNodeId=${this.nextNodeId}
             @pointerdown=${(evt: PointerEvent) => {
