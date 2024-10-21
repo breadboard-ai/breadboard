@@ -118,7 +118,7 @@
   },
   "dependencies": {
     "@breadboard-ai/build": "0.10.4",
-    "pyodide": "^0.26.2"
+    "pyodide": "^0.26.3"
   },
   "devDependencies": {
     "eslint": "^8.57.1",
