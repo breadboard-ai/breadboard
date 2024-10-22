@@ -84,11 +84,13 @@ export class RunObserver implements InspectableRunObserver {
                 );
 
                 run.dataStoreKey = `${url}-${timestamp}`;
-                if (!this.#options.skipDataStore) {
-                  // Ensure that we release old blobs if we've encountered this
-                  // run before.
-                  this.#options.dataStore?.releaseGroup(run.dataStoreKey);
-                  this.#options.dataStore?.createGroup(run.dataStoreKey);
+                const { dataStore, skipDataStore } = this.#options;
+                if (!skipDataStore && dataStore) {
+                  // If a group with this key already exists, let's just
+                  // keep adding to it. Otherwise, let create a new one.
+                  if (!dataStore.has(run.dataStoreKey)) {
+                    this.#options.dataStore?.createGroup(run.dataStoreKey);
+                  }
                 }
               }
             } else if (result.type === "graphend") {
