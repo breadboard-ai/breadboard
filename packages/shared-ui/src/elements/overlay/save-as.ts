@@ -258,18 +258,18 @@ export class SaveAsOverlay extends LitElement {
           const data = new FormData(evt.target);
           const title = data.get("title") as string | null;
           const fileName = data.get("filename") as string | null;
-          const provider = data.get("provider") as string | null;
+          const boardServer = data.get("board-server") as string | null;
           const graph = this.graph || blankLLMContent();
 
-          if (!(title && provider && fileName && graph)) {
+          if (!(title && boardServer && fileName && graph)) {
             return;
           }
 
-          const [providerName, location] = this.#parseUrl(provider);
-          const chosenProvider = this.boardServers.find(
-            (provider) => provider.name === providerName
+          const [boardServerName, location] = this.#parseUrl(boardServer);
+          const chosenBoardServer = this.boardServers.find(
+            (boardServer) => boardServer.name === boardServerName
           );
-          const chosenLocation = chosenProvider?.items().get(location);
+          const chosenLocation = chosenBoardServer?.items().get(location);
 
           let fileExists = false;
 
@@ -314,7 +314,7 @@ export class SaveAsOverlay extends LitElement {
           graph.title = title;
           this.dispatchEvent(
             new GraphBoardServerSaveBoardEvent(
-              providerName,
+              boardServerName,
               location,
               fileName,
               graph
@@ -335,8 +335,8 @@ export class SaveAsOverlay extends LitElement {
           </button>
         </header>
 
-        <label>Provider</label>
-        <select name="provider" .value=${this.selectedBoardServer}>
+        <label>Board Server</label>
+        <select name="board-server" .value=${this.selectedBoardServer}>
           ${map(this.boardServers, (boardSerer) => {
             const stores = [...boardSerer.items()].filter(
               ([, store]) => store.permission === "granted"

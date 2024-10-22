@@ -188,15 +188,15 @@ export class UI extends LitElement {
         let capabilities: false | GraphProviderCapabilities = false;
         let extendedCapabilities: false | GraphProviderExtendedCapabilities =
           false;
-        for (const provider of this.boardServers) {
+        for (const boardServer of this.boardServers) {
           if (!this.graph || !this.graph.url) {
             continue;
           }
 
-          const canProvide = provider.canProvide(new URL(this.graph.url));
+          const canProvide = boardServer.canProvide(new URL(this.graph.url));
           if (canProvide) {
             capabilities = canProvide;
-            extendedCapabilities = provider.extendedCapabilities();
+            extendedCapabilities = boardServer.extendedCapabilities();
             break;
           }
         }

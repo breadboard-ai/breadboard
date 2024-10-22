@@ -119,8 +119,8 @@ export class BoardSelector extends LitElement {
       return;
     }
 
-    for (const provider of this.boardServers) {
-      for (const [, store] of provider.items()) {
+    for (const boardServer of this.boardServers) {
+      for (const [, store] of boardServer.items()) {
         for (const [, { url, tags }] of store.items) {
           const expandedUrl = new URL(url, window.location.href);
           if (this.#board === expandedUrl.href && tags?.includes("tool")) {
@@ -140,7 +140,7 @@ export class BoardSelector extends LitElement {
 
   render() {
     const showQuickSwitch = this.#board && this.#board.startsWith("#");
-    const providers = this.boardServers.filter((provider) =>
+    const boardServers = this.boardServers.filter((provider) =>
       this.graph && this.graph.url
         ? provider.canProvide(new URL(this.graph.url))
         : false
@@ -183,7 +183,7 @@ export class BoardSelector extends LitElement {
                 })}
               </optgroup>`
             : nothing}
-          ${map(providers, (provider) => {
+          ${map(boardServers, (provider) => {
             return html`${map(provider.items(), ([, store]) => {
               const storeItems = [...store.items]
                 .filter(([, storeItem]) => {

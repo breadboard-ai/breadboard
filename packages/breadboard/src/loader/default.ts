@@ -6,10 +6,14 @@
 
 import { GraphDescriptor } from "@breadboard-ai/types";
 import {
-  GraphProvider,
+  BoardServer,
+  BoardServerCapabilities,
+  BoardServerProject,
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
   GraphProviderStore,
+  Permission,
+  User,
 } from "./types.js";
 
 export const loadFromFile = async (path: string) => {
@@ -51,8 +55,23 @@ export const loadWithFetch = async (url: string | URL) => {
   return await response?.json();
 };
 
-export class DefaultGraphProvider implements GraphProvider {
+export class DefaultBoardServer implements BoardServer {
+  url: URL = new URL(window.location.href);
+  projects: Promise<BoardServerProject[]> = Promise.resolve([]);
+  kits = [];
+  secrets = new Map();
+  extensions = [];
+  capabilities: BoardServerCapabilities = {
+    connect: false,
+    disconnect: false,
+    preview: false,
+    watch: false,
+    refresh: false,
+  };
+
   name = "DefaultGraphProvider";
+  user: User = { username: "board-builder", apiKey: "", secrets: new Map() };
+  users = [this.user];
 
   #ready = Promise.resolve();
   ready() {
@@ -66,12 +85,12 @@ export class DefaultGraphProvider implements GraphProvider {
   extendedCapabilities(): GraphProviderExtendedCapabilities {
     return {
       modify: false,
-      connect: false,
-      disconnect: false,
-      refresh: false,
-      watch: false,
-      preview: false,
+      ...this.capabilities,
     };
+  }
+
+  getAccess(_url: URL, _user: User): Promise<Permission> {
+    throw new Error("Method not implemented.");
   }
 
   canProvide(url: URL): false | GraphProviderCapabilities {
