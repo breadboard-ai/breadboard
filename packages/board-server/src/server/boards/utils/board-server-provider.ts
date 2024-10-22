@@ -5,12 +5,17 @@
  */
 
 import {
+  type BoardServer,
+  type BoardServerCapabilities,
+  type BoardServerProject,
   type ChangeNotificationCallback,
   type GraphDescriptor,
   type GraphProvider,
   type GraphProviderCapabilities,
   type GraphProviderExtendedCapabilities,
   type GraphProviderStore,
+  type Permission,
+  type User,
 } from "@google-labs/breadboard";
 
 import { asInfo, getStore } from "../../store.js";
@@ -28,13 +33,32 @@ export const loadFromStore = async (
   return graph as GraphDescriptor;
 };
 
-export class BoardServerProvider implements GraphProvider {
+export class BoardServerProvider implements BoardServer {
   #initialized = false;
   #serverUrl: string | undefined;
   #path: string;
   #loader: BoardServerLoadFunction;
   #cache: Map<string, GraphDescriptor> = new Map();
 
+  url: URL = new URL(
+    typeof window !== "undefined"
+      ? window.location.href
+      : "https://breadboard-ai.github.io/"
+  );
+  projects: Promise<BoardServerProject[]> = Promise.resolve([]);
+  kits = [];
+  secrets = new Map();
+  extensions = [];
+  capabilities: BoardServerCapabilities = {
+    connect: false,
+    disconnect: false,
+    preview: false,
+    watch: false,
+    refresh: false,
+  };
+
+  user: User = { username: "board-builder", apiKey: "", secrets: new Map() };
+  users = [this.user];
   name = "Board Server Provider";
 
   constructor(path: string, loader: BoardServerLoadFunction) {
@@ -60,6 +84,10 @@ export class BoardServerProvider implements GraphProvider {
 
   async ready(): Promise<void> {
     await this.#initialize();
+  }
+
+  getAccess(_url: URL, _user: User): Promise<Permission> {
+    throw new Error("Method not implemented.");
   }
 
   isSupported(): boolean {

@@ -56,7 +56,11 @@ export const loadWithFetch = async (url: string | URL) => {
 };
 
 export class DefaultBoardServer implements BoardServer {
-  url: URL = new URL(window.location.href);
+  url: URL = new URL(
+    typeof window !== "undefined"
+      ? window.location.href
+      : "https://breadboard-ai.github.io/"
+  );
   projects: Promise<BoardServerProject[]> = Promise.resolve([]);
   kits = [];
   secrets = new Map();
@@ -69,7 +73,7 @@ export class DefaultBoardServer implements BoardServer {
     refresh: false,
   };
 
-  name = "DefaultGraphProvider";
+  name = "DefaultBoardServer";
   user: User = { username: "board-builder", apiKey: "", secrets: new Map() };
   users = [this.user];
 
