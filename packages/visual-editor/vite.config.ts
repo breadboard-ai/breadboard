@@ -21,7 +21,6 @@ export default defineConfig((_) => {
         entry: {
           worker: "src/worker.ts",
           sample: "./index.html",
-          preview: "./preview.html",
           oauth: "./oauth/index.html",
           iframe: "./iframe.html",
           embed: "src/embed.ts",
