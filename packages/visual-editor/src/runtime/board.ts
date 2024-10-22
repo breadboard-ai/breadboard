@@ -389,15 +389,15 @@ export class Board extends EventTarget {
       let kits = this.kits;
       let graph: GraphDescriptor | null = null;
       if (this.#canParse(url, base.href)) {
-        const provider = this.getProviderForURL(new URL(url, base));
-        if (provider) {
+        const boardServer = this.getBoardServerForURL(new URL(url, base));
+        if (boardServer) {
           // Ensure the the provider has actually loaded fully before
           // requesting the graph file from it.
-          await provider.ready();
+          await boardServer.ready();
         }
 
-        if (provider && this.boardServers) {
-          kits = (provider as BoardServer).kits ?? this.kits;
+        if (boardServer && this.boardServers) {
+          kits = (boardServer as BoardServer).kits ?? this.kits;
           graph = await this.boardServers.loader.load(url, { base });
         } else {
           graph = await this.loader.load(url, { base });
@@ -504,17 +504,17 @@ export class Board extends EventTarget {
     }
 
     const boardUrl = new URL(tab.graph.url);
-    const provider = this.getProviderForURL(boardUrl);
-    if (!provider) {
+    const boardServer = this.getBoardServerForURL(boardUrl);
+    if (!boardServer) {
       return false;
     }
 
-    const capabilities = provider.canProvide(boardUrl);
+    const capabilities = boardServer.canProvide(boardUrl);
     if (!capabilities || !capabilities.save) {
       return false;
     }
 
-    for (const store of provider.items().values()) {
+    for (const store of boardServer.items().values()) {
       for (const item of store.items.values()) {
         if (item.url !== tab.graph.url) {
           continue;
@@ -542,17 +542,17 @@ export class Board extends EventTarget {
     }
 
     const boardUrl = new URL(tab.graph.url);
-    const provider = this.getProviderForURL(boardUrl);
-    if (!provider) {
+    const boardServer = this.getBoardServerForURL(boardUrl);
+    if (!boardServer) {
       return { result: false, error: "Unable to save" };
     }
 
-    const capabilities = provider.canProvide(boardUrl);
+    const capabilities = boardServer.canProvide(boardUrl);
     if (!capabilities || !capabilities.save) {
       return { result: false, error: "Unable to save" };
     }
 
-    return provider.save(boardUrl, tab.graph);
+    return boardServer.save(boardUrl, tab.graph);
   }
 
   async saveAs(
@@ -562,29 +562,29 @@ export class Board extends EventTarget {
     graph: GraphDescriptor
   ) {
     const fail = { result: false, error: "Unable to save", url: undefined };
-    const provider = this.getProviderByName(boardServerName);
-    if (!provider) {
+    const boardServer = this.getBoardServerByName(boardServerName);
+    if (!boardServer) {
       return fail;
     }
 
-    const urlString = await provider.createURL(location, fileName);
+    const urlString = await boardServer.createURL(location, fileName);
     if (!urlString) {
       return fail;
     }
 
     const url = new URL(urlString);
-    const response = await provider.create(url, graph);
+    const response = await boardServer.create(url, graph);
     return { ...response, url };
   }
 
   async delete(providerName: string, url: string) {
     const fail = { result: false, error: "Unable to delete" };
-    const provider = this.getProviderByName(providerName);
-    if (!provider) {
+    const boardServer = this.getBoardServerByName(providerName);
+    if (!boardServer) {
       return fail;
     }
 
-    return await provider.delete(new URL(url));
+    return await boardServer.delete(new URL(url));
   }
 
   async extensionAction<T extends BoardServerExtensionNamespace>(

@@ -5,18 +5,18 @@
  */
 
 import { Loader } from "./loader.js";
-import { GraphLoader, GraphProvider } from "./types.js";
-import { DefaultGraphProvider } from "./default.js";
+import { GraphLoader, BoardServer } from "./types.js";
+import { DefaultBoardServer } from "./default.js";
 
 export const createLoader = (
-  graphProviders?: GraphProvider[],
+  boardServers?: BoardServer[],
   opts?: { disableDefaultProvider?: boolean }
 ): GraphLoader => {
-  const providers = [...(graphProviders ?? [])];
+  const servers = [...(boardServers ?? [])];
   if (!opts?.disableDefaultProvider) {
-    providers.push(new DefaultGraphProvider());
+    servers.push(new DefaultBoardServer());
   }
-  return new Loader(providers);
+  return new Loader(servers);
 };
 
 export { SENTINEL_BASE_URL } from "./loader.js";

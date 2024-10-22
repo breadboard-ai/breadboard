@@ -19,6 +19,7 @@ import { loadKits } from "./utils/kit-loader.js";
 import {
   createLoader,
   createRunObserver,
+  type BoardServer,
   type GraphProvider,
   type InputValues,
   type InspectableRun,
@@ -72,7 +73,7 @@ export class ApiExplorer extends LitElement {
     runStore: this.runStore,
   });
   #handlers: Map<string, inputCallback[]> = new Map();
-  #providers: GraphProvider[] = [];
+  #providers: BoardServer[] = [];
   #kitLoad = loadKits([
     TemplateKit,
     Core,

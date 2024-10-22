@@ -33,10 +33,7 @@ export default defineConfig({
   build: {
     lib: {
       entry: {
-        // TODO: These are just variants of the visual-editor entry points; we
-        // could (and possibly should) unify them.
         index: "./index.html",
-        preview: "./preview.html",
       },
       name: "Breadboard Debugger Runtime",
       formats: ["es"],
