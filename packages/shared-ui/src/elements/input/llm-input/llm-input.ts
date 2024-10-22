@@ -3,7 +3,14 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
+import {
+  LitElement,
+  html,
+  css,
+  HTMLTemplateResult,
+  nothing,
+  PropertyValues,
+} from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { AllowedLLMContentTypes } from "../../../types/types.js";
 import { map } from "lit/directives/map.js";
@@ -33,6 +40,7 @@ import type {
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 
 const OVERFLOW_MENU_WIDTH = 180;
+const OVERFLOW_MENU_BUTTON_HEIGHT = 44;
 
 type MultiModalInput = AudioInput | DrawableInput | WebcamInput;
 
@@ -188,9 +196,11 @@ export class LLMInput extends LitElement {
 
     :host([inlinecontrols="true"]) #controls {
       display: grid;
-      grid-template-rows: var(--bb-grid-size-11);
+      grid-auto-rows: var(--bb-grid-size-11);
+      row-gap: 1px;
       background: none;
-      height: 224px;
+      width: 180px;
+      height: var(--controls-height, 224px);
       padding: 0;
     }
 
@@ -223,8 +233,13 @@ export class LLMInput extends LitElement {
       background-color: var(--bb-neutral-50);
     }
 
+    :host([inlinecontrols="true"]) #controls button:first-of-type {
+      border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
+    }
+
     :host([inlinecontrols="true"]) #controls button:last-of-type {
       border-bottom: none;
+      border-radius: 0 0 var(--bb-grid-size-2) var(--bb-grid-size-2);
     }
 
     #toggle-controls {
@@ -567,6 +582,18 @@ export class LLMInput extends LitElement {
 
     window.removeEventListener("click", this.#onWindowPointerDownBound);
     window.removeEventListener("keyup", this.#onWindowKeyUpBound);
+  }
+
+  protected willUpdate(changedProperties: PropertyValues): void {
+    if (changedProperties.has("allow")) {
+      const allowable = Object.values(this.allow).filter(
+        (value) => value
+      ).length;
+      this.style.setProperty(
+        "--controls-height",
+        `${allowable * OVERFLOW_MENU_BUTTON_HEIGHT}px`
+      );
+    }
   }
 
   getContainerHeight(): number {
