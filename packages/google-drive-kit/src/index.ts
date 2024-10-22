@@ -9,6 +9,7 @@ import exportFile from "./components/export-file.js";
 import getFileContent from "./components/get-file-content.js";
 import listFiles from "./components/list-files.js";
 import contextToSlides from "./components/context-to-slides.js";
+import getBreadboardFolder from "./components/get-breadboard-folder.js";
 
 export default await kit({
   title: "Google Drive Kit",
@@ -16,5 +17,11 @@ export default await kit({
   description:
     "Nodes for reading & writing to files in Google Drive, including Docs and Sheets",
   version: "0.0.1",
-  components: { getFileContent, listFiles, exportFile, contextToSlides },
+  components: {
+    getFileContent,
+    listFiles,
+    exportFile,
+    contextToSlides,
+    getBreadboardFolder,
+  },
 });

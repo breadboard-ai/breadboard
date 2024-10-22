@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { enumeration, object, optional } from "@breadboard-ai/build";
+import { array, enumeration, object, optional } from "@breadboard-ai/build";
 
 /**
  * A Breadboard Type Expression corresponding to
@@ -16,4 +16,11 @@ export const fileType = object({
   id: "string",
   name: "string",
   resourceKey: optional("string"),
+});
+
+export const fileListType = object({
+  kind: enumeration("drive#fileList"),
+  nextPageToken: optional("string"),
+  incompleteSearch: "boolean",
+  files: array(fileType),
 });
