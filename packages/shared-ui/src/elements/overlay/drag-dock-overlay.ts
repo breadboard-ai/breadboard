@@ -321,28 +321,20 @@ export class DragDockOverlay extends LitElement {
       height: var(--bb-grid-size-5);
       width: var(--bb-grid-size-5);
       cursor: pointer;
-      border: 1px solid var(--bb-neutral-300);
-      transition: all 0.3s cubic-bezier(0, 0, 0.3, 1);
+      border: none;
+      transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
       font-size: 0;
-      background: var(--bb-neutral-0) var(--bb-icon-anchor) center center / 16px
-        16px no-repeat;
+      background: var(--bb-icon-keep) center center / 16px 16px no-repeat;
       margin-right: var(--bb-grid-size-2);
+      opacity: 0.5;
     }
 
-    #persist:focus,
     #persist:hover {
-      color: var(--bb-neutral-600);
-      background: var(--bb-neutral-0) var(--bb-icon-anchor-active) center center /
-        16px 16px no-repeat;
-      border: 1px solid var(--bb-neutral-300);
+      opacity: 1;
     }
 
     #persist.active {
-      opacity: 1;
-      color: var(--bb-neutral-700);
-      background: var(--bb-neutral-50) var(--bb-icon-anchor-active) center
-        center / 16px 16px no-repeat;
-      border: 1px solid var(--bb-neutral-500);
+      background: var(--bb-icon-keep-filled) center center / 16px 16px no-repeat;
     }
 
     @keyframes fadeIn {
