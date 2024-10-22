@@ -14,8 +14,11 @@ import type {
   SlidesInsertTextRequest,
   SlidesPredefinedLayout,
   SlidesRequest,
+  SlidesTextRange,
   TextToSlideRequestsResult,
 } from "../drive-types.js";
+import { parseMarkdown } from "../util/markdown.js";
+import type { ParsedBullet, ParsedText } from "../util/types.js";
 
 export {
   contextToSlides,
@@ -89,10 +92,13 @@ function contextToSlides(
     return { insertText: { objectId, text, insertionIndex } };
   }
 
-  function createParagraphBullets(objectId: string): {
+  function createParagraphBullets(
+    objectId: string,
+    textRange?: SlidesTextRange
+  ): {
     createParagraphBullets: SlidesCreateParagraphBulletsRequest;
   } {
-    return { createParagraphBullets: { objectId } };
+    return { createParagraphBullets: { objectId, textRange } };
   }
 
   function createImage(
@@ -151,37 +157,21 @@ function contextToSlides(
     startId: number,
     text: string
   ): TextToSlideRequestsResult {
-    const lines = text.split(/\n/);
+    const lines = parseMarkdown(text);
     const requests: SlidesRequest[] = [];
-    const textLines: string[] = [];
+    const textLines: (ParsedText | ParsedBullet)[] = [];
     let prevPlaceholderId: string | null = null;
     let prevSlideId = startId;
+    let offset = 0;
     lines.forEach((line) => {
-      const match = line.match(/(?<heading>^#*\W*)(?<text>.*$)/);
-      if (!match) {
-        return;
-      }
-      const heading = match.groups?.heading?.trim();
-      const text = match.groups?.text?.trim();
-      if (heading) {
-        // first, flush the existing textLines
-        if (textLines.length > 0) {
-          const placeholderId = prevPlaceholderId;
-          if (placeholderId) {
-            requests.push(insertText(placeholderId, textLines.join("\n")));
-          }
-          textLines.length = 0;
+      switch (line.type) {
+        case "bullet": {
+          addToBody(line);
+          break;
         }
-        const isBullet = heading === "-";
-        if (isBullet) {
-          const placeholderId = prevPlaceholderId;
-          textLines.length = 0;
-          if (placeholderId) {
-            requests.push(insertText(placeholderId, `\t${text}\n`));
-            requests.push(createParagraphBullets(placeholderId));
-          }
-        } else {
-          const level = heading.length;
+        case "heading": {
+          finalizeSlide();
+          const { level, text } = line;
           if (level == 1) {
             if (!text) {
               return;
@@ -202,23 +192,64 @@ function contextToSlides(
               insertText(`${slideId}-title`, text!)
             );
           }
+          offset = line.end;
+          break;
         }
-      } else {
-        // Only add text lines if there was a title previously specified.
-        // Otherwise, drop the text.
-        if (text && prevPlaceholderId) {
-          textLines.push(text);
+        case "text": {
+          addToBody(line);
+          break;
         }
       }
     });
+
     // Flush the last textLines
     if (textLines.length > 0 && prevPlaceholderId) {
-      requests.push(insertText(prevPlaceholderId, textLines.join("\n")));
+      finalizeSlide();
     }
     return { requests, prevSlideId };
 
     function createObjectId() {
       return `Slide-${++prevSlideId}`;
+    }
+
+    function addToBody(line: ParsedText | ParsedBullet) {
+      if (prevPlaceholderId) {
+        textLines.push(line);
+      }
+    }
+
+    function finalizeSlide() {
+      if (!prevPlaceholderId) return;
+
+      requests.push(
+        insertText(
+          prevPlaceholderId,
+          textLines.map((line) => line.text).join("\n")
+        )
+      );
+
+      // Identify bullet ranges, if any
+      let bulletStart = -1;
+      let bulletEnd = 0;
+      textLines.forEach((line) => {
+        if (bulletStart === -1) {
+          if (line.type === "bullet") bulletStart = line.start;
+        } else {
+          if (line.type === "text") bulletEnd = line.start - 1;
+        }
+      });
+      if (bulletStart !== -1) {
+        if (bulletEnd === 0) {
+          bulletEnd = textLines.at(-1)!.end;
+        }
+        const textRange: SlidesTextRange = {
+          startIndex: bulletStart - offset,
+          endIndex: bulletEnd - offset,
+          type: "FIXED_RANGE",
+        };
+        requests.push(createParagraphBullets(prevPlaceholderId, textRange));
+      }
+      textLines.length = 0;
     }
   }
 }

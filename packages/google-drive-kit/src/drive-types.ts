@@ -34,6 +34,20 @@ export type SlidesPlaceholder = {
   type?: string | null;
 };
 
+export type SlidesTextRangeType =
+  // A fixed range. Both the startIndex and endIndex must be specified.
+  | "FIXED_RANGE"
+  // Starts the range at startIndex and continues until the end of the
+  // collection. The endIndex must not be specified.
+  | "FROM_START_INDEX"
+  | "ALL";
+
+export type SlidesTextRange = {
+  startIndex?: number;
+  endIndex?: number;
+  type: SlidesTextRangeType;
+};
+
 export type SlidesLayoutPlaceholderIdMapping = {
   /**
    * The placeholder on a layout that will be applied to a slide. Only type and index are needed. For example, a predefined `TITLE_AND_BODY` layout may usually have a TITLE placeholder with index 0 and a BODY placeholder with index 0.
@@ -87,6 +101,7 @@ export type SlidesInsertTextRequest = {
 
 export type SlidesCreateParagraphBulletsRequest = {
   objectId: string | null;
+  textRange?: SlidesTextRange;
 };
 
 /**
