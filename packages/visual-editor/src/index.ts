@@ -1452,13 +1452,17 @@ export class Main extends LitElement {
   render() {
     const toasts = html`${map(
       this.toasts,
-      ([, { message, type, persistent }], idx) => {
+      ([toastId, { message, type, persistent }], idx) => {
         const offset = this.toasts.size - idx - 1;
         return html`<bb-toast
+          .toastId=${toastId}
           .offset=${offset}
           .message=${message}
           .type=${type}
           .timeout=${persistent ? 0 : nothing}
+          @bbtoastremoved=${(evt: BreadboardUI.Events.ToastRemovedEvent) => {
+            this.toasts.delete(evt.toastId);
+          }}
         ></bb-toast>`;
       }
     )}`;
