@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, PropertyValueMap } from "lit";
+import { LitElement, html, css, PropertyValueMap, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import {
   GraphBoardServerSaveBoardEvent,
@@ -337,12 +337,15 @@ export class SaveAsOverlay extends LitElement {
 
         <label>Board Server</label>
         <select name="board-server" .value=${this.selectedBoardServer}>
-          ${map(this.boardServers, (boardSerer) => {
-            const stores = [...boardSerer.items()].filter(
+          ${map(this.boardServers, (boardServer) => {
+            if (!boardServer.extendedCapabilities().modify) {
+              return nothing;
+            }
+            const stores = [...boardServer.items()].filter(
               ([, store]) => store.permission === "granted"
             );
             return html`${map(stores, ([location, store]) => {
-              const value = `${boardSerer.name}::${store.url ?? location}`;
+              const value = `${boardServer.name}::${store.url ?? location}`;
               const isSelectedOption = value === selected;
               return html`<option
                 ?disabled=${store.permission !== "granted"}
