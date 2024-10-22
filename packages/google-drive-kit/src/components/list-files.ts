@@ -6,26 +6,15 @@
 
 import {
   annotate,
-  array,
   board,
-  enumeration,
   input,
-  object,
-  optional,
   optionalEdge,
   output,
 } from "@breadboard-ai/build";
 import { cast, fetch, unnest } from "@google-labs/core-kit";
 import { urlTemplate } from "@google-labs/template-kit";
 import { headers } from "../internal/headers.js";
-import { fileType } from "../types.js";
-
-const fileListType = object({
-  kind: enumeration("drive#fileList"),
-  nextPageToken: optional("string"),
-  incompleteSearch: "boolean",
-  files: array(fileType),
-});
+import { fileListType } from "../types.js";
 
 const query = input({
   title: "Query",
