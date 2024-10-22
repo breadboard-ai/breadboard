@@ -282,6 +282,14 @@ export class ToastEvent extends Event {
   }
 }
 
+export class ToastRemovedEvent extends Event {
+  static eventName = "bbtoastremoved";
+
+  constructor(public readonly toastId: string) {
+    super(ToastRemovedEvent.eventName, { ...eventInit });
+  }
+}
+
 export class DelayEvent extends Event {
   static eventName = "bbdelay";
 

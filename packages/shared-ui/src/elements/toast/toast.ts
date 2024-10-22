@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ToastType } from "../../events/events.js";
+import { ToastRemovedEvent, ToastType } from "../../events/events.js";
 import { LitElement, html, css, PropertyValueMap } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
@@ -12,6 +12,9 @@ const DEFAULT_TIMEOUT = 8000;
 
 @customElement("bb-toast")
 export class Toast extends LitElement {
+  @property({ reflect: true })
+  toastId: string | null = null;
+
   @property({ reflect: true })
   type: ToastType = ToastType.INFORMATION;
 
@@ -101,6 +104,7 @@ export class Toast extends LitElement {
     }
   `;
 
+  #removalTimeout = -1;
   connectedCallback(): void {
     super.connectedCallback();
 
@@ -128,11 +132,15 @@ export class Toast extends LitElement {
       return;
     }
 
-    setTimeout(() => {
+    clearTimeout(this.#removalTimeout);
+    this.#removalTimeout = setTimeout(() => {
       this.addEventListener(
         "animationend",
         () => {
           this.remove();
+          if (this.toastId) {
+            this.dispatchEvent(new ToastRemovedEvent(this.toastId));
+          }
         },
         { once: true }
       );
