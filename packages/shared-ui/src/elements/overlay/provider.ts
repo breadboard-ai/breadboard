@@ -18,8 +18,11 @@ export class BoardServerOverlay extends LitElement {
   @property()
   boardServers: BoardServer[] = [];
 
+  @property()
+  showGoogleDrive = false;
+
   @state()
-  serverType: "FileSystem" | "BoardServer" = "BoardServer";
+  serverType: "FileSystem" | "BoardServer" | "GoogleDrive" = "BoardServer";
 
   #formRef: Ref<HTMLFormElement> = createRef();
 
@@ -210,6 +213,14 @@ export class BoardServerOverlay extends LitElement {
           />`;
         break;
       }
+
+      case "GoogleDrive": {
+        // TODO: Figure out the right way to sign in.
+        fields = html`<bb-connection-input
+          .connectionId=${"google-drive-limited"}
+        ></bb-connection-input>`;
+        break;
+      }
     }
 
     const supportsFileSystem = "showDirectoryPicker" in window;
@@ -267,6 +278,17 @@ export class BoardServerOverlay extends LitElement {
             case "FileSystem": {
               break;
             }
+
+            case "GoogleDrive": {
+              this.dispatchEvent(
+                new GraphBoardServerConnectRequestEvent(
+                  "RemoteGraphProvider",
+                  "drive:board-server"
+                )
+              );
+              this.dispatchEvent(new OverlayDismissedEvent());
+              break;
+            }
           }
         }}
       >
@@ -306,6 +328,14 @@ export class BoardServerOverlay extends LitElement {
                 ?selected=${this.serverType === "FileSystem"}
               >
                 File System
+              </option>`
+            : nothing}
+          ${this.showGoogleDrive
+            ? html`<option
+                value="GoogleDrive"
+                ?selected=${this.serverType === "GoogleDrive"}
+              >
+                Google Drive
               </option>`
             : nothing}
         </select>

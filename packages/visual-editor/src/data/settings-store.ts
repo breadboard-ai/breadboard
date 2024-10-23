@@ -61,7 +61,7 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
             name: "Collapse Nodes by Default",
             description:
               "Whether you wish to have nodes in the graph collapsed by default",
-            value: true,
+            value: false,
           },
         ],
         [
@@ -167,6 +167,15 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
           {
             name: "Offer Configuration Enhancements",
             description: "Toggles showing the component enhancement button",
+            value: false,
+          },
+        ],
+        [
+          "Show Google Drive Board Server",
+          {
+            name: "Show Google Drive Board Server",
+            description:
+              '(Unstable) Show "Google Drive" as an option when adding a new board server',
             value: false,
           },
         ],

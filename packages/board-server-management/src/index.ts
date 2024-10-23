@@ -17,7 +17,9 @@ import {
 import { loadKits } from "./utils/kit-loader.js";
 import GeminiKit from "@google-labs/gemini-kit";
 import PythonWasmKit from "@breadboard-ai/python-wasm";
-import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
+import GoogleDriveKit, {
+  GoogleDriveBoardServer,
+} from "@breadboard-ai/google-drive-kit";
 const loadedKits = loadKits([GeminiKit, PythonWasmKit, GoogleDriveKit]);
 
 const PLAYGROUND_BOARDS = "example://playground-boards";
@@ -100,33 +102,49 @@ export async function connectToBoardServer(
   apiKey?: string
 ): Promise<{ title: string; url: string } | null> {
   const existingServers = await getBoardServers();
-  if (
-    location &&
-    (location.startsWith(RemoteBoardServer.PROTOCOL) ||
-      location.startsWith(RemoteBoardServer.LOCALHOST))
-  ) {
-    const existingServer = existingServers.find(
-      (server) => server.url.origin === location
-    );
+  if (location) {
+    if (
+      location.startsWith(RemoteBoardServer.PROTOCOL) ||
+      location.startsWith(RemoteBoardServer.LOCALHOST)
+    ) {
+      const existingServer = existingServers.find(
+        (server) => server.url.origin === location
+      );
 
-    if (existingServer) {
-      console.warn("Server already connected");
+      if (existingServer) {
+        console.warn("Server already connected");
+        return null;
+      }
+
+      const response = await RemoteBoardServer.connect(location, apiKey);
+      if (response) {
+        const url = new URL(location);
+        await storeBoardServer(url, response.title, {
+          apiKey: apiKey ?? "",
+          secrets: new Map(),
+          username: response.username,
+        });
+        return { title: response.title, url: url.href };
+      }
+
+      return null;
+    } else if (location.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
+      const existingServer = existingServers.find(
+        (server) => server.url.origin === location
+      );
+      if (existingServer) {
+        console.warn("Server already connected");
+      }
+      const response = await GoogleDriveBoardServer.connect();
+      if (response) {
+        throw new Error("Storing Google Drive server not yet implemented");
+      }
       return null;
     }
-
-    const response = await RemoteBoardServer.connect(location, apiKey);
-    if (response) {
-      const url = new URL(location);
-      await storeBoardServer(url, response.title, {
-        apiKey: apiKey ?? "",
-        secrets: new Map(),
-        username: response.username,
-      });
-      return { title: response.title, url: url.href };
-    }
-
+    // Unknown location + protocol combination.
     return null;
   } else {
+    // No location -- presume file system board server.
     const handle = await FileSystemBoardServer.connect();
     if (!handle) {
       return null;
