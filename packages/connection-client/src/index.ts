@@ -4,4 +4,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-console.log("code goes here");
+export { TokenVendor } from "./token-vendor.js";
