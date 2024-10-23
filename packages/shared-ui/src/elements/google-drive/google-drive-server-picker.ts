@@ -67,8 +67,9 @@ export class GoogleDriveServerDirPicker extends LitElement {
 
   #pickFolderTask = new Task(this, {
     task: async ([accessToken]) => {
+      const files = new Files(accessToken!);
       const response = await fetch(
-        makeFilesQueryRequest(ALL_BOARD_SERVER_FOLDERS_QUERY, accessToken!)
+        files.makeQueryRequest(ALL_BOARD_SERVER_FOLDERS_QUERY)
       );
       const json = (await response.json()) as DriveFileList;
       return json.files;
@@ -85,17 +86,15 @@ export class GoogleDriveServerDirPicker extends LitElement {
   async #createNewFolder() {
     // TODO: Make this configurable via UI.
     const folderName = "Breadboard";
+    const files = new Files(this.accessToken!);
     const response = await fetch(
-      makeFilesCreateRequest(
-        {
-          name: folderName,
-          mimeType: "application/vnd.google-apps.folder",
-          appProperties: {
-            breadboard: "root",
-          },
+      files.makeCreateRequest({
+        name: folderName,
+        mimeType: "application/vnd.google-apps.folder",
+        appProperties: {
+          breadboard: "root",
         },
-        this.accessToken!
-      )
+      })
     );
     this.newlyCreated = (await response.json()) as DriveFile;
     this.dispatchEvent(new GoogleDriveFolderPickedEvent(this.newlyCreated.id));
@@ -132,21 +131,30 @@ export class GoogleDriveServerDirPicker extends LitElement {
   }
 }
 
-function makeFilesQueryRequest(query: string, accessToken: string): Request {
-  return new Request(`https://www.googleapis.com/drive/v3/files?q=${query}`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-}
+// TODO: Somehow move to google-drive-kit
+class Files {
+  #accessToken: string;
 
-function makeFilesCreateRequest(body: unknown, accessToken: string): Request {
-  return new Request("https://www.googleapis.com/drive/v3/files", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(body),
-  });
+  constructor(accessToken: string) {
+    this.#accessToken = accessToken;
+  }
+
+  makeQueryRequest(query: string): Request {
+    return new Request(`https://www.googleapis.com/drive/v3/files?q=${query}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${this.#accessToken}`,
+      },
+    });
+  }
+
+  makeCreateRequest(body: unknown): Request {
+    return new Request("https://www.googleapis.com/drive/v3/files", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.#accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+  }
 }
