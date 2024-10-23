@@ -225,14 +225,10 @@ export class BoardServerOverlay extends LitElement {
       }
 
       case "GoogleDrive": {
-        // TODO: Figure out the right way to sign in.
         fields = html` <div class="connection">
           <input type="hidden" ${ref(this.#driveIdRef)} name="drive-id" />
-          <bb-connection-input
-            .connectionId=${"google-drive"}
-          ></bb-connection-input>
 
-          <bb-google-drive-directory-picker
+          <bb-google-drive-server-picker
             @bbgoogledrivefolderpicked=${(
               evt: GoogleDriveFolderPickedEvent
             ) => {
@@ -242,7 +238,7 @@ export class BoardServerOverlay extends LitElement {
 
               this.#driveIdRef.value.value = evt.id;
             }}
-          ></bb-google-drive-directory-picker>
+          ></bb-google-drive-server-picker>
         </div>`;
         break;
       }
@@ -311,7 +307,7 @@ export class BoardServerOverlay extends LitElement {
 
               this.dispatchEvent(
                 new GraphBoardServerConnectRequestEvent(
-                  "google-drive",
+                  "google-drive-limited",
                   `drive://${driveFolderId}`
                 )
               );
