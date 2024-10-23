@@ -226,7 +226,11 @@ export class ResetEvent extends Event {
 export class OverflowMenuActionEvent extends Event {
   static eventName = "bboverflowmenuaction";
 
-  constructor(public readonly action: string) {
+  constructor(
+    public readonly action: string,
+    public readonly x: number | null = null,
+    public readonly y: number | null = null
+  ) {
     super(OverflowMenuActionEvent.eventName, { ...eventInit });
   }
 }
