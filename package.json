@@ -33,6 +33,7 @@
         "./packages/visual-editor:build",
         "./packages/build:build",
         "./packages/build-code:build",
+        "./packages/connection-client:build",
         "./packages/connection-server:build",
         "./packages/core-kit:build",
         "./packages/data-store:build",
