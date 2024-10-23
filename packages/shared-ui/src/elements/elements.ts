@@ -27,6 +27,7 @@ export { Editor } from "./editor/editor.js";
 export { EventDetails } from "./event-details/event-details.js";
 export { FancyJson } from "./editor/fancy-json.js";
 export { FirstRunOverlay } from "./overlay/first-run.js";
+export { GoogleDriveDirectoryPicker } from "./google-drive/google-drive-directory-picker.js";
 export { GoogleDriveFileId } from "./google-drive/google-drive-file-id.js";
 export { GoogleDriveQuery } from "./google-drive/google-drive-query.js";
 export { GraphHistory } from "./graph-history/graph-history.js";

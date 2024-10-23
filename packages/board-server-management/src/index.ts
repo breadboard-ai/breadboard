@@ -6,7 +6,12 @@
 
 import * as idb from "idb";
 import { IDBBoardServer } from "@breadboard-ai/idb-board-server";
-import { BoardServer, GraphDescriptor, User } from "@google-labs/breadboard";
+import {
+  BoardServer,
+  GraphDescriptor,
+  User,
+  UserAuth,
+} from "@google-labs/breadboard";
 import { RemoteBoardServer } from "@breadboard-ai/remote-board-server";
 import { ExampleBoardServer } from "@breadboard-ai/example-board-server";
 import {
@@ -27,11 +32,14 @@ const EXAMPLE_BOARDS = "example://example-boards";
 const BOARD_SERVER_LISTING_DB = "board-server";
 const BOARD_SERVER_LISTING_VERSION = 1;
 
+type Auth = { clientId: string; accessToken: string };
+
 interface BoardServerItem {
   url: string;
   title: string;
   user: User;
   handle?: FileSystemDirectoryHandle;
+  auth?: Auth;
 }
 
 interface BoardServerListing extends idb.DBSchema {
@@ -89,6 +97,10 @@ export async function getBoardServers(
         return FileSystemBoardServer.from(url, title, user, kits, handle);
       }
 
+      if (url.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
+        return GoogleDriveBoardServer.from(url, title, user, kits);
+      }
+
       console.warn(`Unsupported store URL: ${url}`);
       return null;
     })
@@ -99,8 +111,15 @@ export async function getBoardServers(
 
 export async function connectToBoardServer(
   location?: string,
-  apiKey?: string
+  apiKey?: string,
+  auth?: UserAuth
 ): Promise<{ title: string; url: string } | null> {
+  if (apiKey && auth) {
+    console.warn(
+      `Connection attempted to ${location} with both API key and OAuth`
+    );
+  }
+
   const existingServers = await getBoardServers();
   if (location) {
     if (
@@ -135,10 +154,24 @@ export async function connectToBoardServer(
       if (existingServer) {
         console.warn("Server already connected");
       }
-      const response = await GoogleDriveBoardServer.connect();
-      if (response) {
-        throw new Error("Storing Google Drive server not yet implemented");
+
+      if (!auth) {
+        return null;
       }
+
+      const url = new URL(location);
+      const response = await GoogleDriveBoardServer.connect(url.hostname, auth);
+      if (response) {
+        await storeBoardServer(url, response.title, {
+          apiKey: apiKey ?? "",
+          auth,
+          secrets: new Map(),
+          username: response.username,
+        });
+
+        return { title: response.title, url: url.href };
+      }
+
       return null;
     }
     // Unknown location + protocol combination.

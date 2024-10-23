@@ -14,6 +14,8 @@ import {
   RunStore,
 } from "@google-labs/breadboard";
 
+import * as BreadboardUI from "@breadboard-ai/shared-ui";
+
 export enum TabType {
   URL,
   DESCRIPTOR,
@@ -38,6 +40,8 @@ export interface RuntimeConfig {
   dataStore: DataStore;
   runStore: RunStore;
   experiments: Record<string, boolean>;
+  environment?: BreadboardUI.Contexts.Environment;
+  tokenVendor?: BreadboardUI.Elements.TokenVendor;
 }
 
 export interface RuntimeConfigBoardServers {

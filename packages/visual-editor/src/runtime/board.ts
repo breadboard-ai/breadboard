@@ -40,7 +40,9 @@ export class Board extends EventTarget {
     private readonly providers: GraphProvider[],
     private readonly loader: GraphLoader,
     private readonly kits: Kit[],
-    private readonly boardServers: RuntimeConfigBoardServers
+    private readonly boardServers: RuntimeConfigBoardServers,
+    private readonly environment?: BreadboardUI.Contexts.Environment,
+    private readonly tokenVendor?: BreadboardUI.Elements.TokenVendor
   ) {
     super();
   }
@@ -84,11 +86,42 @@ export class Board extends EventTarget {
   }
 
   async connect(
-    _providerName: string,
+    connectionId: string,
     location?: string,
     apiKey?: string
   ): Promise<{ success: boolean; error?: string }> {
-    const boardServerInfo = await connectToBoardServer(location, apiKey);
+    let auth: { clientId: string; accessToken: string } | undefined = undefined;
+    if (connectionId !== "") {
+      if (this.environment?.connectionServerUrl && this.tokenVendor) {
+        const url = new URL("list", this.environment?.connectionServerUrl);
+        const connectionList = await fetch(url);
+        try {
+          const { connections } = await connectionList.json();
+          const connection = connections.find(
+            (connection: { id: string }) => connection.id === connectionId
+          );
+          if (!connection) {
+            return { success: false };
+          }
+
+          const token = this.tokenVendor.getToken(connectionId);
+          if (token.state !== "valid") {
+            // TODO: Figure out the revalidation state.
+            return { success: false };
+          }
+
+          auth = {
+            clientId: token.grant.client_id,
+            accessToken: token.grant.access_token,
+          };
+        } catch (err) {
+          console.warn(err);
+          return { success: false };
+        }
+      }
+    }
+
+    const boardServerInfo = await connectToBoardServer(location, apiKey, auth);
     if (!boardServerInfo) {
       this.dispatchEvent(
         new RuntimeErrorEvent("Unable to connect to Board Server")
@@ -572,8 +605,12 @@ export class Board extends EventTarget {
       return fail;
     }
 
-    const url = new URL(urlString);
+    let url = new URL(urlString);
     const response = await boardServer.create(url, graph);
+    if (response.url) {
+      url = new URL(response.url);
+    }
+
     return { ...response, url };
   }
 

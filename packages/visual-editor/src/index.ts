@@ -165,6 +165,9 @@ export class Main extends LitElement {
   @state()
   previewOverlayURL: URL | null = null;
 
+  @state()
+  boardServerNavState: string | null = null;
+
   @property()
   tab: Runtime.Types.Tab | null = null;
 
@@ -284,6 +287,8 @@ export class Main extends LitElement {
           runStore: this.#runStore,
           dataStore: this.#dataStore,
           experiments: {},
+          environment: this.environment,
+          tokenVendor: this.tokenVendor,
         });
       })
       .then((runtime) => {
@@ -1139,16 +1144,19 @@ export class Main extends LitElement {
       message = message.slice(0, 67) + "...";
     }
 
-    // Don't toast a repeat message.
+    this.toasts.set(id, { message, type, persistent });
+
+    let shouldToast = true;
     for (const toast of this.toasts.values()) {
       if (toast.message === message) {
-        console.warn(`Ignoring toast with message "${message}"`);
+        shouldToast = false;
         return;
       }
     }
 
-    this.toasts.set(id, { message, type, persistent });
-    this.requestUpdate();
+    if (shouldToast) {
+      this.requestUpdate();
+    }
 
     return id;
   }
@@ -1488,6 +1496,7 @@ export class Main extends LitElement {
         .selectedBoardServer=${this.selectedBoardServer}
         .selectedLocation=${this.selectedLocation}
         .boardServers=${this.#boardServers}
+        .boardServerNavState=${this.boardServerNavState}
         ?inert=${showingOverlay}
         @pointerdown=${(evt: Event) => evt.stopPropagation()}
         @bbreset=${() => {
@@ -1534,7 +1543,7 @@ export class Main extends LitElement {
             );
           }
 
-          this.requestUpdate();
+          this.boardServerNavState = globalThis.crypto.randomUUID();
         }}
         @bbgraphboardserverdisconnect=${async (
           evt: BreadboardUI.Events.GraphBoardServerDisconnectEvent
@@ -1543,7 +1552,7 @@ export class Main extends LitElement {
             evt.boardServerName,
             evt.location
           );
-          this.requestUpdate();
+          this.boardServerNavState = globalThis.crypto.randomUUID();
         }}
         @bbgraphboardserverrenewaccesssrequest=${async (
           evt: BreadboardUI.Events.GraphBoardServerRenewAccessRequestEvent
@@ -1560,7 +1569,7 @@ export class Main extends LitElement {
             await boardServer.renewAccess();
           }
 
-          this.requestUpdate();
+          this.boardServerNavState = globalThis.crypto.randomUUID();
         }}
         @bbgraphboardserverloadrequest=${async (
           evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
@@ -2150,7 +2159,10 @@ export class Main extends LitElement {
 
               const canSave = this.#runtime.board.canSave(id) && !tab.readOnly;
               const saveStatus = this.#tabSaveStatus.get(id) ?? "saved";
-              const remote = tab.graph.url?.startsWith("http") ?? false;
+              const remote =
+                (tab.graph.url?.startsWith("http") ||
+                  tab.graph.url?.startsWith("drive")) ??
+                false;
               const readonly = tab.readOnly;
 
               let saveTitle = "Saved";

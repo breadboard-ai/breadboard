@@ -35,6 +35,9 @@ export class Navigation extends LitElement {
   @property()
   boardServers: BoardServer[] = [];
 
+  @property()
+  boardServerNavState: string | null = null;
+
   @property({ reflect: true })
   visible = false;
 
@@ -466,6 +469,7 @@ export class Navigation extends LitElement {
   protected willUpdate(
     changedProperties:
       | PropertyValueMap<{
+          boardServerNavState: string | null;
           boardServers: BoardServer[];
           selectedBoardServer: string;
           selectedLocation: string;
@@ -475,10 +479,12 @@ export class Navigation extends LitElement {
       | Map<PropertyKey, unknown>
   ): void {
     if (
+      changedProperties.has("boardServerNavState") ||
       changedProperties.has("boardServers") ||
       changedProperties.has("selectedLocation") ||
       changedProperties.has("selectedBoardServer") ||
-      changedProperties.has("filter")
+      changedProperties.has("filter") ||
+      changedProperties.has("url")
     ) {
       this.#boardServerContents = this.#loadBoardServerContents();
     }
