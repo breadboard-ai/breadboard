@@ -1038,8 +1038,14 @@ export class RibbonMenu extends LitElement {
       @pointerout=${() => {
         this.dispatchEvent(new HideTooltipEvent());
       }}
-      @click=${() => {
-        this.dispatchEvent(new OverflowMenuActionEvent("edit-board-details"));
+      @click=${(evt: PointerEvent) => {
+        this.dispatchEvent(
+          new OverflowMenuActionEvent(
+            "edit-board-details",
+            evt.clientX,
+            evt.clientY
+          )
+        );
       }}
     >
       Edit board information

@@ -130,6 +130,8 @@ export class Main extends LitElement {
     isTool: boolean | null;
     isComponent: boolean | null;
     subGraphId: string | null;
+    x: number | null;
+    y: number | null;
   } | null = null;
 
   @state()
@@ -1391,7 +1393,7 @@ export class Main extends LitElement {
     );
   }
 
-  #showBoardEditOverlay() {
+  #showBoardEditOverlay(x: number | null, y: number | null) {
     if (!this.tab) {
       return;
     }
@@ -1406,6 +1408,8 @@ export class Main extends LitElement {
       subGraphId: this.tab.subGraphId,
       title: title ?? "",
       version: version ?? "",
+      x,
+      y,
     };
   }
 
@@ -1618,7 +1622,13 @@ export class Main extends LitElement {
 
         let boardOverlay: HTMLTemplateResult | symbol = nothing;
         if (this.boardEditOverlayInfo) {
-          boardOverlay = html`<bb-board-edit-overlay
+          const location = {
+            x: this.boardEditOverlayInfo.x ?? 160,
+            y: this.boardEditOverlayInfo.y ?? 100,
+            addHorizontalClickClearance: true,
+          };
+
+          boardOverlay = html`<bb-board-details-overlay
             .boardTitle=${this.boardEditOverlayInfo.title}
             .boardVersion=${this.boardEditOverlayInfo.version}
             .boardDescription=${this.boardEditOverlayInfo.description}
@@ -1626,6 +1636,7 @@ export class Main extends LitElement {
             .boardIsTool=${this.boardEditOverlayInfo.isTool}
             .boardIsComponent=${this.boardEditOverlayInfo.isComponent}
             .subGraphId=${this.boardEditOverlayInfo.subGraphId}
+            .location=${location}
             @bboverlaydismissed=${() => {
               this.boardEditOverlayInfo = null;
             }}
@@ -1636,7 +1647,7 @@ export class Main extends LitElement {
               this.boardEditOverlayInfo = null;
               this.requestUpdate();
             }}
-          ></bb-board-edit-overlay>`;
+          ></bb-board-details-overlay>`;
         }
 
         let settingsOverlay: HTMLTemplateResult | symbol = nothing;
@@ -2171,12 +2182,7 @@ export class Main extends LitElement {
                     class=${classMap({
                       "back-to-main-board": true,
                     })}
-                    @click=${(evt: PointerEvent) => {
-                      if (evt.metaKey) {
-                        this.#showBoardEditOverlay();
-                        return;
-                      }
-
+                    @click=${() => {
                       if (this.tab?.id === tab.id && tab.subGraphId !== null) {
                         tab.subGraphId = null;
                         return;
@@ -2184,12 +2190,12 @@ export class Main extends LitElement {
 
                       this.#runtime.board.changeTab(tab.id);
                     }}
-                    @dblclick=${() => {
+                    @dblclick=${(evt: PointerEvent) => {
                       if (!this.tab) {
                         return;
                       }
 
-                      this.#showBoardEditOverlay();
+                      this.#showBoardEditOverlay(evt.clientX, evt.clientY);
                     }}
                   >
                     ${tab.graph.title}
@@ -2286,7 +2292,7 @@ export class Main extends LitElement {
               ) => {
                 switch (evt.action) {
                   case "edit-board-details": {
-                    this.#showBoardEditOverlay();
+                    this.#showBoardEditOverlay(evt.x ?? null, evt.y ?? null);
                     break;
                   }
 

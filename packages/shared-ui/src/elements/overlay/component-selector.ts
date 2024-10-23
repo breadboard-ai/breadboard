@@ -227,6 +227,12 @@ export class ComponentSelectorOverlay extends LitElement {
     .kit-contents ul li.kit-item .node-icon.google-drive::before {
       background: var(--bb-icon-google-drive) top left / 28px 28px no-repeat;
     }
+
+    .no-components {
+      font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
+        var(--bb-font-family);
+      margin: var(--bb-grid-size-2);
+    }
   `;
 
   connectedCallback(): void {
@@ -245,6 +251,7 @@ export class ComponentSelectorOverlay extends LitElement {
     );
 
     for (const kit of kits) {
+      console.log(kit);
       if (!kit.descriptor.title) {
         continue;
       }
@@ -282,6 +289,8 @@ export class ComponentSelectorOverlay extends LitElement {
       const available = typeMetadata.filter(
         ({ metadata }) => !metadata.deprecated
       );
+
+      console.log(available);
 
       if (available.length === 0) {
         continue;
@@ -379,59 +388,69 @@ export class ComponentSelectorOverlay extends LitElement {
                   const kitId = kitName
                     .toLocaleLowerCase()
                     .replace(/\W/gim, "-");
+
+                  // Prevent the user from accidentally embedding the
+                  // current tool graph inside of itself.
+                  kitContents = kitContents.filter(
+                    (nodeTypeInfo) => nodeTypeInfo.id !== this.graph?.raw().url
+                  );
+
                   return html`<details
                     ?open=${expandAll || kitName === "Agent Kit"}
                   >
                     <summary for="${kitId}"><span>${kitName}</span></summary>
                     <div class="kit-contents">
-                      <ul>
-                        ${map(kitContents, (nodeTypeInfo) => {
-                          // Prevent the user from accidentally embedding the
-                          // current tool graph inside of itself.
-                          if (nodeTypeInfo.id === this.graph?.raw().url) {
-                            return nothing;
-                          }
+                      ${kitContents.length
+                        ? html`<ul>
+                            ${map(kitContents, (nodeTypeInfo) => {
+                              const className = nodeTypeInfo.id
+                                .toLocaleLowerCase()
+                                .replaceAll(/\W/gim, "-");
+                              const id = nodeTypeInfo.id;
+                              const description =
+                                nodeTypeInfo.metadata.description;
+                              const title = nodeTypeInfo.metadata.title || id;
+                              const icon =
+                                nodeTypeInfo.metadata.icon ?? "generic";
 
-                          const className = nodeTypeInfo.id
-                            .toLocaleLowerCase()
-                            .replaceAll(/\W/gim, "-");
-                          const id = nodeTypeInfo.id;
-                          const description = nodeTypeInfo.metadata.description;
-                          const title = nodeTypeInfo.metadata.title || id;
-                          const icon = nodeTypeInfo.metadata.icon ?? "generic";
-                          return html`<li
-                            class=${classMap({
-                              [className]: true,
-                              ["kit-item"]: true,
+                              return html`<li
+                                class=${classMap({
+                                  [className]: true,
+                                  ["kit-item"]: true,
+                                })}
+                                draggable="true"
+                                @dblclick=${() => {
+                                  this.dispatchEvent(
+                                    new KitNodeChosenEvent(id)
+                                  );
+                                }}
+                                @dragstart=${(evt: DragEvent) => {
+                                  if (!evt.dataTransfer) {
+                                    return;
+                                  }
+                                  evt.dataTransfer.setData(DATA_TYPE, id);
+                                }}
+                              >
+                                <div
+                                  class=${classMap({
+                                    "node-icon": true,
+                                    [icon]: true,
+                                  })}
+                                ></div>
+                                <div>
+                                  <div class="node-id">${title}</div>
+                                  ${description
+                                    ? html`<div class="node-description">
+                                        ${description}
+                                      </div>`
+                                    : nothing}
+                                </div>
+                              </li>`;
                             })}
-                            draggable="true"
-                            @dblclick=${() => {
-                              this.dispatchEvent(new KitNodeChosenEvent(id));
-                            }}
-                            @dragstart=${(evt: DragEvent) => {
-                              if (!evt.dataTransfer) {
-                                return;
-                              }
-                              evt.dataTransfer.setData(DATA_TYPE, id);
-                            }}
-                          >
-                            <div
-                              class=${classMap({
-                                "node-icon": true,
-                                [icon]: true,
-                              })}
-                            ></div>
-                            <div>
-                              <div class="node-id">${title}</div>
-                              ${description
-                                ? html`<div class="node-description">
-                                    ${description}
-                                  </div>`
-                                : nothing}
-                            </div>
-                          </li>`;
-                        })}
-                      </ul>
+                          </ul>`
+                        : html`<div class="no-components">
+                            No components available
+                          </div>`}
                     </div>
                   </details>`;
                 })}
