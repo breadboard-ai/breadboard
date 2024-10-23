@@ -51,6 +51,7 @@ export async function getBoardServers(
   userAuth?: UserAuth,
   skipPlaygroundExamples = false
 ): Promise<BoardServer[]> {
+  console.trace("🌻 userAuth", userAuth);
   const db = await idb.openDB<BoardServerListing>(
     BOARD_SERVER_LISTING_DB,
     BOARD_SERVER_LISTING_VERSION,
