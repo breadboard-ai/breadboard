@@ -1569,10 +1569,7 @@ export class Main extends LitElement {
         @bbgraphboardserverdisconnect=${async (
           evt: BreadboardUI.Events.GraphBoardServerDisconnectEvent
         ) => {
-          await this.#runtime.board.disconnect(
-            evt.boardServerName,
-            evt.location
-          );
+          await this.#runtime.board.disconnect(evt.location);
           this.boardServerNavState = globalThis.crypto.randomUUID();
         }}
         @bbgraphboardserverrenewaccesssrequest=${async (

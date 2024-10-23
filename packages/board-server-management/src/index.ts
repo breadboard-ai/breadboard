@@ -6,12 +6,7 @@
 
 import * as idb from "idb";
 import { IDBBoardServer } from "@breadboard-ai/idb-board-server";
-import {
-  BoardServer,
-  GraphDescriptor,
-  User,
-  UserAuth,
-} from "@google-labs/breadboard";
+import { BoardServer, GraphDescriptor, User } from "@google-labs/breadboard";
 import { RemoteBoardServer } from "@breadboard-ai/remote-board-server";
 import { ExampleBoardServer } from "@breadboard-ai/example-board-server";
 import {
@@ -25,6 +20,7 @@ import PythonWasmKit from "@breadboard-ai/python-wasm";
 import GoogleDriveKit, {
   GoogleDriveBoardServer,
 } from "@breadboard-ai/google-drive-kit";
+import { TokenVendor } from "@breadboard-ai/connection-client";
 const loadedKits = loadKits([GeminiKit, PythonWasmKit, GoogleDriveKit]);
 
 const PLAYGROUND_BOARDS = "example://playground-boards";
@@ -33,6 +29,8 @@ const BOARD_SERVER_LISTING_DB = "board-server";
 const BOARD_SERVER_LISTING_VERSION = 1;
 
 type Auth = { clientId: string; accessToken: string };
+
+export type UserAuth = { connectionId: string; tokenVendor: TokenVendor };
 
 interface BoardServerItem {
   url: string;
@@ -50,6 +48,7 @@ interface BoardServerListing extends idb.DBSchema {
 }
 
 export async function getBoardServers(
+  userAuth?: UserAuth,
   skipPlaygroundExamples = false
 ): Promise<BoardServer[]> {
   const db = await idb.openDB<BoardServerListing>(
@@ -97,11 +96,18 @@ export async function getBoardServers(
         return FileSystemBoardServer.from(url, title, user, kits, handle);
       }
 
-      if (url.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
-        return GoogleDriveBoardServer.from(url, title, user, kits);
+      if (url.startsWith(GoogleDriveBoardServer.PROTOCOL) && userAuth) {
+        return GoogleDriveBoardServer.from(
+          url,
+          title,
+          user,
+          kits,
+          userAuth.connectionId,
+          userAuth.tokenVendor
+        );
       }
 
-      console.warn(`Unsupported store URL: ${url}`);
+      console.warn(`Unsupported store URL: ${url}`, userAuth);
       return null;
     })
   );
@@ -120,7 +126,7 @@ export async function connectToBoardServer(
     );
   }
 
-  const existingServers = await getBoardServers();
+  const existingServers = await getBoardServers(auth);
   if (location) {
     if (
       location.startsWith(RemoteBoardServer.PROTOCOL) ||
@@ -160,11 +166,14 @@ export async function connectToBoardServer(
       }
 
       const url = new URL(location);
-      const response = await GoogleDriveBoardServer.connect(url.hostname, auth);
+      const response = await GoogleDriveBoardServer.connect(
+        url.hostname,
+        auth.connectionId,
+        auth.tokenVendor
+      );
       if (response) {
         await storeBoardServer(url, response.title, {
           apiKey: apiKey ?? "",
-          auth,
           secrets: new Map(),
           username: response.username,
         });
