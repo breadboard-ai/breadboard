@@ -29,6 +29,7 @@
       "dependencies": [
         "../breadboard:build",
         "../build:build",
+        "../connection-client:build",
         "../data-store:build",
         "../schema:build",
         "build:tsc"
@@ -38,6 +39,7 @@
       "dependencies": [
         "../breadboard:build:tsc",
         "../build:build:tsc",
+        "../connection-client:build",
         "../data-store:build:tsc",
         "../schema:build:tsc",
         "../types:build:tsc"
@@ -98,6 +100,7 @@
   },
   "dependencies": {
     "@breadboard-ai/build": "0.10.4",
+    "@breadboard-ai/connection-client": "0.0.1",
     "@breadboard-ai/data-store": "0.2.4",
     "@breadboard-ai/types": "0.1.2",
     "@codemirror/autocomplete": "^6.18.1",

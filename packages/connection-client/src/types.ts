@@ -13,7 +13,7 @@ export type ConnectionEnvironment = {
  * Represents a store that remembers and recalls the stored grant.
  */
 export type GrantStore = {
-  get(): string | undefined;
+  get(connectionId: string): string | undefined;
   set(connectionId: string, grant: string): Promise<void>;
 };
 

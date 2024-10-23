@@ -15,6 +15,7 @@ import {
 } from "@google-labs/breadboard";
 
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import { TokenVendor } from "@breadboard-ai/connection-client";
 
 export enum TabType {
   URL,
@@ -41,7 +42,7 @@ export interface RuntimeConfig {
   runStore: RunStore;
   experiments: Record<string, boolean>;
   environment?: BreadboardUI.Contexts.Environment;
-  tokenVendor?: BreadboardUI.Elements.TokenVendor;
+  tokenVendor?: TokenVendor;
 }
 
 export interface RuntimeConfigBoardServers {

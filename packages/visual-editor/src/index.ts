@@ -43,6 +43,7 @@ import { EnhanceSideboard, TabId } from "./runtime/types";
 import { createPastRunObserver } from "./utils/past-run-observer";
 import { getRunNodeConfig } from "./utils/run-node";
 import { TopGraphObserver } from "../../shared-ui/dist/utils/top-graph-observer";
+import { TokenVendor } from "@breadboard-ai/connection-client";
 
 const STORAGE_PREFIX = "bb-main";
 
@@ -151,7 +152,7 @@ export class Main extends LitElement {
   environment = ENVIRONMENT;
 
   @provide({ context: BreadboardUI.Elements.tokenVendorContext })
-  tokenVendor!: BreadboardUI.Elements.TokenVendor;
+  tokenVendor!: TokenVendor;
 
   @provide({ context: BreadboardUI.Contexts.settingsHelperContext })
   settingsHelper!: SettingsHelperImpl;
@@ -232,8 +233,25 @@ export class Main extends LitElement {
     this.#proxy = config.proxy || [];
     if (this.#settings) {
       this.settingsHelper = new SettingsHelperImpl(this.#settings);
-      this.tokenVendor = new BreadboardUI.Elements.TokenVendor(
-        this.settingsHelper,
+      this.tokenVendor = new TokenVendor(
+        {
+          get: (conectionId: string) => {
+            return this.settingsHelper.get(
+              BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
+              conectionId
+            )?.value as string;
+          },
+          set: async (connectionId: string, grant: string) => {
+            await this.settingsHelper.set(
+              BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
+              connectionId,
+              {
+                name: connectionId,
+                value: grant,
+              }
+            );
+          },
+        },
         ENVIRONMENT
       );
     }

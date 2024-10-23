@@ -5,3 +5,5 @@
  */
 
 export { TokenVendor } from "./token-vendor.js";
+
+export type * from "./types.js";

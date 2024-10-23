@@ -18,11 +18,11 @@ import {
   type Connection,
 } from "./connection-server.js";
 import "./connection-signin.js";
+import { tokenVendorContext } from "./token-vendor.js";
 import {
-  ExpiredTokenResult,
+  type ExpiredTokenResult,
   TokenVendor,
-  tokenVendorContext,
-} from "./token-vendor.js";
+} from "@breadboard-ai/connection-client";
 
 /**
  * Input element for handling secrets provided by OAuth connections.

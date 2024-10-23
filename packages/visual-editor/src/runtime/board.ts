@@ -30,6 +30,7 @@ import {
   disconnectFromBoardServer,
   getBoardServers,
 } from "@breadboard-ai/board-server-management";
+import { TokenVendor } from "@breadboard-ai/connection-client";
 
 export class Board extends EventTarget {
   #tabs = new Map<TabId, Tab>();
@@ -42,7 +43,7 @@ export class Board extends EventTarget {
     private readonly kits: Kit[],
     private readonly boardServers: RuntimeConfigBoardServers,
     private readonly environment?: BreadboardUI.Contexts.Environment,
-    private readonly tokenVendor?: BreadboardUI.Elements.TokenVendor
+    private readonly tokenVendor?: TokenVendor
   ) {
     super();
   }

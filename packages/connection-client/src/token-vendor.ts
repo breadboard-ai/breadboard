@@ -40,7 +40,7 @@ export class TokenVendor {
   }
 
   getToken(connectionId: string): TokenResult {
-    const grantJsonString = this.#store.get();
+    const grantJsonString = this.#store.get(connectionId);
     if (grantJsonString === undefined) {
       return { state: "signedout" };
     }
