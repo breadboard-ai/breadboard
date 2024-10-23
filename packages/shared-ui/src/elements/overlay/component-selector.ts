@@ -251,7 +251,6 @@ export class ComponentSelectorOverlay extends LitElement {
     );
 
     for (const kit of kits) {
-      console.log(kit);
       if (!kit.descriptor.title) {
         continue;
       }
@@ -289,8 +288,6 @@ export class ComponentSelectorOverlay extends LitElement {
       const available = typeMetadata.filter(
         ({ metadata }) => !metadata.deprecated
       );
-
-      console.log(available);
 
       if (available.length === 0) {
         continue;
