@@ -65,14 +65,7 @@ export async function create(config: RuntimeConfig): Promise<{
   };
 
   const runtime = {
-    board: new Board(
-      [],
-      loader,
-      kits,
-      boardServers,
-      config.environment,
-      config.tokenVendor
-    ),
+    board: new Board([], loader, kits, boardServers, config.tokenVendor),
     edit: new Edit([], loader, kits),
     run: new Run(config.dataStore, config.runStore, kits),
     kits,

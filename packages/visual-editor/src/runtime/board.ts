@@ -42,7 +42,6 @@ export class Board extends EventTarget {
     private readonly loader: GraphLoader,
     private readonly kits: Kit[],
     private readonly boardServers: RuntimeConfigBoardServers,
-    private readonly environment?: BreadboardUI.Contexts.Environment,
     private readonly tokenVendor?: TokenVendor
   ) {
     super();
