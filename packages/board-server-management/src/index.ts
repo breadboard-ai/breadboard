@@ -17,7 +17,9 @@ import {
 import { loadKits } from "./utils/kit-loader.js";
 import GeminiKit from "@google-labs/gemini-kit";
 import PythonWasmKit from "@breadboard-ai/python-wasm";
-import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
+import GoogleDriveKit, {
+  GoogleDriveBoardServer,
+} from "@breadboard-ai/google-drive-kit";
 const loadedKits = loadKits([GeminiKit, PythonWasmKit, GoogleDriveKit]);
 
 const PLAYGROUND_BOARDS = "example://playground-boards";
@@ -126,8 +128,17 @@ export async function connectToBoardServer(
       }
 
       return null;
-    } else if (location.startsWith("drive:")) {
-      // We can't do it ... yet!
+    } else if (location.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
+      const existingServer = existingServers.find(
+        (server) => server.url.origin === location
+      );
+      if (existingServer) {
+        console.warn("Server already connected");
+      }
+      const response = await GoogleDriveBoardServer.connect();
+      if (response) {
+        throw new Error("Storing Google Drive server not yet implemented");
+      }
       return null;
     }
     // Unknown location + protocol combination.

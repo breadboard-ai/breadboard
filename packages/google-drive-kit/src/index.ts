@@ -25,3 +25,5 @@ export default await kit({
     getBreadboardFolder,
   },
 });
+
+export { GoogleDriveBoardServer } from "./board-server/server.js";
