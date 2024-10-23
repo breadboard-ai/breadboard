@@ -18,7 +18,7 @@ import {
   type Connection,
 } from "./connection-server.js";
 import "./connection-signin.js";
-import { tokenVendorContext } from "./token-vendor.js";
+import { tokenVendorContext } from "../../contexts/token-vendor.js";
 import {
   type ExpiredTokenResult,
   TokenVendor,
