@@ -43,7 +43,10 @@ import { EnhanceSideboard, TabId } from "./runtime/types";
 import { createPastRunObserver } from "./utils/past-run-observer";
 import { getRunNodeConfig } from "./utils/run-node";
 import { TopGraphObserver } from "../../shared-ui/dist/utils/top-graph-observer";
-import { TokenVendor } from "@breadboard-ai/connection-client";
+import {
+  createTokenVendor,
+  TokenVendor,
+} from "@breadboard-ai/connection-client";
 
 const STORAGE_PREFIX = "bb-main";
 
@@ -233,7 +236,7 @@ export class Main extends LitElement {
     this.#proxy = config.proxy || [];
     if (this.#settings) {
       this.settingsHelper = new SettingsHelperImpl(this.#settings);
-      this.tokenVendor = new TokenVendor(
+      this.tokenVendor = createTokenVendor(
         {
           get: (conectionId: string) => {
             return this.settingsHelper.get(

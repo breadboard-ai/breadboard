@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export type TokenVendor = {
+  getToken(connectionId: string): TokenResult;
+};
+
 export type ConnectionEnvironment = {
   connectionServerUrl: string | undefined;
   connectionRedirectUrl: string;

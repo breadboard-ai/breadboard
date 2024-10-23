@@ -30,7 +30,7 @@ const EXPIRY_THRESHOLD_MS = /* 1 minute */ 60_000;
  * elements should discover it using the {@link tokenVendorContext} Lit
  * context, which should be provided by the top-level Visual Editor element.
  */
-export class TokenVendor {
+export class TokenVendorImpl {
   #store: GrantStore;
   #environment: ConnectionEnvironment;
 

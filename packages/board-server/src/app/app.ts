@@ -44,7 +44,10 @@ import { map } from "lit/directives/map.js";
 import { provide } from "@lit/context";
 import { VisitorState } from "./utils/types.js";
 import { AppSettingsHelper } from "./utils/settings-helper.js";
-import { TokenVendor } from "@breadboard-ai/connection-client";
+import {
+  type TokenVendor,
+  createTokenVendor,
+} from "@breadboard-ai/connection-client";
 import { SETTINGS_TYPE } from "../../../shared-ui/dist/types/types.js";
 
 const RUN_ON_BOARD_SERVER = "run-on-board-server";
@@ -451,7 +454,7 @@ export class AppView extends LitElement {
   constructor() {
     super();
     this.settingsHelper = new AppSettingsHelper();
-    this.tokenVendor = new TokenVendor(
+    this.tokenVendor = createTokenVendor(
       {
         get: (conectionId: string) => {
           return this.settingsHelper.get(SETTINGS_TYPE.CONNECTIONS, conectionId)
