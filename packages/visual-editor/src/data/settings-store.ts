@@ -170,6 +170,15 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
             value: false,
           },
         ],
+        [
+          "Show Google Drive Board Server",
+          {
+            name: "Show Google Drive Board Server",
+            description:
+              '(Unstable) Show "Google Drive" as an option when adding a new board server',
+            value: false,
+          },
+        ],
       ]),
     },
     [BreadboardUI.Types.SETTINGS_TYPE.SECRETS]: {
