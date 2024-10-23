@@ -61,7 +61,7 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
             name: "Collapse Nodes by Default",
             description:
               "Whether you wish to have nodes in the graph collapsed by default",
-            value: true,
+            value: false,
           },
         ],
         [
