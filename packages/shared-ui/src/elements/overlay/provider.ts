@@ -7,6 +7,7 @@
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
+  GoogleDriveFolderPickedEvent,
   GraphBoardServerConnectRequestEvent,
   OverlayDismissedEvent,
 } from "../../events/events.js";
@@ -25,6 +26,7 @@ export class BoardServerOverlay extends LitElement {
   serverType: "FileSystem" | "BoardServer" | "GoogleDrive" = "BoardServer";
 
   #formRef: Ref<HTMLFormElement> = createRef();
+  #driveIdRef: Ref<HTMLInputElement> = createRef();
 
   static styles = css`
     :host {
@@ -155,6 +157,14 @@ export class BoardServerOverlay extends LitElement {
       height: 20px;
       margin-right: var(--bb-grid-size);
     }
+
+    .connection {
+      margin: 0 var(--bb-grid-size-4);
+    }
+
+    bb-connection-input {
+      margin: 0 var(--bb-grid-size-4);
+    }
   `;
 
   protected firstUpdated(): void {
@@ -216,9 +226,24 @@ export class BoardServerOverlay extends LitElement {
 
       case "GoogleDrive": {
         // TODO: Figure out the right way to sign in.
-        fields = html`<bb-connection-input
-          .connectionId=${"google-drive-limited"}
-        ></bb-connection-input>`;
+        fields = html` <div class="connection">
+          <input type="hidden" ${ref(this.#driveIdRef)} name="drive-id" />
+          <bb-connection-input
+            .connectionId=${"google-drive"}
+          ></bb-connection-input>
+
+          <bb-google-drive-directory-picker
+            @bbgoogledrivefolderpicked=${(
+              evt: GoogleDriveFolderPickedEvent
+            ) => {
+              if (!this.#driveIdRef.value) {
+                return;
+              }
+
+              this.#driveIdRef.value.value = evt.id;
+            }}
+          ></bb-google-drive-directory-picker>
+        </div>`;
         break;
       }
     }
@@ -266,11 +291,7 @@ export class BoardServerOverlay extends LitElement {
               url = url.replace(/\/$/, "");
 
               this.dispatchEvent(
-                new GraphBoardServerConnectRequestEvent(
-                  "RemoteGraphProvider",
-                  url,
-                  apiKey
-                )
+                new GraphBoardServerConnectRequestEvent("", url, apiKey)
               );
               break;
             }
@@ -280,10 +301,18 @@ export class BoardServerOverlay extends LitElement {
             }
 
             case "GoogleDrive": {
+              const driveFolderId = data.get("drive-id") as string;
+              if (!driveFolderId) {
+                console.warn(
+                  "Unable to proceed - no Google Drive folder chosen"
+                );
+                return;
+              }
+
               this.dispatchEvent(
                 new GraphBoardServerConnectRequestEvent(
-                  "RemoteGraphProvider",
-                  "drive:board-server"
+                  "google-drive",
+                  `drive://${driveFolderId}`
                 )
               );
               this.dispatchEvent(new OverlayDismissedEvent());

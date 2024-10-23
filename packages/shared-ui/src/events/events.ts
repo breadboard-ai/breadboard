@@ -911,3 +911,13 @@ export class GraphNodeRunRequestEvent extends Event {
     super(GraphNodeRunRequestEvent.eventName, { ...eventInit });
   }
 }
+
+/** Google Drive */
+
+export class GoogleDriveFolderPickedEvent extends Event {
+  static eventName = "bbgoogledrivefolderpicked";
+
+  constructor(public readonly id: string) {
+    super(GoogleDriveFolderPickedEvent.eventName, { ...eventInit });
+  }
+}

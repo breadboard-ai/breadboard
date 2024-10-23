@@ -70,6 +70,12 @@ export class ConnectionInput extends LitElement {
     bb-connection-signin {
       margin-top: 14px;
     }
+
+    .signed-in {
+      font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
+        var(--bb-font-family);
+      color: var(--bb-neutral-600);
+    }
   `;
 
   render() {
@@ -83,7 +89,7 @@ export class ConnectionInput extends LitElement {
       return this.#refreshAndRenderStatus(grant);
     }
     this.#broadcastSecret(grant.grant.access_token, grant.grant.client_id);
-    return html`Token was fresh`;
+    return html`<div class="signed-in">Signed in</div>`;
   }
 
   #renderSigninButton() {
