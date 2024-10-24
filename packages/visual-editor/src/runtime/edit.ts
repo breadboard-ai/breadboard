@@ -80,6 +80,10 @@ export class Edit extends EventTarget {
   }
 
   getHistory(tab: Tab | null) {
+    if (!tab) {
+      return null;
+    }
+
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
@@ -94,6 +98,10 @@ export class Edit extends EventTarget {
     id: string,
     subGraphId: string | null = null
   ) {
+    if (!tab) {
+      return null;
+    }
+
     const editableGraph = this.getEditor(tab, subGraphId);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
@@ -109,6 +117,10 @@ export class Edit extends EventTarget {
   }
 
   getNodeTitle(tab: Tab | null, id: string, subGraphId: string | null = null) {
+    if (!tab) {
+      return null;
+    }
+
     const editableGraph = this.getEditor(tab, subGraphId);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
@@ -119,6 +131,10 @@ export class Edit extends EventTarget {
   }
 
   getNodeType(tab: Tab | null, id: string, subGraphId: string | null = null) {
+    if (!tab) {
+      return null;
+    }
+
     const editableGraph = this.getEditor(tab, subGraphId);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
@@ -133,6 +149,10 @@ export class Edit extends EventTarget {
     id: string,
     subGraphId: string | null = null
   ) {
+    if (!tab) {
+      return null;
+    }
+
     const editableGraph = this.getEditor(tab, subGraphId);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
@@ -147,6 +167,10 @@ export class Edit extends EventTarget {
     id: string,
     subGraphId: string | null = null
   ) {
+    if (!tab) {
+      return null;
+    }
+
     const editableGraph = this.getEditor(tab, subGraphId);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
@@ -157,6 +181,10 @@ export class Edit extends EventTarget {
   }
 
   getNodePorts(tab: Tab | null, id: string, subGraphId: string | null = null) {
+    if (!tab) {
+      return null;
+    }
+
     const editableGraph = this.getEditor(tab, subGraphId);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
@@ -166,7 +194,11 @@ export class Edit extends EventTarget {
     return editableGraph.inspect().nodeById(id)?.ports() ?? null;
   }
 
-  canUndo(tab: Tab | null) {
+  canUndo(tab: Tab | null): boolean {
+    if (!tab) {
+      return false;
+    }
+
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
@@ -178,6 +210,10 @@ export class Edit extends EventTarget {
   }
 
   undo(tab: Tab | null) {
+    if (!tab) {
+      return null;
+    }
+
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
@@ -189,6 +225,10 @@ export class Edit extends EventTarget {
   }
 
   canRedo(tab: Tab | null) {
+    if (!tab) {
+      return false;
+    }
+
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
@@ -200,6 +240,10 @@ export class Edit extends EventTarget {
   }
 
   redo(tab: Tab | null) {
+    if (!tab) {
+      return null;
+    }
+
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));

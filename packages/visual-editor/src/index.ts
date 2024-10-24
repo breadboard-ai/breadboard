@@ -49,6 +49,7 @@ import {
 } from "@breadboard-ai/connection-client";
 
 const STORAGE_PREFIX = "bb-main";
+const LOADING_TIMEOUT = 250;
 
 type MainArguments = {
   boards: BreadboardUI.Types.Board[];
@@ -369,10 +370,11 @@ export class Main extends LitElement {
 
         this.#runtime.edit.addEventListener(
           Runtime.Events.RuntimeErrorEvent.eventName,
-          (_evt: Runtime.Events.RuntimeErrorEvent) => {
-            // This causes infinite loop on blank page.
-            // TODO: Figure out why.
-            // this.toast(evt.message, BreadboardUI.Events.ToastType.ERROR);
+          (evt: Runtime.Events.RuntimeErrorEvent) => {
+            // Wait a frame so we don't end up accidentally spamming the render.
+            requestAnimationFrame(() => {
+              this.toast(evt.message, BreadboardUI.Events.ToastType.ERROR);
+            });
           }
         );
 
@@ -1010,7 +1012,7 @@ export class Main extends LitElement {
     this.#setBoardPendingSaveState(false);
     this.#persistBoardServerAndLocation(boardServerName, location);
 
-    this.#changeBoard(url.href, false);
+    this.#attemptBoardStart(new BreadboardUI.Events.StartEvent(url.href));
     this.toast(
       "Board saved",
       BreadboardUI.Events.ToastType.INFORMATION,
@@ -1155,6 +1157,15 @@ export class Main extends LitElement {
     window.history.replaceState(null, "", pageUrl);
   }
 
+  untoast(id: string | undefined) {
+    if (!id) {
+      return;
+    }
+
+    this.toasts.delete(id);
+    this.requestUpdate();
+  }
+
   toast(
     message: string,
     type: BreadboardUI.Events.ToastType,
@@ -1166,18 +1177,7 @@ export class Main extends LitElement {
     }
 
     this.toasts.set(id, { message, type, persistent });
-
-    let shouldToast = true;
-    for (const toast of this.toasts.values()) {
-      if (toast.message === message) {
-        shouldToast = false;
-        return;
-      }
-    }
-
-    if (shouldToast) {
-      this.requestUpdate();
-    }
+    this.requestUpdate();
 
     return id;
   }
@@ -1269,21 +1269,6 @@ export class Main extends LitElement {
     }
   }
 
-  async #changeBoard(url: string, createNewTab = false) {
-    try {
-      this.#runtime.board.createTabFromURL(
-        url,
-        this.tab?.graph.url,
-        createNewTab
-      );
-    } catch (err) {
-      this.toast(
-        `Unable to load file: ${url}`,
-        BreadboardUI.Events.ToastType.ERROR
-      );
-    }
-  }
-
   #persistBoardServerAndLocation(boardServerName: string, location: string) {
     this.selectedBoardServer = boardServerName;
     this.selectedLocation = location;
@@ -1358,9 +1343,20 @@ export class Main extends LitElement {
     });
   }
 
-  #attemptBoardStart(evt: BreadboardUI.Events.StartEvent) {
+  async #attemptBoardStart(evt: BreadboardUI.Events.StartEvent) {
     if (evt.url) {
-      this.#runtime.board.createTabFromURL(evt.url);
+      let id;
+      const loadingTimeout = setTimeout(() => {
+        id = this.toast(
+          "Loading...",
+          BreadboardUI.Events.ToastType.PENDING,
+          true
+        );
+      }, LOADING_TIMEOUT);
+
+      await this.#runtime.board.createTabFromURL(evt.url);
+      clearTimeout(loadingTimeout);
+      this.untoast(id);
     } else if (evt.descriptor) {
       this.#runtime.board.createTabFromDescriptor(evt.descriptor);
     }
@@ -1592,7 +1588,7 @@ export class Main extends LitElement {
         @bbgraphboardserverloadrequest=${async (
           evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
         ) => {
-          this.#changeBoard(evt.url, evt.newTab);
+          this.#attemptBoardStart(new BreadboardUI.Events.StartEvent(evt.url));
         }}
         @bbgraphboardserverselectionchange=${(
           evt: BreadboardUI.Events.GraphBoardServerSelectionChangeEvent
