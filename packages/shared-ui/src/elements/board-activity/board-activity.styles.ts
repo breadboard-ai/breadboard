@@ -121,7 +121,7 @@ export const styles = css`
     font-size: 0;
     cursor: pointer;
     border: none;
-    background: transparent var(--bb-icon-info) center center / 20px 20px
+    background: transparent var(--bb-icon-info-filled) center center / 20px 20px
       no-repeat;
     opacity: 0.2;
     transition: opacity 0.1s cubic-bezier(0, 0, 0.3, 1);
