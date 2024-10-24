@@ -33,8 +33,9 @@ const context = input({
 });
 
 const rootId = input({
-  title: "ID",
-  description: "The Breadboard Folder Id",
+  title: "Root ID",
+  description:
+    'The Drive id of the Breadboard folder that is used as root for storing data. Use "Get Breadboard Folder" component to obtain it',
   type: "string",
 });
 
