@@ -912,12 +912,20 @@ export class GraphNodeRunRequestEvent extends Event {
   }
 }
 
-/** Google Drive */
+/** Connections */
+
+export class ConnectionSignedOutEvent extends Event {
+  static eventName = "bbconnectionsignedout";
+
+  constructor(public readonly connectionId: string) {
+    super(ConnectionSignedOutEvent.eventName, { ...eventInit });
+  }
+}
 
 export class GoogleDriveFolderPickedEvent extends Event {
   static eventName = "bbgoogledrivefolderpicked";
 
-  constructor(public readonly id: string) {
+  constructor(public readonly id: string | null) {
     super(GoogleDriveFolderPickedEvent.eventName, { ...eventInit });
   }
 }

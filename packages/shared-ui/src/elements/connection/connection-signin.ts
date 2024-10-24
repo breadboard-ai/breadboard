@@ -20,6 +20,7 @@ import {
   type OAuthStateParameter,
 } from "./connection-common.js";
 import type { Connection } from "./connection-server.js";
+import { ConnectionSignedOutEvent } from "../../events/events.js";
 
 /**
  * Widget for signing in and out of a connection to a third party app/service.
@@ -51,20 +52,25 @@ export class ConnectionSignin extends LitElement {
     .icon {
       width: 20px;
       height: 20px;
+      margin-top: 3px;
     }
+
     .icon.missing {
       background: var(--bb-icon-lan) center center / 20px 20px no-repeat;
     }
 
     .title {
-      font-size: var(--bb-body-medium);
-      font-weight: normal;
-      margin: 0;
+      font: 400 var(--bb-title-medium) / var(--bb-title-line-height-medium)
+        var(--bb-font-family);
+      margin: 0 0 var(--bb-grid-size) 0;
+      color: var(--bb-neutral-800);
     }
+
     .description {
-      font-size: var(--bb-body-x-small);
-      line-height: var(--bb-body-line-height-x-small);
-      margin: 0;
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      margin: var(--bb-grid-size) 0 var(--bb-grid-size-2) 0;
+      color: var(--bb-neutral-600);
     }
 
     .signin,
@@ -73,10 +79,14 @@ export class ConnectionSignin extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 19px;
-      font-size: 13px;
-      border-radius: 9px;
-      padding: 1px 8px;
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      border-radius: var(--bb-grid-size-10);
+      padding: 0 var(--bb-grid-size-3);
+      cursor: pointer;
+      display: block;
+      height: var(--bb-grid-size-5);
+      line-height: var(--bb-grid-size-5);
     }
 
     .signin {
@@ -120,7 +130,11 @@ export class ConnectionSignin extends LitElement {
         SETTINGS_TYPE.CONNECTIONS,
         this.connection.id
       );
-      this._state = setting === undefined ? "signedout" : "signedin";
+
+      // Wait a frame so that we're not immediately rendering again.
+      requestAnimationFrame(() => {
+        this._state = setting === undefined ? "signedout" : "signedin";
+      });
     }
   }
 
@@ -143,7 +157,8 @@ export class ConnectionSignin extends LitElement {
       <p class="description">${this.connection.description}</p>
     </div>`;
 
-    return html`${icon} ${metadata} ${this.#renderButton()}`;
+    return html`${icon} ${metadata}
+      <div>${this.#renderButton()}</div>`;
   }
 
   #renderButton() {
@@ -267,6 +282,7 @@ export class ConnectionSignin extends LitElement {
       this.connection.id
     );
     this._state = "signedout";
+    this.dispatchEvent(new ConnectionSignedOutEvent(this.connection.id));
   }
 }
 

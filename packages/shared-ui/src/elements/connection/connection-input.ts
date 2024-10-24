@@ -67,14 +67,16 @@ export class ConnectionInput extends LitElement {
   });
 
   static styles = css`
-    bb-connection-signin {
-      margin-top: 14px;
+    :host {
+      display: block;
     }
 
-    .signed-in {
+    .signed-in,
+    p {
       font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
         var(--bb-font-family);
       color: var(--bb-neutral-600);
+      margin: 0;
     }
   `;
 
@@ -89,16 +91,18 @@ export class ConnectionInput extends LitElement {
       return this.#refreshAndRenderStatus(grant);
     }
     this.#broadcastSecret(grant.grant.access_token, grant.grant.client_id);
-    return html`<div class="signed-in">Signed in</div>`;
+    return this.#renderSigninButton();
   }
 
   #renderSigninButton() {
     if (!this.connectionId) {
       return "";
     }
+
     if (this.#availableConnections.status === TaskStatus.INITIAL) {
       this.#availableConnections.run();
     }
+
     return this.#availableConnections.render({
       pending: () => html`<p>Loading connections ...</p>`,
       error: (e) => html`<p>Error loading connections: ${e}</p>`,
@@ -130,7 +134,7 @@ export class ConnectionInput extends LitElement {
     return this.#refreshTask.render({
       pending: () => html`<p>Refreshing token ...</p>`,
       error: (e) => html`<p>Error refreshing token: ${e}</p>`,
-      complete: () => html`<p>Token refreshed!</p>`,
+      complete: () => html`<p>Token refreshed</p>`,
     });
   }
 
