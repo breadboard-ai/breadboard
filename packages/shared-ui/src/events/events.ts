@@ -925,7 +925,7 @@ export class ConnectionSignedOutEvent extends Event {
 export class GoogleDriveFolderPickedEvent extends Event {
   static eventName = "bbgoogledrivefolderpicked";
 
-  constructor(public readonly id: string) {
+  constructor(public readonly id: string | null) {
     super(GoogleDriveFolderPickedEvent.eventName, { ...eventInit });
   }
 }
