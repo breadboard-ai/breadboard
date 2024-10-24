@@ -1725,7 +1725,6 @@ export class Main extends LitElement {
               evt: BreadboardUI.Events.GraphBoardServerConnectRequestEvent
             ) => {
               const result = await this.#runtime.board.connect(
-                evt.boardServerName,
                 evt.location,
                 evt.apiKey
               );
@@ -1790,7 +1789,6 @@ export class Main extends LitElement {
               evt: BreadboardUI.Events.GraphBoardServerConnectRequestEvent
             ) => {
               const result = await this.#runtime.board.connect(
-                evt.boardServerName, // Deprecated.
                 evt.location,
                 evt.apiKey
               );

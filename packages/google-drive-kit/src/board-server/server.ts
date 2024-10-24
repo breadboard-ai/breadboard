@@ -46,6 +46,25 @@ interface DriveFileQuery {
 class GoogleDriveBoardServer extends EventTarget implements BoardServer {
   static PROTOCOL = "drive:";
 
+  static async connect(folderId: string, vendor: TokenVendor) {
+    const accessToken = await getAccessToken(vendor);
+
+    try {
+      const api = new Files(accessToken!);
+      const response = await fetch(api.makeGetRequest(folderId));
+
+      const folder: DriveFile = await response.json();
+      if (!folder) {
+        return null;
+      }
+
+      return { title: folder.name, username: "board-builder" };
+    } catch (err) {
+      console.warn(err);
+      return null;
+    }
+  }
+
   static async from(
     url: string,
     title: string,

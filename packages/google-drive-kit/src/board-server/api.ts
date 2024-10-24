@@ -43,6 +43,16 @@ ${JSON.stringify(body, null, 2)}
     };
   }
 
+  makeGetRequest(filename: string): Request {
+    return new Request(
+      `https://www.googleapis.com/drive/v3/files/${filename}`,
+      {
+        method: "GET",
+        ...this.#headers,
+      }
+    );
+  }
+
   makeQueryRequest(query: string): Request {
     return new Request(
       `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=*`,
