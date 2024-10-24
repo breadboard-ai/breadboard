@@ -268,7 +268,6 @@ export type GraphLoader = {
  */
 export type Username = string;
 export type UserApiKey = string;
-export type UserAuth = { clientId: string; accessToken: string };
 
 export interface BoardServerCapabilities {
   connect: boolean;
@@ -352,7 +351,6 @@ export interface BoardServerProject extends Entity {
 export interface User {
   username: Username;
   apiKey: UserApiKey;
-  auth?: UserAuth;
   secrets: Secrets /* Used in preference to Board Server equivalents */;
 }
 

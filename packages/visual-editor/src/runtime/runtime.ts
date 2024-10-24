@@ -42,7 +42,11 @@ export async function create(config: RuntimeConfig): Promise<{
   ]);
 
   const skipPlaygroundExamples = import.meta.env.MODE !== "development";
-  let servers = await getBoardServers(skipPlaygroundExamples);
+  const auth = {
+    connectionId: "google-drive-limited",
+    tokenVendor: config.tokenVendor!,
+  };
+  let servers = await getBoardServers(auth, skipPlaygroundExamples);
 
   // First run - set everything up and migrate the data.
   if (servers.length === 0) {
@@ -61,14 +65,7 @@ export async function create(config: RuntimeConfig): Promise<{
   };
 
   const runtime = {
-    board: new Board(
-      [],
-      loader,
-      kits,
-      boardServers,
-      config.environment,
-      config.tokenVendor
-    ),
+    board: new Board([], loader, kits, boardServers, config.tokenVendor),
     edit: new Edit([], loader, kits),
     run: new Run(config.dataStore, config.runStore, kits),
     kits,

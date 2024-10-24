@@ -30,6 +30,7 @@ import {
   disconnectFromBoardServer,
   getBoardServers,
 } from "@breadboard-ai/board-server-management";
+import { TokenVendor } from "@breadboard-ai/connection-client";
 
 export class Board extends EventTarget {
   #tabs = new Map<TabId, Tab>();
@@ -41,8 +42,7 @@ export class Board extends EventTarget {
     private readonly loader: GraphLoader,
     private readonly kits: Kit[],
     private readonly boardServers: RuntimeConfigBoardServers,
-    private readonly environment?: BreadboardUI.Contexts.Environment,
-    private readonly tokenVendor?: BreadboardUI.Elements.TokenVendor
+    private readonly tokenVendor?: TokenVendor
   ) {
     super();
   }
@@ -90,37 +90,11 @@ export class Board extends EventTarget {
     location?: string,
     apiKey?: string
   ): Promise<{ success: boolean; error?: string }> {
-    let auth: { clientId: string; accessToken: string } | undefined = undefined;
-    if (connectionId !== "") {
-      if (this.environment?.connectionServerUrl && this.tokenVendor) {
-        const url = new URL("list", this.environment?.connectionServerUrl);
-        const connectionList = await fetch(url);
-        try {
-          const { connections } = await connectionList.json();
-          const connection = connections.find(
-            (connection: { id: string }) => connection.id === connectionId
-          );
-          if (!connection) {
-            return { success: false };
-          }
-
-          const token = this.tokenVendor.getToken(connectionId);
-          if (token.state !== "valid") {
-            // TODO: Figure out the revalidation state.
-            return { success: false };
-          }
-
-          auth = {
-            clientId: token.grant.client_id,
-            accessToken: token.grant.access_token,
-          };
-        } catch (err) {
-          console.warn(err);
-          return { success: false };
-        }
-      }
+    if (!this.tokenVendor) {
+      return { success: false, error: "Can't connect without a token vendor" };
     }
 
+    const auth = { connectionId, tokenVendor: this.tokenVendor };
     const boardServerInfo = await connectToBoardServer(location, apiKey, auth);
     if (!boardServerInfo) {
       this.dispatchEvent(
@@ -132,7 +106,7 @@ export class Board extends EventTarget {
       // the user is notified.
       return { success: false };
     } else {
-      this.boardServers.servers = await getBoardServers();
+      this.boardServers.servers = await getBoardServers(auth);
       this.boardServers.loader = createLoader(this.boardServers.servers);
       this.dispatchEvent(
         new RuntimeBoardServerChangeEvent(
@@ -145,7 +119,10 @@ export class Board extends EventTarget {
     return { success: false };
   }
 
-  async disconnect(_providerName: string, location: string) {
+  async disconnect(location: string) {
+    const auth = this.tokenVendor
+      ? { connectionId: "google-drive-limited", tokenVendor: this.tokenVendor }
+      : undefined;
     const success = await disconnectFromBoardServer(location);
     if (!success) {
       this.dispatchEvent(
@@ -157,7 +134,7 @@ export class Board extends EventTarget {
       // the user is notified.
       return { success: false };
     }
-    this.boardServers.servers = await getBoardServers();
+    this.boardServers.servers = await getBoardServers(auth);
     this.boardServers.loader = createLoader(this.boardServers.servers);
     this.dispatchEvent(new RuntimeBoardServerChangeEvent());
   }
