@@ -58,6 +58,10 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
         return null;
       }
 
+      if (!("name" in folder)) {
+        return null;
+      }
+
       return { title: folder.name, username: "board-builder" };
     } catch (err) {
       console.warn(err);
@@ -72,6 +76,15 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
     kits: Kit[],
     vendor: TokenVendor
   ) {
+    const connection = await GoogleDriveBoardServer.connect(
+      new URL(url).hostname,
+      vendor
+    );
+
+    if (!connection) {
+      return null;
+    }
+
     try {
       const configuration = {
         url: new URL(url),
