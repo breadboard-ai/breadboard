@@ -145,7 +145,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
   async #refreshProjects(): Promise<BoardServerProject[]> {
     const folderId = this.url.hostname;
     const accessToken = await getAccessToken(this.vendor);
-    const query = `"${folderId}" in parents`;
+    const query = `"${folderId}" in parents and mimeType = "application/json"`;
 
     if (!folderId || !accessToken) {
       throw new Error("No folder ID or access token");
@@ -432,7 +432,7 @@ function createAppProperties(
   const {
     title = filename,
     description = "",
-    metadata: tags = [],
+    metadata: { tags = [] } = {},
   } = descriptor;
   return {
     appProperties: {
@@ -448,6 +448,7 @@ function readAppProperties(file: DriveFile) {
   let parsedTags = [];
   try {
     parsedTags = tags ? JSON.parse(tags) : [];
+    if (!Array.isArray(parsedTags)) parsedTags = [];
   } catch {
     // do nothing.
   }

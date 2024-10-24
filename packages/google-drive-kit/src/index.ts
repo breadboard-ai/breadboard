@@ -10,6 +10,8 @@ import getFileContent from "./components/get-file-content.js";
 import listFiles from "./components/list-files.js";
 import contextToSlides from "./components/context-to-slides.js";
 import getBreadboardFolder from "./components/get-breadboard-folder.js";
+import saveContextToDrive from "./components/save-context-to-drive.js";
+import loadContextFromDrive from "./components/load-context-from-drive.js";
 
 export default await kit({
   title: "Google Drive Kit",
@@ -23,6 +25,8 @@ export default await kit({
     exportFile,
     contextToSlides,
     getBreadboardFolder,
+    saveContextToDrive,
+    loadContextFromDrive,
   },
 });
 

@@ -16,3 +16,14 @@ export const { headers } = code(
     },
   })
 ).outputs;
+
+export const { headers: multipartHeaders } = code(
+  { token: secret("connection:google-drive-limited") },
+  { headers: object({}, "string") },
+  ({ token }) => ({
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ["Content-Type"]: `multipart/related; boundary=BBBBBBBBBBB`,
+    },
+  })
+).outputs;
