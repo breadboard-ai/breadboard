@@ -42,11 +42,10 @@ export async function create(config: RuntimeConfig): Promise<{
   ]);
 
   const skipPlaygroundExamples = import.meta.env.MODE !== "development";
-  const auth = {
-    connectionId: "google-drive-limited",
-    tokenVendor: config.tokenVendor!,
-  };
-  let servers = await getBoardServers(auth, skipPlaygroundExamples);
+  let servers = await getBoardServers(
+    config.tokenVendor,
+    skipPlaygroundExamples
+  );
 
   // First run - set everything up and migrate the data.
   if (servers.length === 0) {

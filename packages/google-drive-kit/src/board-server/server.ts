@@ -44,12 +44,8 @@ interface DriveFileQuery {
 class GoogleDriveBoardServer extends EventTarget implements BoardServer {
   static PROTOCOL = "drive:";
 
-  static async connect(
-    folderId: string,
-    connectionId: string,
-    vendor: TokenVendor
-  ) {
-    const accessToken = await getAccessToken(connectionId, vendor);
+  static async connect(folderId: string, vendor: TokenVendor) {
+    const accessToken = await getAccessToken(vendor);
     const folderUrl = `https://www.googleapis.com/drive/v3/files/${folderId}`;
     const headers = new Headers({
       Authorization: `Bearer ${accessToken}`,
@@ -78,7 +74,6 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
     title: string,
     user: User,
     kits: Kit[],
-    clientId: string,
     vendor: TokenVendor
   ) {
     try {
@@ -98,13 +93,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
         },
       };
 
-      return new GoogleDriveBoardServer(
-        title,
-        configuration,
-        user,
-        clientId,
-        vendor
-      );
+      return new GoogleDriveBoardServer(title, configuration, user, vendor);
     } catch (err) {
       console.warn(err);
       return null;
@@ -124,7 +113,6 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
     public readonly name: string,
     public readonly configuration: BoardServerConfiguration,
     public readonly user: User,
-    public readonly connectionId: string,
     public readonly vendor: TokenVendor
   ) {
     super();
@@ -147,8 +135,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
 
   async #refreshProjects(): Promise<BoardServerProject[]> {
     const folderId = this.url.hostname;
-    const connectionId = this.connectionId;
-    const accessToken = await getAccessToken(connectionId, this.vendor);
+    const accessToken = await getAccessToken(this.vendor);
     const query = `"${folderId}" in parents`;
 
     if (!folderId || !accessToken) {
@@ -254,7 +241,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
 
   async load(url: URL): Promise<GraphDescriptor | null> {
     const file = url.href.replace(`${this.url.href}/`, "");
-    const accessToken = await getAccessToken(this.connectionId, this.vendor);
+    const accessToken = await getAccessToken(this.vendor);
     const folderUrl = `https://www.googleapis.com/drive/v3/files/${file}?alt=media`;
     const headers = new Headers({
       Authorization: `Bearer ${accessToken}`,
@@ -283,7 +270,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
     descriptor: GraphDescriptor
   ): Promise<{ result: boolean; error?: string }> {
     const file = url.href.replace(`${this.url.href}/`, "");
-    const accessToken = await getAccessToken(this.connectionId, this.vendor);
+    const accessToken = await getAccessToken(this.vendor);
     const folderUrl = `https://www.googleapis.com/upload/drive/v3/files/${file}?uploadType=media`;
     const headers = new Headers({
       Authorization: `Bearer ${accessToken}`,
@@ -316,7 +303,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
 
     const parent = this.url.hostname;
     const file = url.href.replace(`${this.url.href}/`, "");
-    const accessToken = await getAccessToken(this.connectionId, this.vendor);
+    const accessToken = await getAccessToken(this.vendor);
     const folderUrl = `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
     const boundary = globalThis.crypto.randomUUID();
     const headers = new Headers({
@@ -359,7 +346,7 @@ ${JSON.stringify(descriptor, null, 2)}
 
   async delete(url: URL): Promise<{ result: boolean; error?: string }> {
     const file = url.href.replace(`${this.url.href}/`, "");
-    const accessToken = await getAccessToken(this.connectionId, this.vendor);
+    const accessToken = await getAccessToken(this.vendor);
     const folderUrl = `https://www.googleapis.com/drive/v3/files/${file}`;
     const headers = new Headers({
       Authorization: `Bearer ${accessToken}`,
