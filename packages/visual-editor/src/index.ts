@@ -1775,12 +1775,8 @@ export class Main extends LitElement {
 
         let boardServerAddOverlay: HTMLTemplateResult | symbol = nothing;
         if (this.showBoardServerAddOverlay) {
-          const showGoogleDrive = !!this.#settings?.getItem(
-            BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
-            "Show Google Drive Board Server"
-          )?.value;
           boardServerAddOverlay = html`<bb-board-server-overlay
-            .showGoogleDrive=${showGoogleDrive}
+            .showGoogleDrive=${true}
             .boardServers=${this.#boardServers}
             @bboverlaydismissed=${() => {
               this.showBoardServerAddOverlay = false;
