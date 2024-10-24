@@ -161,13 +161,13 @@ const getFileResponse = cast(
 
 const notFoundOutput = outputNode({
   ...describe("Breadboard root not found"),
-  context: output(routeFromListFiles.outputs.context, { title: "Context out" }),
+  notFound: output(routeFromListFiles.outputs.context, { title: "Not Found" }),
 });
 
 const savedFileNotFoundOutput = outputNode({
   ...describe("Saved file not found"),
-  context: output(routeFromListSavedFiles.outputs.context, {
-    title: "Context out",
+  notFound: output(routeFromListSavedFiles.outputs.context, {
+    title: "Not Found",
   }),
 });
 
