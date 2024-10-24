@@ -8,11 +8,8 @@ import type { TokenVendor } from "@breadboard-ai/connection-client";
 
 export { getAccessToken };
 
-async function getAccessToken(
-  connectionId: string,
-  vendor: TokenVendor
-): Promise<string | null> {
-  const token = vendor.getToken(connectionId);
+async function getAccessToken(vendor: TokenVendor): Promise<string | null> {
+  const token = vendor.getToken("google-drive-limited");
   if (token.state === "expired") {
     const refreshed = await token.refresh();
     return refreshed.grant.access_token;

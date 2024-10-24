@@ -30,8 +30,6 @@ const BOARD_SERVER_LISTING_VERSION = 1;
 
 type Auth = { clientId: string; accessToken: string };
 
-export type UserAuth = { connectionId: string; tokenVendor: TokenVendor };
-
 interface BoardServerItem {
   url: string;
   title: string;
@@ -48,10 +46,9 @@ interface BoardServerListing extends idb.DBSchema {
 }
 
 export async function getBoardServers(
-  userAuth?: UserAuth,
+  tokenVendor?: TokenVendor,
   skipPlaygroundExamples = false
 ): Promise<BoardServer[]> {
-  console.trace("🌻 userAuth", userAuth);
   const db = await idb.openDB<BoardServerListing>(
     BOARD_SERVER_LISTING_DB,
     BOARD_SERVER_LISTING_VERSION,
@@ -97,18 +94,11 @@ export async function getBoardServers(
         return FileSystemBoardServer.from(url, title, user, kits, handle);
       }
 
-      if (url.startsWith(GoogleDriveBoardServer.PROTOCOL) && userAuth) {
-        return GoogleDriveBoardServer.from(
-          url,
-          title,
-          user,
-          kits,
-          userAuth.connectionId,
-          userAuth.tokenVendor
-        );
+      if (url.startsWith(GoogleDriveBoardServer.PROTOCOL) && tokenVendor) {
+        return GoogleDriveBoardServer.from(url, title, user, kits, tokenVendor);
       }
 
-      console.warn(`Unsupported store URL: ${url}`, userAuth);
+      console.warn(`Unsupported store URL: ${url}`);
       return null;
     })
   );
@@ -119,15 +109,9 @@ export async function getBoardServers(
 export async function connectToBoardServer(
   location?: string,
   apiKey?: string,
-  auth?: UserAuth
+  tokenVendor?: TokenVendor
 ): Promise<{ title: string; url: string } | null> {
-  if (apiKey && auth) {
-    console.warn(
-      `Connection attempted to ${location} with both API key and OAuth`
-    );
-  }
-
-  const existingServers = await getBoardServers(auth);
+  const existingServers = await getBoardServers(tokenVendor);
   if (location) {
     if (
       location.startsWith(RemoteBoardServer.PROTOCOL) ||
@@ -162,15 +146,14 @@ export async function connectToBoardServer(
         console.warn("Server already connected");
       }
 
-      if (!auth) {
+      if (!tokenVendor) {
         return null;
       }
 
       const url = new URL(location);
       const response = await GoogleDriveBoardServer.connect(
         url.hostname,
-        auth.connectionId,
-        auth.tokenVendor
+        tokenVendor
       );
       if (response) {
         await storeBoardServer(url, response.title, {

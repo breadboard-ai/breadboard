@@ -86,7 +86,6 @@ export class Board extends EventTarget {
   }
 
   async connect(
-    connectionId: string,
     location?: string,
     apiKey?: string
   ): Promise<{ success: boolean; error?: string }> {
@@ -94,8 +93,11 @@ export class Board extends EventTarget {
       return { success: false, error: "Can't connect without a token vendor" };
     }
 
-    const auth = { connectionId, tokenVendor: this.tokenVendor };
-    const boardServerInfo = await connectToBoardServer(location, apiKey, auth);
+    const boardServerInfo = await connectToBoardServer(
+      location,
+      apiKey,
+      this.tokenVendor
+    );
     if (!boardServerInfo) {
       this.dispatchEvent(
         new RuntimeErrorEvent("Unable to connect to Board Server")
@@ -106,7 +108,7 @@ export class Board extends EventTarget {
       // the user is notified.
       return { success: false };
     } else {
-      this.boardServers.servers = await getBoardServers(auth);
+      this.boardServers.servers = await getBoardServers(this.tokenVendor);
       this.boardServers.loader = createLoader(this.boardServers.servers);
       this.dispatchEvent(
         new RuntimeBoardServerChangeEvent(
@@ -120,9 +122,6 @@ export class Board extends EventTarget {
   }
 
   async disconnect(location: string) {
-    const auth = this.tokenVendor
-      ? { connectionId: "google-drive-limited", tokenVendor: this.tokenVendor }
-      : undefined;
     const success = await disconnectFromBoardServer(location);
     if (!success) {
       this.dispatchEvent(
@@ -134,7 +133,7 @@ export class Board extends EventTarget {
       // the user is notified.
       return { success: false };
     }
-    this.boardServers.servers = await getBoardServers(auth);
+    this.boardServers.servers = await getBoardServers(this.tokenVendor);
     this.boardServers.loader = createLoader(this.boardServers.servers);
     this.dispatchEvent(new RuntimeBoardServerChangeEvent());
   }

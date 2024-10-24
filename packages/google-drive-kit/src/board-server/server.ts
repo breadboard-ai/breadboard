@@ -22,6 +22,7 @@ import type {
   User,
 } from "@google-labs/breadboard";
 import { getAccessToken } from "./access.js";
+import { Files } from "./api.js";
 
 export { GoogleDriveBoardServer };
 
@@ -31,6 +32,7 @@ interface DriveFile {
   mimeType: string;
   name: string;
   resourceKey: string;
+  appProperties: Record<string, string>;
 }
 
 interface DriveFileQuery {
@@ -44,22 +46,12 @@ interface DriveFileQuery {
 class GoogleDriveBoardServer extends EventTarget implements BoardServer {
   static PROTOCOL = "drive:";
 
-  static async connect(
-    folderId: string,
-    connectionId: string,
-    vendor: TokenVendor
-  ) {
-    const accessToken = await getAccessToken(connectionId, vendor);
-    const folderUrl = `https://www.googleapis.com/drive/v3/files/${folderId}`;
-    const headers = new Headers({
-      Authorization: `Bearer ${accessToken}`,
-    });
+  static async connect(folderId: string, vendor: TokenVendor) {
+    const accessToken = await getAccessToken(vendor);
 
     try {
-      const response = await fetch(folderUrl, {
-        headers,
-        method: "GET",
-      });
+      const api = new Files(accessToken!);
+      const response = await fetch(api.makeGetRequest(folderId));
 
       const folder: DriveFile = await response.json();
       if (!folder) {
@@ -78,7 +70,6 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
     title: string,
     user: User,
     kits: Kit[],
-    clientId: string,
     vendor: TokenVendor
   ) {
     try {
@@ -98,13 +89,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
         },
       };
 
-      return new GoogleDriveBoardServer(
-        title,
-        configuration,
-        user,
-        clientId,
-        vendor
-      );
+      return new GoogleDriveBoardServer(title, configuration, user, vendor);
     } catch (err) {
       console.warn(err);
       return null;
@@ -124,7 +109,6 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
     public readonly name: string,
     public readonly configuration: BoardServerConfiguration,
     public readonly user: User,
-    public readonly connectionId: string,
     public readonly vendor: TokenVendor
   ) {
     super();
@@ -147,23 +131,16 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
 
   async #refreshProjects(): Promise<BoardServerProject[]> {
     const folderId = this.url.hostname;
-    const connectionId = this.connectionId;
-    const accessToken = await getAccessToken(connectionId, this.vendor);
+    const accessToken = await getAccessToken(this.vendor);
     const query = `"${folderId}" in parents`;
 
     if (!folderId || !accessToken) {
       throw new Error("No folder ID or access token");
     }
 
-    const queryUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}`;
-    const headers = new Headers({
-      Authorization: `Bearer ${accessToken}`,
-    });
-
     try {
-      const fileRequest = await fetch(queryUrl, {
-        headers,
-      });
+      const api = new Files(accessToken);
+      const fileRequest = await fetch(api.makeQueryRequest(query));
       const response: DriveFileQuery = await fileRequest.json();
       const canAccess = true;
       const access = new Map([
@@ -186,12 +163,13 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
       const projects = response.files
         .filter((file) => file.mimeType === "application/json")
         .map((file) => {
+          const { title, tags } = readAppProperties(file);
           return {
             url: new URL(`${this.url}/${file.id}`),
             metadata: {
               owner: "board-builder",
-              tags: [],
-              title: file.name,
+              tags,
+              title,
               access,
             },
           };
@@ -202,8 +180,6 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
       console.warn(err);
       return [];
     }
-
-    throw new Error("Error loading projects");
   }
 
   getAccess(_url: URL, _user: User): Promise<Permission> {
@@ -254,17 +230,11 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
 
   async load(url: URL): Promise<GraphDescriptor | null> {
     const file = url.href.replace(`${this.url.href}/`, "");
-    const accessToken = await getAccessToken(this.connectionId, this.vendor);
-    const folderUrl = `https://www.googleapis.com/drive/v3/files/${file}?alt=media`;
-    const headers = new Headers({
-      Authorization: `Bearer ${accessToken}`,
-    });
+    const accessToken = await getAccessToken(this.vendor);
 
     try {
-      const response = await fetch(folderUrl, {
-        headers,
-        method: "GET",
-      });
+      const api = new Files(accessToken!);
+      const response = await fetch(api.makeLoadRequest(file));
 
       const graph: GraphDescriptor = await response.json();
       if (!graph || "error" in graph) {
@@ -283,19 +253,17 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
     descriptor: GraphDescriptor
   ): Promise<{ result: boolean; error?: string }> {
     const file = url.href.replace(`${this.url.href}/`, "");
-    const accessToken = await getAccessToken(this.connectionId, this.vendor);
-    const folderUrl = `https://www.googleapis.com/upload/drive/v3/files/${file}?uploadType=media`;
-    const headers = new Headers({
-      Authorization: `Bearer ${accessToken}`,
-      ["Content-Type"]: "application/json",
-    });
-
+    const accessToken = await getAccessToken(this.vendor);
     try {
-      await fetch(folderUrl, {
-        headers,
-        method: "PATCH",
-        body: JSON.stringify(descriptor, null, 2),
-      });
+      const api = new Files(accessToken!);
+
+      await fetch(
+        api.makePatchRequest(
+          file,
+          createAppProperties(file, descriptor),
+          descriptor
+        )
+      );
 
       return { result: true };
     } catch (err) {
@@ -315,35 +283,22 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
     // First create the file, then save.
 
     const parent = this.url.hostname;
-    const file = url.href.replace(`${this.url.href}/`, "");
-    const accessToken = await getAccessToken(this.connectionId, this.vendor);
-    const folderUrl = `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
-    const boundary = globalThis.crypto.randomUUID();
-    const headers = new Headers({
-      Authorization: `Bearer ${accessToken}`,
-      ["Content-Type"]: `multipart/related; boundary=${boundary}`,
-    });
-
-    const body = `--${boundary}
-Content-Type: application/json; charset=UTF-8
-
-{
-  "name": "${file}",
-  "mimeType": "application/json",
-  "parents": ["${parent}"]
-}
---${boundary}
-Content-Type: application/json; charset=UTF-8
-
-${JSON.stringify(descriptor, null, 2)}
---${boundary}--`;
+    const fileName = url.href.replace(`${this.url.href}/`, "");
+    const accessToken = await getAccessToken(this.vendor);
 
     try {
-      const response = await fetch(folderUrl, {
-        headers,
-        method: "POST",
-        body,
-      });
+      const api = new Files(accessToken!);
+      const response = await fetch(
+        api.makeMultipartCreateRequest(
+          {
+            name: fileName,
+            mimeType: "application/json",
+            parents: [parent],
+            ...createAppProperties(fileName, descriptor),
+          },
+          descriptor
+        )
+      );
 
       const file: DriveFile = await response.json();
       const updatedUrl = `${GoogleDriveBoardServer.PROTOCOL}//${parent}/${file.id}`;
@@ -359,17 +314,10 @@ ${JSON.stringify(descriptor, null, 2)}
 
   async delete(url: URL): Promise<{ result: boolean; error?: string }> {
     const file = url.href.replace(`${this.url.href}/`, "");
-    const accessToken = await getAccessToken(this.connectionId, this.vendor);
-    const folderUrl = `https://www.googleapis.com/drive/v3/files/${file}`;
-    const headers = new Headers({
-      Authorization: `Bearer ${accessToken}`,
-    });
-
+    const accessToken = await getAccessToken(this.vendor);
     try {
-      await fetch(folderUrl, {
-        headers,
-        method: "DELETE",
-      });
+      const api = new Files(accessToken!);
+      await fetch(api.makeDeleteRequest(file));
 
       this.projects = this.#refreshProjects();
 
@@ -454,4 +402,45 @@ ${JSON.stringify(descriptor, null, 2)}
   async preview(_url: URL): Promise<URL> {
     throw new Error("Method not implemented.");
   }
+}
+
+type AppProperties = {
+  appProperties: {
+    title: string;
+    description: string;
+    tags: string;
+  };
+};
+
+function createAppProperties(
+  filename: string,
+  descriptor: GraphDescriptor
+): AppProperties {
+  const {
+    title = filename,
+    description = "",
+    metadata: tags = [],
+  } = descriptor;
+  return {
+    appProperties: {
+      title,
+      description,
+      tags: JSON.stringify(tags),
+    },
+  };
+}
+
+function readAppProperties(file: DriveFile) {
+  const { name, appProperties: { title, description = "", tags } = {} } = file;
+  let parsedTags = [];
+  try {
+    parsedTags = tags ? JSON.parse(tags) : [];
+  } catch {
+    // do nothing.
+  }
+  return {
+    title: title || name,
+    description,
+    tags: parsedTags,
+  };
 }
