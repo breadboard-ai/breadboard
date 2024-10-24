@@ -21,9 +21,31 @@ class Files {
     };
   }
 
+  #multipartRequest(metadata: unknown, body: unknown) {
+    const boundary = globalThis.crypto.randomUUID();
+    const headers = new Headers({
+      Authorization: `Bearer ${this.#accessToken}`,
+      ["Content-Type"]: `multipart/related; boundary=${boundary}`,
+    });
+
+    const multipartBody = `--${boundary}
+Content-Type: application/json; charset=UTF-8
+
+${JSON.stringify(metadata, null, 2)}
+--${boundary}
+Content-Type: application/json; charset=UTF-8
+
+${JSON.stringify(body, null, 2)}
+--${boundary}--`;
+    return {
+      headers,
+      body: multipartBody,
+    };
+  }
+
   makeQueryRequest(query: string): Request {
     return new Request(
-      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}`,
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=*`,
       {
         method: "GET",
         ...this.#headers,
@@ -50,41 +72,21 @@ class Files {
   }
 
   makeMultipartCreateRequest(metadata: unknown, body: unknown): Request {
-    const boundary = globalThis.crypto.randomUUID();
-    const headers = new Headers({
-      Authorization: `Bearer ${this.#accessToken}`,
-      ["Content-Type"]: `multipart/related; boundary=${boundary}`,
-    });
-
-    const multipartBody = `--${boundary}
-Content-Type: application/json; charset=UTF-8
-
-${JSON.stringify(metadata, null, 2)}
---${boundary}
-Content-Type: application/json; charset=UTF-8
-
-${JSON.stringify(body, null, 2)}
---${boundary}--`;
     return new Request(
       `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`,
       {
         method: "POST",
-        headers,
-        body: multipartBody,
+        ...this.#multipartRequest(metadata, body),
       }
     );
   }
 
-  makePatchRequest(file: string, body: unknown): Request {
+  makePatchRequest(file: string, metadata: unknown, body: unknown): Request {
     return new Request(
-      `https://www.googleapis.com/upload/drive/v3/files/${file}?uploadType=media`,
+      `https://www.googleapis.com/upload/drive/v3/files/${file}?uploadType=multipart`,
       {
         method: "PATCH",
-        headers: {
-          ...this.#headers.headers,
-          ["Content-Type"]: "application/json",
-        },
-        body: JSON.stringify(body, null, 2),
+        ...this.#multipartRequest(metadata, body),
       }
     );
   }

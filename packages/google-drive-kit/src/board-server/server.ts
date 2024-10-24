@@ -32,6 +32,7 @@ interface DriveFile {
   mimeType: string;
   name: string;
   resourceKey: string;
+  appProperties: Record<string, string>;
 }
 
 interface DriveFileQuery {
@@ -143,12 +144,13 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
       const projects = response.files
         .filter((file) => file.mimeType === "application/json")
         .map((file) => {
+          const { title, tags } = readAppProperties(file);
           return {
             url: new URL(`${this.url}/${file.id}`),
             metadata: {
               owner: "board-builder",
-              tags: [],
-              title: file.name,
+              tags,
+              title,
               access,
             },
           };
@@ -236,7 +238,13 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
     try {
       const api = new Files(accessToken!);
 
-      await fetch(api.makePatchRequest(file, descriptor));
+      await fetch(
+        api.makePatchRequest(
+          file,
+          createAppProperties(file, descriptor),
+          descriptor
+        )
+      );
 
       return { result: true };
     } catch (err) {
@@ -258,6 +266,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
     const parent = this.url.hostname;
     const fileName = url.href.replace(`${this.url.href}/`, "");
     const accessToken = await getAccessToken(this.vendor);
+
     try {
       const api = new Files(accessToken!);
       const response = await fetch(
@@ -266,6 +275,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
             name: fileName,
             mimeType: "application/json",
             parents: [parent],
+            ...createAppProperties(fileName, descriptor),
           },
           descriptor
         )
@@ -373,4 +383,45 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
   async preview(_url: URL): Promise<URL> {
     throw new Error("Method not implemented.");
   }
+}
+
+type AppProperties = {
+  appProperties: {
+    title: string;
+    description: string;
+    tags: string;
+  };
+};
+
+function createAppProperties(
+  filename: string,
+  descriptor: GraphDescriptor
+): AppProperties {
+  const {
+    title = filename,
+    description = "",
+    metadata: tags = [],
+  } = descriptor;
+  return {
+    appProperties: {
+      title,
+      description,
+      tags: JSON.stringify(tags),
+    },
+  };
+}
+
+function readAppProperties(file: DriveFile) {
+  const { name, appProperties: { title, description = "", tags } = {} } = file;
+  let parsedTags = [];
+  try {
+    parsedTags = tags ? JSON.parse(tags) : [];
+  } catch {
+    // do nothing.
+  }
+  return {
+    title: title || name,
+    description,
+    tags: parsedTags,
+  };
 }
