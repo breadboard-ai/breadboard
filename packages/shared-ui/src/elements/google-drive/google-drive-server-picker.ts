@@ -131,7 +131,8 @@ export class GoogleDriveServerDirPicker extends LitElement {
   }
 }
 
-// TODO: Somehow move to google-drive-kit
+// TODO: Somehow consolidate with the one in
+// google-drive-kit
 class Files {
   #accessToken: string;
 
