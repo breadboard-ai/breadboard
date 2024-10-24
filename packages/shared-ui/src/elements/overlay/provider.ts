@@ -236,7 +236,7 @@ export class BoardServerOverlay extends LitElement {
                 return;
               }
 
-              this.#driveIdRef.value.value = evt.id;
+              this.#driveIdRef.value.value = evt.id ?? "";
             }}
           ></bb-google-drive-server-picker>
         </div>`;

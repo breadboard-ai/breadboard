@@ -1065,7 +1065,7 @@ export class Main extends LitElement {
       this.#removeRecentUrl(url);
     }
 
-    this.requestUpdate();
+    this.boardServerNavState = globalThis.crypto.randomUUID();
   }
 
   #attemptBoardCreate(graph: GraphDescriptor) {
@@ -1532,7 +1532,11 @@ export class Main extends LitElement {
         @bbgraphboardserverdeleterequest=${async (
           evt: BreadboardUI.Events.GraphBoardServerDeleteRequestEvent
         ) => {
-          this.#attemptBoardDelete(evt.boardServerName, evt.url, evt.isActive);
+          await this.#attemptBoardDelete(
+            evt.boardServerName,
+            evt.url,
+            evt.isActive
+          );
         }}
         @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
           this.#attemptBoardStart(evt);
