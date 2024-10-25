@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import {
   ConsoleStdout,
   File as WasiFile,
@@ -26,7 +32,14 @@ const { instance } = await WebAssembly.instantiateStreaming(fetch(path), {
 });
 jsandbox.__wbg_set_wasm(instance.exports);
 wasi.start({ exports: instance.exports });
-const result = jsandbox.eval_code(`
-      [1,2,3].reduce((acc, c) => acc + c)
-    `);
-console.log({ result });
+const result = jsandbox.run_module(
+  `
+      export default function(inputs) {
+        return \`HELLO \${JSON.stringify(inputs)}\`;
+      }
+    `,
+  JSON.stringify({
+    args: "ARGS ARE HERE",
+  })
+);
+console.log({ result: JSON.parse(result) });
