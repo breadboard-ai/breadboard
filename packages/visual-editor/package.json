@@ -120,6 +120,7 @@
         "typescript-files-and-deps",
         "../example-boards:build",
         "copy-pyoide-assets",
+        "copy-jsandbox-runtime",
         {
           "script": "copy-light-kits",
           "cascade": false
@@ -218,6 +219,14 @@
       "output": [
         "public/python_stdlib.zip",
         "public/pyodide*"
+      ]
+    },
+    "copy-jsandbox-runtime": {
+      "command": "tsx src/copy-jsandbox-runtime.ts",
+      "files": [],
+      "output": [
+        "public/jsandbox_bg.js",
+        "public/jsandbox_bg.wasm"
       ]
     }
   },
