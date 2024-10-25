@@ -906,7 +906,10 @@ export class GraphNode extends PIXI.Container {
       this.#showHeaderPorts();
     } else {
       portsOutStartY = this.#drawInPorts(portStartY + this.#padding);
-      this.#drawOutPorts(portsOutStartY + this.#padding);
+      const portsOutEndY = this.#drawOutPorts(portsOutStartY);
+      if (portsOutStartY === portsOutEndY) {
+        portsOutStartY = null;
+      }
       this.#hideHeaderPorts();
     }
     this.#drawBackground(portsOutStartY);
@@ -1156,9 +1159,7 @@ export class GraphNode extends PIXI.Container {
       this.#background.stroke({ color: this.#segmentDividerColor });
     }
 
-    // Outputs never have output ports themselves, so we avoid drawing this
-    // divider line.
-    if (portsDivider !== null && this.type !== "output") {
+    if (portsDivider !== null) {
       // Ensure a clean line.
       portsDivider = Math.round(portsDivider) + 0.5;
 
@@ -1237,11 +1238,17 @@ export class GraphNode extends PIXI.Container {
   #drawOutPorts(portStartY = 0) {
     this.#outPortLocations.clear();
 
+    let haveAddedPadding = false;
     let portY = portStartY;
     for (let p = 0; p < this.#outPortsSortedByName.length; p++) {
       const portItem = this.#outPortsSortedByName[p];
       if (this.#shouldHidePort(portItem.port, "$error")) {
         continue;
+      }
+
+      if (!haveAddedPadding) {
+        haveAddedPadding = true;
+        portY += this.#padding;
       }
 
       const { port, label, nodePort } = portItem;
@@ -1267,6 +1274,8 @@ export class GraphNode extends PIXI.Container {
           ? this.#portLabelVerticalPadding
           : 0);
     }
+
+    return portY;
   }
 
   inPortLocation(name: string): PIXI.ObservablePoint | null {

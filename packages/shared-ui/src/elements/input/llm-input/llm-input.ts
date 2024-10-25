@@ -40,7 +40,7 @@ import type {
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 
 const OVERFLOW_MENU_WIDTH = 180;
-const OVERFLOW_MENU_BUTTON_HEIGHT = 44;
+const OVERFLOW_MENU_BUTTON_HEIGHT = 45;
 
 type MultiModalInput = AudioInput | DrawableInput | WebcamInput;
 
@@ -591,7 +591,9 @@ export class LLMInput extends LitElement {
       ).length;
       this.style.setProperty(
         "--controls-height",
-        `${allowable * OVERFLOW_MENU_BUTTON_HEIGHT}px`
+        // Clamped to 5 because we don't currently support all allowable items
+        // in the UI as yet.
+        `${Math.min(5, allowable) * OVERFLOW_MENU_BUTTON_HEIGHT}px`
       );
     }
   }
