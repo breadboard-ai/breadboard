@@ -19,6 +19,7 @@ import reduce from "./nodes/reduce.js";
 import reflect from "./nodes/reflect.js";
 import resolve from "./nodes/resolve.js";
 import runJavascript from "./nodes/run-javascript.js";
+import runModule from "./nodes/run-module.js";
 import secrets from "./nodes/secrets.js";
 import service from "./nodes/service.js";
 import slot from "./nodes/slot.js";
@@ -32,6 +33,7 @@ export { default as invoke } from "./nodes/invoke.js";
 export { map, default as mapNode } from "./nodes/map.js";
 export { default as passthrough } from "./nodes/passthrough.js";
 export { default as runJavascript } from "./nodes/run-javascript.js";
+export { default as runModule } from "./nodes/run-module.js";
 export { secret, default as secrets } from "./nodes/secrets.js";
 export { unnest, unnestNode } from "./nodes/unnest.js";
 import { storeDataNode } from "./nodes/storeData.js";
@@ -200,6 +202,7 @@ export const Core = builder.build({
   batch,
   fetch,
   runJavascript,
+  runModule,
   secrets,
   curry,
 
@@ -399,6 +402,7 @@ export const coreKit = await kit({
     reduce,
     resolve,
     runJavascript,
+    runModule,
     secrets,
     service,
     unnest: unnestNode,
