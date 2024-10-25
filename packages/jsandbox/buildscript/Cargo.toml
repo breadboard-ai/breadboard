@@ -1,0 +1,18 @@
+[package]
+name = "buildscript"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.80"
+binaryen = "0.13.0"
+brotli = "3.4.0"
+cargo_toml = "0.19.2"
+clap = { version = "4.5.1", features = ["derive"] }
+tokio = { version = "1.36.0", features = ["full"] }
+walrus = "0.20.3"
+wasm-bindgen = { workspace = true }
+wasm-bindgen-cli-support = { workspace = true }
+wasm-bindgen-futures = { workspace = true }
