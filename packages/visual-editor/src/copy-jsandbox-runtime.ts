@@ -6,20 +6,17 @@
 
 import { existsSync } from "fs";
 import { copyFile } from "fs/promises";
-import { dirname, join } from "path";
+import { join } from "path";
 import { exit } from "process";
 
 // TODO: Actually make this a real dependency.
-const jsandboxDir = dirname(
-  join(
-    import.meta.dirname,
-    "..",
-    "..",
-    "jsandbox",
-    "target",
-    "wasm-bindgen",
-    "."
-  )
+const jsandboxDir = join(
+  import.meta.dirname,
+  "..",
+  "..",
+  "jsandbox",
+  "target",
+  "wasm-bindgen"
 );
 
 await Promise.all(
@@ -29,12 +26,12 @@ await Promise.all(
     // make this operation fail silently with a warning, rather than break the
     // build.
     if (!existsSync(fullPath)) {
-      console.warn("WARNING: JSandbox bits weren't found");
+      console.warn(`WARNING: JSandbox bits weren't found at:\n${fullPath}`);
       exit(0);
     }
     copyFile(
       decodeURI(join(jsandboxDir, filename)),
-      decodeURI(join(import.meta.dirname, "..", "public", filename))
+      decodeURI(join(import.meta.dirname, "..", "jsandbox", filename))
     );
   })
 );

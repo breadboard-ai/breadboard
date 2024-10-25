@@ -131,6 +131,7 @@
     "typescript": "^5.6.3"
   },
   "dependencies": {
+    "@bjorn3/browser_wasi_shim": "^0.3.0",
     "@breadboard-ai/build": "0.10.4",
     "@google-labs/breadboard": "^0.28.0"
   }
