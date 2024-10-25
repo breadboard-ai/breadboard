@@ -56,7 +56,14 @@ export default defineNodeType({
       outputs: $outputSchema ? unsafeSchema($outputSchema) : { "*": "unknown" },
     };
   },
-  invoke: (config, args) => runModule(config, args),
+  invoke: (config, args) => {
+    if (typeof globalThis.window === "undefined") {
+      return error(
+        "The `runModule` component currently only works in the browser."
+      );
+    }
+    return runModule(config, args);
+  },
 });
 
 type RunModuleInputs = {
@@ -64,5 +71,16 @@ type RunModuleInputs = {
 };
 
 async function runModule({ $code: code }: RunModuleInputs, args: InputValues) {
-  throw new Error("Not implemented");
+  const codeUrl = URL.createObjectURL(
+    new Blob([code], { type: "application/javascript" })
+  );
+  const result = (
+    await import(/* @vite-ignore */ /* webpackIgnore: true */ codeUrl)
+  ).default(args);
+  URL.revokeObjectURL(codeUrl);
+  return result;
+}
+
+function error($error: string) {
+  return { $error };
 }
