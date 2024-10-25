@@ -12,7 +12,7 @@ enum Error {
 type Result<T> = std::result::Result<T, Error>;
 
 #[wasm_bindgen]
-pub fn eval(code: String) -> std::result::Result<String, JsError> {
+pub fn eval_code(code: String) -> std::result::Result<String, JsError> {
     let rt = rquickjs::Runtime::new()?;
     let ctx = rquickjs::Context::full(&rt)?;
     let result: Result<String> = ctx.with(|ctx| {
