@@ -4,8 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { existsSync } from "fs";
 import { copyFile } from "fs/promises";
 import { dirname, join } from "path";
+import { exit } from "process";
 
 // TODO: Actually make this a real dependency.
 const jsandboxDir = dirname(
@@ -22,6 +24,14 @@ const jsandboxDir = dirname(
 
 await Promise.all(
   ["jsandbox_bg.js", "jsandbox_bg.wasm"].map((filename) => {
+    const fullPath = join(jsandboxDir, filename);
+    // Since JSandbox is still under construction,
+    // make this operation fail silently with a warning, rather than break the
+    // build.
+    if (!existsSync(fullPath)) {
+      console.warn("WARNING: JSandbox bits weren't found");
+      exit(0);
+    }
     copyFile(
       decodeURI(join(jsandboxDir, filename)),
       decodeURI(join(import.meta.dirname, "..", "public", filename))
