@@ -3,7 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-use rquickjs::{function::Args, prelude::IntoArg, CatchResultExt, Object};
+use rquickjs::{CatchResultExt, Object};
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
 
@@ -36,20 +36,27 @@ pub fn run_module(code: String, json: String) -> std::result::Result<String, JsE
     let rt = rquickjs::Runtime::new()?;
     let ctx = rquickjs::Context::full(&rt)?;
     let result: Result<String> = ctx.with(|ctx| {
-        let name = "m";
-        let (module, _) = rquickjs::Module::declare(ctx.clone(), name, code)
+        // Construct the Console object.
+        let global = ctx.globals();
+        let console = Object::new(ctx.clone())?;
+        let _ = console.set("log", rquickjs::Function::new(ctx.clone(), log)?);
+        let _ = global.set("console", console);
+        // Load the module.
+        let (module, _) = rquickjs::Module::declare(ctx.clone(), "m", code)
             .catch(&ctx)
             .unwrap()
             .eval()
             .catch(&ctx)
             .unwrap();
         while ctx.execute_pending_job() {}
+        // Get the default export.
         let default = module
             .namespace()
             .unwrap()
             .get::<_, rquickjs::Function>("default")
             .unwrap();
         let inputs = ctx.json_parse(json)?;
+        // Call it and return value.
         let result_obj: rquickjs::Value = default.call((inputs,)).catch(&ctx).unwrap();
         let Some(result_str) = ctx.json_stringify(result_obj)? else {
             return Err(Error::NotStringifiable);
@@ -57,6 +64,12 @@ pub fn run_module(code: String, json: String) -> std::result::Result<String, JsE
         Ok(result_str.to_string()?)
     });
     Ok(result?)
+}
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(message: String);
 }
 
 #[wasm_bindgen(main)]

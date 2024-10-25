@@ -35,7 +35,10 @@ wasi.start({ exports: instance.exports });
 const result = jsandbox.run_module(
   `
       export default function(inputs) {
-        return \`HELLO \${JSON.stringify(inputs)}\`;
+        console.log("TEST");
+        return {
+          inputs
+        };
       }
     `,
   JSON.stringify({
