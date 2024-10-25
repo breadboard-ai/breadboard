@@ -12,6 +12,7 @@ export default defineNodeType({
   metadata: {
     title: "Run Module",
     description: "Runs a supplied ECMAScript module.",
+    tags: ["experimental"],
     help: {
       url: "https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-runmodule-component",
     },
