@@ -102,7 +102,7 @@
   "dependencies": {
     "@breadboard-ai/build": "0.10.4",
     "@google-labs/breadboard": "^0.28.0",
-    "@rgrove/parse-xml": "^4.1.0",
+    "@rgrove/parse-xml": "^4.2.0",
     "@types/json-schema": "^7.0.15",
     "ajv": "^8.17.1",
     "jsonata": "^2.0.5",
