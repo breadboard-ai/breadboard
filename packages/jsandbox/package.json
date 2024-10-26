@@ -3,7 +3,10 @@
   "version": "0.0.1",
   "description": "Breadboard Javascript Sandbox",
   "main": "./dist/src/index.js",
-  "exports": "./dist/src/index.js",
+  "exports": {
+    ".": "./dist/src/index.js",
+    "./sandbox.wasm": "./sandbox.wasm"
+  },
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {

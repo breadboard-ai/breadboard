@@ -2,4 +2,3 @@
 # because they come from NPM.
 public/pyodide*
 public/python*
-jsandbox/*

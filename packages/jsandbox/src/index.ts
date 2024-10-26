@@ -4,4 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-console.log("CODE GOES HERE");
+import factory from "./factory.js";
+
+export { factory };
