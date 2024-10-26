@@ -56,19 +56,6 @@ impl CliArgs {
         self.cargo_manifest = Some(manifest);
         Ok(())
     }
-
-    async fn project_name(&self) -> Result<&str> {
-        let cargo_path = self.cargo_toml_path()?;
-        Ok(self
-            .cargo_manifest
-            .as_ref()
-            .ok_or_else(|| anyhow!("{} metadata hasn’t been read", cargo_path.display()))?
-            .package
-            .as_ref()
-            .ok_or_else(|| anyhow!("{} must have a [package] section", cargo_path.display()))?
-            .name
-            .as_str())
-    }
 }
 
 #[tokio::main]
@@ -78,17 +65,6 @@ async fn main() -> Result<()> {
     build_jsandbox(&args).await.context("jsandbox")?;
 
     Ok(())
-}
-
-macro_rules! promise_sequence {
-    ($a:expr, $b:expr) => {
-        async move {
-            match $a.await {
-                Ok(_) => $b.await,
-                v @ Err(_) => v,
-            }
-        }
-    };
 }
 
 async fn build_jsandbox(args: &CliArgs) -> Result<()> {

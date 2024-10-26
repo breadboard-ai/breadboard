@@ -40,8 +40,7 @@
     "build": "wireit",
     "build:vite": "wireit",
     "build:tsc": "wireit",
-    "copy-example-boards": "wireit",
-    "update-sandbox-runtime": "wireit"
+    "copy-example-boards": "wireit"
   },
   "wireit": {
     "build": {
@@ -80,6 +79,7 @@
         "../example-boards:build:tsc",
         "../gemini-kit:build:tsc",
         "../google-drive-kit:build:tsc",
+        "../jsandbox:build:tsc",
         "../json-kit:build:tsc",
         "../template-kit:build:tsc",
         "../node-nursery-web:build:tsc",
@@ -121,6 +121,7 @@
         "typescript-files-and-deps",
         "../example-boards:build",
         "copy-pyoide-assets",
+        "update-sandbox-runtime",
         {
           "script": "copy-light-kits",
           "cascade": false
@@ -151,6 +152,10 @@
           "cascade": false
         },
         {
+          "script": "update-sandbox-runtime",
+          "cascade": false
+        },
+        {
           "script": "copy-example-boards",
           "cascade": false
         },
@@ -175,6 +180,10 @@
         },
         {
           "script": "copy-light-kits",
+          "cascade": false
+        },
+        {
+          "script": "update-sandbox-runtime",
           "cascade": false
         },
         {
@@ -281,7 +290,6 @@
     "vitest": "^2.1.3"
   },
   "dependencies": {
-    "@bjorn3/browser_wasi_shim": "^0.3.0",
     "@breadboard-ai/board-server-management": "1.18.0",
     "@breadboard-ai/board-server-utils": "0.1.4",
     "@breadboard-ai/build": "0.10.4",
@@ -289,6 +297,7 @@
     "@breadboard-ai/example-boards": "0.3.5",
     "@breadboard-ai/google-drive-kit": "0.2.7",
     "@breadboard-ai/idb-board-server": "1.18.0",
+    "@breadboard-ai/jsandbox": "0.0.1",
     "@breadboard-ai/manifest": "0.4.6",
     "@breadboard-ai/python-wasm": "0.1.9",
     "@breadboard-ai/shared-ui": "1.19.0",

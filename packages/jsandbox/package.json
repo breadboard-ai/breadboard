@@ -1,0 +1,101 @@
+{
+  "name": "@breadboard-ai/jsandbox",
+  "version": "0.0.1",
+  "description": "Breadboard Javascript Sandbox",
+  "main": "./dist/src/index.js",
+  "exports": {
+    ".": "./dist/src/index.js",
+    "./sandbox.wasm": "./sandbox.wasm"
+  },
+  "types": "dist/src/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "prepack": "npm run build",
+    "build": "wireit",
+    "test": "wireit",
+    "build:runtime": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "build:tsc"
+      ]
+    },
+    "build:rs": {
+      "command": "cargo run -p buildscript --color=always -- -r"
+    },
+    "build:runtime": {
+      "dependencies": [
+        "update-runtime-files"
+      ]
+    },
+    "update-runtime-files": {
+      "command": "tsx src/update-runtime-files.ts",
+      "dependencies": [
+        "build:rs"
+      ],
+      "output": [
+        "sandbox.wasm",
+        "src/factory.js"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc --pretty",
+      "files": [
+        "src/",
+        "tests/",
+        "tsconfig.json",
+        "package.json"
+      ],
+      "output": [
+        "dist/"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "lint": {
+      "command": "eslint src/ --ext .ts",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        ".eslintrc",
+        "../../.eslintrc.json"
+      ],
+      "output": []
+    },
+    "test": {
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/*.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    }
+  },
+  "repository": {
+    "directory": "packages/jsandbox",
+    "type": "git",
+    "url": "https://github.com/breadboard-ai/breadboard.git"
+  },
+  "files": [
+    "dist/src"
+  ],
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/breadboard-ai/breadboard/issues"
+  },
+  "homepage": "https://github.com/breadboard-ai/breadboard#readme",
+  "devDependencies": {
+    "@google-labs/tsconfig": "^0.0.1",
+    "@types/node": "^22.0.0",
+    "eslint": "^8.57.1",
+    "typescript": "^5.6.3",
+    "tsx": "^4.19.1",
+    "wireit": "^0.14.9"
+  },
+  "dependencies": {
+    "@bjorn3/browser_wasi_shim": "^0.3.0"
+  }
+}
