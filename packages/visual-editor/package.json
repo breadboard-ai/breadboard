@@ -40,7 +40,8 @@
     "build": "wireit",
     "build:vite": "wireit",
     "build:tsc": "wireit",
-    "copy-example-boards": "wireit"
+    "copy-example-boards": "wireit",
+    "update-sandbox-runtime": "wireit"
   },
   "wireit": {
     "build": {
@@ -120,7 +121,6 @@
         "typescript-files-and-deps",
         "../example-boards:build",
         "copy-pyoide-assets",
-        "copy-jsandbox-runtime",
         {
           "script": "copy-light-kits",
           "cascade": false
@@ -221,12 +221,14 @@
         "public/pyodide*"
       ]
     },
-    "copy-jsandbox-runtime": {
-      "command": "tsx src/copy-jsandbox-runtime.ts",
-      "files": [],
+    "update-sandbox-runtime": {
+      "command": "tsx src/update-sandbox-runtime.ts",
+      "files": [
+        "src/update-sandbox-runtime.ts"
+      ],
       "output": [
-        "jsandbox/jsandbox_bg.js",
-        "jsandbox/jsandbox_bg.wasm"
+        "src/sandbox/bindings.js",
+        "public/sandbox.wasm"
       ]
     }
   },
