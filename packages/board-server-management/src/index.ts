@@ -276,27 +276,32 @@ export async function createDefaultLocalBoardServer() {
 }
 
 export async function migrateIDBGraphProviders() {
-  const db = await idb.openDB("default");
-  const graphs: GraphDescriptor[] = await db.getAll("graphs");
-  db.close();
+  try {
+    const db = await idb.openDB("default");
+    const graphs: GraphDescriptor[] = await db.getAll("graphs");
+    db.close();
 
-  const boardServers = await getBoardServers();
-  const idbBoardServer = boardServers.find(
-    (bbs) => bbs.name === "Browser Storage"
-  );
+    const boardServers = await getBoardServers();
+    const idbBoardServer = boardServers.find(
+      (bbs) => bbs.name === "Browser Storage"
+    );
 
-  if (idbBoardServer) {
-    for (let i = 0; i < graphs.length; i++) {
-      const descriptor = graphs[i];
-      const boardSlug = descriptor.url?.split("/").at(-1) ?? "board.bgl.json";
-      const boardUrl = new URL(
-        `${idbBoardServer.url.href}/project-${i}/${boardSlug}`
-      );
+    if (idbBoardServer) {
+      for (let i = 0; i < graphs.length; i++) {
+        const descriptor = graphs[i];
+        const boardSlug = descriptor.url?.split("/").at(-1) ?? "board.bgl.json";
+        const boardUrl = new URL(
+          `${idbBoardServer.url.href}/project-${i}/${boardSlug}`
+        );
 
-      await idbBoardServer.create(boardUrl, descriptor);
+        await idbBoardServer.create(boardUrl, descriptor);
+      }
+    } else {
+      console.warn("Unable to find local Board Server");
     }
-  } else {
-    console.warn("Unable to find local Board Server");
+  } catch (err) {
+    // No default database - nothing to migrate.
+    return;
   }
 }
 
