@@ -40,7 +40,8 @@
     "build": "wireit",
     "build:vite": "wireit",
     "build:tsc": "wireit",
-    "copy-example-boards": "wireit"
+    "copy-example-boards": "wireit",
+    "update-sandbox-runtime": "wireit"
   },
   "wireit": {
     "build": {
@@ -219,6 +220,16 @@
         "public/python_stdlib.zip",
         "public/pyodide*"
       ]
+    },
+    "update-sandbox-runtime": {
+      "command": "tsx src/update-sandbox-runtime.ts",
+      "files": [
+        "src/update-sandbox-runtime.ts"
+      ],
+      "output": [
+        "src/sandbox/bindings.js",
+        "public/sandbox.wasm"
+      ]
     }
   },
   "repository": {
@@ -264,22 +275,23 @@
     "dotenv": "^16.4.5",
     "tsx": "^4.19.1",
     "typescript": "^5.6.3",
+    "vite": "^5.4.10",
     "vite-plugin-full-reload": "^1.2.0",
     "vite-plugin-watch-and-run": "^1.7.0",
-    "vite": "^5.4.10",
     "vitest": "^2.1.3"
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.10.4",
+    "@bjorn3/browser_wasi_shim": "^0.3.0",
     "@breadboard-ai/board-server-management": "1.18.0",
     "@breadboard-ai/board-server-utils": "0.1.4",
+    "@breadboard-ai/build": "0.10.4",
     "@breadboard-ai/data-store": "0.2.4",
     "@breadboard-ai/example-boards": "0.3.5",
     "@breadboard-ai/google-drive-kit": "0.2.7",
     "@breadboard-ai/idb-board-server": "1.18.0",
     "@breadboard-ai/manifest": "0.4.6",
-    "@breadboard-ai/shared-ui": "1.19.0",
     "@breadboard-ai/python-wasm": "0.1.9",
+    "@breadboard-ai/shared-ui": "1.19.0",
     "@breadboard-ai/types": "0.1.2",
     "@codemirror/autocomplete": "^6.18.1",
     "@codemirror/commands": "^6.7.1",
@@ -300,8 +312,8 @@
     "@types/google.picker": "^0.0.43",
     "ajv": "^8.17.1",
     "codemirror": "^6.0.1",
-    "idb-keyval": "^6.2.1",
     "idb": "^8.0.0",
+    "idb-keyval": "^6.2.1",
     "lit": "^3.2.1",
     "markdown-it": "^14.1.0",
     "pixi.js": "^8.5.2"

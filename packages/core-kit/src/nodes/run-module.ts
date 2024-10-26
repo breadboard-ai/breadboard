@@ -72,21 +72,25 @@ type RunModuleInputs = {
 };
 
 async function runModule({ $code: code }: RunModuleInputs, args: InputValues) {
+  return runModuleAsBlob(code, args);
+}
+
+function error($error: string) {
+  return { $error };
+}
+
+async function runModuleAsBlob(code: string, inputs: InputValues) {
   const codeUrl = URL.createObjectURL(
     new Blob([code], { type: "application/javascript" })
   );
   try {
     const result = (
       await import(/* @vite-ignore */ /* webpackIgnore: true */ codeUrl)
-    ).default(args);
+    ).default(inputs);
     return result;
   } catch (e) {
     return error((e as Error).message);
   } finally {
     URL.revokeObjectURL(codeUrl);
   }
-}
-
-function error($error: string) {
-  return { $error };
 }
