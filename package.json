@@ -69,6 +69,7 @@
         "./packages/discovery-types:test",
         "./packages/google-drive-kit:test",
         "./packages/import:test",
+        "./packages/jsandbox:test",
         "./packages/json-kit:test",
         "./packages/template-kit:test",
         "./packages/node-nursery-web:test",
