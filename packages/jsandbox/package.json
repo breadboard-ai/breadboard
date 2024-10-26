@@ -8,12 +8,31 @@
   "type": "module",
   "scripts": {
     "prepack": "npm run build",
-    "build": "wireit"
+    "build": "wireit",
+    "build:runtime": "wireit"
   },
   "wireit": {
     "build": {
       "dependencies": [
         "build:tsc"
+      ]
+    },
+    "build:rs": {
+      "command": "cargo run -p buildscript --color=always -- -r"
+    },
+    "build:runtime": {
+      "dependencies": [
+        "update-runtime-files"
+      ]
+    },
+    "update-runtime-files": {
+      "command": "tsx src/update-runtime-files.ts",
+      "dependencies": [
+        "build:rs"
+      ],
+      "output": [
+        "sandbox.wasm",
+        "src/factory.js"
       ]
     },
     "build:tsc": {
@@ -60,6 +79,7 @@
     "@types/node": "^22.0.0",
     "eslint": "^8.57.1",
     "typescript": "^5.6.3",
+    "tsx": "^4.19.1",
     "wireit": "^0.14.9"
   },
   "dependencies": {
