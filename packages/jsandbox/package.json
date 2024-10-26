@@ -1,0 +1,68 @@
+{
+  "name": "@breadboard-ai/jsandbox",
+  "version": "0.0.1",
+  "description": "Breadboard Javascript Sandbox",
+  "main": "./dist/src/index.js",
+  "exports": "./dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "prepack": "npm run build",
+    "build": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "build:tsc"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc --pretty",
+      "files": [
+        "src/",
+        "tsconfig.json",
+        "package.json"
+      ],
+      "output": [
+        "dist/"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "lint": {
+      "command": "eslint src/ --ext .ts",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        ".eslintrc",
+        "../../.eslintrc.json"
+      ],
+      "output": []
+    }
+  },
+  "repository": {
+    "directory": "packages/jsandbox",
+    "type": "git",
+    "url": "https://github.com/breadboard-ai/breadboard.git"
+  },
+  "files": [
+    "dist/src"
+  ],
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/breadboard-ai/breadboard/issues"
+  },
+  "homepage": "https://github.com/breadboard-ai/breadboard#readme",
+  "devDependencies": {
+    "@google-labs/tsconfig": "^0.0.1",
+    "@types/node": "^22.0.0",
+    "eslint": "^8.57.1",
+    "typescript": "^5.6.3",
+    "wireit": "^0.14.9"
+  },
+  "dependencies": {
+    "@bjorn3/browser_wasi_shim": "^0.3.0"
+  }
+}
