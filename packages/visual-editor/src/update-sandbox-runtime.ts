@@ -34,7 +34,6 @@ async function copy(filename: string, destination: string[]) {
   await copyFile(source, dest);
 }
 
-// First, copy the import to the src
 await Promise.all([
   copy("jsandbox_bg.js", ["src", "sandbox", "bindings.js"]),
   copy("jsandbox_bg.wasm", ["public", "sandbox.wasm"]),

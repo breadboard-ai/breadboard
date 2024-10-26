@@ -6,7 +6,12 @@
 
 import * as idb from "idb";
 import { IDBBoardServer } from "@breadboard-ai/idb-board-server";
-import { BoardServer, GraphDescriptor, User } from "@google-labs/breadboard";
+import {
+  asRuntimeKit,
+  BoardServer,
+  GraphDescriptor,
+  User,
+} from "@google-labs/breadboard";
 import { RemoteBoardServer } from "@breadboard-ai/remote-board-server";
 import { ExampleBoardServer } from "@breadboard-ai/example-board-server";
 import {
@@ -21,7 +26,11 @@ import GoogleDriveKit, {
   GoogleDriveBoardServer,
 } from "@breadboard-ai/google-drive-kit";
 import { TokenVendor } from "@breadboard-ai/connection-client";
-const loadedKits = loadKits([GeminiKit, PythonWasmKit, GoogleDriveKit]);
+const loadedKits = loadKits([
+  asRuntimeKit(GeminiKit),
+  asRuntimeKit(PythonWasmKit),
+  asRuntimeKit(GoogleDriveKit),
+]);
 
 const PLAYGROUND_BOARDS = "example://playground-boards";
 const EXAMPLE_BOARDS = "example://example-boards";

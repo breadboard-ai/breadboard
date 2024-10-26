@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { createLoader, Kit } from "@google-labs/breadboard";
+import { asRuntimeKit, createLoader, Kit } from "@google-labs/breadboard";
 import { Board } from "./board.js";
 import { Run } from "./run.js";
 import { Edit } from "./edit.js";
@@ -24,6 +24,7 @@ import GeminiKit from "@google-labs/gemini-kit";
 import BuildExampleKit from "../build-example-kit";
 import PythonWasmKit from "@breadboard-ai/python-wasm";
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
+import { createKit } from "../sandbox/index.js";
 
 export * as Events from "./events.js";
 export * as Types from "./types.js";
@@ -35,10 +36,11 @@ export async function create(config: RuntimeConfig): Promise<{
   kits: Kit[];
 }> {
   const kits = await loadKits([
-    GeminiKit,
-    BuildExampleKit,
-    PythonWasmKit,
-    GoogleDriveKit,
+    createKit(),
+    asRuntimeKit(GeminiKit),
+    asRuntimeKit(BuildExampleKit),
+    asRuntimeKit(PythonWasmKit),
+    asRuntimeKit(GoogleDriveKit),
   ]);
 
   const skipPlaygroundExamples = import.meta.env.MODE !== "development";

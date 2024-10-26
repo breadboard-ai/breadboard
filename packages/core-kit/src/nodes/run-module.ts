@@ -7,13 +7,6 @@
 import { defineNodeType, object, unsafeSchema } from "@breadboard-ai/build";
 import { InputValues } from "@google-labs/breadboard";
 
-import {
-  ConsoleStdout,
-  File as WasiFile,
-  OpenFile,
-  WASI,
-} from "@bjorn3/browser_wasi_shim";
-
 export default defineNodeType({
   name: "runModule",
   metadata: {
@@ -79,7 +72,7 @@ type RunModuleInputs = {
 };
 
 async function runModule({ $code: code }: RunModuleInputs, args: InputValues) {
-  return runModuleWithJsandbox(code, args);
+  return runModuleAsBlob(code, args);
 }
 
 function error($error: string) {
@@ -100,29 +93,4 @@ async function runModuleAsBlob(code: string, inputs: InputValues) {
   } finally {
     URL.revokeObjectURL(codeUrl);
   }
-}
-
-async function runModuleWithJsandbox(code: string, inputs: InputValues) {
-  const path = new URL("/jsandbox/jsandbox_bg.wasm", window.location.href);
-  const wasi = new WASI(
-    [],
-    [],
-    [
-      new OpenFile(new WasiFile([])), // stdin
-      ConsoleStdout.lineBuffered((msg) => console.log(`[WASI stdout] ${msg}`)),
-      ConsoleStdout.lineBuffered((msg) => console.warn(`[WASI stderr] ${msg}`)),
-    ]
-  );
-  // @ts-expect-error 2307
-  const factory = (await import("/jsandbox/jsandbox_bg.js")).default;
-  const jsandbox = factory();
-  const { instance } = await WebAssembly.instantiateStreaming(fetch(path), {
-    "./jsandbox_bg.js": jsandbox,
-    wasi_snapshot_preview1: wasi.wasiImport,
-  });
-  jsandbox.__wbg_set_wasm(instance.exports);
-  // @ts-expect-error 2739
-  wasi.start({ exports: instance.exports });
-  const result = jsandbox.run_module(code, JSON.stringify(inputs));
-  return JSON.parse(result);
 }
