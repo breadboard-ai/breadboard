@@ -12,6 +12,7 @@
   "scripts": {
     "prepack": "npm run build",
     "build": "wireit",
+    "test": "wireit",
     "build:runtime": "wireit"
   },
   "wireit": {
@@ -42,6 +43,7 @@
       "command": "tsc --pretty",
       "files": [
         "src/",
+        "tests/",
         "tsconfig.json",
         "package.json"
       ],
@@ -59,6 +61,14 @@
         ".eslintrc",
         "../../.eslintrc.json"
       ],
+      "output": []
+    },
+    "test": {
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/*.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
       "output": []
     }
   },
