@@ -2,3 +2,4 @@
 # because they come from NPM.
 public/pyodide*
 public/python*
+public/sandbox.wasm

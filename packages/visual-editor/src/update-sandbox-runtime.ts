@@ -4,37 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { existsSync } from "fs";
 import { copyFile } from "fs/promises";
 import { join } from "path";
-import { exit } from "process";
 
-// TODO: Actually make this a real dependency.
-const jsandboxDir = join(
-  import.meta.dirname,
-  "..",
-  "..",
-  "jsandbox",
-  "target",
-  "wasm-bindgen"
-);
+const jsandboxWasmPath = new URL(
+  import.meta.resolve("@breadboard-ai/jsandbox/sandbox.wasm")
+).pathname;
 
-async function copy(filename: string, destination: string[]) {
-  const fullPath = join(jsandboxDir, filename);
-  // Since JSandbox is still under construction,
-  // make this operation fail silently with a warning, rather than break the
-  // build.
-  if (!existsSync(fullPath)) {
-    console.warn(`WARNING: JSandbox bits weren't found at:\n${fullPath}`);
-    exit(0);
-  }
-  const source = decodeURI(join(jsandboxDir, filename));
+async function copy(destination: string[]) {
   const dest = decodeURI(join(import.meta.dirname, "..", ...destination));
-  console.log(`Copying\nfrom: "${source}"\nto: "${dest}"`);
-  await copyFile(source, dest);
+  console.log(`Copying\nfrom: "${jsandboxWasmPath}"\nto: "${dest}"`);
+  await copyFile(jsandboxWasmPath, dest);
 }
 
-await Promise.all([
-  copy("jsandbox_bg.js", ["src", "sandbox", "bindings.js"]),
-  copy("jsandbox_bg.wasm", ["public", "sandbox.wasm"]),
-]);
+await Promise.all([copy(["public", "sandbox.wasm"])]);

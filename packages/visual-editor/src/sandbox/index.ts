@@ -12,7 +12,7 @@ import {
 } from "@bjorn3/browser_wasi_shim";
 import { type InputValues, type Kit } from "@google-labs/breadboard";
 
-import factory from "./bindings.js";
+import { factory } from "@breadboard-ai/jsandbox";
 import wasm from "/sandbox.wasm?url";
 
 export { createKit };
