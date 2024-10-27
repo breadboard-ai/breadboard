@@ -56,25 +56,43 @@ describe("runtime basics", () => {
 
 describe("runtime errors", () => {
   test("handles invalid module", async () => {
-    await rejects(async () => await run("export"), {
+    await rejects(async () => run("export"), {
       name: "Error",
       message: /invalid export syntax/,
     });
 
-    await rejects(async () => await run("FOO"), {
+    await rejects(async () => run("FOO"), {
       name: "Error",
       message: /Error converting from js 'undefined' into type 'function'/,
     });
   });
 
   test("handles errors thrown", async () => {
-    await rejects(
-      async () =>
-        await run(
-          `export default function() {
+    await rejects(async () =>
+      run(
+        `export default function() {
         throw new Error("OH NOES");
       }`
-        )
+      )
     );
+  });
+});
+
+describe("can import capabilities", () => {
+  test("can import breadboard:capabilities module", async () => {
+    const result = await run(`import "breadboard:capabilities";
+    export default function() {
+      return { success: true }
+    }`);
+    ok(true);
+  });
+
+  test("can import fetch from breadboard:capabilities", async () => {
+    const result = await run(`import { fetch } from "breadboard:capabilities";
+    export default function() {
+      return { fetch: typeof fetch }
+    }
+      `);
+    deepStrictEqual(result, { fetch: "function" });
   });
 });

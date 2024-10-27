@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-rquickjs = "0.6.2"
+rquickjs = { version = "0.6.2", default-features = false, features = [ "loader", ] }
+
 thiserror = "1.0.65"
 wasm-bindgen = { workspace = true }
 
@@ -13,6 +14,8 @@ wasm-bindgen = { git = "https://github.com/surma-dump/wasm-bindgen.git", branch 
 wasm-bindgen-cli-support = { git = "https://github.com/surma-dump/wasm-bindgen.git", branch = "wasi" }
 wasm-bindgen-futures = { git = "https://github.com/surma-dump/wasm-bindgen.git", branch = "wasi" }
 # js-sys = { path = "wasm-bindgen/crates/js-sys" }
+
+
 
 [workspace]
 members = [

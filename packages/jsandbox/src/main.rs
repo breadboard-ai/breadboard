@@ -3,20 +3,45 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-use rquickjs::{CatchResultExt, Object};
+use rquickjs::{
+    loader::{BuiltinResolver, ModuleLoader},
+    CatchResultExt, Object,
+};
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
+
+mod capabilities;
+
+use capabilities::CapabilitiesModule;
 
 #[derive(Debug, Error)]
 enum Error {
     #[error("Value could not be stringified to JSON")]
     NotStringifiable,
+
     #[error("No Value when trying to convert from promise")]
     NoValue,
+
     #[error("A QuickJS error occured: {0}")]
     QuickJS(#[from] rquickjs::Error),
-    #[error("Run time error occurred: {0}")]
-    RunTime(String),
+
+    #[error("Error loading module: {0}")]
+    Loading(String),
+
+    #[error("Error evaluating module: {0}")]
+    Evaluating(String),
+
+    #[error("Error getting default export: {0}")]
+    GettingDefaultExport(String),
+
+    #[error("Error getting `default` function: {0}")]
+    GettintDefaultFunction(String),
+
+    #[error("Error parsing input values: {0}")]
+    ParsingInputValues(String),
+
+    #[error("Error calling module function: {0}")]
+    CallingModuleFunction(String),
 }
 
 type Result<T> = std::result::Result<T, Error>;
@@ -50,8 +75,14 @@ fn maybe_promise(result_obj: rquickjs::Value) -> Result<rquickjs::Value> {
 
 #[wasm_bindgen]
 pub fn run_module(code: String, json: String) -> std::result::Result<String, JsError> {
+    let resolver = BuiltinResolver::default().with_module("breadboard:capabilities");
+    let loader = ModuleLoader::default().with_module("breadboard:capabilities", CapabilitiesModule);
+
     let rt = rquickjs::Runtime::new()?;
     let ctx = rquickjs::Context::full(&rt)?;
+
+    rt.set_loader(resolver, loader);
+
     let result: Result<String> = ctx.with(|ctx| {
         // Construct the Console object.
         let global = ctx.globals();
@@ -62,35 +93,37 @@ pub fn run_module(code: String, json: String) -> std::result::Result<String, JsE
         // Load the module.
         let module = rquickjs::Module::declare(ctx.clone(), "m", code)
             .catch(&ctx)
-            .map_err(|e| Error::RunTime(e.to_string()))?;
+            .map_err(|e| Error::Loading(e.to_string()))?;
+
+        // Evaluate module.
         let (evaluated, _) = module
             .eval()
             .catch(&ctx)
-            .map_err(|e| Error::RunTime(e.to_string()))?;
+            .map_err(|e| Error::Evaluating(e.to_string()))?;
         while ctx.execute_pending_job() {}
 
         // Get the default export.
         let namespace = evaluated
             .namespace()
             .catch(&ctx)
-            .map_err(|e| Error::RunTime(e.to_string()))?;
+            .map_err(|e| Error::GettingDefaultExport(e.to_string()))?;
 
         let default = namespace
             .get::<_, rquickjs::Function>("default")
             .catch(&ctx)
-            .map_err(|e| Error::RunTime(e.to_string()))?;
+            .map_err(|e| Error::GettintDefaultFunction(e.to_string()))?;
 
         let inputs = ctx
             .json_parse(json)
             .catch(&ctx)
-            .map_err(|e| Error::RunTime(e.to_string()))?;
+            .map_err(|e| Error::ParsingInputValues(e.to_string()))?;
 
         // Call it and return value.
         let result_obj: rquickjs::Value = maybe_promise(
             default
                 .call((inputs,))
                 .catch(&ctx)
-                .map_err(|e| Error::RunTime(e.to_string()))?,
+                .map_err(|e| Error::CallingModuleFunction(e.to_string()))?,
         )?;
 
         let Some(result_str) = ctx.json_stringify(result_obj)? else {
