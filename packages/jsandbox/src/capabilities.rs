@@ -16,8 +16,12 @@ impl ModuleDef for CapabilitiesModule {
     fn evaluate<'js>(ctx: &Ctx<'js>, exports: &rquickjs::module::Exports<'js>) -> Result<()> {
         exports.export(
             "fetch",
-            Function::new(ctx.clone(), |a: f64, b: f64| (a + b) * 0.5)?.with_name("fetch")?,
+            Function::new(ctx.clone(), |inputs: String| fetch(inputs))?.with_name("fetch")?,
         )?;
         Ok(())
     }
+}
+
+fn fetch(inputs: String) -> String {
+    format!("INPUTS: {}", inputs)
 }

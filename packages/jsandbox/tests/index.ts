@@ -95,4 +95,13 @@ describe("can import capabilities", () => {
       `);
     deepStrictEqual(result, { fetch: "function" });
   });
+
+  test("can call fetch from breadboard:capabilities", async () => {
+    const result = await run(`import { fetch } from "breadboard:capabilities";
+    export default function() {
+      return { result: fetch("HELLO") }
+    }
+      `);
+    deepStrictEqual(result, { result: "INPUTS: HELLO" });
+  });
 });

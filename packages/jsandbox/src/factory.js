@@ -143,6 +143,11 @@ wasm.__wbindgen_free(deferred4_0, deferred4_1, 1);
 }
 }
 
+ function __wbindgen_error_new(arg0, arg1) {
+const ret = new Error(getStringFromWasm0(arg0, arg1));
+return ret;
+};
+
  function __wbg_log_0b11c2c234f90aee(arg0, arg1) {
 let deferred0_0;
 let deferred0_1;
@@ -153,11 +158,6 @@ console.log(getStringFromWasm0(arg0, arg1));
 } finally {
 wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
 }
-};
-
- function __wbindgen_error_new(arg0, arg1) {
-const ret = new Error(getStringFromWasm0(arg0, arg1));
-return ret;
 };
 
  function __wbindgen_init_externref_table() {
@@ -178,9 +178,9 @@ eval_code
 ,
 run_module
 ,
-__wbg_log_0b11c2c234f90aee
-,
 __wbindgen_error_new
+,
+__wbg_log_0b11c2c234f90aee
 ,
 __wbindgen_init_externref_table
 ,
