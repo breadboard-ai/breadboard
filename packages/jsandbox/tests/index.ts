@@ -6,7 +6,7 @@
 
 import test, { describe } from "node:test";
 import { loadRuntime, RunModuleManager } from "../src/node.js";
-import { deepStrictEqual } from "node:assert";
+import { deepStrictEqual, ok, rejects, throws } from "node:assert";
 
 async function run(
   code: string,
@@ -17,7 +17,7 @@ async function run(
   return manager.runModule(code, inputs);
 }
 
-describe("runtime", () => {
+describe("runtime basics", () => {
   test("can run a simple module", async () => {
     deepStrictEqual(
       await run(
@@ -50,6 +50,31 @@ describe("runtime", () => {
         { test: "HELLO" }
       ),
       { result: "HELLO" }
+    );
+  });
+});
+
+describe("runtime errors", () => {
+  test("handles invalid module", async () => {
+    await rejects(async () => await run("export"), {
+      name: "Error",
+      message: /invalid export syntax/,
+    });
+
+    await rejects(async () => await run("FOO"), {
+      name: "Error",
+      message: /Error converting from js 'undefined' into type 'function'/,
+    });
+  });
+
+  test("handles errors thrown", async () => {
+    await rejects(
+      async () =>
+        await run(
+          `export default function() {
+        throw new Error("OH NOES");
+      }`
+        )
     );
   });
 });

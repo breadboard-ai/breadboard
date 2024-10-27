@@ -15,6 +15,8 @@ enum Error {
     NoValue,
     #[error("A QuickJS error occured: {0}")]
     QuickJS(#[from] rquickjs::Error),
+    #[error("Run time error occurred: {0}")]
+    RunTime(String),
 }
 
 type Result<T> = std::result::Result<T, Error>;
@@ -56,24 +58,41 @@ pub fn run_module(code: String, json: String) -> std::result::Result<String, JsE
         let console = Object::new(ctx.clone())?;
         let _ = console.set("log", rquickjs::Function::new(ctx.clone(), log)?);
         let _ = global.set("console", console);
+
         // Load the module.
-        let (module, _) = rquickjs::Module::declare(ctx.clone(), "m", code)
+        let module = rquickjs::Module::declare(ctx.clone(), "m", code)
             .catch(&ctx)
-            .unwrap()
+            .map_err(|e| Error::RunTime(e.to_string()))?;
+        let (evaluated, _) = module
             .eval()
             .catch(&ctx)
-            .unwrap();
+            .map_err(|e| Error::RunTime(e.to_string()))?;
         while ctx.execute_pending_job() {}
+
         // Get the default export.
-        let default = module
+        let namespace = evaluated
             .namespace()
-            .unwrap()
+            .catch(&ctx)
+            .map_err(|e| Error::RunTime(e.to_string()))?;
+
+        let default = namespace
             .get::<_, rquickjs::Function>("default")
-            .unwrap();
-        let inputs = ctx.json_parse(json)?;
+            .catch(&ctx)
+            .map_err(|e| Error::RunTime(e.to_string()))?;
+
+        let inputs = ctx
+            .json_parse(json)
+            .catch(&ctx)
+            .map_err(|e| Error::RunTime(e.to_string()))?;
+
         // Call it and return value.
-        let result_obj: rquickjs::Value =
-            maybe_promise(default.call((inputs,)).catch(&ctx).unwrap())?;
+        let result_obj: rquickjs::Value = maybe_promise(
+            default
+                .call((inputs,))
+                .catch(&ctx)
+                .map_err(|e| Error::RunTime(e.to_string()))?,
+        )?;
+
         let Some(result_str) = ctx.json_stringify(result_obj)? else {
             return Err(Error::NotStringifiable);
         };
