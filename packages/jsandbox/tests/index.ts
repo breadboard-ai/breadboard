@@ -40,4 +40,16 @@ describe("runtime", () => {
       { result: "HELLO" }
     );
   });
+
+  test("supports async export", async () => {
+    deepStrictEqual(
+      await run(
+        `export default async function({test}) {
+        return new Promise((resolve) => resolve({ result: test }));
+      }`,
+        { test: "HELLO" }
+      ),
+      { result: "HELLO" }
+    );
+  });
 });

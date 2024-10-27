@@ -22,7 +22,14 @@
       ]
     },
     "build:rs": {
-      "command": "cargo run -p buildscript --color=always -- -r"
+      "command": "cargo run -p buildscript --color=always -- -r",
+      "files": [
+        "src/*.rs"
+      ],
+      "output": [
+        "target/wasm_bindgen/jsandbox_bg.js",
+        "target/wasm_bindgen/jsandbox_bg.wasm"
+      ]
     },
     "build:runtime": {
       "dependencies": [
@@ -66,7 +73,7 @@
     "test": {
       "command": "node --test --enable-source-maps --test-reporter spec dist/tests/*.js",
       "dependencies": [
-        "build:tsc"
+        "build"
       ],
       "files": [],
       "output": []

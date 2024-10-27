@@ -11,6 +11,8 @@ use wasm_bindgen::prelude::*;
 enum Error {
     #[error("Value could not be stringified to JSON")]
     NotStringifiable,
+    #[error("No Value when trying to convert from promise")]
+    NoValue,
     #[error("A QuickJS error occured: {0}")]
     QuickJS(#[from] rquickjs::Error),
 }
@@ -29,6 +31,19 @@ pub fn eval_code(code: String) -> std::result::Result<String, JsError> {
         Ok(result_str.to_string()?)
     });
     Ok(result?)
+}
+
+fn maybe_promise(result_obj: rquickjs::Value) -> Result<rquickjs::Value> {
+    let resolved_obj: rquickjs::Value = if result_obj.is_promise() {
+        let Some(promise) = result_obj.as_promise() else {
+            return Err(Error::NoValue);
+        };
+        let result = promise.finish::<rquickjs::Value>()?;
+        result
+    } else {
+        result_obj.clone()
+    };
+    Ok(resolved_obj)
 }
 
 #[wasm_bindgen]
@@ -57,7 +72,8 @@ pub fn run_module(code: String, json: String) -> std::result::Result<String, JsE
             .unwrap();
         let inputs = ctx.json_parse(json)?;
         // Call it and return value.
-        let result_obj: rquickjs::Value = default.call((inputs,)).catch(&ctx).unwrap();
+        let result_obj: rquickjs::Value =
+            maybe_promise(default.call((inputs,)).catch(&ctx).unwrap())?;
         let Some(result_str) = ctx.json_stringify(result_obj)? else {
             return Err(Error::NotStringifiable);
         };
