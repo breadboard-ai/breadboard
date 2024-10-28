@@ -21,7 +21,7 @@ export default defineNodeType({
     $module: {
       description: "The Module to run.",
       title: "Module",
-      behavior: ["config"],
+      behavior: ["config", "module"],
       type: "string",
     },
     $inputSchema: {
