@@ -6,7 +6,7 @@
 
 import test, { describe } from "node:test";
 import { loadRuntime, RunModuleManager } from "../src/node.js";
-import { deepStrictEqual } from "node:assert";
+import { deepStrictEqual, ok, rejects, throws } from "node:assert";
 
 async function run(
   code: string,
@@ -17,7 +17,7 @@ async function run(
   return manager.runModule(code, inputs);
 }
 
-describe("runtime", () => {
+describe("runtime basics", () => {
   test("can run a simple module", async () => {
     deepStrictEqual(
       await run(
@@ -39,5 +39,69 @@ describe("runtime", () => {
       ),
       { result: "HELLO" }
     );
+  });
+
+  test("supports async export", async () => {
+    deepStrictEqual(
+      await run(
+        `export default async function({test}) {
+        return new Promise((resolve) => resolve({ result: test }));
+      }`,
+        { test: "HELLO" }
+      ),
+      { result: "HELLO" }
+    );
+  });
+});
+
+describe("runtime errors", () => {
+  test("handles invalid module", async () => {
+    await rejects(async () => run("export"), {
+      name: "Error",
+      message: /invalid export syntax/,
+    });
+
+    await rejects(async () => run("FOO"), {
+      name: "Error",
+      message: /Error converting from js 'undefined' into type 'function'/,
+    });
+  });
+
+  test("handles errors thrown", async () => {
+    await rejects(async () =>
+      run(
+        `export default function() {
+        throw new Error("OH NOES");
+      }`
+      )
+    );
+  });
+});
+
+describe("can import capabilities", () => {
+  test("can import breadboard:capabilities module", async () => {
+    const result = await run(`import "breadboard:capabilities";
+    export default function() {
+      return { success: true }
+    }`);
+    ok(true);
+  });
+
+  test("can import fetch from breadboard:capabilities", async () => {
+    const result = await run(`import { fetch } from "breadboard:capabilities";
+    export default function() {
+      return { fetch: typeof fetch }
+    }
+      `);
+    deepStrictEqual(result, { fetch: "function" });
+  });
+
+  test("can call fetch from breadboard:capabilities", async () => {
+    const result = await run(`import { fetch } from "breadboard:capabilities";
+    export default function() {
+      return { result: fetch({ test: "HELLO" }) }
+    }
+      `);
+    deepStrictEqual(result, { result: { test: "HELLO" } });
   });
 });
