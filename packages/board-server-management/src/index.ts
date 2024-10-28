@@ -275,6 +275,17 @@ export async function createDefaultLocalBoardServer() {
   }
 }
 
+export async function legacyGraphProviderExists() {
+  const db = await idb.openDB("default");
+  try {
+    await db.getAll("graphs");
+  } catch (err) {
+    return false;
+  }
+
+  return true;
+}
+
 export async function migrateIDBGraphProviders() {
   try {
     const db = await idb.openDB("default");

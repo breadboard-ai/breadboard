@@ -11,18 +11,7 @@
   <script type="module">
     import * as pkg from "./package.json";
     import { Main } from "./src/index.ts";
-    import { IDBGraphProvider } from "./src/providers/indexed-db.ts";
-    import { FileSystemGraphProvider } from "./src/providers/file-system.ts";
-    import { ExamplesGraphProvider } from "./src/providers/examples.ts";
-    import { RemoteGraphProvider } from "./src/providers/remote.ts";
     import { SettingsStore } from "./src/data/settings-store.ts";
-    import examplesBoards from "@breadboard-ai/example-boards/examples-boards.json" assert { type: "json" };
-    import playgroundBoards from "@breadboard-ai/example-boards/playground-boards.json" assert { type: "json" };
-
-    const boards = new Map([["Example Boards", examplesBoards]]);
-    if (import.meta.env.MODE === "development") {
-      boards.set("Playground Boards", playgroundBoards);
-    }
 
     const config = {
       settings: SettingsStore.instance(),
