@@ -836,6 +836,8 @@ export class LLMInput extends LitElement {
     if (this.value.parts.length === 0) {
       this.value = null;
     }
+
+    this.#partDataURLs.delete(idx);
     this.#forceReRender();
   }
 
