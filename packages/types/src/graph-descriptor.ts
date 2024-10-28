@@ -391,6 +391,64 @@ type TestProperties = {
 };
 
 /**
+ * Unique identifier of a module.
+ */
+export type ModuleIdentifier = string;
+
+/**
+ * The code for this module, which should include a describer, an invoker, and
+ * any other relevant information to power the module.
+ */
+export type ModuleCode = string;
+
+/**
+ * A tag that can be associated with a graph.
+ * - `published`: The module is published (as opposed to a draft). It may be
+ *    used in production and shared with others.
+ * - `experimental`: The graph is experimental and may not be stable.
+ */
+export type ModuleTag = "published" | "experimental";
+
+export type ModuleMetadata = {
+  /**
+   * The icon for the module.
+   */
+  icon?: string;
+
+  /**
+   * The source file for the module, if relevant.
+   */
+  url?: string;
+
+  /**
+   * Tags associated with the module. At this moment, free-form strings.
+   */
+  tags?: ModuleTag[];
+
+  /**
+   * The documentation for the module, expressed as a URL and optional description.
+   */
+  help?: {
+    description?: string;
+    url: string;
+  };
+};
+
+export type Module = {
+  /**
+   * Metadata associated with the graph.
+   */
+  metadata: ModuleMetadata;
+
+  /**
+   * The code for this module.
+   */
+  code: string;
+};
+
+export type Modules = Record<ModuleIdentifier, Module>;
+
+/**
  * Represents a graph.
  */
 export type GraphDescriptor = GraphInlineMetadata & {
@@ -422,6 +480,11 @@ export type GraphDescriptor = GraphInlineMetadata & {
    * Arguments that are passed to the graph, useful to bind values to graphs.
    */
   args?: InputValues;
+
+  /**
+   * Modules that are included as part of this graph.
+   */
+  modules?: Modules;
 } & TestProperties;
 
 /**

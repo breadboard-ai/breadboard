@@ -99,6 +99,10 @@
 					"$ref": "#/definitions/InputValues",
 					"description": "Arguments that are passed to the graph, useful to bind values to graphs."
 				},
+				"modules": {
+					"$ref": "#/definitions/Modules",
+					"description": "Modules that are included as part of this graph."
+				},
 				"$schema": {
 					"type": "string",
 					"description": "The schema of the graph."
@@ -537,6 +541,78 @@
 				"description": "Unique identifier of a graph."
 			},
 			"description": "Represents a collection of sub-graphs. The key is the identifier of the sub-graph. The value is the descriptor of the sub-graph."
+		},
+		"Modules": {
+			"type": "object",
+			"additionalProperties": {
+				"$ref": "#/definitions/Module"
+			},
+			"propertyNames": {
+				"description": "Unique identifier of a module."
+			}
+		},
+		"Module": {
+			"type": "object",
+			"properties": {
+				"metadata": {
+					"$ref": "#/definitions/ModuleMetadata",
+					"description": "Metadata associated with the graph."
+				},
+				"code": {
+					"type": "string",
+					"description": "The code for this module."
+				}
+			},
+			"required": [
+				"metadata",
+				"code"
+			],
+			"additionalProperties": false
+		},
+		"ModuleMetadata": {
+			"type": "object",
+			"properties": {
+				"icon": {
+					"type": "string",
+					"description": "The icon for the module."
+				},
+				"url": {
+					"type": "string",
+					"description": "The source file for the module, if relevant."
+				},
+				"tags": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/ModuleTag"
+					},
+					"description": "Tags associated with the module. At this moment, free-form strings."
+				},
+				"help": {
+					"type": "object",
+					"properties": {
+						"description": {
+							"type": "string"
+						},
+						"url": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"url"
+					],
+					"additionalProperties": false,
+					"description": "The documentation for the module, expressed as a URL and optional description."
+				}
+			},
+			"additionalProperties": false
+		},
+		"ModuleTag": {
+			"type": "string",
+			"enum": [
+				"published",
+				"experimental"
+			],
+			"description": "A tag that can be associated with a graph.\n- `published`: The module is published (as opposed to a draft). It may be    used in production and shared with others.\n- `experimental`: The graph is experimental and may not be stable."
 		}
 	}
 }

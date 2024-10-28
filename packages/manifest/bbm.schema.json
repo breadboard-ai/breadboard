@@ -217,6 +217,10 @@
 					"$ref": "#/definitions/GraphMetadata",
 					"description": "Metadata associated with the graph."
 				},
+				"modules": {
+					"$ref": "#/definitions/Modules",
+					"description": "Modules that are included as part of this graph."
+				},
 				"nodes": {
 					"description": "The collection of all nodes in the graph.",
 					"items": {
@@ -429,6 +433,72 @@
 			],
 			"description": "Union of  {@link  ResourceReference }  and  {@link  BreadboardManifest }"
 		},
+		"Module": {
+			"additionalProperties": false,
+			"properties": {
+				"code": {
+					"description": "The code for this module.",
+					"type": "string"
+				},
+				"metadata": {
+					"$ref": "#/definitions/ModuleMetadata",
+					"description": "Metadata associated with the graph."
+				}
+			},
+			"required": [
+				"code",
+				"metadata"
+			],
+			"type": "object"
+		},
+		"ModuleMetadata": {
+			"additionalProperties": false,
+			"properties": {
+				"help": {
+					"additionalProperties": false,
+					"description": "The documentation for the module, expressed as a URL and optional description.",
+					"properties": {
+						"description": {
+							"type": "string"
+						},
+						"url": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"url"
+					],
+					"type": "object"
+				},
+				"icon": {
+					"description": "The icon for the module.",
+					"type": "string"
+				},
+				"tags": {
+					"description": "Tags associated with the module. At this moment, free-form strings.",
+					"items": {
+						"$ref": "#/definitions/ModuleTag"
+					},
+					"type": "array"
+				},
+				"url": {
+					"description": "The source file for the module, if relevant.",
+					"type": "string"
+				}
+			},
+			"type": "object"
+		},
+		"ModuleTag": {
+			"description": "A tag that can be associated with a graph.\n- `published`: The module is published (as opposed to a draft). It may be    used in production and shared with others.\n- `experimental`: The graph is experimental and may not be stable.",
+			"enum": [
+				"experimental",
+				"published"
+			],
+			"type": "string"
+		},
+		"Modules": {
+			"$ref": "#/definitions/Record%3CModuleIdentifier%2CModule%3E"
+		},
 		"NodeConfiguration": {
 			"$ref": "#/definitions/Record%3Cstring%2CNodeValue%3E",
 			"description": "Values that are supplied as part of the graph. These values are merged with the `InputValues` and supplied as inputs to the `NodeHandler`."
@@ -600,6 +670,15 @@
 			},
 			"propertyNames": {
 				"description": "Unique identifier of a node's input."
+			},
+			"type": "object"
+		},
+		"Record<ModuleIdentifier,Module>": {
+			"additionalProperties": {
+				"$ref": "#/definitions/Module"
+			},
+			"propertyNames": {
+				"description": "Unique identifier of a module."
 			},
 			"type": "object"
 		},
