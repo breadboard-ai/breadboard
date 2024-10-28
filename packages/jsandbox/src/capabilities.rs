@@ -25,15 +25,11 @@ impl ModuleDef for CapabilitiesModule {
 }
 
 async fn fetch_wrapped<'js>(inputs: Value<'js>) -> rquickjs::Value<'js> {
-    // let ctx = inputs.ctx().clone();
     fetch_result(inputs).await.unwrap()
 }
 
 async fn fetch_result<'js>(inputs: Value<'js>) -> rquickjs::Result<Value<'js>> {
     let ctx: Ctx<'js> = inputs.ctx().clone();
-    // let Some(input_str) = ctx.json_stringify(inputs)? else {
-    //     return Err(rquickjs::Error::new_loading("test"));
-    // };
     let input_str = ctx.json_stringify(inputs).unwrap().unwrap();
     let result_str = fetch(input_str.to_string()?)
         .await
