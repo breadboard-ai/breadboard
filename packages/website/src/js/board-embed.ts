@@ -145,6 +145,7 @@ export class BoardEmbed extends LitElement {
         .collapseNodesByDefault=${collapseNodesByDefault}
         .hideSubboardSelectorWhenEmpty=${true}
         .showNodePreviewValues=${false}
+        .showReadOnlyLabel=${false}
         .readOnly=${true}
       ></bb-editor>
       <div id="overlay"></div>
