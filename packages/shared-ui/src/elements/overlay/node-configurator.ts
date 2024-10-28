@@ -53,6 +53,9 @@ export class NodeConfigurationOverlay extends LitElement {
   @property()
   showNodeTypeDescriptions = false;
 
+  @property()
+  readOnly = false;
+
   #overlayRef: Ref<Overlay> = createRef();
   #userInputRef: Ref<UserInput> = createRef();
   #formRef: Ref<HTMLFormElement> = createRef();
@@ -218,10 +221,15 @@ export class NodeConfigurationOverlay extends LitElement {
       margin-right: var(--bb-grid-size-2);
     }
 
-    #update:hover,
-    #update:focus {
+    #update:not([disabled]):hover,
+    #update:not([disabled]):focus {
       background: var(--bb-ui-600);
       transition-duration: 0.1s;
+    }
+
+    #update[disabled] {
+      opacity: 0.5;
+      cursor: default;
     }
 
     #minmax {
@@ -632,10 +640,16 @@ export class NodeConfigurationOverlay extends LitElement {
                 type="text"
                 placeholder="Enter the title for this component"
                 .value=${this.value.metadata?.title || ""}
+                ?disabled=${this.readOnly}
               />
 
               <label for="log-level">Log values</label>
-              <select type="text" id="log-level" name="log-level">
+              <select
+                type="text"
+                id="log-level"
+                name="log-level"
+                ?disabled=${this.readOnly}
+              >
                 <option
                   value="debug"
                   ?selected=${this.value.metadata?.logLevel === "debug"}
@@ -656,6 +670,7 @@ export class NodeConfigurationOverlay extends LitElement {
                 name="description"
                 placeholder="Enter the description for this component"
                 .value=${this.value.metadata?.description || ""}
+                ?disabled=${this.readOnly}
               ></textarea>
             </form>
             <bb-user-input
@@ -681,13 +696,14 @@ export class NodeConfigurationOverlay extends LitElement {
               .inlineControls=${true}
               .jumpTo=${this.value.selectedPort}
               .enhancingValue=${false}
+              .readOnly=${this.readOnly}
             ></bb-user-input>
           </div>
         </div>
         <div id="buttons">
           <button
             id="run-node"
-            ?disabled=${!this.canRunNode}
+            ?disabled=${!this.canRunNode || this.readOnly}
             @click=${() => {
               if (!this.value) {
                 return;
@@ -709,6 +725,7 @@ export class NodeConfigurationOverlay extends LitElement {
               Cancel
             </button>
             <button
+              ?disabled=${this.readOnly}
               id="update"
               @click=${() => {
                 this.processData();

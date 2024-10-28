@@ -1986,6 +1986,7 @@ export class Main extends LitElement {
             .showTypes=${false}
             .offerConfigurationEnhancements=${offerConfigurationEnhancements}
             .showNodeTypeDescriptions=${showNodeTypeDescriptions}
+            .readOnly=${this.tab?.readOnly}
             @bbrunisolatednode=${async (
               evt: BreadboardUI.Events.RunIsolatedNodeEvent
             ) => {
