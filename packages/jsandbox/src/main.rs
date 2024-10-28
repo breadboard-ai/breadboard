@@ -5,7 +5,7 @@
  */
 use rquickjs::{
     loader::{BuiltinResolver, ModuleLoader},
-    CatchResultExt, Object,
+    CatchResultExt,
 };
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
