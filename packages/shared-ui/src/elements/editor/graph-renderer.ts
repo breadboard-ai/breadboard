@@ -1795,7 +1795,7 @@ export class GraphRenderer extends LitElement {
                     type="text"
                     placeholder="Enter port name"
                     required
-                    pattern="^[a-z0-9\\-]+$"
+                    pattern="^[a-z0-9\\-_]+$"
                   />`
                 : html`No outgoing ports`}
           </div>
@@ -1842,7 +1842,7 @@ export class GraphRenderer extends LitElement {
                     type="text"
                     placeholder="Enter port name"
                     required
-                    pattern="^[a-z0-9\\-]+$"
+                    pattern="^[a-z0-9\\-_]+$"
                   />`
                 : html`No incoming ports`}
           </div>
