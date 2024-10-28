@@ -15,11 +15,17 @@ function createKit(): Kit {
   return {
     url: import.meta.url,
     handlers: {
-      runModule: async ({ $code: code, ...rest }) => {
+      runModule: async ({ $module, ...rest }, context) => {
+        const module = context.board?.modules?.[$module as string];
+        if (!module) {
+          throw new Error(`Invalid module ${$module}`);
+        }
+
+        const { code } = module;
         const runner = new RunModuleManager(
           new URL(wasm, window.location.href)
         );
-        const result = await runner.runModule(code as string, rest);
+        const result = await runner.runModule(code, rest);
         return result;
       },
     },

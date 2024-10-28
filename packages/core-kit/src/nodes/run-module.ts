@@ -18,12 +18,10 @@ export default defineNodeType({
     },
   },
   inputs: {
-    $code: {
-      description:
-        "The JavaScript code to run. Must be a module with a default export that takes in one object as input argument and returns an object.",
-      title: "Code",
-      behavior: ["config", "code"],
-      format: "javascript",
+    $module: {
+      description: "The Module to run.",
+      title: "Module",
+      behavior: ["config"],
       type: "string",
     },
     $inputSchema: {
@@ -68,10 +66,15 @@ export default defineNodeType({
 });
 
 type RunModuleInputs = {
-  $code: string;
+  $module: string;
 };
 
-async function runModule({ $code: code }: RunModuleInputs, args: InputValues) {
+async function runModule(
+  { $module: _$module }: RunModuleInputs,
+  args: InputValues
+) {
+  // TODO: Get code.
+  const code = "return []";
   return runModuleAsBlob(code, args);
 }
 
