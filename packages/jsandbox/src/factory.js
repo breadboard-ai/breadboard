@@ -1,6 +1,8 @@
+import { fetch } from './capabilities.js';
 
         export const RAW_WASM = Symbol();
         export default function() {
+
 let wasm;
  function __wbg_set_wasm(val) {
 wasm = val;
@@ -85,6 +87,15 @@ WASM_VECTOR_LEN = offset;
 return ptr;
 }
 
+let cachedDataViewMemory0 = null;
+
+function getDataViewMemory0() {
+if (cachedDataViewMemory0 === null || cachedDataViewMemory0.buffer.detached === true || (cachedDataViewMemory0.buffer.detached === undefined && cachedDataViewMemory0.buffer !== wasm.memory.buffer)) {
+cachedDataViewMemory0 = new DataView(wasm.memory.buffer);
+}
+return cachedDataViewMemory0;
+}
+
 function takeFromExternrefTable0(idx) {
 const value = wasm.__wbindgen_export_0.get(idx);
 wasm.__externref_table_dealloc(idx);
@@ -148,6 +159,22 @@ const ret = new Error(getStringFromWasm0(arg0, arg1));
 return ret;
 };
 
+ function __wbg_fetch_f1f32fc92128b512(arg0, arg1, arg2) {
+let deferred0_0;
+let deferred0_1;
+try {
+deferred0_0 = arg1;
+deferred0_1 = arg2;
+const ret = fetch(getStringFromWasm0(arg1, arg2));
+const ptr2 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len2 = WASM_VECTOR_LEN;
+getDataViewMemory0().setInt32(arg0 + 4 * 1, len2, true);
+getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr2, true);
+} finally {
+wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
+}
+};
+
  function __wbg_log_0b11c2c234f90aee(arg0, arg1) {
 let deferred0_0;
 let deferred0_1;
@@ -179,6 +206,8 @@ eval_code
 run_module
 ,
 __wbindgen_error_new
+,
+__wbg_fetch_f1f32fc92128b512
 ,
 __wbg_log_0b11c2c234f90aee
 ,

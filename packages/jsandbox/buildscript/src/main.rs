@@ -138,8 +138,13 @@ async fn fix_bindgen_js(args: &CliArgs, name: impl AsRef<str>) -> Result<()> {
         .map(|line| line.trim().trim_start_matches("export"))
         .collect();
 
+    let insert_position = lines
+        .iter()
+        .position(|line| !line.trim().starts_with("import"))
+        .unwrap_or(0);
+
     lines.insert(
-        0,
+        insert_position,
         r#"
         export const RAW_WASM = Symbol();
         export default function() {"#,

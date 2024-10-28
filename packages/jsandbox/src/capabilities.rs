@@ -5,6 +5,7 @@
  */
 use rquickjs::{module::ModuleDef, CatchResultExt, Ctx, Function, Result, Value};
 use thiserror::Error;
+use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Error)]
 enum CapabilitiesError {
@@ -59,6 +60,7 @@ fn fetch_result<'js>(inputs: Value<'js>) -> CapabilitiesResult<Value<'js>> {
     Ok(result)
 }
 
-fn fetch(inputs: String) -> String {
-    return inputs;
+#[wasm_bindgen(raw_module = "./capabilities.js")]
+extern "C" {
+    fn fetch(inputs: String) -> String;
 }
