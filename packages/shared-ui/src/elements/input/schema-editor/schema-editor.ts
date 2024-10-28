@@ -694,7 +694,7 @@ export class SchemaEditor extends LitElement {
             name="${id}-id"
             id="${id}-id"
             type="text"
-            pattern="^[a-zA-Z0-9\\-_]+$"
+            pattern="^[a-z\\-_][a-zA-Z0-9\\-_]*$"
             .value="${id}"
             required="required"
           />
