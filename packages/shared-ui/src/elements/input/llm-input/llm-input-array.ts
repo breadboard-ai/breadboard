@@ -48,6 +48,9 @@ export class LLMInputArray extends LitElement {
   @property({ reflect: true })
   selected = 0;
 
+  @property()
+  autofocus = false;
+
   #resizeObserver: ResizeObserver | null = null;
   #activeLLMContentRef: Ref<LLMInput> = createRef();
 
@@ -252,6 +255,7 @@ export class LLMInputArray extends LitElement {
                 .clamped=${this.clamped}
                 .inlineControls=${this.inlineControls}
                 .allow=${this.allow}
+                .autofocus=${this.autofocus && idx === 0}
               ></bb-llm-input>`;
             })
           : html`No items specified`}
