@@ -158,6 +158,9 @@ export class Editor extends LitElement {
   showControls = true;
 
   @property()
+  showReadOnlyLabel = true;
+
+  @property()
   readOnly = false;
 
   @property()
@@ -1411,7 +1414,7 @@ export class Editor extends LitElement {
 
     const editor = html`${until(this.#processGraph())}`;
     const readOnlyFlag =
-      this.graph !== null && this.readOnly
+      this.graph !== null && this.readOnly && this.showReadOnlyLabel
         ? html`<aside id="readonly-overlay">Read-only View</aside>`
         : nothing;
 
