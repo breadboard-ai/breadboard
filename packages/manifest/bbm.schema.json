@@ -446,8 +446,7 @@
 				}
 			},
 			"required": [
-				"code",
-				"metadata"
+				"code"
 			],
 			"type": "object"
 		},

@@ -564,7 +564,6 @@
 				}
 			},
 			"required": [
-				"metadata",
 				"code"
 			],
 			"additionalProperties": false
