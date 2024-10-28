@@ -3,12 +3,13 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import {
   OverflowMenuActionEvent,
   OverflowMenuDismissedEvent,
+  OverflowMenuSecondaryActionEvent,
 } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 
@@ -17,6 +18,7 @@ interface Action {
   name: string;
   icon: string;
   disabled?: boolean;
+  secondaryAction?: string;
 }
 
 @customElement("bb-overflow-menu")
@@ -57,28 +59,58 @@ export class OverflowMenu extends LitElement {
         no-repeat;
       border: none;
       text-align: left;
-      border-bottom: 1px solid var(--bb-neutral-300);
       cursor: pointer;
       min-width: 130px;
+      width: 100%;
     }
 
-    button:first-of-type {
-      border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
+    div {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--bb-neutral-300);
     }
 
-    button:last-of-type {
-      border-radius: 0 0 var(--bb-grid-size-2) var(--bb-grid-size-2);
+    div:last-of-type {
       border-bottom: none;
     }
 
-    button:only-child {
+    .secondary-action {
+      flex: 0 0 auto;
+      width: 20px;
+      height: 20px;
+      margin: 0 var(--bb-grid-size);
+      background: transparent;
+      background-position: center center;
+      background-repeat: no-repeat;
+      padding: 0;
+      border: none;
+      min-width: 20px;
+      border-radius: 0;
+    }
+
+    div:first-of-type:not(.with-secondary-action) button {
+      border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
+    }
+
+    div:last-of-type:not(.with-secondary-action) button {
+      border-radius: 0 0 var(--bb-grid-size-2) var(--bb-grid-size-2);
+    }
+
+    div.with-secondary-action:first-of-type button:first-child {
+      border-radius: var(--bb-grid-size-2) 0 0 0;
+    }
+
+    div.with-secondary-action:last-of-type button:first-child {
+      border-radius: 0 0 0 var(--bb-grid-size-2);
+    }
+
+    div:only-child button {
       border-radius: var(--bb-grid-size-2);
     }
 
     button[disabled] {
       opacity: 0.5;
       cursor: auto;
-      border-bottom: 1px solid var(--bb-neutral-500);
     }
 
     button:not([disabled]):hover,
@@ -181,16 +213,44 @@ export class OverflowMenu extends LitElement {
 
   render() {
     return html`${map(this.actions, (action) => {
-      return html`<button
-        class=${classMap({ [action.icon]: true })}
-        @click=${() => {
-          this.dispatchEvent(new OverflowMenuActionEvent(action.name));
-        }}
-        ?disabled=${(action.name !== "settings" && this.disabled) ||
-        action.disabled}
+      return html`<div
+        class=${classMap({
+          ["with-secondary-action"]: action.secondaryAction !== undefined,
+        })}
       >
-        ${action.title}
-      </button>`;
+        <button
+          class=${classMap({ [action.icon]: true })}
+          @click=${() => {
+            this.dispatchEvent(new OverflowMenuActionEvent(action.name));
+          }}
+          ?disabled=${(action.name !== "settings" && this.disabled) ||
+          action.disabled}
+        >
+          ${action.title}
+        </button>
+
+        ${action.secondaryAction
+          ? html`<button
+              @click=${() => {
+                if (!action.secondaryAction) {
+                  return;
+                }
+                this.dispatchEvent(
+                  new OverflowMenuSecondaryActionEvent(
+                    action.secondaryAction,
+                    action.name
+                  )
+                );
+              }}
+              ?disabled=${(action.name !== "settings" && this.disabled) ||
+              action.disabled}
+              class=${classMap({
+                "secondary-action": true,
+                [action.secondaryAction]: true,
+              })}
+            ></button>`
+          : nothing}
+      </div>`;
     })}`;
   }
 }
