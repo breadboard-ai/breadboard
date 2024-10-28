@@ -7,6 +7,9 @@
 import test, { describe } from "node:test";
 import { loadRuntime, RunModuleManager } from "../src/node.js";
 import { deepStrictEqual, ok, rejects, throws } from "node:assert";
+import { Capabilities } from "../src/capabilities.js";
+
+Capabilities.instance().install([["fetch", async (inputs) => inputs]]);
 
 async function run(
   code: string,
