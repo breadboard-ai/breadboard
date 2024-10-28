@@ -235,6 +235,17 @@ export class OverflowMenuActionEvent extends Event {
   }
 }
 
+export class OverflowMenuSecondaryActionEvent extends Event {
+  static eventName = "bboverflowmenusecondaryaction";
+
+  constructor(
+    public readonly action: string,
+    public readonly value?: unknown
+  ) {
+    super(OverflowMenuSecondaryActionEvent.eventName, { ...eventInit });
+  }
+}
+
 export class OverflowMenuDismissedEvent extends Event {
   static eventName = "bboverflowmenudismissed";
 

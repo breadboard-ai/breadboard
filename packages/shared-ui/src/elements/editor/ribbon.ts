@@ -18,6 +18,7 @@ import {
   KitNodeChosenEvent,
   NodeCreateEvent,
   OverflowMenuActionEvent,
+  OverflowMenuSecondaryActionEvent,
   RedoEvent,
   ResetLayoutEvent,
   RunEvent,
@@ -1207,12 +1208,14 @@ export class RibbonMenu extends LitElement {
         name: string;
         icon: string;
         disabled?: boolean;
+        secondaryAction?: string;
       }> = Object.entries(subGraphs).map(([id, graph]) => {
         return {
           title: graph.title ?? "Untitled sub board",
           name: id,
           icon: "board",
           disabled: id === this.subGraphId,
+          secondaryAction: "delete",
         };
       });
 
@@ -1234,6 +1237,28 @@ export class RibbonMenu extends LitElement {
           evt.stopPropagation();
           this.dispatchEvent(new SubGraphChosenEvent(evt.action));
           this.showSubgraphMenu = false;
+        }}
+        @bboverflowmenusecondaryaction=${(
+          evt: OverflowMenuSecondaryActionEvent
+        ) => {
+          if (!confirm("Are you sure you wish to delete this sub board?")) {
+            return;
+          }
+
+          if (!evt.value || typeof evt.value !== "string") {
+            return;
+          }
+
+          evt.stopPropagation();
+          this.dispatchEvent(new SubGraphDeleteEvent(evt.value));
+          this.showSubgraphMenu = false;
+
+          // Switch out from the subgraph if needed.
+          if (this.subGraphId !== evt.value) {
+            return;
+          }
+
+          this.dispatchEvent(new SubGraphChosenEvent(MAIN_BOARD_ID));
         }}
       ></bb-overflow-menu>`;
     }
