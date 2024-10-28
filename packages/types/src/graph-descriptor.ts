@@ -409,7 +409,7 @@ export type ModuleCode = string;
  */
 export type ModuleTag = "published" | "experimental";
 
-export interface ModuleMetadata {
+export type ModuleMetadata = {
   /**
    * The icon for the module.
    */
@@ -432,9 +432,9 @@ export interface ModuleMetadata {
     description?: string;
     url: string;
   };
-}
+};
 
-export interface Module {
+export type Module = {
   /**
    * Metadata associated with the graph.
    */
@@ -444,7 +444,7 @@ export interface Module {
    * The code for this module.
    */
   code: string;
-}
+};
 
 export type Modules = Record<ModuleIdentifier, Module>;
 
