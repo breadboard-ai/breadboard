@@ -473,8 +473,6 @@ export class UserInput extends LitElement {
         let inputField: HTMLTemplateResult | symbol = nothing;
         let description: HTMLTemplateResult | symbol = nothing;
 
-        console.log(input);
-
         if (input.schema) {
           if (Array.isArray(input.schema.type)) {
             input.schema.type = typeof input.value;
