@@ -438,7 +438,7 @@ export type Module = {
   /**
    * Metadata associated with the graph.
    */
-  metadata: ModuleMetadata;
+  metadata?: ModuleMetadata;
 
   /**
    * The code for this module.
