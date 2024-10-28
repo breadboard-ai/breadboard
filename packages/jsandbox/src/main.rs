@@ -75,59 +75,61 @@ fn maybe_promise(result_obj: rquickjs::Value) -> Result<rquickjs::Value> {
 }
 
 #[wasm_bindgen]
-pub fn run_module(code: String, json: String) -> std::result::Result<String, JsError> {
+pub async fn run_module(code: String, json: String) -> std::result::Result<String, JsError> {
     let resolver = BuiltinResolver::default().with_module("breadboard:capabilities");
     let loader = ModuleLoader::default().with_module("breadboard:capabilities", CapabilitiesModule);
 
-    let rt = rquickjs::Runtime::new()?;
-    let ctx = rquickjs::Context::full(&rt)?;
+    let rt = rquickjs::AsyncRuntime::new()?;
+    let ctx = rquickjs::AsyncContext::full(&rt).await?;
 
-    ctx.with(|ctx| plugins::console::init(&ctx))?;
+    ctx.with(|ctx| plugins::console::init(&ctx)).await?;
 
-    rt.set_loader(resolver, loader);
+    rt.set_loader(resolver, loader).await;
 
-    let result: Result<String> = ctx.with(|ctx| {
-        // Load the module.
-        let module = rquickjs::Module::declare(ctx.clone(), "m", code)
-            .catch(&ctx)
-            .map_err(|e| Error::Loading(e.to_string()))?;
-
-        // Evaluate module.
-        let (evaluated, _) = module
-            .eval()
-            .catch(&ctx)
-            .map_err(|e| Error::Evaluating(e.to_string()))?;
-        while ctx.execute_pending_job() {}
-
-        // Get the default export.
-        let namespace = evaluated
-            .namespace()
-            .catch(&ctx)
-            .map_err(|e| Error::GettingDefaultExport(e.to_string()))?;
-
-        let default = namespace
-            .get::<_, rquickjs::Function>("default")
-            .catch(&ctx)
-            .map_err(|e| Error::GettintDefaultFunction(e.to_string()))?;
-
-        let inputs = ctx
-            .json_parse(json)
-            .catch(&ctx)
-            .map_err(|e| Error::ParsingInputValues(e.to_string()))?;
-
-        // Call it and return value.
-        let result_obj: rquickjs::Value = maybe_promise(
-            default
-                .call((inputs,))
+    let result: Result<String> = ctx
+        .with(|ctx| {
+            // Load the module.
+            let module = rquickjs::Module::declare(ctx.clone(), "m", code)
                 .catch(&ctx)
-                .map_err(|e| Error::CallingModuleFunction(e.to_string()))?,
-        )?;
+                .map_err(|e| Error::Loading(e.to_string()))?;
 
-        let Some(result_str) = ctx.json_stringify(result_obj)? else {
-            return Err(Error::NotStringifiable);
-        };
-        Ok(result_str.to_string()?)
-    });
+            // Evaluate module.
+            let (evaluated, _) = module
+                .eval()
+                .catch(&ctx)
+                .map_err(|e| Error::Evaluating(e.to_string()))?;
+            while ctx.execute_pending_job() {}
+
+            // Get the default export.
+            let namespace = evaluated
+                .namespace()
+                .catch(&ctx)
+                .map_err(|e| Error::GettingDefaultExport(e.to_string()))?;
+
+            let default = namespace
+                .get::<_, rquickjs::Function>("default")
+                .catch(&ctx)
+                .map_err(|e| Error::GettintDefaultFunction(e.to_string()))?;
+
+            let inputs = ctx
+                .json_parse(json)
+                .catch(&ctx)
+                .map_err(|e| Error::ParsingInputValues(e.to_string()))?;
+
+            // Call it and return value.
+            let result_obj: rquickjs::Value = maybe_promise(
+                default
+                    .call((inputs,))
+                    .catch(&ctx)
+                    .map_err(|e| Error::CallingModuleFunction(e.to_string()))?,
+            )?;
+
+            let Some(result_str) = ctx.json_stringify(result_obj)? else {
+                return Err(Error::NotStringifiable);
+            };
+            Ok(result_str.to_string()?)
+        })
+        .await;
     Ok(result?)
 }
 

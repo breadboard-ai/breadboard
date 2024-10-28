@@ -8,6 +8,7 @@ rquickjs = { version = "0.6.2", default-features = false, features = [ "loader",
 
 thiserror = "1.0.65"
 wasm-bindgen = { workspace = true }
+wasm-bindgen-futures = { workspace = true }
 js-sys = { workspace = true }
 
 [workspace.dependencies]
