@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 use rquickjs::{
+    async_with,
     loader::{BuiltinResolver, ModuleLoader},
     CatchResultExt,
 };
@@ -19,9 +20,6 @@ use capabilities::CapabilitiesModule;
 enum Error {
     #[error("Value could not be stringified to JSON")]
     NotStringifiable,
-
-    #[error("No Value when trying to convert from promise")]
-    NoValue,
 
     #[error("A QuickJS error occured: {0}")]
     QuickJS(#[from] rquickjs::Error),
@@ -61,12 +59,12 @@ pub fn eval_code(code: String) -> std::result::Result<String, JsError> {
     Ok(result?)
 }
 
-fn maybe_promise(result_obj: rquickjs::Value) -> Result<rquickjs::Value> {
+async fn maybe_promise<'js>(result_obj: rquickjs::Value<'js>) -> Result<rquickjs::Value<'js>> {
     let resolved_obj: rquickjs::Value = if result_obj.is_promise() {
-        let Some(promise) = result_obj.as_promise() else {
-            return Err(Error::NoValue);
-        };
-        let result = promise.finish::<rquickjs::Value>()?;
+        let promise = result_obj.as_promise().unwrap().clone();
+        let ctx = result_obj.ctx();
+        while ctx.execute_pending_job() {}
+        let result = promise.into_future::<rquickjs::Value<'js>>().await?;
         result
     } else {
         result_obj.clone()
@@ -75,18 +73,18 @@ fn maybe_promise(result_obj: rquickjs::Value) -> Result<rquickjs::Value> {
 }
 
 #[wasm_bindgen]
-pub fn run_module(code: String, json: String) -> std::result::Result<String, JsError> {
+pub async fn run_module(code: String, json: String) -> std::result::Result<String, JsError> {
     let resolver = BuiltinResolver::default().with_module("breadboard:capabilities");
     let loader = ModuleLoader::default().with_module("breadboard:capabilities", CapabilitiesModule);
 
-    let rt = rquickjs::Runtime::new()?;
-    let ctx = rquickjs::Context::full(&rt)?;
+    let rt = rquickjs::AsyncRuntime::new()?;
+    let ctx = rquickjs::AsyncContext::full(&rt).await?;
 
-    ctx.with(|ctx| plugins::console::init(&ctx))?;
+    ctx.with(|ctx| plugins::console::init(&ctx)).await?;
 
-    rt.set_loader(resolver, loader);
+    rt.set_loader(resolver, loader).await;
 
-    let result: Result<String> = ctx.with(|ctx| {
+    let result = async_with!(ctx => |ctx| {
         // Load the module.
         let module = rquickjs::Module::declare(ctx.clone(), "m", code)
             .catch(&ctx)
@@ -121,13 +119,14 @@ pub fn run_module(code: String, json: String) -> std::result::Result<String, JsE
                 .call((inputs,))
                 .catch(&ctx)
                 .map_err(|e| Error::CallingModuleFunction(e.to_string()))?,
-        )?;
+        ).await?;
 
         let Some(result_str) = ctx.json_stringify(result_obj)? else {
             return Err(Error::NotStringifiable);
         };
         Ok(result_str.to_string()?)
-    });
+    })
+    .await;
     Ok(result?)
 }
 
