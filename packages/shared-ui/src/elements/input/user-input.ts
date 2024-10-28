@@ -10,6 +10,7 @@ import {
   isLLMContent,
   isLLMContentArray,
   NodeValue,
+  UnresolvedPathBoardCapability,
 } from "@google-labs/breadboard";
 import {
   css,
@@ -445,6 +446,21 @@ export class UserInput extends LitElement {
   }
 
   render() {
+    const createBoardInput = (
+      id: string,
+      value?: UnresolvedPathBoardCapability | string
+    ) => {
+      const board = (typeof value === "string" ? value : value?.path) ?? "";
+      return html`<bb-board-selector
+        id="${id}"
+        name="${id}"
+        .graph=${this.graph}
+        .subGraphs=${this.graph?.graphs ?? null}
+        .boardServers=${this.boardServers}
+        .value=${board}
+      ></bb-board-selector>`;
+    };
+
     return html`<form
       ${ref(this.#formRef)}
       @input=${() => {
@@ -456,6 +472,8 @@ export class UserInput extends LitElement {
       ${map(this.inputs, (input, idx) => {
         let inputField: HTMLTemplateResult | symbol = nothing;
         let description: HTMLTemplateResult | symbol = nothing;
+
+        console.log(input);
 
         if (input.schema) {
           if (Array.isArray(input.schema.type)) {
@@ -538,6 +556,8 @@ export class UserInput extends LitElement {
               .schema=${input.schema}
               .value=${input.value ?? defaultValue}
             ></bb-delegating-input>`;
+          } else if (isBoardBehavior(input.schema, input.value)) {
+            inputField = createBoardInput(id, input.value);
           } else {
             switch (input.schema.type) {
               case "array": {
@@ -571,7 +591,7 @@ export class UserInput extends LitElement {
                     .autofocus=${idx === 0 ? true : false}
                   ></bb-llm-input-array>`;
                 } else {
-                  let renderableValue = input.value;
+                  let renderableValue: unknown = input.value;
                   if (typeof input.value !== "string") {
                     renderableValue = JSON.stringify(input.value);
                   }
@@ -636,19 +656,7 @@ export class UserInput extends LitElement {
                   ></bb-llm-input>`;
                   break;
                 } else if (isBoardBehavior(input.schema, input.value)) {
-                  const board =
-                    (typeof input.value === "string"
-                      ? input.value
-                      : input.value?.path) ?? "";
-                  inputField = html`<bb-board-selector
-                    id="${id}"
-                    name="${id}"
-                    .graph=${this.graph}
-                    .subGraphs=${this.graph?.graphs ?? null}
-                    .boardServers=${this.boardServers}
-                    .value=${board}
-                    }
-                  ></bb-board-selector>`;
+                  inputField = createBoardInput(id, input.value);
                   break;
                 }
 
