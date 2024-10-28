@@ -872,7 +872,7 @@ export class StreamlinedSchemaEditor extends LitElement {
                       .value=${id ?? ""}
                       required
                       autocomplete="off"
-                      pattern="^[a-z0-9\\-_]+$"
+                      pattern="^[a-z\\-_][a-z0-9\\-_]*$"
                     />
 
                     ${isLLMContentArray || isText
