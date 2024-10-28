@@ -568,6 +568,7 @@ export class UserInput extends LitElement {
                     .clamped=${this.llmInputClamped}
                     .inlineControls=${this.inlineControls}
                     .showEntrySelector=${this.llmInputShowEntrySelector}
+                    .autofocus=${idx === 0 ? true : false}
                   ></bb-llm-input-array>`;
                 } else {
                   let renderableValue = input.value;

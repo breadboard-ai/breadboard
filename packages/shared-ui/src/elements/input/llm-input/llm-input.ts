@@ -77,6 +77,9 @@ export class LLMInput extends LitElement {
   @state()
   showInlineControls: { x: number; y: number } | null = null;
 
+  @property()
+  autofocus = false;
+
   #forceRenderCount = 0;
   #focusLastPart = false;
   #triggerSelectionFlow = false;
@@ -595,6 +598,11 @@ export class LLMInput extends LitElement {
         // in the UI as yet.
         `${Math.min(5, allowable) * OVERFLOW_MENU_BUTTON_HEIGHT}px`
       );
+    }
+
+    if (changedProperties.has("autofocus")) {
+      this.#focusLastPart = true;
+      this.#triggerSelectionFlow = true;
     }
   }
 
