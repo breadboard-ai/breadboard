@@ -107,4 +107,14 @@ describe("can import capabilities", () => {
       `);
     deepStrictEqual(result, { result: { test: "HELLO" } });
   });
+
+  test("gracefully handles unknown capability", async () => {
+    rejects(() =>
+      run(`import { foo } from "breadboard:capabilities";
+    export default async function() {
+      return { result: await foo({ test: "HELLO" }) }
+    }
+      `)
+    );
+  });
 });
