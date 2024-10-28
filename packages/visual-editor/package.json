@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/visual-editor",
-  "version": "1.21.5",
+  "version": "1.21.6",
   "description": "The Visual Editor for Breadboard",
   "main": "./build/index.js",
   "exports": {
@@ -232,11 +232,13 @@
     },
     "update-sandbox-runtime": {
       "command": "tsx src/update-sandbox-runtime.ts",
+      "dependencies": [
+        "../jsandbox:build"
+      ],
       "files": [
         "src/update-sandbox-runtime.ts"
       ],
       "output": [
-        "src/sandbox/bindings.js",
         "public/sandbox.wasm"
       ]
     }
