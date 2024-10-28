@@ -3,21 +3,8 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-use rquickjs::{module::ModuleDef, CatchResultExt, Ctx, Function, Result, Value};
-use thiserror::Error;
+use rquickjs::{module::ModuleDef, prelude::Async, Ctx, Function, Result, Value};
 use wasm_bindgen::prelude::*;
-
-#[derive(Debug, Error)]
-enum CapabilitiesError {
-    #[error("Value could not be stringified to JSON")]
-    NotStringifiable,
-    #[error("A QuickJS error occured: {0}")]
-    QuickJS(#[from] rquickjs::Error),
-    #[error("JSON Parsing error: {0}")]
-    ParseError(String),
-}
-
-type CapabilitiesResult<T> = std::result::Result<T, CapabilitiesError>;
 
 pub struct CapabilitiesModule;
 
@@ -31,36 +18,31 @@ impl ModuleDef for CapabilitiesModule {
         let ctx = ctx.clone();
         exports.export(
             "fetch",
-            Function::new(ctx.clone(), |inputs: Value<'js>| fetch_wrapped(inputs))?
-                .with_name("fetch")?,
+            Function::new(ctx.clone(), Async(fetch_wrapped))?.with_name("fetch")?,
         )?;
         Ok(())
     }
 }
 
-fn fetch_wrapped<'js>(inputs: Value<'js>) -> rquickjs::Value<'js> {
-    let ctx = inputs.ctx().clone();
-    let result = match fetch_result(inputs) {
-        Ok(v) => v,
-        Err(_) => Value::new_undefined(ctx),
-    };
-    result
+async fn fetch_wrapped<'js>(inputs: Value<'js>) -> rquickjs::Value<'js> {
+    // let ctx = inputs.ctx().clone();
+    fetch_result(inputs).await.unwrap()
 }
 
-fn fetch_result<'js>(inputs: Value<'js>) -> CapabilitiesResult<Value<'js>> {
+async fn fetch_result<'js>(inputs: Value<'js>) -> rquickjs::Result<Value<'js>> {
     let ctx: Ctx<'js> = inputs.ctx().clone();
-    let Some(input_str) = ctx.json_stringify(inputs)? else {
-        return Err(CapabilitiesError::NotStringifiable);
-    };
-    let result_str = fetch(input_str.to_string()?);
-    let result = ctx
-        .json_parse(result_str)
-        .catch(&ctx)
-        .map_err(|e| CapabilitiesError::ParseError(e.to_string()))?;
-    Ok(result)
+    // let Some(input_str) = ctx.json_stringify(inputs)? else {
+    //     return Err(rquickjs::Error::new_loading("test"));
+    // };
+    let input_str = ctx.json_stringify(inputs).unwrap().unwrap();
+    let result_str = fetch(input_str.to_string()?)
+        .await
+        .as_string()
+        .unwrap_or_default();
+    ctx.json_parse(result_str)
 }
 
 #[wasm_bindgen(raw_module = "./capabilities.js")]
 extern "C" {
-    fn fetch(inputs: String) -> String;
+    async fn fetch(inputs: String) -> JsValue;
 }

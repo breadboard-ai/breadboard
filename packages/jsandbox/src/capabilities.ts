@@ -6,6 +6,6 @@
 
 export { fetch };
 
-function fetch(inputs: unknown) {
+async function fetch(inputs: unknown) {
   return inputs;
 }

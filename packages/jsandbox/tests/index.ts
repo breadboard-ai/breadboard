@@ -98,8 +98,8 @@ describe("can import capabilities", () => {
 
   test("can call fetch from breadboard:capabilities", async () => {
     const result = await run(`import { fetch } from "breadboard:capabilities";
-    export default function() {
-      return { result: fetch({ test: "HELLO" }) }
+    export default async function() {
+      return { result: await fetch({ test: "HELLO" }) }
     }
       `);
     deepStrictEqual(result, { result: { test: "HELLO" } });

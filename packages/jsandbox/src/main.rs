@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 use rquickjs::{
+    async_with,
     loader::{BuiltinResolver, ModuleLoader},
     CatchResultExt,
 };
@@ -19,9 +20,6 @@ use capabilities::CapabilitiesModule;
 enum Error {
     #[error("Value could not be stringified to JSON")]
     NotStringifiable,
-
-    #[error("No Value when trying to convert from promise")]
-    NoValue,
 
     #[error("A QuickJS error occured: {0}")]
     QuickJS(#[from] rquickjs::Error),
@@ -61,12 +59,12 @@ pub fn eval_code(code: String) -> std::result::Result<String, JsError> {
     Ok(result?)
 }
 
-fn maybe_promise(result_obj: rquickjs::Value) -> Result<rquickjs::Value> {
+async fn maybe_promise<'js>(result_obj: rquickjs::Value<'js>) -> Result<rquickjs::Value<'js>> {
     let resolved_obj: rquickjs::Value = if result_obj.is_promise() {
-        let Some(promise) = result_obj.as_promise() else {
-            return Err(Error::NoValue);
-        };
-        let result = promise.finish::<rquickjs::Value>()?;
+        let promise = result_obj.as_promise().unwrap().clone();
+        let ctx = result_obj.ctx();
+        while ctx.execute_pending_job() {}
+        let result = promise.into_future::<rquickjs::Value<'js>>().await?;
         result
     } else {
         result_obj.clone()
@@ -86,50 +84,49 @@ pub async fn run_module(code: String, json: String) -> std::result::Result<Strin
 
     rt.set_loader(resolver, loader).await;
 
-    let result: Result<String> = ctx
-        .with(|ctx| {
-            // Load the module.
-            let module = rquickjs::Module::declare(ctx.clone(), "m", code)
+    let result = async_with!(ctx => |ctx| {
+        // Load the module.
+        let module = rquickjs::Module::declare(ctx.clone(), "m", code)
+            .catch(&ctx)
+            .map_err(|e| Error::Loading(e.to_string()))?;
+
+        // Evaluate module.
+        let (evaluated, _) = module
+            .eval()
+            .catch(&ctx)
+            .map_err(|e| Error::Evaluating(e.to_string()))?;
+        while ctx.execute_pending_job() {}
+
+        // Get the default export.
+        let namespace = evaluated
+            .namespace()
+            .catch(&ctx)
+            .map_err(|e| Error::GettingDefaultExport(e.to_string()))?;
+
+        let default = namespace
+            .get::<_, rquickjs::Function>("default")
+            .catch(&ctx)
+            .map_err(|e| Error::GettintDefaultFunction(e.to_string()))?;
+
+        let inputs = ctx
+            .json_parse(json)
+            .catch(&ctx)
+            .map_err(|e| Error::ParsingInputValues(e.to_string()))?;
+
+        // Call it and return value.
+        let result_obj: rquickjs::Value = maybe_promise(
+            default
+                .call((inputs,))
                 .catch(&ctx)
-                .map_err(|e| Error::Loading(e.to_string()))?;
+                .map_err(|e| Error::CallingModuleFunction(e.to_string()))?,
+        ).await?;
 
-            // Evaluate module.
-            let (evaluated, _) = module
-                .eval()
-                .catch(&ctx)
-                .map_err(|e| Error::Evaluating(e.to_string()))?;
-            while ctx.execute_pending_job() {}
-
-            // Get the default export.
-            let namespace = evaluated
-                .namespace()
-                .catch(&ctx)
-                .map_err(|e| Error::GettingDefaultExport(e.to_string()))?;
-
-            let default = namespace
-                .get::<_, rquickjs::Function>("default")
-                .catch(&ctx)
-                .map_err(|e| Error::GettintDefaultFunction(e.to_string()))?;
-
-            let inputs = ctx
-                .json_parse(json)
-                .catch(&ctx)
-                .map_err(|e| Error::ParsingInputValues(e.to_string()))?;
-
-            // Call it and return value.
-            let result_obj: rquickjs::Value = maybe_promise(
-                default
-                    .call((inputs,))
-                    .catch(&ctx)
-                    .map_err(|e| Error::CallingModuleFunction(e.to_string()))?,
-            )?;
-
-            let Some(result_str) = ctx.json_stringify(result_obj)? else {
-                return Err(Error::NotStringifiable);
-            };
-            Ok(result_str.to_string()?)
-        })
-        .await;
+        let Some(result_str) = ctx.json_stringify(result_obj)? else {
+            return Err(Error::NotStringifiable);
+        };
+        Ok(result_str.to_string()?)
+    })
+    .await;
     Ok(result?)
 }
 
