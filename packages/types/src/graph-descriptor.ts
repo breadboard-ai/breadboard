@@ -446,6 +446,8 @@ export interface Module {
   code: string;
 }
 
+export type Modules = Record<ModuleIdentifier, Module>;
+
 /**
  * Represents a graph.
  */
@@ -482,7 +484,7 @@ export type GraphDescriptor = GraphInlineMetadata & {
   /**
    * Modules that are included as part of this graph.
    */
-  modules?: Map<ModuleIdentifier, Module>;
+  modules?: Modules;
 } & TestProperties;
 
 /**
