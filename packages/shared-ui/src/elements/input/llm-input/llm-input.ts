@@ -836,6 +836,8 @@ export class LLMInput extends LitElement {
     if (this.value.parts.length === 0) {
       this.value = null;
     }
+
+    this.#partDataURLs.delete(idx);
     this.#forceReRender();
   }
 
@@ -880,6 +882,7 @@ export class LLMInput extends LitElement {
     let getData: () => Promise<string>;
     let url;
     if (isInlineData(part)) {
+      console.log("Using part", part);
       url = this.#partDataURLs.get(idx);
       mimeType = part.inlineData.mimeType;
       getData = async () => atob(part.inlineData.data);
@@ -1168,6 +1171,7 @@ export class LLMInput extends LitElement {
                 )}`;
               } else if (isInlineData(part)) {
                 partClass = "inline-data";
+                console.log(part);
 
                 value = html`${until(
                   this.#getPartDataAsHTML(idx, part, isLastPart),

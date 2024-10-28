@@ -85,7 +85,7 @@ export class OverflowMenu extends LitElement {
       padding: 0;
       border: none;
       min-width: 20px;
-      border-radius: 0;
+      border-radius: var(--bb-grid-size);
     }
 
     div:first-of-type:not(.with-secondary-action) button {
