@@ -22,7 +22,6 @@ export default defineConfig((_) => {
           worker: "src/worker.ts",
           sample: "./index.html",
           oauth: "./oauth/index.html",
-          iframe: "./iframe.html",
           "palm-kit": "src/palm-kit.ts",
           "core-kit": "src/core-kit.ts",
           "json-kit": "src/json-kit.ts",

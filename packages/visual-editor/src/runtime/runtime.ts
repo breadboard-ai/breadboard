@@ -17,6 +17,7 @@ import {
   migrateRemoteGraphProviders,
   migrateExampleGraphProviders,
   migrateFileSystemProviders,
+  legacyGraphProviderExists,
 } from "@breadboard-ai/board-server-management";
 
 import { loadKits } from "../utils/kit-loader";
@@ -49,13 +50,19 @@ export async function create(config: RuntimeConfig): Promise<{
     skipPlaygroundExamples
   );
 
-  // First run - set everything up and migrate the data.
+  // First run - set everything up.
   if (servers.length === 0) {
     await createDefaultLocalBoardServer();
-    await migrateIDBGraphProviders();
-    await migrateRemoteGraphProviders();
-    await migrateExampleGraphProviders();
-    await migrateFileSystemProviders();
+
+    // Migrate any legacy data. We do this in order so that IDB doesn't get
+    // into a bad state with races and the like.
+    if (await legacyGraphProviderExists()) {
+      await migrateIDBGraphProviders();
+      await migrateRemoteGraphProviders();
+      await migrateExampleGraphProviders();
+      await migrateFileSystemProviders();
+    }
+
     servers = await getBoardServers();
   }
 
