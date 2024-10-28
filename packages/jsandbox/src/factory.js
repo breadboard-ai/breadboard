@@ -154,10 +154,31 @@ wasm.__wbindgen_free(deferred4_0, deferred4_1, 1);
 }
 }
 
- function __wbindgen_error_new(arg0, arg1) {
-const ret = new Error(getStringFromWasm0(arg0, arg1));
-return ret;
-};
+function getArrayJsValueFromWasm0(ptr, len) {
+ptr = ptr >>> 0;
+const mem = getDataViewMemory0();
+const result = [];
+for (let i = ptr; i < ptr + 4 * len; i += 4) {
+result.push(wasm.__wbindgen_export_0.get(mem.getUint32(i, true)));
+}
+wasm.__externref_drop_slice(ptr, len);
+return result;
+}
+
+function addToExternrefTable0(obj) {
+const idx = wasm.__externref_table_alloc();
+wasm.__wbindgen_export_0.set(idx, obj);
+return idx;
+}
+
+function handleError(f, args) {
+try {
+return f.apply(this, args);
+} catch (e) {
+const idx = addToExternrefTable0(e);
+wasm.__wbindgen_exn_store(idx);
+}
+}
 
  function __wbg_fetch_f1f32fc92128b512(arg0, arg1, arg2) {
 let deferred0_0;
@@ -175,16 +196,41 @@ wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
 }
 };
 
- function __wbg_log_0b11c2c234f90aee(arg0, arg1) {
-let deferred0_0;
-let deferred0_1;
-try {
-deferred0_0 = arg0;
-deferred0_1 = arg1;
-console.log(getStringFromWasm0(arg0, arg1));
-} finally {
-wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
-}
+ function __wbindgen_string_new(arg0, arg1) {
+const ret = getStringFromWasm0(arg0, arg1);
+return ret;
+};
+
+ function __wbg_warn_5fb7db206870e610(arg0, arg1) {
+var v0 = getArrayJsValueFromWasm0(arg0, arg1).slice();
+wasm.__wbindgen_free(arg0, arg1 * 4, 4);
+console.warn(...v0);
+};
+
+ function __wbg_error_c900e646cf91e4e4(arg0, arg1) {
+var v0 = getArrayJsValueFromWasm0(arg0, arg1).slice();
+wasm.__wbindgen_free(arg0, arg1 * 4, 4);
+console.error(...v0);
+};
+
+ function __wbg_log_4d5ee32fbc09e881(arg0, arg1) {
+var v0 = getArrayJsValueFromWasm0(arg0, arg1).slice();
+wasm.__wbindgen_free(arg0, arg1 * 4, 4);
+console.log(...v0);
+};
+
+ function __wbindgen_error_new(arg0, arg1) {
+const ret = new Error(getStringFromWasm0(arg0, arg1));
+return ret;
+};
+
+ function __wbg_parse_51ee5409072379d3() { return handleError(function (arg0, arg1) {
+const ret = JSON.parse(getStringFromWasm0(arg0, arg1));
+return ret;
+}, arguments) };
+
+ function __wbindgen_throw(arg0, arg1) {
+throw new Error(getStringFromWasm0(arg0, arg1));
 };
 
  function __wbindgen_init_externref_table() {
@@ -205,11 +251,21 @@ eval_code
 ,
 run_module
 ,
-__wbindgen_error_new
-,
 __wbg_fetch_f1f32fc92128b512
 ,
-__wbg_log_0b11c2c234f90aee
+__wbindgen_string_new
+,
+__wbg_warn_5fb7db206870e610
+,
+__wbg_error_c900e646cf91e4e4
+,
+__wbg_log_4d5ee32fbc09e881
+,
+__wbindgen_error_new
+,
+__wbg_parse_51ee5409072379d3
+,
+__wbindgen_throw
 ,
 __wbindgen_init_externref_table
 ,

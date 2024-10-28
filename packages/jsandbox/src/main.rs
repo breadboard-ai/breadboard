@@ -11,6 +11,7 @@ use thiserror::Error;
 use wasm_bindgen::prelude::*;
 
 mod capabilities;
+mod plugins;
 
 use capabilities::CapabilitiesModule;
 
@@ -81,15 +82,11 @@ pub fn run_module(code: String, json: String) -> std::result::Result<String, JsE
     let rt = rquickjs::Runtime::new()?;
     let ctx = rquickjs::Context::full(&rt)?;
 
+    ctx.with(|ctx| plugins::console::init(&ctx))?;
+
     rt.set_loader(resolver, loader);
 
     let result: Result<String> = ctx.with(|ctx| {
-        // Construct the Console object.
-        let global = ctx.globals();
-        let console = Object::new(ctx.clone())?;
-        let _ = console.set("log", rquickjs::Function::new(ctx.clone(), log)?);
-        let _ = global.set("console", console);
-
         // Load the module.
         let module = rquickjs::Module::declare(ctx.clone(), "m", code)
             .catch(&ctx)
@@ -132,12 +129,6 @@ pub fn run_module(code: String, json: String) -> std::result::Result<String, JsE
         Ok(result_str.to_string()?)
     });
     Ok(result?)
-}
-
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(message: String);
 }
 
 #[wasm_bindgen(main)]

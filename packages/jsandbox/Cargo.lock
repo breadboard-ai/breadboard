@@ -476,6 +476,7 @@ dependencies = [
 name = "jsandbox"
 version = "0.1.0"
 dependencies = [
+ "js-sys",
  "rquickjs",
  "thiserror",
  "wasm-bindgen",
