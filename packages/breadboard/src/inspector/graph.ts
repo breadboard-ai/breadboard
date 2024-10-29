@@ -47,7 +47,7 @@ import {
 } from "./types.js";
 import { invokeGraph } from "../run/invoke-graph.js";
 import { graphUrlLike } from "../utils/graph-url-like.js";
-import { ModuleCache } from "./modules.js";
+import { ModuleCache } from "./module.js";
 
 export const inspectableGraph = (
   graph: GraphDescriptor,

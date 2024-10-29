@@ -421,6 +421,11 @@ export type ModuleMetadata = {
   url?: string;
 
   /**
+   * The description for the module.
+   */
+  description?: string;
+
+  /**
    * Tags associated with the module. At this moment, free-form strings.
    */
   tags?: ModuleTag[];

@@ -453,6 +453,10 @@
 		"ModuleMetadata": {
 			"additionalProperties": false,
 			"properties": {
+				"description": {
+					"description": "The description for the module.",
+					"type": "string"
+				},
 				"help": {
 					"additionalProperties": false,
 					"description": "The documentation for the module, expressed as a URL and optional description.",
