@@ -7,10 +7,11 @@
 import { deepStrictEqual } from "node:assert";
 import test, { describe } from "node:test";
 import { loadRuntime, NodeModuleManager } from "../src/node.js";
+import { DescriberInputs } from "../src/types.js";
 
 async function describeModule(
   code: string,
-  inputs: Record<string, unknown> = {}
+  inputs: DescriberInputs
 ): Promise<Record<string, unknown>> {
   const wasm = await loadRuntime();
   const manager = new NodeModuleManager(wasm, { test: code });
@@ -30,7 +31,8 @@ function describe() {
 
 export default function() {
   return { result: foo() }
-}`
+}`,
+        {}
       ),
       { inputSchema: {}, outputSchema: {} }
     );

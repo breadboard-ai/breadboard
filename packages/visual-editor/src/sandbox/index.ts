@@ -10,7 +10,7 @@ import {
   type Kit,
 } from "@google-labs/breadboard";
 
-import { RunModuleManager } from "@breadboard-ai/jsandbox";
+import { WebModuleManager } from "@breadboard-ai/jsandbox";
 import wasm from "/sandbox.wasm?url";
 
 import { Capabilities } from "@breadboard-ai/jsandbox";
@@ -59,8 +59,6 @@ function addSandboxedRunModule(kits: Kit[]): Kit[] {
       ? existingRunModule.describe
       : undefined;
 
-  console.log("DESCRIBE", describe);
-
   return [
     {
       url: import.meta.url,
@@ -72,17 +70,18 @@ function addSandboxedRunModule(kits: Kit[]): Kit[] {
               getHandler("secrets", context),
             ]);
 
-            const module = context.board?.modules?.[$module as string];
-            if (!module) {
-              throw new Error(`Invalid module ${$module}`);
+            const modules = context.board?.modules;
+            if (!modules) {
+              throw new Error(`No modules were found in this graph`);
             }
-
-            const { code } = module;
-            const runner = new RunModuleManager(
-              new URL(wasm, window.location.href)
+            const runner = new WebModuleManager(
+              new URL(wasm, window.location.href),
+              Object.fromEntries(
+                Object.entries(modules).map(([name, spec]) => [name, spec.code])
+              )
             );
-            const result = await runner.runModule(code, rest);
-            return result;
+            const result = await runner.invoke($module as string, rest);
+            return result as InputValues;
           },
           describe,
         },
