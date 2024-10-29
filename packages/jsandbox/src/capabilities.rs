@@ -13,6 +13,7 @@ pub struct CapabilitiesModule;
 impl ModuleDef for CapabilitiesModule {
     fn declare(decl: &rquickjs::module::Declarations) -> Result<()> {
         decl.declare("fetch")?;
+        decl.declare("secrets")?;
         Ok(())
     }
 
@@ -21,6 +22,10 @@ impl ModuleDef for CapabilitiesModule {
         exports.export(
             "fetch",
             Function::new(ctx.clone(), Async(fetch_value))?.with_name("fetch")?,
+        )?;
+        exports.export(
+            "secrets",
+            Function::new(ctx.clone(), Async(secrets_value))?.with_name("secrets")?,
         )?;
         Ok(())
     }
@@ -47,7 +52,12 @@ async fn fetch_value<'js>(inputs: Value<'js>) -> rquickjs::Result<Value<'js>> {
     call_capability(inputs, fetch).await
 }
 
+async fn secrets_value<'js>(inputs: Value<'js>) -> rquickjs::Result<Value<'js>> {
+    call_capability(inputs, secrets).await
+}
+
 #[wasm_bindgen(raw_module = "./capabilities.js")]
 extern "C" {
     async fn fetch(inputs: String) -> JsValue;
+    async fn secrets(inputs: String) -> JsValue;
 }

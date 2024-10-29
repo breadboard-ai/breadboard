@@ -5,3 +5,4 @@
  */
 
 export { RunModuleManager } from "./browser.js";
+export { Capabilities } from "./capabilities.js";

@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { fetch, Capabilities };
+export { fetch, secrets, Capabilities };
 
 type Values = Record<string, unknown>;
 
-type Capability = (inputs: Values) => Promise<Values>;
+type Capability = (inputs: Values) => Promise<Values | void>;
 
 class Capabilities {
   #capabilities = new Map<string, Capability>();
@@ -21,12 +21,12 @@ class Capabilities {
     return this.#capabilities.get(name);
   }
 
-  async invoke(name: string, inputs: Values) {
+  async invoke(name: string, inputs: string) {
     const c = this.get(name);
     if (!c) {
       throw new Error(`Capability "${name}" is not avaialble.`);
     }
-    return c(inputs);
+    return JSON.stringify(await c(JSON.parse(inputs)));
   }
 
   install(capabilities: [string, Capability][]) {
@@ -38,6 +38,10 @@ class Capabilities {
   }
 }
 
-async function fetch(inputs: Values) {
+async function fetch(inputs: string) {
   return Capabilities.instance().invoke("fetch", inputs);
+}
+
+async function secrets(inputs: string) {
+  return Capabilities.instance().invoke("secrets", inputs);
 }
