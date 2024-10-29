@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import test, { before, beforeEach, describe, after } from "node:test";
-import { loadRuntime, RunModuleManager } from "../src/node.js";
-import { deepStrictEqual, ok, rejects, throws } from "node:assert";
+import { deepStrictEqual } from "node:assert";
 import { Console } from "node:console";
+import test, { after, before, beforeEach, describe } from "node:test";
+import { loadRuntime, RunModuleManager } from "../src/node.js";
 
 async function run(
   code: string,
@@ -15,7 +15,7 @@ async function run(
 ): Promise<Record<string, unknown>> {
   const wasm = await loadRuntime();
   const manager = new RunModuleManager(wasm);
-  return manager.runModule("test", {}, code, inputs);
+  return manager.runModule("default", "test", {}, code, inputs);
 }
 
 type Console = typeof globalThis.console;

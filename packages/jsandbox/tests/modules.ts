@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { deepStrictEqual, rejects } from "node:assert";
 import test, { describe } from "node:test";
-import { loadRuntime, RunModuleManager } from "../src/node.js";
-import { deepStrictEqual, ok, rejects, throws } from "node:assert";
 import { Capabilities } from "../src/capabilities.js";
+import { loadRuntime, RunModuleManager } from "../src/node.js";
 
 Capabilities.instance().install([["fetch", async (inputs) => inputs]]);
 
@@ -18,7 +18,7 @@ async function run(
 ): Promise<Record<string, unknown>> {
   const wasm = await loadRuntime();
   const manager = new RunModuleManager(wasm);
-  return manager.runModule("test", modules, code, inputs);
+  return manager.runModule("default", "test", modules, code, inputs);
 }
 
 describe("peer module import", () => {

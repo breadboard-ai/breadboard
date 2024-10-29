@@ -74,6 +74,7 @@ async fn maybe_promise<'js>(result_obj: rquickjs::Value<'js>) -> Result<rquickjs
 
 #[wasm_bindgen]
 pub async fn run_module(
+    method: String,
     name: String,
     modules: JsValue,
     code: String,
@@ -129,7 +130,7 @@ pub async fn run_module(
             .map_err(|e| Error::GettingDefaultExport(e.to_string()))?;
 
         let default = namespace
-            .get::<_, rquickjs::Function>("default")
+            .get::<_, rquickjs::Function>(method)
             .catch(&ctx)
             .map_err(|e| Error::GettintDefaultFunction(e.to_string()))?;
 

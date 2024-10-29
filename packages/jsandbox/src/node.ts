@@ -25,6 +25,7 @@ class RunModuleManager {
   constructor(public readonly wasm: Buffer) {}
 
   async runModule(
+    method: "default" | "describe",
     name: string,
     modules: Record<string, string>,
     code: string,
@@ -52,6 +53,7 @@ class RunModuleManager {
     // @ts-expect-error 2739
     wasi.start({ exports: instance.exports });
     const result = await jsandbox.run_module(
+      method,
       name,
       modules,
       code,
