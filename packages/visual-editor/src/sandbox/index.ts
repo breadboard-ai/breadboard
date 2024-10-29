@@ -15,13 +15,19 @@ import wasm from "/sandbox.wasm?url";
 
 import { Capabilities } from "@breadboard-ai/jsandbox";
 
-export { createKit };
+export { addSandboxedRunModule };
 
-function getHandler(handlerName: string, context: NodeHandlerContext) {
-  const handler = context.kits
+function findHandler(handlerName: string, kits?: Kit[]) {
+  const handler = kits
     ?.flatMap((kit) => Object.entries(kit.handlers))
     .find(([name]) => name === handlerName)
     ?.at(1);
+
+  return handler;
+}
+
+function getHandler(handlerName: string, context: NodeHandlerContext) {
+  const handler = findHandler(handlerName, context.kits);
 
   if (!handler || typeof handler === "string") {
     throw new Error("Trying to get one of the non-core handlers");
@@ -44,28 +50,44 @@ function getHandler(handlerName: string, context: NodeHandlerContext) {
   ];
 }
 
-function createKit(): Kit {
-  return {
-    url: import.meta.url,
-    handlers: {
-      runModule: async ({ $module, ...rest }, context) => {
-        Capabilities.instance().install([
-          getHandler("fetch", context),
-          getHandler("secrets", context),
-        ]);
+function addSandboxedRunModule(kits: Kit[]): Kit[] {
+  const existingRunModule = findHandler("runModule", kits);
+  const describe =
+    existingRunModule &&
+    typeof existingRunModule !== "string" &&
+    "describe" in existingRunModule
+      ? existingRunModule.describe
+      : undefined;
 
-        const module = context.board?.modules?.[$module as string];
-        if (!module) {
-          throw new Error(`Invalid module ${$module}`);
-        }
+  console.log("DESCRIBE", describe);
 
-        const { code } = module;
-        const runner = new RunModuleManager(
-          new URL(wasm, window.location.href)
-        );
-        const result = await runner.runModule(code, rest);
-        return result;
+  return [
+    {
+      url: import.meta.url,
+      handlers: {
+        runModule: {
+          invoke: async ({ $module, ...rest }, context) => {
+            Capabilities.instance().install([
+              getHandler("fetch", context),
+              getHandler("secrets", context),
+            ]);
+
+            const module = context.board?.modules?.[$module as string];
+            if (!module) {
+              throw new Error(`Invalid module ${$module}`);
+            }
+
+            const { code } = module;
+            const runner = new RunModuleManager(
+              new URL(wasm, window.location.href)
+            );
+            const result = await runner.runModule(code, rest);
+            return result;
+          },
+          describe,
+        },
       },
     },
-  };
+    ...kits,
+  ];
 }
