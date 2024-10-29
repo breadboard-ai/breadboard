@@ -58,6 +58,7 @@ const BEHAVIOR_AFFECTS_TYPE_CHECKING: { [K in BehaviorSchema]: boolean } = {
   "ports-spec": true,
   image: true,
   code: true,
+  module: true,
 };
 
 export const collectPorts = (
