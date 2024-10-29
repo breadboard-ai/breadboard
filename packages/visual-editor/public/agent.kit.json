@@ -10617,6 +10617,7 @@
                           "image",
                           "json-schema",
                           "llm-content",
+                          "module",
                           "ports-spec",
                           "stream",
                           "transient"
