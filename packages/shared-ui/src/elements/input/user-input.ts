@@ -38,6 +38,7 @@ import {
   isGoogleDriveQuery,
   isLLMContentArrayBehavior,
   isLLMContentBehavior,
+  isModuleBehavior,
   isPortSpecBehavior,
 } from "../../utils/index.js";
 import {
@@ -199,6 +200,10 @@ export class UserInput extends LitElement {
       resize: none;
       field-sizing: content;
       max-height: 300px;
+    }
+
+    .item .module-selector {
+      margin: var(--bb-grid-size-2) 0 var(--bb-grid-size-3) 0;
     }
 
     .api-message {
@@ -556,6 +561,24 @@ export class UserInput extends LitElement {
             ></bb-delegating-input>`;
           } else if (isBoardBehavior(input.schema, input.value)) {
             inputField = createBoardInput(id, input.value);
+          } else if (isModuleBehavior(input.schema)) {
+            const modules = this.graph?.modules ?? {};
+            const moduleNames = Object.keys(modules);
+            inputField = html`<select
+              class="module-selector"
+              id="${id}"
+              name="${id}"
+            >
+              ${moduleNames.map(
+                (module) =>
+                  html`<option
+                    value=${module}
+                    ?selected=${module === input.value}
+                  >
+                    ${module}
+                  </option>`
+              )};
+            </select>`;
           } else {
             switch (input.schema.type) {
               case "array": {

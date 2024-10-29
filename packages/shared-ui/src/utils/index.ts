@@ -36,6 +36,10 @@ export function isLLMContentBehavior(schema: Schema) {
   return schema.behavior?.includes("llm-content");
 }
 
+export function isModuleBehavior(schema: Schema) {
+  return schema.behavior?.includes("module");
+}
+
 export function isLLMContentArrayBehavior(schema: Schema) {
   if (schema.type !== "array") return false;
   if (Array.isArray(schema.items)) return false;
