@@ -61,7 +61,7 @@ describe("peer module import", () => {
     );
   });
 
-  test("supports nestsed imports", async () => {
+  test("supports nested imports", async () => {
     deepStrictEqual(
       await run(
         {
