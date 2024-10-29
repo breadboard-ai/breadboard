@@ -202,8 +202,20 @@ export class UserInput extends LitElement {
       max-height: 300px;
     }
 
-    .item .module-selector {
+    .item .module-selector-container {
       margin: var(--bb-grid-size-2) 0 var(--bb-grid-size-3) 0;
+    }
+
+    .item .module-description {
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      color: var(--bb-neutral-600);
+      margin: var(--bb-grid-size) 0;
+      display: block;
+    }
+
+    .item .module-description:empty {
+      margin: 0;
     }
 
     .api-message {
@@ -450,6 +462,32 @@ export class UserInput extends LitElement {
     }
   }
 
+  #updateModuleDescriptionIfNeeded(evt: InputEvent) {
+    if (!(evt.target instanceof HTMLSelectElement)) {
+      return;
+    }
+
+    if (!evt.target.classList.contains("module-selector")) {
+      return;
+    }
+
+    if (!this.#formRef.value) {
+      return;
+    }
+
+    const selectorId = evt.target.id;
+    const label = this.#formRef.value.querySelector(
+      `label[for="${selectorId}"]`
+    );
+    if (!label) {
+      return;
+    }
+
+    const moduleDescription =
+      this.graph?.modules?.[evt.target.value]?.metadata?.description;
+    label.textContent = moduleDescription ?? "";
+  }
+
   render() {
     const createBoardInput = (
       id: string,
@@ -468,8 +506,9 @@ export class UserInput extends LitElement {
 
     return html`<form
       ${ref(this.#formRef)}
-      @input=${() => {
+      @input=${(evt: InputEvent) => {
         this.#emitProcessedData();
+        this.#updateModuleDescriptionIfNeeded(evt);
       }}
       @bbcodechange=${this.#emitProcessedData}
       @submit=${this.#onFormSubmit}
@@ -564,21 +603,29 @@ export class UserInput extends LitElement {
           } else if (isModuleBehavior(input.schema)) {
             const modules = this.graph?.modules ?? {};
             const moduleNames = Object.keys(modules);
-            inputField = html`<select
-              class="module-selector"
-              id="${id}"
-              name="${id}"
-            >
-              ${moduleNames.map(
-                (module) =>
-                  html`<option
-                    value=${module}
-                    ?selected=${module === input.value}
-                  >
-                    ${module}
-                  </option>`
-              )};
-            </select>`;
+
+            const moduleDescription =
+              typeof input.value === "string"
+                ? (modules[input.value]?.metadata?.description ?? null)
+                : null;
+
+            inputField = html` <div class="module-selector-container">
+              <label for=${id} class="module-description"
+                >${moduleDescription ?? nothing}</label
+              >
+              <select id="${id}" name="${id}" class="module-selector">
+                <option value="">-- No module</option>
+                ${moduleNames.map(
+                  (module) =>
+                    html`<option
+                      value=${module}
+                      ?selected=${module === input.value}
+                    >
+                      ${module}
+                    </option>`
+                )};
+              </select>
+            </div>`;
           } else {
             switch (input.schema.type) {
               case "array": {
