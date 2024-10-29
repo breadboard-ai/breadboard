@@ -8,6 +8,7 @@
     { "path": "packages/board-server-management" },
     { "path": "packages/connection-server" },
     { "path": "packages/connection-client" },
+    { "path": "packages/composite-board" },
     { "path": "packages/core-kit" },
     { "path": "packages/data-store" },
     { "path": "packages/discovery-types" },
