@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphMetadata, InputValues, StartLabel } from "@breadboard-ai/types";
+import {
+  GraphMetadata,
+  InputValues,
+  ModuleIdentifier,
+  StartLabel,
+} from "@breadboard-ai/types";
 import { getHandler } from "../handler.js";
 import { createLoader } from "../loader/index.js";
 import { combineSchemas, removeProperty } from "../schema.js";
@@ -38,9 +43,11 @@ import {
   InspectableSubgraphs,
   NodeTypeDescriberOptions,
   InspectableNodeType,
+  InspectableModules,
 } from "./types.js";
 import { invokeGraph } from "../run/invoke-graph.js";
 import { graphUrlLike } from "../utils/graph-url-like.js";
+import { ModuleCache } from "./modules.js";
 
 export const inspectableGraph = (
   graph: GraphDescriptor,
@@ -84,7 +91,10 @@ class Graph implements InspectableGraphWithStore {
     const nodes = new NodeCache(this);
     const edges = new EdgeCache(nodes);
     edges.populate(graph);
-    this.#cache = { edges, nodes };
+    const modules = new ModuleCache();
+    modules.populate(graph);
+
+    this.#cache = { edges, nodes, modules };
   }
 
   raw() {
@@ -191,6 +201,14 @@ class Graph implements InspectableGraphWithStore {
 
   nodes(): InspectableNode[] {
     return this.#cache.nodes.nodes();
+  }
+
+  moduleById(id: ModuleIdentifier) {
+    return this.#cache.modules.get(id);
+  }
+
+  modules(): InspectableModules {
+    return this.#cache.modules.modules();
   }
 
   edges(): InspectableEdge[] {
@@ -378,6 +396,10 @@ class Graph implements InspectableGraphWithStore {
     return this.#cache.edges;
   }
 
+  get moduleStore() {
+    return this.#cache.modules;
+  }
+
   updateGraph(graph: GraphDescriptor): void {
     this.#graph = graph;
   }
@@ -387,7 +409,11 @@ class Graph implements InspectableGraphWithStore {
     const nodes = new NodeCache(this);
     const edges = new EdgeCache(nodes);
     edges.populate(graph);
-    this.#cache = { edges, nodes };
+
+    const modules = new ModuleCache();
+    modules.populate(graph);
+
+    this.#cache = { edges, nodes, modules };
     this.#graphs = null;
   }
 

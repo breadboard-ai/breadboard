@@ -7,6 +7,10 @@
 import {
   GraphIdentifier,
   GraphMetadata,
+  Module,
+  ModuleCode,
+  ModuleIdentifier,
+  ModuleMetadata,
   NodeMetadata,
   StartLabel,
 } from "@breadboard-ai/types";
@@ -290,6 +294,14 @@ export type InspectableGraph = {
    * Returns the subgraphs that are embedded in this graph.
    */
   graphs(): InspectableSubgraphs;
+  /**
+   * Returns a module by name.
+   */
+  moduleById(id: ModuleIdentifier): InspectableModule | undefined;
+  /**
+   * Returns the modules that are embedded in this graph.
+   */
+  modules(): InspectableModules;
 };
 
 /**
@@ -513,6 +525,20 @@ export type InspectableNodeType = {
   ports(): Promise<InspectableNodePorts>;
 };
 
+export type InspectableModule = {
+  /**
+   * Returns the metadata, associated with this node type.
+   */
+  metadata(): ModuleMetadata;
+
+  /**
+   *
+   */
+  code(): ModuleCode;
+};
+
+export type InspectableModules = Record<ModuleIdentifier, InspectableModule>;
+
 /**
  * Represents a simple listener for edits to the graph.
  * An instance of this type is returned by the `editReceiver` method of
@@ -558,6 +584,13 @@ export type InspectableNodeCache = {
   nodes(): InspectableNode[];
 };
 
+export type InspectableModuleCache = {
+  get(id: string): InspectableModule | undefined;
+  add(id: string, module: Module): void;
+  remove(id: ModuleIdentifier): void;
+  modules(): InspectableModules;
+};
+
 /**
  * A backing store for `InspectableGraph` instances, representing a stable
  * instance of a graph whose properties mutate.
@@ -565,6 +598,7 @@ export type InspectableNodeCache = {
 export type MutableGraph = {
   nodes: InspectableNodeCache;
   edges: InspectableEdgeCache;
+  modules: InspectableModuleCache;
 };
 
 /**
