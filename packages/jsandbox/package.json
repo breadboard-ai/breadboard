@@ -24,7 +24,8 @@
     "build:rs": {
       "command": "cargo run -p buildscript --color=always -- -r",
       "files": [
-        "src/*.rs"
+        "src/**/*.rs",
+        "Cargo.toml"
       ],
       "output": [
         "target/wasm_bindgen/jsandbox_bg.js",

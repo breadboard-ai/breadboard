@@ -9,11 +9,7 @@ wasm = val;
 }
 
 
-const lTextDecoder = typeof TextDecoder === 'undefined' ? (0, module.require)('util').TextDecoder : TextDecoder;
-
-let cachedTextDecoder = new lTextDecoder('utf-8', { ignoreBOM: true, fatal: true });
-
-cachedTextDecoder.decode();
+let WASM_VECTOR_LEN = 0;
 
 let cachedUint8ArrayMemory0 = null;
 
@@ -23,13 +19,6 @@ cachedUint8ArrayMemory0 = new Uint8Array(wasm.memory.buffer);
 }
 return cachedUint8ArrayMemory0;
 }
-
-function getStringFromWasm0(ptr, len) {
-ptr = ptr >>> 0;
-return cachedTextDecoder.decode(getUint8ArrayMemory0().subarray(ptr, ptr + len));
-}
-
-let WASM_VECTOR_LEN = 0;
 
 const lTextEncoder = typeof TextEncoder === 'undefined' ? (0, module.require)('util').TextEncoder : TextEncoder;
 
@@ -98,6 +87,17 @@ if (cachedDataViewMemory0 === null || cachedDataViewMemory0.buffer.detached === 
 cachedDataViewMemory0 = new DataView(wasm.memory.buffer);
 }
 return cachedDataViewMemory0;
+}
+
+const lTextDecoder = typeof TextDecoder === 'undefined' ? (0, module.require)('util').TextDecoder : TextDecoder;
+
+let cachedTextDecoder = new lTextDecoder('utf-8', { ignoreBOM: true, fatal: true });
+
+cachedTextDecoder.decode();
+
+function getStringFromWasm0(ptr, len) {
+ptr = ptr >>> 0;
+return cachedTextDecoder.decode(getUint8ArrayMemory0().subarray(ptr, ptr + len));
 }
 
 function debugString(val) {
@@ -196,18 +196,7 @@ CLOSURE_DTORS.register(real, state, state);
 return real;
 }
 function __wbg_adapter_24(arg0, arg1, arg2) {
-wasm.closure57_externref_shim(arg0, arg1, arg2);
-}
-
-function getArrayJsValueFromWasm0(ptr, len) {
-ptr = ptr >>> 0;
-const mem = getDataViewMemory0();
-const result = [];
-for (let i = ptr; i < ptr + 4 * len; i += 4) {
-result.push(wasm.__wbindgen_export_2.get(mem.getUint32(i, true)));
-}
-wasm.__externref_drop_slice(ptr, len);
-return result;
+wasm.closure61_externref_shim(arg0, arg1, arg2);
 }
 
 function takeFromExternrefTable0(idx) {
@@ -241,17 +230,32 @@ wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
 }
 
 /**
+* @param {string} name
+* @param {any} modules
 * @param {string} code
 * @param {string} json
 * @returns {Promise<string>}
 */
- function run_module(code, json) {
-const ptr0 = passStringToWasm0(code, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+ function run_module(name, modules, code, json) {
+const ptr0 = passStringToWasm0(name, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
 const len0 = WASM_VECTOR_LEN;
-const ptr1 = passStringToWasm0(json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const ptr1 = passStringToWasm0(code, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
 const len1 = WASM_VECTOR_LEN;
-const ret = wasm.run_module(ptr0, len0, ptr1, len1);
+const ptr2 = passStringToWasm0(json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len2 = WASM_VECTOR_LEN;
+const ret = wasm.run_module(ptr0, len0, modules, ptr1, len1, ptr2, len2);
 return ret;
+}
+
+function getArrayJsValueFromWasm0(ptr, len) {
+ptr = ptr >>> 0;
+const mem = getDataViewMemory0();
+const result = [];
+for (let i = ptr; i < ptr + 4 * len; i += 4) {
+result.push(wasm.__wbindgen_export_2.get(mem.getUint32(i, true)));
+}
+wasm.__externref_drop_slice(ptr, len);
+return result;
 }
 
 function notDefined(what) { return () => { throw new Error(`${what} is not defined`); }; }
@@ -270,17 +274,26 @@ const idx = addToExternrefTable0(e);
 wasm.__wbindgen_exn_store(idx);
 }
 }
-function __wbg_adapter_47(arg0, arg1, arg2, arg3) {
-wasm.closure78_externref_shim(arg0, arg1, arg2, arg3);
+function __wbg_adapter_55(arg0, arg1, arg2, arg3) {
+wasm.closure82_externref_shim(arg0, arg1, arg2, arg3);
 }
 
- function __wbindgen_error_new(arg0, arg1) {
-const ret = new Error(getStringFromWasm0(arg0, arg1));
-return ret;
+ function __wbindgen_string_get(arg0, arg1) {
+const obj = arg1;
+const ret = typeof(obj) === 'string' ? obj : undefined;
+var ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+var len1 = WASM_VECTOR_LEN;
+getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
+getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
 };
 
  function __wbindgen_string_new(arg0, arg1) {
 const ret = getStringFromWasm0(arg0, arg1);
+return ret;
+};
+
+ function __wbindgen_error_new(arg0, arg1) {
+const ret = new Error(getStringFromWasm0(arg0, arg1));
 return ret;
 };
 
@@ -325,15 +338,6 @@ wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
 }
 };
 
- function __wbindgen_string_get(arg0, arg1) {
-const obj = arg1;
-const ret = typeof(obj) === 'string' ? obj : undefined;
-var ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-var len1 = WASM_VECTOR_LEN;
-getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
-getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
-};
-
  function __wbg_fetch_f1f32fc92128b512(arg0, arg1) {
 let deferred0_0;
 let deferred0_1;
@@ -358,6 +362,16 @@ return ret;
 };
 
  const __wbg_queueMicrotask_c5419c06eab41e73 = typeof queueMicrotask == 'function' ? queueMicrotask : notDefined('queueMicrotask');
+
+ function __wbg_get_5419cf6b954aa11d(arg0, arg1) {
+const ret = arg0[arg1 >>> 0];
+return ret;
+};
+
+ function __wbg_length_f217bbbf7e8e4df4(arg0) {
+const ret = arg0.length;
+return ret;
+};
 
  function __wbg_newnoargs_1ede4bf2ebbaaf43(arg0, arg1) {
 const ret = new Function(getStringFromWasm0(arg0, arg1));
@@ -394,10 +408,20 @@ const ret = arg0 === undefined;
 return ret;
 };
 
+ function __wbg_from_91a67a5f04c98a54(arg0) {
+const ret = Array.from(arg0);
+return ret;
+};
+
  function __wbg_call_3bfa248576352471() { return handleError(function (arg0, arg1, arg2) {
 const ret = arg0.call(arg1, arg2);
 return ret;
 }, arguments) };
+
+ function __wbg_entries_c02034de337d3ee2(arg0) {
+const ret = Object.entries(arg0);
+return ret;
+};
 
  function __wbg_new_1073970097e5a420(arg0, arg1) {
 try {
@@ -406,7 +430,7 @@ var cb0 = (arg0, arg1) => {
 const a = state0.a;
 state0.a = 0;
 try {
-return __wbg_adapter_47(a, state0.b, arg0, arg1);
+return __wbg_adapter_55(a, state0.b, arg0, arg1);
 } finally {
 state0.a = a;
 }
@@ -450,8 +474,8 @@ getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
 throw new Error(getStringFromWasm0(arg0, arg1));
 };
 
- function __wbindgen_closure_wrapper196(arg0, arg1, arg2) {
-const ret = makeMutClosure(arg0, arg1, 58, __wbg_adapter_24);
+ function __wbindgen_closure_wrapper210(arg0, arg1, arg2) {
+const ret = makeMutClosure(arg0, arg1, 62, __wbg_adapter_24);
 return ret;
 };
 
@@ -473,9 +497,11 @@ eval_code
 ,
 run_module
 ,
-__wbindgen_error_new
+__wbindgen_string_get
 ,
 __wbindgen_string_new
+,
+__wbindgen_error_new
 ,
 __wbg_log_4d5ee32fbc09e881
 ,
@@ -487,8 +513,6 @@ __wbindgen_cb_drop
 ,
 __wbg_secrets_52d52956bc8d3d7b
 ,
-__wbindgen_string_get
-,
 __wbg_fetch_f1f32fc92128b512
 ,
 __wbg_queueMicrotask_848aa4969108a57e
@@ -496,6 +520,10 @@ __wbg_queueMicrotask_848aa4969108a57e
 __wbindgen_is_function
 ,
 __wbg_queueMicrotask_c5419c06eab41e73
+,
+__wbg_get_5419cf6b954aa11d
+,
+__wbg_length_f217bbbf7e8e4df4
 ,
 __wbg_newnoargs_1ede4bf2ebbaaf43
 ,
@@ -511,7 +539,11 @@ __wbg_global_3eca19bb09e9c484
 ,
 __wbindgen_is_undefined
 ,
+__wbg_from_91a67a5f04c98a54
+,
 __wbg_call_3bfa248576352471
+,
+__wbg_entries_c02034de337d3ee2
 ,
 __wbg_new_1073970097e5a420
 ,
@@ -527,7 +559,7 @@ __wbindgen_debug_string
 ,
 __wbindgen_throw
 ,
-__wbindgen_closure_wrapper196
+__wbindgen_closure_wrapper210
 ,
 __wbindgen_init_externref_table
 ,

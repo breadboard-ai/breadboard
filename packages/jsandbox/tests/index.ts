@@ -17,7 +17,7 @@ async function run(
 ): Promise<Record<string, unknown>> {
   const wasm = await loadRuntime();
   const manager = new RunModuleManager(wasm);
-  return manager.runModule(code, inputs);
+  return manager.runModule("test", {}, code, inputs);
 }
 
 describe("runtime basics", () => {
