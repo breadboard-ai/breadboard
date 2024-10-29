@@ -10,21 +10,48 @@ import {
   WASI,
   File as WasiFile,
 } from "@bjorn3/browser_wasi_shim";
-import factory from "./factory.js";
-import { join } from "path";
 import { readFile } from "fs/promises";
+import { join } from "path";
+import factory from "./factory.js";
+import {
+  DescriberInputs,
+  DescriberOutputs,
+  InvokeInputs,
+  InvokeOutputs,
+  ModuleManager,
+  ModuleSpec,
+} from "./types.js";
 
-export { RunModuleManager, loadRuntime };
+export { loadRuntime, NodeModuleManager };
 
 async function loadRuntime(): Promise<Buffer> {
   const path = join(import.meta.dirname, "..", "..", "sandbox.wasm");
   return readFile(path);
 }
 
-class RunModuleManager {
-  constructor(public readonly wasm: Buffer) {}
+class NodeModuleManager implements ModuleManager {
+  constructor(
+    public readonly wasm: Buffer,
+    public readonly modules: ModuleSpec
+  ) {}
 
-  async runModule(code: string, inputs: Record<string, unknown>) {
+  invoke(name: string, inputs: InvokeInputs): Promise<InvokeOutputs> {
+    return this.#run("default", name, inputs);
+  }
+
+  describe(name: string, inputs: DescriberInputs): Promise<DescriberOutputs> {
+    return this.#run("describe", name, inputs);
+  }
+
+  async #run(
+    method: "default" | "describe",
+    name: string,
+    inputs: Record<string, unknown>
+  ) {
+    const code = this.modules[name];
+    if (!code) {
+      return { $error: `Unable to find module "${name}"` };
+    }
     const wasi = new WASI(
       [],
       [],
@@ -46,7 +73,13 @@ class RunModuleManager {
     jsandbox.__wbg_set_wasm(instance.exports);
     // @ts-expect-error 2739
     wasi.start({ exports: instance.exports });
-    const result = await jsandbox.run_module(code, JSON.stringify(inputs));
+    const result = await jsandbox.run_module(
+      method,
+      name,
+      this.modules,
+      code,
+      JSON.stringify(inputs)
+    );
     return JSON.parse(result);
   }
 }

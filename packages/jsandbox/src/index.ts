@@ -4,5 +4,5 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { RunModuleManager } from "./browser.js";
+export { WebModuleManager } from "./web.js";
 export { Capabilities } from "./capabilities.js";

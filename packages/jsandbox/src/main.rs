@@ -5,7 +5,7 @@
  */
 use rquickjs::{
     async_with,
-    loader::{BuiltinResolver, ModuleLoader},
+    loader::{BuiltinLoader, BuiltinResolver, ModuleLoader},
     CatchResultExt,
 };
 use thiserror::Error;
@@ -73,9 +73,35 @@ async fn maybe_promise<'js>(result_obj: rquickjs::Value<'js>) -> Result<rquickjs
 }
 
 #[wasm_bindgen]
-pub async fn run_module(code: String, json: String) -> std::result::Result<String, JsError> {
-    let resolver = BuiltinResolver::default().with_module("breadboard:capabilities");
-    let loader = ModuleLoader::default().with_module("breadboard:capabilities", CapabilitiesModule);
+pub async fn run_module(
+    method: String,
+    name: String,
+    modules: JsValue,
+    code: String,
+    json: String,
+) -> std::result::Result<String, JsError> {
+    let mut peer_loader = BuiltinLoader::default();
+    let mut resolver = BuiltinResolver::default();
+    let object = js_sys::Object::from(modules);
+    let entries = js_sys::Object::entries(&object);
+    for i in 0..entries.length() {
+        let entry = js_sys::Array::from(&entries.get(i));
+        let peer = entry.get(0).as_string().unwrap_or_default();
+        let code = entry.get(1).as_string().unwrap_or_default();
+        if !peer.is_empty() && !code.is_empty() && name != peer {
+            let peer_js = format!("{}.js", peer);
+            peer_loader.add_module(&peer, code.as_str());
+            resolver.add_module(&peer);
+            peer_loader.add_module(&peer_js, code.as_str());
+            resolver.add_module(&peer_js);
+        }
+    }
+    resolver.add_module("breadboard:capabilities");
+
+    let loader = (
+        peer_loader,
+        ModuleLoader::default().with_module("breadboard:capabilities", CapabilitiesModule),
+    );
 
     let rt = rquickjs::AsyncRuntime::new()?;
     let ctx = rquickjs::AsyncContext::full(&rt).await?;
@@ -86,7 +112,7 @@ pub async fn run_module(code: String, json: String) -> std::result::Result<Strin
 
     let result = async_with!(ctx => |ctx| {
         // Load the module.
-        let module = rquickjs::Module::declare(ctx.clone(), "m", code)
+        let module = rquickjs::Module::declare(ctx.clone(), name, code)
             .catch(&ctx)
             .map_err(|e| Error::Loading(e.to_string()))?;
 
@@ -104,7 +130,7 @@ pub async fn run_module(code: String, json: String) -> std::result::Result<Strin
             .map_err(|e| Error::GettingDefaultExport(e.to_string()))?;
 
         let default = namespace
-            .get::<_, rquickjs::Function>("default")
+            .get::<_, rquickjs::Function>(method)
             .catch(&ctx)
             .map_err(|e| Error::GettintDefaultFunction(e.to_string()))?;
 
