@@ -5,7 +5,7 @@
  */
 
 import express from "express";
-import type { IncomingMessage, ServerResponse } from "node:http";
+import type { Request, Response } from 'express';
 
 import { grant } from "./api/grant.js";
 import { list } from "./api/list.js";
@@ -20,21 +20,21 @@ export function startServer(port: number, config: ServerConfig) {
   // TODO: #3172 - Error handling
   // TODO: #3172 - Handle HTTP verbs individually
 
-  app.all("/list", async (req, res) => {
+  app.all("/list", async (req: Request, res: Response) => {
     if (!cors(req, res, config.allowedOrigins)) {
       return;
     }
     await list(req, res, config);
   });
 
-  app.all("/grant", async (req, res) => {
+  app.all("/grant", async (req: Request, res: Response) => {
     if (!cors(req, res, config.allowedOrigins)) {
       return;
     }
     await grant(req, res, config);
   });
 
-  app.all("/refresh", async (req, res) => {
+  app.all("/refresh", async (req: Request, res: Response) => {
     if (!cors(req, res, config.allowedOrigins)) {
       return;
     }
