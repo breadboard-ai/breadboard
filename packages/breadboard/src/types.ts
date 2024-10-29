@@ -119,7 +119,11 @@ export type BehaviorSchema =
    * Indicates that the string is a Google Drive File ID.
    * https://developers.google.com/drive/api/guides/about-files#characteristics
    */
-  | "google-drive-file-id";
+  | "google-drive-file-id"
+  /**
+   * Indicates that the string is a Module.
+   */
+  | "module";
 
 export type Schema = {
   title?: string;
