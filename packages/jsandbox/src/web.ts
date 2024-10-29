@@ -12,19 +12,40 @@ import {
 } from "@bjorn3/browser_wasi_shim";
 
 import factory from "./factory.js";
+import {
+  DescriberInputs,
+  DescriberOutputs,
+  InvokeInputs,
+  InvokeOutputs,
+  ModuleManager,
+  ModuleSpec,
+} from "./types.js";
 
-export { RunModuleManager };
+export { WebModuleManager };
 
-class RunModuleManager {
-  constructor(public readonly runtimeUrl: URL) {}
+class WebModuleManager implements ModuleManager {
+  constructor(
+    public readonly runtimeUrl: URL,
+    public readonly modules: ModuleSpec
+  ) {}
 
-  async runModule(
+  invoke(name: string, inputs: InvokeInputs): Promise<InvokeOutputs> {
+    return this.#run("default", name, inputs);
+  }
+
+  describe(name: string, inputs: DescriberInputs): Promise<DescriberOutputs> {
+    return this.#run("describe", name, inputs);
+  }
+
+  async #run(
     method: "default" | "describe",
     name: string,
-    modules: Record<string, string>,
-    code: string,
-    inputs: Record<string, unknown>
+    inputs: InvokeInputs
   ) {
+    const code = this.modules[name];
+    if (!code) {
+      return { $error: `Unable to find module "${name}"` };
+    }
     const wasi = new WASI(
       [],
       [],
@@ -52,7 +73,7 @@ class RunModuleManager {
     const result = await jsandbox.run_module(
       method,
       name,
-      modules,
+      this.modules,
       code,
       JSON.stringify(inputs)
     );

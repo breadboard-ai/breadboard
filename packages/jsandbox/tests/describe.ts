@@ -6,23 +6,21 @@
 
 import { deepStrictEqual } from "node:assert";
 import test, { describe } from "node:test";
-import { loadRuntime, RunModuleManager } from "../src/node.js";
+import { loadRuntime, NodeModuleManager } from "../src/node.js";
 
 async function describeModule(
-  modules: Record<string, string>,
   code: string,
   inputs: Record<string, unknown> = {}
 ): Promise<Record<string, unknown>> {
   const wasm = await loadRuntime();
-  const manager = new RunModuleManager(wasm);
-  return manager.runModule("describe", "test", modules, code, inputs);
+  const manager = new NodeModuleManager(wasm, { test: code });
+  return manager.describe("test", inputs);
 }
 
 describe("custom describers", () => {
   test("can run", async () => {
     deepStrictEqual(
       await describeModule(
-        {},
         `
 export { describe };
 

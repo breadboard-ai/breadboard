@@ -5,7 +5,7 @@
  */
 
 import test, { describe } from "node:test";
-import { loadRuntime, RunModuleManager } from "../src/node.js";
+import { loadRuntime, NodeModuleManager } from "../src/node.js";
 import { deepStrictEqual, ok, rejects, throws } from "node:assert";
 import { Capabilities } from "../src/capabilities.js";
 
@@ -16,8 +16,8 @@ async function run(
   inputs: Record<string, unknown> = {}
 ): Promise<Record<string, unknown>> {
   const wasm = await loadRuntime();
-  const manager = new RunModuleManager(wasm);
-  return manager.runModule("default", "test", {}, code, inputs);
+  const manager = new NodeModuleManager(wasm, { test: code });
+  return manager.invoke("test", inputs);
 }
 
 describe("runtime basics", () => {
