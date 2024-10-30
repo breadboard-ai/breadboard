@@ -16,7 +16,17 @@ import type { ServerConfig } from "./config.js";
 export function startServer(port: number, config: ServerConfig) {
   const app = express();
 
-  app.use(cors({ origin: config.allowedOrigins }));
+  app.use(
+    cors({
+      credentials: true,
+      // Different browsers allow different max values for max age. The highest
+      // seems to be Chromium at 24 hours.
+      // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Max-Age
+      maxAge: 24 * 60 * 60,
+      methods: "GET",
+      origin: config.allowedOrigins,
+    })
+  );
 
   // TODO: #3172 - Error handling
   // TODO: #3172 - Handle HTTP verbs individually
