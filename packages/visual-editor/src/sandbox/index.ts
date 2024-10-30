@@ -5,8 +5,13 @@
  */
 
 import {
+  GraphDescriptor,
   InputValues,
+  NodeDescriberContext,
+  NodeDescriberResult,
   NodeHandlerContext,
+  NodeHandlerObject,
+  Schema,
   type Kit,
 } from "@google-labs/breadboard";
 
@@ -50,14 +55,30 @@ function getHandler(handlerName: string, context: NodeHandlerContext) {
   ];
 }
 
-function addSandboxedRunModule(kits: Kit[]): Kit[] {
+function addSandboxedRunModule(board: GraphDescriptor, kits: Kit[]): Kit[] {
+  const modules = board.modules;
+  if (!modules) {
+    return kits;
+  }
+
+  const runner = new WebModuleManager(
+    new URL(wasm, window.location.href),
+    Object.fromEntries(
+      Object.entries(modules).map(([name, spec]) => [name, spec.code])
+    )
+  );
+
   const existingRunModule = findHandler("runModule", kits);
-  const describe =
-    existingRunModule &&
+  const originalDescriber =
+    (existingRunModule &&
     typeof existingRunModule !== "string" &&
     "describe" in existingRunModule
       ? existingRunModule.describe
-      : undefined;
+      : undefined) ??
+    (() => ({
+      outputSchema: {},
+      inputSchema: {},
+    }));
 
   return [
     {
@@ -69,22 +90,54 @@ function addSandboxedRunModule(kits: Kit[]): Kit[] {
               getHandler("fetch", context),
               getHandler("secrets", context),
             ]);
-
-            const modules = context.board?.modules;
-            if (!modules) {
-              throw new Error(`No modules were found in this graph`);
-            }
-            const runner = new WebModuleManager(
-              new URL(wasm, window.location.href),
-              Object.fromEntries(
-                Object.entries(modules).map(([name, spec]) => [name, spec.code])
-              )
-            );
             const result = await runner.invoke($module as string, rest);
             return result as InputValues;
           },
-          describe,
-        },
+          describe: async (
+            inputs?: InputValues,
+            inputSchema?: Schema,
+            outputSchema?: Schema,
+            /**
+             * The context in which the node is described.
+             */
+            context?: NodeDescriberContext
+          ) => {
+            const { $module } = inputs || {};
+            if ($module) {
+              try {
+                const result = (await runner.describe($module as string, {
+                  inputs,
+                  inputSchema,
+                  outputSchema,
+                })) as NodeDescriberResult;
+                return {
+                  inputSchema: {
+                    type: "object",
+                    properties: {
+                      $module: {
+                        type: "string",
+                        title: "Module ID",
+                        behavior: ["config", "module"],
+                      },
+                      ...result.inputSchema.properties,
+                    },
+                  },
+                  outputSchema: result.outputSchema,
+                };
+              } catch (e) {
+                // swallow the error. It's okay that some modules don't have
+                // custom describers.
+              }
+            }
+
+            return originalDescriber(
+              inputs,
+              inputSchema,
+              outputSchema,
+              context
+            );
+          },
+        } satisfies NodeHandlerObject,
       },
     },
     ...kits,

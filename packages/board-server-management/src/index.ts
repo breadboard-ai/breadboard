@@ -7,9 +7,9 @@
 import * as idb from "idb";
 import { IDBBoardServer } from "@breadboard-ai/idb-board-server";
 import {
-  asRuntimeKit,
   BoardServer,
   GraphDescriptor,
+  Kit,
   User,
 } from "@google-labs/breadboard";
 import { RemoteBoardServer } from "@breadboard-ai/remote-board-server";
@@ -19,18 +19,8 @@ import {
   type FileSystemDirectoryHandle,
 } from "@breadboard-ai/filesystem-board-server";
 
-import { loadKits } from "./utils/kit-loader.js";
-import GeminiKit from "@google-labs/gemini-kit";
-import PythonWasmKit from "@breadboard-ai/python-wasm";
-import GoogleDriveKit, {
-  GoogleDriveBoardServer,
-} from "@breadboard-ai/google-drive-kit";
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import { TokenVendor } from "@breadboard-ai/connection-client";
-const loadedKits = loadKits([
-  asRuntimeKit(GeminiKit),
-  asRuntimeKit(PythonWasmKit),
-  asRuntimeKit(GoogleDriveKit),
-]);
 
 const PLAYGROUND_BOARDS = "example://playground-boards";
 const EXAMPLE_BOARDS = "example://example-boards";
@@ -55,6 +45,7 @@ interface BoardServerListing extends idb.DBSchema {
 }
 
 export async function getBoardServers(
+  kits: Kit[],
   tokenVendor?: TokenVendor,
   skipPlaygroundExamples = false
 ): Promise<BoardServer[]> {
@@ -70,13 +61,6 @@ export async function getBoardServers(
 
   const storeUrls = await db.getAll("servers");
   db.close();
-
-  // TODO: Figure out a better solution for kits. As it stands we duplicate
-  // the kits across all of the Board Servers, so we can afford to load them
-  // in here and then populate the Board Servers with them. If we devolve it to
-  // the Board Server entirely then each one would load a separate copy of the
-  // same kits.
-  const kits = await loadedKits;
 
   const stores = await Promise.all(
     storeUrls.map(({ url, title, user, handle }) => {
@@ -116,11 +100,12 @@ export async function getBoardServers(
 }
 
 export async function connectToBoardServer(
+  kits: Kit[],
   location?: string,
   apiKey?: string,
   tokenVendor?: TokenVendor
 ): Promise<{ title: string; url: string } | null> {
-  const existingServers = await getBoardServers(tokenVendor);
+  const existingServers = await getBoardServers(kits, tokenVendor);
   if (location) {
     if (
       location.startsWith(RemoteBoardServer.PROTOCOL) ||
@@ -258,7 +243,7 @@ async function storeBoardServer(
   db.close();
 }
 
-export async function createDefaultLocalBoardServer() {
+export async function createDefaultLocalBoardServer(kits: Kit[]) {
   try {
     const url = `${IDBBoardServer.PROTOCOL}board-server-local`;
     const user = {
@@ -267,7 +252,6 @@ export async function createDefaultLocalBoardServer() {
       secrets: new Map(),
     };
 
-    const kits = await loadedKits;
     await IDBBoardServer.createDefault(new URL(url), user, kits);
     await storeBoardServer(new URL(url), "Browser Storage", user);
   } catch (err) {
@@ -286,13 +270,13 @@ export async function legacyGraphProviderExists() {
   return true;
 }
 
-export async function migrateIDBGraphProviders() {
+export async function migrateIDBGraphProviders(kits: Kit[]) {
   try {
     const db = await idb.openDB("default");
     const graphs: GraphDescriptor[] = await db.getAll("graphs");
     db.close();
 
-    const boardServers = await getBoardServers();
+    const boardServers = await getBoardServers(kits);
     const idbBoardServer = boardServers.find(
       (bbs) => bbs.name === "Browser Storage"
     );

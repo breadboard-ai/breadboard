@@ -31,6 +31,7 @@ import {
   getBoardServers,
 } from "@breadboard-ai/board-server-management";
 import { TokenVendor } from "@breadboard-ai/connection-client";
+import { addSandboxedRunModule } from "../sandbox";
 
 export class Board extends EventTarget {
   #tabs = new Map<TabId, Tab>();
@@ -94,6 +95,7 @@ export class Board extends EventTarget {
     }
 
     const boardServerInfo = await connectToBoardServer(
+      this.kits,
       location,
       apiKey,
       this.tokenVendor
@@ -108,7 +110,10 @@ export class Board extends EventTarget {
       // the user is notified.
       return { success: false };
     } else {
-      this.boardServers.servers = await getBoardServers(this.tokenVendor);
+      this.boardServers.servers = await getBoardServers(
+        this.kits,
+        this.tokenVendor
+      );
       this.boardServers.loader = createLoader(this.boardServers.servers);
       this.dispatchEvent(
         new RuntimeBoardServerChangeEvent(
@@ -133,7 +138,10 @@ export class Board extends EventTarget {
       // the user is notified.
       return { success: false };
     }
-    this.boardServers.servers = await getBoardServers(this.tokenVendor);
+    this.boardServers.servers = await getBoardServers(
+      this.kits,
+      this.tokenVendor
+    );
     this.boardServers.loader = createLoader(this.boardServers.servers);
     this.dispatchEvent(new RuntimeBoardServerChangeEvent());
   }
@@ -310,7 +318,7 @@ export class Board extends EventTarget {
     const id = globalThis.crypto.randomUUID();
     this.#tabs.set(id, {
       id,
-      kits: this.kits,
+      kits: addSandboxedRunModule(descriptor, this.kits),
       name: descriptor.title ?? "Untitled board",
       graph: descriptor,
       subGraphId: null,
@@ -349,7 +357,7 @@ export class Board extends EventTarget {
     const id = globalThis.crypto.randomUUID();
     this.#tabs.set(id, {
       id,
-      kits: this.kits,
+      kits: addSandboxedRunModule(descriptor, this.kits),
       name: descriptor.title ?? "Untitled board",
       graph: descriptor,
       subGraphId: null,
@@ -434,7 +442,7 @@ export class Board extends EventTarget {
       const id = globalThis.crypto.randomUUID();
       this.#tabs.set(id, {
         id,
-        kits,
+        kits: addSandboxedRunModule(graph, kits),
         name: graph.title ?? "Untitled board",
         graph,
         subGraphId: null,

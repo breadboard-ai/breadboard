@@ -432,7 +432,7 @@ export class Main extends LitElement {
               // run with it before switching to the tab proper.
               if (evt.topGraphObserver) {
                 this.#runtime.run.create(
-                  this.tab.id,
+                  this.tab,
                   evt.topGraphObserver,
                   evt.runObserver
                 );
@@ -1131,7 +1131,7 @@ export class Main extends LitElement {
       return;
     }
 
-    this.#runtime.run.runBoard(this.tab.id, config, history);
+    this.#runtime.run.runBoard(this.tab, config, history);
   }
 
   #clearTabParams() {
@@ -2007,6 +2007,7 @@ export class Main extends LitElement {
                   // We should probably have some way to codify the shape.
                   const invocationResult =
                     await this.#runtime.run.invokeSideboard(
+                      this.tab!.kits,
                       "/side-boards/enhance-configuration.bgl.json",
                       this.#runtime.board.getLoader(),
                       { config },

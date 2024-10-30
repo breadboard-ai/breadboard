@@ -18,7 +18,7 @@ import {
   RunArguments,
   RunStore,
 } from "@google-labs/breadboard";
-import { Result, TabId } from "./types";
+import { Result, Tab, TabId } from "./types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
   createRunner,
@@ -47,23 +47,23 @@ export class Run extends EventTarget {
       topGraphObserver?: BreadboardUI.Utils.TopGraphObserver;
       runObserver?: InspectableRunObserver;
       abortController?: AbortController;
+      kits: Kit[];
     }
   >();
 
   constructor(
     public readonly dataStore: DataStore,
-    public readonly runStore: RunStore,
-    public readonly kits: Kit[]
+    public readonly runStore: RunStore
   ) {
     super();
   }
 
   create(
-    tabId: TabId,
+    tab: Tab,
     topGraphObserver: BreadboardUI.Utils.TopGraphObserver,
     runObserver?: InspectableRunObserver
   ) {
-    this.#runs.set(tabId, { topGraphObserver, runObserver });
+    this.#runs.set(tab.id, { topGraphObserver, runObserver, kits: tab.kits });
   }
 
   getRunner(tabId: TabId | null) {
@@ -107,12 +107,13 @@ export class Run extends EventTarget {
   }
 
   async runBoard(
-    tabId: TabId,
+    tab: Tab,
     config: RunConfig,
     history?: InspectableRunSequenceEntry[]
   ) {
     const abortController = new AbortController();
-    config = { ...config, kits: this.kits, signal: abortController.signal };
+    const tabId = tab.id;
+    config = { ...config, kits: tab.kits, signal: abortController.signal };
 
     const runner = this.#createBoardRunner(config, abortController);
     this.#runs.set(tabId, runner);
@@ -215,7 +216,7 @@ export class Run extends EventTarget {
       logLevel: "debug",
       dataStore: this.dataStore,
       runStore: this.runStore,
-      kits: this.kits,
+      kits: config.kits,
     });
 
     const topGraphObserver = new BreadboardUI.Utils.TopGraphObserver(
@@ -226,10 +227,17 @@ export class Run extends EventTarget {
 
     harnessRunner.addObserver(runObserver);
 
-    return { harnessRunner, topGraphObserver, runObserver, abortController };
+    return {
+      harnessRunner,
+      topGraphObserver,
+      runObserver,
+      abortController,
+      kits: config.kits,
+    };
   }
 
   async invokeSideboard(
+    kits: Kit[],
     url: string,
     loader: GraphLoader,
     inputs: InputValues,
@@ -245,7 +253,7 @@ export class Run extends EventTarget {
       };
     }
     const args: RunArguments = {
-      kits: [sideboardSecretsKit(settings), ...this.kits],
+      kits: [sideboardSecretsKit(settings), ...kits],
       loader: loader,
       store: this.dataStore,
     };
