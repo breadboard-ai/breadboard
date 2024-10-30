@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { fetch, secrets, Capabilities };
+export { fetch, secrets, invoke, Capabilities };
 
 type Values = Record<string, unknown>;
 
@@ -44,4 +44,8 @@ async function fetch(inputs: string) {
 
 async function secrets(inputs: string) {
   return Capabilities.instance().invoke("secrets", inputs);
+}
+
+async function invoke(inputs: string) {
+  return Capabilities.instance().invoke("invoke", inputs);
 }
