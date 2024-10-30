@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import express from "express";
 import { createServer } from "node:http";
 import { env } from "node:process";
 import { loadConnections, type ServerConfig } from "./config.js";
-import { makeRouter } from "./router.js";
+import { startServer } from "./server.js";
 
 const configPath = process.env["CONNECTIONS_FILE"];
 const config: ServerConfig = {
@@ -46,10 +47,14 @@ if (config.allowedOrigins.size === 0) {
 }
 const host = env.HOST || "localhost";
 const port = env.PORT ? Number(env.PORT) : 5555;
-const server = createServer(makeRouter(config));
-server.on("error", (error) => {
-  console.error(error);
-  if ((error as { code?: string }).code === "EADDRINUSE") {
+
+const app = express();
+
+try {
+  startServer(port, config);
+} catch (e) {
+  console.error(e);
+  if ((e as { code?: string }).code === "EADDRINUSE") {
     console.log(
       `
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -62,16 +67,4 @@ server.on("error", (error) => {
 `
     );
   }
-});
-
-server.listen(port, host, () => {
-  console.info(
-    `
-┌─────────────────────────────────────────────────────────────────────────┐
-│ Breadboard Connection Server                                            │
-├─────────────────────────────────────────────────────────────────────────┘
-│ Listening on "http://${host}:${port}"...
-└──────────────────────────────────────────────────────────────────────────
-`
-  );
-});
+}
