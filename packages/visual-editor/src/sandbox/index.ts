@@ -44,7 +44,8 @@ function getHandler(handlerName: string, context: NodeHandlerContext) {
     handlerName,
     async (inputs: InputValues) => {
       try {
-        return invoke(inputs as InputValues, context);
+        const result = await invoke(inputs as InputValues, context);
+        return result;
       } catch (e) {
         return { $error: (e as Error).message };
       }

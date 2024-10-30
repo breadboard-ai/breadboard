@@ -538,25 +538,25 @@ export class Main extends LitElement {
               case "secret": {
                 const runEvt = evt.runEvt as RunSecretEvent;
                 const { keys } = runEvt.data;
-                const result: InputValues = {};
                 if (this.#secretsHelper) {
                   this.#secretsHelper.setKeys(keys);
                   if (this.#secretsHelper.hasAllSecrets()) {
                     evt.harnessRunner?.run(this.#secretsHelper.getSecrets());
+                  } else {
+                    const result = SecretsHelper.allKeysAreKnown(
+                      this.#settings!,
+                      keys
+                    );
+                    if (result) {
+                      evt.harnessRunner?.run(result);
+                    }
                   }
                 } else {
-                  const allKeysAreKnown = keys.every((key) => {
-                    const savedSecret =
-                      this.#settings
-                        ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.SECRETS)
-                        .items.get(key) ?? null;
-                    if (savedSecret) {
-                      result[key] = savedSecret.value;
-                      return true;
-                    }
-                    return false;
-                  });
-                  if (allKeysAreKnown) {
+                  const result = SecretsHelper.allKeysAreKnown(
+                    this.#settings!,
+                    keys
+                  );
+                  if (result) {
                     evt.harnessRunner?.run(result);
                   } else {
                     this.#secretsHelper = new SecretsHelper(this.#settings!);

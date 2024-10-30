@@ -50,6 +50,8 @@ where
         .await
         .as_string()
         .unwrap_or_default();
+    while ctx.execute_pending_job() {}
+
     ctx.json_parse(result_str)
 }
 

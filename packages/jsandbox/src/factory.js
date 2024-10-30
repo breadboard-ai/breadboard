@@ -196,7 +196,7 @@ CLOSURE_DTORS.register(real, state, state);
 return real;
 }
 function __wbg_adapter_24(arg0, arg1, arg2) {
-wasm.closure63_externref_shim(arg0, arg1, arg2);
+wasm.closure66_externref_shim(arg0, arg1, arg2);
 }
 
 function getArrayJsValueFromWasm0(ptr, len) {
@@ -278,7 +278,7 @@ wasm.__wbindgen_exn_store(idx);
 }
 }
 function __wbg_adapter_57(arg0, arg1, arg2, arg3) {
-wasm.closure84_externref_shim(arg0, arg1, arg2, arg3);
+wasm.closure87_externref_shim(arg0, arg1, arg2, arg3);
 }
 
  function __wbindgen_string_get(arg0, arg1) {
@@ -490,8 +490,8 @@ getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
 throw new Error(getStringFromWasm0(arg0, arg1));
 };
 
- function __wbindgen_closure_wrapper213(arg0, arg1, arg2) {
-const ret = makeMutClosure(arg0, arg1, 64, __wbg_adapter_24);
+ function __wbindgen_closure_wrapper217(arg0, arg1, arg2) {
+const ret = makeMutClosure(arg0, arg1, 67, __wbg_adapter_24);
 return ret;
 };
 
@@ -577,7 +577,7 @@ __wbindgen_debug_string
 ,
 __wbindgen_throw
 ,
-__wbindgen_closure_wrapper213
+__wbindgen_closure_wrapper217
 ,
 __wbindgen_init_externref_table
 ,
