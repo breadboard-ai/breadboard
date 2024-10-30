@@ -5,6 +5,7 @@
  */
 
 import {
+  GraphDescriptor,
   InputValues,
   NodeHandlerContext,
   type Kit,
@@ -50,7 +51,19 @@ function getHandler(handlerName: string, context: NodeHandlerContext) {
   ];
 }
 
-function addSandboxedRunModule(kits: Kit[]): Kit[] {
+function addSandboxedRunModule(board: GraphDescriptor, kits: Kit[]): Kit[] {
+  const modules = board.modules;
+  if (!modules) {
+    return kits;
+  }
+
+  const runner = new WebModuleManager(
+    new URL(wasm, window.location.href),
+    Object.fromEntries(
+      Object.entries(modules).map(([name, spec]) => [name, spec.code])
+    )
+  );
+
   const existingRunModule = findHandler("runModule", kits);
   const describe =
     existingRunModule &&
@@ -74,12 +87,6 @@ function addSandboxedRunModule(kits: Kit[]): Kit[] {
             if (!modules) {
               throw new Error(`No modules were found in this graph`);
             }
-            const runner = new WebModuleManager(
-              new URL(wasm, window.location.href),
-              Object.fromEntries(
-                Object.entries(modules).map(([name, spec]) => [name, spec.code])
-              )
-            );
             const result = await runner.invoke($module as string, rest);
             return result as InputValues;
           },
