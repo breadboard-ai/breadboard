@@ -89,6 +89,7 @@ function addSandboxedRunModule(board: GraphDescriptor, kits: Kit[]): Kit[] {
             Capabilities.instance().install([
               getHandler("fetch", context),
               getHandler("secrets", context),
+              getHandler("invoke", context),
             ]);
             const result = await runner.invoke($module as string, rest);
             return result as InputValues;
