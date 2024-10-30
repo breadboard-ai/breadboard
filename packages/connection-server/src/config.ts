@@ -4,12 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { readFile } from "node:fs/promises";
 
 export interface ServerConfig {
   connections: Map<string, ConnectionConfig>;
-  allowedOrigins: Set<string>;
+  allowedOrigins: string[];
 }
 
 export interface ConnectionsConfigFile {
