@@ -14,6 +14,7 @@ impl ModuleDef for CapabilitiesModule {
     fn declare(decl: &rquickjs::module::Declarations) -> Result<()> {
         decl.declare("fetch")?;
         decl.declare("secrets")?;
+        decl.declare("invoke")?;
         Ok(())
     }
 
@@ -26,6 +27,10 @@ impl ModuleDef for CapabilitiesModule {
         exports.export(
             "secrets",
             Function::new(ctx.clone(), Async(secrets_value))?.with_name("secrets")?,
+        )?;
+        exports.export(
+            "invoke",
+            Function::new(ctx.clone(), Async(invoke_value))?.with_name("invoke")?,
         )?;
         Ok(())
     }
@@ -45,6 +50,8 @@ where
         .await
         .as_string()
         .unwrap_or_default();
+    while ctx.execute_pending_job() {}
+
     ctx.json_parse(result_str)
 }
 
@@ -56,8 +63,13 @@ async fn secrets_value<'js>(inputs: Value<'js>) -> rquickjs::Result<Value<'js>> 
     call_capability(inputs, secrets).await
 }
 
+async fn invoke_value<'js>(inputs: Value<'js>) -> rquickjs::Result<Value<'js>> {
+    call_capability(inputs, invoke).await
+}
+
 #[wasm_bindgen(raw_module = "./capabilities.js")]
 extern "C" {
     async fn fetch(inputs: String) -> JsValue;
     async fn secrets(inputs: String) -> JsValue;
+    async fn invoke(inputs: String) -> JsValue;
 }

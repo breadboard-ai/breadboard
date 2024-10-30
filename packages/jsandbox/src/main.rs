@@ -153,6 +153,9 @@ pub async fn run_module(
         Ok(result_str.to_string()?)
     })
     .await;
+
+    rt.idle().await;
+
     Ok(result?)
 }
 

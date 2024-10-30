@@ -44,7 +44,8 @@ function getHandler(handlerName: string, context: NodeHandlerContext) {
     handlerName,
     async (inputs: InputValues) => {
       try {
-        return invoke(inputs as InputValues, context);
+        const result = await invoke(inputs as InputValues, context);
+        return result;
       } catch (e) {
         return { $error: (e as Error).message };
       }
@@ -89,6 +90,7 @@ function addSandboxedRunModule(board: GraphDescriptor, kits: Kit[]): Kit[] {
             Capabilities.instance().install([
               getHandler("fetch", context),
               getHandler("secrets", context),
+              getHandler("invoke", context),
             ]);
             const result = await runner.invoke($module as string, rest);
             return result as InputValues;
