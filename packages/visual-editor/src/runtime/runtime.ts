@@ -47,24 +47,25 @@ export async function create(config: RuntimeConfig): Promise<{
 
   const skipPlaygroundExamples = import.meta.env.MODE !== "development";
   let servers = await getBoardServers(
+    kits,
     config.tokenVendor,
     skipPlaygroundExamples
   );
 
   // First run - set everything up.
   if (servers.length === 0) {
-    await createDefaultLocalBoardServer();
+    await createDefaultLocalBoardServer(kits);
 
     // Migrate any legacy data. We do this in order so that IDB doesn't get
     // into a bad state with races and the like.
     if (await legacyGraphProviderExists()) {
-      await migrateIDBGraphProviders();
+      await migrateIDBGraphProviders(kits);
       await migrateRemoteGraphProviders();
       await migrateExampleGraphProviders();
       await migrateFileSystemProviders();
     }
 
-    servers = await getBoardServers();
+    servers = await getBoardServers(kits);
   }
 
   const loader = createLoader(servers);
