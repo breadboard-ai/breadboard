@@ -24,28 +24,16 @@ import {
 export { WebModuleManager };
 
 class WebModuleManager implements ModuleManager {
+  #sandbox: Promise<ReturnType<typeof factory>>;
+
   constructor(
     public readonly runtimeUrl: URL,
     public readonly modules: ModuleSpec
-  ) {}
-
-  invoke(name: string, inputs: InvokeInputs): Promise<InvokeOutputs> {
-    return this.#run("default", name, inputs);
-  }
-
-  describe(name: string, inputs: DescriberInputs): Promise<DescriberOutputs> {
-    return this.#run("describe", name, inputs);
-  }
-
-  async #run(
-    method: "default" | "describe",
-    name: string,
-    inputs: InvokeInputs
   ) {
-    const code = this.modules[name];
-    if (!code) {
-      return { $error: `Unable to find module "${name}"` };
-    }
+    this.#sandbox = this.#start();
+  }
+
+  async #start() {
     const wasi = new WASI(
       [],
       [],
@@ -70,13 +58,38 @@ class WebModuleManager implements ModuleManager {
     jsandbox.__wbg_set_wasm(instance.exports);
     // @ts-expect-error 2739
     wasi.start({ exports: instance.exports });
-    const result = await jsandbox.run_module(
+    return jsandbox;
+  }
+
+  invoke(name: string, inputs: InvokeInputs): Promise<InvokeOutputs> {
+    return this.#run("default", name, inputs);
+  }
+
+  describe(name: string, inputs: DescriberInputs): Promise<DescriberOutputs> {
+    return this.#run("describe", name, inputs);
+  }
+
+  async #run(
+    method: "default" | "describe",
+    name: string,
+    inputs: InvokeInputs
+  ) {
+    const sandbox = await this.#sandbox;
+    const code = this.modules[name];
+    if (!code) {
+      return { $error: `Unable to find module "${name}"` };
+    }
+
+    const label = `⏱️ Quick JS: ${name}`;
+    console.time(label);
+    const result = await sandbox.run_module(
       method,
       name,
       this.modules,
       code,
       JSON.stringify(inputs)
     );
+    console.timeEnd(label);
     return JSON.parse(result);
   }
 }
