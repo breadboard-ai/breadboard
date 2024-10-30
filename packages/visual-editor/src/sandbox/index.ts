@@ -7,7 +7,11 @@
 import {
   GraphDescriptor,
   InputValues,
+  NodeDescriberContext,
+  NodeDescriberResult,
   NodeHandlerContext,
+  NodeHandlerObject,
+  Schema,
   type Kit,
 } from "@google-labs/breadboard";
 
@@ -65,12 +69,16 @@ function addSandboxedRunModule(board: GraphDescriptor, kits: Kit[]): Kit[] {
   );
 
   const existingRunModule = findHandler("runModule", kits);
-  const describe =
-    existingRunModule &&
+  const originalDescriber =
+    (existingRunModule &&
     typeof existingRunModule !== "string" &&
     "describe" in existingRunModule
       ? existingRunModule.describe
-      : undefined;
+      : undefined) ??
+    (() => ({
+      outputSchema: {},
+      inputSchema: {},
+    }));
 
   return [
     {
@@ -82,16 +90,54 @@ function addSandboxedRunModule(board: GraphDescriptor, kits: Kit[]): Kit[] {
               getHandler("fetch", context),
               getHandler("secrets", context),
             ]);
-
-            const modules = context.board?.modules;
-            if (!modules) {
-              throw new Error(`No modules were found in this graph`);
-            }
             const result = await runner.invoke($module as string, rest);
             return result as InputValues;
           },
-          describe,
-        },
+          describe: async (
+            inputs?: InputValues,
+            inputSchema?: Schema,
+            outputSchema?: Schema,
+            /**
+             * The context in which the node is described.
+             */
+            context?: NodeDescriberContext
+          ) => {
+            const { $module } = inputs || {};
+            if ($module) {
+              try {
+                const result = (await runner.describe($module as string, {
+                  inputs,
+                  inputSchema,
+                  outputSchema,
+                })) as NodeDescriberResult;
+                return {
+                  inputSchema: {
+                    type: "object",
+                    properties: {
+                      $module: {
+                        type: "string",
+                        title: "Module ID",
+                        behavior: ["config", "module"],
+                      },
+                      ...result.inputSchema.properties,
+                    },
+                  },
+                  outputSchema: result.outputSchema,
+                };
+              } catch (e) {
+                // swallow the error. It's okay that some modules don't have
+                // custom describers.
+              }
+            }
+
+            return originalDescriber(
+              inputs,
+              inputSchema,
+              outputSchema,
+              context
+            );
+          },
+        } satisfies NodeHandlerObject,
       },
     },
     ...kits,

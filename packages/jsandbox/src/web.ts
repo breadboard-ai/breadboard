@@ -80,8 +80,6 @@ class WebModuleManager implements ModuleManager {
       return { $error: `Unable to find module "${name}"` };
     }
 
-    const label = `⏱️ Quick JS: ${name}`;
-    console.time(label);
     const result = await sandbox.run_module(
       method,
       name,
@@ -89,7 +87,6 @@ class WebModuleManager implements ModuleManager {
       code,
       JSON.stringify(inputs)
     );
-    console.timeEnd(label);
     return JSON.parse(result);
   }
 }
