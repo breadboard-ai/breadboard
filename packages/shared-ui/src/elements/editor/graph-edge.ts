@@ -15,6 +15,7 @@ import {
 } from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
 import { GRAPH_OPERATIONS } from "./types.js";
+import { segmentIntersection } from "../../utils/pixi-math.js";
 
 // Value is on the wire, but hasn't been consumed by receiving component yet.
 const edgeColorValueStored = getGlobalColor("--bb-human-600");
@@ -106,7 +107,6 @@ export class GraphEdge extends PIXI.Container {
       this.#draw();
       this.#isDirty = false;
     };
-
     this.#edgeGraphic.addEventListener("pointerover", () => {
       if (this.readOnly) {
         return;
@@ -259,6 +259,17 @@ export class GraphEdge extends PIXI.Container {
 
   get type() {
     return this.#type;
+  }
+
+  get hitArea(): PIXI.Polygon | null {
+    if (!this.#edgeGraphic.hitArea) {
+      return null;
+    }
+    if (this.#edgeGraphic.hitArea instanceof PIXI.Polygon) {
+      return this.#edgeGraphic.hitArea;
+    }
+    console.warn("Found edge that does not have a polygon as its hit area.");
+    return null;
   }
 
   forceRedraw() {
@@ -827,4 +838,76 @@ export class GraphEdge extends PIXI.Container {
       this.#editSprite.visible = this.value === null || this.value.length === 0;
     }
   }
+
+  intersectsRect(rect: PIXI.Rectangle): boolean {
+    if (!this.hitArea) return false;
+
+    const rectVerts: Array<PIXI.Point> = rectangleVertices(rect);
+    const rectEdges: Array<[PIXI.Point, PIXI.Point]> = [];
+    for (let i = 0; i < 4; i++) {
+      rectEdges.push([rectVerts[i], rectVerts[(i + 1) % 4]]);
+    }
+
+    // This for-loop intersects the polygon hitbox with the given rectangle.
+    // For every vertex, it checks whether the vertex is inside the rectangle
+    // and returns true if that is the case.
+    // At the same time, we construct the edges of the polygon along the way
+    // and intersect them with each edge of the rectangle.
+    // This covers, for example, the case of a mostly diagonal polygon where
+    // all vertices are outside the rectangle, but the polygon lines
+    // go through the rectangle.
+    let lastPoint: PIXI.Point | null = null;
+    for (const [x, y] of pairsFromList(this.hitArea.points)) {
+      const localP = new PIXI.Point(x, y);
+      const p = this.toGlobal(localP);
+      if (rect.contains(p.x, p.y)) return true;
+      if (lastPoint) {
+        const polyEdge = [lastPoint, p] as const;
+        for (const rectEdge of rectEdges) {
+          if (lineIntersect(...polyEdge, ...rectEdge)) return true;
+        }
+      }
+      lastPoint = p;
+    }
+
+    // This last loop checks if any corners of the rectangle are inside the
+    // polygon. Getting to this code is exceedingly rare, as most cases are
+    // handled by the edge intersection above. This code will only run in the
+    // case the rectangle is fully inside the polygon.
+    for (const p of rectVerts) {
+      if (this.hitArea.contains(p.x, p.y)) return true;
+    }
+    return false;
+  }
+}
+
+// pixi-math returns the intersection point. The coordinates of that point are
+// NaN if the lines are parallel or only intersect outside the extents of the segments.
+function lineIntersect(
+  p1s: PIXI.Point,
+  p1e: PIXI.Point,
+  p2s: PIXI.Point,
+  p2e: PIXI.Point
+): boolean {
+  const i = segmentIntersection(p1s, p1e, p2s, p2e);
+  if (Number.isNaN(i.x) || Number.isNaN(i.y)) return false;
+  return true;
+}
+
+// Iterates over a list of numbers and returns pair-wise elements.
+function* pairsFromList(list: number[]) {
+  for (let i = 0; i < list.length - 1; i += 2) {
+    yield [list[i], list[i + 1]];
+  }
+}
+
+// Returns all corners of a rectangle. Order is important so that you can
+// iterate through this list to compute all edges.
+function rectangleVertices(r: PIXI.Rectangle) {
+  return [
+    new PIXI.Point(r.x, r.y),
+    new PIXI.Point(r.x + r.width, r.y),
+    new PIXI.Point(r.x + r.width, r.y + r.height),
+    new PIXI.Point(r.x, r.y + r.height),
+  ];
 }
