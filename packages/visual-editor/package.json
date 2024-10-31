@@ -304,7 +304,7 @@
     "@breadboard-ai/python-wasm": "0.1.9",
     "@breadboard-ai/shared-ui": "1.19.0",
     "@breadboard-ai/types": "0.1.2",
-    "@codemirror/autocomplete": "^6.18.1",
+    "@codemirror/autocomplete": "^6.18.2",
     "@codemirror/commands": "^6.7.1",
     "@codemirror/lang-javascript": "^6.2.2",
     "@dagrejs/dagre": "^1.1.4",
