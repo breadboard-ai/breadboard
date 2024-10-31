@@ -5,7 +5,6 @@
  */
 
 import express from "express";
-import { createServer } from "node:http";
 import { env } from "node:process";
 import { loadConnections, type ServerConfig } from "./config.js";
 import { startServer } from "./server.js";
@@ -13,11 +12,9 @@ import { startServer } from "./server.js";
 const configPath = process.env["CONNECTIONS_FILE"];
 const config: ServerConfig = {
   connections: configPath ? await loadConnections(configPath) : new Map(),
-  allowedOrigins: new Set(
-    (process.env["ALLOWED_ORIGINS"] ?? "")
-      .split(/\s+/)
-      .filter((origin) => origin !== "")
-  ),
+  allowedOrigins: (process.env["ALLOWED_ORIGINS"] ?? "")
+    .split(/\s+/)
+    .filter((origin) => origin !== ""),
 };
 if (config.connections.size === 0) {
   console.log(
@@ -33,7 +30,7 @@ if (config.connections.size === 0) {
 `
   );
 }
-if (config.allowedOrigins.size === 0) {
+if (config.allowedOrigins.length === 0) {
   console.log(
     `
 ┌─────────────────────────────────────────────────────────────────────────┐
