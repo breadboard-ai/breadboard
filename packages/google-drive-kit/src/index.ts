@@ -13,21 +13,23 @@ import getBreadboardFolder from "./components/get-breadboard-folder.js";
 import saveContextToDrive from "./components/save-context-to-drive.js";
 import loadContextFromDrive from "./components/load-context-from-drive.js";
 
+export const components = {
+  getFileContent,
+  listFiles,
+  exportFile,
+  contextToSlides,
+  getBreadboardFolder,
+  saveContextToDrive,
+  loadContextFromDrive,
+};
+
 export default await kit({
   title: "Google Drive Kit",
   url: "npm:@breadboard-ai/google-drive-kit",
   description:
     "Nodes for reading & writing to files in Google Drive, including Docs and Sheets",
   version: "0.0.1",
-  components: {
-    getFileContent,
-    listFiles,
-    exportFile,
-    contextToSlides,
-    getBreadboardFolder,
-    saveContextToDrive,
-    loadContextFromDrive,
-  },
+  components,
 });
 
 export { GoogleDriveBoardServer } from "./board-server/server.js";

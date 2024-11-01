@@ -32,7 +32,8 @@
     "./*.js": {
       "types": "./dist/*.d.ts",
       "default": "./dist/*.js"
-    }
+    },
+    "./google-drive.kit.json": "./google-drive.kit.json"
   },
   "files": [
     "dist/**/*.{js,js.map,d.ts}",
@@ -49,6 +50,7 @@
     "lint": "wireit",
     "test-and-lint": "wireit",
     "dev": "npm run test-and-lint --watch",
+    "generate-kit-manifest": "wireit",
     "generate:js-components": "wireit",
     "generate:graphs": "wireit"
   },
@@ -131,6 +133,18 @@
       "files": [],
       "output": [
         "graphs/"
+      ]
+    },
+    "generate-kit-manifest": {
+      "command": "tsx src/generate-kit-manifest.ts",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "src/generate-kit-manifest.ts"
+      ],
+      "output": [
+        "google-drive.kit.json"
       ]
     },
     "generate:js-components": {
