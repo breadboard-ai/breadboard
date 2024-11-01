@@ -7,12 +7,18 @@
 import path from "path";
 import { fileURLToPath } from "url";
 
-import { asRuntimeKit, type KitManifest } from "@google-labs/breadboard";
+import {
+  asRuntimeKit,
+  type GraphDescriptor,
+  type KitManifest,
+} from "@google-labs/breadboard";
 
 import { serialize } from "@breadboard-ai/build";
 import { writeFile } from "fs/promises";
 
 import { default as kitConstructor, components } from "./index.js";
+
+import appendToDoc from "./bgl/append-to-doc.bgl.json";
 
 const MANIFEST_NAME = "google-drive.kit.json";
 
@@ -28,12 +34,15 @@ const manifest: KitManifest = {
   description: kit.description,
   version: kit.version,
   url: "npm:@breadboard-ai/google-drive-kit",
-  nodes: Object.fromEntries(
-    Object.entries(components).map(([name, definition]) => [
-      name,
-      serialize(definition),
-    ])
-  ),
+  nodes: {
+    ...Object.fromEntries(
+      Object.entries(components).map(([name, definition]) => [
+        name,
+        serialize(definition),
+      ])
+    ),
+    appendToDoc: appendToDoc as GraphDescriptor,
+  },
 };
 
 const generate = async () => {

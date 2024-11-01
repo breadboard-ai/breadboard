@@ -13,6 +13,7 @@
     "sourceMap": true,
     "inlineSources": true,
     "strict": true,
+    "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
