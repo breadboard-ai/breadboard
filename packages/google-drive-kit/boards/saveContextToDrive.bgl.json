@@ -1,7 +1,7 @@
 {
+  "title": "Save Context To Drive",
+  "description": "Saves LLM Conversation Context to Google Drive.",
   "metadata": {
-    "title": "Save Context To Drive",
-    "description": "Saves LLM Conversation Context to Google Drive.",
     "icon": "google-drive"
   },
   "edges": [

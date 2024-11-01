@@ -34,10 +34,9 @@ const content = fetch({ url, headers }).outputs.response;
 
 export const exportFile = board({
   id: "exportFile",
+  title: "Export File",
+  description: "Export a Google Workspace document to the requested MIME type.",
   metadata: {
-    title: "Export File",
-    description:
-      "Export a Google Workspace document to the requested MIME type.",
     icon: "google-drive",
   },
   inputs: { fileId, mimeType },

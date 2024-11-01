@@ -27,7 +27,7 @@ const manifest: KitManifest = {
   title: kit.title,
   description: kit.description,
   version: kit.version,
-  url: `https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/google-drive-kit/${MANIFEST_NAME}`,
+  url: "npm:@breadboard-ai/google-drive-kit",
   nodes: Object.fromEntries(
     Object.entries(components).map(([name, definition]) => [
       name,

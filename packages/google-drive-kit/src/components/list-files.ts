@@ -42,10 +42,10 @@ const { files, incompleteSearch, nextPageToken } = unnest(response);
 
 export const listFiles = board({
   id: "listFiles",
+  title: "List Files",
+  description:
+    "List files in Google Drive.\n\nSee https://developers.google.com/drive/api/guides/search-files for more details.",
   metadata: {
-    title: "List Files",
-    description:
-      "List files in Google Drive.\n\nSee https://developers.google.com/drive/api/guides/search-files for more details.",
     icon: "google-drive",
   },
   inputs: { query },

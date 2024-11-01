@@ -148,10 +148,10 @@ const newOutput = outputNode({
 });
 
 const createBreadboardFolder = board({
+  title: "Get Breadboard Folder",
+  description:
+    'Gets (or creates if doesn\'t exist) a dedicated "Breadboard" folder in Google Drive. This folder can be used for story various Breadboard-specifc assets and boards.',
   metadata: {
-    title: "Get Breadboard Folder",
-    description:
-      'Gets (or creates if doesn\'t exist) a dedicated "Breadboard" folder in Google Drive. This folder can be used for story various Breadboard-specifc assets and boards.',
     icon: "google-drive",
   },
   inputs: { folderName },

@@ -193,9 +193,9 @@ const pass = passthrough({
 
 export default board({
   id: "saveContextToDrive",
+  title: "Save Context To Drive",
+  description: "Saves LLM Conversation Context to Google Drive.",
   metadata: {
-    title: "Save Context To Drive",
-    description: "Saves LLM Conversation Context to Google Drive.",
     icon: "google-drive",
   },
   inputs: { context, key, breadboardFolderId: rootId },

@@ -215,7 +215,8 @@
     "copy-light-kits": {
       "command": "tsx src/copy-light-kits.ts",
       "dependencies": [
-        "../agent-kit:build"
+        "../agent-kit:build",
+        "../google-drive-kit:build"
       ],
       "files": [],
       "output": [

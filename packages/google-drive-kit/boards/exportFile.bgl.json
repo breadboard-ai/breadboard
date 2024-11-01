@@ -1,7 +1,7 @@
 {
+  "title": "Export File",
+  "description": "Export a Google Workspace document to the requested MIME type.",
   "metadata": {
-    "title": "Export File",
-    "description": "Export a Google Workspace document to the requested MIME type.",
     "icon": "google-drive"
   },
   "edges": [

@@ -60,7 +60,8 @@
         "build:tsc",
         "../build:build",
         "../core-kit:build",
-        "../template-kit:build"
+        "../template-kit:build",
+        "generate-kit-manifest"
       ]
     },
     "build:tsc": {

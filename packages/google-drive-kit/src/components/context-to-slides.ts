@@ -96,10 +96,10 @@ const getUrl = getPresentationUrl({
 
 const contextToSlidesBoard = board({
   id: "contextToSlides",
+  title: "Context to Slides",
+  description:
+    "Turns LLM Conversation Context into a Google Slides presentation",
   metadata: {
-    title: "Context to Slides",
-    description:
-      "Turns LLM Conversation Context into a Google Slides presentation",
     icon: "google-drive",
   },
   inputs: { context, title },
