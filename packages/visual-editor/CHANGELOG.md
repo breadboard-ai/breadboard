@@ -1,5 +1,185 @@
 # @google-labs/breadboard-web
 
+## 1.22.0
+
+### Minor Changes
+
+- 4dc21f4: Implement basic Google Drive Board Server
+- 55674b8: Add support for calling Gemini for sideboards.
+- 1ce1af8: Introduce new Board Activity
+- 83b735f: Introduce "Context To Slides" component.
+- 71d42aa: Teach Visual Editor to run step by step.
+- 1fc5812: React to component edits correctly.
+- e014e42: Introduce "component" tag and user custom kits.
+- 49c7cb7: Add support for peer imports and custom describers (latter not yet plumbed through)
+- d7f04f2: Start removal of provider scaffolding
+- 8b8a0cf: Switch Board Servers on by default
+- 7c99283: Move Google Drive Board Server from behind the flag.
+- ee2844b: Teach Visual Editor about different edge states.
+- 2e7d66f: Add `secrets` to capabilities.
+- 9bd4439: Implement a JS sandbox and start using it in runModule.
+- df7ad14: Implement support for custom describers in runModule.
+- 3dcbf03: Teach Google Drive Board Server to save board metadata.
+- bdf80d8: Teach Google Drive board server to refresh credentials.
+- cf74d3d: (Re-)Introduce node runner
+- 4c71e39: Introduce (entirely stubbed out) Google Drive board server.
+- 8cbc686: Surface the actual error from Gemini.
+- 29762d6: Implement "Re-run from this node" feature.
+- 526f310: Teach JSandbox to handle errors and load "breadboard:capabilities" import
+- a133437: Implement "Role" configuration port for Content component.
+- 38defd8: Make `jsandbox` a real package.
+- bf69ac9: Teach Specialist to be more robust with routes.
+- db93a6a: Implement "stopAfter" run argument (but not yet use it).
+- e1b8e9b: Implement basic "Enhance" plumbing.
+- 37dd928: Add support for `invoke` capability.
+- 8f079a1: Teach Inspector API about modules
+
+### Patch Changes
+
+- 4fb645c: Show node type descriptions by default
+- b0fae7a: Fix infinite loop bug
+- 9d5d6d9: Fixes to jsandbox run
+- 5dc3453: Remove run node setting
+- 0e84b38: Fix configurator deeplink
+- 25905c9: Switch Debug button back to Run
+- ed08f2c: Update drag-dock overlay style
+- fd3667f: Update board details overlay
+- ee0870c: Improve error rendering
+- b043b4d: Offer enhancement button
+- 4375cd1: Apply enhancements ephemerally
+- 8fdce2b: Add "regenerate value" button
+- 6215ade: Synchronize activity log with visual editor when component is edited.
+- 29f7ad4: Various small UI tweaks for GDrive
+- 9a0f027: Add run button to node configurator
+- 01846fa: Add basic debug controls
+- b6eb227: Improve UX of GDrive Board Server
+- 7daf4f2: Cancel any pending autosave when a user has interacted
+- 7cd9014: Update edge value inspector styles
+- f284ca8: Migrate graph node footer back to header
+- 814e95c: Only show 'regenerate' for non-inputs
+- c6f1a69: Fix save behavior
+- ae8bd19: More provider changes
+- 2fffc7a: Reinstate export button for Board activity
+- 2a91b27: Remove old Providers
+- 03d061c: Dispose of toasts
+- cd09c03: Allow compound enhancement & resets
+- 77e1e1d: Fix LLM Inputs
+- eb61b4f: Add more icons to components
+- Updated dependencies [5812884]
+- Updated dependencies [4fb645c]
+- Updated dependencies [9d5d6d9]
+- Updated dependencies [4dc21f4]
+- Updated dependencies [e8e4232]
+- Updated dependencies [55674b8]
+- Updated dependencies [1ce1af8]
+- Updated dependencies [a00058b]
+- Updated dependencies [ff6e3e0]
+- Updated dependencies [559ed8e]
+- Updated dependencies [0e84b38]
+- Updated dependencies [83b735f]
+- Updated dependencies [2526901]
+- Updated dependencies [71d42aa]
+- Updated dependencies [25905c9]
+- Updated dependencies [814db04]
+- Updated dependencies [5f4d8eb]
+- Updated dependencies [ed08f2c]
+- Updated dependencies [1fc5812]
+- Updated dependencies [fd3667f]
+- Updated dependencies [4e7c3fe]
+- Updated dependencies [ee0870c]
+- Updated dependencies [93f7874]
+- Updated dependencies [b043b4d]
+- Updated dependencies [63abd70]
+- Updated dependencies [1cf2285]
+- Updated dependencies [4375cd1]
+- Updated dependencies [afd0d4d]
+- Updated dependencies [e014e42]
+- Updated dependencies [49c7cb7]
+- Updated dependencies [8fdce2b]
+- Updated dependencies [b4c5848]
+- Updated dependencies [6215ade]
+- Updated dependencies [29f7ad4]
+- Updated dependencies [9a0f027]
+- Updated dependencies [01846fa]
+- Updated dependencies [d7f04f2]
+- Updated dependencies [b6eb227]
+- Updated dependencies [7daf4f2]
+- Updated dependencies [8b8a0cf]
+- Updated dependencies [1260786]
+- Updated dependencies [7cd9014]
+- Updated dependencies [661beea]
+- Updated dependencies [1741928]
+- Updated dependencies [f284ca8]
+- Updated dependencies [850c217]
+- Updated dependencies [ee2844b]
+- Updated dependencies [2e7d66f]
+- Updated dependencies [9fc85a6]
+- Updated dependencies [9bd4439]
+- Updated dependencies [df7ad14]
+- Updated dependencies [35954e0]
+- Updated dependencies [15d3b74]
+- Updated dependencies [0ad35bd]
+- Updated dependencies [39d1913]
+- Updated dependencies [3dcbf03]
+- Updated dependencies [bdf80d8]
+- Updated dependencies [cf74d3d]
+- Updated dependencies [4c71e39]
+- Updated dependencies [814e95c]
+- Updated dependencies [8cbc686]
+- Updated dependencies [3b8f814]
+- Updated dependencies [530d7d2]
+- Updated dependencies [29762d6]
+- Updated dependencies [526f310]
+- Updated dependencies [25b3853]
+- Updated dependencies [47606e3]
+- Updated dependencies [514136d]
+- Updated dependencies [c6f1a69]
+- Updated dependencies [a133437]
+- Updated dependencies [9756889]
+- Updated dependencies [ae8bd19]
+- Updated dependencies [387447c]
+- Updated dependencies [2fffc7a]
+- Updated dependencies [14bd092]
+- Updated dependencies [5332cbc]
+- Updated dependencies [552d44b]
+- Updated dependencies [2a91b27]
+- Updated dependencies [38defd8]
+- Updated dependencies [2510120]
+- Updated dependencies [08b71d6]
+- Updated dependencies [6726e5a]
+- Updated dependencies [64e6b88]
+- Updated dependencies [bf69ac9]
+- Updated dependencies [db93a6a]
+- Updated dependencies [ef99f4e]
+- Updated dependencies [03d061c]
+- Updated dependencies [cd09c03]
+- Updated dependencies [950443f]
+- Updated dependencies [2d5b24e]
+- Updated dependencies [77e1e1d]
+- Updated dependencies [37dd928]
+- Updated dependencies [eb61b4f]
+- Updated dependencies [8f079a1]
+  - @breadboard-ai/shared-ui@1.20.0
+  - @google-labs/core-kit@0.16.0
+  - @breadboard-ai/board-server-management@1.19.0
+  - @breadboard-ai/google-drive-kit@0.3.0
+  - @google-labs/breadboard@0.29.0
+  - @google-labs/agent-kit@0.13.0
+  - @breadboard-ai/jsandbox@0.1.0
+  - @breadboard-ai/manifest@0.5.0
+  - @breadboard-ai/types@0.2.0
+  - @breadboard-ai/example-boards@0.3.6
+  - @google-labs/gemini-kit@0.9.0
+  - @google-labs/node-nursery-web@1.3.4
+  - @breadboard-ai/board-server-utils@0.1.5
+  - @breadboard-ai/build@0.10.5
+  - @breadboard-ai/data-store@0.2.5
+  - @breadboard-ai/idb-board-server@1.18.1
+  - @google-labs/json-kit@0.3.12
+  - @google-labs/palm-kit@0.1.6
+  - @google-labs/template-kit@0.3.14
+  - @breadboard-ai/python-wasm@0.1.10
+
 ## 1.21.0
 
 ### Minor Changes

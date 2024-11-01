@@ -1,5 +1,33 @@
 # @breadboard-ai/google-drive-kit
 
+## 0.3.0
+
+### Minor Changes
+
+- 4dc21f4: Implement basic Google Drive Board Server
+- 83b735f: Introduce "Context To Slides" component.
+- 93f7874: Teach "Context to Slides" about bulleted lists.
+- 3dcbf03: Teach Google Drive Board Server to save board metadata.
+- bdf80d8: Teach Google Drive board server to refresh credentials.
+- 4c71e39: Introduce (entirely stubbed out) Google Drive board server.
+- 25b3853: Introduce "Save Context to Drive" and "Load Context from Drive" components.
+- ef99f4e: Add an experimental "Get Breadboard Folder" component.
+
+### Patch Changes
+
+- 559ed8e: Remove GDrive from list if folder 404s
+- Updated dependencies [9d5d6d9]
+- Updated dependencies [a00058b]
+- Updated dependencies [ee2844b]
+- Updated dependencies [9bd4439]
+- Updated dependencies [39d1913]
+- Updated dependencies [bdf80d8]
+- Updated dependencies [5332cbc]
+  - @google-labs/core-kit@0.16.0
+  - @breadboard-ai/connection-client@0.1.0
+  - @breadboard-ai/build@0.10.5
+  - @google-labs/template-kit@0.3.14
+
 ## 0.2.7
 
 ### Patch Changes

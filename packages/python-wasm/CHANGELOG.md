@@ -1,5 +1,11 @@
 # @breadboard-ai/python-wasm
 
+## 0.1.10
+
+### Patch Changes
+
+- @breadboard-ai/build@0.10.5
+
 ## 0.1.9
 
 ### Patch Changes

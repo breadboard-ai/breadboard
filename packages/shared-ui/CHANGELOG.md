@@ -1,5 +1,102 @@
 # @breadboard-ai/shared-ui
 
+## 1.20.0
+
+### Minor Changes
+
+- 4dc21f4: Implement basic Google Drive Board Server
+- 55674b8: Add support for calling Gemini for sideboards.
+- 1ce1af8: Introduce new Board Activity
+- 83b735f: Introduce "Context To Slides" component.
+- 71d42aa: Teach Visual Editor to run step by step.
+- 1fc5812: React to component edits correctly.
+- e014e42: Introduce "component" tag and user custom kits.
+- d7f04f2: Start removal of provider scaffolding
+- 8b8a0cf: Switch Board Servers on by default
+- ee2844b: Teach Visual Editor about different edge states.
+- 15d3b74: Make "Show Run Node" button appear only when it's possible to run a node.
+- 3dcbf03: Teach Google Drive Board Server to save board metadata.
+- bdf80d8: Teach Google Drive board server to refresh credentials.
+- cf74d3d: (Re-)Introduce node runner
+- 4c71e39: Introduce (entirely stubbed out) Google Drive board server.
+- 29762d6: Implement "Re-run from this node" feature.
+- bf69ac9: Teach Specialist to be more robust with routes.
+
+### Patch Changes
+
+- 5812884: Prototype composite boards
+- 4fb645c: Show node type descriptions by default
+- e8e4232: Set edge values to "consumed" on nodeend.
+- ff6e3e0: Fix the problem where outgoing edges aren't cleared on edit.
+- 0e84b38: Fix configurator deeplink
+- 2526901: Filter out board servers that can't be written into in Save overlay.
+- 25905c9: Switch Debug button back to Run
+- 814db04: Simplify Board Activity a little
+- 5f4d8eb: Improve debug controls
+- ed08f2c: Update drag-dock overlay style
+- fd3667f: Update board details overlay
+- ee0870c: Improve error rendering
+- b043b4d: Offer enhancement button
+- 1cf2285: Prevent leading numbers at the start of IDs
+- 4375cd1: Apply enhancements ephemerally
+- 8fdce2b: Add "regenerate value" button
+- b4c5848: Fix stale LLM Input data
+- 6215ade: Synchronize activity log with visual editor when component is edited.
+- 29f7ad4: Various small UI tweaks for GDrive
+- 9a0f027: Add run button to node configurator
+- 01846fa: Add basic debug controls
+- b6eb227: Improve UX of GDrive Board Server
+- 7daf4f2: Cancel any pending autosave when a user has interacted
+- 1260786: Improve secret rendering in Board Activity
+- 7cd9014: Update edge value inspector styles
+- 1741928: Small UI tweaks
+- f284ca8: Migrate graph node footer back to header
+- 850c217: Unbreak serialization.
+- 9fc85a6: Narrow schema type automatically
+- 0ad35bd: Fix missing icons
+- 814e95c: Only show 'regenerate' for non-inputs
+- 3b8f814: Fix reset & input defaults
+- 530d7d2: Fix Activity Marker line height
+- 47606e3: Add support for secondary actions on overflow menus
+- 514136d: Fix user choices
+- c6f1a69: Fix save behavior
+- 9756889: Fix UI render bugs
+- ae8bd19: More provider changes
+- 2fffc7a: Reinstate export button for Board activity
+- 14bd092: Fix LLM Input menu when items is disallowed
+- 2510120: Show board selector when needed
+- 08b71d6: Place outputs at the bottom of the node
+- 6726e5a: Teach user-input about module behavior
+- 64e6b88: Allow underscores in edge names
+- 03d061c: Dispose of toasts
+- cd09c03: Allow compound enhancement & resets
+- 950443f: Attempt autofocus when running boards
+- 77e1e1d: Fix LLM Inputs
+- eb61b4f: Add more icons to components
+- Updated dependencies [4dc21f4]
+- Updated dependencies [71d42aa]
+- Updated dependencies [1fc5812]
+- Updated dependencies [63abd70]
+- Updated dependencies [e014e42]
+- Updated dependencies [6215ade]
+- Updated dependencies [661beea]
+- Updated dependencies [850c217]
+- Updated dependencies [ee2844b]
+- Updated dependencies [39d1913]
+- Updated dependencies [bdf80d8]
+- Updated dependencies [29762d6]
+- Updated dependencies [c6f1a69]
+- Updated dependencies [5332cbc]
+- Updated dependencies [db93a6a]
+- Updated dependencies [2d5b24e]
+- Updated dependencies [8f079a1]
+  - @google-labs/breadboard@0.29.0
+  - @google-labs/breadboard-schema@1.9.0
+  - @breadboard-ai/types@0.2.0
+  - @breadboard-ai/connection-client@0.1.0
+  - @breadboard-ai/build@0.10.5
+  - @breadboard-ai/data-store@0.2.5
+
 ## 1.19.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/python-wasm",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "A runPython Breadboard node which uses WASM (Web Assembly)",
   "license": "Apache-2.0",
   "author": "Google LLC",
@@ -117,7 +117,7 @@
     }
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.10.4",
+    "@breadboard-ai/build": "0.10.5",
     "pyodide": "^0.26.3"
   },
   "devDependencies": {

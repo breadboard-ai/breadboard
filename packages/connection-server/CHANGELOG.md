@@ -1,5 +1,19 @@
 # @breadboard-ai/connection-server
 
+## 0.4.0
+
+### Minor Changes
+
+- 4dc21f4: Implement basic Google Drive Board Server
+
+### Patch Changes
+
+- 559ed8e: Remove GDrive from list if folder 404s
+- 29f7ad4: Various small UI tweaks for GDrive
+- d96f25a: Convert connection server to express
+- b6eb227: Improve UX of GDrive Board Server
+- b39c118: Convert connection server to express
+
 ## 0.3.2
 
 ### Patch Changes

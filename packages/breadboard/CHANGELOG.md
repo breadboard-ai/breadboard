@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.29.0
+
+### Minor Changes
+
+- 4dc21f4: Implement basic Google Drive Board Server
+- 71d42aa: Teach Visual Editor to run step by step.
+- 1fc5812: React to component edits correctly.
+- e014e42: Introduce "component" tag and user custom kits.
+- ee2844b: Teach Visual Editor about different edge states.
+- bdf80d8: Teach Google Drive board server to refresh credentials.
+- 29762d6: Implement "Re-run from this node" feature.
+- db93a6a: Implement "stopAfter" run argument (but not yet use it).
+- 8f079a1: Teach Inspector API about modules
+
+### Patch Changes
+
+- 63abd70: Fix the asBlob crash when replaying runs.
+- 6215ade: Synchronize activity log with visual editor when component is edited.
+- 850c217: Unbreak serialization.
+- 39d1913: Add webpackIgnore to server-only code
+- c6f1a69: Fix save behavior
+- 5332cbc: Add `module` behavior
+- 2d5b24e: Add description to module
+- Updated dependencies [e014e42]
+- Updated dependencies [661beea]
+- Updated dependencies [2d5b24e]
+  - @google-labs/breadboard-schema@1.9.0
+  - @breadboard-ai/types@0.2.0
+
 ## 0.28.0
 
 ### Minor Changes

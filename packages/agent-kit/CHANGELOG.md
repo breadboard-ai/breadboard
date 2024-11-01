@@ -1,5 +1,18 @@
 # @google-labs/agent-kit
 
+## 0.13.0
+
+### Minor Changes
+
+- 83b735f: Introduce "Context To Slides" component.
+- a133437: Implement "Role" configuration port for Content component.
+- bf69ac9: Teach Specialist to be more robust with routes.
+- 8f079a1: Teach Inspector API about modules
+
+### Patch Changes
+
+- @breadboard-ai/build@0.10.5
+
 ## 0.12.4
 
 ### Patch Changes

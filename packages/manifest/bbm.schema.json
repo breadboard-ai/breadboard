@@ -1,10 +1,10 @@
 {
-	"$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@breadboard-ai/manifest@0.4.6/packages/manifest/bbm.schema.json",
+	"$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@breadboard-ai/manifest@0.5.0/packages/manifest/bbm.schema.json",
 	"$ref": "#/definitions/BreadboardManifest",
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"definitions": {
 		"Board": {
-			"$ref": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.8.1/packages/schema/breadboard.schema.json#/definitions/GraphDescriptor",
+			"$ref": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.9.0/packages/schema/breadboard.schema.json#/definitions/GraphDescriptor",
 			"description": "A reference to the BGL schema GraphDescriptor type.",
 			"type": "object"
 		},

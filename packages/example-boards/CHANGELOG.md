@@ -1,5 +1,53 @@
 # @breadboard-ai/example-boards
 
+## 0.3.6
+
+### Patch Changes
+
+- df7ad14: Implement support for custom describers in runModule.
+- 77e1e1d: Fix LLM Inputs
+- Updated dependencies [9d5d6d9]
+- Updated dependencies [4dc21f4]
+- Updated dependencies [a00058b]
+- Updated dependencies [559ed8e]
+- Updated dependencies [83b735f]
+- Updated dependencies [71d42aa]
+- Updated dependencies [1fc5812]
+- Updated dependencies [93f7874]
+- Updated dependencies [63abd70]
+- Updated dependencies [e014e42]
+- Updated dependencies [6215ade]
+- Updated dependencies [850c217]
+- Updated dependencies [ee2844b]
+- Updated dependencies [9bd4439]
+- Updated dependencies [39d1913]
+- Updated dependencies [3dcbf03]
+- Updated dependencies [bdf80d8]
+- Updated dependencies [4c71e39]
+- Updated dependencies [8cbc686]
+- Updated dependencies [29762d6]
+- Updated dependencies [25b3853]
+- Updated dependencies [c6f1a69]
+- Updated dependencies [a133437]
+- Updated dependencies [5332cbc]
+- Updated dependencies [bf69ac9]
+- Updated dependencies [db93a6a]
+- Updated dependencies [ef99f4e]
+- Updated dependencies [2d5b24e]
+- Updated dependencies [8f079a1]
+  - @google-labs/core-kit@0.16.0
+  - @breadboard-ai/google-drive-kit@0.3.0
+  - @google-labs/breadboard@0.29.0
+  - @google-labs/agent-kit@0.13.0
+  - @breadboard-ai/manifest@0.5.0
+  - @google-labs/gemini-kit@0.9.0
+  - @google-labs/node-nursery-web@1.3.4
+  - @breadboard-ai/build@0.10.5
+  - @google-labs/json-kit@0.3.12
+  - @google-labs/palm-kit@0.1.6
+  - @google-labs/template-kit@0.3.14
+  - @breadboard-ai/python-wasm@0.1.10
+
 ## 0.3.5
 
 ### Patch Changes
