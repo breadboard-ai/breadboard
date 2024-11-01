@@ -71,29 +71,27 @@ type RunModuleInputs = {
 
 async function runModule(
   { $module: _$module }: RunModuleInputs,
-  args: InputValues
+  _args: InputValues
 ) {
-  // TODO: Get code.
-  const code = "return []";
-  return runModuleAsBlob(code, args);
+  return error("Run Module implementation is not available");
 }
 
 function error($error: string) {
   return { $error };
 }
 
-async function runModuleAsBlob(code: string, inputs: InputValues) {
-  const codeUrl = URL.createObjectURL(
-    new Blob([code], { type: "application/javascript" })
-  );
-  try {
-    const result = (
-      await import(/* @vite-ignore */ /* webpackIgnore: true */ codeUrl)
-    ).default(inputs);
-    return result;
-  } catch (e) {
-    return error((e as Error).message);
-  } finally {
-    URL.revokeObjectURL(codeUrl);
-  }
-}
+// async function runModuleAsBlob(code: string, inputs: InputValues) {
+//   const codeUrl = URL.createObjectURL(
+//     new Blob([code], { type: "application/javascript" })
+//   );
+//   try {
+//     const result = (
+//       await import(/* @vite-ignore */ /* webpackIgnore: true */ codeUrl)
+//     ).default(inputs);
+//     return result;
+//   } catch (e) {
+//     return error((e as Error).message);
+//   } finally {
+//     URL.revokeObjectURL(codeUrl);
+//   }
+// }

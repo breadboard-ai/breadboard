@@ -44,7 +44,13 @@ function getHandler(handlerName: string, context: NodeHandlerContext) {
     handlerName,
     async (inputs: InputValues) => {
       try {
-        const result = await invoke(inputs as InputValues, context);
+        const result = await invoke(inputs as InputValues, {
+          ...context,
+          descriptor: {
+            id: `${handlerName}-called-from-run-module`,
+            type: handlerName,
+          },
+        });
         return result;
       } catch (e) {
         return { $error: (e as Error).message };
