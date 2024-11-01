@@ -30,6 +30,7 @@ const resolvePath = (module: string, file: string) => {
 
 const LIGHT_KITS = [
   { module: "@google-labs/agent-kit", file: "agent.kit.json" },
+  { module: "@breadboard-ai/google-drive-kit", file: "google-drive.kit.json" },
 ];
 
 export const copyLightKits = async () => {

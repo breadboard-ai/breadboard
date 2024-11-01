@@ -4,5 +4,6 @@
   "/json-kit.js",
   "/template-kit.js",
   "/node-nursery-web-kit.js",
-  "/agent.kit.json"
+  "/agent.kit.json",
+  "/google-drive.kit.json"
 ]

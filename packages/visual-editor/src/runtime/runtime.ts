@@ -24,7 +24,6 @@ import { loadKits } from "../utils/kit-loader";
 import GeminiKit from "@google-labs/gemini-kit";
 import BuildExampleKit from "../build-example-kit";
 import PythonWasmKit from "@breadboard-ai/python-wasm";
-import GoogleDriveKit from "@breadboard-ai/google-drive-kit";
 
 export * as Events from "./events.js";
 export * as Types from "./types.js";
@@ -39,7 +38,6 @@ export async function create(config: RuntimeConfig): Promise<{
     asRuntimeKit(GeminiKit),
     asRuntimeKit(BuildExampleKit),
     asRuntimeKit(PythonWasmKit),
-    asRuntimeKit(GoogleDriveKit),
   ]);
 
   const skipPlaygroundExamples = import.meta.env.MODE !== "development";

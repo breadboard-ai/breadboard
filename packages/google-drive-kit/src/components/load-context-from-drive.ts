@@ -178,10 +178,11 @@ const loadedOutput = outputNode({
 
 export default board({
   id: "loadContextFromDrive",
+  title: "Load Context from Drive",
+  description:
+    "Loads previously saved LLM Conversation context from Google Drive",
+  version: "0.1.0",
   metadata: {
-    title: "Load Context from Drive",
-    description:
-      "Loads previously saved LLM Conversation context from Google Drive",
     icon: "google-drive",
   },
   inputs: { rootId, key },

@@ -1,0 +1,513 @@
+{
+  "title": "Context to Slides",
+  "description": "Turns LLM Conversation Context into a Google Slides presentation",
+  "version": "0.1.0",
+  "metadata": {
+    "icon": "google-drive"
+  },
+  "edges": [
+    {
+      "from": "connection:google-drive-limited-secret",
+      "to": "runJavascript-2",
+      "out": "connection:google-drive-limited",
+      "in": "token"
+    },
+    {
+      "from": "fetch-0",
+      "to": "runJavascript-0",
+      "out": "response",
+      "in": "response"
+    },
+    {
+      "from": "fetch-1",
+      "to": "runJavascript-1",
+      "out": "response",
+      "in": "presentation"
+    },
+    {
+      "from": "input-0",
+      "to": "runJavascript-3",
+      "out": "title",
+      "in": "context"
+    },
+    {
+      "from": "input-0",
+      "to": "runJavascript-4",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "runJavascript-0",
+      "to": "output-0",
+      "out": "url",
+      "in": "context"
+    },
+    {
+      "from": "runJavascript-1",
+      "to": "runJavascript-4",
+      "out": "slideId",
+      "in": "slideId"
+    },
+    {
+      "from": "runJavascript-1",
+      "to": "urlTemplate-0",
+      "out": "presentationId",
+      "in": "presentationId"
+    },
+    {
+      "from": "runJavascript-2",
+      "to": "fetch-0",
+      "out": "headers",
+      "in": "headers"
+    },
+    {
+      "from": "runJavascript-2",
+      "to": "fetch-1",
+      "out": "headers",
+      "in": "headers"
+    },
+    {
+      "from": "runJavascript-3",
+      "to": "fetch-1",
+      "out": "body",
+      "in": "body"
+    },
+    {
+      "from": "runJavascript-4",
+      "to": "fetch-0",
+      "out": "body",
+      "in": "body"
+    },
+    {
+      "from": "urlTemplate-0",
+      "to": "fetch-0",
+      "out": "url",
+      "in": "url"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input-0",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context in",
+              "description": "The conversation context to convert to a new Google Slides presentation. Only the last item in the context will be used for conversion.",
+              "items": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false,
+                "behavior": [
+                  "llm-content"
+                ]
+              }
+            },
+            "title": {
+              "type": "array",
+              "title": "Title",
+              "description": "The title of the new Google Slide presentatio",
+              "items": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false,
+                "behavior": [
+                  "llm-content",
+                  "config"
+                ]
+              }
+            }
+          },
+          "required": [
+            "context",
+            "title"
+          ]
+        }
+      }
+    },
+    {
+      "id": "output-0",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "string",
+              "title": "URL",
+              "description": "The URL of the newly created presentation"
+            }
+          },
+          "required": [
+            "context"
+          ]
+        }
+      }
+    },
+    {
+      "id": "connection:google-drive-limited-secret",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "connection:google-drive-limited"
+        ]
+      }
+    },
+    {
+      "id": "fetch-0",
+      "type": "fetch",
+      "configuration": {
+        "method": "POST"
+      },
+      "metadata": {
+        "title": "Call Batch Update API",
+        "description": "Populating the slides."
+      }
+    },
+    {
+      "id": "fetch-1",
+      "type": "fetch",
+      "configuration": {
+        "method": "POST",
+        "url": "https://slides.googleapis.com/v1/presentations"
+      },
+      "metadata": {
+        "title": "Call Create Slides API",
+        "description": "Creating a new Slides presentation"
+      }
+    },
+    {
+      "id": "runJavascript-0",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "\"use strict\";\n// src/js-components/get-presentation-url.ts\n/**\n * @license\n * Copyright 2024 Google LLC\n * SPDX-License-Identifier: Apache-2.0\n */\nfunction run(inputs) {\n  const response = inputs.response;\n  return {\n    url: `https://docs.google.com/presentation/d/${response.presentationId}/edit?usp=sharing`\n  };\n}\n",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "response": {
+              "$ref": "#/definitions/def-0"
+            }
+          },
+          "required": [
+            "response"
+          ],
+          "definitions": {
+            "def-0": {
+              "description": "All Breadboard values must be JSON serializable, and this is the set of\nJSON serializable types.",
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/def-0"
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/definitions/def-0"
+                  }
+                },
+                {
+                  "type": [
+                    "null",
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "name": "run",
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "url"
+          ]
+        },
+        "raw": true
+      },
+      "metadata": {
+        "title": "Get Presentation URL",
+        "description": "Extracting presentation URL from response"
+      }
+    },
+    {
+      "id": "runJavascript-1",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "\"use strict\";\n// src/js-components/get-deck-metadata.ts\n/**\n * @license\n * Copyright 2024 Google LLC\n * SPDX-License-Identifier: Apache-2.0\n */\nfunction run(inputs) {\n  const presentation = inputs.presentation;\n  return {\n    presentationId: presentation.presentationId,\n    slideId: presentation.slides[0]?.objectId || \"Slide_0\"\n  };\n}\n",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "presentation": {
+              "$ref": "#/definitions/def-0"
+            }
+          },
+          "required": [
+            "presentation"
+          ],
+          "definitions": {
+            "def-0": {
+              "description": "All Breadboard values must be JSON serializable, and this is the set of\nJSON serializable types.",
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/def-0"
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/definitions/def-0"
+                  }
+                },
+                {
+                  "type": [
+                    "null",
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "name": "run",
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "presentationId": {
+              "type": "string"
+            },
+            "slideId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "presentationId",
+            "slideId"
+          ]
+        },
+        "raw": true
+      },
+      "metadata": {
+        "title": "Get Presentation Metadata",
+        "description": "Get metadata of the newly created slide presentation"
+      }
+    },
+    {
+      "id": "runJavascript-2",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const run = ({token})=>({headers:{Authorization:`Bearer ${token}`}});",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "token": {
+              "type": "string"
+            }
+          }
+        },
+        "name": "run",
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "headers": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "raw": true
+      }
+    },
+    {
+      "id": "runJavascript-3",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "\"use strict\";\n// ../types/dist/src/index.js\n/**\n * @license\n * Copyright 2024 Google LLC\n * SPDX-License-Identifier: Apache-2.0\n */\n\n// src/js-components/context-to-title.ts\n/**\n * @license\n * Copyright 2024 Google LLC\n * SPDX-License-Identifier: Apache-2.0\n */\nfunction run(inputs) {\n  let context = inputs.context;\n  const result = {\n    body: {\n      title: \"Untitled Slide Deck\"\n    }\n  };\n  if (typeof context === \"string\") {\n    result.body.title = context;\n    return result;\n  }\n  if (!Array.isArray(context)) {\n    context = [context];\n  }\n  const last = context.at(-1);\n  if (!last || !last.parts || !last.parts.length) {\n    return result;\n  }\n  result.body.title = last.parts.map((part) => \"text\" in part ? part.text : \"\").join(\" \");\n  return result;\n}\n",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "$ref": "#/definitions/def-0"
+            }
+          },
+          "required": [
+            "context"
+          ],
+          "definitions": {
+            "def-0": {
+              "description": "All Breadboard values must be JSON serializable, and this is the set of\nJSON serializable types.",
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/def-0"
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/definitions/def-0"
+                  }
+                },
+                {
+                  "type": [
+                    "null",
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "name": "run",
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "body": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title"
+              ]
+            }
+          },
+          "required": [
+            "body"
+          ]
+        },
+        "raw": true
+      },
+      "metadata": {
+        "title": "To Title",
+        "description": "Converting LLM Content to New Slide Title"
+      }
+    },
+    {
+      "id": "runJavascript-4",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "\"use strict\";\n// ../types/dist/src/index.js\n/**\n * @license\n * Copyright 2024 Google LLC\n * SPDX-License-Identifier: Apache-2.0\n */\n\n// src/util/markdown.ts\n/**\n * @license\n * Copyright 2024 Google LLC\n * SPDX-License-Identifier: Apache-2.0\n */\nfunction parseMarkdown(text) {\n  const lines = text.split(/\\n/);\n  const result = [];\n  const cursor = { pos: 0 };\n  lines.map((line) => line.trimEnd()).forEach((line) => {\n    if (!line) {\n      return;\n    }\n    const heading = parseHeading(cursor, line);\n    if (heading) {\n      result.push(heading);\n      return;\n    }\n    const bullet = parseBullet(cursor, line);\n    if (bullet) {\n      result.push(bullet);\n      return;\n    }\n    result.push({\n      type: \"text\",\n      text: line,\n      ...updateCursor(cursor, line.length)\n    });\n  });\n  return result;\n}\nfunction updateCursor(cursor, len) {\n  const start = cursor.pos;\n  const end = (cursor.pos += len) - 1;\n  return { start, end };\n}\nfunction parseHeading(cursor, line) {\n  const match = line.match(/^(?<heading>#{1,6})\\s+(?<text>.+)$/);\n  if (!match) {\n    return null;\n  }\n  const heading = match.groups?.heading?.trim();\n  const text = match.groups?.text?.trim();\n  if (!heading || text === void 0) {\n    return null;\n  }\n  return {\n    type: \"heading\",\n    level: heading.length,\n    text,\n    ...updateCursor(cursor, text.length)\n  };\n}\nfunction parseBullet(cursor, line) {\n  const match = line.match(/^(?<indent>\\s*)[-+*]\\s+(?<text>.+)$/);\n  if (!match) {\n    return null;\n  }\n  const indent = match?.groups?.indent;\n  const text = match?.groups?.text?.trim();\n  if (indent === void 0 || text === void 0) {\n    return null;\n  }\n  return {\n    type: \"bullet\",\n    level: indent.length,\n    text,\n    ...updateCursor(cursor, text.length)\n  };\n}\n\n// src/js-components/context-to-slides.ts\n/**\n * @license\n * Copyright 2024 Google LLC\n * SPDX-License-Identifier: Apache-2.0\n */\nfunction run(inputs) {\n  const requests = contextToSlides(\n    inputs.context,\n    inputs.slideId\n  );\n  return {\n    body: { requests }\n  };\n}\nfunction contextToSlides(context, slideToDelete) {\n  const requests = [\n    {\n      deleteObject: {\n        objectId: slideToDelete\n      }\n    }\n  ];\n  const last = context.at(-1);\n  if (!last || !last.parts) {\n    return requests;\n  }\n  let slideId = 0;\n  last.parts.forEach((part) => {\n    if (\"text\" in part) {\n      const { prevSlideId, requests: newRequests } = textToSlideRequests(\n        slideId,\n        part.text\n      );\n      slideId = prevSlideId;\n      requests.push(...newRequests);\n    } else if (\"storedData\" in part) {\n      const { handle } = part.storedData;\n      if (handle) {\n        const id = `Slide-${++slideId}`;\n        requests.push(createSlide(id, \"\", \"BLANK\"), createImage(id, handle));\n      }\n    }\n  });\n  return requests;\n  function insertText(objectId, text, insertionIndex) {\n    return { insertText: { objectId, text, insertionIndex } };\n  }\n  function createParagraphBullets(objectId, textRange) {\n    return { createParagraphBullets: { objectId, textRange } };\n  }\n  function createImage(objectId, url) {\n    return {\n      createImage: {\n        url,\n        elementProperties: {\n          pageObjectId: objectId\n        }\n      }\n    };\n  }\n  function createSlide(slideId2, placeholderId, layout) {\n    const result = {\n      objectId: slideId2,\n      slideLayoutReference: { predefinedLayout: layout },\n      placeholderIdMappings: []\n    };\n    switch (layout) {\n      case \"TITLE\": {\n        result.placeholderIdMappings.push({\n          layoutPlaceholder: { type: \"CENTERED_TITLE\", index: 0 },\n          objectId: `${slideId2}-title`\n        });\n        result.placeholderIdMappings.push({\n          layoutPlaceholder: { type: \"SUBTITLE\", index: 0 },\n          objectId: placeholderId\n        });\n        break;\n      }\n      case \"TITLE_AND_BODY\": {\n        result.placeholderIdMappings.push({\n          layoutPlaceholder: { type: \"TITLE\", index: 0 },\n          objectId: `${slideId2}-title`\n        });\n        result.placeholderIdMappings.push({\n          layoutPlaceholder: { type: \"BODY\", index: 0 },\n          objectId: placeholderId\n        });\n        break;\n      }\n    }\n    return { createSlide: result };\n  }\n  function textToSlideRequests(startId, text) {\n    const lines = parseMarkdown(text);\n    const requests2 = [];\n    const textLines = [];\n    let prevPlaceholderId = null;\n    let prevSlideId = startId;\n    let offset = 0;\n    lines.forEach((line) => {\n      switch (line.type) {\n        case \"bullet\": {\n          addToBody(line);\n          break;\n        }\n        case \"heading\": {\n          finalizeSlide();\n          const { level, text: text2 } = line;\n          if (level == 1) {\n            if (!text2) {\n              return;\n            }\n            const slideId2 = createObjectId();\n            prevPlaceholderId = `${slideId2}-subtitle`;\n            requests2.push(\n              createSlide(slideId2, prevPlaceholderId, \"TITLE\"),\n              insertText(`${slideId2}-title`, text2)\n            );\n          } else {\n            const slideId2 = createObjectId();\n            prevPlaceholderId = `${slideId2}-body`;\n            requests2.push(\n              createSlide(slideId2, prevPlaceholderId, \"TITLE_AND_BODY\"),\n              insertText(`${slideId2}-title`, text2)\n            );\n          }\n          offset = line.end;\n          break;\n        }\n        case \"text\": {\n          addToBody(line);\n          break;\n        }\n      }\n    });\n    if (textLines.length > 0 && prevPlaceholderId) {\n      finalizeSlide();\n    }\n    return { requests: requests2, prevSlideId };\n    function createObjectId() {\n      return `Slide-${++prevSlideId}`;\n    }\n    function addToBody(line) {\n      if (prevPlaceholderId) {\n        textLines.push(line);\n      }\n    }\n    function finalizeSlide() {\n      if (!prevPlaceholderId) return;\n      requests2.push(\n        insertText(\n          prevPlaceholderId,\n          textLines.map((line) => line.text).join(\"\\n\")\n        )\n      );\n      let bulletStart = -1;\n      let bulletEnd = 0;\n      textLines.forEach((line) => {\n        if (bulletStart === -1) {\n          if (line.type === \"bullet\") bulletStart = line.start;\n        } else {\n          if (line.type === \"text\") bulletEnd = line.start - 1;\n        }\n      });\n      if (bulletStart !== -1) {\n        if (bulletEnd === 0) {\n          bulletEnd = textLines.at(-1).end;\n        }\n        const textRange = {\n          startIndex: bulletStart - offset,\n          endIndex: bulletEnd - offset,\n          type: \"FIXED_RANGE\"\n        };\n        requests2.push(createParagraphBullets(prevPlaceholderId, textRange));\n      }\n      textLines.length = 0;\n    }\n  }\n}\nfunction isDeleteObjectRequest(request) {\n  return \"deleteObject\" in request;\n}\nfunction isCreateSlideRequest(request) {\n  return \"createSlide\" in request;\n}\nfunction isInsertTextRequest(request) {\n  return \"insertText\" in request;\n}\nfunction isCreateImageRequest(request) {\n  return \"createImage\" in request;\n}\n",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "$ref": "#/definitions/def-0"
+            },
+            "slideId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "context",
+            "slideId"
+          ],
+          "definitions": {
+            "def-0": {
+              "description": "All Breadboard values must be JSON serializable, and this is the set of\nJSON serializable types.",
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/def-0"
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/definitions/def-0"
+                  }
+                },
+                {
+                  "type": [
+                    "null",
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "name": "run",
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "body": {
+              "$ref": "#/definitions/def-0"
+            }
+          },
+          "required": [
+            "body"
+          ],
+          "definitions": {
+            "def-0": {
+              "description": "All Breadboard values must be JSON serializable, and this is the set of\nJSON serializable types.",
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/def-0"
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/definitions/def-0"
+                  }
+                },
+                {
+                  "type": [
+                    "null",
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "raw": true
+      },
+      "metadata": {
+        "title": "To Slide Requests",
+        "description": "Converting LLM Content to Slide Requests"
+      }
+    },
+    {
+      "id": "urlTemplate-0",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://slides.googleapis.com/v1/presentations/{presentationId}:batchUpdate"
+      }
+    }
+  ]
+}
