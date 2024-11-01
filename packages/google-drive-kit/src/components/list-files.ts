@@ -45,6 +45,7 @@ export const listFiles = board({
   title: "List Files",
   description:
     "List files in Google Drive.\n\nSee https://developers.google.com/drive/api/guides/search-files for more details.",
+  version: "0.1.0",
   metadata: {
     icon: "google-drive",
   },

@@ -25,9 +25,10 @@ const url = urlTemplate({
 const response = fetch({ url, headers });
 
 export const getFileContent = board({
+  id: "getFileContent",
   title: "Get File Content",
   description: "Get the content of a file in Google Drive",
-  id: "getFileContent",
+  version: "0.1.0",
   metadata: {
     icon: "google-drive",
   },

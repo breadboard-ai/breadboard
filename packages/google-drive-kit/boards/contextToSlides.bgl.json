@@ -1,6 +1,7 @@
 {
   "title": "Context to Slides",
   "description": "Turns LLM Conversation Context into a Google Slides presentation",
+  "version": "0.1.0",
   "metadata": {
     "icon": "google-drive"
   },

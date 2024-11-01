@@ -195,6 +195,7 @@ export default board({
   id: "saveContextToDrive",
   title: "Save Context To Drive",
   description: "Saves LLM Conversation Context to Google Drive.",
+  version: "0.1.0",
   metadata: {
     icon: "google-drive",
   },

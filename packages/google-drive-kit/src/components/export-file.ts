@@ -36,6 +36,7 @@ export const exportFile = board({
   id: "exportFile",
   title: "Export File",
   description: "Export a Google Workspace document to the requested MIME type.",
+  version: "0.1.0",
   metadata: {
     icon: "google-drive",
   },

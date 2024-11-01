@@ -7,6 +7,7 @@
     "getFileContent": {
       "title": "Get File Content",
       "description": "Get the content of a file in Google Drive",
+      "version": "0.1.0",
       "metadata": {
         "icon": "google-drive"
       },
@@ -147,6 +148,7 @@
     "listFiles": {
       "title": "List Files",
       "description": "List files in Google Drive.\n\nSee https://developers.google.com/drive/api/guides/search-files for more details.",
+      "version": "0.1.0",
       "metadata": {
         "icon": "google-drive"
       },
@@ -420,6 +422,7 @@
     "exportFile": {
       "title": "Export File",
       "description": "Export a Google Workspace document to the requested MIME type.",
+      "version": "0.1.0",
       "metadata": {
         "icon": "google-drive"
       },
@@ -572,6 +575,7 @@
     "contextToSlides": {
       "title": "Context to Slides",
       "description": "Turns LLM Conversation Context into a Google Slides presentation",
+      "version": "0.1.0",
       "metadata": {
         "icon": "google-drive"
       },
@@ -1084,6 +1088,7 @@
     "getBreadboardFolder": {
       "title": "Get Breadboard Folder",
       "description": "Gets (or creates if doesn't exist) a dedicated \"Breadboard\" folder in Google Drive. This folder can be used for story various Breadboard-specifc assets and boards.",
+      "version": "0.1.0",
       "metadata": {
         "icon": "google-drive"
       },
@@ -1611,6 +1616,7 @@
     "saveContextToDrive": {
       "title": "Save Context To Drive",
       "description": "Saves LLM Conversation Context to Google Drive.",
+      "version": "0.1.0",
       "metadata": {
         "icon": "google-drive"
       },
@@ -2355,6 +2361,7 @@
     "loadContextFromDrive": {
       "title": "Load Context from Drive",
       "description": "Loads previously saved LLM Conversation context from Google Drive",
+      "version": "0.1.0",
       "metadata": {
         "icon": "google-drive"
       },
