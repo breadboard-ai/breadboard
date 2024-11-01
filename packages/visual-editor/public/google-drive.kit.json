@@ -3077,7 +3077,7 @@
     },
     "appendToDoc": {
       "title": "Append To Doc",
-      "description": "Appends conversation context contents to a Google Doc, converting Markdown to proper formatting.",
+      "description": "Appends conversation context to  a Google Document, converting Markdown to proper formatting.",
       "version": "0.1.0",
       "nodes": [
         {
@@ -3114,8 +3114,8 @@
           },
           "metadata": {
             "visual": {
-              "x": -297,
-              "y": -400,
+              "x": -273,
+              "y": -468,
               "collapsed": "expanded"
             },
             "logLevel": "debug"
@@ -3141,8 +3141,8 @@
           },
           "metadata": {
             "visual": {
-              "x": 478,
-              "y": -450,
+              "x": 464,
+              "y": -402,
               "collapsed": "expanded"
             },
             "logLevel": "debug"
@@ -3209,7 +3209,8 @@
         }
       },
       "metadata": {
-        "tags": []
+        "tags": [],
+        "icon": "google-drive"
       }
     }
   }

@@ -41,7 +41,7 @@ const manifest: KitManifest = {
         serialize(definition),
       ])
     ),
-    appendToDoc: appendToDoc as GraphDescriptor,
+    appendToDoc: addIcon(appendToDoc),
   },
 };
 
@@ -61,5 +61,12 @@ const generate = async () => {
   const json = JSON.stringify(manifest, null, 2);
   return writeFile(MANIFEST_PATH, json);
 };
+
+function addIcon(o: unknown) {
+  const board = o as GraphDescriptor;
+  board.metadata ??= {};
+  board.metadata.icon = "google-drive";
+  return board;
+}
 
 await generate();
