@@ -30,25 +30,31 @@ async function loadRuntime(): Promise<Buffer> {
 }
 
 class NodeModuleManager implements ModuleManager {
-  constructor(
-    public readonly wasm: Buffer,
-    public readonly modules: ModuleSpec
-  ) {}
+  constructor(public readonly wasm: Buffer) {}
 
-  invoke(name: string, inputs: InvokeInputs): Promise<InvokeOutputs> {
-    return this.#run("default", name, inputs);
+  invoke(
+    modules: ModuleSpec,
+    name: string,
+    inputs: InvokeInputs
+  ): Promise<InvokeOutputs> {
+    return this.#run("default", modules, name, inputs);
   }
 
-  describe(name: string, inputs: DescriberInputs): Promise<DescriberOutputs> {
-    return this.#run("describe", name, inputs);
+  describe(
+    modules: ModuleSpec,
+    name: string,
+    inputs: DescriberInputs
+  ): Promise<DescriberOutputs> {
+    return this.#run("describe", modules, name, inputs);
   }
 
   async #run(
     method: "default" | "describe",
+    modules: ModuleSpec,
     name: string,
     inputs: Record<string, unknown>
   ) {
-    const code = this.modules[name];
+    const code = modules[name];
     if (!code) {
       return { $error: `Unable to find module "${name}"` };
     }
@@ -76,7 +82,7 @@ class NodeModuleManager implements ModuleManager {
     const result = await jsandbox.run_module(
       method,
       name,
-      this.modules,
+      modules,
       code,
       JSON.stringify(inputs)
     );

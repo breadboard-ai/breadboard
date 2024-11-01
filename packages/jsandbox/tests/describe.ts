@@ -14,8 +14,8 @@ async function describeModule(
   inputs: DescriberInputs
 ): Promise<Record<string, unknown>> {
   const wasm = await loadRuntime();
-  const manager = new NodeModuleManager(wasm, { test: code });
-  return manager.describe("test", inputs);
+  const manager = new NodeModuleManager(wasm);
+  return manager.describe({ test: code }, "test", inputs);
 }
 
 describe("custom describers", () => {
