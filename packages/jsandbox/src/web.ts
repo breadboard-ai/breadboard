@@ -26,10 +26,7 @@ export { WebModuleManager };
 class WebModuleManager implements ModuleManager {
   #sandbox: Promise<ReturnType<typeof factory>>;
 
-  constructor(
-    public readonly runtimeUrl: URL,
-    public readonly modules: ModuleSpec
-  ) {
+  constructor(public readonly runtimeUrl: URL) {
     this.#sandbox = this.#start();
   }
 
@@ -61,21 +58,30 @@ class WebModuleManager implements ModuleManager {
     return jsandbox;
   }
 
-  invoke(name: string, inputs: InvokeInputs): Promise<InvokeOutputs> {
-    return this.#run("default", name, inputs);
+  invoke(
+    modules: ModuleSpec,
+    name: string,
+    inputs: InvokeInputs
+  ): Promise<InvokeOutputs> {
+    return this.#run("default", modules, name, inputs);
   }
 
-  describe(name: string, inputs: DescriberInputs): Promise<DescriberOutputs> {
-    return this.#run("describe", name, inputs);
+  describe(
+    modules: ModuleSpec,
+    name: string,
+    inputs: DescriberInputs
+  ): Promise<DescriberOutputs> {
+    return this.#run("describe", modules, name, inputs);
   }
 
   async #run(
     method: "default" | "describe",
+    modules: ModuleSpec,
     name: string,
     inputs: InvokeInputs
   ) {
     const sandbox = await this.#sandbox;
-    const code = this.modules[name];
+    const code = modules[name];
     if (!code) {
       return { $error: `Unable to find module "${name}"` };
     }
@@ -83,7 +89,7 @@ class WebModuleManager implements ModuleManager {
     const result = await sandbox.run_module(
       method,
       name,
-      this.modules,
+      modules,
       code,
       JSON.stringify(inputs)
     );

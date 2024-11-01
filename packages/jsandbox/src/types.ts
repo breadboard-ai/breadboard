@@ -18,6 +18,14 @@ export type InvokeInputs = Values;
 export type InvokeOutputs = Values;
 
 export type ModuleManager = {
-  invoke(name: string, inputs: InvokeInputs): Promise<InvokeOutputs>;
-  describe(name: string, inputs: DescriberInputs): Promise<DescriberOutputs>;
+  invoke(
+    modules: ModuleSpec,
+    name: string,
+    inputs: InvokeInputs
+  ): Promise<InvokeOutputs>;
+  describe(
+    modules: ModuleSpec,
+    name: string,
+    inputs: DescriberInputs
+  ): Promise<DescriberOutputs>;
 };

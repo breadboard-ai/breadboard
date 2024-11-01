@@ -16,8 +16,8 @@ async function run(
   inputs: Record<string, unknown> = {}
 ): Promise<Record<string, unknown>> {
   const wasm = await loadRuntime();
-  const manager = new NodeModuleManager(wasm, modules);
-  return manager.invoke("test", inputs);
+  const manager = new NodeModuleManager(wasm);
+  return manager.invoke(modules, "test", inputs);
 }
 
 describe("peer module import", () => {
