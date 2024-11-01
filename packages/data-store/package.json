@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/data-store",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "A data store implementation to support Breadboard",
   "main": "./dist/src/index.js",
   "exports": {
@@ -152,8 +152,8 @@
     "node": ">=20.14.0"
   },
   "dependencies": {
-    "@breadboard-ai/types": "0.1.2",
-    "@google-labs/breadboard": "^0.28.0",
+    "@breadboard-ai/types": "0.2.0",
+    "@google-labs/breadboard": "^0.29.0",
     "idb": "^8.0.0"
   }
 }

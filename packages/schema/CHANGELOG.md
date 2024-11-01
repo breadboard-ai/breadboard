@@ -1,5 +1,15 @@
 # @google-labs/breadboard-schema
 
+## 1.9.0
+
+### Minor Changes
+
+- e014e42: Introduce "component" tag and user custom kits.
+
+### Patch Changes
+
+- 2d5b24e: Add description to module
+
 ## 1.8.1
 
 ### Patch Changes

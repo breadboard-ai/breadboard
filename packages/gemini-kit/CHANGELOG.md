@@ -1,5 +1,37 @@
 # @google-labs/gemini-kit
 
+## 0.9.0
+
+### Minor Changes
+
+- 8cbc686: Surface the actual error from Gemini.
+
+### Patch Changes
+
+- Updated dependencies [9d5d6d9]
+- Updated dependencies [4dc21f4]
+- Updated dependencies [a00058b]
+- Updated dependencies [71d42aa]
+- Updated dependencies [1fc5812]
+- Updated dependencies [63abd70]
+- Updated dependencies [e014e42]
+- Updated dependencies [6215ade]
+- Updated dependencies [850c217]
+- Updated dependencies [ee2844b]
+- Updated dependencies [9bd4439]
+- Updated dependencies [39d1913]
+- Updated dependencies [bdf80d8]
+- Updated dependencies [29762d6]
+- Updated dependencies [c6f1a69]
+- Updated dependencies [5332cbc]
+- Updated dependencies [db93a6a]
+- Updated dependencies [2d5b24e]
+- Updated dependencies [8f079a1]
+  - @google-labs/core-kit@0.16.0
+  - @google-labs/breadboard@0.29.0
+  - @breadboard-ai/build@0.10.5
+  - @google-labs/template-kit@0.3.14
+
 ## 0.8.3
 
 ### Patch Changes

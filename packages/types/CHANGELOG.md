@@ -1,5 +1,16 @@
 # @breadboard-ai/types
 
+## 0.2.0
+
+### Minor Changes
+
+- e014e42: Introduce "component" tag and user custom kits.
+- 661beea: Introduce `module` property
+
+### Patch Changes
+
+- 2d5b24e: Add description to module
+
 ## 0.1.2
 
 ### Patch Changes

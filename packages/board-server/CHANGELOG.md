@@ -1,5 +1,36 @@
 # @breadboard-ai/board-server
 
+## 0.9.0
+
+### Minor Changes
+
+- 35954e0: Build out GCS-based data store and fix a few bugs.
+- bdf80d8: Teach Google Drive board server to refresh credentials.
+
+### Patch Changes
+
+- Updated dependencies [4dc21f4]
+- Updated dependencies [71d42aa]
+- Updated dependencies [1fc5812]
+- Updated dependencies [63abd70]
+- Updated dependencies [e014e42]
+- Updated dependencies [6215ade]
+- Updated dependencies [661beea]
+- Updated dependencies [850c217]
+- Updated dependencies [ee2844b]
+- Updated dependencies [39d1913]
+- Updated dependencies [bdf80d8]
+- Updated dependencies [29762d6]
+- Updated dependencies [c6f1a69]
+- Updated dependencies [5332cbc]
+- Updated dependencies [db93a6a]
+- Updated dependencies [2d5b24e]
+- Updated dependencies [8f079a1]
+  - @google-labs/breadboard@0.29.0
+  - @breadboard-ai/types@0.2.0
+  - @breadboard-ai/connection-client@0.1.0
+  - @breadboard-ai/data-store@0.2.5
+
 ## 0.8.0
 
 ### Minor Changes
