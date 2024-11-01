@@ -318,7 +318,7 @@ export class Board extends EventTarget {
     const id = globalThis.crypto.randomUUID();
     this.#tabs.set(id, {
       id,
-      kits: addSandboxedRunModule(descriptor, this.kits),
+      kits: addSandboxedRunModule(this.kits),
       name: descriptor.title ?? "Untitled board",
       graph: descriptor,
       subGraphId: null,
@@ -357,7 +357,7 @@ export class Board extends EventTarget {
     const id = globalThis.crypto.randomUUID();
     this.#tabs.set(id, {
       id,
-      kits: addSandboxedRunModule(descriptor, this.kits),
+      kits: addSandboxedRunModule(this.kits),
       name: descriptor.title ?? "Untitled board",
       graph: descriptor,
       subGraphId: null,
@@ -442,7 +442,7 @@ export class Board extends EventTarget {
       const id = globalThis.crypto.randomUUID();
       this.#tabs.set(id, {
         id,
-        kits: addSandboxedRunModule(graph, kits),
+        kits: addSandboxedRunModule(kits),
         name: graph.title ?? "Untitled board",
         graph,
         subGraphId: null,

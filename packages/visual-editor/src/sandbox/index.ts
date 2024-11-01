@@ -5,7 +5,6 @@
  */
 
 import {
-  GraphDescriptor,
   InputValues,
   NodeDescriberContext,
   NodeDescriberResult,
@@ -62,18 +61,8 @@ function getHandler(handlerName: string, context: NodeHandlerContext) {
   ];
 }
 
-function addSandboxedRunModule(board: GraphDescriptor, kits: Kit[]): Kit[] {
-  const modules = board.modules;
-  if (!modules) {
-    return kits;
-  }
-
-  const runner = new WebModuleManager(
-    new URL(wasm, window.location.href),
-    Object.fromEntries(
-      Object.entries(modules).map(([name, spec]) => [name, spec.code])
-    )
-  );
+function addSandboxedRunModule(kits: Kit[]): Kit[] {
+  const runner = new WebModuleManager(new URL(wasm, window.location.href));
 
   const existingRunModule = findHandler("runModule", kits);
   const originalDescriber =
@@ -93,12 +82,29 @@ function addSandboxedRunModule(board: GraphDescriptor, kits: Kit[]): Kit[] {
       handlers: {
         runModule: {
           invoke: async ({ $module, ...rest }, context) => {
+            const moduleDeclaration = context.board?.modules;
+            if (!moduleDeclaration) {
+              return {
+                $error: `Unable to run module: no modules found within board ${context.board?.url || "uknown board"}`,
+              };
+            }
+            const modules = Object.fromEntries(
+              Object.entries(moduleDeclaration).map(([name, spec]) => [
+                name,
+                spec.code,
+              ])
+            );
+
             Capabilities.instance().install([
               getHandler("fetch", context),
               getHandler("secrets", context),
               getHandler("invoke", context),
             ]);
-            const result = await runner.invoke($module as string, rest);
+            const result = await runner.invoke(
+              modules,
+              $module as string,
+              rest
+            );
             return result as InputValues;
           },
           describe: async (
@@ -111,13 +117,24 @@ function addSandboxedRunModule(board: GraphDescriptor, kits: Kit[]): Kit[] {
             context?: NodeDescriberContext
           ) => {
             const { $module } = inputs || {};
-            if ($module) {
+            const moduleDeclaration = context?.outerGraph?.modules;
+            if ($module && moduleDeclaration) {
+              const modules = Object.fromEntries(
+                Object.entries(moduleDeclaration).map(([name, spec]) => [
+                  name,
+                  spec.code,
+                ])
+              );
               try {
-                const result = (await runner.describe($module as string, {
-                  inputs,
-                  inputSchema,
-                  outputSchema,
-                })) as NodeDescriberResult;
+                const result = (await runner.describe(
+                  modules,
+                  $module as string,
+                  {
+                    inputs,
+                    inputSchema,
+                    outputSchema,
+                  }
+                )) as NodeDescriberResult;
                 return {
                   inputSchema: {
                     type: "object",
