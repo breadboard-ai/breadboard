@@ -39,7 +39,7 @@ enum Error {
     #[error("Error parsing input values: {0}")]
     ParsingInputValues(String),
 
-    #[error("Error calling module function: {0}")]
+    #[error("{0}")]
     CallingModuleFunction(String),
 }
 
@@ -59,7 +59,9 @@ pub fn eval_code(code: String) -> std::result::Result<String, JsError> {
     Ok(result?)
 }
 
-async fn maybe_promise<'js>(result_obj: rquickjs::Value<'js>) -> Result<rquickjs::Value<'js>> {
+async fn maybe_promise<'js>(
+    result_obj: rquickjs::Value<'js>,
+) -> rquickjs::Result<rquickjs::Value<'js>> {
     let resolved_obj: rquickjs::Value = if result_obj.is_promise() {
         let promise = result_obj.as_promise().unwrap().clone();
         let ctx = result_obj.ctx();
@@ -129,7 +131,7 @@ pub async fn run_module(
             .catch(&ctx)
             .map_err(|e| Error::GettingDefaultExport(e.to_string()))?;
 
-        let default = namespace
+        let func = namespace
             .get::<_, rquickjs::Function>(method)
             .catch(&ctx)
             .map_err(|e| Error::GettintDefaultFunction(e.to_string()))?;
@@ -141,11 +143,10 @@ pub async fn run_module(
 
         // Call it and return value.
         let result_obj: rquickjs::Value = maybe_promise(
-            default
-                .call((inputs,))
-                .catch(&ctx)
-                .map_err(|e| Error::CallingModuleFunction(e.to_string()))?,
-        ).await?;
+            func.call((inputs,)).catch(&ctx)
+            .map_err(|e| Error::CallingModuleFunction(e.to_string()))?
+        ).await.catch(&ctx)
+        .map_err(|e| Error::CallingModuleFunction(e.to_string()))?;
 
         let Some(result_str) = ctx.json_stringify(result_obj)? else {
             return Err(Error::NotStringifiable);

@@ -6,7 +6,7 @@
 
 import test, { describe } from "node:test";
 import { loadRuntime, NodeModuleManager } from "../src/node.js";
-import { deepStrictEqual, ok, rejects, throws } from "node:assert";
+import { deepStrictEqual, ok, rejects, strictEqual, throws } from "node:assert";
 import { Capabilities } from "../src/capabilities.js";
 
 Capabilities.instance().install([["fetch", async (inputs) => inputs]]);
@@ -59,24 +59,44 @@ describe("runtime basics", () => {
 
 describe("runtime errors", () => {
   test("handles invalid module", async () => {
-    await rejects(async () => run("export"), {
-      name: "Error",
-      message: /invalid export syntax/,
-    });
+    await rejects(run("export"), /invalid export syntax/);
 
-    await rejects(async () => run("FOO"), {
-      name: "Error",
-      message: /Error converting from js 'undefined' into type 'function'/,
-    });
+    await rejects(
+      run("FOO"),
+      /Error converting from js 'undefined' into type 'function'/
+    );
   });
 
   test("handles errors thrown", async () => {
-    await rejects(async () =>
+    await rejects(
       run(
         `export default function() {
         throw new Error("OH NOES");
       }`
-      )
+      ),
+      /OH NOES/
+    );
+  });
+
+  test("handles errors thrown in async functions", async () => {
+    await rejects(
+      run(
+        `export default async function() {
+        throw new Error("OH NOES");
+      }`
+      ),
+      /OH NOES/
+    );
+  });
+
+  test("handles syntax errors", async () => {
+    await rejects(
+      run(
+        `export default async function() {
+        foo += 1;
+      }`
+      ),
+      /'foo' is not defined/
     );
   });
 });
@@ -109,7 +129,7 @@ describe("can import capabilities", () => {
   });
 
   test("gracefully handles unknown capability", async () => {
-    rejects(() =>
+    await rejects(() =>
       run(`import { foo } from "breadboard:capabilities";
     export default async function() {
       return { result: await foo({ test: "HELLO" }) }
