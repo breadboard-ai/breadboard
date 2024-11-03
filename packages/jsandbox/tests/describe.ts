@@ -8,13 +8,13 @@ import { deepStrictEqual } from "node:assert";
 import test, { describe } from "node:test";
 import { NodeSandbox } from "../src/node.js";
 import { DescriberInputs } from "../src/types.js";
-import { Module } from "../src/module.js";
+import { SandboxedModule } from "../src/module.js";
 
 async function describeModule(
   code: string,
   inputs: DescriberInputs
 ): Promise<Record<string, unknown>> {
-  const module = new Module(new NodeSandbox(), {}, { test: code });
+  const module = new SandboxedModule(new NodeSandbox(), {}, { test: code });
   return module.describe("test", inputs);
 }
 

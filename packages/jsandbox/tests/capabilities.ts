@@ -7,13 +7,13 @@
 import { deepStrictEqual } from "node:assert";
 import test, { describe } from "node:test";
 import { NodeSandbox } from "../src/node.js";
-import { Module } from "../src/module.js";
+import { SandboxedModule } from "../src/module.js";
 
 async function run(
   code: string,
   inputs: Record<string, unknown> = {}
 ): Promise<Record<string, unknown>> {
-  const module = new Module(
+  const module = new SandboxedModule(
     new NodeSandbox(),
     {
       fetch: async (_, inputs) => inputs,

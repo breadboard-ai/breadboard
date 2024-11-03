@@ -15,9 +15,9 @@ import {
   Sandbox,
 } from "./types.js";
 
-export { Module };
+export { SandboxedModule };
 
-class Module {
+class SandboxedModule {
   constructor(
     public readonly sandbox: Sandbox,
     public readonly capabilities: CapabilitySpec,
