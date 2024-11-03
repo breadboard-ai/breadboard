@@ -14,11 +14,9 @@ import {
   type Kit,
 } from "@google-labs/breadboard";
 
-import {
-  Capability,
-  SandboxedModule,
-  WebSandbox,
-} from "@breadboard-ai/jsandbox";
+import { Capability, SandboxedModule } from "@breadboard-ai/jsandbox";
+import { WebSandbox } from "@breadboard-ai/jsandbox/web";
+
 import wasm from "/sandbox.wasm?url";
 
 export { addSandboxedRunModule };

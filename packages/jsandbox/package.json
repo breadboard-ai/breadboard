@@ -5,7 +5,9 @@
   "main": "./dist/src/index.js",
   "exports": {
     ".": "./dist/src/index.js",
-    "./sandbox.wasm": "./sandbox.wasm"
+    "./sandbox.wasm": "./sandbox.wasm",
+    "./web": "./dist/src/web-exports.js",
+    "./node": "./dist/src/node-exports.js"
   },
   "types": "dist/src/index.d.ts",
   "type": "module",
