@@ -7,16 +7,16 @@
 import { deepStrictEqual, rejects } from "node:assert";
 import test, { describe } from "node:test";
 
-import { loadRuntime, NodeModuleManager } from "../src/node.js";
+import { loadRuntime, NodeSandbox } from "../src/node.js";
+import { Module } from "../src/module.js";
 
 async function run(
   code: string,
   inputs: Record<string, unknown> = {}
 ): Promise<Record<string, unknown>> {
-  const uuid = crypto.randomUUID();
   const wasm = await loadRuntime();
-  const manager = new NodeModuleManager(wasm);
-  return manager.invoke(uuid, { test: code }, "test", inputs);
+  const module = new Module(new NodeSandbox(wasm), {}, { test: code });
+  return module.invoke("test", inputs);
 }
 
 describe("runtime basics", () => {

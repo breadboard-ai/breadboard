@@ -12,19 +12,11 @@ import {
 } from "@bjorn3/browser_wasi_shim";
 
 import factory from "./factory.js";
-import {
-  DescriberInputs,
-  DescriberOutputs,
-  InvokeInputs,
-  InvokeOutputs,
-  ModuleManager,
-  ModuleSpec,
-  UUID,
-} from "./types.js";
+import { InvokeInputs, ModuleSpec, Sandbox, UUID } from "./types.js";
 
-export { WebModuleManager };
+export { WebSandbox };
 
-class WebModuleManager implements ModuleManager {
+class WebSandbox implements Sandbox {
   #sandbox: Promise<ReturnType<typeof factory>>;
 
   constructor(public readonly runtimeUrl: URL) {
@@ -59,25 +51,7 @@ class WebModuleManager implements ModuleManager {
     return jsandbox;
   }
 
-  invoke(
-    invocationId: UUID,
-    modules: ModuleSpec,
-    name: string,
-    inputs: InvokeInputs
-  ): Promise<InvokeOutputs> {
-    return this.#run(invocationId, "default", modules, name, inputs);
-  }
-
-  describe(
-    invocationId: UUID,
-    modules: ModuleSpec,
-    name: string,
-    inputs: DescriberInputs
-  ): Promise<DescriberOutputs> {
-    return this.#run(invocationId, "describe", modules, name, inputs);
-  }
-
-  async #run(
+  async runModule(
     invocationId: UUID,
     method: "default" | "describe",
     modules: ModuleSpec,

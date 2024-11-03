@@ -6,30 +6,24 @@
 
 import { deepStrictEqual } from "node:assert";
 import test, { describe } from "node:test";
-import { Capabilities } from "../src/capabilities.js";
-import { loadRuntime, NodeModuleManager } from "../src/node.js";
+import { loadRuntime, NodeSandbox } from "../src/node.js";
+import { Module } from "../src/module.js";
 
 async function run(
   code: string,
   inputs: Record<string, unknown> = {}
 ): Promise<Record<string, unknown>> {
-  const invocationId = crypto.randomUUID();
-  Capabilities.instance().install(invocationId, {
-    fetch: async (invocationId, inputs) => inputs,
-    invoke: async (invocationId, inputs) => inputs,
-    secrets: async (invocationId, inputs) => inputs,
-  });
-
   const wasm = await loadRuntime();
-  const manager = new NodeModuleManager(wasm);
-  const outputs = await manager.invoke(
-    invocationId,
-    { test: code },
-    "test",
-    inputs
+  const module = new Module(
+    new NodeSandbox(wasm),
+    {
+      fetch: async (_, inputs) => inputs,
+      invoke: async (_, inputs) => inputs,
+      secrets: async (_, inputs) => inputs,
+    },
+    { test: code }
   );
-
-  Capabilities.instance().uninstall(invocationId);
+  const outputs = await module.invoke("test", inputs);
   return outputs;
 }
 

@@ -13,45 +13,19 @@ import {
 import { readFile } from "fs/promises";
 import { join } from "path";
 import factory from "./factory.js";
-import {
-  DescriberInputs,
-  DescriberOutputs,
-  InvokeInputs,
-  InvokeOutputs,
-  ModuleManager,
-  ModuleSpec,
-  UUID,
-} from "./types.js";
+import { ModuleSpec, Sandbox, UUID } from "./types.js";
 
-export { loadRuntime, NodeModuleManager };
+export { loadRuntime, NodeSandbox };
 
 async function loadRuntime(): Promise<Buffer> {
   const path = join(import.meta.dirname, "..", "..", "sandbox.wasm");
   return readFile(path);
 }
 
-class NodeModuleManager implements ModuleManager {
+class NodeSandbox implements Sandbox {
   constructor(public readonly wasm: Buffer) {}
 
-  invoke(
-    invocationId: UUID,
-    modules: ModuleSpec,
-    name: string,
-    inputs: InvokeInputs
-  ): Promise<InvokeOutputs> {
-    return this.#run(invocationId, "default", modules, name, inputs);
-  }
-
-  describe(
-    invocationId: UUID,
-    modules: ModuleSpec,
-    name: string,
-    inputs: DescriberInputs
-  ): Promise<DescriberOutputs> {
-    return this.#run(invocationId, "describe", modules, name, inputs);
-  }
-
-  async #run(
+  async runModule(
     invocationId: UUID,
     method: "default" | "describe",
     modules: ModuleSpec,

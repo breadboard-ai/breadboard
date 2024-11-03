@@ -6,17 +6,17 @@
 
 import { deepStrictEqual } from "node:assert";
 import test, { describe } from "node:test";
-import { loadRuntime, NodeModuleManager } from "../src/node.js";
+import { loadRuntime, NodeSandbox } from "../src/node.js";
 import { DescriberInputs } from "../src/types.js";
+import { Module } from "../src/module.js";
 
 async function describeModule(
   code: string,
   inputs: DescriberInputs
 ): Promise<Record<string, unknown>> {
-  const uuid = crypto.randomUUID();
   const wasm = await loadRuntime();
-  const manager = new NodeModuleManager(wasm);
-  return manager.describe(uuid, { test: code }, "test", inputs);
+  const module = new Module(new NodeSandbox(wasm), {}, { test: code });
+  return module.describe("test", inputs);
 }
 
 describe("custom describers", () => {

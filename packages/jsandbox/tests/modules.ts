@@ -6,18 +6,16 @@
 
 import { deepStrictEqual, rejects } from "node:assert";
 import test, { describe } from "node:test";
-import { Capabilities } from "../src/capabilities.js";
-import { loadRuntime, NodeModuleManager } from "../src/node.js";
+import { loadRuntime, NodeSandbox } from "../src/node.js";
+import { Module } from "../src/module.js";
 
 async function run(
   modules: Record<string, string>,
   inputs: Record<string, unknown> = {}
 ): Promise<Record<string, unknown>> {
-  const uuid = crypto.randomUUID();
   const wasm = await loadRuntime();
-  const manager = new NodeModuleManager(wasm);
-  const outputs = await manager.invoke(uuid, modules, "test", inputs);
-  return outputs;
+  const module = new Module(new NodeSandbox(wasm), {}, modules);
+  return module.invoke("test", inputs);
 }
 
 describe("peer module import", () => {
