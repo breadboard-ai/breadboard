@@ -241,7 +241,7 @@ wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
 }
 
 /**
-* @param {string} invocaton_id
+* @param {string} invocation_id
 * @param {string} method
 * @param {string} name
 * @param {any} modules
@@ -249,8 +249,8 @@ wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
 * @param {string} json
 * @returns {Promise<string>}
 */
- function run_module(invocaton_id, method, name, modules, code, json) {
-const ptr0 = passStringToWasm0(invocaton_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+ function run_module(invocation_id, method, name, modules, code, json) {
+const ptr0 = passStringToWasm0(invocation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
 const len0 = WASM_VECTOR_LEN;
 const ptr1 = passStringToWasm0(method, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
 const len1 = WASM_VECTOR_LEN;

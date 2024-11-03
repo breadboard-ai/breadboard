@@ -74,9 +74,27 @@ async fn maybe_promise<'js>(
     Ok(resolved_obj)
 }
 
+macro_rules! add_capability_modules {
+    ($resolver:expr, $loader:expr, $module_name:expr, $invocation_id:expr, $($capability:expr),+ $(,)?) => {
+        $(
+            $loader.add_module(
+                concat!("@", $capability),
+                format!(
+                    "import {{ {} }} from \"{}\";\nexport default function(inputs) {{ return {}(\"{}\", inputs); }}\n",
+                    $capability,
+                    $module_name,
+                    $capability,
+                    $invocation_id
+                )
+            );
+            $resolver.add_module(concat!("@", $capability));
+        )+
+    };
+}
+
 #[wasm_bindgen]
 pub async fn run_module(
-    invocaton_id: String,
+    invocation_id: String,
     method: String,
     name: String,
     modules: JsValue,
@@ -85,10 +103,18 @@ pub async fn run_module(
 ) -> std::result::Result<String, JsError> {
     let mut resolver = BuiltinResolver::default();
 
-    let capability_module_name = format!("bb-{}", invocaton_id);
+    let capability_module_name = format!("bb-{}", invocation_id);
 
     let mut capabilities_loader = BuiltinLoader::default();
-    capabilities_loader.add_module("@fetch", format!("import {{ fetch }} from \"{}\";\nexport default function(inputs) {{ return fetch(\"{}\", inputs); }}\n", capability_module_name, invocaton_id ));
+    add_capability_modules!(
+        resolver,
+        capabilities_loader,
+        capability_module_name,
+        invocation_id,
+        "fetch",
+        "invoke",
+        "secrets"
+    );
 
     let mut peer_loader = BuiltinLoader::default();
     let object = js_sys::Object::from(modules);
@@ -105,7 +131,6 @@ pub async fn run_module(
             resolver.add_module(&peer_js);
         }
     }
-    resolver.add_module("@fetch");
     resolver.add_module(capability_module_name.clone());
 
     let loader = (
