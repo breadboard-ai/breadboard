@@ -14,10 +14,13 @@ import {
   type Kit,
 } from "@google-labs/breadboard";
 
-import { WebModuleManager } from "@breadboard-ai/jsandbox";
+import {
+  WebSandbox,
+  SandboxedModule,
+  Capability,
+  UUID,
+} from "@breadboard-ai/jsandbox";
 import wasm from "/sandbox.wasm?url";
-
-import { Capabilities } from "@breadboard-ai/jsandbox";
 
 export { addSandboxedRunModule };
 
@@ -39,30 +42,24 @@ function getHandler(handlerName: string, context: NodeHandlerContext) {
 
   const invoke = "invoke" in handler ? handler.invoke : handler;
 
-  return [
-    handlerName,
-    async (inputs: InputValues) => {
-      try {
-        const result = await invoke(inputs as InputValues, {
-          ...context,
-          descriptor: {
-            id: `${handlerName}-called-from-run-module`,
-            type: handlerName,
-          },
-        });
-        return result;
-      } catch (e) {
-        return { $error: (e as Error).message };
-      }
-    },
-  ] as [
-    string,
-    (inputs: Record<string, unknown>) => Promise<Record<string, unknown>>,
-  ];
+  return (async (_invocationId: UUID, inputs: InputValues) => {
+    try {
+      const result = await invoke(inputs as InputValues, {
+        ...context,
+        descriptor: {
+          id: `${handlerName}-called-from-run-module`,
+          type: handlerName,
+        },
+      });
+      return result;
+    } catch (e) {
+      return { $error: (e as Error).message };
+    }
+  }) as Capability;
 }
 
 function addSandboxedRunModule(kits: Kit[]): Kit[] {
-  const runner = new WebModuleManager(new URL(wasm, window.location.href));
+  const sandbox = new WebSandbox(new URL(wasm, window.location.href));
 
   const existingRunModule = findHandler("runModule", kits);
   const originalDescriber =
@@ -94,17 +91,16 @@ function addSandboxedRunModule(kits: Kit[]): Kit[] {
                 spec.code,
               ])
             );
-
-            Capabilities.instance().install([
-              getHandler("fetch", context),
-              getHandler("secrets", context),
-              getHandler("invoke", context),
-            ]);
-            const result = await runner.invoke(
-              modules,
-              $module as string,
-              rest
+            const module = new SandboxedModule(
+              sandbox,
+              {
+                fetch: getHandler("fetch", context),
+                secrets: getHandler("secrets", context),
+                invoke: getHandler("invoke", context),
+              },
+              modules
             );
+            const result = await module.invoke($module as string, rest);
             return result as InputValues;
           },
           describe: async (
@@ -125,16 +121,13 @@ function addSandboxedRunModule(kits: Kit[]): Kit[] {
                   spec.code,
                 ])
               );
+              const module = new SandboxedModule(sandbox, {}, modules);
               try {
-                const result = (await runner.describe(
-                  modules,
-                  $module as string,
-                  {
-                    inputs,
-                    inputSchema,
-                    outputSchema,
-                  }
-                )) as NodeDescriberResult;
+                const result = (await module.describe($module as string, {
+                  inputs,
+                  inputSchema,
+                  outputSchema,
+                })) as NodeDescriberResult;
                 return {
                   inputSchema: {
                     type: "object",

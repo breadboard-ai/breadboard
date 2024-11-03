@@ -7,6 +7,6 @@
 export type * from "./types.js";
 
 export { WebSandbox } from "./web.js";
-export { NodeSandbox } from "./node.js";
+// export { NodeSandbox } from "./node.js";
 export { Capabilities } from "./capabilities.js";
-export { SandboxedModule as Module } from "./module.js";
+export { SandboxedModule } from "./module.js";
