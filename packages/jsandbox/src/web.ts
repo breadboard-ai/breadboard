@@ -19,6 +19,7 @@ import {
   InvokeOutputs,
   ModuleManager,
   ModuleSpec,
+  UUID,
 } from "./types.js";
 
 export { WebModuleManager };
@@ -59,22 +60,25 @@ class WebModuleManager implements ModuleManager {
   }
 
   invoke(
+    invocationId: UUID,
     modules: ModuleSpec,
     name: string,
     inputs: InvokeInputs
   ): Promise<InvokeOutputs> {
-    return this.#run("default", modules, name, inputs);
+    return this.#run(invocationId, "default", modules, name, inputs);
   }
 
   describe(
+    invocationId: UUID,
     modules: ModuleSpec,
     name: string,
     inputs: DescriberInputs
   ): Promise<DescriberOutputs> {
-    return this.#run("describe", modules, name, inputs);
+    return this.#run(invocationId, "describe", modules, name, inputs);
   }
 
   async #run(
+    invocationId: UUID,
     method: "default" | "describe",
     modules: ModuleSpec,
     name: string,
@@ -87,7 +91,7 @@ class WebModuleManager implements ModuleManager {
     }
 
     const result = await sandbox.run_module(
-      1,
+      invocationId,
       method,
       name,
       modules,

@@ -13,9 +13,10 @@ async function describeModule(
   code: string,
   inputs: DescriberInputs
 ): Promise<Record<string, unknown>> {
+  const uuid = crypto.randomUUID();
   const wasm = await loadRuntime();
   const manager = new NodeModuleManager(wasm);
-  return manager.describe({ test: code }, "test", inputs);
+  return manager.describe(uuid, { test: code }, "test", inputs);
 }
 
 describe("custom describers", () => {

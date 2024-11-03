@@ -13,9 +13,10 @@ async function run(
   code: string,
   inputs: Record<string, unknown> = {}
 ): Promise<Record<string, unknown>> {
+  const uuid = crypto.randomUUID();
   const wasm = await loadRuntime();
   const manager = new NodeModuleManager(wasm);
-  return manager.invoke({ test: code }, "test", inputs);
+  return manager.invoke(uuid, { test: code }, "test", inputs);
 }
 
 describe("runtime basics", () => {

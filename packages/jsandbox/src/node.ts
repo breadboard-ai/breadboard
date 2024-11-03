@@ -20,6 +20,7 @@ import {
   InvokeOutputs,
   ModuleManager,
   ModuleSpec,
+  UUID,
 } from "./types.js";
 
 export { loadRuntime, NodeModuleManager };
@@ -33,22 +34,25 @@ class NodeModuleManager implements ModuleManager {
   constructor(public readonly wasm: Buffer) {}
 
   invoke(
+    invocationId: UUID,
     modules: ModuleSpec,
     name: string,
     inputs: InvokeInputs
   ): Promise<InvokeOutputs> {
-    return this.#run("default", modules, name, inputs);
+    return this.#run(invocationId, "default", modules, name, inputs);
   }
 
   describe(
+    invocationId: UUID,
     modules: ModuleSpec,
     name: string,
     inputs: DescriberInputs
   ): Promise<DescriberOutputs> {
-    return this.#run("describe", modules, name, inputs);
+    return this.#run(invocationId, "describe", modules, name, inputs);
   }
 
   async #run(
+    invocationId: UUID,
     method: "default" | "describe",
     modules: ModuleSpec,
     name: string,
@@ -80,7 +84,7 @@ class NodeModuleManager implements ModuleManager {
     // @ts-expect-error 2739
     wasi.start({ exports: instance.exports });
     const result = await jsandbox.run_module(
-      1,
+      invocationId,
       method,
       name,
       modules,

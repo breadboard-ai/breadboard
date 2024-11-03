@@ -19,13 +19,17 @@ export type InvokeOutputs = Values;
 
 export type ModuleManager = {
   invoke(
+    invocationId: UUID,
     modules: ModuleSpec,
     name: string,
     inputs: InvokeInputs
   ): Promise<InvokeOutputs>;
   describe(
+    invocationId: UUID,
     modules: ModuleSpec,
     name: string,
     inputs: DescriberInputs
   ): Promise<DescriberOutputs>;
 };
+
+export type UUID = `${string}-${string}-${string}-${string}-${string}`;

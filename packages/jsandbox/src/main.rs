@@ -76,7 +76,7 @@ async fn maybe_promise<'js>(
 
 #[wasm_bindgen]
 pub async fn run_module(
-    invocaton_id: u32,
+    invocaton_id: String,
     method: String,
     name: String,
     modules: JsValue,
@@ -85,10 +85,10 @@ pub async fn run_module(
 ) -> std::result::Result<String, JsError> {
     let mut resolver = BuiltinResolver::default();
 
-    let capability_module_name = format!("breadboard:{}", invocaton_id);
+    let capability_module_name = format!("bb-{}", invocaton_id);
 
     let mut capabilities_loader = BuiltinLoader::default();
-    capabilities_loader.add_module("@fetch", format!("import {{ fetch }} from \"{}\";\nexport default function(inputs) {{ return fetch({}, inputs); }}\n", capability_module_name, invocaton_id ));
+    capabilities_loader.add_module("@fetch", format!("import {{ fetch }} from \"{}\";\nexport default function(inputs) {{ return fetch(\"{}\", inputs); }}\n", capability_module_name, invocaton_id ));
 
     let mut peer_loader = BuiltinLoader::default();
     let object = js_sys::Object::from(modules);
