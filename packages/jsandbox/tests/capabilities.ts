@@ -16,9 +16,9 @@ async function run(
   const module = new SandboxedModule(
     new NodeSandbox(),
     {
-      fetch: async (_, inputs) => inputs,
-      invoke: async (_, inputs) => inputs,
-      secrets: async (_, inputs) => inputs,
+      fetch: async (inputs) => inputs,
+      invoke: async (inputs) => inputs,
+      secrets: async (inputs) => inputs,
     },
     { test: code }
   );

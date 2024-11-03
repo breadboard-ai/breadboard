@@ -4,16 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { UUID } from "./types.js";
+import { Capability, UUID } from "./types.js";
 
 export { fetch, secrets, invoke, Capabilities };
 
 type Values = Record<string, unknown>;
-
-type Capability = (
-  invocationId: UUID,
-  inputs: Values
-) => Promise<Values | void>;
 
 class Capabilities {
   #capabilities = new Map<UUID, Map<string, Capability>>();
@@ -33,7 +28,7 @@ class Capabilities {
         `Capability "${name}" is not avaialble for invocation "${invocationId}".`
       );
     }
-    return JSON.stringify(await c(invocationId, JSON.parse(inputs)));
+    return JSON.stringify(await c(JSON.parse(inputs)));
   }
 
   install(invocationId: UUID, capabilities: Record<string, Capability>) {

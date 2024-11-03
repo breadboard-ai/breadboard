@@ -15,10 +15,9 @@ import {
 } from "@google-labs/breadboard";
 
 import {
-  WebSandbox,
-  SandboxedModule,
   Capability,
-  UUID,
+  SandboxedModule,
+  WebSandbox,
 } from "@breadboard-ai/jsandbox";
 import wasm from "/sandbox.wasm?url";
 
@@ -42,7 +41,7 @@ function getHandler(handlerName: string, context: NodeHandlerContext) {
 
   const invoke = "invoke" in handler ? handler.invoke : handler;
 
-  return (async (_invocationId: UUID, inputs: InputValues) => {
+  return (async (inputs: InputValues) => {
     try {
       const result = await invoke(inputs as InputValues, {
         ...context,
