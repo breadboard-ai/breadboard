@@ -37,12 +37,11 @@ class Capabilities {
   }
 
   install(invocationId: UUID, capabilities: Record<string, Capability>) {
-    // if (!this.#capabilities.has(invocationId)) {
-    //   throw new Error(
-    //     `Invocation ID collision: "${invocationId}" capabilities were already installed.`
-    //   );
-    // }
-    console.log("🌻 installing", invocationId);
+    if (this.#capabilities.has(invocationId)) {
+      throw new Error(
+        `Invocation ID collision: "${invocationId}" capabilities were already installed.`
+      );
+    }
     this.#capabilities.set(invocationId, new Map(Object.entries(capabilities)));
   }
 
