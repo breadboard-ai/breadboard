@@ -241,6 +241,7 @@ wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
 }
 
 /**
+* @param {number} invocaton_id
 * @param {string} method
 * @param {string} name
 * @param {any} modules
@@ -248,7 +249,7 @@ wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
 * @param {string} json
 * @returns {Promise<string>}
 */
- function run_module(method, name, modules, code, json) {
+ function run_module(invocaton_id, method, name, modules, code, json) {
 const ptr0 = passStringToWasm0(method, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
 const len0 = WASM_VECTOR_LEN;
 const ptr1 = passStringToWasm0(name, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
@@ -257,7 +258,7 @@ const ptr2 = passStringToWasm0(code, wasm.__wbindgen_malloc, wasm.__wbindgen_rea
 const len2 = WASM_VECTOR_LEN;
 const ptr3 = passStringToWasm0(json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
 const len3 = WASM_VECTOR_LEN;
-const ret = wasm.run_module(ptr0, len0, ptr1, len1, modules, ptr2, len2, ptr3, len3);
+const ret = wasm.run_module(invocaton_id, ptr0, len0, ptr1, len1, modules, ptr2, len2, ptr3, len3);
 return ret;
 }
 
@@ -295,39 +296,39 @@ const ret = getStringFromWasm0(arg0, arg1);
 return ret;
 };
 
- function __wbg_secrets_52d52956bc8d3d7b(arg0, arg1) {
+ function __wbg_fetch_f1f32fc92128b512(arg0, arg1, arg2) {
 let deferred0_0;
 let deferred0_1;
 try {
-deferred0_0 = arg0;
-deferred0_1 = arg1;
-const ret = secrets(getStringFromWasm0(arg0, arg1));
+deferred0_0 = arg1;
+deferred0_1 = arg2;
+const ret = fetch(arg0 >>> 0, getStringFromWasm0(arg1, arg2));
 return ret;
 } finally {
 wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
 }
 };
 
- function __wbg_fetch_f1f32fc92128b512(arg0, arg1) {
+ function __wbg_invoke_b869e83afb3faed8(arg0, arg1, arg2) {
 let deferred0_0;
 let deferred0_1;
 try {
-deferred0_0 = arg0;
-deferred0_1 = arg1;
-const ret = fetch(getStringFromWasm0(arg0, arg1));
+deferred0_0 = arg1;
+deferred0_1 = arg2;
+const ret = invoke(arg0 >>> 0, getStringFromWasm0(arg1, arg2));
 return ret;
 } finally {
 wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
 }
 };
 
- function __wbg_invoke_b869e83afb3faed8(arg0, arg1) {
+ function __wbg_secrets_52d52956bc8d3d7b(arg0, arg1, arg2) {
 let deferred0_0;
 let deferred0_1;
 try {
-deferred0_0 = arg0;
-deferred0_1 = arg1;
-const ret = invoke(getStringFromWasm0(arg0, arg1));
+deferred0_0 = arg1;
+deferred0_1 = arg2;
+const ret = secrets(arg0 >>> 0, getStringFromWasm0(arg1, arg2));
 return ret;
 } finally {
 wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
@@ -490,7 +491,7 @@ getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
 throw new Error(getStringFromWasm0(arg0, arg1));
 };
 
- function __wbindgen_closure_wrapper217(arg0, arg1, arg2) {
+ function __wbindgen_closure_wrapper221(arg0, arg1, arg2) {
 const ret = makeMutClosure(arg0, arg1, 67, __wbg_adapter_24);
 return ret;
 };
@@ -517,11 +518,11 @@ __wbindgen_string_get
 ,
 __wbindgen_string_new
 ,
-__wbg_secrets_52d52956bc8d3d7b
-,
 __wbg_fetch_f1f32fc92128b512
 ,
 __wbg_invoke_b869e83afb3faed8
+,
+__wbg_secrets_52d52956bc8d3d7b
 ,
 __wbindgen_error_new
 ,
@@ -577,7 +578,7 @@ __wbindgen_debug_string
 ,
 __wbindgen_throw
 ,
-__wbindgen_closure_wrapper217
+__wbindgen_closure_wrapper221
 ,
 __wbindgen_init_externref_table
 ,

@@ -76,14 +76,21 @@ async fn maybe_promise<'js>(
 
 #[wasm_bindgen]
 pub async fn run_module(
+    invocaton_id: u32,
     method: String,
     name: String,
     modules: JsValue,
     code: String,
     json: String,
 ) -> std::result::Result<String, JsError> {
-    let mut peer_loader = BuiltinLoader::default();
     let mut resolver = BuiltinResolver::default();
+
+    let capability_module_name = format!("breadboard:{}", invocaton_id);
+
+    let mut capabilities_loader = BuiltinLoader::default();
+    capabilities_loader.add_module("@fetch", format!("import {{ fetch }} from \"{}\";\nexport default function(inputs) {{ return fetch({}, inputs); }}\n", capability_module_name, invocaton_id ));
+
+    let mut peer_loader = BuiltinLoader::default();
     let object = js_sys::Object::from(modules);
     let entries = js_sys::Object::entries(&object);
     for i in 0..entries.length() {
@@ -98,11 +105,13 @@ pub async fn run_module(
             resolver.add_module(&peer_js);
         }
     }
-    resolver.add_module("breadboard:capabilities");
+    resolver.add_module("@fetch");
+    resolver.add_module(capability_module_name.clone());
 
     let loader = (
+        capabilities_loader,
         peer_loader,
-        ModuleLoader::default().with_module("breadboard:capabilities", CapabilitiesModule),
+        ModuleLoader::default().with_module(capability_module_name.clone(), CapabilitiesModule),
     );
 
     let rt = rquickjs::AsyncRuntime::new()?;

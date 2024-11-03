@@ -87,6 +87,7 @@ class WebModuleManager implements ModuleManager {
     }
 
     const result = await sandbox.run_module(
+      1,
       method,
       name,
       modules,

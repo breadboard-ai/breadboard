@@ -80,6 +80,7 @@ class NodeModuleManager implements ModuleManager {
     // @ts-expect-error 2739
     wasi.start({ exports: instance.exports });
     const result = await jsandbox.run_module(
+      1,
       method,
       name,
       modules,

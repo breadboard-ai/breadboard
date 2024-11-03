@@ -9,15 +9,14 @@ import test, { describe } from "node:test";
 import { Capabilities } from "../src/capabilities.js";
 import { loadRuntime, NodeModuleManager } from "../src/node.js";
 
-Capabilities.instance().install([["fetch", async (inputs) => inputs]]);
-
 async function run(
   modules: Record<string, string>,
   inputs: Record<string, unknown> = {}
 ): Promise<Record<string, unknown>> {
   const wasm = await loadRuntime();
   const manager = new NodeModuleManager(wasm);
-  return manager.invoke(modules, "test", inputs);
+  const outputs = await manager.invoke(modules, "test", inputs);
+  return outputs;
 }
 
 describe("peer module import", () => {

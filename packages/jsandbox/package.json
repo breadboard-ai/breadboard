@@ -19,6 +19,10 @@
     "build": {
       "dependencies": [
         "build:tsc"
+      ],
+      "files": [
+        "sandbox.wasm",
+        "src/factory.js"
       ]
     },
     "build:rs": {

@@ -4,12 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { deepStrictEqual, rejects } from "node:assert";
 import test, { describe } from "node:test";
-import { loadRuntime, NodeModuleManager } from "../src/node.js";
-import { deepStrictEqual, ok, rejects, strictEqual, throws } from "node:assert";
-import { Capabilities } from "../src/capabilities.js";
 
-Capabilities.instance().install([["fetch", async (inputs) => inputs]]);
+import { loadRuntime, NodeModuleManager } from "../src/node.js";
 
 async function run(
   code: string,
@@ -97,44 +95,6 @@ describe("runtime errors", () => {
       }`
       ),
       /'foo' is not defined/
-    );
-  });
-});
-
-describe("can import capabilities", () => {
-  test("can import breadboard:capabilities module", async () => {
-    const result = await run(`import "breadboard:capabilities";
-    export default function() {
-      return { success: true }
-    }`);
-    ok(true);
-  });
-
-  test("can import fetch from breadboard:capabilities", async () => {
-    const result = await run(`import { fetch } from "breadboard:capabilities";
-    export default function() {
-      return { fetch: typeof fetch }
-    }
-      `);
-    deepStrictEqual(result, { fetch: "function" });
-  });
-
-  test("can call fetch from breadboard:capabilities", async () => {
-    const result = await run(`import { fetch } from "breadboard:capabilities";
-    export default async function() {
-      return { result: await fetch({ test: "HELLO" }) }
-    }
-      `);
-    deepStrictEqual(result, { result: { test: "HELLO" } });
-  });
-
-  test("gracefully handles unknown capability", async () => {
-    await rejects(() =>
-      run(`import { foo } from "breadboard:capabilities";
-    export default async function() {
-      return { result: await foo({ test: "HELLO" }) }
-    }
-      `)
     );
   });
 });

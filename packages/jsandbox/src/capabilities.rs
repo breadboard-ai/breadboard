@@ -37,16 +37,17 @@ impl ModuleDef for CapabilitiesModule {
 }
 
 async fn call_capability<'js, F, Fut>(
+    invocation_id: u32,
     inputs: Value<'js>,
     capability: F,
 ) -> rquickjs::Result<Value<'js>>
 where
-    F: FnOnce(String) -> Fut,
+    F: FnOnce(u32, String) -> Fut,
     Fut: Future<Output = JsValue>,
 {
     let ctx: Ctx<'js> = inputs.ctx().clone();
     let input_str = ctx.json_stringify(inputs)?.unwrap();
-    let result_str = capability(input_str.to_string()?)
+    let result_str = capability(invocation_id, input_str.to_string()?)
         .await
         .as_string()
         .unwrap_or_default();
@@ -55,21 +56,24 @@ where
     ctx.json_parse(result_str)
 }
 
-async fn fetch_value<'js>(inputs: Value<'js>) -> rquickjs::Result<Value<'js>> {
-    call_capability(inputs, fetch).await
+async fn fetch_value<'js>(invocation_id: u32, inputs: Value<'js>) -> rquickjs::Result<Value<'js>> {
+    call_capability(invocation_id, inputs, fetch).await
 }
 
-async fn secrets_value<'js>(inputs: Value<'js>) -> rquickjs::Result<Value<'js>> {
-    call_capability(inputs, secrets).await
+async fn secrets_value<'js>(
+    invocation_id: u32,
+    inputs: Value<'js>,
+) -> rquickjs::Result<Value<'js>> {
+    call_capability(invocation_id, inputs, secrets).await
 }
 
-async fn invoke_value<'js>(inputs: Value<'js>) -> rquickjs::Result<Value<'js>> {
-    call_capability(inputs, invoke).await
+async fn invoke_value<'js>(invocation_id: u32, inputs: Value<'js>) -> rquickjs::Result<Value<'js>> {
+    call_capability(invocation_id, inputs, invoke).await
 }
 
 #[wasm_bindgen(raw_module = "./capabilities.js")]
 extern "C" {
-    async fn fetch(inputs: String) -> JsValue;
-    async fn secrets(inputs: String) -> JsValue;
-    async fn invoke(inputs: String) -> JsValue;
+    async fn fetch(invocation_id: u32, inputs: String) -> JsValue;
+    async fn secrets(invocation_id: u32, inputs: String) -> JsValue;
+    async fn invoke(invocation_id: u32, inputs: String) -> JsValue;
 }
