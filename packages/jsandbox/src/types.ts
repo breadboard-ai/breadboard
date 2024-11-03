@@ -17,15 +17,22 @@ export type DescriberOutputs = { inputSchema: unknown; outputSchema: unknown };
 export type InvokeInputs = Values;
 export type InvokeOutputs = Values;
 
-export type ModuleManager = {
-  invoke(
-    modules: ModuleSpec,
-    name: string,
-    inputs: InvokeInputs
-  ): Promise<InvokeOutputs>;
-  describe(
-    modules: ModuleSpec,
-    name: string,
-    inputs: DescriberInputs
-  ): Promise<DescriberOutputs>;
+export type Capability = (inputs: Values) => Promise<Values | void>;
+
+export type CapabilitySpec = {
+  fetch?: Capability;
+  invoke?: Capability;
+  secrets?: Capability;
 };
+
+export type Sandbox = {
+  runModule(
+    invocationId: UUID,
+    method: "default" | "describe",
+    modules: ModuleSpec,
+    name: string,
+    inputs: Record<string, unknown>
+  ): Promise<InvokeOutputs | DescriberOutputs>;
+};
+
+export type UUID = `${string}-${string}-${string}-${string}-${string}`;

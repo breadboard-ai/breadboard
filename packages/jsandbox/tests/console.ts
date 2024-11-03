@@ -7,15 +7,15 @@
 import { deepStrictEqual } from "node:assert";
 import { Console } from "node:console";
 import test, { after, before, beforeEach, describe } from "node:test";
-import { loadRuntime, NodeModuleManager } from "../src/node.js";
+import { NodeSandbox } from "../src/node.js";
+import { SandboxedModule } from "../src/module.js";
 
 async function run(
   code: string,
   inputs: Record<string, unknown> = {}
 ): Promise<Record<string, unknown>> {
-  const wasm = await loadRuntime();
-  const manager = new NodeModuleManager(wasm);
-  return manager.invoke({ test: code }, "test", inputs);
+  const module = new SandboxedModule(new NodeSandbox(), {}, { test: code });
+  return module.invoke("test", inputs);
 }
 
 type Console = typeof globalThis.console;

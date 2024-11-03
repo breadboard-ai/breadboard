@@ -6,18 +6,15 @@
 
 import { deepStrictEqual, rejects } from "node:assert";
 import test, { describe } from "node:test";
-import { Capabilities } from "../src/capabilities.js";
-import { loadRuntime, NodeModuleManager } from "../src/node.js";
-
-Capabilities.instance().install([["fetch", async (inputs) => inputs]]);
+import { NodeSandbox } from "../src/node.js";
+import { SandboxedModule } from "../src/module.js";
 
 async function run(
   modules: Record<string, string>,
   inputs: Record<string, unknown> = {}
 ): Promise<Record<string, unknown>> {
-  const wasm = await loadRuntime();
-  const manager = new NodeModuleManager(wasm);
-  return manager.invoke(modules, "test", inputs);
+  const module = new SandboxedModule(new NodeSandbox(), {}, modules);
+  return module.invoke("test", inputs);
 }
 
 describe("peer module import", () => {

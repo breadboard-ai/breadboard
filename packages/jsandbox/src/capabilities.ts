@@ -4,33 +4,44 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Capability, UUID } from "./types.js";
+
 export { fetch, secrets, invoke, Capabilities };
 
 type Values = Record<string, unknown>;
 
-type Capability = (inputs: Values) => Promise<Values | void>;
-
 class Capabilities {
-  #capabilities = new Map<string, Capability>();
+  #capabilities = new Map<UUID, Map<string, Capability>>();
 
   static #instance: Capabilities = new Capabilities();
 
   constructor() {}
 
-  get(name: string) {
-    return this.#capabilities.get(name);
+  get(invocationId: UUID, name: string): Capability | undefined {
+    return this.#capabilities.get(invocationId)?.get(name);
   }
 
-  async invoke(name: string, inputs: string) {
-    const c = this.get(name);
+  async invoke(invocationId: UUID, name: string, inputs: string) {
+    const c = this.get(invocationId, name);
     if (!c) {
-      throw new Error(`Capability "${name}" is not avaialble.`);
+      throw new Error(
+        `Capability "${name}" is not avaialble for invocation "${invocationId}".`
+      );
     }
     return JSON.stringify(await c(JSON.parse(inputs)));
   }
 
-  install(capabilities: [string, Capability][]) {
-    this.#capabilities = new Map(capabilities);
+  install(invocationId: UUID, capabilities: Record<string, Capability>) {
+    if (this.#capabilities.has(invocationId)) {
+      throw new Error(
+        `Invocation ID collision: "${invocationId}" capabilities were already installed.`
+      );
+    }
+    this.#capabilities.set(invocationId, new Map(Object.entries(capabilities)));
+  }
+
+  uninstall(invocationId: UUID) {
+    this.#capabilities.delete(invocationId);
   }
 
   static instance() {
@@ -38,14 +49,14 @@ class Capabilities {
   }
 }
 
-async function fetch(inputs: string) {
-  return Capabilities.instance().invoke("fetch", inputs);
+async function fetch(invocationId: UUID, inputs: string) {
+  return Capabilities.instance().invoke(invocationId, "fetch", inputs);
 }
 
-async function secrets(inputs: string) {
-  return Capabilities.instance().invoke("secrets", inputs);
+async function secrets(invocationId: UUID, inputs: string) {
+  return Capabilities.instance().invoke(invocationId, "secrets", inputs);
 }
 
-async function invoke(inputs: string) {
-  return Capabilities.instance().invoke("invoke", inputs);
+async function invoke(invocationId: UUID, inputs: string) {
+  return Capabilities.instance().invoke(invocationId, "invoke", inputs);
 }

@@ -4,5 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { WebModuleManager } from "./web.js";
+export type * from "./types.js";
+
+export { WebSandbox } from "./web.js";
+// export { NodeSandbox } from "./node.js";
 export { Capabilities } from "./capabilities.js";
+export { SandboxedModule } from "./module.js";
