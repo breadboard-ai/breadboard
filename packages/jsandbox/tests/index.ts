@@ -7,15 +7,14 @@
 import { deepStrictEqual, rejects } from "node:assert";
 import test, { describe } from "node:test";
 
-import { loadRuntime, NodeSandbox } from "../src/node.js";
+import { NodeSandbox } from "../src/node.js";
 import { Module } from "../src/module.js";
 
 async function run(
   code: string,
   inputs: Record<string, unknown> = {}
 ): Promise<Record<string, unknown>> {
-  const wasm = await loadRuntime();
-  const module = new Module(new NodeSandbox(wasm), {}, { test: code });
+  const module = new Module(new NodeSandbox(), {}, { test: code });
   return module.invoke("test", inputs);
 }
 

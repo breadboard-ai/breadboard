@@ -15,7 +15,7 @@ import { join } from "path";
 import factory from "./factory.js";
 import { ModuleSpec, Sandbox, UUID } from "./types.js";
 
-export { loadRuntime, NodeSandbox };
+export { NodeSandbox };
 
 async function loadRuntime(): Promise<Buffer> {
   const path = join(import.meta.dirname, "..", "..", "sandbox.wasm");
@@ -23,7 +23,11 @@ async function loadRuntime(): Promise<Buffer> {
 }
 
 class NodeSandbox implements Sandbox {
-  constructor(public readonly wasm: Buffer) {}
+  #buffer: Promise<Buffer>;
+
+  constructor() {
+    this.#buffer = loadRuntime();
+  }
 
   async runModule(
     invocationId: UUID,
@@ -32,6 +36,7 @@ class NodeSandbox implements Sandbox {
     name: string,
     inputs: Record<string, unknown>
   ) {
+    const wasm = await this.#buffer;
     const code = modules[name];
     if (!code) {
       return { $error: `Unable to find module "${name}"` };
@@ -50,7 +55,7 @@ class NodeSandbox implements Sandbox {
       ]
     );
     const jsandbox = factory();
-    const { instance } = await WebAssembly.instantiate(this.wasm, {
+    const { instance } = await WebAssembly.instantiate(wasm, {
       "./jsandbox_bg.js": jsandbox,
       wasi_snapshot_preview1: wasi.wasiImport,
     });

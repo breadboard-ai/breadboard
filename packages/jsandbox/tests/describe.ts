@@ -6,7 +6,7 @@
 
 import { deepStrictEqual } from "node:assert";
 import test, { describe } from "node:test";
-import { loadRuntime, NodeSandbox } from "../src/node.js";
+import { NodeSandbox } from "../src/node.js";
 import { DescriberInputs } from "../src/types.js";
 import { Module } from "../src/module.js";
 
@@ -14,8 +14,7 @@ async function describeModule(
   code: string,
   inputs: DescriberInputs
 ): Promise<Record<string, unknown>> {
-  const wasm = await loadRuntime();
-  const module = new Module(new NodeSandbox(wasm), {}, { test: code });
+  const module = new Module(new NodeSandbox(), {}, { test: code });
   return module.describe("test", inputs);
 }
 
