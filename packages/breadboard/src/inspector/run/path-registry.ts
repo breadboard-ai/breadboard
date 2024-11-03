@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { timestamp } from "../../timestamp.js";
 import { OutputValues } from "../../types.js";
 import {
   GraphUUID,
@@ -109,7 +110,7 @@ class Entry implements PathRegistryEntry {
         break;
       }
       case "secret": {
-        sidecar.end = data?.timestamp || null;
+        sidecar.end = data?.timestamp || timestamp();
         break;
       }
     }

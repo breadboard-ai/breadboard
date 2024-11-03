@@ -149,6 +149,10 @@ export class RunObserver implements InspectableRunObserver {
     return timestamp;
   }
 
+  resume() {
+    this.#runs.at(0)?.resume?.();
+  }
+
   async observe(result: HarnessRunResult): Promise<void> {
     if (result.type === "graphstart") {
       const { path, timestamp } = result.data;
@@ -284,6 +288,10 @@ export class Run implements InspectableRun {
 
   get edges(): InspectableRunEdge[] {
     return this.#events.edges;
+  }
+
+  resume() {
+    this.#events.resume();
   }
 
   currentNodeEvent(): InspectableRunNodeEvent | null {

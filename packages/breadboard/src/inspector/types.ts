@@ -680,6 +680,12 @@ export type InspectableRunObserver = {
    */
   runs(): Promise<InspectableRun[]>;
   /**
+   * Informs the observer that the run is resuming. This is useful to clean
+   * up any transient state that might be awaiting the next result.
+   * For example, secret's end timestamp is finalized this way
+   */
+  resume?(): void;
+  /**
    * Observes the given result and collects it into the list of runs.
    * @param result -- the result to observe
    * @returns -- the list of runs that were observed
@@ -968,6 +974,10 @@ export type InspectableRun = {
    * if no inputs were submitted.
    */
   inputs(): InspectableRunInputs | null;
+  /**
+   * Signals that the run was resumed.
+   */
+  resume?(): void;
   /**
    * Returns a HarnessRunResult asynchronous generator that allows replaying
    * the run.
