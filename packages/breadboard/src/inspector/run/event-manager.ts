@@ -255,8 +255,12 @@ export class EventManager {
     this.#addToSequence("error", createSimpleEntry(ERROR_PATH, event));
   }
 
+  resume(result?: HarnessRunResult) {
+    this.#pathRegistry.finalizeSidecar(SECRET_PATH, result?.data);
+  }
+
   add(result: HarnessRunResult) {
-    this.#pathRegistry.finalizeSidecar(SECRET_PATH, result.data);
+    this.resume(result);
 
     switch (result.type) {
       case "graphstart":

@@ -103,6 +103,9 @@ export class LocalRunner
       } else if (this.#pendingResult) {
         this.#pendingResult.reply({ inputs: inputs ?? {} });
         inputs = undefined;
+        this.#observers.forEach((observer) => {
+          observer.resume?.();
+        });
       }
       this.#pendingResult = null;
 
