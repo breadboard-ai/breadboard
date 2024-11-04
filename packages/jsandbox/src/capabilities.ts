@@ -31,7 +31,11 @@ class Capabilities {
       );
     }
     const parsedInputs = JSON.parse(inputs);
-    await installed.telemetry?.startCapability(name, parsedInputs);
+    const metadata = parsedInputs.$metadata;
+    if (metadata) {
+      delete parsedInputs.$metadata;
+    }
+    await installed.telemetry?.startCapability(name, parsedInputs, metadata);
     const outputs = await capability(parsedInputs);
     await installed.telemetry?.endCapability(
       name,

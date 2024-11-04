@@ -17,7 +17,8 @@ import type {
 import { NestedRun } from "./nested-run.js";
 import { BubbledInspectableNode } from "../bubbled-node.js";
 import { eventIdFromEntryId, idFromPath } from "./conversions.js";
-import type { TraversalResult } from "@breadboard-ai/types";
+import type { NodeDescriptor, TraversalResult } from "@breadboard-ai/types";
+import { VirtualNode } from "../virtual-node.js";
 
 export class RunNodeEvent implements InspectableRunNodeEvent {
   type: "node";
@@ -50,25 +51,29 @@ export class RunNodeEvent implements InspectableRunNodeEvent {
 
   constructor(
     entry: PathRegistryEntry,
-    id: NodeIdentifier,
+    node: NodeDescriptor,
     start: number,
     inputs: InputValues,
     traversalResult?: TraversalResult
   ) {
     if (!entry.parent) {
       throw new Error(
-        `RunNodeEvent has no parent entry. This is a bug in Inspector API machinery. Node Id: ${id}`
+        `RunNodeEvent has no parent entry. This is a bug in Inspector API machinery. Node Id: ${node.id}`
       );
     }
     if (!entry.parent.graph) {
       throw new Error(
-        `This node event's parent has no graph associated with it. Node Id: ${id}`
+        `This node event's parent has no graph associated with it. Node Id: ${node.id}`
       );
+    }
+
+    if (entry.parent.graph.raw().virtual) {
+      this.#node = new VirtualNode(node);
     }
 
     this.#entry = entry;
     this.type = "node";
-    this.#id = id;
+    this.#id = node.id;
     this.start = start;
     this.end = null;
     this.inputs = inputs;

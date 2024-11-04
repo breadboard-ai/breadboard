@@ -7,6 +7,7 @@
 import type {
   GraphDescriptor,
   InputValues,
+  NodeMetadata,
   OutputValues,
   Probe,
 } from "@breadboard-ai/types";
@@ -32,12 +33,16 @@ class Telemetry {
     });
   }
 
-  async startCapability(type: string, inputs: InputValues) {
+  async startCapability(
+    type: string,
+    inputs: InputValues,
+    metadata?: NodeMetadata
+  ) {
     ++this.index;
     await this.probe.report?.({
       type: "nodestart",
       data: {
-        node: this.#getDescriptor(type),
+        node: this.#getDescriptor(type, metadata),
         inputs,
         path: [...this.path, this.index],
         timestamp: timestamp(),
@@ -73,10 +78,11 @@ class Telemetry {
     });
   }
 
-  #getDescriptor(type: string) {
+  #getDescriptor(type: string, metadata?: NodeMetadata) {
     return {
       id: `${type}-${this.index}`,
       type,
+      metadata,
     };
   }
 }
