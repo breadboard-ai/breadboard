@@ -1,4 +1,4 @@
-import { Probe, ProbeMessage } from "@google-labs/breadboard";
+import { Probe, ProbeMessage } from "@breadboard-ai/types";
 
 export type VerboseLoggingCallback = (message: ProbeMessage) => Promise<void>;
 

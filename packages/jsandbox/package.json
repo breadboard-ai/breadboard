@@ -20,8 +20,7 @@
   "wireit": {
     "build": {
       "dependencies": [
-        "build:tsc",
-        "../types:build:tsc"
+        "build:tsc"
       ],
       "files": [
         "sandbox.wasm",
@@ -56,6 +55,9 @@
     },
     "build:tsc": {
       "command": "tsc --pretty",
+      "dependencies": [
+        "../types:build:tsc"
+      ],
       "files": [
         "src/",
         "tests/",
