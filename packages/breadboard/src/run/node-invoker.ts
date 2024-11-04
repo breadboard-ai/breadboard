@@ -9,13 +9,12 @@ import { resolveBoardCapabilitiesInInputs } from "../capability.js";
 import { callHandler, getHandler } from "../handler.js";
 import { SENTINEL_BASE_URL } from "../loader/loader.js";
 import { RunResult } from "../run.js";
+import type { NodeHandlerContext, RunArguments } from "../types.js";
 import type {
   GraphDescriptor,
-  NodeHandlerContext,
   OutputValues,
-  RunArguments,
   TraversalResult,
-} from "../types.js";
+} from "@breadboard-ai/types";
 
 type ResultSupplier = (result: RunResult) => Promise<void>;
 

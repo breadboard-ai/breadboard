@@ -16,8 +16,10 @@ import type {
   NodeTypeIdentifier,
   NodeValue,
   OutputValues,
+  ProbeMessage,
   StartLabel,
   StoredDataCapabilityPart,
+  TraversalResult,
 } from "@breadboard-ai/types";
 import { GraphLoader } from "./loader/types.js";
 import { DataStore } from "./data/types.js";
@@ -170,40 +172,6 @@ export type ErrorCapability = Capability & {
 export type DataCapability = {
   kind: "data";
 } & (InlineDataCapabilityPart | StoredDataCapabilityPart);
-
-/**
- * The Map of queues of all outputs that were sent to a given node,
- * and a map of these for all nodes.
- */
-export type NodeValuesQueues = Map<string, NodeValue[]>;
-export type NodeValuesQueuesMap = Map<NodeIdentifier, NodeValuesQueues>;
-
-export interface QueuedNodeValuesState {
-  state: NodeValuesQueuesMap;
-  constants: NodeValuesQueuesMap;
-  wireOutputs(opportunities: Edge[], outputs: OutputValues): void;
-  getAvailableInputs(nodeId: NodeIdentifier): InputValues;
-  useInputs(node: NodeIdentifier, inputs: InputValues): void;
-}
-
-export interface CompletedNodeOutput {
-  promiseId: symbol;
-  outputs: OutputValues;
-  newOpportunities: Edge[];
-}
-
-export interface TraversalResult {
-  descriptor: NodeDescriptor;
-  inputs: InputValues;
-  missingInputs: string[];
-  current: Edge;
-  opportunities: Edge[];
-  newOpportunities: Edge[];
-  state: QueuedNodeValuesState;
-  outputs?: OutputValues;
-  partialOutputs?: OutputValues;
-  skip: boolean;
-}
 
 /**
  * A function that represents a type of a node in the graph.
@@ -472,63 +440,6 @@ export interface BreadboardValidator {
   ): BreadboardValidator;
 }
 
-export type GraphStartProbeData = {
-  graph: GraphDescriptor;
-  path: number[];
-  timestamp: number;
-  edges?: { edge: Edge; value: NodeValue }[];
-};
-
-export type GraphStartProbeMessage = {
-  type: "graphstart";
-  data: GraphStartProbeData;
-};
-
-export type GraphEndProbeData = {
-  path: number[];
-  timestamp: number;
-};
-
-export type GraphEndProbeMessage = {
-  type: "graphend";
-  data: GraphEndProbeData;
-};
-
-export type SkipProbeMessage = {
-  type: "skip";
-  data: {
-    node: NodeDescriptor;
-    inputs: InputValues;
-    missingInputs: string[];
-    path: number[];
-    timestamp: number;
-  };
-};
-
-export type NodeStartProbeMessage = {
-  type: "nodestart";
-  data: NodeStartResponse;
-  result?: TraversalResult;
-};
-
-export type NodeEndProbeMessage = {
-  type: "nodeend";
-  data: NodeEndResponse;
-};
-
-export type EdgeProbeMessage = {
-  type: "edge";
-  data: EdgeResponse;
-};
-
-export type ProbeMessage =
-  | GraphStartProbeMessage
-  | GraphEndProbeMessage
-  | SkipProbeMessage
-  | EdgeProbeMessage
-  | NodeStartProbeMessage
-  | NodeEndProbeMessage;
-
 /**
  * Sent by the runner to supply outputs.
  */
@@ -549,44 +460,6 @@ export type OutputResponse = {
   bubbled: boolean;
   path: number[];
   timestamp: number;
-};
-
-/**
- * Sent by the runner just before a node is about to run.
- */
-export type NodeStartResponse = {
-  /**
-   * The description of the node that is about to run.
-   * @see [NodeDescriptor]
-   */
-  node: NodeDescriptor;
-  inputs: InputValues;
-  path: number[];
-  timestamp: number;
-};
-
-export type NodeEndResponse = {
-  node: NodeDescriptor;
-  inputs: InputValues;
-  outputs: OutputValues;
-  validatorMetadata?: BreadboardValidatorMetadata[];
-  path: number[];
-  timestamp: number;
-  newOpportunities: Edge[];
-};
-
-export type EdgeResponse = {
-  edge: Edge;
-  /**
-   * The path of the outgoing node.
-   */
-  from?: number[];
-  /**
-   * The path of the incoming node.
-   */
-  to: number[];
-  timestamp: number;
-  value?: InputValues;
 };
 
 /**

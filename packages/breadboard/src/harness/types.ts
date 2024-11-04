@@ -4,7 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { StartLabel } from "@breadboard-ai/types";
+import type {
+  StartLabel,
+  GraphStartProbeData,
+  GraphEndProbeData,
+  NodeEndResponse,
+  NodeStartResponse,
+  SkipProbeMessage,
+  TraversalResult,
+} from "@breadboard-ai/types";
 import type { DataStore } from "../data/types.js";
 import { InspectableRunObserver } from "../inspector/types.js";
 import type { GraphLoader } from "../loader/types.js";
@@ -27,14 +35,8 @@ import type {
   Kit,
   OutputResponse,
   OutputValues,
-  SkipProbeMessage,
-  GraphStartProbeData,
-  GraphEndProbeData,
-  NodeEndResponse,
-  NodeStartResponse,
   Schema,
   NodeIdentifier,
-  TraversalResult,
 } from "../types.js";
 import {
   TypedEventTargetType,

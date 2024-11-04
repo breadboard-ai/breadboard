@@ -5,7 +5,7 @@
  */
 
 import { HarnessRunResult } from "../../harness/types.js";
-import { GraphEndProbeData } from "../../types.js";
+import type { GraphEndProbeData } from "@breadboard-ai/types";
 import { asyncGen } from "../../utils/async-gen.js";
 import { inspectableGraph } from "../graph.js";
 import {

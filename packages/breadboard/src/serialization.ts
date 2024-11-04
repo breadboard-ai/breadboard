@@ -6,7 +6,7 @@
 
 import { MachineResult } from "./traversal/result.js";
 import { MachineEdgeState } from "./traversal/state.js";
-import { TraversalResult } from "./types.js";
+import type { TraversalResult } from "@breadboard-ai/types";
 
 export const replacer = (key: string, value: unknown) => {
   if (!(value instanceof Map)) return value;

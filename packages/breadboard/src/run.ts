@@ -12,9 +12,8 @@ import type {
   NodeDescriptor,
   OutputValues,
   TraversalResult,
-  BreadboardRunResult,
-  RunResultType,
-} from "./types.js";
+} from "@breadboard-ai/types";
+import type { BreadboardRunResult, RunResultType } from "./types.js";
 
 export class RunResult implements BreadboardRunResult {
   #type: RunResultType;

@@ -5,12 +5,7 @@
  */
 
 import type { HarnessRunResult } from "../../harness/types.js";
-import type {
-  InputValues,
-  NodeIdentifier,
-  OutputValues,
-  TraversalResult,
-} from "../../types.js";
+import type { InputValues, NodeIdentifier, OutputValues } from "../../types.js";
 import type {
   EventIdentifier,
   InspectableGraph,
@@ -22,6 +17,7 @@ import type {
 import { NestedRun } from "./nested-run.js";
 import { BubbledInspectableNode } from "../bubbled-node.js";
 import { eventIdFromEntryId, idFromPath } from "./conversions.js";
+import type { TraversalResult } from "@breadboard-ai/types";
 
 export class RunNodeEvent implements InspectableRunNodeEvent {
   type: "node";

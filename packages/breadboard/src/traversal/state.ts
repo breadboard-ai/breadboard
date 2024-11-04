@@ -12,7 +12,7 @@ import type {
   OutputValues,
   NodeValue,
   NodeValuesQueuesMap,
-} from "../types.js";
+} from "@breadboard-ai/types";
 
 export class MachineEdgeState implements QueuedNodeValuesState {
   state: NodeValuesQueuesMap = new Map();

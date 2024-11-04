@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
   GraphIdentifier,
   GraphMetadata,
   Module,
@@ -13,6 +13,7 @@ import {
   ModuleMetadata,
   NodeMetadata,
   StartLabel,
+  TraversalResult,
 } from "@breadboard-ai/types";
 import { HarnessRunResult, SecretResult } from "../harness/types.js";
 import { GraphLoader } from "../loader/types.js";
@@ -33,7 +34,6 @@ import {
   NodeValue,
   OutputValues,
   Schema,
-  TraversalResult,
 } from "../types.js";
 import {
   DataStore,

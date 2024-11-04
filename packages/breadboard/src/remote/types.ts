@@ -9,23 +9,20 @@ import { RunConfig, RunDiagnosticsLevel } from "../harness/types.js";
 import { GraphLoader } from "../loader/types.js";
 import type { RunState } from "../run/types.js";
 import { PatchedReadableStream } from "../stream.js";
-import {
+import type {
   EdgeProbeMessage,
-  ErrorResponse,
   GraphDescriptor,
   GraphEndProbeMessage,
   GraphStartProbeMessage,
-  InputResponse,
   InputValues,
-  Kit,
   NodeDescriptor,
   NodeEndProbeMessage,
   NodeStartProbeMessage,
-  OutputResponse,
   OutputValues,
   SkipProbeMessage,
   TraversalResult,
-} from "../types.js";
+} from "@breadboard-ai/types";
+import { OutputResponse, Kit, ErrorResponse, InputResponse } from "../types.js";
 
 /**
  * Sent by the client to request loading a board. This is an optional request

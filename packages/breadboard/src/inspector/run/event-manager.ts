@@ -5,18 +5,20 @@
  */
 
 import { HarnessRunResult, SecretResult } from "../../harness/types.js";
-import {
+import type {
   EdgeResponse,
-  ErrorResponse,
   GraphEndProbeData,
   GraphStartProbeData,
+  NodeEndResponse,
+  NodeStartResponse,
+  TraversalResult,
+} from "@breadboard-ai/types";
+import {
+  ErrorResponse,
   InputResponse,
   NodeConfiguration,
   NodeDescriptor,
-  NodeEndResponse,
-  NodeStartResponse,
   OutputResponse,
-  TraversalResult,
 } from "../../types.js";
 import { inspectableGraph } from "../graph.js";
 import {
