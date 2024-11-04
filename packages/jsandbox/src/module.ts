@@ -33,7 +33,7 @@ class SandboxedModule {
   ) {
     const invocationId = crypto.randomUUID();
     Capabilities.instance().install(invocationId, this.capabilities, telemetry);
-    telemetry?.startCapability();
+    await telemetry?.startModule();
     const outputs = await this.sandbox.runModule(
       invocationId,
       method,
@@ -41,7 +41,7 @@ class SandboxedModule {
       name,
       inputs
     );
-    telemetry?.endCapability();
+    await telemetry?.endModule();
     Capabilities.instance().uninstall(invocationId);
     return outputs;
   }

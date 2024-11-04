@@ -4,18 +4,91 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Probe } from "@breadboard-ai/types";
+import type {
+  GraphDescriptor,
+  InputValues,
+  OutputValues,
+  Probe,
+} from "@breadboard-ai/types";
 
 export { Telemetry };
 
 class Telemetry {
-  constructor(public readonly probe: Probe) {}
+  index = 0;
 
-  startModule() {}
+  constructor(
+    public readonly probe: Probe,
+    public readonly path: number[]
+  ) {}
 
-  startCapability() {}
+  async startModule() {
+    await this.probe.report?.({
+      type: "graphstart",
+      data: {
+        graph: virtualGraph(),
+        path: this.path,
+        timestamp: timestamp(),
+      },
+    });
+  }
 
-  endCapability() {}
+  async startCapability(type: string, inputs: InputValues) {
+    ++this.index;
+    await this.probe.report?.({
+      type: "nodestart",
+      data: {
+        node: this.#getDescriptor(type),
+        inputs,
+        path: [...this.path, this.index],
+        timestamp: timestamp(),
+      },
+    });
+  }
 
-  endModule() {}
+  async endCapability(
+    type: string,
+    inputs: InputValues,
+    outputs: OutputValues
+  ) {
+    await this.probe.report?.({
+      type: "nodeend",
+      data: {
+        node: this.#getDescriptor(type),
+        inputs,
+        outputs,
+        path: [...this.path, this.index],
+        timestamp: timestamp(),
+        newOpportunities: [],
+      },
+    });
+  }
+
+  async endModule() {
+    await this.probe.report?.({
+      type: "graphend",
+      data: {
+        path: this.path,
+        timestamp: timestamp(),
+      },
+    });
+  }
+
+  #getDescriptor(type: string) {
+    return {
+      id: `${type}-${this.index}`,
+      type,
+    };
+  }
+}
+
+function virtualGraph(): GraphDescriptor {
+  return {
+    nodes: [],
+    edges: [],
+    virtual: true,
+  };
+}
+
+function timestamp() {
+  return globalThis.performance.now();
 }

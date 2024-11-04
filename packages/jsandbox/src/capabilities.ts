@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { OutputValues } from "@breadboard-ai/types";
 import { Telemetry } from "./telemetry.js";
 import { Capability, CapabilitySpec, UUID } from "./types.js";
 
@@ -29,9 +30,14 @@ class Capabilities {
         `Capability "${name}" is not avaialble for invocation "${invocationId}".`
       );
     }
-    installed.telemetry?.startCapability();
-    const outputs = await capability(JSON.parse(inputs));
-    installed.telemetry?.endCapability();
+    const parsedInputs = JSON.parse(inputs);
+    await installed.telemetry?.startCapability(name, parsedInputs);
+    const outputs = await capability(parsedInputs);
+    await installed.telemetry?.endCapability(
+      name,
+      parsedInputs,
+      outputs as OutputValues
+    );
     return JSON.stringify(outputs);
   }
 

@@ -18,6 +18,7 @@ import {
   type Capability,
   type Sandbox,
   SandboxedModule,
+  Telemetry,
 } from "@breadboard-ai/jsandbox";
 
 export { addSandboxedRunModule };
@@ -96,7 +97,11 @@ function addSandboxedRunModule(sandbox: Sandbox, kits: Kit[]): Kit[] {
               },
               modules
             );
-            const result = await module.invoke($module as string, rest);
+            const result = await module.invoke(
+              $module as string,
+              rest,
+              telemetry(context)
+            );
             return result as InputValues;
           },
           describe: async (
@@ -156,4 +161,11 @@ function addSandboxedRunModule(sandbox: Sandbox, kits: Kit[]): Kit[] {
     },
     ...kits,
   ];
+}
+
+function telemetry(context: NodeHandlerContext) {
+  if (context.probe && context.invocationPath) {
+    return new Telemetry(context.probe, context.invocationPath);
+  }
+  return undefined;
 }

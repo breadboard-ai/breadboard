@@ -8,10 +8,14 @@ import {
   GraphMetadata,
   InputValues,
   ModuleIdentifier,
+  NodeConfiguration,
+  NodeDescriptor,
+  NodeMetadata,
   StartLabel,
 } from "@breadboard-ai/types";
 import { getHandler } from "../handler.js";
 import { createLoader } from "../loader/index.js";
+import { invokeGraph } from "../run/invoke-graph.js";
 import { combineSchemas, removeProperty } from "../schema.js";
 import {
   Edge,
@@ -24,8 +28,10 @@ import {
   NodeTypeIdentifier,
   Schema,
 } from "../types.js";
+import { graphUrlLike } from "../utils/graph-url-like.js";
 import { EdgeCache } from "./edge.js";
 import { collectKits, createGraphNodeType } from "./kits.js";
+import { ModuleCache } from "./module.js";
 import { NodeCache } from "./node.js";
 import {
   EdgeType,
@@ -35,19 +41,17 @@ import {
 } from "./schemas.js";
 import {
   InspectableEdge,
-  MutableGraph,
   InspectableGraphOptions,
   InspectableGraphWithStore,
   InspectableKit,
-  InspectableNode,
-  InspectableSubgraphs,
-  NodeTypeDescriberOptions,
-  InspectableNodeType,
   InspectableModules,
+  InspectableNode,
+  InspectableNodePorts,
+  InspectableNodeType,
+  InspectableSubgraphs,
+  MutableGraph,
+  NodeTypeDescriberOptions,
 } from "./types.js";
-import { invokeGraph } from "../run/invoke-graph.js";
-import { graphUrlLike } from "../utils/graph-url-like.js";
-import { ModuleCache } from "./module.js";
 
 export const inspectableGraph = (
   graph: GraphDescriptor,
@@ -196,6 +200,9 @@ class Graph implements InspectableGraphWithStore {
   }
 
   nodeById(id: NodeIdentifier) {
+    if (this.#graph.virtual) {
+      return new VirtualNode(id);
+    }
     return this.#cache.nodes.get(id);
   }
 
@@ -429,5 +436,115 @@ class Graph implements InspectableGraphWithStore {
 
   graphs(): InspectableSubgraphs {
     return (this.#graphs ??= this.#populateSubgraphs());
+  }
+}
+
+type VirtualNodeType = "fetch" | "secrets" | "invoke" | "unknown";
+
+function discernType(id: string): VirtualNodeType {
+  const [type] = id.split("-");
+  if (["fetch", "secrets", "invoke"].includes(type)) {
+    return type as VirtualNodeType;
+  }
+  return "unknown";
+}
+
+/**
+ * A virtual node represents a node in a virtual graph. Virtual
+ * Graphs aren't actually graphs, but rather code that
+ * behaves as in a "graph-like" way: it may invoke components,
+ * but its topology is entirely imperative.
+ * For example, the runModule code is a virtual graph, and
+ * every capability it invokes shows up as a virtual node.
+ */
+class VirtualNode implements InspectableNode {
+  #id: string;
+  // Currently matches runModule capabilities.
+  #type: VirtualNodeType;
+  descriptor: NodeDescriptor;
+
+  constructor(id: string) {
+    this.#id = id;
+    this.#type = discernType(id);
+    this.descriptor = {
+      id,
+      type: this.#type,
+    };
+  }
+
+  title(): string {
+    return this.#type;
+  }
+
+  description(): string {
+    return this.#type;
+  }
+
+  incoming(): InspectableEdge[] {
+    return [];
+  }
+
+  outgoing(): InspectableEdge[] {
+    return [];
+  }
+
+  isEntry(): boolean {
+    return false;
+  }
+
+  startLabels(): StartLabel[] | undefined {
+    return undefined;
+  }
+
+  isExit(): boolean {
+    return false;
+  }
+
+  #ports(): InspectableNodePorts {
+    return {
+      inputs: {
+        ports: [],
+        fixed: true,
+      },
+      outputs: {
+        ports: [],
+        fixed: true,
+      },
+    };
+  }
+
+  type(): InspectableNodeType {
+    return {
+      metadata: async () => {
+        return {
+          title: this.#type,
+        };
+      },
+      type: () => {
+        return this.#type;
+      },
+      ports: async () => {
+        return this.#ports();
+      },
+    };
+  }
+
+  async describe(): Promise<NodeDescriberResult> {
+    return {
+      inputSchema: {},
+      outputSchema: {},
+    };
+  }
+
+  configuration(): NodeConfiguration {
+    return {};
+  }
+
+  metadata(): NodeMetadata {
+    return {};
+  }
+
+  async ports(): Promise<InspectableNodePorts> {
+    return this.#ports();
   }
 }
