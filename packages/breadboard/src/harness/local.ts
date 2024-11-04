@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { ProbeMessage } from "@breadboard-ai/types";
 import { createDefaultDataStore } from "../data/index.js";
 import { asyncGen, runGraph } from "../index.js";
 import { createLoader } from "../loader/index.js";
@@ -14,7 +15,6 @@ import {
   ErrorObject,
   GraphDescriptor,
   Kit,
-  ProbeMessage,
 } from "../types.js";
 import { Diagnostics } from "./diagnostics.js";
 import { extractError } from "./error.js";

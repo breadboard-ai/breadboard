@@ -59,7 +59,8 @@
         "../example-boards:build:tsc",
         "../core-kit:build:tsc",
         "../import:build",
-        "../template-kit:build:tsc"
+        "../template-kit:build:tsc",
+        "../types:build:tsc"
       ],
       "files": [
         "src/**/*.js",
@@ -146,6 +147,7 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
+    "@breadboard-ai/types": "0.2.0",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.0.0",

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Probe, ProbeMessage } from "../types.js";
+import type { Probe, ProbeMessage } from "@breadboard-ai/types";
 
 export type DiagnosticsCallback = (message: ProbeMessage) => Promise<void>;
 

@@ -5,16 +5,18 @@
  */
 
 import {
-  ErrorResponse,
   GraphEndProbeData,
   GraphStartProbeData,
-  InputResponse,
-  InputValues,
   NodeEndResponse,
   NodeStartResponse,
-  OutputResponse,
   SkipProbeMessage,
   TraversalResult,
+} from "@breadboard-ai/types";
+import {
+  ErrorResponse,
+  InputResponse,
+  InputValues,
+  OutputResponse,
 } from "../types.js";
 import {
   HarnessRunResult,

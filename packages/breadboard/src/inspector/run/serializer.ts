@@ -8,6 +8,8 @@ import {
   GraphDescriptor,
   NodeDescriptor,
   NodeValue,
+  GraphEndProbeData,
+  NodeEndResponse,
 } from "@breadboard-ai/types";
 import {
   GraphUUID,
@@ -20,13 +22,7 @@ import {
   InspectableRunSecretEvent,
   InspectableRunErrorEvent,
 } from "../types.js";
-import {
-  ErrorResponse,
-  GraphEndProbeData,
-  InputResponse,
-  NodeEndResponse,
-  OutputResponse,
-} from "../../types.js";
+import { ErrorResponse, InputResponse, OutputResponse } from "../../types.js";
 import { SecretResult } from "../../harness/types.js";
 import { SerializedDataStoreGroup } from "../../data/types.js";
 import { idFromPath } from "./conversions.js";

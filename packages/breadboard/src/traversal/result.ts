@@ -11,7 +11,7 @@ import type {
   NodeDescriptor,
   OutputValues,
   TraversalResult,
-} from "../types.js";
+} from "@breadboard-ai/types";
 import { MachineEdgeState } from "./state.js";
 
 export class MachineResult implements TraversalResult {

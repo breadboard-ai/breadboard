@@ -5,18 +5,20 @@
  */
 
 import { HarnessRunResult, SecretResult } from "../../harness/types.js";
-import {
+import type {
   EdgeResponse,
-  ErrorResponse,
   GraphEndProbeData,
   GraphStartProbeData,
+  NodeEndResponse,
+  NodeStartResponse,
+  TraversalResult,
+} from "@breadboard-ai/types";
+import {
+  ErrorResponse,
   InputResponse,
   NodeConfiguration,
   NodeDescriptor,
-  NodeEndResponse,
-  NodeStartResponse,
   OutputResponse,
-  TraversalResult,
 } from "../../types.js";
 import { inspectableGraph } from "../graph.js";
 import {
@@ -144,7 +146,7 @@ export class EventManager {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
 
-    const event = new RunNodeEvent(entry, node.id, timestamp, inputs, result);
+    const event = new RunNodeEvent(entry, node, timestamp, inputs, result);
     event.hidden = shouldSkipEvent(
       this.#options,
       node,
@@ -163,7 +165,7 @@ export class EventManager {
     }
 
     if (bubbled) {
-      const event = new RunNodeEvent(entry, node.id, timestamp, inputArguments);
+      const event = new RunNodeEvent(entry, node, timestamp, inputArguments);
       event.bubbled = true;
       this.#pathRegistry.addSidecar(path, event);
       this.#addToSequence("input", createSimpleEntry(path, event));
@@ -184,7 +186,7 @@ export class EventManager {
       throw new Error(`Expected an existing entry for ${JSON.stringify(path)}`);
     }
     if (bubbled) {
-      const event = new RunNodeEvent(entry, node.id, timestamp, outputs);
+      const event = new RunNodeEvent(entry, node, timestamp, outputs);
       event.bubbled = true;
       this.#pathRegistry.addSidecar(path, event);
       this.#addToSequence("output", createSimpleEntry(path, event));

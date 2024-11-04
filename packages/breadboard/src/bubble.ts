@@ -11,13 +11,11 @@ import type {
   GraphInlineMetadata,
   InputValues,
   NodeDescriptor,
-  NodeHandlerContext,
   NodeValue,
   OutputValues,
-  RunArguments,
-  Schema,
   TraversalResult,
-} from "./types.js";
+} from "@breadboard-ai/types";
+import type { NodeHandlerContext, RunArguments, Schema } from "./types.js";
 
 export const createErrorMessage = (
   inputName: string,

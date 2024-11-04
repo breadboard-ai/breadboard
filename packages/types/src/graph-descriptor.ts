@@ -490,6 +490,17 @@ export type GraphDescriptor = GraphInlineMetadata & {
    * Modules that are included as part of this graph.
    */
   modules?: Modules;
+
+  /**
+   * An optional property that indicates that this graph is
+   * "virtual": it can not be represented by a static list
+   * of edges and nodes, and is instead more of a representation
+   * of something that's "graph-like".
+   * Modules, when they invoke capabilities, are "virtual" graphs:
+   * they don't have a defined topology and instead, this topology
+   * is discovered through imperative code execution
+   */
+  virtual?: true;
 } & TestProperties;
 
 /**

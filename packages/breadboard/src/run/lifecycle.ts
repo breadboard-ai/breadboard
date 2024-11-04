@@ -11,7 +11,7 @@ import type {
   NodeIdentifier,
   OutputValues,
   TraversalResult,
-} from "../types.js";
+} from "@breadboard-ai/types";
 import { Registry } from "./registry.js";
 import type {
   LifecyclePathRegistryEntry,

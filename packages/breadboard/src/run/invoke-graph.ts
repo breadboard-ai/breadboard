@@ -5,13 +5,13 @@
  */
 
 import { timestamp } from "../timestamp.js";
+import type { RunArguments } from "../types.js";
 import type {
   GraphDescriptor,
   InputValues,
   OutputValues,
-  RunArguments,
   TraversalResult,
-} from "../types.js";
+} from "@breadboard-ai/types";
 import { runGraph } from "./run-graph.js";
 
 /**

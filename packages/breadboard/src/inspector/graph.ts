@@ -12,6 +12,7 @@ import {
 } from "@breadboard-ai/types";
 import { getHandler } from "../handler.js";
 import { createLoader } from "../loader/index.js";
+import { invokeGraph } from "../run/invoke-graph.js";
 import { combineSchemas, removeProperty } from "../schema.js";
 import {
   Edge,
@@ -24,8 +25,10 @@ import {
   NodeTypeIdentifier,
   Schema,
 } from "../types.js";
+import { graphUrlLike } from "../utils/graph-url-like.js";
 import { EdgeCache } from "./edge.js";
 import { collectKits, createGraphNodeType } from "./kits.js";
+import { ModuleCache } from "./module.js";
 import { NodeCache } from "./node.js";
 import {
   EdgeType,
@@ -35,19 +38,17 @@ import {
 } from "./schemas.js";
 import {
   InspectableEdge,
-  MutableGraph,
   InspectableGraphOptions,
   InspectableGraphWithStore,
   InspectableKit,
-  InspectableNode,
-  InspectableSubgraphs,
-  NodeTypeDescriberOptions,
-  InspectableNodeType,
   InspectableModules,
+  InspectableNode,
+  InspectableNodeType,
+  InspectableSubgraphs,
+  MutableGraph,
+  NodeTypeDescriberOptions,
 } from "./types.js";
-import { invokeGraph } from "../run/invoke-graph.js";
-import { graphUrlLike } from "../utils/graph-url-like.js";
-import { ModuleCache } from "./module.js";
+import { VirtualNode } from "./virtual-node.js";
 
 export const inspectableGraph = (
   graph: GraphDescriptor,
@@ -196,6 +197,9 @@ class Graph implements InspectableGraphWithStore {
   }
 
   nodeById(id: NodeIdentifier) {
+    if (this.#graph.virtual) {
+      return new VirtualNode({ id });
+    }
     return this.#cache.nodes.get(id);
   }
 

@@ -5,12 +5,12 @@
  */
 
 import { InspectableRunSequenceEntry } from "../inspector/types.js";
+import type { TraversalResult } from "@breadboard-ai/types";
 import type {
   Edge,
   NodeConfiguration,
   NodeIdentifier,
   OutputValues,
-  TraversalResult,
 } from "../types.js";
 
 /**

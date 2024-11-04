@@ -5,6 +5,7 @@
  */
 
 import { Capabilities } from "./capabilities.js";
+import { Telemetry } from "./telemetry.js";
 import {
   CapabilitySpec,
   DescriberInputs,
@@ -27,10 +28,12 @@ class SandboxedModule {
   async #run(
     method: "describe" | "default",
     name: string,
-    inputs: DescriberInputs | InvokeInputs
+    inputs: DescriberInputs | InvokeInputs,
+    telemetry?: Telemetry
   ) {
     const invocationId = crypto.randomUUID();
-    Capabilities.instance().install(invocationId, this.capabilities);
+    Capabilities.instance().install(invocationId, this.capabilities, telemetry);
+    await telemetry?.startModule();
     const outputs = await this.sandbox.runModule(
       invocationId,
       method,
@@ -38,12 +41,17 @@ class SandboxedModule {
       name,
       inputs
     );
+    await telemetry?.endModule();
     Capabilities.instance().uninstall(invocationId);
     return outputs;
   }
 
-  async invoke(name: string, inputs: InvokeInputs): Promise<InvokeOutputs> {
-    return this.#run("default", name, inputs);
+  async invoke(
+    name: string,
+    inputs: InvokeInputs,
+    telemetry?: Telemetry
+  ): Promise<InvokeOutputs> {
+    return this.#run("default", name, inputs, telemetry);
   }
 
   describe(name: string, inputs: DescriberInputs): Promise<DescriberOutputs> {

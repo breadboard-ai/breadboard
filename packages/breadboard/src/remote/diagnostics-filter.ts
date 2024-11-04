@@ -7,17 +7,15 @@
 import { formatRunError } from "../harness/error.js";
 import type { RunDiagnosticsLevel } from "../harness/types.js";
 import { timestamp } from "../timestamp.js";
+import type { ErrorResponse, InputResponse, OutputResponse } from "../types.js";
 import type {
   EdgeResponse,
-  ErrorResponse,
   GraphEndProbeData,
   GraphStartProbeData,
-  InputResponse,
   NodeEndResponse,
   NodeStartResponse,
-  OutputResponse,
   SkipProbeMessage,
-} from "../types.js";
+} from "@breadboard-ai/types";
 import { End, RemoteMessage, RemoteMessageWriter } from "./types.js";
 
 function omit<T extends RemoteMessage[1]>(message: T, ...keys: (keyof T)[]): T {

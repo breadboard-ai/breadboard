@@ -277,6 +277,11 @@
 				"version": {
 					"description": "Version of the graph. [semver](https://semver.org/) format is encouraged.",
 					"type": "string"
+				},
+				"virtual": {
+					"const": true,
+					"description": "An optional property that indicates that this graph is \"virtual\": it can not be represented by a static list of edges and nodes, and is instead more of a representation of something that's \"graph-like\". Modules, when they invoke capabilities, are \"virtual\" graphs: they don't have a defined topology and instead, this topology is discovered through imperative code execution",
+					"type": "boolean"
 				}
 			},
 			"required": [
