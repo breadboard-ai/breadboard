@@ -107,3 +107,7 @@ export type ProbeMessage =
   | EdgeProbeMessage
   | NodeStartProbeMessage
   | NodeEndProbeMessage;
+
+export interface Probe {
+  report?(message: ProbeMessage): Promise<void>;
+}

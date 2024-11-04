@@ -16,10 +16,10 @@ import type {
   NodeTypeIdentifier,
   NodeValue,
   OutputValues,
-  ProbeMessage,
   StartLabel,
   StoredDataCapabilityPart,
   TraversalResult,
+  Probe,
 } from "@breadboard-ai/types";
 import { GraphLoader } from "./loader/types.js";
 import { DataStore } from "./data/types.js";
@@ -519,12 +519,6 @@ export type ErrorResponse = {
   code?: number;
   timestamp: number;
 };
-
-// TODO: Remove extending EventTarget once new runner is converted to use
-// reporting.
-export interface Probe {
-  report?(message: ProbeMessage): Promise<void>;
-}
 
 export interface Breadboard extends GraphDescriptor {
   input<In = InputValues, Out = OutputValues>(

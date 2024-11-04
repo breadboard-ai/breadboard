@@ -4,40 +4,51 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capability, UUID } from "./types.js";
+import { Telemetry } from "./telemetry.js";
+import { Capability, CapabilitySpec, UUID } from "./types.js";
 
 export { fetch, secrets, invoke, Capabilities };
 
-type Values = Record<string, unknown>;
+type Installed = {
+  capabilities: Map<string, Capability>;
+  telemetry?: Telemetry;
+};
 
 class Capabilities {
-  #capabilities = new Map<UUID, Map<string, Capability>>();
+  #capabilities = new Map<UUID, Installed>();
 
   static #instance: Capabilities = new Capabilities();
 
   constructor() {}
 
-  get(invocationId: UUID, name: string): Capability | undefined {
-    return this.#capabilities.get(invocationId)?.get(name);
-  }
-
   async invoke(invocationId: UUID, name: string, inputs: string) {
-    const c = this.get(invocationId, name);
-    if (!c) {
+    const installed = this.#capabilities.get(invocationId);
+    const capability = installed?.capabilities.get(name);
+    if (!installed || !capability) {
       throw new Error(
         `Capability "${name}" is not avaialble for invocation "${invocationId}".`
       );
     }
-    return JSON.stringify(await c(JSON.parse(inputs)));
+    installed.telemetry?.startCapability();
+    const outputs = await capability(JSON.parse(inputs));
+    installed.telemetry?.endCapability();
+    return JSON.stringify(outputs);
   }
 
-  install(invocationId: UUID, capabilities: Record<string, Capability>) {
+  install(
+    invocationId: UUID,
+    capabilities: CapabilitySpec,
+    telemetry?: Telemetry
+  ) {
     if (this.#capabilities.has(invocationId)) {
       throw new Error(
         `Invocation ID collision: "${invocationId}" capabilities were already installed.`
       );
     }
-    this.#capabilities.set(invocationId, new Map(Object.entries(capabilities)));
+    this.#capabilities.set(invocationId, {
+      telemetry,
+      capabilities: new Map(Object.entries(capabilities)),
+    });
   }
 
   uninstall(invocationId: UUID) {
