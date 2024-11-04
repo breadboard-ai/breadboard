@@ -11,15 +11,15 @@ import {
   File as WasiFile,
 } from "@bjorn3/browser_wasi_shim";
 import { readFile } from "fs/promises";
-import { join } from "path";
+import { fileURLToPath } from "node:url";
 import factory from "./factory.js";
 import { ModuleSpec, Sandbox, UUID } from "./types.js";
 
 export { NodeSandbox };
 
 async function loadRuntime(): Promise<Buffer> {
-  const path = join(import.meta.dirname, "..", "..", "sandbox.wasm");
-  return readFile(path);
+  const file = import.meta.resolve("@breadboard-ai/jsandbox/sandbox.wasm");
+  return readFile(fileURLToPath(file));
 }
 
 class NodeSandbox implements Sandbox {

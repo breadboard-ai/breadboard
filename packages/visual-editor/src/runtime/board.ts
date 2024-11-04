@@ -31,7 +31,17 @@ import {
   getBoardServers,
 } from "@breadboard-ai/board-server-management";
 import { TokenVendor } from "@breadboard-ai/connection-client";
-import { addSandboxedRunModule } from "../sandbox";
+import { addSandboxedRunModule } from "@google-labs/core-kit";
+
+import wasm from "/sandbox.wasm?url";
+import { WebSandbox } from "@breadboard-ai/jsandbox/web";
+
+function withRunModule(kits: Kit[]): Kit[] {
+  return addSandboxedRunModule(
+    new WebSandbox(new URL(wasm, window.location.href)),
+    kits
+  );
+}
 
 export class Board extends EventTarget {
   #tabs = new Map<TabId, Tab>();
@@ -318,7 +328,7 @@ export class Board extends EventTarget {
     const id = globalThis.crypto.randomUUID();
     this.#tabs.set(id, {
       id,
-      kits: addSandboxedRunModule(this.kits),
+      kits: withRunModule(this.kits),
       name: descriptor.title ?? "Untitled board",
       graph: descriptor,
       subGraphId: null,
@@ -357,7 +367,7 @@ export class Board extends EventTarget {
     const id = globalThis.crypto.randomUUID();
     this.#tabs.set(id, {
       id,
-      kits: addSandboxedRunModule(this.kits),
+      kits: withRunModule(this.kits),
       name: descriptor.title ?? "Untitled board",
       graph: descriptor,
       subGraphId: null,
@@ -442,7 +452,7 @@ export class Board extends EventTarget {
       const id = globalThis.crypto.randomUUID();
       this.#tabs.set(id, {
         id,
-        kits: addSandboxedRunModule(kits),
+        kits: withRunModule(kits),
         name: graph.title ?? "Untitled board",
         graph,
         subGraphId: null,
