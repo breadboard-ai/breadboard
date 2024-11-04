@@ -4,20 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
   InputValues,
   NodeDescriberContext,
   NodeDescriberResult,
   NodeHandlerContext,
   NodeHandlerObject,
   Schema,
-  type Kit,
+  Kit,
 } from "@google-labs/breadboard";
 
-import { Capability, SandboxedModule } from "@breadboard-ai/jsandbox";
-import { WebSandbox } from "@breadboard-ai/jsandbox/web";
-
-import wasm from "/sandbox.wasm?url";
+import {
+  type Capability,
+  type Sandbox,
+  SandboxedModule,
+} from "@breadboard-ai/jsandbox";
 
 export { addSandboxedRunModule };
 
@@ -55,9 +56,7 @@ function getHandler(handlerName: string, context: NodeHandlerContext) {
   }) as Capability;
 }
 
-function addSandboxedRunModule(kits: Kit[]): Kit[] {
-  const sandbox = new WebSandbox(new URL(wasm, window.location.href));
-
+function addSandboxedRunModule(sandbox: Sandbox, kits: Kit[]): Kit[] {
   const existingRunModule = findHandler("runModule", kits);
   const originalDescriber =
     (existingRunModule &&
