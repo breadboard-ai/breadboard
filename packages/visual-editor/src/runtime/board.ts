@@ -490,7 +490,7 @@ export class Board extends EventTarget {
     this.dispatchEvent(new RuntimeTabChangeEvent());
   }
 
-  changeModule(id: TabId, moduleId: ModuleIdentifier) {
+  changeModule(id: TabId, moduleId: ModuleIdentifier | null) {
     const tab = this.#tabs.get(id);
     if (!tab) {
       return;
