@@ -21,7 +21,7 @@
     { "path": "packages/import" },
     { "path": "packages/json-kit" },
     { "path": "packages/manifest" },
-    { "path": "packages/node-nursery-web" },
+    { "path": "packages/mod-playground" },
     { "path": "packages/node-proxy-server" },
     { "path": "packages/palm-kit" },
     { "path": "packages/schema" },
