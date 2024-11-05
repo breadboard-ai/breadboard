@@ -108,11 +108,15 @@ class Node implements InspectableNode {
   async #describeInternal(
     options: NodeTypeDescriberOptions
   ): Promise<NodeDescriberResult> {
-    return this.#graph.describeType(this.descriptor.type, {
-      inputs: this.#inputsAndConfig(options.inputs, this.configuration()),
-      incoming: options.incoming,
-      outgoing: options.outgoing,
-    });
+    return this.#graph.describeNodeType(
+      this.descriptor.id,
+      this.descriptor.type,
+      {
+        inputs: this.#inputsAndConfig(options.inputs, this.configuration()),
+        incoming: options.incoming,
+        outgoing: options.outgoing,
+      }
+    );
   }
 
   async describe(inputs?: InputValues): Promise<NodeDescriberResult> {

@@ -267,7 +267,8 @@ export type InspectableGraph = {
   /**
    * Describe a given type of the node
    */
-  describeType(
+  describeNodeType(
+    id: NodeIdentifier,
     type: NodeTypeIdentifier,
     options?: NodeTypeDescriberOptions
   ): Promise<NodeDescriberResult>;
@@ -547,7 +548,11 @@ export type InspectableModules = Record<ModuleIdentifier, InspectableModule>;
 export type GraphStoreMutator = {
   // TODO: This is probably wrong. A new version of the graph should likely
   // create a new instance of an `InspectableGraph`.
-  updateGraph(graph: GraphDescriptor): void;
+  updateGraph(
+    graph: GraphDescriptor,
+    visualOnly: boolean,
+    affectedNodes: NodeIdentifier[]
+  ): void;
   // Destroys all caches.
   // TODO: Maybe too much machinery here? Just get a new instance of inspector?
   resetGraph(graph: GraphDescriptor): void;
@@ -591,6 +596,12 @@ export type InspectableModuleCache = {
   modules(): InspectableModules;
 };
 
+export type InspectableDescriberResultCache = {
+  get(id: NodeIdentifier): NodeDescriberResult | undefined;
+  set(id: NodeIdentifier, result: NodeDescriberResult): NodeDescriberResult;
+  clear(visualOnly: boolean, affectedNodes: NodeIdentifier[]): void;
+};
+
 /**
  * A backing store for `InspectableGraph` instances, representing a stable
  * instance of a graph whose properties mutate.
@@ -599,6 +610,7 @@ export type MutableGraph = {
   nodes: InspectableNodeCache;
   edges: InspectableEdgeCache;
   modules: InspectableModuleCache;
+  describe: InspectableDescriberResultCache;
 };
 
 /**

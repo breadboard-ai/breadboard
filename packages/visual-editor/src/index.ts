@@ -2275,6 +2275,7 @@ export class Main extends LitElement {
               ?inert=${showingOverlay}
               .readOnly=${this.tab?.readOnly ?? true}
               .graph=${this.tab?.graph ?? null}
+              .editor=${this.#runtime.edit.getEditor(this.tab, this.subGraphId)}
               .subGraphId=${this.tab?.subGraphId ?? null}
               .run=${runs[0] ?? null}
               .topGraphResult=${topGraphResult}
