@@ -25,6 +25,11 @@ export class ChangeGraphMetadata implements EditOperation {
     const { graph } = context;
     const visualOnly = graph.metadata === metadata;
     graph.metadata = metadata;
-    return { success: true, visualOnly, affectedNodes: [] };
+    return {
+      success: true,
+      visualOnly,
+      affectedNodes: [],
+      affectedModules: [],
+    };
   }
 }

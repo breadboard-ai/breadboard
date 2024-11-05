@@ -23,6 +23,9 @@ export class CodeEditor extends LitElement {
   @property()
   showMessage = false;
 
+  @property({ reflect: true })
+  passthru = false;
+
   #editor: EditorView | null = null;
   #content: Ref<HTMLDivElement> = createRef();
   #value: string | null = null;
@@ -39,8 +42,8 @@ export class CodeEditor extends LitElement {
 
     .cm-editor {
       border-radius: var(--bb-grid-size);
-      background: rgb(255, 255, 255);
-      padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
+      background: var(--bb-neutral-0);
+      padding: var(--bb-grid-size-2);
       border: 1px solid rgb(209, 209, 209);
     }
 
@@ -48,6 +51,15 @@ export class CodeEditor extends LitElement {
       outline: none;
       border: 1px solid var(--bb-ui-700);
       box-shadow: inset 0 0 0 1px var(--bb-ui-700);
+    }
+
+    :host([passthru="true"]) .cm-editor {
+      border: 1px solid transparent;
+    }
+
+    :host([passthru="true"]) .cm-editor.cm-focused {
+      border: 1px solid transparent;
+      box-shadow: none;
     }
 
     textarea {

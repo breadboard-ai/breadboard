@@ -89,6 +89,14 @@ export class RuntimeTabCloseEvent extends Event {
   }
 }
 
+export class RuntimeModuleChangeEvent extends Event {
+  static eventName = "runtimemodulechange" as const;
+
+  constructor() {
+    super(RuntimeModuleChangeEvent.eventName, { ...eventInit });
+  }
+}
+
 export class RuntimeBoardRunEvent extends Event {
   static eventName = "runtimeboardrun" as const;
 

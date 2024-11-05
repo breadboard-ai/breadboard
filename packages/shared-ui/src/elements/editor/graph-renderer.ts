@@ -571,6 +571,14 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.on("wheel", onWheel);
   }
 
+  get padding() {
+    return this.#padding;
+  }
+
+  set padding(padding: number) {
+    this.#padding = padding;
+  }
+
   #storeContainerTransformForVisibleGraph() {
     const visibleGraph = this.#getVisibleGraph();
     if (!visibleGraph) {

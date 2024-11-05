@@ -16,6 +16,7 @@ import {
 
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { TokenVendor } from "@breadboard-ai/connection-client";
+import { ModuleIdentifier } from "@breadboard-ai/types";
 
 export enum TabType {
   URL,
@@ -32,6 +33,7 @@ export interface Tab {
   name: TabName;
   graph: GraphDescriptor;
   subGraphId: string | null;
+  moduleId: ModuleIdentifier | null;
   version: number;
   readOnly: boolean;
   type: TabType;

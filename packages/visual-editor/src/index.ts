@@ -457,6 +457,13 @@ export class Main extends LitElement {
         );
 
         this.#runtime.board.addEventListener(
+          Runtime.Events.RuntimeModuleChangeEvent.eventName,
+          () => {
+            this.requestUpdate();
+          }
+        );
+
+        this.#runtime.board.addEventListener(
           Runtime.Events.RuntimeTabCloseEvent.eventName,
           async (evt: Runtime.Events.RuntimeTabCloseEvent) => {
             stopCurrentRunIfActive(evt.tabId);
@@ -2277,6 +2284,7 @@ export class Main extends LitElement {
               .graph=${this.tab?.graph ?? null}
               .editor=${this.#runtime.edit.getEditor(this.tab, this.subGraphId)}
               .subGraphId=${this.tab?.subGraphId ?? null}
+              .moduleId=${this.tab?.moduleId ?? null}
               .run=${runs[0] ?? null}
               .topGraphResult=${topGraphResult}
               .kits=${this.tab?.kits ?? []}
@@ -2574,6 +2582,23 @@ export class Main extends LitElement {
                     ? evt.subGraphId
                     : null;
                 this.requestUpdate();
+              }}
+              @bbmodulechosen=${(
+                evt: BreadboardUI.Events.ModuleChosenEvent
+              ) => {
+                if (!this.tab) {
+                  return;
+                }
+
+                this.#runtime.board.changeModule(this.tab.id, evt.moduleId);
+              }}
+              @bbmoduleedit=${(evt: BreadboardUI.Events.ModuleEditEvent) => {
+                this.#runtime.edit.editModule(
+                  this.tab,
+                  evt.moduleId,
+                  evt.code,
+                  evt.metadata
+                );
               }}
               @bbnoderunrequest=${async (
                 evt: BreadboardUI.Events.NodeRunRequestEvent

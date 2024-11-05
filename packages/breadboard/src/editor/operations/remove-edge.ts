@@ -26,7 +26,11 @@ export class RemoveEdge implements EditOperation {
         error: `Edge from "${spec.from}:${spec.out}" to "${spec.to}:${spec.in}" does not exist`,
       };
     }
-    return { success: true, affectedNodes: [spec.from, spec.to] };
+    return {
+      success: true,
+      affectedNodes: [spec.from, spec.to],
+      affectedModules: [],
+    };
   }
 
   async do(
@@ -49,6 +53,10 @@ export class RemoveEdge implements EditOperation {
     const index = findEdgeIndex(graph, edge);
     const foundEdge = edges.splice(index, 1)[0];
     store.edgeStore.remove(foundEdge);
-    return { success: true, affectedNodes: [edge.from, edge.to] };
+    return {
+      success: true,
+      affectedNodes: [edge.from, edge.to],
+      affectedModules: [],
+    };
   }
 }
