@@ -10,10 +10,12 @@ import { code } from "@google-labs/core-kit";
 declare global {
   // eslint-disable-next-line no-var
   var ai: {
-    createTextSession: () => Promise<{
-      prompt: (text: string) => Promise<string>;
-    }>;
-    canCreateTextSession: () => Promise<boolean>;
+    languageModel: {
+      create: () => Promise<{ prompt: (text: string) => Promise<string> }>;
+      capabilities: () => Promise<{
+        available: 'readily', defaultTopK: 3, maxTopK: 8, defaultTemperature: 1
+      }>;
+    }
   };
 }
 
@@ -31,7 +33,7 @@ const { text } = code(
     prompt,
   },
   { text: "string" },
-  async ({ prompt }) => {
+  async ({ prompt }: { prompt: string }) => {
     const ERROR_MESSAGE =
       "Prompt API is not available. For more information, see https://developer.chrome.com/docs/ai/built-in.";
 
@@ -39,11 +41,12 @@ const { text } = code(
     if (!ai) {
       throw new Error(ERROR_MESSAGE);
     }
-    const canAI = await ai.canCreateTextSession();
+    const capabilities = await ai.languageModel.capabilities();
+    const canAI = capabilities.available === 'readily';
     if (!canAI) {
       throw new Error(ERROR_MESSAGE);
     }
-    const session = await ai.createTextSession();
+    const session = await ai.languageModel.create();
     const text = (await session.prompt(prompt)) as string;
     return { text };
   }
