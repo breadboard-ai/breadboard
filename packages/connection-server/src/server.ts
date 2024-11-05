@@ -23,23 +23,21 @@ export function startServer(port: number, config: ServerConfig) {
       // seems to be 24 hours.
       // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Max-Age
       maxAge: 24 * 60 * 60,
-      methods: "GET",
       origin: config.allowedOrigins,
     })
   );
 
-  // TODO: #3172 - Error handling
-  // TODO: #3172 - Handle HTTP verbs individually
+  // TODO: #3172 - Common error handling
 
-  app.all("/list", async (req: Request, res: Response) =>
+  app.get("/list", async (req: Request, res: Response) =>
     list(req, res, config)
   );
 
-  app.all("/grant", async (req: Request, res: Response) =>
+  app.get("/grant", async (req: Request, res: Response) =>
     grant(req, res, config)
   );
 
-  app.all("/refresh", async (req: Request, res: Response) =>
+  app.get("/refresh", async (req: Request, res: Response) =>
     refresh(req, res, config)
   );
 
