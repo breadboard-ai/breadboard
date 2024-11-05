@@ -177,6 +177,10 @@ export class OverflowMenu extends LitElement {
     button.add-circle {
       background-image: var(--bb-icon-add-circle);
     }
+
+    button.module {
+      background-image: var(--bb-icon-extension);
+    }
   `;
 
   connectedCallback(): void {

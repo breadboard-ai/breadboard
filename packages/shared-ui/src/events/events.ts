@@ -390,6 +390,34 @@ export class SubGraphCreateEvent extends Event {
 }
 
 /**
+ * Module Management
+ */
+
+export class ModuleChosenEvent extends Event {
+  static eventName = "bbmodulechosen";
+
+  constructor(public readonly moduleId: string) {
+    super(ModuleChosenEvent.eventName, { ...eventInit });
+  }
+}
+
+export class ModuleDeleteEvent extends Event {
+  static eventName = "bbmoduledelete";
+
+  constructor(public readonly moduleId: string) {
+    super(ModuleDeleteEvent.eventName, { ...eventInit });
+  }
+}
+
+export class ModuleCreateEvent extends Event {
+  static eventName = "bbmodulecreate";
+
+  constructor(public readonly moduleId: string) {
+    super(ModuleCreateEvent.eventName, { ...eventInit });
+  }
+}
+
+/**
  * Board Servers
  */
 

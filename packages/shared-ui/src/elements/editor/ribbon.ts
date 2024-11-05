@@ -16,6 +16,7 @@ import {
   AddSubgraphEvent,
   HideTooltipEvent,
   KitNodeChosenEvent,
+  ModuleChosenEvent,
   NodeCreateEvent,
   OverflowMenuActionEvent,
   OverflowMenuSecondaryActionEvent,
@@ -49,6 +50,9 @@ export class RibbonMenu extends LitElement {
 
   @property()
   subGraphId: string | null = null;
+
+  @property()
+  moduleId: string | null = null;
 
   @property()
   dataType = "text/plain";
@@ -100,6 +104,9 @@ export class RibbonMenu extends LitElement {
 
   @state()
   showSubgraphMenu = false;
+
+  @state()
+  showBoardModules = false;
 
   static styles = css`
     * {
@@ -164,13 +171,6 @@ export class RibbonMenu extends LitElement {
       display: none;
     }
 
-    #components,
-    #board-management,
-    #edit-controls,
-    #graph-controls {
-      margin-right: var(--bb-grid-size-4);
-    }
-
     #components button:last-of-type {
       margin-right: 0;
     }
@@ -202,7 +202,14 @@ export class RibbonMenu extends LitElement {
     #subgraph-menu {
       position: absolute;
       top: calc(100% + -8px);
-      left: 600px;
+      left: 565px;
+      right: auto;
+    }
+
+    #board-modules-menu {
+      position: absolute;
+      top: calc(100% + -8px);
+      left: 634px;
       right: auto;
     }
 
@@ -214,7 +221,8 @@ export class RibbonMenu extends LitElement {
     }
 
     .divider {
-      margin: 0 var(--bb-grid-size-4) 0 0;
+      padding: 0 var(--bb-grid-size-3) 0 0;
+      margin: 0 0 0 var(--bb-grid-size-3);
       height: var(--bb-grid-size-5);
       border-left: 1px solid var(--bb-neutral-300);
     }
@@ -248,6 +256,7 @@ export class RibbonMenu extends LitElement {
     #edit-board-info,
     #shortcut-save,
     #shortcut-copy,
+    #shortcut-board-modules,
     #delete-board,
     #undo,
     #redo,
@@ -276,7 +285,7 @@ export class RibbonMenu extends LitElement {
     }
 
     #left button {
-      margin-right: var(--bb-grid-size-3);
+      margin: 0 var(--bb-grid-size);
     }
 
     #right button {
@@ -289,6 +298,7 @@ export class RibbonMenu extends LitElement {
     #shortcut-add-comment:hover,
     #shortcut-save:hover,
     #shortcut-copy:hover,
+    #shortcut-board-modules:hover,
     #delete-board:hover,
     #edit-board-info:hover,
     #undo:hover,
@@ -304,6 +314,7 @@ export class RibbonMenu extends LitElement {
     #shortcut-add-comment:focus,
     #shortcut-save:focus,
     #shortcut-copy:focus,
+    #shortcut-board-modules:focus,
     #edit-board-info:focus,
     #delete-board:focus,
     #undo:focus,
@@ -370,6 +381,20 @@ export class RibbonMenu extends LitElement {
       background: var(--bb-neutral-0);
       background-image: var(--bb-icon-copy-to-clipboard),
         var(--bb-icon-arrow-drop-down);
+      background-position:
+        0 center,
+        16px center;
+      background-size:
+        20px 20px,
+        20px 20px;
+      background-repeat: no-repeat, no-repeat;
+      margin-right: var(--bb-grid-size);
+    }
+
+    #shortcut-board-modules {
+      width: var(--bb-grid-size-9);
+      background: var(--bb-neutral-0);
+      background-image: var(--bb-icon-extension), var(--bb-icon-arrow-drop-down);
       background-position:
         0 center,
         16px center;
@@ -1263,6 +1288,61 @@ export class RibbonMenu extends LitElement {
       ></bb-overflow-menu>`;
     }
 
+    const modules = html`<button
+      id="shortcut-board-modules"
+      @pointerover=${(evt: PointerEvent) => {
+        this.dispatchEvent(
+          new ShowTooltipEvent("Board Modules", evt.clientX, evt.clientY)
+        );
+      }}
+      @pointerout=${() => {
+        this.dispatchEvent(new HideTooltipEvent());
+      }}
+      @click=${() => {
+        this.showBoardModules = true;
+      }}
+    >
+      Modules
+    </button>`;
+
+    let moduleMenu: HTMLTemplateResult | symbol = nothing;
+    if (this.showBoardModules) {
+      const modules: Array<{
+        title: string;
+        name: string;
+        icon: string;
+        disabled?: boolean;
+      }> = Object.keys(this.graph?.modules() || {}).map((title) => {
+        return {
+          title,
+          name: title,
+          icon: "module",
+        };
+      });
+
+      modules.unshift({
+        title: "Main board",
+        name: MAIN_BOARD_ID,
+        icon: "board",
+        disabled: this.moduleId === null,
+      });
+
+      moduleMenu = html`<bb-overflow-menu
+        id="board-modules-menu"
+        .actions=${modules}
+        .disabled=${this.graph === null}
+        @bboverflowmenudismissed=${() => {
+          this.showBoardModules = false;
+        }}
+        @bboverflowmenuaction=${(evt: OverflowMenuActionEvent) => {
+          this.showBoardModules = false;
+          evt.stopImmediatePropagation();
+
+          this.dispatchEvent(new ModuleChosenEvent(evt.action));
+        }}
+      ></bb-overflow-menu>`;
+    }
+
     const boardManagementControls = [
       html`<div class="divider"></div>`,
       editBoardInfo,
@@ -1346,12 +1426,19 @@ export class RibbonMenu extends LitElement {
       ></bb-overflow-menu>`;
     }
 
+    const moduleManagement = [
+      html`<div class="divider"></div>`,
+      modules,
+      moduleMenu,
+    ];
+
     const left = [
       componentSelector,
       components,
       boardManagement,
       editControls,
       graphControls,
+      moduleManagement,
       overflow,
     ];
 
