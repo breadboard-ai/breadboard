@@ -49,6 +49,7 @@ import {
   NodeTypeDescriberOptions,
 } from "./types.js";
 import { VirtualNode } from "./virtual-node.js";
+import { DescribeResultCache } from "./run/describe-cache.js";
 
 export const inspectableGraph = (
   graph: GraphDescriptor,
@@ -94,8 +95,9 @@ class Graph implements InspectableGraphWithStore {
     edges.populate(graph);
     const modules = new ModuleCache();
     modules.populate(graph);
+    const describe = new DescribeResultCache();
 
-    this.#cache = { edges, nodes, modules };
+    this.#cache = { edges, nodes, modules, describe };
   }
 
   raw() {
@@ -130,17 +132,22 @@ class Graph implements InspectableGraphWithStore {
     return handler.describe;
   }
 
-  async describeType(
+  async describeNodeType(
+    id: NodeIdentifier,
     type: NodeTypeIdentifier,
     options: NodeTypeDescriberOptions = {}
   ): Promise<NodeDescriberResult> {
+    const cached = this.#cache.describe.get(id);
+    if (cached) {
+      return cached;
+    }
     // The schema of an input or an output is defined by their
     // configuration schema or their incoming/outgoing edges.
     if (type === "input") {
-      return describeInput(options);
+      return this.#cache.describe.set(id, describeInput(options));
     }
     if (type === "output") {
-      return describeOutput(options);
+      return this.#cache.describe.set(id, describeOutput(options));
     }
 
     const { kits } = this.#options;
@@ -150,7 +157,7 @@ class Graph implements InspectableGraphWithStore {
       outputSchema: edgesToSchema(EdgeType.Out, options?.outgoing),
     } satisfies NodeDescriberResult;
     if (!describer) {
-      return asWired;
+      return this.#cache.describe.set(id, asWired);
     }
     const loader = this.#options.loader || createLoader();
     const context: NodeDescriberContext = {
@@ -184,15 +191,18 @@ class Graph implements InspectableGraphWithStore {
       context.base = this.#url;
     }
     try {
-      return describer(
-        options?.inputs || undefined,
-        asWired.inputSchema,
-        asWired.outputSchema,
-        context
+      return this.#cache.describe.set(
+        id,
+        await describer(
+          options?.inputs || undefined,
+          asWired.inputSchema,
+          asWired.outputSchema,
+          context
+        )
       );
     } catch (e) {
       console.warn(`Error describing node type ${type}`, e);
-      return asWired;
+      return this.#cache.describe.set(id, asWired);
     }
   }
 
@@ -404,7 +414,12 @@ class Graph implements InspectableGraphWithStore {
     return this.#cache.modules;
   }
 
-  updateGraph(graph: GraphDescriptor): void {
+  updateGraph(
+    graph: GraphDescriptor,
+    visualOnly: boolean,
+    affectedNodes: NodeIdentifier[]
+  ): void {
+    this.#cache.describe.clear(visualOnly, affectedNodes);
     this.#graph = graph;
   }
 
@@ -417,7 +432,9 @@ class Graph implements InspectableGraphWithStore {
     const modules = new ModuleCache();
     modules.populate(graph);
 
-    this.#cache = { edges, nodes, modules };
+    const describe = new DescribeResultCache();
+
+    this.#cache = { edges, nodes, modules, describe };
     this.#graphs = null;
   }
 

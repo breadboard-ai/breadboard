@@ -7,6 +7,7 @@
 import {
   BoardServer,
   EditHistory,
+  EditableGraph,
   GraphDescriptor,
   GraphLoader,
   GraphProviderCapabilities,
@@ -14,7 +15,6 @@ import {
   InspectableRun,
   InspectableRunInputs,
   Kit,
-  inspect,
 } from "@google-labs/breadboard";
 import {
   HTMLTemplateResult,
@@ -38,6 +38,9 @@ import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 export class UI extends LitElement {
   @property()
   graph: GraphDescriptor | null = null;
+
+  @property()
+  editor: EditableGraph | null = null;
 
   @property()
   subGraphId: string | null = null;
@@ -154,14 +157,7 @@ export class UI extends LitElement {
           .items.get("Show Experimental Components")?.value
       : false;
 
-    const graph =
-      this.graph && this.loader
-        ? inspect(this.graph, {
-            kits: this.kits,
-            loader: this.loader,
-          })
-        : null;
-
+    const graph = this.editor?.inspect() || null;
     /**
      * Create all the elements we need.
      */

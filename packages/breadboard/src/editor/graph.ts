@@ -119,7 +119,7 @@ export class Graph implements EditableGraph {
       }
       this.#version++;
     }
-    this.#inspector.updateGraph(this.#graph);
+    this.#inspector.updateGraph(this.#graph, visualOnly, affectedNodes);
     this.#eventTarget.dispatchEvent(
       new ChangeEvent(
         this.#graph,
