@@ -81,7 +81,11 @@ export class AddEdge implements EditOperation {
         };
       }
     }
-    return { success: true, affectedNodes: [edge.from, edge.to] };
+    return {
+      success: true,
+      affectedNodes: [edge.from, edge.to],
+      affectedModules: [],
+    };
   }
 
   async do(
@@ -104,6 +108,10 @@ export class AddEdge implements EditOperation {
     // TODO: Figure out how to make this work in multi-edit mode.
     store.edgeStore.add(edge);
     graph.edges.push(edge);
-    return { success: true, affectedNodes: [edge.from, edge.to] };
+    return {
+      success: true,
+      affectedNodes: [edge.from, edge.to],
+      affectedModules: [],
+    };
   }
 }

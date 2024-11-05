@@ -7,6 +7,8 @@
 import {
   GraphIdentifier,
   GraphMetadata,
+  Module,
+  ModuleIdentifier,
   NodeMetadata,
 } from "@breadboard-ai/types";
 import {
@@ -109,6 +111,12 @@ export type ChangeMetadataSpec = {
   reset?: boolean;
 };
 
+export type ChangeModuleSpec = {
+  type: "changemodule";
+  id: ModuleIdentifier;
+  module: Module;
+};
+
 export type ChangeGraphMetadataSpec = {
   type: "changegraphmetadata";
   metadata: GraphMetadata;
@@ -149,7 +157,8 @@ export type EditSpec =
   | ChangeEdgeSpec
   | ChangeConfigurationSpec
   | ChangeMetadataSpec
-  | ChangeGraphMetadataSpec;
+  | ChangeGraphMetadataSpec
+  | ChangeModuleSpec;
 
 export type EditableGraph = {
   addEventListener<Key extends keyof EditableGraphEventMap>(
@@ -288,6 +297,7 @@ export type SingleEditResult =
   | {
       success: true;
       affectedNodes: NodeIdentifier[];
+      affectedModules: ModuleIdentifier[];
       /**
        * Indicates that the edit was successful, and
        * resulted in no change.

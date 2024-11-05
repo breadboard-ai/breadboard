@@ -417,8 +417,19 @@ class Graph implements InspectableGraphWithStore {
   updateGraph(
     graph: GraphDescriptor,
     visualOnly: boolean,
-    affectedNodes: NodeIdentifier[]
+    affectedNodes: NodeIdentifier[],
+    affectedModules: ModuleIdentifier[]
   ): void {
+    // TODO: Update this a better way?
+    for (const id of affectedModules) {
+      if (!graph.modules || !graph.modules[id]) {
+        continue;
+      }
+
+      this.#cache.modules.remove(id);
+      this.#cache.modules.add(id, graph.modules[id]);
+    }
+
     this.#cache.describe.clear(visualOnly, affectedNodes);
     this.#graph = graph;
   }

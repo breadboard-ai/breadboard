@@ -46,6 +46,9 @@ export class UI extends LitElement {
   subGraphId: string | null = null;
 
   @property()
+  moduleId: string | null = null;
+
+  @property()
   run: InspectableRun | null = null;
 
   @property()
@@ -158,10 +161,11 @@ export class UI extends LitElement {
       : false;
 
     const graph = this.editor?.inspect() || null;
+
     /**
      * Create all the elements we need.
      */
-    const editor = guard(
+    const graphEditor = guard(
       [
         this.graph,
         this.subGraphId,
@@ -207,6 +211,7 @@ export class UI extends LitElement {
           .collapseNodesByDefault=${collapseNodesByDefault}
           .extendedCapabilities=${extendedCapabilities}
           .graph=${graph}
+          .kits=${this.kits}
           .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
           .highlightInvalidWires=${highlightInvalidWires}
           .invertZoomScrollDirection=${invertZoomScrollDirection}
@@ -220,6 +225,7 @@ export class UI extends LitElement {
           .showPortTooltips=${showPortTooltips}
           .showReadOnlyOverlay=${true}
           .subGraphId=${this.subGraphId}
+          .moduleId=${this.moduleId}
           .tabURLs=${this.tabURLs}
           .topGraphResult=${this.topGraphResult}
         ></bb-editor>`;
@@ -234,6 +240,6 @@ export class UI extends LitElement {
       ></bb-welcome-panel>`;
     }
 
-    return html`<section id="diagram">${editor} ${welcomePanel}</section>`;
+    return html`<section id="diagram">${graphEditor} ${welcomePanel}</section>`;
   }
 }

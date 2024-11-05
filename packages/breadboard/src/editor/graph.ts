@@ -28,7 +28,9 @@ import { ChangeEdge } from "./operations/change-edge.js";
 import { ChangeConfiguration } from "./operations/change-configuration.js";
 import { ChangeMetadata } from "./operations/change-metadata.js";
 import { ChangeGraphMetadata } from "./operations/change-graph-metadata.js";
+import { ChangeModule } from "./operations/change-module.js";
 import { GraphEditHistory } from "./history.js";
+import { ModuleIdentifier } from "@breadboard-ai/types";
 
 const operations = new Map<EditSpec["type"], EditOperation>([
   ["addnode", new AddNode()],
@@ -39,6 +41,7 @@ const operations = new Map<EditSpec["type"], EditOperation>([
   ["changeconfiguration", new ChangeConfiguration()],
   ["changemetadata", new ChangeMetadata()],
   ["changegraphmetadata", new ChangeGraphMetadata()],
+  ["changemodule", new ChangeModule()],
 ]);
 
 export class Graph implements EditableGraph {
@@ -84,7 +87,7 @@ export class Graph implements EditableGraph {
         this.#version++;
         this.#inspector.resetGraph(graph);
         this.#eventTarget.dispatchEvent(
-          new ChangeEvent(this.#graph, this.#version, false, "history", [])
+          new ChangeEvent(this.#graph, this.#version, false, "history", [], [])
         );
       },
     });
@@ -96,11 +99,15 @@ export class Graph implements EditableGraph {
     this.#graphs = {};
   }
 
-  #updateGraph(visualOnly: boolean, affectedNodes: NodeIdentifier[]) {
+  #updateGraph(
+    visualOnly: boolean,
+    affectedNodes: NodeIdentifier[],
+    affectedModules: ModuleIdentifier[]
+  ) {
     if (this.#parent) {
       this.#graph = { ...this.#graph };
       // Update parent version.
-      this.#parent.#updateGraph(visualOnly, []);
+      this.#parent.#updateGraph(visualOnly, [], []);
     } else {
       if (!this.#graphs) {
         throw new Error(
@@ -119,14 +126,20 @@ export class Graph implements EditableGraph {
       }
       this.#version++;
     }
-    this.#inspector.updateGraph(this.#graph, visualOnly, affectedNodes);
+    this.#inspector.updateGraph(
+      this.#graph,
+      visualOnly,
+      affectedNodes,
+      affectedModules
+    );
     this.#eventTarget.dispatchEvent(
       new ChangeEvent(
         this.#graph,
         this.#version,
         visualOnly,
         "edit",
-        affectedNodes
+        affectedNodes,
+        affectedModules
       )
     );
   }
@@ -214,6 +227,8 @@ export class Graph implements EditableGraph {
     let visualOnly = true;
     // Collect affected nodes
     const affectedNodes: NodeIdentifier[][] = [];
+    // Collect affected modules
+    const affectedModules: NodeIdentifier[][] = [];
     for (const edit of edits) {
       const result = await this.#singleEdit(edit, context);
       log.push({ edit: edit.type, result });
@@ -222,6 +237,7 @@ export class Graph implements EditableGraph {
         break;
       }
       affectedNodes.push(result.affectedNodes);
+      affectedModules.push(result.affectedModules);
       if (!result.noChange) {
         noChange = false;
       }
@@ -242,7 +258,11 @@ export class Graph implements EditableGraph {
     this.#history.addEdit(this.#graph, checkpoint, label, this.#version);
 
     !dryRun &&
-      this.#updateGraph(visualOnly, [...new Set(affectedNodes.flat())]);
+      this.#updateGraph(
+        visualOnly,
+        [...new Set(affectedNodes.flat())],
+        [...new Set(affectedModules.flat())]
+      );
     return { success: true, log };
   }
 
@@ -268,7 +288,7 @@ export class Graph implements EditableGraph {
 
     const editable = new Graph(graph, this.#options, this);
     this.#graphs[id] = editable;
-    this.#updateGraph(false, []);
+    this.#updateGraph(false, [], []);
 
     return editable;
   }
@@ -287,8 +307,8 @@ export class Graph implements EditableGraph {
       };
     }
     delete this.#graphs[id];
-    this.#updateGraph(false, []);
-    return { success: true, affectedNodes: [] };
+    this.#updateGraph(false, [], []);
+    return { success: true, affectedNodes: [], affectedModules: [] };
   }
 
   replaceGraph(
@@ -307,7 +327,7 @@ export class Graph implements EditableGraph {
 
     const editable = new Graph(graph, this.#options, this);
     this.#graphs[id] = editable;
-    this.#updateGraph(false, []);
+    this.#updateGraph(false, [], []);
 
     return editable;
   }

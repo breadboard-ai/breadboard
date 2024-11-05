@@ -23,7 +23,14 @@ import {
   RuntimeBoardEnhanceEvent,
   RuntimeErrorEvent,
 } from "./events";
-import { GraphTag, NodeMetadata, NodeValue } from "@breadboard-ai/types";
+import {
+  GraphTag,
+  ModuleCode,
+  ModuleIdentifier,
+  ModuleMetadata,
+  NodeMetadata,
+  NodeValue,
+} from "@breadboard-ai/types";
 
 export class Edit extends EventTarget {
   #editors = new Map<TabId, EditableGraph>();
@@ -308,6 +315,37 @@ export class Edit extends EventTarget {
       (comment) => comment.id !== id
     );
     this.dispatchEvent(new RuntimeBoardEditEvent(tab.id, [], false));
+  }
+
+  editModule(
+    tab: Tab | null,
+    moduleId: ModuleIdentifier,
+    moduleCode: ModuleCode,
+    moduleMetadata: ModuleMetadata
+  ) {
+    if (!tab) {
+      return null;
+    }
+
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
+      return null;
+    }
+
+    editableGraph.edit(
+      [
+        {
+          type: "changemodule",
+          id: moduleId,
+          module: {
+            code: moduleCode,
+            metadata: moduleMetadata,
+          },
+        },
+      ],
+      `Update module ${moduleId}`
+    );
   }
 
   updateBoardInfo(

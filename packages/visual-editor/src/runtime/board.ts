@@ -23,6 +23,7 @@ import {
   RuntimeTabChangeEvent,
   RuntimeTabCloseEvent,
   RuntimeBoardServerChangeEvent,
+  RuntimeModuleChangeEvent,
 } from "./events";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
@@ -35,6 +36,7 @@ import { addSandboxedRunModule } from "@google-labs/core-kit";
 
 import wasm from "/sandbox.wasm?url";
 import { WebSandbox } from "@breadboard-ai/jsandbox/web";
+import { ModuleIdentifier } from "@breadboard-ai/types";
 
 function withRunModule(kits: Kit[]): Kit[] {
   return addSandboxedRunModule(
@@ -332,6 +334,7 @@ export class Board extends EventTarget {
       name: descriptor.title ?? "Untitled board",
       graph: descriptor,
       subGraphId: null,
+      moduleId: null,
       version: 1,
       type: TabType.DESCRIPTOR,
       readOnly,
@@ -371,6 +374,7 @@ export class Board extends EventTarget {
       name: descriptor.title ?? "Untitled board",
       graph: descriptor,
       subGraphId: null,
+      moduleId: null,
       version: 1,
       type: TabType.DESCRIPTOR,
       readOnly: false,
@@ -456,6 +460,7 @@ export class Board extends EventTarget {
         name: graph.title ?? "Untitled board",
         graph,
         subGraphId: null,
+        moduleId: null,
         type: TabType.URL,
         version: 1,
         readOnly,
@@ -483,6 +488,16 @@ export class Board extends EventTarget {
 
     this.#currentTabId = id;
     this.dispatchEvent(new RuntimeTabChangeEvent());
+  }
+
+  changeModule(id: TabId, moduleId: ModuleIdentifier) {
+    const tab = this.#tabs.get(id);
+    if (!tab) {
+      return;
+    }
+
+    tab.moduleId = moduleId;
+    this.dispatchEvent(new RuntimeModuleChangeEvent());
   }
 
   closeTab(id: TabId) {

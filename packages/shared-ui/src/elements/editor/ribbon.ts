@@ -40,6 +40,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import { guard } from "lit/directives/guard.js";
 import { type ComponentSelectorOverlay } from "../elements";
+import { ModuleIdentifier } from "@breadboard-ai/types";
 
 const COLLAPSED_MENU_BUFFER = 60;
 
@@ -1317,6 +1318,7 @@ export class RibbonMenu extends LitElement {
           title,
           name: title,
           icon: "module",
+          disabled: this.moduleId === title,
         };
       });
 
@@ -1338,7 +1340,12 @@ export class RibbonMenu extends LitElement {
           this.showBoardModules = false;
           evt.stopImmediatePropagation();
 
-          this.dispatchEvent(new ModuleChosenEvent(evt.action));
+          let moduleId: ModuleIdentifier | null = evt.action;
+          if (evt.action === MAIN_BOARD_ID) {
+            moduleId = null;
+          }
+
+          this.dispatchEvent(new ModuleChosenEvent(moduleId));
         }}
       ></bb-overflow-menu>`;
     }

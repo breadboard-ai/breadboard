@@ -18,7 +18,13 @@ import type {
   TopGraphEdgeInfo,
   UserOutputValues,
 } from "../types/types.js";
-import type { NodeMetadata, NodeValue } from "@breadboard-ai/types";
+import type {
+  ModuleCode,
+  ModuleIdentifier,
+  ModuleMetadata,
+  NodeMetadata,
+  NodeValue,
+} from "@breadboard-ai/types";
 import { ComponentExpansionState } from "../elements/editor/types.js";
 
 const eventInit = {
@@ -396,15 +402,27 @@ export class SubGraphCreateEvent extends Event {
 export class ModuleChosenEvent extends Event {
   static eventName = "bbmodulechosen";
 
-  constructor(public readonly moduleId: string) {
+  constructor(public readonly moduleId: ModuleIdentifier | null) {
     super(ModuleChosenEvent.eventName, { ...eventInit });
+  }
+}
+
+export class ModuleEditEvent extends Event {
+  static eventName = "bbmoduleedit";
+
+  constructor(
+    public readonly moduleId: ModuleIdentifier,
+    public readonly code: ModuleCode,
+    public readonly metadata: ModuleMetadata
+  ) {
+    super(ModuleEditEvent.eventName, { ...eventInit });
   }
 }
 
 export class ModuleDeleteEvent extends Event {
   static eventName = "bbmoduledelete";
 
-  constructor(public readonly moduleId: string) {
+  constructor(public readonly moduleId: ModuleIdentifier) {
     super(ModuleDeleteEvent.eventName, { ...eventInit });
   }
 }
@@ -412,7 +430,7 @@ export class ModuleDeleteEvent extends Event {
 export class ModuleCreateEvent extends Event {
   static eventName = "bbmodulecreate";
 
-  constructor(public readonly moduleId: string) {
+  constructor(public readonly moduleId: ModuleIdentifier) {
     super(ModuleCreateEvent.eventName, { ...eventInit });
   }
 }

@@ -551,7 +551,8 @@ export type GraphStoreMutator = {
   updateGraph(
     graph: GraphDescriptor,
     visualOnly: boolean,
-    affectedNodes: NodeIdentifier[]
+    affectedNodes: NodeIdentifier[],
+    affectedModules: ModuleIdentifier[]
   ): void;
   // Destroys all caches.
   // TODO: Maybe too much machinery here? Just get a new instance of inspector?

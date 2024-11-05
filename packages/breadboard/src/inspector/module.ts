@@ -11,7 +11,11 @@ import {
   ModuleIdentifier,
   ModuleMetadata,
 } from "@breadboard-ai/types";
-import { InspectableModule, InspectableModules } from "./types.js";
+import {
+  InspectableModule,
+  InspectableModuleCache,
+  InspectableModules,
+} from "./types.js";
 
 class Module implements InspectableModule {
   #code: ModuleCode | undefined;
@@ -31,14 +35,14 @@ class Module implements InspectableModule {
   }
 }
 
-export class ModuleCache {
+export class ModuleCache implements InspectableModuleCache {
   #modules: Record<ModuleIdentifier, InspectableModule> = {};
 
-  get(id: string): InspectableModule | undefined {
+  get(id: ModuleIdentifier): InspectableModule | undefined {
     return this.#modules[id];
   }
 
-  add(id: string, module: ModuleType): void {
+  add(id: ModuleIdentifier, module: ModuleType): void {
     this.#modules[id] = new Module(module);
   }
 

@@ -14,14 +14,22 @@ import {
   InspectableGraph,
   InspectableNodePorts,
   InspectableRun,
+  Kit,
   NodeConfiguration,
   NodeDescriptor,
   NodeHandlerMetadata,
   NodeValue,
 } from "@google-labs/breadboard";
-import { LitElement, PropertyValues, css, html, nothing } from "lit";
+import {
+  HTMLTemplateResult,
+  LitElement,
+  PropertyValues,
+  css,
+  html,
+  nothing,
+} from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { Ref, createRef } from "lit/directives/ref.js";
+import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import {
   CommentEditRequestEvent,
@@ -64,6 +72,7 @@ const PASTE_OFFSET = 50;
 
 import { TopGraphRunResult } from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
+import { ModuleEditor } from "../elements.js";
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
   if (type !== "input" && type !== "output") {
@@ -104,7 +113,13 @@ export class Editor extends LitElement {
   graph: InspectableGraph | null = null;
 
   @property()
+  kits: Kit[] = [];
+
+  @property()
   subGraphId: string | null = null;
+
+  @property()
+  moduleId: string | null = null;
 
   @property()
   run: InspectableRun | null = null;
@@ -225,6 +240,7 @@ export class Editor extends LitElement {
   #top = 0;
   #left = 0;
   #addButtonRef: Ref<HTMLInputElement> = createRef();
+  #moduleEditor: Ref<ModuleEditor> = createRef();
 
   #writingToClipboard = false;
   #readingFromClipboard = false;
@@ -249,6 +265,7 @@ export class Editor extends LitElement {
       width: 100%;
       height: 100%;
       position: relative;
+      padding-top: 44px;
     }
 
     #readonly-overlay {
@@ -287,12 +304,30 @@ export class Editor extends LitElement {
       z-index: 1;
     }
 
+    #content {
+      display: block;
+      width: 100%;
+      height: 100%;
+      outline: none;
+      overflow: hidden;
+      position: relative;
+    }
+
     bb-graph-renderer {
       display: block;
       width: 100%;
       height: 100%;
       outline: none;
       overflow: hidden;
+    }
+
+    bb-module-editor {
+      background: var(--bb-ui-50);
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
     }
   `;
 
@@ -590,12 +625,16 @@ export class Editor extends LitElement {
   }
 
   protected willUpdate(changedProperties: PropertyValues): void {
-    if (!changedProperties.has("run")) {
-      return;
+    if (changedProperties.has("run")) {
+      this.#graphRenderer.zoomToHighlightedNode =
+        this.zoomToHighlightedNodeDuringRuns;
     }
 
-    this.#graphRenderer.zoomToHighlightedNode =
-      this.zoomToHighlightedNodeDuringRuns;
+    if (changedProperties.has("moduleId")) {
+      if (this.moduleId === null && this.#moduleEditor.value) {
+        this.#moduleEditor.value.destroyEditor();
+      }
+    }
   }
 
   #onGraphInteraction() {
@@ -1366,6 +1405,7 @@ export class Editor extends LitElement {
     const ribbonMenu = html`<bb-ribbon-menu
       .graph=${this.graph}
       .subGraphId=${this.subGraphId}
+      .moduleId=${this.moduleId}
       .dataType=${DATA_TYPE}
       .showExperimentalComponents=${this.showExperimentalComponents}
       .canSave=${this.capabilities && this.capabilities.save}
@@ -1412,12 +1452,28 @@ export class Editor extends LitElement {
       }}
     ></bb-ribbon-menu>`;
 
-    const editor = html`${until(this.#processGraph())}`;
+    let moduleEditor: HTMLTemplateResult | symbol = nothing;
+    if (this.graph && this.moduleId) {
+      moduleEditor = html`<bb-module-editor
+        ${ref(this.#moduleEditor)}
+        .moduleId=${this.moduleId}
+        .modules=${this.graph.modules() ?? {}}
+        .kits=${this.kits}
+        .readOnly=${this.readOnly}
+        .renderId=${crypto.randomUUID()}
+      ></bb-module-editor>`;
+    }
+
+    const graphEditor = html`${until(this.#processGraph())}`;
     const readOnlyFlag =
       this.graph !== null && this.readOnly && this.showReadOnlyLabel
         ? html`<aside id="readonly-overlay">Read-only View</aside>`
         : nothing;
 
-    return [this.graph ? ribbonMenu : nothing, editor, readOnlyFlag];
+    const content = html`<div id="content">
+      ${graphEditor}${this.moduleId ? moduleEditor : nothing}
+    </div>`;
+
+    return [this.graph ? ribbonMenu : nothing, content, readOnlyFlag];
   }
 }
