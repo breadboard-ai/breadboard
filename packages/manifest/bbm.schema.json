@@ -482,6 +482,10 @@
 					"description": "The icon for the module.",
 					"type": "string"
 				},
+				"runnable": {
+					"description": "Whether the module should be presented as a runnable item to runModule.",
+					"type": "boolean"
+				},
 				"tags": {
 					"description": "Tags associated with the module. At this moment, free-form strings.",
 					"items": {

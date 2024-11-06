@@ -60,9 +60,20 @@ export type AddNodeSpec = {
   node: EditableNodeSpec;
 };
 
+export type AddModuleSpec = {
+  type: "addmodule";
+  id: ModuleIdentifier;
+  module: Module;
+};
+
 export type RemoveNodeSpec = {
   type: "removenode";
   id: NodeIdentifier;
+};
+
+export type RemoveModuleSpec = {
+  type: "removemodule";
+  id: ModuleIdentifier;
 };
 
 export type AddEdgeSpec = {
@@ -150,10 +161,12 @@ export type EditOperation = {
 };
 
 export type EditSpec =
+  | AddModuleSpec
   | AddNodeSpec
   | RemoveNodeSpec
   | AddEdgeSpec
   | RemoveEdgeSpec
+  | RemoveModuleSpec
   | ChangeEdgeSpec
   | ChangeConfigurationSpec
   | ChangeMetadataSpec

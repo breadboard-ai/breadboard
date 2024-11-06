@@ -22,8 +22,10 @@ import {
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 import { AddEdge } from "./operations/add-edge.js";
 import { AddNode } from "./operations/add-node.js";
+import { AddModule } from "./operations/add-module.js";
 import { RemoveNode } from "./operations/remove-node.js";
 import { RemoveEdge } from "./operations/remove-edge.js";
+import { RemoveModule } from "./operations/remove-module.js";
 import { ChangeEdge } from "./operations/change-edge.js";
 import { ChangeConfiguration } from "./operations/change-configuration.js";
 import { ChangeMetadata } from "./operations/change-metadata.js";
@@ -41,6 +43,8 @@ const operations = new Map<EditSpec["type"], EditOperation>([
   ["changeconfiguration", new ChangeConfiguration()],
   ["changemetadata", new ChangeMetadata()],
   ["changegraphmetadata", new ChangeGraphMetadata()],
+  ["addmodule", new AddModule()],
+  ["removemodule", new RemoveModule()],
   ["changemodule", new ChangeModule()],
 ]);
 
