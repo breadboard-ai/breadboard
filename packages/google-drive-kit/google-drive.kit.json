@@ -14,7 +14,7 @@
       "edges": [
         {
           "from": "connection:google-drive-limited-secret",
-          "to": "runJavascript-0",
+          "to": "runJavascript-1",
           "out": "connection:google-drive-limited",
           "in": "token"
         },
@@ -26,12 +26,18 @@
         },
         {
           "from": "input-0",
-          "to": "urlTemplate-0",
+          "to": "runJavascript-0",
           "out": "fileId",
           "in": "fileId"
         },
         {
           "from": "runJavascript-0",
+          "to": "urlTemplate-0",
+          "out": "id",
+          "in": "fileId"
+        },
+        {
+          "from": "runJavascript-1",
           "to": "fetch-0",
           "out": "headers",
           "in": "headers"
@@ -52,12 +58,26 @@
               "type": "object",
               "properties": {
                 "fileId": {
-                  "type": "string",
+                  "type": "object",
                   "behavior": [
-                    "google-drive-file-id"
+                    "google-drive-file-id",
+                    "config"
                   ],
                   "title": "File ID",
-                  "description": "The ID of the file.\nSee https://developers.google.com/drive/api/reference/rest/v3/files/get#body.PATH_PARAMETERS.file_id"
+                  "description": "The ID of the file.\nSee https://developers.google.com/drive/api/reference/rest/v3/files/get#body.PATH_PARAMETERS.file_id",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "preview": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "preview"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -108,6 +128,48 @@
         },
         {
           "id": "runJavascript-0",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const run = ({fileId:fileId2})=>{return{id:fileId2.id}};",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "fileId": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "preview": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "preview"
+                  ],
+                  "additionalProperties": false,
+                  "behavior": [
+                    "google-drive-file-id",
+                    "config"
+                  ]
+                }
+              }
+            },
+            "name": "run",
+            "outputSchema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                }
+              }
+            },
+            "raw": true
+          }
+        },
+        {
+          "id": "runJavascript-1",
           "type": "runJavascript",
           "configuration": {
             "code": "const run = ({token})=>({headers:{Authorization:`Bearer ${token}`}});",
@@ -429,7 +491,7 @@
       "edges": [
         {
           "from": "connection:google-drive-limited-secret",
-          "to": "runJavascript-0",
+          "to": "runJavascript-1",
           "out": "connection:google-drive-limited",
           "in": "token"
         },
@@ -441,7 +503,7 @@
         },
         {
           "from": "input-0",
-          "to": "urlTemplate-0",
+          "to": "runJavascript-0",
           "out": "fileId",
           "in": "fileId"
         },
@@ -453,6 +515,12 @@
         },
         {
           "from": "runJavascript-0",
+          "to": "urlTemplate-0",
+          "out": "id",
+          "in": "fileId"
+        },
+        {
+          "from": "runJavascript-1",
           "to": "fetch-0",
           "out": "headers",
           "in": "headers"
@@ -473,15 +541,32 @@
               "type": "object",
               "properties": {
                 "fileId": {
-                  "type": "string",
+                  "type": "object",
                   "behavior": [
-                    "google-drive-file-id"
+                    "google-drive-file-id",
+                    "config"
                   ],
                   "title": "File ID",
-                  "description": "The ID of the Google Drive file.\nSee https://developers.google.com/drive/api/reference/rest/v3/files/export#body.PATH_PARAMETERS.file_id"
+                  "description": "The ID of the Google Drive file.\nSee https://developers.google.com/drive/api/reference/rest/v3/files/export#body.PATH_PARAMETERS.file_id",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "preview": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "preview"
+                  ],
+                  "additionalProperties": false
                 },
                 "mimeType": {
                   "type": "string",
+                  "behavior": [
+                    "config"
+                  ],
                   "title": "MIME Type",
                   "description": "The MIME type of the format requested for this export.\nSee https://developers.google.com/drive/api/reference/rest/v3/files/export#body.QUERY_PARAMETERS.mime_type"
                 }
@@ -535,6 +620,48 @@
         },
         {
           "id": "runJavascript-0",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "const run = ({fileId:fileId2})=>{return{id:fileId2.id}};",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "fileId": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "preview": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "preview"
+                  ],
+                  "additionalProperties": false,
+                  "behavior": [
+                    "google-drive-file-id",
+                    "config"
+                  ]
+                }
+              }
+            },
+            "name": "run",
+            "outputSchema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                }
+              }
+            },
+            "raw": true
+          }
+        },
+        {
+          "id": "runJavascript-1",
           "type": "runJavascript",
           "configuration": {
             "code": "const run = ({token})=>({headers:{Authorization:`Bearer ${token}`}});",
@@ -3325,7 +3452,7 @@
       ],
       "modules": {
         "main": {
-          "code": "import { connect, exportFile, unwrap } from \"./api\";\n\nexport { invoke as default, describe };\n\nasync function invoke({ id }) {\n  if (!id) {\n    return error(\"Please provide Google Drive File ID\");\n  }\n  const token = await connect({\n    title: \"Get API Token\",\n    description: \"Requesting Google Drive API Auth token\",\n  });\n  const text = unwrap(\n    await exportFile(token, id, \"text/markdown\", {\n      title: \"Export to Markdown\",\n      description: \"Exporting specified Google Drive file to Markdown\",\n    }),\n    `Unable to export file with id \"${id}\" to Markdown`\n  );\n  return { context: [{ parts: [{ text }], role: \"user\" }] };\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        id: {\n          type: \"string\",\n          title: \"File ID\",\n          behavior: [\"google-drive-file-id\"],\n        },\n      },\n    },\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    },\n  };\n}\n\nfunction error($error) {\n  return { $error };\n}\n",
+          "code": "import { connect, exportFile, unwrap } from \"./api\";\n\nexport { invoke as default, describe };\n\nasync function invoke({ id }) {\n  let { id: fileId, preview } = id || {};\n  if (!fileId) {\n    return error(\"Please provide Google Drive File ID\");\n  }\n  const token = await connect({\n    title: \"Get API Token\",\n    description: \"Requesting Google Drive API Auth token\",\n  });\n  const text = unwrap(\n    await exportFile(token, fileId, \"text/markdown\", {\n      title: `Convert ${preview} to Markdown`,\n      description: `Converting ${preview} to Markdown`,\n    }),\n    `Unable to export file \"${preview}\" and/or convert it to Markdown`\n  );\n  return { context: [{ parts: [{ text }], role: \"user\" }] };\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        id: {\n          type: \"string\",\n          title: \"File ID\",\n          behavior: [\"google-drive-file-id\"],\n        },\n      },\n    },\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    },\n  };\n}\n\nfunction error($error) {\n  return { $error };\n}\n",
           "metadata": {
             "runnable": true
           }

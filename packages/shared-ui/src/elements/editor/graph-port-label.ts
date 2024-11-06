@@ -316,6 +316,8 @@ export class GraphPortLabel extends PIXI.Container {
         }
       } else if (Array.isArray(value)) {
         valStr = `${value.length} item${value.length === 1 ? "" : "s"}`;
+      } else if ("preview" in value) {
+        valStr = value.preview as string;
       }
     } else {
       valStr = value.toString();

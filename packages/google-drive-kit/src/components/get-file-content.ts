@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { annotate, board, input, output } from "@breadboard-ai/build";
-import { fetch } from "@google-labs/core-kit";
+import { annotate, board, input, object, output } from "@breadboard-ai/build";
+import { code, fetch } from "@google-labs/core-kit";
 import { urlTemplate } from "@google-labs/template-kit";
 import { headers } from "../internal/headers.js";
 
@@ -13,13 +13,23 @@ const fileId = input({
   title: "File ID",
   description: `The ID of the file.
 See https://developers.google.com/drive/api/reference/rest/v3/files/get#body.PATH_PARAMETERS.file_id`,
-  type: annotate("string", { behavior: ["google-drive-file-id"] }),
+  type: annotate(
+    object({
+      id: "string",
+      preview: "string",
+    }),
+    { behavior: ["google-drive-file-id", "config"] }
+  ),
+});
+
+const getIdValue = code({ fileId }, { id: "string" }, ({ fileId }) => {
+  return { id: fileId.id };
 });
 
 const url = urlTemplate({
   // https://developers.google.com/drive/api/reference/rest/v3/files/get
   template: "https://www.googleapis.com/drive/v3/files/{fileId}?alt=media",
-  fileId,
+  fileId: getIdValue.outputs.id,
 });
 
 const response = fetch({ url, headers });
