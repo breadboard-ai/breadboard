@@ -3230,7 +3230,7 @@
     },
     "readFromDoc": {
       "title": "Read From Doc",
-      "description": "Takes a Google Drive doc and turns it into a single-turn conversation context.",
+      "description": "Loads a Google Drive document, converts it to Markdown, and returns it as a single-turn conversation context.",
       "version": "0.0.1",
       "nodes": [
         {
@@ -3255,8 +3255,8 @@
           },
           "metadata": {
             "visual": {
-              "x": -170,
-              "y": -266,
+              "x": -154,
+              "y": -224,
               "collapsed": "expanded"
             },
             "logLevel": "debug"
@@ -3286,8 +3286,8 @@
           },
           "metadata": {
             "visual": {
-              "x": 508,
-              "y": -184,
+              "x": 490,
+              "y": -218,
               "collapsed": "expanded"
             }
           }
