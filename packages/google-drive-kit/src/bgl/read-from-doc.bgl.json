@@ -1,0 +1,90 @@
+{
+  "title": "Read From Doc",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "documentid": {
+              "type": "string",
+              "title": "Document",
+              "behavior": [
+                "google-drive-file-id"
+              ],
+              "description": "Pick the document to read from."
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -207,
+          "y": -243,
+          "collapsed": "expanded"
+        },
+        "logLevel": "debug"
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 290,
+          "y": 8,
+          "collapsed": "expanded"
+        }
+      }
+    },
+    {
+      "id": "runModule-82b2b71c",
+      "type": "runModule",
+      "metadata": {
+        "visual": {
+          "x": 90,
+          "y": -298,
+          "collapsed": "expanded"
+        },
+        "title": "Read From Doc",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "$module": "main"
+      }
+    }
+  ],
+  "edges": [],
+  "modules": {
+    "main": {
+      "code": "export { invoke as default, describe };\n\nasync function invoke(inputs) {\n  return inputs;\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        title: { type: \"string\", title: \"Title\" },\n        id: { type: \"string\", title: \"Document ID\", behavior: [ \"google-drive-file-id\" ]}\n      },\n    },\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    },\n  };\n}",
+      "metadata": {
+        "runnable": true
+      }
+    }
+  }
+}
