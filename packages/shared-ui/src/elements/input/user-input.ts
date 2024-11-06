@@ -408,7 +408,7 @@ export class UserInput extends LitElement {
               // The ArrayEditor returns a JSON serialized string for its value
               // so we decode that here.
               try {
-                if (inputValue !== "") {
+                if (typeof inputValue === "string" && inputValue !== "") {
                   inputValue = JSON.parse(inputValue);
                 }
               } catch (err) {

@@ -11,13 +11,20 @@ import { InputChangeEvent, InputPlugin } from "../../plugins/input-plugin.js";
 import "../connection/connection-input.js";
 import { loadDrivePicker } from "./google-apis.js";
 
+type PickedValue = {
+  // A special value recognized by the "GraphPortLabel": if present in an
+  // object, will be used as the preview value.
+  preview: string;
+  id: string;
+};
+
 export const googleDriveFileIdInputPlugin: InputPlugin = {
   instantiate: {
     customElementName: "bb-google-drive-file-id",
   },
   match: {
     schema: {
-      type: "string",
+      type: "object",
       behavior: ["google-drive-file-id"],
     },
   },
@@ -59,8 +66,11 @@ export class GoogleDriveFileId extends LitElement {
   @state()
   private _pickerLib?: typeof google.picker;
 
+  @state()
+  docName = "";
+
   @property()
-  value = "";
+  value: PickedValue | null = null;
 
   #picker?: google.picker.Picker;
 
@@ -81,12 +91,7 @@ export class GoogleDriveFileId extends LitElement {
     }
     return html`
       <button @click=${this.#onClickPickFiles}>Pick File</button>
-      <input
-        type="text"
-        placeholder='Click "Pick File" or paste a Google Drive File ID'
-        .value=${this.value}
-        @input=${this.#onQueryInput}
-      />
+      <input type="text" disabled="true" .value=${this.value?.preview || ""} />
     `;
   }
 
@@ -116,7 +121,9 @@ export class GoogleDriveFileId extends LitElement {
       .setAppId(this._authorization.clientId)
       .setOAuthToken(this._authorization.secret)
       .setCallback(this.#pickerCallback.bind(this))
-      .addView(google.picker.ViewId.DOCS)
+      .addView(
+        new this._pickerLib.DocsView().setMode(google.picker.DocsViewMode.LIST)
+      )
       .enableFeature(google.picker.Feature.NAV_HIDDEN)
       .build();
     this.#picker.setVisible(true);
@@ -133,7 +140,9 @@ export class GoogleDriveFileId extends LitElement {
         // TODO(aomarks) Show this as a snackbar
         console.log(`Shared 1 Google Drive file with Breadboard`);
         if (result.docs.length > 0) {
-          this.value = result.docs[0].id;
+          const { id, name } = result.docs[0];
+          this.value = { id, preview: name };
+          this.docName = name;
           this.dispatchEvent(new InputChangeEvent(this.value));
         }
       }
@@ -147,10 +156,5 @@ export class GoogleDriveFileId extends LitElement {
     this.#picker.setVisible(false);
     this.#picker.dispose();
     this.#picker = undefined;
-  }
-
-  #onQueryInput(event: { target: HTMLTextAreaElement }) {
-    this.value = event.target.value;
-    this.dispatchEvent(new InputChangeEvent(this.value));
   }
 }

@@ -8,7 +8,7 @@
   "edges": [
     {
       "from": "connection:google-drive-limited-secret",
-      "to": "runJavascript-0",
+      "to": "runJavascript-1",
       "out": "connection:google-drive-limited",
       "in": "token"
     },
@@ -20,12 +20,18 @@
     },
     {
       "from": "input-0",
-      "to": "urlTemplate-0",
+      "to": "runJavascript-0",
       "out": "fileId",
       "in": "fileId"
     },
     {
       "from": "runJavascript-0",
+      "to": "urlTemplate-0",
+      "out": "id",
+      "in": "fileId"
+    },
+    {
+      "from": "runJavascript-1",
       "to": "fetch-0",
       "out": "headers",
       "in": "headers"
@@ -46,12 +52,26 @@
           "type": "object",
           "properties": {
             "fileId": {
-              "type": "string",
+              "type": "object",
               "behavior": [
-                "google-drive-file-id"
+                "google-drive-file-id",
+                "config"
               ],
               "title": "File ID",
-              "description": "The ID of the file.\nSee https://developers.google.com/drive/api/reference/rest/v3/files/get#body.PATH_PARAMETERS.file_id"
+              "description": "The ID of the file.\nSee https://developers.google.com/drive/api/reference/rest/v3/files/get#body.PATH_PARAMETERS.file_id",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "preview": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "preview"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
@@ -102,6 +122,48 @@
     },
     {
       "id": "runJavascript-0",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "const run = ({fileId:fileId2})=>{return{id:fileId2.id}};",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "fileId": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "preview": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "preview"
+              ],
+              "additionalProperties": false,
+              "behavior": [
+                "google-drive-file-id",
+                "config"
+              ]
+            }
+          }
+        },
+        "name": "run",
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            }
+          }
+        },
+        "raw": true
+      }
+    },
+    {
+      "id": "runJavascript-1",
       "type": "runJavascript",
       "configuration": {
         "code": "const run = ({token})=>({headers:{Authorization:`Bearer ${token}`}});",

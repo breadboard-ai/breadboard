@@ -142,6 +142,7 @@
       "command": "vite preview",
       "service": true,
       "dependencies": [
+        "build",
         "../example-boards:build",
         {
           "script": "typescript-files-and-deps",
