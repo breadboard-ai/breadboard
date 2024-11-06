@@ -116,7 +116,9 @@ export class GoogleDriveFileId extends LitElement {
       .setAppId(this._authorization.clientId)
       .setOAuthToken(this._authorization.secret)
       .setCallback(this.#pickerCallback.bind(this))
-      .addView(google.picker.ViewId.DOCS)
+      .addView(
+        new this._pickerLib.DocsView().setMode(google.picker.DocsViewMode.LIST)
+      )
       .enableFeature(google.picker.Feature.NAV_HIDDEN)
       .build();
     this.#picker.setVisible(true);
