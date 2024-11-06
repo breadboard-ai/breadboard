@@ -709,7 +709,7 @@ export class StreamlinedSchemaEditor extends LitElement {
 
                     hint = html`
                       A conversation history, typically used with
-                      <em>Specialist</em>, <em>Human</em>, or
+                      <em>Model</em>, <em>Human</em>, or
                       <em>Content</em> components. Each component visited
                       appends its output to this context.
                     `;

@@ -841,7 +841,7 @@ export class GraphRibbonMenu extends LitElement {
           @pointerover=${(evt: PointerEvent) => {
             this.dispatchEvent(
               new ShowTooltipEvent(
-                "Add Specialist Component",
+                "Add Model Component",
                 evt.clientX,
                 evt.clientY
               )
@@ -861,7 +861,7 @@ export class GraphRibbonMenu extends LitElement {
             evt.dataTransfer.setData(this.dataType, "specialist");
           }}
         >
-          Add Specialist
+          Add Model
         </button>
         <button
           draggable="true"

@@ -71,27 +71,39 @@ function describeSpecialist(inputs: unknown) {
         },
         examples: [],
       },
-      task: {
-        title: "Task",
-        description:
-          "(Optional) Provide a specific task with clear instructions for the worker to complete using the conversation context. Use mustache-style {{params}} to add parameters.",
-        type: "object",
-        default: '{"role":"user","parts":[{"text":""}]}',
-        behavior: ["llm-content", "config"],
-        examples: [],
-      },
+      // task: {
+      //   title: "Task",
+      //   description:
+      //     "(Optional) Provide a specific task with clear instructions for the worker to complete using the conversation context. Use mustache-style {{params}} to add parameters.",
+      //   type: "object",
+      //   default: '{"role":"user","parts":[{"text":""}]}',
+      //   behavior: ["llm-content", "config"],
+      //   examples: [],
+      // },
       persona: {
         type: "object",
         behavior: ["llm-content", "config"],
-        title: "Persona",
+        title: "System Instruction",
         description:
-          "Describe the worker's skills, capabilities, mindset, and thinking process. Use mustache-style {{params}} to add parameters.",
+          "Give the model additional context on what to do, like specific rules/guidelines to adhere to or specify behavior separate from the provided context. Use mustache-style {{params}} to add parameters.",
         default: '{"role":"user","parts":[{"text":""}]}',
         examples: [],
       },
     },
     required: [],
   };
+
+  console.log("🌻 inputSchema", task);
+  if (task) {
+    inputSchema.properties!.task = {
+      title: "Task",
+      description: "(Deprecated) Additional content to append to the prompt.",
+      type: "object",
+      default: '{"role":"user","parts":[{"text":""}]}',
+      behavior: ["llm-content", "config"],
+      examples: [],
+    };
+  }
 
   const all = [
     ...collectParams(textFromLLMContent(persona)),
