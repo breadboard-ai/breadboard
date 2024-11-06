@@ -399,11 +399,19 @@ export class SubGraphCreateEvent extends Event {
  * Module Management
  */
 
-export class ToggleModulePreview extends Event {
+export class FormatModuleCodeEvent extends Event {
+  static readonly eventName = "bbformatmodulecode";
+
+  constructor() {
+    super(FormatModuleCodeEvent.eventName, { ...eventInit });
+  }
+}
+
+export class ToggleModulePreviewEvent extends Event {
   static readonly eventName = "bbtogglepreview";
 
   constructor() {
-    super(ToggleModulePreview.eventName, { ...eventInit });
+    super(ToggleModulePreviewEvent.eventName, { ...eventInit });
   }
 }
 

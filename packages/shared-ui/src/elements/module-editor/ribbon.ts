@@ -6,6 +6,7 @@
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
+  FormatModuleCodeEvent,
   HideTooltipEvent,
   ModuleChosenEvent,
   ModuleCreateEvent,
@@ -16,7 +17,7 @@ import {
   ShowTooltipEvent,
   StopEvent,
   ToggleBoardActivityEvent,
-  ToggleModulePreview,
+  ToggleModulePreviewEvent,
 } from "../../events/events";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { InspectableGraph, InspectableModules } from "@google-labs/breadboard";
@@ -72,6 +73,9 @@ export class ModuleRibbonMenu extends LitElement {
 
   @property()
   canShowModulePreview = false;
+
+  @property()
+  formatting = false;
 
   @state()
   showSaveMenu = false;
@@ -165,7 +169,8 @@ export class ModuleRibbonMenu extends LitElement {
 
     #shortcut-board-modules,
     #toggle-preview,
-    #shortcut-overflow {
+    #shortcut-overflow,
+    #format-code {
       width: 20px;
       height: 20px;
       background: red;
@@ -187,6 +192,16 @@ export class ModuleRibbonMenu extends LitElement {
 
     :host([isshowingmodulepreview="true"]) #toggle-preview {
       background-color: var(--bb-ui-100);
+    }
+
+    #format-code {
+      background: var(--bb-neutral-0) var(--bb-icon-braces) center center / 20px
+        20px no-repeat;
+      margin-left: var(--bb-grid-size-4);
+    }
+
+    #format-code[disabled] {
+      opacity: 0.3;
     }
 
     button {
@@ -215,6 +230,8 @@ export class ModuleRibbonMenu extends LitElement {
       display: none;
     }
 
+    #format-code:hover,
+    #format-code:focus,
     #shortcut-board-modules:hover,
     #shortcut-board-modules:focus {
       transition-duration: 0.1s;
@@ -579,11 +596,33 @@ export class ModuleRibbonMenu extends LitElement {
     const moduleIsRunnable = !!(module && module.metadata().runnable);
     const moduleControls = html`<div id="module-controls">
       <div class="divider"></div>
+
+      <button
+        id="format-code"
+        ?disabled=${this.formatting}
+        @click=${() => {
+          this.dispatchEvent(new FormatModuleCodeEvent());
+        }}
+        @pointerover=${(evt: PointerEvent) => {
+          this.dispatchEvent(
+            new ShowTooltipEvent(
+              `Format Module Code ${this.formatting ? "(running)" : ""}`,
+              evt.clientX,
+              evt.clientY
+            )
+          );
+        }}
+        @pointerout=${() => {
+          this.dispatchEvent(new HideTooltipEvent());
+        }}
+      >
+        Format Module Code
+      </button>
       <button
         id="toggle-preview"
         ?disabled=${!this.canShowModulePreview}
         @click=${() => {
-          this.dispatchEvent(new ToggleModulePreview());
+          this.dispatchEvent(new ToggleModulePreviewEvent());
         }}
         @pointerover=${(evt: PointerEvent) => {
           this.dispatchEvent(
