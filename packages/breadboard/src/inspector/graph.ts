@@ -137,73 +137,68 @@ class Graph implements InspectableGraphWithStore {
     type: NodeTypeIdentifier,
     options: NodeTypeDescriberOptions = {}
   ): Promise<NodeDescriberResult> {
-    const cached = this.#cache.describe.get(id);
-    if (cached) {
-      return cached;
-    }
-    // The schema of an input or an output is defined by their
-    // configuration schema or their incoming/outgoing edges.
-    if (type === "input") {
-      return this.#cache.describe.set(id, describeInput(options));
-    }
-    if (type === "output") {
-      return this.#cache.describe.set(id, describeOutput(options));
-    }
+    return this.#cache.describe.getOrCreate(id, async () => {
+      // The schema of an input or an output is defined by their
+      // configuration schema or their incoming/outgoing edges.
+      if (type === "input") {
+        return describeInput(options);
+      }
+      if (type === "output") {
+        return describeOutput(options);
+      }
 
-    const { kits } = this.#options;
-    const describer = await this.#getDescriber(type);
-    const asWired = {
-      inputSchema: edgesToSchema(EdgeType.In, options?.incoming),
-      outputSchema: edgesToSchema(EdgeType.Out, options?.outgoing),
-    } satisfies NodeDescriberResult;
-    if (!describer) {
-      return this.#cache.describe.set(id, asWired);
-    }
-    const loader = this.#options.loader || createLoader();
-    const context: NodeDescriberContext = {
-      outerGraph: this.#graph,
-      loader,
-      kits,
-      wires: {
-        incoming: Object.fromEntries(
-          (options?.incoming ?? []).map((edge) => [
-            edge.in,
-            {
-              outputPort: {
-                describe: async () => (await edge.outPort()).type.schema,
+      const { kits } = this.#options;
+      const describer = await this.#getDescriber(type);
+      const asWired = {
+        inputSchema: edgesToSchema(EdgeType.In, options?.incoming),
+        outputSchema: edgesToSchema(EdgeType.Out, options?.outgoing),
+      } satisfies NodeDescriberResult;
+      if (!describer) {
+        return asWired;
+      }
+      const loader = this.#options.loader || createLoader();
+      const context: NodeDescriberContext = {
+        outerGraph: this.#graph,
+        loader,
+        kits,
+        wires: {
+          incoming: Object.fromEntries(
+            (options?.incoming ?? []).map((edge) => [
+              edge.in,
+              {
+                outputPort: {
+                  describe: async () => (await edge.outPort()).type.schema,
+                },
               },
-            },
-          ])
-        ),
-        outgoing: Object.fromEntries(
-          (options?.outgoing ?? []).map((edge) => [
-            edge.out,
-            {
-              inputPort: {
-                describe: async () => (await edge.inPort()).type.schema,
+            ])
+          ),
+          outgoing: Object.fromEntries(
+            (options?.outgoing ?? []).map((edge) => [
+              edge.out,
+              {
+                inputPort: {
+                  describe: async () => (await edge.inPort()).type.schema,
+                },
               },
-            },
-          ])
-        ),
-      },
-    };
-    if (this.#url) {
-      context.base = this.#url;
-    }
-    try {
-      return this.#cache.describe.set(
-        id,
-        await describer(
+            ])
+          ),
+        },
+      };
+      if (this.#url) {
+        context.base = this.#url;
+      }
+      try {
+        return describer(
           options?.inputs || undefined,
           asWired.inputSchema,
           asWired.outputSchema,
           context
-        )
-      );
-    } catch (e) {
-      console.warn(`Error describing node type ${type}`, e);
-      return this.#cache.describe.set(id, asWired);
-    }
+        );
+      } catch (e) {
+        console.warn(`Error describing node type ${type}`, e);
+        return asWired;
+      }
+    });
   }
 
   nodeById(id: NodeIdentifier) {
