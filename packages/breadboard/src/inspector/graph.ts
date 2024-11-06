@@ -417,11 +417,11 @@ class Graph implements InspectableGraphWithStore {
   ): void {
     // TODO: Update this a better way?
     for (const id of affectedModules) {
+      this.#cache.modules.remove(id);
       if (!graph.modules || !graph.modules[id]) {
         continue;
       }
 
-      this.#cache.modules.remove(id);
       this.#cache.modules.add(id, graph.modules[id]);
     }
 

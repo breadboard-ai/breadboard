@@ -411,6 +411,11 @@ export type ModuleTag = "published" | "experimental";
 
 export type ModuleMetadata = {
   /**
+   * Whether the module should be presented as a runnable item to runModule.
+   */
+  runnable?: boolean;
+
+  /**
    * The icon for the module.
    */
   icon?: string;

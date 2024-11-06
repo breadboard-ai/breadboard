@@ -576,6 +576,10 @@
 		"ModuleMetadata": {
 			"type": "object",
 			"properties": {
+				"runnable": {
+					"type": "boolean",
+					"description": "Whether the module should be presented as a runnable item to runModule."
+				},
 				"icon": {
 					"type": "string",
 					"description": "The icon for the module."
