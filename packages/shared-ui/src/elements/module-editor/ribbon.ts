@@ -16,6 +16,7 @@ import {
   ShowTooltipEvent,
   StopEvent,
   ToggleBoardActivityEvent,
+  ToggleModulePreview,
 } from "../../events/events";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { InspectableGraph, InspectableModules } from "@google-labs/breadboard";
@@ -54,9 +55,6 @@ export class ModuleRibbonMenu extends LitElement {
   @property()
   canSave = false;
 
-  @property({ reflect: true })
-  showComponentSelector = false;
-
   @property()
   eventCount = 0;
 
@@ -68,6 +66,12 @@ export class ModuleRibbonMenu extends LitElement {
 
   @property({ reflect: true })
   isShowingBoardActivityOverlay = false;
+
+  @property({ reflect: true })
+  isShowingModulePreview = false;
+
+  @property()
+  canShowModulePreview = false;
 
   @state()
   showSaveMenu = false;
@@ -127,57 +131,15 @@ export class ModuleRibbonMenu extends LitElement {
         var(--bb-font-family);
     }
 
-    #component-toggle-container,
-    #components,
-    #board-management,
-    #edit-controls,
-    #graph-controls {
+    #module-controls {
       display: flex;
       height: 100%;
       align-items: center;
       flex: 0 0 auto;
     }
 
-    #components.hidden,
-    #board-management.hidden,
-    #edit-controls.hidden,
-    #graph-controls.hidden {
+    #module-controls.hidden {
       display: none;
-    }
-
-    #components button:last-of-type {
-      margin-right: 0;
-    }
-
-    bb-component-selector-overlay {
-      display: none;
-      position: absolute;
-    }
-
-    :host([showcomponentselector="true"]) bb-component-selector-overlay {
-      display: block;
-      pointer-events: auto;
-    }
-
-    #save {
-      position: absolute;
-      top: calc(100% + -8px);
-      left: 280px;
-      right: auto;
-    }
-
-    #copy {
-      position: absolute;
-      top: calc(100% + -8px);
-      left: 320px;
-      right: auto;
-    }
-
-    #subgraph-menu {
-      position: absolute;
-      top: calc(100% + -8px);
-      left: 565px;
-      right: auto;
     }
 
     #board-modules-menu {
@@ -201,68 +163,44 @@ export class ModuleRibbonMenu extends LitElement {
       border-left: 1px solid var(--bb-neutral-300);
     }
 
-    #component-toggle {
-      display: block;
-      background: var(--bb-neutral-0);
-      border: 1px solid var(--bb-ui-100);
-      height: var(--bb-grid-size-7);
-      padding: 0 var(--bb-grid-size-2);
-      border-radius: var(--bb-grid-size);
-      transition: background 0.3s cubic-bezier(0, 0, 0.3, 1);
-      cursor: pointer;
-    }
-
-    #component-toggle:hover,
-    #component-toggle:focus {
-      transition-duration: 0.1s;
-      background: var(--bb-ui-50);
-    }
-
-    #component-toggle.active {
-      border: 1px solid var(--bb-ui-200);
-      background: var(--bb-ui-100);
-    }
-
-    #shortcut-add-specialist,
-    #shortcut-add-human,
-    #shortcut-add-looper,
-    #shortcut-add-comment,
-    #edit-board-info,
-    #shortcut-save,
-    #shortcut-copy,
     #shortcut-board-modules,
-    #delete-board,
-    #undo,
-    #redo,
-    #zoom-to-fit,
-    #reset-layout,
-    #shortcut-overflow,
-    #shortcut-add-subgraph,
-    #shortcut-select-subgraph {
+    #toggle-preview,
+    #shortcut-overflow {
       width: 20px;
       height: 20px;
       background: red;
       border: none;
-      border-radius: 0;
+      border-radius: var(--bb-grid-size);
       opacity: 0.6;
       font-size: 0;
       transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
     }
 
-    button {
-      padding: 0;
-      cursor: pointer;
+    #toggle-preview {
+      background: var(--bb-neutral-0) var(--bb-icon-preview) center center /
+        20px 20px no-repeat;
     }
 
-    button[draggable="true"] {
-      cursor: grab;
+    #toggle-preview[disabled] {
+      opacity: 0.3;
+    }
+
+    :host([isshowingmodulepreview="true"]) #toggle-preview {
+      background-color: var(--bb-ui-100);
+    }
+
+    button {
+      padding: 0;
+    }
+
+    button:not([disabled]) {
+      cursor: pointer;
     }
 
     #left button {
       margin: 0 var(--bb-grid-size);
     }
 
-    #left button#component-toggle,
     #left button#shortcut-board-modules {
       margin: 0 var(--bb-grid-size) 0 0;
     }
@@ -271,103 +209,16 @@ export class ModuleRibbonMenu extends LitElement {
       margin-left: var(--bb-grid-size-2);
     }
 
-    #shortcut-add-specialist:hover,
-    #shortcut-add-human:hover,
-    #shortcut-add-looper:hover,
-    #shortcut-add-comment:hover,
-    #shortcut-save:hover,
-    #shortcut-copy:hover,
+    #shortcut-overflow {
+      background: var(--bb-neutral-0) var(--bb-icon-more-vert) center center /
+        20px 20px no-repeat;
+      display: none;
+    }
+
     #shortcut-board-modules:hover,
-    #delete-board:hover,
-    #edit-board-info:hover,
-    #undo:hover,
-    #redo:hover,
-    #zoom-to-fit:hover,
-    #reset-layout:hover,
-    #shortcut-overflow:hover,
-    #shortcut-add-subgraph:hover,
-    #shortcut-select-subgraph:hover,
-    #shortcut-add-specialist:focus,
-    #shortcut-add-human:focus,
-    #shortcut-add-looper:focus,
-    #shortcut-add-comment:focus,
-    #shortcut-save:focus,
-    #shortcut-copy:focus,
-    #shortcut-board-modules:focus,
-    #edit-board-info:focus,
-    #delete-board:focus,
-    #undo:focus,
-    #redo:focus,
-    #zoom-to-fit:focus,
-    #reset-layout:focus,
-    #shortcut-overflow:focus,
-    #shortcut-add-subgraph:focus,
-    #shortcut-select-subgraph:focus {
+    #shortcut-board-modules:focus {
       transition-duration: 0.1s;
       opacity: 1;
-    }
-
-    #shortcut-add-specialist {
-      background: var(--bb-neutral-0) var(--bb-icon-smart-toy) center center /
-        20px 20px no-repeat;
-    }
-
-    #shortcut-add-human {
-      background: var(--bb-neutral-0) var(--bb-icon-human) center center / 20px
-        20px no-repeat;
-    }
-
-    #shortcut-add-looper {
-      background: var(--bb-neutral-0) var(--bb-icon-laps) center center / 20px
-        20px no-repeat;
-    }
-
-    #shortcut-add-comment {
-      background: var(--bb-neutral-0) var(--bb-icon-edit) center center / 20px
-        20px no-repeat;
-    }
-
-    #edit-board-info {
-      background: var(--bb-neutral-0) var(--bb-icon-data-info-alert) center
-        center / 20px 20px no-repeat;
-    }
-
-    #delete-board {
-      background: var(--bb-neutral-0) var(--bb-icon-delete) center center / 20px
-        20px no-repeat;
-      margin-right: 0;
-    }
-
-    #shortcut-save {
-      background: var(--bb-neutral-0);
-      background-image: var(--bb-icon-save), var(--bb-icon-arrow-drop-down);
-      background-position:
-        0 center,
-        16px center;
-      background-size:
-        20px 20px,
-        20px 20px;
-      background-repeat: no-repeat, no-repeat;
-      margin-right: var(--bb-grid-size);
-    }
-
-    #shortcut-save.show-more {
-      width: var(--bb-grid-size-9);
-    }
-
-    #shortcut-copy {
-      width: var(--bb-grid-size-9);
-      background: var(--bb-neutral-0);
-      background-image: var(--bb-icon-copy-to-clipboard),
-        var(--bb-icon-arrow-drop-down);
-      background-position:
-        0 center,
-        16px center;
-      background-size:
-        20px 20px,
-        20px 20px;
-      background-repeat: no-repeat, no-repeat;
-      margin-right: var(--bb-grid-size);
     }
 
     #shortcut-board-modules {
@@ -391,67 +242,25 @@ export class ModuleRibbonMenu extends LitElement {
       background-image: var(--bb-icon-board), var(--bb-icon-arrow-drop-down);
     }
 
-    #undo {
-      background: var(--bb-neutral-0) var(--bb-icon-undo) center center / 20px
-        20px no-repeat;
-    }
-
-    #redo {
-      background: var(--bb-neutral-0) var(--bb-icon-redo) center center / 20px
-        20px no-repeat;
-    }
-
-    #left button#redo {
-      margin-right: 0;
-    }
-
-    #redo[disabled],
-    #undo[disabled] {
-      opacity: 0.4;
-      cursor: auto;
-    }
-
-    #zoom-to-fit {
-      background: var(--bb-neutral-0) var(--bb-icon-fit) center center / 20px
-        20px no-repeat;
-    }
-
-    #reset-layout {
-      background: var(--bb-neutral-0) var(--bb-icon-reset-nodes) center center /
-        20px 20px no-repeat;
-    }
-
-    #shortcut-overflow {
-      background: var(--bb-neutral-0) var(--bb-icon-more-vert) center center /
-        20px 20px no-repeat;
-      display: none;
-    }
-
-    #shortcut-add-subgraph {
-      background: var(--bb-neutral-0) var(--bb-icon-add-circle) center center /
-        20px 20px no-repeat;
-    }
-
-    #shortcut-select-subgraph {
-      width: var(--bb-grid-size-9);
-      background: var(--bb-neutral-0);
-      background-image: var(--bb-icon-board), var(--bb-icon-arrow-drop-down);
-      background-position:
-        0 center,
-        16px center;
-      background-size:
-        20px 20px,
-        20px 20px;
-      background-repeat: no-repeat, no-repeat;
-      margin-right: var(--bb-grid-size);
-    }
-
     #shortcut-overflow.visible {
       display: block;
     }
 
     .hidden {
       display: none;
+    }
+
+    #runnable {
+      display: flex;
+      align-items: center;
+      margin-left: var(--bb-grid-size-2);
+    }
+
+    label[for="mark-runnable"] {
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
+      color: var(--bb-neutral-700);
+      margin-left: var(--bb-grid-size);
     }
 
     #run {
@@ -471,37 +280,6 @@ export class ModuleRibbonMenu extends LitElement {
     #run.running {
       background: var(--bb-ui-600) url(/images/progress-ui-inverted.svg) 8px
         center / 16px 16px no-repeat;
-    }
-
-    #follow {
-      border-radius: var(--bb-grid-size);
-      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family);
-      padding: 0;
-      height: var(--bb-grid-size-7);
-      cursor: pointer;
-      border: 1px solid var(--bb-neutral-300);
-      transition: all 0.3s cubic-bezier(0, 0, 0.3, 1);
-      font-size: 0;
-      width: var(--bb-grid-size-7);
-      background: var(--bb-neutral-0) var(--bb-icon-directions) center center /
-        20px 20px no-repeat;
-    }
-
-    #follow:focus,
-    #follow:hover {
-      color: var(--bb-inputs-600);
-      background: var(--bb-neutral-0) var(--bb-icon-directions-active) center
-        center / 20px 20px no-repeat;
-      border: 1px solid var(--bb-inputs-300);
-    }
-
-    #follow.active {
-      opacity: 1;
-      color: var(--bb-inputs-700);
-      background: var(--bb-inputs-50) var(--bb-icon-directions-active) center
-        center / 20px 20px no-repeat;
-      border: 1px solid var(--bb-inputs-500);
     }
 
     #board-activity {
@@ -559,6 +337,7 @@ export class ModuleRibbonMenu extends LitElement {
     disabled?: boolean;
   }> = [];
   #boardActivityRef: Ref<HTMLButtonElement> = createRef();
+  #runnableModuleInputRef: Ref<HTMLInputElement> = createRef();
   #overflowMenuToggleRef: Ref<HTMLButtonElement> = createRef();
   #segmentThresholds = new WeakMap<Element, { left: number; right: number }>();
   #resizeObserver = new ResizeObserver((entries) => {
@@ -652,7 +431,17 @@ export class ModuleRibbonMenu extends LitElement {
     );
   }
 
+  moduleIsRunnable(): boolean {
+    if (!this.#runnableModuleInputRef.value) {
+      return false;
+    }
+
+    return this.#runnableModuleInputRef.value.checked;
+  }
+
   render() {
+    const module = this.modules[this.moduleId ?? ""] ?? null;
+
     const modules = html`<button
       id="shortcut-board-modules"
       class=${classMap({ main: this.moduleId === null })}
@@ -786,9 +575,61 @@ export class ModuleRibbonMenu extends LitElement {
       ></bb-overflow-menu>`;
     }
 
-    const moduleManagement = [modules, moduleMenu];
+    const moduleSelector = [modules, moduleMenu];
+    const moduleIsRunnable = !!(module && module.metadata().runnable);
+    const moduleControls = html`<div id="module-controls">
+      <div class="divider"></div>
+      <button
+        id="toggle-preview"
+        ?disabled=${!this.canShowModulePreview}
+        @click=${() => {
+          this.dispatchEvent(new ToggleModulePreview());
+        }}
+        @pointerover=${(evt: PointerEvent) => {
+          this.dispatchEvent(
+            new ShowTooltipEvent(
+              `Toggle Module Preview ${moduleIsRunnable ? "" : "(disabled)"}`,
+              evt.clientX,
+              evt.clientY
+            )
+          );
+        }}
+        @pointerout=${() => {
+          this.dispatchEvent(new HideTooltipEvent());
+        }}
+      >
+        Toggle Module Preview
+      </button>
 
-    const left = [moduleManagement, overflow];
+      <div id="runnable">
+        <input
+          ${ref(this.#runnableModuleInputRef)}
+          .checked=${moduleIsRunnable}
+          .value=${"true"}
+          type="checkbox"
+          id="mark-runnable"
+          name="mark-runnable"
+        />
+        <label
+          for="mark-runnable"
+          @pointerover=${(evt: PointerEvent) => {
+            this.dispatchEvent(
+              new ShowTooltipEvent(
+                "Make available to runModule",
+                evt.clientX,
+                evt.clientY
+              )
+            );
+          }}
+          @pointerout=${() => {
+            this.dispatchEvent(new HideTooltipEvent());
+          }}
+          >Runnable</label
+        >
+      </div>
+    </div>`;
+
+    const left = [moduleSelector, moduleControls, overflow];
     const right = [
       html`<button
         id="board-activity"

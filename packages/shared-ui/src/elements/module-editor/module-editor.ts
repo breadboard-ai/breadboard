@@ -24,13 +24,16 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
-import { CodeEditor, GraphRenderer } from "../elements";
+import { CodeEditor, GraphRenderer, ModuleRibbonMenu } from "../elements";
 import { ModuleIdentifier, Modules } from "@breadboard-ai/types";
 import { GraphAssets } from "../editor/graph-assets";
 import { until } from "lit/directives/until.js";
 import { GraphInitialDrawEvent, ModuleEditEvent } from "../../events/events";
 import { guard } from "lit/directives/guard.js";
 import { TopGraphRunResult } from "../../types/types";
+import { classMap } from "lit/directives/class-map.js";
+
+const PREVIEW_KEY = "bb-module-editor-preview-visible";
 
 @customElement("bb-module-editor")
 export class ModuleEditor extends LitElement {
@@ -73,6 +76,9 @@ export class ModuleEditor extends LitElement {
   @property()
   isShowingBoardActivityOverlay = false;
 
+  @property()
+  showModulePreview = false;
+
   static styles = css`
     * {
       box-sizing: border-box;
@@ -96,21 +102,24 @@ export class ModuleEditor extends LitElement {
 
     #module-graph {
       border-radius: var(--bb-grid-size);
-      border: 1px solid var(--bb-neutral-300);
-      height: 100%;
-      display: none;
+      height: 40vh;
+      width: 40vw;
+      max-height: 340px;
+      max-width: 340px;
       overflow: hidden;
-      position: relative;
+      position: absolute;
+      right: 32px;
+      top: 76px;
+      box-shadow:
+        0 8px 8px 0 rgba(0, 0, 0, 0.07),
+        0 15px 12px 0 rgba(0, 0, 0, 0.09);
+      z-index: 4;
+      opacity: 0;
+      pointer-events: none;
     }
 
-    #module-graph::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background: transparent;
+    #module-graph.visible {
+      opacity: 1;
     }
 
     bb-graph-renderer {
@@ -197,23 +206,39 @@ export class ModuleEditor extends LitElement {
     }
   `;
 
+  #moduleRibbonMenuRef: Ref<ModuleRibbonMenu> = createRef();
   #codeEditorRef: Ref<CodeEditor> = createRef();
   #graphVersion = 1;
   #graphRenderer = new GraphRenderer();
 
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    this.showModulePreview =
+      globalThis.localStorage.getItem(PREVIEW_KEY) === "true";
+  }
+
   processData() {
-    if (!this.#codeEditorRef.value || !this.moduleId) {
+    if (
+      !this.#codeEditorRef.value ||
+      !this.#moduleRibbonMenuRef.value ||
+      !this.moduleId
+    ) {
       return;
     }
 
     const editor = this.#codeEditorRef.value;
+    const ribbonMenu = this.#moduleRibbonMenuRef.value;
     const module = this.modules[this.moduleId];
     if (!module) {
       return;
     }
 
+    const metadata = module.metadata();
+    metadata.runnable = ribbonMenu.moduleIsRunnable();
+
     this.dispatchEvent(
-      new ModuleEditEvent(this.moduleId, editor.value ?? "", module.metadata())
+      new ModuleEditEvent(this.moduleId, editor.value ?? "", metadata)
     );
   }
 
@@ -280,7 +305,7 @@ export class ModuleEditor extends LitElement {
 
     this.#graphVersion++;
     this.#graphRenderer.readOnly = true;
-    this.#graphRenderer.padding = 10;
+    this.#graphRenderer.padding = 28;
 
     const selectedGraph = graph;
 
@@ -355,6 +380,11 @@ export class ModuleEditor extends LitElement {
     return this.#graphRenderer;
   }
 
+  #togglePreview(value = !this.showModulePreview) {
+    this.showModulePreview = value;
+    globalThis.localStorage.setItem(PREVIEW_KEY, `${this.showModulePreview}`);
+  }
+
   render() {
     if (!this.modules || !this.moduleId) {
       return nothing;
@@ -394,70 +424,83 @@ export class ModuleEditor extends LitElement {
       isError = newestEvent.type === "error";
     }
 
-    return html`<section>
-      <bb-module-ribbon-menu
-        .graph=${this.graph}
-        .modules=${this.modules}
-        .moduleId=${this.moduleId}
-        .canSave=${false}
-        .readOnly=${this.readOnly}
-        .isRunning=${isRunning}
-        .eventCount=${eventCount}
-        .isInputPending=${isInputPending}
-        .isError=${isError}
-        .isShowingBoardActivityOverlay=${this.isShowingBoardActivityOverlay}
-      ></bb-module-ribbon-menu>
-      <div id="code-container">
-        <div id="code-container-outer">
-          <div id="code-container-inner">
-            <bb-code-editor
-              ${ref(this.#codeEditorRef)}
-              @bbcodechange=${() => {
-                this.pending = true;
-              }}
-              @focus=${() => {
-                requestAnimationFrame(() => {
-                  this.focused = true;
-                });
-              }}
-              @blur=${() => {
-                requestAnimationFrame(() => {
-                  this.focused = false;
-                });
-              }}
-              .passthru=${true}
-              .value=${module.code()}
-            ></bb-code-editor>
+    const isRunnable = !!module.metadata().runnable;
+    return html` <div
+        id="module-graph"
+        class=${classMap({ visible: this.showModulePreview && isRunnable })}
+      >
+        ${moduleGraph}
+      </div>
+      <section>
+        <bb-module-ribbon-menu
+          ${ref(this.#moduleRibbonMenuRef)}
+          .graph=${this.graph}
+          .modules=${this.modules}
+          .moduleId=${this.moduleId}
+          .canSave=${false}
+          .readOnly=${this.readOnly}
+          .isRunning=${isRunning}
+          .eventCount=${eventCount}
+          .isInputPending=${isInputPending}
+          .isError=${isError}
+          .isShowingBoardActivityOverlay=${this.isShowingBoardActivityOverlay}
+          .isShowingModulePreview=${this.showModulePreview}
+          .canShowModulePreview=${isRunnable}
+          @input=${() => {
+            this.pending = true;
+          }}
+          @bbtogglepreview=${() => this.#togglePreview()}
+        ></bb-module-ribbon-menu>
+        <div id="code-container">
+          <div id="code-container-outer">
+            <div id="code-container-inner">
+              <bb-code-editor
+                ${ref(this.#codeEditorRef)}
+                @bbcodechange=${() => {
+                  this.pending = true;
+                }}
+                @focus=${() => {
+                  requestAnimationFrame(() => {
+                    this.focused = true;
+                  });
+                }}
+                @blur=${() => {
+                  requestAnimationFrame(() => {
+                    this.focused = false;
+                  });
+                }}
+                .passthru=${true}
+                .value=${module.code()}
+              ></bb-code-editor>
+            </div>
           </div>
         </div>
-      </div>
-      <div id="module-graph">${moduleGraph}</div>
-      <div id="buttons">
-        <div>
-          <button
-            id="revert"
-            @click=${() => {
-              if (!this.#codeEditorRef.value || !module) {
-                return;
-              }
+        <div id="buttons">
+          <div>
+            <button
+              id="revert"
+              @click=${() => {
+                if (!this.#codeEditorRef.value || !module) {
+                  return;
+                }
 
-              this.#codeEditorRef.value.value = module.code() ?? null;
-              this.pending = false;
-            }}
-          >
-            Revert to saved
-          </button>
-          <button
-            ?disabled=${!this.pending}
-            id="update"
-            @click=${() => {
-              this.processData();
-            }}
-          >
-            Apply changes
-          </button>
+                this.#codeEditorRef.value.value = module.code() ?? null;
+                this.pending = false;
+              }}
+            >
+              Revert to saved
+            </button>
+            <button
+              ?disabled=${!this.pending}
+              id="update"
+              @click=${() => {
+                this.processData();
+              }}
+            >
+              Apply changes
+            </button>
+          </div>
         </div>
-      </div>
-    </section>`;
+      </section>`;
   }
 }
