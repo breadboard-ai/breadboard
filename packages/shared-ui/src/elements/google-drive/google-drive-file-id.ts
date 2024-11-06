@@ -59,6 +59,9 @@ export class GoogleDriveFileId extends LitElement {
   @state()
   private _pickerLib?: typeof google.picker;
 
+  @state()
+  docName = "";
+
   @property()
   value = "";
 
@@ -83,8 +86,8 @@ export class GoogleDriveFileId extends LitElement {
       <button @click=${this.#onClickPickFiles}>Pick File</button>
       <input
         type="text"
-        placeholder='Click "Pick File" or paste a Google Drive File ID'
-        .value=${this.value}
+        disabled="true"
+        .value=${this.docName}
         @input=${this.#onQueryInput}
       />
     `;
@@ -135,7 +138,9 @@ export class GoogleDriveFileId extends LitElement {
         // TODO(aomarks) Show this as a snackbar
         console.log(`Shared 1 Google Drive file with Breadboard`);
         if (result.docs.length > 0) {
-          this.value = result.docs[0].id;
+          const { id, name } = result.docs[0];
+          this.value = id;
+          this.docName = name;
           this.dispatchEvent(new InputChangeEvent(this.value));
         }
       }
