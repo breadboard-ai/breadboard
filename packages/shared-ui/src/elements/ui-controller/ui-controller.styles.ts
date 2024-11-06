@@ -188,4 +188,14 @@ export const styles = css`
     padding: 0 var(--bb-grid-size-4) var(--bb-grid-size-10)
       var(--bb-grid-size-4);
   }
+
+  bb-module-editor {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    background: var(--bb-ui-50);
+  }
 `;

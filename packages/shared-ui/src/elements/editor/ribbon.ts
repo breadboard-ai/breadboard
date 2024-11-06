@@ -17,6 +17,8 @@ import {
   HideTooltipEvent,
   KitNodeChosenEvent,
   ModuleChosenEvent,
+  ModuleCreateEvent,
+  ModuleDeleteEvent,
   NodeCreateEvent,
   OverflowMenuActionEvent,
   OverflowMenuSecondaryActionEvent,
@@ -44,8 +46,8 @@ import { ModuleIdentifier } from "@breadboard-ai/types";
 
 const COLLAPSED_MENU_BUFFER = 60;
 
-@customElement("bb-ribbon-menu")
-export class RibbonMenu extends LitElement {
+@customElement("bb-graph-ribbon-menu")
+export class GraphRibbonMenu extends LitElement {
   @property()
   graph: InspectableGraph | null = null;
 
@@ -210,7 +212,7 @@ export class RibbonMenu extends LitElement {
     #board-modules-menu {
       position: absolute;
       top: calc(100% + -8px);
-      left: 634px;
+      left: 4px;
       right: auto;
     }
 
@@ -287,6 +289,11 @@ export class RibbonMenu extends LitElement {
 
     #left button {
       margin: 0 var(--bb-grid-size);
+    }
+
+    #left button#component-toggle,
+    #left button#shortcut-board-modules {
+      margin: 0 var(--bb-grid-size) 0 0;
     }
 
     #right button {
@@ -393,17 +400,24 @@ export class RibbonMenu extends LitElement {
     }
 
     #shortcut-board-modules {
-      width: var(--bb-grid-size-9);
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
+      width: auto;
+      padding: 0 20px 0 28px;
       background: var(--bb-neutral-0);
       background-image: var(--bb-icon-extension), var(--bb-icon-arrow-drop-down);
       background-position:
-        0 center,
-        16px center;
+        -2px center,
+        right center;
       background-size:
         20px 20px,
         20px 20px;
       background-repeat: no-repeat, no-repeat;
       margin-right: var(--bb-grid-size);
+    }
+
+    #shortcut-board-modules.main {
+      background-image: var(--bb-icon-board), var(--bb-icon-arrow-drop-down);
     }
 
     #undo {
@@ -1291,6 +1305,7 @@ export class RibbonMenu extends LitElement {
 
     const modules = html`<button
       id="shortcut-board-modules"
+      class=${classMap({ main: this.moduleId === null })}
       @pointerover=${(evt: PointerEvent) => {
         this.dispatchEvent(
           new ShowTooltipEvent("Board Modules", evt.clientX, evt.clientY)
@@ -1303,7 +1318,7 @@ export class RibbonMenu extends LitElement {
         this.showBoardModules = true;
       }}
     >
-      Modules
+      ${this.moduleId ? this.moduleId : "Main board"}
     </button>`;
 
     let moduleMenu: HTMLTemplateResult | symbol = nothing;
@@ -1319,6 +1334,7 @@ export class RibbonMenu extends LitElement {
           name: title,
           icon: "module",
           disabled: this.moduleId === title,
+          secondaryAction: "delete",
         };
       });
 
@@ -1327,6 +1343,12 @@ export class RibbonMenu extends LitElement {
         name: MAIN_BOARD_ID,
         icon: "board",
         disabled: this.moduleId === null,
+      });
+
+      modules.push({
+        title: "Create new module...",
+        name: "create-module",
+        icon: "add-circle",
       });
 
       moduleMenu = html`<bb-overflow-menu
@@ -1340,12 +1362,44 @@ export class RibbonMenu extends LitElement {
           this.showBoardModules = false;
           evt.stopImmediatePropagation();
 
+          if (evt.action === "create-module") {
+            let moduleId;
+
+            do {
+              moduleId = prompt("What would you like to call this module?");
+              if (!moduleId) {
+                return;
+              }
+              // Check that the new module name is valid.
+            } while (!/^[A-Za-z0-9_\\-]+$/gim.test(moduleId));
+
+            this.dispatchEvent(new ModuleCreateEvent(moduleId));
+            return;
+          }
+
           let moduleId: ModuleIdentifier | null = evt.action;
           if (evt.action === MAIN_BOARD_ID) {
             moduleId = null;
           }
 
           this.dispatchEvent(new ModuleChosenEvent(moduleId));
+        }}
+        @bboverflowmenusecondaryaction=${(
+          evt: OverflowMenuSecondaryActionEvent
+        ) => {
+          this.showBoardModules = false;
+          evt.stopImmediatePropagation();
+
+          if (!evt.value) {
+            return;
+          }
+
+          const id = evt.value as ModuleIdentifier;
+          if (!confirm(`Are you sure you wish to delete the "${id}" module?`)) {
+            return;
+          }
+
+          this.dispatchEvent(new ModuleDeleteEvent(id));
         }}
       ></bb-overflow-menu>`;
     }
@@ -1434,18 +1488,18 @@ export class RibbonMenu extends LitElement {
     }
 
     const moduleManagement = [
-      html`<div class="divider"></div>`,
       modules,
       moduleMenu,
+      html`<div class="divider"></div>`,
     ];
 
     const left = [
+      moduleManagement,
       componentSelector,
       components,
       boardManagement,
       editControls,
       graphControls,
-      moduleManagement,
       overflow,
     ];
 

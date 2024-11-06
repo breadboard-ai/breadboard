@@ -10,6 +10,7 @@ import {
   InspectableGraph,
   InspectableModules,
   InspectableNodePorts,
+  InspectableRun,
   Kit,
   NodeHandlerMetadata,
 } from "@google-labs/breadboard";
@@ -23,15 +24,25 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
-import { CodeEditor, GraphRenderer } from "../elements";
+import { CodeEditor, GraphRenderer, ModuleRibbonMenu } from "../elements";
 import { ModuleIdentifier, Modules } from "@breadboard-ai/types";
 import { GraphAssets } from "../editor/graph-assets";
 import { until } from "lit/directives/until.js";
 import { GraphInitialDrawEvent, ModuleEditEvent } from "../../events/events";
 import { guard } from "lit/directives/guard.js";
+import { TopGraphRunResult } from "../../types/types";
+import { classMap } from "lit/directives/class-map.js";
+
+const PREVIEW_KEY = "bb-module-editor-preview-visible";
 
 @customElement("bb-module-editor")
 export class ModuleEditor extends LitElement {
+  @property()
+  graph: InspectableGraph | null = null;
+
+  @property()
+  subGraphId: string | null = null;
+
   @property()
   moduleId: ModuleIdentifier | null = null;
 
@@ -56,6 +67,18 @@ export class ModuleEditor extends LitElement {
   @property()
   renderId = "";
 
+  @property()
+  run: InspectableRun | null = null;
+
+  @property()
+  topGraphResult: TopGraphRunResult | null = null;
+
+  @property()
+  isShowingBoardActivityOverlay = false;
+
+  @property()
+  showModulePreview = false;
+
   static styles = css`
     * {
       box-sizing: border-box;
@@ -70,34 +93,33 @@ export class ModuleEditor extends LitElement {
 
     section {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 30vw;
-      grid-template-rows: minmax(0, 2fr) minmax(0, 1fr) var(--bb-grid-size-7);
-      row-gap: var(--bb-grid-size-2);
-      column-gap: var(--bb-grid-size-2);
+      grid-template-rows: 44px minmax(0, 1fr) var(--bb-grid-size-12);
+      row-gap: var(--bb-grid-size-4);
       width: 100%;
       height: 100%;
-      padding: 20px;
       position: relative;
     }
 
     #module-graph {
       border-radius: var(--bb-grid-size);
-      border: 1px solid var(--bb-neutral-300);
-      height: 100%;
-      display: block;
+      height: 40vh;
+      width: 40vw;
+      max-height: 340px;
+      max-width: 340px;
       overflow: hidden;
-      position: relative;
-      grid-row: 1 / 3;
+      position: absolute;
+      right: 32px;
+      top: 76px;
+      box-shadow:
+        0 8px 8px 0 rgba(0, 0, 0, 0.07),
+        0 15px 12px 0 rgba(0, 0, 0, 0.09);
+      z-index: 4;
+      opacity: 0;
+      pointer-events: none;
     }
 
-    #module-graph::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background: transparent;
+    #module-graph.visible {
+      opacity: 1;
     }
 
     bb-graph-renderer {
@@ -105,21 +127,24 @@ export class ModuleEditor extends LitElement {
       height: 100%;
     }
 
-    #outer {
+    #code-container {
+      padding: 0 var(--bb-grid-size-4);
+    }
+
+    #code-container-outer {
       width: 100%;
       height: 100%;
       border-radius: var(--bb-grid-size);
       border: 1px solid var(--bb-neutral-300);
       overflow-y: auto;
-      grid-row: 1 / 3;
     }
 
-    :host([focused="true"]) #outer {
+    :host([focused="true"]) #code-container-outer {
       border: 1px solid var(--bb-ui-700);
       box-shadow: inset 0 0 0 1px var(--bb-ui-700);
     }
 
-    #inner {
+    #code-container-inner {
       width: 100%;
       height: 100%;
       overflow-y: scroll;
@@ -172,36 +197,48 @@ export class ModuleEditor extends LitElement {
       cursor: default;
     }
 
-    #buttons {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      grid-column: 1 / 3;
-    }
-
     #buttons > div {
       display: flex;
+      justify-content: flex-end;
+      width: 100%;
+      padding-right: var(--bb-grid-size-4);
       flex: 0 0 auto;
     }
   `;
 
+  #moduleRibbonMenuRef: Ref<ModuleRibbonMenu> = createRef();
   #codeEditorRef: Ref<CodeEditor> = createRef();
   #graphVersion = 1;
   #graphRenderer = new GraphRenderer();
 
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    this.showModulePreview =
+      globalThis.localStorage.getItem(PREVIEW_KEY) === "true";
+  }
+
   processData() {
-    if (!this.#codeEditorRef.value || !this.moduleId) {
+    if (
+      !this.#codeEditorRef.value ||
+      !this.#moduleRibbonMenuRef.value ||
+      !this.moduleId
+    ) {
       return;
     }
 
     const editor = this.#codeEditorRef.value;
+    const ribbonMenu = this.#moduleRibbonMenuRef.value;
     const module = this.modules[this.moduleId];
     if (!module) {
       return;
     }
 
+    const metadata = module.metadata();
+    metadata.runnable = ribbonMenu.moduleIsRunnable();
+
     this.dispatchEvent(
-      new ModuleEditEvent(this.moduleId, editor.value ?? "", module.metadata())
+      new ModuleEditEvent(this.moduleId, editor.value ?? "", metadata)
     );
   }
 
@@ -268,7 +305,7 @@ export class ModuleEditor extends LitElement {
 
     this.#graphVersion++;
     this.#graphRenderer.readOnly = true;
-    this.#graphRenderer.padding = 10;
+    this.#graphRenderer.padding = 28;
 
     const selectedGraph = graph;
 
@@ -343,6 +380,11 @@ export class ModuleEditor extends LitElement {
     return this.#graphRenderer;
   }
 
+  #togglePreview(value = !this.showModulePreview) {
+    this.showModulePreview = value;
+    globalThis.localStorage.setItem(PREVIEW_KEY, `${this.showModulePreview}`);
+  }
+
   render() {
     if (!this.modules || !this.moduleId) {
       return nothing;
@@ -366,54 +408,99 @@ export class ModuleEditor extends LitElement {
       return nothing;
     }
 
-    return html`<section>
-      <div id="outer">
-        <div id="inner">
-          <bb-code-editor
-            ${ref(this.#codeEditorRef)}
-            @bbcodechange=${() => {
-              this.pending = true;
-            }}
-            @focus=${() => {
-              requestAnimationFrame(() => {
-                this.focused = true;
-              });
-            }}
-            @blur=${() => {
-              requestAnimationFrame(() => {
-                this.focused = false;
-              });
-            }}
-            .passthru=${true}
-            .value=${module.code()}
-          ></bb-code-editor>
-        </div>
-      </div>
-      <div id="module-graph">${moduleGraph}</div>
-      <div id="buttons">
-        <button
-          id="revert"
-          @click=${() => {
-            if (!this.#codeEditorRef.value || !module) {
-              return;
-            }
+    const isRunning = this.topGraphResult
+      ? this.topGraphResult.status === "running" ||
+        this.topGraphResult.status === "paused"
+      : false;
 
-            this.#codeEditorRef.value.value = module.code() ?? null;
-            this.pending = false;
-          }}
-        >
-          Revert to saved
-        </button>
-        <button
-          ?disabled=${!this.pending}
-          id="update"
-          @click=${() => {
-            this.processData();
-          }}
-        >
-          Apply changes
-        </button>
+    let isInputPending = false;
+    let isError = false;
+    const eventCount = this.run?.events.length ?? 0;
+    const newestEvent = this.run?.events.at(-1);
+    if (newestEvent) {
+      isInputPending =
+        newestEvent.type === "node" &&
+        newestEvent.node.descriptor.type === "input";
+      isError = newestEvent.type === "error";
+    }
+
+    const isRunnable = !!module.metadata().runnable;
+    return html` <div
+        id="module-graph"
+        class=${classMap({ visible: this.showModulePreview && isRunnable })}
+      >
+        ${moduleGraph}
       </div>
-    </section>`;
+      <section>
+        <bb-module-ribbon-menu
+          ${ref(this.#moduleRibbonMenuRef)}
+          .graph=${this.graph}
+          .modules=${this.modules}
+          .moduleId=${this.moduleId}
+          .canSave=${false}
+          .readOnly=${this.readOnly}
+          .isRunning=${isRunning}
+          .eventCount=${eventCount}
+          .isInputPending=${isInputPending}
+          .isError=${isError}
+          .isShowingBoardActivityOverlay=${this.isShowingBoardActivityOverlay}
+          .isShowingModulePreview=${this.showModulePreview}
+          .canShowModulePreview=${isRunnable}
+          @input=${() => {
+            this.pending = true;
+          }}
+          @bbtogglepreview=${() => this.#togglePreview()}
+        ></bb-module-ribbon-menu>
+        <div id="code-container">
+          <div id="code-container-outer">
+            <div id="code-container-inner">
+              <bb-code-editor
+                ${ref(this.#codeEditorRef)}
+                @bbcodechange=${() => {
+                  this.pending = true;
+                }}
+                @focus=${() => {
+                  requestAnimationFrame(() => {
+                    this.focused = true;
+                  });
+                }}
+                @blur=${() => {
+                  requestAnimationFrame(() => {
+                    this.focused = false;
+                  });
+                }}
+                .passthru=${true}
+                .value=${module.code()}
+              ></bb-code-editor>
+            </div>
+          </div>
+        </div>
+        <div id="buttons">
+          <div>
+            <button
+              id="revert"
+              @click=${() => {
+                if (!this.#codeEditorRef.value || !module) {
+                  return;
+                }
+
+                this.#codeEditorRef.value.value = module.code() ?? null;
+                this.pending = false;
+              }}
+            >
+              Revert to saved
+            </button>
+            <button
+              ?disabled=${!this.pending}
+              id="update"
+              @click=${() => {
+                this.processData();
+              }}
+            >
+              Apply changes
+            </button>
+          </div>
+        </div>
+      </section>`;
   }
 }
