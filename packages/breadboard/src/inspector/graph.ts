@@ -50,6 +50,7 @@ import {
 } from "./types.js";
 import { VirtualNode } from "./virtual-node.js";
 import { DescribeResultCache } from "./run/describe-cache.js";
+import { tryModuleDescriber } from "./run-module-describer.js";
 
 export const inspectableGraph = (
   graph: GraphDescriptor,
@@ -335,12 +336,37 @@ class Graph implements InspectableGraphWithStore {
     }
     // invoke graph
     try {
+      const moduleDescriber = tryModuleDescriber(
+        customDescriber,
+        this.#graph,
+        this.#options
+      );
       const base = this.#url;
-      // try loading the describer graph.
       const { loader } = this.#options;
       if (!loader) {
         return { success: false };
       }
+      if (moduleDescriber) {
+        const { inputSchema, outputSchema } =
+          await this.#describeWithStaticAnalysis();
+
+        const result = await moduleDescriber(
+          inputs,
+          inputSchema,
+          outputSchema,
+          {
+            outerGraph: this.#graph,
+            base,
+            kits: this.#options.kits,
+            loader,
+            wires: { incoming: {}, outgoing: {} },
+          }
+        );
+        return { success: true, result };
+      } else if (moduleDescriber !== false) {
+        return { success: false };
+      }
+      // try loading the describer graph.
       const describerGraph = await loader.load(customDescriber, {
         base,
         board: this.#graph,
