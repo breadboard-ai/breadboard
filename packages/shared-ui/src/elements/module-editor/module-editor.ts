@@ -79,6 +79,9 @@ export class ModuleEditor extends LitElement {
   @property()
   showModulePreview = false;
 
+  @state()
+  private formatting = false;
+
   static styles = css`
     * {
       box-sizing: border-box;
@@ -216,6 +219,38 @@ export class ModuleEditor extends LitElement {
 
     this.showModulePreview =
       globalThis.localStorage.getItem(PREVIEW_KEY) === "true";
+  }
+
+  async #formatCode() {
+    if (!this.#codeEditorRef.value) {
+      return;
+    }
+
+    const editor = this.#codeEditorRef.value;
+    if (!editor.value) {
+      return;
+    }
+
+    const [Prettier, PrettierESTree, PrettierTS] = await Promise.all([
+      import("prettier"),
+      // @ts-expect-error Does not provide types.
+      import("prettier/plugins/estree.mjs"),
+      // @ts-expect-error Does not provide types.
+      import("prettier/plugins/typescript.mjs"),
+    ]);
+
+    const formatted = await Prettier.format(editor.value, {
+      arrowParens: "always",
+      printWidth: 80,
+      semi: true,
+      tabWidth: 2,
+      trailingComma: "es5",
+      useTabs: false,
+      parser: "typescript",
+      plugins: [PrettierESTree, PrettierTS],
+    });
+
+    editor.value = formatted;
   }
 
   processData() {
@@ -446,10 +481,20 @@ export class ModuleEditor extends LitElement {
           .isShowingBoardActivityOverlay=${this.isShowingBoardActivityOverlay}
           .isShowingModulePreview=${this.showModulePreview}
           .canShowModulePreview=${isRunnable}
+          .formatting=${this.formatting}
           @input=${() => {
             this.pending = true;
           }}
           @bbtogglepreview=${() => this.#togglePreview()}
+          @bbformatmodulecode=${async () => {
+            if (this.formatting) {
+              return;
+            }
+
+            this.formatting = true;
+            await this.#formatCode();
+            this.formatting = false;
+          }}
         ></bb-module-ribbon-menu>
         <div id="code-container">
           <div id="code-container-outer">
