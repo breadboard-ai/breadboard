@@ -11,13 +11,17 @@ import { InspectableDescriberResultCache } from "../types.js";
 export { DescribeResultCache };
 
 class DescribeResultCache implements InspectableDescriberResultCache {
-  #map = new Map<NodeIdentifier, NodeDescriberResult>();
+  #map = new Map<NodeIdentifier, Promise<NodeDescriberResult>>();
 
-  get(id: NodeIdentifier) {
-    return this.#map.get(id);
-  }
-
-  set(id: NodeIdentifier, result: NodeDescriberResult): NodeDescriberResult {
+  getOrCreate(
+    id: NodeIdentifier,
+    factory: () => Promise<NodeDescriberResult>
+  ): Promise<NodeDescriberResult> {
+    let result = this.#map.get(id);
+    if (result) {
+      return result;
+    }
+    result = factory();
     this.#map.set(id, result);
     return result;
   }

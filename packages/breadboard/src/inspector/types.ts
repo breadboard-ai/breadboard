@@ -598,8 +598,10 @@ export type InspectableModuleCache = {
 };
 
 export type InspectableDescriberResultCache = {
-  get(id: NodeIdentifier): NodeDescriberResult | undefined;
-  set(id: NodeIdentifier, result: NodeDescriberResult): NodeDescriberResult;
+  getOrCreate(
+    id: NodeIdentifier,
+    factory: () => Promise<NodeDescriberResult>
+  ): Promise<NodeDescriberResult>;
   clear(visualOnly: boolean, affectedNodes: NodeIdentifier[]): void;
 };
 
