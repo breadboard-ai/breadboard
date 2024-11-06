@@ -10,7 +10,7 @@
         "schema": {
           "properties": {
             "documentid": {
-              "type": "string",
+              "type": "object",
               "title": "Document",
               "behavior": [
                 "google-drive-file-id",
