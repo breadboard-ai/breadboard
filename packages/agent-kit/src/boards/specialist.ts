@@ -54,7 +54,7 @@ const inputs = starInputs({ type: object({}, "unknown") });
 const tools = input({
   title: "Tools",
   description:
-    "(Optional) Add tools to this list for the worker to use when needed",
+    "(Optional) Add a list of boards to invoke by the model. The title and description of each board will be converted to a function call declaration.",
   type: annotate(
     array(annotate(object({}, "unknown"), { behavior: ["board"] })),
     { behavior: ["config"] }
@@ -63,14 +63,19 @@ const tools = input({
 });
 
 const model = input({
-  title: "Model",
-  description: "Choose the model to use for this specialist.",
+  title: "Model Name",
+  description: "Choose the specific model to use.",
   type: annotate(
     enumeration(
       "gemini-1.5-flash-latest",
       "gemini-1.5-pro-latest",
+      "gemini-1.5-pro-001",
+      "gemini-1.5-pro-002",
       "gemini-1.5-pro-exp-0801",
       "gemini-1.5-pro-exp-0827",
+      "gemini-1.5-flash-001",
+      "gemini-1.5-flash-002",
+      "gemini-1.5-flash-8b-exp-0924",
       "gemini-1.5-flash-8b-exp-0827",
       "gemini-1.5-flash-exp-0827"
     ),
@@ -344,7 +349,7 @@ const mainOutput = outputNode({
 });
 
 export default board({
-  title: "Specialist",
+  title: "Model",
   metadata: {
     icon: "smart-toy",
     help: {
@@ -353,7 +358,7 @@ export default board({
   },
   version: "2.1.0",
   description:
-    "Given instructions on how to act, makes a single LLM call, optionally invoking tools.",
+    "Makes a single LLM call using supplied conversation context as prompt, optionally calling tools. Adds a “model” turn to the conversation. When tools are called, adds an extra “user” turn containing tool call outputs. Returns updated conversation context.",
   inputs: [
     inputNode({
       "*": inputs,

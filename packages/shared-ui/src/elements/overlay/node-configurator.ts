@@ -532,7 +532,7 @@ export class NodeConfigurationOverlay extends LitElement {
           enhance:
             this.offerConfigurationEnhancements &&
             port.name === "persona" &&
-            this.value?.type === "Specialist",
+            this.value?.type === "Model",
         },
       };
     });

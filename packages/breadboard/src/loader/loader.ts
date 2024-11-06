@@ -46,16 +46,9 @@ export class Loader implements GraphLoader {
       }
       if (capabilities.load) {
         const response = await provider.load(url);
-        const graph: GraphDescriptor = typeof response == "string" ? JSON.parse(response) : response;
+        const graph: GraphDescriptor =
+          typeof response == "string" ? JSON.parse(response) : response;
         if (graph !== null) {
-          // TODO: Remove this on 2024/9/1. By then, surely all of the graphs
-          // would have migrated to use the new name.
-          graph.nodes?.map((node) => {
-            if (node.type === "superWorker") {
-              console.warn("superWorker encountered, converting to specialist");
-              node.type = "specialist";
-            }
-          });
           graph.url = url.href;
           return graph;
         }

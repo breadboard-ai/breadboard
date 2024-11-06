@@ -14,7 +14,7 @@ const describe = code(
   {
     $metadata: {
       title: "Describe",
-      description: "Describes the Specialist",
+      description: "Describes the Model Component",
     },
     "*": inputs,
   },
@@ -23,8 +23,8 @@ const describe = code(
 );
 
 export default board({
-  title: "Specialist Describer",
-  description: "A custom describer for the Specialist component",
+  title: "Model Component Describer",
+  description: "A custom describer for the Model component",
   version: "0.1.0",
   inputs: { "*": inputs },
   outputs: {

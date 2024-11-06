@@ -57,7 +57,6 @@ export class DelegatingInput
         return undefined;
       }
       const plugin = chooseBestPlugin(schema, environment);
-      console.log("🌻 Choosing plugin", plugin);
       if (!plugin) {
         throw new Error(
           `<bb-delegating-input> could not find an input widget capable of ` +
