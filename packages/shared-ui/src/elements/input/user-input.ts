@@ -3,7 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LLMContent } from "@breadboard-ai/types";
+import { LLMContent, ModuleIdentifier } from "@breadboard-ai/types";
 import {
   BoardServer,
   GraphDescriptor,
@@ -27,6 +27,7 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
   EnhanceNodeConfigurationEvent,
   EnhanceNodeResetEvent,
+  ModuleChosenEvent,
   UserOutputEvent,
 } from "../../events/events";
 import { UserInputConfiguration, UserOutputValues } from "../../types/types";
@@ -613,18 +614,33 @@ export class UserInput extends LitElement {
               <label for=${id} class="module-description"
                 >${moduleDescription ?? nothing}</label
               >
-              <select id="${id}" name="${id}" class="module-selector">
-                <option value="">-- No module</option>
-                ${moduleNames.map(
-                  (module) =>
-                    html`<option
-                      value=${module}
-                      ?selected=${module === input.value}
-                    >
-                      ${module}
-                    </option>`
-                )};
-              </select>
+              <div>
+                <select id="${id}" name="${id}" class="module-selector">
+                  <option value="">-- No module</option>
+                  ${moduleNames.map(
+                    (module) =>
+                      html`<option
+                        value=${module}
+                        ?selected=${module === input.value}
+                      >
+                        ${module}
+                      </option>`
+                  )};
+                </select>
+                <button
+                  @click=${() => {
+                    console.log(input.value);
+                    if (!input.value) {
+                      return;
+                    }
+
+                    const id = input.value as ModuleIdentifier;
+                    this.dispatchEvent(new ModuleChosenEvent(id));
+                  }}
+                >
+                  Jump to definition
+                </button>
+              </div>
             </div>`;
           } else {
             switch (input.schema.type) {

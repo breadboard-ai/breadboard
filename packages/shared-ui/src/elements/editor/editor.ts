@@ -20,16 +20,9 @@ import {
   NodeHandlerMetadata,
   NodeValue,
 } from "@google-labs/breadboard";
-import {
-  HTMLTemplateResult,
-  LitElement,
-  PropertyValues,
-  css,
-  html,
-  nothing,
-} from "lit";
+import { LitElement, PropertyValues, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { Ref, createRef } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import {
   CommentEditRequestEvent,
@@ -72,7 +65,6 @@ const PASTE_OFFSET = 50;
 
 import { TopGraphRunResult } from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
-import { ModuleEditor } from "../elements.js";
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
   if (type !== "input" && type !== "output") {
@@ -117,9 +109,6 @@ export class Editor extends LitElement {
 
   @property()
   subGraphId: string | null = null;
-
-  @property()
-  moduleId: string | null = null;
 
   @property()
   run: InspectableRun | null = null;
@@ -240,7 +229,6 @@ export class Editor extends LitElement {
   #top = 0;
   #left = 0;
   #addButtonRef: Ref<HTMLInputElement> = createRef();
-  #moduleEditor: Ref<ModuleEditor> = createRef();
 
   #writingToClipboard = false;
   #readingFromClipboard = false;
@@ -294,7 +282,7 @@ export class Editor extends LitElement {
       mix-blend-mode: difference;
     }
 
-    bb-ribbon-menu {
+    bb-graph-ribbon-menu {
       position: absolute;
       top: 0;
       left: 0;
@@ -319,15 +307,6 @@ export class Editor extends LitElement {
       height: 100%;
       outline: none;
       overflow: hidden;
-    }
-
-    bb-module-editor {
-      background: var(--bb-ui-50);
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
     }
   `;
 
@@ -628,12 +607,6 @@ export class Editor extends LitElement {
     if (changedProperties.has("run")) {
       this.#graphRenderer.zoomToHighlightedNode =
         this.zoomToHighlightedNodeDuringRuns;
-    }
-
-    if (changedProperties.has("moduleId")) {
-      if (this.moduleId === null && this.#moduleEditor.value) {
-        this.#moduleEditor.value.destroyEditor();
-      }
     }
   }
 
@@ -1402,10 +1375,10 @@ export class Editor extends LitElement {
       isError = newestEvent.type === "error";
     }
 
-    const ribbonMenu = html`<bb-ribbon-menu
+    const ribbonMenu = html`<bb-graph-ribbon-menu
       .graph=${this.graph}
       .subGraphId=${this.subGraphId}
-      .moduleId=${this.moduleId}
+      .moduleId=${null}
       .dataType=${DATA_TYPE}
       .showExperimentalComponents=${this.showExperimentalComponents}
       .canSave=${this.capabilities && this.capabilities.save}
@@ -1450,19 +1423,7 @@ export class Editor extends LitElement {
       @bbaddsubgraph=${() => {
         this.#proposeNewSubGraph();
       }}
-    ></bb-ribbon-menu>`;
-
-    let moduleEditor: HTMLTemplateResult | symbol = nothing;
-    if (this.graph && this.moduleId) {
-      moduleEditor = html`<bb-module-editor
-        ${ref(this.#moduleEditor)}
-        .moduleId=${this.moduleId}
-        .modules=${this.graph.modules() ?? {}}
-        .kits=${this.kits}
-        .readOnly=${this.readOnly}
-        .renderId=${crypto.randomUUID()}
-      ></bb-module-editor>`;
-    }
+    ></bb-graph-ribbon-menu>`;
 
     const graphEditor = html`${until(this.#processGraph())}`;
     const readOnlyFlag =
@@ -1470,9 +1431,7 @@ export class Editor extends LitElement {
         ? html`<aside id="readonly-overlay">Read-only View</aside>`
         : nothing;
 
-    const content = html`<div id="content">
-      ${graphEditor}${this.moduleId ? moduleEditor : nothing}
-    </div>`;
+    const content = html`<div id="content">${graphEditor}</div>`;
 
     return [this.graph ? ribbonMenu : nothing, content, readOnlyFlag];
   }

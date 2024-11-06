@@ -33,6 +33,8 @@ import {
   TopGraphRunResult,
 } from "../../types/types.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
+import { ModuleEditor } from "../module-editor/module-editor.js";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
 
 @customElement("bb-ui-controller")
 export class UI extends LitElement {
@@ -96,12 +98,20 @@ export class UI extends LitElement {
   @state()
   history: EditHistory | null = null;
 
+  #moduleEditor: Ref<ModuleEditor> = createRef();
+
   static styles = uiControllerStyles;
 
   editorRender = 0;
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("isShowingBoardActivityOverlay")) {
       this.editorRender++;
+    }
+
+    if (changedProperties.has("moduleId")) {
+      if (this.moduleId === null && this.#moduleEditor.value) {
+        this.#moduleEditor.value.destroyEditor();
+      }
     }
   }
 
@@ -240,6 +250,25 @@ export class UI extends LitElement {
       ></bb-welcome-panel>`;
     }
 
-    return html`<section id="diagram">${graphEditor} ${welcomePanel}</section>`;
+    let moduleEditor: HTMLTemplateResult | symbol = nothing;
+    if (graph && this.moduleId) {
+      moduleEditor = html`<bb-module-editor
+        ${ref(this.#moduleEditor)}
+        .graph=${graph}
+        .moduleId=${this.moduleId}
+        .modules=${graph.modules() ?? {}}
+        .isShowingBoardActivityOverlay=${this.isShowingBoardActivityOverlay}
+        .kits=${this.kits}
+        .run=${this.run}
+        .readOnly=${this.readOnly}
+        .renderId=${crypto.randomUUID()}
+        .subGraphId=${this.subGraphId}
+        .topGraphResult=${this.topGraphResult}
+      ></bb-module-editor>`;
+    }
+
+    return html`<section id="diagram">
+      ${graphEditor} ${this.moduleId ? moduleEditor : nothing} ${welcomePanel}
+    </section>`;
   }
 }

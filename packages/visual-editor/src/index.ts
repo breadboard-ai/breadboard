@@ -1996,6 +1996,15 @@ export class Main extends LitElement {
             .offerConfigurationEnhancements=${offerConfigurationEnhancements}
             .showNodeTypeDescriptions=${showNodeTypeDescriptions}
             .readOnly=${this.tab?.readOnly}
+            @bbmodulechosen=${(evt: BreadboardUI.Events.ModuleChosenEvent) => {
+              if (!this.tab) {
+                return;
+              }
+
+              this.#nodeConfiguratorData = null;
+              this.showNodeConfigurator = false;
+              this.#runtime.board.changeModule(this.tab.id, evt.moduleId);
+            }}
             @bbrunisolatednode=${async (
               evt: BreadboardUI.Events.RunIsolatedNodeEvent
             ) => {
@@ -2593,6 +2602,26 @@ export class Main extends LitElement {
                 }
 
                 this.#runtime.board.changeModule(this.tab.id, evt.moduleId);
+              }}
+              @bbmodulecreate=${(
+                evt: BreadboardUI.Events.ModuleCreateEvent
+              ) => {
+                if (!this.tab) {
+                  return;
+                }
+
+                this.#runtime.edit.createModule(this.tab, evt.moduleId, {
+                  code: "",
+                });
+              }}
+              @bbmoduledelete=${(
+                evt: BreadboardUI.Events.ModuleDeleteEvent
+              ) => {
+                if (!this.tab) {
+                  return;
+                }
+
+                this.#runtime.edit.deleteModule(this.tab, evt.moduleId);
               }}
               @bbmoduleedit=${(evt: BreadboardUI.Events.ModuleEditEvent) => {
                 this.#runtime.edit.editModule(

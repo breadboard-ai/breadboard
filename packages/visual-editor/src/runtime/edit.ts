@@ -25,6 +25,7 @@ import {
 } from "./events";
 import {
   GraphTag,
+  Module,
   ModuleCode,
   ModuleIdentifier,
   ModuleMetadata,
@@ -315,6 +316,64 @@ export class Edit extends EventTarget {
       (comment) => comment.id !== id
     );
     this.dispatchEvent(new RuntimeBoardEditEvent(tab.id, [], false));
+  }
+
+  createModule(
+    tab: Tab | null,
+    moduleId: ModuleIdentifier,
+    module: Module,
+    switchToCreatedModule = true
+  ) {
+    if (!tab) {
+      return null;
+    }
+
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
+      return null;
+    }
+
+    editableGraph
+      .edit(
+        [
+          {
+            type: "addmodule",
+            id: moduleId,
+            module,
+          },
+        ],
+        `Add module ${moduleId}`
+      )
+      .then(() => {
+        if (!switchToCreatedModule) {
+          return;
+        }
+
+        tab.moduleId = moduleId;
+      });
+  }
+
+  deleteModule(tab: Tab | null, moduleId: ModuleIdentifier) {
+    if (!tab) {
+      return null;
+    }
+
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
+      return null;
+    }
+
+    editableGraph.edit(
+      [
+        {
+          type: "removemodule",
+          id: moduleId,
+        },
+      ],
+      `Delete module ${moduleId}`
+    );
   }
 
   editModule(

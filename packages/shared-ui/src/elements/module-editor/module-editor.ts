@@ -10,6 +10,7 @@ import {
   InspectableGraph,
   InspectableModules,
   InspectableNodePorts,
+  InspectableRun,
   Kit,
   NodeHandlerMetadata,
 } from "@google-labs/breadboard";
@@ -29,9 +30,16 @@ import { GraphAssets } from "../editor/graph-assets";
 import { until } from "lit/directives/until.js";
 import { GraphInitialDrawEvent, ModuleEditEvent } from "../../events/events";
 import { guard } from "lit/directives/guard.js";
+import { TopGraphRunResult } from "../../types/types";
 
 @customElement("bb-module-editor")
 export class ModuleEditor extends LitElement {
+  @property()
+  graph: InspectableGraph | null = null;
+
+  @property()
+  subGraphId: string | null = null;
+
   @property()
   moduleId: ModuleIdentifier | null = null;
 
@@ -56,6 +64,15 @@ export class ModuleEditor extends LitElement {
   @property()
   renderId = "";
 
+  @property()
+  run: InspectableRun | null = null;
+
+  @property()
+  topGraphResult: TopGraphRunResult | null = null;
+
+  @property()
+  isShowingBoardActivityOverlay = false;
+
   static styles = css`
     * {
       box-sizing: border-box;
@@ -70,13 +87,10 @@ export class ModuleEditor extends LitElement {
 
     section {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 30vw;
-      grid-template-rows: minmax(0, 2fr) minmax(0, 1fr) var(--bb-grid-size-7);
-      row-gap: var(--bb-grid-size-2);
-      column-gap: var(--bb-grid-size-2);
+      grid-template-rows: 44px minmax(0, 1fr) var(--bb-grid-size-12);
+      row-gap: var(--bb-grid-size-4);
       width: 100%;
       height: 100%;
-      padding: 20px;
       position: relative;
     }
 
@@ -84,10 +98,9 @@ export class ModuleEditor extends LitElement {
       border-radius: var(--bb-grid-size);
       border: 1px solid var(--bb-neutral-300);
       height: 100%;
-      display: block;
+      display: none;
       overflow: hidden;
       position: relative;
-      grid-row: 1 / 3;
     }
 
     #module-graph::after {
@@ -105,21 +118,24 @@ export class ModuleEditor extends LitElement {
       height: 100%;
     }
 
-    #outer {
+    #code-container {
+      padding: 0 var(--bb-grid-size-4);
+    }
+
+    #code-container-outer {
       width: 100%;
       height: 100%;
       border-radius: var(--bb-grid-size);
       border: 1px solid var(--bb-neutral-300);
       overflow-y: auto;
-      grid-row: 1 / 3;
     }
 
-    :host([focused="true"]) #outer {
+    :host([focused="true"]) #code-container-outer {
       border: 1px solid var(--bb-ui-700);
       box-shadow: inset 0 0 0 1px var(--bb-ui-700);
     }
 
-    #inner {
+    #code-container-inner {
       width: 100%;
       height: 100%;
       overflow-y: scroll;
@@ -172,15 +188,11 @@ export class ModuleEditor extends LitElement {
       cursor: default;
     }
 
-    #buttons {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      grid-column: 1 / 3;
-    }
-
     #buttons > div {
       display: flex;
+      justify-content: flex-end;
+      width: 100%;
+      padding-right: var(--bb-grid-size-4);
       flex: 0 0 auto;
     }
   `;
@@ -366,53 +378,85 @@ export class ModuleEditor extends LitElement {
       return nothing;
     }
 
+    const isRunning = this.topGraphResult
+      ? this.topGraphResult.status === "running" ||
+        this.topGraphResult.status === "paused"
+      : false;
+
+    let isInputPending = false;
+    let isError = false;
+    const eventCount = this.run?.events.length ?? 0;
+    const newestEvent = this.run?.events.at(-1);
+    if (newestEvent) {
+      isInputPending =
+        newestEvent.type === "node" &&
+        newestEvent.node.descriptor.type === "input";
+      isError = newestEvent.type === "error";
+    }
+
     return html`<section>
-      <div id="outer">
-        <div id="inner">
-          <bb-code-editor
-            ${ref(this.#codeEditorRef)}
-            @bbcodechange=${() => {
-              this.pending = true;
-            }}
-            @focus=${() => {
-              requestAnimationFrame(() => {
-                this.focused = true;
-              });
-            }}
-            @blur=${() => {
-              requestAnimationFrame(() => {
-                this.focused = false;
-              });
-            }}
-            .passthru=${true}
-            .value=${module.code()}
-          ></bb-code-editor>
+      <bb-module-ribbon-menu
+        .graph=${this.graph}
+        .modules=${this.modules}
+        .moduleId=${this.moduleId}
+        .canSave=${false}
+        .readOnly=${this.readOnly}
+        .isRunning=${isRunning}
+        .eventCount=${eventCount}
+        .isInputPending=${isInputPending}
+        .isError=${isError}
+        .isShowingBoardActivityOverlay=${this.isShowingBoardActivityOverlay}
+      ></bb-module-ribbon-menu>
+      <div id="code-container">
+        <div id="code-container-outer">
+          <div id="code-container-inner">
+            <bb-code-editor
+              ${ref(this.#codeEditorRef)}
+              @bbcodechange=${() => {
+                this.pending = true;
+              }}
+              @focus=${() => {
+                requestAnimationFrame(() => {
+                  this.focused = true;
+                });
+              }}
+              @blur=${() => {
+                requestAnimationFrame(() => {
+                  this.focused = false;
+                });
+              }}
+              .passthru=${true}
+              .value=${module.code()}
+            ></bb-code-editor>
+          </div>
         </div>
       </div>
       <div id="module-graph">${moduleGraph}</div>
       <div id="buttons">
-        <button
-          id="revert"
-          @click=${() => {
-            if (!this.#codeEditorRef.value || !module) {
-              return;
-            }
+        <div>
+          <button
+            id="revert"
+            @click=${() => {
+              if (!this.#codeEditorRef.value || !module) {
+                return;
+              }
 
-            this.#codeEditorRef.value.value = module.code() ?? null;
-            this.pending = false;
-          }}
-        >
-          Revert to saved
-        </button>
-        <button
-          ?disabled=${!this.pending}
-          id="update"
-          @click=${() => {
-            this.processData();
-          }}
-        >
-          Apply changes
-        </button>
+              this.#codeEditorRef.value.value = module.code() ?? null;
+              this.pending = false;
+            }}
+          >
+            Revert to saved
+          </button>
+          <button
+            ?disabled=${!this.pending}
+            id="update"
+            @click=${() => {
+              this.processData();
+            }}
+          >
+            Apply changes
+          </button>
+        </div>
       </div>
     </section>`;
   }

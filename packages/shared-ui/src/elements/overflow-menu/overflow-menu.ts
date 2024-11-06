@@ -52,6 +52,8 @@ export class OverflowMenu extends LitElement {
     }
 
     button {
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
       padding: var(--bb-grid-size-3) var(--bb-grid-size-4) var(--bb-grid-size-3)
         var(--bb-grid-size-11);
       color: var(--bb-neutral-900);
