@@ -1997,9 +1997,7 @@ export class Main extends LitElement {
             .offerConfigurationEnhancements=${offerConfigurationEnhancements}
             .showNodeTypeDescriptions=${showNodeTypeDescriptions}
             .readOnly=${this.tab?.readOnly}
-            @bbmodulechosen=${(
-              evt: BreadboardUI.Events.ToggleModulePreviewEvent
-            ) => {
+            @bbmodulechosen=${(evt: BreadboardUI.Events.ModuleChosenEvent) => {
               if (!this.tab) {
                 return;
               }
@@ -2598,7 +2596,7 @@ export class Main extends LitElement {
                 this.requestUpdate();
               }}
               @bbmodulechosen=${(
-                evt: BreadboardUI.Events.ToggleModulePreviewEvent
+                evt: BreadboardUI.Events.ModuleChosenEvent
               ) => {
                 if (!this.tab) {
                   return;
