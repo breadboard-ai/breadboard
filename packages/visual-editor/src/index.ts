@@ -461,6 +461,7 @@ export class Main extends LitElement {
         this.#runtime.board.addEventListener(
           Runtime.Events.RuntimeModuleChangeEvent.eventName,
           () => {
+            this.#updatePageURL();
             this.requestUpdate();
           }
         );

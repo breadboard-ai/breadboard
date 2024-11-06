@@ -226,6 +226,10 @@ export class Board extends EventTarget {
         activeTab = t;
       }
 
+      if (tab.moduleId) {
+        params.set(`module-tab${t}`, tab.moduleId);
+      }
+
       params.set(`tab${t++}`, tab.graph.url);
     }
 
@@ -277,7 +281,20 @@ export class Board extends EventTarget {
           continue;
         }
 
-        await this.createTabFromURL(tab, url.href, true, false, false);
+        let moduleId: ModuleIdentifier | null = null;
+        const moduleIdParam = params.get(`module-tab${t}`);
+        if (moduleIdParam) {
+          moduleId = moduleIdParam;
+        }
+
+        await this.createTabFromURL(
+          tab,
+          url.href,
+          true,
+          false,
+          false,
+          moduleId
+        );
 
         // Capture the current tab ID so we can restore it after creating all
         // the tabs again.
@@ -393,7 +410,8 @@ export class Board extends EventTarget {
     currentUrl: string | null = null,
     createNewTab = false,
     readOnly = false,
-    dispatchTabChangeEvent = true
+    dispatchTabChangeEvent = true,
+    moduleId: ModuleIdentifier | null = null
   ) {
     let url = this.#makeRelativeToCurrentBoard(boardUrl, currentUrl);
 
@@ -453,6 +471,11 @@ export class Board extends EventTarget {
         return;
       }
 
+      // Confirm the module exists before setting it.
+      if (moduleId && (!graph.modules || !graph.modules[moduleId])) {
+        moduleId = null;
+      }
+
       const id = globalThis.crypto.randomUUID();
       this.#tabs.set(id, {
         id,
@@ -460,7 +483,7 @@ export class Board extends EventTarget {
         name: graph.title ?? "Untitled board",
         graph,
         subGraphId: null,
-        moduleId: null,
+        moduleId,
         type: TabType.URL,
         version: 1,
         readOnly,
