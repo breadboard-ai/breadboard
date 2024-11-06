@@ -93,7 +93,6 @@ function describeSpecialist(inputs: unknown) {
     required: [],
   };
 
-  console.log("🌻 inputSchema", task);
   if (task) {
     inputSchema.properties!.task = {
       title: "Task",

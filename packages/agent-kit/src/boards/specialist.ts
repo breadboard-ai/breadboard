@@ -63,7 +63,7 @@ const tools = input({
 });
 
 const model = input({
-  title: "Model",
+  title: "Model Name",
   description: "Choose the specific model to use.",
   type: annotate(
     enumeration(
