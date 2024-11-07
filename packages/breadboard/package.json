@@ -160,7 +160,7 @@
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@definitelytyped/dtslint": "^0.2.25",
+    "@definitelytyped/dtslint": "^0.2.26",
     "@google-labs/tsconfig": "^0.0.1",
     "@rollup/plugin-node-resolve": "^15.3.0",
     "@rollup/plugin-terser": "^0.4.4",
