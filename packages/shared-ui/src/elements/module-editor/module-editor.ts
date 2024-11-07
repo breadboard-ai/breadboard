@@ -592,7 +592,7 @@ export class ModuleEditor extends LitElement {
 
     if (language === "typescript" && this.modules) {
       // Add the built-in capabilities.
-      definitions = new Map<string, string>([["__builtins.d.ts", builtIns]]);
+      definitions = new Map<string, string>([["/__builtins.d.ts", builtIns]]);
 
       // Add each of the other modules.
       for (const [name, contents] of Object.entries(this.modules)) {
@@ -605,7 +605,7 @@ export class ModuleEditor extends LitElement {
           continue;
         }
 
-        definitions.set(`${name}.ts`, source.code);
+        definitions.set(`/${name}.ts`, source.code);
       }
     }
 
