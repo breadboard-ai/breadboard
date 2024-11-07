@@ -31,7 +31,11 @@ export class TraversalMachineIterator
       this.#current.state.useInputs(descriptor.id, this.#current.inputs);
 
       if (outputs && outputs.$error) {
-        const $error = outputs.$error as ErrorCapability;
+        const $error = (
+          typeof outputs.$error === "string"
+            ? { error: new Error(outputs.$error) }
+            : outputs.$error
+        ) as ErrorCapability;
         outputs.$error = {
           descriptor,
           ...($error as object),
