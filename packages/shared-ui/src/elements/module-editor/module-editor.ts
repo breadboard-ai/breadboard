@@ -258,10 +258,8 @@ export class ModuleEditor extends LitElement {
         declaration: true,
         rootDir: ".",
         noLib: true,
-        noEmit: true,
         verbatimModuleSyntax: true,
         allowJs: true,
-        allowImportingTsExtensions: true,
         paths: {
           "*": ["./*"],
         },
