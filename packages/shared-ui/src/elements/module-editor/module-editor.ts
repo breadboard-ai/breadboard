@@ -314,18 +314,16 @@ export class ModuleEditor extends LitElement {
         ${ref(this.#codeEditorRef)}
         @bbcodechange=${() => {
           this.pending = true;
-          if (env) {
-            if (!this.#codeEditorRef.value) {
-              return;
-            }
-
-            const editor = this.#codeEditorRef.value;
-            if (!editor.value) {
-              return;
-            }
-
-            this.processData(editor.value, compile(editor.value));
+          if (!this.#codeEditorRef.value) {
+            return;
           }
+
+          const editor = this.#codeEditorRef.value;
+          if (!editor.value) {
+            return;
+          }
+
+          this.processData(editor.value, compile(editor.value));
         }}
         .passthru=${true}
         .value=${code}
