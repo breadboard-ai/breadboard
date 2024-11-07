@@ -564,7 +564,7 @@
 					"description": "Metadata associated with the graph."
 				},
 				"code": {
-					"type": "string",
+					"$ref": "#/definitions/ModuleCode",
 					"description": "The code for this module."
 				}
 			},
@@ -614,6 +614,23 @@
 					],
 					"additionalProperties": false,
 					"description": "The documentation for the module, expressed as a URL and optional description."
+				},
+				"source": {
+					"type": "object",
+					"properties": {
+						"language": {
+							"$ref": "#/definitions/ModuleLanguage"
+						},
+						"code": {
+							"$ref": "#/definitions/ModuleCode"
+						}
+					},
+					"required": [
+						"language",
+						"code"
+					],
+					"additionalProperties": false,
+					"description": "The pre-compiled source for this module."
 				}
 			},
 			"additionalProperties": false
@@ -625,6 +642,13 @@
 				"experimental"
 			],
 			"description": "A tag that can be associated with a graph.\n- `published`: The module is published (as opposed to a draft). It may be    used in production and shared with others.\n- `experimental`: The graph is experimental and may not be stable."
+		},
+		"ModuleLanguage": {
+			"type": "string"
+		},
+		"ModuleCode": {
+			"type": "string",
+			"description": "The code for this module, which should include a describer, an invoker, and any other relevant information to power the module."
 		}
 	}
 }

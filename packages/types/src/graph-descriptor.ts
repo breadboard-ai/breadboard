@@ -409,6 +409,8 @@ export type ModuleCode = string;
  */
 export type ModuleTag = "published" | "experimental";
 
+export type ModuleLanguage = string;
+
 export type ModuleMetadata = {
   /**
    * Whether the module should be presented as a runnable item to runModule.
@@ -442,6 +444,14 @@ export type ModuleMetadata = {
     description?: string;
     url: string;
   };
+
+  /**
+   * The pre-compiled source for this module.
+   */
+  source?: {
+    language: ModuleLanguage;
+    code: ModuleCode;
+  };
 };
 
 export type Module = {
@@ -453,7 +463,7 @@ export type Module = {
   /**
    * The code for this module.
    */
-  code: string;
+  code: ModuleCode;
 };
 
 export type Modules = Record<ModuleIdentifier, Module>;
