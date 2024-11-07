@@ -19,6 +19,14 @@ import {
   InspectableNodePorts,
 } from "@google-labs/breadboard";
 import { CommentNode, NodeMetadata } from "@breadboard-ai/types";
+import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
+import type {
+  tsAutocomplete,
+  tsFacet,
+  tsHover,
+  tsLinter,
+  tsSync,
+} from "@valtown/codemirror-ts";
 
 export const enum HistoryEventType {
   DONE = "done",
@@ -380,3 +388,16 @@ export interface UserMessage {
 }
 
 export type RunIdentifier = string;
+
+export type CodeMirrorExtensions = {
+  tsSync: typeof tsSync;
+  tsFacet: typeof tsFacet;
+  tsLinter: typeof tsLinter;
+  tsAutocomplete: typeof tsAutocomplete;
+  tsHover: typeof tsHover;
+};
+
+export type TypeScriptLanguageSupport = {
+  env: VirtualTypeScriptEnvironment | null;
+  extensions: CodeMirrorExtensions | null;
+};

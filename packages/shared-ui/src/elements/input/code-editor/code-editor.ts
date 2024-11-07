@@ -4,21 +4,31 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, nothing } from "lit";
+import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { EditorView, minimalSetup } from "codemirror";
 import { keymap } from "@codemirror/view";
 import { javascript } from "@codemirror/lang-javascript";
 import { json } from "@codemirror/lang-json";
-import { closeBrackets } from "@codemirror/autocomplete";
+import { autocompletion, closeBrackets } from "@codemirror/autocomplete";
 import { indentWithTab } from "@codemirror/commands";
 import { CodeChangeEvent } from "../../../events/events.js";
+import { type Extension } from "@codemirror/state";
+
+import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
+import { CodeMirrorExtensions } from "../../../types/types.js";
+import type { HoverInfo } from "@valtown/codemirror-ts";
+
+const CODE_CHANGE_EMIT_TIMEOUT = 500;
 
 @customElement("bb-code-editor")
 export class CodeEditor extends LitElement {
   @property()
-  language: "javascript" | "json" = "javascript";
+  language: "javascript" | "typescript" | "json" | null = null;
+
+  @property()
+  definitions: Map<string, string> | null = null;
 
   @property()
   showMessage = false;
@@ -26,12 +36,20 @@ export class CodeEditor extends LitElement {
   @property({ reflect: true })
   passthru = false;
 
+  @property()
+  fileName: string | null = null;
+
+  @property()
+  env: VirtualTypeScriptEnvironment | null = null;
+
+  @property()
+  extensions: CodeMirrorExtensions | null = null;
+
   #editor: EditorView | null = null;
   #content: Ref<HTMLDivElement> = createRef();
   #value: string | null = null;
   #message = "";
-
-  #onKeyUpBound = this.#onKeyUp.bind(this);
+  #shouldCreateEditorOnUpdate = false;
 
   static styles = css`
     :host {
@@ -105,6 +123,19 @@ export class CodeEditor extends LitElement {
         opacity: 1;
       }
     }
+
+    .cm-tooltip {
+      padding: var(--bb-grid-size);
+      border-radius: var(--bb-grid-size);
+      background: var(--bb-neutral-0) !important;
+      border: 1px solid var(--bb-neutral-300) !important;
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family-mono);
+
+      box-shadow:
+        0 8px 8px 0 rgba(0, 0, 0, 0.07),
+        0 15px 12px 0 rgba(0, 0, 0, 0.09);
+    }
   `;
 
   set value(value: string | null) {
@@ -134,36 +165,89 @@ export class CodeEditor extends LitElement {
     this.#editor.dispatch(transaction);
   }
 
-  protected firstUpdated(): void {
-    const lang = this.language === "javascript" ? javascript : json;
+  protected willUpdate(changedProperties: PropertyValues): void {
+    if (changedProperties.has("language")) {
+      this.#shouldCreateEditorOnUpdate = true;
+    }
+  }
+
+  protected updated(): void {
+    if (!this.#shouldCreateEditorOnUpdate) {
+      return;
+    }
+
+    this.destroy();
+    this.#createEditor();
+  }
+
+  #emitTimeout = -1;
+  #createEditor() {
+    const editorExtensions: Extension[] = [
+      minimalSetup,
+      closeBrackets(),
+      keymap.of([indentWithTab]),
+      EditorView.updateListener.of((value) => {
+        if (!value.docChanged) {
+          return;
+        }
+
+        globalThis.clearTimeout(this.#emitTimeout);
+        this.#emitTimeout = setTimeout(() => {
+          this.dispatchEvent(new CodeChangeEvent());
+        }, CODE_CHANGE_EMIT_TIMEOUT);
+      }),
+    ];
+
+    switch (this.language) {
+      case "typescript": {
+        if (!this.env || !this.extensions || !this.fileName) {
+          throw new Error("TypeScript editor started without language support");
+        }
+
+        const { tsFacet, tsSync, tsLinter, tsAutocomplete, tsHover } =
+          this.extensions;
+
+        editorExtensions.push(
+          javascript({ typescript: true }),
+          tsFacet.of({ env: this.env, path: this.fileName }),
+          tsSync(),
+          tsLinter(),
+          autocompletion({ override: [tsAutocomplete()] }),
+          tsHover({
+            renderTooltip: (info: HoverInfo) => {
+              const div = document.createElement("div");
+              div.className = "hover";
+              if (info.quickInfo?.displayParts) {
+                for (const part of info.quickInfo.displayParts) {
+                  const span = div.appendChild(document.createElement("span"));
+                  span.className = `quick-info-${part.kind}`;
+                  span.innerText = part.text;
+                }
+              }
+              return { dom: div };
+            },
+          })
+        );
+        break;
+      }
+
+      case "javascript": {
+        editorExtensions.push(javascript());
+        break;
+      }
+
+      case "json": {
+        editorExtensions.push(json());
+        break;
+      }
+    }
 
     this.#editor = new EditorView({
-      extensions: [
-        minimalSetup,
-        lang(),
-        closeBrackets(),
-        keymap.of([indentWithTab]),
-      ],
+      extensions: editorExtensions,
       parent: this.#content.value,
     });
 
     this.#attemptEditorUpdate();
-  }
-
-  #onKeyUp() {
-    this.dispatchEvent(new CodeChangeEvent());
-  }
-
-  connectedCallback(): void {
-    super.connectedCallback();
-
-    this.addEventListener("keyup", this.#onKeyUpBound);
-  }
-
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-
-    this.removeEventListener("keyup", this.#onKeyUpBound);
   }
 
   render() {

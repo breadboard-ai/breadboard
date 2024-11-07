@@ -25,13 +25,21 @@ import {
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
 import { CodeEditor, GraphRenderer, ModuleRibbonMenu } from "../elements";
-import { ModuleIdentifier, Modules } from "@breadboard-ai/types";
+import {
+  ModuleCode,
+  ModuleIdentifier,
+  ModuleLanguage,
+  Modules,
+} from "@breadboard-ai/types";
 import { GraphAssets } from "../editor/graph-assets";
 import { until } from "lit/directives/until.js";
 import { GraphInitialDrawEvent, ModuleEditEvent } from "../../events/events";
 import { guard } from "lit/directives/guard.js";
-import { TopGraphRunResult } from "../../types/types";
+import { CodeMirrorExtensions, TopGraphRunResult } from "../../types/types";
 import { classMap } from "lit/directives/class-map.js";
+import { builtIns } from "./built-ins.js";
+import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
+// import { getModList, getTypeScriptMod } from "./ts-mod";
 
 const PREVIEW_KEY = "bb-module-editor-preview-visible";
 
@@ -96,7 +104,7 @@ export class ModuleEditor extends LitElement {
 
     section {
       display: grid;
-      grid-template-rows: 44px minmax(0, 1fr) var(--bb-grid-size-12);
+      grid-template-rows: 44px minmax(0, 1fr);
       row-gap: var(--bb-grid-size-4);
       width: 100%;
       height: 100%;
@@ -132,6 +140,7 @@ export class ModuleEditor extends LitElement {
 
     #code-container {
       padding: 0 var(--bb-grid-size-4);
+      margin-bottom: var(--bb-grid-size-4);
     }
 
     #code-container-outer {
@@ -221,6 +230,112 @@ export class ModuleEditor extends LitElement {
       globalThis.localStorage.getItem(PREVIEW_KEY) === "true";
   }
 
+  async #createEditor(
+    code: ModuleCode,
+    language: ModuleLanguage,
+    definitions: Map<string, string> | null
+  ) {
+    const fileName = `${this.moduleId}.ts`;
+    let env: VirtualTypeScriptEnvironment | null = null;
+    let extensions: CodeMirrorExtensions | null = null;
+    let compile = (code: string) => code;
+    if (language === "typescript") {
+      const [
+        ts,
+        tsvfs,
+        { tsSync, tsFacet, tsLinter, tsAutocomplete, tsHover },
+      ] = await Promise.all([
+        import("typescript"),
+        import("@typescript/vfs"),
+        import("@valtown/codemirror-ts"),
+      ]);
+
+      const compilerOptions = {
+        target: ts.ScriptTarget.ESNext,
+        module: ts.ModuleKind.Preserve,
+        moduleResolution: ts.ModuleResolutionKind.Bundler,
+        isolatedModules: true,
+        declaration: true,
+        rootDir: ".",
+        noLib: true,
+        noEmit: true,
+        verbatimModuleSyntax: true,
+        allowJs: true,
+        allowImportingTsExtensions: true,
+        paths: {
+          "*": ["./*"],
+        },
+      };
+
+      const fsMap = new Map();
+      const system = tsvfs.createSystem(fsMap);
+      env = tsvfs.createVirtualTypeScriptEnvironment(
+        system,
+        [...fsMap.keys()],
+        ts,
+        compilerOptions
+      );
+
+      if (definitions) {
+        for (const [fileName, contents] of definitions) {
+          env.createFile(fileName, contents);
+        }
+      }
+
+      compile = (code: string) => {
+        if (!env) {
+          console.warn("Unable to compile code");
+          return code;
+        }
+
+        const sys = env.sys;
+        const host = tsvfs.createVirtualCompilerHost(sys, compilerOptions, ts);
+        const program = ts.createProgram({
+          rootNames: [...sys.readDirectory(sys.getCurrentDirectory())],
+          options: compilerOptions,
+          host: host.compilerHost,
+        });
+
+        program.emit();
+        return sys.readFile(`${this.moduleId}.js`) ?? "";
+      };
+
+      extensions = {
+        tsSync,
+        tsFacet,
+        tsLinter,
+        tsAutocomplete,
+        tsHover,
+      };
+    }
+
+    return html`${guard([this.moduleId], () => {
+      return html`<bb-code-editor
+        ${ref(this.#codeEditorRef)}
+        @bbcodechange=${() => {
+          this.pending = true;
+          if (!this.#codeEditorRef.value) {
+            return;
+          }
+
+          const editor = this.#codeEditorRef.value;
+          if (!editor.value) {
+            return;
+          }
+
+          this.processData(editor.value, compile(editor.value));
+        }}
+        .passthru=${true}
+        .value=${code}
+        .language=${language}
+        .definitions=${definitions}
+        .env=${env}
+        .extensions=${extensions}
+        .fileName=${fileName}
+      ></bb-code-editor>`;
+    })}`;
+  }
+
   async #formatCode() {
     if (!this.#codeEditorRef.value) {
       return;
@@ -253,16 +368,11 @@ export class ModuleEditor extends LitElement {
     editor.value = formatted;
   }
 
-  processData() {
-    if (
-      !this.#codeEditorRef.value ||
-      !this.#moduleRibbonMenuRef.value ||
-      !this.moduleId
-    ) {
+  processData(source: string, compiledCode: string) {
+    if (!this.#moduleRibbonMenuRef.value || !this.moduleId) {
       return;
     }
 
-    const editor = this.#codeEditorRef.value;
     const ribbonMenu = this.#moduleRibbonMenuRef.value;
     const module = this.modules[this.moduleId];
     if (!module) {
@@ -270,10 +380,15 @@ export class ModuleEditor extends LitElement {
     }
 
     const metadata = module.metadata();
+    const language = metadata.source?.language ?? "javascript";
+
+    if (language === "typescript") {
+      metadata.source = { code: source, language: "typescript" };
+    }
     metadata.runnable = ribbonMenu.moduleIsRunnable();
 
     this.dispatchEvent(
-      new ModuleEditEvent(this.moduleId, editor.value ?? "", metadata)
+      new ModuleEditEvent(this.moduleId, compiledCode, metadata)
     );
   }
 
@@ -459,6 +574,39 @@ export class ModuleEditor extends LitElement {
       isError = newestEvent.type === "error";
     }
 
+    let code = module.code();
+    let language = "javascript";
+    let definitions = null;
+    const metadata = module.metadata();
+    if (metadata.source) {
+      const source = metadata.source;
+      if (source.language === "typescript") {
+        code = source.code;
+        language = source.language;
+      } else {
+        console.warn(`Unexpected language ${source.language}`);
+      }
+    }
+
+    if (language === "typescript" && this.modules) {
+      // Add the built-in capabilities.
+      definitions = new Map<string, string>([["/__builtins.d.ts", builtIns]]);
+
+      // Add each of the other modules.
+      for (const [name, contents] of Object.entries(this.modules)) {
+        if (name === this.moduleId) {
+          continue;
+        }
+
+        const source = contents.metadata().source;
+        if (!source || source.language !== "typescript") {
+          continue;
+        }
+
+        definitions.set(`/${name}.ts`, source.code);
+      }
+    }
+
     const isRunnable = !!module.metadata().runnable;
     return html` <div
         id="module-graph"
@@ -499,51 +647,8 @@ export class ModuleEditor extends LitElement {
         <div id="code-container">
           <div id="code-container-outer">
             <div id="code-container-inner">
-              <bb-code-editor
-                ${ref(this.#codeEditorRef)}
-                @bbcodechange=${() => {
-                  this.pending = true;
-                }}
-                @focus=${() => {
-                  requestAnimationFrame(() => {
-                    this.focused = true;
-                  });
-                }}
-                @blur=${() => {
-                  requestAnimationFrame(() => {
-                    this.focused = false;
-                  });
-                }}
-                .passthru=${true}
-                .value=${module.code()}
-              ></bb-code-editor>
+              ${until(this.#createEditor(code, language, definitions))}
             </div>
-          </div>
-        </div>
-        <div id="buttons">
-          <div>
-            <button
-              id="revert"
-              @click=${() => {
-                if (!this.#codeEditorRef.value || !module) {
-                  return;
-                }
-
-                this.#codeEditorRef.value.value = module.code() ?? null;
-                this.pending = false;
-              }}
-            >
-              Revert to saved
-            </button>
-            <button
-              ?disabled=${!this.pending}
-              id="update"
-              @click=${() => {
-                this.processData();
-              }}
-            >
-              Apply changes
-            </button>
           </div>
         </div>
       </section>`;

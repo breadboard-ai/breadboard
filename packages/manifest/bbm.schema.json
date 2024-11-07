@@ -442,8 +442,8 @@
 			"additionalProperties": false,
 			"properties": {
 				"code": {
-					"description": "The code for this module.",
-					"type": "string"
+					"$ref": "#/definitions/ModuleCode",
+					"description": "The code for this module."
 				},
 				"metadata": {
 					"$ref": "#/definitions/ModuleMetadata",
@@ -454,6 +454,13 @@
 				"code"
 			],
 			"type": "object"
+		},
+		"ModuleCode": {
+			"description": "The code for this module, which should include a describer, an invoker, and any other relevant information to power the module.",
+			"type": "string"
+		},
+		"ModuleLanguage": {
+			"type": "string"
 		},
 		"ModuleMetadata": {
 			"additionalProperties": false,
@@ -485,6 +492,23 @@
 				"runnable": {
 					"description": "Whether the module should be presented as a runnable item to runModule.",
 					"type": "boolean"
+				},
+				"source": {
+					"additionalProperties": false,
+					"description": "The pre-compiled source for this module.",
+					"properties": {
+						"code": {
+							"$ref": "#/definitions/ModuleCode"
+						},
+						"language": {
+							"$ref": "#/definitions/ModuleLanguage"
+						}
+					},
+					"required": [
+						"code",
+						"language"
+					],
+					"type": "object"
 				},
 				"tags": {
 					"description": "Tags associated with the module. At this moment, free-form strings.",
