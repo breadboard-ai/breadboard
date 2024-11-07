@@ -116,7 +116,7 @@
     "@lit/task": "^1.0.1",
     "@types/gapi": "^0.0.47",
     "@types/gapi.drive": "^0.0.9",
-    "@types/google.picker": "^0.0.43",
+    "@types/google.picker": "^0.0.44",
     "@typescript/vfs": "^1.6.0",
     "@valtown/codemirror-ts": "^2.2.0",
     "ajv": "^8.17.1",
