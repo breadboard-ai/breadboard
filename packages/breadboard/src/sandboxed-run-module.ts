@@ -4,15 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { InputValues, GraphDescriptor } from "@breadboard-ai/types";
 import type {
-  InputValues,
   NodeDescriberContext,
   NodeDescriberResult,
   NodeHandlerContext,
   NodeHandlerObject,
   Schema,
   Kit,
-  GraphDescriptor,
 } from "./types.js";
 
 import {

@@ -617,6 +617,10 @@ export interface NodeHandlerContext {
    * The data store that can be used to store data across nodes.
    */
   readonly store?: DataStore;
+  /**
+   * JS Sandbox that will be used to run the imperative graphs.
+   */
+  sandbox?: Sandbox;
 }
 
 export type RunArguments = NodeHandlerContext & {

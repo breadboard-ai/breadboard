@@ -17,6 +17,10 @@ export { Telemetry };
 class Telemetry {
   index = 0;
 
+  static create(probe?: Probe, path?: number[]): Telemetry | undefined {
+    return probe && path ? new Telemetry(probe, path) : undefined;
+  }
+
   constructor(
     public readonly probe: Probe,
     public readonly path: number[]

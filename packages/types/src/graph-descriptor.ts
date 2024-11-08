@@ -472,33 +472,11 @@ export type Module = {
 
 export type Modules = Record<ModuleIdentifier, Module>;
 
-/**
- * Represents a graph.
- */
-export type GraphDescriptor = GraphInlineMetadata & {
+export type GraphCommonProperties = GraphInlineMetadata & {
   /**
    * Metadata associated with the graph.
    */
   metadata?: GraphMetadata;
-  /**
-   * The collection of all edges in the graph.
-   */
-  edges: Edge[];
-
-  /**
-   * The collection of all nodes in the graph.
-   */
-  nodes: NodeDescriptor[];
-
-  /**
-   * All the kits (collections of node handlers) that are used by the graph.
-   */
-  kits?: KitDescriptor[];
-
-  /**
-   * Sub-graphs that are also described by this graph representation.
-   */
-  graphs?: SubGraphs;
 
   /**
    * Arguments that are passed to the graph, useful to bind values to graphs.
@@ -520,7 +498,55 @@ export type GraphDescriptor = GraphInlineMetadata & {
    * is discovered through imperative code execution
    */
   virtual?: true;
-} & TestProperties;
+};
+
+/**
+ * Represents a typical graph: a collection of nodes and edges that form
+ * the graph topology.
+ */
+export type DeclarativeGraph = GraphCommonProperties & {
+  /**
+   * The collection of all edges in the graph.
+   */
+  edges: Edge[];
+
+  /**
+   * The collection of all nodes in the graph.
+   */
+  nodes: NodeDescriptor[];
+
+  /**
+   * All the kits (collections of node handlers) that are used by the graph.
+   */
+  kits?: KitDescriptor[];
+
+  /**
+   * Sub-graphs that are also described by this graph representation.
+   */
+  graphs?: SubGraphs;
+};
+
+/**
+ * Represents a graph that's backed by code rather than nodes and edges.
+ */
+export type ImperativeGraph = GraphCommonProperties & {
+  /**
+   * The id of the Module that is used as an entry point for this graph.
+   * If this value is set, the graph is a "module graph": it is backed
+   * by code rather than by nodes and edges.
+   */
+  main: ModuleIdentifier;
+};
+
+/**
+ * A union type of both declarative and imperative graphs. Represents a graph
+ * that is either declarative (defined by nodes and edges) or imperative
+ * (backed by code).
+ */
+export type GraphDescriptor = GraphCommonProperties &
+  DeclarativeGraph &
+  Partial<ImperativeGraph> &
+  TestProperties;
 
 /**
  * Values that are supplied as inputs to the `NodeHandler`.
