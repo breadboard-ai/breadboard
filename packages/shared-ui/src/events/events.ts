@@ -600,6 +600,14 @@ export class CodeChangeEvent extends Event {
   }
 }
 
+export class CodeDiagnosticEvent extends Event {
+  static eventName = "bbcodediagnostic";
+
+  constructor(public readonly count = 0) {
+    super(CodeDiagnosticEvent.eventName, { ...eventInit });
+  }
+}
+
 export class UserOutputEvent extends Event {
   static eventName = "bbuseroutput";
 

@@ -15,6 +15,7 @@ import { autocompletion, closeBrackets } from "@codemirror/autocomplete";
 import { indentWithTab } from "@codemirror/commands";
 import {
   CodeChangeEvent,
+  CodeDiagnosticEvent,
   ToastEvent,
   ToastType,
 } from "../../../events/events.js";
@@ -257,6 +258,17 @@ export class CodeEditor extends LitElement {
 
         globalThis.clearTimeout(this.#emitTimeout);
         this.#emitTimeout = setTimeout(() => {
+          if (this.env && this.fileName) {
+            const diagnostics = [
+              ...this.env.languageService.getSemanticDiagnostics(this.fileName),
+              ...this.env.languageService.getSyntacticDiagnostics(
+                this.fileName
+              ),
+            ];
+
+            this.dispatchEvent(new CodeDiagnosticEvent(diagnostics.length));
+          }
+
           this.dispatchEvent(new CodeChangeEvent());
         }, CODE_CHANGE_EMIT_TIMEOUT);
       }),

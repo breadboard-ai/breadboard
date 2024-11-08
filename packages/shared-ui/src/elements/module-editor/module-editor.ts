@@ -28,6 +28,7 @@ import { GraphAssets } from "../editor/graph-assets";
 import { until } from "lit/directives/until.js";
 import {
   CodeChangeEvent,
+  CodeDiagnosticEvent,
   GraphInitialDrawEvent,
   ModuleEditEvent,
   ToastEvent,
@@ -38,11 +39,13 @@ import { CodeMirrorExtensions, TopGraphRunResult } from "../../types/types";
 import { classMap } from "lit/directives/class-map.js";
 import { builtIns } from "./built-ins.js";
 import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
+import { getMappedMinimalModList } from "./ts-library";
 
 const PREVIEW_KEY = "bb-module-editor-preview-visible";
 
 type CompilationEnvironment = {
   language: ModuleLanguage;
+  moduleId: ModuleIdentifier | null;
   env: VirtualTypeScriptEnvironment | null;
   extensions: CodeMirrorExtensions | null;
   compile(code: ModuleCode): ModuleCode;
@@ -91,6 +94,9 @@ export class ModuleEditor extends LitElement {
 
   @state()
   private formatting = false;
+
+  @state()
+  private errorCount = 0;
 
   static styles = css`
     * {
@@ -249,6 +255,7 @@ export class ModuleEditor extends LitElement {
   #graphRenderer = new GraphRenderer();
   #compilationEnvironment: CompilationEnvironment = {
     language: "javascript",
+    moduleId: null,
     env: null,
     extensions: null,
     compile: (code: ModuleCode) => code,
@@ -263,14 +270,19 @@ export class ModuleEditor extends LitElement {
 
   async #resetCompilationEnvironmentIfChanged(
     language: ModuleLanguage,
+    moduleId: ModuleIdentifier,
     definitions: Map<string, string> | null
   ) {
-    if (language === this.#compilationEnvironment.language) {
+    if (
+      language === this.#compilationEnvironment.language &&
+      moduleId === this.#compilationEnvironment.moduleId
+    ) {
       return;
     }
 
     this.#compilationEnvironment = {
       language,
+      moduleId,
       env: null,
       extensions: null,
       compile: (code: ModuleCode) => code,
@@ -299,7 +311,8 @@ export class ModuleEditor extends LitElement {
       verbatimModuleSyntax: true,
     };
 
-    const fsMap = new Map();
+    const modules = getMappedMinimalModList();
+    const fsMap = new Map(await Promise.all(modules));
     const system = tsvfs.createSystem(fsMap);
     this.#compilationEnvironment.env = tsvfs.createVirtualTypeScriptEnvironment(
       system,
@@ -346,17 +359,25 @@ export class ModuleEditor extends LitElement {
     language: ModuleLanguage,
     definitions: Map<string, string> | null
   ) {
+    if (!this.moduleId) {
+      return nothing;
+    }
+
     return html`${guard(
       [this.moduleId, this.graph?.raw().url, language],
       () => {
         const editor = this.#resetCompilationEnvironmentIfChanged(
           language,
+          this.moduleId!,
           definitions
         ).then(() => {
           const fileName = `${this.moduleId}.ts`;
 
           return html`<bb-code-editor
             ${ref(this.#codeEditorRef)}
+            @bbcodediagnostic=${(evt: CodeDiagnosticEvent) => {
+              this.errorCount = evt.count;
+            }}
             @bbcodechange=${async (evt: CodeChangeEvent) => {
               // User attempted a double save - ignore.
               if (this.formatting) {
@@ -727,6 +748,8 @@ export class ModuleEditor extends LitElement {
           .canShowModulePreview=${isRunnable}
           .formatting=${this.formatting}
           .renderId=${globalThis.crypto.randomUUID()}
+          .errorCount=${this.errorCount}
+          .showErrors=${this.#compilationEnvironment.language === "typescript"}
           @input=${() => {
             this.#processEditorCodeWithEnvironment();
           }}
