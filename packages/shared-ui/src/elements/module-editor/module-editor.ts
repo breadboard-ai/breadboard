@@ -14,14 +14,7 @@ import {
   Kit,
   NodeHandlerMetadata,
 } from "@google-labs/breadboard";
-import {
-  LitElement,
-  html,
-  css,
-  nothing,
-  HTMLTemplateResult,
-  PropertyValues,
-} from "lit";
+import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
 import { CodeEditor, GraphRenderer, ModuleRibbonMenu } from "../elements";
@@ -44,9 +37,14 @@ import { CodeMirrorExtensions, TopGraphRunResult } from "../../types/types";
 import { classMap } from "lit/directives/class-map.js";
 import { builtIns } from "./built-ins.js";
 import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
-// import { getModList, getTypeScriptMod } from "./ts-mod";
 
 const PREVIEW_KEY = "bb-module-editor-preview-visible";
+
+type CompilationEnvironment = {
+  env: VirtualTypeScriptEnvironment | null;
+  extensions: CodeMirrorExtensions | null;
+  compile(code: ModuleCode): ModuleCode;
+};
 
 @customElement("bb-module-editor")
 export class ModuleEditor extends LitElement {
@@ -67,9 +65,6 @@ export class ModuleEditor extends LitElement {
 
   @property({ reflect: true })
   focused = false;
-
-  @state()
-  pending = false;
 
   @property()
   readOnly = false;
@@ -240,6 +235,11 @@ export class ModuleEditor extends LitElement {
   #codeEditorRef: Ref<CodeEditor> = createRef();
   #graphVersion = 1;
   #graphRenderer = new GraphRenderer();
+  #compilationEnvironment: CompilationEnvironment = {
+    env: null,
+    extensions: null,
+    compile: (code: ModuleCode) => code,
+  };
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -248,15 +248,22 @@ export class ModuleEditor extends LitElement {
       globalThis.localStorage.getItem(PREVIEW_KEY) === "true";
   }
 
+  #resetCompilationEnvironment() {
+    this.#compilationEnvironment = {
+      env: null,
+      extensions: null,
+      compile: (code: ModuleCode) => code,
+    };
+  }
+
   async #createEditor(
     code: ModuleCode,
     language: ModuleLanguage,
     definitions: Map<string, string> | null
   ) {
+    this.#resetCompilationEnvironment();
+
     const fileName = `${this.moduleId}.ts`;
-    let env: VirtualTypeScriptEnvironment | null = null;
-    let extensions: CodeMirrorExtensions | null = null;
-    let compile = (code: string) => code;
     if (language === "typescript") {
       const [
         ts,
@@ -281,26 +288,27 @@ export class ModuleEditor extends LitElement {
 
       const fsMap = new Map();
       const system = tsvfs.createSystem(fsMap);
-      env = tsvfs.createVirtualTypeScriptEnvironment(
-        system,
-        [...fsMap.keys()],
-        ts,
-        compilerOptions
-      );
+      this.#compilationEnvironment.env =
+        tsvfs.createVirtualTypeScriptEnvironment(
+          system,
+          [...fsMap.keys()],
+          ts,
+          compilerOptions
+        );
 
       if (definitions) {
         for (const [fileName, contents] of definitions) {
-          env.createFile(fileName, contents);
+          this.#compilationEnvironment.env.createFile(fileName, contents);
         }
       }
 
-      compile = (code: string) => {
-        if (!env) {
+      this.#compilationEnvironment.compile = (code: string) => {
+        if (!this.#compilationEnvironment.env) {
           console.warn("Unable to compile code");
           return code;
         }
 
-        const sys = env.sys;
+        const sys = this.#compilationEnvironment.env.sys;
         const host = tsvfs.createVirtualCompilerHost(sys, compilerOptions, ts);
         const program = ts.createProgram({
           rootNames: [...sys.readDirectory(sys.getCurrentDirectory())],
@@ -312,7 +320,7 @@ export class ModuleEditor extends LitElement {
         return sys.readFile(`${this.moduleId}.js`) ?? "";
       };
 
-      extensions = {
+      this.#compilationEnvironment.extensions = {
         tsSync,
         tsFacet,
         tsLinter,
@@ -325,27 +333,33 @@ export class ModuleEditor extends LitElement {
       return html`<bb-code-editor
         ${ref(this.#codeEditorRef)}
         @bbcodechange=${() => {
-          this.pending = true;
-          if (!this.#codeEditorRef.value) {
-            return;
-          }
-
-          const editor = this.#codeEditorRef.value;
-          if (!editor.value) {
-            return;
-          }
-
-          this.processData(editor.value, compile(editor.value));
+          this.#processEditorCodeWithEnvironment();
         }}
         .passthru=${true}
         .value=${code}
         .language=${language}
         .definitions=${definitions}
-        .env=${env}
-        .extensions=${extensions}
+        .env=${this.#compilationEnvironment.env}
+        .extensions=${this.#compilationEnvironment.extensions}
         .fileName=${fileName}
       ></bb-code-editor>`;
     })}`;
+  }
+
+  async #processEditorCodeWithEnvironment() {
+    if (!this.#codeEditorRef.value) {
+      return;
+    }
+
+    const editor = this.#codeEditorRef.value;
+    if (!editor.value) {
+      return;
+    }
+
+    this.processData(
+      editor.value,
+      this.#compilationEnvironment.compile(editor.value)
+    );
   }
 
   async #formatCode() {
@@ -430,12 +444,6 @@ export class ModuleEditor extends LitElement {
     this.dispatchEvent(
       new ModuleEditEvent(this.moduleId, compiledCode, metadata)
     );
-  }
-
-  protected willUpdate(changedProperties: PropertyValues): void {
-    if (changedProperties.has("renderId")) {
-      this.pending = false;
-    }
   }
 
   destroyEditor() {
@@ -671,7 +679,7 @@ export class ModuleEditor extends LitElement {
           .canShowModulePreview=${isRunnable}
           .formatting=${this.formatting}
           @input=${() => {
-            this.pending = true;
+            this.#processEditorCodeWithEnvironment();
           }}
           @bbtogglepreview=${() => this.#togglePreview()}
           @bbformatmodulecode=${async () => {
