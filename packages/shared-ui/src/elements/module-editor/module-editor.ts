@@ -27,6 +27,7 @@ import {
 import { GraphAssets } from "../editor/graph-assets";
 import { until } from "lit/directives/until.js";
 import {
+  CodeChangeEvent,
   GraphInitialDrawEvent,
   ModuleEditEvent,
   ToastEvent,
@@ -332,7 +333,22 @@ export class ModuleEditor extends LitElement {
     return html`${guard([this.moduleId, this.graph?.raw().url], () => {
       return html`<bb-code-editor
         ${ref(this.#codeEditorRef)}
-        @bbcodechange=${() => {
+        @bbcodechange=${async (evt: CodeChangeEvent) => {
+          // User attempted a double save - ignore.
+          if (this.formatting) {
+            this.dispatchEvent(
+              new ToastEvent(
+                "Unable to save - already in process",
+                ToastType.WARNING
+              )
+            );
+            return;
+          }
+
+          if (evt.formatOnChange) {
+            await this.#formatCode();
+          }
+
           this.#processEditorCodeWithEnvironment();
         }}
         .passthru=${true}
@@ -346,7 +362,7 @@ export class ModuleEditor extends LitElement {
     })}`;
   }
 
-  async #processEditorCodeWithEnvironment() {
+  #processEditorCodeWithEnvironment() {
     if (!this.#codeEditorRef.value) {
       return;
     }
