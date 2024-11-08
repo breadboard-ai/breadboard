@@ -161,6 +161,19 @@ export class ModuleEditor extends LitElement {
       height: 100%;
       overflow-y: scroll;
       background: white;
+      position: relative;
+    }
+
+    #code-container-inner::before {
+      content: "";
+      background-color: rgb(245, 245, 245);
+      color: rgb(108, 108, 108);
+      border-right: 1px solid rgb(221, 221, 221);
+      width: 20px;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
     }
 
     #revert {
@@ -259,10 +272,6 @@ export class ModuleEditor extends LitElement {
         rootDir: ".",
         noLib: true,
         verbatimModuleSyntax: true,
-        allowJs: true,
-        paths: {
-          "*": ["./*"],
-        },
       };
 
       const fsMap = new Map();
