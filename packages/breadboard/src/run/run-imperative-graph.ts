@@ -4,9 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphDescriptor, ImperativeGraph } from "@breadboard-ai/types";
+import type {
+  GraphDescriptor,
+  ImperativeGraph,
+  ModuleIdentifier,
+} from "@breadboard-ai/types";
 
-export { isImperativeGraph, toDeclarativeGraph };
+export { isImperativeGraph, toDeclarativeGraph, toImperativeGraph };
 
 function isImperativeGraph(graph: unknown): graph is ImperativeGraph {
   return "main" in (graph as ImperativeGraph);
@@ -56,4 +60,16 @@ function toDeclarativeGraph(graph: ImperativeGraph): GraphDescriptor {
     },
   ];
   return declarative;
+}
+
+function toImperativeGraph(
+  main: ModuleIdentifier,
+  graph: GraphDescriptor
+): GraphDescriptor {
+  const imperative = structuredClone(graph) as Partial<GraphDescriptor>;
+  imperative.main = main;
+  delete imperative.nodes;
+  delete imperative.edges;
+  delete imperative.graphs;
+  return imperative as GraphDescriptor;
 }

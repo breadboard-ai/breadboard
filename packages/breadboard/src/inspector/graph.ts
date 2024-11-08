@@ -51,6 +51,10 @@ import {
   NodeTypeDescriberOptions,
 } from "./types.js";
 import { VirtualNode } from "./virtual-node.js";
+import {
+  isImperativeGraph,
+  toDeclarativeGraph,
+} from "../run/run-imperative-graph.js";
 
 export const inspectableGraph = (
   graph: GraphDescriptor,
@@ -88,14 +92,14 @@ class Graph implements InspectableGraphWithStore {
   #graphs: InspectableSubgraphs | null = null;
 
   constructor(graph: GraphDescriptor, options?: InspectableGraphOptions) {
-    this.#graph = graph;
-    this.#url = maybeURL(graph.url);
+    this.#graph = isImperativeGraph(graph) ? toDeclarativeGraph(graph) : graph;
+    this.#url = maybeURL(this.#graph.url);
     this.#options = options || {};
     const nodes = new NodeCache(this);
     const edges = new EdgeCache(nodes);
-    edges.populate(graph);
+    edges.populate(this.#graph);
     const modules = new ModuleCache();
-    modules.populate(graph);
+    modules.populate(this.#graph);
     const describe = new DescribeResultCache();
 
     this.#cache = { edges, nodes, modules, describe };
@@ -261,6 +265,9 @@ class Graph implements InspectableGraphWithStore {
   }
 
   incomingForNode(id: NodeIdentifier): InspectableEdge[] {
+    if (!this.#graph.edges) {
+      console.log("🌻 what's going on here", this.#graph);
+    }
     return this.#graph.edges
       .filter((edge) => edge.to === id)
       .map((edge) => this.#cache.edges.getOrCreate(edge));

@@ -33,6 +33,18 @@ import { ChangeGraphMetadata } from "./operations/change-graph-metadata.js";
 import { ChangeModule } from "./operations/change-module.js";
 import { GraphEditHistory } from "./history.js";
 import { ModuleIdentifier } from "@breadboard-ai/types";
+import {
+  isImperativeGraph,
+  toDeclarativeGraph,
+  toImperativeGraph,
+} from "../run/run-imperative-graph.js";
+
+const validImperativeEdits: EditSpec["type"][] = [
+  "addmodule",
+  "changegraphmetadata",
+  "removemodule",
+  "changemodule",
+];
 
 const operations = new Map<EditSpec["type"], EditOperation>([
   ["addnode", new AddNode()],
@@ -57,20 +69,26 @@ export class Graph implements EditableGraph {
   #graphs: Record<GraphIdentifier, Graph> | null;
   #eventTarget: EventTarget = new EventTarget();
   #history: GraphEditHistory;
+  #imperativeMain: string | null = null;
 
   constructor(
     graph: GraphDescriptor,
     options: EditableGraphOptions,
     parent: Graph | null
   ) {
-    this.#graph = graph;
+    if (isImperativeGraph(graph)) {
+      this.#imperativeMain = graph.main;
+      this.#graph = toDeclarativeGraph(graph);
+    } else {
+      this.#graph = graph;
+    }
     this.#parent = parent || null;
     if (parent) {
       // Embedded subgraphs can not have subgraphs.
       this.#graphs = null;
     } else {
       this.#graphs = Object.fromEntries(
-        Object.entries(graph.graphs || {}).map(([id, graph]) => [
+        Object.entries(this.#graph.graphs || {}).map(([id, graph]) => [
           id,
           new Graph(graph, options, this),
         ])
@@ -81,7 +99,7 @@ export class Graph implements EditableGraph {
     this.#inspector = inspectableGraph(this.#graph, options);
     this.#history = new GraphEditHistory({
       graph: () => {
-        return this.#graph;
+        return this.raw();
       },
       version: () => {
         return this.#version;
@@ -91,11 +109,11 @@ export class Graph implements EditableGraph {
         this.#version++;
         this.#inspector.resetGraph(graph);
         this.#eventTarget.dispatchEvent(
-          new ChangeEvent(this.#graph, this.#version, false, "history", [], [])
+          new ChangeEvent(this.raw(), this.#version, false, "history", [], [])
         );
       },
     });
-    this.#history.add(graph, "Clean slate");
+    this.#history.add(this.raw(), "Clean slate");
   }
 
   #makeIndependent() {
@@ -168,7 +186,7 @@ export class Graph implements EditableGraph {
       : {
           type: "nochange",
         };
-    this.#eventTarget.dispatchEvent(new ChangeRejectEvent(this.#graph, reason));
+    this.#eventTarget.dispatchEvent(new ChangeRejectEvent(this.raw(), reason));
   }
 
   addEventListener(eventName: string, listener: EventListener): void {
@@ -184,6 +202,13 @@ export class Graph implements EditableGraph {
 
   parent() {
     return this.#parent;
+  }
+
+  #shouldDiscardEdit(edit: EditSpec) {
+    if (this.#imperativeMain) {
+      return !validImperativeEdits.includes(edit.type);
+    }
+    return false;
   }
 
   async #singleEdit(
@@ -234,6 +259,9 @@ export class Graph implements EditableGraph {
     // Collect affected modules
     const affectedModules: NodeIdentifier[][] = [];
     for (const edit of edits) {
+      if (this.#shouldDiscardEdit(edit)) {
+        continue;
+      }
       const result = await this.#singleEdit(edit, context);
       log.push({ edit: edit.type, result });
       if (!result.success) {
@@ -259,7 +287,7 @@ export class Graph implements EditableGraph {
       return { success: true, log };
     }
 
-    this.#history.addEdit(this.#graph, checkpoint, label, this.#version);
+    this.#history.addEdit(this.raw(), checkpoint, label, this.#version);
 
     !dryRun &&
       this.#updateGraph(
@@ -337,7 +365,9 @@ export class Graph implements EditableGraph {
   }
 
   raw() {
-    return this.#graph;
+    return this.#imperativeMain
+      ? toImperativeGraph(this.#imperativeMain, this.#graph)
+      : this.#graph;
   }
 
   inspect() {
