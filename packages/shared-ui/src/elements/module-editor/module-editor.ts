@@ -334,15 +334,17 @@ export class ModuleEditor extends LitElement {
       }
 
       const sys = this.#compilationEnvironment.env.sys;
-      const host = tsvfs.createVirtualCompilerHost(sys, compilerOptions, ts);
-      const program = ts.createProgram({
-        rootNames: [...sys.readDirectory(sys.getCurrentDirectory())],
-        options: compilerOptions,
-        host: host.compilerHost,
+      const file = sys.readFile(`${this.moduleId}.ts`);
+      if (!file) {
+        console.warn("Unable to compile code");
+        return code;
+      }
+
+      const { outputText } = ts.transpileModule(file, {
+        compilerOptions,
       });
 
-      program.emit();
-      return sys.readFile(`${this.moduleId}.js`) ?? "";
+      return outputText;
     };
 
     this.#compilationEnvironment.extensions = {
