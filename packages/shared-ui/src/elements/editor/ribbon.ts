@@ -1328,15 +1328,17 @@ export class GraphRibbonMenu extends LitElement {
         name: string;
         icon: string;
         disabled?: boolean;
-      }> = Object.keys(this.graph?.modules() || {}).map((title) => {
-        return {
-          title,
-          name: title,
-          icon: "module",
-          disabled: this.moduleId === title,
-          secondaryAction: "delete",
-        };
-      });
+      }> = Object.keys(this.graph?.modules() || {})
+        .map((title) => {
+          return {
+            title,
+            name: title,
+            icon: "module",
+            disabled: this.moduleId === title,
+            secondaryAction: "delete",
+          };
+        })
+        .sort((a, b) => (a.title > b.title ? 1 : a.title < b.title ? -1 : 0));
 
       modules.unshift({
         title: "Main board",

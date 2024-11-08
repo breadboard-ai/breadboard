@@ -8,12 +8,16 @@ import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { EditorView, minimalSetup } from "codemirror";
-import { keymap } from "@codemirror/view";
+import { keymap, lineNumbers } from "@codemirror/view";
 import { javascript } from "@codemirror/lang-javascript";
 import { json } from "@codemirror/lang-json";
 import { autocompletion, closeBrackets } from "@codemirror/autocomplete";
 import { indentWithTab } from "@codemirror/commands";
-import { CodeChangeEvent } from "../../../events/events.js";
+import {
+  CodeChangeEvent,
+  ToastEvent,
+  ToastType,
+} from "../../../events/events.js";
 import { type Extension } from "@codemirror/state";
 
 import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
@@ -50,6 +54,7 @@ export class CodeEditor extends LitElement {
   #value: string | null = null;
   #message = "";
   #shouldCreateEditorOnUpdate = false;
+  #onKeyDownBound = this.#onKeyDown.bind(this);
 
   static styles = css`
     :host {
@@ -61,8 +66,7 @@ export class CodeEditor extends LitElement {
     .cm-editor {
       border-radius: var(--bb-grid-size);
       background: var(--bb-neutral-0);
-      padding: var(--bb-grid-size-2);
-      border: 1px solid rgb(209, 209, 209);
+      border: 1px solid var(--bb-neutral-300);
     }
 
     .cm-editor.cm-focused {
@@ -72,11 +76,11 @@ export class CodeEditor extends LitElement {
     }
 
     :host([passthru="true"]) .cm-editor {
-      border: 1px solid transparent;
+      border: none;
     }
 
     :host([passthru="true"]) .cm-editor.cm-focused {
-      border: 1px solid transparent;
+      border: none;
       box-shadow: none;
     }
 
@@ -152,6 +156,31 @@ export class CodeEditor extends LitElement {
     return this.#value;
   }
 
+  connectedCallback(): void {
+    super.connectedCallback();
+    this.addEventListener("keydown", this.#onKeyDown);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.removeEventListener("keydown", this.#onKeyDown);
+  }
+
+  #onKeyDown(evt: KeyboardEvent) {
+    const isMac = navigator.platform.indexOf("Mac") === 0;
+    const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+    if (evt.key !== "s" || !isCtrlCommand) {
+      return;
+    }
+
+    evt.preventDefault();
+    evt.stopImmediatePropagation();
+
+    this.dispatchEvent(new ToastEvent("Code updated", ToastType.INFORMATION));
+    this.dispatchEvent(new CodeChangeEvent());
+  }
+
   #attemptEditorUpdate() {
     if (!this.#editor) {
       return;
@@ -163,6 +192,14 @@ export class CodeEditor extends LitElement {
     });
 
     this.#editor.dispatch(transaction);
+  }
+
+  #attemptEditorFocus() {
+    if (!this.#editor) {
+      return;
+    }
+
+    this.#editor.focus();
   }
 
   protected willUpdate(changedProperties: PropertyValues): void {
@@ -184,6 +221,7 @@ export class CodeEditor extends LitElement {
   #createEditor() {
     const editorExtensions: Extension[] = [
       minimalSetup,
+      lineNumbers(),
       closeBrackets(),
       keymap.of([indentWithTab]),
       EditorView.updateListener.of((value) => {
@@ -248,6 +286,7 @@ export class CodeEditor extends LitElement {
     });
 
     this.#attemptEditorUpdate();
+    this.#attemptEditorFocus();
   }
 
   render() {

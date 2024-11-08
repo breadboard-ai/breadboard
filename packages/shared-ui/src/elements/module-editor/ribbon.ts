@@ -485,15 +485,17 @@ export class ModuleRibbonMenu extends LitElement {
         icon: string;
         disabled?: boolean;
         secondaryAction?: string;
-      }> = Object.keys(this.modules || {}).map((title) => {
-        return {
-          title,
-          name: title,
-          icon: "module",
-          disabled: this.moduleId === title,
-          secondaryAction: "delete",
-        };
-      });
+      }> = Object.keys(this.modules || {})
+        .map((title) => {
+          return {
+            title,
+            name: title,
+            icon: "module",
+            disabled: this.moduleId === title,
+            secondaryAction: "delete",
+          };
+        })
+        .sort((a, b) => (a.title > b.title ? 1 : a.title < b.title ? -1 : 0));
 
       modules.unshift({
         title: "Main board",
