@@ -48,6 +48,8 @@ import {
   TokenVendor,
 } from "@breadboard-ai/connection-client";
 
+import { sandbox } from "./sandbox";
+
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 250;
 
@@ -311,6 +313,7 @@ export class Main extends LitElement {
           experiments: {},
           environment: this.environment,
           tokenVendor: this.tokenVendor,
+          sandbox,
         });
       })
       .then((runtime) => {

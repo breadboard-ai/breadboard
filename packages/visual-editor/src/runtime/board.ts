@@ -33,15 +33,11 @@ import {
   getBoardServers,
 } from "@breadboard-ai/board-server-management";
 import { TokenVendor } from "@breadboard-ai/connection-client";
-import wasm from "/sandbox.wasm?url";
-import { WebSandbox } from "@breadboard-ai/jsandbox/web";
 import { ModuleIdentifier } from "@breadboard-ai/types";
+import { sandbox } from "../sandbox";
 
 function withRunModule(kits: Kit[]): Kit[] {
-  return addSandboxedRunModule(
-    new WebSandbox(new URL(wasm, window.location.href)),
-    kits
-  );
+  return addSandboxedRunModule(sandbox, kits);
 }
 
 export class Board extends EventTarget {

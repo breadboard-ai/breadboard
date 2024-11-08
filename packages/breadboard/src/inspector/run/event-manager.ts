@@ -103,7 +103,10 @@ export class EventManager {
     };
     // TODO: Instead of creating a new instance, cache and store them
     // in the GraphStore.
-    entry.graph = inspectableGraph(graph, { kits: this.#options.kits });
+    entry.graph = inspectableGraph(graph, {
+      kits: this.#options.kits,
+      sandbox: this.#options.sandbox,
+    });
     this.#addToSequence("graphstart", entry);
   }
 

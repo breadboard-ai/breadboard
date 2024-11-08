@@ -24,6 +24,7 @@ import type {
 import { GraphLoader } from "./loader/types.js";
 import { DataStore } from "./data/types.js";
 import { ManagedRunState, RunState } from "./run/types.js";
+import { Sandbox } from "@breadboard-ai/jsandbox";
 
 export type {
   Capability,
@@ -227,6 +228,10 @@ export type NodeDescriberContext = {
    * Kits that are available in the context of the node.
    */
   kits?: Kit[];
+  /**
+   * JS Sandbox that will be used to run the module describers.
+   */
+  sandbox?: Sandbox;
 };
 
 export type NodeDescriberWires = {

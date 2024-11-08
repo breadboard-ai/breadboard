@@ -162,6 +162,7 @@ class Graph implements InspectableGraphWithStore {
         outerGraph: this.#graph,
         loader,
         kits,
+        sandbox: this.#options.sandbox,
         wires: {
           incoming: Object.fromEntries(
             (options?.incoming ?? []).map((edge) => [

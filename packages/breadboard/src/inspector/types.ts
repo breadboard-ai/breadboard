@@ -1109,6 +1109,10 @@ export type RunObserverOptions = {
    * Whether or not to skip replacing inlineData parts with storedData parts.
    */
   skipDataStore?: boolean;
+  /**
+   * The JS Sandbox that will be used to run custom describers
+   */
+  sandbox?: Sandbox;
 };
 
 export type GraphstartTimelineEntry = [
