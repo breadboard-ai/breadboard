@@ -13,7 +13,7 @@ import type {
   Schema,
   Kit,
   GraphDescriptor,
-} from "@google-labs/breadboard";
+} from "./types.js";
 
 import {
   type Capability,

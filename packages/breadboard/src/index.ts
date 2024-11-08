@@ -124,3 +124,5 @@ export { runGraph } from "./run/run-graph.js";
  * Conversion helpers
  */
 export { sequenceEntryToHarnessRunResult } from "./inspector/run/conversions.js";
+
+export { addSandboxedRunModule } from "./sandboxed-run-module.js";

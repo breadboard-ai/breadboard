@@ -39,8 +39,6 @@ export { unnest, unnestNode } from "./nodes/unnest.js";
 import { storeDataNode } from "./nodes/storeData.js";
 import { retrieveDataNode } from "./nodes/retrieveData.js";
 
-export { addSandboxedRunModule } from "./sandboxed-run-module.js";
-
 const metadata = {
   title: "Core Kit",
   description: "A Breadboard kit that enables composition and reuse of boards",

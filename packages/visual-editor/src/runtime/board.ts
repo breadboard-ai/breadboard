@@ -5,6 +5,7 @@
  */
 
 import {
+  addSandboxedRunModule,
   BoardServer,
   BoardServerExtension,
   BoardServerExtensionNamespace,
@@ -32,8 +33,6 @@ import {
   getBoardServers,
 } from "@breadboard-ai/board-server-management";
 import { TokenVendor } from "@breadboard-ai/connection-client";
-import { addSandboxedRunModule } from "@google-labs/core-kit";
-
 import wasm from "/sandbox.wasm?url";
 import { WebSandbox } from "@breadboard-ai/jsandbox/web";
 import { ModuleIdentifier } from "@breadboard-ai/types";
