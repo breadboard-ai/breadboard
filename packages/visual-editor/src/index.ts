@@ -49,7 +49,7 @@ import {
 } from "@breadboard-ai/connection-client";
 
 import { sandbox } from "./sandbox";
-import { ModuleIdentifier } from "@breadboard-ai/types";
+import { Module, ModuleIdentifier } from "@breadboard-ai/types";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 250;
@@ -1437,9 +1437,23 @@ export class Main extends LitElement {
       return;
     }
 
-    this.#runtime.edit.createModule(this.tab, moduleId, {
+    const newModule: Module = {
       code: "",
-    });
+    };
+
+    const createAsTypeScript = this.#settings
+      ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
+      .items.get("Use TypeScript as Module default language");
+    if (createAsTypeScript) {
+      newModule.metadata = {
+        source: {
+          code: "",
+          language: "typescript",
+        },
+      };
+    }
+
+    this.#runtime.edit.createModule(this.tab, moduleId, newModule);
   }
 
   #showBoardEditOverlay(x: number | null, y: number | null) {

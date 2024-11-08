@@ -420,6 +420,11 @@ export class GraphRibbonMenu extends LitElement {
       background-image: var(--bb-icon-board), var(--bb-icon-arrow-drop-down);
     }
 
+    #shortcut-board-modules.ts {
+      background-image: var(--bb-icon-extension-ts),
+        var(--bb-icon-arrow-drop-down);
+    }
+
     #undo {
       background: var(--bb-neutral-0) var(--bb-icon-undo) center center / 20px
         20px no-repeat;
@@ -1303,9 +1308,14 @@ export class GraphRibbonMenu extends LitElement {
       ></bb-overflow-menu>`;
     }
 
+    const graphModules = this.graph?.modules() || {};
+    const module = graphModules[this.moduleId ?? ""] ?? null;
     const modules = html`<button
       id="shortcut-board-modules"
-      class=${classMap({ main: this.moduleId === null })}
+      class=${classMap({
+        main: this.moduleId === null,
+        ts: module && module.metadata().source?.language === "typescript",
+      })}
       @pointerover=${(evt: PointerEvent) => {
         this.dispatchEvent(
           new ShowTooltipEvent("Board Modules", evt.clientX, evt.clientY)
@@ -1328,12 +1338,15 @@ export class GraphRibbonMenu extends LitElement {
         name: string;
         icon: string;
         disabled?: boolean;
-      }> = Object.keys(this.graph?.modules() || {})
-        .map((title) => {
+      }> = Object.entries(graphModules)
+        .map(([title, module]) => {
           return {
             title,
             name: title,
-            icon: "module",
+            icon:
+              module.metadata().source?.language === "typescript"
+                ? "module-ts"
+                : "module",
             disabled: this.moduleId === title,
             secondaryAction: "delete",
           };

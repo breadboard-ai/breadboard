@@ -183,6 +183,10 @@ export class OverflowMenu extends LitElement {
     button.module {
       background-image: var(--bb-icon-extension);
     }
+
+    button.module-ts {
+      background-image: var(--bb-icon-extension-ts);
+    }
   `;
 
   connectedCallback(): void {

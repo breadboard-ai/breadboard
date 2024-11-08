@@ -259,6 +259,12 @@ export class UserInput extends LitElement {
       height: 100%;
       border: 1px solid var(--bb-ui-200);
       border-radius: var(--bb-grid-size);
+      transition: background-color 0.15s cubic-bezier(0, 0, 0.3, 1);
+    }
+
+    .item .module label:hover {
+      border: 1px solid var(--bb-ui-300);
+      background: var(--bb-ui-50);
     }
 
     .item .module input:checked + label {

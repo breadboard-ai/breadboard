@@ -259,6 +259,11 @@ export class ModuleRibbonMenu extends LitElement {
       background-image: var(--bb-icon-board), var(--bb-icon-arrow-drop-down);
     }
 
+    #shortcut-board-modules.ts {
+      background-image: var(--bb-icon-extension-ts),
+        var(--bb-icon-arrow-drop-down);
+    }
+
     #shortcut-overflow.visible {
       display: block;
     }
@@ -461,7 +466,10 @@ export class ModuleRibbonMenu extends LitElement {
 
     const modules = html`<button
       id="shortcut-board-modules"
-      class=${classMap({ main: this.moduleId === null })}
+      class=${classMap({
+        main: this.moduleId === null,
+        ts: module.metadata().source?.language === "typescript",
+      })}
       @pointerover=${(evt: PointerEvent) => {
         this.dispatchEvent(
           new ShowTooltipEvent("Board Modules", evt.clientX, evt.clientY)
@@ -485,12 +493,15 @@ export class ModuleRibbonMenu extends LitElement {
         icon: string;
         disabled?: boolean;
         secondaryAction?: string;
-      }> = Object.keys(this.modules || {})
-        .map((title) => {
+      }> = Object.entries(this.modules || {})
+        .map(([title, module]) => {
           return {
             title,
             name: title,
-            icon: "module",
+            icon:
+              module.metadata().source?.language === "typescript"
+                ? "module-ts"
+                : "module",
             disabled: this.moduleId === title,
             secondaryAction: "delete",
           };
