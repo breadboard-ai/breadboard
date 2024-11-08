@@ -33,7 +33,12 @@ import {
 } from "@breadboard-ai/types";
 import { GraphAssets } from "../editor/graph-assets";
 import { until } from "lit/directives/until.js";
-import { GraphInitialDrawEvent, ModuleEditEvent } from "../../events/events";
+import {
+  GraphInitialDrawEvent,
+  ModuleEditEvent,
+  ToastEvent,
+  ToastType,
+} from "../../events/events";
 import { guard } from "lit/directives/guard.js";
 import { CodeMirrorExtensions, TopGraphRunResult } from "../../types/types";
 import { classMap } from "lit/directives/class-map.js";
@@ -316,7 +321,7 @@ export class ModuleEditor extends LitElement {
       };
     }
 
-    return html`${guard([this.moduleId], () => {
+    return html`${guard([this.moduleId, this.graph?.raw().url], () => {
       return html`<bb-code-editor
         ${ref(this.#codeEditorRef)}
         @bbcodechange=${() => {
@@ -361,18 +366,44 @@ export class ModuleEditor extends LitElement {
       import("prettier/plugins/typescript.mjs"),
     ]);
 
-    const formatted = await Prettier.format(editor.value, {
-      arrowParens: "always",
-      printWidth: 80,
-      semi: true,
-      tabWidth: 2,
-      trailingComma: "es5",
-      useTabs: false,
-      parser: "typescript",
-      plugins: [PrettierESTree, PrettierTS],
-    });
+    try {
+      const formatted = await Prettier.format(editor.value, {
+        arrowParens: "always",
+        printWidth: 80,
+        semi: true,
+        tabWidth: 2,
+        trailingComma: "es5",
+        useTabs: false,
+        parser: "typescript",
+        plugins: [PrettierESTree, PrettierTS],
+      });
 
-    editor.value = formatted;
+      editor.value = formatted;
+    } catch (err) {
+      const formatError = err as Error;
+      const syntaxError = formatError.message.split("\n")[0];
+      if (!syntaxError) {
+        this.dispatchEvent(
+          new ToastEvent("Error formatting code", ToastType.ERROR)
+        );
+        return;
+      }
+
+      this.dispatchEvent(new ToastEvent(syntaxError, ToastType.ERROR));
+    }
+  }
+
+  #parseModuleDescription(code: string) {
+    const matches = /@fileOverview([\s\S]*?)\*\//gim.exec(code);
+    if (!matches) {
+      return "";
+    }
+
+    return matches[1]
+      .split("\n")
+      .map((line) => line.replace(/\s?\*/, "").trim())
+      .join("\n")
+      .trim();
   }
 
   processData(source: string, compiledCode: string) {
@@ -388,10 +419,12 @@ export class ModuleEditor extends LitElement {
 
     const metadata = module.metadata();
     const language = metadata.source?.language ?? "javascript";
+    const description = this.#parseModuleDescription(source);
 
     if (language === "typescript") {
       metadata.source = { code: source, language: "typescript" };
     }
+    metadata.description = description;
     metadata.runnable = ribbonMenu.moduleIsRunnable();
 
     this.dispatchEvent(

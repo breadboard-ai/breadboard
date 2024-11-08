@@ -3,7 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LLMContent, ModuleIdentifier } from "@breadboard-ai/types";
+import { LLMContent } from "@breadboard-ai/types";
 import {
   BoardServer,
   GraphDescriptor,
@@ -27,7 +27,10 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
   EnhanceNodeConfigurationEvent,
   EnhanceNodeResetEvent,
+  HideTooltipEvent,
   ModuleChosenEvent,
+  ModuleCreateEvent,
+  ShowTooltipEvent,
   UserOutputEvent,
 } from "../../events/events";
 import { UserInputConfiguration, UserOutputValues } from "../../types/types";
@@ -59,6 +62,8 @@ import {
   StreamlinedSchemaEditor,
 } from "../elements";
 import "./delegating-input.js";
+
+const NO_MODULE = " -- No module";
 
 @customElement("bb-user-input")
 export class UserInput extends LitElement {
@@ -203,13 +208,29 @@ export class UserInput extends LitElement {
       max-height: 300px;
     }
 
-    .item .module-selector-container {
+    .item .module-selector {
       margin: var(--bb-grid-size-2) 0 var(--bb-grid-size-3) 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      column-gap: var(--bb-grid-size);
+      row-gap: var(--bb-grid-size);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+    }
+
+    .item .module-title {
+      font: 500 var(--bb-title-small) / var(--bb-title-line-height-small)
+        var(--bb-font-family);
+      color: var(--bb-neutral-800);
+      margin: var(--bb-grid-size) 0;
+      display: block;
+    }
+
+    .item .module-title:empty {
+      margin: 0;
     }
 
     .item .module-description {
-      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family);
       color: var(--bb-neutral-600);
       margin: var(--bb-grid-size) 0;
       display: block;
@@ -217,6 +238,33 @@ export class UserInput extends LitElement {
 
     .item .module-description:empty {
       margin: 0;
+    }
+
+    .item .module {
+      border-radius: var(--bb-grid-size);
+    }
+
+    .item .module input {
+      display: none;
+    }
+
+    .item .module label {
+      padding-bottom: 32px;
+      background: var(--bb-neutral-0);
+      display: block;
+      padding: var(--bb-grid-size-2);
+      padding-bottom: var(--bb-grid-size-10);
+      cursor: pointer;
+      position: relative;
+      height: 100%;
+      border: 1px solid var(--bb-ui-200);
+      border-radius: var(--bb-grid-size);
+    }
+
+    .item .module input:checked + label {
+      border: 1px solid var(--bb-ui-400);
+      background: var(--bb-ui-50);
+      cursor: default;
     }
 
     .api-message {
@@ -230,6 +278,7 @@ export class UserInput extends LitElement {
       flex: 1;
     }
 
+    .jump-to-definition,
     .enhance {
       border: none;
       border-radius: var(--bb-grid-size-6);
@@ -244,11 +293,14 @@ export class UserInput extends LitElement {
       transition: background-color 0.1s cubic-bezier(0, 0, 0.3, 1);
     }
 
+    .jump-to-definition:hover,
+    .jump-to-definition:focus,
     .enhance:hover,
     .enhance:focus {
       background-color: var(--bb-ui-500);
     }
 
+    .jump-to-definition[disabled],
     .enhance[disabled] {
       opacity: 0.8;
       cursor: normal;
@@ -264,10 +316,40 @@ export class UserInput extends LitElement {
       flex: 0 0 auto;
     }
 
+    .jump-to-definition {
+      position: absolute;
+      bottom: var(--bb-grid-size);
+      right: var(--bb-grid-size);
+      font-size: 0;
+      width: var(--bb-grid-size-7);
+      height: var(--bb-grid-size-7);
+      padding: 0;
+      background-image: var(--bb-icon-extension-inverted);
+    }
+
+    .create-new-module {
+      border-radius: var(--bb-grid-size-6);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      background: var(--bb-neutral-0) var(--bb-icon-add-circle) 6px center /
+        16px 16px no-repeat;
+      height: var(--bb-grid-size-6);
+      padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-6);
+      color: var(--bb-neutral-900);
+      cursor: pointer;
+      transition: background-color 0.1s cubic-bezier(0, 0, 0.3, 1);
+      border: 1px solid var(--bb-neutral-300);
+    }
+
+    .create-new-module:hover,
+    .create-new-module:focus {
+      background-color: var(--bb-neutral-50);
+    }
+
     .reset {
       border: none;
       border-radius: var(--bb-grid-size-6);
-      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
       background: transparent;
       height: var(--bb-grid-size-6);
@@ -365,12 +447,16 @@ export class UserInput extends LitElement {
         // shape of the HTMLInputElement insofar as they have a .value property
         // on them.
         const id = this.#createId(input.name);
-        const el = this.#formRef.value?.querySelector<HTMLInputElement>(
-          `#${id}`
-        );
+        let el = this.#formRef.value?.querySelector<HTMLInputElement>(`#${id}`);
         if (!el) {
-          console.warn(`Unable to locate element for #${id} (${input.name})`);
-          return { name: input.name, value: null };
+          el = this.#formRef.value?.querySelector<HTMLInputElement>(
+            `input[name="${id}"]:checked`
+          );
+
+          if (!el) {
+            console.warn(`Unable to locate element for #${id} (${input.name})`);
+            return { name: input.name, value: null };
+          }
         }
 
         let inputValue: NodeValue = el.value;
@@ -602,46 +688,86 @@ export class UserInput extends LitElement {
           } else if (isBoardBehavior(input.schema, input.value)) {
             inputField = createBoardInput(id, input.value);
           } else if (isModuleBehavior(input.schema)) {
-            const modules = this.graph?.modules ?? {};
-            const moduleNames = Object.keys(modules);
+            const modules = Object.entries(this.graph?.modules ?? {}).filter(
+              ([, module]) => module.metadata?.runnable
+            );
 
-            const moduleDescription =
-              typeof input.value === "string"
-                ? (modules[input.value]?.metadata?.description ?? null)
-                : null;
+            modules.unshift([
+              NO_MODULE,
+              {
+                code: "// No module",
+                metadata: { description: "Unsets this module value" },
+              },
+            ]);
 
-            inputField = html` <div class="module-selector-container">
-              <label for=${id} class="module-description"
-                >${moduleDescription ?? nothing}</label
-              >
-              <div>
-                <select id="${id}" name="${id}" class="module-selector">
-                  <option value="">-- No module</option>
-                  ${moduleNames.map(
-                    (module) =>
-                      html`<option
-                        value=${module}
-                        ?selected=${module === input.value}
-                      >
-                        ${module}
-                      </option>`
-                  )};
-                </select>
-                <button
-                  @click=${() => {
-                    console.log(input.value);
-                    if (!input.value) {
+            inputField = html`<div class="module-selector">
+                ${map(modules, ([module, moduleInfo], idx) => {
+                  const description =
+                    moduleInfo.metadata?.description || "No description";
+
+                  return html`
+                    <div class="module">
+                      <input
+                        type="radio"
+                        name=${id}
+                        id="${id}-${idx}"
+                        .value=${module === NO_MODULE ? "" : module}
+                        ?checked=${module === input.value}
+                      />
+                      <label for="${id}-${idx}">
+                        <span class="module-title">${module}</span>
+                        <span class="module-description">${description}</span>
+                        ${module === NO_MODULE
+                          ? nothing
+                          : html`<button
+                              class="jump-to-definition"
+                              @pointerover=${(evt: PointerEvent) => {
+                                this.dispatchEvent(
+                                  new ShowTooltipEvent(
+                                    "Jump to module definition",
+                                    evt.clientX,
+                                    evt.clientY
+                                  )
+                                );
+                              }}
+                              @pointerout=${() => {
+                                this.dispatchEvent(new HideTooltipEvent());
+                              }}
+                              @click=${() => {
+                                this.dispatchEvent(new HideTooltipEvent());
+                                this.dispatchEvent(
+                                  new ModuleChosenEvent(module)
+                                );
+                              }}
+                            >
+                              Jump to definition
+                            </button>`}
+                      </label>
+                    </div>
+                  `;
+                })}
+              </div>
+
+              <button
+                class="create-new-module"
+                @click=${() => {
+                  let moduleId;
+
+                  do {
+                    moduleId = prompt(
+                      "What would you like to call this module?"
+                    );
+                    if (!moduleId) {
                       return;
                     }
+                    // Check that the new module name is valid.
+                  } while (!/^[A-Za-z0-9_\\-]+$/gim.test(moduleId));
 
-                    const id = input.value as ModuleIdentifier;
-                    this.dispatchEvent(new ModuleChosenEvent(id));
-                  }}
-                >
-                  Jump to definition
-                </button>
-              </div>
-            </div>`;
+                  this.dispatchEvent(new ModuleCreateEvent(moduleId));
+                }}
+              >
+                Create a new module...
+              </button> `;
           } else {
             switch (input.schema.type) {
               case "array": {

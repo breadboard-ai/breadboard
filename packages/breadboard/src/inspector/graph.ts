@@ -435,7 +435,7 @@ class Graph implements InspectableGraphWithStore {
     affectedNodes: NodeIdentifier[],
     affectedModules: ModuleIdentifier[]
   ): void {
-    // TODO: Update this a better way?
+    // TODO: Handle this a better way?
     for (const id of affectedModules) {
       this.#cache.modules.remove(id);
       if (!graph.modules || !graph.modules[id]) {
@@ -443,6 +443,19 @@ class Graph implements InspectableGraphWithStore {
       }
 
       this.#cache.modules.add(id, graph.modules[id]);
+
+      // Find any nodes configured to use this module and clear its describer.
+      const runModulesNodes = this.#cache.nodes.byType("runModule");
+      for (const node of runModulesNodes) {
+        if (
+          node.configuration().$module &&
+          node.configuration().$module === id &&
+          !affectedNodes.includes(node.descriptor.id)
+        ) {
+          affectedNodes.push(node.descriptor.id);
+          visualOnly = false;
+        }
+      }
     }
 
     this.#cache.describe.clear(visualOnly, affectedNodes);

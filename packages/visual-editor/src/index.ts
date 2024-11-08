@@ -49,6 +49,7 @@ import {
 } from "@breadboard-ai/connection-client";
 
 import { sandbox } from "./sandbox";
+import { ModuleIdentifier } from "@breadboard-ai/types";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 250;
@@ -1431,6 +1432,16 @@ export class Main extends LitElement {
     );
   }
 
+  #attemptModuleCreate(moduleId: ModuleIdentifier) {
+    if (!this.tab) {
+      return;
+    }
+
+    this.#runtime.edit.createModule(this.tab, moduleId, {
+      code: "",
+    });
+  }
+
   #showBoardEditOverlay(x: number | null, y: number | null) {
     if (!this.tab) {
       return;
@@ -2008,6 +2019,11 @@ export class Main extends LitElement {
               this.#nodeConfiguratorData = null;
               this.showNodeConfigurator = false;
               this.#runtime.board.changeModule(this.tab.id, evt.moduleId);
+            }}
+            @bbmodulecreate=${(evt: BreadboardUI.Events.ModuleCreateEvent) => {
+              this.#attemptModuleCreate(evt.moduleId);
+              this.#nodeConfiguratorData = null;
+              this.showNodeConfigurator = false;
             }}
             @bbrunisolatednode=${async (
               evt: BreadboardUI.Events.RunIsolatedNodeEvent
@@ -2610,13 +2626,7 @@ export class Main extends LitElement {
               @bbmodulecreate=${(
                 evt: BreadboardUI.Events.ModuleCreateEvent
               ) => {
-                if (!this.tab) {
-                  return;
-                }
-
-                this.#runtime.edit.createModule(this.tab, evt.moduleId, {
-                  code: "",
-                });
+                this.#attemptModuleCreate(evt.moduleId);
               }}
               @bbmoduledelete=${(
                 evt: BreadboardUI.Events.ModuleDeleteEvent
