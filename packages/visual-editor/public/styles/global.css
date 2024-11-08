@@ -93,6 +93,8 @@
   --bb-icon-experiment: url(/third_party/icons/experiment.svg);
   --bb-icon-extension: url(/third_party/icons/extension.svg);
   --bb-icon-extension-inverted: url(/third_party/icons/extension-inverted.svg);
+  --bb-icon-extension-ts: url(/third_party/icons/extension-ts.svg);
+  --bb-icon-extension-ts-inverted: url(/third_party/icons/extension-ts-inverted.svg);
   --bb-icon-eye: url(/third_party/icons/eye.svg);
   --bb-icon-fetch: url(/third_party/icons/fetch.svg);
   --bb-icon-file-add: url(/third_party/icons/file-add.svg);

@@ -170,6 +170,15 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
             value: false,
           },
         ],
+        [
+          "Use TypeScript as Module default language",
+          {
+            name: "Use TypeScript as Module default language",
+            description:
+              "Sets TypeScript as the language when creating new modules",
+            value: true,
+          },
+        ],
       ]),
     },
     [BreadboardUI.Types.SETTINGS_TYPE.SECRETS]: {
