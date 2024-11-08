@@ -951,6 +951,7 @@ export class UserInput extends LitElement {
                   inputField = html`<bb-code-editor
                     id=${id}
                     name=${id}
+                    .language=${"javascript"}
                     .value=${input.value ?? defaultValue ?? ""}
                   ></bb-code-editor>`;
                   break;

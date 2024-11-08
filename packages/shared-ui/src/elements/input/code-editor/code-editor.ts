@@ -63,6 +63,10 @@ export class CodeEditor extends LitElement {
       position: relative;
     }
 
+    .cm-gutters {
+      border-radius: var(--bb-grid-size) 0 0 var(--bb-grid-size);
+    }
+
     .cm-editor {
       border-radius: var(--bb-grid-size);
       background: var(--bb-neutral-0);
@@ -72,7 +76,7 @@ export class CodeEditor extends LitElement {
     .cm-editor.cm-focused {
       outline: none;
       border: 1px solid var(--bb-ui-700);
-      box-shadow: inset 0 0 0 1px var(--bb-ui-700);
+      box-shadow: 0 0 0 1px var(--bb-ui-700);
     }
 
     :host([passthru="true"]) .cm-editor {
@@ -161,12 +165,12 @@ export class CodeEditor extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
-    this.addEventListener("keydown", this.#onKeyDown);
+    this.addEventListener("keydown", this.#onKeyDownBound);
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.removeEventListener("keydown", this.#onKeyDown);
+    this.removeEventListener("keydown", this.#onKeyDownBound);
   }
 
   #onKeyDown(evt: KeyboardEvent) {
