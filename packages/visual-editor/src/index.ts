@@ -1439,20 +1439,21 @@ export class Main extends LitElement {
     }
 
     const newModule: Module = {
-      code: defaultModuleContent,
+      code: defaultModuleContent(),
       metadata: {
         runnable: true,
       },
     };
 
-    const createAsTypeScript = this.#settings
-      ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
-      .items.get("Use TypeScript as Module default language");
+    const createAsTypeScript =
+      this.#settings
+        ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
+        .items.get("Use TypeScript as Module default language")?.value ?? false;
     if (createAsTypeScript) {
       newModule.metadata = {
         runnable: true,
         source: {
-          code: defaultModuleContent,
+          code: defaultModuleContent("typescript"),
           language: "typescript",
         },
       };

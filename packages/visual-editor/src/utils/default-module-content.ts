@@ -4,14 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export const defaultModuleContent = `/**
+import { ModuleLanguage } from "@breadboard-ai/types";
+
+export function defaultModuleContent(language: ModuleLanguage = "javascript") {
+  return `/**
  * @fileoverview Add a description for your module here.
  */
 
 export { invoke as default, describe };
 
-async function invoke({context}: {context: unknown}) {
-  return { context }
+async function invoke({ context }${language === "typescript" ? ": { context: unknown }" : ""}) {
+  return { context };
 }
 
 async function describe() {
@@ -37,4 +40,6 @@ async function describe() {
       },
     },
   };
-}`;
+}
+`;
+}
