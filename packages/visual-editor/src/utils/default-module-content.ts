@@ -13,8 +13,8 @@ export function defaultModuleContent(language: ModuleLanguage = "javascript") {
 
 export { invoke as default, describe };
 
-async function invoke({context}${language === "typescript" ? ": {context: unknown}" : ""}) {
-  return { context }
+async function invoke({ context }${language === "typescript" ? ": { context: unknown }" : ""}) {
+  return { context };
 }
 
 async function describe() {
@@ -40,5 +40,6 @@ async function describe() {
       },
     },
   };
-}`;
+}
+`;
 }
