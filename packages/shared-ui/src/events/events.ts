@@ -583,7 +583,7 @@ export class CommentUpdateEvent extends Event {
 export class CodeChangeEvent extends Event {
   static eventName = "bbcodechange";
 
-  constructor() {
+  constructor(public readonly formatOnChange = false) {
     super(CodeChangeEvent.eventName, { ...eventInit });
   }
 }

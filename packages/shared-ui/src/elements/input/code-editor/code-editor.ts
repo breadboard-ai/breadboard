@@ -142,6 +142,9 @@ export class CodeEditor extends LitElement {
     }
   `;
 
+  #emitTimeout = -1;
+  #lastCursorPosition: number | undefined = undefined;
+
   set value(value: string | null) {
     this.#value = value;
     this.#attemptEditorUpdate();
@@ -177,8 +180,10 @@ export class CodeEditor extends LitElement {
     evt.preventDefault();
     evt.stopImmediatePropagation();
 
+    this.#lastCursorPosition = this.#editor?.state.selection.main.head;
+
     this.dispatchEvent(new ToastEvent("Code updated", ToastType.INFORMATION));
-    this.dispatchEvent(new CodeChangeEvent());
+    this.dispatchEvent(new CodeChangeEvent(true));
   }
 
   #attemptEditorUpdate() {
@@ -192,6 +197,24 @@ export class CodeEditor extends LitElement {
     });
 
     this.#editor.dispatch(transaction);
+
+    const lastCursorPosition = this.#lastCursorPosition;
+    this.#lastCursorPosition = undefined;
+
+    // Ensure we're not setting the cursor outside of the available range.
+    if (
+      !lastCursorPosition ||
+      lastCursorPosition > this.#editor.state.doc.length
+    ) {
+      return;
+    }
+
+    this.#editor.dispatch({
+      selection: {
+        anchor: lastCursorPosition,
+        head: lastCursorPosition,
+      },
+    });
   }
 
   #attemptEditorFocus() {
@@ -217,7 +240,6 @@ export class CodeEditor extends LitElement {
     this.#createEditor();
   }
 
-  #emitTimeout = -1;
   #createEditor() {
     const editorExtensions: Extension[] = [
       minimalSetup,
