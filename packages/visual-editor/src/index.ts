@@ -2628,6 +2628,19 @@ export class Main extends LitElement {
                     : null;
                 this.requestUpdate();
               }}
+              @bbmodulechangelanguage=${(
+                evt: BreadboardUI.Events.ModuleChangeLanguageEvent
+              ) => {
+                if (!this.tab) {
+                  return;
+                }
+
+                this.#runtime.edit.changeModuleLanguage(
+                  this.tab,
+                  evt.moduleId,
+                  evt.moduleLanguage
+                );
+              }}
               @bbmodulechosen=${(
                 evt: BreadboardUI.Events.ModuleChosenEvent
               ) => {

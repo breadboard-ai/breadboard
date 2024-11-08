@@ -330,36 +330,39 @@ export class ModuleEditor extends LitElement {
       };
     }
 
-    return html`${guard([this.moduleId, this.graph?.raw().url], () => {
-      return html`<bb-code-editor
-        ${ref(this.#codeEditorRef)}
-        @bbcodechange=${async (evt: CodeChangeEvent) => {
-          // User attempted a double save - ignore.
-          if (this.formatting) {
-            this.dispatchEvent(
-              new ToastEvent(
-                "Unable to save - already in process",
-                ToastType.WARNING
-              )
-            );
-            return;
-          }
+    return html`${guard(
+      [this.moduleId, this.graph?.raw().url, language],
+      () => {
+        return html`<bb-code-editor
+          ${ref(this.#codeEditorRef)}
+          @bbcodechange=${async (evt: CodeChangeEvent) => {
+            // User attempted a double save - ignore.
+            if (this.formatting) {
+              this.dispatchEvent(
+                new ToastEvent(
+                  "Unable to save - already in process",
+                  ToastType.WARNING
+                )
+              );
+              return;
+            }
 
-          if (evt.formatOnChange) {
-            await this.#formatCode();
-          }
+            if (evt.formatOnChange) {
+              await this.#formatCode();
+            }
 
-          this.#processEditorCodeWithEnvironment();
-        }}
-        .passthru=${true}
-        .value=${code}
-        .language=${language}
-        .definitions=${definitions}
-        .env=${this.#compilationEnvironment.env}
-        .extensions=${this.#compilationEnvironment.extensions}
-        .fileName=${fileName}
-      ></bb-code-editor>`;
-    })}`;
+            this.#processEditorCodeWithEnvironment();
+          }}
+          .passthru=${true}
+          .value=${code}
+          .language=${language}
+          .definitions=${definitions}
+          .env=${this.#compilationEnvironment.env}
+          .extensions=${this.#compilationEnvironment.extensions}
+          .fileName=${fileName}
+        ></bb-code-editor>`;
+      }
+    )}`;
   }
 
   #processEditorCodeWithEnvironment() {
@@ -694,6 +697,7 @@ export class ModuleEditor extends LitElement {
           .isShowingModulePreview=${this.showModulePreview}
           .canShowModulePreview=${isRunnable}
           .formatting=${this.formatting}
+          .renderId=${globalThis.crypto.randomUUID()}
           @input=${() => {
             this.#processEditorCodeWithEnvironment();
           }}
