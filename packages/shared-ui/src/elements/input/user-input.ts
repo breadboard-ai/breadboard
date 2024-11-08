@@ -718,7 +718,8 @@ export class UserInput extends LitElement {
                         name=${id}
                         id="${id}-${idx}"
                         .value=${module === NO_MODULE ? "" : module}
-                        ?checked=${module === input.value}
+                        ?checked=${(module === NO_MODULE && !input.value) ||
+                        module === input.value}
                       />
                       <label for="${id}-${idx}">
                         <span class="module-title">${module}</span>
