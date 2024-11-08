@@ -295,6 +295,7 @@ export class ModuleEditor extends LitElement {
       declaration: true,
       rootDir: ".",
       noLib: true,
+      allowJs: true,
       verbatimModuleSyntax: true,
     };
 
@@ -693,11 +694,12 @@ export class ModuleEditor extends LitElement {
         }
 
         const source = contents.metadata().source;
-        if (!source || source.language !== "typescript") {
+        if (source && source.language !== "typescript") {
+          definitions.set(`/${name}.ts`, source.code);
           continue;
+        } else {
+          definitions.set(`/${name}.js`, contents.code());
         }
-
-        definitions.set(`/${name}.ts`, source.code);
       }
     }
 
