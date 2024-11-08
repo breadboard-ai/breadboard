@@ -28,6 +28,7 @@ import {
   Module,
   ModuleCode,
   ModuleIdentifier,
+  ModuleLanguage,
   ModuleMetadata,
   NodeMetadata,
   NodeValue,
@@ -380,6 +381,69 @@ export class Edit extends EventTarget {
       ],
       `Delete module ${moduleId}`
     );
+  }
+
+  changeModuleLanguage(
+    tab: Tab | null,
+    moduleId: ModuleIdentifier,
+    language: ModuleLanguage
+  ) {
+    if (!tab) {
+      return null;
+    }
+
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
+      return null;
+    }
+
+    const module = editableGraph.inspect().moduleById(moduleId);
+    if (!module) {
+      return null;
+    }
+
+    const newModule: Module = {
+      code: module.code(),
+      metadata: module.metadata(),
+    };
+
+    if (!newModule.metadata) {
+      return null;
+    }
+
+    switch (language) {
+      case "typescript": {
+        if (newModule.metadata.source?.language === "typescript") {
+          console.warn("Attempt to convert TypeScript module to TypeScript");
+          return null;
+        }
+
+        newModule.metadata.source = {
+          code: module.code(),
+          language: "typescript",
+        };
+        break;
+      }
+
+      case "javascript": {
+        if (newModule.metadata.source?.language === "javascript") {
+          console.warn("Attempt to convert JavaScript module to JavaScript");
+          return null;
+        }
+
+        // Apply the existing code to the root value and remove the metadata
+        // source.
+        if (newModule.metadata.source?.code) {
+          newModule.code = newModule.metadata.source?.code;
+        }
+
+        delete newModule.metadata.source;
+        break;
+      }
+    }
+
+    this.editModule(tab, moduleId, newModule.code, newModule.metadata);
   }
 
   editModule(

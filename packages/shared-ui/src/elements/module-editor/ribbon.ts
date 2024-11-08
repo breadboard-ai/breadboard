@@ -8,6 +8,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import {
   FormatModuleCodeEvent,
   HideTooltipEvent,
+  ModuleChangeLanguageEvent,
   ModuleChosenEvent,
   ModuleCreateEvent,
   ModuleDeleteEvent,
@@ -77,6 +78,9 @@ export class ModuleRibbonMenu extends LitElement {
   @property()
   formatting = false;
 
+  @property()
+  renderId: string | null = null;
+
   @state()
   showSaveMenu = false;
 
@@ -106,6 +110,16 @@ export class ModuleRibbonMenu extends LitElement {
       font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
       justify-content: space-between;
+    }
+
+    input[type="text"],
+    select,
+    textarea {
+      padding: var(--bb-grid-size) var(--bb-grid-size);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      border: 1px solid var(--bb-neutral-300);
+      border-radius: var(--bb-grid-size);
     }
 
     #left {
@@ -266,6 +280,14 @@ export class ModuleRibbonMenu extends LitElement {
 
     #shortcut-overflow.visible {
       display: block;
+    }
+
+    #language-selector-container {
+      margin-right: var(--bb-grid-size-2);
+    }
+
+    #language-selector-container label {
+      margin-right: var(--bb-grid-size);
     }
 
     .hidden {
@@ -463,12 +485,13 @@ export class ModuleRibbonMenu extends LitElement {
 
   render() {
     const module = this.modules[this.moduleId ?? ""] ?? null;
+    const isTypeScript = module.metadata().source?.language === "typescript";
 
     const modules = html`<button
       id="shortcut-board-modules"
       class=${classMap({
         main: this.moduleId === null,
-        ts: module.metadata().source?.language === "typescript",
+        ts: isTypeScript,
       })}
       @pointerover=${(evt: PointerEvent) => {
         this.dispatchEvent(
@@ -609,6 +632,32 @@ export class ModuleRibbonMenu extends LitElement {
     const moduleIsRunnable = !!(module && module.metadata().runnable);
     const moduleControls = html`<div id="module-controls">
       <div class="divider"></div>
+      <div id="language-selector-container">
+        <label for="language-selector">Language</label>
+        <select
+          id="language-selector"
+          @input=${(evt: InputEvent) => {
+            if (!confirm("Are you sure you wish to change module language?")) {
+              return;
+            }
+
+            if (!(evt.target instanceof HTMLSelectElement) || !this.moduleId) {
+              return;
+            }
+
+            this.dispatchEvent(
+              new ModuleChangeLanguageEvent(this.moduleId, evt.target.value)
+            );
+          }}
+        >
+          <option value="javascript" ?selected=${!isTypeScript}>
+            JavaScript
+          </option>
+          <option value="typescript" ?selected=${isTypeScript}>
+            TypeScript
+          </option>
+        </select>
+      </div>
 
       <button
         id="format-code"

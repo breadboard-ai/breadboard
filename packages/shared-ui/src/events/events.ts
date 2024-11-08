@@ -21,6 +21,7 @@ import type {
 import type {
   ModuleCode,
   ModuleIdentifier,
+  ModuleLanguage,
   ModuleMetadata,
   NodeMetadata,
   NodeValue,
@@ -420,6 +421,17 @@ export class ModuleChosenEvent extends Event {
 
   constructor(public readonly moduleId: ModuleIdentifier | null) {
     super(ModuleChosenEvent.eventName, { ...eventInit });
+  }
+}
+
+export class ModuleChangeLanguageEvent extends Event {
+  static eventName = "bbmodulechangelanguage";
+
+  constructor(
+    public readonly moduleId: ModuleIdentifier,
+    public readonly moduleLanguage: ModuleLanguage
+  ) {
+    super(ModuleChangeLanguageEvent.eventName, { ...eventInit });
   }
 }
 
