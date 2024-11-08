@@ -158,7 +158,7 @@
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
-    "ava": "^5.2.0",
+    "ava": "^6.2.0",
     "eslint": "^8.57.1",
     "eslint-plugin-expect-type": "^0.4.3",
     "npm-ci": "^0.0.2",
