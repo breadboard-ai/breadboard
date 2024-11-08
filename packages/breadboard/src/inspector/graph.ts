@@ -13,6 +13,7 @@ import {
 import { getHandler } from "../handler.js";
 import { createLoader } from "../loader/index.js";
 import { invokeGraph } from "../run/invoke-graph.js";
+import { invokeDescriber } from "../sandboxed-run-module.js";
 import { combineSchemas, removeProperty } from "../schema.js";
 import {
   Edge,
@@ -30,6 +31,7 @@ import { EdgeCache } from "./edge.js";
 import { collectKits, createGraphNodeType } from "./kits.js";
 import { ModuleCache } from "./module.js";
 import { NodeCache } from "./node.js";
+import { DescribeResultCache } from "./run/describe-cache.js";
 import {
   EdgeType,
   describeInput,
@@ -49,8 +51,6 @@ import {
   NodeTypeDescriberOptions,
 } from "./types.js";
 import { VirtualNode } from "./virtual-node.js";
-import { DescribeResultCache } from "./run/describe-cache.js";
-import { tryModuleDescriber } from "./run-module-describer.js";
 
 export const inspectableGraph = (
   graph: GraphDescriptor,
@@ -336,36 +336,29 @@ class Graph implements InspectableGraphWithStore {
     }
     // invoke graph
     try {
-      const moduleDescriber = tryModuleDescriber(
-        customDescriber,
-        this.#graph,
-        this.#options
-      );
-      const base = this.#url;
-      const { loader } = this.#options;
+      const { loader, sandbox } = this.#options;
+      if (sandbox) {
+        const { inputSchema, outputSchema } =
+          await this.#describeWithStaticAnalysis();
+        const result = await invokeDescriber(
+          sandbox,
+          this.#graph,
+          inputs,
+          inputSchema,
+          outputSchema
+        );
+        if (result) {
+          return { success: true, result };
+        }
+        if (result === false) {
+          return { success: false };
+        }
+      }
       if (!loader) {
         return { success: false };
       }
-      if (moduleDescriber) {
-        const { inputSchema, outputSchema } =
-          await this.#describeWithStaticAnalysis();
+      const base = this.#url;
 
-        const result = await moduleDescriber(
-          inputs,
-          inputSchema,
-          outputSchema,
-          {
-            outerGraph: this.#graph,
-            base,
-            kits: this.#options.kits,
-            loader,
-            wires: { incoming: {}, outgoing: {} },
-          }
-        );
-        return { success: true, result };
-      } else if (moduleDescriber !== false) {
-        return { success: false };
-      }
       // try loading the describer graph.
       const describerGraph = await loader.load(customDescriber, {
         base,
