@@ -50,6 +50,7 @@ import {
 
 import { sandbox } from "./sandbox";
 import { Module, ModuleIdentifier } from "@breadboard-ai/types";
+import { defaultModuleContent } from "./utils/default-module-content";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 250;
@@ -1438,7 +1439,10 @@ export class Main extends LitElement {
     }
 
     const newModule: Module = {
-      code: "",
+      code: defaultModuleContent,
+      metadata: {
+        runnable: true,
+      },
     };
 
     const createAsTypeScript = this.#settings
@@ -1446,8 +1450,9 @@ export class Main extends LitElement {
       .items.get("Use TypeScript as Module default language");
     if (createAsTypeScript) {
       newModule.metadata = {
+        runnable: true,
         source: {
-          code: "",
+          code: defaultModuleContent,
           language: "typescript",
         },
       };

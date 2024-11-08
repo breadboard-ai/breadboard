@@ -42,6 +42,7 @@ import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
 const PREVIEW_KEY = "bb-module-editor-preview-visible";
 
 type CompilationEnvironment = {
+  language: ModuleLanguage;
   env: VirtualTypeScriptEnvironment | null;
   extensions: CodeMirrorExtensions | null;
   compile(code: ModuleCode): ModuleCode;
@@ -230,6 +231,16 @@ export class ModuleEditor extends LitElement {
       padding-right: var(--bb-grid-size-4);
       flex: 0 0 auto;
     }
+
+    .loading-env {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
+        var(--bb-font-family);
+    }
   `;
 
   #moduleRibbonMenuRef: Ref<ModuleRibbonMenu> = createRef();
@@ -237,6 +248,7 @@ export class ModuleEditor extends LitElement {
   #graphVersion = 1;
   #graphRenderer = new GraphRenderer();
   #compilationEnvironment: CompilationEnvironment = {
+    language: "javascript",
     env: null,
     extensions: null,
     compile: (code: ModuleCode) => code,
@@ -249,11 +261,82 @@ export class ModuleEditor extends LitElement {
       globalThis.localStorage.getItem(PREVIEW_KEY) === "true";
   }
 
-  #resetCompilationEnvironment() {
+  async #resetCompilationEnvironmentIfChanged(
+    language: ModuleLanguage,
+    definitions: Map<string, string> | null
+  ) {
+    if (language === this.#compilationEnvironment.language) {
+      return;
+    }
+
     this.#compilationEnvironment = {
+      language,
       env: null,
       extensions: null,
       compile: (code: ModuleCode) => code,
+    };
+
+    if (language !== "typescript") {
+      return;
+    }
+
+    const [ts, tsvfs, { tsSync, tsFacet, tsLinter, tsAutocomplete, tsHover }] =
+      await Promise.all([
+        import("typescript"),
+        import("@typescript/vfs"),
+        import("@valtown/codemirror-ts"),
+      ]);
+
+    const compilerOptions = {
+      target: ts.ScriptTarget.ESNext,
+      module: ts.ModuleKind.Preserve,
+      moduleResolution: ts.ModuleResolutionKind.Bundler,
+      isolatedModules: true,
+      declaration: true,
+      rootDir: ".",
+      noLib: true,
+      verbatimModuleSyntax: true,
+    };
+
+    const fsMap = new Map();
+    const system = tsvfs.createSystem(fsMap);
+    this.#compilationEnvironment.env = tsvfs.createVirtualTypeScriptEnvironment(
+      system,
+      [...fsMap.keys()],
+      ts,
+      compilerOptions
+    );
+
+    if (definitions) {
+      for (const [fileName, contents] of definitions) {
+        this.#compilationEnvironment.env.createFile(fileName, contents);
+      }
+    }
+
+    this.#compilationEnvironment.compile = (code: string) => {
+      if (!this.#compilationEnvironment.env) {
+        console.warn("Unable to compile code");
+        return code;
+      }
+
+      const sys = this.#compilationEnvironment.env.sys;
+      const host = tsvfs.createVirtualCompilerHost(sys, compilerOptions, ts);
+      const program = ts.createProgram({
+        rootNames: [...sys.readDirectory(sys.getCurrentDirectory())],
+        options: compilerOptions,
+        host: host.compilerHost,
+      });
+
+      program.emit();
+      return sys.readFile(`${this.moduleId}.js`) ?? "";
+    };
+
+    this.#compilationEnvironment.extensions = {
+      tsSync,
+      tsFacet,
+      tsLinter,
+      tsAutocomplete,
+      tsHover,
     };
   }
 
@@ -262,105 +345,49 @@ export class ModuleEditor extends LitElement {
     language: ModuleLanguage,
     definitions: Map<string, string> | null
   ) {
-    this.#resetCompilationEnvironment();
-
-    const fileName = `${this.moduleId}.ts`;
-    if (language === "typescript") {
-      const [
-        ts,
-        tsvfs,
-        { tsSync, tsFacet, tsLinter, tsAutocomplete, tsHover },
-      ] = await Promise.all([
-        import("typescript"),
-        import("@typescript/vfs"),
-        import("@valtown/codemirror-ts"),
-      ]);
-
-      const compilerOptions = {
-        target: ts.ScriptTarget.ESNext,
-        module: ts.ModuleKind.Preserve,
-        moduleResolution: ts.ModuleResolutionKind.Bundler,
-        isolatedModules: true,
-        declaration: true,
-        rootDir: ".",
-        noLib: true,
-        verbatimModuleSyntax: true,
-      };
-
-      const fsMap = new Map();
-      const system = tsvfs.createSystem(fsMap);
-      this.#compilationEnvironment.env =
-        tsvfs.createVirtualTypeScriptEnvironment(
-          system,
-          [...fsMap.keys()],
-          ts,
-          compilerOptions
-        );
-
-      if (definitions) {
-        for (const [fileName, contents] of definitions) {
-          this.#compilationEnvironment.env.createFile(fileName, contents);
-        }
-      }
-
-      this.#compilationEnvironment.compile = (code: string) => {
-        if (!this.#compilationEnvironment.env) {
-          console.warn("Unable to compile code");
-          return code;
-        }
-
-        const sys = this.#compilationEnvironment.env.sys;
-        const host = tsvfs.createVirtualCompilerHost(sys, compilerOptions, ts);
-        const program = ts.createProgram({
-          rootNames: [...sys.readDirectory(sys.getCurrentDirectory())],
-          options: compilerOptions,
-          host: host.compilerHost,
-        });
-
-        program.emit();
-        return sys.readFile(`${this.moduleId}.js`) ?? "";
-      };
-
-      this.#compilationEnvironment.extensions = {
-        tsSync,
-        tsFacet,
-        tsLinter,
-        tsAutocomplete,
-        tsHover,
-      };
-    }
-
     return html`${guard(
       [this.moduleId, this.graph?.raw().url, language],
       () => {
-        return html`<bb-code-editor
-          ${ref(this.#codeEditorRef)}
-          @bbcodechange=${async (evt: CodeChangeEvent) => {
-            // User attempted a double save - ignore.
-            if (this.formatting) {
-              this.dispatchEvent(
-                new ToastEvent(
-                  "Unable to save - already in process",
-                  ToastType.WARNING
-                )
-              );
-              return;
-            }
+        const editor = this.#resetCompilationEnvironmentIfChanged(
+          language,
+          definitions
+        ).then(() => {
+          const fileName = `${this.moduleId}.ts`;
 
-            if (evt.formatOnChange) {
-              await this.#formatCode();
-            }
+          return html`<bb-code-editor
+            ${ref(this.#codeEditorRef)}
+            @bbcodechange=${async (evt: CodeChangeEvent) => {
+              // User attempted a double save - ignore.
+              if (this.formatting) {
+                this.dispatchEvent(
+                  new ToastEvent(
+                    "Unable to save - already in process",
+                    ToastType.WARNING
+                  )
+                );
+                return;
+              }
 
-            this.#processEditorCodeWithEnvironment();
-          }}
-          .passthru=${true}
-          .value=${code}
-          .language=${language}
-          .definitions=${definitions}
-          .env=${this.#compilationEnvironment.env}
-          .extensions=${this.#compilationEnvironment.extensions}
-          .fileName=${fileName}
-        ></bb-code-editor>`;
+              if (evt.formatOnChange) {
+                await this.#formatCode();
+              }
+
+              this.#processEditorCodeWithEnvironment();
+            }}
+            .passthru=${true}
+            .value=${code}
+            .language=${language}
+            .definitions=${definitions}
+            .env=${this.#compilationEnvironment.env}
+            .extensions=${this.#compilationEnvironment.extensions}
+            .fileName=${fileName}
+          ></bb-code-editor>`;
+        });
+
+        return html`${until(
+          editor,
+          html`<div class="loading-env">Loading environment...</div>`
+        )}`;
       }
     )}`;
   }
