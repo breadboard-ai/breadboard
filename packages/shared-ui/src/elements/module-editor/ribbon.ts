@@ -61,6 +61,12 @@ export class ModuleRibbonMenu extends LitElement {
   eventCount = 0;
 
   @property()
+  errorCount = 0;
+
+  @property()
+  showErrors = false;
+
+  @property()
   isInputPending = false;
 
   @property()
@@ -305,6 +311,22 @@ export class ModuleRibbonMenu extends LitElement {
         var(--bb-font-family);
       color: var(--bb-neutral-700);
       margin-left: var(--bb-grid-size);
+    }
+
+    #errors {
+      padding: var(--bb-grid-size) var(--bb-grid-size-2);
+      background: var(--bb-neutral-50);
+      border-radius: var(--bb-grid-size);
+      min-width: 70px;
+      text-align: center;
+      user-select: none;
+    }
+
+    #errors.has-errors {
+      margin-left: var(--bb-grid-size-2);
+      padding: var(--bb-grid-size);
+      background: var(--bb-warning-400);
+      color: var(--bb-neutral-0);
     }
 
     #run {
@@ -730,7 +752,17 @@ export class ModuleRibbonMenu extends LitElement {
       </div>
     </div>`;
 
-    const left = [moduleSelector, moduleControls, overflow];
+    const errors = this.showErrors
+      ? html`<div class="divider"></div>
+          <div
+            id="errors"
+            class=${classMap({ "has-errors": this.errorCount > 0 })}
+          >
+            ${this.errorCount} error${this.errorCount === 1 ? "" : "s"}
+          </div>`
+      : nothing;
+
+    const left = [moduleSelector, moduleControls, errors, overflow];
     const right = [
       html`<button
         id="board-activity"
