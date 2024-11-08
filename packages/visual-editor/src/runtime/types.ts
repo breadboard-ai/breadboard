@@ -17,6 +17,7 @@ import {
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { TokenVendor } from "@breadboard-ai/connection-client";
 import { ModuleIdentifier } from "@breadboard-ai/types";
+import { Sandbox } from "@breadboard-ai/jsandbox";
 
 export enum TabType {
   URL,
@@ -42,6 +43,7 @@ export interface Tab {
 export interface RuntimeConfig {
   dataStore: DataStore;
   runStore: RunStore;
+  sandbox: Sandbox;
   experiments: Record<string, boolean>;
   environment?: BreadboardUI.Contexts.Environment;
   tokenVendor?: TokenVendor;

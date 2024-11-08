@@ -32,6 +32,7 @@ import {
   NodeMetadata,
   NodeValue,
 } from "@breadboard-ai/types";
+import { Sandbox } from "@breadboard-ai/jsandbox";
 
 export class Edit extends EventTarget {
   #editors = new Map<TabId, EditableGraph>();
@@ -39,7 +40,8 @@ export class Edit extends EventTarget {
   constructor(
     public readonly providers: GraphProvider[],
     public readonly loader: GraphLoader,
-    public readonly kits: Kit[]
+    public readonly kits: Kit[],
+    public readonly sandbox: Sandbox
   ) {
     super();
   }
@@ -59,7 +61,11 @@ export class Edit extends EventTarget {
       return editor;
     }
 
-    const editor = edit(tab.graph, { kits: tab.kits, loader: this.loader });
+    const editor = edit(tab.graph, {
+      kits: tab.kits,
+      loader: this.loader,
+      sandbox: this.sandbox,
+    });
     editor.addEventListener("graphchange", (evt) => {
       tab.graph = evt.graph;
       this.dispatchEvent(

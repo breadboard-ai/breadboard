@@ -13,6 +13,7 @@ import {
 import { getHandler } from "../handler.js";
 import { createLoader } from "../loader/index.js";
 import { invokeGraph } from "../run/invoke-graph.js";
+import { invokeDescriber } from "../sandboxed-run-module.js";
 import { combineSchemas, removeProperty } from "../schema.js";
 import {
   Edge,
@@ -30,6 +31,7 @@ import { EdgeCache } from "./edge.js";
 import { collectKits, createGraphNodeType } from "./kits.js";
 import { ModuleCache } from "./module.js";
 import { NodeCache } from "./node.js";
+import { DescribeResultCache } from "./run/describe-cache.js";
 import {
   EdgeType,
   describeInput,
@@ -49,7 +51,6 @@ import {
   NodeTypeDescriberOptions,
 } from "./types.js";
 import { VirtualNode } from "./virtual-node.js";
-import { DescribeResultCache } from "./run/describe-cache.js";
 
 export const inspectableGraph = (
   graph: GraphDescriptor,
@@ -161,6 +162,7 @@ class Graph implements InspectableGraphWithStore {
         outerGraph: this.#graph,
         loader,
         kits,
+        sandbox: this.#options.sandbox,
         wires: {
           incoming: Object.fromEntries(
             (options?.incoming ?? []).map((edge) => [
@@ -335,12 +337,30 @@ class Graph implements InspectableGraphWithStore {
     }
     // invoke graph
     try {
-      const base = this.#url;
-      // try loading the describer graph.
-      const { loader } = this.#options;
+      const { loader, sandbox } = this.#options;
+      if (sandbox) {
+        const { inputSchema, outputSchema } =
+          await this.#describeWithStaticAnalysis();
+        const result = await invokeDescriber(
+          sandbox,
+          this.#graph,
+          inputs,
+          inputSchema,
+          outputSchema
+        );
+        if (result) {
+          return { success: true, result };
+        }
+        if (result === false) {
+          return { success: false };
+        }
+      }
       if (!loader) {
         return { success: false };
       }
+      const base = this.#url;
+
+      // try loading the describer graph.
       const describerGraph = await loader.load(customDescriber, {
         base,
         board: this.#graph,

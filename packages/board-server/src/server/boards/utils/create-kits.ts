@@ -8,12 +8,13 @@ import { NodeSandbox } from "@breadboard-ai/jsandbox/node";
 import AgentKit from "@google-labs/agent-kit/agent.kit.json" with { type: "json" };
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit/google-drive.kit.json" with { type: "json" };
 import {
+  addSandboxedRunModule,
   asRuntimeKit,
   type Kit,
   type KitManifest,
 } from "@google-labs/breadboard";
 import { fromManifest } from "@google-labs/breadboard/kits";
-import Core, { addSandboxedRunModule } from "@google-labs/core-kit";
+import Core from "@google-labs/core-kit";
 import GeminiKit from "@google-labs/gemini-kit";
 import JSONKit from "@google-labs/json-kit";
 import TemplateKit from "@google-labs/template-kit";

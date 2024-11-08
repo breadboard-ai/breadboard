@@ -42,6 +42,7 @@ import {
 } from "../data/types.js";
 import { SequenceEntry } from "./run/serializer.js";
 import { ReanimationState } from "../run/types.js";
+import { Sandbox } from "@breadboard-ai/jsandbox";
 
 export type GraphVersion = number;
 
@@ -318,6 +319,10 @@ export type InspectableGraphOptions = {
    * The loader to use when loading boards.
    */
   loader?: GraphLoader;
+  /**
+   * The Javascript Sandbox that will be used to run custom describers.
+   */
+  readonly sandbox?: Sandbox;
 };
 
 /**
@@ -1104,6 +1109,10 @@ export type RunObserverOptions = {
    * Whether or not to skip replacing inlineData parts with storedData parts.
    */
   skipDataStore?: boolean;
+  /**
+   * The JS Sandbox that will be used to run custom describers
+   */
+  sandbox?: Sandbox;
 };
 
 export type GraphstartTimelineEntry = [
