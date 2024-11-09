@@ -57,7 +57,6 @@ import { VirtualNode } from "./virtual-node.js";
 import {
   isImperativeGraph,
   toDeclarativeGraph,
-  toImperativeGraph,
 } from "../run/run-imperative-graph.js";
 
 export const inspectableGraph = (
@@ -396,17 +395,23 @@ class Graph implements InspectableGraphWithStore {
   async #tryDescribingWithCustomDescriber(
     inputs: InputValues
   ): Promise<CustomDescriberResult> {
-    const customDescriber = this.#graph.metadata?.describer;
+    const customDescriber =
+      this.#graph.metadata?.describer ||
+      (this.#graph.main ? `module:${this.#graph.main}` : undefined);
     if (!customDescriber) {
       return { success: false };
     }
     // invoke graph
     try {
       const { loader, sandbox } = this.#options;
-      if (sandbox) {
+      if (sandbox && customDescriber.startsWith("module:")) {
         const { inputSchema, outputSchema } =
           await this.#describeWithStaticAnalysis();
+
+        const moduleId = customDescriber.slice("module:".length);
+
         const result = await invokeDescriber(
+          moduleId,
           sandbox,
           this.#graph,
           inputs,
