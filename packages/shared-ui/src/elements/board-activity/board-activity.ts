@@ -374,7 +374,7 @@ export class BoardActivity extends LitElement {
     const nodeSchema = await node.describe(inputs);
     const descriptor = node.descriptor;
     const schema = nodeSchema?.outputSchema || inputs.schema;
-    const requiredFields = (inputs.schema as Schema).required ?? [];
+    const requiredFields = schema.required ?? [];
 
     // TODO: Implement support for multiple iterations over the
     // same input over a run. Currently, we will only grab the

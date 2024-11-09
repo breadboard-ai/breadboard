@@ -15,6 +15,7 @@ import {
   GraphDescriptor,
   BoardServer,
   blankLLMContent,
+  blankImperative,
 } from "@google-labs/breadboard";
 import { map } from "lit/directives/map.js";
 
@@ -259,7 +260,10 @@ export class SaveAsOverlay extends LitElement {
           const title = data.get("title") as string | null;
           const fileName = data.get("filename") as string | null;
           const boardServer = data.get("board-server") as string | null;
-          const graph = this.graph || blankLLMContent();
+          const imperative = !!data.get("imperative");
+          const graph = imperative
+            ? blankImperative()
+            : this.graph || blankLLMContent();
 
           if (!(title && boardServer && fileName && graph)) {
             return;
@@ -400,6 +404,11 @@ export class SaveAsOverlay extends LitElement {
           }}
           .value=${this.#generateFileName(title)}
         />
+
+        ${this.isNewBoard
+          ? html` <label>Code</label>
+              <input name="imperative" type="checkbox" />`
+          : nothing}
 
         <div id="controls">
           <button

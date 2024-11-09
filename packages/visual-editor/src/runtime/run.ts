@@ -38,6 +38,7 @@ import {
   RunSkipEvent,
 } from "@google-labs/breadboard/harness";
 import { RuntimeBoardRunEvent } from "./events";
+import { sandbox } from "../sandbox";
 
 export class Run extends EventTarget {
   #runs = new Map<
@@ -217,6 +218,7 @@ export class Run extends EventTarget {
       dataStore: this.dataStore,
       runStore: this.runStore,
       kits: config.kits,
+      sandbox: sandbox,
     });
 
     const topGraphObserver = new BreadboardUI.Utils.TopGraphObserver(

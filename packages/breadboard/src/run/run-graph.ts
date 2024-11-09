@@ -12,12 +12,16 @@ import type {
 import { bubbleUpInputsIfNeeded, bubbleUpOutputsIfNeeded } from "../bubble.js";
 import { resolveBoardCapabilities } from "../capability.js";
 import { InputStageResult, OutputStageResult } from "../run.js";
+import { cloneState } from "../serialization.js";
 import { timestamp } from "../timestamp.js";
 import { TraversalMachine } from "../traversal/machine.js";
 import type { BreadboardRunResult, RunArguments } from "../types.js";
 import { asyncGen } from "../utils/async-gen.js";
 import { NodeInvoker } from "./node-invoker.js";
-import { cloneState } from "../serialization.js";
+import {
+  isImperativeGraph,
+  toDeclarativeGraph,
+} from "./run-imperative-graph.js";
 
 /**
  * Runs a graph in "run" mode. See
@@ -32,6 +36,10 @@ export async function* runGraph(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { inputs, start, stopAfter, ...context } = args;
   const { probe, state, invocationPath = [] } = context;
+
+  if (isImperativeGraph(graph)) {
+    graph = toDeclarativeGraph(graph);
+  }
 
   const lifecycle = state?.lifecycle();
   yield* asyncGen<BreadboardRunResult>(async (next) => {

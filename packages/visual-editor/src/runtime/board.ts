@@ -339,6 +339,8 @@ export class Board extends EventTarget {
       return;
     }
 
+    const moduleId = descriptor.main || null;
+
     const id = globalThis.crypto.randomUUID();
     this.#tabs.set(id, {
       id,
@@ -346,7 +348,7 @@ export class Board extends EventTarget {
       name: descriptor.title ?? "Untitled board",
       graph: descriptor,
       subGraphId: null,
-      moduleId: null,
+      moduleId,
       version: 1,
       type: TabType.DESCRIPTOR,
       readOnly,
@@ -379,6 +381,8 @@ export class Board extends EventTarget {
       }
     }
 
+    const moduleId = descriptor.main || null;
+
     const id = globalThis.crypto.randomUUID();
     this.#tabs.set(id, {
       id,
@@ -386,7 +390,7 @@ export class Board extends EventTarget {
       name: descriptor.title ?? "Untitled board",
       graph: descriptor,
       subGraphId: null,
-      moduleId: null,
+      moduleId,
       version: 1,
       type: TabType.DESCRIPTOR,
       readOnly: false,
@@ -464,6 +468,11 @@ export class Board extends EventTarget {
       if (!graph) {
         this.dispatchEvent(new RuntimeErrorEvent("Unable to load board"));
         return;
+      }
+
+      // Check to see if this is an imperative grpah
+      if (graph.main) {
+        moduleId = graph.main;
       }
 
       // Confirm the module exists before setting it.

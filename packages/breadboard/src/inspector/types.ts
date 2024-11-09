@@ -304,6 +304,18 @@ export type InspectableGraph = {
    * Returns the modules that are embedded in this graph.
    */
   modules(): InspectableModules;
+  /**
+   * Returns true if the graph represents an `ImperativeGraph` instance.
+   * Imperative `InspectableGraph` will still show nodes and edges, but
+   * it is just a fixed topology that represents how the graph is run.
+   */
+  imperative(): boolean;
+  /**
+   * Returns the name of the designated "main" module if this is an
+   * `ImperativeGraph` instance and `undefined` if it is not yet set or
+   * this is a `DeclarativeGraph` instance.
+   */
+  main(): string | undefined;
 };
 
 /**

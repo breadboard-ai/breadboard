@@ -126,3 +126,4 @@ export { runGraph } from "./run/run-graph.js";
 export { sequenceEntryToHarnessRunResult } from "./inspector/run/conversions.js";
 
 export { addSandboxedRunModule } from "./sandboxed-run-module.js";
+export { blankImperative } from "./run/run-imperative-graph.js";

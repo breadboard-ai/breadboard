@@ -1317,6 +1317,7 @@ export class Main extends LitElement {
           const runObserver = createRunObserver({
             logLevel: "debug",
             dataStore: this.#dataStore,
+            sandbox,
           });
 
           evt.preventDefault();

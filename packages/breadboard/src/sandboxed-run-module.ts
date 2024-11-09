@@ -6,13 +6,16 @@
 
 import type {
   InputValues,
+  GraphDescriptor,
+  ModuleIdentifier,
+} from "@breadboard-ai/types";
+import type {
   NodeDescriberContext,
   NodeDescriberResult,
   NodeHandlerContext,
   NodeHandlerObject,
   Schema,
   Kit,
-  GraphDescriptor,
 } from "./types.js";
 
 import {
@@ -22,7 +25,7 @@ import {
   Telemetry,
 } from "@breadboard-ai/jsandbox";
 
-export { addSandboxedRunModule, invokeDescriber };
+export { addSandboxedRunModule, invokeDescriber, invokeMainDescriber };
 
 function findHandler(handlerName: string, kits?: Kit[]) {
   const handler = kits
@@ -171,33 +174,43 @@ function telemetry(context: NodeHandlerContext) {
   return undefined;
 }
 
-const MODULE_PROTOCOL = "module:";
-
-/**
- *
- * @param sandbox
- * @param graph
- * @param inputs
- * @param inputSchema
- * @param outputSchema
- * @returns - returns `undefined` if this is not a module describer,
- *           `false` if the module describer invocation exists, but failed,
- *           `NodeDescriberResult` otherwise.
- */
 async function invokeDescriber(
+  moduleId: ModuleIdentifier,
+  sandbox: Sandbox,
+  graph: GraphDescriptor,
+  inputs: InputValues,
+  inputSchema?: Schema,
+  outputSchema?: Schema
+): Promise<NodeDescriberResult | undefined> {
+  const declarations = graph.modules;
+  if (!declarations) {
+    return;
+  }
+  const modules = Object.fromEntries(
+    Object.entries(declarations).map(([name, spec]) => [name, spec.code])
+  );
+  const module = new SandboxedModule(sandbox, {}, modules);
+  try {
+    return module.describe(moduleId, {
+      inputs,
+      inputSchema,
+      outputSchema,
+    }) as Promise<NodeDescriberResult>;
+  } catch (e) {
+    // swallow the error. It's okay that some modules don't have
+    // custom describers.
+  }
+}
+
+async function invokeMainDescriber(
   sandbox: Sandbox,
   graph: GraphDescriptor,
   inputs: InputValues,
   inputSchema?: Schema,
   outputSchema?: Schema
 ): Promise<NodeDescriberResult | undefined | false> {
-  const url = graph.metadata?.describer;
-  if (!url || !url.startsWith(MODULE_PROTOCOL)) {
-    return;
-  }
-  const name = url.slice(MODULE_PROTOCOL.length);
-  const declarations = graph.modules;
-  if (!declarations) {
+  const { main, modules: declarations } = graph;
+  if (!declarations || !main) {
     return false;
   }
   const modules = Object.fromEntries(
@@ -205,7 +218,7 @@ async function invokeDescriber(
   );
   const module = new SandboxedModule(sandbox, {}, modules);
   try {
-    return module.describe(name, {
+    return module.describe(main, {
       inputs,
       inputSchema,
       outputSchema,

@@ -553,12 +553,14 @@ export class ModuleRibbonMenu extends LitElement {
         })
         .sort((a, b) => (a.title > b.title ? 1 : a.title < b.title ? -1 : 0));
 
-      modules.unshift({
-        title: "Main board",
-        name: MAIN_BOARD_ID,
-        icon: "board",
-        disabled: this.moduleId === null,
-      });
+      if (!this.graph?.imperative()) {
+        modules.unshift({
+          title: "Main board",
+          name: MAIN_BOARD_ID,
+          icon: "board",
+          disabled: this.moduleId === null,
+        });
+      }
 
       modules.push({
         title: "Create new module...",
