@@ -37,7 +37,7 @@ import {
 import { guard } from "lit/directives/guard.js";
 import { CodeMirrorExtensions, TopGraphRunResult } from "../../types/types";
 import { classMap } from "lit/directives/class-map.js";
-import { builtIns } from "./built-ins.js";
+import { typeDeclarations as builtIns } from "@breadboard-ai/jsandbox";
 import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
 import { getMappedMinimalModList } from "./ts-library";
 

@@ -5,14 +5,19 @@
  */
 
 // TODO: Generate this.
-export const builtIns = `
+export const typeDeclarations = `
+
 declare function encodeURIComponent(v: string): string;
 
 declare module '@fetch' {
+  export type FetchInputs = {
+    url: string;
+  }
+
   /**
    * A built-in capability of Breadboard to fetch data.
    */
-  export default function fetch(url: string|Request): Promise<Response>;
+  export default function fetch(url: FetchInputs): Promise<Response>;
 }
 
 declare module '@secrets' {
