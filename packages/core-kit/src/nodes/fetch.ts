@@ -209,9 +209,10 @@ export default defineNodeType({
       } else {
         const isJson = contentType?.includes("application/json");
         const isText = contentType?.startsWith("text/");
+        const isXML = contentType?.startsWith("application/xml");
         if (isJson) {
           response = raw ? await data.text() : await data.json();
-        } else if (isText) {
+        } else if (isText || isXML) {
           response = await data.text();
         } else {
           if (!store) {

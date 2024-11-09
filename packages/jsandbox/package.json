@@ -53,10 +53,20 @@
         "src/factory.js"
       ]
     },
+    "update-type-declarations": {
+      "command": "tsx src/update-type-declarations.ts",
+      "files": [
+        "src/environment.d.ts"
+      ],
+      "output": [
+        "src/type-declarations.ts"
+      ]
+    },
     "build:tsc": {
       "command": "tsc --pretty",
       "dependencies": [
-        "../types:build:tsc"
+        "../types:build:tsc",
+        "update-type-declarations"
       ],
       "files": [
         "src/",
