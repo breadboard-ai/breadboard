@@ -39,7 +39,7 @@ import { CodeMirrorExtensions, TopGraphRunResult } from "../../types/types";
 import { classMap } from "lit/directives/class-map.js";
 import { typeDeclarations as builtIns } from "@breadboard-ai/jsandbox";
 import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
-import { getMappedMinimalModList } from "./ts-library";
+import { getMappedQuickJsModList } from "./ts-library";
 
 const PREVIEW_KEY = "bb-module-editor-preview-visible";
 
@@ -311,7 +311,7 @@ export class ModuleEditor extends LitElement {
       verbatimModuleSyntax: true,
     };
 
-    const modules = getMappedMinimalModList();
+    const modules = getMappedQuickJsModList();
     const fsMap = new Map(await Promise.all(modules));
     const system = tsvfs.createSystem(fsMap);
     this.#compilationEnvironment.env = tsvfs.createVirtualTypeScriptEnvironment(
