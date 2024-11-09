@@ -94,7 +94,7 @@ class Graph implements InspectableGraphWithStore {
   #cache: MutableGraph;
   #graphs: InspectableSubgraphs | null = null;
 
-  #imperativeMain: ModuleIdentifier | null = null;
+  #imperativeMain: ModuleIdentifier | undefined;
 
   constructor(graph: GraphDescriptor, options?: InspectableGraphOptions) {
     if (isImperativeGraph(graph)) {
@@ -118,6 +118,14 @@ class Graph implements InspectableGraphWithStore {
 
   raw() {
     return this.#graph;
+  }
+
+  imperative(): boolean {
+    return !!this.#imperativeMain;
+  }
+
+  main(): string | undefined {
+    return this.#imperativeMain;
   }
 
   metadata(): GraphMetadata | undefined {
