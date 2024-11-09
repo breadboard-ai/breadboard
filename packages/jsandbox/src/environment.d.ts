@@ -14,6 +14,10 @@ declare function encodeURIComponent(
 
 declare module "@fetch" {
   export type FetchInputs = {
+    $metadata?: {
+      title?: string;
+      description?: string;
+    };
     /**
      * The URL to fetch
      */
@@ -33,6 +37,10 @@ declare module "@fetch" {
   };
 
   export type FetchOutputs = {
+    /**
+     * The error object.
+     */
+    $error?: unknown;
     /**
      * The response from the fetch request
      */
@@ -66,16 +74,26 @@ declare module "@secrets" {
    * A built-in capability of Breadboard to obtain secrets.
    */
   export default function secrets<S extends string>(inputs: {
+    $metadata?: {
+      title?: string;
+      description?: string;
+    };
     keys: S[];
   }): Promise<{ [K in S]: string }>;
 }
 
 declare module "@invoke" {
   export type InvokeInputs = {
+    $metadata?: {
+      title?: string;
+      description?: string;
+    };
     $board: string;
   } & Record<string, unknown>;
 
-  export type InvokeOutputs = Record<string, unknown>;
+  export type InvokeOutputs = Record<string, unknown> & {
+    $error?: unknown;
+  };
 
   /**
    * A built-in capability of Breadboard to invoke boards.
