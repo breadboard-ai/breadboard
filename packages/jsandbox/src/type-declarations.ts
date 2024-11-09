@@ -79,4 +79,17 @@ declare module "@secrets" {
     keys: S[];
   }): Promise<{ [K in S]: string }>;
 }
+
+declare module "@invoke" {
+  export type InvokeInputs = {
+    $board: string;
+  } & Record<string, unknown>;
+
+  export type InvokeOutputs = Record<string, unknown>;
+
+  /**
+   * A built-in capability of Breadboard to invoke boards.
+   */
+  export default function invoke(inputs: InvokeInputs): Promise<InvokeOutputs>;
+}
 `
