@@ -18,7 +18,6 @@ function isImperativeGraph(graph: unknown): graph is ImperativeGraph {
 function toDeclarativeGraph(graph: ImperativeGraph): GraphDescriptor {
   const { main } = graph;
   const declarative = structuredClone(graph) as GraphDescriptor;
-  delete declarative.main;
   declarative.nodes = [
     {
       id: "input",
@@ -34,7 +33,7 @@ function toDeclarativeGraph(graph: ImperativeGraph): GraphDescriptor {
         $module: main,
       },
       metadata: {
-        title: `Run ${graph.title || '"main" Module'}`,
+        title: `Run "${graph.title || '"main"'}" module`,
       },
     },
     {

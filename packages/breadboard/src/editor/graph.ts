@@ -96,7 +96,7 @@ export class Graph implements EditableGraph {
     }
     this.#options = options;
     this.#version = parent ? 0 : options.version || 0;
-    this.#inspector = inspectableGraph(this.#graph, options);
+    this.#inspector = inspectableGraph(this.raw(), options);
     this.#history = new GraphEditHistory({
       graph: () => {
         return this.raw();

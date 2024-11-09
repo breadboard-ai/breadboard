@@ -13,7 +13,10 @@ import {
 import { getHandler } from "../handler.js";
 import { createLoader } from "../loader/index.js";
 import { invokeGraph } from "../run/invoke-graph.js";
-import { invokeDescriber } from "../sandboxed-run-module.js";
+import {
+  invokeDescriber,
+  invokeMainDescriber,
+} from "../sandboxed-run-module.js";
 import { combineSchemas, removeProperty } from "../schema.js";
 import {
   Edge,
@@ -54,6 +57,7 @@ import { VirtualNode } from "./virtual-node.js";
 import {
   isImperativeGraph,
   toDeclarativeGraph,
+  toImperativeGraph,
 } from "../run/run-imperative-graph.js";
 
 export const inspectableGraph = (
@@ -91,8 +95,16 @@ class Graph implements InspectableGraphWithStore {
   #cache: MutableGraph;
   #graphs: InspectableSubgraphs | null = null;
 
+  #imperativeMain: ModuleIdentifier | null = null;
+
   constructor(graph: GraphDescriptor, options?: InspectableGraphOptions) {
-    this.#graph = isImperativeGraph(graph) ? toDeclarativeGraph(graph) : graph;
+    if (isImperativeGraph(graph)) {
+      const { main } = graph;
+      this.#graph = toDeclarativeGraph(graph);
+      this.#imperativeMain = main;
+    } else {
+      this.#graph = graph;
+    }
     this.#url = maybeURL(this.#graph.url);
     this.#options = options || {};
     const nodes = new NodeCache(this);
@@ -146,9 +158,55 @@ class Graph implements InspectableGraphWithStore {
       // The schema of an input or an output is defined by their
       // configuration schema or their incoming/outgoing edges.
       if (type === "input") {
+        if (this.#imperativeMain) {
+          if (!this.#options.sandbox) {
+            throw new Error(
+              "Sandbox not supplied, won't be able to describe this graph correctly"
+            );
+          }
+          const result = await invokeMainDescriber(
+            this.#options.sandbox,
+            this.#graph,
+            options.inputs!,
+            {},
+            {}
+          );
+          if (result)
+            return describeInput({
+              inputs: {
+                schema: result.inputSchema,
+              },
+              incoming: options?.incoming,
+              outgoing: options?.outgoing,
+            });
+          return describeInput(options);
+        }
         return describeInput(options);
       }
       if (type === "output") {
+        if (this.#imperativeMain) {
+          if (!this.#options.sandbox) {
+            throw new Error(
+              "Sandbox not supplied, won't be able to describe this graph correctly"
+            );
+          }
+          const result = await invokeMainDescriber(
+            this.#options.sandbox,
+            this.#graph,
+            options.inputs!,
+            {},
+            {}
+          );
+          if (result)
+            return describeOutput({
+              inputs: {
+                schema: result.outputSchema,
+              },
+              incoming: options?.incoming,
+              outgoing: options?.outgoing,
+            });
+          return describeInput(options);
+        }
         return describeOutput(options);
       }
 
