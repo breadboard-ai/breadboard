@@ -376,6 +376,12 @@ export class BoardActivity extends LitElement {
     const schema = nodeSchema?.outputSchema || inputs.schema;
     const requiredFields = schema.required ?? [];
 
+    if (!schema.properties || Object.keys(schema.properties).length === 0) {
+      this.dispatchEvent(
+        new InputEnterEvent(descriptor.id, {}, /* allowSavingIfSecret */ true)
+      );
+    }
+
     // TODO: Implement support for multiple iterations over the
     // same input over a run. Currently, we will only grab the
     // first value.
