@@ -65,7 +65,7 @@ declare module "@secrets" {
   /**
    * A built-in capability of Breadboard to obtain secrets.
    */
-  export default function secrets(sekrits: {
-    keys: string[];
-  }): Promise<Record<string, string>>;
+  export default function secrets<S extends string>(inputs: {
+    keys: S[];
+  }): Promise<{ [K in S]: string }>;
 }
