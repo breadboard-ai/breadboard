@@ -471,7 +471,7 @@ export class Board extends EventTarget {
       }
 
       // Check to see if this is an imperative grpah
-      if (graph.main) {
+      if (graph.main && !moduleId) {
         moduleId = graph.main;
       }
 
