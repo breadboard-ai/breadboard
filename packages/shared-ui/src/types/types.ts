@@ -401,3 +401,11 @@ export type TypeScriptLanguageSupport = {
   env: VirtualTypeScriptEnvironment | null;
   extensions: CodeMirrorExtensions | null;
 };
+
+export interface Command {
+  title: string;
+  name: string;
+  icon: string;
+  disabled?: boolean;
+  secondaryAction?: string;
+}
