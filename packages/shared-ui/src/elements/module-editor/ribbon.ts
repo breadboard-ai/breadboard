@@ -391,9 +391,11 @@ export class ModuleRibbonMenu extends LitElement {
       min-width: 70px;
       text-align: center;
       user-select: none;
+      cursor: default;
     }
 
     #errors-toggle.has-errors {
+      cursor: pointer;
       margin-left: var(--bb-grid-size-2);
       padding: var(--bb-grid-size);
       background: var(--bb-warning-400);
@@ -461,10 +463,15 @@ export class ModuleRibbonMenu extends LitElement {
     }
 
     #errors {
+      cursor: default;
       position: absolute;
       top: calc(100% + -8px);
       left: var(--error-left, 494px);
       right: auto;
+    }
+
+    #errors.available {
+      cursor: pointer;
     }
 
     #copy {
