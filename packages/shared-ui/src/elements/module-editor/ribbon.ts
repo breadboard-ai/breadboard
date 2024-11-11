@@ -66,6 +66,9 @@ export class ModuleRibbonMenu extends LitElement {
   errorCount = 0;
 
   @property()
+  errorDetails: Array<{ message: string; start: number }> | null = null;
+
+  @property()
   showErrors = false;
 
   @property()
@@ -97,6 +100,9 @@ export class ModuleRibbonMenu extends LitElement {
 
   @state()
   showSaveMenu = false;
+
+  @state()
+  showErrorMenu = false;
 
   @state()
   showCopyMenu = false;
@@ -377,16 +383,17 @@ export class ModuleRibbonMenu extends LitElement {
       margin-left: var(--bb-grid-size);
     }
 
-    #errors {
+    #errors-toggle {
       padding: var(--bb-grid-size) var(--bb-grid-size-2);
       background: var(--bb-neutral-50);
+      border: none;
       border-radius: var(--bb-grid-size);
       min-width: 70px;
       text-align: center;
       user-select: none;
     }
 
-    #errors.has-errors {
+    #errors-toggle.has-errors {
       margin-left: var(--bb-grid-size-2);
       padding: var(--bb-grid-size);
       background: var(--bb-warning-400);
@@ -451,6 +458,17 @@ export class ModuleRibbonMenu extends LitElement {
       top: calc(100% + -8px);
       left: 138px;
       right: auto;
+    }
+
+    #errors {
+      position: absolute;
+      top: calc(100% + -8px);
+      left: 494px;
+      right: auto;
+    }
+
+    #errors.main {
+      left: 614px;
     }
 
     #copy {
@@ -1025,14 +1043,55 @@ export class ModuleRibbonMenu extends LitElement {
       </div>
     </div>`;
 
+    let errorMenu: HTMLTemplateResult | symbol = nothing;
+    if (this.showErrorMenu && this.errorDetails) {
+      const errorActions: Array<{
+        title: string;
+        name: string;
+        icon: string;
+        disabled?: boolean;
+        secondaryAction?: string;
+      }> = this.errorDetails.map((error) => {
+        return {
+          title: error.message,
+          name: `error-${error.start}`,
+          icon: "error",
+        };
+      });
+
+      errorMenu = html`<bb-overflow-menu
+        id="errors"
+        class=${classMap({ main: isMainModule })}
+        .actions=${errorActions}
+        .disabled=${this.graph === null}
+        @bboverflowmenudismissed=${() => {
+          this.showErrorMenu = false;
+        }}
+        @bboverflowmenuaction=${() => {
+          this.showErrorMenu = false;
+        }}
+      ></bb-overflow-menu>`;
+    }
+
     const errors = this.showErrors
       ? html`<div class="divider"></div>
-          <div
-            id="errors"
+          <button
+            id="errors-toggle"
             class=${classMap({ "has-errors": this.errorCount > 0 })}
+            @pointerover=${(evt: PointerEvent) => {
+              this.dispatchEvent(
+                new ShowTooltipEvent("Show errors", evt.clientX, evt.clientY)
+              );
+            }}
+            @pointerout=${() => {
+              this.dispatchEvent(new HideTooltipEvent());
+            }}
+            @click=${() => {
+              this.showErrorMenu = true;
+            }}
           >
             ${this.errorCount} error${this.errorCount === 1 ? "" : "s"}
-          </div>`
+          </button>`
       : nothing;
 
     const left = [
@@ -1095,6 +1154,7 @@ export class ModuleRibbonMenu extends LitElement {
       html`<div id="right">${right}</div>`,
       saveMenu,
       copyMenu,
+      errorMenu,
       overflowMenu,
     ];
   }

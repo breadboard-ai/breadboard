@@ -34,6 +34,7 @@ import {
   ModuleChosenEvent,
   ModuleCreateEvent,
   ModuleEditEvent,
+  OverflowMenuActionEvent,
   ToastEvent,
   ToastType,
 } from "../../events/events";
@@ -134,6 +135,10 @@ export class ModuleEditor extends LitElement {
       width: 100%;
       height: 100%;
       position: relative;
+    }
+
+    bb-module-ribbon-menu {
+      z-index: 5;
     }
 
     #module-graph {
@@ -288,6 +293,7 @@ export class ModuleEditor extends LitElement {
   };
   #hasUnsavedChanges = false;
   #onKeyDownBound = this.#onKeyDown.bind(this);
+  #errorDetails: Array<{ message: string; start: number }> | null = null;
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -412,6 +418,11 @@ export class ModuleEditor extends LitElement {
     };
   }
 
+  #resetErrorState() {
+    this.errorCount = 0;
+    this.#errorDetails = null;
+  }
+
   async #createEditor(
     code: ModuleCode,
     language: ModuleLanguage,
@@ -424,6 +435,7 @@ export class ModuleEditor extends LitElement {
     return html`${guard(
       [this.moduleId, this.graph?.raw().url, language],
       () => {
+        this.#resetErrorState();
         const editor = this.#resetCompilationEnvironmentIfChanged(
           language,
           this.moduleId!,
@@ -457,6 +469,7 @@ export class ModuleEditor extends LitElement {
 
               if (evt.options.errors !== undefined) {
                 this.errorCount = evt.options.errors;
+                this.#errorDetails = evt.options.errorsDetail ?? null;
               }
 
               this.#processEditorCodeWithEnvironment(evt.options.manual);
@@ -893,7 +906,27 @@ export class ModuleEditor extends LitElement {
           .formatting=${this.formatting}
           .renderId=${globalThis.crypto.randomUUID()}
           .errorCount=${this.errorCount}
+          .errorDetails=${this.#errorDetails}
           .showErrors=${this.#compilationEnvironment.language === "typescript"}
+          @bboverflowmenuaction=${(evt: OverflowMenuActionEvent) => {
+            if (evt.action.startsWith("error-")) {
+              evt.stopImmediatePropagation();
+              if (!this.#codeEditorRef.value) {
+                return;
+              }
+
+              const location = Number.parseInt(
+                evt.action.replace(/^error-/gim, ""),
+                10
+              );
+              if (Number.isNaN(location)) {
+                console.warn(`Unable to go to location ${evt.action}`);
+                return;
+              }
+
+              this.#codeEditorRef.value.gotoLocation(location);
+            }
+          }}
           @input=${() => {
             this.#processEditorCodeWithEnvironment();
           }}

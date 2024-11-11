@@ -49,6 +49,8 @@ export class OverflowMenu extends LitElement {
       box-shadow:
         0px 4px 8px 3px rgba(0, 0, 0, 0.05),
         0px 1px 3px rgba(0, 0, 0, 0.1);
+      max-height: 360px;
+      overflow-y: scroll;
     }
 
     button {
@@ -64,6 +66,10 @@ export class OverflowMenu extends LitElement {
       cursor: pointer;
       min-width: 130px;
       width: 100%;
+      max-width: 300px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     div {
@@ -186,6 +192,11 @@ export class OverflowMenu extends LitElement {
 
     button.module-ts {
       background-image: var(--bb-icon-extension-ts);
+    }
+
+    button.error {
+      background-image: var(--bb-icon-error);
+      color: var(--bb-warning-600);
     }
   `;
 

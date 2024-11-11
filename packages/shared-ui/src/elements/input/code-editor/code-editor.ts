@@ -228,20 +228,11 @@ export class CodeEditor extends LitElement {
     const lastCursorPosition = this.#lastCursorPosition;
     this.#lastCursorPosition = undefined;
 
-    // Ensure we're not setting the cursor outside of the available range.
-    if (
-      !lastCursorPosition ||
-      lastCursorPosition > this.#editor.state.doc.length
-    ) {
+    if (!lastCursorPosition) {
       return;
     }
 
-    this.#editor.dispatch({
-      selection: {
-        anchor: lastCursorPosition,
-        head: lastCursorPosition,
-      },
-    });
+    this.gotoLocation(lastCursorPosition);
   }
 
   attemptEditorFocus() {
@@ -249,6 +240,28 @@ export class CodeEditor extends LitElement {
       return;
     }
 
+    this.#editor.focus();
+  }
+
+  gotoLocation(location: number) {
+    if (!this.#editor) {
+      return;
+    }
+
+    // Ensure we're not setting the cursor outside of the available range.
+    if (!location || location > this.#editor.state.doc.length) {
+      return;
+    }
+
+    this.#editor.dispatch({
+      selection: {
+        anchor: location,
+        head: location,
+      },
+      effects: [
+        EditorView.scrollIntoView(location, { y: "start", yMargin: 100 }),
+      ],
+    });
     this.#editor.focus();
   }
 
@@ -320,17 +333,32 @@ export class CodeEditor extends LitElement {
 
         globalThis.clearTimeout(this.#emitTimeout);
         this.#emitTimeout = setTimeout(() => {
-          const opts: { format?: boolean; manual?: boolean; errors?: number } =
-            { format: false, manual: false };
+          const opts: {
+            format?: boolean;
+            manual?: boolean;
+            errors?: number;
+            errorsDetail?: Array<{ message: string; start: number }>;
+          } = { format: false, manual: false };
           if (this.env && this.fileName) {
-            const codeDiagnostics = [
+            const errorsDetail = [
               ...this.env.languageService.getSemanticDiagnostics(this.fileName),
               ...this.env.languageService.getSyntacticDiagnostics(
                 this.fileName
               ),
-            ];
+            ].map((value) => {
+              let messageText = value.messageText;
+              if (typeof messageText !== "string") {
+                messageText = messageText.messageText;
+              }
 
-            opts.errors = codeDiagnostics.length;
+              return {
+                message: messageText,
+                start: value.start ?? 0,
+              };
+            });
+
+            opts.errors = errorsDetail.length;
+            opts.errorsDetail = errorsDetail;
           }
 
           this.dispatchEvent(new CodeChangeEvent(opts));
