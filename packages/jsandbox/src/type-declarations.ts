@@ -22,6 +22,14 @@ declare function encodeURIComponent(
   uriComponent: string | number | boolean
 ): string;
 
+interface Console {
+  log(...data: any[]);
+  error(...data: any[]);
+  warn(...data: any[]);
+}
+
+declare var console: Console;
+
 declare module "@fetch" {
   export type FetchInputs = {
     $metadata?: {
