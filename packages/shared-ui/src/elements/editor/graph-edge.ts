@@ -15,7 +15,7 @@ import {
 } from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
 import { GRAPH_OPERATIONS } from "./types.js";
-import { segmentIntersection } from "../../utils/pixi-math.js";
+import { segmentIntersection } from "@pixi/math-extras";
 
 // Value is on the wire, but hasn't been consumed by receiving component yet.
 const edgeColorValueStored = getGlobalColor("--bb-human-600");
