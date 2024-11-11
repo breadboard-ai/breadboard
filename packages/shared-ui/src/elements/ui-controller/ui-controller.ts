@@ -171,6 +171,23 @@ export class UI extends LitElement {
       : false;
 
     const graph = this.editor?.inspect() || null;
+    let capabilities: false | GraphProviderCapabilities = false;
+    let extendedCapabilities: false | GraphProviderExtendedCapabilities = false;
+    for (const boardServer of this.boardServers) {
+      if (!this.graph || !this.graph.url) {
+        continue;
+      }
+
+      const canProvide = boardServer.canProvide(new URL(this.graph.url));
+      if (canProvide) {
+        capabilities = canProvide;
+        extendedCapabilities = boardServer.extendedCapabilities();
+        break;
+      }
+    }
+
+    const canUndo = this.history?.canUndo() ?? false;
+    const canRedo = this.history?.canRedo() ?? false;
 
     /**
      * Create all the elements we need.
@@ -195,25 +212,6 @@ export class UI extends LitElement {
         showExperimentalComponents,
       ],
       () => {
-        let capabilities: false | GraphProviderCapabilities = false;
-        let extendedCapabilities: false | GraphProviderExtendedCapabilities =
-          false;
-        for (const boardServer of this.boardServers) {
-          if (!this.graph || !this.graph.url) {
-            continue;
-          }
-
-          const canProvide = boardServer.canProvide(new URL(this.graph.url));
-          if (canProvide) {
-            capabilities = canProvide;
-            extendedCapabilities = boardServer.extendedCapabilities();
-            break;
-          }
-        }
-
-        const canUndo = this.history?.canUndo() ?? false;
-        const canRedo = this.history?.canRedo() ?? false;
-
         return html`<bb-editor
           .canRedo=${canRedo}
           .canUndo=${canUndo}
@@ -254,14 +252,17 @@ export class UI extends LitElement {
     if (graph && this.moduleId) {
       moduleEditor = html`<bb-module-editor
         ${ref(this.#moduleEditor)}
+        .canRedo=${canRedo}
+        .canUndo=${canUndo}
+        .capabilities=${capabilities}
         .graph=${graph}
-        .moduleId=${this.moduleId}
-        .modules=${graph.modules() ?? {}}
         .isShowingBoardActivityOverlay=${this.isShowingBoardActivityOverlay}
         .kits=${this.kits}
-        .run=${this.run}
+        .moduleId=${this.moduleId}
+        .modules=${graph.modules() ?? {}}
         .readOnly=${this.readOnly}
         .renderId=${crypto.randomUUID()}
+        .run=${this.run}
         .subGraphId=${this.subGraphId}
         .topGraphResult=${this.topGraphResult}
       ></bb-module-editor>`;

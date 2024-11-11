@@ -6,6 +6,7 @@
 import {
   createLoader,
   GraphDescriptor,
+  GraphProviderCapabilities,
   inspect,
   InspectableGraph,
   InspectableModules,
@@ -31,6 +32,7 @@ import {
   CommandEvent,
   GraphInitialDrawEvent,
   ModuleChosenEvent,
+  ModuleCreateEvent,
   ModuleEditEvent,
   ToastEvent,
   ToastType,
@@ -96,6 +98,9 @@ export class ModuleEditor extends LitElement {
 
   @property()
   showModulePreview = false;
+
+  @property()
+  capabilities: false | GraphProviderCapabilities = false;
 
   @state()
   private formatting = false;
@@ -592,7 +597,7 @@ export class ModuleEditor extends LitElement {
     this.#codeEditorRef.value.destroy();
   }
 
-  #createModuleGraph(): GraphDescriptor | null {
+  #createModuleGraph(isMainModule = false): GraphDescriptor | null {
     if (!this.moduleId || !this.modules) {
       return null;
     }
@@ -611,7 +616,9 @@ export class ModuleEditor extends LitElement {
           id: this.moduleId,
           type: "runModule",
           metadata: {
-            title: `Demo Component`,
+            title: isMainModule
+              ? (this.graph?.raw().title ?? "Untitled Board")
+              : `Demo Component`,
             visual: {
               collapsed: "expanded",
             },
@@ -744,7 +751,8 @@ export class ModuleEditor extends LitElement {
       return nothing;
     }
 
-    const moduleGraphDescriptor = this.#createModuleGraph();
+    const isMainModule = this.graph?.main() === this.moduleId;
+    const moduleGraphDescriptor = this.#createModuleGraph(isMainModule);
     let moduleGraph: HTMLTemplateResult | symbol = nothing;
     if (moduleGraphDescriptor) {
       const inspectedModuleGraph = inspect(moduleGraphDescriptor, {
@@ -823,18 +831,23 @@ export class ModuleEditor extends LitElement {
         icon: "open",
         name: "open",
       },
+      {
+        title: "Create module...",
+        icon: "add-circle",
+        name: "create-module",
+      },
     ];
 
     if (this.errorCount > 0) {
       commands.push({
-        title: "Force save code",
+        title: "Force save module",
         icon: "save",
         name: "save",
         secondaryAction: "force",
       });
     } else {
       commands.push({
-        title: "Save code",
+        title: "Save module",
         icon: "save",
         name: "save",
       });
@@ -853,10 +866,12 @@ export class ModuleEditor extends LitElement {
           })
       : [];
 
-    const isRunnable = !!module.metadata().runnable;
+    const isRunnable = !!module.metadata().runnable || isMainModule;
     return html` <div
         id="module-graph"
-        class=${classMap({ visible: this.showModulePreview && isRunnable })}
+        class=${classMap({
+          visible: (this.showModulePreview && isRunnable) || isMainModule,
+        })}
       >
         ${moduleGraph}
       </div>
@@ -866,7 +881,7 @@ export class ModuleEditor extends LitElement {
           .graph=${this.graph}
           .modules=${this.modules}
           .moduleId=${this.moduleId}
-          .canSave=${false}
+          .canSave=${this.capabilities && this.capabilities.save}
           .readOnly=${this.readOnly}
           .isRunning=${isRunning}
           .eventCount=${eventCount}
@@ -933,6 +948,24 @@ export class ModuleEditor extends LitElement {
                     true,
                     evt.secondaryAction === "force"
                   );
+                  break;
+                }
+
+                case "create-module": {
+                  let moduleId;
+
+                  do {
+                    moduleId = prompt(
+                      "What would you like to call this module?"
+                    );
+                    if (!moduleId) {
+                      return;
+                    }
+                    // Check that the new module name is valid.
+                  } while (!/^[A-Za-z0-9_\\-]+$/gim.test(moduleId));
+
+                  this.dispatchEvent(new ModuleCreateEvent(moduleId));
+
                   break;
                 }
 

@@ -191,21 +191,21 @@ export class GraphRibbonMenu extends LitElement {
     #save {
       position: absolute;
       top: calc(100% + -8px);
-      left: 280px;
+      left: 398px;
       right: auto;
     }
 
     #copy {
       position: absolute;
       top: calc(100% + -8px);
-      left: 320px;
+      left: 442px;
       right: auto;
     }
 
     #subgraph-menu {
       position: absolute;
       top: calc(100% + -8px);
-      left: 565px;
+      left: 700px;
       right: auto;
     }
 
@@ -1351,7 +1351,14 @@ export class GraphRibbonMenu extends LitElement {
             secondaryAction: "delete",
           };
         })
-        .sort((a, b) => (a.title > b.title ? 1 : a.title < b.title ? -1 : 0));
+        .sort((a, b) => {
+          // Always place 'main' modules at the top.
+          if (a.title === this.graph?.main()) return -1;
+
+          if (a.title > b.title) return 1;
+          if (a.title < b.title) return -1;
+          return 0;
+        });
 
       modules.unshift({
         title: "Main board",
