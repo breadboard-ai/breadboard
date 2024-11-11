@@ -463,12 +463,8 @@ export class ModuleRibbonMenu extends LitElement {
     #errors {
       position: absolute;
       top: calc(100% + -8px);
-      left: 494px;
+      left: var(--error-left, 494px);
       right: auto;
-    }
-
-    #errors.main {
-      left: 614px;
     }
 
     #copy {
@@ -1061,7 +1057,6 @@ export class ModuleRibbonMenu extends LitElement {
 
       errorMenu = html`<bb-overflow-menu
         id="errors"
-        class=${classMap({ main: isMainModule })}
         .actions=${errorActions}
         .disabled=${this.graph === null}
         @bboverflowmenudismissed=${() => {
@@ -1086,7 +1081,14 @@ export class ModuleRibbonMenu extends LitElement {
             @pointerout=${() => {
               this.dispatchEvent(new HideTooltipEvent());
             }}
-            @click=${() => {
+            @click=${(evt: Event) => {
+              if (!(evt.target instanceof HTMLElement)) {
+                return;
+              }
+
+              const { left } = evt.target.getBoundingClientRect();
+              this.style.setProperty("--error-left", `${left}px`);
+
               this.showErrorMenu = true;
             }}
           >
