@@ -600,6 +600,7 @@ export class CodeChangeEvent extends Event {
       manual?: boolean;
       format?: boolean;
       errors?: number;
+      errorsDetail?: Array<{ message: string; start: number }>;
     }
   ) {
     super(CodeChangeEvent.eventName, { ...eventInit });
