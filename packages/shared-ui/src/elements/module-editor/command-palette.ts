@@ -75,6 +75,10 @@ export class CommandPalette extends LitElement {
       background-image: var(--bb-icon-save);
     }
 
+    menu li.add-circle {
+      background-image: var(--bb-icon-add-circle);
+    }
+
     menu li.selected {
       background-color: var(--bb-ui-50);
     }
@@ -219,7 +223,7 @@ export class CommandPalette extends LitElement {
                   this.#emitCurrentCommand();
                 }}
                 class=${classMap({
-                  [command.name]: true,
+                  [command.icon]: true,
                   selected: idx === this.selectedIndex,
                 })}
                 data-command=${command.name}
