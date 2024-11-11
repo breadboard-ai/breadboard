@@ -17,9 +17,12 @@ import {
   closeBrackets,
   closeCompletion,
   completionStatus,
+  moveCompletionSelection,
   startCompletion,
 } from "@codemirror/autocomplete";
 import {
+  cursorLineDown,
+  cursorLineUp,
   indentLess,
   indentMore,
   insertNewlineAndIndent,
@@ -298,6 +301,28 @@ export class CodeEditor extends LitElement {
           preventDefault: true,
           shift: indentLess,
           run: maybeAutoComplete,
+        },
+        {
+          key: "ArrowDown",
+          preventDefault: true,
+          run(view: EditorView) {
+            if (completionStatus(view.state) === "active") {
+              return moveCompletionSelection(true, "option")(view);
+            }
+
+            return cursorLineDown(view);
+          },
+        },
+        {
+          key: "ArrowUp",
+          preventDefault: true,
+          run(view: EditorView) {
+            if (completionStatus(view.state) === "active") {
+              return moveCompletionSelection(false, "option")(view);
+            }
+
+            return cursorLineUp(view);
+          },
         },
         {
           key: "Enter",
