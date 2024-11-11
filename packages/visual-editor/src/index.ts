@@ -1925,12 +1925,9 @@ export class Main extends LitElement {
                 }
               } else {
                 const data = event.data as InputValues;
-                if (runner.running()) {
-                  throw new Error(
-                    "The runner is already running, cannot send input"
-                  );
+                if (!runner.running()) {
+                  runner.run(data);
                 }
-                runner.run(data);
               }
             }}
           ></bb-board-activity-overlay>`;
