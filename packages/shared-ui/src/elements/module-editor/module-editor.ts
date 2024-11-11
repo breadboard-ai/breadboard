@@ -138,7 +138,7 @@ export class ModuleEditor extends LitElement {
     }
 
     bb-module-ribbon-menu {
-      z-index: 5;
+      z-index: 7;
     }
 
     #module-graph {
@@ -277,6 +277,7 @@ export class ModuleEditor extends LitElement {
       width: 75%;
       max-width: 650px;
       transform: translateX(-50%);
+      z-index: 6;
     }
   `;
 
@@ -880,6 +881,11 @@ export class ModuleEditor extends LitElement {
       : [];
 
     const isRunnable = !!module.metadata().runnable || isMainModule;
+    const recentItemsKey = (this.graph?.raw().url ?? "untitled-graph").replace(
+      /[\W\s]/gim,
+      "-"
+    );
+
     return html` <div
         id="module-graph"
         class=${classMap({
@@ -956,6 +962,10 @@ export class ModuleEditor extends LitElement {
       </section>
       ${this.showCommandPalette || this.showModulePalette
         ? html`<bb-command-palette
+            .recentItemsKey=${this.showCommandPalette
+              ? "commands"
+              : recentItemsKey}
+            .recencyType=${this.showCommandPalette ? "local" : "session"}
             .commands=${this.showCommandPalette ? commands : modules}
             @pointerdown=${(evt: PointerEvent) => {
               evt.stopImmediatePropagation();

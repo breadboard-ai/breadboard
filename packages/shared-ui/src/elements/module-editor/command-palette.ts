@@ -22,6 +22,12 @@ export class CommandPalette extends LitElement {
   @property()
   filter: string | null = null;
 
+  @property()
+  recentItemsKey: string | null = null;
+
+  @property()
+  recencyType: "local" | "session" = "session";
+
   static styles = css`
     :host {
       display: block;
@@ -95,6 +101,7 @@ export class CommandPalette extends LitElement {
   #inputRef: Ref<HTMLInputElement> = createRef();
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #attemptFocus = false;
+  #recentItems: string[] = [];
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -108,10 +115,68 @@ export class CommandPalette extends LitElement {
     this.removeEventListener("keydown", this.#onKeyDownBound);
   }
 
+  #restoreRecentItemsForKey(key: string | null) {
+    if (!key) {
+      return;
+    }
+
+    const store =
+      this.recencyType === "local"
+        ? globalThis.localStorage
+        : globalThis.sessionStorage;
+    try {
+      const data = store.getItem(`bb-command-palette-${key}`);
+      if (!data) {
+        return;
+      }
+      const items = JSON.parse(data);
+      if (
+        !Array.isArray(items) ||
+        !items.every((item) => typeof item === "string")
+      ) {
+        return;
+      }
+
+      this.#recentItems = items;
+    } catch (err) {
+      console.warn(err);
+      return;
+    }
+  }
+
+  #saveRecentItemsForKey(key: string | null) {
+    if (!key) {
+      return;
+    }
+
+    const items = JSON.stringify(this.#recentItems);
+    const store =
+      this.recencyType === "local"
+        ? globalThis.localStorage
+        : globalThis.sessionStorage;
+    store.setItem(`bb-command-palette-${key}`, items);
+  }
+
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("commands")) {
       this.#attemptFocus = true;
       this.selectedIndex = 0;
+
+      this.#restoreRecentItemsForKey(this.recentItemsKey);
+
+      // Sort commands based on recency.
+      this.commands.sort((commandA, commandB) => {
+        const indexA = this.#recentItems.indexOf(commandA.title);
+        const indexB = this.#recentItems.indexOf(commandB.title);
+        if (indexA !== -1 && indexB === -1) {
+          return -1;
+        }
+        if (indexA === -1 && indexB !== -1) {
+          return 1;
+        }
+
+        return indexA - indexB;
+      });
     }
   }
 
@@ -120,6 +185,19 @@ export class CommandPalette extends LitElement {
     if (!command) {
       return;
     }
+
+    // Track for future invocations.
+    const currentIndex = this.#recentItems.findIndex(
+      (item) => item === command.title
+    );
+    if (currentIndex === -1) {
+      this.#recentItems.unshift(command.title);
+    } else {
+      const [item] = this.#recentItems.splice(currentIndex, 1);
+      this.#recentItems.unshift(item);
+    }
+
+    this.#saveRecentItemsForKey(this.recentItemsKey);
 
     this.dispatchEvent(
       new CommandEvent(command.name, command.secondaryAction ?? null)
