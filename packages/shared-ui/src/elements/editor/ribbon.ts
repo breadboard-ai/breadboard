@@ -1354,6 +1354,7 @@ export class GraphRibbonMenu extends LitElement {
         .sort((a, b) => {
           // Always place 'main' modules at the top.
           if (a.title === this.graph?.main()) return -1;
+          if (b.title === this.graph?.main()) return 1;
 
           if (a.title > b.title) return 1;
           if (a.title < b.title) return -1;
