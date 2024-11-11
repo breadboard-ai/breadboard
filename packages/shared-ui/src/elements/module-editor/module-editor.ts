@@ -28,14 +28,19 @@ import { GraphAssets } from "../editor/graph-assets";
 import { until } from "lit/directives/until.js";
 import {
   CodeChangeEvent,
-  CodeDiagnosticEvent,
+  CommandEvent,
   GraphInitialDrawEvent,
+  ModuleChosenEvent,
   ModuleEditEvent,
   ToastEvent,
   ToastType,
 } from "../../events/events";
 import { guard } from "lit/directives/guard.js";
-import { CodeMirrorExtensions, TopGraphRunResult } from "../../types/types";
+import {
+  CodeMirrorExtensions,
+  Command,
+  TopGraphRunResult,
+} from "../../types/types";
 import { classMap } from "lit/directives/class-map.js";
 import { typeDeclarations as builtIns } from "@breadboard-ai/jsandbox";
 import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
@@ -98,6 +103,12 @@ export class ModuleEditor extends LitElement {
   @state()
   private errorCount = 0;
 
+  @state()
+  private showCommandPalette = false;
+
+  @state()
+  private showModulePalette = false;
+
   static styles = css`
     * {
       box-sizing: border-box;
@@ -108,6 +119,7 @@ export class ModuleEditor extends LitElement {
       width: 100%;
       height: 100%;
       overflow: hidden;
+      position: relative;
     }
 
     section {
@@ -247,6 +259,15 @@ export class ModuleEditor extends LitElement {
       font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
         var(--bb-font-family);
     }
+
+    bb-command-palette {
+      position: absolute;
+      top: calc(var(--bb-grid-size-2) + 44px);
+      left: 50%;
+      width: 75%;
+      max-width: 650px;
+      transform: translateX(-50%);
+    }
   `;
 
   #moduleRibbonMenuRef: Ref<ModuleRibbonMenu> = createRef();
@@ -260,12 +281,42 @@ export class ModuleEditor extends LitElement {
     extensions: null,
     compile: (code: ModuleCode) => code,
   };
+  #hasUnsavedChanges = false;
+  #onKeyDownBound = this.#onKeyDown.bind(this);
 
   connectedCallback(): void {
     super.connectedCallback();
 
+    this.addEventListener("keydown", this.#onKeyDownBound);
+
     this.showModulePreview =
       globalThis.localStorage.getItem(PREVIEW_KEY) === "true";
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    this.removeEventListener("keydown", this.#onKeyDownBound);
+  }
+
+  #onKeyDown(evt: KeyboardEvent) {
+    const isMac = navigator.platform.indexOf("Mac") === 0;
+    const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+    if (!isCtrlCommand || evt.key !== "p") {
+      return;
+    }
+
+    this.showCommandPalette = false;
+    this.showModulePalette = false;
+
+    if (evt.shiftKey) {
+      this.showCommandPalette = true;
+    } else {
+      this.showModulePalette = true;
+    }
+
+    evt.preventDefault();
+    evt.stopImmediatePropagation();
   }
 
   async #resetCompilationEnvironmentIfChanged(
@@ -377,10 +428,13 @@ export class ModuleEditor extends LitElement {
 
           return html`<bb-code-editor
             ${ref(this.#codeEditorRef)}
-            @bbcodediagnostic=${(evt: CodeDiagnosticEvent) => {
-              this.errorCount = evt.count;
+            @pointerdown=${() => {
+              this.showModulePalette = false;
+              this.showCommandPalette = false;
             }}
             @bbcodechange=${async (evt: CodeChangeEvent) => {
+              this.#hasUnsavedChanges = true;
+
               // User attempted a double save - ignore.
               if (this.formatting) {
                 this.dispatchEvent(
@@ -392,11 +446,15 @@ export class ModuleEditor extends LitElement {
                 return;
               }
 
-              if (evt.formatOnChange) {
+              if (evt.options.format) {
                 await this.#formatCode();
               }
 
-              this.#processEditorCodeWithEnvironment();
+              if (evt.options.errors !== undefined) {
+                this.errorCount = evt.options.errors;
+              }
+
+              this.#processEditorCodeWithEnvironment(evt.options.manual);
             }}
             .passthru=${true}
             .value=${code}
@@ -416,7 +474,7 @@ export class ModuleEditor extends LitElement {
     )}`;
   }
 
-  #processEditorCodeWithEnvironment() {
+  #processEditorCodeWithEnvironment(manual = false, force = false) {
     if (!this.#codeEditorRef.value) {
       return;
     }
@@ -426,10 +484,46 @@ export class ModuleEditor extends LitElement {
       return;
     }
 
-    this.processData(
-      editor.value,
-      this.#compilationEnvironment.compile(editor.value)
+    if (this.errorCount > 0 && !force) {
+      // Only toast the user when they requested a save.
+      if (manual) {
+        this.dispatchEvent(
+          new ToastEvent("Unable to save - code has errors", ToastType.WARNING)
+        );
+      }
+      return;
+    }
+
+    const source = editor.value;
+    const compiledCode = this.#compilationEnvironment.compile(editor.value);
+    if (!this.#moduleRibbonMenuRef.value || !this.moduleId) {
+      return;
+    }
+
+    const ribbonMenu = this.#moduleRibbonMenuRef.value;
+    const module = this.modules[this.moduleId];
+    if (!module) {
+      return;
+    }
+
+    const metadata = module.metadata();
+    const language = metadata.source?.language ?? "javascript";
+    const description = this.#parseModuleDescription(source);
+
+    if (language === "typescript") {
+      metadata.source = { code: source, language: "typescript" };
+    }
+    metadata.description = description;
+    metadata.runnable = ribbonMenu.moduleIsRunnable();
+
+    this.#hasUnsavedChanges = false;
+    this.dispatchEvent(
+      new ModuleEditEvent(this.moduleId, compiledCode, metadata)
     );
+
+    if (manual) {
+      this.dispatchEvent(new ToastEvent("Code updated", ToastType.INFORMATION));
+    }
   }
 
   async #formatCode() {
@@ -488,32 +582,6 @@ export class ModuleEditor extends LitElement {
       .map((line) => line.replace(/\s?\*/, "").trim())
       .join("\n")
       .trim();
-  }
-
-  processData(source: string, compiledCode: string) {
-    if (!this.#moduleRibbonMenuRef.value || !this.moduleId) {
-      return;
-    }
-
-    const ribbonMenu = this.#moduleRibbonMenuRef.value;
-    const module = this.modules[this.moduleId];
-    if (!module) {
-      return;
-    }
-
-    const metadata = module.metadata();
-    const language = metadata.source?.language ?? "javascript";
-    const description = this.#parseModuleDescription(source);
-
-    if (language === "typescript") {
-      metadata.source = { code: source, language: "typescript" };
-    }
-    metadata.description = description;
-    metadata.runnable = ribbonMenu.moduleIsRunnable();
-
-    this.dispatchEvent(
-      new ModuleEditEvent(this.moduleId, compiledCode, metadata)
-    );
   }
 
   destroyEditor() {
@@ -653,6 +721,24 @@ export class ModuleEditor extends LitElement {
     globalThis.localStorage.setItem(PREVIEW_KEY, `${this.showModulePreview}`);
   }
 
+  #attemptEditorFocus() {
+    if (!this.#codeEditorRef.value) {
+      return;
+    }
+
+    this.#codeEditorRef.value.attemptEditorFocus();
+  }
+
+  #confirmModuleChangeIfNeeded() {
+    if (this.#hasUnsavedChanges) {
+      return confirm(
+        "There are unsaved changes. Are you sure you wish to proceed?"
+      );
+    }
+
+    return true;
+  }
+
   render() {
     if (!this.modules || !this.moduleId) {
       return nothing;
@@ -726,6 +812,47 @@ export class ModuleEditor extends LitElement {
       }
     }
 
+    const commands: Command[] = [
+      {
+        title: "Format code",
+        icon: "format",
+        name: "format",
+      },
+      {
+        title: "Open module...",
+        icon: "open",
+        name: "open",
+      },
+    ];
+
+    if (this.errorCount > 0) {
+      commands.push({
+        title: "Force save code",
+        icon: "save",
+        name: "save",
+        secondaryAction: "force",
+      });
+    } else {
+      commands.push({
+        title: "Save code",
+        icon: "save",
+        name: "save",
+      });
+    }
+
+    const modules: Command[] = this.modules
+      ? Object.keys(this.modules)
+          .filter((module) => module !== this.moduleId)
+          .map((module) => {
+            return {
+              title: `Open ${module}...`,
+              icon: "open",
+              name: "open",
+              secondaryAction: module,
+            };
+          })
+      : [];
+
     const isRunnable = !!module.metadata().runnable;
     return html` <div
         id="module-graph"
@@ -755,6 +882,11 @@ export class ModuleEditor extends LitElement {
           @input=${() => {
             this.#processEditorCodeWithEnvironment();
           }}
+          @bbmodulechosen=${(evt: Event) => {
+            if (!this.#confirmModuleChangeIfNeeded()) {
+              evt.stopImmediatePropagation();
+            }
+          }}
           @bbtogglepreview=${() => this.#togglePreview()}
           @bbformatmodulecode=${async () => {
             if (this.formatting) {
@@ -773,6 +905,59 @@ export class ModuleEditor extends LitElement {
             </div>
           </div>
         </div>
-      </section>`;
+      </section>
+      ${this.showCommandPalette || this.showModulePalette
+        ? html`<bb-command-palette
+            .commands=${this.showCommandPalette ? commands : modules}
+            @pointerdown=${(evt: PointerEvent) => {
+              evt.stopImmediatePropagation();
+            }}
+            @bbpalettedismissed=${() => {
+              this.showCommandPalette = false;
+              this.showModulePalette = false;
+              this.#attemptEditorFocus();
+            }}
+            @bbcommand=${(evt: CommandEvent) => {
+              this.showCommandPalette = false;
+              this.showModulePalette = false;
+              this.#attemptEditorFocus();
+
+              switch (evt.command) {
+                case "format": {
+                  this.#formatCode();
+                  break;
+                }
+
+                case "save": {
+                  this.#processEditorCodeWithEnvironment(
+                    true,
+                    evt.secondaryAction === "force"
+                  );
+                  break;
+                }
+
+                case "open": {
+                  if (evt.secondaryAction !== null) {
+                    if (!this.#confirmModuleChangeIfNeeded()) {
+                      return;
+                    }
+
+                    this.dispatchEvent(
+                      new ModuleChosenEvent(evt.secondaryAction)
+                    );
+                    break;
+                  }
+                  this.showModulePalette = true;
+                  break;
+                }
+
+                default: {
+                  console.warn(`Unexpected command ${evt.command}`);
+                  break;
+                }
+              }
+            }}
+          ></bb-command-palette>`
+        : nothing}`;
   }
 }

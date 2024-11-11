@@ -11,14 +11,21 @@ import { EditorView, minimalSetup } from "codemirror";
 import { keymap, lineNumbers } from "@codemirror/view";
 import { javascript } from "@codemirror/lang-javascript";
 import { json } from "@codemirror/lang-json";
-import { autocompletion, closeBrackets } from "@codemirror/autocomplete";
-import { indentWithTab } from "@codemirror/commands";
 import {
-  CodeChangeEvent,
-  CodeDiagnosticEvent,
-  ToastEvent,
-  ToastType,
-} from "../../../events/events.js";
+  acceptCompletion,
+  autocompletion,
+  closeBrackets,
+  closeCompletion,
+  completionStatus,
+  startCompletion,
+} from "@codemirror/autocomplete";
+import {
+  indentLess,
+  indentMore,
+  insertNewlineAndIndent,
+} from "@codemirror/commands";
+import { bracketMatching } from "@codemirror/language";
+import { CodeChangeEvent } from "../../../events/events.js";
 import { type Extension } from "@codemirror/state";
 
 import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
@@ -87,6 +94,22 @@ export class CodeEditor extends LitElement {
     :host([passthru="true"]) .cm-editor.cm-focused {
       border: none;
       box-shadow: none;
+    }
+
+    .cm-lintRange-error {
+      position: relative;
+    }
+
+    .cm-lintRange-error::before {
+      content: "";
+      position: absolute;
+      left: -2px;
+      top: -2px;
+      bottom: -2px;
+      right: -2px;
+      border-radius: var(--bb-grid-size);
+      background: oklch(from var(--bb-warning-500) l c h / 0.15);
+      z-index: -1;
     }
 
     textarea {
@@ -187,8 +210,7 @@ export class CodeEditor extends LitElement {
 
     this.#lastCursorPosition = this.#editor?.state.selection.main.head;
 
-    this.dispatchEvent(new ToastEvent("Code updated", ToastType.INFORMATION));
-    this.dispatchEvent(new CodeChangeEvent(true));
+    this.dispatchEvent(new CodeChangeEvent({ format: true, manual: true }));
   }
 
   #attemptEditorUpdate() {
@@ -222,7 +244,7 @@ export class CodeEditor extends LitElement {
     });
   }
 
-  #attemptEditorFocus() {
+  attemptEditorFocus() {
     if (!this.#editor) {
       return;
     }
@@ -246,11 +268,51 @@ export class CodeEditor extends LitElement {
   }
 
   #createEditor() {
+    const maybeAutoComplete = (view: EditorView) => {
+      // If there are completions, assume that tab is to be used,
+      // otherwise indent the content.
+      if (completionStatus(view.state) === null) {
+        return indentMore(view);
+      }
+
+      return acceptCompletion(view);
+    };
+
     const editorExtensions: Extension[] = [
+      keymap.of([
+        {
+          key: "Tab",
+          preventDefault: true,
+          shift: indentLess,
+          run: maybeAutoComplete,
+        },
+        {
+          key: "Enter",
+          preventDefault: true,
+          run(view: EditorView) {
+            if (completionStatus(view.state) === null) {
+              return insertNewlineAndIndent(view);
+            }
+
+            return acceptCompletion(view);
+          },
+        },
+        {
+          key: "Mod-Shift-Space",
+          preventDefault: true,
+          run: startCompletion,
+        },
+        {
+          key: "Escape",
+          preventDefault: true,
+          run: closeCompletion,
+        },
+      ]),
       minimalSetup,
       lineNumbers(),
       closeBrackets(),
-      keymap.of([indentWithTab]),
+      bracketMatching(),
+
       EditorView.updateListener.of((value) => {
         if (!value.docChanged) {
           return;
@@ -258,18 +320,20 @@ export class CodeEditor extends LitElement {
 
         globalThis.clearTimeout(this.#emitTimeout);
         this.#emitTimeout = setTimeout(() => {
+          const opts: { format?: boolean; manual?: boolean; errors?: number } =
+            { format: false, manual: false };
           if (this.env && this.fileName) {
-            const diagnostics = [
+            const codeDiagnostics = [
               ...this.env.languageService.getSemanticDiagnostics(this.fileName),
               ...this.env.languageService.getSyntacticDiagnostics(
                 this.fileName
               ),
             ];
 
-            this.dispatchEvent(new CodeDiagnosticEvent(diagnostics.length));
+            opts.errors = codeDiagnostics.length;
           }
 
-          this.dispatchEvent(new CodeChangeEvent());
+          this.dispatchEvent(new CodeChangeEvent(opts));
         }, CODE_CHANGE_EMIT_TIMEOUT);
       }),
     ];
@@ -288,7 +352,10 @@ export class CodeEditor extends LitElement {
           tsFacet.of({ env: this.env, path: this.fileName }),
           tsSync(),
           tsLinter(),
-          autocompletion({ override: [tsAutocomplete()] }),
+          autocompletion({
+            override: [tsAutocomplete()],
+            defaultKeymap: false,
+          }),
           tsHover({
             renderTooltip: (info: HoverInfo) => {
               const div = document.createElement("div");
@@ -324,7 +391,7 @@ export class CodeEditor extends LitElement {
     });
 
     this.#attemptEditorUpdate();
-    this.#attemptEditorFocus();
+    this.attemptEditorFocus();
   }
 
   render() {

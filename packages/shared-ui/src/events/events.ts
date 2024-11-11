@@ -595,16 +595,14 @@ export class CommentUpdateEvent extends Event {
 export class CodeChangeEvent extends Event {
   static eventName = "bbcodechange";
 
-  constructor(public readonly formatOnChange = false) {
+  constructor(
+    public readonly options: {
+      manual?: boolean;
+      format?: boolean;
+      errors?: number;
+    }
+  ) {
     super(CodeChangeEvent.eventName, { ...eventInit });
-  }
-}
-
-export class CodeDiagnosticEvent extends Event {
-  static eventName = "bbcodediagnostic";
-
-  constructor(public readonly count = 0) {
-    super(CodeDiagnosticEvent.eventName, { ...eventInit });
   }
 }
 
@@ -1020,5 +1018,28 @@ export class GoogleDriveFolderPickedEvent extends Event {
 
   constructor(public readonly id: string | null) {
     super(GoogleDriveFolderPickedEvent.eventName, { ...eventInit });
+  }
+}
+
+/**
+ * Command Palette
+ */
+
+export class PaletteDismissedEvent extends Event {
+  static eventName = "bbpalettedismissed";
+
+  constructor() {
+    super(PaletteDismissedEvent.eventName, { ...eventInit });
+  }
+}
+
+export class CommandEvent extends Event {
+  static eventName = "bbcommand";
+
+  constructor(
+    public readonly command: string,
+    public readonly secondaryAction: string | null
+  ) {
+    super(CommandEvent.eventName, { ...eventInit });
   }
 }

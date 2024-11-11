@@ -163,6 +163,10 @@ export class SaveAsOverlay extends LitElement {
     .split textarea {
       margin: 0;
     }
+
+    .container {
+      margin: 0 var(--bb-grid-size-4);
+    }
   `;
 
   protected willUpdate(
@@ -406,8 +410,14 @@ export class SaveAsOverlay extends LitElement {
         />
 
         ${this.isNewBoard
-          ? html` <label>Code</label>
-              <input name="imperative" type="checkbox" />`
+          ? html` <label for="imperative-board">Code</label>
+              <div class="container">
+                <input
+                  id="imperative-board"
+                  name="imperative"
+                  type="checkbox"
+                />
+              </div>`
           : nothing}
 
         <div id="controls">

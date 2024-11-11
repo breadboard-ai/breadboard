@@ -15,6 +15,7 @@ export { BoardEditOverlay } from "./overlay/board-edit.js";
 export { BoardSelector } from "./input/board-selector/board-selector.js";
 export { BoardServerOverlay } from "./overlay/provider.js";
 export { CodeEditor } from "./input/code-editor/code-editor.js";
+export { CommandPalette } from "./module-editor/command-palette.js";
 export { CommentOverlay } from "./overlay/comment.js";
 export { ComponentSelectorOverlay } from "./overlay/component-selector.js";
 export { ConnectionBroker } from "./connection/connection-broker.js";
