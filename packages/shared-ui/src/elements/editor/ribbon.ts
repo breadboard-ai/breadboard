@@ -43,6 +43,7 @@ import { MAIN_BOARD_ID } from "../../constants/constants";
 import { guard } from "lit/directives/guard.js";
 import { type ComponentSelectorOverlay } from "../elements";
 import { ModuleIdentifier } from "@breadboard-ai/types";
+import { getModuleId } from "../../utils/module-id";
 
 const COLLAPSED_MENU_BUFFER = 60;
 
@@ -1386,15 +1387,10 @@ export class GraphRibbonMenu extends LitElement {
           evt.stopImmediatePropagation();
 
           if (evt.action === "create-module") {
-            let moduleId;
-
-            do {
-              moduleId = prompt("What would you like to call this module?");
-              if (!moduleId) {
-                return;
-              }
-              // Check that the new module name is valid.
-            } while (!/^[A-Za-z0-9_\\-]+$/gim.test(moduleId));
+            const moduleId = getModuleId();
+            if (!moduleId) {
+              return;
+            }
 
             this.dispatchEvent(new ModuleCreateEvent(moduleId));
             return;
