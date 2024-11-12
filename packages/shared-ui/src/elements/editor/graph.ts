@@ -687,7 +687,14 @@ export class Graph extends PIXI.Container {
         continue;
       }
 
-      edge.selected = rect.intersects(edge.getBounds(true).rectangle);
+      // Cheap bounding box intersection first, and move on to the next edge if that fails.
+      if (!rect.intersects(edge.getBounds(true).rectangle)) {
+        edge.selected = false;
+        continue;
+      }
+
+      // If the bounding boxes intersect, run the more expensive rectangle/polygon intersection.
+      edge.selected = edge.intersectsRect(rect);
     }
 
     this.#sortChildrenBySelectedStatus();
