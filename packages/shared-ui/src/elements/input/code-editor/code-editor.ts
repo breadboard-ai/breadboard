@@ -11,6 +11,8 @@ import { EditorView, minimalSetup } from "codemirror";
 import { keymap, lineNumbers } from "@codemirror/view";
 import { javascript } from "@codemirror/lang-javascript";
 import { json } from "@codemirror/lang-json";
+import { continueKeymap } from "@valtown/codemirror-continue";
+import { closeSearchPanel, openSearchPanel, search } from "@codemirror/search";
 import {
   acceptCompletion,
   autocompletion,
@@ -36,6 +38,7 @@ import { CodeMirrorExtensions } from "../../../types/types.js";
 import type { HoverInfo } from "@valtown/codemirror-ts";
 
 const CODE_CHANGE_EMIT_TIMEOUT = 500;
+const CODE_INDENTATION = 2;
 
 @customElement("bb-code-editor")
 export class CodeEditor extends LitElement {
@@ -159,17 +162,98 @@ export class CodeEditor extends LitElement {
       }
     }
 
+    .cm-editor .cm-panel.cm-search {
+      display: grid;
+      grid-template-columns: repeat(7, max-content) auto;
+      grid-auto-rows: var(--bb-grid-size-5);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      color: var(--bb-neutral-800);
+      column-gap: var(--bb-grid-size-2);
+      row-gap: var(--bb-grid-size);
+      padding: var(--bb-grid-size-2);
+      background: var(--bb-neutral-0);
+    }
+
+    .cm-editor .cm-panel.cm-search label {
+      display: flex;
+      align-items: center;
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+    }
+
+    .cm-editor .cm-panel.cm-search input.cm-textfield,
+    .cm-editor .cm-panel.cm-search button.cm-button {
+      padding: 0 var(--bb-grid-size-2);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      border-radius: var(--bb-grid-size);
+      border: 1px solid var(--bb-neutral-300);
+      background: var(--bb-neutral-0);
+      margin: 0;
+    }
+
+    .cm-editor .cm-panel.cm-search button.cm-button {
+      border-radius: var(--bb-grid-size-12);
+      background: var(--bb-ui-100);
+      color: var(--bb-ui-700);
+      border: none;
+    }
+
+    .cm-editor .cm-panel.cm-search br {
+      flex: 1 0 auto;
+    }
+
+    .cm-editor .cm-panel.cm-search button[name="close"] {
+      width: 20px;
+      height: 20px;
+      background: var(--bb-icon-close) center center / 20px 20px no-repeat;
+      font-size: 0;
+    }
+
     .cm-tooltip {
-      padding: var(--bb-grid-size);
       border-radius: var(--bb-grid-size);
       background: var(--bb-neutral-0) !important;
       border: 1px solid var(--bb-neutral-300) !important;
-      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family-mono);
-
+      font: 500 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
+        monospace;
+      white-space: nowrap;
       box-shadow:
         0 8px 8px 0 rgba(0, 0, 0, 0.07),
         0 15px 12px 0 rgba(0, 0, 0, 0.09);
+      line-height: 1.8;
+      color: rgb(0, 0, 204);
+    }
+
+    .hover {
+      padding: var(--bb-grid-size-2);
+    }
+
+    .hover span {
+      margin: 0 1ch 0 0;
+    }
+
+    .hover span.no-margin,
+    .hover span.quick-info-indentation,
+    .hover span:has(+ .quick-info-punctuation) {
+      margin-right: 0;
+    }
+
+    .hover span.enforce-margin:has(+ .quick-info-punctuation) {
+      margin-right: 1ch;
+    }
+
+    .quick-info-punctuation {
+      color: rgb(0, 0, 0);
+    }
+
+    .quick-info-functionName,
+    .quick-info-keyword {
+      color: rgb(119, 0, 136);
+    }
+
+    .quick-info-aliasName {
+      color: rgb(0, 136, 85);
     }
   `;
 
@@ -296,6 +380,7 @@ export class CodeEditor extends LitElement {
 
     const editorExtensions: Extension[] = [
       keymap.of([
+        ...continueKeymap,
         {
           key: "Tab",
           preventDefault: true,
@@ -343,13 +428,34 @@ export class CodeEditor extends LitElement {
         {
           key: "Escape",
           preventDefault: true,
-          run: closeCompletion,
+          run(view: EditorView) {
+            if (completionStatus(view.state) !== null) {
+              return closeCompletion(view);
+            }
+
+            return closeSearchPanel(view);
+          },
+        },
+        {
+          key: "Mod-f",
+          preventDefault: true,
+          run: openSearchPanel,
         },
       ]),
       minimalSetup,
       lineNumbers(),
       closeBrackets(),
       bracketMatching(),
+      search({ top: true }),
+      EditorView.theme({
+        "&": {
+          fontSize: "11.75px",
+        },
+        ".cm-scroller": {
+          fontWeight: 400,
+          lineHeight: 1.8,
+        },
+      }),
 
       EditorView.updateListener.of((value) => {
         if (!value.docChanged) {
@@ -414,10 +520,60 @@ export class CodeEditor extends LitElement {
               const div = document.createElement("div");
               div.className = "hover";
               if (info.quickInfo?.displayParts) {
-                for (const part of info.quickInfo.displayParts) {
+                const parts = info.quickInfo.displayParts.filter(
+                  (p) => p.kind !== "space"
+                );
+                let indentation = 0;
+                for (let p = 0; p < parts.length; p++) {
+                  const part = parts[p];
+                  const text = part.text;
+
+                  // Create the container span.
                   const span = div.appendChild(document.createElement("span"));
                   span.className = `quick-info-${part.kind}`;
-                  span.innerText = part.text;
+                  if (text === "(" || text === ")") {
+                    span.classList.add("no-margin");
+                  }
+
+                  if (text === ":") {
+                    span.classList.add("enforce-margin");
+                  }
+
+                  span.innerText = text;
+
+                  // Now handle indentation.
+                  if (
+                    p < parts.length - 1 &&
+                    (parts[p + 1].kind === "lineBreak" ||
+                      parts[p + 1].kind === "punctuation")
+                  ) {
+                    // { followed by a new line indents more.
+                    const nextPart = parts[p + 1];
+                    if (part.text === "{" && nextPart.kind === "lineBreak") {
+                      indentation++;
+                    }
+
+                    // }; and } followed by a new line indents less.
+                    if (part.kind === "lineBreak" && nextPart.text === "}") {
+                      indentation--;
+                    }
+                  }
+
+                  // Make sure to clamp in case of negative indentation (which
+                  // ideally shouldn't happen, but best to be sure).
+                  indentation = Math.max(0, indentation);
+
+                  // Finally, if we have a line break inject a span with the
+                  // requisite amount of
+                  if (part.kind === "lineBreak") {
+                    const span = div.appendChild(
+                      document.createElement("span")
+                    );
+                    span.className = `quick-info-indentation`;
+                    span.innerHTML = "&nbsp;".repeat(
+                      indentation * CODE_INDENTATION
+                    );
+                  }
                 }
               }
               return { dom: div };
