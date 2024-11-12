@@ -24,6 +24,7 @@ import {
   SandboxedModule,
   Telemetry,
 } from "@breadboard-ai/jsandbox";
+import { inflateData } from "./data/inflate-deflate.js";
 
 export { addSandboxedRunModule, invokeDescriber, invokeMainDescriber };
 
@@ -101,9 +102,12 @@ function addSandboxedRunModule(sandbox: Sandbox, kits: Kit[]): Kit[] {
               },
               modules
             );
+            const inputs = context.store
+              ? ((await inflateData(context.store, rest)) as InputValues)
+              : rest;
             const result = await module.invoke(
               $module as string,
-              rest,
+              inputs,
               telemetry(context)
             );
             return result as InputValues;
