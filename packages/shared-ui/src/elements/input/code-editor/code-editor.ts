@@ -163,7 +163,7 @@ export class CodeEditor extends LitElement {
     }
 
     .cm-editor .cm-panels {
-      z-index: 0;
+      z-index: 1;
     }
 
     .cm-editor .cm-panel.cm-search {
