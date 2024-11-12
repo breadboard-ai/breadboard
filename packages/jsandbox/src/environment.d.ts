@@ -108,3 +108,55 @@ declare module "@invoke" {
    */
   export default function invoke(inputs: InvokeInputs): Promise<InvokeOutputs>;
 }
+
+declare type FunctionCallCapabilityPart = {
+  functionCall: {
+    name: string;
+    args: object;
+  };
+};
+
+declare type FunctionResponseCapabilityPart = {
+  functionResponse: {
+    name: string;
+    response: object;
+  };
+};
+
+declare type TextCapabilityPart = {
+  text: string;
+};
+
+declare type DataStoreHandle = string;
+
+/**
+ * Represents data that is stored by a DataStoreProvider.
+ */
+declare type StoredDataCapabilityPart = {
+  storedData: {
+    handle: DataStoreHandle;
+    mimeType: string;
+  };
+};
+
+declare type DataPart =
+  | InlineDataCapabilityPart
+  | StoredDataCapabilityPart
+  | FunctionCallCapabilityPart
+  | FunctionResponseCapabilityPart
+  | TextCapabilityPart;
+
+declare type LLMContent = {
+  role?: string;
+  parts: DataPart[];
+};
+
+/**
+ * Represents inline data, encoded as a base64 string.
+ */
+declare type InlineDataCapabilityPart = {
+  inlineData: {
+    mimeType: string;
+    data: string;
+  };
+};
