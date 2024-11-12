@@ -162,6 +162,10 @@ export class CodeEditor extends LitElement {
       }
     }
 
+    .cm-editor .cm-panels {
+      z-index: 0;
+    }
+
     .cm-editor .cm-panel.cm-search {
       display: grid;
       grid-template-columns: repeat(7, max-content) auto;
@@ -287,6 +291,10 @@ export class CodeEditor extends LitElement {
   #onKeyDown(evt: KeyboardEvent) {
     const isMac = navigator.platform.indexOf("Mac") === 0;
     const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+    if (evt.shiftKey) {
+      return;
+    }
 
     if (evt.key !== "s" || !isCtrlCommand) {
       return;

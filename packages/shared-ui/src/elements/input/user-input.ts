@@ -549,10 +549,26 @@ export class UserInput extends LitElement {
       .replace(/^\$/, "__");
   }
 
+  #shouldAttemptFocus = false;
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("inputs")) {
       this.enhancingInput.clear();
+      this.#shouldAttemptFocus = true;
     }
+  }
+
+  protected updated(): void {
+    if (!this.#shouldAttemptFocus) {
+      return;
+    }
+
+    this.#shouldAttemptFocus = false;
+    if (!this.#formRef.value) {
+      return;
+    }
+
+    const input = this.#formRef.value.querySelector<HTMLInputElement>("input");
+    input?.select();
   }
 
   #updateModuleDescriptionIfNeeded(evt: InputEvent) {
@@ -606,7 +622,7 @@ export class UserInput extends LitElement {
       @bbcodechange=${this.#emitProcessedData}
       @submit=${this.#onFormSubmit}
     >
-      ${map(this.inputs, (input, idx) => {
+      ${map(this.inputs, (input) => {
         let inputField: HTMLTemplateResult | symbol = nothing;
         let description: HTMLTemplateResult | symbol = nothing;
 
@@ -805,7 +821,6 @@ export class UserInput extends LitElement {
                     .clamped=${this.llmInputClamped}
                     .inlineControls=${this.inlineControls}
                     .showEntrySelector=${this.llmInputShowEntrySelector}
-                    .autofocus=${idx === 0 ? true : false}
                   ></bb-llm-input-array>`;
                 } else {
                   let renderableValue: unknown = input.value;
@@ -914,7 +929,6 @@ export class UserInput extends LitElement {
                   name=${id}
                   autocomplete="off"
                   placeholder=${input.schema.description ?? ""}
-                  .autofocus=${idx === 0 ? true : false}
                   .value=${stringifyObject(input.value, defaultValue)}
                 ></textarea>`;
                 break;
@@ -928,7 +942,6 @@ export class UserInput extends LitElement {
                   autocomplete="off"
                   placeholder=${input.schema.description ?? ""}
                   ?required=${input.required}
-                  .autofocus=${idx === 0 ? true : false}
                   .value=${input.value ?? defaultValue ?? ""}
                 />`;
                 break;
@@ -940,7 +953,6 @@ export class UserInput extends LitElement {
                   id=${id}
                   name=${id}
                   autocomplete="off"
-                  .autofocus=${idx === 0 ? true : false}
                   .checked=${input.value}
                 />`;
                 break;
@@ -970,7 +982,6 @@ export class UserInput extends LitElement {
                     name=${id}
                     autocomplete="off"
                     placeholder=${input.schema.description ?? ""}
-                    .autofocus=${idx === 0 ? true : false}
                   >
                     ${options.map(
                       (item) =>
@@ -1006,7 +1017,6 @@ export class UserInput extends LitElement {
                         name=${id}
                         autocomplete="off"
                         placeholder=${input.schema.description ?? ""}
-                        .autofocus=${idx === 0 ? true : false}
                         .value=${input.value ?? defaultValue ?? ""}
                       />`;
                     break;
@@ -1017,7 +1027,6 @@ export class UserInput extends LitElement {
                     name=${id}
                     autocomplete="off"
                     placeholder=${input.schema.description ?? ""}
-                    .autofocus=${idx === 0 ? true : false}
                     .value=${input.value ?? defaultValue ?? ""}
                   ></textarea>`;
                   break;
@@ -1031,7 +1040,6 @@ export class UserInput extends LitElement {
                     autocomplete="off"
                     placeholder=${input.schema.description ?? ""}
                     ?required=${input.required}
-                    .autofocus=${idx === 0 ? true : false}
                     .value=${input.value ?? defaultValue ?? ""}
                   />`;
                 break;
