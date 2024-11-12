@@ -332,18 +332,11 @@ export class ModuleEditor extends LitElement {
     evt.stopImmediatePropagation();
   }
 
-  async #resetCompilationEnvironmentIfChanged(
+  async #resetCompilationEnvironment(
     language: ModuleLanguage,
     moduleId: ModuleIdentifier,
     definitions: Map<string, string> | null
   ) {
-    if (
-      language === this.#compilationEnvironment.language &&
-      moduleId === this.#compilationEnvironment.moduleId
-    ) {
-      return;
-    }
-
     this.#compilationEnvironment = {
       language,
       moduleId,
@@ -438,7 +431,7 @@ export class ModuleEditor extends LitElement {
       [this.moduleId, this.graph?.raw().url, language],
       () => {
         this.#resetErrorState();
-        const editor = this.#resetCompilationEnvironmentIfChanged(
+        const editor = this.#resetCompilationEnvironment(
           language,
           this.moduleId!,
           definitions

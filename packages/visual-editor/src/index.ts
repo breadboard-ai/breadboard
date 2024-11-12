@@ -1441,9 +1441,7 @@ export class Main extends LitElement {
 
     const newModule: Module = {
       code: defaultModuleContent(),
-      metadata: {
-        runnable: true,
-      },
+      metadata: {},
     };
 
     const createAsTypeScript =
@@ -1452,7 +1450,6 @@ export class Main extends LitElement {
         .items.get("Use TypeScript as Module default language")?.value ?? false;
     if (createAsTypeScript) {
       newModule.metadata = {
-        runnable: true,
         source: {
           code: defaultModuleContent("typescript"),
           language: "typescript",
