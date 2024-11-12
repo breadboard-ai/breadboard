@@ -62,6 +62,7 @@ import {
   StreamlinedSchemaEditor,
 } from "../elements";
 import "./delegating-input.js";
+import { getModuleId } from "../../utils/module-id";
 
 const NO_MODULE = " -- No module";
 
@@ -774,17 +775,10 @@ export class UserInput extends LitElement {
               <button
                 class="create-new-module"
                 @click=${() => {
-                  let moduleId;
-
-                  do {
-                    moduleId = prompt(
-                      "What would you like to call this module?"
-                    );
-                    if (!moduleId) {
-                      return;
-                    }
-                    // Check that the new module name is valid.
-                  } while (!/^[A-Za-z0-9_\\-]+$/gim.test(moduleId));
+                  const moduleId = getModuleId();
+                  if (!moduleId) {
+                    return;
+                  }
 
                   this.dispatchEvent(new ModuleCreateEvent(moduleId));
                 }}

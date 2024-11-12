@@ -48,6 +48,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { typeDeclarations as builtIns } from "@breadboard-ai/jsandbox";
 import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
 import { getMappedQuickJsModList } from "./ts-library";
+import { getModuleId } from "../../utils/module-id";
 
 const PREVIEW_KEY = "bb-module-editor-preview-visible";
 
@@ -296,6 +297,8 @@ export class ModuleEditor extends LitElement {
   #hasUnsavedChanges = false;
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #errorDetails: Array<{ message: string; start: number }> | null = null;
+  #moduleCount = -1;
+  #editorId = globalThis.crypto.randomUUID();
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -310,6 +313,13 @@ export class ModuleEditor extends LitElement {
     super.disconnectedCallback();
 
     this.removeEventListener("keydown", this.#onKeyDownBound);
+  }
+
+  protected willUpdate(): void {
+    if (Object.keys(this.modules).length !== this.#moduleCount) {
+      this.#moduleCount = Object.keys(this.modules).length;
+      this.#editorId = globalThis.crypto.randomUUID();
+    }
   }
 
   #onKeyDown(evt: KeyboardEvent) {
@@ -428,7 +438,7 @@ export class ModuleEditor extends LitElement {
     }
 
     return html`${guard(
-      [this.moduleId, this.graph?.raw().url, language],
+      [this.moduleId, this.graph?.raw().url, language, this.#editorId],
       () => {
         this.#resetErrorState();
         const editor = this.#resetCompilationEnvironment(
@@ -989,20 +999,12 @@ export class ModuleEditor extends LitElement {
                 }
 
                 case "create-module": {
-                  let moduleId;
-
-                  do {
-                    moduleId = prompt(
-                      "What would you like to call this module?"
-                    );
-                    if (!moduleId) {
-                      return;
-                    }
-                    // Check that the new module name is valid.
-                  } while (!/^[A-Za-z0-9_\\-]+$/gim.test(moduleId));
+                  const moduleId = getModuleId();
+                  if (!moduleId) {
+                    break;
+                  }
 
                   this.dispatchEvent(new ModuleCreateEvent(moduleId));
-
                   break;
                 }
 
