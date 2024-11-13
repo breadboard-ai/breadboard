@@ -51,6 +51,7 @@
         "./packages/shared-ui:build",
         "./packages/template-kit:build",
         "./packages/types:build",
+        "./packages/unified-server:build",
         "./packages/visual-editor:build",
         "./packages/website:build"
       ]
@@ -76,7 +77,8 @@
         "./packages/palm-kit:test",
         "./packages/python-wasm:test",
         "./packages/schema:test",
-        "./packages/template-kit:test"
+        "./packages/template-kit:test",
+        "./packages/unified-server:test"
       ]
     },
     "lint": {
@@ -97,7 +99,8 @@
         "./packages/node-nursery-web:lint",
         "./packages/palm-kit:lint",
         "./packages/python-wasm:lint",
-        "./packages/template-kit:lint"
+        "./packages/template-kit:lint",
+        "./packages/unified-server:lint"
       ]
     },
     "ci:local": {
