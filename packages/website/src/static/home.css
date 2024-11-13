@@ -137,6 +137,7 @@ main header img {
   transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
   text-decoration: none;
   color: var(--bb-neutral-700);
+  height: 100%;
 }
 
 #updates ul li a:hover,
