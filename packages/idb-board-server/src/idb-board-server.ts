@@ -27,7 +27,7 @@ import {
   IDBProjectStoreProject as IDBBoardServerProject,
   LocalStoreData,
 } from "./types/idb-types.js";
-import { fromManifest } from "@google-labs/breadboard/kits";
+import { kitFromGraphDescriptor } from "@google-labs/breadboard/kits";
 
 const loadedExtensions: BoardServerExtension[] = [];
 
@@ -274,7 +274,7 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
       return;
     }
 
-    const nodes: Record<string, GraphDescriptor> = {};
+    const graphs: Record<string, GraphDescriptor> = {};
     for (let idx = 0; idx < projects.length; idx++) {
       const project = projects[idx];
       if (!project.board?.descriptor.url) {
@@ -290,7 +290,7 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
         continue;
       }
 
-      nodes[type] = {
+      graphs[type] = {
         title: project.board?.descriptor.title,
         description: project.board?.descriptor.description,
         metadata: {
@@ -307,15 +307,20 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
       };
     }
 
-    const boardServerKit = fromManifest({
+    const boardServerKit = kitFromGraphDescriptor({
       url: `${this.url.href}/bsk`,
       version: "0.0.1",
       title: "Board Server Kit",
-      nodes,
+      graphs: graphs,
+      exports: Object.keys(graphs).map((name) => `#${name}`),
+      edges: [],
+      nodes: [],
     });
 
     this.kits = this.kits.filter((kit) => kit.title !== "Board Server Kit");
-    this.kits.push(boardServerKit);
+    if (boardServerKit) {
+      this.kits.push(boardServerKit);
+    }
   }
 
   async load(url: URL): Promise<GraphDescriptor | null> {
