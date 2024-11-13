@@ -330,9 +330,6 @@ class Graph implements InspectableGraphWithStore {
   }
 
   incomingForNode(id: NodeIdentifier): InspectableEdge[] {
-    if (!this.#graph.edges) {
-      console.log("🌻 what's going on here", this.#graph);
-    }
     return this.#graph.edges
       .filter((edge) => edge.to === id)
       .map((edge) => this.#cache.edges.getOrCreate(edge));

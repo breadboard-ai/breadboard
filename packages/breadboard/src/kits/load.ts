@@ -60,6 +60,7 @@ class GraphDescriptorNodeHandler implements NodeHandlerObject {
     return await inspect(this.#graph, {
       kits: context?.kits,
       loader: context?.loader,
+      sandbox: context?.sandbox,
     }).describe(inputs);
   }
 
