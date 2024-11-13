@@ -489,6 +489,14 @@ export type GraphCommonProperties = GraphInlineMetadata & {
   modules?: Modules;
 
   /**
+   * The modules and sub-graphs that this graph declares as "exports": they
+   * themselves are usable declarative or imperative graphs.
+   * When the "exports" property exist, this graph is actually a Kit
+   * declaration: it can be used to distributed multiple graphs.
+   */
+  exports?: (ModuleIdentifier | `#${GraphIdentifier}`)[];
+
+  /**
    * An optional property that indicates that this graph is
    * "virtual": it can not be represented by a static list
    * of edges and nodes, and is instead more of a representation

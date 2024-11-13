@@ -197,6 +197,20 @@
 					"description": "For internal testing only. Do not use.",
 					"type": "string"
 				},
+				"exports": {
+					"description": "The modules and sub-graphs that this graph declares as \"exports\": they themselves are usable declarative or imperative graphs. When the \"exports\" property exist, this graph is actually a Kit declaration: it can be used to distributed multiple graphs.",
+					"items": {
+						"anyOf": [
+							{
+								"$ref": "#/definitions/ModuleIdentifier"
+							},
+							{
+								"type": "string"
+							}
+						]
+					},
+					"type": "array"
+				},
 				"graphs": {
 					"$ref": "#/definitions/SubGraphs",
 					"description": "Sub-graphs that are also described by this graph representation."
