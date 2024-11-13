@@ -20,6 +20,7 @@ import { default as kitConstructor, components } from "./index.js";
 
 import appendToDoc from "./bgl/append-to-doc.bgl.json";
 import readFromDoc from "./bgl/read-from-doc.bgl.json";
+import contextToSlides from "./bgl/context-to-slides.bgl.json";
 
 const MANIFEST_NAME = "google-drive.kit.json";
 
@@ -44,6 +45,7 @@ const manifest: KitManifest = {
     ),
     appendToDoc: addIcon(appendToDoc),
     readFromDoc: addIcon(readFromDoc),
+    contextToSlides: addIcon(contextToSlides),
   },
 };
 

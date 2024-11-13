@@ -1,7 +1,7 @@
 {
   "title": "Context to Slides v3",
-  "description": "(experimental) Revamped Context to Slides.",
-  "version": "0.0.1",
+  "description": "Turns LLM Conversation Context into a Google Slides presentation",
+  "version": "2.0.0",
   "main": "main",
   "modules": {
     "main": {
