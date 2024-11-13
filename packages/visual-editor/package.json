@@ -322,7 +322,7 @@
     "@lit/task": "^1.0.1",
     "@types/gapi": "^0.0.47",
     "@types/gapi.drive": "^0.0.9",
-    "@types/google.picker": "^0.0.43",
+    "@types/google.picker": "^0.0.45",
     "ajv": "^8.17.1",
     "codemirror": "^6.0.1",
     "idb": "^8.0.0",
