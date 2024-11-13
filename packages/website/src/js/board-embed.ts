@@ -16,13 +16,13 @@ import AgentKit from "@google-labs/agent-kit/agent.kit.json" assert { type: "jso
 import "@breadboard-ai/shared-ui/editor";
 
 import {
-  KitManifest,
+  GraphDescriptor,
   asRuntimeKit,
   createLoader,
   inspect,
 } from "@google-labs/breadboard";
 import { until } from "lit/directives/until.js";
-import { fromManifest } from "@google-labs/breadboard/kits";
+import { kitFromGraphDescriptor } from "@google-labs/breadboard/kits";
 
 const UPDATE_USER_TIMEOUT = 1_000;
 
@@ -124,8 +124,11 @@ export class BoardEmbed extends LitElement {
       asRuntimeKit(JSONKit),
       asRuntimeKit(TemplateKit),
       asRuntimeKit(GeminiKit),
-      fromManifest(AgentKit as KitManifest),
     ];
+    const agentKit = kitFromGraphDescriptor(AgentKit as GraphDescriptor);
+    if (agentKit) {
+      kits.push(agentKit);
+    }
 
     if (!graph) {
       return html`Unable to load board`;

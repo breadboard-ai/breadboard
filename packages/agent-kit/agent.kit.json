@@ -3,7 +3,17 @@
   "description": "A collection of nodes for building Agent-like experiences.",
   "version": "0.0.1",
   "url": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/agent-kit/agent.kit.json",
-  "nodes": {
+  "exports": [
+    "#human",
+    "#repeater",
+    "#structuredWorker",
+    "#specialist",
+    "#worker",
+    "#looper",
+    "#joiner",
+    "#content"
+  ],
+  "graphs": {
     "human": {
       "title": "Human",
       "description": "A human in the loop. Use this node to insert a real person (user input) into your team of synthetic workers.",
@@ -17772,5 +17782,7 @@
         }
       }
     }
-  }
+  },
+  "nodes": [],
+  "edges": []
 }
