@@ -27,12 +27,11 @@
     "build": {
       "dependencies": [
         "./packages/agent-kit:build",
-        "./packages/breadboard:build",
+        "./packages/board-server:build",
         "./packages/breadboard-cli:build",
-        "./packages/shared-ui:build",
-        "./packages/visual-editor:build",
-        "./packages/build:build",
+        "./packages/breadboard:build",
         "./packages/build-code:build",
+        "./packages/build:build",
         "./packages/connection-client:build",
         "./packages/connection-server:build",
         "./packages/core-kit:build",
@@ -44,25 +43,26 @@
         "./packages/idb-board-server:build",
         "./packages/import:build",
         "./packages/json-kit:build",
-        "./packages/template-kit:build",
+        "./packages/manifest:build",
         "./packages/node-nursery-web:build",
         "./packages/palm-kit:build",
         "./packages/python-wasm:build",
-        "./packages/website:build",
         "./packages/schema:build",
-        "./packages/board-server:build",
-        "./packages/manifest:build",
-        "./packages/types:build"
+        "./packages/shared-ui:build",
+        "./packages/template-kit:build",
+        "./packages/types:build",
+        "./packages/visual-editor:build",
+        "./packages/website:build"
       ]
     },
     "test": {
       "dependencies": [
         "./packages/agent-kit:test",
         "./packages/board-server:test",
-        "./packages/breadboard:test",
         "./packages/breadboard-cli:test",
-        "./packages/build:test",
+        "./packages/breadboard:test",
         "./packages/build-code:test",
+        "./packages/build:test",
         "./packages/connection-server:test",
         "./packages/core-kit:test",
         "./packages/data-store:test",
@@ -71,20 +71,20 @@
         "./packages/import:test",
         "./packages/jsandbox:test",
         "./packages/json-kit:test",
-        "./packages/template-kit:test",
+        "./packages/manifest:test",
         "./packages/node-nursery-web:test",
         "./packages/palm-kit:test",
         "./packages/python-wasm:test",
         "./packages/schema:test",
-        "./packages/manifest:test"
+        "./packages/template-kit:test"
       ]
     },
     "lint": {
       "dependencies": [
-        "./packages/breadboard:lint",
         "./packages/breadboard-cli:lint",
-        "./packages/build:lint",
+        "./packages/breadboard:lint",
         "./packages/build-code:lint",
+        "./packages/build:lint",
         "./packages/connection-server:lint",
         "./packages/core-kit:lint",
         "./packages/data-store:lint",
@@ -94,10 +94,10 @@
         "./packages/google-drive-kit:lint",
         "./packages/import:lint",
         "./packages/json-kit:lint",
-        "./packages/template-kit:lint",
         "./packages/node-nursery-web:lint",
         "./packages/palm-kit:lint",
-        "./packages/python-wasm:lint"
+        "./packages/python-wasm:lint",
+        "./packages/template-kit:lint"
       ]
     },
     "ci:local": {
