@@ -8,7 +8,6 @@ import type {
   NodeConfiguration,
   NodeDescriptor,
   NodeMetadata,
-  StartLabel,
 } from "@breadboard-ai/types";
 import type { NodeDescriberResult } from "../types.js";
 import type {
@@ -73,10 +72,6 @@ class VirtualNode implements InspectableNode {
 
   isEntry(): boolean {
     return false;
-  }
-
-  startLabels(): StartLabel[] | undefined {
-    return undefined;
   }
 
   isExit(): boolean {

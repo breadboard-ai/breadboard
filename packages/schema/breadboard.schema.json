@@ -387,41 +387,8 @@
 			"description": "Represents metadata of a node. This is an optional part of the `NodeDescriptor` that can be used to provide additional information about the node."
 		},
 		"NodeTag": {
-			"anyOf": [
-				{
-					"type": "string",
-					"const": "start"
-				},
-				{
-					"$ref": "#/definitions/StartTag"
-				}
-			],
-			"description": "Represents a tag that can be associated with a node."
-		},
-		"StartTag": {
-			"type": "object",
-			"properties": {
-				"type": {
-					"type": "string",
-					"const": "start"
-				},
-				"label": {
-					"$ref": "#/definitions/StartLabel"
-				}
-			},
-			"required": [
-				"type"
-			],
-			"additionalProperties": false,
-			"description": "Represents a start tag, which is a special tag that can be associated with a node. It is used to indicate that the node is a starting point for traversal. The `label` field allows the user to specify additional way to specify the kind of traversal they are looking for."
-		},
-		"StartLabel": {
 			"type": "string",
-			"enum": [
-				"default",
-				"describe"
-			],
-			"description": "Valid start labels."
+			"description": "Represents a tag that can be associated with a node."
 		},
 		"GraphTag": {
 			"type": "string",

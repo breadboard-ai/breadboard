@@ -275,7 +275,7 @@
 					"type": "array"
 				},
 				"start": {
-					"$ref": "#/definitions/StartLabel",
+					"$ref": "#/definitions/NodeIdentifier",
 					"deprecated": "For internal testing only. Do not use.",
 					"description": "For internal testing only. Do not use."
 				},
@@ -655,16 +655,8 @@
 			"type": "object"
 		},
 		"NodeTag": {
-			"anyOf": [
-				{
-					"const": "start",
-					"type": "string"
-				},
-				{
-					"$ref": "#/definitions/StartTag"
-				}
-			],
-			"description": "Represents a tag that can be associated with a node."
+			"description": "Represents a tag that can be associated with a node.",
+			"type": "string"
 		},
 		"NodeTypeIdentifier": {
 			"description": "Unique identifier of a node's type.",
@@ -795,31 +787,6 @@
 			},
 			"required": [
 				"reference"
-			],
-			"type": "object"
-		},
-		"StartLabel": {
-			"description": "Valid start labels.",
-			"enum": [
-				"default",
-				"describe"
-			],
-			"type": "string"
-		},
-		"StartTag": {
-			"additionalProperties": false,
-			"description": "Represents a start tag, which is a special tag that can be associated with a node. It is used to indicate that the node is a starting point for traversal. The `label` field allows the user to specify additional way to specify the kind of traversal they are looking for.",
-			"properties": {
-				"label": {
-					"$ref": "#/definitions/StartLabel"
-				},
-				"type": {
-					"const": "start",
-					"type": "string"
-				}
-			},
-			"required": [
-				"type"
 			],
 			"type": "object"
 		},

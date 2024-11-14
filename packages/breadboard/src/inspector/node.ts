@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  GraphDescriptor,
-  NodeMetadata,
-  StartLabel,
-} from "@breadboard-ai/types";
+import { GraphDescriptor, NodeMetadata } from "@breadboard-ai/types";
 import {
   InputValues,
   NodeConfiguration,
@@ -55,27 +51,8 @@ class Node implements InspectableNode {
     return this.#graph.outgoingForNode(this.descriptor.id);
   }
 
-  isEntry(label: StartLabel = "default"): boolean {
-    const labels = this.startLabels();
-    if (labels) {
-      return labels.includes(label);
-    } else if (label !== "default") {
-      return false;
-    }
+  isEntry(): boolean {
     return this.incoming().length === 0;
-  }
-
-  startLabels(): StartLabel[] | undefined {
-    const tags = this.descriptor?.metadata?.tags || [];
-    const labels: StartLabel[] = [];
-    for (const tag of tags) {
-      if (typeof tag === "string" && tag === "start") {
-        labels.push("default");
-      } else if (tag.type === "start") {
-        labels.push(tag.label || "default");
-      }
-    }
-    return labels.length > 0 ? labels : undefined;
   }
 
   isExit(): boolean {

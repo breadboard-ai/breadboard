@@ -12,7 +12,6 @@ import type {
   ModuleIdentifier,
   ModuleMetadata,
   NodeMetadata,
-  StartLabel,
   TraversalResult,
 } from "@breadboard-ai/types";
 import { HarnessRunResult, SecretResult } from "../harness/types.js";
@@ -81,11 +80,7 @@ export type InspectableNode = {
    * Return true if the node is an entry node (labeled as such or
    * has no incoming edges)
    */
-  isEntry(label?: StartLabel): boolean;
-  /**
-   * The start label of the node.
-   */
-  startLabels(): StartLabel[] | undefined;
+  isEntry(): boolean;
   /**
    * Return true if the node is an exit node (no outgoing edges)
    */
@@ -286,7 +281,7 @@ export type InspectableGraph = {
   /**
    * Returns a list of entry nodes for the graph.
    */
-  entries(label?: StartLabel): InspectableNode[];
+  entries(): InspectableNode[];
   /**
    * Returns the API of the graph. This function is designed to match the
    * output of the `NodeDescriberFunction`.

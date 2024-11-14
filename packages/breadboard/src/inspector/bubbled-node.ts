@@ -21,7 +21,7 @@ import {
   NodeDescriptor,
   OutputValues,
 } from "../types.js";
-import { NodeMetadata, StartLabel } from "@breadboard-ai/types";
+import { NodeMetadata } from "@breadboard-ai/types";
 
 /**
  * This is a special kind of an `InspectableNode`, representing a bubbled
@@ -62,12 +62,8 @@ export class BubbledInspectableNode implements InspectableNode {
     return this.#actual.outgoing();
   }
 
-  isEntry(label?: StartLabel): boolean {
-    return this.#actual.isEntry(label);
-  }
-
-  startLabels(): StartLabel[] | undefined {
-    return this.#actual.startLabels();
+  isEntry(): boolean {
+    return this.#actual.isEntry();
   }
 
   isExit(): boolean {

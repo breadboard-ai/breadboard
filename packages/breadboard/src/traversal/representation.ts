@@ -40,7 +40,6 @@ export class GraphRepresentation {
   #findEntries() {
     if (this.start) {
       const entry = this.nodes.has(this.start);
-      console.log("🌻 have entry", this.start);
       return entry ? [this.start] : [];
     }
     // Otherwise, fall back to computing entries based on edges.

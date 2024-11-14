@@ -43,7 +43,6 @@ await Promise.all(
         t.log("Skipped");
         return;
       }
-      console.log("🌻 starting from", graph.start);
       const machine = new TraversalMachine(graph, undefined, graph.start);
       const outputs: OutputValues[] = [];
       const sequence: string[] = [];
