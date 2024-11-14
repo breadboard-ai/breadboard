@@ -62,7 +62,10 @@ export class NodeInvoker {
       ...this.#context,
       descriptor,
       board: this.#graph,
-      // TODO: Remove this, since it is now the same as `board`.
+      // This is important: outerGraph is the value of the parent graph
+      // if this.#graph is a subgraph.
+      // Or it equals to "board" it this is not a subgraph
+      // TODO: Make this more elegant.
       outerGraph: this.#graph,
       base,
       kits,

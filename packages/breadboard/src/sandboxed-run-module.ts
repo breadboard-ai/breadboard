@@ -81,7 +81,7 @@ function addSandboxedRunModule(sandbox: Sandbox, kits: Kit[]): Kit[] {
       handlers: {
         runModule: {
           invoke: async ({ $module, ...rest }, context) => {
-            const moduleDeclaration = context.board?.modules;
+            const moduleDeclaration = context.outerGraph?.modules;
             if (!moduleDeclaration) {
               return {
                 $error: `Unable to run module: no modules found within board ${context.board?.url || "uknown board"}`,
