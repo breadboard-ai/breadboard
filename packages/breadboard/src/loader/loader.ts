@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphDescriptor, GraphToRun, SubGraphs } from "../types.js";
+import type { GraphDescriptor, GraphToRun } from "../types.js";
 import type {
   GraphProvider,
   GraphLoader,
@@ -17,9 +17,8 @@ export const SENTINEL_BASE_URL = new URL("sentinel://sentinel/sentinel");
 export { resolveGraph };
 
 function resolveGraph(graphToRun: GraphToRun): GraphDescriptor {
-  return graphToRun.subGraphId
-    ? graphToRun.graph.graphs![graphToRun.subGraphId]
-    : graphToRun.graph;
+  const { graph, subGraphId } = graphToRun;
+  return subGraphId ? graph.graphs![subGraphId] : graph;
 }
 
 export const removeHash = (url: URL): URL => {
@@ -75,8 +74,9 @@ export class Loader implements GraphLoader {
   #getSubgraph(
     url: URL | null,
     hash: string,
-    subgraphs?: SubGraphs
+    supergraph: GraphDescriptor
   ): GraphLoaderResult {
+    const subgraphs = supergraph.graphs;
     if (!subgraphs) {
       const error = `No subgraphs to load "#${hash}" from`;
       console.warn(error);
@@ -89,7 +89,7 @@ export class Loader implements GraphLoader {
       return { success: false, error };
     }
     if (url) graph.url = url.href;
-    return { success: true, graph };
+    return { success: true, graph: supergraph, subGraphId: hash };
   }
 
   async load(
@@ -104,7 +104,7 @@ export class Loader implements GraphLoader {
     const isEphemeralSupergraph =
       path.startsWith("#") && supergraph && !supergraph.url;
     if (isEphemeralSupergraph) {
-      return this.#getSubgraph(null, path.substring(1), supergraph.graphs);
+      return this.#getSubgraph(null, path.substring(1), supergraph);
     }
 
     const base = baseURLFromContext(context);
@@ -126,7 +126,7 @@ export class Loader implements GraphLoader {
         : SENTINEL_BASE_URL;
       if (sameWithoutHash(url, supergraphURL)) {
         const hash = url.hash.substring(1);
-        return this.#getSubgraph(url, hash, supergraph.graphs);
+        return this.#getSubgraph(url, hash, supergraph);
       }
     }
     // Otherwise, load the graph and then get its subgraph.
@@ -137,7 +137,7 @@ export class Loader implements GraphLoader {
     return this.#getSubgraph(
       url,
       url.hash.substring(1),
-      loadedSupergraphResult.graph.graphs
+      loadedSupergraphResult.graph
     );
   }
 }
