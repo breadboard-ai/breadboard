@@ -15,19 +15,11 @@
   ],
   "nodes": [
     { "id": "node-a", "type": "input" },
-    {
-      "id": "node-b",
-      "type": "make",
-      "metadata": {
-        "tags": [
-          {
-            "type": "start"
-          }
-        ]
-      }
-    },
+    { "id": "node-b", "type": "make" },
     { "id": "node-c", "type": "output" }
   ],
+  "inputs": { "text": "test" },
   "outputs": [{ "text": "Hello, world!" }],
-  "sequence": ["node-b", "node-c"]
+  "sequence": ["node-b", "node-c"],
+  "start": "node-b"
 }

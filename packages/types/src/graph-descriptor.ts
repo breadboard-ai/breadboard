@@ -378,7 +378,7 @@ type TestProperties = {
    * For internal testing only. Do not use.
    * @deprecated For internal testing only. Do not use.
    */
-  start?: StartLabel;
+  start?: NodeIdentifier;
 };
 
 /**

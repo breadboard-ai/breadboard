@@ -5,9 +5,9 @@
  */
 
 import type {
-  StartLabel,
   GraphDescriptor,
   TraversalResult,
+  NodeIdentifier,
 } from "@breadboard-ai/types";
 import { TraversalMachineIterator } from "./iterator.js";
 import { GraphRepresentation } from "./representation.js";
@@ -21,7 +21,7 @@ export class TraversalMachine implements AsyncIterable<TraversalResult> {
   constructor(
     descriptor: GraphDescriptor,
     result?: TraversalResult,
-    start?: StartLabel
+    start?: NodeIdentifier
   ) {
     this.graph = new GraphRepresentation(descriptor, start);
     this.previousResult = result;
