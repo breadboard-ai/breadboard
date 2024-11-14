@@ -135,7 +135,7 @@ export class Overlay extends LitElement {
       this.dispatchEvent(new OverlayDismissedEvent());
     }}></div>
     <div id="content" ${ref(this.#contentRef)} @pointerdown=${(evt: Event) => {
-      evt.stopImmediatePropagation();
+      evt.stopPropagation();
     }}><slot></div>`;
   }
 }

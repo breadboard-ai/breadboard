@@ -47,6 +47,7 @@ export { NodeConfigurationInfo } from "./node-info/node-configuration.js";
 export { NodeConfigurationOverlay } from "./overlay/node-configurator.js";
 export { NodeMetaDetails } from "./node-info/node-meta-details.js";
 export { NodeRunner } from "./node-runner/node-runner.js";
+export { OpenBoardOverlay } from "./overlay/open-board.js";
 export { OverflowMenu } from "./overflow-menu/overflow-menu.js";
 export { Overlay } from "./overlay/overlay.js";
 export { PortTooltip } from "./editor/port-tooltip.js";

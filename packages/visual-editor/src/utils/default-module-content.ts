@@ -13,7 +13,7 @@ export function defaultModuleContent(language: ModuleLanguage = "javascript") {
 
 export { invoke as default, describe };
 
-async function invoke({ context }${language === "typescript" ? ": { context: unknown }" : ""}) {
+async function invoke({ context }${language === "typescript" ? ": { context: LLMContent[] }" : ""}) {
   return { context };
 }
 
