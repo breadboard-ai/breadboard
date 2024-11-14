@@ -534,6 +534,7 @@ class Graph implements InspectableGraphWithStore {
 
     this.#cache.describe.clear(visualOnly, affectedNodes);
     this.#graph = graph;
+    this.#graphs = null;
   }
 
   resetGraph(graph: GraphDescriptor): void {
