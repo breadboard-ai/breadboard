@@ -17,6 +17,8 @@ export type GraphProviderItem = {
   username?: string;
   title?: string;
   tags?: GraphTag[];
+  version?: string;
+  description?: string;
   mine: boolean;
   readonly: boolean;
   handle: unknown;

@@ -29,6 +29,7 @@ export const styles = css`
     border: none;
     margin-right: var(--bb-grid-size-2);
     cursor: pointer;
+    display: none;
   }
 
   #close-board {
@@ -311,6 +312,29 @@ export const styles = css`
     height: 20px;
     background: var(--bb-icon-next) center center no-repeat;
     background-size: 12px 12px;
+  }
+
+  #add-tab-container {
+    height: var(--bb-grid-size-10);
+    display: flex;
+    align-items: center;
+  }
+
+  #add-tab {
+    border-radius: var(--bb-grid-size);
+    width: var(--bb-grid-size-6);
+    height: var(--bb-grid-size-6);
+    font-size: 0;
+    background: transparent var(--bb-icon-add-inverted) center center / 20px
+      20px no-repeat;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+  }
+
+  #add-tab:hover,
+  #add-tab:focus {
+    background-color: var(--bb-ui-400);
   }
 
   #content {

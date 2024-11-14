@@ -470,6 +470,8 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
         {
           url: project.url.href,
           mine: project.metadata.owner === this.user.username,
+          version: project.board.descriptor.version,
+          description: project.board.descriptor.description,
           readonly: false,
           handle: null,
           tags: project.board.descriptor.metadata?.tags,

@@ -8,6 +8,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import {
+  GraphBoardOpenRequestEvent,
   GraphBoardServerBlankBoardEvent,
   StartEvent,
 } from "../../events/events.js";
@@ -67,22 +68,7 @@ export class WelcomePanel extends LitElement {
       user-select: none;
     }
 
-    header {
-      display: flex;
-      align-items: center;
-      padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
-    }
-
-    header h1 {
-      flex: 1;
-      margin: 0;
-      font: 400 var(--bb-title-large) / var(--bb-title-line-height-large)
-        var(--bb-font-family);
-      display: flex;
-      align-items: center;
-      color: var(--bb-neutral-900);
-    }
-
+    #open-board,
     #new-board {
       border-radius: 50px;
       background: var(--bb-ui-500);
@@ -97,40 +83,77 @@ export class WelcomePanel extends LitElement {
       padding-right: var(--bb-grid-size-4);
       opacity: 0.8;
       transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+      margin-left: var(--bb-grid-size-3);
     }
 
+    #open-board::before,
     #new-board::before {
       content: "";
-      background: var(--bb-icon-add-inverted) center center / 20px 20px
+      background: var(--bb-icon-open-new-inverted) center center / 20px 20px
         no-repeat;
       width: 20px;
       height: 20px;
-      margin-right: var(--bb-grid-size);
+      margin: 0 var(--bb-grid-size);
     }
 
+    #open-board:hover,
+    #open-board:focus,
     #new-board:hover,
     #new-board:focus {
       opacity: 1;
       transition-duration: 0.1s;
     }
 
+    #new-board::before {
+      background-image: var(--bb-icon-add);
+    }
+
+    #new-board {
+      color: var(--bb-neutral-800);
+      background-color: var(--bb-neutral-100);
+    }
+
+    #new-board:hover,
+    #new-board:focus {
+      background-color: var(--bb-neutral-300);
+    }
+
     #contents {
       display: grid;
       grid-template-columns: minmax(0, 2fr) 3fr;
       column-gap: var(--bb-grid-size-4);
+      row-gap: var(--bb-grid-size-6);
+      padding: var(--bb-grid-size-5) 0 var(--bb-grid-size-6) 0;
+      position: relative;
+    }
+
+    #contents::before {
+      content: "Breadboard";
+      font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
+        var(--bb-font-family);
+      color: var(--bb-neutral-600);
+      height: 36px;
+      top: var(--bb-grid-size-4);
+      left: var(--bb-grid-size-4);
+      padding-left: 32px;
+      background: url(/images/bb-logo.svg) left center / 21px 36px no-repeat;
+      line-height: 36px;
+      position: absolute;
     }
 
     #contents section {
       padding: 0 var(--bb-grid-size-4);
     }
 
-    #contents section h1 {
+    section h1 {
       margin: 0;
       padding-bottom: var(--bb-grid-size-2);
       font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
         var(--bb-font-family);
       display: flex;
+      flex: 1;
       align-items: center;
+      justify-content: space-between;
       color: var(--bb-neutral-900);
     }
 
@@ -138,6 +161,17 @@ export class WelcomePanel extends LitElement {
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
       color: var(--bb-neutral-600);
+    }
+
+    #common-actions {
+      grid-column: 1 / 3;
+      padding: 0 var(--bb-grid-size-4) var(--bb-grid-size-8)
+        var(--bb-grid-size-4);
+    }
+
+    #common-actions-items {
+      display: flex;
+      justify-content: flex-end;
     }
 
     #recent-boards ul {
@@ -221,7 +255,7 @@ export class WelcomePanel extends LitElement {
 
     #guides ul li a {
       border-radius: var(--bb-grid-size-2);
-      background: var(--bb-ui-50);
+      background: var(--bb-neutral-50);
       display: flex;
       padding: var(--bb-grid-size-2);
       text-decoration: none;
@@ -246,7 +280,7 @@ export class WelcomePanel extends LitElement {
 
     #guides a:hover,
     #guides a:focus {
-      background: var(--bb-ui-100);
+      background: var(--bb-neutral-100);
     }
 
     #guides .title {
@@ -264,6 +298,7 @@ export class WelcomePanel extends LitElement {
     #guides #doc-link {
       display: flex;
       justify-content: flex-end;
+      margin-top: var(--bb-grid-size-3);
     }
 
     #guides #see-all-docs {
@@ -276,7 +311,6 @@ export class WelcomePanel extends LitElement {
       text-decoration: none;
       background: var(--bb-icon-open-new) left center / 20px 20px no-repeat;
       color: var(--bb-neutral-700);
-      margin-top: var(--bb-grid-size-4);
     }
 
     #guides #see-all-docs:hover,
@@ -290,7 +324,6 @@ export class WelcomePanel extends LitElement {
         var(--bb-font-family);
       border-top: 1px solid var(--bb-neutral-300);
       padding: var(--bb-grid-size-2) var(--bb-grid-size-2);
-      margin-top: var(--bb-grid-size-12);
     }
 
     footer > * {
@@ -320,18 +353,27 @@ export class WelcomePanel extends LitElement {
   `;
 
   render() {
-    return html` <header>
-        <h1>Breadboard Visual Editor</h1>
-        <button
-          id="new-board"
-          @click=${() => {
-            this.dispatchEvent(new GraphBoardServerBlankBoardEvent());
-          }}
-        >
-          New board
-        </button>
-      </header>
-      <div id="contents">
+    return html`<div id="contents">
+        <section id="common-actions">
+          <div id="common-actions-items">
+            <button
+              id="new-board"
+              @click=${() => {
+                this.dispatchEvent(new GraphBoardServerBlankBoardEvent());
+              }}
+            >
+              Create a new board...
+            </button>
+            <button
+              id="open-board"
+              @click=${() => {
+                this.dispatchEvent(new GraphBoardOpenRequestEvent());
+              }}
+            >
+              Open board...
+            </button>
+          </div>
+        </section>
         <section id="recent-boards">
           <h1>Recent boards</h1>
           ${this.recentBoards.length
