@@ -3,7 +3,18 @@
   "description": "Components for reading & writing to files in Google Drive, including Docs and Sheets",
   "version": "0.0.1",
   "url": "npm:@breadboard-ai/google-drive-kit",
-  "nodes": {
+  "exports": [
+    "#getFileContent",
+    "#listFiles",
+    "#exportFile",
+    "#getBreadboardFolder",
+    "#saveContextToDrive",
+    "#loadContextFromDrive",
+    "#appendToDoc",
+    "#readFromDoc",
+    "#contextToSlides"
+  ],
+  "graphs": {
     "getFileContent": {
       "title": "Get File Content",
       "description": "Get the content of a file in Google Drive",
@@ -3096,5 +3107,7 @@
         "icon": "google-drive"
       }
     }
-  }
+  },
+  "nodes": [],
+  "edges": []
 }

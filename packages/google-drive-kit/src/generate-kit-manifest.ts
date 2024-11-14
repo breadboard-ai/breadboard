@@ -7,11 +7,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
 
-import {
-  asRuntimeKit,
-  type GraphDescriptor,
-  type KitManifest,
-} from "@google-labs/breadboard";
+import { asRuntimeKit, type GraphDescriptor } from "@google-labs/breadboard";
 
 import { serialize } from "@breadboard-ai/build";
 import { writeFile } from "fs/promises";
@@ -31,27 +27,32 @@ const MANIFEST_PATH = path.join(ROOT_DIR, MANIFEST_NAME);
 
 const kit = asRuntimeKit(kitConstructor);
 
-const manifest: KitManifest = {
+const graphs: Record<string, GraphDescriptor> = {
+  ...Object.fromEntries(
+    Object.entries(components).map(([name, definition]) => [
+      name,
+      serialize(definition),
+    ])
+  ),
+  appendToDoc: addIcon(appendToDoc),
+  readFromDoc: addIcon(readFromDoc),
+  contextToSlides: addIcon(contextToSlides),
+};
+
+const manifest: GraphDescriptor = {
   title: kit.title,
   description: kit.description,
   version: kit.version,
   url: "npm:@breadboard-ai/google-drive-kit",
-  nodes: {
-    ...Object.fromEntries(
-      Object.entries(components).map(([name, definition]) => [
-        name,
-        serialize(definition),
-      ])
-    ),
-    appendToDoc: addIcon(appendToDoc),
-    readFromDoc: addIcon(readFromDoc),
-    contextToSlides: addIcon(contextToSlides),
-  },
+  exports: Object.keys(graphs).map((id) => `#${id}`),
+  graphs,
+  nodes: [],
+  edges: [],
 };
 
 const generate = async () => {
   // Write individual nodes to the file system
-  const nodes = Object.entries(manifest.nodes);
+  const nodes = Object.entries(manifest.graphs!);
   await Promise.all(
     nodes.map(async ([name, node]) => {
       if (node.metadata?.deprecated) return;

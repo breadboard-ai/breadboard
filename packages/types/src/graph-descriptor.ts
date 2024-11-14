@@ -227,19 +227,6 @@ export type KitDescriptor = KitReference & {
 };
 
 /**
- * Describes a light kit: a kit where each node is backed by a graph.
- */
-export type KitManifest = KitDescriptor & {
-  /**
-   * A map of nodes. Each key in this object is the node that is provided by
-   * the kit. Each value the `GraphDescriptor` containing the graph. This
-   * graph will be run (runOnce) when the `invoke` of the node's `NodeHandler`
-   * is called.
-   */
-  nodes: Record<NodeIdentifier, GraphDescriptor>;
-};
-
-/**
  * Represents graph metadata that is stored inline in the GraphDescriptor.
  */
 export type GraphInlineMetadata = {
@@ -487,6 +474,14 @@ export type GraphCommonProperties = GraphInlineMetadata & {
    * Modules that are included as part of this graph.
    */
   modules?: Modules;
+
+  /**
+   * The modules and sub-graphs that this graph declares as "exports": they
+   * themselves are usable declarative or imperative graphs.
+   * When the "exports" property exist, this graph is actually a Kit
+   * declaration: it can be used to distributed multiple graphs.
+   */
+  exports?: (ModuleIdentifier | `#${GraphIdentifier}`)[];
 
   /**
    * An optional property that indicates that this graph is
