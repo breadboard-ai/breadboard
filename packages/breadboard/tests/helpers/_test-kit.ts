@@ -53,7 +53,7 @@ export const TestKit = new KitBuilder({
     if (!graph) {
       throw new Error("Must provide a graph to include");
     }
-    return await invokeGraph(graph, inputs, context);
+    return await invokeGraph({ graph }, inputs, context);
   },
   /**
    * This is a primitive implementation of the `invoke` node in Core Kit,
@@ -87,7 +87,7 @@ export const TestKit = new KitBuilder({
 
         if (!board) throw new Error("Must provide valid $board to invoke");
 
-        return await invokeGraph(board, args, context);
+        return await invokeGraph({ graph: board }, args, context);
       } else {
         const { board, path, ...args } = inputs;
 
@@ -105,7 +105,7 @@ export const TestKit = new KitBuilder({
         if (!runnableBoard)
           throw new Error("Must provide valid board to invoke");
 
-        return await invokeGraph(runnableBoard, args, context);
+        return await invokeGraph({ graph: runnableBoard }, args, context);
       }
     },
     describe: async (inputs?: InputValues): Promise<NodeDescriberResult> => {

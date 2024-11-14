@@ -448,14 +448,9 @@ class Graph implements InspectableGraphWithStore {
         outerGraph: this.#graph,
       });
       if (!loadResult.success) {
+        const error = `Could not load custom describer graph ${customDescriber}: ${loadResult.error}`;
+        console.warn(error);
         return loadResult;
-      }
-      const { graph: describerGraph } = loadResult;
-      if (!describerGraph) {
-        console.warn(
-          `Could not load custom describer graph ${customDescriber}`
-        );
-        return { success: false };
       }
       const { inputSchema: $inputSchema, outputSchema: $outputSchema } =
         await this.#describeWithStaticAnalysis();
@@ -465,7 +460,7 @@ class Graph implements InspectableGraphWithStore {
       // delete $outputSchema.properties?.inputSchema;
       // delete $outputSchema.properties?.outputSchema;
       const result = (await invokeGraph(
-        describerGraph,
+        loadResult,
         { ...inputs, $inputSchema, $outputSchema },
         {
           base,

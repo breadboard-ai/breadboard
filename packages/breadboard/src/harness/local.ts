@@ -10,12 +10,7 @@ import { asyncGen, runGraph } from "../index.js";
 import { createLoader } from "../loader/index.js";
 import { LastNode } from "../remote/types.js";
 import { timestamp } from "../timestamp.js";
-import {
-  BreadboardRunResult,
-  ErrorObject,
-  GraphDescriptor,
-  Kit,
-} from "../types.js";
+import { BreadboardRunResult, ErrorObject, GraphToRun, Kit } from "../types.js";
 import { Diagnostics } from "./diagnostics.js";
 import { extractError } from "./error.js";
 import { HarnessRunResult, RunConfig } from "./types.js";
@@ -106,7 +101,7 @@ const maybeSaveResult = (result: BreadboardRunResult, last?: LastNode) => {
   return last;
 };
 
-const load = async (config: RunConfig): Promise<GraphDescriptor> => {
+const load = async (config: RunConfig): Promise<GraphToRun> => {
   const base = baseURL(config);
   const loader = config.loader || createLoader();
   const loadResult = await loader.load(config.url, { base });
@@ -115,12 +110,14 @@ const load = async (config: RunConfig): Promise<GraphDescriptor> => {
       `Unable to load graph from "${config.url}": ${loadResult.error}`
     );
   }
-  return loadResult.graph;
+  return loadResult;
 };
 
 export async function* runLocally(config: RunConfig, kits: Kit[]) {
   yield* asyncGen<HarnessRunResult>(async (next) => {
-    const runner = config.runner || (await load(config));
+    const graphToRun: GraphToRun = config.runner
+      ? { graph: config.runner }
+      : await load(config);
     const loader = config.loader || createLoader();
     const store = config.store || createDefaultDataStore();
     const { base, signal, inputs, state, start, stopAfter } = config;
@@ -135,7 +132,7 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
           })
         : undefined;
 
-      for await (const data of runGraph(runner, {
+      for await (const data of runGraph(graphToRun, {
         probe,
         kits,
         loader,

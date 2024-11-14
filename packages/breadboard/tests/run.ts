@@ -51,7 +51,7 @@ test("correctly saves and loads", async (t) => {
   input.wire("<-", kit.noop());
   input.wire("*->", kit.noop().wire("*->", board.output().wire("*->", input)));
   {
-    for await (const stop of runGraph(board, { kits: [kit] })) {
+    for await (const stop of runGraph({ graph: board }, { kits: [kit] })) {
       t.is(stop.type, "input");
       runResult = stop.save();
       break;
@@ -59,7 +59,7 @@ test("correctly saves and loads", async (t) => {
   }
   {
     for await (const stop of runGraph(
-      board,
+      { graph: board },
       { kits: [kit] },
       RunResult.load(runResult)?.state
     )) {
@@ -70,7 +70,7 @@ test("correctly saves and loads", async (t) => {
   }
   {
     for await (const stop of runGraph(
-      board,
+      { graph: board },
       { kits: [kit] },
       RunResult.load(runResult)?.state
     )) {
@@ -88,7 +88,7 @@ test("correctly detects exit node", async (t) => {
   const input = board.input();
   input.wire("*->", kit.noop().wire("*->", board.output()));
 
-  const generator = runGraph(board, { kits: [kit] });
+  const generator = runGraph({ graph: board }, { kits: [kit] });
 
   {
     const stop = await generator.next();

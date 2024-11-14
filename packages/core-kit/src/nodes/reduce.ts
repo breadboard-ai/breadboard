@@ -58,7 +58,7 @@ export default defineNodeType({
         invocationPath: [...(context?.invocationPath || []), index++],
       };
       const { accumulator } = await invokeGraph(
-        runnableBoard,
+        { graph: runnableBoard },
         { item, accumulator: result },
         newContext
       );

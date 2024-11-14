@@ -6,12 +6,11 @@
 
 import {
   GraphDescriptor,
-  GraphIdentifier,
   GraphTag,
   NodeConfiguration,
   NodeIdentifier,
 } from "@breadboard-ai/types";
-import { Kit } from "../types.js";
+import { GraphToRun, Kit } from "../types.js";
 
 export type GraphProviderItem = {
   url: string;
@@ -254,11 +253,9 @@ export type GraphLoaderContext = {
  * it returns the main graph and the id of the subgraph
  */
 export type GraphLoaderResult =
-  | {
+  | ({
       success: true;
-      graph: GraphDescriptor;
-      subGraphId?: GraphIdentifier;
-    }
+    } & GraphToRun)
   | {
       success: false;
       error: string;

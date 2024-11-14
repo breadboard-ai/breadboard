@@ -164,6 +164,6 @@ export default defineNodeType({
         }
       : { ...context, start, stopAfter };
 
-    return await invokeGraph(board, args, invocationContext);
+    return await invokeGraph({ graph: board }, args, invocationContext);
   },
 });

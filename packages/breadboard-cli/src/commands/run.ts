@@ -35,10 +35,13 @@ async function runBoard(
     ? new VerboseLoggingProbe(async (data) => console.log(data))
     : undefined;
 
-  for await (const stop of runGraph(board, {
-    kits,
-    probe,
-  })) {
+  for await (const stop of runGraph(
+    { graph: board },
+    {
+      kits,
+      probe,
+    }
+  )) {
     if (stop.type === "input") {
       const nodeInputs = stop.inputArguments;
       // we won't mutate the inputs.

@@ -87,6 +87,6 @@ export default {
       throw new Error("Must provide valid board to include");
     }
 
-    return await invokeGraph(runnableBoard, args, context);
+    return await invokeGraph({ graph: runnableBoard }, args, context);
   },
 };

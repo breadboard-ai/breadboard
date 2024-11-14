@@ -60,7 +60,7 @@ class GraphDescriptorNodeHandler implements NodeHandlerObject {
   }
 
   async invoke(inputs: InputValues, context: NodeHandlerContext) {
-    return await invokeGraph(this.#graph, inputs, context);
+    return await invokeGraph({ graph: this.#graph }, inputs, context);
   }
 }
 

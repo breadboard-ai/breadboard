@@ -19,6 +19,7 @@ import type {
   StoredDataCapabilityPart,
   TraversalResult,
   Probe,
+  GraphIdentifier,
 } from "@breadboard-ai/types";
 import { GraphLoader } from "./loader/types.js";
 import { DataStore } from "./data/types.js";
@@ -695,3 +696,12 @@ export type ConfigOrGraph =
   | OptionalIdConfiguration
   | BreadboardCapability
   | GraphDescriptor;
+
+/**
+ * The main argument to runGraph. Provides a way to point at a subgraph
+ * within a graph, while making the whole graph available.
+ */
+export type GraphToRun = {
+  graph: GraphDescriptor;
+  subGraphId?: GraphIdentifier;
+};

@@ -40,7 +40,7 @@ const getTransformer = async (
     return {
       async transform(chunk, controller) {
         const inputs = { chunk };
-        const result = await invokeGraph(runnableBoard, inputs, {
+        const result = await invokeGraph({ graph: runnableBoard }, inputs, {
           ...context,
           // TODO: figure out how to send diagnostics from streams transformer.
           probe: undefined,

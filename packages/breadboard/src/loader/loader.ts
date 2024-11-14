@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphDescriptor, SubGraphs } from "../types.js";
+import type { GraphDescriptor, GraphToRun, SubGraphs } from "../types.js";
 import type {
   GraphProvider,
   GraphLoader,
@@ -13,6 +13,14 @@ import type {
 } from "./types.js";
 
 export const SENTINEL_BASE_URL = new URL("sentinel://sentinel/sentinel");
+
+export { resolveGraph };
+
+function resolveGraph(graphToRun: GraphToRun): GraphDescriptor {
+  return graphToRun.subGraphId
+    ? graphToRun.graph.graphs![graphToRun.subGraphId]
+    : graphToRun.graph;
+}
 
 export const removeHash = (url: URL): URL => {
   const newURL = new URL(url.href);

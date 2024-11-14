@@ -22,7 +22,9 @@ async function serializeAndRunGraph(
   inputs: InputValues
 ): Promise<OutputValues> {
   const board = await graph.serialize();
-  return invokeGraph(board, inputs, { kits: [asRuntimeKit(TestKit)] });
+  return invokeGraph({ graph: board }, inputs, {
+    kits: [asRuntimeKit(TestKit)],
+  });
 }
 
 test("simplest graph", async (t) => {

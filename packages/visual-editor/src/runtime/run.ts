@@ -256,7 +256,7 @@ export class Run extends EventTarget {
       loader: loader,
       store: this.dataStore,
     };
-    const result = await invokeGraph(loadResult.graph, inputs, args);
+    const result = await invokeGraph(loadResult, inputs, args);
     return { success: true, result: result.config as NodeConfiguration };
   }
 }

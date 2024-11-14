@@ -61,7 +61,11 @@ const invokeGraphPerItem = async (
     base: base || context?.base,
     invocationPath: [...(context?.invocationPath || []), index],
   };
-  const outputs = await invokeGraph(graph, { item, index, list }, newContext);
+  const outputs = await invokeGraph(
+    { graph },
+    { item, index, list },
+    newContext
+  );
   // TODO(aomarks) Map functions have an "item" input, but not an "item"
   // output. Instead, all outputs become the map result. That's a bit
   // weird, since it means you can't e.g. map a string to a string; only a

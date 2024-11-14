@@ -55,7 +55,7 @@ export async function interruptibleScriptedRun(
     };
     let outputCount = 0;
     let interrupted = false;
-    for await (const result of runGraph(graph, args)) {
+    for await (const result of runGraph({ graph }, args)) {
       const { type } = result;
       const expectedRunResult = scriptEntry;
       deepStrictEqual(

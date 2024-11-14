@@ -4,24 +4,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  GraphDescriptor,
-  OutputValues,
-  TraversalResult,
-} from "@breadboard-ai/types";
+import type { OutputValues, TraversalResult } from "@breadboard-ai/types";
 import { bubbleUpInputsIfNeeded, bubbleUpOutputsIfNeeded } from "../bubble.js";
 import { resolveBoardCapabilities } from "../capability.js";
 import { InputStageResult, OutputStageResult } from "../run.js";
 import { cloneState } from "../serialization.js";
 import { timestamp } from "../timestamp.js";
 import { TraversalMachine } from "../traversal/machine.js";
-import type { BreadboardRunResult, RunArguments } from "../types.js";
+import type {
+  BreadboardRunResult,
+  GraphToRun,
+  RunArguments,
+} from "../types.js";
 import { asyncGen } from "../utils/async-gen.js";
 import { NodeInvoker } from "./node-invoker.js";
 import {
   isImperativeGraph,
   toDeclarativeGraph,
 } from "./run-imperative-graph.js";
+import { resolveGraph } from "../loader/loader.js";
 
 /**
  * Runs a graph in "run" mode. See
@@ -29,13 +30,15 @@ import {
  * for more details.
  */
 export async function* runGraph(
-  graph: GraphDescriptor,
+  graphToRun: GraphToRun,
   args: RunArguments = {},
   resumeFrom?: TraversalResult
 ): AsyncGenerator<BreadboardRunResult> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { inputs: initialInputs, start, stopAfter, ...context } = args;
   const { probe, state, invocationPath = [] } = context;
+
+  let graph = resolveGraph(graphToRun);
 
   if (isImperativeGraph(graph)) {
     graph = toDeclarativeGraph(graph);

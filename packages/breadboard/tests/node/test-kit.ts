@@ -34,7 +34,7 @@ export const testKit: Kit = {
             }
           : { ...context };
 
-        return invokeGraph(graph, args, invocationContext);
+        return invokeGraph({ graph }, args, invocationContext);
       },
     },
     map: {
@@ -70,7 +70,7 @@ export const testKit: Kit = {
               invocationPath: [...(context?.invocationPath || []), index],
             };
             const outputs = await invokeGraph(
-              graph,
+              { graph },
               { item, index, list },
               newContext
             );
@@ -86,7 +86,7 @@ export const testKit: Kit = {
                 invocationPath: [...(context?.invocationPath || []), index],
               };
               const outputs = await invokeGraph(
-                graph,
+                { graph },
                 { item, index, list },
                 newContext
               );
