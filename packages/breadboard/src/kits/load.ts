@@ -30,14 +30,10 @@ const setBaseURL = (base: URL, key: string, graph: GraphDescriptor) => {
 };
 
 class GraphDescriptorNodeHandler implements NodeHandlerObject {
-  #base: URL;
-  #type: string;
   #graph: GraphDescriptor;
   metadata: NodeHandlerMetadata;
 
   constructor(base: URL, type: string, graph: GraphDescriptor) {
-    this.#base = base;
-    this.#type = type;
     this.#graph = setBaseURL(base, type, graph);
     this.describe = this.describe.bind(this);
     this.invoke = this.invoke.bind(this);
@@ -70,9 +66,6 @@ class GraphDescriptorNodeHandler implements NodeHandlerObject {
 
 const createHandlersFromManifest = (base: URL, graph: GraphDescriptor) => {
   const graphs = graph.graphs!;
-  if (!graph.exports) {
-    console.log("NO GRAPH EXPORTS", graph);
-  }
   const exports = graph.exports!.map((e) => {
     if (e.startsWith("#")) {
       return e.slice(1);
