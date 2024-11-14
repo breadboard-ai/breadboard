@@ -467,6 +467,14 @@ export class ModuleCreateEvent extends Event {
  * Board Servers
  */
 
+export class GraphBoardOpenRequestEvent extends Event {
+  static eventName = "bbgraphboardopenrequest";
+
+  constructor() {
+    super(GraphBoardOpenRequestEvent.eventName, { ...eventInit });
+  }
+}
+
 export class GraphBoardServerConnectRequestEvent extends Event {
   static eventName = "bbgraphboardserverconnectrequest";
 

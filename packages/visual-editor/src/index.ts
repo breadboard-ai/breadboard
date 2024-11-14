@@ -113,6 +113,9 @@ export class Main extends LitElement {
   showWelcomePanel = false;
 
   @state()
+  showOpenBoardOverlay = false;
+
+  @state()
   showSaveAsDialog = false;
   #saveAsState: SaveAsConfiguration | null = null;
 
@@ -428,11 +431,7 @@ export class Main extends LitElement {
           Runtime.Events.RuntimeTabChangeEvent.eventName,
           async (evt: Runtime.Events.RuntimeTabChangeEvent) => {
             this.tab = this.#runtime.board.currentTab;
-            this.showWelcomePanel = this.tab === null;
-
-            if (this.showWelcomePanel) {
-              this.#hideAllOverlays();
-            }
+            this.#maybeShowWelcomePanel();
 
             if (this.tab) {
               // If there is a TGO in the tab change event, honor it and populate a
@@ -607,6 +606,15 @@ export class Main extends LitElement {
     window.removeEventListener("bbrundownload", this.#downloadRunBound);
   }
 
+  #maybeShowWelcomePanel() {
+    this.showWelcomePanel = this.tab === null;
+
+    if (!this.showWelcomePanel) {
+      return;
+    }
+    this.#hideAllOverlays();
+  }
+
   #hideAllOverlays() {
     this.showBoardActivityOverlay = false;
     this.boardEditOverlayInfo = null;
@@ -684,6 +692,13 @@ export class Main extends LitElement {
   #onKeyDown(evt: KeyboardEvent) {
     const isMac = navigator.platform.indexOf("Mac") === 0;
     const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+    if (evt.key === "o" && isCtrlCommand) {
+      evt.preventDefault();
+      evt.stopImmediatePropagation();
+
+      this.showOpenBoardOverlay = true;
+    }
 
     if (evt.key === "v" && isCtrlCommand && !this.tab?.graph) {
       // Only allow a paste when there's nothing else in the composed path that
@@ -1546,7 +1561,8 @@ export class Main extends LitElement {
       this.showSaveAsDialog ||
       this.showNodeConfigurator ||
       this.showEdgeValue ||
-      this.showCommentEditor;
+      this.showCommentEditor ||
+      this.showOpenBoardOverlay;
 
     const nav = this.#initialize.then(() => {
       return html`<bb-nav
@@ -2198,6 +2214,102 @@ export class Main extends LitElement {
           }}><iframe src=${this.previewOverlayURL.href}></bb-overlay>`;
         }
 
+        let openDialogOverlay: HTMLTemplateResult | symbol = nothing;
+        if (this.showOpenBoardOverlay) {
+          openDialogOverlay = html`<bb-open-board-overlay
+            .selectedBoardServer=${this.selectedBoardServer}
+            .selectedLocation=${this.selectedLocation}
+            .boardServers=${this.#boardServers}
+            .boardServerNavState=${this.boardServerNavState}
+            @bboverlaydismissed=${() => {
+              this.showOpenBoardOverlay = false;
+              this.#maybeShowWelcomePanel();
+            }}
+            @bbgraphboardserverblankboard=${() => {
+              this.showOpenBoardOverlay = false;
+              this.#attemptBoardCreate(blankLLMContent());
+            }}
+            @bbgraphboardserveradd=${() => {
+              this.showBoardServerAddOverlay = true;
+            }}
+            @bbgraphboardserverrefresh=${async (
+              evt: BreadboardUI.Events.GraphBoardServerRefreshEvent
+            ) => {
+              const boardServer = this.#runtime.board.getBoardServerByName(
+                evt.boardServerName
+              );
+              if (!boardServer) {
+                return;
+              }
+
+              const refreshed = await boardServer.refresh(evt.location);
+              if (refreshed) {
+                this.toast(
+                  "Source files refreshed",
+                  BreadboardUI.Events.ToastType.INFORMATION
+                );
+              } else {
+                this.toast(
+                  "Unable to refresh source files",
+                  BreadboardUI.Events.ToastType.WARNING
+                );
+              }
+
+              this.boardServerNavState = globalThis.crypto.randomUUID();
+            }}
+            @bbgraphboardserverdisconnect=${async (
+              evt: BreadboardUI.Events.GraphBoardServerDisconnectEvent
+            ) => {
+              await this.#runtime.board.disconnect(evt.location);
+              this.boardServerNavState = globalThis.crypto.randomUUID();
+            }}
+            @bbgraphboardserverrenewaccesssrequest=${async (
+              evt: BreadboardUI.Events.GraphBoardServerRenewAccessRequestEvent
+            ) => {
+              const boardServer = this.#runtime.board.getBoardServerByName(
+                evt.boardServerName
+              );
+
+              if (!boardServer) {
+                return;
+              }
+
+              if (boardServer.renewAccess) {
+                await boardServer.renewAccess();
+              }
+
+              this.boardServerNavState = globalThis.crypto.randomUUID();
+            }}
+            @bbgraphboardserverloadrequest=${async (
+              evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
+            ) => {
+              this.showOpenBoardOverlay = false;
+              this.#attemptBoardStart(
+                new BreadboardUI.Events.StartEvent(evt.url)
+              );
+            }}
+            @bbgraphboardserverdeleterequest=${async (
+              evt: BreadboardUI.Events.GraphBoardServerDeleteRequestEvent
+            ) => {
+              await this.#attemptBoardDelete(
+                evt.boardServerName,
+                evt.url,
+                evt.isActive
+              );
+            }}
+            @bbgraphboardserverselectionchange=${(
+              evt: BreadboardUI.Events.GraphBoardServerSelectionChangeEvent
+            ) => {
+              this.#persistBoardServerAndLocation(
+                evt.selectedBoardServer,
+                evt.selectedLocation
+              );
+            }}
+            >Open board</bb-open-board-overlay
+          >`;
+        }
+
+        const tabs = this.#runtime?.board.tabs ?? [];
         const ui = html`<header>
           <div id="header-bar" ?inert=${showingOverlay}>
           <button
@@ -2217,7 +2329,7 @@ export class Main extends LitElement {
             Breadboard
           </h1>
           <div id="tab-container">
-            ${map(this.#runtime?.board.tabs ?? [], ([id, tab]) => {
+            ${map(tabs, ([id, tab]) => {
               let subGraphTitle: string | undefined | null = null;
               if (tab.graph && tab.graph.graphs && tab.subGraphId) {
                 subGraphTitle =
@@ -2309,6 +2421,21 @@ export class Main extends LitElement {
                 </button>
               </h1>`;
             })}
+            ${
+              tabs.size > 0 // The Welcome Panel is shown when there are no tabs.
+                ? html`<div id="add-tab-container">
+                    <button
+                      id="add-tab"
+                      @click=${() => {
+                        this.showOpenBoardOverlay = true;
+                      }}
+                    >
+                      +
+                    </button>
+                  </div>`
+                : nothing
+            }
+
           </div>
           <button
             class=${classMap({ active: this.showSettingsOverlay })}
@@ -2372,6 +2499,9 @@ export class Main extends LitElement {
               }}
               @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
                 this.#attemptBoardStart(evt);
+              }}
+              @bbgraphboardopenrequest=${() => {
+                this.showOpenBoardOverlay = true;
               }}
               @bboverflowmenuaction=${async (
                 evt: BreadboardUI.Events.OverflowMenuActionEvent
@@ -2838,6 +2968,7 @@ export class Main extends LitElement {
           edgeValueOverlay,
           commentOverlay,
           saveAsDialogOverlay,
+          openDialogOverlay,
         ];
       });
 
