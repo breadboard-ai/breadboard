@@ -7,11 +7,10 @@
 import { createOutputProvider, RequestedInputsManager } from "../bubble.js";
 import { resolveBoardCapabilitiesInInputs } from "../capability.js";
 import { callHandler, getHandler } from "../handler.js";
-import { SENTINEL_BASE_URL } from "../loader/loader.js";
+import { resolveGraph, SENTINEL_BASE_URL } from "../loader/loader.js";
 import { RunResult } from "../run.js";
-import type { NodeHandlerContext, RunArguments } from "../types.js";
+import type { GraphToRun, NodeHandlerContext, RunArguments } from "../types.js";
 import type {
-  GraphDescriptor,
   InputValues,
   NodeIdentifier,
   OutputValues,
@@ -23,14 +22,14 @@ type ResultSupplier = (result: RunResult) => Promise<void>;
 export class NodeInvoker {
   #requestedInputs: RequestedInputsManager;
   #resultSupplier: ResultSupplier;
-  #graph: GraphDescriptor;
+  #graph: GraphToRun;
   #context: NodeHandlerContext;
   #initialInputs?: InputValues;
   #start?: NodeIdentifier;
 
   constructor(
     args: RunArguments,
-    graph: GraphDescriptor,
+    graph: GraphToRun,
     next: (result: RunResult) => Promise<void>
   ) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -61,12 +60,12 @@ export class NodeInvoker {
     const newContext: NodeHandlerContext = {
       ...this.#context,
       descriptor,
-      board: this.#graph,
+      board: resolveGraph(this.#graph),
       // This is important: outerGraph is the value of the parent graph
       // if this.#graph is a subgraph.
       // Or it equals to "board" it this is not a subgraph
       // TODO: Make this more elegant.
-      outerGraph: this.#graph,
+      outerGraph: this.#graph.graph,
       base,
       kits,
       requestInput: this.#requestedInputs.createHandler(
@@ -84,7 +83,11 @@ export class NodeInvoker {
 
     outputs = (await callHandler(
       handler,
-      resolveBoardCapabilitiesInInputs(inputs, this.#context, this.#graph.url),
+      resolveBoardCapabilitiesInInputs(
+        inputs,
+        this.#context,
+        this.#graph.graph.url
+      ),
       newContext
     )) as OutputValues;
 

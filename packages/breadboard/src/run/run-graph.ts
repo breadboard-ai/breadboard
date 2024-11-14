@@ -46,7 +46,7 @@ export async function* runGraph(
 
   const lifecycle = state?.lifecycle();
   yield* asyncGen<BreadboardRunResult>(async (next) => {
-    const nodeInvoker = new NodeInvoker(args, graph, next);
+    const nodeInvoker = new NodeInvoker(args, graphToRun, next);
 
     lifecycle?.dispatchGraphStart(graph.url!, invocationPath);
 
