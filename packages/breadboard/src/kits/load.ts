@@ -11,7 +11,6 @@ import {
   GraphDescriptor,
   InputValues,
   Kit,
-  KitManifest,
   NodeDescriberContext,
   NodeHandlerContext,
   NodeHandlerMetadata,
@@ -69,40 +68,55 @@ class GraphDescriptorNodeHandler implements NodeHandlerObject {
   }
 }
 
-const createHandlersFromManifest = (base: URL, nodes: KitManifest["nodes"]) => {
-  return Object.fromEntries(
-    Object.entries(nodes).map(([key, value]) => {
+const createHandlersFromManifest = (base: URL, graph: GraphDescriptor) => {
+  const graphs = graph.graphs!;
+  if (!graph.exports) {
+    console.log("NO GRAPH EXPORTS", graph);
+  }
+  const exports = graph.exports!.map((e) => {
+    if (e.startsWith("#")) {
+      return e.slice(1);
+    }
+    return e;
+  });
+  const entries = Object.entries(graphs)
+    .filter(([key]) => exports.includes(key))
+    .map(([key, value]) => {
       return [key, new GraphDescriptorNodeHandler(base, key, value)];
-    })
-  );
+    });
+  return Object.fromEntries(entries);
 };
 
 /**
- * Creates a runtime kit from manifest.
- * @param manifest -- a `KitManifest` instance
+ * Creates a runtime kit from a Graph Descriptor.
  */
-export const fromManifest = (manifest: KitManifest): Kit => {
-  const { title, description, version, url } = manifest;
+export const kitFromGraphDescriptor = (
+  graph: GraphDescriptor
+): Kit | undefined => {
+  if (!graph.graphs) {
+    return;
+  }
+  const { title, description, version, url = "" } = graph;
   return {
     title,
     description,
     version,
     url,
-    handlers: createHandlersFromManifest(new URL(url), manifest.nodes),
+    handlers: createHandlersFromManifest(new URL(url), graph),
   };
 };
 
-const isKitManifest = (obj: unknown): obj is KitManifest => {
+function isGraphDescriptor(obj: unknown): obj is GraphDescriptor {
   if (typeof obj !== "object" || obj === null) return false;
-  const manifest = obj as KitManifest;
+  const graph = obj as GraphDescriptor;
   return (
-    typeof manifest.title === "string" &&
-    typeof manifest.description === "string" &&
-    typeof manifest.version === "string" &&
-    typeof manifest.url === "string" &&
-    typeof manifest.nodes === "object"
+    typeof graph.title === "string" &&
+    typeof graph.description === "string" &&
+    typeof graph.version === "string" &&
+    typeof graph.graphs === "object" &&
+    Array.isArray(graph.exports)
   );
-};
+}
 
 /**
  * Loads a kit from a URL.
@@ -113,8 +127,12 @@ export const load = async (url: URL): Promise<Kit> => {
   if (url.protocol === "https:" || url.protocol === "http:") {
     if (url.pathname.endsWith(".kit.json")) {
       const maybeManifest = await loadWithFetch(url);
-      if (isKitManifest(maybeManifest)) {
-        return fromManifest(maybeManifest);
+      if (isGraphDescriptor(maybeManifest)) {
+        const kit = kitFromGraphDescriptor(maybeManifest);
+        if (!kit) {
+          throw new Error(`Unable to import kit from "${url}"`);
+        }
+        return kit;
       }
     } else {
       // Assume that this is a URL to a JS file.

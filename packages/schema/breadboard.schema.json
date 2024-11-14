@@ -98,6 +98,20 @@
 					"$ref": "#/definitions/Modules",
 					"description": "Modules that are included as part of this graph."
 				},
+				"exports": {
+					"type": "array",
+					"items": {
+						"anyOf": [
+							{
+								"$ref": "#/definitions/ModuleIdentifier"
+							},
+							{
+								"type": "string"
+							}
+						]
+					},
+					"description": "The modules and sub-graphs that this graph declares as \"exports\": they themselves are usable declarative or imperative graphs. When the \"exports\" property exist, this graph is actually a Kit declaration: it can be used to distributed multiple graphs."
+				},
 				"virtual": {
 					"type": "boolean",
 					"const": true,
