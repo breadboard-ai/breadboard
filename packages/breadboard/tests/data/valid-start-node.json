@@ -17,15 +17,13 @@
     { "id": "node-a", "type": "input" },
     {
       "id": "node-b",
-      "type": "input",
-      "metadata": {
-        "tags": ["start"]
-      }
+      "type": "input"
     },
     { "id": "node-c", "type": "output" },
     { "id": "node-d", "type": "output" }
   ],
   "inputs": { "text": "foo" },
   "outputs": [{ "data": "foo" }],
-  "sequence": ["node-b", "node-c"]
+  "sequence": ["node-b", "node-c"],
+  "start": "node-b"
 }

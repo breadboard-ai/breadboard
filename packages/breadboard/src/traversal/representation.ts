@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { StartLabel, StartTag } from "@breadboard-ai/types";
 import type {
   Edge,
   GraphDescriptor,
@@ -13,7 +12,7 @@ import type {
 } from "../types.js";
 
 export class GraphRepresentation {
-  start?: StartLabel;
+  start?: NodeIdentifier;
   /**
    * Tails: a map of all outgoing edges, keyed by node id.
    */
@@ -39,43 +38,17 @@ export class GraphRepresentation {
   }
 
   #findEntries() {
-    const entries = new Set<NodeIdentifier>();
-    const start = this.start ?? "default";
-    let hasStartLabels = false;
-    this.nodes.forEach((node) => {
-      node.metadata?.tags?.forEach((tag) => {
-        let startTag = tag as StartTag;
-        if (typeof startTag === "string" && startTag === "start") {
-          startTag = { type: "start", label: "default" };
-        }
-        if (startTag.type === "start") {
-          const label = startTag.label ?? "default";
-          hasStartLabels = true;
-          if (label === start) {
-            entries.add(node.id);
-          }
-        }
-      });
-    });
-
-    // If there are tagged entries, return them.
-    if (entries.size > 0) {
-      return Array.from(entries);
+    if (this.start) {
+      const entry = this.nodes.has(this.start);
+      return entry ? [this.start] : [];
     }
-
-    // If there were start labels present, return an empty array, since we
-    // are asked to traverse a graph from a non-existent entry point.
-    if (hasStartLabels) {
-      return [];
-    }
-
     // Otherwise, fall back to computing entries based on edges.
     return Array.from(this.nodes.keys()).filter((node) =>
       this.#notInHeads(node)
     );
   }
 
-  constructor(descriptor: GraphDescriptor, start?: StartLabel) {
+  constructor(descriptor: GraphDescriptor, start?: NodeIdentifier) {
     if (start) {
       this.start = start;
     }

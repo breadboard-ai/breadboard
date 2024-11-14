@@ -34,7 +34,14 @@ export async function invokeGraph(
     const path = context.invocationPath || [];
     const lifecycle = context.state?.lifecycle();
 
-    for await (const result of runGraph(graph, context, resumeFrom)) {
+    const adjustedContext = context.start
+      ? {
+          ...context,
+          inputs,
+        }
+      : context;
+
+    for await (const result of runGraph(graph, adjustedContext, resumeFrom)) {
       if (result.type === "input") {
         // Pass the inputs to the board. If there are inputs bound to the
         // board (e.g. from a lambda node that had incoming wires), they will
@@ -63,6 +70,8 @@ export async function invokeGraph(
           data: { path, timestamp: timestamp() },
         });
         break;
+      } else {
+        outputs = result.outputs;
       }
     }
     return outputs;

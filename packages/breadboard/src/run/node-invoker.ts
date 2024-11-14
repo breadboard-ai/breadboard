@@ -12,6 +12,8 @@ import { RunResult } from "../run.js";
 import type { NodeHandlerContext, RunArguments } from "../types.js";
 import type {
   GraphDescriptor,
+  InputValues,
+  NodeIdentifier,
   OutputValues,
   TraversalResult,
 } from "@breadboard-ai/types";
@@ -23,6 +25,8 @@ export class NodeInvoker {
   #resultSupplier: ResultSupplier;
   #graph: GraphDescriptor;
   #context: NodeHandlerContext;
+  #initialInputs?: InputValues;
+  #start?: NodeIdentifier;
 
   constructor(
     args: RunArguments,
@@ -30,15 +34,25 @@ export class NodeInvoker {
     next: (result: RunResult) => Promise<void>
   ) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { inputs, ...context } = args;
+    const { inputs, start, stopAfter, ...context } = args;
     this.#requestedInputs = new RequestedInputsManager(args);
     this.#resultSupplier = next;
     this.#graph = graph;
     this.#context = context;
+    this.#start = start;
+    this.#initialInputs = inputs;
+  }
+
+  #adjustInputs(result: TraversalResult) {
+    const { inputs, descriptor } = result;
+    if (!this.#start) return inputs;
+    if (this.#start !== descriptor.id) return inputs;
+    return { ...inputs, ...this.#initialInputs };
   }
 
   async invokeNode(result: TraversalResult, invocationPath: number[]) {
-    const { inputs, descriptor } = result;
+    const { descriptor } = result;
+    const inputs = this.#adjustInputs(result);
     const { kits = [], base = SENTINEL_BASE_URL, state } = this.#context;
     let outputs: OutputValues | undefined = undefined;
 

@@ -229,6 +229,7 @@ describe("LocalRunner", async () => {
       deepStrictEqual(eventNamesFromLog(events), [
         "resume",
         "nodeend",
+        "output",
         "graphend",
         "end",
       ]);

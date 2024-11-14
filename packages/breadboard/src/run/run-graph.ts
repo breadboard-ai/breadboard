@@ -34,7 +34,7 @@ export async function* runGraph(
   resumeFrom?: TraversalResult
 ): AsyncGenerator<BreadboardRunResult> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { inputs, start, stopAfter, ...context } = args;
+  const { inputs: initialInputs, start, stopAfter, ...context } = args;
   const { probe, state, invocationPath = [] } = context;
 
   if (isImperativeGraph(graph)) {
@@ -162,6 +162,8 @@ export async function* runGraph(
       });
     }
 
+    let remainingOutputs: TraversalResult | null = null;
+
     for await (const result of machine) {
       context?.signal?.throwIfAborted();
 
@@ -236,8 +238,10 @@ export async function* runGraph(
           await next(new OutputStageResult(result, invocationId, path()));
         }
         outputs = result.outputs;
+        remainingOutputs = null;
       } else {
         outputs = await nodeInvoker.invokeNode(result, path());
+        remainingOutputs = result;
       }
 
       lifecycle?.dispatchNodeEnd(outputs, path());
@@ -259,6 +263,19 @@ export async function* runGraph(
       if (stopAfter == descriptor.id) {
         prepareToStopAtStartNode = true;
       }
+    }
+
+    if (remainingOutputs) {
+      await next(
+        new OutputStageResult(
+          {
+            ...remainingOutputs,
+            inputs: remainingOutputs.outputs || {},
+          },
+          invocationId,
+          path()
+        )
+      );
     }
 
     lifecycle?.dispatchGraphEnd();

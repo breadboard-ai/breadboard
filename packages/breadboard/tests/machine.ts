@@ -17,7 +17,7 @@ import {
   OutputValues,
 } from "../src/types.js";
 import { MachineResult } from "../src/traversal/result.js";
-import { StartLabel } from "@breadboard-ai/types";
+import { NodeIdentifier } from "@breadboard-ai/types";
 
 const IN_DIR = "./tests/data/";
 
@@ -26,7 +26,7 @@ interface TestGraphDescriptor extends GraphDescriptor {
   inputs: InputValues;
   outputs: OutputValues[];
   throws: boolean;
-  start: StartLabel;
+  start: NodeIdentifier;
 }
 
 const graphs = (await readdir(`${IN_DIR}/`)).filter((file) =>
@@ -48,6 +48,9 @@ await Promise.all(
       const sequence: string[] = [];
       const run = async () => {
         for await (const result of machine) {
+          if (graph.start === "node-b") {
+            console.log("result", result);
+          }
           if (result.skip) continue;
           const { inputs, descriptor } = result;
           sequence.push(descriptor.id);
@@ -65,6 +68,7 @@ await Promise.all(
               break;
             }
             case "make": {
+              console.log("MAKE");
               // A node that creates its own output.
               result.outputs = { text: "Hello, world!" };
               break;

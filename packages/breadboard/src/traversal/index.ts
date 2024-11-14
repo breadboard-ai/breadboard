@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { StartLabel, StartTag } from "@breadboard-ai/types";
+import { NodeIdentifier } from "@breadboard-ai/types";
 import { Edge, InputValues, NodeDescriptor } from "../types.js";
 
 const requiredInputsFromEdges = (edges: Edge[]): string[] => {
@@ -15,20 +15,6 @@ const requiredInputsFromEdges = (edges: Edge[]): string[] => {
         .map((edge: Edge) => edge.in || "")
     ),
   ];
-};
-
-const isStartNode = (
-  node: NodeDescriptor,
-  start: StartLabel = "default"
-): boolean => {
-  if (!node.metadata?.tags) return false;
-  return node.metadata.tags.some((tag) => {
-    const startTag = tag as StartTag;
-    if (typeof startTag === "string") return startTag === "start";
-    if (startTag.type !== "start") return false;
-    const label = startTag.label ?? "default";
-    return start === label;
-  });
 };
 
 /**
@@ -47,9 +33,10 @@ export class Traversal {
     heads: Edge[],
     inputs: InputValues,
     current: NodeDescriptor,
-    start?: StartLabel
+    start?: NodeIdentifier
   ): string[] {
-    const requiredInputs: string[] = isStartNode(current, start)
+    const isStartNode = current.id === start;
+    const requiredInputs: string[] = isStartNode
       ? []
       : requiredInputsFromEdges(heads);
     const inputsWithConfiguration = new Set();
