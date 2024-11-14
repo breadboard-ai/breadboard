@@ -914,7 +914,11 @@ export class OpenBoardOverlay extends LitElement {
                 // Divide the items into two buckets: those that belong to the user and
                 // other published boards.
                 const items = [...store.items].filter(([name, item]) => {
-                  const canShow = this.showOtherPeoplesBoards || item.mine;
+                  const canShow =
+                    this.showOtherPeoplesBoards ||
+                    item.mine ||
+                    store.title === "Example Boards" ||
+                    store.title === "Playground Boards";
 
                   if (!this.filter) {
                     return canShow;
