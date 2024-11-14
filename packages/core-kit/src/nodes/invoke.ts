@@ -11,6 +11,7 @@ import type {
   GraphDescriptor,
   NodeDescriberContext,
   NodeIdentifier,
+  GraphToRun,
 } from "@google-labs/breadboard";
 import {
   getGraphDescriptor,
@@ -30,7 +31,7 @@ export type InvokeNodeInputs = InputValues & {
 };
 
 type RunnableBoardWithArgs = {
-  board: GraphDescriptor | undefined;
+  board: GraphToRun;
   start?: NodeIdentifier;
   stopAfter?: NodeIdentifier;
   args: InputValues;
@@ -42,28 +43,34 @@ const getRunnableBoard = async (
 ): Promise<RunnableBoardWithArgs> => {
   const { $board, $start: start, $stopAfter: stopAfter, ...args } = inputs;
   if ($board) {
-    const board = await getRunner($board, context);
-    return { board, args };
+    const result = await getRunner($board, context);
+    if (!result.success) {
+      throw new Error(result.error);
+    }
+    return { board: result, args };
   } else if (start) {
     if (!context.board) {
       throw new Error(
         "Start is present, but the context didn't provide the current board"
       );
     }
-    return { board: context.board, start, stopAfter, args };
+    return { board: { graph: context.board }, start, stopAfter, args };
   } else {
     const { path, board, graph, ...args } = inputs as InvokeNodeInputs;
 
-    let runnableBoard;
+    let result;
 
     if (board) {
-      runnableBoard = await getGraphDescriptor(board, context);
+      result = await getGraphDescriptor(board, context);
     } else if (graph) {
-      runnableBoard = graph;
+      result = { graph };
     } else if (path) {
-      runnableBoard = await loadGraphFromPath(path, context);
+      result = await loadGraphFromPath(path, context);
     }
-    return { board: runnableBoard, start, stopAfter, args };
+    if (!result?.success) {
+      throw new Error("Unable to get board");
+    }
+    return { board: result, start, stopAfter, args };
   }
 };
 
@@ -72,16 +79,16 @@ const describe = async (
   context?: NodeDescriberContext
 ) => {
   if (context?.base) {
-    let board: GraphDescriptor | undefined;
+    let graphToRun: GraphToRun | undefined;
     if (inputs) {
       try {
-        board = (await getRunnableBoard(context, inputs)).board;
+        graphToRun = (await getRunnableBoard(context, inputs)).board;
       } catch {
         // eat any exceptions.
         // This is a describer, so it must always return some valid value.
       }
-      if (board) {
-        const inspectableGraph = inspect(board, {
+      if (graphToRun) {
+        const inspectableGraph = inspect(graphToRun.graph, {
           kits: context.kits,
           loader: context.loader,
         });
@@ -164,6 +171,6 @@ export default defineNodeType({
         }
       : { ...context, start, stopAfter };
 
-    return await invokeGraph({ graph: board }, args, invocationContext);
+    return await invokeGraph(board, args, invocationContext);
   },
 });

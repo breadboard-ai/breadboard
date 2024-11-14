@@ -15,7 +15,7 @@ import type { Expand } from "@breadboard-ai/build/internal/common/type-util.js";
 import type { JsonSerializable } from "@breadboard-ai/build/internal/type-system/type.js";
 import {
   getGraphDescriptor,
-  GraphDescriptor,
+  GraphToRun,
   invokeGraph,
   NodeHandlerContext,
   OutputValues,
@@ -46,7 +46,7 @@ type ExtractOutputTypes<B extends BoardOutputPorts> = {
 };
 
 const invokeGraphPerItem = async (
-  graph: GraphDescriptor,
+  graph: GraphToRun,
   item: JsonSerializable,
   index: number,
   list: JsonSerializable,
@@ -61,11 +61,7 @@ const invokeGraphPerItem = async (
     base: base || context?.base,
     invocationPath: [...(context?.invocationPath || []), index],
   };
-  const outputs = await invokeGraph(
-    { graph },
-    { item, index, list },
-    newContext
-  );
+  const outputs = await invokeGraph(graph, { item, index, list }, newContext);
   // TODO(aomarks) Map functions have an "item" input, but not an "item"
   // output. Instead, all outputs become the map result. That's a bit
   // weird, since it means you can't e.g. map a string to a string; only a
@@ -127,7 +123,7 @@ const mapNode = defineNodeType({
       throw new Error(`Expected list to be an array, but got ${list}`);
     }
     const graph = await getGraphDescriptor(board, context);
-    if (!graph) return { list };
+    if (!graph.success) return { list };
     let result: OutputValues[];
     const runSerially = !!context.state;
     if (runSerially) {

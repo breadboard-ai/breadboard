@@ -11,6 +11,7 @@ import type {
   NodeHandlerContext,
   BreadboardCapability,
   GraphDescriptor,
+  GraphLoaderResult,
 } from "@google-labs/breadboard";
 import { getGraphDescriptor, invokeGraph } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
@@ -77,16 +78,16 @@ export default {
     // TODO: Please fix the $ref/path mess.
     const source = path || $ref || "";
 
-    const runnableBoard = board
+    const runnableBoard: GraphLoaderResult = board
       ? await getGraphDescriptor(board, context)
       : graph
-        ? graph
+        ? { success: true, graph }
         : await loadGraphFromPath(source, context);
 
-    if (!runnableBoard) {
+    if (!runnableBoard.success) {
       throw new Error("Must provide valid board to include");
     }
 
-    return await invokeGraph({ graph: runnableBoard }, args, context);
+    return await invokeGraph(runnableBoard, args, context);
   },
 };

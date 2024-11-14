@@ -21,7 +21,7 @@ export const testKit: Kit = {
           throw new Error("No board provided for the `invoke` handler");
         }
         const graph = await getGraphDescriptor($board, context);
-        if (!graph) {
+        if (!graph.success) {
           throw new Error(
             "Unable to get graph descriptor from the board in `invoke` handler"
           );
@@ -34,7 +34,7 @@ export const testKit: Kit = {
             }
           : { ...context };
 
-        return invokeGraph({ graph }, args, invocationContext);
+        return invokeGraph(graph, args, invocationContext);
       },
     },
     map: {
@@ -44,7 +44,7 @@ export const testKit: Kit = {
           throw new Error("No board provided for the `map` handler");
         }
         const graph = await getGraphDescriptor(board, context);
-        if (!graph) {
+        if (!graph.success) {
           throw new Error(
             "Unable to get graph descriptor from the board in `map` handler"
           );
@@ -70,7 +70,7 @@ export const testKit: Kit = {
               invocationPath: [...(context?.invocationPath || []), index],
             };
             const outputs = await invokeGraph(
-              { graph },
+              graph,
               { item, index, list },
               newContext
             );
@@ -86,7 +86,7 @@ export const testKit: Kit = {
                 invocationPath: [...(context?.invocationPath || []), index],
               };
               const outputs = await invokeGraph(
-                { graph },
+                graph,
                 { item, index, list },
                 newContext
               );

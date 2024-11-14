@@ -65,47 +65,46 @@ export const TestKit = new KitBuilder({
       const base = context.base || new URL(import.meta.url);
 
       if ($board) {
-        let board;
+        let result = undefined;
         if (($board as BreadboardCapability).kind === "board") {
-          board = await getGraphDescriptor(
+          result = await getGraphDescriptor(
             $board as BreadboardCapability,
             context
           );
         } else if (typeof $board === "string") {
-          const loadResult = await context.loader?.load($board, {
+          result = await context.loader?.load($board, {
             base,
             outerGraph: context.outerGraph,
           });
-          if (!loadResult?.success) {
-            board = undefined;
-          } else {
-            board = loadResult.graph;
-          }
-        } else {
-          board = undefined;
         }
 
-        if (!board) throw new Error("Must provide valid $board to invoke");
+        if (!result) throw new Error("Must provide valid $board to invoke");
 
-        return await invokeGraph({ graph: board }, args, context);
+        if (!result.success) {
+          throw new Error(result.error);
+        }
+
+        return await invokeGraph(result, args, context);
       } else {
         const { board, path, ...args } = inputs;
 
-        const runnableBoard = board
+        const result = board
           ? await getGraphDescriptor(board, context)
           : path
-            ? unwrap(
-                await context.loader?.load(path, {
-                  base,
-                  outerGraph: context.outerGraph,
-                })
-              )
+            ? await context.loader?.load(path, {
+                base,
+                outerGraph: context.outerGraph,
+              })
             : undefined;
 
-        if (!runnableBoard)
+        if (!result) {
           throw new Error("Must provide valid board to invoke");
+        }
+        if (!result.success) {
+          throw new Error(result.error);
+        }
 
-        return await invokeGraph({ graph: runnableBoard }, args, context);
+        return await invokeGraph(result, args, context);
       }
     },
     describe: async (inputs?: InputValues): Promise<NodeDescriberResult> => {
@@ -247,7 +246,6 @@ import {
   NewOutputValues,
   NewNodeFactory as NodeFactory,
   invokeGraph,
-  GraphLoaderResult,
 } from "../../src/index.js";
 import { getGraphDescriptor } from "../../src/capability.js";
 
@@ -275,10 +273,3 @@ export const makeMirrorUniverseKit = () =>
   addKit(MirrorUniverseKit) as unknown as {
     reverser: NodeFactory<{ [key: string]: string }, { [key: string]: string }>;
   };
-
-function unwrap(
-  result: GraphLoaderResult | undefined
-): GraphDescriptor | undefined {
-  if (result && result.success) return result.graph;
-  return undefined;
-}

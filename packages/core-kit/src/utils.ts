@@ -5,7 +5,7 @@
  */
 
 import {
-  GraphDescriptor,
+  GraphLoaderResult,
   NodeHandlerContext,
   Throttler,
   getGraphDescriptor,
@@ -14,16 +14,26 @@ import {
 export const loadGraphFromPath = async (
   path: string,
   context: NodeHandlerContext
-) => {
-  const loaderResult = await context.loader?.load(path, context);
-  if (!loaderResult?.success)
-    throw new Error(`Unable to load graph from "${path}"`);
-  return loaderResult.graph;
+): Promise<GraphLoaderResult> => {
+  if (!context.loader) {
+    return {
+      success: false,
+      error: "Loader wasn't provided to load graph from path",
+    };
+  }
+  const loaderResult = await context.loader.load(path, context);
+  if (!loaderResult.success) {
+    return {
+      success: false,
+      error: `Unable to load graph from "${path}": ${loaderResult?.error}`,
+    };
+  }
+  return loaderResult;
 };
 
 type GetGraphDescriptorThrottler = Throttler<
   [unknown, NodeHandlerContext],
-  GraphDescriptor | undefined
+  GraphLoaderResult
 >;
 
 const graphDescriptorCache = new Map<unknown, GetGraphDescriptorThrottler>();
@@ -31,7 +41,7 @@ const graphDescriptorCache = new Map<unknown, GetGraphDescriptorThrottler>();
 export const getRunner = async (
   board: unknown,
   context: NodeHandlerContext
-) => {
+): Promise<GraphLoaderResult> => {
   let throttler;
   if (!graphDescriptorCache.has(board)) {
     throttler = new Throttler(getGraphDescriptor);

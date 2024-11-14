@@ -49,7 +49,7 @@ export default defineNodeType({
       throw new Error(`Expected list to be an array, but got ${list}`);
     }
     const runnableBoard = await getRunner(board, context);
-    if (!runnableBoard) return { accumulator };
+    if (!runnableBoard.success) return { accumulator };
     let result = accumulator;
     let index = 0;
     for (const item of list) {
@@ -58,7 +58,7 @@ export default defineNodeType({
         invocationPath: [...(context?.invocationPath || []), index++],
       };
       const { accumulator } = await invokeGraph(
-        { graph: runnableBoard },
+        runnableBoard,
         { item, accumulator: result },
         newContext
       );
