@@ -109,11 +109,13 @@ const maybeSaveResult = (result: BreadboardRunResult, last?: LastNode) => {
 const load = async (config: RunConfig): Promise<GraphDescriptor> => {
   const base = baseURL(config);
   const loader = config.loader || createLoader();
-  const graph = await loader.load(config.url, { base });
-  if (!graph) {
-    throw new Error(`Unable to load graph from "${config.url}"`);
+  const loadResult = await loader.load(config.url, { base });
+  if (!loadResult.success) {
+    throw new Error(
+      `Unable to load graph from "${config.url}": ${loadResult.error}`
+    );
   }
-  return graph;
+  return loadResult.graph;
 };
 
 export async function* runLocally(config: RunConfig, kits: Kit[]) {

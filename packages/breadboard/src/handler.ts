@@ -161,10 +161,13 @@ async function getGraphHandlerInternal(
   if (!loader) {
     throw new Error(`Cannot load graph for type "${type}" without a loader.`);
   }
-  const graph = await loader.load(type, context);
-  if (!graph) {
-    throw new Error(`Cannot load graph for type "${type}"`);
+  const loadResult = await loader.load(type, context);
+  if (!loadResult.success) {
+    throw new Error(
+      `Cannot load graph for type "${type}": ${loadResult.error}`
+    );
   }
+  const graph = loadResult.graph;
   return {
     invoke: async (inputs, context) => {
       const base = context.board?.url && new URL(context.board?.url);

@@ -245,21 +245,18 @@ export class Run extends EventTarget {
     inputs: InputValues,
     settings: BreadboardUI.Types.SettingsStore | null
   ): Promise<Result<OutputValues>> {
-    const sideboard = await loader.load(url, {
+    const loadResult = await loader.load(url, {
       base: new URL(window.location.href),
     });
-    if (!sideboard) {
-      return {
-        success: false,
-        error: `Unable to load sidebard at "${url}`,
-      };
+    if (!loadResult.success) {
+      return loadResult;
     }
     const args: RunArguments = {
       kits: [sideboardSecretsKit(settings), ...kits],
       loader: loader,
       store: this.dataStore,
     };
-    const result = await invokeGraph(sideboard, inputs, args);
+    const result = await invokeGraph(loadResult.graph, inputs, args);
     return { success: true, result: result.config as NodeConfiguration };
   }
 }

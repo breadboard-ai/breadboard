@@ -446,9 +446,11 @@ export class Board extends EventTarget {
 
         if (boardServer && this.boardServers) {
           kits = (boardServer as BoardServer).kits ?? this.kits;
-          graph = await this.boardServers.loader.load(url, { base });
+          const loadResult = await this.boardServers.loader.load(url, { base });
+          graph = loadResult.success ? loadResult.graph : null;
         } else {
-          graph = await this.loader.load(url, { base });
+          const loadResult = await this.loader.load(url, { base });
+          graph = loadResult.success ? loadResult.graph : null;
         }
       }
 

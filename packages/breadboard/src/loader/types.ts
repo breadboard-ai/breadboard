@@ -6,6 +6,7 @@
 
 import {
   GraphDescriptor,
+  GraphIdentifier,
   GraphTag,
   NodeConfiguration,
   NodeIdentifier,
@@ -249,6 +250,21 @@ export type GraphLoaderContext = {
 };
 
 /**
+ * Returns the result of loading the graph. When we're loading the subgraph,
+ * it returns the main graph and the id of the subgraph
+ */
+export type GraphLoaderResult =
+  | {
+      success: true;
+      graph: GraphDescriptor;
+      subGraphId?: GraphIdentifier;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+/**
  * Represents a loader for `GraphDescriptor` instances. This is the main
  * interface for loading graphs in Breadboard.
  */
@@ -262,7 +278,7 @@ export type GraphLoader = {
   load: (
     path: string,
     context: GraphLoaderContext
-  ) => Promise<GraphDescriptor | null>;
+  ) => Promise<GraphLoaderResult>;
 };
 
 /**

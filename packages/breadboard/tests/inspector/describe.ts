@@ -16,8 +16,8 @@ const load = async (url: string) => {
   const base = BASE_URL;
   const loader = createLoader();
   const result = await loader.load(url, { base });
-  if (!result) return undefined;
-  return inspectableGraph(result);
+  if (!result.success) return undefined;
+  return inspectableGraph(result.graph);
 };
 
 test("simple graph description works as expected", async (t) => {

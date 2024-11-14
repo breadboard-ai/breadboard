@@ -442,11 +442,15 @@ class Graph implements InspectableGraphWithStore {
       const base = this.#url;
 
       // try loading the describer graph.
-      const describerGraph = await loader.load(customDescriber, {
+      const loadResult = await loader.load(customDescriber, {
         base,
         board: this.#graph,
         outerGraph: this.#graph,
       });
+      if (!loadResult.success) {
+        return loadResult;
+      }
+      const { graph: describerGraph } = loadResult;
       if (!describerGraph) {
         console.warn(
           `Could not load custom describer graph ${customDescriber}`

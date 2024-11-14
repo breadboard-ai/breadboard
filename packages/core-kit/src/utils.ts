@@ -15,9 +15,10 @@ export const loadGraphFromPath = async (
   path: string,
   context: NodeHandlerContext
 ) => {
-  const graph = await context.loader?.load(path, context);
-  if (!graph) throw new Error(`Unable to load graph from "${path}"`);
-  return graph;
+  const loaderResult = await context.loader?.load(path, context);
+  if (!loaderResult?.success)
+    throw new Error(`Unable to load graph from "${path}"`);
+  return loaderResult.graph;
 };
 
 type GetGraphDescriptorThrottler = Throttler<

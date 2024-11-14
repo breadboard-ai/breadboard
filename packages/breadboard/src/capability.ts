@@ -72,26 +72,26 @@ export const graphDescriptorFromCapability = async (
         `The "board" Capability is a URL, but no loader was supplied.`
       );
     }
-    const graph = await context.loader.load(capability.url, context);
-    if (!graph) {
+    const loaderResult = await context.loader.load(capability.url, context);
+    if (!loaderResult.success || !loaderResult.graph) {
       throw new Error(
         `Unable to load "board" Capability with the URL of ${capability.url}.`
       );
     }
-    return graph;
+    return loaderResult.graph;
   } else if (isUnresolvedPathBoardCapability(capability)) {
     if (!context?.loader) {
       throw new Error(
         `The "board" Capability is a URL, but no loader was supplied.`
       );
     }
-    const graph = await context.loader.load(capability.path, context);
-    if (!graph) {
+    const loaderResult = await context.loader.load(capability.path, context);
+    if (!loaderResult.success || !loaderResult.graph) {
       throw new Error(
         `Unable to load "board" Capability with the path of ${capability.path}.`
       );
     }
-    return graph;
+    return loaderResult.graph;
   }
   throw new Error(
     `Unsupported type of "board" Capability. Perhaps the supplied board isn't actually a GraphDescriptor?`
@@ -108,9 +108,11 @@ export const getGraphDescriptor = async (
   if (!board) return undefined;
 
   if (typeof board === "string") {
-    const graph = await context?.loader?.load(board, context);
-    if (!graph) throw new Error(`Unable to load graph from "${board}"`);
-    return graph;
+    const loaderResult = await context?.loader?.load(board, context);
+    if (!loaderResult?.success || !loaderResult.graph) {
+      throw new Error(`Unable to load graph from "${board}"`);
+    }
+    return loaderResult.graph;
   } else if (isBreadboardCapability(board)) {
     return graphDescriptorFromCapability(board, context);
   } else if (isGraphDescriptor(board)) {
