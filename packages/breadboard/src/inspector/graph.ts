@@ -42,6 +42,7 @@ import {
 } from "./schemas.js";
 import {
   InspectableEdge,
+  InspectableGraph,
   InspectableGraphOptions,
   InspectableGraphWithStore,
   InspectableKit,
@@ -62,7 +63,7 @@ export const inspectableGraph = (
   graph: GraphDescriptor,
   options?: InspectableGraphOptions
 ): InspectableGraphWithStore => {
-  return new Graph(graph, options);
+  return new Graph(graph, null, options);
 };
 
 const maybeURL = (url?: string): URL | undefined => {
@@ -90,12 +91,18 @@ class Graph implements InspectableGraphWithStore {
   #options: InspectableGraphOptions;
 
   #graph: GraphDescriptor;
+  #parent: InspectableGraph | null;
   #cache: MutableGraph;
   #graphs: InspectableSubgraphs | null = null;
 
   #imperativeMain: ModuleIdentifier | undefined;
 
-  constructor(graph: GraphDescriptor, options?: InspectableGraphOptions) {
+  constructor(
+    graph: GraphDescriptor,
+    parent: InspectableGraph | null,
+    options?: InspectableGraphOptions
+  ) {
+    this.#parent = parent;
     if (isImperativeGraph(graph)) {
       const { main } = graph;
       this.#graph = toDeclarativeGraph(graph);
@@ -227,7 +234,7 @@ class Graph implements InspectableGraphWithStore {
       }
       const loader = this.#options.loader || createLoader();
       const context: NodeDescriberContext = {
-        outerGraph: this.#graph,
+        outerGraph: this.#parent?.raw() || this.#graph,
         loader,
         kits,
         sandbox: this.#options.sandbox,
@@ -557,7 +564,7 @@ class Graph implements InspectableGraphWithStore {
     if (!subgraphs) return {};
     return Object.fromEntries(
       Object.entries(subgraphs).map(([id, descriptor]) => {
-        return [id, new Graph(descriptor, this.#options)];
+        return [id, new Graph(descriptor, this, this.#options)];
       })
     );
   }
