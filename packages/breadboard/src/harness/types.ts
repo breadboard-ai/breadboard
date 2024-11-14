@@ -5,7 +5,6 @@
  */
 
 import type {
-  StartLabel,
   GraphStartProbeData,
   GraphEndProbeData,
   NodeEndResponse,
@@ -223,11 +222,11 @@ export type RunConfig = {
    */
   state?: ManagedRunState;
   /**
-   * Start label to use for the run. This is useful for specifying a particular
+   * Start node for the run. This is useful for specifying a particular
    * node as the start of the run. If not provided, nodes without any incoming
    * edges will be used.
    */
-  start?: StartLabel;
+  start?: NodeIdentifier;
   /**
    * The id of the node to stop the run after. In combination with `state`, can
    * be used to run parts of the board.

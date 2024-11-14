@@ -69,10 +69,6 @@ const isEntry = node.isEntry();
 // Returns true or false.
 const isDescribeEntry = node.isEntry("describe");
 
-// Get all the start labels assigned to the node.
-// Returns array of strings or undefined if no labels are assigned.
-const startLabels = node.startLabels();
-
 // See if the node is an exit node (no outgoing edges)
 // Returns true or false.
 const isExit = node.isExit();

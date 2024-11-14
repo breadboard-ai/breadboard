@@ -8,7 +8,6 @@ import {
   GraphMetadata,
   InputValues,
   ModuleIdentifier,
-  StartLabel,
 } from "@breadboard-ai/types";
 import { getHandler } from "../handler.js";
 import { createLoader } from "../loader/index.js";
@@ -341,8 +340,8 @@ class Graph implements InspectableGraphWithStore {
       .map((edge) => this.#cache.edges.getOrCreate(edge));
   }
 
-  entries(label?: StartLabel): InspectableNode[] {
-    return this.#cache.nodes.nodes().filter((node) => node.isEntry(label));
+  entries(): InspectableNode[] {
+    return this.#cache.nodes.nodes().filter((node) => node.isEntry());
   }
 
   async #describeWithStaticAnalysis(): Promise<NodeDescriberResult> {

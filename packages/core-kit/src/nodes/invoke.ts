@@ -10,6 +10,7 @@ import type {
   BreadboardCapability,
   GraphDescriptor,
   NodeDescriberContext,
+  NodeIdentifier,
 } from "@google-labs/breadboard";
 import {
   getGraphDescriptor,
@@ -21,6 +22,8 @@ import { defineNodeType, object, unsafeSchema } from "@breadboard-ai/build";
 
 export type InvokeNodeInputs = InputValues & {
   $board?: string | BreadboardCapability | GraphDescriptor;
+  $start?: NodeIdentifier;
+  $stopAfter?: NodeIdentifier;
   path?: string;
   board?: BreadboardCapability;
   graph?: GraphDescriptor;
@@ -28,6 +31,8 @@ export type InvokeNodeInputs = InputValues & {
 
 type RunnableBoardWithArgs = {
   board: GraphDescriptor | undefined;
+  start?: NodeIdentifier;
+  stopAfter?: NodeIdentifier;
   args: InputValues;
 };
 
@@ -35,10 +40,17 @@ const getRunnableBoard = async (
   context: NodeHandlerContext,
   inputs: InvokeNodeInputs
 ): Promise<RunnableBoardWithArgs> => {
-  const { $board, ...args } = inputs;
+  const { $board, $start: start, $stopAfter: stopAfter, ...args } = inputs;
   if ($board) {
     const board = await getRunner($board, context);
     return { board, args };
+  } else if (start) {
+    if (!context.board) {
+      throw new Error(
+        "Start is present, but the context didn't provide the current board"
+      );
+    }
+    return { board: context.board, start, stopAfter, args };
   } else {
     const { path, board, graph, ...args } = inputs as InvokeNodeInputs;
 
@@ -51,7 +63,7 @@ const getRunnableBoard = async (
     } else if (path) {
       runnableBoard = await loadGraphFromPath(path, context);
     }
-    return { board: runnableBoard, args };
+    return { board: runnableBoard, start, stopAfter, args };
   }
 };
 
@@ -132,7 +144,10 @@ export default defineNodeType({
     // TODO(aomarks) Cast here because the type system doesn't understand
     // BreadboardCapability or GraphDescriptors yet.
     const inputs = { ...staticInputs, ...dynamicInputs } as InvokeNodeInputs;
-    const { board, args } = await getRunnableBoard(context, inputs);
+    const { board, args, start, stopAfter } = await getRunnableBoard(
+      context,
+      inputs
+    );
     if (!board) {
       console.warn("Could not get a runnable board");
       throw new Error("Could not get a runnable board");
@@ -144,8 +159,10 @@ export default defineNodeType({
       ? {
           ...context,
           base,
+          start,
+          stopAfter,
         }
-      : { ...context };
+      : { ...context, start, stopAfter };
 
     return await invokeGraph(board, args, invocationContext);
   },

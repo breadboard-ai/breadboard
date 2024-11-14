@@ -17,15 +17,7 @@
     { "id": "node-a", "type": "input" },
     {
       "id": "node-b",
-      "type": "input",
-      "metadata": {
-        "tags": [
-          {
-            "type": "start",
-            "label": "describe"
-          }
-        ]
-      }
+      "type": "input"
     },
     { "id": "node-c", "type": "output" },
     { "id": "node-d", "type": "output" }
@@ -33,5 +25,6 @@
   "inputs": { "text": "foo" },
   "outputs": [],
   "sequence": [],
-  "throws": true
+  "throws": true,
+  "start": "foo"
 }

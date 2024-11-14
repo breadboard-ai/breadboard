@@ -93,7 +93,8 @@ export class TraversalMachineIterator
     const missingInputs = Traversal.computeMissingInputs(
       incomingEdges,
       inputs,
-      currentDescriptor
+      currentDescriptor,
+      this.graph.start
     );
 
     const newOpportunities = tails.get(toNode) || [];

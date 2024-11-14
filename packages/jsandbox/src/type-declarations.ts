@@ -106,7 +106,9 @@ declare module "@invoke" {
       title?: string;
       description?: string;
     };
-    $board: string;
+    $board?: string;
+    $start?: string;
+    $stopAfter?: string;
   } & Record<string, unknown>;
 
   export type InvokeOutputs = Record<string, unknown> & {
