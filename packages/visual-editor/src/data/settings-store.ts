@@ -179,6 +179,14 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
             value: true,
           },
         ],
+        [
+          "Show subgraphs inline",
+          {
+            name: "Show subgraphs inline",
+            description: "Shows subgraphs alongside the main graph",
+            value: false,
+          },
+        ],
       ]),
     },
     [BreadboardUI.Types.SETTINGS_TYPE.SECRETS]: {
