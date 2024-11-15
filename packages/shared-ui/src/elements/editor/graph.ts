@@ -62,6 +62,8 @@ export class Graph extends PIXI.Container {
   #highlightedNodeColor = highlightedNodeColor;
   #highlightPadding = 8;
   #autoSelect = new Set<string>();
+  #subGraphOutline = new PIXI.Graphics();
+  #subGraphOutlinePadding = 24;
   #latestPendingValidateRequest = new WeakMap<GraphEdge, symbol>();
   #edgeValues: TopGraphEdgeValues | null = null;
   #nodeInfo: TopGraphNodeInfo | null = null;
@@ -74,6 +76,7 @@ export class Graph extends PIXI.Container {
 
   readOnly = false;
   highlightInvalidWires = false;
+  subGraphId: string | null = null;
 
   constructor() {
     super({
@@ -83,6 +86,9 @@ export class Graph extends PIXI.Container {
     this.isRenderGroup = true;
     this.eventMode = "static";
     this.sortableChildren = true;
+
+    // TODO: Enable subgraph selection.
+    this.#subGraphOutline.eventMode = "none";
 
     let lastHoverPort: GraphNodePort | null = null;
     let lastHoverNode: GraphNode | null = null;
@@ -104,6 +110,7 @@ export class Graph extends PIXI.Container {
       this.#drawEdges();
       this.#drawNodes();
       this.#drawNodeHighlight();
+      this.#drawSubGraphOutline();
 
       if (this.#autoSelect.size > 0) {
         this.#performAutoSelect();
@@ -296,10 +303,12 @@ export class Graph extends PIXI.Container {
 
       const path = evt.composedPath();
       const topTarget = path[path.length - 1];
+      const isSameGraph = topTarget.parent.parent === this;
 
       if (
         topTarget instanceof GraphNodePort &&
         topTarget.type === nodePortType &&
+        isSameGraph &&
         visibleOnNextMove
       ) {
         // Snap to nearest port.
@@ -382,7 +391,8 @@ export class Graph extends PIXI.Container {
           nodePortBeingEdited.label !== "*" &&
           nodePortBeingEdited.label !== "" &&
           topTarget instanceof GraphNode &&
-          topTarget !== nodeBeingEdited
+          topTarget !== nodeBeingEdited &&
+          isSameGraph
         ) {
           const targetAllowsAdHocPorts =
             (nodePortBeingEdited.type === GraphNodePortType.IN &&
@@ -993,7 +1003,7 @@ export class Graph extends PIXI.Container {
 
   set highlightedNode(node: ComponentWithActivity | null) {
     this.#highlightedComponent = node;
-    this.#drawNodeHighlight();
+    this.#isDirty = true;
   }
 
   get highlightedNode() {
@@ -1092,6 +1102,7 @@ export class Graph extends PIXI.Container {
 
     this.graph.#drawEdges();
     this.graph.#drawNodeHighlight();
+    this.graph.#drawSubGraphOutline();
 
     if (!hasSettled) {
       return;
@@ -1205,6 +1216,63 @@ export class Graph extends PIXI.Container {
     } else {
       renderNodeHighlight();
     }
+  }
+
+  #drawSubGraphOutline() {
+    this.#subGraphOutline.clear();
+
+    if (!this.subGraphId) {
+      return;
+    }
+
+    let minX = Number.POSITIVE_INFINITY;
+    let minY = Number.POSITIVE_INFINITY;
+    let maxX = Number.NEGATIVE_INFINITY;
+    let maxY = Number.NEGATIVE_INFINITY;
+
+    for (const child of this.children) {
+      if (!(child instanceof GraphNode || child instanceof GraphComment)) {
+        continue;
+      }
+
+      let width = child.width;
+      let height = child.height;
+      if (child instanceof GraphNode) {
+        const dims = child.dimensions;
+        width = dims.width;
+        height = dims.height;
+      }
+
+      minX = Math.min(minX, child.position.x);
+      minY = Math.min(minY, child.position.y);
+
+      maxX = Math.max(maxX, child.position.x + width);
+      maxY = Math.max(maxY, child.position.y + height);
+    }
+
+    minX -= this.#subGraphOutlinePadding;
+    minY -= this.#subGraphOutlinePadding;
+    maxX += this.#subGraphOutlinePadding;
+    maxY += this.#subGraphOutlinePadding;
+
+    this.#subGraphOutline.setStrokeStyle({
+      color: 0x0,
+      width: 1,
+      alpha: 0.2,
+    });
+    this.#subGraphOutline.beginPath();
+    this.#subGraphOutline.roundRect(
+      minX,
+      minY,
+      maxX - minX,
+      maxY - minY,
+      8 + this.#subGraphOutlinePadding
+    );
+    this.#subGraphOutline.closePath();
+    this.#subGraphOutline.fill({ color: 0xffffff, alpha: 0.2 });
+    this.#subGraphOutline.stroke();
+
+    this.addChildAt(this.#subGraphOutline, 0);
   }
 
   #drawNodes() {
@@ -1363,6 +1431,7 @@ export class Graph extends PIXI.Container {
       graphNode.on(GRAPH_OPERATIONS.GRAPH_NODE_EXPAND_COLLAPSE, () => {
         this.#redrawAllEdges();
         this.#drawNodeHighlight();
+        this.#drawSubGraphOutline();
 
         const layout = this.#layout.get(graphNode.label);
         if (!layout) {

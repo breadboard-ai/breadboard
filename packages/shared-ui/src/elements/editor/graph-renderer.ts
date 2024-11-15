@@ -29,15 +29,16 @@ import {
   GraphCommentEditRequestEvent,
   GraphNodeRunRequestEvent,
 } from "../../events/events.js";
-import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types.js";
+import {
+  ComponentExpansionState,
+  GRAPH_OPERATIONS,
+  GraphOpts,
+} from "./types.js";
 import { Graph } from "./graph.js";
 import {
   InspectableEdge,
   InspectableEdgeType,
-  InspectableNode,
-  InspectableNodePorts,
   InspectablePort,
-  NodeHandlerMetadata,
   Schema,
 } from "@google-labs/breadboard";
 import { GraphNode } from "./graph-node.js";
@@ -49,7 +50,6 @@ import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { computeNextExpansionState, getGlobalColor } from "./utils.js";
-import { GraphMetadata } from "@breadboard-ai/types";
 import { GraphComment } from "./graph-comment.js";
 import {
   EdgeData,
@@ -71,20 +71,6 @@ enum MODE {
   SELECT = "select",
 }
 
-interface GraphOpts {
-  url: string;
-  subGraphId: string | null;
-  showNodePreviewValues: boolean;
-  showNodeTypeDescriptions: boolean;
-  collapseNodesByDefault: boolean;
-  ports: Map<string, InspectableNodePorts> | null;
-  typeMetadata: Map<string, NodeHandlerMetadata> | null;
-  edges: InspectableEdge[];
-  nodes: InspectableNode[];
-  metadata: GraphMetadata;
-  visible: boolean;
-}
-
 @customElement("bb-graph-renderer")
 export class GraphRenderer extends LitElement {
   @property({ reflect: true })
@@ -98,6 +84,9 @@ export class GraphRenderer extends LitElement {
 
   @property()
   showPortTooltips = false;
+
+  @property()
+  showSubgraphsInline = false;
 
   @state()
   private _portTooltip?: {
@@ -773,6 +762,8 @@ export class GraphRenderer extends LitElement {
       graph.visible = opts.visible;
     }
 
+    graph.subGraphId = subGraphId;
+
     return true;
   }
 
@@ -812,7 +803,9 @@ export class GraphRenderer extends LitElement {
           continue;
         }
 
-        this.dispatchEvent(new GraphNodeSelectedEvent(child.label));
+        this.dispatchEvent(
+          new GraphNodeSelectedEvent(child.label, graph.subGraphId)
+        );
       }
     }
   }
@@ -833,16 +826,18 @@ export class GraphRenderer extends LitElement {
           expansionState: ComponentExpansionState;
         }>
       ) => {
-        this.dispatchEvent(new GraphNodesVisualUpdateEvent(nodes));
+        this.dispatchEvent(
+          new GraphNodesVisualUpdateEvent(nodes, graph.subGraphId)
+        );
       }
     );
 
     graph.on(GRAPH_OPERATIONS.GRAPH_NODE_SELECTED, (id: string) => {
-      this.dispatchEvent(new GraphNodeSelectedEvent(id));
+      this.dispatchEvent(new GraphNodeSelectedEvent(id, graph.subGraphId));
     });
 
     graph.on(GRAPH_OPERATIONS.GRAPH_NODE_DESELECTED, (id: string) => {
-      this.dispatchEvent(new GraphNodeDeselectedEvent(id));
+      this.dispatchEvent(new GraphNodeDeselectedEvent(id, graph.subGraphId));
     });
 
     graph.on(GRAPH_OPERATIONS.GRAPH_NODE_DESELECTED_ALL, () => {
@@ -850,17 +845,19 @@ export class GraphRenderer extends LitElement {
     });
 
     graph.on(GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH, (edge: EdgeData) => {
-      this.dispatchEvent(new GraphEdgeAttachEvent(edge));
+      this.dispatchEvent(new GraphEdgeAttachEvent(edge, graph.subGraphId));
     });
 
     graph.on(GRAPH_OPERATIONS.GRAPH_EDGE_DETACH, (edge: EdgeData) => {
-      this.dispatchEvent(new GraphEdgeDetachEvent(edge));
+      this.dispatchEvent(new GraphEdgeDetachEvent(edge, graph.subGraphId));
     });
 
     graph.on(
       GRAPH_OPERATIONS.GRAPH_EDGE_CHANGE,
       (from: EdgeData, to: EdgeData) => {
-        this.dispatchEvent(new GraphNodeEdgeChangeEvent(from, to));
+        this.dispatchEvent(
+          new GraphNodeEdgeChangeEvent(from, to, false, graph.subGraphId)
+        );
       }
     );
 
@@ -869,7 +866,7 @@ export class GraphRenderer extends LitElement {
     });
 
     graph.on(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW, () => {
-      this.dispatchEvent(new GraphInitialDrawEvent());
+      this.dispatchEvent(new GraphInitialDrawEvent(graph.subGraphId));
     });
 
     graph.on(GRAPH_OPERATIONS.GRAPH_DRAW, () => {
@@ -934,6 +931,7 @@ export class GraphRenderer extends LitElement {
                     null,
                     evt.clientX,
                     evt.clientY,
+                    graph.subGraphId,
                     false
                   )
                 );
@@ -947,7 +945,10 @@ export class GraphRenderer extends LitElement {
                 }
 
                 this.dispatchEvent(
-                  new GraphNodeDeleteEvent(this.#overflowMenuGraphNode.label)
+                  new GraphNodeDeleteEvent(
+                    this.#overflowMenuGraphNode.label,
+                    graph.subGraphId
+                  )
                 );
                 break;
               }
@@ -1041,7 +1042,7 @@ export class GraphRenderer extends LitElement {
         y: number
       ) => {
         this.dispatchEvent(
-          new GraphNodeEditEvent(id, port, selectedPort, x, y)
+          new GraphNodeEditEvent(id, port, selectedPort, x, y, graph.subGraphId)
         );
       }
     );
@@ -1056,7 +1057,14 @@ export class GraphRenderer extends LitElement {
         y: number
       ) => {
         this.dispatchEvent(
-          new GraphEdgeValueSelectedEvent(info, schema, edge, x, y)
+          new GraphEdgeValueSelectedEvent(
+            info,
+            schema,
+            edge,
+            x,
+            y,
+            graph.subGraphId
+          )
         );
       }
     );
@@ -1082,18 +1090,22 @@ export class GraphRenderer extends LitElement {
     graph.on(
       GRAPH_OPERATIONS.GRAPH_COMMENT_EDIT_REQUESTED,
       (id: string, x: number, y: number) => {
-        this.dispatchEvent(new GraphCommentEditRequestEvent(id, x, y));
+        this.dispatchEvent(
+          new GraphCommentEditRequestEvent(id, x, y, graph.subGraphId)
+        );
       }
     );
 
     graph.on(GRAPH_OPERATIONS.GRAPH_NODE_RUN_REQUESTED, (id: string) => {
-      this.dispatchEvent(new GraphNodeRunRequestEvent(id));
+      this.dispatchEvent(new GraphNodeRunRequestEvent(id, graph.subGraphId));
     });
 
     graph.on(
       GRAPH_OPERATIONS.GRAPH_NODE_EDIT,
       (id: string, x: number, y: number) => {
-        this.dispatchEvent(new GraphNodeEditEvent(id, null, null, x, y, false));
+        this.dispatchEvent(
+          new GraphNodeEditEvent(id, null, null, x, y, graph.subGraphId, false)
+        );
       }
     );
 
@@ -1354,7 +1366,9 @@ export class GraphRenderer extends LitElement {
       };
     });
 
-    this.dispatchEvent(new GraphNodesVisualUpdateEvent(nodes));
+    this.dispatchEvent(
+      new GraphNodesVisualUpdateEvent(nodes, graph.subGraphId)
+    );
   }
 
   resetGraphLayout() {
@@ -1432,7 +1446,9 @@ export class GraphRenderer extends LitElement {
         }
       }
 
-      this.dispatchEvent(new GraphEntityRemoveEvent(nodes, edges, comments));
+      this.dispatchEvent(
+        new GraphEntityRemoveEvent(nodes, edges, comments, graph.subGraphId)
+      );
     }
   }
 
@@ -1661,7 +1677,9 @@ export class GraphRenderer extends LitElement {
       type: InspectableEdgeType.Ordinary,
     };
 
-    this.dispatchEvent(new GraphEdgeAttachEvent(edge));
+    this.dispatchEvent(
+      new GraphEdgeAttachEvent(edge, this.#activeGraph.subGraphId)
+    );
 
     return true;
   }
