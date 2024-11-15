@@ -171,7 +171,8 @@ export type EditSpec =
   | ChangeConfigurationSpec
   | ChangeMetadataSpec
   | ChangeGraphMetadataSpec
-  | ChangeModuleSpec;
+  | ChangeModuleSpec
+  | AddGraphSpec;
 
 export type EditableGraph = {
   addEventListener<Key extends keyof EditableGraphEventMap>(

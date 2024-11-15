@@ -557,9 +557,7 @@ export type InspectableModule = {
 export type InspectableModules = Record<ModuleIdentifier, InspectableModule>;
 
 /**
- * Represents a simple listener for edits to the graph.
- * An instance of this type is returned by the `editReceiver` method of
- * `InspectableGraph`.
+ * Represents a tracker for edits to the graph.
  */
 export type GraphStoreMutator = {
   // TODO: This is probably wrong. A new version of the graph should likely

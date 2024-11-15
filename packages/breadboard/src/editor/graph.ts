@@ -84,7 +84,7 @@ export class Graph implements EditableGraph {
     }
     this.#parent = parent || null;
     if (parent) {
-      // Embedded subgraphs can not have subgraphs.
+      // Subgraphs can not have subgraphs.
       this.#graphs = null;
     } else {
       this.#graphs = Object.fromEntries(
@@ -195,7 +195,7 @@ export class Graph implements EditableGraph {
 
   version() {
     if (this.#parent) {
-      throw new Error("Embedded subgraphs can not be versioned.");
+      throw new Error("Subgraphs can not be versioned.");
     }
     return this.#version;
   }
@@ -304,14 +304,14 @@ export class Graph implements EditableGraph {
 
   getGraph(id: GraphIdentifier) {
     if (!this.#graphs) {
-      throw new Error("Embedded graphs can't contain subgraphs.");
+      throw new Error("Subgraphs can't contain subgraphs.");
     }
     return this.#graphs[id] || null;
   }
 
   addGraph(id: GraphIdentifier, graph: GraphDescriptor): EditableGraph | null {
     if (!this.#graphs) {
-      throw new Error("Embedded graphs can't contain subgraphs.");
+      throw new Error("Subgraphs can't contain subgraphs.");
     }
 
     if (this.#graphs[id]) {
@@ -327,7 +327,7 @@ export class Graph implements EditableGraph {
 
   removeGraph(id: GraphIdentifier): SingleEditResult {
     if (!this.#graphs) {
-      throw new Error("Embedded graphs can't contain subgraphs.");
+      throw new Error("Subgraphs can't contain subgraphs.");
     }
 
     if (!this.#graphs[id]) {
@@ -348,7 +348,7 @@ export class Graph implements EditableGraph {
     graph: GraphDescriptor
   ): EditableGraph | null {
     if (!this.#graphs) {
-      throw new Error("Embedded graphs can't contain subgraphs.");
+      throw new Error("Subgraphs can't contain subgraphs.");
     }
 
     const old = this.#graphs[id];
