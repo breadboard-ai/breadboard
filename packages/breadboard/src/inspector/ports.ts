@@ -59,6 +59,7 @@ const BEHAVIOR_AFFECTS_TYPE_CHECKING: { [K in BehaviorSchema]: boolean } = {
   image: true,
   code: true,
   module: true,
+  side: false,
 };
 
 export const collectPorts = (
