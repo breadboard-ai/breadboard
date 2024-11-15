@@ -68,7 +68,7 @@ const getRunnableBoard = async (
       result = await loadGraphFromPath(path, context);
     }
     if (!result?.success) {
-      throw new Error("Unable to get board");
+      throw new Error(`Unable to get board: ${result?.error}`);
     }
     return { board: result, start, stopAfter, args };
   }

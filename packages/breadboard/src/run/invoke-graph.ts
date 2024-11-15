@@ -34,16 +34,9 @@ export async function invokeGraph(
     const path = context.invocationPath || [];
     const lifecycle = context.state?.lifecycle();
 
-    const adjustedContext = context.start
-      ? {
-          ...context,
-          inputs,
-        }
-      : context;
-
     for await (const result of runGraph(
       graphToRun,
-      adjustedContext,
+      { ...context, inputs },
       resumeFrom
     )) {
       if (result.type === "input") {
