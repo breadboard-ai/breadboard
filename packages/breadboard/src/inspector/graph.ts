@@ -5,6 +5,7 @@
  */
 
 import {
+  GraphIdentifier,
   GraphMetadata,
   InputValues,
   ModuleIdentifier,
@@ -42,12 +43,13 @@ import {
 } from "./schemas.js";
 import {
   InspectableEdge,
-  InspectableGraph,
+  InspectableEdgeCache,
   InspectableGraphOptions,
   InspectableGraphWithStore,
   InspectableKit,
   InspectableModules,
   InspectableNode,
+  InspectableNodeCache,
   InspectableNodeType,
   InspectableSubgraphs,
   MutableGraph,
@@ -63,7 +65,7 @@ export const inspectableGraph = (
   graph: GraphDescriptor,
   options?: InspectableGraphOptions
 ): InspectableGraphWithStore => {
-  return new Graph(graph, null, options);
+  return new Graph(graph, "", undefined, undefined, options);
 };
 
 const maybeURL = (url?: string): URL | undefined => {
@@ -91,7 +93,8 @@ class Graph implements InspectableGraphWithStore {
   #options: InspectableGraphOptions;
 
   #graph: GraphDescriptor;
-  #parent: InspectableGraph | null;
+  #graphId: GraphIdentifier;
+  #parent: GraphDescriptor | null = null;
   #cache: MutableGraph;
   #graphs: InspectableSubgraphs | null = null;
 
@@ -99,10 +102,27 @@ class Graph implements InspectableGraphWithStore {
 
   constructor(
     graph: GraphDescriptor,
-    parent: InspectableGraph | null,
+    graphId: GraphIdentifier,
+    nodeCache?: InspectableNodeCache,
+    edgeCache?: InspectableEdgeCache,
     options?: InspectableGraphOptions
   ) {
-    this.#parent = parent;
+    this.#graphId = graphId;
+    if (graphId) {
+      const subGraph = graph.graphs?.[graphId];
+      if (!subGraph) {
+        throw new Error(
+          `Inspect API integrity error: no sub-graph with id "${graphId}" found`
+        );
+      }
+      this.#parent = graph;
+      graph = subGraph;
+      if (!nodeCache || !edgeCache) {
+        throw new Error(
+          `Inspect API integrity error: parent graph cache not supplied to a sub-graph.`
+        );
+      }
+    }
     if (isImperativeGraph(graph)) {
       const { main } = graph;
       this.#graph = toDeclarativeGraph(graph);
@@ -112,9 +132,14 @@ class Graph implements InspectableGraphWithStore {
     }
     this.#url = maybeURL(this.#graph.url);
     this.#options = options || {};
-    const nodes = new NodeCache(this);
-    const edges = new EdgeCache(nodes);
-    edges.populate(this.#graph);
+    const nodes = nodeCache || new NodeCache(this);
+    let edges;
+    if (edgeCache) {
+      edges = edgeCache;
+    } else {
+      edges = new EdgeCache(nodes);
+      edges.populate(this.#graph);
+    }
     const modules = new ModuleCache();
     modules.populate(this.#graph);
     const describe = new DescribeResultCache();
@@ -139,7 +164,7 @@ class Graph implements InspectableGraphWithStore {
   }
 
   nodesByType(type: NodeTypeIdentifier): InspectableNode[] {
-    return this.#cache.nodes.byType(type);
+    return this.#cache.nodes.byType(type, this.#graphId);
   }
 
   async #getDescriber(
@@ -234,7 +259,7 @@ class Graph implements InspectableGraphWithStore {
       }
       const loader = this.#options.loader || createLoader();
       const context: NodeDescriberContext = {
-        outerGraph: this.#parent?.raw() || this.#graph,
+        outerGraph: this.#parent || this.#graph,
         loader,
         kits,
         sandbox: this.#options.sandbox,
@@ -282,11 +307,11 @@ class Graph implements InspectableGraphWithStore {
     if (this.#graph.virtual) {
       return new VirtualNode({ id });
     }
-    return this.#cache.nodes.get(id);
+    return this.#cache.nodes.get(id, this.#graphId);
   }
 
   nodes(): InspectableNode[] {
-    return this.#cache.nodes.nodes();
+    return this.#cache.nodes.nodes(this.#graphId);
   }
 
   moduleById(id: ModuleIdentifier) {
@@ -298,11 +323,11 @@ class Graph implements InspectableGraphWithStore {
   }
 
   edges(): InspectableEdge[] {
-    return this.#cache.edges.edges();
+    return this.#cache.edges.edges(this.#graphId);
   }
 
   hasEdge(edge: Edge): boolean {
-    return this.#cache.edges.hasByValue(edge);
+    return this.#cache.edges.hasByValue(edge, this.#graphId);
   }
 
   kits(): InspectableKit[] {
@@ -338,17 +363,19 @@ class Graph implements InspectableGraphWithStore {
   incomingForNode(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph.edges
       .filter((edge) => edge.to === id)
-      .map((edge) => this.#cache.edges.getOrCreate(edge));
+      .map((edge) => this.#cache.edges.getOrCreate(edge, this.#graphId));
   }
 
   outgoingForNode(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph.edges
       .filter((edge) => edge.from === id)
-      .map((edge) => this.#cache.edges.getOrCreate(edge));
+      .map((edge) => this.#cache.edges.getOrCreate(edge, this.#graphId));
   }
 
   entries(): InspectableNode[] {
-    return this.#cache.nodes.nodes().filter((node) => node.isEntry());
+    return this.#cache.nodes
+      .nodes(this.#graphId)
+      .filter((node) => node.isEntry());
   }
 
   async #describeWithStaticAnalysis(): Promise<NodeDescriberResult> {
@@ -525,7 +552,10 @@ class Graph implements InspectableGraphWithStore {
       this.#cache.modules.add(id, graph.modules[id]);
 
       // Find any nodes configured to use this module and clear its describer.
-      const runModulesNodes = this.#cache.nodes.byType("runModule");
+      const runModulesNodes = this.#cache.nodes.byType(
+        "runModule",
+        this.#graphId
+      );
       for (const node of runModulesNodes) {
         if (
           node.configuration().$module &&
@@ -562,13 +592,27 @@ class Graph implements InspectableGraphWithStore {
     const subgraphs = this.#graph.graphs;
     if (!subgraphs) return {};
     return Object.fromEntries(
-      Object.entries(subgraphs).map(([id, descriptor]) => {
-        return [id, new Graph(descriptor, this, this.#options)];
+      Object.keys(subgraphs).map((id) => {
+        return [
+          id,
+          new Graph(
+            this.#graph,
+            id,
+            this.#cache.nodes,
+            this.#cache.edges,
+            this.#options
+          ),
+        ];
       })
     );
   }
 
-  graphs(): InspectableSubgraphs {
+  graphs(): InspectableSubgraphs | undefined {
+    if (this.#graphId) return;
     return (this.#graphs ??= this.#populateSubgraphs());
+  }
+
+  graphId(): GraphIdentifier {
+    return this.#graphId;
   }
 }

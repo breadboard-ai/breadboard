@@ -21,8 +21,8 @@ test("inspectableGraph correctly reacts to edits", (t) => {
   );
   const editReceiver = inspectable;
   const edge = { from: "a", to: "b", out: "text", in: "text" };
-  editReceiver.nodeStore.add({ id: "b", type: "bar" });
-  editReceiver.edgeStore.add(edge);
+  editReceiver.nodeStore.add({ id: "b", type: "bar" }, "");
+  editReceiver.edgeStore.add(edge, "");
   graph.nodes.push({ id: "b", type: "bar" });
   graph.edges.push(edge);
 
@@ -34,8 +34,8 @@ test("inspectableGraph correctly reacts to edits", (t) => {
   t.true(inspectable.hasEdge(edge));
   t.is(inspectable.incomingForNode("b")?.[0].from, inspectable.nodeById("a")!);
 
-  editReceiver.nodeStore.remove("b");
-  editReceiver.edgeStore.remove(edge);
+  editReceiver.nodeStore.remove("b", "");
+  editReceiver.edgeStore.remove(edge, "");
   graph.nodes = graph.nodes.filter((n) => n.id !== "b");
   graph.edges = graph.edges.filter((e) => e !== edge);
 

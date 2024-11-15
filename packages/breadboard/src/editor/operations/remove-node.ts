@@ -44,17 +44,19 @@ export class RemoveNode implements EditOperation {
       return can;
     }
 
+    const graphId = inspector.graphId();
+
     // Remove any edges that are connected to the removed node.
     graph.edges = graph.edges.filter((edge) => {
       const shouldRemove = edge.from === id || edge.to === id;
       if (shouldRemove) {
-        store.edgeStore.remove(edge);
+        store.edgeStore.remove(edge, graphId);
       }
       return !shouldRemove;
     });
     // Remove the node from the graph.
     graph.nodes = graph.nodes.filter((node) => node.id != id);
-    store.nodeStore.remove(id);
+    store.nodeStore.remove(id, graphId);
     return { success: true, affectedNodes: [id], affectedModules: [] };
   }
 }

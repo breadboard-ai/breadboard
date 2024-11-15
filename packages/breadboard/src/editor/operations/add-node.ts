@@ -54,7 +54,7 @@ export class AddNode implements EditOperation {
     }
 
     graph.nodes.push(node);
-    store.nodeStore.add(node);
+    store.nodeStore.add(node, "");
     return { success: true, affectedNodes: [node.id], affectedModules: [] };
   }
 }

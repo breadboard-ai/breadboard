@@ -288,9 +288,15 @@ export type InspectableGraph = {
    */
   describe(inputs?: InputValues): Promise<NodeDescriberResult>;
   /**
-   * Returns the subgraphs that are embedded in this graph.
+   * Returns the subgraphs that are embedded in this graph or `undefined` if
+   * this is already a subgraph
    */
-  graphs(): InspectableSubgraphs;
+  graphs(): InspectableSubgraphs | undefined;
+  /**
+   * Returns the id of this graph. If this is a main graph,
+   * the value will be "". Otherwise, it will be the id of this subgraph.
+   */
+  graphId(): GraphIdentifier;
   /**
    * Returns a module by name.
    */
@@ -576,32 +582,31 @@ export type GraphStoreMutator = {
 };
 
 export type NodeStoreMutator = {
-  add(node: NodeDescriptor): void;
-  remove(id: NodeIdentifier): void;
+  add(node: NodeDescriptor, graphId: GraphIdentifier): void;
+  remove(id: NodeIdentifier, graphId: GraphIdentifier): void;
 };
 
 export type EdgeStoreMutator = {
-  add(edge: Edge): void;
-  remove(edge: Edge): void;
+  add(edge: Edge, graphId: GraphIdentifier): void;
+  remove(edge: Edge, graphId: GraphIdentifier): void;
 };
 
 export type InspectableGraphWithStore = InspectableGraph & GraphStoreMutator;
 
-export type InspectableEdgeCache = {
-  get(edge: Edge): InspectableEdge | undefined;
-  getOrCreate(edge: Edge): InspectableEdge;
-  add(edge: Edge): void;
-  remove(edge: Edge): void;
-  hasByValue(edge: Edge): boolean;
-  edges(): InspectableEdge[];
+export type InspectableEdgeCache = EdgeStoreMutator & {
+  get(edge: Edge, graphId: GraphIdentifier): InspectableEdge | undefined;
+  getOrCreate(edge: Edge, graphId: GraphIdentifier): InspectableEdge;
+  hasByValue(edge: Edge, graphId: GraphIdentifier): boolean;
+  edges(graphId: GraphIdentifier): InspectableEdge[];
 };
 
-export type InspectableNodeCache = {
-  byType(type: NodeTypeIdentifier): InspectableNode[];
-  get(id: string): InspectableNode | undefined;
-  add(node: NodeDescriptor): void;
-  remove(id: NodeIdentifier): void;
-  nodes(): InspectableNode[];
+export type InspectableNodeCache = NodeStoreMutator & {
+  byType(type: NodeTypeIdentifier, graphId: GraphIdentifier): InspectableNode[];
+  get(
+    id: NodeIdentifier,
+    graphId: GraphIdentifier
+  ): InspectableNode | undefined;
+  nodes(graphId: GraphIdentifier): InspectableNode[];
 };
 
 export type InspectableModuleCache = {
