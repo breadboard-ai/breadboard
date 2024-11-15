@@ -6,6 +6,7 @@
 
 import { Edge as EdgeDescriptor, GraphDescriptor } from "../types.js";
 import {
+  EdgeStoreMutator,
   InspectableEdge,
   InspectableEdgeType,
   InspectableNodeCache,
@@ -115,7 +116,7 @@ class Edge implements InspectableEdge {
   }
 }
 
-export class EdgeCache {
+export class EdgeCache implements EdgeStoreMutator {
   #nodes: InspectableNodeCache;
   #map: Map<EdgeDescriptor, InspectableEdge> = new Map();
 

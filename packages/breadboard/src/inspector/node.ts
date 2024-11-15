@@ -23,6 +23,7 @@ import {
   InspectableNodePorts,
   InspectableNodeType,
   InspectablePortList,
+  NodeStoreMutator,
   NodeTypeDescriberOptions,
 } from "./types.js";
 
@@ -147,7 +148,7 @@ class Node implements InspectableNode {
   }
 }
 
-export class NodeCache {
+export class NodeCache implements NodeStoreMutator {
   #graph: InspectableGraph;
   #map?: Map<NodeIdentifier, InspectableNode>;
   #typeMap?: Map<NodeTypeIdentifier, InspectableNode[]>;
