@@ -14,7 +14,7 @@ import {
   NodeTypeIdentifier,
   OutputValues,
 } from "../types.js";
-import { collectPorts } from "./ports.js";
+import { collectPorts, filterSidePorts } from "./ports.js";
 import { EdgeType } from "./schemas.js";
 import {
   InspectableEdge,
@@ -126,6 +126,10 @@ class Node implements InspectableNode {
         this.#inputsAndConfig(inputValues, this.configuration())
       ),
     };
+    const side: InspectablePortList = {
+      fixed: true,
+      ports: filterSidePorts(inputs),
+    };
     const addErrorPort =
       this.descriptor.type !== "input" && this.descriptor.type !== "output";
     const outputs: InspectablePortList = {
@@ -139,7 +143,7 @@ class Node implements InspectableNode {
         outputValues
       ),
     };
-    return { inputs, outputs };
+    return { inputs, outputs, side };
   }
 }
 

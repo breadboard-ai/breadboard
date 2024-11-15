@@ -125,7 +125,12 @@ export type BehaviorSchema =
   /**
    * Indicates that the string is a Module.
    */
-  | "module";
+  | "module"
+  /**
+   * Indicates that this is a side wire
+   * See https://github.com/breadboard-ai/breadboard/issues/3788#issuecomment-2477813443
+   */
+  | "side";
 
 export type Schema = {
   title?: string;

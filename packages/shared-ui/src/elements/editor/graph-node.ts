@@ -546,6 +546,16 @@ export class GraphNode extends PIXI.Container {
     return { width: this.#width, height: this.#height };
   }
 
+  set sidePorts(ports: InspectablePort[] | null) {
+    if (ports?.length) {
+      console.log("✨ got side ports", ports);
+    }
+  }
+
+  get sidePorts() {
+    return null;
+  }
+
   set inPorts(ports: InspectablePort[] | null) {
     this.#collapsedPortList.readOnly = this.readOnly;
     this.#collapsedPortList.inPorts = ports;

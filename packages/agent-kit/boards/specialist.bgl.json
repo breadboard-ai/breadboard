@@ -3703,6 +3703,7 @@
                       "llm-content",
                       "module",
                       "ports-spec",
+                      "side",
                       "stream",
                       "transient"
                     ],

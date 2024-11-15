@@ -12,6 +12,7 @@ import {
   CanConnectAnalysis,
   InspectableEdge,
   InspectablePort,
+  InspectablePortList,
   InspectablePortType,
   PortStatus,
 } from "./types.js";
@@ -59,6 +60,7 @@ const BEHAVIOR_AFFECTS_TYPE_CHECKING: { [K in BehaviorSchema]: boolean } = {
   image: true,
   code: true,
   module: true,
+  side: false,
 };
 
 export const collectPorts = (
@@ -106,6 +108,7 @@ export const collectPorts = (
       const expected = schemaPortNames.includes(port) || star;
       const required = requiredPortNames.includes(port);
       const portSchema = schema.properties?.[port] || DEFAULT_SCHEMA;
+      const kind = computeKind(type, portSchema);
       if (portSchema.behavior?.includes("deprecated") && !wired) return null;
       return {
         name: port,
@@ -128,11 +131,39 @@ export const collectPorts = (
         ),
         schema: portSchema,
         type: new PortType(portSchema),
-        kind: type === EdgeType.In ? "input" : "output",
+        kind,
       } satisfies InspectablePort;
     })
     .filter(Boolean) as InspectablePort[];
 };
+
+function computeKind(
+  type: EdgeType,
+  portSchema: Schema
+): "input" | "output" | "side" {
+  const behaviors: BehaviorSchema[] =
+    (portSchema.type === "array"
+      ? behaviorFromArray(portSchema.items)
+      : portSchema.behavior) || [];
+  if (type === EdgeType.Out) return "output";
+  const match: Set<BehaviorSchema> = new Set(["config", "board", "side"]);
+  let count = 0;
+  behaviors.forEach((behavior) => {
+    if (match.has(behavior)) ++count;
+  });
+  if (count == 3) return "side";
+  return "input";
+}
+
+function behaviorFromArray(
+  items: Schema | Schema[] | undefined
+): BehaviorSchema[] {
+  if (!items) return [];
+  if (Array.isArray(items)) {
+    return items.flatMap((item) => item.behavior || []) || [];
+  }
+  return items.behavior || [];
+}
 
 export class PortType implements InspectablePortType {
   constructor(public schema: Schema) {}
@@ -213,3 +244,19 @@ export const collectPortsForType = (
     } satisfies InspectablePort;
   });
 };
+
+/**
+ * CAUTION: Side-effectey. Will remove side-wire ports from `inputs`.
+ */
+export function filterSidePorts(inputs: InspectablePortList) {
+  const sidePorts: InspectablePort[] = [];
+  const inputPorts = inputs.ports.filter((port) => {
+    if (port.kind === "side") {
+      sidePorts.push(port);
+      return false;
+    }
+    return true;
+  });
+  inputs.ports = inputPorts;
+  return sidePorts;
+}

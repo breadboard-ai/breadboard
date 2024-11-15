@@ -88,6 +88,10 @@ class VirtualNode implements InspectableNode {
         ports: [],
         fixed: true,
       },
+      side: {
+        ports: [],
+        fixed: true,
+      },
     };
   }
 

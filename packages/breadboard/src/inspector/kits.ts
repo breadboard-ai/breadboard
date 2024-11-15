@@ -16,7 +16,7 @@ import {
   NodeHandlerObject,
 } from "../types.js";
 import { graphUrlLike } from "../utils/graph-url-like.js";
-import { collectPortsForType } from "./ports.js";
+import { collectPortsForType, filterSidePorts } from "./ports.js";
 import { describeInput, describeOutput } from "./schemas.js";
 import {
   InspectableKit,
@@ -129,15 +129,21 @@ const portsFromHandler = async (
   }
   try {
     const described = await handler.describe();
+    const inputs = {
+      fixed: described.inputSchema.additionalProperties === false,
+      ports: collectPortsForType(described.inputSchema, "input"),
+    };
+    const side = {
+      fixed: true,
+      ports: filterSidePorts(inputs),
+    };
     return {
-      inputs: {
-        fixed: described.inputSchema.additionalProperties === false,
-        ports: collectPortsForType(described.inputSchema, "input"),
-      },
+      inputs,
       outputs: {
         fixed: described.outputSchema.additionalProperties === false,
         ports: collectPortsForType(described.outputSchema, "output"),
       },
+      side,
     };
   } catch (e) {
     console.warn(`Error describing node type ${type}:`, e);
@@ -191,6 +197,10 @@ export const emptyPorts = (): InspectableNodePorts => ({
   outputs: {
     ports: [],
     fixed: false,
+  },
+  side: {
+    ports: [],
+    fixed: true,
   },
 });
 
