@@ -25,6 +25,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { Ref, createRef } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import {
+  CommandsAvailableEvent,
   CommentEditRequestEvent,
   EdgeChangeEvent,
   EdgeValueSelectedEvent,
@@ -63,8 +64,9 @@ const ZOOM_KEY = "bb-editor-zoom-to-highlighted-node-during-runs";
 const DATA_TYPE = "text/plain";
 const PASTE_OFFSET = 50;
 
-import { TopGraphRunResult } from "../../types/types.js";
+import { Command, TopGraphRunResult } from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
+import { COMMAND_SET_GRAPH_EDITOR } from "../../constants/constants.js";
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
   if (type !== "input" && type !== "output") {
@@ -520,6 +522,29 @@ export class Editor extends LitElement {
     this.addEventListener("pointerdown", this.#onPointerDownBound);
     this.addEventListener("dragover", this.#onDragOverBound);
     this.addEventListener("drop", this.#onDropBound);
+
+    const commands: Command[] = [
+      {
+        name: "zoom-to-fit",
+        title: "Zoom board to fit",
+        icon: "fit",
+        callback: () => {
+          this.#graphRenderer.zoomToFit();
+        },
+      },
+      {
+        name: "reset-board-layout",
+        title: "Reset board layout",
+        icon: "reset-nodes",
+        callback: () => {
+          this.#graphRenderer.resetGraphLayout();
+        },
+      },
+    ];
+
+    this.dispatchEvent(
+      new CommandsAvailableEvent(COMMAND_SET_GRAPH_EDITOR, commands)
+    );
   }
 
   disconnectedCallback(): void {
