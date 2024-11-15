@@ -406,6 +406,7 @@ export interface Command {
   title: string;
   name: string;
   icon: string;
+  callback?: (command: string, secondaryAction?: string | null) => void;
   disabled?: boolean;
   secondaryAction?: string;
 }

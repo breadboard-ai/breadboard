@@ -1277,6 +1277,9 @@ export class GraphRenderer extends LitElement {
       };
 
       const matrix = this.#scaleContainerAroundPoint(delta, pivot);
+      if (this.#background) {
+        this.#background.tileTransform.setFromMatrix(matrix);
+      }
       this.#storeContainerTransform(graph, matrix);
       return;
     }
@@ -1328,6 +1331,10 @@ export class GraphRenderer extends LitElement {
       const matrix = this.#scaleContainerAroundPoint(delta, pivot);
       if (emitGraphNodeVisualInformation) {
         this.#emitGraphNodeVisualInformation(graph);
+      }
+
+      if (this.#background) {
+        this.#background.tileTransform.setFromMatrix(matrix);
       }
 
       this.#storeContainerTransform(graph, matrix);

@@ -13,6 +13,7 @@ import type {
   Schema,
 } from "@google-labs/breadboard";
 import type {
+  Command,
   EdgeData,
   Settings,
   TopGraphEdgeInfo,
@@ -1050,5 +1051,24 @@ export class CommandEvent extends Event {
     public readonly secondaryAction: string | null
   ) {
     super(CommandEvent.eventName, { ...eventInit });
+  }
+}
+
+export class CommandsSetSwitchEvent extends Event {
+  static eventName = "bbcommandssetswitch";
+
+  constructor(public readonly namespace: string) {
+    super(CommandsSetSwitchEvent.eventName, { ...eventInit });
+  }
+}
+
+export class CommandsAvailableEvent extends Event {
+  static eventName = "bbcommandsavailable";
+
+  constructor(
+    public readonly namespace: string,
+    public readonly commands: Command[]
+  ) {
+    super(CommandsAvailableEvent.eventName, { ...eventInit });
   }
 }

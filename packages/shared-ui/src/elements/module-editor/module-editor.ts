@@ -15,7 +15,14 @@ import {
   Kit,
   NodeHandlerMetadata,
 } from "@google-labs/breadboard";
-import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
+import {
+  LitElement,
+  html,
+  css,
+  nothing,
+  HTMLTemplateResult,
+  PropertyValues,
+} from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
 import { CodeEditor, GraphRenderer, ModuleRibbonMenu } from "../elements";
@@ -29,10 +36,8 @@ import { GraphAssets } from "../editor/graph-assets";
 import { until } from "lit/directives/until.js";
 import {
   CodeChangeEvent,
-  CommandEvent,
+  CommandsAvailableEvent,
   GraphInitialDrawEvent,
-  ModuleChosenEvent,
-  ModuleCreateEvent,
   ModuleEditEvent,
   OverflowMenuActionEvent,
   ToastEvent,
@@ -48,7 +53,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { typeDeclarations as builtIns } from "@breadboard-ai/jsandbox";
 import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
 import { getMappedQuickJsModList } from "./ts-library";
-import { getModuleId } from "../../utils/module-id";
+import { COMMAND_SET_MODULE_EDITOR } from "../../constants/constants";
 
 const PREVIEW_KEY = "bb-module-editor-preview-visible";
 
@@ -295,51 +300,69 @@ export class ModuleEditor extends LitElement {
     compile: (code: ModuleCode) => code,
   };
   #hasUnsavedChanges = false;
-  #onKeyDownBound = this.#onKeyDown.bind(this);
   #errorDetails: Array<{ message: string; start: number }> | null = null;
   #moduleCount = -1;
   #editorId = globalThis.crypto.randomUUID();
 
+  #commandFormatCodeBound = this.#commandFormatCode.bind(this);
+  #commandSaveCodeBound = this.#commandSaveCode.bind(this);
+
   connectedCallback(): void {
     super.connectedCallback();
-
-    this.addEventListener("keydown", this.#onKeyDownBound);
 
     this.showModulePreview =
       globalThis.localStorage.getItem(PREVIEW_KEY) === "true";
   }
 
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-
-    this.removeEventListener("keydown", this.#onKeyDownBound);
-  }
-
-  protected willUpdate(): void {
+  protected willUpdate(changedProperties: PropertyValues): void {
     if (Object.keys(this.modules).length !== this.#moduleCount) {
       this.#moduleCount = Object.keys(this.modules).length;
       this.#editorId = globalThis.crypto.randomUUID();
     }
+
+    if (changedProperties.has("errorCount")) {
+      this.#emitCommands();
+    }
   }
 
-  #onKeyDown(evt: KeyboardEvent) {
-    const isMac = navigator.platform.indexOf("Mac") === 0;
-    const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
-    if (!isCtrlCommand || evt.key !== "p") {
-      return;
-    }
+  #commandFormatCode() {
+    this.#formatCode();
+  }
 
-    this.showCommandPalette = false;
-    this.showModulePalette = false;
+  #commandSaveCode(_command: string, secondaryAction?: string | null) {
+    this.#processEditorCodeWithEnvironment(true, secondaryAction === "force");
+  }
 
-    if (evt.shiftKey) {
-      this.showCommandPalette = true;
+  #emitCommands() {
+    const commands: Command[] = [
+      {
+        title: "Format code",
+        icon: "format",
+        name: "format",
+        callback: this.#commandFormatCodeBound,
+      },
+    ];
+
+    if (this.errorCount > 0) {
+      commands.push({
+        title: "Force save module",
+        icon: "save",
+        name: "save",
+        secondaryAction: "force",
+        callback: this.#commandSaveCodeBound,
+      });
     } else {
-      this.showModulePalette = true;
+      commands.push({
+        title: "Save module",
+        icon: "save",
+        name: "save",
+        callback: this.#commandSaveCodeBound,
+      });
     }
 
-    evt.preventDefault();
-    evt.stopImmediatePropagation();
+    this.dispatchEvent(
+      new CommandsAvailableEvent(COMMAND_SET_MODULE_EDITOR, commands)
+    );
   }
 
   async #resetCompilationEnvironment(
@@ -838,57 +861,7 @@ export class ModuleEditor extends LitElement {
       }
     }
 
-    const commands: Command[] = [
-      {
-        title: "Format code",
-        icon: "format",
-        name: "format",
-      },
-      {
-        title: "Open module...",
-        icon: "open",
-        name: "open",
-      },
-      {
-        title: "Create module...",
-        icon: "add-circle",
-        name: "create-module",
-      },
-    ];
-
-    if (this.errorCount > 0) {
-      commands.push({
-        title: "Force save module",
-        icon: "save",
-        name: "save",
-        secondaryAction: "force",
-      });
-    } else {
-      commands.push({
-        title: "Save module",
-        icon: "save",
-        name: "save",
-      });
-    }
-
-    const modules: Command[] = this.modules
-      ? Object.keys(this.modules)
-          .filter((module) => module !== this.moduleId)
-          .map((module) => {
-            return {
-              title: `Open ${module}...`,
-              icon: "open",
-              name: "open",
-              secondaryAction: module,
-            };
-          })
-      : [];
-
     const isRunnable = !!module.metadata().runnable || isMainModule;
-    const recentItemsKey = (this.graph?.raw().url ?? "untitled-graph").replace(
-      /[\W\s]/gim,
-      "-"
-    );
 
     return html` <div
         id="module-graph"
@@ -963,73 +936,6 @@ export class ModuleEditor extends LitElement {
             </div>
           </div>
         </div>
-      </section>
-      ${this.showCommandPalette || this.showModulePalette
-        ? html`<bb-command-palette
-            .recentItemsKey=${this.showCommandPalette
-              ? "commands"
-              : recentItemsKey}
-            .recencyType=${this.showCommandPalette ? "local" : "session"}
-            .commands=${this.showCommandPalette ? commands : modules}
-            @pointerdown=${(evt: PointerEvent) => {
-              evt.stopImmediatePropagation();
-            }}
-            @bbpalettedismissed=${() => {
-              this.showCommandPalette = false;
-              this.showModulePalette = false;
-              this.#attemptEditorFocus();
-            }}
-            @bbcommand=${(evt: CommandEvent) => {
-              this.showCommandPalette = false;
-              this.showModulePalette = false;
-              this.#attemptEditorFocus();
-
-              switch (evt.command) {
-                case "format": {
-                  this.#formatCode();
-                  break;
-                }
-
-                case "save": {
-                  this.#processEditorCodeWithEnvironment(
-                    true,
-                    evt.secondaryAction === "force"
-                  );
-                  break;
-                }
-
-                case "create-module": {
-                  const moduleId = getModuleId();
-                  if (!moduleId) {
-                    break;
-                  }
-
-                  this.dispatchEvent(new ModuleCreateEvent(moduleId));
-                  break;
-                }
-
-                case "open": {
-                  if (evt.secondaryAction !== null) {
-                    if (!this.#confirmModuleChangeIfNeeded()) {
-                      return;
-                    }
-
-                    this.dispatchEvent(
-                      new ModuleChosenEvent(evt.secondaryAction)
-                    );
-                    break;
-                  }
-                  this.showModulePalette = true;
-                  break;
-                }
-
-                default: {
-                  console.warn(`Unexpected command ${evt.command}`);
-                  break;
-                }
-              }
-            }}
-          ></bb-command-palette>`
-        : nothing}`;
+      </section>`;
   }
 }
