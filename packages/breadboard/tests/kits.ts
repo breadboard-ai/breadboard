@@ -44,7 +44,7 @@ test("KitBuilder can call a function that returns a string", async (t) => {
   echoNode.wire("result->an_output", board.output());
 
   const output = await invokeGraph(
-    board,
+    { graph: board },
     {
       an_input: "hello world",
     },
@@ -78,7 +78,7 @@ test("KitBuilder can call a function that returns an object", async (t) => {
   echoNode.wire("out->an_output", board.output());
 
   const output = await invokeGraph(
-    board,
+    { graph: board },
     {
       an_input: "hello world",
     },
@@ -115,7 +115,7 @@ test("KitBuilder can call a function that has more than one input", async (t) =>
   addNode.wire("result->", board.output());
 
   const output = await invokeGraph(
-    board,
+    { graph: board },
     {
       a: 1,
       b: 2,
@@ -157,7 +157,7 @@ test("KitBuilder can call a function from an external import", async (t) => {
   validateNode.wire("errors->", board.output());
 
   const output = await invokeGraph(
-    board,
+    { graph: board },
     {
       a: { hello: "world" },
       b: { type: "object" },
@@ -230,7 +230,7 @@ test("KitBuilder can call platform functions that contain 0 arguments", async (t
   // result because it's just a string from a dynamic function
   random.wire("result->", board.output());
 
-  const output = await invokeGraph(board, {}, { kits: [myKit] });
+  const output = await invokeGraph({ graph: board }, {}, { kits: [myKit] });
 
   // We really need to pick a library with more than one function.
   t.true(typeof output["result"] === "number");
@@ -255,7 +255,7 @@ test("KitBuilder can call platform functions that accept a splat", async (t) => 
   input.wire("___args->", min.wire("result->", board.output()));
 
   const output = await invokeGraph(
-    board,
+    { graph: board },
     {
       ___args: [1, 2, 3, 4, 5],
     },

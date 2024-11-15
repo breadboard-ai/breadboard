@@ -32,7 +32,7 @@ const getTransformer = async (
       board as BreadboardCapability,
       context
     );
-    if (!runnableBoard) throw new Error("Invalid board");
+    if (!runnableBoard.success) throw new Error("Invalid board");
     // Because stream transformers run outside of the normal board lifecycle,
     // they will not have access to `probe` capabilities and thus will not
     // send diagnostics back.

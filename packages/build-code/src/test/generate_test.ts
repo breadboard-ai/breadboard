@@ -154,11 +154,19 @@ var run = ({ str }) => {
   test("is executable", async () => {
     const bgl = serialize(myBoard);
 
-    const result1 = await invokeGraph(bgl, { str: "foo" }, { kits: [coreKit] });
+    const result1 = await invokeGraph(
+      { graph: bgl },
+      { str: "foo" },
+      { kits: [coreKit] }
+    );
     assert.equal(result1.$error, undefined);
     assert.equal(result1.isFoo, true);
 
-    const result2 = await invokeGraph(bgl, { str: "bar" }, { kits: [coreKit] });
+    const result2 = await invokeGraph(
+      { graph: bgl },
+      { str: "bar" },
+      { kits: [coreKit] }
+    );
     assert.equal(result2.$error, undefined);
     assert.equal(result2.isFoo, false);
   });

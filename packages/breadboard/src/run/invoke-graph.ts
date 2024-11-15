@@ -5,9 +5,8 @@
  */
 
 import { timestamp } from "../timestamp.js";
-import type { RunArguments } from "../types.js";
+import type { GraphToRun, RunArguments } from "../types.js";
 import type {
-  GraphDescriptor,
   InputValues,
   OutputValues,
   TraversalResult,
@@ -20,11 +19,12 @@ import { runGraph } from "./run-graph.js";
  * for more details.
  */
 export async function invokeGraph(
-  graph: GraphDescriptor,
+  graphToRun: GraphToRun,
   inputs: InputValues,
   context: RunArguments = {},
   resumeFrom?: TraversalResult
 ): Promise<OutputValues> {
+  const graph = graphToRun.graph;
   const args = { ...inputs, ...graph.args };
   const { probe } = context;
 
@@ -41,7 +41,11 @@ export async function invokeGraph(
         }
       : context;
 
-    for await (const result of runGraph(graph, adjustedContext, resumeFrom)) {
+    for await (const result of runGraph(
+      graphToRun,
+      adjustedContext,
+      resumeFrom
+    )) {
       if (result.type === "input") {
         // Pass the inputs to the board. If there are inputs bound to the
         // board (e.g. from a lambda node that had incoming wires), they will

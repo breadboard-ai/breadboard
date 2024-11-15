@@ -15,7 +15,7 @@ import type { Expand } from "@breadboard-ai/build/internal/common/type-util.js";
 import type { JsonSerializable } from "@breadboard-ai/build/internal/type-system/type.js";
 import {
   getGraphDescriptor,
-  GraphDescriptor,
+  GraphToRun,
   invokeGraph,
   NodeHandlerContext,
   OutputValues,
@@ -46,7 +46,7 @@ type ExtractOutputTypes<B extends BoardOutputPorts> = {
 };
 
 const invokeGraphPerItem = async (
-  graph: GraphDescriptor,
+  graph: GraphToRun,
   item: JsonSerializable,
   index: number,
   list: JsonSerializable,
@@ -123,7 +123,7 @@ const mapNode = defineNodeType({
       throw new Error(`Expected list to be an array, but got ${list}`);
     }
     const graph = await getGraphDescriptor(board, context);
-    if (!graph) return { list };
+    if (!graph.success) return { list };
     let result: OutputValues[];
     const runSerially = !!context.state;
     if (runSerially) {

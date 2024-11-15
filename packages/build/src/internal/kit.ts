@@ -112,7 +112,7 @@ function makeBoardComponentHandler(
     },
     describe: board.describe.bind(board),
     async invoke(inputs: InputValues, context: NodeHandlerContext) {
-      return invokeGraph({ ...serialized, url }, inputs, context);
+      return invokeGraph({ graph: { ...serialized, url } }, inputs, context);
     },
   };
 }
@@ -130,7 +130,7 @@ async function makeGraphDescriptorComponentHandler(
     },
     describe: () => Promise.resolve(description),
     async invoke(inputs: InputValues, context: NodeHandlerContext) {
-      return invokeGraph(descriptor, inputs, context);
+      return invokeGraph({ graph: descriptor }, inputs, context);
     },
   };
 }

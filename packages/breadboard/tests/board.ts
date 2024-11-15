@@ -33,7 +33,7 @@ test("correctly passes inputs and outputs to included boards", async (t) => {
     );
 
   const result = await invokeGraph(
-    board,
+    { graph: board },
     { hello: "world" },
     { kits: [nestedKit] }
   );
@@ -62,7 +62,7 @@ test("correctly passes inputs and outputs to included boards with a probe", asyn
     );
 
   const result = await invokeGraph(
-    board,
+    { graph: board },
     { hello: "world" },
     { kits: [nestedKit] }
   );
@@ -77,21 +77,33 @@ test("allows pausing and resuming the board", async (t) => {
   input.wire("<-", kit.noop());
   input.wire("*->", kit.noop().wire("*->", board.output().wire("*->", input)));
   {
-    for await (const stop of runGraph(board, { kits: [kit] }, result)) {
+    for await (const stop of runGraph(
+      { graph: board },
+      { kits: [kit] },
+      result
+    )) {
       t.is(stop.type, "input");
       result = stop;
       break;
     }
   }
   {
-    for await (const stop of runGraph(board, { kits: [kit] }, result?.state)) {
+    for await (const stop of runGraph(
+      { graph: board },
+      { kits: [kit] },
+      result?.state
+    )) {
       t.is(stop.type, "output");
       result = stop;
       break;
     }
   }
   {
-    for await (const stop of runGraph(board, { kits: [kit] }, result?.state)) {
+    for await (const stop of runGraph(
+      { graph: board },
+      { kits: [kit] },
+      result?.state
+    )) {
       t.is(stop.type, "input");
       result = stop;
       break;
@@ -129,7 +141,7 @@ test("when $error is set, all other outputs are ignored, named", async (t) => {
     kit.noop().wire("$error->", board.output())
   );
   const result = await invokeGraph(
-    board,
+    { graph: board },
     {},
     {
       kits: [kit],
@@ -146,7 +158,7 @@ test("when $error is set, all other outputs are ignored, with *", async (t) => {
   const output = board.output();
   noop.wire("*->", output);
   noop.wire("$error->", output);
-  const result = await invokeGraph(board, {}, { kits: [kit] });
+  const result = await invokeGraph({ graph: board }, {}, { kits: [kit] });
   t.is(result.foo, undefined);
   t.like(result.$error, { kind: "error" });
 });

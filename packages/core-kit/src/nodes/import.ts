@@ -11,6 +11,7 @@ import type {
   NodeHandlerContext,
   GraphDescriptor,
   OutputValues,
+  GraphLoaderResult,
 } from "@google-labs/breadboard";
 import { loadGraphFromPath } from "../utils.js";
 
@@ -57,12 +58,13 @@ export default {
   ): Promise<OutputValues> => {
     const { path, graph, ...args } = inputs as ImportNodeInputs;
 
-    const board = graph
-      ? graph
+    const result: GraphLoaderResult | undefined = graph
+      ? { success: true, graph }
       : path
         ? await loadGraphFromPath(path, context)
         : undefined;
-    if (!board) throw Error("No board provided");
+    if (!result?.success) throw Error("No board provided");
+    const board = result.graph;
     board.args = args;
 
     return { board: { kind: "board", board } as BreadboardCapability };

@@ -5,7 +5,7 @@
  */
 
 import { inspect } from "./inspector/index.js";
-import { SENTINEL_BASE_URL } from "./loader/loader.js";
+import { resolveGraph, SENTINEL_BASE_URL } from "./loader/loader.js";
 import { invokeGraph } from "./run/invoke-graph.js";
 import type {
   GraphDescriptor,
@@ -161,10 +161,15 @@ async function getGraphHandlerInternal(
   if (!loader) {
     throw new Error(`Cannot load graph for type "${type}" without a loader.`);
   }
-  const graph = await loader.load(type, context);
-  if (!graph) {
-    throw new Error(`Cannot load graph for type "${type}"`);
+  const loadResult = await loader.load(type, context);
+  if (!loadResult.success) {
+    throw new Error(
+      `Cannot load graph for type "${type}": ${loadResult.error}`
+    );
   }
+
+  const graph = resolveGraph(loadResult);
+
   return {
     invoke: async (inputs, context) => {
       const base = context.board?.url && new URL(context.board?.url);
@@ -175,7 +180,7 @@ async function getGraphHandlerInternal(
           }
         : { ...context };
 
-      return await invokeGraph(graph, inputs, invocationContext);
+      return await invokeGraph(loadResult, inputs, invocationContext);
     },
     describe: async (inputs, _inputSchema, _outputSchema, context) => {
       if (!context) {

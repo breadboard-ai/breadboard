@@ -272,11 +272,11 @@ export class ApiExplorer extends LitElement {
     const loader = createLoader([]);
     const base = new URL(window.location.href);
     const graph = await loader.load(url, { base });
-    if (!graph) {
+    if (!graph.success) {
       // TODO: Better error handling, maybe a toast?
       throw new Error(`Unable to load graph: ${url}`);
     }
-    const runner = graph;
+    const runner = graph.graph;
     const { title, description } = runner;
 
     if (title) {

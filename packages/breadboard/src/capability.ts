@@ -5,6 +5,7 @@
  */
 
 import { baseURLFromContext } from "./loader/loader.js";
+import { GraphLoaderResult } from "./loader/types.js";
 import {
   BreadboardCapability,
   GraphDescriptor,
@@ -61,41 +62,45 @@ const isGraphDescriptor = (
 export const graphDescriptorFromCapability = async (
   capability: BreadboardCapability,
   context?: NodeHandlerContext
-) => {
+): Promise<GraphLoaderResult> => {
   if (isGraphDescriptorCapability(capability)) {
     // If all we got is a GraphDescriptor, build a runnable board from it.
     // TODO: Use JSON schema to validate rather than this hack.
-    return capability.board;
+    return { success: true, graph: capability.board };
   } else if (isResolvedURLBoardCapability(capability)) {
     if (!context?.loader) {
-      throw new Error(
-        `The "board" Capability is a URL, but no loader was supplied.`
-      );
+      return {
+        success: false,
+        error: `The "board" Capability is a URL, but no loader was supplied.`,
+      };
     }
-    const graph = await context.loader.load(capability.url, context);
-    if (!graph) {
-      throw new Error(
-        `Unable to load "board" Capability with the URL of ${capability.url}.`
-      );
+    const loaderResult = await context.loader.load(capability.url, context);
+    if (!loaderResult.success) {
+      return {
+        success: false,
+        error: `Unable to load "board" Capability with the URL of ${capability.url}: ${loaderResult.error}`,
+      };
     }
-    return graph;
+    return loaderResult;
   } else if (isUnresolvedPathBoardCapability(capability)) {
     if (!context?.loader) {
       throw new Error(
         `The "board" Capability is a URL, but no loader was supplied.`
       );
     }
-    const graph = await context.loader.load(capability.path, context);
-    if (!graph) {
-      throw new Error(
-        `Unable to load "board" Capability with the path of ${capability.path}.`
-      );
+    const loaderResult = await context.loader.load(capability.path, context);
+    if (!loaderResult.success) {
+      return {
+        success: false,
+        error: `Unable to load "board" Capability with the path of ${capability.path}: ${loaderResult.error}`,
+      };
     }
-    return graph;
+    return loaderResult;
   }
-  throw new Error(
-    `Unsupported type of "board" Capability. Perhaps the supplied board isn't actually a GraphDescriptor?`
-  );
+  return {
+    success: false,
+    error: `Unsupported type of "board" Capability. Perhaps the supplied board isn't actually a GraphDescriptor?`,
+  };
 };
 
 // TODO: Maybe this is just a GraphLoader API? Instead of taking a `string`,
@@ -104,19 +109,21 @@ export const graphDescriptorFromCapability = async (
 export const getGraphDescriptor = async (
   board: unknown,
   context?: NodeHandlerContext
-): Promise<GraphDescriptor | undefined> => {
-  if (!board) return undefined;
+): Promise<GraphLoaderResult> => {
+  if (!board) return { success: false, error: "No board provided" };
 
   if (typeof board === "string") {
-    const graph = await context?.loader?.load(board, context);
-    if (!graph) throw new Error(`Unable to load graph from "${board}"`);
-    return graph;
+    const loaderResult = await context?.loader?.load(board, context);
+    if (!loaderResult?.success || !loaderResult.graph) {
+      throw new Error(`Unable to load graph from "${board}"`);
+    }
+    return loaderResult;
   } else if (isBreadboardCapability(board)) {
     return graphDescriptorFromCapability(board, context);
   } else if (isGraphDescriptor(board)) {
-    return board;
+    return { success: true, graph: board };
   }
-  return undefined;
+  return { success: false, error: "Unable to get GraphDescriptor" };
 };
 
 const resolvePath = (

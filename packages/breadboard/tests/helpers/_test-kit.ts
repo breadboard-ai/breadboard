@@ -53,7 +53,7 @@ export const TestKit = new KitBuilder({
     if (!graph) {
       throw new Error("Must provide a graph to include");
     }
-    return await invokeGraph(graph, inputs, context);
+    return await invokeGraph({ graph }, inputs, context);
   },
   /**
    * This is a primitive implementation of the `invoke` node in Core Kit,
@@ -65,23 +65,30 @@ export const TestKit = new KitBuilder({
       const base = context.base || new URL(import.meta.url);
 
       if ($board) {
-        const board =
-          ($board as BreadboardCapability).kind === "board"
-            ? await getGraphDescriptor($board as BreadboardCapability, context)
-            : typeof $board === "string"
-              ? await context.loader?.load($board, {
-                  base,
-                  outerGraph: context.outerGraph,
-                })
-              : undefined;
+        let result = undefined;
+        if (($board as BreadboardCapability).kind === "board") {
+          result = await getGraphDescriptor(
+            $board as BreadboardCapability,
+            context
+          );
+        } else if (typeof $board === "string") {
+          result = await context.loader?.load($board, {
+            base,
+            outerGraph: context.outerGraph,
+          });
+        }
 
-        if (!board) throw new Error("Must provide valid $board to invoke");
+        if (!result) throw new Error("Must provide valid $board to invoke");
 
-        return await invokeGraph(board, args, context);
+        if (!result.success) {
+          throw new Error(result.error);
+        }
+
+        return await invokeGraph(result, args, context);
       } else {
         const { board, path, ...args } = inputs;
 
-        const runnableBoard = board
+        const result = board
           ? await getGraphDescriptor(board, context)
           : path
             ? await context.loader?.load(path, {
@@ -90,10 +97,14 @@ export const TestKit = new KitBuilder({
               })
             : undefined;
 
-        if (!runnableBoard)
+        if (!result) {
           throw new Error("Must provide valid board to invoke");
+        }
+        if (!result.success) {
+          throw new Error(result.error);
+        }
 
-        return await invokeGraph(runnableBoard, args, context);
+        return await invokeGraph(result, args, context);
       }
     },
     describe: async (inputs?: InputValues): Promise<NodeDescriberResult> => {
