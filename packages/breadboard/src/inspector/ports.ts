@@ -257,7 +257,6 @@ export function filterSidePorts(inputs: InspectablePortList) {
     }
     return true;
   });
-  // TODO: Uncomment this once the side wire editing works.
-  // inputs.ports = inputPorts;
+  inputs.ports = inputPorts;
   return sidePorts;
 }
