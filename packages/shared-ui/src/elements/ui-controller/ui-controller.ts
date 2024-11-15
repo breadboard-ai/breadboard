@@ -35,6 +35,11 @@ import {
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { ModuleEditor } from "../module-editor/module-editor.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { CommandsSetSwitchEvent } from "../../events/events.js";
+import {
+  COMMAND_SET_GRAPH_EDITOR,
+  COMMAND_SET_MODULE_EDITOR,
+} from "../../constants/constants.js";
 
 @customElement("bb-ui-controller")
 export class UI extends LitElement {
@@ -271,5 +276,15 @@ export class UI extends LitElement {
     return html`<section id="diagram">
       ${graphEditor} ${this.moduleId ? moduleEditor : nothing} ${welcomePanel}
     </section>`;
+  }
+
+  updated() {
+    // Inform bb-main which command set is in use. The individual editors are
+    // responsible for
+    this.dispatchEvent(
+      new CommandsSetSwitchEvent(
+        this.moduleId ? COMMAND_SET_MODULE_EDITOR : COMMAND_SET_GRAPH_EDITOR
+      )
+    );
   }
 }

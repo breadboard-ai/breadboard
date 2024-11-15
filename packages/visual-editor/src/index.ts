@@ -116,6 +116,12 @@ export class Main extends LitElement {
   showOpenBoardOverlay = false;
 
   @state()
+  showCommandPalette = false;
+
+  @state()
+  showModulePalette = false;
+
+  @state()
   showSaveAsDialog = false;
   #saveAsState: SaveAsConfiguration | null = null;
 
@@ -185,6 +191,7 @@ export class Main extends LitElement {
 
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
+  #tabContainerRef: Ref<HTMLDivElement> = createRef();
   #boardActivityRef: Ref<BreadboardUI.Elements.BoardActivityOverlay> =
     createRef();
   #boardId = 0;
@@ -205,7 +212,8 @@ export class Main extends LitElement {
    */
   #proxy: HarnessProxyConfig[];
   #onShowTooltipBound = this.#onShowTooltip.bind(this);
-  #onHideTooltipBound = this.#onHideTooltip.bind(this);
+  #hideTooltipBound = this.#hideTooltip.bind(this);
+  #hidePalettesAndTooltipBound = this.#hidePalettesAndTooltip.bind(this);
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #downloadRunBound = this.#downloadRun.bind(this);
   #confirmUnloadWithUserFirstIfNeededBound =
@@ -216,6 +224,75 @@ export class Main extends LitElement {
   #isSaving = false;
   #dataStore = getDataStore();
   #runStore = getRunStore();
+
+  #globalCommands: BreadboardUI.Types.Command[] = [
+    {
+      title: "Open board...",
+      name: "open-board",
+      icon: "open",
+      callback: () => {
+        this.showOpenBoardOverlay = true;
+      },
+    },
+    {
+      title: "Save board",
+      name: "save-board",
+      icon: "save",
+      callback: () => {
+        this.#attemptBoardSave();
+      },
+    },
+    {
+      title: "Save board As...",
+      name: "save-board-as",
+      icon: "save",
+      callback: () => {
+        this.showSaveAsDialog = true;
+      },
+    },
+    {
+      title: "Edit board information...",
+      name: "edit-board-information",
+      icon: "edit",
+      callback: () => {
+        if (!this.#tabContainerRef.value) {
+          return;
+        }
+
+        const activeTab = this.#tabContainerRef.value.querySelector(".active");
+        if (!activeTab) {
+          return;
+        }
+
+        const { left, bottom } = activeTab.getBoundingClientRect();
+        const maxLeft = window.innerWidth - 500;
+        this.#showBoardEditOverlay(Math.min(maxLeft, left), bottom);
+      },
+    },
+    {
+      title: "Open module...",
+      name: "open-module",
+      icon: "open",
+      callback: () => {
+        this.showModulePalette = true;
+      },
+    },
+    {
+      title: "Create module...",
+      icon: "add-circle",
+      name: "create-module",
+      callback: () => {
+        const moduleId = BreadboardUI.Utils.getModuleId();
+        if (!moduleId) {
+          return;
+        }
+
+        this.#attemptModuleCreate(moduleId);
+      },
+    },
+  ];
+  #viewCommandNamespace = "default";
+  #viewCommands = new Map<string, BreadboardUI.Types.Command[]>();
 
   #runtime!: Runtime.RuntimeInstance;
 
@@ -590,8 +667,8 @@ export class Main extends LitElement {
     super.connectedCallback();
 
     window.addEventListener("bbshowtooltip", this.#onShowTooltipBound);
-    window.addEventListener("bbhidetooltip", this.#onHideTooltipBound);
-    window.addEventListener("pointerdown", this.#onHideTooltipBound);
+    window.addEventListener("bbhidetooltip", this.#hideTooltipBound);
+    window.addEventListener("pointerdown", this.#hidePalettesAndTooltipBound);
     window.addEventListener("keydown", this.#onKeyDownBound);
     window.addEventListener("bbrundownload", this.#downloadRunBound);
   }
@@ -600,8 +677,11 @@ export class Main extends LitElement {
     super.disconnectedCallback();
 
     window.removeEventListener("bbshowtooltip", this.#onShowTooltipBound);
-    window.removeEventListener("bbhidetooltip", this.#onHideTooltipBound);
-    window.removeEventListener("pointerdown", this.#onHideTooltipBound);
+    window.removeEventListener("bbhidetooltip", this.#hideTooltipBound);
+    window.removeEventListener(
+      "pointerdown",
+      this.#hidePalettesAndTooltipBound
+    );
     window.removeEventListener("keydown", this.#onKeyDownBound);
     window.removeEventListener("bbrundownload", this.#downloadRunBound);
   }
@@ -647,7 +727,21 @@ export class Main extends LitElement {
     this.#tooltipRef.value.visible = true;
   }
 
-  #onHideTooltip() {
+  #hidePalettesAndTooltip() {
+    this.#hideCommandPalette();
+    this.#hideModulePalette();
+    this.#hideTooltip();
+  }
+
+  #hideCommandPalette() {
+    this.showCommandPalette = false;
+  }
+
+  #hideModulePalette() {
+    this.showModulePalette = false;
+  }
+
+  #hideTooltip() {
     if (!this.#tooltipRef.value) {
       return;
     }
@@ -692,6 +786,17 @@ export class Main extends LitElement {
   #onKeyDown(evt: KeyboardEvent) {
     const isMac = navigator.platform.indexOf("Mac") === 0;
     const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+    if (evt.key === "p" && isCtrlCommand) {
+      evt.preventDefault();
+      evt.stopImmediatePropagation();
+
+      if (evt.shiftKey) {
+        this.showCommandPalette = true;
+      } else {
+        this.showModulePalette = true;
+      }
+    }
 
     if (evt.key === "o" && isCtrlCommand) {
       evt.preventDefault();
@@ -901,6 +1006,22 @@ export class Main extends LitElement {
 
     const tabToSave = this.tab;
     this.#tabSaveId.delete(tabToSave.id);
+  }
+
+  #attemptUndo() {
+    if (!this.#runtime.edit.canUndo(this.tab)) {
+      return;
+    }
+
+    this.#runtime.edit.undo(this.tab);
+  }
+
+  #attemptRedo() {
+    if (!this.#runtime.edit.canRedo(this.tab)) {
+      return;
+    }
+
+    this.#runtime.edit.redo(this.tab);
   }
 
   async #attemptBoardSave(
@@ -1562,7 +1683,9 @@ export class Main extends LitElement {
       this.showNodeConfigurator ||
       this.showEdgeValue ||
       this.showCommentEditor ||
-      this.showOpenBoardOverlay;
+      this.showOpenBoardOverlay ||
+      this.showCommandPalette ||
+      this.showModulePalette;
 
     const nav = this.#initialize.then(() => {
       return html`<bb-nav
@@ -2328,7 +2451,7 @@ export class Main extends LitElement {
           <h1 id="breadboard-logo">
             Breadboard
           </h1>
-          <div id="tab-container">
+          <div id="tab-container" ${ref(this.#tabContainerRef)}>
             ${map(tabs, ([id, tab]) => {
               let subGraphTitle: string | undefined | null = null;
               if (tab.graph && tab.graph.graphs && tab.subGraphId) {
@@ -2474,6 +2597,16 @@ export class Main extends LitElement {
               .inputsFromLastRun=${inputsFromLastRun}
               .isShowingBoardActivityOverlay=${this.showBoardActivityOverlay}
               .tabURLs=${tabURLs}
+              @bbcommandsavailable=${(
+                evt: BreadboardUI.Events.CommandsAvailableEvent
+              ) => {
+                this.#viewCommands.set(evt.namespace, evt.commands);
+              }}
+              @bbcommandssetswitch=${(
+                evt: BreadboardUI.Events.CommandsSetSwitchEvent
+              ) => {
+                this.#viewCommandNamespace = evt.namespace;
+              }}
               @bbinteraction=${() => {
                 this.#clearBoardSave();
               }}
@@ -2484,18 +2617,10 @@ export class Main extends LitElement {
                 this.showSaveAsDialog = true;
               }}
               @bbundo=${() => {
-                if (!this.#runtime.edit.canUndo(this.tab)) {
-                  return;
-                }
-
-                this.#runtime.edit.undo(this.tab);
+                this.#attemptUndo();
               }}
               @bbredo=${() => {
-                if (!this.#runtime.edit.canRedo(this.tab)) {
-                  return;
-                }
-
-                this.#runtime.edit.redo(this.tab);
+                this.#attemptRedo();
               }}
               @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
                 this.#attemptBoardStart(evt);
@@ -2954,6 +3079,108 @@ export class Main extends LitElement {
           </div>
         ${until(nav)}
       </div>`;
+        const recentItemsKey =
+          (this.graph?.url ?? "untitled-graph").replace(/[\W\s]/gim, "-") +
+          `-${this.#viewCommandNamespace}`;
+        const commands = [
+          ...this.#globalCommands,
+          ...(this.#viewCommands.get(this.#viewCommandNamespace) ?? []),
+        ];
+        const commandPalette = this.showCommandPalette
+          ? html`<bb-command-palette
+              .commands=${commands}
+              .recentItemsKey=${recentItemsKey}
+              .recencyType=${"local"}
+              @pointerdown=${(evt: PointerEvent) => {
+                evt.stopImmediatePropagation();
+              }}
+              @bbcommand=${(evt: BreadboardUI.Events.CommandEvent) => {
+                this.#hideCommandPalette();
+
+                const command = [
+                  ...this.#globalCommands,
+                  ...(this.#viewCommands.get(this.#viewCommandNamespace) ?? []),
+                ].find((command) => command.name === evt.command);
+
+                if (!command) {
+                  console.warn(`Unable to find command "${evt.command}"`);
+                  return;
+                }
+
+                if (!command.callback) {
+                  console.warn(`No callback for command "${evt.command}"`);
+                  return;
+                }
+
+                command.callback.call(
+                  null,
+                  evt.command,
+                  command.secondaryAction
+                );
+              }}
+              @bbpalettedismissed=${() => {
+                this.#hideCommandPalette();
+              }}
+            ></bb-command-palette>`
+          : nothing;
+
+        const tabModules = this.tab?.graph.modules
+          ? Object.keys(this.tab?.graph.modules)
+          : [];
+
+        // For standard, non-imperative graphs prepend the main board ID
+        if (!this.tab?.graph.main) {
+          tabModules.unshift(BreadboardUI.Constants.MAIN_BOARD_ID);
+        }
+
+        const modules: BreadboardUI.Types.Command[] = tabModules
+          .filter((module) => {
+            if (this.tab?.moduleId) {
+              return module !== this.tab?.moduleId;
+            }
+
+            return module !== BreadboardUI.Constants.MAIN_BOARD_ID;
+          })
+          .map((module) => {
+            if (module === BreadboardUI.Constants.MAIN_BOARD_ID) {
+              return {
+                title: `Open Main Board...`,
+                icon: "open",
+                name: "open",
+              };
+            }
+            return {
+              title: `Open ${module}...`,
+              icon: "open",
+              name: "open",
+              secondaryAction: module,
+            };
+          });
+
+        const modulePalette = this.showModulePalette
+          ? html`<bb-command-palette
+              .commands=${modules}
+              .recentItemsKey=${recentItemsKey}
+              .recencyType=${"session"}
+              @pointerdown=${(evt: PointerEvent) => {
+                evt.stopImmediatePropagation();
+              }}
+              @bbcommand=${(evt: BreadboardUI.Events.CommandEvent) => {
+                if (!this.tab) {
+                  return;
+                }
+
+                this.#runtime.board.changeModule(
+                  this.tab.id,
+                  evt.secondaryAction ?? null
+                );
+                this.#hideModulePalette();
+              }}
+              @bbpalettedismissed=${() => {
+                this.#hideModulePalette();
+              }}
+            ></bb-command-palette>`
+          : nothing;
 
         return [
           ui,
@@ -2969,6 +3196,8 @@ export class Main extends LitElement {
           commentOverlay,
           saveAsDialogOverlay,
           openDialogOverlay,
+          commandPalette,
+          modulePalette,
         ];
       });
 

@@ -69,6 +69,10 @@ export class CommandPalette extends LitElement {
       background: transparent none 4px center / 20px 20px no-repeat;
     }
 
+    menu li[disabled] {
+      opacity: 0.3;
+    }
+
     menu li.format {
       background-image: var(--bb-icon-braces);
     }
@@ -83,6 +87,18 @@ export class CommandPalette extends LitElement {
 
     menu li.add-circle {
       background-image: var(--bb-icon-add-circle);
+    }
+
+    menu li.fit {
+      background-image: var(--bb-icon-fit);
+    }
+
+    menu li.reset-nodes {
+      background-image: var(--bb-icon-reset-nodes);
+    }
+
+    menu li.edit {
+      background-image: var(--bb-icon-edit);
     }
 
     menu li.selected {
@@ -158,6 +174,10 @@ export class CommandPalette extends LitElement {
   }
 
   protected willUpdate(changedProperties: PropertyValues): void {
+    if (changedProperties.has("filter")) {
+      this.selectedIndex = 0;
+    }
+
     if (changedProperties.has("commands")) {
       this.#attemptFocus = true;
       this.selectedIndex = 0;
@@ -181,8 +201,20 @@ export class CommandPalette extends LitElement {
   }
 
   #emitCurrentCommand() {
-    const command = this.commands[this.selectedIndex];
+    let commands = this.commands;
+    if (this.filter) {
+      const filter = new RegExp(this.filter, "gim");
+      commands = this.commands.filter(
+        (command) => filter.test(command.name) || filter.test(command.title)
+      );
+    }
+
+    const command = commands[this.selectedIndex];
     if (!command) {
+      return;
+    }
+
+    if (command.disabled) {
       return;
     }
 
@@ -304,6 +336,7 @@ export class CommandPalette extends LitElement {
                   [command.icon]: true,
                   selected: idx === this.selectedIndex,
                 })}
+                ?disabled=${command.disabled}
                 data-command=${command.name}
                 data-secondary=${command.secondaryAction}
               >

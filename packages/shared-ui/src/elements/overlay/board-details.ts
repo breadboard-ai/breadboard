@@ -87,7 +87,7 @@ export class BoardDetailsOverlay extends LitElement {
       display: block;
       width: 20px;
       height: 20px;
-      background: transparent var(--bb-icon-wrench) center center / 20px 20px
+      background: transparent var(--bb-icon-edit) center center / 20px 20px
         no-repeat;
       margin-right: var(--bb-grid-size-2);
     }
