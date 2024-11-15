@@ -408,7 +408,7 @@ export class NodeConfigurationInfo extends LitElement {
 
         if (subGraphId && typeof subGraphId === "string") {
           const subgraphs = breadboardGraph.graphs();
-          if (subgraphs[subGraphId]) {
+          if (subgraphs && subgraphs[subGraphId]) {
             breadboardGraph = subgraphs[subGraphId];
           } else {
             console.warn(

@@ -172,7 +172,13 @@ export class NodeCache implements InspectableNodeCache {
     this.#typeMap ??= new Map();
     this.#map ??= new Map();
     const graphTypes = getOrCreate(this.#typeMap, graphId, () => new Map());
-    const inspectableNode = new Node(node, this.#graph);
+    const nodeGraph = graphId ? this.#graph.graphs()?.[graphId] : this.#graph;
+    if (!nodeGraph) {
+      throw new Error(
+        `Inspect API Integrity error: unable to find subgraph "${graphId}"`
+      );
+    }
+    const inspectableNode = new Node(node, nodeGraph);
     const type = node.type;
     let list = graphTypes.get(type);
     if (!list) {

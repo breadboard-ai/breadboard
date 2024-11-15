@@ -75,7 +75,7 @@ export class NodeMetaDetails extends LitElement {
 
       if (subGraphId && typeof subGraphId === "string") {
         const subgraphs = graph.graphs();
-        if (subgraphs[subGraphId]) {
+        if (subgraphs && subgraphs[subGraphId]) {
           graph = subgraphs[subGraphId];
         } else {
           console.warn(`Unable to locate subgraph by name: ${this.subGraphId}`);
