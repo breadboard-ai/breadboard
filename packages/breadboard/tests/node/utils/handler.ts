@@ -23,9 +23,12 @@ describe("getGraphHandler", () => {
         async load(url: string) {
           ok(url === "https://example.com/1");
           return {
-            nodes: {},
-            edges: {},
-          } as GraphDescriptor;
+            success: true,
+            graph: {
+              nodes: {},
+              edges: {},
+            } as GraphDescriptor,
+          };
         },
       },
     });
@@ -38,7 +41,7 @@ describe("getGraphHandler", () => {
       loader: {
         async load(url: string) {
           ok(url === "https://example.com/2");
-          return simple as GraphDescriptor;
+          return { success: true, graph: simple as GraphDescriptor };
         },
       },
     });
@@ -54,7 +57,7 @@ describe("getGraphHandler", () => {
       loader: {
         async load(url: string) {
           ok(url === "https://example.com/3");
-          return simple as GraphDescriptor;
+          return { success: true, graph: simple as GraphDescriptor };
         },
       },
     });

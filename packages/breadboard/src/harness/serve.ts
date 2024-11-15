@@ -119,11 +119,13 @@ export const serve = async (config: ServeConfig | Promise<ServeConfig>) => {
   const url = await getBoardURL(config, factory);
   const base = baseURL(config);
   const loader = createLoader();
-  const graph = await loader.load(url, { base });
-  if (!graph) {
-    throw new Error(`Unable to load graph from "${config.url}"`);
+  const loadResult = await loader.load(url, { base });
+  if (!loadResult.success) {
+    throw new Error(
+      `Unable to load graph from "${config.url}": ${loadResult.error}`
+    );
   }
-  return server.serve(graph, !!config.diagnostics, { kits });
+  return server.serve(loadResult.graph, !!config.diagnostics, { kits });
 };
 
 /**

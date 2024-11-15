@@ -10,7 +10,7 @@ import {
   NodeConfiguration,
   NodeIdentifier,
 } from "@breadboard-ai/types";
-import { Kit } from "../types.js";
+import { GraphToRun, Kit } from "../types.js";
 
 export type GraphProviderItem = {
   url: string;
@@ -249,6 +249,19 @@ export type GraphLoaderContext = {
 };
 
 /**
+ * Returns the result of loading the graph. When we're loading the subgraph,
+ * it returns the main graph and the id of the subgraph
+ */
+export type GraphLoaderResult =
+  | ({
+      success: true;
+    } & GraphToRun)
+  | {
+      success: false;
+      error: string;
+    };
+
+/**
  * Represents a loader for `GraphDescriptor` instances. This is the main
  * interface for loading graphs in Breadboard.
  */
@@ -262,7 +275,7 @@ export type GraphLoader = {
   load: (
     path: string,
     context: GraphLoaderContext
-  ) => Promise<GraphDescriptor | null>;
+  ) => Promise<GraphLoaderResult>;
 };
 
 /**

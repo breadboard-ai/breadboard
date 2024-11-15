@@ -42,6 +42,7 @@ import {
 } from "./schemas.js";
 import {
   InspectableEdge,
+  InspectableGraph,
   InspectableGraphOptions,
   InspectableGraphWithStore,
   InspectableKit,
@@ -62,7 +63,7 @@ export const inspectableGraph = (
   graph: GraphDescriptor,
   options?: InspectableGraphOptions
 ): InspectableGraphWithStore => {
-  return new Graph(graph, options);
+  return new Graph(graph, null, options);
 };
 
 const maybeURL = (url?: string): URL | undefined => {
@@ -90,12 +91,18 @@ class Graph implements InspectableGraphWithStore {
   #options: InspectableGraphOptions;
 
   #graph: GraphDescriptor;
+  #parent: InspectableGraph | null;
   #cache: MutableGraph;
   #graphs: InspectableSubgraphs | null = null;
 
   #imperativeMain: ModuleIdentifier | undefined;
 
-  constructor(graph: GraphDescriptor, options?: InspectableGraphOptions) {
+  constructor(
+    graph: GraphDescriptor,
+    parent: InspectableGraph | null,
+    options?: InspectableGraphOptions
+  ) {
+    this.#parent = parent;
     if (isImperativeGraph(graph)) {
       const { main } = graph;
       this.#graph = toDeclarativeGraph(graph);
@@ -227,7 +234,7 @@ class Graph implements InspectableGraphWithStore {
       }
       const loader = this.#options.loader || createLoader();
       const context: NodeDescriberContext = {
-        outerGraph: this.#graph,
+        outerGraph: this.#parent?.raw() || this.#graph,
         loader,
         kits,
         sandbox: this.#options.sandbox,
@@ -435,16 +442,15 @@ class Graph implements InspectableGraphWithStore {
       const base = this.#url;
 
       // try loading the describer graph.
-      const describerGraph = await loader.load(customDescriber, {
+      const loadResult = await loader.load(customDescriber, {
         base,
         board: this.#graph,
         outerGraph: this.#graph,
       });
-      if (!describerGraph) {
-        console.warn(
-          `Could not load custom describer graph ${customDescriber}`
-        );
-        return { success: false };
+      if (!loadResult.success) {
+        const error = `Could not load custom describer graph ${customDescriber}: ${loadResult.error}`;
+        console.warn(error);
+        return loadResult;
       }
       const { inputSchema: $inputSchema, outputSchema: $outputSchema } =
         await this.#describeWithStaticAnalysis();
@@ -454,7 +460,7 @@ class Graph implements InspectableGraphWithStore {
       // delete $outputSchema.properties?.inputSchema;
       // delete $outputSchema.properties?.outputSchema;
       const result = (await invokeGraph(
-        describerGraph,
+        loadResult,
         { ...inputs, $inputSchema, $outputSchema },
         {
           base,
@@ -534,6 +540,7 @@ class Graph implements InspectableGraphWithStore {
 
     this.#cache.describe.clear(visualOnly, affectedNodes);
     this.#graph = graph;
+    this.#graphs = null;
   }
 
   resetGraph(graph: GraphDescriptor): void {
@@ -556,7 +563,7 @@ class Graph implements InspectableGraphWithStore {
     if (!subgraphs) return {};
     return Object.fromEntries(
       Object.entries(subgraphs).map(([id, descriptor]) => {
-        return [id, new Graph(descriptor, this.#options)];
+        return [id, new Graph(descriptor, this, this.#options)];
       })
     );
   }

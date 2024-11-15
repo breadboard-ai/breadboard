@@ -4,14 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphDescriptor, SubGraphs } from "../types.js";
+import type { GraphDescriptor, GraphToRun } from "../types.js";
 import type {
   GraphProvider,
   GraphLoader,
   GraphLoaderContext,
+  GraphLoaderResult,
 } from "./types.js";
 
 export const SENTINEL_BASE_URL = new URL("sentinel://sentinel/sentinel");
+
+export { resolveGraph };
+
+function resolveGraph(graphToRun: GraphToRun): GraphDescriptor {
+  const { graph, subGraphId } = graphToRun;
+  return subGraphId ? graph.graphs![subGraphId] : graph;
+}
 
 export const removeHash = (url: URL): URL => {
   const newURL = new URL(url.href);
@@ -38,7 +46,7 @@ export class Loader implements GraphLoader {
     this.#graphProviders = graphProviders;
   }
 
-  async #loadWithProviders(url: URL): Promise<GraphDescriptor | null> {
+  async #loadWithProviders(url: URL): Promise<GraphLoaderResult> {
     for (const provider of this.#graphProviders) {
       const capabilities = provider.canProvide(url);
       if (capabilities === false) {
@@ -50,44 +58,44 @@ export class Loader implements GraphLoader {
           typeof response == "string" ? JSON.parse(response) : response;
         if (graph !== null) {
           graph.url = url.href;
-          return graph;
+          return { success: true, graph };
         }
       }
     }
-    console.warn(`Unable to load graph from "${url.href}"`);
-    return null;
+    const error = `Unable to load graph from "${url.href}"`;
+    console.warn(error);
+    return { success: false, error };
   }
 
-  async #loadOrWarn(url: URL): Promise<GraphDescriptor | null> {
-    const graph = await this.#loadWithProviders(url);
-    if (!graph) {
-      return null;
-    }
-    return graph;
+  async #loadOrWarn(url: URL): Promise<GraphLoaderResult> {
+    return this.#loadWithProviders(url);
   }
 
   #getSubgraph(
     url: URL | null,
     hash: string,
-    subgraphs?: SubGraphs
-  ): GraphDescriptor | null {
+    supergraph: GraphDescriptor
+  ): GraphLoaderResult {
+    const subgraphs = supergraph.graphs;
     if (!subgraphs) {
-      console.warn(`No subgraphs to load "#${hash}" from`);
-      return null;
+      const error = `No subgraphs to load "#${hash}" from`;
+      console.warn(error);
+      return { success: false, error };
     }
     const graph = subgraphs[hash];
     if (!graph) {
-      console.warn(`No subgraph found for hash: #${hash}`);
-      return null;
+      const error = `No subgraph found for hash: #${hash}`;
+      console.warn(error);
+      return { success: false, error };
     }
     if (url) graph.url = url.href;
-    return graph;
+    return { success: true, graph: supergraph, subGraphId: hash };
   }
 
   async load(
     path: string,
     context: GraphLoaderContext
-  ): Promise<GraphDescriptor | null> {
+  ): Promise<GraphLoaderResult> {
     const supergraph = context.outerGraph;
     // This is a special case, when we don't have URLs to resolve against.
     // We are a hash path, and we are inside of a supergraph that doesn't
@@ -96,15 +104,7 @@ export class Loader implements GraphLoader {
     const isEphemeralSupergraph =
       path.startsWith("#") && supergraph && !supergraph.url;
     if (isEphemeralSupergraph) {
-      const graph = this.#getSubgraph(
-        null,
-        path.substring(1),
-        supergraph.graphs
-      );
-      if (!graph) {
-        console.warn(`Unable to load graph from "${path}"`);
-      }
-      return graph;
+      return this.#getSubgraph(null, path.substring(1), supergraph);
     }
 
     const base = baseURLFromContext(context);
@@ -126,18 +126,18 @@ export class Loader implements GraphLoader {
         : SENTINEL_BASE_URL;
       if (sameWithoutHash(url, supergraphURL)) {
         const hash = url.hash.substring(1);
-        return this.#getSubgraph(url, hash, supergraph.graphs);
+        return this.#getSubgraph(url, hash, supergraph);
       }
     }
     // Otherwise, load the graph and then get its subgraph.
-    const loadedSupergraph = await this.#loadOrWarn(removeHash(url));
-    if (!loadedSupergraph) {
-      return null;
+    const loadedSupergraphResult = await this.#loadOrWarn(removeHash(url));
+    if (!loadedSupergraphResult.success) {
+      return loadedSupergraphResult;
     }
     return this.#getSubgraph(
       url,
       url.hash.substring(1),
-      loadedSupergraph.graphs
+      loadedSupergraphResult.graph
     );
   }
 }

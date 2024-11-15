@@ -52,10 +52,10 @@ export default defineNodeType({
     } catch {
       // This is a describer, so it must always return some valid value.
     }
-    if (descriptor === undefined) {
+    if (!descriptor || !descriptor.success) {
       return { inputs: { "*": "unknown" } };
     }
-    const { inputSchema } = await inspect(descriptor).describe();
+    const { inputSchema } = await inspect(descriptor.graph).describe();
     return {
       inputs: unsafeSchema({
         ...inputSchema,

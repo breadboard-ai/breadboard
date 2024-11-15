@@ -68,7 +68,7 @@ export class RunServer {
     };
 
     try {
-      for await (const stop of runGraph(runner, servingContext)) {
+      for await (const stop of runGraph({ graph: runner }, servingContext)) {
         if (stop.type === "input") {
           const { node, inputArguments, timestamp, path, invocationId } = stop;
           const bubbled = invocationId == -1;

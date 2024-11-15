@@ -161,7 +161,7 @@
   "dependencies": {
     "@breadboard-ai/build": "0.10.5",
     "@breadboard-ai/import": "0.1.12",
-    "@breadboard-ai/visual-editor": "^1.22.1",
+    "@breadboard-ai/visual-editor": "1.22.1",
     "@google-labs/breadboard": "^0.29.0",
     "@google-labs/core-kit": "^0.16.0",
     "@google-labs/template-kit": "^0.3.14",
