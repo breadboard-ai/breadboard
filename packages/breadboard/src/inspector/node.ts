@@ -22,7 +22,6 @@ import {
   InspectableNode,
   InspectableNodePorts,
   InspectableNodeType,
-  InspectablePort,
   InspectablePortList,
   NodeTypeDescriberOptions,
 } from "./types.js";

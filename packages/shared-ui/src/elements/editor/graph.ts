@@ -1321,6 +1321,7 @@ export class Graph extends PIXI.Container {
       graphNode.readOnly = this.readOnly;
       graphNode.inPorts = portInfo.inputs.ports;
       graphNode.outPorts = portInfo.outputs.ports;
+      graphNode.sidePorts = portInfo.side.ports;
       graphNode.fixedInputs = portInfo.inputs.fixed;
       graphNode.fixedOutputs = portInfo.outputs.fixed;
       const info = this.#nodeInfo;
