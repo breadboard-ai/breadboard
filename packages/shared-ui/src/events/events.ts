@@ -847,7 +847,8 @@ export class GraphNodesVisualUpdateEvent extends Event {
       readonly x: number;
       readonly y: number;
       readonly expansionState: ComponentExpansionState;
-    }>
+    }>,
+    public readonly subGraphId: string | null
   ) {
     super(GraphNodesVisualUpdateEvent.eventName, { ...eventInit });
   }
@@ -862,6 +863,7 @@ export class GraphNodeEditEvent extends Event {
     public readonly selectedPort: string | null,
     public readonly x: number,
     public readonly y: number,
+    public readonly subGraphId: string | null = null,
     public readonly addHorizontalClickClearance = true
   ) {
     super(GraphNodeEditEvent.eventName, { ...eventInit });
@@ -871,7 +873,10 @@ export class GraphNodeEditEvent extends Event {
 export class GraphNodeSelectedEvent extends Event {
   static eventName = "bbgraphnodeselected";
 
-  constructor(public readonly id: string | null) {
+  constructor(
+    public readonly id: string | null,
+    public readonly subGraphId: string | null
+  ) {
     super(GraphNodeSelectedEvent.eventName, { ...eventInit });
   }
 }
@@ -879,7 +884,10 @@ export class GraphNodeSelectedEvent extends Event {
 export class GraphNodeDeselectedEvent extends Event {
   static eventName = "bbgraphnodedeselected";
 
-  constructor(public readonly id: string | null) {
+  constructor(
+    public readonly id: string | null,
+    public readonly subGraphId: string | null
+  ) {
     super(GraphNodeDeselectedEvent.eventName, { ...eventInit });
   }
 }
@@ -895,7 +903,7 @@ export class GraphNodeDeselectedAllEvent extends Event {
 export class GraphInitialDrawEvent extends Event {
   static eventName = "bbgraphinitialdraw";
 
-  constructor() {
+  constructor(public readonly subGraphId: string | null) {
     super(GraphInitialDrawEvent.eventName, { ...eventInit });
   }
 }
@@ -908,7 +916,8 @@ export class GraphEdgeValueSelectedEvent extends Event {
     public readonly schema: Schema | null,
     public readonly edge: EdgeData | null,
     public readonly x: number,
-    public readonly y: number
+    public readonly y: number,
+    public readonly subGraphId: string | null
   ) {
     super(GraphEdgeValueSelectedEvent.eventName, { ...eventInit });
   }
@@ -928,7 +937,10 @@ export class GraphNodeActivitySelectedEvent extends Event {
 export class GraphEdgeAttachEvent extends Event {
   static eventName = "bbgraphedgeattach";
 
-  constructor(public readonly edge: EdgeData) {
+  constructor(
+    public readonly edge: EdgeData,
+    public readonly subGraphId: string | null
+  ) {
     super(GraphEdgeAttachEvent.eventName, { ...eventInit });
   }
 }
@@ -936,7 +948,10 @@ export class GraphEdgeAttachEvent extends Event {
 export class GraphEdgeDetachEvent extends Event {
   static eventName = "bbgraphedgedetach";
 
-  constructor(public readonly edge: EdgeData) {
+  constructor(
+    public readonly edge: EdgeData,
+    public readonly subGraphId: string | null
+  ) {
     super(GraphEdgeDetachEvent.eventName, { ...eventInit });
   }
 }
@@ -947,7 +962,8 @@ export class GraphEntityRemoveEvent extends Event {
   constructor(
     public readonly nodes: string[],
     public readonly edges: EdgeData[],
-    public readonly comments: string[]
+    public readonly comments: string[],
+    public readonly subGraphId: string | null
   ) {
     super(GraphEntityRemoveEvent.eventName, { ...eventInit });
   }
@@ -959,7 +975,8 @@ export class GraphNodeEdgeChangeEvent extends Event {
   constructor(
     public readonly fromEdge: EdgeData,
     public readonly toEdge: EdgeData,
-    public readonly constant = false
+    public readonly constant = false,
+    public readonly subGraphId: string | null
   ) {
     super(GraphNodeEdgeChangeEvent.eventName, { ...eventInit });
   }
@@ -968,7 +985,10 @@ export class GraphNodeEdgeChangeEvent extends Event {
 export class GraphNodeDeleteEvent extends Event {
   static eventName = "bbgraphnodedelete";
 
-  constructor(public readonly id: string) {
+  constructor(
+    public readonly id: string,
+    public readonly subGraphId: string | null
+  ) {
     super(GraphNodeDeleteEvent.eventName, { ...eventInit });
   }
 }
@@ -999,7 +1019,8 @@ export class GraphCommentEditRequestEvent extends Event {
   constructor(
     public readonly id: string,
     public readonly x: number,
-    public readonly y: number
+    public readonly y: number,
+    public readonly subGraphId: string | null = null
   ) {
     super(GraphCommentEditRequestEvent.eventName, { ...eventInit });
   }
@@ -1008,7 +1029,10 @@ export class GraphCommentEditRequestEvent extends Event {
 export class GraphNodeRunRequestEvent extends Event {
   static eventName = "bbgraphnoderunrequest";
 
-  constructor(public readonly id: string) {
+  constructor(
+    public readonly id: string,
+    public readonly subGraphId: string | null = null
+  ) {
     super(GraphNodeRunRequestEvent.eventName, { ...eventInit });
   }
 }

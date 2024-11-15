@@ -4,6 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GraphMetadata } from "@breadboard-ai/types";
+import {
+  InspectableEdge,
+  InspectableNode,
+  InspectableNodePorts,
+  NodeHandlerMetadata,
+} from "@google-labs/breadboard";
+
 export enum GRAPH_OPERATIONS {
   GRAPH_BOARD_LINK_CLICKED = "graphboardlinkclicked",
   GRAPH_AUTOSELECTED_NODES = "graphautoselectednodes",
@@ -58,3 +66,17 @@ export type VisualMetadata = {
   y: number;
   collapsed: ComponentExpansionState | boolean;
 };
+
+export interface GraphOpts {
+  url: string;
+  subGraphId: string | null;
+  showNodePreviewValues: boolean;
+  showNodeTypeDescriptions: boolean;
+  collapseNodesByDefault: boolean;
+  ports: Map<string, InspectableNodePorts> | null;
+  typeMetadata: Map<string, NodeHandlerMetadata> | null;
+  edges: InspectableEdge[];
+  nodes: InspectableNode[];
+  metadata: GraphMetadata;
+  visible: boolean;
+}

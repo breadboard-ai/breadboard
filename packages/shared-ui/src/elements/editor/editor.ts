@@ -67,6 +67,7 @@ const PASTE_OFFSET = 50;
 import { Command, TopGraphRunResult } from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
 import { COMMAND_SET_GRAPH_EDITOR } from "../../constants/constants.js";
+import { GraphOpts } from "./types.js";
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
   if (type !== "input" && type !== "output") {
@@ -177,6 +178,9 @@ export class Editor extends LitElement {
 
   @property()
   showExperimentalComponents = false;
+
+  @property()
+  showSubgraphsInline = true;
 
   @property()
   zoomToHighlightedNodeDuringRuns = false;
@@ -312,6 +316,87 @@ export class Editor extends LitElement {
     }
   `;
 
+  async #inspectableGraphToConfig(
+    url: string,
+    subGraphId: string | null,
+    selectedGraph: InspectableGraph
+  ) {
+    const ports = new Map<string, InspectableNodePorts>();
+    const typeMetadata = new Map<string, NodeHandlerMetadata>();
+    for (const node of selectedGraph.nodes()) {
+      ports.set(node.descriptor.id, await node.ports());
+      try {
+        typeMetadata.set(node.descriptor.type, await node.type().metadata());
+      } catch (err) {
+        // In the event of failing to get the type info, suggest removing the
+        // node from the graph.
+        this.dispatchEvent(
+          new NodeTypeRetrievalErrorEvent(node.descriptor.id, this.subGraphId)
+        );
+      }
+    }
+
+    return {
+      url,
+      subGraphId,
+      visible: true,
+      showNodeTypeDescriptions: this.showNodeTypeDescriptions,
+      showNodePreviewValues: this.showNodePreviewValues,
+      collapseNodesByDefault: this.collapseNodesByDefault,
+      ports: ports,
+      typeMetadata,
+      edges: selectedGraph.edges(),
+      nodes: selectedGraph.nodes(),
+      metadata: selectedGraph.metadata() || {},
+    };
+  }
+
+  #updateOrCreateGraph(opts: GraphOpts, listenForDraw = false) {
+    const updated = this.#graphRenderer.updateGraphByUrl(
+      opts.url,
+      opts.subGraphId,
+      opts
+    );
+    if (updated) {
+      this.#graphRenderer.showGraph(opts.url, opts.subGraphId);
+      if (this.topGraphResult) {
+        this.#graphRenderer.topGraphResult = this.topGraphResult;
+      }
+
+      return;
+    }
+
+    if (this.#lastSubGraphId !== opts.subGraphId) {
+      // TODO: Need to figure out how to encode the subgraph/node id combo.
+      this.#graphRenderer.topGraphResult = null;
+    }
+
+    this.#graphRenderer.createGraph(opts);
+
+    if (!listenForDraw) {
+      return;
+    }
+
+    this.#graphRenderer.addEventListener(
+      GraphInitialDrawEvent.eventName,
+      () => {
+        this.#graphRenderer.showGraph(opts.url, opts.subGraphId);
+        this.#graphRenderer.zoomToFit(
+          true,
+          this.isShowingBoardActivityOverlay ? 400 : 0
+        );
+
+        // When we're loading a graph from existing results, we need to
+        // set the topGraphResult again so that it is applied to the newly
+        // created graph.
+        if (this.topGraphResult) {
+          this.#graphRenderer.topGraphResult = this.topGraphResult;
+        }
+      },
+      { once: true }
+    );
+  }
+
   async #processGraph(): Promise<GraphRenderer> {
     if (GraphAssets.assetPrefix !== this.assetPrefix) {
       GraphAssets.instance().loadAssets(this.assetPrefix);
@@ -328,6 +413,7 @@ export class Editor extends LitElement {
     this.#graphVersion++;
     this.#graphRenderer.readOnly = this.readOnly;
     this.#graphRenderer.highlightInvalidWires = this.highlightInvalidWires;
+    this.#graphRenderer.showSubgraphsInline = this.showSubgraphsInline;
 
     let selectedGraph = this.graph;
     if (this.subGraphId) {
@@ -345,93 +431,44 @@ export class Editor extends LitElement {
       ? `${mainGraphUrl}#${this.subGraphId}`
       : mainGraphUrl;
 
-    const ports = new Map<string, InspectableNodePorts>();
-    const typeMetadata = new Map<string, NodeHandlerMetadata>();
     const graphVersion = this.#graphVersion;
+    const mainGraphOpts = await this.#inspectableGraphToConfig(
+      url,
+      this.subGraphId,
+      selectedGraph
+    );
 
-    for (const node of selectedGraph.nodes()) {
-      ports.set(node.descriptor.id, await node.ports());
-      try {
-        typeMetadata.set(node.descriptor.type, await node.type().metadata());
-      } catch (err) {
-        // In the event of failing to get the type info, suggest removing the
-        // node from the graph.
-        this.dispatchEvent(
-          new NodeTypeRetrievalErrorEvent(node.descriptor.id, this.subGraphId)
+    if (!selectedGraph) {
+      return this.#graphRenderer;
+    }
+
+    const subGraphs = new Map<string, GraphOpts>();
+    if (this.showSubgraphsInline) {
+      for (const [id, subGraph] of Object.entries(selectedGraph.graphs())) {
+        const subGraphUrl = `${url}-${id}`;
+        const subGraphOpts = await this.#inspectableGraphToConfig(
+          subGraphUrl,
+          id,
+          subGraph
         );
-      }
 
-      if (this.#graphVersion !== graphVersion) {
-        // Another update has come in, bail out.
-        return this.#graphRenderer;
+        subGraphs.set(id, subGraphOpts);
       }
     }
 
-    if (!selectedGraph) {
+    // A newer graph has arrived - bail.
+    if (graphVersion !== this.#graphVersion) {
       return this.#graphRenderer;
     }
 
     this.#graphRenderer.hideAllGraphs();
     this.#graphRenderer.removeGraphs(this.tabURLs);
 
-    // Attempt to update the graph if it already exists.
-    const updated = this.#graphRenderer.updateGraphByUrl(url, this.subGraphId, {
-      showNodeTypeDescriptions: this.showNodeTypeDescriptions,
-      showNodePreviewValues: this.showNodePreviewValues,
-      collapseNodesByDefault: this.collapseNodesByDefault,
-      ports: ports,
-      typeMetadata,
-      edges: selectedGraph.edges(),
-      nodes: selectedGraph.nodes(),
-      metadata: selectedGraph.metadata(),
-    });
+    this.#updateOrCreateGraph(mainGraphOpts, true);
 
-    if (updated) {
-      this.#graphRenderer.showGraph(url, this.subGraphId);
-      if (this.topGraphResult) {
-        this.#graphRenderer.topGraphResult = this.topGraphResult;
-      }
-
-      return this.#graphRenderer;
+    for (const [, subGraphOpts] of subGraphs) {
+      this.#updateOrCreateGraph(subGraphOpts);
     }
-
-    if (this.#lastSubGraphId !== this.subGraphId) {
-      // TODO: Need to figure out how to encode the subgraph/node id combo.
-      this.#graphRenderer.topGraphResult = null;
-    }
-
-    this.#graphRenderer.createGraph({
-      url,
-      subGraphId: this.subGraphId,
-      showNodeTypeDescriptions: this.showNodeTypeDescriptions,
-      showNodePreviewValues: this.showNodePreviewValues,
-      collapseNodesByDefault: this.collapseNodesByDefault,
-      ports: ports,
-      typeMetadata,
-      edges: selectedGraph.edges(),
-      nodes: selectedGraph.nodes(),
-      metadata: selectedGraph.metadata() || {},
-      visible: false,
-    });
-
-    this.#graphRenderer.addEventListener(
-      GraphInitialDrawEvent.eventName,
-      () => {
-        this.#graphRenderer.showGraph(url, this.subGraphId);
-        this.#graphRenderer.zoomToFit(
-          true,
-          this.isShowingBoardActivityOverlay ? 400 : 0
-        );
-
-        // When we're loading a graph from existing results, we need to
-        // set the topGraphResult again so that it is applied to the newly
-        // created graph.
-        if (this.topGraphResult) {
-          this.#graphRenderer.topGraphResult = this.topGraphResult;
-        }
-      },
-      { once: true }
-    );
 
     return this.#graphRenderer;
   }
@@ -664,7 +701,7 @@ export class Editor extends LitElement {
         commentEvt.id,
         commentEvt.x,
         commentEvt.y,
-        this.subGraphId
+        commentEvt.subGraphId
       )
     );
   }
@@ -672,7 +709,7 @@ export class Editor extends LitElement {
   #onGraphNodeRunRequest(evt: Event) {
     const runRequestEvt = evt as GraphNodeRunRequestEvent;
     this.dispatchEvent(
-      new NodeRunRequestEvent(runRequestEvt.id, this.subGraphId)
+      new NodeRunRequestEvent(runRequestEvt.id, runRequestEvt.subGraphId)
     );
   }
 
@@ -1135,7 +1172,7 @@ export class Editor extends LitElement {
         }
       }),
       `Node multimove: ${label}`,
-      this.subGraphId
+      moveEvt.subGraphId
     );
 
     if (this.readOnly) {
@@ -1146,7 +1183,7 @@ export class Editor extends LitElement {
   }
 
   #onGraphEdgeAttach(evt: Event) {
-    const { edge } = evt as GraphEdgeAttachEvent;
+    const { edge, subGraphId } = evt as GraphEdgeAttachEvent;
     this.dispatchEvent(
       new EdgeChangeEvent(
         "add",
@@ -1158,13 +1195,13 @@ export class Editor extends LitElement {
           constant: edge.type === "constant",
         },
         undefined,
-        this.subGraphId
+        subGraphId
       )
     );
   }
 
   #onGraphEdgeDetach(evt: Event) {
-    const { edge } = evt as GraphEdgeDetachEvent;
+    const { edge, subGraphId } = evt as GraphEdgeDetachEvent;
     this.dispatchEvent(
       new EdgeChangeEvent(
         "remove",
@@ -1175,13 +1212,13 @@ export class Editor extends LitElement {
           in: edge.in,
         },
         undefined,
-        this.subGraphId
+        subGraphId
       )
     );
   }
 
   #onGraphEdgeChange(evt: Event) {
-    const { fromEdge, toEdge } = evt as GraphNodeEdgeChangeEvent;
+    const { fromEdge, toEdge, subGraphId } = evt as GraphNodeEdgeChangeEvent;
     this.dispatchEvent(
       new EdgeChangeEvent(
         "move",
@@ -1199,18 +1236,19 @@ export class Editor extends LitElement {
           in: toEdge.in,
           constant: toEdge.type === "constant",
         },
-        this.subGraphId
+        subGraphId
       )
     );
   }
 
   #onGraphNodeDelete(evt: Event) {
-    const { id } = evt as GraphNodeDeleteEvent;
-    this.dispatchEvent(new NodeDeleteEvent(id, this.subGraphId));
+    const { id, subGraphId } = evt as GraphNodeDeleteEvent;
+    this.dispatchEvent(new NodeDeleteEvent(id, subGraphId));
   }
 
   #onGraphEntityRemove(evt: Event) {
-    const { nodes, edges, comments } = evt as GraphEntityRemoveEvent;
+    const { nodes, edges, comments, subGraphId } =
+      evt as GraphEntityRemoveEvent;
     const edits: EditSpec[] = [];
 
     // Remove edges first.
@@ -1233,8 +1271,8 @@ export class Editor extends LitElement {
 
     // Remove comments.
     let graph = this.graph?.raw();
-    if (this.subGraphId && graph?.graphs) {
-      graph = graph.graphs[this.subGraphId];
+    if (subGraphId && graph?.graphs) {
+      graph = graph.graphs[subGraphId];
     }
     if (graph && graph.metadata) {
       graph.metadata.comments ??= [];
@@ -1271,19 +1309,26 @@ export class Editor extends LitElement {
       new MultiEditEvent(
         edits,
         `Delete (${nodesLabel}) (${edgesLabel}) (${commentsLabel})`,
-        this.subGraphId
+        subGraphId
       )
     );
   }
 
   #onGraphNodeEdit(evt: Event) {
-    const { id, port, selectedPort, x, y, addHorizontalClickClearance } =
-      evt as GraphNodeEditEvent;
+    const {
+      id,
+      port,
+      selectedPort,
+      x,
+      y,
+      subGraphId,
+      addHorizontalClickClearance,
+    } = evt as GraphNodeEditEvent;
 
     this.dispatchEvent(
       new NodeConfigurationUpdateRequestEvent(
         id,
-        this.subGraphId,
+        subGraphId,
         port,
         selectedPort,
         x,
