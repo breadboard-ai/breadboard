@@ -124,7 +124,11 @@ export class BubbledInspectableNode implements InspectableNode {
           bubbledValues
         ),
       };
-      return { inputs, outputs };
+      const side: InspectablePortList = {
+        fixed: true,
+        ports: [],
+      };
+      return { inputs, outputs, side };
     }
     return this.#actual.ports(inputValues, outputValues || undefined);
   }

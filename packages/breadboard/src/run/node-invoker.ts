@@ -43,10 +43,11 @@ export class NodeInvoker {
   }
 
   #adjustInputs(result: TraversalResult) {
-    const { inputs, descriptor } = result;
-    if (!this.#start) return inputs;
-    if (this.#start !== descriptor.id) return inputs;
-    return { ...inputs, ...this.#initialInputs };
+    const { inputs, current } = result;
+    if (current.from === "$entry") {
+      return { ...inputs, ...this.#initialInputs };
+    }
+    return inputs;
   }
 
   async invokeNode(result: TraversalResult, invocationPath: number[]) {

@@ -438,7 +438,7 @@ export type InspectablePort = {
   /**
    * Is this an input or output port?
    */
-  kind: "input" | "output";
+  kind: "input" | "output" | "side";
 };
 
 export type InspectablePortType = {
@@ -507,6 +507,10 @@ export type InspectableNodePorts = {
    * Returns the output ports of the node.
    */
   outputs: InspectablePortList;
+  /**
+   * Return the side ports of the node.
+   */
+  side: InspectablePortList;
 };
 
 /**
