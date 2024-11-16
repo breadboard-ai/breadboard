@@ -85,6 +85,7 @@ export class AddEdge implements EditOperation {
       success: true,
       affectedNodes: [edge.from, edge.to],
       affectedModules: [],
+      affectedGraphs: [],
     };
   }
 
@@ -103,15 +104,19 @@ export class AddEdge implements EditOperation {
     if (!can.success) {
       return can;
     }
+
+    const graphId = inspector.graphId();
+
     edge = fixUpStarEdge(edge);
     edge = fixupConstantEdge(edge);
     // TODO: Figure out how to make this work in multi-edit mode.
-    store.edgeStore.add(edge);
+    store.edgeStore.add(edge, graphId);
     graph.edges.push(edge);
     return {
       success: true,
       affectedNodes: [edge.from, edge.to],
       affectedModules: [],
+      affectedGraphs: [],
     };
   }
 }

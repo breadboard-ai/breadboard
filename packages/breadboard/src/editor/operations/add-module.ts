@@ -25,7 +25,12 @@ export class AddModule implements EditOperation {
         error: `Unable to add module: module with id "${id}" already exists`,
       };
     }
-    return { success: true, affectedNodes: [], affectedModules: [id] };
+    return {
+      success: true,
+      affectedNodes: [],
+      affectedModules: [id],
+      affectedGraphs: [],
+    };
   }
 
   async do(
@@ -47,6 +52,11 @@ export class AddModule implements EditOperation {
     graph.modules ??= {};
     graph.modules[id] = module;
 
-    return { success: true, affectedNodes: [], affectedModules: [id] };
+    return {
+      success: true,
+      affectedNodes: [],
+      affectedModules: [id],
+      affectedGraphs: [],
+    };
   }
 }

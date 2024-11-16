@@ -25,7 +25,12 @@ export class RemoveNode implements EditOperation {
         error: `Unable to remove node: node with id "${id}" does not exist`,
       };
     }
-    return { success: true, affectedNodes: [id], affectedModules: [] };
+    return {
+      success: true,
+      affectedNodes: [id],
+      affectedModules: [],
+      affectedGraphs: [],
+    };
   }
 
   async do(
@@ -44,17 +49,24 @@ export class RemoveNode implements EditOperation {
       return can;
     }
 
+    const graphId = inspector.graphId();
+
     // Remove any edges that are connected to the removed node.
     graph.edges = graph.edges.filter((edge) => {
       const shouldRemove = edge.from === id || edge.to === id;
       if (shouldRemove) {
-        store.edgeStore.remove(edge);
+        store.edgeStore.remove(edge, graphId);
       }
       return !shouldRemove;
     });
     // Remove the node from the graph.
     graph.nodes = graph.nodes.filter((node) => node.id != id);
-    store.nodeStore.remove(id);
-    return { success: true, affectedNodes: [id], affectedModules: [] };
+    store.nodeStore.remove(id, graphId);
+    return {
+      success: true,
+      affectedNodes: [id],
+      affectedModules: [],
+      affectedGraphs: [],
+    };
   }
 }

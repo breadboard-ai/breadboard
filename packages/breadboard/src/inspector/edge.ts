@@ -4,9 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Edge as EdgeDescriptor, GraphDescriptor } from "../types.js";
+import {
+  Edge as EdgeDescriptor,
+  GraphDescriptor,
+  GraphIdentifier,
+} from "../types.js";
 import {
   InspectableEdge,
+  InspectableEdgeCache,
   InspectableEdgeType,
   InspectableNodeCache,
   InspectablePort,
@@ -52,14 +57,20 @@ export const fixupConstantEdge = (edge: EdgeDescriptor): EdgeDescriptor => {
 class Edge implements InspectableEdge {
   #nodes: InspectableNodeCache;
   #edge: EdgeDescriptor;
+  #graphId: GraphIdentifier;
 
-  constructor(nodes: InspectableNodeCache, edge: EdgeDescriptor) {
+  constructor(
+    nodes: InspectableNodeCache,
+    edge: EdgeDescriptor,
+    graphId: GraphIdentifier
+  ) {
     this.#nodes = nodes;
     this.#edge = edge;
+    this.#graphId = graphId;
   }
 
   get from() {
-    const from = this.#nodes.get(this.#edge.from);
+    const from = this.#nodes.get(this.#edge.from, this.#graphId);
     console.assert(from, "From node not found when getting from.");
     return from!;
   }
@@ -69,7 +80,7 @@ class Edge implements InspectableEdge {
   }
 
   get to() {
-    const to = this.#nodes.get(this.#edge.to);
+    const to = this.#nodes.get(this.#edge.to, this.#graphId);
     console.assert(to, "To node not found when getting to.");
     return to!;
   }
@@ -115,9 +126,9 @@ class Edge implements InspectableEdge {
   }
 }
 
-export class EdgeCache {
+export class EdgeCache implements InspectableEdgeCache {
   #nodes: InspectableNodeCache;
-  #map: Map<EdgeDescriptor, InspectableEdge> = new Map();
+  #map: Map<GraphIdentifier, Map<EdgeDescriptor, InspectableEdge>> = new Map();
 
   constructor(nodes: InspectableNodeCache) {
     this.#nodes = nodes;
@@ -126,42 +137,63 @@ export class EdgeCache {
   populate(graph: GraphDescriptor) {
     // Initialize the edge map from the graph. This is only done once, and all
     // following updates are performed incrementally.
-    return (this.#map = new Map(
-      graph.edges.map((edge) => [edge, new Edge(this.#nodes, edge)])
-    ));
+    const mainGraphEdges = new Map(
+      graph.edges.map((edge) => [edge, new Edge(this.#nodes, edge, "")])
+    );
+    this.#map.set("", mainGraphEdges);
+    Object.entries(graph.graphs || {}).forEach(([graphId, graph]) => {
+      const subGraphEdges = new Map(
+        graph.edges.map((edge) => [edge, new Edge(this.#nodes, edge, graphId)])
+      );
+      this.#map.set(graphId, subGraphEdges);
+    });
   }
 
-  get(edge: EdgeDescriptor): InspectableEdge | undefined {
-    return this.#map.get(edge);
+  get(
+    edge: EdgeDescriptor,
+    graphId: GraphIdentifier
+  ): InspectableEdge | undefined {
+    return this.#map.get(graphId)?.get(edge);
   }
 
-  getOrCreate(edge: EdgeDescriptor): InspectableEdge {
-    let result = this.get(edge);
+  getOrCreate(edge: EdgeDescriptor, graphId: GraphIdentifier): InspectableEdge {
+    let result = this.get(edge, graphId);
     if (result) {
       return result;
     }
-    result = new Edge(this.#nodes, edge);
-    this.add(edge);
+    result = new Edge(this.#nodes, edge, graphId);
+    this.add(edge, graphId);
     return result;
   }
 
-  add(edge: EdgeDescriptor) {
-    console.assert(!this.#map.has(edge), "Edge already exists when adding.");
-    this.#map.set(edge, new Edge(this.#nodes, edge));
+  add(edge: EdgeDescriptor, graphId: GraphIdentifier) {
+    console.assert(
+      !this.#map.get(graphId)?.has(edge),
+      "Edge already exists when adding."
+    );
+    let graphEdges = this.#map.get(graphId);
+    if (!graphEdges) {
+      graphEdges = new Map();
+      this.#map.set(graphId, graphEdges);
+    }
+    graphEdges.set(edge, new Edge(this.#nodes, edge, graphId));
   }
 
-  remove(edge: EdgeDescriptor) {
-    console.assert(this.#map.has(edge), "Edge not found when removing.");
-    this.#map.delete(edge);
+  remove(edge: EdgeDescriptor, graphId: GraphIdentifier) {
+    console.assert(
+      this.#map.get(graphId)?.has(edge),
+      "Edge not found when removing."
+    );
+    this.#map.get(graphId)?.delete(edge);
   }
 
-  has(edge: EdgeDescriptor): boolean {
-    return this.#map.has(edge);
+  has(edge: EdgeDescriptor, graphId: GraphIdentifier): boolean {
+    return !!this.#map.get(graphId)?.has(edge);
   }
 
-  hasByValue(edge: EdgeDescriptor): boolean {
+  hasByValue(edge: EdgeDescriptor, graphId: GraphIdentifier): boolean {
     edge = unfixUpStarEdge(edge);
-    const edges = this.edges();
+    const edges = this.edges(graphId);
     return !!edges.find((e) => {
       return (
         e.from.descriptor.id === edge.from &&
@@ -172,7 +204,7 @@ export class EdgeCache {
     });
   }
 
-  edges(): InspectableEdge[] {
-    return Array.from(this.#map.values());
+  edges(graphId: GraphIdentifier): InspectableEdge[] {
+    return Array.from(this.#map.get(graphId)?.values() || []);
   }
 }

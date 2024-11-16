@@ -269,7 +269,7 @@ export class Edit extends EventTarget {
     return history.redo();
   }
 
-  updateSubBoardInfo(
+  async updateSubBoardInfo(
     tab: Tab | null,
     subGraphId: string,
     title: string,
@@ -306,7 +306,15 @@ export class Edit extends EventTarget {
       isComponent
     );
 
-    editableGraph.replaceGraph(subGraphId, subGraphDescriptor);
+    await editableGraph.edit(
+      [
+        { type: "removegraph", id: subGraphId },
+        { type: "addgraph", id: subGraphId, graph: subGraphDescriptor },
+      ],
+      `Replacing graph "${title}"`
+    );
+
+    // editableGraph.replaceGraph(subGraphId, subGraphDescriptor);
   }
 
   deleteComment(tab: Tab | null, id: string) {
@@ -560,7 +568,7 @@ export class Edit extends EventTarget {
     }
   }
 
-  createSubGraph(tab: Tab | null, subGraphTitle: string) {
+  async createSubGraph(tab: Tab | null, subGraphTitle: string) {
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to create sub board"));
@@ -571,22 +579,28 @@ export class Edit extends EventTarget {
     const board = blankLLMContent();
     board.title = subGraphTitle;
 
-    const editResult = editableGraph.addGraph(id, board);
-    if (!editResult) {
+    const editResult = await editableGraph.edit(
+      [{ type: "addgraph", graph: board, id }],
+      `Adding subgraph ${subGraphTitle}`
+    );
+    if (!editResult.success) {
       return null;
     }
 
     return id;
   }
 
-  deleteSubGraph(tab: Tab | null, subGraphId: string) {
+  async deleteSubGraph(tab: Tab | null, subGraphId: string) {
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to delete sub board"));
       return;
     }
 
-    const editResult = editableGraph.removeGraph(subGraphId);
+    const editResult = await editableGraph.edit(
+      [{ type: "removegraph", id: subGraphId }],
+      `Removing subgraph $"{subGraphId}"`
+    );
     if (!editResult.success) {
       return null;
     }

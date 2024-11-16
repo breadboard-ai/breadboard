@@ -25,7 +25,12 @@ export class ChangeConfiguration implements EditOperation {
         error: `Unable to update configuration: node with id "${id}" does not exist`,
       };
     }
-    return { success: true, affectedNodes: [], affectedModules: [] };
+    return {
+      success: true,
+      affectedNodes: [],
+      affectedModules: [],
+      affectedGraphs: [],
+    };
   }
 
   async do(
@@ -60,6 +65,11 @@ export class ChangeConfiguration implements EditOperation {
         };
       }
     }
-    return { success: true, affectedNodes: [id], affectedModules: [] };
+    return {
+      success: true,
+      affectedNodes: [id],
+      affectedModules: [],
+      affectedGraphs: [],
+    };
   }
 }

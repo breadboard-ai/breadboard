@@ -418,7 +418,7 @@ export class Editor extends LitElement {
     let selectedGraph = this.graph;
     if (this.subGraphId) {
       const subgraphs = selectedGraph.graphs();
-      if (subgraphs[this.subGraphId]) {
+      if (subgraphs && subgraphs[this.subGraphId]) {
         selectedGraph = subgraphs[this.subGraphId];
       } else {
         console.warn(`Unable to locate subgraph by name: ${this.subGraphId}`);
@@ -444,7 +444,9 @@ export class Editor extends LitElement {
 
     const subGraphs = new Map<string, GraphOpts>();
     if (this.showSubgraphsInline) {
-      for (const [id, subGraph] of Object.entries(selectedGraph.graphs())) {
+      for (const [id, subGraph] of Object.entries(
+        selectedGraph.graphs() || {}
+      )) {
         const subGraphUrl = `${url}-${id}`;
         const subGraphOpts = await this.#inspectableGraphToConfig(
           subGraphUrl,

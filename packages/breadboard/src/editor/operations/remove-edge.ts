@@ -30,6 +30,7 @@ export class RemoveEdge implements EditOperation {
       success: true,
       affectedNodes: [spec.from, spec.to],
       affectedModules: [],
+      affectedGraphs: [],
     };
   }
 
@@ -48,15 +49,17 @@ export class RemoveEdge implements EditOperation {
     if (!can.success) {
       return can;
     }
+    const graphId = inspector.graphId();
     edge = fixUpStarEdge(edge);
     const edges = graph.edges;
     const index = findEdgeIndex(graph, edge);
     const foundEdge = edges.splice(index, 1)[0];
-    store.edgeStore.remove(foundEdge);
+    store.edgeStore.remove(foundEdge, graphId);
     return {
       success: true,
       affectedNodes: [edge.from, edge.to],
       affectedModules: [],
+      affectedGraphs: [],
     };
   }
 }
