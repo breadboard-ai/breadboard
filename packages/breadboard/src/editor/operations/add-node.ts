@@ -34,7 +34,12 @@ export class AddNode implements EditOperation {
       };
     }
 
-    return { success: true, affectedNodes: [], affectedModules: [] };
+    return {
+      success: true,
+      affectedNodes: [],
+      affectedModules: [],
+      affectedGraphs: [],
+    };
   }
 
   async do(
@@ -56,6 +61,11 @@ export class AddNode implements EditOperation {
 
     graph.nodes.push(node);
     store.nodeStore.add(node, graphId);
-    return { success: true, affectedNodes: [node.id], affectedModules: [] };
+    return {
+      success: true,
+      affectedNodes: [node.id],
+      affectedModules: [],
+      affectedGraphs: [],
+    };
   }
 }

@@ -14,15 +14,32 @@ import {
 export { AddGraph };
 
 class AddGraph implements EditOperation {
-  do(edit: EditSpec, context: EditOperationContext): Promise<SingleEditResult> {
+  async do(
+    edit: EditSpec,
+    context: EditOperationContext
+  ): Promise<SingleEditResult> {
     if (edit.type !== "addgraph") {
       throw new Error(
         `Editor API integrity error: expected type "addgraph", received "${edit.type}" instead.`
       );
     }
-    const { graph, inspector, store } = context;
-    // Check to see if a graph by this id already exists
-    // Check to see if this is a subgraph
-    throw new Error("not implemented");
+    const { id, graph: subgraph } = edit;
+    const { graph } = context;
+
+    if (graph.graphs?.[id]) {
+      return {
+        success: false,
+        error: `Failed to add graph: "${id}" already exists.`,
+      };
+    }
+    graph.graphs ??= {};
+    graph.graphs[id] = subgraph;
+
+    return {
+      success: true,
+      affectedModules: [],
+      affectedNodes: [],
+      affectedGraphs: [id],
+    };
   }
 }

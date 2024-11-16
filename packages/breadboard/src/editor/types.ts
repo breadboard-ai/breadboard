@@ -315,6 +315,7 @@ export type SingleEditResult =
       success: true;
       affectedNodes: NodeIdentifier[];
       affectedModules: ModuleIdentifier[];
+      affectedGraphs: GraphIdentifier[];
       /**
        * Indicates that the edit was successful, and
        * resulted in no change.

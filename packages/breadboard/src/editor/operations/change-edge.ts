@@ -24,7 +24,12 @@ export class ChangeEdge implements EditOperation {
     inspector: InspectableGraph
   ): Promise<SingleEditResult> {
     if (edgesEqual(from, to)) {
-      return { success: true, affectedNodes: [], affectedModules: [] };
+      return {
+        success: true,
+        affectedNodes: [],
+        affectedModules: [],
+        affectedGraphs: [],
+      };
     }
     const canRemoveOp = new RemoveEdge();
     const canRemove = await canRemoveOp.can(from, inspector);
@@ -32,7 +37,12 @@ export class ChangeEdge implements EditOperation {
     const canAddOp = new AddEdge();
     const canAdd = await canAddOp.can(to, inspector);
     if (!canAdd.success) return canAdd;
-    return { success: true, affectedNodes: [], affectedModules: [] };
+    return {
+      success: true,
+      affectedNodes: [],
+      affectedModules: [],
+      affectedGraphs: [],
+    };
   }
 
   async do(
@@ -58,6 +68,7 @@ export class ChangeEdge implements EditOperation {
         noChange: true,
         affectedNodes: [],
         affectedModules: [],
+        affectedGraphs: [],
       };
     }
     const fixedUpEdge = fixUpStarEdge(from);
@@ -75,6 +86,7 @@ export class ChangeEdge implements EditOperation {
       success: true,
       affectedNodes: [edge.from, edge.to],
       affectedModules: [],
+      affectedGraphs: [],
     };
   }
 }

@@ -38,6 +38,7 @@ import {
   toDeclarativeGraph,
   toImperativeGraph,
 } from "../run/run-imperative-graph.js";
+import { AddGraph } from "./operations/add-graph.js";
 
 const validImperativeEdits: EditSpec["type"][] = [
   "addmodule",
@@ -58,6 +59,7 @@ const operations = new Map<EditSpec["type"], EditOperation>([
   ["addmodule", new AddModule()],
   ["removemodule", new RemoveModule()],
   ["changemodule", new ChangeModule()],
+  ["addgraph", new AddGraph()],
 ]);
 
 export class Graph implements EditableGraph {
@@ -377,7 +379,12 @@ export class Graph implements EditableGraph {
       editableToDelete.#makeIndependent();
     }
     this.#updateGraph(false, [], []);
-    return { success: true, affectedNodes: [], affectedModules: [] };
+    return {
+      success: true,
+      affectedNodes: [],
+      affectedModules: [],
+      affectedGraphs: [id],
+    };
   }
 
   replaceGraph(id: GraphIdentifier, graph: GraphDescriptor): boolean {

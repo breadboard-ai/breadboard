@@ -30,6 +30,7 @@ export class RemoveEdge implements EditOperation {
       success: true,
       affectedNodes: [spec.from, spec.to],
       affectedModules: [],
+      affectedGraphs: [],
     };
   }
 
@@ -58,6 +59,7 @@ export class RemoveEdge implements EditOperation {
       success: true,
       affectedNodes: [edge.from, edge.to],
       affectedModules: [],
+      affectedGraphs: [],
     };
   }
 }

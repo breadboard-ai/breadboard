@@ -25,7 +25,12 @@ export class ChangeMetadata implements EditOperation {
         error: `Unable to change metadata: node with id "${id}" does not exist`,
       };
     }
-    return { success: true, affectedNodes: [], affectedModules: [] };
+    return {
+      success: true,
+      affectedNodes: [],
+      affectedModules: [],
+      affectedGraphs: [],
+    };
   }
 
   #isVisualOnly(incoming: NodeMetadata, existing: NodeMetadata): boolean {
@@ -68,6 +73,12 @@ export class ChangeMetadata implements EditOperation {
       };
     }
     const affectedNodes = visualOnly ? [] : [id];
-    return { success: true, visualOnly, affectedNodes, affectedModules: [] };
+    return {
+      success: true,
+      visualOnly,
+      affectedNodes,
+      affectedModules: [],
+      affectedGraphs: [],
+    };
   }
 }

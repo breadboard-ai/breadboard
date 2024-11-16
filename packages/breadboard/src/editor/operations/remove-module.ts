@@ -28,6 +28,7 @@ export class RemoveModule implements EditOperation {
       success: true,
       affectedNodes: [],
       affectedModules: [id],
+      affectedGraphs: [],
     };
   }
 
@@ -60,6 +61,7 @@ export class RemoveModule implements EditOperation {
       success: true,
       affectedNodes: [],
       affectedModules: [id],
+      affectedGraphs: [],
     };
   }
 }

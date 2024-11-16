@@ -85,6 +85,7 @@ export class AddEdge implements EditOperation {
       success: true,
       affectedNodes: [edge.from, edge.to],
       affectedModules: [],
+      affectedGraphs: [],
     };
   }
 
@@ -115,6 +116,7 @@ export class AddEdge implements EditOperation {
       success: true,
       affectedNodes: [edge.from, edge.to],
       affectedModules: [],
+      affectedGraphs: [],
     };
   }
 }

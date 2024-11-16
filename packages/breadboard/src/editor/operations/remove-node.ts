@@ -25,7 +25,12 @@ export class RemoveNode implements EditOperation {
         error: `Unable to remove node: node with id "${id}" does not exist`,
       };
     }
-    return { success: true, affectedNodes: [id], affectedModules: [] };
+    return {
+      success: true,
+      affectedNodes: [id],
+      affectedModules: [],
+      affectedGraphs: [],
+    };
   }
 
   async do(
@@ -57,6 +62,11 @@ export class RemoveNode implements EditOperation {
     // Remove the node from the graph.
     graph.nodes = graph.nodes.filter((node) => node.id != id);
     store.nodeStore.remove(id, graphId);
-    return { success: true, affectedNodes: [id], affectedModules: [] };
+    return {
+      success: true,
+      affectedNodes: [id],
+      affectedModules: [],
+      affectedGraphs: [],
+    };
   }
 }
