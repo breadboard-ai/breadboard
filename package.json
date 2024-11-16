@@ -172,7 +172,8 @@
   "workspaces": [
     "./core/*",
     "./packages/*",
-    "./packages/node-proxy-server/functions"
+    "./packages/node-proxy-server/functions",
+    "!./packages/bbrt"
   ],
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.27.0",
