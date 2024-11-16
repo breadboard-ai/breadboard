@@ -5,11 +5,11 @@
  */
 
 import {expect} from '@esm-bundle/chai';
-import {MyComponent} from '../component.js';
+import {BBRTMain} from '../components/main.js';
 
-describe('my-component', () => {
+describe('bbrt-main', () => {
   it('is an HTMLElement', () => {
-    const c = new MyComponent();
+    const c = new BBRTMain();
     expect(c).instanceOf(HTMLElement);
   });
 });
