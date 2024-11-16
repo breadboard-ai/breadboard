@@ -337,7 +337,8 @@ export class Graph implements EditableGraph {
       throw new Error("Subgraphs can't contain subgraphs.");
     }
 
-    if (this.#graphs.get(id)) {
+    const subGraphs = this.#graph.graphs;
+    if (subGraphs?.[id]) {
       return false;
     }
 
@@ -367,6 +368,9 @@ export class Graph implements EditableGraph {
       };
     }
     delete subGraphs[id];
+    if (!Object.keys(subGraphs).length) {
+      delete this.#graph.graphs;
+    }
     const editableToDelete = this.#graphs.get(id);
     if (editableToDelete) {
       this.#graphs.delete(id);
