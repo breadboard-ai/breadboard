@@ -1,0 +1,82 @@
+{
+  "name": "@breadboard-ai/template-server",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Template server",
+  "author": "Google LLC",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/breadboard-ai/template#readme",
+  "bugs": {
+    "url": "https://github.com/breadboard-ai/template/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/breadboard-ai/template.git",
+    "directory": "packages/server"
+  },
+  "type": "module",
+  "main": "index.js",
+  "typings": "index.d.ts",
+  "files": [
+    "**/*.js",
+    "**/*.d.ts",
+    "!test/",
+    "!src/",
+    "!.wireit/"
+  ],
+  "scripts": {
+    "start": "wireit",
+    "build": "wireit",
+    "test": "wireit"
+  },
+  "wireit": {
+    "start": {
+      "service": true,
+      "command": "node server.js",
+      "dependencies": [
+        "build",
+        {
+          "script": "../client:build",
+          "cascade": false
+        }
+      ],
+      "files": []
+    },
+    "build": {
+      "command": "tsc --pretty",
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../../tsconfig.base.json",
+        "../../tsconfig.base.node.json"
+      ],
+      "output": [
+        "**/*.js",
+        "**/*.js.map",
+        "**/*.d.ts",
+        "**/*.d.ts.map",
+        "tsconfig.tsbuildinfo",
+        "!src/"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "test": {
+      "#comment": [
+        "node 21 --test takes a glob, but not 18 or 20, ",
+        "and we use xargs instead of shell expansion for windows compatibility"
+      ],
+      "command": "find test -type f -name \"*.test.js\" | xargs node --test --test-reporter=spec",
+      "env": {
+        "FORCE_COLOR": "2"
+      },
+      "files": [],
+      "output": [],
+      "dependencies": [
+        "build"
+      ]
+    }
+  },
+  "dependencies": {
+    "@types/node": "^22.9.0"
+  }
+}
