@@ -34,7 +34,12 @@ export class AddNode implements EditOperation {
       };
     }
 
-    return { success: true, affectedNodes: [], affectedModules: [] };
+    return {
+      success: true,
+      affectedNodes: [],
+      affectedModules: [],
+      affectedGraphs: [],
+    };
   }
 
   async do(
@@ -48,13 +53,19 @@ export class AddNode implements EditOperation {
     }
     const node = spec.node;
     const { graph, inspector, store } = context;
+    const graphId = inspector.graphId();
     const can = await this.can(node, inspector);
     if (!can.success) {
       return can;
     }
 
     graph.nodes.push(node);
-    store.nodeStore.add(node);
-    return { success: true, affectedNodes: [node.id], affectedModules: [] };
+    store.nodeStore.add(node, graphId);
+    return {
+      success: true,
+      affectedNodes: [node.id],
+      affectedModules: [],
+      affectedGraphs: [],
+    };
   }
 }

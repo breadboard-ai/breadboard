@@ -25,7 +25,12 @@ export class ChangeModule implements EditOperation {
         error: `Unable to update module: module with id "${id}" does not exist`,
       };
     }
-    return { success: true, affectedNodes: [], affectedModules: [id] };
+    return {
+      success: true,
+      affectedNodes: [],
+      affectedModules: [id],
+      affectedGraphs: [],
+    };
   }
 
   async do(
@@ -50,6 +55,7 @@ export class ChangeModule implements EditOperation {
       success: true,
       affectedNodes: [],
       affectedModules: [spec.id],
+      affectedGraphs: [],
       visualOnly: false,
     };
   }

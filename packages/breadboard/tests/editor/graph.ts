@@ -517,37 +517,3 @@ test("editor API correctly works with no subgraphs", (t) => {
   const raw = graph.raw();
   t.falsy(raw.graphs);
 });
-
-test("editor API correctly allows adding, removing, replacing subgraphs", (t) => {
-  const graph = testEditGraph();
-  const subgraph = testEditGraph().raw();
-
-  t.assert(graph.addGraph("foo", subgraph) !== null);
-
-  t.truthy(graph.raw().graphs);
-
-  t.is(graph.version(), 1);
-
-  t.assert(graph.addGraph("foo", subgraph) === null);
-
-  t.true(graph.removeGraph("foo").success);
-  t.false(graph.removeGraph("foo").success);
-
-  t.falsy(graph.raw().graphs);
-
-  t.is(graph.version(), 2);
-
-  t.assert(graph.replaceGraph("foo", subgraph) === null);
-
-  t.is(graph.version(), 2);
-
-  t.assert(graph.addGraph("foo", subgraph) !== null);
-
-  t.is(graph.version(), 3);
-
-  t.assert(graph.replaceGraph("foo", subgraph) !== null);
-
-  t.is(graph.version(), 4);
-
-  t.truthy(graph.raw().graphs);
-});

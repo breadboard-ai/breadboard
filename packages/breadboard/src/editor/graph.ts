@@ -38,6 +38,8 @@ import {
   toDeclarativeGraph,
   toImperativeGraph,
 } from "../run/run-imperative-graph.js";
+import { AddGraph } from "./operations/add-graph.js";
+import { RemoveGraph } from "./operations/remove-graph.js";
 
 const validImperativeEdits: EditSpec["type"][] = [
   "addmodule",
@@ -58,6 +60,8 @@ const operations = new Map<EditSpec["type"], EditOperation>([
   ["addmodule", new AddModule()],
   ["removemodule", new RemoveModule()],
   ["changemodule", new ChangeModule()],
+  ["addgraph", new AddGraph()],
+  ["removegraph", new RemoveGraph()],
 ]);
 
 export class Graph implements EditableGraph {
@@ -65,8 +69,9 @@ export class Graph implements EditableGraph {
   #options: EditableGraphOptions;
   #inspector: InspectableGraphWithStore;
   #graph: GraphDescriptor;
+  #graphId: GraphIdentifier;
   #parent: Graph | null;
-  #graphs: Record<GraphIdentifier, Graph> | null;
+  #graphs: Map<GraphIdentifier, Graph> | null;
   #eventTarget: EventTarget = new EventTarget();
   #history: GraphEditHistory;
   #imperativeMain: string | null = null;
@@ -74,6 +79,7 @@ export class Graph implements EditableGraph {
   constructor(
     graph: GraphDescriptor,
     options: EditableGraphOptions,
+    graphId: GraphIdentifier,
     parent: Graph | null
   ) {
     if (isImperativeGraph(graph)) {
@@ -84,19 +90,27 @@ export class Graph implements EditableGraph {
     }
     this.#parent = parent || null;
     if (parent) {
-      // Embedded subgraphs can not have subgraphs.
+      // Subgraphs can not have subgraphs.
       this.#graphs = null;
+      const inspector = parent.inspect().graphs()?.[graphId];
+      if (!inspector) {
+        throw new Error(
+          `Inspect API integrity error: Unable to find subgraph "${graphId}`
+        );
+      }
+      this.#inspector = inspector as InspectableGraphWithStore;
     } else {
-      this.#graphs = Object.fromEntries(
+      this.#inspector = inspectableGraph(this.raw(), options);
+      this.#graphs = new Map(
         Object.entries(this.#graph.graphs || {}).map(([id, graph]) => [
           id,
-          new Graph(graph, options, this),
+          new Graph(graph, options, id, this),
         ])
       );
     }
+    this.#graphId = graphId;
     this.#options = options;
     this.#version = parent ? 0 : options.version || 0;
-    this.#inspector = inspectableGraph(this.raw(), options);
     this.#history = new GraphEditHistory({
       graph: () => {
         return this.raw();
@@ -118,7 +132,7 @@ export class Graph implements EditableGraph {
 
   #makeIndependent() {
     this.#parent = null;
-    this.#graphs = {};
+    this.#graphs = new Map();
   }
 
   #updateGraph(
@@ -131,21 +145,21 @@ export class Graph implements EditableGraph {
       // Update parent version.
       this.#parent.#updateGraph(visualOnly, [], []);
     } else {
-      if (!this.#graphs) {
-        throw new Error(
-          "Integrity error: a supergraph with no ability to add subgraphs"
-        );
-      }
-      const entries = Object.entries(this.#graphs);
-      if (entries.length === 0) {
-        if ("graphs" in this.#graph) delete this.#graph["graphs"];
-        this.#graph = { ...this.#graph };
-      } else {
-        const graphs = Object.fromEntries(
-          entries.map(([id, graph]) => [id, graph.raw()])
-        );
-        this.#graph = { ...this.#graph, graphs };
-      }
+      // if (!this.#graphs) {
+      //   throw new Error(
+      //     "Integrity error: a supergraph with no ability to add subgraphs"
+      //   );
+      // }
+      // const entries = Object.entries(this.#graphs);
+      // if (entries.length === 0) {
+      //   if ("graphs" in this.#graph) delete this.#graph["graphs"];
+      //   this.#graph = { ...this.#graph };
+      // } else {
+      //   const graphs = Object.fromEntries(
+      //     entries.map(([id, graph]) => [id, graph.raw()])
+      //   );
+      //   this.#graph = { ...this.#graph, graphs };
+      // }
       this.#version++;
     }
     this.#inspector.updateGraph(
@@ -195,7 +209,7 @@ export class Graph implements EditableGraph {
 
   version() {
     if (this.#parent) {
-      throw new Error("Embedded subgraphs can not be versioned.");
+      throw new Error("Subgraphs can not be versioned.");
     }
     return this.#version;
   }
@@ -304,64 +318,26 @@ export class Graph implements EditableGraph {
 
   getGraph(id: GraphIdentifier) {
     if (!this.#graphs) {
-      throw new Error("Embedded graphs can't contain subgraphs.");
-    }
-    return this.#graphs[id] || null;
-  }
-
-  addGraph(id: GraphIdentifier, graph: GraphDescriptor): EditableGraph | null {
-    if (!this.#graphs) {
-      throw new Error("Embedded graphs can't contain subgraphs.");
+      throw new Error("Subgraphs can't contain subgraphs.");
     }
 
-    if (this.#graphs[id]) {
+    let editableGraph = this.#graphs.get(id);
+    if (editableGraph) {
+      return editableGraph;
+    }
+
+    const graph = this.raw().graphs?.[id];
+    if (!graph) {
       return null;
     }
 
-    const editable = new Graph(graph, this.#options, this);
-    this.#graphs[id] = editable;
-    this.#updateGraph(false, [], []);
-
-    return editable;
+    editableGraph = new Graph(graph, this.#options, id, this);
+    this.#graphs.set(id, editableGraph);
+    return editableGraph;
   }
 
-  removeGraph(id: GraphIdentifier): SingleEditResult {
-    if (!this.#graphs) {
-      throw new Error("Embedded graphs can't contain subgraphs.");
-    }
-
-    if (!this.#graphs[id]) {
-      const error = `Subgraph with id "${id}" does not exist`;
-      this.#dispatchNoChange(error);
-      return {
-        success: false,
-        error,
-      };
-    }
-    delete this.#graphs[id];
-    this.#updateGraph(false, [], []);
-    return { success: true, affectedNodes: [], affectedModules: [] };
-  }
-
-  replaceGraph(
-    id: GraphIdentifier,
-    graph: GraphDescriptor
-  ): EditableGraph | null {
-    if (!this.#graphs) {
-      throw new Error("Embedded graphs can't contain subgraphs.");
-    }
-
-    const old = this.#graphs[id];
-    if (!old) {
-      return null;
-    }
-    old.#makeIndependent();
-
-    const editable = new Graph(graph, this.#options, this);
-    this.#graphs[id] = editable;
-    this.#updateGraph(false, [], []);
-
-    return editable;
+  graphId() {
+    return this.#graphId;
   }
 
   raw() {

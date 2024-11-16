@@ -171,7 +171,9 @@ export type EditSpec =
   | ChangeConfigurationSpec
   | ChangeMetadataSpec
   | ChangeGraphMetadataSpec
-  | ChangeModuleSpec;
+  | ChangeModuleSpec
+  | AddGraphSpec
+  | RemoveGraphSpec;
 
 export type EditableGraph = {
   addEventListener<Key extends keyof EditableGraphEventMap>(
@@ -193,6 +195,12 @@ export type EditableGraph = {
   parent(): EditableGraph | null;
 
   /**
+   * Returns the id of this graph. If this is a main graph,
+   * the value will be "". Otherwise, it will be the id of this subgraph.
+   */
+  graphId(): GraphIdentifier;
+
+  /**
    * Performs an edit operation on the graph.
    * @param edits -- a list of changes to apply
    * @param label -- a user-friendly description of the edit, which also
@@ -212,34 +220,6 @@ export type EditableGraph = {
    * @throws when used on an embedded subgraph.
    */
   getGraph(id: GraphIdentifier): EditableGraph | null;
-  /**
-   * If does not exist already, adds a subgraph with the specified id.
-   * Fails (returns null) if the subgraph with this id already exists.
-   * @param id - id of the new subgraph
-   * @param graph - the subgraph to add
-   * @returns - the `EditableGraph` instance of the subgraph
-   * @throws when used on an embedded subgraph.
-   */
-  addGraph(id: GraphIdentifier, graph: GraphDescriptor): EditableGraph | null;
-  /**
-   * Replaces the subgraph with the specified id. Fails (returns null)
-   * if the subgraph with this id does not already exist.
-   * @param id - id of the subgraph being replaced
-   * @param graph - the subgraph with which to replace the existing subgraph
-   * @returns - the `EditableGraph` instance of the newly replaced subgraph.
-   * @throws when used on an embedded subgraph.
-   */
-  replaceGraph(
-    id: GraphIdentifier,
-    graph: GraphDescriptor
-  ): EditableGraph | null;
-  /**
-   * Removes the subgraph with the specified id. Fails if the subgraph does not
-   * exist.
-   * @param id - id of the subgraph to remove
-   * @throws when used on an embedded subgraph.
-   */
-  removeGraph(id: GraphIdentifier): SingleEditResult;
 
   raw(): GraphDescriptor;
 
@@ -311,6 +291,7 @@ export type SingleEditResult =
       success: true;
       affectedNodes: NodeIdentifier[];
       affectedModules: ModuleIdentifier[];
+      affectedGraphs: GraphIdentifier[];
       /**
        * Indicates that the edit was successful, and
        * resulted in no change.
