@@ -39,6 +39,7 @@ import {
   toImperativeGraph,
 } from "../run/run-imperative-graph.js";
 import { AddGraph } from "./operations/add-graph.js";
+import { RemoveGraph } from "./operations/remove-graph.js";
 
 const validImperativeEdits: EditSpec["type"][] = [
   "addmodule",
@@ -60,6 +61,7 @@ const operations = new Map<EditSpec["type"], EditOperation>([
   ["removemodule", new RemoveModule()],
   ["changemodule", new ChangeModule()],
   ["addgraph", new AddGraph()],
+  ["removegraph", new RemoveGraph()],
 ]);
 
 export class Graph implements EditableGraph {

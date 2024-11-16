@@ -9,7 +9,7 @@ import { testEditGraph, testSubGraph } from "./test-graph.js";
 import { deepStrictEqual, ok } from "assert";
 
 describe("Sub-graph editing operations", async () => {
-  await it("creates a subgraph", async () => {
+  await it("allows adding subgraphs", async () => {
     const graph = testEditGraph();
     const result = await graph.edit(
       [{ type: "addgraph", graph: testSubGraph(), id: "foo" }],
@@ -19,7 +19,7 @@ describe("Sub-graph editing operations", async () => {
     deepStrictEqual(graph.raw().graphs?.foo?.title, "Test Subgraph");
   });
 
-  await it("does not allow creating duplicate subgraphs", async () => {
+  await it("does not allow adding duplicate subgraphs", async () => {
     const graph = testEditGraph();
     const result = await graph.edit(
       [
@@ -29,5 +29,25 @@ describe("Sub-graph editing operations", async () => {
       ""
     );
     ok(!result.success);
+  });
+
+  await it("removes subgraphs", async () => {
+    const graph = testEditGraph();
+    const addition = await graph.edit(
+      [{ type: "addgraph", graph: testSubGraph(), id: "foo" }],
+      ""
+    );
+    ok(addition.success);
+    deepStrictEqual(graph.raw().graphs?.foo?.title, "Test Subgraph");
+
+    const removal = await graph.edit([{ type: "removegraph", id: "foo" }], "");
+    ok(removal.success);
+    ok(!graph.raw().graphs);
+  });
+
+  await it("doesn't allow removing non-existent subgraphs", async () => {
+    const graph = testEditGraph();
+    const removal = await graph.edit([{ type: "removegraph", id: "foo" }], "");
+    ok(!removal.success);
   });
 });
