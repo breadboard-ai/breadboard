@@ -5,6 +5,9 @@
     "types": ["mocha"],
     "paths": {
       "@esm-bundle/chai": ["./temp-chai-types.d.ts"]
-    }
+    },
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "emitDecoratorMetadata": false
   }
 }

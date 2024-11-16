@@ -4,4 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import './component.js';
+export interface Config {
+  url: string;
+}
