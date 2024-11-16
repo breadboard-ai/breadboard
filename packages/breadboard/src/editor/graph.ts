@@ -65,6 +65,7 @@ export class Graph implements EditableGraph {
   #options: EditableGraphOptions;
   #inspector: InspectableGraphWithStore;
   #graph: GraphDescriptor;
+  #graphId: GraphIdentifier;
   #parent: Graph | null;
   #graphs: Record<GraphIdentifier, Graph> | null;
   #eventTarget: EventTarget = new EventTarget();
@@ -74,6 +75,7 @@ export class Graph implements EditableGraph {
   constructor(
     graph: GraphDescriptor,
     options: EditableGraphOptions,
+    graphId: GraphIdentifier,
     parent: Graph | null
   ) {
     if (isImperativeGraph(graph)) {
@@ -86,17 +88,25 @@ export class Graph implements EditableGraph {
     if (parent) {
       // Subgraphs can not have subgraphs.
       this.#graphs = null;
+      const inspector = parent.inspect().graphs()?.[graphId];
+      if (!inspector) {
+        throw new Error(
+          `Inspect API integrity error: Unable to find subgraph "${graphId}`
+        );
+      }
+      this.#inspector = inspector as InspectableGraphWithStore;
     } else {
+      this.#inspector = inspectableGraph(this.raw(), options);
       this.#graphs = Object.fromEntries(
         Object.entries(this.#graph.graphs || {}).map(([id, graph]) => [
           id,
-          new Graph(graph, options, this),
+          new Graph(graph, options, id, this),
         ])
       );
     }
+    this.#graphId = graphId;
     this.#options = options;
     this.#version = parent ? 0 : options.version || 0;
-    this.#inspector = inspectableGraph(this.raw(), options);
     this.#history = new GraphEditHistory({
       graph: () => {
         return this.raw();
@@ -318,11 +328,15 @@ export class Graph implements EditableGraph {
       return null;
     }
 
-    const editable = new Graph(graph, this.#options, this);
+    const editable = new Graph(graph, this.#options, id, this);
     this.#graphs[id] = editable;
     this.#updateGraph(false, [], []);
 
     return editable;
+  }
+
+  graphId() {
+    return this.#graphId;
   }
 
   removeGraph(id: GraphIdentifier): SingleEditResult {
@@ -357,7 +371,7 @@ export class Graph implements EditableGraph {
     }
     old.#makeIndependent();
 
-    const editable = new Graph(graph, this.#options, this);
+    const editable = new Graph(graph, this.#options, id, this);
     this.#graphs[id] = editable;
     this.#updateGraph(false, [], []);
 

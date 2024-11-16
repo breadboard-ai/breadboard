@@ -225,7 +225,6 @@ export class NodeCache implements InspectableNodeCache {
     if (!this.#map) {
       return;
     }
-    console.assert(!this.#map.has(node.id), "Node already exists in cache.");
     this.#addNodeInternal(node, graphId);
   }
 

@@ -574,6 +574,9 @@ class Graph implements InspectableGraphWithStore {
   }
 
   resetGraph(graph: GraphDescriptor): void {
+    if (this.#graphId) {
+      throw new Error("Handling subgraphs isn't yet implemented.");
+    }
     this.#graph = graph;
     const nodes = new NodeCache(this);
     const edges = new EdgeCache(nodes);

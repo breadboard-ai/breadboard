@@ -194,6 +194,12 @@ export type EditableGraph = {
   parent(): EditableGraph | null;
 
   /**
+   * Returns the id of this graph. If this is a main graph,
+   * the value will be "". Otherwise, it will be the id of this subgraph.
+   */
+  graphId(): GraphIdentifier;
+
+  /**
    * Performs an edit operation on the graph.
    * @param edits -- a list of changes to apply
    * @param label -- a user-friendly description of the edit, which also
