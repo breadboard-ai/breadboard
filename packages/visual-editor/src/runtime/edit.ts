@@ -560,7 +560,7 @@ export class Edit extends EventTarget {
     }
   }
 
-  createSubGraph(tab: Tab | null, subGraphTitle: string) {
+  async createSubGraph(tab: Tab | null, subGraphTitle: string) {
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to create sub board"));
@@ -571,7 +571,10 @@ export class Edit extends EventTarget {
     const board = blankLLMContent();
     board.title = subGraphTitle;
 
-    const editResult = editableGraph.addGraph(id, board);
+    const editResult = await editableGraph.edit(
+      [{ type: "addgraph", graph: board, id }],
+      `Adding subgraph ${subGraphTitle}`
+    );
     if (!editResult) {
       return null;
     }

@@ -2849,7 +2849,7 @@ export class Main extends LitElement {
               @bbsubgraphcreate=${async (
                 evt: BreadboardUI.Events.SubGraphCreateEvent
               ) => {
-                const result = this.#runtime.edit.createSubGraph(
+                const result = await this.#runtime.edit.createSubGraph(
                   this.tab,
                   evt.subGraphTitle
                 );

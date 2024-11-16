@@ -334,22 +334,6 @@ export class Graph implements EditableGraph {
     return editableGraph;
   }
 
-  addGraph(id: GraphIdentifier, graph: GraphDescriptor): boolean {
-    if (!this.#graphs) {
-      throw new Error("Subgraphs can't contain subgraphs.");
-    }
-
-    const subGraphs = this.#graph.graphs;
-    if (subGraphs?.[id]) {
-      return false;
-    }
-
-    this.#graph.graphs ??= {};
-    this.#graph.graphs[id] = graph;
-    this.#updateGraph(false, [], []);
-    return true;
-  }
-
   graphId() {
     return this.#graphId;
   }

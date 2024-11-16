@@ -220,15 +220,6 @@ export type EditableGraph = {
    */
   getGraph(id: GraphIdentifier): EditableGraph | null;
   /**
-   * If does not exist already, adds a subgraph with the specified id.
-   * Fails (returns null) if the subgraph with this id already exists.
-   * @param id - id of the new subgraph
-   * @param graph - the subgraph to add
-   * @returns - `true` if operation succeeded, `false` otherwise.
-   * @throws when used on an embedded subgraph.
-   */
-  addGraph(id: GraphIdentifier, graph: GraphDescriptor): boolean;
-  /**
    * Replaces the subgraph with the specified id. Fails (returns null)
    * if the subgraph with this id does not already exist.
    * @param id - id of the subgraph being replaced
