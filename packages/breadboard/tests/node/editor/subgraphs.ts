@@ -50,4 +50,27 @@ describe("Sub-graph editing operations", async () => {
     const removal = await graph.edit([{ type: "removegraph", id: "foo" }], "");
     ok(!removal.success);
   });
+
+  await it("can replace graph as atomic remove/add", async () => {
+    const graph = testEditGraph();
+    const initialization = await graph.edit(
+      [{ type: "addgraph", graph: testSubGraph(), id: "foo" }],
+      ""
+    );
+    ok(initialization.success);
+    deepStrictEqual(graph.raw().graphs?.foo?.title, "Test Subgraph");
+
+    const newSubGraph = testSubGraph();
+    newSubGraph.title = "Foo";
+
+    const replacement = await graph.edit(
+      [
+        { type: "removegraph", id: "foo" },
+        { type: "addgraph", id: "foo", graph: newSubGraph },
+      ],
+      ""
+    );
+    ok(replacement.success);
+    deepStrictEqual(graph.raw().graphs?.foo?.title, "Foo");
+  });
 });

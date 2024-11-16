@@ -220,15 +220,6 @@ export type EditableGraph = {
    * @throws when used on an embedded subgraph.
    */
   getGraph(id: GraphIdentifier): EditableGraph | null;
-  /**
-   * Replaces the subgraph with the specified id. Fails (returns null)
-   * if the subgraph with this id does not already exist.
-   * @param id - id of the subgraph being replaced
-   * @param graph - the subgraph with which to replace the existing subgraph
-   * @returns - `true` if operation succeeded, `false` otherwise.
-   * @throws when used on an embedded subgraph.
-   */
-  replaceGraph(id: GraphIdentifier, graph: GraphDescriptor): boolean;
 
   raw(): GraphDescriptor;
 

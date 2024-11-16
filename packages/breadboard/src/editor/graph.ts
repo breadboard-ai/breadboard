@@ -340,67 +340,6 @@ export class Graph implements EditableGraph {
     return this.#graphId;
   }
 
-  removeGraph(id: GraphIdentifier): SingleEditResult {
-    if (!this.#graphs) {
-      throw new Error("Subgraphs can't contain subgraphs.");
-    }
-
-    const subGraphs = this.#graph.graphs;
-
-    if (!subGraphs || !subGraphs[id]) {
-      const error = `Subgraph with id "${id}" does not exist`;
-      this.#dispatchNoChange(error);
-      return {
-        success: false,
-        error,
-      };
-    }
-    delete subGraphs[id];
-    if (!Object.keys(subGraphs).length) {
-      delete this.#graph.graphs;
-    }
-    const editableToDelete = this.#graphs.get(id);
-    if (editableToDelete) {
-      this.#graphs.delete(id);
-      editableToDelete.#makeIndependent();
-    }
-    this.#updateGraph(false, [], []);
-    return {
-      success: true,
-      affectedNodes: [],
-      affectedModules: [],
-      affectedGraphs: [id],
-    };
-  }
-
-  replaceGraph(id: GraphIdentifier, graph: GraphDescriptor): boolean {
-    if (!this.#graphs) {
-      throw new Error("Subgraphs can't contain subgraphs.");
-    }
-
-    const subGraphs = this.#graph.graphs;
-
-    if (!subGraphs) {
-      return false;
-    }
-
-    const old = subGraphs[id];
-    if (!old) {
-      return false;
-    } else {
-      const oldEditable = this.#graphs.get(id);
-      if (oldEditable) {
-        oldEditable.#makeIndependent();
-        this.#graphs.delete(id);
-      }
-    }
-    subGraphs[id] = graph;
-
-    this.#updateGraph(false, [], []);
-
-    return true;
-  }
-
   raw() {
     return this.#imperativeMain
       ? toImperativeGraph(this.#imperativeMain, this.#graph)

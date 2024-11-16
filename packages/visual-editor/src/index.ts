@@ -1387,7 +1387,7 @@ export class Main extends LitElement {
     return this.#attemptBoardSave();
   }
 
-  #handleBoardInfoUpdate(evt: BreadboardUI.Events.BoardInfoUpdateEvent) {
+  async #handleBoardInfoUpdate(evt: BreadboardUI.Events.BoardInfoUpdateEvent) {
     if (!this.tab) {
       this.toast(
         "Unable to edit; no active graph",
@@ -1397,7 +1397,7 @@ export class Main extends LitElement {
     }
 
     if (evt.subGraphId) {
-      this.#runtime.edit.updateSubBoardInfo(
+      await this.#runtime.edit.updateSubBoardInfo(
         this.tab,
         evt.subGraphId,
         evt.title,
@@ -1601,7 +1601,15 @@ export class Main extends LitElement {
       return;
     }
 
-    const { description, title, version, metadata } = this.tab.graph;
+    const graph = this.tab.subGraphId
+      ? this.tab.graph.graphs?.[this.tab.subGraphId]
+      : this.tab.graph;
+
+    if (!graph) {
+      return;
+    }
+
+    const { description, title, version, metadata } = graph;
 
     this.boardEditOverlayInfo = {
       description: description ?? "",
@@ -1848,10 +1856,10 @@ export class Main extends LitElement {
             @bboverlaydismissed=${() => {
               this.boardEditOverlayInfo = null;
             }}
-            @bbboardinfoupdate=${(
+            @bbboardinfoupdate=${async (
               evt: BreadboardUI.Events.BoardInfoUpdateEvent
             ) => {
-              this.#handleBoardInfoUpdate(evt);
+              await this.#handleBoardInfoUpdate(evt);
               this.boardEditOverlayInfo = null;
               this.requestUpdate();
             }}

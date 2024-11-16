@@ -269,7 +269,7 @@ export class Edit extends EventTarget {
     return history.redo();
   }
 
-  updateSubBoardInfo(
+  async updateSubBoardInfo(
     tab: Tab | null,
     subGraphId: string,
     title: string,
@@ -306,7 +306,15 @@ export class Edit extends EventTarget {
       isComponent
     );
 
-    editableGraph.replaceGraph(subGraphId, subGraphDescriptor);
+    await editableGraph.edit(
+      [
+        { type: "removegraph", id: subGraphId },
+        { type: "addgraph", id: subGraphId, graph: subGraphDescriptor },
+      ],
+      `Replacing graph "${title}"`
+    );
+
+    // editableGraph.replaceGraph(subGraphId, subGraphDescriptor);
   }
 
   deleteComment(tab: Tab | null, id: string) {
