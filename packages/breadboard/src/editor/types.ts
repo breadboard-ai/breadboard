@@ -229,13 +229,6 @@ export type EditableGraph = {
    * @throws when used on an embedded subgraph.
    */
   replaceGraph(id: GraphIdentifier, graph: GraphDescriptor): boolean;
-  /**
-   * Removes the subgraph with the specified id. Fails if the subgraph does not
-   * exist.
-   * @param id - id of the subgraph to remove
-   * @throws when used on an embedded subgraph.
-   */
-  removeGraph(id: GraphIdentifier): SingleEditResult;
 
   raw(): GraphDescriptor;
 

@@ -575,21 +575,24 @@ export class Edit extends EventTarget {
       [{ type: "addgraph", graph: board, id }],
       `Adding subgraph ${subGraphTitle}`
     );
-    if (!editResult) {
+    if (!editResult.success) {
       return null;
     }
 
     return id;
   }
 
-  deleteSubGraph(tab: Tab | null, subGraphId: string) {
+  async deleteSubGraph(tab: Tab | null, subGraphId: string) {
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to delete sub board"));
       return;
     }
 
-    const editResult = editableGraph.removeGraph(subGraphId);
+    const editResult = await editableGraph.edit(
+      [{ type: "removegraph", id: subGraphId }],
+      `Removing subgraph $"{subGraphId}"`
+    );
     if (!editResult.success) {
       return null;
     }
