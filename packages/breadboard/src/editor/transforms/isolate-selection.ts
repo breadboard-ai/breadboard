@@ -30,10 +30,7 @@ class IsolateSelectionTransform implements EditTransform {
     const { inspector } = context;
     const selection = computeSelection(inspector, this.#nodes);
     if (!selection.success) {
-      return {
-        success: false,
-        error: selection.error,
-      };
+      return selection;
     }
     const { dangling } = selection;
     const edits: RemoveEdgeSpec[] = dangling.map((edge) => ({
