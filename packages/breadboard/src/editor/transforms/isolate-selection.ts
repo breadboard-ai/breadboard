@@ -41,7 +41,7 @@ class IsolateSelectionTransform implements EditTransform {
 
     return {
       success: true,
-      spec: [edits, "Isolating Selection"],
+      spec: { edits, label: "Isolating Selection" },
     };
   }
 }

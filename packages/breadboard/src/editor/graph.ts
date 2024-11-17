@@ -249,7 +249,7 @@ export class Graph implements EditableGraph {
     return this.#applyEdits(async () => {
       return {
         success: true,
-        spec: [edits, label],
+        spec: { edits, label },
       };
     }, dryRun);
   }
@@ -331,7 +331,7 @@ export class Graph implements EditableGraph {
     if (!result.success) {
       error = result.error;
     } else {
-      const [edits, editLabel] = result.spec;
+      const { edits, label: editLabel } = result.spec;
       label = editLabel;
       for (const edit of edits) {
         if (this.#shouldDiscardEdit(edit)) {

@@ -336,7 +336,7 @@ export type EditTransform = {
   createSpec(context: EditOperationContext): Promise<EditTransformResult>;
 };
 
-export type EditTransformSpec = [edits: EditSpec[], label: string];
+export type EditTransformSpec = { edits: EditSpec[]; label: string };
 
 export type EditTransformResult =
   | {
