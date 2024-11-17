@@ -18,9 +18,8 @@ import {
   EditOperationContext,
   EditResultLogEntry,
   EditHistory,
-  EditableGraphSelection,
   EditTransform,
-  EditableGraphSelectionResult,
+  EditTransformResult,
 } from "./types.js";
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 import { AddEdge } from "./operations/add-edge.js";
@@ -43,7 +42,6 @@ import {
 } from "../run/run-imperative-graph.js";
 import { AddGraph } from "./operations/add-graph.js";
 import { RemoveGraph } from "./operations/remove-graph.js";
-import { computeSelection } from "./selection.js";
 
 const validImperativeEdits: EditSpec["type"][] = [
   "addmodule",
@@ -248,72 +246,12 @@ export class Graph implements EditableGraph {
     label: string,
     dryRun = false
   ): Promise<EditResult> {
-    let context: EditOperationContext;
-
-    const checkpoint = structuredClone(this.#graph);
-    if (dryRun) {
-      const graph = checkpoint;
-      const inspector = inspectableGraph(graph, this.#options);
-      context = {
-        graph,
-        inspector,
-        store: inspector,
+    return this.#applyEdits(async () => {
+      return {
+        success: true,
+        spec: [edits, label],
       };
-    } else {
-      context = {
-        graph: this.#graph,
-        inspector: this.#inspector,
-        store: this.#inspector,
-      };
-    }
-    const log: EditResultLogEntry[] = [];
-    let error: string | null = null;
-    // Presume that all edits will result in no changes.
-    let noChange = true;
-    // Presume that all edits will be visual only.
-    let visualOnly = true;
-    // Collect affected nodes
-    const affectedNodes: NodeIdentifier[][] = [];
-    // Collect affected modules
-    const affectedModules: NodeIdentifier[][] = [];
-    for (const edit of edits) {
-      if (this.#shouldDiscardEdit(edit)) {
-        continue;
-      }
-      const result = await this.#singleEdit(edit, context);
-      log.push({ edit: edit.type, result });
-      if (!result.success) {
-        error = result.error;
-        break;
-      }
-      affectedNodes.push(result.affectedNodes);
-      affectedModules.push(result.affectedModules);
-      if (!result.noChange) {
-        noChange = false;
-      }
-      if (!result.visualOnly) {
-        visualOnly = false;
-      }
-    }
-    if (error) {
-      !dryRun && this.#rollbackGraph(checkpoint, error);
-      return { success: false, log, error };
-    }
-
-    if (noChange) {
-      !dryRun && this.#dispatchNoChange();
-      return { success: true, log };
-    }
-
-    this.#history.addEdit(this.raw(), checkpoint, label, this.#version);
-
-    !dryRun &&
-      this.#updateGraph(
-        visualOnly,
-        [...new Set(affectedNodes.flat())],
-        [...new Set(affectedModules.flat())]
-      );
-    return { success: true, log };
+    }, dryRun);
   }
 
   history(): EditHistory {
@@ -354,7 +292,91 @@ export class Graph implements EditableGraph {
     return this.#inspector;
   }
 
-  apply(transform: EditTransform): Promise<EditResult> {
-    throw new Error("Not implemented");
+  async #applyEdits(
+    editSpecBuilder: (
+      context: EditOperationContext
+    ) => Promise<EditTransformResult>,
+    dryRun = false
+  ): Promise<EditResult> {
+    let context: EditOperationContext;
+
+    const checkpoint = structuredClone(this.#graph);
+    if (dryRun) {
+      const graph = checkpoint;
+      const inspector = inspectableGraph(graph, this.#options);
+      context = {
+        graph,
+        inspector,
+        store: inspector,
+      };
+    } else {
+      context = {
+        graph: this.#graph,
+        inspector: this.#inspector,
+        store: this.#inspector,
+      };
+    }
+    const log: EditResultLogEntry[] = [];
+    let error: string | null = null;
+    // Presume that all edits will result in no changes.
+    let noChange = true;
+    // Presume that all edits will be visual only.
+    let visualOnly = true;
+    // Collect affected nodes
+    const affectedNodes: NodeIdentifier[][] = [];
+    // Collect affected modules
+    const affectedModules: NodeIdentifier[][] = [];
+    const result = await editSpecBuilder(context);
+    let label = "";
+    if (!result.success) {
+      error = result.error;
+    } else {
+      const [edits, editLabel] = result.spec;
+      label = editLabel;
+      for (const edit of edits) {
+        if (this.#shouldDiscardEdit(edit)) {
+          continue;
+        }
+        const result = await this.#singleEdit(edit, context);
+        log.push({ edit: edit.type, result });
+        if (!result.success) {
+          error = result.error;
+          break;
+        }
+        affectedNodes.push(result.affectedNodes);
+        affectedModules.push(result.affectedModules);
+        if (!result.noChange) {
+          noChange = false;
+        }
+        if (!result.visualOnly) {
+          visualOnly = false;
+        }
+      }
+    }
+    if (error) {
+      !dryRun && this.#rollbackGraph(checkpoint, error);
+      return { success: false, log, error };
+    }
+
+    if (noChange) {
+      !dryRun && this.#dispatchNoChange();
+      return { success: true, log };
+    }
+
+    this.#history.addEdit(this.raw(), checkpoint, label, this.#version);
+
+    !dryRun &&
+      this.#updateGraph(
+        visualOnly,
+        [...new Set(affectedNodes.flat())],
+        [...new Set(affectedModules.flat())]
+      );
+    return { success: true, log };
+  }
+
+  async apply(transform: EditTransform, dryRun = false): Promise<EditResult> {
+    return this.#applyEdits((context) => {
+      return transform.createSpec(context);
+    }, dryRun);
   }
 }

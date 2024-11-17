@@ -333,14 +333,20 @@ export type EditResult = {
 export type EditableEdgeSpec = Edge;
 
 export type EditTransform = {
-  createSpec(editor: EditableGraph): Promise<EditTransformSpec>;
+  createSpec(context: EditOperationContext): Promise<EditTransformResult>;
 };
 
-export type EditTransformSpec = [
-  edits: EditSpec[],
-  label: string,
-  dryRun?: boolean,
-];
+export type EditTransformSpec = [edits: EditSpec[], label: string];
+
+export type EditTransformResult =
+  | {
+      success: false;
+      error: string;
+    }
+  | {
+      success: true;
+      spec: EditTransformSpec;
+    };
 
 export type EditableGraphSelectionResult =
   | ({
