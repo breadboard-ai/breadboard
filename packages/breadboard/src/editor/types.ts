@@ -210,6 +210,12 @@ export type EditableGraph = {
   edit(edits: EditSpec[], label: string, dryRun?: boolean): Promise<EditResult>;
 
   /**
+   * Applies an edit transform to the graph.
+   * @param transform -- the edit transform to apply
+   */
+  apply(transform: EditTransform): Promise<EditResult>;
+
+  /**
    * Provides a way to manage the history of the graph.
    */
   history(): EditHistory;
@@ -325,3 +331,25 @@ export type EditResult = {
 );
 
 export type EditableEdgeSpec = Edge;
+
+export type EditTransform = {
+  createSpec(editor: EditableGraph): Promise<EditTransformSpec>;
+};
+
+export type EditTransformSpec = [
+  edits: EditSpec[],
+  label: string,
+  dryRun?: boolean,
+];
+
+export type EditableGraphSelectionResult =
+  | ({
+      success: true;
+    } & EditableGraphSelection)
+  | { success: false; error: string };
+
+export type EditableGraphSelection = {
+  nodes: NodeIdentifier[];
+  edges: Edge[];
+  dangling: Edge[];
+};

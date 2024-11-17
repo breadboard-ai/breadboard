@@ -18,6 +18,9 @@ import {
   EditOperationContext,
   EditResultLogEntry,
   EditHistory,
+  EditableGraphSelection,
+  EditTransform,
+  EditableGraphSelectionResult,
 } from "./types.js";
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 import { AddEdge } from "./operations/add-edge.js";
@@ -40,6 +43,7 @@ import {
 } from "../run/run-imperative-graph.js";
 import { AddGraph } from "./operations/add-graph.js";
 import { RemoveGraph } from "./operations/remove-graph.js";
+import { computeSelection } from "./selection.js";
 
 const validImperativeEdits: EditSpec["type"][] = [
   "addmodule",
@@ -348,5 +352,9 @@ export class Graph implements EditableGraph {
 
   inspect() {
     return this.#inspector;
+  }
+
+  apply(transform: EditTransform): Promise<EditResult> {
+    throw new Error("Not implemented");
   }
 }
