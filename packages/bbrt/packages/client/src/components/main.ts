@@ -7,6 +7,7 @@
 import {LitElement, css, html} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import type {Config} from '../config.js';
+import {Conversation} from '../llm/conversation.js';
 import './artifacts.js';
 import './chat.js';
 import './prompt.js';
@@ -15,6 +16,8 @@ import './prompt.js';
 export class BBRTMain extends LitElement {
   @property({type: Object})
   config?: Config;
+
+  #conversation = new Conversation();
 
   static override styles = css`
     :host {
@@ -40,8 +43,8 @@ export class BBRTMain extends LitElement {
 
   override render() {
     return html`
-      <bbrt-chat></bbrt-chat>
-      <bbrt-prompt></bbrt-prompt>
+      <bbrt-chat .conversation=${this.#conversation}></bbrt-chat>
+      <bbrt-prompt .conversation=${this.#conversation}></bbrt-prompt>
       <bbrt-artifacts></bbrt-artifacts>
     `;
   }

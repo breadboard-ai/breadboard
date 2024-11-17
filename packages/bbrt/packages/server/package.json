@@ -1,5 +1,5 @@
 {
-  "name": "@breadboard-ai/template-server",
+  "name": "@breadboard-ai/bbrt-server",
   "private": true,
   "version": "0.0.1",
   "description": "Template server",
