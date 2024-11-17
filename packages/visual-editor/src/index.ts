@@ -1527,7 +1527,7 @@ export class Main extends LitElement {
 
     const nodeConfig = this.#runtime.edit
       .getEditor(this.tab)
-      ?.inspect()
+      ?.inspect("")
       ?.nodeById(id)
       ?.configuration();
 
@@ -2586,7 +2586,7 @@ export class Main extends LitElement {
               ?inert=${showingOverlay}
               .readOnly=${this.tab?.readOnly ?? true}
               .graph=${this.tab?.graph ?? null}
-              .editor=${this.#runtime.edit.getEditor(this.tab, this.subGraphId)}
+              .editor=${this.#runtime.edit.getEditor(this.tab)}
               .subGraphId=${this.tab?.subGraphId ?? null}
               .moduleId=${this.tab?.moduleId ?? null}
               .run=${runs[0] ?? null}
@@ -2998,8 +2998,7 @@ export class Main extends LitElement {
                 this.#runtime.edit.multiEdit(
                   this.tab,
                   evt.edits,
-                  evt.description,
-                  evt.subGraphId
+                  evt.description
                 );
               }}
               @bbnodecreate=${(evt: BreadboardUI.Events.NodeCreateEvent) => {

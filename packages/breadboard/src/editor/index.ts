@@ -12,7 +12,7 @@ export const editGraph = (
   graph: GraphDescriptor,
   options: EditableGraphOptions = {}
 ): EditableGraph => {
-  return new Graph(graph, options, "", null);
+  return new Graph(graph, options);
 };
 
 export { blank, blankLLMContent } from "./blank.js";

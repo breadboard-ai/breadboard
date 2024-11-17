@@ -12,6 +12,7 @@ import {
   SingleEditResult,
 } from "../types.js";
 import { InspectableGraph } from "../../inspector/types.js";
+import { toSubgraphContext } from "../subgraph-context.js";
 
 export class RemoveNode implements EditOperation {
   async can(
@@ -42,14 +43,16 @@ export class RemoveNode implements EditOperation {
         `Editor API integrity error: expected type "removenode", received "${spec.type}" instead.`
       );
     }
-    const id = spec.id;
-    const { graph, inspector, store } = context;
+    const { id, graphId } = spec;
+    const subgraphContext = toSubgraphContext(context, graphId);
+    if (!subgraphContext.success) {
+      return subgraphContext;
+    }
+    const { graph, inspector, store } = subgraphContext.result;
     const can = await this.can(id, inspector);
     if (!can.success) {
       return can;
     }
-
-    const graphId = inspector.graphId();
 
     // Remove any edges that are connected to the removed node.
     graph.edges = graph.edges.filter((edge) => {

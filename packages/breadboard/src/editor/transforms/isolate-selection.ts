@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeIdentifier } from "@breadboard-ai/types";
+import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
 import {
   EditOperationContext,
   EditTransform,
@@ -17,9 +17,11 @@ export { IsolateSelectionTransform };
 
 class IsolateSelectionTransform implements EditTransform {
   #nodes: NodeIdentifier[];
+  #graphId: GraphIdentifier;
 
-  constructor(nodes: NodeIdentifier[]) {
+  constructor(nodes: NodeIdentifier[], graphId: GraphIdentifier) {
     this.#nodes = nodes;
+    this.#graphId = graphId;
   }
 
   async createSpec(
@@ -37,6 +39,7 @@ class IsolateSelectionTransform implements EditTransform {
     const edits: RemoveEdgeSpec[] = dangling.map((edge) => ({
       type: "removeedge",
       edge,
+      graphId: this.#graphId,
     }));
 
     return {

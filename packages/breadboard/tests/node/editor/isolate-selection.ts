@@ -17,6 +17,7 @@ describe("isolate selection transform", () => {
         {
           type: "addedge",
           edge: { from: "node0", to: "node2", out: "*", in: "" },
+          graphId: "",
         },
       ],
       ""
@@ -24,7 +25,7 @@ describe("isolate selection transform", () => {
     ok(edited.success);
 
     {
-      const transform = new IsolateSelectionTransform(["node0"]);
+      const transform = new IsolateSelectionTransform(["node0"], "");
       const transformed = await graph.apply(transform);
       ok(transformed.success);
       const expected = testEditGraph().raw();
@@ -35,7 +36,7 @@ describe("isolate selection transform", () => {
   it("correctly rejects spurious nodes", async () => {
     const graph = testEditGraph();
 
-    const transform = new IsolateSelectionTransform(["node4"]);
+    const transform = new IsolateSelectionTransform(["node4"], "");
     const transformed = await graph.apply(transform);
     ok(!transformed.success);
     const expected = testEditGraph().raw();

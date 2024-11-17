@@ -16,6 +16,7 @@ import { RemoveEdge } from "./remove-edge.js";
 import { AddEdge } from "./add-edge.js";
 import { edgesEqual, findEdgeIndex } from "../edge.js";
 import { fixUpStarEdge } from "../../inspector/edge.js";
+import { toSubgraphContext } from "../subgraph-context.js";
 
 export class ChangeEdge implements EditOperation {
   async can(
@@ -54,10 +55,14 @@ export class ChangeEdge implements EditOperation {
         `Editor API integrity error: expected type "changeedge", received "${spec.type}" instead.`
       );
     }
-    const from = spec.from;
-    const to = spec.to;
+    const { from, to, graphId } = spec;
+    const subgraphContext = toSubgraphContext(context, graphId);
 
-    const { graph, inspector } = context;
+    if (!subgraphContext.success) {
+      return subgraphContext;
+    }
+
+    const { graph, inspector } = subgraphContext.result;
     const can = await this.can(from, to, inspector);
     if (!can.success) {
       return can;

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { toSubgraphContext } from "../subgraph-context.js";
 import {
   EditOperation,
   EditOperationContext,
@@ -21,8 +22,13 @@ export class ChangeGraphMetadata implements EditOperation {
         `Editor API integrity error: expected type "changegraphmetadata", received "${spec.type}" instead.`
       );
     }
-    const { metadata } = spec;
-    const { graph } = context;
+    const { metadata, graphId } = spec;
+    const subgraphContext = toSubgraphContext(context, graphId);
+    if (!subgraphContext.success) {
+      return subgraphContext;
+    }
+
+    const { graph } = subgraphContext.result;
     const visualOnly = graph.metadata === metadata;
     graph.metadata = metadata;
     return {

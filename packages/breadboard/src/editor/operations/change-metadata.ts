@@ -12,6 +12,7 @@ import {
   SingleEditResult,
 } from "../types.js";
 import { InspectableGraph } from "../../inspector/types.js";
+import { toSubgraphContext } from "../subgraph-context.js";
 
 export class ChangeMetadata implements EditOperation {
   async can(
@@ -50,8 +51,13 @@ export class ChangeMetadata implements EditOperation {
         `Editor API integrity error: expected type "changemetadata", received "${spec.type}" instead.`
       );
     }
-    const { id, metadata, reset = false } = spec;
-    const { inspector } = context;
+    const { id, metadata, graphId, reset = false } = spec;
+    const subgraphContext = toSubgraphContext(context, graphId);
+    if (!subgraphContext.success) {
+      return subgraphContext;
+    }
+
+    const { inspector } = subgraphContext.result;
     const can = await this.can(id, inspector);
     if (!can.success) return can;
     const node = inspector.nodeById(id);

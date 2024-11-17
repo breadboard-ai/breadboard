@@ -12,14 +12,14 @@ import { deepStrictEqual, ok } from "node:assert";
 describe("Computing selection", async () => {
   it("reports an error when trying to select non-existent node", () => {
     const graph = testEditGraph();
-    const inspectable = graph.inspect();
+    const inspectable = graph.inspect("");
     const selection = computeSelection(inspectable, ["foo"]);
     ok(!selection.success);
   });
 
   it("computes single-node selection", () => {
     const graph = testEditGraph();
-    const inspectable = graph.inspect();
+    const inspectable = graph.inspect("");
     {
       const selection = computeSelection(inspectable, ["node0"]);
       deepStrictEqual(selection, {
@@ -56,12 +56,13 @@ describe("Computing selection", async () => {
         {
           type: "addedge",
           edge: { from: "node0", to: "node2", out: "*", in: "" },
+          graphId: "",
         },
       ],
       ""
     );
     ok(edited.success);
-    const inspectable = graph.inspect();
+    const inspectable = graph.inspect("");
     {
       const selection = computeSelection(inspectable, ["node0"]);
       deepStrictEqual(selection, {
