@@ -5,10 +5,14 @@
  */
 
 import {LitElement, css, html} from 'lit';
-import {customElement} from 'lit/decorators.js';
+import {customElement, property} from 'lit/decorators.js';
+import type {Conversation} from '../llm/conversation.js';
 
 @customElement('bbrt-prompt')
 export class BBRTPrompt extends LitElement {
+  @property({attribute: false})
+  conversation?: Conversation;
+
   static override styles = css`
     :host {
       border-top: 1px solid #ccc;
@@ -24,13 +28,36 @@ export class BBRTPrompt extends LitElement {
       padding: 0 14px;
       height: 40px;
       flex: 1;
-      font-family: 'Helvetica', sans-serif;
+      font-family: Helvetica, sans-serif;
       font-size: 16px;
       font-weight: 400;
     }
   `;
+
   override render() {
-    return html`<input type="text" placeholder="Ask BBRT" />`;
+    if (this.conversation === undefined) {
+      return html`Connecting...`;
+    }
+    return html`<input
+      type="text"
+      placeholder="Ask BBRT"
+      @keydown=${this.#onKeydown}
+    />`;
+  }
+
+  #onKeydown(event: KeyboardEvent & {target: HTMLInputElement}) {
+    if (event.key !== 'Enter') {
+      return;
+    }
+    if (event.shiftKey) {
+      return;
+    }
+    if (this.conversation === undefined) {
+      return;
+    }
+    const input = event.target;
+    this.conversation.send(input.value);
+    input.value = '';
   }
 }
 

@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "types": ["mocha"],
     "paths": {
       "@esm-bundle/chai": ["./temp-chai-types.d.ts"]

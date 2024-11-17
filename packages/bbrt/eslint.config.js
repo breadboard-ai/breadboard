@@ -56,6 +56,7 @@ export default [
         //   '@typescript-eslint/no-unused-expressions': Cannot read properties
         //   of undefined (reading 'allowShortCircuit'
         '@typescript-eslint/no-unused-expressions': 'off',
+        '@typescript-eslint/no-extraneous-class': 'off',
       },
     },
   ]),

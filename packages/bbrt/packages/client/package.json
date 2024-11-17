@@ -1,5 +1,5 @@
 {
-  "name": "@breadboard-ai/template-component",
+  "name": "@breadboard-ai/bbrt-client",
   "private": true,
   "version": "0.0.1",
   "description": "Template component",
@@ -57,6 +57,9 @@
     }
   },
   "dependencies": {
-    "lit": "^3.2.1"
+    "@lit-labs/signals": "^0.1.1",
+    "jsonriver": "^1.0.0",
+    "lit": "^3.2.1",
+    "signal-utils": "^0.20.0"
   }
 }
