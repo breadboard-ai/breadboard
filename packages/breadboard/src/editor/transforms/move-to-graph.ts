@@ -87,18 +87,17 @@ class MoveToGraphTransform implements EditTransform {
 
     const label = `Moving ${this.#nodes.length} nodes from ${this.#friendlyGraphName(this.#source)} to ${this.#friendlyGraphName(this.#source)}`;
 
+    const result = await context.apply(
+      [...nodeAdditions, ...edgeAdditions, ...edgeRemovals, ...nodeRemovals],
+      label
+    );
+
+    if (!result.success) {
+      return result;
+    }
+
     return {
       success: true,
-      spec: {
-        edits: [
-          ...isolatedSelection.spec.edits,
-          ...nodeAdditions,
-          ...edgeAdditions,
-          ...edgeRemovals,
-          ...nodeRemovals,
-        ],
-        label,
-      },
     };
   }
 }

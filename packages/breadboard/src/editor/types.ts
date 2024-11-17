@@ -158,10 +158,16 @@ export type RemoveGraphSpec = {
   id: GraphIdentifier;
 };
 
+export type EditOperationConductor = (
+  edits: EditSpec[],
+  editLabel: string
+) => Promise<Result<undefined>>;
+
 export type EditOperationContext = {
   graph: GraphDescriptor;
   inspector: InspectableGraph;
   store: GraphStoreMutator;
+  apply: EditOperationConductor;
 };
 
 export type EditOperation = {
@@ -324,17 +330,9 @@ export type EditTransform = {
   createSpec(context: EditOperationContext): Promise<EditTransformResult>;
 };
 
-export type EditTransformSpec = { edits: EditSpec[]; label: string };
-
 export type EditTransformResult =
-  | {
-      success: false;
-      error: string;
-    }
-  | {
-      success: true;
-      spec: EditTransformSpec;
-    };
+  | { success: false; error: string }
+  | { success: true };
 
 export type EditableGraphSelectionResult =
   | ({

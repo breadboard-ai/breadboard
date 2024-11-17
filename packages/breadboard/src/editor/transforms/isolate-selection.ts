@@ -39,9 +39,11 @@ class IsolateSelectionTransform implements EditTransform {
       graphId: this.#graphId,
     }));
 
-    return {
-      success: true,
-      spec: { edits, label: "Isolating Selection" },
-    };
+    const result = await context.apply(edits, "Isolating Selection");
+    if (!result.success) {
+      return result;
+    }
+
+    return { success: true };
   }
 }

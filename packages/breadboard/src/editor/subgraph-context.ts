@@ -31,6 +31,7 @@ function toSubgraphContext(
       graph: subgraph,
       inspector: subgraphInspector,
       store: subgraphInspector as unknown as GraphStoreMutator,
+      apply: context.apply,
     },
   };
 }

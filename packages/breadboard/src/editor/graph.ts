@@ -20,6 +20,7 @@ import {
   EditHistory,
   EditTransform,
   EditTransformResult,
+  EditOperationConductor,
 } from "./types.js";
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 import { AddEdge } from "./operations/add-edge.js";
@@ -182,11 +183,18 @@ export class Graph implements EditableGraph {
     label: string,
     dryRun = false
   ): Promise<EditResult> {
-    return this.#applyEdits(async () => {
+    return this.#applyEdits(async (context) => {
+      await context.apply(edits, label);
       return {
         success: true,
         spec: { edits, label },
       };
+    }, dryRun);
+  }
+
+  async apply(transform: EditTransform, dryRun = false): Promise<EditResult> {
+    return this.#applyEdits((context) => {
+      return transform.createSpec(context);
     }, dryRun);
   }
 
@@ -210,30 +218,15 @@ export class Graph implements EditableGraph {
   }
 
   async #applyEdits(
-    editSpecBuilder: (
+    transformer: (
       context: EditOperationContext
     ) => Promise<EditTransformResult>,
     dryRun = false
   ): Promise<EditResult> {
-    let context: EditOperationContext;
-
     const checkpoint = structuredClone(this.#graph);
-    if (dryRun) {
-      const graph = checkpoint;
-      const inspector = inspectableGraph(graph, this.#options);
-      context = {
-        graph,
-        inspector,
-        store: inspector,
-      };
-    } else {
-      context = {
-        graph: this.#graph,
-        inspector: this.#inspector,
-        store: this.#inspector,
-      };
-    }
     const log: EditResultLogEntry[] = [];
+    let label = "";
+
     let error: string | null = null;
     // Presume that all edits will result in no changes.
     let noChange = true;
@@ -243,12 +236,12 @@ export class Graph implements EditableGraph {
     const affectedNodes: NodeIdentifier[][] = [];
     // Collect affected modules
     const affectedModules: NodeIdentifier[][] = [];
-    const result = await editSpecBuilder(context);
-    let label = "";
-    if (!result.success) {
-      error = result.error;
-    } else {
-      const { edits, label: editLabel } = result.spec;
+    let context: EditOperationContext;
+    const apply: EditOperationConductor = async (
+      edits: EditSpec[],
+      editLabel: string
+    ) => {
+      if (error) return { success: false, error };
       label = editLabel;
       for (const edit of edits) {
         if (this.#shouldDiscardEdit(edit)) {
@@ -258,7 +251,7 @@ export class Graph implements EditableGraph {
         log.push({ edit: edit.type, result });
         if (!result.success) {
           error = result.error;
-          break;
+          return { success: false, error };
         }
         affectedNodes.push(result.affectedNodes);
         affectedModules.push(result.affectedModules);
@@ -269,6 +262,29 @@ export class Graph implements EditableGraph {
           visualOnly = false;
         }
       }
+      return { success: true, result: undefined };
+    };
+
+    if (dryRun) {
+      const graph = checkpoint;
+      const inspector = inspectableGraph(graph, this.#options);
+      context = {
+        graph,
+        inspector,
+        store: inspector,
+        apply,
+      };
+    } else {
+      context = {
+        graph: this.#graph,
+        inspector: this.#inspector,
+        store: this.#inspector,
+        apply,
+      };
+    }
+    const result = await transformer(context);
+    if (!result.success) {
+      error = result.error;
     }
     if (error) {
       !dryRun && this.#rollbackGraph(checkpoint, error);
@@ -289,11 +305,5 @@ export class Graph implements EditableGraph {
         [...new Set(affectedModules.flat())]
       );
     return { success: true, log };
-  }
-
-  async apply(transform: EditTransform, dryRun = false): Promise<EditResult> {
-    return this.#applyEdits((context) => {
-      return transform.createSpec(context);
-    }, dryRun);
   }
 }
