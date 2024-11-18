@@ -386,3 +386,19 @@ if (!moving.success) {
 ```
 
 - `MoveToNewGraphTransform` -- same as above, except creating a new graph, with `title` and `description` arguments that set, respectively, the title and the description of the newly created graph (see example above).
+
+- `SidewireToNewGraphTransform` -- combines the `ConfigureSidewireTransform` and `MoveToNewGraphTransform` to create a new sidewired subgraph from a node selection.
+
+```ts
+const sidewired = await editor.apply(
+  new SidewireToNewGraphTransform(
+    "node0", //  The id of the node on which to configure the subwire.
+    "$side", // The port name that will be used to configure the subwire.
+    "", // The graph id of the specified node ("" means main board).
+    "foo", // The id of the graph to create from selected nodes.
+    ["node2"], // The nodes that will be moved to new graph.
+    "Hello", //  The title of the newly created graph.
+    "World" // The description of the newly created graph (default "")
+  )
+);
+```
