@@ -40,5 +40,5 @@ export const createKits = (overrides: Kit[] = []) => {
   if (googleDriveKit) {
     kits.push(googleDriveKit);
   }
-  return addSandboxedRunModule(new NodeSandbox(), [...kits, ...overrides]);
+  return addSandboxedRunModule(new NodeSandbox(), [...overrides, ...kits]);
 };
