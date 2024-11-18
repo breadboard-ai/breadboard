@@ -58,6 +58,7 @@
   },
   "dependencies": {
     "@lit-labs/signals": "^0.1.1",
+    "@types/json-schema": "^7.0.15",
     "jsonriver": "^1.0.0",
     "lit": "^3.2.1",
     "micromark": "^4.0.1",
