@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "1.3.4",
+  "version": "1.4.0",
   "description": "A Nursery for new nodes that run in both Web and Node environments. Move to other kits to publish.",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -100,8 +100,8 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@google-labs/core-kit": "^0.16.0",
-    "@google-labs/template-kit": "^0.3.14",
+    "@google-labs/core-kit": "^0.17.0",
+    "@google-labs/template-kit": "^0.3.15",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/gapi": "^0.0.47",
     "@types/node": "^22.0.0",
@@ -112,6 +112,6 @@
     "typescript": "^5.6.3"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.29.0"
+    "@google-labs/breadboard": "^0.30.0"
   }
 }

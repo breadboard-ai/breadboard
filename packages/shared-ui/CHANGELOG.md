@@ -1,5 +1,84 @@
 # @breadboard-ai/shared-ui
 
+## 1.21.0
+
+### Minor Changes
+
+- a13caa0: Swap nav for open dialog
+- f472c75: Introduce "Read From Doc" component.
+- 4f49129: Migrate command palette to root
+- 32b50af: Expose side wires in `InspectableGraph`.
+- 1365f9d: Add `#computSideEdges` helper to compute side edges.
+- c75e26f: Introduce Imperative Graphs.
+- 856e249: Add some infrastructure for types to JSandbox.
+- cc19e8c: Teach Visual Editor how to edit modules
+- 2c7587a: Rename "Specialist" to "Model".
+
+### Patch Changes
+
+- 9250262: Various fixes in module editing.
+- 97b85d4: A few more fixes while working with imperative modules.
+- 1f91291: Add support for JS sources
+- 8a590bc: More tweaks to module editor
+- 5e53755: Start subgraph work
+- 3e3fd65: Add a raft of improvements to module management
+- 605af98: Start caching describer results.
+- 57986da: Always show Example & Playground boards
+- 426a2be: Various smaller tweaks to module editor
+- 05a3904: Add prettier support to Module Editor
+- 62d627f: Feed compiled JS from TS compiler.
+- 552be88: Set TypeScript as the default module language
+- 0df3c27: More module editor tweaks
+- b541052: Raft of fixes for Module Editor
+- e3b6040: Teach the command palette about recency
+- 0f2a1da: Fix completion navigation
+- 6fad5ba: Minor fixes for runJavascript rendering
+- 0601a48: Fix compilation
+- 0eb903c: Recreate env when module list changes
+- 66041a7: Migrate to use `InspectableGraph.edit` for subgraph add/remove/replace.
+- 335983b: Teach Module Editor to format on save
+- 07c0720: Various improvements to the Module Editor
+- e0d59b6: Teach Visual Editor how to change module language
+- 032b9f6: Add error menu
+- 9e5390d: Introduce Edit Transforms and start using them.
+- 0e0bd49: Teach Module Editor about search; tidy overlay
+- 4130fed: Add controls for imperative boards
+- Updated dependencies [9250262]
+- Updated dependencies [e37a9bf]
+- Updated dependencies [a13caa0]
+- Updated dependencies [1131130]
+- Updated dependencies [97b85d4]
+- Updated dependencies [ca466cd]
+- Updated dependencies [669694a]
+- Updated dependencies [18dace0]
+- Updated dependencies [605af98]
+- Updated dependencies [32b50af]
+- Updated dependencies [19fc2d0]
+- Updated dependencies [62d627f]
+- Updated dependencies [74aa9b7]
+- Updated dependencies [8d44489]
+- Updated dependencies [ce3a00c]
+- Updated dependencies [b541052]
+- Updated dependencies [c75e26f]
+- Updated dependencies [856e249]
+- Updated dependencies [1f1f7bc]
+- Updated dependencies [db52fbc]
+- Updated dependencies [cc19e8c]
+- Updated dependencies [d42ab17]
+- Updated dependencies [9d5f11b]
+- Updated dependencies [31ddc9a]
+- Updated dependencies [66041a7]
+- Updated dependencies [a934fe2]
+- Updated dependencies [2c7587a]
+- Updated dependencies [9e5390d]
+- Updated dependencies [1fb9857]
+  - @breadboard-ai/jsandbox@0.2.0
+  - @google-labs/breadboard@0.30.0
+  - @google-labs/breadboard-schema@1.10.0
+  - @breadboard-ai/types@0.3.0
+  - @breadboard-ai/build@0.11.0
+  - @breadboard-ai/data-store@0.2.6
+
 ## 1.20.0
 
 ### Minor Changes

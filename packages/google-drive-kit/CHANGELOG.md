@@ -1,5 +1,34 @@
 # @breadboard-ai/google-drive-kit
 
+## 0.4.0
+
+### Minor Changes
+
+- e37a9bf: Add image and formatting support to Context to Slides
+- ca466cd: Plumb probe events (node/graph start/end) for runModule.
+- 1fb9857: Add support for entity escaping.
+- f472c75: Introduce "Read From Doc" component.
+- 289a26f: Handle weird inputs more gracefully.
+- d39d473: Add "Append to Doc" component to Google Drive Kit.
+- 9d5f11b: Convert existing declarative kits to BGL.
+- 1f1f7bc: Add formatting support for "Append to Doc"
+
+### Patch Changes
+
+- 1131130: Scope capabilities to one invocation.
+- 23714f2: Escape single quotes in Google Drive API query.
+- 6fe2ea2: Fix up schema in "Read From Doc".
+- 31ddc9a: Various polish and fixes.
+- Updated dependencies [ca466cd]
+- Updated dependencies [18dace0]
+- Updated dependencies [32b50af]
+- Updated dependencies [8d44489]
+- Updated dependencies [856e249]
+- Updated dependencies [d42ab17]
+  - @google-labs/core-kit@0.17.0
+  - @breadboard-ai/build@0.11.0
+  - @google-labs/template-kit@0.3.15
+
 ## 0.3.0
 
 ### Minor Changes

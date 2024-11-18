@@ -1,5 +1,24 @@
 # @google-labs/agent-kit
 
+## 0.14.0
+
+### Minor Changes
+
+- 32b50af: Expose side wires in `InspectableGraph`.
+- 9d5f11b: Convert existing declarative kits to BGL.
+- 2c7587a: Rename "Specialist" to "Model".
+
+### Patch Changes
+
+- 392b111: Ignore blank tools in Model (Specialist).
+- Updated dependencies [ca466cd]
+- Updated dependencies [18dace0]
+- Updated dependencies [19fc2d0]
+- Updated dependencies [c75e26f]
+- Updated dependencies [9d5f11b]
+  - @breadboard-ai/types@0.3.0
+  - @breadboard-ai/build@0.11.0
+
 ## 0.13.0
 
 ### Minor Changes

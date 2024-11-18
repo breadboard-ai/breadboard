@@ -1,5 +1,12 @@
 # @breadboard-ai/python-wasm
 
+## 0.1.11
+
+### Patch Changes
+
+- Updated dependencies [18dace0]
+  - @breadboard-ai/build@0.11.0
+
 ## 0.1.10
 
 ### Patch Changes

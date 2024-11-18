@@ -1,5 +1,57 @@
 # @breadboard-ai/board-server
 
+## 0.10.0
+
+### Minor Changes
+
+- 8d44489: Implement support for module-based describers
+- d42ab17: Teach Board Server about sandboxed runModule.
+- 9d5f11b: Convert existing declarative kits to BGL.
+
+### Patch Changes
+
+- Updated dependencies [9250262]
+- Updated dependencies [e37a9bf]
+- Updated dependencies [a13caa0]
+- Updated dependencies [1131130]
+- Updated dependencies [97b85d4]
+- Updated dependencies [ca466cd]
+- Updated dependencies [669694a]
+- Updated dependencies [1fb9857]
+- Updated dependencies [18dace0]
+- Updated dependencies [f472c75]
+- Updated dependencies [605af98]
+- Updated dependencies [32b50af]
+- Updated dependencies [289a26f]
+- Updated dependencies [19fc2d0]
+- Updated dependencies [62d627f]
+- Updated dependencies [74aa9b7]
+- Updated dependencies [8d44489]
+- Updated dependencies [ce3a00c]
+- Updated dependencies [b541052]
+- Updated dependencies [c75e26f]
+- Updated dependencies [856e249]
+- Updated dependencies [23714f2]
+- Updated dependencies [d39d473]
+- Updated dependencies [1f1f7bc]
+- Updated dependencies [6fe2ea2]
+- Updated dependencies [db52fbc]
+- Updated dependencies [cc19e8c]
+- Updated dependencies [d42ab17]
+- Updated dependencies [9d5f11b]
+- Updated dependencies [31ddc9a]
+- Updated dependencies [66041a7]
+- Updated dependencies [a934fe2]
+- Updated dependencies [1f1f7bc]
+- Updated dependencies [2c7587a]
+- Updated dependencies [9e5390d]
+- Updated dependencies [1fb9857]
+  - @breadboard-ai/jsandbox@0.2.0
+  - @breadboard-ai/google-drive-kit@0.4.0
+  - @google-labs/breadboard@0.30.0
+  - @breadboard-ai/types@0.3.0
+  - @breadboard-ai/data-store@0.2.6
+
 ## 0.9.0
 
 ### Minor Changes

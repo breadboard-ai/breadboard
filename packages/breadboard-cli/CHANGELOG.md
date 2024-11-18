@@ -1,5 +1,65 @@
 # @google-labs/breadboard-cli
 
+## 0.12.0
+
+### Minor Changes
+
+- 18dace0: Allow subgraphs to access modules
+
+### Patch Changes
+
+- Updated dependencies [9250262]
+- Updated dependencies [e37a9bf]
+- Updated dependencies [a13caa0]
+- Updated dependencies [1131130]
+- Updated dependencies [97b85d4]
+- Updated dependencies [ca466cd]
+- Updated dependencies [1fb9857]
+- Updated dependencies [5e53755]
+- Updated dependencies [18dace0]
+- Updated dependencies [3e3fd65]
+- Updated dependencies [f472c75]
+- Updated dependencies [605af98]
+- Updated dependencies [4f49129]
+- Updated dependencies [32b50af]
+- Updated dependencies [426a2be]
+- Updated dependencies [289a26f]
+- Updated dependencies [19fc2d0]
+- Updated dependencies [05a3904]
+- Updated dependencies [62d627f]
+- Updated dependencies [552be88]
+- Updated dependencies [8d44489]
+- Updated dependencies [ce3a00c]
+- Updated dependencies [0df3c27]
+- Updated dependencies [b541052]
+- Updated dependencies [c75e26f]
+- Updated dependencies [856e249]
+- Updated dependencies [23714f2]
+- Updated dependencies [d39d473]
+- Updated dependencies [6fe2ea2]
+- Updated dependencies [db52fbc]
+- Updated dependencies [cc19e8c]
+- Updated dependencies [d42ab17]
+- Updated dependencies [9d5f11b]
+- Updated dependencies [31ddc9a]
+- Updated dependencies [66041a7]
+- Updated dependencies [a934fe2]
+- Updated dependencies [259ef66]
+- Updated dependencies [07c0720]
+- Updated dependencies [e0d59b6]
+- Updated dependencies [1f1f7bc]
+- Updated dependencies [2c7587a]
+- Updated dependencies [9e5390d]
+- Updated dependencies [0e0bd49]
+- Updated dependencies [392b111]
+- Updated dependencies [1fb9857]
+  - @breadboard-ai/visual-editor@1.23.0
+  - @google-labs/breadboard@0.30.0
+  - @google-labs/core-kit@0.17.0
+  - @breadboard-ai/build@0.11.0
+  - @breadboard-ai/import@0.1.13
+  - @google-labs/template-kit@0.3.15
+
 ## 0.11.6
 
 ### Patch Changes

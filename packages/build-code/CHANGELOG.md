@@ -1,5 +1,22 @@
 # @breadboard-ai/build-code
 
+## 0.2.0
+
+### Minor Changes
+
+- 18dace0: Allow subgraphs to access modules
+
+### Patch Changes
+
+- Updated dependencies [ca466cd]
+- Updated dependencies [18dace0]
+- Updated dependencies [32b50af]
+- Updated dependencies [8d44489]
+- Updated dependencies [856e249]
+- Updated dependencies [d42ab17]
+  - @google-labs/core-kit@0.17.0
+  - @breadboard-ai/build@0.11.0
+
 ## 0.1.5
 
 ### Patch Changes
