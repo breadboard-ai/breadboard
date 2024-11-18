@@ -107,7 +107,9 @@ async function* extractText(
   ) => void,
 ): AsyncIterableIterator<string> {
   for await (const chunk of stream) {
-    // TODO(aomarks) An error can occur here.
+    // TODO(aomarks) Sometimes we get no parts, just a mostly empty message.
+    // That should probably generate an error, which should somehow appear on
+    // this stream.
     const parts = chunk?.candidates?.[0]?.content?.parts;
     if (parts === undefined) {
       console.error(`chunk had no parts: ${JSON.stringify(chunk)}`);

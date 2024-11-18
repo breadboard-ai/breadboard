@@ -8,7 +8,9 @@ import {SignalArray} from 'signal-utils/array';
 import {getWikipediaArticle} from '../tools/wikipedia.js';
 import {BufferedMultiplexStream} from '../util/buffered-multiplex-stream.js';
 import {Lock} from '../util/lock.js';
+import type {Result} from '../util/result.js';
 import {gemini, type Content} from './gemini.js';
+import {openai, type Message} from './openai.js';
 
 export type Turn = {
   role: 'user' | 'model';
@@ -28,23 +30,14 @@ export type ResolvedConversationTurn = Turn & {kind: 'text'};
 export class Conversation {
   readonly turns = new SignalArray<Turn>();
   readonly #lock = new Lock();
+  #model = 'openai';
 
   async send(message: string) {
     await this.#lock.do(async () => {
       this.turns.push({kind: 'text', role: 'user', text: message});
       // TODO(aomarks) Support for loading indicators (another field on Turn).
       this.turns.push({kind: 'text', role: 'model', text: '...'});
-      const result = await gemini(
-        {
-          contents: await this.#contents(),
-          tools: [{functionDeclarations: [getWikipediaArticle.declaration]}],
-        },
-        [getWikipediaArticle],
-        (tool, args, result) => {
-          console.log('Tool invoked:', tool, args, result);
-          void this.send('Tool response: ' + JSON.stringify(result));
-        },
-      );
+      const result = await this.#generate();
       this.turns.pop();
       if (result.ok) {
         this.turns.push({
@@ -60,6 +53,58 @@ export class Conversation {
         });
       }
     });
+  }
+
+  async #generate(): Promise<Result<AsyncIterableIterator<string>, Error>> {
+    if (this.#model === 'gemini') {
+      return this.#generateGemini();
+    }
+    if (this.#model === 'openai') {
+      return this.#generateOpenai();
+    }
+    throw new Error('Unknown model: ' + this.#model);
+  }
+
+  async #generateGemini(): Promise<
+    Result<AsyncIterableIterator<string>, Error>
+  > {
+    return await gemini(
+      {
+        contents: await this.#contents(),
+        tools: [{functionDeclarations: [getWikipediaArticle.declaration]}],
+      },
+      [getWikipediaArticle],
+      (tool, args, result) => {
+        console.log('Tool invoked:', tool, args, result);
+        void this.send('Tool response: ' + JSON.stringify(result));
+      },
+    );
+  }
+
+  async #generateOpenai(): Promise<
+    Result<AsyncIterableIterator<string>, Error>
+  > {
+    return await openai(
+      {
+        model: 'gpt-3.5-turbo',
+        messages: convertToOpenai((await this.#contents()).slice(0, -1)),
+        tools: [
+          {
+            type: 'function',
+            function: {
+              description: getWikipediaArticle.declaration.description,
+              name: getWikipediaArticle.declaration.name,
+              parameters: getWikipediaArticle.declaration.parameters,
+            },
+          },
+        ],
+      },
+      [getWikipediaArticle],
+      (tool, args, result) => {
+        console.log('Tool invoked:', tool, args, result);
+        void this.send('Tool response: ' + JSON.stringify(result));
+      },
+    );
   }
 
   async #contents(): Promise<Content[]> {
@@ -81,4 +126,19 @@ export class Conversation {
     }
     return contents;
   }
+}
+
+function convertToOpenai(contents: Content[]): Message[] {
+  const messages: Message[] = [];
+  for (const content of contents) {
+    messages.push({
+      role: content.role === 'user' ? 'user' : 'system',
+      content: content.parts
+        .filter((part) => 'text' in part)
+        .map((part) => part.text)
+        .join(''),
+    });
+    console.log(messages.at(-1));
+  }
+  return messages;
 }
