@@ -147,12 +147,6 @@ export type AddGraphSpec = {
   graph: GraphDescriptor;
 };
 
-export type ReplaceGraphSpec = {
-  type: "replacegraph";
-  id: GraphIdentifier;
-  graph: GraphDescriptor;
-};
-
 export type RemoveGraphSpec = {
   type: "removegraph";
   id: GraphIdentifier;

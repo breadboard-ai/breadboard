@@ -34,7 +34,7 @@ The editor API provides one method for applying edits to the graph: `edit`. This
 // Adds a node with id = "foo" and type = "type".
 // Returns `Promise<EditResult>`.
 const result = await graph.edit(
-  [{ type: "addnode", node: { id: "foo", type: "type" } }],
+  [{ type: "addnode", node: { id: "foo", type: "type" }, graphId: "" }],
   `Create Node "foo"`
 );
 if (!result.success) {
@@ -51,7 +51,7 @@ When `dryRun` is set to `true`, the method will not perform the actual edit, but
 // just checks to see if such a node could be added.
 // Returns `Promise<EditResult>`.
 const result = await graph.edit(
-  [{ type: "addnode", node: { id: "foo", type: "type" } }],
+  [{ type: "addnode", node: { id: "foo", type: "type" }, graphId: "" }],
   "Adding Node (dry run)",
   true
 );
@@ -69,8 +69,8 @@ Multiple changes to the graph are performed as one atomic unit when specified in
 // .. and a node with id = "bar" and type = "type" as one atomic operation.
 // Returns `Promise<EditResult>`.
 const result = await graph.edit([
-  { type: "addnode", node: { id: "foo", type: "type" } },
-  { type: "addnode", node: { id: "bar", type: "type" } },
+  { type: "addnode", node: { id: "foo", type: "type" }, graphId: "" },
+  { type: "addnode", node: { id: "bar", type: "type" }, graphId: "" },
 ]);
 if (!result.success) {
   console.warn("Adding node failed with this error", result.error);
@@ -90,7 +90,7 @@ const graph = edit(bgl, { kits: [asRuntime(Core), asRunTime(JSONKit)] });
 
 ## Editing a graph
 
-There are the six edit operations that we can perform on the graph:
+Here are all the edit operations that we can perform on the graph:
 
 - `addnode` -- add a new node to the graph
 
@@ -100,11 +100,23 @@ There are the six edit operations that we can perform on the graph:
 
 - `removeedge` -- remove an edge from the graph
 
+- `changeedge` -- mutate an existing edge in place, without changing its identity.
+
 - `changeconfiguration` -- change configuration of a node
 
 - `changemetadata` -- change metadata (title, description, etc.) of a node
 
-- `changegraphmetadata` - change graph metadata.
+- `changegraphmetadata` -- change graph metadata.
+
+- `addmodule` -- add a new module to the graph.
+
+- `removemodule` -- remove existing module from the graph.
+
+- `changemodule` -- update an existing modeul within the graph.
+
+- `addgraph` - add a new sub-graph to the graph.
+
+- `removegraph` - remove a sub-graph from this graph.
 
 ## Starting a new graph
 
@@ -191,85 +203,60 @@ When the `edit` call has a label that's different from the previous call, a new 
 ```ts
 // Creates a new history entry.
 const result = await graph.edit(
-  [{ type: "addnode", node: { id: "foo", type: "type" } }],
+  [{ type: "addnode", node: { id: "foo", type: "type" }, graphId: "" }],
   `Create Node "foo"`
 );
 // Different label, creates another history entry.
 const result = await graph.edit(
-  [{ type: "changemetadata", id: "foo", metadata: { title: "F" } }],
+  [
+    {
+      type: "changemetadata",
+      id: "foo",
+      metadata: { title: "F" },
+      graphId: "",
+    },
+  ],
   `Editing metadata for node "foo"`
 );
 // Label is the same as the previous call, no new entry created.
 const result = await graph.edit(
-  [{ type: "changemetadata", id: "foo", metadata: { title: "Fo" } }],
+  [
+    {
+      type: "changemetadata",
+      id: "foo",
+      metadata: { title: "Fo" },
+      graphId: "",
+    },
+  ],
   `Editing metadata for node "foo"`
 );
 // Label is the same as the previous call, no new entry created.
 const result = await graph.edit(
-  [{ type: "changemetadata", id: "foo", metadata: { title: "Foo" } }],
+  [
+    {
+      type: "changemetadata",
+      id: "foo",
+      metadata: { title: "Foo" },
+      graphId: "",
+    },
+  ],
   `Editing metadata for node "foo"`
 );
 // Different label, creates another history entry.
 const result = await graph.edit(
-  [{ type: "addnode", node: { id: "bar", type: "type" } }],
+  [{ type: "addnode", node: { id: "bar", type: "type" }, graphId: "" }],
   `Create Node "bar"`
 );
 ```
 
 ## Editing subgraphs
 
-Since every graph may have **embedded subgraphs** in it, we can use the Editor API to access and edit these subgraphs as well. Every subgraph has an identifier that is unique among all subgraphs within their graph. The API uses this id to add, remove, replace subgraphs and manages the `EditableGraph` instances for subgraphs.
+Since every graph may have **embedded subgraphs** in it, we can use the Editor API to access and edit these subgraphs as well. Every subgraph has an identifier that is unique among all subgraphs within their graph. The API uses this id to add, remove, replace subgraphs.
 
-```ts
-// Returns an `EditableGraph` instance or `null` if not found.
-const subgraph = graph.getGraph("foo");
-if (subgraph) {
-  // Edit the subgraph
-  // ...
-}
+The `graphId` property in the edit operations provides a way to identify
+the particular subgraph on which it operates.
 
-// Attempts to add a new subgraph and returns `EditResult`.
-// Returns null if a subgraph with this id already exists,
-// and an `EditableGraph` instance otherwise.
-const newSubgraph = graph.addGraph("bar", blank());
-if (!newSubgraph) {
-  console.log("A graph with id 'bar' already exists.");
-}
-
-// Attempts to remove the subgraph and returns `EditResult`.
-// Will fail if a subgraph with this id does not exist.
-const result = graph.removeGraph("bar");
-if (result.success) {
-  console.log("Yay, removed subgraph 'bar'.");
-} else {
-  console.log("The subgraph 'bar' does not exist".)
-}
-
-// Attempts to replace a subgraph and returns `EditResult`.
-// Returns null if a subgraph with this id does not exist,
-// and an `EditableGraph` instance of the new subgraph otherwise.
-const replaced = graph.replaceGraph("foo", blank());
-if (!replaced) {
-  console.log("A graph with id 'foo' does not exist.")
-}
-```
-
-To find out if a particular `EditableGraph` instance is an embedded subgraph, use the `parent()` method:
-
-```ts
-// If subgraph, returns `EditableGraph` instance of the parent graph.
-const parentGraph = subgraph.parent();
-if (parentGraph) {
-  console.log("A subgraph!");
-} else {
-  console.log("Not a subgraph");
-}
-```
-
-Because they are part of a larger graph, subgraphs do not have their own versions and attempting to call the `version()` method on a subgraph will throw an error.
-
-Subgraphs may not contain other subgraphs, so in the same fashion as `version()`, the `getGraph`, `addGraph`, `replaceGraph`, and `removeGraph` will throw
-when called on a subgraph.
+The id of the main graph is an empty string: `""`.
 
 ## Accessing the graph
 
@@ -286,15 +273,16 @@ The `raw()` method will correctly serialize all of graph's subgraph and reflect 
 
 ## Inspecting the graph
 
-Because the graph constantly changes, it can be tedious to keep track of the latest changes and keep creating new instances of `InspectableGraph`. To help with that, there's an `inspect` method on the `EditableGraph`:
+Because the graph constantly changes, it can be tedious to keep track of the latest changes and keep creating new instances of `InspectableGraph`. To help with that, there's an `inspect` method on the `EditableGraph`.
+
+The `inspect` method takes a graph identifier, allow easy access to a
+particular sub-graph's `InspectableGraph` instance.
 
 ```ts
 // Guaranteed to be inspecting the latest graph.
 // Returns `InspectableGraph`.
-const inspectableGraph = graph.inspect();
+const inspectableGraph = graph.inspect("");
 ```
-
-In term of lifecycle, the `InspectableGraph` changes more frequently than the `EditableGraph`. So, hang on to the `EditableGraph` instance and use it to create `InspectableGraph` instances. It will cache them for you, only creating a new inspector when the graph changes.
 
 ## Listening to changes
 
