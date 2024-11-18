@@ -127,3 +127,8 @@ export { sequenceEntryToHarnessRunResult } from "./inspector/run/conversions.js"
 
 export { addSandboxedRunModule } from "./sandboxed-run-module.js";
 export { blankImperative } from "./run/run-imperative-graph.js";
+
+export { IsolateSelectionTransform } from "./editor/transforms/isolate-selection.js";
+export { MoveToGraphTransform } from "./editor/transforms/move-to-graph.js";
+export { MoveToNewGraphTransform } from "./editor/transforms/move-to-new-graph.js";
+export { MergeGraphTransform } from "./editor/transforms/merge-graph.js";
