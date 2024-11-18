@@ -30,7 +30,7 @@ export class BBRTChatMessage extends LitElement {
     const text =
       typeof this.data.text === 'string'
         ? this.data.text
-        : typingEffect(3, this.data.text);
+        : typingEffect(1000, this.data.text);
     return html`<b>${this.data.role}</b>:
       <bbrt-markdown .markdown=${text}></bbrt-markdown>`;
   }
