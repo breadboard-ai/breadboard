@@ -105,7 +105,8 @@
     "url": "https://github.com/breadboard-ai/breadboard.git"
   },
   "files": [
-    "dist/src"
+    "dist/src",
+    "sandbox.wasm"
   ],
   "keywords": [],
   "author": "Google Labs Team",
