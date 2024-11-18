@@ -27,9 +27,8 @@ export class BBRTChat extends SignalWatcher(LitElement) {
     if (this.conversation === undefined) {
       return html`Connecting...`;
     }
-    return this.conversation.contents.map(
-      (message) =>
-        html`<bbrt-chat-message .data=${message}></bbrt-chat-message>`,
+    return this.conversation.turns.map(
+      (turn) => html`<bbrt-chat-message .turn=${turn}></bbrt-chat-message>`,
     );
   }
 }

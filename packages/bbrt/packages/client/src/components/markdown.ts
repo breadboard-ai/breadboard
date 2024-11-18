@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {LitElement} from 'lit';
+import {LitElement, css} from 'lit';
 import {AsyncDirective, directive} from 'lit/async-directive.js';
 import {customElement, property} from 'lit/decorators.js';
 import {unsafeHTML} from 'lit/directives/unsafe-html.js';
@@ -27,6 +27,11 @@ export class BBRTMarkdown extends LitElement {
   @property()
   markdown?: string | AsyncIterable<string>;
 
+  static override styles = css`
+    :first-child {
+      margin-top: 0;
+    }
+  `;
   render() {
     // TODO(aomarks) Why does this initially display a stringified Promise?
     return !this.markdown
