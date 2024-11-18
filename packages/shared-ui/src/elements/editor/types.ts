@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphMetadata } from "@breadboard-ai/types";
+import { GraphMetadata, NodeIdentifier } from "@breadboard-ai/types";
 import {
   InspectableEdge,
   InspectableNode,
@@ -80,3 +80,9 @@ export interface GraphOpts {
   metadata: GraphMetadata;
   visible: boolean;
 }
+
+export type SideEdge = {
+  nodeId: NodeIdentifier;
+  portName: string;
+  graphId: string;
+};
