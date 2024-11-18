@@ -5,13 +5,9 @@
  */
 
 import { describe, it } from "node:test";
-import { testEditGraph, testSubGraph } from "./test-graph.js";
-import { deepStrictEqual, ok as nodeOk } from "node:assert";
+import { ok, testEditGraph, testSubGraph } from "./test-graph.js";
+import { deepStrictEqual } from "node:assert";
 import { MoveToGraphTransform } from "../../../src/editor/transforms/move-to-graph.js";
-
-function ok(result: { success: true } | { success: false; error: string }) {
-  return nodeOk(result.success, !result.success ? result.error : "");
-}
 
 describe("Move-to-graph transform", async () => {
   await it("moves nodes from main graph to sub-graph", async () => {

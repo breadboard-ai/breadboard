@@ -6,8 +6,23 @@
 
 import { editGraph } from "../../../src/editor/index.js";
 import { GraphDescriptor, NodeHandler } from "../../../src/types.js";
+import { ok as nodeOk } from "node:assert";
 
-export { testEditGraph, testSubGraph };
+export { testEditGraph, testSubGraph, ok, notOk };
+
+function ok(
+  result: { success: true } | { success: false; error: string }
+): result is { success: true } {
+  nodeOk(result.success, !result.success ? result.error : "");
+  return result.success;
+}
+
+function notOk(
+  result: { success: true } | { success: false; error: string }
+): result is { success: false; error: string } {
+  nodeOk(!result.success, !result.success ? result.error : "");
+  return !result.success;
+}
 
 function testSubGraph(): GraphDescriptor {
   return {
