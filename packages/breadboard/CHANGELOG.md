@@ -1,5 +1,49 @@
 # Changelog
 
+## 0.30.0
+
+### Minor Changes
+
+- a13caa0: Swap nav for open dialog
+- ca466cd: Plumb probe events (node/graph start/end) for runModule.
+- 18dace0: Allow subgraphs to access modules
+- 32b50af: Expose side wires in `InspectableGraph`.
+- 8d44489: Implement support for module-based describers
+- ce3a00c: Introduce sidewire transforms.
+- c75e26f: Introduce Imperative Graphs.
+- cc19e8c: Teach Visual Editor how to edit modules
+- 9d5f11b: Convert existing declarative kits to BGL.
+- 66041a7: Migrate to use `InspectableGraph.edit` for subgraph add/remove/replace.
+- 2c7587a: Rename "Specialist" to "Model".
+- 9e5390d: Introduce Edit Transforms and start using them.
+- 1fb9857: Teach RunObserver about resuming runs.
+
+### Patch Changes
+
+- e37a9bf: Add image and formatting support to Context to Slides
+- 605af98: Start caching describer results.
+- 19fc2d0: Teach EditSpec to add & remove modules
+- 62d627f: Feed compiled JS from TS compiler.
+- b541052: Raft of fixes for Module Editor
+- 31ddc9a: Various polish and fixes.
+- a934fe2: Make describer cache async.
+- Updated dependencies [9250262]
+- Updated dependencies [1131130]
+- Updated dependencies [97b85d4]
+- Updated dependencies [ca466cd]
+- Updated dependencies [669694a]
+- Updated dependencies [19fc2d0]
+- Updated dependencies [74aa9b7]
+- Updated dependencies [c75e26f]
+- Updated dependencies [856e249]
+- Updated dependencies [1f1f7bc]
+- Updated dependencies [db52fbc]
+- Updated dependencies [d42ab17]
+- Updated dependencies [9d5f11b]
+  - @breadboard-ai/jsandbox@0.2.0
+  - @google-labs/breadboard-schema@1.10.0
+  - @breadboard-ai/types@0.3.0
+
 ## 0.29.0
 
 ### Minor Changes

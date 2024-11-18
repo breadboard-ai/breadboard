@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/mod-playground",
-  "version": "1.21.6",
+  "version": "1.21.7",
   "description": "A Module Playground for Breadboard",
   "main": "./build/index.js",
   "exports": {

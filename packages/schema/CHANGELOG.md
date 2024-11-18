@@ -1,5 +1,17 @@
 # @google-labs/breadboard-schema
 
+## 1.10.0
+
+### Minor Changes
+
+- c75e26f: Introduce Imperative Graphs.
+- 9d5f11b: Convert existing declarative kits to BGL.
+
+### Patch Changes
+
+- ca466cd: Plumb probe events (node/graph start/end) for runModule.
+- 19fc2d0: Teach EditSpec to add & remove modules
+
 ## 1.9.0
 
 ### Minor Changes
