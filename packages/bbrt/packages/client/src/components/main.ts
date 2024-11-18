@@ -11,7 +11,6 @@ import {Conversation} from '../llm/conversation.js';
 import './artifacts.js';
 import './chat.js';
 import './prompt.js';
-import './tool-belt.js';
 
 @customElement('bbrt-main')
 export class BBRTMain extends LitElement {
@@ -55,7 +54,6 @@ export class BBRTMain extends LitElement {
       <bbrt-chat .conversation=${this.#conversation}></bbrt-chat>
       <div id="inputs">
         <bbrt-prompt .conversation=${this.#conversation}></bbrt-prompt>
-        <bbrt-tool-belt .conversation=${this.#conversation}></bbrt-tool-belt>
       </div>
       <bbrt-artifacts></bbrt-artifacts>
     `;

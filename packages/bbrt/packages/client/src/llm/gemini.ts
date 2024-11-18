@@ -60,12 +60,28 @@ export async function gemini(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent`,
   );
   url.searchParams.set('key', GEMINI_API_KEY);
-  const result = await fetch(url.href, {
-    method: 'POST',
-    body: JSON.stringify(request),
-  });
+  let result;
+  try {
+    result = await fetch(url.href, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  } catch (e) {
+    return {ok: false, error: e as Error};
+  }
   if (result.status !== 200) {
-    return {ok: false, error: Error(`http status was ${result.status}`)};
+    try {
+      const error = (await result.json()) as unknown;
+      return {
+        ok: false,
+        error: new Error(
+          `HTTP status ${result.status}` +
+            `\n\n${JSON.stringify(error, null, 2)}`,
+        ),
+      };
+    } catch {
+      return {ok: false, error: Error(`http status was ${result.status}`)};
+    }
   }
   const body = result.body;
   if (body === null) {
@@ -91,8 +107,10 @@ async function* extractText(
   ) => void,
 ): AsyncIterableIterator<string> {
   for await (const chunk of stream) {
-    const parts = chunk.candidates[0]?.content.parts;
+    // TODO(aomarks) An error can occur here.
+    const parts = chunk?.candidates?.[0]?.content?.parts;
     if (parts === undefined) {
+      console.error(`chunk had no parts: ${JSON.stringify(chunk)}`);
       continue;
     }
     for (const part of parts) {
