@@ -19,7 +19,7 @@ function testSubGraph(): GraphDescriptor {
 
 function testEditGraph() {
   return editGraph(
-    structuredClone({
+    {
       nodes: [
         {
           id: "node0",
@@ -31,7 +31,7 @@ function testEditGraph() {
         },
       ],
       edges: [{ from: "node0", out: "out", to: "node0", in: "in" }],
-    }),
+    },
     {
       kits: [
         {

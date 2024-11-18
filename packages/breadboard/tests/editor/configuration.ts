@@ -10,7 +10,8 @@ import { testEditGraph } from "./graph.js";
 
 test("editGraph correctly edits node configuration", async (t) => {
   const graph = testEditGraph();
-  const old = graph.inspect().nodeById("node0")?.descriptor?.configuration;
+  const graphId = "";
+  const old = graph.inspect("").nodeById("node0")?.descriptor?.configuration;
 
   t.deepEqual(old, undefined);
 
@@ -20,13 +21,14 @@ test("editGraph correctly edits node configuration", async (t) => {
         type: "changeconfiguration",
         id: "node0",
         configuration: { title: "hello " },
+        graphId,
       },
     ],
     "test"
   );
 
   t.is(result.success, true);
-  t.deepEqual(graph.inspect().nodeById("node0")?.descriptor?.configuration, {
+  t.deepEqual(graph.inspect("").nodeById("node0")?.descriptor?.configuration, {
     title: "hello ",
   });
 
@@ -36,13 +38,14 @@ test("editGraph correctly edits node configuration", async (t) => {
         type: "changeconfiguration",
         id: "node0",
         configuration: { description: "world" },
+        graphId,
       },
     ],
     "test"
   );
 
   t.is(changeResult.success, true);
-  t.deepEqual(graph.inspect().nodeById("node0")?.descriptor?.configuration, {
+  t.deepEqual(graph.inspect("").nodeById("node0")?.descriptor?.configuration, {
     title: "hello ",
     description: "world",
   });
@@ -54,12 +57,13 @@ test("editGraph correctly edits node configuration", async (t) => {
         id: "node0",
         configuration: { title: "goodbye" },
         reset: true,
+        graphId,
       },
     ],
     "test"
   );
   t.is(resetResult.success, true);
-  t.deepEqual(graph.inspect().nodeById("node0")?.descriptor?.configuration, {
+  t.deepEqual(graph.inspect("").nodeById("node0")?.descriptor?.configuration, {
     title: "goodbye",
   });
 });

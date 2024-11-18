@@ -821,7 +821,7 @@ export class Editor extends LitElement {
         if (this.#readingFromClipboard) {
           return;
         }
-
+        const graphId = this.subGraphId || "";
         this.#graphRenderer.deselectAllChildren();
 
         try {
@@ -972,7 +972,7 @@ export class Editor extends LitElement {
             node.metadata.visual.x = layout.x;
             node.metadata.visual.y = layout.y;
 
-            edits.push({ type: "addnode", node });
+            edits.push({ type: "addnode", node, graphId });
           }
 
           for (const edge of graph.edges) {
@@ -1007,7 +1007,7 @@ export class Editor extends LitElement {
             }
 
             this.#graphRenderer.addToAutoSelect(edgeToString(newEdge));
-            edits.push({ type: "addedge", edge: newEdge });
+            edits.push({ type: "addedge", edge: newEdge, graphId });
           }
 
           if (graph.metadata && graph.metadata.comments) {
@@ -1079,6 +1079,7 @@ export class Editor extends LitElement {
             edits.push({
               type: "changegraphmetadata",
               metadata: breadboardGraph.metadata,
+              graphId,
             });
           }
 
@@ -1124,6 +1125,7 @@ export class Editor extends LitElement {
         `(${curr.id}, {x: ${curr.x}, y: ${curr.y}, collapsed: ${curr.expansionState}})`
       );
     }, "");
+    const graphId = moveEvt.subGraphId || "";
     const editsEvt = new MultiEditEvent(
       moveEvt.nodes.map((node) => {
         switch (node.type) {
@@ -1136,6 +1138,7 @@ export class Editor extends LitElement {
 
             return {
               type: "changemetadata",
+              graphId,
               id: node.id,
               metadata: {
                 ...metadata,
@@ -1168,6 +1171,7 @@ export class Editor extends LitElement {
 
             return {
               type: "changegraphmetadata",
+              graphId,
               metadata,
             };
           }
@@ -1253,10 +1257,13 @@ export class Editor extends LitElement {
       evt as GraphEntityRemoveEvent;
     const edits: EditSpec[] = [];
 
+    const graphId = subGraphId || "";
+
     // Remove edges first.
     for (const edge of edges) {
       edits.push({
         type: "removeedge",
+        graphId,
         edge: {
           from: edge.from.descriptor.id,
           to: edge.to.descriptor.id,
@@ -1268,7 +1275,7 @@ export class Editor extends LitElement {
 
     // Remove nodes.
     for (const id of nodes) {
-      edits.push({ type: "removenode", id });
+      edits.push({ type: "removenode", id, graphId });
     }
 
     // Remove comments.
@@ -1284,6 +1291,7 @@ export class Editor extends LitElement {
       edits.push({
         type: "changegraphmetadata",
         metadata: graph.metadata,
+        graphId,
       });
     }
 
