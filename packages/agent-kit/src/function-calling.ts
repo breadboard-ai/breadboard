@@ -292,9 +292,11 @@ export const functionDeclarationsFormatterFn = ({
   const tools: JsonSerializable[] = [];
   const urlMap: URLMap = {};
   list.forEach((item) => {
-    tools.push(item.function);
+    if (!item) return;
+    const f = item.function;
+    tools.push(f);
     const flags = item.flags;
-    urlMap[item.function.name] = { url: item.boardURL, flags };
+    urlMap[f.name] = { url: item.boardURL, flags };
   });
   routes.forEach((route) => {
     tools.push(route);
