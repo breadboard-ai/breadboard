@@ -335,7 +335,7 @@ const isolating = await graph.apply(new IsolateSelectionTransform(
   ["node0"], // list of nodes ids to isolate
   "" // graph id
 ));
-(!result.success) {
+(!isolating.success) {
   // handle error
 }
 ```
