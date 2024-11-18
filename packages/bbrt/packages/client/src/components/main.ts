@@ -11,6 +11,7 @@ import {Conversation} from '../llm/conversation.js';
 import './artifacts.js';
 import './chat.js';
 import './prompt.js';
+import './tool-belt.js';
 
 @customElement('bbrt-main')
 export class BBRTMain extends LitElement {
@@ -31,9 +32,17 @@ export class BBRTMain extends LitElement {
       grid-column: 1;
       grid-row: 1 / 2;
     }
-    bbrt-prompt {
+    #inputs {
       grid-column: 1;
       grid-row: 2;
+      display: flex;
+      flex-direction: column;
+    }
+    bbrt-prompt {
+      flex-grow: 1;
+    }
+    bbrt-tools {
+      flex-grow: 1;
     }
     bbrt-artifacts {
       grid-column: 2;
@@ -44,7 +53,10 @@ export class BBRTMain extends LitElement {
   override render() {
     return html`
       <bbrt-chat .conversation=${this.#conversation}></bbrt-chat>
-      <bbrt-prompt .conversation=${this.#conversation}></bbrt-prompt>
+      <div id="inputs">
+        <bbrt-prompt .conversation=${this.#conversation}></bbrt-prompt>
+        <bbrt-tool-belt .conversation=${this.#conversation}></bbrt-tool-belt>
+      </div>
       <bbrt-artifacts></bbrt-artifacts>
     `;
   }

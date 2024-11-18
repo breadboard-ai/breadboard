@@ -5,11 +5,19 @@
  */
 
 import {GEMINI_API_KEY} from '../secrets.js';
+import type {FunctionDeclaration, Tool} from '../tools/tool.js';
 import type {Result} from '../util/result.js';
 import {streamJsonArrayItems} from '../util/stream-json-array-items.js';
 
 export interface GeminiRequest {
   contents: Content[];
+  tools?: Array<{
+    functionDeclarations: FunctionDeclaration[];
+  }>;
+  toolConfig?: {
+    mode: 'auto' | 'any' | 'none';
+    allowedFunctionNames: string[];
+  };
 }
 
 export interface Content {
@@ -17,19 +25,41 @@ export interface Content {
   parts: Part[];
 }
 
-export interface Part {
+export type Part = TextPart | FunctionCallPart;
+
+export interface TextPart {
   text: string;
 }
 
+export interface FunctionCallPart {
+  functionCall: {
+    name: string;
+    args: Record<string, unknown>;
+  };
+}
+
+export interface GeminiResponse {
+  candidates: Candidate[];
+}
+
+export interface Candidate {
+  content: Content;
+}
+
 export async function gemini(
-  contents: Content[],
+  request: GeminiRequest,
+  tools: Tool[],
+  onToolInvoke: (
+    tool: Tool,
+    args: Record<string, unknown>,
+    result: unknown,
+  ) => void,
 ): Promise<Result<AsyncIterableIterator<string>, Error>> {
   const model = 'gemini-1.5-flash-latest';
   const url = new URL(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent`,
   );
   url.searchParams.set('key', GEMINI_API_KEY);
-  const request: GeminiRequest = {contents};
   const result = await fetch(url.href, {
     method: 'POST',
     body: JSON.stringify(request),
@@ -45,18 +75,43 @@ export async function gemini(
     streamJsonArrayItems<GeminiResponse>(
       body.pipeThrough(new TextDecoderStream()),
     ),
+    tools,
+    onToolInvoke,
   );
   return {ok: true, value: stream};
 }
 
-interface GeminiResponse {
-  candidates: Array<{content: {parts: Array<{text: string}>}}>;
-}
-
 async function* extractText(
   stream: AsyncIterable<GeminiResponse>,
+  tools: Tool[],
+  onToolInvoke: (
+    tool: Tool,
+    args: Record<string, unknown>,
+    result: unknown,
+  ) => void,
 ): AsyncIterableIterator<string> {
   for await (const chunk of stream) {
-    yield chunk.candidates[0]?.content.parts[0]?.text ?? '';
+    const parts = chunk.candidates[0]?.content.parts;
+    if (parts === undefined) {
+      continue;
+    }
+    for (const part of parts) {
+      if ('text' in part) {
+        yield part.text;
+      } else if ('functionCall' in part) {
+        yield `{{${part.functionCall.name}(${JSON.stringify(
+          part.functionCall.args,
+        )})}}`;
+        for (const tool of tools) {
+          console.log(tool.declaration.name, 'VS', part.functionCall.name);
+          if (tool.declaration.name === part.functionCall.name) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const result = await tool.invoke(part.functionCall.args);
+            onToolInvoke(tool, part.functionCall.args, result);
+            break;
+          }
+        }
+      }
+    }
   }
 }

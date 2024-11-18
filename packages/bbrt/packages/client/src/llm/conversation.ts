@@ -5,6 +5,7 @@
  */
 
 import {SignalArray} from 'signal-utils/array';
+import {getWikipediaArticle} from '../tools/wikipedia.js';
 import {BufferedMultiplexStream} from '../util/buffered-multiplex-stream.js';
 import {gemini, type Content} from './gemini.js';
 
@@ -21,8 +22,19 @@ export class Conversation {
   async send(message: string) {
     // TODO(aomarks) We don't fully serialize requests. Make a proper queue.
     this.contents.push({role: 'user', text: message});
-    const result = await gemini(await this.#contents());
+    const result = await gemini(
+      {
+        contents: await this.#contents(),
+        tools: [{functionDeclarations: [getWikipediaArticle.declaration]}],
+      },
+      [getWikipediaArticle],
+      (tool, args, result) => {
+        console.log('Tool invoked:', tool, args, result);
+        void this.send('Tool response: ' + JSON.stringify(result));
+      },
+    );
     if (result.ok) {
+      // TODO(aomarks) Create the bot response earlier so it can be rendered right away.
       this.contents.push({
         role: 'model',
         text: new BufferedMultiplexStream(result.value),
