@@ -132,3 +132,4 @@ export { IsolateSelectionTransform } from "./editor/transforms/isolate-selection
 export { MoveToGraphTransform } from "./editor/transforms/move-to-graph.js";
 export { MoveToNewGraphTransform } from "./editor/transforms/move-to-new-graph.js";
 export { MergeGraphTransform } from "./editor/transforms/merge-graph.js";
+export { ConfigureSidewireTransform } from "./editor/transforms/configure-sidewire.js";

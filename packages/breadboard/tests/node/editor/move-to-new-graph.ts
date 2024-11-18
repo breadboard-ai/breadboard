@@ -5,17 +5,9 @@
  */
 
 import { describe, it } from "node:test";
-import { testEditGraph, testSubGraph } from "./test-graph.js";
-import { deepStrictEqual, ok as nodeOk } from "node:assert";
+import { notOk, ok, testEditGraph, testSubGraph } from "./test-graph.js";
+import { deepStrictEqual } from "node:assert";
 import { MoveToNewGraphTransform } from "../../../src/editor/transforms/move-to-new-graph.js";
-
-function ok(result: { success: true } | { success: false; error: string }) {
-  return nodeOk(result.success, !result.success ? result.error : "");
-}
-
-function notOk(result: { success: true } | { success: false; error: string }) {
-  return nodeOk(!result.success, !result.success ? result.error : "");
-}
 
 describe("Move-to-new-graph transform", async () => {
   await it("correctly creates a new subgraph", async () => {

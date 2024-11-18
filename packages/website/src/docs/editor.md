@@ -328,6 +328,22 @@ to run code between operations.
 
 Currently, here are the built-in transforms available from `@google-labs/breadboard` package:
 
+- `ConfigureSidewireTransform` -- configures a sidewire port on a node, connecting it to a graph.
+
+```ts
+const sidewired = await editor.apply(
+  new ConfigureSidewireTransform(
+    "node0", // node id of the node to configure
+    "$side", // sidewire port name for the specified node
+    "", // graph id of the specified node ("" means main graph)
+    "foo" // graph id of the graph to which we're drawing the subwire
+  )
+);
+if (!sidewired.success) {
+  // handle error
+}
+```
+
 - `IsolateSelectionTransform` -- takes a list of nodes and removes any edges that aren't shared by these nodes.
 
 ```ts
@@ -336,6 +352,20 @@ const isolating = await graph.apply(new IsolateSelectionTransform(
   "" // graph id
 ));
 (!isolating.success) {
+  // handle error
+}
+```
+
+- `MergeGraphTransform` -- merges a graph into another graph, moving all the nodes and edges from one graph into another, then deleting the remaining empty graph. Takes the id of the source of the graph and the destination graph id.
+
+```ts
+const merging = await editor.apply(
+  new MergeGraphTransform(
+    "foo", // source graph id
+    "" // graph id to merge into
+  )
+);
+if (!merging.success) {
   // handle error
 }
 ```
@@ -356,17 +386,3 @@ if (!moving.success) {
 ```
 
 - `MoveToNewGraphTransform` -- same as above, except creating a new graph, with `title` and `description` arguments that set, respectively, the title and the description of the newly created graph (see example above).
-
-- `MergeGraphTransform` -- merges a graph into another graph, moving all the nodes and edges from one graph into another, then deleting the remaining empty graph. Takes the id of the source of the graph and the destination graph id.
-
-```ts
-const merging = await editor.apply(
-  new MergeGraphTransform(
-    "foo", // source graph id
-    "" // graph id to merge into
-  )
-);
-if (!merging.success) {
-  // handle error
-}
-```
