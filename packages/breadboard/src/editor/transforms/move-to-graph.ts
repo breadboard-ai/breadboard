@@ -39,9 +39,7 @@ class MoveToGraphTransform implements EditTransform {
     return id ? `graph "${id}"` : "main graph";
   }
 
-  async createSpec(
-    context: EditOperationContext
-  ): Promise<EditTransformResult> {
+  async apply(context: EditOperationContext): Promise<EditTransformResult> {
     const sourceContext = toSubgraphContext(context, this.#source);
     if (!sourceContext.success) {
       return sourceContext;
@@ -49,7 +47,7 @@ class MoveToGraphTransform implements EditTransform {
     const isolatedSelection = await new IsolateSelectionTransform(
       this.#nodes,
       this.#source
-    ).createSpec(sourceContext.result);
+    ).apply(sourceContext.result);
     if (!isolatedSelection.success) {
       return isolatedSelection;
     }

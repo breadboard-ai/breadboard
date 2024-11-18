@@ -24,9 +24,7 @@ class IsolateSelectionTransform implements EditTransform {
     this.#graphId = graphId;
   }
 
-  async createSpec(
-    context: EditOperationContext
-  ): Promise<EditTransformResult> {
+  async apply(context: EditOperationContext): Promise<EditTransformResult> {
     const { inspector } = context;
     const selection = computeSelection(inspector, this.#nodes);
     if (!selection.success) {

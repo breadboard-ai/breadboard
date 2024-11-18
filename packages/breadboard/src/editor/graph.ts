@@ -194,7 +194,7 @@ export class Graph implements EditableGraph {
 
   async apply(transform: EditTransform, dryRun = false): Promise<EditResult> {
     return this.#applyEdits((context) => {
-      return transform.createSpec(context);
+      return transform.apply(context);
     }, dryRun);
   }
 

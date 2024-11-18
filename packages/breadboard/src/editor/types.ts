@@ -327,7 +327,7 @@ export type EditResult = {
 export type EditableEdgeSpec = Edge;
 
 export type EditTransform = {
-  createSpec(context: EditOperationContext): Promise<EditTransformResult>;
+  apply(context: EditOperationContext): Promise<EditTransformResult>;
 };
 
 export type EditTransformResult =
