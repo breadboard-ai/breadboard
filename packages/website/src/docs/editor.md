@@ -299,3 +299,74 @@ The `EditableGraph` instance also the `addEventListener` method, which works pre
   - `changeType`, which is `edit` when the change occurred due to a call to the `edit` method or `history` when the event was triggered by one of the history-manipulating methods.
 
 - `graphchangereject` -- dispatched when a proposed change is rejected. This may happen because the change is redundant or because the graph integrity would be jeopardized by the change. The event provides access to these properties: `graph`, which is the `GraphDescriptor` instance on which the change was attempted, and `reason`. The `reason` property itself has a `type` property, which can be either `"nochange"` or `"error`". The `"nochange"` indicates that the change was redundant, and `"error"` signals that the proposed changed would have resulted in an invalid graph. In the latter case, the `reason.error` property will contain the same error that would have been returned by the various `can*` methods from above.
+
+## Transforms
+
+Transforms are an abstraction that allows encapsulating a large atomic edit with many moving parts. For instance, if we want to create a new subgraph and move a few existing nodes from the main graph into it, we can structure it as a list of edits and check to make sure that each edit is valid. Or, we can use this transform:
+
+```ts
+const moving = await editor.apply(
+  new MoveToNewGraphTransform(
+    // Move nodes "node-1" and "node-2" along with all of their shared
+    // edges...
+    ["node-1", "node-2"],
+    // .. From main graph ...
+    "",
+    // ... To a new subgraph with the id "foo" ...
+    "foo",
+    // .. the title "Title" ...
+    "Title",
+    // ... and a description "Description".
+    "Description"
+  )
+);
+```
+
+Transforms are more flexible than the list of operations (even though
+they produce lists of operations as a result), because they allow us
+to run code between operations.
+
+Currently, here are the built-in transforms available from `@google-labs/breadboard` package:
+
+- `IsolateSelectionTransform` -- takes a list of nodes and removes any edges that aren't shared by these nodes.
+
+```ts
+const isolating = await graph.apply(new IsolateSelectionTransform(
+  ["node0"], // list of nodes ids to isolate
+  "" // graph id
+));
+(!result.success) {
+  // handle error
+}
+```
+
+- `MoveToGraphTransform` -- takes a list of nodes, a source and a destination graph ids, and moves the nodes from the source graph to the destination graph.
+
+```ts
+const moving = await editor.apply(
+  new MoveToGraphTransform(
+    ["node10"], // list of node ids to move
+    "foo", // source graph id
+    "" // destination graph id
+  )
+);
+if (!moving.success) {
+  // handle error
+}
+```
+
+- `MoveToNewGraphTransform` -- same as above, except creating a new graph, with `title` and `description` arguments that set, respectively, the title and the description of the newly created graph (see example above).
+
+- `MergeGraphTransform` -- merges a graph into another graph, moving all the nodes and edges from one graph into another, then deleting the remaining empty graph. Takes the id of the source of the graph and the destination graph id.
+
+```ts
+const merging = await editor.apply(
+  new MergeGraphTransform(
+    "foo", // source graph id
+    "" // graph id to merge into
+  )
+);
+if (!merging.success) {
+  // handle error
+}
+```
