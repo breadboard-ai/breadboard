@@ -12,6 +12,8 @@ await startDevServer({
     rootDir: '../client',
     plugins: [],
     watch: true,
-    nodeResolve: true,
+    nodeResolve: {
+      exportConditions: ['default'],
+    },
   },
 });
