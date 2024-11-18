@@ -33,7 +33,9 @@ const post: ApiHandler = async (parsed, req, res, body) => {
 
   const maybeGraph = body as GraphDescriptor;
 
-  if (!("nodes" in maybeGraph && "edges" in maybeGraph)) {
+  if (
+    !(("nodes" in maybeGraph && "edges" in maybeGraph) || "main" in maybeGraph)
+  ) {
     return false;
   }
 

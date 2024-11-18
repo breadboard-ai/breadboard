@@ -379,8 +379,12 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
       return { error: "No API Key" };
     }
     const request = createRequest(url, this.user.apiKey, "POST", descriptor);
-    const response = await fetch(request);
-    return await response.json();
+    try {
+      const response = await fetch(request);
+      return await response.json();
+    } catch (e) {
+      return { error: `Error updating board: ${(e as Error).message}` };
+    }
   }
 
   async #refreshProjects(): Promise<BoardServerProject[]> {
