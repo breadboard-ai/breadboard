@@ -6,9 +6,9 @@
 
 import {LitElement, css, html} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
-import {asyncAppend} from 'lit/directives/async-append.js';
 import type {StreamableContent} from '../llm/conversation.js';
 import {typingEffect} from '../util/typing-effect.js';
+import './markdown.js';
 
 @customElement('bbrt-chat-message')
 export class BBRTChatMessage extends LitElement {
@@ -27,10 +27,12 @@ export class BBRTChatMessage extends LitElement {
     if (this.data === undefined) {
       return html`Connecting ...`;
     }
-    return html`<b>${this.data.role}</b>:
-      ${typeof this.data.text === 'string'
+    const text =
+      typeof this.data.text === 'string'
         ? this.data.text
-        : asyncAppend(typingEffect(3, this.data.text))}`;
+        : typingEffect(3, this.data.text);
+    return html`<b>${this.data.role}</b>:
+      <bbrt-markdown .markdown=${text}></bbrt-markdown>`;
   }
 }
 
