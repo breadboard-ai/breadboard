@@ -745,7 +745,7 @@
       "id": "formatFunctionDeclarations",
       "type": "runJavascript",
       "configuration": {
-        "code": "const formatFunctionDeclarations = ({list,routes})=>{const tools=[];const urlMap={};list.forEach(item=>{tools.push(item.function);const flags=item.flags;urlMap[item.function.name]={url:item.boardURL,flags}});routes.forEach(route=>{tools.push(route);urlMap[route.name]={url:\"\",flags:{}}});return{tools,urlMap}};",
+        "code": "const formatFunctionDeclarations = ({list,routes})=>{const tools=[];const urlMap={};list.forEach(item=>{if(!item)return;const f=item.function;tools.push(f);const flags=item.flags;urlMap[f.name]={url:item.boardURL,flags}});routes.forEach(route=>{tools.push(route);urlMap[route.name]={url:\"\",flags:{}}});return{tools,urlMap}};",
         "inputSchema": {
           "type": "object",
           "properties": {
