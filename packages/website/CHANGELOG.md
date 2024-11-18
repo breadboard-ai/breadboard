@@ -1,5 +1,71 @@
 # @google-labs/breadboard-website
 
+## 2.7.0
+
+### Minor Changes
+
+- 9d5f11b: Convert existing declarative kits to BGL.
+
+### Patch Changes
+
+- a962f19: Add blog update
+- Updated dependencies [9250262]
+- Updated dependencies [e37a9bf]
+- Updated dependencies [a13caa0]
+- Updated dependencies [97b85d4]
+- Updated dependencies [1f91291]
+- Updated dependencies [ca466cd]
+- Updated dependencies [8a590bc]
+- Updated dependencies [5e53755]
+- Updated dependencies [18dace0]
+- Updated dependencies [3e3fd65]
+- Updated dependencies [f472c75]
+- Updated dependencies [605af98]
+- Updated dependencies [4f49129]
+- Updated dependencies [32b50af]
+- Updated dependencies [57986da]
+- Updated dependencies [426a2be]
+- Updated dependencies [1365f9d]
+- Updated dependencies [19fc2d0]
+- Updated dependencies [05a3904]
+- Updated dependencies [62d627f]
+- Updated dependencies [552be88]
+- Updated dependencies [8d44489]
+- Updated dependencies [ce3a00c]
+- Updated dependencies [0df3c27]
+- Updated dependencies [b541052]
+- Updated dependencies [e3b6040]
+- Updated dependencies [c75e26f]
+- Updated dependencies [0f2a1da]
+- Updated dependencies [856e249]
+- Updated dependencies [6fad5ba]
+- Updated dependencies [cc19e8c]
+- Updated dependencies [d42ab17]
+- Updated dependencies [0601a48]
+- Updated dependencies [9d5f11b]
+- Updated dependencies [31ddc9a]
+- Updated dependencies [0eb903c]
+- Updated dependencies [66041a7]
+- Updated dependencies [a934fe2]
+- Updated dependencies [335983b]
+- Updated dependencies [07c0720]
+- Updated dependencies [e0d59b6]
+- Updated dependencies [032b9f6]
+- Updated dependencies [2c7587a]
+- Updated dependencies [9e5390d]
+- Updated dependencies [0e0bd49]
+- Updated dependencies [392b111]
+- Updated dependencies [4130fed]
+- Updated dependencies [1fb9857]
+  - @breadboard-ai/shared-ui@1.21.0
+  - @google-labs/breadboard@0.30.0
+  - @google-labs/core-kit@0.17.0
+  - @google-labs/agent-kit@0.14.0
+  - @google-labs/gemini-kit@0.10.0
+  - @google-labs/json-kit@0.3.13
+  - @google-labs/palm-kit@0.1.7
+  - @google-labs/template-kit@0.3.15
+
 ## 2.6.6
 
 ### Patch Changes

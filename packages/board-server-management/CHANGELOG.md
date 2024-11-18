@@ -1,5 +1,45 @@
 # @breadboard-ai/board-server-management
 
+## 1.19.1
+
+### Patch Changes
+
+- Updated dependencies [e37a9bf]
+- Updated dependencies [a13caa0]
+- Updated dependencies [1131130]
+- Updated dependencies [ca466cd]
+- Updated dependencies [1fb9857]
+- Updated dependencies [18dace0]
+- Updated dependencies [f472c75]
+- Updated dependencies [605af98]
+- Updated dependencies [32b50af]
+- Updated dependencies [289a26f]
+- Updated dependencies [19fc2d0]
+- Updated dependencies [62d627f]
+- Updated dependencies [8d44489]
+- Updated dependencies [ce3a00c]
+- Updated dependencies [b541052]
+- Updated dependencies [c75e26f]
+- Updated dependencies [23714f2]
+- Updated dependencies [d39d473]
+- Updated dependencies [6fe2ea2]
+- Updated dependencies [cc19e8c]
+- Updated dependencies [9d5f11b]
+- Updated dependencies [31ddc9a]
+- Updated dependencies [66041a7]
+- Updated dependencies [a934fe2]
+- Updated dependencies [1f1f7bc]
+- Updated dependencies [2c7587a]
+- Updated dependencies [9e5390d]
+- Updated dependencies [1fb9857]
+  - @breadboard-ai/google-drive-kit@0.4.0
+  - @google-labs/breadboard@0.30.0
+  - @breadboard-ai/idb-board-server@1.19.0
+  - @breadboard-ai/build@0.11.0
+  - @breadboard-ai/example-board-server@1.18.2
+  - @breadboard-ai/filesystem-board-server@1.18.2
+  - @breadboard-ai/remote-board-server@1.19.1
+
 ## 1.19.0
 
 ### Minor Changes

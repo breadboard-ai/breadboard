@@ -1,5 +1,131 @@
 # @google-labs/breadboard-web
 
+## 1.23.0
+
+### Minor Changes
+
+- a13caa0: Swap nav for open dialog
+- 18dace0: Allow subgraphs to access modules
+- f472c75: Introduce "Read From Doc" component.
+- 4f49129: Migrate command palette to root
+- 32b50af: Expose side wires in `InspectableGraph`.
+- 8d44489: Implement support for module-based describers
+- c75e26f: Introduce Imperative Graphs.
+- cc19e8c: Teach Visual Editor how to edit modules
+- 9d5f11b: Convert existing declarative kits to BGL.
+- 2c7587a: Rename "Specialist" to "Model".
+
+### Patch Changes
+
+- 9250262: Various fixes in module editing.
+- e37a9bf: Add image and formatting support to Context to Slides
+- 1131130: Scope capabilities to one invocation.
+- 97b85d4: A few more fixes while working with imperative modules.
+- ca466cd: Plumb probe events (node/graph start/end) for runModule.
+- 1fb9857: Add support for entity escaping.
+- 5e53755: Start subgraph work
+- 3e3fd65: Add a raft of improvements to module management
+- 605af98: Start caching describer results.
+- 426a2be: Various smaller tweaks to module editor
+- 289a26f: Handle weird inputs more gracefully.
+- 05a3904: Add prettier support to Module Editor
+- 552be88: Set TypeScript as the default module language
+- 0df3c27: More module editor tweaks
+- b541052: Raft of fixes for Module Editor
+- 23714f2: Escape single quotes in Google Drive API query.
+- d39d473: Add "Append to Doc" component to Google Drive Kit.
+- 6fe2ea2: Fix up schema in "Read From Doc".
+- db52fbc: Pass module spec at invoke/describe time.
+- d42ab17: Teach Board Server about sandboxed runModule.
+- 66041a7: Migrate to use `InspectableGraph.edit` for subgraph add/remove/replace.
+- a934fe2: Make describer cache async.
+- 259ef66: Set module source based on default type
+- 07c0720: Various improvements to the Module Editor
+- e0d59b6: Teach Visual Editor how to change module language
+- 1f1f7bc: Add formatting support for "Append to Doc"
+- 9e5390d: Introduce Edit Transforms and start using them.
+- 0e0bd49: Teach Module Editor about search; tidy overlay
+- 392b111: Ignore blank tools in Model (Specialist).
+- Updated dependencies [9250262]
+- Updated dependencies [e37a9bf]
+- Updated dependencies [a13caa0]
+- Updated dependencies [1131130]
+- Updated dependencies [97b85d4]
+- Updated dependencies [1f91291]
+- Updated dependencies [ca466cd]
+- Updated dependencies [669694a]
+- Updated dependencies [8a590bc]
+- Updated dependencies [1fb9857]
+- Updated dependencies [5e53755]
+- Updated dependencies [18dace0]
+- Updated dependencies [3e3fd65]
+- Updated dependencies [f472c75]
+- Updated dependencies [605af98]
+- Updated dependencies [4f49129]
+- Updated dependencies [32b50af]
+- Updated dependencies [57986da]
+- Updated dependencies [426a2be]
+- Updated dependencies [289a26f]
+- Updated dependencies [1365f9d]
+- Updated dependencies [19fc2d0]
+- Updated dependencies [05a3904]
+- Updated dependencies [62d627f]
+- Updated dependencies [552be88]
+- Updated dependencies [74aa9b7]
+- Updated dependencies [8d44489]
+- Updated dependencies [ce3a00c]
+- Updated dependencies [0df3c27]
+- Updated dependencies [b541052]
+- Updated dependencies [e3b6040]
+- Updated dependencies [c75e26f]
+- Updated dependencies [0f2a1da]
+- Updated dependencies [856e249]
+- Updated dependencies [6fad5ba]
+- Updated dependencies [23714f2]
+- Updated dependencies [d39d473]
+- Updated dependencies [1f1f7bc]
+- Updated dependencies [6fe2ea2]
+- Updated dependencies [db52fbc]
+- Updated dependencies [cc19e8c]
+- Updated dependencies [d42ab17]
+- Updated dependencies [0601a48]
+- Updated dependencies [9d5f11b]
+- Updated dependencies [31ddc9a]
+- Updated dependencies [0eb903c]
+- Updated dependencies [66041a7]
+- Updated dependencies [a934fe2]
+- Updated dependencies [335983b]
+- Updated dependencies [07c0720]
+- Updated dependencies [e0d59b6]
+- Updated dependencies [032b9f6]
+- Updated dependencies [1f1f7bc]
+- Updated dependencies [2c7587a]
+- Updated dependencies [9e5390d]
+- Updated dependencies [0e0bd49]
+- Updated dependencies [392b111]
+- Updated dependencies [4130fed]
+- Updated dependencies [1fb9857]
+  - @breadboard-ai/shared-ui@1.21.0
+  - @breadboard-ai/jsandbox@0.2.0
+  - @breadboard-ai/google-drive-kit@0.4.0
+  - @google-labs/breadboard@0.30.0
+  - @breadboard-ai/idb-board-server@1.19.0
+  - @google-labs/core-kit@0.17.0
+  - @breadboard-ai/manifest@0.6.0
+  - @breadboard-ai/types@0.3.0
+  - @google-labs/node-nursery-web@1.4.0
+  - @breadboard-ai/build@0.11.0
+  - @google-labs/agent-kit@0.14.0
+  - @google-labs/gemini-kit@0.10.0
+  - @breadboard-ai/board-server-management@1.19.1
+  - @breadboard-ai/example-boards@0.3.7
+  - @breadboard-ai/board-server-utils@0.1.6
+  - @breadboard-ai/data-store@0.2.6
+  - @google-labs/json-kit@0.3.13
+  - @google-labs/palm-kit@0.1.7
+  - @google-labs/template-kit@0.3.15
+  - @breadboard-ai/python-wasm@0.1.11
+
 ## 1.22.0
 
 ### Minor Changes
