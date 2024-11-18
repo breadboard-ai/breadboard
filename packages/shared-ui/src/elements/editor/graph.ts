@@ -24,6 +24,7 @@ import {
   GRAPH_OPERATIONS,
   GraphNodePortType,
   LayoutInfo,
+  SideEdge,
   VisualMetadata,
 } from "./types.js";
 import { GraphAssets } from "./graph-assets.js";
@@ -1275,6 +1276,27 @@ export class Graph extends PIXI.Container {
     this.addChildAt(this.#subGraphOutline, 0);
   }
 
+  #computeSideEdges(): SideEdge[] {
+    if (!this.#ports) {
+      return [];
+    }
+
+    return [...this.#ports.entries()]
+      .flatMap(([nodeId, ports]) => {
+        return ports.side.ports.map((port) => {
+          if (!port.configured) return null;
+          if (typeof port.value !== "string") return null;
+          const graphId = port.value;
+          return {
+            nodeId,
+            portName: port.name,
+            graphId,
+          };
+        });
+      })
+      .filter(Boolean) as SideEdge[];
+  }
+
   #drawNodes() {
     if (!this.#nodes || !this.#ports) {
       return;
@@ -1641,6 +1663,9 @@ export class Graph extends PIXI.Container {
     if (!this.#edges) {
       return;
     }
+
+    const sideEdges = this.#computeSideEdges();
+    console.log("✨ sideEdges", sideEdges);
 
     for (const edge of this.#edges) {
       let edgeGraphic = this.#edgeGraphics.get(inspectableEdgeToString(edge));
