@@ -18,6 +18,9 @@ import {
   EditOperationContext,
   EditResultLogEntry,
   EditHistory,
+  EditTransform,
+  EditTransformResult,
+  EditOperationConductor,
 } from "./types.js";
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 import { AddEdge } from "./operations/add-edge.js";
@@ -69,48 +72,20 @@ export class Graph implements EditableGraph {
   #options: EditableGraphOptions;
   #inspector: InspectableGraphWithStore;
   #graph: GraphDescriptor;
-  #graphId: GraphIdentifier;
-  #parent: Graph | null;
-  #graphs: Map<GraphIdentifier, Graph> | null;
   #eventTarget: EventTarget = new EventTarget();
   #history: GraphEditHistory;
   #imperativeMain: string | null = null;
 
-  constructor(
-    graph: GraphDescriptor,
-    options: EditableGraphOptions,
-    graphId: GraphIdentifier,
-    parent: Graph | null
-  ) {
+  constructor(graph: GraphDescriptor, options: EditableGraphOptions) {
     if (isImperativeGraph(graph)) {
       this.#imperativeMain = graph.main;
       this.#graph = toDeclarativeGraph(graph);
     } else {
       this.#graph = graph;
     }
-    this.#parent = parent || null;
-    if (parent) {
-      // Subgraphs can not have subgraphs.
-      this.#graphs = null;
-      const inspector = parent.inspect().graphs()?.[graphId];
-      if (!inspector) {
-        throw new Error(
-          `Inspect API integrity error: Unable to find subgraph "${graphId}`
-        );
-      }
-      this.#inspector = inspector as InspectableGraphWithStore;
-    } else {
-      this.#inspector = inspectableGraph(this.raw(), options);
-      this.#graphs = new Map(
-        Object.entries(this.#graph.graphs || {}).map(([id, graph]) => [
-          id,
-          new Graph(graph, options, id, this),
-        ])
-      );
-    }
-    this.#graphId = graphId;
+    this.#inspector = inspectableGraph(this.raw(), options);
     this.#options = options;
-    this.#version = parent ? 0 : options.version || 0;
+    this.#version = options.version || 0;
     this.#history = new GraphEditHistory({
       graph: () => {
         return this.raw();
@@ -130,38 +105,12 @@ export class Graph implements EditableGraph {
     this.#history.add(this.raw(), "Clean slate");
   }
 
-  #makeIndependent() {
-    this.#parent = null;
-    this.#graphs = new Map();
-  }
-
   #updateGraph(
     visualOnly: boolean,
     affectedNodes: NodeIdentifier[],
     affectedModules: ModuleIdentifier[]
   ) {
-    if (this.#parent) {
-      this.#graph = { ...this.#graph };
-      // Update parent version.
-      this.#parent.#updateGraph(visualOnly, [], []);
-    } else {
-      // if (!this.#graphs) {
-      //   throw new Error(
-      //     "Integrity error: a supergraph with no ability to add subgraphs"
-      //   );
-      // }
-      // const entries = Object.entries(this.#graphs);
-      // if (entries.length === 0) {
-      //   if ("graphs" in this.#graph) delete this.#graph["graphs"];
-      //   this.#graph = { ...this.#graph };
-      // } else {
-      //   const graphs = Object.fromEntries(
-      //     entries.map(([id, graph]) => [id, graph.raw()])
-      //   );
-      //   this.#graph = { ...this.#graph, graphs };
-      // }
-      this.#version++;
-    }
+    this.#version++;
     this.#inspector.updateGraph(
       this.#graph,
       visualOnly,
@@ -188,9 +137,6 @@ export class Graph implements EditableGraph {
   }
 
   #dispatchNoChange(error?: string) {
-    if (this.#parent) {
-      this.#parent.#dispatchNoChange(error);
-    }
     this.#graph = { ...this.#graph };
     const reason: RejectionReason = error
       ? {
@@ -208,14 +154,7 @@ export class Graph implements EditableGraph {
   }
 
   version() {
-    if (this.#parent) {
-      throw new Error("Subgraphs can not be versioned.");
-    }
     return this.#version;
-  }
-
-  parent() {
-    return this.#parent;
   }
 
   #shouldDiscardEdit(edit: EditSpec) {
@@ -244,25 +183,50 @@ export class Graph implements EditableGraph {
     label: string,
     dryRun = false
   ): Promise<EditResult> {
-    let context: EditOperationContext;
+    return this.#applyEdits(async (context) => {
+      await context.apply(edits, label);
+      return {
+        success: true,
+        spec: { edits, label },
+      };
+    }, dryRun);
+  }
 
-    const checkpoint = structuredClone(this.#graph);
-    if (dryRun) {
-      const graph = checkpoint;
-      const inspector = inspectableGraph(graph, this.#options);
-      context = {
-        graph,
-        inspector,
-        store: inspector,
-      };
-    } else {
-      context = {
-        graph: this.#graph,
-        inspector: this.#inspector,
-        store: this.#inspector,
-      };
+  async apply(transform: EditTransform, dryRun = false): Promise<EditResult> {
+    return this.#applyEdits((context) => {
+      return transform.apply(context);
+    }, dryRun);
+  }
+
+  history(): EditHistory {
+    return this.#history;
+  }
+
+  raw() {
+    return this.#imperativeMain
+      ? toImperativeGraph(this.#imperativeMain, this.#graph)
+      : this.#graph;
+  }
+
+  inspect(id: GraphIdentifier) {
+    if (!id) return this.#inspector;
+    const subGraphInspector = this.#inspector.graphs()?.[id];
+    if (!subGraphInspector) {
+      throw new Error(`Unknown sub-graph id: "${id}"`);
     }
+    return subGraphInspector;
+  }
+
+  async #applyEdits(
+    transformer: (
+      context: EditOperationContext
+    ) => Promise<EditTransformResult>,
+    dryRun = false
+  ): Promise<EditResult> {
+    const checkpoint = structuredClone(this.#graph);
     const log: EditResultLogEntry[] = [];
+    let label = "";
+
     let error: string | null = null;
     // Presume that all edits will result in no changes.
     let noChange = true;
@@ -272,24 +236,55 @@ export class Graph implements EditableGraph {
     const affectedNodes: NodeIdentifier[][] = [];
     // Collect affected modules
     const affectedModules: NodeIdentifier[][] = [];
-    for (const edit of edits) {
-      if (this.#shouldDiscardEdit(edit)) {
-        continue;
+    let context: EditOperationContext;
+    const apply: EditOperationConductor = async (
+      edits: EditSpec[],
+      editLabel: string
+    ) => {
+      if (error) return { success: false, error };
+      label = editLabel;
+      for (const edit of edits) {
+        if (this.#shouldDiscardEdit(edit)) {
+          continue;
+        }
+        const result = await this.#singleEdit(edit, context);
+        log.push({ edit: edit.type, result });
+        if (!result.success) {
+          error = result.error;
+          return { success: false, error };
+        }
+        affectedNodes.push(result.affectedNodes);
+        affectedModules.push(result.affectedModules);
+        if (!result.noChange) {
+          noChange = false;
+        }
+        if (!result.visualOnly) {
+          visualOnly = false;
+        }
       }
-      const result = await this.#singleEdit(edit, context);
-      log.push({ edit: edit.type, result });
-      if (!result.success) {
-        error = result.error;
-        break;
-      }
-      affectedNodes.push(result.affectedNodes);
-      affectedModules.push(result.affectedModules);
-      if (!result.noChange) {
-        noChange = false;
-      }
-      if (!result.visualOnly) {
-        visualOnly = false;
-      }
+      return { success: true, result: undefined };
+    };
+
+    if (dryRun) {
+      const graph = checkpoint;
+      const inspector = inspectableGraph(graph, this.#options);
+      context = {
+        graph,
+        inspector,
+        store: inspector,
+        apply,
+      };
+    } else {
+      context = {
+        graph: this.#graph,
+        inspector: this.#inspector,
+        store: this.#inspector,
+        apply,
+      };
+    }
+    const result = await transformer(context);
+    if (!result.success) {
+      error = result.error;
     }
     if (error) {
       !dryRun && this.#rollbackGraph(checkpoint, error);
@@ -310,43 +305,5 @@ export class Graph implements EditableGraph {
         [...new Set(affectedModules.flat())]
       );
     return { success: true, log };
-  }
-
-  history(): EditHistory {
-    return this.#history;
-  }
-
-  getGraph(id: GraphIdentifier) {
-    if (!this.#graphs) {
-      throw new Error("Subgraphs can't contain subgraphs.");
-    }
-
-    let editableGraph = this.#graphs.get(id);
-    if (editableGraph) {
-      return editableGraph;
-    }
-
-    const graph = this.raw().graphs?.[id];
-    if (!graph) {
-      return null;
-    }
-
-    editableGraph = new Graph(graph, this.#options, id, this);
-    this.#graphs.set(id, editableGraph);
-    return editableGraph;
-  }
-
-  graphId() {
-    return this.#graphId;
-  }
-
-  raw() {
-    return this.#imperativeMain
-      ? toImperativeGraph(this.#imperativeMain, this.#graph)
-      : this.#graph;
-  }
-
-  inspect() {
-    return this.#inspector;
   }
 }

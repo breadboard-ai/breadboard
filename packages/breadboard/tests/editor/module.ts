@@ -15,7 +15,7 @@ test("Can add modules", async (t) => {
   );
 
   t.truthy(result.success);
-  const modules = graph.inspect().modules();
+  const modules = graph.inspect("").modules();
   t.is(Object.keys(modules).length, 1);
   t.deepEqual(modules["mod1"].code(), "Hello, World!");
 });
@@ -41,7 +41,7 @@ test("Can change modules", async (t) => {
   );
 
   t.truthy(changeResult.success);
-  const modules = graph.inspect().modules();
+  const modules = graph.inspect("").modules();
   t.is(Object.keys(modules).length, 1);
   t.deepEqual(modules["mod1"].code(), "Hello, Updated World!");
 });
@@ -62,6 +62,6 @@ test("Can delete modules", async (t) => {
 
   t.truthy(removeResult.success);
 
-  const modules = graph.inspect().modules();
+  const modules = graph.inspect("").modules();
   t.is(Object.keys(modules).length, 0);
 });

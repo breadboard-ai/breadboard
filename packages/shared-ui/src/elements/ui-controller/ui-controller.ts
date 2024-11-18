@@ -181,7 +181,7 @@ export class UI extends LitElement {
           .items.get("Show subgraphs inline")?.value
       : false;
 
-    const graph = this.editor?.inspect() || null;
+    const graph = this.editor?.inspect("") || null;
     let capabilities: false | GraphProviderCapabilities = false;
     let extendedCapabilities: false | GraphProviderExtendedCapabilities = false;
     for (const boardServer of this.boardServers) {

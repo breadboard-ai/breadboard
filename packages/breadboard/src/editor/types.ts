@@ -58,6 +58,7 @@ export type EditableGraphEventMap = {
 export type AddNodeSpec = {
   type: "addnode";
   node: EditableNodeSpec;
+  graphId: GraphIdentifier;
 };
 
 export type AddModuleSpec = {
@@ -69,6 +70,7 @@ export type AddModuleSpec = {
 export type RemoveNodeSpec = {
   type: "removenode";
   id: NodeIdentifier;
+  graphId: GraphIdentifier;
 };
 
 export type RemoveModuleSpec = {
@@ -79,11 +81,13 @@ export type RemoveModuleSpec = {
 export type AddEdgeSpec = {
   type: "addedge";
   edge: EditableEdgeSpec;
+  graphId: GraphIdentifier;
 };
 
 export type RemoveEdgeSpec = {
   type: "removeedge";
   edge: EditableEdgeSpec;
+  graphId: GraphIdentifier;
 };
 
 /**
@@ -96,12 +100,14 @@ export type ChangeEdgeSpec = {
   type: "changeedge";
   from: EditableEdgeSpec;
   to: EditableEdgeSpec;
+  graphId: GraphIdentifier;
 };
 
 export type ChangeConfigurationSpec = {
   type: "changeconfiguration";
   id: NodeIdentifier;
   configuration: NodeConfiguration;
+  graphId: GraphIdentifier;
   /**
    * If set to `true`, the configuration will be set to the value specified in
    * `configuration`. If set to `false`, the value will be merged with the
@@ -114,6 +120,7 @@ export type ChangeMetadataSpec = {
   type: "changemetadata";
   id: NodeIdentifier;
   metadata: NodeMetadata;
+  graphId: GraphIdentifier;
   /**
    * If set to `true`, the metadata will be set to the value specified in
    * `metadata`. If set to `false`, the value will be merged with the
@@ -131,16 +138,11 @@ export type ChangeModuleSpec = {
 export type ChangeGraphMetadataSpec = {
   type: "changegraphmetadata";
   metadata: GraphMetadata;
+  graphId: GraphIdentifier;
 };
 
 export type AddGraphSpec = {
   type: "addgraph";
-  id: GraphIdentifier;
-  graph: GraphDescriptor;
-};
-
-export type ReplaceGraphSpec = {
-  type: "replacegraph";
   id: GraphIdentifier;
   graph: GraphDescriptor;
 };
@@ -150,10 +152,16 @@ export type RemoveGraphSpec = {
   id: GraphIdentifier;
 };
 
+export type EditOperationConductor = (
+  edits: EditSpec[],
+  editLabel: string
+) => Promise<Result<undefined>>;
+
 export type EditOperationContext = {
   graph: GraphDescriptor;
   inspector: InspectableGraph;
   store: GraphStoreMutator;
+  apply: EditOperationConductor;
 };
 
 export type EditOperation = {
@@ -188,19 +196,6 @@ export type EditableGraph = {
   version(): number;
 
   /**
-   * Returns parent graph, if any.
-   * This value will be non-null only for graphs (subgraphs) that are embedded
-   * within a graph.
-   */
-  parent(): EditableGraph | null;
-
-  /**
-   * Returns the id of this graph. If this is a main graph,
-   * the value will be "". Otherwise, it will be the id of this subgraph.
-   */
-  graphId(): GraphIdentifier;
-
-  /**
    * Performs an edit operation on the graph.
    * @param edits -- a list of changes to apply
    * @param label -- a user-friendly description of the edit, which also
@@ -210,20 +205,19 @@ export type EditableGraph = {
   edit(edits: EditSpec[], label: string, dryRun?: boolean): Promise<EditResult>;
 
   /**
+   * Applies an edit transform to the graph.
+   * @param transform -- the edit transform to apply
+   */
+  apply(transform: EditTransform): Promise<EditResult>;
+
+  /**
    * Provides a way to manage the history of the graph.
    */
   history(): EditHistory;
 
-  /**
-   * Retrieves a subgraph of this graph.
-   * @param id -- id of the subgraph
-   * @throws when used on an embedded subgraph.
-   */
-  getGraph(id: GraphIdentifier): EditableGraph | null;
-
   raw(): GraphDescriptor;
 
-  inspect(): InspectableGraph;
+  inspect(id: GraphIdentifier | null): InspectableGraph;
 };
 
 export type EditHistoryController = {
@@ -325,3 +319,33 @@ export type EditResult = {
 );
 
 export type EditableEdgeSpec = Edge;
+
+export type EditTransform = {
+  apply(context: EditOperationContext): Promise<EditTransformResult>;
+};
+
+export type EditTransformResult =
+  | { success: false; error: string }
+  | { success: true };
+
+export type EditableGraphSelectionResult =
+  | ({
+      success: true;
+    } & EditableGraphSelection)
+  | { success: false; error: string };
+
+export type EditableGraphSelection = {
+  nodes: NodeIdentifier[];
+  edges: Edge[];
+  dangling: Edge[];
+};
+
+export type Result<R> =
+  | {
+      success: false;
+      error: string;
+    }
+  | {
+      success: true;
+      result: R;
+    };

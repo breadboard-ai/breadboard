@@ -47,19 +47,11 @@ export class Edit extends EventTarget {
     super();
   }
 
-  getEditor(
-    tab: Tab | null,
-    subGraphId: string | null = null
-  ): EditableGraph | null {
+  getEditor(tab: Tab | null): EditableGraph | null {
     if (!tab) return null;
     if (!tab.graph) return null;
     if (this.#editors.get(tab.id)) {
-      const editor = this.#editors.get(tab.id)!;
-      if (subGraphId) {
-        return editor.getGraph(subGraphId);
-      }
-
-      return editor;
+      return this.#editors.get(tab.id)!;
     }
 
     const editor = edit(tab.graph, {
@@ -88,9 +80,6 @@ export class Edit extends EventTarget {
     });
 
     this.#editors.set(tab.id, editor);
-    if (subGraphId) {
-      return editor.getGraph(subGraphId);
-    }
     return editor;
   }
 
@@ -117,7 +106,7 @@ export class Edit extends EventTarget {
       return null;
     }
 
-    const editableGraph = this.getEditor(tab, subGraphId);
+    const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
       return null;
@@ -125,7 +114,7 @@ export class Edit extends EventTarget {
 
     return (
       editableGraph
-        .inspect()
+        .inspect(subGraphId)
         .metadata()
         ?.comments?.find((comment) => comment.id === id) ?? null
     );
@@ -136,13 +125,13 @@ export class Edit extends EventTarget {
       return null;
     }
 
-    const editableGraph = this.getEditor(tab, subGraphId);
+    const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
       return null;
     }
 
-    return editableGraph.inspect().nodeById(id)?.title() ?? null;
+    return editableGraph.inspect(subGraphId).nodeById(id)?.title() ?? null;
   }
 
   getNodeType(tab: Tab | null, id: string, subGraphId: string | null = null) {
@@ -150,13 +139,15 @@ export class Edit extends EventTarget {
       return null;
     }
 
-    const editableGraph = this.getEditor(tab, subGraphId);
+    const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
       return null;
     }
 
-    return editableGraph.inspect().nodeById(id)?.type().metadata() ?? null;
+    return (
+      editableGraph.inspect(subGraphId).nodeById(id)?.type().metadata() ?? null
+    );
   }
 
   getNodeMetadata(
@@ -168,13 +159,13 @@ export class Edit extends EventTarget {
       return null;
     }
 
-    const editableGraph = this.getEditor(tab, subGraphId);
+    const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
       return null;
     }
 
-    return editableGraph.inspect().nodeById(id)?.metadata() ?? null;
+    return editableGraph.inspect(subGraphId).nodeById(id)?.metadata() ?? null;
   }
 
   getNodeConfiguration(
@@ -186,13 +177,15 @@ export class Edit extends EventTarget {
       return null;
     }
 
-    const editableGraph = this.getEditor(tab, subGraphId);
+    const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
       return null;
     }
 
-    return editableGraph.inspect().nodeById(id)?.configuration() ?? null;
+    return (
+      editableGraph.inspect(subGraphId).nodeById(id)?.configuration() ?? null
+    );
   }
 
   getNodePorts(tab: Tab | null, id: string, subGraphId: string | null = null) {
@@ -200,13 +193,13 @@ export class Edit extends EventTarget {
       return null;
     }
 
-    const editableGraph = this.getEditor(tab, subGraphId);
+    const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
       return null;
     }
 
-    return editableGraph.inspect().nodeById(id)?.ports() ?? null;
+    return editableGraph.inspect(subGraphId).nodeById(id)?.ports() ?? null;
   }
 
   canUndo(tab: Tab | null): boolean {
@@ -287,7 +280,7 @@ export class Edit extends EventTarget {
       return;
     }
 
-    const subGraph = editableGraph.getGraph(subGraphId);
+    const subGraph = editableGraph.raw().graphs?.[subGraphId];
     if (!subGraph) {
       this.dispatchEvent(
         new RuntimeErrorEvent(`Unable to find subboard with id ${subGraphId}`)
@@ -295,7 +288,7 @@ export class Edit extends EventTarget {
       return;
     }
 
-    const subGraphDescriptor = subGraph.raw();
+    const subGraphDescriptor = subGraph;
     this.#updateGraphValues(
       subGraphDescriptor,
       title,
@@ -406,7 +399,7 @@ export class Edit extends EventTarget {
       return null;
     }
 
-    const module = editableGraph.inspect().moduleById(moduleId);
+    const module = editableGraph.inspect("").moduleById(moduleId);
     if (!module) {
       return null;
     }
@@ -629,11 +622,8 @@ export class Edit extends EventTarget {
     },
     subGraphId: string | null = null
   ) {
-    let editableGraph = this.getEditor(tab);
-
-    if (editableGraph && subGraphId) {
-      editableGraph = editableGraph.getGraph(subGraphId);
-    }
+    const editableGraph = this.getEditor(tab);
+    const graphId = subGraphId || "";
 
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
@@ -643,7 +633,7 @@ export class Edit extends EventTarget {
     switch (changeType) {
       case "add": {
         editableGraph.edit(
-          [{ type: "addedge", edge: from }],
+          [{ type: "addedge", edge: from, graphId }],
           `Add edge between ${from.from} and ${from.to}`
         );
         break;
@@ -651,7 +641,7 @@ export class Edit extends EventTarget {
 
       case "remove": {
         editableGraph.edit(
-          [{ type: "removeedge", edge: from }],
+          [{ type: "removeedge", edge: from, graphId }],
           `Remove edge between ${from.from} and ${from.to}`
         );
         break;
@@ -671,6 +661,7 @@ export class Edit extends EventTarget {
               type: "changeedge",
               from: from,
               to: to,
+              graphId,
             },
           ],
           `Change edge from between ${from.from} and ${from.to} to ${to.from} and ${to.to}`
@@ -692,17 +683,15 @@ export class Edit extends EventTarget {
       return;
     }
 
-    let editableGraph = this.getEditor(tab);
-    if (editableGraph && subGraphId) {
-      editableGraph = editableGraph.getGraph(subGraphId);
-    }
+    const editableGraph = this.getEditor(tab);
+    const graphId = subGraphId || "";
 
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
       return;
     }
 
-    const inspectableGraph = editableGraph.inspect();
+    const inspectableGraph = editableGraph.inspect(subGraphId);
     const title = (await inspectableGraph.typeById(nodeType)?.metadata())
       ?.title;
 
@@ -733,13 +722,16 @@ export class Edit extends EventTarget {
       });
 
       editableGraph.edit(
-        [{ type: "changegraphmetadata", metadata: graphMetadata }],
+        [{ type: "changegraphmetadata", metadata: graphMetadata, graphId }],
         `Change metadata for graph - add comment "${id}"`
       );
       return;
     }
 
-    editableGraph.edit([{ type: "addnode", node: newNode }], `Add node ${id}`);
+    editableGraph.edit(
+      [{ type: "addnode", node: newNode, graphId }],
+      `Add node ${id}`
+    );
   }
 
   updateNodeMetadata(
@@ -752,17 +744,15 @@ export class Edit extends EventTarget {
       return;
     }
 
-    let editableGraph = this.getEditor(tab);
-    if (editableGraph && subGraphId) {
-      editableGraph = editableGraph.getGraph(subGraphId);
-    }
+    const editableGraph = this.getEditor(tab);
+    const graphId = subGraphId || "";
 
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
       return;
     }
 
-    const inspectableGraph = editableGraph.inspect();
+    const inspectableGraph = editableGraph.inspect(subGraphId);
     const existingNode = inspectableGraph.nodeById(id);
     const existingMetadata = existingNode?.metadata() || {};
     const newMetadata = {
@@ -771,25 +761,17 @@ export class Edit extends EventTarget {
     };
 
     editableGraph.edit(
-      [{ type: "changemetadata", id, metadata: newMetadata }],
+      [{ type: "changemetadata", id, metadata: newMetadata, graphId }],
       `Change metadata for "${id}"`
     );
   }
 
-  multiEdit(
-    tab: Tab | null,
-    edits: EditSpec[],
-    description: string,
-    subGraphId: string | null = null
-  ) {
+  multiEdit(tab: Tab | null, edits: EditSpec[], description: string) {
     if (tab?.readOnly) {
       return;
     }
 
-    let editableGraph = this.getEditor(tab);
-    if (editableGraph && subGraphId) {
-      editableGraph = editableGraph.getGraph(subGraphId);
-    }
+    const editableGraph = this.getEditor(tab);
 
     if (!editableGraph) {
       console.warn("Unable to multi-edit; no active graph");
@@ -809,17 +791,15 @@ export class Edit extends EventTarget {
       return;
     }
 
-    let editableGraph = this.getEditor(tab);
-    if (editableGraph && subGraphId) {
-      editableGraph = editableGraph.getGraph(subGraphId);
-    }
+    const editableGraph = this.getEditor(tab);
+    const graphId = subGraphId || "";
 
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
       return;
     }
 
-    const inspectableGraph = editableGraph.inspect();
+    const inspectableGraph = editableGraph.inspect(subGraphId);
     const graphMetadata = inspectableGraph.metadata() || {};
     graphMetadata.comments ??= [];
 
@@ -831,7 +811,7 @@ export class Edit extends EventTarget {
 
     comment.text = text;
     editableGraph.edit(
-      [{ type: "changegraphmetadata", metadata: graphMetadata }],
+      [{ type: "changegraphmetadata", metadata: graphMetadata, graphId }],
       `Change metadata for graph - add comment "${id}"`
     );
   }
@@ -846,10 +826,8 @@ export class Edit extends EventTarget {
       return;
     }
 
-    let editableGraph = this.getEditor(tab);
-    if (editableGraph && subGraphId) {
-      editableGraph = editableGraph.getGraph(subGraphId);
-    }
+    const editableGraph = this.getEditor(tab);
+    const graphId = subGraphId || "";
 
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
@@ -863,6 +841,7 @@ export class Edit extends EventTarget {
           id,
           configuration,
           reset: true,
+          graphId,
         },
       ],
       `Change configuration for "${id}"`
@@ -885,17 +864,15 @@ export class Edit extends EventTarget {
       return;
     }
 
-    let editableGraph = this.getEditor(tab);
-    if (editableGraph && subGraphId) {
-      editableGraph = editableGraph.getGraph(subGraphId);
-    }
+    const editableGraph = this.getEditor(tab);
+    const graphId = subGraphId || "";
 
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
       return;
     }
 
-    const inspectableNode = editableGraph.inspect().nodeById(id);
+    const inspectableNode = editableGraph.inspect(graphId).nodeById(id);
     const configuration = structuredClone(
       inspectableNode?.descriptor.configuration ?? {}
     );
@@ -931,17 +908,15 @@ export class Edit extends EventTarget {
       return;
     }
 
-    let editableGraph = this.getEditor(tab);
-    if (editableGraph && subGraphId) {
-      editableGraph = editableGraph.getGraph(subGraphId);
-    }
+    const editableGraph = this.getEditor(tab);
+    const graphId = subGraphId || "";
 
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
       return;
     }
 
-    const inspectableNode = editableGraph.inspect().nodeById(id);
+    const inspectableNode = editableGraph.inspect(graphId).nodeById(id);
     const configuration = inspectableNode?.descriptor.configuration ?? {};
     const updatedConfiguration = structuredClone(configuration);
     for (const [key, value] of Object.entries(configurationPart)) {
@@ -959,6 +934,7 @@ export class Edit extends EventTarget {
         id: id,
         configuration: updatedConfiguration,
         reset: true,
+        graphId,
       },
     ];
 
@@ -969,7 +945,12 @@ export class Edit extends EventTarget {
         ...metadata,
       };
 
-      edits.push({ type: "changemetadata", id, metadata: newMetadata }),
+      edits.push({
+        type: "changemetadata",
+        id,
+        metadata: newMetadata,
+        graphId,
+      }),
         `Change metadata for "${id}"`;
     }
 
@@ -981,16 +962,17 @@ export class Edit extends EventTarget {
       return;
     }
 
-    let editableGraph = this.getEditor(tab);
-    if (editableGraph && subGraphId) {
-      editableGraph = editableGraph.getGraph(subGraphId);
-    }
+    const editableGraph = this.getEditor(tab);
+    const graphId = subGraphId || "";
 
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
       return;
     }
 
-    editableGraph.edit([{ type: "removenode", id: id }], `Remove node ${id}`);
+    editableGraph.edit(
+      [{ type: "removenode", id, graphId }],
+      `Remove node ${id}`
+    );
   }
 }

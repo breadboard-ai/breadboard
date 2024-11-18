@@ -12,6 +12,7 @@ import {
   SingleEditResult,
 } from "../types.js";
 import { InspectableGraph } from "../../inspector/types.js";
+import { toSubgraphContext } from "../subgraph-context.js";
 
 export class AddNode implements EditOperation {
   async can(
@@ -51,9 +52,13 @@ export class AddNode implements EditOperation {
         `Editor API integrity error: expected type "addnode", received "${spec.type}" instead.`
       );
     }
-    const node = spec.node;
-    const { graph, inspector, store } = context;
-    const graphId = inspector.graphId();
+    const { node, graphId } = spec;
+    const subgraphContext = toSubgraphContext(context, graphId);
+    if (!subgraphContext.success) {
+      return subgraphContext;
+    }
+
+    const { graph, inspector, store } = subgraphContext.result;
     const can = await this.can(node, inspector);
     if (!can.success) {
       return can;

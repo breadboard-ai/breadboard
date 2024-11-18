@@ -7,6 +7,7 @@
 import { describe, it } from "node:test";
 import { testEditGraph, testSubGraph } from "./test-graph.js";
 import { deepStrictEqual, ok } from "assert";
+import { EditSpec } from "../../../src/index.js";
 
 describe("Sub-graph editing operations", async () => {
   await it("allows adding subgraphs", async () => {
@@ -72,5 +73,103 @@ describe("Sub-graph editing operations", async () => {
     );
     ok(replacement.success);
     deepStrictEqual(graph.raw().graphs?.foo?.title, "Foo");
+  });
+
+  await it("correctly edits subgraphs", async () => {
+    const graph = testEditGraph();
+    const initialization = await graph.edit(
+      [{ type: "addgraph", graph: testSubGraph(), id: "foo" }],
+      ""
+    );
+    ok(initialization.success);
+    deepStrictEqual(graph.raw().graphs?.foo?.title, "Test Subgraph");
+
+    {
+      const nodeAddition = await graph.edit([addNode("bar")], "");
+
+      ok(nodeAddition.success);
+      const addedNode = graph.raw().graphs?.foo?.nodes[0];
+      deepStrictEqual(addedNode, { id: "bar", type: "bar" });
+    }
+
+    {
+      const nodeRemoval = await graph.edit(
+        [{ type: "removenode", id: "bar", graphId: "foo" }],
+        ""
+      );
+      ok(nodeRemoval.success);
+
+      const subgraphNodeLength = graph.raw().graphs?.foo?.nodes.length;
+      deepStrictEqual(subgraphNodeLength, 0);
+    }
+
+    {
+      const subgraphConstruction = await graph.edit(
+        [
+          addNode("bar"),
+          addNode("foo"),
+          addEdge("bar", "foo"),
+          addEdge("foo", "foo"),
+          {
+            type: "removeedge",
+            graphId: "foo",
+            edge: { from: "foo", to: "foo", out: "*", in: "" },
+          },
+          {
+            type: "changeedge",
+            graphId: "foo",
+            from: { from: "bar", to: "foo", out: "*", in: "" },
+            to: { from: "bar", to: "foo", out: "out", in: "in" },
+          },
+          {
+            type: "changeconfiguration",
+            graphId: "foo",
+            id: "bar",
+            configuration: { in: "yay" },
+          },
+          {
+            type: "changemetadata",
+            graphId: "foo",
+            id: "foo",
+            metadata: { visual: { x: 5 } },
+          },
+          {
+            type: "changegraphmetadata",
+            graphId: "foo",
+            metadata: { tags: ["published"] },
+          },
+        ],
+        ""
+      );
+      ok(
+        subgraphConstruction.success,
+        (subgraphConstruction as { error: string }).error
+      );
+
+      const resultGraph = graph.raw().graphs?.foo;
+      deepStrictEqual(resultGraph?.metadata?.tags, ["published"]);
+      const subgraphNodes = resultGraph?.nodes;
+      deepStrictEqual(subgraphNodes?.length, 2);
+      deepStrictEqual(subgraphNodes?.[0].configuration?.in, "yay");
+      deepStrictEqual(
+        (subgraphNodes?.[1].metadata?.visual as { x: number }).x,
+        5
+      );
+      const subgraphEdges = graph.raw().graphs?.foo?.edges;
+      deepStrictEqual(subgraphEdges?.length, 1);
+      deepStrictEqual(subgraphEdges?.[0].in, "in");
+    }
+
+    function addNode(id: string): EditSpec {
+      return { type: "addnode", graphId: "foo", node: { id, type: "bar" } };
+    }
+
+    function addEdge(from: string, to: string): EditSpec {
+      return {
+        type: "addedge",
+        graphId: "foo",
+        edge: { from, to, out: "*", in: "" },
+      };
+    }
   });
 });

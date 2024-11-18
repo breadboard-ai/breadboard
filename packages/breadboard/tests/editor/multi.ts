@@ -9,8 +9,9 @@ import { testEditGraph } from "./graph.js";
 
 test("Multi-edit returns a last failed edit's error message", async (t) => {
   const graph = testEditGraph();
+  const graphId = "";
   const result = await graph.edit(
-    [{ type: "addnode", node: { id: "node0", type: "foo" } }],
+    [{ type: "addnode", node: { id: "node0", type: "foo" }, graphId }],
     "test",
     true
   );
@@ -40,16 +41,17 @@ test("Multi-edit can do multiple successful edits", async (t) => {
       graphChangeRejectDispatched = true;
     });
     const oldVersion = graph.version();
+    const graphId = "";
     const result = await graph.edit(
       [
-        { type: "addnode", node: { id: "node-1", type: "foo" } },
-        { type: "addnode", node: { id: "node-2", type: "foo" } },
-        { type: "addnode", node: { id: "node-3", type: "foo" } },
+        { type: "addnode", node: { id: "node-1", type: "foo" }, graphId },
+        { type: "addnode", node: { id: "node-2", type: "foo" }, graphId },
+        { type: "addnode", node: { id: "node-3", type: "foo" }, graphId },
       ],
       "test"
     );
     t.true(result.success);
-    const inspector = graph.inspect();
+    const inspector = graph.inspect("");
     t.assert(inspector.nodeById("node-1"));
     t.assert(inspector.nodeById("node-2"));
     t.assert(inspector.nodeById("node-3"));
@@ -68,17 +70,18 @@ test("Multi-edit can do multiple successful edits", async (t) => {
       graphChangeRejectDispatched = true;
     });
     const oldVersion = graph.version();
+    const graphId = "";
     const result = await graph.edit(
       [
-        { type: "addnode", node: { id: "node-1", type: "foo" } },
-        { type: "addnode", node: { id: "node-2", type: "foo" } },
-        { type: "addnode", node: { id: "node-3", type: "foo" } },
+        { type: "addnode", node: { id: "node-1", type: "foo" }, graphId },
+        { type: "addnode", node: { id: "node-2", type: "foo" }, graphId },
+        { type: "addnode", node: { id: "node-3", type: "foo" }, graphId },
       ],
       "test",
       true
     );
     t.true(result.success);
-    const inspector = graph.inspect();
+    const inspector = graph.inspect("");
     t.assert(!inspector.nodeById("node-1"));
     t.assert(!inspector.nodeById("node-2"));
     t.assert(!inspector.nodeById("node-3"));
@@ -100,11 +103,12 @@ test("Multi-edit gracefully fails", async (t) => {
       graphChangeRejectDispatched = true;
     });
     const oldVersion = graph.version();
+    const graphId = "";
     const result = await graph.edit(
       [
-        { type: "addnode", node: { id: "node-1", type: "foo" } },
-        { type: "addnode", node: { id: "node0", type: "foo" } },
-        { type: "addnode", node: { id: "node-3", type: "foo" } },
+        { type: "addnode", node: { id: "node-1", type: "foo" }, graphId },
+        { type: "addnode", node: { id: "node0", type: "foo" }, graphId },
+        { type: "addnode", node: { id: "node-3", type: "foo" }, graphId },
       ],
       "test"
     );
@@ -118,7 +122,7 @@ test("Multi-edit gracefully fails", async (t) => {
       t.fail();
       return;
     }
-    const inspector = graph.inspect();
+    const inspector = graph.inspect("");
     t.assert(!inspector.nodeById("node-1"));
     t.assert(!inspector.nodeById("node-3"));
     t.assert(oldVersion === graph.version());
@@ -136,11 +140,12 @@ test("Multi-edit gracefully fails", async (t) => {
       graphChangeRejectDispatched = true;
     });
     const oldVersion = graph.version();
+    const graphId = "";
     const result = await graph.edit(
       [
-        { type: "addnode", node: { id: "node-1", type: "foo" } },
-        { type: "addnode", node: { id: "node-1", type: "foo" } },
-        { type: "addnode", node: { id: "node-3", type: "foo" } },
+        { type: "addnode", node: { id: "node-1", type: "foo" }, graphId },
+        { type: "addnode", node: { id: "node-1", type: "foo" }, graphId },
+        { type: "addnode", node: { id: "node-3", type: "foo" }, graphId },
       ],
       "test"
     );
@@ -154,7 +159,7 @@ test("Multi-edit gracefully fails", async (t) => {
       t.fail();
       return;
     }
-    const inspector = graph.inspect();
+    const inspector = graph.inspect("");
     t.assert(!inspector.nodeById("node-1"));
     t.assert(!inspector.nodeById("node-3"));
     t.assert(oldVersion === graph.version());

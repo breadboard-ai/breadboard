@@ -30,11 +30,12 @@ const testEditGraph = () => {
 
 test("editGraph correctly edits node metadata", async (t) => {
   const graph = testEditGraph();
-  const metadata = graph.inspect().nodeById("node0")?.descriptor?.metadata;
+  const graphId = "";
+  const metadata = graph.inspect("").nodeById("node0")?.descriptor?.metadata;
   t.is(metadata, undefined);
 
   const result = await graph.edit(
-    [{ type: "changemetadata", id: "node0", metadata: {} }],
+    [{ type: "changemetadata", id: "node0", metadata: {}, graphId }],
     "test",
     true
   );
@@ -42,13 +43,13 @@ test("editGraph correctly edits node metadata", async (t) => {
 
   const newMetadata = { title: "bar" };
   const changeResult = await graph.edit(
-    [{ type: "changemetadata", id: "node0", metadata: newMetadata }],
+    [{ type: "changemetadata", id: "node0", metadata: newMetadata, graphId }],
     "test"
   );
   t.is(changeResult.success, true);
   t.is(graph.version(), 1);
 
-  const changedMetadata = graph.inspect().nodeById("node0")
+  const changedMetadata = graph.inspect("").nodeById("node0")
     ?.descriptor?.metadata;
   t.deepEqual(changedMetadata, newMetadata);
 
@@ -58,6 +59,7 @@ test("editGraph correctly edits node metadata", async (t) => {
         type: "changemetadata",
         id: "nonexistentNode",
         metadata: { title: "baz" },
+        graphId,
       },
     ],
     "test"
@@ -68,11 +70,12 @@ test("editGraph correctly edits node metadata", async (t) => {
 
 test("editGraph correctly edits visual node metadata", async (t) => {
   const graph = testEditGraph();
-  const metadata = graph.inspect().nodeById("node0")?.descriptor?.metadata;
+  const graphId = "";
+  const metadata = graph.inspect("").nodeById("node0")?.descriptor?.metadata;
   t.is(metadata, undefined);
 
   const result = await graph.edit(
-    [{ type: "changemetadata", id: "node0", metadata: {} }],
+    [{ type: "changemetadata", id: "node0", metadata: {}, graphId }],
     "test",
     true
   );
@@ -83,13 +86,13 @@ test("editGraph correctly edits visual node metadata", async (t) => {
     t.true(evt.visualOnly);
   });
   const changeResult = await graph.edit(
-    [{ type: "changemetadata", id: "node0", metadata: newMetadata }],
+    [{ type: "changemetadata", id: "node0", metadata: newMetadata, graphId }],
     "test"
   );
   t.is(changeResult.success, true);
   t.is(graph.version(), 1);
 
-  const changedMetadata = graph.inspect().nodeById("node0")
+  const changedMetadata = graph.inspect("").nodeById("node0")
     ?.descriptor?.metadata;
   t.deepEqual(changedMetadata, newMetadata);
 
@@ -99,6 +102,7 @@ test("editGraph correctly edits visual node metadata", async (t) => {
         type: "changemetadata",
         id: "nonexistentNode",
         metadata: { title: "baz" },
+        graphId,
       },
     ],
     "test"
@@ -109,20 +113,27 @@ test("editGraph correctly edits visual node metadata", async (t) => {
 
 test("editGraph correctly distinguishes between `reset` and incremental graph metadata changes", async (t) => {
   const graph = testEditGraph();
+  const graphId = "";
 
   const result = await graph.edit(
     [
-      { type: "changemetadata", id: "node0", metadata: { title: "hello" } },
+      {
+        type: "changemetadata",
+        id: "node0",
+        metadata: { title: "hello" },
+        graphId,
+      },
       {
         type: "changemetadata",
         id: "node0",
         metadata: { visual: { x: 8, y: 10 } },
+        graphId,
       },
     ],
     "test"
   );
   t.is(result.success, true);
-  const changedMetadata = graph.inspect().nodeById("node0")
+  const changedMetadata = graph.inspect("").nodeById("node0")
     ?.descriptor?.metadata;
   t.deepEqual(changedMetadata, { title: "hello", visual: { x: 8, y: 10 } });
 });

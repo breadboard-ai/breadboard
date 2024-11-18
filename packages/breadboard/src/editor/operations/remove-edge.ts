@@ -14,6 +14,7 @@ import {
 import { InspectableGraph } from "../../inspector/types.js";
 import { fixUpStarEdge } from "../../inspector/edge.js";
 import { findEdgeIndex } from "../edge.js";
+import { toSubgraphContext } from "../subgraph-context.js";
 
 export class RemoveEdge implements EditOperation {
   async can(
@@ -44,12 +45,16 @@ export class RemoveEdge implements EditOperation {
       );
     }
     let edge = spec.edge;
-    const { graph, inspector, store } = context;
+    const { graphId } = spec;
+    const subgraphContext = toSubgraphContext(context, graphId);
+    if (!subgraphContext.success) {
+      return subgraphContext;
+    }
+    const { graph, inspector, store } = subgraphContext.result;
     const can = await this.can(edge, inspector);
     if (!can.success) {
       return can;
     }
-    const graphId = inspector.graphId();
     edge = fixUpStarEdge(edge);
     const edges = graph.edges;
     const index = findEdgeIndex(graph, edge);
