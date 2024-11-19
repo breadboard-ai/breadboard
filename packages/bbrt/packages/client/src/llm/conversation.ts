@@ -10,12 +10,13 @@ import {getWikipediaArticle} from '../tools/wikipedia.js';
 import {BufferedMultiplexStream} from '../util/buffered-multiplex-stream.js';
 import {Lock} from '../util/lock.js';
 import type {Result} from '../util/result.js';
-import {gemini, type GeminiContent} from './gemini.js';
-import {openai, type Message} from './openai.js';
+import type {BBRTChunk} from './chunk.js';
+import {bbrtTurnsToGeminiContents, gemini} from './gemini.js';
+import {bbrtTurnsToOpenAiMessages, openai} from './openai.js';
 
 export type BBRTTurn = BBRTUserTurn | BBRTModelTurn | BBRTErrorTurn;
 
-export type BBRTUserTurn = BBRTUserTurnContent | BBRTUserTurnToolResponse;
+export type BBRTUserTurn = BBRTUserTurnContent | BBRTUserTurnToolResponses;
 
 export interface BBRTUserTurnContent {
   kind: 'user-content';
@@ -23,17 +24,22 @@ export interface BBRTUserTurnContent {
   content: string;
 }
 
-export interface BBRTUserTurnToolResponse {
-  kind: 'user-tool-response';
+export interface BBRTUserTurnToolResponses {
+  kind: 'user-tool-responses';
   role: 'user';
+  responses: BBRTToolResponse[];
+}
+
+export interface BBRTToolResponse {
+  id: string;
   tool: Tool;
-  response: unknown;
+  response: Record<string, unknown>;
 }
 
 export interface BBRTModelTurn {
   kind: 'model';
   role: 'model';
-  content: string | AsyncIterable<string>;
+  content: AsyncIterable<string>;
   toolCalls?: SignalArray<BBRTToolCall>;
 }
 
@@ -51,199 +57,145 @@ export interface BBRTToolCall {
 export class BBRTConversation {
   readonly turns = new SignalArray<BBRTTurn>();
   readonly #lock = new Lock();
+  readonly #tools = [getWikipediaArticle];
   #model = 'openai';
 
-  async send(userContent: string) {
+  async send(message: {content: string} | {toolResponses: BBRTToolResponse[]}) {
     await this.#lock.do(async () => {
-      this.turns.push({
-        kind: 'user-content',
-        role: 'user',
-        content: userContent,
-      });
-      // TODO(aomarks) Support for loading indicators (another field on Turn).
-      this.turns.push({kind: 'model', role: 'model', content: '...'});
-      const toolCalls = new SignalArray<BBRTToolCall>();
-      // TODO(aomarks) #generate() should return two streams/signals, instead of
-      // taking toolCalls in.
-      const result = await this.#generate(toolCalls);
-      // Remove the temporary loading placeholder.
-      this.turns.pop();
-      if (result.ok) {
-        const modelContent = new BufferedMultiplexStream(result.value.text);
+      // Note we only support sending either content or tool responses in one
+      // message, not both.
+      if ('toolResponses' in message) {
         this.turns.push({
-          kind: 'model',
-          role: 'model',
-          content: modelContent,
-          toolCalls,
+          kind: 'user-tool-responses',
+          role: 'user',
+          responses: message.toolResponses,
         });
       } else {
+        this.turns.push({
+          kind: 'user-content',
+          role: 'user',
+          content: message.content,
+        });
+      }
+      // TODO(aomarks) Add a "loading" model turn since the initial response
+      // could take a moment. But note we need to exclude it from the contents
+      // we send. Maybe we should have a state field on model turn so that we
+      // can exclude it when it's not done.
+
+      const result = await this.#generate();
+      if (!result.ok) {
         this.turns.push({
           kind: 'error',
           role: 'model',
           error: result.error,
         });
+        return;
       }
-    });
-  }
 
-  async sendToolResponse(tool: Tool, response: unknown) {
-    await this.#lock.do(async () => {
-      this.turns.push({
-        kind: 'user-tool-response',
-        role: 'user',
-        tool,
-        response,
-      });
-      // TODO(aomarks) Support for loading indicators (another field on Turn).
-      this.turns.push({kind: 'model', role: 'model', content: '...'});
       const toolCalls = new SignalArray<BBRTToolCall>();
-      // TODO(aomarks) #generate() should return two streams/signals, instead of
-      // taking toolCalls in.
-      const result = await this.#generate(toolCalls);
-      // Remove the temporary loading placeholder.
-      this.turns.pop();
-      if (result.ok) {
-        const modelContent = new BufferedMultiplexStream(result.value.text);
-        this.turns.push({
-          kind: 'model',
-          role: 'model',
-          content: modelContent,
-          toolCalls,
-        });
-      } else {
-        this.turns.push({
-          kind: 'error',
-          role: 'model',
-          error: result.error,
-        });
-      }
-    });
-  }
+      const contentStream = new TransformStream<string, string>();
+      this.turns.push({
+        kind: 'model',
+        role: 'model',
+        content: new BufferedMultiplexStream(contentStream.readable),
+        toolCalls,
+      });
 
-  async #generate(
-    toolCalls: SignalArray<BBRTToolCall>,
-  ): Promise<Result<{text: AsyncIterableIterator<string>}, Error>> {
-    const onToolInvoke = (
-      tool: Tool,
-      args: Record<string, unknown>,
-      result: unknown,
-    ): void => {
-      void this.sendToolResponse(tool, result);
-      toolCalls.push({tool, args});
-    };
-
-    let text;
-    if (this.#model === 'gemini') {
-      text = await this.#generateGemini(onToolInvoke);
-    } else {
-      if (this.#model === 'openai') {
-        text = await this.#generateOpenai(onToolInvoke);
-      } else {
-        throw new Error('Unknown model: ' + this.#model);
-      }
-    }
-
-    if (!text.ok) {
-      return text;
-    }
-
-    return {ok: true, value: {text: text.value}};
-  }
-
-  async #generateGemini(
-    onToolInvoke: (
-      tool: Tool,
-      args: Record<string, unknown>,
-      result: unknown,
-    ) => void,
-  ): Promise<Result<AsyncIterableIterator<string>, Error>> {
-    return await gemini(
-      {
-        contents: await this.#contents(),
-        tools: [{functionDeclarations: [getWikipediaArticle.declaration]}],
-      },
-      [getWikipediaArticle],
-      onToolInvoke,
-    );
-  }
-
-  async #generateOpenai(
-    onToolInvoke: (
-      tool: Tool,
-      args: Record<string, unknown>,
-      result: unknown,
-    ) => void,
-  ): Promise<Result<AsyncIterableIterator<string>, Error>> {
-    return await openai(
-      {
-        model: 'gpt-3.5-turbo',
-        messages: convertToOpenai((await this.#contents()).slice(0, -1)),
-        tools: [
-          {
-            type: 'function',
-            function: {
-              description: getWikipediaArticle.declaration.description,
-              name: getWikipediaArticle.declaration.name,
-              parameters: getWikipediaArticle.declaration.parameters,
-            },
-          },
-        ],
-      },
-      [getWikipediaArticle],
-      onToolInvoke,
-    );
-  }
-
-  async #contents(): Promise<GeminiContent[]> {
-    const contents: GeminiContent[] = [];
-    for (const turn of this.turns) {
-      switch (turn.kind) {
-        case 'user-content': {
-          contents.push({role: 'user', parts: [{text: turn.content}]});
-          break;
-        }
-        case 'user-tool-response': {
-          // TODO(aomarks) Use the actual tool response format.
-          contents.push({
-            role: 'user',
-            parts: [{text: `TURN RESPONSE: ${JSON.stringify(turn.response)}`}],
-          });
-          break;
-        }
-        case 'model': {
-          if (typeof turn.content === 'string') {
-            contents.push({role: 'model', parts: [{text: turn.content}]});
-          } else {
-            const text = (await Array.fromAsync(turn.content)).join('');
-            contents.push({role: 'model', parts: [{text}]});
+      const contentWriter = contentStream.writable.getWriter();
+      const toolResponsePromises: Array<Promise<BBRTToolResponse>> = [];
+      for await (const chunk of result.value) {
+        console.log('BBRT RESPONSE CHUNK', JSON.stringify(chunk, null, 2));
+        switch (chunk.kind) {
+          case 'append-content': {
+            await contentWriter.write(chunk.content);
+            break;
           }
-          break;
-        }
-        case 'error': {
-          // TODO(aomarks) Do something better?
-          break;
-        }
-        default: {
-          turn satisfies never;
-          console.error('Unknown turn kind:', turn);
-          break;
+          case 'tool-call': {
+            const tool = this.#tools.find(
+              (tool) => tool.declaration.name === chunk.name,
+            );
+            if (tool === undefined) {
+              console.error('unknown tool', JSON.stringify(chunk));
+              break;
+            }
+            toolCalls.push({id: chunk.id, tool, args: chunk.arguments});
+            toolResponsePromises.push(
+              this.#invokeTool(tool, chunk.id, chunk.arguments),
+            );
+            break;
+          }
+          default: {
+            chunk satisfies never;
+            console.error('unknown chunk kind:', chunk);
+            break;
+          }
         }
       }
-    }
-    return contents;
-  }
-}
-
-function convertToOpenai(contents: GeminiContent[]): Message[] {
-  const messages: Message[] = [];
-  for (const content of contents) {
-    messages.push({
-      role: content.role === 'user' ? 'user' : 'system',
-      content: content.parts
-        .filter((part) => 'text' in part)
-        .map((part) => part.text)
-        .join(''),
+      await contentWriter.close();
+      if (toolResponsePromises.length > 0) {
+        const toolResponses = await Promise.all(toolResponsePromises);
+        setTimeout(() => {
+          // TODO(aomarks) Hacky. We need to return from this function before
+          // sending the response, since otherwise we'll get deadlocked.
+          void this.send({toolResponses});
+        });
+      }
     });
   }
-  return messages;
+
+  async #invokeTool(
+    tool: Tool,
+    id: string,
+    args: Record<string, unknown>,
+  ): Promise<BBRTToolResponse> {
+    const response = await tool.invoke(args);
+    return {id, tool, response};
+  }
+
+  async #generate(): Promise<Result<AsyncIterableIterator<BBRTChunk>, Error>> {
+    let chunks;
+    if (this.#model === 'gemini') {
+      chunks = await this.#generateGemini();
+    } else if (this.#model === 'openai') {
+      chunks = await this.#generateOpenai();
+    } else {
+      throw new Error('Unknown model: ' + this.#model);
+    }
+    if (!chunks.ok) {
+      return chunks;
+    }
+    return {ok: true, value: chunks.value};
+  }
+
+  async #generateGemini(): Promise<
+    Result<AsyncIterableIterator<BBRTChunk>, Error>
+  > {
+    const contents = await bbrtTurnsToGeminiContents(this.turns);
+    return gemini({
+      contents,
+      // TODO(aomarks) Generate tools from tools array.
+      tools: [{functionDeclarations: [getWikipediaArticle.declaration]}],
+    });
+  }
+
+  async #generateOpenai(): Promise<
+    Result<AsyncIterableIterator<BBRTChunk>, Error>
+  > {
+    const messages = await bbrtTurnsToOpenAiMessages(this.turns);
+    return openai({
+      model: 'gpt-3.5-turbo',
+      messages,
+      // TODO(aomarks) Generate tools from tools array.
+      tools: [
+        {
+          type: 'function',
+          function: {
+            description: getWikipediaArticle.declaration.description,
+            name: getWikipediaArticle.declaration.name,
+            parameters: getWikipediaArticle.declaration.parameters,
+          },
+        },
+      ],
+    });
+  }
 }

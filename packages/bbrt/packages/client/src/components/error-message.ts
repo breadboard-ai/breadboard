@@ -14,6 +14,7 @@ export class BBRTErrorMessage extends LitElement {
 
   static override styles = css`
     :host {
+      display: block;
       background: #fff0ef;
       padding: 12px 12px 24px 16px;
       border-radius: 8px;
