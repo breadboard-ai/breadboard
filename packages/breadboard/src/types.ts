@@ -548,11 +548,10 @@ export type GraphDescriptorBoardCapability = {
   kind: "board";
   board: GraphDescriptor;
   /**
-   * Unresolved path to the board. Use this field to specify the path at
-   * compose-time that needs to be resolved at run-time.
-   * The path will be resolved as the inputs are received by the board,
-   * relative to the invoking board.
+   * A string that could be used to render the user-friendly view of the
+   * capability.
    */
+  preview?: string;
 };
 
 export type ResolvedURLBoardCapability = {
@@ -562,6 +561,11 @@ export type ResolvedURLBoardCapability = {
    * result of resolving the `path` field.
    */
   url: string;
+  /**
+   * A string that could be used to render the user-friendly view of the
+   * capability.
+   */
+  preview?: string;
 };
 
 export type UnresolvedPathBoardCapability = {
@@ -573,6 +577,11 @@ export type UnresolvedPathBoardCapability = {
    * relative to the invoking board.
    */
   path: string;
+  /**
+   * A string that could be used to render the user-friendly view of the
+   * capability.
+   */
+  preview?: string;
 };
 
 export type BreadboardCapability =

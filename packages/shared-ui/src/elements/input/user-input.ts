@@ -603,14 +603,13 @@ export class UserInput extends LitElement {
       id: string,
       value?: UnresolvedPathBoardCapability | string
     ) => {
-      const board = (typeof value === "string" ? value : value?.path) ?? "";
       return html`<bb-board-selector
         id="${id}"
         name="${id}"
         .graph=${this.graph}
         .subGraphs=${this.graph?.graphs ?? null}
         .boardServers=${this.boardServers}
-        .value=${board}
+        .value=${value}
       ></bb-board-selector>`;
     };
 
