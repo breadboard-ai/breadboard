@@ -4,24 +4,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import {SignalWatcher} from '@lit-labs/signals';
 import {LitElement, css, html, nothing} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
-import type {Turn} from '../llm/conversation.js';
+import type {BBRTTurn} from '../llm/conversation.js';
 import {typingEffect} from '../util/typing-effect.js';
 import './error-message.js';
 import './markdown.js';
+import './tool-call.js';
 
 @customElement('bbrt-chat-message')
-export class BBRTChatMessage extends LitElement {
+export class BBRTChatMessage extends SignalWatcher(LitElement) {
   @property({type: Object})
-  turn?: Turn;
+  turn?: BBRTTurn;
 
   static override styles = css`
     :host {
       display: grid;
       grid-template-columns: auto 1fr;
       gap: 20px;
-      margin-bottom: 20px;
       font-family: Helvetica, sans-serif;
     }
     :host::part(icon) {
@@ -36,8 +37,13 @@ export class BBRTChatMessage extends LitElement {
     :host::part(icon-model) {
       color: #52e5ad;
     }
-    [part~='message'] {
+    :host::part(content) {
       overflow-y: auto;
+    }
+    :host > :last-child {
+      /* We put this here rather than on :host so that we don't have a margin
+      when we have no content. */
+      margin-bottom: 20px;
     }
   `;
 
@@ -46,26 +52,43 @@ export class BBRTChatMessage extends LitElement {
       case undefined: {
         return nothing;
       }
+      case 'user-content': {
+        return [this.#roleIcon(this.turn.role), this.turn.content];
+      }
+      case 'user-tool-response': {
+        return nothing;
+      }
+      case 'model': {
+        const text =
+          typeof this.turn.content === 'string'
+            ? this.turn.content
+            : typingEffect(1000, this.turn.content);
+        return [
+          this.#roleIcon(this.turn.role),
+          html`<div part="contents">
+            <bbrt-markdown .markdown=${text} part="content"></bbrt-markdown>
+            ${this.turn.toolCalls?.length
+              ? html`<div id="toolCalls" part="content">
+                  ${this.turn.toolCalls?.map(
+                    (toolCall) =>
+                      html`<bbrt-tool-call
+                        .toolCall=${toolCall}
+                      ></bbrt-tool-call>`,
+                  ) ?? []}
+                </div>`
+              : ''}
+          </div>`,
+        ];
+      }
       case 'error': {
         return [
           this.#roleIcon(this.turn.role),
-          html`<bbrt-error-message
-            part="message"
-            .error=${this.turn.error}
-          ></bbrt-error-message>`,
-        ];
-      }
-      case 'text': {
-        const text =
-          typeof this.turn.text === 'string'
-            ? this.turn.text
-            : typingEffect(1000, this.turn.text);
-        return [
-          this.#roleIcon(this.turn.role),
-          html`<bbrt-markdown
-            .markdown=${text}
-            part="message"
-          ></bbrt-markdown>`,
+          html`<div part="contents">
+            <bbrt-error-message
+              part="content"
+              .error=${this.turn.error}
+            ></bbrt-error-message>
+          </div>`,
         ];
       }
       default: {

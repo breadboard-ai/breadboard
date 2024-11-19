@@ -6,12 +6,12 @@
 
 import {LitElement, css, html} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
-import type {Conversation} from '../llm/conversation.js';
+import type {BBRTConversation} from '../llm/conversation.js';
 
 @customElement('bbrt-prompt')
 export class BBRTPrompt extends LitElement {
   @property({attribute: false})
-  conversation?: Conversation;
+  conversation?: BBRTConversation;
 
   static override styles = css`
     :host {

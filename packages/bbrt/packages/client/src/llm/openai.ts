@@ -152,12 +152,7 @@ async function* process(
   }
 
   if (hadToolCall) {
-    console.log('TOOL CALL', toolCallBuffer);
-    yield `{{${toolCallBuffer.name}(${JSON.stringify(
-      toolCallBuffer.arguments,
-    )})}}`;
     for (const tool of tools) {
-      console.log(tool.declaration.name, 'VS', toolCallBuffer.name);
       if (tool.declaration.name === toolCallBuffer.name) {
         const args = JSON.parse(toolCallBuffer.arguments) as Record<
           string,

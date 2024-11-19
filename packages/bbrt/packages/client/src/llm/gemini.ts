@@ -10,7 +10,7 @@ import type {Result} from '../util/result.js';
 import {streamJsonArrayItems} from '../util/stream-json-array-items.js';
 
 export interface GeminiRequest {
-  contents: Content[];
+  contents: GeminiContent[];
   tools?: Array<{
     functionDeclarations: FunctionDeclaration[];
   }>;
@@ -20,7 +20,7 @@ export interface GeminiRequest {
   };
 }
 
-export interface Content {
+export interface GeminiContent {
   role: 'user' | 'model';
   parts: Part[];
 }
@@ -43,7 +43,7 @@ export interface GeminiResponse {
 }
 
 export interface Candidate {
-  content: Content;
+  content: GeminiContent;
 }
 
 export async function gemini(
@@ -119,11 +119,7 @@ async function* extractText(
       if ('text' in part) {
         yield part.text;
       } else if ('functionCall' in part) {
-        yield `{{${part.functionCall.name}(${JSON.stringify(
-          part.functionCall.args,
-        )})}}`;
         for (const tool of tools) {
-          console.log(tool.declaration.name, 'VS', part.functionCall.name);
           if (tool.declaration.name === part.functionCall.name) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const result = await tool.invoke(part.functionCall.args);
