@@ -1665,7 +1665,9 @@ export class Graph extends PIXI.Container {
     }
 
     const sideEdges = this.#computeSideEdges();
-    console.log("✨ sideEdges", sideEdges);
+    if (sideEdges.length) {
+      console.log("✨ sideEdges", sideEdges);
+    }
 
     for (const edge of this.#edges) {
       let edgeGraphic = this.#edgeGraphics.get(inspectableEdgeToString(edge));
