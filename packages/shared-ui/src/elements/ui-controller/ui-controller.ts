@@ -181,6 +181,12 @@ export class UI extends LitElement {
           .items.get("Show subgraphs inline")?.value
       : false;
 
+    const showBoardHierarchy = this.settings
+      ? this.settings
+          .getSection(SETTINGS_TYPE.GENERAL)
+          .items.get("Show board hierarchy")?.value
+      : false;
+
     const graph = this.editor?.inspect("") || null;
     let capabilities: false | GraphProviderCapabilities = false;
     let extendedCapabilities: false | GraphProviderExtendedCapabilities = false;
@@ -222,6 +228,7 @@ export class UI extends LitElement {
         highlightInvalidWires,
         showExperimentalComponents,
         showSubgraphsInline,
+        showBoardHierarchy,
       ],
       () => {
         return html`<bb-editor
@@ -245,6 +252,7 @@ export class UI extends LitElement {
           .showPortTooltips=${showPortTooltips}
           .showSubgraphsInline=${showSubgraphsInline}
           .showReadOnlyOverlay=${true}
+          .showBoardHierarchy=${showBoardHierarchy}
           .subGraphId=${this.subGraphId}
           .moduleId=${this.moduleId}
           .tabURLs=${this.tabURLs}

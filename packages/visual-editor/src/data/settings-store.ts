@@ -187,6 +187,14 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
             value: false,
           },
         ],
+        [
+          "Show board hierarchy",
+          {
+            name: "Show board hierarchy",
+            description: "Shows a hierarchical overview of the current board",
+            value: false,
+          },
+        ],
       ]),
     },
     [BreadboardUI.Types.SETTINGS_TYPE.SECRETS]: {
