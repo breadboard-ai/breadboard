@@ -7,13 +7,13 @@
 import {SignalWatcher} from '@lit-labs/signals';
 import {LitElement, css, html} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
-import type {Conversation} from '../llm/conversation.js';
+import type {BBRTConversation} from '../llm/conversation.js';
 import './chat-message.js';
 
 @customElement('bbrt-chat')
 export class BBRTChat extends SignalWatcher(LitElement) {
   @property({attribute: false})
-  conversation?: Conversation;
+  conversation?: BBRTConversation;
 
   static override styles = css`
     :host {

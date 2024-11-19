@@ -5,45 +5,76 @@
  */
 
 import {SignalArray} from 'signal-utils/array';
+import type {Tool} from '../tools/tool.js';
 import {getWikipediaArticle} from '../tools/wikipedia.js';
 import {BufferedMultiplexStream} from '../util/buffered-multiplex-stream.js';
 import {Lock} from '../util/lock.js';
 import type {Result} from '../util/result.js';
-import {gemini, type Content} from './gemini.js';
+import {gemini, type GeminiContent} from './gemini.js';
 import {openai, type Message} from './openai.js';
 
-export type Turn = {
+export type BBRTTurn = BBRTUserTurn | BBRTModelTurn | BBRTErrorTurn;
+
+export type BBRTUserTurn = BBRTUserTurnContent | BBRTUserTurnToolResponse;
+
+export interface BBRTUserTurnContent {
+  kind: 'user-content';
+  role: 'user';
+  content: string;
+}
+
+export interface BBRTUserTurnToolResponse {
+  kind: 'user-tool-response';
+  role: 'user';
+  tool: Tool;
+  response: unknown;
+}
+
+export interface BBRTModelTurn {
+  kind: 'model';
+  role: 'model';
+  content: string | AsyncIterable<string>;
+  toolCalls?: SignalArray<BBRTToolCall>;
+}
+
+export interface BBRTErrorTurn {
+  kind: 'error';
   role: 'user' | 'model';
-} & (
-  | {
-      kind: 'text';
-      text: string | AsyncIterable<string>;
-    }
-  | {
-      kind: 'error';
-      error: unknown;
-    }
-);
+  error: unknown;
+}
 
-export type ResolvedConversationTurn = Turn & {kind: 'text'};
+export interface BBRTToolCall {
+  tool: Tool;
+  args: Record<string, unknown>;
+}
 
-export class Conversation {
-  readonly turns = new SignalArray<Turn>();
+export class BBRTConversation {
+  readonly turns = new SignalArray<BBRTTurn>();
   readonly #lock = new Lock();
   #model = 'openai';
 
-  async send(message: string) {
+  async send(userContent: string) {
     await this.#lock.do(async () => {
-      this.turns.push({kind: 'text', role: 'user', text: message});
+      this.turns.push({
+        kind: 'user-content',
+        role: 'user',
+        content: userContent,
+      });
       // TODO(aomarks) Support for loading indicators (another field on Turn).
-      this.turns.push({kind: 'text', role: 'model', text: '...'});
-      const result = await this.#generate();
+      this.turns.push({kind: 'model', role: 'model', content: '...'});
+      const toolCalls = new SignalArray<BBRTToolCall>();
+      // TODO(aomarks) #generate() should return two streams/signals, instead of
+      // taking toolCalls in.
+      const result = await this.#generate(toolCalls);
+      // Remove the temporary loading placeholder.
       this.turns.pop();
       if (result.ok) {
+        const modelContent = new BufferedMultiplexStream(result.value.text);
         this.turns.push({
-          kind: 'text',
+          kind: 'model',
           role: 'model',
-          text: new BufferedMultiplexStream(result.value),
+          content: modelContent,
+          toolCalls,
         });
       } else {
         this.turns.push({
@@ -55,35 +86,94 @@ export class Conversation {
     });
   }
 
-  async #generate(): Promise<Result<AsyncIterableIterator<string>, Error>> {
-    if (this.#model === 'gemini') {
-      return this.#generateGemini();
-    }
-    if (this.#model === 'openai') {
-      return this.#generateOpenai();
-    }
-    throw new Error('Unknown model: ' + this.#model);
+  async sendToolResponse(tool: Tool, response: unknown) {
+    await this.#lock.do(async () => {
+      this.turns.push({
+        kind: 'user-tool-response',
+        role: 'user',
+        tool,
+        response,
+      });
+      // TODO(aomarks) Support for loading indicators (another field on Turn).
+      this.turns.push({kind: 'model', role: 'model', content: '...'});
+      const toolCalls = new SignalArray<BBRTToolCall>();
+      // TODO(aomarks) #generate() should return two streams/signals, instead of
+      // taking toolCalls in.
+      const result = await this.#generate(toolCalls);
+      // Remove the temporary loading placeholder.
+      this.turns.pop();
+      if (result.ok) {
+        const modelContent = new BufferedMultiplexStream(result.value.text);
+        this.turns.push({
+          kind: 'model',
+          role: 'model',
+          content: modelContent,
+          toolCalls,
+        });
+      } else {
+        this.turns.push({
+          kind: 'error',
+          role: 'model',
+          error: result.error,
+        });
+      }
+    });
   }
 
-  async #generateGemini(): Promise<
-    Result<AsyncIterableIterator<string>, Error>
-  > {
+  async #generate(
+    toolCalls: SignalArray<BBRTToolCall>,
+  ): Promise<Result<{text: AsyncIterableIterator<string>}, Error>> {
+    const onToolInvoke = (
+      tool: Tool,
+      args: Record<string, unknown>,
+      result: unknown,
+    ): void => {
+      void this.sendToolResponse(tool, result);
+      toolCalls.push({tool, args});
+    };
+
+    let text;
+    if (this.#model === 'gemini') {
+      text = await this.#generateGemini(onToolInvoke);
+    } else {
+      if (this.#model === 'openai') {
+        text = await this.#generateOpenai(onToolInvoke);
+      } else {
+        throw new Error('Unknown model: ' + this.#model);
+      }
+    }
+
+    if (!text.ok) {
+      return text;
+    }
+
+    return {ok: true, value: {text: text.value}};
+  }
+
+  async #generateGemini(
+    onToolInvoke: (
+      tool: Tool,
+      args: Record<string, unknown>,
+      result: unknown,
+    ) => void,
+  ): Promise<Result<AsyncIterableIterator<string>, Error>> {
     return await gemini(
       {
         contents: await this.#contents(),
         tools: [{functionDeclarations: [getWikipediaArticle.declaration]}],
       },
       [getWikipediaArticle],
-      (tool, args, result) => {
-        console.log('Tool invoked:', tool, args, result);
-        void this.send('Tool response: ' + JSON.stringify(result));
-      },
+      onToolInvoke,
     );
   }
 
-  async #generateOpenai(): Promise<
-    Result<AsyncIterableIterator<string>, Error>
-  > {
+  async #generateOpenai(
+    onToolInvoke: (
+      tool: Tool,
+      args: Record<string, unknown>,
+      result: unknown,
+    ) => void,
+  ): Promise<Result<AsyncIterableIterator<string>, Error>> {
     return await openai(
       {
         model: 'gpt-3.5-turbo',
@@ -100,35 +190,51 @@ export class Conversation {
         ],
       },
       [getWikipediaArticle],
-      (tool, args, result) => {
-        console.log('Tool invoked:', tool, args, result);
-        void this.send('Tool response: ' + JSON.stringify(result));
-      },
+      onToolInvoke,
     );
   }
 
-  async #contents(): Promise<Content[]> {
-    const contents: Content[] = [];
+  async #contents(): Promise<GeminiContent[]> {
+    const contents: GeminiContent[] = [];
     for (const turn of this.turns) {
-      if (turn.kind !== 'text') {
-        continue;
+      switch (turn.kind) {
+        case 'user-content': {
+          contents.push({role: 'user', parts: [{text: turn.content}]});
+          break;
+        }
+        case 'user-tool-response': {
+          // TODO(aomarks) Use the actual tool response format.
+          contents.push({
+            role: 'user',
+            parts: [{text: `TURN RESPONSE: ${JSON.stringify(turn.response)}`}],
+          });
+          break;
+        }
+        case 'model': {
+          if (typeof turn.content === 'string') {
+            contents.push({role: 'model', parts: [{text: turn.content}]});
+          } else {
+            const text = (await Array.fromAsync(turn.content)).join('');
+            contents.push({role: 'model', parts: [{text}]});
+          }
+          break;
+        }
+        case 'error': {
+          // TODO(aomarks) Do something better?
+          break;
+        }
+        default: {
+          turn satisfies never;
+          console.error('Unknown turn kind:', turn);
+          break;
+        }
       }
-      const textOrStream = turn.text;
-      // TODO(aomarks) These eslint warning seem totally off base, what's going on?
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const text =
-        typeof textOrStream === 'string'
-          ? textOrStream
-          : // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-            (await Array.fromAsync(textOrStream)).join('');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      contents.push({role: turn.role, parts: [{text}]});
     }
     return contents;
   }
 }
 
-function convertToOpenai(contents: Content[]): Message[] {
+function convertToOpenai(contents: GeminiContent[]): Message[] {
   const messages: Message[] = [];
   for (const content of contents) {
     messages.push({
@@ -138,7 +244,6 @@ function convertToOpenai(contents: Content[]): Message[] {
         .map((part) => part.text)
         .join(''),
     });
-    console.log(messages.at(-1));
   }
   return messages;
 }

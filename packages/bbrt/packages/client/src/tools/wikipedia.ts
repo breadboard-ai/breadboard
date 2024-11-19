@@ -29,9 +29,9 @@ export const getWikipediaArticle: Tool<
       },
     },
   },
+  render: ({title}) => `Wikipedia Article "${title.replace(/_/g, ' ')}"`,
 
   invoke: async ({title}) => {
-    console.log('INVOKE', title);
     const url = new URL('https://en.wikipedia.org/w/api.php');
     url.searchParams.set('page', title);
     url.searchParams.set('action', 'parse');

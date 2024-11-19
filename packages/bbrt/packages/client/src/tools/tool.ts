@@ -10,6 +10,7 @@ export interface Tool<I = any, O = any> {
   declaration: FunctionDeclaration;
   icon: string;
   invoke: (args: I) => Promise<O>;
+  render(args: I): unknown;
 }
 
 export interface FunctionDeclaration {
