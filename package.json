@@ -179,7 +179,7 @@
   ],
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.27.0",
-    "@rollup/rollup-linux-x64-gnu": "^4.25.0"
+    "@rollup/rollup-linux-x64-gnu": "^4.27.3"
   },
   "dependencies": {
     "express": "^4.21.1",
