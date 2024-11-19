@@ -50,7 +50,7 @@ export class Splitter extends LitElement {
   })
   split = [0.5, 0.5];
 
-  @property()
+  @property({ reflect: true })
   showQuickExpandCollapse = false;
 
   #quickExpandRef: Ref<HTMLButtonElement> = createRef();
@@ -64,6 +64,7 @@ export class Splitter extends LitElement {
   static styles = css`
     :host {
       display: grid;
+      grid-auto-rows: minmax(0, 1fr);
       overflow: auto;
       --handle-size: 16px;
       position: relative;
@@ -110,6 +111,10 @@ export class Splitter extends LitElement {
 
     #quick-expand.collapse {
       background: #fff var(--bb-icon-next) center center / 16px 16px no-repeat;
+    }
+
+    :host([showQuickExpandCollapse="false"]) #quick-expand {
+      display: none;
     }
 
     :host([direction="horizontal"]) #quick-expand {

@@ -189,6 +189,9 @@ export class Editor extends LitElement {
   tabURLs: string[] = [];
 
   @property()
+  showBoardHierarchy = true;
+
+  @property()
   set showPortTooltips(value: boolean) {
     this.#graphRenderer.showPortTooltips = value;
   }
@@ -248,9 +251,7 @@ export class Editor extends LitElement {
     }
 
     :host {
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: block;
       background-color: var(--bb-ui-50);
       overflow: auto;
       position: relative;
@@ -307,12 +308,30 @@ export class Editor extends LitElement {
       position: relative;
     }
 
+    #outline-container {
+      border-right: 1px solid var(--bb-neutral-300);
+    }
+
+    #outline-container,
+    #graph-container {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+    }
+
+    bb-graph-outline,
     bb-graph-renderer {
       display: block;
       width: 100%;
       height: 100%;
       outline: none;
       overflow: hidden;
+    }
+
+    #splitter {
+      height: 100%;
+      width: 100%;
     }
   `;
 
@@ -1511,7 +1530,19 @@ export class Editor extends LitElement {
         ? html`<aside id="readonly-overlay">Read-only View</aside>`
         : nothing;
 
-    const content = html`<div id="content">${graphEditor}</div>`;
+    const content = html`<div id="content">
+      ${this.showBoardHierarchy && this.graph
+        ? html`<bb-splitter
+            id="splitter"
+            split="[0.2, 0.8]"
+            .name=${"outline-editor"}
+            .minSegmentSizeHorizontal=${100}
+          >
+            <div id="outline-container" slot="slot-0"><bb-graph-outline .graph=${this.graph} .kits=${this.kits} .subGraphId=${this.subGraphId}></div>
+            <div id="graph-container" slot="slot-1">${graphEditor}</div>
+          </bb-splitter>`
+        : html`${graphEditor}`}
+    </div>`;
 
     return [this.graph ? ribbonMenu : nothing, content, readOnlyFlag];
   }

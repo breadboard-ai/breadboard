@@ -34,6 +34,7 @@ export { GoogleDriveFileId } from "./google-drive/google-drive-file-id.js";
 export { GoogleDriveQuery } from "./google-drive/google-drive-query.js";
 export { GoogleDriveServerPicker } from "./google-drive/google-drive-server-picker.js";
 export { GraphHistory } from "./graph-history/graph-history.js";
+export { GraphOutline } from "./graph-outline/graph-outline.js";
 export { GraphRenderer } from "./editor/graph-renderer.js";
 export { JSONTree } from "./json-tree/json-tree.js";
 export { LLMInput } from "./input/llm-input/llm-input.js";
