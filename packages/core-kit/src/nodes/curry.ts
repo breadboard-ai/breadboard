@@ -66,7 +66,13 @@ export default defineNodeType({
     };
   },
   invoke: async ({ $board }, args, context) => {
-    const graph = await getGraphDescriptor($board, context);
+    const loadResult = await getGraphDescriptor($board, context);
+    if (!loadResult.success) {
+      throw new Error(`Error currying graph: ${loadResult.error}`);
+    }
+    const graph = loadResult.subGraphId
+      ? loadResult.graph.graphs?.[loadResult.subGraphId]
+      : loadResult.graph;
     return { board: { ...graph, args } };
   },
 });
