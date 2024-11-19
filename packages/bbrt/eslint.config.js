@@ -57,6 +57,9 @@ export default [
         //   of undefined (reading 'allowShortCircuit'
         '@typescript-eslint/no-unused-expressions': 'off',
         '@typescript-eslint/no-extraneous-class': 'off',
+        // Lit automatically binds methods in templates to the element, so we do
+        // this a lot.
+        '@typescript-eslint/unbound-method': 'off',
       },
     },
   ]),

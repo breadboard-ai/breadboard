@@ -56,7 +56,7 @@ export class BBRTPrompt extends LitElement {
       return;
     }
     const input = event.target;
-    this.conversation.send(input.value);
+    void this.conversation.send({content: input.value});
     input.value = '';
   }
 }

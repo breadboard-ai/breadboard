@@ -38,7 +38,13 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       color: #52e5ad;
     }
     :host::part(content) {
-      overflow-y: auto;
+      overflow-x: auto;
+    }
+    :host::part(contents) {
+      overflow-x: auto;
+    }
+    :host::part(content) {
+      overflow-x: auto;
     }
     :host > :last-child {
       /* We put this here rather than on :host so that we don't have a margin
@@ -55,28 +61,27 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       case 'user-content': {
         return [this.#roleIcon(this.turn.role), this.turn.content];
       }
-      case 'user-tool-response': {
+      case 'user-tool-responses': {
         return nothing;
       }
       case 'model': {
-        const text =
+        const content =
           typeof this.turn.content === 'string'
             ? this.turn.content
             : typingEffect(1000, this.turn.content);
+        const toolCalls = this.turn.toolCalls?.length
+          ? html`<div id="toolCalls" part="content">
+              ${this.turn.toolCalls?.map(
+                (toolCall) =>
+                  html`<bbrt-tool-call .toolCall=${toolCall}></bbrt-tool-call>`,
+              ) ?? []}
+            </div>`
+          : '';
         return [
           this.#roleIcon(this.turn.role),
           html`<div part="contents">
-            <bbrt-markdown .markdown=${text} part="content"></bbrt-markdown>
-            ${this.turn.toolCalls?.length
-              ? html`<div id="toolCalls" part="content">
-                  ${this.turn.toolCalls?.map(
-                    (toolCall) =>
-                      html`<bbrt-tool-call
-                        .toolCall=${toolCall}
-                      ></bbrt-tool-call>`,
-                  ) ?? []}
-                </div>`
-              : ''}
+            <bbrt-markdown .markdown=${content} part="content"></bbrt-markdown>
+            ${toolCalls}
           </div>`,
         ];
       }

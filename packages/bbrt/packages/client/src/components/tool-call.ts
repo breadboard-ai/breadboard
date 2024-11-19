@@ -21,6 +21,7 @@ export class BBRTToolCallEl extends LitElement {
       border-radius: 8px;
       padding: 8px;
       border: 1px solid #009ac8;
+      margin-right: 16px;
     }
     img {
       max-width: 24px;
