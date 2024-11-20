@@ -143,6 +143,11 @@ export class GraphRenderer extends LitElement {
     }
 
     const ratio = 1 / this.#container.scale.x;
+
+    // Reposition the container.
+    this.#container.x += delta.x * ratio;
+    this.#container.y += delta.y * ratio;
+
     for (const child of this.#container.children) {
       if (!(child instanceof Graph)) {
         continue;
@@ -151,10 +156,6 @@ export class GraphRenderer extends LitElement {
       // Inform the graph about the content rect so that it can attempt to fit
       // the graph inside of it.
       child.layoutRect = contentRect;
-
-      // Reposition it to retain its center.
-      child.position.x += delta.x * ratio;
-      child.position.y += delta.y * ratio;
     }
 
     if (this.#background) {
@@ -683,7 +684,7 @@ export class GraphRenderer extends LitElement {
       return;
     }
 
-    this.zoomToNode(highlightedNode.descriptor.id, -0.1);
+    this.zoomToNode(highlightedNode.descriptor.id, null, -0.1);
   }
 
   createGraph(opts: GraphOpts) {
@@ -763,6 +764,7 @@ export class GraphRenderer extends LitElement {
     }
 
     graph.subGraphId = subGraphId;
+    graph.subGraphTitle = opts.title ?? null;
 
     return true;
   }
@@ -1239,11 +1241,15 @@ export class GraphRenderer extends LitElement {
     }
   }
 
-  zoomToNode(id: string, offset = 0) {
-    this.zoomToFit(false);
+  zoomToNode(id: string, subGraphId: string | null, offset = 0) {
+    this.zoomToFit(false, 0, subGraphId);
 
     for (const graph of this.#container.children) {
       if (!(graph instanceof Graph) || !graph.visible) {
+        continue;
+      }
+
+      if (subGraphId && graph.subGraphId !== subGraphId) {
         continue;
       }
 
@@ -1299,13 +1305,18 @@ export class GraphRenderer extends LitElement {
 
   zoomToFit(
     emitGraphNodeVisualInformation = true,
-    reduceRenderBoundsWidth = 0
+    reduceRenderBoundsWidth = 0,
+    subGraphId: string | null = null
   ) {
     this.#container.scale.set(1, 1);
 
     // Find the first graph in the container and size to it.
     for (const graph of this.#container.children) {
       if (!(graph instanceof Graph) || !graph.visible) {
+        continue;
+      }
+
+      if (subGraphId && graph.subGraphId !== subGraphId) {
         continue;
       }
 
@@ -1320,10 +1331,9 @@ export class GraphRenderer extends LitElement {
       // back here so that the scaling calculations work out.
       graphBounds.x -= graphPosition.x;
       graphBounds.y -= graphPosition.y;
-      graph.position.set(-graphBounds.x, -graphBounds.y);
       this.#container.position.set(
-        (rendererBounds.width - graphBounds.width) * 0.5,
-        (rendererBounds.height - graphBounds.height) * 0.5
+        -graphBounds.x + (rendererBounds.width - graphBounds.width) * 0.5,
+        -graphBounds.y + (rendererBounds.height - graphBounds.height) * 0.5
       );
       const delta = Math.min(
         (rendererBounds.width - 2 * this.#padding) / graphBounds.width,

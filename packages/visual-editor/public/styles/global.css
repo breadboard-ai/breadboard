@@ -64,6 +64,7 @@
   --bb-icon-arrow-drop-down: url(/third_party/icons/arrow-drop-down.svg);
   --bb-icon-before: url(/third_party/icons/before.svg);
   --bb-icon-board: url(/third_party/icons/board.svg);
+  --bb-icon-board-inverted: url(/third_party/icons/board-inverted.svg);
   --bb-icon-braces: url(/third_party/icons/braces.svg);
   --bb-icon-bug: url(/third_party/icons/bug.svg);
   --bb-icon-close: url(/third_party/icons/close.svg);
@@ -137,6 +138,7 @@
   --bb-icon-preview: url(/third_party/icons/preview.svg);
   --bb-icon-public: url(/third_party/icons/public.svg);
   --bb-icon-quick-jump: url(/third_party/icons/quick-jump.svg);
+  --bb-icon-quick-jump-inverted: url(/third_party/icons/quick-jump-inverted.svg);
   --bb-icon-redo: url(/third_party/icons/redo.svg);
   --bb-icon-redo-inverted: url(/third_party/icons/redo-inverted.svg);
   --bb-icon-refresh: url(/third_party/icons/refresh.svg);

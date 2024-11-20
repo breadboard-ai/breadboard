@@ -55,6 +55,8 @@ import {
   NodeTypeRetrievalErrorEvent,
   ShowTooltipEvent,
   SubGraphCreateEvent,
+  ZoomToGraphEvent,
+  ZoomToNodeEvent,
 } from "../../events/events.js";
 import { GraphEdge } from "./graph-edge.js";
 import { GraphRenderer } from "./graph-renderer.js";
@@ -66,7 +68,10 @@ const PASTE_OFFSET = 50;
 
 import { Command, TopGraphRunResult } from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
-import { COMMAND_SET_GRAPH_EDITOR } from "../../constants/constants.js";
+import {
+  COMMAND_SET_GRAPH_EDITOR,
+  MAIN_BOARD_ID,
+} from "../../constants/constants.js";
 import { GraphOpts } from "./types.js";
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
@@ -357,6 +362,7 @@ export class Editor extends LitElement {
 
     return {
       url,
+      title: selectedGraph.raw().title ?? "Untitled Board",
       subGraphId,
       visible: true,
       showNodeTypeDescriptions: this.showNodeTypeDescriptions,
@@ -1144,12 +1150,23 @@ export class Editor extends LitElement {
         `(${curr.id}, {x: ${curr.x}, y: ${curr.y}, collapsed: ${curr.expansionState}})`
       );
     }, "");
+
     const graphId = moveEvt.subGraphId || "";
+    let targetGraph = this.graph;
+    if (targetGraph && graphId) {
+      const subGraphs = targetGraph.graphs();
+      if (!subGraphs) {
+        return;
+      }
+
+      targetGraph = subGraphs[graphId];
+    }
+
     const editsEvt = new MultiEditEvent(
       moveEvt.nodes.map((node) => {
         switch (node.type) {
           case "node": {
-            const graphNode = this.graph?.nodeById(node.id);
+            const graphNode = targetGraph?.nodeById(node.id);
             const metadata = (graphNode?.metadata() || {}) as Record<
               string,
               unknown
@@ -1171,11 +1188,11 @@ export class Editor extends LitElement {
           }
 
           case "comment": {
-            if (!this.graph) {
+            if (!targetGraph) {
               throw new Error("No active graph - unable to update");
             }
 
-            const metadata = this.graph.metadata() || {};
+            const metadata = targetGraph.metadata() || {};
             const commentNode = metadata.comments?.find(
               (commentNode) => commentNode.id === node.id
             );
@@ -1515,6 +1532,7 @@ export class Editor extends LitElement {
         if (this.topGraphResult?.currentNode) {
           this.#graphRenderer.zoomToNode(
             this.topGraphResult.currentNode.descriptor.id,
+            this.subGraphId,
             -0.1
           );
         }
@@ -1538,7 +1556,27 @@ export class Editor extends LitElement {
             .name=${"outline-editor"}
             .minSegmentSizeHorizontal=${100}
           >
-            <div id="outline-container" slot="slot-0"><bb-graph-outline .graph=${this.graph} .kits=${this.kits} .subGraphId=${this.subGraphId}></div>
+            <div id="outline-container" slot="slot-0">
+              <bb-graph-outline
+                .graph=${this.graph}
+                .kits=${this.kits}
+                .subGraphId=${this.subGraphId}
+                .renderId=${globalThis.crypto.randomUUID()}
+                .showSubgraphsInline=${this.showSubgraphsInline}
+                @bbzoomtograph=${(evt: ZoomToGraphEvent) => {
+                  this.#graphRenderer.zoomToHighlightedNode = false;
+                  this.#graphRenderer.zoomToFit(
+                    false,
+                    0,
+                    evt.id === MAIN_BOARD_ID ? null : evt.id
+                  );
+                }}
+                @bbzoomtonode=${(evt: ZoomToNodeEvent) => {
+                  this.#graphRenderer.zoomToHighlightedNode = false;
+                  this.#graphRenderer.zoomToNode(evt.id, evt.subGraphId, 0);
+                }}
+              ></bb-graph-outline>
+            </div>
             <div id="graph-container" slot="slot-1">${graphEditor}</div>
           </bb-splitter>`
         : html`${graphEditor}`}
