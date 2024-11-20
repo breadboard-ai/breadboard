@@ -309,8 +309,12 @@ export class GraphOutline extends LitElement {
       background: var(--bb-ui-50);
     }
 
-    li.port.connected.configured > .title::before,
     li.port.connected > .title::before {
+      background: var(--bb-input-200);
+      border: 1px solid var(--bb-input-600);
+    }
+
+    li.port.connected.configured > .title::before {
       background: var(--bb-ui-300);
       border: 1px solid var(--bb-ui-600);
     }
@@ -610,8 +614,13 @@ export class GraphOutline extends LitElement {
         break;
       }
 
+      case "undefined": {
+        preview = "";
+        break;
+      }
+
       default: {
-        preview = preview.toString();
+        preview = `${value}`;
         break;
       }
     }
