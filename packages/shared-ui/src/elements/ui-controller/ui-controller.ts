@@ -211,7 +211,7 @@ export class UI extends LitElement {
      */
     const graphEditor = guard(
       [
-        this.graph,
+        graph,
         this.subGraphId,
         this.run,
         this.kits,

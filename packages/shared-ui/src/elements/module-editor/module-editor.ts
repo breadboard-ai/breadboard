@@ -740,6 +740,7 @@ export class ModuleEditor extends LitElement {
 
     this.#graphRenderer.createGraph({
       url,
+      title: "Module Graph",
       subGraphId: null,
       showNodeTypeDescriptions: true,
       showNodePreviewValues: true,
