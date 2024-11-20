@@ -157,13 +157,22 @@ export const resolveBoardCapabilitiesInInputs = (
 ) => {
   for (const name in values) {
     const property = values[name];
+    if (Array.isArray(property)) {
+      values[name] = property.map((item) => resolveSingleInput(item));
+    } else {
+      values[name] = resolveSingleInput(property);
+    }
+  }
+  return values;
+
+  function resolveSingleInput(property: NodeValue) {
     if (
       isBreadboardCapability(property) &&
       isUnresolvedPathBoardCapability(property)
     ) {
       const base = url ? new URL(url) : baseURLFromContext(context);
-      values[name] = resolvePath(property, base);
+      return resolvePath(property, base);
     }
+    return property;
   }
-  return values;
 };
