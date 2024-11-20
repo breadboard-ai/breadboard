@@ -41,10 +41,16 @@ import {
   TopGraphNodeInfo,
   cloneEdgeData,
 } from "../../types/types.js";
+import { getSubgraphColor } from "../../utils/subgraph-color.js";
 
 const highlightedNodeColor = getGlobalColor("--bb-ui-600");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
 const nodeBorderColor = getGlobalColor("--bb-neutral-500");
+const subGraphDefaultBorderColor = getGlobalColor("--bb-neutral-300");
+const subGraphDefaultLabelColor = getGlobalColor("--bb-neutral-500");
+const subGraphDefaultLabelTextColor = getGlobalColor("--bb-neutral-0");
+
+const SUB_GRAPH_LABEL_TEXT_SIZE = 11;
 
 export class Graph extends PIXI.Container {
   #isDirty = true;
@@ -64,7 +70,7 @@ export class Graph extends PIXI.Container {
   #highlightPadding = 8;
   #autoSelect = new Set<string>();
   #subGraphOutline = new PIXI.Graphics();
-  #subGraphOutlinePadding = 24;
+  #subGraphOutlinePadding = 20;
   #latestPendingValidateRequest = new WeakMap<GraphEdge, symbol>();
   #edgeValues: TopGraphEdgeValues | null = null;
   #nodeInfo: TopGraphNodeInfo | null = null;
@@ -73,11 +79,17 @@ export class Graph extends PIXI.Container {
   #collapseNodesByDefault = false;
   #showNodePreviewValues = false;
   #showNodeTypeDescriptions = false;
+  #subGraphId: string | null = null;
+  #subGraphTitle: string | null = null;
+  #subGraphTitleLabel: PIXI.Text | null = null;
+  #subGraphBorderColor = subGraphDefaultBorderColor;
+  #subGraphLabelColor = subGraphDefaultLabelColor;
+  #subGraphLabelTextColor = subGraphDefaultLabelTextColor;
+
   layoutRect: DOMRectReadOnly | null = null;
 
   readOnly = false;
   highlightInvalidWires = false;
-  subGraphId: string | null = null;
 
   constructor() {
     super({
@@ -957,6 +969,68 @@ export class Graph extends PIXI.Container {
     return this.#edgeValues;
   }
 
+  set subGraphId(subGraphId: string | null) {
+    if (subGraphId === this.#subGraphId) {
+      return;
+    }
+
+    this.#subGraphId = subGraphId;
+
+    if (subGraphId) {
+      this.#subGraphBorderColor = getSubgraphColor<number>(
+        subGraphId,
+        "border",
+        true
+      );
+      this.#subGraphLabelColor = getSubgraphColor<number>(
+        subGraphId,
+        "label",
+        true
+      );
+      this.#subGraphLabelTextColor = getSubgraphColor<number>(
+        subGraphId,
+        "text",
+        true
+      );
+    } else {
+      this.#subGraphBorderColor = subGraphDefaultBorderColor;
+      this.#subGraphLabelColor = subGraphDefaultLabelColor;
+      this.#subGraphLabelTextColor = subGraphDefaultLabelTextColor;
+    }
+  }
+
+  get subGraphId() {
+    return this.#subGraphId;
+  }
+
+  set subGraphTitle(subGraphTitle: string | null) {
+    if (this.#subGraphTitle && subGraphTitle === this.#subGraphTitle) {
+      return;
+    }
+    this.#subGraphTitle = subGraphTitle;
+
+    const text = subGraphTitle || "";
+    if (!this.#subGraphTitleLabel) {
+      this.#subGraphTitleLabel = new PIXI.Text({
+        text,
+        style: {
+          fontFamily: "Arial",
+          fontSize: SUB_GRAPH_LABEL_TEXT_SIZE,
+          fill: this.#subGraphLabelTextColor,
+          align: "left",
+        },
+      });
+    } else {
+      this.#subGraphTitleLabel.text = text;
+    }
+
+    this.#subGraphTitleLabel.visible = subGraphTitle !== null;
+  }
+
+  get subGraphTitle() {
+    return this.#subGraphTitle;
+  }
+
   set nodeInfo(nodeInfo: TopGraphNodeInfo | null) {
     this.#nodeInfo = nodeInfo;
     this.#isDirty = true;
@@ -1256,22 +1330,47 @@ export class Graph extends PIXI.Container {
     maxX += this.#subGraphOutlinePadding;
     maxY += this.#subGraphOutlinePadding;
 
+    minX = Math.round(minX);
+    minY = Math.round(minY);
+    maxX = Math.round(maxX);
+    maxY = Math.round(maxY);
+
     this.#subGraphOutline.setStrokeStyle({
-      color: 0x0,
+      color: this.#subGraphBorderColor,
       width: 1,
-      alpha: 0.2,
+      alpha: 1,
     });
     this.#subGraphOutline.beginPath();
     this.#subGraphOutline.roundRect(
-      minX,
-      minY,
-      maxX - minX,
-      maxY - minY,
+      minX + 0.5,
+      minY + 0.5,
+      maxX - minX + 0.5,
+      maxY - minY + 0.5,
       8 + this.#subGraphOutlinePadding
     );
     this.#subGraphOutline.closePath();
     this.#subGraphOutline.fill({ color: 0xffffff, alpha: 0.2 });
     this.#subGraphOutline.stroke();
+
+    // Label Placeholder
+    if (this.#subGraphTitleLabel) {
+      const x = minX + 24;
+      const y = minY + 8;
+      this.#subGraphOutline.beginPath();
+      this.#subGraphOutline.roundRect(
+        minX + 24,
+        minY - 8,
+        this.#subGraphTitleLabel.width + 20,
+        this.#subGraphTitleLabel.height + 7,
+        50
+      );
+      this.#subGraphOutline.closePath();
+      this.#subGraphOutline.fill({ color: this.#subGraphLabelColor });
+
+      this.#subGraphTitleLabel.x = x + 9;
+      this.#subGraphTitleLabel.y = y - 13;
+      this.addChildAt(this.#subGraphTitleLabel, 0);
+    }
 
     this.addChildAt(this.#subGraphOutline, 0);
   }
@@ -1666,7 +1765,8 @@ export class Graph extends PIXI.Container {
 
     const sideEdges = this.#computeSideEdges();
     if (sideEdges.length) {
-      console.log("✨ sideEdges", sideEdges);
+      // TODO.
+      // console.log("✨ sideEdges", sideEdges);
     }
 
     for (const edge of this.#edges) {

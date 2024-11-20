@@ -69,6 +69,7 @@ export type VisualMetadata = {
 
 export interface GraphOpts {
   url: string;
+  title: string;
   subGraphId: string | null;
   showNodePreviewValues: boolean;
   showNodeTypeDescriptions: boolean;

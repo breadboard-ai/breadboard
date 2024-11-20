@@ -20,6 +20,7 @@ const ASSET_LIST = new Map([
   ["output", "/third_party/icons/graph/output-48px.svg"],
   ["play-filled", "/third_party/icons/graph/play-filled-48px.svg"],
   ["runJavascript", "/third_party/icons/graph/js-48px.svg"],
+  ["runModule", "/third_party/icons/graph/extension-48px.svg"],
   ["secrets", "/third_party/icons/graph/secrets-48px.svg"],
   ["smart-toy", "/third_party/icons/graph/smart-toy-48px.svg"],
   ["urlTemplate", "/third_party/icons/graph/http-48px.svg"],
