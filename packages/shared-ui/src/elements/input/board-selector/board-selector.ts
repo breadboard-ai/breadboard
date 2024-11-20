@@ -8,6 +8,7 @@ import {
   GraphDescriptor,
   BoardServer,
   SubGraphs,
+  BreadboardCapability,
 } from "@google-labs/breadboard";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
@@ -31,7 +32,7 @@ export class BoardSelector extends LitElement {
 
   #inputRef: Ref<HTMLInputElement> = createRef();
   #selectorRef: Ref<HTMLSelectElement> = createRef();
-  #board: string | null = null;
+  #board: string | BreadboardCapability | null = null;
 
   static styles = css`
     * {
@@ -101,21 +102,33 @@ export class BoardSelector extends LitElement {
       return this.#inputRef.value.value;
     }
 
-    if (!this.#selectorRef.value) {
+    const select = this.#selectorRef.value;
+
+    if (!select) {
       return null;
     }
 
-    return this.#selectorRef.value.value;
+    const value = select.value;
+    if (value.startsWith("#")) {
+      return {
+        kind: "board",
+        path: value,
+        preview: select.selectedOptions[0]?.title,
+      };
+    }
+
+    return select.value;
   }
 
-  set value(value: string | null) {
+  set value(value: string | BreadboardCapability | null) {
     this.#board = value;
     this.requestUpdate();
   }
 
   protected willUpdate(): void {
-    if (this.subGraphs && this.#board && this.subGraphs[this.#board.slice(1)]) {
-      this.usingCustomURL = false;
+    if (this.subGraphs && this.#board) {
+      const id = new SubgraphHelper(this.#board).id();
+      this.usingCustomURL = !this.subGraphs[id];
       return;
     }
 
@@ -139,7 +152,8 @@ export class BoardSelector extends LitElement {
   }
 
   render() {
-    const showQuickSwitch = this.#board && this.#board.startsWith("#");
+    const subgraphHelper = new SubgraphHelper(this.#board);
+    const showQuickSwitch = this.#board && subgraphHelper.isSubgraph;
     const boardServers = this.boardServers.filter((provider) =>
       this.graph && this.graph.url
         ? provider.canProvide(new URL(this.graph.url))
@@ -174,11 +188,14 @@ export class BoardSelector extends LitElement {
             ? html`<optgroup label="Sub Boards">
                 ${map(Object.entries(this.subGraphs), ([id, subGraph]) => {
                   const href = `#${id}`;
+                  const selected = id === subgraphHelper.id();
+                  const title = subGraph.title ?? "Untitled sub board";
                   return html`<option
-                    ?selected=${href === this.#board}
+                    ?selected=${selected}
                     value=${href}
+                    title=${title}
                   >
-                    ${subGraph.title ?? "Untitled sub board"}
+                    ${title}
                   </option>`;
                 })}
               </optgroup>`
@@ -225,7 +242,7 @@ export class BoardSelector extends LitElement {
                   return;
                 }
 
-                const subGraphId = this.#board.replace(/^#/, "");
+                const subGraphId = new SubgraphHelper(this.#board).id();
                 this.dispatchEvent(new SubGraphChosenEvent(subGraphId));
               }}
             >
@@ -260,5 +277,37 @@ export class BoardSelector extends LitElement {
           />`
         : nothing}
     </section>`;
+  }
+}
+
+class SubgraphHelper {
+  #isSubgraph = false;
+  #subGraphIdId = "";
+
+  constructor(public readonly board: string | BreadboardCapability | null) {
+    if (typeof board === "string") {
+      this.#init(board);
+    } else if (board && "path" in board) {
+      this.#init(board.path);
+    }
+  }
+
+  #init(board: string) {
+    if (board.startsWith("#")) {
+      this.#isSubgraph = true;
+      this.#subGraphIdId = board.slice(1);
+    }
+  }
+
+  isSubgraph() {
+    return this.#isSubgraph;
+  }
+
+  id() {
+    return this.#subGraphIdId;
+  }
+
+  path() {
+    return `#${this.id}`;
   }
 }
