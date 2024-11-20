@@ -93,17 +93,6 @@ function describeSpecialist(inputs: unknown) {
     required: [],
   };
 
-  if (task) {
-    inputSchema.properties!.task = {
-      title: "Task",
-      description: "(Deprecated) Additional content to append to the prompt.",
-      type: "object",
-      default: '{"role":"user","parts":[{"text":""}]}',
-      behavior: ["llm-content", "config"],
-      examples: [],
-    };
-  }
-
   const all = [
     ...collectParams(textFromLLMContent(persona)),
     ...collectParams(textFromLLMContent(task)),
