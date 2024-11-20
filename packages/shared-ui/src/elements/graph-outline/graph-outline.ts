@@ -25,7 +25,9 @@ import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import {
+  HideTooltipEvent,
   NodeConfigurationUpdateRequestEvent,
+  ShowTooltipEvent,
   SubGraphChosenEvent,
   ZoomToGraphEvent,
   ZoomToNodeEvent,
@@ -739,6 +741,18 @@ export class GraphOutline extends LitElement {
                       "text"
                     ),
                   })}
+                  @pointerover=${(evt: PointerEvent) => {
+                    this.dispatchEvent(
+                      new ShowTooltipEvent(
+                        `Zoom to board`,
+                        evt.clientX,
+                        evt.clientY
+                      )
+                    );
+                  }}
+                  @pointerout=${() => {
+                    this.dispatchEvent(new HideTooltipEvent());
+                  }}
                   @click=${() => {
                     if (this.mode === "list") {
                       this.#scrollTo(this.#createSubGraphId(subGraphId));
@@ -799,6 +813,18 @@ export class GraphOutline extends LitElement {
           <button
             class=${classMap({ "change-subgraph": true })}
             ?disabled=${!this.showSubgraphsInline && this.subGraphId === null}
+            @pointerover=${(evt: PointerEvent) => {
+              this.dispatchEvent(
+                new ShowTooltipEvent(
+                  `Zoom to Main Board`,
+                  evt.clientX,
+                  evt.clientY
+                )
+              );
+            }}
+            @pointerout=${() => {
+              this.dispatchEvent(new HideTooltipEvent());
+            }}
             @click=${() => {
               if (this.showSubgraphsInline) {
                 this.dispatchEvent(new ZoomToGraphEvent(MAIN_BOARD_ID));
@@ -832,6 +858,18 @@ export class GraphOutline extends LitElement {
                   getSubgraphColor<number>(id, "text", true) === 0xffffff,
               })}
               ?disabled=${!this.showSubgraphsInline && this.subGraphId === id}
+              @pointerover=${(evt: PointerEvent) => {
+                this.dispatchEvent(
+                  new ShowTooltipEvent(
+                    `Zoom to Board`,
+                    evt.clientX,
+                    evt.clientY
+                  )
+                );
+              }}
+              @pointerout=${() => {
+                this.dispatchEvent(new HideTooltipEvent());
+              }}
               @click=${() => {
                 if (this.showSubgraphsInline) {
                   this.dispatchEvent(new ZoomToGraphEvent(id));
@@ -868,6 +906,18 @@ export class GraphOutline extends LitElement {
           <button
             class=${classMap({ "change-subgraph": true })}
             ?disabled=${!this.showSubgraphsInline && this.subGraphId === null}
+            @pointerover=${(evt: PointerEvent) => {
+              this.dispatchEvent(
+                new ShowTooltipEvent(
+                  `Zoom to Main Board`,
+                  evt.clientX,
+                  evt.clientY
+                )
+              );
+            }}
+            @pointerout=${() => {
+              this.dispatchEvent(new HideTooltipEvent());
+            }}
             @click=${() => {
               if (this.showSubgraphsInline) {
                 this.dispatchEvent(new ZoomToGraphEvent(MAIN_BOARD_ID));
