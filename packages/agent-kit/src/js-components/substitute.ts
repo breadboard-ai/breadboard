@@ -56,7 +56,7 @@ export function run(inputParams: Inputs): Outputs {
 
   if (context.length === 0 && !task) {
     throw new Error(
-      "Both conversation Context and Task are empty. Specify at least one of them."
+      "Both conversation Context and Prompt are empty. Need at least one of them."
     );
   }
 
