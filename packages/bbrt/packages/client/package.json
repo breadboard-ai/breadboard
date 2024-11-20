@@ -58,6 +58,7 @@
   },
   "dependencies": {
     "@google-labs/breadboard": "^0.30.0",
+    "@google-labs/core-kit": "^0.17.0",
     "@lit-labs/signals": "^0.1.1",
     "@types/json-schema": "^7.0.15",
     "jsonriver": "^1.0.0",
