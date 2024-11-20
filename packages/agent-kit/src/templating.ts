@@ -71,15 +71,15 @@ function describeSpecialist(inputs: unknown) {
         },
         examples: [],
       },
-      // task: {
-      //   title: "Task",
-      //   description:
-      //     "(Optional) Provide a specific task with clear instructions for the worker to complete using the conversation context. Use mustache-style {{params}} to add parameters.",
-      //   type: "object",
-      //   default: '{"role":"user","parts":[{"text":""}]}',
-      //   behavior: ["llm-content", "config"],
-      //   examples: [],
-      // },
+      task: {
+        title: "Prompt",
+        description:
+          "(Optional) A prompt. Will be added to the end of the the conversation context. Use mustache-style {{params}} to add parameters.",
+        type: "object",
+        default: '{"role":"user","parts":[{"text":""}]}',
+        behavior: ["llm-content", "config"],
+        examples: [],
+      },
       persona: {
         type: "object",
         behavior: ["llm-content", "config"],
