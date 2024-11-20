@@ -36,5 +36,6 @@ export function getSubgraphColor<T extends string | number>(
     return colorSet[idx] as T;
   }
 
-  return `#${colorSet[idx].toString(16)}` as T;
+  const colString = colorSet[idx].toString(16);
+  return `#${colString.padStart(6, "0")}` as T;
 }
