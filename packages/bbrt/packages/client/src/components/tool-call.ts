@@ -17,7 +17,7 @@ export class BBRTToolCallEl extends LitElement {
     :host {
       background: #fff;
       display: inline-flex;
-      align-items: center;
+      align-items: flex-start;
       font-family: Helvetica, sans-serif;
       border-radius: 8px;
       padding: 10px 14px;
@@ -33,6 +33,12 @@ export class BBRTToolCallEl extends LitElement {
       flex-direction: column;
       padding: 0 0 0 16px;
       line-height: 1.4;
+    }
+    [part~='tool-call-content'] > :last-child {
+      margin-bottom: 0;
+    }
+    pre {
+      white-space: pre-wrap;
     }
   `;
 

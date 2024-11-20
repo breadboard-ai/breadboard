@@ -6,6 +6,7 @@
 
 import {Signal} from 'signal-polyfill';
 import {SignalArray} from 'signal-utils/array';
+import {exampleBreadboardTool} from '../tools/breadboard.js';
 import type {Tool} from '../tools/tool.js';
 import {getWikipediaArticle} from '../tools/wikipedia.js';
 import {BufferedMultiplexStream} from '../util/buffered-multiplex-stream.js';
@@ -72,7 +73,7 @@ export interface BBRTToolResponse {
 export class BBRTConversation {
   readonly turns = new SignalArray<BBRTTurn>();
   readonly #lock = new Lock();
-  readonly #tools = [getWikipediaArticle];
+  readonly #tools = [getWikipediaArticle, exampleBreadboardTool];
   #model = 'openai';
 
   send(message: {content: string}): Promise<void> {
@@ -208,8 +209,11 @@ export class BBRTConversation {
     const contents = await bbrtTurnsToGeminiContents(onlyDoneTurns(this.turns));
     return gemini({
       contents,
-      // TODO(aomarks) Generate tools from tools array.
-      tools: [{functionDeclarations: [getWikipediaArticle.declaration]}],
+      // TODO(aomarks) Understand 1 tool with N functions, vs N tools with 1
+      // function each.
+      tools: this.#tools.map((tool) => ({
+        functionDeclarations: [tool.declaration],
+      })),
     });
   }
 
@@ -220,17 +224,14 @@ export class BBRTConversation {
     return openai({
       model: 'gpt-3.5-turbo',
       messages,
-      // TODO(aomarks) Generate tools from tools array.
-      tools: [
-        {
-          type: 'function',
-          function: {
-            description: getWikipediaArticle.declaration.description,
-            name: getWikipediaArticle.declaration.name,
-            parameters: getWikipediaArticle.declaration.parameters,
-          },
+      tools: this.#tools.map((tool) => ({
+        type: 'function',
+        function: {
+          description: tool.declaration.description,
+          name: tool.declaration.name,
+          parameters: tool.declaration.parameters,
         },
-      ],
+      })),
     });
   }
 }

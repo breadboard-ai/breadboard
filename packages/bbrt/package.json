@@ -24,7 +24,8 @@
     "test:web": "wireit",
     "test:node": "wireit",
     "lint": "wireit",
-    "format": "wireit"
+    "format": "wireit",
+    "postinstall": "sed -i '' 's/}(this, function/}(globalThis, function/' ./node_modules/json-schema/lib/validate.js"
   },
   "wireit": {
     "build": {
