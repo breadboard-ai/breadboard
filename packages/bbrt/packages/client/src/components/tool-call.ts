@@ -15,18 +15,24 @@ export class BBRTToolCallEl extends LitElement {
 
   static override styles = css`
     :host {
+      background: #fff;
       display: inline-flex;
       align-items: center;
       font-family: Helvetica, sans-serif;
       border-radius: 8px;
-      padding: 8px;
-      border: 1px solid #009ac8;
-      margin-right: 16px;
+      padding: 10px 14px;
+      border: 1px solid #d9d9d9;
+      box-shadow: rgba(0, 0, 0, 0.1) 1px 1px 5px;
     }
     img {
-      max-width: 24px;
-      max-height: 24px;
-      margin-right: 8px;
+      width: 40px;
+      max-height: 100%;
+    }
+    :host::part(tool-call-content) {
+      display: flex;
+      flex-direction: column;
+      padding: 0 0 0 16px;
+      line-height: 1.4;
     }
   `;
 
@@ -36,7 +42,9 @@ export class BBRTToolCallEl extends LitElement {
     }
     return html`
       <img .src=${this.toolCall.tool.icon} />
-      ${this.toolCall.tool.render(this.toolCall.args)}
+      <div part="tool-call-content">
+        ${this.toolCall.tool.render(this.toolCall.args)}
+      </div>
     `;
   }
 }

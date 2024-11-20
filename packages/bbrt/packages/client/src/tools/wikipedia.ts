@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import {html} from 'lit';
 import type {Tool} from './tool.js';
 
 export const getWikipediaArticle: Tool<
@@ -29,9 +30,21 @@ export const getWikipediaArticle: Tool<
       },
     },
   },
-  render: ({title}) => `Wikipedia Article "${title.replace(/_/g, ' ')}"`,
+  render: ({title}) => html`
+    <span>Read Wikipedia Article</span>
+    <em
+      ><a
+        href="https://en.wikipedia.org/wiki/${title}"
+        target="_blank"
+        referrerpolicy="no-referrer"
+        >${title.replace(/_/g, ' ')}</a
+      ></em
+    >
+  `,
 
   invoke: async ({title}) => {
+    // TODO(aomarks) An artificial pause while working on loading indicators.
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     const url = new URL('https://en.wikipedia.org/w/api.php');
     url.searchParams.set('page', title);
     url.searchParams.set('action', 'parse');

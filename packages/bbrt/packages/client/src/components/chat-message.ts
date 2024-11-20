@@ -7,6 +7,7 @@
 import {SignalWatcher} from '@lit-labs/signals';
 import {LitElement, css, html, nothing} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
+import {guard} from 'lit/directives/guard.js';
 import type {BBRTTurn} from '../llm/conversation.js';
 import {typingEffect} from '../util/typing-effect.js';
 import './error-message.js';
@@ -37,6 +38,31 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
     :host::part(icon-model) {
       color: #52e5ad;
     }
+
+    :host::part(icon-pending) {
+      animation: throb 3s infinite;
+    }
+    :host::part(icon-streaming) {
+      /* TODO(aomarks) Make throbber reflect the speed of the stream. */
+      animation: throb 0.5s infinite;
+    }
+    :host::part(icon-using-tools) {
+      animation: throb 1s infinite;
+    }
+    :host::part(icon-done) {
+      animation: throb 0.5s 1;
+    }
+
+    @keyframes throb {
+      0%,
+      100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.3);
+      }
+    }
+
     :host::part(content) {
       overflow-x: auto;
     }
@@ -51,34 +77,43 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       when we have no content. */
       margin-bottom: 20px;
     }
+
+    #toolCalls {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(auto-fill, 250px);
+      /* Space for shadows to breath on the bottom row. */
+      padding-bottom: 5px;
+    }
   `;
 
   override render() {
-    switch (this.turn?.kind) {
+    const turn = this.turn;
+    switch (turn?.kind) {
       case undefined: {
         return nothing;
       }
       case 'user-content': {
-        return [this.#roleIcon(this.turn.role), this.turn.content];
+        return [this.#roleIcon, turn.content];
       }
       case 'user-tool-responses': {
         return nothing;
       }
       case 'model': {
         const content =
-          typeof this.turn.content === 'string'
-            ? this.turn.content
-            : typingEffect(1000, this.turn.content);
-        const toolCalls = this.turn.toolCalls?.length
+          typeof turn.content === 'string'
+            ? turn.content
+            : guard(turn.content, () => typingEffect(5, turn.content));
+        const toolCalls = turn.toolCalls?.length
           ? html`<div id="toolCalls" part="content">
-              ${this.turn.toolCalls?.map(
+              ${turn.toolCalls?.map(
                 (toolCall) =>
                   html`<bbrt-tool-call .toolCall=${toolCall}></bbrt-tool-call>`,
               ) ?? []}
             </div>`
           : '';
         return [
-          this.#roleIcon(this.turn.role),
+          this.#roleIcon,
           html`<div part="contents">
             <bbrt-markdown .markdown=${content} part="content"></bbrt-markdown>
             ${toolCalls}
@@ -87,27 +122,41 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       }
       case 'error': {
         return [
-          this.#roleIcon(this.turn.role),
+          this.#roleIcon,
           html`<div part="contents">
             <bbrt-error-message
               part="content"
-              .error=${this.turn.error}
+              .error=${turn.error}
             ></bbrt-error-message>
           </div>`,
         ];
       }
       default: {
-        this.turn satisfies never;
+        turn satisfies never;
         return nothing;
       }
     }
   }
 
-  #roleIcon(role: 'user' | 'model') {
-    if (role !== 'user' && role !== 'model') {
+  get #roleIcon() {
+    if (!this.turn) {
+      return nothing;
+    }
+    const {role, status} = this.turn;
+    if (!(role == 'user' || role == 'model')) {
       return '';
     }
-    return html`<svg aria-label="${role}" role="img" part="icon icon-${role}">
+    if (this.turn.kind === 'error') {
+      // TODO(aomarks) A hack so that the icon position is filled by something,
+      // preserving the correct indentation. We don't want to show an icon
+      // because errors are really associated with the most recent turn.
+      return html`<span part="icon"></span>`;
+    }
+    return html`<svg
+      aria-label="${role}"
+      role="img"
+      part="icon icon-${role} icon-${status.get()}"
+    >
       <use href="/images/${role}.svg#icon"></use>
     </svg>`;
   }

@@ -18,8 +18,18 @@ export class BBRTMarkdown extends LitElement {
   markdown?: string | AsyncIterable<string>;
 
   static override styles = css`
+    :host {
+      line-height: 1.4;
+      color: #222;
+    }
     :first-child {
       margin-top: 0;
+    }
+    ol,
+    ul {
+      /* The default chrome value is 40px, which is weird since it doesn't scale
+      with font-size. */
+      padding-inline-start: 2.5em;
     }
   `;
   render() {

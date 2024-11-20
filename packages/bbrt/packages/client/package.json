@@ -57,6 +57,7 @@
     }
   },
   "dependencies": {
+    "@google-labs/breadboard": "^0.30.0",
     "@lit-labs/signals": "^0.1.1",
     "@types/json-schema": "^7.0.15",
     "jsonriver": "^1.0.0",
@@ -64,6 +65,7 @@
     "micromark": "^4.0.1",
     "micromark-extension-gfm-table": "^2.1.0",
     "micromark-util-types": "^2.0.1",
+    "signal-polyfill": "^0.2.1",
     "signal-utils": "^0.20.0"
   }
 }
