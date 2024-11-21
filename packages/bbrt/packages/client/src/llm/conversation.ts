@@ -209,11 +209,13 @@ export class BBRTConversation {
     const contents = await bbrtTurnsToGeminiContents(onlyDoneTurns(this.turns));
     return gemini({
       contents,
-      // TODO(aomarks) Understand 1 tool with N functions, vs N tools with 1
-      // function each.
-      tools: this.#tools.map((tool) => ({
-        functionDeclarations: [tool.declaration],
-      })),
+      // TODO(aomarks) 1 tool with N functions works, but N tools with 1
+      // function each produces a 400 error. By design?
+      tools: [
+        {
+          functionDeclarations: this.#tools.map((tool) => tool.declaration),
+        },
+      ],
     });
   }
 

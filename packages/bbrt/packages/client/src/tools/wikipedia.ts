@@ -30,6 +30,7 @@ export const getWikipediaArticle: Tool<
       },
     },
   },
+
   render: ({title}) => html`
     <span>Read Wikipedia Article</span>
     <em
@@ -43,8 +44,6 @@ export const getWikipediaArticle: Tool<
   `,
 
   invoke: async ({title}) => {
-    // TODO(aomarks) An artificial pause while working on loading indicators.
-    await new Promise((resolve) => setTimeout(resolve, 1000));
     const url = new URL('https://en.wikipedia.org/w/api.php');
     url.searchParams.set('page', title);
     url.searchParams.set('action', 'parse');
