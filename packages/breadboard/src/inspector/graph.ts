@@ -591,6 +591,26 @@ class Graph implements InspectableGraphWithStore {
     this.#graphs = null;
   }
 
+  addSubgraph(subgraph: GraphDescriptor, graphId: GraphIdentifier): void {
+    if (this.#graphId) {
+      throw new Error(
+        `Can't add subgraph "${graphId}" to subgraph "${this.#graphId}": subgraphs can't contain subgraphs`
+      );
+    }
+    this.#cache.nodes.addSubgraphNodes(subgraph, graphId);
+    this.#cache.edges.addSubgraphEdges(subgraph, graphId);
+  }
+
+  removeSubgraph(graphId: GraphIdentifier): void {
+    if (this.#graphId) {
+      throw new Error(
+        `Can't remove subgraph "${graphId}" from subgraph "${this.#graphId}": subgraphs can't contain subgraphs`
+      );
+    }
+    this.#cache.nodes.removeSubgraphNodes(graphId);
+    this.#cache.edges.removeSubgraphEdges(graphId);
+  }
+
   #populateSubgraphs(): InspectableSubgraphs {
     const subgraphs = this.#graph.graphs;
     if (!subgraphs) return {};
