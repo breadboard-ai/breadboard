@@ -15,7 +15,6 @@ export class BBRTPrompt extends LitElement {
 
   static override styles = css`
     :host {
-      border-top: 1px solid #ccc;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -24,7 +23,6 @@ export class BBRTPrompt extends LitElement {
       background: #f0f4f9;
       border: none;
       border-radius: 14px;
-      margin: 0 24px;
       padding: 0 14px;
       height: 40px;
       flex: 1;
@@ -40,7 +38,7 @@ export class BBRTPrompt extends LitElement {
     }
     return html`<input
       type="text"
-      placeholder="Ask BBRT"
+      placeholder="Ask me about Breadboard, or anything else."
       @keydown=${this.#onKeydown}
     />`;
   }
