@@ -693,6 +693,7 @@ export class GraphRenderer extends LitElement {
 
     this.#addGraph(graph);
     this.updateGraphByUrl(opts.url, opts.subGraphId, opts);
+    this.#showBackground();
   }
 
   deleteGraphs() {
@@ -705,6 +706,24 @@ export class GraphRenderer extends LitElement {
       child.removeFromParent();
       child.destroy();
     }
+
+    this.#hideBackground();
+  }
+
+  #hideBackground() {
+    if (!this.#background) {
+      return;
+    }
+
+    this.#background.visible = false;
+  }
+
+  #showBackground() {
+    if (!this.#background) {
+      return;
+    }
+
+    this.#background.visible = true;
   }
 
   updateGraphByUrl(
@@ -1476,6 +1495,10 @@ export class GraphRenderer extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
+
+    if ("start" in this.#app) {
+      this.#app.start();
+    }
 
     this.#resizeObserver.observe(this);
     window.addEventListener("pointerdown", this.#onPointerDownBound);
