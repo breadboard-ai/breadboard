@@ -6,10 +6,13 @@
 
 import {LitElement, css, html} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
+import {Signal} from 'signal-polyfill';
 import type {Config} from '../config.js';
 import {BBRTConversation} from '../llm/conversation.js';
+import type {BBRTModel} from '../llm/model.js';
 import './artifacts.js';
 import './chat.js';
+import './model-selector.js';
 import './prompt.js';
 
 @customElement('bbrt-main')
@@ -17,7 +20,8 @@ export class BBRTMain extends LitElement {
   @property({type: Object})
   config?: Config;
 
-  #conversation = new BBRTConversation();
+  #model = new Signal.State<BBRTModel>('gemini');
+  #conversation = new BBRTConversation(this.#model);
 
   static override styles = css`
     :host {
@@ -35,7 +39,8 @@ export class BBRTMain extends LitElement {
       grid-column: 1;
       grid-row: 2;
       display: flex;
-      flex-direction: column;
+      border-top: 1px solid #ccc;
+      padding: 0 24px 0 16px;
     }
     bbrt-prompt {
       flex-grow: 1;
@@ -53,6 +58,7 @@ export class BBRTMain extends LitElement {
     return html`
       <bbrt-chat .conversation=${this.#conversation}></bbrt-chat>
       <div id="inputs">
+        <bbrt-model-selector .model=${this.#model}></bbrt-model-selector>
         <bbrt-prompt .conversation=${this.#conversation}></bbrt-prompt>
       </div>
       <bbrt-artifacts></bbrt-artifacts>

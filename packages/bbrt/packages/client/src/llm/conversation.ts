@@ -14,6 +14,7 @@ import {Lock} from '../util/lock.js';
 import type {Result} from '../util/result.js';
 import type {BBRTChunk} from './chunk.js';
 import {bbrtTurnsToGeminiContents, gemini} from './gemini.js';
+import type {BBRTModel} from './model.js';
 import {bbrtTurnsToOpenAiMessages, openai} from './openai.js';
 
 // TODO(aomarks) Consider making this whole thing a SignalObject.
@@ -74,7 +75,11 @@ export class BBRTConversation {
   readonly turns = new SignalArray<BBRTTurn>();
   readonly #lock = new Lock();
   readonly #tools = [getWikipediaArticle, exampleBreadboardTool];
-  #model = 'openai';
+  #model: Signal.State<BBRTModel>;
+
+  constructor(model: Signal.State<BBRTModel>) {
+    this.#model = model;
+  }
 
   send(message: {content: string}): Promise<void> {
     // Serialize all requests with a lock. Note that a single call to #send can
@@ -190,12 +195,13 @@ export class BBRTConversation {
 
   async #generate(): Promise<Result<AsyncIterableIterator<BBRTChunk>, Error>> {
     let chunks;
-    if (this.#model === 'gemini') {
+    const model = this.#model.get();
+    if (model === 'gemini') {
       chunks = await this.#generateGemini();
-    } else if (this.#model === 'openai') {
+    } else if (model === 'openai') {
       chunks = await this.#generateOpenai();
     } else {
-      throw new Error('Unknown model: ' + this.#model);
+      throw new Error(`Unknown model: ${model}`);
     }
     if (!chunks.ok) {
       return chunks;
