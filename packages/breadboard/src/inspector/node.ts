@@ -168,6 +168,14 @@ export class NodeCache implements InspectableNodeCache {
     });
   }
 
+  addSubgraphNodes(subgraph: GraphDescriptor, graphId: GraphIdentifier): void {
+    subgraph.nodes.forEach((node) => this.#addNodeInternal(node, graphId));
+  }
+
+  removeSubgraphNodes(graphId: GraphIdentifier): void {
+    this.#map?.delete(graphId);
+  }
+
   #addNodeInternal(node: NodeDescriptor, graphId: GraphIdentifier) {
     this.#typeMap ??= new Map();
     this.#map ??= new Map();

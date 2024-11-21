@@ -24,7 +24,7 @@ class RemoveGraph implements EditOperation {
       );
     }
     const { id } = edit;
-    const { graph } = context;
+    const { graph, store } = context;
 
     if (!graph.graphs || !graph.graphs?.[id]) {
       return {
@@ -36,6 +36,7 @@ class RemoveGraph implements EditOperation {
     if (!Object.keys(graph.graphs).length) {
       delete graph.graphs;
     }
+    store.removeSubgraph(id);
 
     return {
       success: true,

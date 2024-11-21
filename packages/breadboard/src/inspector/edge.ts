@@ -207,4 +207,14 @@ export class EdgeCache implements InspectableEdgeCache {
   edges(graphId: GraphIdentifier): InspectableEdge[] {
     return Array.from(this.#map.get(graphId)?.values() || []);
   }
+
+  addSubgraphEdges(subgraph: GraphDescriptor, graphId: GraphIdentifier): void {
+    subgraph.edges.map((edge) => {
+      this.add(edge, graphId);
+    });
+  }
+
+  removeSubgraphEdges(graphId: GraphIdentifier): void {
+    this.#map.delete(graphId);
+  }
 }
