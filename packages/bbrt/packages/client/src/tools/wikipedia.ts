@@ -5,15 +5,15 @@
  */
 
 import {html} from 'lit';
-import type {Tool} from './tool.js';
+import type {BBRTTool} from './tool.js';
 
-export const getWikipediaArticle: Tool<
+export const getWikipediaArticle: BBRTTool<
   {title: string},
   {wikitext: string} | {error: string}
 > = {
   displayName: 'Get Wikipedia Article',
   icon: '/images/wikipedia.png',
-  declaration: {
+  declaration: () => ({
     name: 'get_wikipedia_article',
     description:
       'Fetches the contents of a Wikipedia article, formatted as wikitext. ' +
@@ -29,7 +29,7 @@ export const getWikipediaArticle: Tool<
         },
       },
     },
-  },
+  }),
 
   render: ({title}) => html`
     <span>Read Wikipedia Article</span>

@@ -7,13 +7,20 @@
 import {LitElement, css, html} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {Signal} from 'signal-polyfill';
+import {SignalArray} from 'signal-utils/array';
+import {SignalSet} from 'signal-utils/set';
+import {BreadboardServer} from '../breadboard/breadboard-server.js';
+import {BreadboardToolProvider} from '../breadboard/breadboard-tool-provider.js';
 import type {Config} from '../config.js';
 import {BBRTConversation} from '../llm/conversation.js';
 import type {BBRTModel} from '../llm/model.js';
-import './artifacts.js';
+import {BREADBOARD_SERVER} from '../secrets.js';
+import {ToolProvider} from '../tools/tool-provider.js';
+import type {BBRTTool} from '../tools/tool.js';
 import './chat.js';
 import './model-selector.js';
 import './prompt.js';
+import './tool-palette.js';
 
 @customElement('bbrt-main')
 export class BBRTMain extends LitElement {
@@ -21,7 +28,13 @@ export class BBRTMain extends LitElement {
   config?: Config;
 
   #model = new Signal.State<BBRTModel>('gemini');
-  #conversation = new BBRTConversation(this.#model);
+  #activeTools = new SignalSet<BBRTTool>();
+  #conversation = new BBRTConversation(this.#model, this.#activeTools);
+
+  #toolProviders = new SignalArray<ToolProvider>([
+    // TODO(aomarks) Support having multiple breadboard servers active.
+    new BreadboardToolProvider(new BreadboardServer(BREADBOARD_SERVER)),
+  ]);
 
   static override styles = css`
     :host {
@@ -29,39 +42,47 @@ export class BBRTMain extends LitElement {
       height: 100vh;
       display: grid;
       grid-template-columns: 2fr 1fr;
-      grid-template-rows: 1fr 100px;
+      grid-template-rows: 1fr auto;
     }
     bbrt-chat {
       grid-column: 1;
       grid-row: 1 / 2;
     }
-    #inputs {
+    #bottom {
+      padding: 24px;
+      border-top: 1px solid #ccc;
       grid-column: 1;
       grid-row: 2;
+    }
+    #inputs {
       display: flex;
-      border-top: 1px solid #ccc;
-      padding: 0 24px 0 16px;
     }
     bbrt-prompt {
       flex-grow: 1;
     }
-    bbrt-tools {
-      flex-grow: 1;
-    }
-    bbrt-artifacts {
+    #sidebar {
       grid-column: 2;
       grid-row: 1 / 3;
+      border-left: 1px solid #ccc;
+      overflow-y: auto;
     }
   `;
 
   override render() {
     return html`
       <bbrt-chat .conversation=${this.#conversation}></bbrt-chat>
-      <div id="inputs">
-        <bbrt-model-selector .model=${this.#model}></bbrt-model-selector>
-        <bbrt-prompt .conversation=${this.#conversation}></bbrt-prompt>
+      <div id="bottom">
+        <div id="inputs">
+          <bbrt-model-selector .model=${this.#model}></bbrt-model-selector>
+          <bbrt-prompt .conversation=${this.#conversation}></bbrt-prompt>
+        </div>
       </div>
-      <bbrt-artifacts></bbrt-artifacts>
+      <div id="sidebar">
+        <bbrt-tool-palette
+          .toolProviders=${this.#toolProviders}
+          .activeTools=${this.#activeTools}
+        ></bbrt-tool-palette>
+      </div>
     `;
   }
 }

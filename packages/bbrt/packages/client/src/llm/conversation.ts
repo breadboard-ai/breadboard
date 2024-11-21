@@ -6,16 +6,25 @@
 
 import {Signal} from 'signal-polyfill';
 import {SignalArray} from 'signal-utils/array';
-import {exampleBreadboardTool} from '../tools/breadboard.js';
-import type {Tool} from '../tools/tool.js';
-import {getWikipediaArticle} from '../tools/wikipedia.js';
+import type {SignalSet} from 'signal-utils/set';
+import type {BBRTTool} from '../tools/tool.js';
 import {BufferedMultiplexStream} from '../util/buffered-multiplex-stream.js';
 import {Lock} from '../util/lock.js';
 import type {Result} from '../util/result.js';
 import type {BBRTChunk} from './chunk.js';
-import {bbrtTurnsToGeminiContents, gemini} from './gemini.js';
+import {
+  bbrtTurnsToGeminiContents,
+  gemini,
+  simplifyJsonSchemaForGemini,
+  type GeminiFunctionDeclaration,
+  type GeminiRequest,
+} from './gemini.js';
 import type {BBRTModel} from './model.js';
-import {bbrtTurnsToOpenAiMessages, openai} from './openai.js';
+import {
+  bbrtTurnsToOpenAiMessages,
+  openai,
+  type OpenAIChatRequest,
+} from './openai.js';
 
 // TODO(aomarks) Consider making this whole thing a SignalObject.
 export type BBRTTurn = BBRTUserTurn | BBRTModelTurn | BBRTErrorTurn;
@@ -60,25 +69,26 @@ export interface BBRTErrorTurn {
 }
 
 export interface BBRTToolCall {
-  tool: Tool;
+  tool: BBRTTool;
   id: string;
   args: Record<string, unknown>;
 }
 
 export interface BBRTToolResponse {
   id: string;
-  tool: Tool;
+  tool: BBRTTool;
   response: Record<string, unknown>;
 }
 
 export class BBRTConversation {
   readonly turns = new SignalArray<BBRTTurn>();
   readonly #lock = new Lock();
-  readonly #tools = [getWikipediaArticle, exampleBreadboardTool];
-  #model: Signal.State<BBRTModel>;
+  readonly #model: Signal.State<BBRTModel>;
+  readonly #tools: SignalSet<BBRTTool>;
 
-  constructor(model: Signal.State<BBRTModel>) {
+  constructor(model: Signal.State<BBRTModel>, tools: SignalSet<BBRTTool>) {
     this.#model = model;
+    this.#tools = tools;
   }
 
   send(message: {content: string}): Promise<void> {
@@ -90,6 +100,13 @@ export class BBRTConversation {
   async #send(
     message: {content: string} | {toolResponses: BBRTToolResponse[]},
   ): Promise<void> {
+    // TODO(aomarks) We read this.#model and this.#tools across async boundaries
+    // in this function, plus we recurse. We should have frozen copies of those
+    // instead, and use them throughout. What's a good pattern for this problem
+    // in general? Should we be factoring out a Sender class so that we can
+    // replace it wholesale whenever the other two change, maybe with a computed
+    // signal?
+
     // Create the user turn. (Note we only support sending either content or
     // tool responses in one message, not both).
     if ('toolResponses' in message) {
@@ -153,9 +170,17 @@ export class BBRTConversation {
           break;
         }
         case 'tool-call': {
-          const tool = this.#tools.find(
-            (tool) => tool.declaration.name === chunk.name,
-          );
+          // TODO(aomarks) tools should be a Map, not a Set (throughout). Though
+          // we should preserve order, so maybe it should be some other data
+          // structure really.
+          const tool = await (async () => {
+            for (const tool of this.#tools) {
+              if ((await tool.declaration()).name === chunk.name) {
+                return tool;
+              }
+            }
+            return undefined;
+          })();
           if (tool === undefined) {
             console.error('unknown tool', JSON.stringify(chunk));
             break;
@@ -185,7 +210,7 @@ export class BBRTConversation {
   }
 
   async #invokeTool(
-    tool: Tool,
+    tool: BBRTTool,
     id: string,
     args: Record<string, unknown>,
   ): Promise<BBRTToolResponse> {
@@ -196,6 +221,8 @@ export class BBRTConversation {
   async #generate(): Promise<Result<AsyncIterableIterator<BBRTChunk>, Error>> {
     let chunks;
     const model = this.#model.get();
+    // TODO(aomarks) Factor thesse out into classes that are configured on main,
+    // rather than hard-coding here.
     if (model === 'gemini') {
       chunks = await this.#generateGemini();
     } else if (model === 'openai') {
@@ -213,34 +240,58 @@ export class BBRTConversation {
     Result<AsyncIterableIterator<BBRTChunk>, Error>
   > {
     const contents = await bbrtTurnsToGeminiContents(onlyDoneTurns(this.turns));
-    return gemini({
+    const request: GeminiRequest = {
       contents,
+    };
+    if (this.#tools.size > 0) {
       // TODO(aomarks) 1 tool with N functions works, but N tools with 1
       // function each produces a 400 error. By design?
-      tools: [
+      request.tools = [
         {
-          functionDeclarations: this.#tools.map((tool) => tool.declaration),
+          functionDeclarations: await Promise.all(
+            [...this.#tools].map(async (tool) => {
+              const declaration = await tool.declaration();
+              const fn: GeminiFunctionDeclaration = {
+                ...declaration,
+              };
+              if (declaration.parameters !== undefined) {
+                fn.parameters = simplifyJsonSchemaForGemini(
+                  declaration.parameters,
+                );
+              }
+              return fn;
+            }),
+          ),
         },
-      ],
-    });
+      ];
+    }
+    return gemini(request);
   }
 
   async #generateOpenai(): Promise<
     Result<AsyncIterableIterator<BBRTChunk>, Error>
   > {
     const messages = await bbrtTurnsToOpenAiMessages(onlyDoneTurns(this.turns));
-    return openai({
+    const request: OpenAIChatRequest = {
       model: 'gpt-3.5-turbo',
       messages,
-      tools: this.#tools.map((tool) => ({
-        type: 'function',
-        function: {
-          description: tool.declaration.description,
-          name: tool.declaration.name,
-          parameters: tool.declaration.parameters,
-        },
-      })),
-    });
+    };
+    if (this.#tools.size > 0) {
+      request.tools = await Promise.all(
+        [...this.#tools].map(async (tool) => {
+          const {name, description, parameters} = await tool.declaration();
+          return {
+            type: 'function',
+            function: {
+              name,
+              description,
+              parameters,
+            },
+          };
+        }),
+      );
+    }
+    return openai(request);
   }
 }
 

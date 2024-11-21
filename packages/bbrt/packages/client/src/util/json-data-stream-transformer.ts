@@ -74,7 +74,7 @@ export class JsonDataStreamTransformer<T> extends TransformStream<
       const bytes = array.subarray(DATA_PREFIX_LENGTH);
       const text = this.#textDecoder.decode(bytes);
       if (!text.match(/^\s*\[DONE\]\s*$/)) {
-        controller.enqueue(JSON.parse(text));
+        controller.enqueue(JSON.parse(text) as T);
       }
     } else {
       console.warn('Unknown data format', this.#textDecoder.decode(array));

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type {JSONSchema7} from 'json-schema';
 import {GEMINI_API_KEY} from '../secrets.js';
 import type {Result} from '../util/result.js';
 import {streamJsonArrayItems} from '../util/stream-json-array-items.js';
@@ -140,29 +141,23 @@ export interface GeminiCandidate {
 export interface GeminiFunctionDeclaration {
   name: string;
   description: string;
-  parameters?: GeminiParameterSchema & {type: 'object'};
+  parameters?: GeminiParameterSchema;
 }
 
 export type GeminiParameterSchema = {
-  description?: string;
+  type?: 'string' | 'number' | 'boolean' | 'array' | 'object';
+  // TODO(aomarks) nullable is not standard JSON Schema, right? Usually
+  // "required" is how you express that.
   nullable?: boolean;
-} & (
-  | {type: 'string'; format: 'enum'; enum: string[]}
-  | {type: 'string'; format?: undefined}
-  | {type: 'number'; format?: 'float' | 'double'}
-  | {type: 'boolean'}
-  | {
-      type: 'array';
-      minItems?: number;
-      maxItems?: number;
-      items?: GeminiParameterSchema;
-    }
-  | {
-      type: 'object';
-      required?: string[];
-      properties?: Record<string, GeminiParameterSchema>;
-    }
-);
+  description?: string;
+  properties?: Record<string, GeminiParameterSchema>;
+  required?: string[];
+  format?: string;
+  enum?: string[];
+  items?: GeminiParameterSchema;
+  minItems?: number;
+  maxItems?: number;
+};
 
 export async function bbrtTurnsToGeminiContents(
   turns: BBRTTurn[],
@@ -181,7 +176,7 @@ export async function bbrtTurnsToGeminiContents(
             parts: [
               {
                 functionResponse: {
-                  name: response.tool.declaration.name,
+                  name: (await response.tool.declaration()).name,
                   response: response.response,
                   // TOOD(aomarks) It really feels like we should also provide
                   // the arguments or an id, since we might have more than one
@@ -203,14 +198,16 @@ export async function bbrtTurnsToGeminiContents(
         }
         if (turn.toolCalls?.length) {
           content.parts.push(
-            ...turn.toolCalls.map(
-              (toolCall): GeminiPart => ({
-                functionCall: {
-                  name: toolCall.tool.declaration.name,
-                  args: toolCall.args,
-                },
-              }),
-            ),
+            ...(await Promise.all(
+              turn.toolCalls.map(
+                async (toolCall): Promise<GeminiPart> => ({
+                  functionCall: {
+                    name: (await toolCall.tool.declaration()).name,
+                    args: toolCall.args,
+                  },
+                }),
+              ),
+            )),
           );
         }
         contents.push(content);
@@ -241,4 +238,48 @@ function randomOpenAIFunctionCallStyleId() {
       .map((x) => RANDOM_STRING_CHARS[x % RANDOM_STRING_CHARS.length])
       .join('')
   );
+}
+
+export function simplifyJsonSchemaForGemini(
+  rootInput: JSONSchema7,
+): GeminiParameterSchema {
+  const rootOutput: GeminiParameterSchema = {type: 'object'};
+  function visit(input: JSONSchema7, output: GeminiParameterSchema) {
+    if (input.type === 'object') {
+      output.type = 'object';
+      if (input.properties !== undefined) {
+        output.properties = {};
+        for (const [key, value] of Object.entries(input.properties)) {
+          output.properties[key] = {};
+          if (value === true) {
+            // TODO(aomarks) True means "any" type, but Gemini doesn't support
+            // that. How out just a string? Maybe object would be better? A true
+            // here doesn't seem to be used much anyway.
+            output.properties[key] = {type: 'string'};
+          } else if (value === false) {
+            continue;
+          } else {
+            visit(value, output.properties[key]);
+          }
+        }
+      }
+      if (input.required !== undefined && input.required.length > 0) {
+        output.required = input.required;
+      }
+    } else if (input.type === 'string') {
+      output.type = 'string';
+      if (input.format !== undefined) {
+        output.format = input.format;
+      }
+    }
+    // TODO(aomarks) More cases to support here!
+  }
+  visit(rootInput, rootOutput);
+  console.log(
+    'SIMPLIFIED JSON SCHEMA FOR GEMINI',
+    JSON.stringify(rootInput, null, 2),
+    '\n',
+    JSON.stringify(rootOutput, null, 2),
+  );
+  return rootOutput;
 }

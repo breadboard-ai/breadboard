@@ -6,13 +6,15 @@
 
 import type {GeminiFunctionDeclaration} from '../llm/gemini.js';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface Tool<
+export interface BBRTTool<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   I = any,
   O extends Record<string, unknown> = Record<string, unknown>,
 > {
   displayName: string;
-  declaration: GeminiFunctionDeclaration;
+  declaration: () =>
+    | GeminiFunctionDeclaration
+    | Promise<GeminiFunctionDeclaration>;
   icon: string;
   invoke: (args: I) => Promise<O>;
   render(args: I): unknown;
