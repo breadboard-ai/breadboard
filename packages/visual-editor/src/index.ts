@@ -2877,10 +2877,8 @@ export class Main extends LitElement {
               @bbsubgraphdelete=${async (
                 evt: BreadboardUI.Events.SubGraphDeleteEvent
               ) => {
-                await this.#runtime.edit.deleteSubGraph(
-                  this.tab,
-                  evt.subGraphId
-                );
+                this.#runtime.edit.deleteSubGraph(this.tab, evt.subGraphId);
+                this.requestUpdate();
               }}
               @bbsubgraphchosen=${(
                 evt: BreadboardUI.Events.SubGraphChosenEvent
