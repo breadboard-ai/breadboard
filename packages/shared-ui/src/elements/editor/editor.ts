@@ -446,7 +446,11 @@ export class Editor extends LitElement {
       if (subgraphs && subgraphs[this.subGraphId]) {
         selectedGraph = subgraphs[this.subGraphId];
       } else {
-        console.warn(`Unable to locate subgraph by name: ${this.subGraphId}`);
+        // This may happen when we were in the subgraph,
+        // and it was just deleted, so we short-circuit the rendering
+        // to main graph.
+        this.#graphRenderer.deleteGraphs();
+        return this.#graphRenderer;
       }
     }
 

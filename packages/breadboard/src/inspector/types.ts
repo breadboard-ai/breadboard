@@ -579,16 +579,22 @@ export type GraphStoreMutator = {
   resetGraph(graph: GraphDescriptor): void;
   nodeStore: NodeStoreMutator;
   edgeStore: EdgeStoreMutator;
+  addSubgraph(subgraph: GraphDescriptor, graphId: GraphIdentifier): void;
+  removeSubgraph(graphId: GraphIdentifier): void;
 };
 
 export type NodeStoreMutator = {
   add(node: NodeDescriptor, graphId: GraphIdentifier): void;
   remove(id: NodeIdentifier, graphId: GraphIdentifier): void;
+  addSubgraphNodes(subgraph: GraphDescriptor, graphId: GraphIdentifier): void;
+  removeSubgraphNodes(graphId: GraphIdentifier): void;
 };
 
 export type EdgeStoreMutator = {
   add(edge: Edge, graphId: GraphIdentifier): void;
   remove(edge: Edge, graphId: GraphIdentifier): void;
+  addSubgraphEdges(subgraph: GraphDescriptor, graphId: GraphIdentifier): void;
+  removeSubgraphEdges(graphId: GraphIdentifier): void;
 };
 
 export type InspectableGraphWithStore = InspectableGraph & GraphStoreMutator;
