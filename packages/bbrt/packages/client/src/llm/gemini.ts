@@ -73,9 +73,11 @@ async function* interpretGeminiChunks(
       } else if ('functionCall' in part) {
         yield {
           kind: 'tool-call',
-          // TODO(aomarks) Gemini tool calls don't have IDs, I guess? So, how
-          // can there be more than one tool call of the same type?
-          id: '',
+          // Gemini function calls don't have IDs, but OpenAI appears to require
+          // them in the case where you have more than tool call in a turn. So
+          // lets make one up that's similar to the OpenAI format so that we can
+          // send Gemini responses to OpenAI.
+          id: randomOpenAIFunctionCallStyleId(),
           name: part.functionCall.name,
           arguments: part.functionCall.args,
         };
@@ -226,4 +228,17 @@ export async function bbrtTurnsToGeminiContents(
     }
   }
   return contents;
+}
+
+const RANDOM_STRING_LENGTH = 24;
+const RANDOM_STRING_CHARS =
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+function randomOpenAIFunctionCallStyleId() {
+  return (
+    'call_' +
+    Array.from(crypto.getRandomValues(new Uint8Array(RANDOM_STRING_LENGTH)))
+      .map((x) => RANDOM_STRING_CHARS[x % RANDOM_STRING_CHARS.length])
+      .join('')
+  );
 }
