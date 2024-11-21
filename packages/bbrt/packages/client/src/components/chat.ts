@@ -63,8 +63,27 @@ export class BBRTChat extends SignalWatcher(LitElement) {
     if (this.conversation === undefined) {
       return html`Connecting...`;
     }
-    return this.conversation.turns.map(
-      (turn) => html`<bbrt-chat-message .turn=${turn}></bbrt-chat-message>`,
+    const turns = this.conversation.turns.filter(
+      ({kind}) => kind !== 'user-tool-responses',
+    );
+    return turns.map(
+      (turn, i) =>
+        html`<bbrt-chat-message
+          .turn=${turn}
+          .hideIcon=${
+            // Hide the icon if the previous turn role was the same (since
+            // otherwise we see two of the same icons in a row, which looks
+            // weird).
+            // TODO(aomarks) Some kind of visual indication would
+            // actually be nice, though, because it's ambiguous sometimes if
+            // e.g. one turn had multiple tool calls, or there was a sequence of
+            // tool calls.
+            turn.role === turns[i - 1]?.role ||
+            // TODO(aomarks) Maybe just get rid of error turn, and put errors on
+            // the turns they are associated with?
+            turn.kind === 'error'
+          }
+        ></bbrt-chat-message>`,
     );
   }
 }

@@ -19,6 +19,9 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
   @property({type: Object})
   turn?: BBRTTurn;
 
+  @property({type: Boolean})
+  hideIcon = false;
+
   static override styles = css`
     :host {
       display: grid;
@@ -146,10 +149,7 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
     if (!(role == 'user' || role == 'model')) {
       return '';
     }
-    if (this.turn.kind === 'error') {
-      // TODO(aomarks) A hack so that the icon position is filled by something,
-      // preserving the correct indentation. We don't want to show an icon
-      // because errors are really associated with the most recent turn.
+    if (this.hideIcon) {
       return html`<span part="icon"></span>`;
     }
     return html`<svg
