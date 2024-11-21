@@ -92,9 +92,7 @@ export class Graph extends PIXI.Container {
   highlightInvalidWires = false;
 
   constructor() {
-    super({
-      isRenderGroup: true,
-    });
+    super();
 
     this.isRenderGroup = true;
     this.eventMode = "static";
