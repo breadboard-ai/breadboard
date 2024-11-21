@@ -173,8 +173,12 @@ export class UserInput extends LitElement {
       box-sizing: border-box;
     }
 
-    .item.status.connected.configured .title::before,
     .item.status.connected .title::before {
+      background: var(--bb-input-200);
+      border: 1px solid var(--bb-input-600);
+    }
+
+    .item.status.connected.configured .title::before {
       background: var(--bb-ui-300);
       border: 1px solid var(--bb-ui-600);
     }

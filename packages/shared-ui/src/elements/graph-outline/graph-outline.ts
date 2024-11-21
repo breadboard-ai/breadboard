@@ -36,6 +36,7 @@ import { MAIN_BOARD_ID } from "../../constants/constants";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { getSubgraphColor } from "../../utils/subgraph-color";
+import { isConfigurableBehavior } from "../../utils";
 
 interface Outline {
   title: string;
@@ -287,8 +288,8 @@ export class GraphOutline extends LitElement {
       margin-right: var(--bb-grid-size-2);
     }
 
-    li.port > .title:has(> .port-item)::before {
-      margin-right: var(--bb-grid-size);
+    li.port > .title:has(.port-item)::before {
+      margin-right: 0;
     }
 
     li.node > .title > .node-item,
@@ -299,13 +300,17 @@ export class GraphOutline extends LitElement {
       background: var(--bb-neutral-0);
       height: var(--bb-grid-size-5);
       border-radius: var(--bb-grid-size);
-      transition: background-color 0.1s cubic-bezer(0, 0, 0.3, 1);
-      cursor: pointer;
+      transition: background-color 0.1s cubic-bezier(0, 0, 0.3, 1);
       padding: 0 var(--bb-grid-size);
+      display: inline-block;
     }
 
-    li.port > .title > .port-item:hover,
-    li.port > .title > .port-item:focus {
+    li.port > .title > button.port-item {
+      cursor: pointer;
+    }
+
+    li.port > .title > button.port-item:hover,
+    li.port > .title > button.port-item:focus {
       background: var(--bb-ui-50);
     }
 
@@ -692,27 +697,29 @@ export class GraphOutline extends LitElement {
                   configured: port.configured,
                 })}
               >
-                <span class="title"
-                  ><button
-                    class="port-item"
-                    @click=${(evt: PointerEvent) => {
-                      const addHorizontalClickClearance = true;
-                      this.dispatchEvent(
-                        new NodeConfigurationUpdateRequestEvent(
-                          node.descriptor.id,
-                          subGraphId,
-                          port,
-                          port.name,
-                          evt.clientX,
-                          evt.clientY,
-                          addHorizontalClickClearance
-                        )
-                      );
-                    }}
-                  >
-                    ${port.title}
-                  </button></span
-                >
+                <span class="title">
+                  ${isConfigurableBehavior(port.schema)
+                    ? html`<button
+                        class="port-item"
+                        @click=${(evt: PointerEvent) => {
+                          const addHorizontalClickClearance = true;
+                          this.dispatchEvent(
+                            new NodeConfigurationUpdateRequestEvent(
+                              node.descriptor.id,
+                              subGraphId,
+                              port,
+                              port.name,
+                              evt.clientX,
+                              evt.clientY,
+                              addHorizontalClickClearance
+                            )
+                          );
+                        }}
+                      >
+                        ${port.title}
+                      </button>`
+                    : html`<span class="port-item">${port.title}</span>`}
+                </span>
                 <span class="preview">${this.#renderPreview(port.value)}</span>
               </li>`;
             })}

@@ -40,6 +40,10 @@ export function isModuleBehavior(schema: Schema) {
   return schema.behavior?.includes("module");
 }
 
+export function isConfigurableBehavior(schema: Schema) {
+  return schema.behavior?.includes("config");
+}
+
 export function isLLMContentArrayBehavior(schema: Schema) {
   if (schema.type !== "array") return false;
   if (Array.isArray(schema.items)) return false;
