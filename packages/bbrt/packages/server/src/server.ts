@@ -8,7 +8,9 @@ import {startDevServer} from '@web/dev-server';
 
 await startDevServer({
   config: {
-    port: 6583,
+    // TODO(aomarks) Must be this number because the board server only allows
+    // this localhost port. Conflicts with visual editor, though.
+    port: 5173,
     rootDir: '../client',
     plugins: [],
     watch: true,

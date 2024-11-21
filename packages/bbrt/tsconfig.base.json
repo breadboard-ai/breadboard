@@ -16,6 +16,7 @@
     "declaration": true,
     "declarationMap": true,
     "composite": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "skipLibCheck": true
   }
 }
