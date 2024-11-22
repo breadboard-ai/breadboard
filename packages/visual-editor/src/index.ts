@@ -2464,7 +2464,8 @@ export class Main extends LitElement {
               let subGraphTitle: string | undefined | null = null;
               if (tab.graph && tab.graph.graphs && tab.subGraphId) {
                 subGraphTitle =
-                  tab.graph.graphs[tab.subGraphId].title || "Untitled Subgraph";
+                  tab.graph.graphs[tab.subGraphId]?.title ||
+                  "Untitled Subgraph";
               }
 
               const canSave = this.#runtime.board.canSave(id) && !tab.readOnly;
@@ -2873,6 +2874,7 @@ export class Main extends LitElement {
                   return;
                 }
                 this.tab.subGraphId = result;
+                this.requestUpdate();
               }}
               @bbsubgraphdelete=${async (
                 evt: BreadboardUI.Events.SubGraphDeleteEvent

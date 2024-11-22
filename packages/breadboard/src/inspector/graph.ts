@@ -597,6 +597,7 @@ class Graph implements InspectableGraphWithStore {
         `Can't add subgraph "${graphId}" to subgraph "${this.#graphId}": subgraphs can't contain subgraphs`
       );
     }
+    this.#graphs = null;
     this.#cache.nodes.addSubgraphNodes(subgraph, graphId);
     this.#cache.edges.addSubgraphEdges(subgraph, graphId);
   }
