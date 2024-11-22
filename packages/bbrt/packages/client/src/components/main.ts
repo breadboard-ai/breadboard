@@ -15,6 +15,7 @@ import type {Config} from '../config.js';
 import {BBRTConversation} from '../llm/conversation.js';
 import type {BBRTModel} from '../llm/model.js';
 import {BREADBOARD_SERVER} from '../secrets.js';
+import {IndexedDBSettingsSecrets} from '../secrets/indexed-db-secrets.js';
 import {ToolProvider} from '../tools/tool-provider.js';
 import type {BBRTTool} from '../tools/tool.js';
 import './chat.js';
@@ -27,13 +28,21 @@ export class BBRTMain extends LitElement {
   @property({type: Object})
   config?: Config;
 
-  #model = new Signal.State<BBRTModel>('gemini');
+  #model = new Signal.State<BBRTModel>('openai');
   #activeTools = new SignalSet<BBRTTool>();
-  #conversation = new BBRTConversation(this.#model, this.#activeTools);
+  #secrets = new IndexedDBSettingsSecrets();
+  #conversation = new BBRTConversation(
+    this.#model,
+    this.#activeTools,
+    this.#secrets,
+  );
 
   #toolProviders = new SignalArray<ToolProvider>([
     // TODO(aomarks) Support having multiple breadboard servers active.
-    new BreadboardToolProvider(new BreadboardServer(BREADBOARD_SERVER)),
+    new BreadboardToolProvider(
+      new BreadboardServer(BREADBOARD_SERVER),
+      this.#secrets,
+    ),
   ]);
 
   static override styles = css`
@@ -70,7 +79,10 @@ export class BBRTMain extends LitElement {
 
   override render() {
     return html`
-      <bbrt-chat .conversation=${this.#conversation}></bbrt-chat>
+      <bbrt-chat
+        .conversation=${this.#conversation}
+        .secrets=${this.#secrets}
+      ></bbrt-chat>
       <div id="bottom">
         <div id="inputs">
           <bbrt-model-selector .model=${this.#model}></bbrt-model-selector>

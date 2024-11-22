@@ -7,6 +7,7 @@
 import {Signal} from 'signal-polyfill';
 import {SignalArray} from 'signal-utils/array';
 import type {SignalSet} from 'signal-utils/set';
+import type {SecretsProvider} from '../secrets/secrets-provider.js';
 import type {BBRTTool} from '../tools/tool.js';
 import {BufferedMultiplexStream} from '../util/buffered-multiplex-stream.js';
 import {Lock} from '../util/lock.js';
@@ -85,10 +86,16 @@ export class BBRTConversation {
   readonly #lock = new Lock();
   readonly #model: Signal.State<BBRTModel>;
   readonly #tools: SignalSet<BBRTTool>;
+  readonly #secrets: SecretsProvider;
 
-  constructor(model: Signal.State<BBRTModel>, tools: SignalSet<BBRTTool>) {
+  constructor(
+    model: Signal.State<BBRTModel>,
+    tools: SignalSet<BBRTTool>,
+    secrets: SecretsProvider,
+  ) {
     this.#model = model;
     this.#tools = tools;
+    this.#secrets = secrets;
   }
 
   send(message: {content: string}): Promise<void> {
@@ -162,7 +169,7 @@ export class BBRTConversation {
     const contentWriter = contentStream.writable.getWriter();
     const toolResponsePromises: Array<Promise<Result<BBRTToolResponse>>> = [];
     for await (const chunk of modelResponse.value) {
-      console.log('BBRT RESPONSE CHUNK', JSON.stringify(chunk, null, 2));
+      // console.log('BBRT RESPONSE CHUNK', JSON.stringify(chunk, null, 2));
       status.set('streaming');
       switch (chunk.kind) {
         case 'append-content': {
@@ -241,7 +248,7 @@ export class BBRTConversation {
     return {ok: true, value: {id, tool, response: invocation.value}};
   }
 
-  async #generate(): Promise<Result<AsyncIterableIterator<BBRTChunk>, Error>> {
+  async #generate(): Promise<Result<AsyncIterableIterator<BBRTChunk>>> {
     let chunks;
     const model = this.#model.get();
     // TODO(aomarks) Factor thesse out into classes that are configured on main,
@@ -259,9 +266,7 @@ export class BBRTConversation {
     return {ok: true, value: chunks.value};
   }
 
-  async #generateGemini(): Promise<
-    Result<AsyncIterableIterator<BBRTChunk>, Error>
-  > {
+  async #generateGemini(): Promise<Result<AsyncIterableIterator<BBRTChunk>>> {
     const contents = await bbrtTurnsToGeminiContents(onlyDoneTurns(this.turns));
     const request: GeminiRequest = {
       contents,
@@ -288,12 +293,17 @@ export class BBRTConversation {
         },
       ];
     }
-    return gemini(request);
+    const apiKey = await this.#secrets.getSecret('GEMINI_API_KEY');
+    if (!apiKey.ok) {
+      return apiKey;
+    }
+    if (apiKey.value === undefined) {
+      return {ok: false, error: new Error('Missing GEMINI_API_KEY')};
+    }
+    return gemini(request, apiKey.value);
   }
 
-  async #generateOpenai(): Promise<
-    Result<AsyncIterableIterator<BBRTChunk>, Error>
-  > {
+  async #generateOpenai(): Promise<Result<AsyncIterableIterator<BBRTChunk>>> {
     const messages = await bbrtTurnsToOpenAiMessages(onlyDoneTurns(this.turns));
     const request: OpenAIChatRequest = {
       model: 'gpt-3.5-turbo',
@@ -314,7 +324,14 @@ export class BBRTConversation {
         }),
       );
     }
-    return openai(request);
+    const apiKey = await this.#secrets.getSecret('OPENAI_API_KEY');
+    if (!apiKey.ok) {
+      return apiKey;
+    }
+    if (apiKey.value === undefined) {
+      return {ok: false, error: new Error('Missing OPENAI_API_KEY')};
+    }
+    return openai(request, apiKey.value);
   }
 }
 
