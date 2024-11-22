@@ -50,6 +50,7 @@ import { getModuleId } from "../../utils/module-id";
 type ItemIdentifier = GraphIdentifier | ModuleIdentifier;
 
 interface Outline {
+  main?: string;
   title: string;
   items: {
     nodes: InspectableNode[];
@@ -693,7 +694,8 @@ export class WorkspaceOutline extends LitElement {
           }
 
           return {
-            type: "declarative",
+            main: graph.main(),
+            type: graph.imperative() ? "imperative" : "declarative",
             title: overrideTitle
               ? "Main Board"
               : (graph.raw().title ?? "Unnamed graph"),
@@ -948,6 +950,8 @@ export class WorkspaceOutline extends LitElement {
   }
 
   #renderWorkspace(
+    type: string,
+    main: string | undefined,
     title: string,
     nodes: InspectableNode[],
     ports: Map<NodeIdentifier, InspectableNodePorts>,
@@ -955,50 +959,54 @@ export class WorkspaceOutline extends LitElement {
     renderSubItemsInline: boolean
   ) {
     const seenSubItems = new Set<string>();
-    return html`${html`<details
-        id=${MAIN_BOARD_ID}
-        class="declarative"
-        ?open=${renderSubItemsInline || subItems.size === 0}
-      >
-        <summary>
-          <div class="title">
-            <button
-              class=${classMap({ "change-subitem": true })}
-              ?disabled=${this.mode === "list" &&
-              this.subGraphId === null &&
-              this.moduleId === null}
-              @click=${() => {
-                if (this.mode === "list") {
-                  if (this.moduleId !== null) {
-                    this.dispatchEvent(new ModuleChosenEvent(null));
-                  }
+    return html`${type === "declarative"
+        ? html`<details
+            id=${MAIN_BOARD_ID}
+            class="declarative"
+            ?open=${renderSubItemsInline || subItems.size === 0}
+          >
+            <summary>
+              <div class="title">
+                <button
+                  class=${classMap({ "change-subitem": true })}
+                  ?disabled=${this.mode === "list" &&
+                  this.subGraphId === null &&
+                  this.moduleId === null}
+                  @click=${() => {
+                    if (this.mode === "list") {
+                      if (this.moduleId !== null) {
+                        this.dispatchEvent(new ModuleChosenEvent(null));
+                      }
 
-                  if (this.subGraphId !== null) {
-                    this.dispatchEvent(new SubGraphChosenEvent(MAIN_BOARD_ID));
-                  }
-                } else {
-                  if (this.moduleId) {
-                    this.dispatchEvent(new ModuleChosenEvent(null));
-                  }
+                      if (this.subGraphId !== null) {
+                        this.dispatchEvent(
+                          new SubGraphChosenEvent(MAIN_BOARD_ID)
+                        );
+                      }
+                    } else {
+                      if (this.moduleId) {
+                        this.dispatchEvent(new ModuleChosenEvent(null));
+                      }
 
-                  this.dispatchEvent(new ZoomToGraphEvent(MAIN_BOARD_ID));
-                }
-              }}
-            >
-              ${title}
-            </button>
-          </div>
-        </summary>
-        ${this.#renderWorkspaceItem(
-          null,
-          nodes,
-          ports,
-          subItems,
-          seenSubItems,
-          renderSubItemsInline
-        )}
-      </details> `}
-      ${subItems.size > seenSubItems.size
+                      this.dispatchEvent(new ZoomToGraphEvent(MAIN_BOARD_ID));
+                    }
+                  }}
+                >
+                  ${title}
+                </button>
+              </div>
+            </summary>
+            ${this.#renderWorkspaceItem(
+              null,
+              nodes,
+              ports,
+              subItems,
+              seenSubItems,
+              renderSubItemsInline
+            )}
+          </details> `
+        : nothing}
+      ${type === "declarative" && subItems.size > seenSubItems.size
         ? html`<h1>Other items</h1>`
         : nothing}
       <div id="create-new">
@@ -1073,32 +1081,38 @@ export class WorkspaceOutline extends LitElement {
               >
                 ${subItem.title}
               </button>
-              <button
-                class="delete"
-                @click=${() => {
-                  if (subItem.type === "declarative") {
-                    if (
-                      !confirm("Are you sure you wish to delete this board?")
-                    ) {
-                      return;
-                    }
+              ${main !== id
+                ? html`<button
+                    class="delete"
+                    @click=${() => {
+                      if (subItem.type === "declarative") {
+                        if (
+                          !confirm(
+                            "Are you sure you wish to delete this board?"
+                          )
+                        ) {
+                          return;
+                        }
 
-                    this.dispatchEvent(new SubGraphDeleteEvent(id));
-                    return;
-                  } else {
-                    if (
-                      !confirm("Are you sure you wish to delete this module?")
-                    ) {
-                      return;
-                    }
+                        this.dispatchEvent(new SubGraphDeleteEvent(id));
+                        return;
+                      } else {
+                        if (
+                          !confirm(
+                            "Are you sure you wish to delete this module?"
+                          )
+                        ) {
+                          return;
+                        }
 
-                    this.dispatchEvent(new ModuleDeleteEvent(id));
-                    return;
-                  }
-                }}
-              >
-                Delete
-              </button>
+                        this.dispatchEvent(new ModuleDeleteEvent(id));
+                        return;
+                      }
+                    }}
+                  >
+                    Delete
+                  </button>`
+                : nothing}
             </div>
           </summary>
           ${this.#renderWorkspaceItem(
@@ -1159,6 +1173,8 @@ export class WorkspaceOutline extends LitElement {
               }
 
               return this.#renderWorkspace(
+                outline.type,
+                outline.main,
                 outline.title,
                 nodes,
                 outline.items.ports,
