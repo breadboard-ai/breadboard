@@ -5,7 +5,6 @@
  */
 
 import type {JSONSchema7} from 'json-schema';
-import {GEMINI_API_KEY} from '../secrets.js';
 import type {Result} from '../util/result.js';
 import {streamJsonArrayItems} from '../util/stream-json-array-items.js';
 import type {BBRTChunk} from './chunk.js';
@@ -13,13 +12,14 @@ import type {BBRTTurn} from './conversation.js';
 
 export async function gemini(
   request: GeminiRequest,
+  apiKey: string,
 ): Promise<Result<AsyncIterableIterator<BBRTChunk>, Error>> {
   const model = 'gemini-1.5-flash-latest';
   const url = new URL(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent`,
   );
-  url.searchParams.set('key', GEMINI_API_KEY);
-  console.log('GEMINI REQUEST', JSON.stringify(request, null, 2));
+  url.searchParams.set('key', apiKey);
+  // console.log('GEMINI REQUEST', JSON.stringify(request, null, 2));
   let result;
   try {
     result = await fetch(url.href, {
@@ -59,7 +59,7 @@ async function* interpretGeminiChunks(
   stream: AsyncIterable<GeminiResponse>,
 ): AsyncIterableIterator<BBRTChunk> {
   for await (const chunk of stream) {
-    console.log('GEMINI RESPONSE CHUNK', JSON.stringify(chunk, null, 2));
+    // console.log('GEMINI RESPONSE CHUNK', JSON.stringify(chunk, null, 2));
     // TODO(aomarks) Sometimes we get no parts, just a mostly empty message.
     // That should probably generate an error, which should somehow appear on
     // this stream.

@@ -5,7 +5,6 @@
  */
 
 import type {JSONSchema7} from 'json-schema';
-import {OPENAI_API_KEY} from '../secrets.js';
 import {JsonDataStreamTransformer} from '../util/json-data-stream-transformer.js';
 import type {Result} from '../util/result.js';
 import type {BBRTChunk} from './chunk.js';
@@ -13,16 +12,17 @@ import type {BBRTTurn} from './conversation.js';
 
 export async function openai(
   request: OpenAIChatRequest,
+  apiKey: string,
 ): Promise<Result<AsyncIterableIterator<BBRTChunk>, Error>> {
   const url = new URL(`https://api.openai.com/v1/chat/completions`);
   let result;
-  console.log('OPENAI REQUEST', JSON.stringify(request, null, 2));
+  // console.log('OPENAI REQUEST', JSON.stringify(request, null, 2));
   try {
     result = await fetch(url.href, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({...request, stream: true}),
     });
@@ -62,7 +62,7 @@ async function* interpretOpenAIChunks(
   >();
 
   for await (const chunk of stream) {
-    console.log('OPENAI RESPONSE CHUNK', JSON.stringify(chunk, null, 2));
+    // console.log('OPENAI RESPONSE CHUNK', JSON.stringify(chunk, null, 2));
     const choice = chunk?.choices?.[0];
     if (!choice) {
       console.error(`chunk had no choice: ${JSON.stringify(chunk, null, 2)}`);

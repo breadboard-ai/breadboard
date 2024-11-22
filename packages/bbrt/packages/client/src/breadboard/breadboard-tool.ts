@@ -20,6 +20,7 @@ import type {
   GeminiFunctionDeclaration,
   GeminiParameterSchema,
 } from '../llm/gemini.js';
+import type {SecretsProvider} from '../secrets/secrets-provider.js';
 import type {BBRTTool} from '../tools/tool.js';
 import type {Result} from '../util/result.js';
 import type {
@@ -33,10 +34,16 @@ export class BreadboardTool implements BBRTTool<InputValues, OutputValues> {
   // TODO(aomarks) More kits.
   readonly #loader = createLoader();
   readonly #kits = [asRuntimeKit(CoreKit), asRuntimeKit(TemplateKit)];
+  readonly #secrets: SecretsProvider;
 
-  constructor(board: BreadboardBoardListing, server: BreadboardServer) {
+  constructor(
+    board: BreadboardBoardListing,
+    server: BreadboardServer,
+    secrets: SecretsProvider,
+  ) {
     this.listing = board;
     this.#server = server;
+    this.#secrets = secrets;
   }
 
   get displayName() {
@@ -71,22 +78,18 @@ export class BreadboardTool implements BBRTTool<InputValues, OutputValues> {
       kits: this.#kits,
       loader: this.#loader,
     }).describe({});
-    console.log('bb:inputSchema', this.displayName, inputSchema);
     return {
       name,
       description:
         this.listing.title + (bgl.description ? `: ${bgl.description}` : ''),
       // TODO(aomarks) We may need to strip non-standard Breadboard annotations
       // in the JSON Schema.
-      parameters: inputSchema as unknown as GeminiParameterSchema & {
-        type: 'object';
-      },
+      parameters: inputSchema as GeminiParameterSchema,
     };
   }
 
   async invoke(inputs: InputValues): Promise<Result<OutputValues>> {
     const bgl = await this.#bgl();
-    // TODO(aomarks) Support remote execution
     const config: RunConfig = {
       // TODO(aomarks) What should this be, it matters for relative imports,
       // right?
@@ -94,31 +97,68 @@ export class BreadboardTool implements BBRTTool<InputValues, OutputValues> {
       kits: this.#kits,
       runner: bgl,
       loader: this.#loader,
+      // TOOD(aomarks) Why is this both here and under run() below?
       inputs,
+      // Enables the "secret" event.
+      interactiveSecrets: true,
     };
-
+    // TODO(aomarks) Support proxying/remote execution.
     const runner = createRunner(config);
-    const outputs: OutputValues[] = [];
-    let error: unknown;
-    await new Promise<void>((resolve) => {
-      runner.addEventListener('output', (event) => {
-        outputs.push(event.data.outputs);
-      });
-      runner.addEventListener('error', (event) => {
-        error = event.data.error;
-        resolve();
-      });
-      runner.addEventListener('end', () => {
-        resolve();
-      });
-      void runner.run(inputs);
-    });
-    console.log('BREADBOARD DONE', {outputs, error});
+    const runResult = await new Promise<Result<OutputValues[]>>(
+      (endBoardRun) => {
+        const outputs: OutputValues[] = [];
+        runner.addEventListener('output', (event) => {
+          outputs.push(event.data.outputs);
+        });
+        runner.addEventListener('end', () => {
+          endBoardRun({ok: true, value: outputs});
+        });
+        runner.addEventListener('error', (event) => {
+          endBoardRun({ok: false, error: event.data.error});
+        });
+        runner.addEventListener('secret', (event) => {
+          void (async () => {
+            const secrets: Record<string, string> = {};
+            const missing = [];
+            const results = await Promise.all(
+              event.data.keys.map(
+                async (name) =>
+                  [name, await this.#secrets.getSecret(name)] as const,
+              ),
+            );
+            for (const [name, result] of results) {
+              if (!result.ok) {
+                endBoardRun(result);
+                return;
+              }
+              if (result.value !== undefined) {
+                secrets[name] = result.value;
+              } else {
+                missing.push(name);
+              }
+            }
+            if (missing.length > 0) {
+              endBoardRun({
+                ok: false,
+                error:
+                  `Missing secret(s): ${missing.join(', ')}.` +
+                  ` Use the Visual Editor Settings to add API keys.`,
+              });
+              return;
+            }
+            void runner.run(secrets);
+          })();
+        });
 
-    if (error !== undefined) {
-      return {ok: false, error};
+        void runner.run(inputs);
+      },
+    );
+    console.log('BREADBOARD RUN DONE', runResult);
+
+    if (!runResult.ok) {
+      return runResult;
     }
-
+    const outputs = runResult.value;
     if (outputs.length === 1) {
       return {ok: true, value: outputs[0]!};
     } else if (outputs.length > 0) {
