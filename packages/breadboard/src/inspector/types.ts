@@ -42,6 +42,7 @@ import {
 import { SequenceEntry } from "./run/serializer.js";
 import { ReanimationState } from "../run/types.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
+import { AffectedNode } from "../editor/types.js";
 
 export type GraphVersion = number;
 
@@ -589,7 +590,7 @@ export type GraphStoreMutator = {
   updateGraph(
     graph: GraphDescriptor,
     visualOnly: boolean,
-    affectedNodes: NodeIdentifier[],
+    affectedNodes: AffectedNode[],
     affectedModules: ModuleIdentifier[]
   ): void;
   // Destroys all caches.
@@ -643,9 +644,10 @@ export type InspectableModuleCache = {
 export type InspectableDescriberResultCache = {
   getOrCreate(
     id: NodeIdentifier,
+    graphId: GraphIdentifier,
     factory: () => Promise<NodeDescriberResult>
   ): Promise<NodeDescriberResult>;
-  clear(visualOnly: boolean, affectedNodes: NodeIdentifier[]): void;
+  clear(visualOnly: boolean, affectedNodes: AffectedNode[]): void;
 };
 
 /**

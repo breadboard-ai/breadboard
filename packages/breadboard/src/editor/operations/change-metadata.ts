@@ -78,7 +78,7 @@ export class ChangeMetadata implements EditOperation {
         ...metadata,
       };
     }
-    const affectedNodes = visualOnly ? [] : [id];
+    const affectedNodes = visualOnly ? [] : [{ id, graphId }];
     return {
       success: true,
       visualOnly,

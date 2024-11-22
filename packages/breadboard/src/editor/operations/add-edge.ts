@@ -18,11 +18,13 @@ import {
   unfixUpStarEdge,
 } from "../../inspector/edge.js";
 import { toSubgraphContext } from "../subgraph-context.js";
+import { GraphIdentifier } from "@breadboard-ai/types";
 
 export class AddEdge implements EditOperation {
   async can(
     edge: EditableEdgeSpec,
-    inspector: InspectableGraph
+    inspector: InspectableGraph,
+    graphId: GraphIdentifier
   ): Promise<SingleEditResult> {
     edge = unfixUpStarEdge(edge);
     if (inspector.hasEdge(edge)) {
@@ -84,7 +86,10 @@ export class AddEdge implements EditOperation {
     }
     return {
       success: true,
-      affectedNodes: [edge.from, edge.to],
+      affectedNodes: [
+        { id: edge.from, graphId },
+        { id: edge.to, graphId },
+      ],
       affectedModules: [],
       affectedGraphs: [],
     };
@@ -107,7 +112,7 @@ export class AddEdge implements EditOperation {
       return subgraphContext;
     }
     const { graph, inspector, store } = subgraphContext.result;
-    const can = await this.can(edge, inspector);
+    const can = await this.can(edge, inspector, graphId);
     if (!can.success) {
       return can;
     }
@@ -119,7 +124,10 @@ export class AddEdge implements EditOperation {
     graph.edges.push(edge);
     return {
       success: true,
-      affectedNodes: [edge.from, edge.to],
+      affectedNodes: [
+        { id: edge.from, graphId },
+        { id: edge.to, graphId },
+      ],
       affectedModules: [],
       affectedGraphs: [],
     };

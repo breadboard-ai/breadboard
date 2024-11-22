@@ -43,13 +43,11 @@ import {
 } from "./schemas.js";
 import {
   InspectableEdge,
-  InspectableEdgeCache,
   InspectableGraphOptions,
   InspectableGraphWithStore,
   InspectableKit,
   InspectableModules,
   InspectableNode,
-  InspectableNodeCache,
   InspectableNodeType,
   InspectableSubgraphs,
   MutableGraph,
@@ -60,12 +58,13 @@ import {
   isImperativeGraph,
   toDeclarativeGraph,
 } from "../run/run-imperative-graph.js";
+import { AffectedNode } from "../editor/types.js";
 
 export const inspectableGraph = (
   graph: GraphDescriptor,
   options?: InspectableGraphOptions
 ): InspectableGraphWithStore => {
-  return new Graph(graph, "", undefined, undefined, options);
+  return new Graph(graph, "", undefined, options);
 };
 
 const maybeURL = (url?: string): URL | undefined => {
@@ -103,8 +102,7 @@ class Graph implements InspectableGraphWithStore {
   constructor(
     graph: GraphDescriptor,
     graphId: GraphIdentifier,
-    nodeCache?: InspectableNodeCache,
-    edgeCache?: InspectableEdgeCache,
+    cache?: MutableGraph,
     options?: InspectableGraphOptions
   ) {
     this.#graphId = graphId;
@@ -117,9 +115,9 @@ class Graph implements InspectableGraphWithStore {
       }
       this.#parent = graph;
       graph = subGraph;
-      if (!nodeCache || !edgeCache) {
+      if (!cache) {
         throw new Error(
-          `Inspect API integrity error: parent graph cache not supplied to a sub-graph.`
+          `Inspect API integrity error: parent cache not supplied to a sub-graph.`
         );
       }
     }
@@ -132,10 +130,10 @@ class Graph implements InspectableGraphWithStore {
     }
     this.#url = maybeURL(this.#graph.url);
     this.#options = options || {};
-    const nodes = nodeCache || new NodeCache(this);
+    const nodes = cache?.nodes || new NodeCache(this);
     let edges;
-    if (edgeCache) {
-      edges = edgeCache;
+    if (cache?.edges) {
+      edges = cache.edges;
     } else {
       edges = new EdgeCache(nodes);
       edges.populate(this.#graph);
@@ -192,7 +190,7 @@ class Graph implements InspectableGraphWithStore {
     type: NodeTypeIdentifier,
     options: NodeTypeDescriberOptions = {}
   ): Promise<NodeDescriberResult> {
-    return this.#cache.describe.getOrCreate(id, async () => {
+    return this.#cache.describe.getOrCreate(id, this.#graphId, async () => {
       // The schema of an input or an output is defined by their
       // configuration schema or their incoming/outgoing edges.
       if (type === "input") {
@@ -539,7 +537,7 @@ class Graph implements InspectableGraphWithStore {
   updateGraph(
     graph: GraphDescriptor,
     visualOnly: boolean,
-    affectedNodes: NodeIdentifier[],
+    affectedNodes: AffectedNode[],
     affectedModules: ModuleIdentifier[]
   ): void {
     // TODO: Handle this a better way?
@@ -560,9 +558,12 @@ class Graph implements InspectableGraphWithStore {
         if (
           node.configuration().$module &&
           node.configuration().$module === id &&
-          !affectedNodes.includes(node.descriptor.id)
+          !affectedNodes.find((n) => n.id === node.descriptor.id)
         ) {
-          affectedNodes.push(node.descriptor.id);
+          affectedNodes.push({
+            id: node.descriptor.id,
+            graphId: this.#graphId,
+          });
           visualOnly = false;
         }
       }
@@ -617,16 +618,7 @@ class Graph implements InspectableGraphWithStore {
     if (!subgraphs) return {};
     return Object.fromEntries(
       Object.keys(subgraphs).map((id) => {
-        return [
-          id,
-          new Graph(
-            this.#graph,
-            id,
-            this.#cache.nodes,
-            this.#cache.edges,
-            this.#options
-          ),
-        ];
+        return [id, new Graph(this.#graph, id, this.#cache, this.#options)];
       })
     );
   }

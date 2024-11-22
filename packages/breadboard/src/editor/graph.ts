@@ -21,6 +21,7 @@ import {
   EditTransform,
   EditTransformResult,
   EditOperationConductor,
+  AffectedNode,
 } from "./types.js";
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 import { AddEdge } from "./operations/add-edge.js";
@@ -107,7 +108,7 @@ export class Graph implements EditableGraph {
 
   #updateGraph(
     visualOnly: boolean,
-    affectedNodes: NodeIdentifier[],
+    affectedNodes: AffectedNode[],
     affectedModules: ModuleIdentifier[]
   ) {
     this.#version++;
@@ -233,7 +234,7 @@ export class Graph implements EditableGraph {
     // Presume that all edits will be visual only.
     let visualOnly = true;
     // Collect affected nodes
-    const affectedNodes: NodeIdentifier[][] = [];
+    const affectedNodes: AffectedNode[][] = [];
     // Collect affected modules
     const affectedModules: NodeIdentifier[][] = [];
     let context: EditOperationContext;
