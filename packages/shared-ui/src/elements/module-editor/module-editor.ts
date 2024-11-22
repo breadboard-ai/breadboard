@@ -177,7 +177,7 @@ export class ModuleEditor extends LitElement {
     #code-container {
       padding: 0 var(--bb-grid-size-4);
       margin-bottom: var(--bb-grid-size-4);
-      width: 100vw;
+      width: 100%;
     }
 
     #code-container-outer {

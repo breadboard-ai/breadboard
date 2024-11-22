@@ -213,6 +213,7 @@ export const styles = css`
     margin: 0;
     height: 100%;
     overflow: hidden;
+    border-bottom: 1px solid var(--bb-neutral-300);
   }
 
   #tab-container h1 {

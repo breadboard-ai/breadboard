@@ -15,6 +15,7 @@ import {
   InspectableRun,
   InspectableRunInputs,
   Kit,
+  NodeIdentifier,
 } from "@google-labs/breadboard";
 import {
   HTMLTemplateResult,
@@ -35,11 +36,20 @@ import {
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { ModuleEditor } from "../module-editor/module-editor.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { CommandsSetSwitchEvent } from "../../events/events.js";
+import {
+  CommandsSetSwitchEvent,
+  SubGraphChosenEvent,
+  ZoomToGraphEvent,
+  ZoomToNodeEvent,
+} from "../../events/events.js";
 import {
   COMMAND_SET_GRAPH_EDITOR,
   COMMAND_SET_MODULE_EDITOR,
+  MAIN_BOARD_ID,
 } from "../../constants/constants.js";
+import { Editor } from "../elements.js";
+
+const MODE_KEY = "bb-ui-controller-outline-mode";
 
 @customElement("bb-ui-controller")
 export class UI extends LitElement {
@@ -103,9 +113,23 @@ export class UI extends LitElement {
   @state()
   history: EditHistory | null = null;
 
-  #moduleEditor: Ref<ModuleEditor> = createRef();
+  @property()
+  mode: "list" | "tree" = "list";
+
+  #graphEditorRef: Ref<Editor> = createRef();
+  #moduleEditorRef: Ref<ModuleEditor> = createRef();
+  #zoomToNodeOnNextUpdate: NodeIdentifier | null = null;
 
   static styles = uiControllerStyles;
+
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    const mode = globalThis.localStorage.getItem(MODE_KEY);
+    if (mode === "list" || mode === "tree") {
+      this.mode = mode;
+    }
+  }
 
   editorRender = 0;
   protected willUpdate(changedProperties: PropertyValues): void {
@@ -114,8 +138,8 @@ export class UI extends LitElement {
     }
 
     if (changedProperties.has("moduleId")) {
-      if (this.moduleId === null && this.#moduleEditor.value) {
-        this.#moduleEditor.value.destroyEditor();
+      if (this.moduleId === null && this.#moduleEditorRef.value) {
+        this.#moduleEditorRef.value.destroyEditor();
       }
     }
   }
@@ -218,6 +242,7 @@ export class UI extends LitElement {
         this.topGraphResult,
         this.history,
         this.editorRender,
+        this.mode,
         collapseNodesByDefault,
         hideSubboardSelectorWhenEmpty,
         showNodeShortcuts,
@@ -232,6 +257,7 @@ export class UI extends LitElement {
       ],
       () => {
         return html`<bb-editor
+          ${ref(this.#graphEditorRef)}
           .canRedo=${canRedo}
           .canUndo=${canUndo}
           .capabilities=${capabilities}
@@ -250,9 +276,8 @@ export class UI extends LitElement {
           .showNodeShortcuts=${showNodeShortcuts}
           .showNodeTypeDescriptions=${showNodeTypeDescriptions}
           .showPortTooltips=${showPortTooltips}
-          .showSubgraphsInline=${showSubgraphsInline}
+          .showSubgraphsInline=${this.mode === "tree"}
           .showReadOnlyOverlay=${true}
-          .showBoardHierarchy=${showBoardHierarchy}
           .subGraphId=${this.subGraphId}
           .moduleId=${this.moduleId}
           .tabURLs=${this.tabURLs}
@@ -272,7 +297,7 @@ export class UI extends LitElement {
     let moduleEditor: HTMLTemplateResult | symbol = nothing;
     if (graph && this.moduleId) {
       moduleEditor = html`<bb-module-editor
-        ${ref(this.#moduleEditor)}
+        ${ref(this.#moduleEditorRef)}
         .canRedo=${canRedo}
         .canUndo=${canUndo}
         .capabilities=${capabilities}
@@ -289,9 +314,68 @@ export class UI extends LitElement {
       ></bb-module-editor>`;
     }
 
-    return html`<section id="diagram">
-      ${graphEditor} ${this.moduleId ? moduleEditor : nothing} ${welcomePanel}
-    </section>`;
+    return graph
+      ? html`<section id="diagram">
+          <bb-splitter
+            id="splitter"
+            split="[0.2, 0.8]"
+            .name=${"outline-editor"}
+            .minSegmentSizeHorizontal=${100}
+          >
+            <div id="outline-container" slot="slot-0">
+              <bb-workspace-outline
+                .graph=${graph}
+                .kits=${this.kits}
+                .subGraphId=${this.subGraphId}
+                .moduleId=${this.moduleId}
+                .renderId=${globalThis.crypto.randomUUID()}
+                .mode=${this.mode}
+                @bbsubgraphchosen=${(evt: SubGraphChosenEvent) => {
+                  if (evt.zoomToNode) {
+                    this.#zoomToNodeOnNextUpdate = evt.zoomToNode;
+                  }
+                }}
+                @bboutlinemodechange=${() => {
+                  this.mode = this.mode === "list" ? "tree" : "list";
+                  if (this.mode === "tree") {
+                    this.subGraphId = null;
+                  }
+
+                  globalThis.localStorage.setItem(MODE_KEY, this.mode);
+                }}
+                @bbzoomtograph=${(evt: ZoomToGraphEvent) => {
+                  if (!this.#graphEditorRef.value) {
+                    return;
+                  }
+
+                  this.#graphEditorRef.value.zoomToHighlightedNode = false;
+                  this.#graphEditorRef.value.zoomToFit(
+                    false,
+                    0,
+                    evt.id === MAIN_BOARD_ID ? null : evt.id
+                  );
+                }}
+                @bbzoomtonode=${(evt: ZoomToNodeEvent) => {
+                  if (!this.#graphEditorRef.value) {
+                    return;
+                  }
+
+                  this.#graphEditorRef.value.zoomToHighlightedNode = false;
+                  this.#graphEditorRef.value.zoomToNode(
+                    evt.id,
+                    evt.subGraphId,
+                    0
+                  );
+                }}
+              ></bb-workspace-outline>
+            </div>
+            <div id="graph-container" slot="slot-1">
+              ${graphEditor} ${this.moduleId ? moduleEditor : nothing}
+              ${welcomePanel}
+            </div>
+          </bb-splitter>
+        </section>`
+      : html`${graphEditor} ${welcomePanel}`;
   }
 
   updated() {
@@ -302,5 +386,16 @@ export class UI extends LitElement {
         this.moduleId ? COMMAND_SET_MODULE_EDITOR : COMMAND_SET_GRAPH_EDITOR
       )
     );
+
+    if (this.#zoomToNodeOnNextUpdate) {
+      const zoomToNode = this.#zoomToNodeOnNextUpdate;
+      this.#zoomToNodeOnNextUpdate = null;
+      requestAnimationFrame(() => {
+        if (!this.#graphEditorRef.value) {
+          return;
+        }
+        this.#graphEditorRef.value.zoomToNode(zoomToNode, this.subGraphId, 0);
+      });
+    }
   }
 }

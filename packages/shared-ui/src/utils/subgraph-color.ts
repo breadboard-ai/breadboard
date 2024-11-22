@@ -21,7 +21,7 @@ const textPresets = [
   0xffffff, 0xffffff, 0xffffff, 0x000000, 0x000000, 0x000000, 0xffffff,
 ];
 
-export function getSubgraphColor<T extends string | number>(
+export function getSubItemColor<T extends string | number>(
   id: string,
   type: "border" | "label" | "text",
   asNumber = false

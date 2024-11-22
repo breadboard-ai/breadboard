@@ -445,6 +445,10 @@
 					"type": "string",
 					"description": "The description for the module."
 				},
+				"title": {
+					"type": "string",
+					"description": "The title for the module."
+				},
 				"tags": {
 					"type": "array",
 					"items": {
