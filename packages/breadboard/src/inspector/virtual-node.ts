@@ -129,4 +129,8 @@ class VirtualNode implements InspectableNode {
   async ports(): Promise<InspectableNodePorts> {
     return this.#ports();
   }
+
+  deleted(): boolean {
+    return false;
+  }
 }

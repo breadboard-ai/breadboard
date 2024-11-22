@@ -34,6 +34,7 @@ import {
 class Node implements InspectableNode {
   descriptor: NodeDescriptor;
   #graph: InspectableGraph;
+  #deleted = false;
 
   constructor(descriptor: NodeDescriptor, graph: InspectableGraph) {
     this.descriptor = descriptor;
@@ -150,6 +151,14 @@ class Node implements InspectableNode {
     };
     return { inputs, outputs, side };
   }
+
+  setDeleted() {
+    this.#deleted = true;
+  }
+
+  deleted() {
+    return this.#deleted;
+  }
 }
 
 export class NodeCache implements InspectableNodeCache {
@@ -173,6 +182,10 @@ export class NodeCache implements InspectableNodeCache {
   }
 
   removeSubgraphNodes(graphId: GraphIdentifier): void {
+    const subgraph = this.#map?.get(graphId);
+    subgraph?.forEach((node) => {
+      (node as Node).setDeleted();
+    });
     this.#map?.delete(graphId);
   }
 
@@ -247,7 +260,7 @@ export class NodeCache implements InspectableNodeCache {
       );
       return;
     }
-    const node = nodeMap.get(id);
+    const node = nodeMap.get(id) as Node;
     console.assert(node, "Node does not exist in cache.");
     const type = node!.descriptor.type;
     const list = this.#typeMap?.get(graphId)?.get(type);
@@ -256,6 +269,7 @@ export class NodeCache implements InspectableNodeCache {
       list.splice(index, 1);
     }
     nodeMap.delete(id);
+    node.setDeleted();
   }
 
   nodes(graphId: GraphIdentifier): InspectableNode[] {
