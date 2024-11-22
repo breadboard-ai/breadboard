@@ -29,11 +29,13 @@ import {
   HideTooltipEvent,
   ModuleChosenEvent,
   ModuleCreateEvent,
+  ModuleDeleteEvent,
   NodeConfigurationUpdateRequestEvent,
   OutlineModeChangeEvent,
   ShowTooltipEvent,
   SubGraphChosenEvent,
   SubGraphCreateEvent,
+  SubGraphDeleteEvent,
   ZoomToGraphEvent,
   ZoomToNodeEvent,
 } from "../../events/events";
@@ -564,6 +566,31 @@ export class WorkspaceOutline extends LitElement {
     .create-new-module:focus {
       background-color: var(--bb-neutral-50);
     }
+
+    .delete {
+      height: var(--bb-grid-size-7);
+      width: var(--bb-grid-size-7);
+      border: none;
+      background: transparent var(--bb-icon-delete) center center / 20px 20px
+        no-repeat;
+      font-size: 0;
+      margin: 0 var(--bb-grid-size-2);
+      opacity: 0;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: background 0.1s cubic-bezier(0, 0, 0.3, 1);
+    }
+
+    .title:hover .delete,
+    .delete:hover,
+    .delete:focus {
+      opacity: 1;
+    }
+
+    .delete:hover,
+    .delete:focus {
+      background-color: var(--bb-neutral-50);
+    }
   `;
 
   #containerRef: Ref<HTMLDivElement> = createRef();
@@ -1045,6 +1072,32 @@ export class WorkspaceOutline extends LitElement {
                 }}
               >
                 ${subItem.title}
+              </button>
+              <button
+                class="delete"
+                @click=${() => {
+                  if (subItem.type === "declarative") {
+                    if (
+                      !confirm("Are you sure you wish to delete this board?")
+                    ) {
+                      return;
+                    }
+
+                    this.dispatchEvent(new SubGraphDeleteEvent(id));
+                    return;
+                  } else {
+                    if (
+                      !confirm("Are you sure you wish to delete this module?")
+                    ) {
+                      return;
+                    }
+
+                    this.dispatchEvent(new ModuleDeleteEvent(id));
+                    return;
+                  }
+                }}
+              >
+                Delete
               </button>
             </div>
           </summary>
