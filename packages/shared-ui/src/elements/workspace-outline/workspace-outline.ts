@@ -45,10 +45,10 @@ interface Outline {
   subGraphs: Map<GraphIdentifier, Outline>;
 }
 
-const MODE_KEY = "bb-graph-outline-mode";
+const MODE_KEY = "bb-workspace-outline-mode";
 
-@customElement("bb-graph-outline")
-export class GraphOutline extends LitElement {
+@customElement("bb-workspace-outline")
+export class WorkspaceOutline extends LitElement {
   @property()
   graph: InspectableGraph | null = null;
 

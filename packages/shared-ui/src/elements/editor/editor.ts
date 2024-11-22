@@ -325,7 +325,7 @@ export class Editor extends LitElement {
       position: relative;
     }
 
-    bb-graph-outline,
+    bb-workspace-outline,
     bb-graph-renderer {
       display: block;
       width: 100%;
@@ -1561,7 +1561,7 @@ export class Editor extends LitElement {
             .minSegmentSizeHorizontal=${100}
           >
             <div id="outline-container" slot="slot-0">
-              <bb-graph-outline
+              <bb-workspace-outline
                 .graph=${this.graph}
                 .kits=${this.kits}
                 .subGraphId=${this.subGraphId}
@@ -1579,7 +1579,7 @@ export class Editor extends LitElement {
                   this.#graphRenderer.zoomToHighlightedNode = false;
                   this.#graphRenderer.zoomToNode(evt.id, evt.subGraphId, 0);
                 }}
-              ></bb-graph-outline>
+              ></bb-workspace-outline>
             </div>
             <div id="graph-container" slot="slot-1">${graphEditor}</div>
           </bb-splitter>`
