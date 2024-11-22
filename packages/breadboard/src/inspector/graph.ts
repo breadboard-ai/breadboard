@@ -130,19 +130,17 @@ class Graph implements InspectableGraphWithStore {
     }
     this.#url = maybeURL(this.#graph.url);
     this.#options = options || {};
-    const nodes = cache?.nodes || new NodeCache(this);
-    let edges;
-    if (cache?.edges) {
-      edges = cache.edges;
+    if (cache) {
+      this.#cache = cache;
     } else {
-      edges = new EdgeCache(nodes);
+      const nodes = new NodeCache(this);
+      const edges = new EdgeCache(nodes);
       edges.populate(this.#graph);
+      const modules = new ModuleCache();
+      modules.populate(this.#graph);
+      const describe = new DescribeResultCache();
+      this.#cache = { edges, nodes, modules, describe };
     }
-    const modules = new ModuleCache();
-    modules.populate(this.#graph);
-    const describe = new DescribeResultCache();
-
-    this.#cache = { edges, nodes, modules, describe };
   }
 
   raw() {
