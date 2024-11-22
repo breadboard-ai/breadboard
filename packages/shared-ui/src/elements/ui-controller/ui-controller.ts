@@ -142,6 +142,12 @@ export class UI extends LitElement {
         this.#moduleEditorRef.value.destroyEditor();
       }
     }
+
+    if (changedProperties.has("mode") || changedProperties.has("subGraphId")) {
+      if (this.mode === "tree") {
+        this.subGraphId = null;
+      }
+    }
   }
 
   render() {
@@ -337,10 +343,6 @@ export class UI extends LitElement {
                 }}
                 @bboutlinemodechange=${() => {
                   this.mode = this.mode === "list" ? "tree" : "list";
-                  if (this.mode === "tree") {
-                    this.subGraphId = null;
-                  }
-
                   globalThis.localStorage.setItem(MODE_KEY, this.mode);
                 }}
                 @bbzoomtograph=${(evt: ZoomToGraphEvent) => {

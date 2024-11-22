@@ -371,8 +371,8 @@ export class GraphRenderer extends LitElement {
   `;
 
   constructor(
-    private minScale = 0.1,
-    private maxScale = 4,
+    private minScale = 0.06,
+    private maxScale = 2.5,
     private zoomFactor = 100
   ) {
     super();
@@ -672,6 +672,10 @@ export class GraphRenderer extends LitElement {
 
     for (const graph of this.#container.children) {
       if (!(graph instanceof Graph) || !graph.visible) {
+        continue;
+      }
+
+      if (graph.subGraphId) {
         continue;
       }
 
@@ -1327,9 +1331,12 @@ export class GraphRenderer extends LitElement {
     reduceRenderBoundsWidth = 0,
     subGraphId: string | null = null
   ) {
+    this.#container.position.set(0, 0);
     this.#container.scale.set(1, 1);
 
-    // Find the first graph in the container and size to it.
+    const bounds = new PIXI.Bounds();
+    const position = new PIXI.Point();
+
     for (const graph of this.#container.children) {
       if (!(graph instanceof Graph) || !graph.visible) {
         continue;
@@ -1340,46 +1347,49 @@ export class GraphRenderer extends LitElement {
       }
 
       const graphPosition = graph.getGlobalPosition();
+      position.x = Math.min(position.x, graphPosition.x);
+      position.y = Math.min(position.y, graphPosition.y);
+
       const graphBounds = graph.getBounds();
-      const rendererBounds = this.getBoundingClientRect();
-      if (reduceRenderBoundsWidth) {
-        rendererBounds.width -= reduceRenderBoundsWidth;
-      }
+      bounds.addBounds(graphBounds);
 
-      // Dagre isn't guaranteed to start the layout at 0, 0, so we adjust things
-      // back here so that the scaling calculations work out.
-      graphBounds.x -= graphPosition.x;
-      graphBounds.y -= graphPosition.y;
-      this.#container.position.set(
-        -graphBounds.x + (rendererBounds.width - graphBounds.width) * 0.5,
-        -graphBounds.y + (rendererBounds.height - graphBounds.height) * 0.5
-      );
-      const delta = Math.min(
-        (rendererBounds.width - 2 * this.#padding) / graphBounds.width,
-        (rendererBounds.height - 2 * this.#padding) / graphBounds.height,
-        1
-      );
-
-      if (delta < this.minScale) {
-        this.minScale = delta;
-      }
-
-      const pivot = {
-        x: rendererBounds.width / 2,
-        y: rendererBounds.height / 2,
-      };
-
-      const matrix = this.#scaleContainerAroundPoint(delta, pivot);
       if (emitGraphNodeVisualInformation) {
         this.#emitGraphNodeVisualInformation(graph);
       }
+    }
 
-      if (this.#background) {
-        this.#background.tileTransform.setFromMatrix(matrix);
-      }
+    const rendererBounds = this.getBoundingClientRect();
+    if (reduceRenderBoundsWidth) {
+      rendererBounds.width -= reduceRenderBoundsWidth;
+    }
 
-      this.#storeContainerTransform(graph, matrix);
-      return;
+    // Dagre isn't guaranteed to start the layout at 0, 0, so we adjust things
+    // back here so that the scaling calculations work out.
+    bounds.x -= position.x;
+    bounds.y -= position.y;
+    this.#container.position.set(
+      -bounds.x + (rendererBounds.width - bounds.width) * 0.5,
+      -bounds.y + (rendererBounds.height - bounds.height) * 0.5
+    );
+    const delta = Math.min(
+      (rendererBounds.width - 2 * this.#padding) / bounds.width,
+      (rendererBounds.height - 2 * this.#padding) / bounds.height,
+      1
+    );
+
+    if (delta < this.minScale) {
+      this.minScale = delta;
+    }
+
+    const pivot = {
+      x: rendererBounds.width / 2,
+      y: rendererBounds.height / 2,
+    };
+
+    const matrix = this.#scaleContainerAroundPoint(delta, pivot);
+
+    if (this.#background) {
+      this.#background.tileTransform.setFromMatrix(matrix);
     }
   }
 

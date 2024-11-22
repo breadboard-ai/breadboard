@@ -20,6 +20,7 @@ import type {
   UserOutputValues,
 } from "../types/types.js";
 import type {
+  GraphIdentifier,
   ModuleCode,
   ModuleIdentifier,
   ModuleLanguage,
@@ -596,7 +597,7 @@ export class GraphBoardServerSelectionChangeEvent extends Event {
 export class ZoomToGraphEvent extends Event {
   static eventName = "bbzoomtograph";
 
-  constructor(public readonly id: string) {
+  constructor(public readonly id: GraphIdentifier) {
     super(ZoomToGraphEvent.eventName, { ...eventInit });
   }
 }
@@ -605,7 +606,7 @@ export class ZoomToNodeEvent extends Event {
   static eventName = "bbzoomtonode";
 
   constructor(
-    public readonly id: string,
+    public readonly id: NodeIdentifier,
     public readonly subGraphId: string | null = null
   ) {
     super(ZoomToNodeEvent.eventName, { ...eventInit });

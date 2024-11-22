@@ -9,6 +9,7 @@ import {
   Edge,
   EditSpec,
   GraphDescriptor,
+  GraphIdentifier,
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
   InspectableGraph,
@@ -359,7 +360,11 @@ export class Editor extends LitElement {
     };
   }
 
-  #updateOrCreateGraph(opts: GraphOpts, listenForDraw = false) {
+  #updateOrCreateGraph(
+    opts: GraphOpts,
+    listenForDraw: boolean,
+    listenForDrawId: GraphIdentifier | null = null
+  ) {
     const updated = this.#graphRenderer.updateGraphByUrl(
       opts.url,
       opts.subGraphId,
@@ -371,6 +376,12 @@ export class Editor extends LitElement {
         this.#graphRenderer.topGraphResult = this.topGraphResult;
       }
 
+      if (this.#zoomOnUpdate) {
+        this.#graphRenderer.zoomToFit(false, 0, this.#zoomOnUpdateId);
+
+        this.#zoomOnUpdate = false;
+        this.#zoomOnUpdateId = null;
+      }
       return;
     }
 
@@ -380,28 +391,38 @@ export class Editor extends LitElement {
     }
 
     this.#graphRenderer.createGraph(opts);
-
     if (!listenForDraw) {
       return;
     }
 
+    const onInitialDraw = (evt: Event) => {
+      const drawEvt = evt as GraphInitialDrawEvent;
+      if (drawEvt.subGraphId !== listenForDrawId) {
+        return;
+      }
+
+      this.#graphRenderer.showGraph(opts.url, opts.subGraphId);
+      this.#graphRenderer.zoomToFit(
+        true,
+        this.isShowingBoardActivityOverlay ? 400 : 0
+      );
+
+      this.#graphRenderer.removeEventListener(
+        GraphInitialDrawEvent.eventName,
+        onInitialDraw
+      );
+
+      // When we're loading a graph from existing results, we need to
+      // set the topGraphResult again so that it is applied to the newly
+      // created graph.
+      if (this.topGraphResult) {
+        this.#graphRenderer.topGraphResult = this.topGraphResult;
+      }
+    };
+
     this.#graphRenderer.addEventListener(
       GraphInitialDrawEvent.eventName,
-      () => {
-        this.#graphRenderer.showGraph(opts.url, opts.subGraphId);
-        this.#graphRenderer.zoomToFit(
-          true,
-          this.isShowingBoardActivityOverlay ? 400 : 0
-        );
-
-        // When we're loading a graph from existing results, we need to
-        // set the topGraphResult again so that it is applied to the newly
-        // created graph.
-        if (this.topGraphResult) {
-          this.#graphRenderer.topGraphResult = this.topGraphResult;
-        }
-      },
-      { once: true }
+      onInitialDraw
     );
   }
 
@@ -478,10 +499,21 @@ export class Editor extends LitElement {
     this.#graphRenderer.hideAllGraphs();
     this.#graphRenderer.removeGraphs(this.tabURLs);
 
-    this.#updateOrCreateGraph(mainGraphOpts, true);
+    const shouldListenForMainGraph =
+      this.subGraphId !== null || subGraphs.size === 0;
+    const mainGraphId = this.subGraphId !== null ? this.subGraphId : null;
 
-    for (const [, subGraphOpts] of subGraphs) {
-      this.#updateOrCreateGraph(subGraphOpts);
+    this.#updateOrCreateGraph(
+      mainGraphOpts,
+      shouldListenForMainGraph,
+      mainGraphId
+    );
+
+    let s = 0;
+    for (const [id, subGraphOpts] of subGraphs) {
+      const shouldListenForSubGraph = s === subGraphs.size - 1;
+      this.#updateOrCreateGraph(subGraphOpts, shouldListenForSubGraph, id);
+      s++;
     }
 
     return this.#graphRenderer;
@@ -677,6 +709,20 @@ export class Editor extends LitElement {
     this.removeEventListener("pointerdown", this.#onPointerDownBound);
     this.removeEventListener("dragover", this.#onDragOverBound);
     this.removeEventListener("drop", this.#onDropBound);
+  }
+
+  #zoomOnUpdate = false;
+  #zoomOnUpdateId: GraphIdentifier | null = null;
+  protected willUpdate(changedProperties: PropertyValues): void {
+    if (
+      changedProperties.has("subGraphId") ||
+      changedProperties.has("showSubgraphsInline")
+    ) {
+      if (!this.showSubgraphsInline) {
+        this.#zoomOnUpdate = true;
+        this.#zoomOnUpdateId = this.subGraphId;
+      }
+    }
   }
 
   #onGraphInteraction() {

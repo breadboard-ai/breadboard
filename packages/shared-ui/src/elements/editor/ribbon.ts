@@ -18,14 +18,12 @@ import {
   KitNodeChosenEvent,
   NodeCreateEvent,
   OverflowMenuActionEvent,
-  OverflowMenuSecondaryActionEvent,
   RedoEvent,
   ResetLayoutEvent,
   RunEvent,
   SaveAsEvent,
   ShowTooltipEvent,
   StopEvent,
-  SubGraphChosenEvent,
   SubGraphDeleteEvent,
   ToggleBoardActivityEvent,
   ToggleFollowEvent,
@@ -34,9 +32,8 @@ import {
 } from "../../events/events";
 import { createRandomID } from "./utils";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { InspectableGraph, SubGraphs } from "@google-labs/breadboard";
+import { InspectableGraph } from "@google-labs/breadboard";
 import { classMap } from "lit/directives/class-map.js";
-import { MAIN_BOARD_ID } from "../../constants/constants";
 import { guard } from "lit/directives/guard.js";
 import { type ComponentSelectorOverlay } from "../elements";
 
@@ -187,14 +184,14 @@ export class GraphRibbonMenu extends LitElement {
     #save {
       position: absolute;
       top: calc(100% + -8px);
-      left: 398px;
+      left: 258px;
       right: auto;
     }
 
     #copy {
       position: absolute;
       top: calc(100% + -8px);
-      left: 442px;
+      left: 312px;
       right: auto;
     }
 
@@ -1203,106 +1200,7 @@ export class GraphRibbonMenu extends LitElement {
       >
         Reset Layout
       </button>
-      <button
-        id="shortcut-add-subgraph"
-        @click=${() => {
-          this.dispatchEvent(new AddSubgraphEvent());
-        }}
-        @pointerover=${(evt: PointerEvent) => {
-          this.dispatchEvent(
-            new ShowTooltipEvent("Add sub board", evt.clientX, evt.clientY)
-          );
-        }}
-        @pointerout=${() => {
-          this.dispatchEvent(new HideTooltipEvent());
-        }}
-      >
-        Add sub board
-      </button>
-      <button
-        id="shortcut-select-subgraph"
-        @click=${() => {
-          this.showSubgraphMenu = true;
-        }}
-        @pointerover=${(evt: PointerEvent) => {
-          this.dispatchEvent(
-            new ShowTooltipEvent("Select sub board", evt.clientX, evt.clientY)
-          );
-        }}
-        @pointerout=${() => {
-          this.dispatchEvent(new HideTooltipEvent());
-        }}
-      >
-        Select sub board
-      </button>
     </div>`;
-
-    let subGraphMenu: HTMLTemplateResult | symbol = nothing;
-    if (this.showSubgraphMenu) {
-      const rawGraph = this.graph?.raw();
-      const subGraphs: SubGraphs | null = rawGraph?.graphs
-        ? rawGraph.graphs
-        : {};
-
-      const actions: Array<{
-        title: string;
-        name: string;
-        icon: string;
-        disabled?: boolean;
-        secondaryAction?: string;
-      }> = Object.entries(subGraphs).map(([id, graph]) => {
-        return {
-          title: graph.title ?? "Untitled sub board",
-          name: id,
-          icon: "board",
-          disabled: id === this.subGraphId,
-          secondaryAction: "delete",
-        };
-      });
-
-      actions.unshift({
-        title: "Main board",
-        name: MAIN_BOARD_ID,
-        icon: "board",
-        disabled: this.subGraphId === null,
-      });
-
-      subGraphMenu = html`<bb-overflow-menu
-        id="subgraph-menu"
-        .disabled=${false}
-        .actions=${actions}
-        @bboverflowmenudismissed=${() => {
-          this.showSubgraphMenu = false;
-        }}
-        @bboverflowmenuaction=${(evt: OverflowMenuActionEvent) => {
-          evt.stopPropagation();
-          this.dispatchEvent(new SubGraphChosenEvent(evt.action));
-          this.showSubgraphMenu = false;
-        }}
-        @bboverflowmenusecondaryaction=${(
-          evt: OverflowMenuSecondaryActionEvent
-        ) => {
-          if (!confirm("Are you sure you wish to delete this sub board?")) {
-            return;
-          }
-
-          if (!evt.value || typeof evt.value !== "string") {
-            return;
-          }
-
-          evt.stopPropagation();
-          this.dispatchEvent(new SubGraphDeleteEvent(evt.value));
-          this.showSubgraphMenu = false;
-
-          // Switch out from the subgraph if needed.
-          if (this.subGraphId !== evt.value) {
-            return;
-          }
-
-          this.dispatchEvent(new SubGraphChosenEvent(MAIN_BOARD_ID));
-        }}
-      ></bb-overflow-menu>`;
-    }
 
     const boardManagementControls = [
       html`<div class="divider"></div>`,
@@ -1471,7 +1369,6 @@ export class GraphRibbonMenu extends LitElement {
       saveMenu,
       copyMenu,
       overflowMenu,
-      subGraphMenu,
     ];
   }
 }

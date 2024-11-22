@@ -28,10 +28,12 @@ import { map } from "lit/directives/map.js";
 import {
   HideTooltipEvent,
   ModuleChosenEvent,
+  ModuleCreateEvent,
   NodeConfigurationUpdateRequestEvent,
   OutlineModeChangeEvent,
   ShowTooltipEvent,
   SubGraphChosenEvent,
+  SubGraphCreateEvent,
   ZoomToGraphEvent,
   ZoomToNodeEvent,
 } from "../../events/events";
@@ -41,6 +43,7 @@ import { styleMap } from "lit/directives/style-map.js";
 import { getSubItemColor } from "../../utils/subgraph-color";
 import { isConfigurableBehavior } from "../../utils";
 import { ModuleIdentifier } from "@breadboard-ai/types";
+import { getModuleId } from "../../utils/module-id";
 
 type ItemIdentifier = GraphIdentifier | ModuleIdentifier;
 
@@ -331,9 +334,6 @@ export class WorkspaceOutline extends LitElement {
       padding: 0 var(--bb-grid-size);
       display: inline-block;
       line-height: var(--bb-grid-size-5);
-    }
-
-    li.port > .title > button.port-item {
       cursor: pointer;
     }
 
@@ -521,6 +521,48 @@ export class WorkspaceOutline extends LitElement {
 
     button.subgraph.inverted::before {
       background-image: var(--bb-icon-board-inverted);
+    }
+
+    #create-new {
+      margin-bottom: var(--bb-grid-size-3);
+    }
+
+    .create-new-board {
+      border-radius: var(--bb-grid-size-6);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      background: var(--bb-neutral-0) var(--bb-icon-add-circle) 6px center /
+        16px 16px no-repeat;
+      height: var(--bb-grid-size-6);
+      padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-6);
+      color: var(--bb-neutral-900);
+      cursor: pointer;
+      transition: background-color 0.1s cubic-bezier(0, 0, 0.3, 1);
+      border: 1px solid var(--bb-neutral-300);
+    }
+
+    .create-new-board:hover,
+    .create-new-board:focus {
+      background-color: var(--bb-neutral-50);
+    }
+
+    .create-new-module {
+      border-radius: var(--bb-grid-size-6);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      background: var(--bb-neutral-0) var(--bb-icon-add-circle) 6px center /
+        16px 16px no-repeat;
+      height: var(--bb-grid-size-6);
+      padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-6);
+      color: var(--bb-neutral-900);
+      cursor: pointer;
+      transition: background-color 0.1s cubic-bezier(0, 0, 0.3, 1);
+      border: 1px solid var(--bb-neutral-300);
+    }
+
+    .create-new-module:hover,
+    .create-new-module:focus {
+      background-color: var(--bb-neutral-50);
     }
   `;
 
@@ -721,27 +763,7 @@ export class WorkspaceOutline extends LitElement {
           <span class="title"
             ><button
               class="node-item"
-              @dblclick=${(evt: PointerEvent) => {
-                this.dispatchEvent(
-                  new NodeConfigurationUpdateRequestEvent(
-                    node.descriptor.id,
-                    subGraphId,
-                    null,
-                    null,
-                    evt.clientX,
-                    evt.clientY,
-                    true
-                  )
-                );
-              }}
-              @click=${(evt: PointerEvent) => {
-                const isMac = navigator.platform.indexOf("Mac") === 0;
-                const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
-
-                if (!isCtrlCommand) {
-                  return;
-                }
-
+              @click=${() => {
                 if (this.subGraphId !== subGraphId && this.mode === "list") {
                   this.dispatchEvent(
                     new SubGraphChosenEvent(
@@ -751,6 +773,10 @@ export class WorkspaceOutline extends LitElement {
                   );
 
                   return;
+                }
+
+                if (this.mode === "tree" && this.moduleId) {
+                  this.dispatchEvent(new ModuleChosenEvent(null));
                 }
 
                 this.dispatchEvent(
@@ -903,91 +929,135 @@ export class WorkspaceOutline extends LitElement {
   ) {
     const seenSubItems = new Set<string>();
     return html`${html`<details
-      id=${MAIN_BOARD_ID}
-      class="declarative"
-      ?open=${renderSubItemsInline}
-    >
-      <summary>
-        <div class="title">
-          <button
-            class=${classMap({ "change-subitem": true })}
-            ?disabled=${this.subGraphId === null && this.moduleId === null}
-            @click=${() => {
-              if (this.moduleId !== null) {
-                this.dispatchEvent(new ModuleChosenEvent(null));
-              }
-
-              if (this.subGraphId !== null) {
-                this.dispatchEvent(new SubGraphChosenEvent(MAIN_BOARD_ID));
-              }
-            }}
-          >
-            ${title}
-          </button>
-        </div>
-      </summary>
-      ${this.#renderWorkspaceItem(
-        null,
-        nodes,
-        ports,
-        subItems,
-        seenSubItems,
-        renderSubItemsInline
-      )}
-    </details> `}
-    ${renderSubItemsInline && subItems.size > seenSubItems.size
-      ? html`<h1>Other items</h1>`
-      : nothing}
-    ${map(subItems, ([id, subItem]) => {
-      if (seenSubItems.has(id)) {
-        return nothing;
-      }
-
-      return html`<details
-        style=${styleMap({
-          "--subgraph-border-color": getSubItemColor(id, "border"),
-          "--subgraph-label-color": getSubItemColor(id, "label"),
-        })}
-        id=${this.#createSubItemId(id)}
-        class=${classMap({ [subItem.type]: true })}
+        id=${MAIN_BOARD_ID}
+        class="declarative"
+        ?open=${renderSubItemsInline || subItems.size === 0}
       >
         <summary>
           <div class="title">
             <button
-              class=${classMap({
-                "change-subitem": true,
-                inverted:
-                  getSubItemColor<number>(id, "text", true) === 0xffffff,
-              })}
-              ?disabled=${this.subGraphId === id || this.moduleId === id}
+              class=${classMap({ "change-subitem": true })}
+              ?disabled=${this.mode === "list" &&
+              this.subGraphId === null &&
+              this.moduleId === null}
               @click=${() => {
-                if (subItem.type === "declarative") {
-                  if (this.mode === "tree") {
-                    this.dispatchEvent(new ZoomToGraphEvent(id));
-                  } else {
-                    this.dispatchEvent(new SubGraphChosenEvent(id));
+                if (this.mode === "list") {
+                  if (this.moduleId !== null) {
                     this.dispatchEvent(new ModuleChosenEvent(null));
                   }
+
+                  if (this.subGraphId !== null) {
+                    this.dispatchEvent(new SubGraphChosenEvent(MAIN_BOARD_ID));
+                  }
                 } else {
-                  this.dispatchEvent(new SubGraphChosenEvent(MAIN_BOARD_ID));
-                  this.dispatchEvent(new ModuleChosenEvent(id));
+                  if (this.moduleId) {
+                    this.dispatchEvent(new ModuleChosenEvent(null));
+                  }
+
+                  this.dispatchEvent(new ZoomToGraphEvent(MAIN_BOARD_ID));
                 }
               }}
             >
-              ${subItem.title}
+              ${title}
             </button>
           </div>
         </summary>
         ${this.#renderWorkspaceItem(
-          id,
-          subItem.items.nodes,
-          subItem.items.ports,
-          subItem.subItems,
+          null,
+          nodes,
+          ports,
+          subItems,
           seenSubItems,
-          false
+          renderSubItemsInline
         )}
-      </details>`;
-    })}`;
+      </details> `}
+      ${subItems.size > seenSubItems.size
+        ? html`<h1>Other items</h1>`
+        : nothing}
+      <div id="create-new">
+        <button
+          class="create-new-board"
+          @click=${() => {
+            const newSubGraphName = prompt(
+              "What would you like to call this board?"
+            );
+            if (!newSubGraphName) {
+              return;
+            }
+
+            this.dispatchEvent(new SubGraphCreateEvent(newSubGraphName));
+          }}
+        >
+          Create a new board...
+        </button>
+        <button
+          class="create-new-module"
+          @click=${() => {
+            const moduleId = getModuleId();
+            if (!moduleId) {
+              return;
+            }
+
+            this.dispatchEvent(new ModuleCreateEvent(moduleId));
+          }}
+        >
+          Create a new module...
+        </button>
+      </div>
+      ${map(subItems, ([id, subItem]) => {
+        if (seenSubItems.has(id)) {
+          return nothing;
+        }
+
+        return html`<details
+          style=${styleMap({
+            "--subgraph-border-color": getSubItemColor(id, "border"),
+            "--subgraph-label-color": getSubItemColor(id, "label"),
+          })}
+          id=${this.#createSubItemId(id)}
+          class=${classMap({ [subItem.type]: true })}
+        >
+          <summary>
+            <div class="title">
+              <button
+                class=${classMap({
+                  "change-subitem": true,
+                  inverted:
+                    getSubItemColor<number>(id, "text", true) === 0xffffff,
+                })}
+                ?disabled=${this.subGraphId === id || this.moduleId === id}
+                @click=${() => {
+                  if (subItem.type === "declarative") {
+                    if (this.mode === "tree") {
+                      if (this.moduleId) {
+                        this.dispatchEvent(new ModuleChosenEvent(null));
+                      }
+
+                      this.dispatchEvent(new ZoomToGraphEvent(id));
+                    } else {
+                      this.dispatchEvent(new SubGraphChosenEvent(id));
+                      this.dispatchEvent(new ModuleChosenEvent(null));
+                    }
+                  } else {
+                    this.dispatchEvent(new SubGraphChosenEvent(MAIN_BOARD_ID));
+                    this.dispatchEvent(new ModuleChosenEvent(id));
+                  }
+                }}
+              >
+                ${subItem.title}
+              </button>
+            </div>
+          </summary>
+          ${this.#renderWorkspaceItem(
+            id,
+            subItem.items.nodes,
+            subItem.items.ports,
+            subItem.subItems,
+            seenSubItems,
+            false
+          )}
+        </details>`;
+      })}`;
   }
 
   render() {
