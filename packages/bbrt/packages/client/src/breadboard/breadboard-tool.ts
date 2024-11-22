@@ -21,12 +21,13 @@ import type {
   GeminiParameterSchema,
 } from '../llm/gemini.js';
 import type {BBRTTool} from '../tools/tool.js';
+import type {Result} from '../util/result.js';
 import type {
   BreadboardBoardListing,
   BreadboardServer,
 } from './breadboard-server.js';
 
-export class BreadboardTool implements BBRTTool {
+export class BreadboardTool implements BBRTTool<InputValues, OutputValues> {
   readonly listing: BreadboardBoardListing;
   readonly #server: BreadboardServer;
   // TODO(aomarks) More kits.
@@ -47,9 +48,10 @@ export class BreadboardTool implements BBRTTool {
   }
 
   render(inputs: Record<string, unknown>) {
+    // prettier-ignore
     return html`
       <span>${this.listing.title}</span>
-      <pre>${JSON.stringify(inputs, null, 2)}</pre>
+      <pre>${JSON.stringify(inputs)}</pre>
     `;
   }
 
@@ -82,7 +84,7 @@ export class BreadboardTool implements BBRTTool {
     };
   }
 
-  async invoke(inputs: Record<string, InputValues>) {
+  async invoke(inputs: InputValues): Promise<Result<OutputValues>> {
     const bgl = await this.#bgl();
     // TODO(aomarks) Support remote execution
     const config: RunConfig = {
@@ -94,37 +96,38 @@ export class BreadboardTool implements BBRTTool {
       loader: this.#loader,
       inputs,
     };
+
     const runner = createRunner(config);
     const outputs: OutputValues[] = [];
-    await new Promise<void>((resolve, reject) => {
-      runner.addEventListener('input', (event) => {
-        console.log('bb:input', event);
-      });
+    let error: unknown;
+    await new Promise<void>((resolve) => {
       runner.addEventListener('output', (event) => {
         outputs.push(event.data.outputs);
-        console.log('bb:output', event);
       });
       runner.addEventListener('error', (event) => {
-        // TODO(aomarks) Probably bad formatting. Also make sure we are grabbing
-        // as much info as possible.
-        reject(new Error(JSON.stringify(event.data.error)));
-        console.log('bb:error', event);
+        error = event.data.error;
+        resolve();
       });
-      runner.addEventListener('end', (event) => {
-        console.log('bb:end', event);
+      runner.addEventListener('end', () => {
         resolve();
       });
       void runner.run(inputs);
     });
-    console.log('bb:final outputs', outputs);
+    console.log('BREADBOARD DONE', {outputs, error});
+
+    if (error !== undefined) {
+      return {ok: false, error};
+    }
+
     if (outputs.length === 1) {
-      return outputs[0] ?? {};
+      return {ok: true, value: outputs[0]!};
     } else if (outputs.length > 0) {
       return {
+        ok: false,
         error: `Multiple Breadboard outputs received: ${JSON.stringify(outputs)}`,
       };
     } else {
-      return {error: 'No Breadboard outputs received'};
+      return {ok: false, error: 'No Breadboard outputs received'};
     }
   }
 }

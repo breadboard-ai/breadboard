@@ -55,7 +55,7 @@ export const getWikipediaArticle: BBRTTool<
     try {
       const result = await fetch(url.href);
       if (result.status !== 200) {
-        return {error: `HTTP status: ${result.status}`};
+        return {ok: false, error: `HTTP status: ${result.status}`};
       }
       json = (await result.json()) as {
         parse?: {
@@ -65,12 +65,12 @@ export const getWikipediaArticle: BBRTTool<
         };
       };
     } catch (e) {
-      return {error: `HTTP error: ${String(e)}`};
+      return {ok: false, error: `HTTP error: ${String(e)}`};
     }
     const wikitext = json?.parse?.wikitext?.['*'];
     if (!wikitext) {
-      return {error: 'No wikitext found'};
+      return {ok: false, error: 'No wikitext found'};
     }
-    return {wikitext: wikitext.slice(0, 5000)};
+    return {ok: true, value: {wikitext: wikitext.slice(0, 5000)}};
   },
 };

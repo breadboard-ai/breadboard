@@ -140,10 +140,10 @@ export class BBRTConversation {
     };
     this.turns.push(modelTurn);
 
-    const result = await this.#generate();
-    if (!result.ok) {
+    const modelResponse = await this.#generate();
+    if (!modelResponse.ok) {
       status.set('error');
-      modelTurn.error = result.error;
+      modelTurn.error = modelResponse.error;
       // TODO(aomarks) Use a new "using" statement for this, with broad scope.
       // Same for lock.
       void contentStream.writable.close();
@@ -154,14 +154,14 @@ export class BBRTConversation {
         kind: 'error',
         role: 'model',
         status,
-        error: result.error,
+        error: modelResponse.error,
       });
       return;
     }
 
     const contentWriter = contentStream.writable.getWriter();
-    const toolResponsePromises: Array<Promise<BBRTToolResponse>> = [];
-    for await (const chunk of result.value) {
+    const toolResponsePromises: Array<Promise<Result<BBRTToolResponse>>> = [];
+    for await (const chunk of modelResponse.value) {
       console.log('BBRT RESPONSE CHUNK', JSON.stringify(chunk, null, 2));
       status.set('streaming');
       switch (chunk.kind) {
@@ -204,8 +204,28 @@ export class BBRTConversation {
     } else {
       status.set('using-tools');
       const toolResponses = await Promise.all(toolResponsePromises);
-      status.set('done');
-      return this.#send({toolResponses});
+      const errors = toolResponses
+        .filter((response) => !response.ok)
+        .map((response) => response.error);
+      if (errors.length > 0) {
+        status.set('error');
+        const error =
+          errors.length === 1 ? errors[0] : new AggregateError(errors);
+        modelTurn.error = error;
+        // TODO(aomarks) Remove once we render errors directly on turns. Though,
+        // be careful here, since if we add retry, we don't want to retry the
+        // whole turn, just the model call. Maybe we need a turn role for tool
+        // invocations?
+        this.turns.push({
+          kind: 'error',
+          role: 'model',
+          status,
+          error,
+        });
+      } else {
+        status.set('done');
+        return this.#send({toolResponses: toolResponses.map((r) => r.value!)});
+      }
     }
   }
 
@@ -213,9 +233,12 @@ export class BBRTConversation {
     tool: BBRTTool,
     id: string,
     args: Record<string, unknown>,
-  ): Promise<BBRTToolResponse> {
-    const response = await tool.invoke(args);
-    return {id, tool, response};
+  ): Promise<Result<BBRTToolResponse>> {
+    const invocation = await tool.invoke(args);
+    if (!invocation.ok) {
+      return invocation;
+    }
+    return {ok: true, value: {id, tool, response: invocation.value}};
   }
 
   async #generate(): Promise<Result<AsyncIterableIterator<BBRTChunk>, Error>> {

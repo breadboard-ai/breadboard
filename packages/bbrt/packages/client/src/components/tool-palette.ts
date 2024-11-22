@@ -55,7 +55,7 @@ export class BBRTToolPalette extends SignalWatcher(LitElement) {
       max-width: 16px;
     }
     .active > a {
-      color: red;
+      color: #008dff;
     }
   `;
 
