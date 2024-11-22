@@ -539,6 +539,10 @@
 					},
 					"type": "array"
 				},
+				"title": {
+					"description": "The title for the module.",
+					"type": "string"
+				},
 				"url": {
 					"description": "The source file for the module, if relevant.",
 					"type": "string"

@@ -400,6 +400,11 @@ export type ModuleMetadata = {
   description?: string;
 
   /**
+   * The title for the module.
+   */
+  title?: string;
+
+  /**
    * Tags associated with the module. At this moment, free-form strings.
    */
   tags?: ModuleTag[];

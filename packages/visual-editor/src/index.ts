@@ -2461,13 +2461,6 @@ export class Main extends LitElement {
           </h1>
           <div id="tab-container" ${ref(this.#tabContainerRef)}>
             ${map(tabs, ([id, tab]) => {
-              let subGraphTitle: string | undefined | null = null;
-              if (tab.graph && tab.graph.graphs && tab.subGraphId) {
-                subGraphTitle =
-                  tab.graph.graphs[tab.subGraphId]?.title ||
-                  "Untitled Subgraph";
-              }
-
               const canSave = this.#runtime.board.canSave(id) && !tab.readOnly;
               const saveStatus = this.#tabSaveStatus.get(id) ?? "saved";
               const remote =
@@ -2528,9 +2521,7 @@ export class Main extends LitElement {
                   >
                     ${tab.graph.title}
                   </button></span
-                >${subGraphTitle
-                  ? html`<span class="subgraph-name">${subGraphTitle}</span>`
-                  : nothing}
+                >
                 <div
                   class=${classMap({
                     "save-status": true,
@@ -2880,7 +2871,6 @@ export class Main extends LitElement {
                 evt: BreadboardUI.Events.SubGraphDeleteEvent
               ) => {
                 this.#runtime.edit.deleteSubGraph(this.tab, evt.subGraphId);
-                this.requestUpdate();
               }}
               @bbsubgraphchosen=${(
                 evt: BreadboardUI.Events.SubGraphChosenEvent

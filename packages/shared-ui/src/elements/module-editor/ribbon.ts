@@ -9,11 +9,7 @@ import {
   FormatModuleCodeEvent,
   HideTooltipEvent,
   ModuleChangeLanguageEvent,
-  ModuleChosenEvent,
-  ModuleCreateEvent,
-  ModuleDeleteEvent,
   OverflowMenuActionEvent,
-  OverflowMenuSecondaryActionEvent,
   RunEvent,
   SaveAsEvent,
   ShowTooltipEvent,
@@ -25,9 +21,6 @@ import {
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { InspectableGraph, InspectableModules } from "@google-labs/breadboard";
 import { classMap } from "lit/directives/class-map.js";
-import { MAIN_BOARD_ID } from "../../constants/constants";
-import { ModuleIdentifier } from "@breadboard-ai/types";
-import { getModuleId } from "../../utils/module-id";
 
 const COLLAPSED_MENU_BUFFER = 60;
 
@@ -610,121 +603,6 @@ export class ModuleRibbonMenu extends LitElement {
     const isTypeScript = module.metadata().source?.language === "typescript";
     const isMainModule = this.graph?.main() === this.moduleId;
 
-    const modules = html`<button
-      id="shortcut-board-modules"
-      class=${classMap({
-        main: this.moduleId === null,
-        ts: isTypeScript,
-      })}
-      @pointerover=${(evt: PointerEvent) => {
-        this.dispatchEvent(
-          new ShowTooltipEvent("Board Modules", evt.clientX, evt.clientY)
-        );
-      }}
-      @pointerout=${() => {
-        this.dispatchEvent(new HideTooltipEvent());
-      }}
-      @click=${() => {
-        this.showBoardModules = true;
-      }}
-    >
-      ${this.moduleId ? this.moduleId : "Main board"}
-    </button>`;
-
-    let moduleMenu: HTMLTemplateResult | symbol = nothing;
-    if (this.showBoardModules) {
-      const modules: Array<{
-        title: string;
-        name: string;
-        icon: string;
-        disabled?: boolean;
-        secondaryAction?: string;
-      }> = Object.entries(this.modules || {})
-        .map(([title, module]) => {
-          return {
-            title,
-            name: title,
-            icon:
-              module.metadata().source?.language === "typescript"
-                ? "module-ts"
-                : "module",
-            disabled: this.moduleId === title,
-            secondaryAction: "delete",
-          };
-        })
-        .sort((a, b) => {
-          // Always place 'main' modules at the top.
-          if (a.title === this.graph?.main()) return -1;
-          if (b.title === this.graph?.main()) return 1;
-
-          if (a.title > b.title) return 1;
-          if (a.title < b.title) return -1;
-          return 0;
-        });
-
-      if (!this.graph?.imperative()) {
-        modules.unshift({
-          title: "Main board",
-          name: MAIN_BOARD_ID,
-          icon: "board",
-          disabled: this.moduleId === null,
-        });
-      }
-
-      modules.push({
-        title: "Create new module...",
-        name: "create-module",
-        icon: "add-circle",
-      });
-
-      moduleMenu = html`<bb-overflow-menu
-        id="board-modules-menu"
-        .actions=${modules}
-        .disabled=${this.moduleId === null}
-        @bboverflowmenudismissed=${() => {
-          this.showBoardModules = false;
-        }}
-        @bboverflowmenuaction=${(evt: OverflowMenuActionEvent) => {
-          this.showBoardModules = false;
-          evt.stopImmediatePropagation();
-
-          if (evt.action === "create-module") {
-            const moduleId = getModuleId();
-            if (!moduleId) {
-              return;
-            }
-
-            this.dispatchEvent(new ModuleCreateEvent(moduleId));
-            return;
-          }
-
-          let moduleId: ModuleIdentifier | null = evt.action;
-          if (evt.action === MAIN_BOARD_ID) {
-            moduleId = null;
-          }
-
-          this.dispatchEvent(new ModuleChosenEvent(moduleId));
-        }}
-        @bboverflowmenusecondaryaction=${(
-          evt: OverflowMenuSecondaryActionEvent
-        ) => {
-          this.showBoardModules = false;
-          evt.stopImmediatePropagation();
-
-          if (!evt.value) {
-            return;
-          }
-
-          const id = evt.value as ModuleIdentifier;
-          if (!confirm(`Are you sure you wish to delete the "${id}" module?`)) {
-            return;
-          }
-
-          this.dispatchEvent(new ModuleDeleteEvent(id));
-        }}
-      ></bb-overflow-menu>`;
-    }
-
     const overflow = html`<button
       id="shortcut-overflow"
       ${ref(this.#overflowMenuToggleRef)}
@@ -756,7 +634,6 @@ export class ModuleRibbonMenu extends LitElement {
       ></bb-overflow-menu>`;
     }
 
-    const moduleSelector = [modules, moduleMenu];
     const save = html`<button
       class=${classMap({ "show-more": this.canSave })}
       id="shortcut-save"
@@ -929,13 +806,7 @@ export class ModuleRibbonMenu extends LitElement {
       Delete board
     </button>`;
 
-    const boardManagementControls = [
-      html`<div class="divider"></div>`,
-      editBoardInfo,
-      save,
-      copy,
-      deleteBoard,
-    ];
+    const boardManagementControls = [editBoardInfo, save, copy, deleteBoard];
 
     const boardManagement = html`<div id="board-management">
       ${boardManagementControls}
@@ -943,7 +814,6 @@ export class ModuleRibbonMenu extends LitElement {
 
     const moduleIsRunnable = !!(module && module.metadata().runnable);
     const moduleControls = html`<div id="module-controls">
-      <div class="divider"></div>
       <div id="language-selector-container">
         <label for="language-selector">Language</label>
         <select
@@ -1101,7 +971,6 @@ export class ModuleRibbonMenu extends LitElement {
       : nothing;
 
     const left = [
-      moduleSelector,
       isMainModule ? boardManagement : nothing,
       moduleControls,
       errors,

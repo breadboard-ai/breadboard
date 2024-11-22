@@ -9,6 +9,7 @@ import {
   Edge,
   EditSpec,
   GraphDescriptor,
+  GraphIdentifier,
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
   InspectableGraph,
@@ -55,8 +56,6 @@ import {
   NodeTypeRetrievalErrorEvent,
   ShowTooltipEvent,
   SubGraphCreateEvent,
-  ZoomToGraphEvent,
-  ZoomToNodeEvent,
 } from "../../events/events.js";
 import { GraphEdge } from "./graph-edge.js";
 import { GraphRenderer } from "./graph-renderer.js";
@@ -68,10 +67,7 @@ const PASTE_OFFSET = 50;
 
 import { Command, TopGraphRunResult } from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
-import {
-  COMMAND_SET_GRAPH_EDITOR,
-  MAIN_BOARD_ID,
-} from "../../constants/constants.js";
+import { COMMAND_SET_GRAPH_EDITOR } from "../../constants/constants.js";
 import { GraphOpts } from "./types.js";
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
@@ -188,9 +184,6 @@ export class Editor extends LitElement {
   showSubgraphsInline = true;
 
   @property()
-  zoomToHighlightedNodeDuringRuns = false;
-
-  @property()
   tabURLs: string[] = [];
 
   @property()
@@ -203,6 +196,15 @@ export class Editor extends LitElement {
 
   get showPortTooltips() {
     return this.#graphRenderer.showPortTooltips;
+  }
+
+  @property()
+  set zoomToHighlightedNode(value: boolean) {
+    this.#graphRenderer.zoomToHighlightedNode = value;
+  }
+
+  get zoomToHighlightedNode() {
+    return this.#graphRenderer.zoomToHighlightedNode;
   }
 
   @property()
@@ -313,30 +315,12 @@ export class Editor extends LitElement {
       position: relative;
     }
 
-    #outline-container {
-      border-right: 1px solid var(--bb-neutral-300);
-    }
-
-    #outline-container,
-    #graph-container {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      position: relative;
-    }
-
-    bb-graph-outline,
     bb-graph-renderer {
       display: block;
       width: 100%;
       height: 100%;
       outline: none;
       overflow: hidden;
-    }
-
-    #splitter {
-      height: 100%;
-      width: 100%;
     }
   `;
 
@@ -376,7 +360,11 @@ export class Editor extends LitElement {
     };
   }
 
-  #updateOrCreateGraph(opts: GraphOpts, listenForDraw = false) {
+  #updateOrCreateGraph(
+    opts: GraphOpts,
+    listenForDraw: boolean,
+    listenForDrawId: GraphIdentifier | null = null
+  ) {
     const updated = this.#graphRenderer.updateGraphByUrl(
       opts.url,
       opts.subGraphId,
@@ -388,6 +376,12 @@ export class Editor extends LitElement {
         this.#graphRenderer.topGraphResult = this.topGraphResult;
       }
 
+      if (this.#zoomOnUpdate) {
+        this.#graphRenderer.zoomToFit(false, 0, this.#zoomOnUpdateId);
+
+        this.#zoomOnUpdate = false;
+        this.#zoomOnUpdateId = null;
+      }
       return;
     }
 
@@ -397,28 +391,38 @@ export class Editor extends LitElement {
     }
 
     this.#graphRenderer.createGraph(opts);
-
     if (!listenForDraw) {
       return;
     }
 
+    const onInitialDraw = (evt: Event) => {
+      const drawEvt = evt as GraphInitialDrawEvent;
+      if (drawEvt.subGraphId !== listenForDrawId) {
+        return;
+      }
+
+      this.#graphRenderer.showGraph(opts.url, opts.subGraphId);
+      this.#graphRenderer.zoomToFit(
+        true,
+        this.isShowingBoardActivityOverlay ? 400 : 0
+      );
+
+      this.#graphRenderer.removeEventListener(
+        GraphInitialDrawEvent.eventName,
+        onInitialDraw
+      );
+
+      // When we're loading a graph from existing results, we need to
+      // set the topGraphResult again so that it is applied to the newly
+      // created graph.
+      if (this.topGraphResult) {
+        this.#graphRenderer.topGraphResult = this.topGraphResult;
+      }
+    };
+
     this.#graphRenderer.addEventListener(
       GraphInitialDrawEvent.eventName,
-      () => {
-        this.#graphRenderer.showGraph(opts.url, opts.subGraphId);
-        this.#graphRenderer.zoomToFit(
-          true,
-          this.isShowingBoardActivityOverlay ? 400 : 0
-        );
-
-        // When we're loading a graph from existing results, we need to
-        // set the topGraphResult again so that it is applied to the newly
-        // created graph.
-        if (this.topGraphResult) {
-          this.#graphRenderer.topGraphResult = this.topGraphResult;
-        }
-      },
-      { once: true }
+      onInitialDraw
     );
   }
 
@@ -495,10 +499,21 @@ export class Editor extends LitElement {
     this.#graphRenderer.hideAllGraphs();
     this.#graphRenderer.removeGraphs(this.tabURLs);
 
-    this.#updateOrCreateGraph(mainGraphOpts, true);
+    const shouldListenForMainGraph =
+      this.subGraphId !== null || subGraphs.size === 0;
+    const mainGraphId = this.subGraphId !== null ? this.subGraphId : null;
 
-    for (const [, subGraphOpts] of subGraphs) {
-      this.#updateOrCreateGraph(subGraphOpts);
+    this.#updateOrCreateGraph(
+      mainGraphOpts,
+      shouldListenForMainGraph,
+      mainGraphId
+    );
+
+    let s = 0;
+    for (const [id, subGraphOpts] of subGraphs) {
+      const shouldListenForSubGraph = s === subGraphs.size - 1;
+      this.#updateOrCreateGraph(subGraphOpts, shouldListenForSubGraph, id);
+      s++;
     }
 
     return this.#graphRenderer;
@@ -507,7 +522,7 @@ export class Editor extends LitElement {
   constructor() {
     super();
 
-    this.zoomToHighlightedNodeDuringRuns =
+    this.zoomToHighlightedNode =
       (globalThis.localStorage.getItem(ZOOM_KEY) ?? "true") === "true";
   }
 
@@ -696,10 +711,17 @@ export class Editor extends LitElement {
     this.removeEventListener("drop", this.#onDropBound);
   }
 
+  #zoomOnUpdate = false;
+  #zoomOnUpdateId: GraphIdentifier | null = null;
   protected willUpdate(changedProperties: PropertyValues): void {
-    if (changedProperties.has("run")) {
-      this.#graphRenderer.zoomToHighlightedNode =
-        this.zoomToHighlightedNodeDuringRuns;
+    if (
+      changedProperties.has("subGraphId") ||
+      changedProperties.has("showSubgraphsInline")
+    ) {
+      if (!this.showSubgraphsInline) {
+        this.#zoomOnUpdate = true;
+        this.#zoomOnUpdateId = this.subGraphId;
+      }
     }
   }
 
@@ -711,7 +733,7 @@ export class Editor extends LitElement {
       return;
     }
 
-    this.zoomToHighlightedNodeDuringRuns = false;
+    this.zoomToHighlightedNode = false;
   }
 
   #onGraphShowTooltip(evt: Event) {
@@ -1469,6 +1491,22 @@ export class Editor extends LitElement {
     this.#onResizeBound();
   }
 
+  zoomToFit(
+    emitGraphNodeVisualInformation = true,
+    reduceRenderBoundsWidth = 0,
+    subGraphId: string | null = null
+  ) {
+    this.#graphRenderer.zoomToFit(
+      emitGraphNodeVisualInformation,
+      reduceRenderBoundsWidth,
+      subGraphId
+    );
+  }
+
+  zoomToNode(id: string, subGraphId: string | null, offset = 0) {
+    this.#graphRenderer.zoomToNode(id, subGraphId, offset);
+  }
+
   render() {
     this.#graphRenderer.topGraphResult = this.subGraphId
       ? null
@@ -1506,7 +1544,7 @@ export class Editor extends LitElement {
       .canRedo=${this.canRedo}
       .readOnly=${this.readOnly}
       .isRunning=${isRunning}
-      .follow=${this.zoomToHighlightedNodeDuringRuns}
+      .follow=${this.zoomToHighlightedNode}
       .eventCount=${eventCount}
       .isInputPending=${isInputPending}
       .isError=${isError}
@@ -1524,8 +1562,8 @@ export class Editor extends LitElement {
         this.#graphRenderer.resetGraphLayout();
       }}
       @bbtogglefollow=${() => {
-        const shouldZoom = !this.zoomToHighlightedNodeDuringRuns;
-        this.zoomToHighlightedNodeDuringRuns = shouldZoom;
+        const shouldZoom = !this.zoomToHighlightedNode;
+        this.zoomToHighlightedNode = shouldZoom;
         this.#graphRenderer.zoomToHighlightedNode = shouldZoom;
         globalThis.localStorage.setItem(ZOOM_KEY, shouldZoom.toString());
 
@@ -1552,39 +1590,7 @@ export class Editor extends LitElement {
         ? html`<aside id="readonly-overlay">Read-only View</aside>`
         : nothing;
 
-    const content = html`<div id="content">
-      ${this.showBoardHierarchy && this.graph
-        ? html`<bb-splitter
-            id="splitter"
-            split="[0.2, 0.8]"
-            .name=${"outline-editor"}
-            .minSegmentSizeHorizontal=${100}
-          >
-            <div id="outline-container" slot="slot-0">
-              <bb-graph-outline
-                .graph=${this.graph}
-                .kits=${this.kits}
-                .subGraphId=${this.subGraphId}
-                .renderId=${globalThis.crypto.randomUUID()}
-                .showSubgraphsInline=${this.showSubgraphsInline}
-                @bbzoomtograph=${(evt: ZoomToGraphEvent) => {
-                  this.#graphRenderer.zoomToHighlightedNode = false;
-                  this.#graphRenderer.zoomToFit(
-                    false,
-                    0,
-                    evt.id === MAIN_BOARD_ID ? null : evt.id
-                  );
-                }}
-                @bbzoomtonode=${(evt: ZoomToNodeEvent) => {
-                  this.#graphRenderer.zoomToHighlightedNode = false;
-                  this.#graphRenderer.zoomToNode(evt.id, evt.subGraphId, 0);
-                }}
-              ></bb-graph-outline>
-            </div>
-            <div id="graph-container" slot="slot-1">${graphEditor}</div>
-          </bb-splitter>`
-        : html`${graphEditor}`}
-    </div>`;
+    const content = html`<div id="content">${graphEditor}</div>`;
 
     return [this.graph ? ribbonMenu : nothing, content, readOnlyFlag];
   }
