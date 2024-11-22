@@ -55,7 +55,7 @@ export const fixupConstantEdge = (edge: EdgeDescriptor): EdgeDescriptor => {
 };
 
 class Edge implements InspectableEdge {
-  #nodes: InspectableNodeCache;
+  #nodes: InspectableNodeCache | null;
   #edge: EdgeDescriptor;
   #graphId: GraphIdentifier;
 
@@ -69,7 +69,16 @@ class Edge implements InspectableEdge {
     this.#graphId = graphId;
   }
 
+  raw(): EdgeDescriptor {
+    return this.#edge;
+  }
+
   get from() {
+    if (!this.#nodes) {
+      throw new Error(
+        `Unable to access "from": this edge was deleted and is no longer part of the graph`
+      );
+    }
     const from = this.#nodes.get(this.#edge.from, this.#graphId);
     console.assert(from, "From node not found when getting from.");
     return from!;
@@ -80,6 +89,11 @@ class Edge implements InspectableEdge {
   }
 
   get to() {
+    if (!this.#nodes) {
+      throw new Error(
+        `Unable to access "to": this edge was deleted and is no longer part of the graph`
+      );
+    }
     const to = this.#nodes.get(this.#edge.to, this.#graphId);
     console.assert(to, "To node not found when getting to.");
     return to!;
@@ -123,6 +137,14 @@ class Edge implements InspectableEdge {
       };
     }
     return { status: "valid" };
+  }
+
+  setDeleted() {
+    this.#nodes = null;
+  }
+
+  deleted(): boolean {
+    return !this.#nodes;
   }
 }
 
@@ -184,7 +206,9 @@ export class EdgeCache implements InspectableEdgeCache {
       this.#map.get(graphId)?.has(edge),
       "Edge not found when removing."
     );
+    const inspectableEdge = this.#map.get(graphId)?.get(edge);
     this.#map.get(graphId)?.delete(edge);
+    (inspectableEdge as Edge)?.setDeleted();
   }
 
   has(edge: EdgeDescriptor, graphId: GraphIdentifier): boolean {
@@ -215,6 +239,9 @@ export class EdgeCache implements InspectableEdgeCache {
   }
 
   removeSubgraphEdges(graphId: GraphIdentifier): void {
+    this.#map.get(graphId)?.forEach((inspectableEdge) => {
+      (inspectableEdge as Edge).setDeleted();
+    });
     this.#map.delete(graphId);
   }
 }

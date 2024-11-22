@@ -132,4 +132,8 @@ export class BubbledInspectableNode implements InspectableNode {
     }
     return this.#actual.ports(inputValues, outputValues || undefined);
   }
+
+  deleted(): boolean {
+    return this.#actual.deleted();
+  }
 }

@@ -8,7 +8,7 @@ import { editGraph } from "../../../src/editor/index.js";
 import { GraphDescriptor, NodeHandler } from "../../../src/types.js";
 import { ok as nodeOk } from "node:assert";
 
-export { testEditGraph, testSubGraph, ok, notOk };
+export { testEditGraph, testSubGraph, testFilledOutSubGraph, ok, notOk };
 
 function ok(
   result: { success: true } | { success: false; error: string }
@@ -24,6 +24,22 @@ function notOk(
   return !result.success;
 }
 
+function testFilledOutSubGraph(): GraphDescriptor {
+  return {
+    title: "Test Filled Out Subgraph",
+    nodes: [
+      {
+        id: "node3",
+        type: "foo",
+      },
+      {
+        id: "node4",
+        type: "bar",
+      },
+    ],
+    edges: [{ from: "node3", out: "out", to: "node4", in: "in" }],
+  };
+}
 function testSubGraph(): GraphDescriptor {
   return {
     title: "Test Subgraph",
