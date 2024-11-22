@@ -39,6 +39,7 @@ export class BBRTToolCallEl extends LitElement {
     }
     pre {
       white-space: pre-wrap;
+      overflow-wrap: break-word;
     }
   `;
 

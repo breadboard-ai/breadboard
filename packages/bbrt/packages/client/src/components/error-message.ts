@@ -15,8 +15,10 @@ export class BBRTErrorMessage extends LitElement {
   static override styles = css`
     :host {
       display: block;
+    }
+    :host::part(error) {
       background: #fff0ef;
-      padding: 12px 12px 24px 16px;
+      padding: 12px 16px;
       border-radius: 8px;
     }
     :host::part(message) {
@@ -31,27 +33,61 @@ export class BBRTErrorMessage extends LitElement {
     :last-child {
       margin-bottom: 0;
     }
+    pre {
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+    }
   `;
 
   override render() {
-    let message =
-      (this.error as {message?: unknown}).message ?? `Unknown error`;
-    let stack = (this.error as {stack?: unknown}).stack;
-    if (
-      typeof message === 'string' &&
-      typeof stack === 'string' &&
-      stack &&
-      stack.startsWith(`Error: ${message}\n`)
+    return this.#renderError(this.error);
+  }
+
+  #renderError(error: unknown): unknown {
+    if (error instanceof AggregateError && error.errors.length > 0) {
+      return error.errors.map((subError) => this.#renderError(subError));
+    } else if (error instanceof Error) {
+      let message = error.message ?? '';
+      let stack = error.stack ?? '';
+      const prefixedMessage = `Error: ${message}`;
+      if (stack.startsWith(`${prefixedMessage}\n`)) {
+        // Often times the stack trace contains a full copy of the message, with
+        // an Error: prefix. Remove the redundancy.
+        stack = stack.slice(prefixedMessage.length /* for the \n */ + 1);
+        message = prefixedMessage;
+      }
+      return html`
+        <div part="error">
+          <pre part="message">${message ?? 'Unknown error'}</pre>
+          ${stack // prettier-ignore
+            ? html`<pre part="stack">${stack}</pre>`
+            : ''}
+        </div>
+      `;
+    } else if (
+      // An error-like object (anything with a truthy "message" property).
+      typeof error === 'object' &&
+      error !== null &&
+      'message' in error &&
+      error.message
     ) {
-      // Often times the stack trace contains a full copy of the message, with
-      // an Error: prefix. Remove the redundancy.
-      stack = stack.slice(`Error: ${message}\n`.length);
-      message = `Error: ${message}`;
+      // prettier-ignore
+      return html`<pre part="error message">${error.message}</pre>`;
+    } else if (
+      // A nested error (anything with a truthy "error" property).
+      typeof error === 'object' &&
+      error !== null &&
+      'error' in error &&
+      error.error
+    ) {
+      return this.#renderError(error.error);
+    } else if (typeof error === 'string') {
+      // prettier-ignore
+      return html`<pre part="error message">${error}</pre>`;
+    } else {
+      // prettier-ignore
+      return html`<pre part="error message">${JSON.stringify(this.error, null, 2)}</pre>`;
     }
-    return html`
-      <pre part="message">${message}</pre>
-      ${stack ? html`<pre part="stack">${stack}</pre>` : ''}
-    `;
   }
 }
 
