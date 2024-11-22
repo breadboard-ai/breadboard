@@ -952,7 +952,8 @@ export class Graph extends PIXI.Container {
 
   set edges(edges: InspectableEdge[] | null) {
     // Validate the edges.
-    this.#edges = edges?.filter((edge) => edge.to && edge.from) || null;
+    this.#edges =
+      edges?.filter((edge) => !edge.deleted() && edge.to && edge.from) || null;
     this.#isDirty = true;
   }
 
@@ -1452,6 +1453,8 @@ export class Graph extends PIXI.Container {
     };
 
     for (const node of this.#nodes) {
+      if (node.deleted()) continue;
+
       const { id, type } = node.descriptor;
       const { title: typeTitle = type, icon } =
         this.#typeMetadata?.get(type) || {};
@@ -1770,6 +1773,8 @@ export class Graph extends PIXI.Container {
     }
 
     for (const edge of this.#edges) {
+      if (edge.deleted()) continue;
+
       let edgeGraphic = this.#edgeGraphics.get(inspectableEdgeToString(edge));
       if (!edgeGraphic) {
         const fromNode = this.#graphNodeById.get(edge.from.descriptor.id);

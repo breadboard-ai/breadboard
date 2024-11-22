@@ -124,6 +124,13 @@ export type InspectableNode = {
     inputs?: InputValues,
     outputs?: OutputValues
   ): Promise<InspectableNodePorts>;
+
+  /**
+   * Returns `true` if the node has been deleted from the graph and this
+   * instance of `InspectableNode` no longer represents a valid node in
+   * a graph. Returns `false` otherwise.
+   */
+  deleted(): boolean;
 };
 
 /**
@@ -162,6 +169,10 @@ export enum InspectableEdgeType {
 
 export type InspectableEdge = {
   /**
+   * The underlying Edge
+   */
+  raw(): Edge;
+  /**
    * The outgoing node of the edge.
    */
   from: InspectableNode;
@@ -197,6 +208,13 @@ export type InspectableEdge = {
    * output port type is a subtype of the input port type).
    */
   validate(): Promise<ValidateResult>;
+
+  /**
+   * Returns `true` if the edge has been deleted from the graph and this
+   * instance of `InspectableEdge` no longer represents a valid edge in
+   * a graph. Returns `false` otherwise.
+   */
+  deleted(): boolean;
 };
 
 export type ValidateResult =
