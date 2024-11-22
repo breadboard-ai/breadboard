@@ -20,10 +20,12 @@ import type {
   UserOutputValues,
 } from "../types/types.js";
 import type {
+  GraphIdentifier,
   ModuleCode,
   ModuleIdentifier,
   ModuleLanguage,
   ModuleMetadata,
+  NodeIdentifier,
   NodeMetadata,
   NodeValue,
 } from "@breadboard-ai/types";
@@ -376,7 +378,10 @@ export class KitNodeChosenEvent extends Event {
 export class SubGraphChosenEvent extends Event {
   static eventName = "bbsubgraphchosen";
 
-  constructor(public readonly subGraphId: string) {
+  constructor(
+    public readonly subGraphId: string,
+    public readonly zoomToNode: NodeIdentifier | null = null
+  ) {
     super(SubGraphChosenEvent.eventName, { ...eventInit });
   }
 }
@@ -592,7 +597,7 @@ export class GraphBoardServerSelectionChangeEvent extends Event {
 export class ZoomToGraphEvent extends Event {
   static eventName = "bbzoomtograph";
 
-  constructor(public readonly id: string) {
+  constructor(public readonly id: GraphIdentifier) {
     super(ZoomToGraphEvent.eventName, { ...eventInit });
   }
 }
@@ -601,10 +606,18 @@ export class ZoomToNodeEvent extends Event {
   static eventName = "bbzoomtonode";
 
   constructor(
-    public readonly id: string,
+    public readonly id: NodeIdentifier,
     public readonly subGraphId: string | null = null
   ) {
     super(ZoomToNodeEvent.eventName, { ...eventInit });
+  }
+}
+
+export class OutlineModeChangeEvent extends Event {
+  static eventName = "bboutlinemodechange";
+
+  constructor(public readonly mode: "list" | "tree") {
+    super(OutlineModeChangeEvent.eventName, { ...eventInit });
   }
 }
 

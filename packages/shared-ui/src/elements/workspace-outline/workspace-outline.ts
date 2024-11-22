@@ -6,6 +6,7 @@
 import {
   GraphIdentifier,
   InspectableGraph,
+  InspectableModule,
   InspectableNode,
   InspectableNodePorts,
   Kit,
@@ -26,29 +27,40 @@ import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import {
   HideTooltipEvent,
+  ModuleChosenEvent,
+  ModuleCreateEvent,
+  ModuleDeleteEvent,
   NodeConfigurationUpdateRequestEvent,
+  OutlineModeChangeEvent,
   ShowTooltipEvent,
   SubGraphChosenEvent,
+  SubGraphCreateEvent,
+  SubGraphDeleteEvent,
   ZoomToGraphEvent,
   ZoomToNodeEvent,
 } from "../../events/events";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { getSubgraphColor } from "../../utils/subgraph-color";
+import { getSubItemColor } from "../../utils/subgraph-color";
 import { isConfigurableBehavior } from "../../utils";
+import { ModuleIdentifier } from "@breadboard-ai/types";
+import { getModuleId } from "../../utils/module-id";
+
+type ItemIdentifier = GraphIdentifier | ModuleIdentifier;
 
 interface Outline {
   title: string;
-  nodes: InspectableNode[];
-  ports: Map<NodeIdentifier, InspectableNodePorts>;
-  subGraphs: Map<GraphIdentifier, Outline>;
+  items: {
+    nodes: InspectableNode[];
+    ports: Map<NodeIdentifier, InspectableNodePorts>;
+  };
+  type: "imperative" | "declarative";
+  subItems: Map<ItemIdentifier, Outline>;
 }
 
-const MODE_KEY = "bb-graph-outline-mode";
-
-@customElement("bb-graph-outline")
-export class GraphOutline extends LitElement {
+@customElement("bb-workspace-outline")
+export class WorkspaceOutline extends LitElement {
   @property()
   graph: InspectableGraph | null = null;
 
@@ -56,13 +68,13 @@ export class GraphOutline extends LitElement {
   kits: Kit[] = [];
 
   @property()
-  subGraphId: string | null = null;
+  subGraphId: GraphIdentifier | null = null;
+
+  @property()
+  moduleId: ModuleIdentifier | null = null;
 
   @property()
   renderId = "";
-
-  @property()
-  showSubgraphsInline = false;
 
   @property({ reflect: true })
   mode: "list" | "tree" = "list";
@@ -81,6 +93,12 @@ export class GraphOutline extends LitElement {
       min-width: 220px;
       height: 100%;
       overflow: hidden;
+    }
+
+    h1 {
+      font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
+        var(--bb-font-family);
+      margin: var(--bb-grid-size-4) 0 var(--bb-grid-size) 0;
     }
 
     #controls {
@@ -169,23 +187,32 @@ export class GraphOutline extends LitElement {
       list-style: none;
     }
 
-    details.graph {
+    details.declarative,
+    details.imperative {
+      margin-bottom: var(--bb-grid-size-2);
+    }
+
+    details.declarative:last-of-type,
+    details.imperative:last-of-type {
       margin-bottom: var(--bb-grid-size-5);
     }
 
-    details.graph summary {
-      height: var(--bb-grid-size-5);
+    details.declarative summary,
+    details.imperative summary {
+      height: var(--bb-grid-size-7);
       display: flex;
       align-items: center;
       padding-right: var(--bb-grid-size-5);
     }
 
-    details.graph summary .title {
+    details.declarative summary .title,
+    details.imperative summary .title {
       color: var(--subgraph-label-color, var(--bb-neutral-800));
       flex: 1 0 auto;
     }
 
-    details.graph summary::before {
+    details.declarative summary::before,
+    details.imperative summary::before {
       content: "";
       width: var(--bb-grid-size-5);
       height: var(--bb-grid-size-5);
@@ -195,12 +222,17 @@ export class GraphOutline extends LitElement {
       margin-right: var(--bb-grid-size);
     }
 
-    details > summary {
+    details.imperative summary::before {
+      background-image: var(--bb-icon-extension);
+    }
+
+    details.declarative > summary {
+      cursor: pointer;
       background: var(--bb-icon-unfold-more) calc(100% + 4px) center / 20px 20px
         no-repeat;
     }
 
-    details[open] > summary {
+    details.declarative[open] > summary {
       background: var(--bb-icon-unfold-less) calc(100% + 4px) center / 20px 20px
         no-repeat;
     }
@@ -303,9 +335,7 @@ export class GraphOutline extends LitElement {
       transition: background-color 0.1s cubic-bezier(0, 0, 0.3, 1);
       padding: 0 var(--bb-grid-size);
       display: inline-block;
-    }
-
-    li.port > .title > button.port-item {
+      line-height: var(--bb-grid-size-5);
       cursor: pointer;
     }
 
@@ -404,30 +434,48 @@ export class GraphOutline extends LitElement {
       background: transparent var(--bb-icon-merge-type) center -1px / 20px 20px no-repeat;
     }
 
-    .change-subgraph {
+    .change-subitem {
+      color: var(--bb-neutral-800);
       display: block;
-      width: var(--bb-grid-size-5);
-      height: var(--bb-grid-size-5);
-      background: var(--subgraph-label-color, var(--bb-ui-50))
-        var(--bb-icon-quick-jump) center center / 16px 16px no-repeat;
+      background: var(--bb-neutral-0);
       border: none;
-      font-size: 0;
-      border-radius: 50%;
+      border-radius: var(--bb-grid-size);
       cursor: pointer;
+      padding: 0 var(--bb-grid-size-2);
+      height: var(--bb-grid-size-7);
+      flex: 1;
+      text-align: left;
+      transition: background 0.1s cubic-bezier(0, 0, 0.3, 1);
     }
 
-    .change-subgraph.inverted {
-      background-image: var(--bb-icon-quick-jump-inverted);
+    .change-subitem:hover,
+    .change-subitem:focus {
+      background: var(--subgraph-label-color, var(--bb-ui-50));
     }
 
-    .change-subgraph[disabled] {
-      opacity: 0.4;
+    .change-subitem.inverted:hover,
+    .change-subitem.inverted:focus {
+      color: var(--bb-neutral-0);
+    }
+
+    .change-subitem[disabled] {
+      background: var(--subgraph-label-color, var(--bb-ui-50));
       cursor: default;
     }
 
+    .change-subitem[disabled].inverted {
+      color: var(--bb-neutral-0);
+    }
+
     .title {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
       height: var(--bb-grid-size-5);
+      flex: 1;
+    }
+
+    .title:has(> .change-subitem) {
+      height: var(--bb-grid-size-7);
     }
 
     .preview {
@@ -476,28 +524,101 @@ export class GraphOutline extends LitElement {
     button.subgraph.inverted::before {
       background-image: var(--bb-icon-board-inverted);
     }
+
+    #create-new {
+      margin-bottom: var(--bb-grid-size-3);
+    }
+
+    .create-new-board {
+      border-radius: var(--bb-grid-size-6);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      background: var(--bb-neutral-0) var(--bb-icon-add-circle) 6px center /
+        16px 16px no-repeat;
+      height: var(--bb-grid-size-6);
+      padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-6);
+      color: var(--bb-neutral-900);
+      cursor: pointer;
+      transition: background-color 0.1s cubic-bezier(0, 0, 0.3, 1);
+      border: 1px solid var(--bb-neutral-300);
+    }
+
+    .create-new-board:hover,
+    .create-new-board:focus {
+      background-color: var(--bb-neutral-50);
+    }
+
+    .create-new-module {
+      border-radius: var(--bb-grid-size-6);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      background: var(--bb-neutral-0) var(--bb-icon-add-circle) 6px center /
+        16px 16px no-repeat;
+      height: var(--bb-grid-size-6);
+      padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-6);
+      color: var(--bb-neutral-900);
+      cursor: pointer;
+      transition: background-color 0.1s cubic-bezier(0, 0, 0.3, 1);
+      border: 1px solid var(--bb-neutral-300);
+    }
+
+    .create-new-module:hover,
+    .create-new-module:focus {
+      background-color: var(--bb-neutral-50);
+    }
+
+    .delete {
+      height: var(--bb-grid-size-7);
+      width: var(--bb-grid-size-7);
+      border: none;
+      background: transparent var(--bb-icon-delete) center center / 20px 20px
+        no-repeat;
+      font-size: 0;
+      margin: 0 var(--bb-grid-size-2);
+      opacity: 0;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: background 0.1s cubic-bezier(0, 0, 0.3, 1);
+    }
+
+    .title:hover .delete,
+    .delete:hover,
+    .delete:focus {
+      opacity: 1;
+    }
+
+    .delete:hover,
+    .delete:focus {
+      background-color: var(--bb-neutral-50);
+    }
   `;
 
   #containerRef: Ref<HTMLDivElement> = createRef();
-  #graphRender: Task<(InspectableGraph | string | null)[], Outline> | null =
+  #workspaceRender: Task<(InspectableGraph | string | null)[], Outline> | null =
     null;
 
-  connectedCallback(): void {
-    super.connectedCallback();
-
-    const mode = globalThis.localStorage.getItem(MODE_KEY);
-    if (mode === "list" || mode === "tree") {
-      this.mode = mode;
-    }
-  }
-
-  #createSubGraphId(id: string) {
+  #createSubItemId(id: string) {
     return `sg-${id}`;
   }
 
   #loadGraphDetails() {
     return new Task(this, {
       task: async ([graph]): Promise<Outline> => {
+        const moduleToOutline = async (
+          id: ModuleIdentifier,
+          module: InspectableModule
+        ): Promise<Outline> => {
+          return {
+            type: "imperative",
+            title: module.metadata().title ?? id,
+            items: {
+              nodes: [],
+              ports: new Map(),
+            },
+            subItems: new Map(),
+          };
+        };
+
         const graphToOutline = async (
           graph: InspectableGraph,
           overrideTitle = true
@@ -553,21 +674,34 @@ export class GraphOutline extends LitElement {
             return 0;
           });
 
-          const subGraphs = new Map<GraphIdentifier, Outline>();
-          const subGraphEntries = graph.graphs();
-          if (subGraphEntries) {
-            for (const [id, subGraph] of Object.entries(subGraphEntries)) {
-              subGraphs.set(id, await graphToOutline(subGraph, false));
+          const subItems = new Map<
+            GraphIdentifier | ModuleIdentifier,
+            Outline
+          >();
+          const subGraphs = graph.graphs();
+          if (subGraphs) {
+            for (const [id, subGraph] of Object.entries(subGraphs)) {
+              subItems.set(id, await graphToOutline(subGraph, false));
+            }
+          }
+
+          const modules = graph.modules();
+          if (modules) {
+            for (const [id, module] of Object.entries(modules)) {
+              subItems.set(id, await moduleToOutline(id, module));
             }
           }
 
           return {
+            type: "declarative",
             title: overrideTitle
               ? "Main Board"
               : (graph.raw().title ?? "Unnamed graph"),
-            nodes,
-            ports,
-            subGraphs,
+            items: {
+              nodes,
+              ports,
+            },
+            subItems,
           } as Outline;
         };
 
@@ -590,7 +724,7 @@ export class GraphOutline extends LitElement {
 
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("graph")) {
-      this.#graphRender = this.#loadGraphDetails();
+      this.#workspaceRender = this.#loadGraphDetails();
     }
   }
 
@@ -633,12 +767,13 @@ export class GraphOutline extends LitElement {
     return preview;
   }
 
-  #renderBoard(
+  #renderWorkspaceItem(
     subGraphId: string | null,
     nodes: InspectableNode[],
     ports: Map<NodeIdentifier, InspectableNodePorts>,
     subGraphs: Map<GraphIdentifier, Outline>,
-    renderBoardsInline = false
+    seenSubItems: Set<string>,
+    renderSubItemsInline = false
   ): HTMLTemplateResult {
     return html`<ul>
       ${map(nodes, (node) => {
@@ -655,25 +790,20 @@ export class GraphOutline extends LitElement {
           <span class="title"
             ><button
               class="node-item"
-              @dblclick=${(evt: PointerEvent) => {
-                this.dispatchEvent(
-                  new NodeConfigurationUpdateRequestEvent(
-                    node.descriptor.id,
-                    subGraphId,
-                    null,
-                    null,
-                    evt.clientX,
-                    evt.clientY,
-                    true
-                  )
-                );
-              }}
-              @click=${(evt: PointerEvent) => {
-                const isMac = navigator.platform.indexOf("Mac") === 0;
-                const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+              @click=${() => {
+                if (this.subGraphId !== subGraphId && this.mode === "list") {
+                  this.dispatchEvent(
+                    new SubGraphChosenEvent(
+                      subGraphId ? subGraphId : MAIN_BOARD_ID,
+                      node.descriptor.id
+                    )
+                  );
 
-                if (!isCtrlCommand) {
                   return;
+                }
+
+                if (this.mode === "tree" && this.moduleId) {
+                  this.dispatchEvent(new ModuleChosenEvent(null));
                 }
 
                 this.dispatchEvent(
@@ -738,21 +868,21 @@ export class GraphOutline extends LitElement {
                   class=${classMap({
                     subgraph: true,
                     inverted:
-                      getSubgraphColor<number>(subGraphId, "text", true) ===
+                      getSubItemColor<number>(subGraphId, "text", true) ===
                       0xffffff,
                   })}
-                  ?disabled=${!this.showSubgraphsInline &&
+                  ?disabled=${this.mode === "list" &&
                   this.subGraphId === subGraphId}
                   style=${styleMap({
-                    "--subgraph-border-color": getSubgraphColor(
+                    "--subgraph-border-color": getSubItemColor(
                       subGraphId,
                       "border"
                     ),
-                    "--subgraph-label-color": getSubgraphColor(
+                    "--subgraph-label-color": getSubItemColor(
                       subGraphId,
                       "label"
                     ),
-                    "--subgraph-label-text-color": getSubgraphColor(
+                    "--subgraph-label-text-color": getSubItemColor(
                       subGraphId,
                       "text"
                     ),
@@ -760,7 +890,7 @@ export class GraphOutline extends LitElement {
                   @pointerover=${(evt: PointerEvent) => {
                     this.dispatchEvent(
                       new ShowTooltipEvent(
-                        `Zoom to board`,
+                        `Go to item`,
                         evt.clientX,
                         evt.clientY
                       )
@@ -771,9 +901,9 @@ export class GraphOutline extends LitElement {
                   }}
                   @click=${() => {
                     if (this.mode === "list") {
-                      this.#scrollTo(this.#createSubGraphId(subGraphId));
+                      this.#scrollTo(this.#createSubItemId(subGraphId));
                     } else {
-                      if (this.showSubgraphsInline) {
+                      if (this.mode === "tree") {
                         this.dispatchEvent(new ZoomToGraphEvent(subGraphId));
                       } else {
                         this.dispatchEvent(new SubGraphChosenEvent(subGraphId));
@@ -784,16 +914,17 @@ export class GraphOutline extends LitElement {
                   ${subGraph?.title}
                 </button>`;
 
-                if (!renderBoardsInline) {
+                if (!renderSubItemsInline) {
                   graphDetail = graphButton;
                 } else {
                   graphDetail = html`<div>
-                    ${graphButton}${this.#renderBoard(
+                    ${graphButton}${this.#renderWorkspaceItem(
                       subGraphId,
-                      subGraph.nodes,
-                      subGraph.ports,
-                      subGraph.subGraphs,
-                      renderBoardsInline
+                      subGraph.items.nodes,
+                      subGraph.items.ports,
+                      subGraph.subItems,
+                      seenSubItems,
+                      renderSubItemsInline
                     )}
                   </div>`;
                 }
@@ -802,7 +933,7 @@ export class GraphOutline extends LitElement {
               return html`<li
                 class=${classMap({
                   port: true,
-                  subgraph: !renderBoardsInline,
+                  subgraph: !renderSubItemsInline,
                   [port.status]: true,
                   configured: port.configured,
                 })}
@@ -816,142 +947,174 @@ export class GraphOutline extends LitElement {
     </ul>`;
   }
 
-  #renderAsList(
+  #renderWorkspace(
     title: string,
     nodes: InspectableNode[],
     ports: Map<NodeIdentifier, InspectableNodePorts>,
-    subGraphs: Map<GraphIdentifier, Outline>
+    subItems: Map<ItemIdentifier, Outline>,
+    renderSubItemsInline: boolean
   ) {
-    return html`${html`<details id=${MAIN_BOARD_ID} class="graph" open>
-      <summary>
-        <span class="title">${title}</span>
-        <div id="graph-controls">
-          <button
-            class=${classMap({ "change-subgraph": true })}
-            ?disabled=${!this.showSubgraphsInline && this.subGraphId === null}
-            @pointerover=${(evt: PointerEvent) => {
-              this.dispatchEvent(
-                new ShowTooltipEvent(
-                  `Zoom to Main Board`,
-                  evt.clientX,
-                  evt.clientY
-                )
-              );
-            }}
-            @pointerout=${() => {
-              this.dispatchEvent(new HideTooltipEvent());
-            }}
-            @click=${() => {
-              if (this.showSubgraphsInline) {
-                this.dispatchEvent(new ZoomToGraphEvent(MAIN_BOARD_ID));
-              } else {
-                this.dispatchEvent(new SubGraphChosenEvent(MAIN_BOARD_ID));
-              }
-            }}
-          >
-            Change subgraph
-          </button>
-        </div>
-      </summary>
-      ${this.#renderBoard(null, nodes, ports, subGraphs, false)}
-    </details> `}${map(subGraphs, ([id, subGraph]) => {
-      return html`<details
-        style=${styleMap({
-          "--subgraph-border-color": getSubgraphColor(id, "border"),
-          "--subgraph-label-color": getSubgraphColor(id, "label"),
-        })}
-        id=${this.#createSubGraphId(id)}
-        class="graph"
-        open
+    const seenSubItems = new Set<string>();
+    return html`${html`<details
+        id=${MAIN_BOARD_ID}
+        class="declarative"
+        ?open=${renderSubItemsInline || subItems.size === 0}
       >
         <summary>
-          <span class="title">${subGraph.title}</span>
-          <div id="graph-controls">
+          <div class="title">
             <button
-              class=${classMap({
-                "change-subgraph": true,
-                inverted:
-                  getSubgraphColor<number>(id, "text", true) === 0xffffff,
-              })}
-              ?disabled=${!this.showSubgraphsInline && this.subGraphId === id}
-              @pointerover=${(evt: PointerEvent) => {
-                this.dispatchEvent(
-                  new ShowTooltipEvent(
-                    `Zoom to Board`,
-                    evt.clientX,
-                    evt.clientY
-                  )
-                );
-              }}
-              @pointerout=${() => {
-                this.dispatchEvent(new HideTooltipEvent());
-              }}
+              class=${classMap({ "change-subitem": true })}
+              ?disabled=${this.mode === "list" &&
+              this.subGraphId === null &&
+              this.moduleId === null}
               @click=${() => {
-                if (this.showSubgraphsInline) {
-                  this.dispatchEvent(new ZoomToGraphEvent(id));
+                if (this.mode === "list") {
+                  if (this.moduleId !== null) {
+                    this.dispatchEvent(new ModuleChosenEvent(null));
+                  }
+
+                  if (this.subGraphId !== null) {
+                    this.dispatchEvent(new SubGraphChosenEvent(MAIN_BOARD_ID));
+                  }
                 } else {
-                  this.dispatchEvent(new SubGraphChosenEvent(id));
+                  if (this.moduleId) {
+                    this.dispatchEvent(new ModuleChosenEvent(null));
+                  }
+
+                  this.dispatchEvent(new ZoomToGraphEvent(MAIN_BOARD_ID));
                 }
               }}
             >
-              Change subgraph
+              ${title}
             </button>
           </div>
         </summary>
-        ${this.#renderBoard(
-          id,
-          subGraph.nodes,
-          subGraph.ports,
-          subGraph.subGraphs,
-          false
+        ${this.#renderWorkspaceItem(
+          null,
+          nodes,
+          ports,
+          subItems,
+          seenSubItems,
+          renderSubItemsInline
         )}
-      </details>`;
-    })}`;
-  }
+      </details> `}
+      ${subItems.size > seenSubItems.size
+        ? html`<h1>Other items</h1>`
+        : nothing}
+      <div id="create-new">
+        <button
+          class="create-new-board"
+          @click=${() => {
+            const newSubGraphName = prompt(
+              "What would you like to call this board?"
+            );
+            if (!newSubGraphName) {
+              return;
+            }
 
-  #renderAsTree(
-    title: string,
-    nodes: InspectableNode[],
-    ports: Map<NodeIdentifier, InspectableNodePorts>,
-    subGraphs: Map<GraphIdentifier, Outline>
-  ) {
-    return html`<details id=${MAIN_BOARD_ID} class="graph" open>
-      <summary>
-        <span class="title">${title}</span>
-        <div id="graph-controls">
-          <button
-            class=${classMap({ "change-subgraph": true })}
-            ?disabled=${!this.showSubgraphsInline && this.subGraphId === null}
-            @pointerover=${(evt: PointerEvent) => {
-              this.dispatchEvent(
-                new ShowTooltipEvent(
-                  `Zoom to Main Board`,
-                  evt.clientX,
-                  evt.clientY
-                )
-              );
-            }}
-            @pointerout=${() => {
-              this.dispatchEvent(new HideTooltipEvent());
-            }}
-            @click=${() => {
-              if (this.showSubgraphsInline) {
-                this.dispatchEvent(new ZoomToGraphEvent(MAIN_BOARD_ID));
-              } else {
-                this.dispatchEvent(new SubGraphChosenEvent(MAIN_BOARD_ID));
-              }
-            }}
-          >
-            Change subgraph
-          </button>
-        </div>
-      </summary>
-      ${this.#renderBoard(null, nodes, ports, subGraphs, true)}
-    </details> `;
+            this.dispatchEvent(new SubGraphCreateEvent(newSubGraphName));
+          }}
+        >
+          Create a new board...
+        </button>
+        <button
+          class="create-new-module"
+          @click=${() => {
+            const moduleId = getModuleId();
+            if (!moduleId) {
+              return;
+            }
+
+            this.dispatchEvent(new ModuleCreateEvent(moduleId));
+          }}
+        >
+          Create a new module...
+        </button>
+      </div>
+      ${map(subItems, ([id, subItem]) => {
+        if (seenSubItems.has(id)) {
+          return nothing;
+        }
+
+        return html`<details
+          style=${styleMap({
+            "--subgraph-border-color": getSubItemColor(id, "border"),
+            "--subgraph-label-color": getSubItemColor(id, "label"),
+          })}
+          id=${this.#createSubItemId(id)}
+          class=${classMap({ [subItem.type]: true })}
+        >
+          <summary>
+            <div class="title">
+              <button
+                class=${classMap({
+                  "change-subitem": true,
+                  inverted:
+                    getSubItemColor<number>(id, "text", true) === 0xffffff,
+                })}
+                ?disabled=${this.subGraphId === id || this.moduleId === id}
+                @click=${() => {
+                  if (subItem.type === "declarative") {
+                    if (this.mode === "tree") {
+                      if (this.moduleId) {
+                        this.dispatchEvent(new ModuleChosenEvent(null));
+                      }
+
+                      this.dispatchEvent(new ZoomToGraphEvent(id));
+                    } else {
+                      this.dispatchEvent(new SubGraphChosenEvent(id));
+                      this.dispatchEvent(new ModuleChosenEvent(null));
+                    }
+                  } else {
+                    this.dispatchEvent(new SubGraphChosenEvent(MAIN_BOARD_ID));
+                    this.dispatchEvent(new ModuleChosenEvent(id));
+                  }
+                }}
+              >
+                ${subItem.title}
+              </button>
+              <button
+                class="delete"
+                @click=${() => {
+                  if (subItem.type === "declarative") {
+                    if (
+                      !confirm("Are you sure you wish to delete this board?")
+                    ) {
+                      return;
+                    }
+
+                    this.dispatchEvent(new SubGraphDeleteEvent(id));
+                    return;
+                  } else {
+                    if (
+                      !confirm("Are you sure you wish to delete this module?")
+                    ) {
+                      return;
+                    }
+
+                    this.dispatchEvent(new ModuleDeleteEvent(id));
+                    return;
+                  }
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </summary>
+          ${this.#renderWorkspaceItem(
+            id,
+            subItem.items.nodes,
+            subItem.items.ports,
+            subItem.subItems,
+            seenSubItems,
+            false
+          )}
+        </details>`;
+      })}`;
   }
 
   render() {
-    if (!this.#graphRender) {
+    if (!this.#workspaceRender) {
       return nothing;
     }
 
@@ -973,18 +1136,21 @@ export class GraphOutline extends LitElement {
             id="view-toggle"
             class=${classMap({ [this.mode]: true })}
             @click=${() => {
-              this.mode = this.mode === "list" ? "tree" : "list";
-              globalThis.localStorage.setItem(MODE_KEY, this.mode);
+              this.dispatchEvent(
+                new OutlineModeChangeEvent(
+                  this.mode === "list" ? "tree" : "list"
+                )
+              );
             }}
           >
             Toggle
           </button>
         </div>
         <div id="outline">
-          ${this.#graphRender.render({
+          ${this.#workspaceRender.render({
             pending: () => html`Loading...`,
             complete: (outline) => {
-              let nodes = [...outline.nodes];
+              let nodes = [...outline.items.nodes];
               if (this.filter) {
                 nodes = nodes.filter((node) => {
                   const filter = new RegExp(this.filter!, "gim");
@@ -992,26 +1158,13 @@ export class GraphOutline extends LitElement {
                 });
               }
 
-              switch (this.mode) {
-                case "list": {
-                  return this.#renderAsList(
-                    outline.title,
-                    nodes,
-                    outline.ports,
-                    outline.subGraphs
-                  );
-                }
-                case "tree": {
-                  return this.#renderAsTree(
-                    outline.title,
-                    nodes,
-                    outline.ports,
-                    outline.subGraphs
-                  );
-                }
-                default:
-                  return html`Unexpected render type`;
-              }
+              return this.#renderWorkspace(
+                outline.title,
+                nodes,
+                outline.items.ports,
+                outline.subItems,
+                this.mode === "tree"
+              );
             },
             error: () => html`Unable to load graph outline`,
           })}

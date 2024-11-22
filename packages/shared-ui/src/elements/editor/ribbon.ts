@@ -16,19 +16,14 @@ import {
   AddSubgraphEvent,
   HideTooltipEvent,
   KitNodeChosenEvent,
-  ModuleChosenEvent,
-  ModuleCreateEvent,
-  ModuleDeleteEvent,
   NodeCreateEvent,
   OverflowMenuActionEvent,
-  OverflowMenuSecondaryActionEvent,
   RedoEvent,
   ResetLayoutEvent,
   RunEvent,
   SaveAsEvent,
   ShowTooltipEvent,
   StopEvent,
-  SubGraphChosenEvent,
   SubGraphDeleteEvent,
   ToggleBoardActivityEvent,
   ToggleFollowEvent,
@@ -37,13 +32,10 @@ import {
 } from "../../events/events";
 import { createRandomID } from "./utils";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { InspectableGraph, SubGraphs } from "@google-labs/breadboard";
+import { InspectableGraph } from "@google-labs/breadboard";
 import { classMap } from "lit/directives/class-map.js";
-import { MAIN_BOARD_ID } from "../../constants/constants";
 import { guard } from "lit/directives/guard.js";
 import { type ComponentSelectorOverlay } from "../elements";
-import { ModuleIdentifier } from "@breadboard-ai/types";
-import { getModuleId } from "../../utils/module-id";
 
 const COLLAPSED_MENU_BUFFER = 60;
 
@@ -192,14 +184,14 @@ export class GraphRibbonMenu extends LitElement {
     #save {
       position: absolute;
       top: calc(100% + -8px);
-      left: 398px;
+      left: 258px;
       right: auto;
     }
 
     #copy {
       position: absolute;
       top: calc(100% + -8px);
-      left: 442px;
+      left: 312px;
       right: auto;
     }
 
@@ -1208,220 +1200,7 @@ export class GraphRibbonMenu extends LitElement {
       >
         Reset Layout
       </button>
-      <button
-        id="shortcut-add-subgraph"
-        @click=${() => {
-          this.dispatchEvent(new AddSubgraphEvent());
-        }}
-        @pointerover=${(evt: PointerEvent) => {
-          this.dispatchEvent(
-            new ShowTooltipEvent("Add sub board", evt.clientX, evt.clientY)
-          );
-        }}
-        @pointerout=${() => {
-          this.dispatchEvent(new HideTooltipEvent());
-        }}
-      >
-        Add sub board
-      </button>
-      <button
-        id="shortcut-select-subgraph"
-        @click=${() => {
-          this.showSubgraphMenu = true;
-        }}
-        @pointerover=${(evt: PointerEvent) => {
-          this.dispatchEvent(
-            new ShowTooltipEvent("Select sub board", evt.clientX, evt.clientY)
-          );
-        }}
-        @pointerout=${() => {
-          this.dispatchEvent(new HideTooltipEvent());
-        }}
-      >
-        Select sub board
-      </button>
     </div>`;
-
-    let subGraphMenu: HTMLTemplateResult | symbol = nothing;
-    if (this.showSubgraphMenu) {
-      const rawGraph = this.graph?.raw();
-      const subGraphs: SubGraphs | null = rawGraph?.graphs
-        ? rawGraph.graphs
-        : {};
-
-      const actions: Array<{
-        title: string;
-        name: string;
-        icon: string;
-        disabled?: boolean;
-        secondaryAction?: string;
-      }> = Object.entries(subGraphs).map(([id, graph]) => {
-        return {
-          title: graph.title ?? "Untitled sub board",
-          name: id,
-          icon: "board",
-          disabled: id === this.subGraphId,
-          secondaryAction: "delete",
-        };
-      });
-
-      actions.unshift({
-        title: "Main board",
-        name: MAIN_BOARD_ID,
-        icon: "board",
-        disabled: this.subGraphId === null,
-      });
-
-      subGraphMenu = html`<bb-overflow-menu
-        id="subgraph-menu"
-        .disabled=${false}
-        .actions=${actions}
-        @bboverflowmenudismissed=${() => {
-          this.showSubgraphMenu = false;
-        }}
-        @bboverflowmenuaction=${(evt: OverflowMenuActionEvent) => {
-          evt.stopPropagation();
-          this.dispatchEvent(new SubGraphChosenEvent(evt.action));
-          this.showSubgraphMenu = false;
-        }}
-        @bboverflowmenusecondaryaction=${(
-          evt: OverflowMenuSecondaryActionEvent
-        ) => {
-          if (!confirm("Are you sure you wish to delete this sub board?")) {
-            return;
-          }
-
-          if (!evt.value || typeof evt.value !== "string") {
-            return;
-          }
-
-          evt.stopPropagation();
-          this.dispatchEvent(new SubGraphDeleteEvent(evt.value));
-          this.showSubgraphMenu = false;
-
-          // Switch out from the subgraph if needed.
-          if (this.subGraphId !== evt.value) {
-            return;
-          }
-
-          this.dispatchEvent(new SubGraphChosenEvent(MAIN_BOARD_ID));
-        }}
-      ></bb-overflow-menu>`;
-    }
-
-    const graphModules = this.graph?.modules() || {};
-    const module = graphModules[this.moduleId ?? ""] ?? null;
-    const modules = html`<button
-      id="shortcut-board-modules"
-      class=${classMap({
-        main: this.moduleId === null,
-        ts: module && module.metadata().source?.language === "typescript",
-      })}
-      @pointerover=${(evt: PointerEvent) => {
-        this.dispatchEvent(
-          new ShowTooltipEvent("Board Modules", evt.clientX, evt.clientY)
-        );
-      }}
-      @pointerout=${() => {
-        this.dispatchEvent(new HideTooltipEvent());
-      }}
-      @click=${() => {
-        this.showBoardModules = true;
-      }}
-    >
-      ${this.moduleId ? this.moduleId : "Main board"}
-    </button>`;
-
-    let moduleMenu: HTMLTemplateResult | symbol = nothing;
-    if (this.showBoardModules) {
-      const modules: Array<{
-        title: string;
-        name: string;
-        icon: string;
-        disabled?: boolean;
-      }> = Object.entries(graphModules)
-        .map(([title, module]) => {
-          return {
-            title,
-            name: title,
-            icon:
-              module.metadata().source?.language === "typescript"
-                ? "module-ts"
-                : "module",
-            disabled: this.moduleId === title,
-            secondaryAction: "delete",
-          };
-        })
-        .sort((a, b) => {
-          // Always place 'main' modules at the top.
-          if (a.title === this.graph?.main()) return -1;
-          if (b.title === this.graph?.main()) return 1;
-
-          if (a.title > b.title) return 1;
-          if (a.title < b.title) return -1;
-          return 0;
-        });
-
-      modules.unshift({
-        title: "Main board",
-        name: MAIN_BOARD_ID,
-        icon: "board",
-        disabled: this.moduleId === null,
-      });
-
-      modules.push({
-        title: "Create new module...",
-        name: "create-module",
-        icon: "add-circle",
-      });
-
-      moduleMenu = html`<bb-overflow-menu
-        id="board-modules-menu"
-        .actions=${modules}
-        .disabled=${this.graph === null}
-        @bboverflowmenudismissed=${() => {
-          this.showBoardModules = false;
-        }}
-        @bboverflowmenuaction=${(evt: OverflowMenuActionEvent) => {
-          this.showBoardModules = false;
-          evt.stopImmediatePropagation();
-
-          if (evt.action === "create-module") {
-            const moduleId = getModuleId();
-            if (!moduleId) {
-              return;
-            }
-
-            this.dispatchEvent(new ModuleCreateEvent(moduleId));
-            return;
-          }
-
-          let moduleId: ModuleIdentifier | null = evt.action;
-          if (evt.action === MAIN_BOARD_ID) {
-            moduleId = null;
-          }
-
-          this.dispatchEvent(new ModuleChosenEvent(moduleId));
-        }}
-        @bboverflowmenusecondaryaction=${(
-          evt: OverflowMenuSecondaryActionEvent
-        ) => {
-          this.showBoardModules = false;
-          evt.stopImmediatePropagation();
-
-          if (!evt.value) {
-            return;
-          }
-
-          const id = evt.value as ModuleIdentifier;
-          if (!confirm(`Are you sure you wish to delete the "${id}" module?`)) {
-            return;
-          }
-
-          this.dispatchEvent(new ModuleDeleteEvent(id));
-        }}
-      ></bb-overflow-menu>`;
-    }
 
     const boardManagementControls = [
       html`<div class="divider"></div>`,
@@ -1506,14 +1285,7 @@ export class GraphRibbonMenu extends LitElement {
       ></bb-overflow-menu>`;
     }
 
-    const moduleManagement = [
-      modules,
-      moduleMenu,
-      html`<div class="divider"></div>`,
-    ];
-
     const left = [
-      moduleManagement,
       componentSelector,
       components,
       boardManagement,
@@ -1597,7 +1369,6 @@ export class GraphRibbonMenu extends LitElement {
       saveMenu,
       copyMenu,
       overflowMenu,
-      subGraphMenu,
     ];
   }
 }

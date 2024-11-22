@@ -193,9 +193,35 @@ export const styles = css`
     position: absolute;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
+    width: 100%;
+    height: 100%;
     z-index: 2;
     background: var(--bb-ui-50);
+  }
+
+  #outline-container {
+    border-right: 1px solid var(--bb-neutral-300);
+  }
+
+  #outline-container,
+  #graph-container {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+  }
+
+  bb-workspace-outline,
+  bb-graph-renderer {
+    display: block;
+    width: 100%;
+    height: 100%;
+    outline: none;
+    overflow: hidden;
+  }
+
+  #splitter {
+    height: 100%;
+    width: 100%;
   }
 `;

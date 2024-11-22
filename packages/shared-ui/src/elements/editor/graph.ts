@@ -41,7 +41,7 @@ import {
   TopGraphNodeInfo,
   cloneEdgeData,
 } from "../../types/types.js";
-import { getSubgraphColor } from "../../utils/subgraph-color.js";
+import { getSubItemColor } from "../../utils/subgraph-color.js";
 
 const highlightedNodeColor = getGlobalColor("--bb-ui-600");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
@@ -978,17 +978,17 @@ export class Graph extends PIXI.Container {
     this.#subGraphId = subGraphId;
 
     if (subGraphId) {
-      this.#subGraphBorderColor = getSubgraphColor<number>(
+      this.#subGraphBorderColor = getSubItemColor<number>(
         subGraphId,
         "border",
         true
       );
-      this.#subGraphLabelColor = getSubgraphColor<number>(
+      this.#subGraphLabelColor = getSubItemColor<number>(
         subGraphId,
         "label",
         true
       );
-      this.#subGraphLabelTextColor = getSubgraphColor<number>(
+      this.#subGraphLabelTextColor = getSubItemColor<number>(
         subGraphId,
         "text",
         true

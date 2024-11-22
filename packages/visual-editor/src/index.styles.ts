@@ -213,12 +213,13 @@ export const styles = css`
     margin: 0;
     height: 100%;
     overflow: hidden;
+    border-bottom: 1px solid var(--bb-neutral-300);
   }
 
   #tab-container h1 {
     font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
       var(--bb-font-family);
-    background: var(--bb-neutral-0);
+    background: linear-gradient(var(--bb-neutral-0) 86%, var(--bb-neutral-50));
     color: var(--bb-neutral-800);
     margin: 0;
     height: calc(100% - var(--bb-grid-size) * 2);
