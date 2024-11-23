@@ -655,6 +655,7 @@ export type InspectableDescriberResultCache = {
  * instance of a graph whose properties mutate.
  */
 export type MutableGraph = {
+  graph: GraphDescriptor;
   nodes: InspectableNodeCache;
   edges: InspectableEdgeCache;
   modules: InspectableModuleCache;
