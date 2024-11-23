@@ -19,7 +19,7 @@ export async function gemini(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent`,
   );
   url.searchParams.set('key', apiKey);
-  // console.log('GEMINI REQUEST', JSON.stringify(request, null, 2));
+  console.log('GEMINI REQUEST', JSON.stringify(request, null, 2));
   let result;
   try {
     result = await fetch(url.href, {

@@ -16,7 +16,7 @@ export async function openai(
 ): Promise<Result<AsyncIterableIterator<BBRTChunk>, Error>> {
   const url = new URL(`https://api.openai.com/v1/chat/completions`);
   let result;
-  // console.log('OPENAI REQUEST', JSON.stringify(request, null, 2));
+  console.log('OPENAI REQUEST', JSON.stringify(request, null, 2));
   try {
     result = await fetch(url.href, {
       method: 'POST',
