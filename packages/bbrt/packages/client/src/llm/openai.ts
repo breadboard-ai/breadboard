@@ -210,7 +210,7 @@ export async function bbrtTurnsToOpenAiMessages(
           messages.push({
             role: 'tool',
             tool_call_id: response.id,
-            content: JSON.stringify(response.response),
+            content: JSON.stringify(response.response.output),
           });
         }
         break;

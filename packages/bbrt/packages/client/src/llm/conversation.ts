@@ -8,7 +8,7 @@ import {Signal} from 'signal-polyfill';
 import {SignalArray} from 'signal-utils/array';
 import type {SignalSet} from 'signal-utils/set';
 import type {SecretsProvider} from '../secrets/secrets-provider.js';
-import type {BBRTTool} from '../tools/tool.js';
+import type {BBRTInvokeResult, BBRTTool} from '../tools/tool.js';
 import {BufferedMultiplexStream} from '../util/buffered-multiplex-stream.js';
 import {Lock} from '../util/lock.js';
 import type {Result} from '../util/result.js';
@@ -78,7 +78,8 @@ export interface BBRTToolCall {
 export interface BBRTToolResponse {
   id: string;
   tool: BBRTTool;
-  response: Record<string, unknown>;
+  args: Record<string, unknown>;
+  response: BBRTInvokeResult;
 }
 
 export class BBRTConversation {
@@ -245,7 +246,7 @@ export class BBRTConversation {
     if (!invocation.ok) {
       return invocation;
     }
-    return {ok: true, value: {id, tool, response: invocation.value}};
+    return {ok: true, value: {id, tool, args, response: invocation.value}};
   }
 
   async #generate(): Promise<Result<AsyncIterableIterator<BBRTChunk>>> {

@@ -8,7 +8,13 @@ import {SignalWatcher} from '@lit-labs/signals';
 import {LitElement, css, html, nothing} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {guard} from 'lit/directives/guard.js';
-import type {BBRTTurn} from '../llm/conversation.js';
+import type {
+  BBRTErrorTurn,
+  BBRTModelTurn,
+  BBRTTurn,
+  BBRTUserTurnContent,
+  BBRTUserTurnToolResponses,
+} from '../llm/conversation.js';
 import {typingEffect} from '../util/typing-effect.js';
 import './error-message.js';
 import './markdown.js';
@@ -81,12 +87,16 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       margin-bottom: 20px;
     }
 
-    #toolCalls {
+    #toolCalls,
+    #toolResponses {
       display: grid;
       gap: 18px;
-      grid-template-columns: repeat(auto-fill, 250px);
+      grid-template-columns: repeat(auto-fill, 300px);
       /* Space for shadows to breath on the bottom row. */
       padding-bottom: 5px;
+    }
+    #toolResponses > img {
+      max-width: 100%;
     }
   `;
 
@@ -97,42 +107,16 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
         return nothing;
       }
       case 'user-content': {
-        return [this.#roleIcon, turn.content];
+        return this.#renderUserContent(turn);
       }
       case 'user-tool-responses': {
-        return nothing;
+        return this.#renderUserToolResponses(turn);
       }
       case 'model': {
-        const content =
-          typeof turn.content === 'string'
-            ? turn.content
-            : guard(turn.content, () => typingEffect(5, turn.content));
-        const toolCalls = turn.toolCalls?.length
-          ? html`<div id="toolCalls" part="content">
-              ${turn.toolCalls?.map(
-                (toolCall) =>
-                  html`<bbrt-tool-call .toolCall=${toolCall}></bbrt-tool-call>`,
-              ) ?? []}
-            </div>`
-          : '';
-        return [
-          this.#roleIcon,
-          html`<div part="contents">
-            <bbrt-markdown .markdown=${content} part="content"></bbrt-markdown>
-            ${toolCalls}
-          </div>`,
-        ];
+        return this.#renderModelResponse(turn);
       }
       case 'error': {
-        return [
-          this.#roleIcon,
-          html`<div part="contents">
-            <bbrt-error-message
-              part="content"
-              .error=${turn.error}
-            ></bbrt-error-message>
-          </div>`,
-        ];
+        return this.#renderError(turn);
       }
       default: {
         turn satisfies never;
@@ -141,15 +125,63 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
     }
   }
 
+  #renderUserContent(turn: BBRTUserTurnContent) {
+    return [this.#roleIcon, html`<div id="userContent">${turn.content}</div>`];
+  }
+
+  #renderUserToolResponses(turn: BBRTUserTurnToolResponses) {
+    return [
+      this.#roleIcon,
+      html`<div part="contents">
+        <div id="toolResponses">
+          ${turn.responses.map(({tool, args, response}) => {
+            return tool.renderResult(args, response);
+          })}
+        </div>
+      </div>`,
+    ];
+  }
+
+  #renderModelResponse(turn: BBRTModelTurn) {
+    const content =
+      typeof turn.content === 'string'
+        ? turn.content
+        : guard(turn.content, () => typingEffect(5, turn.content));
+    const toolCalls = turn.toolCalls?.length
+      ? html`<div id="toolCalls" part="content">
+          ${turn.toolCalls?.map(
+            (toolCall) =>
+              html`<bbrt-tool-call .toolCall=${toolCall}></bbrt-tool-call>`,
+          ) ?? []}
+        </div>`
+      : '';
+    return [
+      this.#roleIcon,
+      html`<div part="contents">
+        <bbrt-markdown .markdown=${content} part="content"></bbrt-markdown>
+        ${toolCalls}
+      </div>`,
+    ];
+  }
+
+  #renderError(turn: BBRTErrorTurn) {
+    return [
+      this.#roleIcon,
+      html`<div part="contents">
+        <bbrt-error-message
+          part="content"
+          .error=${turn.error}
+        ></bbrt-error-message>
+      </div>`,
+    ];
+  }
+
   get #roleIcon() {
     if (!this.turn) {
       return nothing;
     }
-    const {role, status} = this.turn;
-    if (!(role == 'user' || role == 'model')) {
-      return '';
-    }
-    if (this.hideIcon) {
+    const {kind, role, status} = this.turn;
+    if (this.hideIcon || kind === 'user-tool-responses' || kind === 'error') {
       return html`<span part="icon"></span>`;
     }
     return html`<svg

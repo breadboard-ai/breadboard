@@ -170,24 +170,22 @@ export async function bbrtTurnsToGeminiContents(
         break;
       }
       case 'user-tool-responses': {
-        for (const response of turn.responses) {
-          contents.push({
-            role: 'user',
-            parts: [
-              {
-                functionResponse: {
-                  name: (await response.tool.declaration()).name,
-                  response: response.response,
-                  // TOOD(aomarks) It really feels like we should also provide
-                  // the arguments or an id, since we might have more than one
-                  // call to the same tool. Maybe it uses the ordering (which we
-                  // preserve), or maybe the LLM just figures it out from
-                  // context most of the time anyway.
-                },
+        contents.push({
+          role: 'user',
+          parts: await Promise.all(
+            turn.responses.map(async (response) => ({
+              functionResponse: {
+                name: (await response.tool.declaration()).name,
+                response: response.response.output,
+                // TOOD(aomarks) It really feels like we should also provide
+                // the arguments or an id, since we might have more than one
+                // call to the same tool. Maybe it uses the ordering (which we
+                // preserve), or maybe the LLM just figures it out from
+                // context most of the time anyway.
               },
-            ],
-          });
-        }
+            })),
+          ),
+        });
         break;
       }
       case 'model': {
