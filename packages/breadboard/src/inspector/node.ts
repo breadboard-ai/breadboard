@@ -163,8 +163,9 @@ class Node implements InspectableNode {
 
 export class NodeCache implements InspectableNodeCache {
   #graph: InspectableGraph;
-  #map?: Map<GraphIdentifier, Map<NodeIdentifier, InspectableNode>>;
-  #typeMap?: Map<GraphIdentifier, Map<NodeTypeIdentifier, InspectableNode[]>>;
+  #map: Map<GraphIdentifier, Map<NodeIdentifier, InspectableNode>> = new Map();
+  #typeMap: Map<GraphIdentifier, Map<NodeTypeIdentifier, InspectableNode[]>> =
+    new Map();
 
   constructor(graph: InspectableGraph) {
     this.#graph = graph;
@@ -182,16 +183,14 @@ export class NodeCache implements InspectableNodeCache {
   }
 
   removeSubgraphNodes(graphId: GraphIdentifier): void {
-    const subgraph = this.#map?.get(graphId);
+    const subgraph = this.#map.get(graphId);
     subgraph?.forEach((node) => {
       (node as Node).setDeleted();
     });
-    this.#map?.delete(graphId);
+    this.#map.delete(graphId);
   }
 
   #addNodeInternal(node: NodeDescriptor, graphId: GraphIdentifier) {
-    this.#typeMap ??= new Map();
-    this.#map ??= new Map();
     const graphTypes = getOrCreate(this.#typeMap, graphId, () => new Map());
     const nodeGraph = graphId ? this.#graph.graphs()?.[graphId] : this.#graph;
     if (!nodeGraph) {
@@ -220,26 +219,18 @@ export class NodeCache implements InspectableNodeCache {
     }
   }
 
-  #ensureNodeMap() {
-    if (this.#map) return this.#map;
-    this.populate(this.#graph.raw());
-    this.#map ??= new Map();
-    return this.#map!;
-  }
-
   byType(
     type: NodeTypeIdentifier,
     graphId: GraphIdentifier
   ): InspectableNode[] {
-    this.#ensureNodeMap();
-    return this.#typeMap?.get(graphId)?.get(type) || [];
+    return this.#typeMap.get(graphId)?.get(type) || [];
   }
 
   get(
     id: NodeIdentifier,
     graphId: GraphIdentifier
   ): InspectableNode | undefined {
-    return this.#ensureNodeMap().get(graphId)?.get(id);
+    return this.#map.get(graphId)?.get(id);
   }
 
   add(node: NodeDescriptor, graphId: GraphIdentifier) {
@@ -273,6 +264,6 @@ export class NodeCache implements InspectableNodeCache {
   }
 
   nodes(graphId: GraphIdentifier): InspectableNode[] {
-    return Array.from(this.#ensureNodeMap().get(graphId)?.values() || []);
+    return Array.from(this.#map.get(graphId)?.values() || []);
   }
 }

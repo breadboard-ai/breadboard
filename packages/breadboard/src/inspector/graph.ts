@@ -129,11 +129,14 @@ class Graph implements InspectableGraphWithStore {
     } else {
       const nodes = new NodeCache(this);
       const edges = new EdgeCache(nodes);
-      edges.populate(graph);
       const modules = new ModuleCache();
-      modules.populate(graph);
       const describe = new DescribeResultCache();
-      this.#cache = { graph, edges, nodes, modules, describe };
+      const cache: MutableGraph = { graph, edges, nodes, modules, describe };
+      this.#graphs = this.#populateSubgraphs(cache);
+      nodes.populate(graph);
+      edges.populate(graph);
+      modules.populate(graph);
+      this.#cache = cache;
     }
   }
 
@@ -617,27 +620,24 @@ class Graph implements InspectableGraphWithStore {
     this.#cache.edges.removeSubgraphEdges(graphId);
   }
 
-  #populateSubgraphs(): InspectableSubgraphs {
+  #populateSubgraphs(cache: MutableGraph): InspectableSubgraphs {
     if (this.#graphId) {
       throw new Error(
         "Inspect API integrity error: #populateSubgraphs should never be called for subgraphs"
       );
     }
-    const subgraphs = this.#cache.graph.graphs;
+    const subgraphs = cache.graph.graphs;
     if (!subgraphs) return {};
     return Object.fromEntries(
       Object.keys(subgraphs).map((id) => {
-        return [
-          id,
-          new Graph(this.#cache.graph, id, this.#cache, this.#options),
-        ];
+        return [id, new Graph(cache.graph, id, cache, this.#options)];
       })
     );
   }
 
   graphs(): InspectableSubgraphs | undefined {
     if (this.#graphId) return;
-    return (this.#graphs ??= this.#populateSubgraphs());
+    return (this.#graphs ??= this.#populateSubgraphs(this.#cache));
   }
 
   graphId(): GraphIdentifier {
