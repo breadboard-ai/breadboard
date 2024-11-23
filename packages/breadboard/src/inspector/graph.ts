@@ -10,21 +10,13 @@ import {
   InputValues,
   ModuleIdentifier,
 } from "@breadboard-ai/types";
-import { getHandler } from "../handler.js";
-import { createLoader } from "../loader/index.js";
 import { invokeGraph } from "../run/invoke-graph.js";
-import {
-  invokeDescriber,
-  invokeMainDescriber,
-} from "../sandboxed-run-module.js";
+import { invokeDescriber } from "../sandboxed-run-module.js";
 import { combineSchemas, removeProperty } from "../schema.js";
 import {
   Edge,
   GraphDescriptor,
-  NodeDescriberContext,
-  NodeDescriberFunction,
   NodeDescriberResult,
-  NodeHandler,
   NodeIdentifier,
   NodeTypeIdentifier,
   Schema,
@@ -35,12 +27,7 @@ import { collectKits, createGraphNodeType } from "./kits.js";
 import { ModuleCache } from "./module.js";
 import { NodeCache } from "./node.js";
 import { DescribeResultCache } from "./run/describe-cache.js";
-import {
-  EdgeType,
-  describeInput,
-  describeOutput,
-  edgesToSchema,
-} from "./schemas.js";
+import { describeInput, describeOutput } from "./schemas.js";
 import {
   InspectableEdge,
   InspectableGraphOptions,
@@ -59,6 +46,8 @@ import {
   toDeclarativeGraph,
 } from "../run/run-imperative-graph.js";
 import { AffectedNode } from "../editor/types.js";
+import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
+import { DescriberManager } from "./describer-manager.js";
 
 export const inspectableGraph = (
   graph: GraphDescriptor,
@@ -165,140 +154,24 @@ class Graph implements InspectableGraphWithStore {
     return this.#cache.nodes.byType(type, this.#graphId);
   }
 
-  async #getDescriber(
-    type: NodeTypeIdentifier
-  ): Promise<NodeDescriberFunction | undefined> {
-    const { kits } = this.#options;
-    const loader = this.#options.loader || createLoader();
-    let handler: NodeHandler | undefined;
-    try {
-      handler = await getHandler(type, {
-        kits,
-        loader,
-      });
-    } catch (e) {
-      console.warn(`Error getting describer for node type ${type}`, e);
-    }
-    if (!handler || !("describe" in handler) || !handler.describe) {
-      return undefined;
-    }
-    return handler.describe;
-  }
-
   async describeNodeType(
     id: NodeIdentifier,
     type: NodeTypeIdentifier,
     options: NodeTypeDescriberOptions = {}
   ): Promise<NodeDescriberResult> {
-    return this.#cache.describe.getOrCreate(id, this.#graphId, async () => {
-      // The schema of an input or an output is defined by their
-      // configuration schema or their incoming/outgoing edges.
-      if (type === "input") {
-        if (this.#imperativeMain) {
-          if (!this.#options.sandbox) {
-            throw new Error(
-              "Sandbox not supplied, won't be able to describe this graph correctly"
-            );
-          }
-          const result = await invokeMainDescriber(
-            this.#options.sandbox,
-            this.#graph(),
-            options.inputs!,
-            {},
-            {}
-          );
-          if (result)
-            return describeInput({
-              inputs: {
-                schema: result.inputSchema,
-              },
-              incoming: options?.incoming,
-              outgoing: options?.outgoing,
-            });
-          return describeInput(options);
-        }
-        return describeInput(options);
-      }
-      if (type === "output") {
-        if (this.#imperativeMain) {
-          if (!this.#options.sandbox) {
-            throw new Error(
-              "Sandbox not supplied, won't be able to describe this graph correctly"
-            );
-          }
-          const result = await invokeMainDescriber(
-            this.#options.sandbox,
-            this.#graph(),
-            options.inputs!,
-            {},
-            {}
-          );
-          if (result)
-            return describeOutput({
-              inputs: {
-                schema: result.outputSchema,
-              },
-              incoming: options?.incoming,
-              outgoing: options?.outgoing,
-            });
-          return describeInput(options);
-        }
-        return describeOutput(options);
-      }
-
-      const { kits } = this.#options;
-      const describer = await this.#getDescriber(type);
-      const asWired = {
-        inputSchema: edgesToSchema(EdgeType.In, options?.incoming),
-        outputSchema: edgesToSchema(EdgeType.Out, options?.outgoing),
-      } satisfies NodeDescriberResult;
-      if (!describer) {
-        return asWired;
-      }
-      const loader = this.#options.loader || createLoader();
-      const context: NodeDescriberContext = {
-        outerGraph: this.#cache.graph,
-        loader,
-        kits,
-        sandbox: this.#options.sandbox,
-        wires: {
-          incoming: Object.fromEntries(
-            (options?.incoming ?? []).map((edge) => [
-              edge.in,
-              {
-                outputPort: {
-                  describe: async () => (await edge.outPort()).type.schema,
-                },
-              },
-            ])
-          ),
-          outgoing: Object.fromEntries(
-            (options?.outgoing ?? []).map((edge) => [
-              edge.out,
-              {
-                inputPort: {
-                  describe: async () => (await edge.inPort()).type.schema,
-                },
-              },
-            ])
-          ),
-        },
-      };
-      if (this.#url) {
-        context.base = this.#url;
-      }
-      try {
-        return describer(
-          options?.inputs || undefined,
-          asWired.inputSchema,
-          asWired.outputSchema,
-          context
-        );
-      } catch (e) {
-        console.warn(`Error describing node type ${type}`, e);
-        return asWired;
-      }
-    });
+    const handle = GraphDescriptorHandle.create(
+      this.#cache.graph,
+      this.#graphId
+    );
+    if (!handle.success) {
+      throw new Error(`Inspect API Integrity Error: ${handle.error}`);
+    }
+    const manager = new DescriberManager(
+      handle.result,
+      this.#cache.describe,
+      this.#options
+    );
+    return manager.describeNodeType(id, type, options);
   }
 
   nodeById(id: NodeIdentifier) {
