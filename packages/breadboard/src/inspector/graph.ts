@@ -50,17 +50,7 @@ export const inspectableGraph = (
   return new Graph(graph, "", undefined, options);
 };
 
-const maybeURL = (url?: string): URL | undefined => {
-  url = url || "";
-  try {
-    return new URL(url);
-  } catch {
-    return undefined;
-  }
-};
-
 class Graph implements InspectableGraphWithStore {
-  #url?: URL;
   #kits?: InspectableKit[];
   #nodeTypes?: Map<NodeTypeIdentifier, InspectableNodeType>;
   #options: InspectableGraphOptions;
@@ -96,7 +86,6 @@ class Graph implements InspectableGraphWithStore {
       graph = toDeclarativeGraph(graph);
       this.#imperativeMain = main;
     }
-    this.#url = maybeURL(graph.url);
     this.#options = options || {};
     this.#cache = cache ?? this.#initializeMutableGraph(graph);
   }
