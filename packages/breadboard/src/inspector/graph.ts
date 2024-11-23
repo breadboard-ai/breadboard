@@ -10,16 +10,12 @@ import {
   InputValues,
   ModuleIdentifier,
 } from "@breadboard-ai/types";
-import { invokeGraph } from "../run/invoke-graph.js";
-import { invokeDescriber } from "../sandboxed-run-module.js";
-import { combineSchemas, removeProperty } from "../schema.js";
 import {
   Edge,
   GraphDescriptor,
   NodeDescriberResult,
   NodeIdentifier,
   NodeTypeIdentifier,
-  Schema,
 } from "../types.js";
 import { graphUrlLike } from "../utils/graph-url-like.js";
 import { EdgeCache } from "./edge.js";
@@ -27,7 +23,6 @@ import { collectKits, createGraphNodeType } from "./kits.js";
 import { ModuleCache } from "./module.js";
 import { NodeCache } from "./node.js";
 import { DescribeResultCache } from "./run/describe-cache.js";
-import { describeInput, describeOutput } from "./schemas.js";
 import {
   InspectableEdge,
   InspectableGraphOptions,
@@ -46,7 +41,6 @@ import {
   toDeclarativeGraph,
 } from "../run/run-imperative-graph.js";
 import { AffectedNode } from "../editor/types.js";
-import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
 import { DescriberManager } from "./describer-manager.js";
 
 export const inspectableGraph = (
@@ -64,15 +58,6 @@ const maybeURL = (url?: string): URL | undefined => {
     return undefined;
   }
 };
-
-type CustomDescriberResult =
-  | {
-      success: true;
-      result: NodeDescriberResult;
-    }
-  | {
-      success: false;
-    };
 
 class Graph implements InspectableGraphWithStore {
   #url?: URL;
@@ -159,19 +144,15 @@ class Graph implements InspectableGraphWithStore {
     type: NodeTypeIdentifier,
     options: NodeTypeDescriberOptions = {}
   ): Promise<NodeDescriberResult> {
-    const handle = GraphDescriptorHandle.create(
-      this.#cache.graph,
-      this.#graphId
-    );
-    if (!handle.success) {
-      throw new Error(`Inspect API Integrity Error: ${handle.error}`);
-    }
-    const manager = new DescriberManager(
-      handle.result,
-      this.#cache.describe,
+    const manager = DescriberManager.create(
+      this.#graphId,
+      this.#cache,
       this.#options
     );
-    return manager.describeNodeType(id, type, options);
+    if (!manager.success) {
+      throw new Error(`Inspect API Integrity Error: ${manager.error}`);
+    }
+    return manager.result.describeNodeType(id, type, options);
   }
 
   nodeById(id: NodeIdentifier) {
@@ -249,150 +230,16 @@ class Graph implements InspectableGraphWithStore {
       .filter((node) => node.isEntry());
   }
 
-  async #describeWithStaticAnalysis(): Promise<NodeDescriberResult> {
-    const inputSchemas = (
-      await Promise.all(
-        this.nodesByType("input")
-          .filter((n) => n.isEntry())
-          .map((input) =>
-            describeInput({
-              inputs: input.configuration(),
-              incoming: input.incoming(),
-              outgoing: input.outgoing(),
-              asType: true,
-            })
-          )
-      )
-    ).map((result) => result.outputSchema);
-
-    const outputSchemas = (
-      await Promise.all(
-        this.nodesByType("output")
-          .filter((n) => n.isExit())
-          .map((output) =>
-            describeOutput({
-              inputs: output.configuration(),
-              incoming: output.incoming(),
-              outgoing: output.outgoing(),
-              asType: true,
-            })
-          )
-      )
-    )
-      .map((result) =>
-        result.inputSchema.behavior?.includes("bubble")
-          ? null
-          : result.inputSchema
-      )
-      .filter(Boolean) as Schema[];
-
-    const inputSchema = combineSchemas(inputSchemas, (result, schema) => {
-      if (schema.additionalProperties !== false) {
-        result.additionalProperties = true;
-      } else if (!("additionalProperties" in result)) {
-        result.additionalProperties = false;
-      }
-    });
-    const outputSchema = removeProperty(
-      combineSchemas(outputSchemas),
-      "schema"
-    );
-
-    return { inputSchema, outputSchema };
-  }
-
-  async #tryDescribingWithCustomDescriber(
-    inputs: InputValues
-  ): Promise<CustomDescriberResult> {
-    const customDescriber =
-      this.#graph().metadata?.describer ||
-      (this.#graph().main ? `module:${this.#graph().main}` : undefined);
-    if (!customDescriber) {
-      return { success: false };
-    }
-    // invoke graph
-    try {
-      const { loader, sandbox } = this.#options;
-      if (sandbox && customDescriber.startsWith("module:")) {
-        const { inputSchema, outputSchema } =
-          await this.#describeWithStaticAnalysis();
-
-        const moduleId = customDescriber.slice("module:".length);
-
-        const result = await invokeDescriber(
-          moduleId,
-          sandbox,
-          this.#graph(),
-          inputs,
-          inputSchema,
-          outputSchema
-        );
-        if (result) {
-          return { success: true, result };
-        }
-        if (result === false) {
-          return { success: false };
-        }
-      }
-      if (!loader) {
-        return { success: false };
-      }
-      const base = this.#url;
-
-      // try loading the describer graph.
-      const loadResult = await loader.load(customDescriber, {
-        base,
-        board: this.#graph(),
-        outerGraph: this.#graph(),
-      });
-      if (!loadResult.success) {
-        const error = `Could not load custom describer graph ${customDescriber}: ${loadResult.error}`;
-        console.warn(error);
-        return loadResult;
-      }
-      const { inputSchema: $inputSchema, outputSchema: $outputSchema } =
-        await this.#describeWithStaticAnalysis();
-      // Remove the artifacts of the describer from the input/output schemas.
-      // TODO: The right fix here is for static describer to not include
-      // describer outputs.
-      // delete $outputSchema.properties?.inputSchema;
-      // delete $outputSchema.properties?.outputSchema;
-      const result = (await invokeGraph(
-        loadResult,
-        { ...inputs, $inputSchema, $outputSchema },
-        {
-          base,
-          kits: this.#options.kits,
-          loader,
-        }
-      )) as NodeDescriberResult;
-      if ("$error" in result) {
-        console.warn(
-          `Error while invoking graph's custom describer`,
-          result.$error
-        );
-        return { success: false };
-      }
-      if (!result.inputSchema || !result.outputSchema) {
-        console.warn(
-          `Custom describer did not return input/output schemas`,
-          result
-        );
-        return { success: false };
-      }
-      return { success: true, result };
-    } catch (e) {
-      console.warn(`Error while invoking graph's custom describer`, e);
-      return { success: false };
-    }
-  }
-
   async describe(inputs?: InputValues): Promise<NodeDescriberResult> {
-    const result = await this.#tryDescribingWithCustomDescriber(inputs || {});
-    if (result.success) {
-      return result.result;
+    const manager = DescriberManager.create(
+      this.#graphId,
+      this.#cache,
+      this.#options
+    );
+    if (!manager.success) {
+      throw new Error(`Inspect API Integrity Error: ${manager.error}`);
     }
-    return this.#describeWithStaticAnalysis();
+    return manager.result.describe(inputs);
   }
 
   get nodeStore() {
