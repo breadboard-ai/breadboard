@@ -90,6 +90,7 @@ export class BreadboardTool implements BBRTTool<InputValues, OutputValues> {
 
   async invoke(inputs: InputValues): Promise<Result<OutputValues>> {
     const bgl = await this.#bgl();
+    console.log('BREADBOARD INVOKE', {inputs, bgl});
     const config: RunConfig = {
       // TODO(aomarks) What should this be, it matters for relative imports,
       // right?
@@ -97,26 +98,35 @@ export class BreadboardTool implements BBRTTool<InputValues, OutputValues> {
       kits: this.#kits,
       runner: bgl,
       loader: this.#loader,
-      // TOOD(aomarks) Why is this both here and under run() below?
-      inputs,
       // Enables the "secret" event.
       interactiveSecrets: true,
+      // TODO(aomarks) Provide an abort signal.
     };
     // TODO(aomarks) Support proxying/remote execution.
     const runner = createRunner(config);
     const runResult = await new Promise<Result<OutputValues[]>>(
       (endBoardRun) => {
         const outputs: OutputValues[] = [];
+        runner.addEventListener('input', (event) => {
+          console.log('BREADBOARD INPUT', event.data, runner.inputSchema());
+          // TODO(aomarks) I thought I should be able to pass the inputs to the
+          // RunConfig, and/or to the main run call -- but neither seem to work.
+          void runner.run(inputs);
+        });
         runner.addEventListener('output', (event) => {
+          console.log('BREADBOARD OUTPUT', event.data.outputs);
           outputs.push(event.data.outputs);
         });
         runner.addEventListener('end', () => {
+          console.log('BREADBOARD END');
           endBoardRun({ok: true, value: outputs});
         });
         runner.addEventListener('error', (event) => {
+          console.log('BREADBOARD ERROR', event.data.error);
           endBoardRun({ok: false, error: event.data.error});
         });
         runner.addEventListener('secret', (event) => {
+          console.log('BREADBOARD SECRET', event.data.keys);
           void (async () => {
             const secrets: Record<string, string> = {};
             const missing = [];
@@ -150,7 +160,7 @@ export class BreadboardTool implements BBRTTool<InputValues, OutputValues> {
           })();
         });
 
-        void runner.run(inputs);
+        void runner.run();
       },
     );
     console.log('BREADBOARD RUN DONE', runResult);
