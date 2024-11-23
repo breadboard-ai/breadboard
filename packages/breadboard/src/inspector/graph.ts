@@ -36,12 +36,9 @@ import {
   NodeTypeDescriberOptions,
 } from "./types.js";
 import { VirtualNode } from "./virtual-node.js";
-import {
-  isImperativeGraph,
-  toDeclarativeGraph,
-} from "../run/run-imperative-graph.js";
 import { AffectedNode } from "../editor/types.js";
 import { DescriberManager } from "./describer-manager.js";
+import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
 
 export const inspectableGraph = (
   graph: GraphDescriptor,
@@ -67,27 +64,20 @@ class Graph implements InspectableGraphWithStore {
     cache?: MutableGraph,
     options?: InspectableGraphOptions
   ) {
-    this.#graphId = graphId;
-    if (graphId) {
-      const subGraph = graph.graphs?.[graphId];
-      if (!subGraph) {
-        throw new Error(
-          `Inspect API integrity error: no sub-graph with id "${graphId}" found`
-        );
-      }
-      if (!cache) {
-        throw new Error(
-          `Inspect API integrity error: parent cache not supplied to a sub-graph.`
-        );
-      }
-    }
-    if (isImperativeGraph(graph)) {
-      const { main } = graph;
-      graph = toDeclarativeGraph(graph);
-      this.#imperativeMain = main;
-    }
     this.#options = options || {};
-    this.#cache = cache ?? this.#initializeMutableGraph(graph);
+    this.#graphId = graphId;
+    if (graphId && !cache) {
+      throw new Error(
+        `Inspect API integrity error: parent cache not supplied to a sub-graph.`
+      );
+    }
+    const handle = GraphDescriptorHandle.create(graph, graphId);
+    if (!handle.success) {
+      throw new Error(`Inspect API integrity error: ${handle.error}`);
+    }
+    this.#imperativeMain = handle.result.main();
+    this.#cache =
+      cache ?? this.#initializeMutableGraph(handle.result.outerGraph());
   }
 
   #graph(): GraphDescriptor {
