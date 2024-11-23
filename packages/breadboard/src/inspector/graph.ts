@@ -98,20 +98,7 @@ class Graph implements InspectableGraphWithStore {
     }
     this.#url = maybeURL(graph.url);
     this.#options = options || {};
-    if (cache) {
-      this.#cache = cache;
-    } else {
-      const nodes = new NodeCache(this);
-      const edges = new EdgeCache(nodes);
-      const modules = new ModuleCache();
-      const describe = new DescribeResultCache();
-      const cache: MutableGraph = { graph, edges, nodes, modules, describe };
-      this.#graphs = this.#populateSubgraphs(cache);
-      nodes.populate(graph);
-      edges.populate(graph);
-      modules.populate(graph);
-      this.#cache = cache;
-    }
+    this.#cache = cache ?? this.#initializeMutableGraph(graph);
   }
 
   #graph(): GraphDescriptor {
@@ -299,24 +286,26 @@ class Graph implements InspectableGraphWithStore {
     this.#graphs = null;
   }
 
+  #initializeMutableGraph(graph: GraphDescriptor): MutableGraph {
+    const nodes = new NodeCache(this);
+    const edges = new EdgeCache(nodes);
+    const modules = new ModuleCache();
+    const describe = new DescribeResultCache();
+    const cache: MutableGraph = { graph, edges, nodes, modules, describe };
+    this.#graphs = this.#populateSubgraphs(cache);
+    nodes.populate(graph);
+    edges.populate(graph);
+    modules.populate(graph);
+    return cache;
+  }
+
   resetGraph(graph: GraphDescriptor): void {
     if (this.#graphId) {
       throw new Error(
         "Inspect API integrity error: resetSubgraph should never be called for subgraphs"
       );
     }
-    this.#cache.graph = graph;
-    const nodes = new NodeCache(this);
-    const edges = new EdgeCache(nodes);
-    edges.populate(graph);
-
-    const modules = new ModuleCache();
-    modules.populate(graph);
-
-    const describe = new DescribeResultCache();
-
-    this.#cache = { graph, edges, nodes, modules, describe };
-    this.#graphs = null;
+    this.#cache = this.#initializeMutableGraph(graph);
   }
 
   addSubgraph(subgraph: GraphDescriptor, graphId: GraphIdentifier): void {
