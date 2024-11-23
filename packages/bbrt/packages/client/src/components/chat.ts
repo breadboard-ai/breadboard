@@ -63,10 +63,9 @@ export class BBRTChat extends SignalWatcher(LitElement) {
     if (this.conversation === undefined) {
       return html`Connecting...`;
     }
-    const turns = this.conversation.turns.filter(
-      ({kind}) => kind !== 'user-tool-responses',
-    );
-    return turns.map(
+    const turns = this.conversation.turns;
+    // .filter(({kind}) => kind !== 'user-tool-responses');
+    return this.conversation.turns.map(
       (turn, i) =>
         html`<bbrt-chat-message
           .turn=${turn}

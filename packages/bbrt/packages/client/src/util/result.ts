@@ -11,7 +11,9 @@ export type Result<T, E = unknown> =
   | {ok: true; value: T; error?: undefined}
   | {ok: false; value?: undefined; error: E};
 
-export function resultify<T, E = unknown>(promise: Promise<T>): Result<T, E>;
+export function resultify<T, E = unknown>(
+  promise: Promise<T>,
+): Promise<Result<T, E>>;
 
 export function resultify<T, E = unknown>(
   asyncFn: () => Promise<T>,

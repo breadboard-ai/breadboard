@@ -5,12 +5,14 @@
  */
 
 import {html} from 'lit';
-import type {BBRTTool} from './tool.js';
+import type {Result} from '../util/result.js';
+import type {BBRTInvokeResult, BBRTTool} from './tool.js';
 
-export const getWikipediaArticle: BBRTTool<
-  {title: string},
-  {wikitext: string} | {error: string}
-> = {
+type WikipediaOutput =
+  | {wikitext: string; error?: undefined}
+  | {wikitext?: undefined; error: string};
+
+export const getWikipediaArticle: BBRTTool<{title: string}, WikipediaOutput> = {
   displayName: 'Get Wikipedia Article',
   icon: '/images/wikipedia.png',
   declaration: () => ({
@@ -31,7 +33,31 @@ export const getWikipediaArticle: BBRTTool<
     },
   }),
 
-  render: ({title}) => html`
+  api: () => ({
+    ok: true,
+    value: {
+      inputSchema: {
+        type: 'object',
+        properties: {
+          title: {
+            type: 'string',
+            description: 'The title of the Wikipedia article to fetch',
+          },
+        },
+      },
+      outputSchema: {
+        type: 'object',
+        properties: {
+          wikitext: {
+            type: 'string',
+            description: 'The resulting wikitext',
+          },
+        },
+      },
+    },
+  }),
+
+  renderCard: ({title}) => html`
     <span>Read Wikipedia Article</span>
     <em
       ><a
@@ -43,7 +69,14 @@ export const getWikipediaArticle: BBRTTool<
     >
   `,
 
-  invoke: async ({title}) => {
+  renderResult: ({title}, result) => html`
+    <h4>${title}</h4>
+    <pre>${result.wikitext}</pre>
+  `,
+
+  invoke: async ({
+    title,
+  }): Promise<Result<BBRTInvokeResult<WikipediaOutput>>> => {
     const url = new URL('https://en.wikipedia.org/w/api.php');
     url.searchParams.set('page', title);
     url.searchParams.set('action', 'parse');
@@ -71,6 +104,12 @@ export const getWikipediaArticle: BBRTTool<
     if (!wikitext) {
       return {ok: false, error: 'No wikitext found'};
     }
-    return {ok: true, value: {wikitext: wikitext.slice(0, 5000)}};
+    return {
+      ok: true,
+      value: {
+        output: {wikitext: wikitext.slice(0, 5000)},
+        artifacts: [],
+      },
+    };
   },
 };
