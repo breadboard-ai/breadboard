@@ -265,6 +265,11 @@ class KitCache implements InspectableKitCache {
   }
 
   populate(context: NodeHandlerContext, graph: GraphDescriptor) {
-    this.#kits = collectKits(context, graph);
+    const kits = collectKits(context, graph);
+
+    this.#types = new Map(
+      kits.flatMap((kit) => kit.nodeTypes.map((type) => [type.type(), type]))
+    );
+    this.#kits = kits;
   }
 }

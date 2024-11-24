@@ -662,11 +662,12 @@ export type InspectableKitCache = {
  */
 export type MutableGraph = {
   graph: GraphDescriptor;
-  nodes: InspectableNodeCache;
-  edges: InspectableEdgeCache;
-  modules: InspectableModuleCache;
-  describe: InspectableDescriberResultCache;
-  kits: InspectableKitCache;
+  readonly options: InspectableGraphOptions;
+  readonly nodes: InspectableNodeCache;
+  readonly edges: InspectableEdgeCache;
+  readonly modules: InspectableModuleCache;
+  readonly describe: InspectableDescriberResultCache;
+  readonly kits: InspectableKitCache;
 };
 
 /**

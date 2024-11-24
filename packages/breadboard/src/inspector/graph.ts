@@ -17,9 +17,8 @@ import {
   NodeIdentifier,
   NodeTypeIdentifier,
 } from "../types.js";
-import { graphUrlLike } from "../utils/graph-url-like.js";
 import { EdgeCache } from "./edge.js";
-import { createGraphNodeType, KitCache } from "./kits.js";
+import { KitCache } from "./kits.js";
 import { ModuleCache } from "./module.js";
 import { Node, NodeCache } from "./node.js";
 import { DescribeResultCache } from "./run/describe-cache.js";
@@ -35,7 +34,6 @@ import {
   MutableGraph,
   NodeTypeDescriberOptions,
 } from "./types.js";
-import { VirtualNode } from "./virtual-node.js";
 import { AffectedNode } from "../editor/types.js";
 import { DescriberManager } from "./describer-manager.js";
 import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
@@ -49,9 +47,6 @@ export const inspectableGraph = (
 };
 
 class Graph implements InspectableGraphWithStore {
-  #nodeTypes?: Map<NodeTypeIdentifier, InspectableNodeType>;
-  #options: InspectableGraphOptions;
-
   #graphId: GraphIdentifier;
   #cache: MutableGraph;
   #graphs: InspectableSubgraphs | null = null;
@@ -64,7 +59,6 @@ class Graph implements InspectableGraphWithStore {
     cache?: MutableGraph,
     options?: InspectableGraphOptions
   ) {
-    this.#options = options || {};
     this.#graphId = graphId;
     if (graphId && !cache) {
       throw new Error(
@@ -77,7 +71,8 @@ class Graph implements InspectableGraphWithStore {
     }
     this.#imperativeMain = handle.result.main();
     this.#cache =
-      cache ?? this.#initializeMutableGraph(handle.result.outerGraph());
+      cache ??
+      this.#initializeMutableGraph(handle.result.outerGraph(), options || {});
   }
 
   #graph(): GraphDescriptor {
@@ -110,11 +105,7 @@ class Graph implements InspectableGraphWithStore {
     type: NodeTypeIdentifier,
     options: NodeTypeDescriberOptions = {}
   ): Promise<NodeDescriberResult> {
-    const manager = DescriberManager.create(
-      this.#graphId,
-      this.#cache,
-      this.#options
-    );
+    const manager = DescriberManager.create(this.#graphId, this.#cache);
     if (!manager.success) {
       throw new Error(`Inspect API Integrity Error: ${manager.error}`);
     }
@@ -122,10 +113,7 @@ class Graph implements InspectableGraphWithStore {
   }
 
   nodeById(id: NodeIdentifier) {
-    if (this.#graph().virtual) {
-      return new VirtualNode({ id });
-    }
-    return this.#cache.nodes.get(id, this.#graphId);
+    return new GraphQueries(this.#cache, this.#graphId).nodeById(id);
   }
 
   nodes(): InspectableNode[] {
@@ -153,26 +141,11 @@ class Graph implements InspectableGraphWithStore {
   }
 
   typeForNode(id: NodeIdentifier): InspectableNodeType | undefined {
-    const node = this.nodeById(id);
-    if (!node) {
-      return undefined;
-    }
-    return this.typeById(node.descriptor.type);
+    return new GraphQueries(this.#cache, this.#graphId).typeForNode(id);
   }
 
   typeById(id: NodeTypeIdentifier): InspectableNodeType | undefined {
-    const kits = this.kits();
-    this.#nodeTypes ??= new Map(
-      kits.flatMap((kit) => kit.nodeTypes.map((type) => [type.type(), type]))
-    );
-    const knownNodeType = this.#nodeTypes.get(id);
-    if (knownNodeType) {
-      return knownNodeType;
-    }
-    if (!graphUrlLike(id)) {
-      return undefined;
-    }
-    return createGraphNodeType(id, this.#options);
+    return new GraphQueries(this.#cache, this.#graphId).typeById(id);
   }
 
   incomingForNode(id: NodeIdentifier): InspectableEdge[] {
@@ -188,11 +161,7 @@ class Graph implements InspectableGraphWithStore {
   }
 
   async describe(inputs?: InputValues): Promise<NodeDescriberResult> {
-    const manager = DescriberManager.create(
-      this.#graphId,
-      this.#cache,
-      this.#options
-    );
+    const manager = DescriberManager.create(this.#graphId, this.#cache);
     if (!manager.success) {
       throw new Error(`Inspect API Integrity Error: ${manager.error}`);
     }
@@ -256,7 +225,10 @@ class Graph implements InspectableGraphWithStore {
     this.#graphs = null;
   }
 
-  #initializeMutableGraph(graph: GraphDescriptor): MutableGraph {
+  #initializeMutableGraph(
+    graph: GraphDescriptor,
+    options: InspectableGraphOptions
+  ): MutableGraph {
     const nodes = new NodeCache((descriptor, graphId) => {
       const graph = graphId ? this.graphs()?.[graphId] : this;
       if (!graph) {
@@ -272,6 +244,7 @@ class Graph implements InspectableGraphWithStore {
     const kits = new KitCache();
     const cache: MutableGraph = {
       graph,
+      options,
       edges,
       nodes,
       modules,
@@ -282,7 +255,7 @@ class Graph implements InspectableGraphWithStore {
     nodes.populate(graph);
     edges.populate(graph);
     modules.populate(graph);
-    kits.populate(this.#options, graph);
+    kits.populate(options, graph);
     return cache;
   }
 
@@ -292,7 +265,7 @@ class Graph implements InspectableGraphWithStore {
         "Inspect API integrity error: resetSubgraph should never be called for subgraphs"
       );
     }
-    this.#cache = this.#initializeMutableGraph(graph);
+    this.#cache = this.#initializeMutableGraph(graph, this.#cache.options);
   }
 
   addSubgraph(subgraph: GraphDescriptor, graphId: GraphIdentifier): void {
@@ -326,7 +299,7 @@ class Graph implements InspectableGraphWithStore {
     if (!subgraphs) return {};
     return Object.fromEntries(
       Object.keys(subgraphs).map((id) => {
-        return [id, new Graph(cache.graph, id, cache, this.#options)];
+        return [id, new Graph(cache.graph, id, cache)];
       })
     );
   }

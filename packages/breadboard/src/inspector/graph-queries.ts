@@ -8,8 +8,17 @@ import {
   GraphDescriptor,
   GraphIdentifier,
   NodeIdentifier,
+  NodeTypeIdentifier,
 } from "@breadboard-ai/types";
-import { InspectableEdge, InspectableNode, MutableGraph } from "./types.js";
+import {
+  InspectableEdge,
+  InspectableNode,
+  InspectableNodeType,
+  MutableGraph,
+} from "./types.js";
+import { graphUrlLike } from "../utils/graph-url-like.js";
+import { createGraphNodeType } from "./kits.js";
+import { VirtualNode } from "./virtual-node.js";
 
 export { GraphQueries };
 
@@ -54,5 +63,31 @@ class GraphQueries {
     return this.#cache.nodes
       .nodes(this.#graphId)
       .filter((node) => node.isEntry());
+  }
+
+  nodeById(id: NodeIdentifier) {
+    if (this.#graph().virtual) {
+      return new VirtualNode({ id });
+    }
+    return this.#cache.nodes.get(id, this.#graphId);
+  }
+
+  typeForNode(id: NodeIdentifier): InspectableNodeType | undefined {
+    const node = this.nodeById(id);
+    if (!node) {
+      return undefined;
+    }
+    return this.typeById(node.descriptor.type);
+  }
+
+  typeById(id: NodeTypeIdentifier): InspectableNodeType | undefined {
+    const knownNodeType = this.#cache.kits.getType(id);
+    if (knownNodeType) {
+      return knownNodeType;
+    }
+    if (!graphUrlLike(id)) {
+      return undefined;
+    }
+    return createGraphNodeType(id, this.#cache.options);
   }
 }

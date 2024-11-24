@@ -11,7 +11,6 @@ import {
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
 import {
-  InspectableGraphOptions,
   InspectableNode,
   MutableGraph,
   NodeTypeDescriberOptions,
@@ -49,15 +48,14 @@ export { DescriberManager };
 class DescriberManager {
   private constructor(
     public readonly handle: GraphDescriptorHandle,
-    public readonly cache: MutableGraph,
-    public readonly options: InspectableGraphOptions
+    public readonly cache: MutableGraph
   ) {}
 
   async #getDescriber(
     type: NodeTypeIdentifier
   ): Promise<NodeDescriberFunction | undefined> {
-    const { kits } = this.options;
-    const loader = this.options.loader || createLoader();
+    const { kits } = this.cache.options;
+    const loader = this.cache.options.loader || createLoader();
     let handler: NodeHandler | undefined;
     try {
       handler = await getHandler(type, { kits, loader });
@@ -139,7 +137,7 @@ class DescriberManager {
     }
     // invoke graph
     try {
-      const { loader, sandbox } = this.options;
+      const { loader, sandbox } = this.cache.options;
       if (sandbox && customDescriber.startsWith("module:")) {
         const { inputSchema, outputSchema } =
           await this.#describeWithStaticAnalysis();
@@ -196,7 +194,7 @@ class DescriberManager {
         { ...inputs, $inputSchema, $outputSchema },
         {
           base,
-          kits: this.options.kits,
+          kits: this.cache.options.kits,
           loader,
         }
       )) as NodeDescriberResult;
@@ -245,13 +243,13 @@ class DescriberManager {
         // configuration schema or their incoming/outgoing edges.
         if (type === "input") {
           if (this.handle.main()) {
-            if (!this.options.sandbox) {
+            if (!this.cache.options.sandbox) {
               throw new Error(
                 "Sandbox not supplied, won't be able to describe this graph correctly"
               );
             }
             const result = await invokeMainDescriber(
-              this.options.sandbox,
+              this.cache.options.sandbox,
               this.handle.graph(),
               options.inputs!,
               {},
@@ -271,13 +269,13 @@ class DescriberManager {
         }
         if (type === "output") {
           if (this.handle.main()) {
-            if (!this.options.sandbox) {
+            if (!this.cache.options.sandbox) {
               throw new Error(
                 "Sandbox not supplied, won't be able to describe this graph correctly"
               );
             }
             const result = await invokeMainDescriber(
-              this.options.sandbox,
+              this.cache.options.sandbox,
               this.handle.graph(),
               options.inputs!,
               {},
@@ -296,7 +294,7 @@ class DescriberManager {
           return describeOutput(options);
         }
 
-        const { kits } = this.options;
+        const { kits } = this.cache.options;
         const describer = await this.#getDescriber(type);
         const asWired = {
           inputSchema: edgesToSchema(EdgeType.In, options?.incoming),
@@ -305,12 +303,12 @@ class DescriberManager {
         if (!describer) {
           return asWired;
         }
-        const loader = this.options.loader || createLoader();
+        const loader = this.cache.options.loader || createLoader();
         const context: NodeDescriberContext = {
           outerGraph: this.handle.outerGraph(),
           loader,
           kits,
-          sandbox: this.options.sandbox,
+          sandbox: this.cache.options.sandbox,
           wires: {
             incoming: Object.fromEntries(
               (options?.incoming ?? []).map((edge) => [
@@ -354,8 +352,7 @@ class DescriberManager {
 
   static create(
     graphId: GraphIdentifier,
-    cache: MutableGraph,
-    options: InspectableGraphOptions
+    cache: MutableGraph
   ): Result<DescriberManager> {
     const handle = GraphDescriptorHandle.create(cache.graph, graphId);
     if (!handle.success) {
@@ -363,7 +360,7 @@ class DescriberManager {
     }
     return {
       success: true,
-      result: new DescriberManager(handle.result, cache, options),
+      result: new DescriberManager(handle.result, cache),
     };
   }
 }
