@@ -581,27 +581,6 @@ export type InspectableModule = {
 
 export type InspectableModules = Record<ModuleIdentifier, InspectableModule>;
 
-/**
- * Represents a tracker for edits to the graph.
- */
-export type GraphStoreMutator = {
-  // TODO: This is probably wrong. A new version of the graph should likely
-  // create a new instance of an `InspectableGraph`.
-  updateGraph(
-    graph: GraphDescriptor,
-    visualOnly: boolean,
-    affectedNodes: AffectedNode[],
-    affectedModules: ModuleIdentifier[]
-  ): void;
-  // Destroys all caches.
-  // TODO: Maybe too much machinery here? Just get a new instance of inspector?
-  resetGraph(graph: GraphDescriptor): void;
-  nodeStore: NodeStoreMutator;
-  edgeStore: EdgeStoreMutator;
-  addSubgraph(subgraph: GraphDescriptor, graphId: GraphIdentifier): void;
-  removeSubgraph(graphId: GraphIdentifier): void;
-};
-
 export type NodeStoreMutator = {
   add(node: NodeDescriptor, graphId: GraphIdentifier): void;
   remove(id: NodeIdentifier, graphId: GraphIdentifier): void;
@@ -615,8 +594,6 @@ export type EdgeStoreMutator = {
   addSubgraphEdges(subgraph: GraphDescriptor, graphId: GraphIdentifier): void;
   removeSubgraphEdges(graphId: GraphIdentifier): void;
 };
-
-export type InspectableGraphWithStore = InspectableGraph & GraphStoreMutator;
 
 export type InspectableEdgeCache = EdgeStoreMutator & {
   get(edge: Edge, graphId: GraphIdentifier): InspectableEdge | undefined;

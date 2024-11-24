@@ -12,9 +12,9 @@ import {
 import {
   InspectableDescriberResultCache,
   InspectableEdgeCache,
+  InspectableGraph,
   InspectableGraphCache,
   InspectableGraphOptions,
-  InspectableGraphWithStore,
   InspectableKitCache,
   InspectableModuleCache,
   InspectableNodeCache,
@@ -36,7 +36,7 @@ export { MutableGraphImpl };
 export const inspectableGraph = (
   graph: GraphDescriptor,
   options?: InspectableGraphOptions
-): InspectableGraphWithStore => {
+): InspectableGraph => {
   return new Graph("", new MutableGraphImpl(graph, options || {}));
 };
 

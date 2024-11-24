@@ -19,7 +19,7 @@ import {
 } from "../types.js";
 import {
   InspectableEdge,
-  InspectableGraphWithStore,
+  InspectableGraph,
   InspectableKit,
   InspectableModules,
   InspectableNode,
@@ -28,13 +28,12 @@ import {
   MutableGraph,
   NodeTypeDescriberOptions,
 } from "./types.js";
-import { AffectedNode } from "../editor/types.js";
 import { DescriberManager } from "./describer-manager.js";
 import { GraphQueries } from "./graph-queries.js";
 
 export { Graph };
 
-class Graph implements InspectableGraphWithStore {
+class Graph implements InspectableGraph {
   #graphId: GraphIdentifier;
   #mutable: MutableGraph;
 
@@ -134,59 +133,6 @@ class Graph implements InspectableGraphWithStore {
       throw new Error(`Inspect API Integrity Error: ${manager.error}`);
     }
     return manager.result.describe(inputs);
-  }
-
-  get nodeStore() {
-    return this.#mutable.nodes;
-  }
-
-  get edgeStore() {
-    return this.#mutable.edges;
-  }
-
-  get moduleStore() {
-    return this.#mutable.modules;
-  }
-
-  updateGraph(
-    graph: GraphDescriptor,
-    visualOnly: boolean,
-    affectedNodes: AffectedNode[],
-    affectedModules: ModuleIdentifier[]
-  ): void {
-    if (this.#graphId) {
-      throw new Error(
-        "Inspect API integrity error: updateGraph should never be called for subgraphs"
-      );
-    }
-    this.#mutable.update(graph, visualOnly, affectedNodes, affectedModules);
-  }
-
-  resetGraph(graph: GraphDescriptor): void {
-    if (this.#graphId) {
-      throw new Error(
-        "Inspect API integrity error: resetSubgraph should never be called for subgraphs"
-      );
-    }
-    this.#mutable.rebuild(graph);
-  }
-
-  addSubgraph(subgraph: GraphDescriptor, graphId: GraphIdentifier): void {
-    if (this.#graphId) {
-      throw new Error(
-        `Can't add subgraph "${graphId}" to subgraph "${this.#graphId}": subgraphs can't contain subgraphs`
-      );
-    }
-    this.#mutable.addSubgraph(subgraph, graphId);
-  }
-
-  removeSubgraph(graphId: GraphIdentifier): void {
-    if (this.#graphId) {
-      throw new Error(
-        `Can't remove subgraph "${graphId}" from subgraph "${this.#graphId}": subgraphs can't contain subgraphs`
-      );
-    }
-    this.#mutable.removeSubgraph(graphId);
   }
 
   graphs(): InspectableSubgraphs | undefined {
