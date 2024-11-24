@@ -31,7 +31,7 @@ import {
   NodeTypeDescriberOptions,
 } from "./types.js";
 
-class Node implements InspectableNode {
+export class Node implements InspectableNode {
   descriptor: NodeDescriptor;
   #graph: InspectableGraph;
   #deleted = false;
@@ -161,14 +161,19 @@ class Node implements InspectableNode {
   }
 }
 
+type NodeFactory = (
+  node: NodeDescriptor,
+  graphId: GraphIdentifier
+) => InspectableNode;
+
 export class NodeCache implements InspectableNodeCache {
-  #graph: InspectableGraph;
+  #factory: NodeFactory;
   #map: Map<GraphIdentifier, Map<NodeIdentifier, InspectableNode>> = new Map();
   #typeMap: Map<GraphIdentifier, Map<NodeTypeIdentifier, InspectableNode[]>> =
     new Map();
 
-  constructor(graph: InspectableGraph) {
-    this.#graph = graph;
+  constructor(factory: NodeFactory) {
+    this.#factory = factory;
   }
 
   populate(graph: GraphDescriptor) {
@@ -192,13 +197,7 @@ export class NodeCache implements InspectableNodeCache {
 
   #addNodeInternal(node: NodeDescriptor, graphId: GraphIdentifier) {
     const graphTypes = getOrCreate(this.#typeMap, graphId, () => new Map());
-    const nodeGraph = graphId ? this.#graph.graphs()?.[graphId] : this.#graph;
-    if (!nodeGraph) {
-      throw new Error(
-        `Inspect API Integrity error: unable to find subgraph "${graphId}"`
-      );
-    }
-    const inspectableNode = new Node(node, nodeGraph);
+    const inspectableNode = this.#factory(node, graphId);
     const type = node.type;
     let list = graphTypes.get(type);
     if (!list) {

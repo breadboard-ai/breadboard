@@ -21,7 +21,7 @@ import { graphUrlLike } from "../utils/graph-url-like.js";
 import { EdgeCache } from "./edge.js";
 import { collectKits, createGraphNodeType } from "./kits.js";
 import { ModuleCache } from "./module.js";
-import { NodeCache } from "./node.js";
+import { Node, NodeCache } from "./node.js";
 import { DescribeResultCache } from "./run/describe-cache.js";
 import {
   InspectableEdge,
@@ -261,7 +261,15 @@ class Graph implements InspectableGraphWithStore {
   }
 
   #initializeMutableGraph(graph: GraphDescriptor): MutableGraph {
-    const nodes = new NodeCache(this);
+    const nodes = new NodeCache((descriptor, graphId) => {
+      const graph = graphId ? this.graphs()?.[graphId] : this;
+      if (!graph) {
+        throw new Error(
+          `Inspect API Integrity error: unable to find subgraph "${graphId}"`
+        );
+      }
+      return new Node(descriptor, graph);
+    });
     const edges = new EdgeCache(nodes);
     const modules = new ModuleCache();
     const describe = new DescribeResultCache();
