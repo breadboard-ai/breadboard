@@ -8,8 +8,8 @@
 
 import test from "ava";
 
-import { inspectableGraph } from "../../src/inspector/graph/mutable-graph.js";
 import { createLoader } from "../../src/loader/index.js";
+import { inspector } from "../helpers/_inspector.js";
 
 const BASE_URL = new URL("../../../tests/inspector/data/", import.meta.url);
 
@@ -18,7 +18,7 @@ const load = async (url: string) => {
   const loader = createLoader();
   const result = await loader.load(url, { base });
   if (!result.success) return undefined;
-  return inspectableGraph(result.graph);
+  return inspector(result.graph);
 };
 
 test("inspector API can traverse simplest.json", async (t) => {

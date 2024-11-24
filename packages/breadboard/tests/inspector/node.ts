@@ -5,8 +5,7 @@
  */
 
 import test from "ava";
-
-import { inspectableGraph } from "../../src/inspector/graph/mutable-graph.js";
+import { inspector } from "../helpers/_inspector.js";
 
 test("inspectableNode correctly returns node configuration", (t) => {
   const graph = {
@@ -21,7 +20,7 @@ test("inspectableNode correctly returns node configuration", (t) => {
     ],
     edges: [],
   };
-  const inspectable = inspectableGraph(graph);
+  const inspectable = inspector(graph);
   t.deepEqual(inspectable.nodeById("a")?.configuration(), { foo: "test" });
 });
 
@@ -36,7 +35,7 @@ test("inspectableNode correctly returns node title", (t) => {
       ],
       edges: [],
     };
-    const inspectable = inspectableGraph(graph);
+    const inspectable = inspector(graph);
     t.deepEqual(inspectable.nodeById("a")?.title(), "a");
   }
   {
@@ -52,7 +51,7 @@ test("inspectableNode correctly returns node title", (t) => {
       ],
       edges: [],
     };
-    const inspectable = inspectableGraph(graph);
+    const inspectable = inspector(graph);
     t.deepEqual(inspectable.nodeById("a")?.title(), "test");
   }
 });
@@ -71,7 +70,7 @@ test("InspectableNode instances are stable within InspectableGraph", (t) => {
     ],
     edges: [{ from: "a", to: "b" }],
   };
-  const inspectable = inspectableGraph(graph);
+  const inspectable = inspector(graph);
   t.assert(inspectable.nodeById("a") === inspectable.nodeById("a"));
   t.assert(inspectable.nodeById("b") === inspectable.nodeById("b"));
   t.assert(inspectable.nodeById("a") === inspectable.entries()[0]);
@@ -83,7 +82,7 @@ test("A graph with no nodes doesn't cause errors", (t) => {
     nodes: [],
     edges: [],
   };
-  const inspectable = inspectableGraph(graph);
+  const inspectable = inspector(graph);
   t.deepEqual(inspectable.nodes(), []);
   t.deepEqual(inspectable.nodeById("a"), undefined);
   t.deepEqual(inspectable.nodesByType("foo"), []);

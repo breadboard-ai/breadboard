@@ -5,11 +5,10 @@
  */
 
 import test from "ava";
-
-import { inspectableGraph } from "../../src/inspector/graph/mutable-graph.js";
+import { inspector } from "../helpers/_inspector.js";
 
 test("InspectableEdge instances are stable for read-only graph", (t) => {
-  const graph = inspectableGraph({
+  const graph = inspector({
     nodes: [
       {
         id: "node0",
@@ -38,7 +37,7 @@ test("InspectableEdge instances are stable for read-only graph", (t) => {
 });
 
 test("InspectableEdge correctly reports the type of an edge", (t) => {
-  const graph = inspectableGraph({
+  const graph = inspector({
     nodes: [
       {
         id: "node0",

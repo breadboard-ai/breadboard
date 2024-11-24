@@ -6,7 +6,7 @@
 
 import { GraphDescriptor } from "@breadboard-ai/types";
 import test from "ava";
-import { inspectableGraph } from "../../src/inspector/graph/mutable-graph.js";
+import { inspector } from "../helpers/_inspector.js";
 
 test("InspectableGraph correctly provides subgraphs", async (t) => {
   const graph: GraphDescriptor = {
@@ -20,7 +20,7 @@ test("InspectableGraph correctly provides subgraphs", async (t) => {
     },
   };
 
-  const inspectable = inspectableGraph(graph);
+  const inspectable = inspector(graph);
   const graphs = inspectable.graphs()!;
 
   t.is(Object.values(graphs).length, 1);
