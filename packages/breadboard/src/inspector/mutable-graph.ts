@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "@breadboard-ai/types";
+import {
+  GraphDescriptor,
+  GraphIdentifier,
+  ModuleIdentifier,
+} from "@breadboard-ai/types";
 import {
   InspectableDescriberResultCache,
   InspectableEdgeCache,
@@ -25,6 +29,7 @@ import { GraphCache } from "./graph-cache.js";
 import { Graph } from "./graph.js";
 import { EdgeCache } from "./graph/edge-cache.js";
 import { NodeCache } from "./graph/node-cache.js";
+import { AffectedNode } from "../editor/types.js";
 
 export { MutableGraphImpl };
 
@@ -56,6 +61,55 @@ class MutableGraphImpl implements MutableGraph {
   constructor(graph: GraphDescriptor, options: InspectableGraphOptions) {
     this.options = options;
     this.rebuild(graph);
+  }
+
+  update(
+    graph: GraphDescriptor,
+    visualOnly: boolean,
+    affectedNodes: AffectedNode[],
+    affectedModules: ModuleIdentifier[]
+  ): void {
+    // TODO: Handle this a better way?
+    for (const id of affectedModules) {
+      this.modules.remove(id);
+      if (!graph.modules || !graph.modules[id]) {
+        continue;
+      }
+
+      this.modules.add(id, graph.modules[id]);
+
+      // Find any nodes configured to use this module and clear its describer.
+      const runModulesNodes = this.nodes.byType("runModule", "");
+      for (const node of runModulesNodes) {
+        if (
+          node.configuration().$module &&
+          node.configuration().$module === id &&
+          !affectedNodes.find((n) => n.id === node.descriptor.id)
+        ) {
+          affectedNodes.push({
+            id: node.descriptor.id,
+            graphId: "",
+          });
+          visualOnly = false;
+        }
+      }
+    }
+
+    this.describe.clear(visualOnly, affectedNodes);
+    this.graph = graph;
+    this.graphs.rebuild(graph);
+  }
+
+  addSubgraph(subgraph: GraphDescriptor, graphId: GraphIdentifier): void {
+    this.graphs.add(graphId);
+    this.nodes.addSubgraphNodes(subgraph, graphId);
+    this.edges.addSubgraphEdges(subgraph, graphId);
+  }
+
+  removeSubgraph(graphId: GraphIdentifier): void {
+    this.graphs.remove(graphId);
+    this.nodes.removeSubgraphNodes(graphId);
+    this.edges.removeSubgraphEdges(graphId);
   }
 
   rebuild(graph: GraphDescriptor) {

@@ -159,38 +159,7 @@ class Graph implements InspectableGraphWithStore {
         "Inspect API integrity error: updateGraph should never be called for subgraphs"
       );
     }
-    // TODO: Handle this a better way?
-    for (const id of affectedModules) {
-      this.#mutable.modules.remove(id);
-      if (!graph.modules || !graph.modules[id]) {
-        continue;
-      }
-
-      this.#mutable.modules.add(id, graph.modules[id]);
-
-      // Find any nodes configured to use this module and clear its describer.
-      const runModulesNodes = this.#mutable.nodes.byType(
-        "runModule",
-        this.#graphId
-      );
-      for (const node of runModulesNodes) {
-        if (
-          node.configuration().$module &&
-          node.configuration().$module === id &&
-          !affectedNodes.find((n) => n.id === node.descriptor.id)
-        ) {
-          affectedNodes.push({
-            id: node.descriptor.id,
-            graphId: this.#graphId,
-          });
-          visualOnly = false;
-        }
-      }
-    }
-
-    this.#mutable.describe.clear(visualOnly, affectedNodes);
-    this.#mutable.graph = graph;
-    this.#mutable.graphs.rebuild(graph);
+    this.#mutable.update(graph, visualOnly, affectedNodes, affectedModules);
   }
 
   resetGraph(graph: GraphDescriptor): void {
@@ -208,9 +177,7 @@ class Graph implements InspectableGraphWithStore {
         `Can't add subgraph "${graphId}" to subgraph "${this.#graphId}": subgraphs can't contain subgraphs`
       );
     }
-    this.#mutable.graphs.add(graphId);
-    this.#mutable.nodes.addSubgraphNodes(subgraph, graphId);
-    this.#mutable.edges.addSubgraphEdges(subgraph, graphId);
+    this.#mutable.addSubgraph(subgraph, graphId);
   }
 
   removeSubgraph(graphId: GraphIdentifier): void {
@@ -219,9 +186,7 @@ class Graph implements InspectableGraphWithStore {
         `Can't remove subgraph "${graphId}" from subgraph "${this.#graphId}": subgraphs can't contain subgraphs`
       );
     }
-    this.#mutable.graphs.remove(graphId);
-    this.#mutable.nodes.removeSubgraphNodes(graphId);
-    this.#mutable.edges.removeSubgraphEdges(graphId);
+    this.#mutable.removeSubgraph(graphId);
   }
 
   graphs(): InspectableSubgraphs | undefined {

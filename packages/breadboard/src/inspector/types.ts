@@ -683,6 +683,16 @@ export type MutableGraph = {
   readonly describe: InspectableDescriberResultCache;
   readonly kits: InspectableKitCache;
 
+  update(
+    graph: GraphDescriptor,
+    visualOnly: boolean,
+    affectedNodes: AffectedNode[],
+    affectedModules: ModuleIdentifier[]
+  ): void;
+
+  addSubgraph(subgraph: GraphDescriptor, graphId: GraphIdentifier): void;
+  removeSubgraph(graphId: GraphIdentifier): void;
+
   rebuild(graph: GraphDescriptor): void;
 };
 
