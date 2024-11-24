@@ -16,7 +16,7 @@ import {
   NodeDescriberResult,
   NodeIdentifier,
   NodeTypeIdentifier,
-} from "../types.js";
+} from "../../types.js";
 import {
   InspectableEdge,
   InspectableGraph,
@@ -27,7 +27,7 @@ import {
   InspectableSubgraphs,
   MutableGraph,
   NodeTypeDescriberOptions,
-} from "./types.js";
+} from "../types.js";
 import { DescriberManager } from "./describer-manager.js";
 import { GraphQueries } from "./graph-queries.js";
 

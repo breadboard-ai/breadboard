@@ -7,8 +7,8 @@
 import test from "ava";
 
 import { GraphDescriptor } from "@breadboard-ai/types";
-import { inspectableGraph } from "../../src/inspector/mutable-graph.js";
-import { PortType } from "../../src/inspector/ports.js";
+import { inspectableGraph } from "../../src/inspector/graph/mutable-graph.js";
+import { PortType } from "../../src/inspector/graph/ports.js";
 import { Schema } from "../../src/types.js";
 
 test("collectPorts correctly reports edges", async (t) => {

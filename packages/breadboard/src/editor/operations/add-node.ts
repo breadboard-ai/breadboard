@@ -13,7 +13,7 @@ import {
 } from "../types.js";
 import { InspectableGraph } from "../../inspector/types.js";
 import { errorNoInspect } from "./error.js";
-import { GraphDescriptorHandle } from "../../inspector/graph-descriptor-handle.js";
+import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
 
 export class AddNode implements EditOperation {
   async can(

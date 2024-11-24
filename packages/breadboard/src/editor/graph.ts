@@ -42,7 +42,7 @@ import {
 } from "../run/run-imperative-graph.js";
 import { AddGraph } from "./operations/add-graph.js";
 import { RemoveGraph } from "./operations/remove-graph.js";
-import { MutableGraphImpl } from "../inspector/mutable-graph.js";
+import { MutableGraphImpl } from "../inspector/graph/mutable-graph.js";
 
 const validImperativeEdits: EditSpec["type"][] = [
   "addmodule",

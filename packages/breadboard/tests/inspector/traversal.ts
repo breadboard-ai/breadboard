@@ -8,7 +8,7 @@
 
 import test from "ava";
 
-import { inspectableGraph } from "../../src/inspector/mutable-graph.js";
+import { inspectableGraph } from "../../src/inspector/graph/mutable-graph.js";
 import { createLoader } from "../../src/loader/index.js";
 
 const BASE_URL = new URL("../../../tests/inspector/data/", import.meta.url);

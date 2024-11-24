@@ -11,7 +11,7 @@ import {
   EditTransformResult,
 } from "../types.js";
 import { MoveToGraphTransform } from "./move-to-graph.js";
-import { GraphDescriptorHandle } from "../../inspector/graph-descriptor-handle.js";
+import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
 
 export { MergeGraphTransform };
 

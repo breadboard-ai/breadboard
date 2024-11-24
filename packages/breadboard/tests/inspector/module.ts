@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { inspectableGraph } from "../../src/inspector/mutable-graph.js";
+import { inspectableGraph } from "../../src/inspector/graph/mutable-graph.js";
 
 test("inspectableModule correctly returns modules", (t) => {
   const modules = {

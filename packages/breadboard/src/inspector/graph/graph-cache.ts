@@ -9,7 +9,7 @@ import {
   InspectableGraph,
   InspectableGraphCache,
   InspectableSubgraphs,
-} from "./types.js";
+} from "../types.js";
 
 export { GraphCache };
 

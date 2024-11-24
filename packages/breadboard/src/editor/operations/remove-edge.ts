@@ -12,11 +12,11 @@ import {
   SingleEditResult,
 } from "../types.js";
 import { InspectableGraph } from "../../inspector/types.js";
-import { fixUpStarEdge } from "../../inspector/edge.js";
+import { fixUpStarEdge } from "../../inspector/graph/edge.js";
 import { findEdgeIndex } from "../edge.js";
 import { GraphIdentifier } from "@breadboard-ai/types";
 import { errorNoInspect } from "./error.js";
-import { GraphDescriptorHandle } from "../../inspector/graph-descriptor-handle.js";
+import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
 
 export class RemoveEdge implements EditOperation {
   async can(

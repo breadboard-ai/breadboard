@@ -15,10 +15,10 @@ import {
 import { RemoveEdge } from "./remove-edge.js";
 import { AddEdge } from "./add-edge.js";
 import { edgesEqual, findEdgeIndex } from "../edge.js";
-import { fixUpStarEdge } from "../../inspector/edge.js";
+import { fixUpStarEdge } from "../../inspector/graph/edge.js";
 import { GraphIdentifier } from "@breadboard-ai/types";
 import { errorNoInspect } from "./error.js";
-import { GraphDescriptorHandle } from "../../inspector/graph-descriptor-handle.js";
+import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
 
 export class ChangeEdge implements EditOperation {
   async can(

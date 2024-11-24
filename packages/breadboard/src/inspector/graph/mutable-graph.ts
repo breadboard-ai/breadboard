@@ -19,17 +19,17 @@ import {
   InspectableModuleCache,
   InspectableNodeCache,
   MutableGraph,
-} from "./types.js";
+} from "../types.js";
 import { Node } from "./node.js";
 import { Edge } from "./edge.js";
 import { ModuleCache } from "./module.js";
-import { DescribeResultCache } from "./run/describe-cache.js";
+import { DescribeResultCache } from "../run/describe-cache.js";
 import { KitCache } from "./kits.js";
 import { GraphCache } from "./graph-cache.js";
 import { Graph } from "./graph.js";
-import { EdgeCache } from "./graph/edge-cache.js";
-import { NodeCache } from "./graph/node-cache.js";
-import { AffectedNode } from "../editor/types.js";
+import { EdgeCache } from "./edge-cache.js";
+import { NodeCache } from "./node-cache.js";
+import { AffectedNode } from "../../editor/types.js";
 
 export { MutableGraphImpl };
 

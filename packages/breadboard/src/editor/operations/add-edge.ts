@@ -9,7 +9,7 @@ import {
   fixUpStarEdge,
   fixupConstantEdge,
   unfixUpStarEdge,
-} from "../../inspector/edge.js";
+} from "../../inspector/graph/edge.js";
 import { InspectableGraph } from "../../inspector/types.js";
 import {
   EditOperation,
@@ -19,7 +19,7 @@ import {
   SingleEditResult,
 } from "../types.js";
 import { errorNoInspect } from "./error.js";
-import { GraphDescriptorHandle } from "../../inspector/graph-descriptor-handle.js";
+import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
 
 export class AddEdge implements EditOperation {
   async can(

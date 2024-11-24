@@ -9,8 +9,8 @@ export {
   createDefaultDataStore,
 } from "../data/index.js";
 import { GraphDescriptor } from "../types.js";
-import { GraphStore } from "./graph-store.js";
-import { inspectableGraph } from "./mutable-graph.js";
+import { GraphStore } from "./graph/graph-store.js";
+import { inspectableGraph } from "./graph/mutable-graph.js";
 import { RunObserver } from "./run/run.js";
 import {
   InspectableGraph,

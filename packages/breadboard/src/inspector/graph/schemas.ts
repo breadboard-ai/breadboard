@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SchemaBuilder, combineSchemas } from "../schema.js";
-import { NodeDescriberResult, Schema } from "../types.js";
+import { SchemaBuilder, combineSchemas } from "../../schema.js";
+import { NodeDescriberResult, Schema } from "../../types.js";
 import {
   InspectableEdge,
   InspectableEdgeType,
   NodeTypeDescriberOptions,
-} from "./types.js";
+} from "../types.js";
 
 export enum EdgeType {
   In,

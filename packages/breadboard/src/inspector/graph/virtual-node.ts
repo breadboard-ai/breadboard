@@ -9,13 +9,13 @@ import type {
   NodeDescriptor,
   NodeMetadata,
 } from "@breadboard-ai/types";
-import type { NodeDescriberResult } from "../types.js";
+import type { NodeDescriberResult } from "../../types.js";
 import type {
   InspectableEdge,
   InspectableNode,
   InspectableNodePorts,
   InspectableNodeType,
-} from "./types.js";
+} from "../types.js";
 
 export { VirtualNode };
 

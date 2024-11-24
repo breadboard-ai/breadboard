@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { inspectableGraph } from "../../src/inspector/mutable-graph.js";
+import { inspectableGraph } from "../../src/inspector/graph/mutable-graph.js";
 
 test("input in ports are fixed", async (t) => {
   const graph = inspectableGraph({
