@@ -17,7 +17,7 @@ import {
   MutableGraph,
 } from "./types.js";
 import { Node, NodeCache } from "./node.js";
-import { EdgeCache } from "./edge.js";
+import { Edge, EdgeCache } from "./edge.js";
 import { ModuleCache } from "./module.js";
 import { DescribeResultCache } from "./run/describe-cache.js";
 import { KitCache } from "./kits.js";
@@ -67,13 +67,13 @@ class MutableGraphImpl implements MutableGraph {
       }
       return new Node(descriptor, this, graphId);
     });
-    this.edges = new EdgeCache(this.nodes);
+    this.edges = new EdgeCache(
+      (edge, graphId) => new Edge(this.nodes, edge, graphId)
+    );
     this.modules = new ModuleCache();
     this.describe = new DescribeResultCache();
     this.kits = new KitCache(this.options);
-    this.graphs = new GraphCache((id) => {
-      return new Graph(id, this);
-    });
+    this.graphs = new GraphCache((id) => new Graph(id, this));
     this.graphs.rebuild(graph);
     this.nodes.rebuild(graph);
     this.edges.rebuild(graph);

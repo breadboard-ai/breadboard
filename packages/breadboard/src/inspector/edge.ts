@@ -18,6 +18,8 @@ import {
   ValidateResult,
 } from "./types.js";
 
+export { Edge };
+
 /**
  * This helper is necessary because both "*" and "" are valid representations
  * of a wildcard edge tail. This function ensures that the edge is always
@@ -148,24 +150,29 @@ class Edge implements InspectableEdge {
   }
 }
 
+type EdgeFactory = (
+  edge: EdgeDescriptor,
+  graphId: GraphIdentifier
+) => InspectableEdge;
+
 export class EdgeCache implements InspectableEdgeCache {
-  #nodes: InspectableNodeCache;
+  #factory: EdgeFactory;
   #map: Map<GraphIdentifier, Map<EdgeDescriptor, InspectableEdge>> = new Map();
 
-  constructor(nodes: InspectableNodeCache) {
-    this.#nodes = nodes;
+  constructor(factory: EdgeFactory) {
+    this.#factory = factory;
   }
 
   rebuild(graph: GraphDescriptor) {
     // Initialize the edge map from the graph. This is only done once, and all
     // following updates are performed incrementally.
     const mainGraphEdges = new Map(
-      graph.edges.map((edge) => [edge, new Edge(this.#nodes, edge, "")])
+      graph.edges.map((edge) => [edge, this.#factory(edge, "")])
     );
     this.#map.set("", mainGraphEdges);
     Object.entries(graph.graphs || {}).forEach(([graphId, graph]) => {
       const subGraphEdges = new Map(
-        graph.edges.map((edge) => [edge, new Edge(this.#nodes, edge, graphId)])
+        graph.edges.map((edge) => [edge, this.#factory(edge, graphId)])
       );
       this.#map.set(graphId, subGraphEdges);
     });
@@ -183,7 +190,7 @@ export class EdgeCache implements InspectableEdgeCache {
     if (result) {
       return result;
     }
-    result = new Edge(this.#nodes, edge, graphId);
+    result = this.#factory(edge, graphId);
     this.add(edge, graphId);
     return result;
   }
@@ -198,7 +205,7 @@ export class EdgeCache implements InspectableEdgeCache {
       graphEdges = new Map();
       this.#map.set(graphId, graphEdges);
     }
-    graphEdges.set(edge, new Edge(this.#nodes, edge, graphId));
+    graphEdges.set(edge, this.#factory(edge, graphId));
   }
 
   remove(edge: EdgeDescriptor, graphId: GraphIdentifier) {
