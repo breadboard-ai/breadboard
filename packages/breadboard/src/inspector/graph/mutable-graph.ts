@@ -33,6 +33,13 @@ import { AffectedNode } from "../../editor/types.js";
 
 export { MutableGraphImpl };
 
+/**
+ *
+ * @deprecated This is the old way of getting an InspectableGraph instance.
+ * @param graph
+ * @param options
+ * @returns
+ */
 export const inspectableGraph = (
   graph: GraphDescriptor,
   options?: InspectableGraphOptions
