@@ -14,16 +14,21 @@ import {
   NodeHandlerContext,
   NodeTypeIdentifier,
   NodeHandlerObject,
+  GraphDescriptor,
 } from "../types.js";
 import { graphUrlLike } from "../utils/graph-url-like.js";
 import { collectPortsForType, filterSidePorts } from "./ports.js";
 import { describeInput, describeOutput } from "./schemas.js";
 import {
+  InspectableGraphOptions,
   InspectableKit,
+  InspectableKitCache,
   InspectableNodePorts,
   InspectableNodeType,
   NodeTypeDescriberOptions,
 } from "./types.js";
+
+export { KitCache };
 
 const createBuiltInKit = (): InspectableKit => {
   return {
@@ -78,12 +83,12 @@ const createCustomTypesKit = (
 
 export const collectKits = (
   context: NodeHandlerContext,
-  nodes: NodeDescriptor[]
+  graph: GraphDescriptor
 ): InspectableKit[] => {
   const { kits = [] } = context;
   return [
     createBuiltInKit(),
-    ...createCustomTypesKit(nodes, context),
+    ...createCustomTypesKit(graph.nodes, context),
     ...kits.map((kit) => {
       const descriptor = {
         title: kit.title,
@@ -242,5 +247,35 @@ class CustomNodeType implements InspectableNodeType {
   async ports(): Promise<InspectableNodePorts> {
     const handler = await this.#handlerPromise;
     return portsFromHandler(this.#type, handler as NodeHandler);
+  }
+}
+
+class KitCache implements InspectableKitCache {
+  #types: Map<NodeTypeIdentifier, InspectableNodeType> = new Map();
+  #kits: InspectableKit[] = [];
+  #options: InspectableGraphOptions;
+
+  constructor(options: InspectableGraphOptions) {
+    this.#options = options;
+  }
+
+  getType(id: NodeTypeIdentifier): InspectableNodeType | undefined {
+    return this.#types.get(id);
+  }
+  addType(id: NodeTypeIdentifier, type: InspectableNodeType): void {
+    this.#types.set(id, type);
+  }
+
+  kits(): InspectableKit[] {
+    return this.#kits;
+  }
+
+  rebuild(graph: GraphDescriptor) {
+    const kits = collectKits(this.#options, graph);
+
+    this.#types = new Map(
+      kits.flatMap((kit) => kit.nodeTypes.map((type) => [type.type(), type]))
+    );
+    this.#kits = kits;
   }
 }

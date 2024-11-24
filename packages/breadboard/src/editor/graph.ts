@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { inspectableGraph } from "../inspector/graph.js";
 import { InspectableGraphWithStore } from "../inspector/types.js";
 import { GraphDescriptor, GraphIdentifier, NodeIdentifier } from "../types.js";
 import {
@@ -21,6 +20,7 @@ import {
   EditTransform,
   EditTransformResult,
   EditOperationConductor,
+  AffectedNode,
 } from "./types.js";
 import { ChangeEvent, ChangeRejectEvent } from "./events.js";
 import { AddEdge } from "./operations/add-edge.js";
@@ -43,6 +43,7 @@ import {
 } from "../run/run-imperative-graph.js";
 import { AddGraph } from "./operations/add-graph.js";
 import { RemoveGraph } from "./operations/remove-graph.js";
+import { inspectableGraph } from "../inspector/mutable-graph.js";
 
 const validImperativeEdits: EditSpec["type"][] = [
   "addmodule",
@@ -107,7 +108,7 @@ export class Graph implements EditableGraph {
 
   #updateGraph(
     visualOnly: boolean,
-    affectedNodes: NodeIdentifier[],
+    affectedNodes: AffectedNode[],
     affectedModules: ModuleIdentifier[]
   ) {
     this.#version++;
@@ -233,7 +234,7 @@ export class Graph implements EditableGraph {
     // Presume that all edits will be visual only.
     let visualOnly = true;
     // Collect affected nodes
-    const affectedNodes: NodeIdentifier[][] = [];
+    const affectedNodes: AffectedNode[][] = [];
     // Collect affected modules
     const affectedModules: NodeIdentifier[][] = [];
     let context: EditOperationContext;

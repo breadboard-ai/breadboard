@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeIdentifier } from "@breadboard-ai/types";
+import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
 import {
   EditOperation,
   EditOperationContext,
@@ -17,7 +17,8 @@ import { toSubgraphContext } from "../subgraph-context.js";
 export class RemoveNode implements EditOperation {
   async can(
     id: NodeIdentifier,
-    inspector: InspectableGraph
+    inspector: InspectableGraph,
+    graphId: GraphIdentifier
   ): Promise<SingleEditResult> {
     const exists = !!inspector.nodeById(id);
     if (!exists) {
@@ -28,7 +29,7 @@ export class RemoveNode implements EditOperation {
     }
     return {
       success: true,
-      affectedNodes: [id],
+      affectedNodes: [{ id, graphId }],
       affectedModules: [],
       affectedGraphs: [],
     };
@@ -49,7 +50,7 @@ export class RemoveNode implements EditOperation {
       return subgraphContext;
     }
     const { graph, inspector, store } = subgraphContext.result;
-    const can = await this.can(id, inspector);
+    const can = await this.can(id, inspector, graphId);
     if (!can.success) {
       return can;
     }
@@ -67,7 +68,7 @@ export class RemoveNode implements EditOperation {
     store.nodeStore.remove(id, graphId);
     return {
       success: true,
-      affectedNodes: [id],
+      affectedNodes: [{ id, graphId }],
       affectedModules: [],
       affectedGraphs: [],
     };

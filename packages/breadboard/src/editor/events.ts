@@ -6,6 +6,7 @@
 
 import { GraphDescriptor, NodeIdentifier } from "../types.js";
 import {
+  AffectedNode,
   ChangeEventType,
   ErrorRejection,
   GraphChangeEvent,
@@ -24,7 +25,7 @@ export class ChangeEvent extends Event implements GraphChangeEvent {
     public version: number,
     public visualOnly: boolean,
     public changeType: ChangeEventType,
-    public affectedNodes: NodeIdentifier[],
+    public affectedNodes: AffectedNode[],
     public affectedModules: NodeIdentifier[]
   ) {
     super(ChangeEvent.eventName, {
