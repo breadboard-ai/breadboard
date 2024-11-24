@@ -15,11 +15,13 @@ import { InspectableGraph } from "../../inspector/types.js";
 import { fixUpStarEdge } from "../../inspector/edge.js";
 import { findEdgeIndex } from "../edge.js";
 import { toSubgraphContext } from "../subgraph-context.js";
+import { GraphIdentifier } from "@breadboard-ai/types";
 
 export class RemoveEdge implements EditOperation {
   async can(
     spec: EditableEdgeSpec,
-    inspector: InspectableGraph
+    inspector: InspectableGraph,
+    graphId: GraphIdentifier
   ): Promise<SingleEditResult> {
     if (!inspector.hasEdge(spec)) {
       return {
@@ -29,7 +31,10 @@ export class RemoveEdge implements EditOperation {
     }
     return {
       success: true,
-      affectedNodes: [spec.from, spec.to],
+      affectedNodes: [
+        { id: spec.from, graphId },
+        { id: spec.to, graphId },
+      ],
       affectedModules: [],
       affectedGraphs: [],
     };
@@ -51,7 +56,7 @@ export class RemoveEdge implements EditOperation {
       return subgraphContext;
     }
     const { graph, inspector, store } = subgraphContext.result;
-    const can = await this.can(edge, inspector);
+    const can = await this.can(edge, inspector, graphId);
     if (!can.success) {
       return can;
     }
@@ -62,7 +67,10 @@ export class RemoveEdge implements EditOperation {
     store.edgeStore.remove(foundEdge, graphId);
     return {
       success: true,
-      affectedNodes: [edge.from, edge.to],
+      affectedNodes: [
+        { id: edge.from, graphId },
+        { id: edge.to, graphId },
+      ],
       affectedModules: [],
       affectedGraphs: [],
     };

@@ -31,7 +31,7 @@ export type GraphChangeEvent = Event & {
   version: number;
   visualOnly: boolean;
   changeType: ChangeEventType;
-  affectedNodes: NodeIdentifier[];
+  affectedNodes: AffectedNode[];
 };
 
 export type ErrorRejection = {
@@ -283,7 +283,7 @@ export type SingleEditResult =
     }
   | {
       success: true;
-      affectedNodes: NodeIdentifier[];
+      affectedNodes: AffectedNode[];
       affectedModules: ModuleIdentifier[];
       affectedGraphs: GraphIdentifier[];
       /**
@@ -297,6 +297,11 @@ export type SingleEditResult =
        */
       visualOnly?: boolean;
     };
+
+export type AffectedNode = {
+  id: NodeIdentifier;
+  graphId: GraphIdentifier;
+};
 
 export type EditResultLogEntry = {
   edit: EditSpec["type"];

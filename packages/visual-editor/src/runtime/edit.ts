@@ -64,7 +64,10 @@ export class Edit extends EventTarget {
       this.dispatchEvent(
         new RuntimeBoardEditEvent(
           tab.id,
-          evt.visualOnly ? [] : evt.affectedNodes,
+          // This is wrong, since we lose the graphId here.
+          // TODO: Propagate graphId out to listeners of
+          // RuntimeBoardEditEvent.
+          evt.visualOnly ? [] : evt.affectedNodes.map((node) => node.id),
           evt.visualOnly
         )
       );

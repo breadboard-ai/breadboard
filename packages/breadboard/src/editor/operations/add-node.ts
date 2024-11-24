@@ -68,7 +68,7 @@ export class AddNode implements EditOperation {
     store.nodeStore.add(node, graphId);
     return {
       success: true,
-      affectedNodes: [node.id],
+      affectedNodes: [{ id: node.id, graphId }],
       affectedModules: [],
       affectedGraphs: [],
     };

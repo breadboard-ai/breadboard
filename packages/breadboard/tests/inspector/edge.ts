@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { inspectableGraph } from "../../src/inspector/graph.js";
+import { inspectableGraph } from "../../src/inspector/mutable-graph.js";
 
 test("InspectableEdge instances are stable for read-only graph", (t) => {
   const graph = inspectableGraph({

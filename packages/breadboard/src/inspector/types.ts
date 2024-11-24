@@ -42,6 +42,7 @@ import {
 import { SequenceEntry } from "./run/serializer.js";
 import { ReanimationState } from "../run/types.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
+import { AffectedNode } from "../editor/types.js";
 
 export type GraphVersion = number;
 
@@ -589,7 +590,7 @@ export type GraphStoreMutator = {
   updateGraph(
     graph: GraphDescriptor,
     visualOnly: boolean,
-    affectedNodes: NodeIdentifier[],
+    affectedNodes: AffectedNode[],
     affectedModules: ModuleIdentifier[]
   ): void;
   // Destroys all caches.
@@ -622,6 +623,7 @@ export type InspectableEdgeCache = EdgeStoreMutator & {
   getOrCreate(edge: Edge, graphId: GraphIdentifier): InspectableEdge;
   hasByValue(edge: Edge, graphId: GraphIdentifier): boolean;
   edges(graphId: GraphIdentifier): InspectableEdge[];
+  rebuild(graph: GraphDescriptor): void;
 };
 
 export type InspectableNodeCache = NodeStoreMutator & {
@@ -631,6 +633,7 @@ export type InspectableNodeCache = NodeStoreMutator & {
     graphId: GraphIdentifier
   ): InspectableNode | undefined;
   nodes(graphId: GraphIdentifier): InspectableNode[];
+  rebuild(graph: GraphDescriptor): void;
 };
 
 export type InspectableModuleCache = {
@@ -638,14 +641,32 @@ export type InspectableModuleCache = {
   add(id: string, module: Module): void;
   remove(id: ModuleIdentifier): void;
   modules(): InspectableModules;
+  rebuild(graph: GraphDescriptor): void;
 };
 
 export type InspectableDescriberResultCache = {
   getOrCreate(
     id: NodeIdentifier,
+    graphId: GraphIdentifier,
     factory: () => Promise<NodeDescriberResult>
   ): Promise<NodeDescriberResult>;
-  clear(visualOnly: boolean, affectedNodes: NodeIdentifier[]): void;
+  clear(visualOnly: boolean, affectedNodes: AffectedNode[]): void;
+};
+
+export type InspectableKitCache = {
+  getType(id: NodeTypeIdentifier): InspectableNodeType | undefined;
+  addType(id: NodeTypeIdentifier, type: InspectableNodeType): void;
+  kits(): InspectableKit[];
+  rebuild(graph: GraphDescriptor): void;
+};
+
+export type InspectableGraphCache = {
+  add(id: GraphIdentifier): void;
+  get(id: GraphIdentifier): InspectableGraph | undefined;
+  graphs(): InspectableSubgraphs;
+  remove(id: GraphIdentifier): void;
+  rebuild(graph: GraphDescriptor): void;
+  clear(): void;
 };
 
 /**
@@ -653,10 +674,16 @@ export type InspectableDescriberResultCache = {
  * instance of a graph whose properties mutate.
  */
 export type MutableGraph = {
-  nodes: InspectableNodeCache;
-  edges: InspectableEdgeCache;
-  modules: InspectableModuleCache;
-  describe: InspectableDescriberResultCache;
+  graph: GraphDescriptor;
+  readonly graphs: InspectableGraphCache;
+  readonly options: InspectableGraphOptions;
+  readonly nodes: InspectableNodeCache;
+  readonly edges: InspectableEdgeCache;
+  readonly modules: InspectableModuleCache;
+  readonly describe: InspectableDescriberResultCache;
+  readonly kits: InspectableKitCache;
+
+  rebuild(graph: GraphDescriptor): void;
 };
 
 /**

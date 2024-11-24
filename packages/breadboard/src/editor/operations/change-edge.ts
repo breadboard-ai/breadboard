@@ -17,12 +17,14 @@ import { AddEdge } from "./add-edge.js";
 import { edgesEqual, findEdgeIndex } from "../edge.js";
 import { fixUpStarEdge } from "../../inspector/edge.js";
 import { toSubgraphContext } from "../subgraph-context.js";
+import { GraphIdentifier } from "@breadboard-ai/types";
 
 export class ChangeEdge implements EditOperation {
   async can(
     from: EditableEdgeSpec,
     to: EditableEdgeSpec,
-    inspector: InspectableGraph
+    inspector: InspectableGraph,
+    graphId: GraphIdentifier
   ): Promise<SingleEditResult> {
     if (edgesEqual(from, to)) {
       return {
@@ -33,10 +35,10 @@ export class ChangeEdge implements EditOperation {
       };
     }
     const canRemoveOp = new RemoveEdge();
-    const canRemove = await canRemoveOp.can(from, inspector);
+    const canRemove = await canRemoveOp.can(from, inspector, graphId);
     if (!canRemove.success) return canRemove;
     const canAddOp = new AddEdge();
-    const canAdd = await canAddOp.can(to, inspector);
+    const canAdd = await canAddOp.can(to, inspector, graphId);
     if (!canAdd.success) return canAdd;
     return {
       success: true,
@@ -63,7 +65,7 @@ export class ChangeEdge implements EditOperation {
     }
 
     const { graph, inspector } = subgraphContext.result;
-    const can = await this.can(from, to, inspector);
+    const can = await this.can(from, to, inspector, graphId);
     if (!can.success) {
       return can;
     }
@@ -89,7 +91,10 @@ export class ChangeEdge implements EditOperation {
     }
     return {
       success: true,
-      affectedNodes: [edge.from, edge.to],
+      affectedNodes: [
+        { id: edge.from, graphId },
+        { id: edge.to, graphId },
+      ],
       affectedModules: [],
       affectedGraphs: [],
     };

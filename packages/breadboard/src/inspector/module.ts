@@ -58,7 +58,7 @@ export class ModuleCache implements InspectableModuleCache {
     return this.#modules ?? {};
   }
 
-  populate(graph: GraphDescriptor) {
+  rebuild(graph: GraphDescriptor) {
     if (!graph.modules) {
       return;
     }

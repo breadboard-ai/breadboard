@@ -20,7 +20,6 @@ import {
   NodeDescriptor,
   OutputResponse,
 } from "../../types.js";
-import { inspectableGraph } from "../graph.js";
 import {
   ERROR_PATH,
   PathRegistry,
@@ -53,6 +52,7 @@ import {
 } from "./conversions.js";
 import { ReanimationState } from "../../run/types.js";
 import { LifecycleManager } from "../../run/lifecycle.js";
+import { inspectableGraph } from "../mutable-graph.js";
 
 const shouldSkipEvent = (
   options: RunObserverOptions,
