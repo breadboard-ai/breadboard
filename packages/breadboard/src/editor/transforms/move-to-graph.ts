@@ -15,8 +15,8 @@ import {
   RemoveNodeSpec,
 } from "../types.js";
 import { IsolateSelectionTransform } from "./isolate-selection.js";
-import { toSubgraphContext } from "../subgraph-context.js";
 import { computeSelection } from "../selection.js";
+import { errorNoInspect } from "../operations/error.js";
 
 export { MoveToGraphTransform };
 
@@ -40,19 +40,18 @@ class MoveToGraphTransform implements EditTransform {
   }
 
   async apply(context: EditOperationContext): Promise<EditTransformResult> {
-    const sourceContext = toSubgraphContext(context, this.#source);
-    if (!sourceContext.success) {
-      return sourceContext;
-    }
     const isolatedSelection = await new IsolateSelectionTransform(
       this.#nodes,
       this.#source
-    ).apply(sourceContext.result);
+    ).apply(context);
     if (!isolatedSelection.success) {
       return isolatedSelection;
     }
 
-    const sourceInspector = sourceContext.result.inspector;
+    const sourceInspector = context.mutable.graphs.get(this.#source);
+    if (!sourceInspector) {
+      return errorNoInspect(this.#source);
+    }
 
     const selection = computeSelection(sourceInspector, this.#nodes);
     if (!selection.success) {

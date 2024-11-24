@@ -12,6 +12,7 @@ import {
   RemoveEdgeSpec,
 } from "../types.js";
 import { computeSelection } from "../selection.js";
+import { errorNoInspect } from "../operations/error.js";
 
 export { IsolateSelectionTransform };
 
@@ -25,7 +26,11 @@ class IsolateSelectionTransform implements EditTransform {
   }
 
   async apply(context: EditOperationContext): Promise<EditTransformResult> {
-    const { inspector } = context;
+    const { mutable } = context;
+    const inspector = mutable.graphs.get(this.#graphId);
+    if (!inspector) {
+      return errorNoInspect(this.#graphId);
+    }
     const selection = computeSelection(inspector, this.#nodes);
     if (!selection.success) {
       return selection;
