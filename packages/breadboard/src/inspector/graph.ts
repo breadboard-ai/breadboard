@@ -38,6 +38,7 @@ import { AffectedNode } from "../editor/types.js";
 import { DescriberManager } from "./describer-manager.js";
 import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
 import { GraphQueries } from "./graph-queries.js";
+import { GraphCache } from "./graph-cache.js";
 
 export const inspectableGraph = (
   graph: GraphDescriptor,
@@ -242,8 +243,12 @@ class Graph implements InspectableGraphWithStore {
     const modules = new ModuleCache();
     const describe = new DescribeResultCache();
     const kits = new KitCache();
+    const graphs = new GraphCache((id) => {
+      return new Graph(graph, id, this.#cache);
+    });
     const cache: MutableGraph = {
       graph,
+      graphs,
       options,
       edges,
       nodes,

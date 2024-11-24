@@ -1,34 +1,50 @@
-// /**
-//  * @license
-//  * Copyright 2024 Google LLC
-//  * SPDX-License-Identifier: Apache-2.0
-//  */
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-// import { GraphIdentifier } from "@breadboard-ai/types";
-// import {
-//   InspectableGraph,
-//   InspectableGraphCache,
-//   InspectableSubgraphs,
-// } from "./types.js";
+import { GraphIdentifier } from "@breadboard-ai/types";
+import {
+  InspectableGraph,
+  InspectableGraphCache,
+  InspectableSubgraphs,
+  MutableGraph,
+} from "./types.js";
 
-// export { GraphCache };
+export { GraphCache };
 
-// class GraphCache implements InspectableGraphCache {
-//   #graphs: Map<GraphIdentifier, InspectableGraph> = new Map();
+type GraphFactory = (graphId: GraphIdentifier) => InspectableGraph;
 
-//   add(id: GraphIdentifier, graph: InspectableGraph): void {
-//     this.#graphs.set(id, graph);
-//   }
+class GraphCache implements InspectableGraphCache {
+  #factory: GraphFactory;
+  #graphs: Map<GraphIdentifier, InspectableGraph> = new Map();
 
-//   graphs(): InspectableSubgraphs {
-//     return Object.fromEntries(this.#graphs.entries());
-//   }
+  constructor(factory: GraphFactory) {
+    this.#factory = factory;
+  }
 
-//   remove(id: GraphIdentifier): void {
-//     this.#graphs.delete(id);
-//   }
+  populate(cache: MutableGraph) {
+    const subgraphs = cache.graph.graphs;
+    if (!subgraphs) return;
+    Object.keys(subgraphs).forEach((id) => {
+      this.add(id, this.#factory(id));
+    });
+  }
 
-//   clear(): void {
-//     this.#graphs.clear();
-//   }
-// }
+  add(id: GraphIdentifier, graph: InspectableGraph): void {
+    this.#graphs.set(id, graph);
+  }
+
+  graphs(): InspectableSubgraphs {
+    return Object.fromEntries(this.#graphs.entries());
+  }
+
+  remove(id: GraphIdentifier): void {
+    this.#graphs.delete(id);
+  }
+
+  clear(): void {
+    this.#graphs.clear();
+  }
+}

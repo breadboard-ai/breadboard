@@ -656,12 +656,20 @@ export type InspectableKitCache = {
   kits(): InspectableKit[];
 };
 
+export type InspectableGraphCache = {
+  add(id: GraphIdentifier, graph: InspectableGraph): void;
+  graphs(): InspectableSubgraphs;
+  remove(id: GraphIdentifier): void;
+  clear(): void;
+};
+
 /**
  * A backing store for `InspectableGraph` instances, representing a stable
  * instance of a graph whose properties mutate.
  */
 export type MutableGraph = {
   graph: GraphDescriptor;
+  readonly graphs: InspectableGraphCache;
   readonly options: InspectableGraphOptions;
   readonly nodes: InspectableNodeCache;
   readonly edges: InspectableEdgeCache;
