@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { inspectableGraph } from "../../src/inspector/graph.js";
+import { inspectableGraph } from "../../src/inspector/mutable-graph.js";
 import { GraphDescriptor } from "@breadboard-ai/types";
 
 test("inspectableGraph correctly reacts to edits", (t) => {

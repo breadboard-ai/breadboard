@@ -678,6 +678,8 @@ export type MutableGraph = {
   readonly modules: InspectableModuleCache;
   readonly describe: InspectableDescriberResultCache;
   readonly kits: InspectableKitCache;
+
+  rebuild(graph: GraphDescriptor): void;
 };
 
 /**

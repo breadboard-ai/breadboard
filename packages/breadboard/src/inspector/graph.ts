@@ -17,14 +17,8 @@ import {
   NodeIdentifier,
   NodeTypeIdentifier,
 } from "../types.js";
-import { EdgeCache } from "./edge.js";
-import { KitCache } from "./kits.js";
-import { ModuleCache } from "./module.js";
-import { Node, NodeCache } from "./node.js";
-import { DescribeResultCache } from "./run/describe-cache.js";
 import {
   InspectableEdge,
-  InspectableGraphOptions,
   InspectableGraphWithStore,
   InspectableKit,
   InspectableModules,
@@ -38,14 +32,8 @@ import { AffectedNode } from "../editor/types.js";
 import { DescriberManager } from "./describer-manager.js";
 import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
 import { GraphQueries } from "./graph-queries.js";
-import { GraphCache } from "./graph-cache.js";
 
-export const inspectableGraph = (
-  graph: GraphDescriptor,
-  options?: InspectableGraphOptions
-): InspectableGraphWithStore => {
-  return new Graph(graph, "", undefined, options);
-};
+export { Graph };
 
 class Graph implements InspectableGraphWithStore {
   #graphId: GraphIdentifier;
@@ -56,11 +44,10 @@ class Graph implements InspectableGraphWithStore {
   constructor(
     graph: GraphDescriptor,
     graphId: GraphIdentifier,
-    cache?: MutableGraph,
-    options?: InspectableGraphOptions
+    mutableGraph: MutableGraph
   ) {
     this.#graphId = graphId;
-    if (graphId && !cache) {
+    if (graphId && !mutableGraph) {
       throw new Error(
         `Inspect API integrity error: parent cache not supplied to a sub-graph.`
       );
@@ -70,9 +57,7 @@ class Graph implements InspectableGraphWithStore {
       throw new Error(`Inspect API integrity error: ${handle.error}`);
     }
     this.#imperativeMain = handle.result.main();
-    this.#cache =
-      cache ??
-      this.#initializeMutableGraph(handle.result.outerGraph(), options || {});
+    this.#cache = mutableGraph;
   }
 
   #graph(): GraphDescriptor {
@@ -225,55 +210,13 @@ class Graph implements InspectableGraphWithStore {
     this.#cache.graphs.rebuild(graph);
   }
 
-  #initializeMutableGraph(
-    graph: GraphDescriptor,
-    options: InspectableGraphOptions
-  ): MutableGraph {
-    const nodes = new NodeCache((descriptor, graphId) => {
-      const graph = graphId ? this.#cache.graphs.get(graphId) : this;
-      if (!graph) {
-        throw new Error(
-          `Inspect API Integrity error: unable to find subgraph "${graphId}"`
-        );
-      }
-      return new Node(descriptor, this.#cache, graphId);
-    });
-    const edges = new EdgeCache(nodes);
-    const modules = new ModuleCache();
-    const describe = new DescribeResultCache();
-    const kits = new KitCache();
-    const graphs = new GraphCache((id) => {
-      return new Graph(graph, id, this.#cache);
-    });
-    const cache: MutableGraph = {
-      graph,
-      graphs,
-      options,
-      edges,
-      nodes,
-      modules,
-      describe,
-      kits,
-    };
-    // Currently necesary, because this.#cache is still null when
-    // nodes.populate is called, and so the factory is empty.
-    // TODO: Remove this hack.
-    this.#cache = cache;
-    graphs.rebuild(graph);
-    nodes.populate(graph);
-    edges.populate(graph);
-    modules.populate(graph);
-    kits.populate(options, graph);
-    return cache;
-  }
-
   resetGraph(graph: GraphDescriptor): void {
     if (this.#graphId) {
       throw new Error(
         "Inspect API integrity error: resetSubgraph should never be called for subgraphs"
       );
     }
-    this.#cache = this.#initializeMutableGraph(graph, this.#cache.options);
+    this.#cache.rebuild(graph);
   }
 
   addSubgraph(subgraph: GraphDescriptor, graphId: GraphIdentifier): void {

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { inspectableGraph } from "../inspector/graph.js";
 import { InspectableGraphWithStore } from "../inspector/types.js";
 import { GraphDescriptor, GraphIdentifier, NodeIdentifier } from "../types.js";
 import {
@@ -44,6 +43,7 @@ import {
 } from "../run/run-imperative-graph.js";
 import { AddGraph } from "./operations/add-graph.js";
 import { RemoveGraph } from "./operations/remove-graph.js";
+import { inspectableGraph } from "../inspector/mutable-graph.js";
 
 const validImperativeEdits: EditSpec["type"][] = [
   "addmodule",
