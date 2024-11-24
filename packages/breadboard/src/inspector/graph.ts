@@ -39,6 +39,7 @@ import { VirtualNode } from "./virtual-node.js";
 import { AffectedNode } from "../editor/types.js";
 import { DescriberManager } from "./describer-manager.js";
 import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
+import { GraphQueries } from "./graph-queries.js";
 
 export const inspectableGraph = (
   graph: GraphDescriptor,
@@ -179,21 +180,15 @@ class Graph implements InspectableGraphWithStore {
   }
 
   incomingForNode(id: NodeIdentifier): InspectableEdge[] {
-    return this.#graph()
-      .edges.filter((edge) => edge.to === id)
-      .map((edge) => this.#cache.edges.getOrCreate(edge, this.#graphId));
+    return new GraphQueries(this.#cache, this.#graphId).incoming(id);
   }
 
   outgoingForNode(id: NodeIdentifier): InspectableEdge[] {
-    return this.#graph()
-      .edges.filter((edge) => edge.from === id)
-      .map((edge) => this.#cache.edges.getOrCreate(edge, this.#graphId));
+    return new GraphQueries(this.#cache, this.#graphId).outgoing(id);
   }
 
   entries(): InspectableNode[] {
-    return this.#cache.nodes
-      .nodes(this.#graphId)
-      .filter((node) => node.isEntry());
+    return new GraphQueries(this.#cache, this.#graphId).entries();
   }
 
   async describe(inputs?: InputValues): Promise<NodeDescriberResult> {
