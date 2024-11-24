@@ -16,13 +16,15 @@ import {
   InspectableNodeCache,
   MutableGraph,
 } from "./types.js";
-import { Node, NodeCache } from "./node.js";
-import { Edge, EdgeCache } from "./edge.js";
+import { Node } from "./node.js";
+import { Edge } from "./edge.js";
 import { ModuleCache } from "./module.js";
 import { DescribeResultCache } from "./run/describe-cache.js";
 import { KitCache } from "./kits.js";
 import { GraphCache } from "./graph-cache.js";
 import { Graph } from "./graph.js";
+import { EdgeCache } from "./graph/edge-cache.js";
+import { NodeCache } from "./graph/node-cache.js";
 
 export { MutableGraphImpl };
 
