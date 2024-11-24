@@ -230,7 +230,7 @@ class Graph implements InspectableGraphWithStore {
     options: InspectableGraphOptions
   ): MutableGraph {
     const nodes = new NodeCache((descriptor, graphId) => {
-      const graph = graphId ? this.graphs()?.[graphId] : this;
+      const graph = graphId ? this.#cache.graphs.get(graphId) : this;
       if (!graph) {
         throw new Error(
           `Inspect API Integrity error: unable to find subgraph "${graphId}"`

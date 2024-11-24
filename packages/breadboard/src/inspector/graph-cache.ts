@@ -31,6 +31,10 @@ class GraphCache implements InspectableGraphCache {
     );
   }
 
+  get(id: GraphIdentifier): InspectableGraph | undefined {
+    return this.#graphs.get(id);
+  }
+
   add(id: GraphIdentifier, graph: InspectableGraph): void {
     this.#graphs.set(id, graph);
   }

@@ -658,6 +658,7 @@ export type InspectableKitCache = {
 
 export type InspectableGraphCache = {
   add(id: GraphIdentifier, graph: InspectableGraph): void;
+  get(id: GraphIdentifier): InspectableGraph | undefined;
   graphs(): InspectableSubgraphs;
   remove(id: GraphIdentifier): void;
   rebuild(graph: GraphDescriptor): void;
