@@ -30,7 +30,7 @@ export const inspectableGraph = (
   graph: GraphDescriptor,
   options?: InspectableGraphOptions
 ): InspectableGraphWithStore => {
-  return new Graph(graph, "", new MutableGraphImpl(graph, options || {}));
+  return new Graph("", new MutableGraphImpl(graph, options || {}));
 };
 
 class MutableGraphImpl implements MutableGraph {
@@ -72,7 +72,7 @@ class MutableGraphImpl implements MutableGraph {
     this.describe = new DescribeResultCache();
     this.kits = new KitCache();
     this.graphs = new GraphCache((id) => {
-      return new Graph(graph, id, this);
+      return new Graph(id, this);
     });
     this.graphs.rebuild(graph);
     (this.nodes as NodeCache).populate(graph);

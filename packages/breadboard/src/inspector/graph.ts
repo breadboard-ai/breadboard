@@ -30,59 +30,42 @@ import {
 } from "./types.js";
 import { AffectedNode } from "../editor/types.js";
 import { DescriberManager } from "./describer-manager.js";
-import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
 import { GraphQueries } from "./graph-queries.js";
 
 export { Graph };
 
 class Graph implements InspectableGraphWithStore {
   #graphId: GraphIdentifier;
-  #cache: MutableGraph;
+  #mutable: MutableGraph;
 
-  #imperativeMain: ModuleIdentifier | undefined;
-
-  constructor(
-    graph: GraphDescriptor,
-    graphId: GraphIdentifier,
-    mutableGraph: MutableGraph
-  ) {
+  constructor(graphId: GraphIdentifier, mutableGraph: MutableGraph) {
     this.#graphId = graphId;
-    if (graphId && !mutableGraph) {
-      throw new Error(
-        `Inspect API integrity error: parent cache not supplied to a sub-graph.`
-      );
-    }
-    const handle = GraphDescriptorHandle.create(graph, graphId);
-    if (!handle.success) {
-      throw new Error(`Inspect API integrity error: ${handle.error}`);
-    }
-    this.#imperativeMain = handle.result.main();
-    this.#cache = mutableGraph;
+    this.#mutable = mutableGraph;
   }
 
-  #graph(): GraphDescriptor {
-    const graph = this.#cache.graph;
+  #descriptor(): GraphDescriptor {
+    const graph = this.#mutable.graph;
     return this.#graphId ? graph.graphs![this.#graphId]! : graph;
   }
 
   raw() {
-    return this.#graph();
+    return this.#descriptor();
   }
 
   imperative(): boolean {
-    return !!this.#imperativeMain;
+    return !!this.main();
   }
 
   main(): string | undefined {
-    return this.#imperativeMain;
+    return this.#descriptor().main;
   }
 
   metadata(): GraphMetadata | undefined {
-    return this.#graph().metadata;
+    return this.#descriptor().metadata;
   }
 
   nodesByType(type: NodeTypeIdentifier): InspectableNode[] {
-    return this.#cache.nodes.byType(type, this.#graphId);
+    return this.#mutable.nodes.byType(type, this.#graphId);
   }
 
   async describeNodeType(
@@ -90,7 +73,7 @@ class Graph implements InspectableGraphWithStore {
     type: NodeTypeIdentifier,
     options: NodeTypeDescriberOptions = {}
   ): Promise<NodeDescriberResult> {
-    const manager = DescriberManager.create(this.#graphId, this.#cache);
+    const manager = DescriberManager.create(this.#graphId, this.#mutable);
     if (!manager.success) {
       throw new Error(`Inspect API Integrity Error: ${manager.error}`);
     }
@@ -98,55 +81,55 @@ class Graph implements InspectableGraphWithStore {
   }
 
   nodeById(id: NodeIdentifier) {
-    return new GraphQueries(this.#cache, this.#graphId).nodeById(id);
+    return new GraphQueries(this.#mutable, this.#graphId).nodeById(id);
   }
 
   nodes(): InspectableNode[] {
-    return this.#cache.nodes.nodes(this.#graphId);
+    return this.#mutable.nodes.nodes(this.#graphId);
   }
 
   moduleById(id: ModuleIdentifier) {
-    return this.#cache.modules.get(id);
+    return this.#mutable.modules.get(id);
   }
 
   modules(): InspectableModules {
-    return this.#cache.modules.modules();
+    return this.#mutable.modules.modules();
   }
 
   edges(): InspectableEdge[] {
-    return this.#cache.edges.edges(this.#graphId);
+    return this.#mutable.edges.edges(this.#graphId);
   }
 
   hasEdge(edge: Edge): boolean {
-    return this.#cache.edges.hasByValue(edge, this.#graphId);
+    return this.#mutable.edges.hasByValue(edge, this.#graphId);
   }
 
   kits(): InspectableKit[] {
-    return this.#cache.kits.kits();
+    return this.#mutable.kits.kits();
   }
 
   typeForNode(id: NodeIdentifier): InspectableNodeType | undefined {
-    return new GraphQueries(this.#cache, this.#graphId).typeForNode(id);
+    return new GraphQueries(this.#mutable, this.#graphId).typeForNode(id);
   }
 
   typeById(id: NodeTypeIdentifier): InspectableNodeType | undefined {
-    return new GraphQueries(this.#cache, this.#graphId).typeById(id);
+    return new GraphQueries(this.#mutable, this.#graphId).typeById(id);
   }
 
   incomingForNode(id: NodeIdentifier): InspectableEdge[] {
-    return new GraphQueries(this.#cache, this.#graphId).incoming(id);
+    return new GraphQueries(this.#mutable, this.#graphId).incoming(id);
   }
 
   outgoingForNode(id: NodeIdentifier): InspectableEdge[] {
-    return new GraphQueries(this.#cache, this.#graphId).outgoing(id);
+    return new GraphQueries(this.#mutable, this.#graphId).outgoing(id);
   }
 
   entries(): InspectableNode[] {
-    return new GraphQueries(this.#cache, this.#graphId).entries();
+    return new GraphQueries(this.#mutable, this.#graphId).entries();
   }
 
   async describe(inputs?: InputValues): Promise<NodeDescriberResult> {
-    const manager = DescriberManager.create(this.#graphId, this.#cache);
+    const manager = DescriberManager.create(this.#graphId, this.#mutable);
     if (!manager.success) {
       throw new Error(`Inspect API Integrity Error: ${manager.error}`);
     }
@@ -154,15 +137,15 @@ class Graph implements InspectableGraphWithStore {
   }
 
   get nodeStore() {
-    return this.#cache.nodes;
+    return this.#mutable.nodes;
   }
 
   get edgeStore() {
-    return this.#cache.edges;
+    return this.#mutable.edges;
   }
 
   get moduleStore() {
-    return this.#cache.modules;
+    return this.#mutable.modules;
   }
 
   updateGraph(
@@ -178,15 +161,15 @@ class Graph implements InspectableGraphWithStore {
     }
     // TODO: Handle this a better way?
     for (const id of affectedModules) {
-      this.#cache.modules.remove(id);
+      this.#mutable.modules.remove(id);
       if (!graph.modules || !graph.modules[id]) {
         continue;
       }
 
-      this.#cache.modules.add(id, graph.modules[id]);
+      this.#mutable.modules.add(id, graph.modules[id]);
 
       // Find any nodes configured to use this module and clear its describer.
-      const runModulesNodes = this.#cache.nodes.byType(
+      const runModulesNodes = this.#mutable.nodes.byType(
         "runModule",
         this.#graphId
       );
@@ -205,9 +188,9 @@ class Graph implements InspectableGraphWithStore {
       }
     }
 
-    this.#cache.describe.clear(visualOnly, affectedNodes);
-    this.#cache.graph = graph;
-    this.#cache.graphs.rebuild(graph);
+    this.#mutable.describe.clear(visualOnly, affectedNodes);
+    this.#mutable.graph = graph;
+    this.#mutable.graphs.rebuild(graph);
   }
 
   resetGraph(graph: GraphDescriptor): void {
@@ -216,7 +199,7 @@ class Graph implements InspectableGraphWithStore {
         "Inspect API integrity error: resetSubgraph should never be called for subgraphs"
       );
     }
-    this.#cache.rebuild(graph);
+    this.#mutable.rebuild(graph);
   }
 
   addSubgraph(subgraph: GraphDescriptor, graphId: GraphIdentifier): void {
@@ -225,12 +208,9 @@ class Graph implements InspectableGraphWithStore {
         `Can't add subgraph "${graphId}" to subgraph "${this.#graphId}": subgraphs can't contain subgraphs`
       );
     }
-    this.#cache.graphs.add(
-      graphId,
-      new Graph(this.#cache.graph, graphId, this.#cache)
-    );
-    this.#cache.nodes.addSubgraphNodes(subgraph, graphId);
-    this.#cache.edges.addSubgraphEdges(subgraph, graphId);
+    this.#mutable.graphs.add(graphId);
+    this.#mutable.nodes.addSubgraphNodes(subgraph, graphId);
+    this.#mutable.edges.addSubgraphEdges(subgraph, graphId);
   }
 
   removeSubgraph(graphId: GraphIdentifier): void {
@@ -239,14 +219,14 @@ class Graph implements InspectableGraphWithStore {
         `Can't remove subgraph "${graphId}" from subgraph "${this.#graphId}": subgraphs can't contain subgraphs`
       );
     }
-    this.#cache.graphs.remove(graphId);
-    this.#cache.nodes.removeSubgraphNodes(graphId);
-    this.#cache.edges.removeSubgraphEdges(graphId);
+    this.#mutable.graphs.remove(graphId);
+    this.#mutable.nodes.removeSubgraphNodes(graphId);
+    this.#mutable.edges.removeSubgraphEdges(graphId);
   }
 
   graphs(): InspectableSubgraphs | undefined {
     if (this.#graphId) return;
-    return this.#cache.graphs.graphs();
+    return this.#mutable.graphs.graphs();
   }
 
   graphId(): GraphIdentifier {

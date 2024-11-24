@@ -29,18 +29,19 @@ class GraphCache implements InspectableGraphCache {
     this.#graphs = new Map(
       Object.keys(subgraphs).map((id) => [id, this.#factory(id)])
     );
+    this.#graphs.set("", this.#factory(""));
   }
 
   get(id: GraphIdentifier): InspectableGraph | undefined {
     return this.#graphs.get(id);
   }
 
-  add(id: GraphIdentifier, graph: InspectableGraph): void {
-    this.#graphs.set(id, graph);
+  add(id: GraphIdentifier): void {
+    this.#graphs.set(id, this.#factory(id));
   }
 
   graphs(): InspectableSubgraphs {
-    return Object.fromEntries(this.#graphs.entries());
+    return Object.fromEntries([...this.#graphs.entries()].filter(([id]) => id));
   }
 
   remove(id: GraphIdentifier): void {
