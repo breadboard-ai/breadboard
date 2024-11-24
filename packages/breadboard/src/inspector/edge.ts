@@ -156,7 +156,7 @@ export class EdgeCache implements InspectableEdgeCache {
     this.#nodes = nodes;
   }
 
-  populate(graph: GraphDescriptor) {
+  rebuild(graph: GraphDescriptor) {
     // Initialize the edge map from the graph. This is only done once, and all
     // following updates are performed incrementally.
     const mainGraphEdges = new Map(

@@ -623,6 +623,7 @@ export type InspectableEdgeCache = EdgeStoreMutator & {
   getOrCreate(edge: Edge, graphId: GraphIdentifier): InspectableEdge;
   hasByValue(edge: Edge, graphId: GraphIdentifier): boolean;
   edges(graphId: GraphIdentifier): InspectableEdge[];
+  rebuild(graph: GraphDescriptor): void;
 };
 
 export type InspectableNodeCache = NodeStoreMutator & {
@@ -632,6 +633,7 @@ export type InspectableNodeCache = NodeStoreMutator & {
     graphId: GraphIdentifier
   ): InspectableNode | undefined;
   nodes(graphId: GraphIdentifier): InspectableNode[];
+  rebuild(graph: GraphDescriptor): void;
 };
 
 export type InspectableModuleCache = {
@@ -639,6 +641,7 @@ export type InspectableModuleCache = {
   add(id: string, module: Module): void;
   remove(id: ModuleIdentifier): void;
   modules(): InspectableModules;
+  rebuild(graph: GraphDescriptor): void;
 };
 
 export type InspectableDescriberResultCache = {
@@ -654,6 +657,7 @@ export type InspectableKitCache = {
   getType(id: NodeTypeIdentifier): InspectableNodeType | undefined;
   addType(id: NodeTypeIdentifier, type: InspectableNodeType): void;
   kits(): InspectableKit[];
+  rebuild(graph: GraphDescriptor): void;
 };
 
 export type InspectableGraphCache = {

@@ -194,7 +194,7 @@ export class NodeCache implements InspectableNodeCache {
     this.#factory = factory;
   }
 
-  populate(graph: GraphDescriptor) {
+  rebuild(graph: GraphDescriptor) {
     graph.nodes.forEach((node) => this.#addNodeInternal(node, ""));
     Object.entries(graph.graphs || {}).forEach(([graphId, graph]) => {
       graph.nodes.forEach((node) => this.#addNodeInternal(node, graphId));

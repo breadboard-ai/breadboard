@@ -20,6 +20,7 @@ import { graphUrlLike } from "../utils/graph-url-like.js";
 import { collectPortsForType, filterSidePorts } from "./ports.js";
 import { describeInput, describeOutput } from "./schemas.js";
 import {
+  InspectableGraphOptions,
   InspectableKit,
   InspectableKitCache,
   InspectableNodePorts,
@@ -252,6 +253,11 @@ class CustomNodeType implements InspectableNodeType {
 class KitCache implements InspectableKitCache {
   #types: Map<NodeTypeIdentifier, InspectableNodeType> = new Map();
   #kits: InspectableKit[] = [];
+  #options: InspectableGraphOptions;
+
+  constructor(options: InspectableGraphOptions) {
+    this.#options = options;
+  }
 
   getType(id: NodeTypeIdentifier): InspectableNodeType | undefined {
     return this.#types.get(id);
@@ -264,8 +270,8 @@ class KitCache implements InspectableKitCache {
     return this.#kits;
   }
 
-  populate(context: NodeHandlerContext, graph: GraphDescriptor) {
-    const kits = collectKits(context, graph);
+  rebuild(graph: GraphDescriptor) {
+    const kits = collectKits(this.#options, graph);
 
     this.#types = new Map(
       kits.flatMap((kit) => kit.nodeTypes.map((type) => [type.type(), type]))

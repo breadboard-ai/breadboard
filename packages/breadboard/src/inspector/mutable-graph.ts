@@ -70,14 +70,14 @@ class MutableGraphImpl implements MutableGraph {
     this.edges = new EdgeCache(this.nodes);
     this.modules = new ModuleCache();
     this.describe = new DescribeResultCache();
-    this.kits = new KitCache();
+    this.kits = new KitCache(this.options);
     this.graphs = new GraphCache((id) => {
       return new Graph(id, this);
     });
     this.graphs.rebuild(graph);
-    (this.nodes as NodeCache).populate(graph);
-    (this.edges as EdgeCache).populate(graph);
-    (this.modules as ModuleCache).populate(graph);
-    (this.kits as KitCache).populate(this.options, graph);
+    this.nodes.rebuild(graph);
+    this.edges.rebuild(graph);
+    this.modules.rebuild(graph);
+    this.kits.rebuild(graph);
   }
 }
