@@ -22,23 +22,31 @@ import { collectPorts, filterSidePorts } from "./ports.js";
 import { EdgeType } from "./schemas.js";
 import {
   InspectableEdge,
-  InspectableGraph,
   InspectableNode,
   InspectableNodeCache,
   InspectableNodePorts,
   InspectableNodeType,
   InspectablePortList,
+  MutableGraph,
   NodeTypeDescriberOptions,
 } from "./types.js";
+import { GraphQueries } from "./graph-queries.js";
+import { DescriberManager } from "./describer-manager.js";
 
 export class Node implements InspectableNode {
   descriptor: NodeDescriptor;
-  #graph: InspectableGraph;
+  #graph: MutableGraph;
+  #graphId: GraphIdentifier;
   #deleted = false;
 
-  constructor(descriptor: NodeDescriptor, graph: InspectableGraph) {
+  constructor(
+    descriptor: NodeDescriptor,
+    graph: MutableGraph,
+    graphId: GraphIdentifier
+  ) {
     this.descriptor = descriptor;
     this.#graph = graph;
+    this.#graphId = graphId;
   }
 
   title(): string {
@@ -50,11 +58,15 @@ export class Node implements InspectableNode {
   }
 
   incoming(): InspectableEdge[] {
-    return this.#graph.incomingForNode(this.descriptor.id);
+    return new GraphQueries(this.#graph, this.#graphId).incoming(
+      this.descriptor.id
+    );
   }
 
   outgoing(): InspectableEdge[] {
-    return this.#graph.outgoingForNode(this.descriptor.id);
+    return new GraphQueries(this.#graph, this.#graphId).outgoing(
+      this.descriptor.id
+    );
   }
 
   isEntry(): boolean {
@@ -66,7 +78,9 @@ export class Node implements InspectableNode {
   }
 
   type(): InspectableNodeType {
-    const type = this.#graph.typeForNode(this.descriptor.id);
+    const type = new GraphQueries(this.#graph, this.#graphId).typeForNode(
+      this.descriptor.id
+    );
     if (!type) {
       throw new Error(
         `Possible integrity error: node ${this.descriptor.id} does not have a type`
@@ -91,7 +105,11 @@ export class Node implements InspectableNode {
   async #describeInternal(
     options: NodeTypeDescriberOptions
   ): Promise<NodeDescriberResult> {
-    return this.#graph.describeNodeType(
+    const manager = DescriberManager.create(this.#graphId, this.#graph);
+    if (!manager.success) {
+      throw new Error(`Inspect API Integrity Error: ${manager.error}`);
+    }
+    return manager.result.describeNodeType(
       this.descriptor.id,
       this.descriptor.type,
       {

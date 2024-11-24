@@ -236,7 +236,7 @@ class Graph implements InspectableGraphWithStore {
           `Inspect API Integrity error: unable to find subgraph "${graphId}"`
         );
       }
-      return new Node(descriptor, graph);
+      return new Node(descriptor, this.#cache, graphId);
     });
     const edges = new EdgeCache(nodes);
     const modules = new ModuleCache();
@@ -251,6 +251,10 @@ class Graph implements InspectableGraphWithStore {
       describe,
       kits,
     };
+    // Currently necesary, because this.#cache is still null when
+    // nodes.populate is called, and so the factory is empty.
+    // TODO: Remove this hack.
+    this.#cache = cache;
     this.#graphs = this.#populateSubgraphs(cache);
     nodes.populate(graph);
     edges.populate(graph);
