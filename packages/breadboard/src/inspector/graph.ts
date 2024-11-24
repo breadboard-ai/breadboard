@@ -50,7 +50,6 @@ export const inspectableGraph = (
 class Graph implements InspectableGraphWithStore {
   #graphId: GraphIdentifier;
   #cache: MutableGraph;
-  #graphs: InspectableSubgraphs | null = null;
 
   #imperativeMain: ModuleIdentifier | undefined;
 
@@ -223,7 +222,7 @@ class Graph implements InspectableGraphWithStore {
 
     this.#cache.describe.clear(visualOnly, affectedNodes);
     this.#cache.graph = graph;
-    this.#graphs = null;
+    this.#cache.graphs.rebuild(graph);
   }
 
   #initializeMutableGraph(
@@ -260,7 +259,7 @@ class Graph implements InspectableGraphWithStore {
     // nodes.populate is called, and so the factory is empty.
     // TODO: Remove this hack.
     this.#cache = cache;
-    this.#graphs = this.#populateSubgraphs(cache);
+    graphs.rebuild(graph);
     nodes.populate(graph);
     edges.populate(graph);
     modules.populate(graph);
@@ -283,7 +282,10 @@ class Graph implements InspectableGraphWithStore {
         `Can't add subgraph "${graphId}" to subgraph "${this.#graphId}": subgraphs can't contain subgraphs`
       );
     }
-    this.#graphs = null;
+    this.#cache.graphs.add(
+      graphId,
+      new Graph(this.#cache.graph, graphId, this.#cache)
+    );
     this.#cache.nodes.addSubgraphNodes(subgraph, graphId);
     this.#cache.edges.addSubgraphEdges(subgraph, graphId);
   }
@@ -294,28 +296,14 @@ class Graph implements InspectableGraphWithStore {
         `Can't remove subgraph "${graphId}" from subgraph "${this.#graphId}": subgraphs can't contain subgraphs`
       );
     }
+    this.#cache.graphs.remove(graphId);
     this.#cache.nodes.removeSubgraphNodes(graphId);
     this.#cache.edges.removeSubgraphEdges(graphId);
   }
 
-  #populateSubgraphs(cache: MutableGraph): InspectableSubgraphs {
-    if (this.#graphId) {
-      throw new Error(
-        "Inspect API integrity error: #populateSubgraphs should never be called for subgraphs"
-      );
-    }
-    const subgraphs = cache.graph.graphs;
-    if (!subgraphs) return {};
-    return Object.fromEntries(
-      Object.keys(subgraphs).map((id) => {
-        return [id, new Graph(cache.graph, id, cache)];
-      })
-    );
-  }
-
   graphs(): InspectableSubgraphs | undefined {
     if (this.#graphId) return;
-    return (this.#graphs ??= this.#populateSubgraphs(this.#cache));
+    return this.#cache.graphs.graphs();
   }
 
   graphId(): GraphIdentifier {

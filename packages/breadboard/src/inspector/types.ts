@@ -660,6 +660,7 @@ export type InspectableGraphCache = {
   add(id: GraphIdentifier, graph: InspectableGraph): void;
   graphs(): InspectableSubgraphs;
   remove(id: GraphIdentifier): void;
+  rebuild(graph: GraphDescriptor): void;
   clear(): void;
 };
 

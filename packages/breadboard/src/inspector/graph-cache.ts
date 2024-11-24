@@ -4,12 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphIdentifier } from "@breadboard-ai/types";
+import { GraphDescriptor, GraphIdentifier } from "@breadboard-ai/types";
 import {
   InspectableGraph,
   InspectableGraphCache,
   InspectableSubgraphs,
-  MutableGraph,
 } from "./types.js";
 
 export { GraphCache };
@@ -24,12 +23,12 @@ class GraphCache implements InspectableGraphCache {
     this.#factory = factory;
   }
 
-  populate(cache: MutableGraph) {
-    const subgraphs = cache.graph.graphs;
+  rebuild(graph: GraphDescriptor) {
+    const subgraphs = graph.graphs;
     if (!subgraphs) return;
-    Object.keys(subgraphs).forEach((id) => {
-      this.add(id, this.#factory(id));
-    });
+    this.#graphs = new Map(
+      Object.keys(subgraphs).map((id) => [id, this.#factory(id)])
+    );
   }
 
   add(id: GraphIdentifier, graph: InspectableGraph): void {

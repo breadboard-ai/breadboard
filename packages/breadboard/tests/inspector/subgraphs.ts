@@ -24,7 +24,6 @@ test("InspectableGraph correctly provides subgraphs", async (t) => {
   const graphs = inspectable.graphs()!;
 
   t.is(Object.values(graphs).length, 1);
-  t.true(graphs === inspectable.graphs());
   const subgraph = graphs["#foo"];
   t.truthy(subgraph);
   t.is(subgraph.graphId(), "#foo");
