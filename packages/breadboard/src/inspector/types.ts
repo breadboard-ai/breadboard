@@ -650,6 +650,12 @@ export type InspectableDescriberResultCache = {
   clear(visualOnly: boolean, affectedNodes: AffectedNode[]): void;
 };
 
+export type InspectableKitCache = {
+  getType(id: NodeTypeIdentifier): InspectableNodeType | undefined;
+  addType(id: NodeTypeIdentifier, type: InspectableNodeType): void;
+  kits(): InspectableKit[];
+};
+
 /**
  * A backing store for `InspectableGraph` instances, representing a stable
  * instance of a graph whose properties mutate.
@@ -660,6 +666,7 @@ export type MutableGraph = {
   edges: InspectableEdgeCache;
   modules: InspectableModuleCache;
   describe: InspectableDescriberResultCache;
+  kits: InspectableKitCache;
 };
 
 /**

@@ -14,16 +14,20 @@ import {
   NodeHandlerContext,
   NodeTypeIdentifier,
   NodeHandlerObject,
+  GraphDescriptor,
 } from "../types.js";
 import { graphUrlLike } from "../utils/graph-url-like.js";
 import { collectPortsForType, filterSidePorts } from "./ports.js";
 import { describeInput, describeOutput } from "./schemas.js";
 import {
   InspectableKit,
+  InspectableKitCache,
   InspectableNodePorts,
   InspectableNodeType,
   NodeTypeDescriberOptions,
 } from "./types.js";
+
+export { KitCache };
 
 const createBuiltInKit = (): InspectableKit => {
   return {
@@ -78,12 +82,12 @@ const createCustomTypesKit = (
 
 export const collectKits = (
   context: NodeHandlerContext,
-  nodes: NodeDescriptor[]
+  graph: GraphDescriptor
 ): InspectableKit[] => {
   const { kits = [] } = context;
   return [
     createBuiltInKit(),
-    ...createCustomTypesKit(nodes, context),
+    ...createCustomTypesKit(graph.nodes, context),
     ...kits.map((kit) => {
       const descriptor = {
         title: kit.title,
@@ -242,5 +246,25 @@ class CustomNodeType implements InspectableNodeType {
   async ports(): Promise<InspectableNodePorts> {
     const handler = await this.#handlerPromise;
     return portsFromHandler(this.#type, handler as NodeHandler);
+  }
+}
+
+class KitCache implements InspectableKitCache {
+  #types: Map<NodeTypeIdentifier, InspectableNodeType> = new Map();
+  #kits: InspectableKit[] = [];
+
+  getType(id: NodeTypeIdentifier): InspectableNodeType | undefined {
+    return this.#types.get(id);
+  }
+  addType(id: NodeTypeIdentifier, type: InspectableNodeType): void {
+    this.#types.set(id, type);
+  }
+
+  kits(): InspectableKit[] {
+    return this.#kits;
+  }
+
+  populate(context: NodeHandlerContext, graph: GraphDescriptor) {
+    this.#kits = collectKits(context, graph);
   }
 }

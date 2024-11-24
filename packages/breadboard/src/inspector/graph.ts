@@ -19,7 +19,7 @@ import {
 } from "../types.js";
 import { graphUrlLike } from "../utils/graph-url-like.js";
 import { EdgeCache } from "./edge.js";
-import { collectKits, createGraphNodeType } from "./kits.js";
+import { createGraphNodeType, KitCache } from "./kits.js";
 import { ModuleCache } from "./module.js";
 import { Node, NodeCache } from "./node.js";
 import { DescribeResultCache } from "./run/describe-cache.js";
@@ -49,7 +49,6 @@ export const inspectableGraph = (
 };
 
 class Graph implements InspectableGraphWithStore {
-  #kits?: InspectableKit[];
   #nodeTypes?: Map<NodeTypeIdentifier, InspectableNodeType>;
   #options: InspectableGraphOptions;
 
@@ -150,10 +149,7 @@ class Graph implements InspectableGraphWithStore {
   }
 
   kits(): InspectableKit[] {
-    return (this.#kits ??= collectKits(
-      { kits: this.#options.kits, loader: this.#options.loader },
-      this.#graph().nodes
-    ));
+    return this.#cache.kits.kits();
   }
 
   typeForNode(id: NodeIdentifier): InspectableNodeType | undefined {
@@ -273,11 +269,20 @@ class Graph implements InspectableGraphWithStore {
     const edges = new EdgeCache(nodes);
     const modules = new ModuleCache();
     const describe = new DescribeResultCache();
-    const cache: MutableGraph = { graph, edges, nodes, modules, describe };
+    const kits = new KitCache();
+    const cache: MutableGraph = {
+      graph,
+      edges,
+      nodes,
+      modules,
+      describe,
+      kits,
+    };
     this.#graphs = this.#populateSubgraphs(cache);
     nodes.populate(graph);
     edges.populate(graph);
     modules.populate(graph);
+    kits.populate(this.#options, graph);
     return cache;
   }
 
