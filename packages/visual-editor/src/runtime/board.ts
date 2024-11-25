@@ -24,7 +24,7 @@ import {
   RuntimeTabChangeEvent,
   RuntimeTabCloseEvent,
   RuntimeBoardServerChangeEvent,
-  RuntimeModuleChangeEvent,
+  RuntimeWorkspaceItemChangeEvent,
 } from "./events";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
@@ -33,7 +33,7 @@ import {
   getBoardServers,
 } from "@breadboard-ai/board-server-management";
 import { TokenVendor } from "@breadboard-ai/connection-client";
-import { ModuleIdentifier } from "@breadboard-ai/types";
+import { GraphIdentifier, ModuleIdentifier } from "@breadboard-ai/types";
 import { sandbox } from "../sandbox";
 
 function withRunModule(kits: Kit[]): Kit[] {
@@ -519,14 +519,25 @@ export class Board extends EventTarget {
     this.dispatchEvent(new RuntimeTabChangeEvent());
   }
 
-  changeModule(id: TabId, moduleId: ModuleIdentifier | null) {
+  changeWorkspaceItem(
+    id: TabId,
+    subGraphId: GraphIdentifier | null,
+    moduleId: ModuleIdentifier | null
+  ) {
     const tab = this.#tabs.get(id);
     if (!tab) {
       return;
     }
 
+    if (subGraphId && moduleId) {
+      console.error("Unable to select both a subgraph and module");
+      return;
+    }
+
+    tab.subGraphId = subGraphId;
     tab.moduleId = moduleId;
-    this.dispatchEvent(new RuntimeModuleChangeEvent());
+
+    this.dispatchEvent(new RuntimeWorkspaceItemChangeEvent());
   }
 
   closeTab(id: TabId) {
