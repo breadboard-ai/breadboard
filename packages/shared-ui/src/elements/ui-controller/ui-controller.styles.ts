@@ -233,6 +233,18 @@ export const styles = css`
     width: 100%;
   }
 
+  #side-nav-title {
+    height: var(--bb-grid-size-11);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    padding: var(--bb-grid-size-2);
+    font: 500 var(--bb-label-large) / var(--bb-label-line-height-large)
+      var(--bb-font-family);
+    border-bottom: 1px solid var(--bb-neutral-300);
+    justify-content: space-between;
+  }
+
   #side-nav {
     background: var(--bb-ui-700);
     display: flex;
@@ -252,6 +264,27 @@ export const styles = css`
 
   #side-nav-top > *:first-of-type {
     margin-top: 0;
+  }
+
+  #create-new {
+    height: var(--bb-grid-size-7);
+    border: none;
+    background: transparent var(--bb-icon-add-circle) var(--bb-grid-size) center /
+      20px 20px no-repeat;
+    margin: 0 0 0 var(--bb-grid-size-2);
+    opacity: 0.7;
+    cursor: pointer;
+    border-radius: var(--bb-grid-size-12);
+    transition: opacity 0.1s cubic-bezier(0, 0, 0.3, 1);
+    padding: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size-7);
+    font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
+      var(--bb-font-family);
+  }
+
+  #create-new:hover,
+  #create-new:focus {
+    background-color: var(--bb-neutral-50);
+    opacity: 1;
   }
 
   #toggle-components,

@@ -35,6 +35,20 @@ import {
   NodeValue,
 } from "@breadboard-ai/types";
 import { Sandbox } from "@breadboard-ai/jsandbox";
+import { defaultModuleContent } from "../utils/default-module-content";
+
+function isGraphDescriptor(source: unknown): source is GraphDescriptor {
+  return (
+    typeof source === "object" &&
+    source !== null &&
+    "edges" in source &&
+    "nodes" in source
+  );
+}
+
+function isModule(source: unknown): source is Module {
+  return typeof source === "object" && source !== null && "code" in source;
+}
 
 export class Edit extends EventTarget {
   #editors = new Map<TabId, EditableGraph>();
@@ -394,10 +408,83 @@ export class Edit extends EventTarget {
     return editableGraph.edit(edits, `Copying to ${title} (${type})`);
   }
 
-  createModule(
+  async createWorkspaceItem(
+    tab: Tab | null,
+    type: "declarative" | "imperative",
+    title: string,
+    id: GraphIdentifier | ModuleIdentifier = crypto.randomUUID(),
+    source?: string | URL | Module | GraphDescriptor
+  ) {
+    if (!tab) {
+      return null;
+    }
+
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
+      return null;
+    }
+
+    const edits: EditSpec[] = [];
+    switch (type) {
+      case "declarative": {
+        let board: GraphDescriptor | undefined = undefined;
+        if (source) {
+          if (typeof source === "string" || source instanceof URL) {
+            try {
+              const sourceResponse = await fetch(source);
+              board = await sourceResponse.json();
+            } catch (err) {
+              console.warn(err);
+              return;
+            }
+          } else if (isGraphDescriptor(source)) {
+            board = source;
+          }
+        }
+        await this.createSubGraph(tab, title, id, board);
+        break;
+      }
+
+      case "imperative": {
+        let module: Module | undefined = undefined;
+        if (source) {
+          if (typeof source === "string" || source instanceof URL) {
+            try {
+              const sourceResponse = await fetch(source);
+              module = await sourceResponse.json();
+            } catch (err) {
+              console.warn(err);
+              return;
+            }
+          } else if (isModule(source)) {
+            module = source;
+          }
+        }
+
+        if (!module) {
+          module = { code: defaultModuleContent(), metadata: { title } };
+        }
+
+        this.createModule(tab, id, module);
+        break;
+      }
+
+      default:
+        throw new Error(`Unexpected copy type ${type}`);
+    }
+
+    if (!edits.length) {
+      return;
+    }
+
+    return editableGraph.edit(edits, `Copying to ${title} (${type})`);
+  }
+
+  async createModule(
     tab: Tab | null,
     moduleId: ModuleIdentifier,
-    module: Module,
+    module: Module = { code: defaultModuleContent("javascript") },
     switchToCreatedModule = true
   ) {
     if (!tab) {
@@ -410,7 +497,7 @@ export class Edit extends EventTarget {
       return null;
     }
 
-    editableGraph
+    return editableGraph
       .edit(
         [
           {
@@ -629,15 +716,18 @@ export class Edit extends EventTarget {
     }
   }
 
-  async createSubGraph(tab: Tab | null, subGraphTitle: string) {
+  async createSubGraph(
+    tab: Tab | null,
+    subGraphTitle: string,
+    id: GraphIdentifier = globalThis.crypto.randomUUID(),
+    board = blankLLMContent()
+  ) {
     const editableGraph = this.getEditor(tab);
     if (!editableGraph) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to create sub board"));
       return;
     }
 
-    const id = globalThis.crypto.randomUUID();
-    const board = blankLLMContent();
     board.title = subGraphTitle;
 
     const editResult = await editableGraph.edit(

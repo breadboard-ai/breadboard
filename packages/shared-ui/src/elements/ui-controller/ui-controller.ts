@@ -15,7 +15,6 @@ import {
   InspectableRun,
   InspectableRunInputs,
   Kit,
-  NodeIdentifier,
 } from "@google-labs/breadboard";
 import {
   HTMLTemplateResult,
@@ -38,14 +37,12 @@ import { ModuleEditor } from "../module-editor/module-editor.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
   CommandsSetSwitchEvent,
-  SubGraphChosenEvent,
-  ZoomToGraphEvent,
-  ZoomToNodeEvent,
+  WorkspaceItemChosenEvent,
+  WorkspaceNewItemCreateRequestEvent,
 } from "../../events/events.js";
 import {
   COMMAND_SET_GRAPH_EDITOR,
   COMMAND_SET_MODULE_EDITOR,
-  MAIN_BOARD_ID,
 } from "../../constants/constants.js";
 import { Editor } from "../elements.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -124,7 +121,7 @@ export class UI extends LitElement {
 
   #graphEditorRef: Ref<Editor> = createRef();
   #moduleEditorRef: Ref<ModuleEditor> = createRef();
-  #zoomToNodeOnNextUpdate: NodeIdentifier | null = null;
+  #workspaceItemChosen: WorkspaceItemChosenEvent | null = null;
 
   static styles = uiControllerStyles;
 
@@ -151,6 +148,10 @@ export class UI extends LitElement {
     if (changedProperties.has("moduleId")) {
       if (this.moduleId === null && this.#moduleEditorRef.value) {
         this.#moduleEditorRef.value.destroyEditor();
+      }
+
+      if (this.sideNavItem === "components" && this.moduleId) {
+        this.sideNavItem = null;
       }
     }
 
@@ -257,9 +258,6 @@ export class UI extends LitElement {
     const canUndo = this.history?.canUndo() ?? false;
     const canRedo = this.history?.canRedo() ?? false;
 
-    /**
-     * Create all the elements we need.
-     */
     const graphEditor = guard(
       [
         graph,
@@ -368,42 +366,36 @@ export class UI extends LitElement {
     let sideNavItem: HTMLTemplateResult | symbol = nothing;
     switch (this.sideNavItem) {
       case "workspace-overview": {
-        sideNavItem = html`<bb-workspace-outline
-          .graph=${graph}
-          .kits=${this.kits}
-          .subGraphId=${this.subGraphId}
-          .moduleId=${this.moduleId}
-          .renderId=${globalThis.crypto.randomUUID()}
-          .mode=${this.mode}
-          @bbsubgraphchosen=${(evt: SubGraphChosenEvent) => {
-            if (evt.zoomToNode) {
-              this.#zoomToNodeOnNextUpdate = evt.zoomToNode;
-            }
-          }}
-          @bboutlinemodechange=${() => {
-            this.mode = this.mode === "list" ? "tree" : "list";
-            globalThis.localStorage.setItem(MODE_KEY, this.mode);
-          }}
-          @bbzoomtograph=${(evt: ZoomToGraphEvent) => {
-            if (!this.#graphEditorRef.value) {
-              return;
-            }
-
-            this.#graphEditorRef.value.zoomToHighlightedNode = false;
-            this.#graphEditorRef.value.zoomToFit(
-              0,
-              evt.id === MAIN_BOARD_ID ? null : evt.id
-            );
-          }}
-          @bbzoomtonode=${(evt: ZoomToNodeEvent) => {
-            if (!this.#graphEditorRef.value) {
-              return;
-            }
-
-            this.#graphEditorRef.value.zoomToHighlightedNode = false;
-            this.#graphEditorRef.value.zoomToNode(evt.id, evt.subGraphId, 0);
-          }}
-        ></bb-workspace-outline>`;
+        sideNavItem = html`<h1 id="side-nav-title">
+            <span>Workspace</span>
+            <div id="workspace-controls">
+              <button
+                id="create-new"
+                @click=${() => {
+                  this.dispatchEvent(new WorkspaceNewItemCreateRequestEvent());
+                }}
+              >
+                New item...
+              </button>
+            </div>
+          </h1>
+          ${guard([graph, this.moduleId, this.subGraphId, this.mode], () => {
+            return html`<bb-workspace-outline
+              .graph=${graph}
+              .kits=${this.kits}
+              .subGraphId=${this.subGraphId}
+              .moduleId=${this.moduleId}
+              .renderId=${globalThis.crypto.randomUUID()}
+              .mode=${this.mode}
+              @bbworkspaceitemchosen=${(evt: WorkspaceItemChosenEvent) => {
+                this.#workspaceItemChosen = evt;
+              }}
+              @bboutlinemodechange=${() => {
+                this.mode = this.mode === "list" ? "tree" : "list";
+                globalThis.localStorage.setItem(MODE_KEY, this.mode);
+              }}
+            ></bb-workspace-outline>`;
+          })}`;
         break;
       }
 
@@ -411,9 +403,8 @@ export class UI extends LitElement {
         sideNavItem = html`${guard(
           [graph?.kits],
           () =>
-            html`<bb-component-selector
-              .graph=${graph}
-            ></bb-component-selector>`
+            html`<h1 id="side-nav-title">Components</h1>
+              <bb-component-selector .graph=${graph}></bb-component-selector>`
         )}`;
         break;
       }
@@ -448,14 +439,27 @@ export class UI extends LitElement {
       )
     );
 
-    if (this.#zoomToNodeOnNextUpdate) {
-      const zoomToNode = this.#zoomToNodeOnNextUpdate;
-      this.#zoomToNodeOnNextUpdate = null;
+    if (this.#workspaceItemChosen) {
+      const workspaceItem = this.#workspaceItemChosen;
+      this.#workspaceItemChosen = null;
+
+      if (workspaceItem.moduleId !== null) {
+        return;
+      }
+
       requestAnimationFrame(() => {
         if (!this.#graphEditorRef.value) {
           return;
         }
-        this.#graphEditorRef.value.zoomToNode(zoomToNode, this.subGraphId, 0);
+
+        this.#graphEditorRef.value.zoomToFit(0, workspaceItem.subGraphId);
+        if (workspaceItem.nodeId) {
+          this.#graphEditorRef.value.zoomToNode(
+            workspaceItem.nodeId,
+            workspaceItem.subGraphId,
+            0
+          );
+        }
       });
     }
   }

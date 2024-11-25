@@ -1309,6 +1309,10 @@ export class GraphRenderer extends LitElement {
       bounds.addBounds(graphBounds);
     }
 
+    if (!bounds.isValid) {
+      return;
+    }
+
     const rendererBounds = this.getBoundingClientRect();
     if (reduceRenderBoundsWidth) {
       rendererBounds.width -= reduceRenderBoundsWidth;

@@ -32,6 +32,7 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { InspectableGraph } from "@google-labs/breadboard";
 import { classMap } from "lit/directives/class-map.js";
 import { type ComponentSelectorOverlay } from "../elements";
+import { OverflowAction } from "../../types/types";
 
 const COLLAPSED_MENU_BUFFER = 60;
 
@@ -575,12 +576,7 @@ export class GraphRibbonMenu extends LitElement {
     }
   `;
 
-  #overflowActions: Array<{
-    title: string;
-    name: string;
-    icon: string;
-    disabled?: boolean;
-  }> = [];
+  #overflowActions: OverflowAction[] = [];
   #boardActivityRef: Ref<HTMLButtonElement> = createRef();
   #overflowMenuToggleRef: Ref<HTMLButtonElement> = createRef();
   #componentSelectorRef: Ref<ComponentSelectorOverlay> = createRef();

@@ -44,6 +44,7 @@ export { LLMOutputArray } from "./llm-output/llm-output-array.js";
 export { ModuleRibbonMenu } from "./module-editor/ribbon.js";
 export { ModuleEditor } from "./module-editor/module-editor.js";
 export { Navigation } from "./nav/nav.js";
+export { NewWorkspaceItemOverlay } from "./overlay/new-workspace-item.js";
 export { NodeConfigurationInfo } from "./node-info/node-configuration.js";
 export { NodeConfigurationOverlay } from "./overlay/node-configurator.js";
 export { NodeMetaDetails } from "./node-info/node-meta-details.js";
