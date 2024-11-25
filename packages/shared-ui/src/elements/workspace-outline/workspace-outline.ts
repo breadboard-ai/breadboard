@@ -44,6 +44,8 @@ import { isConfigurableBehavior } from "../../utils";
 import { ModuleIdentifier } from "@breadboard-ai/types";
 import { OverflowAction } from "../../types/types";
 
+const OPEN_ITEMS_KEY = "bb-workspace-outline-open-items";
+
 type ItemIdentifier = GraphIdentifier | ModuleIdentifier;
 
 interface Outline {
@@ -622,6 +624,7 @@ export class WorkspaceOutline extends LitElement {
     }
   `;
 
+  #openItems = new Set<string>();
   #containerRef: Ref<HTMLDivElement> = createRef();
   #workspaceRender: Task<(InspectableGraph | string | null)[], Outline> | null =
     null;
@@ -756,6 +759,26 @@ export class WorkspaceOutline extends LitElement {
     if (changedProperties.has("graph")) {
       this.#workspaceRender = this.#loadGraphDetails();
     }
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    const openItems = globalThis.sessionStorage.getItem(OPEN_ITEMS_KEY);
+    if (openItems !== null) {
+      try {
+        this.#openItems = new Set(JSON.parse(openItems));
+      } catch (err) {
+        // Noop fail.
+      }
+    }
+  }
+
+  #storeOpenItems() {
+    globalThis.sessionStorage.setItem(
+      OPEN_ITEMS_KEY,
+      JSON.stringify([...this.#openItems])
+    );
   }
 
   #scrollTo(subGraphId: string) {
@@ -956,6 +979,16 @@ export class WorkspaceOutline extends LitElement {
     </ul>`;
   }
 
+  #toggleOpenStatusFor(id: string) {
+    if (this.#openItems.has(id)) {
+      this.#openItems.delete(id);
+    } else {
+      this.#openItems.add(id);
+    }
+
+    this.#storeOpenItems();
+  }
+
   #renderWorkspace(
     type: string,
     main: string | undefined,
@@ -970,7 +1003,7 @@ export class WorkspaceOutline extends LitElement {
       ? html`<details
           id=${MAIN_BOARD_ID}
           class="declarative"
-          ?open=${subItems.size === 0}
+          ?open=${subItems.size === 0 || this.#openItems.has(MAIN_BOARD_ID)}
         >
           <summary
             @click=${(evt: PointerEvent) => {
@@ -978,6 +1011,7 @@ export class WorkspaceOutline extends LitElement {
               const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
               if (!isCtrlCommand) {
+                this.#toggleOpenStatusFor(MAIN_BOARD_ID);
                 return;
               }
 
@@ -1049,6 +1083,7 @@ export class WorkspaceOutline extends LitElement {
           [subItem.type]: true,
           inverted: getSubItemColor<number>(id, "text", true) === 0xffffff,
         })}
+        ?open=${this.#openItems.has(id)}
       >
         <summary
           @click=${(evt: PointerEvent) => {
@@ -1056,6 +1091,7 @@ export class WorkspaceOutline extends LitElement {
             const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
             if (!isCtrlCommand) {
+              this.#toggleOpenStatusFor(id);
               return;
             }
 

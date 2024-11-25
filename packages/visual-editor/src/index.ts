@@ -122,6 +122,9 @@ export class Main extends LitElement {
   showModulePalette = false;
 
   @state()
+  showNewWorkspaceItemOverlay = false;
+
+  @state()
   showSaveAsDialog = false;
   #saveAsState: SaveAsConfiguration | null = null;
 
@@ -1701,7 +1704,8 @@ export class Main extends LitElement {
       this.showCommentEditor ||
       this.showOpenBoardOverlay ||
       this.showCommandPalette ||
-      this.showModulePalette;
+      this.showModulePalette ||
+      this.showNewWorkspaceItemOverlay;
 
     const nav = this.#initialize.then(() => {
       return html`<bb-nav
@@ -1906,6 +1910,57 @@ export class Main extends LitElement {
               this.showSettingsOverlay = false;
             }}
           ></bb-settings-edit-overlay>`;
+        }
+
+        let showNewWorkspaceItemOverlay: HTMLTemplateResult | symbol = nothing;
+        if (this.showNewWorkspaceItemOverlay) {
+          showNewWorkspaceItemOverlay = html`<bb-new-workspace-item-overlay
+            @bbworkspaceitemcreate=${async (
+              evt: BreadboardUI.Events.WorkspaceItemCreateEvent
+            ) => {
+              this.showNewWorkspaceItemOverlay = false;
+
+              let source: Module | undefined = undefined;
+              if (evt.itemType === "imperative") {
+                const createAsTypeScript =
+                  this.#settings
+                    ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
+                    .items.get("Use TypeScript as Module default language")
+                    ?.value ?? false;
+
+                if (createAsTypeScript) {
+                  source = {
+                    code: "",
+                    metadata: {
+                      title: evt.title ?? "Untitled item",
+                      source: {
+                        code: defaultModuleContent("typescript"),
+                        language: "typescript",
+                      },
+                    },
+                  };
+                } else {
+                  source = {
+                    code: defaultModuleContent(),
+                    metadata: {
+                      title: evt.title ?? "Untitled item",
+                    },
+                  };
+                }
+              }
+
+              await this.#runtime.edit.createWorkspaceItem(
+                this.tab,
+                evt.itemType,
+                evt.title ?? "Untitled item",
+                crypto.randomUUID(),
+                source
+              );
+            }}
+            @bboverlaydismissed=${() => {
+              this.showNewWorkspaceItemOverlay = false;
+            }}
+          ></bb-new-workspace-item-overlay>`;
         }
 
         let firstRunOverlay: HTMLTemplateResult | symbol = nothing;
@@ -2624,6 +2679,9 @@ export class Main extends LitElement {
               @bbinteraction=${() => {
                 this.#clearBoardSave();
               }}
+              @bbworkspacenewitemcreaterequest=${() => {
+                this.showNewWorkspaceItemOverlay = true;
+              }}
               @bbboarditemcopy=${(
                 evt: BreadboardUI.Events.BoardItemCopyEvent
               ) => {
@@ -3203,6 +3261,7 @@ export class Main extends LitElement {
           boardOverlay,
           settingsOverlay,
           firstRunOverlay,
+          showNewWorkspaceItemOverlay,
           historyOverlay,
           boardServerAddOverlay,
           previewOverlay,

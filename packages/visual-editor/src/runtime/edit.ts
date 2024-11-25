@@ -47,7 +47,7 @@ function isGraphDescriptor(source: unknown): source is GraphDescriptor {
 }
 
 function isModule(source: unknown): source is Module {
-  return typeof source === "object" && source !== null && "code" in module;
+  return typeof source === "object" && source !== null && "code" in source;
 }
 
 export class Edit extends EventTarget {
@@ -408,11 +408,11 @@ export class Edit extends EventTarget {
     return editableGraph.edit(edits, `Copying to ${title} (${type})`);
   }
 
-  async createBoardItem(
+  async createWorkspaceItem(
     tab: Tab | null,
-    type: "graph" | "module",
-    id: GraphIdentifier | ModuleIdentifier,
+    type: "declarative" | "imperative",
     title: string,
+    id: GraphIdentifier | ModuleIdentifier = crypto.randomUUID(),
     source?: string | URL | Module | GraphDescriptor
   ) {
     if (!tab) {
@@ -427,7 +427,7 @@ export class Edit extends EventTarget {
 
     const edits: EditSpec[] = [];
     switch (type) {
-      case "graph": {
+      case "declarative": {
         let board: GraphDescriptor | undefined = undefined;
         if (source) {
           if (typeof source === "string" || source instanceof URL) {
@@ -442,11 +442,11 @@ export class Edit extends EventTarget {
             board = source;
           }
         }
-        this.createSubGraph(tab, title, id, board);
+        await this.createSubGraph(tab, title, id, board);
         break;
       }
 
-      case "module": {
+      case "imperative": {
         let module: Module | undefined = undefined;
         if (source) {
           if (typeof source === "string" || source instanceof URL) {
@@ -463,8 +463,7 @@ export class Edit extends EventTarget {
         }
 
         if (!module) {
-          console.warn("Tried to create module, but no code was provided");
-          return;
+          module = { code: defaultModuleContent(), metadata: { title } };
         }
 
         this.createModule(tab, id, module);
@@ -482,7 +481,7 @@ export class Edit extends EventTarget {
     return editableGraph.edit(edits, `Copying to ${title} (${type})`);
   }
 
-  createModule(
+  async createModule(
     tab: Tab | null,
     moduleId: ModuleIdentifier,
     module: Module = { code: defaultModuleContent("javascript") },
@@ -498,7 +497,7 @@ export class Edit extends EventTarget {
       return null;
     }
 
-    editableGraph
+    return editableGraph
       .edit(
         [
           {

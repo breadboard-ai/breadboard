@@ -38,6 +38,7 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
   CommandsSetSwitchEvent,
   WorkspaceItemChosenEvent,
+  WorkspaceNewItemCreateRequestEvent,
 } from "../../events/events.js";
 import {
   COMMAND_SET_GRAPH_EDITOR,
@@ -371,32 +372,30 @@ export class UI extends LitElement {
               <button
                 id="create-new"
                 @click=${() => {
-                  // this.dispatchEvent(new SubGraphCreateEvent(newSubGraphName));
+                  this.dispatchEvent(new WorkspaceNewItemCreateRequestEvent());
                 }}
               >
                 New item...
               </button>
             </div>
           </h1>
-          ${guard(
-            [graph?.raw().url, this.moduleId, this.subGraphId, this.mode],
-            () =>
-              html`<bb-workspace-outline
-                .graph=${graph}
-                .kits=${this.kits}
-                .subGraphId=${this.subGraphId}
-                .moduleId=${this.moduleId}
-                .renderId=${globalThis.crypto.randomUUID()}
-                .mode=${this.mode}
-                @bbworkspaceitemchosen=${(evt: WorkspaceItemChosenEvent) => {
-                  this.#workspaceItemChosen = evt;
-                }}
-                @bboutlinemodechange=${() => {
-                  this.mode = this.mode === "list" ? "tree" : "list";
-                  globalThis.localStorage.setItem(MODE_KEY, this.mode);
-                }}
-              ></bb-workspace-outline>`
-          )}`;
+          ${guard([graph, this.moduleId, this.subGraphId, this.mode], () => {
+            return html`<bb-workspace-outline
+              .graph=${graph}
+              .kits=${this.kits}
+              .subGraphId=${this.subGraphId}
+              .moduleId=${this.moduleId}
+              .renderId=${globalThis.crypto.randomUUID()}
+              .mode=${this.mode}
+              @bbworkspaceitemchosen=${(evt: WorkspaceItemChosenEvent) => {
+                this.#workspaceItemChosen = evt;
+              }}
+              @bboutlinemodechange=${() => {
+                this.mode = this.mode === "list" ? "tree" : "list";
+                globalThis.localStorage.setItem(MODE_KEY, this.mode);
+              }}
+            ></bb-workspace-outline>`;
+          })}`;
         break;
       }
 

@@ -372,7 +372,7 @@ export class KitNodeChosenEvent extends Event {
 }
 
 /**
- *
+ * Workspace management
  */
 export class WorkspaceItemChosenEvent extends Event {
   static eventName = "bbworkspaceitemchosen";
@@ -383,6 +383,25 @@ export class WorkspaceItemChosenEvent extends Event {
     public readonly nodeId: NodeIdentifier | null = null
   ) {
     super(WorkspaceItemChosenEvent.eventName, { ...eventInit });
+  }
+}
+
+export class WorkspaceNewItemCreateRequestEvent extends Event {
+  static eventName = "bbworkspacenewitemcreaterequest";
+
+  constructor() {
+    super(WorkspaceNewItemCreateRequestEvent.eventName, { ...eventInit });
+  }
+}
+
+export class WorkspaceItemCreateEvent extends Event {
+  static eventName = "bbworkspaceitemcreate";
+
+  constructor(
+    public readonly itemType: "declarative" | "imperative",
+    public readonly title: string | null = null
+  ) {
+    super(WorkspaceItemCreateEvent.eventName, { ...eventInit });
   }
 }
 
