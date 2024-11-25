@@ -12,7 +12,8 @@ import {
 } from "@bjorn3/browser_wasi_shim";
 
 import factory from "./factory.js";
-import { InvokeInputs, ModuleSpec, Sandbox, UUID } from "./types.js";
+import { InvokeInputs, ModuleSpec, Sandbox } from "./types.js";
+import { UUID } from "@breadboard-ai/types";
 
 export { WebSandbox };
 

@@ -13,6 +13,7 @@ import type {
   ModuleMetadata,
   NodeMetadata,
   TraversalResult,
+  UUID,
 } from "@breadboard-ai/types";
 import { HarnessRunResult, SecretResult } from "../harness/types.js";
 import { GraphLoader } from "../loader/types.js";
@@ -42,7 +43,7 @@ import {
 import { SequenceEntry } from "./run/serializer.js";
 import { ReanimationState } from "../run/types.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
-import { AffectedNode } from "../editor/types.js";
+import { AffectedNode, Result } from "../editor/types.js";
 
 export type GraphVersion = number;
 
@@ -646,12 +647,19 @@ export type InspectableGraphCache = {
   clear(): void;
 };
 
+export type MutableGraphStore = {
+  create(url: GraphDescriptor): Result<MutableGraph>;
+};
+
+export type MutableGraphIdentifier = UUID;
+
 /**
  * A backing store for `InspectableGraph` instances, representing a stable
  * instance of a graph whose properties mutate.
  */
 export type MutableGraph = {
   graph: GraphDescriptor;
+  readonly id: MutableGraphIdentifier;
   readonly graphs: InspectableGraphCache;
   readonly options: InspectableGraphOptions;
   readonly nodes: InspectableNodeCache;

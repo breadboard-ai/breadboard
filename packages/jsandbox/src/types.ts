@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { UUID } from "@breadboard-ai/types";
+
 export type Values = Record<string, unknown>;
 export type ModuleSpec = Record<string, string>;
 export type ModuleMethod = "default" | "describe";
@@ -34,5 +36,3 @@ export type Sandbox = {
     inputs: Record<string, unknown>
   ): Promise<InvokeOutputs | DescriberOutputs>;
 };
-
-export type UUID = `${string}-${string}-${string}-${string}-${string}`;

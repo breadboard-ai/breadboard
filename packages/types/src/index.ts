@@ -8,3 +8,4 @@ export type * from "./graph-descriptor.js";
 export type * from "./llm-content.js";
 export type * from "./probe.js";
 export type * from "./traversal.js";
+export type * from "./uuid.js";

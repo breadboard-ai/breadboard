@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { OutputValues } from "@breadboard-ai/types";
+import { OutputValues, UUID } from "@breadboard-ai/types";
 import { Telemetry } from "./telemetry.js";
-import { Capability, CapabilitySpec, UUID } from "./types.js";
+import { Capability, CapabilitySpec } from "./types.js";
 
 export { fetch, secrets, invoke, Capabilities };
 

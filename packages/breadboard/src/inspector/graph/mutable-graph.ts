@@ -19,6 +19,7 @@ import {
   InspectableModuleCache,
   InspectableNodeCache,
   MutableGraph,
+  MutableGraphIdentifier,
 } from "../types.js";
 import { Node } from "./node.js";
 import { Edge } from "./edge.js";
@@ -53,6 +54,7 @@ export const inspectableGraph = (
 
 class MutableGraphImpl implements MutableGraph {
   readonly options: InspectableGraphOptions;
+  readonly id: MutableGraphIdentifier;
 
   // @ts-expect-error Initialized in rebuild.
   graph: GraphDescriptor;
@@ -71,6 +73,7 @@ class MutableGraphImpl implements MutableGraph {
 
   constructor(graph: GraphDescriptor, options: InspectableGraphOptions) {
     this.options = options;
+    this.id = crypto.randomUUID();
     this.rebuild(graph);
   }
 
