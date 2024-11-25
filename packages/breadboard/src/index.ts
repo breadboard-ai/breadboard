@@ -80,7 +80,7 @@ export { PortStatus } from "./inspector/types.js";
  * The Editor API.
  */
 export type * from "./editor/types.js";
-export { editGraph as edit, blank, blankLLMContent } from "./editor/index.js";
+export { blank, blankLLMContent } from "./editor/index.js";
 
 /**
  * The Loader API
