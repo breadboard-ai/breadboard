@@ -307,7 +307,7 @@ export class BBRTConversation {
   async #generateOpenai(): Promise<Result<AsyncIterableIterator<BBRTChunk>>> {
     const messages = await bbrtTurnsToOpenAiMessages(onlyDoneTurns(this.turns));
     const request: OpenAIChatRequest = {
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-4o',
       messages,
     };
     if (this.#tools.size > 0) {
