@@ -548,6 +548,14 @@ export class Main extends LitElement {
         );
 
         this.#runtime.board.addEventListener(
+          Runtime.Events.RuntimeWorkspaceItemChangeEvent.eventName,
+          () => {
+            this.#updatePageURL();
+            this.requestUpdate();
+          }
+        );
+
+        this.#runtime.board.addEventListener(
           Runtime.Events.RuntimeTabCloseEvent.eventName,
           async (evt: Runtime.Events.RuntimeTabCloseEvent) => {
             stopCurrentRunIfActive(evt.tabId);
@@ -2173,14 +2181,20 @@ export class Main extends LitElement {
             .offerConfigurationEnhancements=${offerConfigurationEnhancements}
             .showNodeTypeDescriptions=${showNodeTypeDescriptions}
             .readOnly=${this.tab?.readOnly}
-            @bbmodulechosen=${(evt: BreadboardUI.Events.ModuleChosenEvent) => {
+            @bbworkspaceitemchosen=${(
+              evt: BreadboardUI.Events.WorkspaceItemChosenEvent
+            ) => {
               if (!this.tab) {
                 return;
               }
 
               this.#nodeConfiguratorData = null;
               this.showNodeConfigurator = false;
-              this.#runtime.board.changeModule(this.tab.id, evt.moduleId);
+              this.#runtime.board.changeWorkspaceItem(
+                this.tab.id,
+                evt.subGraphId,
+                evt.moduleId
+              );
             }}
             @bbmodulecreate=${(evt: BreadboardUI.Events.ModuleCreateEvent) => {
               this.#attemptModuleCreate(evt.moduleId);
@@ -2882,19 +2896,6 @@ export class Main extends LitElement {
               ) => {
                 this.#runtime.edit.deleteSubGraph(this.tab, evt.subGraphId);
               }}
-              @bbsubgraphchosen=${(
-                evt: BreadboardUI.Events.SubGraphChosenEvent
-              ) => {
-                if (!this.tab) {
-                  return;
-                }
-
-                this.tab.subGraphId =
-                  evt.subGraphId !== BreadboardUI.Constants.MAIN_BOARD_ID
-                    ? evt.subGraphId
-                    : null;
-                this.requestUpdate();
-              }}
               @bbmodulechangelanguage=${(
                 evt: BreadboardUI.Events.ModuleChangeLanguageEvent
               ) => {
@@ -2908,14 +2909,18 @@ export class Main extends LitElement {
                   evt.moduleLanguage
                 );
               }}
-              @bbmodulechosen=${(
-                evt: BreadboardUI.Events.ModuleChosenEvent
+              @bbworkspaceitemchosen=${(
+                evt: BreadboardUI.Events.WorkspaceItemChosenEvent
               ) => {
                 if (!this.tab) {
                   return;
                 }
 
-                this.#runtime.board.changeModule(this.tab.id, evt.moduleId);
+                this.#runtime.board.changeWorkspaceItem(
+                  this.tab.id,
+                  evt.subGraphId,
+                  evt.moduleId
+                );
               }}
               @bbmodulecreate=${(
                 evt: BreadboardUI.Events.ModuleCreateEvent
@@ -3180,8 +3185,9 @@ export class Main extends LitElement {
                   return;
                 }
 
-                this.#runtime.board.changeModule(
+                this.#runtime.board.changeWorkspaceItem(
                   this.tab.id,
+                  null,
                   evt.secondaryAction ?? null
                 );
                 this.#hideModulePalette();

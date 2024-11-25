@@ -410,3 +410,11 @@ export interface Command {
   disabled?: boolean;
   secondaryAction?: string;
 }
+
+export interface OverflowAction {
+  title: string;
+  name: string;
+  icon: string;
+  disabled?: boolean;
+  secondaryAction?: string;
+}

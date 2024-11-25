@@ -372,6 +372,21 @@ export class KitNodeChosenEvent extends Event {
 }
 
 /**
+ *
+ */
+export class WorkspaceItemChosenEvent extends Event {
+  static eventName = "bbworkspaceitemchosen";
+
+  constructor(
+    public readonly subGraphId: GraphIdentifier | null,
+    public readonly moduleId: ModuleIdentifier | null,
+    public readonly nodeId: NodeIdentifier | null = null
+  ) {
+    super(WorkspaceItemChosenEvent.eventName, { ...eventInit });
+  }
+}
+
+/**
  * Sub Graph Management
  */
 
@@ -603,25 +618,6 @@ export class BoardItemCopyEvent extends Event {
     public readonly title: string
   ) {
     super(BoardItemCopyEvent.eventName, { ...eventInit });
-  }
-}
-
-export class ZoomToGraphEvent extends Event {
-  static eventName = "bbzoomtograph";
-
-  constructor(public readonly id: GraphIdentifier) {
-    super(ZoomToGraphEvent.eventName, { ...eventInit });
-  }
-}
-
-export class ZoomToNodeEvent extends Event {
-  static eventName = "bbzoomtonode";
-
-  constructor(
-    public readonly id: NodeIdentifier,
-    public readonly subGraphId: string | null = null
-  ) {
-    super(ZoomToNodeEvent.eventName, { ...eventInit });
   }
 }
 

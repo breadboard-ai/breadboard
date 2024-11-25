@@ -159,6 +159,10 @@ export class OverflowMenu extends LitElement {
       background-image: var(--bb-icon-edit);
     }
 
+    button.fit {
+      background-image: var(--bb-icon-fit);
+    }
+
     button.undo {
       background-image: var(--bb-icon-undo);
     }
@@ -193,6 +197,14 @@ export class OverflowMenu extends LitElement {
 
     button.module-ts {
       background-image: var(--bb-icon-extension-ts);
+    }
+
+    button.duplicate {
+      background-image: var(--bb-icon-duplicate);
+    }
+
+    button.quick-jump {
+      background-image: var(--bb-icon-quick-jump);
     }
 
     button.error {

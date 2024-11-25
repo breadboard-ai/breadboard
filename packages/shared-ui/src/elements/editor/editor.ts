@@ -382,9 +382,13 @@ export class Editor extends LitElement {
         this.#graphRenderer.topGraphResult = this.topGraphResult;
       }
 
-      if (this.#zoomOnUpdate) {
+      if (
+        this.#zoomOnUpdate &&
+        listenForDraw &&
+        listenForDrawId &&
+        opts.subGraphId === listenForDrawId
+      ) {
         this.#graphRenderer.zoomToFit(0, this.#zoomOnUpdateId);
-
         this.#zoomOnUpdate = false;
         this.#zoomOnUpdateId = null;
       }

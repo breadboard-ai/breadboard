@@ -28,17 +28,13 @@ import { map } from "lit/directives/map.js";
 import {
   BoardItemCopyEvent,
   HideTooltipEvent,
-  ModuleChosenEvent,
-  ModuleCreateEvent,
   ModuleDeleteEvent,
   NodeConfigurationUpdateRequestEvent,
   OutlineModeChangeEvent,
+  OverflowMenuActionEvent,
   ShowTooltipEvent,
-  SubGraphChosenEvent,
-  SubGraphCreateEvent,
   SubGraphDeleteEvent,
-  ZoomToGraphEvent,
-  ZoomToNodeEvent,
+  WorkspaceItemChosenEvent,
 } from "../../events/events";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
@@ -46,7 +42,7 @@ import { styleMap } from "lit/directives/style-map.js";
 import { getSubItemColor } from "../../utils/subgraph-color";
 import { isConfigurableBehavior } from "../../utils";
 import { ModuleIdentifier } from "@breadboard-ai/types";
-import { getModuleId } from "../../utils/module-id";
+import { OverflowAction } from "../../types/types";
 
 type ItemIdentifier = GraphIdentifier | ModuleIdentifier;
 
@@ -83,6 +79,13 @@ export class WorkspaceOutline extends LitElement {
 
   @state()
   filter: string | null = null;
+
+  @state()
+  private showOverflowMenu = false;
+  #overflowMenuTargetType: "declarative" | "imperative" = "declarative";
+  #overflowMenuTarget: string | null = null;
+  #overflowMenuOptions: OverflowAction[] = [];
+  #overflowMenuLocation = { x: 0, y: 0 };
 
   static styles = css`
     * {
@@ -179,12 +182,13 @@ export class WorkspaceOutline extends LitElement {
     }
 
     #outline {
-      height: calc(100% - var(--bb-grid-size-12));
+      height: calc(100% - 92px);
       overflow-x: hidden;
       overflow-y: scroll;
       padding: 0 var(--bb-grid-size-2);
       font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
+      user-select: none;
     }
 
     summary::-webkit-details-marker {
@@ -210,12 +214,6 @@ export class WorkspaceOutline extends LitElement {
       height: var(--bb-grid-size-7);
       display: flex;
       align-items: center;
-    }
-
-    details.declarative summary .title,
-    details.imperative summary .title {
-      width: 100%;
-      flex: 1 0 auto;
     }
 
     details.declarative > summary {
@@ -456,8 +454,8 @@ export class WorkspaceOutline extends LitElement {
       cursor: default;
     }
 
-    .declarative .change-subitem::before,
-    .imperative .change-subitem::before {
+    .declarative > summary > .title::before,
+    .imperative > summary > .title::before {
       content: "";
       width: var(--bb-grid-size-5);
       height: var(--bb-grid-size-5);
@@ -468,27 +466,34 @@ export class WorkspaceOutline extends LitElement {
       border-radius: var(--bb-grid-size);
       flex: 0 0 auto;
       position: absolute;
-      top: var(--bb-grid-size);
-      left: var(--bb-grid-size);
+      top: 0;
+      left: 0;
     }
 
-    .declarative.inverted .change-subitem::before {
+    .declarative.inverted > summary > .title::before {
       background-image: var(--bb-icon-board-inverted);
     }
 
-    .imperative .change-subitem::before {
+    .imperative > summary > .title::before {
       background-image: var(--bb-icon-extension);
     }
 
-    .imperative.inverted .change-subitem::before {
+    .imperative.inverted > summary > .title::before {
       background-image: var(--bb-icon-extension-inverted);
     }
 
     .title {
-      display: inline-flex;
-      align-items: center;
       height: var(--bb-grid-size-5);
-      flex: 1;
+    }
+
+    summary > .title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: calc(100% - 28px);
+      margin-right: var(--bb-grid-size-2);
+      padding-left: var(--bb-grid-size-7);
+      position: relative;
     }
 
     .title:has(> .change-subitem) {
@@ -584,42 +589,36 @@ export class WorkspaceOutline extends LitElement {
       background-color: var(--bb-neutral-50);
     }
 
-    .duplicate,
-    .delete {
+    .more {
       height: var(--bb-grid-size-7);
       width: var(--bb-grid-size-7);
       border: none;
-      background: transparent none center center / 20px 20px no-repeat;
+      background: transparent var(--bb-icon-more-vert) center center / 20px 20px
+        no-repeat;
       font-size: 0;
-      margin: 0 0 0 var(--bb-grid-size-2);
+      margin: 0 0 0 var(--bb-grid-size);
       opacity: 0;
       cursor: pointer;
       border-radius: 50%;
       transition: background 0.1s cubic-bezier(0, 0, 0.3, 1);
     }
 
-    .title:hover .duplicate,
-    .duplicate:hover,
-    .duplicate:focus,
-    .title:hover .delete,
-    .delete:hover,
-    .delete:focus {
+    summary:hover .more,
+    .more:hover,
+    .more:focus {
       opacity: 1;
     }
 
-    .duplicate:hover,
-    .duplicate:focus,
-    .delete:hover,
-    .delete:focus {
+    .more:hover,
+    .more:focus {
       background-color: var(--bb-neutral-50);
     }
 
-    .delete {
-      background-image: var(--bb-icon-delete);
-    }
-
-    .duplicate {
-      background-image: var(--bb-icon-duplicate);
+    bb-overflow-menu {
+      position: fixed;
+      z-index: 100;
+      right: auto;
+      bottom: auto;
     }
   `;
 
@@ -822,24 +821,7 @@ export class WorkspaceOutline extends LitElement {
             ><button
               class="node-item"
               @click=${() => {
-                if (this.subGraphId !== subGraphId && this.mode === "list") {
-                  this.dispatchEvent(
-                    new SubGraphChosenEvent(
-                      subGraphId ? subGraphId : MAIN_BOARD_ID,
-                      node.descriptor.id
-                    )
-                  );
-
-                  return;
-                }
-
-                if (this.mode === "tree" && this.moduleId) {
-                  this.dispatchEvent(new ModuleChosenEvent(null));
-                }
-
-                this.dispatchEvent(
-                  new ZoomToNodeEvent(node.descriptor.id, subGraphId)
-                );
+                this.#changeWorkspaceItem(subGraphId, null, node.descriptor.id);
               }}
             >
               ${node.title()}
@@ -934,11 +916,7 @@ export class WorkspaceOutline extends LitElement {
                     if (this.mode === "list") {
                       this.#scrollTo(this.#createSubItemId(subGraphId));
                     } else {
-                      if (this.mode === "tree") {
-                        this.dispatchEvent(new ZoomToGraphEvent(subGraphId));
-                      } else {
-                        this.dispatchEvent(new SubGraphChosenEvent(subGraphId));
-                      }
+                      this.#changeWorkspaceItem(subGraphId, null);
                     }
                   }}
                 >
@@ -994,36 +972,57 @@ export class WorkspaceOutline extends LitElement {
           class="declarative"
           ?open=${subItems.size === 0}
         >
-          <summary>
-            <div class="title">
-              <button
-                class=${classMap({ "change-subitem": true })}
-                ?disabled=${this.mode === "list" &&
-                this.subGraphId === null &&
-                this.moduleId === null}
-                @click=${() => {
-                  if (this.mode === "list") {
-                    if (this.moduleId !== null) {
-                      this.dispatchEvent(new ModuleChosenEvent(null));
-                    }
+          <summary
+            @click=${(evt: PointerEvent) => {
+              const isMac = navigator.platform.indexOf("Mac") === 0;
+              const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
-                    if (this.subGraphId !== null) {
-                      this.dispatchEvent(
-                        new SubGraphChosenEvent(MAIN_BOARD_ID)
-                      );
-                    }
-                  } else {
-                    if (this.moduleId) {
-                      this.dispatchEvent(new ModuleChosenEvent(null));
-                    }
+              if (!isCtrlCommand) {
+                return;
+              }
 
-                    this.dispatchEvent(new ZoomToGraphEvent(MAIN_BOARD_ID));
-                  }
-                }}
-              >
-                ${title}
-              </button>
-            </div>
+              evt.preventDefault();
+              evt.stopPropagation();
+
+              // Switch to main board.
+              this.#changeWorkspaceItem(null, null);
+            }}
+          >
+            <div class="title">${title}</div>
+            <button
+              class="more"
+              @click=${(evt: PointerEvent) => {
+                this.#overflowMenuLocation = {
+                  x: evt.clientX + 20,
+                  y: evt.clientY,
+                };
+
+                const showZoom =
+                  main === undefined &&
+                  this.moduleId === null &&
+                  this.subGraphId === null;
+
+                this.#overflowMenuTargetType =
+                  main === undefined ? "declarative" : "imperative";
+                this.#overflowMenuTarget = null;
+                this.#overflowMenuOptions = [
+                  showZoom
+                    ? {
+                        title: "Zoom to Fit",
+                        name: "zoom-to-fit",
+                        icon: "fit",
+                      }
+                    : {
+                        title: "Go to item",
+                        name: "quick-jump",
+                        icon: "quick-jump",
+                      },
+                ];
+                this.showOverflowMenu = true;
+              }}
+            >
+              More
+            </button>
           </summary>
           ${this.#renderWorkspaceItem(
             null,
@@ -1051,88 +1050,68 @@ export class WorkspaceOutline extends LitElement {
           inverted: getSubItemColor<number>(id, "text", true) === 0xffffff,
         })}
       >
-        <summary>
-          <div class="title">
-            <button
-              class=${classMap({
-                "change-subitem": true,
-              })}
-              ?disabled=${this.subGraphId === id || this.moduleId === id}
-              @click=${() => {
-                if (subItem.type === "declarative") {
-                  if (this.mode === "tree") {
-                    if (this.moduleId) {
-                      this.dispatchEvent(new ModuleChosenEvent(null));
-                    }
+        <summary
+          @click=${(evt: PointerEvent) => {
+            const isMac = navigator.platform.indexOf("Mac") === 0;
+            const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
-                    this.dispatchEvent(new ZoomToGraphEvent(id));
-                  } else {
-                    this.dispatchEvent(new SubGraphChosenEvent(id));
-                    this.dispatchEvent(new ModuleChosenEvent(null));
-                  }
-                } else {
-                  this.dispatchEvent(new SubGraphChosenEvent(MAIN_BOARD_ID));
-                  this.dispatchEvent(new ModuleChosenEvent(id));
-                }
-              }}
-            >
-              ${subItem.title}
-            </button>
-            ${main !== id
-              ? html`<button
-                    class="duplicate"
-                    @click=${() => {
-                      const name = prompt(
-                        "What would you like to call this?",
-                        `${subItem.title} Copy`
-                      );
-                      if (!name) {
-                        return;
-                      }
+            if (!isCtrlCommand) {
+              return;
+            }
 
-                      this.dispatchEvent(
-                        new BoardItemCopyEvent(
-                          id,
-                          subItem.type === "declarative" ? "graph" : "module",
-                          name
-                        )
-                      );
-                    }}
-                  >
-                    Duplicate
-                  </button>
-                  <button
-                    class="delete"
-                    @click=${() => {
-                      if (subItem.type === "declarative") {
-                        if (
-                          !confirm(
-                            "Are you sure you wish to delete this board?"
-                          )
-                        ) {
-                          return;
+            evt.preventDefault();
+            evt.stopPropagation();
+
+            const subGraphId = subItem.type === "declarative" ? id : null;
+            const moduleId = subItem.type === "imperative" ? id : null;
+            this.#changeWorkspaceItem(subGraphId, moduleId);
+          }}
+        >
+          <div class="title">${subItem.title}</div>
+          ${main !== id
+            ? html` <button
+                class="more"
+                @click=${(evt: PointerEvent) => {
+                  this.#overflowMenuLocation = {
+                    x: evt.clientX + 20,
+                    y: evt.clientY,
+                  };
+
+                  const showZoom =
+                    subItem.type === "declarative" &&
+                    (this.mode === "tree" || this.subGraphId === id);
+
+                  this.#overflowMenuTargetType = subItem.type;
+                  this.#overflowMenuTarget = id;
+                  this.#overflowMenuOptions = [
+                    showZoom
+                      ? {
+                          title: "Zoom to Fit",
+                          name: "zoom-to-fit",
+                          icon: "fit",
                         }
-
-                        this.dispatchEvent(new SubGraphDeleteEvent(id));
-                        return;
-                      } else {
-                        if (
-                          !confirm(
-                            "Are you sure you wish to delete this module?"
-                          )
-                        ) {
-                          return;
-                        }
-
-                        this.dispatchEvent(new ModuleDeleteEvent(id));
-                        return;
-                      }
-                    }}
-                  >
-                    Delete
-                  </button>`
-              : nothing}
-          </div>
+                      : {
+                          title: "Go to item",
+                          name: "quick-jump",
+                          icon: "quick-jump",
+                        },
+                    {
+                      title: "Duplicate",
+                      name: "duplicate",
+                      icon: "duplicate",
+                    },
+                    {
+                      title: "Delete",
+                      name: "delete",
+                      icon: "delete",
+                    },
+                  ];
+                  this.showOverflowMenu = true;
+                }}
+              >
+                More
+              </button>`
+            : nothing}
         </summary>
         ${this.#renderWorkspaceItem(
           id,
@@ -1143,7 +1122,118 @@ export class WorkspaceOutline extends LitElement {
           false
         )}
       </details>`;
-    })}`;
+    })}
+    ${this.showOverflowMenu
+      ? html`<bb-overflow-menu
+          .actions=${this.#overflowMenuOptions}
+          .disabled=${false}
+          @bboverflowmenuaction=${(evt: OverflowMenuActionEvent) => {
+            evt.stopImmediatePropagation();
+
+            switch (evt.action) {
+              case "zoom-to-fit": {
+                this.#changeWorkspaceItem(
+                  this.#overflowMenuTarget ? this.#overflowMenuTarget : null,
+                  null
+                );
+                break;
+              }
+
+              case "quick-jump": {
+                const subGraphId =
+                  this.#overflowMenuTargetType === "declarative"
+                    ? this.#overflowMenuTarget
+                    : null;
+                const moduleId =
+                  this.#overflowMenuTargetType === "imperative"
+                    ? this.#overflowMenuTarget
+                    : null;
+                this.#changeWorkspaceItem(subGraphId, moduleId);
+                break;
+              }
+
+              case "duplicate": {
+                if (!this.#overflowMenuTarget) {
+                  break;
+                }
+
+                const target = subItems.get(this.#overflowMenuTarget);
+                if (!target) {
+                  break;
+                }
+
+                const name = prompt(
+                  "What would you like to call this?",
+                  `${target.title} Copy`
+                );
+                if (!name) {
+                  break;
+                }
+
+                this.dispatchEvent(
+                  new BoardItemCopyEvent(
+                    this.#overflowMenuTarget,
+                    target.type === "declarative" ? "graph" : "module",
+                    name
+                  )
+                );
+                break;
+              }
+
+              case "delete": {
+                if (!this.#overflowMenuTarget) {
+                  break;
+                }
+
+                const target = subItems.get(this.#overflowMenuTarget);
+                if (!target) {
+                  break;
+                }
+
+                if (target.type === "declarative") {
+                  if (!confirm("Are you sure you wish to delete this board?")) {
+                    break;
+                  }
+
+                  this.dispatchEvent(
+                    new SubGraphDeleteEvent(this.#overflowMenuTarget)
+                  );
+                  break;
+                } else {
+                  if (
+                    !confirm("Are you sure you wish to delete this module?")
+                  ) {
+                    break;
+                  }
+
+                  this.dispatchEvent(
+                    new ModuleDeleteEvent(this.#overflowMenuTarget)
+                  );
+                  break;
+                }
+              }
+            }
+            this.showOverflowMenu = false;
+          }}
+          @bboverflowmenudismissed=${() => {
+            this.showOverflowMenu = false;
+          }}
+          style=${styleMap({
+            left: `${this.#overflowMenuLocation.x}px`,
+            top: `${this.#overflowMenuLocation.y}px`,
+          })}
+        ></bb-overflow-menu>`
+      : nothing} `;
+  }
+
+  #changeWorkspaceItem(
+    subGraphId: GraphIdentifier | null,
+    moduleId: ModuleIdentifier | null,
+    nodeId: NodeIdentifier | null = null
+  ) {
+    this.dispatchEvent(
+      new WorkspaceItemChosenEvent(subGraphId, moduleId, nodeId)
+    );
   }
 
   render() {

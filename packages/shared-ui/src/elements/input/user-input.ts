@@ -28,10 +28,10 @@ import {
   EnhanceNodeConfigurationEvent,
   EnhanceNodeResetEvent,
   HideTooltipEvent,
-  ModuleChosenEvent,
   ModuleCreateEvent,
   ShowTooltipEvent,
   UserOutputEvent,
+  WorkspaceItemChosenEvent,
 } from "../../events/events";
 import { UserInputConfiguration, UserOutputValues } from "../../types/types";
 import {
@@ -763,7 +763,7 @@ export class UserInput extends LitElement {
                               @click=${() => {
                                 this.dispatchEvent(new HideTooltipEvent());
                                 this.dispatchEvent(
-                                  new ModuleChosenEvent(module)
+                                  new WorkspaceItemChosenEvent(null, module)
                                 );
                               }}
                             >
