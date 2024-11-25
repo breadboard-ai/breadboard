@@ -7,9 +7,9 @@
 import test from "ava";
 
 import { GraphDescriptor } from "@breadboard-ai/types";
-import { inspectableGraph } from "../../src/inspector/mutable-graph.js";
-import { PortType } from "../../src/inspector/ports.js";
+import { PortType } from "../../src/inspector/graph/ports.js";
 import { Schema } from "../../src/types.js";
+import { inspector } from "../helpers/_inspector.js";
 
 test("collectPorts correctly reports edges", async (t) => {
   const graph = {
@@ -25,7 +25,7 @@ test("collectPorts correctly reports edges", async (t) => {
       { from: "b", to: "c", in: "text", out: "bar" },
     ],
   } satisfies GraphDescriptor;
-  const inspectable = inspectableGraph(graph);
+  const inspectable = inspector(graph);
   const b = inspectable.nodeById("b");
   const ports = await b?.ports();
   const inputs = ports?.inputs?.ports;
@@ -66,7 +66,7 @@ test("collectPorts correctly recognizes dangling ports", async (t) => {
     nodes: [{ id: "a", type: "input" }],
     edges: [{ from: "a", to: "a", in: "foo", out: "text" }],
   } satisfies GraphDescriptor;
-  const inspectable = inspectableGraph(graph);
+  const inspectable = inspector(graph);
   const a = inspectable.nodeById("a");
   const ports = await a?.ports();
   t.assert(ports?.inputs?.fixed);
@@ -87,7 +87,7 @@ test("collectPorts adds an $error port", async (t) => {
     nodes: [{ id: "a", type: "bar" }],
     edges: [],
   } satisfies GraphDescriptor;
-  const inspectable = inspectableGraph(graph);
+  const inspectable = inspector(graph);
   const a = inspectable.nodeById("a");
   const ports = await a?.ports();
   const outputs = ports?.outputs?.ports;

@@ -6,9 +6,9 @@
 
 import test from "ava";
 
-import { inspectableGraph } from "../../src/inspector/mutable-graph.js";
 import { createLoader } from "../../src/loader/index.js";
 import { GraphDescriptor, Schema } from "../../src/types.js";
+import { inspector } from "../helpers/_inspector.js";
 
 const BASE_URL = new URL("../../../tests/inspector/data/", import.meta.url);
 
@@ -17,7 +17,7 @@ const load = async (url: string) => {
   const loader = createLoader();
   const result = await loader.load(url, { base });
   if (!result.success) return undefined;
-  return inspectableGraph(result.graph);
+  return inspector(result.graph);
 };
 
 test("simple graph description works as expected", async (t) => {
@@ -32,7 +32,7 @@ test("simple graph description works as expected", async (t) => {
       { from: "b", to: "c", in: "text", out: "bar" },
     ],
   } satisfies GraphDescriptor;
-  const inspectable = inspectableGraph(graph);
+  const inspectable = inspector(graph);
   const api = await inspectable.describe();
   t.deepEqual(api, {
     inputSchema: {

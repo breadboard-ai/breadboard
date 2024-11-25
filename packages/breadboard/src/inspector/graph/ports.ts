@@ -6,7 +6,7 @@
 
 import { analyzeIsJsonSubSchema } from "@google-labs/breadboard-schema/subschema.js";
 import { JSONSchema4 } from "json-schema";
-import { BehaviorSchema, NodeConfiguration, Schema } from "../types.js";
+import { BehaviorSchema, NodeConfiguration, Schema } from "../../types.js";
 import { DEFAULT_SCHEMA, EdgeType } from "./schemas.js";
 import {
   CanConnectAnalysis,
@@ -15,7 +15,7 @@ import {
   InspectablePortList,
   InspectablePortType,
   PortStatus,
-} from "./types.js";
+} from "../types.js";
 
 const title = (schema: Schema, key: string) => {
   return schema.properties?.[key]?.title || key;

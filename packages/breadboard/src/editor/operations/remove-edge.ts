@@ -12,10 +12,11 @@ import {
   SingleEditResult,
 } from "../types.js";
 import { InspectableGraph } from "../../inspector/types.js";
-import { fixUpStarEdge } from "../../inspector/edge.js";
+import { fixUpStarEdge } from "../../inspector/graph/edge.js";
 import { findEdgeIndex } from "../edge.js";
-import { toSubgraphContext } from "../subgraph-context.js";
 import { GraphIdentifier } from "@breadboard-ai/types";
+import { errorNoInspect } from "./error.js";
+import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
 
 export class RemoveEdge implements EditOperation {
   async can(
@@ -51,20 +52,27 @@ export class RemoveEdge implements EditOperation {
     }
     let edge = spec.edge;
     const { graphId } = spec;
-    const subgraphContext = toSubgraphContext(context, graphId);
-    if (!subgraphContext.success) {
-      return subgraphContext;
+    const { mutable } = context;
+    const inspector = mutable.graphs.get(graphId);
+    if (!inspector) {
+      return errorNoInspect(graphId);
     }
-    const { graph, inspector, store } = subgraphContext.result;
+
     const can = await this.can(edge, inspector, graphId);
     if (!can.success) {
       return can;
     }
+    const handle = GraphDescriptorHandle.create(context.graph, graphId);
+    if (!handle.success) {
+      return handle;
+    }
+    const graph = handle.result.graph();
+
     edge = fixUpStarEdge(edge);
     const edges = graph.edges;
     const index = findEdgeIndex(graph, edge);
     const foundEdge = edges.splice(index, 1)[0];
-    store.edgeStore.remove(foundEdge, graphId);
+    mutable.edges.remove(foundEdge, graphId);
     return {
       success: true,
       affectedNodes: [

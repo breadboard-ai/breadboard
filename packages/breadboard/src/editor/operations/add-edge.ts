@@ -4,6 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GraphIdentifier } from "@breadboard-ai/types";
+import {
+  fixUpStarEdge,
+  fixupConstantEdge,
+  unfixUpStarEdge,
+} from "../../inspector/graph/edge.js";
+import { InspectableGraph } from "../../inspector/types.js";
 import {
   EditOperation,
   EditOperationContext,
@@ -11,14 +18,8 @@ import {
   EditableEdgeSpec,
   SingleEditResult,
 } from "../types.js";
-import { InspectableGraph } from "../../inspector/types.js";
-import {
-  fixUpStarEdge,
-  fixupConstantEdge,
-  unfixUpStarEdge,
-} from "../../inspector/edge.js";
-import { toSubgraphContext } from "../subgraph-context.js";
-import { GraphIdentifier } from "@breadboard-ai/types";
+import { errorNoInspect } from "./error.js";
+import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
 
 export class AddEdge implements EditOperation {
   async can(
@@ -107,21 +108,24 @@ export class AddEdge implements EditOperation {
     let edge = spec.edge;
     const { graphId } = spec;
 
-    const subgraphContext = toSubgraphContext(context, graphId);
-    if (!subgraphContext.success) {
-      return subgraphContext;
+    const { graph, mutable } = context;
+    const inspector = mutable.graphs.get(graphId);
+    if (!inspector) {
+      return errorNoInspect(graphId);
     }
-    const { graph, inspector, store } = subgraphContext.result;
     const can = await this.can(edge, inspector, graphId);
     if (!can.success) {
       return can;
     }
+    const handle = GraphDescriptorHandle.create(graph, graphId);
+    if (!handle.success) {
+      return handle;
+    }
 
     edge = fixUpStarEdge(edge);
     edge = fixupConstantEdge(edge);
-    // TODO: Figure out how to make this work in multi-edit mode.
-    store.edgeStore.add(edge, graphId);
-    graph.edges.push(edge);
+    mutable.edges.add(edge, graphId);
+    handle.result.graph().edges.push(edge);
     return {
       success: true,
       affectedNodes: [

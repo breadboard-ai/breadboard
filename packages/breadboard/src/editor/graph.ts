@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InspectableGraphWithStore } from "../inspector/types.js";
 import { GraphDescriptor, GraphIdentifier, NodeIdentifier } from "../types.js";
 import {
   SingleEditResult,
@@ -43,7 +42,7 @@ import {
 } from "../run/run-imperative-graph.js";
 import { AddGraph } from "./operations/add-graph.js";
 import { RemoveGraph } from "./operations/remove-graph.js";
-import { inspectableGraph } from "../inspector/mutable-graph.js";
+import { MutableGraphImpl } from "../inspector/graph/mutable-graph.js";
 
 const validImperativeEdits: EditSpec["type"][] = [
   "addmodule",
@@ -71,7 +70,7 @@ const operations = new Map<EditSpec["type"], EditOperation>([
 export class Graph implements EditableGraph {
   #version = 0;
   #options: EditableGraphOptions;
-  #inspector: InspectableGraphWithStore;
+  #mutable: MutableGraphImpl;
   #graph: GraphDescriptor;
   #eventTarget: EventTarget = new EventTarget();
   #history: GraphEditHistory;
@@ -84,7 +83,7 @@ export class Graph implements EditableGraph {
     } else {
       this.#graph = graph;
     }
-    this.#inspector = inspectableGraph(this.raw(), options);
+    this.#mutable = new MutableGraphImpl(graph, options);
     this.#options = options;
     this.#version = options.version || 0;
     this.#history = new GraphEditHistory({
@@ -97,7 +96,7 @@ export class Graph implements EditableGraph {
       setGraph: (graph) => {
         this.#graph = graph;
         this.#version++;
-        this.#inspector.resetGraph(graph);
+        this.#mutable.rebuild(graph);
         this.#eventTarget.dispatchEvent(
           new ChangeEvent(this.raw(), this.#version, false, "history", [], [])
         );
@@ -112,7 +111,7 @@ export class Graph implements EditableGraph {
     affectedModules: ModuleIdentifier[]
   ) {
     this.#version++;
-    this.#inspector.updateGraph(
+    this.#mutable.update(
       this.#graph,
       visualOnly,
       affectedNodes,
@@ -132,8 +131,7 @@ export class Graph implements EditableGraph {
 
   #rollbackGraph(checkpoint: GraphDescriptor, error: string) {
     this.#graph = checkpoint;
-    // TODO: Handle subgraphs.
-    this.#inspector.resetGraph(this.#graph);
+    this.#mutable.rebuild(this.#graph);
     this.#dispatchNoChange(error);
   }
 
@@ -210,12 +208,11 @@ export class Graph implements EditableGraph {
   }
 
   inspect(id: GraphIdentifier) {
-    if (!id) return this.#inspector;
-    const subGraphInspector = this.#inspector.graphs()?.[id];
-    if (!subGraphInspector) {
+    const inspectableGraph = this.#mutable.graphs.get(id || "");
+    if (!inspectableGraph) {
       throw new Error(`Unknown sub-graph id: "${id}"`);
     }
-    return subGraphInspector;
+    return inspectableGraph;
   }
 
   async #applyEdits(
@@ -268,18 +265,16 @@ export class Graph implements EditableGraph {
 
     if (dryRun) {
       const graph = checkpoint;
-      const inspector = inspectableGraph(graph, this.#options);
+      const mutable = new MutableGraphImpl(graph, this.#options);
       context = {
         graph,
-        inspector,
-        store: inspector,
+        mutable,
         apply,
       };
     } else {
       context = {
         graph: this.#graph,
-        inspector: this.#inspector,
-        store: this.#inspector,
+        mutable: this.#mutable,
         apply,
       };
     }

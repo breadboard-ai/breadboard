@@ -5,8 +5,7 @@
  */
 
 import test from "ava";
-
-import { inspectableGraph } from "../../src/inspector/mutable-graph.js";
+import { inspector } from "../helpers/_inspector.js";
 
 test("inspectableModule correctly returns modules", (t) => {
   const modules = {
@@ -20,7 +19,7 @@ test("inspectableModule correctly returns modules", (t) => {
     edges: [],
     modules,
   };
-  const inspectable = inspectableGraph(graph);
+  const inspectable = inspector(graph);
   t.deepEqual(inspectable.modules()?.foo.code(), modules.foo.code);
   t.deepEqual(inspectable.modules()?.foo.metadata(), modules.foo.metadata);
 });
@@ -30,7 +29,7 @@ test("inspectableModule correctly returns empty modules when not populated", (t)
     nodes: [],
     edges: [],
   };
-  const inspectable = inspectableGraph(graph);
+  const inspectable = inspector(graph);
   t.deepEqual(inspectable.modules(), {});
 });
 
@@ -48,7 +47,7 @@ test("InspectableModule instances are stable within InspectableGraph", (t) => {
     modules,
   };
 
-  const inspectable = inspectableGraph(graph);
+  const inspectable = inspector(graph);
   t.assert(inspectable.moduleById("foo") === inspectable.moduleById("foo"));
 });
 
@@ -59,6 +58,6 @@ test("returns undefined for non-existent modules", (t) => {
     modules: {},
   };
 
-  const inspectable = inspectableGraph(graph);
+  const inspectable = inspector(graph);
   t.is(inspectable.moduleById("foo"), undefined);
 });

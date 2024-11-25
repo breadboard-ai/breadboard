@@ -15,9 +15,10 @@ import {
 import { RemoveEdge } from "./remove-edge.js";
 import { AddEdge } from "./add-edge.js";
 import { edgesEqual, findEdgeIndex } from "../edge.js";
-import { fixUpStarEdge } from "../../inspector/edge.js";
-import { toSubgraphContext } from "../subgraph-context.js";
+import { fixUpStarEdge } from "../../inspector/graph/edge.js";
 import { GraphIdentifier } from "@breadboard-ai/types";
+import { errorNoInspect } from "./error.js";
+import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
 
 export class ChangeEdge implements EditOperation {
   async can(
@@ -58,13 +59,12 @@ export class ChangeEdge implements EditOperation {
       );
     }
     const { from, to, graphId } = spec;
-    const subgraphContext = toSubgraphContext(context, graphId);
-
-    if (!subgraphContext.success) {
-      return subgraphContext;
+    const { mutable } = context;
+    const inspector = mutable.graphs.get(graphId);
+    if (!inspector) {
+      return errorNoInspect(graphId);
     }
 
-    const { graph, inspector } = subgraphContext.result;
     const can = await this.can(from, to, inspector, graphId);
     if (!can.success) {
       return can;
@@ -78,6 +78,12 @@ export class ChangeEdge implements EditOperation {
         affectedGraphs: [],
       };
     }
+    const handle = GraphDescriptorHandle.create(context.graph, graphId);
+    if (!handle.success) {
+      return handle;
+    }
+    const graph = handle.result.graph();
+
     const fixedUpEdge = fixUpStarEdge(from);
     const edges = graph.edges;
     const index = findEdgeIndex(graph, fixedUpEdge);

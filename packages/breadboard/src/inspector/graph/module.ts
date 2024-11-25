@@ -15,7 +15,7 @@ import {
   InspectableModule,
   InspectableModuleCache,
   InspectableModules,
-} from "./types.js";
+} from "../types.js";
 
 class Module implements InspectableModule {
   #code: ModuleCode | undefined;

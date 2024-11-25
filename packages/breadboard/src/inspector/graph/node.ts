@@ -11,7 +11,7 @@ import {
   NodeDescriberResult,
   NodeDescriptor,
   OutputValues,
-} from "../types.js";
+} from "../../types.js";
 import { collectPorts, filterSidePorts } from "./ports.js";
 import { EdgeType } from "./schemas.js";
 import {
@@ -22,7 +22,7 @@ import {
   InspectablePortList,
   MutableGraph,
   NodeTypeDescriberOptions,
-} from "./types.js";
+} from "../types.js";
 import { GraphQueries } from "./graph-queries.js";
 import { DescriberManager } from "./describer-manager.js";
 

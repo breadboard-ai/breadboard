@@ -6,21 +6,21 @@
 
 import { EdgeType, describeInput } from "./schemas.js";
 import { collectPorts } from "./ports.js";
-import { filterBySchema } from "../schema.js";
+import { filterBySchema } from "../../schema.js";
 import {
   InspectableEdge,
   InspectableNode,
   InspectableNodePorts,
   InspectableNodeType,
   InspectablePortList,
-} from "./types.js";
+} from "../types.js";
 import {
   InputValues,
   NodeConfiguration,
   NodeDescriberResult,
   NodeDescriptor,
   OutputValues,
-} from "../types.js";
+} from "../../types.js";
 import { NodeMetadata } from "@breadboard-ai/types";
 
 /**

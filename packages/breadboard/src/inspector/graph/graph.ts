@@ -16,10 +16,10 @@ import {
   NodeDescriberResult,
   NodeIdentifier,
   NodeTypeIdentifier,
-} from "../types.js";
+} from "../../types.js";
 import {
   InspectableEdge,
-  InspectableGraphWithStore,
+  InspectableGraph,
   InspectableKit,
   InspectableModules,
   InspectableNode,
@@ -27,14 +27,13 @@ import {
   InspectableSubgraphs,
   MutableGraph,
   NodeTypeDescriberOptions,
-} from "./types.js";
-import { AffectedNode } from "../editor/types.js";
+} from "../types.js";
 import { DescriberManager } from "./describer-manager.js";
 import { GraphQueries } from "./graph-queries.js";
 
 export { Graph };
 
-class Graph implements InspectableGraphWithStore {
+class Graph implements InspectableGraph {
   #graphId: GraphIdentifier;
   #mutable: MutableGraph;
 
@@ -134,94 +133,6 @@ class Graph implements InspectableGraphWithStore {
       throw new Error(`Inspect API Integrity Error: ${manager.error}`);
     }
     return manager.result.describe(inputs);
-  }
-
-  get nodeStore() {
-    return this.#mutable.nodes;
-  }
-
-  get edgeStore() {
-    return this.#mutable.edges;
-  }
-
-  get moduleStore() {
-    return this.#mutable.modules;
-  }
-
-  updateGraph(
-    graph: GraphDescriptor,
-    visualOnly: boolean,
-    affectedNodes: AffectedNode[],
-    affectedModules: ModuleIdentifier[]
-  ): void {
-    if (this.#graphId) {
-      throw new Error(
-        "Inspect API integrity error: updateGraph should never be called for subgraphs"
-      );
-    }
-    // TODO: Handle this a better way?
-    for (const id of affectedModules) {
-      this.#mutable.modules.remove(id);
-      if (!graph.modules || !graph.modules[id]) {
-        continue;
-      }
-
-      this.#mutable.modules.add(id, graph.modules[id]);
-
-      // Find any nodes configured to use this module and clear its describer.
-      const runModulesNodes = this.#mutable.nodes.byType(
-        "runModule",
-        this.#graphId
-      );
-      for (const node of runModulesNodes) {
-        if (
-          node.configuration().$module &&
-          node.configuration().$module === id &&
-          !affectedNodes.find((n) => n.id === node.descriptor.id)
-        ) {
-          affectedNodes.push({
-            id: node.descriptor.id,
-            graphId: this.#graphId,
-          });
-          visualOnly = false;
-        }
-      }
-    }
-
-    this.#mutable.describe.clear(visualOnly, affectedNodes);
-    this.#mutable.graph = graph;
-    this.#mutable.graphs.rebuild(graph);
-  }
-
-  resetGraph(graph: GraphDescriptor): void {
-    if (this.#graphId) {
-      throw new Error(
-        "Inspect API integrity error: resetSubgraph should never be called for subgraphs"
-      );
-    }
-    this.#mutable.rebuild(graph);
-  }
-
-  addSubgraph(subgraph: GraphDescriptor, graphId: GraphIdentifier): void {
-    if (this.#graphId) {
-      throw new Error(
-        `Can't add subgraph "${graphId}" to subgraph "${this.#graphId}": subgraphs can't contain subgraphs`
-      );
-    }
-    this.#mutable.graphs.add(graphId);
-    this.#mutable.nodes.addSubgraphNodes(subgraph, graphId);
-    this.#mutable.edges.addSubgraphEdges(subgraph, graphId);
-  }
-
-  removeSubgraph(graphId: GraphIdentifier): void {
-    if (this.#graphId) {
-      throw new Error(
-        `Can't remove subgraph "${graphId}" from subgraph "${this.#graphId}": subgraphs can't contain subgraphs`
-      );
-    }
-    this.#mutable.graphs.remove(graphId);
-    this.#mutable.nodes.removeSubgraphNodes(graphId);
-    this.#mutable.edges.removeSubgraphEdges(graphId);
   }
 
   graphs(): InspectableSubgraphs | undefined {

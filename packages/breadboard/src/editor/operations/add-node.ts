@@ -12,7 +12,8 @@ import {
   SingleEditResult,
 } from "../types.js";
 import { InspectableGraph } from "../../inspector/types.js";
-import { toSubgraphContext } from "../subgraph-context.js";
+import { errorNoInspect } from "./error.js";
+import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
 
 export class AddNode implements EditOperation {
   async can(
@@ -53,19 +54,25 @@ export class AddNode implements EditOperation {
       );
     }
     const { node, graphId } = spec;
-    const subgraphContext = toSubgraphContext(context, graphId);
-    if (!subgraphContext.success) {
-      return subgraphContext;
+
+    const { graph, mutable } = context;
+    const inspector = mutable.graphs.get(graphId);
+    if (!inspector) {
+      return errorNoInspect(graphId);
     }
 
-    const { graph, inspector, store } = subgraphContext.result;
+    const handle = GraphDescriptorHandle.create(graph, graphId);
+    if (!handle.success) {
+      return handle;
+    }
+
     const can = await this.can(node, inspector);
     if (!can.success) {
       return can;
     }
 
-    graph.nodes.push(node);
-    store.nodeStore.add(node, graphId);
+    handle.result.graph().nodes.push(node);
+    mutable.nodes.add(node, graphId);
     return {
       success: true,
       affectedNodes: [{ id: node.id, graphId }],

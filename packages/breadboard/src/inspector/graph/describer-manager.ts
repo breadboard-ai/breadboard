@@ -14,14 +14,14 @@ import {
   InspectableNode,
   MutableGraph,
   NodeTypeDescriberOptions,
-} from "./types.js";
+} from "../types.js";
 import {
   NodeDescriberContext,
   NodeDescriberFunction,
   NodeDescriberResult,
   NodeHandler,
   Schema,
-} from "../types.js";
+} from "../../types.js";
 import {
   describeInput,
   describeOutput,
@@ -31,13 +31,13 @@ import {
 import {
   invokeDescriber,
   invokeMainDescriber,
-} from "../sandboxed-run-module.js";
-import { createLoader } from "../loader/index.js";
-import { getHandler } from "../handler.js";
+} from "../../sandboxed-run-module.js";
+import { createLoader } from "../../loader/index.js";
+import { getHandler } from "../../handler.js";
 import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
-import { combineSchemas, removeProperty } from "../schema.js";
-import { Result } from "../editor/types.js";
-import { invokeGraph } from "../run/invoke-graph.js";
+import { combineSchemas, removeProperty } from "../../schema.js";
+import { Result } from "../../editor/types.js";
+import { invokeGraph } from "../../run/invoke-graph.js";
 
 export { DescriberManager };
 

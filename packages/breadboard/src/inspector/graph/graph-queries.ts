@@ -15,8 +15,8 @@ import {
   InspectableNode,
   InspectableNodeType,
   MutableGraph,
-} from "./types.js";
-import { graphUrlLike } from "../utils/graph-url-like.js";
+} from "../types.js";
+import { graphUrlLike } from "../../utils/graph-url-like.js";
 import { createGraphNodeType } from "./kits.js";
 import { VirtualNode } from "./virtual-node.js";
 

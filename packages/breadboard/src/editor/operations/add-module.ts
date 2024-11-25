@@ -43,7 +43,8 @@ export class AddModule implements EditOperation {
       );
     }
     const { id, module } = spec;
-    const { graph, inspector } = context;
+    const { graph, mutable } = context;
+    const inspector = mutable.graphs.get("")!;
     const can = await this.can(id, inspector);
     if (!can.success) {
       return can;

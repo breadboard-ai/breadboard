@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getGraphHandler } from "../handler.js";
+import { getGraphHandler } from "../../handler.js";
 import {
   NodeHandlers,
   NodeHandler,
@@ -15,8 +15,8 @@ import {
   NodeTypeIdentifier,
   NodeHandlerObject,
   GraphDescriptor,
-} from "../types.js";
-import { graphUrlLike } from "../utils/graph-url-like.js";
+} from "../../types.js";
+import { graphUrlLike } from "../../utils/graph-url-like.js";
 import { collectPortsForType, filterSidePorts } from "./ports.js";
 import { describeInput, describeOutput } from "./schemas.js";
 import {
@@ -26,7 +26,7 @@ import {
   InspectableNodePorts,
   InspectableNodeType,
   NodeTypeDescriberOptions,
-} from "./types.js";
+} from "../types.js";
 
 export { KitCache };
 

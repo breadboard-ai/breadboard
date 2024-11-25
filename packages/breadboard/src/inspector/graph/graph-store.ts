@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "../types.js";
-import { GraphUUID, GraphDescriptorStore } from "./types.js";
+import { GraphDescriptor } from "../../types.js";
+import { GraphUUID, GraphDescriptorStore } from "./../types.js";
 
 const toUUID = (url: string, version: number): GraphUUID => {
   return `${version}|${url}`;

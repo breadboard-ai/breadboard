@@ -12,7 +12,7 @@ import {
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
 import { InspectableNode, InspectableNodeCache } from "../types.js";
-import { Node } from "../node.js";
+import { Node } from "./node.js";
 
 type NodeFactory = (
   node: NodeDescriptor,

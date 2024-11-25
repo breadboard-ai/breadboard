@@ -10,8 +10,8 @@ import {
   EditTransform,
   EditTransformResult,
 } from "../types.js";
-import { toSubgraphContext } from "../subgraph-context.js";
 import { MoveToGraphTransform } from "./move-to-graph.js";
+import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
 
 export { MergeGraphTransform };
 
@@ -25,12 +25,14 @@ class MergeGraphTransform implements EditTransform {
   }
 
   async apply(context: EditOperationContext): Promise<EditTransformResult> {
-    const sourceContext = toSubgraphContext(context, this.#source);
-    if (!sourceContext.success) {
-      return sourceContext;
+    const { graph } = context;
+
+    const handle = GraphDescriptorHandle.create(graph, this.#source);
+    if (!handle.success) {
+      return handle;
     }
 
-    const all = sourceContext.result.graph.nodes.map((node) => node.id);
+    const all = handle.result.graph().nodes.map((node) => node.id);
 
     const moving = await new MoveToGraphTransform(
       all,

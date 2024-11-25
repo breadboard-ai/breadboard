@@ -5,13 +5,13 @@
  */
 
 import { ModuleIdentifier } from "@breadboard-ai/types";
+import { InspectableGraph } from "../../inspector/types.js";
 import {
   EditOperation,
   EditOperationContext,
   EditSpec,
   SingleEditResult,
 } from "../types.js";
-import { InspectableGraph } from "../../inspector/types.js";
 
 export class ChangeModule implements EditOperation {
   async can(
@@ -43,7 +43,8 @@ export class ChangeModule implements EditOperation {
       );
     }
     const id = spec.id;
-    const { graph, inspector } = context;
+    const { graph, mutable } = context;
+    const inspector = mutable.graphs.get("")!;
     const can = await this.can(id, inspector);
     if (!can.success) {
       return can;

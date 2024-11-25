@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Edge as EdgeDescriptor, GraphIdentifier } from "../types.js";
+import { Edge as EdgeDescriptor, GraphIdentifier } from "../../types.js";
 import {
   InspectableEdge,
   InspectableEdgeType,
   InspectableNodeCache,
   InspectablePort,
   ValidateResult,
-} from "./types.js";
+} from "../types.js";
 
 export { Edge };
 

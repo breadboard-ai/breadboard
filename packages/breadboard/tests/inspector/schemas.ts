@@ -5,11 +5,10 @@
  */
 
 import test from "ava";
-
-import { inspectableGraph } from "../../src/inspector/mutable-graph.js";
+import { inspector } from "../helpers/_inspector.js";
 
 test("input in ports are fixed", async (t) => {
-  const graph = inspectableGraph({
+  const graph = inspector({
     nodes: [
       {
         id: "node",
@@ -24,7 +23,7 @@ test("input in ports are fixed", async (t) => {
 });
 
 test("output out ports are fixed", async (t) => {
-  const graph = inspectableGraph({
+  const graph = inspector({
     nodes: [
       {
         id: "node",

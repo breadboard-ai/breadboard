@@ -5,7 +5,7 @@
  */
 
 import { HarnessRunResult } from "../../harness/types.js";
-import { GraphStore } from "../graph-store.js";
+import { GraphStore } from "../graph/graph-store.js";
 import {
   EventIdentifier,
   GraphUUID,

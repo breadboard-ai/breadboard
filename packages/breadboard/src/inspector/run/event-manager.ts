@@ -52,7 +52,7 @@ import {
 } from "./conversions.js";
 import { ReanimationState } from "../../run/types.js";
 import { LifecycleManager } from "../../run/lifecycle.js";
-import { inspectableGraph } from "../mutable-graph.js";
+import { inspectableGraph } from "../graph/mutable-graph.js";
 
 const shouldSkipEvent = (
   options: RunObserverOptions,
