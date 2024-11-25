@@ -757,7 +757,7 @@ export class ModuleEditor extends LitElement {
       GraphInitialDrawEvent.eventName,
       () => {
         this.#graphRenderer.showGraph(url, null);
-        this.#graphRenderer.zoomToFit(true, 0);
+        this.#graphRenderer.zoomToFit(0);
       },
       { once: true }
     );

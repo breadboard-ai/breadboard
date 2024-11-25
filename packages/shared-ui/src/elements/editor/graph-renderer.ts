@@ -121,7 +121,6 @@ export class GraphRenderer extends LitElement {
   #container = new PIXI.Container({
     isRenderGroup: true,
   });
-  #containerTransforms = new Map<string, PIXI.Matrix>();
 
   #nodeSelection: PIXI.Graphics | null = null;
   #background: PIXI.TilingSprite | null = null;
@@ -142,11 +141,9 @@ export class GraphRenderer extends LitElement {
       delta.y = (contentRect.height - this.#lastContentRect.height) * 0.5;
     }
 
-    const ratio = 1 / this.#container.scale.x;
-
     // Reposition the container.
-    this.#container.x += delta.x * ratio;
-    this.#container.y += delta.y * ratio;
+    this.#container.x += delta.x;
+    this.#container.y += delta.y;
 
     for (const child of this.#container.children) {
       if (!(child instanceof Graph)) {
@@ -159,8 +156,8 @@ export class GraphRenderer extends LitElement {
     }
 
     if (this.#background) {
-      this.#background.tilePosition.x += delta.x * ratio;
-      this.#background.tilePosition.y += delta.y * ratio;
+      this.#background.tilePosition.x += delta.x;
+      this.#background.tilePosition.y += delta.y;
     }
 
     this.#lastContentRect = contentRect;
@@ -516,8 +513,6 @@ export class GraphRenderer extends LitElement {
 
       removeNodeSelection();
       removeStartValues();
-
-      this.#storeContainerTransformForVisibleGraph();
     };
     this.#app.stage.addListener("pointerup", onPointerUp);
     this.#app.stage.addListener("pointerupoutside", onPointerUp);
@@ -554,8 +549,6 @@ export class GraphRenderer extends LitElement {
           this.#background.tilePosition.y -= evt.deltaY;
         }
       }
-
-      this.#storeContainerTransformForVisibleGraph();
     };
 
     this.#app.stage.on("wheel", onWheel);
@@ -567,34 +560,6 @@ export class GraphRenderer extends LitElement {
 
   set padding(padding: number) {
     this.#padding = padding;
-  }
-
-  #storeContainerTransformForVisibleGraph() {
-    const visibleGraph = this.#getVisibleGraph();
-    if (!visibleGraph) {
-      return;
-    }
-
-    const matrix = this.#container.worldTransform.clone();
-    this.#storeContainerTransform(visibleGraph, matrix);
-  }
-
-  #storeContainerTransform(graph: Graph, matrix: PIXI.Matrix) {
-    this.#containerTransforms.set(graph.label, matrix);
-  }
-
-  #restoreContainerTransformForVisibleGraph() {
-    const visibleGraph = this.#getVisibleGraph();
-    if (!visibleGraph) {
-      return;
-    }
-
-    const matrix = this.#containerTransforms.get(visibleGraph.label);
-    if (!matrix) {
-      return;
-    }
-
-    this.#container.setFromMatrix(matrix);
   }
 
   #scaleContainerAroundPoint(delta: number, pivot: PIXI.PointData) {
@@ -649,8 +614,6 @@ export class GraphRenderer extends LitElement {
 
       graph.visible = true;
     }
-
-    this.#restoreContainerTransformForVisibleGraph();
   }
 
   set topGraphResult(topGraphResult: TopGraphRunResult | null) {
@@ -800,18 +763,6 @@ export class GraphRenderer extends LitElement {
     return this.#container.children.filter(
       (child) => child instanceof Graph
     ) as Graph[];
-  }
-
-  #getVisibleGraph(): Graph | null {
-    for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph) || !graph.visible) {
-        continue;
-      }
-
-      return graph;
-    }
-
-    return null;
   }
 
   #emitSelectionState() {
@@ -1198,7 +1149,7 @@ export class GraphRenderer extends LitElement {
 
   deselectAllChildren() {
     for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph) || !graph.visible) {
+      if (!(graph instanceof Graph)) {
         continue;
       }
 
@@ -1222,11 +1173,16 @@ export class GraphRenderer extends LitElement {
     node: string,
     type: "comment" | "node",
     position: PIXI.PointData,
+    subGraphId: string | null = null,
     expansionState: ComponentExpansionState,
     justAdded: boolean
   ) {
     for (const graph of this.#container.children) {
       if (!(graph instanceof Graph) || !graph.visible) {
+        continue;
+      }
+
+      if (subGraphId && graph.subGraphId !== subGraphId) {
         continue;
       }
 
@@ -1240,6 +1196,10 @@ export class GraphRenderer extends LitElement {
     }
 
     return null;
+  }
+
+  calculateNodeLocation(x: number, y: number) {
+    return this.#container.toGlobal({ x, y });
   }
 
   getNodeLayoutPosition(node: string) {
@@ -1265,7 +1225,7 @@ export class GraphRenderer extends LitElement {
   }
 
   zoomToNode(id: string, subGraphId: string | null, offset = 0) {
-    this.zoomToFit(false, 0, subGraphId);
+    this.zoomToFit(0, subGraphId);
 
     for (const graph of this.#container.children) {
       if (!(graph instanceof Graph) || !graph.visible) {
@@ -1321,16 +1281,11 @@ export class GraphRenderer extends LitElement {
       if (this.#background) {
         this.#background.tileTransform.setFromMatrix(matrix);
       }
-      this.#storeContainerTransform(graph, matrix);
       return;
     }
   }
 
-  zoomToFit(
-    emitGraphNodeVisualInformation = true,
-    reduceRenderBoundsWidth = 0,
-    subGraphId: string | null = null
-  ) {
+  zoomToFit(reduceRenderBoundsWidth = 0, subGraphId: string | null = null) {
     this.#container.position.set(0, 0);
     this.#container.scale.set(1, 1);
 
@@ -1352,10 +1307,6 @@ export class GraphRenderer extends LitElement {
 
       const graphBounds = graph.getBounds();
       bounds.addBounds(graphBounds);
-
-      if (emitGraphNodeVisualInformation) {
-        this.#emitGraphNodeVisualInformation(graph);
-      }
     }
 
     const rendererBounds = this.getBoundingClientRect();
@@ -1387,7 +1338,6 @@ export class GraphRenderer extends LitElement {
     };
 
     const matrix = this.#scaleContainerAroundPoint(delta, pivot);
-
     if (this.#background) {
       this.#background.tileTransform.setFromMatrix(matrix);
     }

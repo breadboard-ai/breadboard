@@ -15,15 +15,23 @@ export const styles = css`
     height: 100%;
     overscroll-behavior: contain;
     overflow: auto;
-    --diagram-display: flex;
   }
 
   #controls-activity,
-  #diagram {
+  #content {
     width: 100%;
     height: 100%;
     overflow: auto;
     position: relative;
+  }
+
+  #content {
+    display: grid;
+    grid-template-columns: var(--bb-grid-size-12) minmax(0, 1fr);
+  }
+
+  #content.welcome {
+    grid-template-columns: none;
   }
 
   #controls-activity {
@@ -223,5 +231,95 @@ export const styles = css`
   #splitter {
     height: 100%;
     width: 100%;
+  }
+
+  #side-nav {
+    background: var(--bb-ui-700);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    z-index: 2;
+  }
+
+  #side-nav-top {
+    padding: var(--bb-grid-size-2);
+  }
+
+  #side-nav-top > * {
+    margin-top: var(--bb-grid-size);
+  }
+
+  #side-nav-top > *:first-of-type {
+    margin-top: 0;
+  }
+
+  #toggle-components,
+  #toggle-workspace-overview {
+    width: 32px;
+    height: 32px;
+    font-size: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    opacity: 1;
+    cursor: pointer;
+    border-radius: var(--bb-grid-size);
+    position: relative;
+  }
+
+  #toggle-components::after,
+  #toggle-workspace-overview::after {
+    background: var(--bb-neutral-800);
+    color: var(--bb-neutral-0);
+    padding: var(--bb-grid-size-2);
+    left: calc(100% + var(--bb-grid-size-3));
+    border-radius: var(--bb-grid-size);
+    top: 50%;
+    pointer-events: none;
+    transform: translateY(-50%);
+    display: block;
+    font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+      var(--bb-font-family);
+    position: absolute;
+    opacity: 0;
+    transition: opacity 0.15s cubic-bezier(0, 0, 0.3, 1);
+  }
+
+  #toggle-components::after {
+    content: "Components";
+  }
+
+  #toggle-workspace-overview::after {
+    content: "Workspace";
+  }
+
+  #toggle-components:hover::after,
+  #toggle-workspace-overview:hover::after {
+    opacity: 1;
+  }
+
+  #toggle-components {
+    background: transparent var(--bb-icon-extension-inverted) center center /
+      24px 24px no-repeat;
+  }
+
+  #toggle-workspace-overview {
+    background: transparent var(--bb-icon-workspace-inverted) center center /
+      24px 24px no-repeat;
+  }
+
+  #toggle-components:hover,
+  #toggle-components:focus,
+  #toggle-components.active {
+    background: oklch(from var(--bb-neutral-0) l c h/0.22)
+      var(--bb-icon-extension-inverted) center center / 24px 24px no-repeat;
+  }
+
+  #toggle-workspace-overview:hover,
+  #toggle-workspace-overview:focus,
+  #toggle-workspace-overview.active {
+    background: oklch(from var(--bb-neutral-0) l c h/0.22)
+      var(--bb-icon-workspace-inverted) center center / 24px 24px no-repeat;
   }
 `;
