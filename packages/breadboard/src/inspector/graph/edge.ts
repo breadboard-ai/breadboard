@@ -8,8 +8,8 @@ import { Edge as EdgeDescriptor, GraphIdentifier } from "../../types.js";
 import {
   InspectableEdge,
   InspectableEdgeType,
-  InspectableNodeCache,
   InspectablePort,
+  MutableGraph,
   ValidateResult,
 } from "../types.js";
 
@@ -52,16 +52,16 @@ export const fixupConstantEdge = (edge: EdgeDescriptor): EdgeDescriptor => {
 };
 
 class Edge implements InspectableEdge {
-  #nodes: InspectableNodeCache | null;
+  #mutable: MutableGraph | null;
   #edge: EdgeDescriptor;
   #graphId: GraphIdentifier;
 
   constructor(
-    nodes: InspectableNodeCache,
+    mutable: MutableGraph,
     edge: EdgeDescriptor,
     graphId: GraphIdentifier
   ) {
-    this.#nodes = nodes;
+    this.#mutable = mutable;
     this.#edge = edge;
     this.#graphId = graphId;
   }
@@ -71,12 +71,12 @@ class Edge implements InspectableEdge {
   }
 
   get from() {
-    if (!this.#nodes) {
+    if (!this.#mutable) {
       throw new Error(
         `Unable to access "from": this edge was deleted and is no longer part of the graph`
       );
     }
-    const from = this.#nodes.get(this.#edge.from, this.#graphId);
+    const from = this.#mutable.nodes.get(this.#edge.from, this.#graphId);
     console.assert(from, "From node not found when getting from.");
     return from!;
   }
@@ -86,12 +86,12 @@ class Edge implements InspectableEdge {
   }
 
   get to() {
-    if (!this.#nodes) {
+    if (!this.#mutable) {
       throw new Error(
         `Unable to access "to": this edge was deleted and is no longer part of the graph`
       );
     }
-    const to = this.#nodes.get(this.#edge.to, this.#graphId);
+    const to = this.#mutable.nodes.get(this.#edge.to, this.#graphId);
     console.assert(to, "To node not found when getting to.");
     return to!;
   }
@@ -137,10 +137,10 @@ class Edge implements InspectableEdge {
   }
 
   setDeleted() {
-    this.#nodes = null;
+    this.#mutable = null;
   }
 
   deleted(): boolean {
-    return !this.#nodes;
+    return !this.#mutable;
   }
 }

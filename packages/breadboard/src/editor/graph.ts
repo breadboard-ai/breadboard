@@ -43,6 +43,7 @@ import {
 import { AddGraph } from "./operations/add-graph.js";
 import { RemoveGraph } from "./operations/remove-graph.js";
 import { MutableGraphImpl } from "../inspector/graph/mutable-graph.js";
+import { MutableGraph } from "../inspector/types.js";
 
 const validImperativeEdits: EditSpec["type"][] = [
   "addmodule",
@@ -69,22 +70,21 @@ const operations = new Map<EditSpec["type"], EditOperation>([
 
 export class Graph implements EditableGraph {
   #version = 0;
-  #options: EditableGraphOptions;
   #mutable: MutableGraphImpl;
   #graph: GraphDescriptor;
   #eventTarget: EventTarget = new EventTarget();
   #history: GraphEditHistory;
   #imperativeMain: string | null = null;
 
-  constructor(graph: GraphDescriptor, options: EditableGraphOptions) {
+  constructor(mutable: MutableGraph, options: EditableGraphOptions) {
+    const graph = mutable.graph;
     if (isImperativeGraph(graph)) {
       this.#imperativeMain = graph.main;
       this.#graph = toDeclarativeGraph(graph);
     } else {
       this.#graph = graph;
     }
-    this.#mutable = new MutableGraphImpl(graph, options);
-    this.#options = options;
+    this.#mutable = mutable;
     this.#version = options.version || 0;
     this.#history = new GraphEditHistory({
       graph: () => {
@@ -265,7 +265,7 @@ export class Graph implements EditableGraph {
 
     if (dryRun) {
       const graph = checkpoint;
-      const mutable = new MutableGraphImpl(graph, this.#options);
+      const mutable = new MutableGraphImpl(graph, this.#mutable.options);
       context = {
         graph,
         mutable,

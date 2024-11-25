@@ -13,9 +13,10 @@ import type {
   ModuleMetadata,
   NodeMetadata,
   TraversalResult,
+  UUID,
 } from "@breadboard-ai/types";
 import { HarnessRunResult, SecretResult } from "../harness/types.js";
-import { GraphLoader } from "../loader/types.js";
+import { GraphLoader, GraphLoaderContext } from "../loader/types.js";
 import {
   BehaviorSchema,
   Edge,
@@ -42,7 +43,12 @@ import {
 import { SequenceEntry } from "./run/serializer.js";
 import { ReanimationState } from "../run/types.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
-import { AffectedNode } from "../editor/types.js";
+import {
+  AffectedNode,
+  EditableGraph,
+  EditableGraphOptions,
+  Result,
+} from "../editor/types.js";
 
 export type GraphVersion = number;
 
@@ -646,12 +652,47 @@ export type InspectableGraphCache = {
   clear(): void;
 };
 
+export type MainGraphIdentifier = UUID;
+
+export type GraphHandle = {
+  id: MainGraphIdentifier;
+} & (
+  | {
+      type: "declarative";
+      /**
+       * The value is "" for the main graph.
+       */
+      graphId: GraphIdentifier;
+    }
+  | {
+      type: "imperative";
+      moduleId: ModuleIdentifier;
+    }
+);
+
+export type MutableGraphStore = {
+  load(url: string, options: GraphLoaderContext): Promise<Result<GraphHandle>>;
+  editByDescriptor(
+    graph: GraphDescriptor,
+    options?: EditableGraphOptions
+  ): EditableGraph | undefined;
+  edit(
+    id: MainGraphIdentifier,
+    options?: EditableGraphOptions
+  ): EditableGraph | undefined;
+  inspect(
+    id: MainGraphIdentifier,
+    graphId: GraphIdentifier
+  ): InspectableGraph | undefined;
+};
+
 /**
  * A backing store for `InspectableGraph` instances, representing a stable
  * instance of a graph whose properties mutate.
  */
 export type MutableGraph = {
   graph: GraphDescriptor;
+  readonly id: MainGraphIdentifier;
   readonly graphs: InspectableGraphCache;
   readonly options: InspectableGraphOptions;
   readonly nodes: InspectableNodeCache;

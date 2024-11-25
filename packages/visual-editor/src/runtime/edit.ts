@@ -6,13 +6,13 @@
 
 import {
   blankLLMContent,
-  edit,
   EditableGraph,
   EditSpec,
   GraphDescriptor,
   GraphLoader,
   GraphProvider,
   Kit,
+  MutableGraphStore,
   NodeConfiguration,
   NodeDescriptor,
   NodeIdentifier,
@@ -57,7 +57,8 @@ export class Edit extends EventTarget {
     public readonly providers: GraphProvider[],
     public readonly loader: GraphLoader,
     public readonly kits: Kit[],
-    public readonly sandbox: Sandbox
+    public readonly sandbox: Sandbox,
+    public readonly graphStore: MutableGraphStore
   ) {
     super();
   }
@@ -69,11 +70,10 @@ export class Edit extends EventTarget {
       return this.#editors.get(tab.id)!;
     }
 
-    const editor = edit(tab.graph, {
-      kits: tab.kits,
-      loader: this.loader,
-      sandbox: this.sandbox,
-    });
+    const editor = this.graphStore.editByDescriptor(tab.graph);
+    if (!editor) {
+      return null;
+    }
     editor.addEventListener("graphchange", (evt) => {
       tab.graph = evt.graph;
       this.dispatchEvent(

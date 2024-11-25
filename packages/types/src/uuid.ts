@@ -4,4 +4,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { blank, blankLLMContent } from "./blank.js";
+export type UUID = `${string}-${string}-${string}-${string}-${string}`;

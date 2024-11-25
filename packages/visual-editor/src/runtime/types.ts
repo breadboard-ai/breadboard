@@ -10,6 +10,7 @@ import {
   GraphDescriptor,
   GraphLoader,
   Kit,
+  MutableGraphStore,
   NodeConfiguration,
   RunStore,
 } from "@google-labs/breadboard";
@@ -41,6 +42,7 @@ export interface Tab {
 }
 
 export interface RuntimeConfig {
+  graphStore: MutableGraphStore;
   dataStore: DataStore;
   runStore: RunStore;
   sandbox: Sandbox;
@@ -52,6 +54,7 @@ export interface RuntimeConfig {
 export interface RuntimeConfigBoardServers {
   servers: BoardServer[];
   loader: GraphLoader;
+  graphStore: MutableGraphStore;
 }
 
 export type Result<T> =

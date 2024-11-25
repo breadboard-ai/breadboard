@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { editGraph } from "../../../src/editor/index.js";
 import { GraphDescriptor, NodeHandler } from "../../../src/types.js";
 import { ok as nodeOk } from "node:assert";
+import { editGraph } from "../../helpers/_editor.js";
 
 export { testEditGraph, testSubGraph, testFilledOutSubGraph, ok, notOk };
 
