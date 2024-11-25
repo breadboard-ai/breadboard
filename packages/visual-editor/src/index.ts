@@ -2610,6 +2610,16 @@ export class Main extends LitElement {
               @bbinteraction=${() => {
                 this.#clearBoardSave();
               }}
+              @bbboarditemcopy=${(
+                evt: BreadboardUI.Events.BoardItemCopyEvent
+              ) => {
+                this.#runtime.edit.copyBoardItem(
+                  this.tab,
+                  evt.itemType,
+                  evt.id,
+                  evt.title
+                );
+              }}
               @bbsave=${() => {
                 this.#attemptBoardSave();
               }}
