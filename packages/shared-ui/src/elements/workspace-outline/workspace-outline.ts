@@ -26,6 +26,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import {
+  BoardItemCopyEvent,
   HideTooltipEvent,
   ModuleChosenEvent,
   ModuleCreateEvent,
@@ -568,29 +569,42 @@ export class WorkspaceOutline extends LitElement {
       background-color: var(--bb-neutral-50);
     }
 
+    .duplicate,
     .delete {
       height: var(--bb-grid-size-7);
       width: var(--bb-grid-size-7);
       border: none;
-      background: transparent var(--bb-icon-delete) center center / 20px 20px
-        no-repeat;
+      background: transparent none center center / 20px 20px no-repeat;
       font-size: 0;
-      margin: 0 var(--bb-grid-size-2);
+      margin: 0 0 0 var(--bb-grid-size-2);
       opacity: 0;
       cursor: pointer;
       border-radius: 50%;
       transition: background 0.1s cubic-bezier(0, 0, 0.3, 1);
     }
 
+    .title:hover .duplicate,
+    .duplicate:hover,
+    .duplicate:focus,
     .title:hover .delete,
     .delete:hover,
     .delete:focus {
       opacity: 1;
     }
 
+    .duplicate:hover,
+    .duplicate:focus,
     .delete:hover,
     .delete:focus {
       background-color: var(--bb-neutral-50);
+    }
+
+    .delete {
+      background-image: var(--bb-icon-delete);
+    }
+
+    .duplicate {
+      background-image: var(--bb-icon-duplicate);
     }
   `;
 
@@ -1083,35 +1097,57 @@ export class WorkspaceOutline extends LitElement {
               </button>
               ${main !== id
                 ? html`<button
-                    class="delete"
-                    @click=${() => {
-                      if (subItem.type === "declarative") {
-                        if (
-                          !confirm(
-                            "Are you sure you wish to delete this board?"
-                          )
-                        ) {
+                      class="duplicate"
+                      @click=${() => {
+                        const name = prompt(
+                          "What would you like to call this?",
+                          `${subItem.title} Copy`
+                        );
+                        if (!name) {
                           return;
                         }
 
-                        this.dispatchEvent(new SubGraphDeleteEvent(id));
-                        return;
-                      } else {
-                        if (
-                          !confirm(
-                            "Are you sure you wish to delete this module?"
+                        this.dispatchEvent(
+                          new BoardItemCopyEvent(
+                            id,
+                            subItem.type === "declarative" ? "graph" : "module",
+                            name
                           )
-                        ) {
+                        );
+                      }}
+                    >
+                      Duplicate
+                    </button>
+                    <button
+                      class="delete"
+                      @click=${() => {
+                        if (subItem.type === "declarative") {
+                          if (
+                            !confirm(
+                              "Are you sure you wish to delete this board?"
+                            )
+                          ) {
+                            return;
+                          }
+
+                          this.dispatchEvent(new SubGraphDeleteEvent(id));
+                          return;
+                        } else {
+                          if (
+                            !confirm(
+                              "Are you sure you wish to delete this module?"
+                            )
+                          ) {
+                            return;
+                          }
+
+                          this.dispatchEvent(new ModuleDeleteEvent(id));
                           return;
                         }
-
-                        this.dispatchEvent(new ModuleDeleteEvent(id));
-                        return;
-                      }
-                    }}
-                  >
-                    Delete
-                  </button>`
+                      }}
+                    >
+                      Delete
+                    </button>`
                 : nothing}
             </div>
           </summary>

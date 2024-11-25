@@ -594,6 +594,18 @@ export class GraphBoardServerSelectionChangeEvent extends Event {
  * Graph Management - UI
  */
 
+export class BoardItemCopyEvent extends Event {
+  static eventName = "bbboarditemcopy";
+
+  constructor(
+    public readonly id: GraphIdentifier | ModuleIdentifier,
+    public readonly itemType: "graph" | "module",
+    public readonly title: string
+  ) {
+    super(BoardItemCopyEvent.eventName, { ...eventInit });
+  }
+}
+
 export class ZoomToGraphEvent extends Event {
   static eventName = "bbzoomtograph";
 
