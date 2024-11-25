@@ -74,7 +74,7 @@
   "main": "lib/bundle.js",
   "dependencies": {
     "firebase-admin": "^13.0.0",
-    "firebase-functions": "^6.1.0"
+    "firebase-functions": "^6.1.1"
   },
   "devDependencies": {
     "@google-labs/breadboard": "^0.30.0",
