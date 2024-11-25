@@ -12,8 +12,8 @@ import {
 import {
   isImperativeGraph,
   toDeclarativeGraph,
-} from "../run/run-imperative-graph.js";
-import { Result } from "../editor/types.js";
+} from "../../run/run-imperative-graph.js";
+import { Result } from "../../editor/types.js";
 
 export { GraphDescriptorHandle };
 

@@ -4,13 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { toSubgraphContext } from "../subgraph-context.js";
+import { GraphDescriptorHandle } from "../../inspector/graph/graph-descriptor-handle.js";
 import {
   EditOperation,
   EditOperationContext,
   EditSpec,
   SingleEditResult,
 } from "../types.js";
+import { errorNoInspect } from "./error.js";
 
 export class ChangeGraphMetadata implements EditOperation {
   async do(
@@ -23,12 +24,18 @@ export class ChangeGraphMetadata implements EditOperation {
       );
     }
     const { metadata, graphId } = spec;
-    const subgraphContext = toSubgraphContext(context, graphId);
-    if (!subgraphContext.success) {
-      return subgraphContext;
+    const { mutable } = context;
+    const inspector = mutable.graphs.get(graphId);
+    if (!inspector) {
+      return errorNoInspect(graphId);
     }
 
-    const { graph } = subgraphContext.result;
+    const handle = GraphDescriptorHandle.create(context.graph, graphId);
+    if (!handle.success) {
+      return handle;
+    }
+    const graph = handle.result.graph();
+
     const visualOnly = graph.metadata === metadata;
     graph.metadata = metadata;
     return {

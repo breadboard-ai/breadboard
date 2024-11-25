@@ -14,7 +14,7 @@ import {
   SerializedRunLoadingOptions,
   TimelineEntry,
 } from "../types.js";
-import { inspectableGraph } from "../mutable-graph.js";
+import { inspectableGraph } from "../graph/mutable-graph.js";
 
 export { Replay };
 

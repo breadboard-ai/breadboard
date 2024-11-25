@@ -15,10 +15,10 @@ import type {
   PathRegistryEntry,
 } from "../types.js";
 import { NestedRun } from "./nested-run.js";
-import { BubbledInspectableNode } from "../bubbled-node.js";
+import { BubbledInspectableNode } from "../graph/bubbled-node.js";
 import { eventIdFromEntryId, idFromPath } from "./conversions.js";
 import type { NodeDescriptor, TraversalResult } from "@breadboard-ai/types";
-import { VirtualNode } from "../virtual-node.js";
+import { VirtualNode } from "../graph/virtual-node.js";
 
 export class RunNodeEvent implements InspectableRunNodeEvent {
   type: "node";

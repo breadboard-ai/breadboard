@@ -5,8 +5,7 @@
  */
 
 import test from "ava";
-
-import { inspectableGraph } from "../../src/inspector/mutable-graph.js";
+import { inspector } from "../helpers/_inspector.js";
 
 test("inspectableGraph nodes, nodeById, and nodesByType work as expected", (t) => {
   const graph = {
@@ -17,7 +16,7 @@ test("inspectableGraph nodes, nodeById, and nodesByType work as expected", (t) =
     ],
     edges: [],
   };
-  const inspectable = inspectableGraph(graph);
+  const inspectable = inspector(graph);
   t.deepEqual(
     inspectable.nodes().map((n) => n.descriptor.id),
     ["a", "b", "c"]
@@ -44,7 +43,7 @@ test("inspectableGraph incomingForNode and outgoingForNode work as expected", (t
       { from: "b", to: "c" },
     ],
   };
-  const inspectable = inspectableGraph(graph);
+  const inspectable = inspector(graph);
   t.deepEqual(
     inspectable.incomingForNode("b").map((e) => e.from.descriptor.id),
     ["a"]
@@ -80,7 +79,7 @@ test("Graph correctly returns entry nodes for a graph", (t) => {
       { from: "b", to: "c" },
     ],
   };
-  const inspectable = inspectableGraph(graph);
+  const inspectable = inspector(graph);
   t.deepEqual(
     inspectable.entries().map((n) => n.descriptor.id),
     ["a"]

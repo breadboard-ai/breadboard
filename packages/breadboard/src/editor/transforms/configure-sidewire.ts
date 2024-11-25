@@ -10,7 +10,7 @@ import {
   EditTransform,
   EditTransformResult,
 } from "../types.js";
-import { toSubgraphContext } from "../subgraph-context.js";
+import { errorNoInspect } from "../operations/error.js";
 
 export { ConfigureSidewireTransform };
 
@@ -30,13 +30,11 @@ class ConfigureSidewireTransform implements EditTransform {
       };
     }
 
-    const sourceContext = toSubgraphContext(context, this.sourceGraphId);
-    if (!sourceContext.success) {
-      return sourceContext;
+    const { mutable, apply } = context;
+    const inspector = mutable.graphs.get(this.sourceGraphId);
+    if (!inspector) {
+      return errorNoInspect(this.sourceGraphId);
     }
-
-    const { inspector, apply } = sourceContext.result;
-
     const node = inspector.nodeById(this.nodeId);
     if (!node) {
       return {

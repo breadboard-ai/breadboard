@@ -12,7 +12,7 @@ import {
   SingleEditResult,
 } from "../types.js";
 import { InspectableGraph } from "../../inspector/types.js";
-import { toSubgraphContext } from "../subgraph-context.js";
+import { errorNoInspect } from "./error.js";
 
 export class ChangeMetadata implements EditOperation {
   async can(
@@ -52,12 +52,12 @@ export class ChangeMetadata implements EditOperation {
       );
     }
     const { id, metadata, graphId, reset = false } = spec;
-    const subgraphContext = toSubgraphContext(context, graphId);
-    if (!subgraphContext.success) {
-      return subgraphContext;
+    const { mutable } = context;
+    const inspector = mutable.graphs.get(graphId);
+    if (!inspector) {
+      return errorNoInspect(graphId);
     }
 
-    const { inspector } = subgraphContext.result;
     const can = await this.can(id, inspector);
     if (!can.success) return can;
     const node = inspector.nodeById(id);

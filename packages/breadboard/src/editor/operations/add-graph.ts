@@ -24,7 +24,7 @@ class AddGraph implements EditOperation {
       );
     }
     const { id, graph: subgraph } = edit;
-    const { graph, store } = context;
+    const { graph, mutable } = context;
 
     if (graph.graphs?.[id]) {
       return {
@@ -34,7 +34,7 @@ class AddGraph implements EditOperation {
     }
     graph.graphs ??= {};
     graph.graphs[id] = subgraph;
-    store.addSubgraph(subgraph, id);
+    mutable.addSubgraph(subgraph, id);
 
     return {
       success: true,

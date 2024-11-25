@@ -9,7 +9,7 @@ import {
   InspectableGraph,
   InspectableGraphCache,
   InspectableSubgraphs,
-} from "./types.js";
+} from "../types.js";
 
 export { GraphCache };
 
@@ -24,10 +24,8 @@ class GraphCache implements InspectableGraphCache {
   }
 
   rebuild(graph: GraphDescriptor) {
-    const subgraphs = graph.graphs;
-    if (!subgraphs) return;
     this.#graphs = new Map(
-      Object.keys(subgraphs).map((id) => [id, this.#factory(id)])
+      Object.keys(graph.graphs || []).map((id) => [id, this.#factory(id)])
     );
     this.#graphs.set("", this.#factory(""));
   }

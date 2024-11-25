@@ -12,9 +12,9 @@ import {
   NodeMetadata,
 } from "@breadboard-ai/types";
 import {
-  GraphStoreMutator,
   InspectableGraph,
   InspectableGraphOptions,
+  MutableGraph,
 } from "../inspector/types.js";
 import {
   Edge,
@@ -159,8 +159,7 @@ export type EditOperationConductor = (
 
 export type EditOperationContext = {
   graph: GraphDescriptor;
-  inspector: InspectableGraph;
-  store: GraphStoreMutator;
+  mutable: MutableGraph;
   apply: EditOperationConductor;
 };
 
