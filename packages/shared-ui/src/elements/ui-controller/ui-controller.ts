@@ -48,8 +48,11 @@ import {
   MAIN_BOARD_ID,
 } from "../../constants/constants.js";
 import { Editor } from "../elements.js";
+import { classMap } from "lit/directives/class-map.js";
+import { map } from "lit/directives/map.js";
 
 const MODE_KEY = "bb-ui-controller-outline-mode";
+const SIDE_NAV_ITEM_KEY = "bb-ui-side-nav-item";
 
 @customElement("bb-ui-controller")
 export class UI extends LitElement {
@@ -116,6 +119,9 @@ export class UI extends LitElement {
   @property()
   mode: "list" | "tree" = "list";
 
+  @property()
+  sideNavItem: string | null = null;
+
   #graphEditorRef: Ref<Editor> = createRef();
   #moduleEditorRef: Ref<ModuleEditor> = createRef();
   #zoomToNodeOnNextUpdate: NodeIdentifier | null = null;
@@ -128,6 +134,11 @@ export class UI extends LitElement {
     const mode = globalThis.localStorage.getItem(MODE_KEY);
     if (mode === "list" || mode === "tree") {
       this.mode = mode;
+    }
+
+    const sideNavItem = globalThis.localStorage.getItem(SIDE_NAV_ITEM_KEY);
+    if (sideNavItem) {
+      this.sideNavItem = sideNavItem;
     }
   }
 
@@ -147,6 +158,16 @@ export class UI extends LitElement {
       if (this.mode === "tree") {
         this.subGraphId = null;
       }
+    }
+  }
+
+  #handleSideNav(label: string) {
+    if (this.sideNavItem === label) {
+      this.sideNavItem = null;
+      globalThis.localStorage.removeItem(SIDE_NAV_ITEM_KEY);
+    } else {
+      this.sideNavItem = label;
+      globalThis.localStorage.setItem(SIDE_NAV_ITEM_KEY, label);
     }
   }
 
@@ -320,64 +341,102 @@ export class UI extends LitElement {
       ></bb-module-editor>`;
     }
 
+    const sideNavItems = ["workspace-overview"];
+    if (!this.moduleId) {
+      sideNavItems.push("components");
+    }
+
+    const sideNav = html`<div id="side-nav">
+      <div id="side-nav-top">
+        ${map(sideNavItems, (item) => {
+          return html`<button
+            id="toggle-${item}"
+            class=${classMap({ active: this.sideNavItem === item })}
+            @click=${() => {
+              this.#handleSideNav(item);
+            }}
+          ></button>`;
+        })}
+      </div>
+      <div id="side-nav-bottom"></div>
+    </div> `;
+
+    const contentContainer = html`<div id="graph-container" slot="slot-1">
+      ${graphEditor} ${this.moduleId ? moduleEditor : nothing} ${welcomePanel}
+    </div>`;
+
+    let sideNavItem: HTMLTemplateResult | symbol = nothing;
+    switch (this.sideNavItem) {
+      case "workspace-overview": {
+        sideNavItem = html`<bb-workspace-outline
+          .graph=${graph}
+          .kits=${this.kits}
+          .subGraphId=${this.subGraphId}
+          .moduleId=${this.moduleId}
+          .renderId=${globalThis.crypto.randomUUID()}
+          .mode=${this.mode}
+          @bbsubgraphchosen=${(evt: SubGraphChosenEvent) => {
+            if (evt.zoomToNode) {
+              this.#zoomToNodeOnNextUpdate = evt.zoomToNode;
+            }
+          }}
+          @bboutlinemodechange=${() => {
+            this.mode = this.mode === "list" ? "tree" : "list";
+            globalThis.localStorage.setItem(MODE_KEY, this.mode);
+          }}
+          @bbzoomtograph=${(evt: ZoomToGraphEvent) => {
+            if (!this.#graphEditorRef.value) {
+              return;
+            }
+
+            this.#graphEditorRef.value.zoomToHighlightedNode = false;
+            this.#graphEditorRef.value.zoomToFit(
+              0,
+              evt.id === MAIN_BOARD_ID ? null : evt.id
+            );
+          }}
+          @bbzoomtonode=${(evt: ZoomToNodeEvent) => {
+            if (!this.#graphEditorRef.value) {
+              return;
+            }
+
+            this.#graphEditorRef.value.zoomToHighlightedNode = false;
+            this.#graphEditorRef.value.zoomToNode(evt.id, evt.subGraphId, 0);
+          }}
+        ></bb-workspace-outline>`;
+        break;
+      }
+
+      case "components": {
+        sideNavItem = html`${guard(
+          [graph?.kits],
+          () =>
+            html`<bb-component-selector
+              .graph=${graph}
+            ></bb-component-selector>`
+        )}`;
+        break;
+      }
+    }
+
     return graph
-      ? html`<section id="diagram">
-          <bb-splitter
-            id="splitter"
-            split="[0.2, 0.8]"
-            .name=${"outline-editor"}
-            .minSegmentSizeHorizontal=${100}
-          >
-            <div id="outline-container" slot="slot-0">
-              <bb-workspace-outline
-                .graph=${graph}
-                .kits=${this.kits}
-                .subGraphId=${this.subGraphId}
-                .moduleId=${this.moduleId}
-                .renderId=${globalThis.crypto.randomUUID()}
-                .mode=${this.mode}
-                @bbsubgraphchosen=${(evt: SubGraphChosenEvent) => {
-                  if (evt.zoomToNode) {
-                    this.#zoomToNodeOnNextUpdate = evt.zoomToNode;
-                  }
-                }}
-                @bboutlinemodechange=${() => {
-                  this.mode = this.mode === "list" ? "tree" : "list";
-                  globalThis.localStorage.setItem(MODE_KEY, this.mode);
-                }}
-                @bbzoomtograph=${(evt: ZoomToGraphEvent) => {
-                  if (!this.#graphEditorRef.value) {
-                    return;
-                  }
-
-                  this.#graphEditorRef.value.zoomToHighlightedNode = false;
-                  this.#graphEditorRef.value.zoomToFit(
-                    false,
-                    0,
-                    evt.id === MAIN_BOARD_ID ? null : evt.id
-                  );
-                }}
-                @bbzoomtonode=${(evt: ZoomToNodeEvent) => {
-                  if (!this.#graphEditorRef.value) {
-                    return;
-                  }
-
-                  this.#graphEditorRef.value.zoomToHighlightedNode = false;
-                  this.#graphEditorRef.value.zoomToNode(
-                    evt.id,
-                    evt.subGraphId,
-                    0
-                  );
-                }}
-              ></bb-workspace-outline>
-            </div>
-            <div id="graph-container" slot="slot-1">
-              ${graphEditor} ${this.moduleId ? moduleEditor : nothing}
-              ${welcomePanel}
-            </div>
-          </bb-splitter>
+      ? html`<section id="content">
+          ${sideNav}
+          ${this.sideNavItem
+            ? html`<bb-splitter
+                id="splitter"
+                split="[0.2, 0.8]"
+                .name=${"outline-editor"}
+                .minSegmentSizeHorizontal=${100}
+              >
+                <div id="outline-container" slot="slot-0">${sideNavItem}</div>
+                ${contentContainer}
+              </bb-splitter>`
+            : contentContainer}
         </section>`
-      : html`${graphEditor} ${welcomePanel}`;
+      : html`<section id="content" class="welcome">
+          ${graphEditor} ${welcomePanel}
+        </section>`;
   }
 
   updated() {

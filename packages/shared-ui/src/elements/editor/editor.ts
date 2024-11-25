@@ -64,6 +64,7 @@ import { createRandomID, edgeToString } from "./utils.js";
 const ZOOM_KEY = "bb-editor-zoom-to-highlighted-node-during-runs";
 const DATA_TYPE = "text/plain";
 const PASTE_OFFSET = 50;
+const RIBBON_HEIGHT = 44;
 
 import { Command, TopGraphRunResult } from "../../types/types.js";
 import { GraphAssets } from "./graph-assets.js";
@@ -223,7 +224,6 @@ export class Editor extends LitElement {
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #onDropBound = this.#onDrop.bind(this);
   #onDragOverBound = this.#onDragOver.bind(this);
-  #onResizeBound = this.#onResize.bind(this);
   #onPointerMoveBound = this.#onPointerMove.bind(this);
   #onPointerDownBound = this.#onPointerDown.bind(this);
   #onGraphNodesVisualUpdateBound = this.#onGraphNodesVisualUpdate.bind(this);
@@ -244,6 +244,12 @@ export class Editor extends LitElement {
 
   #top = 0;
   #left = 0;
+  #resizeObserver = new ResizeObserver(() => {
+    const bounds = this.getBoundingClientRect();
+    this.#top = bounds.top;
+    this.#left = bounds.left;
+  });
+
   #addButtonRef: Ref<HTMLInputElement> = createRef();
 
   #writingToClipboard = false;
@@ -377,7 +383,7 @@ export class Editor extends LitElement {
       }
 
       if (this.#zoomOnUpdate) {
-        this.#graphRenderer.zoomToFit(false, 0, this.#zoomOnUpdateId);
+        this.#graphRenderer.zoomToFit(0, this.#zoomOnUpdateId);
 
         this.#zoomOnUpdate = false;
         this.#zoomOnUpdateId = null;
@@ -403,7 +409,6 @@ export class Editor extends LitElement {
 
       this.#graphRenderer.showGraph(opts.url, opts.subGraphId);
       this.#graphRenderer.zoomToFit(
-        true,
         this.isShowingBoardActivityOverlay ? 400 : 0
       );
 
@@ -529,6 +534,8 @@ export class Editor extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
 
+    this.#resizeObserver.observe(this);
+
     this.#graphRenderer.addEventListener(
       GraphEdgeAttachEvent.eventName,
       this.#onGraphEdgeAttachBound
@@ -599,7 +606,6 @@ export class Editor extends LitElement {
       this.#onGraphNodeRunRequestBound
     );
 
-    window.addEventListener("resize", this.#onResizeBound);
     this.addEventListener("keydown", this.#onKeyDownBound);
     this.addEventListener("pointermove", this.#onPointerMoveBound);
     this.addEventListener("pointerdown", this.#onPointerDownBound);
@@ -612,7 +618,7 @@ export class Editor extends LitElement {
         title: "Zoom board to fit",
         icon: "fit",
         callback: () => {
-          this.#graphRenderer.zoomToFit();
+          this.#graphRenderer.zoomToFit(0, this.subGraphId);
         },
       },
       {
@@ -633,6 +639,8 @@ export class Editor extends LitElement {
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
+    this.#resizeObserver.disconnect();
+
     this.#graphRenderer.removeEventListener(
       GraphEdgeAttachEvent.eventName,
       this.#onGraphEdgeAttachBound
@@ -703,7 +711,6 @@ export class Editor extends LitElement {
       this.#onGraphNodeRunRequestBound
     );
 
-    window.removeEventListener("resize", this.#onResizeBound);
     this.removeEventListener("keydown", this.#onKeyDownBound);
     this.removeEventListener("pointermove", this.#onPointerMoveBound);
     this.removeEventListener("pointerdown", this.#onPointerDownBound);
@@ -1007,6 +1014,7 @@ export class Editor extends LitElement {
               node.id,
               "node",
               position,
+              this.subGraphId,
               this.collapseNodesByDefault ? "collapsed" : "expanded",
               false
             );
@@ -1103,6 +1111,7 @@ export class Editor extends LitElement {
                 comment.id,
                 "comment",
                 position,
+                this.subGraphId,
                 this.collapseNodesByDefault ? "collapsed" : "expanded",
                 false
               );
@@ -1438,7 +1447,7 @@ export class Editor extends LitElement {
 
     const id = createRandomID(type);
     const x = evt.pageX - this.#left + window.scrollX;
-    const y = evt.pageY - this.#top - window.scrollY;
+    const y = evt.pageY - this.#top - window.scrollY - RIBBON_HEIGHT;
 
     this.#graphRenderer.deselectAllChildren();
 
@@ -1447,6 +1456,7 @@ export class Editor extends LitElement {
       id,
       type === "comment" ? "comment" : "node",
       { x, y },
+      this.subGraphId,
       this.collapseNodesByDefault ? "collapsed" : "expanded",
       true
     );
@@ -1470,12 +1480,6 @@ export class Editor extends LitElement {
     );
   }
 
-  #onResize() {
-    const bounds = this.getBoundingClientRect();
-    this.#top = bounds.top;
-    this.#left = bounds.left;
-  }
-
   #proposeNewSubGraph() {
     const newSubGraphName = prompt(
       "What would you like to call this sub board?"
@@ -1487,20 +1491,8 @@ export class Editor extends LitElement {
     this.dispatchEvent(new SubGraphCreateEvent(newSubGraphName));
   }
 
-  firstUpdated(): void {
-    this.#onResizeBound();
-  }
-
-  zoomToFit(
-    emitGraphNodeVisualInformation = true,
-    reduceRenderBoundsWidth = 0,
-    subGraphId: string | null = null
-  ) {
-    this.#graphRenderer.zoomToFit(
-      emitGraphNodeVisualInformation,
-      reduceRenderBoundsWidth,
-      subGraphId
-    );
+  zoomToFit(reduceRenderBoundsWidth = 0, subGraphId: string | null = null) {
+    this.#graphRenderer.zoomToFit(reduceRenderBoundsWidth, subGraphId);
   }
 
   zoomToNode(id: string, subGraphId: string | null, offset = 0) {
@@ -1554,8 +1546,8 @@ export class Editor extends LitElement {
       }}
       @bbzoomtofit=${() => {
         this.#graphRenderer.zoomToFit(
-          true,
-          this.isShowingBoardActivityOverlay ? 400 : 0
+          this.isShowingBoardActivityOverlay ? 400 : 0,
+          this.subGraphId
         );
       }}
       @bbresetlayout=${() => {

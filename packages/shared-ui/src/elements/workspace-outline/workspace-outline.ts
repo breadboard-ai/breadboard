@@ -104,8 +104,8 @@ export class WorkspaceOutline extends LitElement {
     }
 
     #controls {
-      height: var(--bb-grid-size-16);
-      padding: var(--bb-grid-size-4);
+      height: var(--bb-grid-size-12);
+      padding: var(--bb-grid-size-2);
       display: grid;
       grid-template-columns: 1fr min-content;
       column-gap: var(--bb-grid-size-2);
@@ -120,6 +120,11 @@ export class WorkspaceOutline extends LitElement {
         var(--bb-font-family);
       border: 1px solid var(--bb-neutral-300);
       border-radius: var(--bb-grid-size);
+    }
+
+    #controls input[type="search"]:focus {
+      outline: none;
+      box-shadow: inset 0 0 0 4px var(--bb-ui-50);
     }
 
     #controls #view-toggle {
@@ -174,9 +179,10 @@ export class WorkspaceOutline extends LitElement {
     }
 
     #outline {
-      height: calc(100% - var(--bb-grid-size-16));
-      overflow: scroll;
-      padding: 0 var(--bb-grid-size-4);
+      height: calc(100% - var(--bb-grid-size-12));
+      overflow-x: hidden;
+      overflow-y: scroll;
+      padding: 0 var(--bb-grid-size-2);
       font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
     }
