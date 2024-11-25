@@ -14,7 +14,7 @@ export async function gemini(
   request: GeminiRequest,
   apiKey: string,
 ): Promise<Result<AsyncIterableIterator<BBRTChunk>, Error>> {
-  const model = 'gemini-1.5-flash-latest';
+  const model = 'gemini-1.5-pro';
   const url = new URL(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent`,
   );

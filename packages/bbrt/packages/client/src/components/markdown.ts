@@ -9,8 +9,7 @@ import {customElement, property} from 'lit/decorators.js';
 import {asyncReplace} from 'lit/directives/async-replace.js';
 import {unsafeHTML} from 'lit/directives/unsafe-html.js';
 import {micromark} from 'micromark';
-import {gfmTable, gfmTableHtml} from 'micromark-extension-gfm-table';
-import type {Extension, HtmlExtension} from 'micromark-util-types';
+import {gfm, gfmHtml} from 'micromark-extension-gfm';
 
 @customElement('bbrt-markdown')
 export class BBRTMarkdown extends LitElement {
@@ -50,12 +49,8 @@ declare global {
 const MICROMARK_SETTINGS = {
   allowDangerousHtml: false,
   allowDangerousProtocol: false,
-  // TODO(aomarks) Why do we need these casts, here and below? They seem
-  // to be importing the same type, but maybe from different nested
-  // versions?
-  // TODO(aomarks) The table extension doesn't seem to be working.
-  extensions: [gfmTable as Extension],
-  htmlExtensions: [gfmTableHtml as HtmlExtension],
+  extensions: [gfm()],
+  htmlExtensions: [gfmHtml()],
 };
 
 function renderMarkdown(markdown: string) {
