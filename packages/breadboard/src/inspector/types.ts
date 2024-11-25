@@ -43,7 +43,7 @@ import {
 import { SequenceEntry } from "./run/serializer.js";
 import { ReanimationState } from "../run/types.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
-import { AffectedNode, Result } from "../editor/types.js";
+import { AffectedNode } from "../editor/types.js";
 
 export type GraphVersion = number;
 
@@ -648,7 +648,8 @@ export type InspectableGraphCache = {
 };
 
 export type MutableGraphStore = {
-  create(url: GraphDescriptor): Result<MutableGraph>;
+  add(url: GraphDescriptor): MutableGraph;
+  get(id: MutableGraphIdentifier): MutableGraph | undefined;
 };
 
 export type MutableGraphIdentifier = UUID;
