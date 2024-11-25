@@ -30,6 +30,10 @@ import { Graph } from "./graph.js";
 import { EdgeCache } from "./edge-cache.js";
 import { NodeCache } from "./node-cache.js";
 import { AffectedNode } from "../../editor/types.js";
+import {
+  isImperativeGraph,
+  toDeclarativeGraph,
+} from "../../run/run-imperative-graph.js";
 
 export { MutableGraphImpl };
 
@@ -120,6 +124,9 @@ class MutableGraphImpl implements MutableGraph {
   }
 
   rebuild(graph: GraphDescriptor) {
+    if (isImperativeGraph(graph)) {
+      graph = toDeclarativeGraph(graph);
+    }
     this.graph = graph;
     this.nodes = new NodeCache((descriptor, graphId) => {
       const graph = graphId ? this.graphs.get(graphId) : this;
