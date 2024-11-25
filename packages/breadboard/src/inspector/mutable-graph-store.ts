@@ -57,6 +57,18 @@ class GraphStore implements MutableGraphStore {
     };
   }
 
+  editByDescriptor(
+    graph: GraphDescriptor,
+    options: EditableGraphOptions = {}
+  ): EditableGraph | undefined {
+    const result = this.getOrAdd(graph);
+    if (!result.success) {
+      console.error(`Failed to edityByDescriptor: ${result.error}`);
+      return undefined;
+    }
+    return this.edit(result.result.id, options);
+  }
+
   edit(
     id: MainGraphIdentifier,
     options: EditableGraphOptions = {}

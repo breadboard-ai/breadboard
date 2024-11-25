@@ -28,6 +28,7 @@ import {
   InspectableRunSequenceEntry,
   NodeConfiguration,
   SerializedRun,
+  MutableGraphStore,
 } from "@google-labs/breadboard";
 import { getDataStore, getRunStore } from "@breadboard-ai/data-store";
 import { classMap } from "lit/directives/class-map.js";
@@ -225,6 +226,7 @@ export class Main extends LitElement {
   #recentBoardStore = RecentBoardStore.instance();
   #recentBoards: BreadboardUI.Types.RecentBoard[] = [];
   #isSaving = false;
+  #graphStore!: MutableGraphStore;
   #dataStore = getDataStore();
   #runStore = getRunStore();
 
@@ -393,6 +395,7 @@ export class Main extends LitElement {
       })
       .then(() => {
         return Runtime.create({
+          graphStore: this.#graphStore,
           runStore: this.#runStore,
           dataStore: this.#dataStore,
           experiments: {},
@@ -403,6 +406,7 @@ export class Main extends LitElement {
       })
       .then((runtime) => {
         this.#runtime = runtime;
+        this.#graphStore = runtime.board.getGraphStore();
         this.#boardServers = runtime.board.getBoardServers() || [];
 
         this.#runtime.edit.addEventListener(

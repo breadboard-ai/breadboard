@@ -15,6 +15,7 @@ import {
   GraphProvider,
   InspectableRunObserver,
   Kit,
+  MutableGraphStore,
 } from "@google-labs/breadboard";
 import { RuntimeConfigBoardServers, Tab, TabId, TabType } from "./types";
 import {
@@ -194,6 +195,10 @@ export class Board extends EventTarget {
 
   getLoader(): GraphLoader {
     return this.boardServers.loader;
+  }
+
+  getGraphStore(): MutableGraphStore {
+    return this.boardServers.graphStore;
   }
 
   get tabs() {

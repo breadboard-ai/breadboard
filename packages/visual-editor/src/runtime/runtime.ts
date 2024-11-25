@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { asRuntimeKit, createLoader, Kit } from "@google-labs/breadboard";
+import {
+  asRuntimeKit,
+  createLoader,
+  GraphStore,
+  Kit,
+} from "@google-labs/breadboard";
 import { Board } from "./board.js";
 import { Run } from "./run.js";
 import { Edit } from "./edit.js";
@@ -64,14 +69,20 @@ export async function create(config: RuntimeConfig): Promise<{
   }
 
   const loader = createLoader(servers);
+  const graphStore = new GraphStore({
+    kits,
+    loader,
+    sandbox: config.sandbox,
+  });
   const boardServers = {
     servers,
     loader,
+    graphStore,
   };
 
   const runtime = {
     board: new Board([], loader, kits, boardServers, config.tokenVendor),
-    edit: new Edit([], loader, kits, config.sandbox),
+    edit: new Edit([], loader, kits, config.sandbox, graphStore),
     run: new Run(config.dataStore, config.runStore),
     kits,
   } as const;

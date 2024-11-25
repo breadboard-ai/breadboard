@@ -672,6 +672,10 @@ export type GraphHandle = {
 
 export type MutableGraphStore = {
   load(url: string, options: GraphLoaderContext): Promise<Result<GraphHandle>>;
+  editByDescriptor(
+    graph: GraphDescriptor,
+    options?: EditableGraphOptions
+  ): EditableGraph | undefined;
   edit(
     id: MainGraphIdentifier,
     options?: EditableGraphOptions
