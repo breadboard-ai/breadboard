@@ -13,7 +13,8 @@ import {
 import { readFile } from "fs/promises";
 import { fileURLToPath } from "node:url";
 import factory from "./factory.js";
-import { ModuleSpec, Sandbox, UUID } from "./types.js";
+import { ModuleSpec, Sandbox } from "./types.js";
+import { UUID } from "@breadboard-ai/types";
 
 export { NodeSandbox };
 

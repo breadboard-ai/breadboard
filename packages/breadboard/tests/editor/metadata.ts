@@ -6,8 +6,8 @@
 
 import test from "ava";
 
-import { editGraph } from "../../src/editor/index.js";
 import { NodeMetadata } from "@breadboard-ai/types";
+import { editGraph } from "../helpers/_editor.js";
 
 const testEditGraph = () => {
   return editGraph(
