@@ -83,6 +83,7 @@
   --bb-icon-directions-inverted: url(/third_party/icons/directions-inverted.svg);
   --bb-icon-download: url(/third_party/icons/download.svg);
   --bb-icon-draft: url(/third_party/icons/draft.svg);
+  --bb-icon-duplicate: url(/third_party/icons/duplicate.svg);
   --bb-icon-edge-connector: url(/third_party/icons/edge-connector.svg);
   --bb-icon-edit: url(/third_party/icons/edit.svg);
   --bb-icon-edit-ui: url(/third_party/icons/edit-ui.svg);
@@ -173,6 +174,8 @@
   --bb-icon-vital-signs: url(/third_party/icons/vital-signs.svg);
   --bb-icon-visibility-off: url(/third_party/icons/visibility-off.svg);
   --bb-icon-warning: url(/third_party/icons/warning.svg);
+  --bb-icon-workspace: url(/third_party/icons/workspace.svg);
+  --bb-icon-workspace-inverted: url(/third_party/icons/workspace-inverted.svg);
   --bb-icon-wrench: url(/third_party/icons/wrench.svg);
 
   /** UI Colors */

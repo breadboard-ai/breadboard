@@ -15,8 +15,6 @@ import { customElement, property, state } from "lit/decorators.js";
 import {
   AddSubgraphEvent,
   HideTooltipEvent,
-  KitNodeChosenEvent,
-  NodeCreateEvent,
   OverflowMenuActionEvent,
   RedoEvent,
   ResetLayoutEvent,
@@ -30,11 +28,9 @@ import {
   UndoEvent,
   ZoomToFitEvent,
 } from "../../events/events";
-import { createRandomID } from "./utils";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { InspectableGraph } from "@google-labs/breadboard";
 import { classMap } from "lit/directives/class-map.js";
-import { guard } from "lit/directives/guard.js";
 import { type ComponentSelectorOverlay } from "../elements";
 
 const COLLAPSED_MENU_BUFFER = 60;
@@ -793,161 +789,6 @@ export class GraphRibbonMenu extends LitElement {
   }
 
   render() {
-    const componentSelector: HTMLTemplateResult = html`${guard(
-      [this.graph?.raw().url],
-      () => {
-        return html`<bb-component-selector-overlay
-          .graph=${this.graph}
-          .showExperimentalComponents=${this.showExperimentalComponents}
-          .static=${!this.#animateComponentSelector}
-          ${ref(this.#componentSelectorRef)}
-          @bbkitnodechosen=${(evt: KitNodeChosenEvent) => {
-            const id = createRandomID(evt.nodeType);
-            this.dispatchEvent(new NodeCreateEvent(id, evt.nodeType));
-          }}
-          @bboverlaydismissed=${() => {
-            if (!this.#componentSelectorRef.value) {
-              return;
-            }
-
-            if (this.#componentSelectorRef.value.persist) {
-              return;
-            }
-
-            this.showComponentSelector = false;
-          }}
-        ></bb-component-selector-overlay>`;
-      }
-    )}`;
-
-    const components = html`
-      <div id="component-toggle-container">
-        <button
-          id="component-toggle"
-          class=${classMap({ active: this.showComponentSelector })}
-          @click=${() => {
-            this.showComponentSelector = !this.showComponentSelector;
-          }}
-        >
-          Components
-        </button>
-      </div>
-      <div id="components">
-        <button
-          draggable="true"
-          id="shortcut-add-specialist"
-          @pointerover=${(evt: PointerEvent) => {
-            this.dispatchEvent(
-              new ShowTooltipEvent(
-                "Add Model Component",
-                evt.clientX,
-                evt.clientY
-              )
-            );
-          }}
-          @pointerout=${() => {
-            this.dispatchEvent(new HideTooltipEvent());
-          }}
-          @dblclick=${() => {
-            const id = createRandomID("specialist");
-            this.dispatchEvent(new NodeCreateEvent(id, "specialist"));
-          }}
-          @dragstart=${(evt: DragEvent) => {
-            if (!evt.dataTransfer) {
-              return;
-            }
-            evt.dataTransfer.setData(this.dataType, "specialist");
-          }}
-        >
-          Add Model
-        </button>
-        <button
-          draggable="true"
-          id="shortcut-add-human"
-          @pointerover=${(evt: PointerEvent) => {
-            this.dispatchEvent(
-              new ShowTooltipEvent(
-                "Add Human Component",
-                evt.clientX,
-                evt.clientY
-              )
-            );
-          }}
-          @pointerout=${() => {
-            this.dispatchEvent(new HideTooltipEvent());
-          }}
-          @dblclick=${() => {
-            const id = createRandomID("human");
-            this.dispatchEvent(new NodeCreateEvent(id, "human"));
-          }}
-          @dragstart=${(evt: DragEvent) => {
-            if (!evt.dataTransfer) {
-              return;
-            }
-            evt.dataTransfer.setData(this.dataType, "human");
-          }}
-        >
-          Add Human
-        </button>
-        <button
-          draggable="true"
-          id="shortcut-add-looper"
-          @pointerover=${(evt: PointerEvent) => {
-            this.dispatchEvent(
-              new ShowTooltipEvent(
-                "Add Looper Component",
-                evt.clientX,
-                evt.clientY
-              )
-            );
-          }}
-          @pointerout=${() => {
-            this.dispatchEvent(new HideTooltipEvent());
-          }}
-          @dblclick=${() => {
-            const id = createRandomID("looper");
-            this.dispatchEvent(new NodeCreateEvent(id, "looper"));
-          }}
-          @dragstart=${(evt: DragEvent) => {
-            if (!evt.dataTransfer) {
-              return;
-            }
-            evt.dataTransfer.setData(this.dataType, "looper");
-          }}
-        >
-          Add Looper
-        </button>
-        <button
-          draggable="true"
-          id="shortcut-add-comment"
-          @pointerover=${(evt: PointerEvent) => {
-            this.dispatchEvent(
-              new ShowTooltipEvent(
-                "Add Comment Component",
-                evt.clientX,
-                evt.clientY
-              )
-            );
-          }}
-          @pointerout=${() => {
-            this.dispatchEvent(new HideTooltipEvent());
-          }}
-          @dblclick=${() => {
-            const id = createRandomID("comment");
-            this.dispatchEvent(new NodeCreateEvent(id, "comment"));
-          }}
-          @dragstart=${(evt: DragEvent) => {
-            if (!evt.dataTransfer) {
-              return;
-            }
-            evt.dataTransfer.setData(this.dataType, "comment");
-          }}
-        >
-          Add Comment
-        </button>
-      </div>
-    `;
-
     const save = html`<button
       class=${classMap({ "show-more": this.canSave })}
       id="shortcut-save"
@@ -1202,13 +1043,7 @@ export class GraphRibbonMenu extends LitElement {
       </button>
     </div>`;
 
-    const boardManagementControls = [
-      html`<div class="divider"></div>`,
-      editBoardInfo,
-      save,
-      copy,
-      deleteBoard,
-    ];
+    const boardManagementControls = [editBoardInfo, save, copy, deleteBoard];
 
     const boardManagement = html`<div id="board-management">
       ${boardManagementControls}
@@ -1285,14 +1120,7 @@ export class GraphRibbonMenu extends LitElement {
       ></bb-overflow-menu>`;
     }
 
-    const left = [
-      componentSelector,
-      components,
-      boardManagement,
-      editControls,
-      graphControls,
-      overflow,
-    ];
+    const left = [boardManagement, editControls, graphControls, overflow];
 
     const right = [
       html`<button

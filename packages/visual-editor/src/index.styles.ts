@@ -199,7 +199,7 @@ export const styles = css`
       var(--bb-font-family);
     margin-right: var(--bb-grid-size-6);
     padding-left: var(--bb-grid-size-7);
-    margin-left: var(--bb-grid-size-2);
+    margin-left: var(--bb-grid-size);
     background: url(/images/bb-logo-inverted.svg) left center no-repeat;
     height: 100%;
     display: flex;
@@ -223,8 +223,7 @@ export const styles = css`
     color: var(--bb-neutral-800);
     margin: 0;
     height: calc(100% - var(--bb-grid-size) * 2);
-    border-radius: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2) 0
-      0;
+    border-radius: var(--bb-grid-size) var(--bb-grid-size) 0 0;
     padding: 0 calc(var(--bb-grid-size) * 4);
     display: flex;
     align-items: center;
