@@ -138,7 +138,7 @@ class MutableGraphImpl implements MutableGraph {
       return new Node(descriptor, this, graphId);
     });
     this.edges = new EdgeCache(
-      (edge, graphId) => new Edge(this.nodes, edge, graphId)
+      (edge, graphId) => new Edge(this, edge, graphId)
     );
     this.modules = new ModuleCache();
     this.describe = new DescribeResultCache();
