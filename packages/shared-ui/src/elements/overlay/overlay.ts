@@ -34,7 +34,7 @@ export class Overlay extends LitElement {
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.15);
+      background: oklch(from var(--bb-ui-900) l c h/0.1);
     }
 
     #wrapper {
@@ -61,6 +61,12 @@ export class Overlay extends LitElement {
 
     :host([inline]) #background {
       background: transparent;
+    }
+
+    :host([elevated]) #content {
+      box-shadow:
+        0 8px 8px 0 rgba(0, 0, 0, 0.07),
+        0 15px 12px 0 rgba(0, 0, 0, 0.09);
     }
 
     :host([inline]) #content {

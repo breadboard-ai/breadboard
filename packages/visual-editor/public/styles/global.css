@@ -67,11 +67,14 @@
   --bb-icon-board-inverted: url(/third_party/icons/board-inverted.svg);
   --bb-icon-braces: url(/third_party/icons/braces.svg);
   --bb-icon-bug: url(/third_party/icons/bug.svg);
+  --bb-icon-capability: url(/third_party/icons/capability.svg);
+  --bb-icon-capability-inverted: url(/third_party/icons/capability-inverted.svg);
   --bb-icon-close: url(/third_party/icons/close.svg);
   --bb-icon-check-inverted: url(/third_party/icons/check-inverted.svg);
   --bb-icon-collapse: url(/third_party/icons/collapse.svg);
   --bb-icon-comment: url(/third_party/icons/comment.svg);
   --bb-icon-confirm-blue: url(/third_party/icons/confirm-blue.svg);
+  --bb-icon-code: url(/third_party/icons/code.svg);
   --bb-icon-code-blocks: url(/third_party/icons/code-blocks.svg);
   --bb-icon-continue: url(/third_party/icons/continue.svg);
   --bb-icon-copy-to-clipboard: url(/third_party/icons/copy-to-clipboard.svg);

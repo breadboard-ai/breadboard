@@ -5,7 +5,7 @@
  */
 
 import { LitElement, html, css } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement } from "lit/decorators.js";
 import {
   OverlayDismissedEvent,
   WorkspaceItemCreateEvent,
@@ -14,11 +14,7 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 
 @customElement("bb-new-workspace-item-overlay")
 export class NewWorkspaceItemOverlay extends LitElement {
-  @property()
-  panelTitle: string = "Create new...";
-
   #formRef: Ref<HTMLFormElement> = createRef();
-  #fileNameRef: Ref<HTMLInputElement> = createRef();
 
   static styles = css`
     :host {
@@ -30,6 +26,20 @@ export class NewWorkspaceItemOverlay extends LitElement {
       flex-direction: column;
       width: 85vw;
       max-width: 420px;
+    }
+
+    #container {
+      display: grid;
+      grid-template-columns: 90px minmax(0, 1fr);
+      column-gap: var(--bb-grid-size-4);
+      row-gap: var(--bb-grid-size-2);
+      padding: var(--bb-grid-size-4);
+    }
+
+    #type-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: var(--bb-grid-size-2);
     }
 
     header {
@@ -64,22 +74,9 @@ export class NewWorkspaceItemOverlay extends LitElement {
     }
 
     label {
-      padding: var(--bb-grid-size) calc(var(--bb-grid-size) * 4);
-      font-size: var(--bb-label-small);
-      color: var(--bb-ui-600);
-    }
-
-    input[type="text"],
-    textarea,
-    select {
-      margin: var(--bb-grid-size) calc(var(--bb-grid-size) * 4)
-        calc(var(--bb-grid-size) * 2);
-      font-size: var(--bb-body-small);
-      font-family: var(--bb-font-family);
-      border: 1px solid var(--bb-neutral-400);
-      resize: none;
-      line-height: 1.5;
-      border-radius: var(--bb-grid-size);
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
+      align-self: center;
     }
 
     textarea {
@@ -142,6 +139,52 @@ export class NewWorkspaceItemOverlay extends LitElement {
     .container {
       margin: 0 var(--bb-grid-size-4);
     }
+
+    input[type="radio"] {
+      display: none;
+    }
+
+    #type-container label {
+      display: flex;
+      height: 80px;
+      border-radius: var(--bb-grid-size);
+      border: 1px solid var(--bb-ui-100);
+      justify-content: center;
+      padding: var(--bb-grid-size-3);
+      align-items: flex-end;
+      cursor: pointer;
+      font: 500 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
+    }
+
+    #type-container label[for="declarative"] {
+      background: var(--bb-icon-board) center calc(50% - 12px) / 48px 48px
+        no-repeat;
+    }
+
+    #type-container label[for="imperative"] {
+      background: var(--bb-icon-code) center calc(50% - 12px) / 48px 48px
+        no-repeat;
+    }
+
+    #type-container label:hover {
+      border: 1px solid var(--bb-ui-300);
+    }
+
+    #type-container input:checked + label {
+      border: 1px solid var(--bb-ui-300);
+      box-shadow: 0 0 0 2px var(--bb-ui-300);
+    }
+
+    input[type="text"],
+    select,
+    textarea {
+      padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      border: 1px solid var(--bb-neutral-300);
+      border-radius: var(--bb-grid-size);
+    }
   `;
 
   protected firstUpdated(): void {
@@ -150,7 +193,7 @@ export class NewWorkspaceItemOverlay extends LitElement {
     }
 
     const input = this.#formRef.value.querySelector(
-      "input"
+      "input[type='text']"
     ) as HTMLInputElement;
     if (!input) {
       return;
@@ -163,7 +206,7 @@ export class NewWorkspaceItemOverlay extends LitElement {
   }
 
   render() {
-    return html`<bb-overlay>
+    return html`<bb-overlay elevated>
       <form
         ${ref(this.#formRef)}
         @keydown=${(evt: KeyboardEvent) => {
@@ -203,7 +246,7 @@ export class NewWorkspaceItemOverlay extends LitElement {
         }}
       >
         <header>
-          <h1>${this.panelTitle}</h1>
+          <h1>New item...</h1>
           <button
             @click=${() => {
               this.dispatchEvent(new OverlayDismissedEvent());
@@ -215,14 +258,35 @@ export class NewWorkspaceItemOverlay extends LitElement {
           </button>
         </header>
 
-        <label>Type</label>
-        <select name="item-type">
-          <option value="declarative">Visual Board</option>
-          <option value="imperative">Code Board</option>
-        </select>
+        <div id="container">
+          <label>Type</label>
+          <div id="type-container">
+            <input
+              id="declarative"
+              type="radio"
+              name="item-type"
+              value="declarative"
+              checked
+            />
+            <label for="declarative">Visual Board</label>
 
-        <label>Title</label>
-        <input name="title" type="text" required />
+            <input
+              id="imperative"
+              type="radio"
+              name="item-type"
+              value="imperative"
+            />
+            <label for="imperative">Code Board</label>
+          </div>
+
+          <label>Title</label>
+          <input
+            name="title"
+            type="text"
+            placeholder="Enter a title for the item"
+            required
+          />
+        </div>
 
         <div id="controls">
           <button
