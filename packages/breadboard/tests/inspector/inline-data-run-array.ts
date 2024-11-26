@@ -85,6 +85,7 @@ export const results: HarnessRunResult[] = [
         ],
         url: "idb://default/blank-board.bgl.json",
       },
+      graphId: "",
       path: [],
       timestamp: 68300.29999999702,
     },

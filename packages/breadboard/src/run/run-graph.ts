@@ -161,7 +161,12 @@ export async function* runGraph(
     if (!resumeFrom) {
       await probe?.report?.({
         type: "graphstart",
-        data: { graph, path: invocationPath, timestamp: timestamp() },
+        data: {
+          graph: graphToRun.graph,
+          graphId: graphToRun.subGraphId || "",
+          path: invocationPath,
+          timestamp: timestamp(),
+        },
       });
     }
 

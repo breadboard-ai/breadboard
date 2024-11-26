@@ -97,6 +97,7 @@ export class HttpClient {
         path: [],
         timestamp: timestamp(),
         graph: emptyGraph(),
+        graphId: "",
       },
     ]);
 
