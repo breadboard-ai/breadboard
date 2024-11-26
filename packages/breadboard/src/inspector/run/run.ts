@@ -226,7 +226,12 @@ export class RunObserver implements InspectableRunObserver {
         "No data store provided to RunObserver, unable to load runs"
       );
     }
-    const loader = new RunLoader(this.#options.dataStore, o, options || {});
+    const loader = new RunLoader(
+      this.#store,
+      this.#options.dataStore,
+      o,
+      options || {}
+    );
     const result = await loader.load();
     if (result.success) {
       this.#runs.push(result.run);

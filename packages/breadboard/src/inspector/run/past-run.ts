@@ -14,7 +14,7 @@ import {
   InspectableRunInputs,
   InspectableRunNodeEvent,
   MainGraphIdentifier,
-  SerializedRunLoadingOptions,
+  MutableGraphStore,
   TimelineEntry,
 } from "../types.js";
 import { Replay } from "./replay.js";
@@ -28,10 +28,10 @@ export class PastRun implements InspectableRun {
 
   constructor(
     public readonly dataStoreKey = crypto.randomUUID(),
-    timeline: TimelineEntry[],
-    options: SerializedRunLoadingOptions
+    graphStore: MutableGraphStore,
+    timeline: TimelineEntry[]
   ) {
-    this.#replay = new Replay(timeline, 0, options);
+    this.#replay = new Replay(graphStore, timeline, 0);
   }
 
   async initializeBackingRun(options: InspectableGraphOptions) {

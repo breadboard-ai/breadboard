@@ -69,6 +69,7 @@ export const results: HarnessRunResult[] = [
         kits: [],
       },
       path: [],
+      graphId: "",
       timestamp: 2448.5,
     },
     async reply() {},

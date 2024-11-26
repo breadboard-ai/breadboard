@@ -74,6 +74,7 @@ export class RunSerializer {
       index = this.#seenGraphs.get(mainGraphId) || 0;
     }
     const edges = entry.edges;
+    const graphId = entry.graphId;
     return [
       "graphstart",
       {
@@ -81,6 +82,7 @@ export class RunSerializer {
         path: entry.path,
         index,
         graph,
+        graphId,
         edges,
       },
     ];

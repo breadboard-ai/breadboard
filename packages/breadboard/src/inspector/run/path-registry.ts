@@ -5,7 +5,7 @@
  */
 
 import { timestamp } from "../../timestamp.js";
-import { OutputValues } from "../../types.js";
+import { GraphIdentifier, OutputValues } from "../../types.js";
 import {
   InspectableGraph,
   InspectableRunEdge,
@@ -30,6 +30,7 @@ export const createSimpleEntry = (
     parent: null,
     children: [],
     mainGraphId: null,
+    graphId: "",
     graphStart: 0,
     graphEnd: 0,
     event,
@@ -58,6 +59,7 @@ class Entry implements PathRegistryEntry {
   #trackedSidecars: Map<string, InspectableRunEvent> = new Map();
 
   mainGraphId: MainGraphIdentifier | null = null;
+  graphId: GraphIdentifier = "";
   // Wait until `graphstart` event to set the start time.
   graphStart: number = 0;
   graphEnd: number | null = null;

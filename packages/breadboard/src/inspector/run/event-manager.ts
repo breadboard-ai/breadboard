@@ -97,6 +97,7 @@ export class EventManager {
     const mainGraphId = adding.result;
     const entry = this.#pathRegistry.create(path);
     entry.mainGraphId = mainGraphId;
+    entry.graphId = graphId;
     entry.graphStart = timestamp;
     entry.view = {
       // Math: The start index is the length of the sequence before the

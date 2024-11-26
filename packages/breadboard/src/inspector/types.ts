@@ -1142,6 +1142,7 @@ export type PathRegistryEntry = {
   parent: PathRegistryEntry | null;
   children: PathRegistryEntry[];
   mainGraphId: MainGraphIdentifier | null;
+  graphId: GraphIdentifier;
   graphStart: number;
   graphEnd: number | null;
   event: InspectableRunEvent | null;
@@ -1225,6 +1226,7 @@ export type GraphstartTimelineEntry = [
     path: number[];
     index: number;
     graph: GraphDescriptor | null;
+    graphId: string;
     edges: InspectableRunEdge[];
   },
 ];
