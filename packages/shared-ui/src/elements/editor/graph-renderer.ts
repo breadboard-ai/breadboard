@@ -1225,7 +1225,7 @@ export class GraphRenderer extends LitElement {
   }
 
   zoomToNode(id: string, subGraphId: string | null, offset = 0) {
-    this.zoomToFit(0, subGraphId);
+    this.zoomToFit(0, subGraphId, subGraphId !== null);
 
     for (const graph of this.#container.children) {
       if (!(graph instanceof Graph) || !graph.visible) {
@@ -1245,8 +1245,13 @@ export class GraphRenderer extends LitElement {
       const graphNodeBounds = graphNode.getBounds();
       const rendererBounds = this.getBoundingClientRect();
 
+      const graphMidX =
+        (graphBounds.x + graphBounds.width / 2) / rendererBounds.width;
+      const graphMidY =
+        (graphBounds.y + graphBounds.height / 2) / rendererBounds.height;
+
       const xShift =
-        (0.5 +
+        (graphMidX +
           offset -
           (graphNodeBounds.x - graphBounds.x + graphNodeBounds.width * 0.5) /
             graphBounds.width) *
@@ -1254,7 +1259,7 @@ export class GraphRenderer extends LitElement {
       this.#container.x += xShift;
 
       const yShift =
-        (0.5 -
+        (graphMidY -
           (graphNodeBounds.y - graphBounds.y + graphNodeBounds.height * 0.5) /
             graphBounds.height) *
         graphBounds.height;
@@ -1285,7 +1290,11 @@ export class GraphRenderer extends LitElement {
     }
   }
 
-  zoomToFit(reduceRenderBoundsWidth = 0, subGraphId: string | null = null) {
+  zoomToFit(
+    reduceRenderBoundsWidth = 0,
+    subGraphId: string | null = null,
+    includeSubGraphs = true
+  ) {
     this.#container.position.set(0, 0);
     this.#container.scale.set(1, 1);
 
@@ -1294,6 +1303,10 @@ export class GraphRenderer extends LitElement {
 
     for (const graph of this.#container.children) {
       if (!(graph instanceof Graph) || !graph.visible) {
+        continue;
+      }
+
+      if (!includeSubGraphs && graph.subGraphId) {
         continue;
       }
 
