@@ -1413,6 +1413,12 @@ export class Graph extends PIXI.Container {
      * centralize the graph.
      */
     let nodesLeftToDraw = this.#nodes.length;
+
+    // For empty graphs, just emit the event immediately.
+    if (nodesLeftToDraw === 0) {
+      this.emit(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW);
+    }
+
     const onDraw = function (this: {
       graphNode: GraphNode;
       layout: LayoutInfo | null;
