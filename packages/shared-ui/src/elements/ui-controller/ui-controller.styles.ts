@@ -288,7 +288,8 @@ export const styles = css`
   }
 
   #toggle-components,
-  #toggle-workspace-overview {
+  #toggle-workspace-overview,
+  #toggle-capabilities {
     width: 32px;
     height: 32px;
     font-size: 0;
@@ -302,7 +303,8 @@ export const styles = css`
   }
 
   #toggle-components::after,
-  #toggle-workspace-overview::after {
+  #toggle-workspace-overview::after,
+  #toggle-capabilities::after {
     background: var(--bb-neutral-800);
     color: var(--bb-neutral-0);
     padding: var(--bb-grid-size-2);
@@ -327,8 +329,13 @@ export const styles = css`
     content: "Workspace";
   }
 
+  #toggle-capabilities::after {
+    content: "Capabilities";
+  }
+
   #toggle-components:hover::after,
-  #toggle-workspace-overview:hover::after {
+  #toggle-workspace-overview:hover::after,
+  #toggle-capabilities:hover::after {
     opacity: 1;
   }
 
@@ -339,6 +346,11 @@ export const styles = css`
 
   #toggle-workspace-overview {
     background: transparent var(--bb-icon-workspace-inverted) center center /
+      24px 24px no-repeat;
+  }
+
+  #toggle-capabilities {
+    background: transparent var(--bb-icon-capabilities-inverted) center center /
       24px 24px no-repeat;
   }
 
@@ -354,5 +366,12 @@ export const styles = css`
   #toggle-workspace-overview.active {
     background: oklch(from var(--bb-neutral-0) l c h/0.22)
       var(--bb-icon-workspace-inverted) center center / 24px 24px no-repeat;
+  }
+
+  #toggle-capabilities:hover,
+  #toggle-capabilities:focus,
+  #toggle-capabilities.active {
+    background: oklch(from var(--bb-neutral-0) l c h/0.22)
+      var(--bb-icon-capabilities-inverted) center center / 24px 24px no-repeat;
   }
 `;
