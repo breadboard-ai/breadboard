@@ -1101,6 +1101,11 @@ export class WorkspaceOutline extends LitElement {
                           name: "quick-jump",
                           icon: "quick-jump",
                         },
+                    {
+                      title: "Edit Board Information",
+                      name: "edit-board-details",
+                      icon: "edit-board-details",
+                    },
                   ],
                   location: {
                     x: evt.clientX + 20,
@@ -1169,32 +1174,48 @@ export class WorkspaceOutline extends LitElement {
                     subItem.type === "declarative" &&
                     (this.mode === "tree" || this.subGraphId === id);
 
+                  const actions: OverflowAction[] = [];
+
+                  if (showZoom) {
+                    actions.push({
+                      title: "Zoom to Fit",
+                      name: "zoom-to-fit",
+                      icon: "fit",
+                    });
+                  } else {
+                    actions.push({
+                      title: "Go to item",
+                      name: "quick-jump",
+                      icon: "quick-jump",
+                    });
+                  }
+
+                  if (subItem.type === "declarative") {
+                    actions.push({
+                      title: "Edit Board Information",
+                      name: "edit-board-details",
+                      icon: "edit-board-details",
+                      value: id,
+                    });
+                  }
+
+                  actions.push(
+                    {
+                      title: "Duplicate",
+                      name: "duplicate",
+                      icon: "duplicate",
+                    },
+                    {
+                      title: "Delete",
+                      name: "delete",
+                      icon: "delete",
+                    }
+                  );
+
                   this.#setOverflowMenuValues({
                     type: subItem.type,
                     target: id,
-                    actions: [
-                      showZoom
-                        ? {
-                            title: "Zoom to Fit",
-                            name: "zoom-to-fit",
-                            icon: "fit",
-                          }
-                        : {
-                            title: "Go to item",
-                            name: "quick-jump",
-                            icon: "quick-jump",
-                          },
-                      {
-                        title: "Duplicate",
-                        name: "duplicate",
-                        icon: "duplicate",
-                      },
-                      {
-                        title: "Delete",
-                        name: "delete",
-                        icon: "delete",
-                      },
-                    ],
+                    actions,
                     location: {
                       x: evt.clientX + 20,
                       y: evt.clientY,
@@ -1222,10 +1243,12 @@ export class WorkspaceOutline extends LitElement {
           .actions=${this.#overflowMenu.actions}
           .disabled=${false}
           @bboverflowmenuaction=${(evt: OverflowMenuActionEvent) => {
-            evt.stopImmediatePropagation();
+            this.showOverflowMenu = false;
 
             switch (evt.action) {
               case "zoom-to-fit": {
+                evt.stopImmediatePropagation();
+
                 this.#changeWorkspaceItem(
                   this.#overflowMenu.target ? this.#overflowMenu.target : null,
                   null
@@ -1234,6 +1257,8 @@ export class WorkspaceOutline extends LitElement {
               }
 
               case "quick-jump": {
+                evt.stopImmediatePropagation();
+
                 const subGraphId =
                   this.#overflowMenu.type === "declarative"
                     ? this.#overflowMenu.target
@@ -1247,6 +1272,8 @@ export class WorkspaceOutline extends LitElement {
               }
 
               case "duplicate": {
+                evt.stopImmediatePropagation();
+
                 if (!this.#overflowMenu.target) {
                   break;
                 }
@@ -1275,6 +1302,8 @@ export class WorkspaceOutline extends LitElement {
               }
 
               case "delete": {
+                evt.stopImmediatePropagation();
+
                 if (!this.#overflowMenu.target) {
                   break;
                 }
@@ -1307,7 +1336,6 @@ export class WorkspaceOutline extends LitElement {
                 }
               }
             }
-            this.showOverflowMenu = false;
           }}
           @bboverflowmenudismissed=${() => {
             this.showOverflowMenu = false;

@@ -271,7 +271,11 @@ export class Main extends LitElement {
 
         const { left, bottom } = activeTab.getBoundingClientRect();
         const maxLeft = window.innerWidth - 500;
-        this.#showBoardEditOverlay(Math.min(maxLeft, left), bottom);
+        this.#showBoardEditOverlay(
+          Math.min(maxLeft, left),
+          bottom,
+          this.tab?.subGraphId ?? null
+        );
       },
     },
     {
@@ -1611,13 +1615,17 @@ export class Main extends LitElement {
     this.#runtime.edit.createModule(this.tab, moduleId, newModule);
   }
 
-  #showBoardEditOverlay(x: number | null, y: number | null) {
+  #showBoardEditOverlay(
+    x: number | null,
+    y: number | null,
+    subGraphId: string | null
+  ) {
     if (!this.tab) {
       return;
     }
 
-    const graph = this.tab.subGraphId
-      ? this.tab.graph.graphs?.[this.tab.subGraphId]
+    const graph = subGraphId
+      ? this.tab.graph.graphs?.[subGraphId]
       : this.tab.graph;
 
     if (!graph) {
@@ -1631,7 +1639,7 @@ export class Main extends LitElement {
       isTool: metadata?.tags?.includes("tool") ?? false,
       isComponent: metadata?.tags?.includes("component") ?? false,
       published: metadata?.tags?.includes("published") ?? false,
-      subGraphId: this.tab.subGraphId,
+      subGraphId,
       title: title ?? "",
       version: version ?? "",
       x,
@@ -2589,7 +2597,11 @@ export class Main extends LitElement {
                       return;
                     }
 
-                    this.#showBoardEditOverlay(evt.clientX, evt.clientY);
+                    this.#showBoardEditOverlay(
+                      evt.clientX,
+                      evt.clientY,
+                      this.tab.subGraphId
+                    );
                   }}
                 >
                   <span>${tab.graph.title}</span>
@@ -2718,7 +2730,11 @@ export class Main extends LitElement {
               ) => {
                 switch (evt.action) {
                   case "edit-board-details": {
-                    this.#showBoardEditOverlay(evt.x ?? null, evt.y ?? null);
+                    this.#showBoardEditOverlay(
+                      evt.x ?? null,
+                      evt.y ?? null,
+                      evt.value
+                    );
                     break;
                   }
 
