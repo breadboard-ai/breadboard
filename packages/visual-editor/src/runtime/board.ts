@@ -5,7 +5,6 @@
  */
 
 import {
-  addSandboxedRunModule,
   BoardServer,
   BoardServerExtension,
   BoardServerExtensionNamespace,
@@ -35,11 +34,6 @@ import {
 } from "@breadboard-ai/board-server-management";
 import { TokenVendor } from "@breadboard-ai/connection-client";
 import { GraphIdentifier, ModuleIdentifier } from "@breadboard-ai/types";
-import { sandbox } from "../sandbox";
-
-function withRunModule(kits: Kit[]): Kit[] {
-  return addSandboxedRunModule(sandbox, kits);
-}
 
 export class Board extends EventTarget {
   #tabs = new Map<TabId, Tab>();
@@ -360,7 +354,7 @@ export class Board extends EventTarget {
     const id = globalThis.crypto.randomUUID();
     this.#tabs.set(id, {
       id,
-      kits: withRunModule(this.kits),
+      kits: this.kits,
       name: descriptor.title ?? "Untitled board",
       graph: descriptor,
       subGraphId: null,
@@ -402,7 +396,7 @@ export class Board extends EventTarget {
     const id = globalThis.crypto.randomUUID();
     this.#tabs.set(id, {
       id,
-      kits: withRunModule(this.kits),
+      kits: this.kits,
       name: descriptor.title ?? "Untitled board",
       graph: descriptor,
       subGraphId: null,
@@ -506,7 +500,7 @@ export class Board extends EventTarget {
       const id = globalThis.crypto.randomUUID();
       this.#tabs.set(id, {
         id,
-        kits: withRunModule(kits),
+        kits,
         name: graph.title ?? "Untitled board",
         graph,
         subGraphId,

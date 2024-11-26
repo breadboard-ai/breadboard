@@ -5,6 +5,7 @@
  */
 
 import {
+  addSandboxedRunModule,
   asRuntimeKit,
   createLoader,
   GraphStore,
@@ -33,17 +34,25 @@ import PythonWasmKit from "@breadboard-ai/python-wasm";
 export * as Events from "./events.js";
 export * as Types from "./types.js";
 
+import { sandbox } from "../sandbox";
+
+function withRunModule(kits: Kit[]): Kit[] {
+  return addSandboxedRunModule(sandbox, kits);
+}
+
 export async function create(config: RuntimeConfig): Promise<{
   board: Board;
   run: Run;
   edit: Edit;
   kits: Kit[];
 }> {
-  const kits = await loadKits([
-    asRuntimeKit(GeminiKit),
-    asRuntimeKit(BuildExampleKit),
-    asRuntimeKit(PythonWasmKit),
-  ]);
+  const kits = withRunModule(
+    await loadKits([
+      asRuntimeKit(GeminiKit),
+      asRuntimeKit(BuildExampleKit),
+      asRuntimeKit(PythonWasmKit),
+    ])
+  );
 
   const skipPlaygroundExamples = import.meta.env.MODE !== "development";
   let servers = await getBoardServers(
