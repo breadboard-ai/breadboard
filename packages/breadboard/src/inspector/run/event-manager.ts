@@ -107,7 +107,7 @@ export class EventManager {
     };
     // TODO: Instead of creating a new instance, cache and store them
     // in the GraphStore.
-    const inspector = this.#graphStore.inspect(mainGraphId, graphId);
+    const inspector = this.#graphStore.inspectAsync(mainGraphId, graphId);
     if (inspector) {
       entry.graph = inspector;
     } else {

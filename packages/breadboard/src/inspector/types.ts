@@ -682,7 +682,7 @@ export type MutableGraphStore = {
     id: MainGraphIdentifier,
     options?: EditableGraphOptions
   ): EditableGraph | undefined;
-  inspect(
+  inspectAsync(
     id: MainGraphIdentifier,
     graphId: GraphIdentifier
   ): InspectableGraph | undefined;

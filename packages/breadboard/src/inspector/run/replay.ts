@@ -42,7 +42,7 @@ class Replay {
       if (!adding.success) {
         throw new Error(`Run API integrity error: ${adding.error}`);
       }
-      const inspector = this.#graphStore.inspect(adding.result, graphId)!;
+      const inspector = this.#graphStore.inspectAsync(adding.result, graphId)!;
       this.#graphs.set(index, inspector);
     } else {
       graph = this.#graphs.get(index)?.raw() || null;

@@ -119,7 +119,7 @@ class GraphStore implements MutableGraphStore {
     return new GraphEditor(mutable, options);
   }
 
-  inspect(
+  inspectAsync(
     id: MainGraphIdentifier,
     graphId: GraphIdentifier
   ): InspectableGraph | undefined {
