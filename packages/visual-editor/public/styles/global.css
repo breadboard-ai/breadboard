@@ -67,8 +67,8 @@
   --bb-icon-board-inverted: url(/third_party/icons/board-inverted.svg);
   --bb-icon-braces: url(/third_party/icons/braces.svg);
   --bb-icon-bug: url(/third_party/icons/bug.svg);
-  --bb-icon-capability: url(/third_party/icons/capability.svg);
-  --bb-icon-capability-inverted: url(/third_party/icons/capability-inverted.svg);
+  --bb-icon-capabilities: url(/third_party/icons/capabilities.svg);
+  --bb-icon-capabilities-inverted: url(/third_party/icons/capabilities-inverted.svg);
   --bb-icon-close: url(/third_party/icons/close.svg);
   --bb-icon-check-inverted: url(/third_party/icons/check-inverted.svg);
   --bb-icon-collapse: url(/third_party/icons/collapse.svg);
@@ -115,6 +115,7 @@
   --bb-icon-input: url(/third_party/icons/input.svg);
   --bb-icon-info: url(/third_party/icons/info.svg);
   --bb-icon-info-filled: url(/third_party/icons/info-filled.svg);
+  --bb-icon-invoke: url(/third_party/icons/invoke.svg);
   --bb-icon-jsonata: url(/third_party/icons/jsonata.svg);
   --bb-icon-javascript: url(/third_party/icons/js.svg);
   --bb-icon-library-add: url(/third_party/icons/library-add.svg);

@@ -607,6 +607,17 @@ export class CodeEditor extends LitElement {
       parent: this.#content.value,
     });
 
+    this.#editor.scrollDOM.addEventListener("dragover", (evt) => {
+      evt.preventDefault();
+      evt.stopImmediatePropagation();
+    });
+
+    this.#editor.scrollDOM.addEventListener("drop", (evt) => {
+      evt.preventDefault();
+      evt.stopImmediatePropagation();
+      console.log(evt);
+    });
+
     this.#attemptEditorUpdate();
     this.attemptEditorFocus();
   }
