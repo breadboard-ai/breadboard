@@ -231,7 +231,7 @@ export class WorkspaceOutline extends LitElement {
     }
 
     ul {
-      margin: 0 0 0 var(--bb-grid-size-2);
+      margin: 0 0 0 var(--bb-grid-size-3);
       padding: 0;
       border-left: 1px solid var(--bb-neutral-300);
       list-style: none;
@@ -240,6 +240,7 @@ export class WorkspaceOutline extends LitElement {
     ul.ports {
       border-left: 1px solid transparent;
       position: relative;
+      margin: 0 0 0 var(--bb-grid-size-2);
     }
 
     ul.ports::before {
@@ -260,7 +261,7 @@ export class WorkspaceOutline extends LitElement {
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
-      padding: 0 0 0 var(--bb-grid-size-2);
+      padding: 0 0 0 var(--bb-grid-size-3);
       position: relative;
     }
 
@@ -468,8 +469,8 @@ export class WorkspaceOutline extends LitElement {
       border-radius: var(--bb-grid-size);
       flex: 0 0 auto;
       position: absolute;
-      top: 0;
-      left: 0;
+      top: var(--bb-grid-size);
+      left: var(--bb-grid-size);
     }
 
     .declarative.inverted > summary > .title::before {
@@ -489,13 +490,31 @@ export class WorkspaceOutline extends LitElement {
     }
 
     summary > .title {
+      border: none;
+      background: transparent;
+      padding: 0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      width: calc(100% - 28px);
       margin-right: var(--bb-grid-size-2);
       padding-left: var(--bb-grid-size-7);
       position: relative;
+      text-align: left;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+      border-radius: var(--bb-grid-size);
+    }
+
+    summary:hover > .title,
+    summary > .title:hover,
+    summary > .title:focus {
+      width: calc(100% - 28px);
+      background: var(--bb-ui-50);
+    }
+
+    details.selected > summary > .title {
+      background: var(--bb-ui-50);
     }
 
     .title:has(> .change-subitem) {
@@ -599,7 +618,7 @@ export class WorkspaceOutline extends LitElement {
         no-repeat;
       font-size: 0;
       margin: 0 0 0 var(--bb-grid-size);
-      opacity: 0;
+      display: none;
       cursor: pointer;
       border-radius: 50%;
       transition: background 0.1s cubic-bezier(0, 0, 0.3, 1);
@@ -608,7 +627,7 @@ export class WorkspaceOutline extends LitElement {
     summary:hover .more,
     .more:hover,
     .more:focus {
-      opacity: 1;
+      display: block;
     }
 
     .more:hover,
@@ -979,11 +998,11 @@ export class WorkspaceOutline extends LitElement {
     </ul>`;
   }
 
-  #toggleOpenStatusFor(id: string) {
-    if (this.#openItems.has(id)) {
-      this.#openItems.delete(id);
-    } else {
+  #setOpenStatusFor(id: string, value: boolean) {
+    if (value) {
       this.#openItems.add(id);
+    } else {
+      this.#openItems.delete(id);
     }
 
     this.#storeOpenItems();
@@ -1002,27 +1021,30 @@ export class WorkspaceOutline extends LitElement {
     return html`${type === "declarative"
       ? html`<details
           id=${MAIN_BOARD_ID}
-          class="declarative"
+          class=${classMap({
+            declarative: true,
+            selected: this.moduleId === null && this.subGraphId === null,
+          })}
           ?open=${subItems.size === 0 || this.#openItems.has(MAIN_BOARD_ID)}
+          @toggle=${(evt: Event) => {
+            if (!(evt.target instanceof HTMLDetailsElement)) {
+              return;
+            }
+
+            this.#setOpenStatusFor(MAIN_BOARD_ID, evt.target.open);
+          }}
         >
-          <summary
-            @click=${(evt: PointerEvent) => {
-              const isMac = navigator.platform.indexOf("Mac") === 0;
-              const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+          <summary>
+            <button
+              class="title"
+              @click=${(evt: PointerEvent) => {
+                evt.stopPropagation();
 
-              if (!isCtrlCommand) {
-                this.#toggleOpenStatusFor(MAIN_BOARD_ID);
-                return;
-              }
-
-              evt.preventDefault();
-              evt.stopPropagation();
-
-              // Switch to main board.
-              this.#changeWorkspaceItem(null, null);
-            }}
-          >
-            <div class="title">${title}</div>
+                this.#changeWorkspaceItem(null, null);
+              }}
+            >
+              ${title}
+            </button>
             <button
               class="more"
               @click=${(evt: PointerEvent) => {
@@ -1082,28 +1104,30 @@ export class WorkspaceOutline extends LitElement {
         class=${classMap({
           [subItem.type]: true,
           inverted: getSubItemColor<number>(id, "text", true) === 0xffffff,
+          selected: this.moduleId === id || this.subGraphId === id,
         })}
         ?open=${this.#openItems.has(id)}
+        @toggle=${(evt: Event) => {
+          if (!(evt.target instanceof HTMLDetailsElement)) {
+            return;
+          }
+
+          this.#setOpenStatusFor(id, evt.target.open);
+        }}
       >
-        <summary
-          @click=${(evt: PointerEvent) => {
-            const isMac = navigator.platform.indexOf("Mac") === 0;
-            const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+        <summary>
+          <button
+            class="title"
+            @click=${(evt: PointerEvent) => {
+              evt.stopPropagation();
 
-            if (!isCtrlCommand) {
-              this.#toggleOpenStatusFor(id);
-              return;
-            }
-
-            evt.preventDefault();
-            evt.stopPropagation();
-
-            const subGraphId = subItem.type === "declarative" ? id : null;
-            const moduleId = subItem.type === "imperative" ? id : null;
-            this.#changeWorkspaceItem(subGraphId, moduleId);
-          }}
-        >
-          <div class="title">${subItem.title}</div>
+              const subGraphId = subItem.type === "declarative" ? id : null;
+              const moduleId = subItem.type === "imperative" ? id : null;
+              this.#changeWorkspaceItem(subGraphId, moduleId);
+            }}
+          >
+            ${subItem.title}
+          </button>
           ${main !== id
             ? html` <button
                 class="more"
