@@ -7,11 +7,11 @@
 import { HarnessRunResult } from "../../harness/types.js";
 import type {
   EventIdentifier,
-  GraphUUID,
   InspectableRun,
   InspectableRunEvent,
   InspectableRunInputs,
   InspectableRunNodeEvent,
+  MainGraphIdentifier,
   PathRegistryEntry,
 } from "../types.js";
 import {
@@ -29,7 +29,7 @@ export class NestedRun implements InspectableRun {
 
   #entry: PathRegistryEntry;
 
-  graphId: GraphUUID;
+  mainGraphId: MainGraphIdentifier;
   start: number;
   end: number | null;
   graphVersion = 0;
@@ -37,7 +37,7 @@ export class NestedRun implements InspectableRun {
   edges = [];
 
   constructor(entry: PathRegistryEntry) {
-    this.graphId = entry.graphId as GraphUUID;
+    this.mainGraphId = entry.mainGraphId!;
     this.start = entry.graphStart;
     this.end = entry.graphEnd;
     this.events = entry.events;

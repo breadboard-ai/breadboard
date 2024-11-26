@@ -30,12 +30,12 @@ import { RunNodeEvent } from "./run-node-event.js";
 import { RunSerializer, SequenceEntry } from "./serializer.js";
 import {
   EventIdentifier,
-  GraphDescriptorStore,
   InspectableRunEdge,
   InspectableRunErrorEvent,
   InspectableRunEvent,
   InspectableRunNodeEvent,
   InspectableRunSecretEvent,
+  MutableGraphStore,
   PathRegistryEntry,
   RunObserverLogLevel,
   RunObserverOptions,
@@ -52,7 +52,6 @@ import {
 } from "./conversions.js";
 import { ReanimationState } from "../../run/types.js";
 import { LifecycleManager } from "../../run/lifecycle.js";
-import { inspectableGraph } from "../graph/mutable-graph.js";
 
 const shouldSkipEvent = (
   options: RunObserverOptions,
@@ -80,7 +79,7 @@ export class EventManager {
   #sequence: SequenceEntry[] = [];
   #currentNodeEvent: RunNodeEvent | null = null;
 
-  constructor(store: GraphDescriptorStore, options: RunObserverOptions) {
+  constructor(store: MutableGraphStore, options: RunObserverOptions) {
     this.#graphStore = store;
     this.#options = options;
   }
@@ -90,9 +89,14 @@ export class EventManager {
   }
 
   #addGraphstart(data: GraphStartProbeData) {
-    const { path, graph, timestamp } = data;
-    const { id: graphId } = this.#graphStore.add(graph, 0);
+    const { path, graph, graphId = "", timestamp } = data;
+    const adding = this.#graphStore.addByDescriptor(graph);
+    if (!adding.success) {
+      return;
+    }
+    const mainGraphId = adding.result;
     const entry = this.#pathRegistry.create(path);
+    entry.mainGraphId = mainGraphId;
     entry.graphId = graphId;
     entry.graphStart = timestamp;
     entry.view = {
@@ -103,10 +107,14 @@ export class EventManager {
     };
     // TODO: Instead of creating a new instance, cache and store them
     // in the GraphStore.
-    entry.graph = inspectableGraph(graph, {
-      kits: this.#options.kits,
-      sandbox: this.#options.sandbox,
-    });
+    const inspector = this.#graphStore.inspect(mainGraphId, graphId);
+    if (inspector) {
+      entry.graph = inspector;
+    } else {
+      throw new Error(
+        `Run API Integrity error: unable to get InspectableGraph for "${mainGraphId}", "${graphId}"`
+      );
+    }
     this.#addToSequence("graphstart", entry);
   }
 

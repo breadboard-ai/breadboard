@@ -13,6 +13,7 @@ import {
   InspectableRunSequenceEntry,
   invokeGraph,
   Kit,
+  MutableGraphStore,
   NodeConfiguration,
   OutputValues,
   RunArguments,
@@ -53,6 +54,7 @@ export class Run extends EventTarget {
   >();
 
   constructor(
+    public readonly graphStore: MutableGraphStore,
     public readonly dataStore: DataStore,
     public readonly runStore: RunStore
   ) {
@@ -213,7 +215,7 @@ export class Run extends EventTarget {
 
   #createBoardRunner(config: RunConfig, abortController: AbortController) {
     const harnessRunner = createRunner(config);
-    const runObserver = createRunObserver({
+    const runObserver = createRunObserver(this.graphStore, {
       logLevel: "debug",
       dataStore: this.dataStore,
       runStore: this.runStore,

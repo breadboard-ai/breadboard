@@ -1465,7 +1465,7 @@ export class Main extends LitElement {
       try {
         const runData = JSON.parse(data) as SerializedRun | GraphDescriptor;
         if (isSerializedRun(runData)) {
-          const runObserver = createRunObserver({
+          const runObserver = createRunObserver(this.#graphStore, {
             logLevel: "debug",
             dataStore: this.#dataStore,
             sandbox,

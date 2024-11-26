@@ -5,14 +5,14 @@
  */
 
 import { timestamp } from "../../timestamp.js";
-import { OutputValues } from "../../types.js";
+import { GraphIdentifier, OutputValues } from "../../types.js";
 import {
-  GraphUUID,
   InspectableGraph,
   InspectableRunEdge,
   InspectableRunErrorEvent,
   InspectableRunEvent,
   InspectableRunNodeEvent,
+  MainGraphIdentifier,
   PathRegistryEntry,
   SequenceView,
 } from "../types.js";
@@ -29,7 +29,8 @@ export const createSimpleEntry = (
     path,
     parent: null,
     children: [],
-    graphId: null,
+    mainGraphId: null,
+    graphId: "",
     graphStart: 0,
     graphEnd: 0,
     event,
@@ -57,7 +58,8 @@ class Entry implements PathRegistryEntry {
   // secret and error do not have a corresponding `nodeend` event.
   #trackedSidecars: Map<string, InspectableRunEvent> = new Map();
 
-  graphId: GraphUUID | null = null;
+  mainGraphId: MainGraphIdentifier | null = null;
+  graphId: GraphIdentifier = "";
   // Wait until `graphstart` event to set the start time.
   graphStart: number = 0;
   graphEnd: number | null = null;

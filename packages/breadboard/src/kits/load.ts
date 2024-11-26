@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { inspect } from "../inspector/index.js";
 import { loadWithFetch } from "../loader/default.js";
 import { invokeGraph } from "../run/invoke-graph.js";
 import {
@@ -12,12 +11,14 @@ import {
   InputValues,
   Kit,
   NodeDescriberContext,
+  NodeDescriberResult,
   NodeHandlerContext,
   NodeHandlerMetadata,
   NodeHandlerObject,
   Schema,
 } from "../types.js";
 import { asRuntimeKit } from "./ctors.js";
+import { describe as describeHelper } from "./utils.js";
 
 const setBaseURL = (base: URL, key: string, graph: GraphDescriptor) => {
   if (graph.edges && graph.nodes) {
@@ -29,6 +30,10 @@ const setBaseURL = (base: URL, key: string, graph: GraphDescriptor) => {
   }
 };
 
+const emptyResult: NodeDescriberResult = {
+  inputSchema: { type: "object" },
+  outputSchema: { type: "object" },
+};
 class GraphDescriptorNodeHandler implements NodeHandlerObject {
   #graph: GraphDescriptor;
   metadata: NodeHandlerMetadata;
@@ -52,11 +57,20 @@ class GraphDescriptorNodeHandler implements NodeHandlerObject {
     _outputSchema?: Schema,
     context?: NodeDescriberContext
   ) {
-    return await inspect(this.#graph, {
-      kits: context?.kits,
-      loader: context?.loader,
-      sandbox: context?.sandbox,
-    }).describe(inputs);
+    const describing = await describeHelper(
+      this.#graph,
+      "",
+      {
+        kits: context?.kits,
+        loader: context?.loader,
+        sandbox: context?.sandbox,
+      },
+      inputs
+    );
+    if (!describing.success) {
+      return emptyResult;
+    }
+    return describing.result;
   }
 
   async invoke(inputs: InputValues, context: NodeHandlerContext) {

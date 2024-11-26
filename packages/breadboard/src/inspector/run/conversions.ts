@@ -38,9 +38,16 @@ function sequenceEntryToHarnessRunResult(
     case "graphstart": {
       const { graphStart, path, graph: inspectableGraph, edges } = data;
       const graph = inspectableGraph?.raw() as GraphDescriptor;
+      const graphId = inspectableGraph?.graphId() || "";
       return {
         type,
-        data: { timestamp: graphStart, path: trimPath(path), graph, edges },
+        data: {
+          timestamp: graphStart,
+          graphId,
+          path: trimPath(path),
+          graph,
+          edges,
+        },
         async reply() {},
       };
     }
@@ -171,9 +178,16 @@ async function* eventsAsHarnessRunResults(
       case "graphstart": {
         const { graphStart, path, graph: inspectableGraph, edges } = data;
         const graph = inspectableGraph?.raw() as GraphDescriptor;
+        const graphId = inspectableGraph?.graphId() || "";
         yield {
           type,
-          data: { timestamp: graphStart, path: trimPath(path), graph, edges },
+          data: {
+            timestamp: graphStart,
+            path: trimPath(path),
+            graph,
+            graphId,
+            edges,
+          },
           async reply() {},
         };
         break;

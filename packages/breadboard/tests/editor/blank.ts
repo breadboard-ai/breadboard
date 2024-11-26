@@ -5,7 +5,21 @@
  */
 
 import test from "ava";
-import { blank, inspect } from "../../src/index.js";
+import {
+  blank,
+  GraphDescriptor,
+  InspectableGraph,
+  InspectableGraphOptions,
+} from "../../src/index.js";
+import { Graph } from "../../src/inspector/graph/graph.js";
+import { MutableGraphImpl } from "../../src/inspector/graph/mutable-graph.js";
+
+const inspect = (
+  graph: GraphDescriptor,
+  options?: InspectableGraphOptions
+): InspectableGraph => {
+  return new Graph("", new MutableGraphImpl(graph, options || {}));
+};
 
 test("importBlank creates a nice blank board", async (t) => {
   const b = blank();

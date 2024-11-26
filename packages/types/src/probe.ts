@@ -39,6 +39,7 @@ export type NodeEndResponse = {
 
 export type GraphStartProbeData = {
   graph: GraphDescriptor;
+  graphId: string;
   path: number[];
   timestamp: number;
   edges?: { edge: Edge; value: NodeValue }[];
