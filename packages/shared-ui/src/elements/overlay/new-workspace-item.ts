@@ -30,7 +30,7 @@ export class NewWorkspaceItemOverlay extends LitElement {
 
     #container {
       display: grid;
-      grid-template-columns: 90px minmax(0, 1fr);
+      grid-template-columns: 1fr;
       column-gap: var(--bb-grid-size-4);
       row-gap: var(--bb-grid-size-2);
       padding: var(--bb-grid-size-4);
@@ -259,7 +259,6 @@ export class NewWorkspaceItemOverlay extends LitElement {
         </header>
 
         <div id="container">
-          <label>Type</label>
           <div id="type-container">
             <input
               id="declarative"
@@ -279,7 +278,6 @@ export class NewWorkspaceItemOverlay extends LitElement {
             <label for="imperative">Code Board</label>
           </div>
 
-          <label>Title</label>
           <input
             name="title"
             type="text"
