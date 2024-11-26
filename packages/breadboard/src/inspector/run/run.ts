@@ -4,33 +4,33 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { DataStore, RunTimestamp, RunURL } from "../../data/types.js";
 import { HarnessRunResult } from "../../harness/types.js";
 import {
   GraphDescriptor,
   NodeConfiguration,
   NodeIdentifier,
 } from "../../types.js";
-import { EventManager } from "./event-manager.js";
-import { RunLoader } from "./loader.js";
 import {
   EventIdentifier,
-  GraphUUID,
-  GraphDescriptorStore,
   InspectableRun,
+  InspectableRunEdge,
   InspectableRunEvent,
+  InspectableRunInputs,
   InspectableRunLoadResult,
+  InspectableRunNodeEvent,
   InspectableRunObserver,
+  InspectableRunSequenceEntry,
+  MainGraphIdentifier,
+  MutableGraphStore,
   RunObserverOptions,
   RunSerializationOptions,
   SerializedRun,
   SerializedRunLoadingOptions,
-  InspectableRunNodeEvent,
-  InspectableRunInputs,
-  InspectableRunEdge,
-  InspectableRunSequenceEntry,
 } from "../types.js";
-import { DataStore, RunTimestamp, RunURL } from "../../data/types.js";
 import { eventsAsHarnessRunResults } from "./conversions.js";
+import { EventManager } from "./event-manager.js";
+import { RunLoader } from "./loader.js";
 
 const isInput = (
   event: InspectableRunEvent
@@ -43,14 +43,14 @@ const isInput = (
 };
 
 export class RunObserver implements InspectableRunObserver {
-  #store: GraphDescriptorStore;
+  #store: MutableGraphStore;
   #options: RunObserverOptions;
   #runs: InspectableRun[] = [];
   #runLimit = 2;
   #url: RunURL | null = null;
   #timestamp: RunTimestamp | null = null;
 
-  constructor(store: GraphDescriptorStore, options: RunObserverOptions) {
+  constructor(store: MutableGraphStore, options: RunObserverOptions) {
     this.#store = store;
     this.#options = options;
   }
@@ -226,7 +226,12 @@ export class RunObserver implements InspectableRunObserver {
         "No data store provided to RunObserver, unable to load runs"
       );
     }
-    const loader = new RunLoader(this.#options.dataStore, o, options || {});
+    const loader = new RunLoader(
+      this.#store,
+      this.#options.dataStore,
+      o,
+      options || {}
+    );
     const result = await loader.load();
     if (result.success) {
       this.#runs.push(result.run);
@@ -263,7 +268,7 @@ export class Run implements InspectableRun {
 
   #events: EventManager;
 
-  graphId: GraphUUID;
+  mainGraphId: MainGraphIdentifier;
   start: number;
   end: number | null = null;
   graphVersion: number;
@@ -271,7 +276,7 @@ export class Run implements InspectableRun {
 
   constructor(
     timestamp: number,
-    graphStore: GraphDescriptorStore,
+    graphStore: MutableGraphStore,
     graph: GraphDescriptor,
     options: RunObserverOptions
   ) {
@@ -279,7 +284,11 @@ export class Run implements InspectableRun {
     this.#dataStore = options.dataStore || null;
     this.graphVersion = 0;
     this.start = timestamp;
-    this.graphId = graphStore.add(graph, this.graphVersion).id;
+    const adding = graphStore.addByDescriptor(graph);
+    if (!adding.success) {
+      throw new Error(`Run API integrity error: ${adding.error}`);
+    }
+    this.mainGraphId = adding.result;
   }
 
   get events(): InspectableRunEvent[] {

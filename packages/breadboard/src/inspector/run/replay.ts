@@ -4,42 +4,46 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult } from "../../harness/types.js";
 import type { GraphEndProbeData } from "@breadboard-ai/types";
+import { HarnessRunResult } from "../../harness/types.js";
 import { asyncGen } from "../../utils/async-gen.js";
 import {
   GraphstartTimelineEntry,
   InspectableGraph,
+  MutableGraphStore,
   NodestartTimelineEntry,
-  SerializedRunLoadingOptions,
   TimelineEntry,
 } from "../types.js";
-import { inspectableGraph } from "../graph/mutable-graph.js";
 
 export { Replay };
 
 class Replay {
+  #graphStore: MutableGraphStore;
   #timeline: TimelineEntry[];
   #start: number;
   #graphs = new Map<number, InspectableGraph>();
-  #options: SerializedRunLoadingOptions;
 
   constructor(
+    graphStore: MutableGraphStore,
     timeline: TimelineEntry[],
-    start: number,
-    options: SerializedRunLoadingOptions = {}
+    start: number
   ) {
+    this.#graphStore = graphStore;
     this.#timeline = timeline;
     this.#start = start;
-    this.#options = options;
   }
 
   #loadGraphStart(result: GraphstartTimelineEntry): HarnessRunResult {
     const [, data] = result;
-    const { index, timestamp, path, edges } = data;
+    const { index, timestamp, path, graphId, edges } = data;
     let { graph } = data;
     if (graph !== null) {
-      this.#graphs.set(index, inspectableGraph(graph, this.#options));
+      const adding = this.#graphStore.addByDescriptor(graph);
+      if (!adding.success) {
+        throw new Error(`Run API integrity error: ${adding.error}`);
+      }
+      const inspector = this.#graphStore.inspect(adding.result, graphId)!;
+      this.#graphs.set(index, inspector);
     } else {
       graph = this.#graphs.get(index)?.raw() || null;
     }

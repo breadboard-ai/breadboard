@@ -31,6 +31,7 @@ class Telemetry {
       type: "graphstart",
       data: {
         graph: virtualGraph(),
+        graphId: "",
         path: this.path,
         timestamp: timestamp(),
       },

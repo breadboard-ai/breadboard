@@ -10,6 +10,7 @@ import {
   createRunObserver,
   GraphDescriptor,
   GraphLoader,
+  GraphStore,
   InspectableRun,
   InspectableRunObserver,
   Kit,
@@ -233,7 +234,11 @@ export class NodeRunner extends LitElement {
     });
 
     if (!this.#runObserver) {
-      this.#runObserver = createRunObserver({
+      // This is wrong, but we don't use this component at the moment.
+      // We shouldn't create a new GraphStore instance here.
+      // TODO: Pass the graph store from components above?
+      const store = new GraphStore({});
+      this.#runObserver = createRunObserver(store, {
         logLevel: "debug",
         skipDataStore: true,
       });

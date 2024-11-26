@@ -5,15 +5,16 @@
  */
 
 import { HarnessRunResult } from "../../harness/types.js";
-import { GraphStore } from "../graph/graph-store.js";
+import { GraphStore } from "../mutable-graph-store.js";
 import {
   EventIdentifier,
-  GraphUUID,
+  InspectableGraphOptions,
   InspectableRun,
   InspectableRunEvent,
   InspectableRunInputs,
   InspectableRunNodeEvent,
-  SerializedRunLoadingOptions,
+  MainGraphIdentifier,
+  MutableGraphStore,
   TimelineEntry,
 } from "../types.js";
 import { Replay } from "./replay.js";
@@ -27,25 +28,27 @@ export class PastRun implements InspectableRun {
 
   constructor(
     public readonly dataStoreKey = crypto.randomUUID(),
-    timeline: TimelineEntry[],
-    options: SerializedRunLoadingOptions
+    graphStore: MutableGraphStore,
+    timeline: TimelineEntry[]
   ) {
-    this.#replay = new Replay(timeline, 0, options);
+    this.#replay = new Replay(graphStore, timeline, 0);
   }
 
-  async initializeBackingRun() {
-    const observer = new RunObserver(new GraphStore(), { logLevel: "debug" });
+  async initializeBackingRun(options: InspectableGraphOptions) {
+    const observer = new RunObserver(new GraphStore(options), {
+      logLevel: "debug",
+    });
     for await (const result of this.replay()) {
       await observer.observe(result);
     }
     this.#backingRun = (await observer.runs())[0];
   }
 
-  get graphId(): GraphUUID {
+  get mainGraphId(): MainGraphIdentifier {
     if (!this.#backingRun) {
       throw new Error("Uninitialized run: can't yet provide graph IDs");
     }
-    return this.#backingRun.graphId;
+    return this.#backingRun.mainGraphId;
   }
 
   get graphVersion(): number {

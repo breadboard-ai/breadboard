@@ -9,27 +9,32 @@ export {
   createDefaultDataStore,
 } from "../data/index.js";
 import { GraphDescriptor } from "../types.js";
-import { GraphStore } from "./graph/graph-store.js";
-import { inspectableGraph } from "./graph/mutable-graph.js";
+import { Graph } from "./graph/graph.js";
+import { MutableGraphImpl } from "./graph/mutable-graph.js";
 import { RunObserver } from "./run/run.js";
 import {
   InspectableGraph,
   InspectableGraphOptions,
   InspectableRunObserver,
+  MutableGraphStore,
   RunObserverOptions,
 } from "./types.js";
 
+/**
+ *
+ * @deprecated Use GraphStore instead.
+ */
 export const inspect = (
   graph: GraphDescriptor,
   options?: InspectableGraphOptions
 ): InspectableGraph => {
-  return inspectableGraph(graph, options);
+  return new Graph("", new MutableGraphImpl(graph, options || {}));
 };
 
 export const createRunObserver = (
+  store: MutableGraphStore,
   options?: RunObserverOptions
 ): InspectableRunObserver => {
-  const store = new GraphStore();
   return new RunObserver(store, options || {});
 };
 

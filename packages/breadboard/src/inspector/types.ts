@@ -672,6 +672,7 @@ export type GraphHandle = {
 
 export type MutableGraphStore = {
   load(url: string, options: GraphLoaderContext): Promise<Result<GraphHandle>>;
+  addByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier>;
   editByDescriptor(
     graph: GraphDescriptor,
     options?: EditableGraphOptions
@@ -850,9 +851,18 @@ export type SerializedRunLoadingOptions = {
    */
   secretReplacer?: SerializedRunSecretReplacer;
   /**
-   * Optional, kits that are used with this run.
+   * Optional, a list of kits to use when inspecting the graph. If not
+   * supplied, the graph will be inspected without any kits.
    */
   kits?: Kit[];
+  /**
+   * The loader to use when loading boards.
+   */
+  loader?: GraphLoader;
+  /**
+   * The Javascript Sandbox that will be used to run custom describers.
+   */
+  readonly sandbox?: Sandbox;
 };
 
 export type StoreAdditionResult = {
@@ -1032,7 +1042,7 @@ export type InspectableRun = {
   /**
    * The id of the graph that was run.
    */
-  graphId: GraphUUID;
+  mainGraphId: MainGraphIdentifier;
   /**
    * The version of the graph that was run.
    */
@@ -1131,7 +1141,8 @@ export type PathRegistryEntry = {
   path: number[];
   parent: PathRegistryEntry | null;
   children: PathRegistryEntry[];
-  graphId: GraphUUID | null;
+  mainGraphId: MainGraphIdentifier | null;
+  graphId: GraphIdentifier;
   graphStart: number;
   graphEnd: number | null;
   event: InspectableRunEvent | null;
@@ -1215,6 +1226,7 @@ export type GraphstartTimelineEntry = [
     path: number[];
     index: number;
     graph: GraphDescriptor | null;
+    graphId: string;
     edges: InspectableRunEdge[];
   },
 ];

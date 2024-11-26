@@ -9,48 +9,33 @@ import {
   GraphIdentifier,
   ModuleIdentifier,
 } from "@breadboard-ai/types";
-import {
-  InspectableDescriberResultCache,
-  InspectableEdgeCache,
-  InspectableGraph,
-  InspectableGraphCache,
-  InspectableGraphOptions,
-  InspectableKitCache,
-  InspectableModuleCache,
-  InspectableNodeCache,
-  MutableGraph,
-  MainGraphIdentifier,
-} from "../types.js";
-import { Node } from "./node.js";
-import { Edge } from "./edge.js";
-import { ModuleCache } from "./module.js";
-import { DescribeResultCache } from "../run/describe-cache.js";
-import { KitCache } from "./kits.js";
-import { GraphCache } from "./graph-cache.js";
-import { Graph } from "./graph.js";
-import { EdgeCache } from "./edge-cache.js";
-import { NodeCache } from "./node-cache.js";
 import { AffectedNode } from "../../editor/types.js";
 import {
   isImperativeGraph,
   toDeclarativeGraph,
 } from "../../run/run-imperative-graph.js";
+import { DescribeResultCache } from "../run/describe-cache.js";
+import {
+  InspectableDescriberResultCache,
+  InspectableEdgeCache,
+  InspectableGraphCache,
+  InspectableGraphOptions,
+  InspectableKitCache,
+  InspectableModuleCache,
+  InspectableNodeCache,
+  MainGraphIdentifier,
+  MutableGraph,
+} from "../types.js";
+import { EdgeCache } from "./edge-cache.js";
+import { Edge } from "./edge.js";
+import { GraphCache } from "./graph-cache.js";
+import { Graph } from "./graph.js";
+import { KitCache } from "./kits.js";
+import { ModuleCache } from "./module.js";
+import { NodeCache } from "./node-cache.js";
+import { Node } from "./node.js";
 
 export { MutableGraphImpl };
-
-/**
- *
- * @deprecated This is the old way of getting an InspectableGraph instance.
- * @param graph
- * @param options
- * @returns
- */
-export const inspectableGraph = (
-  graph: GraphDescriptor,
-  options?: InspectableGraphOptions
-): InspectableGraph => {
-  return new Graph("", new MutableGraphImpl(graph, options || {}));
-};
 
 class MutableGraphImpl implements MutableGraph {
   readonly options: InspectableGraphOptions;
