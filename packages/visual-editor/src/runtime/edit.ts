@@ -374,6 +374,19 @@ export class Edit extends EventTarget {
         const newGraph = structuredClone(graph);
         newGraph.title = title;
 
+        for (const node of newGraph.nodes) {
+          if (!node.metadata?.visual) {
+            continue;
+          }
+
+          const metadata = node.metadata.visual as Record<string, number>;
+          metadata.x ??= 0;
+          metadata.y ??= 0;
+
+          metadata.x += 30;
+          metadata.y += 30;
+        }
+
         const newId = crypto.randomUUID();
         edits.push({ type: "addgraph", graph: newGraph, id: newId });
         break;
@@ -611,7 +624,7 @@ export class Edit extends EventTarget {
     this.editModule(tab, moduleId, newModule.code, newModule.metadata);
   }
 
-  editModule(
+  async editModule(
     tab: Tab | null,
     moduleId: ModuleIdentifier,
     moduleCode: ModuleCode,
@@ -627,7 +640,7 @@ export class Edit extends EventTarget {
       return null;
     }
 
-    editableGraph.edit(
+    return editableGraph.edit(
       [
         {
           type: "changemodule",
