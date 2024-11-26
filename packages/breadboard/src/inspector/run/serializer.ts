@@ -12,7 +12,6 @@ import {
   NodeEndResponse,
 } from "@breadboard-ai/types";
 import {
-  GraphUUID,
   TimelineEntry,
   RunSerializationOptions,
   SerializedRun,
@@ -21,6 +20,7 @@ import {
   InspectableRunNodeEvent,
   InspectableRunSecretEvent,
   InspectableRunErrorEvent,
+  MainGraphIdentifier,
 } from "../types.js";
 import { ErrorResponse, InputResponse, OutputResponse } from "../../types.js";
 import { SecretResult } from "../../harness/types.js";
@@ -30,7 +30,7 @@ import { idFromPath } from "./conversions.js";
 export type SequenceEntry = [type: TimelineEntry[0], entry: PathRegistryEntry];
 
 export class RunSerializer {
-  #seenGraphs = new Map<GraphUUID, number>();
+  #seenGraphs = new Map<MainGraphIdentifier, number>();
   #graphIndex = 0;
 
   #graphIndexFromEntry(entry: PathRegistryEntry) {
@@ -40,7 +40,7 @@ export class RunSerializer {
         `Unknown graph entry for "${idFromPath(entry.path)}" when serializing.`
       );
     }
-    const graphId = graphEntry.graphId;
+    const graphId = graphEntry.mainGraphId;
     if (!graphId) {
       throw new Error(
         `Unknown graphId for "${idFromPath(entry.path)}" when serializing.`
@@ -60,18 +60,18 @@ export class RunSerializer {
   }
 
   serializeGraphstart(entry: PathRegistryEntry): TimelineEntry {
-    const { graphId } = entry;
-    if (graphId === null) {
+    const { mainGraphId } = entry;
+    if (mainGraphId === null) {
       throw new Error("Encountered an empty graphId during graphstart.");
     }
     let graph: GraphDescriptor | null = null;
     let index: number;
-    if (!this.#seenGraphs.has(graphId)) {
+    if (!this.#seenGraphs.has(mainGraphId)) {
       graph = entry.graph?.raw() || null;
       index = this.#graphIndex++;
-      this.#seenGraphs.set(graphId, index);
+      this.#seenGraphs.set(mainGraphId, index);
     } else {
-      index = this.#seenGraphs.get(graphId) || 0;
+      index = this.#seenGraphs.get(mainGraphId) || 0;
     }
     const edges = entry.edges;
     return [
