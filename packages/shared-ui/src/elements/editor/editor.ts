@@ -402,31 +402,32 @@ export class Editor extends LitElement {
     }
 
     this.#graphRenderer.createGraph(opts);
-    const onInitialDraw = (evt: Event) => {
-      const drawEvt = evt as GraphInitialDrawEvent;
-
-      this.#graphRenderer.showGraph(opts.url, drawEvt.subGraphId);
-
-      if (drawEvt.subGraphId !== listenForDrawId) {
-        return;
-      }
-
+    const onInitialDraw = () => {
+      this.#graphRenderer.showGraph(opts.url, opts.subGraphId);
       this.#graphRenderer.removeEventListener(
         GraphInitialDrawEvent.eventName,
         onInitialDraw
       );
 
-      this.#graphRenderer.zoomToFit(
-        this.isShowingBoardActivityOverlay ? 400 : 0,
-        this.showSubgraphsInline ? null : listenForDrawId
-      );
-
-      // When we're loading a graph from existing results, we need to
-      // set the topGraphResult again so that it is applied to the newly
-      // created graph.
-      if (this.topGraphResult) {
-        this.#graphRenderer.topGraphResult = this.topGraphResult;
+      if (!listenForDraw) {
+        return;
       }
+
+      // Wait a frame to ensure graphs have been shown before trying to
+      // zoom to the target.
+      requestAnimationFrame(() => {
+        this.#graphRenderer.zoomToFit(
+          this.isShowingBoardActivityOverlay ? 400 : 0,
+          listenForDrawId
+        );
+
+        // When we're loading a graph from existing results, we need to
+        // set the topGraphResult again so that it is applied to the newly
+        // created graph.
+        if (this.topGraphResult) {
+          this.#graphRenderer.topGraphResult = this.topGraphResult;
+        }
+      });
     };
 
     this.#graphRenderer.addEventListener(
@@ -467,22 +468,16 @@ export class Editor extends LitElement {
       }
     }
 
-    // Force a reset when the board changes.
-    const mainGraphUrl = this.graph.raw().url ?? "";
-    const url = this.subGraphId
-      ? `${mainGraphUrl}#${this.subGraphId}`
-      : mainGraphUrl;
-
-    const graphVersion = this.#graphVersion;
-    const mainGraphOpts = await this.#inspectableGraphToConfig(
-      url,
-      this.showSubgraphsInline ? null : this.subGraphId,
-      selectedGraph
-    );
-
     if (!selectedGraph) {
       return this.#graphRenderer;
     }
+
+    // Force a reset when the board changes.
+    const mainGraphUrl = this.graph.raw().url ?? "";
+    const url =
+      this.subGraphId && !this.showSubgraphsInline
+        ? `${mainGraphUrl}#${this.subGraphId}`
+        : mainGraphUrl;
 
     const subGraphs = new Map<string, GraphOpts>();
     if (this.showSubgraphsInline) {
@@ -500,6 +495,19 @@ export class Editor extends LitElement {
       }
     }
 
+    const graphVersion = this.#graphVersion;
+    const mainGraphOpts = await this.#inspectableGraphToConfig(
+      url,
+      this.showSubgraphsInline ? null : this.subGraphId,
+      selectedGraph
+    );
+
+    const finalGraph = subGraphs.size ? [...subGraphs].at(-1)?.[0] : null;
+    const zoomTargetWhenDrawingFinished = this.subGraphId;
+    const finalGraphWhichTriggersZoom = this.showSubgraphsInline
+      ? finalGraph
+      : this.subGraphId;
+
     // A newer graph has arrived - bail.
     if (graphVersion !== this.#graphVersion) {
       return this.#graphRenderer;
@@ -508,9 +516,6 @@ export class Editor extends LitElement {
     this.#graphRenderer.hideAllGraphs();
     this.#graphRenderer.removeGraphs(this.tabURLs);
 
-    const shouldListenForMainGraph =
-      !this.showSubgraphsInline &&
-      (this.subGraphId !== null || subGraphs.size === 0);
     const mainGraphId =
       this.subGraphId !== null && !this.showSubgraphsInline
         ? this.subGraphId
@@ -518,15 +523,16 @@ export class Editor extends LitElement {
 
     this.#updateOrCreateGraph(
       mainGraphOpts,
-      shouldListenForMainGraph,
-      mainGraphId
+      mainGraphId === finalGraphWhichTriggersZoom,
+      zoomTargetWhenDrawingFinished
     );
 
-    let s = 0;
     for (const [id, subGraphOpts] of subGraphs) {
-      const shouldListenForSubGraph = s === subGraphs.size - 1;
-      this.#updateOrCreateGraph(subGraphOpts, shouldListenForSubGraph, id);
-      s++;
+      this.#updateOrCreateGraph(
+        subGraphOpts,
+        id === finalGraphWhichTriggersZoom,
+        zoomTargetWhenDrawingFinished
+      );
     }
 
     return this.#graphRenderer;
