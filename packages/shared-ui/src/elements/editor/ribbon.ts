@@ -181,14 +181,14 @@ export class GraphRibbonMenu extends LitElement {
     #save {
       position: absolute;
       top: calc(100% + -8px);
-      left: 258px;
+      left: 18px;
       right: auto;
     }
 
     #copy {
       position: absolute;
       top: calc(100% + -8px);
-      left: 312px;
+      left: 52px;
       right: auto;
     }
 
@@ -900,33 +900,6 @@ export class GraphRibbonMenu extends LitElement {
       ></bb-overflow-menu>`;
     }
 
-    const editBoardInfo = html` <button
-      id="edit-board-info"
-      @pointerover=${(evt: PointerEvent) => {
-        this.dispatchEvent(
-          new ShowTooltipEvent(
-            "Edit board information",
-            evt.clientX,
-            evt.clientY
-          )
-        );
-      }}
-      @pointerout=${() => {
-        this.dispatchEvent(new HideTooltipEvent());
-      }}
-      @click=${(evt: PointerEvent) => {
-        this.dispatchEvent(
-          new OverflowMenuActionEvent(
-            "edit-board-details",
-            evt.clientX,
-            evt.clientY
-          )
-        );
-      }}
-    >
-      Edit board information
-    </button>`;
-
     const deleteBoard = html` <button
       id="delete-board"
       @pointerover=${(evt: PointerEvent) => {
@@ -1039,7 +1012,7 @@ export class GraphRibbonMenu extends LitElement {
       </button>
     </div>`;
 
-    const boardManagementControls = [editBoardInfo, save, copy, deleteBoard];
+    const boardManagementControls = [save, copy, deleteBoard];
 
     const boardManagement = html`<div id="board-management">
       ${boardManagementControls}

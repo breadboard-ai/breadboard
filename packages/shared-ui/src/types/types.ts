@@ -416,5 +416,6 @@ export interface OverflowAction {
   name: string;
   icon: string;
   disabled?: boolean;
+  value?: string;
   secondaryAction?: string;
 }
