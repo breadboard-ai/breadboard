@@ -153,6 +153,10 @@ export class UI extends LitElement {
       if (this.sideNavItem === "components" && this.moduleId) {
         this.sideNavItem = null;
       }
+
+      if (this.sideNavItem === "capabilities" && !this.moduleId) {
+        this.sideNavItem = null;
+      }
     }
 
     if (changedProperties.has("mode") || changedProperties.has("subGraphId")) {
@@ -342,6 +346,8 @@ export class UI extends LitElement {
     const sideNavItems = ["workspace-overview"];
     if (!this.moduleId) {
       sideNavItems.push("components");
+    } else {
+      sideNavItems.push("capabilities");
     }
 
     const sideNav = html`<div id="side-nav">
@@ -396,6 +402,12 @@ export class UI extends LitElement {
               }}
             ></bb-workspace-outline>`;
           })}`;
+        break;
+      }
+
+      case "capabilities": {
+        sideNavItem = html`<h1 id="side-nav-title">Capabilities</h1>
+          <bb-capabilities-selector></bb-capabilities-selector>`;
         break;
       }
 

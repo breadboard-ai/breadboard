@@ -3201,25 +3201,26 @@ export class Main extends LitElement {
             ></bb-command-palette>`
           : nothing;
 
-        const tabModules = this.tab?.graph.modules
-          ? Object.keys(this.tab?.graph.modules)
-          : [];
+        const tabModules = Object.entries(this.tab?.graph.modules ?? {});
 
         // For standard, non-imperative graphs prepend the main board ID
         if (!this.tab?.graph.main) {
-          tabModules.unshift(BreadboardUI.Constants.MAIN_BOARD_ID);
+          tabModules.unshift([
+            BreadboardUI.Constants.MAIN_BOARD_ID,
+            { code: "" },
+          ]);
         }
 
         const modules: BreadboardUI.Types.Command[] = tabModules
-          .filter((module) => {
+          .filter(([id]) => {
             if (this.tab?.moduleId) {
-              return module !== this.tab?.moduleId;
+              return id !== this.tab?.moduleId;
             }
 
-            return module !== BreadboardUI.Constants.MAIN_BOARD_ID;
+            return id !== BreadboardUI.Constants.MAIN_BOARD_ID;
           })
-          .map((module) => {
-            if (module === BreadboardUI.Constants.MAIN_BOARD_ID) {
+          .map(([id, module]): BreadboardUI.Types.Command => {
+            if (id === BreadboardUI.Constants.MAIN_BOARD_ID) {
               return {
                 title: `Open Main Board...`,
                 icon: "open",
@@ -3227,10 +3228,10 @@ export class Main extends LitElement {
               };
             }
             return {
-              title: `Open ${module}...`,
+              title: `Open ${module.metadata?.title ?? id}...`,
               icon: "open",
               name: "open",
-              secondaryAction: module,
+              secondaryAction: id,
             };
           });
 
