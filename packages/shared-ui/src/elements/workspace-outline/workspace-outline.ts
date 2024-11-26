@@ -45,6 +45,7 @@ import { ModuleIdentifier } from "@breadboard-ai/types";
 import { OverflowAction } from "../../types/types";
 
 const OPEN_ITEMS_KEY = "bb-workspace-outline-open-items";
+const OVERFLOW_MENU_CLEARANCE = 140;
 
 type ItemIdentifier = GraphIdentifier | ModuleIdentifier;
 
@@ -57,6 +58,13 @@ interface Outline {
   };
   type: "imperative" | "declarative";
   subItems: Map<ItemIdentifier, Outline>;
+}
+
+interface OverflowMenu {
+  type: "declarative" | "imperative";
+  target: string | null;
+  actions: OverflowAction[];
+  location: { x: number; y: number };
 }
 
 @customElement("bb-workspace-outline")
@@ -84,10 +92,23 @@ export class WorkspaceOutline extends LitElement {
 
   @state()
   private showOverflowMenu = false;
-  #overflowMenuTargetType: "declarative" | "imperative" = "declarative";
-  #overflowMenuTarget: string | null = null;
-  #overflowMenuOptions: OverflowAction[] = [];
-  #overflowMenuLocation = { x: 0, y: 0 };
+  #overflowMenu: OverflowMenu = {
+    type: "declarative",
+    target: null,
+    actions: [],
+    location: { x: 0, y: 0 },
+  };
+
+  #setOverflowMenuValues(config: Partial<OverflowMenu>) {
+    this.#overflowMenu = { ...this.#overflowMenu, ...config };
+    if (
+      this.#overflowMenu.location.y >
+      window.innerHeight - OVERFLOW_MENU_CLEARANCE
+    ) {
+      this.#overflowMenu.location.y =
+        window.innerHeight - OVERFLOW_MENU_CLEARANCE;
+    }
+  }
 
   static styles = css`
     * {
@@ -1048,32 +1069,32 @@ export class WorkspaceOutline extends LitElement {
             <button
               class="more"
               @click=${(evt: PointerEvent) => {
-                this.#overflowMenuLocation = {
-                  x: evt.clientX + 20,
-                  y: evt.clientY,
-                };
-
                 const showZoom =
                   main === undefined &&
                   this.moduleId === null &&
                   this.subGraphId === null;
 
-                this.#overflowMenuTargetType =
-                  main === undefined ? "declarative" : "imperative";
-                this.#overflowMenuTarget = null;
-                this.#overflowMenuOptions = [
-                  showZoom
-                    ? {
-                        title: "Zoom to Fit",
-                        name: "zoom-to-fit",
-                        icon: "fit",
-                      }
-                    : {
-                        title: "Go to item",
-                        name: "quick-jump",
-                        icon: "quick-jump",
-                      },
-                ];
+                this.#setOverflowMenuValues({
+                  type: main === undefined ? "declarative" : "imperative",
+                  target: null,
+                  actions: [
+                    showZoom
+                      ? {
+                          title: "Zoom to Fit",
+                          name: "zoom-to-fit",
+                          icon: "fit",
+                        }
+                      : {
+                          title: "Go to item",
+                          name: "quick-jump",
+                          icon: "quick-jump",
+                        },
+                  ],
+                  location: {
+                    x: evt.clientX + 20,
+                    y: evt.clientY,
+                  },
+                });
                 this.showOverflowMenu = true;
               }}
             >
@@ -1132,40 +1153,41 @@ export class WorkspaceOutline extends LitElement {
             ? html` <button
                 class="more"
                 @click=${(evt: PointerEvent) => {
-                  this.#overflowMenuLocation = {
-                    x: evt.clientX + 20,
-                    y: evt.clientY,
-                  };
-
                   const showZoom =
                     subItem.type === "declarative" &&
                     (this.mode === "tree" || this.subGraphId === id);
 
-                  this.#overflowMenuTargetType = subItem.type;
-                  this.#overflowMenuTarget = id;
-                  this.#overflowMenuOptions = [
-                    showZoom
-                      ? {
-                          title: "Zoom to Fit",
-                          name: "zoom-to-fit",
-                          icon: "fit",
-                        }
-                      : {
-                          title: "Go to item",
-                          name: "quick-jump",
-                          icon: "quick-jump",
-                        },
-                    {
-                      title: "Duplicate",
-                      name: "duplicate",
-                      icon: "duplicate",
+                  this.#setOverflowMenuValues({
+                    type: subItem.type,
+                    target: id,
+                    actions: [
+                      showZoom
+                        ? {
+                            title: "Zoom to Fit",
+                            name: "zoom-to-fit",
+                            icon: "fit",
+                          }
+                        : {
+                            title: "Go to item",
+                            name: "quick-jump",
+                            icon: "quick-jump",
+                          },
+                      {
+                        title: "Duplicate",
+                        name: "duplicate",
+                        icon: "duplicate",
+                      },
+                      {
+                        title: "Delete",
+                        name: "delete",
+                        icon: "delete",
+                      },
+                    ],
+                    location: {
+                      x: evt.clientX + 20,
+                      y: evt.clientY,
                     },
-                    {
-                      title: "Delete",
-                      name: "delete",
-                      icon: "delete",
-                    },
-                  ];
+                  });
                   this.showOverflowMenu = true;
                 }}
               >
@@ -1185,7 +1207,7 @@ export class WorkspaceOutline extends LitElement {
     })}
     ${this.showOverflowMenu
       ? html`<bb-overflow-menu
-          .actions=${this.#overflowMenuOptions}
+          .actions=${this.#overflowMenu.actions}
           .disabled=${false}
           @bboverflowmenuaction=${(evt: OverflowMenuActionEvent) => {
             evt.stopImmediatePropagation();
@@ -1193,7 +1215,7 @@ export class WorkspaceOutline extends LitElement {
             switch (evt.action) {
               case "zoom-to-fit": {
                 this.#changeWorkspaceItem(
-                  this.#overflowMenuTarget ? this.#overflowMenuTarget : null,
+                  this.#overflowMenu.target ? this.#overflowMenu.target : null,
                   null
                 );
                 break;
@@ -1201,23 +1223,23 @@ export class WorkspaceOutline extends LitElement {
 
               case "quick-jump": {
                 const subGraphId =
-                  this.#overflowMenuTargetType === "declarative"
-                    ? this.#overflowMenuTarget
+                  this.#overflowMenu.type === "declarative"
+                    ? this.#overflowMenu.target
                     : null;
                 const moduleId =
-                  this.#overflowMenuTargetType === "imperative"
-                    ? this.#overflowMenuTarget
+                  this.#overflowMenu.type === "imperative"
+                    ? this.#overflowMenu.target
                     : null;
                 this.#changeWorkspaceItem(subGraphId, moduleId);
                 break;
               }
 
               case "duplicate": {
-                if (!this.#overflowMenuTarget) {
+                if (!this.#overflowMenu.target) {
                   break;
                 }
 
-                const target = subItems.get(this.#overflowMenuTarget);
+                const target = subItems.get(this.#overflowMenu.target);
                 if (!target) {
                   break;
                 }
@@ -1232,7 +1254,7 @@ export class WorkspaceOutline extends LitElement {
 
                 this.dispatchEvent(
                   new BoardItemCopyEvent(
-                    this.#overflowMenuTarget,
+                    this.#overflowMenu.target,
                     target.type === "declarative" ? "graph" : "module",
                     name
                   )
@@ -1241,11 +1263,11 @@ export class WorkspaceOutline extends LitElement {
               }
 
               case "delete": {
-                if (!this.#overflowMenuTarget) {
+                if (!this.#overflowMenu.target) {
                   break;
                 }
 
-                const target = subItems.get(this.#overflowMenuTarget);
+                const target = subItems.get(this.#overflowMenu.target);
                 if (!target) {
                   break;
                 }
@@ -1256,7 +1278,7 @@ export class WorkspaceOutline extends LitElement {
                   }
 
                   this.dispatchEvent(
-                    new SubGraphDeleteEvent(this.#overflowMenuTarget)
+                    new SubGraphDeleteEvent(this.#overflowMenu.target)
                   );
                   break;
                 } else {
@@ -1267,7 +1289,7 @@ export class WorkspaceOutline extends LitElement {
                   }
 
                   this.dispatchEvent(
-                    new ModuleDeleteEvent(this.#overflowMenuTarget)
+                    new ModuleDeleteEvent(this.#overflowMenu.target)
                   );
                   break;
                 }
@@ -1279,8 +1301,8 @@ export class WorkspaceOutline extends LitElement {
             this.showOverflowMenu = false;
           }}
           style=${styleMap({
-            left: `${this.#overflowMenuLocation.x}px`,
-            top: `${this.#overflowMenuLocation.y}px`,
+            left: `${this.#overflowMenu.location.x}px`,
+            top: `${this.#overflowMenu.location.y}px`,
           })}
         ></bb-overflow-menu>`
       : nothing} `;
