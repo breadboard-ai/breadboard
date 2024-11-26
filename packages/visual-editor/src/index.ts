@@ -2571,46 +2571,45 @@ export class Main extends LitElement {
                   active: this.tab?.id === tab.id,
                 })}
               >
-                <span
-                  ><button
-                    class=${classMap({
-                      "back-to-main-board": true,
-                    })}
-                    @click=${() => {
-                      if (this.tab?.id === tab.id && tab.subGraphId !== null) {
-                        tab.subGraphId = null;
-                        return;
-                      }
-
-                      this.#runtime.board.changeTab(tab.id);
-                    }}
-                    @dblclick=${(evt: PointerEvent) => {
-                      if (!this.tab) {
-                        return;
-                      }
-
-                      this.#showBoardEditOverlay(evt.clientX, evt.clientY);
-                    }}
-                  >
-                    ${tab.graph.title}
-                  </button></span
-                >
-                <div
+                <button
                   class=${classMap({
-                    "save-status": true,
+                    "back-to-main-board": true,
                     "can-save": canSave,
-                    remote,
-                    [saveStatus]: true,
-                    readonly,
                   })}
-                  title=${saveTitle}
-                ></div>
+                  @click=${() => {
+                    if (this.tab?.id === tab.id && tab.subGraphId !== null) {
+                      tab.subGraphId = null;
+                      return;
+                    }
+
+                    this.#runtime.board.changeTab(tab.id);
+                  }}
+                  @dblclick=${(evt: PointerEvent) => {
+                    if (!this.tab) {
+                      return;
+                    }
+
+                    this.#showBoardEditOverlay(evt.clientX, evt.clientY);
+                  }}
+                >
+                  <span>${tab.graph.title}</span>
+                  <span
+                    class=${classMap({
+                      "save-status": true,
+                      "can-save": canSave,
+                      remote,
+                      [saveStatus]: true,
+                      readonly,
+                    })}
+                    title=${saveTitle}
+                  ></span>
+                </button>
                 <button
                   @click=${() => {
                     this.#runtime.board.closeTab(id);
                   }}
                   ?disabled=${tab.graph === null}
-                  id="close-board"
+                  class="close-board"
                   title="Close Board"
                 >
                   Close
