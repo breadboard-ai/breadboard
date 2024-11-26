@@ -238,6 +238,7 @@ export class OverflowMenuActionEvent extends Event {
 
   constructor(
     public readonly action: string,
+    public readonly value: string | null = null,
     public readonly x: number | null = null,
     public readonly y: number | null = null
   ) {

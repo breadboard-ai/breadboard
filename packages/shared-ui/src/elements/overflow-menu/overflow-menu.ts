@@ -12,19 +12,12 @@ import {
   OverflowMenuSecondaryActionEvent,
 } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
-
-interface Action {
-  title: string;
-  name: string;
-  icon: string;
-  disabled?: boolean;
-  secondaryAction?: string;
-}
+import { OverflowAction } from "../../types/types.js";
 
 @customElement("bb-overflow-menu")
 export class OverflowMenu extends LitElement {
   @property()
-  actions: Action[] = [];
+  actions: OverflowAction[] = [];
 
   @property()
   disabled = true;
@@ -254,8 +247,15 @@ export class OverflowMenu extends LitElement {
       >
         <button
           class=${classMap({ [action.icon]: true })}
-          @click=${() => {
-            this.dispatchEvent(new OverflowMenuActionEvent(action.name));
+          @click=${(evt: PointerEvent) => {
+            this.dispatchEvent(
+              new OverflowMenuActionEvent(
+                action.name,
+                action.value ?? null,
+                evt.clientX,
+                evt.clientY
+              )
+            );
           }}
           ?disabled=${(action.name !== "settings" && this.disabled) ||
           action.disabled}

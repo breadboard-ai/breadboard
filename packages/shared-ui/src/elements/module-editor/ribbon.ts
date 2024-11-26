@@ -767,6 +767,7 @@ export class ModuleRibbonMenu extends LitElement {
         this.dispatchEvent(
           new OverflowMenuActionEvent(
             "edit-board-details",
+            undefined,
             evt.clientX,
             evt.clientY
           )
