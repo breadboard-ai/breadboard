@@ -227,7 +227,11 @@ export class Board extends EventTarget {
       }
 
       if (tab.moduleId) {
-        params.set(`module-tab${t}`, tab.moduleId);
+        params.set(`subitem-i-id${t}`, tab.moduleId);
+      }
+
+      if (tab.subGraphId) {
+        params.set(`subitem-d-id${t}`, tab.subGraphId);
       }
 
       params.set(`tab${t++}`, tab.graph.url);
@@ -282,9 +286,15 @@ export class Board extends EventTarget {
         }
 
         let moduleId: ModuleIdentifier | null = null;
-        const moduleIdParam = params.get(`module-tab${t}`);
+        const moduleIdParam = params.get(`subitem-i-id${t}`);
         if (moduleIdParam) {
           moduleId = moduleIdParam;
+        }
+
+        let subGraphId: GraphIdentifier | null = null;
+        const subGraphIdParam = params.get(`subitem-d-id${t}`);
+        if (subGraphIdParam) {
+          subGraphId = subGraphIdParam;
         }
 
         await this.createTabFromURL(
@@ -293,7 +303,8 @@ export class Board extends EventTarget {
           true,
           false,
           false,
-          moduleId
+          moduleId,
+          subGraphId
         );
 
         // Capture the current tab ID so we can restore it after creating all
@@ -415,7 +426,8 @@ export class Board extends EventTarget {
     createNewTab = false,
     readOnly = false,
     dispatchTabChangeEvent = true,
-    moduleId: ModuleIdentifier | null = null
+    moduleId: ModuleIdentifier | null = null,
+    subGraphId: GraphIdentifier | null = null
   ) {
     let url = this.#makeRelativeToCurrentBoard(boardUrl, currentUrl);
 
@@ -487,13 +499,17 @@ export class Board extends EventTarget {
         moduleId = null;
       }
 
+      if (subGraphId && (!graph.graphs || !graph.graphs[subGraphId])) {
+        subGraphId = null;
+      }
+
       const id = globalThis.crypto.randomUUID();
       this.#tabs.set(id, {
         id,
         kits: withRunModule(kits),
         name: graph.title ?? "Untitled board",
         graph,
-        subGraphId: null,
+        subGraphId,
         moduleId,
         type: TabType.URL,
         version: 1,
