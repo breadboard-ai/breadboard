@@ -1,16 +1,16 @@
-import type { Request, Response } from 'express';
-import { getStore } from '../../server/store.js';
-import { verifyKey } from '../../server/boards/utils/verify-key.js';
-import { runBoard, timestamp } from '../../server/boards/utils/run-board.js';
-import { loadFromStore } from '../../server/boards/utils/board-server-provider.js';
-import { secretsKit } from '../../server/proxy/secrets.js';
-import type { RemoteMessage } from '@google-labs/breadboard/remote';
-import { asyncHandler } from '../support.js';
+import type { Request, Response } from "express";
+import { getStore } from "../../server/store.js";
+import { verifyKey } from "../../server/boards/utils/verify-key.js";
+import { runBoard, timestamp } from "../../server/boards/utils/run-board.js";
+import { loadFromStore } from "../../server/boards/utils/board-server-provider.js";
+import { secretsKit } from "../../server/proxy/secrets.js";
+import type { RemoteMessage } from "@google-labs/breadboard/remote";
+import { asyncHandler } from "../support.js";
 const run = async (req: Request, res: Response) => {
   const { user, boardName } = req.params;
   const API_ENTRY = "/boards";
   const boardPath = `@${user}/${boardName}`;
-  const url = new URL(`${req.protocol}://${req.get('host')}${req.originalUrl}`);
+  const url = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`);
   url.pathname = `${API_ENTRY}/${boardPath}`;
   url.search = "";
   const href = url.href.endsWith(".json") ? url.href : `${url.href}.json`;
@@ -33,7 +33,7 @@ const run = async (req: Request, res: Response) => {
   const board = await store.get(user!, boardName!);
 
   if (!board) {
-    res.status(404).json({ error: 'Board not found' });
+    res.status(404).json({ error: "Board not found" });
     return;
   }
 
@@ -46,6 +46,7 @@ const run = async (req: Request, res: Response) => {
         path: [],
         timestamp: timestamp(),
         graph: { nodes: [], edges: [] },
+        graphId: "",
       },
     ]);
     await writer.write([

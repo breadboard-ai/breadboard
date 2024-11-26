@@ -35,6 +35,7 @@ const runHandler: ApiHandler = async (parsed, req, res, body) => {
         path: [],
         timestamp: timestamp(),
         graph: { nodes: [], edges: [] },
+        graphId: "",
       },
     ]);
     await writer.write([

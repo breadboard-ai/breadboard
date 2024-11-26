@@ -19,6 +19,7 @@ import { loadKits } from "./utils/kit-loader.js";
 import {
   createLoader,
   createRunObserver,
+  GraphStore,
   type BoardServer,
   type GraphProvider,
   type InputValues,
@@ -68,7 +69,7 @@ export class ApiExplorer extends LitElement {
   runStore = getRunStore();
 
   #kits: Kit[] = [];
-  #runObserver: InspectableRunObserver = createRunObserver({
+  #runObserver: InspectableRunObserver = createRunObserver(new GraphStore({}), {
     dataStore: this.dataStore,
     runStore: this.runStore,
   });

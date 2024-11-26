@@ -16,7 +16,7 @@ import {
   NodeHandlers,
   NodeIdentifier,
 } from "../types.js";
-import { inspect } from "../index.js";
+import { describe } from "./utils.js";
 
 export class GraphToKitAdapter {
   graph: GraphDescriptor;
@@ -67,11 +67,19 @@ export class GraphToKitAdapter {
         if (this.graph.graphs != undefined && id in this.graph.graphs) {
           const subGraph = this.graph.graphs[id] as GraphDescriptor;
           if (subGraph == undefined) return emptyResult;
-          return await inspect(subGraph).describe();
+          const describing = await describe(this.graph, id);
+          if (!describing.success) {
+            return emptyResult;
+          }
+          return describing.result;
         } else if (node.type === "invoke") {
           const { $board } = node.configuration as { $board?: GraphDescriptor };
           if ($board) {
-            return await inspect($board).describe();
+            const describing = await describe($board, "");
+            if (!describing.success) {
+              return emptyResult;
+            }
+            return describing.result;
           }
         }
 
