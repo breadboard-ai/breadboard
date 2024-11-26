@@ -5,7 +5,6 @@
  */
 
 import {
-  inspect,
   NodeIdentifier,
   sequenceEntryToHarnessRunResult,
   type GraphDescriptor,
@@ -115,7 +114,7 @@ export class TopGraphObserver {
   }
 
   static entryResult(graph: GraphDescriptor | undefined): TopGraphRunResult {
-    const entryId = graph && inspect(graph).entries().at(0)?.descriptor.id;
+    const entryId = computeEntryId(graph);
     return {
       log: [],
       currentNode: null,
@@ -136,6 +135,15 @@ export class TopGraphObserver {
       graph: graph || null,
       status: "stopped",
     };
+
+    // Ideally, this function should live somewhere in packages/breadboard,
+    // but for now, this is good enough.
+    function computeEntryId(graph?: GraphDescriptor) {
+      if (!graph) return;
+      const incoming = new Set(graph.edges.map((edge) => edge.to));
+      const entries = graph.nodes.filter((node) => !incoming.has(node.id));
+      return entries.at(0)?.id;
+    }
   }
 
   constructor(
