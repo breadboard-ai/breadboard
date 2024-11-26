@@ -656,6 +656,14 @@ export class WorkspaceOutline extends LitElement {
       background-color: var(--bb-neutral-50);
     }
 
+    .no-items {
+      padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      font-style: italic;
+      color: var(--bb-neutral-700);
+    }
+
     bb-overflow-menu {
       position: fixed;
       z-index: 100;
@@ -868,6 +876,10 @@ export class WorkspaceOutline extends LitElement {
     seenSubItems: Set<string>,
     renderSubItemsInline = false
   ): HTMLTemplateResult {
+    if (nodes.length === 0) {
+      return html`<div class="no-items">There are no items available</div>`;
+    }
+
     return html`<ul>
       ${map(nodes, (node) => {
         const { type } = node.descriptor;
@@ -1356,11 +1368,21 @@ export class WorkspaceOutline extends LitElement {
             pending: () => html`Loading...`,
             complete: (outline) => {
               let nodes = [...outline.items.nodes];
+              const subItems = new Map([...outline.subItems]);
               if (this.filter) {
                 nodes = nodes.filter((node) => {
                   const filter = new RegExp(this.filter!, "gim");
                   return filter.test(node.title());
                 });
+
+                for (const [id, graphOrModule] of subItems) {
+                  const filter = new RegExp(this.filter, "gim");
+                  if (filter.test(id) || filter.test(graphOrModule.title)) {
+                    continue;
+                  }
+
+                  subItems.delete(id);
+                }
               }
 
               return this.#renderWorkspace(
@@ -1369,7 +1391,7 @@ export class WorkspaceOutline extends LitElement {
                 outline.title,
                 nodes,
                 outline.items.ports,
-                outline.subItems,
+                subItems,
                 this.mode === "tree"
               );
             },
