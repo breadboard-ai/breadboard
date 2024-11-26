@@ -517,7 +517,7 @@ export class Edit extends EventTarget {
       });
   }
 
-  deleteModule(tab: Tab | null, moduleId: ModuleIdentifier) {
+  async deleteModule(tab: Tab | null, moduleId: ModuleIdentifier) {
     if (!tab) {
       return null;
     }
@@ -528,7 +528,7 @@ export class Edit extends EventTarget {
       return null;
     }
 
-    editableGraph.edit(
+    const result = await editableGraph.edit(
       [
         {
           type: "removemodule",
@@ -537,6 +537,15 @@ export class Edit extends EventTarget {
       ],
       `Delete module ${moduleId}`
     );
+
+    if (!result.success) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to delete module"));
+      return;
+    }
+
+    if (tab.moduleId === moduleId) {
+      tab.moduleId = null;
+    }
   }
 
   changeModuleLanguage(
