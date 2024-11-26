@@ -124,7 +124,7 @@
     "@types/google.picker": "^0.0.43",
     "@typescript/vfs": "^1.6.0",
     "@valtown/codemirror-continue": "^2.0.0",
-    "@valtown/codemirror-ts": "^2.2.1",
+    "@valtown/codemirror-ts": "^2.3.0",
     "ajv": "^8.17.1",
     "codemirror": "^6.0.1",
     "idb": "^8.0.0",
