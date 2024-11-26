@@ -354,7 +354,7 @@ export class Editor extends LitElement {
       url,
       title: selectedGraph.raw().title ?? "Untitled Board",
       subGraphId,
-      visible: true,
+      visible: false,
       showNodeTypeDescriptions: this.showNodeTypeDescriptions,
       showNodePreviewValues: this.showNodePreviewValues,
       collapseNodesByDefault: this.collapseNodesByDefault,
@@ -376,6 +376,7 @@ export class Editor extends LitElement {
       opts.subGraphId,
       opts
     );
+
     if (updated) {
       this.#graphRenderer.showGraph(opts.url, opts.subGraphId);
       if (this.topGraphResult) {
@@ -401,24 +402,23 @@ export class Editor extends LitElement {
     }
 
     this.#graphRenderer.createGraph(opts);
-    if (!listenForDraw) {
-      return;
-    }
-
     const onInitialDraw = (evt: Event) => {
       const drawEvt = evt as GraphInitialDrawEvent;
+
+      this.#graphRenderer.showGraph(opts.url, drawEvt.subGraphId);
+
       if (drawEvt.subGraphId !== listenForDrawId) {
         return;
       }
 
-      this.#graphRenderer.showGraph(opts.url, opts.subGraphId);
-      this.#graphRenderer.zoomToFit(
-        this.isShowingBoardActivityOverlay ? 400 : 0
-      );
-
       this.#graphRenderer.removeEventListener(
         GraphInitialDrawEvent.eventName,
         onInitialDraw
+      );
+
+      this.#graphRenderer.zoomToFit(
+        this.isShowingBoardActivityOverlay ? 400 : 0,
+        this.showSubgraphsInline ? null : listenForDrawId
       );
 
       // When we're loading a graph from existing results, we need to
@@ -454,7 +454,7 @@ export class Editor extends LitElement {
     this.#graphRenderer.showSubgraphsInline = this.showSubgraphsInline;
 
     let selectedGraph = this.graph;
-    if (this.subGraphId) {
+    if (this.subGraphId && !this.showSubgraphsInline) {
       const subgraphs = selectedGraph.graphs();
       if (subgraphs && subgraphs[this.subGraphId]) {
         selectedGraph = subgraphs[this.subGraphId];
@@ -476,7 +476,7 @@ export class Editor extends LitElement {
     const graphVersion = this.#graphVersion;
     const mainGraphOpts = await this.#inspectableGraphToConfig(
       url,
-      this.subGraphId,
+      this.showSubgraphsInline ? null : this.subGraphId,
       selectedGraph
     );
 
@@ -509,8 +509,12 @@ export class Editor extends LitElement {
     this.#graphRenderer.removeGraphs(this.tabURLs);
 
     const shouldListenForMainGraph =
-      this.subGraphId !== null || subGraphs.size === 0;
-    const mainGraphId = this.subGraphId !== null ? this.subGraphId : null;
+      !this.showSubgraphsInline &&
+      (this.subGraphId !== null || subGraphs.size === 0);
+    const mainGraphId =
+      this.subGraphId !== null && !this.showSubgraphsInline
+        ? this.subGraphId
+        : null;
 
     this.#updateOrCreateGraph(
       mainGraphOpts,

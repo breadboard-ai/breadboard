@@ -158,12 +158,6 @@ export class UI extends LitElement {
         this.sideNavItem = null;
       }
     }
-
-    if (changedProperties.has("mode") || changedProperties.has("subGraphId")) {
-      if (this.mode === "tree") {
-        this.subGraphId = null;
-      }
-    }
   }
 
   #handleSideNav(label: string) {
