@@ -19,6 +19,10 @@ import {
   RunObserverOptions,
 } from "./types.js";
 
+/**
+ *
+ * @deprecated Use GraphStore instead.
+ */
 export const inspect = (
   graph: GraphDescriptor,
   options?: InspectableGraphOptions
