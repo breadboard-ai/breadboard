@@ -1,18 +1,18 @@
 {
-  "name": "@breadboard-ai/bbrt-client",
+  "name": "@breadboard-ai/bbrt",
   "private": true,
   "version": "0.0.1",
-  "description": "Template component",
+  "description": "BBRT",
   "author": "Google LLC",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/breadboard-ai/template#readme",
+  "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "bugs": {
-    "url": "https://github.com/breadboard-ai/template/issues"
+    "url": "https://github.com/breadboard-ai/breadboard/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/breadboard-ai/template.git",
-    "directory": "packages/component"
+    "url": "https://github.com/breadboard-ai/breadboard.git",
+    "directory": "packages/bbrt"
   },
   "type": "module",
   "main": "index.js",
@@ -26,34 +26,59 @@
   ],
   "scripts": {
     "build": "wireit",
-    "test": "wireit"
+    "build:tsc": "wireit",
+    "test": "echo \"no tests yet\"",
+    "lint": "wireit"
   },
   "wireit": {
     "build": {
+      "dependencies": [
+        "build:tsc",
+        "../breadboard:build",
+        "../core-kit:build",
+        "../template-kit:build"
+      ]
+    },
+    "build:tsc": {
       "command": "tsc --pretty",
+      "dependencies": [
+        "../breadboard:build:tsc",
+        "../core-kit:build:tsc",
+        "../template-kit:build:tsc"
+      ],
       "files": [
         "src/**/*.ts",
         "tsconfig.json",
-        "../../tsconfig.base.json",
-        "../../tsconfig.base.web.json"
+        "tsconfig.base.json",
+        "tsconfig.base.web.json"
       ],
       "output": [
-        "**/*.js",
-        "**/*.js.map",
-        "**/*.d.ts",
-        "**/*.d.ts.map",
-        "tsconfig.tsbuildinfo",
-        "!src/"
+        "dist/",
+        "tsconfig.tsbuildinfo"
       ],
       "clean": "if-file-deleted"
     },
-    "test": {
-      "command": "web-test-runner \"test/**/*.test.js\" --node-resolve --playwright --browsers chromium",
+    "test:playwright": {
+      "command": "web-test-runner \"dist/test/**/*.test.js\" --node-resolve --playwright --browsers chromium",
       "files": [],
       "output": [],
       "dependencies": [
         "build"
       ]
+    },
+    "lint": {
+      "command": "eslint . --ext .ts",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        ".eslintrc",
+        "../../.eslintrc.json"
+      ],
+      "output": []
     }
   },
   "dependencies": {
@@ -68,5 +93,11 @@
     "micromark-extension-gfm": "^3.0.0",
     "signal-polyfill": "^0.2.1",
     "signal-utils": "^0.20.0"
+  },
+  "devDependencies": {
+    "@web/test-runner": "^0.19.0",
+    "@web/test-runner-playwright": "^0.11.0",
+    "typescript": "^5.6.3",
+    "wireit": "^0.14.9"
   }
 }
