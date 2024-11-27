@@ -54,11 +54,6 @@ export type GraphVersion = number;
 
 export type GraphURL = string;
 
-/**
- * Represents an UUID that is used to identify a graph.
- */
-export type GraphUUID = `${GraphVersion}|${GraphURL}`;
-
 export type InspectableNode = {
   /**
    * The `NodeDescriptor` for the node.
@@ -716,62 +711,6 @@ export type MutableGraph = {
 };
 
 /**
- * Represents a store of graph versions.
- */
-export type InspectableGraphVersionsStore = {
-  /**
-   * Retrieves a graph with the given id, and optionally, version and run.
-   * @param id -- the id of the graph to retrieve
-   * @param version -- the version of the graph to retrieve (optional,
-   * defaults to 0)
-   * @param run -- the run of the graph to retrieve (optional, defaults to 0)
-   */
-  get(
-    id: GraphUUID,
-    version?: number,
-    run?: number
-  ): Promise<InspectableGraphVersions>;
-};
-
-/**
- * Represents a sequence of versions of a graph.
- * This sequence of versions grows as the graph is edited.
- */
-export type InspectableGraphVersions = {
-  /**
-   * The unique identifier of the sequence of graph versions.
-   */
-  id: GraphUUID;
-  /**
-   * A list of versions for the given graph. Every edit to the graph
-   * results in a new version. The first item in the list is the initial
-   * version of the graph. The last item is the latest version.
-   */
-  versions: InspectableVersionedGraph[];
-  /**
-   * Returns only major versions of the graph.
-   * A "major" version of the graph is a version that has one or more runs
-   * associated with it. A "minor" version is a version that has no runs.
-   */
-  major(): InspectableVersionedGraph[];
-};
-
-/**
- * Represents a versioned graph.
- * A versioned graph has zero or more runs associated with it.
- */
-export type InspectableVersionedGraph = {
-  /**
-   * The unique identifier of the versioned graph. This is a monotonically
-   * increasing number, starting from 0. Same as the index of the `versions`
-   * array in the `InspectableGraphWithVersions` object.
-   */
-  id: number;
-  graph: InspectableGraph;
-  runs: InspectableRun[];
-};
-
-/**
  * Represents a result of loading a serialized `InspectableRun`
  */
 export type InspectableRunLoadResult =
@@ -863,40 +802,6 @@ export type SerializedRunLoadingOptions = {
    * The Javascript Sandbox that will be used to run custom describers.
    */
   readonly sandbox?: Sandbox;
-};
-
-export type StoreAdditionResult = {
-  /**
-   * The UUID of the graph
-   */
-  id: GraphUUID;
-  /**
-   * True, if the graph did not exist in the store before and was added as
-   * a result of this operation.
-   * False, if the graph already existed.
-   */
-  added: boolean;
-};
-
-/**
- * Represents a store of all graphs that the system has seen so far.
- */
-export type GraphDescriptorStore = {
-  /**
-   * Retrieves a graph with the given id.
-   * @param id -- the id of the graph to retrieve
-   */
-  get(id: GraphUUID): GraphDescriptor | undefined;
-  /**
-   * Checks if the store has a graph with the given id.
-   * @param id -- the id of the graph
-   */
-  has(id: GraphUUID): boolean;
-  /**
-   * Adds a graph to the store and returns a `StoreAdditionResult`.
-   * @see StoreAdditionResult
-   */
-  add(graph: GraphDescriptor, version: number): StoreAdditionResult;
 };
 
 /**
