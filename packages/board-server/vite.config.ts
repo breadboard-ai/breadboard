@@ -16,7 +16,6 @@ export default defineConfig({
         index: "./index.html",
         api: "./api.html",
         oauth: "./oauth/index.html",
-        bbrt: "./experimental/bbrt/index.html",
       },
       formats: ["es"],
     },
