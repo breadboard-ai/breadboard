@@ -7,6 +7,7 @@
 import { GraphMetadata, NodeIdentifier } from "@breadboard-ai/types";
 import {
   InspectableEdge,
+  InspectableModules,
   InspectableNode,
   InspectableNodePorts,
   NodeHandlerMetadata,
@@ -78,6 +79,7 @@ export interface GraphOpts {
   typeMetadata: Map<string, NodeHandlerMetadata> | null;
   edges: InspectableEdge[];
   nodes: InspectableNode[];
+  modules: InspectableModules;
   metadata: GraphMetadata;
   visible: boolean;
 }

@@ -5,6 +5,7 @@
  */
 
 import {
+  InspectableModules,
   InspectablePort,
   isInlineData,
   isLLMContent,
@@ -16,6 +17,7 @@ import {
 import * as PIXI from "pixi.js";
 import { getGlobalColor, isConfigurablePort } from "./utils";
 import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types";
+import { isModuleBehavior } from "../../utils";
 
 const hoverColor = getGlobalColor("--bb-ui-50");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
@@ -48,11 +50,18 @@ export class GraphPortLabel extends PIXI.Container {
 
   #showNodePreviewValues = false;
   #isConfigurable = false;
+  #modules: InspectableModules | null = null;
 
   readOnly = false;
 
-  constructor(port: InspectablePort, showNodePreviewValues: boolean) {
+  constructor(
+    port: InspectablePort,
+    showNodePreviewValues: boolean,
+    modules: InspectableModules | null = null
+  ) {
     super();
+
+    this.#modules = modules;
 
     this.#label = new PIXI.Text({
       text: port.title,
@@ -290,6 +299,18 @@ export class GraphPortLabel extends PIXI.Container {
         return "(not configured)";
       }
       return "";
+    }
+
+    if (isModuleBehavior(port.schema)) {
+      if (
+        this.#modules &&
+        typeof port.value === "string" &&
+        this.#modules[port.value]
+      ) {
+        return this.#modules[port.value].metadata().title ?? port.value;
+      }
+
+      return "Unspecified Module";
     }
 
     let valStr = "";
