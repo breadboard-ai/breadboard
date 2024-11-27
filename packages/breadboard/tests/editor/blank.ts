@@ -5,22 +5,13 @@
  */
 
 import test from "ava";
-import {
-  blank,
-  GraphDescriptor,
-  GraphStore,
-  InspectableGraph,
-  InspectableGraphOptions,
-} from "../../src/index.js";
+import { blank, GraphDescriptor, InspectableGraph } from "../../src/index.js";
 import { Graph } from "../../src/inspector/graph/graph.js";
 import { MutableGraphImpl } from "../../src/inspector/graph/mutable-graph.js";
-import { makeTerribleOptions } from "../../src/inspector/graph-store.js";
+import { makeTestGraphStore } from "../helpers/_graph-store.js";
 
-const inspect = (
-  graph: GraphDescriptor,
-  options: InspectableGraphOptions = {}
-): InspectableGraph => {
-  const store = new GraphStore(makeTerribleOptions(options));
+const inspect = (graph: GraphDescriptor): InspectableGraph => {
+  const store = makeTestGraphStore();
   return new Graph("", new MutableGraphImpl(graph, store));
 };
 

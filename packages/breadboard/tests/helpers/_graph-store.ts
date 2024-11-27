@@ -4,19 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphStore } from "../../src/index.js";
+import { GraphStore, InspectableGraphOptions } from "../../src/index.js";
 
 export { makeTestGraphStore };
 
-function makeTestGraphStore() {
+function makeTestGraphStore(options: InspectableGraphOptions = {}) {
   return new GraphStore({
-    kits: [],
-    sandbox: {
+    kits: options.kits || [],
+    sandbox: options.sandbox || {
       runModule() {
-        throw new Error("Do not run modules with test graph store");
+        throw new Error("Non-existent sandbox: Terrible Options were used.");
       },
     },
-    loader: {
+    loader: options.loader || {
       load() {
         throw new Error("Do not load graphs with test graph store");
       },
