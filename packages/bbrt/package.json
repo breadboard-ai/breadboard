@@ -48,7 +48,8 @@
     "build": "wireit",
     "build:tsc": "wireit",
     "test": "echo \"no tests yet\"",
-    "lint": "wireit"
+    "lint": "wireit",
+    "prepack": "npm run build"
   },
   "wireit": {
     "build": {
