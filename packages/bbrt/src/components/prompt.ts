@@ -38,7 +38,7 @@ export class BBRTPrompt extends LitElement {
     }
     return html`<input
       type="text"
-      placeholder="Ask me about Breadboard, or anything else."
+      placeholder="Ask me about Breadboard"
       @keydown=${this.#onKeydown}
     />`;
   }
