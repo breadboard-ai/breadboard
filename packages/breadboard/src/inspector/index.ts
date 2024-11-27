@@ -9,6 +9,7 @@ export {
   createDefaultDataStore,
 } from "../data/index.js";
 import { GraphDescriptor } from "../types.js";
+import { GraphStore } from "./graph-store.js";
 import { Graph } from "./graph/graph.js";
 import { MutableGraphImpl } from "./graph/mutable-graph.js";
 import { RunObserver } from "./run/run.js";
@@ -26,9 +27,10 @@ import {
  */
 export const inspect = (
   graph: GraphDescriptor,
-  options?: InspectableGraphOptions
+  options: InspectableGraphOptions = {}
 ): InspectableGraph => {
-  return new Graph("", new MutableGraphImpl(graph, options || {}));
+  const store = new GraphStore(options);
+  return new Graph("", new MutableGraphImpl(graph, store, options));
 };
 
 export const createRunObserver = (

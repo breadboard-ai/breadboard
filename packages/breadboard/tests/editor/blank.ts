@@ -8,6 +8,7 @@ import test from "ava";
 import {
   blank,
   GraphDescriptor,
+  GraphStore,
   InspectableGraph,
   InspectableGraphOptions,
 } from "../../src/index.js";
@@ -16,9 +17,10 @@ import { MutableGraphImpl } from "../../src/inspector/graph/mutable-graph.js";
 
 const inspect = (
   graph: GraphDescriptor,
-  options?: InspectableGraphOptions
+  options: InspectableGraphOptions = {}
 ): InspectableGraph => {
-  return new Graph("", new MutableGraphImpl(graph, options || {}));
+  const store = new GraphStore(options);
+  return new Graph("", new MutableGraphImpl(graph, store, options));
 };
 
 test("importBlank creates a nice blank board", async (t) => {

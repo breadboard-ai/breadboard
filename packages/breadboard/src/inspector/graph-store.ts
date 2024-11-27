@@ -120,7 +120,7 @@ class GraphStore implements MutableGraphStore {
       return { success: true, result: existing };
     } else {
       // Brand new graph
-      const mutable = new MutableGraphImpl(graph, this.#options);
+      const mutable = new MutableGraphImpl(graph, this, this.#options);
       this.#mutables.set(mutable.id, mutable);
       this.#mainGraphIds.set(url, mutable.id);
       return { success: true, result: mutable };

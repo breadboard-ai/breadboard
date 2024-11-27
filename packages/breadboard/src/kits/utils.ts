@@ -14,6 +14,7 @@ import { MutableGraphImpl } from "../inspector/graph/mutable-graph.js";
 import { NodeDescriberResult } from "../types.js";
 import { Result } from "../editor/types.js";
 import { InspectableGraphOptions } from "../inspector/types.js";
+import { GraphStore } from "../inspector/graph-store.js";
 
 export { describe };
 
@@ -27,7 +28,8 @@ async function describe(
   options: InspectableGraphOptions = {},
   inputs?: InputValues
 ): Promise<Result<NodeDescriberResult>> {
-  const mutable = new MutableGraphImpl(graph, options);
+  const store = new GraphStore(options);
+  const mutable = new MutableGraphImpl(graph, store, options);
   const describer = DescriberManager.create(graphId, mutable);
   if (!describer.success) {
     return describer;

@@ -265,7 +265,11 @@ export class Graph implements EditableGraph {
 
     if (dryRun) {
       const graph = checkpoint;
-      const mutable = new MutableGraphImpl(graph, this.#mutable.options);
+      const mutable = new MutableGraphImpl(
+        graph,
+        this.#mutable.store,
+        this.#mutable.options
+      );
       context = {
         graph,
         mutable,
