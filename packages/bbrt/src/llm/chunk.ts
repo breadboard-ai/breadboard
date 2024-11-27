@@ -7,12 +7,12 @@
 export type BBRTChunk = BBRTAppendContentChunk | BBRTToolCallChunk;
 
 export type BBRTAppendContentChunk = {
-  kind: 'append-content';
+  kind: "append-content";
   content: string;
 };
 
 export type BBRTToolCallChunk = {
-  kind: 'tool-call';
+  kind: "tool-call";
   id: string;
   name: string;
   arguments: Record<string, unknown>;

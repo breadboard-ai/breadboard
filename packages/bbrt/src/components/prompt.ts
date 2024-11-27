@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {LitElement, css, html} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
-import type {BBRTConversation} from '../llm/conversation.js';
+import { LitElement, css, html } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import type { BBRTConversation } from "../llm/conversation.js";
 
-@customElement('bbrt-prompt')
+@customElement("bbrt-prompt")
 export class BBRTPrompt extends LitElement {
-  @property({attribute: false})
+  @property({ attribute: false })
   conversation?: BBRTConversation;
 
   static override styles = css`
@@ -43,8 +43,8 @@ export class BBRTPrompt extends LitElement {
     />`;
   }
 
-  #onKeydown(event: KeyboardEvent & {target: HTMLInputElement}) {
-    if (event.key !== 'Enter') {
+  #onKeydown(event: KeyboardEvent & { target: HTMLInputElement }) {
+    if (event.key !== "Enter") {
       return;
     }
     if (event.shiftKey) {
@@ -54,13 +54,13 @@ export class BBRTPrompt extends LitElement {
       return;
     }
     const input = event.target;
-    void this.conversation.send({content: input.value});
-    input.value = '';
+    void this.conversation.send({ content: input.value });
+    input.value = "";
   }
 }
 
 declare global {
   interface HTMLElementTagNameMap {
-    'bbrt-prompt': BBRTPrompt;
+    "bbrt-prompt": BBRTPrompt;
   }
 }

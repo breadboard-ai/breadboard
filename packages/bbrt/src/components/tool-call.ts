@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {LitElement, css, html, nothing} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
-import type {BBRTToolCall} from '../llm/conversation.js';
+import { LitElement, css, html, nothing } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import type { BBRTToolCall } from "../llm/conversation.js";
 
-@customElement('bbrt-tool-call')
+@customElement("bbrt-tool-call")
 export class BBRTToolCallEl extends LitElement {
-  @property({attribute: false})
+  @property({ attribute: false })
   toolCall?: BBRTToolCall;
 
   static override styles = css`
@@ -34,7 +34,7 @@ export class BBRTToolCallEl extends LitElement {
       padding: 0 0 0 16px;
       line-height: 1.4;
     }
-    [part~='tool-call-content'] > :last-child {
+    [part~="tool-call-content"] > :last-child {
       margin-bottom: 0;
     }
     pre {
@@ -58,6 +58,6 @@ export class BBRTToolCallEl extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'bbrt-tool-call': BBRTToolCallEl;
+    "bbrt-tool-call": BBRTToolCallEl;
   }
 }

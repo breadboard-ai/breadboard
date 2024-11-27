@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {SignalWatcher} from '@lit-labs/signals';
-import {LitElement, css, html, nothing} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
-import type {Signal} from 'signal-polyfill';
-import type {BBRTModel} from '../llm/model.js';
+import { SignalWatcher } from "@lit-labs/signals";
+import { LitElement, css, html, nothing } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import type { Signal } from "signal-polyfill";
+import type { BBRTModel } from "../llm/model.js";
 
-@customElement('bbrt-model-selector')
+@customElement("bbrt-model-selector")
 export class BBRTModelSelector extends SignalWatcher(LitElement) {
-  @property({attribute: false})
+  @property({ attribute: false })
   model?: Signal.State<BBRTModel>;
 
   static override styles = css`
@@ -54,12 +54,12 @@ export class BBRTModelSelector extends SignalWatcher(LitElement) {
       return;
     }
     // TODO(aomarks) Make this more configurable.
-    this.model.set(this.model.get() === 'openai' ? 'gemini' : 'openai');
+    this.model.set(this.model.get() === "openai" ? "gemini" : "openai");
   }
 }
 
 declare global {
   interface HTMLElementTagNameMap {
-    'bbrt-model-selector': BBRTModelSelector;
+    "bbrt-model-selector": BBRTModelSelector;
   }
 }

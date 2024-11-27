@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {parse} from 'jsonriver';
+import { parse } from "jsonriver";
 
 export async function* streamJsonArrayItems<T = unknown>(
-  stream: AsyncIterable<string>,
+  stream: AsyncIterable<string>
 ): AsyncIterable<T> {
   let array: T[] | undefined;
   let nextYieldIdx = 0;
@@ -21,7 +21,7 @@ export async function* streamJsonArrayItems<T = unknown>(
       firstParse = false;
     } else if (parsed !== array) {
       throw new Error(
-        `Expected the same array, got: ${JSON.stringify(parsed)}`,
+        `Expected the same array, got: ${JSON.stringify(parsed)}`
       );
     }
     // Yield only up to the second-to-last item, because we only want to yield

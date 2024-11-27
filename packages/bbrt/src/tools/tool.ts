@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {SerializedStoredData} from '@google-labs/breadboard';
-import type {JSONSchema7} from 'json-schema';
-import type {GeminiFunctionDeclaration} from '../llm/gemini.js';
-import type {Result} from '../util/result.js';
+import type { SerializedStoredData } from "@google-labs/breadboard";
+import type { JSONSchema7 } from "json-schema";
+import type { GeminiFunctionDeclaration } from "../llm/gemini.js";
+import type { Result } from "../util/result.js";
 
 export type BBRTInvokeResult<
   O extends Record<string, unknown> = Record<string, unknown>,
