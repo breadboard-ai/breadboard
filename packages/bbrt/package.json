@@ -1,6 +1,5 @@
 {
   "name": "@breadboard-ai/bbrt",
-  "private": true,
   "version": "0.0.1",
   "description": "BBRT",
   "author": "Google LLC",
@@ -17,6 +16,27 @@
   "type": "module",
   "main": "index.js",
   "typings": "index.d.ts",
+  "exports": {
+    "./package.json": {
+      "default": "./package.json"
+    },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./index.js": {
+      "types": null,
+      "default": null
+    },
+    "./internal/*.js": {
+      "types": "./dist/internal/*.d.ts",
+      "default": null
+    },
+    "./*.js": {
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*.js"
+    }
+  },
   "files": [
     "**/*.js",
     "**/*.d.ts",

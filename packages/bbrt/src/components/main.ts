@@ -6,15 +6,14 @@
 
 import { LitElement, css, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
 import { Signal } from "signal-polyfill";
 import { SignalArray } from "signal-utils/array";
 import { SignalSet } from "signal-utils/set";
-import { BreadboardServer } from "../breadboard/breadboard-server.js";
-import { BreadboardToolProvider } from "../breadboard/breadboard-tool-provider.js";
+import { readBoardServersFromIndexedDB } from "../breadboard/indexed-db-servers.js";
 import type { Config } from "../config.js";
 import { BBRTConversation } from "../llm/conversation.js";
 import type { BBRTModel } from "../llm/model.js";
-import { BREADBOARD_SERVER } from "../secrets.js";
 import { IndexedDBSettingsSecrets } from "../secrets/indexed-db-secrets.js";
 import { ToolProvider } from "../tools/tool-provider.js";
 import type { BBRTTool } from "../tools/tool.js";
@@ -22,7 +21,6 @@ import "./chat.js";
 import "./model-selector.js";
 import "./prompt.js";
 import "./tool-palette.js";
-import { classMap } from "lit/directives/class-map.js";
 
 @customElement("bbrt-main")
 export class BBRTMain extends LitElement {
@@ -40,13 +38,7 @@ export class BBRTMain extends LitElement {
   @state()
   private _sidePanelOpen = false;
 
-  #toolProviders = new SignalArray<ToolProvider>([
-    // TODO(aomarks) Support having multiple breadboard servers active.
-    new BreadboardToolProvider(
-      new BreadboardServer(BREADBOARD_SERVER),
-      this.#secrets
-    ),
-  ]);
+  #toolProviders = new SignalArray<ToolProvider>();
 
   static override styles = css`
     #container {
@@ -93,6 +85,11 @@ export class BBRTMain extends LitElement {
     }
   `;
 
+  connectedCallback(): void {
+    super.connectedCallback();
+    void this.#discoverToolProviders();
+  }
+
   override render() {
     return html`
       <div
@@ -134,6 +131,19 @@ export class BBRTMain extends LitElement {
 
   #clickExpandSidebar() {
     this._sidePanelOpen = !this._sidePanelOpen;
+  }
+
+  async #discoverToolProviders() {
+    const providers = await readBoardServersFromIndexedDB(this.#secrets);
+    if (!providers.ok) {
+      console.error(
+        "Failed to read board servers from IndexedDB:",
+        providers.error
+      );
+      return;
+    }
+    this.#toolProviders.length = 0;
+    this.#toolProviders.push(...providers.value);
   }
 }
 
