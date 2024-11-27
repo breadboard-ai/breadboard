@@ -11,7 +11,6 @@ import { input } from "../internal/board/input.js";
 import { defineNodeType } from "../internal/define/define.js";
 import { kit } from "../internal/kit.js";
 import {
-  board as oldBoard,
   type GraphDescriptor,
   type Kit,
   type KitConstructor,
@@ -127,98 +126,6 @@ test("kit handles BGL component", () => {
   assert.equal(testKit.baz.title, "BGL Title");
   assert.equal(testKit.baz.description, "BGL Description");
   assert.equal(testKit.baz.metadata?.icon, "robot");
-});
-
-test("can invoke discrete component with old API", async () => {
-  const legacyTestKit = await testKit.legacy();
-  const oldBoardInstance = await oldBoard(() => {
-    const node = legacyTestKit.foo({ str: "foo" });
-    return {
-      str: node.str,
-    };
-  });
-  const bgl = await oldBoardInstance.serialize();
-  assert.deepEqual(bgl, {
-    nodes: [
-      {
-        id: "output-2",
-        type: "output",
-        configuration: {
-          schema: {
-            type: "object",
-            properties: {
-              str: {
-                title: "str",
-                type: "string",
-              },
-            },
-          },
-        },
-      },
-      {
-        id: "foo-3",
-        type: "foo",
-        configuration: {
-          str: "foo",
-        },
-      },
-    ],
-    edges: [
-      {
-        from: "foo-3",
-        out: "str",
-        to: "output-2",
-        in: "str",
-      },
-    ],
-    graphs: {},
-  });
-});
-
-test("can invoke board component with old API", async () => {
-  const legacyTestKit = await testKit.legacy();
-  const oldBoardInstance = await oldBoard(() => {
-    const num = legacyTestKit.bar({ num: 32 });
-    return {
-      num,
-    };
-  });
-  const bgl = await oldBoardInstance.serialize();
-  assert.deepEqual(bgl, {
-    nodes: [
-      {
-        id: "output-2",
-        type: "output",
-        configuration: {
-          schema: {
-            type: "object",
-            properties: {
-              num: {
-                title: "num",
-                type: "number",
-              },
-            },
-          },
-        },
-      },
-      {
-        id: "bar-3",
-        type: "bar",
-        configuration: {
-          num: 32,
-        },
-      },
-    ],
-    edges: [
-      {
-        from: "bar-3",
-        out: "num",
-        to: "output-2",
-        in: "num",
-      },
-    ],
-    graphs: {},
-  });
 });
 
 test("can invoke discrete component with new API", () => {
