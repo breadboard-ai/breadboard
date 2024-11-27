@@ -1064,7 +1064,7 @@ export class Edit extends EventTarget {
     );
   }
 
-  changeNodeConfigurationPart(
+  async changeNodeConfigurationPart(
     tab: Tab | null,
     id: string,
     configurationPart: NodeConfiguration,
@@ -1121,7 +1121,10 @@ export class Edit extends EventTarget {
         `Change metadata for "${id}"`;
     }
 
-    editableGraph.edit(edits, `Change partial configuration for "${id}"`);
+    return editableGraph.edit(
+      edits,
+      `Change partial configuration for "${id}"`
+    );
   }
 
   deleteNode(tab: Tab | null, id: string, subGraphId: string | null = null) {
