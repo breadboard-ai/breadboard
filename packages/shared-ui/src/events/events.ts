@@ -735,6 +735,14 @@ export class NodePartialUpdateEvent extends Event {
   }
 }
 
+export class BoardChosenEvent extends Event {
+  static eventName = "bbboardchosen";
+
+  constructor(public readonly id: GraphIdentifier) {
+    super(BoardChosenEvent.eventName, { ...eventInit });
+  }
+}
+
 export class EdgeValueUpdateEvent extends Event {
   static eventName = "bbedgevalueupdate";
 

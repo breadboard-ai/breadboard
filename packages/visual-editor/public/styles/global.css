@@ -8,6 +8,10 @@
   box-sizing: border-box;
 }
 
+body.hide-cursor {
+  cursor: none !important;
+}
+
 :root {
   --bb-grid-size: 4px;
   --bb-grid-size-2: calc(var(--bb-grid-size) * 2);
@@ -171,6 +175,7 @@
   --bb-icon-undo-inverted: url(/third_party/icons/undo-inverted.svg);
   --bb-icon-unfold-less: url(/third_party/icons/unfold-less.svg);
   --bb-icon-unfold-more: url(/third_party/icons/unfold-more.svg);
+  --bb-icon-up-down: url(/third_party/icons/up-down.svg);
   --bb-icon-value: url(/third_party/icons/value.svg);
   --bb-icon-value-inverted: url(/third_party/icons/value-inverted.svg);
   --bb-icon-unknown-value: url(/third_party/icons/unknown-value.svg);
