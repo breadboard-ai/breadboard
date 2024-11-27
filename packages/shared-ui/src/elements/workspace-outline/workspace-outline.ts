@@ -9,9 +9,9 @@ import {
   InspectableModule,
   InspectableNode,
   InspectableNodePorts,
+  InspectablePort,
   Kit,
   NodeIdentifier,
-  NodeValue,
 } from "@google-labs/breadboard";
 import { Task } from "@lit/task";
 import {
@@ -40,7 +40,7 @@ import { MAIN_BOARD_ID } from "../../constants/constants";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { getSubItemColor } from "../../utils/subgraph-color";
-import { isConfigurableBehavior } from "../../utils";
+import { isConfigurableBehavior, isModuleBehavior } from "../../utils";
 import { ModuleIdentifier } from "@breadboard-ai/types";
 import { OverflowAction } from "../../types/types";
 
@@ -829,11 +829,20 @@ export class WorkspaceOutline extends LitElement {
     );
   }
 
-  #renderPreview(value: NodeValue) {
+  #renderPreview(port: InspectablePort) {
     let preview = "";
-    switch (typeof value) {
+    if (isModuleBehavior(port.schema)) {
+      const modules = this.graph?.modules();
+      if (modules && typeof port.value === "string" && modules[port.value]) {
+        return modules[port.value].metadata().title ?? port.value;
+      }
+
+      return "Unspecified Module";
+    }
+
+    switch (typeof port.value) {
       case "object": {
-        preview = JSON.stringify(value);
+        preview = JSON.stringify(port.value);
         break;
       }
 
@@ -843,7 +852,7 @@ export class WorkspaceOutline extends LitElement {
       }
 
       default: {
-        preview = `${value}`;
+        preview = `${port.value}`;
         break;
       }
     }
@@ -921,7 +930,7 @@ export class WorkspaceOutline extends LitElement {
                       </button>`
                     : html`<span class="port-item">${port.title}</span>`}
                 </span>
-                <span class="preview">${this.#renderPreview(port.value)}</span>
+                <span class="preview">${this.#renderPreview(port)}</span>
               </li>`;
             })}
             ${map(nodePorts.side.ports, (port) => {
