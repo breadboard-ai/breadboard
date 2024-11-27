@@ -27,6 +27,7 @@
     "build": {
       "dependencies": [
         "./packages/agent-kit:build",
+        "./packages/bbrt:build",
         "./packages/board-server:build",
         "./packages/breadboard-cli:build",
         "./packages/breadboard:build",
@@ -59,6 +60,7 @@
     "test": {
       "dependencies": [
         "./packages/agent-kit:test",
+        "./packages/bbrt:test",
         "./packages/board-server:test",
         "./packages/breadboard-cli:test",
         "./packages/breadboard:test",
@@ -84,6 +86,7 @@
     "lint": {
       "dependencies": [
         "./packages/breadboard-cli:lint",
+        "./packages/bbrt:lint",
         "./packages/breadboard:lint",
         "./packages/build-code:lint",
         "./packages/build:lint",
@@ -175,8 +178,7 @@
   "workspaces": [
     "./core/*",
     "./packages/*",
-    "./packages/node-proxy-server/functions",
-    "!./packages/bbrt"
+    "./packages/node-proxy-server/functions"
   ],
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.27.4",
