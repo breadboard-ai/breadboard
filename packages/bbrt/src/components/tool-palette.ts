@@ -4,21 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {SignalWatcher} from '@lit-labs/signals';
-import {LitElement, css, html, nothing} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
-import {classMap} from 'lit/directives/class-map.js';
-import type {SignalArray} from 'signal-utils/array';
-import type {SignalSet} from 'signal-utils/set';
-import type {ToolProvider} from '../tools/tool-provider.js';
-import type {BBRTTool} from '../tools/tool.js';
+import { SignalWatcher } from "@lit-labs/signals";
+import { LitElement, css, html, nothing } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
+import type { SignalArray } from "signal-utils/array";
+import type { SignalSet } from "signal-utils/set";
+import type { ToolProvider } from "../tools/tool-provider.js";
+import type { BBRTTool } from "../tools/tool.js";
 
-@customElement('bbrt-tool-palette')
+@customElement("bbrt-tool-palette")
 export class BBRTToolPalette extends SignalWatcher(LitElement) {
-  @property({attribute: false})
+  @property({ attribute: false })
   toolProviders?: SignalArray<ToolProvider>;
 
-  @property({attribute: false})
+  @property({ attribute: false })
   activeTools?: SignalSet<BBRTTool>;
 
   static override styles = css`
@@ -78,7 +78,7 @@ export class BBRTToolPalette extends SignalWatcher(LitElement) {
   `;
 
   #renderTool = (tool: BBRTTool) => html`
-    <li class=${classMap({active: this.activeTools?.has(tool) ?? false})}>
+    <li class=${classMap({ active: this.activeTools?.has(tool) ?? false })}>
       <a href="#" @click=${(event: MouseEvent) => this.#clickTool(event, tool)}>
         ${tool.icon ? html`<img src=${tool.icon} alt="" />` : nothing}
         ${tool.displayName}
@@ -102,6 +102,6 @@ export class BBRTToolPalette extends SignalWatcher(LitElement) {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'bbrt-tool-palette': BBRTToolPalette;
+    "bbrt-tool-palette": BBRTToolPalette;
   }
 }

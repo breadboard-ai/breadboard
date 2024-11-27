@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {LitElement, css, html} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
+import { LitElement, css, html } from "lit";
+import { customElement, property } from "lit/decorators.js";
 
-@customElement('bbrt-error-message')
+@customElement("bbrt-error-message")
 export class BBRTErrorMessage extends LitElement {
-  @property({type: Object})
+  @property({ type: Object })
   error?: unknown;
 
   static override styles = css`
@@ -47,8 +47,8 @@ export class BBRTErrorMessage extends LitElement {
     if (error instanceof AggregateError && error.errors.length > 0) {
       return error.errors.map((subError) => this.#renderError(subError));
     } else if (error instanceof Error) {
-      let message = error.message ?? '';
-      let stack = error.stack ?? '';
+      let message = error.message ?? "";
+      let stack = error.stack ?? "";
       const prefixedMessage = `Error: ${message}`;
       if (stack.startsWith(`${prefixedMessage}\n`)) {
         // Often times the stack trace contains a full copy of the message, with
@@ -58,30 +58,30 @@ export class BBRTErrorMessage extends LitElement {
       }
       return html`
         <div part="error">
-          <pre part="message">${message ?? 'Unknown error'}</pre>
+          <pre part="message">${message ?? "Unknown error"}</pre>
           ${stack // prettier-ignore
             ? html`<pre part="stack">${stack}</pre>`
-            : ''}
+            : ""}
         </div>
       `;
     } else if (
       // An error-like object (anything with a truthy "message" property).
-      typeof error === 'object' &&
+      typeof error === "object" &&
       error !== null &&
-      'message' in error &&
+      "message" in error &&
       error.message
     ) {
       // prettier-ignore
       return html`<pre part="error message">${error.message}</pre>`;
     } else if (
       // A nested error (anything with a truthy "error" property).
-      typeof error === 'object' &&
+      typeof error === "object" &&
       error !== null &&
-      'error' in error &&
+      "error" in error &&
       error.error
     ) {
       return this.#renderError(error.error);
-    } else if (typeof error === 'string') {
+    } else if (typeof error === "string") {
       // prettier-ignore
       return html`<pre part="error message">${error}</pre>`;
     } else {
@@ -93,6 +93,6 @@ export class BBRTErrorMessage extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'bbrt-error-message': BBRTErrorMessage;
+    "bbrt-error-message": BBRTErrorMessage;
   }
 }

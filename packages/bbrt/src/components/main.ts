@@ -4,38 +4,38 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {LitElement, css, html} from 'lit';
-import {customElement, property, state} from 'lit/decorators.js';
-import {Signal} from 'signal-polyfill';
-import {SignalArray} from 'signal-utils/array';
-import {SignalSet} from 'signal-utils/set';
-import {BreadboardServer} from '../breadboard/breadboard-server.js';
-import {BreadboardToolProvider} from '../breadboard/breadboard-tool-provider.js';
-import type {Config} from '../config.js';
-import {BBRTConversation} from '../llm/conversation.js';
-import type {BBRTModel} from '../llm/model.js';
-import {BREADBOARD_SERVER} from '../secrets.js';
-import {IndexedDBSettingsSecrets} from '../secrets/indexed-db-secrets.js';
-import {ToolProvider} from '../tools/tool-provider.js';
-import type {BBRTTool} from '../tools/tool.js';
-import './chat.js';
-import './model-selector.js';
-import './prompt.js';
-import './tool-palette.js';
-import {classMap} from 'lit/directives/class-map.js';
+import { LitElement, css, html } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
+import { Signal } from "signal-polyfill";
+import { SignalArray } from "signal-utils/array";
+import { SignalSet } from "signal-utils/set";
+import { BreadboardServer } from "../breadboard/breadboard-server.js";
+import { BreadboardToolProvider } from "../breadboard/breadboard-tool-provider.js";
+import type { Config } from "../config.js";
+import { BBRTConversation } from "../llm/conversation.js";
+import type { BBRTModel } from "../llm/model.js";
+import { BREADBOARD_SERVER } from "../secrets.js";
+import { IndexedDBSettingsSecrets } from "../secrets/indexed-db-secrets.js";
+import { ToolProvider } from "../tools/tool-provider.js";
+import type { BBRTTool } from "../tools/tool.js";
+import "./chat.js";
+import "./model-selector.js";
+import "./prompt.js";
+import "./tool-palette.js";
+import { classMap } from "lit/directives/class-map.js";
 
-@customElement('bbrt-main')
+@customElement("bbrt-main")
 export class BBRTMain extends LitElement {
-  @property({type: Object})
+  @property({ type: Object })
   config?: Config;
 
-  #model = new Signal.State<BBRTModel>('gemini');
+  #model = new Signal.State<BBRTModel>("gemini");
   #activeTools = new SignalSet<BBRTTool>();
   #secrets = new IndexedDBSettingsSecrets();
   #conversation = new BBRTConversation(
     this.#model,
     this.#activeTools,
-    this.#secrets,
+    this.#secrets
   );
   @state()
   private _sidePanelOpen = false;
@@ -44,7 +44,7 @@ export class BBRTMain extends LitElement {
     // TODO(aomarks) Support having multiple breadboard servers active.
     new BreadboardToolProvider(
       new BreadboardServer(BREADBOARD_SERVER),
-      this.#secrets,
+      this.#secrets
     ),
   ]);
 
@@ -97,7 +97,7 @@ export class BBRTMain extends LitElement {
     return html`
       <div
         id="container"
-        class=${classMap({sidePanelOpen: this._sidePanelOpen})}
+        class=${classMap({ sidePanelOpen: this._sidePanelOpen })}
       >
         <bbrt-chat
           .conversation=${this.#conversation}
@@ -139,6 +139,6 @@ export class BBRTMain extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'bbrt-main': BBRTMain;
+    "bbrt-main": BBRTMain;
   }
 }

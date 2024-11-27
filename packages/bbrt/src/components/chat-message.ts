@@ -4,28 +4,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {SignalWatcher} from '@lit-labs/signals';
-import {LitElement, css, html, nothing} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
-import {guard} from 'lit/directives/guard.js';
+import { SignalWatcher } from "@lit-labs/signals";
+import { LitElement, css, html, nothing } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { guard } from "lit/directives/guard.js";
 import type {
   BBRTErrorTurn,
   BBRTModelTurn,
   BBRTTurn,
   BBRTUserTurnContent,
   BBRTUserTurnToolResponses,
-} from '../llm/conversation.js';
-import {typingEffect} from '../util/typing-effect.js';
-import './error-message.js';
-import './markdown.js';
-import './tool-call.js';
+} from "../llm/conversation.js";
+import { typingEffect } from "../util/typing-effect.js";
+import "./error-message.js";
+import "./markdown.js";
+import "./tool-call.js";
 
-@customElement('bbrt-chat-message')
+@customElement("bbrt-chat-message")
 export class BBRTChatMessage extends SignalWatcher(LitElement) {
-  @property({type: Object})
+  @property({ type: Object })
   turn?: BBRTTurn;
 
-  @property({type: Boolean})
+  @property({ type: Boolean })
   hideIcon = false;
 
   static override styles = css`
@@ -106,16 +106,16 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       case undefined: {
         return nothing;
       }
-      case 'user-content': {
+      case "user-content": {
         return this.#renderUserContent(turn);
       }
-      case 'user-tool-responses': {
+      case "user-tool-responses": {
         return this.#renderUserToolResponses(turn);
       }
-      case 'model': {
+      case "model": {
         return this.#renderModelResponse(turn);
       }
-      case 'error': {
+      case "error": {
         return this.#renderError(turn);
       }
       default: {
@@ -134,7 +134,7 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       this.#roleIcon,
       html`<div part="contents">
         <div id="toolResponses">
-          ${turn.responses.map(({tool, args, response}) => {
+          ${turn.responses.map(({ tool, args, response }) => {
             return tool.renderResult(args, response);
           })}
         </div>
@@ -144,17 +144,17 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
 
   #renderModelResponse(turn: BBRTModelTurn) {
     const content =
-      typeof turn.content === 'string'
+      typeof turn.content === "string"
         ? turn.content
         : guard(turn.content, () => typingEffect(5, turn.content));
     const toolCalls = turn.toolCalls?.length
       ? html`<div id="toolCalls" part="content">
           ${turn.toolCalls?.map(
             (toolCall) =>
-              html`<bbrt-tool-call .toolCall=${toolCall}></bbrt-tool-call>`,
+              html`<bbrt-tool-call .toolCall=${toolCall}></bbrt-tool-call>`
           ) ?? []}
         </div>`
-      : '';
+      : "";
     return [
       this.#roleIcon,
       html`<div part="contents">
@@ -180,8 +180,8 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
     if (!this.turn) {
       return nothing;
     }
-    const {kind, role, status} = this.turn;
-    if (this.hideIcon || kind === 'user-tool-responses' || kind === 'error') {
+    const { kind, role, status } = this.turn;
+    if (this.hideIcon || kind === "user-tool-responses" || kind === "error") {
       return html`<span part="icon"></span>`;
     }
     return html`<svg
@@ -196,6 +196,6 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'bbrt-chat-message': BBRTChatMessage;
+    "bbrt-chat-message": BBRTChatMessage;
   }
 }

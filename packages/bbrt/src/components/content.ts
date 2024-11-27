@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {JSONSchema7} from 'json-schema';
-import {LitElement, css, html} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
+import type { JSONSchema7 } from "json-schema";
+import { LitElement, css, html } from "lit";
+import { customElement, property } from "lit/decorators.js";
 
-@customElement('bbrt-content')
+@customElement("bbrt-content")
 export class BBRTContent extends LitElement {
-  @property({type: Object})
+  @property({ type: Object })
   schema?: JSONSchema7;
 
-  @property({type: Object})
+  @property({ type: Object })
   data?: unknown;
 
   static override styles = css`
@@ -33,6 +33,6 @@ export class BBRTContent extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'bbrt-content': BBRTContent;
+    "bbrt-content": BBRTContent;
   }
 }

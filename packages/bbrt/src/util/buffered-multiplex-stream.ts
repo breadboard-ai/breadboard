@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {Deferred} from './deferred.js';
+import { Deferred } from "./deferred.js";
 
-type State = 'unstarted' | 'started' | 'ended';
+type State = "unstarted" | "started" | "ended";
 
 export class BufferedMultiplexStream<T> {
   readonly #source: AsyncIterable<T>;
   readonly #buffer: T[] = [];
-  #state: State = 'unstarted';
+  #state: State = "unstarted";
   #nextTick = new Deferred<void>();
 
   constructor(source: AsyncIterable<T>) {
@@ -25,7 +25,7 @@ export class BufferedMultiplexStream<T> {
       while (i < this.#buffer.length) {
         yield this.#buffer[i++]!;
       }
-      if (this.#state === 'ended') {
+      if (this.#state === "ended") {
         return;
       }
       await this.#nextTick.promise;
@@ -38,15 +38,15 @@ export class BufferedMultiplexStream<T> {
   }
 
   async #startBufferingIfNeeded() {
-    if (this.#state !== 'unstarted') {
+    if (this.#state !== "unstarted") {
       return;
     }
-    this.#state = 'started';
+    this.#state = "started";
     for await (const value of this.#source) {
       this.#buffer.push(value);
       this.#tick();
     }
-    this.#state = 'ended';
+    this.#state = "ended";
     this.#tick();
   }
 }
