@@ -4,30 +4,30 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {JSONSchema7} from 'json-schema';
-import type {Result} from '../util/result.js';
-import {streamJsonArrayItems} from '../util/stream-json-array-items.js';
-import type {BBRTChunk} from './chunk.js';
-import type {BBRTTurn} from './conversation.js';
+import type { JSONSchema7 } from "json-schema";
+import type { Result } from "../util/result.js";
+import { streamJsonArrayItems } from "../util/stream-json-array-items.js";
+import type { BBRTChunk } from "./chunk.js";
+import type { BBRTTurn } from "./conversation.js";
 
 export async function gemini(
   request: GeminiRequest,
-  apiKey: string,
+  apiKey: string
 ): Promise<Result<AsyncIterableIterator<BBRTChunk>, Error>> {
-  const model = 'gemini-1.5-pro';
+  const model = "gemini-1.5-pro";
   const url = new URL(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent`
   );
-  url.searchParams.set('key', apiKey);
-  console.log('GEMINI REQUEST', JSON.stringify(request, null, 2));
+  url.searchParams.set("key", apiKey);
+  console.log("GEMINI REQUEST", JSON.stringify(request, null, 2));
   let result;
   try {
     result = await fetch(url.href, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(request),
     });
   } catch (e) {
-    return {ok: false, error: e as Error};
+    return { ok: false, error: e as Error };
   }
   if (result.status !== 200) {
     try {
@@ -36,27 +36,27 @@ export async function gemini(
         ok: false,
         error: new Error(
           `HTTP status ${result.status}` +
-            `\n\n${JSON.stringify(error, null, 2)}`,
+            `\n\n${JSON.stringify(error, null, 2)}`
         ),
       };
     } catch {
-      return {ok: false, error: Error(`http status was ${result.status}`)};
+      return { ok: false, error: Error(`http status was ${result.status}`) };
     }
   }
   const body = result.body;
   if (body === null) {
-    return {ok: false, error: Error('body was null')};
+    return { ok: false, error: Error("body was null") };
   }
   const stream = interpretGeminiChunks(
     streamJsonArrayItems<GeminiResponse>(
-      body.pipeThrough(new TextDecoderStream()),
-    ),
+      body.pipeThrough(new TextDecoderStream())
+    )
   );
-  return {ok: true, value: stream};
+  return { ok: true, value: stream };
 }
 
 async function* interpretGeminiChunks(
-  stream: AsyncIterable<GeminiResponse>,
+  stream: AsyncIterable<GeminiResponse>
 ): AsyncIterableIterator<BBRTChunk> {
   for await (const chunk of stream) {
     // console.log('GEMINI RESPONSE CHUNK', JSON.stringify(chunk, null, 2));
@@ -69,11 +69,11 @@ async function* interpretGeminiChunks(
       continue;
     }
     for (const part of parts) {
-      if ('text' in part) {
-        yield {kind: 'append-content', content: part.text};
-      } else if ('functionCall' in part) {
+      if ("text" in part) {
+        yield { kind: "append-content", content: part.text };
+      } else if ("functionCall" in part) {
         yield {
-          kind: 'tool-call',
+          kind: "tool-call",
           // Gemini function calls don't have IDs, but OpenAI appears to require
           // them in the case where you have more than tool call in a turn. So
           // lets make one up that's similar to the OpenAI format so that we can
@@ -84,7 +84,7 @@ async function* interpretGeminiChunks(
         };
       } else {
         console.error(
-          `gemini part had no text or functionCall: ${JSON.stringify(chunk)}`,
+          `gemini part had no text or functionCall: ${JSON.stringify(chunk)}`
         );
       }
     }
@@ -97,13 +97,13 @@ export interface GeminiRequest {
     functionDeclarations: GeminiFunctionDeclaration[];
   }>;
   toolConfig?: {
-    mode: 'auto' | 'any' | 'none';
+    mode: "auto" | "any" | "none";
     allowedFunctionNames: string[];
   };
 }
 
 export interface GeminiContent {
-  role: 'user' | 'model';
+  role: "user" | "model";
   parts: GeminiPart[];
 }
 
@@ -145,7 +145,7 @@ export interface GeminiFunctionDeclaration {
 }
 
 export type GeminiParameterSchema = {
-  type?: 'string' | 'number' | 'boolean' | 'array' | 'object';
+  type?: "string" | "number" | "boolean" | "array" | "object";
   // TODO(aomarks) nullable is not standard JSON Schema, right? Usually
   // "required" is how you express that.
   nullable?: boolean;
@@ -160,18 +160,18 @@ export type GeminiParameterSchema = {
 };
 
 export async function bbrtTurnsToGeminiContents(
-  turns: BBRTTurn[],
+  turns: BBRTTurn[]
 ): Promise<GeminiContent[]> {
   const contents: GeminiContent[] = [];
   for (const turn of turns) {
     switch (turn.kind) {
-      case 'user-content': {
-        contents.push({role: 'user', parts: [{text: turn.content}]});
+      case "user-content": {
+        contents.push({ role: "user", parts: [{ text: turn.content }] });
         break;
       }
-      case 'user-tool-responses': {
+      case "user-tool-responses": {
         contents.push({
-          role: 'user',
+          role: "user",
           parts: await Promise.all(
             turn.responses.map(async (response) => ({
               functionResponse: {
@@ -183,16 +183,16 @@ export async function bbrtTurnsToGeminiContents(
                 // preserve), or maybe the LLM just figures it out from
                 // context most of the time anyway.
               },
-            })),
+            }))
           ),
         });
         break;
       }
-      case 'model': {
-        const text = (await Array.fromAsync(turn.content)).join('');
-        const content: GeminiContent = {role: 'model', parts: []};
+      case "model": {
+        const text = (await Array.fromAsync(turn.content)).join("");
+        const content: GeminiContent = { role: "model", parts: [] };
         if (text) {
-          content.parts.push({text});
+          content.parts.push({ text });
         }
         if (turn.toolCalls?.length) {
           content.parts.push(
@@ -203,21 +203,21 @@ export async function bbrtTurnsToGeminiContents(
                     name: (await toolCall.tool.declaration()).name,
                     args: toolCall.args,
                   },
-                }),
-              ),
-            )),
+                })
+              )
+            ))
           );
         }
         contents.push(content);
         break;
       }
-      case 'error': {
+      case "error": {
         // TODO(aomarks) Do something better?
         break;
       }
       default: {
         turn satisfies never;
-        console.error('Unknown turn kind:', turn);
+        console.error("Unknown turn kind:", turn);
         break;
       }
     }
@@ -227,24 +227,24 @@ export async function bbrtTurnsToGeminiContents(
 
 const RANDOM_STRING_LENGTH = 24;
 const RANDOM_STRING_CHARS =
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 function randomOpenAIFunctionCallStyleId() {
   return (
-    'call_' +
+    "call_" +
     Array.from(crypto.getRandomValues(new Uint8Array(RANDOM_STRING_LENGTH)))
       .map((x) => RANDOM_STRING_CHARS[x % RANDOM_STRING_CHARS.length])
-      .join('')
+      .join("")
   );
 }
 
 export function simplifyJsonSchemaForGemini(
-  rootInput: JSONSchema7,
+  rootInput: JSONSchema7
 ): GeminiParameterSchema {
-  const rootOutput: GeminiParameterSchema = {type: 'object'};
+  const rootOutput: GeminiParameterSchema = { type: "object" };
   function visit(input: JSONSchema7, output: GeminiParameterSchema) {
-    if (input.type === 'object') {
-      output.type = 'object';
+    if (input.type === "object") {
+      output.type = "object";
       if (input.properties !== undefined) {
         output.properties = {};
         for (const [key, value] of Object.entries(input.properties)) {
@@ -253,7 +253,7 @@ export function simplifyJsonSchemaForGemini(
             // TODO(aomarks) True means "any" type, but Gemini doesn't support
             // that. How out just a string? Maybe object would be better? A true
             // here doesn't seem to be used much anyway.
-            output.properties[key] = {type: 'string'};
+            output.properties[key] = { type: "string" };
           } else if (value === false) {
             continue;
           } else {
@@ -264,8 +264,8 @@ export function simplifyJsonSchemaForGemini(
       if (input.required !== undefined && input.required.length > 0) {
         output.required = input.required;
       }
-    } else if (input.type === 'string') {
-      output.type = 'string';
+    } else if (input.type === "string") {
+      output.type = "string";
       if (input.format !== undefined) {
         output.format = input.format;
       }
@@ -274,10 +274,10 @@ export function simplifyJsonSchemaForGemini(
   }
   visit(rootInput, rootOutput);
   console.log(
-    'SIMPLIFIED JSON SCHEMA FOR GEMINI',
+    "SIMPLIFIED JSON SCHEMA FOR GEMINI",
     JSON.stringify(rootInput, null, 2),
-    '\n',
-    JSON.stringify(rootOutput, null, 2),
+    "\n",
+    JSON.stringify(rootOutput, null, 2)
   );
   return rootOutput;
 }

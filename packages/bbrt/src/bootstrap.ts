@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import './components/main.js';
-import type {Config} from './config.js';
+import "./components/main.js";
+import type { Config } from "./config.js";
 
 const config: Config = {
-  url: 'potato',
+  url: "potato",
 };
-const main = document.querySelector('bbrt-main');
+const main = document.querySelector("bbrt-main");
 if (main !== null) {
   main.config = config;
 } else {
-  throw new Error('could not find top-level <bbrt-main> element');
+  throw new Error("could not find top-level <bbrt-main> element");
 }

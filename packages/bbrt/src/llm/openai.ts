@@ -4,30 +4,30 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {JSONSchema7} from 'json-schema';
-import {JsonDataStreamTransformer} from '../util/json-data-stream-transformer.js';
-import type {Result} from '../util/result.js';
-import type {BBRTChunk} from './chunk.js';
-import type {BBRTTurn} from './conversation.js';
+import type { JSONSchema7 } from "json-schema";
+import { JsonDataStreamTransformer } from "../util/json-data-stream-transformer.js";
+import type { Result } from "../util/result.js";
+import type { BBRTChunk } from "./chunk.js";
+import type { BBRTTurn } from "./conversation.js";
 
 export async function openai(
   request: OpenAIChatRequest,
-  apiKey: string,
+  apiKey: string
 ): Promise<Result<AsyncIterableIterator<BBRTChunk>, Error>> {
   const url = new URL(`https://api.openai.com/v1/chat/completions`);
   let result;
-  console.log('OPENAI REQUEST', JSON.stringify(request, null, 2));
+  console.log("OPENAI REQUEST", JSON.stringify(request, null, 2));
   try {
     result = await fetch(url.href, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({...request, stream: true}),
+      body: JSON.stringify({ ...request, stream: true }),
     });
   } catch (e) {
-    return {ok: false, error: e as Error};
+    return { ok: false, error: e as Error };
   }
   if (result.status !== 200) {
     try {
@@ -36,29 +36,29 @@ export async function openai(
         ok: false,
         error: new Error(
           `HTTP status ${result.status}` +
-            `\n\n${JSON.stringify(error, null, 2)}`,
+            `\n\n${JSON.stringify(error, null, 2)}`
         ),
       };
     } catch {
-      return {ok: false, error: Error(`http status was ${result.status}`)};
+      return { ok: false, error: Error(`http status was ${result.status}`) };
     }
   }
   const body = result.body;
   if (body === null) {
-    return {ok: false, error: Error('body was null')};
+    return { ok: false, error: Error("body was null") };
   }
   const stream = interpretOpenAIChunks(
-    body.pipeThrough(new JsonDataStreamTransformer<OpenAIChunk>()),
+    body.pipeThrough(new JsonDataStreamTransformer<OpenAIChunk>())
   );
-  return {ok: true, value: stream};
+  return { ok: true, value: stream };
 }
 
 async function* interpretOpenAIChunks(
-  stream: AsyncIterable<OpenAIChunk>,
+  stream: AsyncIterable<OpenAIChunk>
 ): AsyncIterableIterator<BBRTChunk> {
   const toolCalls = new Map<
     number,
-    {id: string; name: string; jsonArgs: string}
+    { id: string; name: string; jsonArgs: string }
   >();
 
   for await (const chunk of stream) {
@@ -81,7 +81,7 @@ async function* interpretOpenAIChunks(
 
     const content = delta.content;
     if (content != null) {
-      yield {kind: 'append-content', content};
+      yield { kind: "append-content", content };
       continue;
     }
 
@@ -89,24 +89,24 @@ async function* interpretOpenAIChunks(
       for (const toolCallChunk of delta.tool_calls) {
         let buffer = toolCalls.get(toolCallChunk.index);
         if (buffer === undefined) {
-          buffer = {id: '', name: '', jsonArgs: ''};
+          buffer = { id: "", name: "", jsonArgs: "" };
           toolCalls.set(toolCallChunk.index, buffer);
         }
-        buffer.id += toolCallChunk.id ?? '';
-        buffer.name += toolCallChunk.function.name ?? '';
-        buffer.jsonArgs += toolCallChunk.function.arguments ?? '';
+        buffer.id += toolCallChunk.id ?? "";
+        buffer.name += toolCallChunk.function.name ?? "";
+        buffer.jsonArgs += toolCallChunk.function.arguments ?? "";
       }
       continue;
     }
 
     console.error(
-      `could not interpret chunk: ${JSON.stringify(chunk, null, 2)}`,
+      `could not interpret chunk: ${JSON.stringify(chunk, null, 2)}`
     );
   }
 
   for (const call of toolCalls.values()) {
     yield {
-      kind: 'tool-call',
+      kind: "tool-call",
       name: call.name,
       id: call.id,
       arguments: JSON.parse(call.jsonArgs) as Record<string, unknown>,
@@ -120,10 +120,10 @@ export interface OpenAIChatRequest {
   messages: OpenAIMessage[];
   tools?: Array<OpenAITool>;
   tool_choice?:
-    | 'none'
-    | 'auto'
-    | 'required'
-    | {type: 'function'; function: {name: string}};
+    | "none"
+    | "auto"
+    | "required"
+    | { type: "function"; function: { name: string } };
 }
 
 export type OpenAIMessage =
@@ -133,32 +133,32 @@ export type OpenAIMessage =
   | OpenAIToolMessage;
 
 export interface OpenAISystemMessage {
-  role: 'system';
+  role: "system";
   name?: string;
   content: string | string[];
 }
 
 export interface OpenAIUserMessage {
-  role: 'user';
+  role: "user";
   name?: string;
   content: string | string[];
 }
 
 export interface OpenAIAssistantMessage {
-  role: 'assistant';
+  role: "assistant";
   // TODO(aomarks) Actually at least one of content/tool_calls is required.
   content?: string;
   tool_calls?: OpenAIToolCall[];
 }
 
 export interface OpenAIToolMessage {
-  role: 'tool';
+  role: "tool";
   content: string | string[];
   tool_call_id: string;
 }
 
 export type OpenAITool = {
-  type: 'function';
+  type: "function";
   function: OpenAIFunction;
 };
 
@@ -188,7 +188,7 @@ interface OpenAIToolCall {
   // going out?
   index: number;
   id: string;
-  type: 'function';
+  type: "function";
   function: {
     name: string;
     arguments: string;
@@ -196,28 +196,28 @@ interface OpenAIToolCall {
 }
 
 export async function bbrtTurnsToOpenAiMessages(
-  turns: BBRTTurn[],
+  turns: BBRTTurn[]
 ): Promise<OpenAIMessage[]> {
   const messages: OpenAIMessage[] = [];
   for (const turn of turns) {
     switch (turn.kind) {
-      case 'user-content': {
-        messages.push({role: 'user', content: turn.content});
+      case "user-content": {
+        messages.push({ role: "user", content: turn.content });
         break;
       }
-      case 'user-tool-responses': {
+      case "user-tool-responses": {
         for (const response of turn.responses) {
           messages.push({
-            role: 'tool',
+            role: "tool",
             tool_call_id: response.id,
             content: JSON.stringify(response.response.output),
           });
         }
         break;
       }
-      case 'model': {
-        const content = (await Array.fromAsync(turn.content)).join('');
-        const msg: OpenAIAssistantMessage = {role: 'assistant'};
+      case "model": {
+        const content = (await Array.fromAsync(turn.content)).join("");
+        const msg: OpenAIAssistantMessage = { role: "assistant" };
         if (content) {
           msg.content = content;
         }
@@ -228,24 +228,24 @@ export async function bbrtTurnsToOpenAiMessages(
               // (need request vs response variants).
               index: undefined as unknown as number,
               id: toolCall.id,
-              type: 'function',
+              type: "function",
               function: {
                 name: (await toolCall.tool.declaration()).name,
                 arguments: JSON.stringify(toolCall.args),
               },
-            })),
+            }))
           );
         }
         messages.push(msg);
         break;
       }
-      case 'error': {
+      case "error": {
         // TODO(aomarks) Do something better?
         break;
       }
       default: {
         turn satisfies never;
-        console.error('Unknown turn kind:', turn);
+        console.error("Unknown turn kind:", turn);
         break;
       }
     }

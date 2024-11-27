@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {GraphDescriptor} from '@google-labs/breadboard';
+import type { GraphDescriptor } from "@google-labs/breadboard";
 
 export class BreadboardServer {
   readonly #baseUrl: string;
@@ -18,7 +18,7 @@ export class BreadboardServer {
   }
 
   async boards(): Promise<BreadboardBoardListing[]> {
-    const url = new URL('/boards', this.#baseUrl);
+    const url = new URL("/boards", this.#baseUrl);
     // TODO(aomarks) Better error handling.
     const response = await fetch(url);
     if (!response.ok) {

@@ -9,7 +9,7 @@
 // also don't want to fall behind the tail of the stream too far.
 export async function* typingEffect(
   maxCharsPerChunk: number,
-  stream: AsyncIterable<string>,
+  stream: AsyncIterable<string>
 ): AsyncIterableIterator<string> {
   for await (const chunk of stream) {
     for (let start = 0; start < chunk.length; start += maxCharsPerChunk) {

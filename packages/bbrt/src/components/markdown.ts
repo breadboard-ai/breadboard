@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {LitElement, css, nothing} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
-import {asyncReplace} from 'lit/directives/async-replace.js';
-import {unsafeHTML} from 'lit/directives/unsafe-html.js';
-import {micromark} from 'micromark';
-import {gfm, gfmHtml} from 'micromark-extension-gfm';
+import { LitElement, css, nothing } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { asyncReplace } from "lit/directives/async-replace.js";
+import { unsafeHTML } from "lit/directives/unsafe-html.js";
+import { micromark } from "micromark";
+import { gfm, gfmHtml } from "micromark-extension-gfm";
 
-@customElement('bbrt-markdown')
+@customElement("bbrt-markdown")
 export class BBRTMarkdown extends LitElement {
   @property()
   markdown?: string | AsyncIterable<string>;
@@ -34,7 +34,7 @@ export class BBRTMarkdown extends LitElement {
   render() {
     return !this.markdown
       ? nothing
-      : typeof this.markdown === 'string'
+      : typeof this.markdown === "string"
         ? renderMarkdown(this.markdown)
         : asyncReplace(renderMarkdownStreaming(this.markdown));
   }
@@ -42,7 +42,7 @@ export class BBRTMarkdown extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'bbrt-markdown': BBRTMarkdown;
+    "bbrt-markdown": BBRTMarkdown;
   }
 }
 
@@ -58,13 +58,13 @@ function renderMarkdown(markdown: string) {
 }
 
 async function* renderMarkdownStreaming(
-  stream: AsyncIterable<string>,
+  stream: AsyncIterable<string>
 ): AsyncIterable<unknown> {
   // TODO(aomarks) Yield something right away so that asyncReplace clears the
   // previous part when switching to a new source to render. Check if there is a
   // more elegant solution.
-  yield '';
-  let markdown = '';
+  yield "";
+  let markdown = "";
   for await (const chunk of stream) {
     markdown += chunk;
     // TODO(aomarks) micromark has a streaming mode, but only in Node. We need a

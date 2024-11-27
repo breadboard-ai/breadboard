@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-const DATA_PREFIX_LENGTH = 'data:'.length;
-const D_BYTE = 'd'.charCodeAt(0);
-const A_BYTE = 'a'.charCodeAt(0);
-const T_BYTE = 't'.charCodeAt(0);
-const COLON_BYTE = ':'.charCodeAt(0);
-const NEWLINE_BYTE = '\n'.charCodeAt(0);
+const DATA_PREFIX_LENGTH = "data:".length;
+const D_BYTE = "d".charCodeAt(0);
+const A_BYTE = "a".charCodeAt(0);
+const T_BYTE = "t".charCodeAt(0);
+const COLON_BYTE = ":".charCodeAt(0);
+const NEWLINE_BYTE = "\n".charCodeAt(0);
 
 function hasDataPrefix(chunk: Uint8Array): boolean {
   return (
@@ -38,7 +38,7 @@ export class JsonDataStreamTransformer<T> extends TransformStream<
 
   #transform(
     chunk: Uint8Array,
-    controller: TransformStreamDefaultController<T>,
+    controller: TransformStreamDefaultController<T>
   ) {
     let lineStart = 0;
     for (let i = 0; i < chunk.length; i++) {
@@ -77,7 +77,7 @@ export class JsonDataStreamTransformer<T> extends TransformStream<
         controller.enqueue(JSON.parse(text) as T);
       }
     } else {
-      console.warn('Unknown data format', this.#textDecoder.decode(array));
+      console.warn("Unknown data format", this.#textDecoder.decode(array));
     }
   }
 }

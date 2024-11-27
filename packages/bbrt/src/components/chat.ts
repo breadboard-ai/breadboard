@@ -4,17 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {SignalWatcher} from '@lit-labs/signals';
-import {LitElement, css, html} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
-import type {BBRTConversation} from '../llm/conversation.js';
-import './chat-message.js';
+import { SignalWatcher } from "@lit-labs/signals";
+import { LitElement, css, html } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import type { BBRTConversation } from "../llm/conversation.js";
+import "./chat-message.js";
 
-type ScrollState = {status: 'locked'} | {status: 'auto'; intervalId: number};
+type ScrollState =
+  | { status: "locked" }
+  | { status: "auto"; intervalId: number };
 
-@customElement('bbrt-chat')
+@customElement("bbrt-chat")
 export class BBRTChat extends SignalWatcher(LitElement) {
-  @property({attribute: false})
+  @property({ attribute: false })
   conversation?: BBRTConversation;
 
   #scrollState: ScrollState;
@@ -34,25 +36,25 @@ export class BBRTChat extends SignalWatcher(LitElement) {
     // scroller.
     const autoScroll = () =>
       setInterval(() => {
-        this.scrollTo({top: Number.MAX_SAFE_INTEGER, behavior: 'smooth'});
+        this.scrollTo({ top: Number.MAX_SAFE_INTEGER, behavior: "smooth" });
       }, 500);
     this.#scrollState = {
-      status: 'auto',
+      status: "auto",
       intervalId: autoScroll(),
     };
     let prevScrollTop = 0;
-    this.addEventListener('scroll', () => {
+    this.addEventListener("scroll", () => {
       const scrolledUp = this.scrollTop < prevScrollTop;
-      if (this.#scrollState.status === 'auto') {
+      if (this.#scrollState.status === "auto") {
         if (scrolledUp) {
           clearInterval(this.#scrollState.intervalId);
-          this.#scrollState = {status: 'locked'};
+          this.#scrollState = { status: "locked" };
         }
       } else {
         const scrolledToBottom =
           this.scrollTop + this.clientHeight >= this.scrollHeight;
         if (scrolledToBottom) {
-          this.#scrollState = {status: 'auto', intervalId: autoScroll()};
+          this.#scrollState = { status: "auto", intervalId: autoScroll() };
         }
       }
       prevScrollTop = this.scrollTop;
@@ -80,15 +82,15 @@ export class BBRTChat extends SignalWatcher(LitElement) {
             turn.role === turns[i - 1]?.role ||
             // TODO(aomarks) Maybe just get rid of error turn, and put errors on
             // the turns they are associated with?
-            turn.kind === 'error'
+            turn.kind === "error"
           }
-        ></bbrt-chat-message>`,
+        ></bbrt-chat-message>`
     );
   }
 }
 
 declare global {
   interface HTMLElementTagNameMap {
-    'bbrt-chat': BBRTChat;
+    "bbrt-chat": BBRTChat;
   }
 }
