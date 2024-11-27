@@ -742,7 +742,9 @@ export class UserInput extends LitElement {
                         module === input.value}
                       />
                       <label for="${id}-${idx}">
-                        <span class="module-title">${module}</span>
+                        <span class="module-title"
+                          >${moduleInfo.metadata?.title ?? module}</span
+                        >
                         <span class="module-description">${description}</span>
                         ${module === NO_MODULE
                           ? nothing

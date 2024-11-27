@@ -8,6 +8,7 @@ import {
   CommentNode,
   InspectableEdge,
   InspectableEdgeType,
+  InspectableModules,
   InspectableNode,
   InspectableNodePorts,
   InspectablePort,
@@ -58,6 +59,7 @@ export class Graph extends PIXI.Container {
   #edgeGraphics = new Map<string, GraphEdge>();
   #edges: InspectableEdge[] | null = null;
   #nodes: InspectableNode[] | null = null;
+  #modules: InspectableModules | null = null;
   #typeMetadata: Map<string, NodeHandlerMetadata> | null = null;
   #comments: CommentNode[] | null = null;
   #ports: Map<string, InspectableNodePorts> | null = null;
@@ -961,6 +963,15 @@ export class Graph extends PIXI.Container {
     return this.#edges;
   }
 
+  set modules(modules: InspectableModules | null) {
+    this.#modules = modules;
+    this.#isDirty = true;
+  }
+
+  get modules() {
+    return this.#modules;
+  }
+
   set edgeValues(edgeValues: TopGraphEdgeValues | null) {
     this.#edgeValues = edgeValues;
     this.#isDirty = true;
@@ -1517,6 +1528,9 @@ export class Graph extends PIXI.Container {
 
       graphNode.label = id;
       graphNode.readOnly = this.readOnly;
+      // Modules must go first because if any of the in ports specify a ModuleId
+      // we will need to look it up in the modules object.
+      graphNode.modules = this.modules;
       graphNode.inPorts = portInfo.inputs.ports;
       graphNode.outPorts = portInfo.outputs.ports;
       graphNode.sidePorts = portInfo.side.ports;
