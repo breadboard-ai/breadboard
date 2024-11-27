@@ -69,10 +69,25 @@ export class ApiExplorer extends LitElement {
   runStore = getRunStore();
 
   #kits: Kit[] = [];
-  #runObserver: InspectableRunObserver = createRunObserver(new GraphStore({}), {
-    dataStore: this.dataStore,
-    runStore: this.runStore,
-  });
+  #runObserver: InspectableRunObserver = createRunObserver(
+    new GraphStore({
+      kits: [],
+      loader: {
+        load() {
+          throw new Error("Implement when resurrecting this code");
+        },
+      },
+      sandbox: {
+        runModule() {
+          throw new Error("Implement when resurrecting this code");
+        },
+      },
+    }),
+    {
+      dataStore: this.dataStore,
+      runStore: this.runStore,
+    }
+  );
   #handlers: Map<string, inputCallback[]> = new Map();
   #providers: BoardServer[] = [];
   #kitLoad = loadKits([
