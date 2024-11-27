@@ -26,13 +26,13 @@ import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import {
+  BoardChosenEvent,
   BoardItemCopyEvent,
-  HideTooltipEvent,
   ModuleDeleteEvent,
   NodeConfigurationUpdateRequestEvent,
+  NodePartialUpdateEvent,
   OutlineModeChangeEvent,
   OverflowMenuActionEvent,
-  ShowTooltipEvent,
   SubGraphDeleteEvent,
   WorkspaceItemChosenEvent,
 } from "../../events/events";
@@ -277,13 +277,15 @@ export class WorkspaceOutline extends LitElement {
     li {
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
-      white-space: nowrap;
       margin: var(--bb-grid-size) 0;
+      padding: 0 0 0 var(--bb-grid-size-3);
+      position: relative;
+    }
+
+    li.with-preview {
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
-      padding: 0 0 0 var(--bb-grid-size-3);
-      position: relative;
     }
 
     li:has(> div > ul):last-of-type::after {
@@ -508,6 +510,7 @@ export class WorkspaceOutline extends LitElement {
 
     .title {
       height: var(--bb-grid-size-5);
+      flex: 0 0 auto;
     }
 
     summary > .title {
@@ -547,46 +550,6 @@ export class WorkspaceOutline extends LitElement {
         var(--bb-font-family);
       color: var(--bb-neutral-500);
       margin-left: var(--bb-grid-size-2);
-    }
-
-    button.subgraph {
-      display: inline-flex;
-      align-items: center;
-      border: none;
-      font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
-        var(--bb-font-family);
-      background: var(--subgraph-label-color, var(--bb-ui-50));
-      border-radius: 40px;
-      height: var(--bb-grid-size-5);
-      padding: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size);
-      color: var(--subgraph-label-text-color, var(--bb-neutral-800));
-      cursor: pointer;
-    }
-
-    :host([mode="tree"]) button.subgraph {
-      margin-left: calc(var(--bb-grid-size-2) * -1);
-    }
-
-    :host([mode="list"]) button.subgraph {
-      margin-left: var(--bb-grid-size-2);
-    }
-
-    button.subgraph[disabled] {
-      opacity: 0.4;
-      cursor: default;
-    }
-
-    button.subgraph::before {
-      content: "";
-      width: var(--bb-grid-size-5);
-      height: var(--bb-grid-size-5);
-      background: transparent var(--bb-icon-board) center center / 16px 16px
-        no-repeat;
-      margin-right: var(--bb-grid-size);
-    }
-
-    button.subgraph.inverted::before {
-      background-image: var(--bb-icon-board-inverted);
     }
 
     #create-new {
@@ -905,6 +868,7 @@ export class WorkspaceOutline extends LitElement {
                   port: true,
                   [port.status]: true,
                   configured: port.configured,
+                  "with-preview": true,
                 })}
               >
                 <span class="title">
@@ -939,62 +903,35 @@ export class WorkspaceOutline extends LitElement {
               }
 
               let graphDetail: HTMLTemplateResult | symbol = nothing;
-              const subGraphId = (port.value as GraphIdentifier).slice(1);
-              const subGraph = subGraphs.get(subGraphId);
-              if (!subGraph) {
+              const portSubGraphId = (port.value as GraphIdentifier).slice(1);
+              const portSubGraph = subGraphs.get(portSubGraphId);
+              if (!portSubGraph) {
                 graphDetail = html`Unable to locate subgraph`;
               } else {
-                const graphButton = html`<button
-                  class=${classMap({
-                    subgraph: true,
-                    inverted:
-                      getSubItemColor<number>(subGraphId, "text", true) ===
-                      0xffffff,
-                  })}
-                  ?disabled=${this.mode === "list" &&
-                  this.subGraphId === subGraphId}
-                  style=${styleMap({
-                    "--subgraph-border-color": getSubItemColor(
-                      subGraphId,
-                      "border"
-                    ),
-                    "--subgraph-label-color": getSubItemColor(
-                      subGraphId,
-                      "label"
-                    ),
-                    "--subgraph-label-text-color": getSubItemColor(
-                      subGraphId,
-                      "text"
-                    ),
-                  })}
-                  @pointerover=${(evt: PointerEvent) => {
+                const graphButton = html`<bb-slide-board-selector
+                  .graph=${this.graph}
+                  .value=${portSubGraphId}
+                  ?list=${this.mode === "list"}
+                  ?tree=${this.mode === "tree"}
+                  @bbboardchosen=${(evt: BoardChosenEvent) => {
                     this.dispatchEvent(
-                      new ShowTooltipEvent(
-                        `Go to item`,
-                        evt.clientX,
-                        evt.clientY
+                      new NodePartialUpdateEvent(
+                        node.descriptor.id,
+                        subGraphId,
+                        { [port.name]: `#${evt.id}` }
                       )
                     );
                   }}
-                  @pointerout=${() => {
-                    this.dispatchEvent(new HideTooltipEvent());
-                  }}
-                  @click=${() => {
-                    this.#changeWorkspaceItem(subGraphId, null);
-                  }}
-                >
-                  ${subGraph?.title}
-                </button>`;
-
+                ></bb-slide-board-selector>`;
                 if (!renderSubItemsInline) {
                   graphDetail = graphButton;
                 } else {
                   graphDetail = html`<div>
                     ${graphButton}${this.#renderWorkspaceItem(
-                      subGraphId,
-                      subGraph.items.nodes,
-                      subGraph.items.ports,
-                      subGraph.subItems,
+                      portSubGraphId,
+                      portSubGraph.items.nodes,
+                      portSubGraph.items.ports,
+                      portSubGraph.subItems,
                       seenSubItems,
                       renderSubItemsInline
                     )}

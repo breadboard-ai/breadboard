@@ -2694,6 +2694,30 @@ export class Main extends LitElement {
               @bbinteraction=${() => {
                 this.#clearBoardSave();
               }}
+              @bbnodepartialupdate=${async (
+                evt: BreadboardUI.Events.NodePartialUpdateEvent
+              ) => {
+                if (!this.tab) {
+                  this.toast(
+                    "Unable to edit; no active graph",
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
+                  return;
+                }
+
+                if (!evt.debugging) {
+                  this.#nodeConfiguratorData = null;
+                  this.showNodeConfigurator = false;
+                }
+
+                this.#runtime.edit.changeNodeConfigurationPart(
+                  this.tab,
+                  evt.id,
+                  evt.configuration,
+                  evt.subGraphId,
+                  evt.metadata
+                );
+              }}
               @bbworkspacenewitemcreaterequest=${() => {
                 this.showNewWorkspaceItemOverlay = true;
               }}
