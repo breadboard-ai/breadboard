@@ -186,7 +186,7 @@
     "express": "^4.21.1",
     "json-schema": "^0.4.0",
     "litegraph.js": "^0.7.18",
-    "prettier": "^3.3.3"
+    "prettier": "^3.4.1"
   },
   "repository": {
     "type": "git",
