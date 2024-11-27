@@ -11,10 +11,11 @@ import {
   EditableGraphOptions,
   Result,
 } from "../editor/types.js";
-import { GraphLoaderContext } from "../loader/types.js";
+import { GraphLoader, GraphLoaderContext } from "../loader/types.js";
 import { MutableGraphImpl } from "./graph/mutable-graph.js";
 import {
   GraphHandle,
+  GraphStoreArgs,
   InspectableGraph,
   InspectableGraphOptions,
   MainGraphIdentifier,
@@ -22,16 +23,41 @@ import {
   MutableGraphStore,
 } from "./types.js";
 import { hash } from "../utils/hash.js";
+import { Kit } from "../types.js";
+import { Sandbox } from "@breadboard-ai/jsandbox";
+import { createLoader } from "../loader/index.js";
 
-export { GraphStore };
+export { GraphStore, makeTerribleOptions };
+
+// TODO: Deprecate and remove.
+function makeTerribleOptions(
+  options: InspectableGraphOptions = {}
+): Required<InspectableGraphOptions> {
+  return {
+    kits: options.kits || [],
+    sandbox: options.sandbox || {
+      runModule() {
+        throw new Error("Non-existent sandbox: Terrible Options were used.");
+      },
+    },
+    loader: createLoader(),
+  };
+}
 
 class GraphStore implements MutableGraphStore {
+  readonly kits: readonly Kit[];
+  readonly sandbox: Sandbox;
+  readonly loader: GraphLoader;
+
   #options: InspectableGraphOptions;
   #mainGraphIds: Map<string, MainGraphIdentifier> = new Map();
   #mutables: Map<MainGraphIdentifier, MutableGraph> = new Map();
 
-  constructor(options: InspectableGraphOptions) {
-    this.#options = options;
+  constructor(args: GraphStoreArgs) {
+    this.kits = args.kits;
+    this.sandbox = args.sandbox;
+    this.loader = args.loader;
+    this.#options = args;
   }
 
   async load(

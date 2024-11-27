@@ -8,6 +8,7 @@ import { GraphDescriptor } from "@breadboard-ai/types";
 import { Graph } from "../../src/inspector/graph/graph.js";
 import { MutableGraphImpl } from "../../src/inspector/graph/mutable-graph.js";
 import { GraphStore, InspectableGraphOptions } from "../../src/index.js";
+import { makeTerribleOptions } from "../../src/inspector/graph-store.js";
 
 export { inspector };
 
@@ -15,6 +16,6 @@ function inspector(
   graph: GraphDescriptor,
   options: InspectableGraphOptions = {}
 ) {
-  const store = new GraphStore(options);
+  const store = new GraphStore(makeTerribleOptions(options));
   return new Graph("", new MutableGraphImpl(graph, store, options));
 }

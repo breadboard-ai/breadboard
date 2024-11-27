@@ -665,7 +665,13 @@ export type GraphHandle = {
     }
 );
 
+export type GraphStoreArgs = Required<InspectableGraphOptions>;
+
 export type MutableGraphStore = {
+  readonly kits: readonly Kit[];
+  readonly sandbox: Sandbox;
+  readonly loader: GraphLoader;
+
   load(url: string, options: GraphLoaderContext): Promise<Result<GraphHandle>>;
   addByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier>;
   editByDescriptor(

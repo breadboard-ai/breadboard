@@ -14,12 +14,13 @@ import {
 } from "../../src/index.js";
 import { Graph } from "../../src/inspector/graph/graph.js";
 import { MutableGraphImpl } from "../../src/inspector/graph/mutable-graph.js";
+import { makeTerribleOptions } from "../../src/inspector/graph-store.js";
 
 const inspect = (
   graph: GraphDescriptor,
   options: InspectableGraphOptions = {}
 ): InspectableGraph => {
-  const store = new GraphStore(options);
+  const store = new GraphStore(makeTerribleOptions(options));
   return new Graph("", new MutableGraphImpl(graph, store, options));
 };
 
