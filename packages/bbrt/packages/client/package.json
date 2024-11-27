@@ -1,0 +1,72 @@
+{
+  "name": "@breadboard-ai/bbrt-client",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Template component",
+  "author": "Google LLC",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/breadboard-ai/template#readme",
+  "bugs": {
+    "url": "https://github.com/breadboard-ai/template/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/breadboard-ai/template.git",
+    "directory": "packages/component"
+  },
+  "type": "module",
+  "main": "index.js",
+  "typings": "index.d.ts",
+  "files": [
+    "**/*.js",
+    "**/*.d.ts",
+    "!test/",
+    "!src/",
+    "!.wireit/"
+  ],
+  "scripts": {
+    "build": "wireit",
+    "test": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "command": "tsc --pretty",
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../../tsconfig.base.json",
+        "../../tsconfig.base.web.json"
+      ],
+      "output": [
+        "**/*.js",
+        "**/*.js.map",
+        "**/*.d.ts",
+        "**/*.d.ts.map",
+        "tsconfig.tsbuildinfo",
+        "!src/"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "test": {
+      "command": "web-test-runner \"test/**/*.test.js\" --node-resolve --playwright --browsers chromium",
+      "files": [],
+      "output": [],
+      "dependencies": [
+        "build"
+      ]
+    }
+  },
+  "dependencies": {
+    "@google-labs/breadboard": "^0.30.0",
+    "@google-labs/core-kit": "^0.17.0",
+    "@google-labs/template-kit": "^0.3.15",
+    "@lit-labs/signals": "^0.1.1",
+    "@types/json-schema": "^7.0.15",
+    "jsonriver": "^1.0.0",
+    "lit": "^3.2.1",
+    "micromark": "^4.0.1",
+    "micromark-extension-gfm": "^3.0.0",
+    "signal-polyfill": "^0.2.1",
+    "signal-utils": "^0.20.0"
+  }
+}

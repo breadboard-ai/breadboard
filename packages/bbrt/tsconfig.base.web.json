@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "types": ["mocha"],
+    "paths": {
+      "@esm-bundle/chai": ["./temp-chai-types.d.ts"]
+    },
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "emitDecoratorMetadata": false
+  }
+}
