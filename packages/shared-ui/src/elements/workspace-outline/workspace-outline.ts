@@ -829,23 +829,6 @@ export class WorkspaceOutline extends LitElement {
     );
   }
 
-  #scrollTo(subGraphId: string) {
-    if (!this.#containerRef.value) {
-      return;
-    }
-
-    const subGraph = this.#containerRef.value.querySelector(`#${subGraphId}`);
-    if (!subGraph) {
-      return;
-    }
-
-    subGraph.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-      inline: "start",
-    });
-  }
-
   #renderPreview(value: NodeValue) {
     let preview = "";
     switch (typeof value) {
@@ -988,11 +971,7 @@ export class WorkspaceOutline extends LitElement {
                     this.dispatchEvent(new HideTooltipEvent());
                   }}
                   @click=${() => {
-                    if (this.mode === "list") {
-                      this.#scrollTo(this.#createSubItemId(subGraphId));
-                    } else {
-                      this.#changeWorkspaceItem(subGraphId, null);
-                    }
+                    this.#changeWorkspaceItem(subGraphId, null);
                   }}
                 >
                   ${subGraph?.title}
