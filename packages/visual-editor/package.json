@@ -40,12 +40,14 @@
     "build": "wireit",
     "build:vite": "wireit",
     "build:tsc": "wireit",
-    "copy-example-boards": "wireit"
+    "copy-example-boards": "wireit",
+    "copy-bbrt-assets": "wireit"
   },
   "wireit": {
     "build": {
       "dependencies": [
         "../agent-kit:build",
+        "../bbrt:build",
         "../breadboard:build",
         "../board-server-management:build",
         "../board-server-utils:build",
@@ -69,6 +71,7 @@
     "typescript-files-and-deps": {
       "dependencies": [
         "../agent-kit:build:tsc",
+        "../bbrt:build:tsc",
         "../breadboard:build:tsc",
         "../board-server-management:build:tsc",
         "../board-server-utils:build:tsc",
@@ -125,6 +128,10 @@
         {
           "script": "copy-light-kits",
           "cascade": false
+        },
+        {
+          "script": "copy-bbrt-assets",
+          "cascade": false
         }
       ],
       "files": [
@@ -132,6 +139,7 @@
         ".env*",
         "*.html",
         "oauth/",
+        "experimental/",
         "public/"
       ],
       "output": [
@@ -150,6 +158,10 @@
         },
         {
           "script": "copy-light-kits",
+          "cascade": false
+        },
+        {
+          "script": "copy-bbrt-assets",
           "cascade": false
         },
         {
@@ -181,6 +193,10 @@
         },
         {
           "script": "copy-light-kits",
+          "cascade": false
+        },
+        {
+          "script": "copy-bbrt-assets",
           "cascade": false
         },
         {
@@ -219,14 +235,27 @@
         "../agent-kit:build",
         "../google-drive-kit:build"
       ],
-      "files": [],
+      "files": [
+        "src/copy-light-kits.ts"
+      ],
       "output": [
         "public/*.kit.json"
       ]
     },
+    "copy-bbrt-assets": {
+      "command": "tsx src/copy-bbrt-assets.ts",
+      "files": [
+        "src/copy-bbrt-assets.ts"
+      ],
+      "output": [
+        "public/bbrt/"
+      ]
+    },
     "copy-pyoide-assets": {
       "command": "tsx src/copy-pyodide-assets.ts",
-      "files": [],
+      "files": [
+        "src/copy-pyodide-assets.ts"
+      ],
       "output": [
         "public/python_stdlib.zip",
         "public/pyodide*"
@@ -294,6 +323,7 @@
     "vitest": "^2.1.5"
   },
   "dependencies": {
+    "@breadboard-ai/bbrt": "^0.0.1",
     "@breadboard-ai/board-server-management": "1.19.1",
     "@breadboard-ai/board-server-utils": "0.1.6",
     "@breadboard-ai/build": "0.11.0",
