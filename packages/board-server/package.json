@@ -50,6 +50,7 @@
       "dependencies": [
         "build:esbuild",
         "../breadboard:build:tsc",
+        "../bbrt:build:tsc",
         "../data-store:build:tsc",
         "../agent-kit:build:tsc",
         "../palm-kit:build:tsc",
@@ -189,6 +190,7 @@
     "wireit": "^0.14.9"
   },
   "dependencies": {
+    "@breadboard-ai/bbrt": "^0.0.1",
     "@breadboard-ai/connection-client": "0.1.0",
     "@breadboard-ai/data-store": "0.2.6",
     "@breadboard-ai/google-drive-kit": "0.4.0",
