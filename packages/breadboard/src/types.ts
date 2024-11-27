@@ -237,6 +237,11 @@ export type NodeDescriberContext = {
    * JS Sandbox that will be used to run the module describers.
    */
   sandbox?: Sandbox;
+  /**
+   * Graph Store: tracks all the graphs, changes to them, and their
+   * dependencies.
+   */
+  graphStore?: MutableGraphStore;
 };
 
 export type NodeDescriberWires = {

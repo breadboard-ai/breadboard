@@ -308,6 +308,7 @@ class DescriberManager {
           loader,
           kits,
           sandbox: this.mutable.store.sandbox,
+          graphStore: this.mutable.store,
           wires: {
             incoming: Object.fromEntries(
               (options?.incoming ?? []).map((edge) => [

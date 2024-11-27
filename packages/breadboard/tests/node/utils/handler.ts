@@ -10,6 +10,7 @@ import { deepStrictEqual, ok } from "node:assert";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import simple from "../../bgl/simple.bgl.json" with { type: "json" };
 import { NodeDescriberResult, NodeDescriberWires } from "../../../src/types.js";
+import { MutableGraphStore } from "../../../src/index.js";
 
 describe("getGraphHandler", () => {
   test("returns undefined for non-URL-like type", async () => {
@@ -71,6 +72,7 @@ describe("getGraphHandler", () => {
         kits: [],
         outerGraph: simple,
         wires: {} as NodeDescriberWires,
+        graphStore: {} as MutableGraphStore,
       }
     );
     ok(description !== undefined);
