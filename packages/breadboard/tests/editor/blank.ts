@@ -21,7 +21,7 @@ const inspect = (
   options: InspectableGraphOptions = {}
 ): InspectableGraph => {
   const store = new GraphStore(makeTerribleOptions(options));
-  return new Graph("", new MutableGraphImpl(graph, store, options));
+  return new Graph("", new MutableGraphImpl(graph, store));
 };
 
 test("importBlank creates a nice blank board", async (t) => {

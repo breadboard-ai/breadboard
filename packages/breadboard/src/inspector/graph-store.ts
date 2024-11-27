@@ -23,11 +23,19 @@ import {
   MutableGraphStore,
 } from "./types.js";
 import { hash } from "../utils/hash.js";
-import { Kit } from "../types.js";
+import { Kit, NodeHandlerContext } from "../types.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { createLoader } from "../loader/index.js";
 
-export { GraphStore, makeTerribleOptions };
+export { GraphStore, makeTerribleOptions, contextFromStore };
+
+function contextFromStore(store: MutableGraphStore): NodeHandlerContext {
+  return {
+    kits: [...store.kits],
+    loader: store.loader,
+    sandbox: store.sandbox,
+  };
+}
 
 // TODO: Deprecate and remove.
 function makeTerribleOptions(
@@ -49,7 +57,6 @@ class GraphStore implements MutableGraphStore {
   readonly sandbox: Sandbox;
   readonly loader: GraphLoader;
 
-  #options: InspectableGraphOptions;
   #mainGraphIds: Map<string, MainGraphIdentifier> = new Map();
   #mutables: Map<MainGraphIdentifier, MutableGraph> = new Map();
 
@@ -57,14 +64,13 @@ class GraphStore implements MutableGraphStore {
     this.kits = args.kits;
     this.sandbox = args.sandbox;
     this.loader = args.loader;
-    this.#options = args;
   }
 
   async load(
     url: string,
     options: GraphLoaderContext
   ): Promise<Result<GraphHandle>> {
-    const loader = this.#options.loader;
+    const loader = this.loader;
     if (!loader) {
       return error(`Unable to load "${url}": no loader provided`);
     }
@@ -146,7 +152,7 @@ class GraphStore implements MutableGraphStore {
       return { success: true, result: existing };
     } else {
       // Brand new graph
-      const mutable = new MutableGraphImpl(graph, this, this.#options);
+      const mutable = new MutableGraphImpl(graph, this);
       this.#mutables.set(mutable.id, mutable);
       this.#mainGraphIds.set(url, mutable.id);
       return { success: true, result: mutable };

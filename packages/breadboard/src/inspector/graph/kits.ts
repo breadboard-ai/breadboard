@@ -6,27 +6,27 @@
 
 import { getGraphHandler } from "../../handler.js";
 import {
-  NodeHandlers,
-  NodeHandler,
-  NodeDescriberResult,
-  NodeHandlerMetadata,
-  NodeDescriptor,
-  NodeHandlerContext,
-  NodeTypeIdentifier,
-  NodeHandlerObject,
   GraphDescriptor,
+  NodeDescriberResult,
+  NodeDescriptor,
+  NodeHandler,
+  NodeHandlerMetadata,
+  NodeHandlerObject,
+  NodeHandlers,
+  NodeTypeIdentifier,
 } from "../../types.js";
 import { graphUrlLike } from "../../utils/graph-url-like.js";
-import { collectPortsForType, filterSidePorts } from "./ports.js";
-import { describeInput, describeOutput } from "./schemas.js";
+import { contextFromStore } from "../graph-store.js";
 import {
-  InspectableGraphOptions,
   InspectableKit,
   InspectableKitCache,
   InspectableNodePorts,
   InspectableNodeType,
+  MutableGraph,
   NodeTypeDescriberOptions,
 } from "../types.js";
+import { collectPortsForType, filterSidePorts } from "./ports.js";
+import { describeInput, describeOutput } from "./schemas.js";
 
 export { KitCache };
 
@@ -59,7 +59,7 @@ const createBuiltInKit = (): InspectableKit => {
 
 const createCustomTypesKit = (
   nodes: NodeDescriptor[],
-  context: NodeHandlerContext
+  mutable: MutableGraph
 ): InspectableKit[] => {
   const urlLikeNodeTypes = nodes.filter((node) => graphUrlLike(node.type));
 
@@ -75,20 +75,20 @@ const createCustomTypesKit = (
         url: "",
       },
       nodeTypes: uniqueTypes.map((type) => {
-        return new CustomNodeType(type, context);
+        return new CustomNodeType(type, mutable);
       }),
     },
   ];
 };
 
 export const collectKits = (
-  context: NodeHandlerContext,
+  mutable: MutableGraph,
   graph: GraphDescriptor
 ): InspectableKit[] => {
-  const { kits = [] } = context;
+  const kits = mutable.store.kits;
   return [
     createBuiltInKit(),
-    ...createCustomTypesKit(graph.nodes, context),
+    ...createCustomTypesKit(graph.nodes, mutable),
     ...kits.map((kit) => {
       const descriptor = {
         title: kit.title,
@@ -98,7 +98,7 @@ export const collectKits = (
       };
       return {
         descriptor,
-        nodeTypes: collectNodeTypes(kit.handlers, context),
+        nodeTypes: collectNodeTypes(kit.handlers, mutable),
       };
     }),
   ];
@@ -106,20 +106,20 @@ export const collectKits = (
 
 export const createGraphNodeType = (
   type: NodeTypeIdentifier,
-  context: NodeHandlerContext
+  mutable: MutableGraph
 ): InspectableNodeType => {
-  return new CustomNodeType(type, context);
+  return new CustomNodeType(type, mutable);
 };
 
 const collectNodeTypes = (
   handlers: NodeHandlers,
-  context: NodeHandlerContext
+  mutable: MutableGraph
 ): InspectableNodeType[] => {
   return Object.entries(handlers)
     .sort()
     .map(([type, handler]) => {
       if (graphUrlLike(type)) {
-        return new CustomNodeType(type, context);
+        return new CustomNodeType(type, mutable);
       }
       return new KitNodeType(type, handler);
     });
@@ -220,9 +220,12 @@ class CustomNodeType implements InspectableNodeType {
   #metadata: NodeHandlerMetadata | null = null;
   #handlerPromise: Promise<NodeHandlerObject | undefined> | null = null;
 
-  constructor(type: string, context: NodeHandlerContext) {
+  constructor(type: string, mutable: MutableGraph) {
     this.#type = type;
-    this.#handlerPromise = getGraphHandler(type, context);
+    this.#handlerPromise = getGraphHandler(
+      type,
+      contextFromStore(mutable.store)
+    );
   }
 
   async #readMetadata() {
@@ -253,10 +256,10 @@ class CustomNodeType implements InspectableNodeType {
 class KitCache implements InspectableKitCache {
   #types: Map<NodeTypeIdentifier, InspectableNodeType> = new Map();
   #kits: InspectableKit[] = [];
-  #options: InspectableGraphOptions;
+  #mutable: MutableGraph;
 
-  constructor(options: InspectableGraphOptions) {
-    this.#options = options;
+  constructor(mutable: MutableGraph) {
+    this.#mutable = mutable;
   }
 
   getType(id: NodeTypeIdentifier): InspectableNodeType | undefined {
@@ -271,7 +274,7 @@ class KitCache implements InspectableKitCache {
   }
 
   rebuild(graph: GraphDescriptor) {
-    const kits = collectKits(this.#options, graph);
+    const kits = collectKits(this.#mutable, graph);
 
     this.#types = new Map(
       kits.flatMap((kit) => kit.nodeTypes.map((type) => [type.type(), type]))

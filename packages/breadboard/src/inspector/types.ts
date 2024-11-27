@@ -696,8 +696,6 @@ export type MutableGraph = {
   graph: GraphDescriptor;
   readonly id: MainGraphIdentifier;
   readonly graphs: InspectableGraphCache;
-  // TODO: Deprecate once all callers are using `store`.
-  readonly options: InspectableGraphOptions;
   readonly store: MutableGraphStore;
   readonly nodes: InspectableNodeCache;
   readonly edges: InspectableEdgeCache;

@@ -29,7 +29,7 @@ async function describe(
   inputs?: InputValues
 ): Promise<Result<NodeDescriberResult>> {
   const store = new GraphStore(makeTerribleOptions(options));
-  const mutable = new MutableGraphImpl(graph, store, options);
+  const mutable = new MutableGraphImpl(graph, store);
   const describer = DescriberManager.create(graphId, mutable);
   if (!describer.success) {
     return describer;

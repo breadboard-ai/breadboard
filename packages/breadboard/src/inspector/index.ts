@@ -30,7 +30,7 @@ export const inspect = (
   options: InspectableGraphOptions = {}
 ): InspectableGraph => {
   const store = new GraphStore(makeTerribleOptions(options));
-  return new Graph("", new MutableGraphImpl(graph, store, options));
+  return new Graph("", new MutableGraphImpl(graph, store));
 };
 
 export const createRunObserver = (
