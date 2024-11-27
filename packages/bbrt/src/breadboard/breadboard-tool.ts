@@ -55,7 +55,7 @@ export class BreadboardTool implements BBRTTool<InputValues, OutputValues> {
   }
 
   get icon() {
-    return "/images/tool.svg";
+    return "/bbrt/images/tool.svg";
   }
 
   renderCard(inputs: Record<string, unknown>) {

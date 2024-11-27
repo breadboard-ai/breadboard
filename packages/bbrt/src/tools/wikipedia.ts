@@ -15,7 +15,7 @@ type WikipediaOutput =
 export const getWikipediaArticle: BBRTTool<{ title: string }, WikipediaOutput> =
   {
     displayName: "Get Wikipedia Article",
-    icon: "/images/wikipedia.png",
+    icon: "/bbrt/images/wikipedia.png",
     declaration: () => ({
       name: "get_wikipedia_article",
       description:
