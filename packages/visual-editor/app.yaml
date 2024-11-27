@@ -6,9 +6,6 @@ handlers:
   - url: /oauth/
     static_files: dist/oauth/index.html
     upload: dist/oauth/index.html
-  - url: /experimental/bbrt/
-    static_files: dist/experimental/bbrt/index.html
-    upload: dist/experimental/bbrt/index.html
   - url: /(.*)
     static_files: dist/\1
     upload: dist/(.*)
