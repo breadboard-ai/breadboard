@@ -5,6 +5,7 @@
  */
 
 import {
+  Edge,
   GraphIdentifier,
   GraphMetadata,
   KitDescriptor,
@@ -18,12 +19,30 @@ import {
   NodeValue,
 } from "@breadboard-ai/types";
 import { NodeHandlerMetadata, Schema } from "../../types.js";
+import {
+  TypedEventTarget,
+  TypedEventTargetType,
+} from "../../utils/typed-event-target.js";
+
+export type SnapshotEventMap = {
+  stale: SnapshotStaleEvent;
+  fresh: SnapshotFreshEvent;
+};
+
+export type SnapshotStaleEvent = Event;
+export type SnapshotFreshEvent = Event;
+
+export type SnapshotEventTarget = TypedEventTarget<SnapshotEventMap>;
+
+export type InspectableSnapshot = TypedEventTargetType<SnapshotEventMap> & {
+  current(): InspectableMainGraphSnapshot;
+};
 
 export type InspectableMainGraphSnapshot = {
   /**
-   * Returns this graph's metadata, if exists.
+   * Returns this graph's metadata, if exists
    */
-  readonly metadata: GraphMetadata;
+  readonly metadata: GraphMetadata | undefined;
   /**
    * Returns all nodes in the graph.
    */
@@ -136,30 +155,14 @@ export type InspectableNodeSnapshot = {
   /**
    * Returns the current state of node's ports
    */
-  readonly ports: InspectableNodePortsSnapshot;
+  readonly ports: InspectableNodePortsSnapshot | undefined;
 };
 
-export type InspectableEdgeSnapshot = {
-  /**
-   * The outgoing node of the edge.
-   */
-  from: InspectableNodeSnapshot;
-  /**
-   * The name of the port of the outgoing node.
-   */
-  out: InspectablePortSnapshot;
-  /**
-   * The incoming node of the edge.
-   */
-  to: InspectableNodeSnapshot;
-  /**
-   * The name of the port of the incoming node.
-   */
-  in: InspectablePortSnapshot;
+export type InspectableEdgeSnapshot = Edge & {
   /**
    * The type of the edge.
    */
-  type: "ordinary" | "constant" | "control" | "star";
+  readonly type: "ordinary" | "constant" | "control" | "star";
 };
 
 export type InspectableModuleSnapshot = {
@@ -178,7 +181,7 @@ export type InspectableNodeTypeSnapshot = {
   /**
    * Returns the metadata, associated with this node type.
    */
-  readonly metadata: NodeHandlerMetadata;
+  readonly metadata: NodeHandlerMetadata | undefined;
   /**
    * Returns the type of the node.
    */
@@ -186,7 +189,7 @@ export type InspectableNodeTypeSnapshot = {
   /**
    * Returns the ports of the node.
    */
-  readonly ports: InspectableNodePortsSnapshot;
+  readonly ports: InspectableNodePortsSnapshot | undefined;
 };
 
 export type InspectableNodePortsSnapshot = {
@@ -205,7 +208,7 @@ export type InspectableNodePortsSnapshot = {
 };
 
 export type InspectablePortListSnapshot = {
-  readonly ports: InspectablePortSnapshot;
+  readonly ports: InspectablePortSnapshot[];
   /**
    * Returns true if the list of ports is fixed. Returns false if the node
    * expects a dynamic number of ports.
