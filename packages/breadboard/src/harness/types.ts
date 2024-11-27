@@ -13,7 +13,10 @@ import type {
   TraversalResult,
 } from "@breadboard-ai/types";
 import type { DataStore } from "../data/types.js";
-import { InspectableRunObserver } from "../inspector/types.js";
+import {
+  InspectableRunObserver,
+  MutableGraphStore,
+} from "../inspector/types.js";
 import type { GraphLoader } from "../loader/types.js";
 import type { NodeProxyConfig } from "../remote/config.js";
 import type {
@@ -217,6 +220,11 @@ export type RunConfig = {
    * The data store to use for storing data.
    */
   store?: DataStore;
+  /**
+   * Graph Store: tracks all the graphs, changes to them, and their
+   * dependencies.
+   */
+  graphStore?: MutableGraphStore;
   /**
    * The state from which to resume the run.
    */

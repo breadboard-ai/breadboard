@@ -1579,6 +1579,7 @@ export class Main extends LitElement {
           store: this.#dataStore,
           inputs: BreadboardUI.Data.inputsFromSettings(this.#settings),
           interactiveSecrets: true,
+          graphStore: this.#graphStore,
           ...config,
         },
         this.#settings,
@@ -3067,6 +3068,7 @@ export class Main extends LitElement {
                       kits: [], // The kits are added by the runtime.
                       loader: this.#runtime.board.getLoader(),
                       store: this.#dataStore,
+                      graphStore: this.#graphStore,
                       inputs: BreadboardUI.Data.inputsFromSettings(
                         this.#settings
                       ),

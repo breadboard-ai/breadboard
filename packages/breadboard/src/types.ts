@@ -25,6 +25,7 @@ import { GraphLoader } from "./loader/types.js";
 import { DataStore } from "./data/types.js";
 import { ManagedRunState, RunState } from "./run/types.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
+import { MutableGraphStore } from "./inspector/types.js";
 
 export type {
   Capability,
@@ -634,6 +635,11 @@ export interface NodeHandlerContext {
    * JS Sandbox that will be used to run the imperative graphs.
    */
   sandbox?: Sandbox;
+  /**
+   * Graph Store: tracks all the graphs, changes to them, and their
+   * dependencies.
+   */
+  graphStore?: MutableGraphStore;
 }
 
 export type RunArguments = NodeHandlerContext & {
