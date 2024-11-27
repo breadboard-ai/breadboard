@@ -1,6 +1,5 @@
 {
   "name": "@breadboard-ai/bbrt",
-  "private": true,
   "version": "0.0.1",
   "description": "BBRT",
   "author": "Google LLC",
