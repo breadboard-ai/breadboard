@@ -44,7 +44,10 @@ export class BBRTModelSelector extends SignalWatcher(LitElement) {
         @click=${this.#cycleModel}
         title="Using ${model}. Click to cycle models."
       >
-        <img alt="Using model ${model}" src="/images/${model}-logomark.svg" />
+        <img
+          alt="Using model ${model}"
+          src="/bbrt/images/${model}-logomark.svg"
+        />
       </button>
     `;
   }

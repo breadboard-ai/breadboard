@@ -189,7 +189,7 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       role="img"
       part="icon icon-${role} icon-${status.get()}"
     >
-      <use href="/images/${role}.svg#icon"></use>
+      <use href="/bbrt/images/${role}.svg#icon"></use>
     </svg>`;
   }
 }
