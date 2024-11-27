@@ -5,7 +5,6 @@
  */
 
 import { config } from "dotenv";
-import { resolve } from "path";
 import { defineConfig } from "vitest/config";
 
 export const buildCustomAllowList = (value?: string) => {
@@ -22,6 +21,7 @@ export default defineConfig((_) => {
           worker: "src/worker.ts",
           sample: "./index.html",
           oauth: "./oauth/index.html",
+          bbrt: "./experimental/bbrt/index.html",
           "palm-kit": "src/palm-kit.ts",
           "core-kit": "src/core-kit.ts",
           "json-kit": "src/json-kit.ts",
