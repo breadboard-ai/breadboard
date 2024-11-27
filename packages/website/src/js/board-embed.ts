@@ -130,12 +130,12 @@ export class BoardEmbed extends LitElement {
       kits.push(agentKit);
     }
 
-    if (!graph) {
+    if (!graph.success) {
       return html`Unable to load board`;
     }
 
     const collapseNodesByDefault = this.collapseNodesByDefault === "true";
-    const inspectableGraph = inspect(graph, { kits, loader });
+    const inspectableGraph = inspect(graph.graph, { kits, loader });
     return html`<bb-editor
         .loader=${loader}
         .kits=${kits}
