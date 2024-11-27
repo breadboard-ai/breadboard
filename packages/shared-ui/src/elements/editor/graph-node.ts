@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InspectablePort, PortStatus } from "@google-labs/breadboard";
+import {
+  InspectableModules,
+  InspectablePort,
+  PortStatus,
+} from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
 import {
   ComponentExpansionState,
@@ -94,6 +98,7 @@ export class GraphNode extends PIXI.Container {
   }> = [];
   #inPortLocations: Map<string, PIXI.ObservablePoint> = new Map();
   #outPortLocations: Map<string, PIXI.ObservablePoint> = new Map();
+  #modules: InspectableModules | null = null;
   #selected = false;
   #highlightForAdHoc = false;
   #expansionState: ComponentExpansionState = "expanded";
@@ -559,6 +564,15 @@ export class GraphNode extends PIXI.Container {
     return null;
   }
 
+  set modules(modules: InspectableModules | null) {
+    this.#modules = modules;
+    this.#isDirty = true;
+  }
+
+  get modules() {
+    return this.#modules;
+  }
+
   set inPorts(ports: InspectablePort[] | null) {
     this.#collapsedPortList.readOnly = this.readOnly;
     this.#collapsedPortList.inPorts = ports;
@@ -571,7 +585,11 @@ export class GraphNode extends PIXI.Container {
     for (const port of ports) {
       let portItem = this.#inPortsData.get(port.name);
       if (!portItem) {
-        const label = new GraphNodePortLabel(port, this.#showNodePreviewValues);
+        const label = new GraphNodePortLabel(
+          port,
+          this.#showNodePreviewValues,
+          this.#modules
+        );
         label.expansionState = this.#expansionState;
         label.on(
           GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,

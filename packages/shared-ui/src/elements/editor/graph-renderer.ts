@@ -737,6 +737,10 @@ export class GraphRenderer extends LitElement {
       graph.nodes = opts.nodes;
     }
 
+    if (opts.modules !== undefined) {
+      graph.modules = opts.modules;
+    }
+
     if (opts.typeMetadata !== undefined) {
       graph.typeMetadata = opts.typeMetadata;
     }

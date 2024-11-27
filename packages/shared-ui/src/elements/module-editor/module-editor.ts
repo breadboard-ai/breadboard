@@ -750,6 +750,7 @@ export class ModuleEditor extends LitElement {
       edges: selectedGraph.edges(),
       nodes: selectedGraph.nodes(),
       metadata: selectedGraph.metadata() || {},
+      modules: selectedGraph.modules(),
       visible: false,
     });
 

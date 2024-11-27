@@ -334,7 +334,7 @@ export class Editor extends LitElement {
     url: string,
     subGraphId: string | null,
     selectedGraph: InspectableGraph
-  ) {
+  ): Promise<GraphOpts> {
     const ports = new Map<string, InspectableNodePorts>();
     const typeMetadata = new Map<string, NodeHandlerMetadata>();
     for (const node of selectedGraph.nodes()) {
@@ -362,6 +362,7 @@ export class Editor extends LitElement {
       typeMetadata,
       edges: selectedGraph.edges(),
       nodes: selectedGraph.nodes(),
+      modules: selectedGraph.modules(),
       metadata: selectedGraph.metadata() || {},
     };
   }
