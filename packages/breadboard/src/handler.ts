@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { inspect } from "./inspector/index.js";
 import { resolveGraph, SENTINEL_BASE_URL } from "./loader/loader.js";
 import { invokeGraph } from "./run/invoke-graph.js";
 import type {
@@ -30,6 +29,13 @@ const getHandlerFunction = (handler: NodeHandler): NodeHandlerFunction => {
   if (handler instanceof Function) return handler;
   throw new Error("Invalid handler");
 };
+
+function emptyDescriberResult(): NodeDescriberResult {
+  return {
+    inputSchema: { type: "object" },
+    outputSchema: { type: "object" },
+  };
+}
 
 export const callHandler = async (
   handler: NodeHandler,
@@ -213,7 +219,18 @@ async function describeGraph(
   graph: GraphDescriptor,
   context: NodeDescriberContext
 ) {
-  const inspectableGraph = inspect(graph, context);
+  const graphStore = context?.graphStore;
+  if (!graphStore) {
+    return emptyDescriberResult();
+  }
+  const adding = graphStore.addByDescriptor(graph);
+  if (!adding.success) {
+    return emptyDescriberResult();
+  }
+  const inspectableGraph = graphStore.inspect(adding.result, "");
+  if (!inspectableGraph) {
+    return emptyDescriberResult();
+  }
   const result = await inspectableGraph.describe(inputs);
   return result;
 }

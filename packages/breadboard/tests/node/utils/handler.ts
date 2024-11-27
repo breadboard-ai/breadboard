@@ -10,7 +10,7 @@ import { deepStrictEqual, ok } from "node:assert";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import simple from "../../bgl/simple.bgl.json" with { type: "json" };
 import { NodeDescriberResult, NodeDescriberWires } from "../../../src/types.js";
-import { MutableGraphStore } from "../../../src/index.js";
+import { makeTestGraphStore } from "../../helpers/_graph-store.js";
 
 describe("getGraphHandler", () => {
   test("returns undefined for non-URL-like type", async () => {
@@ -45,6 +45,7 @@ describe("getGraphHandler", () => {
           return { success: true, graph: simple as GraphDescriptor };
         },
       },
+      graphStore: makeTestGraphStore(),
     });
     ok(handler !== undefined);
     ok("invoke" in handler);
@@ -61,6 +62,7 @@ describe("getGraphHandler", () => {
           return { success: true, graph: simple as GraphDescriptor };
         },
       },
+      graphStore: makeTestGraphStore(),
     });
     ok(handler !== undefined);
     ok("describe" in handler);
@@ -72,7 +74,7 @@ describe("getGraphHandler", () => {
         kits: [],
         outerGraph: simple,
         wires: {} as NodeDescriberWires,
-        graphStore: {} as MutableGraphStore,
+        graphStore: makeTestGraphStore(),
       }
     );
     ok(description !== undefined);
