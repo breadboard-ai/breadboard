@@ -240,7 +240,7 @@ export class WorkspaceOutline extends LitElement {
     }
 
     details.declarative > summary {
-      padding-right: var(--bb-grid-size-8);
+      padding-right: var(--bb-grid-size-9);
       cursor: pointer;
       background: var(--bb-icon-unfold-more) calc(100% - 4px) center / 20px 20px
         no-repeat;
@@ -428,23 +428,28 @@ export class WorkspaceOutline extends LitElement {
     }
 
     li.node.human > .title::before {
-      background: transparent var(--bb-icon-human) center -1px / 20px 20px no-repeat;
+      background: transparent var(--bb-icon-human) center -1px / 20px 20px
+        no-repeat;
     }
 
     li.node.urlTemplate > .title::before {
-      background: transparent var(--bb-icon-http) center -1px / 20px 20px no-repeat;
+      background: transparent var(--bb-icon-http) center -1px / 20px 20px
+        no-repeat;
     }
 
     li.node.fetch > .title::before {
-      background: transparent var(--bb-icon-fetch) center -1px / 20px 20px no-repeat;
+      background: transparent var(--bb-icon-fetch) center -1px / 20px 20px
+        no-repeat;
     }
 
     li.node.jsonata > .title::before {
-      background: transparent var(--bb-icon-jsonata) center -1px / 20px 20px no-repeat;
+      background: transparent var(--bb-icon-jsonata) center -1px / 20px 20px
+        no-repeat;
     }
 
     li.node.joiner > .title::before {
-      background: transparent var(--bb-icon-merge-type) center -1px / 20px 20px no-repeat;
+      background: transparent var(--bb-icon-merge-type) center -1px / 20px 20px
+        no-repeat;
     }
 
     .change-subitem {
@@ -601,6 +606,7 @@ export class WorkspaceOutline extends LitElement {
       background: transparent var(--bb-icon-more-vert) center center / 20px 20px
         no-repeat;
       font-size: 0;
+      flex: 0 0 auto;
       margin: 0 0 0 var(--bb-grid-size);
       display: none;
       cursor: pointer;
