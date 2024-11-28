@@ -24,7 +24,11 @@ import {
   TypedEventTarget,
   TypedEventTargetType,
 } from "../../utils/typed-event-target.js";
-import { ChangeGraphMetadataSpec } from "../../editor/types.js";
+import {
+  AddEdgeSpec,
+  AddNodeSpec,
+  ChangeGraphMetadataSpec,
+} from "../../editor/types.js";
 
 export type SnapshotEventMap = {
   stale: SnapshotStaleEvent;
@@ -296,10 +300,18 @@ export type InspectablePortSnapshot = {
   readonly kind: "input" | "output" | "side";
 };
 
-export type NewGraphSpec = {
-  type: "newgraph";
+export type SnapshotAddGraphSpec = {
+  type: "addgraph";
   graphId: GraphIdentifier;
   metadata: GraphInlineMetadata;
 };
 
-export type SnapshotChangeSpec = NewGraphSpec | ChangeGraphMetadataSpec;
+export type SnapshotAddEdgeSpec = AddEdgeSpec & {
+  id: number;
+};
+
+export type SnapshotChangeSpec =
+  | SnapshotAddGraphSpec
+  | ChangeGraphMetadataSpec
+  | AddNodeSpec
+  | SnapshotAddEdgeSpec;

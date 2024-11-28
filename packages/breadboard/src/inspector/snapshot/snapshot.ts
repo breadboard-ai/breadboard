@@ -53,6 +53,12 @@ class Snapshot
 
     this.#changes.newGraph(inspector.raw(), "");
     this.#changes.changeGraphMetadata(inspector.metadata(), "");
+    inspector.nodes().forEach((node) => {
+      this.#changes.addNode(node.descriptor, "");
+    });
+    inspector.edges().forEach((edge) => {
+      this.#changes.addEdge(edge.raw(), "");
+    });
   }
 
   rebuild(): Mutable<InspectableMainGraphSnapshot> {

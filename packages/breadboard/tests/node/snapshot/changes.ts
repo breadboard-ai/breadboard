@@ -13,41 +13,97 @@ import { deepStrictEqual } from "node:assert";
 import { SnapshotChangeSpec } from "../../../src/inspector/snapshot/types.js";
 
 function mutable(graph: GraphDescriptor) {
-  return new MutableGraphImpl(graph, makeTestGraphStore());
+  return new MutableGraphImpl(
+    graph,
+    makeTestGraphStore({
+      kits: [
+        {
+          url: "",
+          handlers: {
+            type: () => {
+              throw new Error("Not implemented");
+            },
+          },
+        },
+      ],
+    })
+  );
 }
 
 describe("Snapshot changes", async () => {
-  it("correctly rebuilds graph", async () => {
+  it("correctly builds initial list of changes", async () => {
     const blank = new Snapshot(mutable({ nodes: [], edges: [] }));
     deepStrictEqual(blank.changes, [
       {
-        type: "newgraph",
+        type: "addgraph",
         metadata: {},
         graphId: "",
       },
-    ]);
+    ] satisfies SnapshotChangeSpec[]);
+
+    const withInlineMetadata = new Snapshot(
+      mutable({ title: "Foo", description: "Bar", nodes: [], edges: [] })
+    );
+    deepStrictEqual(withInlineMetadata.changes, [
+      {
+        type: "addgraph",
+        metadata: { title: "Foo", description: "Bar" },
+        graphId: "",
+      },
+    ] satisfies SnapshotChangeSpec[]);
 
     const withMetadata = new Snapshot(
       mutable({
+        version: "0.0.1",
         nodes: [],
         edges: [],
-        metadata: {
-          tags: ["published"],
-        },
+        metadata: { tags: ["published"] },
       })
     );
     deepStrictEqual(withMetadata.changes, [
       {
-        type: "newgraph",
-        metadata: {},
+        type: "addgraph",
+        metadata: { version: "0.0.1" },
         graphId: "",
       },
       {
         type: "changegraphmetadata",
         graphId: "",
-        metadata: {
-          tags: ["published"],
-        },
+        metadata: { tags: ["published"] },
+      },
+    ] satisfies SnapshotChangeSpec[]);
+
+    const withNodes = new Snapshot(
+      mutable({
+        title: "Title",
+        nodes: [
+          { id: "first", type: "type", configuration: { foo: "foo" } },
+          { id: "second", type: "type", configuration: { bar: "bar" } },
+        ],
+        edges: [{ from: "first", out: "out", to: "second", in: "in" }],
+      })
+    );
+    deepStrictEqual(withNodes.changes, [
+      {
+        type: "addgraph",
+        metadata: { title: "Title" },
+        graphId: "",
+      },
+      {
+        type: "addnode",
+        node: { id: "first", type: "type", configuration: { foo: "foo" } },
+        graphId: "",
+      },
+      {
+        type: "addnode",
+        node: { id: "second", type: "type", configuration: { bar: "bar" } },
+        graphId: "",
+      },
+      {
+        type: "addedge",
+        edge: { from: "first", out: "out", to: "second", in: "in" },
+        id: 1115284803,
+        graphId: "",
       },
     ] satisfies SnapshotChangeSpec[]);
   });
