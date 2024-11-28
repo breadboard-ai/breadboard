@@ -97,7 +97,7 @@ export async function getIsolatedNodeGraphDescriptor(
   if (!adding.success) {
     return null;
   }
-  const breadboardGraph = graphStore.inspect(adding.result, "");
+  const breadboardGraph = graphStore.inspectAsync(adding.result, "");
   if (!breadboardGraph) {
     return null;
   }

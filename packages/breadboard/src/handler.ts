@@ -227,7 +227,7 @@ async function describeGraph(
   if (!adding.success) {
     return emptyDescriberResult();
   }
-  const inspectableGraph = graphStore.inspect(adding.result, "");
+  const inspectableGraph = graphStore.inspectAsync(adding.result, "");
   if (!inspectableGraph) {
     return emptyDescriberResult();
   }
