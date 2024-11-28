@@ -5,13 +5,13 @@
  */
 
 import {
-  inspect,
   invokeGraph,
   type InputValues,
   type Kit,
   type KitConstructor,
   type NewNodeFactory,
   type NewNodeValue,
+  type NodeDescriberResult,
   type NodeHandler,
   type NodeHandlerContext,
   type NodeHandlerObject,
@@ -110,18 +110,39 @@ function makeBoardComponentHandler(
   };
 }
 
+function emptyDescriberResult(): NodeDescriberResult {
+  return {
+    inputSchema: { type: "object" },
+    outputSchema: { type: "object" },
+  };
+}
+
 async function makeGraphDescriptorComponentHandler(
   id: string,
   descriptor: GraphDescriptor
 ): Promise<NodeHandler> {
-  const description = await inspect(descriptor).describe();
   return {
     metadata: {
       ...descriptor.metadata,
       title: descriptor.title,
       description: descriptor.description,
     },
-    describe: () => Promise.resolve(description),
+    async describe(inputs, _inputSchema, _outputSchema, context) {
+      const graphStore = context?.graphStore;
+      if (!graphStore) {
+        return emptyDescriberResult();
+      }
+      const adding = graphStore.addByDescriptor(descriptor);
+      if (!adding.success) {
+        return emptyDescriberResult();
+      }
+      const inspectableGraph = graphStore.inspect(adding.result, "");
+      if (!inspectableGraph) {
+        return emptyDescriberResult();
+      }
+      const result = await inspectableGraph.describe(inputs);
+      return result;
+    },
     async invoke(inputs: InputValues, context: NodeHandlerContext) {
       return invokeGraph({ graph: descriptor }, inputs, context);
     },
