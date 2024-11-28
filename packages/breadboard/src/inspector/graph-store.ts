@@ -11,10 +11,11 @@ import {
   EditableGraphOptions,
   Result,
 } from "../editor/types.js";
-import { GraphLoaderContext } from "../loader/types.js";
+import { GraphLoader, GraphLoaderContext } from "../loader/types.js";
 import { MutableGraphImpl } from "./graph/mutable-graph.js";
 import {
   GraphHandle,
+  GraphStoreArgs,
   InspectableGraph,
   InspectableGraphOptions,
   MainGraphIdentifier,
@@ -22,23 +23,54 @@ import {
   MutableGraphStore,
 } from "./types.js";
 import { hash } from "../utils/hash.js";
+import { Kit, NodeHandlerContext } from "../types.js";
+import { Sandbox } from "@breadboard-ai/jsandbox";
+import { createLoader } from "../loader/index.js";
 
-export { GraphStore };
+export { GraphStore, makeTerribleOptions, contextFromStore };
+
+function contextFromStore(store: MutableGraphStore): NodeHandlerContext {
+  return {
+    kits: [...store.kits],
+    loader: store.loader,
+    sandbox: store.sandbox,
+  };
+}
+
+// TODO: Deprecate and remove.
+function makeTerribleOptions(
+  options: InspectableGraphOptions = {}
+): Required<InspectableGraphOptions> {
+  return {
+    kits: options.kits || [],
+    sandbox: options.sandbox || {
+      runModule() {
+        throw new Error("Non-existent sandbox: Terrible Options were used.");
+      },
+    },
+    loader: createLoader(),
+  };
+}
 
 class GraphStore implements MutableGraphStore {
-  #options: InspectableGraphOptions;
+  readonly kits: readonly Kit[];
+  readonly sandbox: Sandbox;
+  readonly loader: GraphLoader;
+
   #mainGraphIds: Map<string, MainGraphIdentifier> = new Map();
   #mutables: Map<MainGraphIdentifier, MutableGraph> = new Map();
 
-  constructor(options: InspectableGraphOptions) {
-    this.#options = options;
+  constructor(args: GraphStoreArgs) {
+    this.kits = args.kits;
+    this.sandbox = args.sandbox;
+    this.loader = args.loader;
   }
 
   async load(
     url: string,
     options: GraphLoaderContext
   ): Promise<Result<GraphHandle>> {
-    const loader = this.#options.loader;
+    const loader = this.loader;
     if (!loader) {
       return error(`Unable to load "${url}": no loader provided`);
     }
@@ -120,7 +152,7 @@ class GraphStore implements MutableGraphStore {
       return { success: true, result: existing };
     } else {
       // Brand new graph
-      const mutable = new MutableGraphImpl(graph, this.#options);
+      const mutable = new MutableGraphImpl(graph, this);
       this.#mutables.set(mutable.id, mutable);
       this.#mainGraphIds.set(url, mutable.id);
       return { success: true, result: mutable };

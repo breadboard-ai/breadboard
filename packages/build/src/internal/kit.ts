@@ -5,24 +5,18 @@
  */
 
 import {
-  addKit,
-  Board,
-  inspect,
   invokeGraph,
-  type BreadboardNode,
-  type ConfigOrGraph,
   type InputValues,
   type Kit,
   type KitConstructor,
   type NewNodeFactory,
   type NewNodeValue,
+  type NodeDescriberResult,
   type NodeHandler,
   type NodeHandlerContext,
   type NodeHandlerObject,
-  type NodeHandlers,
 } from "@google-labs/breadboard";
-import type { GraphDescriptor, KitTag, SubGraphs } from "@breadboard-ai/types";
-import { GraphToKitAdapter, KitBuilder } from "@google-labs/breadboard/kits";
+import type { GraphDescriptor, KitTag } from "@breadboard-ai/types";
 import type { BoardDefinition } from "./board/board.js";
 import { serialize } from "./board/serialize.js";
 import type { Expand } from "./common/type-util.js";
@@ -93,7 +87,6 @@ export async function kit<T extends ComponentManifest>(
 
   return Object.assign(kit, {
     ...kitBoundComponents,
-    legacy: () => makeLegacyKit<T>(options),
   }) as BuildKit<T>;
 }
 
@@ -117,18 +110,39 @@ function makeBoardComponentHandler(
   };
 }
 
+function emptyDescriberResult(): NodeDescriberResult {
+  return {
+    inputSchema: { type: "object" },
+    outputSchema: { type: "object" },
+  };
+}
+
 async function makeGraphDescriptorComponentHandler(
   id: string,
   descriptor: GraphDescriptor
 ): Promise<NodeHandler> {
-  const description = await inspect(descriptor).describe();
   return {
     metadata: {
       ...descriptor.metadata,
       title: descriptor.title,
       description: descriptor.description,
     },
-    describe: () => Promise.resolve(description),
+    async describe(inputs, _inputSchema, _outputSchema, context) {
+      const graphStore = context?.graphStore;
+      if (!graphStore) {
+        return emptyDescriberResult();
+      }
+      const adding = graphStore.addByDescriptor(descriptor);
+      if (!adding.success) {
+        return emptyDescriberResult();
+      }
+      const inspectableGraph = graphStore.inspect(adding.result, "");
+      if (!inspectableGraph) {
+        return emptyDescriberResult();
+      }
+      const result = await inspectableGraph.describe(inputs);
+      return result;
+    },
     async invoke(inputs: InputValues, context: NodeHandlerContext) {
       return invokeGraph({ graph: descriptor }, inputs, context);
     },
@@ -161,56 +175,6 @@ function bindComponentToKit<
       return target.apply(thisArg, [...args, kitBinding] as any);
     },
   });
-}
-
-/**
- * We also expose a "legacy" property, an async function which returns a version
- * of this Kit that can be used directly in the old API.
- */
-async function makeLegacyKit<T extends ComponentManifest>({
-  title,
-  description,
-  version,
-  url,
-  components,
-}: KitOptions): Promise<Expand<LegacyKit<T>>> {
-  const kitBoard = new Board({ title, description, version });
-  const { Core } = await import(
-    // Cast to prevent TypeScript from trying to import these types (we don't
-    // want to depend on them in the type system because it's a circular
-    // dependency).
-    "@google-labs/core-kit" as string
-  );
-  const core = kitBoard.addKit(Core) as object as {
-    invoke: (config?: ConfigOrGraph) => BreadboardNode<unknown, unknown>;
-  };
-  const handlers: NodeHandlers = {};
-  const adapter = await GraphToKitAdapter.create(kitBoard, url, []);
-  const graphs: SubGraphs = {};
-  for (const [id, component] of Object.entries(components)) {
-    if (isDiscreteComponent(component)) {
-      handlers[id] = component;
-    } else {
-      core.invoke({
-        $id: id,
-        $board: `#${id}`,
-        $metadata: {
-          ...component.metadata,
-          title: component.title ?? component.metadata?.title,
-          description: component.description ?? component.metadata?.description,
-        },
-      });
-      graphs[id] = isGraphDescriptor(component)
-        ? component
-        : serialize(component);
-      handlers[id] = adapter.handlerForNode(id);
-    }
-  }
-  kitBoard.graphs = graphs;
-  const builder = new KitBuilder(adapter.populateDescriptor({ url }));
-  return addKit(builder.build(handlers)) as object as Promise<
-    Expand<LegacyKit<T>>
-  >;
 }
 
 type LegacyKit<T extends ComponentManifest> = {

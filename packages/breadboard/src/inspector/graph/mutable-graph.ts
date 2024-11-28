@@ -19,12 +19,12 @@ import {
   InspectableDescriberResultCache,
   InspectableEdgeCache,
   InspectableGraphCache,
-  InspectableGraphOptions,
   InspectableKitCache,
   InspectableModuleCache,
   InspectableNodeCache,
   MainGraphIdentifier,
   MutableGraph,
+  MutableGraphStore,
 } from "../types.js";
 import { EdgeCache } from "./edge-cache.js";
 import { Edge } from "./edge.js";
@@ -38,7 +38,7 @@ import { Node } from "./node.js";
 export { MutableGraphImpl };
 
 class MutableGraphImpl implements MutableGraph {
-  readonly options: InspectableGraphOptions;
+  readonly store: MutableGraphStore;
   readonly id: MainGraphIdentifier;
 
   // @ts-expect-error Initialized in rebuild.
@@ -56,8 +56,8 @@ class MutableGraphImpl implements MutableGraph {
   // @ts-expect-error Initialized in rebuild.
   kits: InspectableKitCache;
 
-  constructor(graph: GraphDescriptor, options: InspectableGraphOptions) {
-    this.options = options;
+  constructor(graph: GraphDescriptor, store: MutableGraphStore) {
+    this.store = store;
     this.id = crypto.randomUUID();
     this.rebuild(graph);
   }
@@ -130,7 +130,7 @@ class MutableGraphImpl implements MutableGraph {
     );
     this.modules = new ModuleCache();
     this.describe = new DescribeResultCache();
-    this.kits = new KitCache(this.options);
+    this.kits = new KitCache(this);
     this.graphs = new GraphCache((id) => new Graph(id, this));
     this.graphs.rebuild(graph);
     this.nodes.rebuild(graph);

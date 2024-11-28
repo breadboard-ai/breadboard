@@ -67,13 +67,15 @@ export type * from "./utils/typed-event-target.js";
  */
 export { getGraphDescriptor } from "./capability.js";
 
-export { GraphStore } from "./inspector/graph-store.js";
-
 /**
  * The Inspector API.
  */
 export * from "./inspector/types.js";
-export { inspect, createRunObserver } from "./inspector/index.js";
+export {
+  inspect,
+  createRunObserver,
+  createGraphStore,
+} from "./inspector/index.js";
 export { PortStatus } from "./inspector/types.js";
 
 /**

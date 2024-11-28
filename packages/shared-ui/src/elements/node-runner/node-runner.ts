@@ -7,10 +7,11 @@ import { LitElement, html, css, PropertyValueMap, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { InputEnterEvent } from "../../events/events.js";
 import {
+  createGraphStore,
   createRunObserver,
   GraphDescriptor,
   GraphLoader,
-  GraphStore,
+  GraphStoreArgs,
   InspectableRun,
   InspectableRunObserver,
   Kit,
@@ -237,7 +238,7 @@ export class NodeRunner extends LitElement {
       // This is wrong, but we don't use this component at the moment.
       // We shouldn't create a new GraphStore instance here.
       // TODO: Pass the graph store from components above?
-      const store = new GraphStore({});
+      const store = createGraphStore({} as GraphStoreArgs);
       this.#runObserver = createRunObserver(store, {
         logLevel: "debug",
         skipDataStore: true,

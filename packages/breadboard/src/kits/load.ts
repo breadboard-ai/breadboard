@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { DescriberManager } from "../inspector/graph/describer-manager.js";
+import { MutableGraphImpl } from "../inspector/graph/mutable-graph.js";
 import { loadWithFetch } from "../loader/default.js";
 import { invokeGraph } from "../run/invoke-graph.js";
 import {
@@ -18,7 +20,6 @@ import {
   Schema,
 } from "../types.js";
 import { asRuntimeKit } from "./ctors.js";
-import { describe as describeHelper } from "./utils.js";
 
 const setBaseURL = (base: URL, key: string, graph: GraphDescriptor) => {
   if (graph.edges && graph.nodes) {
@@ -57,20 +58,18 @@ class GraphDescriptorNodeHandler implements NodeHandlerObject {
     _outputSchema?: Schema,
     context?: NodeDescriberContext
   ) {
-    const describing = await describeHelper(
-      this.#graph,
-      "",
-      {
-        kits: context?.kits,
-        loader: context?.loader,
-        sandbox: context?.sandbox,
-      },
-      inputs
-    );
-    if (!describing.success) {
+    const graphStore = context?.graphStore;
+    if (!graphStore) {
+      console.warn("Unable to describe graph: no GraphStore supplied.");
       return emptyResult;
     }
-    return describing.result;
+    // TODO: Avoid creating a free-standing mutable graph here.
+    const mutable = new MutableGraphImpl(this.#graph, graphStore);
+    const describer = DescriberManager.create("", mutable);
+    if (!describer.success) {
+      return emptyResult;
+    }
+    return await describer.result.describe(inputs);
   }
 
   async invoke(inputs: InputValues, context: NodeHandlerContext) {

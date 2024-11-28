@@ -88,6 +88,6 @@ class GraphQueries {
     if (!graphUrlLike(id)) {
       return undefined;
     }
-    return createGraphNodeType(id, this.#cache.options);
+    return createGraphNodeType(id, this.#cache);
   }
 }

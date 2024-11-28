@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
+  createGraphStore,
   createLoader,
   GraphDescriptor,
   GraphProviderCapabilities,
-  inspect,
   InspectableGraph,
   InspectableModules,
   InspectableNodePorts,
@@ -674,7 +674,27 @@ export class ModuleEditor extends LitElement {
     };
   }
 
-  async #processGraph(graph: InspectableGraph | null): Promise<GraphRenderer> {
+  async #processGraph(descriptor: GraphDescriptor): Promise<GraphRenderer> {
+    const graphStore = createGraphStore({
+      kits: this.kits,
+      loader: createLoader(),
+      sandbox: {
+        runModule: () => {
+          throw new Error(
+            "The describer in module editor should not need the sandbox"
+          );
+        },
+      },
+    });
+    const adding = graphStore.addByDescriptor(descriptor);
+    if (!adding.success) {
+      return this.#graphRenderer;
+    }
+    const graph = graphStore.inspect(adding.result, "");
+    if (!graph) {
+      return this.#graphRenderer;
+    }
+
     if (GraphAssets.assetPrefix !== this.assetPrefix) {
       GraphAssets.instance().loadAssets(this.assetPrefix);
       await GraphAssets.instance().loaded;
@@ -798,13 +818,8 @@ export class ModuleEditor extends LitElement {
     const moduleGraphDescriptor = this.#createModuleGraph(isMainModule);
     let moduleGraph: HTMLTemplateResult | symbol = nothing;
     if (moduleGraphDescriptor) {
-      const inspectedModuleGraph = inspect(moduleGraphDescriptor, {
-        kits: this.kits,
-        loader: createLoader([], { disableDefaultProvider: true }),
-      });
-
       moduleGraph = html`${guard([this.moduleId, this.renderId], () => {
-        return html`${until(this.#processGraph(inspectedModuleGraph))}`;
+        return html`${until(this.#processGraph(moduleGraphDescriptor))}`;
       })}`;
     }
 

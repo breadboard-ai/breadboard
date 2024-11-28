@@ -12,13 +12,14 @@ import {
   InspectableRunEvent,
   InspectableRunObserver,
 } from "../../src/inspector/types.js";
-import { createRunObserver, GraphStore } from "../../src/index.js";
+import { createRunObserver } from "../../src/index.js";
 import { HarnessRunResult } from "../../src/harness/types.js";
 import { replaceSecrets } from "../../src/inspector/run/serializer.js";
 import {
   createDefaultDataStore,
   createDefaultRunStore,
 } from "../../src/data/index.js";
+import { makeTestGraphStore } from "../helpers/_graph-store.js";
 
 const BASE_PATH = new URL(
   "../../../tests/inspector/data/loader",
@@ -87,7 +88,7 @@ const GEMINI_KEY_VALUE = "b576eea9-5ae6-4e9d-9958-e798ad8dbff7";
 const GEMINI_SENTINEL = "103e9083-13fd-46b4-a9ee-683a09e31a26";
 
 test("run save/load: loadRawRun works as expected", async (t) => {
-  const store = new GraphStore({});
+  const store = makeTestGraphStore();
   const observer = createRunObserver(store, {
     logLevel: "debug",
   });
@@ -97,7 +98,7 @@ test("run save/load: loadRawRun works as expected", async (t) => {
 });
 
 test("run save/load: observer.save -> run.load roundtrip", async (t) => {
-  const store = new GraphStore({});
+  const store = makeTestGraphStore();
   const observer = createRunObserver(store, {
     logLevel: "debug",
     dataStore: createDefaultDataStore(),
@@ -118,7 +119,7 @@ test("run save/load: observer.save -> run.load roundtrip", async (t) => {
 });
 
 test("run save/load: replaceSecrets correctly replaces secrets", async (t) => {
-  const store = new GraphStore({});
+  const store = makeTestGraphStore();
   const observer = createRunObserver(store, {
     logLevel: "debug",
   });
@@ -168,7 +169,7 @@ test("run save/load: replaceSecrets correctly replaces secrets", async (t) => {
 });
 
 test("run load/save: serialization produces consistent size", async (t) => {
-  const store = new GraphStore({});
+  const store = makeTestGraphStore();
   const observer = createRunObserver(store, {
     logLevel: "debug",
     dataStore: createDefaultDataStore(),
