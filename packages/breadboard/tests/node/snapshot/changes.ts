@@ -20,8 +20,10 @@ function mutable(graph: GraphDescriptor) {
         {
           url: "",
           handlers: {
-            type: () => {
-              throw new Error("Not implemented");
+            type: {
+              invoke: () => {
+                throw new Error("Not implemented");
+              },
             },
           },
         },
@@ -92,6 +94,15 @@ describe("Snapshot changes", async () => {
             },
           },
         },
+        graphs: {
+          subgraph1: {
+            title: "Subgraph 1",
+            nodes: [
+              { id: "third", type: "type", configuration: { foo: "baz" } },
+            ],
+            edges: [{ from: "third", out: "out", to: "third", in: "in" }],
+          },
+        },
       })
     );
     deepStrictEqual(everything.changes, [
@@ -132,6 +143,35 @@ describe("Snapshot changes", async () => {
             runnable: true,
           },
         },
+      },
+      {
+        graphId: "subgraph1",
+        metadata: {
+          title: "Subgraph 1",
+        },
+        type: "addgraph",
+      },
+      {
+        graphId: "subgraph1",
+        node: {
+          configuration: {
+            foo: "baz",
+          },
+          id: "third",
+          type: "type",
+        },
+        type: "addnode",
+      },
+      {
+        edge: {
+          from: "third",
+          in: "in",
+          out: "out",
+          to: "third",
+        },
+        graphId: "subgraph1",
+        id: 4075679067,
+        type: "addedge",
       },
     ] satisfies SnapshotChangeSpec[]);
   });

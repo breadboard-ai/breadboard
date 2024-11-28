@@ -4,8 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GraphIdentifier } from "@breadboard-ai/types";
 import {
   InspectableEdge,
+  InspectableGraph,
   InspectableNodeType,
   MutableGraph,
 } from "../types.js";
@@ -51,16 +53,26 @@ class Snapshot
     }
     this.#changes = new ChangeMaker([]);
 
-    this.#changes.newGraph(inspector.raw(), "");
-    this.#changes.changeGraphMetadata(inspector.metadata(), "");
-    inspector.nodes().forEach((node) => {
-      this.#changes.addNode(node.descriptor, "");
-    });
-    inspector.edges().forEach((edge) => {
-      this.#changes.addEdge(edge.raw(), "");
-    });
+    this.rebuildSingleGraph(inspector, "");
     Object.entries(inspector.modules()).forEach(([id, module]) => {
       this.#changes.addModule(id, module);
+    });
+    Object.entries(inspector.graphs() || {}).forEach(([graphId, subgraph]) => {
+      this.rebuildSingleGraph(subgraph, graphId);
+    });
+  }
+
+  rebuildSingleGraph(
+    inspector: InspectableGraph,
+    graphId: GraphIdentifier
+  ): void {
+    this.#changes.newGraph(inspector.raw(), graphId);
+    this.#changes.changeGraphMetadata(inspector.metadata(), graphId);
+    inspector.nodes().forEach((node) => {
+      this.#changes.addNode(node.descriptor, graphId);
+    });
+    inspector.edges().forEach((edge) => {
+      this.#changes.addEdge(edge.raw(), graphId);
     });
   }
 
