@@ -14,7 +14,7 @@ import {
   ModuleIdentifier,
   NodeDescriptor,
 } from "@breadboard-ai/types";
-import { SnapshotChangeSpec } from "./types.js";
+import { SnapshotAddGraphSpec, SnapshotChangeSpec } from "./types.js";
 import { hash } from "../../utils/hash.js";
 import { InspectableModule } from "../types.js";
 
@@ -29,6 +29,13 @@ const INLINE_METADATA_PROPS: readonly (keyof GraphInlineMetadata)[] = [
 ] as const;
 
 const MODULE_PROPS: readonly (keyof Module)[] = ["code", "metadata"] as const;
+
+const ADD_GRAPH_PROPS: readonly (keyof SnapshotAddGraphSpec)[] = [
+  "type",
+  "metadata",
+  "graphId",
+  "main",
+];
 
 class ChangeMaker {
   constructor(public readonly changes: SnapshotChangeSpec[]) {}
@@ -62,12 +69,15 @@ class ChangeMaker {
     });
   }
 
-  newGraph(graph: GraphDescriptor, graphId: GraphIdentifier) {
-    this.changes.push({
-      type: "addgraph",
-      metadata: copy(INLINE_METADATA_PROPS, graph),
-      graphId,
-    });
+  addGraph(graph: GraphDescriptor, graphId: GraphIdentifier) {
+    this.changes.push(
+      copy(ADD_GRAPH_PROPS, {
+        type: "addgraph",
+        metadata: copy(INLINE_METADATA_PROPS, graph),
+        graphId,
+        main: graph.main,
+      })
+    );
   }
 }
 
@@ -84,6 +94,7 @@ function copy<
     if (typeof o === "function") o = o.call(source);
     if (o !== null && typeof o === "object" && Object.keys(o).length === 0)
       return;
+    if (o === undefined) return;
     if (key in source) {
       (result as Copyable)[key] = o;
     }

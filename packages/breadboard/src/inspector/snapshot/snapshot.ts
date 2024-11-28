@@ -66,14 +66,16 @@ class Snapshot
     inspector: InspectableGraph,
     graphId: GraphIdentifier
   ): void {
-    this.#changes.newGraph(inspector.raw(), graphId);
+    this.#changes.addGraph(inspector.raw(), graphId);
     this.#changes.changeGraphMetadata(inspector.metadata(), graphId);
-    inspector.nodes().forEach((node) => {
-      this.#changes.addNode(node.descriptor, graphId);
-    });
-    inspector.edges().forEach((edge) => {
-      this.#changes.addEdge(edge.raw(), graphId);
-    });
+    if (!inspector.imperative()) {
+      inspector.nodes().forEach((node) => {
+        this.#changes.addNode(node.descriptor, graphId);
+      });
+      inspector.edges().forEach((edge) => {
+        this.#changes.addEdge(edge.raw(), graphId);
+      });
+    }
   }
 
   rebuild(): Mutable<InspectableMainGraphSnapshot> {

@@ -304,7 +304,8 @@ export type InspectablePortSnapshot = {
 export type SnapshotAddGraphSpec = {
   type: "addgraph";
   graphId: GraphIdentifier;
-  metadata: GraphInlineMetadata;
+  metadata?: GraphInlineMetadata;
+  main?: string;
 };
 
 export type SnapshotAddEdgeSpec = AddEdgeSpec & {

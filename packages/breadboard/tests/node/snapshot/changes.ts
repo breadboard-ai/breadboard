@@ -22,7 +22,14 @@ function mutable(graph: GraphDescriptor) {
           handlers: {
             type: {
               invoke: () => {
-                throw new Error("Not implemented");
+                throw new Error('Test error: "type" should not be invoked');
+              },
+            },
+            runModule: {
+              invoke: () => {
+                throw new Error(
+                  'Test error: "run-module" should not be invoked'
+                );
               },
             },
           },
@@ -38,7 +45,6 @@ describe("Snapshot changes", async () => {
     deepStrictEqual(blank.changes, [
       {
         type: "addgraph",
-        metadata: {},
         graphId: "",
       },
     ] satisfies SnapshotChangeSpec[]);
@@ -175,4 +181,34 @@ describe("Snapshot changes", async () => {
       },
     ] satisfies SnapshotChangeSpec[]);
   });
+
+  const imperative = new Snapshot(
+    mutable({
+      title: "Title",
+      main: "main",
+      modules: {
+        main: {
+          code: "code",
+        },
+      },
+      edges: [],
+      nodes: [],
+    })
+  );
+
+  deepStrictEqual(imperative.changes, [
+    {
+      type: "addgraph",
+      metadata: { title: "Title" },
+      main: "main",
+      graphId: "",
+    },
+    {
+      type: "addmodule",
+      id: "main",
+      module: {
+        code: "code",
+      },
+    },
+  ] satisfies SnapshotChangeSpec[]);
 });
