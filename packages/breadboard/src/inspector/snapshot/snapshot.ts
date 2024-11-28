@@ -9,11 +9,13 @@ import {
   InspectableNodeType,
   MutableGraph,
 } from "../types.js";
+import { ChangeMaker } from "./change-maker.js";
 import {
   InspectableEdgeSnapshot,
   InspectableMainGraphSnapshot,
   InspectableNodeSnapshot,
   InspectableSnapshot,
+  SnapshotChangeSpec,
   SnapshotEventTarget,
 } from "./types.js";
 
@@ -26,12 +28,31 @@ class Snapshot
   implements InspectableSnapshot
 {
   #mutable: MutableGraph;
+  #changes!: ChangeMaker;
   #snapshot: Mutable<InspectableMainGraphSnapshot>;
 
   constructor(mutable: MutableGraph) {
     super();
     this.#mutable = mutable;
+    this.rebuildChanges();
     this.#snapshot = this.rebuild();
+  }
+
+  get changes(): SnapshotChangeSpec[] {
+    return this.#changes.changes;
+  }
+
+  rebuildChanges(): void {
+    const inspector = this.#mutable.graphs.get("");
+    if (!inspector) {
+      throw new Error(
+        `Snapshot API Integrity error: no main graph for "${this.#mutable.graph.url}`
+      );
+    }
+    this.#changes = new ChangeMaker([]);
+
+    this.#changes.newGraph(inspector.raw(), "");
+    this.#changes.changeGraphMetadata(inspector.metadata(), "");
   }
 
   rebuild(): Mutable<InspectableMainGraphSnapshot> {
