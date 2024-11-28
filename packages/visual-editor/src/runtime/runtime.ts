@@ -7,8 +7,8 @@
 import {
   addSandboxedRunModule,
   asRuntimeKit,
+  createGraphStore,
   createLoader,
-  GraphStore,
   Kit,
 } from "@google-labs/breadboard";
 import { Board } from "./board.js";
@@ -78,7 +78,7 @@ export async function create(config: RuntimeConfig): Promise<{
   }
 
   const loader = createLoader(servers);
-  const graphStore = new GraphStore({
+  const graphStore = createGraphStore({
     kits,
     loader,
     sandbox: config.sandbox,

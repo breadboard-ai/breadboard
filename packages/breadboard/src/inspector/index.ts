@@ -14,6 +14,7 @@ import { Graph } from "./graph/graph.js";
 import { MutableGraphImpl } from "./graph/mutable-graph.js";
 import { RunObserver } from "./run/run.js";
 import {
+  GraphStoreArgs,
   InspectableGraph,
   InspectableGraphOptions,
   InspectableRunObserver,
@@ -41,3 +42,7 @@ export const createRunObserver = (
 };
 
 export { Run } from "./run/run.js";
+
+export function createGraphStore(args: GraphStoreArgs): MutableGraphStore {
+  return new GraphStore(args);
+}

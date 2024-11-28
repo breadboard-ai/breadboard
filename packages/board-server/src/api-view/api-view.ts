@@ -17,11 +17,10 @@ import AgentKit from "@google-labs/agent-kit";
 
 import { loadKits } from "./utils/kit-loader.js";
 import {
+  createGraphStore,
   createLoader,
   createRunObserver,
-  GraphStore,
   type BoardServer,
-  type GraphProvider,
   type InputValues,
   type InspectableRun,
   type InspectableRunObserver,
@@ -70,7 +69,7 @@ export class ApiExplorer extends LitElement {
 
   #kits: Kit[] = [];
   #runObserver: InspectableRunObserver = createRunObserver(
-    new GraphStore({
+    createGraphStore({
       kits: [],
       loader: {
         load() {

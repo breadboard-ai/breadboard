@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphStore, InspectableGraphOptions } from "../../src/index.js";
+import { GraphStore } from "../../src/inspector/graph-store.js";
+import { InspectableGraphOptions } from "../../src/inspector/types.js";
 
 export { makeTestGraphStore };
 

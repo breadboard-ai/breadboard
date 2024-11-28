@@ -5,8 +5,8 @@
  */
 
 import {
+  createGraphStore,
   createLoader,
-  GraphStore,
   type GraphDescriptor,
   type NodeDescriberResult,
 } from "@google-labs/breadboard";
@@ -49,7 +49,7 @@ const describe: ApiHandler = async (parsed, _req, res) => {
   }
 
   const loader = createLoader();
-  const graphStore = new GraphStore({
+  const graphStore = createGraphStore({
     kits: [],
     loader,
     sandbox: new NodeSandbox(),
