@@ -17,5 +17,4 @@ const geminiKit = await kit({
 });
 
 export default geminiKit;
-export const gemini = await geminiKit.legacy();
 export { text as geminiText };

@@ -665,7 +665,13 @@ export type GraphHandle = {
     }
 );
 
+export type GraphStoreArgs = Required<InspectableGraphOptions>;
+
 export type MutableGraphStore = {
+  readonly kits: readonly Kit[];
+  readonly sandbox: Sandbox;
+  readonly loader: GraphLoader;
+
   load(url: string, options: GraphLoaderContext): Promise<Result<GraphHandle>>;
   addByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier>;
   editByDescriptor(
@@ -690,7 +696,7 @@ export type MutableGraph = {
   graph: GraphDescriptor;
   readonly id: MainGraphIdentifier;
   readonly graphs: InspectableGraphCache;
-  readonly options: InspectableGraphOptions;
+  readonly store: MutableGraphStore;
   readonly nodes: InspectableNodeCache;
   readonly edges: InspectableEdgeCache;
   readonly modules: InspectableModuleCache;

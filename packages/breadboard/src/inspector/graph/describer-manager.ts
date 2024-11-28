@@ -38,6 +38,7 @@ import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
 import { combineSchemas, removeProperty } from "../../schema.js";
 import { Result } from "../../editor/types.js";
 import { invokeGraph } from "../../run/invoke-graph.js";
+import { contextFromStore } from "../graph-store.js";
 
 export { DescriberManager };
 
@@ -48,17 +49,15 @@ export { DescriberManager };
 class DescriberManager {
   private constructor(
     public readonly handle: GraphDescriptorHandle,
-    public readonly cache: MutableGraph
+    public readonly mutable: MutableGraph
   ) {}
 
   async #getDescriber(
     type: NodeTypeIdentifier
   ): Promise<NodeDescriberFunction | undefined> {
-    const { kits } = this.cache.options;
-    const loader = this.cache.options.loader || createLoader();
     let handler: NodeHandler | undefined;
     try {
-      handler = await getHandler(type, { kits, loader });
+      handler = await getHandler(type, contextFromStore(this.mutable.store));
     } catch (e) {
       console.warn(`Error getting describer for node type ${type}`, e);
     }
@@ -69,7 +68,7 @@ class DescriberManager {
   }
 
   #nodesByType(type: NodeTypeIdentifier): InspectableNode[] {
-    return this.cache.nodes.byType(type, this.handle.graphId);
+    return this.mutable.nodes.byType(type, this.handle.graphId);
   }
 
   async #describeWithStaticAnalysis(): Promise<NodeDescriberResult> {
@@ -137,7 +136,7 @@ class DescriberManager {
     }
     // invoke graph
     try {
-      const { loader, sandbox } = this.cache.options;
+      const { loader, sandbox } = this.mutable.store;
       if (sandbox && customDescriber.startsWith("module:")) {
         const { inputSchema, outputSchema } =
           await this.#describeWithStaticAnalysis();
@@ -194,7 +193,7 @@ class DescriberManager {
         { ...inputs, $inputSchema, $outputSchema },
         {
           base,
-          kits: this.cache.options.kits,
+          kits: [...this.mutable.store.kits],
           loader,
         }
       )) as NodeDescriberResult;
@@ -235,7 +234,7 @@ class DescriberManager {
     type: NodeTypeIdentifier,
     options: NodeTypeDescriberOptions = {}
   ): Promise<NodeDescriberResult> {
-    return this.cache.describe.getOrCreate(
+    return this.mutable.describe.getOrCreate(
       id,
       this.handle.graphId,
       async () => {
@@ -243,13 +242,13 @@ class DescriberManager {
         // configuration schema or their incoming/outgoing edges.
         if (type === "input") {
           if (this.handle.main()) {
-            if (!this.cache.options.sandbox) {
+            if (!this.mutable.store.sandbox) {
               throw new Error(
                 "Sandbox not supplied, won't be able to describe this graph correctly"
               );
             }
             const result = await invokeMainDescriber(
-              this.cache.options.sandbox,
+              this.mutable.store.sandbox,
               this.handle.graph(),
               options.inputs!,
               {},
@@ -269,13 +268,13 @@ class DescriberManager {
         }
         if (type === "output") {
           if (this.handle.main()) {
-            if (!this.cache.options.sandbox) {
+            if (!this.mutable.store.sandbox) {
               throw new Error(
                 "Sandbox not supplied, won't be able to describe this graph correctly"
               );
             }
             const result = await invokeMainDescriber(
-              this.cache.options.sandbox,
+              this.mutable.store.sandbox,
               this.handle.graph(),
               options.inputs!,
               {},
@@ -294,7 +293,7 @@ class DescriberManager {
           return describeOutput(options);
         }
 
-        const { kits } = this.cache.options;
+        const kits = [...this.mutable.store.kits];
         const describer = await this.#getDescriber(type);
         const asWired = {
           inputSchema: edgesToSchema(EdgeType.In, options?.incoming),
@@ -303,12 +302,13 @@ class DescriberManager {
         if (!describer) {
           return asWired;
         }
-        const loader = this.cache.options.loader || createLoader();
+        const loader = this.mutable.store.loader || createLoader();
         const context: NodeDescriberContext = {
           outerGraph: this.handle.outerGraph(),
           loader,
           kits,
-          sandbox: this.cache.options.sandbox,
+          sandbox: this.mutable.store.sandbox,
+          graphStore: this.mutable.store,
           wires: {
             incoming: Object.fromEntries(
               (options?.incoming ?? []).map((edge) => [

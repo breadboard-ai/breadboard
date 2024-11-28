@@ -18,8 +18,8 @@ import "@breadboard-ai/shared-ui/editor";
 import {
   GraphDescriptor,
   asRuntimeKit,
+  createGraphStore,
   createLoader,
-  inspect,
 } from "@google-labs/breadboard";
 import { until } from "lit/directives/until.js";
 import { kitFromGraphDescriptor } from "@google-labs/breadboard/kits";
@@ -114,11 +114,7 @@ export class BoardEmbed extends LitElement {
     if (!this.url) {
       return html`Unable to load - no URL provided`;
     }
-
     const loader = createLoader([]);
-    const graph = await loader.load(this.url, {
-      base: new URL(this.url, location.href),
-    });
     const kits = [
       asRuntimeKit(Core),
       asRuntimeKit(JSONKit),
@@ -130,12 +126,35 @@ export class BoardEmbed extends LitElement {
       kits.push(agentKit);
     }
 
+    const graphStore = createGraphStore({
+      kits,
+      loader,
+      sandbox: {
+        runModule: () => {
+          throw new Error("TODO: Teach BoardEmbed about sandbox.");
+        },
+      },
+    });
+
+    const graph = await loader.load(this.url, {
+      base: new URL(this.url, location.href),
+    });
+
+    if (!graph) {
+      return html`Unable to load board`;
+    }
+
     if (!graph.success) {
       return html`Unable to load board`;
     }
 
+    const adding = graphStore.addByDescriptor(graph.graph);
+    if (!adding.success) {
+      return html`Unable to load board`;
+    }
+    const inspectableGraph = graphStore.inspect(adding.result, "");
+
     const collapseNodesByDefault = this.collapseNodesByDefault === "true";
-    const inspectableGraph = inspect(graph.graph, { kits, loader });
     return html`<bb-editor
         .loader=${loader}
         .kits=${kits}

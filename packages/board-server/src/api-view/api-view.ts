@@ -17,11 +17,10 @@ import AgentKit from "@google-labs/agent-kit";
 
 import { loadKits } from "./utils/kit-loader.js";
 import {
+  createGraphStore,
   createLoader,
   createRunObserver,
-  GraphStore,
   type BoardServer,
-  type GraphProvider,
   type InputValues,
   type InspectableRun,
   type InspectableRunObserver,
@@ -69,10 +68,25 @@ export class ApiExplorer extends LitElement {
   runStore = getRunStore();
 
   #kits: Kit[] = [];
-  #runObserver: InspectableRunObserver = createRunObserver(new GraphStore({}), {
-    dataStore: this.dataStore,
-    runStore: this.runStore,
-  });
+  #runObserver: InspectableRunObserver = createRunObserver(
+    createGraphStore({
+      kits: [],
+      loader: {
+        load() {
+          throw new Error("Implement when resurrecting this code");
+        },
+      },
+      sandbox: {
+        runModule() {
+          throw new Error("Implement when resurrecting this code");
+        },
+      },
+    }),
+    {
+      dataStore: this.dataStore,
+      runStore: this.runStore,
+    }
+  );
   #handlers: Map<string, inputCallback[]> = new Map();
   #providers: BoardServer[] = [];
   #kitLoad = loadKits([

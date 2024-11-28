@@ -5,10 +5,8 @@
  */
 
 import { HarnessRunResult } from "../../harness/types.js";
-import { GraphStore } from "../graph-store.js";
 import {
   EventIdentifier,
-  InspectableGraphOptions,
   InspectableRun,
   InspectableRunEvent,
   InspectableRunInputs,
@@ -34,8 +32,8 @@ export class PastRun implements InspectableRun {
     this.#replay = new Replay(graphStore, timeline, 0);
   }
 
-  async initializeBackingRun(options: InspectableGraphOptions) {
-    const observer = new RunObserver(new GraphStore(options), {
+  async initializeBackingRun(graphStore: MutableGraphStore) {
+    const observer = new RunObserver(graphStore, {
       logLevel: "debug",
     });
     for await (const result of this.replay()) {
