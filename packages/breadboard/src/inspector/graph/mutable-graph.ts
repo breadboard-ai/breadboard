@@ -41,20 +41,13 @@ class MutableGraphImpl implements MutableGraph {
   readonly store: MutableGraphStore;
   readonly id: MainGraphIdentifier;
 
-  // @ts-expect-error Initialized in rebuild.
-  graph: GraphDescriptor;
-  // @ts-expect-error Initialized in rebuild.
-  graphs: InspectableGraphCache;
-  // @ts-expect-error Initialized in rebuild.
-  nodes: InspectableNodeCache;
-  // @ts-expect-error Initialized in rebuild.
-  edges: InspectableEdgeCache;
-  // @ts-expect-error Initialized in rebuild.
-  modules: InspectableModuleCache;
-  // @ts-expect-error Initialized in rebuild.
-  describe: InspectableDescriberResultCache;
-  // @ts-expect-error Initialized in rebuild.
-  kits: InspectableKitCache;
+  graph!: GraphDescriptor;
+  graphs!: InspectableGraphCache;
+  nodes!: InspectableNodeCache;
+  edges!: InspectableEdgeCache;
+  modules!: InspectableModuleCache;
+  describe!: InspectableDescriberResultCache;
+  kits!: InspectableKitCache;
 
   constructor(graph: GraphDescriptor, store: MutableGraphStore) {
     this.store = store;
