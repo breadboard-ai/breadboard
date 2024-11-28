@@ -73,7 +73,7 @@ describe("Snapshot changes", async () => {
       },
     ] satisfies SnapshotChangeSpec[]);
 
-    const withNodes = new Snapshot(
+    const everything = new Snapshot(
       mutable({
         title: "Title",
         nodes: [
@@ -81,9 +81,20 @@ describe("Snapshot changes", async () => {
           { id: "second", type: "type", configuration: { bar: "bar" } },
         ],
         edges: [{ from: "first", out: "out", to: "second", in: "in" }],
+        modules: {
+          mod1: {
+            code: "foo",
+          },
+          mod2: {
+            code: "bar",
+            metadata: {
+              runnable: true,
+            },
+          },
+        },
       })
     );
-    deepStrictEqual(withNodes.changes, [
+    deepStrictEqual(everything.changes, [
       {
         type: "addgraph",
         metadata: { title: "Title" },
@@ -104,6 +115,23 @@ describe("Snapshot changes", async () => {
         edge: { from: "first", out: "out", to: "second", in: "in" },
         id: 1115284803,
         graphId: "",
+      },
+      {
+        type: "addmodule",
+        id: "mod1",
+        module: {
+          code: "foo",
+        },
+      },
+      {
+        type: "addmodule",
+        id: "mod2",
+        module: {
+          code: "bar",
+          metadata: {
+            runnable: true,
+          },
+        },
       },
     ] satisfies SnapshotChangeSpec[]);
   });

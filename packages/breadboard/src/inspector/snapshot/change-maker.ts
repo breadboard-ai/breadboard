@@ -10,10 +10,13 @@ import {
   GraphIdentifier,
   GraphInlineMetadata,
   GraphMetadata,
+  Module,
+  ModuleIdentifier,
   NodeDescriptor,
 } from "@breadboard-ai/types";
 import { SnapshotChangeSpec } from "./types.js";
 import { hash } from "../../utils/hash.js";
+import { InspectableModule } from "../types.js";
 
 export { ChangeMaker };
 
@@ -24,6 +27,8 @@ const INLINE_METADATA_PROPS: readonly (keyof GraphInlineMetadata)[] = [
   "description",
   "version",
 ] as const;
+
+const MODULE_PROPS: readonly (keyof Module)[] = ["code", "metadata"] as const;
 
 class ChangeMaker {
   constructor(public readonly changes: SnapshotChangeSpec[]) {}
@@ -49,19 +54,39 @@ class ChangeMaker {
     this.changes.push({ type: "addedge", edge, graphId, id });
   }
 
-  newGraph(graph: GraphDescriptor, graphId: GraphIdentifier) {
-    type Copyable = Record<string, unknown>;
-    const metadata: GraphInlineMetadata = {};
-    INLINE_METADATA_PROPS.forEach((key) => {
-      if (key in graph) {
-        (metadata as Copyable)[key] = (graph as Copyable)[key];
-      }
+  addModule(id: ModuleIdentifier, module: InspectableModule) {
+    this.changes.push({
+      type: "addmodule",
+      id,
+      module: copy(MODULE_PROPS, module),
     });
+  }
 
+  newGraph(graph: GraphDescriptor, graphId: GraphIdentifier) {
     this.changes.push({
       type: "addgraph",
-      metadata,
+      metadata: copy(INLINE_METADATA_PROPS, graph),
       graphId,
     });
   }
+}
+
+type Copyable = Record<string, unknown>;
+function copy<
+  S extends Copyable,
+  D extends Copyable,
+  P extends readonly string[],
+>(props: P, source: S): D {
+  const result: Partial<D> = {};
+  props.forEach((key) => {
+    if (!(key in source)) return;
+    let o = (source as Copyable)[key];
+    if (typeof o === "function") o = o.call(source);
+    if (o !== null && typeof o === "object" && Object.keys(o).length === 0)
+      return;
+    if (key in source) {
+      (result as Copyable)[key] = o;
+    }
+  });
+  return result as D;
 }

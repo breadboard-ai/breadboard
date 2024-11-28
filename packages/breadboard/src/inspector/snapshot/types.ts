@@ -26,6 +26,7 @@ import {
 } from "../../utils/typed-event-target.js";
 import {
   AddEdgeSpec,
+  AddModuleSpec,
   AddNodeSpec,
   ChangeGraphMetadataSpec,
 } from "../../editor/types.js";
@@ -314,4 +315,5 @@ export type SnapshotChangeSpec =
   | SnapshotAddGraphSpec
   | ChangeGraphMetadataSpec
   | AddNodeSpec
-  | SnapshotAddEdgeSpec;
+  | SnapshotAddEdgeSpec
+  | AddModuleSpec;

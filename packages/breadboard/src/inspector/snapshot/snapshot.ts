@@ -59,6 +59,9 @@ class Snapshot
     inspector.edges().forEach((edge) => {
       this.#changes.addEdge(edge.raw(), "");
     });
+    Object.entries(inspector.modules()).forEach(([id, module]) => {
+      this.#changes.addModule(id, module);
+    });
   }
 
   rebuild(): Mutable<InspectableMainGraphSnapshot> {
