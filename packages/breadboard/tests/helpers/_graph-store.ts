@@ -14,7 +14,7 @@ function makeTestGraphStore(options: InspectableGraphOptions = {}) {
     kits: options.kits || [],
     sandbox: options.sandbox || {
       runModule() {
-        throw new Error("Non-existent sandbox: Terrible Options were used.");
+        throw new Error("Do not use sandbox with test graph store");
       },
     },
     loader: options.loader || {
