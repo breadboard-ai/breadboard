@@ -84,12 +84,12 @@ export async function getIsolatedNodeGraphDescriptor(
     kits,
     loader: loader || {
       load: () => {
-        throw new Error("Loader was not supplied.");
+        throw new Error("Loader should not be used for isolated nodes");
       },
     },
     sandbox: {
       runModule: () => {
-        throw new Error("Sandbox was not supplied.");
+        throw new Error("Sandbox should not be used for isolated nodes.");
       },
     },
   });
