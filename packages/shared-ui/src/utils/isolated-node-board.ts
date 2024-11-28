@@ -5,9 +5,9 @@
  */
 
 import {
+  createGraphStore,
   GraphDescriptor,
   GraphLoader,
-  inspect,
   InspectableNode,
   InspectableNodePorts,
   Kit,
@@ -80,10 +80,27 @@ export async function getIsolatedNodeGraphDescriptor(
   loader: GraphLoader | undefined,
   nodeId: string
 ): Promise<GraphDescriptor | null> {
-  const breadboardGraph = inspect(board, {
+  const graphStore = createGraphStore({
     kits,
-    loader,
+    loader: loader || {
+      load: () => {
+        throw new Error("Loader was not supplied.");
+      },
+    },
+    sandbox: {
+      runModule: () => {
+        throw new Error("Sandbox was not supplied.");
+      },
+    },
   });
+  const adding = graphStore.addByDescriptor(board);
+  if (!adding.success) {
+    return null;
+  }
+  const breadboardGraph = graphStore.inspect(adding.result, "");
+  if (!breadboardGraph) {
+    return null;
+  }
 
   const node = breadboardGraph.nodeById(nodeId);
   if (!node) {
