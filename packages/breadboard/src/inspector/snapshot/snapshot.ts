@@ -5,34 +5,33 @@
  */
 
 import { GraphIdentifier } from "@breadboard-ai/types";
-import {
-  InspectableEdge,
-  InspectableGraph,
-  InspectableNodeType,
-  MutableGraph,
-} from "../types.js";
+import { InspectableGraph, MutableGraph } from "../types.js";
 import { ChangeMaker } from "./change-maker.js";
 import {
-  InspectableEdgeSnapshot,
   InspectableMainGraphSnapshot,
-  InspectableNodeSnapshot,
   InspectableSnapshot,
   SnapshotChangeSpec,
   SnapshotEventTarget,
   SnapshotPendingUpdate,
 } from "./types.js";
 import { PortUpdateReconciler } from "./port-update-reconciler.js";
+import { FreshEvent, StaleEvent } from "./events.js";
 
 export { Snapshot };
 
 type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
+type FreshResolve = (snapshot: InspectableMainGraphSnapshot) => void;
+
 class Snapshot
   extends (EventTarget as SnapshotEventTarget)
   implements InspectableSnapshot
 {
+  #stale = false;
+  #fresh: Promise<InspectableMainGraphSnapshot>;
+  #freshResolve: FreshResolve | null = null;
   #mutable: MutableGraph;
-  #changes!: ChangeMaker;
+  #changes: ChangeMaker = new ChangeMaker([]);
   #snapshot: Mutable<InspectableMainGraphSnapshot>;
   readonly #pending: SnapshotPendingUpdate[] = [];
   readonly #portUpdateReconciler: PortUpdateReconciler =
@@ -41,16 +40,37 @@ class Snapshot
   constructor(mutable: MutableGraph) {
     super();
     this.#mutable = mutable;
-    this.rebuildChanges();
-    this.#snapshot = this.rebuild();
+    this.#snapshot = {} as InspectableMainGraphSnapshot;
+    this.#fresh = Promise.resolve(this.#snapshot);
   }
 
   get changes(): SnapshotChangeSpec[] {
     return this.#changes.changes;
   }
 
+  get fresh(): Promise<InspectableMainGraphSnapshot> {
+    return this.#fresh;
+  }
+
   get pending(): readonly SnapshotPendingUpdate[] {
     return this.#pending;
+  }
+
+  #setStale() {
+    if (this.#stale) return;
+
+    this.#stale = true;
+    this.dispatchEvent(new StaleEvent());
+    this.#fresh = new Promise((resolve) => {
+      this.#freshResolve = resolve;
+    });
+  }
+
+  #setFresh() {
+    if (!this.#stale) return;
+    this.#stale = false;
+    this.dispatchEvent(new FreshEvent());
+    this.#freshResolve?.(this.#snapshot);
   }
 
   /**
@@ -62,12 +82,15 @@ class Snapshot
    *    items arrive into the update queue.
    */
   async update(_manual: boolean = false): Promise<void> {
-    // if stale, start an update using the update queue.
-    // the update queue has all the pending things that should
-    // be updated, but won't be until this function is called.
+    // Use inifite loop with dequeueing instead of a typical forEach,
+    // because the middle of the loop has awaits and they can introduce
+    // new items into the pending queue.
     for (;;) {
       const pending = this.#pending.shift();
-      if (!pending) break;
+      if (!pending) {
+        this.#setFresh();
+        break;
+      }
       switch (pending.type) {
         case "updateports": {
           const { graphId, nodeId } = pending;
@@ -101,14 +124,20 @@ class Snapshot
     }
   }
 
-  rebuildChanges(): void {
+  start(): void {
+    this.#stale = false;
+
     const inspector = this.#mutable.graphs.get("");
     if (!inspector) {
       throw new Error(
         `Snapshot API Integrity error: no main graph for "${this.#mutable.graph.url}`
       );
     }
-    this.#changes = new ChangeMaker([]);
+    // Restart if there are changes already.
+    if (this.#changes.changes.length > 0) {
+      this.#changes = new ChangeMaker([]);
+      this.#stale = false;
+    }
 
     this.rebuildSingleGraph(inspector, "");
     Object.entries(inspector.modules()).forEach(([id, module]) => {
@@ -117,6 +146,7 @@ class Snapshot
     Object.entries(inspector.graphs() || {}).forEach(([graphId, subgraph]) => {
       this.rebuildSingleGraph(subgraph, graphId);
     });
+    this.update();
   }
 
   rebuildSingleGraph(
@@ -133,6 +163,7 @@ class Snapshot
           nodeId: node.descriptor.id,
           graphId,
         });
+        this.#setStale();
       });
       inspector.edges().forEach((edge) => {
         this.#changes.addEdge(edge.raw(), graphId);
@@ -140,67 +171,7 @@ class Snapshot
     }
   }
 
-  rebuild(): Mutable<InspectableMainGraphSnapshot> {
-    const inspector = this.#mutable.graphs.get("");
-    if (!inspector) {
-      throw new Error(
-        `Snapshot API Integrity error: no main graph for "${this.#mutable.graph.url}`
-      );
-    }
-    const nodes: InspectableNodeSnapshot[] = inspector.nodes().map((node) => {
-      return {
-        descriptor: node.descriptor,
-        title: node.title(),
-        description: node.description(),
-        incoming: toEdgeSnapshots(node.incoming()),
-        outgoing: toEdgeSnapshots(node.outgoing()),
-        isEntry: node.isEntry(),
-        isExit: node.isExit(),
-        type: toNodeTypeSnapshot(node.type()),
-        configuration: node.configuration(),
-        metadata: node.metadata(),
-        ports: {
-          inputs: {
-            fixed: false,
-            ports: [],
-          },
-          outputs: {
-            fixed: false,
-            ports: [],
-          },
-          side: {
-            fixed: false,
-            ports: [],
-          },
-        },
-      };
-    });
-    const edges: InspectableEdgeSnapshot[] = toEdgeSnapshots(inspector.edges());
-
-    return {
-      metadata: inspector.metadata(),
-      nodes,
-      edges,
-      kits: [],
-      graphs: {},
-      modules: {},
-      imperative: inspector.imperative(),
-      main: inspector.main(),
-    };
-  }
-
   current(): InspectableMainGraphSnapshot {
     return this.#snapshot;
   }
-}
-
-function toNodeTypeSnapshot(type: InspectableNodeType) {
-  return { metadata: undefined, type: type.type(), ports: undefined };
-}
-
-function toEdgeSnapshots(edges: InspectableEdge[]) {
-  return edges.map((edge) => {
-    const raw = edge.raw();
-    return { ...raw, type: edge.type };
-  });
 }

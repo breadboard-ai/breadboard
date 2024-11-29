@@ -55,6 +55,7 @@ type Timeless<T> = T extends { timestamp: number } ? Omit<T, "timestamp"> : T;
 describe("Snapshot changes", async () => {
   it("correctly builds initial list of changes", () => {
     const blank = new Snapshot(mutable({ nodes: [], edges: [] }));
+    blank.start();
     deepStrictEqual(timeless(blank.changes), [
       {
         type: "addgraph",
@@ -65,6 +66,7 @@ describe("Snapshot changes", async () => {
     const withInlineMetadata = new Snapshot(
       mutable({ title: "Foo", description: "Bar", nodes: [], edges: [] })
     );
+    withInlineMetadata.start();
     deepStrictEqual(timeless(withInlineMetadata.changes), [
       {
         type: "addgraph",
@@ -81,6 +83,7 @@ describe("Snapshot changes", async () => {
         metadata: { tags: ["published"] },
       })
     );
+    withMetadata.start();
     deepStrictEqual(timeless(withMetadata.changes), [
       {
         type: "addgraph",
@@ -124,6 +127,7 @@ describe("Snapshot changes", async () => {
         },
       })
     );
+    everything.start();
     deepStrictEqual(timeless(everything.changes), [
       {
         type: "addgraph",
@@ -193,12 +197,8 @@ describe("Snapshot changes", async () => {
         type: "addedge",
       },
     ] satisfies Timeless<SnapshotChangeSpec>[]);
+    // The "first" item has already been consumed by update by now.
     deepStrictEqual(everything.pending, [
-      {
-        type: "updateports",
-        graphId: "",
-        nodeId: "first",
-      },
       {
         type: "updateports",
         graphId: "",
@@ -224,6 +224,7 @@ describe("Snapshot changes", async () => {
         nodes: [],
       })
     );
+    imperative.start();
     deepStrictEqual(timeless(imperative.changes), [
       {
         type: "addgraph",
@@ -249,6 +250,15 @@ describe("Snapshot changes", async () => {
         edges: [],
       })
     );
+    const events: string[] = [];
+    oneNode.addEventListener("fresh", () => {
+      events.push("fresh");
+    });
+    oneNode.addEventListener("stale", () => {
+      events.push("stale");
+    });
+    oneNode.start();
+
     deepStrictEqual(timeless(oneNode.changes), [
       {
         type: "addgraph",
@@ -261,15 +271,10 @@ describe("Snapshot changes", async () => {
         graphId: "",
       },
     ] satisfies Timeless<SnapshotChangeSpec>[]);
-    deepStrictEqual(oneNode.pending, [
-      {
-        type: "updateports",
-        graphId: "",
-        nodeId: "first",
-      },
-    ] satisfies SnapshotPendingUpdate[]);
-    await oneNode.update();
     deepStrictEqual(oneNode.pending, []);
+
+    await oneNode.fresh;
+    deepStrictEqual(events, ["stale", "fresh"]);
     deepStrictEqual(timeless(oneNode.changes), [
       {
         type: "addgraph",
