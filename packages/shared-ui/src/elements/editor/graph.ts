@@ -893,7 +893,7 @@ export class Graph extends PIXI.Container {
       }
 
       const child = this.getChildByLabel(comment);
-      if (!child || !(child instanceof GraphNode)) {
+      if (!child || !(child instanceof GraphComment)) {
         continue;
       }
 

@@ -927,9 +927,13 @@ export class GraphRenderer extends LitElement {
     graph.selectionState = { ...selectionState };
   }
 
-  #clearAllGraphSelections() {
+  #clearOtherGraphSelections(except: Graph) {
     const graphs = this.getGraphs();
     for (const graph of graphs) {
+      if (graph === except) {
+        continue;
+      }
+
       graph.selectionState = emptySelectionState();
     }
   }
@@ -958,7 +962,7 @@ export class GraphRenderer extends LitElement {
       GRAPH_OPERATIONS.GRAPH_NODE_TOGGLE_SELECTED,
       (id: NodeIdentifier, isCtrlCommand: boolean) => {
         if (!isCtrlCommand) {
-          this.#clearAllGraphSelections();
+          this.#clearOtherGraphSelections(graph);
         }
         this.#toggleGraphNodeSelection(graph, id, isCtrlCommand);
         this.#emitSelection();
