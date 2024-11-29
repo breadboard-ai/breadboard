@@ -751,6 +751,26 @@ export class GraphRenderer extends LitElement {
     this.#hideBackground();
   }
 
+  deleteStaleSubGraphs(keep: Set<GraphIdentifier>) {
+    for (let c = this.#container.children.length; c >= 0; c--) {
+      const child = this.#container.children[c];
+      if (!(child instanceof Graph)) {
+        continue;
+      }
+
+      if (!child.subGraphId) {
+        continue;
+      }
+
+      if (keep.has(child.subGraphId)) {
+        continue;
+      }
+
+      child.removeFromParent();
+      child.destroy();
+    }
+  }
+
   #hideBackground() {
     if (!this.#background) {
       return;
@@ -961,7 +981,7 @@ export class GraphRenderer extends LitElement {
     graph.on(
       GRAPH_OPERATIONS.GRAPH_NODE_TOGGLE_SELECTED,
       (id: NodeIdentifier, isCtrlCommand: boolean) => {
-        if (!isCtrlCommand) {
+        if (!isCtrlCommand && !graph.selectionState?.nodes.has(id)) {
           this.#clearOtherGraphSelections(graph);
         }
         this.#toggleGraphNodeSelection(graph, id, isCtrlCommand);

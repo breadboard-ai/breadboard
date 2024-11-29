@@ -3141,7 +3141,18 @@ export class Main extends LitElement {
               @bbsubgraphdelete=${async (
                 evt: BreadboardUI.Events.SubGraphDeleteEvent
               ) => {
-                this.#runtime.edit.deleteSubGraph(this.tab, evt.subGraphId);
+                await this.#runtime.edit.deleteSubGraph(
+                  this.tab,
+                  evt.subGraphId
+                );
+                if (!this.tab) {
+                  return;
+                }
+
+                this.#runtime.select.deselectAll(
+                  this.tab.id,
+                  this.#runtime.util.createWorkspaceSelectionChangeId()
+                );
               }}
               @bbmodulechangelanguage=${(
                 evt: BreadboardUI.Events.ModuleChangeLanguageEvent
@@ -3298,7 +3309,8 @@ export class Main extends LitElement {
                 this.showCommentEditor = true;
                 const value = this.#runtime.edit.getGraphComment(
                   this.tab,
-                  evt.id
+                  evt.id,
+                  evt.subGraphId
                 );
                 this.#commentValueData = {
                   x: evt.x,

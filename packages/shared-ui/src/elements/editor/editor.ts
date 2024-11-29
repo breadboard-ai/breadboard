@@ -468,6 +468,9 @@ export class Editor extends LitElement {
     this.#graphRenderer.highlightInvalidWires = this.highlightInvalidWires;
     this.#graphRenderer.showSubgraphsInline = this.showSubgraphsInline;
 
+    const availableSubGraphs = Object.keys(this.graph.graphs() || {});
+    this.#graphRenderer.deleteStaleSubGraphs(new Set(availableSubGraphs));
+
     let selectedGraph = this.graph;
     if (this.subGraphId && !this.showSubgraphsInline) {
       const subgraphs = selectedGraph.graphs();

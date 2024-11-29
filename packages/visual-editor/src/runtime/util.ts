@@ -5,6 +5,7 @@
  */
 
 import {
+  CommentNode,
   Edge,
   EditSpec,
   GraphDescriptor,
@@ -79,6 +80,11 @@ export function generateBoardFrom(
         selectionState.nodes.has(edge.from) &&
         selectionState.nodes.has(edge.to)
     );
+    if (graph.metadata && graph.metadata.comments) {
+      graph.metadata.comments = graph.metadata.comments.filter((comment) =>
+        selectionState.comments.has(comment.id)
+      );
+    }
   };
 
   const subGraphs = filteredGraph.graphs ?? {};
@@ -183,12 +189,14 @@ export function generateDeleteEditSpecFrom(
 }
 
 function adjustNodePosition(
-  node: NodeDescriptor,
+  node: NodeDescriptor | CommentNode,
   leftMostNode: { x: number; y: number },
   pointerLocation: { x: number; y: number }
 ) {
   node.metadata ??= {};
-  node.metadata.title ??= node.type;
+  if ("type" in node) {
+    node.metadata.title ??= node.type;
+  }
   node.metadata.visual ??= { x: 0, y: 0, collapsed: "collapsed" };
   const location = node.metadata.visual as {
     x: number;
@@ -218,6 +226,23 @@ function getLeftMostLocation(
         leftMostNode.x = location.x;
         leftMostNode.y = location.y;
       }
+    }
+  }
+
+  const comments = graph.metadata?.comments ?? [];
+  for (const comment of comments) {
+    if (!comment.metadata?.visual) {
+      continue;
+    }
+
+    const location = comment.metadata.visual as {
+      x: number;
+      y: number;
+      collapsed: string;
+    };
+    if (location.x < leftMostNode.x) {
+      leftMostNode.x = location.x;
+      leftMostNode.y = location.y;
     }
   }
 
@@ -403,6 +428,7 @@ export function generateAddEditSpecFromDescriptor(
     }
   }
 
+  // Nodes.
   const remappedNodes = new Map<NodeIdentifier, NodeIdentifier>();
   for (const node of sourceGraph.nodes) {
     if (targetGraph.nodeById(node.id)) {
@@ -417,6 +443,7 @@ export function generateAddEditSpecFromDescriptor(
     edits.push({ type: "addnode", node, graphId: "" });
   }
 
+  // Edges.
   for (const edge of sourceGraph.edges) {
     const remappedFrom = remappedNodes.get(edge.from);
     const remappedTo = remappedNodes.get(edge.to);
@@ -430,19 +457,63 @@ export function generateAddEditSpecFromDescriptor(
     edits.push({ type: "addedge", edge, graphId: "" });
   }
 
+  // Comments.
+  const comments = sourceGraph.metadata?.comments;
+  if (comments) {
+    const existingMetadata = structuredClone(targetGraph.metadata() ?? {});
+    existingMetadata.comments ??= [];
+    for (const comment of comments) {
+      comment.id = createNodeId();
+      adjustNodePosition(comment, leftMostNode, pointerLocation);
+      existingMetadata.comments.push(comment);
+    }
+
+    edits.push({
+      type: "changegraphmetadata",
+      metadata: { ...existingMetadata },
+      graphId: "",
+    });
+  }
+
+  // Subgraphs.
   for (const [id, subGraph] of Object.entries(sourceGraph.graphs ?? {})) {
     const graphs = targetGraph.graphs();
+    const newSubGraph = structuredClone(subGraph);
     let graphId = id;
     if (graphs && graphs[id]) {
       graphId = createGraphId();
     }
 
-    for (const node of subGraph.nodes) {
+    // Remove any existing comments.
+    newSubGraph.metadata ??= {};
+    newSubGraph.metadata.comments = [];
+
+    // Now update all node positions.
+    for (const node of newSubGraph.nodes) {
       adjustNodePosition(node, leftMostNode, pointerLocation);
     }
 
+    // Add the subgraph.
     if (!graphs || !graphs[graphId]) {
-      edits.push({ type: "addgraph", id: graphId, graph: subGraph });
+      edits.push({ type: "addgraph", id: graphId, graph: newSubGraph });
+    }
+
+    // Add any comments back in.
+    const comments = subGraph.metadata?.comments;
+    if (comments) {
+      const existingMetadata = structuredClone(newSubGraph.metadata ?? {});
+      existingMetadata.comments ??= [];
+      for (const comment of comments) {
+        comment.id = createNodeId();
+        adjustNodePosition(comment, leftMostNode, pointerLocation);
+        existingMetadata.comments.push(comment);
+      }
+
+      edits.push({
+        type: "changegraphmetadata",
+        metadata: { ...existingMetadata },
+        graphId,
+      });
     }
   }
 
