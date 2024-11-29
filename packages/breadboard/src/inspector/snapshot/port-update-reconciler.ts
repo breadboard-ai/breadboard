@@ -5,24 +5,15 @@
  */
 
 import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
-import {
-  InspectableNodePortsSnapshot,
-  InspectablePortListSnapshot,
-  InspectablePortSnapshot,
-  NodePortChanges,
-} from "./types.js";
-import {
-  InspectableNodePorts,
-  InspectablePort,
-  InspectablePortList,
-} from "../types.js";
+import { NodePortChanges } from "./types.js";
+import { InspectableNodePorts, InspectablePortList } from "../types.js";
 
 export { PortUpdateReconciler };
 
-type NodePortMap = Map<NodeIdentifier, InspectableNodePortsSnapshot>;
+type NodePortMap = Map<NodeIdentifier, InspectableNodePorts>;
 
 type PortsUpdate = {
-  updated: InspectableNodePortsSnapshot;
+  updated: InspectableNodePorts;
   changes: NodePortChanges;
 };
 
@@ -31,7 +22,7 @@ class PortUpdateReconciler {
 
   reconcilePorts(
     incoming: InspectableNodePorts,
-    existing?: InspectableNodePortsSnapshot
+    existing?: InspectableNodePorts
   ): PortsUpdate {
     if (!existing) {
       return this.createNewSnapshot(incoming);
@@ -41,7 +32,7 @@ class PortUpdateReconciler {
 
   createNewSnapshot(incoming: InspectableNodePorts): PortsUpdate {
     return {
-      updated: toPortsSnapshot(incoming),
+      updated: incoming,
       changes: {
         input: toUpdates(incoming.inputs),
         output: toUpdates(incoming.outputs),
@@ -49,45 +40,11 @@ class PortUpdateReconciler {
       },
     };
 
-    function toPortsSnapshot(
-      ports: InspectableNodePorts
-    ): InspectableNodePortsSnapshot {
-      return {
-        inputs: toPortListSnapshot(ports.inputs),
-        outputs: toPortListSnapshot(ports.outputs),
-        side: toPortListSnapshot(ports.side),
-      };
-    }
-
-    function toPortListSnapshot(
-      list: InspectablePortList
-    ): InspectablePortListSnapshot {
-      return {
-        fixed: list.fixed,
-        ports: list.ports.map((port) => toPortSnapshot(port)),
-      };
-    }
-
-    function toPortSnapshot(port: InspectablePort): InspectablePortSnapshot {
-      return {
-        name: port.name,
-        title: port.title,
-        status: port.status,
-        configured: port.configured,
-        value: port.value,
-        star: port.star,
-        schema: port.schema,
-        kind: port.kind,
-      };
-    }
-
     function toUpdates(ports: InspectablePortList) {
       return {
         fixedChanged: ports.fixed,
         deleted: [],
-        added: ports.ports.map((port) => {
-          return toPortSnapshot(port);
-        }),
+        added: ports.ports,
         updated: [],
       };
     }

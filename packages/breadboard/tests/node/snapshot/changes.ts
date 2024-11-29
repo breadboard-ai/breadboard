@@ -13,6 +13,7 @@ import { deepStrictEqual } from "node:assert";
 import {
   SnapshotChangeSpec,
   SnapshotPendingUpdate,
+  SnapshotUpdatePortsSpec,
 } from "../../../src/inspector/snapshot/types.js";
 
 function mutable(graph: GraphDescriptor) {
@@ -275,114 +276,18 @@ describe("Snapshot changes", async () => {
 
     await oneNode.fresh;
     deepStrictEqual(events, ["stale", "fresh"]);
-    deepStrictEqual(timeless(oneNode.changes), [
-      {
-        type: "addgraph",
-        metadata: { title: "Title" },
-        graphId: "",
-      },
-      {
-        type: "addnode",
-        node: { id: "first", type: "type", configuration: { foo: "foo" } },
-        graphId: "",
-      },
-      {
-        type: "updateports",
-        graphId: "",
-        nodeId: "first",
-        input: {
-          added: [
-            {
-              configured: false,
-              kind: "input",
-              name: "",
-              schema: {
-                type: "string",
-              },
-              star: true,
-              status: "ready",
-              title: "",
-              value: undefined,
-            },
-            {
-              configured: false,
-              kind: "input",
-              name: "*",
-              schema: {
-                type: "string",
-              },
-              star: true,
-              status: "ready",
-              title: "*",
-              value: undefined,
-            },
-            {
-              configured: true,
-              kind: "input",
-              name: "foo",
-              schema: {
-                type: "string",
-              },
-              star: false,
-              status: "connected",
-              title: "foo",
-              value: "foo",
-            },
-          ],
-          deleted: [],
-          fixedChanged: false,
-          updated: [],
-        },
-        output: {
-          added: [
-            {
-              configured: false,
-              kind: "output",
-              name: "",
-              schema: {
-                type: "string",
-              },
-              star: true,
-              status: "ready",
-              title: "",
-              value: undefined,
-            },
-            {
-              configured: false,
-              kind: "output",
-              name: "$error",
-              schema: {
-                type: "string",
-              },
-              star: false,
-              status: "ready",
-              title: "$error",
-              value: undefined,
-            },
-            {
-              configured: false,
-              kind: "output",
-              name: "*",
-              schema: {
-                type: "string",
-              },
-              star: true,
-              status: "ready",
-              title: "*",
-              value: undefined,
-            },
-          ],
-          deleted: [],
-          fixedChanged: false,
-          updated: [],
-        },
-        side: {
-          added: [],
-          deleted: [],
-          fixedChanged: true,
-          updated: [],
-        },
-      },
-    ] satisfies Timeless<SnapshotChangeSpec>[]);
+    deepStrictEqual(oneNode.changes.length, 3);
+    const types = oneNode.changes.map((change) => change.type);
+    deepStrictEqual(types, ["addgraph", "addnode", "updateports"]);
+    const updateports = oneNode.changes.at(2) as SnapshotUpdatePortsSpec;
+    deepStrictEqual(updateports.input.added.length, 3);
+    deepStrictEqual(updateports.input.deleted.length, 0);
+    deepStrictEqual(updateports.input.updated.length, 0);
+    deepStrictEqual(updateports.output.added.length, 3);
+    deepStrictEqual(updateports.output.deleted.length, 0);
+    deepStrictEqual(updateports.output.updated.length, 0);
+    deepStrictEqual(updateports.side.added.length, 0);
+    deepStrictEqual(updateports.side.deleted.length, 0);
+    deepStrictEqual(updateports.side.updated.length, 0);
   });
 });

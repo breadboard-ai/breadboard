@@ -31,6 +31,7 @@ import {
   AddNodeSpec,
   ChangeGraphMetadataSpec,
 } from "../../editor/types.js";
+import { InspectablePort } from "../types.js";
 
 export type SnapshotEventMap = {
   stale: SnapshotStaleEvent;
@@ -322,8 +323,8 @@ export type SnapshotAddEdgeSpec = AddEdgeSpec & {
 export type PortChanges = {
   fixedChanged: boolean;
   deleted: PortIdentifier[];
-  added: InspectablePortSnapshot[];
-  updated: InspectablePortSnapshot[];
+  added: InspectablePort[];
+  updated: InspectablePort[];
 };
 
 export type NodePortChanges = {
