@@ -927,6 +927,13 @@ export class GraphRenderer extends LitElement {
     graph.selectionState = { ...selectionState };
   }
 
+  #clearAllGraphSelections() {
+    const graphs = this.getGraphs();
+    for (const graph of graphs) {
+      graph.selectionState = emptySelectionState();
+    }
+  }
+
   #applyPositionDeltaToSelection(delta: PIXI.Point) {
     const graphs = this.getGraphs();
     for (const graph of graphs) {
@@ -950,6 +957,9 @@ export class GraphRenderer extends LitElement {
     graph.on(
       GRAPH_OPERATIONS.GRAPH_NODE_TOGGLE_SELECTED,
       (id: NodeIdentifier, isCtrlCommand: boolean) => {
+        if (!isCtrlCommand) {
+          this.#clearAllGraphSelections();
+        }
         this.#toggleGraphNodeSelection(graph, id, isCtrlCommand);
         this.#emitSelection();
       }
