@@ -12,16 +12,13 @@ import {
   NodeDescriptor,
   OutputValues,
 } from "../../types.js";
-import { collectPorts, filterSidePorts } from "./ports.js";
-import { EdgeType } from "./schemas.js";
+import { describerResultToPorts } from "./ports.js";
 import {
   InspectableEdge,
   InspectableNode,
   InspectableNodePorts,
   InspectableNodeType,
-  InspectablePortList,
   MutableGraph,
-  NodeTypeDescriberOptions,
 } from "../types.js";
 import { GraphQueries } from "./graph-queries.js";
 import { DescriberManager } from "./describer-manager.js";
@@ -90,14 +87,9 @@ export class Node implements InspectableNode {
     return this.descriptor.metadata || {};
   }
 
-  #inputsAndConfig(inputs?: InputValues, config?: NodeConfiguration) {
-    // Config first, then inputs on top. Inputs override config.
-    return { ...config, ...inputs };
-  }
-
-  async #describeInternal(
-    options: NodeTypeDescriberOptions
-  ): Promise<NodeDescriberResult> {
+  async describe(inputs?: InputValues): Promise<NodeDescriberResult> {
+    const incoming = this.incoming();
+    const outgoing = this.outgoing();
     const manager = DescriberManager.create(this.#graphId, this.#graph);
     if (!manager.success) {
       throw new Error(`Inspect API Integrity Error: ${manager.error}`);
@@ -106,61 +98,19 @@ export class Node implements InspectableNode {
       this.descriptor.id,
       this.descriptor.type,
       {
-        inputs: this.#inputsAndConfig(options.inputs, this.configuration()),
-        incoming: options.incoming,
-        outgoing: options.outgoing,
+        inputs: { ...this.configuration(), inputs },
+        incoming,
+        outgoing,
       }
     );
-  }
-
-  async describe(inputs?: InputValues): Promise<NodeDescriberResult> {
-    return this.#describeInternal({
-      inputs,
-      incoming: this.incoming(),
-      outgoing: this.outgoing(),
-    });
   }
 
   async ports(
     inputValues?: InputValues,
     outputValues?: OutputValues
   ): Promise<InspectableNodePorts> {
-    const incoming = this.incoming();
-    const outgoing = this.outgoing();
-    const described = await this.#describeInternal({
-      inputs: inputValues,
-      incoming,
-      outgoing,
-    });
-    const inputs: InspectablePortList = {
-      fixed: described.inputSchema.additionalProperties === false,
-      ports: collectPorts(
-        EdgeType.In,
-        incoming,
-        described.inputSchema,
-        false,
-        true,
-        this.#inputsAndConfig(inputValues, this.configuration())
-      ),
-    };
-    const side: InspectablePortList = {
-      fixed: true,
-      ports: filterSidePorts(inputs),
-    };
-    const addErrorPort =
-      this.descriptor.type !== "input" && this.descriptor.type !== "output";
-    const outputs: InspectablePortList = {
-      fixed: described.outputSchema.additionalProperties === false,
-      ports: collectPorts(
-        EdgeType.Out,
-        outgoing,
-        described.outputSchema,
-        addErrorPort,
-        false,
-        outputValues
-      ),
-    };
-    return { inputs, outputs, side };
+    const described = await this.describe(inputValues);
+    return describerResultToPorts(this, described, inputValues, outputValues);
   }
 
   setDeleted() {

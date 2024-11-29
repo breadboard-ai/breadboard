@@ -6,16 +6,27 @@
 
 import { analyzeIsJsonSubSchema } from "@google-labs/breadboard-schema/subschema.js";
 import { JSONSchema4 } from "json-schema";
-import { BehaviorSchema, NodeConfiguration, Schema } from "../../types.js";
+import {
+  BehaviorSchema,
+  InputValues,
+  NodeConfiguration,
+  NodeDescriberResult,
+  OutputValues,
+  Schema,
+} from "../../types.js";
 import { DEFAULT_SCHEMA, EdgeType } from "./schemas.js";
 import {
   CanConnectAnalysis,
   InspectableEdge,
+  InspectableNode,
+  InspectableNodePorts,
   InspectablePort,
   InspectablePortList,
   InspectablePortType,
   PortStatus,
 } from "../types.js";
+
+export { describerResultToPorts };
 
 const title = (schema: Schema, key: string) => {
   return schema.properties?.[key]?.title || key;
@@ -259,4 +270,43 @@ export function filterSidePorts(inputs: InspectablePortList) {
   });
   inputs.ports = inputPorts;
   return sidePorts;
+}
+
+function describerResultToPorts(
+  node: InspectableNode,
+  described: NodeDescriberResult,
+  inputValues?: InputValues,
+  outputValues?: OutputValues
+): InspectableNodePorts {
+  const incoming = node.incoming();
+  const outgoing = node.outgoing();
+  const inputs: InspectablePortList = {
+    fixed: described.inputSchema.additionalProperties === false,
+    ports: collectPorts(
+      EdgeType.In,
+      incoming,
+      described.inputSchema,
+      false,
+      true,
+      { ...node.configuration(), ...inputValues }
+    ),
+  };
+  const side: InspectablePortList = {
+    fixed: true,
+    ports: filterSidePorts(inputs),
+  };
+  const addErrorPort =
+    node.descriptor.type !== "input" && node.descriptor.type !== "output";
+  const outputs: InspectablePortList = {
+    fixed: described.outputSchema.additionalProperties === false,
+    ports: collectPorts(
+      EdgeType.Out,
+      outgoing,
+      described.outputSchema,
+      addErrorPort,
+      false,
+      outputValues
+    ),
+  };
+  return { inputs, outputs, side };
 }
