@@ -772,6 +772,7 @@ export class ModuleEditor extends LitElement {
       metadata: selectedGraph.metadata() || {},
       modules: selectedGraph.modules(),
       visible: false,
+      selectionState: null,
     });
 
     this.#graphRenderer.addEventListener(

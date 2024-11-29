@@ -18,6 +18,10 @@ import type {
   Settings,
   TopGraphEdgeInfo,
   UserOutputValues,
+  WorkspaceSelectionState,
+  WorkspaceSelectionChangeId,
+  WorkspaceVisualChangeId,
+  WorkspaceVisualState,
 } from "../types/types.js";
 import type {
   GraphIdentifier,
@@ -97,14 +101,6 @@ export class SaveAsEvent extends Event {
   }
 }
 
-export class DismissedEvent extends Event {
-  static eventName = "bbdismissed";
-
-  constructor() {
-    super(DismissedEvent.eventName, { ...eventInit });
-  }
-}
-
 export class BoardInfoUpdateEvent extends Event {
   static eventName = "bbboardinfoupdate";
 
@@ -118,14 +114,6 @@ export class BoardInfoUpdateEvent extends Event {
     public readonly subGraphId: string | null = null
   ) {
     super(BoardInfoUpdateEvent.eventName, { ...eventInit });
-  }
-}
-
-export class BoardUnloadEvent extends Event {
-  static eventName = "bbboardunload";
-
-  constructor() {
-    super(BoardUnloadEvent.eventName, { ...eventInit });
   }
 }
 
@@ -188,13 +176,6 @@ export class ToggleBoardActivityEvent extends Event {
     public readonly forceOn = false
   ) {
     super(ToggleBoardActivityEvent.eventName, { ...eventInit });
-  }
-}
-
-export class AddSubgraphEvent extends Event {
-  static eventName = "bbaddsubgraph";
-  constructor() {
-    super(AddSubgraphEvent.eventName, { ...eventInit });
   }
 }
 
@@ -324,6 +305,9 @@ export class DelayEvent extends Event {
   }
 }
 
+/**
+ * @deprecated
+ */
 export class InputRequestedEvent extends Event {
   static eventName = "bbinputrequested";
 
@@ -375,6 +359,28 @@ export class KitNodeChosenEvent extends Event {
 /**
  * Workspace management
  */
+
+export class WorkspaceVisualUpdateEvent extends Event {
+  static eventName = "bbworkspacevisualupdate";
+  constructor(
+    public readonly visualChangeId: WorkspaceVisualChangeId,
+    public readonly visualState: WorkspaceVisualState
+  ) {
+    super(WorkspaceVisualUpdateEvent.eventName, { ...eventInit });
+  }
+}
+
+export class WorkspaceSelectionStateEvent extends Event {
+  static eventName = "bbworkspaceselectionstate";
+
+  constructor(
+    public readonly selectionChangeId: WorkspaceSelectionChangeId,
+    public readonly selections: WorkspaceSelectionState | null
+  ) {
+    super(WorkspaceSelectionStateEvent.eventName, { ...eventInit });
+  }
+}
+
 export class WorkspaceItemChosenEvent extends Event {
   static eventName = "bbworkspaceitemchosen";
 
@@ -1102,6 +1108,17 @@ export class GraphNodeRunRequestEvent extends Event {
     public readonly subGraphId: string | null = null
   ) {
     super(GraphNodeRunRequestEvent.eventName, { ...eventInit });
+  }
+}
+
+export class EditorPointerPositionChangeEvent extends Event {
+  static eventName = "bbeditorpositionchange";
+
+  constructor(
+    public readonly x: number,
+    public readonly y: number
+  ) {
+    super(EditorPointerPositionChangeEvent.eventName, { ...eventInit });
   }
 }
 

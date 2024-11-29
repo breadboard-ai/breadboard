@@ -8,8 +8,9 @@ import {
   Edge,
   InspectableEdgeType,
   InspectablePort,
+  NodeIdentifier,
 } from "@google-labs/breadboard";
-import type { EdgeData } from "../../types/types.js";
+import type { EdgeData, GraphSelectionState } from "../../types/types.js";
 import { ComponentExpansionState, VisualMetadata } from "./types.js";
 
 const documentStyles = getComputedStyle(document.documentElement);
@@ -121,4 +122,12 @@ export function createRandomID(type: string) {
   }
   // TODO: Check for clashes
   return `${type}-${nextNodeId[0]}`;
+}
+
+export function emptySelectionState(): GraphSelectionState {
+  return {
+    nodes: new Set<NodeIdentifier>(),
+    comments: new Set<string>(),
+    edges: new Set<string>(),
+  };
 }

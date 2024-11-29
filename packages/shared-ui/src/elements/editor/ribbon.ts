@@ -13,8 +13,8 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
-  AddSubgraphEvent,
   HideTooltipEvent,
+  NodeCreateEvent,
   OverflowMenuActionEvent,
   RedoEvent,
   ResetLayoutEvent,
@@ -33,6 +33,7 @@ import { InspectableGraph } from "@google-labs/breadboard";
 import { classMap } from "lit/directives/class-map.js";
 import { type ComponentSelectorOverlay } from "../elements";
 import { OverflowAction } from "../../types/types";
+import { createRandomID } from "./utils";
 
 const COLLAPSED_MENU_BUFFER = 60;
 
@@ -1012,7 +1013,40 @@ export class GraphRibbonMenu extends LitElement {
       </button>
     </div>`;
 
-    const boardManagementControls = [save, copy, deleteBoard];
+    const boardManagementControls = [
+      html`<button
+          draggable="true"
+          id="shortcut-add-comment"
+          @pointerover=${(evt: PointerEvent) => {
+            this.dispatchEvent(
+              new ShowTooltipEvent(
+                "Add Comment Component",
+                evt.clientX,
+                evt.clientY
+              )
+            );
+          }}
+          @pointerout=${() => {
+            this.dispatchEvent(new HideTooltipEvent());
+          }}
+          @dblclick=${() => {
+            const id = createRandomID("comment");
+            this.dispatchEvent(new NodeCreateEvent(id, "comment"));
+          }}
+          @dragstart=${(evt: DragEvent) => {
+            if (!evt.dataTransfer) {
+              return;
+            }
+            evt.dataTransfer.setData(this.dataType, "comment");
+          }}
+        >
+          Add Comment
+        </button>
+        <div class="divider"></div>`,
+      save,
+      copy,
+      deleteBoard,
+    ];
 
     const boardManagement = html`<div id="board-management">
       ${boardManagementControls}
@@ -1074,12 +1108,6 @@ export class GraphRibbonMenu extends LitElement {
             case "reset-board-layout": {
               evt.stopPropagation();
               this.dispatchEvent(new ResetLayoutEvent());
-              break;
-            }
-
-            case "add-sub-graph": {
-              evt.stopPropagation();
-              this.dispatchEvent(new AddSubgraphEvent());
               break;
             }
           }

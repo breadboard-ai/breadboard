@@ -18,7 +18,11 @@ import {
   NodeIdentifier,
   InspectableNodePorts,
 } from "@google-labs/breadboard";
-import { CommentNode, NodeMetadata } from "@breadboard-ai/types";
+import {
+  CommentNode,
+  GraphIdentifier,
+  NodeMetadata,
+} from "@breadboard-ai/types";
 import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
 import type {
   tsAutocomplete,
@@ -418,4 +422,33 @@ export interface OverflowAction {
   disabled?: boolean;
   value?: string;
   secondaryAction?: string;
+}
+
+export interface GraphSelectionState {
+  nodes: Set<NodeIdentifier>;
+  comments: Set<string>;
+  edges: Set<string>;
+}
+
+export interface GraphEntityVisualState {
+  type: "node" | "comment";
+  x: number;
+  y: number;
+  expansionState: "collapsed" | "expanded" | "advanced";
+}
+
+export type GraphVisualState = Map<NodeIdentifier, GraphEntityVisualState>;
+
+export type WorkspaceVisualChangeId = ReturnType<typeof crypto.randomUUID>;
+export type WorkspaceVisualState = Map<GraphIdentifier, GraphVisualState>;
+export interface WorkspaceVisualStateWithChangeId {
+  visualChangeId: WorkspaceVisualChangeId;
+  visualState: WorkspaceVisualState;
+}
+
+export type WorkspaceSelectionChangeId = ReturnType<typeof crypto.randomUUID>;
+export type WorkspaceSelectionState = Map<GraphIdentifier, GraphSelectionState>;
+export interface WorkspaceSelectionStateWithChangeId {
+  selectionChangeId: WorkspaceSelectionChangeId;
+  selectionState: WorkspaceSelectionState;
 }

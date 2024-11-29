@@ -5,7 +5,13 @@
  */
 
 import { HarnessRunner, RunEventMap } from "@google-labs/breadboard/harness";
-import { Tab, TabId } from "./types";
+import {
+  Tab,
+  TabId,
+  WorkspaceSelectionChangeId,
+  WorkspaceSelectionState,
+  WorkspaceVisualChangeId,
+} from "./types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
   InspectableRunObserver,
@@ -94,6 +100,25 @@ export class RuntimeModuleChangeEvent extends Event {
 
   constructor() {
     super(RuntimeModuleChangeEvent.eventName, { ...eventInit });
+  }
+}
+
+export class RuntimeSelectionChangeEvent extends Event {
+  static eventName = "runtimeselectionchange" as const;
+
+  constructor(
+    public readonly selectionChangeId: WorkspaceSelectionChangeId,
+    public readonly selectionState: WorkspaceSelectionState
+  ) {
+    super(RuntimeSelectionChangeEvent.eventName, { ...eventInit });
+  }
+}
+
+export class RuntimeVisualChangeEvent extends Event {
+  static eventName = "runtimevisualnchange" as const;
+
+  constructor(public readonly visualChangeId: WorkspaceVisualChangeId) {
+    super(RuntimeVisualChangeEvent.eventName, { ...eventInit });
   }
 }
 
