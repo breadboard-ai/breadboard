@@ -92,6 +92,11 @@ class Snapshot
           this.#changes.addPorts(graphId, nodeId, changes);
           break;
         }
+        default: {
+          throw new Error(
+            `Snapshot API integrity error: Unsupported pending type "${pending.type}"`
+          );
+        }
       }
     }
   }
