@@ -6,36 +6,42 @@
 
 import type { SerializedStoredData } from "@google-labs/breadboard";
 import type { JSONSchema7 } from "json-schema";
-import type { GeminiFunctionDeclaration } from "../llm/gemini.js";
+import type { Signal } from "signal-polyfill";
 import type { Result } from "../util/result.js";
 
-export type BBRTInvokeResult<
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  O extends Record<string, any> = Record<string, any>,
-> = {
-  readonly artifacts: SerializedStoredData[];
-  readonly output: O;
-};
-
-export interface BBRTTool<
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  I = any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  O extends Record<string, any> = Record<string, any>,
-> {
-  displayName: string;
-  // TODO(aomarks) Use Result type.
-  declaration: () =>
-    | GeminiFunctionDeclaration
-    | Promise<GeminiFunctionDeclaration>;
-  icon: string;
-  invoke: (args: I) => Promise<Result<BBRTInvokeResult<O>>>;
-  renderCard(args: I): unknown;
-  renderResult(args: I, result: O): unknown;
-  describe: () => Result<BBRTToolAPI> | Promise<Result<BBRTToolAPI>>;
+export interface BBRTTool<I = unknown, O = unknown> {
+  readonly metadata: ToolMetadata;
+  api(): Promise<Result<ToolAPI>>;
+  invoke(args: I): ToolInvocation<O>;
 }
 
-export type BBRTToolAPI = {
+export interface ToolAPI {
   inputSchema: JSONSchema7;
   outputSchema: JSONSchema7;
-};
+}
+
+export interface ToolMetadata {
+  id: string;
+  title: string;
+  description: string;
+  icon?: string;
+}
+
+export type ToolInvocationState<O = unknown> =
+  | { status: "running" }
+  | {
+      status: "success";
+      value: InvokeResult<O>;
+    }
+  | { status: "error"; error: unknown };
+
+export interface InvokeResult<O = unknown> {
+  readonly output: O;
+  readonly artifacts: SerializedStoredData[];
+}
+
+export interface ToolInvocation<O = unknown> {
+  readonly state: Signal.State<ToolInvocationState<O>>;
+  render(): unknown;
+  renderContent(): unknown;
+}

@@ -45,11 +45,16 @@ export class BBRTActivateModal extends LitElement {
       opacity: 50%;
       cursor: none;
     }
+    pre {
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
   `;
 
   override render() {
     return html`
-      <span>Activate ${this.name ?? html`<i>Unknown board</i>`}?</span>
+      <span>Activate board?</span>
+      <pre>${this.name ?? "Unknown board"}</pre>
       <div id="buttons">
         <button
           id="allow"

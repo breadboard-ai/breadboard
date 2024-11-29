@@ -15,5 +15,5 @@ export type BBRTToolCallChunk = {
   kind: "tool-call";
   id: string;
   name: string;
-  arguments: Record<string, unknown>;
+  arguments: unknown;
 };

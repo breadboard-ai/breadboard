@@ -17,7 +17,7 @@ import { BBRTConversation } from "../llm/conversation.js";
 import type { BBRTModel } from "../llm/model.js";
 import { IndexedDBSettingsSecrets } from "../secrets/indexed-db-secrets.js";
 import { ActivateTool } from "../tools/activate-tool.js";
-import { BoardLister } from "../tools/board-lister.js";
+import { BoardLister } from "../tools/list-tools.js";
 import { ToolProvider } from "../tools/tool-provider.js";
 import type { BBRTTool } from "../tools/tool.js";
 import "./chat.js";
@@ -152,9 +152,11 @@ export class BBRTMain extends LitElement {
       )
     );
     this.#activeTools.clear();
-    this.#activeTools.add(new BoardLister(servers.value));
+    // TODO(aomarks) Casts should not be needed. Something to do with the
+    // default parameter being unknown instead of any.
+    this.#activeTools.add(new BoardLister(servers.value) as BBRTTool);
     this.#activeTools.add(
-      new ActivateTool(this.#toolProviders, this.#activeTools)
+      new ActivateTool(this.#toolProviders, this.#activeTools) as BBRTTool
     );
   }
 }

@@ -8,16 +8,18 @@ import { Signal } from "signal-polyfill";
 import { SignalArray } from "signal-utils/array";
 import type { SignalSet } from "signal-utils/set";
 import type { SecretsProvider } from "../secrets/secrets-provider.js";
-import type { BBRTInvokeResult, BBRTTool } from "../tools/tool.js";
+import type { BBRTTool, InvokeResult, ToolInvocation } from "../tools/tool.js";
 import { BufferedMultiplexStream } from "../util/buffered-multiplex-stream.js";
 import { Lock } from "../util/lock.js";
 import type { Result } from "../util/result.js";
+import { waitForState } from "../util/wait-for-state.js";
 import type { BBRTChunk } from "./chunk.js";
 import {
   bbrtTurnsToGeminiContents,
   gemini,
   simplifyJsonSchemaForGemini,
   type GeminiFunctionDeclaration,
+  type GeminiParameterSchema,
   type GeminiRequest,
 } from "./gemini.js";
 import type { BBRTModel } from "./model.js";
@@ -25,6 +27,7 @@ import {
   bbrtTurnsToOpenAiMessages,
   openai,
   type OpenAIChatRequest,
+  type OpenAITool,
 } from "./openai.js";
 
 // TODO(aomarks) Consider making this whole thing a SignalObject.
@@ -70,16 +73,18 @@ export interface BBRTErrorTurn {
 }
 
 export interface BBRTToolCall {
-  tool: BBRTTool;
   id: string;
-  args: Record<string, unknown>;
+  tool: BBRTTool;
+  args: unknown;
+  invocation: ToolInvocation;
 }
 
 export interface BBRTToolResponse {
   id: string;
   tool: BBRTTool;
-  args: Record<string, unknown>;
-  response: BBRTInvokeResult;
+  invocation: ToolInvocation;
+  args: unknown;
+  response: InvokeResult;
 }
 
 export class BBRTConversation {
@@ -182,7 +187,7 @@ export class BBRTConversation {
           // structure really.
           const tool = await (async () => {
             for (const tool of this.#tools) {
-              if ((await tool.declaration()).name === chunk.name) {
+              if (tool.metadata.id === chunk.name) {
                 return tool;
               }
             }
@@ -198,9 +203,15 @@ export class BBRTConversation {
             });
             break;
           }
-          toolCalls.push({ id: chunk.id, tool, args: chunk.arguments });
+          const invocation = tool.invoke(chunk.arguments);
+          toolCalls.push({
+            id: chunk.id,
+            args: chunk.arguments,
+            tool,
+            invocation,
+          });
           toolResponsePromises.push(
-            this.#invokeTool(tool, chunk.id, chunk.arguments)
+            this.#monitorInvocation(chunk.id, tool, chunk.arguments, invocation)
           );
           break;
         }
@@ -244,18 +255,33 @@ export class BBRTConversation {
     }
   }
 
-  async #invokeTool(
-    tool: BBRTTool,
+  // TODO(aomarks) Kinda ugly. Should be simpler?
+  async #monitorInvocation(
     id: string,
-    args: Record<string, unknown>
+    tool: BBRTTool,
+    args: unknown,
+    invocation: ToolInvocation
   ): Promise<Result<BBRTToolResponse>> {
-    const invocation = await tool.invoke(args);
-    console.log({ invocation });
-    if (!invocation.ok) {
-      // TODO(aomarks) This should be displayed to the user.
-      return invocation;
+    const result = await waitForState(
+      invocation.state,
+      (state) => state.status === "success" || state.status === "error"
+    );
+    if (result.status === "success") {
+      return {
+        ok: true,
+        value: {
+          id,
+          tool,
+          invocation,
+          args,
+          response: result.value,
+        },
+      };
+    } else if (result.status === "error") {
+      return { ok: false, error: result.error };
+    } else {
+      throw new Error("Internal error");
     }
-    return { ok: true, value: { id, tool, args, response: invocation.value } };
   }
 
   async #generate(): Promise<Result<AsyncIterableIterator<BBRTChunk>>> {
@@ -288,14 +314,14 @@ export class BBRTConversation {
         {
           functionDeclarations: await Promise.all(
             [...this.#tools].map(async (tool) => {
-              const declaration = await tool.declaration();
+              const inputSchema = (await tool.api()).value?.inputSchema;
               const fn: GeminiFunctionDeclaration = {
-                ...declaration,
+                name: tool.metadata.id,
+                description: tool.metadata.description,
+                parameters: inputSchema as GeminiParameterSchema,
               };
-              if (declaration.parameters !== undefined) {
-                fn.parameters = simplifyJsonSchemaForGemini(
-                  declaration.parameters
-                );
+              if (inputSchema !== undefined) {
+                fn.parameters = simplifyJsonSchemaForGemini(inputSchema);
               }
               return fn;
             })
@@ -320,19 +346,35 @@ export class BBRTConversation {
       messages,
     };
     if (this.#tools.size > 0) {
-      request.tools = await Promise.all(
+      const tools = await Promise.all(
         [...this.#tools].map(async (tool) => {
-          const { name, description, parameters } = await tool.declaration();
+          const { id, description } = tool.metadata;
+          const api = await tool.api();
+          if (!api.ok) {
+            return api;
+          }
+          const { inputSchema } = api.value;
           return {
-            type: "function",
-            function: {
-              name,
-              description,
-              parameters,
-            },
+            ok: true,
+            value: {
+              type: "function",
+              function: {
+                name: id,
+                description,
+                parameters: inputSchema,
+              },
+            } satisfies OpenAITool,
           };
         })
       );
+      request.tools = [];
+      for (const tool of tools) {
+        if (tool.ok) {
+          request.tools.push(tool.value);
+        } else {
+          // TODO(aomarks): handle error
+        }
+      }
     }
     const apiKey = await this.#secrets.getSecret("OPENAI_API_KEY");
     if (!apiKey.ok) {

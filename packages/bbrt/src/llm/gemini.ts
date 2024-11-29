@@ -117,14 +117,14 @@ export interface GeminiTextPart {
 export interface GeminiFunctionCall {
   functionCall: {
     name: string;
-    args: Record<string, unknown>;
+    args: unknown;
   };
 }
 
 export interface GeminiFunctionResponse {
   functionResponse: {
     name: string;
-    response: Record<string, unknown>;
+    response: unknown;
   };
 }
 
@@ -170,19 +170,17 @@ export async function bbrtTurnsToGeminiContents(
       case "user-tool-responses": {
         contents.push({
           role: "user",
-          parts: await Promise.all(
-            turn.responses.map(async (response) => ({
-              functionResponse: {
-                name: (await response.tool.declaration()).name,
-                response: response.response.output,
-                // TOOD(aomarks) It really feels like we should also provide
-                // the arguments or an id, since we might have more than one
-                // call to the same tool. Maybe it uses the ordering (which we
-                // preserve), or maybe the LLM just figures it out from
-                // context most of the time anyway.
-              },
-            }))
-          ),
+          parts: turn.responses.map((response) => ({
+            functionResponse: {
+              name: response.tool.metadata.id,
+              response: response.response.output,
+              // TOOD(aomarks) It really feels like we should also provide the
+              // arguments or an id, since we might have more than one call to
+              // the same tool. Maybe it uses the ordering (which we preserve),
+              // or maybe the LLM just figures it out from context most of the
+              // time anyway.
+            },
+          })),
         });
         break;
       }
@@ -196,9 +194,9 @@ export async function bbrtTurnsToGeminiContents(
           content.parts.push(
             ...(await Promise.all(
               turn.toolCalls.map(
-                async (toolCall): Promise<GeminiPart> => ({
+                (toolCall): GeminiPart => ({
                   functionCall: {
-                    name: (await toolCall.tool.declaration()).name,
+                    name: toolCall.tool.metadata.id,
                     args: toolCall.args,
                   },
                 })

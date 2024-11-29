@@ -48,10 +48,8 @@ export class BBRTToolCallEl extends LitElement {
       return nothing;
     }
     return html`
-      <img .src=${this.toolCall.tool.icon} />
-      <div part="tool-call-content">
-        ${this.toolCall.tool.renderCard(this.toolCall.args)}
-      </div>
+      <img .src=${this.toolCall.tool.metadata.icon!} />
+      <div part="tool-call-content">${this.toolCall.invocation.render()}</div>
     `;
   }
 }

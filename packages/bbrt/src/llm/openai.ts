@@ -228,7 +228,7 @@ export async function bbrtTurnsToOpenAiMessages(
               id: toolCall.id,
               type: "function",
               function: {
-                name: (await toolCall.tool.declaration()).name,
+                name: toolCall.tool.metadata.id,
                 arguments: JSON.stringify(toolCall.args),
               },
             }))
