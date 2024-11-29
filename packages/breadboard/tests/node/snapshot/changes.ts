@@ -10,7 +10,10 @@ import { GraphDescriptor } from "@breadboard-ai/types";
 import { MutableGraphImpl } from "../../../src/inspector/graph/mutable-graph.js";
 import { makeTestGraphStore } from "../../helpers/_graph-store.js";
 import { deepStrictEqual } from "node:assert";
-import { SnapshotChangeSpec } from "../../../src/inspector/snapshot/types.js";
+import {
+  SnapshotChangeSpec,
+  SnapshotPendingUpdate,
+} from "../../../src/inspector/snapshot/types.js";
 
 function mutable(graph: GraphDescriptor) {
   return new MutableGraphImpl(
@@ -40,7 +43,7 @@ function mutable(graph: GraphDescriptor) {
 }
 
 describe("Snapshot changes", async () => {
-  it("correctly builds initial list of changes", async () => {
+  it("correctly builds initial list of changes", () => {
     const blank = new Snapshot(mutable({ nodes: [], edges: [] }));
     deepStrictEqual(blank.changes, [
       {
@@ -180,35 +183,191 @@ describe("Snapshot changes", async () => {
         type: "addedge",
       },
     ] satisfies SnapshotChangeSpec[]);
-  });
+    deepStrictEqual(everything.pending, [
+      {
+        type: "updateports",
+        graphId: "",
+        nodeId: "first",
+      },
+      {
+        type: "updateports",
+        graphId: "",
+        nodeId: "second",
+      },
+      {
+        type: "updateports",
+        graphId: "subgraph1",
+        nodeId: "third",
+      },
+    ] satisfies SnapshotPendingUpdate[]);
 
-  const imperative = new Snapshot(
-    mutable({
-      title: "Title",
-      main: "main",
-      modules: {
-        main: {
+    const imperative = new Snapshot(
+      mutable({
+        title: "Title",
+        main: "main",
+        modules: {
+          main: {
+            code: "code",
+          },
+        },
+        edges: [],
+        nodes: [],
+      })
+    );
+    deepStrictEqual(imperative.changes, [
+      {
+        type: "addgraph",
+        metadata: { title: "Title" },
+        main: "main",
+        graphId: "",
+      },
+      {
+        type: "addmodule",
+        id: "main",
+        module: {
           code: "code",
         },
       },
-      edges: [],
-      nodes: [],
-    })
-  );
+    ] satisfies SnapshotChangeSpec[]);
+  });
 
-  deepStrictEqual(imperative.changes, [
-    {
-      type: "addgraph",
-      metadata: { title: "Title" },
-      main: "main",
-      graphId: "",
-    },
-    {
-      type: "addmodule",
-      id: "main",
-      module: {
-        code: "code",
+  await it("correctly produces initial port updates", async () => {
+    const oneNode = new Snapshot(
+      mutable({
+        title: "Title",
+        nodes: [{ id: "first", type: "type", configuration: { foo: "foo" } }],
+        edges: [],
+      })
+    );
+    deepStrictEqual(oneNode.changes, [
+      {
+        type: "addgraph",
+        metadata: { title: "Title" },
+        graphId: "",
       },
-    },
-  ] satisfies SnapshotChangeSpec[]);
+      {
+        type: "addnode",
+        node: { id: "first", type: "type", configuration: { foo: "foo" } },
+        graphId: "",
+      },
+    ] satisfies SnapshotChangeSpec[]);
+    deepStrictEqual(oneNode.pending, [
+      {
+        type: "updateports",
+        graphId: "",
+        nodeId: "first",
+      },
+    ] satisfies SnapshotPendingUpdate[]);
+    await oneNode.update();
+    deepStrictEqual(oneNode.pending, []);
+    deepStrictEqual(oneNode.changes, [
+      {
+        type: "addgraph",
+        metadata: { title: "Title" },
+        graphId: "",
+      },
+      {
+        type: "addnode",
+        node: { id: "first", type: "type", configuration: { foo: "foo" } },
+        graphId: "",
+      },
+      {
+        type: "updateports",
+        graphId: "",
+        nodeId: "first",
+        input: {
+          added: [
+            {
+              configured: false,
+              kind: "input",
+              name: "",
+              schema: {
+                type: "string",
+              },
+              star: true,
+              status: "ready",
+              title: "",
+              value: undefined,
+            },
+            {
+              configured: false,
+              kind: "input",
+              name: "*",
+              schema: {
+                type: "string",
+              },
+              star: true,
+              status: "ready",
+              title: "*",
+              value: undefined,
+            },
+            {
+              configured: true,
+              kind: "input",
+              name: "foo",
+              schema: {
+                type: "string",
+              },
+              star: false,
+              status: "connected",
+              title: "foo",
+              value: "foo",
+            },
+          ],
+          deleted: [],
+          fixedChanged: false,
+          updated: [],
+        },
+        output: {
+          added: [
+            {
+              configured: false,
+              kind: "output",
+              name: "",
+              schema: {
+                type: "string",
+              },
+              star: true,
+              status: "ready",
+              title: "",
+              value: undefined,
+            },
+            {
+              configured: false,
+              kind: "output",
+              name: "$error",
+              schema: {
+                type: "string",
+              },
+              star: false,
+              status: "ready",
+              title: "$error",
+              value: undefined,
+            },
+            {
+              configured: false,
+              kind: "output",
+              name: "*",
+              schema: {
+                type: "string",
+              },
+              star: true,
+              status: "ready",
+              title: "*",
+              value: undefined,
+            },
+          ],
+          deleted: [],
+          fixedChanged: false,
+          updated: [],
+        },
+        side: {
+          added: [],
+          deleted: [],
+          fixedChanged: true,
+          updated: [],
+        },
+      },
+    ] satisfies SnapshotChangeSpec[]);
+  });
 });

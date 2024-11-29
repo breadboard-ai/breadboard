@@ -13,8 +13,13 @@ import {
   Module,
   ModuleIdentifier,
   NodeDescriptor,
+  NodeIdentifier,
 } from "@breadboard-ai/types";
-import { SnapshotAddGraphSpec, SnapshotChangeSpec } from "./types.js";
+import {
+  NodePortChanges,
+  SnapshotAddGraphSpec,
+  SnapshotChangeSpec,
+} from "./types.js";
 import { hash } from "../../utils/hash.js";
 import { InspectableModule } from "../types.js";
 
@@ -78,6 +83,19 @@ class ChangeMaker {
         main: graph.main,
       })
     );
+  }
+
+  addPorts(
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier,
+    changes: NodePortChanges
+  ) {
+    this.changes.push({
+      type: "updateports",
+      graphId,
+      nodeId,
+      ...changes,
+    });
   }
 }
 

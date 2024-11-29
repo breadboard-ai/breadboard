@@ -19,7 +19,9 @@ import {
   InspectableSnapshot,
   SnapshotChangeSpec,
   SnapshotEventTarget,
+  SnapshotPendingUpdate,
 } from "./types.js";
+import { PortUpdateReconciler } from "./port-update-reconciler.js";
 
 export { Snapshot };
 
@@ -32,6 +34,9 @@ class Snapshot
   #mutable: MutableGraph;
   #changes!: ChangeMaker;
   #snapshot: Mutable<InspectableMainGraphSnapshot>;
+  readonly #pending: SnapshotPendingUpdate[] = [];
+  readonly #portUpdateReconciler: PortUpdateReconciler =
+    new PortUpdateReconciler();
 
   constructor(mutable: MutableGraph) {
     super();
@@ -42,6 +47,53 @@ class Snapshot
 
   get changes(): SnapshotChangeSpec[] {
     return this.#changes.changes;
+  }
+
+  get pending(): readonly SnapshotPendingUpdate[] {
+    return this.#pending;
+  }
+
+  /**
+   *
+   * @param manual -- if `true`, the updates will stop once the
+   *    update queue is empty, and when the new items arrive, this
+   *    method will have to be called again.
+   *    If `false` (default), will continue updating as soon as new
+   *    items arrive into the update queue.
+   */
+  async update(_manual: boolean = false): Promise<void> {
+    // if stale, start an update using the update queue.
+    // the update queue has all the pending things that should
+    // be updated, but won't be until this function is called.
+    for (;;) {
+      const pending = this.#pending.shift();
+      if (!pending) break;
+      switch (pending.type) {
+        case "updateports": {
+          const { graphId, nodeId } = pending;
+          const inspector = this.#mutable.graphs.get(graphId);
+          if (!inspector) {
+            throw new Error(
+              `Snapshot API integrity error: unable to find graph "${graphId}"`
+            );
+          }
+          const node = inspector.nodeById(nodeId);
+          if (!node) {
+            throw new Error(
+              `Snasphot API integrity error: uanble to find node "${nodeId}" in graph "${graphId}"`
+            );
+          }
+          const ports = await node.ports();
+          const changes = this.#portUpdateReconciler.getChanges(
+            graphId,
+            nodeId,
+            ports
+          );
+          this.#changes.addPorts(graphId, nodeId, changes);
+          break;
+        }
+      }
+    }
   }
 
   rebuildChanges(): void {
@@ -71,6 +123,11 @@ class Snapshot
     if (!inspector.imperative()) {
       inspector.nodes().forEach((node) => {
         this.#changes.addNode(node.descriptor, graphId);
+        this.#pending.push({
+          type: "updateports",
+          nodeId: node.descriptor.id,
+          graphId,
+        });
       });
       inspector.edges().forEach((edge) => {
         this.#changes.addEdge(edge.raw(), graphId);

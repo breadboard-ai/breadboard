@@ -15,6 +15,7 @@ import {
   ModuleMetadata,
   NodeConfiguration,
   NodeDescriptor,
+  NodeIdentifier,
   NodeMetadata,
   NodeTypeIdentifier,
   NodeValue,
@@ -293,13 +294,17 @@ export type InspectablePortSnapshot = {
   /**
    * Returns the edges connected to this port.
    */
-  readonly edges: InspectableEdgeSnapshot[];
+  // readonly edges: InspectableEdgeSnapshot[];
 
   /**
    * Is this an input, output, or side port?
    */
-  readonly kind: "input" | "output" | "side";
+  readonly kind: SnapshotPortKind;
 };
+
+export type SnapshotPortKind = "input" | "output" | "side";
+
+export type PortIdentifier = string;
 
 export type SnapshotAddGraphSpec = {
   type: "addgraph";
@@ -312,9 +317,36 @@ export type SnapshotAddEdgeSpec = AddEdgeSpec & {
   id: number;
 };
 
+export type PortChanges = {
+  fixedChanged: boolean;
+  deleted: PortIdentifier[];
+  added: InspectablePortSnapshot[];
+  updated: InspectablePortSnapshot[];
+};
+
+export type NodePortChanges = {
+  input: PortChanges;
+  output: PortChanges;
+  side: PortChanges;
+};
+
+export type SnapshotUpdatePortsSpec = {
+  type: "updateports";
+  graphId: GraphIdentifier;
+  nodeId: NodeIdentifier;
+} & NodePortChanges;
+
 export type SnapshotChangeSpec =
   | SnapshotAddGraphSpec
   | ChangeGraphMetadataSpec
   | AddNodeSpec
   | SnapshotAddEdgeSpec
-  | AddModuleSpec;
+  | AddModuleSpec
+  | SnapshotUpdatePortsSpec;
+
+export type SnapshotPendingPortUpdate = Pick<
+  SnapshotUpdatePortsSpec,
+  "type" | "graphId" | "nodeId"
+>;
+
+export type SnapshotPendingUpdate = SnapshotPendingPortUpdate;
