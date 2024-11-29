@@ -18,9 +18,8 @@ import {
   NodeIdentifier,
   NodeMetadata,
   NodeTypeIdentifier,
-  NodeValue,
 } from "@breadboard-ai/types";
-import { NodeHandlerMetadata, Schema } from "../../types.js";
+import { NodeHandlerMetadata } from "../../types.js";
 import {
   TypedEventTarget,
   TypedEventTargetType,
@@ -31,7 +30,7 @@ import {
   AddNodeSpec,
   ChangeGraphMetadataSpec,
 } from "../../editor/types.js";
-import { InspectablePort } from "../types.js";
+import { InspectableNodePorts, InspectablePort } from "../types.js";
 
 export type SnapshotEventMap = {
   stale: SnapshotStaleEvent;
@@ -164,7 +163,7 @@ export type InspectableNodeSnapshot = {
   /**
    * Returns the current state of node's ports
    */
-  readonly ports: InspectableNodePortsSnapshot | undefined;
+  readonly ports: InspectableNodePorts | undefined;
 };
 
 export type InspectableEdgeSnapshot = Edge & {
@@ -198,112 +197,8 @@ export type InspectableNodeTypeSnapshot = {
   /**
    * Returns the ports of the node.
    */
-  readonly ports: InspectableNodePortsSnapshot | undefined;
+  readonly ports: InspectableNodePorts | undefined;
 };
-
-export type InspectableNodePortsSnapshot = {
-  /**
-   * Returns the input ports of the node.
-   */
-  readonly inputs: InspectablePortListSnapshot;
-  /**
-   * Returns the output ports of the node.
-   */
-  readonly outputs: InspectablePortListSnapshot;
-  /**
-   * Return the side ports of the node.
-   */
-  readonly side: InspectablePortListSnapshot;
-};
-
-export type InspectablePortListSnapshot = {
-  readonly ports: InspectablePortSnapshot[];
-  /**
-   * Returns true if the list of ports is fixed. Returns false if the node
-   * expects a dynamic number of ports.
-   *
-   * Fixed example: the `validateJson` node, which has two fixed input ports:
-   * `json` and `schema`.
-   *
-   * Conversely, the `core.invoke` node is an example of the dynamic number of
-   * ports, which can take any number of inputs and they are passed to the
-   * invoked graph as arguments.
-   */
-  readonly fixed: boolean;
-};
-
-export type InspectablePortSnapshot = {
-  /**
-   * The name of the port.
-   */
-  readonly name: string;
-  /**
-   * The title of the port, if specified by schema. Otherwise, same as the
-   * name of the port
-   */
-  readonly title: string;
-  /**
-   * Returns current status of this port.
-   */
-  readonly status: /**
-   * The port status impossible to determine. This only happens when the node
-   * has a star wire ("*") and the port is not connected.
-   */
-  | "indeterminate"
-    /**
-     * The port is correctly connected to another node or specified using node's
-     * configuration, according to this node's schema.
-     */
-    | "connected"
-    /**
-     * The port is not connected to another node, and it is expected, but not
-     * required by the node's schema.
-     */
-    | "ready"
-    /**
-     * The port is not connected to another node, but it is required by the node's
-     * schema. It is similar to "Ready", except that not having this port
-     * connected is an error.
-     */
-    | "missing"
-    /**
-     * The port is connected to this node, but it is not expected by the node's
-     * schema. This is an error state.
-     */
-    | "dangling";
-  /**
-   * Returns true if the port was specified in the node's configuration.
-   */
-  readonly configured: boolean;
-  /**
-   * Returns current value for the port. This value is computed as follows:
-   * - if there is a value coming from one of the incoming edges, then
-   *   return that value;
-   * - otherwise, if there is a value specified in node's configuration,
-   *   then return that value;
-   * - otherwise, return null;
-   */
-  readonly value: NodeValue;
-  /**
-   * Returns true if this is the star or control port ("*" or "").
-   */
-  readonly star: boolean;
-  /**
-   * Port schema as defined by the node's configuration.
-   */
-  readonly schema: Schema;
-  /**
-   * Returns the edges connected to this port.
-   */
-  // readonly edges: InspectableEdgeSnapshot[];
-
-  /**
-   * Is this an input, output, or side port?
-   */
-  readonly kind: SnapshotPortKind;
-};
-
-export type SnapshotPortKind = "input" | "output" | "side";
 
 export type PortIdentifier = string;
 
