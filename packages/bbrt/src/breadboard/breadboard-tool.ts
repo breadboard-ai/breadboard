@@ -31,6 +31,7 @@ import type {
   BreadboardBoardListing,
   BreadboardServer,
 } from "./breadboard-server.js";
+import { makeToolSafeName } from "./make-tool-safe-name.js";
 
 export class BreadboardTool implements BBRTTool<InputValues, OutputValues> {
   readonly listing: BreadboardBoardListing;
@@ -71,7 +72,7 @@ export class BreadboardTool implements BBRTTool<InputValues, OutputValues> {
     result: BBRTInvokeResult<OutputValues>
   ) {
     return until(
-      this.api().then((api) =>
+      this.describe().then((api) =>
         api.ok ? this.#renderResult(result, api.value) : ""
       ),
       "..."
@@ -98,7 +99,7 @@ export class BreadboardTool implements BBRTTool<InputValues, OutputValues> {
   }
 
   #apiCache?: Promise<Result<BBRTToolAPI>>;
-  async api() {
+  async describe() {
     return (this.#apiCache ??= resultify(
       inspect(await this.#bgl(), {
         kits: this.#kits,
@@ -109,18 +110,13 @@ export class BreadboardTool implements BBRTTool<InputValues, OutputValues> {
 
   async declaration(): Promise<GeminiFunctionDeclaration> {
     const bgl = await this.#bgl();
-    const api = await this.api();
+    const api = await this.describe();
     if (!api.ok) {
       throw api.error;
     }
     const { inputSchema } = api.value;
-    // Gemini requires [a-zA-Z0-9_\-\.]{1,64}.
-    // OpenAI requires [a-zA-Z0-9_\-]{1,??}
-    const name = this.listing.path
-      .replace(/[^a-zA-Z0-9_\\-]/g, "")
-      .slice(0, 64);
     return {
-      name,
+      name: makeToolSafeName(this.listing.path),
       description:
         this.listing.title + (bgl.description ? `: ${bgl.description}` : ""),
       // TODO(aomarks) We may need to strip non-standard Breadboard annotations
@@ -133,7 +129,6 @@ export class BreadboardTool implements BBRTTool<InputValues, OutputValues> {
     inputs: InputValues
   ): Promise<Result<BBRTInvokeResult<OutputValues>>> {
     const bgl = await this.#bgl();
-    console.log("BREADBOARD INVOKE", { inputs, bgl });
     const dataStore = createDefaultDataStore();
     const dataStoreGroupId = crypto.randomUUID();
     dataStore.createGroup(dataStoreGroupId);
@@ -154,26 +149,21 @@ export class BreadboardTool implements BBRTTool<InputValues, OutputValues> {
     const runResult = await new Promise<Result<OutputValues[]>>(
       (endBoardRun) => {
         const outputs: OutputValues[] = [];
-        runner.addEventListener("input", (event) => {
-          console.log("BREADBOARD INPUT", event.data, runner.inputSchema());
+        runner.addEventListener("input", () => {
           // TODO(aomarks) I thought I should be able to pass the inputs to the
           // RunConfig, and/or to the main run call -- but neither seem to work.
           void runner.run(inputs);
         });
         runner.addEventListener("output", (event) => {
-          console.log("BREADBOARD OUTPUT", event.data.outputs);
           outputs.push(event.data.outputs);
         });
         runner.addEventListener("end", () => {
-          console.log("BREADBOARD END");
           endBoardRun({ ok: true, value: outputs });
         });
         runner.addEventListener("error", (event) => {
-          console.log("BREADBOARD ERROR", event.data.error);
           endBoardRun({ ok: false, error: event.data.error });
         });
         runner.addEventListener("secret", (event) => {
-          console.log("BREADBOARD SECRET", event.data.keys);
           void (async () => {
             const secrets: Record<string, string> = {};
             const missing = [];
@@ -210,7 +200,6 @@ export class BreadboardTool implements BBRTTool<InputValues, OutputValues> {
         void runner.run();
       }
     );
-    console.log("BREADBOARD RUN DONE", runResult);
 
     if (!runResult.ok) {
       return runResult;

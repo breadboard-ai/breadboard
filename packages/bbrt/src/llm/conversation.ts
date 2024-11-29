@@ -170,7 +170,6 @@ export class BBRTConversation {
     const contentWriter = contentStream.writable.getWriter();
     const toolResponsePromises: Array<Promise<Result<BBRTToolResponse>>> = [];
     for await (const chunk of modelResponse.value) {
-      // console.log('BBRT RESPONSE CHUNK', JSON.stringify(chunk, null, 2));
       status.set("streaming");
       switch (chunk.kind) {
         case "append-content": {
@@ -191,6 +190,12 @@ export class BBRTConversation {
           })();
           if (tool === undefined) {
             console.error("unknown tool", JSON.stringify(chunk));
+            this.turns.push({
+              kind: "error",
+              role: "model",
+              status,
+              error: new Error(`Unknown tool: ${JSON.stringify(chunk)}`),
+            });
             break;
           }
           toolCalls.push({ id: chunk.id, tool, args: chunk.arguments });
@@ -245,7 +250,9 @@ export class BBRTConversation {
     args: Record<string, unknown>
   ): Promise<Result<BBRTToolResponse>> {
     const invocation = await tool.invoke(args);
+    console.log({ invocation });
     if (!invocation.ok) {
+      // TODO(aomarks) This should be displayed to the user.
       return invocation;
     }
     return { ok: true, value: { id, tool, args, response: invocation.value } };

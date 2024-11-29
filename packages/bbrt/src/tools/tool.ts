@@ -10,16 +10,18 @@ import type { GeminiFunctionDeclaration } from "../llm/gemini.js";
 import type { Result } from "../util/result.js";
 
 export type BBRTInvokeResult<
-  O extends Record<string, unknown> = Record<string, unknown>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  O extends Record<string, any> = Record<string, any>,
 > = {
-  artifacts: SerializedStoredData[];
-  output: O;
+  readonly artifacts: SerializedStoredData[];
+  readonly output: O;
 };
 
 export interface BBRTTool<
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   I = any,
-  O extends Record<string, unknown> = Record<string, unknown>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  O extends Record<string, any> = Record<string, any>,
 > {
   displayName: string;
   // TODO(aomarks) Use Result type.
@@ -30,7 +32,7 @@ export interface BBRTTool<
   invoke: (args: I) => Promise<Result<BBRTInvokeResult<O>>>;
   renderCard(args: I): unknown;
   renderResult(args: I, result: O): unknown;
-  api: () => Result<BBRTToolAPI> | Promise<Result<BBRTToolAPI>>;
+  describe: () => Result<BBRTToolAPI> | Promise<Result<BBRTToolAPI>>;
 }
 
 export type BBRTToolAPI = {

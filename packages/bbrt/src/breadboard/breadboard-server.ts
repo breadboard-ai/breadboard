@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphDescriptor } from "@google-labs/breadboard";
+import type {
+  GraphDescriptor,
+  NodeDescriberResult,
+} from "@google-labs/breadboard";
+import { getDefaultSchema } from "./get-default-schema.js";
 
 export class BreadboardServer {
   readonly #baseUrl: string;
@@ -36,6 +40,34 @@ export class BreadboardServer {
     }
     return (await response.json()) as GraphDescriptor;
   }
+
+  async boardsDetailed(): Promise<BreadboardBoardListingDetailed[]> {
+    const listings = await this.boards();
+    const details: BreadboardBoardListingDetailed[] = [];
+    await Promise.all(
+      listings.map(async (listing) => {
+        const bgl = await this.board(listing.path);
+        const schema = await getDefaultSchema(bgl);
+        if (!schema.ok) {
+          console.error(
+            "Error getting schema for board",
+            listing.path,
+            schema.error
+          );
+          return;
+        }
+        if (!bgl.title || !bgl.description) {
+          return;
+        }
+        details.push({
+          ...listing,
+          bgl,
+          schema: schema.value,
+        });
+      })
+    );
+    return details;
+  }
 }
 
 export interface BreadboardBoardListing {
@@ -45,4 +77,9 @@ export interface BreadboardBoardListing {
   readonly: boolean;
   mine: boolean;
   tags: string[];
+}
+
+export interface BreadboardBoardListingDetailed extends BreadboardBoardListing {
+  bgl: GraphDescriptor;
+  schema: NodeDescriberResult;
 }
