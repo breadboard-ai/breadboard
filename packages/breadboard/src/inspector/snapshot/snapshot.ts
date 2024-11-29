@@ -146,6 +146,9 @@ class Snapshot
     Object.entries(inspector.graphs() || {}).forEach(([graphId, subgraph]) => {
       this.rebuildSingleGraph(subgraph, graphId);
     });
+    // This will consume the first pending item in the pending queue,
+    // so `pending` will almost never contain the entire pending queue
+    // when read.
     this.update();
   }
 
