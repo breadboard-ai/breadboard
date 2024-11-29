@@ -14,6 +14,7 @@ import {
 import { Board } from "./board.js";
 import { Run } from "./run.js";
 import { Edit } from "./edit.js";
+import { Util } from "./util.js";
 import { RuntimeConfig } from "./types.js";
 
 import {
@@ -35,6 +36,7 @@ export * as Events from "./events.js";
 export * as Types from "./types.js";
 
 import { sandbox } from "../sandbox";
+import { Select } from "./select.js";
 
 function withRunModule(kits: Kit[]): Kit[] {
   return addSandboxedRunModule(sandbox, kits);
@@ -45,6 +47,8 @@ export async function create(config: RuntimeConfig): Promise<{
   run: Run;
   edit: Edit;
   kits: Kit[];
+  select: Select;
+  util: typeof Util;
 }> {
   const kits = withRunModule(
     await loadKits([
@@ -93,6 +97,8 @@ export async function create(config: RuntimeConfig): Promise<{
     board: new Board([], loader, kits, boardServers, config.tokenVendor),
     edit: new Edit([], loader, kits, config.sandbox, graphStore),
     run: new Run(graphStore, config.dataStore, config.runStore),
+    select: new Select(),
+    util: Util,
     kits,
   } as const;
 

@@ -42,7 +42,10 @@ import { styleMap } from "lit/directives/style-map.js";
 import { getSubItemColor } from "../../utils/subgraph-color";
 import { isConfigurableBehavior, isModuleBehavior } from "../../utils";
 import { ModuleIdentifier } from "@breadboard-ai/types";
-import { OverflowAction } from "../../types/types";
+import {
+  OverflowAction,
+  WorkspaceSelectionStateWithChangeId,
+} from "../../types/types";
 
 const OPEN_ITEMS_KEY = "bb-workspace-outline-open-items";
 const OVERFLOW_MENU_CLEARANCE = 140;
@@ -86,6 +89,9 @@ export class WorkspaceOutline extends LitElement {
 
   @property({ reflect: true })
   mode: "list" | "tree" = "list";
+
+  @property()
+  selectionState: WorkspaceSelectionStateWithChangeId | null = null;
 
   @state()
   filter: string | null = null;

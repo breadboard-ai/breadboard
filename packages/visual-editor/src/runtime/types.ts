@@ -17,7 +17,11 @@ import {
 
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { TokenVendor } from "@breadboard-ai/connection-client";
-import { ModuleIdentifier } from "@breadboard-ai/types";
+import {
+  GraphIdentifier,
+  ModuleIdentifier,
+  NodeIdentifier,
+} from "@breadboard-ai/types";
 import { Sandbox } from "@breadboard-ai/jsandbox";
 
 export enum TabType {
@@ -70,3 +74,35 @@ export type Result<T> =
 export type EnhanceSideboard = {
   enhance(config: NodeConfiguration): Promise<Result<NodeConfiguration>>;
 };
+
+export interface GraphSelectionState {
+  nodes: Set<NodeIdentifier>;
+  comments: Set<string>;
+  edges: Set<string>;
+}
+
+export interface GraphEntityVisualState {
+  type: "node" | "comment";
+  x: number;
+  y: number;
+  expansionState: "collapsed" | "expanded" | "advanced";
+}
+
+export type GraphVisualState = Map<NodeIdentifier, GraphEntityVisualState>;
+
+export type WorkspaceVisualChangeId = ReturnType<typeof crypto.randomUUID>;
+export type WorkspaceVisualState = Map<GraphIdentifier, GraphVisualState>;
+export interface WorkspaceVisualStateWithChangeId {
+  visualChangeId: WorkspaceVisualChangeId;
+  visualState: WorkspaceVisualState;
+}
+
+export type WorkspaceSelectionChangeId = ReturnType<typeof crypto.randomUUID>;
+export type WorkspaceSelectionState = Map<GraphIdentifier, GraphSelectionState>;
+export interface WorkspaceSelectionStateWithChangeId {
+  selectionChangeId: WorkspaceSelectionChangeId;
+  selectionState: WorkspaceSelectionState;
+}
+
+export type TabSelectionState = Map<TabId, WorkspaceSelectionState>;
+export type EditChangeId = ReturnType<typeof crypto.randomUUID>;

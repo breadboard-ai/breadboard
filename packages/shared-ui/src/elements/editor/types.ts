@@ -12,6 +12,7 @@ import {
   InspectableNodePorts,
   NodeHandlerMetadata,
 } from "@google-labs/breadboard";
+import { GraphSelectionState } from "../../types/types";
 
 export enum GRAPH_OPERATIONS {
   GRAPH_BOARD_LINK_CLICKED = "graphboardlinkclicked",
@@ -19,14 +20,14 @@ export enum GRAPH_OPERATIONS {
   GRAPH_NODE_DRAWN = "graphnodedrawn",
   GRAPH_COMMENT_DRAWN = "graphcommentdrawn",
   GRAPH_COMMENT_EDIT_REQUESTED = "graphcommenteditrequested",
+  GRAPH_COMMENT_TOGGLE_SELECTED = "graphcommenttoggleselected",
   GRAPH_NODE_MOVED = "graphnodemoved",
-  GRAPH_NODES_MOVED = "graphnodesmoved",
   GRAPH_INITIAL_DRAW = "graphinitialdraw",
   GRAPH_DRAW = "graphdraw",
   GRAPH_NODE_EDIT = "graphnodeedit",
-  GRAPH_NODE_SELECTED = "graphnodeselected",
-  GRAPH_NODE_DESELECTED = "graphnodedeselected",
-  GRAPH_NODE_DESELECTED_ALL = "graphnodedeselectedall",
+  GRAPH_NODE_TOGGLE_SELECTED = "graphnodetoggleselected",
+  GRAPH_SELECTION_MOVE = "graphselectionmove",
+  GRAPH_SELECTION_MOVE_SETTLED = "graphselectionmovesettled",
   GRAPH_NODE_ACTIVITY_SELECTED = "graphnodeactivityselected",
   GRAPH_EDGE_VALUE_SELECTED = "graphedgevalueselected",
   GRAPH_EDGE_ATTACH = "graphedgeattach",
@@ -35,6 +36,7 @@ export enum GRAPH_OPERATIONS {
   GRAPH_EDGE_SELECT_DISAMBIGUATION_REQUESTED = "graphedgeselectdisambiguationrequested",
   GRAPH_EDGE_ADD_DISAMBIGUATION_REQUESTED = "graphedgeadddisambiguationrequested",
   GRAPH_EDGE_ADD_AD_HOC_DISAMBIGUATION_REQUESTED = "graphedgeaddadhocdisambiguationrequested",
+  GRAPH_EDGE_TOGGLE_SELECTED = "graphedgetoggleselected",
   GRAPH_NODE_EXPAND_COLLAPSE = "graphnodeexpandcollapse",
   GRAPH_NODE_MENU_CLICKED = "graphnodemenuclicked",
   GRAPH_NODE_MENU_REQUESTED = "graphnodemenurequested",
@@ -82,6 +84,7 @@ export interface GraphOpts {
   modules: InspectableModules;
   metadata: GraphMetadata;
   visible: boolean;
+  selectionState: GraphSelectionState | null;
 }
 
 export type SideEdge = {

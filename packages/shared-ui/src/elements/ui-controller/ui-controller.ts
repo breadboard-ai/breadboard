@@ -31,6 +31,8 @@ import {
   STATUS,
   SettingsStore,
   TopGraphRunResult,
+  WorkspaceSelectionChangeId,
+  WorkspaceVisualChangeId,
 } from "../../types/types.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { ModuleEditor } from "../module-editor/module-editor.js";
@@ -118,6 +120,12 @@ export class UI extends LitElement {
 
   @property()
   sideNavItem: string | null = null;
+
+  @property()
+  selectionState: WorkspaceSelectionChangeId | null = null;
+
+  @property()
+  visualChangeId: WorkspaceVisualChangeId | null = null;
 
   #graphEditorRef: Ref<Editor> = createRef();
   #moduleEditorRef: Ref<ModuleEditor> = createRef();
@@ -266,6 +274,8 @@ export class UI extends LitElement {
         this.history,
         this.editorRender,
         this.mode,
+        this.selectionState,
+        this.visualChangeId,
         collapseNodesByDefault,
         hideSubboardSelectorWhenEmpty,
         showNodeShortcuts,
@@ -305,6 +315,8 @@ export class UI extends LitElement {
           .moduleId=${this.moduleId}
           .tabURLs=${this.tabURLs}
           .topGraphResult=${this.topGraphResult}
+          .selectionState=${this.selectionState}
+          .visualChangeId=${this.visualChangeId}
         ></bb-editor>`;
       }
     );
@@ -379,23 +391,33 @@ export class UI extends LitElement {
               </button>
             </div>
           </h1>
-          ${guard([graph, this.moduleId, this.subGraphId, this.mode], () => {
-            return html`<bb-workspace-outline
-              .graph=${graph}
-              .kits=${this.kits}
-              .subGraphId=${this.subGraphId}
-              .moduleId=${this.moduleId}
-              .renderId=${globalThis.crypto.randomUUID()}
-              .mode=${this.mode}
-              @bbworkspaceitemchosen=${(evt: WorkspaceItemChosenEvent) => {
-                this.#workspaceItemChosen = evt;
-              }}
-              @bboutlinemodechange=${() => {
-                this.mode = this.mode === "list" ? "tree" : "list";
-                globalThis.localStorage.setItem(MODE_KEY, this.mode);
-              }}
-            ></bb-workspace-outline>`;
-          })}`;
+          ${guard(
+            [
+              graph,
+              this.moduleId,
+              this.subGraphId,
+              this.mode,
+              this.selectionState,
+            ],
+            () => {
+              return html`<bb-workspace-outline
+                .graph=${graph}
+                .kits=${this.kits}
+                .subGraphId=${this.subGraphId}
+                .moduleId=${this.moduleId}
+                .renderId=${globalThis.crypto.randomUUID()}
+                .mode=${this.mode}
+                .selectionState=${this.selectionState}
+                @bbworkspaceitemchosen=${(evt: WorkspaceItemChosenEvent) => {
+                  this.#workspaceItemChosen = evt;
+                }}
+                @bboutlinemodechange=${() => {
+                  this.mode = this.mode === "list" ? "tree" : "list";
+                  globalThis.localStorage.setItem(MODE_KEY, this.mode);
+                }}
+              ></bb-workspace-outline>`;
+            }
+          )}`;
         break;
       }
 

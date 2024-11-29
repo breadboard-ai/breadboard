@@ -17,11 +17,18 @@ import {
   NodeDescriptor,
   NodeIdentifier,
 } from "@google-labs/breadboard";
-import { EnhanceSideboard, Tab, TabId } from "./types";
+import {
+  EnhanceSideboard,
+  Tab,
+  TabId,
+  WorkspaceVisualChangeId,
+  WorkspaceVisualState,
+} from "./types";
 import {
   RuntimeBoardEditEvent,
   RuntimeBoardEnhanceEvent,
   RuntimeErrorEvent,
+  RuntimeVisualChangeEvent,
 } from "./events";
 import {
   GraphIdentifier,
@@ -36,6 +43,7 @@ import {
 } from "@breadboard-ai/types";
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { defaultModuleContent } from "../utils/default-module-content";
+import { MAIN_BOARD_ID } from "../../../shared-ui/dist/constants/constants";
 
 function isGraphDescriptor(source: unknown): source is GraphDescriptor {
   return (
@@ -768,6 +776,70 @@ export class Edit extends EventTarget {
     if (subGraphId === tab?.subGraphId) {
       tab.subGraphId = null;
     }
+  }
+
+  async processVisualChanges(
+    tab: Tab | null,
+    visualChangeId: WorkspaceVisualChangeId,
+    visualState: WorkspaceVisualState
+  ) {
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to delete sub board"));
+      return;
+    }
+
+    const edits: EditSpec[] = [];
+    for (const [subGraphId, graphVisualState] of visualState) {
+      let graphId = "";
+      if (subGraphId !== MAIN_BOARD_ID) {
+        graphId = subGraphId;
+      }
+
+      for (const [id, entityVisualState] of graphVisualState) {
+        switch (entityVisualState.type) {
+          case "comment": {
+            const graphMetadata =
+              editableGraph.inspect(graphId).metadata() ?? {};
+            const commentNode = graphMetadata.comments?.find(
+              (commentNode) => commentNode.id === id
+            );
+
+            if (commentNode && commentNode.metadata) {
+              commentNode.metadata.visual = {
+                x: entityVisualState.x,
+                y: entityVisualState.y,
+                collapsed: entityVisualState.expansionState,
+              };
+            }
+            break;
+          }
+
+          case "node": {
+            const existingMetadata =
+              editableGraph.inspect(graphId).nodeById(id)?.metadata() ?? {};
+
+            edits.push({
+              type: "changemetadata",
+              graphId,
+              id: id,
+              metadata: {
+                ...existingMetadata,
+                visual: {
+                  x: entityVisualState.x,
+                  y: entityVisualState.y,
+                  collapsed: entityVisualState.expansionState,
+                },
+              },
+            });
+          }
+        }
+      }
+    }
+
+    await editableGraph.edit(edits, visualChangeId);
+
+    this.dispatchEvent(new RuntimeVisualChangeEvent(visualChangeId));
   }
 
   changeEdge(
