@@ -8,17 +8,12 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import * as PIXI from "pixi.js";
 import {
-  GraphNodeSelectedEvent,
   GraphNodeDeleteEvent,
   GraphEdgeAttachEvent,
   GraphNodeEdgeChangeEvent,
   GraphEdgeDetachEvent,
   InputErrorEvent,
-  GraphNodeDeselectedEvent,
-  GraphNodeDeselectedAllEvent,
-  GraphNodesVisualUpdateEvent,
   GraphInitialDrawEvent,
-  GraphEntityRemoveEvent,
   StartEvent,
   GraphNodeEditEvent,
   GraphEdgeValueSelectedEvent,
@@ -28,6 +23,8 @@ import {
   GraphHideTooltipEvent,
   GraphCommentEditRequestEvent,
   GraphNodeRunRequestEvent,
+  WorkspaceSelectionStateEvent,
+  WorkspaceVisualUpdateEvent,
 } from "../../events/events.js";
 import {
   ComponentExpansionState,
@@ -36,26 +33,38 @@ import {
 } from "./types.js";
 import { Graph } from "./graph.js";
 import {
+  GraphIdentifier,
   InspectableEdge,
   InspectableEdgeType,
   InspectablePort,
+  NodeIdentifier,
   Schema,
 } from "@google-labs/breadboard";
 import { GraphNode } from "./graph-node.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { GraphAssets } from "./graph-assets.js";
-import { GraphEdge } from "./graph-edge.js";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { computeNextExpansionState, getGlobalColor } from "./utils.js";
-import { GraphComment } from "./graph-comment.js";
+import {
+  computeNextExpansionState,
+  emptySelectionState,
+  getGlobalColor,
+  inspectableEdgeToString,
+} from "./utils.js";
 import {
   EdgeData,
+  GraphSelectionState,
   TopGraphEdgeInfo,
   TopGraphRunResult,
+  WorkspaceSelectionState,
+  WorkspaceSelectionChangeId,
+  WorkspaceVisualState,
+  WorkspaceVisualChangeId,
+  GraphVisualState,
 } from "../../types/types.js";
+import { MAIN_BOARD_ID } from "../../constants/constants.js";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
 const backgroundGridColor = getGlobalColor("--bb-ui-100");
@@ -443,13 +452,8 @@ export class GraphRenderer extends LitElement {
         alpha: selectionBoxBackgroundAlpha,
       });
 
-      for (const graph of this.#container.children) {
-        if (!(graph instanceof Graph) || !graph.visible) {
-          continue;
-        }
-
-        graph.selectInRect(new PIXI.Rectangle(x, y, w, h));
-      }
+      this.#selectWithin(new PIXI.Rectangle(x, y, w, h), evt.shiftKey);
+      this.#emitSelection();
     };
 
     const setStartValues = (evt: PIXI.FederatedPointerEvent) => {
@@ -475,16 +479,10 @@ export class GraphRenderer extends LitElement {
       (evt: PIXI.FederatedPointerEvent) => {
         if (evt.nativeEvent.button === 1) {
           this.#mode = MODE.MOVE;
-        } else {
-          for (const graph of this.#container.children) {
-            if (!(graph instanceof Graph) || !graph.visible) {
-              continue;
-            }
-
-            graph.deselectAllChildren();
-          }
         }
 
+        this.#selectWithin(new PIXI.Rectangle(0, 0, 0, 0), evt.shiftKey);
+        this.#emitSelection();
         setStartValues(evt);
       }
     );
@@ -562,6 +560,77 @@ export class GraphRenderer extends LitElement {
     this.#padding = padding;
   }
 
+  #emitGraphVisualInformation() {
+    const visualStates: WorkspaceVisualState = new Map<
+      GraphIdentifier,
+      GraphVisualState
+    >();
+
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph) || !graph.visible) {
+        continue;
+      }
+
+      const visualState = graph.visualState;
+      visualStates.set(graph.subGraphId ?? MAIN_BOARD_ID, visualState);
+    }
+
+    const changeId = this.#visualChangeId();
+    this.dispatchEvent(new WorkspaceVisualUpdateEvent(changeId, visualStates));
+  }
+
+  #emitSelection() {
+    const selections: WorkspaceSelectionState = new Map<
+      GraphIdentifier,
+      GraphSelectionState
+    >();
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph) || !graph.visible) {
+        continue;
+      }
+
+      const graphSelection = graph.selectionState;
+      if (
+        graphSelection &&
+        (graphSelection.nodes.size > 0 ||
+          graphSelection.comments.size > 0 ||
+          graphSelection.edges.size > 0)
+      ) {
+        selections.set(graph.subGraphId ?? MAIN_BOARD_ID, graphSelection);
+      }
+    }
+
+    const changeId = this.#selectionChangeId();
+    if (selections.size === 0) {
+      this.dispatchEvent(new WorkspaceSelectionStateEvent(changeId, null));
+      return;
+    }
+
+    this.dispatchEvent(new WorkspaceSelectionStateEvent(changeId, selections));
+  }
+
+  #selectWithin(rect: PIXI.Rectangle, retainExistingSelection = false) {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph) || !graph.visible) {
+        continue;
+      }
+
+      const graphSelection = graph.createGraphSelectionFrom(
+        rect,
+        retainExistingSelection
+      );
+      graph.selectionState = { ...graphSelection };
+    }
+  }
+
+  #visualChangeId(): WorkspaceVisualChangeId {
+    return crypto.randomUUID();
+  }
+
+  #selectionChangeId(): WorkspaceSelectionChangeId {
+    return crypto.randomUUID();
+  }
+
   #scaleContainerAroundPoint(delta: number, pivot: PIXI.PointData) {
     const m = new PIXI.Matrix();
     m.identity()
@@ -582,13 +651,18 @@ export class GraphRenderer extends LitElement {
     return m;
   }
 
-  #notifyGraphOfEdgeSelection(edge: EdgeData) {
+  #notifyEdgeSelection(edge: EdgeData) {
     if (!this.#activeGraph) {
       return;
     }
 
-    this.#activeGraph.selectEdge(edge);
+    const graphSelection =
+      this.#activeGraph.selectionState ?? emptySelectionState();
+    graphSelection.edges.add(inspectableEdgeToString(edge));
+
+    this.#activeGraph.selectionState = { ...graphSelection };
     this.#activeGraph = null;
+    this.#emitSelection();
   }
 
   hideAllGraphs() {
@@ -697,7 +771,7 @@ export class GraphRenderer extends LitElement {
     url: string,
     subGraphId: string | null,
     opts: Partial<GraphOpts>
-  ) {
+  ): boolean {
     const graph = this.#container.children.find(
       (child) => child.label === this.#createUrl(url, subGraphId)
     );
@@ -753,6 +827,10 @@ export class GraphRenderer extends LitElement {
       graph.visible = opts.visible;
     }
 
+    if (opts.selectionState !== undefined) {
+      graph.selectionState = opts.selectionState;
+    }
+
     graph.subGraphId = subGraphId;
     graph.subGraphTitle = opts.title ?? null;
 
@@ -769,60 +847,129 @@ export class GraphRenderer extends LitElement {
     ) as Graph[];
   }
 
-  #emitSelectionState() {
-    this.dispatchEvent(new GraphNodeDeselectedAllEvent());
+  #toggleGraphNodeSelection(
+    graph: Graph,
+    id: NodeIdentifier,
+    isCtrlCommand: boolean
+  ) {
+    let selectionState = graph.selectionState;
+    if (!selectionState) {
+      selectionState = emptySelectionState();
+    }
 
-    for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph) || !graph.visible) {
-        continue;
+    if (isCtrlCommand) {
+      if (selectionState.nodes.has(id)) {
+        selectionState.nodes.delete(id);
+      } else {
+        selectionState.nodes.add(id);
       }
-
-      const selectedChildren = graph.getSelectedChildren();
-      for (const child of selectedChildren) {
-        if (!(child instanceof GraphNode || child instanceof GraphComment)) {
-          continue;
-        }
-
-        this.dispatchEvent(
-          new GraphNodeSelectedEvent(child.label, graph.subGraphId)
-        );
+    } else {
+      if (!selectionState.nodes.has(id)) {
+        selectionState.edges.clear();
+        selectionState.comments.clear();
+        selectionState.nodes.clear();
+        selectionState.nodes.add(id);
       }
+    }
+
+    graph.selectionState = { ...selectionState };
+  }
+
+  #toggleGraphEdgeSelection(graph: Graph, id: string, isCtrlCommand: boolean) {
+    let selectionState = graph.selectionState;
+    if (!selectionState) {
+      selectionState = emptySelectionState();
+    }
+
+    if (isCtrlCommand) {
+      if (selectionState.edges.has(id)) {
+        selectionState.edges.delete(id);
+      } else {
+        selectionState.edges.add(id);
+      }
+    } else {
+      if (!selectionState.edges.has(id)) {
+        selectionState.nodes.clear();
+        selectionState.comments.clear();
+        selectionState.nodes.clear();
+        selectionState.edges.add(id);
+      }
+    }
+
+    graph.selectionState = { ...selectionState };
+  }
+
+  #toggleGraphCommentSelection(
+    graph: Graph,
+    id: string,
+    isCtrlCommand: boolean
+  ) {
+    let selectionState = graph.selectionState;
+    if (!selectionState) {
+      selectionState = emptySelectionState();
+    }
+
+    if (isCtrlCommand) {
+      if (selectionState.comments.has(id)) {
+        selectionState.comments.delete(id);
+      } else {
+        selectionState.comments.add(id);
+      }
+    } else {
+      if (!selectionState.comments.has(id)) {
+        selectionState.edges.clear();
+        selectionState.nodes.clear();
+        selectionState.nodes.clear();
+        selectionState.comments.add(id);
+      }
+    }
+
+    graph.selectionState = { ...selectionState };
+  }
+
+  #applyPositionDeltaToSelection(delta: PIXI.Point) {
+    const graphs = this.getGraphs();
+    for (const graph of graphs) {
+      graph.updateNodePositions(delta);
     }
   }
 
   #addGraph(graph: Graph) {
     graph.on(GRAPH_OPERATIONS.GRAPH_NODE_EXPAND_COLLAPSE, () => {
-      this.#emitGraphNodeVisualInformation(graph);
+      this.#emitGraphVisualInformation();
+    });
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_SELECTION_MOVE, (delta) => {
+      this.#applyPositionDeltaToSelection(delta);
+    });
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_SELECTION_MOVE_SETTLED, () => {
+      this.#emitGraphVisualInformation();
     });
 
     graph.on(
-      GRAPH_OPERATIONS.GRAPH_NODES_MOVED,
-      (
-        nodes: Array<{
-          id: string;
-          type: "node" | "comment";
-          x: number;
-          y: number;
-          expansionState: ComponentExpansionState;
-        }>
-      ) => {
-        this.dispatchEvent(
-          new GraphNodesVisualUpdateEvent(nodes, graph.subGraphId)
-        );
+      GRAPH_OPERATIONS.GRAPH_NODE_TOGGLE_SELECTED,
+      (id: NodeIdentifier, isCtrlCommand: boolean) => {
+        this.#toggleGraphNodeSelection(graph, id, isCtrlCommand);
+        this.#emitSelection();
       }
     );
 
-    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_SELECTED, (id: string) => {
-      this.dispatchEvent(new GraphNodeSelectedEvent(id, graph.subGraphId));
-    });
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_COMMENT_TOGGLE_SELECTED,
+      (id: NodeIdentifier, isCtrlCommand: boolean) => {
+        this.#toggleGraphCommentSelection(graph, id, isCtrlCommand);
+        this.#emitSelection();
+      }
+    );
 
-    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_DESELECTED, (id: string) => {
-      this.dispatchEvent(new GraphNodeDeselectedEvent(id, graph.subGraphId));
-    });
-
-    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_DESELECTED_ALL, () => {
-      this.dispatchEvent(new GraphNodeDeselectedAllEvent());
-    });
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_EDGE_TOGGLE_SELECTED,
+      (id: NodeIdentifier, isCtrlCommand: boolean) => {
+        this.#toggleGraphEdgeSelection(graph, id, isCtrlCommand);
+        this.#emitSelection();
+      }
+    );
 
     graph.on(GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH, (edge: EdgeData) => {
       this.dispatchEvent(new GraphEdgeAttachEvent(edge, graph.subGraphId));
@@ -840,10 +987,6 @@ export class GraphRenderer extends LitElement {
         );
       }
     );
-
-    graph.on(GRAPH_OPERATIONS.GRAPH_AUTOSELECTED_NODES, () => {
-      this.#emitSelectionState();
-    });
 
     graph.on(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW, () => {
       this.dispatchEvent(new GraphInitialDrawEvent(graph.subGraphId));
@@ -1137,40 +1280,8 @@ export class GraphRenderer extends LitElement {
     }
   }
 
-  getSelectedChildren() {
-    const selected: Array<GraphNode | GraphComment | GraphEdge> = [];
-
-    for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph) || !graph.visible) {
-        continue;
-      }
-
-      selected.push(...graph.getSelectedChildren());
-    }
-
-    return selected;
-  }
-
-  deselectAllChildren() {
-    for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph)) {
-        continue;
-      }
-
-      graph.deselectAllChildren();
-    }
-  }
-
-  toGlobal(point: PIXI.PointData) {
-    for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph)) {
-        continue;
-      }
-
-      return graph.toGlobal(point);
-    }
-
-    return point;
+  toContainerCoordinates(point: PIXI.PointData) {
+    return this.#container.toLocal(point);
   }
 
   setNodeLayoutPosition(
@@ -1216,16 +1327,6 @@ export class GraphRenderer extends LitElement {
     }
 
     return null;
-  }
-
-  addToAutoSelect(node: string) {
-    for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph) || !graph.visible) {
-        continue;
-      }
-
-      return graph.addToAutoSelect(node);
-    }
   }
 
   zoomToNode(id: string, subGraphId: string | null, offset = 0) {
@@ -1364,23 +1465,6 @@ export class GraphRenderer extends LitElement {
     }
   }
 
-  #emitGraphNodeVisualInformation(graph: Graph) {
-    const positions = graph.getNodeLayoutPositions();
-    const nodes = [...positions.entries()].map(([id, layout]) => {
-      return {
-        id,
-        type: layout.type,
-        x: layout.x,
-        y: layout.y,
-        expansionState: layout.expansionState,
-      };
-    });
-
-    this.dispatchEvent(
-      new GraphNodesVisualUpdateEvent(nodes, graph.subGraphId)
-    );
-  }
-
   resetGraphLayout() {
     for (const graph of this.#container.children) {
       if (!(graph instanceof Graph) || !graph.visible) {
@@ -1390,19 +1474,9 @@ export class GraphRenderer extends LitElement {
       graph.clearNodeLayoutPositions();
       graph.storeCommentLayoutPositions();
       graph.layout();
-
-      this.#emitGraphNodeVisualInformation(graph);
     }
-  }
 
-  selectAll() {
-    for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph) || !graph.visible) {
-        continue;
-      }
-
-      graph.selectAll();
-    }
+    this.#emitGraphVisualInformation();
   }
 
   #onPointerDown() {
@@ -1410,55 +1484,9 @@ export class GraphRenderer extends LitElement {
   }
 
   #onKeyDown(evt: KeyboardEvent) {
-    if (evt.code === "KeyA" && evt.metaKey) {
-      if (evt.composedPath()[0] !== this) {
-        return;
-      }
-
-      this.selectAll();
-      return;
-    }
-
     if (evt.code === "Space") {
       this.#mode = MODE.MOVE;
       return;
-    }
-
-    if (evt.code !== "Backspace" && evt.code !== "Delete") {
-      return;
-    }
-
-    const [target] = evt.composedPath();
-    if (target !== this) {
-      return;
-    }
-
-    for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph) || !graph.visible) {
-        continue;
-      }
-
-      const selectedChildren = graph.getSelectedChildren();
-      if (!selectedChildren.length) {
-        continue;
-      }
-
-      const nodes: string[] = [];
-      const edges: EdgeData[] = [];
-      const comments: string[] = [];
-      for (const child of selectedChildren) {
-        if (child instanceof GraphNode) {
-          nodes.push(child.label);
-        } else if (child instanceof GraphComment) {
-          comments.push(child.label);
-        } else if (child instanceof GraphEdge && child.edge) {
-          edges.push(child.edge);
-        }
-      }
-
-      this.dispatchEvent(
-        new GraphEntityRemoveEvent(nodes, edges, comments, graph.subGraphId)
-      );
     }
   }
 
@@ -1752,7 +1780,7 @@ export class GraphRenderer extends LitElement {
 
             return html`<button
               @pointerdown=${() => {
-                this.#notifyGraphOfEdgeSelection(edge);
+                this.#notifyEdgeSelection(edge);
               }}
             >
               ${until(labelOut, html`Out...`)}

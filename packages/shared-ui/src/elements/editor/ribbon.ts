@@ -13,7 +13,6 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
-  AddSubgraphEvent,
   HideTooltipEvent,
   OverflowMenuActionEvent,
   RedoEvent,
@@ -1074,12 +1073,6 @@ export class GraphRibbonMenu extends LitElement {
             case "reset-board-layout": {
               evt.stopPropagation();
               this.dispatchEvent(new ResetLayoutEvent());
-              break;
-            }
-
-            case "add-sub-graph": {
-              evt.stopPropagation();
-              this.dispatchEvent(new AddSubgraphEvent());
               break;
             }
           }

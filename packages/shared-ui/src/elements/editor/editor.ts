@@ -5,10 +5,6 @@
  */
 
 import {
-  CommentNode,
-  Edge,
-  EditSpec,
-  GraphDescriptor,
   GraphIdentifier,
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
@@ -17,9 +13,7 @@ import {
   InspectableRun,
   Kit,
   NodeConfiguration,
-  NodeDescriptor,
   NodeHandlerMetadata,
-  NodeValue,
 } from "@google-labs/breadboard";
 import { LitElement, PropertyValues, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
@@ -30,11 +24,11 @@ import {
   CommentEditRequestEvent,
   EdgeChangeEvent,
   EdgeValueSelectedEvent,
+  EditorPointerPositionChangeEvent,
   GraphCommentEditRequestEvent,
   GraphEdgeAttachEvent,
   GraphEdgeDetachEvent,
   GraphEdgeValueSelectedEvent,
-  GraphEntityRemoveEvent,
   GraphHideTooltipEvent,
   GraphInitialDrawEvent,
   GraphInteractionEvent,
@@ -43,11 +37,9 @@ import {
   GraphNodeEdgeChangeEvent,
   GraphNodeEditEvent,
   GraphNodeRunRequestEvent,
-  GraphNodesVisualUpdateEvent,
   GraphShowTooltipEvent,
   HideTooltipEvent,
   InteractionEvent,
-  MultiEditEvent,
   NodeActivitySelectedEvent,
   NodeConfigurationUpdateRequestEvent,
   NodeCreateEvent,
@@ -55,21 +47,28 @@ import {
   NodeRunRequestEvent,
   NodeTypeRetrievalErrorEvent,
   ShowTooltipEvent,
-  SubGraphCreateEvent,
+  WorkspaceSelectionStateEvent,
+  WorkspaceVisualUpdateEvent,
 } from "../../events/events.js";
-import { GraphEdge } from "./graph-edge.js";
 import { GraphRenderer } from "./graph-renderer.js";
-import { createRandomID, edgeToString } from "./utils.js";
+import { createRandomID } from "./utils.js";
+import {
+  Command,
+  TopGraphRunResult,
+  WorkspaceSelectionChangeId,
+  WorkspaceSelectionStateWithChangeId,
+  WorkspaceVisualChangeId,
+} from "../../types/types.js";
+import { GraphAssets } from "./graph-assets.js";
+import {
+  COMMAND_SET_GRAPH_EDITOR,
+  MAIN_BOARD_ID,
+} from "../../constants/constants.js";
+import { GraphOpts } from "./types.js";
 
 const ZOOM_KEY = "bb-editor-zoom-to-highlighted-node-during-runs";
 const DATA_TYPE = "text/plain";
-const PASTE_OFFSET = 50;
 const RIBBON_HEIGHT = 44;
-
-import { Command, TopGraphRunResult } from "../../types/types.js";
-import { GraphAssets } from "./graph-assets.js";
-import { COMMAND_SET_GRAPH_EDITOR } from "../../constants/constants.js";
-import { GraphOpts } from "./types.js";
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
   if (type !== "input" && type !== "output") {
@@ -191,6 +190,12 @@ export class Editor extends LitElement {
   showBoardHierarchy = true;
 
   @property()
+  selectionState: WorkspaceSelectionStateWithChangeId | null = null;
+
+  @property()
+  visualChangeId: WorkspaceVisualChangeId | null = null;
+
+  @property()
   set showPortTooltips(value: boolean) {
     this.#graphRenderer.showPortTooltips = value;
   }
@@ -221,17 +226,18 @@ export class Editor extends LitElement {
   #lastBoardId: number = -1;
   #lastSubGraphId: string | null = null;
 
-  #onKeyDownBound = this.#onKeyDown.bind(this);
   #onDropBound = this.#onDrop.bind(this);
   #onDragOverBound = this.#onDragOver.bind(this);
   #onPointerMoveBound = this.#onPointerMove.bind(this);
   #onPointerDownBound = this.#onPointerDown.bind(this);
-  #onGraphNodesVisualUpdateBound = this.#onGraphNodesVisualUpdate.bind(this);
+  #onWorkspaceSelectionStateChangeBound =
+    this.#onWorkspaceSelectionStateChange.bind(this);
+  #onWorkspaceVisualUpdateChangeBound =
+    this.#onWorkspaceVisualUpdateChange.bind(this);
   #onGraphEdgeAttachBound = this.#onGraphEdgeAttach.bind(this);
   #onGraphEdgeDetachBound = this.#onGraphEdgeDetach.bind(this);
   #onGraphEdgeChangeBound = this.#onGraphEdgeChange.bind(this);
   #onGraphNodeDeleteBound = this.#onGraphNodeDelete.bind(this);
-  #onGraphEntityRemoveBound = this.#onGraphEntityRemove.bind(this);
   #onGraphNodeEditBound = this.#onGraphNodeEdit.bind(this);
   #onGraphEdgeValueSelectedBound = this.#onGraphEdgeValueSelected.bind(this);
   #onGraphNodeActivitySelectedBound =
@@ -242,6 +248,9 @@ export class Editor extends LitElement {
   #onGraphCommentEditRequestBound = this.#onGraphCommentEditRequest.bind(this);
   #onGraphNodeRunRequestBound = this.#onGraphNodeRunRequest.bind(this);
 
+  #lastVisualChangeId: WorkspaceVisualChangeId | null = null;
+  #lastSelectionChangeId: WorkspaceSelectionChangeId | null = null;
+
   #top = 0;
   #left = 0;
   #resizeObserver = new ResizeObserver(() => {
@@ -251,12 +260,6 @@ export class Editor extends LitElement {
   });
 
   #addButtonRef: Ref<HTMLInputElement> = createRef();
-
-  #writingToClipboard = false;
-  #readingFromClipboard = false;
-  #lastX = 0;
-  #lastY = 0;
-  #pasteCount = 0;
 
   static styles = css`
     * {
@@ -350,6 +353,10 @@ export class Editor extends LitElement {
       }
     }
 
+    const graphSelectionState = this.selectionState?.selectionState.get(
+      subGraphId ? subGraphId : MAIN_BOARD_ID
+    );
+
     return {
       url,
       title: selectedGraph.raw().title ?? "Untitled Board",
@@ -364,6 +371,7 @@ export class Editor extends LitElement {
       nodes: selectedGraph.nodes(),
       modules: selectedGraph.modules(),
       metadata: selectedGraph.metadata() || {},
+      selectionState: graphSelectionState ?? null,
     };
   }
 
@@ -417,17 +425,22 @@ export class Editor extends LitElement {
       // Wait a frame to ensure graphs have been shown before trying to
       // zoom to the target.
       requestAnimationFrame(() => {
-        this.#graphRenderer.zoomToFit(
-          this.isShowingBoardActivityOverlay ? 400 : 0,
-          listenForDrawId
-        );
-
         // When we're loading a graph from existing results, we need to
         // set the topGraphResult again so that it is applied to the newly
         // created graph.
         if (this.topGraphResult) {
           this.#graphRenderer.topGraphResult = this.topGraphResult;
         }
+
+        if (!this.#zoomOnCreate) {
+          return;
+        }
+
+        this.#zoomOnCreate = false;
+        this.#graphRenderer.zoomToFit(
+          this.isShowingBoardActivityOverlay ? 400 : 0,
+          listenForDrawId
+        );
       });
     };
 
@@ -552,6 +565,16 @@ export class Editor extends LitElement {
     this.#resizeObserver.observe(this);
 
     this.#graphRenderer.addEventListener(
+      WorkspaceSelectionStateEvent.eventName,
+      this.#onWorkspaceSelectionStateChangeBound
+    );
+
+    this.#graphRenderer.addEventListener(
+      WorkspaceVisualUpdateEvent.eventName,
+      this.#onWorkspaceVisualUpdateChangeBound
+    );
+
+    this.#graphRenderer.addEventListener(
       GraphEdgeAttachEvent.eventName,
       this.#onGraphEdgeAttachBound
     );
@@ -569,16 +592,6 @@ export class Editor extends LitElement {
     this.#graphRenderer.addEventListener(
       GraphNodeDeleteEvent.eventName,
       this.#onGraphNodeDeleteBound
-    );
-
-    this.#graphRenderer.addEventListener(
-      GraphNodesVisualUpdateEvent.eventName,
-      this.#onGraphNodesVisualUpdateBound
-    );
-
-    this.#graphRenderer.addEventListener(
-      GraphEntityRemoveEvent.eventName,
-      this.#onGraphEntityRemoveBound
     );
 
     this.#graphRenderer.addEventListener(
@@ -621,7 +634,6 @@ export class Editor extends LitElement {
       this.#onGraphNodeRunRequestBound
     );
 
-    this.addEventListener("keydown", this.#onKeyDownBound);
     this.addEventListener("pointermove", this.#onPointerMoveBound);
     this.addEventListener("pointerdown", this.#onPointerDownBound);
     this.addEventListener("dragover", this.#onDragOverBound);
@@ -657,6 +669,16 @@ export class Editor extends LitElement {
     this.#resizeObserver.disconnect();
 
     this.#graphRenderer.removeEventListener(
+      WorkspaceSelectionStateEvent.eventName,
+      this.#onWorkspaceSelectionStateChangeBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      WorkspaceVisualUpdateEvent.eventName,
+      this.#onWorkspaceVisualUpdateChangeBound
+    );
+
+    this.#graphRenderer.removeEventListener(
       GraphEdgeAttachEvent.eventName,
       this.#onGraphEdgeAttachBound
     );
@@ -674,16 +696,6 @@ export class Editor extends LitElement {
     this.#graphRenderer.removeEventListener(
       GraphNodeDeleteEvent.eventName,
       this.#onGraphNodeDeleteBound
-    );
-
-    this.#graphRenderer.removeEventListener(
-      GraphNodesVisualUpdateEvent.eventName,
-      this.#onGraphNodesVisualUpdateBound
-    );
-
-    this.#graphRenderer.removeEventListener(
-      GraphEntityRemoveEvent.eventName,
-      this.#onGraphEntityRemoveBound
     );
 
     this.#graphRenderer.removeEventListener(
@@ -726,15 +738,33 @@ export class Editor extends LitElement {
       this.#onGraphNodeRunRequestBound
     );
 
-    this.removeEventListener("keydown", this.#onKeyDownBound);
     this.removeEventListener("pointermove", this.#onPointerMoveBound);
     this.removeEventListener("pointerdown", this.#onPointerDownBound);
     this.removeEventListener("dragover", this.#onDragOverBound);
     this.removeEventListener("drop", this.#onDropBound);
   }
 
+  protected shouldUpdate(changedProperties: PropertyValues): boolean {
+    if (this.#lastVisualChangeId && changedProperties.has("visualChangeId")) {
+      return this.#lastVisualChangeId !== this.visualChangeId;
+    }
+
+    if (
+      this.#lastSelectionChangeId &&
+      changedProperties.has("selectionState")
+    ) {
+      return (
+        this.#lastSelectionChangeId !== this.selectionState?.selectionChangeId
+      );
+    }
+
+    return true;
+  }
+
   #zoomOnUpdate = false;
   #zoomOnUpdateId: GraphIdentifier | null = null;
+  #zoomOnCreate = false;
+  #currentGraphUrl: string | null = null;
   protected willUpdate(changedProperties: PropertyValues): void {
     if (
       changedProperties.has("subGraphId") ||
@@ -745,6 +775,23 @@ export class Editor extends LitElement {
         this.#zoomOnUpdateId = this.subGraphId;
       }
     }
+
+    const graphUrl = this.graph?.raw().url ?? null;
+    if (this.#currentGraphUrl !== graphUrl) {
+      this.#currentGraphUrl = graphUrl;
+      this.#zoomOnCreate = true;
+      this.#graphRenderer.deleteGraphs();
+    }
+  }
+
+  #onWorkspaceSelectionStateChange(evt: Event) {
+    const selectionEvt = evt as WorkspaceSelectionStateEvent;
+    this.#lastSelectionChangeId = selectionEvt.selectionChangeId;
+  }
+
+  #onWorkspaceVisualUpdateChange(evt: Event) {
+    const visualEvt = evt as WorkspaceVisualUpdateEvent;
+    this.#lastVisualChangeId = visualEvt.visualChangeId;
   }
 
   #onGraphInteraction() {
@@ -789,390 +836,15 @@ export class Editor extends LitElement {
   }
 
   #onPointerMove(evt: PointerEvent) {
-    this.#lastX = evt.pageX - this.#left + window.scrollX;
-    this.#lastY = evt.pageY - this.#top - window.scrollY;
-  }
+    const pointer = {
+      x: evt.pageX - this.#left + window.scrollX,
+      y: evt.pageY - this.#top - window.scrollY - RIBBON_HEIGHT,
+    };
 
-  #isNodeDescriptor(item: unknown): item is NodeDescriptor {
-    return (
-      typeof item === "object" &&
-      item !== null &&
-      "id" in item &&
-      "type" in item
+    const location = this.#graphRenderer.toContainerCoordinates(pointer);
+    this.dispatchEvent(
+      new EditorPointerPositionChangeEvent(location.x, location.y)
     );
-  }
-
-  #isEdge(item: unknown): item is Edge {
-    return (
-      typeof item === "object" &&
-      item !== null &&
-      "from" in item &&
-      "to" in item
-    );
-  }
-
-  async #onKeyDown(evt: KeyboardEvent) {
-    if (this.readOnly) {
-      return;
-    }
-
-    const isMac = navigator.platform.indexOf("Mac") === 0;
-    const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
-
-    if (isCtrlCommand && this.graph) {
-      // Copy.
-      if (evt.key === "c") {
-        if (this.#writingToClipboard) {
-          return;
-        }
-
-        const selected = this.#graphRenderer.getSelectedChildren();
-        if (!selected.length) {
-          return;
-        }
-
-        let breadboardGraph = this.graph.raw();
-        if (this.subGraphId && breadboardGraph.graphs) {
-          const subgraphs = breadboardGraph.graphs;
-          if (subgraphs[this.subGraphId]) {
-            breadboardGraph = subgraphs[this.subGraphId];
-          } else {
-            console.warn(
-              `Unable to locate subgraph by name: ${this.subGraphId}`
-            );
-          }
-        }
-
-        const nodes = breadboardGraph.nodes.filter((node) => {
-          return selected.find((item) => item.label === node.id);
-        });
-
-        const edges = breadboardGraph.edges.filter((edge) => {
-          return selected.find((item) => {
-            if (!(item instanceof GraphEdge)) {
-              return false;
-            }
-
-            if (!item.edge) {
-              return false;
-            }
-
-            return (
-              item.edge.from.descriptor.id === edge.from &&
-              item.edge.to.descriptor.id === edge.to
-            );
-          });
-        });
-
-        breadboardGraph.metadata ??= {};
-        breadboardGraph.metadata.comments ??= [];
-        const metadataComments = breadboardGraph.metadata.comments;
-        const comments = metadataComments.filter((node) => {
-          return selected.find((item) => item.label === node.id);
-        });
-
-        const metadata = { ...breadboardGraph.metadata, comments };
-
-        this.#writingToClipboard = true;
-        await navigator.clipboard.writeText(
-          JSON.stringify(
-            {
-              title: breadboardGraph.title,
-              description: breadboardGraph.description,
-              version: breadboardGraph.version,
-              metadata,
-              edges,
-              nodes,
-            },
-            null,
-            2
-          )
-        );
-        this.#writingToClipboard = false;
-      } else if (evt.key === "v") {
-        // Paste.
-        if (this.#readingFromClipboard) {
-          return;
-        }
-        const graphId = this.subGraphId || "";
-        this.#graphRenderer.deselectAllChildren();
-
-        try {
-          this.#readingFromClipboard = true;
-          const data = await navigator.clipboard.readText();
-          if (!data || !this.graph) {
-            return;
-          }
-
-          let graph;
-          // TODO: This is a kludge, let's be more robust here.
-          // Maybe like InspectableGraph.isGraphURL(data) or something.
-          if (data.endsWith(".bgl.json")) {
-            graph = {
-              edges: [],
-              nodes: [
-                {
-                  id: createRandomID(data),
-                  type: data,
-                },
-              ],
-            };
-          } else {
-            graph = JSON.parse(data) as GraphDescriptor;
-            if (!("edges" in graph && "nodes" in graph)) {
-              return;
-            }
-          }
-
-          const comments = graph.metadata?.comments ?? [];
-          const nodesAndComments = [...graph.nodes, ...comments];
-          nodesAndComments.sort(
-            (
-              nodeA: NodeDescriptor | CommentNode,
-              nodeB: NodeDescriptor | CommentNode
-            ) => {
-              if (nodeA.metadata?.visual && nodeB.metadata?.visual) {
-                const visualA = nodeA.metadata.visual as Record<string, number>;
-                const visualB = nodeB.metadata.visual as Record<string, number>;
-                return visualA.x - visualB.x;
-              }
-
-              if (nodeA.metadata?.visual && !nodeB.metadata?.visual) {
-                return -1;
-              }
-
-              if (!nodeA.metadata?.visual && nodeB.metadata?.visual) {
-                return 1;
-              }
-
-              return 0;
-            }
-          );
-
-          if (!nodesAndComments.length) {
-            return;
-          }
-
-          const leftMostNode = nodesAndComments[0];
-          let leftMostVisual = structuredClone(
-            leftMostNode.metadata?.visual
-          ) as Record<string, number>;
-          if (!leftMostVisual) {
-            leftMostVisual = { x: 0, y: 0 };
-          }
-
-          const leftMostNodeGlobalPosition = this.#graphRenderer.toGlobal({
-            x: leftMostVisual.x,
-            y: leftMostVisual.y,
-          });
-
-          // Find the current graph.
-          let breadboardGraph = this.graph.raw();
-          if (this.subGraphId && breadboardGraph.graphs) {
-            const subgraphs = breadboardGraph.graphs;
-            if (subgraphs[this.subGraphId]) {
-              breadboardGraph = subgraphs[this.subGraphId];
-            } else {
-              console.warn(
-                `Unable to locate subgraph by name: ${this.subGraphId}`
-              );
-            }
-          }
-
-          if (!breadboardGraph) {
-            return;
-          }
-
-          const remappedNodeIds = new Map<string, string>();
-          const edits: EditSpec[] = [];
-          for (let i = 0; i < graph.nodes.length; i++) {
-            const node = graph.nodes[i];
-            if (!this.#isNodeDescriptor(node)) {
-              continue;
-            }
-
-            // Update the node ID so it doesn't clash.
-            const existingNode = breadboardGraph.nodes.find(
-              (graphNode) => graphNode.id === node.id
-            );
-            if (existingNode) {
-              node.id = createRandomID(node.type);
-              remappedNodeIds.set(existingNode.id, node.id);
-            }
-
-            node.metadata = node.metadata || {};
-            node.metadata.visual = (node.metadata.visual || {}) as Record<
-              string,
-              NodeValue
-            >;
-
-            // Grab the x & y coordinates, delete them, and use them to instruct
-            // the graph where to place the node when it's added.
-            const x = (node.metadata.visual["x"] as number) ?? i * 40;
-            const y = (node.metadata.visual["y"] as number) ?? 0;
-
-            delete node.metadata.visual["x"];
-            delete node.metadata.visual["y"];
-
-            const globalPosition = this.#graphRenderer.toGlobal({ x, y });
-            const offset = {
-              x: globalPosition.x - leftMostNodeGlobalPosition.x,
-              y: globalPosition.y - leftMostNodeGlobalPosition.y,
-            };
-
-            const position = {
-              x: this.#lastX + offset.x - PASTE_OFFSET,
-              y: this.#lastY + offset.y - PASTE_OFFSET,
-            };
-
-            this.#graphRenderer.setNodeLayoutPosition(
-              node.id,
-              "node",
-              position,
-              this.subGraphId,
-              this.collapseNodesByDefault ? "collapsed" : "expanded",
-              false
-            );
-            this.#graphRenderer.addToAutoSelect(node.id);
-
-            // Ask the graph for the visual positioning because the graph accounts for
-            // any transforms, whereas our base x & y values do not.
-            const layout = this.#graphRenderer.getNodeLayoutPosition(
-              node.id
-            ) || {
-              x: 0,
-              y: 0,
-            };
-            node.metadata.visual.x = layout.x;
-            node.metadata.visual.y = layout.y;
-
-            edits.push({ type: "addnode", node, graphId });
-          }
-
-          for (const edge of graph.edges) {
-            if (!this.#isEdge(edge)) {
-              continue;
-            }
-
-            const newEdge: Edge = {
-              from: remappedNodeIds.get(edge.from) ?? edge.from,
-              to: remappedNodeIds.get(edge.to) ?? edge.to,
-              in: edge.in ?? "MISSING_WIRE",
-              out: edge.out ?? "MISSING_WIRE",
-            };
-
-            if (edge.constant) {
-              newEdge.constant = edge.constant;
-            }
-
-            const existingEdge = breadboardGraph.edges.find(
-              (graphEdge) =>
-                graphEdge.from === newEdge.from &&
-                graphEdge.to === newEdge.to &&
-                graphEdge.out === newEdge.out &&
-                graphEdge.in === newEdge.in
-            );
-            if (existingEdge) {
-              continue;
-            }
-
-            if (edge.in === "MISSING_WIRE" || edge.out === "MISSING_WIRE") {
-              continue;
-            }
-
-            this.#graphRenderer.addToAutoSelect(edgeToString(newEdge));
-            edits.push({ type: "addedge", edge: newEdge, graphId });
-          }
-
-          if (graph.metadata && graph.metadata.comments) {
-            breadboardGraph.metadata ??= {};
-            breadboardGraph.metadata.comments ??= [];
-
-            const newComments: CommentNode[] = [];
-            for (const comment of graph.metadata.comments) {
-              // Update the node ID so it doesn't clash.
-              const existingNode = breadboardGraph.metadata.comments.find(
-                (graphNode) => graphNode.id === comment.id
-              );
-
-              if (existingNode) {
-                comment.id = createRandomID("comment");
-              }
-
-              // Grab the x & y coordinates, delete them, and use them to instruct
-              // the graph where to place the node when it's added.
-              comment.metadata ??= {};
-              comment.metadata.visual ??= {};
-
-              const visual = comment.metadata.visual as Record<string, number>;
-              const x = (visual["x"] as number) ?? 0;
-              const y = (visual["y"] as number) ?? 0;
-
-              delete visual["x"];
-              delete visual["y"];
-
-              const globalPosition = this.#graphRenderer.toGlobal({ x, y });
-              const offset = {
-                x: globalPosition.x - leftMostNodeGlobalPosition.x,
-                y: globalPosition.y - leftMostNodeGlobalPosition.y,
-              };
-
-              const position = {
-                x: this.#lastX + offset.x - PASTE_OFFSET,
-                y: this.#lastY + offset.y - PASTE_OFFSET,
-              };
-
-              this.#graphRenderer.setNodeLayoutPosition(
-                comment.id,
-                "comment",
-                position,
-                this.subGraphId,
-                this.collapseNodesByDefault ? "collapsed" : "expanded",
-                false
-              );
-              this.#graphRenderer.addToAutoSelect(comment.id);
-
-              // Ask the graph for the visual positioning because the graph accounts for
-              // any transforms, whereas our base x & y values do not.
-              const layout = this.#graphRenderer.getNodeLayoutPosition(
-                comment.id
-              ) || {
-                x: 0,
-                y: 0,
-              };
-
-              visual.x = layout.x;
-              visual.y = layout.y;
-
-              newComments.push(comment);
-            }
-
-            breadboardGraph.metadata.comments = [
-              ...breadboardGraph.metadata.comments,
-              ...newComments,
-            ];
-            edits.push({
-              type: "changegraphmetadata",
-              metadata: breadboardGraph.metadata,
-              graphId,
-            });
-          }
-
-          this.dispatchEvent(
-            new MultiEditEvent(
-              edits,
-              `Paste (#${++this.#pasteCount})`,
-              this.subGraphId
-            )
-          );
-        } catch (err) {
-          // Not JSON data - ignore.
-          return;
-        } finally {
-          this.#readingFromClipboard = false;
-        }
-      }
-    }
   }
 
   #onPointerDown(evt: Event) {
@@ -1189,89 +861,6 @@ export class Editor extends LitElement {
     }
 
     this.#addButtonRef.value.checked = false;
-  }
-
-  #onGraphNodesVisualUpdate(evt: Event) {
-    const moveEvt = evt as GraphNodesVisualUpdateEvent;
-    const label = moveEvt.nodes.reduce((prev, curr, idx) => {
-      return (
-        prev +
-        (idx > 0 ? ", " : "") +
-        `(${curr.id}, {x: ${curr.x}, y: ${curr.y}, collapsed: ${curr.expansionState}})`
-      );
-    }, "");
-
-    const graphId = moveEvt.subGraphId || "";
-    let targetGraph = this.graph;
-    if (targetGraph && graphId) {
-      const subGraphs = targetGraph.graphs();
-      if (!subGraphs) {
-        return;
-      }
-
-      targetGraph = subGraphs[graphId];
-    }
-
-    const editsEvt = new MultiEditEvent(
-      moveEvt.nodes.map((node) => {
-        switch (node.type) {
-          case "node": {
-            const graphNode = targetGraph?.nodeById(node.id);
-            const metadata = (graphNode?.metadata() || {}) as Record<
-              string,
-              unknown
-            >;
-
-            return {
-              type: "changemetadata",
-              graphId,
-              id: node.id,
-              metadata: {
-                ...metadata,
-                visual: {
-                  x: node.x,
-                  y: node.y,
-                  collapsed: node.expansionState,
-                },
-              },
-            };
-          }
-
-          case "comment": {
-            if (!targetGraph) {
-              throw new Error("No active graph - unable to update");
-            }
-
-            const metadata = targetGraph.metadata() || {};
-            const commentNode = metadata.comments?.find(
-              (commentNode) => commentNode.id === node.id
-            );
-
-            if (commentNode && commentNode.metadata) {
-              commentNode.metadata.visual = {
-                x: node.x,
-                y: node.y,
-                collapsed: node.expansionState,
-              };
-            }
-
-            return {
-              type: "changegraphmetadata",
-              graphId,
-              metadata,
-            };
-          }
-        }
-      }),
-      `Node multimove: ${label}`,
-      moveEvt.subGraphId
-    );
-
-    if (this.readOnly) {
-      return;
-    }
-
-    this.dispatchEvent(editsEvt);
   }
 
   #onGraphEdgeAttach(evt: Event) {
@@ -1338,78 +927,6 @@ export class Editor extends LitElement {
     this.dispatchEvent(new NodeDeleteEvent(id, subGraphId));
   }
 
-  #onGraphEntityRemove(evt: Event) {
-    const { nodes, edges, comments, subGraphId } =
-      evt as GraphEntityRemoveEvent;
-    const edits: EditSpec[] = [];
-
-    const graphId = subGraphId || "";
-
-    // Remove edges first.
-    for (const edge of edges) {
-      edits.push({
-        type: "removeedge",
-        graphId,
-        edge: {
-          from: edge.from.descriptor.id,
-          to: edge.to.descriptor.id,
-          out: edge.out,
-          in: edge.in,
-        },
-      });
-    }
-
-    // Remove nodes.
-    for (const id of nodes) {
-      edits.push({ type: "removenode", id, graphId });
-    }
-
-    // Remove comments.
-    let graph = this.graph?.raw();
-    if (subGraphId && graph?.graphs) {
-      graph = graph.graphs[subGraphId];
-    }
-    if (graph && graph.metadata) {
-      graph.metadata.comments ??= [];
-      graph.metadata.comments = graph.metadata.comments.filter(
-        (comment) => !comments.includes(comment.id)
-      );
-      edits.push({
-        type: "changegraphmetadata",
-        metadata: graph.metadata,
-        graphId,
-      });
-    }
-
-    // Create some comments for bookkeeping.
-    const nodesLabel = nodes.length ? `#${nodes.join(", #")}` : "No nodes";
-    const edgesLabel = edges.length
-      ? edges.reduce((prev, curr, idx) => {
-          return (
-            prev +
-            (idx > 0 ? ", " : "") +
-            edgeToString({
-              from: curr.from.descriptor.id,
-              to: curr.to.descriptor.id,
-              out: curr.out,
-              in: curr.in,
-            })
-          );
-        }, "")
-      : "No edges";
-    const commentsLabel = comments.length
-      ? `#${comments.join(", #")}`
-      : "No comments";
-
-    this.dispatchEvent(
-      new MultiEditEvent(
-        edits,
-        `Delete (${nodesLabel}) (${edgesLabel}) (${commentsLabel})`,
-        subGraphId
-      )
-    );
-  }
-
   #onGraphNodeEdit(evt: Event) {
     const {
       id,
@@ -1461,49 +978,22 @@ export class Editor extends LitElement {
     }
 
     const id = createRandomID(type);
-    const x = evt.pageX - this.#left + window.scrollX;
-    const y = evt.pageY - this.#top - window.scrollY - RIBBON_HEIGHT;
-
-    this.#graphRenderer.deselectAllChildren();
-
-    // Store the middle of the node for later.
-    this.#graphRenderer.setNodeLayoutPosition(
-      id,
-      type === "comment" ? "comment" : "node",
-      { x, y },
-      this.subGraphId,
-      this.collapseNodesByDefault ? "collapsed" : "expanded",
-      true
-    );
-
-    // Ask the graph for the visual positioning because the graph accounts for
-    // any transforms, whereas our base x & y values do not.
-    const layout = this.#graphRenderer.getNodeLayoutPosition(id) || {
-      x: 0,
-      y: 0,
+    const configuration = getDefaultConfiguration(type);
+    const pointer = {
+      x: evt.pageX - this.#left + window.scrollX,
+      y: evt.pageY - this.#top - window.scrollY - RIBBON_HEIGHT,
     };
 
-    const configuration = getDefaultConfiguration(type);
+    const location = this.#graphRenderer.toContainerCoordinates(pointer);
     this.dispatchEvent(
       new NodeCreateEvent(id, type, this.subGraphId, configuration, {
         visual: {
-          x: layout.x,
-          y: layout.y,
+          x: location.x - 100,
+          y: location.y - 50,
           collapsed: this.collapseNodesByDefault,
         },
       })
     );
-  }
-
-  #proposeNewSubGraph() {
-    const newSubGraphName = prompt(
-      "What would you like to call this sub board?"
-    );
-    if (!newSubGraphName) {
-      return;
-    }
-
-    this.dispatchEvent(new SubGraphCreateEvent(newSubGraphName));
   }
 
   zoomToFit(reduceRenderBoundsWidth = 0, subGraphId: string | null = null) {
@@ -1556,9 +1046,6 @@ export class Editor extends LitElement {
       .isInputPending=${isInputPending}
       .isError=${isError}
       .isShowingBoardActivityOverlay=${this.isShowingBoardActivityOverlay}
-      @bbnodecreate=${() => {
-        this.#graphRenderer.deselectAllChildren();
-      }}
       @bbzoomtofit=${() => {
         this.#graphRenderer.zoomToFit(
           this.isShowingBoardActivityOverlay ? 400 : 0,
@@ -1585,9 +1072,6 @@ export class Editor extends LitElement {
             -0.1
           );
         }
-      }}
-      @bbaddsubgraph=${() => {
-        this.#proposeNewSubGraph();
       }}
     ></bb-graph-ribbon-menu>`;
 

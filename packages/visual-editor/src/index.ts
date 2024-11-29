@@ -40,7 +40,12 @@ import { SecretsHelper } from "./utils/secrets-helper";
 import { SettingsHelperImpl } from "./utils/settings-helper";
 import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
-import { EnhanceSideboard, TabId } from "./runtime/types";
+import {
+  EnhanceSideboard,
+  TabId,
+  WorkspaceSelectionStateWithChangeId,
+  WorkspaceVisualChangeId,
+} from "./runtime/types";
 import { createPastRunObserver } from "./utils/past-run-observer";
 import { getRunNodeConfig } from "./utils/run-node";
 import { TopGraphObserver } from "../../shared-ui/dist/utils/top-graph-observer";
@@ -52,6 +57,15 @@ import {
 import { sandbox } from "./sandbox";
 import { Module, ModuleIdentifier } from "@breadboard-ai/types";
 import { defaultModuleContent } from "./utils/default-module-content";
+import { KeyboardCommand, KeyboardCommandDeps } from "./commands/types";
+import {
+  CopyCommand,
+  CutCommand,
+  DeleteCommand,
+  PasteCommand,
+  SelectAllCommand,
+} from "./commands/commands";
+import { MAIN_BOARD_ID } from "../../shared-ui/dist/constants/constants";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 250;
@@ -229,6 +243,9 @@ export class Main extends LitElement {
   #graphStore!: MutableGraphStore;
   #dataStore = getDataStore();
   #runStore = getRunStore();
+  #selectionState: WorkspaceSelectionStateWithChangeId | null = null;
+  #lastVisualChangeId: WorkspaceVisualChangeId | null = null;
+  #lastPointerPosition = { x: 0, y: 0 };
 
   #globalCommands: BreadboardUI.Types.Command[] = [
     {
@@ -425,6 +442,26 @@ export class Main extends LitElement {
               evt.configuration
             );
 
+            this.requestUpdate();
+          }
+        );
+
+        this.#runtime.select.addEventListener(
+          Runtime.Events.RuntimeSelectionChangeEvent.eventName,
+          (evt: Runtime.Events.RuntimeSelectionChangeEvent) => {
+            this.#selectionState = {
+              selectionChangeId: evt.selectionChangeId,
+              selectionState: evt.selectionState,
+            };
+
+            this.requestUpdate();
+          }
+        );
+
+        this.#runtime.edit.addEventListener(
+          Runtime.Events.RuntimeVisualChangeEvent.eventName,
+          (evt: Runtime.Events.RuntimeVisualChangeEvent) => {
+            this.#lastVisualChangeId = evt.visualChangeId;
             this.requestUpdate();
           }
         );
@@ -802,9 +839,114 @@ export class Main extends LitElement {
     );
   }
 
-  #onKeyDown(evt: KeyboardEvent) {
+  #commands: Map<string[], KeyboardCommand> = new Map([
+    [DeleteCommand.keys, DeleteCommand],
+    [SelectAllCommand.keys, SelectAllCommand],
+    [CopyCommand.keys, CopyCommand],
+    [CutCommand.keys, CutCommand],
+    [PasteCommand.keys, PasteCommand],
+  ]);
+
+  #handlingKey = false;
+  async #onKeyDown(evt: KeyboardEvent) {
+    if (this.#handlingKey) {
+      return;
+    }
+
+    // Check if there's an input preference before actioning any main keyboard
+    // command.
+    if (
+      evt.composedPath().some((target) => this.#receivesInputPreference(target))
+    ) {
+      return;
+    }
+
     const isMac = navigator.platform.indexOf("Mac") === 0;
     const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+    let key = evt.key;
+
+    if (key === "Meta" || key === "Ctrl" || key === "Shift") {
+      return;
+    }
+
+    if (evt.metaKey) {
+      key = `Cmd+${key}`;
+    }
+    if (evt.ctrlKey) {
+      key = `Ctrl+${key}`;
+    }
+    if (evt.shiftKey) {
+      key = `Shift+${key}`;
+    }
+
+    const deps: KeyboardCommandDeps = {
+      runtime: this.#runtime,
+      selectionState: this.#selectionState,
+      tab: this.tab,
+      originalEvent: evt,
+      pointerLocation: this.#lastPointerPosition,
+    } as const;
+
+    for (const [keys, command] of this.#commands) {
+      if (keys.includes(key)) {
+        evt.preventDefault();
+        evt.stopImmediatePropagation();
+
+        this.#handlingKey = true;
+
+        // Toast.
+        let toastId;
+        const notifyUser = () => {
+          toastId = this.toast(
+            command.messagePending ?? "Working...",
+            BreadboardUI.Events.ToastType.PENDING,
+            true
+          );
+        };
+
+        // Either notify or set a timeout for notifying the user.
+        let notifyUserOnTimeout;
+        if (command.alwaysNotify) {
+          notifyUser();
+        } else {
+          notifyUserOnTimeout = setTimeout(
+            notifyUser,
+            command.messageTimeout ?? 100
+          );
+        }
+
+        // Perform the command.
+        try {
+          await command.do(deps);
+
+          // Replace the toast.
+          if (toastId) {
+            this.toast(
+              command.messageComplete ?? "Done",
+              command.messageType ?? BreadboardUI.Events.ToastType.INFORMATION,
+              false,
+              toastId
+            );
+          }
+        } catch (err) {
+          const commandErr = err as { message: string };
+          this.toast(
+            commandErr.message ?? "An error occurred",
+            BreadboardUI.Events.ToastType.ERROR,
+            false,
+            toastId
+          );
+        } finally {
+          // Clear the timeout in case it's not fired yet.
+          if (notifyUserOnTimeout) {
+            clearTimeout(notifyUserOnTimeout);
+          }
+        }
+
+        this.#handlingKey = false;
+      }
+    }
 
     if (evt.key === "p" && isCtrlCommand) {
       evt.preventDefault();
@@ -822,37 +964,6 @@ export class Main extends LitElement {
       evt.stopImmediatePropagation();
 
       this.showOpenBoardOverlay = true;
-    }
-
-    if (evt.key === "v" && isCtrlCommand && !this.tab?.graph) {
-      // Only allow a paste when there's nothing else in the composed path that
-      // would accept the paste first.
-      if (
-        evt
-          .composedPath()
-          .some((target) => this.#receivesInputPreference(target))
-      ) {
-        return;
-      }
-
-      evt.preventDefault();
-
-      navigator.clipboard.readText().then((content) => {
-        try {
-          const descriptor = JSON.parse(content) as GraphDescriptor;
-          if (!("edges" in descriptor && "nodes" in descriptor)) {
-            return;
-          }
-
-          this.#runtime.board.createTabFromDescriptor(descriptor);
-        } catch (err) {
-          this.toast(
-            "Unable to paste board",
-            BreadboardUI.Events.ToastType.ERROR
-          );
-        }
-      });
-      return;
     }
 
     if (evt.key === "s" && isCtrlCommand) {
@@ -2682,6 +2793,40 @@ export class Main extends LitElement {
               .inputsFromLastRun=${inputsFromLastRun}
               .isShowingBoardActivityOverlay=${this.showBoardActivityOverlay}
               .tabURLs=${tabURLs}
+              .selectionState=${this.#selectionState}
+              .visualChangeId=${this.#lastVisualChangeId}
+              @bbeditorpositionchange=${(
+                evt: BreadboardUI.Events.EditorPointerPositionChangeEvent
+              ) => {
+                this.#lastPointerPosition.x = evt.x;
+                this.#lastPointerPosition.y = evt.y;
+              }}
+              @bbworkspaceselectionstate=${(
+                evt: BreadboardUI.Events.WorkspaceSelectionStateEvent
+              ) => {
+                if (!this.tab) {
+                  return;
+                }
+
+                this.#runtime.select.processSelections(
+                  this.tab.id,
+                  evt.selectionChangeId,
+                  evt.selections
+                );
+              }}
+              @bbworkspacevisualupdate=${(
+                evt: BreadboardUI.Events.WorkspaceVisualUpdateEvent
+              ) => {
+                if (!this.tab) {
+                  return;
+                }
+
+                this.#runtime.edit.processVisualChanges(
+                  this.tab,
+                  evt.visualChangeId,
+                  evt.visualState
+                );
+              }}
               @bbcommandsavailable=${(
                 evt: BreadboardUI.Events.CommandsAvailableEvent
               ) => {
@@ -3109,14 +3254,27 @@ export class Main extends LitElement {
                   evt.description
                 );
               }}
-              @bbnodecreate=${(evt: BreadboardUI.Events.NodeCreateEvent) => {
-                this.#runtime.edit.createNode(
+              @bbnodecreate=${async (
+                evt: BreadboardUI.Events.NodeCreateEvent
+              ) => {
+                await this.#runtime.edit.createNode(
                   this.tab,
                   evt.id,
                   evt.nodeType,
                   evt.configuration,
                   evt.metadata,
                   evt.subGraphId
+                );
+
+                if (!this.tab) {
+                  return;
+                }
+
+                this.#runtime.select.selectNode(
+                  this.tab.id,
+                  this.#runtime.util.createWorkspaceSelectionChangeId(),
+                  this.tab.subGraphId ?? MAIN_BOARD_ID,
+                  evt.id
                 );
               }}
               @bbnodeconfigurationupdaterequest=${async (
