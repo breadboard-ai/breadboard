@@ -14,7 +14,6 @@ import {
   SnapshotEventTarget,
   SnapshotPendingUpdate,
 } from "./types.js";
-import { PortUpdateReconciler } from "./port-update-reconciler.js";
 import { FreshEvent, StaleEvent } from "./events.js";
 
 export { Snapshot };
@@ -34,8 +33,6 @@ class Snapshot
   #changes: ChangeMaker = new ChangeMaker([]);
   #snapshot: Mutable<InspectableMainGraphSnapshot>;
   readonly #pending: SnapshotPendingUpdate[] = [];
-  readonly #portUpdateReconciler: PortUpdateReconciler =
-    new PortUpdateReconciler();
 
   constructor(mutable: MutableGraph) {
     super();
@@ -107,7 +104,7 @@ class Snapshot
             );
           }
           const ports = await node.ports();
-          const changes = this.#portUpdateReconciler.getChanges(
+          const changes = this.#mutable.ports.getChanges(
             graphId,
             nodeId,
             ports

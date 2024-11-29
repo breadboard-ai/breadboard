@@ -15,13 +15,9 @@ import {
   NodeDescriptor,
   NodeIdentifier,
 } from "@breadboard-ai/types";
-import {
-  NodePortChanges,
-  SnapshotAddGraphSpec,
-  SnapshotChangeSpec,
-} from "./types.js";
+import { SnapshotAddGraphSpec, SnapshotChangeSpec } from "./types.js";
 import { hash } from "../../utils/hash.js";
-import { InspectableModule } from "../types.js";
+import { InspectableModule, NodePortChanges } from "../types.js";
 import { timestamp } from "../../timestamp.js";
 
 export { ChangeMaker };

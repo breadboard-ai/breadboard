@@ -91,46 +91,60 @@ export class BubbledInspectableNode implements InspectableNode {
     return this.#actual.describe(inputs);
   }
 
+  #portsForInput(inputValues?: InputValues, outputValues?: OutputValues) {
+    const described = describeInput({ inputs: inputValues });
+
+    const bubbledValues = filterBySchema(
+      outputValues || {},
+      described.outputSchema
+    );
+    const inputs: InspectablePortList = {
+      fixed: described.inputSchema.additionalProperties === false,
+      ports: collectPorts(
+        EdgeType.In,
+        this.incoming(),
+        described.inputSchema,
+        false,
+        true,
+        inputValues
+      ),
+    };
+    const outputs: InspectablePortList = {
+      fixed: described.outputSchema.additionalProperties === false,
+      ports: collectPorts(
+        EdgeType.Out,
+        [],
+        described.outputSchema,
+        false,
+        false,
+        bubbledValues
+      ),
+    };
+    const side: InspectablePortList = {
+      fixed: true,
+      ports: [],
+    };
+    return { inputs, outputs, side };
+  }
+
   async ports(
     inputValues?: InputValues | undefined,
     outputValues?: OutputValues | undefined
   ): Promise<InspectableNodePorts> {
     if (this.descriptor.type === "input") {
-      const described = describeInput({ inputs: inputValues });
-
-      const bubbledValues = filterBySchema(
-        outputValues || {},
-        described.outputSchema
-      );
-      const inputs: InspectablePortList = {
-        fixed: described.inputSchema.additionalProperties === false,
-        ports: collectPorts(
-          EdgeType.In,
-          this.incoming(),
-          described.inputSchema,
-          false,
-          true,
-          inputValues
-        ),
-      };
-      const outputs: InspectablePortList = {
-        fixed: described.outputSchema.additionalProperties === false,
-        ports: collectPorts(
-          EdgeType.Out,
-          [],
-          described.outputSchema,
-          false,
-          false,
-          bubbledValues
-        ),
-      };
-      const side: InspectablePortList = {
-        fixed: true,
-        ports: [],
-      };
-      return { inputs, outputs, side };
+      return this.#portsForInput(inputValues, outputValues);
     }
     return this.#actual.ports(inputValues, outputValues || undefined);
+  }
+
+  currentPorts(
+    inputValues?: InputValues,
+    outputValues?: OutputValues
+  ): InspectableNodePorts {
+    if (this.descriptor.type === "input") {
+      return this.#portsForInput(inputValues, outputValues);
+    }
+    return this.#actual.currentPorts(inputValues, outputValues);
   }
 
   deleted(): boolean {

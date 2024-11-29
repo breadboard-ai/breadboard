@@ -130,6 +130,10 @@ class VirtualNode implements InspectableNode {
     return this.#ports();
   }
 
+  currentPorts(): InspectableNodePorts {
+    return this.#ports();
+  }
+
   deleted(): boolean {
     return false;
   }

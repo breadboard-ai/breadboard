@@ -11,6 +11,7 @@ import {
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
 import {
+  InspectableEdge,
   InspectableNode,
   MutableGraph,
   NodeTypeDescriberOptions,
@@ -295,10 +296,10 @@ class DescriberManager {
 
         const kits = [...this.mutable.store.kits];
         const describer = await this.#getDescriber(type);
-        const asWired = {
-          inputSchema: edgesToSchema(EdgeType.In, options?.incoming),
-          outputSchema: edgesToSchema(EdgeType.Out, options?.outgoing),
-        } satisfies NodeDescriberResult;
+        const asWired = DescriberManager.asWired(
+          options.incoming,
+          options.outgoing
+        );
         if (!describer) {
           return asWired;
         }
@@ -348,6 +349,16 @@ class DescriberManager {
         }
       }
     );
+  }
+
+  static asWired(
+    incoming: InspectableEdge[] = [],
+    outgoing: InspectableEdge[] = []
+  ) {
+    return {
+      inputSchema: edgesToSchema(EdgeType.In, incoming),
+      outputSchema: edgesToSchema(EdgeType.Out, outgoing),
+    } satisfies NodeDescriberResult;
   }
 
   static create(

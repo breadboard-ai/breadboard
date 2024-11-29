@@ -5,10 +5,13 @@
  */
 
 import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
-import { NodePortChanges } from "./types.js";
-import { InspectableNodePorts, InspectablePortList } from "../types.js";
+import {
+  InspectableNodePorts,
+  InspectablePortList,
+  NodePortChanges,
+} from "../types.js";
 
-export { PortUpdateReconciler };
+export { PortCache };
 
 type NodePortMap = Map<NodeIdentifier, InspectableNodePorts>;
 
@@ -17,7 +20,7 @@ type PortsUpdate = {
   changes: NodePortChanges;
 };
 
-class PortUpdateReconciler {
+class PortCache {
   #map: Map<GraphIdentifier, NodePortMap> = new Map();
 
   reconcilePorts(
@@ -48,6 +51,13 @@ class PortUpdateReconciler {
         updated: [],
       };
     }
+  }
+
+  current(
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier
+  ): InspectableNodePorts | undefined {
+    return this.#map.get(graphId)?.get(nodeId);
   }
 
   getChanges(

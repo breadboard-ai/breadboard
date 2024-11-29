@@ -105,6 +105,21 @@ export class Node implements InspectableNode {
     );
   }
 
+  currentPorts(
+    inputValues?: InputValues,
+    outputValues?: OutputValues
+  ): InspectableNodePorts {
+    const ports = this.#graph.ports.current(this.#graphId, this.descriptor.id);
+    if (ports) return ports;
+
+    return describerResultToPorts(
+      this,
+      DescriberManager.asWired(this.incoming(), this.outgoing()),
+      inputValues,
+      outputValues
+    );
+  }
+
   async ports(
     inputValues?: InputValues,
     outputValues?: OutputValues

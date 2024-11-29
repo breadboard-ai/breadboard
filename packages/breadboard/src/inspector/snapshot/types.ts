@@ -30,7 +30,7 @@ import {
   AddNodeSpec,
   ChangeGraphMetadataSpec,
 } from "../../editor/types.js";
-import { InspectableNodePorts, InspectablePort } from "../types.js";
+import { InspectableNodePorts, NodePortChanges } from "../types.js";
 
 export type SnapshotEventMap = {
   stale: SnapshotStaleEvent;
@@ -200,8 +200,6 @@ export type InspectableNodeTypeSnapshot = {
   readonly ports: InspectableNodePorts | undefined;
 };
 
-export type PortIdentifier = string;
-
 export type SnapshotAddGraphSpec = {
   type: "addgraph";
   graphId: GraphIdentifier;
@@ -213,19 +211,6 @@ export type SnapshotAddGraphSpec = {
 export type SnapshotAddEdgeSpec = AddEdgeSpec & {
   id: number;
   timestamp: number;
-};
-
-export type PortChanges = {
-  fixedChanged: boolean;
-  deleted: PortIdentifier[];
-  added: InspectablePort[];
-  updated: InspectablePort[];
-};
-
-export type NodePortChanges = {
-  input: PortChanges;
-  output: PortChanges;
-  side: PortChanges;
 };
 
 export type SnapshotUpdatePortsSpec = {
