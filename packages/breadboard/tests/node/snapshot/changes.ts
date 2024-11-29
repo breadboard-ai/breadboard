@@ -42,26 +42,36 @@ function mutable(graph: GraphDescriptor) {
   );
 }
 
+function timeless(spec: SnapshotChangeSpec[]): Partial<SnapshotChangeSpec>[] {
+  const result = structuredClone(spec);
+  result.forEach((r) => {
+    delete (r as Partial<SnapshotChangeSpec>).timestamp;
+  });
+  return result;
+}
+
+type Timeless<T> = T extends { timestamp: number } ? Omit<T, "timestamp"> : T;
+
 describe("Snapshot changes", async () => {
   it("correctly builds initial list of changes", () => {
     const blank = new Snapshot(mutable({ nodes: [], edges: [] }));
-    deepStrictEqual(blank.changes, [
+    deepStrictEqual(timeless(blank.changes), [
       {
         type: "addgraph",
         graphId: "",
       },
-    ] satisfies SnapshotChangeSpec[]);
+    ] satisfies Timeless<SnapshotChangeSpec>[]);
 
     const withInlineMetadata = new Snapshot(
       mutable({ title: "Foo", description: "Bar", nodes: [], edges: [] })
     );
-    deepStrictEqual(withInlineMetadata.changes, [
+    deepStrictEqual(timeless(withInlineMetadata.changes), [
       {
         type: "addgraph",
         metadata: { title: "Foo", description: "Bar" },
         graphId: "",
       },
-    ] satisfies SnapshotChangeSpec[]);
+    ] satisfies Timeless<SnapshotChangeSpec>[]);
 
     const withMetadata = new Snapshot(
       mutable({
@@ -71,7 +81,7 @@ describe("Snapshot changes", async () => {
         metadata: { tags: ["published"] },
       })
     );
-    deepStrictEqual(withMetadata.changes, [
+    deepStrictEqual(timeless(withMetadata.changes), [
       {
         type: "addgraph",
         metadata: { version: "0.0.1" },
@@ -82,7 +92,7 @@ describe("Snapshot changes", async () => {
         graphId: "",
         metadata: { tags: ["published"] },
       },
-    ] satisfies SnapshotChangeSpec[]);
+    ] satisfies Timeless<SnapshotChangeSpec>[]);
 
     const everything = new Snapshot(
       mutable({
@@ -114,7 +124,7 @@ describe("Snapshot changes", async () => {
         },
       })
     );
-    deepStrictEqual(everything.changes, [
+    deepStrictEqual(timeless(everything.changes), [
       {
         type: "addgraph",
         metadata: { title: "Title" },
@@ -182,7 +192,7 @@ describe("Snapshot changes", async () => {
         id: 4075679067,
         type: "addedge",
       },
-    ] satisfies SnapshotChangeSpec[]);
+    ] satisfies Timeless<SnapshotChangeSpec>[]);
     deepStrictEqual(everything.pending, [
       {
         type: "updateports",
@@ -214,7 +224,7 @@ describe("Snapshot changes", async () => {
         nodes: [],
       })
     );
-    deepStrictEqual(imperative.changes, [
+    deepStrictEqual(timeless(imperative.changes), [
       {
         type: "addgraph",
         metadata: { title: "Title" },
@@ -228,7 +238,7 @@ describe("Snapshot changes", async () => {
           code: "code",
         },
       },
-    ] satisfies SnapshotChangeSpec[]);
+    ] satisfies Timeless<SnapshotChangeSpec>[]);
   });
 
   await it("correctly produces initial port updates", async () => {
@@ -239,7 +249,7 @@ describe("Snapshot changes", async () => {
         edges: [],
       })
     );
-    deepStrictEqual(oneNode.changes, [
+    deepStrictEqual(timeless(oneNode.changes), [
       {
         type: "addgraph",
         metadata: { title: "Title" },
@@ -250,7 +260,7 @@ describe("Snapshot changes", async () => {
         node: { id: "first", type: "type", configuration: { foo: "foo" } },
         graphId: "",
       },
-    ] satisfies SnapshotChangeSpec[]);
+    ] satisfies Timeless<SnapshotChangeSpec>[]);
     deepStrictEqual(oneNode.pending, [
       {
         type: "updateports",
@@ -260,7 +270,7 @@ describe("Snapshot changes", async () => {
     ] satisfies SnapshotPendingUpdate[]);
     await oneNode.update();
     deepStrictEqual(oneNode.pending, []);
-    deepStrictEqual(oneNode.changes, [
+    deepStrictEqual(timeless(oneNode.changes), [
       {
         type: "addgraph",
         metadata: { title: "Title" },
@@ -368,6 +378,6 @@ describe("Snapshot changes", async () => {
           updated: [],
         },
       },
-    ] satisfies SnapshotChangeSpec[]);
+    ] satisfies Timeless<SnapshotChangeSpec>[]);
   });
 });

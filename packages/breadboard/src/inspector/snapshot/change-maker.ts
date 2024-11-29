@@ -22,6 +22,7 @@ import {
 } from "./types.js";
 import { hash } from "../../utils/hash.js";
 import { InspectableModule } from "../types.js";
+import { timestamp } from "../../timestamp.js";
 
 export { ChangeMaker };
 
@@ -54,16 +55,28 @@ class ChangeMaker {
       type: "changegraphmetadata",
       metadata,
       graphId,
+      timestamp: timestamp(),
     });
   }
 
   addNode(node: NodeDescriptor, graphId: GraphIdentifier) {
-    this.changes.push({ type: "addnode", node, graphId });
+    this.changes.push({
+      type: "addnode",
+      node,
+      graphId,
+      timestamp: timestamp(),
+    });
   }
 
   addEdge(edge: Edge, graphId: GraphIdentifier) {
     const id = hash(edge);
-    this.changes.push({ type: "addedge", edge, graphId, id });
+    this.changes.push({
+      type: "addedge",
+      edge,
+      graphId,
+      id,
+      timestamp: timestamp(),
+    });
   }
 
   addModule(id: ModuleIdentifier, module: InspectableModule) {
@@ -71,6 +84,7 @@ class ChangeMaker {
       type: "addmodule",
       id,
       module: copy(MODULE_PROPS, module),
+      timestamp: timestamp(),
     });
   }
 
@@ -81,6 +95,7 @@ class ChangeMaker {
         metadata: copy(INLINE_METADATA_PROPS, graph),
         graphId,
         main: graph.main,
+        timestamp: timestamp(),
       })
     );
   }
@@ -94,6 +109,7 @@ class ChangeMaker {
       type: "updateports",
       graphId,
       nodeId,
+      timestamp: timestamp(),
       ...changes,
     });
   }

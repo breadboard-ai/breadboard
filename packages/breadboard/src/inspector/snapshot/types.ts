@@ -309,12 +309,14 @@ export type PortIdentifier = string;
 export type SnapshotAddGraphSpec = {
   type: "addgraph";
   graphId: GraphIdentifier;
+  timestamp: number;
   metadata?: GraphInlineMetadata;
   main?: string;
 };
 
 export type SnapshotAddEdgeSpec = AddEdgeSpec & {
   id: number;
+  timestamp: number;
 };
 
 export type PortChanges = {
@@ -332,16 +334,29 @@ export type NodePortChanges = {
 
 export type SnapshotUpdatePortsSpec = {
   type: "updateports";
+  timestamp: number;
   graphId: GraphIdentifier;
   nodeId: NodeIdentifier;
 } & NodePortChanges;
 
+export type SnapshotAddNodeSpec = AddNodeSpec & {
+  timestamp: number;
+};
+
+export type SnapshotAddModuleSpec = AddModuleSpec & {
+  timestamp: number;
+};
+
+export type SnapshotChangeGraphMetadataSpec = ChangeGraphMetadataSpec & {
+  timestamp: number;
+};
+
 export type SnapshotChangeSpec =
   | SnapshotAddGraphSpec
-  | ChangeGraphMetadataSpec
-  | AddNodeSpec
+  | SnapshotChangeGraphMetadataSpec
+  | SnapshotAddNodeSpec
   | SnapshotAddEdgeSpec
-  | AddModuleSpec
+  | SnapshotAddModuleSpec
   | SnapshotUpdatePortsSpec;
 
 export type SnapshotPendingPortUpdate = Pick<
