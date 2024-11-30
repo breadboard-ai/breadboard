@@ -5,7 +5,6 @@
  */
 
 import type { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
-import type { NodeDescriberResult } from "../../types.js";
 import {
   InspectableDescriberResultCache,
   InspectableDescriberResultCacheEntry,
@@ -18,19 +17,34 @@ export { DescribeResultCache };
 class DescribeResultCache implements InspectableDescriberResultCache {
   #map = new Map<number, InspectableDescriberResultCacheEntry>();
 
+  #latestResolved(
+    entry: InspectableDescriberResultCacheEntry
+  ): InspectableDescriberResultCacheEntry {
+    let current = entry.current;
+    return {
+      get current() {
+        return current;
+      },
+      latest: entry.latest.then((latest) => {
+        current = latest;
+        return latest;
+      }),
+    };
+  }
+
   getOrCreate(
     id: NodeIdentifier,
     graphId: GraphIdentifier,
     factory: () => InspectableDescriberResultCacheEntry
-  ): Promise<NodeDescriberResult> {
+  ): InspectableDescriberResultCacheEntry {
     const hash = computeHash({ id, graphId });
     let result = this.#map.get(hash);
     if (result) {
-      return result.latest;
+      return result;
     }
     result = factory();
-    this.#map.set(hash, result);
-    return result.latest;
+    this.#map.set(hash, this.#latestResolved(result));
+    return result;
   }
 
   clear(visualOnly: boolean, affectedNodes: AffectedNode[]) {

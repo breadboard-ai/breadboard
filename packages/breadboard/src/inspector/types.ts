@@ -649,7 +649,7 @@ export type InspectableDescriberResultCache = {
     id: NodeIdentifier,
     graphId: GraphIdentifier,
     factory: () => InspectableDescriberResultCacheEntry
-  ): Promise<NodeDescriberResult>;
+  ): InspectableDescriberResultCacheEntry;
   clear(visualOnly: boolean, affectedNodes: AffectedNode[]): void;
 };
 

@@ -186,7 +186,7 @@ class NodeTypeDescriberManager {
         options.outgoing
       ),
       latest: getLatest(),
-    }));
+    })).latest;
   }
 
   static asWired(
