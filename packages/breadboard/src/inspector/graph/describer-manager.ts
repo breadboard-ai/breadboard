@@ -41,13 +41,9 @@ import { Result } from "../../editor/types.js";
 import { invokeGraph } from "../../run/invoke-graph.js";
 import { contextFromStore } from "../graph-store.js";
 
-export { DescriberManager };
+export { GraphDescriberManager, NodeTypeDescriberManager };
 
-/**
- * Contains all machinery that allows
- * describing a node or a graph
- */
-class DescriberManager {
+class NodeTypeDescriberManager {
   private constructor(
     public readonly handle: GraphDescriptorHandle,
     public readonly mutable: MutableGraph
@@ -67,6 +63,162 @@ class DescriberManager {
     }
     return handler.describe;
   }
+
+  async describeNodeType(
+    id: NodeIdentifier,
+    type: NodeTypeIdentifier,
+    options: NodeTypeDescriberOptions = {}
+  ): Promise<NodeDescriberResult> {
+    return this.mutable.describe.getOrCreate(
+      id,
+      this.handle.graphId,
+      async () => {
+        // The schema of an input or an output is defined by their
+        // configuration schema or their incoming/outgoing edges.
+        if (type === "input") {
+          if (this.handle.main()) {
+            if (!this.mutable.store.sandbox) {
+              throw new Error(
+                "Sandbox not supplied, won't be able to describe this graph correctly"
+              );
+            }
+            const result = await invokeMainDescriber(
+              this.mutable.store.sandbox,
+              this.handle.graph(),
+              options.inputs!,
+              {},
+              {}
+            );
+            if (result)
+              return describeInput({
+                inputs: {
+                  schema: result.inputSchema,
+                },
+                incoming: options?.incoming,
+                outgoing: options?.outgoing,
+              });
+            return describeInput(options);
+          }
+          return describeInput(options);
+        }
+        if (type === "output") {
+          if (this.handle.main()) {
+            if (!this.mutable.store.sandbox) {
+              throw new Error(
+                "Sandbox not supplied, won't be able to describe this graph correctly"
+              );
+            }
+            const result = await invokeMainDescriber(
+              this.mutable.store.sandbox,
+              this.handle.graph(),
+              options.inputs!,
+              {},
+              {}
+            );
+            if (result)
+              return describeOutput({
+                inputs: {
+                  schema: result.outputSchema,
+                },
+                incoming: options?.incoming,
+                outgoing: options?.outgoing,
+              });
+            return describeInput(options);
+          }
+          return describeOutput(options);
+        }
+
+        const kits = [...this.mutable.store.kits];
+        const describer = await this.#getDescriber(type);
+        const asWired = NodeTypeDescriberManager.asWired(
+          options.incoming,
+          options.outgoing
+        );
+        if (!describer) {
+          return asWired;
+        }
+        const loader = this.mutable.store.loader || createLoader();
+        const context: NodeDescriberContext = {
+          outerGraph: this.handle.outerGraph(),
+          loader,
+          kits,
+          sandbox: this.mutable.store.sandbox,
+          graphStore: this.mutable.store,
+          wires: {
+            incoming: Object.fromEntries(
+              (options?.incoming ?? []).map((edge) => [
+                edge.in,
+                {
+                  outputPort: {
+                    describe: async () => (await edge.outPort()).type.schema,
+                  },
+                },
+              ])
+            ),
+            outgoing: Object.fromEntries(
+              (options?.outgoing ?? []).map((edge) => [
+                edge.out,
+                {
+                  inputPort: {
+                    describe: async () => (await edge.inPort()).type.schema,
+                  },
+                },
+              ])
+            ),
+          },
+        };
+        if (this.handle.url()) {
+          context.base = this.handle.url();
+        }
+        try {
+          return describer(
+            options?.inputs || undefined,
+            asWired.inputSchema,
+            asWired.outputSchema,
+            context
+          );
+        } catch (e) {
+          console.warn(`Error describing node type ${type}`, e);
+          return asWired;
+        }
+      }
+    );
+  }
+
+  static asWired(
+    incoming: InspectableEdge[] = [],
+    outgoing: InspectableEdge[] = []
+  ) {
+    return {
+      inputSchema: edgesToSchema(EdgeType.In, incoming),
+      outputSchema: edgesToSchema(EdgeType.Out, outgoing),
+    } satisfies NodeDescriberResult;
+  }
+
+  static create(
+    graphId: GraphIdentifier,
+    cache: MutableGraph
+  ): Result<NodeTypeDescriberManager> {
+    const handle = GraphDescriptorHandle.create(cache.graph, graphId);
+    if (!handle.success) {
+      return handle;
+    }
+    return {
+      success: true,
+      result: new NodeTypeDescriberManager(handle.result, cache),
+    };
+  }
+}
+
+/**
+ * Contains all machinery that allows
+ * describing a node or a graph
+ */
+class GraphDescriberManager {
+  private constructor(
+    public readonly handle: GraphDescriptorHandle,
+    public readonly mutable: MutableGraph
+  ) {}
 
   #nodesByType(type: NodeTypeIdentifier): InspectableNode[] {
     return this.mutable.nodes.byType(type, this.handle.graphId);
@@ -230,148 +382,17 @@ class DescriberManager {
     return this.#describeWithStaticAnalysis();
   }
 
-  async describeNodeType(
-    id: NodeIdentifier,
-    type: NodeTypeIdentifier,
-    options: NodeTypeDescriberOptions = {}
-  ): Promise<NodeDescriberResult> {
-    return this.mutable.describe.getOrCreate(
-      id,
-      this.handle.graphId,
-      async () => {
-        // The schema of an input or an output is defined by their
-        // configuration schema or their incoming/outgoing edges.
-        if (type === "input") {
-          if (this.handle.main()) {
-            if (!this.mutable.store.sandbox) {
-              throw new Error(
-                "Sandbox not supplied, won't be able to describe this graph correctly"
-              );
-            }
-            const result = await invokeMainDescriber(
-              this.mutable.store.sandbox,
-              this.handle.graph(),
-              options.inputs!,
-              {},
-              {}
-            );
-            if (result)
-              return describeInput({
-                inputs: {
-                  schema: result.inputSchema,
-                },
-                incoming: options?.incoming,
-                outgoing: options?.outgoing,
-              });
-            return describeInput(options);
-          }
-          return describeInput(options);
-        }
-        if (type === "output") {
-          if (this.handle.main()) {
-            if (!this.mutable.store.sandbox) {
-              throw new Error(
-                "Sandbox not supplied, won't be able to describe this graph correctly"
-              );
-            }
-            const result = await invokeMainDescriber(
-              this.mutable.store.sandbox,
-              this.handle.graph(),
-              options.inputs!,
-              {},
-              {}
-            );
-            if (result)
-              return describeOutput({
-                inputs: {
-                  schema: result.outputSchema,
-                },
-                incoming: options?.incoming,
-                outgoing: options?.outgoing,
-              });
-            return describeInput(options);
-          }
-          return describeOutput(options);
-        }
-
-        const kits = [...this.mutable.store.kits];
-        const describer = await this.#getDescriber(type);
-        const asWired = DescriberManager.asWired(
-          options.incoming,
-          options.outgoing
-        );
-        if (!describer) {
-          return asWired;
-        }
-        const loader = this.mutable.store.loader || createLoader();
-        const context: NodeDescriberContext = {
-          outerGraph: this.handle.outerGraph(),
-          loader,
-          kits,
-          sandbox: this.mutable.store.sandbox,
-          graphStore: this.mutable.store,
-          wires: {
-            incoming: Object.fromEntries(
-              (options?.incoming ?? []).map((edge) => [
-                edge.in,
-                {
-                  outputPort: {
-                    describe: async () => (await edge.outPort()).type.schema,
-                  },
-                },
-              ])
-            ),
-            outgoing: Object.fromEntries(
-              (options?.outgoing ?? []).map((edge) => [
-                edge.out,
-                {
-                  inputPort: {
-                    describe: async () => (await edge.inPort()).type.schema,
-                  },
-                },
-              ])
-            ),
-          },
-        };
-        if (this.handle.url()) {
-          context.base = this.handle.url();
-        }
-        try {
-          return describer(
-            options?.inputs || undefined,
-            asWired.inputSchema,
-            asWired.outputSchema,
-            context
-          );
-        } catch (e) {
-          console.warn(`Error describing node type ${type}`, e);
-          return asWired;
-        }
-      }
-    );
-  }
-
-  static asWired(
-    incoming: InspectableEdge[] = [],
-    outgoing: InspectableEdge[] = []
-  ) {
-    return {
-      inputSchema: edgesToSchema(EdgeType.In, incoming),
-      outputSchema: edgesToSchema(EdgeType.Out, outgoing),
-    } satisfies NodeDescriberResult;
-  }
-
   static create(
     graphId: GraphIdentifier,
     cache: MutableGraph
-  ): Result<DescriberManager> {
+  ): Result<GraphDescriberManager> {
     const handle = GraphDescriptorHandle.create(cache.graph, graphId);
     if (!handle.success) {
       return handle;
     }
     return {
       success: true,
-      result: new DescriberManager(handle.result, cache),
+      result: new GraphDescriberManager(handle.result, cache),
     };
   }
 }
