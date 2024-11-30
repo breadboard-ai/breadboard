@@ -6,28 +6,31 @@
 
 import type { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
 import type { NodeDescriberResult } from "../../types.js";
-import { InspectableDescriberResultCache } from "../types.js";
+import {
+  InspectableDescriberResultCache,
+  InspectableDescriberResultCacheEntry,
+} from "../types.js";
 import { AffectedNode } from "../../editor/types.js";
 import { hash } from "../../utils/hash.js";
 
 export { DescribeResultCache };
 
 class DescribeResultCache implements InspectableDescriberResultCache {
-  #map = new Map<number, Promise<NodeDescriberResult>>();
+  #map = new Map<number, InspectableDescriberResultCacheEntry>();
 
   getOrCreate(
     id: NodeIdentifier,
     graphId: GraphIdentifier,
-    factory: () => Promise<NodeDescriberResult>
+    factory: () => InspectableDescriberResultCacheEntry
   ): Promise<NodeDescriberResult> {
     const hash = computeHash({ id, graphId });
     let result = this.#map.get(hash);
     if (result) {
-      return result;
+      return result.latest;
     }
     result = factory();
     this.#map.set(hash, result);
-    return result;
+    return result.latest;
   }
 
   clear(visualOnly: boolean, affectedNodes: AffectedNode[]) {

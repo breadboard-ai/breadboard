@@ -632,11 +632,23 @@ export type InspectableModuleCache = {
   rebuild(graph: GraphDescriptor): void;
 };
 
+export type InspectableDescriberResultCacheEntry = {
+  /**
+   * When this promise is resolved, provides the latest/freshes value
+   * of the `NodeDescriberResult`.
+   */
+  latest: Promise<NodeDescriberResult>;
+  /**
+   * Provides the current value, which may be stale.
+   */
+  current: NodeDescriberResult;
+};
+
 export type InspectableDescriberResultCache = {
   getOrCreate(
     id: NodeIdentifier,
     graphId: GraphIdentifier,
-    factory: () => Promise<NodeDescriberResult>
+    factory: () => InspectableDescriberResultCacheEntry
   ): Promise<NodeDescriberResult>;
   clear(visualOnly: boolean, affectedNodes: AffectedNode[]): void;
 };
