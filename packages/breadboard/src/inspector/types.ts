@@ -660,6 +660,7 @@ export type InspectableDescriberResultCache = {
     graphId: GraphIdentifier,
     inputs?: InputValues
   ): InspectableDescriberResultCacheEntry;
+  update(affectedNodes: AffectedNode[]): void;
   clear(visualOnly: boolean, affectedNodes: AffectedNode[]): void;
 };
 

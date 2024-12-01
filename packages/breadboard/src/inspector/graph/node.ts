@@ -90,7 +90,7 @@ export class Node implements InspectableNode {
     const describeEntry = this.#graph.describe.get(
       this.descriptor.id,
       this.#graphId,
-      { ...this.configuration(), ...inputs }
+      inputs
     );
     return describeEntry.latest;
   }

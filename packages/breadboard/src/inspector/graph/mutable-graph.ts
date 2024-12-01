@@ -91,7 +91,10 @@ class MutableGraphImpl implements MutableGraph {
       }
     }
 
-    this.describe.clear(visualOnly, affectedNodes);
+    // TODO: Handle removals, etc.
+    if (!visualOnly) {
+      this.describe.update(affectedNodes);
+    }
     this.graph = graph;
     this.graphs.rebuild(graph);
   }

@@ -66,6 +66,13 @@ class DescribeResultCache implements InspectableDescriberResultCache {
     return result.snapshot();
   }
 
+  update(affectedNodes: AffectedNode[]) {
+    affectedNodes.forEach((affected) => {
+      const hash = computeHash(affected);
+      this.#map.get(hash)?.refresh();
+    });
+  }
+
   clear(visualOnly: boolean, affectedNodes: AffectedNode[]) {
     if (visualOnly) {
       return;

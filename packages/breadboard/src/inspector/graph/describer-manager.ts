@@ -77,7 +77,7 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
     return this.getLatestDescription(node.descriptor.type, graphId, {
       incoming: node.incoming(),
       outgoing: node.outgoing(),
-      inputs,
+      inputs: { ...node.configuration(), ...inputs },
     });
   }
 
