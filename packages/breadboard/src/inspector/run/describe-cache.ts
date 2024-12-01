@@ -4,47 +4,66 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
+import type {
+  GraphIdentifier,
+  InputValues,
+  NodeIdentifier,
+} from "@breadboard-ai/types";
 import {
+  DescribeResultCacheArgs,
   InspectableDescriberResultCache,
   InspectableDescriberResultCacheEntry,
 } from "../types.js";
 import { AffectedNode } from "../../editor/types.js";
 import { hash } from "../../utils/hash.js";
+import {
+  SnapshotUpdater,
+  SnapshotUpdaterArgs,
+} from "../snapshot/snapshot-updater.js";
+import { NodeDescriberResult } from "../../types.js";
 
 export { DescribeResultCache };
 
-class DescribeResultCache implements InspectableDescriberResultCache {
-  #map = new Map<number, InspectableDescriberResultCacheEntry>();
+type MapItem = SnapshotUpdater<NodeDescriberResult>;
 
-  #latestResolved(
-    entry: InspectableDescriberResultCacheEntry
-  ): InspectableDescriberResultCacheEntry {
-    let current = entry.current;
+class DescribeResultCache implements InspectableDescriberResultCache {
+  #map = new Map<number, MapItem>();
+
+  constructor(public readonly args: DescribeResultCacheArgs) {}
+
+  #createSnapshotArgs(
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier,
+    inputs?: InputValues
+  ) {
     return {
-      get current() {
-        return current;
-      },
-      latest: entry.latest.then((latest) => {
-        current = latest;
-        return latest;
-      }),
-    };
+      initial: () => this.args.initial(graphId, nodeId),
+      latest: () => this.args.latest(graphId, nodeId, inputs),
+      willUpdate: (previous, current) =>
+        this.args.willUpdate(graphId, nodeId, previous, current),
+    } as SnapshotUpdaterArgs<NodeDescriberResult>;
   }
 
-  getOrCreate(
+  get(
     id: NodeIdentifier,
     graphId: GraphIdentifier,
-    factory: () => InspectableDescriberResultCacheEntry
+    inputs?: InputValues
   ): InspectableDescriberResultCacheEntry {
+    if (inputs && Object.keys(inputs).length > 0) {
+      // bypass cache when there are inputs. We can't cache these
+      // describer results ... yet.
+      return new SnapshotUpdater(
+        this.#createSnapshotArgs(graphId, id, inputs)
+      ).snapshot();
+    }
     const hash = computeHash({ id, graphId });
     let result = this.#map.get(hash);
     if (result) {
-      return result;
+      return result.snapshot();
     }
-    result = factory();
-    this.#map.set(hash, this.#latestResolved(result));
-    return result;
+    result = new SnapshotUpdater(this.#createSnapshotArgs(graphId, id));
+    this.#map.set(hash, result);
+    return result.snapshot();
   }
 
   clear(visualOnly: boolean, affectedNodes: AffectedNode[]) {

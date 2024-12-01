@@ -11,6 +11,7 @@ import {
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
 import {
+  DescribeResultCacheArgs,
   InspectableEdge,
   InspectableNode,
   MutableGraph,
@@ -43,11 +44,51 @@ import { contextFromStore } from "../graph-store.js";
 
 export { GraphDescriberManager, NodeTypeDescriberManager };
 
-class NodeTypeDescriberManager {
-  private constructor(
-    public readonly handle: GraphDescriptorHandle,
-    public readonly mutable: MutableGraph
-  ) {}
+function emptyResult(): NodeDescriberResult {
+  return {
+    inputSchema: { type: "object" },
+    outputSchema: { type: "object" },
+  };
+}
+
+class NodeTypeDescriberManager implements DescribeResultCacheArgs {
+  public constructor(public readonly mutable: MutableGraph) {}
+
+  initial(
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier
+  ): NodeDescriberResult {
+    const node = this.mutable.nodes.get(nodeId, graphId);
+    if (!node) {
+      return emptyResult();
+    }
+    return NodeTypeDescriberManager.asWired(node.incoming(), node.outgoing());
+  }
+
+  async latest(
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier,
+    inputs?: InputValues
+  ): Promise<NodeDescriberResult> {
+    const node = this.mutable.nodes.get(nodeId, graphId);
+    if (!node) {
+      return emptyResult();
+    }
+    return this.getLatestDescription(node.descriptor.type, graphId, {
+      incoming: node.incoming(),
+      outgoing: node.outgoing(),
+      inputs,
+    });
+  }
+
+  willUpdate(
+    _graphId: GraphIdentifier,
+    _nodeId: NodeIdentifier,
+    _previous: NodeDescriberResult,
+    _current: NodeDescriberResult
+  ): void {
+    // TODO: Implement.
+  }
 
   async #getDescriber(
     type: NodeTypeIdentifier
@@ -66,12 +107,21 @@ class NodeTypeDescriberManager {
 
   async getLatestDescription(
     type: NodeTypeIdentifier,
+    graphId: GraphIdentifier,
     options: NodeTypeDescriberOptions = {}
   ) {
+    const gettingHandle = GraphDescriptorHandle.create(
+      this.mutable.graph,
+      graphId
+    );
+    if (!gettingHandle.success) {
+      throw new Error(gettingHandle.error);
+    }
+    const handle = gettingHandle.result;
     // The schema of an input or an output is defined by their
     // configuration schema or their incoming/outgoing edges.
     if (type === "input") {
-      if (this.handle.main()) {
+      if (handle.main()) {
         if (!this.mutable.store.sandbox) {
           throw new Error(
             "Sandbox not supplied, won't be able to describe this graph correctly"
@@ -79,7 +129,7 @@ class NodeTypeDescriberManager {
         }
         const result = await invokeMainDescriber(
           this.mutable.store.sandbox,
-          this.handle.graph(),
+          handle.graph(),
           options.inputs!,
           {},
           {}
@@ -97,7 +147,7 @@ class NodeTypeDescriberManager {
       return describeInput(options);
     }
     if (type === "output") {
-      if (this.handle.main()) {
+      if (handle.main()) {
         if (!this.mutable.store.sandbox) {
           throw new Error(
             "Sandbox not supplied, won't be able to describe this graph correctly"
@@ -105,7 +155,7 @@ class NodeTypeDescriberManager {
         }
         const result = await invokeMainDescriber(
           this.mutable.store.sandbox,
-          this.handle.graph(),
+          handle.graph(),
           options.inputs!,
           {},
           {}
@@ -134,7 +184,7 @@ class NodeTypeDescriberManager {
     }
     const loader = this.mutable.store.loader || createLoader();
     const context: NodeDescriberContext = {
-      outerGraph: this.handle.outerGraph(),
+      outerGraph: handle.outerGraph(),
       loader,
       kits,
       sandbox: this.mutable.store.sandbox,
@@ -162,8 +212,8 @@ class NodeTypeDescriberManager {
         ),
       },
     };
-    if (this.handle.url()) {
-      context.base = this.handle.url();
+    if (handle.url()) {
+      context.base = handle.url();
     }
     try {
       return describer(
@@ -178,20 +228,6 @@ class NodeTypeDescriberManager {
     }
   }
 
-  async describeNodeType(
-    id: NodeIdentifier,
-    type: NodeTypeIdentifier,
-    options: NodeTypeDescriberOptions = {}
-  ): Promise<NodeDescriberResult> {
-    return this.mutable.describe.getOrCreate(id, this.handle.graphId, () => ({
-      current: NodeTypeDescriberManager.asWired(
-        options.incoming,
-        options.outgoing
-      ),
-      latest: this.getLatestDescription(type, options),
-    })).latest;
-  }
-
   static asWired(
     incoming: InspectableEdge[] = [],
     outgoing: InspectableEdge[] = []
@@ -200,20 +236,6 @@ class NodeTypeDescriberManager {
       inputSchema: edgesToSchema(EdgeType.In, incoming),
       outputSchema: edgesToSchema(EdgeType.Out, outgoing),
     } satisfies NodeDescriberResult;
-  }
-
-  static create(
-    graphId: GraphIdentifier,
-    cache: MutableGraph
-  ): Result<NodeTypeDescriberManager> {
-    const handle = GraphDescriptorHandle.create(cache.graph, graphId);
-    if (!handle.success) {
-      return handle;
-    }
-    return {
-      success: true,
-      result: new NodeTypeDescriberManager(handle.result, cache),
-    };
   }
 }
 

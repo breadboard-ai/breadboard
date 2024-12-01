@@ -291,14 +291,6 @@ export type InspectableGraph = {
    */
   typeById(id: NodeTypeIdentifier): InspectableNodeType | undefined;
   /**
-   * Describe a given type of the node
-   */
-  describeNodeType(
-    id: NodeIdentifier,
-    type: NodeTypeIdentifier,
-    options?: NodeTypeDescriberOptions
-  ): Promise<NodeDescriberResult>;
-  /**
    * Returns the nodes that have an edge to the node with the given id.
    * @param id id of the node to find incoming nodes for
    */
@@ -366,6 +358,24 @@ export type InspectableGraphOptions = {
    * The Javascript Sandbox that will be used to run custom describers.
    */
   readonly sandbox?: Sandbox;
+};
+
+export type DescribeResultCacheArgs = {
+  initial(
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier
+  ): NodeDescriberResult;
+  latest(
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier,
+    inputs?: InputValues
+  ): Promise<NodeDescriberResult>;
+  willUpdate(
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier,
+    previous: NodeDescriberResult,
+    current: NodeDescriberResult
+  ): void;
 };
 
 /**
@@ -645,10 +655,10 @@ export type InspectableDescriberResultCacheEntry = {
 };
 
 export type InspectableDescriberResultCache = {
-  getOrCreate(
+  get(
     id: NodeIdentifier,
     graphId: GraphIdentifier,
-    factory: () => InspectableDescriberResultCacheEntry
+    inputs?: InputValues
   ): InspectableDescriberResultCacheEntry;
   clear(visualOnly: boolean, affectedNodes: AffectedNode[]): void;
 };

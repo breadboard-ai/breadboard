@@ -70,20 +70,21 @@ class Graph implements InspectableGraph {
     return this.#mutable.nodes.byType(type, this.#graphId);
   }
 
-  async describeNodeType(
-    id: NodeIdentifier,
-    type: NodeTypeIdentifier,
-    options: NodeTypeDescriberOptions = {}
-  ): Promise<NodeDescriberResult> {
-    const manager = NodeTypeDescriberManager.create(
-      this.#graphId,
-      this.#mutable
-    );
-    if (!manager.success) {
-      throw new Error(`Inspect API Integrity Error: ${manager.error}`);
-    }
-    return manager.result.describeNodeType(id, type, options);
-  }
+  // TODO: Remove this
+  // async describeNodeType(
+  //   id: NodeIdentifier,
+  //   type: NodeTypeIdentifier,
+  //   options: NodeTypeDescriberOptions = {}
+  // ): Promise<NodeDescriberResult> {
+  //   const manager = NodeTypeDescriberManager.create(
+  //     this.#graphId,
+  //     this.#mutable
+  //   );
+  //   if (!manager.success) {
+  //     throw new Error(`Inspect API Integrity Error: ${manager.error}`);
+  //   }
+  //   return manager.result.describeNodeType(id, type, options);
+  // }
 
   nodeById(id: NodeIdentifier) {
     return new GraphQueries(this.#mutable, this.#graphId).nodeById(id);

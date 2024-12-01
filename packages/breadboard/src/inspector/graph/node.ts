@@ -21,7 +21,6 @@ import {
   MutableGraph,
 } from "../types.js";
 import { GraphQueries } from "./graph-queries.js";
-import { NodeTypeDescriberManager } from "./describer-manager.js";
 
 export class Node implements InspectableNode {
   descriptor: NodeDescriptor;
@@ -88,33 +87,25 @@ export class Node implements InspectableNode {
   }
 
   async describe(inputs?: InputValues): Promise<NodeDescriberResult> {
-    const incoming = this.incoming();
-    const outgoing = this.outgoing();
-    const manager = NodeTypeDescriberManager.create(this.#graphId, this.#graph);
-    if (!manager.success) {
-      throw new Error(`Inspect API Integrity Error: ${manager.error}`);
-    }
-    return manager.result.describeNodeType(
+    const describeEntry = this.#graph.describe.get(
       this.descriptor.id,
-      this.descriptor.type,
-      {
-        inputs: { ...this.configuration(), inputs },
-        incoming,
-        outgoing,
-      }
+      this.#graphId,
+      { ...this.configuration(), ...inputs }
     );
+    return describeEntry.latest;
   }
 
   currentPorts(
     inputValues?: InputValues,
     outputValues?: OutputValues
   ): InspectableNodePorts {
-    const ports = this.#graph.ports.current(this.#graphId, this.descriptor.id);
-    if (ports) return ports;
-
+    const describeEntry = this.#graph.describe.get(
+      this.descriptor.id,
+      this.#graphId
+    );
     return describerResultToPorts(
       this,
-      NodeTypeDescriberManager.asWired(this.incoming(), this.outgoing()),
+      describeEntry.current,
       inputValues,
       outputValues
     );
