@@ -82,12 +82,20 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
   }
 
   willUpdate(
-    _graphId: GraphIdentifier,
-    _nodeId: NodeIdentifier,
-    _previous: NodeDescriberResult,
-    _current: NodeDescriberResult
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier,
+    previous: NodeDescriberResult,
+    current: NodeDescriberResult
   ): void {
-    // TODO: Implement.
+    // Compute the diff between previous and current.
+    // The diff is the change spec.
+    // If same, return.
+    // Otherwise:
+    // Add change spec to the change list
+    // So the change list lives on mutable graph!
+    // Global to main graph.
+    // Dispatch "update" event on the InspectableGraph
+    // this.mutable.graphs.get(graphId).dispatchEvent()
   }
 
   async #getDescriber(

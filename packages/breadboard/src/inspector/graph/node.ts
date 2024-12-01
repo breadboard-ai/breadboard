@@ -99,16 +99,11 @@ export class Node implements InspectableNode {
     inputValues?: InputValues,
     outputValues?: OutputValues
   ): InspectableNodePorts {
-    const describeEntry = this.#graph.describe.get(
+    const current = this.#graph.describe.get(
       this.descriptor.id,
       this.#graphId
-    );
-    return describerResultToPorts(
-      this,
-      describeEntry.current,
-      inputValues,
-      outputValues
-    );
+    ).current;
+    return describerResultToPorts(this, current, inputValues, outputValues);
   }
 
   async ports(
