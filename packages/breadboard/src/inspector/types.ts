@@ -49,7 +49,6 @@ import {
   EditableGraphOptions,
   Result,
 } from "../editor/types.js";
-import { InspectableSnapshot } from "./snapshot/types.js";
 
 export type GraphVersion = number;
 
@@ -715,15 +714,10 @@ export type MutableGraphStore = {
     id: MainGraphIdentifier,
     options?: EditableGraphOptions
   ): EditableGraph | undefined;
-  inspectAsync(
-    id: MainGraphIdentifier,
-    graphId: GraphIdentifier
-  ): InspectableGraph | undefined;
-
   inspect(
     id: MainGraphIdentifier,
     graphId: GraphIdentifier
-  ): InspectableSnapshot;
+  ): InspectableGraph | undefined;
 };
 
 export type PortIdentifier = string;

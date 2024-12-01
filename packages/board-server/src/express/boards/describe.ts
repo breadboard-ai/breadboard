@@ -43,7 +43,7 @@ const describe = async (req: Request, res: Response): Promise<void> => {
   if (!adding.success) {
     describeResult = emptyDescriberResult();
   } else {
-    const inspector = graphStore.inspectAsync(adding.result, "");
+    const inspector = graphStore.inspect(adding.result, "");
     if (!inspector) {
       describeResult = emptyDescriberResult();
     } else {

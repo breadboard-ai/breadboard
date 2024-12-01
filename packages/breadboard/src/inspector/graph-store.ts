@@ -26,7 +26,6 @@ import { hash } from "../utils/hash.js";
 import { Kit, NodeHandlerContext } from "../types.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { createLoader } from "../loader/index.js";
-import { InspectableSnapshot } from "./snapshot/types.js";
 
 export { GraphStore, makeTerribleOptions, contextFromStore };
 
@@ -120,7 +119,7 @@ class GraphStore implements MutableGraphStore {
     return new GraphEditor(mutable, options);
   }
 
-  inspectAsync(
+  inspect(
     id: MainGraphIdentifier,
     graphId: GraphIdentifier
   ): InspectableGraph | undefined {
@@ -128,13 +127,6 @@ class GraphStore implements MutableGraphStore {
     if (!mutable) return undefined;
 
     return mutable.graphs.get(graphId);
-  }
-
-  inspect(
-    _id: MainGraphIdentifier,
-    _graphId: GraphIdentifier
-  ): InspectableSnapshot {
-    throw new Error("Not implemented");
   }
 
   getOrAdd(graph: GraphDescriptor): Result<MutableGraph> {

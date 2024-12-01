@@ -690,7 +690,7 @@ export class ModuleEditor extends LitElement {
     if (!adding.success) {
       return this.#graphRenderer;
     }
-    const graph = graphStore.inspectAsync(adding.result, "");
+    const graph = graphStore.inspect(adding.result, "");
     if (!graph) {
       return this.#graphRenderer;
     }

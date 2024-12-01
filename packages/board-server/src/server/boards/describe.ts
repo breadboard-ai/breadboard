@@ -60,7 +60,7 @@ const describe: ApiHandler = async (parsed, _req, res) => {
   if (!adding.success) {
     describeResult = emptyDescriberResult();
   } else {
-    const inspector = graphStore.inspectAsync(adding.result, "");
+    const inspector = graphStore.inspect(adding.result, "");
     if (!inspector) {
       describeResult = emptyDescriberResult();
     } else {

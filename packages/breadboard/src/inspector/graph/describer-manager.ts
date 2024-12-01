@@ -82,10 +82,10 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
   }
 
   willUpdate(
-    graphId: GraphIdentifier,
-    nodeId: NodeIdentifier,
-    previous: NodeDescriberResult,
-    current: NodeDescriberResult
+    _graphId: GraphIdentifier,
+    _nodeId: NodeIdentifier,
+    _previous: NodeDescriberResult,
+    _current: NodeDescriberResult
   ): void {
     // Compute the diff between previous and current.
     // The diff is the change spec.
