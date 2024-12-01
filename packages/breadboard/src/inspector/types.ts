@@ -120,12 +120,21 @@ export type InspectableNode = {
    */
   metadata(): NodeMetadata;
   /**
-   * Returns the current state of node's ports
+   * Returns the latest state of node's ports
    */
   ports(
     inputs?: InputValues,
     outputs?: OutputValues
   ): Promise<InspectableNodePorts>;
+
+  /**
+   * Returns the current state of node's ports. This value may contain
+   * stale information, but is not async.
+   */
+  currentPorts(
+    inputValues?: InputValues,
+    outputValues?: OutputValues
+  ): InspectableNodePorts;
 
   /**
    * Returns `true` if the node has been deleted from the graph and this
@@ -281,14 +290,6 @@ export type InspectableGraph = {
    */
   typeById(id: NodeTypeIdentifier): InspectableNodeType | undefined;
   /**
-   * Describe a given type of the node
-   */
-  describeNodeType(
-    id: NodeIdentifier,
-    type: NodeTypeIdentifier,
-    options?: NodeTypeDescriberOptions
-  ): Promise<NodeDescriberResult>;
-  /**
    * Returns the nodes that have an edge to the node with the given id.
    * @param id id of the node to find incoming nodes for
    */
@@ -356,6 +357,24 @@ export type InspectableGraphOptions = {
    * The Javascript Sandbox that will be used to run custom describers.
    */
   readonly sandbox?: Sandbox;
+};
+
+export type DescribeResultCacheArgs = {
+  initial(
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier
+  ): NodeDescriberResult;
+  latest(
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier,
+    inputs?: InputValues
+  ): Promise<NodeDescriberResult>;
+  willUpdate(
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier,
+    previous: NodeDescriberResult,
+    current: NodeDescriberResult
+  ): void;
 };
 
 /**
@@ -622,12 +641,25 @@ export type InspectableModuleCache = {
   rebuild(graph: GraphDescriptor): void;
 };
 
+export type InspectableDescriberResultCacheEntry = {
+  /**
+   * When this promise is resolved, provides the latest/freshes value
+   * of the `NodeDescriberResult`.
+   */
+  latest: Promise<NodeDescriberResult>;
+  /**
+   * Provides the current value, which may be stale.
+   */
+  current: NodeDescriberResult;
+};
+
 export type InspectableDescriberResultCache = {
-  getOrCreate(
+  get(
     id: NodeIdentifier,
     graphId: GraphIdentifier,
-    factory: () => Promise<NodeDescriberResult>
-  ): Promise<NodeDescriberResult>;
+    inputs?: InputValues
+  ): InspectableDescriberResultCacheEntry;
+  update(affectedNodes: AffectedNode[]): void;
   clear(visualOnly: boolean, affectedNodes: AffectedNode[]): void;
 };
 
@@ -688,6 +720,33 @@ export type MutableGraphStore = {
   ): InspectableGraph | undefined;
 };
 
+export type PortIdentifier = string;
+
+export type PortChanges = {
+  fixedChanged: boolean;
+  deleted: PortIdentifier[];
+  added: InspectablePort[];
+  updated: InspectablePort[];
+};
+
+export type NodePortChanges = {
+  input: PortChanges;
+  output: PortChanges;
+  side: PortChanges;
+};
+
+export type InspectablePortCache = {
+  getChanges(
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier,
+    port: InspectableNodePorts
+  ): NodePortChanges;
+  current(
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier
+  ): InspectableNodePorts | undefined;
+};
+
 /**
  * A backing store for `InspectableGraph` instances, representing a stable
  * instance of a graph whose properties mutate.
@@ -702,6 +761,7 @@ export type MutableGraph = {
   readonly modules: InspectableModuleCache;
   readonly describe: InspectableDescriberResultCache;
   readonly kits: InspectableKitCache;
+  readonly ports: InspectablePortCache;
 
   update(
     graph: GraphDescriptor,

@@ -22,6 +22,7 @@ import {
   InspectableKitCache,
   InspectableModuleCache,
   InspectableNodeCache,
+  InspectablePortCache,
   MainGraphIdentifier,
   MutableGraph,
   MutableGraphStore,
@@ -34,6 +35,8 @@ import { KitCache } from "./kits.js";
 import { ModuleCache } from "./module.js";
 import { NodeCache } from "./node-cache.js";
 import { Node } from "./node.js";
+import { PortCache } from "./port-cache.js";
+import { NodeTypeDescriberManager } from "./describer-manager.js";
 
 export { MutableGraphImpl };
 
@@ -41,20 +44,14 @@ class MutableGraphImpl implements MutableGraph {
   readonly store: MutableGraphStore;
   readonly id: MainGraphIdentifier;
 
-  // @ts-expect-error Initialized in rebuild.
-  graph: GraphDescriptor;
-  // @ts-expect-error Initialized in rebuild.
-  graphs: InspectableGraphCache;
-  // @ts-expect-error Initialized in rebuild.
-  nodes: InspectableNodeCache;
-  // @ts-expect-error Initialized in rebuild.
-  edges: InspectableEdgeCache;
-  // @ts-expect-error Initialized in rebuild.
-  modules: InspectableModuleCache;
-  // @ts-expect-error Initialized in rebuild.
-  describe: InspectableDescriberResultCache;
-  // @ts-expect-error Initialized in rebuild.
-  kits: InspectableKitCache;
+  graph!: GraphDescriptor;
+  graphs!: InspectableGraphCache;
+  nodes!: InspectableNodeCache;
+  edges!: InspectableEdgeCache;
+  modules!: InspectableModuleCache;
+  describe!: InspectableDescriberResultCache;
+  kits!: InspectableKitCache;
+  ports!: InspectablePortCache;
 
   constructor(graph: GraphDescriptor, store: MutableGraphStore) {
     this.store = store;
@@ -94,7 +91,10 @@ class MutableGraphImpl implements MutableGraph {
       }
     }
 
-    this.describe.clear(visualOnly, affectedNodes);
+    // TODO: Handle removals, etc.
+    if (!visualOnly) {
+      this.describe.update(affectedNodes);
+    }
     this.graph = graph;
     this.graphs.rebuild(graph);
   }
@@ -129,9 +129,10 @@ class MutableGraphImpl implements MutableGraph {
       (edge, graphId) => new Edge(this, edge, graphId)
     );
     this.modules = new ModuleCache();
-    this.describe = new DescribeResultCache();
+    this.describe = new DescribeResultCache(new NodeTypeDescriberManager(this));
     this.kits = new KitCache(this);
     this.graphs = new GraphCache((id) => new Graph(id, this));
+    this.ports = new PortCache();
     this.graphs.rebuild(graph);
     this.nodes.rebuild(graph);
     this.edges.rebuild(graph);
