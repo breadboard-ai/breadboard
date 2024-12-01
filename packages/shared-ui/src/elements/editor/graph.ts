@@ -792,6 +792,7 @@ export class Graph extends PIXI.Container {
 
     let edgesAdded = 0;
     for (const edge of this.#edges) {
+      if (edge.deleted()) continue;
       edgesAdded++;
       g.setEdge(edge.from.descriptor.id, edge.to.descriptor.id);
     }
@@ -1558,6 +1559,7 @@ export class Graph extends PIXI.Container {
     }
 
     for (const edge of this.#edges) {
+      if (edge.deleted()) continue;
       const edgeGraphic = this.#edgeGraphics.get(inspectableEdgeToString(edge));
       if (!edgeGraphic) {
         continue;
