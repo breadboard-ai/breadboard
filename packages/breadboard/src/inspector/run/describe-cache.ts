@@ -19,7 +19,7 @@ import { hash } from "../../utils/hash.js";
 import {
   SnapshotUpdater,
   SnapshotUpdaterArgs,
-} from "../snapshot/snapshot-updater.js";
+} from "../../utils/snapshot-updater.js";
 import { NodeDescriberResult } from "../../types.js";
 
 export { DescribeResultCache };
