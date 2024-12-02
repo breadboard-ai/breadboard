@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
+import {
+  GraphIdentifier,
+  ModuleIdentifier,
+  NodeIdentifier,
+} from "@breadboard-ai/types";
 import { RuntimeSelectionChangeEvent } from "./events";
 import {
   GraphSelectionState,
@@ -48,7 +52,7 @@ export class Select extends EventTarget {
     );
   }
 
-  #collection<T extends keyof GraphSelectionState>(
+  #graphCollection<T extends keyof GraphSelectionState>(
     tab: TabId,
     graphId: GraphIdentifier,
     namespace: T
@@ -67,23 +71,33 @@ export class Select extends EventTarget {
       : never;
   }
 
-  #add<T extends keyof GraphSelectionState>(
+  #addToModulesCollection(tab: TabId, moduleId: ModuleIdentifier) {
+    const selection = this.#getState(tab);
+    selection.modules.add(moduleId);
+  }
+
+  #removeFromModulesCollection(tab: TabId, moduleId: ModuleIdentifier) {
+    const selection = this.#getState(tab);
+    selection.modules.delete(moduleId);
+  }
+
+  #addToGraphsCollection<T extends keyof GraphSelectionState>(
     tab: TabId,
     graphId: GraphIdentifier,
     namespace: T,
     value: GraphSelectionState[T] extends Set<infer U> ? U : never
   ) {
-    const namespaceCollection = this.#collection(tab, graphId, namespace);
+    const namespaceCollection = this.#graphCollection(tab, graphId, namespace);
     namespaceCollection.add(value);
   }
 
-  #remove<T extends keyof GraphSelectionState>(
+  #removeFromGraphsCollection<T extends keyof GraphSelectionState>(
     tab: TabId,
     graphId: GraphIdentifier,
     namespace: T,
     value: GraphSelectionState[T] extends Set<infer U> ? U : never
   ) {
-    const namespaceCollection = this.#collection(tab, graphId, namespace);
+    const namespaceCollection = this.#graphCollection(tab, graphId, namespace);
     namespaceCollection.delete(value);
   }
 
@@ -97,7 +111,7 @@ export class Select extends EventTarget {
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier
   ) {
-    this.#add(tab, graphId, "nodes", nodeId);
+    this.#addToGraphsCollection(tab, graphId, "nodes", nodeId);
     this.#emit(tab, selectionChangeId);
   }
 
@@ -107,7 +121,7 @@ export class Select extends EventTarget {
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier
   ) {
-    this.#remove(tab, graphId, "nodes", nodeId);
+    this.#removeFromGraphsCollection(tab, graphId, "nodes", nodeId);
     this.#emit(tab, selectionChangeId);
   }
 
@@ -117,7 +131,7 @@ export class Select extends EventTarget {
     graphId: GraphIdentifier,
     commentId: string
   ) {
-    this.#add(tab, graphId, "comments", commentId);
+    this.#addToGraphsCollection(tab, graphId, "comments", commentId);
     this.#emit(tab, selectionChangeId);
   }
 
@@ -127,7 +141,7 @@ export class Select extends EventTarget {
     graphId: GraphIdentifier,
     commentId: string
   ) {
-    this.#remove(tab, graphId, "comments", commentId);
+    this.#removeFromGraphsCollection(tab, graphId, "comments", commentId);
     this.#emit(tab, selectionChangeId);
   }
 
@@ -137,7 +151,7 @@ export class Select extends EventTarget {
     graphId: GraphIdentifier,
     edgeId: string
   ) {
-    this.#add(tab, graphId, "edges", edgeId);
+    this.#addToGraphsCollection(tab, graphId, "edges", edgeId);
     this.#emit(tab, selectionChangeId);
   }
 
@@ -147,7 +161,25 @@ export class Select extends EventTarget {
     graphId: GraphIdentifier,
     edgeId: string
   ) {
-    this.#remove(tab, graphId, "edges", edgeId);
+    this.#removeFromGraphsCollection(tab, graphId, "edges", edgeId);
+    this.#emit(tab, selectionChangeId);
+  }
+
+  addModule(
+    tab: TabId,
+    selectionChangeId: WorkspaceSelectionChangeId,
+    moduleId: ModuleIdentifier
+  ) {
+    this.#addToModulesCollection(tab, moduleId);
+    this.#emit(tab, selectionChangeId);
+  }
+
+  removeModule(
+    tab: TabId,
+    selectionChangeId: WorkspaceSelectionChangeId,
+    moduleId: ModuleIdentifier
+  ) {
+    this.#removeFromModulesCollection(tab, moduleId);
     this.#emit(tab, selectionChangeId);
   }
 
@@ -165,16 +197,20 @@ export class Select extends EventTarget {
     this.#clear(tab);
     for (const [id, selectionState] of selections.graphs) {
       for (const nodes of selectionState.nodes) {
-        this.#add(tab, id, "nodes", nodes);
+        this.#addToGraphsCollection(tab, id, "nodes", nodes);
       }
 
       for (const comments of selectionState.comments) {
-        this.#add(tab, id, "comments", comments);
+        this.#addToGraphsCollection(tab, id, "comments", comments);
       }
 
       for (const edges of selectionState.edges) {
-        this.#add(tab, id, "edges", edges);
+        this.#addToGraphsCollection(tab, id, "edges", edges);
       }
+    }
+
+    for (const id of selections.modules) {
+      this.#addToModulesCollection(tab, id);
     }
 
     this.#emit(tab, selectionChangeId);
@@ -187,7 +223,7 @@ export class Select extends EventTarget {
     nodeId: NodeIdentifier
   ) {
     this.#clear(tab);
-    this.#add(tab, graphId, "nodes", nodeId);
+    this.#addToGraphsCollection(tab, graphId, "nodes", nodeId);
     this.#emit(tab, selectionChangeId);
   }
 
