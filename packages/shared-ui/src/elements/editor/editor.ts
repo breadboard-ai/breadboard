@@ -473,7 +473,14 @@ export class Editor extends LitElement {
       shouldAnimate = false;
     }
 
-    this.#graphRenderer.moveToSelection(shouldAnimate);
+    if (shouldAnimate) {
+      this.#graphRenderer.moveToSelection(true);
+    } else {
+      requestAnimationFrame(() => {
+        this.#graphRenderer.moveToSelection(false);
+      });
+    }
+
     return this.#graphRenderer;
   }
 
