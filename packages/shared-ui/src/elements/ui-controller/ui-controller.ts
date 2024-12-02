@@ -398,19 +398,23 @@ export class UI extends LitElement {
               </button>
             </div>
           </h1>
-          ${guard([graph, this.mode, this.selectionState], () => {
-            return html`<bb-workspace-outline
-              .graph=${graph}
-              .kits=${this.kits}
-              .renderId=${globalThis.crypto.randomUUID()}
-              .mode=${this.mode}
-              .selectionState=${this.selectionState}
-              @bboutlinemodechange=${() => {
-                this.mode = this.mode === "list" ? "tree" : "list";
-                globalThis.localStorage.setItem(MODE_KEY, this.mode);
-              }}
-            ></bb-workspace-outline>`;
-          })}`;
+          ${guard(
+            [graph, this.mode, this.selectionState, this.graphTopologyUpdateId],
+            () => {
+              return html`<bb-workspace-outline
+                .graph=${graph}
+                .kits=${this.kits}
+                .renderId=${globalThis.crypto.randomUUID()}
+                .mode=${this.mode}
+                .selectionState=${this.selectionState}
+                .graphTopologyUpdateId=${this.graphTopologyUpdateId}
+                @bboutlinemodechange=${() => {
+                  this.mode = this.mode === "list" ? "tree" : "list";
+                  globalThis.localStorage.setItem(MODE_KEY, this.mode);
+                }}
+              ></bb-workspace-outline>`;
+            }
+          )}`;
         break;
       }
 
