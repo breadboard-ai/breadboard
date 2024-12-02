@@ -54,10 +54,10 @@ export class Select extends EventTarget {
     namespace: T
   ) {
     const selection = this.#getState(tab);
-    let graphSelection = selection.get(graphId);
+    let graphSelection = selection.graphs.get(graphId);
     if (!graphSelection) {
       graphSelection = createEmptyGraphSelectionState();
-      selection.set(graphId, graphSelection);
+      selection.graphs.set(graphId, graphSelection);
     }
 
     return graphSelection[namespace] as GraphSelectionState[T] extends Set<
@@ -163,7 +163,7 @@ export class Select extends EventTarget {
     }
 
     this.#clear(tab);
-    for (const [id, selectionState] of selections) {
+    for (const [id, selectionState] of selections.graphs) {
       for (const nodes of selectionState.nodes) {
         this.#add(tab, id, "nodes", nodes);
       }
@@ -220,9 +220,9 @@ export class Select extends EventTarget {
       return selections;
     };
 
-    workspaceSelections.set(MAIN_BOARD_ID, createSelection(graph));
+    workspaceSelections.graphs.set(MAIN_BOARD_ID, createSelection(graph));
     for (const [id, subGraph] of Object.entries(graph.graphs() || {})) {
-      workspaceSelections.set(id, createSelection(subGraph));
+      workspaceSelections.graphs.set(id, createSelection(subGraph));
     }
 
     this.processSelections(tab, selectionChangeId, workspaceSelections);

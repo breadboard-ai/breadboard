@@ -353,7 +353,7 @@ export class Editor extends LitElement {
       }
     }
 
-    const graphSelectionState = this.selectionState?.selectionState.get(
+    const graphSelectionState = this.selectionState?.selectionState.graphs.get(
       subGraphId ? subGraphId : MAIN_BOARD_ID
     );
 

@@ -580,10 +580,10 @@ export class GraphRenderer extends LitElement {
   }
 
   #emitSelection() {
-    const selections: WorkspaceSelectionState = new Map<
-      GraphIdentifier,
-      GraphSelectionState
-    >();
+    const selections: WorkspaceSelectionState = {
+      graphs: new Map<GraphIdentifier, GraphSelectionState>(),
+      modules: new Set(),
+    };
     for (const graph of this.#container.children) {
       if (!(graph instanceof Graph) || !graph.visible) {
         continue;
@@ -596,12 +596,15 @@ export class GraphRenderer extends LitElement {
           graphSelection.comments.size > 0 ||
           graphSelection.edges.size > 0)
       ) {
-        selections.set(graph.subGraphId ?? MAIN_BOARD_ID, graphSelection);
+        selections.graphs.set(
+          graph.subGraphId ?? MAIN_BOARD_ID,
+          graphSelection
+        );
       }
     }
 
     const changeId = this.#selectionChangeId();
-    if (selections.size === 0) {
+    if (selections.graphs.size === 0) {
       this.dispatchEvent(new WorkspaceSelectionStateEvent(changeId, null));
       return;
     }

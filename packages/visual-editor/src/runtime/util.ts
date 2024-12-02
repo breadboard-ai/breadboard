@@ -50,7 +50,10 @@ export function createWorkspaceSelectionChangeId(): WorkspaceSelectionChangeId {
 }
 
 export function createEmptyWorkspaceSelectionState(): WorkspaceSelectionState {
-  return new Map();
+  return {
+    graphs: new Map(),
+    modules: new Set(),
+  };
 }
 
 export function createEmptyGraphSelectionState(): GraphSelectionState {
@@ -89,18 +92,18 @@ export function generateBoardFrom(
 
   const subGraphs = filteredGraph.graphs ?? {};
   for (const subGraph of Object.keys(subGraphs)) {
-    if (selectionState.has(subGraph)) {
+    if (selectionState.graphs.has(subGraph)) {
       continue;
     }
 
     delete subGraphs[subGraph];
   }
 
-  if (!selectionState.has(MAIN_BOARD_ID)) {
+  if (!selectionState.graphs.has(MAIN_BOARD_ID)) {
     filterGraph(filteredGraph, createEmptyGraphSelectionState());
   }
 
-  for (const [id, graphSelectionState] of selectionState) {
+  for (const [id, graphSelectionState] of selectionState.graphs) {
     if (id === MAIN_BOARD_ID) {
       filterGraph(filteredGraph, graphSelectionState);
     } else {
@@ -166,7 +169,7 @@ export function generateDeleteEditSpecFrom(
   };
 
   const edits: EditSpec[] = [];
-  for (const [id, graphSelectionState] of selectionState) {
+  for (const [id, graphSelectionState] of selectionState.graphs) {
     let graphToEdit = graph;
     if (id !== MAIN_BOARD_ID) {
       const subGraphs = graph.graphs();
@@ -322,10 +325,10 @@ export function generateSelectionFrom(
     switch (item.type) {
       case "addnode": {
         const graphId = item.graphId === "" ? MAIN_BOARD_ID : item.graphId;
-        let graphState = selections.get(graphId);
+        let graphState = selections.graphs.get(graphId);
         if (!graphState) {
           graphState = createEmptyGraphSelectionState();
-          selections.set(graphId, graphState);
+          selections.graphs.set(graphId, graphState);
         }
 
         graphState.nodes.add(item.node.id);
@@ -334,10 +337,10 @@ export function generateSelectionFrom(
 
       case "addedge": {
         const graphId = item.graphId === "" ? MAIN_BOARD_ID : item.graphId;
-        let graphState = selections.get(graphId);
+        let graphState = selections.graphs.get(graphId);
         if (!graphState) {
           graphState = createEmptyGraphSelectionState();
-          selections.set(graphId, graphState);
+          selections.graphs.set(graphId, graphState);
         }
 
         graphState.edges.add(edgeToString(item.edge));
@@ -346,10 +349,10 @@ export function generateSelectionFrom(
 
       case "addgraph": {
         const graphId = item.id;
-        let graphState = selections.get(graphId);
+        let graphState = selections.graphs.get(graphId);
         if (!graphState) {
           graphState = createEmptyGraphSelectionState();
-          selections.set(graphId, graphState);
+          selections.graphs.set(graphId, graphState);
         }
 
         for (const node of item.graph.nodes) {
