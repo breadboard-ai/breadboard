@@ -4,16 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BreadboardToolProvider } from "../breadboard/breadboard-tool-provider.js";
-import type { SecretsProvider } from "../secrets/secrets-provider.js";
 import { resultify, type Result } from "../util/result.js";
 import { BreadboardServer } from "./breadboard-server.js";
 
 type BoardServerEntry = { url: string };
 
-export async function readBoardServersFromIndexedDB(
-  secrets: SecretsProvider
-): Promise<Result<BreadboardToolProvider[]>> {
+export async function readBoardServersFromIndexedDB(): Promise<
+  Result<BreadboardServer[]>
+> {
   const db = await resultify(indexedDB.open("board-server"));
   if (!db.ok) {
     return db;
@@ -39,8 +37,6 @@ export async function readBoardServersFromIndexedDB(
     value: entries.value
       .map(({ url }) => url)
       .filter((url) => url.startsWith("http") || url.startsWith("https"))
-      .map(
-        (url) => new BreadboardToolProvider(new BreadboardServer(url), secrets)
-      ),
+      .map((url) => new BreadboardServer(url)),
   };
 }

@@ -8,7 +8,6 @@ import {
   asRuntimeKit,
   createDefaultDataStore,
   createLoader,
-  inspect,
   type GraphDescriptor,
   type InputValues,
   type OutputValues,
@@ -17,134 +16,136 @@ import {
 import { createRunner, type RunConfig } from "@google-labs/breadboard/harness";
 import CoreKit from "@google-labs/core-kit";
 import TemplateKit from "@google-labs/template-kit";
-import { html } from "lit";
-import { until } from "lit/directives/until.js";
+import type { JSONSchema7 } from "json-schema";
+import { html, nothing } from "lit";
+import { Signal } from "signal-polyfill";
 import "../components/content.js";
-import type {
-  GeminiFunctionDeclaration,
-  GeminiParameterSchema,
-} from "../llm/gemini.js";
 import type { SecretsProvider } from "../secrets/secrets-provider.js";
-import type { BBRTInvokeResult, BBRTTool, BBRTToolAPI } from "../tools/tool.js";
+import type {
+  BBRTTool,
+  ToolAPI,
+  ToolInvocation,
+  ToolInvocationState,
+  ToolMetadata,
+} from "../tools/tool.js";
 import { resultify, type Result } from "../util/result.js";
 import type {
   BreadboardBoardListing,
   BreadboardServer,
 } from "./breadboard-server.js";
+import { getDefaultSchema } from "./get-default-schema.js";
+import { makeToolSafeName } from "./make-tool-safe-name.js";
 
-export class BreadboardTool implements BBRTTool<InputValues, OutputValues> {
-  readonly listing: BreadboardBoardListing;
+export class BreadboardTool implements BBRTTool<unknown, unknown> {
+  readonly #listing: BreadboardBoardListing;
   readonly #server: BreadboardServer;
-  // TODO(aomarks) More kits.
-  readonly #loader = createLoader();
-  readonly #kits = [asRuntimeKit(CoreKit), asRuntimeKit(TemplateKit)];
   readonly #secrets: SecretsProvider;
 
   constructor(
-    board: BreadboardBoardListing,
+    listing: BreadboardBoardListing,
     server: BreadboardServer,
     secrets: SecretsProvider
   ) {
-    this.listing = board;
+    this.#listing = listing;
     this.#server = server;
     this.#secrets = secrets;
   }
 
-  get displayName() {
-    return this.listing.title;
-  }
-
-  get icon() {
-    return "/bbrt/images/tool.svg";
-  }
-
-  renderCard(inputs: Record<string, unknown>) {
-    // prettier-ignore
-    return html`
-      <span>${this.listing.title}</span>
-      <pre>${JSON.stringify(inputs)}</pre>
-    `;
-  }
-
-  renderResult(
-    _inputs: Record<string, unknown>,
-    result: BBRTInvokeResult<OutputValues>
-  ) {
-    return until(
-      this.api().then((api) =>
-        api.ok ? this.#renderResult(result, api.value) : ""
-      ),
-      "..."
-    );
-  }
-
-  #renderResult(
-    { artifacts }: BBRTInvokeResult<OutputValues>,
-    _api: BBRTToolAPI
-  ) {
-    // TODO(aomarks) Display other kinds of content.
-    const display = [];
-    for (const artifact of artifacts) {
-      if (artifact.inlineData.mimeType.startsWith("image/")) {
-        display.push(html`<img src="${artifact.handle}" />`);
-      }
-    }
-    return display;
-  }
-
-  #bglCache?: Promise<GraphDescriptor>;
-  #bgl(): Promise<GraphDescriptor> {
-    return (this.#bglCache ??= this.#server.board(this.listing.path));
-  }
-
-  #apiCache?: Promise<Result<BBRTToolAPI>>;
-  async api() {
-    return (this.#apiCache ??= resultify(
-      inspect(await this.#bgl(), {
-        kits: this.#kits,
-        loader: this.#loader,
-      }).describe({}) as Promise<BBRTToolAPI>
-    ));
-  }
-
-  async declaration(): Promise<GeminiFunctionDeclaration> {
-    const bgl = await this.#bgl();
-    const api = await this.api();
-    if (!api.ok) {
-      throw api.error;
-    }
-    const { inputSchema } = api.value;
-    // Gemini requires [a-zA-Z0-9_\-\.]{1,64}.
-    // OpenAI requires [a-zA-Z0-9_\-]{1,??}
-    const name = this.listing.path
-      .replace(/[^a-zA-Z0-9_\\-]/g, "")
-      .slice(0, 64);
+  get metadata(): ToolMetadata {
     return {
-      name,
-      description:
-        this.listing.title + (bgl.description ? `: ${bgl.description}` : ""),
-      // TODO(aomarks) We may need to strip non-standard Breadboard annotations
-      // in the JSON Schema.
-      parameters: inputSchema as GeminiParameterSchema,
+      id: makeToolSafeName(this.#server.url + "_" + this.#listing.path),
+      title: this.#listing.title,
+      description: "TODO",
+      icon: "/bbrt/images/tool.svg",
     };
   }
 
-  async invoke(
-    inputs: InputValues
-  ): Promise<Result<BBRTInvokeResult<OutputValues>>> {
-    const bgl = await this.#bgl();
-    console.log("BREADBOARD INVOKE", { inputs, bgl });
-    const dataStore = createDefaultDataStore();
-    const dataStoreGroupId = crypto.randomUUID();
-    dataStore.createGroup(dataStoreGroupId);
+  #api?: Promise<Result<ToolAPI>>;
+  async api(): Promise<Result<ToolAPI>> {
+    return (this.#api ??= (async () => {
+      const bgl = await this.#bgl();
+      if (!bgl.ok) {
+        return bgl;
+      }
+      const desc = await getDefaultSchema(bgl.value);
+      if (!desc.ok) {
+        return desc;
+      }
+      return {
+        ok: true,
+        value: {
+          // TODO(aomarks) We need to strip non-standard Breadboard schema
+          // fields like behavior, because the model backends are pretty strict
+          // about this schema.
+          inputSchema: desc.value.inputSchema as JSONSchema7,
+          outputSchema: desc.value.outputSchema as JSONSchema7,
+        },
+      };
+    })());
+  }
+
+  invoke(args: unknown) {
+    return new BreadboardToolInvocation(
+      this.#listing,
+      args,
+      () => this.#bgl(),
+      this.#secrets
+    );
+  }
+
+  #bglCache?: Promise<Result<GraphDescriptor>>;
+  #bgl(): Promise<Result<GraphDescriptor>> {
+    return (this.#bglCache ??= resultify(
+      this.#server.board(this.#listing.path)
+    ));
+  }
+}
+
+export class BreadboardToolInvocation implements ToolInvocation<unknown> {
+  readonly #listing: BreadboardBoardListing;
+  readonly #args: unknown;
+  readonly #secrets: SecretsProvider;
+  readonly #getBgl: () => Promise<Result<GraphDescriptor>>;
+
+  readonly state = new Signal.State<ToolInvocationState<unknown>>({
+    status: "running",
+  });
+
+  constructor(
+    listing: BreadboardBoardListing,
+    args: unknown,
+    getBgl: () => Promise<Result<GraphDescriptor>>,
+    secrets: SecretsProvider
+  ) {
+    this.#listing = listing;
+    this.#args = args;
+    this.#getBgl = getBgl;
+    this.#secrets = secrets;
+    void this.#start();
+  }
+
+  async #start(): Promise<void> {
+    const bgl = await this.#getBgl();
+    if (!bgl.ok) {
+      this.state.set({ status: "error", error: bgl.error });
+      return;
+    }
+
+    const loader = createLoader();
+    const kits = [asRuntimeKit(CoreKit), asRuntimeKit(TemplateKit)];
+
+    const store = createDefaultDataStore();
+    const storeGroupID = crypto.randomUUID();
+    store.createGroup(storeGroupID);
+
     const config: RunConfig = {
       // TODO(aomarks) What should this be, it matters for relative imports,
       // right?
       url: `https://example.com/fake`,
-      kits: this.#kits,
-      runner: bgl,
-      loader: this.#loader,
-      store: dataStore,
+      kits,
+      runner: bgl.value,
+      loader,
+      store,
       // Enables the "secret" event.
       interactiveSecrets: true,
       // TODO(aomarks) Provide an abort signal.
@@ -154,26 +155,21 @@ export class BreadboardTool implements BBRTTool<InputValues, OutputValues> {
     const runResult = await new Promise<Result<OutputValues[]>>(
       (endBoardRun) => {
         const outputs: OutputValues[] = [];
-        runner.addEventListener("input", (event) => {
-          console.log("BREADBOARD INPUT", event.data, runner.inputSchema());
+        runner.addEventListener("input", () => {
           // TODO(aomarks) I thought I should be able to pass the inputs to the
           // RunConfig, and/or to the main run call -- but neither seem to work.
-          void runner.run(inputs);
+          void runner.run(this.#args as InputValues);
         });
         runner.addEventListener("output", (event) => {
-          console.log("BREADBOARD OUTPUT", event.data.outputs);
           outputs.push(event.data.outputs);
         });
         runner.addEventListener("end", () => {
-          console.log("BREADBOARD END");
           endBoardRun({ ok: true, value: outputs });
         });
         runner.addEventListener("error", (event) => {
-          console.log("BREADBOARD ERROR", event.data.error);
           endBoardRun({ ok: false, error: event.data.error });
         });
         runner.addEventListener("secret", (event) => {
-          console.log("BREADBOARD SECRET", event.data.keys);
           void (async () => {
             const secrets: Record<string, string> = {};
             const missing = [];
@@ -210,23 +206,83 @@ export class BreadboardTool implements BBRTTool<InputValues, OutputValues> {
         void runner.run();
       }
     );
-    console.log("BREADBOARD RUN DONE", runResult);
 
     if (!runResult.ok) {
-      return runResult;
+      this.state.set({ status: "error", error: runResult.error });
+      return;
     }
     const outputs = runResult.value;
     if (outputs.length === 1) {
+      // TODO(aomarks) Resultify
       const artifacts: SerializedStoredData[] =
-        (await dataStore.serializeGroup(dataStoreGroupId)) ?? [];
-      return { ok: true as const, value: { output: outputs[0]!, artifacts } };
-    } else if (outputs.length > 0) {
-      return {
-        ok: false as const,
-        error: `Multiple Breadboard outputs received: ${JSON.stringify(outputs)}`,
-      };
-    } else {
-      return { ok: false as const, error: "No Breadboard outputs received" };
+        (await store.serializeGroup(storeGroupID)) ?? [];
+      this.state.set({
+        status: "success",
+        value: {
+          output: outputs[0]!,
+          artifacts,
+        },
+      });
+      return;
     }
+    if (outputs.length > 0) {
+      this.state.set({
+        status: "error",
+        error: `Multiple Breadboard outputs received: ${JSON.stringify(outputs)}`,
+      });
+      return;
+    }
+    this.state.set({
+      status: "error",
+      error: "No Breadboard outputs received",
+    });
+  }
+
+  render() {
+    const basicInfo = html`
+      <span>${this.#listing.title}</span>
+      <pre>${JSON.stringify(this.#args)}</pre>
+    `;
+    const state = this.state.get();
+    switch (state.status) {
+      case "running": {
+        return [basicInfo, "Running..."];
+      }
+      case "success": {
+        const display = [];
+        for (const artifact of state.value.artifacts) {
+          if (artifact.inlineData.mimeType.startsWith("image/")) {
+            display.push(html`<img src="${artifact.handle}" />`);
+          }
+        }
+        return [basicInfo, "Success", ...display];
+      }
+      case "error": {
+        return [
+          basicInfo,
+          "Error",
+          html` <pre>${JSON.stringify(state.error)}</pre> `,
+        ];
+      }
+      default: {
+        state satisfies never;
+        console.error("Unexpected state", state);
+        return [basicInfo, "Internal error"];
+      }
+    }
+  }
+
+  renderContent() {
+    const state = this.state.get();
+    if (state.status !== "success") {
+      return nothing;
+    }
+    const images = [];
+    for (const artifact of state.value.artifacts) {
+      if (artifact.inlineData.mimeType.startsWith("image/")) {
+        images.push(html`<img src="${artifact.handle}" />`);
+      }
+    }
+    return images;
   }
 }

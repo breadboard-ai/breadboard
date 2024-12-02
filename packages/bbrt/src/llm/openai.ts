@@ -16,7 +16,6 @@ export async function openai(
 ): Promise<Result<AsyncIterableIterator<BBRTChunk>, Error>> {
   const url = new URL(`https://api.openai.com/v1/chat/completions`);
   let result;
-  console.log("OPENAI REQUEST", JSON.stringify(request, null, 2));
   try {
     result = await fetch(url.href, {
       method: "POST",
@@ -62,7 +61,6 @@ async function* interpretOpenAIChunks(
   >();
 
   for await (const chunk of stream) {
-    // console.log('OPENAI RESPONSE CHUNK', JSON.stringify(chunk, null, 2));
     const choice = chunk?.choices?.[0];
     if (!choice) {
       console.error(`chunk had no choice: ${JSON.stringify(chunk, null, 2)}`);
@@ -230,7 +228,7 @@ export async function bbrtTurnsToOpenAiMessages(
               id: toolCall.id,
               type: "function",
               function: {
-                name: (await toolCall.tool.declaration()).name,
+                name: toolCall.tool.metadata.id,
                 arguments: JSON.stringify(toolCall.args),
               },
             }))

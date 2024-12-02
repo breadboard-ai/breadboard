@@ -80,8 +80,10 @@ export class BBRTToolPalette extends SignalWatcher(LitElement) {
   #renderTool = (tool: BBRTTool) => html`
     <li class=${classMap({ active: this.activeTools?.has(tool) ?? false })}>
       <a href="#" @click=${(event: MouseEvent) => this.#clickTool(event, tool)}>
-        ${tool.icon ? html`<img src=${tool.icon} alt="" />` : nothing}
-        ${tool.displayName}
+        ${tool.metadata.icon
+          ? html`<img src=${tool.metadata.icon} alt="" />`
+          : nothing}
+        ${tool.metadata.title}
       </a>
     </li>
   `;
