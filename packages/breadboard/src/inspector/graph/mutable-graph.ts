@@ -96,7 +96,6 @@ class MutableGraphImpl implements MutableGraph {
       this.describe.update(affectedNodes);
     }
     this.graph = graph;
-    this.graphs.rebuild(graph);
   }
 
   addSubgraph(subgraph: GraphDescriptor, graphId: GraphIdentifier): void {
