@@ -31,7 +31,6 @@ import {
   ModuleCreateEvent,
   ShowTooltipEvent,
   UserOutputEvent,
-  WorkspaceItemChosenEvent,
 } from "../../events/events";
 import { UserInputConfiguration, UserOutputValues } from "../../types/types";
 import {
@@ -764,9 +763,9 @@ export class UserInput extends LitElement {
                               }}
                               @click=${() => {
                                 this.dispatchEvent(new HideTooltipEvent());
-                                this.dispatchEvent(
-                                  new WorkspaceItemChosenEvent(null, module)
-                                );
+                                // this.dispatchEvent(
+                                //   new WorkspaceItemChosenEvent(null, module)
+                                // );
                               }}
                             >
                               Jump to definition

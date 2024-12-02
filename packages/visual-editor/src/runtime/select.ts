@@ -31,7 +31,7 @@ export class Select extends EventTarget {
     WorkspaceSelectionState
   >();
 
-  #getState(tab: TabId): WorkspaceSelectionState {
+  #createWorkspaceSelectionStateIfNeeded(tab: TabId): WorkspaceSelectionState {
     let state = this.#selectionState.get(tab);
     if (!state) {
       state = createEmptyWorkspaceSelectionState();
@@ -41,12 +41,25 @@ export class Select extends EventTarget {
     return state;
   }
 
+  #createGraphSelectionStateIfNeeded(
+    selectionState: WorkspaceSelectionState,
+    graphId: GraphIdentifier
+  ): GraphSelectionState {
+    let graphSelection = selectionState.graphs.get(graphId);
+    if (!graphSelection) {
+      graphSelection = createEmptyGraphSelectionState();
+      selectionState.graphs.set(graphId, graphSelection);
+    }
+
+    return graphSelection;
+  }
+
   #clear(tab: TabId) {
     this.#selectionState.set(tab, createEmptyWorkspaceSelectionState());
   }
 
   #emit(tab: TabId, selectionChangeId: WorkspaceSelectionChangeId) {
-    const state = this.#getState(tab);
+    const state = this.#createWorkspaceSelectionStateIfNeeded(tab);
     this.dispatchEvent(
       new RuntimeSelectionChangeEvent(selectionChangeId, state)
     );
@@ -57,12 +70,11 @@ export class Select extends EventTarget {
     graphId: GraphIdentifier,
     namespace: T
   ) {
-    const selection = this.#getState(tab);
-    let graphSelection = selection.graphs.get(graphId);
-    if (!graphSelection) {
-      graphSelection = createEmptyGraphSelectionState();
-      selection.graphs.set(graphId, graphSelection);
-    }
+    const selection = this.#createWorkspaceSelectionStateIfNeeded(tab);
+    const graphSelection = this.#createGraphSelectionStateIfNeeded(
+      selection,
+      graphId
+    );
 
     return graphSelection[namespace] as GraphSelectionState[T] extends Set<
       infer U
@@ -72,12 +84,12 @@ export class Select extends EventTarget {
   }
 
   #addToModulesCollection(tab: TabId, moduleId: ModuleIdentifier) {
-    const selection = this.#getState(tab);
+    const selection = this.#createWorkspaceSelectionStateIfNeeded(tab);
     selection.modules.add(moduleId);
   }
 
   #removeFromModulesCollection(tab: TabId, moduleId: ModuleIdentifier) {
-    const selection = this.#getState(tab);
+    const selection = this.#createWorkspaceSelectionStateIfNeeded(tab);
     selection.modules.delete(moduleId);
   }
 
@@ -186,7 +198,8 @@ export class Select extends EventTarget {
   processSelections(
     tab: TabId,
     selectionChangeId: WorkspaceSelectionChangeId,
-    selections: WorkspaceSelectionState | null
+    selections: WorkspaceSelectionState | null,
+    replaceExistingSelections = true
   ) {
     if (selections === null) {
       this.#clear(tab);
@@ -194,8 +207,16 @@ export class Select extends EventTarget {
       return;
     }
 
-    this.#clear(tab);
+    if (replaceExistingSelections) {
+      this.#clear(tab);
+    }
+
     for (const [id, selectionState] of selections.graphs) {
+      // Ensure that the workspace and graph selection states exist, even if
+      // the contents of the selection state are empty.
+      const workspaceState = this.#createWorkspaceSelectionStateIfNeeded(tab);
+      this.#createGraphSelectionStateIfNeeded(workspaceState, id);
+
       for (const nodes of selectionState.nodes) {
         this.#addToGraphsCollection(tab, id, "nodes", nodes);
       }

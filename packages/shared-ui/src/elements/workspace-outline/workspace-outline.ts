@@ -34,7 +34,7 @@ import {
   OutlineModeChangeEvent,
   OverflowMenuActionEvent,
   SubGraphDeleteEvent,
-  WorkspaceItemChosenEvent,
+  WorkspaceSelectionStateEvent,
 } from "../../events/events";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
@@ -44,8 +44,11 @@ import { isConfigurableBehavior, isModuleBehavior } from "../../utils";
 import { ModuleIdentifier } from "@breadboard-ai/types";
 import {
   OverflowAction,
+  WorkspaceSelectionChangeId,
+  WorkspaceSelectionState,
   WorkspaceSelectionStateWithChangeId,
 } from "../../types/types";
+import * as Utils from "../../utils/utils.js";
 
 const OPEN_ITEMS_KEY = "bb-workspace-outline-open-items";
 const OVERFLOW_MENU_CLEARANCE = 140;
@@ -77,12 +80,6 @@ export class WorkspaceOutline extends LitElement {
 
   @property()
   kits: Kit[] = [];
-
-  @property()
-  subGraphId: GraphIdentifier | null = null;
-
-  @property()
-  moduleId: ModuleIdentifier | null = null;
 
   @property()
   renderId = "";
@@ -358,6 +355,11 @@ export class WorkspaceOutline extends LitElement {
       cursor: pointer;
     }
 
+    li.node > .title > .node-item.selected {
+      background: var(--bb-ui-600);
+      color: var(--bb-neutral-0);
+    }
+
     li.port > .title > button.port-item:hover,
     li.port > .title > button.port-item:focus {
       background: var(--bb-ui-50);
@@ -545,10 +547,6 @@ export class WorkspaceOutline extends LitElement {
     summary > .title:hover,
     summary > .title:focus {
       width: calc(100% - 28px);
-      background: var(--bb-ui-50);
-    }
-
-    details.selected > summary > .title {
       background: var(--bb-ui-50);
     }
 
@@ -774,7 +772,7 @@ export class WorkspaceOutline extends LitElement {
       onError: () => {
         // TODO.
       },
-      args: () => [this.graph, this.subGraphId],
+      args: () => [this.graph],
     });
   }
 
@@ -858,12 +856,26 @@ export class WorkspaceOutline extends LitElement {
           side: { ports: [], fixed: false },
         };
 
+        const selection = this.selectionState?.selectionState.graphs.get(
+          subGraphId ? subGraphId : MAIN_BOARD_ID
+        );
         return html`<li class=${classMap({ node: true, [type]: true })}>
           <span class="title"
             ><button
-              class="node-item"
-              @click=${() => {
-                this.#changeWorkspaceItem(subGraphId, null, node.descriptor.id);
+              class=${classMap({
+                ["node-item"]: true,
+                selected: selection?.nodes.has(node.descriptor.id) ?? false,
+              })}
+              @click=${(evt: PointerEvent) => {
+                const isMac = navigator.platform.indexOf("Mac") === 0;
+                const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+                this.#changeWorkspaceItem(
+                  subGraphId,
+                  null,
+                  node.descriptor.id,
+                  !isCtrlCommand
+                );
               }}
             >
               ${node.title()}
@@ -993,7 +1005,6 @@ export class WorkspaceOutline extends LitElement {
           id=${MAIN_BOARD_ID}
           class=${classMap({
             declarative: true,
-            selected: this.moduleId === null && this.subGraphId === null,
           })}
           ?open=${subItems.size === 0 || this.#openItems.has(MAIN_BOARD_ID)}
           @toggle=${(evt: Event) => {
@@ -1006,7 +1017,7 @@ export class WorkspaceOutline extends LitElement {
         >
           <summary>
             <button
-              class="title"
+              class=${classMap({ title: true })}
               @click=${(evt: PointerEvent) => {
                 evt.stopPropagation();
 
@@ -1020,8 +1031,9 @@ export class WorkspaceOutline extends LitElement {
               @click=${(evt: PointerEvent) => {
                 const showZoom =
                   main === undefined &&
-                  this.moduleId === null &&
-                  this.subGraphId === null;
+                  this.mode === "list" &&
+                  this.selectionState?.selectionState.graphs.size === 0 &&
+                  this.selectionState.selectionState.modules.size === 0;
 
                 this.#setOverflowMenuValues({
                   type: main === undefined ? "declarative" : "imperative",
@@ -1079,7 +1091,6 @@ export class WorkspaceOutline extends LitElement {
         class=${classMap({
           [subItem.type]: true,
           inverted: getSubItemColor<number>(id, "text", true) === 0xffffff,
-          selected: this.moduleId === id || this.subGraphId === id,
         })}
         ?open=${this.#openItems.has(id)}
         @toggle=${(evt: Event) => {
@@ -1092,7 +1103,7 @@ export class WorkspaceOutline extends LitElement {
       >
         <summary>
           <button
-            class="title"
+            class=${classMap({ title: true })}
             @click=${(evt: PointerEvent) => {
               evt.stopPropagation();
 
@@ -1109,7 +1120,8 @@ export class WorkspaceOutline extends LitElement {
                 @click=${(evt: PointerEvent) => {
                   const showZoom =
                     subItem.type === "declarative" &&
-                    (this.mode === "tree" || this.subGraphId === id);
+                    (this.mode === "tree" ||
+                      this.selectionState?.selectionState.graphs.has(id));
 
                   const actions: OverflowAction[] = [];
 
@@ -1285,13 +1297,90 @@ export class WorkspaceOutline extends LitElement {
       : nothing} `;
   }
 
+  #selectionChangeId(): WorkspaceSelectionChangeId {
+    return crypto.randomUUID();
+  }
+
   #changeWorkspaceItem(
     subGraphId: GraphIdentifier | null,
     moduleId: ModuleIdentifier | null,
-    nodeId: NodeIdentifier | null = null
+    nodeId: NodeIdentifier | null = null,
+    replaceExistingSelections = true
   ) {
+    const subGraph = subGraphId ? subGraphId : MAIN_BOARD_ID;
+    let selectionState: WorkspaceSelectionState;
+
+    // Either start with an empty selection or the existing selection.
+    if (!this.selectionState || replaceExistingSelections) {
+      selectionState = Utils.Workspace.createEmptyWorkspaceSelectionState();
+    } else {
+      selectionState = this.selectionState.selectionState;
+    }
+
+    // If there's a subgraph ID and it doesn't already exist in the selection
+    // then go ahead and add it.
+    if (subGraphId && !selectionState.graphs.has(subGraphId)) {
+      selectionState.graphs.set(
+        subGraphId,
+        Utils.Workspace.createEmptyGraphSelectionState()
+      );
+    } else if (!subGraphId && replaceExistingSelections) {
+      // In the event there's no subgraph _and_ we're replacing the contents of
+      // the selection treat that as an instruction to clear the selection.
+      selectionState.graphs.clear();
+      selectionState.graphs.set(
+        MAIN_BOARD_ID,
+        Utils.Workspace.createEmptyGraphSelectionState()
+      );
+    }
+
+    // Similarly for the module ID.
+    if (moduleId && !selectionState.modules.has(moduleId)) {
+      selectionState.modules.add(moduleId);
+    } else if (!moduleId && replaceExistingSelections) {
+      selectionState.modules.clear();
+    }
+
+    if (!moduleId) {
+      const graphSelection = selectionState.graphs.get(subGraph);
+      if (graphSelection && nodeId) {
+        if (graphSelection.nodes.add(nodeId)) {
+          graphSelection.nodes.add(nodeId);
+        } else {
+          graphSelection.nodes.delete(nodeId);
+        }
+      } else if (graphSelection) {
+        // Append all nodes.
+        let targetGraph: InspectableGraph | undefined | null = this.graph;
+        if (targetGraph && subGraph !== MAIN_BOARD_ID) {
+          targetGraph = targetGraph.graphs()?.[subGraph];
+        }
+
+        if (targetGraph) {
+          for (const node of targetGraph.nodes()) {
+            graphSelection.nodes.add(node.descriptor.id);
+          }
+
+          for (const edge of targetGraph.edges()) {
+            graphSelection.edges.add(
+              Utils.Workspace.inspectableEdgeToString(edge)
+            );
+          }
+
+          for (const comment of targetGraph.metadata()?.comments || []) {
+            graphSelection.comments.add(comment.id);
+          }
+        }
+      }
+    }
+
+    const selectionChangeId = this.#selectionChangeId();
     this.dispatchEvent(
-      new WorkspaceItemChosenEvent(subGraphId, moduleId, nodeId)
+      new WorkspaceSelectionStateEvent(
+        selectionChangeId,
+        selectionState,
+        replaceExistingSelections
+      )
     );
   }
 

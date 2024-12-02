@@ -2360,8 +2360,8 @@ export class Main extends LitElement {
             .offerConfigurationEnhancements=${offerConfigurationEnhancements}
             .showNodeTypeDescriptions=${showNodeTypeDescriptions}
             .readOnly=${this.tab?.readOnly}
-            @bbworkspaceitemchosen=${(
-              evt: BreadboardUI.Events.WorkspaceItemChosenEvent
+            @bbworkspaceselectionstate=${(
+              evt: BreadboardUI.Events.WorkspaceSelectionStateEvent
             ) => {
               if (!this.tab) {
                 return;
@@ -2369,11 +2369,13 @@ export class Main extends LitElement {
 
               this.#nodeConfiguratorData = null;
               this.showNodeConfigurator = false;
-              this.#runtime.board.changeWorkspaceItem(
-                this.tab.id,
-                evt.subGraphId,
-                evt.moduleId
-              );
+              if (evt.replaceExistingSelections) {
+                this.#runtime.select.processSelections(
+                  this.tab.id,
+                  evt.selectionChangeId,
+                  evt.selections
+                );
+              }
             }}
             @bbmodulecreate=${(evt: BreadboardUI.Events.ModuleCreateEvent) => {
               this.#attemptModuleCreate(evt.moduleId);
@@ -2811,7 +2813,8 @@ export class Main extends LitElement {
                 this.#runtime.select.processSelections(
                   this.tab.id,
                   evt.selectionChangeId,
-                  evt.selections
+                  evt.selections,
+                  evt.replaceExistingSelections
                 );
               }}
               @bbworkspacevisualupdate=${(
@@ -3165,19 +3168,6 @@ export class Main extends LitElement {
                   this.tab,
                   evt.moduleId,
                   evt.moduleLanguage
-                );
-              }}
-              @bbworkspaceitemchosen=${(
-                evt: BreadboardUI.Events.WorkspaceItemChosenEvent
-              ) => {
-                if (!this.tab) {
-                  return;
-                }
-
-                this.#runtime.board.changeWorkspaceItem(
-                  this.tab.id,
-                  evt.subGraphId,
-                  evt.moduleId
                 );
               }}
               @bbmodulecreate=${(
