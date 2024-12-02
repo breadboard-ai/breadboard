@@ -466,7 +466,10 @@ export class Editor extends LitElement {
     }
 
     // Always avoid animating if the user prefers it without.
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (
+      !this.showSubgraphsInline ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
       shouldAnimate = false;
     }
 
