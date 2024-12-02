@@ -82,4 +82,39 @@ describe("SnapshotUpdater", async () => {
       ["bar", "bar"],
     ]);
   });
+
+  await it("caches latest unless asked to refresh", async () => {
+    const updates: [previous: string, current: string][] = [];
+    let counter = 0;
+
+    const updater = new SnapshotUpdater({
+      initial: () => "foo",
+      latest: async () => `latest-${counter++}`,
+      willUpdate(previous, current) {
+        updates.push([previous, current]);
+      },
+    });
+    deepStrictEqual(updater.current(), "foo");
+    await updater.latest();
+    deepStrictEqual(updater.current(), "latest-0");
+    deepStrictEqual(updates, [["foo", "latest-0"]]);
+    await Promise.resolve();
+    updater.refresh();
+    await Promise.resolve();
+    deepStrictEqual(updater.current(), "latest-1");
+    deepStrictEqual(updates, [
+      ["foo", "latest-0"],
+      ["latest-0", "latest-1"],
+    ]);
+    const value = await updater.snapshot().latest;
+    deepStrictEqual(value, "latest-1");
+    updater.refresh();
+    await Promise.resolve();
+    deepStrictEqual(updater.current(), "latest-2");
+    deepStrictEqual(updates, [
+      ["foo", "latest-0"],
+      ["latest-0", "latest-1"],
+      ["latest-1", "latest-2"],
+    ]);
+  });
 });

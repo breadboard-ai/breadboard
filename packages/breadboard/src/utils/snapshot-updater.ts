@@ -19,11 +19,12 @@ export { SnapshotUpdater };
 
 class SnapshotUpdater<Value> {
   #current: Value | null = null;
-  #pending: Promise<Value> | null = null;
+  #snapshot: Promise<Value> | null = null;
 
   constructor(public readonly args: SnapshotUpdaterArgs<Value>) {}
 
   refresh() {
+    this.#snapshot = null;
     this.latest().catch(() => {
       // eat the errors to remove any weird side effects of calling `refresh`.
     });
@@ -42,21 +43,16 @@ class SnapshotUpdater<Value> {
   }
 
   async latest(): Promise<Value> {
-    if (this.#pending) {
-      return this.#pending;
+    if (this.#snapshot) {
+      return this.#snapshot;
     }
 
-    this.#pending = this.args
-      .latest()
-      .then((latest) => {
-        this.args.willUpdate(this.current(), latest);
-        this.#current = latest;
-        return latest;
-      })
-      .finally(() => {
-        this.#pending = null;
-      });
+    this.#snapshot = this.args.latest().then((latest) => {
+      this.args.willUpdate(this.current(), latest);
+      this.#current = latest;
+      return latest;
+    });
 
-    return this.#pending;
+    return this.#snapshot;
   }
 }
