@@ -1541,14 +1541,14 @@ export class GraphRenderer extends LitElement {
     );
 
     // Scale.
-    const delta = Math.min(
+    let delta = Math.min(
       (rendererBounds.width - 2 * this.#padding) / bounds.width,
       (rendererBounds.height - 2 * this.#padding) / bounds.height,
       1
     );
 
     if (delta < this.minScale) {
-      this.minScale = delta;
+      delta = this.minScale;
     }
 
     const pivot = {
@@ -1564,6 +1564,12 @@ export class GraphRenderer extends LitElement {
     // Ensure that it is always on a square pixel.
     this.#targetContainerMatrix.tx = Math.round(this.#targetContainerMatrix.tx);
     this.#targetContainerMatrix.ty = Math.round(this.#targetContainerMatrix.ty);
+
+    // Also ensure that the matrix values remain positive.
+    this.#targetContainerMatrix.a = Math.max(this.#targetContainerMatrix.a, 0);
+    this.#targetContainerMatrix.b = Math.max(this.#targetContainerMatrix.b, 0);
+    this.#targetContainerMatrix.c = Math.max(this.#targetContainerMatrix.c, 0);
+    this.#targetContainerMatrix.d = Math.max(this.#targetContainerMatrix.d, 0);
   }
 
   #createBoundsFromMainGraph() {
