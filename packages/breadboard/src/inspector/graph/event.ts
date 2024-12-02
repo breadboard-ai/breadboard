@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InspectableGraphUpdateEvent } from "../types.js";
+import { GraphStoreUpdateEvent } from "../types.js";
 
 export { UpdateEvent };
 
@@ -14,7 +14,7 @@ const eventInit = {
   composed: true,
 };
 
-class UpdateEvent extends Event implements InspectableGraphUpdateEvent {
+class UpdateEvent extends Event implements GraphStoreUpdateEvent {
   static eventName = "update";
 
   constructor() {

@@ -104,7 +104,7 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
     if (inputsDiffer.same() && outputsDiffer.same()) {
       return;
     }
-    this.mutable.graphs.get("")?.dispatchEvent(new UpdateEvent());
+    this.mutable.store.dispatchEvent(new UpdateEvent());
 
     // Add change spec to the change list
     // So the change list lives on mutable graph!

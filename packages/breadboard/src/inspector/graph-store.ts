@@ -16,6 +16,7 @@ import { MutableGraphImpl } from "./graph/mutable-graph.js";
 import {
   GraphHandle,
   GraphStoreArgs,
+  GraphStoreEventTarget,
   InspectableGraph,
   InspectableGraphOptions,
   MainGraphIdentifier,
@@ -26,6 +27,7 @@ import { hash } from "../utils/hash.js";
 import { Kit, NodeHandlerContext } from "../types.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { createLoader } from "../loader/index.js";
+import { TypedEventTarget } from "../utils/typed-event-target.js";
 
 export { GraphStore, makeTerribleOptions, contextFromStore };
 
@@ -52,7 +54,10 @@ function makeTerribleOptions(
   };
 }
 
-class GraphStore implements MutableGraphStore {
+class GraphStore
+  extends (EventTarget as TypedEventTarget<GraphStoreEventTarget>)
+  implements MutableGraphStore
+{
   readonly kits: readonly Kit[];
   readonly sandbox: Sandbox;
   readonly loader: GraphLoader;
@@ -61,6 +66,7 @@ class GraphStore implements MutableGraphStore {
   #mutables: Map<MainGraphIdentifier, MutableGraph> = new Map();
 
   constructor(args: GraphStoreArgs) {
+    super();
     this.kits = args.kits;
     this.sandbox = args.sandbox;
     this.loader = args.loader;

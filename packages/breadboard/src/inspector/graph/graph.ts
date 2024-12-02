@@ -20,7 +20,6 @@ import {
 import {
   InspectableEdge,
   InspectableGraph,
-  InspectableGraphEventTarget,
   InspectableKit,
   InspectableModules,
   InspectableNode,
@@ -33,15 +32,11 @@ import { GraphQueries } from "./graph-queries.js";
 
 export { Graph };
 
-class Graph
-  extends (EventTarget as InspectableGraphEventTarget)
-  implements InspectableGraph
-{
+class Graph implements InspectableGraph {
   #graphId: GraphIdentifier;
   #mutable: MutableGraph;
 
   constructor(graphId: GraphIdentifier, mutableGraph: MutableGraph) {
-    super();
     this.#graphId = graphId;
     this.#mutable = mutableGraph;
   }
