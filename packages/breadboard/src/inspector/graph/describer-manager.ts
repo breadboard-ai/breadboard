@@ -41,6 +41,7 @@ import { combineSchemas, removeProperty } from "../../schema.js";
 import { Result } from "../../editor/types.js";
 import { invokeGraph } from "../../run/invoke-graph.js";
 import { contextFromStore } from "../graph-store.js";
+import { SchemaDiffer } from "../../utils/schema-differ.js";
 
 export { GraphDescriberManager, NodeTypeDescriberManager };
 
@@ -84,13 +85,25 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
   willUpdate(
     _graphId: GraphIdentifier,
     _nodeId: NodeIdentifier,
-    _previous: NodeDescriberResult,
-    _current: NodeDescriberResult
+    previous: NodeDescriberResult,
+    current: NodeDescriberResult
   ): void {
-    // Compute the diff between previous and current.
-    // The diff is the change spec.
-    // If same, return.
-    // Otherwise:
+    const inputsDiffer = new SchemaDiffer(
+      previous.inputSchema,
+      current.inputSchema
+    );
+    inputsDiffer.computeDiff();
+
+    const outputsDiffer = new SchemaDiffer(
+      previous.outputSchema,
+      current.outputSchema
+    );
+    outputsDiffer.computeDiff();
+
+    if (inputsDiffer.same() && outputsDiffer.same()) {
+      return;
+    }
+
     // Add change spec to the change list
     // So the change list lives on mutable graph!
     // Global to main graph.

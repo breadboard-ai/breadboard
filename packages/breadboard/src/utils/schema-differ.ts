@@ -6,7 +6,7 @@
 
 import { Schema } from "../types.js";
 
-export { SchemaDiffer, diffSchemas };
+export { SchemaDiffer };
 
 const SIMPLE_PROPS: readonly (keyof Schema)[] = [
   "title",
@@ -26,13 +26,6 @@ export type SchemaDiff = {
   updated: Set<string>;
 };
 
-function diffSchemas(existing: Schema, incoming: Schema): SchemaDiff {
-  const differ = new SchemaDiffer(existing, incoming);
-  differ.computeRequiredChanges();
-  differ.computePropertyChanges();
-  return differ.diff();
-}
-
 class SchemaDiffer implements SchemaDiff {
   additionalPropsChanged: boolean;
   added: Set<string> = new Set();
@@ -45,6 +38,20 @@ class SchemaDiffer implements SchemaDiff {
   ) {
     this.additionalPropsChanged =
       existing.additionalProperties !== incoming.additionalProperties;
+  }
+
+  computeDiff(): void {
+    this.computePropertyChanges();
+    this.computePropertyChanges();
+  }
+
+  same(): boolean {
+    return (
+      this.added.size === 0 &&
+      this.removed.size === 0 &&
+      this.updated.size === 0 &&
+      this.additionalPropsChanged === false
+    );
   }
 
   diff(): SchemaDiff {
