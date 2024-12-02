@@ -352,10 +352,15 @@ export class Board extends EventTarget {
     const moduleId = descriptor.main || null;
 
     const id = globalThis.crypto.randomUUID();
+    const mainGraphId = this.getGraphStore().addByDescriptor(descriptor);
+    if (!mainGraphId.success) {
+      throw new Error(`Unable to add graph: ${mainGraphId.error}`);
+    }
     this.#tabs.set(id, {
       id,
       kits: this.kits,
       name: descriptor.title ?? "Untitled board",
+      mainGraphId: mainGraphId.result,
       graph: descriptor,
       subGraphId: null,
       moduleId,
@@ -394,11 +399,16 @@ export class Board extends EventTarget {
     const moduleId = descriptor.main || null;
 
     const id = globalThis.crypto.randomUUID();
+    const mainGraphId = this.getGraphStore().addByDescriptor(descriptor);
+    if (!mainGraphId.success) {
+      throw new Error(`Unable to add graph: ${mainGraphId.error}`);
+    }
     this.#tabs.set(id, {
       id,
       kits: this.kits,
       name: descriptor.title ?? "Untitled board",
       graph: descriptor,
+      mainGraphId: mainGraphId.result,
       subGraphId: null,
       moduleId,
       version: 1,
@@ -497,12 +507,20 @@ export class Board extends EventTarget {
         subGraphId = null;
       }
 
+      // This is not elegant, since we actually load the graph by URL,
+      // and we should know this mainGraphId by now.
+      // TODO: Make this more elegant.
+      const mainGraphId = this.getGraphStore().addByDescriptor(graph);
+      if (!mainGraphId.success) {
+        throw new Error(`Unable to add graph: ${mainGraphId.error}`);
+      }
       const id = globalThis.crypto.randomUUID();
       this.#tabs.set(id, {
         id,
         kits,
         name: graph.title ?? "Untitled board",
         graph,
+        mainGraphId: mainGraphId.result,
         subGraphId,
         moduleId,
         type: TabType.URL,

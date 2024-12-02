@@ -10,6 +10,7 @@ import {
   GraphDescriptor,
   GraphLoader,
   Kit,
+  MainGraphIdentifier,
   MutableGraphStore,
   NodeConfiguration,
   RunStore,
@@ -37,6 +38,7 @@ export interface Tab {
   id: TabId;
   kits: Kit[];
   name: TabName;
+  mainGraphId: MainGraphIdentifier;
   graph: GraphDescriptor;
   subGraphId: string | null;
   moduleId: ModuleIdentifier | null;

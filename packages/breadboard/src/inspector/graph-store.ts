@@ -16,6 +16,7 @@ import { MutableGraphImpl } from "./graph/mutable-graph.js";
 import {
   GraphHandle,
   GraphStoreArgs,
+  GraphStoreEventTarget,
   InspectableGraph,
   InspectableGraphOptions,
   MainGraphIdentifier,
@@ -52,7 +53,10 @@ function makeTerribleOptions(
   };
 }
 
-class GraphStore implements MutableGraphStore {
+class GraphStore
+  extends (EventTarget as GraphStoreEventTarget)
+  implements MutableGraphStore
+{
   readonly kits: readonly Kit[];
   readonly sandbox: Sandbox;
   readonly loader: GraphLoader;
@@ -61,6 +65,7 @@ class GraphStore implements MutableGraphStore {
   #mutables: Map<MainGraphIdentifier, MutableGraph> = new Map();
 
   constructor(args: GraphStoreArgs) {
+    super();
     this.kits = args.kits;
     this.sandbox = args.sandbox;
     this.loader = args.loader;

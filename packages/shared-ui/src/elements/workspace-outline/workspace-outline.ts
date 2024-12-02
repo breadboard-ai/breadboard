@@ -13,15 +13,7 @@ import {
   Kit,
   NodeIdentifier,
 } from "@google-labs/breadboard";
-import { Task } from "@lit/task";
-import {
-  LitElement,
-  html,
-  css,
-  PropertyValues,
-  nothing,
-  HTMLTemplateResult,
-} from "lit";
+import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
@@ -89,6 +81,9 @@ export class WorkspaceOutline extends LitElement {
 
   @property()
   selectionState: WorkspaceSelectionStateWithChangeId | null = null;
+
+  @property()
+  graphTopologyUpdateId: number = 0;
 
   @state()
   filter: string | null = null;
@@ -647,139 +642,108 @@ export class WorkspaceOutline extends LitElement {
 
   #openItems = new Set<string>();
   #containerRef: Ref<HTMLDivElement> = createRef();
-  #workspaceRender: Task<(InspectableGraph | string | null)[], Outline> | null =
-    null;
 
   #createSubItemId(id: string) {
     return `sg-${id}`;
   }
 
-  #loadGraphDetails() {
-    return new Task(this, {
-      task: async ([graph]): Promise<Outline> => {
-        const moduleToOutline = async (
-          id: ModuleIdentifier,
-          module: InspectableModule
-        ): Promise<Outline> => {
-          return {
-            type: "imperative",
-            title: module.metadata().title ?? id,
-            items: {
-              nodes: [],
-              ports: new Map(),
-            },
-            subItems: new Map(),
-          };
-        };
+  #getGraphDetails(graph: InspectableGraph) {
+    const moduleToOutline = (
+      id: ModuleIdentifier,
+      module: InspectableModule
+    ): Outline => {
+      return {
+        type: "imperative",
+        title: module.metadata().title ?? id,
+        items: {
+          nodes: [],
+          ports: new Map(),
+        },
+        subItems: new Map(),
+      };
+    };
 
-        const graphToOutline = async (
-          graph: InspectableGraph,
-          overrideTitle = true
-        ): Promise<Outline> => {
-          const nodes: InspectableNode[] = [];
-          const ports: Map<NodeIdentifier, InspectableNodePorts> = new Map();
-          for (const node of graph.nodes()) {
-            nodes.push(node);
+    const graphToOutline = (
+      graph: InspectableGraph,
+      overrideTitle = true
+    ): Outline => {
+      const nodes: InspectableNode[] = [];
+      const ports: Map<NodeIdentifier, InspectableNodePorts> = new Map();
+      for (const node of graph.nodes()) {
+        nodes.push(node);
 
-            const nodePorts = await node.ports();
-            ports.set(node.descriptor.id, nodePorts);
-          }
+        const nodePorts = node.currentPorts();
+        ports.set(node.descriptor.id, nodePorts);
+      }
 
-          nodes.sort((a, b) => {
-            // Attempt to sort inputs to the front, and outputs to the back.
-            if (
-              a.descriptor.type === "input" &&
-              b.descriptor.type !== "input"
-            ) {
-              return -1;
-            }
-
-            if (
-              b.descriptor.type === "input" &&
-              a.descriptor.type !== "input"
-            ) {
-              return 1;
-            }
-
-            if (
-              a.descriptor.type === "output" &&
-              b.descriptor.type !== "output"
-            ) {
-              return 1;
-            }
-
-            if (
-              b.descriptor.type === "output" &&
-              a.descriptor.type !== "output"
-            ) {
-              return -1;
-            }
-
-            // Fall through to titles.
-            if (a.title() < b.title()) {
-              return -1;
-            }
-
-            if (a.title() > b.title()) {
-              return 1;
-            }
-
-            return 0;
-          });
-
-          const subItems = new Map<
-            GraphIdentifier | ModuleIdentifier,
-            Outline
-          >();
-          const subGraphs = graph.graphs();
-          if (subGraphs) {
-            for (const [id, subGraph] of Object.entries(subGraphs)) {
-              subItems.set(id, await graphToOutline(subGraph, false));
-            }
-          }
-
-          const modules = graph.modules();
-          if (modules) {
-            for (const [id, module] of Object.entries(modules)) {
-              subItems.set(id, await moduleToOutline(id, module));
-            }
-          }
-
-          return {
-            main: graph.main(),
-            type: graph.imperative() ? "imperative" : "declarative",
-            title: overrideTitle
-              ? "Main Board"
-              : (graph.raw().title ?? "Unnamed graph"),
-            items: {
-              nodes,
-              ports,
-            },
-            subItems,
-          } as Outline;
-        };
-
-        if (typeof graph !== "object" || Array.isArray(graph)) {
-          throw new Error("Unsupported information");
+      nodes.sort((a, b) => {
+        // Attempt to sort inputs to the front, and outputs to the back.
+        if (a.descriptor.type === "input" && b.descriptor.type !== "input") {
+          return -1;
         }
 
-        if (!graph) {
-          throw new Error("Unable to load graph");
+        if (b.descriptor.type === "input" && a.descriptor.type !== "input") {
+          return 1;
         }
 
-        return graphToOutline(graph);
-      },
-      onError: () => {
-        // TODO.
-      },
-      args: () => [this.graph],
-    });
-  }
+        if (a.descriptor.type === "output" && b.descriptor.type !== "output") {
+          return 1;
+        }
 
-  protected willUpdate(changedProperties: PropertyValues): void {
-    if (changedProperties.has("graph")) {
-      this.#workspaceRender = this.#loadGraphDetails();
+        if (b.descriptor.type === "output" && a.descriptor.type !== "output") {
+          return -1;
+        }
+
+        // Fall through to titles.
+        if (a.title() < b.title()) {
+          return -1;
+        }
+
+        if (a.title() > b.title()) {
+          return 1;
+        }
+
+        return 0;
+      });
+
+      const subItems = new Map<GraphIdentifier | ModuleIdentifier, Outline>();
+      const subGraphs = graph.graphs();
+      if (subGraphs) {
+        for (const [id, subGraph] of Object.entries(subGraphs)) {
+          subItems.set(id, graphToOutline(subGraph, false));
+        }
+      }
+
+      const modules = graph.modules();
+      if (modules) {
+        for (const [id, module] of Object.entries(modules)) {
+          subItems.set(id, moduleToOutline(id, module));
+        }
+      }
+
+      return {
+        main: graph.main(),
+        type: graph.imperative() ? "imperative" : "declarative",
+        title: overrideTitle
+          ? "Main Board"
+          : (graph.raw().title ?? "Unnamed graph"),
+        items: {
+          nodes,
+          ports,
+        },
+        subItems,
+      } as Outline;
+    };
+
+    if (typeof graph !== "object" || Array.isArray(graph)) {
+      throw new Error("Unsupported information");
     }
+
+    if (!graph) {
+      throw new Error("Unable to load graph");
+    }
+
+    return graphToOutline(graph);
   }
 
   connectedCallback(): void {
@@ -1398,11 +1362,38 @@ export class WorkspaceOutline extends LitElement {
     );
   }
 
-  render() {
-    if (!this.#workspaceRender) {
-      return nothing;
+  #renderOutline() {
+    const outline = this.#getGraphDetails(this.graph!);
+    let nodes = [...outline.items.nodes];
+    const subItems = new Map([...outline.subItems]);
+    if (this.filter) {
+      nodes = nodes.filter((node) => {
+        const filter = new RegExp(this.filter!, "gim");
+        return filter.test(node.title());
+      });
+
+      for (const [id, graphOrModule] of subItems) {
+        const filter = new RegExp(this.filter, "gim");
+        if (filter.test(id) || filter.test(graphOrModule.title)) {
+          continue;
+        }
+
+        subItems.delete(id);
+      }
     }
 
+    return this.#renderWorkspace(
+      outline.type,
+      outline.main,
+      outline.title,
+      nodes,
+      outline.items.ports,
+      subItems,
+      this.mode === "tree"
+    );
+  }
+
+  render() {
     return html`
       <div id="container" ${ref(this.#containerRef)}>
         <div id="controls">
@@ -1431,41 +1422,7 @@ export class WorkspaceOutline extends LitElement {
             Toggle
           </button>
         </div>
-        <div id="outline">
-          ${this.#workspaceRender.render({
-            pending: () => html`Loading...`,
-            complete: (outline) => {
-              let nodes = [...outline.items.nodes];
-              const subItems = new Map([...outline.subItems]);
-              if (this.filter) {
-                nodes = nodes.filter((node) => {
-                  const filter = new RegExp(this.filter!, "gim");
-                  return filter.test(node.title());
-                });
-
-                for (const [id, graphOrModule] of subItems) {
-                  const filter = new RegExp(this.filter, "gim");
-                  if (filter.test(id) || filter.test(graphOrModule.title)) {
-                    continue;
-                  }
-
-                  subItems.delete(id);
-                }
-              }
-
-              return this.#renderWorkspace(
-                outline.type,
-                outline.main,
-                outline.title,
-                nodes,
-                outline.items.ports,
-                subItems,
-                this.mode === "tree"
-              );
-            },
-            error: () => html`Unable to load graph outline`,
-          })}
-        </div>
+        <div id="outline">${this.#renderOutline()}</div>
       </div>
     `;
   }
