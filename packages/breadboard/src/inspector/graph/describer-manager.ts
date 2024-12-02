@@ -42,6 +42,7 @@ import { Result } from "../../editor/types.js";
 import { invokeGraph } from "../../run/invoke-graph.js";
 import { contextFromStore } from "../graph-store.js";
 import { SchemaDiffer } from "../../utils/schema-differ.js";
+import { UpdateEvent } from "./event.js";
 
 export { GraphDescriberManager, NodeTypeDescriberManager };
 
@@ -103,6 +104,7 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
     if (inputsDiffer.same() && outputsDiffer.same()) {
       return;
     }
+    this.mutable.graphs.get("")?.dispatchEvent(new UpdateEvent());
 
     // Add change spec to the change list
     // So the change list lives on mutable graph!
