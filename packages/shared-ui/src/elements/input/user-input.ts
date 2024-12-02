@@ -31,7 +31,7 @@ import {
   ModuleCreateEvent,
   ShowTooltipEvent,
   UserOutputEvent,
-  WorkspaceItemChosenEvent,
+  WorkspaceSelectionStateEvent,
 } from "../../events/events";
 import { UserInputConfiguration, UserOutputValues } from "../../types/types";
 import {
@@ -63,6 +63,7 @@ import {
 } from "../elements";
 import "./delegating-input.js";
 import { getModuleId } from "../../utils/module-id";
+import * as Utils from "../../utils/utils.js";
 
 const NO_MODULE = " -- No module";
 
@@ -763,9 +764,19 @@ export class UserInput extends LitElement {
                                 this.dispatchEvent(new HideTooltipEvent());
                               }}
                               @click=${() => {
+                                const selections =
+                                  Utils.Workspace.createEmptyWorkspaceSelectionState();
+                                selections.modules.add(module);
+
+                                const changeId =
+                                  Utils.Workspace.createWorkspaceSelectionChangeId();
                                 this.dispatchEvent(new HideTooltipEvent());
                                 this.dispatchEvent(
-                                  new WorkspaceItemChosenEvent(null, module)
+                                  new WorkspaceSelectionStateEvent(
+                                    changeId,
+                                    selections,
+                                    true
+                                  )
                                 );
                               }}
                             >

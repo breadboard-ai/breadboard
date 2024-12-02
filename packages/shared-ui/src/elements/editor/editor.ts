@@ -223,8 +223,6 @@ export class Editor extends LitElement {
   // Incremented each time a graph is updated, used to avoid extra work
   // inspecting ports when the graph is updated.
   #graphVersion = 0;
-  #lastBoardId: number = -1;
-  #lastSubGraphId: string | null = null;
 
   #onDropBound = this.#onDrop.bind(this);
   #onDragOverBound = this.#onDragOver.bind(this);
@@ -353,7 +351,7 @@ export class Editor extends LitElement {
       }
     }
 
-    const graphSelectionState = this.selectionState?.selectionState.get(
+    const graphSelectionState = this.selectionState?.selectionState.graphs.get(
       subGraphId ? subGraphId : MAIN_BOARD_ID
     );
 
@@ -375,82 +373,7 @@ export class Editor extends LitElement {
     };
   }
 
-  #updateOrCreateGraph(
-    opts: GraphOpts,
-    listenForDraw: boolean,
-    listenForDrawId: GraphIdentifier | null = null
-  ) {
-    const updated = this.#graphRenderer.updateGraphByUrl(
-      opts.url,
-      opts.subGraphId,
-      opts
-    );
-
-    if (updated) {
-      this.#graphRenderer.showGraph(opts.url, opts.subGraphId);
-      if (this.topGraphResult) {
-        this.#graphRenderer.topGraphResult = this.topGraphResult;
-      }
-
-      if (
-        this.#zoomOnUpdate &&
-        listenForDraw &&
-        listenForDrawId &&
-        opts.subGraphId === listenForDrawId
-      ) {
-        this.#graphRenderer.zoomToFit(0, this.#zoomOnUpdateId);
-        this.#zoomOnUpdate = false;
-        this.#zoomOnUpdateId = null;
-      }
-      return;
-    }
-
-    if (this.#lastSubGraphId !== opts.subGraphId) {
-      // TODO: Need to figure out how to encode the subgraph/node id combo.
-      this.#graphRenderer.topGraphResult = null;
-    }
-
-    this.#graphRenderer.createGraph(opts);
-    const onInitialDraw = () => {
-      this.#graphRenderer.showGraph(opts.url, opts.subGraphId);
-      this.#graphRenderer.removeEventListener(
-        GraphInitialDrawEvent.eventName,
-        onInitialDraw
-      );
-
-      if (!listenForDraw) {
-        return;
-      }
-
-      // Wait a frame to ensure graphs have been shown before trying to
-      // zoom to the target.
-      requestAnimationFrame(() => {
-        // When we're loading a graph from existing results, we need to
-        // set the topGraphResult again so that it is applied to the newly
-        // created graph.
-        if (this.topGraphResult) {
-          this.#graphRenderer.topGraphResult = this.topGraphResult;
-        }
-
-        if (!this.#zoomOnCreate) {
-          return;
-        }
-
-        this.#zoomOnCreate = false;
-        this.#graphRenderer.zoomToFit(
-          this.isShowingBoardActivityOverlay ? 400 : 0,
-          listenForDrawId
-        );
-      });
-    };
-
-    this.#graphRenderer.addEventListener(
-      GraphInitialDrawEvent.eventName,
-      onInitialDraw
-    );
-  }
-
-  async #processGraph(): Promise<GraphRenderer> {
+  async #processGraph() {
     if (GraphAssets.assetPrefix !== this.assetPrefix) {
       GraphAssets.instance().loadAssets(this.assetPrefix);
       await GraphAssets.instance().loaded;
@@ -470,88 +393,87 @@ export class Editor extends LitElement {
 
     const availableSubGraphs = Object.keys(this.graph.graphs() || {});
     this.#graphRenderer.deleteStaleSubGraphs(new Set(availableSubGraphs));
+    this.#graphRenderer.hideAllGraphs();
 
-    let selectedGraph = this.graph;
-    if (this.subGraphId && !this.showSubgraphsInline) {
-      const subgraphs = selectedGraph.graphs();
-      if (subgraphs && subgraphs[this.subGraphId]) {
-        selectedGraph = subgraphs[this.subGraphId];
+    let shouldAnimate = true;
+
+    const handleGraph = async (
+      url: string,
+      subGraphId: GraphIdentifier | null,
+      selectedGraph: InspectableGraph
+    ) => {
+      const opts = await this.#inspectableGraphToConfig(
+        url,
+        subGraphId,
+        selectedGraph
+      );
+
+      const updated = this.#graphRenderer.updateGraphByUrl(
+        url,
+        subGraphId,
+        opts
+      );
+      if (!updated) {
+        shouldAnimate = false;
+        return new Promise<void>((resolve) => {
+          this.#graphRenderer.createGraph(opts);
+          this.#graphRenderer.addEventListener(
+            GraphInitialDrawEvent.eventName,
+            () => {
+              this.#graphRenderer.showGraph(url, subGraphId);
+              resolve();
+            },
+            { once: true }
+          );
+        });
       } else {
-        // This may happen when we were in the subgraph,
-        // and it was just deleted, so we short-circuit the rendering
-        // to main graph.
-        this.#graphRenderer.deleteGraphs();
+        this.#graphRenderer.showGraph(url, subGraphId);
+      }
+    };
+
+    const url = this.graph.raw().url ?? "no-url";
+    if (this.showSubgraphsInline) {
+      await handleGraph(url, null, this.graph);
+
+      const subGraphs = Object.entries(this.graph.graphs() ?? {});
+      for (const [id, graph] of subGraphs) {
+        await handleGraph(url, id, graph);
+      }
+    } else {
+      if (!this.selectionState) {
         return this.#graphRenderer;
       }
-    }
 
-    if (!selectedGraph) {
-      return this.#graphRenderer;
-    }
+      const state = this.selectionState.selectionState.graphs;
+      const graphs = [...state.keys()];
+      if (graphs.length === 0) {
+        graphs.unshift(MAIN_BOARD_ID);
+      }
 
-    // Force a reset when the board changes.
-    const mainGraphUrl = this.graph.raw().url ?? "";
-    const url =
-      this.subGraphId && !this.showSubgraphsInline
-        ? `${mainGraphUrl}#${this.subGraphId}`
-        : mainGraphUrl;
+      this.#graphRenderer.resetAllSelectionStates();
+      for (const id of graphs) {
+        const subGraphId = id === MAIN_BOARD_ID ? null : id;
+        let selectedGraph = this.graph;
+        if (id !== MAIN_BOARD_ID) {
+          const subGraphs = this.graph.graphs();
+          if (subGraphs && subGraphs[id]) {
+            selectedGraph = subGraphs[id];
+          }
+        }
 
-    const subGraphs = new Map<string, GraphOpts>();
-    if (this.showSubgraphsInline) {
-      for (const [id, subGraph] of Object.entries(
-        selectedGraph.graphs() || {}
-      )) {
-        const subGraphUrl = `${url}-${id}`;
-        const subGraphOpts = await this.#inspectableGraphToConfig(
-          subGraphUrl,
-          id,
-          subGraph
-        );
-
-        subGraphs.set(id, subGraphOpts);
+        await handleGraph(url, subGraphId, selectedGraph);
       }
     }
 
-    const graphVersion = this.#graphVersion;
-    const mainGraphOpts = await this.#inspectableGraphToConfig(
-      url,
-      this.showSubgraphsInline ? null : this.subGraphId,
-      selectedGraph
-    );
-
-    const finalGraph = subGraphs.size ? [...subGraphs].at(-1)?.[0] : null;
-    const zoomTargetWhenDrawingFinished = this.subGraphId;
-    const finalGraphWhichTriggersZoom = this.showSubgraphsInline
-      ? finalGraph
-      : this.subGraphId;
-
-    // A newer graph has arrived - bail.
-    if (graphVersion !== this.#graphVersion) {
-      return this.#graphRenderer;
+    // Always avoid animating if the user prefers it without.
+    if (
+      !this.showSubgraphsInline ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      shouldAnimate = false;
     }
 
-    this.#graphRenderer.hideAllGraphs();
-    this.#graphRenderer.removeGraphs(this.tabURLs);
-
-    const mainGraphId =
-      this.subGraphId !== null && !this.showSubgraphsInline
-        ? this.subGraphId
-        : null;
-
-    this.#updateOrCreateGraph(
-      mainGraphOpts,
-      mainGraphId === finalGraphWhichTriggersZoom,
-      zoomTargetWhenDrawingFinished
-    );
-
-    for (const [id, subGraphOpts] of subGraphs) {
-      this.#updateOrCreateGraph(
-        subGraphOpts,
-        id === finalGraphWhichTriggersZoom,
-        zoomTargetWhenDrawingFinished
-      );
-    }
-
+    this.#graphRenderer.moveToSelection(shouldAnimate);
     return this.#graphRenderer;
   }
 
@@ -764,25 +686,11 @@ export class Editor extends LitElement {
     return true;
   }
 
-  #zoomOnUpdate = false;
-  #zoomOnUpdateId: GraphIdentifier | null = null;
-  #zoomOnCreate = false;
   #currentGraphUrl: string | null = null;
-  protected willUpdate(changedProperties: PropertyValues): void {
-    if (
-      changedProperties.has("subGraphId") ||
-      changedProperties.has("showSubgraphsInline")
-    ) {
-      if (!this.showSubgraphsInline) {
-        this.#zoomOnUpdate = true;
-        this.#zoomOnUpdateId = this.subGraphId;
-      }
-    }
-
+  protected willUpdate(): void {
     const graphUrl = this.graph?.raw().url ?? null;
     if (this.#currentGraphUrl !== graphUrl) {
       this.#currentGraphUrl = graphUrl;
-      this.#zoomOnCreate = true;
       this.#graphRenderer.deleteGraphs();
     }
   }

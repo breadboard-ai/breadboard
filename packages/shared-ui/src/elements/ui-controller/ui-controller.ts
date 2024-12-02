@@ -31,7 +31,7 @@ import {
   STATUS,
   SettingsStore,
   TopGraphRunResult,
-  WorkspaceSelectionChangeId,
+  WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
 } from "../../types/types.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
@@ -39,7 +39,6 @@ import { ModuleEditor } from "../module-editor/module-editor.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
   CommandsSetSwitchEvent,
-  WorkspaceItemChosenEvent,
   WorkspaceNewItemCreateRequestEvent,
 } from "../../events/events.js";
 import {
@@ -60,12 +59,6 @@ export class UI extends LitElement {
 
   @property()
   editor: EditableGraph | null = null;
-
-  @property()
-  subGraphId: string | null = null;
-
-  @property()
-  moduleId: string | null = null;
 
   @property()
   run: InspectableRun | null = null;
@@ -122,14 +115,13 @@ export class UI extends LitElement {
   sideNavItem: string | null = null;
 
   @property()
-  selectionState: WorkspaceSelectionChangeId | null = null;
+  selectionState: WorkspaceSelectionStateWithChangeId | null = null;
 
   @property()
   visualChangeId: WorkspaceVisualChangeId | null = null;
 
   #graphEditorRef: Ref<Editor> = createRef();
   #moduleEditorRef: Ref<ModuleEditor> = createRef();
-  #workspaceItemChosen: WorkspaceItemChosenEvent | null = null;
 
   static styles = uiControllerStyles;
 
@@ -153,16 +145,23 @@ export class UI extends LitElement {
       this.editorRender++;
     }
 
-    if (changedProperties.has("moduleId")) {
-      if (this.moduleId === null && this.#moduleEditorRef.value) {
-        this.#moduleEditorRef.value.destroyEditor();
+    if (changedProperties.has("selectionState")) {
+      if (this.#moduleEditorRef.value) {
+        if (
+          !this.selectionState ||
+          this.selectionState.selectionState.modules.size === 0
+        ) {
+          this.#moduleEditorRef.value.destroyEditor();
+        }
       }
 
-      if (this.sideNavItem === "components" && this.moduleId) {
+      const selectedModuleCount =
+        this.selectionState?.selectionState.modules.size ?? 0;
+      if (this.sideNavItem === "components" && selectedModuleCount > 0) {
         this.sideNavItem = null;
       }
 
-      if (this.sideNavItem === "capabilities" && !this.moduleId) {
+      if (this.sideNavItem === "capabilities" && selectedModuleCount === 0) {
         this.sideNavItem = null;
       }
     }
@@ -267,7 +266,6 @@ export class UI extends LitElement {
     const graphEditor = guard(
       [
         graph,
-        this.subGraphId,
         this.run,
         this.kits,
         this.topGraphResult,
@@ -311,8 +309,6 @@ export class UI extends LitElement {
           .showPortTooltips=${showPortTooltips}
           .showSubgraphsInline=${this.mode === "tree"}
           .showReadOnlyOverlay=${true}
-          .subGraphId=${this.subGraphId}
-          .moduleId=${this.moduleId}
           .tabURLs=${this.tabURLs}
           .topGraphResult=${this.topGraphResult}
           .selectionState=${this.selectionState}
@@ -329,8 +325,14 @@ export class UI extends LitElement {
       ></bb-welcome-panel>`;
     }
 
+    const selectedModules = this.selectionState?.selectionState.modules;
+    const modules = selectedModules ? [...selectedModules] : [];
+    if (modules.length > 0) {
+      // TODO.
+    }
+
     let moduleEditor: HTMLTemplateResult | symbol = nothing;
-    if (graph && this.moduleId) {
+    if (graph && selectedModules && selectedModules.size > 0) {
       moduleEditor = html`<bb-module-editor
         ${ref(this.#moduleEditorRef)}
         .canRedo=${canRedo}
@@ -339,21 +341,20 @@ export class UI extends LitElement {
         .graph=${graph}
         .isShowingBoardActivityOverlay=${this.isShowingBoardActivityOverlay}
         .kits=${this.kits}
-        .moduleId=${this.moduleId}
+        .moduleId=${modules[0]}
         .modules=${graph.modules() ?? {}}
         .readOnly=${this.readOnly}
         .renderId=${crypto.randomUUID()}
         .run=${this.run}
-        .subGraphId=${this.subGraphId}
         .topGraphResult=${this.topGraphResult}
       ></bb-module-editor>`;
     }
 
     const sideNavItems = ["workspace-overview"];
-    if (!this.moduleId) {
-      sideNavItems.push("components");
-    } else {
+    if (modules.length > 0) {
       sideNavItems.push("capabilities");
+    } else {
+      sideNavItems.push("components");
     }
 
     const sideNav = html`<div id="side-nav">
@@ -372,7 +373,8 @@ export class UI extends LitElement {
     </div> `;
 
     const contentContainer = html`<div id="graph-container" slot="slot-1">
-      ${graphEditor} ${this.moduleId ? moduleEditor : nothing} ${welcomePanel}
+      ${graphEditor} ${modules.length > 0 ? moduleEditor : nothing}
+      ${welcomePanel}
     </div>`;
 
     let sideNavItem: HTMLTemplateResult | symbol = nothing;
@@ -391,33 +393,19 @@ export class UI extends LitElement {
               </button>
             </div>
           </h1>
-          ${guard(
-            [
-              graph,
-              this.moduleId,
-              this.subGraphId,
-              this.mode,
-              this.selectionState,
-            ],
-            () => {
-              return html`<bb-workspace-outline
-                .graph=${graph}
-                .kits=${this.kits}
-                .subGraphId=${this.subGraphId}
-                .moduleId=${this.moduleId}
-                .renderId=${globalThis.crypto.randomUUID()}
-                .mode=${this.mode}
-                .selectionState=${this.selectionState}
-                @bbworkspaceitemchosen=${(evt: WorkspaceItemChosenEvent) => {
-                  this.#workspaceItemChosen = evt;
-                }}
-                @bboutlinemodechange=${() => {
-                  this.mode = this.mode === "list" ? "tree" : "list";
-                  globalThis.localStorage.setItem(MODE_KEY, this.mode);
-                }}
-              ></bb-workspace-outline>`;
-            }
-          )}`;
+          ${guard([graph, this.mode, this.selectionState], () => {
+            return html`<bb-workspace-outline
+              .graph=${graph}
+              .kits=${this.kits}
+              .renderId=${globalThis.crypto.randomUUID()}
+              .mode=${this.mode}
+              .selectionState=${this.selectionState}
+              @bboutlinemodechange=${() => {
+                this.mode = this.mode === "list" ? "tree" : "list";
+                globalThis.localStorage.setItem(MODE_KEY, this.mode);
+              }}
+            ></bb-workspace-outline>`;
+          })}`;
         break;
       }
 
@@ -459,36 +447,16 @@ export class UI extends LitElement {
   }
 
   updated() {
-    // Inform bb-main which command set is in use. The individual editors are
-    // responsible for
+    // Inform bb-main which command set is in use.
+    const selectedModules = this.selectionState?.selectionState.modules;
+    const modules = selectedModules ? [...selectedModules] : [];
+
     this.dispatchEvent(
       new CommandsSetSwitchEvent(
-        this.moduleId ? COMMAND_SET_MODULE_EDITOR : COMMAND_SET_GRAPH_EDITOR
+        modules.length > 0
+          ? COMMAND_SET_MODULE_EDITOR
+          : COMMAND_SET_GRAPH_EDITOR
       )
     );
-
-    if (this.#workspaceItemChosen) {
-      const workspaceItem = this.#workspaceItemChosen;
-      this.#workspaceItemChosen = null;
-
-      if (workspaceItem.moduleId !== null) {
-        return;
-      }
-
-      requestAnimationFrame(() => {
-        if (!this.#graphEditorRef.value) {
-          return;
-        }
-
-        this.#graphEditorRef.value.zoomToFit(0, workspaceItem.subGraphId);
-        if (workspaceItem.nodeId) {
-          this.#graphEditorRef.value.zoomToNode(
-            workspaceItem.nodeId,
-            workspaceItem.subGraphId,
-            0
-          );
-        }
-      });
-    }
   }
 }

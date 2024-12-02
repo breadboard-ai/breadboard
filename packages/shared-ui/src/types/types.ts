@@ -21,6 +21,7 @@ import {
 import {
   CommentNode,
   GraphIdentifier,
+  ModuleIdentifier,
   NodeMetadata,
 } from "@breadboard-ai/types";
 import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
@@ -447,7 +448,10 @@ export interface WorkspaceVisualStateWithChangeId {
 }
 
 export type WorkspaceSelectionChangeId = ReturnType<typeof crypto.randomUUID>;
-export type WorkspaceSelectionState = Map<GraphIdentifier, GraphSelectionState>;
+export type WorkspaceSelectionState = {
+  graphs: Map<GraphIdentifier, GraphSelectionState>;
+  modules: Set<ModuleIdentifier>;
+};
 export interface WorkspaceSelectionStateWithChangeId {
   selectionChangeId: WorkspaceSelectionChangeId;
   selectionState: WorkspaceSelectionState;

@@ -71,9 +71,6 @@ export class ModuleEditor extends LitElement {
   graph: InspectableGraph | null = null;
 
   @property()
-  subGraphId: string | null = null;
-
-  @property()
   moduleId: ModuleIdentifier | null = null;
 
   @property()

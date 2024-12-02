@@ -98,7 +98,10 @@ export interface WorkspaceVisualStateWithChangeId {
 }
 
 export type WorkspaceSelectionChangeId = ReturnType<typeof crypto.randomUUID>;
-export type WorkspaceSelectionState = Map<GraphIdentifier, GraphSelectionState>;
+export type WorkspaceSelectionState = {
+  graphs: Map<GraphIdentifier, GraphSelectionState>;
+  modules: Set<ModuleIdentifier>;
+};
 export interface WorkspaceSelectionStateWithChangeId {
   selectionChangeId: WorkspaceSelectionChangeId;
   selectionState: WorkspaceSelectionState;
