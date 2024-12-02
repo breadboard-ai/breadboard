@@ -375,21 +375,10 @@ export class WorkspaceSelectionStateEvent extends Event {
 
   constructor(
     public readonly selectionChangeId: WorkspaceSelectionChangeId,
-    public readonly selections: WorkspaceSelectionState | null
+    public readonly selections: WorkspaceSelectionState | null,
+    public readonly replaceExistingSelections = true
   ) {
     super(WorkspaceSelectionStateEvent.eventName, { ...eventInit });
-  }
-}
-
-export class WorkspaceItemChosenEvent extends Event {
-  static eventName = "bbworkspaceitemchosen";
-
-  constructor(
-    public readonly subGraphId: GraphIdentifier | null,
-    public readonly moduleId: ModuleIdentifier | null,
-    public readonly nodeId: NodeIdentifier | null = null
-  ) {
-    super(WorkspaceItemChosenEvent.eventName, { ...eventInit });
   }
 }
 

@@ -22,7 +22,11 @@ export const DeleteCommand: KeyboardCommand = {
       throw new Error("Unable to edit graph");
     }
 
-    if (!tab || !selectionState || selectionState.selectionState.size === 0) {
+    if (
+      !tab ||
+      !selectionState ||
+      selectionState.selectionState.graphs.size === 0
+    ) {
       throw new Error("Nothing to delete");
     }
 
@@ -75,7 +79,11 @@ export const CopyCommand: KeyboardCommand = {
       throw new Error("Unable to edit graph");
     }
 
-    if (!tab || !selectionState || selectionState.selectionState.size === 0) {
+    if (
+      !tab ||
+      !selectionState ||
+      selectionState.selectionState.graphs.size === 0
+    ) {
       throw new Error("Nothing to copy");
     }
 
@@ -102,7 +110,11 @@ export const CutCommand: KeyboardCommand = {
       throw new Error("Unable to edit graph");
     }
 
-    if (!tab || !selectionState || selectionState.selectionState.size === 0) {
+    if (
+      !tab ||
+      !selectionState ||
+      selectionState.selectionState.graphs.size === 0
+    ) {
       throw new Error("Nothing to cut");
     }
 

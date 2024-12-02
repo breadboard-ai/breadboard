@@ -634,6 +634,7 @@ export class CodeEditor extends LitElement {
       return;
     }
 
+    console.log("Destroy code editor");
     this.#editor.destroy();
     this.#editor = null;
   }

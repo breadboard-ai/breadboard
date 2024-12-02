@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
+import {
+  GraphIdentifier,
+  ModuleIdentifier,
+  NodeIdentifier,
+} from "@breadboard-ai/types";
 import { RuntimeSelectionChangeEvent } from "./events";
 import {
   GraphSelectionState,
@@ -27,7 +31,7 @@ export class Select extends EventTarget {
     WorkspaceSelectionState
   >();
 
-  #getState(tab: TabId): WorkspaceSelectionState {
+  #createWorkspaceSelectionStateIfNeeded(tab: TabId): WorkspaceSelectionState {
     let state = this.#selectionState.get(tab);
     if (!state) {
       state = createEmptyWorkspaceSelectionState();
@@ -37,28 +41,40 @@ export class Select extends EventTarget {
     return state;
   }
 
+  #createGraphSelectionStateIfNeeded(
+    selectionState: WorkspaceSelectionState,
+    graphId: GraphIdentifier
+  ): GraphSelectionState {
+    let graphSelection = selectionState.graphs.get(graphId);
+    if (!graphSelection) {
+      graphSelection = createEmptyGraphSelectionState();
+      selectionState.graphs.set(graphId, graphSelection);
+    }
+
+    return graphSelection;
+  }
+
   #clear(tab: TabId) {
     this.#selectionState.set(tab, createEmptyWorkspaceSelectionState());
   }
 
   #emit(tab: TabId, selectionChangeId: WorkspaceSelectionChangeId) {
-    const state = this.#getState(tab);
+    const state = this.#createWorkspaceSelectionStateIfNeeded(tab);
     this.dispatchEvent(
       new RuntimeSelectionChangeEvent(selectionChangeId, state)
     );
   }
 
-  #collection<T extends keyof GraphSelectionState>(
+  #graphCollection<T extends keyof GraphSelectionState>(
     tab: TabId,
     graphId: GraphIdentifier,
     namespace: T
   ) {
-    const selection = this.#getState(tab);
-    let graphSelection = selection.get(graphId);
-    if (!graphSelection) {
-      graphSelection = createEmptyGraphSelectionState();
-      selection.set(graphId, graphSelection);
-    }
+    const selection = this.#createWorkspaceSelectionStateIfNeeded(tab);
+    const graphSelection = this.#createGraphSelectionStateIfNeeded(
+      selection,
+      graphId
+    );
 
     return graphSelection[namespace] as GraphSelectionState[T] extends Set<
       infer U
@@ -67,23 +83,33 @@ export class Select extends EventTarget {
       : never;
   }
 
-  #add<T extends keyof GraphSelectionState>(
+  #addToModulesCollection(tab: TabId, moduleId: ModuleIdentifier) {
+    const selection = this.#createWorkspaceSelectionStateIfNeeded(tab);
+    selection.modules.add(moduleId);
+  }
+
+  #removeFromModulesCollection(tab: TabId, moduleId: ModuleIdentifier) {
+    const selection = this.#createWorkspaceSelectionStateIfNeeded(tab);
+    selection.modules.delete(moduleId);
+  }
+
+  #addToGraphsCollection<T extends keyof GraphSelectionState>(
     tab: TabId,
     graphId: GraphIdentifier,
     namespace: T,
     value: GraphSelectionState[T] extends Set<infer U> ? U : never
   ) {
-    const namespaceCollection = this.#collection(tab, graphId, namespace);
+    const namespaceCollection = this.#graphCollection(tab, graphId, namespace);
     namespaceCollection.add(value);
   }
 
-  #remove<T extends keyof GraphSelectionState>(
+  #removeFromGraphsCollection<T extends keyof GraphSelectionState>(
     tab: TabId,
     graphId: GraphIdentifier,
     namespace: T,
     value: GraphSelectionState[T] extends Set<infer U> ? U : never
   ) {
-    const namespaceCollection = this.#collection(tab, graphId, namespace);
+    const namespaceCollection = this.#graphCollection(tab, graphId, namespace);
     namespaceCollection.delete(value);
   }
 
@@ -97,7 +123,7 @@ export class Select extends EventTarget {
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier
   ) {
-    this.#add(tab, graphId, "nodes", nodeId);
+    this.#addToGraphsCollection(tab, graphId, "nodes", nodeId);
     this.#emit(tab, selectionChangeId);
   }
 
@@ -107,7 +133,7 @@ export class Select extends EventTarget {
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier
   ) {
-    this.#remove(tab, graphId, "nodes", nodeId);
+    this.#removeFromGraphsCollection(tab, graphId, "nodes", nodeId);
     this.#emit(tab, selectionChangeId);
   }
 
@@ -117,7 +143,7 @@ export class Select extends EventTarget {
     graphId: GraphIdentifier,
     commentId: string
   ) {
-    this.#add(tab, graphId, "comments", commentId);
+    this.#addToGraphsCollection(tab, graphId, "comments", commentId);
     this.#emit(tab, selectionChangeId);
   }
 
@@ -127,7 +153,7 @@ export class Select extends EventTarget {
     graphId: GraphIdentifier,
     commentId: string
   ) {
-    this.#remove(tab, graphId, "comments", commentId);
+    this.#removeFromGraphsCollection(tab, graphId, "comments", commentId);
     this.#emit(tab, selectionChangeId);
   }
 
@@ -137,7 +163,7 @@ export class Select extends EventTarget {
     graphId: GraphIdentifier,
     edgeId: string
   ) {
-    this.#add(tab, graphId, "edges", edgeId);
+    this.#addToGraphsCollection(tab, graphId, "edges", edgeId);
     this.#emit(tab, selectionChangeId);
   }
 
@@ -147,14 +173,33 @@ export class Select extends EventTarget {
     graphId: GraphIdentifier,
     edgeId: string
   ) {
-    this.#remove(tab, graphId, "edges", edgeId);
+    this.#removeFromGraphsCollection(tab, graphId, "edges", edgeId);
+    this.#emit(tab, selectionChangeId);
+  }
+
+  addModule(
+    tab: TabId,
+    selectionChangeId: WorkspaceSelectionChangeId,
+    moduleId: ModuleIdentifier
+  ) {
+    this.#addToModulesCollection(tab, moduleId);
+    this.#emit(tab, selectionChangeId);
+  }
+
+  removeModule(
+    tab: TabId,
+    selectionChangeId: WorkspaceSelectionChangeId,
+    moduleId: ModuleIdentifier
+  ) {
+    this.#removeFromModulesCollection(tab, moduleId);
     this.#emit(tab, selectionChangeId);
   }
 
   processSelections(
     tab: TabId,
     selectionChangeId: WorkspaceSelectionChangeId,
-    selections: WorkspaceSelectionState | null
+    selections: WorkspaceSelectionState | null,
+    replaceExistingSelections = true
   ) {
     if (selections === null) {
       this.#clear(tab);
@@ -162,19 +207,31 @@ export class Select extends EventTarget {
       return;
     }
 
-    this.#clear(tab);
-    for (const [id, selectionState] of selections) {
+    if (replaceExistingSelections) {
+      this.#clear(tab);
+    }
+
+    for (const [id, selectionState] of selections.graphs) {
+      // Ensure that the workspace and graph selection states exist, even if
+      // the contents of the selection state are empty.
+      const workspaceState = this.#createWorkspaceSelectionStateIfNeeded(tab);
+      this.#createGraphSelectionStateIfNeeded(workspaceState, id);
+
       for (const nodes of selectionState.nodes) {
-        this.#add(tab, id, "nodes", nodes);
+        this.#addToGraphsCollection(tab, id, "nodes", nodes);
       }
 
       for (const comments of selectionState.comments) {
-        this.#add(tab, id, "comments", comments);
+        this.#addToGraphsCollection(tab, id, "comments", comments);
       }
 
       for (const edges of selectionState.edges) {
-        this.#add(tab, id, "edges", edges);
+        this.#addToGraphsCollection(tab, id, "edges", edges);
       }
+    }
+
+    for (const id of selections.modules) {
+      this.#addToModulesCollection(tab, id);
     }
 
     this.#emit(tab, selectionChangeId);
@@ -187,7 +244,7 @@ export class Select extends EventTarget {
     nodeId: NodeIdentifier
   ) {
     this.#clear(tab);
-    this.#add(tab, graphId, "nodes", nodeId);
+    this.#addToGraphsCollection(tab, graphId, "nodes", nodeId);
     this.#emit(tab, selectionChangeId);
   }
 
@@ -220,9 +277,9 @@ export class Select extends EventTarget {
       return selections;
     };
 
-    workspaceSelections.set(MAIN_BOARD_ID, createSelection(graph));
+    workspaceSelections.graphs.set(MAIN_BOARD_ID, createSelection(graph));
     for (const [id, subGraph] of Object.entries(graph.graphs() || {})) {
-      workspaceSelections.set(id, createSelection(subGraph));
+      workspaceSelections.graphs.set(id, createSelection(subGraph));
     }
 
     this.processSelections(tab, selectionChangeId, workspaceSelections);
@@ -230,6 +287,10 @@ export class Select extends EventTarget {
 
   deselectAll(tab: TabId, selectionChangeId: WorkspaceSelectionChangeId) {
     this.#clear(tab);
+    this.#emit(tab, selectionChangeId);
+  }
+
+  refresh(tab: TabId, selectionChangeId: WorkspaceSelectionChangeId) {
     this.#emit(tab, selectionChangeId);
   }
 }

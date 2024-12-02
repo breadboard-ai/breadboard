@@ -721,6 +721,10 @@ export class Graph extends PIXI.Container {
     this.#layout.clear();
   }
 
+  getGraphNodeById(node: string) {
+    return this.#graphNodeById.get(node);
+  }
+
   getNodeLayoutPosition(node: string) {
     return this.#layout.get(node);
   }
