@@ -196,6 +196,9 @@ export class Editor extends LitElement {
   visualChangeId: WorkspaceVisualChangeId | null = null;
 
   @property()
+  graphTopologyUpdateId: number = 0;
+
+  @property()
   set showPortTooltips(value: boolean) {
     this.#graphRenderer.showPortTooltips = value;
   }
@@ -339,7 +342,7 @@ export class Editor extends LitElement {
     const ports = new Map<string, InspectableNodePorts>();
     const typeMetadata = new Map<string, NodeHandlerMetadata>();
     for (const node of selectedGraph.nodes()) {
-      ports.set(node.descriptor.id, await node.ports());
+      ports.set(node.descriptor.id, node.currentPorts());
       try {
         typeMetadata.set(node.descriptor.type, await node.type().metadata());
       } catch (err) {

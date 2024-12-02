@@ -703,7 +703,11 @@ export type GraphHandle = {
 
 export type GraphStoreArgs = Required<InspectableGraphOptions>;
 
-export type GraphStoreUpdateEvent = Event;
+export type GraphStoreUpdateEvent = Event & {
+  mainGraphId: MainGraphIdentifier;
+  graphId: GraphIdentifier;
+  nodeId: NodeIdentifier;
+};
 
 type GraphsStoreEventMap = {
   update: GraphStoreUpdateEvent;
@@ -711,7 +715,7 @@ type GraphsStoreEventMap = {
 
 export type GraphStoreEventTarget = TypedEventTarget<GraphsStoreEventMap>;
 
-export type MutableGraphStore = TypedEventTargetType<GraphStoreEventTarget> & {
+export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> & {
   readonly kits: readonly Kit[];
   readonly sandbox: Sandbox;
   readonly loader: GraphLoader;

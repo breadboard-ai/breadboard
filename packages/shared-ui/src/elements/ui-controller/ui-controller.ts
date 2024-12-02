@@ -120,6 +120,9 @@ export class UI extends LitElement {
   @property()
   visualChangeId: WorkspaceVisualChangeId | null = null;
 
+  @property()
+  graphTopologyUpdateId: number = 0;
+
   #graphEditorRef: Ref<Editor> = createRef();
   #moduleEditorRef: Ref<ModuleEditor> = createRef();
 
@@ -274,6 +277,7 @@ export class UI extends LitElement {
         this.mode,
         this.selectionState,
         this.visualChangeId,
+        this.graphTopologyUpdateId,
         collapseNodesByDefault,
         hideSubboardSelectorWhenEmpty,
         showNodeShortcuts,
@@ -313,6 +317,7 @@ export class UI extends LitElement {
           .topGraphResult=${this.topGraphResult}
           .selectionState=${this.selectionState}
           .visualChangeId=${this.visualChangeId}
+          .graphTopologyUpdateId=${this.graphTopologyUpdateId}
         ></bb-editor>`;
       }
     );

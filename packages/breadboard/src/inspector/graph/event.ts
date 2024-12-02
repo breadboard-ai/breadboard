@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphStoreUpdateEvent } from "../types.js";
+import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
+import { GraphStoreUpdateEvent, MainGraphIdentifier } from "../types.js";
 
 export { UpdateEvent };
 
@@ -17,7 +18,11 @@ const eventInit = {
 class UpdateEvent extends Event implements GraphStoreUpdateEvent {
   static eventName = "update";
 
-  constructor() {
+  constructor(
+    public readonly mainGraphId: MainGraphIdentifier,
+    public readonly graphId: GraphIdentifier,
+    public readonly nodeId: NodeIdentifier
+  ) {
     super(UpdateEvent.eventName, { ...eventInit });
   }
 }

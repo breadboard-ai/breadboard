@@ -27,7 +27,6 @@ import { hash } from "../utils/hash.js";
 import { Kit, NodeHandlerContext } from "../types.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { createLoader } from "../loader/index.js";
-import { TypedEventTarget } from "../utils/typed-event-target.js";
 
 export { GraphStore, makeTerribleOptions, contextFromStore };
 
@@ -55,7 +54,7 @@ function makeTerribleOptions(
 }
 
 class GraphStore
-  extends (EventTarget as TypedEventTarget<GraphStoreEventTarget>)
+  extends (EventTarget as GraphStoreEventTarget)
   implements MutableGraphStore
 {
   readonly kits: readonly Kit[];
