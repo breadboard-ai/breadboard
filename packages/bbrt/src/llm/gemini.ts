@@ -19,7 +19,6 @@ export async function gemini(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent`
   );
   url.searchParams.set("key", apiKey);
-  console.log("GEMINI REQUEST", JSON.stringify(request, null, 2));
   let result;
   try {
     result = await fetch(url.href, {
@@ -59,7 +58,6 @@ async function* interpretGeminiChunks(
   stream: AsyncIterable<GeminiResponse>
 ): AsyncIterableIterator<BBRTChunk> {
   for await (const chunk of stream) {
-    // console.log('GEMINI RESPONSE CHUNK', JSON.stringify(chunk, null, 2));
     // TODO(aomarks) Sometimes we get no parts, just a mostly empty message.
     // That should probably generate an error, which should somehow appear on
     // this stream.
@@ -119,14 +117,14 @@ export interface GeminiTextPart {
 export interface GeminiFunctionCall {
   functionCall: {
     name: string;
-    args: Record<string, unknown>;
+    args: unknown;
   };
 }
 
 export interface GeminiFunctionResponse {
   functionResponse: {
     name: string;
-    response: Record<string, unknown>;
+    response: unknown;
   };
 }
 
@@ -172,19 +170,17 @@ export async function bbrtTurnsToGeminiContents(
       case "user-tool-responses": {
         contents.push({
           role: "user",
-          parts: await Promise.all(
-            turn.responses.map(async (response) => ({
-              functionResponse: {
-                name: (await response.tool.declaration()).name,
-                response: response.response.output,
-                // TOOD(aomarks) It really feels like we should also provide
-                // the arguments or an id, since we might have more than one
-                // call to the same tool. Maybe it uses the ordering (which we
-                // preserve), or maybe the LLM just figures it out from
-                // context most of the time anyway.
-              },
-            }))
-          ),
+          parts: turn.responses.map((response) => ({
+            functionResponse: {
+              name: response.tool.metadata.id,
+              response: response.response.output,
+              // TOOD(aomarks) It really feels like we should also provide the
+              // arguments or an id, since we might have more than one call to
+              // the same tool. Maybe it uses the ordering (which we preserve),
+              // or maybe the LLM just figures it out from context most of the
+              // time anyway.
+            },
+          })),
         });
         break;
       }
@@ -198,9 +194,9 @@ export async function bbrtTurnsToGeminiContents(
           content.parts.push(
             ...(await Promise.all(
               turn.toolCalls.map(
-                async (toolCall): Promise<GeminiPart> => ({
+                (toolCall): GeminiPart => ({
                   functionCall: {
-                    name: (await toolCall.tool.declaration()).name,
+                    name: toolCall.tool.metadata.id,
                     args: toolCall.args,
                   },
                 })
@@ -240,8 +236,8 @@ function randomOpenAIFunctionCallStyleId() {
 
 export function simplifyJsonSchemaForGemini(
   rootInput: JSONSchema7
-): GeminiParameterSchema {
-  const rootOutput: GeminiParameterSchema = { type: "object" };
+): GeminiParameterSchema | undefined {
+  const rootOutput: GeminiParameterSchema = { type: "object", properties: {} };
   function visit(input: JSONSchema7, output: GeminiParameterSchema) {
     if (input.type === "object") {
       output.type = "object";
@@ -273,11 +269,11 @@ export function simplifyJsonSchemaForGemini(
     // TODO(aomarks) More cases to support here!
   }
   visit(rootInput, rootOutput);
-  console.log(
-    "SIMPLIFIED JSON SCHEMA FOR GEMINI",
-    JSON.stringify(rootInput, null, 2),
-    "\n",
-    JSON.stringify(rootOutput, null, 2)
-  );
+  if (Object.keys(rootOutput.properties ?? {}).length === 0) {
+    // Gemini really doesn't like when you specify an object with no properties,
+    // so you can't have an object here at all if the function call has no
+    // parameters.
+    return undefined;
+  }
   return rootOutput;
 }

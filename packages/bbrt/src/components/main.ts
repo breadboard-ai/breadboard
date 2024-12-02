@@ -10,11 +10,14 @@ import { classMap } from "lit/directives/class-map.js";
 import { Signal } from "signal-polyfill";
 import { SignalArray } from "signal-utils/array";
 import { SignalSet } from "signal-utils/set";
+import { BreadboardToolProvider } from "../breadboard/breadboard-tool-provider.js";
 import { readBoardServersFromIndexedDB } from "../breadboard/indexed-db-servers.js";
 import type { Config } from "../config.js";
 import { BBRTConversation } from "../llm/conversation.js";
 import type { BBRTModel } from "../llm/model.js";
 import { IndexedDBSettingsSecrets } from "../secrets/indexed-db-secrets.js";
+import { ActivateTool } from "../tools/activate-tool.js";
+import { BoardLister } from "../tools/list-tools.js";
 import { ToolProvider } from "../tools/tool-provider.js";
 import type { BBRTTool } from "../tools/tool.js";
 import "./chat.js";
@@ -134,16 +137,27 @@ export class BBRTMain extends LitElement {
   }
 
   async #discoverToolProviders() {
-    const providers = await readBoardServersFromIndexedDB(this.#secrets);
-    if (!providers.ok) {
+    const servers = await readBoardServersFromIndexedDB();
+    if (!servers.ok) {
       console.error(
         "Failed to read board servers from IndexedDB:",
-        providers.error
+        servers.error
       );
       return;
     }
     this.#toolProviders.length = 0;
-    this.#toolProviders.push(...providers.value);
+    this.#toolProviders.push(
+      ...servers.value.map(
+        (server) => new BreadboardToolProvider(server, this.#secrets)
+      )
+    );
+    this.#activeTools.clear();
+    // TODO(aomarks) Casts should not be needed. Something to do with the
+    // default parameter being unknown instead of any.
+    this.#activeTools.add(new BoardLister(servers.value) as BBRTTool);
+    this.#activeTools.add(
+      new ActivateTool(this.#toolProviders, this.#activeTools) as BBRTTool
+    );
   }
 }
 

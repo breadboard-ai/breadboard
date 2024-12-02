@@ -134,9 +134,7 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       this.#roleIcon,
       html`<div part="contents">
         <div id="toolResponses">
-          ${turn.responses.map(({ tool, args, response }) => {
-            return tool.renderResult(args, response);
-          })}
+          ${turn.responses.map(({ invocation }) => invocation.renderContent())}
         </div>
       </div>`,
     ];
