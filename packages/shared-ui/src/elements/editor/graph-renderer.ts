@@ -1735,6 +1735,8 @@ export class GraphRenderer extends LitElement {
     window.addEventListener("keyup", this.#onKeyUpBound);
     window.addEventListener("keydown", this.#onKeyDownBound);
     this.addEventListener("wheel", this.#onWheelBound, { passive: false });
+
+    this.moveToSelection(false);
   }
 
   disconnectedCallback(): void {
