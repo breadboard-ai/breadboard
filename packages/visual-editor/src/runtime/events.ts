@@ -115,7 +115,7 @@ export class RuntimeSelectionChangeEvent extends Event {
 }
 
 export class RuntimeVisualChangeEvent extends Event {
-  static eventName = "runtimevisualnchange" as const;
+  static eventName = "runtimevisualchange" as const;
 
   constructor(public readonly visualChangeId: WorkspaceVisualChangeId) {
     super(RuntimeVisualChangeEvent.eventName, { ...eventInit });

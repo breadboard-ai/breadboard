@@ -247,6 +247,10 @@ export class Main extends LitElement {
   #lastVisualChangeId: WorkspaceVisualChangeId | null = null;
   #lastPointerPosition = { x: 0, y: 0 };
 
+  // Monotonically increases whenever the graph topology of a graph in the
+  // current tab changes. Graph topology == any non-visual change to the graph.
+  #graphTopologyUpdateId: number = 0;
+
   #globalCommands: BreadboardUI.Types.Command[] = [
     {
       title: "Open board...",
@@ -429,6 +433,15 @@ export class Main extends LitElement {
         this.#runtime = runtime;
         this.#graphStore = runtime.board.getGraphStore();
         this.#boardServers = runtime.board.getBoardServers() || [];
+
+        this.#graphStore.addEventListener("update", (evt) => {
+          const { mainGraphId } = evt;
+          if (mainGraphId !== this.tab?.mainGraphId) {
+            return;
+          }
+          this.#graphTopologyUpdateId++;
+          this.requestUpdate();
+        });
 
         this.#runtime.edit.addEventListener(
           Runtime.Events.RuntimeBoardEnhanceEvent.eventName,
@@ -2802,6 +2815,7 @@ export class Main extends LitElement {
               .tabURLs=${tabURLs}
               .selectionState=${this.#selectionState}
               .visualChangeId=${this.#lastVisualChangeId}
+              .graphTopologyUpdateId=${this.#graphTopologyUpdateId}
               @bbeditorpositionchange=${(
                 evt: BreadboardUI.Events.EditorPointerPositionChangeEvent
               ) => {
