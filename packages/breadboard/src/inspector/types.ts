@@ -49,6 +49,10 @@ import {
   EditableGraphOptions,
   Result,
 } from "../editor/types.js";
+import {
+  TypedEventTarget,
+  TypedEventTargetType,
+} from "../utils/typed-event-target.js";
 
 export type GraphVersion = number;
 
@@ -243,102 +247,112 @@ export interface ValidateError {
 
 export type InspectableSubgraphs = Record<GraphIdentifier, InspectableGraph>;
 
-export type InspectableGraph = {
-  /**
-   * Returns the underlying `GraphDescriptor` object.
-   * TODO: Replace all uses of it with a proper inspector API.
-   */
-  raw(): GraphDescriptor;
-  /**
-   * Returns this graph's metadata, if exists.
-   */
-  metadata(): GraphMetadata | undefined;
-  /**
-   * Returns the node with the given id, or undefined if no such node exists.
-   * @param id id of the node to find
-   */
-  nodeById(id: NodeIdentifier): InspectableNode | undefined;
-  /**
-   * Returns all nodes in the graph.
-   */
-  nodes(): InspectableNode[];
-  /**
-   * Returns all edges of the graph.
-   */
-  edges(): InspectableEdge[];
-  /**
-   * Returns true if the edge exists in the graph.
-   */
-  hasEdge(edge: Edge): boolean;
-  /**
-   * Returns all kits in the graph.
-   */
-  kits(): InspectableKit[];
-  /**
-   * Returns all nodes of the given type.
-   * @param type type of the nodes to find
-   */
-  nodesByType(type: NodeTypeIdentifier): InspectableNode[];
-  /**
-   * Returns the `InspectableNodeType` for a given node or undefined if the
-   * node does not exist.
-   */
-  typeForNode(id: NodeIdentifier): InspectableNodeType | undefined;
-  /**
-   * Returns the `InspectableNodeType` for a given type or undefined if the type
-   * does not exist.
-   */
-  typeById(id: NodeTypeIdentifier): InspectableNodeType | undefined;
-  /**
-   * Returns the nodes that have an edge to the node with the given id.
-   * @param id id of the node to find incoming nodes for
-   */
-  incomingForNode(id: NodeIdentifier): InspectableEdge[];
-  /**
-   * Returns the nodes that have an edge from the node with the given id.
-   * @param id id of the node to find outgoing nodes for
-   */
-  outgoingForNode(id: NodeIdentifier): InspectableEdge[];
-  /**
-   * Returns a list of entry nodes for the graph.
-   */
-  entries(): InspectableNode[];
-  /**
-   * Returns the API of the graph. This function is designed to match the
-   * output of the `NodeDescriberFunction`.
-   */
-  describe(inputs?: InputValues): Promise<NodeDescriberResult>;
-  /**
-   * Returns the subgraphs that are embedded in this graph or `undefined` if
-   * this is already a subgraph
-   */
-  graphs(): InspectableSubgraphs | undefined;
-  /**
-   * Returns the id of this graph. If this is a main graph,
-   * the value will be "". Otherwise, it will be the id of this subgraph.
-   */
-  graphId(): GraphIdentifier;
-  /**
-   * Returns a module by name.
-   */
-  moduleById(id: ModuleIdentifier): InspectableModule | undefined;
-  /**
-   * Returns the modules that are embedded in this graph.
-   */
-  modules(): InspectableModules;
-  /**
-   * Returns true if the graph represents an `ImperativeGraph` instance.
-   * Imperative `InspectableGraph` will still show nodes and edges, but
-   * it is just a fixed topology that represents how the graph is run.
-   */
-  imperative(): boolean;
-  /**
-   * Returns the name of the designated "main" module if this is an
-   * `ImperativeGraph` instance and `undefined` if it is not yet set or
-   * this is a `DeclarativeGraph` instance.
-   */
-  main(): string | undefined;
+export type InspectableGraphUpdateEvent = Event;
+
+type InspectableGraphEventMap = {
+  update: InspectableGraphUpdateEvent;
 };
+
+export type InspectableGraphEventTarget =
+  TypedEventTarget<InspectableGraphEventMap>;
+
+export type InspectableGraph =
+  TypedEventTargetType<InspectableGraphEventMap> & {
+    /**
+     * Returns the underlying `GraphDescriptor` object.
+     * TODO: Replace all uses of it with a proper inspector API.
+     */
+    raw(): GraphDescriptor;
+    /**
+     * Returns this graph's metadata, if exists.
+     */
+    metadata(): GraphMetadata | undefined;
+    /**
+     * Returns the node with the given id, or undefined if no such node exists.
+     * @param id id of the node to find
+     */
+    nodeById(id: NodeIdentifier): InspectableNode | undefined;
+    /**
+     * Returns all nodes in the graph.
+     */
+    nodes(): InspectableNode[];
+    /**
+     * Returns all edges of the graph.
+     */
+    edges(): InspectableEdge[];
+    /**
+     * Returns true if the edge exists in the graph.
+     */
+    hasEdge(edge: Edge): boolean;
+    /**
+     * Returns all kits in the graph.
+     */
+    kits(): InspectableKit[];
+    /**
+     * Returns all nodes of the given type.
+     * @param type type of the nodes to find
+     */
+    nodesByType(type: NodeTypeIdentifier): InspectableNode[];
+    /**
+     * Returns the `InspectableNodeType` for a given node or undefined if the
+     * node does not exist.
+     */
+    typeForNode(id: NodeIdentifier): InspectableNodeType | undefined;
+    /**
+     * Returns the `InspectableNodeType` for a given type or undefined if the type
+     * does not exist.
+     */
+    typeById(id: NodeTypeIdentifier): InspectableNodeType | undefined;
+    /**
+     * Returns the nodes that have an edge to the node with the given id.
+     * @param id id of the node to find incoming nodes for
+     */
+    incomingForNode(id: NodeIdentifier): InspectableEdge[];
+    /**
+     * Returns the nodes that have an edge from the node with the given id.
+     * @param id id of the node to find outgoing nodes for
+     */
+    outgoingForNode(id: NodeIdentifier): InspectableEdge[];
+    /**
+     * Returns a list of entry nodes for the graph.
+     */
+    entries(): InspectableNode[];
+    /**
+     * Returns the API of the graph. This function is designed to match the
+     * output of the `NodeDescriberFunction`.
+     */
+    describe(inputs?: InputValues): Promise<NodeDescriberResult>;
+    /**
+     * Returns the subgraphs that are embedded in this graph or `undefined` if
+     * this is already a subgraph
+     */
+    graphs(): InspectableSubgraphs | undefined;
+    /**
+     * Returns the id of this graph. If this is a main graph,
+     * the value will be "". Otherwise, it will be the id of this subgraph.
+     */
+    graphId(): GraphIdentifier;
+    /**
+     * Returns a module by name.
+     */
+    moduleById(id: ModuleIdentifier): InspectableModule | undefined;
+    /**
+     * Returns the modules that are embedded in this graph.
+     */
+    modules(): InspectableModules;
+    /**
+     * Returns true if the graph represents an `ImperativeGraph` instance.
+     * Imperative `InspectableGraph` will still show nodes and edges, but
+     * it is just a fixed topology that represents how the graph is run.
+     */
+    imperative(): boolean;
+    /**
+     * Returns the name of the designated "main" module if this is an
+     * `ImperativeGraph` instance and `undefined` if it is not yet set or
+     * this is a `DeclarativeGraph` instance.
+     */
+    main(): string | undefined;
+  };
 
 /**
  * Options to supply to the `inspectableGraph` function.

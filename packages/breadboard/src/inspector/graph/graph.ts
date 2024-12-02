@@ -20,27 +20,28 @@ import {
 import {
   InspectableEdge,
   InspectableGraph,
+  InspectableGraphEventTarget,
   InspectableKit,
   InspectableModules,
   InspectableNode,
   InspectableNodeType,
   InspectableSubgraphs,
   MutableGraph,
-  NodeTypeDescriberOptions,
 } from "../types.js";
-import {
-  GraphDescriberManager,
-  NodeTypeDescriberManager,
-} from "./describer-manager.js";
+import { GraphDescriberManager } from "./describer-manager.js";
 import { GraphQueries } from "./graph-queries.js";
 
 export { Graph };
 
-class Graph implements InspectableGraph {
+class Graph
+  extends (EventTarget as InspectableGraphEventTarget)
+  implements InspectableGraph
+{
   #graphId: GraphIdentifier;
   #mutable: MutableGraph;
 
   constructor(graphId: GraphIdentifier, mutableGraph: MutableGraph) {
+    super();
     this.#graphId = graphId;
     this.#mutable = mutableGraph;
   }
