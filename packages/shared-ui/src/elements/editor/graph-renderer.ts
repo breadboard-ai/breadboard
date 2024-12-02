@@ -143,6 +143,8 @@ export class GraphRenderer extends LitElement {
       return;
     }
 
+    this.#userHasInteracted = true;
+
     const { contentRect } = entries[0];
     const delta = new PIXI.Point(0, 0);
     if (this.#lastContentRect) {
@@ -172,6 +174,7 @@ export class GraphRenderer extends LitElement {
     this.#lastContentRect = contentRect;
   });
 
+  #userHasInteracted = false;
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #onKeyUpBound = this.#onKeyUp.bind(this);
   #onWheelBound = this.#onWheel.bind(this);
@@ -383,6 +386,9 @@ export class GraphRenderer extends LitElement {
   ) {
     super();
 
+    this.#container.position.set(0, 0);
+    this.#container.scale.set(1, 1);
+
     this.#app.stage.addChild(this.#container);
     this.#app.stage.eventMode = "static";
     this.tabIndex = 0;
@@ -481,6 +487,7 @@ export class GraphRenderer extends LitElement {
           this.#mode = MODE.MOVE;
         }
 
+        this.#userHasInteracted = true;
         this.#selectWithin(new PIXI.Rectangle(0, 0, 0, 0), evt.shiftKey);
         this.#emitSelection();
         setStartValues(evt);
@@ -518,6 +525,7 @@ export class GraphRenderer extends LitElement {
     const onWheel = (evt: PIXI.FederatedWheelEvent) => {
       // The user has interacted – stop the auto-zoom/pan.
       this.zoomToHighlightedNode = false;
+      this.#userHasInteracted = true;
       this.dispatchEvent(new GraphInteractionEvent());
 
       if (evt.metaKey || evt.ctrlKey) {
@@ -1366,6 +1374,9 @@ export class GraphRenderer extends LitElement {
     return null;
   }
 
+  /**
+   * @deprecated
+   */
   zoomToNode(id: string, subGraphId: string | null, offset = 0) {
     this.zoomToFit(0, subGraphId, subGraphId !== null);
 
@@ -1432,6 +1443,9 @@ export class GraphRenderer extends LitElement {
     }
   }
 
+  /**
+   * @deprecated
+   */
   zoomToFit(
     reduceRenderBoundsWidth = 0,
     subGraphId: string | null = null,
@@ -1500,6 +1514,170 @@ export class GraphRenderer extends LitElement {
     if (this.#background) {
       this.#background.tileTransform.setFromMatrix(matrix);
     }
+  }
+
+  resetAllSelectionStates() {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      graph.selectionState = null;
+    }
+  }
+
+  #targetContainerMatrix = new PIXI.Matrix();
+  #setTargetContainerMatrixFromBounds(bounds: PIXI.Bounds) {
+    this.#targetContainerMatrix.identity();
+
+    if (!bounds.isValid) {
+      return;
+    }
+
+    const rendererBounds = this.getBoundingClientRect();
+    this.#targetContainerMatrix.translate(
+      -bounds.x + (rendererBounds.width - bounds.width) * 0.5,
+      -bounds.y + (rendererBounds.height - bounds.height) * 0.5
+    );
+
+    // Scale.
+    const delta = Math.min(
+      (rendererBounds.width - 2 * this.#padding) / bounds.width,
+      (rendererBounds.height - 2 * this.#padding) / bounds.height,
+      1
+    );
+
+    if (delta < this.minScale) {
+      this.minScale = delta;
+    }
+
+    const pivot = {
+      x: rendererBounds.width / 2,
+      y: rendererBounds.height / 2,
+    };
+
+    this.#targetContainerMatrix
+      .translate(-pivot.x, -pivot.y)
+      .scale(delta, delta)
+      .translate(pivot.x, pivot.y);
+
+    // Ensure that it is always on a square pixel.
+    this.#targetContainerMatrix.tx = Math.round(this.#targetContainerMatrix.tx);
+    this.#targetContainerMatrix.ty = Math.round(this.#targetContainerMatrix.ty);
+  }
+
+  #createBoundsFromMainGraph() {
+    const bounds = new PIXI.Bounds();
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph) || graph.subGraphId) {
+        continue;
+      }
+
+      // It's possible Dagre has placed the graph away from 0, 0, so we account
+      // for that here by asking for the global position.
+      const graphPosition = graph.position;
+      const x = -graphPosition.x;
+      const y = -graphPosition.y;
+      const bound = new PIXI.Bounds(x, y, x + graph.width, y + graph.height);
+
+      bounds.addBounds(bound);
+    }
+
+    return bounds;
+  }
+
+  #createBoundsFromSelection() {
+    const bounds = new PIXI.Bounds();
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph) || !graph.selectionState) {
+        continue;
+      }
+
+      for (const node of graph.selectionState.nodes) {
+        const graphNode = graph.getGraphNodeById(node);
+        const graphNodePosition = graph.getNodeLayoutPosition(node);
+        if (!graphNode || !graphNodePosition) {
+          continue;
+        }
+
+        const x = graphNodePosition.x;
+        const y = graphNodePosition.y;
+        const bound = new PIXI.Bounds(
+          x,
+          y,
+          x + graphNode.width,
+          y + graphNode.height
+        );
+
+        bounds.addBounds(bound);
+      }
+
+      // TODO: Comments.
+    }
+
+    return bounds;
+  }
+
+  moveToSelection(animate = false) {
+    this.#userHasInteracted = false;
+
+    const setContainer = (target = this.#targetContainerMatrix) => {
+      this.#container.setFromMatrix(target);
+      this.#background?.tileTransform.setFromMatrix(target);
+    };
+
+    this.#setTargetContainerMatrixFromBounds(this.#createBoundsFromSelection());
+    if (this.#targetContainerMatrix.isIdentity()) {
+      animate = false;
+
+      this.#setTargetContainerMatrixFromBounds(
+        this.#createBoundsFromMainGraph()
+      );
+    }
+
+    if (this.#targetContainerMatrix.isIdentity()) {
+      console.warn("Unable to set container matrix");
+      return;
+    }
+
+    if (!animate) {
+      setContainer();
+      return;
+    }
+
+    const EASING = 10;
+    const THRESHOLD = 0.001;
+    const update = () => {
+      if (this.#userHasInteracted) {
+        return;
+      }
+
+      const current = this.#container.worldTransform.clone();
+
+      current.a += (this.#targetContainerMatrix.a - current.a) / EASING;
+      current.b += (this.#targetContainerMatrix.b - current.b) / EASING;
+      current.c += (this.#targetContainerMatrix.c - current.c) / EASING;
+      current.d += (this.#targetContainerMatrix.d - current.d) / EASING;
+      current.tx += (this.#targetContainerMatrix.tx - current.tx) / EASING;
+      current.ty += (this.#targetContainerMatrix.ty - current.ty) / EASING;
+
+      if (
+        Math.abs(current.a - this.#targetContainerMatrix.a) < THRESHOLD &&
+        Math.abs(current.b - this.#targetContainerMatrix.b) < THRESHOLD &&
+        Math.abs(current.c - this.#targetContainerMatrix.c) < THRESHOLD &&
+        Math.abs(current.d - this.#targetContainerMatrix.d) < THRESHOLD &&
+        Math.abs(current.tx - this.#targetContainerMatrix.tx) < THRESHOLD &&
+        Math.abs(current.ty - this.#targetContainerMatrix.ty) < THRESHOLD
+      ) {
+        setContainer();
+        return;
+      }
+
+      setContainer(current);
+      requestAnimationFrame(update);
+    };
+
+    requestAnimationFrame(update);
   }
 
   resetGraphLayout() {

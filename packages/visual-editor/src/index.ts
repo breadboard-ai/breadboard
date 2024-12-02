@@ -580,6 +580,11 @@ export class Main extends LitElement {
               if (this.tab.graph.title) {
                 this.#setPageTitle(this.tab.graph.title);
               }
+
+              this.#runtime.select.refresh(
+                this.tab.id,
+                this.#runtime.util.createWorkspaceSelectionChangeId()
+              );
             } else {
               this.#clearTabParams();
               this.#setPageTitle(null);

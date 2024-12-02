@@ -85,7 +85,7 @@ export class WorkspaceOutline extends LitElement {
   renderId = "";
 
   @property({ reflect: true })
-  mode: "list" | "tree" = "list";
+  mode: "list" | "tree" = "tree";
 
   @property()
   selectionState: WorkspaceSelectionStateWithChangeId | null = null;
@@ -869,12 +869,14 @@ export class WorkspaceOutline extends LitElement {
               @click=${(evt: PointerEvent) => {
                 const isMac = navigator.platform.indexOf("Mac") === 0;
                 const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+                const replaceExistingSelection =
+                  this.mode === "list" || !isCtrlCommand;
 
                 this.#changeWorkspaceItem(
                   subGraphId,
                   null,
                   node.descriptor.id,
-                  !isCtrlCommand
+                  replaceExistingSelection
                 );
               }}
             >
@@ -1021,7 +1023,10 @@ export class WorkspaceOutline extends LitElement {
               @click=${(evt: PointerEvent) => {
                 evt.stopPropagation();
 
-                this.#changeWorkspaceItem(null, null);
+                const isMac = navigator.platform.indexOf("Mac") === 0;
+                const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+                this.#changeWorkspaceItem(null, null, null, !isCtrlCommand);
               }}
             >
               ${title}
@@ -1107,9 +1112,19 @@ export class WorkspaceOutline extends LitElement {
             @click=${(evt: PointerEvent) => {
               evt.stopPropagation();
 
+              const isMac = navigator.platform.indexOf("Mac") === 0;
+              const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+              const replaceExistingSelection =
+                this.mode === "list" || !isCtrlCommand;
+
               const subGraphId = subItem.type === "declarative" ? id : null;
               const moduleId = subItem.type === "imperative" ? id : null;
-              this.#changeWorkspaceItem(subGraphId, moduleId);
+              this.#changeWorkspaceItem(
+                subGraphId,
+                moduleId,
+                null,
+                replaceExistingSelection
+              );
             }}
           >
             ${subItem.title}
@@ -1324,10 +1339,7 @@ export class WorkspaceOutline extends LitElement {
         subGraphId,
         Utils.Workspace.createEmptyGraphSelectionState()
       );
-    } else if (!subGraphId && replaceExistingSelections) {
-      // In the event there's no subgraph _and_ we're replacing the contents of
-      // the selection treat that as an instruction to clear the selection.
-      selectionState.graphs.clear();
+    } else if (!subGraphId && !selectionState.graphs.has(MAIN_BOARD_ID)) {
       selectionState.graphs.set(
         MAIN_BOARD_ID,
         Utils.Workspace.createEmptyGraphSelectionState()
@@ -1336,6 +1348,8 @@ export class WorkspaceOutline extends LitElement {
 
     // Similarly for the module ID.
     if (moduleId && !selectionState.modules.has(moduleId)) {
+      selectionState.graphs.clear();
+      selectionState.modules.clear();
       selectionState.modules.add(moduleId);
     } else if (!moduleId && replaceExistingSelections) {
       selectionState.modules.clear();
@@ -1344,10 +1358,10 @@ export class WorkspaceOutline extends LitElement {
     if (!moduleId) {
       const graphSelection = selectionState.graphs.get(subGraph);
       if (graphSelection && nodeId) {
-        if (graphSelection.nodes.add(nodeId)) {
-          graphSelection.nodes.add(nodeId);
-        } else {
+        if (graphSelection.nodes.has(nodeId) && replaceExistingSelections) {
           graphSelection.nodes.delete(nodeId);
+        } else {
+          graphSelection.nodes.add(nodeId);
         }
       } else if (graphSelection) {
         // Append all nodes.

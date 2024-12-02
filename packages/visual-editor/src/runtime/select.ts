@@ -289,4 +289,8 @@ export class Select extends EventTarget {
     this.#clear(tab);
     this.#emit(tab, selectionChangeId);
   }
+
+  refresh(tab: TabId, selectionChangeId: WorkspaceSelectionChangeId) {
+    this.#emit(tab, selectionChangeId);
+  }
 }
