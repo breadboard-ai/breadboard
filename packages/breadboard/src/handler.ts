@@ -18,7 +18,6 @@ import type {
   OutputValues,
 } from "./types.js";
 import { graphUrlLike } from "./utils/graph-url-like.js";
-import { Throttler } from "./utils/throttler.js";
 
 const getHandlerFunction = (handler: NodeHandler): NodeHandlerFunction => {
   if ("invoke" in handler && handler.invoke) return handler.invoke;
@@ -88,33 +87,7 @@ export async function getHandler(
   throw new Error(`No handler for node type "${type}"`);
 }
 
-type GraphHandlerThrottler = Throttler<
-  [NodeTypeIdentifier, NodeHandlerContext],
-  NodeHandlerObject | undefined
->;
-
-const HANDLER_THROTTLE_DELAY = 10000;
-
-const GRAPH_HANDLER_CACHE = new Map<
-  NodeTypeIdentifier,
-  GraphHandlerThrottler
->();
-
 export async function getGraphHandler(
-  type: NodeTypeIdentifier,
-  context: NodeHandlerContext
-): Promise<NodeHandlerObject | undefined> {
-  let throttler;
-  if (!GRAPH_HANDLER_CACHE.has(type)) {
-    throttler = new Throttler(getGraphHandlerInternal, HANDLER_THROTTLE_DELAY);
-    GRAPH_HANDLER_CACHE.set(type, throttler);
-  } else {
-    throttler = GRAPH_HANDLER_CACHE.get(type)!;
-  }
-  return throttler.call({}, type, context);
-}
-
-async function getGraphHandlerInternal(
   type: NodeTypeIdentifier,
   context: NodeHandlerContext
 ): Promise<NodeHandlerObject | undefined> {
