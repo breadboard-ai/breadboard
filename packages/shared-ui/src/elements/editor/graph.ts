@@ -135,7 +135,9 @@ export class Graph extends PIXI.Container {
 
       if (this.#isInitialDraw) {
         this.#isInitialDraw = false;
-        this.emit(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW);
+        requestAnimationFrame(() => {
+          this.emit(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW);
+        });
       }
     };
 

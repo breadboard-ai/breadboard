@@ -4,25 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
-  createGraphStore,
-  createLoader,
   GraphDescriptor,
   GraphProviderCapabilities,
   InspectableGraph,
   InspectableModules,
-  InspectableNodePorts,
   InspectableRun,
   Kit,
-  NodeHandlerMetadata,
 } from "@google-labs/breadboard";
-import {
-  LitElement,
-  html,
-  css,
-  nothing,
-  HTMLTemplateResult,
-  PropertyValues,
-} from "lit";
+import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
 import { CodeEditor, GraphRenderer, ModuleRibbonMenu } from "../elements";
@@ -32,12 +21,10 @@ import {
   ModuleLanguage,
   Modules,
 } from "@breadboard-ai/types";
-import { GraphAssets } from "../editor/graph-assets";
 import { until } from "lit/directives/until.js";
 import {
   CodeChangeEvent,
   CommandsAvailableEvent,
-  GraphInitialDrawEvent,
   ModuleEditEvent,
   OverflowMenuActionEvent,
   ToastEvent,
@@ -49,7 +36,6 @@ import {
   Command,
   TopGraphRunResult,
 } from "../../types/types";
-import { classMap } from "lit/directives/class-map.js";
 import { typeDeclarations as builtIns } from "@breadboard-ai/jsandbox";
 import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
 import { getMappedQuickJsModList } from "./ts-library";
@@ -671,119 +657,6 @@ export class ModuleEditor extends LitElement {
     };
   }
 
-  async #processGraph(descriptor: GraphDescriptor): Promise<GraphRenderer> {
-    const graphStore = createGraphStore({
-      kits: this.kits,
-      loader: createLoader(),
-      sandbox: {
-        runModule: () => {
-          throw new Error(
-            "The describer in module editor should not need the sandbox"
-          );
-        },
-      },
-    });
-    const adding = graphStore.addByDescriptor(descriptor);
-    if (!adding.success) {
-      return this.#graphRenderer;
-    }
-    const graph = graphStore.inspect(adding.result, "");
-    if (!graph) {
-      return this.#graphRenderer;
-    }
-
-    if (GraphAssets.assetPrefix !== this.assetPrefix) {
-      GraphAssets.instance().loadAssets(this.assetPrefix);
-      await GraphAssets.instance().loaded;
-    }
-
-    await this.#graphRenderer.ready;
-
-    if (!graph) {
-      this.#graphRenderer.deleteGraphs();
-      return this.#graphRenderer;
-    }
-
-    this.#graphVersion++;
-    this.#graphRenderer.readOnly = true;
-    this.#graphRenderer.padding = 28;
-
-    const selectedGraph = graph;
-
-    // Force a reset when the board changes.
-    const url = graph.raw().url ?? "module-graph";
-
-    const ports = new Map<string, InspectableNodePorts>();
-    const typeMetadata = new Map<string, NodeHandlerMetadata>();
-    const graphVersion = this.#graphVersion;
-
-    for (const node of selectedGraph.nodes()) {
-      ports.set(node.descriptor.id, await node.ports());
-      try {
-        typeMetadata.set(node.descriptor.type, await node.type().metadata());
-      } catch (err) {
-        console.warn(err);
-      }
-
-      if (this.#graphVersion !== graphVersion) {
-        // Another update has come in, bail out.
-        return this.#graphRenderer;
-      }
-    }
-
-    if (!selectedGraph) {
-      return this.#graphRenderer;
-    }
-
-    this.#graphRenderer.hideAllGraphs();
-    this.#graphRenderer.removeGraphs([]);
-
-    // Attempt to update the graph if it already exists.
-    const updated = this.#graphRenderer.updateGraphByUrl(url, null, {
-      showNodeTypeDescriptions: true,
-      showNodePreviewValues: true,
-      collapseNodesByDefault: false,
-      ports: ports,
-      typeMetadata,
-      edges: selectedGraph.edges(),
-      nodes: selectedGraph.nodes(),
-      metadata: selectedGraph.metadata(),
-    });
-
-    if (updated) {
-      this.#graphRenderer.showGraph(url, null);
-      return this.#graphRenderer;
-    }
-
-    this.#graphRenderer.createGraph({
-      url,
-      title: "Module Graph",
-      subGraphId: null,
-      showNodeTypeDescriptions: true,
-      showNodePreviewValues: true,
-      collapseNodesByDefault: false,
-      ports: ports,
-      typeMetadata,
-      edges: selectedGraph.edges(),
-      nodes: selectedGraph.nodes(),
-      metadata: selectedGraph.metadata() || {},
-      modules: selectedGraph.modules(),
-      visible: false,
-      selectionState: null,
-    });
-
-    this.#graphRenderer.addEventListener(
-      GraphInitialDrawEvent.eventName,
-      () => {
-        this.#graphRenderer.showGraph(url, null);
-        this.#graphRenderer.zoomToFit(0);
-      },
-      { once: true }
-    );
-
-    return this.#graphRenderer;
-  }
-
   #togglePreview(value = !this.showModulePreview) {
     this.showModulePreview = value;
     globalThis.localStorage.setItem(PREVIEW_KEY, `${this.showModulePreview}`);
@@ -814,11 +687,10 @@ export class ModuleEditor extends LitElement {
 
     const isMainModule = this.graph?.main() === this.moduleId;
     const moduleGraphDescriptor = this.#createModuleGraph(isMainModule);
-    let moduleGraph: HTMLTemplateResult | symbol = nothing;
+    // let moduleGraph: HTMLTemplateResult | symbol = nothing;
     if (moduleGraphDescriptor) {
-      moduleGraph = html`${guard([this.moduleId, this.renderId], () => {
-        return html`${until(this.#processGraph(moduleGraphDescriptor))}`;
-      })}`;
+      // TODO: Reintroduce the graph.
+      // moduleGraph = nothing;
     }
 
     const module = this.modules[this.moduleId];
@@ -878,79 +750,71 @@ export class ModuleEditor extends LitElement {
 
     const isRunnable = !!module.metadata().runnable || isMainModule;
 
-    return html` <div
-        id="module-graph"
-        class=${classMap({
-          visible: (this.showModulePreview && isRunnable) || isMainModule,
-        })}
-      >
-        ${moduleGraph}
-      </div>
-      <section>
-        <bb-module-ribbon-menu
-          ${ref(this.#moduleRibbonMenuRef)}
-          .graph=${this.graph}
-          .modules=${this.modules}
-          .moduleId=${this.moduleId}
-          .canSave=${this.capabilities && this.capabilities.save}
-          .readOnly=${this.readOnly}
-          .isRunning=${isRunning}
-          .eventCount=${eventCount}
-          .isInputPending=${isInputPending}
-          .isError=${isError}
-          .isShowingBoardActivityOverlay=${this.isShowingBoardActivityOverlay}
-          .isShowingModulePreview=${this.showModulePreview}
-          .canShowModulePreview=${isRunnable}
-          .formatting=${this.formatting}
-          .renderId=${globalThis.crypto.randomUUID()}
-          .errorCount=${this.errorCount}
-          .errorDetails=${this.#errorDetails}
-          .showErrors=${this.#compilationEnvironment.language === "typescript"}
-          @bboverflowmenuaction=${(evt: OverflowMenuActionEvent) => {
-            if (evt.action.startsWith("error-")) {
-              evt.stopImmediatePropagation();
-              if (!this.#codeEditorRef.value) {
-                return;
-              }
-
-              const location = Number.parseInt(
-                evt.action.replace(/^error-/gim, ""),
-                10
-              );
-              if (Number.isNaN(location)) {
-                console.warn(`Unable to go to location ${evt.action}`);
-                return;
-              }
-
-              this.#codeEditorRef.value.gotoLocation(location);
-            }
-          }}
-          @input=${() => {
-            this.#processEditorCodeWithEnvironment();
-          }}
-          @bbmodulechosen=${(evt: Event) => {
-            if (!this.#confirmModuleChangeIfNeeded()) {
-              evt.stopImmediatePropagation();
-            }
-          }}
-          @bbtogglepreview=${() => this.#togglePreview()}
-          @bbformatmodulecode=${async () => {
-            if (this.formatting) {
+    return html` <section>
+      <bb-module-ribbon-menu
+        ${ref(this.#moduleRibbonMenuRef)}
+        .graph=${this.graph}
+        .modules=${this.modules}
+        .moduleId=${this.moduleId}
+        .canSave=${this.capabilities && this.capabilities.save}
+        .readOnly=${this.readOnly}
+        .isRunning=${isRunning}
+        .eventCount=${eventCount}
+        .isInputPending=${isInputPending}
+        .isError=${isError}
+        .isShowingBoardActivityOverlay=${this.isShowingBoardActivityOverlay}
+        .isShowingModulePreview=${this.showModulePreview}
+        .canShowModulePreview=${isRunnable}
+        .formatting=${this.formatting}
+        .renderId=${globalThis.crypto.randomUUID()}
+        .errorCount=${this.errorCount}
+        .errorDetails=${this.#errorDetails}
+        .showErrors=${this.#compilationEnvironment.language === "typescript"}
+        @bboverflowmenuaction=${(evt: OverflowMenuActionEvent) => {
+          if (evt.action.startsWith("error-")) {
+            evt.stopImmediatePropagation();
+            if (!this.#codeEditorRef.value) {
               return;
             }
 
-            this.formatting = true;
-            await this.#formatCode();
-            this.formatting = false;
-          }}
-        ></bb-module-ribbon-menu>
-        <div id="code-container">
-          <div id="code-container-outer">
-            <div id="code-container-inner">
-              ${until(this.#createEditor(code, language, definitions))}
-            </div>
+            const location = Number.parseInt(
+              evt.action.replace(/^error-/gim, ""),
+              10
+            );
+            if (Number.isNaN(location)) {
+              console.warn(`Unable to go to location ${evt.action}`);
+              return;
+            }
+
+            this.#codeEditorRef.value.gotoLocation(location);
+          }
+        }}
+        @input=${() => {
+          this.#processEditorCodeWithEnvironment();
+        }}
+        @bbmodulechosen=${(evt: Event) => {
+          if (!this.#confirmModuleChangeIfNeeded()) {
+            evt.stopImmediatePropagation();
+          }
+        }}
+        @bbtogglepreview=${() => this.#togglePreview()}
+        @bbformatmodulecode=${async () => {
+          if (this.formatting) {
+            return;
+          }
+
+          this.formatting = true;
+          await this.#formatCode();
+          this.formatting = false;
+        }}
+      ></bb-module-ribbon-menu>
+      <div id="code-container">
+        <div id="code-container-outer">
+          <div id="code-container-inner">
+            ${until(this.#createEditor(code, language, definitions))}
           </div>
         </div>
-      </section>`;
+      </div>
+    </section>`;
   }
 }
