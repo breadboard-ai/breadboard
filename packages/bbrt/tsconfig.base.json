@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "Node16",
-    "moduleResolution": "Node16",
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "incremental": true,
     "sourceMap": true,
     "strict": true,
@@ -15,6 +15,8 @@
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
     "declarationMap": true,
-    "composite": true
+    "composite": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true
   }
 }

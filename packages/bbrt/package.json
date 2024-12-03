@@ -1,178 +1,124 @@
 {
   "name": "@breadboard-ai/bbrt",
-  "private": true,
   "version": "0.0.1",
   "description": "BBRT",
   "author": "Google LLC",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/breadboard-ai/bbrt#readme",
+  "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "bugs": {
-    "url": "https://github.com/breadboard-ai/bbrt/issues"
+    "url": "https://github.com/breadboard-ai/breadboard/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/breadboard-ai/bbrt.git",
-    "directory": "packages/core"
+    "url": "https://github.com/breadboard-ai/breadboard.git",
+    "directory": "packages/bbrt"
   },
   "type": "module",
-  "workspaces": [
-    "packages/*"
+  "main": "index.js",
+  "typings": "index.d.ts",
+  "exports": {
+    "./package.json": {
+      "default": "./package.json"
+    },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./index.js": {
+      "types": null,
+      "default": null
+    },
+    "./internal/*.js": {
+      "types": "./dist/internal/*.d.ts",
+      "default": null
+    },
+    "./*.js": {
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*.js"
+    }
+  },
+  "files": [
+    "**/*.js",
+    "**/*.d.ts",
+    "!test/",
+    "!src/",
+    "!.wireit/"
   ],
   "scripts": {
     "build": "wireit",
-    "test": "wireit",
-    "test:web": "wireit",
-    "test:node": "wireit",
+    "build:tsc": "wireit",
+    "test": "echo \"no tests yet\"",
     "lint": "wireit",
-    "prepack": "npm run build",
-  "homepage": "https://github.com/breadboard-ai/bbrt#readme",
-  "bugs": {
-    "url": "https://github.com/breadboard-ai/bbrt/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/breadboard-ai/bbrt.git",
-    "directory": "packages/core"
-  },
-  "type": "module",
-  "workspaces": [
-    "packages/*"
-  ],
-  "scripts": {
-    "build": "wireit",
-    "test": "wireit",
-    "test:web": "wireit",
-    "test:node": "wireit",
-    "lint": "wireit",
-    "format": "wireit"
+    "prepack": "npm run build"
   },
   "wireit": {
     "build": {
       "dependencies": [
-        "./packages/client:build",
-        "./packages/server:build"
+        "build:tsc",
+        "../breadboard:build",
+        "../core-kit:build",
+        "../template-kit:build"
       ]
     },
-    "test": {
+    "build:tsc": {
+      "command": "tsc --pretty",
       "dependencies": [
-        "test:web",
-        "test:node"
-      ]
-    },
-    "test:web": {
-      "dependencies": [
-        "./packages/client:test"
-      ]
-    },
-    "test:node": {
-      "dependencies": [
-        "./packages/server:test"
-      ]
-    },
-    "format": {
-      "command": "prettier \"./packages/*/src/**/*.ts\" --check --cache --cache-strategy=metadata --write",
-      "files": [
-        ".prettierrc.json",
-        "packages/*/src/**/*.ts"
+        "../breadboard:build:tsc",
+        "../core-kit:build:tsc",
+        "../template-kit:build:tsc"
       ],
-      "output": []
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "tsconfig.base.json",
+        "tsconfig.base.web.json"
+      ],
+      "output": [
+        "dist/",
+        "tsconfig.tsbuildinfo"
+      ],
+      "clean": "if-file-deleted"
     },
-    "lint": {
-      "dependencies": [
-        "lint:eslint",
-        "lint:prettier"
-      ]
-    },
-    "lint:eslint": {
-      "command": "eslint --color --cache --cache-location .eslintcache \"packages/*/src/**/*.ts\"",
+    "test:playwright": {
+      "command": "web-test-runner \"dist/test/**/*.test.js\" --node-resolve --playwright --browsers chromium",
+      "files": [],
+      "output": [],
       "dependencies": [
         "build"
+      ]
+    },
+    "lint": {
+      "command": "eslint . --ext .ts",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "build:tsc"
       ],
       "files": [
         ".eslintrc",
         "../../.eslintrc.json"
-        "./packages/client:build",
-        "./packages/server:build"
-      ]
-    },
-    "test": {
-      "dependencies": [
-        "test:web",
-        "test:node"
-      ]
-    },
-    "test:web": {
-      "dependencies": [
-        "./packages/client:test"
-      ]
-    },
-    "test:node": {
-      "dependencies": [
-        "./packages/server:test"
-      ]
-    },
-    "format": {
-      "command": "prettier \"./packages/*/src/**/*.ts\" --check --cache --cache-strategy=metadata --write",
-      "files": [
-        ".prettierrc.json",
-        "packages/*/src/**/*.ts"
-      ],
-      "output": []
-    },
-    "lint": {
-      "dependencies": [
-        "lint:eslint",
-        "lint:prettier"
-      ]
-    },
-    "lint:eslint": {
-      "command": "eslint --color --cache --cache-location .eslintcache \"packages/*/src/**/*.ts\"",
-      "dependencies": [
-        "build"
-      ],
-      "files": [
-        "eslint.config.js"
-      ],
-      "output": [
-        ".eslintcache"
-      ]
-    },
-    "lint:prettier": {
-      "command": "prettier \"./packages/*/src/**/*.ts\" --check --cache --cache-strategy=metadata",
-      "files": [
-        ".prettierrc.json",
-        "packages/*/src/**/*.ts"
       ],
       "output": []
     }
   },
+  "dependencies": {
+    "@google-labs/breadboard": "^0.30.0",
+    "@google-labs/core-kit": "^0.17.0",
+    "@google-labs/template-kit": "^0.3.15",
+    "@lit-labs/signals": "^0.1.1",
+    "@types/json-schema": "^7.0.15",
+    "jsonriver": "^1.0.0",
+    "lit": "^3.2.1",
+    "micromark": "^4.0.1",
+    "micromark-extension-gfm": "^3.0.0",
+    "signal-polyfill": "^0.2.1",
+    "signal-utils": "^0.20.0"
+  },
   "devDependencies": {
-    "@eslint/js": "^9.15.0",
-    "@esm-bundle/chai": "^4.3.4",
-    "@types/mocha": "^10.0.9",
-    "@types/node": "^22.9.0",
-    "@web/dev-server": "^0.4.6",
     "@web/test-runner": "^0.19.0",
     "@web/test-runner-playwright": "^0.11.0",
-    "eslint": "^9.15.0",
-    "eslint-plugin-no-only-tests": "^3.3.0",
-    "playwright": "^1.48.2",
-    "prettier": "^3.3.3",
     "typescript": "^5.6.3",
-  "devDependencies": {
-    "@eslint/js": "^9.15.0",
-    "@esm-bundle/chai": "^4.3.4",
-    "@types/mocha": "^10.0.9",
-    "@types/node": "^22.9.0",
-    "@web/dev-server": "^0.4.6",
-    "@web/test-runner": "^0.19.0",
-    "@web/test-runner-playwright": "^0.11.0",
-    "eslint": "^9.15.0",
-    "eslint-plugin-no-only-tests": "^3.3.0",
-    "playwright": "^1.48.2",
-    "prettier": "^3.3.3",
-    "typescript": "^5.6.3",
-    "typescript-eslint": "^8.14.0",
     "wireit": "^0.14.9"
   }
 }
