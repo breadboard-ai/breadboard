@@ -627,6 +627,10 @@ export class GraphRenderer extends LitElement {
   }
 
   protected shouldUpdate(changedProperties: PropertyValues): boolean {
+    if (changedProperties.has("_portTooltip")) {
+      return false;
+    }
+
     if (changedProperties.has("topGraphUrl")) {
       return true;
     }
