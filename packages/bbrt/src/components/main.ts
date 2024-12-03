@@ -13,15 +13,17 @@ import { SignalSet } from "signal-utils/set";
 import { BreadboardToolProvider } from "../breadboard/breadboard-tool-provider.js";
 import { readBoardServersFromIndexedDB } from "../breadboard/indexed-db-servers.js";
 import type { Config } from "../config.js";
+import type { BBRTDriver } from "../drivers/driver-interface.js";
+import { GeminiDriver } from "../drivers/gemini.js";
+import { OpenAiDriver } from "../drivers/openai.js";
 import { BBRTConversation } from "../llm/conversation.js";
-import type { BBRTModel } from "../llm/model.js";
 import { IndexedDBSettingsSecrets } from "../secrets/indexed-db-secrets.js";
 import { ActivateTool } from "../tools/activate-tool.js";
 import { BoardLister } from "../tools/list-tools.js";
 import { ToolProvider } from "../tools/tool-provider.js";
 import type { BBRTTool } from "../tools/tool.js";
 import "./chat.js";
-import "./model-selector.js";
+import "./driver-selector.js";
 import "./prompt.js";
 import "./tool-palette.js";
 
@@ -30,18 +32,21 @@ export class BBRTMain extends LitElement {
   @property({ type: Object })
   config?: Config;
 
-  #model = new Signal.State<BBRTModel>("gemini");
-  #activeTools = new SignalSet<BBRTTool>();
-  #secrets = new IndexedDBSettingsSecrets();
-  #conversation = new BBRTConversation(
-    this.#model,
-    this.#activeTools,
-    this.#secrets
+  readonly #secrets = new IndexedDBSettingsSecrets();
+  readonly #drivers = [
+    new GeminiDriver(() => this.#secrets.getSecret("GEMINI_API_KEY")),
+    new OpenAiDriver(() => this.#secrets.getSecret("OPENAI_API_KEY")),
+  ];
+  readonly #activeDriver = new Signal.State<BBRTDriver>(this.#drivers[0]!);
+  readonly #toolProviders = new SignalArray<ToolProvider>();
+  readonly #activeTools = new SignalSet<BBRTTool>();
+  readonly #conversation = new BBRTConversation(
+    this.#activeDriver,
+    this.#activeTools
   );
+
   @state()
   private _sidePanelOpen = false;
-
-  #toolProviders = new SignalArray<ToolProvider>();
 
   static override styles = css`
     #container {
@@ -99,13 +104,13 @@ export class BBRTMain extends LitElement {
         id="container"
         class=${classMap({ sidePanelOpen: this._sidePanelOpen })}
       >
-        <bbrt-chat
-          .conversation=${this.#conversation}
-          .secrets=${this.#secrets}
-        ></bbrt-chat>
+        <bbrt-chat .conversation=${this.#conversation}></bbrt-chat>
         <div id="bottom">
           <div id="inputs">
-            <bbrt-model-selector .model=${this.#model}></bbrt-model-selector>
+            <bbrt-driver-selector
+              .available=${this.#drivers}
+              .active=${this.#activeDriver}
+            ></bbrt-driver-selector>
             <bbrt-prompt .conversation=${this.#conversation}></bbrt-prompt>
           </div>
         </div>

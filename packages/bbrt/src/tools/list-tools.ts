@@ -9,7 +9,7 @@ import { Signal } from "signal-polyfill";
 import type { BreadboardServer } from "../breadboard/breadboard-server.js";
 import { makeToolSafeName } from "../breadboard/make-tool-safe-name.js";
 import "../components/content.js";
-import type { GeminiFunctionDeclaration } from "../llm/gemini.js";
+import type { GeminiFunctionDeclaration } from "../drivers/gemini.js";
 import type { EmptyObject } from "../util/empty-object.js";
 import { resultify, type Result } from "../util/result.js";
 import type {
