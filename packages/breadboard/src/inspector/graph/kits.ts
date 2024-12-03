@@ -23,6 +23,7 @@ import {
   InspectableNodePorts,
   InspectableNodeType,
   MutableGraph,
+  MutableGraphStore,
   NodeTypeDescriberOptions,
 } from "../types.js";
 import { collectPortsForType, filterSidePorts } from "./ports.js";
@@ -75,7 +76,7 @@ const createCustomTypesKit = (
         url: "",
       },
       nodeTypes: uniqueTypes.map((type) => {
-        return new CustomNodeType(type, mutable);
+        return new CustomNodeType(type, mutable.store);
       }),
     },
   ];
@@ -108,7 +109,7 @@ export const createGraphNodeType = (
   type: NodeTypeIdentifier,
   mutable: MutableGraph
 ): InspectableNodeType => {
-  return new CustomNodeType(type, mutable);
+  return new CustomNodeType(type, mutable.store);
 };
 
 const collectNodeTypes = (
@@ -119,7 +120,7 @@ const collectNodeTypes = (
     .sort()
     .map(([type, handler]) => {
       if (graphUrlLike(type)) {
-        return new CustomNodeType(type, mutable);
+        return new CustomNodeType(type, mutable.store);
       }
       return new KitNodeType(type, handler);
     });
@@ -220,12 +221,9 @@ class CustomNodeType implements InspectableNodeType {
   #metadata: NodeHandlerMetadata | null = null;
   #handlerPromise: Promise<NodeHandlerObject | undefined> | null = null;
 
-  constructor(type: string, mutable: MutableGraph) {
+  constructor(type: string, store: MutableGraphStore) {
     this.#type = type;
-    this.#handlerPromise = getGraphHandler(
-      type,
-      contextFromStore(mutable.store)
-    );
+    this.#handlerPromise = getGraphHandler(type, contextFromStore(store));
   }
 
   async #readMetadata() {
