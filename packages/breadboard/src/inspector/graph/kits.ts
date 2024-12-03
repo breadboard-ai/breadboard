@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getGraphHandler } from "../../handler.js";
+import { toNodeHandlerMetadata } from "../../graph-based-node-handler.js";
+import { getGraphHandlerFromStore } from "../../handler.js";
 import {
   GraphDescriptor,
   NodeDescriberResult,
@@ -16,7 +17,6 @@ import {
   NodeTypeIdentifier,
 } from "../../types.js";
 import { graphUrlLike } from "../../utils/graph-url-like.js";
-import { contextFromStore } from "../graph-store.js";
 import {
   InspectableKit,
   InspectableKitCache,
@@ -166,11 +166,15 @@ class KitNodeType implements InspectableNodeType {
   }
 
   async metadata(): Promise<NodeHandlerMetadata> {
-    return "metadata" in this.#handler ? this.#handler.metadata || {} : {};
+    return this.currentMetadata();
   }
 
   type() {
     return this.#type;
+  }
+
+  currentMetadata(): NodeHandlerMetadata {
+    return "metadata" in this.#handler ? this.#handler.metadata || {} : {};
   }
 
   async ports(): Promise<InspectableNodePorts> {
@@ -219,13 +223,12 @@ class CustomNodeType implements InspectableNodeType {
   #type: string;
   #metadata: NodeHandlerMetadata | null = null;
   #handlerPromise: Promise<NodeHandlerObject | undefined> | null = null;
+  #mutable: MutableGraph;
 
   constructor(type: string, mutable: MutableGraph) {
     this.#type = type;
-    this.#handlerPromise = getGraphHandler(
-      type,
-      contextFromStore(mutable.store)
-    );
+    this.#mutable = mutable;
+    this.#handlerPromise = getGraphHandlerFromStore(type, mutable.store);
   }
 
   async #readMetadata() {
@@ -236,6 +239,15 @@ class CustomNodeType implements InspectableNodeType {
     return {
       title: shortUrlTitle(this.#type),
     };
+  }
+
+  currentMetadata(): NodeHandlerMetadata {
+    const graph = this.#mutable.store.getByURL(
+      this.#type,
+      [this.#mutable.id],
+      {}
+    );
+    return toNodeHandlerMetadata(graph.graph);
   }
 
   async metadata(): Promise<NodeHandlerMetadata> {

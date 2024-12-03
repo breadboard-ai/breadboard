@@ -436,7 +436,11 @@ export class Main extends LitElement {
 
         this.#graphStore.addEventListener("update", (evt) => {
           const { mainGraphId } = evt;
-          if (mainGraphId !== this.tab?.mainGraphId) {
+          const current = this.tab?.mainGraphId;
+          if (
+            !current ||
+            (mainGraphId !== current && !evt.affectedGraphs.includes(current))
+          ) {
             return;
           }
           this.#graphTopologyUpdateId++;

@@ -6,7 +6,7 @@
 
 import { describe, it } from "node:test";
 import { SnapshotUpdater } from "../../../src/utils/snapshot-updater.js";
-import { deepStrictEqual } from "node:assert";
+import { deepStrictEqual, rejects } from "node:assert";
 
 describe("SnapshotUpdater", async () => {
   await it("correctly initializes and resolves to latest", async () => {
@@ -116,5 +116,34 @@ describe("SnapshotUpdater", async () => {
       ["latest-0", "latest-1"],
       ["latest-1", "latest-2"],
     ]);
+  });
+
+  await it("handles errors thrown when obtaining latest", async () => {
+    let counter = 0;
+    const updates: [previous: string, current: string][] = [];
+
+    const updater = new SnapshotUpdater({
+      initial: () => "foo",
+      latest: async () => {
+        counter++;
+        throw new Error("nope");
+      },
+      willUpdate(previous, current) {
+        updates.push([previous, current]);
+      },
+    });
+
+    deepStrictEqual(updater.current(), "foo");
+    rejects(async () => {
+      await updater.latest();
+    });
+    deepStrictEqual(counter, 1);
+    deepStrictEqual(updater.current(), "foo");
+    rejects(updater.latest());
+    deepStrictEqual(counter, 1);
+    updater.refresh();
+    rejects(updater.latest());
+    deepStrictEqual(counter, 2);
+    deepStrictEqual(updates, []);
   });
 });

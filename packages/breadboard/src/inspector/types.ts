@@ -581,6 +581,12 @@ export type InspectableNodeType = {
    * Returns the metadata, associated with this node type.
    */
   metadata(): Promise<NodeHandlerMetadata>;
+
+  /**
+   * Same as above, but not async. The data may be stale. Listen to the
+   * `update` events on GraphStore to get fresh metadata.
+   */
+  currentMetadata(): NodeHandlerMetadata;
   /**
    * Returns the type of the node.
    */
@@ -705,6 +711,7 @@ export type GraphStoreArgs = Required<InspectableGraphOptions>;
 
 export type GraphStoreUpdateEvent = Event & {
   mainGraphId: MainGraphIdentifier;
+  affectedGraphs: MainGraphIdentifier[];
   graphId: GraphIdentifier;
   nodeId: NodeIdentifier;
 };
@@ -721,6 +728,12 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> & {
   readonly loader: GraphLoader;
 
   load(url: string, options: GraphLoaderContext): Promise<Result<GraphHandle>>;
+
+  getByURL(
+    url: string,
+    dependencies: MainGraphIdentifier[],
+    context: GraphLoaderContext
+  ): MutableGraph;
   addByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier>;
   editByDescriptor(
     graph: GraphDescriptor,
