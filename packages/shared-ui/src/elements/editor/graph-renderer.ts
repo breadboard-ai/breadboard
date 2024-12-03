@@ -627,6 +627,10 @@ export class GraphRenderer extends LitElement {
   }
 
   protected shouldUpdate(changedProperties: PropertyValues): boolean {
+    if (changedProperties.has("topGraphUrl")) {
+      return true;
+    }
+
     if (changedProperties.has("selectionChangeId")) {
       return this.selectionChangeId !== this.#lastSelectionChangeId;
     }
