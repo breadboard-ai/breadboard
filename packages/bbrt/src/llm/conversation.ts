@@ -7,28 +7,13 @@
 import { Signal } from "signal-polyfill";
 import { SignalArray } from "signal-utils/array";
 import type { SignalSet } from "signal-utils/set";
-import type { SecretsProvider } from "../secrets/secrets-provider.js";
+import type { BBRTDriver } from "../drivers/driver-interface.js";
 import type { BBRTTool, InvokeResult, ToolInvocation } from "../tools/tool.js";
 import { BufferedMultiplexStream } from "../util/buffered-multiplex-stream.js";
 import { Lock } from "../util/lock.js";
 import type { Result } from "../util/result.js";
 import { waitForState } from "../util/wait-for-state.js";
 import type { BBRTChunk } from "./chunk.js";
-import {
-  bbrtTurnsToGeminiContents,
-  gemini,
-  simplifyJsonSchemaForGemini,
-  type GeminiFunctionDeclaration,
-  type GeminiParameterSchema,
-  type GeminiRequest,
-} from "./gemini.js";
-import type { BBRTModel } from "./model.js";
-import {
-  bbrtTurnsToOpenAiMessages,
-  openai,
-  type OpenAIChatRequest,
-  type OpenAITool,
-} from "./openai.js";
 
 // TODO(aomarks) Consider making this whole thing a SignalObject.
 export type BBRTTurn = BBRTUserTurn | BBRTModelTurn | BBRTErrorTurn;
@@ -90,18 +75,12 @@ export interface BBRTToolResponse {
 export class BBRTConversation {
   readonly turns = new SignalArray<BBRTTurn>();
   readonly #lock = new Lock();
-  readonly #model: Signal.State<BBRTModel>;
+  readonly #driver: Signal.State<BBRTDriver>;
   readonly #tools: SignalSet<BBRTTool>;
-  readonly #secrets: SecretsProvider;
 
-  constructor(
-    model: Signal.State<BBRTModel>,
-    tools: SignalSet<BBRTTool>,
-    secrets: SecretsProvider
-  ) {
-    this.#model = model;
+  constructor(driver: Signal.State<BBRTDriver>, tools: SignalSet<BBRTTool>) {
+    this.#driver = driver;
     this.#tools = tools;
-    this.#secrets = secrets;
   }
 
   send(message: { content: string }): Promise<void> {
@@ -285,108 +264,11 @@ export class BBRTConversation {
   }
 
   async #generate(): Promise<Result<AsyncIterableIterator<BBRTChunk>>> {
-    let chunks;
-    const model = this.#model.get();
-    // TODO(aomarks) Factor thesse out into classes that are configured on main,
-    // rather than hard-coding here.
-    if (model === "gemini") {
-      chunks = await this.#generateGemini();
-    } else if (model === "openai") {
-      chunks = await this.#generateOpenai();
-    } else {
-      throw new Error(`Unknown model: ${model}`);
-    }
+    const driver = this.#driver.get();
+    const chunks = await driver.executeTurn(this.turns, [...this.#tools]);
     if (!chunks.ok) {
       return chunks;
     }
     return { ok: true, value: chunks.value };
   }
-
-  async #generateGemini(): Promise<Result<AsyncIterableIterator<BBRTChunk>>> {
-    const contents = await bbrtTurnsToGeminiContents(onlyDoneTurns(this.turns));
-    const request: GeminiRequest = {
-      contents,
-    };
-    if (this.#tools.size > 0) {
-      // TODO(aomarks) 1 tool with N functions works, but N tools with 1
-      // function each produces a 400 error. By design?
-      request.tools = [
-        {
-          functionDeclarations: await Promise.all(
-            [...this.#tools].map(async (tool) => {
-              const inputSchema = (await tool.api()).value?.inputSchema;
-              const fn: GeminiFunctionDeclaration = {
-                name: tool.metadata.id,
-                description: tool.metadata.description,
-                parameters: inputSchema as GeminiParameterSchema,
-              };
-              if (inputSchema !== undefined) {
-                fn.parameters = simplifyJsonSchemaForGemini(inputSchema);
-              }
-              return fn;
-            })
-          ),
-        },
-      ];
-    }
-    const apiKey = await this.#secrets.getSecret("GEMINI_API_KEY");
-    if (!apiKey.ok) {
-      return apiKey;
-    }
-    if (apiKey.value === undefined) {
-      return { ok: false, error: new Error("Missing GEMINI_API_KEY") };
-    }
-    return gemini(request, apiKey.value);
-  }
-
-  async #generateOpenai(): Promise<Result<AsyncIterableIterator<BBRTChunk>>> {
-    const messages = await bbrtTurnsToOpenAiMessages(onlyDoneTurns(this.turns));
-    const request: OpenAIChatRequest = {
-      model: "gpt-4o",
-      messages,
-    };
-    if (this.#tools.size > 0) {
-      const tools = await Promise.all(
-        [...this.#tools].map(async (tool) => {
-          const { id, description } = tool.metadata;
-          const api = await tool.api();
-          if (!api.ok) {
-            return api;
-          }
-          const { inputSchema } = api.value;
-          return {
-            ok: true,
-            value: {
-              type: "function",
-              function: {
-                name: id,
-                description,
-                parameters: inputSchema,
-              },
-            } satisfies OpenAITool,
-          };
-        })
-      );
-      request.tools = [];
-      for (const tool of tools) {
-        if (tool.ok) {
-          request.tools.push(tool.value);
-        } else {
-          // TODO(aomarks): handle error
-        }
-      }
-    }
-    const apiKey = await this.#secrets.getSecret("OPENAI_API_KEY");
-    if (!apiKey.ok) {
-      return apiKey;
-    }
-    if (apiKey.value === undefined) {
-      return { ok: false, error: new Error("Missing OPENAI_API_KEY") };
-    }
-    return openai(request, apiKey.value);
-  }
-}
-
-function onlyDoneTurns(turns: Array<BBRTTurn>): BBRTTurn[] {
-  return turns.filter((turn) => turn.status.get() === "done");
 }

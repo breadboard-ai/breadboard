@@ -5,54 +5,88 @@
  */
 
 import type { JSONSchema7 } from "json-schema";
+import type { BBRTChunk } from "../llm/chunk.js";
+import type { BBRTTurn } from "../llm/conversation.js";
+import type { BBRTTool } from "../tools/tool.js";
 import { JsonDataStreamTransformer } from "../util/json-data-stream-transformer.js";
 import type { Result } from "../util/result.js";
-import type { BBRTChunk } from "./chunk.js";
-import type { BBRTTurn } from "./conversation.js";
+import type { BBRTDriver } from "./driver-interface.js";
 
-export async function openai(
-  request: OpenAIChatRequest,
-  apiKey: string
-): Promise<Result<AsyncIterableIterator<BBRTChunk>, Error>> {
-  const url = new URL(`https://api.openai.com/v1/chat/completions`);
-  let result;
-  try {
-    result = await fetch(url.href, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({ ...request, stream: true }),
-    });
-  } catch (e) {
-    return { ok: false, error: e as Error };
+export class OpenAiDriver implements BBRTDriver {
+  readonly name = "OpenAI";
+  readonly icon = "/bbrt/images/openai-logomark.svg";
+
+  readonly #getApiKey: () => Promise<Result<string | undefined>>;
+
+  constructor(getApiKey: () => Promise<Result<string | undefined>>) {
+    this.#getApiKey = getApiKey;
   }
-  if (result.status !== 200) {
-    try {
-      const error = (await result.json()) as unknown;
-      return {
-        ok: false,
-        error: new Error(
-          `HTTP status ${result.status}` +
-            `\n\n${JSON.stringify(error, null, 2)}`
-        ),
-      };
-    } catch {
-      return { ok: false, error: Error(`http status was ${result.status}`) };
+
+  async executeTurn(
+    turns: BBRTTurn[],
+    tools: BBRTTool[]
+  ): Promise<Result<AsyncIterableIterator<BBRTChunk>>> {
+    const messages = await convertTurnsForOpenAi(turns);
+    const request: OpenAIChatRequest = {
+      model: "gpt-4o",
+      stream: true,
+      messages,
+    };
+    if (tools.length > 0) {
+      const openAiTools = await convertToolsForOpenAi([...tools.values()]);
+      if (!openAiTools.ok) {
+        return openAiTools;
+      }
+      request.tools = openAiTools.value;
     }
+
+    const url = new URL(`https://api.openai.com/v1/chat/completions`);
+    const apiKey = await this.#getApiKey();
+    if (!apiKey.ok) {
+      return apiKey;
+    }
+    if (!apiKey.value) {
+      return { ok: false, error: Error("No OpenAI API key was available") };
+    }
+    let result;
+    try {
+      result = await fetch(url.href, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey.value}`,
+        },
+        body: JSON.stringify(request),
+      });
+    } catch (e) {
+      return { ok: false, error: e as Error };
+    }
+    if (result.status !== 200) {
+      try {
+        const error = (await result.json()) as unknown;
+        return {
+          ok: false,
+          error: new Error(
+            `HTTP status ${result.status}` +
+              `\n\n${JSON.stringify(error, null, 2)}`
+          ),
+        };
+      } catch {
+        return { ok: false, error: Error(`http status was ${result.status}`) };
+      }
+    }
+    const body = result.body;
+    if (body === null) {
+      return { ok: false, error: Error("body was null") };
+    }
+    const stream = convertOpenAiChunks(
+      body.pipeThrough(new JsonDataStreamTransformer<OpenAIChunk>())
+    );
+    return { ok: true, value: stream };
   }
-  const body = result.body;
-  if (body === null) {
-    return { ok: false, error: Error("body was null") };
-  }
-  const stream = interpretOpenAIChunks(
-    body.pipeThrough(new JsonDataStreamTransformer<OpenAIChunk>())
-  );
-  return { ok: true, value: stream };
 }
 
-async function* interpretOpenAIChunks(
+async function* convertOpenAiChunks(
   stream: AsyncIterable<OpenAIChunk>
 ): AsyncIterableIterator<BBRTChunk> {
   const toolCalls = new Map<
@@ -193,11 +227,14 @@ interface OpenAIToolCall {
   };
 }
 
-export async function bbrtTurnsToOpenAiMessages(
+async function convertTurnsForOpenAi(
   turns: BBRTTurn[]
 ): Promise<OpenAIMessage[]> {
   const messages: OpenAIMessage[] = [];
   for (const turn of turns) {
+    if (turn.status.get() !== "done") {
+      continue;
+    }
     switch (turn.kind) {
       case "user-content": {
         messages.push({ role: "user", content: turn.content });
@@ -249,4 +286,34 @@ export async function bbrtTurnsToOpenAiMessages(
     }
   }
   return messages;
+}
+
+async function convertToolsForOpenAi(
+  tools: BBRTTool[]
+): Promise<Result<OpenAIChatRequest["tools"]>> {
+  const results: OpenAITool[] = [];
+  const errors: unknown[] = [];
+  await Promise.all(
+    tools.map(async (tool) => {
+      const { id, description } = tool.metadata;
+      const api = await tool.api();
+      if (!api.ok) {
+        errors.push(api.error);
+        return;
+      }
+      const { inputSchema } = api.value;
+      results.push({
+        type: "function",
+        function: {
+          name: id,
+          description,
+          parameters: inputSchema,
+        },
+      });
+    })
+  );
+  if (errors.length > 0) {
+    return { ok: false, error: new AggregateError(errors) };
+  }
+  return { ok: true, value: results };
 }

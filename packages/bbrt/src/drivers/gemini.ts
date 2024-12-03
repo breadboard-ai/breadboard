@@ -5,56 +5,84 @@
  */
 
 import type { JSONSchema7 } from "json-schema";
+import type { BBRTChunk } from "../llm/chunk.js";
+import type { BBRTTurn } from "../llm/conversation.js";
+import type { BBRTTool } from "../tools/tool.js";
 import type { Result } from "../util/result.js";
 import { streamJsonArrayItems } from "../util/stream-json-array-items.js";
-import type { BBRTChunk } from "./chunk.js";
-import type { BBRTTurn } from "./conversation.js";
+import type { BBRTDriver } from "./driver-interface.js";
 
-export async function gemini(
-  request: GeminiRequest,
-  apiKey: string
-): Promise<Result<AsyncIterableIterator<BBRTChunk>, Error>> {
-  const model = "gemini-1.5-pro";
-  const url = new URL(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent`
-  );
-  url.searchParams.set("key", apiKey);
-  let result;
-  try {
-    result = await fetch(url.href, {
-      method: "POST",
-      body: JSON.stringify(request),
-    });
-  } catch (e) {
-    return { ok: false, error: e as Error };
+export class GeminiDriver implements BBRTDriver {
+  readonly name = "Gemini";
+  readonly icon = "/bbrt/images/gemini-logomark.svg";
+
+  readonly #getApiKey: () => Promise<Result<string | undefined>>;
+
+  constructor(getApiKey: () => Promise<Result<string | undefined>>) {
+    this.#getApiKey = getApiKey;
   }
-  if (result.status !== 200) {
-    try {
-      const error = (await result.json()) as unknown;
-      return {
-        ok: false,
-        error: new Error(
-          `HTTP status ${result.status}` +
-            `\n\n${JSON.stringify(error, null, 2)}`
-        ),
-      };
-    } catch {
-      return { ok: false, error: Error(`http status was ${result.status}`) };
+
+  async executeTurn(
+    turns: BBRTTurn[],
+    tools: BBRTTool[]
+  ): Promise<Result<AsyncIterableIterator<BBRTChunk>>> {
+    const contents = await convertTurnsForGemini(turns);
+    const request: GeminiRequest = {
+      contents,
+    };
+    if (tools.length > 0) {
+      request.tools = await convertToolsForGemini(tools);
     }
+
+    const model = "gemini-1.5-pro";
+    const url = new URL(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent`
+    );
+    const apiKey = await this.#getApiKey();
+    if (!apiKey.ok) {
+      return apiKey;
+    }
+    if (!apiKey.value) {
+      return { ok: false, error: Error("No Gemini API key was available") };
+    }
+    url.searchParams.set("key", apiKey.value);
+    let result;
+    try {
+      result = await fetch(url.href, {
+        method: "POST",
+        body: JSON.stringify(request),
+      });
+    } catch (e) {
+      return { ok: false, error: e as Error };
+    }
+    if (result.status !== 200) {
+      try {
+        const error = (await result.json()) as unknown;
+        return {
+          ok: false,
+          error: new Error(
+            `HTTP status ${result.status}` +
+              `\n\n${JSON.stringify(error, null, 2)}`
+          ),
+        };
+      } catch {
+        return { ok: false, error: Error(`http status was ${result.status}`) };
+      }
+    }
+    const body = result.body;
+    if (body === null) {
+      return { ok: false, error: Error("body was null") };
+    }
+    const stream = convertGeminiChunks(
+      streamJsonArrayItems<GeminiResponse>(
+        body.pipeThrough(new TextDecoderStream())
+      )
+    );
+    return { ok: true, value: stream };
   }
-  const body = result.body;
-  if (body === null) {
-    return { ok: false, error: Error("body was null") };
-  }
-  const stream = interpretGeminiChunks(
-    streamJsonArrayItems<GeminiResponse>(
-      body.pipeThrough(new TextDecoderStream())
-    )
-  );
-  return { ok: true, value: stream };
 }
 
-async function* interpretGeminiChunks(
+async function* convertGeminiChunks(
   stream: AsyncIterable<GeminiResponse>
 ): AsyncIterableIterator<BBRTChunk> {
   for await (const chunk of stream) {
@@ -157,11 +185,14 @@ export type GeminiParameterSchema = {
   maxItems?: number;
 };
 
-export async function bbrtTurnsToGeminiContents(
+async function convertTurnsForGemini(
   turns: BBRTTurn[]
 ): Promise<GeminiContent[]> {
   const contents: GeminiContent[] = [];
   for (const turn of turns) {
+    if (turn.status.get() !== "done") {
+      continue;
+    }
     switch (turn.kind) {
       case "user-content": {
         contents.push({ role: "user", parts: [{ text: turn.content }] });
@@ -221,6 +252,32 @@ export async function bbrtTurnsToGeminiContents(
   return contents;
 }
 
+async function convertToolsForGemini(
+  tools: BBRTTool[]
+): Promise<GeminiRequest["tools"]> {
+  // TODO(aomarks) 1 tool with N functions works, but N tools with 1
+  // function each produces a 400 error. By design?
+  return [
+    {
+      functionDeclarations: await Promise.all(
+        tools.map(async (tool) => {
+          // TODO(aomarks) Handle error.
+          const inputSchema = (await tool.api()).value?.inputSchema;
+          const fn: GeminiFunctionDeclaration = {
+            name: tool.metadata.id,
+            description: tool.metadata.description,
+            parameters: inputSchema as GeminiParameterSchema,
+          };
+          if (inputSchema !== undefined) {
+            fn.parameters = simplifyJsonSchemaForGemini(inputSchema);
+          }
+          return fn;
+        })
+      ),
+    },
+  ];
+}
+
 const RANDOM_STRING_LENGTH = 24;
 const RANDOM_STRING_CHARS =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -234,7 +291,7 @@ function randomOpenAIFunctionCallStyleId() {
   );
 }
 
-export function simplifyJsonSchemaForGemini(
+function simplifyJsonSchemaForGemini(
   rootInput: JSONSchema7
 ): GeminiParameterSchema | undefined {
   const rootOutput: GeminiParameterSchema = { type: "object", properties: {} };

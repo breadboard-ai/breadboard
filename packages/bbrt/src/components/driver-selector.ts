@@ -8,12 +8,15 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import type { Signal } from "signal-polyfill";
-import type { BBRTModel } from "../llm/model.js";
+import type { BBRTDriver } from "../drivers/driver-interface.js";
 
-@customElement("bbrt-model-selector")
-export class BBRTModelSelector extends SignalWatcher(LitElement) {
+@customElement("bbrt-driver-selector")
+export class BBRTDriverSelector extends SignalWatcher(LitElement) {
   @property({ attribute: false })
-  model?: Signal.State<BBRTModel>;
+  available?: BBRTDriver[];
+
+  @property({ attribute: false })
+  active?: Signal.State<BBRTDriver>;
 
   static override styles = css`
     :host {
@@ -35,34 +38,32 @@ export class BBRTModelSelector extends SignalWatcher(LitElement) {
   `;
 
   override render() {
-    if (this.model === undefined) {
+    if (this.active === undefined || this.available === undefined) {
       return nothing;
     }
-    const model = this.model.get();
+    const { name, icon } = this.active.get();
     return html`
       <button
-        @click=${this.#cycleModel}
-        title="Using ${model}. Click to cycle models."
+        @click=${this.#cycle}
+        title="Using ${name}. Click to cycle models."
       >
-        <img
-          alt="Using model ${model}"
-          src="/bbrt/images/${model}-logomark.svg"
-        />
+        <img alt="Using model ${name}" src=${icon} />
       </button>
     `;
   }
 
-  #cycleModel() {
-    if (this.model === undefined) {
+  #cycle() {
+    if (this.active === undefined || this.available === undefined) {
       return;
     }
-    // TODO(aomarks) Make this more configurable.
-    this.model.set(this.model.get() === "openai" ? "gemini" : "openai");
+    const indexOfActive = this.available.indexOf(this.active.get());
+    const nextIndex = (indexOfActive + 1) % this.available.length;
+    this.active.set(this.available[nextIndex]!);
   }
 }
 
 declare global {
   interface HTMLElementTagNameMap {
-    "bbrt-model-selector": BBRTModelSelector;
+    "bbrt-driver-selector": BBRTDriverSelector;
   }
 }
