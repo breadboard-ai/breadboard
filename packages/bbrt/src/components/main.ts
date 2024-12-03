@@ -22,6 +22,7 @@ import { ActivateTool } from "../tools/activate-tool.js";
 import { BoardLister } from "../tools/list-tools.js";
 import { ToolProvider } from "../tools/tool-provider.js";
 import type { BBRTTool } from "../tools/tool.js";
+import "./board-visualizer.js";
 import "./chat.js";
 import "./driver-selector.js";
 import "./prompt.js";
@@ -91,6 +92,14 @@ export class BBRTMain extends LitElement {
       border: none;
       cursor: pointer;
     }
+    bbrt-board-visualizer {
+      /* TODO(aomarks) Temp styles */
+      position: fixed;
+      right: 10px;
+      bottom: 100px;
+      width: 400px;
+      height: 400px;
+    }
   `;
 
   connectedCallback(): void {
@@ -100,6 +109,7 @@ export class BBRTMain extends LitElement {
 
   override render() {
     return html`
+      <bbrt-board-visualizer></bbrt-board-visualizer>
       <div
         id="container"
         class=${classMap({ sidePanelOpen: this._sidePanelOpen })}
