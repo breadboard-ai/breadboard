@@ -44,6 +44,18 @@ class DescribeResultCache implements InspectableDescriberResultCache {
     } as SnapshotUpdaterArgs<NodeDescriberResult>;
   }
 
+  #createInertSnapshotArgs(
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier,
+    inputs?: InputValues
+  ) {
+    return {
+      initial: () => this.args.initial(graphId, nodeId),
+      latest: () => this.args.latest(graphId, nodeId, inputs),
+      willUpdate() {},
+    } as SnapshotUpdaterArgs<NodeDescriberResult>;
+  }
+
   get(
     id: NodeIdentifier,
     graphId: GraphIdentifier,
@@ -53,7 +65,7 @@ class DescribeResultCache implements InspectableDescriberResultCache {
       // bypass cache when there are inputs. We can't cache these
       // describer results ... yet.
       return new SnapshotUpdater(
-        this.#createSnapshotArgs(graphId, id, inputs)
+        this.#createInertSnapshotArgs(graphId, id, inputs)
       ).snapshot();
     }
     const hash = computeHash({ id, graphId });
