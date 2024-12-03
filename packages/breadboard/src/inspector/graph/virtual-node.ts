@@ -102,6 +102,11 @@ class VirtualNode implements InspectableNode {
           title: this.#type,
         };
       },
+      currentMetadata: () => {
+        return {
+          title: this.#type,
+        };
+      },
       type: () => {
         return this.#type;
       },

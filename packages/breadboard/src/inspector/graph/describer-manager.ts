@@ -105,7 +105,7 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
       return;
     }
     this.mutable.store.dispatchEvent(
-      new UpdateEvent(this.mutable.id, graphId, nodeId)
+      new UpdateEvent(this.mutable.id, graphId, nodeId, [])
     );
   }
 

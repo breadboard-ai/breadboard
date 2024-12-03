@@ -21,7 +21,8 @@ class UpdateEvent extends Event implements GraphStoreUpdateEvent {
   constructor(
     public readonly mainGraphId: MainGraphIdentifier,
     public readonly graphId: GraphIdentifier,
-    public readonly nodeId: NodeIdentifier
+    public readonly nodeId: NodeIdentifier,
+    public readonly affectedGraphs: MainGraphIdentifier[]
   ) {
     super(UpdateEvent.eventName, { ...eventInit });
   }

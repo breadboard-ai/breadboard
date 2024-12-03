@@ -27,6 +27,8 @@ import { hash } from "../utils/hash.js";
 import { Kit, NodeHandlerContext } from "../types.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { createLoader } from "../loader/index.js";
+import { SnapshotUpdater } from "../utils/snapshot-updater.js";
+import { UpdateEvent } from "./graph/event.js";
 
 export { GraphStore, makeTerribleOptions, contextFromStore };
 
@@ -35,6 +37,7 @@ function contextFromStore(store: MutableGraphStore): NodeHandlerContext {
     kits: [...store.kits],
     loader: store.loader,
     sandbox: store.sandbox,
+    graphStore: store,
   };
 }
 
@@ -62,7 +65,9 @@ class GraphStore
   readonly loader: GraphLoader;
 
   #mainGraphIds: Map<string, MainGraphIdentifier> = new Map();
-  #mutables: Map<MainGraphIdentifier, MutableGraph> = new Map();
+  #mutables: Map<MainGraphIdentifier, SnapshotUpdater<MutableGraph>> =
+    new Map();
+  #dependencies: Map<MainGraphIdentifier, Set<MainGraphIdentifier>> = new Map();
 
   constructor(args: GraphStoreArgs) {
     super();
@@ -134,6 +139,40 @@ class GraphStore
     return mutable.graphs.get(graphId);
   }
 
+  getByURL(
+    url: string,
+    dependencies: MainGraphIdentifier[],
+    context: GraphLoaderContext = {}
+  ): MutableGraph {
+    const id = this.#mainGraphIds.get(url);
+    if (id) {
+      this.#addDependencies(id, dependencies);
+      return this.#mutables.get(id)!.current();
+    }
+    const snapshot = this.#snapshotFromUrl(url, context);
+    const mutable = snapshot.current();
+    this.#mutables.set(mutable.id, snapshot);
+    this.#mainGraphIds.set(url, mutable.id);
+    this.#addDependencies(mutable.id, dependencies);
+    return mutable;
+  }
+
+  #addDependencies(
+    id: MainGraphIdentifier,
+    dependencies: MainGraphIdentifier[]
+  ) {
+    if (!dependencies.length) return;
+
+    let deps: Set<MainGraphIdentifier> | undefined = this.#dependencies.get(id);
+    if (!deps) {
+      deps = new Set();
+      this.#dependencies.set(id, deps);
+    }
+    dependencies.forEach((dependency) => {
+      deps.add(dependency);
+    });
+  }
+
   getOrAdd(graph: GraphDescriptor): Result<MutableGraph> {
     let url = graph.url;
     let graphHash: number | null = null;
@@ -145,7 +184,7 @@ class GraphStore
     // Find graph by URL.
     const id = this.#mainGraphIds.get(url);
     if (id) {
-      const existing = this.#mutables.get(id);
+      const existing = this.#mutables.get(id)?.current();
       if (!existing) {
         return error(`Integrity error: main graph "${id}" not found in store.`);
       }
@@ -157,15 +196,72 @@ class GraphStore
       return { success: true, result: existing };
     } else {
       // Brand new graph
-      const mutable = new MutableGraphImpl(graph, this);
-      this.#mutables.set(mutable.id, mutable);
+      const snapshot = this.#snapshotFromGraphDescriptor(graph);
+      const mutable = snapshot.current();
+      this.#mutables.set(mutable.id, snapshot);
       this.#mainGraphIds.set(url, mutable.id);
       return { success: true, result: mutable };
     }
   }
 
+  /**
+   * Creates a snapshot of a MutableGraph that is based on the
+   * GraphDescriptor instance.
+   *
+   * This is basically a constant -- calling `refresh` doesn't do anything,
+   * and `latest` is immediately resolved to the same value as `current`.
+   *
+   * @param graph
+   * @returns
+   */
+  #snapshotFromGraphDescriptor(
+    graph: GraphDescriptor
+  ): SnapshotUpdater<MutableGraph> {
+    const mutable = new MutableGraphImpl(graph, this);
+    return new SnapshotUpdater({
+      initial() {
+        return mutable;
+      },
+      latest() {
+        return Promise.resolve(mutable);
+      },
+      willUpdate() {},
+    });
+  }
+
+  #snapshotFromUrl(
+    url: string,
+    options: GraphLoaderContext
+  ): SnapshotUpdater<MutableGraph> {
+    const mutable = new MutableGraphImpl(emptyGraph(), this);
+    let graphId = "";
+    return new SnapshotUpdater({
+      initial: () => mutable,
+      latest: async () => {
+        const loader = this.loader;
+        if (!loader) {
+          throw new Error(`Unable to load "${url}": no loader provided`);
+        }
+        const loading = await loader.load(url, options);
+        if (!loading.success) {
+          throw new Error(loading.error);
+        }
+        mutable.rebuild(loading.graph);
+        graphId = loading.subGraphId || "";
+        return mutable;
+      },
+      willUpdate: () => {
+        this.dispatchEvent(
+          new UpdateEvent(mutable.id, graphId, "", [
+            ...(this.#dependencies.get(mutable.id) || []),
+          ])
+        );
+      },
+    });
+  }
+
   get(id: MainGraphIdentifier): MutableGraph | undefined {
-    return this.#mutables.get(id);
+    return this.#mutables.get(id)?.current();
   }
 }
 
@@ -173,5 +269,12 @@ function error<T>(message: string): Result<T> {
   return {
     success: false,
     error: message,
+  };
+}
+
+function emptyGraph(): GraphDescriptor {
+  return {
+    edges: [],
+    nodes: [],
   };
 }

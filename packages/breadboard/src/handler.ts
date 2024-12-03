@@ -4,14 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { resolveGraph, SENTINEL_BASE_URL } from "./loader/loader.js";
-import { invokeGraph } from "./run/invoke-graph.js";
+import { GraphBasedNodeHandler } from "./graph-based-node-handler.js";
+import { MutableGraphStore } from "./inspector/types.js";
+import { SENTINEL_BASE_URL } from "./loader/loader.js";
 import type {
-  GraphDescriptor,
   InputValues,
   Kit,
-  NodeDescriberContext,
-  NodeDescriberResult,
   NodeHandler,
   NodeHandlerContext,
   NodeHandlerFunction,
@@ -21,21 +19,12 @@ import type {
   OutputValues,
 } from "./types.js";
 import { graphUrlLike } from "./utils/graph-url-like.js";
-import { hash } from "./utils/hash.js";
-import { Throttler } from "./utils/throttler.js";
 
 const getHandlerFunction = (handler: NodeHandler): NodeHandlerFunction => {
   if ("invoke" in handler && handler.invoke) return handler.invoke;
   if (handler instanceof Function) return handler;
   throw new Error("Invalid handler");
 };
-
-function emptyDescriberResult(): NodeDescriberResult {
-  return {
-    inputSchema: { type: "object" },
-    outputSchema: { type: "object" },
-  };
-}
 
 export const callHandler = async (
   handler: NodeHandler,
@@ -99,62 +88,21 @@ export async function getHandler(
   throw new Error(`No handler for node type "${type}"`);
 }
 
-/**
- * A utility function to filter out empty (null or undefined) values from
- * an object.
- *
- * @param obj -- The object to filter.
- * @returns -- The object with empty values removed.
- */
-function filterEmptyValues<T extends Record<string, unknown>>(obj: T): T {
-  return Object.fromEntries(
-    Object.entries(obj).filter(([, value]) => !!value)
-  ) as T;
+export async function getGraphHandlerFromStore(
+  type: NodeTypeIdentifier,
+  store: MutableGraphStore
+): Promise<NodeHandlerObject | undefined> {
+  const nodeTypeUrl = graphUrlLike(type)
+    ? new URL(type, SENTINEL_BASE_URL)
+    : undefined;
+  if (!nodeTypeUrl) {
+    return undefined;
+  }
+  const result = store.getByURL(type, [], {});
+  return new GraphBasedNodeHandler({ graph: result.graph }, type);
 }
-
-type GraphHandlerThrottler = Throttler<
-  [NodeTypeIdentifier, NodeHandlerContext],
-  NodeHandlerObject | undefined
->;
-
-type NodeDescriberThrottler = Throttler<
-  [InputValues | undefined, GraphDescriptor, NodeDescriberContext],
-  NodeDescriberResult
->;
-
-const HANDLER_THROTTLE_DELAY = 10000;
-const DESCRIBE_THROTTLE_DELAY = 5000;
-
-const GRAPH_HANDLER_CACHE = new Map<
-  NodeTypeIdentifier,
-  GraphHandlerThrottler
->();
-
-type DescribeThrottlerWithHash = {
-  throttler: NodeDescriberThrottler;
-  hash: number;
-};
-
-const DESCRIBE_RESULT_CACHE = new Map<
-  NodeTypeIdentifier,
-  DescribeThrottlerWithHash
->();
 
 export async function getGraphHandler(
-  type: NodeTypeIdentifier,
-  context: NodeHandlerContext
-): Promise<NodeHandlerObject | undefined> {
-  let throttler;
-  if (!GRAPH_HANDLER_CACHE.has(type)) {
-    throttler = new Throttler(getGraphHandlerInternal, HANDLER_THROTTLE_DELAY);
-    GRAPH_HANDLER_CACHE.set(type, throttler);
-  } else {
-    throttler = GRAPH_HANDLER_CACHE.get(type)!;
-  }
-  return throttler.call({}, type, context);
-}
-
-async function getGraphHandlerInternal(
   type: NodeTypeIdentifier,
   context: NodeHandlerContext
 ): Promise<NodeHandlerObject | undefined> {
@@ -174,63 +122,5 @@ async function getGraphHandlerInternal(
     );
   }
 
-  const graph = resolveGraph(loadResult);
-
-  return {
-    invoke: async (inputs, context) => {
-      const base = context.board?.url && new URL(context.board?.url);
-      const invocationContext = base
-        ? {
-            ...context,
-            base,
-          }
-        : { ...context };
-
-      return await invokeGraph(loadResult, inputs, invocationContext);
-    },
-    describe: async (inputs, _inputSchema, _outputSchema, context) => {
-      if (!context) {
-        return { inputSchema: {}, outputSchema: {} };
-      }
-      const inputsHash = hash(inputs);
-      let describeThrottler = DESCRIBE_RESULT_CACHE.get(type);
-      if (!describeThrottler || describeThrottler.hash !== inputsHash) {
-        describeThrottler = {
-          throttler: new Throttler(describeGraph, DESCRIBE_THROTTLE_DELAY),
-          hash: inputsHash,
-        };
-
-        DESCRIBE_RESULT_CACHE.set(type, describeThrottler);
-      }
-      return describeThrottler.throttler.call({}, inputs, graph, context);
-    },
-    metadata: filterEmptyValues({
-      title: graph.title,
-      description: graph.description,
-      url: graph.url,
-      icon: graph.metadata?.icon,
-      help: graph.metadata?.help,
-    }),
-  } as NodeHandlerObject;
-}
-
-async function describeGraph(
-  inputs: InputValues | undefined,
-  graph: GraphDescriptor,
-  context: NodeDescriberContext
-) {
-  const graphStore = context?.graphStore;
-  if (!graphStore) {
-    return emptyDescriberResult();
-  }
-  const adding = graphStore.addByDescriptor(graph);
-  if (!adding.success) {
-    return emptyDescriberResult();
-  }
-  const inspectableGraph = graphStore.inspect(adding.result, "");
-  if (!inspectableGraph) {
-    return emptyDescriberResult();
-  }
-  const result = await inspectableGraph.describe(inputs);
-  return result;
+  return new GraphBasedNodeHandler(loadResult, type);
 }
