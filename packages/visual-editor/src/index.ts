@@ -1363,6 +1363,10 @@ export class Main extends LitElement {
     }
 
     if (this.tab && isActive) {
+      this.#runtime.select.deselectAll(
+        this.tab.id,
+        this.#runtime.select.generateId()
+      );
       this.#runtime.board.closeTab(this.tab.id);
       this.#removeRecentUrl(url);
     }
