@@ -1,0 +1,60 @@
+{
+  "name": "@google-labs/unified-server",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
+  "private": true,
+  "version": "0.0.1",
+  "description": "serves visual editor, board server, and connection server from a single origin",
+  "main": "./dist/src/index.js",
+  "exports": "./dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "prepack": "npm run build",
+    "test": "FORCE_COLOR=1 ava",
+    "build": "FORCE_COLOR=1 tsc --b",
+    "watch": "FORCE_COLOR=1 tsc --b --watch",
+    "lint": "FORCE_COLOR=1 eslint . --ext .ts"
+  },
+  "repository": {
+    "directory": "packages/blank",
+    "type": "git",
+    "url": "https://github.com/breadboard-ai/breadboard.git"
+  },
+  "files": [
+    "dist/src"
+  ],
+  "ava": {
+    "timeout": "30s",
+    "files": [
+      "tests/**/*.ts"
+    ],
+    "workerThreads": false,
+    "typescript": {
+      "rewritePaths": {
+        "./": "dist/"
+      },
+      "compile": false
+    }
+  },
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/breadboard-ai/breadboard/issues"
+  },
+  "homepage": "https://github.com/breadboard-ai/breadboard#readme",
+  "devDependencies": {
+    "@ava/typescript": "^4.0.0",
+    "@google-labs/tsconfig": "^0.0.1",
+    "@types/node": "^18.16.3",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "ava": "^5.2.0",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "express": "^4.21.1"
+  }
+}
