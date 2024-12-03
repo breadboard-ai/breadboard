@@ -249,7 +249,8 @@ export class Main extends LitElement {
 
   // Monotonically increases whenever the graph topology of a graph in the
   // current tab changes. Graph topology == any non-visual change to the graph.
-  #graphTopologyUpdateId: number = 0;
+  @state()
+  graphTopologyUpdateId: number = 0;
 
   #globalCommands: BreadboardUI.Types.Command[] = [
     {
@@ -443,7 +444,7 @@ export class Main extends LitElement {
           ) {
             return;
           }
-          this.#graphTopologyUpdateId++;
+          this.graphTopologyUpdateId++;
         });
 
         this.#runtime.edit.addEventListener(
@@ -2822,7 +2823,7 @@ export class Main extends LitElement {
               .tabURLs=${tabURLs}
               .selectionState=${this.#selectionState}
               .visualChangeId=${this.#lastVisualChangeId}
-              .graphTopologyUpdateId=${this.#graphTopologyUpdateId}
+              .graphTopologyUpdateId=${this.graphTopologyUpdateId}
               @bbeditorpositionchange=${(
                 evt: BreadboardUI.Events.EditorPointerPositionChangeEvent
               ) => {
