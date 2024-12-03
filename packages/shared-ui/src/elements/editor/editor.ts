@@ -17,8 +17,7 @@ import {
 } from "@google-labs/breadboard";
 import { LitElement, PropertyValues, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { Ref, createRef } from "lit/directives/ref.js";
-import { until } from "lit/directives/until.js";
+import { Ref, createRef, ref } from "lit/directives/ref.js";
 import {
   CommandsAvailableEvent,
   CommentEditRequestEvent,
@@ -30,7 +29,6 @@ import {
   GraphEdgeDetachEvent,
   GraphEdgeValueSelectedEvent,
   GraphHideTooltipEvent,
-  GraphInitialDrawEvent,
   GraphInteractionEvent,
   GraphNodeActivitySelectedEvent,
   GraphNodeDeleteEvent,
@@ -59,7 +57,6 @@ import {
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
 } from "../../types/types.js";
-import { GraphAssets } from "./graph-assets.js";
 import {
   COMMAND_SET_GRAPH_EDITOR,
   MAIN_BOARD_ID,
@@ -199,22 +196,10 @@ export class Editor extends LitElement {
   graphTopologyUpdateId: number = 0;
 
   @property()
-  set showPortTooltips(value: boolean) {
-    this.#graphRenderer.showPortTooltips = value;
-  }
-
-  get showPortTooltips() {
-    return this.#graphRenderer.showPortTooltips;
-  }
+  showPortTooltips = false;
 
   @property()
-  set zoomToHighlightedNode(value: boolean) {
-    this.#graphRenderer.zoomToHighlightedNode = value;
-  }
-
-  get zoomToHighlightedNode() {
-    return this.#graphRenderer.zoomToHighlightedNode;
-  }
+  zoomToHighlightedNode = false;
 
   @property()
   isShowingBoardActivityOverlay = false;
@@ -222,19 +207,17 @@ export class Editor extends LitElement {
   @state()
   showOverflowMenu = false;
 
-  #graphRenderer = new GraphRenderer();
-  // Incremented each time a graph is updated, used to avoid extra work
-  // inspecting ports when the graph is updated.
-  #graphVersion = 0;
+  #graphRendererRef: Ref<GraphRenderer> = createRef();
 
   #onDropBound = this.#onDrop.bind(this);
   #onDragOverBound = this.#onDragOver.bind(this);
   #onPointerMoveBound = this.#onPointerMove.bind(this);
-  #onPointerDownBound = this.#onPointerDown.bind(this);
   #onWorkspaceSelectionStateChangeBound =
     this.#onWorkspaceSelectionStateChange.bind(this);
   #onWorkspaceVisualUpdateChangeBound =
     this.#onWorkspaceVisualUpdateChange.bind(this);
+
+  // TODO: Remove these in favour of direct events.
   #onGraphEdgeAttachBound = this.#onGraphEdgeAttach.bind(this);
   #onGraphEdgeDetachBound = this.#onGraphEdgeDetach.bind(this);
   #onGraphEdgeChangeBound = this.#onGraphEdgeChange.bind(this);
@@ -259,8 +242,6 @@ export class Editor extends LitElement {
     this.#top = bounds.top;
     this.#left = bounds.left;
   });
-
-  #addButtonRef: Ref<HTMLInputElement> = createRef();
 
   static styles = css`
     * {
@@ -376,110 +357,6 @@ export class Editor extends LitElement {
     };
   }
 
-  async #processGraph() {
-    if (GraphAssets.assetPrefix !== this.assetPrefix) {
-      GraphAssets.instance().loadAssets(this.assetPrefix);
-      await GraphAssets.instance().loaded;
-    }
-
-    await this.#graphRenderer.ready;
-
-    if (!this.graph) {
-      this.#graphRenderer.deleteGraphs();
-      return this.#graphRenderer;
-    }
-
-    this.#graphVersion++;
-    this.#graphRenderer.readOnly = this.readOnly;
-    this.#graphRenderer.highlightInvalidWires = this.highlightInvalidWires;
-    this.#graphRenderer.showSubgraphsInline = this.showSubgraphsInline;
-
-    const availableSubGraphs = Object.keys(this.graph.graphs() || {});
-    this.#graphRenderer.deleteStaleSubGraphs(new Set(availableSubGraphs));
-    this.#graphRenderer.hideAllGraphs();
-
-    let shouldAnimate = true;
-
-    const handleGraph = (
-      url: string,
-      subGraphId: GraphIdentifier | null,
-      selectedGraph: InspectableGraph
-    ) => {
-      const opts = this.#inspectableGraphToConfig(
-        url,
-        subGraphId,
-        selectedGraph
-      );
-
-      const updated = this.#graphRenderer.updateGraphByUrl(
-        url,
-        subGraphId,
-        opts
-      );
-      if (!updated) {
-        shouldAnimate = false;
-        return new Promise<void>((resolve) => {
-          this.#graphRenderer.createGraph(opts);
-          this.#graphRenderer.addEventListener(
-            GraphInitialDrawEvent.eventName,
-            () => {
-              this.#graphRenderer.showGraph(url, subGraphId);
-              resolve();
-            },
-            { once: true }
-          );
-        });
-      } else {
-        this.#graphRenderer.showGraph(url, subGraphId);
-      }
-    };
-
-    const url = this.graph.raw().url ?? "no-url";
-    if (this.showSubgraphsInline) {
-      handleGraph(url, null, this.graph);
-
-      const subGraphs = Object.entries(this.graph.graphs() ?? {});
-      for (const [id, graph] of subGraphs) {
-        handleGraph(url, id, graph);
-      }
-    } else {
-      if (!this.selectionState) {
-        return this.#graphRenderer;
-      }
-
-      const state = this.selectionState.selectionState.graphs;
-      const graphs = [...state.keys()];
-      if (graphs.length === 0) {
-        graphs.unshift(MAIN_BOARD_ID);
-      }
-
-      this.#graphRenderer.resetAllSelectionStates();
-      for (const id of graphs) {
-        const subGraphId = id === MAIN_BOARD_ID ? null : id;
-        let selectedGraph = this.graph;
-        if (id !== MAIN_BOARD_ID) {
-          const subGraphs = this.graph.graphs();
-          if (subGraphs && subGraphs[id]) {
-            selectedGraph = subGraphs[id];
-          }
-        }
-
-        handleGraph(url, subGraphId, selectedGraph);
-      }
-    }
-
-    // Always avoid animating if the user prefers it without.
-    if (
-      !this.showSubgraphsInline ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      shouldAnimate = false;
-    }
-
-    this.#graphRenderer.moveToSelection(shouldAnimate);
-    return this.#graphRenderer;
-  }
-
   constructor() {
     super();
 
@@ -492,100 +369,81 @@ export class Editor extends LitElement {
 
     this.#resizeObserver.observe(this);
 
-    this.#graphRenderer.addEventListener(
+    this.addEventListener(
       WorkspaceSelectionStateEvent.eventName,
       this.#onWorkspaceSelectionStateChangeBound
     );
 
-    this.#graphRenderer.addEventListener(
+    this.addEventListener(
       WorkspaceVisualUpdateEvent.eventName,
       this.#onWorkspaceVisualUpdateChangeBound
     );
 
-    this.#graphRenderer.addEventListener(
+    this.addEventListener(
       GraphEdgeAttachEvent.eventName,
       this.#onGraphEdgeAttachBound
     );
 
-    this.#graphRenderer.addEventListener(
+    this.addEventListener(
       GraphEdgeDetachEvent.eventName,
       this.#onGraphEdgeDetachBound
     );
 
-    this.#graphRenderer.addEventListener(
+    this.addEventListener(
       GraphNodeEdgeChangeEvent.eventName,
       this.#onGraphEdgeChangeBound
     );
 
-    this.#graphRenderer.addEventListener(
+    this.addEventListener(
       GraphNodeDeleteEvent.eventName,
       this.#onGraphNodeDeleteBound
     );
 
-    this.#graphRenderer.addEventListener(
+    this.addEventListener(
       GraphNodeEditEvent.eventName,
       this.#onGraphNodeEditBound
     );
 
-    this.#graphRenderer.addEventListener(
+    this.addEventListener(
       GraphEdgeValueSelectedEvent.eventName,
       this.#onGraphEdgeValueSelectedBound
     );
 
-    this.#graphRenderer.addEventListener(
+    this.addEventListener(
       GraphNodeActivitySelectedEvent.eventName,
       this.#onGraphNodeActivitySelectedBound
     );
 
-    this.#graphRenderer.addEventListener(
+    this.addEventListener(
       GraphInteractionEvent.eventName,
       this.#onGraphInteractionBound
     );
 
-    this.#graphRenderer.addEventListener(
+    this.addEventListener(
       GraphShowTooltipEvent.eventName,
       this.#onGraphShowTooltipBound
     );
 
-    this.#graphRenderer.addEventListener(
+    this.addEventListener(
       GraphHideTooltipEvent.eventName,
       this.#onGraphHideTooltipBound
     );
 
-    this.#graphRenderer.addEventListener(
+    this.addEventListener(
       GraphCommentEditRequestEvent.eventName,
       this.#onGraphCommentEditRequestBound
     );
 
-    this.#graphRenderer.addEventListener(
+    this.addEventListener(
       GraphNodeRunRequestEvent.eventName,
       this.#onGraphNodeRunRequestBound
     );
 
     this.addEventListener("pointermove", this.#onPointerMoveBound);
-    this.addEventListener("pointerdown", this.#onPointerDownBound);
     this.addEventListener("dragover", this.#onDragOverBound);
     this.addEventListener("drop", this.#onDropBound);
 
-    const commands: Command[] = [
-      {
-        name: "zoom-to-fit",
-        title: "Zoom board to fit",
-        icon: "fit",
-        callback: () => {
-          this.#graphRenderer.zoomToFit(0, this.subGraphId);
-        },
-      },
-      {
-        name: "reset-board-layout",
-        title: "Reset board layout",
-        icon: "reset-nodes",
-        callback: () => {
-          this.#graphRenderer.resetGraphLayout();
-        },
-      },
-    ];
-
+    const commands: Command[] = [];
     this.dispatchEvent(
       new CommandsAvailableEvent(COMMAND_SET_GRAPH_EDITOR, commands)
     );
@@ -596,83 +454,92 @@ export class Editor extends LitElement {
 
     this.#resizeObserver.disconnect();
 
-    this.#graphRenderer.removeEventListener(
+    this.removeEventListener(
       WorkspaceSelectionStateEvent.eventName,
       this.#onWorkspaceSelectionStateChangeBound
     );
 
-    this.#graphRenderer.removeEventListener(
+    this.removeEventListener(
       WorkspaceVisualUpdateEvent.eventName,
       this.#onWorkspaceVisualUpdateChangeBound
     );
 
-    this.#graphRenderer.removeEventListener(
+    this.removeEventListener(
       GraphEdgeAttachEvent.eventName,
       this.#onGraphEdgeAttachBound
     );
 
-    this.#graphRenderer.removeEventListener(
+    this.removeEventListener(
       GraphEdgeDetachEvent.eventName,
       this.#onGraphEdgeDetachBound
     );
 
-    this.#graphRenderer.removeEventListener(
+    this.removeEventListener(
       GraphNodeEdgeChangeEvent.eventName,
       this.#onGraphEdgeChangeBound
     );
 
-    this.#graphRenderer.removeEventListener(
+    this.removeEventListener(
       GraphNodeDeleteEvent.eventName,
       this.#onGraphNodeDeleteBound
     );
 
-    this.#graphRenderer.removeEventListener(
+    this.removeEventListener(
       GraphNodeEditEvent.eventName,
       this.#onGraphNodeEditBound
     );
 
-    this.#graphRenderer.removeEventListener(
+    this.removeEventListener(
       GraphEdgeValueSelectedEvent.eventName,
       this.#onGraphEdgeValueSelectedBound
     );
 
-    this.#graphRenderer.removeEventListener(
+    this.removeEventListener(
       GraphNodeActivitySelectedEvent.eventName,
       this.#onGraphNodeActivitySelectedBound
     );
 
-    this.#graphRenderer.removeEventListener(
+    this.removeEventListener(
       GraphInteractionEvent.eventName,
       this.#onGraphInteractionBound
     );
 
-    this.#graphRenderer.removeEventListener(
+    this.removeEventListener(
       GraphShowTooltipEvent.eventName,
       this.#onGraphShowTooltipBound
     );
 
-    this.#graphRenderer.removeEventListener(
+    this.removeEventListener(
       GraphHideTooltipEvent.eventName,
       this.#onGraphHideTooltipBound
     );
 
-    this.#graphRenderer.removeEventListener(
+    this.removeEventListener(
       GraphCommentEditRequestEvent.eventName,
       this.#onGraphCommentEditRequestBound
     );
 
-    this.#graphRenderer.removeEventListener(
+    this.removeEventListener(
       GraphNodeRunRequestEvent.eventName,
       this.#onGraphNodeRunRequestBound
     );
 
     this.removeEventListener("pointermove", this.#onPointerMoveBound);
-    this.removeEventListener("pointerdown", this.#onPointerDownBound);
     this.removeEventListener("dragover", this.#onDragOverBound);
     this.removeEventListener("drop", this.#onDropBound);
   }
 
+  #lastGraphUrl: string | null = null;
   protected shouldUpdate(changedProperties: PropertyValues): boolean {
+    if (changedProperties.has("graph")) {
+      const graphUrl = this.graph?.raw().url;
+      const matches = graphUrl === this.#lastGraphUrl;
+      if (!matches) {
+        this.#lastGraphUrl = graphUrl ?? null;
+        return true;
+      }
+    }
+
     if (this.#lastVisualChangeId && changedProperties.has("visualChangeId")) {
       return this.#lastVisualChangeId !== this.visualChangeId;
     }
@@ -689,13 +556,70 @@ export class Editor extends LitElement {
     return true;
   }
 
-  #currentGraphUrl: string | null = null;
+  #configs = new Map<GraphIdentifier, GraphOpts>();
   protected willUpdate(): void {
-    const graphUrl = this.graph?.raw().url ?? null;
-    if (this.#currentGraphUrl !== graphUrl) {
-      this.#currentGraphUrl = graphUrl;
-      this.#graphRenderer.deleteGraphs();
+    this.#configs = this.#convertGraphsToConfigs(this.graph);
+  }
+
+  #convertGraphsToConfigs(
+    graph: InspectableGraph | null
+  ): Map<GraphIdentifier, GraphOpts> {
+    const configs = new Map<GraphIdentifier, GraphOpts>();
+    if (!graph) {
+      return configs;
     }
+
+    const url = graph.raw().url ?? "no-url";
+    if (this.showSubgraphsInline) {
+      configs.set(
+        MAIN_BOARD_ID,
+        this.#inspectableGraphToConfig(url, null, graph)
+      );
+
+      for (const [id, subGraph] of Object.entries(graph.graphs() || {})) {
+        configs.set(id, this.#inspectableGraphToConfig(url, id, subGraph));
+      }
+    } else {
+      if (this.selectionState?.selectionState) {
+        if (this.selectionState?.selectionState.graphs.size === 0) {
+          configs.set(
+            MAIN_BOARD_ID,
+            this.#inspectableGraphToConfig(url, null, graph)
+          );
+        } else {
+          for (const id of this.selectionState.selectionState.graphs.keys()) {
+            let targetGraph = graph;
+            if (id !== MAIN_BOARD_ID) {
+              const subGraphs = graph.graphs();
+              if (!subGraphs) {
+                continue;
+              }
+              targetGraph = subGraphs[id];
+            }
+
+            if (!targetGraph) {
+              continue;
+            }
+
+            configs.set(
+              id,
+              this.#inspectableGraphToConfig(
+                url,
+                id === MAIN_BOARD_ID ? null : id,
+                targetGraph
+              )
+            );
+          }
+        }
+      } else {
+        configs.set(
+          MAIN_BOARD_ID,
+          this.#inspectableGraphToConfig(url, null, graph)
+        );
+      }
+    }
+
+    return configs;
   }
 
   #onWorkspaceSelectionStateChange(evt: Event) {
@@ -750,31 +674,20 @@ export class Editor extends LitElement {
   }
 
   #onPointerMove(evt: PointerEvent) {
+    if (!this.#graphRendererRef.value) {
+      return;
+    }
+
     const pointer = {
       x: evt.pageX - this.#left + window.scrollX,
       y: evt.pageY - this.#top - window.scrollY - RIBBON_HEIGHT,
     };
 
-    const location = this.#graphRenderer.toContainerCoordinates(pointer);
+    const location =
+      this.#graphRendererRef.value.toContainerCoordinates(pointer);
     this.dispatchEvent(
       new EditorPointerPositionChangeEvent(location.x, location.y)
     );
-  }
-
-  #onPointerDown(evt: Event) {
-    if (!this.#addButtonRef.value) {
-      return;
-    }
-
-    const [top] = evt.composedPath();
-    if (
-      top instanceof HTMLLabelElement &&
-      top.getAttribute("for") === "add-node"
-    ) {
-      return;
-    }
-
-    this.#addButtonRef.value.checked = false;
   }
 
   #onGraphEdgeAttach(evt: Event) {
@@ -886,8 +799,9 @@ export class Editor extends LitElement {
     }
 
     evt.preventDefault();
+
     const type = evt.dataTransfer?.getData(DATA_TYPE);
-    if (!type || !this.#graphRenderer) {
+    if (!type || !this.#graphRendererRef.value) {
       return;
     }
 
@@ -898,7 +812,8 @@ export class Editor extends LitElement {
       y: evt.pageY - this.#top - window.scrollY - RIBBON_HEIGHT,
     };
 
-    const location = this.#graphRenderer.toContainerCoordinates(pointer);
+    const location =
+      this.#graphRendererRef.value.toContainerCoordinates(pointer);
     this.dispatchEvent(
       new NodeCreateEvent(id, type, this.subGraphId, configuration, {
         visual: {
@@ -910,24 +825,7 @@ export class Editor extends LitElement {
     );
   }
 
-  zoomToFit(reduceRenderBoundsWidth = 0, subGraphId: string | null = null) {
-    this.#graphRenderer.zoomToFit(reduceRenderBoundsWidth, subGraphId);
-  }
-
-  zoomToNode(id: string, subGraphId: string | null, offset = 0) {
-    this.#graphRenderer.zoomToNode(id, subGraphId, offset);
-  }
-
   render() {
-    this.#graphRenderer.topGraphResult = this.subGraphId
-      ? null
-      : this.topGraphResult;
-
-    if (this.#graphRenderer) {
-      this.#graphRenderer.invertZoomScrollDirection =
-        this.invertZoomScrollDirection;
-    }
-
     const isRunning = this.topGraphResult
       ? this.topGraphResult.status === "running" ||
         this.topGraphResult.status === "paused"
@@ -961,41 +859,38 @@ export class Editor extends LitElement {
       .isError=${isError}
       .isShowingBoardActivityOverlay=${this.isShowingBoardActivityOverlay}
       @bbzoomtofit=${() => {
-        this.#graphRenderer.zoomToFit(
-          this.isShowingBoardActivityOverlay ? 400 : 0,
-          this.subGraphId
-        );
-      }}
-      @bbresetlayout=${() => {
-        this.#graphRenderer.resetGraphLayout();
-      }}
-      @bbtogglefollow=${() => {
-        const shouldZoom = !this.zoomToHighlightedNode;
-        this.zoomToHighlightedNode = shouldZoom;
-        this.#graphRenderer.zoomToHighlightedNode = shouldZoom;
-        globalThis.localStorage.setItem(ZOOM_KEY, shouldZoom.toString());
-
-        if (!shouldZoom) {
+        if (!this.#graphRendererRef.value) {
           return;
         }
 
-        if (this.topGraphResult?.currentNode) {
-          this.#graphRenderer.zoomToNode(
-            this.topGraphResult.currentNode.descriptor.id,
-            this.subGraphId,
-            -0.1
-          );
+        let animate = true;
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          animate = false;
         }
+        this.#graphRendererRef.value.zoomToFit(animate);
       }}
     ></bb-graph-ribbon-menu>`;
 
-    const graphEditor = html`${until(this.#processGraph())}`;
     const readOnlyFlag =
       this.graph !== null && this.readOnly && this.showReadOnlyLabel
         ? html`<aside id="readonly-overlay">Read-only View</aside>`
         : nothing;
 
-    const content = html`<div id="content">${graphEditor}</div>`;
+    const content = html`<div id="content">
+      <bb-graph-renderer
+        ${ref(this.#graphRendererRef)}
+        .topGraphUrl=${this.graph?.raw().url ?? "no-url"}
+        .topGraphResult=${this.topGraphResult}
+        .assetPrefix=${this.assetPrefix}
+        .configs=${this.#configs}
+        .invertZoomScrollDirection=${this.invertZoomScrollDirection}
+        .readOnly=${this.readOnly}
+        .highlightInvalidWires=${this.highlightInvalidWires}
+        .showPortTooltips=${this.showPortTooltips}
+        .showSubgraphsInline=${this.showSubgraphsInline}
+        .selectionChangeId=${this.selectionState?.selectionChangeId}
+      ></bb-graph-renderer>
+    </div>`;
 
     return [this.graph ? ribbonMenu : nothing, content, readOnlyFlag];
   }

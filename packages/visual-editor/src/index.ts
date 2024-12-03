@@ -444,7 +444,6 @@ export class Main extends LitElement {
             return;
           }
           this.#graphTopologyUpdateId++;
-          this.requestUpdate();
         });
 
         this.#runtime.edit.addEventListener(
@@ -3374,6 +3373,16 @@ export class Main extends LitElement {
                 this.toast(
                   `Error retrieving type information for ${evt.id}; try removing the component from the board`,
                   BreadboardUI.Events.ToastType.ERROR
+                );
+              }}
+              @bboutlinemodechange=${() => {
+                if (!this.tab) {
+                  return;
+                }
+
+                this.#runtime.select.deselectAll(
+                  this.tab?.id,
+                  this.#runtime.util.createWorkspaceSelectionChangeId()
                 );
               }}
             ></bb-ui-controller>
