@@ -13,6 +13,7 @@ import {
   NodeDescriberContext,
   NodeDescriberResult,
   NodeHandlerContext,
+  NodeHandlerMetadata,
   NodeHandlerObject,
   NodeTypeIdentifier,
   Schema,
@@ -20,7 +21,7 @@ import {
 import { hash } from "./utils/hash.js";
 import { Throttler } from "./utils/throttler.js";
 
-export { GraphBasedNodeHandler };
+export { GraphBasedNodeHandler, toNodeHandlerMetadata };
 
 type NodeDescriberThrottler = Throttler<
   [InputValues | undefined, GraphDescriptor, NodeDescriberContext],
@@ -47,6 +48,8 @@ class GraphBasedNodeHandler implements NodeHandlerObject {
     this.#graph = graph;
     this.#type = type;
     this.#descriptor = resolveGraph(graph);
+    this.invoke = this.invoke.bind(this);
+    this.describe = this.describe.bind(this);
   }
 
   async invoke(inputs: InputValues, context: NodeHandlerContext) {
@@ -89,14 +92,18 @@ class GraphBasedNodeHandler implements NodeHandlerObject {
   }
 
   get metadata() {
-    return filterEmptyValues({
-      title: this.#descriptor.title,
-      description: this.#descriptor.description,
-      url: this.#descriptor.url,
-      icon: this.#descriptor.metadata?.icon,
-      help: this.#descriptor.metadata?.help,
-    });
+    return toNodeHandlerMetadata(this.#descriptor);
   }
+}
+
+function toNodeHandlerMetadata(graph: GraphDescriptor): NodeHandlerMetadata {
+  return filterEmptyValues({
+    title: graph.title,
+    description: graph.description,
+    url: graph.url,
+    icon: graph.metadata?.icon,
+    help: graph.metadata?.help,
+  });
 }
 
 async function describeGraph(

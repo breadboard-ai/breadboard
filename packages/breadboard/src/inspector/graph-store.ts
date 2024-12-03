@@ -28,6 +28,7 @@ import { Kit, NodeHandlerContext } from "../types.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { createLoader } from "../loader/index.js";
 import { SnapshotUpdater } from "../utils/snapshot-updater.js";
+import { UpdateEvent } from "./graph/event.js";
 
 export { GraphStore, makeTerribleOptions, contextFromStore };
 
@@ -36,6 +37,7 @@ function contextFromStore(store: MutableGraphStore): NodeHandlerContext {
     kits: [...store.kits],
     loader: store.loader,
     sandbox: store.sandbox,
+    graphStore: store,
   };
 }
 
@@ -136,6 +138,18 @@ class GraphStore
     return mutable.graphs.get(graphId);
   }
 
+  getByURL(
+    url: string,
+    dependencies: MainGraphIdentifier[],
+    context: GraphLoaderContext = {}
+  ): MutableGraph {
+    const snapshot = this.#snapshotFromUrl(url, dependencies, context);
+    const mutable = snapshot.current();
+    this.#mutables.set(mutable.id, snapshot);
+    this.#mainGraphIds.set(url, mutable.id);
+    return mutable;
+  }
+
   getOrAdd(graph: GraphDescriptor): Result<MutableGraph> {
     let url = graph.url;
     let graphHash: number | null = null;
@@ -194,6 +208,7 @@ class GraphStore
 
   #snapshotFromUrl(
     url: string,
+    dependencies: MainGraphIdentifier[],
     options: GraphLoaderContext
   ): SnapshotUpdater<MutableGraph> {
     const mutable = new MutableGraphImpl(emptyGraph(), this);
@@ -214,7 +229,9 @@ class GraphStore
         return mutable;
       },
       willUpdate: () => {
-        // TODO: dispatch update event for the graph
+        this.dispatchEvent(
+          new UpdateEvent(mutable.id, graphId, "", dependencies)
+        );
       },
     });
   }
