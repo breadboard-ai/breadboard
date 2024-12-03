@@ -5,6 +5,7 @@
  */
 
 import { GraphBasedNodeHandler } from "./graph-based-node-handler.js";
+import { MutableGraphStore } from "./inspector/types.js";
 import { SENTINEL_BASE_URL } from "./loader/loader.js";
 import type {
   InputValues,
@@ -85,6 +86,20 @@ export async function getHandler(
     return kitHandler;
   }
   throw new Error(`No handler for node type "${type}"`);
+}
+
+export async function getGraphHandlerFromStore(
+  type: NodeTypeIdentifier,
+  store: MutableGraphStore
+): Promise<NodeHandlerObject | undefined> {
+  const nodeTypeUrl = graphUrlLike(type)
+    ? new URL(type, SENTINEL_BASE_URL)
+    : undefined;
+  if (!nodeTypeUrl) {
+    return undefined;
+  }
+  const result = store.getByURL(type, [], {});
+  return new GraphBasedNodeHandler({ graph: result.graph }, type);
 }
 
 export async function getGraphHandler(

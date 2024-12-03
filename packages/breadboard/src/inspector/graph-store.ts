@@ -67,6 +67,7 @@ class GraphStore
   #mainGraphIds: Map<string, MainGraphIdentifier> = new Map();
   #mutables: Map<MainGraphIdentifier, SnapshotUpdater<MutableGraph>> =
     new Map();
+  #dependencies: Map<MainGraphIdentifier, Set<MainGraphIdentifier>> = new Map();
 
   constructor(args: GraphStoreArgs) {
     super();
@@ -143,11 +144,33 @@ class GraphStore
     dependencies: MainGraphIdentifier[],
     context: GraphLoaderContext = {}
   ): MutableGraph {
-    const snapshot = this.#snapshotFromUrl(url, dependencies, context);
+    const id = this.#mainGraphIds.get(url);
+    if (id) {
+      this.#addDependencies(id, dependencies);
+      return this.#mutables.get(id)!.current();
+    }
+    const snapshot = this.#snapshotFromUrl(url, context);
     const mutable = snapshot.current();
     this.#mutables.set(mutable.id, snapshot);
     this.#mainGraphIds.set(url, mutable.id);
+    this.#addDependencies(mutable.id, dependencies);
     return mutable;
+  }
+
+  #addDependencies(
+    id: MainGraphIdentifier,
+    dependencies: MainGraphIdentifier[]
+  ) {
+    if (!dependencies.length) return;
+
+    let deps: Set<MainGraphIdentifier> | undefined = this.#dependencies.get(id);
+    if (!deps) {
+      deps = new Set();
+      this.#dependencies.set(id, deps);
+    }
+    dependencies.forEach((dependency) => {
+      deps.add(dependency);
+    });
   }
 
   getOrAdd(graph: GraphDescriptor): Result<MutableGraph> {
@@ -208,7 +231,6 @@ class GraphStore
 
   #snapshotFromUrl(
     url: string,
-    dependencies: MainGraphIdentifier[],
     options: GraphLoaderContext
   ): SnapshotUpdater<MutableGraph> {
     const mutable = new MutableGraphImpl(emptyGraph(), this);
@@ -230,7 +252,9 @@ class GraphStore
       },
       willUpdate: () => {
         this.dispatchEvent(
-          new UpdateEvent(mutable.id, graphId, "", dependencies)
+          new UpdateEvent(mutable.id, graphId, "", [
+            ...(this.#dependencies.get(mutable.id) || []),
+          ])
         );
       },
     });

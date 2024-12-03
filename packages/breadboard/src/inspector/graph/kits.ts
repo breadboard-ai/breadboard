@@ -5,7 +5,7 @@
  */
 
 import { toNodeHandlerMetadata } from "../../graph-based-node-handler.js";
-import { getGraphHandler } from "../../handler.js";
+import { getGraphHandlerFromStore } from "../../handler.js";
 import {
   GraphDescriptor,
   NodeDescriberResult,
@@ -17,7 +17,6 @@ import {
   NodeTypeIdentifier,
 } from "../../types.js";
 import { graphUrlLike } from "../../utils/graph-url-like.js";
-import { contextFromStore } from "../graph-store.js";
 import {
   InspectableKit,
   InspectableKitCache,
@@ -229,10 +228,7 @@ class CustomNodeType implements InspectableNodeType {
   constructor(type: string, mutable: MutableGraph) {
     this.#type = type;
     this.#mutable = mutable;
-    this.#handlerPromise = getGraphHandler(
-      type,
-      contextFromStore(mutable.store)
-    );
+    this.#handlerPromise = getGraphHandlerFromStore(type, mutable.store);
   }
 
   async #readMetadata() {

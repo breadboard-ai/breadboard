@@ -334,17 +334,17 @@ export class Editor extends LitElement {
     }
   `;
 
-  async #inspectableGraphToConfig(
+  #inspectableGraphToConfig(
     url: string,
     subGraphId: string | null,
     selectedGraph: InspectableGraph
-  ): Promise<GraphOpts> {
+  ): GraphOpts {
     const ports = new Map<string, InspectableNodePorts>();
     const typeMetadata = new Map<string, NodeHandlerMetadata>();
     for (const node of selectedGraph.nodes()) {
       ports.set(node.descriptor.id, node.currentPorts());
       try {
-        typeMetadata.set(node.descriptor.type, await node.type().metadata());
+        typeMetadata.set(node.descriptor.type, node.type().currentMetadata());
       } catch (err) {
         // In the event of failing to get the type info, suggest removing the
         // node from the graph.
@@ -400,12 +400,12 @@ export class Editor extends LitElement {
 
     let shouldAnimate = true;
 
-    const handleGraph = async (
+    const handleGraph = (
       url: string,
       subGraphId: GraphIdentifier | null,
       selectedGraph: InspectableGraph
     ) => {
-      const opts = await this.#inspectableGraphToConfig(
+      const opts = this.#inspectableGraphToConfig(
         url,
         subGraphId,
         selectedGraph
@@ -436,11 +436,11 @@ export class Editor extends LitElement {
 
     const url = this.graph.raw().url ?? "no-url";
     if (this.showSubgraphsInline) {
-      await handleGraph(url, null, this.graph);
+      handleGraph(url, null, this.graph);
 
       const subGraphs = Object.entries(this.graph.graphs() ?? {});
       for (const [id, graph] of subGraphs) {
-        await handleGraph(url, id, graph);
+        handleGraph(url, id, graph);
       }
     } else {
       if (!this.selectionState) {
@@ -464,7 +464,7 @@ export class Editor extends LitElement {
           }
         }
 
-        await handleGraph(url, subGraphId, selectedGraph);
+        handleGraph(url, subGraphId, selectedGraph);
       }
     }
 
