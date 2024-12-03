@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, nothing } from "lit";
+import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import * as PIXI from "pixi.js";
 import {
@@ -26,11 +26,7 @@ import {
   WorkspaceSelectionStateEvent,
   WorkspaceVisualUpdateEvent,
 } from "../../events/events.js";
-import {
-  ComponentExpansionState,
-  GRAPH_OPERATIONS,
-  GraphOpts,
-} from "./types.js";
+import { GRAPH_OPERATIONS, GraphOpts } from "./types.js";
 import { Graph } from "./graph.js";
 import {
   GraphIdentifier,
@@ -97,14 +93,37 @@ export class GraphRenderer extends LitElement {
   @property()
   showSubgraphsInline = false;
 
+  @property()
+  assetPrefix = "";
+
+  @property()
+  configs: Map<GraphIdentifier, GraphOpts> | null = null;
+
+  @property()
+  topGraphResult: TopGraphRunResult | null = null;
+
+  @property()
+  selectionChangeId: WorkspaceSelectionChangeId | null = null;
+
+  @property()
+  topGraphUrl: string | null = null;
+
   @state()
   private _portTooltip?: {
     location: PIXI.ObservablePoint;
     port: InspectablePort;
   } = undefined;
 
+  @property()
+  padding = 100;
+
   #app = new PIXI.Application();
   #appInitialized = false;
+  #configChanged = false;
+  #lastSelectionChangeId: WorkspaceSelectionChangeId | null = null;
+  #selectionHasChanged = false;
+  #topGraphUrlChanged = false;
+  #graphsRendered = false;
 
   #overflowEditNode: Ref<HTMLButtonElement> = createRef();
   #overflowDeleteNode: Ref<HTMLButtonElement> = createRef();
@@ -126,12 +145,11 @@ export class GraphRenderer extends LitElement {
   } | null = null;
 
   #mode = MODE.SELECT;
-  #padding = 100;
   #container = new PIXI.Container({
     isRenderGroup: true,
   });
 
-  #nodeSelection: PIXI.Graphics | null = null;
+  #graphItemSelectionRect: PIXI.Graphics | null = null;
   #background: PIXI.TilingSprite | null = null;
   #lastContentRect: DOMRectReadOnly | null = null;
   #resizeObserver = new ResizeObserver((entries) => {
@@ -399,13 +417,13 @@ export class GraphRenderer extends LitElement {
     let modeWhenInteractionStarted: MODE | null = null;
 
     const removeNodeSelection = () => {
-      if (!this.#nodeSelection) {
+      if (!this.#graphItemSelectionRect) {
         return;
       }
 
-      this.#nodeSelection.removeFromParent();
-      this.#nodeSelection.destroy();
-      this.#nodeSelection = null;
+      this.#graphItemSelectionRect.removeFromParent();
+      this.#graphItemSelectionRect.destroy();
+      this.#graphItemSelectionRect = null;
     };
 
     const onStageMove = (evt: PIXI.FederatedPointerEvent) => {
@@ -434,8 +452,8 @@ export class GraphRenderer extends LitElement {
         return;
       }
 
-      if (!this.#nodeSelection) {
-        this.#nodeSelection = new PIXI.Graphics();
+      if (!this.#graphItemSelectionRect) {
+        this.#graphItemSelectionRect = new PIXI.Graphics();
       }
 
       const dragPosition = this.#app.stage.toLocal(evt.global);
@@ -447,13 +465,16 @@ export class GraphRenderer extends LitElement {
       const w = Math.abs(dragDeltaX);
       const h = Math.abs(dragDeltaY);
 
-      this.#app.stage.addChild(this.#nodeSelection);
-      this.#nodeSelection.clear();
-      this.#nodeSelection.beginPath();
-      this.#nodeSelection.rect(x, y, w, h);
-      this.#nodeSelection.closePath();
-      this.#nodeSelection.stroke({ width: 1, color: selectionBoxBorderColor });
-      this.#nodeSelection.fill({
+      this.#app.stage.addChild(this.#graphItemSelectionRect);
+      this.#graphItemSelectionRect.clear();
+      this.#graphItemSelectionRect.beginPath();
+      this.#graphItemSelectionRect.rect(x, y, w, h);
+      this.#graphItemSelectionRect.closePath();
+      this.#graphItemSelectionRect.stroke({
+        width: 1,
+        color: selectionBoxBorderColor,
+      });
+      this.#graphItemSelectionRect.fill({
         color: selectionBoxBackgroundColor,
         alpha: selectionBoxBackgroundAlpha,
       });
@@ -539,13 +560,30 @@ export class GraphRenderer extends LitElement {
         }
 
         const pivot = this.#app.stage.toLocal(evt.global);
-        const matrix = this.#scaleContainerAroundPoint(delta, pivot);
+        const scaleMatrix = new PIXI.Matrix();
+        scaleMatrix
+          .identity()
+          .scale(this.#container.scale.x, this.#container.scale.y)
+          .translate(this.#container.x, this.#container.y);
+
+        // Update with the mousewheel position & delta.
+        scaleMatrix
+          .translate(-pivot.x, -pivot.y)
+          .scale(delta, delta)
+          .translate(pivot.x, pivot.y);
+
+        // Ensure that it is always on a square pixel.
+        scaleMatrix.tx = Math.round(scaleMatrix.tx);
+        scaleMatrix.ty = Math.round(scaleMatrix.ty);
+
+        // Apply back to the container.
+        this.#container.setFromMatrix(scaleMatrix);
 
         if (!this.#background) {
           return;
         }
 
-        this.#background.tileTransform.setFromMatrix(matrix);
+        this.#background.tileTransform.setFromMatrix(scaleMatrix);
       } else {
         this.#container.x -= evt.deltaX;
         this.#container.y -= evt.deltaY;
@@ -560,12 +598,106 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.on("wheel", onWheel);
   }
 
-  get padding() {
-    return this.#padding;
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    if ("start" in this.#app) {
+      this.#app.start();
+    }
+
+    this.#resizeObserver.observe(this);
+    window.addEventListener("pointerdown", this.#onPointerDownBound);
+    window.addEventListener("keyup", this.#onKeyUpBound);
+    window.addEventListener("keydown", this.#onKeyDownBound);
+    this.addEventListener("wheel", this.#onWheelBound, { passive: false });
   }
 
-  set padding(padding: number) {
-    this.#padding = padding;
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    if ("stop" in this.#app) {
+      this.#app.stop();
+    }
+
+    this.#resizeObserver.disconnect();
+    window.removeEventListener("pointerdown", this.#onPointerDownBound);
+    window.removeEventListener("keyup", this.#onKeyUpBound);
+    window.removeEventListener("keydown", this.#onKeyDownBound);
+    this.removeEventListener("wheel", this.#onWheelBound);
+  }
+
+  protected shouldUpdate(changedProperties: PropertyValues): boolean {
+    if (changedProperties.has("selectionChangeId")) {
+      return this.selectionChangeId !== this.#lastSelectionChangeId;
+    }
+
+    return true;
+  }
+
+  protected willUpdate(changedProperties: PropertyValues): void {
+    this.#configChanged = changedProperties.has("configs");
+
+    const topGraphUrlChanged = changedProperties.has("topGraphUrl");
+    const subGraphSelectionChanged =
+      !this.showSubgraphsInline && changedProperties.has("selectionChangeId");
+    const visualModeChanged = changedProperties.has("showSubgraphsInline");
+
+    if (topGraphUrlChanged || subGraphSelectionChanged || visualModeChanged) {
+      this.#topGraphUrlChanged = true;
+      this.#graphsRendered = false;
+      this.#removeAllGraphs();
+    }
+
+    if (this.#graphsRendered && changedProperties.has("selectionChangeId")) {
+      // Only observe selection changes when we're not dealing with the top
+      // level graph.
+      this.#selectionHasChanged = true;
+    }
+  }
+
+  protected updated(): void {
+    if (
+      (this.#edgesForDisambiguation && this.#edgeSelectMenuRef.value) ||
+      (this.#newEdgeData && this.#edgeCreateMenuRef.value)
+    ) {
+      window.addEventListener(
+        "pointerdown",
+        () => {
+          this.#edgesForDisambiguation = null;
+          this.#newEdgeData = null;
+          this.#autoFocusSelf = true;
+          this.requestUpdate();
+        },
+        { once: true }
+      );
+
+      const input = this.#edgeCreateMenuRef.value?.querySelector("input");
+      if (input) {
+        input.focus();
+      }
+    }
+
+    if (this.#autoFocusSelf) {
+      this.#autoFocusSelf = false;
+      requestAnimationFrame(() => {
+        this.focus();
+      });
+    }
+
+    if (this.#selectionHasChanged) {
+      this.#selectionHasChanged = false;
+
+      let shouldAnimate = true;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        shouldAnimate = false;
+      }
+
+      // Wait a frame for the changes to be applied to the graph before trying
+      // to move to the selection.
+      requestAnimationFrame(() => {
+        this.#setTargetContainerMatrix(shouldAnimate);
+      });
+    }
   }
 
   #emitGraphVisualInformation() {
@@ -612,6 +744,7 @@ export class GraphRenderer extends LitElement {
     }
 
     const changeId = this.#selectionChangeId();
+    this.#lastSelectionChangeId = changeId;
     if (selections.graphs.size === 0) {
       this.dispatchEvent(new WorkspaceSelectionStateEvent(changeId, null));
       return;
@@ -642,26 +775,6 @@ export class GraphRenderer extends LitElement {
     return crypto.randomUUID();
   }
 
-  #scaleContainerAroundPoint(delta: number, pivot: PIXI.PointData) {
-    const m = new PIXI.Matrix();
-    m.identity()
-      .scale(this.#container.scale.x, this.#container.scale.y)
-      .translate(this.#container.x, this.#container.y);
-
-    // Update with the mousewheel position & delta.
-    m.translate(-pivot.x, -pivot.y)
-      .scale(delta, delta)
-      .translate(pivot.x, pivot.y);
-
-    // Ensure that it is always on a square pixel.
-    m.tx = Math.round(m.tx);
-    m.ty = Math.round(m.ty);
-
-    // Apply back to the container.
-    this.#container.setFromMatrix(m);
-    return m;
-  }
-
   #notifyEdgeSelection(edge: EdgeData) {
     if (!this.#activeGraph) {
       return;
@@ -674,208 +787,6 @@ export class GraphRenderer extends LitElement {
     this.#activeGraph.selectionState = { ...graphSelection };
     this.#activeGraph = null;
     this.#emitSelection();
-  }
-
-  hideAllGraphs() {
-    for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph)) {
-        continue;
-      }
-
-      graph.visible = false;
-    }
-  }
-
-  showGraph(url: string, subGraphId: string | null) {
-    const label = this.#createUrl(url, subGraphId);
-    for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph)) {
-        continue;
-      }
-
-      if (graph.label !== label) {
-        continue;
-      }
-
-      graph.visible = true;
-    }
-  }
-
-  set topGraphResult(topGraphResult: TopGraphRunResult | null) {
-    let highlightedNode = null;
-    let edgeValues = null;
-    let nodeInfo = null;
-
-    if (topGraphResult && topGraphResult.currentNode) {
-      highlightedNode = topGraphResult.currentNode;
-    }
-
-    if (topGraphResult && topGraphResult.edgeValues) {
-      edgeValues = topGraphResult.edgeValues;
-    }
-
-    if (topGraphResult && topGraphResult.nodeInformation) {
-      nodeInfo = topGraphResult.nodeInformation;
-    }
-
-    for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph) || !graph.visible) {
-        continue;
-      }
-
-      if (graph.subGraphId) {
-        continue;
-      }
-
-      graph.highlightedNode = highlightedNode;
-      graph.edgeValues = edgeValues;
-      graph.nodeInfo = nodeInfo;
-    }
-
-    if (!this.zoomToHighlightedNode || !highlightedNode) {
-      return;
-    }
-
-    this.zoomToNode(highlightedNode.descriptor.id, null, -0.1);
-  }
-
-  createGraph(opts: GraphOpts) {
-    const graph = new Graph();
-    graph.label = this.#createUrl(opts.url, opts.subGraphId);
-
-    this.#addGraph(graph);
-    this.updateGraphByUrl(opts.url, opts.subGraphId, opts);
-    this.#showBackground();
-  }
-
-  deleteGraphs() {
-    for (let c = this.#container.children.length; c >= 0; c--) {
-      const child = this.#container.children[c];
-      if (!(child instanceof Graph)) {
-        continue;
-      }
-
-      child.removeFromParent();
-      child.destroy();
-    }
-
-    this.#hideBackground();
-  }
-
-  deleteStaleSubGraphs(keep: Set<GraphIdentifier>) {
-    for (let c = this.#container.children.length; c >= 0; c--) {
-      const child = this.#container.children[c];
-      if (!(child instanceof Graph)) {
-        continue;
-      }
-
-      if (!child.subGraphId) {
-        continue;
-      }
-
-      if (keep.has(child.subGraphId)) {
-        continue;
-      }
-
-      child.removeFromParent();
-      child.destroy();
-    }
-  }
-
-  #hideBackground() {
-    if (!this.#background) {
-      return;
-    }
-
-    this.#background.visible = false;
-  }
-
-  #showBackground() {
-    if (!this.#background) {
-      return;
-    }
-
-    this.#background.visible = true;
-  }
-
-  updateGraphByUrl(
-    url: string,
-    subGraphId: string | null,
-    opts: Partial<GraphOpts>
-  ): boolean {
-    const graph = this.#container.children.find(
-      (child) => child.label === this.#createUrl(url, subGraphId)
-    );
-
-    if (!(graph instanceof Graph)) {
-      return false;
-    }
-
-    graph.readOnly = this.readOnly;
-    graph.highlightInvalidWires = this.highlightInvalidWires;
-
-    if (opts.showNodeTypeDescriptions !== undefined) {
-      graph.showNodeTypeDescriptions = opts.showNodeTypeDescriptions;
-    }
-
-    if (opts.showNodePreviewValues !== undefined) {
-      graph.showNodePreviewValues = opts.showNodePreviewValues;
-    }
-
-    if (opts.showNodeTypeDescriptions !== undefined) {
-      graph.showNodeTypeDescriptions = opts.showNodeTypeDescriptions;
-    }
-
-    if (opts.collapseNodesByDefault !== undefined) {
-      graph.collapseNodesByDefault = opts.collapseNodesByDefault;
-    }
-
-    if (opts.ports !== undefined) {
-      graph.ports = opts.ports;
-    }
-
-    if (opts.edges !== undefined) {
-      graph.edges = opts.edges;
-    }
-
-    if (opts.nodes !== undefined) {
-      graph.nodes = opts.nodes;
-    }
-
-    if (opts.modules !== undefined) {
-      graph.modules = opts.modules;
-    }
-
-    if (opts.typeMetadata !== undefined) {
-      graph.typeMetadata = opts.typeMetadata;
-    }
-
-    if (opts.metadata !== undefined) {
-      graph.comments = opts.metadata.comments || null;
-    }
-
-    if (opts.visible !== undefined) {
-      graph.visible = opts.visible;
-    }
-
-    if (opts.selectionState !== undefined) {
-      graph.selectionState = opts.selectionState;
-    }
-
-    graph.subGraphId = subGraphId;
-    graph.subGraphTitle = opts.title ?? null;
-
-    return true;
-  }
-
-  #createUrl(url: string, subGraphId: string | null) {
-    return url + (subGraphId ? `#${subGraphId}` : "");
-  }
-
-  getGraphs(): Graph[] {
-    return this.#container.children.filter(
-      (child) => child instanceof Graph
-    ) as Graph[];
   }
 
   #toggleGraphNodeSelection(
@@ -959,571 +870,41 @@ export class GraphRenderer extends LitElement {
   }
 
   #clearOtherGraphSelections(except: Graph) {
-    const graphs = this.getGraphs();
-    for (const graph of graphs) {
-      if (graph === except) {
+    for (const child of this.#container.children) {
+      if (!(child instanceof Graph) || child === except) {
         continue;
       }
 
-      graph.selectionState = emptySelectionState();
+      child.selectionState = emptySelectionState();
     }
   }
 
   #applyPositionDeltaToSelection(delta: PIXI.Point) {
-    const graphs = this.getGraphs();
-    for (const graph of graphs) {
-      graph.updateNodePositions(delta);
+    for (const child of this.#container.children) {
+      if (!(child instanceof Graph)) {
+        continue;
+      }
+      child.updateNodePositions(delta);
     }
   }
 
-  #addGraph(graph: Graph) {
-    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_EXPAND_COLLAPSE, () => {
-      this.#emitGraphVisualInformation();
-    });
-
-    graph.on(GRAPH_OPERATIONS.GRAPH_SELECTION_MOVE, (delta) => {
-      this.#applyPositionDeltaToSelection(delta);
-    });
-
-    graph.on(GRAPH_OPERATIONS.GRAPH_SELECTION_MOVE_SETTLED, () => {
-      this.#emitGraphVisualInformation();
-    });
-
-    graph.on(
-      GRAPH_OPERATIONS.GRAPH_NODE_TOGGLE_SELECTED,
-      (id: NodeIdentifier, isCtrlCommand: boolean) => {
-        if (!isCtrlCommand && !graph.selectionState?.nodes.has(id)) {
-          this.#clearOtherGraphSelections(graph);
-        }
-        this.#toggleGraphNodeSelection(graph, id, isCtrlCommand);
-        this.#emitSelection();
-      }
-    );
-
-    graph.on(
-      GRAPH_OPERATIONS.GRAPH_COMMENT_TOGGLE_SELECTED,
-      (id: NodeIdentifier, isCtrlCommand: boolean) => {
-        this.#toggleGraphCommentSelection(graph, id, isCtrlCommand);
-        this.#emitSelection();
-      }
-    );
-
-    graph.on(
-      GRAPH_OPERATIONS.GRAPH_EDGE_TOGGLE_SELECTED,
-      (id: NodeIdentifier, isCtrlCommand: boolean) => {
-        this.#toggleGraphEdgeSelection(graph, id, isCtrlCommand);
-        this.#emitSelection();
-      }
-    );
-
-    graph.on(GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH, (edge: EdgeData) => {
-      this.dispatchEvent(new GraphEdgeAttachEvent(edge, graph.subGraphId));
-    });
-
-    graph.on(GRAPH_OPERATIONS.GRAPH_EDGE_DETACH, (edge: EdgeData) => {
-      this.dispatchEvent(new GraphEdgeDetachEvent(edge, graph.subGraphId));
-    });
-
-    graph.on(
-      GRAPH_OPERATIONS.GRAPH_EDGE_CHANGE,
-      (from: EdgeData, to: EdgeData) => {
-        this.dispatchEvent(
-          new GraphNodeEdgeChangeEvent(from, to, false, graph.subGraphId)
-        );
-      }
-    );
-
-    graph.on(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW, () => {
-      this.dispatchEvent(new GraphInitialDrawEvent(graph.subGraphId));
-    });
-
-    graph.on(GRAPH_OPERATIONS.GRAPH_DRAW, () => {
-      graph.layout();
-    });
-
-    graph.on(
-      GRAPH_OPERATIONS.GRAPH_NODE_MENU_REQUESTED,
-      (graphNode: GraphNode, location: PIXI.ObservablePoint) => {
-        if (!this.#overflowMenuRef.value) {
-          return;
-        }
-
-        const overflowMenu = this.#overflowMenuRef.value;
-        overflowMenu.classList.add("visible");
-        overflowMenu.style.translate = `${location.x}px ${location.y}px`;
-
-        if (this.#overflowMinMaxSingleNode.value) {
-          this.#overflowMinMaxSingleNode.value.classList.toggle(
-            "expanded",
-            graphNode.expansionState === "expanded"
-          );
-          this.#overflowMinMaxSingleNode.value.classList.toggle(
-            "collapsed",
-            graphNode.expansionState === "collapsed"
-          );
-          this.#overflowMinMaxSingleNode.value.classList.toggle(
-            "advanced",
-            graphNode.expansionState === "advanced"
-          );
-        }
-
-        this.#overflowMenuGraphNode = graphNode;
-
-        window.addEventListener(
-          "pointerdown",
-          (evt: PointerEvent) => {
-            if (!this.#overflowMenuGraphNode) {
-              return;
-            }
-
-            const [topItem] = evt.composedPath();
-            switch (topItem) {
-              case this.#overflowMinMaxSingleNode.value: {
-                this.#overflowMenuGraphNode.expansionState =
-                  computeNextExpansionState(
-                    this.#overflowMenuGraphNode.expansionState
-                  );
-                break;
-              }
-
-              case this.#overflowEditNode.value: {
-                if (!this.#overflowMenuGraphNode.label) {
-                  console.warn("Tried to delete unnamed node");
-                  break;
-                }
-
-                this.dispatchEvent(
-                  new GraphNodeEditEvent(
-                    this.#overflowMenuGraphNode.label,
-                    null,
-                    null,
-                    evt.clientX,
-                    evt.clientY,
-                    graph.subGraphId,
-                    false
-                  )
-                );
-                break;
-              }
-
-              case this.#overflowDeleteNode.value: {
-                if (!this.#overflowMenuGraphNode.label) {
-                  console.warn("Tried to delete unnamed node");
-                  break;
-                }
-
-                this.dispatchEvent(
-                  new GraphNodeDeleteEvent(
-                    this.#overflowMenuGraphNode.label,
-                    graph.subGraphId
-                  )
-                );
-                break;
-              }
-            }
-
-            overflowMenu.classList.remove("visible");
-            this.#overflowMenuGraphNode = null;
-          },
-          { once: true }
-        );
-      }
-    );
-
-    graph.on(
-      GRAPH_OPERATIONS.GRAPH_EDGE_SELECT_DISAMBIGUATION_REQUESTED,
-      (possibleEdges: InspectableEdge[], location: PIXI.ObservablePoint) => {
-        this.#activeGraph = graph;
-        this.#edgesForDisambiguation = possibleEdges;
-        this.#menuLocation = location;
-
-        this.requestUpdate();
-      }
-    );
-
-    graph.on(
-      GRAPH_OPERATIONS.GRAPH_EDGE_ADD_DISAMBIGUATION_REQUESTED,
-      (
-        from: string,
-        to: string,
-        portsOut: InspectablePort[],
-        portsIn: InspectablePort[],
-        location: PIXI.ObservablePoint
-      ) => {
-        this.#activeGraph = graph;
-        this.#newEdgeData = {
-          from,
-          to,
-          portsOut,
-          portsIn,
-        };
-        this.#menuLocation = location;
-
-        this.requestUpdate();
-      }
-    );
-
-    graph.on(
-      GRAPH_OPERATIONS.GRAPH_EDGE_ADD_AD_HOC_DISAMBIGUATION_REQUESTED,
-      (
-        from: string,
-        to: string,
-        portsOut: InspectablePort[] | null,
-        portsIn: InspectablePort[] | null,
-        location: PIXI.ObservablePoint
-      ) => {
-        this.#activeGraph = graph;
-        this.#newEdgeData = {
-          from,
-          to,
-          portsOut,
-          portsIn,
-        };
-        this.#menuLocation = location;
-
-        this.requestUpdate();
-      }
-    );
-
-    graph.on(GRAPH_OPERATIONS.GRAPH_BOARD_LINK_CLICKED, (board: string) => {
-      this.dispatchEvent(new StartEvent(board));
-    });
-
-    graph.on(
-      GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSEENTER,
-      (port: InspectablePort, location: PIXI.ObservablePoint) => {
-        this._portTooltip = { port, location };
-      }
-    );
-
-    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSELEAVE, () => {
-      this._portTooltip = undefined;
-    });
-
-    graph.on(
-      GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
-      (
-        id: string,
-        port: InspectablePort | null,
-        selectedPort: string | null,
-        x: number,
-        y: number
-      ) => {
-        this.dispatchEvent(
-          new GraphNodeEditEvent(id, port, selectedPort, x, y, graph.subGraphId)
-        );
-      }
-    );
-
-    graph.on(
-      GRAPH_OPERATIONS.GRAPH_EDGE_VALUE_SELECTED,
-      (
-        info: TopGraphEdgeInfo[],
-        schema: Schema | null,
-        edge: EdgeData | null,
-        x: number,
-        y: number
-      ) => {
-        this.dispatchEvent(
-          new GraphEdgeValueSelectedEvent(
-            info,
-            schema,
-            edge,
-            x,
-            y,
-            graph.subGraphId
-          )
-        );
-      }
-    );
-
-    graph.on(
-      GRAPH_OPERATIONS.GRAPH_NODE_ACTIVITY_SELECTED,
-      (nodeName: string, id: string) => {
-        this.dispatchEvent(new GraphNodeActivitySelectedEvent(nodeName, id));
-      }
-    );
-
-    graph.on(
-      GRAPH_OPERATIONS.GRAPH_SHOW_TOOLTIP,
-      (message: string, x: number, y: number) => {
-        this.dispatchEvent(new GraphShowTooltipEvent(message, x, y));
-      }
-    );
-
-    graph.on(GRAPH_OPERATIONS.GRAPH_HIDE_TOOLTIP, () => {
-      this.dispatchEvent(new GraphHideTooltipEvent());
-    });
-
-    graph.on(
-      GRAPH_OPERATIONS.GRAPH_COMMENT_EDIT_REQUESTED,
-      (id: string, x: number, y: number) => {
-        this.dispatchEvent(
-          new GraphCommentEditRequestEvent(id, x, y, graph.subGraphId)
-        );
-      }
-    );
-
-    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_RUN_REQUESTED, (id: string) => {
-      this.dispatchEvent(new GraphNodeRunRequestEvent(id, graph.subGraphId));
-    });
-
-    graph.on(
-      GRAPH_OPERATIONS.GRAPH_NODE_EDIT,
-      (id: string, x: number, y: number) => {
-        this.dispatchEvent(
-          new GraphNodeEditEvent(id, null, null, x, y, graph.subGraphId, false)
-        );
-      }
-    );
-
-    this.#container.addChild(graph);
-  }
-
-  removeGraph(graph: Graph) {
+  #removeGraph(graph: Graph) {
     graph.removeFromParent();
     graph.destroy();
   }
 
-  removeGraphs(keepList: string[]) {
+  #removeAllGraphs() {
     for (const graph of this.#container.children) {
       if (!(graph instanceof Graph)) {
         continue;
       }
 
-      if (keepList.includes(graph.label)) {
-        continue;
-      }
-
-      // This is a subgraph, so do a further check to ensure whether it should
-      // be retained or removed.
-      if (graph.label.includes("#")) {
-        let keep = false;
-        searchLoop: for (const tabURL of keepList) {
-          if (graph.label.startsWith(tabURL)) {
-            keep = true;
-            break searchLoop;
-          }
-        }
-
-        if (keep) {
-          continue;
-        }
-      }
-
-      this.removeGraph(graph);
-    }
-  }
-
-  removeAllGraphs() {
-    for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph)) {
-        continue;
-      }
-
-      this.removeGraph(graph);
+      this.#removeGraph(graph);
     }
   }
 
   toContainerCoordinates(point: PIXI.PointData) {
     return this.#container.toLocal(point);
-  }
-
-  setNodeLayoutPosition(
-    node: string,
-    type: "comment" | "node",
-    position: PIXI.PointData,
-    subGraphId: string | null = null,
-    expansionState: ComponentExpansionState,
-    justAdded: boolean
-  ) {
-    for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph) || !graph.visible) {
-        continue;
-      }
-
-      if (subGraphId && graph.subGraphId !== subGraphId) {
-        continue;
-      }
-
-      return graph.setNodeLayoutPosition(
-        node,
-        type,
-        position,
-        expansionState,
-        justAdded
-      );
-    }
-
-    return null;
-  }
-
-  calculateNodeLocation(x: number, y: number) {
-    return this.#container.toGlobal({ x, y });
-  }
-
-  getNodeLayoutPosition(node: string) {
-    for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph) || !graph.visible) {
-        continue;
-      }
-
-      return graph.getNodeLayoutPosition(node);
-    }
-
-    return null;
-  }
-
-  /**
-   * @deprecated
-   */
-  zoomToNode(id: string, subGraphId: string | null, offset = 0) {
-    this.zoomToFit(0, subGraphId, subGraphId !== null);
-
-    for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph) || !graph.visible) {
-        continue;
-      }
-
-      if (subGraphId && graph.subGraphId !== subGraphId) {
-        continue;
-      }
-
-      const graphNode = graph.getChildByLabel(id);
-      if (!graphNode) {
-        continue;
-      }
-
-      const graphBounds = graph.getBounds();
-      const graphNodeBounds = graphNode.getBounds();
-      const rendererBounds = this.getBoundingClientRect();
-
-      const graphMidX =
-        (graphBounds.x + graphBounds.width / 2) / rendererBounds.width;
-      const graphMidY =
-        (graphBounds.y + graphBounds.height / 2) / rendererBounds.height;
-
-      const xShift =
-        (graphMidX +
-          offset -
-          (graphNodeBounds.x - graphBounds.x + graphNodeBounds.width * 0.5) /
-            graphBounds.width) *
-        graphBounds.width;
-      this.#container.x += xShift;
-
-      const yShift =
-        (graphMidY -
-          (graphNodeBounds.y - graphBounds.y + graphNodeBounds.height * 0.5) /
-            graphBounds.height) *
-        graphBounds.height;
-      this.#container.y += yShift;
-
-      let delta = Math.min(
-        (rendererBounds.width - 2 * this.#padding) / graphNodeBounds.width,
-        (rendererBounds.height - 2 * this.#padding) / graphNodeBounds.height
-      );
-
-      const zoomNodeMaxScale = this.maxScale * 0.5;
-      if (delta < this.minScale) {
-        delta = this.minScale;
-      } else if (delta > zoomNodeMaxScale) {
-        delta = zoomNodeMaxScale;
-      }
-
-      const pivot = {
-        x: rendererBounds.width / 2,
-        y: rendererBounds.height / 2,
-      };
-
-      const matrix = this.#scaleContainerAroundPoint(delta, pivot);
-      if (this.#background) {
-        this.#background.tileTransform.setFromMatrix(matrix);
-      }
-      return;
-    }
-  }
-
-  /**
-   * @deprecated
-   */
-  zoomToFit(
-    reduceRenderBoundsWidth = 0,
-    subGraphId: string | null = null,
-    includeSubGraphs = true
-  ) {
-    this.#container.position.set(0, 0);
-    this.#container.scale.set(1, 1);
-
-    const bounds = new PIXI.Bounds();
-    const position = new PIXI.Point();
-
-    for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph) || !graph.visible) {
-        continue;
-      }
-
-      if (!includeSubGraphs && graph.subGraphId) {
-        continue;
-      }
-
-      if (subGraphId && graph.subGraphId !== subGraphId) {
-        continue;
-      }
-
-      const graphPosition = graph.getGlobalPosition();
-      position.x = Math.min(position.x, graphPosition.x);
-      position.y = Math.min(position.y, graphPosition.y);
-
-      const graphBounds = graph.getBounds();
-      bounds.addBounds(graphBounds);
-    }
-
-    if (!bounds.isValid) {
-      return;
-    }
-
-    const rendererBounds = this.getBoundingClientRect();
-    if (reduceRenderBoundsWidth) {
-      rendererBounds.width -= reduceRenderBoundsWidth;
-    }
-
-    // Dagre isn't guaranteed to start the layout at 0, 0, so we adjust things
-    // back here so that the scaling calculations work out.
-    bounds.x -= position.x;
-    bounds.y -= position.y;
-    this.#container.position.set(
-      -bounds.x + (rendererBounds.width - bounds.width) * 0.5,
-      -bounds.y + (rendererBounds.height - bounds.height) * 0.5
-    );
-    const delta = Math.min(
-      (rendererBounds.width - 2 * this.#padding) / bounds.width,
-      (rendererBounds.height - 2 * this.#padding) / bounds.height,
-      1
-    );
-
-    if (delta < this.minScale) {
-      this.minScale = delta;
-    }
-
-    const pivot = {
-      x: rendererBounds.width / 2,
-      y: rendererBounds.height / 2,
-    };
-
-    const matrix = this.#scaleContainerAroundPoint(delta, pivot);
-    if (this.#background) {
-      this.#background.tileTransform.setFromMatrix(matrix);
-    }
-  }
-
-  resetAllSelectionStates() {
-    for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph)) {
-        continue;
-      }
-
-      graph.selectionState = null;
-    }
   }
 
   #targetContainerMatrix = new PIXI.Matrix();
@@ -1542,8 +923,8 @@ export class GraphRenderer extends LitElement {
 
     // Scale.
     let delta = Math.min(
-      (rendererBounds.width - 2 * this.#padding) / bounds.width,
-      (rendererBounds.height - 2 * this.#padding) / bounds.height,
+      (rendererBounds.width - 2 * this.padding) / bounds.width,
+      (rendererBounds.height - 2 * this.padding) / bounds.height,
       1
     );
 
@@ -1572,21 +953,35 @@ export class GraphRenderer extends LitElement {
     this.#targetContainerMatrix.d = Math.max(this.#targetContainerMatrix.d, 0);
   }
 
-  #createBoundsFromMainGraph() {
+  #createBoundsFromAllGraphs() {
     const bounds = new PIXI.Bounds();
     for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph) || graph.subGraphId) {
+      if (!(graph instanceof Graph)) {
         continue;
       }
 
-      // It's possible Dagre has placed the graph away from 0, 0, so we account
-      // for that here by asking for the global position.
-      const graphPosition = graph.position;
-      const x = -graphPosition.x;
-      const y = -graphPosition.y;
-      const bound = new PIXI.Bounds(x, y, x + graph.width, y + graph.height);
+      for (const node of graph.children) {
+        if (!(node instanceof GraphNode)) {
+          continue;
+        }
 
-      bounds.addBounds(bound);
+        const graphNode = graph.getGraphNodeById(node.label);
+        const graphNodePosition = graph.getNodeLayoutPosition(node.label);
+        if (!graphNode || !graphNodePosition) {
+          continue;
+        }
+
+        const x = graphNodePosition.x;
+        const y = graphNodePosition.y;
+        const bound = new PIXI.Bounds(
+          x,
+          y,
+          x + graphNode.width,
+          y + graphNode.height
+        );
+
+        bounds.addBounds(bound);
+      }
     }
 
     return bounds;
@@ -1617,29 +1012,35 @@ export class GraphRenderer extends LitElement {
 
         bounds.addBounds(bound);
       }
-
-      // TODO: Comments.
     }
 
     return bounds;
   }
 
-  moveToSelection(animate = false) {
+  zoomToFit(animate = false) {
+    this.#setTargetContainerMatrixFromBounds(this.#createBoundsFromAllGraphs());
+
+    this.#setTargetContainerMatrix(animate);
+  }
+
+  #setTargetContainerMatrix(animate = false) {
     this.#userHasInteracted = false;
 
+    this.#setTargetContainerMatrixFromBounds(this.#createBoundsFromSelection());
+    if (this.#targetContainerMatrix.isIdentity()) {
+      this.#setTargetContainerMatrixFromBounds(
+        this.#createBoundsFromAllGraphs()
+      );
+    }
+
+    this.#updateContainerFromTargetMatrix(animate);
+  }
+
+  #updateContainerFromTargetMatrix(animate = false) {
     const setContainer = (target = this.#targetContainerMatrix) => {
       this.#container.setFromMatrix(target);
       this.#background?.tileTransform.setFromMatrix(target);
     };
-
-    this.#setTargetContainerMatrixFromBounds(this.#createBoundsFromSelection());
-    if (this.#targetContainerMatrix.isIdentity()) {
-      animate = false;
-
-      this.#setTargetContainerMatrixFromBounds(
-        this.#createBoundsFromMainGraph()
-      );
-    }
 
     if (this.#targetContainerMatrix.isIdentity()) {
       console.warn("Unable to set container matrix");
@@ -1686,20 +1087,6 @@ export class GraphRenderer extends LitElement {
     requestAnimationFrame(update);
   }
 
-  resetGraphLayout() {
-    for (const graph of this.#container.children) {
-      if (!(graph instanceof Graph) || !graph.visible) {
-        continue;
-      }
-
-      graph.clearNodeLayoutPositions();
-      graph.storeCommentLayoutPositions();
-      graph.layout();
-    }
-
-    this.#emitGraphVisualInformation();
-  }
-
   #onPointerDown() {
     this.dispatchEvent(new GraphInteractionEvent());
   }
@@ -1723,39 +1110,13 @@ export class GraphRenderer extends LitElement {
     evt.preventDefault();
   }
 
-  connectedCallback(): void {
-    super.connectedCallback();
-
-    if ("start" in this.#app) {
-      this.#app.start();
-    }
-
-    this.#resizeObserver.observe(this);
-    window.addEventListener("pointerdown", this.#onPointerDownBound);
-    window.addEventListener("keyup", this.#onKeyUpBound);
-    window.addEventListener("keydown", this.#onKeyDownBound);
-    this.addEventListener("wheel", this.#onWheelBound, { passive: false });
-
-    this.moveToSelection(false);
-  }
-
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-
-    if ("stop" in this.#app) {
-      this.#app.stop();
-    }
-
-    this.#resizeObserver.disconnect();
-    window.removeEventListener("pointerdown", this.#onPointerDownBound);
-    window.removeEventListener("keyup", this.#onKeyUpBound);
-    window.removeEventListener("keydown", this.#onKeyDownBound);
-    this.removeEventListener("wheel", this.#onWheelBound);
-  }
-
   async #loadTexturesAndInitializeRenderer() {
     if (this.#appInitialized) {
       return this.#app.canvas;
+    }
+
+    if (GraphAssets.assetPrefix !== this.assetPrefix) {
+      GraphAssets.instance().loadAssets(this.assetPrefix);
     }
 
     await Promise.all([
@@ -1827,36 +1188,6 @@ export class GraphRenderer extends LitElement {
 
     this.#appInitialized = true;
     return this.#app.canvas;
-  }
-
-  protected updated(): void {
-    if (
-      (this.#edgesForDisambiguation && this.#edgeSelectMenuRef.value) ||
-      (this.#newEdgeData && this.#edgeCreateMenuRef.value)
-    ) {
-      window.addEventListener(
-        "pointerdown",
-        () => {
-          this.#edgesForDisambiguation = null;
-          this.#newEdgeData = null;
-          this.#autoFocusSelf = true;
-          this.requestUpdate();
-        },
-        { once: true }
-      );
-
-      const input = this.#edgeCreateMenuRef.value?.querySelector("input");
-      if (input) {
-        input.focus();
-      }
-    }
-
-    if (this.#autoFocusSelf) {
-      this.#autoFocusSelf = false;
-      requestAnimationFrame(() => {
-        this.focus();
-      });
-    }
   }
 
   #createEdgeIfPossible() {
@@ -2166,12 +1497,532 @@ export class GraphRenderer extends LitElement {
       : nothing;
 
     return [
-      until(this.ready),
+      until(
+        this.ready.then((canvas) => {
+          if (this.#configChanged) {
+            this.#configChanged = false;
+            this.#applyConfigs();
+          }
+
+          this.#handleTopGraphResult();
+          return html`${canvas}`;
+        })
+      ),
       overflowMenu,
       edgeSelectDisambiguationMenu,
       edgeMenu,
       this.#renderPortTooltip(),
     ];
+  }
+
+  #handleTopGraphResult() {
+    let highlightedNode = null;
+    let edgeValues = null;
+    let nodeInfo = null;
+
+    if (this.topGraphResult && this.topGraphResult.currentNode) {
+      highlightedNode = this.topGraphResult.currentNode;
+    }
+
+    if (this.topGraphResult && this.topGraphResult.edgeValues) {
+      edgeValues = this.topGraphResult.edgeValues;
+    }
+
+    if (this.topGraphResult && this.topGraphResult.nodeInformation) {
+      nodeInfo = this.topGraphResult.nodeInformation;
+    }
+
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph) || !graph.visible) {
+        continue;
+      }
+
+      if (graph.subGraphId) {
+        continue;
+      }
+
+      graph.highlightedNode = highlightedNode;
+      graph.edgeValues = edgeValues;
+      graph.nodeInfo = nodeInfo;
+    }
+  }
+
+  #hideBackground() {
+    if (!this.#background) {
+      return;
+    }
+
+    this.#background.visible = false;
+  }
+
+  #showBackground() {
+    if (!this.#background) {
+      return;
+    }
+
+    this.#background.visible = true;
+  }
+
+  #showAllGraphs() {
+    for (const child of this.#container.children) {
+      if (!(child instanceof Graph)) {
+        continue;
+      }
+
+      child.visible = true;
+    }
+  }
+
+  #applyConfigs() {
+    if (!this.configs || this.configs.size === 0) {
+      this.#removeAllGraphs();
+      this.#hideBackground();
+      return;
+    }
+
+    this.#showBackground();
+
+    let graphCount = 0;
+    const subGraphsSeen = new Set<string>();
+    for (const [id, config] of this.configs) {
+      const subGraphId = id === MAIN_BOARD_ID ? null : id;
+      if (id !== MAIN_BOARD_ID) {
+        subGraphsSeen.add(id);
+      }
+
+      const graphUrl = this.#createUrl(config.url, subGraphId);
+      if (this.#updateGraphByUrl(config.url, subGraphId, config)) {
+        continue;
+      }
+
+      graphCount++;
+
+      const graph = new Graph();
+      graph.label = graphUrl;
+
+      // Initial Draw - wait for all graphs before attempting to move.
+      if (this.#topGraphUrlChanged) {
+        graph.once(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW, () => {
+          graphCount--;
+          if (graphCount === 0) {
+            // Wait a frame so that all changes have been applied.
+            requestAnimationFrame(() => {
+              this.#showAllGraphs();
+              this.#graphsRendered = true;
+              this.#setTargetContainerMatrix(false);
+            });
+          }
+        });
+      }
+
+      this.#addGraph(graph);
+      this.#updateGraphByUrl(config.url, subGraphId, config);
+    }
+
+    if (this.#graphsRendered) {
+      this.#showAllGraphs();
+    }
+
+    this.#topGraphUrlChanged = false;
+    this.#removeStaleSubGraphs(subGraphsSeen);
+  }
+
+  #addGraph(graph: Graph) {
+    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_EXPAND_COLLAPSE, () => {
+      this.#emitGraphVisualInformation();
+    });
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_SELECTION_MOVE, (delta) => {
+      this.#applyPositionDeltaToSelection(delta);
+    });
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_SELECTION_MOVE_SETTLED, () => {
+      this.#emitGraphVisualInformation();
+    });
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_TOGGLE_SELECTED,
+      (id: NodeIdentifier, isCtrlCommand: boolean) => {
+        if (!isCtrlCommand && !graph.selectionState?.nodes.has(id)) {
+          this.#clearOtherGraphSelections(graph);
+        }
+        this.#toggleGraphNodeSelection(graph, id, isCtrlCommand);
+        this.#emitSelection();
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_COMMENT_TOGGLE_SELECTED,
+      (id: NodeIdentifier, isCtrlCommand: boolean) => {
+        this.#toggleGraphCommentSelection(graph, id, isCtrlCommand);
+        this.#emitSelection();
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_EDGE_TOGGLE_SELECTED,
+      (id: NodeIdentifier, isCtrlCommand: boolean) => {
+        this.#toggleGraphEdgeSelection(graph, id, isCtrlCommand);
+        this.#emitSelection();
+      }
+    );
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH, (edge: EdgeData) => {
+      this.dispatchEvent(new GraphEdgeAttachEvent(edge, graph.subGraphId));
+    });
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_EDGE_DETACH, (edge: EdgeData) => {
+      this.dispatchEvent(new GraphEdgeDetachEvent(edge, graph.subGraphId));
+    });
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_EDGE_CHANGE,
+      (from: EdgeData, to: EdgeData) => {
+        this.dispatchEvent(
+          new GraphNodeEdgeChangeEvent(from, to, false, graph.subGraphId)
+        );
+      }
+    );
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW, () => {
+      this.dispatchEvent(new GraphInitialDrawEvent(graph.subGraphId));
+    });
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_DRAW, () => {
+      graph.layout();
+    });
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_MENU_REQUESTED,
+      (graphNode: GraphNode, location: PIXI.ObservablePoint) => {
+        if (!this.#overflowMenuRef.value) {
+          return;
+        }
+
+        const overflowMenu = this.#overflowMenuRef.value;
+        overflowMenu.classList.add("visible");
+        overflowMenu.style.translate = `${location.x}px ${location.y}px`;
+
+        if (this.#overflowMinMaxSingleNode.value) {
+          this.#overflowMinMaxSingleNode.value.classList.toggle(
+            "expanded",
+            graphNode.expansionState === "expanded"
+          );
+          this.#overflowMinMaxSingleNode.value.classList.toggle(
+            "collapsed",
+            graphNode.expansionState === "collapsed"
+          );
+          this.#overflowMinMaxSingleNode.value.classList.toggle(
+            "advanced",
+            graphNode.expansionState === "advanced"
+          );
+        }
+
+        this.#overflowMenuGraphNode = graphNode;
+
+        window.addEventListener(
+          "pointerdown",
+          (evt: PointerEvent) => {
+            if (!this.#overflowMenuGraphNode) {
+              return;
+            }
+
+            const [topItem] = evt.composedPath();
+            switch (topItem) {
+              case this.#overflowMinMaxSingleNode.value: {
+                this.#overflowMenuGraphNode.expansionState =
+                  computeNextExpansionState(
+                    this.#overflowMenuGraphNode.expansionState
+                  );
+                break;
+              }
+
+              case this.#overflowEditNode.value: {
+                if (!this.#overflowMenuGraphNode.label) {
+                  console.warn("Tried to delete unnamed node");
+                  break;
+                }
+
+                this.dispatchEvent(
+                  new GraphNodeEditEvent(
+                    this.#overflowMenuGraphNode.label,
+                    null,
+                    null,
+                    evt.clientX,
+                    evt.clientY,
+                    graph.subGraphId,
+                    false
+                  )
+                );
+                break;
+              }
+
+              case this.#overflowDeleteNode.value: {
+                if (!this.#overflowMenuGraphNode.label) {
+                  console.warn("Tried to delete unnamed node");
+                  break;
+                }
+
+                this.dispatchEvent(
+                  new GraphNodeDeleteEvent(
+                    this.#overflowMenuGraphNode.label,
+                    graph.subGraphId
+                  )
+                );
+                break;
+              }
+            }
+
+            overflowMenu.classList.remove("visible");
+            this.#overflowMenuGraphNode = null;
+          },
+          { once: true }
+        );
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_EDGE_SELECT_DISAMBIGUATION_REQUESTED,
+      (possibleEdges: InspectableEdge[], location: PIXI.ObservablePoint) => {
+        this.#activeGraph = graph;
+        this.#edgesForDisambiguation = possibleEdges;
+        this.#menuLocation = location;
+
+        this.requestUpdate();
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_EDGE_ADD_DISAMBIGUATION_REQUESTED,
+      (
+        from: string,
+        to: string,
+        portsOut: InspectablePort[],
+        portsIn: InspectablePort[],
+        location: PIXI.ObservablePoint
+      ) => {
+        this.#activeGraph = graph;
+        this.#newEdgeData = {
+          from,
+          to,
+          portsOut,
+          portsIn,
+        };
+        this.#menuLocation = location;
+
+        this.requestUpdate();
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_EDGE_ADD_AD_HOC_DISAMBIGUATION_REQUESTED,
+      (
+        from: string,
+        to: string,
+        portsOut: InspectablePort[] | null,
+        portsIn: InspectablePort[] | null,
+        location: PIXI.ObservablePoint
+      ) => {
+        this.#activeGraph = graph;
+        this.#newEdgeData = {
+          from,
+          to,
+          portsOut,
+          portsIn,
+        };
+        this.#menuLocation = location;
+
+        this.requestUpdate();
+      }
+    );
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_BOARD_LINK_CLICKED, (board: string) => {
+      this.dispatchEvent(new StartEvent(board));
+    });
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSEENTER,
+      (port: InspectablePort, location: PIXI.ObservablePoint) => {
+        this._portTooltip = { port, location };
+      }
+    );
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_PORT_MOUSELEAVE, () => {
+      this._portTooltip = undefined;
+    });
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_PORT_VALUE_EDIT,
+      (
+        id: string,
+        port: InspectablePort | null,
+        selectedPort: string | null,
+        x: number,
+        y: number
+      ) => {
+        this.dispatchEvent(
+          new GraphNodeEditEvent(id, port, selectedPort, x, y, graph.subGraphId)
+        );
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_EDGE_VALUE_SELECTED,
+      (
+        info: TopGraphEdgeInfo[],
+        schema: Schema | null,
+        edge: EdgeData | null,
+        x: number,
+        y: number
+      ) => {
+        this.dispatchEvent(
+          new GraphEdgeValueSelectedEvent(
+            info,
+            schema,
+            edge,
+            x,
+            y,
+            graph.subGraphId
+          )
+        );
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_ACTIVITY_SELECTED,
+      (nodeName: string, id: string) => {
+        this.dispatchEvent(new GraphNodeActivitySelectedEvent(nodeName, id));
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_SHOW_TOOLTIP,
+      (message: string, x: number, y: number) => {
+        this.dispatchEvent(new GraphShowTooltipEvent(message, x, y));
+      }
+    );
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_HIDE_TOOLTIP, () => {
+      this.dispatchEvent(new GraphHideTooltipEvent());
+    });
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_COMMENT_EDIT_REQUESTED,
+      (id: string, x: number, y: number) => {
+        this.dispatchEvent(
+          new GraphCommentEditRequestEvent(id, x, y, graph.subGraphId)
+        );
+      }
+    );
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_RUN_REQUESTED, (id: string) => {
+      this.dispatchEvent(new GraphNodeRunRequestEvent(id, graph.subGraphId));
+    });
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_NODE_EDIT,
+      (id: string, x: number, y: number) => {
+        this.dispatchEvent(
+          new GraphNodeEditEvent(id, null, null, x, y, graph.subGraphId, false)
+        );
+      }
+    );
+
+    this.#container.addChild(graph);
+  }
+
+  #updateGraphByUrl(
+    url: string,
+    subGraphId: string | null,
+    opts: Partial<GraphOpts>
+  ): boolean {
+    const graph = this.#container.children.find(
+      (child) => child.label === this.#createUrl(url, subGraphId)
+    );
+
+    if (!(graph instanceof Graph)) {
+      return false;
+    }
+
+    graph.readOnly = this.readOnly;
+    graph.highlightInvalidWires = this.highlightInvalidWires;
+
+    if (opts.showNodeTypeDescriptions !== undefined) {
+      graph.showNodeTypeDescriptions = opts.showNodeTypeDescriptions;
+    }
+
+    if (opts.showNodePreviewValues !== undefined) {
+      graph.showNodePreviewValues = opts.showNodePreviewValues;
+    }
+
+    if (opts.showNodeTypeDescriptions !== undefined) {
+      graph.showNodeTypeDescriptions = opts.showNodeTypeDescriptions;
+    }
+
+    if (opts.collapseNodesByDefault !== undefined) {
+      graph.collapseNodesByDefault = opts.collapseNodesByDefault;
+    }
+
+    if (opts.ports !== undefined) {
+      graph.ports = opts.ports;
+    }
+
+    if (opts.edges !== undefined) {
+      graph.edges = opts.edges;
+    }
+
+    if (opts.nodes !== undefined) {
+      graph.nodes = opts.nodes;
+    }
+
+    if (opts.modules !== undefined) {
+      graph.modules = opts.modules;
+    }
+
+    if (opts.typeMetadata !== undefined) {
+      graph.typeMetadata = opts.typeMetadata;
+    }
+
+    if (opts.metadata !== undefined) {
+      graph.comments = opts.metadata.comments || null;
+    }
+
+    if (opts.visible !== undefined) {
+      graph.visible = opts.visible;
+    }
+
+    if (opts.selectionState !== undefined) {
+      graph.selectionState = opts.selectionState;
+    }
+
+    graph.subGraphId = subGraphId;
+    graph.subGraphTitle = opts.title ?? null;
+
+    return true;
+  }
+
+  #createUrl(url: string, subGraphId: string | null) {
+    return url + (subGraphId ? `#${subGraphId}` : "");
+  }
+
+  #removeStaleSubGraphs(keep: Set<GraphIdentifier>) {
+    for (let c = this.#container.children.length; c >= 0; c--) {
+      const child = this.#container.children[c];
+      if (!(child instanceof Graph)) {
+        continue;
+      }
+
+      if (!child.subGraphId) {
+        continue;
+      }
+
+      if (keep.has(child.subGraphId)) {
+        continue;
+      }
+
+      child.removeFromParent();
+      child.destroy();
+    }
   }
 
   #renderPortTooltip() {
