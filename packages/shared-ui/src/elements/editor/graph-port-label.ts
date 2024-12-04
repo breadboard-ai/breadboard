@@ -189,6 +189,11 @@ export class GraphPortLabel extends PIXI.Container {
       return;
     }
 
+    // Value preview may change the dimensions. Let's compute them now,
+    // because we may be computing dimensions for the node, and it needs
+    // the new values.
+    this.#calculateDimensions();
+
     this.isConfigurable = isConfigurablePort(port, this.#expansionState);
   }
 
