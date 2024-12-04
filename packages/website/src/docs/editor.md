@@ -13,13 +13,17 @@ The Editor API provides a way to edit a graph. It is designed to work in conjunc
 
 ## Creating an editor
 
-Calling the `edit` method creates an instance of an `EditableGraph`. This method expects a `GraphDescriptor` as its first argument:
+Calling the `editByDescriptor` method on a `MutableGraphStore` instance creates a new instance of an `EditableGraph`. This method expects a `GraphDescriptor` as its first argument:
 
 ```ts
-import { edit } from "google-labs/breadboard";
+import { createGraphStore } from "google-labs/breadboard";
+
+// ...
+// Somewhere during initialization of the applicaton.
+const graphStore = createGraphStore(graphStoreOptions);
 
 // Returns an instance of `EditableGraph`.
-const graph = edit(bgl);
+const graph = graphStore.editByDescriptor(bgl);
 ```
 
 The editor API provides one method for applying edits to the graph: `edit`. This method takes three members (two required):
