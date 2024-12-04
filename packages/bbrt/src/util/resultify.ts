@@ -60,7 +60,11 @@ export function resultify<T = unknown, E = unknown>(
       object.onerror = () => resolve({ ok: false, error: object.error });
     });
   } else {
-    console.error("Invalid argument to resultify", object);
-    throw new Error("Invalid argument to resultify");
+    const msg = `Internal error: Invalid resultify argument ${object}`;
+    console.error(msg, object);
+    return {
+      ok: false,
+      error: new Error(msg) as E,
+    };
   }
 }

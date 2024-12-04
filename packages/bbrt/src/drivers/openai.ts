@@ -257,19 +257,17 @@ async function convertTurnsForOpenAi(
           msg.content = content;
         }
         if (turn.toolCalls?.length) {
-          msg.tool_calls = await Promise.all(
-            turn.toolCalls.map(async (toolCall) => ({
-              // TODO(aomarks) We shouldn't need to specify an index, typings isue
-              // (need request vs response variants).
-              index: undefined as unknown as number,
-              id: toolCall.id,
-              type: "function",
-              function: {
-                name: toolCall.tool.metadata.id,
-                arguments: JSON.stringify(toolCall.args),
-              },
-            }))
-          );
+          msg.tool_calls = turn.toolCalls.map((toolCall) => ({
+            // TODO(aomarks) We shouldn't need to specify an index, typings isue
+            // (need request vs response variants).
+            index: undefined as unknown as number,
+            id: toolCall.id,
+            type: "function",
+            function: {
+              name: toolCall.tool.metadata.id,
+              arguments: JSON.stringify(toolCall.args),
+            },
+          }));
         }
         messages.push(msg);
         break;

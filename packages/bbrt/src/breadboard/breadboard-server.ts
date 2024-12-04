@@ -8,6 +8,9 @@ import type {
   GraphDescriptor,
   NodeDescriberResult,
 } from "@google-labs/breadboard";
+import type { Result } from "../util/result.js";
+import { resultify } from "../util/resultify.js";
+import { transposeResults } from "../util/transpose-results.js";
 import { getDefaultSchema } from "./get-default-schema.js";
 
 export class BreadboardServer {
@@ -21,52 +24,69 @@ export class BreadboardServer {
     return this.#baseUrl;
   }
 
-  async boards(): Promise<BreadboardBoardListing[]> {
+  async boards(): Promise<Result<BreadboardBoardListing[]>> {
     const url = new URL("/boards", this.#baseUrl);
-    // TODO(aomarks) Better error handling.
-    const response = await fetch(url);
+    const response = await resultify(fetch(url));
     if (!response.ok) {
-      throw new Error(`HTTP status ${response.status}: ${response.statusText}`);
+      return response;
     }
-    return (await response.json()) as BreadboardBoardListing[];
+    if (!response.value.ok) {
+      return {
+        ok: false,
+        error: new Error(
+          `HTTP ${response.value.status} ${response.value.statusText}`
+        ),
+      };
+    }
+    return resultify(response.value.json());
   }
 
-  async board(boardPath: string): Promise<GraphDescriptor> {
+  async board(boardPath: string): Promise<Result<GraphDescriptor>> {
     const url = new URL(`/boards/${boardPath}`, this.#baseUrl);
-    // TODO(aomarks) Better error handling.
-    const response = await fetch(url);
+    const response = await resultify(fetch(url));
     if (!response.ok) {
-      throw new Error(`HTTP status ${response.status}: ${response.statusText}`);
+      return response;
     }
-    return (await response.json()) as GraphDescriptor;
+    if (!response.value.ok) {
+      return {
+        ok: false,
+        error: new Error(
+          `HTTP ${response.value.status} ${response.value.statusText}`
+        ),
+      };
+    }
+    return resultify(response.value.json());
   }
 
-  async boardsDetailed(): Promise<BreadboardBoardListingDetailed[]> {
+  async boardsDetailed(): Promise<Result<BreadboardBoardListingDetailed[]>> {
     const listings = await this.boards();
-    const details: BreadboardBoardListingDetailed[] = [];
-    await Promise.all(
-      listings.map(async (listing) => {
-        const bgl = await this.board(listing.path);
-        const schema = await getDefaultSchema(bgl);
-        if (!schema.ok) {
-          console.error(
-            "Error getting schema for board",
-            listing.path,
-            schema.error
-          );
-          return;
-        }
-        if (!bgl.title || !bgl.description) {
-          return;
-        }
-        details.push({
-          ...listing,
-          bgl,
-          schema: schema.value,
-        });
-      })
+    if (!listings.ok) {
+      return listings;
+    }
+    return transposeResults(
+      await Promise.all(
+        listings.value.map(
+          async (listing): Promise<Result<BreadboardBoardListingDetailed>> => {
+            const bgl = await this.board(listing.path);
+            if (!bgl.ok) {
+              return bgl;
+            }
+            const schema = await getDefaultSchema(bgl.value);
+            if (!schema.ok) {
+              return schema;
+            }
+            return {
+              ok: true,
+              value: {
+                ...listing,
+                bgl: bgl.value,
+                schema: schema.value,
+              },
+            };
+          }
+        )
+      )
     );
-    return details;
   }
 }
 

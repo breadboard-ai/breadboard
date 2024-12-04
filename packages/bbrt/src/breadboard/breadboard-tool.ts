@@ -29,7 +29,6 @@ import type {
   ToolMetadata,
 } from "../tools/tool.js";
 import type { Result } from "../util/result.js";
-import { resultify } from "../util/resultify.js";
 import type {
   BreadboardBoardListing,
   BreadboardServer,
@@ -96,9 +95,7 @@ export class BreadboardTool implements BBRTTool<unknown, unknown> {
 
   #bglCache?: Promise<Result<GraphDescriptor>>;
   bgl(): Promise<Result<GraphDescriptor>> {
-    return (this.#bglCache ??= resultify(
-      this.#server.board(this.#listing.path)
-    ));
+    return (this.#bglCache ??= this.#server.board(this.#listing.path));
   }
 }
 
