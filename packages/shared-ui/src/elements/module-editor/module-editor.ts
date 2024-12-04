@@ -4,18 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
+  createGraphStore,
+  createLoader,
   GraphDescriptor,
   GraphProviderCapabilities,
   InspectableGraph,
   InspectableModules,
+  InspectableNodePorts,
   InspectableRun,
   Kit,
+  NodeHandlerMetadata,
 } from "@google-labs/breadboard";
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
 import { CodeEditor, GraphRenderer, ModuleRibbonMenu } from "../elements";
 import {
+  GraphIdentifier,
   ModuleCode,
   ModuleIdentifier,
   ModuleLanguage,
@@ -39,7 +44,11 @@ import {
 import { typeDeclarations as builtIns } from "@breadboard-ai/jsandbox";
 import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
 import { getMappedQuickJsModList } from "./ts-library";
-import { COMMAND_SET_MODULE_EDITOR } from "../../constants/constants";
+import {
+  COMMAND_SET_MODULE_EDITOR,
+  MAIN_BOARD_ID,
+} from "../../constants/constants";
+import { GraphOpts } from "../editor/types";
 
 const PREVIEW_KEY = "bb-module-editor-preview-visible";
 
@@ -144,12 +153,8 @@ export class ModuleEditor extends LitElement {
         0 8px 8px 0 rgba(0, 0, 0, 0.07),
         0 15px 12px 0 rgba(0, 0, 0, 0.09);
       z-index: 4;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    #module-graph.visible {
       opacity: 1;
+      pointer-events: none;
     }
 
     bb-graph-renderer {
@@ -289,6 +294,13 @@ export class ModuleEditor extends LitElement {
 
   #commandFormatCodeBound = this.#commandFormatCode.bind(this);
   #commandSaveCodeBound = this.#commandSaveCode.bind(this);
+
+  // TODO: Pass this in as a property instead?
+  #store = createGraphStore({
+    kits: [],
+    loader: createLoader(),
+    sandbox: { runModule: () => Promise.resolve({}) },
+  });
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -621,7 +633,43 @@ export class ModuleEditor extends LitElement {
     this.#codeEditorRef.value.destroy();
   }
 
-  #createModuleGraph(isMainModule = false): GraphDescriptor | null {
+  #inspectableGraphToConfig(
+    url: string,
+    subGraphId: string | null,
+    selectedGraph: InspectableGraph
+  ): GraphOpts {
+    const ports = new Map<string, InspectableNodePorts>();
+    const typeMetadata = new Map<string, NodeHandlerMetadata>();
+    for (const node of selectedGraph.nodes()) {
+      ports.set(node.descriptor.id, node.currentPorts());
+      try {
+        typeMetadata.set(node.descriptor.type, node.type().currentMetadata());
+      } catch (err) {
+        // Ignore errors.
+      }
+    }
+
+    return {
+      url,
+      title: selectedGraph.raw().title ?? "Untitled Board",
+      subGraphId,
+      visible: false,
+      showNodeTypeDescriptions: false,
+      showNodePreviewValues: false,
+      collapseNodesByDefault: false,
+      ports: ports,
+      typeMetadata,
+      edges: selectedGraph.edges(),
+      nodes: selectedGraph.nodes(),
+      modules: selectedGraph.modules(),
+      metadata: selectedGraph.metadata() || {},
+      selectionState: null,
+    };
+  }
+
+  #createModuleGraphConfig(
+    isMainModule = false
+  ): Map<GraphIdentifier, GraphOpts> | null {
     if (!this.moduleId || !this.modules) {
       return null;
     }
@@ -634,7 +682,9 @@ export class ModuleEditor extends LitElement {
       };
     }
 
-    return {
+    const url = "no-url";
+    const graph: GraphDescriptor = {
+      url,
       nodes: [
         {
           id: this.moduleId,
@@ -655,6 +705,19 @@ export class ModuleEditor extends LitElement {
       edges: [],
       modules,
     };
+
+    const editableGraph = this.#store.editByDescriptor(graph);
+    const inspectableGraph = editableGraph?.inspect("");
+    if (!inspectableGraph) {
+      return null;
+    }
+
+    return new Map([
+      [
+        MAIN_BOARD_ID,
+        this.#inspectableGraphToConfig(url, null, inspectableGraph),
+      ],
+    ]);
   }
 
   #togglePreview(value = !this.showModulePreview) {
@@ -686,13 +749,6 @@ export class ModuleEditor extends LitElement {
     }
 
     const isMainModule = this.graph?.main() === this.moduleId;
-    const moduleGraphDescriptor = this.#createModuleGraph(isMainModule);
-    // let moduleGraph: HTMLTemplateResult | symbol = nothing;
-    if (moduleGraphDescriptor) {
-      // TODO: Reintroduce the graph.
-      // moduleGraph = nothing;
-    }
-
     const module = this.modules[this.moduleId];
     if (!module) {
       return nothing;
@@ -815,6 +871,25 @@ export class ModuleEditor extends LitElement {
           </div>
         </div>
       </div>
+      ${isRunnable
+        ? html`
+            <div id="module-graph">
+              <bb-graph-renderer
+                .padding=${28}
+                .topGraphUrl=${this.graph?.raw().url ?? "no-url"}
+                .topGraphResult=${this.topGraphResult}
+                .assetPrefix=${this.assetPrefix}
+                .configs=${this.#createModuleGraphConfig()}
+                .invertZoomScrollDirection=${false}
+                .readOnly=${true}
+                .highlightInvalidWires=${false}
+                .showPortTooltips=${false}
+                .showSubgraphsInline=${false}
+                .selectionChangeId=${null}
+              ></bb-graph-renderer>
+            </div>
+          `
+        : nothing}
     </section>`;
   }
 }
