@@ -3034,6 +3034,7 @@ export class Main extends LitElement {
       <div id="content" ?inert=${showingOverlay}>
         <bb-ui-controller
               ${ref(this.#uiRef)}
+              .graphStore=${this.#graphStore}
               ?inert=${showingOverlay}
               .readOnly=${this.tab?.readOnly ?? true}
               .graph=${this.tab?.graph ?? null}
