@@ -13,6 +13,7 @@ import {
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
   InspectableRun,
+  InspectableRunEvent,
   InspectableRunInputs,
   Kit,
 } from "@google-labs/breadboard";
@@ -61,7 +62,7 @@ export class UI extends LitElement {
   editor: EditableGraph | null = null;
 
   @property()
-  run: InspectableRun | null = null;
+  runs: InspectableRun[] | null = null;
 
   @property()
   inputsFromLastRun: InspectableRunInputs | null = null;
@@ -100,9 +101,6 @@ export class UI extends LitElement {
   boardServers: BoardServer[] = [];
 
   @property()
-  isShowingBoardActivityOverlay = false;
-
-  @property()
   tabURLs: string[] = [];
 
   @state()
@@ -112,7 +110,7 @@ export class UI extends LitElement {
   mode: "list" | "tree" = "list";
 
   @property()
-  sideNavItem: string | null = null;
+  sideNavItem: string | null = "components";
 
   @property()
   selectionState: WorkspaceSelectionStateWithChangeId | null = null;
@@ -123,6 +121,10 @@ export class UI extends LitElement {
   @property()
   graphTopologyUpdateId: number = 0;
 
+  @state()
+  debugEvent: InspectableRunEvent | null = null;
+
+  #lastEventPosition = 0;
   #graphEditorRef: Ref<Editor> = createRef();
   #moduleEditorRef: Ref<ModuleEditor> = createRef();
 
@@ -148,7 +150,21 @@ export class UI extends LitElement {
       this.editorRender++;
     }
 
+    if (changedProperties.has("topGraphResult")) {
+      this.#lastEventPosition = 0;
+    }
+
     if (changedProperties.has("selectionState")) {
+      // If this is an imperative board with no selection state then set the
+      // selection to be the main.
+      if (
+        this.selectionState?.selectionState.graphs.size === 0 &&
+        this.selectionState?.selectionState.modules.size === 0 &&
+        this.graph?.main
+      ) {
+        this.selectionState?.selectionState.modules.add(this.graph.main);
+      }
+
       if (this.#moduleEditorRef.value) {
         if (
           !this.selectionState ||
@@ -157,20 +173,14 @@ export class UI extends LitElement {
           this.#moduleEditorRef.value.destroyEditor();
         }
       }
-
-      const selectedModuleCount =
-        this.selectionState?.selectionState.modules.size ?? 0;
-      if (this.sideNavItem === "components" && selectedModuleCount > 0) {
-        this.sideNavItem = null;
-      }
-
-      if (this.sideNavItem === "capabilities" && selectedModuleCount === 0) {
-        this.sideNavItem = null;
-      }
     }
   }
 
   #handleSideNav(label: string) {
+    if (this.sideNavItem === "activity") {
+      this.#lastEventPosition = this.runs?.[0]?.events.length ?? 0;
+    }
+
     if (this.sideNavItem === label) {
       this.sideNavItem = null;
       globalThis.localStorage.removeItem(SIDE_NAV_ITEM_KEY);
@@ -265,11 +275,14 @@ export class UI extends LitElement {
 
     const canUndo = this.history?.canUndo() ?? false;
     const canRedo = this.history?.canRedo() ?? false;
+    const run = this.runs?.[0] ?? null;
+    const lastRun = this.runs?.[1] ?? null;
+    const events = run?.events ?? [];
 
     const graphEditor = guard(
       [
         graph,
-        this.run,
+        run,
         this.kits,
         this.topGraphResult,
         this.history,
@@ -303,9 +316,8 @@ export class UI extends LitElement {
           .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
           .highlightInvalidWires=${highlightInvalidWires}
           .invertZoomScrollDirection=${invertZoomScrollDirection}
-          .isShowingBoardActivityOverlay=${this.isShowingBoardActivityOverlay}
           .readOnly=${this.readOnly}
-          .run=${this.run}
+          .run=${run}
           .showExperimentalComponents=${showExperimentalComponents}
           .showNodePreviewValues=${showNodePreviewValues}
           .showNodeShortcuts=${showNodeShortcuts}
@@ -318,6 +330,9 @@ export class UI extends LitElement {
           .selectionState=${this.selectionState}
           .visualChangeId=${this.visualChangeId}
           .graphTopologyUpdateId=${this.graphTopologyUpdateId}
+          @bbrunboard=${() => {
+            this.sideNavItem = "activity";
+          }}
         ></bb-editor>`;
       }
     );
@@ -344,30 +359,51 @@ export class UI extends LitElement {
         .canUndo=${canUndo}
         .capabilities=${capabilities}
         .graph=${graph}
-        .isShowingBoardActivityOverlay=${this.isShowingBoardActivityOverlay}
         .kits=${this.kits}
         .moduleId=${modules[0]}
         .modules=${graph.modules() ?? {}}
         .readOnly=${this.readOnly}
         .renderId=${crypto.randomUUID()}
-        .run=${this.run}
+        .run=${run}
         .topGraphResult=${this.topGraphResult}
+        @bbrunboard=${() => {
+          this.sideNavItem = "activity";
+        }}
       ></bb-module-editor>`;
     }
 
-    const sideNavItems = ["workspace-overview"];
+    let chosenSideNavItem = this.sideNavItem;
+    // Ensure components & capabilities only apply when the view is of the
+    // correct type.
+    const selectedModuleCount =
+      this.selectionState?.selectionState.modules.size ?? 0;
+    if (this.sideNavItem === "components" && selectedModuleCount > 0) {
+      chosenSideNavItem = null;
+    }
+
+    if (this.sideNavItem === "capabilities" && selectedModuleCount === 0) {
+      chosenSideNavItem = null;
+    }
+
+    const sideNavItems = ["activity", "workspace-overview"];
     if (modules.length > 0) {
-      sideNavItems.push("capabilities");
+      sideNavItems.unshift("capabilities");
     } else {
-      sideNavItems.push("components");
+      sideNavItems.unshift("components");
     }
 
     const sideNav = html`<div id="side-nav">
       <div id="side-nav-top">
         ${map(sideNavItems, (item) => {
+          const newEventCount = events.length - this.#lastEventPosition;
           return html`<button
             id="toggle-${item}"
-            class=${classMap({ active: this.sideNavItem === item })}
+            data-count=${item === "activity" &&
+            chosenSideNavItem !== "activity" &&
+            newEventCount > 0
+              ? newEventCount
+              : nothing}
+            class=${classMap({ active: chosenSideNavItem === item })}
             @click=${() => {
               this.#handleSideNav(item);
             }}
@@ -433,12 +469,78 @@ export class UI extends LitElement {
         )}`;
         break;
       }
+
+      case "activity": {
+        const eventPosition = events.length - 1;
+        const latest = events.at(-1);
+        let showDebugControls = false;
+        if (latest && latest.type === "node") {
+          showDebugControls = this.status === "stopped" && latest.end === null;
+        }
+
+        const hideLast = this.status === STATUS.STOPPED;
+        const inputsFromLastRun = lastRun?.inputs() ?? null;
+        const nextNodeId =
+          this.topGraphResult?.currentNode?.descriptor.id ?? null;
+
+        sideNavItem = html`${guard(
+          [run, events, eventPosition, this.debugEvent],
+          () =>
+            html`<h1 id="side-nav-title">Activity</h1>
+              <div id="board-activity-container">
+                <bb-board-activity
+                  class=${classMap({ collapsed: this.debugEvent !== null })}
+                  .run=${run}
+                  .events=${events}
+                  .eventPosition=${eventPosition}
+                  .inputsFromLastRun=${inputsFromLastRun}
+                  .showExtendedInfo=${true}
+                  .settings=${this.settings}
+                  .showLogTitle=${false}
+                  .logTitle=${"Run"}
+                  .hideLast=${hideLast}
+                  .boardServers=${this.boardServers}
+                  .showDebugControls=${showDebugControls}
+                  .nextNodeId=${nextNodeId}
+                  @pointerdown=${(evt: PointerEvent) => {
+                    const [top] = evt.composedPath();
+                    if (
+                      !(top instanceof HTMLElement) ||
+                      !top.dataset.messageId
+                    ) {
+                      return;
+                    }
+                    evt.stopImmediatePropagation();
+                    const id = top.dataset.messageId;
+                    const event = run?.getEventById(id);
+                    if (!event) {
+                      // TODO: Offer the user more information.
+                      console.warn(`Unable to find event with ID "${id}"`);
+                      return;
+                    }
+                    if (event.type !== "node") {
+                      return;
+                    }
+
+                    this.debugEvent = event;
+                  }}
+                  name="Board"
+                ></bb-board-activity>
+                ${this.debugEvent
+                  ? html`<bb-event-details
+                      .event=${this.debugEvent}
+                    ></bb-event-details>`
+                  : nothing}
+              </div>`
+        )}`;
+        break;
+      }
     }
 
     return graph
       ? html`<section id="content">
           ${sideNav}
-          ${this.sideNavItem
+          ${chosenSideNavItem
             ? html`<bb-splitter
                 id="splitter"
                 split="[0.2, 0.8]"

@@ -3,39 +3,19 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import {
-  LitElement,
-  html,
-  css,
-  PropertyValues,
-  HTMLTemplateResult,
-  nothing,
-} from "lit";
+import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   HideTooltipEvent,
-  NodeCreateEvent,
-  OverflowMenuActionEvent,
   RedoEvent,
-  ResetLayoutEvent,
   RunEvent,
-  SaveAsEvent,
   ShowTooltipEvent,
   StopEvent,
-  SubGraphDeleteEvent,
-  ToggleBoardActivityEvent,
-  ToggleFollowEvent,
   UndoEvent,
   ZoomToFitEvent,
 } from "../../events/events";
-import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { InspectableGraph } from "@google-labs/breadboard";
 import { classMap } from "lit/directives/class-map.js";
-import { type ComponentSelectorOverlay } from "../elements";
-import { OverflowAction } from "../../types/types";
-import { createRandomID } from "./utils";
-
-const COLLAPSED_MENU_BUFFER = 60;
 
 @customElement("bb-graph-ribbon-menu")
 export class GraphRibbonMenu extends LitElement {
@@ -113,7 +93,7 @@ export class GraphRibbonMenu extends LitElement {
       align-items: center;
       background: var(--bb-neutral-0);
       border-bottom: 1px solid var(--bb-neutral-300);
-      padding: 0 var(--bb-grid-size-4);
+      padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size);
       color: var(--bb-neutral-700);
       font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
@@ -182,14 +162,14 @@ export class GraphRibbonMenu extends LitElement {
     #save {
       position: absolute;
       top: calc(100% + -8px);
-      left: 18px;
+      left: 60px;
       right: auto;
     }
 
     #copy {
       position: absolute;
       top: calc(100% + -8px);
-      left: 52px;
+      left: 104px;
       right: auto;
     }
 
@@ -280,11 +260,6 @@ export class GraphRibbonMenu extends LitElement {
 
     #left button {
       margin: 0 var(--bb-grid-size);
-    }
-
-    #left button#component-toggle,
-    #left button#shortcut-board-modules {
-      margin: 0 var(--bb-grid-size) 0 0;
     }
 
     #right button {
@@ -480,9 +455,9 @@ export class GraphRibbonMenu extends LitElement {
     }
 
     #run {
-      width: 116px;
+      width: 76px;
       height: var(--bb-grid-size-7);
-      background: var(--bb-ui-600) var(--bb-icon-play-filled-inverted) 8px
+      background: var(--bb-inputs-600) var(--bb-icon-play-filled-inverted) 8px
         center / 20px 20px no-repeat;
       color: #fff;
       border-radius: 20px;
@@ -494,7 +469,7 @@ export class GraphRibbonMenu extends LitElement {
     }
 
     #run.running {
-      background: var(--bb-ui-600) url(/images/progress-ui-inverted.svg) 8px
+      background: var(--bb-inputs-600) url(/images/progress-ui-inverted.svg) 8px
         center / 16px 16px no-repeat;
     }
 
@@ -577,362 +552,8 @@ export class GraphRibbonMenu extends LitElement {
     }
   `;
 
-  #overflowActions: OverflowAction[] = [];
-  #boardActivityRef: Ref<HTMLButtonElement> = createRef();
-  #overflowMenuToggleRef: Ref<HTMLButtonElement> = createRef();
-  #componentSelectorRef: Ref<ComponentSelectorOverlay> = createRef();
-  #segmentThresholds = new WeakMap<Element, { left: number; right: number }>();
-  #animateComponentSelector = false;
-  #resizeObserver = new ResizeObserver((entries) => {
-    if (entries.length === 0) {
-      return;
-    }
-
-    const target = entries[0].target;
-    if (!target.shadowRoot) {
-      return;
-    }
-
-    const left = target.shadowRoot.querySelector("#left");
-    if (!left) {
-      return;
-    }
-
-    const leftBounds = left.getBoundingClientRect();
-    const menuSegments = left.children;
-    this.#overflowActions.length = 0;
-    let overflowLeft = Number.POSITIVE_INFINITY;
-
-    // Ensure all thresholds are in place first
-    for (const segment of menuSegments) {
-      if (
-        segment.id === "shortcut-overflow" ||
-        segment.id === "component-toggle-container"
-      ) {
-        continue;
-      }
-
-      if (!this.#segmentThresholds.get(segment)) {
-        const { left, right } = segment.getBoundingClientRect();
-        this.#segmentThresholds.set(segment, { left, right });
-      }
-    }
-
-    for (const segment of menuSegments) {
-      const threshold = this.#segmentThresholds.get(segment);
-      if (threshold === undefined) {
-        continue;
-      }
-
-      const hidden = threshold.right + COLLAPSED_MENU_BUFFER > leftBounds.right;
-      segment.classList.toggle("hidden", hidden);
-      if (hidden) {
-        overflowLeft = Math.min(threshold.left, overflowLeft);
-
-        switch (segment.id) {
-          case "board-management": {
-            this.#overflowActions.push(
-              {
-                title: "Edit board information",
-                name: "edit-board-details",
-                icon: "edit-board-details",
-              },
-              {
-                title: "Save",
-                name: "save",
-                icon: "save",
-              },
-              {
-                title: "Save As...",
-                name: "save-as",
-                icon: "save-as",
-              },
-              {
-                title: "Copy Board Contents",
-                name: "copy-board-contents",
-                icon: "copy",
-              },
-              {
-                title: "Copy Board URL",
-                name: "copy-to-clipboard",
-                icon: "copy",
-              },
-              {
-                title: "Copy Tab URL",
-                name: "copy-tab-to-clipboard",
-                icon: "copy",
-              },
-              {
-                title: "Copy Preview URL",
-                name: "copy-preview-to-clipboard",
-                icon: "copy",
-              },
-              {
-                title: "Delete this board",
-                name: "delete",
-                icon: "delete",
-              }
-            );
-            break;
-          }
-
-          case "edit-controls": {
-            this.#overflowActions.push(
-              {
-                title: "Undo",
-                name: "undo",
-                icon: "undo",
-              },
-              {
-                title: "Redo",
-                name: "redo",
-                icon: "redo",
-              }
-            );
-            break;
-          }
-
-          case "graph-controls": {
-            this.#overflowActions.push(
-              {
-                title: "Zoom board to fit",
-                name: "zoom-board-to-fit",
-                icon: "zoom-to-fit",
-              },
-              {
-                title: "Reset board layout",
-                name: "reset-board-layout",
-                icon: "reset-nodes",
-              },
-              {
-                title: "Add sub board",
-                name: "add-sub-graph",
-                icon: "add-circle",
-              }
-            );
-            break;
-          }
-        }
-      }
-    }
-
-    if (overflowLeft < Number.POSITIVE_INFINITY) {
-      this.style.setProperty("--overflow-left", `${overflowLeft}px`);
-    }
-
-    if (!this.#overflowMenuToggleRef.value) {
-      return;
-    }
-
-    this.#overflowMenuToggleRef.value.classList.toggle(
-      "visible",
-      this.#overflowActions.length > 0
-    );
-  });
-
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this.#resizeObserver.disconnect();
-  }
-
-  protected willUpdate(changedProperties: PropertyValues): void {
-    // If the graph has changed and:
-    //  - 1. showComponentSelector is true, do not animate
-    //  - 2. showComponentSelector is false, animate
-    if (changedProperties.has("graph")) {
-      this.#animateComponentSelector = !this.showComponentSelector;
-    } else if (changedProperties.has("showComponentSelector")) {
-      // If the user has toggled the component selector, animate.
-      this.#animateComponentSelector = true;
-    }
-
-    if (this.#componentSelectorRef.value) {
-      // Because there is a guard preventing re-rendering of the component
-      // selector unless the current graph changes, we directly update its
-      // static property here.
-      this.#componentSelectorRef.value.static = !this.#animateComponentSelector;
-    }
-  }
-
-  protected firstUpdated(): void {
-    this.#resizeObserver.observe(this);
-  }
-
-  protected updated(changedProperties: PropertyValues): void {
-    if (!changedProperties.has("showComponentSelector")) {
-      return;
-    }
-
-    if (!this.#componentSelectorRef.value) {
-      return;
-    }
-
-    this.#componentSelectorRef.value.selectSearchInput();
-  }
-
-  #showBoardActivity(forceOn = false) {
-    if (!this.#boardActivityRef.value) {
-      return;
-    }
-
-    const bounds = this.#boardActivityRef.value.getBoundingClientRect();
-    this.dispatchEvent(
-      new ToggleBoardActivityEvent(
-        bounds.left + bounds.width / 2,
-        bounds.bottom + 14,
-        forceOn
-      )
-    );
-  }
-
   render() {
-    const save = html`<button
-      class=${classMap({ "show-more": this.canSave })}
-      id="shortcut-save"
-      @pointerover=${(evt: PointerEvent) => {
-        this.dispatchEvent(
-          new ShowTooltipEvent("Save this board", evt.clientX, evt.clientY)
-        );
-      }}
-      @pointerout=${() => {
-        this.dispatchEvent(new HideTooltipEvent());
-      }}
-      @click=${() => {
-        if (this.canSave) {
-          this.showSaveMenu = true;
-        } else {
-          this.dispatchEvent(new SaveAsEvent());
-        }
-      }}
-    >
-      Save
-    </button>`;
-
-    let saveMenu: HTMLTemplateResult | symbol = nothing;
-    if (this.showSaveMenu) {
-      const saveActions: Array<{
-        title: string;
-        name: string;
-        icon: string;
-        disabled?: boolean;
-      }> = [
-        {
-          title: "Save Board",
-          name: "save",
-          icon: "save",
-        },
-        {
-          title: "Save Board As...",
-          name: "save-as",
-          icon: "save",
-        },
-      ];
-
-      saveMenu = html`<bb-overflow-menu
-        id="save"
-        .actions=${saveActions}
-        .disabled=${this.graph === null}
-        @bboverflowmenudismissed=${() => {
-          this.showSaveMenu = false;
-        }}
-        @bboverflowmenuaction=${() => {
-          this.showSaveMenu = false;
-        }}
-      ></bb-overflow-menu>`;
-    }
-
-    const copy = html`<button
-      id="shortcut-copy"
-      @pointerover=${(evt: PointerEvent) => {
-        this.dispatchEvent(
-          new ShowTooltipEvent("Copy this board", evt.clientX, evt.clientY)
-        );
-      }}
-      @pointerout=${() => {
-        this.dispatchEvent(new HideTooltipEvent());
-      }}
-      @click=${() => {
-        this.showCopyMenu = true;
-      }}
-    >
-      Copy
-    </button>`;
-
-    let copyMenu: HTMLTemplateResult | symbol = nothing;
-    if (this.showCopyMenu) {
-      const copyActions: Array<{
-        title: string;
-        name: string;
-        icon: string;
-        disabled?: boolean;
-      }> = [
-        {
-          title: "Copy Board Contents",
-          name: "copy-board-contents",
-          icon: "copy",
-        },
-        {
-          title: "Copy Board URL",
-          name: "copy-to-clipboard",
-          icon: "copy",
-        },
-        {
-          title: "Copy Tab URL",
-          name: "copy-tab-to-clipboard",
-          icon: "copy",
-        },
-        {
-          title: "Copy Preview URL",
-          name: "copy-preview-to-clipboard",
-          icon: "copy",
-        },
-      ];
-
-      copyMenu = html`<bb-overflow-menu
-        id="copy"
-        .actions=${copyActions}
-        .disabled=${this.graph === null}
-        @bboverflowmenudismissed=${() => {
-          this.showCopyMenu = false;
-        }}
-        @bboverflowmenuaction=${() => {
-          this.showCopyMenu = false;
-        }}
-      ></bb-overflow-menu>`;
-    }
-
-    const deleteBoard = html` <button
-      id="delete-board"
-      @pointerover=${(evt: PointerEvent) => {
-        this.dispatchEvent(
-          new ShowTooltipEvent(
-            `Delete this ${this.subGraphId ? `subboard` : `board`}`,
-            evt.clientX,
-            evt.clientY
-          )
-        );
-      }}
-      @pointerout=${() => {
-        this.dispatchEvent(new HideTooltipEvent());
-      }}
-      @click=${() => {
-        if (this.subGraphId) {
-          if (!confirm("Are you sure you wish to delete this sub board?")) {
-            return;
-          }
-
-          this.dispatchEvent(new SubGraphDeleteEvent(this.subGraphId));
-          return;
-        }
-
-        this.dispatchEvent(new OverflowMenuActionEvent("delete"));
-      }}
-    >
-      Delete board
-    </button>`;
-
     const editControls = html`<div id="edit-controls">
-      <div class="divider"></div>
       <button
         id="undo"
         ?disabled=${!this.canUndo}
@@ -995,175 +616,9 @@ export class GraphRibbonMenu extends LitElement {
       >
         Zoom to fit
       </button>
-      <button
-        id="reset-layout"
-        @click=${() => {
-          this.dispatchEvent(new ResetLayoutEvent());
-        }}
-        @pointerover=${(evt: PointerEvent) => {
-          this.dispatchEvent(
-            new ShowTooltipEvent("Reset board layout", evt.clientX, evt.clientY)
-          );
-        }}
-        @pointerout=${() => {
-          this.dispatchEvent(new HideTooltipEvent());
-        }}
-      >
-        Reset Layout
-      </button>
     </div>`;
 
-    const boardManagementControls = [
-      html`<button
-          draggable="true"
-          id="shortcut-add-comment"
-          @pointerover=${(evt: PointerEvent) => {
-            this.dispatchEvent(
-              new ShowTooltipEvent(
-                "Add Comment Component",
-                evt.clientX,
-                evt.clientY
-              )
-            );
-          }}
-          @pointerout=${() => {
-            this.dispatchEvent(new HideTooltipEvent());
-          }}
-          @dblclick=${() => {
-            const id = createRandomID("comment");
-            this.dispatchEvent(new NodeCreateEvent(id, "comment"));
-          }}
-          @dragstart=${(evt: DragEvent) => {
-            if (!evt.dataTransfer) {
-              return;
-            }
-            evt.dataTransfer.setData(this.dataType, "comment");
-          }}
-        >
-          Add Comment
-        </button>
-        <div class="divider"></div>`,
-      save,
-      copy,
-      deleteBoard,
-    ];
-
-    const boardManagement = html`<div id="board-management">
-      ${boardManagementControls}
-    </div>`;
-
-    const overflow = html`<button
-      id="shortcut-overflow"
-      ${ref(this.#overflowMenuToggleRef)}
-      @click=${() => {
-        this.showOverflowMenu = true;
-      }}
-    >
-      See more...
-    </button>`;
-
-    let overflowMenu: HTMLTemplateResult | symbol = nothing;
-    if (this.showOverflowMenu) {
-      for (const action of this.#overflowActions) {
-        if (action.title === "Undo") {
-          action.disabled = !this.canUndo;
-        }
-
-        if (action.title === "Redo") {
-          action.disabled = !this.canRedo;
-        }
-
-        if (action.title === "Save") {
-          action.disabled = !this.canSave;
-        }
-      }
-
-      overflowMenu = html`<bb-overflow-menu
-        id="overflow-menu"
-        .disabled=${false}
-        .actions=${this.#overflowActions}
-        @bboverflowmenudismissed=${() => {
-          this.showOverflowMenu = false;
-        }}
-        @bboverflowmenuaction=${(evt: OverflowMenuActionEvent) => {
-          switch (evt.action) {
-            case "undo": {
-              evt.stopPropagation();
-              this.dispatchEvent(new UndoEvent());
-              break;
-            }
-
-            case "redo": {
-              evt.stopPropagation();
-              this.dispatchEvent(new RedoEvent());
-              break;
-            }
-
-            case "zoom-board-to-fit": {
-              evt.stopPropagation();
-              this.dispatchEvent(new ZoomToFitEvent());
-              break;
-            }
-
-            case "reset-board-layout": {
-              evt.stopPropagation();
-              this.dispatchEvent(new ResetLayoutEvent());
-              break;
-            }
-          }
-
-          this.showOverflowMenu = false;
-        }}
-      ></bb-overflow-menu>`;
-    }
-
-    const left = [boardManagement, editControls, graphControls, overflow];
-
-    const right = [
-      html`<button
-        id="follow"
-        class=${classMap({ active: this.follow })}
-        @pointerover=${(evt: PointerEvent) => {
-          this.dispatchEvent(
-            new ShowTooltipEvent(
-              "Follow board activity",
-              evt.clientX,
-              evt.clientY
-            )
-          );
-        }}
-        @pointerout=${() => {
-          this.dispatchEvent(new HideTooltipEvent());
-        }}
-        @click=${() => {
-          this.dispatchEvent(new ToggleFollowEvent());
-        }}
-      >
-        Follow
-      </button>`,
-      html`<button
-        id="board-activity"
-        ${ref(this.#boardActivityRef)}
-        @pointerover=${(evt: PointerEvent) => {
-          this.dispatchEvent(
-            new ShowTooltipEvent("See board activity", evt.clientX, evt.clientY)
-          );
-        }}
-        @pointerout=${() => {
-          this.dispatchEvent(new HideTooltipEvent());
-        }}
-        @click=${() => {
-          this.#showBoardActivity();
-        }}
-      >
-        <span
-          class=${classMap({
-            error: this.isError,
-            pending: this.isInputPending,
-          })}
-          >${this.eventCount}</span
-        >
-      </button>`,
+    const left = [
       html`<button
         id="run"
         title="Run this board"
@@ -1179,21 +634,18 @@ export class GraphRibbonMenu extends LitElement {
           if (this.isRunning) {
             this.dispatchEvent(new StopEvent());
           } else {
-            this.#showBoardActivity(true);
             this.dispatchEvent(new RunEvent());
           }
         }}
       >
-        ${this.isRunning ? "Stop Board" : "Run Board"}
+        ${this.isRunning ? "Stop" : "Run"}
       </button>`,
     ];
 
+    const right = [editControls, graphControls];
     return [
       html`<div id="left">${left}</div>`,
       html`<div id="right">${right}</div>`,
-      saveMenu,
-      copyMenu,
-      overflowMenu,
     ];
   }
 }

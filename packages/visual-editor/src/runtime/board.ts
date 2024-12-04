@@ -207,6 +207,10 @@ export class Board extends EventTarget {
     return this.#tabs.get(this.#currentTabId) ?? null;
   }
 
+  getTabById(tab: TabId): Tab | null {
+    return this.#tabs.get(tab) ?? null;
+  }
+
   createURLFromTabs() {
     const params = new URLSearchParams();
     let t = 0;
@@ -640,6 +644,30 @@ export class Board extends EventTarget {
     }
 
     return false;
+  }
+
+  canPreview(id: TabId | null): boolean {
+    if (!id) {
+      return false;
+    }
+
+    const tab = this.#tabs.get(id);
+    if (!tab) {
+      return false;
+    }
+
+    if (!tab.graph || !tab.graph.url) {
+      return false;
+    }
+
+    const boardUrl = new URL(tab.graph.url);
+    const boardServer = this.getBoardServerForURL(boardUrl);
+    if (!boardServer) {
+      return false;
+    }
+
+    console.log(boardServer, boardServer.capabilities);
+    return boardServer.capabilities.preview;
   }
 
   save(id: TabId | null) {

@@ -10,7 +10,6 @@ import {
   InspectableNode,
   InspectableNodePorts,
   InspectablePort,
-  Kit,
   NodeIdentifier,
 } from "@google-labs/breadboard";
 import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
@@ -55,6 +54,7 @@ interface Outline {
     ports: Map<NodeIdentifier, InspectableNodePorts>;
   };
   type: "imperative" | "declarative";
+  runnable?: boolean;
   subItems: Map<ItemIdentifier, Outline>;
 }
 
@@ -69,9 +69,6 @@ interface OverflowMenu {
 export class WorkspaceOutline extends LitElement {
   @property()
   graph: InspectableGraph | null = null;
-
-  @property()
-  kits: Kit[] = [];
 
   @property()
   renderId = "";
@@ -242,6 +239,10 @@ export class WorkspaceOutline extends LitElement {
       cursor: pointer;
       background: var(--bb-icon-unfold-more) calc(100% - 4px) center / 20px 20px
         no-repeat;
+    }
+
+    details.imperative > summary {
+      padding-right: var(--bb-grid-size-4);
     }
 
     details.declarative[open] > summary {
@@ -545,6 +546,11 @@ export class WorkspaceOutline extends LitElement {
       background: var(--bb-ui-50);
     }
 
+    summary > .title.selected {
+      background: var(--bb-ui-600);
+      color: var(--bb-neutral-0);
+    }
+
     .title:has(> .change-subitem) {
       height: var(--bb-grid-size-7);
     }
@@ -659,6 +665,7 @@ export class WorkspaceOutline extends LitElement {
           nodes: [],
           ports: new Map(),
         },
+        runnable: module.metadata().runnable ?? false,
         subItems: new Map(),
       };
     };
@@ -965,6 +972,18 @@ export class WorkspaceOutline extends LitElement {
     subItems: Map<ItemIdentifier, Outline>,
     renderSubItemsInline: boolean
   ) {
+    const subItemsList = [...subItems.entries()].sort(
+      ([a, subItemA], [b, subItemB]) => {
+        if (a === main) return -1;
+        if (b === main) return 1;
+        if (subItemA.type === "declarative" && subItemB.type === "imperative")
+          return -1;
+        if (subItemA.type === "imperative" && subItemB.type === "declarative")
+          return 1;
+        return a > b ? 1 : a < b ? -1 : 0;
+      }
+    );
+
     const seenSubItems = new Set<string>();
     return html`${type === "declarative"
       ? html`<details
@@ -1046,7 +1065,7 @@ export class WorkspaceOutline extends LitElement {
           )}
         </details> `
       : nothing}
-    ${map(subItems, ([id, subItem]) => {
+    ${map(subItemsList, ([id, subItem]) => {
       if (seenSubItems.has(id)) {
         return nothing;
       }
@@ -1059,6 +1078,7 @@ export class WorkspaceOutline extends LitElement {
         id=${this.#createSubItemId(id)}
         class=${classMap({
           [subItem.type]: true,
+          runnable: subItem.runnable ?? false,
           inverted: getSubItemColor<number>(id, "text", true) === 0xffffff,
         })}
         ?open=${this.#openItems.has(id)}
@@ -1072,7 +1092,11 @@ export class WorkspaceOutline extends LitElement {
       >
         <summary>
           <button
-            class=${classMap({ title: true })}
+            class=${classMap({
+              title: true,
+              selected:
+                this.selectionState?.selectionState.modules.has(id) ?? false,
+            })}
             @click=${(evt: PointerEvent) => {
               evt.stopPropagation();
 

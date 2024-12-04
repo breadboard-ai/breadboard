@@ -287,6 +287,18 @@ export class ComponentSelector extends LitElement {
         continue;
       }
 
+      if (kit.descriptor.title === "Built-in Kit") {
+        available.unshift({
+          id: "comment",
+          metadata: {
+            description:
+              "A comment node. Use this to put additional information on your board",
+            title: "Comment",
+            icon: "edit",
+          },
+        });
+      }
+
       kitList.set(kit.descriptor.title, available);
     }
     return kitList;
