@@ -39,17 +39,19 @@ async function inflateConfiguration(
   loadedKits: Kit[]
 ): Promise<BoardServerConfiguration> {
   const secrets = new Map<string, string>(configuration.secrets);
-  const kits: Kit[] = configuration.kits
-    .map((url) => {
-      const kit = loadedKits.find((kit) => kit.url === url);
-      if (!kit) {
-        console.warn(`Unable to find kit for ${url}`);
-        return null;
-      }
+  const kits: Kit[] = loadedKits;
+  // TODO: Figure out the right fix.
+  // configuration.kits
+  //   .map((url) => {
+  //     const kit = loadedKits.find((kit) => kit.url === url);
+  //     if (!kit) {
+  //       console.warn(`Unable to find kit for ${url}`);
+  //       return null;
+  //     }
 
-      return kit;
-    })
-    .filter((kit) => kit !== null);
+  //     return kit;
+  //   })
+  //   .filter((kit) => kit !== null);
 
   const extensions: BoardServerExtension[] = configuration.extensions
     .map((url) => {
