@@ -139,7 +139,7 @@ export class TopGraphObserver {
     // Ideally, this function should live somewhere in packages/breadboard,
     // but for now, this is good enough.
     function computeEntryId(graph?: GraphDescriptor) {
-      if (!graph) return;
+      if (!graph || !graph.edges) return;
       const incoming = new Set(graph.edges.map((edge) => edge.to));
       const entries = graph.nodes.filter((node) => !incoming.has(node.id));
       return entries.at(0)?.id;

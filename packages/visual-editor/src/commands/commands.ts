@@ -25,7 +25,7 @@ export const DeleteCommand: KeyboardCommand = {
     if (
       !tab ||
       !selectionState ||
-      selectionState.selectionState.graphs.size === 0
+      (!tab.moduleId && selectionState.selectionState.graphs.size === 0)
     ) {
       throw new Error("Nothing to delete");
     }
