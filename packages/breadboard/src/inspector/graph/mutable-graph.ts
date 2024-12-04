@@ -37,6 +37,7 @@ import { NodeCache } from "./node-cache.js";
 import { Node } from "./node.js";
 import { PortCache } from "./port-cache.js";
 import { NodeTypeDescriberManager } from "./describer-manager.js";
+import { UpdateEvent } from "./event.js";
 
 export { MutableGraphImpl };
 
@@ -94,6 +95,7 @@ class MutableGraphImpl implements MutableGraph {
     // TODO: Handle removals, etc.
     if (!visualOnly) {
       this.describe.update(affectedNodes);
+      this.store.dispatchEvent(new UpdateEvent(this.id, "", "", []));
     }
     this.graph = graph;
   }
