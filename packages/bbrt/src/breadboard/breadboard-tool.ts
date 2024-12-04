@@ -206,30 +206,15 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
       this.state.set({ status: "error", error: runResult.error });
       return;
     }
-    const outputs = runResult.value;
-    if (outputs.length === 1) {
-      // TODO(aomarks) Resultify
-      const artifacts: SerializedStoredData[] =
-        (await store.serializeGroup(storeGroupID)) ?? [];
-      this.state.set({
-        status: "success",
-        value: {
-          output: outputs[0]!,
-          artifacts,
-        },
-      });
-      return;
-    }
-    if (outputs.length > 0) {
-      this.state.set({
-        status: "error",
-        error: `Multiple Breadboard outputs received: ${JSON.stringify(outputs)}`,
-      });
-      return;
-    }
+    // TODO(aomarks) Resultify
+    const artifacts: SerializedStoredData[] =
+      (await store.serializeGroup(storeGroupID)) ?? [];
     this.state.set({
-      status: "error",
-      error: "No Breadboard outputs received",
+      status: "success",
+      value: {
+        output: Object.assign({}, ...runResult.value),
+        artifacts,
+      },
     });
   }
 
@@ -244,13 +229,7 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
         return [basicInfo, "Running..."];
       }
       case "success": {
-        const display = [];
-        for (const artifact of state.value.artifacts) {
-          if (artifact.inlineData.mimeType.startsWith("image/")) {
-            display.push(html`<img src="${artifact.handle}" />`);
-          }
-        }
-        return [basicInfo, "Success", ...display];
+        return [basicInfo, "Success"];
       }
       case "error": {
         return [
@@ -272,12 +251,18 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
     if (state.status !== "success") {
       return nothing;
     }
-    const images = [];
+    const artifacts = [];
     for (const artifact of state.value.artifacts) {
-      if (artifact.inlineData.mimeType.startsWith("image/")) {
-        images.push(html`<img src="${artifact.handle}" />`);
+      const { mimeType } = artifact.inlineData;
+      if (mimeType.startsWith("image/")) {
+        artifacts.push(html`<img src="${artifact.handle}" />`);
+      } else {
+        console.log(
+          "Could not display artifact with unsupported MIME type",
+          artifact
+        );
       }
     }
-    return images;
+    return artifacts;
   }
 }
