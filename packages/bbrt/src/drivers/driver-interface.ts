@@ -18,7 +18,7 @@ export interface BBRTDriver {
   readonly icon: string;
 
   executeTurn(
-    request: BBRTTurn[],
+    turns: BBRTTurn[],
     tools: BBRTTool[]
   ): Promise<Result<AsyncIterableIterator<BBRTChunk>>>;
 }

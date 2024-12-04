@@ -4,13 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, css, html } from "lit";
+import { GraphDescriptor } from "@google-labs/breadboard";
+import { SignalWatcher } from "@lit-labs/signals";
+import { LitElement, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Signal } from "signal-polyfill";
 import { SignalArray } from "signal-utils/array";
+import { AsyncComputed } from "signal-utils/async-computed";
 import { SignalSet } from "signal-utils/set";
 import { BreadboardToolProvider } from "../breadboard/breadboard-tool-provider.js";
+import { BreadboardTool } from "../breadboard/breadboard-tool.js";
 import { readBoardServersFromIndexedDB } from "../breadboard/indexed-db-servers.js";
 import type { Config } from "../config.js";
 import type { BBRTDriver } from "../drivers/driver-interface.js";
@@ -22,13 +26,14 @@ import { ActivateTool } from "../tools/activate-tool.js";
 import { BoardLister } from "../tools/list-tools.js";
 import { ToolProvider } from "../tools/tool-provider.js";
 import type { BBRTTool } from "../tools/tool.js";
+import "./board-visualizer.js";
 import "./chat.js";
 import "./driver-selector.js";
 import "./prompt.js";
 import "./tool-palette.js";
 
 @customElement("bbrt-main")
-export class BBRTMain extends LitElement {
+export class BBRTMain extends SignalWatcher(LitElement) {
   @property({ type: Object })
   config?: Config;
 
@@ -44,9 +49,30 @@ export class BBRTMain extends LitElement {
     this.#activeDriver,
     this.#activeTools
   );
+  readonly #displayedBoard = new AsyncComputed<GraphDescriptor | undefined>(
+    async () => {
+      // TODO(aomarks) This is just a temporary way to get some kind of relevant
+      // graph to render, to prove that rendering is working OK. Eventually this
+      // would render a board being built from the conversation.
+      let boardTool: BreadboardTool | undefined;
+      for (const tool of this.#activeTools) {
+        if (tool instanceof BreadboardTool) {
+          boardTool = tool;
+        }
+      }
+      if (boardTool === undefined) {
+        return undefined;
+      }
+      const bgl = await boardTool.bgl();
+      if (!bgl.ok) {
+        return undefined;
+      }
+      return bgl.value;
+    }
+  );
 
   @state()
-  private _sidePanelOpen = false;
+  private _sidePanelOpen = true;
 
   static override styles = css`
     #container {
@@ -79,7 +105,8 @@ export class BBRTMain extends LitElement {
       grid-column: 2;
       grid-row: 1 / 3;
       border-left: 1px solid #ccc;
-      overflow-y: auto;
+      display: grid;
+      grid-template-rows: 1fr 300px;
     }
     #expandSidebarButton {
       position: fixed;
@@ -90,6 +117,12 @@ export class BBRTMain extends LitElement {
       background: none;
       border: none;
       cursor: pointer;
+    }
+    bbrt-tool-palette {
+      overflow-y: scroll;
+    }
+    bbrt-board-visualizer {
+      border-top: 1px solid #ccc;
     }
   `;
 
@@ -114,31 +147,47 @@ export class BBRTMain extends LitElement {
             <bbrt-prompt .conversation=${this.#conversation}></bbrt-prompt>
           </div>
         </div>
-        <div id="sidebar">
-          <button id="expandSidebarButton" @click=${this.#clickExpandSidebar}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              height="24px"
-              viewBox="0 -960 960 960"
-              width="24px"
-              fill="#5f6368"
-            >
-              <path
-                d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"
-              />
-            </svg>
-          </button>
-          <bbrt-tool-palette
-            .toolProviders=${this.#toolProviders}
-            .activeTools=${this.#activeTools}
-          ></bbrt-tool-palette>
-        </div>
+        <button id="expandSidebarButton" @click=${this.#clickExpandSidebar}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            height="24px"
+            viewBox="0 -960 960 960"
+            width="24px"
+            fill="#5f6368"
+          >
+            <path
+              d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"
+            />
+          </svg>
+        </button>
+        <div id="sidebar">${this.#renderSidebarContents()}</div>
       </div>
     `;
   }
 
   #clickExpandSidebar() {
     this._sidePanelOpen = !this._sidePanelOpen;
+  }
+
+  #renderSidebarContents() {
+    if (!this._sidePanelOpen) {
+      return nothing;
+    }
+
+    return [
+      html`
+        <bbrt-tool-palette
+          .toolProviders=${this.#toolProviders}
+          .activeTools=${this.#activeTools}
+        ></bbrt-tool-palette>
+      `,
+
+      html`
+        <bbrt-board-visualizer
+          .graph=${this.#displayedBoard.get()}
+        ></bbrt-board-visualizer>
+      `,
+    ];
   }
 
   async #discoverToolProviders() {

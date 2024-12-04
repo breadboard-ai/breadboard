@@ -57,6 +57,7 @@
         "build:tsc",
         "../breadboard:build",
         "../core-kit:build",
+        "../shared-ui:build",
         "../template-kit:build"
       ]
     },
@@ -65,6 +66,7 @@
       "dependencies": [
         "../breadboard:build:tsc",
         "../core-kit:build:tsc",
+        "../shared-ui:build:tsc",
         "../template-kit:build:tsc"
       ],
       "files": [
@@ -103,6 +105,7 @@
     }
   },
   "dependencies": {
+    "@breadboard-ai/shared-ui": "1.21.0",
     "@google-labs/breadboard": "^0.30.0",
     "@google-labs/core-kit": "^0.17.0",
     "@google-labs/template-kit": "^0.3.15",
