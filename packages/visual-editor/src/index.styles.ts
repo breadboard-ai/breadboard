@@ -12,9 +12,10 @@ export const styles = css`
   }
 
   :host {
+    --header-height: var(--bb-grid-size-16);
     flex: 1 0 auto;
     display: grid;
-    grid-template-rows: calc(var(--bb-grid-size) * 12) auto;
+    grid-template-rows: var(--header-height) auto;
   }
 
   bb-toast {
@@ -34,8 +35,8 @@ export const styles = css`
 
   .close-board {
     font-size: 0;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     background: var(--bb-icon-close) center center no-repeat;
     background-size: 16px 16px;
     border: 2px solid transparent;
@@ -44,15 +45,11 @@ export const styles = css`
     border-radius: 50%;
   }
 
-  .close-board:not([disabled]) {
-    cursor: pointer;
-  }
-
   .close-board:not([disabled]):hover {
     transition-duration: 0.1s;
     opacity: 1;
-    background-color: var(--bb-neutral-300);
-    border: 2px solid var(--bb-neutral-300);
+    background-color: var(--bb-neutral-200);
+    border: 2px solid var(--bb-neutral-200);
   }
 
   #new-board {
@@ -182,7 +179,7 @@ export const styles = css`
     z-index: 1;
     width: 100%;
     overflow: hidden;
-    height: calc(var(--bb-grid-size) * 12);
+    height: 100%;
   }
 
   #header-bar {
@@ -190,19 +187,32 @@ export const styles = css`
     align-items: center;
     width: 100%;
     height: 100%;
-    padding: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size-3);
+    padding: 0 var(--bb-grid-size-2) 0 0;
+    border-bottom: 1px solid var(--bb-neutral-300);
   }
 
   #header-bar h1 {
     font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
       var(--bb-font-family);
-    margin-right: var(--bb-grid-size-6);
-    padding-left: var(--bb-grid-size-7);
-    margin-left: var(--bb-grid-size);
-    background: url(/images/bb-logo-inverted.svg) left center no-repeat;
+    margin-right:;
+    padding-left: var(--bb-grid-size-11);
+    margin: 0 var(--bb-grid-size-6) 0 0;
+    background: url(/images/bb-logo-inverted.svg) var(--bb-grid-size-4) center
+      no-repeat;
     height: 100%;
     display: flex;
     align-items: center;
+    position: relative;
+  }
+
+  #header-bar h1::after {
+    content: "";
+    width: 48px;
+    height: 1px;
+    background: var(--bb-ui-700);
+    bottom: -1px;
+    left: 0;
+    position: absolute;
   }
 
   #header-bar #tab-container {
@@ -212,41 +222,56 @@ export const styles = css`
     margin: 0;
     height: 100%;
     overflow: hidden;
-    border-bottom: 1px solid var(--bb-neutral-300);
   }
 
-  #tab-container h1 {
+  #tab-container .tab {
     font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
       var(--bb-font-family);
     background: linear-gradient(var(--bb-neutral-0) 86%, var(--bb-neutral-50));
     color: var(--bb-neutral-800);
     margin: 0;
     height: calc(100% - var(--bb-grid-size) * 2);
-    border-radius: var(--bb-grid-size) var(--bb-grid-size) 0 0;
-    padding: 0;
+    border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
+    padding: var(--bb-grid-size);
     display: grid;
-    grid-template-columns: 1fr 32px;
+    grid-template-columns: 32px 1fr 32px;
     align-items: center;
+    justify-items: center;
     user-select: none;
     margin-right: var(--bb-grid-size-2);
     opacity: 0.7;
     transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
   }
 
-  #tab-container h1:hover {
+  #tab-container .tab-title {
+    font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+      var(--bb-font-family);
+    margin-bottom: 2px;
+    color: var(--bb-neutral-900);
+  }
+
+  #tab-container .tab-overflow {
+    width: 20px;
+    height: 20px;
+    background: var(--bb-icon-menu) center center / 20px 20px no-repeat;
+    font-size: 0;
+    border: none;
+  }
+
+  #tab-container .tab:hover {
     transition-duration: 0.1s;
   }
 
-  #tab-container h1.active {
+  #tab-container .tab.active {
     opacity: 1;
   }
 
   #tab-container .save-status {
-    margin-left: 8px;
-    width: 20px;
-    height: 20px;
     background: transparent;
-    display: none;
+    padding-left: var(--bb-grid-size-5);
+    font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
+      var(--bb-font-family);
+    color: var(--bb-neutral-600);
   }
 
   #tab-container .save-status.can-save,
@@ -255,41 +280,43 @@ export const styles = css`
   }
 
   #tab-container .save-status.saving {
-    background: transparent url(/images/progress-ui.svg) center center / 20px
-      20px no-repeat;
+    background: transparent url(/images/progress-ui.svg) left center / 16px 16px
+      no-repeat;
   }
 
   #tab-container .save-status.unsaved {
-    background: transparent var(--bb-icon-pending) center center / 12px 12px
+    background: transparent var(--bb-icon-pending) left center / 12px 12px
       no-repeat;
   }
 
   #tab-container .save-status.saved {
-    background: transparent var(--bb-icon-saved-local) center center / 20px 20px
+    background: transparent var(--bb-icon-saved-local) left center / 16px 16px
       no-repeat;
   }
 
   #tab-container .save-status.error {
-    background: transparent var(--bb-icon-warning) center center / 20px 20px
+    background: transparent var(--bb-icon-warning) left center / 16px 16px
       no-repeat;
   }
 
   #tab-container .save-status.saved.remote {
-    background: transparent var(--bb-icon-saved-remote) center center / 20px
-      20px no-repeat;
+    background: transparent var(--bb-icon-saved-remote) left center / 16px 16px
+      no-repeat;
   }
 
   #tab-container .save-status.readonly {
-    background: transparent var(--bb-icon-saved-readonly) center center / 20px
-      20px no-repeat;
+    background: transparent var(--bb-icon-saved-readonly) left center / 16px
+      16px no-repeat;
   }
 
   #tab-container .back-to-main-board {
-    display: grid;
-    grid-template-columns: 1fr 24px;
-    align-items: center;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    align-items: flex-start;
+    justify-content: center;
     column-gap: var(--bb-grid-size);
-    padding: 0 var(--bb-grid-size-4);
+    padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size);
     margin: 0;
     cursor: pointer;
     background: transparent;
@@ -299,10 +326,6 @@ export const styles = css`
     white-space: nowrap;
     font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
       var(--bb-font-family);
-  }
-
-  #tab-container .back-to-main-board:not(.can-save) {
-    grid-template-columns: 1fr;
   }
 
   #tab-container .back-to-main-board:disabled {
@@ -324,30 +347,31 @@ export const styles = css`
   }
 
   #add-tab-container {
-    height: var(--bb-grid-size-10);
+    height: 100%;
     display: flex;
     align-items: center;
   }
 
   #add-tab {
-    border-radius: var(--bb-grid-size);
+    border-radius: 50%;
     width: var(--bb-grid-size-6);
     height: var(--bb-grid-size-6);
     font-size: 0;
-    background: transparent var(--bb-icon-add-inverted) center center / 20px
-      20px no-repeat;
+    background: var(--bb-ui-300) var(--bb-icon-add) center center / 24px 24px
+      no-repeat;
     border: none;
     cursor: pointer;
     transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+    margin-right: var(--bb-grid-size-3);
   }
 
   #add-tab:hover,
   #add-tab:focus {
-    background-color: var(--bb-ui-400);
+    background-color: var(--bb-ui-200);
   }
 
   #content {
-    max-height: calc(100svh - var(--bb-grid-size) * 12);
+    max-height: calc(100svh - var(--header-height));
     display: flex;
     flex-direction: column;
   }
@@ -384,5 +408,11 @@ export const styles = css`
     max-width: 650px;
     transform: translateX(-50%);
     z-index: 6;
+  }
+
+  #board-overflow {
+    position: fixed;
+    right: auto;
+    bottom: auto;
   }
 `;

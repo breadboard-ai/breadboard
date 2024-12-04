@@ -132,6 +132,7 @@ body.hide-cursor {
   --bb-icon-mic-green: url(/third_party/icons/mic-green.svg);
   --bb-icon-minimize: url(/third_party/icons/minimize.svg);
   --bb-icon-menu: url(/third_party/icons/menu.svg);
+  --bb-icon-menu-inverted: url(/third_party/icons/menu-inverted.svg);
   --bb-icon-model: url(/third_party/icons/model.svg);
   --bb-icon-more-vert: url(/third_party/icons/more-vert.svg);
   --bb-icon-more-vert-inverted: url(/third_party/icons/more-vert-inverted.svg);
@@ -181,6 +182,7 @@ body.hide-cursor {
   --bb-icon-unknown-value: url(/third_party/icons/unknown-value.svg);
   --bb-icon-unknown-value-inverted: url(/third_party/icons/unknown-value-inverted.svg);
   --bb-icon-vital-signs: url(/third_party/icons/vital-signs.svg);
+  --bb-icon-vital-signs-inverted: url(/third_party/icons/vital-signs-inverted.svg);
   --bb-icon-visibility-off: url(/third_party/icons/visibility-off.svg);
   --bb-icon-warning: url(/third_party/icons/warning.svg);
   --bb-icon-workspace: url(/third_party/icons/workspace.svg);
@@ -188,6 +190,17 @@ body.hide-cursor {
   --bb-icon-wrench: url(/third_party/icons/wrench.svg);
 
   /** UI Colors */
+
+  --bb-notify-50: #fce4ec;
+  --bb-notify-100: #f8bbd0;
+  --bb-notify-200: #f48fb1;
+  --bb-notify-300: #f06292;
+  --bb-notify-400: #ec407a;
+  --bb-notify-500: #e91e63;
+  --bb-notify-600: #d81b60;
+  --bb-notify-700: #c2185b;
+  --bb-notify-800: #ad1457;
+  --bb-notify-900: #880e4f;
 
   --bb-warning-50: #fffcfc;
   --bb-warning-75: #ffcce4;

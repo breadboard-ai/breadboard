@@ -9,20 +9,14 @@ import {
   FormatModuleCodeEvent,
   HideTooltipEvent,
   ModuleChangeLanguageEvent,
-  OverflowMenuActionEvent,
   RunEvent,
-  SaveAsEvent,
   ShowTooltipEvent,
   StopEvent,
-  SubGraphDeleteEvent,
-  ToggleBoardActivityEvent,
   ToggleModulePreviewEvent,
 } from "../../events/events";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { InspectableGraph, InspectableModules } from "@google-labs/breadboard";
 import { classMap } from "lit/directives/class-map.js";
-
-const COLLAPSED_MENU_BUFFER = 60;
 
 @customElement("bb-module-ribbon-menu")
 export class ModuleRibbonMenu extends LitElement {
@@ -119,7 +113,7 @@ export class ModuleRibbonMenu extends LitElement {
       align-items: center;
       background: var(--bb-neutral-0);
       border-bottom: 1px solid var(--bb-neutral-300);
-      padding: 0 var(--bb-grid-size-4);
+      padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size);
       color: var(--bb-neutral-700);
       font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
@@ -397,9 +391,9 @@ export class ModuleRibbonMenu extends LitElement {
     }
 
     #run {
-      width: 116px;
+      width: 76px;
       height: var(--bb-grid-size-7);
-      background: var(--bb-ui-600) var(--bb-icon-play-filled-inverted) 8px
+      background: var(--bb-inputs-600) var(--bb-icon-play-filled-inverted) 8px
         center / 20px 20px no-repeat;
       color: #fff;
       border-radius: 20px;
@@ -411,7 +405,7 @@ export class ModuleRibbonMenu extends LitElement {
     }
 
     #run.running {
-      background: var(--bb-ui-600) url(/images/progress-ui-inverted.svg) 8px
+      background: var(--bb-inputs-600) url(/images/progress-ui-inverted.svg) 8px
         center / 16px 16px no-repeat;
     }
 
@@ -452,7 +446,7 @@ export class ModuleRibbonMenu extends LitElement {
     #save {
       position: absolute;
       top: calc(100% + -8px);
-      left: 138px;
+      left: 7px;
       right: auto;
     }
 
@@ -471,7 +465,7 @@ export class ModuleRibbonMenu extends LitElement {
     #copy {
       position: absolute;
       top: calc(100% + -8px);
-      left: 182px;
+      left: 51px;
       right: auto;
     }
 
@@ -489,106 +483,7 @@ export class ModuleRibbonMenu extends LitElement {
     }
   `;
 
-  #overflowActions: Array<{
-    title: string;
-    name: string;
-    icon: string;
-    disabled?: boolean;
-  }> = [];
-  #boardActivityRef: Ref<HTMLButtonElement> = createRef();
   #runnableModuleInputRef: Ref<HTMLInputElement> = createRef();
-  #overflowMenuToggleRef: Ref<HTMLButtonElement> = createRef();
-  #segmentThresholds = new WeakMap<Element, { left: number; right: number }>();
-  #resizeObserver = new ResizeObserver((entries) => {
-    if (entries.length === 0) {
-      return;
-    }
-
-    const target = entries[0].target;
-    if (!target.shadowRoot) {
-      return;
-    }
-
-    const left = target.shadowRoot.querySelector("#left");
-    if (!left) {
-      return;
-    }
-
-    const leftBounds = left.getBoundingClientRect();
-    const menuSegments = left.children;
-    this.#overflowActions.length = 0;
-    let overflowLeft = Number.POSITIVE_INFINITY;
-
-    // Ensure all thresholds are in place first
-    for (const segment of menuSegments) {
-      if (
-        segment.id === "shortcut-overflow" ||
-        segment.id === "component-toggle-container"
-      ) {
-        continue;
-      }
-
-      if (!this.#segmentThresholds.get(segment)) {
-        const { left, right } = segment.getBoundingClientRect();
-        this.#segmentThresholds.set(segment, { left, right });
-      }
-    }
-
-    for (const segment of menuSegments) {
-      const threshold = this.#segmentThresholds.get(segment);
-      if (threshold === undefined) {
-        continue;
-      }
-
-      const hidden = threshold.right + COLLAPSED_MENU_BUFFER > leftBounds.right;
-      segment.classList.toggle("hidden", hidden);
-      if (hidden) {
-        overflowLeft = Math.min(threshold.left, overflowLeft);
-
-        switch (segment.id) {
-          default:
-            break;
-        }
-      }
-    }
-
-    if (overflowLeft < Number.POSITIVE_INFINITY) {
-      this.style.setProperty("--overflow-left", `${overflowLeft}px`);
-    }
-
-    if (!this.#overflowMenuToggleRef.value) {
-      return;
-    }
-
-    this.#overflowMenuToggleRef.value.classList.toggle(
-      "visible",
-      this.#overflowActions.length > 0
-    );
-  });
-
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this.#resizeObserver.disconnect();
-  }
-
-  protected firstUpdated(): void {
-    this.#resizeObserver.observe(this);
-  }
-
-  #showBoardActivity(forceOn = false) {
-    if (!this.#boardActivityRef.value) {
-      return;
-    }
-
-    const bounds = this.#boardActivityRef.value.getBoundingClientRect();
-    this.dispatchEvent(
-      new ToggleBoardActivityEvent(
-        bounds.left + bounds.width / 2,
-        bounds.bottom + 14,
-        forceOn
-      )
-    );
-  }
 
   moduleIsRunnable(): boolean {
     if (!this.#runnableModuleInputRef.value) {
@@ -602,216 +497,6 @@ export class ModuleRibbonMenu extends LitElement {
     const module = this.modules[this.moduleId ?? ""] ?? null;
     const isTypeScript = module.metadata().source?.language === "typescript";
     const isMainModule = this.graph?.main() === this.moduleId;
-
-    const overflow = html`<button
-      id="shortcut-overflow"
-      ${ref(this.#overflowMenuToggleRef)}
-      @click=${() => {
-        this.showOverflowMenu = true;
-      }}
-    >
-      See more...
-    </button>`;
-
-    let overflowMenu: HTMLTemplateResult | symbol = nothing;
-    if (this.showOverflowMenu) {
-      for (const action of this.#overflowActions) {
-        if (action.title === "Save") {
-          action.disabled = !this.canSave;
-        }
-      }
-
-      overflowMenu = html`<bb-overflow-menu
-        id="overflow-menu"
-        .disabled=${false}
-        .actions=${this.#overflowActions}
-        @bboverflowmenudismissed=${() => {
-          this.showOverflowMenu = false;
-        }}
-        @bboverflowmenuaction=${(_evt: OverflowMenuActionEvent) => {
-          this.showOverflowMenu = false;
-        }}
-      ></bb-overflow-menu>`;
-    }
-
-    const save = html`<button
-      class=${classMap({ "show-more": this.canSave })}
-      id="shortcut-save"
-      @pointerover=${(evt: PointerEvent) => {
-        this.dispatchEvent(
-          new ShowTooltipEvent("Save this board", evt.clientX, evt.clientY)
-        );
-      }}
-      @pointerout=${() => {
-        this.dispatchEvent(new HideTooltipEvent());
-      }}
-      @click=${() => {
-        if (this.canSave) {
-          this.showSaveMenu = true;
-        } else {
-          this.dispatchEvent(new SaveAsEvent());
-        }
-      }}
-    >
-      Save
-    </button>`;
-
-    let saveMenu: HTMLTemplateResult | symbol = nothing;
-    if (this.showSaveMenu) {
-      const saveActions: Array<{
-        title: string;
-        name: string;
-        icon: string;
-        disabled?: boolean;
-      }> = [
-        {
-          title: "Save Board",
-          name: "save",
-          icon: "save",
-        },
-        {
-          title: "Save Board As...",
-          name: "save-as",
-          icon: "save",
-        },
-      ];
-
-      saveMenu = html`<bb-overflow-menu
-        id="save"
-        .actions=${saveActions}
-        .disabled=${this.graph === null}
-        @bboverflowmenudismissed=${() => {
-          this.showSaveMenu = false;
-        }}
-        @bboverflowmenuaction=${() => {
-          this.showSaveMenu = false;
-        }}
-      ></bb-overflow-menu>`;
-    }
-
-    const copy = html`<button
-      id="shortcut-copy"
-      @pointerover=${(evt: PointerEvent) => {
-        this.dispatchEvent(
-          new ShowTooltipEvent("Copy this board", evt.clientX, evt.clientY)
-        );
-      }}
-      @pointerout=${() => {
-        this.dispatchEvent(new HideTooltipEvent());
-      }}
-      @click=${() => {
-        this.showCopyMenu = true;
-      }}
-    >
-      Copy
-    </button>`;
-
-    let copyMenu: HTMLTemplateResult | symbol = nothing;
-    if (this.showCopyMenu) {
-      const copyActions: Array<{
-        title: string;
-        name: string;
-        icon: string;
-        disabled?: boolean;
-      }> = [
-        {
-          title: "Copy Board Contents",
-          name: "copy-board-contents",
-          icon: "copy",
-        },
-        {
-          title: "Copy Board URL",
-          name: "copy-to-clipboard",
-          icon: "copy",
-        },
-        {
-          title: "Copy Tab URL",
-          name: "copy-tab-to-clipboard",
-          icon: "copy",
-        },
-        {
-          title: "Copy Preview URL",
-          name: "copy-preview-to-clipboard",
-          icon: "copy",
-        },
-      ];
-
-      copyMenu = html`<bb-overflow-menu
-        id="copy"
-        .actions=${copyActions}
-        .disabled=${this.graph === null}
-        @bboverflowmenudismissed=${() => {
-          this.showCopyMenu = false;
-        }}
-        @bboverflowmenuaction=${() => {
-          this.showCopyMenu = false;
-        }}
-      ></bb-overflow-menu>`;
-    }
-
-    const editBoardInfo = html` <button
-      id="edit-board-info"
-      @pointerover=${(evt: PointerEvent) => {
-        this.dispatchEvent(
-          new ShowTooltipEvent(
-            "Edit board information",
-            evt.clientX,
-            evt.clientY
-          )
-        );
-      }}
-      @pointerout=${() => {
-        this.dispatchEvent(new HideTooltipEvent());
-      }}
-      @click=${(evt: PointerEvent) => {
-        this.dispatchEvent(
-          new OverflowMenuActionEvent(
-            "edit-board-details",
-            undefined,
-            evt.clientX,
-            evt.clientY
-          )
-        );
-      }}
-    >
-      Edit board information
-    </button>`;
-
-    const deleteBoard = html` <button
-      id="delete-board"
-      @pointerover=${(evt: PointerEvent) => {
-        this.dispatchEvent(
-          new ShowTooltipEvent(
-            `Delete this ${this.subGraphId ? `subboard` : `board`}`,
-            evt.clientX,
-            evt.clientY
-          )
-        );
-      }}
-      @pointerout=${() => {
-        this.dispatchEvent(new HideTooltipEvent());
-      }}
-      @click=${() => {
-        if (this.subGraphId) {
-          if (!confirm("Are you sure you wish to delete this sub board?")) {
-            return;
-          }
-
-          this.dispatchEvent(new SubGraphDeleteEvent(this.subGraphId));
-          return;
-        }
-
-        this.dispatchEvent(new OverflowMenuActionEvent("delete"));
-      }}
-    >
-      Delete board
-    </button>`;
-
-    const boardManagementControls = [editBoardInfo, save, copy, deleteBoard];
-
-    const boardManagement = html`<div id="board-management">
-      ${boardManagementControls}
-    </div>`;
 
     const moduleIsRunnable = !!(module && module.metadata().runnable);
     const moduleControls = html`<div id="module-controls">
@@ -900,7 +585,7 @@ export class ModuleRibbonMenu extends LitElement {
           @pointerover=${(evt: PointerEvent) => {
             this.dispatchEvent(
               new ShowTooltipEvent(
-                "Make available to runModule",
+                "Make available as a component",
                 evt.clientX,
                 evt.clientY
               )
@@ -909,7 +594,7 @@ export class ModuleRibbonMenu extends LitElement {
           @pointerout=${() => {
             this.dispatchEvent(new HideTooltipEvent());
           }}
-          >Runnable</label
+          >Component</label
         >
       </div>
     </div>`;
@@ -944,8 +629,7 @@ export class ModuleRibbonMenu extends LitElement {
     }
 
     const errors = this.showErrors
-      ? html`<div class="divider"></div>
-          <button
+      ? html`<button
             id="errors-toggle"
             class=${classMap({ "has-errors": this.errorCount > 0 })}
             @pointerover=${(evt: PointerEvent) => {
@@ -968,39 +652,11 @@ export class ModuleRibbonMenu extends LitElement {
             }}
           >
             ${this.errorCount} error${this.errorCount === 1 ? "" : "s"}
-          </button>`
+          </button>
+          <div class="divider"></div>`
       : nothing;
 
     const left = [
-      isMainModule ? boardManagement : nothing,
-      moduleControls,
-      errors,
-      overflow,
-    ];
-    const right = [
-      html`<button
-        id="board-activity"
-        ${ref(this.#boardActivityRef)}
-        @pointerover=${(evt: PointerEvent) => {
-          this.dispatchEvent(
-            new ShowTooltipEvent("See board activity", evt.clientX, evt.clientY)
-          );
-        }}
-        @pointerout=${() => {
-          this.dispatchEvent(new HideTooltipEvent());
-        }}
-        @click=${() => {
-          this.#showBoardActivity();
-        }}
-      >
-        <span
-          class=${classMap({
-            error: this.isError,
-            pending: this.isInputPending,
-          })}
-          >${this.eventCount}</span
-        >
-      </button>`,
       html`<button
         id="run"
         title="Run this board"
@@ -1016,22 +672,19 @@ export class ModuleRibbonMenu extends LitElement {
           if (this.isRunning) {
             this.dispatchEvent(new StopEvent());
           } else {
-            this.#showBoardActivity(true);
             this.dispatchEvent(new RunEvent());
           }
         }}
       >
-        ${this.isRunning ? "Stop Board" : "Run Board"}
+        ${this.isRunning ? "Stop" : "Run"}
       </button>`,
     ];
+    const right = [errors, moduleControls];
 
     return [
       html`<div id="left">${left}</div>`,
       html`<div id="right">${right}</div>`,
-      saveMenu,
-      copyMenu,
       errorMenu,
-      overflowMenu,
     ];
   }
 }

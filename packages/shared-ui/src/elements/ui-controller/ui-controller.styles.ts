@@ -269,8 +269,8 @@ export const styles = css`
   #create-new {
     height: var(--bb-grid-size-7);
     border: none;
-    background: transparent var(--bb-icon-add-circle) var(--bb-grid-size) center /
-      20px 20px no-repeat;
+    background: transparent var(--bb-icon-add-circle) var(--bb-grid-size)
+      center / 20px 20px no-repeat;
     margin: 0 0 0 var(--bb-grid-size-2);
     opacity: 0.7;
     cursor: pointer;
@@ -288,6 +288,7 @@ export const styles = css`
   }
 
   #toggle-components,
+  #toggle-activity,
   #toggle-workspace-overview,
   #toggle-capabilities {
     width: 32px;
@@ -303,6 +304,7 @@ export const styles = css`
   }
 
   #toggle-components::after,
+  #toggle-activity::after,
   #toggle-workspace-overview::after,
   #toggle-capabilities::after {
     background: var(--bb-neutral-800);
@@ -333,6 +335,11 @@ export const styles = css`
     content: "Capabilities";
   }
 
+  #toggle-activity::after {
+    content: "Activity";
+  }
+
+  #toggle-activity:hover::after,
   #toggle-components:hover::after,
   #toggle-workspace-overview:hover::after,
   #toggle-capabilities:hover::after {
@@ -351,6 +358,11 @@ export const styles = css`
 
   #toggle-capabilities {
     background: transparent var(--bb-icon-capabilities-inverted) center center /
+      24px 24px no-repeat;
+  }
+
+  #toggle-activity {
+    background: transparent var(--bb-icon-vital-signs-inverted) center center /
       24px 24px no-repeat;
   }
 
@@ -373,5 +385,55 @@ export const styles = css`
   #toggle-capabilities.active {
     background: oklch(from var(--bb-neutral-0) l c h/0.22)
       var(--bb-icon-capabilities-inverted) center center / 24px 24px no-repeat;
+  }
+
+  #toggle-activity:hover,
+  #toggle-activity:focus,
+  #toggle-activity.active {
+    background: oklch(from var(--bb-neutral-0) l c h/0.22)
+      var(--bb-icon-vital-signs-inverted) center center / 24px 24px no-repeat;
+  }
+
+  #toggle-activity[data-count]::before {
+    content: attr(data-count);
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 20px;
+    height: 20px;
+    background: var(--bb-notify-500);
+    color: var(--bb-neutral-0);
+    border-radius: 50%;
+    font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
+      var(--bb-font-family);
+    z-index: 100;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  #board-activity-container {
+    height: calc(100% - 64px);
+    overflow: auto;
+    position: relative;
+    padding: var(--bb-grid-size-2);
+  }
+
+  bb-activity-log.collapsed {
+    overflow: hidden;
+    height: 0;
+  }
+
+  bb-event-details {
+    background: var(--bb-neutral-0);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-height: 100%;
+    z-index: 1;
+    padding: var(--bb-grid-size-4);
   }
 `;

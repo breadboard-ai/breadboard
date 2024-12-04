@@ -123,7 +123,7 @@ export class FileSystemBoardServer extends EventTarget implements BoardServer {
           disconnect: true,
           refresh: true,
           watch: false,
-          preview: true,
+          preview: false,
         },
       };
 

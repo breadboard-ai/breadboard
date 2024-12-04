@@ -89,6 +89,10 @@ export const styles = css`
     background: var(--bb-neutral-0);
   }
 
+  .activity-entry .node-info {
+    display: block;
+  }
+
   .activity-entry.node h1::before,
   .activity-entry .node-info summary::before {
     content: "";
@@ -136,13 +140,15 @@ export const styles = css`
   .node summary::before,
   .activity-entry .activity-entry.node summary::before,
   .activity-entry.node h1::before {
-    background: transparent var(--bb-icon-board) center -1px / 20px 20px no-repeat;
+    background: transparent var(--bb-icon-board) center -1px / 20px 20px
+      no-repeat;
   }
 
   .node.specialist summary::before,
   .activity-entry .activity-entry.node.specialist summary::before,
   .activity-entry.node.specialist h1::before {
-    background: transparent var(--bb-icon-smart-toy) center -1px / 20px 20px no-repeat;
+    background: transparent var(--bb-icon-smart-toy) center -1px / 20px 20px
+      no-repeat;
   }
 
   .node.input summary::before,
@@ -176,37 +182,43 @@ export const styles = css`
   .node.human summary::before,
   .activity-entry .activity-entry.node.human summary::before,
   .activity-entry.node.human h1::before {
-    background: transparent var(--bb-icon-human) center -1px / 20px 20px no-repeat;
+    background: transparent var(--bb-icon-human) center -1px / 20px 20px
+      no-repeat;
   }
 
   .node.urlTemplate summary::before,
   .activity-entry .activity-entry.node.urlTemplate summary::before,
   .activity-entry.node.urlTemplate h1::before {
-    background: transparent var(--bb-icon-http) center -1px / 20px 20px no-repeat;
+    background: transparent var(--bb-icon-http) center -1px / 20px 20px
+      no-repeat;
   }
 
   .node.fetch summary::before,
   .activity-entry .activity-entry.node.fetch summary::before,
   .activity-entry.node.fetch h1::before {
-    background: transparent var(--bb-icon-fetch) center -1px / 20px 20px no-repeat;
+    background: transparent var(--bb-icon-fetch) center -1px / 20px 20px
+      no-repeat;
   }
 
   .node.jsonata summary::before,
   .activity-entry .activity-entry.node.jsonata summary::before,
   .activity-entry.node.jsonata h1::before {
-    background: transparent var(--bb-icon-jsonata) center -1px / 20px 20px no-repeat;
+    background: transparent var(--bb-icon-jsonata) center -1px / 20px 20px
+      no-repeat;
   }
 
   .node.output summary::before,
   .activity-entry .activity-entry.node.output summary::before,
   .activity-entry.node.output h1::before {
-    background: transparent var(--bb-icon-output) center -1px / 20px 20px no-repeat;
+    background: transparent var(--bb-icon-output) center -1px / 20px 20px
+      no-repeat;
   }
 
   .node.joiner summary::before,
   .activity-entry .activity-entry.node.joiner summary::before,
   .activity-entry.node.joiner h1::before {
-    background: transparent var(--bb-icon-merge-type) center -1px / 20px 20px no-repeat;
+    background: transparent var(--bb-icon-merge-type) center -1px / 20px 20px
+      no-repeat;
   }
 
   .activity-entry h2 {
@@ -270,13 +282,13 @@ export const styles = css`
   }
 
   .activity-entry .stored .node-status {
-    background: var(--bb-human-600) var(--bb-icon-value-inverted) center center /
-      16px 16px no-repeat;
+    background: var(--bb-human-600) var(--bb-icon-value-inverted) center
+      center / 16px 16px no-repeat;
   }
 
   .activity-entry .consumed .node-status {
-    background: var(--bb-input-600) var(--bb-icon-value-inverted) center center /
-      16px 16px no-repeat;
+    background: var(--bb-input-600) var(--bb-icon-value-inverted) center
+      center / 16px 16px no-repeat;
   }
 
   .activity-entry .stored .node-output::before {

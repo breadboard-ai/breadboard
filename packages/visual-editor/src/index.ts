@@ -13,7 +13,6 @@ import {
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import { map } from "lit/directives/map.js";
-import { guard } from "lit/directives/guard.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
@@ -22,7 +21,6 @@ import {
   createRunObserver,
   GraphDescriptor,
   BoardServer,
-  InputValues,
   InspectableEdge,
   InspectableRun,
   InspectableRunSequenceEntry,
@@ -32,6 +30,7 @@ import {
 } from "@google-labs/breadboard";
 import { getDataStore, getRunStore } from "@breadboard-ai/data-store";
 import { classMap } from "lit/directives/class-map.js";
+import { styleMap } from "lit/directives/style-map.js";
 import { SettingsStore } from "./data/settings-store";
 import { addNodeProxyServerConfig } from "./data/node-proxy-servers";
 import { provide } from "@lit/context";
@@ -55,7 +54,7 @@ import {
 } from "@breadboard-ai/connection-client";
 
 import { sandbox } from "./sandbox";
-import { Module, ModuleIdentifier } from "@breadboard-ai/types";
+import { InputValues, Module, ModuleIdentifier } from "@breadboard-ai/types";
 import { defaultModuleContent } from "./utils/default-module-content";
 import { KeyboardCommand, KeyboardCommandDeps } from "./commands/types";
 import {
@@ -82,6 +81,12 @@ type SaveAsConfiguration = {
   title: string;
   graph: GraphDescriptor;
   isNewBoard: boolean;
+};
+
+type BoardOverlowMenuConfiguration = {
+  tabId: TabId;
+  x: number;
+  y: number;
 };
 
 const generatedUrls = new Set<string>();
@@ -113,11 +118,6 @@ export class Main extends LitElement {
   @state()
   showBoardServerAddOverlay = false;
 
-  @property({ reflect: true })
-  showBoardActivityOverlay = false;
-  #boardActivityLocation: BreadboardUI.Types.BoardActivityLocation | null =
-    null;
-
   @state()
   showHistory = false;
 
@@ -138,6 +138,10 @@ export class Main extends LitElement {
 
   @state()
   showNewWorkspaceItemOverlay = false;
+
+  @state()
+  showBoardOverflowMenu = false;
+  #boardOverflowMenuConfiguration: BoardOverlowMenuConfiguration | null = null;
 
   @state()
   showSaveAsDialog = false;
@@ -210,8 +214,6 @@ export class Main extends LitElement {
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
   #tabContainerRef: Ref<HTMLDivElement> = createRef();
-  #boardActivityRef: Ref<BreadboardUI.Elements.BoardActivityOverlay> =
-    createRef();
   #boardId = 0;
   #boardPendingSave = false;
   #tabSaveId = new Map<
@@ -529,6 +531,7 @@ export class Main extends LitElement {
             }
 
             this.#attemptBoardSave(
+              this.tab,
               "Saving board",
               false,
               false,
@@ -791,7 +794,6 @@ export class Main extends LitElement {
   }
 
   #hideAllOverlays() {
-    this.showBoardActivityOverlay = false;
     this.boardEditOverlayInfo = null;
     this.showSettingsOverlay = false;
     this.showBoardServerAddOverlay = false;
@@ -1019,7 +1021,7 @@ export class Main extends LitElement {
         saveMessage = "Board and configuration saved";
       }
 
-      this.#attemptBoardSave(saveMessage);
+      this.#attemptBoardSave(this.tab, saveMessage);
       return;
     }
 
@@ -1194,16 +1196,16 @@ export class Main extends LitElement {
   }
 
   async #attemptBoardSave(
-    message = "Board saved",
+    tabToSave = this.tab,
+    message = "Workspace saved",
     ackUser = true,
     showSaveAsIfNeeded = true,
     timeout = 0
   ) {
-    if (!this.tab) {
+    if (!tabToSave) {
       return;
     }
 
-    const tabToSave = this.tab;
     if (tabToSave.readOnly) {
       return;
     }
@@ -1246,7 +1248,7 @@ export class Main extends LitElement {
     let id;
     if (ackUser) {
       id = this.toast(
-        "Saving board...",
+        "Saving workspace...",
         BreadboardUI.Events.ToastType.PENDING,
         true
       );
@@ -1348,14 +1350,14 @@ export class Main extends LitElement {
   ) {
     if (
       !confirm(
-        "Are you sure you want to delete this board? This cannot be undone"
+        "Are you sure you want to delete this Workspace? This cannot be undone"
       )
     ) {
       return;
     }
 
     const id = this.toast(
-      "Deleting board...",
+      "Deleting workspace...",
       BreadboardUI.Events.ToastType.PENDING,
       true
     );
@@ -1366,7 +1368,7 @@ export class Main extends LitElement {
     );
     if (result) {
       this.toast(
-        "Board deleted",
+        "Workspace deleted",
         BreadboardUI.Events.ToastType.INFORMATION,
         false,
         id
@@ -1394,7 +1396,7 @@ export class Main extends LitElement {
 
   #attemptBoardCreate(graph: GraphDescriptor) {
     this.#saveAsState = {
-      title: "Create new board",
+      title: "Create new Workspace",
       graph,
       isNewBoard: true,
     };
@@ -1719,8 +1721,6 @@ export class Main extends LitElement {
 
     const graph = this.tab?.graph;
 
-    this.showBoardActivityOverlay = true;
-
     this.#runBoard(
       addNodeProxyServerConfig(
         this.#proxy,
@@ -1872,7 +1872,8 @@ export class Main extends LitElement {
       this.showOpenBoardOverlay ||
       this.showCommandPalette ||
       this.showModulePalette ||
-      this.showNewWorkspaceItemOverlay;
+      this.showNewWorkspaceItemOverlay ||
+      this.showBoardOverflowMenu;
 
     const nav = this.#initialize.then(() => {
       return html`<bb-nav
@@ -2220,108 +2221,6 @@ export class Main extends LitElement {
               this.showBoardServerAddOverlay = false;
             }}
           ></bb-board-server-overlay>`;
-        }
-
-        const run = runs[0] ?? null;
-        const events = runs[0]?.events ?? [];
-
-        // Maybe a hack, not sure yet. When the run status is "STOPPED",
-        // it more than likely means we're in the "step-by-step" mode,
-        // and so any incomplete nodes (the ones that are next in the step)
-        // should be hidden.
-        const hideLast = tabStatus === BreadboardUI.Types.STATUS.STOPPED;
-
-        // We have a guard around the board activity overlay to prevent it
-        // from re-rendering on every change (which triggers the entry
-        // animation). This means we need to "manually" send it the run and
-        // events on each pass, which is done immediately after this.
-        const boardActivityOverlay = html`${guard([], () => {
-          return html`<bb-board-activity-overlay
-            ${ref(this.#boardActivityRef)}
-            .location=${this.#boardActivityLocation}
-            .run=${run}
-            .events=${events}
-            .topGraphResult=${topGraphResult}
-            .settings=${this.#settings}
-            .boardServers=${this.#boardServers}
-            .hideLast=${hideLast}
-            .inputsFromLastRun=${inputsFromLastRun}
-            @bboverlaydismissed=${() => {
-              if (!this.#boardActivityRef.value) {
-                return;
-              }
-
-              if (this.#boardActivityRef.value.persist) {
-                return;
-              }
-
-              this.showBoardActivityOverlay = false;
-              this.#boardActivityLocation = null;
-            }}
-            @bbrunisolatednode=${async (
-              evt: BreadboardUI.Events.RunIsolatedNodeEvent
-            ) => {
-              await this.#attemptNodeRun(evt.id, evt.stopAfter);
-            }}
-            @bbinputenter=${async (
-              event: BreadboardUI.Events.InputEnterEvent
-            ) => {
-              if (!this.#settings || !this.tab) {
-                return;
-              }
-
-              const isSecret = "secret" in event.data;
-              const runner = this.#runtime.run.getRunner(this.tab.id);
-              if (!runner) {
-                throw new Error("Can't send input, no runner");
-              }
-              if (isSecret) {
-                if (this.#secretsHelper) {
-                  this.#secretsHelper.receiveSecrets(event);
-                  if (
-                    this.#secretsHelper.hasAllSecrets() &&
-                    !runner?.running()
-                  ) {
-                    const secrets = this.#secretsHelper.getSecrets();
-                    this.#secretsHelper = null;
-                    runner?.run(secrets);
-                  }
-                } else {
-                  // This is the case when the "secret" event hasn't yet
-                  // been received.
-                  // Likely, this is a side effect of how the
-                  // activity-log is built: it relies on the run observer
-                  // for the events list, and the run observer updates the
-                  // list of run events before the run API dispatches
-                  // the "secret" event.
-                  this.#secretsHelper = new SecretsHelper(this.#settings!);
-                  this.#secretsHelper.receiveSecrets(event);
-                }
-              } else {
-                const data = event.data as InputValues;
-                if (!runner.running()) {
-                  runner.run(data);
-                }
-              }
-            }}
-          ></bb-board-activity-overlay>`;
-        })}`;
-
-        // Update board activity values.
-        if (this.#boardActivityRef.value) {
-          const latest = events.at(-1);
-          let showDebugControls = false;
-          if (latest && latest.type === "node") {
-            showDebugControls = tabStatus === "stopped" && latest.end === null;
-          }
-
-          this.#boardActivityRef.value.run = run;
-          this.#boardActivityRef.value.events = events;
-          this.#boardActivityRef.value.inputsFromLastRun = inputsFromLastRun;
-          this.#boardActivityRef.value.hideLast = hideLast;
-          this.#boardActivityRef.value.showDebugControls = showDebugControls;
-          this.#boardActivityRef.value.nextNodeId =
-            topGraphResult.currentNode?.descriptor.id ?? null;
         }
 
         let historyOverlay: HTMLTemplateResult | symbol = nothing;
@@ -2678,6 +2577,281 @@ export class Main extends LitElement {
           >`;
         }
 
+        let boardOverflowMenu: HTMLTemplateResult | symbol = nothing;
+        if (
+          this.showBoardOverflowMenu &&
+          this.#boardOverflowMenuConfiguration
+        ) {
+          const tabId = this.#boardOverflowMenuConfiguration.tabId;
+          const actions: BreadboardUI.Types.OverflowAction[] = [
+            {
+              title: "Save Workspace As...",
+              name: "save-as",
+              icon: "save",
+              value: tabId,
+            },
+            {
+              title: "Copy Workspace Contents",
+              name: "copy-board-contents",
+              icon: "copy",
+              value: tabId,
+            },
+            {
+              title: "Copy Workspace URL",
+              name: "copy-to-clipboard",
+              icon: "copy",
+              value: tabId,
+            },
+            {
+              title: "Copy Tab URL",
+              name: "copy-tab-to-clipboard",
+              icon: "copy",
+              value: tabId,
+            },
+          ];
+
+          if (this.#runtime.board.canPreview(tabId)) {
+            actions.push({
+              title: "Copy Preview URL",
+              name: "copy-preview-to-clipboard",
+              icon: "copy",
+              value: tabId,
+            });
+          }
+
+          if (this.#runtime.board.canSave(tabId)) {
+            actions.unshift({
+              title: "Save Workspace",
+              name: "save",
+              icon: "save",
+              value: tabId,
+            });
+
+            actions.push({
+              title: "Delete Workspace",
+              name: "delete",
+              icon: "delete",
+              value: tabId,
+            });
+          }
+
+          actions.push({
+            title: "Download Workspace",
+            name: "download",
+            icon: "download",
+            value: tabId,
+          });
+
+          boardOverflowMenu = html`<bb-overflow-menu
+            id="board-overflow"
+            style=${styleMap({
+              left: `${this.#boardOverflowMenuConfiguration.x}px`,
+              top: `${this.#boardOverflowMenuConfiguration.y}px`,
+            })}
+            .actions=${actions}
+            .disabled=${false}
+            @bboverflowmenudismissed=${() => {
+              this.showBoardOverflowMenu = false;
+            }}
+            @bboverflowmenuaction=${async (
+              actionEvt: BreadboardUI.Events.OverflowMenuActionEvent
+            ) => {
+              this.showBoardOverflowMenu = false;
+              if (!actionEvt.value) {
+                this.toast(
+                  "Unable to perform action with tab - no ID provided",
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+                return;
+              }
+
+              const tab = this.#runtime.board.getTabById(
+                actionEvt.value as TabId
+              );
+              if (!tab) {
+                this.toast(
+                  "Unable to perform action with tab",
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+                return;
+              }
+
+              switch (actionEvt.action) {
+                case "copy-board-contents": {
+                  if (!tab.graph || !tab.graph.url) {
+                    this.toast(
+                      "Unable to copy board URL",
+                      BreadboardUI.Events.ToastType.ERROR
+                    );
+                    break;
+                  }
+
+                  await navigator.clipboard.writeText(
+                    JSON.stringify(tab.graph, null, 2)
+                  );
+                  this.toast(
+                    "Workspace contents copied",
+                    BreadboardUI.Events.ToastType.INFORMATION
+                  );
+                  break;
+                }
+
+                case "copy-to-clipboard": {
+                  if (!tab.graph || !tab.graph.url) {
+                    this.toast(
+                      "Unable to copy Workspace URL",
+                      BreadboardUI.Events.ToastType.ERROR
+                    );
+                    break;
+                  }
+
+                  await navigator.clipboard.writeText(tab.graph.url);
+                  this.toast(
+                    "Workspace URL copied",
+                    BreadboardUI.Events.ToastType.INFORMATION
+                  );
+                  break;
+                }
+
+                case "copy-tab-to-clipboard": {
+                  if (!tab.graph || !tab.graph.url) {
+                    this.toast(
+                      "Unable to copy Tab URL",
+                      BreadboardUI.Events.ToastType.ERROR
+                    );
+                    break;
+                  }
+
+                  const url = new URL(window.location.href);
+                  url.search = `?tab0=${tab.graph.url}`;
+
+                  await navigator.clipboard.writeText(url.href);
+                  this.toast(
+                    "Tab URL copied",
+                    BreadboardUI.Events.ToastType.INFORMATION
+                  );
+                  break;
+                }
+
+                case "download": {
+                  if (!tab.graph) {
+                    break;
+                  }
+
+                  const board = structuredClone(tab.graph);
+                  delete board["url"];
+
+                  const data = JSON.stringify(board, null, 2);
+                  const url = URL.createObjectURL(
+                    new Blob([data], { type: "application/json" })
+                  );
+
+                  for (const url of generatedUrls) {
+                    try {
+                      URL.revokeObjectURL(url);
+                    } catch (err) {
+                      console.warn(err);
+                    }
+                  }
+
+                  generatedUrls.clear();
+                  generatedUrls.add(url);
+
+                  let fileName = `${board.title ?? "Untitled Workspace"}.json`;
+                  if (tab.graph.url) {
+                    try {
+                      const boardUrl = new URL(
+                        tab.graph.url,
+                        window.location.href
+                      );
+                      const baseName = /[^/]+$/.exec(boardUrl.pathname);
+                      if (baseName) {
+                        fileName = baseName[0];
+                      }
+                    } catch (err) {
+                      // Ignore errors - this is best-effort to get the file name from the URL.
+                    }
+                  }
+
+                  const anchor = document.createElement("a");
+                  anchor.download = fileName;
+                  anchor.href = url;
+                  anchor.click();
+                  break;
+                }
+
+                case "delete": {
+                  if (!tab.graph || !tab.graph.url) {
+                    return;
+                  }
+
+                  const boardServer = this.#runtime.board.getBoardServerForURL(
+                    new URL(tab.graph.url)
+                  );
+                  if (!boardServer) {
+                    return;
+                  }
+
+                  console.log(boardServer.name, tab.graph.url, true);
+                  this.#attemptBoardDelete(
+                    boardServer.name,
+                    tab.graph.url,
+                    true
+                  );
+                  break;
+                }
+
+                case "save": {
+                  this.#attemptBoardSave(tab);
+                  break;
+                }
+
+                case "save-as": {
+                  this.#saveAsState = {
+                    title: "Save Workspace As...",
+                    graph: tab.graph,
+                    isNewBoard: false,
+                  };
+
+                  this.showSaveAsDialog = true;
+                  break;
+                }
+
+                case "copy-preview-to-clipboard": {
+                  if (!tab.graph || !tab.graph.url) {
+                    return;
+                  }
+
+                  const boardServer = this.#runtime.board.getBoardServerForURL(
+                    new URL(tab.graph.url)
+                  );
+                  if (!boardServer) {
+                    return;
+                  }
+
+                  try {
+                    const previewUrl = await boardServer.preview(
+                      new URL(tab.graph.url)
+                    );
+
+                    await navigator.clipboard.writeText(previewUrl.href);
+                    this.toast(
+                      "Preview URL copied",
+                      BreadboardUI.Events.ToastType.INFORMATION
+                    );
+                  } catch (err) {
+                    this.toast(
+                      "Unable to create preview",
+                      BreadboardUI.Events.ToastType.ERROR
+                    );
+                  }
+                  break;
+                }
+              }
+            }}
+          ></bb-overflow-menu>`;
+        }
+
         const tabs = this.#runtime?.board.tabs ?? [];
         const ui = html`<header>
           <div id="header-bar" ?inert=${showingOverlay}>
@@ -2698,6 +2872,20 @@ export class Main extends LitElement {
             Breadboard
           </h1>
           <div id="tab-container" ${ref(this.#tabContainerRef)}>
+          ${
+            tabs.size > 0 // The Welcome Panel is shown when there are no tabs.
+              ? html`<div id="add-tab-container">
+                  <button
+                    id="add-tab"
+                    @click=${() => {
+                      this.showOpenBoardOverlay = true;
+                    }}
+                  >
+                    +
+                  </button>
+                </div>`
+              : nothing
+          }
             ${map(tabs, ([id, tab]) => {
               const canSave = this.#runtime.board.canSave(id) && !tab.readOnly;
               const saveStatus = this.#tabSaveStatus.get(id) ?? "saved";
@@ -2705,7 +2893,7 @@ export class Main extends LitElement {
                 (tab.graph.url?.startsWith("http") ||
                   tab.graph.url?.startsWith("drive")) ??
                 false;
-              const readonly = tab.readOnly;
+              const readonly = tab.readOnly || !canSave;
 
               let saveTitle = "Saved";
               switch (saveStatus) {
@@ -2715,27 +2903,45 @@ export class Main extends LitElement {
                 }
 
                 case BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED: {
-                  saveTitle = remote
-                    ? "Saved on Board Server"
-                    : "Saved on device";
-
                   if (readonly) {
-                    saveTitle += " - read-only";
+                    saveTitle += " - Read Only";
                   }
                   break;
                 }
 
                 case BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR: {
-                  saveTitle = "Error saving board";
+                  saveTitle = "Error";
                   break;
                 }
               }
 
-              return html`<h1
+              return html`<div
                 class=${classMap({
+                  tab: true,
                   active: this.tab?.id === tab.id,
                 })}
               >
+                <button
+                  class="tab-overflow"
+                  @click=${(evt: PointerEvent) => {
+                    if (!(evt.target instanceof HTMLButtonElement)) {
+                      return;
+                    }
+
+                    const btnBounds = evt.target.getBoundingClientRect();
+                    const x = btnBounds.x + btnBounds.width;
+                    const y = btnBounds.y + btnBounds.height;
+
+                    this.#boardOverflowMenuConfiguration = {
+                      tabId: tab.id,
+                      x,
+                      y,
+                    };
+                    this.showBoardOverflowMenu = true;
+                  }}
+                >
+                  Overflow
+                </button>
                 <button
                   class=${classMap({
                     "back-to-main-board": true,
@@ -2761,17 +2967,19 @@ export class Main extends LitElement {
                     );
                   }}
                 >
-                  <span>${tab.graph.title}</span>
+                  <span class="tab-title">${tab.graph.title}</span>
                   <span
-                    class=${classMap({
-                      "save-status": true,
-                      "can-save": canSave,
-                      remote,
-                      [saveStatus]: true,
-                      readonly,
-                    })}
-                    title=${saveTitle}
-                  ></span>
+                    ><span
+                      class=${classMap({
+                        "save-status": true,
+                        "can-save": canSave,
+                        remote,
+                        [saveStatus]: true,
+                        readonly,
+                      })}
+                      >${saveTitle}</span
+                    ></span
+                  >
                 </button>
                 <button
                   @click=${() => {
@@ -2783,23 +2991,8 @@ export class Main extends LitElement {
                 >
                   Close
                 </button>
-              </h1>`;
+              </div>`;
             })}
-            ${
-              tabs.size > 0 // The Welcome Panel is shown when there are no tabs.
-                ? html`<div id="add-tab-container">
-                    <button
-                      id="add-tab"
-                      @click=${() => {
-                        this.showOpenBoardOverlay = true;
-                      }}
-                    >
-                      +
-                    </button>
-                  </div>`
-                : nothing
-            }
-
           </div>
           <button
             class=${classMap({ active: this.showSettingsOverlay })}
@@ -2822,7 +3015,7 @@ export class Main extends LitElement {
               .editor=${this.#runtime.edit.getEditor(this.tab)}
               .subGraphId=${this.tab?.subGraphId ?? null}
               .moduleId=${this.tab?.moduleId ?? null}
-              .run=${runs[0] ?? null}
+              .runs=${runs ?? null}
               .topGraphResult=${topGraphResult}
               .kits=${this.tab?.kits ?? []}
               .loader=${this.#runtime.board.getLoader()}
@@ -2836,11 +3029,51 @@ export class Main extends LitElement {
               .showWelcomePanel=${this.showWelcomePanel}
               .recentBoards=${this.#recentBoards}
               .inputsFromLastRun=${inputsFromLastRun}
-              .isShowingBoardActivityOverlay=${this.showBoardActivityOverlay}
               .tabURLs=${tabURLs}
               .selectionState=${this.#selectionState}
               .visualChangeId=${this.#lastVisualChangeId}
               .graphTopologyUpdateId=${this.graphTopologyUpdateId}
+              @bbinputenter=${async (
+                event: BreadboardUI.Events.InputEnterEvent
+              ) => {
+                if (!this.#settings || !this.tab) {
+                  return;
+                }
+
+                const isSecret = "secret" in event.data;
+                const runner = this.#runtime.run.getRunner(this.tab.id);
+                if (!runner) {
+                  throw new Error("Can't send input, no runner");
+                }
+                if (isSecret) {
+                  if (this.#secretsHelper) {
+                    this.#secretsHelper.receiveSecrets(event);
+                    if (
+                      this.#secretsHelper.hasAllSecrets() &&
+                      !runner?.running()
+                    ) {
+                      const secrets = this.#secretsHelper.getSecrets();
+                      this.#secretsHelper = null;
+                      runner?.run(secrets);
+                    }
+                  } else {
+                    // This is the case when the "secret" event hasn't yet
+                    // been received.
+                    // Likely, this is a side effect of how the
+                    // activity-log is built: it relies on the run observer
+                    // for the events list, and the run observer updates the
+                    // list of run events before the run API dispatches
+                    // the "secret" event.
+                    this.#secretsHelper = new SecretsHelper(this.#settings!);
+                    this.#secretsHelper.receiveSecrets(event);
+                  }
+                } else {
+                  const data = event.data as InputValues;
+                  if (!runner.running()) {
+                    runner.run(data);
+                  }
+                }
+              }}
               @bbeditorpositionchange=${(
                 evt: BreadboardUI.Events.EditorPointerPositionChangeEvent
               ) => {
@@ -2955,172 +3188,6 @@ export class Main extends LitElement {
                     break;
                   }
 
-                  case "copy-board-contents": {
-                    if (!this.tab?.graph || !this.tab?.graph.url) {
-                      this.toast(
-                        "Unable to copy board URL",
-                        BreadboardUI.Events.ToastType.ERROR
-                      );
-                      break;
-                    }
-
-                    await navigator.clipboard.writeText(
-                      JSON.stringify(this.tab.graph, null, 2)
-                    );
-                    this.toast(
-                      "Board contents copied",
-                      BreadboardUI.Events.ToastType.INFORMATION
-                    );
-                    break;
-                  }
-
-                  case "copy-to-clipboard": {
-                    if (!this.tab?.graph || !this.tab?.graph.url) {
-                      this.toast(
-                        "Unable to copy board URL",
-                        BreadboardUI.Events.ToastType.ERROR
-                      );
-                      break;
-                    }
-
-                    await navigator.clipboard.writeText(this.tab.graph.url);
-                    this.toast(
-                      "Board URL copied",
-                      BreadboardUI.Events.ToastType.INFORMATION
-                    );
-                    break;
-                  }
-
-                  case "copy-tab-to-clipboard": {
-                    if (!this.tab?.graph || !this.tab?.graph.url) {
-                      this.toast(
-                        "Unable to copy board URL",
-                        BreadboardUI.Events.ToastType.ERROR
-                      );
-                      break;
-                    }
-
-                    const url = new URL(window.location.href);
-                    url.search = `?tab0=${this.tab.graph.url}`;
-
-                    await navigator.clipboard.writeText(url.href);
-                    this.toast(
-                      "Tab URL copied",
-                      BreadboardUI.Events.ToastType.INFORMATION
-                    );
-                    break;
-                  }
-
-                  case "download": {
-                    if (!this.tab?.graph) {
-                      break;
-                    }
-
-                    const board = structuredClone(this.tab?.graph);
-                    delete board["url"];
-
-                    const data = JSON.stringify(board, null, 2);
-                    const url = URL.createObjectURL(
-                      new Blob([data], { type: "application/json" })
-                    );
-
-                    for (const url of generatedUrls) {
-                      try {
-                        URL.revokeObjectURL(url);
-                      } catch (err) {
-                        console.warn(err);
-                      }
-                    }
-
-                    generatedUrls.clear();
-                    generatedUrls.add(url);
-
-                    let fileName = `${board.title ?? "Untitled Board"}.json`;
-                    if (this.tab.graph.url) {
-                      try {
-                        const boardUrl = new URL(
-                          this.tab.graph.url,
-                          window.location.href
-                        );
-                        const baseName = /[^/]+$/.exec(boardUrl.pathname);
-                        if (baseName) {
-                          fileName = baseName[0];
-                        }
-                      } catch (err) {
-                        // Ignore errors - this is best-effort to get the file name from the URL.
-                      }
-                    }
-
-                    const anchor = document.createElement("a");
-                    anchor.download = fileName;
-                    anchor.href = url;
-                    anchor.click();
-                    break;
-                  }
-
-                  case "delete": {
-                    if (!this.tab?.graph || !this.tab?.graph.url) {
-                      return;
-                    }
-
-                    const boardServer =
-                      this.#runtime.board.getBoardServerForURL(
-                        new URL(this.tab?.graph.url)
-                      );
-                    if (!boardServer) {
-                      return;
-                    }
-
-                    this.#attemptBoardDelete(
-                      boardServer.name,
-                      this.tab?.graph.url,
-                      true
-                    );
-                    break;
-                  }
-
-                  case "save": {
-                    this.#attemptBoardSave();
-                    break;
-                  }
-
-                  case "save-as": {
-                    this.showSaveAsDialog = true;
-                    break;
-                  }
-
-                  case "copy-preview-to-clipboard": {
-                    if (!this.tab?.graph || !this.tab?.graph.url) {
-                      return;
-                    }
-
-                    const boardServer =
-                      this.#runtime.board.getBoardServerForURL(
-                        new URL(this.tab?.graph.url)
-                      );
-                    if (!boardServer) {
-                      return;
-                    }
-
-                    try {
-                      const previewUrl = await boardServer.preview(
-                        new URL(this.tab?.graph.url)
-                      );
-
-                      await navigator.clipboard.writeText(previewUrl.href);
-                      this.toast(
-                        "Preview URL copied",
-                        BreadboardUI.Events.ToastType.INFORMATION
-                      );
-                    } catch (err) {
-                      this.toast(
-                        "Unable to create preview",
-                        BreadboardUI.Events.ToastType.ERROR
-                      );
-                    }
-                    break;
-                  }
-
                   default: {
                     this.toast(
                       "Unknown action",
@@ -3129,20 +3196,6 @@ export class Main extends LitElement {
                     break;
                   }
                 }
-              }}
-              @bbtoggleboardactivity=${(
-                evt: BreadboardUI.Events.ToggleBoardActivityEvent
-              ) => {
-                if (evt.forceOn) {
-                  this.showBoardActivityOverlay = true;
-                } else {
-                  this.showBoardActivityOverlay =
-                    !this.showBoardActivityOverlay;
-                }
-
-                this.#boardActivityLocation = this.showBoardActivityOverlay
-                  ? { x: evt.x, y: evt.y }
-                  : null;
               }}
               @dragover=${(evt: DragEvent) => {
                 evt.preventDefault();
@@ -3525,7 +3578,6 @@ export class Main extends LitElement {
           historyOverlay,
           boardServerAddOverlay,
           previewOverlay,
-          boardActivityOverlay,
           nodeConfiguratorOverlay,
           edgeValueOverlay,
           commentOverlay,
@@ -3533,6 +3585,7 @@ export class Main extends LitElement {
           openDialogOverlay,
           commandPalette,
           modulePalette,
+          boardOverflowMenu,
         ];
       });
 
