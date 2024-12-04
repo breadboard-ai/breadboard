@@ -5,16 +5,16 @@
   "main": "./build/index.js",
   "exports": {
     ".": {
-      "default": "./build/index.js",
-      "types": "./build.index.d.ts"
+      "types": "./build.index.d.ts",
+      "default": "./build/index.js"
     },
     "./preview.js": {
-      "default": "./build/preview.js",
-      "types": "./build/preview.d.ts"
+      "types": "./build/preview.d.ts",
+      "default": "./build/preview.js"
     },
     "./config.js": {
-      "default": "./build/config.js",
-      "types": "./build/config.d.ts"
+      "types": "./build/config.d.ts",
+      "default": "./build/config.js"
     },
     "./public": "./public",
     "./index.html": "./index.html",
