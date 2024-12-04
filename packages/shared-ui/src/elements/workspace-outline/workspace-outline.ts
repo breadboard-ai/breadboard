@@ -456,7 +456,7 @@ export class WorkspaceOutline extends LitElement {
         no-repeat;
     }
 
-    .change-subitem {
+    .change-subitem:not(.main) {
       color: var(--bb-neutral-800);
       align-items: center;
       background: var(--bb-neutral-0);
@@ -535,8 +535,8 @@ export class WorkspaceOutline extends LitElement {
       border-radius: var(--bb-grid-size);
     }
 
-    summary:hover > .title,
-    summary > .title:hover {
+    details:not(.main) summary:hover > .title,
+    details:not(.main) summary > .title:hover {
       width: calc(100% - 36px);
       background: var(--bb-ui-50);
     }
@@ -1083,6 +1083,7 @@ export class WorkspaceOutline extends LitElement {
         id=${this.#createSubItemId(id)}
         class=${classMap({
           [subItem.type]: true,
+          main: id === main,
           runnable: subItem.runnable ?? false,
           inverted: getSubItemColor<number>(id, "text", true) === 0xffffff,
         })}
