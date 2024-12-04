@@ -235,14 +235,14 @@ export class WorkspaceOutline extends LitElement {
     }
 
     details.declarative > summary {
-      padding-right: var(--bb-grid-size-9);
+      padding-right: var(--bb-grid-size-13);
       cursor: pointer;
       background: var(--bb-icon-unfold-more) calc(100% - 4px) center / 20px 20px
         no-repeat;
     }
 
     details.imperative > summary {
-      padding-right: var(--bb-grid-size-4);
+      padding-right: var(--bb-grid-size-13);
     }
 
     details.declarative[open] > summary {
@@ -494,8 +494,8 @@ export class WorkspaceOutline extends LitElement {
       content: "";
       width: var(--bb-grid-size-5);
       height: var(--bb-grid-size-5);
-      background: var(--subgraph-label-color, transparent) var(--bb-icon-board)
-        center center / 16px 16px no-repeat;
+      background: transparent var(--bb-icon-board) center center / 16px 16px
+        no-repeat;
       display: inline-block;
       margin-right: var(--bb-grid-size);
       border-radius: var(--bb-grid-size);
@@ -505,16 +505,12 @@ export class WorkspaceOutline extends LitElement {
       left: var(--bb-grid-size);
     }
 
-    .declarative.inverted > summary > .title::before {
-      background-image: var(--bb-icon-board-inverted);
-    }
-
     .imperative > summary > .title::before {
-      background-image: var(--bb-icon-extension);
+      background-image: var(--bb-icon-code);
     }
 
-    .imperative.inverted > summary > .title::before {
-      background-image: var(--bb-icon-extension-inverted);
+    .imperative.runnable > summary > .title::before {
+      background-image: var(--bb-icon-extension);
     }
 
     .title {
@@ -540,9 +536,8 @@ export class WorkspaceOutline extends LitElement {
     }
 
     summary:hover > .title,
-    summary > .title:hover,
-    summary > .title:focus {
-      width: calc(100% - 28px);
+    summary > .title:hover {
+      width: calc(100% - 36px);
       background: var(--bb-ui-50);
     }
 
@@ -604,6 +599,16 @@ export class WorkspaceOutline extends LitElement {
       background-color: var(--bb-neutral-50);
     }
 
+    .color {
+      display: block;
+      background: var(--subgraph-label-color, red);
+      border-radius: 50%;
+      margin-left: var(--bb-grid-size);
+      width: 10px;
+      height: 10px;
+      flex: 0 0 auto;
+    }
+
     .more {
       height: var(--bb-grid-size-7);
       width: var(--bb-grid-size-7);
@@ -612,7 +617,7 @@ export class WorkspaceOutline extends LitElement {
         no-repeat;
       font-size: 0;
       flex: 0 0 auto;
-      margin: 0 0 0 var(--bb-grid-size);
+      margin: 0 var(--bb-grid-size);
       display: none;
       cursor: pointer;
       border-radius: 50%;
@@ -1119,65 +1124,66 @@ export class WorkspaceOutline extends LitElement {
           </button>
           ${main !== id
             ? html` <button
-                class="more"
-                @click=${(evt: PointerEvent) => {
-                  const showZoom =
-                    subItem.type === "declarative" &&
-                    (this.mode === "tree" ||
-                      this.selectionState?.selectionState.graphs.has(id));
+                  class="more"
+                  @click=${(evt: PointerEvent) => {
+                    const showZoom =
+                      subItem.type === "declarative" &&
+                      (this.mode === "tree" ||
+                        this.selectionState?.selectionState.graphs.has(id));
 
-                  const actions: OverflowAction[] = [];
+                    const actions: OverflowAction[] = [];
 
-                  if (showZoom) {
-                    actions.push({
-                      title: "Zoom to Fit",
-                      name: "zoom-to-fit",
-                      icon: "fit",
-                    });
-                  } else {
-                    actions.push({
-                      title: "Go to item",
-                      name: "quick-jump",
-                      icon: "quick-jump",
-                    });
-                  }
-
-                  if (subItem.type === "declarative") {
-                    actions.push({
-                      title: "Edit Board Information",
-                      name: "edit-board-details",
-                      icon: "edit-board-details",
-                      value: id,
-                    });
-                  }
-
-                  actions.push(
-                    {
-                      title: "Duplicate",
-                      name: "duplicate",
-                      icon: "duplicate",
-                    },
-                    {
-                      title: "Delete",
-                      name: "delete",
-                      icon: "delete",
+                    if (showZoom) {
+                      actions.push({
+                        title: "Zoom to Fit",
+                        name: "zoom-to-fit",
+                        icon: "fit",
+                      });
+                    } else {
+                      actions.push({
+                        title: "Go to item",
+                        name: "quick-jump",
+                        icon: "quick-jump",
+                      });
                     }
-                  );
 
-                  this.#setOverflowMenuValues({
-                    type: subItem.type,
-                    target: id,
-                    actions,
-                    location: {
-                      x: evt.clientX + 20,
-                      y: evt.clientY,
-                    },
-                  });
-                  this.showOverflowMenu = true;
-                }}
-              >
-                More
-              </button>`
+                    if (subItem.type === "declarative") {
+                      actions.push({
+                        title: "Edit Board Information",
+                        name: "edit-board-details",
+                        icon: "edit-board-details",
+                        value: id,
+                      });
+                    }
+
+                    actions.push(
+                      {
+                        title: "Duplicate",
+                        name: "duplicate",
+                        icon: "duplicate",
+                      },
+                      {
+                        title: "Delete",
+                        name: "delete",
+                        icon: "delete",
+                      }
+                    );
+
+                    this.#setOverflowMenuValues({
+                      type: subItem.type,
+                      target: id,
+                      actions,
+                      location: {
+                        x: evt.clientX + 20,
+                        y: evt.clientY,
+                      },
+                    });
+                    this.showOverflowMenu = true;
+                  }}
+                >
+                  More
+                </button>
+                <span class="color"></span>`
             : nothing}
         </summary>
         ${this.#renderWorkspaceItem(
