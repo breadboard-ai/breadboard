@@ -6,12 +6,7 @@
 
 import * as idb from "idb";
 import { IDBBoardServer } from "@breadboard-ai/idb-board-server";
-import {
-  BoardServer,
-  GraphDescriptor,
-  Kit,
-  User,
-} from "@google-labs/breadboard";
+import { BoardServer, GraphDescriptor, User } from "@google-labs/breadboard";
 import { RemoteBoardServer } from "@breadboard-ai/remote-board-server";
 import { ExampleBoardServer } from "@breadboard-ai/example-board-server";
 import {
@@ -45,7 +40,6 @@ interface BoardServerListing extends idb.DBSchema {
 }
 
 export async function getBoardServers(
-  kits: Kit[],
   tokenVendor?: TokenVendor,
   skipPlaygroundExamples = false
 ): Promise<BoardServer[]> {
@@ -65,14 +59,14 @@ export async function getBoardServers(
   const stores = await Promise.all(
     storeUrls.map(({ url, title, user, handle }) => {
       if (url.startsWith(IDBBoardServer.PROTOCOL)) {
-        return IDBBoardServer.from(url, title, user, kits);
+        return IDBBoardServer.from(url, title, user);
       }
 
       if (
         url.startsWith(RemoteBoardServer.PROTOCOL) ||
         url.startsWith(RemoteBoardServer.LOCALHOST)
       ) {
-        return RemoteBoardServer.from(url, title, user, kits);
+        return RemoteBoardServer.from(url, title, user);
       }
 
       if (url.startsWith(ExampleBoardServer.PROTOCOL)) {
@@ -80,15 +74,15 @@ export async function getBoardServers(
           return null;
         }
 
-        return ExampleBoardServer.from(url, title, user, kits);
+        return ExampleBoardServer.from(url, title, user);
       }
 
       if (url.startsWith(FileSystemBoardServer.PROTOCOL)) {
-        return FileSystemBoardServer.from(url, title, user, kits, handle);
+        return FileSystemBoardServer.from(url, title, user, handle);
       }
 
       if (url.startsWith(GoogleDriveBoardServer.PROTOCOL) && tokenVendor) {
-        return GoogleDriveBoardServer.from(url, title, user, kits, tokenVendor);
+        return GoogleDriveBoardServer.from(url, title, user, tokenVendor);
       }
 
       console.warn(`Unsupported store URL: ${url}`);
@@ -100,12 +94,11 @@ export async function getBoardServers(
 }
 
 export async function connectToBoardServer(
-  kits: Kit[],
   location?: string,
   apiKey?: string,
   tokenVendor?: TokenVendor
 ): Promise<{ title: string; url: string } | null> {
-  const existingServers = await getBoardServers(kits, tokenVendor);
+  const existingServers = await getBoardServers(tokenVendor);
   if (location) {
     if (
       location.startsWith(RemoteBoardServer.PROTOCOL) ||
@@ -243,7 +236,7 @@ async function storeBoardServer(
   db.close();
 }
 
-export async function createDefaultLocalBoardServer(kits: Kit[]) {
+export async function createDefaultLocalBoardServer() {
   try {
     const url = `${IDBBoardServer.PROTOCOL}board-server-local`;
     const user = {
@@ -252,7 +245,7 @@ export async function createDefaultLocalBoardServer(kits: Kit[]) {
       secrets: new Map(),
     };
 
-    await IDBBoardServer.createDefault(new URL(url), user, kits);
+    await IDBBoardServer.createDefault(new URL(url), user);
     await storeBoardServer(new URL(url), "Browser Storage", user);
   } catch (err) {
     console.warn(err);
@@ -270,13 +263,13 @@ export async function legacyGraphProviderExists() {
   return true;
 }
 
-export async function migrateIDBGraphProviders(kits: Kit[]) {
+export async function migrateIDBGraphProviders() {
   try {
     const db = await idb.openDB("default");
     const graphs: GraphDescriptor[] = await db.getAll("graphs");
     db.close();
 
-    const boardServers = await getBoardServers(kits);
+    const boardServers = await getBoardServers();
     const idbBoardServer = boardServers.find(
       (bbs) => bbs.name === "Browser Storage"
     );

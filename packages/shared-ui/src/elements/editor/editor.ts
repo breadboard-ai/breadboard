@@ -11,7 +11,6 @@ import {
   InspectableGraph,
   InspectableNodePorts,
   InspectableRun,
-  Kit,
   NodeConfiguration,
   NodeHandlerMetadata,
 } from "@google-labs/breadboard";
@@ -104,9 +103,6 @@ type EditedNode = {
 export class Editor extends LitElement {
   @property()
   graph: InspectableGraph | null = null;
-
-  @property()
-  kits: Kit[] = [];
 
   @property()
   subGraphId: string | null = null;

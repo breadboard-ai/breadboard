@@ -10,6 +10,7 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
   InspectableGraph,
   InspectableKit,
+  Kit,
   NodeHandlerMetadata,
 } from "@google-labs/breadboard";
 import { Task } from "@lit/task";
@@ -21,6 +22,9 @@ const DATA_TYPE = "text/plain";
 
 @customElement("bb-component-selector")
 export class ComponentSelector extends LitElement {
+  @property()
+  boardServerKits: Kit[] | null = null;
+
   @property()
   graph: InspectableGraph | null = null;
 

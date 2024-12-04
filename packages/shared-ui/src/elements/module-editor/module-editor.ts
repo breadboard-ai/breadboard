@@ -10,7 +10,6 @@ import {
   InspectableModules,
   InspectableNodePorts,
   InspectableRun,
-  Kit,
   MutableGraphStore,
   NodeHandlerMetadata,
 } from "@google-labs/breadboard";
@@ -69,9 +68,6 @@ export class ModuleEditor extends LitElement {
 
   @property()
   modules: InspectableModules = {};
-
-  @property()
-  kits: Kit[] = [];
 
   @property({ reflect: true })
   focused = false;

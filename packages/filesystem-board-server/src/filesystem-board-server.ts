@@ -103,7 +103,6 @@ export class FileSystemBoardServer extends EventTarget implements BoardServer {
     url: string,
     title: string,
     user: User,
-    kits: Kit[],
     handle?: FileSystemDirectoryHandle
   ) {
     try {
@@ -114,7 +113,7 @@ export class FileSystemBoardServer extends EventTarget implements BoardServer {
       const configuration = {
         url: new URL(url),
         projects: Promise.resolve([]),
-        kits,
+        kits: [],
         users: [],
         secrets: new Map(),
         extensions: [],

@@ -73,7 +73,6 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
     url: string,
     title: string,
     user: User,
-    kits: Kit[],
     vendor: TokenVendor
   ) {
     const connection = await GoogleDriveBoardServer.connect(
@@ -89,7 +88,7 @@ class GoogleDriveBoardServer extends EventTarget implements BoardServer {
       const configuration = {
         url: new URL(url),
         projects: Promise.resolve([]),
-        kits,
+        kits: [],
         users: [],
         secrets: new Map(),
         extensions: [],

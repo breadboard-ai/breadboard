@@ -164,7 +164,7 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
     return url.replace(/^idb:\/\//, "");
   }
 
-  static async from(url: string, title: string, user: User, kits: Kit[]) {
+  static async from(url: string, title: string, user: User) {
     try {
       const db = await createLocalStoreDBIfNeeded(url);
 
@@ -177,7 +177,7 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
         throw new Error(`Unable to retrieve configuration for ${url}`);
       }
 
-      const configuration = await inflateConfiguration(idbConfiguration, kits);
+      const configuration = await inflateConfiguration(idbConfiguration, []);
       return new IDBBoardServer(title, configuration, user);
     } catch (err) {
       console.warn(err);
@@ -200,12 +200,12 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
     db.close();
   }
 
-  static async createDefault(url: URL, user: User, kits: Kit[]) {
+  static async createDefault(url: URL, user: User) {
     const extensions = loadedExtensions;
     this.#create({
       url: new URL(url),
       projects: Promise.resolve([]),
-      kits,
+      kits: [],
       users: [user],
       secrets: new Map(),
       extensions,

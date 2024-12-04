@@ -99,12 +99,12 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
     }
   }
 
-  static async from(url: string, title: string, user: User, kits: Kit[]) {
+  static async from(url: string, title: string, user: User) {
     try {
       const configuration = {
         url: new URL(url),
         projects: Promise.resolve([]),
-        kits,
+        kits: [],
         users: [],
         secrets: new Map(),
         extensions: [],
