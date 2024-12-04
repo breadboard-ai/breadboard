@@ -105,6 +105,7 @@ export class BoardInfoUpdateEvent extends Event {
   static eventName = "bbboardinfoupdate";
 
   constructor(
+    public readonly tabId: string | null,
     public readonly title: string,
     public readonly version: string,
     public readonly description: string,

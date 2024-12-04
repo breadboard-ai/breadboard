@@ -163,6 +163,7 @@ export class Main extends LitElement {
 
   @state()
   boardEditOverlayInfo: {
+    tabId: TabId;
     title: string;
     version: string;
     description: string;
@@ -313,6 +314,7 @@ export class Main extends LitElement {
         const { left, bottom } = activeTab.getBoundingClientRect();
         const maxLeft = window.innerWidth - 500;
         this.#showBoardEditOverlay(
+          this.tab,
           Math.min(maxLeft, left),
           bottom,
           this.tab?.subGraphId ?? null
@@ -1563,9 +1565,15 @@ export class Main extends LitElement {
   }
 
   async #handleBoardInfoUpdate(evt: BreadboardUI.Events.BoardInfoUpdateEvent) {
-    if (!this.tab) {
+    if (!evt.tabId) {
+      this.toast("Unable to edit", BreadboardUI.Events.ToastType.ERROR);
+      return;
+    }
+
+    const tab = this.#runtime.board.getTabById(evt.tabId as TabId);
+    if (!tab) {
       this.toast(
-        "Unable to edit; no active graph",
+        "Unable to edit - no tab found",
         BreadboardUI.Events.ToastType.ERROR
       );
       return;
@@ -1573,7 +1581,7 @@ export class Main extends LitElement {
 
     if (evt.subGraphId) {
       await this.#runtime.edit.updateSubBoardInfo(
-        this.tab,
+        tab,
         evt.subGraphId,
         evt.title,
         evt.version,
@@ -1584,7 +1592,7 @@ export class Main extends LitElement {
       );
     } else {
       this.#runtime.edit.updateBoardInfo(
-        this.tab,
+        tab,
         evt.title,
         evt.version,
         evt.description,
@@ -1771,17 +1779,16 @@ export class Main extends LitElement {
   }
 
   #showBoardEditOverlay(
+    tab = this.tab,
     x: number | null,
     y: number | null,
     subGraphId: string | null
   ) {
-    if (!this.tab) {
+    if (!tab) {
       return;
     }
 
-    const graph = subGraphId
-      ? this.tab.graph.graphs?.[subGraphId]
-      : this.tab.graph;
+    const graph = subGraphId ? tab.graph.graphs?.[subGraphId] : tab.graph;
 
     if (!graph) {
       return;
@@ -1790,6 +1797,7 @@ export class Main extends LitElement {
     const { description, title, version, metadata } = graph;
 
     this.boardEditOverlayInfo = {
+      tabId: tab.id,
       description: description ?? "",
       isTool: metadata?.tags?.includes("tool") ?? false,
       isComponent: metadata?.tags?.includes("component") ?? false,
@@ -2025,6 +2033,7 @@ export class Main extends LitElement {
           };
 
           boardOverlay = html`<bb-board-details-overlay
+            .tabId=${this.boardEditOverlayInfo.tabId}
             .boardTitle=${this.boardEditOverlayInfo.title}
             .boardVersion=${this.boardEditOverlayInfo.version}
             .boardDescription=${this.boardEditOverlayInfo.description}
@@ -2628,6 +2637,13 @@ export class Main extends LitElement {
             });
 
             actions.push({
+              title: "Edit Workspace Details",
+              name: "edit-board-details",
+              icon: "edit-board-details",
+              value: tabId,
+            });
+
+            actions.push({
               title: "Delete Workspace",
               name: "delete",
               icon: "delete",
@@ -2657,6 +2673,9 @@ export class Main extends LitElement {
               actionEvt: BreadboardUI.Events.OverflowMenuActionEvent
             ) => {
               this.showBoardOverflowMenu = false;
+              const x = this.#boardOverflowMenuConfiguration?.x ?? 100;
+              const y = this.#boardOverflowMenuConfiguration?.y ?? 100;
+
               if (!actionEvt.value) {
                 this.toast(
                   "Unable to perform action with tab - no ID provided",
@@ -2677,6 +2696,11 @@ export class Main extends LitElement {
               }
 
               switch (actionEvt.action) {
+                case "edit-board-details": {
+                  this.#showBoardEditOverlay(tab, x, y, null);
+                  break;
+                }
+
                 case "copy-board-contents": {
                   if (!tab.graph || !tab.graph.url) {
                     this.toast(
@@ -2961,6 +2985,7 @@ export class Main extends LitElement {
                     }
 
                     this.#showBoardEditOverlay(
+                      this.tab,
                       evt.clientX,
                       evt.clientY,
                       this.tab.subGraphId
@@ -3181,6 +3206,7 @@ export class Main extends LitElement {
                 switch (evt.action) {
                   case "edit-board-details": {
                     this.#showBoardEditOverlay(
+                      this.tab,
                       evt.x ?? null,
                       evt.y ?? null,
                       evt.value
@@ -3208,10 +3234,10 @@ export class Main extends LitElement {
                 this.toast(evt.detail, BreadboardUI.Events.ToastType.ERROR);
                 return;
               }}
-              @bbboardinfoupdate=${(
+              @bbboardinfoupdate=${async (
                 evt: BreadboardUI.Events.BoardInfoUpdateEvent
               ) => {
-                this.#handleBoardInfoUpdate(evt);
+                await this.#handleBoardInfoUpdate(evt);
                 this.requestUpdate();
               }}
               @bbgraphboardserverblankboard=${() => {

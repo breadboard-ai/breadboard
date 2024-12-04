@@ -666,7 +666,6 @@ export class Board extends EventTarget {
       return false;
     }
 
-    console.log(boardServer, boardServer.capabilities);
     return boardServer.capabilities.preview;
   }
 
