@@ -14,7 +14,6 @@ import {
 import { GraphLoader, GraphLoaderContext } from "../loader/types.js";
 import { MutableGraphImpl } from "./graph/mutable-graph.js";
 import {
-  GraphHandle,
   GraphStoreArgs,
   GraphStoreEventTarget,
   InspectableGraph,
@@ -76,29 +75,6 @@ class GraphStore
     this.loader = args.loader;
   }
 
-  async load(
-    url: string,
-    options: GraphLoaderContext
-  ): Promise<Result<GraphHandle>> {
-    const loader = this.loader;
-    if (!loader) {
-      return error(`Unable to load "${url}": no loader provided`);
-    }
-    const loading = await loader.load(url, options);
-    if (!loading.success) {
-      return loading;
-    }
-    const { graph, subGraphId: graphId = "" } = loading;
-    const mutable = this.getOrAdd(graph);
-    if (!mutable.success) {
-      return mutable;
-    }
-    return {
-      success: true,
-      result: { type: "declarative", id: mutable.result.id, graphId },
-    };
-  }
-
   addByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier> {
     const getting = this.getOrAdd(graph);
     if (!getting.success) {
@@ -139,7 +115,7 @@ class GraphStore
     return mutable.graphs.get(graphId);
   }
 
-  getByURL(
+  addByURL(
     url: string,
     dependencies: MainGraphIdentifier[],
     context: GraphLoaderContext = {}

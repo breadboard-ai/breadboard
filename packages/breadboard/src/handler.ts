@@ -98,7 +98,7 @@ export async function getGraphHandlerFromStore(
   if (!nodeTypeUrl) {
     return undefined;
   }
-  const result = store.getByURL(type, [], {});
+  const result = store.addByURL(type, [], {});
   return new GraphBasedNodeHandler({ graph: result.graph }, type);
 }
 

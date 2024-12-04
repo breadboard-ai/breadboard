@@ -727,9 +727,7 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> & {
   readonly sandbox: Sandbox;
   readonly loader: GraphLoader;
 
-  load(url: string, options: GraphLoaderContext): Promise<Result<GraphHandle>>;
-
-  getByURL(
+  addByURL(
     url: string,
     dependencies: MainGraphIdentifier[],
     context: GraphLoaderContext

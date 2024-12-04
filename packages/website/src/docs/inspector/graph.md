@@ -13,13 +13,27 @@ The Inspector API provides a way to inspect a graph to make sense of it. Because
 
 ## Graph
 
-The entry point for the Inspector API is the `inspect` method. It expects a `GraphDescriptor` as its first argument (the `GraphDescriptor` is the TypeScript type representing the BGL document):
+The entry point for the Inspector API is the `inspect` method on a `GraphStore` instance:
 
 ```ts
-import { inspect } from "@google-labs/breadboard";
+import { createGraphStore } from "@google-labs/breadboard";
 
-// Returns an instance of `InspectableGraph`.
-const graph = inspect(bgl);
+import { createGraphStore } from "google-labs/breadboard";
+
+// ...
+// Somewhere during initialization of the applicaton.
+const graphStore = createGraphStore(graphStoreOptions);
+
+// Add the GraphDescriptor to GraphStore to obtain
+// `MainGraphIdentifier`
+const adding = this.#graphStore.addByDescriptor(graph);
+if (!adding.success) {
+  throw new Error(`Unable to add graph: ${adding.error}`);
+}
+const mainGraphId = adding.result;
+// Use the `MainGraphIdentifier` to get an instance of
+// `InspectableGraph`.
+const inspector = this.#graphStore.inspect(mainGraphId, "");
 ```
 
 Once we have an instance of `InspectableGraph`, we can use it to query the graph:
@@ -303,6 +317,14 @@ The port status can be one of the following values:
 
 > [!NOTE]
 > If the `kits` option isn't supplied, the `ports` method will presume that the node does not have any expectations for its inputs or outputs. All ports will have the `PortStatus.Connected` state.
+
+In situations where temporarily stale results are preferable over using the asynchronous function (like in rendering), we can use the `currentPorts` method, which mirrors the `ports` method, except returns the current value of the ports, rather than a promise:
+
+```ts
+// Returns an InspectableNodePorts instance that may be
+// temporarily stale.
+const ports = node.currentPorts();
+```
 
 ## Subgraphs
 
