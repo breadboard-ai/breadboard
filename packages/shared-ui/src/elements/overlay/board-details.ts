@@ -20,6 +20,9 @@ const OVERLAY_CLEARANCE = 20;
 @customElement("bb-board-details-overlay")
 export class BoardDetailsOverlay extends LitElement {
   @property()
+  tabId: string | null = null;
+
+  @property()
   boardTitle: string | null = null;
 
   @property()
@@ -435,6 +438,7 @@ export class BoardDetailsOverlay extends LitElement {
     const data = new FormData(this.#formRef.value);
     this.dispatchEvent(
       new BoardInfoUpdateEvent(
+        this.tabId,
         data.get("title") as string,
         data.get("version") as string,
         data.get("description") as string,
