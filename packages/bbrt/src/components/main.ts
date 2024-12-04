@@ -75,6 +75,9 @@ export class BBRTMain extends SignalWatcher(LitElement) {
   private _sidePanelOpen = true;
 
   static override styles = css`
+    :host {
+      --sidebar-width: 350px;
+    }
     #container {
       width: 100vw;
       height: 100vh;
@@ -83,7 +86,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
       grid-template-rows: 1fr auto;
     }
     #container.sidePanelOpen {
-      grid-template-columns: 2fr 350px;
+      grid-template-columns: 2fr var(--sidebar-width);
     }
     bbrt-chat {
       grid-column: 1;
@@ -106,7 +109,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
       grid-row: 1 / 3;
       border-left: 1px solid #ccc;
       display: grid;
-      grid-template-rows: 1fr 300px;
+      grid-template-rows: 1fr var(--sidebar-width);
     }
     #expandSidebarButton {
       position: fixed;
@@ -123,6 +126,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
     }
     bbrt-board-visualizer {
       border-top: 1px solid #ccc;
+      width: var(--sidebar-width);
     }
   `;
 
