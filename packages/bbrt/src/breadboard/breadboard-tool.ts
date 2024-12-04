@@ -4,17 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import AgentKit from "@google-labs/agent-kit/agent.kit.json" assert { type: "json" };
 import {
   asRuntimeKit,
   createDefaultDataStore,
   createLoader,
   type GraphDescriptor,
   type InputValues,
+  type Kit,
   type OutputValues,
   type SerializedStoredData,
 } from "@google-labs/breadboard";
 import { createRunner, type RunConfig } from "@google-labs/breadboard/harness";
+import { kitFromGraphDescriptor } from "@google-labs/breadboard/kits";
 import CoreKit from "@google-labs/core-kit";
+import GeminiKit from "@google-labs/gemini-kit";
+import JSONKit from "@google-labs/json-kit";
 import TemplateKit from "@google-labs/template-kit";
 import { html, nothing } from "lit";
 import { Signal } from "signal-polyfill";
@@ -127,7 +132,13 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
     }
 
     const loader = createLoader();
-    const kits = [asRuntimeKit(CoreKit), asRuntimeKit(TemplateKit)];
+    const kits: Kit[] = [
+      asRuntimeKit(CoreKit),
+      asRuntimeKit(TemplateKit),
+      asRuntimeKit(JSONKit),
+      asRuntimeKit(GeminiKit),
+      kitFromGraphDescriptor(AgentKit as GraphDescriptor)!,
+    ];
 
     const store = createDefaultDataStore();
     const storeGroupID = crypto.randomUUID();
