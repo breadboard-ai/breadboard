@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { resultify, type Result } from "../util/result.js";
+import type { Result } from "../util/result.js";
+import { resultify } from "../util/resultify.js";
 import type { SecretsProvider } from "./secrets-provider.js";
 
 type SecretEntry = { name: string; value: string };

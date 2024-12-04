@@ -11,7 +11,7 @@ import { makeToolSafeName } from "../breadboard/make-tool-safe-name.js";
 import "../components/content.js";
 import type { GeminiFunctionDeclaration } from "../drivers/gemini.js";
 import type { EmptyObject } from "../util/empty-object.js";
-import { resultify, type Result } from "../util/result.js";
+import type { Result } from "../util/result.js";
 import type {
   BBRTTool,
   ToolAPI,
@@ -108,7 +108,7 @@ class ListToolsInvocation implements ToolInvocation<Outputs> {
   async #getToolsFromServer(
     server: BreadboardServer
   ): Promise<Array<Result<GeminiFunctionDeclaration>>> {
-    const boards = await resultify(server.boardsDetailed());
+    const boards = await server.boardsDetailed();
     if (!boards.ok) {
       return [boards];
     }

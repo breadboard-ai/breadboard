@@ -29,6 +29,10 @@ export class BBRTBoardVisualizer extends LitElement {
     :host {
       display: flex;
     }
+    bb-graph-renderer {
+      width: 100%;
+      height: 100%;
+    }
   `;
 
   override render() {

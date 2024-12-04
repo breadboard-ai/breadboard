@@ -5,7 +5,7 @@
  */
 
 import { expect } from "@esm-bundle/chai";
-import { BBRTMain } from "../components/main.js";
+import { BBRTMain } from "../../components/main.js";
 
 describe("bbrt-main", () => {
   it("is an HTMLElement", () => {

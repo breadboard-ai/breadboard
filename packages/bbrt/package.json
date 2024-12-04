@@ -47,7 +47,9 @@
   "scripts": {
     "build": "wireit",
     "build:tsc": "wireit",
-    "test": "echo \"no tests yet\"",
+    "test": "wireit",
+    "test:node": "wireit",
+    "test:playwright": "wireit",
     "lint": "wireit",
     "prepack": "npm run build"
   },
@@ -71,9 +73,7 @@
       ],
       "files": [
         "src/**/*.ts",
-        "tsconfig.json",
-        "tsconfig.base.json",
-        "tsconfig.base.web.json"
+        "tsconfig.json"
       ],
       "output": [
         "dist/",
@@ -81,12 +81,26 @@
       ],
       "clean": "if-file-deleted"
     },
+    "test": {
+      "dependencies": [
+        "test:node"
+      ]
+    },
+    "test:node": {
+      "command": "find dist/test/node -name '*_test.js' | xargs node --test --enable-source-maps --test-reporter spec",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
     "test:playwright": {
-      "command": "web-test-runner \"dist/test/**/*.test.js\" --node-resolve --playwright --browsers chromium",
+      "#comment": "TODO(aomarks) Actually run this; need to make sure GitHub actions are OK",
+      "command": "web-test-runner \"dist/test/**/*_test.js\" --node-resolve --playwright --browsers chromium",
       "files": [],
       "output": [],
       "dependencies": [
-        "build"
+        "build:tsc"
       ]
     },
     "lint": {
@@ -119,6 +133,7 @@
     "signal-utils": "^0.20.0"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "@web/test-runner": "^0.19.0",
     "@web/test-runner-playwright": "^0.11.0",
     "typescript": "^5.6.3",

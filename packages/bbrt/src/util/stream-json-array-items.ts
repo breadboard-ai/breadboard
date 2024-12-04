@@ -15,14 +15,20 @@ export async function* streamJsonArrayItems<T = unknown>(
   for await (const parsed of parse(stream)) {
     if (firstParse) {
       if (!Array.isArray(parsed)) {
-        throw new Error(`Expected an array, got: ${JSON.stringify(parsed)}`);
+        const msg =
+          `Internal error: Expected an array, got ` +
+          `${JSON.stringify(parsed)}`;
+        console.error(msg);
+        throw new Error(msg);
       }
       array = parsed as T[];
       firstParse = false;
     } else if (parsed !== array) {
-      throw new Error(
-        `Expected the same array, got: ${JSON.stringify(parsed)}`
-      );
+      const msg =
+        `Internal error: Expected the same array, got ` +
+        `${JSON.stringify(parsed)}`;
+      console.error(msg);
+      throw new Error(msg);
     }
     // Yield only up to the second-to-last item, because we only want to yield
     // complete items, and the last item might not be fully parsed yet

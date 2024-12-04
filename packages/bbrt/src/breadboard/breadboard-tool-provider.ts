@@ -36,7 +36,13 @@ export class BreadboardToolProvider implements ToolProvider {
 
   async #update(): Promise<void> {
     const boards = await this.#server.boards();
-    const tools = boards.map(
+    if (!boards.ok) {
+      console.error(
+        `Failed to fetch boards from ${this.#server.url}: ${boards.error}`
+      );
+      return;
+    }
+    const tools = boards.value.map(
       (board) => new BreadboardTool(board, this.#server, this.#secrets)
     );
     this.#tools.length = 0;

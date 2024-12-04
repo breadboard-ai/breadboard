@@ -223,16 +223,14 @@ async function convertTurnsForGemini(
         }
         if (turn.toolCalls?.length) {
           content.parts.push(
-            ...(await Promise.all(
-              turn.toolCalls.map(
-                (toolCall): GeminiPart => ({
-                  functionCall: {
-                    name: toolCall.tool.metadata.id,
-                    args: toolCall.args,
-                  },
-                })
-              )
-            ))
+            ...turn.toolCalls.map(
+              (toolCall): GeminiPart => ({
+                functionCall: {
+                  name: toolCall.tool.metadata.id,
+                  args: toolCall.args,
+                },
+              })
+            )
           );
         }
         contents.push(content);

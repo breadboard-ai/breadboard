@@ -12,6 +12,7 @@ import type { BBRTTool, InvokeResult, ToolInvocation } from "../tools/tool.js";
 import { BufferedMultiplexStream } from "../util/buffered-multiplex-stream.js";
 import { Lock } from "../util/lock.js";
 import type { Result } from "../util/result.js";
+import { transposeResults } from "../util/transpose-results.js";
 import { waitForState } from "../util/wait-for-state.js";
 import type { BBRTChunk } from "./chunk.js";
 
@@ -206,15 +207,15 @@ export class BBRTConversation {
       status.set("done");
     } else {
       status.set("using-tools");
-      const toolResponses = await Promise.all(toolResponsePromises);
-      const errors = toolResponses
-        .filter((response) => !response.ok)
-        .map((response) => response.error);
-      if (errors.length > 0) {
+      const toolResponses = transposeResults(
+        await Promise.all(toolResponsePromises)
+      );
+      if (toolResponses.ok) {
+        status.set("done");
+        return this.#send({ toolResponses: toolResponses.value });
+      } else {
         status.set("error");
-        const error =
-          errors.length === 1 ? errors[0] : new AggregateError(errors);
-        modelTurn.error = error;
+        modelTurn.error = toolResponses.error;
         // TODO(aomarks) Remove once we render errors directly on turns. Though,
         // be careful here, since if we add retry, we don't want to retry the
         // whole turn, just the model call. Maybe we need a turn role for tool
@@ -223,12 +224,7 @@ export class BBRTConversation {
           kind: "error",
           role: "model",
           status,
-          error,
-        });
-      } else {
-        status.set("done");
-        return this.#send({
-          toolResponses: toolResponses.map((r) => r.value!),
+          error: toolResponses.error,
         });
       }
     }
@@ -248,18 +244,17 @@ export class BBRTConversation {
     if (result.status === "success") {
       return {
         ok: true,
-        value: {
-          id,
-          tool,
-          invocation,
-          args,
-          response: result.value,
-        },
+        value: { id, tool, invocation, args, response: result.value },
       };
     } else if (result.status === "error") {
       return { ok: false, error: result.error };
     } else {
-      throw new Error("Internal error");
+      const msg = `Internal error: could not handle status ${result.status}`;
+      console.error(msg);
+      return {
+        ok: false,
+        error: new Error(msg),
+      };
     }
   }
 

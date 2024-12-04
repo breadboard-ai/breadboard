@@ -14,5 +14,5 @@ const main = document.querySelector("bbrt-main");
 if (main !== null) {
   main.config = config;
 } else {
-  throw new Error("could not find top-level <bbrt-main> element");
+  console.error("could not find top-level <bbrt-main> element");
 }
