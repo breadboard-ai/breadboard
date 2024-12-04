@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
-  createGraphStore,
-  createLoader,
   GraphDescriptor,
   GraphProviderCapabilities,
   InspectableGraph,
@@ -13,6 +11,7 @@ import {
   InspectableNodePorts,
   InspectableRun,
   Kit,
+  MutableGraphStore,
   NodeHandlerMetadata,
 } from "@google-labs/breadboard";
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
@@ -100,6 +99,12 @@ export class ModuleEditor extends LitElement {
 
   @property()
   capabilities: false | GraphProviderCapabilities = false;
+
+  @property()
+  graphStore: MutableGraphStore | null = null;
+
+  @state()
+  private previewUpdateId = 0;
 
   @state()
   private formatting = false;
@@ -294,13 +299,6 @@ export class ModuleEditor extends LitElement {
 
   #commandFormatCodeBound = this.#commandFormatCode.bind(this);
   #commandSaveCodeBound = this.#commandSaveCode.bind(this);
-
-  // TODO: Pass this in as a property instead?
-  #store = createGraphStore({
-    kits: [],
-    loader: createLoader(),
-    sandbox: { runModule: () => Promise.resolve({}) },
-  });
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -674,6 +672,10 @@ export class ModuleEditor extends LitElement {
       return null;
     }
 
+    if (!this.graphStore) {
+      return null;
+    }
+
     const modules: Modules = {};
     for (const [id, module] of Object.entries(this.modules)) {
       modules[id] = {
@@ -682,31 +684,54 @@ export class ModuleEditor extends LitElement {
       };
     }
 
-    const url = "no-url";
+    // Create a stable URL.
+    const mainGraphURL = this.graph!.raw().url!;
+    const url = `module-preview:${mainGraphURL}`;
     const graph: GraphDescriptor = {
       url,
       nodes: [
-        {
-          id: this.moduleId,
-          type: "runModule",
-          metadata: {
-            title: isMainModule
-              ? (this.graph?.raw().title ?? "Untitled Board")
-              : `Demo Component`,
-            visual: {
-              collapsed: "expanded",
+        isMainModule
+          ? {
+              id: this.moduleId,
+              type: mainGraphURL,
+              metadata: {
+                title: this.graph?.raw().title ?? "Untitled Board",
+                visual: {
+                  collapsed: "expanded",
+                },
+              },
+            }
+          : {
+              id: this.moduleId,
+              type: "runModule",
+              metadata: {
+                title: `Demo Component`,
+                visual: {
+                  collapsed: "expanded",
+                },
+              },
+              configuration: {
+                $module: this.moduleId,
+              },
             },
-          },
-          configuration: {
-            $module: this.moduleId,
-          },
-        },
       ],
       edges: [],
       modules,
     };
 
-    const editableGraph = this.#store.editByDescriptor(graph);
+    const adding = this.graphStore.addByDescriptor(graph);
+    if (!adding.success) {
+      return null;
+    }
+    const mainGraphId = adding.result;
+
+    this.graphStore.addEventListener("update", (evt) => {
+      if (evt.mainGraphId === mainGraphId) {
+        this.previewUpdateId++;
+      }
+    });
+
+    const editableGraph = this.graphStore.edit(mainGraphId);
     const inspectableGraph = editableGraph?.inspect("");
     if (!inspectableGraph) {
       return null;
@@ -871,7 +896,7 @@ export class ModuleEditor extends LitElement {
           </div>
         </div>
       </div>
-      ${isRunnable
+      ${isRunnable && this.showModulePreview
         ? html`
             <div id="module-graph">
               <bb-graph-renderer
@@ -879,7 +904,7 @@ export class ModuleEditor extends LitElement {
                 .topGraphUrl=${this.graph?.raw().url ?? "no-url"}
                 .topGraphResult=${this.topGraphResult}
                 .assetPrefix=${this.assetPrefix}
-                .configs=${this.#createModuleGraphConfig()}
+                .configs=${this.#createModuleGraphConfig(isMainModule)}
                 .invertZoomScrollDirection=${false}
                 .readOnly=${true}
                 .highlightInvalidWires=${false}

@@ -16,6 +16,7 @@ import {
   InspectableRunEvent,
   InspectableRunInputs,
   Kit,
+  MutableGraphStore,
 } from "@google-labs/breadboard";
 import {
   HTMLTemplateResult,
@@ -117,6 +118,9 @@ export class UI extends LitElement {
 
   @property()
   visualChangeId: WorkspaceVisualChangeId | null = null;
+
+  @property()
+  graphStore: MutableGraphStore | null = null;
 
   @property()
   graphTopologyUpdateId: number = 0;
@@ -366,6 +370,7 @@ export class UI extends LitElement {
         .renderId=${crypto.randomUUID()}
         .run=${run}
         .topGraphResult=${this.topGraphResult}
+        .graphStore=${this.graphStore}
         @bbrunboard=${() => {
           this.sideNavItem = "activity";
         }}
