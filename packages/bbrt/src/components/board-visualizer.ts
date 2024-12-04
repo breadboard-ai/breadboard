@@ -19,12 +19,11 @@ import { customElement, property } from "lit/decorators.js";
 import { MAIN_BOARD_ID } from "../../../shared-ui/dist/constants/constants.js";
 import type { GraphOpts } from "../../../shared-ui/dist/elements/editor/types.js";
 import { TopGraphObserver } from "../../../shared-ui/dist/utils/utils.js";
-import { testBoard } from "./test-board.js";
 
 @customElement("bbrt-board-visualizer")
 export class BBRTBoardVisualizer extends LitElement {
   @property({ attribute: false })
-  graph?: GraphDescriptor = testBoard;
+  graph?: GraphDescriptor;
 
   static override styles = css`
     :host {

@@ -63,7 +63,7 @@ export class BreadboardTool implements BBRTTool<unknown, unknown> {
   #api?: Promise<Result<ToolAPI>>;
   async api(): Promise<Result<ToolAPI>> {
     return (this.#api ??= (async () => {
-      const bgl = await this.#bgl();
+      const bgl = await this.bgl();
       if (!bgl.ok) {
         return bgl;
       }
@@ -88,13 +88,13 @@ export class BreadboardTool implements BBRTTool<unknown, unknown> {
     return new BreadboardToolInvocation(
       this.#listing,
       args,
-      () => this.#bgl(),
+      () => this.bgl(),
       this.#secrets
     );
   }
 
   #bglCache?: Promise<Result<GraphDescriptor>>;
-  #bgl(): Promise<Result<GraphDescriptor>> {
+  bgl(): Promise<Result<GraphDescriptor>> {
     return (this.#bglCache ??= resultify(
       this.#server.board(this.#listing.path)
     ));
