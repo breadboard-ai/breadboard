@@ -115,7 +115,7 @@ class GraphStore
     return mutable.graphs.get(graphId);
   }
 
-  getByURL(
+  addByURL(
     url: string,
     dependencies: MainGraphIdentifier[],
     context: GraphLoaderContext = {}
