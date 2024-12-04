@@ -28,7 +28,8 @@ import type {
   ToolInvocationState,
   ToolMetadata,
 } from "../tools/tool.js";
-import { resultify, type Result } from "../util/result.js";
+import type { Result } from "../util/result.js";
+import { resultify } from "../util/resultify.js";
 import type {
   BreadboardBoardListing,
   BreadboardServer,

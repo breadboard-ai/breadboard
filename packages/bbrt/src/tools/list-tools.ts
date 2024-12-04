@@ -11,7 +11,8 @@ import { makeToolSafeName } from "../breadboard/make-tool-safe-name.js";
 import "../components/content.js";
 import type { GeminiFunctionDeclaration } from "../drivers/gemini.js";
 import type { EmptyObject } from "../util/empty-object.js";
-import { resultify, type Result } from "../util/result.js";
+import type { Result } from "../util/result.js";
+import { resultify } from "../util/resultify.js";
 import type {
   BBRTTool,
   ToolAPI,

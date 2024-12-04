@@ -10,7 +10,8 @@ import {
   type GraphDescriptor,
   type NodeDescriberResult,
 } from "@google-labs/breadboard";
-import { resultify, type Result } from "../util/result.js";
+import type { Result } from "../util/result.js";
+import { resultify } from "../util/resultify.js";
 
 /**
  * Get the schema of a board without any inputs.
