@@ -16,7 +16,6 @@ import {
 import { createRunner, type RunConfig } from "@google-labs/breadboard/harness";
 import CoreKit from "@google-labs/core-kit";
 import TemplateKit from "@google-labs/template-kit";
-import type { JSONSchema7 } from "json-schema";
 import { html, nothing } from "lit";
 import { Signal } from "signal-polyfill";
 import "../components/content.js";
@@ -35,6 +34,7 @@ import type {
 } from "./breadboard-server.js";
 import { getDefaultSchema } from "./get-default-schema.js";
 import { makeToolSafeName } from "./make-tool-safe-name.js";
+import { standardizeBreadboardSchema } from "./standardize-breadboard-schema.js";
 
 export class BreadboardTool implements BBRTTool<unknown, unknown> {
   readonly #listing: BreadboardBoardListing;
@@ -74,11 +74,8 @@ export class BreadboardTool implements BBRTTool<unknown, unknown> {
       return {
         ok: true,
         value: {
-          // TODO(aomarks) We need to strip non-standard Breadboard schema
-          // fields like behavior, because the model backends are pretty strict
-          // about this schema.
-          inputSchema: desc.value.inputSchema as JSONSchema7,
-          outputSchema: desc.value.outputSchema as JSONSchema7,
+          inputSchema: standardizeBreadboardSchema(desc.value.inputSchema),
+          outputSchema: standardizeBreadboardSchema(desc.value.outputSchema),
         },
       };
     })());
