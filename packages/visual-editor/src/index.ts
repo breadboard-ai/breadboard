@@ -247,8 +247,25 @@ export class Main extends LitElement {
   #lastVisualChangeId: WorkspaceVisualChangeId | null = null;
   #lastPointerPosition = { x: 0, y: 0 };
 
-  // Monotonically increases whenever the graph topology of a graph in the
-  // current tab changes. Graph topology == any non-visual change to the graph.
+  /**
+   * Monotonically increases whenever the graph topology of a graph in the
+   * current tab changes. Graph topology == any non-visual change to the graph.
+   * - this property is incremented whenever the "update" event is received
+   *   from the `GraphStore` instance, which stores and tracks all known graphs,
+   *   across all tabs, etc.
+   * - this property is only incremented when the "update" is for the current
+   *   tab's graph, but that still works when we switch tabs, since we don't
+   *   check the value of the property, just whether it changed.
+   * - because it is decorated with `@state()` on this component,
+   *   incrementing this property causes a new render of the component.
+   * - this property is then passed to various sub-components that need to be
+   *   aware of graph topology changes.
+   * - these sub-components need to have their own `graphTopologyUpdateId` that
+   *   should be decorated as `@property()`, so that the change to this property
+   *   causes a new render of that component, too.
+   * - as the resulting effect, incrementing the property will keep the parts
+   *   of the UI that need to reflect the latest graph topology up to date.
+   */
   @state()
   graphTopologyUpdateId: number = 0;
 
