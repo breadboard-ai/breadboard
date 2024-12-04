@@ -4,17 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import AgentKit from "@google-labs/agent-kit/agent.kit.json" assert { type: "json" };
 import {
   asRuntimeKit,
   createDefaultDataStore,
   createLoader,
   type GraphDescriptor,
   type InputValues,
+  type Kit,
   type OutputValues,
   type SerializedStoredData,
 } from "@google-labs/breadboard";
 import { createRunner, type RunConfig } from "@google-labs/breadboard/harness";
+import { kitFromGraphDescriptor } from "@google-labs/breadboard/kits";
 import CoreKit from "@google-labs/core-kit";
+import GeminiKit from "@google-labs/gemini-kit";
+import JSONKit from "@google-labs/json-kit";
 import TemplateKit from "@google-labs/template-kit";
 import { html, nothing } from "lit";
 import { Signal } from "signal-polyfill";
@@ -127,7 +132,13 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
     }
 
     const loader = createLoader();
-    const kits = [asRuntimeKit(CoreKit), asRuntimeKit(TemplateKit)];
+    const kits: Kit[] = [
+      asRuntimeKit(CoreKit),
+      asRuntimeKit(TemplateKit),
+      asRuntimeKit(JSONKit),
+      asRuntimeKit(GeminiKit),
+      kitFromGraphDescriptor(AgentKit as GraphDescriptor)!,
+    ];
 
     const store = createDefaultDataStore();
     const storeGroupID = crypto.randomUUID();
@@ -206,30 +217,15 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
       this.state.set({ status: "error", error: runResult.error });
       return;
     }
-    const outputs = runResult.value;
-    if (outputs.length === 1) {
-      // TODO(aomarks) Resultify
-      const artifacts: SerializedStoredData[] =
-        (await store.serializeGroup(storeGroupID)) ?? [];
-      this.state.set({
-        status: "success",
-        value: {
-          output: outputs[0]!,
-          artifacts,
-        },
-      });
-      return;
-    }
-    if (outputs.length > 0) {
-      this.state.set({
-        status: "error",
-        error: `Multiple Breadboard outputs received: ${JSON.stringify(outputs)}`,
-      });
-      return;
-    }
+    // TODO(aomarks) Resultify
+    const artifacts: SerializedStoredData[] =
+      (await store.serializeGroup(storeGroupID)) ?? [];
     this.state.set({
-      status: "error",
-      error: "No Breadboard outputs received",
+      status: "success",
+      value: {
+        output: Object.assign({}, ...runResult.value),
+        artifacts,
+      },
     });
   }
 
@@ -244,13 +240,7 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
         return [basicInfo, "Running..."];
       }
       case "success": {
-        const display = [];
-        for (const artifact of state.value.artifacts) {
-          if (artifact.inlineData.mimeType.startsWith("image/")) {
-            display.push(html`<img src="${artifact.handle}" />`);
-          }
-        }
-        return [basicInfo, "Success", ...display];
+        return [basicInfo, "Success"];
       }
       case "error": {
         return [
@@ -272,12 +262,18 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
     if (state.status !== "success") {
       return nothing;
     }
-    const images = [];
+    const artifacts = [];
     for (const artifact of state.value.artifacts) {
-      if (artifact.inlineData.mimeType.startsWith("image/")) {
-        images.push(html`<img src="${artifact.handle}" />`);
+      const { mimeType } = artifact.inlineData;
+      if (mimeType.startsWith("image/")) {
+        artifacts.push(html`<img src="${artifact.handle}" />`);
+      } else {
+        console.log(
+          "Could not display artifact with unsupported MIME type",
+          artifact
+        );
       }
     }
-    return images;
+    return artifacts;
   }
 }

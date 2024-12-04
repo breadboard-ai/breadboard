@@ -57,8 +57,11 @@
     "build": {
       "dependencies": [
         "build:tsc",
+        "../agent-kit:build",
         "../breadboard:build",
         "../core-kit:build",
+        "../gemini-kit:build",
+        "../json-kit:build",
         "../shared-ui:build",
         "../template-kit:build"
       ]
@@ -66,8 +69,11 @@
     "build:tsc": {
       "command": "tsc --pretty",
       "dependencies": [
+        "../agent-kit:build",
         "../breadboard:build:tsc",
         "../core-kit:build:tsc",
+        "../gemini-kit:build:tsc",
+        "../json-kit:build:tsc",
         "../shared-ui:build:tsc",
         "../template-kit:build:tsc"
       ],
@@ -120,8 +126,11 @@
   },
   "dependencies": {
     "@breadboard-ai/shared-ui": "1.21.0",
+    "@google-labs/agent-kit": "^0.14.0",
     "@google-labs/breadboard": "^0.30.0",
     "@google-labs/core-kit": "^0.17.0",
+    "@google-labs/gemini-kit": "^0.10.0",
+    "@google-labs/json-kit": "^0.3.13",
     "@google-labs/template-kit": "^0.3.15",
     "@lit-labs/signals": "^0.1.1",
     "@types/json-schema": "^7.0.15",

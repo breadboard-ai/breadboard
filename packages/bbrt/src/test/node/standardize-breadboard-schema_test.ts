@@ -19,6 +19,13 @@ test("removes behaviors recursively", () => {
         type: "string",
         behavior: ["code", "deprecated"],
       },
+      bar: {
+        type: "array",
+        items: {
+          type: "number",
+          behavior: ["bubble"],
+        },
+      },
     },
   };
   const expected: JSONSchema7 = {
@@ -26,6 +33,178 @@ test("removes behaviors recursively", () => {
     properties: {
       foo: {
         type: "string",
+      },
+      bar: {
+        type: "array",
+        items: {
+          type: "number",
+        },
+      },
+    },
+  };
+  assert.deepEqual(standardizeBreadboardSchema(input), expected);
+});
+
+test("decode JSON-encoded defaults", () => {
+  const input: Schema = {
+    type: "object",
+    default: '{"foo":42}',
+    properties: {
+      foo: {
+        type: "number",
+        default: "42",
+      },
+      bar: {
+        type: "boolean",
+        default: "true",
+      },
+      baz: {
+        type: "number",
+        default: 47 as unknown as string,
+      },
+    },
+  };
+  const expected: JSONSchema7 = {
+    type: "object",
+    default: { foo: 42 },
+    properties: {
+      foo: {
+        type: "number",
+        default: 42,
+      },
+      bar: {
+        type: "boolean",
+        default: true,
+      },
+      baz: {
+        type: "number",
+        default: 47,
+      },
+    },
+  };
+  assert.deepEqual(standardizeBreadboardSchema(input), expected);
+});
+
+test("decode JSON-encoded examples", () => {
+  const input: Schema = {
+    type: "object",
+    examples: ['{"foo":42}'],
+    properties: {
+      foo: {
+        type: "number",
+        examples: ["42"],
+      },
+      bar: {
+        type: "boolean",
+        examples: ["true", "false"],
+      },
+      baz: {
+        type: "number",
+        examples: [47 as unknown as string],
+      },
+    },
+  };
+  const expected: JSONSchema7 = {
+    type: "object",
+    examples: [{ foo: 42 }],
+    properties: {
+      foo: {
+        type: "number",
+        examples: [42],
+      },
+      bar: {
+        type: "boolean",
+        examples: [true, false],
+      },
+      baz: {
+        type: "number",
+        examples: [47],
+      },
+    },
+  };
+  assert.deepEqual(standardizeBreadboardSchema(input), expected);
+});
+
+test("expand llm-content object behavior to JSON schema", () => {
+  const input: Schema = {
+    type: "object",
+    properties: {
+      foo: {
+        type: "object",
+        behavior: ["llm-content"],
+      },
+    },
+  };
+  const expected: JSONSchema7 = {
+    type: "object",
+    properties: {
+      foo: {
+        type: "object",
+        required: ["role", "parts"],
+        properties: {
+          role: {
+            type: "string",
+            enum: ["user", "model"],
+          },
+          parts: {
+            type: "array",
+            items: {
+              type: "object",
+              required: ["text"],
+              properties: {
+                text: {
+                  type: "string",
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+  assert.deepEqual(standardizeBreadboardSchema(input), expected);
+});
+
+test("expand llm-content array behavior to JSON schema", () => {
+  const input: Schema = {
+    type: "object",
+    properties: {
+      foo: {
+        type: "array",
+        items: {
+          type: "object",
+          behavior: ["llm-content"],
+        },
+      },
+    },
+  };
+  const expected: JSONSchema7 = {
+    type: "object",
+    properties: {
+      foo: {
+        type: "array",
+        items: {
+          type: "object",
+          required: ["role", "parts"],
+          properties: {
+            role: {
+              type: "string",
+              enum: ["user", "model"],
+            },
+            parts: {
+              type: "array",
+              items: {
+                type: "object",
+                required: ["text"],
+                properties: {
+                  text: {
+                    type: "string",
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     },
   };

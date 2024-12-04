@@ -4,13 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { JSONSchema7 } from "json-schema";
 import type { BBRTChunk } from "../llm/chunk.js";
 import type { BBRTTurn } from "../llm/conversation.js";
 import type { BBRTTool } from "../tools/tool.js";
 import type { Result } from "../util/result.js";
 import { streamJsonArrayItems } from "../util/stream-json-array-items.js";
+import { adjustSchemaForGemini } from "./adjust-schema-for-gemini.js";
 import type { BBRTDriver } from "./driver-interface.js";
+import type {
+  GeminiContent,
+  GeminiFunctionDeclaration,
+  GeminiParameterSchema,
+  GeminiPart,
+  GeminiRequest,
+  GeminiResponse,
+} from "./gemini-types.js";
 
 export class GeminiDriver implements BBRTDriver {
   readonly name = "Gemini";
@@ -117,74 +125,6 @@ async function* convertGeminiChunks(
   }
 }
 
-export interface GeminiRequest {
-  contents: GeminiContent[];
-  tools?: Array<{
-    functionDeclarations: GeminiFunctionDeclaration[];
-  }>;
-  toolConfig?: {
-    mode: "auto" | "any" | "none";
-    allowedFunctionNames: string[];
-  };
-}
-
-export interface GeminiContent {
-  role: "user" | "model";
-  parts: GeminiPart[];
-}
-
-export type GeminiPart =
-  | GeminiTextPart
-  | GeminiFunctionCall
-  | GeminiFunctionResponse;
-
-export interface GeminiTextPart {
-  text: string;
-}
-
-export interface GeminiFunctionCall {
-  functionCall: {
-    name: string;
-    args: unknown;
-  };
-}
-
-export interface GeminiFunctionResponse {
-  functionResponse: {
-    name: string;
-    response: unknown;
-  };
-}
-
-export interface GeminiResponse {
-  candidates: GeminiCandidate[];
-}
-
-export interface GeminiCandidate {
-  content: GeminiContent;
-}
-
-export interface GeminiFunctionDeclaration {
-  name: string;
-  description: string;
-  parameters?: GeminiParameterSchema;
-}
-
-export type GeminiParameterSchema = {
-  type?: "string" | "number" | "boolean" | "array" | "object";
-  // TODO(aomarks) nullable is not standard JSON Schema, right? Usually
-  // "required" is how you express that.
-  nullable?: boolean;
-  description?: string;
-  properties?: Record<string, GeminiParameterSchema>;
-  required?: string[];
-  format?: string;
-  enum?: string[];
-  items?: GeminiParameterSchema;
-  minItems?: number;
-  maxItems?: number;
-};
-
 async function convertTurnsForGemini(
   turns: BBRTTurn[]
 ): Promise<GeminiContent[]> {
@@ -267,7 +207,7 @@ async function convertToolsForGemini(
             parameters: inputSchema as GeminiParameterSchema,
           };
           if (inputSchema !== undefined) {
-            fn.parameters = simplifyJsonSchemaForGemini(inputSchema);
+            fn.parameters = adjustSchemaForGemini(inputSchema);
           }
           return fn;
         })
@@ -287,48 +227,4 @@ function randomOpenAIFunctionCallStyleId() {
       .map((x) => RANDOM_STRING_CHARS[x % RANDOM_STRING_CHARS.length])
       .join("")
   );
-}
-
-function simplifyJsonSchemaForGemini(
-  rootInput: JSONSchema7
-): GeminiParameterSchema | undefined {
-  const rootOutput: GeminiParameterSchema = { type: "object", properties: {} };
-  function visit(input: JSONSchema7, output: GeminiParameterSchema) {
-    if (input.type === "object") {
-      output.type = "object";
-      if (input.properties !== undefined) {
-        output.properties = {};
-        for (const [key, value] of Object.entries(input.properties)) {
-          output.properties[key] = {};
-          if (value === true) {
-            // TODO(aomarks) True means "any" type, but Gemini doesn't support
-            // that. How out just a string? Maybe object would be better? A true
-            // here doesn't seem to be used much anyway.
-            output.properties[key] = { type: "string" };
-          } else if (value === false) {
-            continue;
-          } else {
-            visit(value, output.properties[key]);
-          }
-        }
-      }
-      if (input.required !== undefined && input.required.length > 0) {
-        output.required = input.required;
-      }
-    } else if (input.type === "string") {
-      output.type = "string";
-      if (input.format !== undefined) {
-        output.format = input.format;
-      }
-    }
-    // TODO(aomarks) More cases to support here!
-  }
-  visit(rootInput, rootOutput);
-  if (Object.keys(rootOutput.properties ?? {}).length === 0) {
-    // Gemini really doesn't like when you specify an object with no properties,
-    // so you can't have an object here at all if the function call has no
-    // parameters.
-    return undefined;
-  }
-  return rootOutput;
 }

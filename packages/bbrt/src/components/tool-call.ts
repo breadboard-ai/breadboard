@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import type { BBRTToolCall } from "../llm/conversation.js";
 
 @customElement("bbrt-tool-call")
-export class BBRTToolCallEl extends LitElement {
+export class BBRTToolCallEl extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   toolCall?: BBRTToolCall;
 
