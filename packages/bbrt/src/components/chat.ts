@@ -34,10 +34,12 @@ export class BBRTChat extends SignalWatcher(LitElement) {
 
     // TODO(aomarks) Turn auto-scrolling into a directive. Also, be a smarter
     // scroller.
-    const autoScroll = () =>
+    const autoScroll = (): number =>
+      // TODO(aomarks) Cast because we're including node types, which have has a
+      // different return type for setInterval than the web.
       setInterval(() => {
         this.scrollTo({ top: Number.MAX_SAFE_INTEGER, behavior: "smooth" });
-      }, 500);
+      }, 500) as unknown as number;
     this.#scrollState = {
       status: "auto",
       intervalId: autoScroll(),

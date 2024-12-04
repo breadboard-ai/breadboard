@@ -1,9 +1,36 @@
 {
-  "extends": "./tsconfig.base.web.json",
   "compilerOptions": {
     "rootDir": "src/",
     "outDir": "dist/",
-    "tsBuildInfoFile": "tsconfig.tsbuildinfo"
+    "tsBuildInfoFile": "tsconfig.tsbuildinfo",
+
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "incremental": true,
+    "sourceMap": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "composite": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "types": ["mocha", "node"],
+    "paths": {
+      "@esm-bundle/chai": ["./temp-chai-types.d.ts"]
+    },
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "emitDecoratorMetadata": false
   },
   "include": ["src/**/*.ts"],
   "exclude": []
