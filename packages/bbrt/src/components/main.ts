@@ -9,22 +9,14 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import { Signal } from "signal-polyfill";
-import { SignalArray } from "signal-utils/array";
 import { AsyncComputed } from "signal-utils/async-computed";
-import { SignalSet } from "signal-utils/set";
+import { BBRTAppState } from "../app-state.js";
 import { BreadboardToolProvider } from "../breadboard/breadboard-tool-provider.js";
 import { BreadboardTool } from "../breadboard/breadboard-tool.js";
 import { readBoardServersFromIndexedDB } from "../breadboard/indexed-db-servers.js";
 import type { Config } from "../config.js";
-import type { BBRTDriver } from "../drivers/driver-interface.js";
-import { GeminiDriver } from "../drivers/gemini.js";
-import { OpenAiDriver } from "../drivers/openai.js";
-import { BBRTConversation } from "../llm/conversation.js";
-import { IndexedDBSettingsSecrets } from "../secrets/indexed-db-secrets.js";
 import { ActivateTool } from "../tools/activate-tool.js";
 import { BoardLister } from "../tools/list-tools.js";
-import { ToolProvider } from "../tools/tool-provider.js";
 import type { BBRTTool } from "../tools/tool.js";
 import "./board-visualizer.js";
 import "./chat.js";
@@ -37,25 +29,15 @@ export class BBRTMain extends SignalWatcher(LitElement) {
   @property({ type: Object })
   config?: Config;
 
-  readonly #secrets = new IndexedDBSettingsSecrets();
-  readonly #drivers = [
-    new GeminiDriver(() => this.#secrets.getSecret("GEMINI_API_KEY")),
-    new OpenAiDriver(() => this.#secrets.getSecret("OPENAI_API_KEY")),
-  ];
-  readonly #activeDriver = new Signal.State<BBRTDriver>(this.#drivers[0]!);
-  readonly #toolProviders = new SignalArray<ToolProvider>();
-  readonly #activeTools = new SignalSet<BBRTTool>();
-  readonly #conversation = new BBRTConversation(
-    this.#activeDriver,
-    this.#activeTools
-  );
+  readonly #state = new BBRTAppState();
+
   readonly #displayedBoard = new AsyncComputed<GraphDescriptor | undefined>(
     async () => {
       // TODO(aomarks) This is just a temporary way to get some kind of relevant
       // graph to render, to prove that rendering is working OK. Eventually this
       // would render a board being built from the conversation.
       let boardTool: BreadboardTool | undefined;
-      for (const tool of this.#activeTools) {
+      for (const tool of this.#state.activeTools) {
         if (tool instanceof BreadboardTool) {
           boardTool = tool;
         }
@@ -141,14 +123,16 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         id="container"
         class=${classMap({ sidePanelOpen: this._sidePanelOpen })}
       >
-        <bbrt-chat .conversation=${this.#conversation}></bbrt-chat>
+        <bbrt-chat .conversation=${this.#state.conversation}></bbrt-chat>
         <div id="bottom">
           <div id="inputs">
             <bbrt-driver-selector
-              .available=${this.#drivers}
-              .active=${this.#activeDriver}
+              .available=${this.#state.drivers}
+              .active=${this.#state.activeDriver}
             ></bbrt-driver-selector>
-            <bbrt-prompt .conversation=${this.#conversation}></bbrt-prompt>
+            <bbrt-prompt
+              .conversation=${this.#state.conversation}
+            ></bbrt-prompt>
           </div>
         </div>
         <button id="expandSidebarButton" @click=${this.#clickExpandSidebar}>
@@ -181,8 +165,8 @@ export class BBRTMain extends SignalWatcher(LitElement) {
     return [
       html`
         <bbrt-tool-palette
-          .toolProviders=${this.#toolProviders}
-          .activeTools=${this.#activeTools}
+          .toolProviders=${this.#state.toolProviders}
+          .activeTools=${this.#state.activeTools}
         ></bbrt-tool-palette>
       `,
 
@@ -203,18 +187,21 @@ export class BBRTMain extends SignalWatcher(LitElement) {
       );
       return;
     }
-    this.#toolProviders.length = 0;
-    this.#toolProviders.push(
+    this.#state.toolProviders.length = 0;
+    this.#state.toolProviders.push(
       ...servers.value.map(
-        (server) => new BreadboardToolProvider(server, this.#secrets)
+        (server) => new BreadboardToolProvider(server, this.#state.secrets)
       )
     );
-    this.#activeTools.clear();
+    this.#state.activeTools.clear();
     // TODO(aomarks) Casts should not be needed. Something to do with the
     // default parameter being unknown instead of any.
-    this.#activeTools.add(new BoardLister(servers.value) as BBRTTool);
-    this.#activeTools.add(
-      new ActivateTool(this.#toolProviders, this.#activeTools) as BBRTTool
+    this.#state.activeTools.add(new BoardLister(servers.value) as BBRTTool);
+    this.#state.activeTools.add(
+      new ActivateTool(
+        this.#state.toolProviders,
+        this.#state.activeTools
+      ) as BBRTTool
     );
   }
 }
