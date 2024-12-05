@@ -267,6 +267,8 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
       const { mimeType } = artifact.inlineData;
       if (mimeType.startsWith("image/")) {
         artifacts.push(html`<img src="${artifact.handle}" />`);
+      } else if (mimeType.startsWith("audio/")) {
+        artifacts.push(html`<audio controls src=${artifact.handle}></audio>`);
       } else {
         console.log(
           "Could not display artifact with unsupported MIME type",
