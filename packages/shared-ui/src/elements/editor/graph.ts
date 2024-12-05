@@ -34,6 +34,7 @@ import {
   getGlobalColor,
   expansionStateFromMetadata,
   emptySelectionState,
+  DBL_CLICK_DELTA,
 } from "./utils.js";
 import { GraphComment } from "./graph-comment.js";
 import {
@@ -52,9 +53,8 @@ const nodeTextColor = getGlobalColor("--bb-neutral-900");
 const nodeBorderColor = getGlobalColor("--bb-neutral-500");
 const subGraphDefaultBorderColor = getGlobalColor("--bb-neutral-300");
 const subGraphDefaultLabelColor = getGlobalColor("--bb-neutral-500");
-const subGraphDefaultLabelTextColor = getGlobalColor("--bb-neutral-0");
 
-const SUB_GRAPH_LABEL_TEXT_SIZE = 11;
+const SUB_GRAPH_LABEL_TEXT_SIZE = 12;
 
 export class Graph extends PIXI.Container {
   #isDirty = true;
@@ -73,6 +73,7 @@ export class Graph extends PIXI.Container {
   #highlightedNode = new PIXI.Graphics();
   #highlightedNodeColor = highlightedNodeColor;
   #highlightPadding = 8;
+  #subGraphOutlineMarker = new PIXI.Graphics();
   #subGraphOutline = new PIXI.Graphics();
   #subGraphOutlinePadding = 20;
   #latestPendingValidateRequest = new WeakMap<GraphEdge, symbol>();
@@ -91,7 +92,7 @@ export class Graph extends PIXI.Container {
   #subGraphTitleLabel: PIXI.Text | null = null;
   #subGraphBorderColor = subGraphDefaultBorderColor;
   #subGraphLabelColor = subGraphDefaultLabelColor;
-  #subGraphLabelTextColor = subGraphDefaultLabelTextColor;
+  #lastClickTime = 0;
 
   layoutRect: DOMRectReadOnly | null = null;
 
@@ -107,8 +108,19 @@ export class Graph extends PIXI.Container {
     this.eventMode = "static";
     this.sortableChildren = true;
 
-    // TODO: Enable subgraph selection.
     this.#subGraphOutline.eventMode = "none";
+
+    this.#subGraphOutlineMarker.eventMode = "static";
+    this.#subGraphOutlineMarker.addEventListener("click", () => {
+      const clickDelta = window.performance.now() - this.#lastClickTime;
+      this.#lastClickTime = window.performance.now();
+
+      if (clickDelta > DBL_CLICK_DELTA) {
+        return;
+      }
+
+      this.minimized = !this.minimized;
+    });
 
     let lastHoverPort: GraphNodePort | null = null;
     let lastHoverNode: GraphNode | null = null;
@@ -126,6 +138,7 @@ export class Graph extends PIXI.Container {
       }
 
       this.#isDirty = false;
+
       this.#drawComments();
       this.#drawEdges();
       this.#drawNodes();
@@ -133,10 +146,20 @@ export class Graph extends PIXI.Container {
       this.#drawSubGraphOutline();
       this.#sortChildrenBySelectedStatus();
 
+      if (this.#minimized && this.#subGraphId) {
+        this.#hideGraphContents();
+      } else {
+        this.#showGraphContents();
+      }
+
       this.emit(GRAPH_OPERATIONS.GRAPH_DRAW);
 
       if (this.#isInitialDraw) {
         this.#isInitialDraw = false;
+        if (this.#minimized && this.#subGraphId) {
+          this.#hideGraphContents();
+        }
+
         requestAnimationFrame(() => {
           this.emit(GRAPH_OPERATIONS.GRAPH_INITIAL_DRAW);
         });
@@ -699,6 +722,32 @@ export class Graph extends PIXI.Container {
     return graphSelection;
   }
 
+  #hideGraphContents() {
+    this.#toggleGraphContents(false);
+  }
+
+  #showGraphContents() {
+    this.#toggleGraphContents(true);
+  }
+
+  #toggleGraphContents(visible: boolean) {
+    for (const child of this.children) {
+      if (!(child instanceof GraphNode || child instanceof GraphComment)) {
+        continue;
+      }
+
+      child.visible = visible;
+    }
+
+    for (const edge of this.#edgeContainer.children) {
+      if (!(edge instanceof GraphEdge)) {
+        continue;
+      }
+
+      edge.visible = visible;
+    }
+  }
+
   #sortChildrenBySelectedStatus() {
     for (const node of this.children) {
       if (!(node instanceof GraphNode || node instanceof GraphComment)) {
@@ -1035,15 +1084,9 @@ export class Graph extends PIXI.Container {
         "label",
         true
       );
-      this.#subGraphLabelTextColor = getSubItemColor<number>(
-        subGraphId,
-        "text",
-        true
-      );
     } else {
       this.#subGraphBorderColor = subGraphDefaultBorderColor;
       this.#subGraphLabelColor = subGraphDefaultLabelColor;
-      this.#subGraphLabelTextColor = subGraphDefaultLabelTextColor;
     }
   }
 
@@ -1064,7 +1107,7 @@ export class Graph extends PIXI.Container {
         style: {
           fontFamily: "Arial",
           fontSize: SUB_GRAPH_LABEL_TEXT_SIZE,
-          fill: this.#subGraphLabelTextColor,
+          fill: nodeTextColor,
           align: "left",
         },
       });
@@ -1072,6 +1115,7 @@ export class Graph extends PIXI.Container {
       this.#subGraphTitleLabel.text = text;
     }
 
+    this.#subGraphTitleLabel.eventMode = "none";
     this.#subGraphTitleLabel.visible = subGraphTitle !== null;
   }
 
@@ -1254,6 +1298,7 @@ export class Graph extends PIXI.Container {
 
   #drawSubGraphOutline() {
     this.#subGraphOutline.clear();
+    this.#subGraphOutlineMarker.clear();
 
     if (!this.subGraphId) {
       return;
@@ -1294,43 +1339,48 @@ export class Graph extends PIXI.Container {
     maxX = Math.round(maxX);
     maxY = Math.round(maxY);
 
-    this.#subGraphOutline.setStrokeStyle({
-      color: this.#subGraphBorderColor,
-      width: this.#highlightDragOver ? 3 : 1,
-      alpha: 1,
-    });
-    this.#subGraphOutline.beginPath();
-    this.#subGraphOutline.roundRect(
-      minX + 0.5,
-      minY + 0.5,
-      maxX - minX + 0.5,
-      maxY - minY + 0.5,
-      8 + this.#subGraphOutlinePadding
-    );
-    this.#subGraphOutline.closePath();
-    this.#subGraphOutline.fill({ color: 0xffffff, alpha: 0.2 });
-    this.#subGraphOutline.stroke();
+    if (!this.#minimized) {
+      this.#subGraphOutline.setStrokeStyle({
+        color: this.#subGraphBorderColor,
+        width: this.#highlightDragOver ? 4 : 2,
+        alpha: 1,
+      });
+      this.#subGraphOutline.beginPath();
+      this.#subGraphOutline.roundRect(
+        minX + 0.5,
+        minY + 0.5,
+        maxX - minX + 0.5,
+        maxY - minY + 0.5,
+        8 + this.#subGraphOutlinePadding
+      );
+      this.#subGraphOutline.closePath();
+      this.#subGraphOutline.fill({ color: 0xffffff, alpha: 0.2 });
+      this.#subGraphOutline.stroke();
+    }
 
     // Label Placeholder
     if (this.#subGraphTitleLabel) {
       const x = minX + 24;
-      const y = minY + 8;
-      this.#subGraphOutline.beginPath();
-      this.#subGraphOutline.roundRect(
-        minX + 24,
-        minY - 8,
-        this.#subGraphTitleLabel.width + 20,
-        this.#subGraphTitleLabel.height + 7,
-        50
-      );
-      this.#subGraphOutline.closePath();
-      this.#subGraphOutline.fill({ color: this.#subGraphLabelColor });
+      const y = minY - 10;
+      const w = this.#subGraphTitleLabel.width + 40;
+      const h = this.#subGraphTitleLabel.height + 12;
+      this.#subGraphOutlineMarker.beginPath();
+      this.#subGraphOutlineMarker.roundRect(x, y, w, h, 50);
+      this.#subGraphOutlineMarker.closePath();
+      this.#subGraphOutlineMarker.fill({ color: 0xffffff });
+      this.#subGraphOutlineMarker.stroke({ color: this.#subGraphLabelColor });
 
-      this.#subGraphTitleLabel.x = x + 9;
-      this.#subGraphTitleLabel.y = y - 13;
+      this.#subGraphOutlineMarker.beginPath();
+      this.#subGraphOutlineMarker.circle(x + w - 12, y + h * 0.5, 5);
+      this.#subGraphOutlineMarker.closePath();
+      this.#subGraphOutlineMarker.fill({ color: this.#subGraphLabelColor });
+
+      this.#subGraphTitleLabel.x = x + 10;
+      this.#subGraphTitleLabel.y = y + 5;
       this.addChildAt(this.#subGraphTitleLabel, 0);
     }
 
+    this.addChildAt(this.#subGraphOutlineMarker, 0);
     this.addChildAt(this.#subGraphOutline, 0);
   }
 
