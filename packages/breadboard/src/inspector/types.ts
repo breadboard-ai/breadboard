@@ -745,6 +745,8 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> & {
     id: MainGraphIdentifier,
     graphId: GraphIdentifier
   ): InspectableGraph | undefined;
+
+  addKits(kits: Kit[], dependencies: MainGraphIdentifier[]): InspectableKit[];
 };
 
 export type PortIdentifier = string;

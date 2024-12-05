@@ -18,6 +18,7 @@ import {
   GraphStoreEventTarget,
   InspectableGraph,
   InspectableGraphOptions,
+  InspectableKit,
   MainGraphIdentifier,
   MutableGraph,
   MutableGraphStore,
@@ -28,6 +29,7 @@ import { Sandbox } from "@breadboard-ai/jsandbox";
 import { createLoader } from "../loader/index.js";
 import { SnapshotUpdater } from "../utils/snapshot-updater.js";
 import { UpdateEvent } from "./graph/event.js";
+import { collectCustomNodeTypes } from "./graph/kits.js";
 
 export { GraphStore, makeTerribleOptions, contextFromStore };
 
@@ -238,6 +240,23 @@ class GraphStore
 
   get(id: MainGraphIdentifier): MutableGraph | undefined {
     return this.#mutables.get(id)?.current();
+  }
+
+  addKits(kits: Kit[], dependencies: MainGraphIdentifier[]): InspectableKit[] {
+    return [
+      ...kits.map((kit) => {
+        const descriptor = {
+          title: kit.title,
+          description: kit.description,
+          url: kit.url,
+          tags: kit.tags || [],
+        };
+        return {
+          descriptor,
+          nodeTypes: collectCustomNodeTypes(kit.handlers, dependencies, this),
+        };
+      }),
+    ];
   }
 }
 

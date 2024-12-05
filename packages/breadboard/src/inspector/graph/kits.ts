@@ -22,13 +22,15 @@ import {
   InspectableKitCache,
   InspectableNodePorts,
   InspectableNodeType,
+  MainGraphIdentifier,
   MutableGraph,
+  MutableGraphStore,
   NodeTypeDescriberOptions,
 } from "../types.js";
 import { collectPortsForType, filterSidePorts } from "./ports.js";
 import { describeInput, describeOutput } from "./schemas.js";
 
-export { KitCache };
+export { KitCache, collectCustomNodeTypes };
 
 const createBuiltInKit = (): InspectableKit => {
   return {
@@ -103,6 +105,22 @@ export const collectKits = (
     }),
   ];
 };
+
+function collectCustomNodeTypes(
+  handlers: NodeHandlers,
+  dependencies: MainGraphIdentifier[],
+  store: MutableGraphStore
+): InspectableNodeType[] {
+  return Object.keys(handlers)
+    .sort()
+    .map((type) => {
+      if (graphUrlLike(type)) {
+        const mutable = store.addByURL(type, dependencies, {});
+        return new CustomNodeType(type, mutable);
+      }
+      throw new Error(`Unknown custom node type: ${type}`);
+    });
+}
 
 export const createGraphNodeType = (
   type: NodeTypeIdentifier,

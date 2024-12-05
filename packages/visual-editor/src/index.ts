@@ -3035,6 +3035,7 @@ export class Main extends LitElement {
         <bb-ui-controller
               ${ref(this.#uiRef)}
               .graphStore=${this.#graphStore}
+              .mainGraphId=${this.tab?.mainGraphId}
               ?inert=${showingOverlay}
               .readOnly=${this.tab?.readOnly ?? true}
               .graph=${this.tab?.graph ?? null}
