@@ -84,6 +84,7 @@ export class Graph extends PIXI.Container {
   #collapseNodesByDefault = false;
   #showNodePreviewValues = false;
   #showNodeTypeDescriptions = false;
+  #highlightDragOver = false;
   #subGraphId: string | null = null;
   #subGraphTitle: string | null = null;
   #subGraphTitleLabel: PIXI.Text | null = null;
@@ -997,6 +998,15 @@ export class Graph extends PIXI.Container {
     return this.#edgeValues;
   }
 
+  set highlightDragOver(highlightDragOver: boolean) {
+    this.#highlightDragOver = highlightDragOver;
+    this.#isDirty = true;
+  }
+
+  get highlightDragOver() {
+    return this.#highlightDragOver;
+  }
+
   set subGraphId(subGraphId: string | null) {
     if (subGraphId === this.#subGraphId) {
       return;
@@ -1276,7 +1286,7 @@ export class Graph extends PIXI.Container {
 
     this.#subGraphOutline.setStrokeStyle({
       color: this.#subGraphBorderColor,
-      width: 1,
+      width: this.#highlightDragOver ? 3 : 1,
       alpha: 1,
     });
     this.#subGraphOutline.beginPath();

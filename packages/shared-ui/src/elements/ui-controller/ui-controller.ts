@@ -52,7 +52,6 @@ import { Editor } from "../elements.js";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 
-const MODE_KEY = "bb-ui-controller-outline-mode";
 const SIDE_NAV_ITEM_KEY = "bb-ui-side-nav-item";
 
 @customElement("bb-ui-controller")
@@ -112,7 +111,7 @@ export class UI extends LitElement {
   history: EditHistory | null = null;
 
   @property()
-  mode: "list" | "tree" = "list";
+  mode = "tree" as const;
 
   @property()
   sideNavItem: string | null = "components";
@@ -140,11 +139,6 @@ export class UI extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
-
-    const mode = globalThis.localStorage.getItem(MODE_KEY);
-    if (mode === "list" || mode === "tree") {
-      this.mode = mode;
-    }
 
     const sideNavItem = globalThis.localStorage.getItem(SIDE_NAV_ITEM_KEY);
     if (sideNavItem) {
@@ -450,10 +444,6 @@ export class UI extends LitElement {
                 .mode=${this.mode}
                 .selectionState=${this.selectionState}
                 .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-                @bboutlinemodechange=${() => {
-                  this.mode = this.mode === "list" ? "tree" : "list";
-                  globalThis.localStorage.setItem(MODE_KEY, this.mode);
-                }}
               ></bb-workspace-outline>`;
             }
           )}`;

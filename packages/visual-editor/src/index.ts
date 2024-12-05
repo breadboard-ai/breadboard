@@ -3398,8 +3398,8 @@ export class Main extends LitElement {
 
                 this.#runtime.select.selectNode(
                   this.tab.id,
-                  this.#runtime.util.createWorkspaceSelectionChangeId(),
-                  this.tab.subGraphId ?? MAIN_BOARD_ID,
+                  this.#runtime.select.generateId(),
+                  evt.subGraphId ?? MAIN_BOARD_ID,
                   evt.id
                 );
               }}
