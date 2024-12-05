@@ -9,7 +9,6 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import { Signal } from "signal-polyfill";
 import { AsyncComputed } from "signal-utils/async-computed";
 import { BBRTAppState } from "../app-state.js";
 import { BreadboardToolProvider } from "../breadboard/breadboard-tool-provider.js";
@@ -19,6 +18,7 @@ import type { Config } from "../config.js";
 import { ActivateTool } from "../tools/activate-tool.js";
 import { BoardLister } from "../tools/list-tools.js";
 import type { BBRTTool } from "../tools/tool.js";
+import { connectedEffect } from "../util/connected-effect.js";
 import "./board-visualizer.js";
 import "./chat.js";
 import "./driver-selector.js";
@@ -112,6 +112,11 @@ export class BBRTMain extends SignalWatcher(LitElement) {
     }
   `;
 
+  constructor() {
+    super();
+    connectedEffect(this, () => this.#persistState());
+  }
+
   connectedCallback(): void {
     super.connectedCallback();
     void this.#discoverToolProviders();
@@ -122,37 +127,11 @@ export class BBRTMain extends SignalWatcher(LitElement) {
       // active tools. Fix is probably to make active tools a SignalSet of ids
       // so that it can be restored before the tools are loaded.
       this.#restoreState();
-      this.#startPersistingState();
     }, 3000);
   }
 
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this.#stopPersistingState();
-  }
-
-  // TODO(aomarks) Bundle this into a utility controller.
-  #serializedStateSignal = new Signal.Computed(() => this.#state.serialize());
-  #persistStateWatcher?: Signal.subtle.Watcher;
-  #startPersistingState() {
-    this.#persistStateWatcher = new Signal.subtle.Watcher(() => {
-      queueMicrotask(() => {
-        this.#persistState();
-        this.#persistStateWatcher?.watch();
-      });
-    });
-    this.#persistStateWatcher.watch(this.#serializedStateSignal);
-    this.#serializedStateSignal.get();
-  }
-  #stopPersistingState() {
-    if (this.#persistStateWatcher !== undefined) {
-      this.#persistStateWatcher.unwatch(this.#serializedStateSignal);
-      this.#persistStateWatcher = undefined;
-    }
-  }
-
   #persistState() {
-    const serialized = JSON.stringify(this.#serializedStateSignal.get());
+    const serialized = JSON.stringify(this.#state.serialize());
     sessionStorage.setItem(APP_STATE_SESSION_STORAGE_KEY, serialized);
   }
 
