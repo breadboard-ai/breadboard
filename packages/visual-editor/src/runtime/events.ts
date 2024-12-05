@@ -108,7 +108,8 @@ export class RuntimeSelectionChangeEvent extends Event {
 
   constructor(
     public readonly selectionChangeId: WorkspaceSelectionChangeId,
-    public readonly selectionState: WorkspaceSelectionState
+    public readonly selectionState: WorkspaceSelectionState,
+    public readonly moveToSelection: "immediate" | "animated" | false
   ) {
     super(RuntimeSelectionChangeEvent.eventName, { ...eventInit });
   }

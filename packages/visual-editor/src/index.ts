@@ -490,6 +490,7 @@ export class Main extends LitElement {
             this.#selectionState = {
               selectionChangeId: evt.selectionChangeId,
               selectionState: evt.selectionState,
+              moveToSelection: evt.moveToSelection,
             };
 
             this.requestUpdate();

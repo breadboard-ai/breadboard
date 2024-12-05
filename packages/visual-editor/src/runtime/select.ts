@@ -58,10 +58,14 @@ export class Select extends EventTarget {
     this.#selectionState.set(tab, createEmptyWorkspaceSelectionState());
   }
 
-  #emit(tab: TabId, selectionChangeId: WorkspaceSelectionChangeId) {
+  #emit(
+    tab: TabId,
+    selectionChangeId: WorkspaceSelectionChangeId,
+    moveToSelection: "immediate" | "animated" | false = false
+  ) {
     const state = this.#createWorkspaceSelectionStateIfNeeded(tab);
     this.dispatchEvent(
-      new RuntimeSelectionChangeEvent(selectionChangeId, state)
+      new RuntimeSelectionChangeEvent(selectionChangeId, state, moveToSelection)
     );
   }
 
@@ -124,7 +128,7 @@ export class Select extends EventTarget {
     nodeId: NodeIdentifier
   ) {
     this.#addToGraphsCollection(tab, graphId, "nodes", nodeId);
-    this.#emit(tab, selectionChangeId);
+    this.#emit(tab, selectionChangeId, "animated");
   }
 
   removeNode(
@@ -134,7 +138,7 @@ export class Select extends EventTarget {
     nodeId: NodeIdentifier
   ) {
     this.#removeFromGraphsCollection(tab, graphId, "nodes", nodeId);
-    this.#emit(tab, selectionChangeId);
+    this.#emit(tab, selectionChangeId, "animated");
   }
 
   addComment(
@@ -144,7 +148,7 @@ export class Select extends EventTarget {
     commentId: string
   ) {
     this.#addToGraphsCollection(tab, graphId, "comments", commentId);
-    this.#emit(tab, selectionChangeId);
+    this.#emit(tab, selectionChangeId, "animated");
   }
 
   removeComment(
@@ -154,7 +158,7 @@ export class Select extends EventTarget {
     commentId: string
   ) {
     this.#removeFromGraphsCollection(tab, graphId, "comments", commentId);
-    this.#emit(tab, selectionChangeId);
+    this.#emit(tab, selectionChangeId, "animated");
   }
 
   addEdge(
@@ -164,7 +168,7 @@ export class Select extends EventTarget {
     edgeId: string
   ) {
     this.#addToGraphsCollection(tab, graphId, "edges", edgeId);
-    this.#emit(tab, selectionChangeId);
+    this.#emit(tab, selectionChangeId, "animated");
   }
 
   removeEdge(
@@ -174,7 +178,7 @@ export class Select extends EventTarget {
     edgeId: string
   ) {
     this.#removeFromGraphsCollection(tab, graphId, "edges", edgeId);
-    this.#emit(tab, selectionChangeId);
+    this.#emit(tab, selectionChangeId, "animated");
   }
 
   addModule(
@@ -183,7 +187,7 @@ export class Select extends EventTarget {
     moduleId: ModuleIdentifier
   ) {
     this.#addToModulesCollection(tab, moduleId);
-    this.#emit(tab, selectionChangeId);
+    this.#emit(tab, selectionChangeId, "animated");
   }
 
   removeModule(
@@ -192,7 +196,7 @@ export class Select extends EventTarget {
     moduleId: ModuleIdentifier
   ) {
     this.#removeFromModulesCollection(tab, moduleId);
-    this.#emit(tab, selectionChangeId);
+    this.#emit(tab, selectionChangeId, "animated");
   }
 
   processSelections(
@@ -234,7 +238,7 @@ export class Select extends EventTarget {
       this.#addToModulesCollection(tab, id);
     }
 
-    this.#emit(tab, selectionChangeId);
+    this.#emit(tab, selectionChangeId, "animated");
   }
 
   selectNode(

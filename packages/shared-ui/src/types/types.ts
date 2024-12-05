@@ -459,4 +459,5 @@ export type WorkspaceSelectionState = {
 export interface WorkspaceSelectionStateWithChangeId {
   selectionChangeId: WorkspaceSelectionChangeId;
   selectionState: WorkspaceSelectionState;
+  moveToSelection: "immediate" | "animated" | false;
 }
