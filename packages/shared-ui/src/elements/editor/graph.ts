@@ -75,7 +75,7 @@ export class Graph extends PIXI.Container {
   #highlightPadding = 8;
   #subGraphOutlineMarker = new PIXI.Graphics();
   #subGraphOutline = new PIXI.Graphics();
-  #subGraphOutlinePadding = 20;
+  #subGraphOutlinePadding = 24;
   #latestPendingValidateRequest = new WeakMap<GraphEdge, symbol>();
   #edgeValues: TopGraphEdgeValues | null = null;
   #nodeInfo: TopGraphNodeInfo | null = null;

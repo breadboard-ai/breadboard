@@ -901,6 +901,7 @@ export class Editor extends LitElement {
         .showPortTooltips=${this.showPortTooltips}
         .showSubgraphsInline=${this.showSubgraphsInline}
         .selectionChangeId=${this.selectionState?.selectionChangeId}
+        .moveToSelection=${this.selectionState?.moveToSelection}
       ></bb-graph-renderer>
     </div>`;
 

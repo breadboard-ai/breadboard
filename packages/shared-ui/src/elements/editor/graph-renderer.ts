@@ -59,6 +59,7 @@ import {
   WorkspaceVisualState,
   WorkspaceVisualChangeId,
   GraphVisualState,
+  WorkspaceSelectionStateWithChangeId,
 } from "../../types/types.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 
@@ -104,6 +105,10 @@ export class GraphRenderer extends LitElement {
 
   @property()
   selectionChangeId: WorkspaceSelectionChangeId | null = null;
+
+  @property()
+  moveToSelection: WorkspaceSelectionStateWithChangeId["moveToSelection"] =
+    false;
 
   @property()
   topGraphUrl: string | null = null;
@@ -692,10 +697,11 @@ export class GraphRenderer extends LitElement {
       });
     }
 
-    if (this.#selectionHasChanged) {
+    if (this.#selectionHasChanged && this.moveToSelection) {
       this.#selectionHasChanged = false;
 
-      let shouldAnimate = true;
+      let shouldAnimate =
+        this.moveToSelection && this.moveToSelection === "animated";
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         shouldAnimate = false;
       }
