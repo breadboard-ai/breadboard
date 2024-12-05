@@ -32,6 +32,7 @@ import {
   GraphIdentifier,
   InspectableEdge,
   InspectableEdgeType,
+  InspectableGraph,
   InspectablePort,
   NodeIdentifier,
   Schema,
@@ -62,6 +63,7 @@ import {
   WorkspaceSelectionStateWithChangeId,
 } from "../../types/types.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { GraphComment } from "./graph-comment.js";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
 const backgroundGridColor = getGlobalColor("--bb-ui-100");
@@ -79,6 +81,9 @@ enum MODE {
 
 @customElement("bb-graph-renderer")
 export class GraphRenderer extends LitElement {
+  @property()
+  graph: InspectableGraph | null = null;
+
   @property({ reflect: true })
   invertZoomScrollDirection = false;
 
@@ -829,6 +834,41 @@ export class GraphRenderer extends LitElement {
     }
 
     graph.selectionState = { ...selectionState };
+  }
+
+  #toggleGraphSelection(graph: Graph, isCtrlCommand: boolean) {
+    const selectionState = graph.selectionState ?? emptySelectionState();
+    const newSelectionState = emptySelectionState();
+    for (const node of graph.children) {
+      if (node instanceof GraphNode) {
+        newSelectionState.nodes.add(node.label);
+      }
+
+      if (node instanceof GraphComment) {
+        newSelectionState.comments.add(node.label);
+      }
+    }
+
+    if (graph.edges) {
+      for (const edge of graph.edges) {
+        newSelectionState.edges.add(inspectableEdgeToString(edge));
+      }
+    }
+
+    if (
+      selectionState.nodes.size === newSelectionState.nodes.size &&
+      selectionState.comments.size === newSelectionState.comments.size &&
+      selectionState.edges.size === newSelectionState.comments.size
+    ) {
+      if (isCtrlCommand) {
+        selectionState.edges.clear();
+        selectionState.comments.clear();
+        selectionState.nodes.clear();
+      }
+      graph.selectionState = { ...selectionState };
+    } else {
+      graph.selectionState = newSelectionState;
+    }
   }
 
   #toggleGraphEdgeSelection(graph: Graph, id: string, isCtrlCommand: boolean) {
@@ -1711,6 +1751,14 @@ export class GraphRenderer extends LitElement {
   }
 
   #addGraph(graph: Graph) {
+    graph.on(GRAPH_OPERATIONS.SUBGRAPH_SELECTED, (isCtrlCommand: boolean) => {
+      if (!isCtrlCommand) {
+        this.#clearOtherGraphSelections(graph);
+      }
+      this.#toggleGraphSelection(graph, isCtrlCommand);
+      this.#emitSelection();
+    });
+
     graph.on(GRAPH_OPERATIONS.GRAPH_TOGGLE_MINIMIZED, () => {
       this.#emitGraphVisualInformation();
     });

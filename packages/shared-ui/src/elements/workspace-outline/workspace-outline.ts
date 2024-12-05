@@ -36,7 +36,6 @@ import { ModuleIdentifier } from "@breadboard-ai/types";
 import {
   OverflowAction,
   WorkspaceSelectionChangeId,
-  WorkspaceSelectionState,
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
 } from "../../types/types";
@@ -1351,72 +1350,14 @@ export class WorkspaceOutline extends LitElement {
     nodeId: NodeIdentifier | null = null,
     replaceExistingSelections = true
   ) {
-    const subGraph = subGraphId ? subGraphId : MAIN_BOARD_ID;
-    let selectionState: WorkspaceSelectionState;
-
-    // Either start with an empty selection or the existing selection.
-    if (!this.selectionState || replaceExistingSelections) {
-      selectionState = Utils.Workspace.createEmptyWorkspaceSelectionState();
-    } else {
-      selectionState = this.selectionState.selectionState;
-    }
-
-    // If there's a subgraph ID and it doesn't already exist in the selection
-    // then go ahead and add it.
-    if (subGraphId && !selectionState.graphs.has(subGraphId)) {
-      selectionState.graphs.set(
-        subGraphId,
-        Utils.Workspace.createEmptyGraphSelectionState()
-      );
-    } else if (!subGraphId && !selectionState.graphs.has(MAIN_BOARD_ID)) {
-      selectionState.graphs.set(
-        MAIN_BOARD_ID,
-        Utils.Workspace.createEmptyGraphSelectionState()
-      );
-    }
-
-    // Similarly for the module ID.
-    if (moduleId && !selectionState.modules.has(moduleId)) {
-      selectionState.graphs.clear();
-      selectionState.modules.clear();
-      selectionState.modules.add(moduleId);
-    } else if (!moduleId && replaceExistingSelections) {
-      selectionState.modules.clear();
-    }
-
-    if (!moduleId) {
-      const graphSelection = selectionState.graphs.get(subGraph);
-      if (graphSelection && nodeId) {
-        if (graphSelection.nodes.has(nodeId) && replaceExistingSelections) {
-          graphSelection.nodes.delete(nodeId);
-        } else {
-          graphSelection.nodes.add(nodeId);
-        }
-      } else if (graphSelection) {
-        // Append all nodes.
-        let targetGraph: InspectableGraph | undefined | null = this.graph;
-        if (targetGraph && subGraph !== MAIN_BOARD_ID) {
-          targetGraph = targetGraph.graphs()?.[subGraph];
-        }
-
-        if (targetGraph) {
-          for (const node of targetGraph.nodes()) {
-            graphSelection.nodes.add(node.descriptor.id);
-          }
-
-          for (const edge of targetGraph.edges()) {
-            graphSelection.edges.add(
-              Utils.Workspace.inspectableEdgeToString(edge)
-            );
-          }
-
-          for (const comment of targetGraph.metadata()?.comments || []) {
-            graphSelection.comments.add(comment.id);
-          }
-        }
-      }
-    }
-
+    const selectionState = Utils.Workspace.createSelection(
+      this.selectionState?.selectionState ?? null,
+      this.graph,
+      subGraphId,
+      moduleId,
+      nodeId,
+      replaceExistingSelections
+    );
     const selectionChangeId = this.#selectionChangeId();
     this.dispatchEvent(
       new WorkspaceSelectionStateEvent(

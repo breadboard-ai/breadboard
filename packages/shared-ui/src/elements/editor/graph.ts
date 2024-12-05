@@ -110,18 +110,88 @@ export class Graph extends PIXI.Container {
 
     this.#subGraphOutline.eventMode = "none";
 
+    let subGraphOutlineMarkerDragStart: PIXI.Point | null = null;
+    this.#subGraphOutlineMarker.cursor = "pointer";
     this.#subGraphOutlineMarker.eventMode = "static";
-    this.#subGraphOutlineMarker.addEventListener("click", () => {
-      const clickDelta = window.performance.now() - this.#lastClickTime;
-      this.#lastClickTime = window.performance.now();
+    this.#subGraphOutlineMarker.addEventListener(
+      "pointerdown",
+      (evt: PointerEvent) => {
+        const isMac = navigator.platform.indexOf("Mac") === 0;
+        const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
-      if (clickDelta > DBL_CLICK_DELTA) {
+        this.emit(GRAPH_OPERATIONS.SUBGRAPH_SELECTED, isCtrlCommand);
+        subGraphOutlineMarkerDragStart = new PIXI.Point(
+          evt.clientX,
+          evt.clientY
+        );
+      }
+    );
+
+    this.#subGraphOutlineMarker.addEventListener(
+      "globalpointermove",
+      (evt: PointerEvent) => {
+        if (!subGraphOutlineMarkerDragStart) {
+          return;
+        }
+
+        this.#subGraphOutlineMarker.cursor = "grabbing";
+
+        const ratio = this.worldTransform.a;
+        const delta = new PIXI.Point(
+          (evt.clientX - subGraphOutlineMarkerDragStart.x) / ratio,
+          (evt.clientY - subGraphOutlineMarkerDragStart.y) / ratio
+        );
+        this.emit(GRAPH_OPERATIONS.GRAPH_SELECTION_MOVE, delta);
+      }
+    );
+
+    const onMarkerPointerUp = (evt: PointerEvent) => {
+      if (!subGraphOutlineMarkerDragStart) {
         return;
       }
 
-      this.minimized = !this.minimized;
-      this.emit(GRAPH_OPERATIONS.GRAPH_TOGGLE_MINIMIZED);
-    });
+      this.#subGraphOutlineMarker.cursor = "pointer";
+
+      const ratio = this.worldTransform.a;
+      const delta = new PIXI.Point(
+        (evt.clientX - subGraphOutlineMarkerDragStart.x) / ratio,
+        (evt.clientY - subGraphOutlineMarkerDragStart.y) / ratio
+      );
+      subGraphOutlineMarkerDragStart = null;
+
+      this.emit(GRAPH_OPERATIONS.GRAPH_SELECTION_MOVE_SETTLED, delta);
+    };
+
+    this.#subGraphOutlineMarker.addEventListener(
+      "pointerup",
+      onMarkerPointerUp
+    );
+    this.#subGraphOutlineMarker.addEventListener(
+      "pointerupoutside",
+      onMarkerPointerUp
+    );
+
+    this.#subGraphOutlineMarker.addEventListener(
+      "click",
+      (evt: PointerEvent) => {
+        const clickDelta = window.performance.now() - this.#lastClickTime;
+        this.#lastClickTime = window.performance.now();
+
+        const isMac = navigator.platform.indexOf("Mac") === 0;
+        const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+        if (clickDelta > DBL_CLICK_DELTA) {
+          return;
+        }
+
+        if (isCtrlCommand) {
+          return;
+        }
+
+        this.minimized = !this.minimized;
+        this.emit(GRAPH_OPERATIONS.GRAPH_TOGGLE_MINIMIZED);
+      }
+    );
 
     let lastHoverPort: GraphNodePort | null = null;
     let lastHoverNode: GraphNode | null = null;
@@ -765,6 +835,10 @@ export class Graph extends PIXI.Container {
 
       edge.zIndex = edge.selected ? this.children.length - 1 : 0;
     }
+  }
+
+  getEdgeContainer() {
+    return this.#edgeContainer;
   }
 
   getNodeLayoutPositions() {
