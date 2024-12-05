@@ -184,6 +184,7 @@ export class BBRTConversation {
             break;
           }
           const invocation = tool.invoke(chunk.arguments);
+          invocation.start();
           toolCalls.push({
             id: chunk.id,
             args: chunk.arguments,

@@ -86,7 +86,7 @@ class ActivateToolInvocation implements ToolInvocation<Outputs> {
   readonly #args: Inputs;
   readonly #outcome = new Deferred<"allow" | "deny">();
   readonly state = new Signal.State<ToolInvocationState<Outputs>>({
-    status: "running",
+    status: "unstarted",
   });
 
   constructor(
@@ -97,7 +97,6 @@ class ActivateToolInvocation implements ToolInvocation<Outputs> {
     this.#toolProviders = toolProviders;
     this.#activeTools = activeTools;
     this.#args = args;
-    void this.#start();
   }
 
   render() {
@@ -115,7 +114,12 @@ class ActivateToolInvocation implements ToolInvocation<Outputs> {
     return nothing;
   }
 
-  async #start(): Promise<void> {
+  async start(): Promise<void> {
+    if (this.state.get().status !== "unstarted") {
+      return;
+    }
+    this.state.set({ status: "running" });
+
     const result = await this.#outcome.promise;
     switch (result) {
       case "allow": {

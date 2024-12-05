@@ -108,7 +108,7 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
   readonly #getBgl: () => Promise<Result<GraphDescriptor>>;
 
   readonly state = new Signal.State<ToolInvocationState<unknown>>({
-    status: "running",
+    status: "unstarted",
   });
 
   constructor(
@@ -121,10 +121,13 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
     this.#args = args;
     this.#getBgl = getBgl;
     this.#secrets = secrets;
-    void this.#start();
   }
 
-  async #start(): Promise<void> {
+  async start(): Promise<void> {
+    if (this.state.get().status !== "unstarted") {
+      return;
+    }
+    this.state.set({ status: "running" });
     const bgl = await this.#getBgl();
     if (!bgl.ok) {
       this.state.set({ status: "error", error: bgl.error });
@@ -236,6 +239,9 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
     `;
     const state = this.state.get();
     switch (state.status) {
+      case "unstarted": {
+        return [basicInfo, "Unstarted"];
+      }
       case "running": {
         return [basicInfo, "Running..."];
       }
