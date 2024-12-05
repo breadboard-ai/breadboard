@@ -32,6 +32,7 @@ import {
 } from "./events";
 import {
   GraphIdentifier,
+  GraphMetadata,
   GraphTag,
   Module,
   ModuleCode,
@@ -778,6 +779,43 @@ export class Edit extends EventTarget {
     }
   }
 
+  async processVisualChange(
+    tab: Tab | null,
+    visualChangeId: WorkspaceVisualChangeId,
+    graphId: GraphIdentifier,
+    visual: GraphMetadata["visual"]
+  ) {
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to delete sub board"));
+      return;
+    }
+
+    const edits: EditSpec[] = [];
+    if (graphId === MAIN_BOARD_ID) {
+      graphId = "";
+    }
+
+    const metadata = editableGraph.inspect(graphId).metadata() ?? {};
+    const currentVisual = { ...metadata.visual, ...visual };
+    metadata.visual = currentVisual;
+
+    // Only subgraphs can be minimized.
+    if (graphId === "") {
+      delete currentVisual.minimized;
+    }
+
+    edits.push({
+      type: "changegraphmetadata",
+      graphId,
+      metadata,
+    });
+
+    await editableGraph.edit(edits, visualChangeId);
+
+    this.dispatchEvent(new RuntimeVisualChangeEvent(visualChangeId));
+  }
+
   async processVisualChanges(
     tab: Tab | null,
     visualChangeId: WorkspaceVisualChangeId,
@@ -796,7 +834,24 @@ export class Edit extends EventTarget {
         graphId = subGraphId;
       }
 
-      for (const [id, entityVisualState] of graphVisualState) {
+      if (graphVisualState.graph) {
+        const metadata = editableGraph.inspect(graphId).metadata() ?? {};
+        const visual = { ...metadata.visual, ...graphVisualState.graph.visual };
+        metadata.visual = visual;
+
+        // Only subgraphs can be minimized.
+        if (graphId === "") {
+          delete metadata.visual.minimized;
+        }
+
+        edits.push({
+          type: "changegraphmetadata",
+          graphId,
+          metadata,
+        });
+      }
+
+      for (const [id, entityVisualState] of graphVisualState.nodes) {
         switch (entityVisualState.type) {
           case "comment": {
             const graphMetadata =

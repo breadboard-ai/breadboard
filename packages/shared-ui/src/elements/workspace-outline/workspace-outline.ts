@@ -25,6 +25,7 @@ import {
   OverflowMenuActionEvent,
   SubGraphDeleteEvent,
   WorkspaceSelectionStateEvent,
+  WorkspaceItemVisualUpdateEvent,
 } from "../../events/events";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
@@ -37,6 +38,7 @@ import {
   WorkspaceSelectionChangeId,
   WorkspaceSelectionState,
   WorkspaceSelectionStateWithChangeId,
+  WorkspaceVisualChangeId,
 } from "../../types/types";
 import * as Utils from "../../utils/utils.js";
 
@@ -54,6 +56,7 @@ interface Outline {
   };
   type: "imperative" | "declarative";
   runnable?: boolean;
+  minimized?: boolean;
   subItems: Map<ItemIdentifier, Outline>;
 }
 
@@ -742,6 +745,7 @@ export class WorkspaceOutline extends LitElement {
           nodes,
           ports,
         },
+        minimized: graph.metadata()?.visual?.minimized ?? false,
         subItems,
       } as Outline;
     };
@@ -1019,26 +1023,15 @@ export class WorkspaceOutline extends LitElement {
             <button
               class="more"
               @click=${(evt: PointerEvent) => {
-                const showZoom =
-                  main === undefined &&
-                  this.selectionState?.selectionState.graphs.size === 0 &&
-                  this.selectionState.selectionState.modules.size === 0;
-
                 this.#setOverflowMenuValues({
                   type: main === undefined ? "declarative" : "imperative",
                   target: null,
                   actions: [
-                    showZoom
-                      ? {
-                          title: "Zoom to Fit",
-                          name: "zoom-to-fit",
-                          icon: "fit",
-                        }
-                      : {
-                          title: "Go to item",
-                          name: "quick-jump",
-                          icon: "quick-jump",
-                        },
+                    {
+                      title: "Zoom to Fit",
+                      name: "zoom-to-fit",
+                      icon: "fit",
+                    },
                     {
                       title: "Edit Board Information",
                       name: "edit-board-details",
@@ -1135,12 +1128,6 @@ export class WorkspaceOutline extends LitElement {
                         name: "zoom-to-fit",
                         icon: "fit",
                       });
-                    } else {
-                      actions.push({
-                        title: "Go to item",
-                        name: "quick-jump",
-                        icon: "quick-jump",
-                      });
                     }
 
                     if (subItem.type === "declarative") {
@@ -1150,6 +1137,22 @@ export class WorkspaceOutline extends LitElement {
                         icon: "edit-board-details",
                         value: id,
                       });
+
+                      if (subItem.minimized) {
+                        actions.push({
+                          title: "Maximize",
+                          name: "maximize",
+                          icon: "maximize",
+                          value: id,
+                        });
+                      } else {
+                        actions.push({
+                          title: "Minimize",
+                          name: "minimize",
+                          icon: "minimize",
+                          value: id,
+                        });
+                      }
                     }
 
                     actions.push(
@@ -1200,6 +1203,38 @@ export class WorkspaceOutline extends LitElement {
             this.showOverflowMenu = false;
 
             switch (evt.action) {
+              case "minimize": {
+                evt.stopImmediatePropagation();
+                const graphId = evt.value as GraphIdentifier;
+                if (!graphId) {
+                  return;
+                }
+
+                const changeId = this.#visualChangeId();
+                this.dispatchEvent(
+                  new WorkspaceItemVisualUpdateEvent(changeId, graphId, {
+                    minimized: true,
+                  })
+                );
+                break;
+              }
+
+              case "maximize": {
+                evt.stopImmediatePropagation();
+                const graphId = evt.value as GraphIdentifier;
+                if (!graphId) {
+                  return;
+                }
+
+                const changeId = this.#visualChangeId();
+                this.dispatchEvent(
+                  new WorkspaceItemVisualUpdateEvent(changeId, graphId, {
+                    minimized: false,
+                  })
+                );
+                break;
+              }
+
               case "zoom-to-fit": {
                 evt.stopImmediatePropagation();
 
@@ -1300,6 +1335,10 @@ export class WorkspaceOutline extends LitElement {
           })}
         ></bb-overflow-menu>`
       : nothing} `;
+  }
+
+  #visualChangeId(): WorkspaceVisualChangeId {
+    return crypto.randomUUID();
   }
 
   #selectionChangeId(): WorkspaceSelectionChangeId {

@@ -291,6 +291,10 @@
 							],
 							"additionalProperties": false,
 							"description": "Last known position of the graph in the editor."
+						},
+						"minimized": {
+							"type": "boolean",
+							"description": "Whether or not the graph is minimized. Generally only applies to subgraphs as they carry that control in the Visual Editor."
 						}
 					},
 					"additionalProperties": false,

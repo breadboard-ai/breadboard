@@ -20,6 +20,7 @@ import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { TokenVendor } from "@breadboard-ai/connection-client";
 import {
   GraphIdentifier,
+  GraphMetadata,
   ModuleIdentifier,
   NodeIdentifier,
 } from "@breadboard-ai/types";
@@ -90,7 +91,10 @@ export interface GraphEntityVisualState {
   expansionState: "collapsed" | "expanded" | "advanced";
 }
 
-export type GraphVisualState = Map<NodeIdentifier, GraphEntityVisualState>;
+export type GraphVisualState = {
+  nodes: Map<NodeIdentifier, GraphEntityVisualState>;
+  graph: GraphMetadata;
+};
 
 export type WorkspaceVisualChangeId = ReturnType<typeof crypto.randomUUID>;
 export type WorkspaceVisualState = Map<GraphIdentifier, GraphVisualState>;

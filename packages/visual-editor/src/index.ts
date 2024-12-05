@@ -3134,6 +3134,20 @@ export class Main extends LitElement {
                   evt.visualState
                 );
               }}
+              @bbworkspaceitemvisualupdate=${(
+                evt: BreadboardUI.Events.WorkspaceItemVisualUpdateEvent
+              ) => {
+                if (!this.tab) {
+                  return;
+                }
+
+                this.#runtime.edit.processVisualChange(
+                  this.tab,
+                  evt.visualChangeId,
+                  evt.graphId,
+                  evt.visual
+                );
+              }}
               @bbcommandsavailable=${(
                 evt: BreadboardUI.Events.CommandsAvailableEvent
               ) => {

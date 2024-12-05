@@ -1011,6 +1011,10 @@ export class GraphRenderer extends LitElement {
         continue;
       }
 
+      if (graph.minimized) {
+        continue;
+      }
+
       for (const node of graph.children) {
         if (!(node instanceof GraphNode)) {
           continue;
@@ -1042,6 +1046,28 @@ export class GraphRenderer extends LitElement {
     const bounds = new PIXI.Bounds();
     for (const graph of this.#container.children) {
       if (!(graph instanceof Graph) || !graph.selectionState) {
+        continue;
+      }
+
+      if (graph.minimized) {
+        const positions = graph.getNodeLayoutPositions();
+        let x = Number.POSITIVE_INFINITY;
+        let y = Number.POSITIVE_INFINITY;
+        for (const position of positions.values()) {
+          x = Math.min(x, position.x);
+          y = Math.min(y, position.y);
+        }
+
+        if (x === Number.POSITIVE_INFINITY) {
+          x = 0;
+        }
+
+        if (y === Number.POSITIVE_INFINITY) {
+          y = 0;
+        }
+
+        const bound = new PIXI.Bounds(x, y, x + 20, y + 1);
+        bounds.addBounds(bound);
         continue;
       }
 
@@ -1679,6 +1705,10 @@ export class GraphRenderer extends LitElement {
   }
 
   #addGraph(graph: Graph) {
+    graph.on(GRAPH_OPERATIONS.GRAPH_TOGGLE_MINIMIZED, () => {
+      this.#emitGraphVisualInformation();
+    });
+
     graph.on(GRAPH_OPERATIONS.GRAPH_NODE_EXPAND_COLLAPSE, () => {
       this.#emitGraphVisualInformation();
     });
@@ -2038,8 +2068,8 @@ export class GraphRenderer extends LitElement {
       graph.comments = opts.metadata.comments || null;
     }
 
-    if (opts.visible !== undefined) {
-      graph.visible = opts.visible;
+    if (opts.minimized !== undefined) {
+      graph.minimized = opts.minimized;
     }
 
     if (opts.selectionState !== undefined) {

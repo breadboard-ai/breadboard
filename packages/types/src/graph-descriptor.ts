@@ -287,6 +287,11 @@ export type GraphMetadata = {
       width: number;
       height: number;
     };
+    /**
+     * Whether or not the graph is minimized. Generally only applies to
+     * subgraphs as they carry that control in the Visual Editor.
+     */
+    minimized?: boolean;
   };
 };
 
