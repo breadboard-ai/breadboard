@@ -556,7 +556,7 @@ export class UI extends LitElement {
                 id="splitter"
                 split="[0.2, 0.8]"
                 .name=${"outline-editor"}
-                .minSegmentSizeHorizontal=${100}
+                .minSegmentSizeHorizontal=${265}
               >
                 <div id="outline-container" slot="slot-0">${sideNavItem}</div>
                 ${contentContainer}
