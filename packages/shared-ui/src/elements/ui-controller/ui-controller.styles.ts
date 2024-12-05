@@ -436,4 +436,24 @@ export const styles = css`
     z-index: 1;
     padding: var(--bb-grid-size-4);
   }
+
+  #back-to-activity {
+    background: var(--bb-ui-50) var(--bb-icon-arrow-back) 6px center / 20px 20px
+      no-repeat;
+    border: none;
+    font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+      var(--bb-font-family);
+    color: var(--bb-ui-600);
+    padding: var(--bb-grid-size) var(--bb-grid-size-4) var(--bb-grid-size)
+      var(--bb-grid-size-8);
+    margin-right: var(--bb-grid-size-2);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+  }
+
+  #back-to-activity:hover,
+  #back-to-activity:focus {
+    background-color: var(--bb-ui-100);
+  }
 `;

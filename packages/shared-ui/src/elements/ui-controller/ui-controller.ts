@@ -497,7 +497,19 @@ export class UI extends LitElement {
         sideNavItem = html`${guard(
           [run, events, eventPosition, this.debugEvent],
           () =>
-            html`<h1 id="side-nav-title">Activity</h1>
+            html`<h1 id="side-nav-title">
+                Activity
+                ${this.debugEvent !== null
+                  ? html`<button
+                      id="back-to-activity"
+                      @click=${() => {
+                        this.debugEvent = null;
+                      }}
+                    >
+                      Back to Activity
+                    </button>`
+                  : nothing}
+              </h1>
               <div id="board-activity-container">
                 <bb-board-activity
                   class=${classMap({ collapsed: this.debugEvent !== null })}
