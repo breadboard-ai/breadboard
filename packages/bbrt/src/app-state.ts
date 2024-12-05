@@ -28,4 +28,5 @@ export class BBRTAppState {
     this.activeDriver,
     this.activeTools
   );
+  readonly sidePanelOpen = new Signal.State<boolean>(true);
 }

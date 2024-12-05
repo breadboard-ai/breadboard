@@ -7,7 +7,7 @@
 import { GraphDescriptor } from "@google-labs/breadboard";
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { AsyncComputed } from "signal-utils/async-computed";
 import { BBRTAppState } from "../app-state.js";
@@ -52,9 +52,6 @@ export class BBRTMain extends SignalWatcher(LitElement) {
       return bgl.value;
     }
   );
-
-  @state()
-  private _sidePanelOpen = true;
 
   static override styles = css`
     :host {
@@ -121,7 +118,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
     return html`
       <div
         id="container"
-        class=${classMap({ sidePanelOpen: this._sidePanelOpen })}
+        class=${classMap({ sidePanelOpen: this.#state.sidePanelOpen.get() })}
       >
         <bbrt-chat .conversation=${this.#state.conversation}></bbrt-chat>
         <div id="bottom">
@@ -154,11 +151,11 @@ export class BBRTMain extends SignalWatcher(LitElement) {
   }
 
   #clickExpandSidebar() {
-    this._sidePanelOpen = !this._sidePanelOpen;
+    this.#state.sidePanelOpen.set(!this.#state.sidePanelOpen.get());
   }
 
   #renderSidebarContents() {
-    if (!this._sidePanelOpen) {
+    if (!this.#state.sidePanelOpen.get()) {
       return nothing;
     }
 
