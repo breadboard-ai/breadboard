@@ -9,6 +9,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
+import { Signal } from "signal-polyfill";
 import { AsyncComputed } from "signal-utils/async-computed";
 import { BBRTAppState } from "../app-state.js";
 import { BreadboardToolProvider } from "../breadboard/breadboard-tool-provider.js";
@@ -23,6 +24,8 @@ import "./chat.js";
 import "./driver-selector.js";
 import "./prompt.js";
 import "./tool-palette.js";
+
+const APP_STATE_SESSION_STORAGE_KEY = "bbrt-app-state-v1";
 
 @customElement("bbrt-main")
 export class BBRTMain extends SignalWatcher(LitElement) {
@@ -112,6 +115,53 @@ export class BBRTMain extends SignalWatcher(LitElement) {
   connectedCallback(): void {
     super.connectedCallback();
     void this.#discoverToolProviders();
+    this.#restoreState();
+    setTimeout(() => {
+      // TODO(aomarks) Silly workaround for a race condition where tools might
+      // not all have been loaded yet, which means we won't have restored the
+      // active tools. Fix is probably to make active tools a SignalSet of ids
+      // so that it can be restored before the tools are loaded.
+      this.#restoreState();
+      this.#startPersistingState();
+    }, 3000);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.#stopPersistingState();
+  }
+
+  // TODO(aomarks) Bundle this into a utility controller.
+  #serializedStateSignal = new Signal.Computed(() => this.#state.serialize());
+  #persistStateWatcher?: Signal.subtle.Watcher;
+  #startPersistingState() {
+    this.#persistStateWatcher = new Signal.subtle.Watcher(() => {
+      queueMicrotask(() => {
+        this.#persistState();
+        this.#persistStateWatcher?.watch();
+      });
+    });
+    this.#persistStateWatcher.watch(this.#serializedStateSignal);
+    this.#serializedStateSignal.get();
+  }
+  #stopPersistingState() {
+    if (this.#persistStateWatcher !== undefined) {
+      this.#persistStateWatcher.unwatch(this.#serializedStateSignal);
+      this.#persistStateWatcher = undefined;
+    }
+  }
+
+  #persistState() {
+    const serialized = JSON.stringify(this.#serializedStateSignal.get());
+    sessionStorage.setItem(APP_STATE_SESSION_STORAGE_KEY, serialized);
+  }
+
+  #restoreState() {
+    const serialized = sessionStorage.getItem(APP_STATE_SESSION_STORAGE_KEY);
+    if (serialized !== null) {
+      const parsed = JSON.parse(serialized);
+      this.#state.restore(parsed);
+    }
   }
 
   override render() {
