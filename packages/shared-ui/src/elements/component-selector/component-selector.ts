@@ -8,8 +8,10 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
-  InspectableGraph,
-  InspectableKit,
+  GraphIdentifier,
+  Kit,
+  MainGraphIdentifier,
+  MutableGraphStore,
   NodeHandlerMetadata,
 } from "@google-labs/breadboard";
 import { Task } from "@lit/task";
@@ -22,7 +24,13 @@ const DATA_TYPE = "text/plain";
 @customElement("bb-component-selector")
 export class ComponentSelector extends LitElement {
   @property()
-  graph: InspectableGraph | null = null;
+  boardServerKits: Kit[] | null = null;
+
+  @property()
+  mainGraphId: GraphIdentifier | null = null;
+
+  @property()
+  graphStore: MutableGraphStore | null = null;
 
   @state()
   filter: string | null = null;
@@ -38,11 +46,16 @@ export class ComponentSelector extends LitElement {
 
   #searchInputRef: Ref<HTMLInputElement> = createRef();
   #kitInfoTask = new Task(this, {
-    task: async ([graph]) => {
-      return this.#createKitList(graph?.kits() || []);
+    task: async ([graphStore, mainGraphId]) => {
+      return this.#createKitList(
+        graphStore as MutableGraphStore,
+        mainGraphId as MainGraphIdentifier
+      );
     },
-    args: () => [this.graph],
+    args: () => [this.graphStore, this.mainGraphId],
   });
+
+  #graphURL: string | null = null;
 
   static styles = css`
     * {
@@ -235,11 +248,24 @@ export class ComponentSelector extends LitElement {
     }
   `;
 
-  async #createKitList(kits: InspectableKit[]) {
+  async #createKitList(
+    graphStore: MutableGraphStore,
+    mainGraphId: MainGraphIdentifier
+  ) {
     const kitList = new Map<
       string,
       { id: string; metadata: NodeHandlerMetadata }[]
     >();
+    const inspectable = graphStore.inspect(mainGraphId, "");
+    if (!inspectable) {
+      return kitList;
+    }
+    this.#graphURL = inspectable.raw().url || null;
+    const graphKits = inspectable?.kits();
+    const boardServerKits = this.boardServerKits
+      ? graphStore.addKits(this.boardServerKits, [mainGraphId])
+      : [];
+    const kits = [...graphKits, ...boardServerKits];
     kits.sort((kit1, kit2) =>
       (kit1.descriptor.title || "") > (kit2.descriptor.title || "") ? 1 : -1
     );
@@ -378,7 +404,7 @@ export class ComponentSelector extends LitElement {
                   // Prevent the user from accidentally embedding the
                   // current tool graph inside of itself.
                   kitContents = kitContents.filter(
-                    (nodeTypeInfo) => nodeTypeInfo.id !== this.graph?.raw().url
+                    (nodeTypeInfo) => nodeTypeInfo.id !== this.#graphURL
                   );
 
                   return html`<details

@@ -16,6 +16,7 @@ import {
   InspectableRunEvent,
   InspectableRunInputs,
   Kit,
+  MainGraphIdentifier,
   MutableGraphStore,
 } from "@google-labs/breadboard";
 import {
@@ -58,6 +59,9 @@ const SIDE_NAV_ITEM_KEY = "bb-ui-side-nav-item";
 export class UI extends LitElement {
   @property()
   graph: GraphDescriptor | null = null;
+
+  @property()
+  mainGraphId: MainGraphIdentifier | null = null;
 
   @property()
   editor: EditableGraph | null = null;
@@ -316,7 +320,6 @@ export class UI extends LitElement {
           .collapseNodesByDefault=${collapseNodesByDefault}
           .extendedCapabilities=${extendedCapabilities}
           .graph=${graph}
-          .kits=${this.kits}
           .hideSubboardSelectorWhenEmpty=${hideSubboardSelectorWhenEmpty}
           .highlightInvalidWires=${highlightInvalidWires}
           .invertZoomScrollDirection=${invertZoomScrollDirection}
@@ -363,7 +366,6 @@ export class UI extends LitElement {
         .canUndo=${canUndo}
         .capabilities=${capabilities}
         .graph=${graph}
-        .kits=${this.kits}
         .moduleId=${modules[0]}
         .modules=${graph.modules() ?? {}}
         .readOnly=${this.readOnly}
@@ -444,7 +446,6 @@ export class UI extends LitElement {
             () => {
               return html`<bb-workspace-outline
                 .graph=${graph}
-                .kits=${this.kits}
                 .renderId=${globalThis.crypto.randomUUID()}
                 .mode=${this.mode}
                 .selectionState=${this.selectionState}
@@ -467,10 +468,15 @@ export class UI extends LitElement {
 
       case "components": {
         sideNavItem = html`${guard(
-          [graph?.kits],
+          [this.kits, this.graphTopologyUpdateId, this.mainGraphId],
           () =>
             html`<h1 id="side-nav-title">Components</h1>
-              <bb-component-selector .graph=${graph}></bb-component-selector>`
+              <bb-component-selector
+                .graphTopologyUpdateId=${this.graphTopologyUpdateId}
+                .boardServerKits=${this.kits}
+                .graphStore=${this.graphStore}
+                .mainGraphId=${this.mainGraphId}
+              ></bb-component-selector>`
         )}`;
         break;
       }

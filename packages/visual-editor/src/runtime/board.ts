@@ -43,6 +43,9 @@ export class Board extends EventTarget {
     /** @deprecated */
     private readonly providers: GraphProvider[],
     private readonly loader: GraphLoader,
+    /**
+     * Extra Kits, supplied by the board server.
+     * */
     private readonly kits: Kit[],
     private readonly boardServers: RuntimeConfigBoardServers,
     private readonly tokenVendor?: TokenVendor
@@ -97,7 +100,6 @@ export class Board extends EventTarget {
     }
 
     const boardServerInfo = await connectToBoardServer(
-      this.kits,
       location,
       apiKey,
       this.tokenVendor
@@ -112,10 +114,7 @@ export class Board extends EventTarget {
       // the user is notified.
       return { success: false };
     } else {
-      this.boardServers.servers = await getBoardServers(
-        this.kits,
-        this.tokenVendor
-      );
+      this.boardServers.servers = await getBoardServers(this.tokenVendor);
       this.boardServers.loader = createLoader(this.boardServers.servers);
       this.dispatchEvent(
         new RuntimeBoardServerChangeEvent(
@@ -140,10 +139,7 @@ export class Board extends EventTarget {
       // the user is notified.
       return { success: false };
     }
-    this.boardServers.servers = await getBoardServers(
-      this.kits,
-      this.tokenVendor
-    );
+    this.boardServers.servers = await getBoardServers(this.tokenVendor);
     this.boardServers.loader = createLoader(this.boardServers.servers);
     this.dispatchEvent(new RuntimeBoardServerChangeEvent());
   }
