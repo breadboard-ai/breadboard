@@ -200,6 +200,14 @@ export class OverflowMenu extends LitElement {
       background-image: var(--bb-icon-quick-jump);
     }
 
+    button.maximize {
+      background-image: var(--bb-icon-maximize);
+    }
+
+    button.minimize {
+      background-image: var(--bb-icon-minimize);
+    }
+
     button.error {
       background-image: var(--bb-icon-error);
       color: var(--bb-warning-600);

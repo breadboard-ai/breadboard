@@ -25,6 +25,7 @@ import type {
 } from "../types/types.js";
 import type {
   GraphIdentifier,
+  GraphMetadata,
   ModuleCode,
   ModuleIdentifier,
   ModuleLanguage,
@@ -399,6 +400,18 @@ export class WorkspaceItemCreateEvent extends Event {
     public readonly title: string | null = null
   ) {
     super(WorkspaceItemCreateEvent.eventName, { ...eventInit });
+  }
+}
+
+export class WorkspaceItemVisualUpdateEvent extends Event {
+  static eventName = "bbworkspaceitemvisualupdate";
+
+  constructor(
+    public readonly visualChangeId: WorkspaceVisualChangeId,
+    public readonly graphId: GraphIdentifier,
+    public readonly visual: GraphMetadata["visual"]
+  ) {
+    super(WorkspaceItemVisualUpdateEvent.eventName, { ...eventInit });
   }
 }
 

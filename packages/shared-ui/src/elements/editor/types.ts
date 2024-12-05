@@ -46,6 +46,7 @@ export enum GRAPH_OPERATIONS {
   GRAPH_NODE_RUN_REQUESTED = "graphnoderunrequested",
   GRAPH_SHOW_TOOLTIP = "graphshowtooltip",
   GRAPH_HIDE_TOOLTIP = "graphhidetooltip",
+  GRAPH_TOGGLE_MINIMIZED = "graphtoggleminimized",
 }
 
 export enum GraphNodePortType {

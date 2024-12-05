@@ -120,6 +120,7 @@ export class Graph extends PIXI.Container {
       }
 
       this.minimized = !this.minimized;
+      this.emit(GRAPH_OPERATIONS.GRAPH_TOGGLE_MINIMIZED);
     });
 
     let lastHoverPort: GraphNodePort | null = null;
@@ -1187,14 +1188,22 @@ export class Graph extends PIXI.Container {
   }
 
   get visualState() {
-    const visualState: GraphVisualState = new Map();
+    const visualState: GraphVisualState = {
+      nodes: new Map(),
+      graph: {
+        visual: {
+          minimized: this.#minimized,
+        },
+      },
+    };
+
     for (const child of this.children) {
       if (!(child instanceof GraphNode || child instanceof GraphComment)) {
         continue;
       }
 
       const type = child instanceof GraphNode ? "node" : "comment";
-      visualState.set(child.label, {
+      visualState.nodes.set(child.label, {
         x: child.x,
         y: child.y,
         type,
