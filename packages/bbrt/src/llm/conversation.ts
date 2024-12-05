@@ -16,7 +16,6 @@ import { transposeResults } from "../util/transpose-results.js";
 import { waitForState } from "../util/wait-for-state.js";
 import type { BBRTChunk } from "./chunk.js";
 
-// TODO(aomarks) Consider making this whole thing a SignalObject.
 export type BBRTTurn = BBRTUserTurn | BBRTModelTurn | BBRTErrorTurn;
 
 export type BBRTUserTurn = BBRTUserTurnContent | BBRTUserTurnToolResponses;
