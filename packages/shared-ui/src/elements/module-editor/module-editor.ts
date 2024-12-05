@@ -682,7 +682,7 @@ export class ModuleEditor extends LitElement {
 
     // Create a stable URL.
     const mainGraphURL = this.graph!.raw().url!;
-    const url = `module-preview:${mainGraphURL}`;
+    const url = `module-preview:${mainGraphURL}?module=${this.moduleId}`;
     const graph: GraphDescriptor = {
       url,
       nodes: [
