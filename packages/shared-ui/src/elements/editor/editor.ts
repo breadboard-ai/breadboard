@@ -786,6 +786,18 @@ export class Editor extends LitElement {
 
   #onDragOver(evt: DragEvent) {
     evt.preventDefault();
+
+    if (!this.#graphRendererRef.value) {
+      return;
+    }
+
+    const pointer = {
+      x: evt.pageX - this.#left + window.scrollX,
+      y: evt.pageY - this.#top - window.scrollY - RIBBON_HEIGHT,
+    };
+
+    this.#graphRendererRef.value.removeSubGraphHighlights();
+    this.#graphRendererRef.value.highlightSubGraphId(pointer);
   }
 
   #onDrop(evt: DragEvent) {
@@ -801,6 +813,8 @@ export class Editor extends LitElement {
       return;
     }
 
+    this.#graphRendererRef.value.removeSubGraphHighlights();
+
     const id = createRandomID(type);
     const configuration = getDefaultConfiguration(type);
     const pointer = {
@@ -810,8 +824,10 @@ export class Editor extends LitElement {
 
     const location =
       this.#graphRendererRef.value.toContainerCoordinates(pointer);
+    const subGraph = this.#graphRendererRef.value.toSubGraphId(pointer);
+
     this.dispatchEvent(
-      new NodeCreateEvent(id, type, this.subGraphId, configuration, {
+      new NodeCreateEvent(id, type, subGraph, configuration, {
         visual: {
           x: location.x - 100,
           y: location.y - 50,

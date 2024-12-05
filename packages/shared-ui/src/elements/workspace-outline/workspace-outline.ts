@@ -22,7 +22,6 @@ import {
   ModuleDeleteEvent,
   NodeConfigurationUpdateRequestEvent,
   NodePartialUpdateEvent,
-  OutlineModeChangeEvent,
   OverflowMenuActionEvent,
   SubGraphDeleteEvent,
   WorkspaceSelectionStateEvent,
@@ -74,7 +73,7 @@ export class WorkspaceOutline extends LitElement {
   renderId = "";
 
   @property({ reflect: true })
-  mode: "list" | "tree" = "tree";
+  mode = "tree" as const;
 
   @property()
   selectionState: WorkspaceSelectionStateWithChangeId | null = null;
@@ -845,8 +844,7 @@ export class WorkspaceOutline extends LitElement {
               @click=${(evt: PointerEvent) => {
                 const isMac = navigator.platform.indexOf("Mac") === 0;
                 const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
-                const replaceExistingSelection =
-                  this.mode === "list" || !isCtrlCommand;
+                const replaceExistingSelection = !isCtrlCommand;
 
                 this.#changeWorkspaceItem(
                   subGraphId,
@@ -913,7 +911,6 @@ export class WorkspaceOutline extends LitElement {
                 const graphButton = html`<bb-slide-board-selector
                   .graph=${this.graph}
                   .value=${portSubGraphId}
-                  ?list=${this.mode === "list"}
                   ?tree=${this.mode === "tree"}
                   @bbboardchosen=${(evt: BoardChosenEvent) => {
                     this.dispatchEvent(
@@ -1024,7 +1021,6 @@ export class WorkspaceOutline extends LitElement {
               @click=${(evt: PointerEvent) => {
                 const showZoom =
                   main === undefined &&
-                  this.mode === "list" &&
                   this.selectionState?.selectionState.graphs.size === 0 &&
                   this.selectionState.selectionState.modules.size === 0;
 
@@ -1108,8 +1104,7 @@ export class WorkspaceOutline extends LitElement {
 
               const isMac = navigator.platform.indexOf("Mac") === 0;
               const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
-              const replaceExistingSelection =
-                this.mode === "list" || !isCtrlCommand;
+              const replaceExistingSelection = !isCtrlCommand;
 
               const subGraphId = subItem.type === "declarative" ? id : null;
               const moduleId = subItem.type === "imperative" ? id : null;
@@ -1439,19 +1434,6 @@ export class WorkspaceOutline extends LitElement {
             placeholder="Search for an item"
             type="search"
           />
-          <button
-            id="view-toggle"
-            class=${classMap({ [this.mode]: true })}
-            @click=${() => {
-              this.dispatchEvent(
-                new OutlineModeChangeEvent(
-                  this.mode === "list" ? "tree" : "list"
-                )
-              );
-            }}
-          >
-            Toggle
-          </button>
         </div>
         <div id="outline">${this.#renderOutline()}</div>
       </div>

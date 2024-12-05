@@ -915,6 +915,49 @@ export class GraphRenderer extends LitElement {
     return this.#container.toLocal(point);
   }
 
+  highlightSubGraphId(point: PIXI.PointData) {
+    let target: Graph | null = null;
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      graph.highlightDragOver = false;
+      if (graph.getBounds().containsPoint(point.x, point.y)) {
+        target = graph;
+        break;
+      }
+    }
+
+    if (target) {
+      target.highlightDragOver = true;
+    }
+  }
+
+  removeSubGraphHighlights() {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      graph.highlightDragOver = false;
+    }
+  }
+
+  toSubGraphId(point: PIXI.PointData): GraphIdentifier | null {
+    for (const child of this.#container.children) {
+      if (!(child instanceof Graph)) {
+        continue;
+      }
+
+      if (child.getBounds().containsPoint(point.x, point.y)) {
+        return child.subGraphId;
+      }
+    }
+
+    return null;
+  }
+
   #targetContainerMatrix = new PIXI.Matrix();
   #setTargetContainerMatrixFromBounds(bounds: PIXI.Bounds) {
     this.#targetContainerMatrix.identity();

@@ -16,7 +16,7 @@ import {
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
-import { CodeEditor, GraphRenderer, ModuleRibbonMenu } from "../elements";
+import { CodeEditor, ModuleRibbonMenu } from "../elements";
 import {
   GraphIdentifier,
   ModuleCode,
@@ -279,8 +279,6 @@ export class ModuleEditor extends LitElement {
 
   #moduleRibbonMenuRef: Ref<ModuleRibbonMenu> = createRef();
   #codeEditorRef: Ref<CodeEditor> = createRef();
-  #graphVersion = 1;
-  #graphRenderer = new GraphRenderer();
   #compilationEnvironment: CompilationEnvironment = {
     language: "javascript",
     moduleId: null,
