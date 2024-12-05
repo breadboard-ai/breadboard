@@ -121,7 +121,7 @@ jobs:
             breadboard=.
 
       - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@v2
         with:
           subject-name: ${{ needs.setup.outputs.board_server_sqlite_image_path }}
           subject-digest: ${{ steps.push.outputs.digest }}
@@ -179,7 +179,7 @@ jobs:
             breadboard=.
 
       - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@v2
         with:
           subject-name: ${{ needs.setup.outputs.board_server_firestore_image_path }}
           subject-digest: ${{ steps.push.outputs.digest }}
