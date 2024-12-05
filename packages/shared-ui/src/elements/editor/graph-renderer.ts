@@ -2038,8 +2038,8 @@ export class GraphRenderer extends LitElement {
       graph.comments = opts.metadata.comments || null;
     }
 
-    if (opts.visible !== undefined) {
-      graph.visible = opts.visible;
+    if (opts.minimized !== undefined) {
+      graph.minimized = opts.minimized;
     }
 
     if (opts.selectionState !== undefined) {

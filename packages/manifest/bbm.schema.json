@@ -355,6 +355,10 @@
 					"additionalProperties": false,
 					"description": "The metadata associated with the visual representation of the graph.",
 					"properties": {
+						"minimized": {
+							"description": "Whether or not the graph is minimized. Generally only applies to subgraphs as they carry that control in the Visual Editor.",
+							"type": "boolean"
+						},
 						"window": {
 							"additionalProperties": false,
 							"description": "Last known position of the graph in the editor.",

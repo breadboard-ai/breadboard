@@ -83,7 +83,7 @@ export interface GraphOpts {
   nodes: InspectableNode[];
   modules: InspectableModules;
   metadata: GraphMetadata;
-  visible: boolean;
+  minimized: boolean;
   selectionState: GraphSelectionState | null;
 }
 

@@ -81,6 +81,7 @@ export class Graph extends PIXI.Container {
   #selectionState: GraphSelectionState | null = null;
 
   #isInitialDraw = true;
+  #minimized = false;
   #collapseNodesByDefault = false;
   #showNodePreviewValues = false;
   #showNodeTypeDescriptions = false;
@@ -996,6 +997,15 @@ export class Graph extends PIXI.Container {
 
   get edgeValues() {
     return this.#edgeValues;
+  }
+
+  set minimized(minimized: boolean) {
+    this.#minimized = minimized;
+    this.#isDirty = true;
+  }
+
+  get minimized() {
+    return this.#minimized;
   }
 
   set highlightDragOver(highlightDragOver: boolean) {

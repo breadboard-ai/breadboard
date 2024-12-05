@@ -339,7 +339,7 @@ export class Editor extends LitElement {
       url,
       title: selectedGraph.raw().title ?? "Untitled Board",
       subGraphId,
-      visible: false,
+      minimized: (selectedGraph.metadata() || {}).visual?.minimized ?? false,
       showNodeTypeDescriptions: this.showNodeTypeDescriptions,
       showNodePreviewValues: this.showNodePreviewValues,
       collapseNodesByDefault: this.collapseNodesByDefault,
