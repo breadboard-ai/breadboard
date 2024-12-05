@@ -5,5 +5,5 @@
  */
 
 export interface Config {
-  url: string;
+  // TODO(aomarks) Nothing here yet, but will surely need it sometime...
 }

@@ -7,9 +7,7 @@
 import "./components/main.js";
 import type { Config } from "./config.js";
 
-const config: Config = {
-  url: "potato",
-};
+const config: Config = {};
 const main = document.querySelector("bbrt-main");
 if (main !== null) {
   main.config = config;
