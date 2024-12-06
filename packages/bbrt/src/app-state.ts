@@ -7,6 +7,7 @@
 import { Signal } from "signal-polyfill";
 import { SignalArray } from "signal-utils/array";
 import { SignalSet } from "signal-utils/set";
+import { IdbArtifactStore } from "./artifacts/idb-artifact-store.js";
 import type { BBRTDriver } from "./drivers/driver-interface.js";
 import { GeminiDriver } from "./drivers/gemini.js";
 import { OpenAiDriver } from "./drivers/openai.js";
@@ -50,6 +51,7 @@ export class BBRTAppState {
     this.activeDriver,
     this.activeTools
   );
+  readonly artifactStore = new IdbArtifactStore();
 
   serialize(): SerializedBBRTAppState {
     return {

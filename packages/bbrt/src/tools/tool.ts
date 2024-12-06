@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { SerializedStoredData } from "@google-labs/breadboard";
 import type { JSONSchema7 } from "json-schema";
 import type { Signal } from "signal-polyfill";
+import type { ArtifactHandle } from "../artifacts/artifact-interface.js";
 import type { Result } from "../util/result.js";
 
 export interface BBRTTool<I = unknown, O = unknown> {
@@ -38,7 +38,7 @@ export type ToolInvocationState<O = unknown> =
 
 export interface InvokeResult<O = unknown> {
   readonly output: O;
-  readonly artifacts: SerializedStoredData[];
+  readonly artifacts: ArtifactHandle[];
 }
 
 export interface ToolInvocation<O = unknown> {
