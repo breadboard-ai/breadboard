@@ -82,6 +82,7 @@ export class BBRTBoardVisualizer extends LitElement {
       modules: inspectable.modules(),
       metadata: inspectable.metadata() ?? {},
       selectionState: null,
+      references: null,
     };
   }
 }
