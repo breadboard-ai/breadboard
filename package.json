@@ -184,7 +184,7 @@
     "@rollup/rollup-linux-x64-gnu": "^4.27.4"
   },
   "dependencies": {
-    "express": "^4.21.1",
+    "express": "^4.21.2",
     "json-schema": "^0.4.0",
     "litegraph.js": "^0.7.18",
     "prettier": "^3.4.1"
