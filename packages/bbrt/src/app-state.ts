@@ -10,6 +10,9 @@ import { SignalSet } from "signal-utils/set";
 import type { BBRTDriver } from "./drivers/driver-interface.js";
 import { GeminiDriver } from "./drivers/gemini.js";
 import { OpenAiDriver } from "./drivers/openai.js";
+import { restoreTurns } from "./llm/conversation-restore.js";
+import type { SerializableBBRTTurn } from "./llm/conversation-serialization-types.js";
+import { serializeTurns } from "./llm/conversation-serialization.js";
 import { BBRTConversation } from "./llm/conversation.js";
 import { IndexedDBSettingsSecrets } from "./secrets/indexed-db-secrets.js";
 import type { ToolProvider } from "./tools/tool-provider.js";
@@ -19,7 +22,7 @@ export interface SerializedBBRTAppState {
   activeDriverName: string;
   activeToolIds: string[];
   sidePanelOpen: boolean;
-  // TODO(aomarks) Conversation turns.
+  conversationTurns: SerializableBBRTTurn[];
 }
 
 export class BBRTAppState {
@@ -45,7 +48,7 @@ export class BBRTAppState {
   readonly sidePanelOpen = new Signal.State<boolean>(true);
   readonly conversation = new BBRTConversation(
     this.activeDriver,
-    this.availableTools
+    this.activeTools
   );
 
   serialize(): SerializedBBRTAppState {
@@ -53,6 +56,7 @@ export class BBRTAppState {
       activeDriverName: this.activeDriver.get().name,
       activeToolIds: [...this.activeToolIds],
       sidePanelOpen: this.sidePanelOpen.get(),
+      conversationTurns: serializeTurns(this.conversation.turns),
     };
   }
 
@@ -75,5 +79,10 @@ export class BBRTAppState {
     }
 
     this.sidePanelOpen.set(serialized.sidePanelOpen);
+
+    this.conversation.turns.length = 0;
+    this.conversation.turns.push(
+      ...restoreTurns(serialized.conversationTurns, this.availableTools)
+    );
   }
 }
