@@ -13,6 +13,8 @@ import {
   InspectableNodePorts,
   InspectablePort,
   NodeHandlerMetadata,
+  NodeIdentifier,
+  PortIdentifier,
   PortStatus,
 } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
@@ -1297,6 +1299,22 @@ export class Graph extends PIXI.Container {
     }
 
     return visualState;
+  }
+
+  intersectingBoardPort(
+    point: PIXI.PointData
+  ): { nodeId: NodeIdentifier; portId: PortIdentifier } | false {
+    for (const node of this.children) {
+      if (!(node instanceof GraphNode)) {
+        continue;
+      }
+
+      if (node.getBounds().containsPoint(point.x, point.y)) {
+        return node.intersectingBoardPort(point);
+      }
+    }
+
+    return false;
   }
 
   #edgesBetween(from: GraphNode, to: GraphNode): InspectableEdge[] {

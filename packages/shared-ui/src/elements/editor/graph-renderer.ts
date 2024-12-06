@@ -35,6 +35,7 @@ import {
   InspectableGraph,
   InspectablePort,
   NodeIdentifier,
+  PortIdentifier,
   Schema,
 } from "@google-labs/breadboard";
 import { GraphNode } from "./graph-node.js";
@@ -955,6 +956,32 @@ export class GraphRenderer extends LitElement {
 
       this.#removeGraph(graph);
     }
+  }
+
+  intersectingBoardPort(
+    point: PIXI.PointData
+  ):
+    | {
+        graphId: GraphIdentifier;
+        nodeId: NodeIdentifier;
+        portId: PortIdentifier;
+      }
+    | false {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      if (graph.getBounds().containsPoint(point.x, point.y)) {
+        const port = graph.intersectingBoardPort(point);
+        if (port) {
+          return { graphId: graph.subGraphId ?? MAIN_BOARD_ID, ...port };
+        }
+        return false;
+      }
+    }
+
+    return false;
   }
 
   toContainerCoordinates(point: PIXI.PointData) {

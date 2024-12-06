@@ -43,6 +43,7 @@ import {
   NodeActivitySelectedEvent,
   NodeConfigurationUpdateRequestEvent,
   NodeCreateEvent,
+  NodeCreateReferenceEvent,
   NodeDeleteEvent,
   NodeRunRequestEvent,
   NodeTypeRetrievalErrorEvent,
@@ -912,12 +913,32 @@ export class Editor extends LitElement {
 
     this.#graphRendererRef.value.removeSubGraphHighlights();
 
-    const id = createRandomID(type);
-    const configuration = getDefaultConfiguration(type);
     const pointer = {
       x: evt.pageX - this.#left + window.scrollX,
       y: evt.pageY - this.#top - window.scrollY - RIBBON_HEIGHT,
     };
+
+    // The user has dropped the item onto a board port.
+    if (URL.canParse(type)) {
+      const boardPort =
+        this.#graphRendererRef.value.intersectingBoardPort(pointer);
+
+      if (boardPort) {
+        this.dispatchEvent(
+          new NodeCreateReferenceEvent(
+            boardPort.graphId,
+            boardPort.nodeId,
+            boardPort.portId,
+            type
+          )
+        );
+        return;
+      }
+    }
+
+    // The user has dropped the item onto the board proper.
+    const id = createRandomID(type);
+    const configuration = getDefaultConfiguration(type);
 
     const location =
       this.#graphRendererRef.value.toContainerCoordinates(pointer);

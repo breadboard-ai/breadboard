@@ -7,6 +7,7 @@
 import {
   InspectableModules,
   InspectablePort,
+  NodeIdentifier,
   PortIdentifier,
   PortStatus,
 } from "@google-labs/breadboard";
@@ -30,6 +31,7 @@ import { GraphPortLabel as GraphNodePortLabel } from "./graph-port-label.js";
 import { ComponentActivityItem } from "../../types/types.js";
 import { GraphNodeActivityMarker } from "./graph-node-activity-marker.js";
 import { GraphNodeReferenceContainer } from "./graph-node-reference-container.js";
+import { isBoardArrayBehavior, isBoardBehavior } from "../../utils/index.js";
 
 const borderColor = getGlobalColor("--bb-neutral-500");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
@@ -1338,6 +1340,35 @@ export class GraphNode extends PIXI.Container {
     this.#referenceContainer.references = this.#references;
 
     this.addChildAt(this.#referenceContainer, 0);
+  }
+
+  intersectingBoardPort(
+    point: PIXI.PointData
+  ): { nodeId: NodeIdentifier; portId: PortIdentifier } | false {
+    if (!this.#inPortsData) {
+      return false;
+    }
+
+    for (const port of this.#inPortsData.values()) {
+      if (!port) {
+        continue;
+      }
+
+      if (
+        port.label.getBounds().containsPoint(point.x, point.y) ||
+        port.nodePort.getBounds().containsPoint(point.x, point.y)
+      ) {
+        if (
+          isBoardBehavior(port.port.schema) ||
+          isBoardArrayBehavior(port.port.schema)
+        ) {
+          return { nodeId: this.label, portId: port.port.name };
+        }
+
+        return false;
+      }
+    }
+    return false;
   }
 
   inPortLocation(name: string): PIXI.ObservablePoint | null {
