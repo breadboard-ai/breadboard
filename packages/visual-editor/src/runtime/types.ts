@@ -37,7 +37,7 @@ export type TabURL = string;
 export type TabName = string;
 export interface Tab {
   id: TabId;
-  kits: Kit[];
+  boardServerKits: Kit[];
   name: TabName;
   mainGraphId: MainGraphIdentifier;
   graph: GraphDescriptor;
