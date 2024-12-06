@@ -159,7 +159,7 @@ class ActivateToolInvocation implements ToolInvocation<Outputs> {
 
   async #findTool(name: string): Promise<BBRTTool | undefined> {
     for (const provider of this.#toolProviders) {
-      for (const tool of provider.tools()) {
+      for (const tool of await provider.tools()) {
         if (tool.metadata.id === name) {
           return tool;
         }

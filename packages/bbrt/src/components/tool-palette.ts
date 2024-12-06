@@ -8,19 +8,13 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import { Signal } from "signal-polyfill";
-import type { SignalArray } from "signal-utils/array";
 import type { SignalSet } from "signal-utils/set";
-import type { ToolProvider } from "../tools/tool-provider.js";
 import type { BBRTTool } from "../tools/tool.js";
 
 @customElement("bbrt-tool-palette")
 export class BBRTToolPalette extends SignalWatcher(LitElement) {
   @property({ attribute: false })
-  toolProviders?: SignalArray<ToolProvider>;
-
-  @property({ attribute: false })
-  activeTools?: Signal.State<Set<BBRTTool>>;
+  availableTools?: SignalSet<BBRTTool>;
 
   @property({ attribute: false })
   activeToolIds?: SignalSet<string>;
@@ -50,10 +44,6 @@ export class BBRTToolPalette extends SignalWatcher(LitElement) {
     :first-child {
       margin-top: 0;
     }
-    h3 {
-      font-weight: normal;
-      color: #666;
-    }
     img {
       height: 16px;
       max-width: 16px;
@@ -64,22 +54,15 @@ export class BBRTToolPalette extends SignalWatcher(LitElement) {
   `;
 
   override render() {
-    if (this.toolProviders === undefined) {
+    if (this.availableTools === undefined) {
       return nothing;
     }
     return html`
       <ul>
-        ${this.toolProviders.map(this.#renderProviders)}
+        ${[...this.availableTools].map(this.#renderTool)}
       </ul>
     `;
   }
-
-  #renderProviders = (provider: ToolProvider) => html`
-    <h3>${provider.name}</h3>
-    <ul>
-      ${provider.tools().map(this.#renderTool)}
-    </ul>
-  `;
 
   #renderTool = (tool: BBRTTool) => html`
     <li

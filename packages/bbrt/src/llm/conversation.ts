@@ -6,7 +6,6 @@
 
 import { Signal } from "signal-polyfill";
 import { SignalArray } from "signal-utils/array";
-import type { SignalSet } from "signal-utils/set";
 import type { BBRTDriver } from "../drivers/driver-interface.js";
 import type { BBRTTool, ToolInvocation } from "../tools/tool.js";
 import { BufferedMultiplexStream } from "../util/buffered-multiplex-stream.js";
@@ -27,11 +26,14 @@ export class BBRTConversation {
   readonly turns = new SignalArray<BBRTTurn>();
   readonly #lock = new Lock();
   readonly #driver: Signal.State<BBRTDriver>;
-  readonly #tools: SignalSet<BBRTTool>;
+  readonly #activeTools: Signal.Computed<Set<BBRTTool>>;
 
-  constructor(driver: Signal.State<BBRTDriver>, tools: SignalSet<BBRTTool>) {
+  constructor(
+    driver: Signal.State<BBRTDriver>,
+    activeTools: Signal.Computed<Set<BBRTTool>>
+  ) {
     this.#driver = driver;
-    this.#tools = tools;
+    this.#activeTools = activeTools;
   }
 
   send(message: { content: string }): Promise<void> {
@@ -116,7 +118,7 @@ export class BBRTConversation {
           // we should preserve order, so maybe it should be some other data
           // structure really.
           const tool = await (async () => {
-            for (const tool of this.#tools) {
+            for (const tool of this.#activeTools.get()) {
               if (tool.metadata.id === chunk.name) {
                 return tool;
               }
@@ -211,7 +213,9 @@ export class BBRTConversation {
 
   async #generate(): Promise<Result<AsyncIterableIterator<BBRTChunk>>> {
     const driver = this.#driver.get();
-    const chunks = await driver.executeTurn(this.turns, [...this.#tools]);
+    const chunks = await driver.executeTurn(this.turns, [
+      ...this.#activeTools.get(),
+    ]);
     if (!chunks.ok) {
       return chunks;
     }

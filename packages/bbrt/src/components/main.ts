@@ -114,13 +114,13 @@ export class BBRTMain extends SignalWatcher(LitElement) {
 
   constructor() {
     super();
-    this.#restoreState();
-    connectedEffect(this, () => this.#persistState());
+    void this.#firstBoot();
   }
 
-  connectedCallback(): void {
-    super.connectedCallback();
-    this.#discoverToolProviders();
+  async #firstBoot() {
+    await this.#loadAllTools();
+    this.#restoreState();
+    connectedEffect(this, () => this.#persistState());
   }
 
   #restoreState() {
@@ -133,9 +133,14 @@ export class BBRTMain extends SignalWatcher(LitElement) {
   }
 
   #persistState() {
-    const serialized = JSON.stringify(this.#state.serialize());
+    const state = this.#state.serialize();
+    const serialized = JSON.stringify(state, null, 2);
     console.log("Persisting state", serialized);
-    sessionStorage.setItem(APP_STATE_SESSION_STORAGE_KEY, serialized);
+    try {
+      sessionStorage.setItem(APP_STATE_SESSION_STORAGE_KEY, serialized);
+    } catch (error) {
+      console.error("Failed to persist state", error);
+    }
   }
 
   override render() {
@@ -186,8 +191,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
     return [
       html`
         <bbrt-tool-palette
-          .toolProviders=${this.#state.toolProviders}
-          .activeTools=${this.#state.activeTools}
+          .availableTools=${this.#state.availableTools}
           .activeToolIds=${this.#state.activeToolIds}
         ></bbrt-tool-palette>
       `,
@@ -200,7 +204,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
     ];
   }
 
-  async #discoverToolProviders() {
+  async #loadAllTools() {
     const servers = await readBoardServersFromIndexedDB();
     if (!servers.ok) {
       console.error(
@@ -209,22 +213,27 @@ export class BBRTMain extends SignalWatcher(LitElement) {
       );
       return;
     }
-    this.#state.toolProviders.length = 0;
-    this.#state.toolProviders.push(
-      ...servers.value.map(
-        (server) => new BreadboardToolProvider(server, this.#state.secrets)
-      )
-    );
-    this.#state.availableTools.clear();
+
+    const boardLister = new BoardLister(servers.value);
     // TODO(aomarks) Casts should not be needed. Something to do with the
     // default parameter being unknown instead of any.
-    this.#state.availableTools.add(new BoardLister(servers.value) as BBRTTool);
-    this.#state.availableTools.add(
-      new ActivateTool(
-        this.#state.toolProviders,
-        this.#state.availableTools
-      ) as BBRTTool
+    this.#state.availableTools.add(boardLister as BBRTTool);
+    this.#state.activeToolIds.add(boardLister.metadata.id);
+
+    const toolActivator = new ActivateTool(
+      this.#state.toolProviders,
+      this.#state.availableTools
     );
+    this.#state.availableTools.add(toolActivator as BBRTTool);
+    this.#state.activeToolIds.add(toolActivator.metadata.id);
+
+    for (const server of servers.value) {
+      const provider = new BreadboardToolProvider(server, this.#state.secrets);
+      this.#state.toolProviders.push(provider);
+      for (const tool of await provider.tools()) {
+        this.#state.availableTools.add(tool);
+      }
+    }
   }
 }
 
