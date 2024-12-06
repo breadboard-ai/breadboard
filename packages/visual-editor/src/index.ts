@@ -47,7 +47,6 @@ import {
 } from "./runtime/types";
 import { createPastRunObserver } from "./utils/past-run-observer";
 import { getRunNodeConfig } from "./utils/run-node";
-import { TopGraphObserver } from "../../shared-ui/dist/utils/top-graph-observer";
 import {
   createTokenVendor,
   TokenVendor,
@@ -879,7 +878,8 @@ export class Main extends LitElement {
       target instanceof HTMLInputElement ||
       target instanceof HTMLTextAreaElement ||
       target instanceof HTMLSelectElement ||
-      target instanceof HTMLCanvasElement
+      target instanceof HTMLCanvasElement ||
+      target instanceof BreadboardUI.Elements.ModuleEditor
     );
   }
 
@@ -1996,7 +1996,7 @@ export class Main extends LitElement {
         const observers = this.#runtime?.run.getObservers(this.tab?.id ?? null);
         const topGraphResult =
           observers?.topGraphObserver?.current() ??
-          TopGraphObserver.entryResult(this.tab?.graph);
+          BreadboardUI.Utils.TopGraphObserver.entryResult(this.tab?.graph);
         const inputsFromLastRun = runs[1]?.inputs() ?? null;
         const tabURLs = this.#runtime.board.getTabURLs();
         const showNodeTypeDescriptions =
@@ -3101,6 +3101,21 @@ export class Main extends LitElement {
                     runner.run(data);
                   }
                 }
+              }}
+              @bbnodecreatereference=${async (
+                evt: BreadboardUI.Events.NodeCreateReferenceEvent
+              ) => {
+                if (!this.tab) {
+                  return;
+                }
+
+                await this.#runtime.edit.createReference(
+                  this.tab,
+                  evt.graphId,
+                  evt.nodeId,
+                  evt.portId,
+                  evt.value
+                );
               }}
               @bbeditorpositionchange=${(
                 evt: BreadboardUI.Events.EditorPointerPositionChangeEvent

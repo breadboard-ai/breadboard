@@ -331,6 +331,7 @@ export class UI extends LitElement {
           .selectionState=${this.selectionState}
           .visualChangeId=${this.visualChangeId}
           .graphTopologyUpdateId=${this.graphTopologyUpdateId}
+          .boardServers=${this.boardServers}
           @bbrunboard=${() => {
             this.sideNavItem = "activity";
           }}

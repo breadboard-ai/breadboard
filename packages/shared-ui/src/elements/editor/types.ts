@@ -11,6 +11,7 @@ import {
   InspectableNode,
   InspectableNodePorts,
   NodeHandlerMetadata,
+  PortIdentifier,
 } from "@google-labs/breadboard";
 import { GraphSelectionState } from "../../types/types";
 
@@ -81,6 +82,7 @@ export interface GraphOpts {
   collapseNodesByDefault: boolean;
   ports: Map<string, InspectableNodePorts> | null;
   typeMetadata: Map<string, NodeHandlerMetadata> | null;
+  references: GraphReferences | null;
   edges: InspectableEdge[];
   nodes: InspectableNode[];
   modules: InspectableModules;
@@ -94,3 +96,13 @@ export type SideEdge = {
   portName: string;
   graphId: string;
 };
+
+export type GraphReferences = Map<NodeIdentifier, GraphNodeReferences>;
+
+export type GraphNodeReferences = Map<PortIdentifier, GraphNodeReferenceOpts>;
+
+export type GraphNodeReferenceOpts = Array<{
+  title: string;
+  color: number;
+  reference: string;
+}>;

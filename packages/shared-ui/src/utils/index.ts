@@ -4,25 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  Schema,
-  NodeValue,
-  UnresolvedPathBoardCapability,
-} from "@google-labs/breadboard";
+import type { Schema } from "@google-labs/breadboard";
 
-export const isBoardBehavior = (
-  schema: Schema,
-  value: NodeValue
-): value is UnresolvedPathBoardCapability | string | undefined => {
-  if (!schema.behavior?.includes("board")) return false;
-  if (!value) return true;
-  if (typeof value === "string") return true;
-  if (typeof value === "object") {
-    const maybeCapability = value as UnresolvedPathBoardCapability;
-    return maybeCapability.kind === "board" && !!maybeCapability.path;
-  }
-  return false;
-};
+export function isBoardBehavior(schema: Schema): boolean {
+  return schema.behavior?.includes("board") ?? false;
+}
+
+export function isBoardArrayBehavior(schema: Schema): boolean {
+  if (schema.type !== "array") return false;
+  if (!schema.items) return false;
+  if (Array.isArray(schema.items)) return false;
+  if (!schema.items.behavior) return false;
+  return schema.items.behavior?.includes("board") ?? false;
+}
 
 export function isPortSpecBehavior(schema: Schema) {
   return schema.behavior?.includes("ports-spec");

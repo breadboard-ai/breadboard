@@ -5,14 +5,21 @@
  */
 
 import {
+  BoardServer,
+  BreadboardCapability,
   GraphIdentifier,
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
   InspectableGraph,
   InspectableNodePorts,
   InspectableRun,
+  isGraphDescriptorCapability,
+  isResolvedURLBoardCapability,
+  isUnresolvedPathBoardCapability,
   NodeConfiguration,
   NodeHandlerMetadata,
+  NodeIdentifier,
+  PortIdentifier,
 } from "@google-labs/breadboard";
 import { LitElement, PropertyValues, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
@@ -40,6 +47,7 @@ import {
   NodeActivitySelectedEvent,
   NodeConfigurationUpdateRequestEvent,
   NodeCreateEvent,
+  NodeCreateReferenceEvent,
   NodeDeleteEvent,
   NodeRunRequestEvent,
   NodeTypeRetrievalErrorEvent,
@@ -60,7 +68,9 @@ import {
   COMMAND_SET_GRAPH_EDITOR,
   MAIN_BOARD_ID,
 } from "../../constants/constants.js";
-import { GraphOpts } from "./types.js";
+import { GraphNodeReferenceOpts, GraphReferences, GraphOpts } from "./types.js";
+import { isBoardArrayBehavior, isBoardBehavior } from "../../utils/index.js";
+import { getSubItemColor } from "../../utils/subgraph-color.js";
 
 const ZOOM_KEY = "bb-editor-zoom-to-highlighted-node-during-runs";
 const DATA_TYPE = "text/plain";
@@ -203,6 +213,9 @@ export class Editor extends LitElement {
   @state()
   showOverflowMenu = false;
 
+  @property()
+  boardServers: BoardServer[] = [];
+
   #graphRendererRef: Ref<GraphRenderer> = createRef();
 
   #onDropBound = this.#onDrop.bind(this);
@@ -311,15 +324,116 @@ export class Editor extends LitElement {
     }
   `;
 
+  #getBoardTitle(boardUrl: string): string {
+    const expandedUrl = new URL(boardUrl, window.location.href);
+    for (const boardServer of this.boardServers) {
+      if (!boardServer.canProvide(expandedUrl)) {
+        continue;
+      }
+
+      for (const store of boardServer.items().values()) {
+        for (const [title, { url }] of store.items) {
+          if (url !== expandedUrl.href) {
+            continue;
+          }
+
+          return title ?? boardUrl;
+        }
+      }
+    }
+
+    return boardUrl;
+  }
+
   #inspectableGraphToConfig(
     url: string,
     subGraphId: string | null,
     selectedGraph: InspectableGraph
   ): GraphOpts {
-    const ports = new Map<string, InspectableNodePorts>();
+    const references: GraphReferences = new Map<
+      NodeIdentifier,
+      Map<PortIdentifier, GraphNodeReferenceOpts>
+    >();
+
+    const pushReference = (
+      nodeId: NodeIdentifier,
+      portId: PortIdentifier,
+      reference: string | BreadboardCapability
+    ) => {
+      if (typeof reference === "object") {
+        if (isGraphDescriptorCapability(reference)) {
+          return;
+        }
+
+        if (isResolvedURLBoardCapability(reference)) {
+          reference = reference.url;
+        } else if (isUnresolvedPathBoardCapability(reference)) {
+          reference = reference.path;
+        }
+      }
+
+      let ref = reference;
+      let title: string;
+
+      if (reference.startsWith("#") && selectedGraph.graphs()) {
+        ref = reference.slice(1);
+
+        const subGraph = selectedGraph.graphs()?.[ref];
+        title = subGraph?.raw().title ?? "Untitled board";
+      } else {
+        const boardTitle = this.#getBoardTitle(reference);
+        if (boardTitle !== reference) {
+          title = boardTitle;
+        } else {
+          title = reference.split("/").at(-1) as string;
+        }
+      }
+
+      let nodeRefs = references.get(nodeId);
+      if (!nodeRefs) {
+        nodeRefs = new Map<PortIdentifier, GraphNodeReferenceOpts>();
+        references.set(nodeId, nodeRefs);
+      }
+
+      let nodeRefValues = nodeRefs.get(portId);
+      if (!nodeRefValues) {
+        nodeRefValues = [];
+        nodeRefs.set(portId, nodeRefValues);
+      }
+
+      nodeRefValues.push({
+        title,
+        color: getSubItemColor<number>(ref, "label", true),
+        reference,
+      });
+    };
+
+    const ports = new Map<PortIdentifier, InspectableNodePorts>();
     const typeMetadata = new Map<string, NodeHandlerMetadata>();
     for (const node of selectedGraph.nodes()) {
-      ports.set(node.descriptor.id, node.currentPorts());
+      const currentPorts = node.currentPorts();
+      ports.set(node.descriptor.id, currentPorts);
+      for (const port of currentPorts.inputs.ports) {
+        if (!port.value) {
+          continue;
+        }
+
+        if (isBoardBehavior(port.schema) || isBoardArrayBehavior(port.schema)) {
+          if (Array.isArray(port.value)) {
+            for (const reference of port.value) {
+              pushReference(
+                node.descriptor.id,
+                port.name,
+
+                reference as string
+              );
+            }
+          } else {
+            pushReference(node.descriptor.id, port.name, port.value as string);
+          }
+        }
+      }
+
       try {
         typeMetadata.set(node.descriptor.type, node.type().currentMetadata());
       } catch (err) {
@@ -349,6 +463,7 @@ export class Editor extends LitElement {
       nodes: selectedGraph.nodes(),
       modules: selectedGraph.modules(),
       metadata: selectedGraph.metadata() || {},
+      references,
       selectionState: graphSelectionState ?? null,
     };
   }
@@ -815,12 +930,32 @@ export class Editor extends LitElement {
 
     this.#graphRendererRef.value.removeSubGraphHighlights();
 
-    const id = createRandomID(type);
-    const configuration = getDefaultConfiguration(type);
     const pointer = {
       x: evt.pageX - this.#left + window.scrollX,
       y: evt.pageY - this.#top - window.scrollY - RIBBON_HEIGHT,
     };
+
+    // The user has dropped the item onto a board port.
+    if (URL.canParse(type)) {
+      const boardPort =
+        this.#graphRendererRef.value.intersectingBoardPort(pointer);
+
+      if (boardPort) {
+        this.dispatchEvent(
+          new NodeCreateReferenceEvent(
+            boardPort.graphId,
+            boardPort.nodeId,
+            boardPort.portId,
+            type
+          )
+        );
+        return;
+      }
+    }
+
+    // The user has dropped the item onto the board proper.
+    const id = createRandomID(type);
+    const configuration = getDefaultConfiguration(type);
 
     const location =
       this.#graphRendererRef.value.toContainerCoordinates(pointer);

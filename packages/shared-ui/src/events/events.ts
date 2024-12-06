@@ -10,6 +10,7 @@ import type {
   InspectablePort,
   NodeConfiguration,
   NodeDescriptor,
+  PortIdentifier,
   Schema,
 } from "@google-labs/breadboard";
 import type {
@@ -690,6 +691,31 @@ export class UserOutputEvent extends Event {
 
   constructor(public readonly values: UserOutputValues) {
     super(UserOutputEvent.eventName, { ...eventInit });
+  }
+}
+
+export class NodeCreateReferenceEvent extends Event {
+  static eventName = "bbnodecreatereference";
+
+  constructor(
+    public readonly graphId: GraphIdentifier,
+    public readonly nodeId: NodeIdentifier,
+    public readonly portId: PortIdentifier,
+    public readonly value: string
+  ) {
+    super(NodeCreateReferenceEvent.eventName, { ...eventInit });
+  }
+}
+
+export class NodeDeleteReferenceEvent extends Event {
+  static eventName = "bbnodedeletereference";
+
+  constructor(
+    public readonly graphId: GraphIdentifier,
+    public readonly nodeId: NodeIdentifier,
+    public readonly portId: PortIdentifier
+  ) {
+    super(NodeDeleteReferenceEvent.eventName, { ...eventInit });
   }
 }
 

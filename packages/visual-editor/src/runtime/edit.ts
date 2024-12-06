@@ -16,6 +16,7 @@ import {
   NodeConfiguration,
   NodeDescriptor,
   NodeIdentifier,
+  PortIdentifier,
 } from "@google-labs/breadboard";
 import {
   EnhanceSideboard,
@@ -777,6 +778,68 @@ export class Edit extends EventTarget {
     if (subGraphId === tab?.subGraphId) {
       tab.subGraphId = null;
     }
+  }
+
+  async createReference(
+    tab: Tab | null,
+    graphId: GraphIdentifier,
+    nodeId: NodeIdentifier,
+    portId: PortIdentifier,
+    value: NodeValue
+  ) {
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to edit"));
+      return;
+    }
+
+    if (graphId === MAIN_BOARD_ID) {
+      graphId = "";
+    }
+
+    const node = editableGraph.inspect(graphId).nodeById(nodeId);
+    const port = node
+      ?.currentPorts()
+      .inputs.ports.find((port) => port.name === portId);
+    const config = node?.configuration();
+    if (!config || !port) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to create reference"));
+      return;
+    }
+
+    const newConfigurationPart: NodeValue = structuredClone({
+      [portId]: config[portId],
+    });
+
+    if (!newConfigurationPart[portId]) {
+      if (port.type.schema.type === "array") {
+        newConfigurationPart[portId] = [value];
+      } else {
+        newConfigurationPart[portId] = value;
+      }
+    } else {
+      if (Array.isArray(newConfigurationPart[portId])) {
+        if (newConfigurationPart[portId].includes(value)) {
+          this.dispatchEvent(new RuntimeErrorEvent("Reference already exists"));
+          return;
+        }
+
+        newConfigurationPart[portId].push(value);
+      } else {
+        if (port.type.schema.type === "array") {
+          newConfigurationPart[portId] = [value];
+        } else {
+          newConfigurationPart[portId] = value;
+        }
+      }
+    }
+
+    return this.changeNodeConfigurationPart(
+      tab,
+      nodeId,
+      newConfigurationPart,
+      graphId === "" ? null : graphId
+    );
   }
 
   async processVisualChange(

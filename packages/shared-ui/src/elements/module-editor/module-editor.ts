@@ -656,6 +656,7 @@ export class ModuleEditor extends LitElement {
       modules: selectedGraph.modules(),
       metadata: selectedGraph.metadata() || {},
       selectionState: null,
+      references: null,
     };
   }
 
