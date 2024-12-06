@@ -46,7 +46,7 @@ export class Board extends EventTarget {
     /**
      * Extra Kits, supplied by the board server.
      * */
-    private readonly kits: Kit[],
+    private readonly boardServerKits: Kit[],
     private readonly boardServers: RuntimeConfigBoardServers,
     private readonly tokenVendor?: TokenVendor
   ) {
@@ -358,7 +358,7 @@ export class Board extends EventTarget {
     }
     this.#tabs.set(id, {
       id,
-      kits: this.kits,
+      boardServerKits: this.boardServerKits,
       name: descriptor.title ?? "Untitled board",
       mainGraphId: mainGraphId.result,
       graph: descriptor,
@@ -405,7 +405,7 @@ export class Board extends EventTarget {
     }
     this.#tabs.set(id, {
       id,
-      kits: this.kits,
+      boardServerKits: this.boardServerKits,
       name: descriptor.title ?? "Untitled board",
       graph: descriptor,
       mainGraphId: mainGraphId.result,
@@ -455,7 +455,7 @@ export class Board extends EventTarget {
     try {
       const base = new URL(window.location.href);
 
-      let kits = this.kits;
+      let kits = this.boardServerKits;
       let graph: GraphDescriptor | null = null;
       if (this.#canParse(url, base.href)) {
         const boardServer = this.getBoardServerForURL(new URL(url, base));
@@ -466,7 +466,7 @@ export class Board extends EventTarget {
         }
 
         if (boardServer && this.boardServers) {
-          kits = (boardServer as BoardServer).kits ?? this.kits;
+          kits = (boardServer as BoardServer).kits ?? this.boardServerKits;
           const loadResult = await this.boardServers.loader.load(url, { base });
           graph = loadResult.success ? loadResult.graph : null;
         } else {
@@ -517,7 +517,7 @@ export class Board extends EventTarget {
       const id = globalThis.crypto.randomUUID();
       this.#tabs.set(id, {
         id,
-        kits,
+        boardServerKits: kits,
         name: graph.title ?? "Untitled board",
         graph,
         mainGraphId: mainGraphId.result,
@@ -780,7 +780,7 @@ export class Board extends EventTarget {
             );
             args = [
               "replaceContent",
-              tab.kits,
+              tab.boardServerKits,
               ...args,
               node ? node.type : comment ? "comment" : "unknown",
               node ? node.configuration : comment ? comment.text : {},

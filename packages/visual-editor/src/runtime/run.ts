@@ -66,7 +66,11 @@ export class Run extends EventTarget {
     topGraphObserver: BreadboardUI.Utils.TopGraphObserver,
     runObserver?: InspectableRunObserver
   ) {
-    this.#runs.set(tab.id, { topGraphObserver, runObserver, kits: tab.kits });
+    this.#runs.set(tab.id, {
+      topGraphObserver,
+      runObserver,
+      kits: [...this.graphStore.kits, ...tab.boardServerKits],
+    });
   }
 
   getRunner(tabId: TabId | null) {
@@ -116,7 +120,11 @@ export class Run extends EventTarget {
   ) {
     const abortController = new AbortController();
     const tabId = tab.id;
-    config = { ...config, kits: tab.kits, signal: abortController.signal };
+    config = {
+      ...config,
+      kits: [...this.graphStore.kits, ...tab.boardServerKits],
+      signal: abortController.signal,
+    };
 
     const runner = this.#createBoardRunner(config, abortController);
     this.#runs.set(tabId, runner);

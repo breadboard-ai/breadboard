@@ -72,7 +72,7 @@ export class UI extends LitElement {
   inputsFromLastRun: InspectableRunInputs | null = null;
 
   @property()
-  kits: Kit[] = [];
+  boardServerKits: Kit[] = [];
 
   @property()
   loader: GraphLoader | null = null;
@@ -285,7 +285,7 @@ export class UI extends LitElement {
       [
         graph,
         run,
-        this.kits,
+        this.boardServerKits,
         this.topGraphResult,
         this.history,
         this.editorRender,
@@ -458,12 +458,12 @@ export class UI extends LitElement {
 
       case "components": {
         sideNavItem = html`${guard(
-          [this.kits, this.graphTopologyUpdateId, this.mainGraphId],
+          [this.boardServerKits, this.graphTopologyUpdateId, this.mainGraphId],
           () =>
             html`<h1 id="side-nav-title">Components</h1>
               <bb-component-selector
                 .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-                .boardServerKits=${this.kits}
+                .boardServerKits=${this.boardServerKits}
                 .graphStore=${this.graphStore}
                 .mainGraphId=${this.mainGraphId}
               ></bb-component-selector>`

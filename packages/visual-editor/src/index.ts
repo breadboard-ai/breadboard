@@ -2354,7 +2354,7 @@ export class Main extends LitElement {
                   // We should probably have some way to codify the shape.
                   const invocationResult =
                     await this.#runtime.run.invokeSideboard(
-                      this.tab!.kits,
+                      this.tab!.boardServerKits,
                       "/side-boards/enhance-configuration.bgl.json",
                       this.#runtime.board.getLoader(),
                       { config },
@@ -3045,7 +3045,7 @@ export class Main extends LitElement {
               .moduleId=${this.tab?.moduleId ?? null}
               .runs=${runs ?? null}
               .topGraphResult=${topGraphResult}
-              .kits=${this.tab?.kits ?? []}
+              .boardServerKits=${this.tab?.boardServerKits ?? []}
               .loader=${this.#runtime.board.getLoader()}
               .status=${tabStatus}
               .boardId=${this.#boardId}
