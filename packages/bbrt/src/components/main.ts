@@ -228,7 +228,11 @@ export class BBRTMain extends SignalWatcher(LitElement) {
     this.#state.activeToolIds.add(toolActivator.metadata.id);
 
     for (const server of servers.value) {
-      const provider = new BreadboardToolProvider(server, this.#state.secrets);
+      const provider = new BreadboardToolProvider(
+        server,
+        this.#state.secrets,
+        this.#state.artifactStore
+      );
       this.#state.toolProviders.push(provider);
       for (const tool of await provider.tools()) {
         this.#state.availableTools.add(tool);

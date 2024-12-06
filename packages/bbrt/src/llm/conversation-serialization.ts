@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InvokeResult, ToolInvocationState } from "../tools/tool.js";
 import type {
   SerializableBBRTToolCall,
   SerializableBBRTToolResponse,
@@ -75,10 +74,10 @@ function serializeToolResponse(
 ): SerializableBBRTToolResponse {
   return {
     id: response.id,
-    invocationState: serializeInvocationState(response.invocation.state.get()),
+    invocationState: response.invocation.state.get(),
     toolId: response.tool.metadata.id,
     args: response.args,
-    response: serializeResponseResult(response.response),
+    response: response.response,
   };
 }
 
@@ -87,31 +86,6 @@ function serializeToolCall(call: BBRTToolCall): SerializableBBRTToolCall {
     id: call.id,
     toolId: call.tool.metadata.id,
     args: call.args,
-    invocationState: serializeInvocationState(call.invocation.state.get()),
+    invocationState: call.invocation.state.get(),
   };
-}
-
-function serializeResponseResult(
-  result: InvokeResult<unknown>
-): InvokeResult<unknown> {
-  const clone = structuredClone(result);
-  for (const artifact of clone.artifacts) {
-    // TODO(aomarks) This is bad. See also below.
-    artifact.inlineData.data = "";
-  }
-  return clone;
-}
-
-function serializeInvocationState(
-  state: ToolInvocationState
-): ToolInvocationState {
-  if (state.status !== "success") {
-    return state;
-  }
-  const clone = structuredClone(state);
-  for (const artifact of clone.value.artifacts) {
-    // TODO(aomarks) See above.
-    artifact.inlineData.data = "";
-  }
-  return clone;
 }
