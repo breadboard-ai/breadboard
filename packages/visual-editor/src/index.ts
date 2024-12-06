@@ -879,7 +879,8 @@ export class Main extends LitElement {
       target instanceof HTMLInputElement ||
       target instanceof HTMLTextAreaElement ||
       target instanceof HTMLSelectElement ||
-      target instanceof HTMLCanvasElement
+      target instanceof HTMLCanvasElement ||
+      target instanceof BreadboardUI.Elements.ModuleEditor
     );
   }
 

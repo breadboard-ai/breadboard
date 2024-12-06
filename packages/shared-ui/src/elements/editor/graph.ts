@@ -24,6 +24,7 @@ import {
   ComponentExpansionState,
   GRAPH_OPERATIONS,
   GraphNodePortType,
+  GraphReferences,
   LayoutInfo,
   SideEdge,
   VisualMetadata,
@@ -80,6 +81,7 @@ export class Graph extends PIXI.Container {
   #edgeValues: TopGraphEdgeValues | null = null;
   #nodeInfo: TopGraphNodeInfo | null = null;
   #selectionState: GraphSelectionState | null = null;
+  #references: GraphReferences | null = null;
 
   #isInitialDraw = true;
   #minimized = false;
@@ -1094,6 +1096,15 @@ export class Graph extends PIXI.Container {
     return this.#showNodeTypeDescriptions;
   }
 
+  set references(references: GraphReferences | null) {
+    this.#references = references;
+    this.#isDirty = true;
+  }
+
+  get references() {
+    return this.#references;
+  }
+
   set edges(edges: InspectableEdge[] | null) {
     // Validate the edges.
     this.#edges =
@@ -1626,6 +1637,10 @@ export class Graph extends PIXI.Container {
       if (graphNode.title !== node.title()) {
         graphNode.title = node.title();
       }
+
+      const graphNodeReferences =
+        this.#references?.get(graphNode.label) ?? null;
+      graphNode.references = graphNodeReferences;
 
       if (icon && GraphAssets.instance().has(icon)) {
         graphNode.icon = icon;

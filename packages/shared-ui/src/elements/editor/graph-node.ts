@@ -7,6 +7,7 @@
 import {
   InspectableModules,
   InspectablePort,
+  PortIdentifier,
   PortStatus,
 } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
@@ -14,6 +15,7 @@ import {
   ComponentExpansionState,
   GRAPH_OPERATIONS,
   GraphNodePortType,
+  GraphNodeReferences,
 } from "./types.js";
 import { GraphNodePort } from "./graph-node-port.js";
 import { GraphOverflowMenu } from "./graph-overflow-menu.js";
@@ -27,6 +29,7 @@ import { GraphNodePortList } from "./graph-node-port-list.js";
 import { GraphPortLabel as GraphNodePortLabel } from "./graph-port-label.js";
 import { ComponentActivityItem } from "../../types/types.js";
 import { GraphNodeActivityMarker } from "./graph-node-activity-marker.js";
+import { GraphNodeReferenceContainer } from "./graph-node-reference-container.js";
 
 const borderColor = getGlobalColor("--bb-neutral-500");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
@@ -72,6 +75,8 @@ export class GraphNode extends PIXI.Container {
   #portRadius = 4;
   #background = new PIXI.Graphics();
   #collapsedPortList = new GraphNodePortList();
+  #referenceContainer = new GraphNodeReferenceContainer();
+  #references: GraphNodeReferences | null = null;
   #inPorts: InspectablePort[] | null = null;
   #inPortsData: Map<
     string,
@@ -96,8 +101,8 @@ export class GraphNode extends PIXI.Container {
     label: PIXI.Text;
     nodePort: GraphNodePort;
   }> = [];
-  #inPortLocations: Map<string, PIXI.ObservablePoint> = new Map();
-  #outPortLocations: Map<string, PIXI.ObservablePoint> = new Map();
+  #inPortLocations: Map<PortIdentifier, PIXI.ObservablePoint> = new Map();
+  #outPortLocations: Map<PortIdentifier, PIXI.ObservablePoint> = new Map();
   #modules: InspectableModules | null = null;
   #selected = false;
   #highlightForAdHoc = false;
@@ -145,6 +150,10 @@ export class GraphNode extends PIXI.Container {
     this.addChild(this.#headerOutPort);
     this.addChild(this.#collapsedPortList);
     this.addChild(this.#activityMarker);
+    this.addChild(this.#referenceContainer);
+
+    this.#referenceContainer.x = -10;
+    this.#referenceContainer.y = 0;
 
     const playIcon = GraphAssets.instance().get("play-filled");
     if (playIcon) {
@@ -426,6 +435,15 @@ export class GraphNode extends PIXI.Container {
     this.#isDirty = true;
   }
 
+  get references() {
+    return this.#references;
+  }
+
+  set references(references: GraphNodeReferences | null) {
+    this.#references = references;
+    this.#isDirty = true;
+  }
+
   get highlightForAdHoc() {
     return this.#highlightForAdHoc;
   }
@@ -578,6 +596,7 @@ export class GraphNode extends PIXI.Container {
     this.#collapsedPortList.inPorts = ports;
     this.#inPorts = ports;
     this.#isDirty = true;
+
     if (!ports) {
       return;
     }
@@ -948,6 +967,7 @@ export class GraphNode extends PIXI.Container {
     this.#drawCollapsedPortListIfNeeded();
     this.#drawActivityMarkerIfNeeded();
     this.#drawRunnerButtonIfNeeded();
+    this.#drawReferences();
   }
 
   #drawRunnerButtonIfNeeded() {
@@ -1307,6 +1327,17 @@ export class GraphNode extends PIXI.Container {
     }
 
     return portY;
+  }
+
+  /**
+   * Note that these should be drawn after the ports so that the port locations
+   * are known.
+   */
+  #drawReferences() {
+    this.#referenceContainer.inPortLocations = this.#inPortLocations;
+    this.#referenceContainer.references = this.#references;
+
+    this.addChildAt(this.#referenceContainer, 0);
   }
 
   inPortLocation(name: string): PIXI.ObservablePoint | null {

@@ -2130,6 +2130,10 @@ export class GraphRenderer extends LitElement {
       graph.selectionState = opts.selectionState;
     }
 
+    if (opts.references !== undefined) {
+      graph.references = opts.references;
+    }
+
     graph.subGraphId = subGraphId;
     graph.subGraphTitle = opts.title ?? null;
 

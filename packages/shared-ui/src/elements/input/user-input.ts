@@ -493,7 +493,7 @@ export class UserInput extends LitElement {
                 isPortSpecBehavior(input.schema) ||
                 isLLMContentBehavior(input.schema) ||
                 isLLMContentArrayBehavior(input.schema) ||
-                isBoardBehavior(input.schema, inputValue)
+                isBoardBehavior(input.schema)
               ) {
                 if (isLLMContentArrayBehavior(input.schema)) {
                   (el as unknown as LLMInputArray).processAllOpenParts();
@@ -712,8 +712,11 @@ export class UserInput extends LitElement {
               .schema=${input.schema}
               .value=${input.value ?? defaultValue}
             ></bb-delegating-input>`;
-          } else if (isBoardBehavior(input.schema, input.value)) {
-            inputField = createBoardInput(id, input.value);
+          } else if (isBoardBehavior(input.schema)) {
+            inputField = createBoardInput(
+              id,
+              input.value as UnresolvedPathBoardCapability
+            );
           } else if (isModuleBehavior(input.schema)) {
             const modules = Object.entries(this.graph?.modules ?? {}).filter(
               ([, module]) => module.metadata?.runnable
@@ -897,8 +900,11 @@ export class UserInput extends LitElement {
                     .inlineControls=${this.inlineControls}
                   ></bb-llm-input>`;
                   break;
-                } else if (isBoardBehavior(input.schema, input.value)) {
-                  inputField = createBoardInput(id, input.value);
+                } else if (isBoardBehavior(input.schema)) {
+                  inputField = createBoardInput(
+                    id,
+                    input.value as UnresolvedPathBoardCapability
+                  );
                   break;
                 }
 
