@@ -7,6 +7,7 @@
 import type { JSONSchema7 } from "json-schema";
 import type { Signal } from "signal-polyfill";
 import type { ArtifactHandle } from "../artifacts/artifact-interface.js";
+import type { PresentableError } from "../util/presentable-error.js";
 import type { Result } from "../util/result.js";
 
 export interface BBRTTool<I = unknown, O = unknown> {
@@ -34,7 +35,7 @@ export type ToolInvocationState<O = unknown> =
       status: "success";
       value: InvokeResult<O>;
     }
-  | { status: "error"; error: unknown };
+  | { status: "error"; error: PresentableError };
 
 export interface InvokeResult<O = unknown> {
   readonly output: O;

@@ -47,18 +47,14 @@ function serializeTurn(turn: BBRTTurn): SerializableBBRTTurn {
       toolCalls: turn.toolCalls
         ? [...turn.toolCalls].map(serializeToolCall)
         : undefined,
-      // TODO(aomarks) This is lossy. We should have a utility that converts any
-      // error to something serializable; see the logic in
-      // components/error-message.ts (maybe we can move it out of there).
-      error: turn.error ? String(turn.error) : turn.error,
+      error: turn.error,
     };
   } else if (turn.kind === "error") {
     return {
       kind: "error",
       role: turn.role,
       status: turn.status.get(),
-      // TODO(aomarks) Lossy errors again, see above.
-      error: String(turn.error),
+      error: turn.error,
     };
   }
   turn satisfies never;

@@ -5,6 +5,7 @@
  */
 
 import type { InvokeResult, ToolInvocationState } from "../tools/tool.js";
+import type { PresentableError } from "../util/presentable-error.js";
 
 export type SerializableBBRTTurn =
   | SerializableBBRTUserTurn
@@ -42,14 +43,14 @@ export interface SerializableBBRTModelTurn {
   status: SerializableBBRTTurnStatus;
   content: string[];
   toolCalls?: Array<SerializableBBRTToolCall>;
-  error?: unknown;
+  error?: PresentableError;
 }
 
 export interface SerializableBBRTErrorTurn {
   kind: "error";
   role: "user" | "model";
   status: SerializableBBRTTurnStatus;
-  error: string;
+  error: PresentableError;
 }
 
 export interface SerializableBBRTToolCall {

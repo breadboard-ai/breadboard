@@ -39,6 +39,7 @@ import type {
   ToolInvocationState,
   ToolMetadata,
 } from "../tools/tool.js";
+import { coercePresentableError } from "../util/presentable-error.js";
 import type { Result } from "../util/result.js";
 import { resultify } from "../util/resultify.js";
 import type {
@@ -145,7 +146,10 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
     this.state.set({ status: "running" });
     const bgl = await this.#getBgl();
     if (!bgl.ok) {
-      this.state.set({ status: "error", error: bgl.error });
+      this.state.set({
+        status: "error",
+        error: coercePresentableError(bgl.error),
+      });
       return;
     }
 
@@ -232,13 +236,19 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
     );
 
     if (!runResult.ok) {
-      this.state.set({ status: "error", error: runResult.error });
+      this.state.set({
+        status: "error",
+        error: coercePresentableError(runResult.error),
+      });
       return;
     }
 
     const artifacts = await this.#extractAndStoreArtifacts(store, storeGroupId);
     if (!artifacts.ok) {
-      this.state.set({ status: "error", error: artifacts.error });
+      this.state.set({
+        status: "error",
+        error: coercePresentableError(artifacts.error),
+      });
       return;
     }
     this.state.set({

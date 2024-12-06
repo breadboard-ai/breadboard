@@ -6,6 +6,7 @@
 
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { coercePresentableError } from "../util/presentable-error.js";
 
 @customElement("bbrt-error-message")
 export class BBRTErrorMessage extends LitElement {
@@ -44,50 +45,22 @@ export class BBRTErrorMessage extends LitElement {
   }
 
   #renderError(error: unknown): unknown {
-    if (error instanceof AggregateError && error.errors.length > 0) {
-      return error.errors.map((subError) => this.#renderError(subError));
-    } else if (error instanceof Error) {
-      let message = error.message ?? "";
-      let stack = error.stack ?? "";
-      const prefixedMessage = `Error: ${message}`;
-      if (stack.startsWith(`${prefixedMessage}\n`)) {
-        // Often times the stack trace contains a full copy of the message, with
-        // an Error: prefix. Remove the redundancy.
-        stack = stack.slice(prefixedMessage.length /* for the \n */ + 1);
-        message = prefixedMessage;
-      }
+    const presentable = coercePresentableError(error);
+    if (presentable.additional && presentable.additional.length > 0) {
+      return [
+        this.#renderError({ ...presentable, additional: undefined }),
+        ...presentable.additional.map(this.#renderError),
+      ];
+    }
+    if (presentable.stack) {
       return html`
         <div part="error">
-          <pre part="message">${message ?? "Unknown error"}</pre>
-          ${stack // prettier-ignore
-            ? html`<pre part="stack">${stack}</pre>`
-            : ""}
+          <pre part="message">${presentable.message ?? "Unknown error"}</pre>
+          <pre part="stack">${presentable.stack}</pre>
         </div>
       `;
-    } else if (
-      // An error-like object (anything with a truthy "message" property).
-      typeof error === "object" &&
-      error !== null &&
-      "message" in error &&
-      error.message
-    ) {
-      // prettier-ignore
-      return html`<pre part="error message">${error.message}</pre>`;
-    } else if (
-      // A nested error (anything with a truthy "error" property).
-      typeof error === "object" &&
-      error !== null &&
-      "error" in error &&
-      error.error
-    ) {
-      return this.#renderError(error.error);
-    } else if (typeof error === "string") {
-      // prettier-ignore
-      return html`<pre part="error message">${error}</pre>`;
-    } else {
-      // prettier-ignore
-      return html`<pre part="error message">${JSON.stringify(this.error, null, 2)}</pre>`;
     }
+    return html`<pre part="error message">${presentable.message}</pre>`;
   }
 }
 
