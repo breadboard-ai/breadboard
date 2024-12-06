@@ -8,6 +8,7 @@ import { Signal } from "signal-polyfill";
 import { SignalArray } from "signal-utils/array";
 import type { BBRTTool, InvokeResult, ToolInvocation } from "../tools/tool.js";
 import type { BufferedMultiplexStream } from "../util/buffered-multiplex-stream.js";
+import type { PresentableError } from "../util/presentable-error.js";
 
 export type BBRTTurn = BBRTUserTurn | BBRTModelTurn | BBRTErrorTurn;
 
@@ -40,14 +41,14 @@ export interface BBRTModelTurn {
   status: Signal.State<BBRTTurnStatus>;
   content: BufferedMultiplexStream<string>;
   toolCalls?: SignalArray<BBRTToolCall>;
-  error?: unknown;
+  error?: PresentableError;
 }
 
 export interface BBRTErrorTurn {
   kind: "error";
   role: "user" | "model";
   status: Signal.State<BBRTTurnStatus>;
-  error: unknown;
+  error: PresentableError;
 }
 
 export interface BBRTToolCall {

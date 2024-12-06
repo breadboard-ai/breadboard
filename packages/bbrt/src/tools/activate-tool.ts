@@ -133,7 +133,7 @@ class ActivateToolInvocation implements ToolInvocation<Outputs> {
         } else {
           this.state.set({
             status: "error",
-            error: "Error finding tool",
+            error: { message: "Error finding tool" },
           });
         }
         break;
@@ -141,7 +141,7 @@ class ActivateToolInvocation implements ToolInvocation<Outputs> {
       case "deny": {
         this.state.set({
           status: "error",
-          error: "User disallowed tool",
+          error: { message: "User disallowed tool" },
         });
         break;
       }
@@ -150,7 +150,7 @@ class ActivateToolInvocation implements ToolInvocation<Outputs> {
         console.error("Unknown result:", result);
         this.state.set({
           status: "error",
-          error: "Internal error",
+          error: { message: "Internal error" },
         });
         break;
       }

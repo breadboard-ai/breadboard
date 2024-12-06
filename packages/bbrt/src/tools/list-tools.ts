@@ -11,6 +11,7 @@ import { makeToolSafeName } from "../breadboard/make-tool-safe-name.js";
 import "../components/content.js";
 import type { GeminiFunctionDeclaration } from "../drivers/gemini-types.js";
 import type { EmptyObject } from "../util/empty-object.js";
+import { coercePresentableError } from "../util/presentable-error.js";
 import type { Result } from "../util/result.js";
 import type {
   BBRTTool,
@@ -100,7 +101,7 @@ class ListToolsInvocation implements ToolInvocation<Outputs> {
       if (!tool.ok) {
         this.state.set({
           status: "error",
-          error: tool.error,
+          error: coercePresentableError(tool.error),
         });
         return;
       }

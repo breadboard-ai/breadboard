@@ -10,6 +10,7 @@ import type { BBRTDriver } from "../drivers/driver-interface.js";
 import type { BBRTTool, ToolInvocation } from "../tools/tool.js";
 import { BufferedMultiplexStream } from "../util/buffered-multiplex-stream.js";
 import { Lock } from "../util/lock.js";
+import { coercePresentableError } from "../util/presentable-error.js";
 import type { Result } from "../util/result.js";
 import { transposeResults } from "../util/transpose-results.js";
 import { waitForState } from "../util/wait-for-state.js";
@@ -88,7 +89,8 @@ export class BBRTConversation {
     const modelResponse = await this.#generate();
     if (!modelResponse.ok) {
       status.set("error");
-      modelTurn.error = modelResponse.error;
+      const error = coercePresentableError(modelResponse.error);
+      modelTurn.error = error;
       // TODO(aomarks) Use a new "using" statement for this, with broad scope.
       // Same for lock.
       void contentStream.writable.close();
@@ -99,7 +101,7 @@ export class BBRTConversation {
         kind: "error",
         role: "model",
         status,
-        error: modelResponse.error,
+        error,
       });
       return;
     }
@@ -168,7 +170,8 @@ export class BBRTConversation {
         return this.#send({ toolResponses: toolResponses.value });
       } else {
         status.set("error");
-        modelTurn.error = toolResponses.error;
+        const error = coercePresentableError(toolResponses.error);
+        modelTurn.error = error;
         // TODO(aomarks) Remove once we render errors directly on turns. Though,
         // be careful here, since if we add retry, we don't want to retry the
         // whole turn, just the model call. Maybe we need a turn role for tool
@@ -177,7 +180,7 @@ export class BBRTConversation {
           kind: "error",
           role: "model",
           status,
-          error: toolResponses.error,
+          error,
         });
       }
     }
