@@ -7,7 +7,6 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { guard } from "lit/directives/guard.js";
 import type {
   BBRTErrorTurn,
   BBRTModelTurn,
@@ -15,7 +14,6 @@ import type {
   BBRTUserTurnContent,
   BBRTUserTurnToolResponses,
 } from "../llm/conversation-types.js";
-import { typingEffect } from "../util/typing-effect.js";
 import "./error-message.js";
 import "./markdown.js";
 import "./tool-call.js";
@@ -141,10 +139,6 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
   }
 
   #renderModelResponse(turn: BBRTModelTurn) {
-    const content =
-      typeof turn.content === "string"
-        ? turn.content
-        : guard(turn.content, () => typingEffect(5, turn.content));
     const toolCalls = turn.toolCalls?.length
       ? html`<div id="toolCalls" part="content">
           ${turn.toolCalls?.map(
@@ -156,7 +150,7 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
     return [
       this.#roleIcon,
       html`<div part="contents">
-        <bbrt-markdown .markdown=${content} part="content"></bbrt-markdown>
+        <bbrt-markdown .markdown=${turn.content} part="content"></bbrt-markdown>
         ${toolCalls}
       </div>`,
     ];
