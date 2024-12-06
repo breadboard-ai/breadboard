@@ -14,7 +14,7 @@ import type {
   BBRTTurn,
   BBRTUserTurnContent,
   BBRTUserTurnToolResponses,
-} from "../llm/conversation.js";
+} from "../llm/conversation-types.js";
 import { typingEffect } from "../util/typing-effect.js";
 import "./error-message.js";
 import "./markdown.js";

@@ -5,7 +5,7 @@
  */
 
 import type { BBRTChunk } from "../llm/chunk.js";
-import type { BBRTTurn } from "../llm/conversation.js";
+import type { BBRTTurn } from "../llm/conversation-types.js";
 import type { BBRTTool } from "../tools/tool.js";
 import { JsonDataStreamTransformer } from "../util/json-data-stream-transformer.js";
 import type { Result } from "../util/result.js";

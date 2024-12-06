@@ -7,7 +7,7 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import type { BBRTToolCall } from "../llm/conversation.js";
+import type { BBRTToolCall } from "../llm/conversation-types.js";
 
 @customElement("bbrt-tool-call")
 export class BBRTToolCallEl extends SignalWatcher(LitElement) {
