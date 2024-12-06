@@ -202,7 +202,7 @@
     "@types/express": "^5.0.0",
     "better-sqlite3": "^11.5.0",
     "cors": "^2.8.5",
-    "express": "^4.21.1",
+    "express": "^4.21.2",
     "lit": "^3.2.1",
     "uuid": "^11.0.3",
     "vite": "^6.0.2"
