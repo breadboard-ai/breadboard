@@ -6,12 +6,16 @@
 
 import {
   BoardServer,
+  BreadboardCapability,
   GraphIdentifier,
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
   InspectableGraph,
   InspectableNodePorts,
   InspectableRun,
+  isGraphDescriptorCapability,
+  isResolvedURLBoardCapability,
+  isUnresolvedPathBoardCapability,
   NodeConfiguration,
   NodeHandlerMetadata,
   NodeIdentifier,
@@ -354,10 +358,23 @@ export class Editor extends LitElement {
     const pushReference = (
       nodeId: NodeIdentifier,
       portId: PortIdentifier,
-      reference: string
+      reference: string | BreadboardCapability
     ) => {
+      if (typeof reference === "object") {
+        if (isGraphDescriptorCapability(reference)) {
+          return;
+        }
+
+        if (isResolvedURLBoardCapability(reference)) {
+          reference = reference.url;
+        } else if (isUnresolvedPathBoardCapability(reference)) {
+          reference = reference.path;
+        }
+      }
+
       let ref = reference;
       let title: string;
+
       if (reference.startsWith("#") && selectedGraph.graphs()) {
         ref = reference.slice(1);
 

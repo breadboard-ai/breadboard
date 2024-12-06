@@ -65,7 +65,12 @@ export type * from "./utils/typed-event-target.js";
 /**
  * Helpers for handling BreadboardCapability.
  */
-export { getGraphDescriptor } from "./capability.js";
+export {
+  getGraphDescriptor,
+  isGraphDescriptorCapability,
+  isResolvedURLBoardCapability,
+  isUnresolvedPathBoardCapability,
+} from "./capability.js";
 
 /**
  * The Inspector API.

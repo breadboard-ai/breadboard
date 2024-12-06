@@ -770,7 +770,14 @@ export class Graph extends PIXI.Container {
       }
 
       if (child instanceof GraphNode) {
-        graphSelection.nodes.add(child.label);
+        // If the graph node has as hit zone, use that.
+        if (child.hitZone) {
+          if (rect.intersects(child.hitZone, child.worldTransform)) {
+            graphSelection.nodes.add(child.label);
+          }
+        } else {
+          graphSelection.nodes.add(child.label);
+        }
       } else if (child instanceof GraphComment) {
         graphSelection.comments.add(child.label);
       }

@@ -125,6 +125,7 @@ export class GraphNode extends PIXI.Container {
   #runnerButton: PIXI.Sprite | null = null;
 
   readOnly = false;
+  hitZone: PIXI.Rectangle | null = null;
 
   constructor(
     id: string,
@@ -232,6 +233,7 @@ export class GraphNode extends PIXI.Container {
       if (this.#isDirty) {
         this.#isDirty = false;
         this.#draw();
+        this.#updateHitZone();
 
         this.emit(GRAPH_OPERATIONS.GRAPH_NODE_DRAWN);
       }
@@ -970,6 +972,15 @@ export class GraphNode extends PIXI.Container {
     this.#drawActivityMarkerIfNeeded();
     this.#drawRunnerButtonIfNeeded();
     this.#drawReferences();
+  }
+
+  #updateHitZone() {
+    this.hitZone = new PIXI.Rectangle(
+      0,
+      0,
+      this.#background.width,
+      this.#background.height
+    );
   }
 
   #drawRunnerButtonIfNeeded() {
