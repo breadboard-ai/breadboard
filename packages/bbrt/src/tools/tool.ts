@@ -28,6 +28,7 @@ export interface ToolMetadata {
 }
 
 export type ToolInvocationState<O = unknown> =
+  | { status: "unstarted" }
   | { status: "running" }
   | {
       status: "success";
@@ -42,6 +43,7 @@ export interface InvokeResult<O = unknown> {
 
 export interface ToolInvocation<O = unknown> {
   readonly state: Signal.State<ToolInvocationState<O>>;
+  start(): void;
   render(): unknown;
   renderContent(): unknown;
 }

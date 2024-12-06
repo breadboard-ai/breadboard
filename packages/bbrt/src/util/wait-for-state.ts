@@ -4,25 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Signal } from "signal-polyfill";
+import type { Signal } from "signal-polyfill";
+import { effect } from "signal-utils/subtle/microtask-effect";
 
 export function waitForState<T>(
   signal: Signal.State<T>,
   predicate: (state: T) => boolean
 ): Promise<T> {
   return new Promise((resolve) => {
-    const watcher = new Signal.subtle.Watcher(() => {
-      // TODO(aomarks) This works, but I'm not certain it's the best approach.
-      queueMicrotask(() => {
-        const value = signal.get();
-        if (predicate(value)) {
-          resolve(value);
-          watcher.unwatch(signal);
-        } else {
-          watcher.watch();
-        }
-      });
+    const unwatch = effect(() => {
+      const value = signal.get();
+      if (predicate(value)) {
+        resolve(value);
+        unwatch();
+      }
     });
-    watcher.watch(signal);
   });
 }
