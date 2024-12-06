@@ -40,7 +40,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
       // graph to render, to prove that rendering is working OK. Eventually this
       // would render a board being built from the conversation.
       let boardTool: BreadboardTool | undefined;
-      for (const tool of this.#state.activeTools) {
+      for (const tool of this.#state.activeTools.get()) {
         if (tool instanceof BreadboardTool) {
           boardTool = tool;
         }
@@ -114,33 +114,28 @@ export class BBRTMain extends SignalWatcher(LitElement) {
 
   constructor() {
     super();
+    this.#restoreState();
     connectedEffect(this, () => this.#persistState());
   }
 
   connectedCallback(): void {
     super.connectedCallback();
-    void this.#discoverToolProviders();
-    this.#restoreState();
-    setTimeout(() => {
-      // TODO(aomarks) Silly workaround for a race condition where tools might
-      // not all have been loaded yet, which means we won't have restored the
-      // active tools. Fix is probably to make active tools a SignalSet of ids
-      // so that it can be restored before the tools are loaded.
-      this.#restoreState();
-    }, 3000);
-  }
-
-  #persistState() {
-    const serialized = JSON.stringify(this.#state.serialize());
-    sessionStorage.setItem(APP_STATE_SESSION_STORAGE_KEY, serialized);
+    this.#discoverToolProviders();
   }
 
   #restoreState() {
     const serialized = sessionStorage.getItem(APP_STATE_SESSION_STORAGE_KEY);
     if (serialized !== null) {
       const parsed = JSON.parse(serialized);
+      console.log("Restoring state", parsed);
       this.#state.restore(parsed);
     }
+  }
+
+  #persistState() {
+    const serialized = JSON.stringify(this.#state.serialize());
+    console.log("Persisting state", serialized);
+    sessionStorage.setItem(APP_STATE_SESSION_STORAGE_KEY, serialized);
   }
 
   override render() {
@@ -193,6 +188,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         <bbrt-tool-palette
           .toolProviders=${this.#state.toolProviders}
           .activeTools=${this.#state.activeTools}
+          .activeToolIds=${this.#state.activeToolIds}
         ></bbrt-tool-palette>
       `,
 
@@ -219,14 +215,14 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         (server) => new BreadboardToolProvider(server, this.#state.secrets)
       )
     );
-    this.#state.activeTools.clear();
+    this.#state.availableTools.clear();
     // TODO(aomarks) Casts should not be needed. Something to do with the
     // default parameter being unknown instead of any.
-    this.#state.activeTools.add(new BoardLister(servers.value) as BBRTTool);
-    this.#state.activeTools.add(
+    this.#state.availableTools.add(new BoardLister(servers.value) as BBRTTool);
+    this.#state.availableTools.add(
       new ActivateTool(
         this.#state.toolProviders,
-        this.#state.activeTools
+        this.#state.availableTools
       ) as BBRTTool
     );
   }

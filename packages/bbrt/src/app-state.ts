@@ -30,19 +30,28 @@ export class BBRTAppState {
   ];
   readonly activeDriver = new Signal.State<BBRTDriver>(this.drivers[0]!);
   readonly toolProviders = new SignalArray<ToolProvider>();
-  readonly activeTools = new SignalSet<BBRTTool>();
+  readonly availableTools = new SignalSet<BBRTTool>();
+  readonly activeToolIds = new SignalSet<string>();
+  readonly activeTools = new Signal.Computed<Set<BBRTTool>>(() => {
+    const active = new Set<BBRTTool>();
+    // TODO(aomarks) Inefficient. Available tools should be a map.
+    for (const tool of this.availableTools) {
+      if (this.activeToolIds.has(tool.metadata.id)) {
+        active.add(tool);
+      }
+    }
+    return active;
+  });
   readonly sidePanelOpen = new Signal.State<boolean>(true);
   readonly conversation = new BBRTConversation(
     this.activeDriver,
-    this.activeTools
+    this.availableTools
   );
 
   serialize(): SerializedBBRTAppState {
     return {
       activeDriverName: this.activeDriver.get().name,
-      activeToolIds: Array.from(this.activeTools).map(
-        (tool) => tool.metadata.id
-      ),
+      activeToolIds: [...this.activeToolIds],
       sidePanelOpen: this.sidePanelOpen.get(),
     };
   }
@@ -60,14 +69,9 @@ export class BBRTAppState {
       );
     }
 
-    // TODO(aomarks) Inefficient. All available tools should be in a map.
-    const activeTools = new Set(serialized.activeToolIds);
-    for (const toolProvider of this.toolProviders) {
-      for (const tool of toolProvider.tools()) {
-        if (activeTools.has(tool.metadata.id)) {
-          this.activeTools.add(tool);
-        }
-      }
+    this.activeToolIds.clear();
+    for (const id of serialized.activeToolIds) {
+      this.activeToolIds.add(id);
     }
 
     this.sidePanelOpen.set(serialized.sidePanelOpen);
