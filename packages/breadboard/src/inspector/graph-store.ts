@@ -78,7 +78,15 @@ class GraphStore
   }
 
   addByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier> {
-    const getting = this.getOrAdd(graph);
+    const getting = this.getOrAdd(graph, true);
+    if (!getting.success) {
+      return getting;
+    }
+    return { success: true, result: getting.result.id };
+  }
+
+  getByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier> {
+    const getting = this.getOrAdd(graph, false);
     if (!getting.success) {
       return getting;
     }
@@ -89,7 +97,7 @@ class GraphStore
     graph: GraphDescriptor,
     options: EditableGraphOptions = {}
   ): EditableGraph | undefined {
-    const result = this.getOrAdd(graph);
+    const result = this.getOrAdd(graph, true);
     if (!result.success) {
       console.error(`Failed to edityByDescriptor: ${result.error}`);
       return undefined;
@@ -115,6 +123,14 @@ class GraphStore
     if (!mutable) return undefined;
 
     return mutable.graphs.get(graphId);
+  }
+
+  inspectSnapshot(
+    graph: GraphDescriptor,
+    graphId: GraphIdentifier
+  ): InspectableGraph | undefined {
+    const immutable = this.#snapshotFromGraphDescriptor(graph).current();
+    return immutable.graphs.get(graphId);
   }
 
   addByURL(
@@ -151,7 +167,7 @@ class GraphStore
     });
   }
 
-  getOrAdd(graph: GraphDescriptor): Result<MutableGraph> {
+  getOrAdd(graph: GraphDescriptor, sameCheck: boolean): Result<MutableGraph> {
     let url = graph.url;
     let graphHash: number | null = null;
     if (!url) {
@@ -166,7 +182,10 @@ class GraphStore
       if (!existing) {
         return error(`Integrity error: main graph "${id}" not found in store.`);
       }
-      const same = graphHash !== null || hash(existing.graph) === hash(graph);
+      const same =
+        !sameCheck ||
+        graphHash !== null ||
+        hash(existing.graph) === hash(graph);
       if (!same) {
         // When not the same, rebuild the graph on the MutableGraphImpl.
         existing.rebuild(graph);

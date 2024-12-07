@@ -90,7 +90,7 @@ export class EventManager {
 
   #addGraphstart(data: GraphStartProbeData) {
     const { path, graph, graphId = "", timestamp } = data;
-    const adding = this.#graphStore.addByDescriptor(graph);
+    const adding = this.#graphStore.getByDescriptor(graph);
     if (!adding.success) {
       return;
     }
@@ -107,7 +107,7 @@ export class EventManager {
     };
     // TODO: Instead of creating a new instance, cache and store them
     // in the GraphStore.
-    const inspector = this.#graphStore.inspect(mainGraphId, graphId);
+    const inspector = this.#graphStore.inspectSnapshot(graph, graphId);
     if (inspector) {
       entry.graph = inspector;
     } else {

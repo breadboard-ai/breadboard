@@ -21,7 +21,6 @@ import {
   InspectableRunNodeEvent,
   InspectableRunObserver,
   InspectableRunSequenceEntry,
-  MainGraphIdentifier,
   MutableGraphStore,
   RunObserverOptions,
   RunSerializationOptions,
@@ -268,7 +267,6 @@ export class Run implements InspectableRun {
 
   #events: EventManager;
 
-  mainGraphId: MainGraphIdentifier;
   start: number;
   end: number | null = null;
   graphVersion: number;
@@ -284,11 +282,6 @@ export class Run implements InspectableRun {
     this.#dataStore = options.dataStore || null;
     this.graphVersion = 0;
     this.start = timestamp;
-    const adding = graphStore.addByDescriptor(graph);
-    if (!adding.success) {
-      throw new Error(`Run API integrity error: ${adding.error}`);
-    }
-    this.mainGraphId = adding.result;
   }
 
   get events(): InspectableRunEvent[] {

@@ -733,6 +733,7 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> & {
     context: GraphLoaderContext
   ): MutableGraph;
   addByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier>;
+  getByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier>;
   editByDescriptor(
     graph: GraphDescriptor,
     options?: EditableGraphOptions
@@ -743,6 +744,10 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> & {
   ): EditableGraph | undefined;
   inspect(
     id: MainGraphIdentifier,
+    graphId: GraphIdentifier
+  ): InspectableGraph | undefined;
+  inspectSnapshot(
+    graph: GraphDescriptor,
     graphId: GraphIdentifier
   ): InspectableGraph | undefined;
 
@@ -1039,10 +1044,6 @@ export type InspectableRunEdge = {
  * Represents a single run of a graph.
  */
 export type InspectableRun = {
-  /**
-   * The id of the graph that was run.
-   */
-  mainGraphId: MainGraphIdentifier;
   /**
    * The version of the graph that was run.
    */

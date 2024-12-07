@@ -11,7 +11,6 @@ import {
   InspectableRunEvent,
   InspectableRunInputs,
   InspectableRunNodeEvent,
-  MainGraphIdentifier,
   MutableGraphStore,
   TimelineEntry,
 } from "../types.js";
@@ -40,13 +39,6 @@ export class PastRun implements InspectableRun {
       await observer.observe(result);
     }
     this.#backingRun = (await observer.runs())[0];
-  }
-
-  get mainGraphId(): MainGraphIdentifier {
-    if (!this.#backingRun) {
-      throw new Error("Uninitialized run: can't yet provide graph IDs");
-    }
-    return this.#backingRun.mainGraphId;
   }
 
   get graphVersion(): number {
