@@ -67,7 +67,7 @@ export class RunSerializer {
     let graph: GraphDescriptor | null = null;
     let index: number;
     if (!this.#seenGraphs.has(mainGraphId)) {
-      graph = entry.graph?.raw() || null;
+      graph = entry.graph?.mainGraphDescriptor() || null;
       index = this.#graphIndex++;
       this.#seenGraphs.set(mainGraphId, index);
     } else {

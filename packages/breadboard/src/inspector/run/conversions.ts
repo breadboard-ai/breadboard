@@ -177,7 +177,8 @@ async function* eventsAsHarnessRunResults(
     switch (type) {
       case "graphstart": {
         const { graphStart, path, graph: inspectableGraph, edges } = data;
-        const graph = inspectableGraph?.raw() as GraphDescriptor;
+        const graph =
+          inspectableGraph?.mainGraphDescriptor() as GraphDescriptor;
         const graphId = inspectableGraph?.graphId() || "";
         yield {
           type,

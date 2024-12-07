@@ -50,6 +50,10 @@ class Graph implements InspectableGraph {
     return this.#descriptor();
   }
 
+  mainGraphDescriptor(): GraphDescriptor {
+    return this.#mutable.graph;
+  }
+
   imperative(): boolean {
     return !!this.main();
   }
