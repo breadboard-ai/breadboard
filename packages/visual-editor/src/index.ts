@@ -27,6 +27,7 @@ import {
   NodeConfiguration,
   SerializedRun,
   MutableGraphStore,
+  defaultModuleContent,
 } from "@google-labs/breadboard";
 import { getDataStore, getRunStore } from "@breadboard-ai/data-store";
 import { classMap } from "lit/directives/class-map.js";
@@ -54,7 +55,6 @@ import {
 
 import { sandbox } from "./sandbox";
 import { InputValues, Module, ModuleIdentifier } from "@breadboard-ai/types";
-import { defaultModuleContent } from "./utils/default-module-content";
 import { KeyboardCommand, KeyboardCommandDeps } from "./commands/types";
 import {
   CopyCommand,

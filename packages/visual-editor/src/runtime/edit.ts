@@ -6,6 +6,7 @@
 
 import {
   blankLLMContent,
+  defaultModuleContent,
   EditableGraph,
   EditSpec,
   GraphDescriptor,
@@ -44,7 +45,6 @@ import {
   NodeValue,
 } from "@breadboard-ai/types";
 import { Sandbox } from "@breadboard-ai/jsandbox";
-import { defaultModuleContent } from "../utils/default-module-content";
 import { MAIN_BOARD_ID } from "../../../shared-ui/dist/constants/constants";
 
 function isGraphDescriptor(source: unknown): source is GraphDescriptor {
