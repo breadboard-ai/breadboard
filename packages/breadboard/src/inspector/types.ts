@@ -254,6 +254,10 @@ export type InspectableGraph = {
    */
   raw(): GraphDescriptor;
   /**
+   * Returns the main graph's descriptor
+   */
+  mainGraphDescriptor(): GraphDescriptor;
+  /**
    * Returns this graph's metadata, if exists.
    */
   metadata(): GraphMetadata | undefined;

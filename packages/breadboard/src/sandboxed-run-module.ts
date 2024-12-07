@@ -46,10 +46,11 @@ function getHandler(handlerName: string, context: NodeHandlerContext) {
 
   const invoke = "invoke" in handler ? handler.invoke : handler;
 
-  return (async (inputs: InputValues) => {
+  return (async (inputs: InputValues, invocationPath: number[]) => {
     try {
       const result = await invoke(inputs as InputValues, {
         ...context,
+        invocationPath,
         descriptor: {
           id: `${handlerName}-called-from-run-module`,
           type: handlerName,
@@ -87,6 +88,7 @@ function addSandboxedRunModule(sandbox: Sandbox, kits: Kit[]): Kit[] {
                 $error: `Unable to run module: no modules found within board ${context.board?.url || "uknown board"}`,
               };
             }
+            const telemetry = Telemetry.create(context);
             const modules = Object.fromEntries(
               Object.entries(moduleDeclaration).map(([name, spec]) => [
                 name,
@@ -108,7 +110,7 @@ function addSandboxedRunModule(sandbox: Sandbox, kits: Kit[]): Kit[] {
             const result = await module.invoke(
               $module as string,
               inputs,
-              telemetry(context)
+              telemetry
             );
             return result as InputValues;
           },
@@ -169,13 +171,6 @@ function addSandboxedRunModule(sandbox: Sandbox, kits: Kit[]): Kit[] {
     },
     ...kits,
   ];
-}
-
-function telemetry(context: NodeHandlerContext) {
-  if (context.probe && context.invocationPath) {
-    return new Telemetry(context.probe, context.invocationPath);
-  }
-  return undefined;
 }
 
 async function invokeDescriber(
