@@ -2099,7 +2099,10 @@ export class Main extends LitElement {
               this.showNewWorkspaceItemOverlay = false;
 
               let source: Module | undefined = undefined;
+              const title = evt.title ?? "Untitled item";
+              let id: string = crypto.randomUUID();
               if (evt.itemType === "imperative") {
+                id = title.replace(/[^a-zA-Z0-9]/g, "-");
                 const createAsTypeScript =
                   this.#settings
                     ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
@@ -2110,7 +2113,7 @@ export class Main extends LitElement {
                   source = {
                     code: "",
                     metadata: {
-                      title: evt.title ?? "Untitled item",
+                      title,
                       source: {
                         code: defaultModuleContent("typescript"),
                         language: "typescript",
@@ -2121,7 +2124,7 @@ export class Main extends LitElement {
                   source = {
                     code: defaultModuleContent(),
                     metadata: {
-                      title: evt.title ?? "Untitled item",
+                      title,
                     },
                   };
                 }
@@ -2130,8 +2133,8 @@ export class Main extends LitElement {
               await this.#runtime.edit.createWorkspaceItem(
                 this.tab,
                 evt.itemType,
-                evt.title ?? "Untitled item",
-                crypto.randomUUID(),
+                title,
+                id,
                 source
               );
             }}
