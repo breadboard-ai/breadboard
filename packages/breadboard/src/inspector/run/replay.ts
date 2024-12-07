@@ -38,11 +38,7 @@ class Replay {
     const { index, timestamp, path, graphId, edges } = data;
     let { graph } = data;
     if (graph !== null) {
-      const adding = this.#graphStore.addByDescriptor(graph);
-      if (!adding.success) {
-        throw new Error(`Run API integrity error: ${adding.error}`);
-      }
-      const inspector = this.#graphStore.inspect(adding.result, graphId)!;
+      const inspector = this.#graphStore.inspectSnapshot(graph, graphId)!;
       this.#graphs.set(index, inspector);
     } else {
       graph = this.#graphs.get(index)?.raw() || null;
