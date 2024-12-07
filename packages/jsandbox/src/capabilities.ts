@@ -35,10 +35,19 @@ class Capabilities {
     if (metadata) {
       delete parsedInputs.$metadata;
     }
-    await installed.telemetry?.startCapability(name, parsedInputs, metadata);
-    const outputs = await capability(parsedInputs);
+    const path =
+      (await installed.telemetry?.startCapability(
+        name,
+        parsedInputs,
+        metadata
+      )) || 0;
+    const outputs = await capability(
+      parsedInputs,
+      installed.telemetry?.invocationPath(path) || []
+    );
     await installed.telemetry?.endCapability(
       name,
+      path,
       parsedInputs,
       outputs as OutputValues
     );

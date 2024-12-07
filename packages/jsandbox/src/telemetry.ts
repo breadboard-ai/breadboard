@@ -14,11 +14,19 @@ import type {
 
 export { Telemetry };
 
+type Context = {
+  probe?: Probe;
+  invocationPath?: number[];
+};
+
 class Telemetry {
   index = 0;
 
-  static create(probe?: Probe, path?: number[]): Telemetry | undefined {
-    return probe && path ? new Telemetry(probe, path) : undefined;
+  static create(context: Context) {
+    if (context.probe && context.invocationPath) {
+      return new Telemetry(context.probe, context.invocationPath);
+    }
+    return undefined;
   }
 
   constructor(
@@ -42,21 +50,23 @@ class Telemetry {
     type: string,
     inputs: InputValues,
     metadata?: NodeMetadata
-  ) {
-    ++this.index;
+  ): Promise<number> {
+    const path = ++this.index;
     await this.probe.report?.({
       type: "nodestart",
       data: {
         node: this.#getDescriptor(type, metadata),
         inputs,
-        path: [...this.path, this.index],
+        path: this.invocationPath(path),
         timestamp: timestamp(),
       },
     });
+    return path;
   }
 
   async endCapability(
     type: string,
+    path: number,
     inputs: InputValues,
     outputs: OutputValues
   ) {
@@ -66,7 +76,7 @@ class Telemetry {
         node: this.#getDescriptor(type),
         inputs,
         outputs,
-        path: [...this.path, this.index],
+        path: this.invocationPath(path),
         timestamp: timestamp(),
         newOpportunities: [],
       },
@@ -81,6 +91,10 @@ class Telemetry {
         timestamp: timestamp(),
       },
     });
+  }
+
+  invocationPath(path: number) {
+    return [...this.path, path];
   }
 
   #getDescriptor(type: string, metadata?: NodeMetadata) {
