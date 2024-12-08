@@ -9,10 +9,19 @@ import { ReactiveController, ReactiveControllerHost } from "lit";
 type ScrollControllerState =
   | { status: "disconnected" }
   | { status: "free" }
-  | { status: "following"; pollIntervalId: number };
+  | {
+      status: "follow-smooth";
+      pollIntervalId: number;
+    }
+  | {
+      status: "follow-fast";
+      pollIntervalId: number;
+    };
 
 export class ScrollController implements ReactiveController {
-  static readonly #followPollMs = 500;
+  static readonly #followSmoothPollMs = 500;
+  static readonly #followFastPollMs = 100;
+  static readonly #initialFastFollowPeriodMs = 1000;
   readonly #host: ReactiveControllerHost;
   readonly #target: HTMLElement;
   #state: ScrollControllerState = { status: "disconnected" };
@@ -30,12 +39,23 @@ export class ScrollController implements ReactiveController {
 
   hostConnected() {
     this.#target.addEventListener("scroll", this.#onScrollEvent);
-    this.#enableFollowing();
+    // We have an initial period where we check frequently and scroll instantly,
+    // because we assume that during this time we might be loading some saved
+    // earlier content, and we want to jump to the end of that quickly.
+    this.#enableFollowFast();
+    setTimeout(() => {
+      if (this.#state.status === "follow-fast") {
+        this.#enableFollowSmooth();
+      }
+    }, ScrollController.#initialFastFollowPeriodMs);
   }
 
   hostDisconnected() {
     this.#target.removeEventListener("scroll", this.#onScrollEvent);
-    if (this.#state.status === "following") {
+    if (
+      this.#state.status === "follow-smooth" ||
+      this.#state.status === "follow-fast"
+    ) {
       clearInterval(this.#state.pollIntervalId);
     } else {
       this.#state.status satisfies "free" | "disconnected";
@@ -45,27 +65,55 @@ export class ScrollController implements ReactiveController {
   }
 
   #onScrollEvent = () => {
-    if (this.#state.status === "following") {
+    if (
+      this.#state.status === "follow-smooth" ||
+      this.#state.status === "follow-fast"
+    ) {
       const scrolledUp = this.#target.scrollTop < this.#previousScrollTop;
       if (scrolledUp) {
         this.#enableFreeScroll();
       }
-    } else if (this.#state.status === "free" && this.#isAtBottom()) {
-      this.#enableFollowing();
+    } else if (this.#state.status === "free") {
+      if (this.#isAtBottom()) {
+        this.#enableFollowSmooth();
+      }
+    } else {
+      this.#state.status satisfies "disconnected";
     }
     this.#previousScrollTop = this.#target.scrollTop;
   };
 
-  #enableFollowing() {
-    if (this.#state.status === "following") {
+  #enableFollowSmooth() {
+    if (this.#state.status === "follow-smooth") {
       return;
+    } else if (this.#state.status === "follow-fast") {
+      clearInterval(this.#state.pollIntervalId);
+    } else {
+      this.#state.status satisfies "free" | "disconnected";
     }
-    this.#state.status satisfies "free" | "disconnected";
     this.#state = {
-      status: "following",
+      status: "follow-smooth",
       pollIntervalId: window.setInterval(
-        this.#onFollowPoll,
-        ScrollController.#followPollMs
+        this.#onFollowSmoothPoll,
+        ScrollController.#followSmoothPollMs
+      ),
+    };
+    this.#host.requestUpdate();
+  }
+
+  #enableFollowFast() {
+    if (this.#state.status === "follow-fast") {
+      return;
+    } else if (this.#state.status === "follow-smooth") {
+      clearInterval(this.#state.pollIntervalId);
+    } else {
+      this.#state.status satisfies "free" | "disconnected";
+    }
+    this.#state = {
+      status: "follow-fast",
+      pollIntervalId: window.setInterval(
+        this.#onFollowFastPoll,
+        ScrollController.#followFastPollMs
       ),
     };
     this.#host.requestUpdate();
@@ -74,8 +122,10 @@ export class ScrollController implements ReactiveController {
   #enableFreeScroll() {
     if (this.#state.status === "free") {
       return;
-    }
-    if (this.#state.status === "following") {
+    } else if (
+      this.#state.status === "follow-smooth" ||
+      this.#state.status === "follow-fast"
+    ) {
       clearInterval(this.#state.pollIntervalId);
     } else {
       this.#state.status satisfies "disconnected";
@@ -84,11 +134,26 @@ export class ScrollController implements ReactiveController {
     this.#host.requestUpdate();
   }
 
-  #onFollowPoll = () => {
-    if (this.#state.status === "following" && !this.#isAtBottom()) {
+  #onFollowSmoothPoll = () => {
+    if (this.#state.status !== "follow-smooth") {
+      return;
+    }
+    if (!this.#isAtBottom()) {
       this.#target.scrollTo({
         top: this.#target.scrollHeight,
         behavior: "smooth",
+      });
+    }
+  };
+
+  #onFollowFastPoll = () => {
+    if (this.#state.status !== "follow-fast") {
+      return;
+    }
+    if (!this.#isAtBottom()) {
+      this.#target.scrollTo({
+        top: this.#target.scrollHeight,
+        behavior: "instant",
       });
     }
   };
