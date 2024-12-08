@@ -113,6 +113,9 @@ export class GraphRenderer extends LitElement {
   selectionChangeId: WorkspaceSelectionChangeId | null = null;
 
   @property()
+  graphTopologyUpdateId: number = 0;
+
+  @property()
   moveToSelection: WorkspaceSelectionStateWithChangeId["moveToSelection"] =
     false;
 
@@ -638,6 +641,10 @@ export class GraphRenderer extends LitElement {
   }
 
   protected shouldUpdate(changedProperties: PropertyValues): boolean {
+    if (changedProperties.has("graphTopologyUpdateId")) {
+      return true;
+    }
+
     if (changedProperties.has("_portTooltip")) {
       return false;
     }
@@ -958,9 +965,7 @@ export class GraphRenderer extends LitElement {
     }
   }
 
-  intersectingBoardPort(
-    point: PIXI.PointData
-  ):
+  intersectingBoardPort(point: PIXI.PointData):
     | {
         graphId: GraphIdentifier;
         nodeId: NodeIdentifier;

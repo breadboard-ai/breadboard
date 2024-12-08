@@ -1029,6 +1029,7 @@ export class Editor extends LitElement {
         .topGraphUrl=${this.graph?.raw().url ?? "no-url"}
         .topGraphResult=${this.topGraphResult}
         .assetPrefix=${this.assetPrefix}
+        .graphTopologyUpdateId=${this.graphTopologyUpdateId}
         .configs=${this.#configs}
         .invertZoomScrollDirection=${this.invertZoomScrollDirection}
         .readOnly=${this.readOnly}
