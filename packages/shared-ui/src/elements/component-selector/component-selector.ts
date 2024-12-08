@@ -8,13 +8,11 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
-  GraphIdentifier,
   Kit,
   MainGraphIdentifier,
   MutableGraphStore,
   NodeHandlerMetadata,
 } from "@google-labs/breadboard";
-import { Task } from "@lit/task";
 import { KitNodeChosenEvent } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -27,7 +25,7 @@ export class ComponentSelector extends LitElement {
   boardServerKits: Kit[] | null = null;
 
   @property()
-  mainGraphId: GraphIdentifier | null = null;
+  mainGraphId: MainGraphIdentifier | null = null;
 
   @property()
   graphStore: MutableGraphStore | null = null;
@@ -39,21 +37,15 @@ export class ComponentSelector extends LitElement {
   showExperimentalComponents = false;
 
   @property()
+  graphStoreUpdateId = 0;
+
+  @property()
   persist = false;
 
   @property()
   static = false;
 
   #searchInputRef: Ref<HTMLInputElement> = createRef();
-  #kitInfoTask = new Task(this, {
-    task: async ([graphStore, mainGraphId]) => {
-      return this.#createKitList(
-        graphStore as MutableGraphStore,
-        mainGraphId as MainGraphIdentifier
-      );
-    },
-    args: () => [this.graphStore, this.mainGraphId],
-  });
 
   #graphURL: string | null = null;
 
@@ -248,7 +240,7 @@ export class ComponentSelector extends LitElement {
     }
   `;
 
-  async #createKitList(
+  #createKitList(
     graphStore: MutableGraphStore,
     mainGraphId: MainGraphIdentifier
   ) {
@@ -262,6 +254,9 @@ export class ComponentSelector extends LitElement {
     }
     this.#graphURL = inspectable.raw().url || null;
     const graphKits = inspectable?.kits();
+    // This should likely be happening outside of this component.
+    // Weird to see the operations of graphStore in rendering.
+    // TODO: Refactor, move to runtime.
     const boardServerKits = this.boardServerKits
       ? graphStore.addKits(this.boardServerKits, [mainGraphId])
       : [];
@@ -290,20 +285,18 @@ export class ComponentSelector extends LitElement {
         continue;
       }
 
-      const typeMetadata = (
-        await Promise.all(
-          kit.nodeTypes.map(async (node) => {
-            const metadata = await node.metadata();
-            if (
-              !this.showExperimentalComponents &&
-              metadata.tags?.includes("experimental")
-            ) {
-              return null;
-            }
-            return { id: node.type(), metadata: await node.metadata() };
-          })
-        )
-      ).filter(Boolean) as { id: string; metadata: NodeHandlerMetadata }[];
+      const typeMetadata = kit.nodeTypes
+        .map((node) => {
+          const metadata = node.currentMetadata();
+          if (
+            !this.showExperimentalComponents &&
+            metadata.tags?.includes("experimental")
+          ) {
+            return null;
+          }
+          return { id: node.type(), metadata };
+        })
+        .filter(Boolean) as { id: string; metadata: NodeHandlerMetadata }[];
 
       const available = typeMetadata.filter(
         ({ metadata }) => !metadata.deprecated
@@ -369,107 +362,101 @@ export class ComponentSelector extends LitElement {
   }
 
   render() {
-    return this.#kitInfoTask.render({
-      pending: () => html`<div>Loading...</div>`,
-      complete: (kitList) => {
-        const before = kitList.size;
-        kitList = this.#filterKitList(kitList);
-        const expandAll = before > kitList.size;
+    if (!this.graphStore || !this.mainGraphId) {
+      return nothing;
+    }
+    const allKits = this.#createKitList(this.graphStore, this.mainGraphId);
 
-        return html` <div id="controls">
-            <input
-              type="search"
-              id="search"
-              slot="search"
-              placeholder="Search for an item"
-              value=${this.filter || ""}
-              ${ref(this.#searchInputRef)}
-              @input=${(evt: InputEvent) => {
-                if (!(evt.target instanceof HTMLInputElement)) {
-                  return;
-                }
+    const before = allKits.size;
+    const kitList = this.#filterKitList(allKits);
+    const expandAll = before > kitList.size;
 
-                this.filter = evt.target.value;
-              }}
-            />
-          </div>
-          <div id="content">
-            <div id="container">
-              <form>
-                ${map(kitList, ([kitName, kitContents]) => {
-                  const kitId = kitName
-                    .toLocaleLowerCase()
-                    .replace(/\W/gim, "-");
+    return html` <div id="controls">
+        <input
+          type="search"
+          id="search"
+          slot="search"
+          placeholder="Search for an item"
+          value=${this.filter || ""}
+          ${ref(this.#searchInputRef)}
+          @input=${(evt: InputEvent) => {
+            if (!(evt.target instanceof HTMLInputElement)) {
+              return;
+            }
 
-                  // Prevent the user from accidentally embedding the
-                  // current tool graph inside of itself.
-                  kitContents = kitContents.filter(
-                    (nodeTypeInfo) => nodeTypeInfo.id !== this.#graphURL
-                  );
+            this.filter = evt.target.value;
+          }}
+        />
+      </div>
+      <div id="content">
+        <div id="container">
+          <form>
+            ${map(kitList, ([kitName, kitContents]) => {
+              const kitId = kitName.toLocaleLowerCase().replace(/\W/gim, "-");
 
-                  return html`<details
-                    ?open=${expandAll || kitName === "Agent Kit"}
-                  >
-                    <summary for="${kitId}"><span>${kitName}</span></summary>
-                    <div class="kit-contents">
-                      ${kitContents.length
-                        ? html`<ul>
-                            ${map(kitContents, (nodeTypeInfo) => {
-                              const className = nodeTypeInfo.id
-                                .toLocaleLowerCase()
-                                .replaceAll(/\W/gim, "-");
-                              const id = nodeTypeInfo.id;
-                              const description =
-                                nodeTypeInfo.metadata.description;
-                              const title = nodeTypeInfo.metadata.title || id;
-                              const icon =
-                                nodeTypeInfo.metadata.icon ?? "generic";
+              // Prevent the user from accidentally embedding the
+              // current tool graph inside of itself.
+              kitContents = kitContents.filter(
+                (nodeTypeInfo) => nodeTypeInfo.id !== this.#graphURL
+              );
 
-                              return html`<li
-                                class=${classMap({
-                                  [className]: true,
-                                  ["kit-item"]: true,
-                                })}
-                                draggable="true"
-                                @dblclick=${() => {
-                                  this.dispatchEvent(
-                                    new KitNodeChosenEvent(id)
-                                  );
-                                }}
-                                @dragstart=${(evt: DragEvent) => {
-                                  if (!evt.dataTransfer) {
-                                    return;
-                                  }
-                                  evt.dataTransfer.setData(DATA_TYPE, id);
-                                }}
-                              >
-                                <div
-                                  class=${classMap({
-                                    "node-icon": true,
-                                    [icon]: true,
-                                  })}
-                                ></div>
-                                <div>
-                                  <div class="node-id">${title}</div>
-                                  ${description
-                                    ? html`<div class="node-description">
-                                        ${description}
-                                      </div>`
-                                    : nothing}
-                                </div>
-                              </li>`;
+              return html`<details
+                ?open=${expandAll || kitName === "Agent Kit"}
+              >
+                <summary for="${kitId}"><span>${kitName}</span></summary>
+                <div class="kit-contents">
+                  ${kitContents.length
+                    ? html`<ul>
+                        ${map(kitContents, (nodeTypeInfo) => {
+                          const className = nodeTypeInfo.id
+                            .toLocaleLowerCase()
+                            .replaceAll(/\W/gim, "-");
+                          const id = nodeTypeInfo.id;
+                          const description = nodeTypeInfo.metadata.description;
+                          const title = nodeTypeInfo.metadata.title || id;
+                          const icon = nodeTypeInfo.metadata.icon ?? "generic";
+
+                          return html`<li
+                            class=${classMap({
+                              [className]: true,
+                              ["kit-item"]: true,
                             })}
-                          </ul>`
-                        : html`<div class="no-components">
-                            No components available
-                          </div>`}
-                    </div>
-                  </details>`;
-                })}
-              </form>
-            </div>
-          </div>`;
-      },
-    });
+                            draggable="true"
+                            @dblclick=${() => {
+                              this.dispatchEvent(new KitNodeChosenEvent(id));
+                            }}
+                            @dragstart=${(evt: DragEvent) => {
+                              if (!evt.dataTransfer) {
+                                return;
+                              }
+                              evt.dataTransfer.setData(DATA_TYPE, id);
+                            }}
+                          >
+                            <div
+                              class=${classMap({
+                                "node-icon": true,
+                                [icon]: true,
+                              })}
+                            ></div>
+                            <div>
+                              <div class="node-id">${title}</div>
+                              ${description
+                                ? html`<div class="node-description">
+                                    ${description}
+                                  </div>`
+                                : nothing}
+                            </div>
+                          </li>`;
+                        })}
+                      </ul>`
+                    : html`<div class="no-components">
+                        No components available
+                      </div>`}
+                </div>
+              </details>`;
+            })}
+          </form>
+        </div>
+      </div>`;
   }
 }

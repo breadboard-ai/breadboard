@@ -27,6 +27,7 @@ import {
   NodeConfiguration,
   SerializedRun,
   MutableGraphStore,
+  defaultModuleContent,
 } from "@google-labs/breadboard";
 import { getDataStore, getRunStore } from "@breadboard-ai/data-store";
 import { classMap } from "lit/directives/class-map.js";
@@ -54,7 +55,6 @@ import {
 
 import { sandbox } from "./sandbox";
 import { InputValues, Module, ModuleIdentifier } from "@breadboard-ai/types";
-import { defaultModuleContent } from "./utils/default-module-content";
 import { KeyboardCommand, KeyboardCommandDeps } from "./commands/types";
 import {
   CopyCommand,
@@ -271,6 +271,14 @@ export class Main extends LitElement {
   @state()
   graphTopologyUpdateId: number = 0;
 
+  /**
+   * Similar to graphTopologyUpdateId, but for all graphs in the graph store.
+   * This is useful for tracking all changes to all graphs, like in
+   * component/boards selectors.
+   */
+  @state()
+  graphStoreUpdateId: number = 0;
+
   #globalCommands: BreadboardUI.Types.Command[] = [
     {
       title: "Open board...",
@@ -458,6 +466,7 @@ export class Main extends LitElement {
         this.#graphStore.addEventListener("update", (evt) => {
           const { mainGraphId } = evt;
           const current = this.tab?.mainGraphId;
+          this.graphStoreUpdateId++;
           if (
             !current ||
             (mainGraphId !== current && !evt.affectedGraphs.includes(current))
@@ -2099,7 +2108,10 @@ export class Main extends LitElement {
               this.showNewWorkspaceItemOverlay = false;
 
               let source: Module | undefined = undefined;
+              const title = evt.title ?? "Untitled item";
+              let id: string = crypto.randomUUID();
               if (evt.itemType === "imperative") {
+                id = title.replace(/[^a-zA-Z0-9]/g, "-");
                 const createAsTypeScript =
                   this.#settings
                     ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
@@ -2110,7 +2122,7 @@ export class Main extends LitElement {
                   source = {
                     code: "",
                     metadata: {
-                      title: evt.title ?? "Untitled item",
+                      title,
                       source: {
                         code: defaultModuleContent("typescript"),
                         language: "typescript",
@@ -2121,7 +2133,7 @@ export class Main extends LitElement {
                   source = {
                     code: defaultModuleContent(),
                     metadata: {
-                      title: evt.title ?? "Untitled item",
+                      title,
                     },
                   };
                 }
@@ -2130,8 +2142,8 @@ export class Main extends LitElement {
               await this.#runtime.edit.createWorkspaceItem(
                 this.tab,
                 evt.itemType,
-                evt.title ?? "Untitled item",
-                crypto.randomUUID(),
+                title,
+                id,
                 source
               );
             }}
@@ -3061,6 +3073,7 @@ export class Main extends LitElement {
               .selectionState=${this.#selectionState}
               .visualChangeId=${this.#lastVisualChangeId}
               .graphTopologyUpdateId=${this.graphTopologyUpdateId}
+              .graphStoreUpdateId=${this.graphStoreUpdateId}
               @bbinputenter=${async (
                 event: BreadboardUI.Events.InputEnterEvent
               ) => {

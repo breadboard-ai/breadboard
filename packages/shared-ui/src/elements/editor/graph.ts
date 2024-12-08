@@ -424,7 +424,7 @@ export class Graph extends PIXI.Container {
 
       const path = evt.composedPath();
       const topTarget = path[path.length - 1];
-      const isSameGraph = topTarget.parent.parent === this;
+      const isSameGraph = topTarget?.parent?.parent === this;
 
       if (
         topTarget instanceof GraphNodePort &&
@@ -542,6 +542,11 @@ export class Graph extends PIXI.Container {
 
       const path = evt.composedPath();
       const topTarget = path[path.length - 1] as PIXI.Graphics;
+
+      // pointer target might be outside of the graph altogether.
+      if (!topTarget) {
+        return;
+      }
 
       // Take a copy of the info we need.
       const targetNodePort = nodePortBeingEdited;

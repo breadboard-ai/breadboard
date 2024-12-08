@@ -26,7 +26,7 @@ function defaultModuleContent(language: ModuleLanguage = "javascript") {
 
 export { invoke as default, describe };
 
-async function invoke({ context }${language === "typescript" ? ": { context: unknown }" : ""}) {
+async function invoke({ context }${language === "typescript" ? ": { context: LLMContent[] }" : ""}) {
   return { context };
 }
 
@@ -41,7 +41,7 @@ async function describe() {
           title: "Context in",
         },
       },
-    },
+    } satisfies Schema,
     outputSchema: {
       type: "object",
       properties: {
@@ -51,7 +51,7 @@ async function describe() {
           title: "Context out",
         },
       },
-    },
+    } satisfies Schema,
   };
 }
 `;

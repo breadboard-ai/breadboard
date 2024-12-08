@@ -81,7 +81,7 @@ export class WorkspaceOutline extends LitElement {
   selectionState: WorkspaceSelectionStateWithChangeId | null = null;
 
   @property()
-  graphTopologyUpdateId: number = 0;
+  graphStoreUpdateId: number = 0;
 
   @state()
   filter: string | null = null;
