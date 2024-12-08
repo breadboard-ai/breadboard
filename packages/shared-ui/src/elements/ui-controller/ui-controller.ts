@@ -128,6 +128,9 @@ export class UI extends LitElement {
   @property()
   graphTopologyUpdateId: number = 0;
 
+  @property()
+  graphStoreUpdateId: number = 0;
+
   @state()
   debugEvent: InspectableRunEvent | null = null;
 
@@ -437,14 +440,14 @@ export class UI extends LitElement {
             </div>
           </h1>
           ${guard(
-            [graph, this.mode, this.selectionState, this.graphTopologyUpdateId],
+            [graph, this.mode, this.selectionState, this.graphStoreUpdateId],
             () => {
               return html`<bb-workspace-outline
                 .graph=${graph}
                 .renderId=${globalThis.crypto.randomUUID()}
                 .mode=${this.mode}
                 .selectionState=${this.selectionState}
-                .graphTopologyUpdateId=${this.graphTopologyUpdateId}
+                .graphStoreUpdateId=${this.graphStoreUpdateId}
               ></bb-workspace-outline>`;
             }
           )}`;
@@ -459,11 +462,11 @@ export class UI extends LitElement {
 
       case "components": {
         sideNavItem = html`${guard(
-          [this.boardServerKits, this.graphTopologyUpdateId, this.mainGraphId],
+          [this.boardServerKits, this.graphStoreUpdateId, this.mainGraphId],
           () =>
             html`<h1 id="side-nav-title">Components</h1>
               <bb-component-selector
-                .graphTopologyUpdateId=${this.graphTopologyUpdateId}
+                .graphStoreUpdateId=${this.graphStoreUpdateId}
                 .boardServerKits=${this.boardServerKits}
                 .graphStore=${this.graphStore}
                 .mainGraphId=${this.mainGraphId}

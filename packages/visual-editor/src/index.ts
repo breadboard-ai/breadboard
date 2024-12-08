@@ -271,6 +271,14 @@ export class Main extends LitElement {
   @state()
   graphTopologyUpdateId: number = 0;
 
+  /**
+   * Similar to graphTopologyUpdateId, but for all graphs in the graph store.
+   * This is useful for tracking all changes to all graphs, like in
+   * component/boards selectors.
+   */
+  @state()
+  graphStoreUpdateId: number = 0;
+
   #globalCommands: BreadboardUI.Types.Command[] = [
     {
       title: "Open board...",
@@ -458,6 +466,7 @@ export class Main extends LitElement {
         this.#graphStore.addEventListener("update", (evt) => {
           const { mainGraphId } = evt;
           const current = this.tab?.mainGraphId;
+          this.graphStoreUpdateId++;
           if (
             !current ||
             (mainGraphId !== current && !evt.affectedGraphs.includes(current))
@@ -3064,6 +3073,7 @@ export class Main extends LitElement {
               .selectionState=${this.#selectionState}
               .visualChangeId=${this.#lastVisualChangeId}
               .graphTopologyUpdateId=${this.graphTopologyUpdateId}
+              .graphStoreUpdateId=${this.graphStoreUpdateId}
               @bbinputenter=${async (
                 event: BreadboardUI.Events.InputEnterEvent
               ) => {
