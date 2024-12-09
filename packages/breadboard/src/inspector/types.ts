@@ -6,6 +6,7 @@
 
 import type {
   GraphIdentifier,
+  GraphInlineMetadata,
   GraphMetadata,
   Module,
   ModuleCode,
@@ -695,21 +696,7 @@ export type InspectableGraphCache = {
 
 export type MainGraphIdentifier = UUID;
 
-export type GraphHandle = {
-  id: MainGraphIdentifier;
-} & (
-  | {
-      type: "declarative";
-      /**
-       * The value is "" for the main graph.
-       */
-      graphId: GraphIdentifier;
-    }
-  | {
-      type: "imperative";
-      moduleId: ModuleIdentifier;
-    }
-);
+export type GraphHandleToBeNamed = NodeHandlerMetadata;
 
 export type GraphStoreArgs = Required<InspectableGraphOptions>;
 
@@ -730,6 +717,8 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> & {
   readonly kits: readonly Kit[];
   readonly sandbox: Sandbox;
   readonly loader: GraphLoader;
+
+  graphs(): GraphHandleToBeNamed[];
 
   addByURL(
     url: string,

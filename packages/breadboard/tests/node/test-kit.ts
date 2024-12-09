@@ -38,6 +38,10 @@ export const testKit: Kit = {
       },
     },
     map: {
+      metadata: {
+        title: "Map",
+        tags: ["experimental"],
+      },
       invoke: async (inputs, context) => {
         const { board, list = [] } = inputs;
         if (!board) {

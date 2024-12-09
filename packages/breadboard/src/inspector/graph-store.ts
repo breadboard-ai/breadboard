@@ -14,6 +14,7 @@ import {
 import { GraphLoader, GraphLoaderContext } from "../loader/types.js";
 import { MutableGraphImpl } from "./graph/mutable-graph.js";
 import {
+  GraphHandleToBeNamed,
   GraphStoreArgs,
   GraphStoreEventTarget,
   InspectableGraph,
@@ -24,7 +25,7 @@ import {
   MutableGraphStore,
 } from "./types.js";
 import { hash } from "../utils/hash.js";
-import { Kit, NodeHandlerContext } from "../types.js";
+import { Kit, NodeHandlerContext, NodeHandlerMetadata } from "../types.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { createLoader } from "../loader/index.js";
 import { SnapshotUpdater } from "../utils/snapshot-updater.js";
@@ -65,6 +66,8 @@ class GraphStore
   readonly sandbox: Sandbox;
   readonly loader: GraphLoader;
 
+  #legacyKits: GraphHandleToBeNamed[];
+
   #mainGraphIds: Map<string, MainGraphIdentifier> = new Map();
   #mutables: Map<MainGraphIdentifier, SnapshotUpdater<MutableGraph>> =
     new Map();
@@ -75,6 +78,43 @@ class GraphStore
     this.kits = args.kits;
     this.sandbox = args.sandbox;
     this.loader = args.loader;
+    this.#legacyKits = this.#populateLegacyKits(args.kits);
+  }
+
+  graphs(): GraphHandleToBeNamed[] {
+    const graphs = [...this.#mutables.entries()]
+      .flatMap(([mainGraphId, snapshot]) => {
+        const mutable = snapshot.current();
+        // TODO: Support exports and main module
+        const inspectable = mutable.graphs.get("");
+        if (!inspectable) {
+          return null;
+        }
+        const descriptor = inspectable.raw();
+        return filterEmptyValues({
+          title: descriptor.title,
+          description: descriptor.description,
+          icon: descriptor.metadata?.icon,
+          url: descriptor.url,
+          tags: descriptor.metadata?.tags,
+          help: descriptor.metadata?.help,
+        });
+      })
+      .filter(Boolean) as GraphHandleToBeNamed[];
+    return [...this.#legacyKits, ...graphs];
+  }
+
+  #populateLegacyKits(kits: Kit[]) {
+    return kits.flatMap((kit) =>
+      Object.entries(kit.handlers).map(([type, handler]) => {
+        const metadata: NodeHandlerMetadata =
+          "metadata" in handler ? handler.metadata || {} : {};
+        return {
+          url: type,
+          ...metadata,
+        };
+      })
+    );
   }
 
   addByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier> {
@@ -291,4 +331,17 @@ function emptyGraph(): GraphDescriptor {
     edges: [],
     nodes: [],
   };
+}
+
+/**
+ * A utility function to filter out empty (null or undefined) values from
+ * an object.
+ *
+ * @param obj -- The object to filter.
+ * @returns -- The object with empty values removed.
+ */
+function filterEmptyValues<T extends Record<string, unknown>>(obj: T): T {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, value]) => !!value)
+  ) as T;
 }
