@@ -17,6 +17,7 @@ import {
   GraphDescriptor,
   NodeIdentifier,
   InspectableNodePorts,
+  PortIdentifier,
 } from "@google-labs/breadboard";
 import {
   CommentNode,
@@ -426,10 +427,14 @@ export interface OverflowAction {
   secondaryAction?: string;
 }
 
+export type ReferenceIdentifier =
+  `${NodeIdentifier}|${PortIdentifier}|${number}`;
+
 export interface GraphSelectionState {
   nodes: Set<NodeIdentifier>;
   comments: Set<string>;
   edges: Set<string>;
+  references: Set<ReferenceIdentifier>;
 }
 
 export interface GraphEntityVisualState {

@@ -10,7 +10,11 @@ import {
   InspectablePort,
   NodeIdentifier,
 } from "@google-labs/breadboard";
-import type { EdgeData, GraphSelectionState } from "../../types/types.js";
+import {
+  ReferenceIdentifier,
+  type EdgeData,
+  type GraphSelectionState,
+} from "../../types/types.js";
 import { ComponentExpansionState, VisualMetadata } from "./types.js";
 
 const documentStyles = getComputedStyle(document.documentElement);
@@ -129,5 +133,6 @@ export function emptySelectionState(): GraphSelectionState {
     nodes: new Set<NodeIdentifier>(),
     comments: new Set<string>(),
     edges: new Set<string>(),
+    references: new Set<ReferenceIdentifier>(),
   };
 }

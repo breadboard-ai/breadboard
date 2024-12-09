@@ -45,6 +45,7 @@ import {
   EdgeData,
   GraphSelectionState,
   GraphVisualState,
+  ReferenceIdentifier,
   TopGraphEdgeValues,
   TopGraphNodeInfo,
   cloneEdgeData,
@@ -782,6 +783,15 @@ export class Graph extends PIXI.Container {
           }
         } else {
           graphSelection.nodes.add(child.label);
+        }
+
+        for (const reference of child.referenceRects()) {
+          if (!rect.intersects(reference.rect)) {
+            continue;
+          }
+
+          const id = `${child.label}|${reference.id}` as ReferenceIdentifier;
+          graphSelection.references.add(id);
         }
       } else if (child instanceof GraphComment) {
         graphSelection.comments.add(child.label);
@@ -1571,6 +1581,19 @@ export class Graph extends PIXI.Container {
           }
         );
 
+        graphNode.on(
+          GRAPH_OPERATIONS.GRAPH_REFERENCE_TOGGLE_SELECTED,
+          (portId: PortIdentifier, index: number, isCtrlCommand: boolean) => {
+            this.emit(
+              GRAPH_OPERATIONS.GRAPH_REFERENCE_TOGGLE_SELECTED,
+              graphNode!.label,
+              portId,
+              index,
+              isCtrlCommand
+            );
+          }
+        );
+
         graphNode.on(GRAPH_OPERATIONS.GRAPH_NODE_DRAWN, () => {
           const node = graphNode!;
           const layout = this.#layout.get(node.label) || null;
@@ -1708,7 +1731,36 @@ export class Graph extends PIXI.Container {
         continue;
       }
 
-      graphNode.selected = this.#selectionState?.nodes.has(id) ?? false;
+      const selectedReferences = new Map<PortIdentifier, number[]>();
+      if (this.#selectionState) {
+        graphNode.selected = this.#selectionState.nodes.has(id) ?? false;
+        for (const reference of this.#selectionState.references) {
+          if (reference.startsWith(id)) {
+            const portAndIndex = reference.replace(id, "");
+            const split = portAndIndex.lastIndexOf("|");
+            if (split === -1) {
+              continue;
+            }
+
+            const portId = portAndIndex.slice(1, split);
+            const indexStr = portAndIndex.slice(split + 1);
+            const index = Number.parseInt(indexStr);
+            if (Number.isNaN(index)) {
+              continue;
+            }
+
+            let selected = selectedReferences.get(portId);
+            if (!selected) {
+              selected = [];
+              selectedReferences.set(portId, selected);
+            }
+
+            selected.push(index);
+          }
+        }
+      }
+
+      graphNode.selectedReferences = selectedReferences;
       graphNode.label = id;
       graphNode.readOnly = this.readOnly;
       // Modules must go first because if any of the in ports specify a ModuleId

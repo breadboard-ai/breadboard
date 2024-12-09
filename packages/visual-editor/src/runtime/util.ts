@@ -15,6 +15,7 @@ import {
   NodeConfiguration,
   NodeDescriptor,
   NodeIdentifier,
+  Schema,
 } from "@google-labs/breadboard";
 import {
   EditChangeId,
@@ -23,7 +24,19 @@ import {
   WorkspaceSelectionState,
 } from "./types";
 
-const MAIN_BOARD_ID = "Main board";
+export const MAIN_BOARD_ID = "Main board";
+
+export function isBoardBehavior(schema: Schema): boolean {
+  return schema.behavior?.includes("board") ?? false;
+}
+
+export function isBoardArrayBehavior(schema: Schema): boolean {
+  if (schema.type !== "array") return false;
+  if (!schema.items) return false;
+  if (Array.isArray(schema.items)) return false;
+  if (!schema.items.behavior) return false;
+  return schema.items.behavior?.includes("board") ?? false;
+}
 
 export function edgeToString(edge: Edge): string {
   return `${edge.from}:${edge.out}->${edge.to}:${edge.in}`;
@@ -61,6 +74,7 @@ export function createEmptyGraphSelectionState(): GraphSelectionState {
     nodes: new Set(),
     comments: new Set(),
     edges: new Set(),
+    references: new Set(),
   };
 }
 
@@ -142,6 +156,61 @@ export function generateDeleteEditSpecFrom(
       }
 
       edits.push({ type: "removeedge", graphId, edge: edge.raw() });
+    }
+
+    // References.
+    const referenceIndexes: number[] = [];
+    for (const reference of state.references) {
+      const [nodeId, portId, indexStr] = reference.split("|");
+      if (!nodeId || !portId || !indexStr) {
+        continue;
+      }
+
+      const index = Number.parseInt(indexStr);
+      if (Number.isNaN(index)) {
+        console.warn(`Unexpected index in references: '${indexStr}'`);
+        continue;
+      }
+
+      referenceIndexes.push(index);
+    }
+
+    for (const reference of state.references) {
+      const [nodeId, portId, indexStr] = reference.split("|");
+      if (!nodeId || !portId || !indexStr) {
+        continue;
+      }
+
+      const index = Number.parseInt(indexStr);
+      if (Number.isNaN(index)) {
+        console.warn(`Unexpected index in references: '${indexStr}'`);
+        continue;
+      }
+
+      const configuration = graph.nodeById(nodeId)?.configuration();
+      if (!configuration) {
+        continue;
+      }
+
+      const newConfiguration = structuredClone(configuration);
+      if (!newConfiguration[portId]) {
+        continue;
+      }
+
+      if (Array.isArray(newConfiguration[portId])) {
+        newConfiguration[portId] = newConfiguration[portId].filter((_, idx) => {
+          return !referenceIndexes.includes(idx);
+        });
+      } else {
+        delete newConfiguration[portId];
+      }
+
+      edits.push({
+        type: "changeconfiguration",
+        graphId,
+        id: nodeId,
+        configuration: newConfiguration,
+      });
     }
 
     // Nodes.
