@@ -43,6 +43,9 @@ export class GraphNodeReference extends PIXI.Container {
     };
 
     this.on("destroyed", () => {
+      // Prevent future renderings.
+      this.#isDirty = false;
+
       for (const child of this.children) {
         child.destroy({ children: true });
       }
