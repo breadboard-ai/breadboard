@@ -956,7 +956,9 @@ export class GraphRenderer extends LitElement {
   }
 
   #removeAllGraphs() {
-    for (const graph of this.#container.children) {
+    // Copy the children array so that it doesn't mutate underneath us as
+    // we remove the children.
+    for (const graph of [...this.#container.children]) {
       if (!(graph instanceof Graph)) {
         continue;
       }
