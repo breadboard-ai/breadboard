@@ -31,6 +31,7 @@ import { createLoader } from "../loader/index.js";
 import { SnapshotUpdater } from "../utils/snapshot-updater.js";
 import { UpdateEvent } from "./graph/event.js";
 import { collectCustomNodeTypes } from "./graph/kits.js";
+import { graphUrlLike } from "../utils/graph-url-like.js";
 
 export { GraphStore, makeTerribleOptions, contextFromStore };
 
@@ -83,15 +84,11 @@ class GraphStore
 
   graphs(): GraphHandleToBeNamed[] {
     const graphs = [...this.#mutables.entries()]
-      .flatMap(([mainGraphId, snapshot]) => {
+      .flatMap(([_mainGraphId, snapshot]) => {
         const mutable = snapshot.current();
+        const descriptor = mutable.graph;
         // TODO: Support exports and main module
-        const inspectable = mutable.graphs.get("");
-        if (!inspectable) {
-          return null;
-        }
-        const descriptor = inspectable.raw();
-        return filterEmptyValues({
+        const mainGraphMetadata = filterEmptyValues({
           title: descriptor.title,
           description: descriptor.description,
           icon: descriptor.metadata?.icon,
@@ -99,6 +96,10 @@ class GraphStore
           tags: descriptor.metadata?.tags,
           help: descriptor.metadata?.help,
         });
+        return {
+          mainGraph: mutable.legacyKitMetadata || mainGraphMetadata,
+          ...mainGraphMetadata,
+        };
       })
       .filter(Boolean) as GraphHandleToBeNamed[];
     return [...this.#legacyKits, ...graphs];
@@ -111,10 +112,33 @@ class GraphStore
           "metadata" in handler ? handler.metadata || {} : {};
         return {
           url: type,
+          mainGraph: filterEmptyValues({
+            title: kit.title,
+            description: kit.description,
+            tags: kit.tags,
+          }),
           ...metadata,
         };
       })
     );
+  }
+
+  registerKit(kit: Kit, dependences: MainGraphIdentifier[]): void {
+    Object.keys(kit.handlers).forEach((type) => {
+      if (graphUrlLike(type)) {
+        const mutable = this.addByURL(type, dependences, {});
+        mutable.legacyKitMetadata = filterEmptyValues({
+          url: kit.url,
+          title: kit.title,
+          description: kit.description,
+          tags: kit.tags,
+        });
+      } else {
+        throw new Error(
+          `The type "${type}" is not Graph URL-like, unable to add this kit`
+        );
+      }
+    });
   }
 
   addByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier> {

@@ -6,7 +6,6 @@
 
 import type {
   GraphIdentifier,
-  GraphInlineMetadata,
   GraphMetadata,
   Module,
   ModuleCode,
@@ -696,7 +695,9 @@ export type InspectableGraphCache = {
 
 export type MainGraphIdentifier = UUID;
 
-export type GraphHandleToBeNamed = NodeHandlerMetadata;
+export type GraphHandleToBeNamed = NodeHandlerMetadata & {
+  mainGraph: NodeHandlerMetadata;
+};
 
 export type GraphStoreArgs = Required<InspectableGraphOptions>;
 
@@ -719,6 +720,16 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> & {
   readonly loader: GraphLoader;
 
   graphs(): GraphHandleToBeNamed[];
+
+  /**
+   * Registers a Kit with the GraphStore.
+   * Currently, only Kits that contain Graph URL-like types
+   * are support.
+   *
+   * @param kit - the kit to register
+   * @param dependences - known dependencies to this kit
+   */
+  registerKit(kit: Kit, dependences: MainGraphIdentifier[]): void;
 
   addByURL(
     url: string,
@@ -780,6 +791,7 @@ export type InspectablePortCache = {
  */
 export type MutableGraph = {
   graph: GraphDescriptor;
+  legacyKitMetadata: KitDescriptor | null;
   readonly id: MainGraphIdentifier;
   readonly graphs: InspectableGraphCache;
   readonly store: MutableGraphStore;

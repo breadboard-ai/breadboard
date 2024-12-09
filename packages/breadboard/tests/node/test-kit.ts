@@ -12,6 +12,7 @@ import { InputValues, Kit, OutputValues } from "../../src/types.js";
 // in tests/bgl/*.
 
 export const testKit: Kit = {
+  title: "Test Kit",
   url: import.meta.url,
   handlers: {
     invoke: {

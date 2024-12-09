@@ -15,11 +15,16 @@ describe("GraphStore.graphs", () => {
       kits: [testKit],
     });
     deepStrictEqual(graphStore.graphs(), [
-      { url: "invoke" },
-      { url: "map", title: "Map", tags: ["experimental"] },
-      { url: "promptTemplate" },
-      { url: "runJavascript" },
-      { url: "secrets" },
+      { mainGraph: { title: "Test Kit" }, url: "invoke" },
+      {
+        mainGraph: { title: "Test Kit" },
+        url: "map",
+        title: "Map",
+        tags: ["experimental"],
+      },
+      { mainGraph: { title: "Test Kit" }, url: "promptTemplate" },
+      { url: "runJavascript", mainGraph: { title: "Test Kit" } },
+      { url: "secrets", mainGraph: { title: "Test Kit" } },
     ]);
   });
 
@@ -28,17 +33,27 @@ describe("GraphStore.graphs", () => {
       kits: [testKit],
     });
     graphStore.addByDescriptor({
+      url: "https://example.com/foo",
       title: "Foo",
       nodes: [],
       edges: [],
     });
     deepStrictEqual(graphStore.graphs(), [
-      { url: "invoke" },
-      { url: "map", title: "Map", tags: ["experimental"] },
-      { url: "promptTemplate" },
-      { url: "runJavascript" },
-      { url: "secrets" },
-      { title: "Foo" },
+      { mainGraph: { title: "Test Kit" }, url: "invoke" },
+      {
+        mainGraph: { title: "Test Kit" },
+        url: "map",
+        title: "Map",
+        tags: ["experimental"],
+      },
+      { mainGraph: { title: "Test Kit" }, url: "promptTemplate" },
+      { url: "runJavascript", mainGraph: { title: "Test Kit" } },
+      { url: "secrets", mainGraph: { title: "Test Kit" } },
+      {
+        title: "Foo",
+        url: "https://example.com/foo",
+        mainGraph: { title: "Foo", url: "https://example.com/foo" },
+      },
     ]);
   });
 });
