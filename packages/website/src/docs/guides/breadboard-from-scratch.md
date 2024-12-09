@@ -352,7 +352,7 @@ VITE_CONNECTION_SERVER_URL={YOUR_CONNECTION_SERVER}
 Re-deploy the Visual Editor.
 
 ```sh
-cd packages-visual/editor
+cd packages/visual-editor
 ```
 
 ```sh
