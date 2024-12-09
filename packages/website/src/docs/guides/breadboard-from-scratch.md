@@ -99,7 +99,7 @@ will need to be done manually.
 > guide](https://cloud.google.com/appengine/docs/standard/troubleshooting#default-sa-permissions)
 > for more information.
 
-1. Go to [Identity & Access Management](https://pantheon.corp.google.com/iam-admin/iam) in Google Cloud console.
+1. Go to [Identity & Access Management](https://console.cloud.google.com/iam-admin/iam) in Google Cloud console.
 1. Locate the default App Engine service account: **`${PROJECT_ID}@appspot.gserviceaccount.com`**
 1. Click **Edit Principal** (the pencil icon)
 1. Ensure that the service account has both the **Editor** and **Storage Admin** roles.
@@ -276,7 +276,7 @@ our Visual Editor.
 ```yaml
 service: boards
 
-...
+# <other config omitted>
 
 env_variables:
   ALLOWED_ORIGINS: "{YOUR_VISUAL_EDITOR_ORIGIN}"
