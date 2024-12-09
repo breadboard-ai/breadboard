@@ -913,6 +913,9 @@ export class Editor extends LitElement {
 
     this.#graphRendererRef.value.removeSubGraphHighlights();
     this.#graphRendererRef.value.highlightSubGraphId(pointer);
+
+    this.#graphRendererRef.value.removeBoardPortHighlights();
+    this.#graphRendererRef.value.highlightBoardPort(pointer);
   }
 
   #onDrop(evt: DragEvent) {
@@ -929,6 +932,7 @@ export class Editor extends LitElement {
     }
 
     this.#graphRendererRef.value.removeSubGraphHighlights();
+    this.#graphRendererRef.value.removeBoardPortHighlights();
 
     const pointer = {
       x: evt.pageX - this.#left + window.scrollX,
@@ -936,7 +940,7 @@ export class Editor extends LitElement {
     };
 
     // The user has dropped the item onto a board port.
-    if (URL.canParse(type)) {
+    if (URL.canParse(type) || type.startsWith("#")) {
       const boardPort =
         this.#graphRendererRef.value.intersectingBoardPort(pointer);
 

@@ -1339,6 +1339,25 @@ export class Graph extends PIXI.Container {
     return false;
   }
 
+  highlightForBoardPort(nodeId: NodeIdentifier) {
+    const node = this.getChildByLabel(nodeId);
+    if (!(node instanceof GraphNode)) {
+      return;
+    }
+
+    node.highlightForBoardPort = true;
+  }
+
+  removeHighlightForBoardPort() {
+    for (const node of this.children) {
+      if (!(node instanceof GraphNode)) {
+        continue;
+      }
+
+      node.highlightForBoardPort = false;
+    }
+  }
+
   #edgesBetween(from: GraphNode, to: GraphNode): InspectableEdge[] {
     if (!this.#edges) {
       return [];
