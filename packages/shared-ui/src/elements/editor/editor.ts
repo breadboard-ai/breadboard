@@ -375,10 +375,10 @@ export class Editor extends LitElement {
       let ref = reference;
       let title: string;
 
-      if (reference.startsWith("#") && selectedGraph.graphs()) {
+      if (reference.startsWith("#") && this.graph?.graphs()) {
         ref = reference.slice(1);
 
-        const subGraph = selectedGraph.graphs()?.[ref];
+        const subGraph = this.graph.graphs()?.[ref];
         title = subGraph?.raw().title ?? "Untitled board";
       } else {
         const boardTitle = this.#getBoardTitle(reference);

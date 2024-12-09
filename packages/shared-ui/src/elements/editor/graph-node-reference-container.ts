@@ -5,7 +5,7 @@
  */
 
 import * as PIXI from "pixi.js";
-import { GraphNodeReferences } from "./types";
+import { GRAPH_OPERATIONS, GraphNodeReferences } from "./types";
 import { GraphNodeReference } from "./graph-node-reference";
 import { PortIdentifier } from "@google-labs/breadboard";
 import { getGlobalColor } from "./utils";
@@ -15,6 +15,7 @@ const edgeColorOrdinary = getGlobalColor("--bb-neutral-400");
 export class GraphNodeReferenceContainer extends PIXI.Container {
   #isDirty = false;
   #references: GraphNodeReferences | null = null;
+  #selectedReferences: Map<PortIdentifier, number[]> | null = null;
   #inPortLocations: Map<PortIdentifier, PIXI.ObservablePoint> | null = null;
   #edges = new PIXI.Graphics();
 
@@ -31,6 +32,9 @@ export class GraphNodeReferenceContainer extends PIXI.Container {
     };
 
     this.on("destroyed", () => {
+      // Prevent future renderings.
+      this.#isDirty = false;
+
       for (const child of this.children) {
         child.destroy({ children: true });
       }
@@ -57,6 +61,17 @@ export class GraphNodeReferenceContainer extends PIXI.Container {
 
   get references() {
     return this.#references;
+  }
+
+  set selectedReferences(
+    selectedReferences: Map<PortIdentifier, number[]> | null
+  ) {
+    this.#selectedReferences = selectedReferences;
+    this.#isDirty = true;
+  }
+
+  get selectedReferences() {
+    return this.#selectedReferences;
   }
 
   #createLabel(portId: PortIdentifier, title: string) {
@@ -135,19 +150,58 @@ export class GraphNodeReferenceContainer extends PIXI.Container {
     }
   }
 
+  getReferenceRects() {
+    if (!this.#references) {
+      return [];
+    }
+
+    const rects: Array<{ id: string; rect: PIXI.Rectangle }> = [];
+    for (const [port, references] of this.#references) {
+      for (let r = 0; r < references.length; r++) {
+        const reference = references[r];
+        const label = this.#createLabel(port, reference.reference);
+        const nodeReference = this.getChildByLabel(label) as GraphNodeReference;
+        if (!nodeReference) {
+          continue;
+        }
+
+        rects.push({
+          id: `${port}|${r}`,
+          rect: nodeReference.getBounds(true).rectangle,
+        });
+      }
+    }
+
+    return rects;
+  }
+
   #draw() {
     if (this.#references) {
       for (const [port, references] of this.#references) {
-        for (const reference of references) {
+        const selectedPortReferences = this.#selectedReferences?.get(port);
+        for (let r = 0; r < references.length; r++) {
+          const reference = references[r];
           const label = this.#createLabel(port, reference.reference);
           let nodeReference = this.getChildByLabel(label) as GraphNodeReference;
           if (!nodeReference) {
             nodeReference = new GraphNodeReference();
             nodeReference.label = label;
+            nodeReference.on(
+              GRAPH_OPERATIONS.GRAPH_REFERENCE_TOGGLE_SELECTED,
+              (isCtrlCommand: boolean) => {
+                this.emit(
+                  GRAPH_OPERATIONS.GRAPH_REFERENCE_TOGGLE_SELECTED,
+                  port,
+                  r,
+                  isCtrlCommand
+                );
+              }
+            );
             this.addChild(nodeReference);
           }
 
           nodeReference.reference = reference;
+          nodeReference.selected = selectedPortReferences?.includes(r) ?? false;
         }
       }
     }

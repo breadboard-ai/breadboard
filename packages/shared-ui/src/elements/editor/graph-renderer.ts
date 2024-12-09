@@ -62,9 +62,11 @@ import {
   WorkspaceVisualChangeId,
   GraphVisualState,
   WorkspaceSelectionStateWithChangeId,
+  ReferenceIdentifier,
 } from "../../types/types.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import { GraphComment } from "./graph-comment.js";
+import { isBoardArrayBehavior, isBoardBehavior } from "../../utils/index.js";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
 const backgroundGridColor = getGlobalColor("--bb-ui-100");
@@ -763,7 +765,8 @@ export class GraphRenderer extends LitElement {
         graphSelection &&
         (graphSelection.nodes.size > 0 ||
           graphSelection.comments.size > 0 ||
-          graphSelection.edges.size > 0)
+          graphSelection.edges.size > 0 ||
+          graphSelection.references.size > 0)
       ) {
         selections.graphs.set(
           graph.subGraphId ?? MAIN_BOARD_ID,
@@ -837,8 +840,9 @@ export class GraphRenderer extends LitElement {
     } else {
       if (!selectionState.nodes.has(id)) {
         selectionState.edges.clear();
-        selectionState.comments.clear();
         selectionState.nodes.clear();
+        selectionState.references.clear();
+        selectionState.comments.clear();
         selectionState.nodes.add(id);
       }
     }
@@ -852,6 +856,24 @@ export class GraphRenderer extends LitElement {
     for (const node of graph.children) {
       if (node instanceof GraphNode) {
         newSelectionState.nodes.add(node.label);
+
+        const referencePorts =
+          node.inPorts?.filter(
+            (port) =>
+              isBoardBehavior(port.schema) || isBoardArrayBehavior(port.schema)
+          ) ?? [];
+
+        for (const port of referencePorts) {
+          if (Array.isArray(port.value)) {
+            for (let i = 0; i < port.value.length; i++) {
+              newSelectionState.references.add(
+                `${node.label}|${port.name}|${i}`
+              );
+            }
+          } else {
+            newSelectionState.references.add(`${node.label}|${port.name}|0`);
+          }
+        }
       }
 
       if (node instanceof GraphComment) {
@@ -868,12 +890,14 @@ export class GraphRenderer extends LitElement {
     if (
       selectionState.nodes.size === newSelectionState.nodes.size &&
       selectionState.comments.size === newSelectionState.comments.size &&
-      selectionState.edges.size === newSelectionState.comments.size
+      selectionState.edges.size === newSelectionState.edges.size &&
+      selectionState.references.size === newSelectionState.references.size
     ) {
       if (isCtrlCommand) {
         selectionState.edges.clear();
-        selectionState.comments.clear();
         selectionState.nodes.clear();
+        selectionState.references.clear();
+        selectionState.comments.clear();
       }
       graph.selectionState = { ...selectionState };
     } else {
@@ -895,9 +919,11 @@ export class GraphRenderer extends LitElement {
       }
     } else {
       if (!selectionState.edges.has(id)) {
+        selectionState.edges.clear();
         selectionState.nodes.clear();
+        selectionState.references.clear();
         selectionState.comments.clear();
-        selectionState.nodes.clear();
+
         selectionState.edges.add(id);
       }
     }
@@ -925,8 +951,44 @@ export class GraphRenderer extends LitElement {
       if (!selectionState.comments.has(id)) {
         selectionState.edges.clear();
         selectionState.nodes.clear();
-        selectionState.nodes.clear();
+        selectionState.references.clear();
+        selectionState.comments.clear();
+
         selectionState.comments.add(id);
+      }
+    }
+
+    graph.selectionState = { ...selectionState };
+  }
+
+  #toggleGraphNodeReferenceSelection(
+    graph: Graph,
+    nodeId: NodeIdentifier,
+    portId: PortIdentifier,
+    index: number,
+    isCtrlCommand: boolean
+  ) {
+    let selectionState = graph.selectionState;
+    if (!selectionState) {
+      selectionState = emptySelectionState();
+    }
+
+    const id: ReferenceIdentifier = `${nodeId}|${portId}|${index}`;
+
+    if (isCtrlCommand) {
+      if (selectionState.references.has(id)) {
+        selectionState.references.delete(id);
+      } else {
+        selectionState.references.add(id);
+      }
+    } else {
+      if (!selectionState.references.has(id)) {
+        selectionState.edges.clear();
+        selectionState.nodes.clear();
+        selectionState.references.clear();
+        selectionState.comments.clear();
+
+        selectionState.references.add(id);
       }
     }
 
@@ -1834,6 +1896,25 @@ export class GraphRenderer extends LitElement {
       GRAPH_OPERATIONS.GRAPH_EDGE_TOGGLE_SELECTED,
       (id: NodeIdentifier, isCtrlCommand: boolean) => {
         this.#toggleGraphEdgeSelection(graph, id, isCtrlCommand);
+        this.#emitSelection();
+      }
+    );
+
+    graph.on(
+      GRAPH_OPERATIONS.GRAPH_REFERENCE_TOGGLE_SELECTED,
+      (
+        nodeId: NodeIdentifier,
+        portId: PortIdentifier,
+        index: number,
+        isCtrlCommand: boolean
+      ) => {
+        this.#toggleGraphNodeReferenceSelection(
+          graph,
+          nodeId,
+          portId,
+          index,
+          isCtrlCommand
+        );
         this.#emitSelection();
       }
     );

@@ -18,6 +18,7 @@ import {
 } from "../types/types";
 import { MAIN_BOARD_ID } from "../constants/constants";
 import { ModuleIdentifier } from "@breadboard-ai/types";
+import { isBoardArrayBehavior, isBoardBehavior } from "./behaviors.js";
 
 export function edgeToString(edge: Edge): string {
   return `${edge.from}:${edge.out}->${edge.to}:${edge.in}`;
@@ -51,6 +52,7 @@ export function createEmptyGraphSelectionState(): GraphSelectionState {
     nodes: new Set(),
     comments: new Set(),
     edges: new Set(),
+    references: new Set(),
   };
 }
 
@@ -106,6 +108,28 @@ export function createSelection(
       if (targetGraph) {
         for (const node of targetGraph.nodes()) {
           graphSelection.nodes.add(node.descriptor.id);
+
+          const referencePorts = node
+            .currentPorts()
+            .inputs.ports.filter(
+              (port) =>
+                isBoardBehavior(port.schema) ||
+                isBoardArrayBehavior(port.schema)
+            );
+
+          for (const port of referencePorts) {
+            if (Array.isArray(port.value)) {
+              for (let i = 0; i < port.value.length; i++) {
+                graphSelection.references.add(
+                  `${node.descriptor.id}|${port.name}|${i}`
+                );
+              }
+            } else {
+              graphSelection.references.add(
+                `${node.descriptor.id}|${port.name}|0`
+              );
+            }
+          }
         }
 
         for (const edge of targetGraph.edges()) {

@@ -45,7 +45,7 @@ import {
   NodeValue,
 } from "@breadboard-ai/types";
 import { Sandbox } from "@breadboard-ai/jsandbox";
-import { MAIN_BOARD_ID } from "../../../shared-ui/dist/constants/constants";
+import { MAIN_BOARD_ID } from "./util";
 
 function isGraphDescriptor(source: unknown): source is GraphDescriptor {
   return (

@@ -18,11 +18,13 @@ import {
   WorkspaceSelectionState,
 } from "./types";
 import { InspectableGraph } from "@google-labs/breadboard";
-import { MAIN_BOARD_ID } from "../../../shared-ui/dist/constants/constants";
 import {
   createEmptyGraphSelectionState,
   createEmptyWorkspaceSelectionState,
   inspectableEdgeToString,
+  isBoardArrayBehavior,
+  isBoardBehavior,
+  MAIN_BOARD_ID,
 } from "./util";
 
 export class Select extends EventTarget {
@@ -232,6 +234,10 @@ export class Select extends EventTarget {
       for (const edges of selectionState.edges) {
         this.#addToGraphsCollection(tab, id, "edges", edges);
       }
+
+      for (const references of selectionState.references) {
+        this.#addToGraphsCollection(tab, id, "references", references);
+      }
     }
 
     for (const id of selections.modules) {
@@ -268,6 +274,25 @@ export class Select extends EventTarget {
       const selections: GraphSelectionState = createEmptyGraphSelectionState();
       for (const node of graph.nodes()) {
         selections.nodes.add(node.descriptor.id);
+
+        const referencePorts = node
+          .currentPorts()
+          .inputs.ports.filter(
+            (port) =>
+              isBoardBehavior(port.schema) || isBoardArrayBehavior(port.schema)
+          );
+
+        for (const port of referencePorts) {
+          if (Array.isArray(port.value)) {
+            for (let i = 0; i < port.value.length; i++) {
+              selections.references.add(
+                `${node.descriptor.id}|${port.name}|${i}`
+              );
+            }
+          } else {
+            selections.references.add(`${node.descriptor.id}|${port.name}|0`);
+          }
+        }
       }
 
       for (const edge of graph.edges()) {

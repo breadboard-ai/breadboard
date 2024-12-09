@@ -107,6 +107,7 @@ export class GraphNode extends PIXI.Container {
   #outPortLocations: Map<PortIdentifier, PIXI.ObservablePoint> = new Map();
   #modules: InspectableModules | null = null;
   #selected = false;
+  #selectedReferences: Map<PortIdentifier, number[]> | null = null;
   #highlightForAdHoc = false;
   #expansionState: ComponentExpansionState = "expanded";
   #emitCollapseToggleEventOnNextDraw = false;
@@ -157,6 +158,17 @@ export class GraphNode extends PIXI.Container {
 
     this.#referenceContainer.x = -10;
     this.#referenceContainer.y = 0;
+    this.#referenceContainer.on(
+      GRAPH_OPERATIONS.GRAPH_REFERENCE_TOGGLE_SELECTED,
+      (portId: PortIdentifier, index: number, isCtrlCommand: boolean) => {
+        this.emit(
+          GRAPH_OPERATIONS.GRAPH_REFERENCE_TOGGLE_SELECTED,
+          portId,
+          index,
+          isCtrlCommand
+        );
+      }
+    );
 
     const playIcon = GraphAssets.instance().get("play-filled");
     if (playIcon) {
@@ -245,6 +257,9 @@ export class GraphNode extends PIXI.Container {
     };
 
     this.on("destroyed", () => {
+      // Prevent future renderings.
+      this.#isDirty = false;
+
       for (const child of this.children) {
         child.destroy({ children: true });
       }
@@ -452,6 +467,17 @@ export class GraphNode extends PIXI.Container {
   set references(references: GraphNodeReferences | null) {
     this.#references = references;
     this.#isDirty = true;
+  }
+
+  set selectedReferences(
+    selectedReferences: Map<PortIdentifier, number[]> | null
+  ) {
+    this.#selectedReferences = selectedReferences;
+    this.#isDirty = true;
+  }
+
+  get selectedReferences() {
+    return this.#selectedReferences;
   }
 
   get highlightForAdHoc() {
@@ -1355,8 +1381,13 @@ export class GraphNode extends PIXI.Container {
   #drawReferences() {
     this.#referenceContainer.inPortLocations = this.#inPortLocations;
     this.#referenceContainer.references = this.#references;
+    this.#referenceContainer.selectedReferences = this.#selectedReferences;
 
     this.addChildAt(this.#referenceContainer, 0);
+  }
+
+  referenceRects(): Array<{ id: string; rect: PIXI.Rectangle }> {
+    return this.#referenceContainer.getReferenceRects();
   }
 
   intersectingBoardPort(

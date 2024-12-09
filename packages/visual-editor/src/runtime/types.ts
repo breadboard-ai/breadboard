@@ -13,6 +13,7 @@ import {
   MainGraphIdentifier,
   MutableGraphStore,
   NodeConfiguration,
+  PortIdentifier,
   RunStore,
 } from "@google-labs/breadboard";
 
@@ -78,10 +79,14 @@ export type EnhanceSideboard = {
   enhance(config: NodeConfiguration): Promise<Result<NodeConfiguration>>;
 };
 
+export type ReferenceIdentifier =
+  `${NodeIdentifier}|${PortIdentifier}|${number}`;
+
 export interface GraphSelectionState {
   nodes: Set<NodeIdentifier>;
   comments: Set<string>;
   edges: Set<string>;
+  references: Set<ReferenceIdentifier>;
 }
 
 export interface GraphEntityVisualState {
