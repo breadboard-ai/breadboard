@@ -246,6 +246,12 @@ will be prompted to do so.
 Each user who wishes to connect to a Board Server is identified by an API key.
 These keys are created by an admin with write access to the `board-server` DB.
 
+Acquire application-default credentials:
+
+```sh
+gcloud auth application-default login
+```
+
 From the repository root:
 
 ```sh
