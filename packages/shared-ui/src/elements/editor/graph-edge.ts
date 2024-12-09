@@ -107,6 +107,13 @@ export class GraphEdge extends PIXI.Container {
       this.#draw();
       this.#isDirty = false;
     };
+
+    this.on("destroyed", () => {
+      for (const child of this.children) {
+        child.destroy({ children: true });
+      }
+    });
+
     this.#edgeGraphic.addEventListener("pointerover", () => {
       if (this.readOnly) {
         return;

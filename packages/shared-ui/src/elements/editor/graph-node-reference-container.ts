@@ -30,6 +30,12 @@ export class GraphNodeReferenceContainer extends PIXI.Container {
       this.#draw();
     };
 
+    this.on("destroyed", () => {
+      for (const child of this.children) {
+        child.destroy({ children: true });
+      }
+    });
+
     this.addChild(this.#edges);
   }
 

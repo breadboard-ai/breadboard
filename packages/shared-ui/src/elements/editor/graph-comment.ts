@@ -171,6 +171,12 @@ export class GraphComment extends PIXI.Container {
       this.emit(GRAPH_OPERATIONS.GRAPH_COMMENT_DRAWN);
     };
 
+    this.on("destroyed", () => {
+      for (const child of this.children) {
+        child.destroy({ children: true });
+      }
+    });
+
     this.#textLabel.eventMode = "none";
     this.#background.eventMode = "auto";
 

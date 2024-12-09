@@ -2950,6 +2950,11 @@ export class Main extends LitElement {
                   saveTitle = "Error";
                   break;
                 }
+
+                case BreadboardUI.Types.BOARD_SAVE_STATUS.UNSAVED: {
+                  saveTitle = "Unsaved";
+                  break;
+                }
               }
 
               return html`<div

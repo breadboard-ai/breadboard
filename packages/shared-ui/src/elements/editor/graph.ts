@@ -245,13 +245,13 @@ export class Graph extends PIXI.Container {
       // Clean all edges.
       for (const edge of this.#edgeContainer.children) {
         edge.removeFromParent();
-        edge.destroy();
+        edge.destroy({ children: true });
       }
 
       // Clean all nodes.
       for (const node of this.#graphNodeById.values()) {
         node.removeFromParent();
-        node.destroy();
+        node.destroy({ children: true });
       }
 
       this.#edgeGraphics.clear();

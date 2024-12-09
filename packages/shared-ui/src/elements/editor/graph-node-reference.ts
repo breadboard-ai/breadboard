@@ -41,6 +41,12 @@ export class GraphNodeReference extends PIXI.Container {
       this.#isDirty = false;
       this.#draw();
     };
+
+    this.on("destroyed", () => {
+      for (const child of this.children) {
+        child.destroy({ children: true });
+      }
+    });
   }
 
   set reference(reference: GraphNodeReferenceOpts[number] | null) {

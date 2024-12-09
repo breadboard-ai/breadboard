@@ -243,6 +243,12 @@ export class GraphNode extends PIXI.Container {
         this.emit(GRAPH_OPERATIONS.GRAPH_NODE_EXPAND_COLLAPSE);
       }
     };
+
+    this.on("destroyed", () => {
+      for (const child of this.children) {
+        child.destroy({ children: true });
+      }
+    });
   }
 
   addPointerEventListeners() {
