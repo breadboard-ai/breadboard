@@ -65,6 +65,12 @@ export class GraphNodeActivityMarker extends PIXI.Container {
       this.#draw();
     };
 
+    this.on("destroyed", () => {
+      for (const child of this.children) {
+        child.destroy({ children: true });
+      }
+    });
+
     this.addListener("pointerover", (evt: PIXI.FederatedPointerEvent) => {
       const message = "Click for component activity";
       const x = evt.clientX;

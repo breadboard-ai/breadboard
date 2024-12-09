@@ -28,6 +28,16 @@ export class GraphNodePortList extends PIXI.Container {
 
   readOnly = false;
 
+  constructor() {
+    super();
+
+    this.on("destroyed", () => {
+      for (const child of this.children) {
+        child.destroy({ children: true });
+      }
+    });
+  }
+
   get empty() {
     return this.#inPortsData.size === 0;
   }

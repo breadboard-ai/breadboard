@@ -629,6 +629,8 @@ export class GraphRenderer extends LitElement {
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
+    this.#removeAllGraphs();
+
     if ("stop" in this.#app) {
       this.#app.stop();
     }
