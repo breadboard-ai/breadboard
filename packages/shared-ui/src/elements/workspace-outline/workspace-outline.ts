@@ -41,6 +41,7 @@ import {
 } from "../../types/types";
 import * as Utils from "../../utils/utils.js";
 
+const DATA_TYPE = "text/plain";
 const OPEN_ITEMS_KEY = "bb-workspace-outline-open-items";
 const OVERFLOW_MENU_CLEARANCE = 140;
 
@@ -1086,11 +1087,15 @@ export class WorkspaceOutline extends LitElement {
       >
         <summary>
           <button
+            draggable="true"
             class=${classMap({
               title: true,
               selected:
                 this.selectionState?.selectionState.modules.has(id) ?? false,
             })}
+            @dragstart=${(evt: DragEvent) => {
+              evt.dataTransfer?.setData(DATA_TYPE, `#${id}`);
+            }}
             @click=${(evt: PointerEvent) => {
               evt.stopPropagation();
 

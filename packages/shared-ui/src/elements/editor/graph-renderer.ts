@@ -1088,6 +1088,33 @@ export class GraphRenderer extends LitElement {
     }
   }
 
+  highlightBoardPort(point: PIXI.PointData) {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      if (graph.getBounds().containsPoint(point.x, point.y)) {
+        const port = graph.intersectingBoardPort(point);
+        if (!port) {
+          continue;
+        }
+
+        graph.highlightForBoardPort(port.nodeId);
+      }
+    }
+  }
+
+  removeBoardPortHighlights() {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      graph.removeHighlightForBoardPort();
+    }
+  }
+
   toSubGraphId(point: PIXI.PointData): GraphIdentifier | null {
     for (const child of this.#container.children) {
       if (!(child instanceof Graph)) {

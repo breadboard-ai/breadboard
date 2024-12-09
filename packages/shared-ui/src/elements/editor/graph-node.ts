@@ -40,6 +40,7 @@ const portsDividerColor = getGlobalColor("--bb-neutral-100");
 
 const selectedNodeColor = getGlobalColor("--bb-ui-600");
 const highlightForAdHocNodeColor = getGlobalColor("--bb-boards-500");
+const highlightForBoardPortNodeColor = getGlobalColor("--bb-joiner-500");
 
 const ICON_SCALE = 0.42;
 const ICON_ALPHA_OVER = 1;
@@ -68,6 +69,7 @@ export class GraphNode extends PIXI.Container {
   #portsDividerColor = portsDividerColor;
   #selectedColor = selectedNodeColor;
   #highlightForAdHocColor = highlightForAdHocNodeColor;
+  #highlightForBoardPortColor = highlightForBoardPortNodeColor;
   #textSize = 12;
   #backgroundColor = 0x333333;
   #padding = 12;
@@ -109,6 +111,7 @@ export class GraphNode extends PIXI.Container {
   #selected = false;
   #selectedReferences: Map<PortIdentifier, number[]> | null = null;
   #highlightForAdHoc = false;
+  #highlightForBoardPort = false;
   #expansionState: ComponentExpansionState = "expanded";
   #emitCollapseToggleEventOnNextDraw = false;
 
@@ -489,7 +492,24 @@ export class GraphNode extends PIXI.Container {
       return;
     }
 
+    if (highlightForAdHoc === this.#highlightForAdHoc) {
+      return;
+    }
+
     this.#highlightForAdHoc = highlightForAdHoc;
+    this.#isDirty = true;
+  }
+
+  get highlightForBoardPort() {
+    return this.#highlightForBoardPort;
+  }
+
+  set highlightForBoardPort(highlightForBoardPort: boolean) {
+    if (highlightForBoardPort === this.#highlightForBoardPort) {
+      return;
+    }
+
+    this.#highlightForBoardPort = highlightForBoardPort;
     this.#isDirty = true;
   }
 
@@ -1205,7 +1225,10 @@ export class GraphNode extends PIXI.Container {
       this.addChildAt(this.#background, 0);
     }
 
-    const borderSize = this.selected || this.#highlightForAdHoc ? 2 : 1;
+    const borderSize =
+      this.selected || this.#highlightForAdHoc || this.#highlightForBoardPort
+        ? 2
+        : 1;
     this.#background.beginPath();
     this.#background.roundRect(
       -borderSize,
@@ -1218,9 +1241,11 @@ export class GraphNode extends PIXI.Container {
     this.#background.fill({
       color: this.#highlightForAdHoc
         ? this.#highlightForAdHocColor
-        : this.selected
-          ? this.#selectedColor
-          : this.#borderColor,
+        : this.#highlightForBoardPort
+          ? this.#highlightForBoardPortColor
+          : this.selected
+            ? this.#selectedColor
+            : this.#borderColor,
     });
 
     this.#background.beginPath();
@@ -1379,6 +1404,7 @@ export class GraphNode extends PIXI.Container {
    * are known.
    */
   #drawReferences() {
+    this.#referenceContainer.visible = this.#expansionState !== "collapsed";
     this.#referenceContainer.inPortLocations = this.#inPortLocations;
     this.#referenceContainer.references = this.#references;
     this.#referenceContainer.selectedReferences = this.#selectedReferences;
