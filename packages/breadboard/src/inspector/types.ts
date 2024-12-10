@@ -695,21 +695,9 @@ export type InspectableGraphCache = {
 
 export type MainGraphIdentifier = UUID;
 
-export type GraphHandle = {
-  id: MainGraphIdentifier;
-} & (
-  | {
-      type: "declarative";
-      /**
-       * The value is "" for the main graph.
-       */
-      graphId: GraphIdentifier;
-    }
-  | {
-      type: "imperative";
-      moduleId: ModuleIdentifier;
-    }
-);
+export type GraphStoreEntry = NodeHandlerMetadata & {
+  mainGraph: NodeHandlerMetadata & { id: MainGraphIdentifier };
+};
 
 export type GraphStoreArgs = Required<InspectableGraphOptions>;
 
@@ -730,6 +718,18 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> & {
   readonly kits: readonly Kit[];
   readonly sandbox: Sandbox;
   readonly loader: GraphLoader;
+
+  graphs(): GraphStoreEntry[];
+
+  /**
+   * Registers a Kit with the GraphStore.
+   * Currently, only Kits that contain Graph URL-like types
+   * are support.
+   *
+   * @param kit - the kit to register
+   * @param dependences - known dependencies to this kit
+   */
+  registerKit(kit: Kit, dependences: MainGraphIdentifier[]): void;
 
   addByURL(
     url: string,
@@ -791,6 +791,7 @@ export type InspectablePortCache = {
  */
 export type MutableGraph = {
   graph: GraphDescriptor;
+  legacyKitMetadata: KitDescriptor | null;
   readonly id: MainGraphIdentifier;
   readonly graphs: InspectableGraphCache;
   readonly store: MutableGraphStore;

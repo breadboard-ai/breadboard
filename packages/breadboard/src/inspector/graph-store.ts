@@ -14,6 +14,7 @@ import {
 import { GraphLoader, GraphLoaderContext } from "../loader/types.js";
 import { MutableGraphImpl } from "./graph/mutable-graph.js";
 import {
+  GraphStoreEntry,
   GraphStoreArgs,
   GraphStoreEventTarget,
   InspectableGraph,
@@ -24,12 +25,13 @@ import {
   MutableGraphStore,
 } from "./types.js";
 import { hash } from "../utils/hash.js";
-import { Kit, NodeHandlerContext } from "../types.js";
+import { Kit, NodeHandlerContext, NodeHandlerMetadata } from "../types.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { createLoader } from "../loader/index.js";
 import { SnapshotUpdater } from "../utils/snapshot-updater.js";
 import { UpdateEvent } from "./graph/event.js";
-import { collectCustomNodeTypes } from "./graph/kits.js";
+import { collectCustomNodeTypes, createBuiltInKit } from "./graph/kits.js";
+import { graphUrlLike } from "../utils/graph-url-like.js";
 
 export { GraphStore, makeTerribleOptions, contextFromStore };
 
@@ -65,6 +67,8 @@ class GraphStore
   readonly sandbox: Sandbox;
   readonly loader: GraphLoader;
 
+  #legacyKits: GraphStoreEntry[];
+
   #mainGraphIds: Map<string, MainGraphIdentifier> = new Map();
   #mutables: Map<MainGraphIdentifier, SnapshotUpdater<MutableGraph>> =
     new Map();
@@ -75,6 +79,93 @@ class GraphStore
     this.kits = args.kits;
     this.sandbox = args.sandbox;
     this.loader = args.loader;
+    this.#legacyKits = this.#populateLegacyKits(args.kits);
+  }
+
+  graphs(): GraphStoreEntry[] {
+    const graphs = [...this.#mutables.entries()]
+      .flatMap(([mainGraphId, snapshot]) => {
+        const mutable = snapshot.current();
+        const descriptor = mutable.graph;
+        // TODO: Support exports and main module
+        const mainGraphMetadata = filterEmptyValues({
+          title: descriptor.title,
+          description: descriptor.description,
+          icon: descriptor.metadata?.icon,
+          url: descriptor.url,
+          tags: descriptor.metadata?.tags,
+          help: descriptor.metadata?.help,
+          id: mainGraphId,
+        });
+        return {
+          mainGraph: mutable.legacyKitMetadata || mainGraphMetadata,
+          ...mainGraphMetadata,
+        };
+      })
+      .filter(Boolean) as GraphStoreEntry[];
+    return [...this.#legacyKits, ...graphs];
+  }
+
+  #populateLegacyKits(kits: Kit[]) {
+    kits = [...kits, createBuiltInKit()];
+    const all = kits.flatMap((kit) =>
+      Object.entries(kit.handlers).map(([type, handler]) => {
+        let metadata: NodeHandlerMetadata =
+          "metadata" in handler ? handler.metadata || {} : {};
+        const mainGraphTags = [...(kit.tags || [])];
+        if (metadata.deprecated) {
+          mainGraphTags.push("deprecated");
+          metadata = { ...metadata };
+          delete metadata.deprecated;
+        }
+        const tags = [...(metadata.tags || []), "component"];
+        return [
+          type,
+          {
+            url: type,
+            mainGraph: filterEmptyValues({
+              title: kit.title,
+              description: kit.description,
+              tags: mainGraphTags,
+            }),
+            ...metadata,
+            tags,
+          },
+        ] as [type: string, info: GraphStoreEntry];
+      })
+    );
+    return Object.values(
+      all.reduce(
+        (collated, [type, info]) => {
+          // Intentionally do the reverse of what goes on
+          // in `handlersFromKits`: last info wins,
+          // because here, we're collecting info, rather
+          // than handlers and the last info is the one
+          // that typically has the right stuff.
+          return { ...collated, [type]: info };
+        },
+        {} as Record<string, GraphStoreEntry>
+      )
+    );
+  }
+
+  registerKit(kit: Kit, dependences: MainGraphIdentifier[]): void {
+    Object.keys(kit.handlers).forEach((type) => {
+      if (graphUrlLike(type)) {
+        const mutable = this.addByURL(type, dependences, {});
+        mutable.legacyKitMetadata = filterEmptyValues({
+          url: kit.url,
+          title: kit.title,
+          description: kit.description,
+          tags: kit.tags,
+          id: mutable.id,
+        });
+      } else {
+        throw new Error(
+          `The type "${type}" is not Graph URL-like, unable to add this kit`
+        );
+      }
+    });
   }
 
   addByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier> {
@@ -291,4 +382,17 @@ function emptyGraph(): GraphDescriptor {
     edges: [],
     nodes: [],
   };
+}
+
+/**
+ * A utility function to filter out empty (null or undefined) values from
+ * an object.
+ *
+ * @param obj -- The object to filter.
+ * @returns -- The object with empty values removed.
+ */
+function filterEmptyValues<T extends Record<string, unknown>>(obj: T): T {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, value]) => !!value)
+  ) as T;
 }

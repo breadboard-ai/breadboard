@@ -400,7 +400,8 @@
 				"published",
 				"tool",
 				"experimental",
-				"component"
+				"component",
+				"deprecated"
 			],
 			"description": "A tag that can be associated with a graph.\n- `published`: The graph is published (as opposed to a draft). It may be    used in production and shared with others.\n- `tool`: The graph is intended to be a tool.\n- `experimental`: The graph is experimental and may not be stable.\n- `component`: The graph is intended to be a component."
 		},

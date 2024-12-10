@@ -7,6 +7,7 @@
 import {
   GraphDescriptor,
   GraphIdentifier,
+  KitDescriptor,
   ModuleIdentifier,
 } from "@breadboard-ai/types";
 import { AffectedNode } from "../../editor/types.js";
@@ -44,6 +45,8 @@ export { MutableGraphImpl };
 class MutableGraphImpl implements MutableGraph {
   readonly store: MutableGraphStore;
   readonly id: MainGraphIdentifier;
+
+  legacyKitMetadata: KitDescriptor | null = null;
 
   graph!: GraphDescriptor;
   graphs!: InspectableGraphCache;

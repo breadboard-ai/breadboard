@@ -12,6 +12,7 @@ import { InputValues, Kit, OutputValues } from "../../src/types.js";
 // in tests/bgl/*.
 
 export const testKit: Kit = {
+  title: "Test Kit",
   url: import.meta.url,
   handlers: {
     invoke: {
@@ -38,6 +39,10 @@ export const testKit: Kit = {
       },
     },
     map: {
+      metadata: {
+        title: "Map",
+        tags: ["experimental"],
+      },
       invoke: async (inputs, context) => {
         const { board, list = [] } = inputs;
         if (!board) {

@@ -86,6 +86,15 @@ export async function create(config: RuntimeConfig): Promise<{
     loader,
     sandbox: config.sandbox,
   });
+
+  servers.forEach((server) => {
+    server.ready().then(() => {
+      server.kits.forEach((kit) => {
+        graphStore.registerKit(kit, []);
+      });
+    });
+  });
+
   const boardServers = {
     servers,
     loader,
