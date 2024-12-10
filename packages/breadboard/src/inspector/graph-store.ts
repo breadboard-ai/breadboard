@@ -106,20 +106,36 @@ class GraphStore
   }
 
   #populateLegacyKits(kits: Kit[]) {
-    return kits.flatMap((kit) =>
+    const all = kits.flatMap((kit) =>
       Object.entries(kit.handlers).map(([type, handler]) => {
         const metadata: NodeHandlerMetadata =
           "metadata" in handler ? handler.metadata || {} : {};
-        return {
-          url: type,
-          mainGraph: filterEmptyValues({
-            title: kit.title,
-            description: kit.description,
-            tags: kit.tags,
-          }),
-          ...metadata,
-        };
+        return [
+          type,
+          {
+            url: type,
+            mainGraph: filterEmptyValues({
+              title: kit.title,
+              description: kit.description,
+              tags: kit.tags,
+            }),
+            ...metadata,
+          },
+        ] as [type: string, info: GraphHandleToBeNamed];
       })
+    );
+    return Object.values(
+      all.reduce(
+        (collated, [type, info]) => {
+          // Intentionally do the reverse of what goes on
+          // in `handlersFromKits`: last info wins,
+          // because here, we're collecting info, rather
+          // than handlers and the last info is the one
+          // that typically has the right stuff.
+          return { ...collated, [type]: info };
+        },
+        {} as Record<string, GraphHandleToBeNamed>
+      )
     );
   }
 
