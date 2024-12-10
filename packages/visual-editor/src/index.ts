@@ -1029,10 +1029,10 @@ export class Main extends LitElement {
         return;
       }
 
-      let saveMessage = "Board saved";
+      let saveMessage = "Workspace saved";
       if (this.#nodeConfiguratorRef.value) {
         this.#nodeConfiguratorRef.value.processData();
-        saveMessage = "Board and configuration saved";
+        saveMessage = "Workspace and configuration saved";
       }
 
       this.#attemptBoardSave(this.tab, saveMessage);
@@ -3123,6 +3123,13 @@ export class Main extends LitElement {
                     runner.run(data);
                   }
                 }
+              }}
+              @bbgraphboardserverloadrequest=${async (
+                evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
+              ) => {
+                this.#attemptBoardStart(
+                  new BreadboardUI.Events.StartEvent(evt.url)
+                );
               }}
               @bbdragconnectorstart=${(
                 evt: BreadboardUI.Events.DragConnectorStartEvent

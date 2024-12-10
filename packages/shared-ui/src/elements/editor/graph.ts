@@ -117,11 +117,18 @@ export class Graph extends PIXI.Container {
     this.#subGraphOutline.eventMode = "none";
 
     let subGraphOutlineMarkerDragStart: PIXI.Point | null = null;
-    this.#subGraphOutlineConnector.cursor = "pointer";
+    this.#subGraphOutlineConnector.cursor = "crosshair";
     this.#subGraphOutlineConnector.eventMode = "static";
-    this.#subGraphOutlineConnector.addEventListener("pointerdown", () => {
-      console.log("Connector");
-    });
+    this.#subGraphOutlineConnector.addEventListener(
+      "pointerdown",
+      (evt: PointerEvent) => {
+        this.emit(
+          GRAPH_OPERATIONS.SUBGRAPH_CONNECTION_START,
+          evt.clientX,
+          evt.clientY
+        );
+      }
+    );
 
     this.#subGraphOutlineMarker.cursor = "pointer";
     this.#subGraphOutlineMarker.eventMode = "static";
@@ -1622,6 +1629,21 @@ export class Graph extends PIXI.Container {
               index,
               isCtrlCommand
             );
+          }
+        );
+
+        graphNode.on(
+          GRAPH_OPERATIONS.GRAPH_REFERENCE_GOTO,
+          (reference: string) => {
+            if (URL.canParse(reference)) {
+              this.emit(GRAPH_OPERATIONS.GRAPH_REFERENCE_LOAD, reference);
+            } else {
+              this.emit(
+                GRAPH_OPERATIONS.SUBGRAPH_SELECTED,
+                false,
+                reference.slice(1)
+              );
+            }
           }
         );
 

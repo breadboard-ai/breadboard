@@ -3,12 +3,27 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, nothing, PropertyValues } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { LitElement, html, css, nothing, PropertyValues, svg } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
 import { DragConnectorReceiver } from "../../types/types";
 import { GraphIdentifier } from "@breadboard-ai/types";
 import { NodeCreateReferenceEvent } from "../../events/events";
-import { MAIN_BOARD_ID } from "../../constants/constants";
+import { getSubItemColor } from "../../utils/subgraph-color";
+
+const documentStyles = getComputedStyle(document.documentElement);
+type ValidColorStrings = `#${number}` | `--${string}`;
+
+export function getGlobalColor(
+  name: ValidColorStrings,
+  defaultValue: ValidColorStrings = "#333333"
+) {
+  const value = documentStyles.getPropertyValue(name)?.replace(/^#/, "");
+  const valueAsNumber = parseInt(value || defaultValue, 16);
+  if (Number.isNaN(valueAsNumber)) {
+    return 0xff00ff;
+  }
+  return valueAsNumber;
+}
 
 @customElement("bb-drag-connector")
 export class DragConnector extends LitElement {
@@ -23,6 +38,9 @@ export class DragConnector extends LitElement {
 
   @property()
   dimensions: { w: number; h: number } | null = null;
+
+  @state()
+  isOnTarget = false;
 
   #resizeObserver = new ResizeObserver((entries) => {
     this.dimensions = {
@@ -68,13 +86,15 @@ export class DragConnector extends LitElement {
 
       if (el.isOnDragConnectorTarget(evt.clientX, evt.clientY)) {
         el.highlight(evt.clientX, evt.clientY);
+        this.isOnTarget = true;
       } else {
         el.removeHighlight(evt.clientX, evt.clientY);
+        this.isOnTarget = false;
       }
     }
   }
 
-  #onPointerUp(evt: PointerEvent) {
+  #onPointerUp(evt: MouseEvent) {
     for (const el of evt.composedPath()) {
       if (!this.#isDragConnectorReceiver(el)) {
         continue;
@@ -82,19 +102,18 @@ export class DragConnector extends LitElement {
 
       const target = el.isOnDragConnectorTarget(evt.clientX, evt.clientY);
       if (target) {
+        evt.stopImmediatePropagation();
+
         el.removeHighlight(evt.clientX, evt.clientY);
-        const [nodeId, portId] = target.split("|");
-        if (!nodeId || !portId || !this.source) {
+        this.isOnTarget = false;
+
+        const [graphId, nodeId, portId] = target.split("|");
+        if (!graphId || !nodeId || !portId || !this.source) {
           break;
         }
 
         this.dispatchEvent(
-          new NodeCreateReferenceEvent(
-            MAIN_BOARD_ID,
-            nodeId,
-            portId,
-            this.source
-          )
+          new NodeCreateReferenceEvent(graphId, nodeId, portId, this.source)
         );
         break;
       }
@@ -102,6 +121,7 @@ export class DragConnector extends LitElement {
 
     this.start = null;
     this.end = null;
+    document.body.classList.remove("boards-highlight");
     window.removeEventListener("pointermove", this.#onPointerMoveBound);
   }
 
@@ -111,9 +131,14 @@ export class DragConnector extends LitElement {
 
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("start") && this.start) {
+      document.body.classList.add("boards-highlight");
+
+      this.end = { ...this.start };
+
       window.addEventListener("pointermove", this.#onPointerMoveBound);
       window.addEventListener("pointerup", this.#onPointerUpBound, {
         once: true,
+        capture: true,
       });
     }
   }
@@ -123,22 +148,45 @@ export class DragConnector extends LitElement {
       return nothing;
     }
 
+    const bgColor = getGlobalColor("--bb-neutral-0");
+    const fillColor = this.isOnTarget
+      ? `#${getGlobalColor("--bb-joiner-500").toString(16).padStart(2)}`
+      : getSubItemColor<string>(
+          this.source.replace(/^#(module:)?/, ""),
+          "label"
+        );
+
     return html`<svg
       xmlns="http://www.w3.org/2000/svg"
       width="100%"
       height="100%"
       viewBox=${`0 0 ${this.dimensions.w} ${this.dimensions.h}`}
     >
-      <circle cx=${this.start.x} cy=${this.start.y} r="3" fill="#ffa500" />
-      <circle cx=${this.end.x} cy=${this.end.y} r="3" fill="#ffa500" />
-      <line
-        x1=${this.start.x}
-        y1=${this.start.y}
-        x2=${this.end.x}
-        y2=${this.end.y}
-        stroke-width="2"
-        stroke="#ffa500"
+      <circle
+        cx="${this.end.x}"
+        cy="${this.end.y}"
+        r="8"
+        fill="#${bgColor.toString(16).padStart(2)}"
+        stroke="${fillColor}"
+        stroke-width="1"
       />
+      <circle cx="${this.end.x}" cy="${this.end.y}" r="5" fill="${fillColor}" />
+      ${this.isOnTarget
+        ? svg`<line
+            x1="${this.end.x - 3}"
+            y1="${this.end.y}"
+            x2="${this.end.x + 3}"
+            y2="${this.end.y}"
+            stroke="white"
+            stroke-width="2" />
+            <line
+            x1="${this.end.x}"
+            y1="${this.end.y - 3}"
+            x2="${this.end.x}"
+            y2="${this.end.y + 3}"
+            stroke="white"
+            stroke-width="2" />`
+        : nothing}
     </svg>`;
   }
 }

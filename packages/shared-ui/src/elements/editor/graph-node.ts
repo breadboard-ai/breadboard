@@ -173,6 +173,13 @@ export class GraphNode extends PIXI.Container {
       }
     );
 
+    this.#referenceContainer.on(
+      GRAPH_OPERATIONS.GRAPH_REFERENCE_GOTO,
+      (...args: unknown[]) => {
+        this.emit(GRAPH_OPERATIONS.GRAPH_REFERENCE_GOTO, ...args);
+      }
+    );
+
     const playIcon = GraphAssets.instance().get("play-filled");
     if (playIcon) {
       this.#runnerButton = new PIXI.Sprite(playIcon);
@@ -282,6 +289,7 @@ export class GraphNode extends PIXI.Container {
         return;
       }
 
+      this.#lastClickTime = 0;
       if (!this.#titleText) {
         return;
       }

@@ -6,7 +6,7 @@
 
 import * as PIXI from "pixi.js";
 import { GRAPH_OPERATIONS, GraphNodeReferenceOpts } from "./types";
-import { getGlobalColor } from "./utils";
+import { DBL_CLICK_DELTA, getGlobalColor } from "./utils";
 
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
 const selectedNodeColor = getGlobalColor("--bb-ui-600");
@@ -28,6 +28,7 @@ export class GraphNodeReference extends PIXI.Container {
       align: "left",
     },
   });
+  #lastClickTime = 0;
 
   constructor() {
     super();
@@ -38,12 +39,28 @@ export class GraphNodeReference extends PIXI.Container {
     this.addChild(this.#title);
 
     this.addEventListener("click", (evt: PIXI.FederatedPointerEvent) => {
-      const isMac = navigator.platform.indexOf("Mac") === 0;
-      const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+      const clickDelta = window.performance.now() - this.#lastClickTime;
+      this.#lastClickTime = window.performance.now();
 
+      if (!this.#reference?.reference) {
+        return;
+      }
+
+      if (clickDelta > DBL_CLICK_DELTA) {
+        const isMac = navigator.platform.indexOf("Mac") === 0;
+        const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+        this.emit(
+          GRAPH_OPERATIONS.GRAPH_REFERENCE_TOGGLE_SELECTED,
+          isCtrlCommand
+        );
+        return;
+      }
+
+      this.#lastClickTime = 0;
       this.emit(
-        GRAPH_OPERATIONS.GRAPH_REFERENCE_TOGGLE_SELECTED,
-        isCtrlCommand
+        GRAPH_OPERATIONS.GRAPH_REFERENCE_GOTO,
+        this.#reference.reference
       );
     });
 

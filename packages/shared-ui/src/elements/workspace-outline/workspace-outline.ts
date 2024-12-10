@@ -27,6 +27,8 @@ import {
   WorkspaceSelectionStateEvent,
   WorkspaceItemVisualUpdateEvent,
   DragConnectorStartEvent,
+  ShowTooltipEvent,
+  HideTooltipEvent,
 } from "../../events/events";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
@@ -48,7 +50,6 @@ import {
 } from "../../types/types";
 import * as Utils from "../../utils/utils.js";
 
-const DATA_TYPE = "text/plain";
 const OPEN_ITEMS_KEY = "bb-workspace-outline-open-items";
 const OVERFLOW_MENU_CLEARANCE = 140;
 
@@ -619,6 +620,7 @@ export class WorkspaceOutline
       width: 10px;
       height: 10px;
       flex: 0 0 auto;
+      cursor: crosshair;
     }
 
     .more {
@@ -681,10 +683,11 @@ export class WorkspaceOutline
     }
 
     if (
+      el.dataset.dragConnectorTargetGraph &&
       el.dataset.dragConnectorTargetNode &&
       el.dataset.dragConnectorTargetPort
     ) {
-      return `${el.dataset.dragConnectorTargetNode}|${el.dataset.dragConnectorTargetPort}`;
+      return `${el.dataset.dragConnectorTargetGraph}|${el.dataset.dragConnectorTargetNode}|${el.dataset.dragConnectorTargetPort}`;
     }
 
     return null;
@@ -832,6 +835,18 @@ export class WorkspaceOutline
       return "Unspecified Module";
     }
 
+    if (isBoardBehavior(port.schema)) {
+      const subGraphs = this.graph?.graphs();
+      let id = port.value;
+      if (typeof id === "string") {
+        id = id.slice(1);
+      }
+
+      if (subGraphs && typeof id === "string" && subGraphs[id]) {
+        return subGraphs[id].raw().title ?? port.value;
+      }
+    }
+
     switch (typeof port.value) {
       case "object": {
         preview = JSON.stringify(port.value);
@@ -919,12 +934,16 @@ export class WorkspaceOutline
                   [port.status]: true,
                   configured: port.configured,
                   "with-preview": true,
+                  board: dragConnectorTargetPort ?? false,
                 })}
               >
                 <span class="title">
                   ${isConfigurableBehavior(port.schema)
                     ? html`<button
                         class="port-item"
+                        data-drag-connector-target-graph=${subGraphId
+                          ? subGraphId
+                          : MAIN_BOARD_ID}
                         data-drag-connector-target-node=${node.descriptor.id ??
                         nothing}
                         data-drag-connector-target-port=${dragConnectorTargetPort ??
@@ -1137,15 +1156,11 @@ export class WorkspaceOutline
       >
         <summary>
           <button
-            draggable="true"
             class=${classMap({
               title: true,
               selected:
                 this.selectionState?.selectionState.modules.has(id) ?? false,
             })}
-            @dragstart=${(evt: DragEvent) => {
-              evt.dataTransfer?.setData(DATA_TYPE, `#${id}`);
-            }}
             @click=${(evt: PointerEvent) => {
               evt.stopPropagation();
 
@@ -1241,8 +1256,25 @@ export class WorkspaceOutline
                     evt.preventDefault();
                     evt.stopImmediatePropagation();
                   }}
+                  @pointerover=${(evt: PointerEvent) => {
+                    this.dispatchEvent(
+                      new ShowTooltipEvent(
+                        `Drag to a board port`,
+                        evt.clientX,
+                        evt.clientY
+                      )
+                    );
+                  }}
+                  @pointerout=${() => {
+                    this.dispatchEvent(new HideTooltipEvent());
+                  }}
                   @pointerdown=${(evt: PointerEvent) => {
                     evt.stopImmediatePropagation();
+
+                    const source =
+                      subItem.type === "declarative"
+                        ? `#${id}`
+                        : `#module:${id}`;
 
                     this.dispatchEvent(
                       new DragConnectorStartEvent(
@@ -1250,7 +1282,7 @@ export class WorkspaceOutline
                           x: evt.clientX,
                           y: evt.clientY,
                         },
-                        `#${id}`
+                        source
                       )
                     );
                   }}
