@@ -467,6 +467,7 @@ export class UI extends LitElement {
             html`<h1 id="side-nav-title">Components</h1>
               <bb-component-selector
                 .graphStoreUpdateId=${this.graphStoreUpdateId}
+                .showExperimentalComponents=${showExperimentalComponents}
                 .boardServerKits=${this.boardServerKits}
                 .graphStore=${this.graphStore}
                 .mainGraphId=${this.mainGraphId}
