@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ModuleIdentifier } from "@breadboard-ai/types";
 import type { GraphDescriptor, GraphToRun } from "../types.js";
 import type {
   GraphProvider,
@@ -17,7 +18,13 @@ export const SENTINEL_BASE_URL = new URL("sentinel://sentinel/sentinel");
 export { resolveGraph };
 
 function resolveGraph(graphToRun: GraphToRun): GraphDescriptor {
-  const { graph, subGraphId } = graphToRun;
+  const { graph, subGraphId, moduleId } = graphToRun;
+  if (moduleId) {
+    const url = graph.url?.startsWith("module:")
+      ? graph.url
+      : `module:${moduleId}:${graph.url}`;
+    return { ...graph, main: moduleId, url };
+  }
   return subGraphId ? graph.graphs![subGraphId] : graph;
 }
 
@@ -38,6 +45,8 @@ export const baseURLFromContext = (context: GraphLoaderContext) => {
   if (context.base) return context.base;
   return SENTINEL_BASE_URL;
 };
+
+const MODULE_PREFIX = "module:";
 
 export class Loader implements GraphLoader {
   #graphProviders: GraphProvider[];
@@ -76,6 +85,24 @@ export class Loader implements GraphLoader {
     hash: string,
     supergraph: GraphDescriptor
   ): GraphLoaderResult {
+    const isModule = hash.startsWith(MODULE_PREFIX);
+    if (isModule) {
+      const modules = supergraph.modules;
+      const moduleId: ModuleIdentifier = hash.slice(MODULE_PREFIX.length);
+      if (!modules) {
+        const error = `No modules to load "${moduleId}" from`;
+        console.warn(error);
+        return { success: false, error };
+      }
+      const module = modules[moduleId];
+      if (!module) {
+        const error = `No module found for module ID: ${moduleId}`;
+        console.warn(error);
+        return { success: false, error };
+      }
+      return { success: true, graph: supergraph, moduleId };
+    }
+
     const subgraphs = supergraph.graphs;
     if (!subgraphs) {
       const error = `No subgraphs to load "#${hash}" from`;

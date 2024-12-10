@@ -42,6 +42,7 @@ export async function* runGraph(
 
   if (isImperativeGraph(graph)) {
     graph = toDeclarativeGraph(graph);
+    graphToRun = { graph };
   }
 
   const lifecycle = state?.lifecycle();
