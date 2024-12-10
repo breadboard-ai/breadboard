@@ -279,10 +279,6 @@ export type InspectableGraph = {
    */
   hasEdge(edge: Edge): boolean;
   /**
-   * Returns all kits in the graph.
-   */
-  kits(): InspectableKit[];
-  /**
    * Returns all nodes of the given type.
    * @param type type of the nodes to find
    */
@@ -680,7 +676,6 @@ export type InspectableDescriberResultCache = {
 export type InspectableKitCache = {
   getType(id: NodeTypeIdentifier): InspectableNodeType | undefined;
   addType(id: NodeTypeIdentifier, type: InspectableNodeType): void;
-  kits(): InspectableKit[];
   rebuild(graph: GraphDescriptor): void;
 };
 
@@ -754,8 +749,6 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> & {
     graph: GraphDescriptor,
     graphId: GraphIdentifier
   ): InspectableGraph | undefined;
-
-  addKits(kits: Kit[], dependencies: MainGraphIdentifier[]): InspectableKit[];
 };
 
 export type PortIdentifier = string;

@@ -333,7 +333,6 @@ class CustomNodeType implements InspectableNodeType {
 
 class KitCache implements InspectableKitCache {
   #types: Map<NodeTypeIdentifier, InspectableNodeType> = new Map();
-  #kits: InspectableKit[] = [];
   #mutable: MutableGraph;
 
   constructor(mutable: MutableGraph) {
@@ -347,16 +346,11 @@ class KitCache implements InspectableKitCache {
     this.#types.set(id, type);
   }
 
-  kits(): InspectableKit[] {
-    return this.#kits;
-  }
-
   rebuild(graph: GraphDescriptor) {
     const kits = collectKits(this.#mutable, graph);
 
     this.#types = new Map(
       kits.flatMap((kit) => kit.nodeTypes.map((type) => [type.type(), type]))
     );
-    this.#kits = kits;
   }
 }
