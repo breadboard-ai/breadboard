@@ -6,9 +6,8 @@
 
 import { GraphDescriptor } from "@google-labs/breadboard";
 import { SignalWatcher } from "@lit-labs/signals";
-import { LitElement, css, html, nothing } from "lit";
+import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { classMap } from "lit/directives/class-map.js";
 import { AsyncComputed } from "signal-utils/async-computed";
 import { BBRTAppState } from "../app-state.js";
 import { BreadboardToolProvider } from "../breadboard/breadboard-tool-provider.js";
@@ -58,57 +57,40 @@ export class BBRTMain extends SignalWatcher(LitElement) {
 
   static override styles = css`
     :host {
-      --sidebar-width: 350px;
-    }
-    #container {
-      width: 100vw;
-      height: 100vh;
       display: grid;
-      grid-template-columns: 2fr 0;
-      grid-template-rows: 1fr auto;
+      grid-template-areas:
+        "sidebar chatlog artifacts"
+        "sidebar chatlog artifacts"
+        "sidebar inputs  artifacts";
+      grid-template-columns: 300px 1fr 1fr;
+      grid-template-rows: 1fr min-content;
     }
-    #container.sidePanelOpen {
-      grid-template-columns: 2fr var(--sidebar-width);
+    bbrt-tool-palette {
+      grid-area: sidebar;
+      overflow-y: auto;
+      border-right: 1px solid #ccc;
     }
     bbrt-chat {
-      grid-column: 1;
-      grid-row: 1 / 2;
-    }
-    #bottom {
-      padding: 24px;
-      border-top: 1px solid #ccc;
-      grid-column: 1;
-      grid-row: 2;
+      grid-area: chatlog;
+      overflow-y: auto;
     }
     #inputs {
+      grid-area: inputs;
       display: flex;
+      padding: 24px;
+      border-top: 1px solid #ccc;
     }
     bbrt-prompt {
       flex-grow: 1;
     }
-    #sidebar {
-      grid-column: 2;
-      grid-row: 1 / 3;
-      border-left: 1px solid #ccc;
-      display: grid;
-      grid-template-rows: 1fr var(--sidebar-width);
-    }
-    #expandSidebarButton {
-      position: fixed;
-      top: 12px;
-      right: 16px;
-      height: 48px;
-      width: 48px;
-      background: none;
-      border: none;
-      cursor: pointer;
-    }
-    bbrt-tool-palette {
-      overflow-y: scroll;
-    }
     bbrt-board-visualizer {
-      border-top: 1px solid #ccc;
-      width: var(--sidebar-width);
+      grid-area: artifacts;
+      border-left: 1px solid #ccc;
+      overflow: hidden;
+    }
+    #toggle-components {
+      background: oklch(from var(--bb-neutral-0) l c h/0.22)
+        var(--bb-icon-extension-inverted) center center / 24px 24px no-repeat;
     }
   `;
 
@@ -145,63 +127,25 @@ export class BBRTMain extends SignalWatcher(LitElement) {
 
   override render() {
     return html`
-      <div
-        id="container"
-        class=${classMap({ sidePanelOpen: this.#state.sidePanelOpen.get() })}
-      >
-        <bbrt-chat .conversation=${this.#state.conversation}></bbrt-chat>
-        <div id="bottom">
-          <div id="inputs">
-            <bbrt-driver-selector
-              .available=${this.#state.drivers}
-              .active=${this.#state.activeDriver}
-            ></bbrt-driver-selector>
-            <bbrt-prompt
-              .conversation=${this.#state.conversation}
-            ></bbrt-prompt>
-          </div>
-        </div>
-        <button id="expandSidebarButton" @click=${this.#clickExpandSidebar}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            height="24px"
-            viewBox="0 -960 960 960"
-            width="24px"
-            fill="#5f6368"
-          >
-            <path
-              d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"
-            />
-          </svg>
-        </button>
-        <div id="sidebar">${this.#renderSidebarContents()}</div>
+      <div id="inputs">
+        <bbrt-driver-selector
+          .available=${this.#state.drivers}
+          .active=${this.#state.activeDriver}
+        ></bbrt-driver-selector>
+        <bbrt-prompt .conversation=${this.#state.conversation}></bbrt-prompt>
       </div>
+
+      <bbrt-chat .conversation=${this.#state.conversation}></bbrt-chat>
+
+      <bbrt-tool-palette
+        .availableTools=${this.#state.availableTools}
+        .activeToolIds=${this.#state.activeToolIds}
+      ></bbrt-tool-palette>
+
+      <bbrt-board-visualizer
+        .graph=${this.#displayedBoard.get()}
+      ></bbrt-board-visualizer>
     `;
-  }
-
-  #clickExpandSidebar() {
-    this.#state.sidePanelOpen.set(!this.#state.sidePanelOpen.get());
-  }
-
-  #renderSidebarContents() {
-    if (!this.#state.sidePanelOpen.get()) {
-      return nothing;
-    }
-
-    return [
-      html`
-        <bbrt-tool-palette
-          .availableTools=${this.#state.availableTools}
-          .activeToolIds=${this.#state.activeToolIds}
-        ></bbrt-tool-palette>
-      `,
-
-      html`
-        <bbrt-board-visualizer
-          .graph=${this.#displayedBoard.get()}
-        ></bbrt-board-visualizer>
-      `,
-    ];
   }
 
   async #loadAllTools() {

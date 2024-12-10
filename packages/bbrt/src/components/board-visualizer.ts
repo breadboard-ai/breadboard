@@ -31,7 +31,6 @@ export class BBRTBoardVisualizer extends LitElement {
     }
     bb-graph-renderer {
       width: 100%;
-      height: 100%;
     }
   `;
 
