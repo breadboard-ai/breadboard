@@ -121,3 +121,4 @@ export interface WorkspaceSelectionStateWithChangeId {
 
 export type TabSelectionState = Map<TabId, WorkspaceSelectionState>;
 export type EditChangeId = ReturnType<typeof crypto.randomUUID>;
+export type MoveToSelection = "immediate" | "animated" | false;

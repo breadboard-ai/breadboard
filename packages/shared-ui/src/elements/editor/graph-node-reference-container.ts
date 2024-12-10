@@ -189,14 +189,29 @@ export class GraphNodeReferenceContainer extends PIXI.Container {
             nodeReference.on(
               GRAPH_OPERATIONS.GRAPH_REFERENCE_TOGGLE_SELECTED,
               (isCtrlCommand: boolean) => {
+                const index = this.#references
+                  ?.get(port)
+                  ?.findIndex((ref) => ref === nodeReference.reference);
+                if (index === -1 || index === undefined) {
+                  return;
+                }
+
                 this.emit(
                   GRAPH_OPERATIONS.GRAPH_REFERENCE_TOGGLE_SELECTED,
                   port,
-                  r,
+                  index,
                   isCtrlCommand
                 );
               }
             );
+
+            nodeReference.on(
+              GRAPH_OPERATIONS.GRAPH_REFERENCE_GOTO,
+              (...args: unknown[]) => {
+                this.emit(GRAPH_OPERATIONS.GRAPH_REFERENCE_GOTO, ...args);
+              }
+            );
+
             this.addChild(nodeReference);
           }
 

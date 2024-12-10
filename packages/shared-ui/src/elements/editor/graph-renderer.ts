@@ -25,8 +25,9 @@ import {
   GraphNodeRunRequestEvent,
   WorkspaceSelectionStateEvent,
   WorkspaceVisualUpdateEvent,
+  DragConnectorStartEvent,
 } from "../../events/events.js";
-import { GRAPH_OPERATIONS, GraphOpts } from "./types.js";
+import { GRAPH_OPERATIONS, GraphOpts, MoveToSelection } from "./types.js";
 import { Graph } from "./graph.js";
 import {
   GraphIdentifier,
@@ -750,7 +751,10 @@ export class GraphRenderer extends LitElement {
     this.dispatchEvent(new WorkspaceVisualUpdateEvent(changeId, visualStates));
   }
 
-  #emitSelection() {
+  #emitSelection(
+    replaceExistingSelections = true,
+    moveToSelection: MoveToSelection = false
+  ) {
     const selections: WorkspaceSelectionState = {
       graphs: new Map<GraphIdentifier, GraphSelectionState>(),
       modules: new Set(),
@@ -782,7 +786,14 @@ export class GraphRenderer extends LitElement {
       return;
     }
 
-    this.dispatchEvent(new WorkspaceSelectionStateEvent(changeId, selections));
+    this.dispatchEvent(
+      new WorkspaceSelectionStateEvent(
+        changeId,
+        selections,
+        replaceExistingSelections,
+        moveToSelection
+      )
+    );
   }
 
   #selectWithin(rect: PIXI.Rectangle, retainExistingSelection = false) {
@@ -1266,9 +1277,10 @@ export class GraphRenderer extends LitElement {
   }
 
   zoomToFit(animate = false) {
+    this.#userHasInteracted = false;
     this.#setTargetContainerMatrixFromBounds(this.#createBoundsFromAllGraphs());
 
-    this.#setTargetContainerMatrix(animate);
+    this.#updateContainerFromTargetMatrix(animate);
   }
 
   #setTargetContainerMatrix(animate = false) {
@@ -1284,7 +1296,13 @@ export class GraphRenderer extends LitElement {
     this.#updateContainerFromTargetMatrix(animate);
   }
 
+  #updating = false;
   #updateContainerFromTargetMatrix(animate = false) {
+    if (this.#updating) {
+      return;
+    }
+
+    this.#updating = true;
     const setContainer = (target = this.#targetContainerMatrix) => {
       this.#container.setFromMatrix(target);
       this.#background?.tileTransform.setFromMatrix(target);
@@ -1297,6 +1315,7 @@ export class GraphRenderer extends LitElement {
 
     if (!animate) {
       setContainer();
+      this.#updating = false;
       return;
     }
 
@@ -1304,6 +1323,7 @@ export class GraphRenderer extends LitElement {
     const THRESHOLD = 0.001;
     const update = () => {
       if (this.#userHasInteracted) {
+        this.#updating = false;
         return;
       }
 
@@ -1325,6 +1345,7 @@ export class GraphRenderer extends LitElement {
         Math.abs(current.ty - this.#targetContainerMatrix.ty) < THRESHOLD
       ) {
         setContainer();
+        this.#updating = false;
         return;
       }
 
@@ -1876,13 +1897,51 @@ export class GraphRenderer extends LitElement {
   }
 
   #addGraph(graph: Graph) {
-    graph.on(GRAPH_OPERATIONS.SUBGRAPH_SELECTED, (isCtrlCommand: boolean) => {
-      if (!isCtrlCommand) {
-        this.#clearOtherGraphSelections(graph);
+    graph.on(
+      GRAPH_OPERATIONS.SUBGRAPH_SELECTED,
+      (isCtrlCommand: boolean, graphId?: GraphIdentifier) => {
+        let moveToSelection: MoveToSelection = false;
+        let targetGraph: Graph | undefined = graph;
+        if (graphId) {
+          targetGraph = this.#container.children.find(
+            (graph) => graph instanceof Graph && graph.subGraphId === graphId
+          ) as Graph;
+          if (!targetGraph) {
+            return;
+          }
+
+          moveToSelection = "animated";
+        }
+
+        if (!isCtrlCommand) {
+          this.#clearOtherGraphSelections(targetGraph);
+        }
+        this.#toggleGraphSelection(targetGraph, isCtrlCommand);
+        this.#emitSelection(true, moveToSelection);
+
+        if (!moveToSelection) {
+          return;
+        }
+        this.#setTargetContainerMatrix(true);
       }
-      this.#toggleGraphSelection(graph, isCtrlCommand);
-      this.#emitSelection();
+    );
+
+    graph.on(GRAPH_OPERATIONS.GRAPH_REFERENCE_LOAD, (reference) => {
+      this.dispatchEvent(new StartEvent(reference));
     });
+
+    graph.on(
+      GRAPH_OPERATIONS.SUBGRAPH_CONNECTION_START,
+      (x: number, y: number) => {
+        if (!graph.subGraphId) {
+          return;
+        }
+
+        this.dispatchEvent(
+          new DragConnectorStartEvent({ x, y }, `#${graph.subGraphId}`)
+        );
+      }
+    );
 
     graph.on(GRAPH_OPERATIONS.GRAPH_TOGGLE_MINIMIZED, () => {
       this.#emitGraphVisualInformation();

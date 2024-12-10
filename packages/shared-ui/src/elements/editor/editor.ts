@@ -59,6 +59,7 @@ import { GraphRenderer } from "./graph-renderer.js";
 import { createRandomID } from "./utils.js";
 import {
   Command,
+  DragConnectorReceiver,
   TopGraphRunResult,
   WorkspaceSelectionChangeId,
   WorkspaceSelectionStateWithChangeId,
@@ -110,7 +111,7 @@ type EditedNode = {
 };
 
 @customElement("bb-editor")
-export class Editor extends LitElement {
+export class Editor extends LitElement implements DragConnectorReceiver {
   @property()
   graph: InspectableGraph | null = null;
 
@@ -375,11 +376,19 @@ export class Editor extends LitElement {
       let ref = reference;
       let title: string;
 
-      if (reference.startsWith("#") && this.graph?.graphs()) {
-        ref = reference.slice(1);
+      if (reference.startsWith("#")) {
+        if (reference.startsWith("#module:") && this.graph?.modules()) {
+          ref = reference.slice("#module:".length);
+          const module = this.graph.moduleById(ref);
+          title = module?.metadata().title ?? "Untitled module";
+        } else if (this.graph?.graphs()) {
+          ref = reference.slice(1);
 
-        const subGraph = this.graph.graphs()?.[ref];
-        title = subGraph?.raw().title ?? "Untitled board";
+          const subGraph = this.graph.graphs()?.[ref];
+          title = subGraph?.raw().title ?? "Untitled board";
+        } else {
+          title = "Untitled item";
+        }
       } else {
         const boardTitle = this.#getBoardTitle(reference);
         if (boardTitle !== reference) {
@@ -974,6 +983,48 @@ export class Editor extends LitElement {
         },
       })
     );
+  }
+
+  isOnDragConnectorTarget(x: number, y: number): string | null {
+    if (!this.#graphRendererRef.value) {
+      return null;
+    }
+
+    const pointer = {
+      x: x - this.#left + window.scrollX,
+      y: y - this.#top - window.scrollY - RIBBON_HEIGHT,
+    };
+
+    const boardPort =
+      this.#graphRendererRef.value.intersectingBoardPort(pointer);
+
+    if (boardPort) {
+      return `${boardPort.graphId}|${boardPort.nodeId}|${boardPort.portId}`;
+    }
+
+    return null;
+  }
+
+  highlight(x: number, y: number): void {
+    if (!this.#graphRendererRef.value) {
+      return;
+    }
+
+    const pointer = {
+      x: x - this.#left + window.scrollX,
+      y: y - this.#top - window.scrollY - RIBBON_HEIGHT,
+    };
+
+    this.#graphRendererRef.value.removeBoardPortHighlights();
+    this.#graphRendererRef.value.highlightBoardPort(pointer);
+  }
+
+  removeHighlight(): void {
+    if (!this.#graphRendererRef.value) {
+      return;
+    }
+
+    this.#graphRendererRef.value.removeBoardPortHighlights();
   }
 
   render() {

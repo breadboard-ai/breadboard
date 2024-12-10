@@ -26,14 +26,23 @@ import {
   SubGraphDeleteEvent,
   WorkspaceSelectionStateEvent,
   WorkspaceItemVisualUpdateEvent,
+  DragConnectorStartEvent,
+  ShowTooltipEvent,
+  HideTooltipEvent,
 } from "../../events/events";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { getSubItemColor } from "../../utils/subgraph-color";
-import { isConfigurableBehavior, isModuleBehavior } from "../../utils";
+import {
+  isBoardArrayBehavior,
+  isBoardBehavior,
+  isConfigurableBehavior,
+  isModuleBehavior,
+} from "../../utils";
 import { ModuleIdentifier } from "@breadboard-ai/types";
 import {
+  DragConnectorReceiver,
   OverflowAction,
   WorkspaceSelectionChangeId,
   WorkspaceSelectionStateWithChangeId,
@@ -41,7 +50,6 @@ import {
 } from "../../types/types";
 import * as Utils from "../../utils/utils.js";
 
-const DATA_TYPE = "text/plain";
 const OPEN_ITEMS_KEY = "bb-workspace-outline-open-items";
 const OVERFLOW_MENU_CLEARANCE = 140;
 
@@ -68,7 +76,10 @@ interface OverflowMenu {
 }
 
 @customElement("bb-workspace-outline")
-export class WorkspaceOutline extends LitElement {
+export class WorkspaceOutline
+  extends LitElement
+  implements DragConnectorReceiver
+{
   @property()
   graph: InspectableGraph | null = null;
 
@@ -609,6 +620,7 @@ export class WorkspaceOutline extends LitElement {
       width: 10px;
       height: 10px;
       flex: 0 0 auto;
+      cursor: crosshair;
     }
 
     .more {
@@ -658,6 +670,37 @@ export class WorkspaceOutline extends LitElement {
 
   #createSubItemId(id: string) {
     return `sg-${id}`;
+  }
+
+  isOnDragConnectorTarget(x: number, y: number): string | null {
+    if (!this.shadowRoot) {
+      return null;
+    }
+
+    const el = this.shadowRoot.elementFromPoint(x, y);
+    if (!(el instanceof HTMLElement)) {
+      return null;
+    }
+
+    if (
+      el.dataset.dragConnectorTargetGraph &&
+      el.dataset.dragConnectorTargetNode &&
+      el.dataset.dragConnectorTargetPort
+    ) {
+      return `${el.dataset.dragConnectorTargetGraph}|${el.dataset.dragConnectorTargetNode}|${el.dataset.dragConnectorTargetPort}`;
+    }
+
+    return null;
+  }
+
+  highlight(_x: number, _y: number): void {
+    // TODO.
+    return;
+  }
+
+  removeHighlight(_x: number, _y: number): void {
+    // TODO.
+    return;
   }
 
   #getGraphDetails(graph: InspectableGraph) {
@@ -792,6 +835,18 @@ export class WorkspaceOutline extends LitElement {
       return "Unspecified Module";
     }
 
+    if (isBoardBehavior(port.schema)) {
+      const subGraphs = this.graph?.graphs();
+      let id = port.value;
+      if (typeof id === "string") {
+        id = id.slice(1);
+      }
+
+      if (subGraphs && typeof id === "string" && subGraphs[id]) {
+        return subGraphs[id].raw().title ?? port.value;
+      }
+    }
+
     switch (typeof port.value) {
       case "object": {
         preview = JSON.stringify(port.value);
@@ -867,18 +922,32 @@ export class WorkspaceOutline extends LitElement {
                 return nothing;
               }
 
+              const dragConnectorTargetPort =
+                isBoardBehavior(port.schema) ||
+                isBoardArrayBehavior(port.schema)
+                  ? port.name
+                  : null;
+
               return html`<li
                 class=${classMap({
                   port: true,
                   [port.status]: true,
                   configured: port.configured,
                   "with-preview": true,
+                  board: dragConnectorTargetPort ?? false,
                 })}
               >
                 <span class="title">
                   ${isConfigurableBehavior(port.schema)
                     ? html`<button
                         class="port-item"
+                        data-drag-connector-target-graph=${subGraphId
+                          ? subGraphId
+                          : MAIN_BOARD_ID}
+                        data-drag-connector-target-node=${node.descriptor.id ??
+                        nothing}
+                        data-drag-connector-target-port=${dragConnectorTargetPort ??
+                        nothing}
                         @click=${(evt: PointerEvent) => {
                           const addHorizontalClickClearance = true;
                           this.dispatchEvent(
@@ -1087,15 +1156,11 @@ export class WorkspaceOutline extends LitElement {
       >
         <summary>
           <button
-            draggable="true"
             class=${classMap({
               title: true,
               selected:
                 this.selectionState?.selectionState.modules.has(id) ?? false,
             })}
-            @dragstart=${(evt: DragEvent) => {
-              evt.dataTransfer?.setData(DATA_TYPE, `#${id}`);
-            }}
             @click=${(evt: PointerEvent) => {
               evt.stopPropagation();
 
@@ -1186,7 +1251,43 @@ export class WorkspaceOutline extends LitElement {
                 >
                   More
                 </button>
-                <span class="color"></span>`
+                <span
+                  @click=${(evt: PointerEvent) => {
+                    evt.preventDefault();
+                    evt.stopImmediatePropagation();
+                  }}
+                  @pointerover=${(evt: PointerEvent) => {
+                    this.dispatchEvent(
+                      new ShowTooltipEvent(
+                        `Drag to a board port`,
+                        evt.clientX,
+                        evt.clientY
+                      )
+                    );
+                  }}
+                  @pointerout=${() => {
+                    this.dispatchEvent(new HideTooltipEvent());
+                  }}
+                  @pointerdown=${(evt: PointerEvent) => {
+                    evt.stopImmediatePropagation();
+
+                    const source =
+                      subItem.type === "declarative"
+                        ? `#${id}`
+                        : `#module:${id}`;
+
+                    this.dispatchEvent(
+                      new DragConnectorStartEvent(
+                        {
+                          x: evt.clientX,
+                          y: evt.clientY,
+                        },
+                        source
+                      )
+                    );
+                  }}
+                  class="color"
+                ></span>`
             : nothing}
         </summary>
         ${this.#renderWorkspaceItem(
@@ -1368,7 +1469,8 @@ export class WorkspaceOutline extends LitElement {
       new WorkspaceSelectionStateEvent(
         selectionChangeId,
         selectionState,
-        replaceExistingSelections
+        replaceExistingSelections,
+        "animated"
       )
     );
   }

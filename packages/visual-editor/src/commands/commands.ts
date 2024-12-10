@@ -9,14 +9,29 @@ import { KeyboardCommand, KeyboardCommandDeps } from "./types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { EditSpec } from "@google-labs/breadboard";
 
+function isFocusedOnGraphRenderer(evt: Event) {
+  return evt
+    .composedPath()
+    .some((target) => target instanceof BreadboardUI.Elements.GraphRenderer);
+}
+
 export const DeleteCommand: KeyboardCommand = {
   keys: ["Delete", "Backspace"],
+
+  willHandle(evt: Event) {
+    return isFocusedOnGraphRenderer(evt);
+  },
 
   async do({
     runtime,
     selectionState,
     tab,
+    originalEvent,
   }: KeyboardCommandDeps): Promise<void> {
+    if (!isFocusedOnGraphRenderer(originalEvent)) {
+      return;
+    }
+
     const editor = runtime.edit.getEditor(tab);
     if (!editor) {
       throw new Error("Unable to edit graph");
@@ -47,7 +62,19 @@ export const DeleteCommand: KeyboardCommand = {
 export const SelectAllCommand: KeyboardCommand = {
   keys: ["Cmd+a", "Ctrl+a"],
 
-  async do({ runtime, tab }: KeyboardCommandDeps): Promise<void> {
+  willHandle(evt: Event) {
+    return isFocusedOnGraphRenderer(evt);
+  },
+
+  async do({
+    runtime,
+    tab,
+    originalEvent,
+  }: KeyboardCommandDeps): Promise<void> {
+    if (!isFocusedOnGraphRenderer(originalEvent)) {
+      return;
+    }
+
     const editor = runtime.edit.getEditor(tab);
     if (!editor) {
       return;
@@ -69,11 +96,20 @@ export const CopyCommand: KeyboardCommand = {
   messageType: BreadboardUI.Events.ToastType.INFORMATION,
   alwaysNotify: true,
 
+  willHandle(evt: Event) {
+    return isFocusedOnGraphRenderer(evt);
+  },
+
   async do({
     runtime,
     selectionState,
     tab,
+    originalEvent,
   }: KeyboardCommandDeps): Promise<void> {
+    if (!isFocusedOnGraphRenderer(originalEvent)) {
+      return;
+    }
+
     const editor = runtime.edit.getEditor(tab);
     if (!editor) {
       throw new Error("Unable to edit graph");
@@ -100,11 +136,20 @@ export const CopyCommand: KeyboardCommand = {
 export const CutCommand: KeyboardCommand = {
   keys: ["Cmd+x", "Ctrl+x"],
 
+  willHandle(evt: Event) {
+    return isFocusedOnGraphRenderer(evt);
+  },
+
   async do({
     runtime,
     selectionState,
     tab,
+    originalEvent,
   }: KeyboardCommandDeps): Promise<void> {
+    if (!isFocusedOnGraphRenderer(originalEvent)) {
+      return;
+    }
+
     const editor = runtime.edit.getEditor(tab);
     if (!editor) {
       throw new Error("Unable to edit graph");
@@ -158,6 +203,10 @@ function canParse(urlLike: string): boolean {
 
 export const PasteCommand: KeyboardCommand = {
   keys: ["Cmd+v", "Ctrl+v"],
+
+  willHandle() {
+    return true;
+  },
 
   async do({
     runtime,

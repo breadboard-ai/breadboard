@@ -77,6 +77,7 @@ export class Graph extends PIXI.Container {
   #highlightedNode = new PIXI.Graphics();
   #highlightedNodeColor = highlightedNodeColor;
   #highlightPadding = 8;
+  #subGraphOutlineConnector = new PIXI.Graphics();
   #subGraphOutlineMarker = new PIXI.Graphics();
   #subGraphOutline = new PIXI.Graphics();
   #subGraphOutlinePadding = 24;
@@ -116,6 +117,19 @@ export class Graph extends PIXI.Container {
     this.#subGraphOutline.eventMode = "none";
 
     let subGraphOutlineMarkerDragStart: PIXI.Point | null = null;
+    this.#subGraphOutlineConnector.cursor = "crosshair";
+    this.#subGraphOutlineConnector.eventMode = "static";
+    this.#subGraphOutlineConnector.addEventListener(
+      "pointerdown",
+      (evt: PointerEvent) => {
+        this.emit(
+          GRAPH_OPERATIONS.SUBGRAPH_CONNECTION_START,
+          evt.clientX,
+          evt.clientY
+        );
+      }
+    );
+
     this.#subGraphOutlineMarker.cursor = "pointer";
     this.#subGraphOutlineMarker.eventMode = "static";
     this.#subGraphOutlineMarker.addEventListener(
@@ -1452,6 +1466,7 @@ export class Graph extends PIXI.Container {
   #drawSubGraphOutline() {
     this.#subGraphOutline.clear();
     this.#subGraphOutlineMarker.clear();
+    this.#subGraphOutlineConnector.clear();
 
     if (!this.subGraphId) {
       return;
@@ -1523,16 +1538,20 @@ export class Graph extends PIXI.Container {
       this.#subGraphOutlineMarker.fill({ color: 0xffffff });
       this.#subGraphOutlineMarker.stroke({ color: this.#subGraphLabelColor });
 
-      this.#subGraphOutlineMarker.beginPath();
-      this.#subGraphOutlineMarker.circle(x + w - 12, y + h * 0.5, 5);
-      this.#subGraphOutlineMarker.closePath();
-      this.#subGraphOutlineMarker.fill({ color: this.#subGraphLabelColor });
+      this.#subGraphOutlineConnector.beginPath();
+      this.#subGraphOutlineConnector.circle(0, 0, 5);
+      this.#subGraphOutlineConnector.closePath();
+      this.#subGraphOutlineConnector.fill({ color: this.#subGraphLabelColor });
+
+      this.#subGraphOutlineConnector.x = x + w - 12;
+      this.#subGraphOutlineConnector.y = y + h * 0.5;
 
       this.#subGraphTitleLabel.x = x + 10;
       this.#subGraphTitleLabel.y = y + 5;
       this.addChildAt(this.#subGraphTitleLabel, 0);
     }
 
+    this.addChildAt(this.#subGraphOutlineConnector, 0);
     this.addChildAt(this.#subGraphOutlineMarker, 0);
     this.addChildAt(this.#subGraphOutline, 0);
   }
@@ -1610,6 +1629,21 @@ export class Graph extends PIXI.Container {
               index,
               isCtrlCommand
             );
+          }
+        );
+
+        graphNode.on(
+          GRAPH_OPERATIONS.GRAPH_REFERENCE_GOTO,
+          (reference: string) => {
+            if (URL.canParse(reference)) {
+              this.emit(GRAPH_OPERATIONS.GRAPH_REFERENCE_LOAD, reference);
+            } else {
+              this.emit(
+                GRAPH_OPERATIONS.SUBGRAPH_SELECTED,
+                false,
+                reference.slice(1)
+              );
+            }
           }
         );
 

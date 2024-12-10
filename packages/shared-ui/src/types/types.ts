@@ -466,3 +466,9 @@ export interface WorkspaceSelectionStateWithChangeId {
   selectionState: WorkspaceSelectionState;
   moveToSelection: "immediate" | "animated" | false;
 }
+
+export interface DragConnectorReceiver extends HTMLElement {
+  isOnDragConnectorTarget(x: number, y: number): string | null;
+  highlight(x: number, y: number): void;
+  removeHighlight(x: number, y: number): void;
+}

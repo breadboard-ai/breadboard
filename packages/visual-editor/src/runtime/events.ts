@@ -6,6 +6,7 @@
 
 import { HarnessRunner, RunEventMap } from "@google-labs/breadboard/harness";
 import {
+  MoveToSelection,
   Tab,
   TabId,
   WorkspaceSelectionChangeId,
@@ -109,7 +110,7 @@ export class RuntimeSelectionChangeEvent extends Event {
   constructor(
     public readonly selectionChangeId: WorkspaceSelectionChangeId,
     public readonly selectionState: WorkspaceSelectionState,
-    public readonly moveToSelection: "immediate" | "animated" | false
+    public readonly moveToSelection: MoveToSelection
   ) {
     super(RuntimeSelectionChangeEvent.eventName, { ...eventInit });
   }
