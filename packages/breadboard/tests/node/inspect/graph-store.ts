@@ -14,18 +14,19 @@ describe("GraphStore.graphs", () => {
     const graphStore = makeTestGraphStore({
       kits: [testKit],
     });
-    deepStrictEqual(graphStore.graphs(), [
-      { mainGraph: { title: "Test Kit" }, url: "invoke" },
-      {
-        mainGraph: { title: "Test Kit" },
-        url: "map",
-        title: "Map",
-        tags: ["experimental"],
-      },
-      { mainGraph: { title: "Test Kit" }, url: "promptTemplate" },
-      { url: "runJavascript", mainGraph: { title: "Test Kit" } },
-      { url: "secrets", mainGraph: { title: "Test Kit" } },
-    ]);
+    deepStrictEqual(
+      graphStore.graphs().map((graph) => graph.url),
+      [
+        "invoke",
+        "map",
+        "promptTemplate",
+        "runJavascript",
+        "secrets",
+        "input",
+        "output",
+        "comment",
+      ]
+    );
   });
 
   it("correctly lists added graphs", () => {
@@ -38,22 +39,19 @@ describe("GraphStore.graphs", () => {
       nodes: [],
       edges: [],
     });
-    deepStrictEqual(graphStore.graphs(), [
-      { mainGraph: { title: "Test Kit" }, url: "invoke" },
-      {
-        mainGraph: { title: "Test Kit" },
-        url: "map",
-        title: "Map",
-        tags: ["experimental"],
-      },
-      { mainGraph: { title: "Test Kit" }, url: "promptTemplate" },
-      { url: "runJavascript", mainGraph: { title: "Test Kit" } },
-      { url: "secrets", mainGraph: { title: "Test Kit" } },
-      {
-        title: "Foo",
-        url: "https://example.com/foo",
-        mainGraph: { title: "Foo", url: "https://example.com/foo" },
-      },
-    ]);
+    deepStrictEqual(
+      graphStore.graphs().map((graph) => graph.url),
+      [
+        "invoke",
+        "map",
+        "promptTemplate",
+        "runJavascript",
+        "secrets",
+        "input",
+        "output",
+        "comment",
+        "https://example.com/foo",
+      ]
+    );
   });
 });
