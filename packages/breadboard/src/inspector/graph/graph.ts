@@ -20,7 +20,6 @@ import {
 import {
   InspectableEdge,
   InspectableGraph,
-  InspectableKit,
   InspectableModules,
   InspectableNode,
   InspectableNodeType,
@@ -92,10 +91,6 @@ class Graph implements InspectableGraph {
 
   hasEdge(edge: Edge): boolean {
     return this.#mutable.edges.hasByValue(edge, this.#graphId);
-  }
-
-  kits(): InspectableKit[] {
-    return this.#mutable.kits.kits();
   }
 
   typeForNode(id: NodeIdentifier): InspectableNodeType | undefined {
