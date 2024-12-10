@@ -108,8 +108,14 @@ class GraphStore
   #populateLegacyKits(kits: Kit[]) {
     const all = kits.flatMap((kit) =>
       Object.entries(kit.handlers).map(([type, handler]) => {
-        const metadata: NodeHandlerMetadata =
+        let metadata: NodeHandlerMetadata =
           "metadata" in handler ? handler.metadata || {} : {};
+        const tags = [...(kit.tags || [])];
+        if (metadata.deprecated) {
+          tags.push("deprecated");
+          metadata = { ...metadata };
+          delete metadata.deprecated;
+        }
         return [
           type,
           {
@@ -117,7 +123,7 @@ class GraphStore
             mainGraph: filterEmptyValues({
               title: kit.title,
               description: kit.description,
-              tags: kit.tags,
+              tags,
             }),
             ...metadata,
           },

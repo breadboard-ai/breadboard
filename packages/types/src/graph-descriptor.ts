@@ -241,7 +241,12 @@ export type GraphInlineMetadata = {
  * - `experimental`: The graph is experimental and may not be stable.
  * - `component`: The graph is intended to be a component.
  */
-export type GraphTag = "published" | "tool" | "experimental" | "component";
+export type GraphTag =
+  | "published"
+  | "tool"
+  | "experimental"
+  | "component"
+  | "deprecated";
 
 /**
  * Represents graph metadata.
