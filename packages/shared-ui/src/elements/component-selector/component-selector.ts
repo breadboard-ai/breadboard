@@ -8,6 +8,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
+  GraphStoreEntry,
   Kit,
   MainGraphIdentifier,
   MutableGraphStore,
@@ -246,79 +247,72 @@ export class ComponentSelector extends LitElement {
   ) {
     const kitList = new Map<
       string,
-      { id: string; metadata: NodeHandlerMetadata }[]
+      { id: string; metadata: GraphStoreEntry }[]
     >();
-    const inspectable = graphStore.inspect(mainGraphId, "");
-    if (!inspectable) {
-      return kitList;
-    }
-    this.#graphURL = inspectable.raw().url || null;
-    const graphKits = inspectable?.kits();
-    // This should likely be happening outside of this component.
-    // Weird to see the operations of graphStore in rendering.
-    // TODO: Refactor, move to runtime.
-    const boardServerKits = this.boardServerKits
-      ? graphStore.addKits(this.boardServerKits, [mainGraphId])
-      : [];
-    const kits = [...graphKits, ...boardServerKits];
-    kits.sort((kit1, kit2) =>
-      (kit1.descriptor.title || "") > (kit2.descriptor.title || "") ? 1 : -1
-    );
+    const graphs = graphStore.graphs();
+    graphs.sort((graph1, graph2) => {
+      const title1 = graph1.mainGraph.title || "";
+      const title2 = graph2.mainGraph.title || "";
+      if (title1 > title2) {
+        return 1;
+      }
+      if (title1 < title2) {
+        return -1;
+      }
+      return (graph1.title || "") > (graph2.title || "") ? 1 : -1;
+    });
 
-    for (const kit of kits) {
-      if (!kit.descriptor.title) {
+    for (const graph of graphs) {
+      if (!graph.title) {
         continue;
       }
 
-      if (kit.descriptor.title === "Custom Types") {
+      const { mainGraph } = graph;
+
+      if (!mainGraph.title) {
         continue;
       }
 
-      if (kit.descriptor.tags?.includes("deprecated")) {
+      if (mainGraph.id === mainGraphId) {
+        continue;
+      }
+
+      if (mainGraph.title === "Custom Types") {
+        continue;
+      }
+
+      if (mainGraph.tags?.includes("deprecated")) {
         continue;
       }
 
       if (
         !this.showExperimentalComponents &&
-        kit.descriptor.tags?.includes("experimental")
+        mainGraph.tags?.includes("experimental")
       ) {
         continue;
       }
 
-      const typeMetadata = kit.nodeTypes
-        .map((node) => {
-          const metadata = node.currentMetadata();
-          if (
-            !this.showExperimentalComponents &&
-            metadata.tags?.includes("experimental")
-          ) {
-            return null;
-          }
-          return { id: node.type(), metadata };
-        })
-        .filter(Boolean) as { id: string; metadata: NodeHandlerMetadata }[];
-
-      const available = typeMetadata.filter(
-        ({ metadata }) => !metadata.deprecated
-      );
-
-      if (available.length === 0) {
+      if (
+        !this.showExperimentalComponents &&
+        graph.tags?.includes("experimental")
+      ) {
         continue;
       }
 
-      if (kit.descriptor.title === "Built-in Kit") {
-        available.unshift({
-          id: "comment",
-          metadata: {
-            description:
-              "A comment node. Use this to put additional information on your board",
-            title: "Comment",
-            icon: "edit",
-          },
-        });
+      if (!graph.tags?.includes("component")) {
+        continue;
       }
 
-      kitList.set(kit.descriptor.title, available);
+      if (graph.tags?.includes("deprecated")) {
+        continue;
+      }
+
+      let group = kitList.get(mainGraph.title);
+      if (!group) {
+        group = [];
+        kitList.set(mainGraph.title, group);
+      }
+      group.push({ id: graph.url!, metadata: graph });
     }
     return kitList;
   }
@@ -365,7 +359,6 @@ export class ComponentSelector extends LitElement {
     if (!this.graphStore || !this.mainGraphId) {
       return nothing;
     }
-    console.log("🌻 graphs", this.graphStore.graphs());
     const allKits = this.#createKitList(this.graphStore, this.mainGraphId);
 
     const before = allKits.size;

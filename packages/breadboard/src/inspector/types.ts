@@ -695,8 +695,8 @@ export type InspectableGraphCache = {
 
 export type MainGraphIdentifier = UUID;
 
-export type GraphHandleToBeNamed = NodeHandlerMetadata & {
-  mainGraph: NodeHandlerMetadata;
+export type GraphStoreEntry = NodeHandlerMetadata & {
+  mainGraph: NodeHandlerMetadata & { id: MainGraphIdentifier };
 };
 
 export type GraphStoreArgs = Required<InspectableGraphOptions>;
@@ -719,7 +719,7 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> & {
   readonly sandbox: Sandbox;
   readonly loader: GraphLoader;
 
-  graphs(): GraphHandleToBeNamed[];
+  graphs(): GraphStoreEntry[];
 
   /**
    * Registers a Kit with the GraphStore.

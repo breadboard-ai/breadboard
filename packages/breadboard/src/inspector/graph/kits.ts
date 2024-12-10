@@ -8,6 +8,7 @@ import { toNodeHandlerMetadata } from "../../graph-based-node-handler.js";
 import { getGraphHandlerFromStore } from "../../handler.js";
 import {
   GraphDescriptor,
+  Kit,
   NodeDescriberResult,
   NodeDescriptor,
   NodeHandler,
@@ -30,9 +31,56 @@ import {
 import { collectPortsForType, filterSidePorts } from "./ports.js";
 import { describeInput, describeOutput } from "./schemas.js";
 
-export { KitCache, collectCustomNodeTypes };
+export { KitCache, collectCustomNodeTypes, createBuiltInKit };
 
-const createBuiltInKit = (): InspectableKit => {
+function unreachableCode() {
+  return function () {
+    throw new Error("This code should be never reached.");
+  };
+}
+
+function createBuiltInKit(): Kit {
+  return {
+    title: "Built-in Kit",
+    description: "A kit containing built-in Breadboard nodes",
+    url: "",
+    handlers: {
+      input: {
+        metadata: {
+          title: "Input",
+          description:
+            "The input node. Use it to request inputs for your board.",
+          help: {
+            url: "https://breadboard-ai.github.io/breadboard/docs/reference/kits/built-in/#the-input-node",
+          },
+        },
+        invoke: unreachableCode(),
+      },
+      output: {
+        metadata: {
+          title: "Output",
+          description:
+            "The output node. Use it to provide outputs from your board.",
+          help: {
+            url: "https://breadboard-ai.github.io/breadboard/docs/reference/kits/built-in/#the-output-node",
+          },
+        },
+        invoke: unreachableCode(),
+      },
+      comment: {
+        metadata: {
+          description:
+            "A comment node. Use this to put additional information on your board",
+          title: "Comment",
+          icon: "edit",
+        },
+        invoke: unreachableCode(),
+      },
+    },
+  };
+}
+
+const createBuiltInInspectableKit = (): InspectableKit => {
   return {
     descriptor: {
       title: "Built-in Kit",
@@ -89,7 +137,7 @@ export const collectKits = (
 ): InspectableKit[] => {
   const kits = mutable.store.kits;
   return [
-    createBuiltInKit(),
+    createBuiltInInspectableKit(),
     ...createCustomTypesKit(graph.nodes, mutable),
     ...kits.map((kit) => {
       const descriptor = {

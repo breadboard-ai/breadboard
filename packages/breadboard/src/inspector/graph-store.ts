@@ -14,7 +14,7 @@ import {
 import { GraphLoader, GraphLoaderContext } from "../loader/types.js";
 import { MutableGraphImpl } from "./graph/mutable-graph.js";
 import {
-  GraphHandleToBeNamed,
+  GraphStoreEntry,
   GraphStoreArgs,
   GraphStoreEventTarget,
   InspectableGraph,
@@ -30,7 +30,7 @@ import { Sandbox } from "@breadboard-ai/jsandbox";
 import { createLoader } from "../loader/index.js";
 import { SnapshotUpdater } from "../utils/snapshot-updater.js";
 import { UpdateEvent } from "./graph/event.js";
-import { collectCustomNodeTypes } from "./graph/kits.js";
+import { collectCustomNodeTypes, createBuiltInKit } from "./graph/kits.js";
 import { graphUrlLike } from "../utils/graph-url-like.js";
 
 export { GraphStore, makeTerribleOptions, contextFromStore };
@@ -67,7 +67,7 @@ class GraphStore
   readonly sandbox: Sandbox;
   readonly loader: GraphLoader;
 
-  #legacyKits: GraphHandleToBeNamed[];
+  #legacyKits: GraphStoreEntry[];
 
   #mainGraphIds: Map<string, MainGraphIdentifier> = new Map();
   #mutables: Map<MainGraphIdentifier, SnapshotUpdater<MutableGraph>> =
@@ -82,9 +82,9 @@ class GraphStore
     this.#legacyKits = this.#populateLegacyKits(args.kits);
   }
 
-  graphs(): GraphHandleToBeNamed[] {
+  graphs(): GraphStoreEntry[] {
     const graphs = [...this.#mutables.entries()]
-      .flatMap(([_mainGraphId, snapshot]) => {
+      .flatMap(([mainGraphId, snapshot]) => {
         const mutable = snapshot.current();
         const descriptor = mutable.graph;
         // TODO: Support exports and main module
@@ -95,27 +95,30 @@ class GraphStore
           url: descriptor.url,
           tags: descriptor.metadata?.tags,
           help: descriptor.metadata?.help,
+          id: mainGraphId,
         });
         return {
           mainGraph: mutable.legacyKitMetadata || mainGraphMetadata,
           ...mainGraphMetadata,
         };
       })
-      .filter(Boolean) as GraphHandleToBeNamed[];
+      .filter(Boolean) as GraphStoreEntry[];
     return [...this.#legacyKits, ...graphs];
   }
 
   #populateLegacyKits(kits: Kit[]) {
+    kits = [...kits, createBuiltInKit()];
     const all = kits.flatMap((kit) =>
       Object.entries(kit.handlers).map(([type, handler]) => {
         let metadata: NodeHandlerMetadata =
           "metadata" in handler ? handler.metadata || {} : {};
-        const tags = [...(kit.tags || [])];
+        const mainGraphTags = [...(kit.tags || [])];
         if (metadata.deprecated) {
-          tags.push("deprecated");
+          mainGraphTags.push("deprecated");
           metadata = { ...metadata };
           delete metadata.deprecated;
         }
+        const tags = [...(metadata.tags || []), "component"];
         return [
           type,
           {
@@ -123,11 +126,12 @@ class GraphStore
             mainGraph: filterEmptyValues({
               title: kit.title,
               description: kit.description,
-              tags,
+              tags: mainGraphTags,
             }),
             ...metadata,
+            tags,
           },
-        ] as [type: string, info: GraphHandleToBeNamed];
+        ] as [type: string, info: GraphStoreEntry];
       })
     );
     return Object.values(
@@ -140,7 +144,7 @@ class GraphStore
           // that typically has the right stuff.
           return { ...collated, [type]: info };
         },
-        {} as Record<string, GraphHandleToBeNamed>
+        {} as Record<string, GraphStoreEntry>
       )
     );
   }
@@ -154,6 +158,7 @@ class GraphStore
           title: kit.title,
           description: kit.description,
           tags: kit.tags,
+          id: mutable.id,
         });
       } else {
         throw new Error(
