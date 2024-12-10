@@ -359,8 +359,10 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     const pushReference = (
       nodeId: NodeIdentifier,
       portId: PortIdentifier,
-      reference: string | BreadboardCapability
+      reference: string | BreadboardCapability | null
     ) => {
+      if (!reference) return;
+
       if (typeof reference === "object") {
         if (isGraphDescriptorCapability(reference)) {
           return;

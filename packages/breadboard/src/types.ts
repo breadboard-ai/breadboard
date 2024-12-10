@@ -20,6 +20,7 @@ import type {
   TraversalResult,
   Probe,
   GraphIdentifier,
+  ModuleIdentifier,
 } from "@breadboard-ai/types";
 import { GraphLoader } from "./loader/types.js";
 import { DataStore } from "./data/types.js";
@@ -729,4 +730,5 @@ export type ConfigOrGraph =
 export type GraphToRun = {
   graph: GraphDescriptor;
   subGraphId?: GraphIdentifier;
+  moduleId?: ModuleIdentifier;
 };
