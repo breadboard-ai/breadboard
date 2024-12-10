@@ -365,6 +365,7 @@ export class ComponentSelector extends LitElement {
     if (!this.graphStore || !this.mainGraphId) {
       return nothing;
     }
+    console.log("🌻 graphs", this.graphStore.graphs());
     const allKits = this.#createKitList(this.graphStore, this.mainGraphId);
 
     const before = allKits.size;

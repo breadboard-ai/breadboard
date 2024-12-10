@@ -464,7 +464,6 @@ export class Board extends EventTarget {
           // requesting the graph file from it.
           await boardServer.ready();
         }
-
         if (boardServer && this.boardServers) {
           kits = (boardServer as BoardServer).kits ?? this.boardServerKits;
           const loadResult = await this.boardServers.loader.load(url, { base });
