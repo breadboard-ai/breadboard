@@ -90,7 +90,7 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       display: grid;
       gap: 18px;
       grid-template-columns: repeat(auto-fill, 300px);
-      /* Space for shadows to breath on the bottom row. */
+      /* Space for shadows to breathe on the bottom row. */
       padding-bottom: 5px;
     }
     #toolResponses > img {

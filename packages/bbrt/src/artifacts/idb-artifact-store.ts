@@ -5,6 +5,7 @@
  */
 
 import type { Result } from "../util/result.js";
+import { resultify } from "../util/resultify.js";
 import { transposeResults } from "../util/transpose-results.js";
 import type { Artifact } from "./artifact-interface.js";
 import type { ArtifactStore } from "./artifact-store-interface.js";
@@ -38,9 +39,15 @@ export class IdbArtifactStore implements ArtifactStore {
     );
     const transposed = transposeResults(await Promise.all(promises));
     if (!transposed.ok) {
-      return transposed;
+      const abort = resultify(() => transaction.abort());
+      if (!abort.ok) {
+        console.error(
+          `Internal Error: Failed to abort IndexedDB transaction`,
+          abort.error
+        );
+      }
     }
-    return { ok: true, value: undefined };
+    return resultify(() => transaction.commit());
   }
 
   async read(artifactId: string): Promise<Result<Artifact>> {
