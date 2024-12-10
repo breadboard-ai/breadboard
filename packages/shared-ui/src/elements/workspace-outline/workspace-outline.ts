@@ -26,14 +26,21 @@ import {
   SubGraphDeleteEvent,
   WorkspaceSelectionStateEvent,
   WorkspaceItemVisualUpdateEvent,
+  DragConnectorStartEvent,
 } from "../../events/events";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { getSubItemColor } from "../../utils/subgraph-color";
-import { isConfigurableBehavior, isModuleBehavior } from "../../utils";
+import {
+  isBoardArrayBehavior,
+  isBoardBehavior,
+  isConfigurableBehavior,
+  isModuleBehavior,
+} from "../../utils";
 import { ModuleIdentifier } from "@breadboard-ai/types";
 import {
+  DragConnectorReceiver,
   OverflowAction,
   WorkspaceSelectionChangeId,
   WorkspaceSelectionStateWithChangeId,
@@ -68,7 +75,10 @@ interface OverflowMenu {
 }
 
 @customElement("bb-workspace-outline")
-export class WorkspaceOutline extends LitElement {
+export class WorkspaceOutline
+  extends LitElement
+  implements DragConnectorReceiver
+{
   @property()
   graph: InspectableGraph | null = null;
 
@@ -660,6 +670,36 @@ export class WorkspaceOutline extends LitElement {
     return `sg-${id}`;
   }
 
+  isOnDragConnectorTarget(x: number, y: number): string | null {
+    if (!this.shadowRoot) {
+      return null;
+    }
+
+    const el = this.shadowRoot.elementFromPoint(x, y);
+    if (!(el instanceof HTMLElement)) {
+      return null;
+    }
+
+    if (
+      el.dataset.dragConnectorTargetNode &&
+      el.dataset.dragConnectorTargetPort
+    ) {
+      return `${el.dataset.dragConnectorTargetNode}|${el.dataset.dragConnectorTargetPort}`;
+    }
+
+    return null;
+  }
+
+  highlight(_x: number, _y: number): void {
+    // TODO.
+    return;
+  }
+
+  removeHighlight(_x: number, _y: number): void {
+    // TODO.
+    return;
+  }
+
   #getGraphDetails(graph: InspectableGraph) {
     const moduleToOutline = (
       id: ModuleIdentifier,
@@ -867,6 +907,12 @@ export class WorkspaceOutline extends LitElement {
                 return nothing;
               }
 
+              const dragConnectorTargetPort =
+                isBoardBehavior(port.schema) ||
+                isBoardArrayBehavior(port.schema)
+                  ? port.name
+                  : null;
+
               return html`<li
                 class=${classMap({
                   port: true,
@@ -879,6 +925,10 @@ export class WorkspaceOutline extends LitElement {
                   ${isConfigurableBehavior(port.schema)
                     ? html`<button
                         class="port-item"
+                        data-drag-connector-target-node=${node.descriptor.id ??
+                        nothing}
+                        data-drag-connector-target-port=${dragConnectorTargetPort ??
+                        nothing}
                         @click=${(evt: PointerEvent) => {
                           const addHorizontalClickClearance = true;
                           this.dispatchEvent(
@@ -1186,7 +1236,26 @@ export class WorkspaceOutline extends LitElement {
                 >
                   More
                 </button>
-                <span class="color"></span>`
+                <span
+                  @click=${(evt: PointerEvent) => {
+                    evt.preventDefault();
+                    evt.stopImmediatePropagation();
+                  }}
+                  @pointerdown=${(evt: PointerEvent) => {
+                    evt.stopImmediatePropagation();
+
+                    this.dispatchEvent(
+                      new DragConnectorStartEvent(
+                        {
+                          x: evt.clientX,
+                          y: evt.clientY,
+                        },
+                        `#${id}`
+                      )
+                    );
+                  }}
+                  class="color"
+                ></span>`
             : nothing}
         </summary>
         ${this.#renderWorkspaceItem(
@@ -1368,7 +1437,8 @@ export class WorkspaceOutline extends LitElement {
       new WorkspaceSelectionStateEvent(
         selectionChangeId,
         selectionState,
-        replaceExistingSelections
+        replaceExistingSelections,
+        "animated"
       )
     );
   }

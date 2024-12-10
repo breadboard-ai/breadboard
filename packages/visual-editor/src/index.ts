@@ -214,6 +214,7 @@ export class Main extends LitElement {
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
   #tabContainerRef: Ref<HTMLDivElement> = createRef();
+  #dragConnectorRef: Ref<BreadboardUI.Elements.DragConnector> = createRef();
   #boardId = 0;
   #boardPendingSave = false;
   #tabSaveId = new Map<
@@ -888,7 +889,8 @@ export class Main extends LitElement {
       target instanceof HTMLTextAreaElement ||
       target instanceof HTMLSelectElement ||
       target instanceof HTMLCanvasElement ||
-      target instanceof BreadboardUI.Elements.ModuleEditor
+      target instanceof BreadboardUI.Elements.ModuleEditor ||
+      target instanceof BreadboardUI.Elements.ActivityLog
     );
   }
 
@@ -942,7 +944,7 @@ export class Main extends LitElement {
     } as const;
 
     for (const [keys, command] of this.#commands) {
-      if (keys.includes(key)) {
+      if (keys.includes(key) && command.willHandle(evt)) {
         evt.preventDefault();
         evt.stopImmediatePropagation();
 
@@ -2337,7 +2339,9 @@ export class Main extends LitElement {
                 this.#runtime.select.processSelections(
                   this.tab.id,
                   evt.selectionChangeId,
-                  evt.selections
+                  evt.selections,
+                  evt.replaceExistingSelections,
+                  evt.moveToSelection
                 );
               }
             }}
@@ -3120,6 +3124,16 @@ export class Main extends LitElement {
                   }
                 }
               }}
+              @bbdragconnectorstart=${(
+                evt: BreadboardUI.Events.DragConnectorStartEvent
+              ) => {
+                if (!this.#dragConnectorRef.value) {
+                  return;
+                }
+
+                this.#dragConnectorRef.value.start = evt.location;
+                this.#dragConnectorRef.value.source = evt.graphId;
+              }}
               @bbnodecreatereference=${async (
                 evt: BreadboardUI.Events.NodeCreateReferenceEvent
               ) => {
@@ -3152,7 +3166,8 @@ export class Main extends LitElement {
                   this.tab.id,
                   evt.selectionChangeId,
                   evt.selections,
-                  evt.replaceExistingSelections
+                  evt.replaceExistingSelections,
+                  evt.moveToSelection
                 );
               }}
               @bbworkspacevisualupdate=${(
@@ -3645,6 +3660,25 @@ export class Main extends LitElement {
             ></bb-command-palette>`
           : nothing;
 
+        const dragConnector = html`<bb-drag-connector
+          ${ref(this.#dragConnectorRef)}
+          @bbnodecreatereference=${async (
+            evt: BreadboardUI.Events.NodeCreateReferenceEvent
+          ) => {
+            if (!this.tab) {
+              return;
+            }
+
+            await this.#runtime.edit.createReference(
+              this.tab,
+              evt.graphId,
+              evt.nodeId,
+              evt.portId,
+              evt.value
+            );
+          }}
+        ></bb-drag-connector>`;
+
         return [
           ui,
           boardOverlay,
@@ -3661,6 +3695,7 @@ export class Main extends LitElement {
           openDialogOverlay,
           commandPalette,
           modulePalette,
+          dragConnector,
           boardOverflowMenu,
         ];
       });

@@ -43,6 +43,8 @@ const eventInit = {
   composed: true,
 };
 
+type MoveToSelection = "immediate" | "animated" | false;
+
 export enum ToastType {
   INFORMATION = "information",
   WARNING = "warning",
@@ -308,6 +310,17 @@ export class DelayEvent extends Event {
   }
 }
 
+export class DragConnectorStartEvent extends Event {
+  static eventName = "bbdragconnectorstart";
+
+  constructor(
+    public readonly location: { x: number; y: number },
+    public readonly graphId: GraphIdentifier
+  ) {
+    super(DragConnectorStartEvent.eventName, { ...eventInit });
+  }
+}
+
 /**
  * @deprecated
  */
@@ -379,7 +392,8 @@ export class WorkspaceSelectionStateEvent extends Event {
   constructor(
     public readonly selectionChangeId: WorkspaceSelectionChangeId,
     public readonly selections: WorkspaceSelectionState | null,
-    public readonly replaceExistingSelections = true
+    public readonly replaceExistingSelections = true,
+    public readonly moveToSelection: MoveToSelection = false
   ) {
     super(WorkspaceSelectionStateEvent.eventName, { ...eventInit });
   }

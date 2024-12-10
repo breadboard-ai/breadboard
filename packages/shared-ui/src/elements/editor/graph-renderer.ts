@@ -1266,9 +1266,10 @@ export class GraphRenderer extends LitElement {
   }
 
   zoomToFit(animate = false) {
+    this.#userHasInteracted = false;
     this.#setTargetContainerMatrixFromBounds(this.#createBoundsFromAllGraphs());
 
-    this.#setTargetContainerMatrix(animate);
+    this.#updateContainerFromTargetMatrix(animate);
   }
 
   #setTargetContainerMatrix(animate = false) {
@@ -1284,7 +1285,13 @@ export class GraphRenderer extends LitElement {
     this.#updateContainerFromTargetMatrix(animate);
   }
 
+  #updating = false;
   #updateContainerFromTargetMatrix(animate = false) {
+    if (this.#updating) {
+      return;
+    }
+
+    this.#updating = true;
     const setContainer = (target = this.#targetContainerMatrix) => {
       this.#container.setFromMatrix(target);
       this.#background?.tileTransform.setFromMatrix(target);
@@ -1297,6 +1304,7 @@ export class GraphRenderer extends LitElement {
 
     if (!animate) {
       setContainer();
+      this.#updating = false;
       return;
     }
 
@@ -1304,6 +1312,7 @@ export class GraphRenderer extends LitElement {
     const THRESHOLD = 0.001;
     const update = () => {
       if (this.#userHasInteracted) {
+        this.#updating = false;
         return;
       }
 
@@ -1325,6 +1334,7 @@ export class GraphRenderer extends LitElement {
         Math.abs(current.ty - this.#targetContainerMatrix.ty) < THRESHOLD
       ) {
         setContainer();
+        this.#updating = false;
         return;
       }
 
