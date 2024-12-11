@@ -8,14 +8,15 @@ import type { GraphDescriptor } from "@google-labs/breadboard";
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Signal } from "signal-polyfill";
-import type { ReactiveArtifact } from "../artifacts/reactive-artifact-store.js";
+import { until } from "lit/directives/until.js";
+import type { AsyncComputed } from "signal-utils/async-computed";
+import type { ArtifactEntry } from "../artifacts/artifact-store.js";
 import "./board-visualizer.js";
 
 @customElement("bbrt-artifact-display")
 export class BBRTArtifactDisplay extends SignalWatcher(LitElement) {
   @property({ attribute: false })
-  artifact?: Signal.State<ReactiveArtifact | undefined>;
+  artifact?: AsyncComputed<ArtifactEntry | undefined>;
 
   static override styles = css`
     :host {
@@ -27,36 +28,33 @@ export class BBRTArtifactDisplay extends SignalWatcher(LitElement) {
   `;
 
   override render() {
-    const task = this.artifact?.get()?.arrayBuffer;
-    if (task === undefined) {
+    const entry = this.artifact?.get();
+    if (entry === undefined) {
       return nothing;
     }
-
-    // TODO(aomarks) Bug in AsyncComputed, will be fixed once
-    // https://github.com/proposal-signals/signal-utils/pull/88 is released.
-    task.get();
-
+    const task = entry.blob;
     if (task.status === "error") {
       return html`<div>Internal error: ${task.error}</div>`;
     }
     if (task.status === "pending") {
       return html`<div>Loading...</div>`;
     }
-    const artifact = task.value;
-    if (artifact === undefined) {
-      // TODO(aomarks) Is this possible?
-      return nothing;
+    const blob = task.value;
+    if (blob === undefined) {
+      return html`<div>Internal error: Missing Blob</div>`;
     }
-
-    if (artifact.mimeType === "application/vnd.breadboard.board") {
-      const board = JSON.parse(
-        new TextDecoder().decode(artifact.buffer)
-      ) as GraphDescriptor;
-      return html`
-        <bbrt-board-visualizer .graph=${board}></bbrt-board-visualizer>
-      `;
+    if (blob.type === "application/vnd.breadboard.board") {
+      return until(
+        entry.json.complete.then((graph) => {
+          return html`
+            <bbrt-board-visualizer
+              .graph=${graph as GraphDescriptor}
+            ></bbrt-board-visualizer>
+          `;
+        })
+      );
     }
-    return html`<div>Unknown artifact type: ${artifact.mimeType}</div>`;
+    return html`<div>Unknown artifact type: ${blob.type}</div>`;
   }
 }
 

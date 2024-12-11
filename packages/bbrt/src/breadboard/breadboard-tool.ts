@@ -22,13 +22,9 @@ import GeminiKit from "@google-labs/gemini-kit";
 import JSONKit from "@google-labs/json-kit";
 import TemplateKit from "@google-labs/template-kit";
 import { html, nothing } from "lit";
-import { until } from "lit/directives/until.js";
 import { Signal } from "signal-polyfill";
-import type {
-  ArtifactBlob,
-  ArtifactHandle,
-} from "../artifacts/artifact-interface.js";
-import type { ArtifactReaderWriter } from "../artifacts/artifact-store-interface.js";
+import type { ArtifactHandle } from "../artifacts/artifact-interface.js";
+import type { ArtifactStore } from "../artifacts/artifact-store.js";
 import "../components/content.js";
 import type { SecretsProvider } from "../secrets/secrets-provider.js";
 import type {
@@ -41,6 +37,7 @@ import type {
 import { coercePresentableError } from "../util/presentable-error.js";
 import type { Result } from "../util/result.js";
 import { resultify } from "../util/resultify.js";
+import { transposeResults } from "../util/transpose-results.js";
 import type {
   BreadboardBoardListing,
   BreadboardServer,
@@ -53,18 +50,18 @@ export class BreadboardTool implements BBRTTool<unknown, unknown> {
   readonly #listing: BreadboardBoardListing;
   readonly #server: BreadboardServer;
   readonly #secrets: SecretsProvider;
-  readonly artifacts: ArtifactReaderWriter;
+  readonly #artifacts: ArtifactStore;
 
   constructor(
     listing: BreadboardBoardListing,
     server: BreadboardServer,
     secrets: SecretsProvider,
-    artifacts: ArtifactReaderWriter
+    artifacts: ArtifactStore
   ) {
     this.#listing = listing;
     this.#server = server;
     this.#secrets = secrets;
-    this.artifacts = artifacts;
+    this.#artifacts = artifacts;
   }
 
   get metadata(): ToolMetadata {
@@ -103,7 +100,7 @@ export class BreadboardTool implements BBRTTool<unknown, unknown> {
       args,
       () => this.bgl(),
       this.#secrets,
-      this.artifacts
+      this.#artifacts
     );
   }
 
@@ -118,7 +115,7 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
   readonly #args: unknown;
   readonly #secrets: SecretsProvider;
   readonly #getBgl: () => Promise<Result<GraphDescriptor>>;
-  readonly #artifacts: ArtifactReaderWriter;
+  readonly #artifacts: ArtifactStore;
 
   readonly state = new Signal.State<ToolInvocationState<unknown>>({
     status: "unstarted",
@@ -129,13 +126,13 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
     args: unknown,
     getBgl: () => Promise<Result<GraphDescriptor>>,
     secrets: SecretsProvider,
-    artifactStore: ArtifactReaderWriter
+    artifacts: ArtifactStore
   ) {
     this.#listing = listing;
     this.#args = args;
     this.#getBgl = getBgl;
     this.#secrets = secrets;
-    this.#artifacts = artifactStore;
+    this.#artifacts = artifacts;
   }
 
   async start(): Promise<void> {
@@ -254,13 +251,7 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
       status: "success",
       value: {
         output: Object.assign({}, ...runResult.value),
-        artifacts: artifacts.value.map(
-          ({ id, blob }): ArtifactHandle => ({
-            id,
-            kind: "handle",
-            mimeType: blob.type,
-          })
-        ),
+        artifacts: artifacts.value,
       },
     });
   }
@@ -268,7 +259,7 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
   async #extractAndStoreArtifacts(
     store: DataStore,
     storeGroupId: string
-  ): Promise<Result<ArtifactBlob[]>> {
+  ): Promise<Result<ArtifactHandle[]>> {
     // TODO(aomarks) This is a bit inefficient, since serializeGroup does its
     // own fetch and base64 encode into inline data. Should probably add a
     // method to DataStore that just lists all the handles.
@@ -287,21 +278,27 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
     if (!blobs.ok) {
       return blobs;
     }
-    const artifacts = blobs.value.map(
-      (blob): ArtifactBlob => ({
-        id: crypto.randomUUID(),
-        kind: "blob",
-        blob,
-      })
+    return transposeResults(
+      await Promise.all(
+        blobs.value.map(async (blob) => {
+          const artifactId = crypto.randomUUID();
+          const entry = this.#artifacts.entry(artifactId);
+          using transaction = await entry.acquireExclusiveReadWriteLock();
+          const write = await transaction.write(blob);
+          if (!write.ok) {
+            return write;
+          }
+          return {
+            ok: true,
+            value: {
+              id: artifactId,
+              kind: "handle",
+              mimeType: blob.type,
+            },
+          };
+        })
+      )
     );
-    const written = await this.#artifacts.write(...artifacts);
-    if (!written.ok) {
-      return written;
-    }
-    return {
-      ok: true,
-      value: artifacts,
-    };
   }
 
   render() {
@@ -324,7 +321,7 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
         return [
           basicInfo,
           "Error",
-          html` <pre>${JSON.stringify(state.error)}</pre> `,
+          html`<pre>${JSON.stringify(state.error)}</pre>`,
         ];
       }
       default: {
@@ -341,41 +338,21 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
       return nothing;
     }
     const artifacts = [];
-    for (const artifact of state.value.artifacts) {
-      const { mimeType, id } = artifact;
+    for (const { id, mimeType } of state.value.artifacts) {
+      const entry = this.#artifacts.entry(id);
       if (mimeType.startsWith("image/")) {
-        artifacts.push(
-          until(
-            this.#artifactUrl(id).then((url) => html`<img src=${url} />`),
-            html`<img />`
-          )
-        );
+        artifacts.push(html`<img src=${entry.url.value ?? ""} />`);
       } else if (mimeType.startsWith("audio/")) {
         artifacts.push(
-          until(
-            this.#artifactUrl(id).then(
-              (url) => html`<audio controls src=${url}></audio>`
-            ),
-            html`<audio controls></audio>`
-          )
+          html`<audio controls src=${entry.url.value ?? ""}></audio>`
         );
       } else {
         console.log(
           "Could not display artifact with unsupported MIME type",
-          artifact
+          mimeType
         );
       }
     }
     return artifacts;
-  }
-
-  async #artifactUrl(id: string): Promise<string> {
-    // TODO(aomarks) Caching?
-    const blob = await this.#artifacts.read(id);
-    if (!blob.ok) {
-      console.error("Failed to read artifact", blob.error);
-      return "";
-    }
-    return URL.createObjectURL(blob.value.blob);
   }
 }

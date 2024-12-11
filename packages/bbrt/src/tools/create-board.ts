@@ -7,8 +7,7 @@
 import type { GraphDescriptor } from "@google-labs/breadboard";
 import { html, nothing } from "lit";
 import { Signal } from "signal-polyfill";
-import type { Artifact } from "../artifacts/artifact-interface.js";
-import type { ArtifactWriter } from "../artifacts/artifact-store-interface.js";
+import type { ArtifactStore } from "../artifacts/artifact-store.js";
 import "../components/activate-modal.js";
 import { coercePresentableError } from "../util/presentable-error.js";
 import type { Result } from "../util/result.js";
@@ -29,9 +28,9 @@ interface Outputs {
 }
 
 export class CreateBoard implements BBRTTool<Inputs, Outputs> {
-  #artifacts: ArtifactWriter;
+  #artifacts: ArtifactStore;
 
-  constructor(artifacts: ArtifactWriter) {
+  constructor(artifacts: ArtifactStore) {
     this.#artifacts = artifacts;
   }
 
@@ -78,13 +77,13 @@ export class CreateBoard implements BBRTTool<Inputs, Outputs> {
 }
 
 class CreateBoardInvocation implements ToolInvocation<Outputs> {
-  readonly #artifacts: ArtifactWriter;
+  readonly #artifacts: ArtifactStore;
   readonly #args: Inputs;
   readonly state = new Signal.State<ToolInvocationState<Outputs>>({
     status: "unstarted",
   });
 
-  constructor(artifacts: ArtifactWriter, args: Inputs) {
+  constructor(artifacts: ArtifactStore, args: Inputs) {
     this.#artifacts = artifacts;
     this.#args = args;
   }
@@ -102,6 +101,7 @@ class CreateBoardInvocation implements ToolInvocation<Outputs> {
       return;
     }
     this.state.set({ status: "running" });
+
     const bgl: GraphDescriptor = {
       metadata: {
         name: this.#args.name,
@@ -109,14 +109,15 @@ class CreateBoardInvocation implements ToolInvocation<Outputs> {
       nodes: [],
       edges: [],
     };
-    const artifact: Artifact = {
-      id: crypto.randomUUID(),
-      kind: "blob",
-      blob: new Blob([JSON.stringify(bgl)], {
-        type: "application/vnd.breadboard.board",
-      }),
-    };
-    const write = await this.#artifacts.write(artifact);
+
+    const artifactId = crypto.randomUUID();
+    const entry = this.#artifacts.entry(artifactId);
+    using transaction = await entry.acquireExclusiveReadWriteLock();
+
+    const blob = new Blob([JSON.stringify(bgl)], {
+      type: "application/vnd.breadboard.board",
+    });
+    const write = await transaction.write(blob);
     if (!write.ok) {
       this.state.set({
         status: "error",
@@ -124,17 +125,18 @@ class CreateBoardInvocation implements ToolInvocation<Outputs> {
       });
       return;
     }
+
     this.state.set({
       status: "success",
       value: {
         output: {
-          artifactId: artifact.id,
+          artifactId: artifactId,
         },
         artifacts: [
           {
             kind: "handle",
-            id: artifact.id,
-            mimeType: artifact.blob.type,
+            id: artifactId,
+            mimeType: blob.type,
           },
         ],
       },

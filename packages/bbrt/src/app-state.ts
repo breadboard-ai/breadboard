@@ -8,11 +8,11 @@ import { Signal } from "signal-polyfill";
 import { SignalArray } from "signal-utils/array";
 import { AsyncComputed } from "signal-utils/async-computed";
 import { SignalSet } from "signal-utils/set";
-import { IdbArtifactStore } from "./artifacts/idb-artifact-store.js";
 import {
-  ReactiveArtifactStore,
-  type ReactiveArtifact,
-} from "./artifacts/reactive-artifact-store.js";
+  ArtifactStore,
+  type ArtifactEntry,
+} from "./artifacts/artifact-store.js";
+import { IdbArtifactReaderWriter } from "./artifacts/idb-artifact-reader-writer.js";
 import type { BBRTDriver } from "./drivers/driver-interface.js";
 import { GeminiDriver } from "./drivers/gemini.js";
 import { OpenAiDriver } from "./drivers/openai.js";
@@ -59,15 +59,15 @@ export class BBRTAppState {
     this.activeTools
   );
 
-  readonly artifacts = new ReactiveArtifactStore(new IdbArtifactStore());
+  readonly artifacts = new ArtifactStore(new IdbArtifactReaderWriter());
   readonly activeArtifactId = new Signal.State<string | undefined>(undefined);
-  readonly activeArtifact = new AsyncComputed<ReactiveArtifact | undefined>(
+  readonly activeArtifact = new AsyncComputed<ArtifactEntry | undefined>(
     async () => {
       const artifactId = this.activeArtifactId.get();
       if (artifactId === undefined) {
         return undefined;
       }
-      return this.artifacts.readReactive(artifactId);
+      return this.artifacts.entry(artifactId);
     }
   );
 
