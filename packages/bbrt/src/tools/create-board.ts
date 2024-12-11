@@ -38,7 +38,11 @@ export class CreateBoard implements BBRTTool<Inputs, Outputs> {
   readonly metadata: ToolMetadata = {
     id: "create_board",
     title: "Create Board",
-    description: "Create a new Breadboard",
+    description:
+      "Create a new Breadboard. Note that create_board must be performed to" +
+      " completion in a separate turn, before any other operations can run on" +
+      " it, because you must wait for a response to find out what identifier" +
+      " was assigned.",
     icon: "/bbrt/images/tool.svg",
   };
 
