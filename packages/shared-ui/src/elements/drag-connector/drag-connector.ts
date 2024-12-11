@@ -3,11 +3,14 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, nothing, PropertyValues, svg } from "lit";
+import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { DragConnectorReceiver } from "../../types/types";
 import { GraphIdentifier } from "@breadboard-ai/types";
-import { NodeCreateReferenceEvent } from "../../events/events";
+import {
+  DragConnectorCancelledEvent,
+  NodeCreateReferenceEvent,
+} from "../../events/events";
 import { getSubItemColor } from "../../utils/subgraph-color";
 
 const documentStyles = getComputedStyle(document.documentElement);
@@ -95,6 +98,7 @@ export class DragConnector extends LitElement {
   }
 
   #onPointerUp(evt: MouseEvent) {
+    let foundTarget = false;
     for (const el of evt.composedPath()) {
       if (!this.#isDragConnectorReceiver(el)) {
         continue;
@@ -112,11 +116,16 @@ export class DragConnector extends LitElement {
           break;
         }
 
+        foundTarget = true;
         this.dispatchEvent(
           new NodeCreateReferenceEvent(graphId, nodeId, portId, this.source)
         );
         break;
       }
+    }
+
+    if (!foundTarget) {
+      this.dispatchEvent(new DragConnectorCancelledEvent());
     }
 
     this.start = null;
@@ -148,7 +157,6 @@ export class DragConnector extends LitElement {
       return nothing;
     }
 
-    const bgColor = getGlobalColor("--bb-neutral-0");
     const fillColor = this.isOnTarget
       ? `#${getGlobalColor("--bb-joiner-500").toString(16).padStart(2)}`
       : getSubItemColor<string>(
@@ -165,28 +173,25 @@ export class DragConnector extends LitElement {
       <circle
         cx="${this.end.x}"
         cy="${this.end.y}"
-        r="8"
-        fill="#${bgColor.toString(16).padStart(2)}"
-        stroke="${fillColor}"
-        stroke-width="1"
+        r="10"
+        fill="${fillColor}"
       />
-      <circle cx="${this.end.x}" cy="${this.end.y}" r="5" fill="${fillColor}" />
-      ${this.isOnTarget
-        ? svg`<line
-            x1="${this.end.x - 3}"
-            y1="${this.end.y}"
-            x2="${this.end.x + 3}"
-            y2="${this.end.y}"
-            stroke="white"
-            stroke-width="2" />
-            <line
-            x1="${this.end.x}"
-            y1="${this.end.y - 3}"
-            x2="${this.end.x}"
-            y2="${this.end.y + 3}"
-            stroke="white"
-            stroke-width="2" />`
-        : nothing}
+      <line
+        x1="${this.end.x - 5}"
+        y1="${this.end.y}"
+        x2="${this.end.x + 5}"
+        y2="${this.end.y}"
+        stroke="white"
+        stroke-width="2"
+      />
+      <line
+        x1="${this.end.x}"
+        y1="${this.end.y - 5}"
+        x2="${this.end.x}"
+        y2="${this.end.y + 5}"
+        stroke="white"
+        stroke-width="2"
+      />
     </svg>`;
   }
 }

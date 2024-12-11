@@ -90,6 +90,8 @@ body.hide-cursor {
   --bb-icon-directions-inverted: url(/third_party/icons/directions-inverted.svg);
   --bb-icon-download: url(/third_party/icons/download.svg);
   --bb-icon-draft: url(/third_party/icons/draft.svg);
+  --bb-icon-drag-click: url(/third_party/icons/drag-click.svg);
+  --bb-icon-drag-click-inverted: url(/third_party/icons/drag-click-inverted.svg);
   --bb-icon-duplicate: url(/third_party/icons/duplicate.svg);
   --bb-icon-edge-connector: url(/third_party/icons/edge-connector.svg);
   --bb-icon-edit: url(/third_party/icons/edit.svg);

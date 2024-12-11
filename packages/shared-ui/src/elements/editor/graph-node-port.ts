@@ -9,6 +9,8 @@ import { GraphNodePortType } from "./types.js";
 import { PortStatus } from "@google-labs/breadboard";
 import { getGlobalColor } from "./utils.js";
 
+const boardReferenceColor = getGlobalColor("--bb-joiner-500");
+
 const connectedColor = getGlobalColor("--bb-inputs-200");
 const danglingColor = getGlobalColor("--bb-warning-300");
 const indeterminateColor = getGlobalColor("--bb-neutral-300");
@@ -46,6 +48,7 @@ export class GraphNodePort extends PIXI.Graphics {
   };
   #overrideStatus: PortStatus | null = null;
   #readOnly = false;
+  #showBoardReferenceMarker = false;
 
   constructor(public type: GraphNodePortType) {
     super();
@@ -84,6 +87,19 @@ export class GraphNodePort extends PIXI.Graphics {
 
   get radius() {
     return this.#radius;
+  }
+
+  set showBoardReferenceMarker(showBoardReferenceMarker: boolean) {
+    if (showBoardReferenceMarker === this.#showBoardReferenceMarker) {
+      return;
+    }
+
+    this.#showBoardReferenceMarker = showBoardReferenceMarker;
+    this.#isDirty = true;
+  }
+
+  get showBoardReferenceMarker() {
+    return this.#showBoardReferenceMarker;
   }
 
   set configured(configured: boolean) {
@@ -151,6 +167,17 @@ export class GraphNodePort extends PIXI.Graphics {
     });
     this.stroke();
     this.closePath();
+
+    if (this.#showBoardReferenceMarker) {
+      const ratio = 1 / this.worldTransform.a;
+      this.beginPath();
+      this.circle(0, 0, 10 * ratio);
+      this.stroke({
+        color: boardReferenceColor,
+        width: Math.round(4 * ratio),
+      });
+      this.closePath();
+    }
 
     this.eventMode = "static";
     this.cursor = this.#readOnly ? undefined : "pointer";

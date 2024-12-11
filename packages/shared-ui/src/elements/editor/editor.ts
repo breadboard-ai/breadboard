@@ -211,6 +211,9 @@ export class Editor extends LitElement implements DragConnectorReceiver {
   @property()
   isShowingBoardActivityOverlay = false;
 
+  @property()
+  showBoardReferenceMarkers = false;
+
   @state()
   showOverflowMenu = false;
 
@@ -462,7 +465,9 @@ export class Editor extends LitElement implements DragConnectorReceiver {
 
     return {
       url,
-      title: selectedGraph.raw().title ?? "Untitled Board",
+      title: subGraphId
+        ? (selectedGraph.raw().title ?? "Untitled Board")
+        : "Main",
       subGraphId,
       minimized: (selectedGraph.metadata() || {}).visual?.minimized ?? false,
       showNodeTypeDescriptions: this.showNodeTypeDescriptions,
@@ -1095,6 +1100,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
         .showSubgraphsInline=${this.showSubgraphsInline}
         .selectionChangeId=${this.selectionState?.selectionChangeId}
         .moveToSelection=${this.selectionState?.moveToSelection}
+        .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
       ></bb-graph-renderer>
     </div>`;
 

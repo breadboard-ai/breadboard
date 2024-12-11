@@ -134,6 +134,16 @@ export class GraphRenderer extends LitElement {
   @property()
   padding = 100;
 
+  @property()
+  set showBoardReferenceMarkers(showBoardReferenceMarkers: boolean) {
+    this.#showBoardReferenceMarkers = showBoardReferenceMarkers;
+    this.#toggleToolBoardMarkersOnGraphs();
+  }
+
+  get showBoardReferenceMarkers() {
+    return this.#showBoardReferenceMarkers;
+  }
+
   #app = new PIXI.Application();
   #appInitialized = false;
   #configChanged = false;
@@ -141,6 +151,7 @@ export class GraphRenderer extends LitElement {
   #selectionHasChanged = false;
   #topGraphUrlChanged = false;
   #graphsRendered = false;
+  #showBoardReferenceMarkers = false;
 
   #overflowEditNode: Ref<HTMLButtonElement> = createRef();
   #overflowDeleteNode: Ref<HTMLButtonElement> = createRef();
@@ -729,6 +740,16 @@ export class GraphRenderer extends LitElement {
       requestAnimationFrame(() => {
         this.#setTargetContainerMatrix(shouldAnimate);
       });
+    }
+  }
+
+  #toggleToolBoardMarkersOnGraphs() {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      graph.showBoardReferenceMarkers = this.#showBoardReferenceMarkers;
     }
   }
 
@@ -2338,7 +2359,7 @@ export class GraphRenderer extends LitElement {
     }
 
     graph.subGraphId = subGraphId;
-    graph.subGraphTitle = opts.title ?? null;
+    graph.graphTitle = opts.title ?? null;
 
     return true;
   }

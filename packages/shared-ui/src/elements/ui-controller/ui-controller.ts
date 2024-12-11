@@ -131,6 +131,9 @@ export class UI extends LitElement {
   @property()
   graphStoreUpdateId: number = 0;
 
+  @property()
+  showBoardReferenceMarkers = false;
+
   @state()
   debugEvent: InspectableRunEvent | null = null;
 
@@ -296,6 +299,7 @@ export class UI extends LitElement {
         this.selectionState,
         this.visualChangeId,
         this.graphTopologyUpdateId,
+        this.showBoardReferenceMarkers,
         collapseNodesByDefault,
         hideSubboardSelectorWhenEmpty,
         showNodeShortcuts,
@@ -335,6 +339,7 @@ export class UI extends LitElement {
           .visualChangeId=${this.visualChangeId}
           .graphTopologyUpdateId=${this.graphTopologyUpdateId}
           .boardServers=${this.boardServers}
+          .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
           @bbrunboard=${() => {
             this.sideNavItem = "activity";
           }}
@@ -440,7 +445,13 @@ export class UI extends LitElement {
             </div>
           </h1>
           ${guard(
-            [graph, this.mode, this.selectionState, this.graphStoreUpdateId],
+            [
+              graph,
+              this.mode,
+              this.selectionState,
+              this.graphStoreUpdateId,
+              this.showBoardReferenceMarkers,
+            ],
             () => {
               return html`<bb-workspace-outline
                 .graph=${graph}
@@ -448,6 +459,10 @@ export class UI extends LitElement {
                 .mode=${this.mode}
                 .selectionState=${this.selectionState}
                 .graphStoreUpdateId=${this.graphStoreUpdateId}
+                .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
+                @bbdragconnectorstart=${() => {
+                  this.showBoardReferenceMarkers = true;
+                }}
               ></bb-workspace-outline>`;
             }
           )}`;

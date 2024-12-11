@@ -118,6 +118,8 @@ export class GraphNode extends PIXI.Container {
   #showNodePreviewValues = false;
   #showNodeTypeDescriptions = false;
   #showNodeRunnerButton = false;
+  #showBoardReferenceMarkers = false;
+
   #overflowMenu = new GraphOverflowMenu();
   #headerInPort = new GraphNodePort(GraphNodePortType.IN);
   #headerOutPort = new GraphNodePort(GraphNodePortType.OUT);
@@ -469,6 +471,16 @@ export class GraphNode extends PIXI.Container {
   set selected(selected: boolean) {
     this.#selected = selected;
     this.#isDirty = true;
+  }
+
+  set showBoardReferenceMarkers(showBoardReferenceMarkers: boolean) {
+    console.log(11111, showBoardReferenceMarkers);
+    this.#showBoardReferenceMarkers = showBoardReferenceMarkers;
+    this.#isDirty = true;
+  }
+
+  get showBoardReferenceMarkers() {
+    return this.#showBoardReferenceMarkers;
   }
 
   get references() {
@@ -1347,6 +1359,11 @@ export class GraphNode extends PIXI.Container {
       nodePort.status = port.status;
       nodePort.configured = port.configured && port.edges.length === 0;
       nodePort.visible = true;
+
+      const isBoard =
+        isBoardBehavior(port.schema) || isBoardArrayBehavior(port.schema);
+      nodePort.showBoardReferenceMarker =
+        isBoard && this.#showBoardReferenceMarkers;
 
       this.#inPortLocations.set(port.name, nodePort.position);
 
