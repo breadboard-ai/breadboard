@@ -12,6 +12,7 @@ import {
 } from "@google-labs/breadboard";
 import {
   ReferenceIdentifier,
+  WorkspaceSelectionState,
   type EdgeData,
   type GraphSelectionState,
 } from "../../types/types.js";
@@ -126,6 +127,13 @@ export function createRandomID(type: string) {
   }
   // TODO: Check for clashes
   return `${type}-${nextNodeId[0]}`;
+}
+
+export function emptyWorkspaceSelectionState(): WorkspaceSelectionState {
+  return {
+    graphs: new Map(),
+    modules: new Set(),
+  };
 }
 
 export function emptySelectionState(): GraphSelectionState {

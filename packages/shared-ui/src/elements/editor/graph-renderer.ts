@@ -49,6 +49,7 @@ import { styleMap } from "lit/directives/style-map.js";
 import {
   computeNextExpansionState,
   emptySelectionState,
+  emptyWorkspaceSelectionState,
   getGlobalColor,
   inspectableEdgeToString,
 } from "./utils.js";
@@ -68,6 +69,7 @@ import {
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import { GraphComment } from "./graph-comment.js";
 import { isBoardArrayBehavior, isBoardBehavior } from "../../utils/index.js";
+import { ModuleIdentifier } from "@breadboard-ai/types";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
 const backgroundGridColor = getGlobalColor("--bb-ui-100");
@@ -1949,6 +1951,21 @@ export class GraphRenderer extends LitElement {
         this.#setTargetContainerMatrix(true);
       }
     );
+
+    graph.on(GRAPH_OPERATIONS.MODULE_SELECTED, (moduleId: ModuleIdentifier) => {
+      const selectionChangeId = this.#selectionChangeId();
+      const selectionState = emptyWorkspaceSelectionState();
+      selectionState.modules.add(moduleId);
+
+      this.dispatchEvent(
+        new WorkspaceSelectionStateEvent(
+          selectionChangeId,
+          selectionState,
+          true,
+          "immediate"
+        )
+      );
+    });
 
     graph.on(GRAPH_OPERATIONS.GRAPH_REFERENCE_LOAD, (reference) => {
       this.dispatchEvent(new StartEvent(reference));

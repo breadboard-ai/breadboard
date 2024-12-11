@@ -1694,11 +1694,18 @@ export class Graph extends PIXI.Container {
             if (URL.canParse(reference)) {
               this.emit(GRAPH_OPERATIONS.GRAPH_REFERENCE_LOAD, reference);
             } else {
-              this.emit(
-                GRAPH_OPERATIONS.SUBGRAPH_SELECTED,
-                false,
-                reference.slice(1)
-              );
+              if (reference.startsWith("#module:")) {
+                this.emit(
+                  GRAPH_OPERATIONS.MODULE_SELECTED,
+                  reference.slice("#module:".length)
+                );
+              } else {
+                this.emit(
+                  GRAPH_OPERATIONS.SUBGRAPH_SELECTED,
+                  false,
+                  reference.slice(1)
+                );
+              }
             }
           }
         );
