@@ -69,6 +69,10 @@ const model = input({
     enumeration(
       "gemini-1.5-flash-latest",
       "gemini-1.5-pro-latest",
+      "gemini-2.0-flash-exp",
+      "gemini-exp-1206",
+      "gemini-exp-1121",
+      "learnlm-1.5-pro-experimental",
       "gemini-1.5-pro-001",
       "gemini-1.5-pro-002",
       "gemini-1.5-pro-exp-0801",
