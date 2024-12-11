@@ -49,6 +49,7 @@ import { styleMap } from "lit/directives/style-map.js";
 import {
   computeNextExpansionState,
   emptySelectionState,
+  emptyWorkspaceSelectionState,
   getGlobalColor,
   inspectableEdgeToString,
 } from "./utils.js";
@@ -68,6 +69,7 @@ import {
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import { GraphComment } from "./graph-comment.js";
 import { isBoardArrayBehavior, isBoardBehavior } from "../../utils/index.js";
+import { ModuleIdentifier } from "@breadboard-ai/types";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
 const backgroundGridColor = getGlobalColor("--bb-ui-100");
@@ -104,6 +106,9 @@ export class GraphRenderer extends LitElement {
   showSubgraphsInline = false;
 
   @property()
+  showMainGraphBorder = true;
+
+  @property()
   assetPrefix = "";
 
   @property()
@@ -134,6 +139,16 @@ export class GraphRenderer extends LitElement {
   @property()
   padding = 100;
 
+  @property()
+  set showBoardReferenceMarkers(showBoardReferenceMarkers: boolean) {
+    this.#showBoardReferenceMarkers = showBoardReferenceMarkers;
+    this.#toggleToolBoardMarkersOnGraphs();
+  }
+
+  get showBoardReferenceMarkers() {
+    return this.#showBoardReferenceMarkers;
+  }
+
   #app = new PIXI.Application();
   #appInitialized = false;
   #configChanged = false;
@@ -141,6 +156,7 @@ export class GraphRenderer extends LitElement {
   #selectionHasChanged = false;
   #topGraphUrlChanged = false;
   #graphsRendered = false;
+  #showBoardReferenceMarkers = false;
 
   #overflowEditNode: Ref<HTMLButtonElement> = createRef();
   #overflowDeleteNode: Ref<HTMLButtonElement> = createRef();
@@ -729,6 +745,16 @@ export class GraphRenderer extends LitElement {
       requestAnimationFrame(() => {
         this.#setTargetContainerMatrix(shouldAnimate);
       });
+    }
+  }
+
+  #toggleToolBoardMarkersOnGraphs() {
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph)) {
+        continue;
+      }
+
+      graph.showBoardReferenceMarkers = this.#showBoardReferenceMarkers;
     }
   }
 
@@ -1926,6 +1952,21 @@ export class GraphRenderer extends LitElement {
       }
     );
 
+    graph.on(GRAPH_OPERATIONS.MODULE_SELECTED, (moduleId: ModuleIdentifier) => {
+      const selectionChangeId = this.#selectionChangeId();
+      const selectionState = emptyWorkspaceSelectionState();
+      selectionState.modules.add(moduleId);
+
+      this.dispatchEvent(
+        new WorkspaceSelectionStateEvent(
+          selectionChangeId,
+          selectionState,
+          true,
+          "immediate"
+        )
+      );
+    });
+
     graph.on(GRAPH_OPERATIONS.GRAPH_REFERENCE_LOAD, (reference) => {
       this.dispatchEvent(new StartEvent(reference));
     });
@@ -2338,7 +2379,8 @@ export class GraphRenderer extends LitElement {
     }
 
     graph.subGraphId = subGraphId;
-    graph.subGraphTitle = opts.title ?? null;
+    graph.graphTitle = opts.title ?? null;
+    graph.graphOutlineVisible = subGraphId !== null || this.showMainGraphBorder;
 
     return true;
   }

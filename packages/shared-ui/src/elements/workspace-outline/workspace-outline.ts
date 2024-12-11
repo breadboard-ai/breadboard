@@ -95,6 +95,9 @@ export class WorkspaceOutline
   @property()
   graphStoreUpdateId: number = 0;
 
+  @property({ reflect: true })
+  showBoardReferenceMarkers = false;
+
   @state()
   filter: string | null = null;
 
@@ -247,18 +250,14 @@ export class WorkspaceOutline
       align-items: center;
     }
 
-    details.declarative > summary {
-      padding-right: var(--bb-grid-size-13);
+    details > summary {
+      padding-right: var(--bb-grid-size-14);
       cursor: pointer;
       background: var(--bb-icon-unfold-more) calc(100% - 4px) center / 20px 20px
         no-repeat;
     }
 
-    details.imperative > summary {
-      padding-right: var(--bb-grid-size-13);
-    }
-
-    details.declarative[open] > summary {
+    details[open] > summary {
       background: var(--bb-icon-unfold-less) calc(100% - 4px) center / 20px 20px
         no-repeat;
     }
@@ -339,6 +338,7 @@ export class WorkspaceOutline
       border-radius: 50%;
       margin-right: var(--bb-grid-size);
       display: inline-block;
+      pointer-events: none;
     }
 
     li.port > .title::before {
@@ -384,6 +384,19 @@ export class WorkspaceOutline
       border: 1px solid var(--bb-ui-600);
     }
 
+    :host([showBoardReferenceMarkers="true"]) li.port.board > .title::after {
+      content: "";
+      width: var(--bb-grid-size-2);
+      height: calc(var(--bb-grid-size-2) - 1px);
+      left: 22px;
+      top: 3px;
+      border: 3px solid transparent;
+      border-radius: 50%;
+      box-shadow: 0 0 0 3px var(--bb-joiner-500);
+      position: absolute;
+      pointer-events: none;
+    }
+
     li.port.missing > .title::before {
       background: var(--bb-warning-300);
       border: 1px solid var(--bb-warning-700);
@@ -395,6 +408,7 @@ export class WorkspaceOutline
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      position: relative;
     }
 
     li.node > .title::before {
@@ -406,6 +420,7 @@ export class WorkspaceOutline
       display: inline-block;
       margin-right: var(--bb-grid-size);
       flex: 0 0 auto;
+      pointer-events: none;
     }
 
     li.node.input > .title::before {
@@ -551,6 +566,10 @@ export class WorkspaceOutline
     details:not(.main) summary:hover > .title,
     details:not(.main) summary > .title:hover {
       width: calc(100% - 36px);
+    }
+
+    details:not(.main) summary:hover > .title:not(.selected),
+    details:not(.main) summary > .title:not(.selected):hover {
       background: var(--bb-ui-50);
     }
 
@@ -613,14 +632,34 @@ export class WorkspaceOutline
     }
 
     .color {
-      display: block;
+      display: flex;
+      margin-left: var(--bb-grid-size);
+      width: 20px;
+      height: 20px;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    .color::before {
+      content: "";
       background: var(--subgraph-label-color, red);
       border-radius: 50%;
-      margin-left: var(--bb-grid-size);
       width: 10px;
       height: 10px;
-      flex: 0 0 auto;
+    }
+
+    .color.reference {
+      background: var(--subgraph-label-color, red)
+        var(--bb-icon-drag-click-inverted) center center / 16px 16px no-repeat;
+      width: 20px;
+      height: 20px;
       cursor: crosshair;
+    }
+
+    .color.reference::before {
+      display: none;
     }
 
     .more {
@@ -639,8 +678,7 @@ export class WorkspaceOutline
     }
 
     summary:hover .more,
-    .more:hover,
-    .more:focus {
+    .more:hover {
       display: block;
     }
 
@@ -682,13 +720,18 @@ export class WorkspaceOutline
       return null;
     }
 
-    if (
-      el.dataset.dragConnectorTargetGraph &&
-      el.dataset.dragConnectorTargetNode &&
-      el.dataset.dragConnectorTargetPort
-    ) {
-      return `${el.dataset.dragConnectorTargetGraph}|${el.dataset.dragConnectorTargetNode}|${el.dataset.dragConnectorTargetPort}`;
-    }
+    let target: HTMLElement | null = el;
+    do {
+      if (
+        target.dataset.dragConnectorTargetGraph &&
+        target.dataset.dragConnectorTargetNode &&
+        target.dataset.dragConnectorTargetPort
+      ) {
+        return `${target.dataset.dragConnectorTargetGraph}|${target.dataset.dragConnectorTargetNode}|${target.dataset.dragConnectorTargetPort}`;
+      }
+
+      target = target.parentElement;
+    } while (target);
 
     return null;
   }
@@ -936,18 +979,17 @@ export class WorkspaceOutline
                   "with-preview": true,
                   board: dragConnectorTargetPort ?? false,
                 })}
+                data-drag-connector-target-graph=${subGraphId
+                  ? subGraphId
+                  : MAIN_BOARD_ID}
+                data-drag-connector-target-node=${node.descriptor.id ?? nothing}
+                data-drag-connector-target-port=${dragConnectorTargetPort ??
+                nothing}
               >
                 <span class="title">
                   ${isConfigurableBehavior(port.schema)
                     ? html`<button
                         class="port-item"
-                        data-drag-connector-target-graph=${subGraphId
-                          ? subGraphId
-                          : MAIN_BOARD_ID}
-                        data-drag-connector-target-node=${node.descriptor.id ??
-                        nothing}
-                        data-drag-connector-target-port=${dragConnectorTargetPort ??
-                        nothing}
                         @click=${(evt: PointerEvent) => {
                           const addHorizontalClickClearance = true;
                           this.dispatchEvent(
@@ -1133,6 +1175,8 @@ export class WorkspaceOutline
         return nothing;
       }
 
+      const preventRefencing =
+        subItem.type === "imperative" && !subItem.runnable;
       return html`<details
         style=${styleMap({
           "--subgraph-border-color": getSubItemColor(id, "border"),
@@ -1252,11 +1296,22 @@ export class WorkspaceOutline
                   More
                 </button>
                 <span
+                  class=${classMap({
+                    color: true,
+                    ["reference"]: !preventRefencing,
+                  })}
                   @click=${(evt: PointerEvent) => {
+                    if (preventRefencing) {
+                      return;
+                    }
                     evt.preventDefault();
                     evt.stopImmediatePropagation();
                   }}
                   @pointerover=${(evt: PointerEvent) => {
+                    if (preventRefencing) {
+                      return;
+                    }
+
                     this.dispatchEvent(
                       new ShowTooltipEvent(
                         `Drag to a board port`,
@@ -1266,9 +1321,17 @@ export class WorkspaceOutline
                     );
                   }}
                   @pointerout=${() => {
+                    if (preventRefencing) {
+                      return;
+                    }
+
                     this.dispatchEvent(new HideTooltipEvent());
                   }}
                   @pointerdown=${(evt: PointerEvent) => {
+                    if (preventRefencing) {
+                      return;
+                    }
+
                     evt.stopImmediatePropagation();
 
                     const source =
@@ -1286,7 +1349,6 @@ export class WorkspaceOutline
                       )
                     );
                   }}
-                  class="color"
                 ></span>`
             : nothing}
         </summary>

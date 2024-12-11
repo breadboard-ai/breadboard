@@ -55,10 +55,11 @@ import { getSubItemColor } from "../../utils/subgraph-color.js";
 const highlightedNodeColor = getGlobalColor("--bb-ui-600");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
 const nodeBorderColor = getGlobalColor("--bb-neutral-500");
-const subGraphDefaultBorderColor = getGlobalColor("--bb-neutral-300");
-const subGraphDefaultLabelColor = getGlobalColor("--bb-neutral-500");
+const subGraphDefaultBorderColor = getGlobalColor("--bb-neutral-400");
+const subGraphDefaultLabelColor = getGlobalColor("--bb-neutral-600");
 
-const SUB_GRAPH_LABEL_TEXT_SIZE = 12;
+const SUB_GRAPH_LABEL_TEXT_SIZE = 14;
+const ICON_SCALE = 0.3333;
 
 export class Graph extends PIXI.Container {
   #isDirty = true;
@@ -77,10 +78,6 @@ export class Graph extends PIXI.Container {
   #highlightedNode = new PIXI.Graphics();
   #highlightedNodeColor = highlightedNodeColor;
   #highlightPadding = 8;
-  #subGraphOutlineConnector = new PIXI.Graphics();
-  #subGraphOutlineMarker = new PIXI.Graphics();
-  #subGraphOutline = new PIXI.Graphics();
-  #subGraphOutlinePadding = 24;
   #latestPendingValidateRequest = new WeakMap<GraphEdge, symbol>();
   #edgeValues: TopGraphEdgeValues | null = null;
   #nodeInfo: TopGraphNodeInfo | null = null;
@@ -92,12 +89,21 @@ export class Graph extends PIXI.Container {
   #collapseNodesByDefault = false;
   #showNodePreviewValues = false;
   #showNodeTypeDescriptions = false;
+  #showBoardReferenceMarkers = false;
   #highlightDragOver = false;
   #subGraphId: string | null = null;
-  #subGraphTitle: string | null = null;
-  #subGraphTitleLabel: PIXI.Text | null = null;
-  #subGraphBorderColor = subGraphDefaultBorderColor;
-  #subGraphLabelColor = subGraphDefaultLabelColor;
+
+  #graphTitle: string | null = null;
+  #graphOutlineTitleLabel: PIXI.Text | null = null;
+  #graphOutlineConnectorIcon: PIXI.Sprite | null = null;
+  #graphOutlineConnector = new PIXI.Graphics();
+  #graphOutlineMarker = new PIXI.Graphics();
+  #graphOutline = new PIXI.Graphics();
+  #graphOutlinePadding = 28;
+  #graphBorderColor = subGraphDefaultBorderColor;
+  #graphLabelColor = subGraphDefaultLabelColor;
+  #graphOutlineVisible = true;
+
   #lastClickTime = 0;
 
   layoutRect: DOMRectReadOnly | null = null;
@@ -114,12 +120,20 @@ export class Graph extends PIXI.Container {
     this.eventMode = "static";
     this.sortableChildren = true;
 
-    this.#subGraphOutline.eventMode = "none";
+    const dragClickTexture = GraphAssets.instance().get("drag-click-inverted");
+    if (dragClickTexture) {
+      this.#graphOutlineConnectorIcon = new PIXI.Sprite(dragClickTexture);
+      this.#graphOutlineConnectorIcon.scale.x = ICON_SCALE;
+      this.#graphOutlineConnectorIcon.scale.y = ICON_SCALE;
+      this.#graphOutlineConnectorIcon.eventMode = "none";
+    }
+
+    this.#graphOutline.eventMode = "none";
 
     let subGraphOutlineMarkerDragStart: PIXI.Point | null = null;
-    this.#subGraphOutlineConnector.cursor = "crosshair";
-    this.#subGraphOutlineConnector.eventMode = "static";
-    this.#subGraphOutlineConnector.addEventListener(
+    this.#graphOutlineConnector.cursor = "crosshair";
+    this.#graphOutlineConnector.eventMode = "static";
+    this.#graphOutlineConnector.addEventListener(
       "pointerdown",
       (evt: PointerEvent) => {
         this.emit(
@@ -130,9 +144,9 @@ export class Graph extends PIXI.Container {
       }
     );
 
-    this.#subGraphOutlineMarker.cursor = "pointer";
-    this.#subGraphOutlineMarker.eventMode = "static";
-    this.#subGraphOutlineMarker.addEventListener(
+    this.#graphOutlineMarker.cursor = "pointer";
+    this.#graphOutlineMarker.eventMode = "static";
+    this.#graphOutlineMarker.addEventListener(
       "pointerdown",
       (evt: PointerEvent) => {
         const isMac = navigator.platform.indexOf("Mac") === 0;
@@ -146,14 +160,14 @@ export class Graph extends PIXI.Container {
       }
     );
 
-    this.#subGraphOutlineMarker.addEventListener(
+    this.#graphOutlineMarker.addEventListener(
       "globalpointermove",
       (evt: PointerEvent) => {
         if (!subGraphOutlineMarkerDragStart) {
           return;
         }
 
-        this.#subGraphOutlineMarker.cursor = "grabbing";
+        this.#graphOutlineMarker.cursor = "grabbing";
 
         const ratio = this.worldTransform.a;
         const delta = new PIXI.Point(
@@ -169,7 +183,7 @@ export class Graph extends PIXI.Container {
         return;
       }
 
-      this.#subGraphOutlineMarker.cursor = "pointer";
+      this.#graphOutlineMarker.cursor = "pointer";
 
       const ratio = this.worldTransform.a;
       const delta = new PIXI.Point(
@@ -181,36 +195,30 @@ export class Graph extends PIXI.Container {
       this.emit(GRAPH_OPERATIONS.GRAPH_SELECTION_MOVE_SETTLED, delta);
     };
 
-    this.#subGraphOutlineMarker.addEventListener(
-      "pointerup",
-      onMarkerPointerUp
-    );
-    this.#subGraphOutlineMarker.addEventListener(
+    this.#graphOutlineMarker.addEventListener("pointerup", onMarkerPointerUp);
+    this.#graphOutlineMarker.addEventListener(
       "pointerupoutside",
       onMarkerPointerUp
     );
 
-    this.#subGraphOutlineMarker.addEventListener(
-      "click",
-      (evt: PointerEvent) => {
-        const clickDelta = window.performance.now() - this.#lastClickTime;
-        this.#lastClickTime = window.performance.now();
+    this.#graphOutlineMarker.addEventListener("click", (evt: PointerEvent) => {
+      const clickDelta = window.performance.now() - this.#lastClickTime;
+      this.#lastClickTime = window.performance.now();
 
-        const isMac = navigator.platform.indexOf("Mac") === 0;
-        const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+      const isMac = navigator.platform.indexOf("Mac") === 0;
+      const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
-        if (clickDelta > DBL_CLICK_DELTA) {
-          return;
-        }
-
-        if (isCtrlCommand) {
-          return;
-        }
-
-        this.minimized = !this.minimized;
-        this.emit(GRAPH_OPERATIONS.GRAPH_TOGGLE_MINIMIZED);
+      if (clickDelta > DBL_CLICK_DELTA) {
+        return;
       }
-    );
+
+      if (isCtrlCommand) {
+        return;
+      }
+
+      this.minimized = !this.minimized;
+      this.emit(GRAPH_OPERATIONS.GRAPH_TOGGLE_MINIMIZED);
+    });
 
     let lastHoverPort: GraphNodePort | null = null;
     let lastHoverNode: GraphNode | null = null;
@@ -233,7 +241,7 @@ export class Graph extends PIXI.Container {
       this.#drawEdges();
       this.#drawNodes();
       this.#drawNodeHighlight();
-      this.#drawSubGraphOutline();
+      this.#drawGraphOutline();
       this.#sortChildrenBySelectedStatus();
 
       if (this.#minimized && this.#subGraphId) {
@@ -1028,6 +1036,16 @@ export class Graph extends PIXI.Container {
     }
   }
 
+  #setBoardReferenceMarkers() {
+    for (const child of this.children) {
+      if (!(child instanceof GraphNode)) {
+        continue;
+      }
+
+      child.showBoardReferenceMarkers = this.#showBoardReferenceMarkers;
+    }
+  }
+
   #setNodesTypeDescriptions() {
     for (const child of this.children) {
       if (!(child instanceof GraphNode)) {
@@ -1076,7 +1094,7 @@ export class Graph extends PIXI.Container {
 
     this.#drawEdges();
     this.#drawNodeHighlight();
-    this.#drawSubGraphOutline();
+    this.#drawGraphOutline();
   }
 
   set selectionState(selectionState: GraphSelectionState | null) {
@@ -1134,6 +1152,15 @@ export class Graph extends PIXI.Container {
     return this.#showNodeTypeDescriptions;
   }
 
+  set showBoardReferenceMarkers(showBoardReferenceMarkers: boolean) {
+    this.#showBoardReferenceMarkers = showBoardReferenceMarkers;
+    this.#setBoardReferenceMarkers();
+  }
+
+  get showBoardReferenceMarkers() {
+    return (this.#showBoardReferenceMarkers = true);
+  }
+
   set references(references: GraphReferences | null) {
     this.#references = references;
     this.#isDirty = true;
@@ -1161,6 +1188,19 @@ export class Graph extends PIXI.Container {
 
   get modules() {
     return this.#modules;
+  }
+
+  set graphOutlineVisible(graphOutlineVisible: boolean) {
+    if (graphOutlineVisible === this.#graphOutlineVisible) {
+      return;
+    }
+
+    this.#graphOutlineVisible = graphOutlineVisible;
+    this.#isDirty = true;
+  }
+
+  get graphOutlineVisible() {
+    return this.#graphOutlineVisible;
   }
 
   set edgeValues(edgeValues: TopGraphEdgeValues | null) {
@@ -1198,19 +1238,19 @@ export class Graph extends PIXI.Container {
     this.#subGraphId = subGraphId;
 
     if (subGraphId) {
-      this.#subGraphBorderColor = getSubItemColor<number>(
+      this.#graphBorderColor = getSubItemColor<number>(
         subGraphId,
         "border",
         true
       );
-      this.#subGraphLabelColor = getSubItemColor<number>(
+      this.#graphLabelColor = getSubItemColor<number>(
         subGraphId,
         "label",
         true
       );
     } else {
-      this.#subGraphBorderColor = subGraphDefaultBorderColor;
-      this.#subGraphLabelColor = subGraphDefaultLabelColor;
+      this.#graphBorderColor = subGraphDefaultBorderColor;
+      this.#graphLabelColor = subGraphDefaultLabelColor;
     }
   }
 
@@ -1218,15 +1258,15 @@ export class Graph extends PIXI.Container {
     return this.#subGraphId;
   }
 
-  set subGraphTitle(subGraphTitle: string | null) {
-    if (this.#subGraphTitle && subGraphTitle === this.#subGraphTitle) {
+  set graphTitle(graphTitle: string | null) {
+    if (this.#graphTitle && graphTitle === this.#graphTitle) {
       return;
     }
-    this.#subGraphTitle = subGraphTitle;
+    this.#graphTitle = graphTitle;
 
-    const text = subGraphTitle || "";
-    if (!this.#subGraphTitleLabel) {
-      this.#subGraphTitleLabel = new PIXI.Text({
+    const text = graphTitle || "";
+    if (!this.#graphOutlineTitleLabel) {
+      this.#graphOutlineTitleLabel = new PIXI.Text({
         text,
         style: {
           fontFamily: "Arial",
@@ -1236,15 +1276,15 @@ export class Graph extends PIXI.Container {
         },
       });
     } else {
-      this.#subGraphTitleLabel.text = text;
+      this.#graphOutlineTitleLabel.text = text;
     }
 
-    this.#subGraphTitleLabel.eventMode = "none";
-    this.#subGraphTitleLabel.visible = subGraphTitle !== null;
+    this.#graphOutlineTitleLabel.eventMode = "none";
+    this.#graphOutlineTitleLabel.visible = graphTitle !== null;
   }
 
-  get subGraphTitle() {
-    return this.#subGraphTitle;
+  get graphTitle() {
+    return this.#graphTitle;
   }
 
   set nodeInfo(nodeInfo: TopGraphNodeInfo | null) {
@@ -1463,12 +1503,16 @@ export class Graph extends PIXI.Container {
     }
   }
 
-  #drawSubGraphOutline() {
-    this.#subGraphOutline.clear();
-    this.#subGraphOutlineMarker.clear();
-    this.#subGraphOutlineConnector.clear();
+  #drawGraphOutline() {
+    this.#graphOutline.clear();
+    this.#graphOutlineMarker.clear();
+    this.#graphOutlineConnector.clear();
 
-    if (!this.subGraphId) {
+    if (this.#graphOutlineConnectorIcon) {
+      this.#graphOutlineConnectorIcon.visible = false;
+    }
+
+    if (!this.#graphOutlineVisible) {
       return;
     }
 
@@ -1497,10 +1541,10 @@ export class Graph extends PIXI.Container {
       maxY = Math.max(maxY, child.position.y + height);
     }
 
-    minX -= this.#subGraphOutlinePadding;
-    minY -= this.#subGraphOutlinePadding;
-    maxX += this.#subGraphOutlinePadding;
-    maxY += this.#subGraphOutlinePadding;
+    minX -= this.#graphOutlinePadding;
+    minY -= this.#graphOutlinePadding;
+    maxX += this.#graphOutlinePadding;
+    maxY += this.#graphOutlinePadding;
 
     minX = Math.round(minX);
     minY = Math.round(minY);
@@ -1508,52 +1552,64 @@ export class Graph extends PIXI.Container {
     maxY = Math.round(maxY);
 
     if (!this.#minimized) {
-      this.#subGraphOutline.setStrokeStyle({
-        color: this.#subGraphBorderColor,
+      this.#graphOutline.setStrokeStyle({
+        color: this.#graphBorderColor,
         width: this.#highlightDragOver ? 4 : 2,
         alpha: 1,
       });
-      this.#subGraphOutline.beginPath();
-      this.#subGraphOutline.roundRect(
+      this.#graphOutline.beginPath();
+      this.#graphOutline.roundRect(
         minX + 0.5,
         minY + 0.5,
         maxX - minX + 0.5,
         maxY - minY + 0.5,
-        8 + this.#subGraphOutlinePadding
+        8 + this.#graphOutlinePadding
       );
-      this.#subGraphOutline.closePath();
-      this.#subGraphOutline.fill({ color: 0xffffff, alpha: 0.2 });
-      this.#subGraphOutline.stroke();
+      this.#graphOutline.closePath();
+      this.#graphOutline.fill({ color: 0xffffff, alpha: 0.2 });
+      this.#graphOutline.stroke();
     }
 
     // Label Placeholder
-    if (this.#subGraphTitleLabel) {
-      const x = minX + 24;
-      const y = minY - 10;
-      const w = this.#subGraphTitleLabel.width + 40;
-      const h = this.#subGraphTitleLabel.height + 12;
-      this.#subGraphOutlineMarker.beginPath();
-      this.#subGraphOutlineMarker.roundRect(x, y, w, h, 50);
-      this.#subGraphOutlineMarker.closePath();
-      this.#subGraphOutlineMarker.fill({ color: 0xffffff });
-      this.#subGraphOutlineMarker.stroke({ color: this.#subGraphLabelColor });
+    if (this.#graphOutlineTitleLabel) {
+      const x = minX + 30;
+      const y = minY - 16;
+      const w =
+        this.#graphOutlineTitleLabel.width + (this.subGraphId ? 46 : 28);
+      const h = this.#graphOutlineTitleLabel.height + 16;
+      this.#graphOutlineMarker.beginPath();
+      this.#graphOutlineMarker.roundRect(x, y, w, h, 50);
+      this.#graphOutlineMarker.closePath();
+      this.#graphOutlineMarker.fill({ color: 0xffffff });
+      this.#graphOutlineMarker.stroke({ color: this.#graphLabelColor });
 
-      this.#subGraphOutlineConnector.beginPath();
-      this.#subGraphOutlineConnector.circle(0, 0, 5);
-      this.#subGraphOutlineConnector.closePath();
-      this.#subGraphOutlineConnector.fill({ color: this.#subGraphLabelColor });
+      this.#graphOutlineConnector.beginPath();
+      this.#graphOutlineConnector.circle(0, 0, 10);
+      this.#graphOutlineConnector.closePath();
+      this.#graphOutlineConnector.fill({ color: this.#graphLabelColor });
 
-      this.#subGraphOutlineConnector.x = x + w - 12;
-      this.#subGraphOutlineConnector.y = y + h * 0.5;
+      this.#graphOutlineConnector.x = x + w - 16;
+      this.#graphOutlineConnector.y = y + h * 0.5;
 
-      this.#subGraphTitleLabel.x = x + 10;
-      this.#subGraphTitleLabel.y = y + 5;
-      this.addChildAt(this.#subGraphTitleLabel, 0);
+      this.#graphOutlineTitleLabel.x = x + 14;
+      this.#graphOutlineTitleLabel.y = y + 8;
+
+      if (this.subGraphId) {
+        if (this.#graphOutlineConnectorIcon) {
+          this.#graphOutlineConnectorIcon.x = x + w - 24;
+          this.#graphOutlineConnectorIcon.y = y + h * 0.5 - 8;
+
+          this.#graphOutlineConnectorIcon.visible = true;
+          this.addChildAt(this.#graphOutlineConnectorIcon, 0);
+        }
+        this.addChildAt(this.#graphOutlineConnector, 0);
+      }
+
+      this.addChildAt(this.#graphOutlineTitleLabel, 0);
+      this.addChildAt(this.#graphOutlineMarker, 0);
     }
 
-    this.addChildAt(this.#subGraphOutlineConnector, 0);
-    this.addChildAt(this.#subGraphOutlineMarker, 0);
-    this.addChildAt(this.#subGraphOutline, 0);
+    this.addChildAt(this.#graphOutline, 0);
   }
 
   #computeSideEdges(): SideEdge[] {
@@ -1638,11 +1694,18 @@ export class Graph extends PIXI.Container {
             if (URL.canParse(reference)) {
               this.emit(GRAPH_OPERATIONS.GRAPH_REFERENCE_LOAD, reference);
             } else {
-              this.emit(
-                GRAPH_OPERATIONS.SUBGRAPH_SELECTED,
-                false,
-                reference.slice(1)
-              );
+              if (reference.startsWith("#module:")) {
+                this.emit(
+                  GRAPH_OPERATIONS.MODULE_SELECTED,
+                  reference.slice("#module:".length)
+                );
+              } else {
+                this.emit(
+                  GRAPH_OPERATIONS.SUBGRAPH_SELECTED,
+                  false,
+                  reference.slice(1)
+                );
+              }
             }
           }
         );
@@ -1671,7 +1734,7 @@ export class Graph extends PIXI.Container {
         graphNode.on(GRAPH_OPERATIONS.GRAPH_NODE_EXPAND_COLLAPSE, () => {
           this.#redrawAllEdges();
           this.#drawNodeHighlight();
-          this.#drawSubGraphOutline();
+          this.#drawGraphOutline();
 
           const layout = this.#layout.get(graphNode!.label);
           if (!layout) {

@@ -127,6 +127,9 @@ export class Main extends LitElement {
   showWelcomePanel = false;
 
   @state()
+  showBoardReferenceMarkers = false;
+
+  @state()
   showOpenBoardOverlay = false;
 
   @state()
@@ -3083,6 +3086,7 @@ export class Main extends LitElement {
               .visualChangeId=${this.#lastVisualChangeId}
               .graphTopologyUpdateId=${this.graphTopologyUpdateId}
               .graphStoreUpdateId=${this.graphStoreUpdateId}
+              .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
               @bbinputenter=${async (
                 event: BreadboardUI.Events.InputEnterEvent
               ) => {
@@ -3140,6 +3144,7 @@ export class Main extends LitElement {
 
                 this.#dragConnectorRef.value.start = evt.location;
                 this.#dragConnectorRef.value.source = evt.graphId;
+                this.showBoardReferenceMarkers = true;
               }}
               @bbnodecreatereference=${async (
                 evt: BreadboardUI.Events.NodeCreateReferenceEvent
@@ -3683,6 +3688,11 @@ export class Main extends LitElement {
               evt.portId,
               evt.value
             );
+
+            this.showBoardReferenceMarkers = false;
+          }}
+          @bbdragconnectorcancelled=${() => {
+            this.showBoardReferenceMarkers = false;
           }}
         ></bb-drag-connector>`;
 

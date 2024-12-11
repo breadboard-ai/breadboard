@@ -8,6 +8,10 @@ import * as PIXI from "pixi.js";
 
 const ASSET_LIST = new Map([
   ["code-blocks", "/third_party/icons/graph/code-blocks-48px.svg"],
+  [
+    "drag-click-inverted",
+    "/third_party/icons/graph/drag-click-inverted-48px.svg",
+  ],
   ["edit", "/third_party/icons/graph/edit-48px.svg"],
   ["fetch", "/third_party/icons/graph/fetch-48px.svg"],
   ["google-drive", "/third_party/icons/graph/google-drive-48px.svg"],

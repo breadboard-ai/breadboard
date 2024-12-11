@@ -321,6 +321,13 @@ export class DragConnectorStartEvent extends Event {
   }
 }
 
+export class DragConnectorCancelledEvent extends Event {
+  static eventName = "bbdragconnectorcancelled";
+
+  constructor() {
+    super(DragConnectorCancelledEvent.eventName, { ...eventInit });
+  }
+}
 /**
  * @deprecated
  */
