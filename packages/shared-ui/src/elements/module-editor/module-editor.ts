@@ -679,11 +679,14 @@ export class ModuleEditor extends LitElement {
       };
     }
 
+    const module = this.modules[this.moduleId];
+
     // Create a stable URL.
     const mainGraphURL = this.graph!.raw().url!;
     const url = `module-preview:${mainGraphURL}?module=${this.moduleId}`;
     const graph: GraphDescriptor = {
       url,
+      title: module?.metadata().title,
       nodes: [
         isMainModule
           ? {
@@ -700,7 +703,7 @@ export class ModuleEditor extends LitElement {
               id: this.moduleId,
               type: "runModule",
               metadata: {
-                title: `Demo Component`,
+                title: module?.metadata().title,
                 visual: {
                   collapsed: "expanded",
                 },
@@ -905,6 +908,7 @@ export class ModuleEditor extends LitElement {
                 .highlightInvalidWires=${false}
                 .showPortTooltips=${false}
                 .showSubgraphsInline=${false}
+                .showMainGraphBorder=${false}
                 .selectionChangeId=${null}
               ></bb-graph-renderer>
             </div>

@@ -104,6 +104,9 @@ export class GraphRenderer extends LitElement {
   showSubgraphsInline = false;
 
   @property()
+  showMainGraphBorder = true;
+
+  @property()
   assetPrefix = "";
 
   @property()
@@ -2360,6 +2363,7 @@ export class GraphRenderer extends LitElement {
 
     graph.subGraphId = subGraphId;
     graph.graphTitle = opts.title ?? null;
+    graph.graphOutlineVisible = subGraphId !== null || this.showMainGraphBorder;
 
     return true;
   }

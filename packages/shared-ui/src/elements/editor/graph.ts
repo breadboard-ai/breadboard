@@ -95,13 +95,14 @@ export class Graph extends PIXI.Container {
 
   #graphTitle: string | null = null;
   #graphOutlineTitleLabel: PIXI.Text | null = null;
-  #graphOutlineConnectorSprite: PIXI.Sprite | null = null;
+  #graphOutlineConnectorIcon: PIXI.Sprite | null = null;
   #graphOutlineConnector = new PIXI.Graphics();
   #graphOutlineMarker = new PIXI.Graphics();
   #graphOutline = new PIXI.Graphics();
   #graphOutlinePadding = 28;
   #graphBorderColor = subGraphDefaultBorderColor;
   #graphLabelColor = subGraphDefaultLabelColor;
+  #graphOutlineVisible = true;
 
   #lastClickTime = 0;
 
@@ -121,10 +122,10 @@ export class Graph extends PIXI.Container {
 
     const dragClickTexture = GraphAssets.instance().get("drag-click-inverted");
     if (dragClickTexture) {
-      this.#graphOutlineConnectorSprite = new PIXI.Sprite(dragClickTexture);
-      this.#graphOutlineConnectorSprite.scale.x = ICON_SCALE;
-      this.#graphOutlineConnectorSprite.scale.y = ICON_SCALE;
-      this.#graphOutlineConnectorSprite.eventMode = "none";
+      this.#graphOutlineConnectorIcon = new PIXI.Sprite(dragClickTexture);
+      this.#graphOutlineConnectorIcon.scale.x = ICON_SCALE;
+      this.#graphOutlineConnectorIcon.scale.y = ICON_SCALE;
+      this.#graphOutlineConnectorIcon.eventMode = "none";
     }
 
     this.#graphOutline.eventMode = "none";
@@ -1189,6 +1190,19 @@ export class Graph extends PIXI.Container {
     return this.#modules;
   }
 
+  set graphOutlineVisible(graphOutlineVisible: boolean) {
+    if (graphOutlineVisible === this.#graphOutlineVisible) {
+      return;
+    }
+
+    this.#graphOutlineVisible = graphOutlineVisible;
+    this.#isDirty = true;
+  }
+
+  get graphOutlineVisible() {
+    return this.#graphOutlineVisible;
+  }
+
   set edgeValues(edgeValues: TopGraphEdgeValues | null) {
     this.#edgeValues = edgeValues;
     this.#isDirty = true;
@@ -1494,6 +1508,14 @@ export class Graph extends PIXI.Container {
     this.#graphOutlineMarker.clear();
     this.#graphOutlineConnector.clear();
 
+    if (this.#graphOutlineConnectorIcon) {
+      this.#graphOutlineConnectorIcon.visible = false;
+    }
+
+    if (!this.#graphOutlineVisible) {
+      return;
+    }
+
     let minX = Number.POSITIVE_INFINITY;
     let minY = Number.POSITIVE_INFINITY;
     let maxX = Number.NEGATIVE_INFINITY;
@@ -1573,11 +1595,12 @@ export class Graph extends PIXI.Container {
       this.#graphOutlineTitleLabel.y = y + 8;
 
       if (this.subGraphId) {
-        if (this.#graphOutlineConnectorSprite) {
-          this.#graphOutlineConnectorSprite.x = x + w - 24;
-          this.#graphOutlineConnectorSprite.y = y + h * 0.5 - 8;
+        if (this.#graphOutlineConnectorIcon) {
+          this.#graphOutlineConnectorIcon.x = x + w - 24;
+          this.#graphOutlineConnectorIcon.y = y + h * 0.5 - 8;
 
-          this.addChildAt(this.#graphOutlineConnectorSprite, 0);
+          this.#graphOutlineConnectorIcon.visible = true;
+          this.addChildAt(this.#graphOutlineConnectorIcon, 0);
         }
         this.addChildAt(this.#graphOutlineConnector, 0);
       }

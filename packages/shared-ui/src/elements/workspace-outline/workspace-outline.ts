@@ -566,6 +566,10 @@ export class WorkspaceOutline
     details:not(.main) summary:hover > .title,
     details:not(.main) summary > .title:hover {
       width: calc(100% - 36px);
+    }
+
+    details:not(.main) summary:hover > .title:not(.selected),
+    details:not(.main) summary > .title:not(.selected):hover {
       background: var(--bb-ui-50);
     }
 
@@ -628,15 +632,34 @@ export class WorkspaceOutline
     }
 
     .color {
-      display: block;
-      background: var(--subgraph-label-color, red)
-        var(--bb-icon-drag-click-inverted) center center / 16px 16px no-repeat;
-      border-radius: 50%;
+      display: flex;
       margin-left: var(--bb-grid-size);
       width: 20px;
       height: 20px;
       flex: 0 0 auto;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    .color::before {
+      content: "";
+      background: var(--subgraph-label-color, red);
+      border-radius: 50%;
+      width: 10px;
+      height: 10px;
+    }
+
+    .color.reference {
+      background: var(--subgraph-label-color, red)
+        var(--bb-icon-drag-click-inverted) center center / 16px 16px no-repeat;
+      width: 20px;
+      height: 20px;
       cursor: crosshair;
+    }
+
+    .color.reference::before {
+      display: none;
     }
 
     .more {
@@ -655,8 +678,7 @@ export class WorkspaceOutline
     }
 
     summary:hover .more,
-    .more:hover,
-    .more:focus {
+    .more:hover {
       display: block;
     }
 
@@ -1153,6 +1175,8 @@ export class WorkspaceOutline
         return nothing;
       }
 
+      const preventRefencing =
+        subItem.type === "imperative" && !subItem.runnable;
       return html`<details
         style=${styleMap({
           "--subgraph-border-color": getSubItemColor(id, "border"),
@@ -1272,11 +1296,22 @@ export class WorkspaceOutline
                   More
                 </button>
                 <span
+                  class=${classMap({
+                    color: true,
+                    ["reference"]: !preventRefencing,
+                  })}
                   @click=${(evt: PointerEvent) => {
+                    if (preventRefencing) {
+                      return;
+                    }
                     evt.preventDefault();
                     evt.stopImmediatePropagation();
                   }}
                   @pointerover=${(evt: PointerEvent) => {
+                    if (preventRefencing) {
+                      return;
+                    }
+
                     this.dispatchEvent(
                       new ShowTooltipEvent(
                         `Drag to a board port`,
@@ -1286,9 +1321,17 @@ export class WorkspaceOutline
                     );
                   }}
                   @pointerout=${() => {
+                    if (preventRefencing) {
+                      return;
+                    }
+
                     this.dispatchEvent(new HideTooltipEvent());
                   }}
                   @pointerdown=${(evt: PointerEvent) => {
+                    if (preventRefencing) {
+                      return;
+                    }
+
                     evt.stopImmediatePropagation();
 
                     const source =
@@ -1306,7 +1349,6 @@ export class WorkspaceOutline
                       )
                     );
                   }}
-                  class="color"
                 ></span>`
             : nothing}
         </summary>

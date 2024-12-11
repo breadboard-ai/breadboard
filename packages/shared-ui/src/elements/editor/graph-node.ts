@@ -474,7 +474,6 @@ export class GraphNode extends PIXI.Container {
   }
 
   set showBoardReferenceMarkers(showBoardReferenceMarkers: boolean) {
-    console.log(11111, showBoardReferenceMarkers);
     this.#showBoardReferenceMarkers = showBoardReferenceMarkers;
     this.#isDirty = true;
   }
