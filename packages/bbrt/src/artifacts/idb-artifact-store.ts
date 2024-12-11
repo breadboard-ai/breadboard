@@ -7,14 +7,14 @@
 import type { Result } from "../util/result.js";
 import { resultify } from "../util/resultify.js";
 import { transposeResults } from "../util/transpose-results.js";
-import type { Artifact } from "./artifact-interface.js";
-import type { ArtifactStore } from "./artifact-store-interface.js";
+import type { Artifact, ArtifactBlob } from "./artifact-interface.js";
+import type { ArtifactReaderWriter } from "./artifact-store-interface.js";
 
 const ARTIFACT_IDB_DB_NAME = "bbrt";
 const ARTIFACT_IDB_DB_VERSION = 1;
 const ARTIFACT_IDB_STORE_NAME = "artifacts";
 
-export class IdbArtifactStore implements ArtifactStore {
+export class IdbArtifactStore implements ArtifactReaderWriter {
   public async write(...artifacts: Artifact[]): Promise<Result<void>> {
     const open = await this.#openDB();
     if (!open.ok) {
@@ -50,7 +50,7 @@ export class IdbArtifactStore implements ArtifactStore {
     return resultify(() => transaction.commit());
   }
 
-  async read(artifactId: string): Promise<Result<Artifact>> {
+  async read(artifactId: string): Promise<Result<ArtifactBlob>> {
     const dbResult = await this.#openDB();
     if (!dbResult.ok) {
       return dbResult;
@@ -60,10 +60,10 @@ export class IdbArtifactStore implements ArtifactStore {
     const store = transaction.objectStore(ARTIFACT_IDB_STORE_NAME);
     const request = store.get(artifactId);
 
-    return new Promise<Result<Artifact>>((resolve) => {
+    return new Promise((resolve) => {
       request.onsuccess = () => {
         if (request.result) {
-          resolve({ ok: true, value: request.result as Artifact });
+          resolve({ ok: true, value: request.result });
         } else {
           resolve({
             ok: false,

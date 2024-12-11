@@ -4,21 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "@google-labs/breadboard";
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { AsyncComputed } from "signal-utils/async-computed";
 import { BBRTAppState } from "../app-state.js";
 import { BreadboardToolProvider } from "../breadboard/breadboard-tool-provider.js";
-import { BreadboardTool } from "../breadboard/breadboard-tool.js";
 import { readBoardServersFromIndexedDB } from "../breadboard/indexed-db-servers.js";
 import type { Config } from "../config.js";
 import { ActivateTool } from "../tools/activate-tool.js";
+import { AddNode } from "../tools/add-node.js";
+import { CreateBoard } from "../tools/create-board.js";
+import { DisplayArtifact } from "../tools/display-artifact.js";
 import { BoardLister } from "../tools/list-tools.js";
 import type { BBRTTool } from "../tools/tool.js";
 import { connectedEffect } from "../util/connected-effect.js";
-import "./board-visualizer.js";
+import "./artifact-display.js";
 import "./chat.js";
 import "./driver-selector.js";
 import "./prompt.js";
@@ -32,28 +32,6 @@ export class BBRTMain extends SignalWatcher(LitElement) {
   config?: Config;
 
   readonly #state = new BBRTAppState();
-
-  readonly #displayedBoard = new AsyncComputed<GraphDescriptor | undefined>(
-    async () => {
-      // TODO(aomarks) This is just a temporary way to get some kind of relevant
-      // graph to render, to prove that rendering is working OK. Eventually this
-      // would render a board being built from the conversation.
-      let boardTool: BreadboardTool | undefined;
-      for (const tool of this.#state.activeTools.get()) {
-        if (tool instanceof BreadboardTool) {
-          boardTool = tool;
-        }
-      }
-      if (boardTool === undefined) {
-        return undefined;
-      }
-      const bgl = await boardTool.bgl();
-      if (!bgl.ok) {
-        return undefined;
-      }
-      return bgl.value;
-    }
-  );
 
   static override styles = css`
     :host {
@@ -83,14 +61,10 @@ export class BBRTMain extends SignalWatcher(LitElement) {
     bbrt-prompt {
       flex-grow: 1;
     }
-    bbrt-board-visualizer {
+    bbrt-artifact-display {
       grid-area: artifacts;
       border-left: 1px solid #ccc;
       overflow: hidden;
-    }
-    #toggle-components {
-      background: oklch(from var(--bb-neutral-0) l c h/0.22)
-        var(--bb-icon-extension-inverted) center center / 24px 24px no-repeat;
     }
   `;
 
@@ -117,7 +91,6 @@ export class BBRTMain extends SignalWatcher(LitElement) {
   #persistState() {
     const state = this.#state.serialize();
     const serialized = JSON.stringify(state, null, 2);
-    console.log("Persisting state", serialized);
     try {
       sessionStorage.setItem(APP_STATE_SESSION_STORAGE_KEY, serialized);
     } catch (error) {
@@ -142,9 +115,9 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         .activeToolIds=${this.#state.activeToolIds}
       ></bbrt-tool-palette>
 
-      <bbrt-board-visualizer
-        .graph=${this.#displayedBoard.get()}
-      ></bbrt-board-visualizer>
+      <bbrt-artifact-display
+        .artifact=${this.#state.activeArtifact}
+      ></bbrt-artifact-display>
     `;
   }
 
@@ -171,11 +144,26 @@ export class BBRTMain extends SignalWatcher(LitElement) {
     this.#state.availableTools.add(toolActivator as BBRTTool);
     this.#state.activeToolIds.add(toolActivator.metadata.id);
 
+    const boardCreator = new CreateBoard(this.#state.artifacts);
+    this.#state.availableTools.add(boardCreator as BBRTTool);
+    this.#state.activeToolIds.add(boardCreator.metadata.id);
+
+    const nodeAdder = new AddNode(this.#state.artifacts);
+    this.#state.availableTools.add(nodeAdder as BBRTTool);
+    this.#state.activeToolIds.add(nodeAdder.metadata.id);
+
+    const artifactDisplayer = new DisplayArtifact((artifactId) => {
+      this.#state.activeArtifactId.set(artifactId);
+      return { ok: true, value: undefined };
+    });
+    this.#state.availableTools.add(artifactDisplayer as BBRTTool);
+    this.#state.activeToolIds.add(artifactDisplayer.metadata.id);
+
     for (const server of servers.value) {
       const provider = new BreadboardToolProvider(
         server,
         this.#state.secrets,
-        this.#state.artifactStore
+        this.#state.artifacts
       );
       this.#state.toolProviders.push(provider);
       for (const tool of await provider.tools()) {
