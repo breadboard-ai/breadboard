@@ -189,12 +189,21 @@ export const CutCommand: KeyboardCommand = {
 // compiler continues to work on the assumption that it's a browser URL.
 const cP = "" + "canParse";
 function canParse(urlLike: string): boolean {
+  const maybeFragment = urlLike.startsWith("#");
+
   if (cP in URL) {
+    if (maybeFragment) {
+      return URL.canParse(urlLike, window.location.href);
+    }
     return URL.canParse(urlLike);
   }
 
   try {
-    new URL(urlLike);
+    if (maybeFragment) {
+      new URL(urlLike, window.location.href);
+    } else {
+      new URL(urlLike);
+    }
     return true;
   } catch (err) {
     return false;
@@ -218,7 +227,9 @@ export const PasteCommand: KeyboardCommand = {
     let boardUrl: string | undefined;
     try {
       if (canParse(clipboardContents)) {
-        boardUrl = (URL.parse(clipboardContents) ?? { href: undefined }).href;
+        boardUrl = (
+          URL.parse(clipboardContents, tab?.graph.url) ?? { href: undefined }
+        ).href;
       } else {
         boardContents = JSON.parse(clipboardContents);
         // TODO: Proper board checks.
