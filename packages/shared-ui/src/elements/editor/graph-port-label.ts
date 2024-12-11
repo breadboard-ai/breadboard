@@ -17,7 +17,11 @@ import {
 import * as PIXI from "pixi.js";
 import { getGlobalColor, isConfigurablePort } from "./utils";
 import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types";
-import { isModuleBehavior } from "../../utils";
+import {
+  isBoardArrayBehavior,
+  isBoardBehavior,
+  isModuleBehavior,
+} from "../../utils";
 
 const hoverColor = getGlobalColor("--bb-ui-50");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
@@ -325,6 +329,15 @@ export class GraphPortLabel extends PIXI.Container {
       }
 
       return "Unspecified Module";
+    }
+
+    // TODO: Pass through a user-friendly label for boards & board arrays?
+    if (isBoardBehavior(port.schema)) {
+      return "1 item";
+    }
+
+    if (isBoardArrayBehavior(port.schema) && Array.isArray(port.value)) {
+      return `${port.value.length} item${port.value.length !== 1 ? "s" : ""}`;
     }
 
     let valStr = "";

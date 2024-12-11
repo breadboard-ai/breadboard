@@ -867,6 +867,28 @@ export class WorkspaceOutline
     );
   }
 
+  #toBoardName(id: GraphIdentifier | ModuleIdentifier) {
+    if (id.startsWith("#module:")) {
+      const modules = this.graph?.modules();
+      if (typeof id === "string") {
+        id = id.slice("#module:".length);
+      }
+
+      if (modules && typeof id === "string" && modules[id]) {
+        return modules[id].metadata().title ?? id;
+      }
+    } else {
+      const subGraphs = this.graph?.graphs();
+      if (typeof id === "string") {
+        id = id.slice(1);
+      }
+
+      if (subGraphs && typeof id === "string" && subGraphs[id]) {
+        return subGraphs[id].raw().title ?? id;
+      }
+    }
+  }
+
   #renderPreview(port: InspectablePort) {
     let preview = "";
     if (isModuleBehavior(port.schema)) {
@@ -879,15 +901,13 @@ export class WorkspaceOutline
     }
 
     if (isBoardBehavior(port.schema)) {
-      const subGraphs = this.graph?.graphs();
-      let id = port.value;
-      if (typeof id === "string") {
-        id = id.slice(1);
-      }
+      return this.#toBoardName(port.value as GraphIdentifier);
+    }
 
-      if (subGraphs && typeof id === "string" && subGraphs[id]) {
-        return subGraphs[id].raw().title ?? port.value;
-      }
+    if (isBoardArrayBehavior(port.schema) && Array.isArray(port.value)) {
+      return port.value
+        .map((module) => this.#toBoardName(module as ModuleIdentifier))
+        .join(", ");
     }
 
     switch (typeof port.value) {
