@@ -52,7 +52,6 @@ export class BBRTArtifactDisplay extends SignalWatcher(LitElement) {
       const board = JSON.parse(
         new TextDecoder().decode(artifact.buffer)
       ) as GraphDescriptor;
-      console.log({ board });
       return html`
         <bbrt-board-visualizer .graph=${board}></bbrt-board-visualizer>
       `;

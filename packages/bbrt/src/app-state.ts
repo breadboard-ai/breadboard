@@ -63,7 +63,6 @@ export class BBRTAppState {
   readonly activeArtifactId = new Signal.State<string | undefined>(undefined);
   readonly activeArtifact = new AsyncComputed<ReactiveArtifact | undefined>(
     async () => {
-      console.log("activeArtifact function runs");
       const artifactId = this.activeArtifactId.get();
       if (artifactId === undefined) {
         return undefined;
@@ -107,7 +106,6 @@ export class BBRTAppState {
       ...restoreTurns(serialized.conversationTurns, this.availableTools)
     );
 
-    console.log("restore activeArtifactId to", serialized.activeArtifactId);
     this.activeArtifactId.set(serialized.activeArtifactId);
   }
 }
