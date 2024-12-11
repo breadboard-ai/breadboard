@@ -126,7 +126,33 @@ class AddNodeInvocation implements ToolInvocation<Outputs> {
       new TextDecoder().decode(buffer)
     ) as GraphDescriptor;
     const { id, type, title, description } = this.#args.node;
-    board.nodes.push({ id, type, metadata: { title, description } });
+
+    board.nodes.push({
+      id,
+      type,
+      metadata: {
+        title,
+        description,
+        visual: {
+          // TODO(aomarks) A smarter layout algorithm.
+          x: getRandomIntInclusive(-400, 400),
+          y: getRandomIntInclusive(-400, 400),
+          collapsed: false,
+        },
+      },
+    });
+
+    if (board.nodes.length > 1) {
+      // TODO(aomarks) Obviously wrong wiring, just to have something to look
+      // at.
+      board.edges.push({
+        from: board.nodes.at(-2)!.id,
+        out: "output",
+        to: board.nodes.at(-1)!.id,
+        in: "output",
+      });
+    }
+
     const written = await this.#artifacts.write({
       id: boardId,
       kind: "blob",
@@ -143,4 +169,10 @@ class AddNodeInvocation implements ToolInvocation<Outputs> {
     }
     this.state.set({ status: "success", value: { output: {}, artifacts: [] } });
   }
+}
+
+function getRandomIntInclusive(min: number, max: number) {
+  const minCeiled = Math.ceil(min);
+  const maxFloored = Math.floor(max);
+  return Math.floor(Math.random() * (maxFloored - minCeiled + 1) + minCeiled);
 }
