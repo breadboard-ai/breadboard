@@ -20,10 +20,11 @@ export { resolveGraph };
 function resolveGraph(graphToRun: GraphToRun): GraphDescriptor {
   const { graph, subGraphId, moduleId } = graphToRun;
   if (moduleId) {
+    const title = graph.modules?.[moduleId]?.metadata?.title || moduleId;
     const url = graph.url?.startsWith("module:")
       ? graph.url
       : `module:${moduleId}:${graph.url}`;
-    return { ...graph, main: moduleId, url };
+    return { ...graph, main: moduleId, url, title };
   }
   return subGraphId ? graph.graphs![subGraphId] : graph;
 }
