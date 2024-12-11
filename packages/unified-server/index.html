@@ -1,0 +1,28 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width" />
+  <meta name="theme-color" content="#2E8BE8" />
+  <link rel="stylesheet" href="/styles/global.css" />
+  <link rel="icon" type="image/svg+xml" href="/images/u1f35e_u1f60e.svg" />
+  <title>Breadboard - Visual Editor</title>
+</head>
+<body>
+  <script type="module">
+    import * as pkg from "./package.json";
+    import { Main } from "@breadboard-ai/visual-editor/index.ts";
+    import { SettingsStore } from "@breadboard-ai/visual-editor/data/settings-store.ts";
+
+    const config = {
+      settings: SettingsStore.instance(),
+      version: pkg.version,
+    };
+
+    window.oncontextmenu = (evt) => evt.preventDefault();
+
+    const main = new Main(config);
+    document.body.appendChild(main);
+
+    console.log(`[Breadboard Unified Server: Version ${pkg.version}]`);
+  </script>
+</body>
