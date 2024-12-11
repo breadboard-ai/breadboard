@@ -5,9 +5,14 @@
  */
 
 import type { Result } from "../util/result.js";
-import type { Artifact } from "./artifact-interface.js";
+import type { ArtifactBlob } from "./artifact-interface.js";
 
-export interface ArtifactStore {
-  read(artifactId: string): Promise<Result<Artifact>>;
-  write(...artifacts: Artifact[]): Promise<Result<void>>;
+export type ArtifactReaderWriter = ArtifactReader & ArtifactWriter;
+
+export interface ArtifactReader {
+  read(artifactId: string): Promise<Result<ArtifactBlob>>;
+}
+
+export interface ArtifactWriter {
+  write(...artifacts: ArtifactBlob[]): Promise<Result<void>>;
 }

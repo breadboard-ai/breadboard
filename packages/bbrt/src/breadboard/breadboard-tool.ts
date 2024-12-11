@@ -25,11 +25,10 @@ import { html, nothing } from "lit";
 import { until } from "lit/directives/until.js";
 import { Signal } from "signal-polyfill";
 import type {
-  Artifact,
+  ArtifactBlob,
   ArtifactHandle,
-  BlobArtifact,
 } from "../artifacts/artifact-interface.js";
-import type { ArtifactStore } from "../artifacts/artifact-store-interface.js";
+import type { ArtifactReaderWriter } from "../artifacts/artifact-store-interface.js";
 import "../components/content.js";
 import type { SecretsProvider } from "../secrets/secrets-provider.js";
 import type {
@@ -54,18 +53,18 @@ export class BreadboardTool implements BBRTTool<unknown, unknown> {
   readonly #listing: BreadboardBoardListing;
   readonly #server: BreadboardServer;
   readonly #secrets: SecretsProvider;
-  readonly #artifactStore: ArtifactStore;
+  readonly artifacts: ArtifactReaderWriter;
 
   constructor(
     listing: BreadboardBoardListing,
     server: BreadboardServer,
     secrets: SecretsProvider,
-    artifactStore: ArtifactStore
+    artifacts: ArtifactReaderWriter
   ) {
     this.#listing = listing;
     this.#server = server;
     this.#secrets = secrets;
-    this.#artifactStore = artifactStore;
+    this.artifacts = artifacts;
   }
 
   get metadata(): ToolMetadata {
@@ -104,7 +103,7 @@ export class BreadboardTool implements BBRTTool<unknown, unknown> {
       args,
       () => this.bgl(),
       this.#secrets,
-      this.#artifactStore
+      this.artifacts
     );
   }
 
@@ -119,7 +118,7 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
   readonly #args: unknown;
   readonly #secrets: SecretsProvider;
   readonly #getBgl: () => Promise<Result<GraphDescriptor>>;
-  readonly #artifactStore: ArtifactStore;
+  readonly #artifacts: ArtifactReaderWriter;
 
   readonly state = new Signal.State<ToolInvocationState<unknown>>({
     status: "unstarted",
@@ -130,13 +129,13 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
     args: unknown,
     getBgl: () => Promise<Result<GraphDescriptor>>,
     secrets: SecretsProvider,
-    artifactStore: ArtifactStore
+    artifactStore: ArtifactReaderWriter
   ) {
     this.#listing = listing;
     this.#args = args;
     this.#getBgl = getBgl;
     this.#secrets = secrets;
-    this.#artifactStore = artifactStore;
+    this.#artifacts = artifactStore;
   }
 
   async start(): Promise<void> {
@@ -256,7 +255,11 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
       value: {
         output: Object.assign({}, ...runResult.value),
         artifacts: artifacts.value.map(
-          ({ id, blob }): ArtifactHandle => ({ id, mimeType: blob.type })
+          ({ id, blob }): ArtifactHandle => ({
+            id,
+            kind: "handle",
+            mimeType: blob.type,
+          })
         ),
       },
     });
@@ -265,7 +268,7 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
   async #extractAndStoreArtifacts(
     store: DataStore,
     storeGroupId: string
-  ): Promise<Result<BlobArtifact[]>> {
+  ): Promise<Result<ArtifactBlob[]>> {
     // TODO(aomarks) This is a bit inefficient, since serializeGroup does its
     // own fetch and base64 encode into inline data. Should probably add a
     // method to DataStore that just lists all the handles.
@@ -285,13 +288,13 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
       return blobs;
     }
     const artifacts = blobs.value.map(
-      (blob): Artifact => ({
+      (blob): ArtifactBlob => ({
         id: crypto.randomUUID(),
         kind: "blob",
         blob,
       })
     );
-    const written = await this.#artifactStore.write(...artifacts);
+    const written = await this.#artifacts.write(...artifacts);
     if (!written.ok) {
       return written;
     }
@@ -368,7 +371,7 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
 
   async #artifactUrl(id: string): Promise<string> {
     // TODO(aomarks) Caching?
-    const blob = await this.#artifactStore.read(id);
+    const blob = await this.#artifacts.read(id);
     if (!blob.ok) {
       console.error("Failed to read artifact", blob.error);
       return "";

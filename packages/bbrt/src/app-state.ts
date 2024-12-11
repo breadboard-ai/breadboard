@@ -6,8 +6,13 @@
 
 import { Signal } from "signal-polyfill";
 import { SignalArray } from "signal-utils/array";
+import { AsyncComputed } from "signal-utils/async-computed";
 import { SignalSet } from "signal-utils/set";
 import { IdbArtifactStore } from "./artifacts/idb-artifact-store.js";
+import {
+  ReactiveArtifactStore,
+  type ReactiveArtifact,
+} from "./artifacts/reactive-artifact-store.js";
 import type { BBRTDriver } from "./drivers/driver-interface.js";
 import { GeminiDriver } from "./drivers/gemini.js";
 import { OpenAiDriver } from "./drivers/openai.js";
@@ -24,9 +29,11 @@ export interface SerializedBBRTAppState {
   activeToolIds: string[];
   sidePanelOpen: boolean;
   conversationTurns: SerializableBBRTTurn[];
+  activeArtifactId: string | undefined;
 }
 
 export class BBRTAppState {
+  // TODO(aomarks) Probably want to separate static stuff from dynamic stuff.
   readonly secrets = new IndexedDBSettingsSecrets();
   readonly drivers = [
     new GeminiDriver(() => this.secrets.getSecret("GEMINI_API_KEY")),
@@ -51,7 +58,18 @@ export class BBRTAppState {
     this.activeDriver,
     this.activeTools
   );
-  readonly artifactStore = new IdbArtifactStore();
+
+  readonly artifacts = new ReactiveArtifactStore(new IdbArtifactStore());
+  readonly activeArtifactId = new Signal.State<string | undefined>(undefined);
+  readonly activeArtifact = new AsyncComputed<ReactiveArtifact | undefined>(
+    async () => {
+      const artifactId = this.activeArtifactId.get();
+      if (artifactId === undefined) {
+        return undefined;
+      }
+      return this.artifacts.readReactive(artifactId);
+    }
+  );
 
   serialize(): SerializedBBRTAppState {
     return {
@@ -59,6 +77,7 @@ export class BBRTAppState {
       activeToolIds: [...this.activeToolIds],
       sidePanelOpen: this.sidePanelOpen.get(),
       conversationTurns: serializeTurns(this.conversation.turns),
+      activeArtifactId: this.activeArtifactId.get(),
     };
   }
 
@@ -86,5 +105,7 @@ export class BBRTAppState {
     this.conversation.turns.push(
       ...restoreTurns(serialized.conversationTurns, this.availableTools)
     );
+
+    this.activeArtifactId.set(serialized.activeArtifactId);
   }
 }
