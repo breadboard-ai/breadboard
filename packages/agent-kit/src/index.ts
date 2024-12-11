@@ -32,4 +32,3 @@ const agentKit = await kit({
 });
 
 export default agentKit;
-export const agents = await agentKit.legacy();
