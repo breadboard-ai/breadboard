@@ -46,6 +46,7 @@ const ICON_SCALE = 0.42;
 const ICON_ALPHA_OVER = 1;
 const ICON_ALPHA_OUT = 0.7;
 const MIN_NODE_WIDTH = 200;
+const MAX_NODE_TITLE_LENGTH = 30;
 
 export class GraphNode extends PIXI.Container {
   #width = 0;
@@ -881,7 +882,11 @@ export class GraphNode extends PIXI.Container {
       this.showNodeTypeDescriptions && typeDiffersToTitle
         ? ` (${this.#typeTitle})`
         : "";
-    const nodeTitle = `${this.#title}${nodeType}`;
+    let nodeTitle = `${this.#title}${nodeType}`;
+    if (nodeTitle.length > MAX_NODE_TITLE_LENGTH) {
+      nodeTitle = `${nodeTitle.slice(0, MAX_NODE_TITLE_LENGTH - 3)}...`;
+    }
+
     if (this.#titleText) {
       if (this.#titleText.text !== nodeTitle) {
         this.#titleText.text = nodeTitle;
@@ -1328,7 +1333,6 @@ export class GraphNode extends PIXI.Container {
 
     let portStartY = 0;
     if (this.#titleText) {
-      this.#titleText.eventMode = "none";
       this.#titleText.x = titleStartX;
       this.#titleText.y = this.#padding;
       this.addChild(this.#titleText);
