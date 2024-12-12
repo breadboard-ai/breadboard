@@ -9,7 +9,6 @@ import { Signal } from "signal-polyfill";
 import type { SignalArray } from "signal-utils/array";
 import type { SignalSet } from "signal-utils/set";
 import "../components/activate-modal.js";
-import { Deferred } from "../util/deferred.js";
 import type { EmptyObject } from "../util/empty-object.js";
 import type { Result } from "../util/result.js";
 import type { ToolProvider } from "./tool-provider.js";
@@ -84,7 +83,7 @@ class ActivateToolInvocation implements ToolInvocation<Outputs> {
   readonly #toolProviders: SignalArray<ToolProvider>;
   readonly #activeTools: SignalSet<BBRTTool>;
   readonly #args: Inputs;
-  readonly #outcome = new Deferred<"allow" | "deny">();
+  readonly #outcome = Promise.withResolvers<"allow" | "deny">();
   readonly state = new Signal.State<ToolInvocationState<Outputs>>({
     status: "unstarted",
   });

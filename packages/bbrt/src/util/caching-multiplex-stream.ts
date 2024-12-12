@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Deferred } from "./deferred.js";
-
 type State = "unstarted" | "started" | "ended";
 
 export class CachingMultiplexStream<T> {
@@ -14,7 +12,7 @@ export class CachingMultiplexStream<T> {
   readonly buffer: T[] = [];
   // TODO(aomarks) Should not be public.
   state: State = "unstarted";
-  #nextTick = new Deferred<void>();
+  #nextTick = Promise.withResolvers<void>();
 
   constructor(source: AsyncIterable<T>) {
     this.#source = source;
@@ -47,7 +45,7 @@ export class CachingMultiplexStream<T> {
 
   #tick() {
     this.#nextTick.resolve();
-    this.#nextTick = new Deferred();
+    this.#nextTick = Promise.withResolvers();
   }
 
   async #startBufferingIfNeeded() {
