@@ -158,9 +158,6 @@ export class Editor extends LitElement implements DragConnectorReceiver {
   invertZoomScrollDirection = false;
 
   @property()
-  showNodeTypeDescriptions = true;
-
-  @property()
   showNodePreviewValues = true;
 
   @property()
@@ -470,7 +467,6 @@ export class Editor extends LitElement implements DragConnectorReceiver {
         : "Main",
       subGraphId,
       minimized: (selectedGraph.metadata() || {}).visual?.minimized ?? false,
-      showNodeTypeDescriptions: this.showNodeTypeDescriptions,
       showNodePreviewValues: this.showNodePreviewValues,
       collapseNodesByDefault: this.collapseNodesByDefault,
       ports: ports,

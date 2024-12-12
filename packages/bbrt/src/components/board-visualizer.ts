@@ -71,7 +71,6 @@ export class BBRTBoardVisualizer extends LitElement {
       title: graph.title ?? "Untitled",
       subGraphId: null,
       minimized: false,
-      showNodeTypeDescriptions: true,
       showNodePreviewValues: true,
       collapseNodesByDefault: false,
       ports: ports,

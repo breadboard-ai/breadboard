@@ -2333,16 +2333,8 @@ export class GraphRenderer extends LitElement {
     graph.readOnly = this.readOnly;
     graph.highlightInvalidWires = this.highlightInvalidWires;
 
-    if (opts.showNodeTypeDescriptions !== undefined) {
-      graph.showNodeTypeDescriptions = opts.showNodeTypeDescriptions;
-    }
-
     if (opts.showNodePreviewValues !== undefined) {
       graph.showNodePreviewValues = opts.showNodePreviewValues;
-    }
-
-    if (opts.showNodeTypeDescriptions !== undefined) {
-      graph.showNodeTypeDescriptions = opts.showNodeTypeDescriptions;
     }
 
     if (opts.collapseNodesByDefault !== undefined) {

@@ -51,9 +51,6 @@ export class NodeConfigurationOverlay extends LitElement {
   offerConfigurationEnhancements = false;
 
   @property()
-  showNodeTypeDescriptions = false;
-
-  @property()
   readOnly = false;
 
   #overlayRef: Ref<Overlay> = createRef();
@@ -602,15 +599,7 @@ export class NodeConfigurationOverlay extends LitElement {
             this.#toggleMaximize();
           }}
         >
-          <span
-            >Configure ${this.value.title}
-            ${this.showNodeTypeDescriptions &&
-            this.value.type &&
-            this.value.title?.toLocaleLowerCase() !==
-              this.value.type.toLocaleLowerCase()
-              ? `(${this.value.type})`
-              : nothing}</span
-          >
+          <span>Configure ${this.value.title}</span>
           <button
             id="minmax"
             title=${this.maximized ? "Minimize overlay" : "Maximize overlay"}
