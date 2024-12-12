@@ -8,6 +8,7 @@ import { GraphDescriptor } from "@breadboard-ai/types";
 import { KeyboardCommand, KeyboardCommandDeps } from "./types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { EditSpec } from "@google-labs/breadboard";
+import { MAIN_BOARD_ID } from "../runtime/util";
 
 function isFocusedOnGraphRenderer(evt: Event) {
   return evt
@@ -220,6 +221,7 @@ export const PasteCommand: KeyboardCommand = {
   async do({
     runtime,
     tab,
+    selectionState,
     pointerLocation,
   }: KeyboardCommandDeps): Promise<void> {
     const clipboardContents = await navigator.clipboard.readText();
@@ -252,10 +254,27 @@ export const PasteCommand: KeyboardCommand = {
         let spec: EditSpec[] = [];
         // 1a. Paste a board.
         if (boardContents) {
+          const destGraphIds = [];
+          if (selectionState) {
+            for (const id of selectionState.selectionState.graphs.keys()) {
+              if (id === MAIN_BOARD_ID) {
+                destGraphIds.push("");
+                continue;
+              }
+
+              destGraphIds.push(id);
+            }
+          }
+
+          if (destGraphIds.length === 0) {
+            destGraphIds.push("");
+          }
+
           spec = runtime.util.generateAddEditSpecFromDescriptor(
             boardContents,
             graph,
-            pointerLocation
+            pointerLocation,
+            destGraphIds
           );
         } else if (boardUrl) {
           // 1b. Paste a URL.

@@ -121,7 +121,6 @@ export class GraphNode extends PIXI.Container {
   #emitCollapseToggleEventOnNextDraw = false;
 
   #showNodePreviewValues = false;
-  #showNodeTypeDescriptions = false;
   #showNodeRunnerButton = false;
   #showBoardReferenceMarkers = false;
 
@@ -454,19 +453,6 @@ export class GraphNode extends PIXI.Container {
 
   get showNodePreviewValues() {
     return this.#showNodePreviewValues;
-  }
-
-  set showNodeTypeDescriptions(showNodeTypeDescriptions: boolean) {
-    if (this.#showNodeTypeDescriptions === showNodeTypeDescriptions) {
-      return;
-    }
-
-    this.#showNodeTypeDescriptions = showNodeTypeDescriptions;
-    this.#isDirty = true;
-  }
-
-  get showNodeTypeDescriptions() {
-    return this.#showNodeTypeDescriptions;
   }
 
   get selected() {
@@ -880,13 +866,7 @@ export class GraphNode extends PIXI.Container {
   }
 
   #createTitleTextIfNeeded() {
-    const typeDiffersToTitle =
-      this.#typeTitle.toLocaleLowerCase() !== this.#title.toLocaleLowerCase();
-    const nodeType =
-      this.showNodeTypeDescriptions && typeDiffersToTitle
-        ? ` (${this.#typeTitle})`
-        : "";
-    let nodeTitle = `${this.#title}${nodeType}`;
+    let nodeTitle = this.#title;
     if (nodeTitle.length > MAX_NODE_TITLE_LENGTH) {
       nodeTitle = `${nodeTitle.slice(0, MAX_NODE_TITLE_LENGTH - 3)}...`;
     }

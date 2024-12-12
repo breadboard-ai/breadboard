@@ -646,7 +646,6 @@ export class ModuleEditor extends LitElement {
       title: selectedGraph.raw().title ?? "Untitled Board",
       subGraphId,
       minimized: false,
-      showNodeTypeDescriptions: false,
       showNodePreviewValues: false,
       collapseNodesByDefault: false,
       ports: ports,
