@@ -2898,7 +2898,7 @@ export class Main extends LitElement {
 
         const tabs = this.#runtime?.board.tabs ?? [];
         const ui = html`<header>
-          <div id="header-bar" ?inert=${showingOverlay}>
+          <div id="header-bar" data-active=${this.tab ? "true" : nothing} ?inert=${showingOverlay}>
           <button
             id="show-nav"
             @click=${() => {

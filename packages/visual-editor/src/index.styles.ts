@@ -205,7 +205,7 @@ export const styles = css`
     position: relative;
   }
 
-  #header-bar h1::after {
+  #header-bar[data-active="true"] h1::after {
     content: "";
     width: 48px;
     height: 1px;
