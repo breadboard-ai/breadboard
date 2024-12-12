@@ -8,7 +8,7 @@ import { Signal } from "signal-polyfill";
 import { SignalArray } from "signal-utils/array";
 import type { BBRTDriver } from "../drivers/driver-interface.js";
 import type { BBRTTool, ToolInvocation } from "../tools/tool.js";
-import { BufferedMultiplexStream } from "../util/buffered-multiplex-stream.js";
+import { CachingMultiplexStream } from "../util/caching-multiplex-stream.js";
 import { Lock } from "../util/lock.js";
 import { coercePresentableError } from "../util/presentable-error.js";
 import type { Result } from "../util/result.js";
@@ -81,7 +81,7 @@ export class BBRTConversation {
       status,
       // Use BufferedMultiplexStream so that we can have as many consumers as
       // needed of the entire content stream.
-      content: new BufferedMultiplexStream(contentStream.readable),
+      content: new CachingMultiplexStream(contentStream.readable),
       toolCalls,
     };
     this.turns.push(modelTurn);
