@@ -1364,7 +1364,8 @@ export class GraphNode extends PIXI.Container {
       const hidePortBubble =
         (isConfigurableBehavior(port.schema) || port.configured) &&
         !isBoard &&
-        this.#expansionState !== "advanced";
+        this.#expansionState !== "advanced" &&
+        port.edges.length === 0;
 
       nodePort.label = port.name;
       nodePort.radius = hidePortBubble ? 0 : this.#portRadius;
