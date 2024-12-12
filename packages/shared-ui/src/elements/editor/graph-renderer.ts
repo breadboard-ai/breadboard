@@ -196,7 +196,7 @@ export class GraphRenderer extends LitElement {
       return;
     }
 
-    this.#userHasInteracted = true;
+    this.#removeEffect("container");
 
     const { contentRect } = entries[0];
     const delta = new PIXI.Point(0, 0);
@@ -227,7 +227,6 @@ export class GraphRenderer extends LitElement {
     this.#lastContentRect = contentRect;
   });
 
-  #userHasInteracted = false;
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #onKeyUpBound = this.#onKeyUp.bind(this);
   #onWheelBound = this.#onWheel.bind(this);
@@ -543,7 +542,7 @@ export class GraphRenderer extends LitElement {
           this.#mode = MODE.MOVE;
         }
 
-        this.#userHasInteracted = true;
+        this.#removeEffect("container");
         this.#selectWithin(new PIXI.Rectangle(0, 0, 0, 0), evt.shiftKey);
         this.#emitSelection();
         setStartValues(evt);
@@ -581,7 +580,7 @@ export class GraphRenderer extends LitElement {
     const onWheel = (evt: PIXI.FederatedWheelEvent) => {
       // The user has interacted – stop the auto-zoom/pan.
       this.zoomToHighlightedNode = false;
-      this.#userHasInteracted = true;
+      this.#removeEffect("container");
       this.dispatchEvent(new GraphInteractionEvent());
 
       if (evt.metaKey || evt.ctrlKey) {
@@ -1168,16 +1167,16 @@ export class GraphRenderer extends LitElement {
     return null;
   }
 
-  #targetContainerMatrix = new PIXI.Matrix();
-  #setTargetContainerMatrixFromBounds(bounds: PIXI.Bounds) {
-    this.#targetContainerMatrix.identity();
+  #calculateTargetContainerMatrixFromBounds(bounds: PIXI.Bounds): PIXI.Matrix {
+    const targetContainerMatrix = new PIXI.Matrix();
+    targetContainerMatrix.identity();
 
     if (!bounds.isValid) {
-      return;
+      return targetContainerMatrix;
     }
 
     const rendererBounds = this.getBoundingClientRect();
-    this.#targetContainerMatrix.translate(
+    targetContainerMatrix.translate(
       -bounds.x + (rendererBounds.width - bounds.width) * 0.5,
       -bounds.y + (rendererBounds.height - bounds.height) * 0.5
     );
@@ -1198,20 +1197,22 @@ export class GraphRenderer extends LitElement {
       y: rendererBounds.height / 2,
     };
 
-    this.#targetContainerMatrix
+    targetContainerMatrix
       .translate(-pivot.x, -pivot.y)
       .scale(delta, delta)
       .translate(pivot.x, pivot.y);
 
     // Ensure that it is always on a square pixel.
-    this.#targetContainerMatrix.tx = Math.round(this.#targetContainerMatrix.tx);
-    this.#targetContainerMatrix.ty = Math.round(this.#targetContainerMatrix.ty);
+    targetContainerMatrix.tx = Math.round(targetContainerMatrix.tx);
+    targetContainerMatrix.ty = Math.round(targetContainerMatrix.ty);
 
     // Also ensure that the matrix values remain positive.
-    this.#targetContainerMatrix.a = Math.max(this.#targetContainerMatrix.a, 0);
-    this.#targetContainerMatrix.b = Math.max(this.#targetContainerMatrix.b, 0);
-    this.#targetContainerMatrix.c = Math.max(this.#targetContainerMatrix.c, 0);
-    this.#targetContainerMatrix.d = Math.max(this.#targetContainerMatrix.d, 0);
+    targetContainerMatrix.a = Math.max(targetContainerMatrix.a, 0);
+    targetContainerMatrix.b = Math.max(targetContainerMatrix.b, 0);
+    targetContainerMatrix.c = Math.max(targetContainerMatrix.c, 0);
+    targetContainerMatrix.d = Math.max(targetContainerMatrix.d, 0);
+
+    return targetContainerMatrix;
   }
 
   #createBoundsFromAllGraphs() {
@@ -1305,83 +1306,78 @@ export class GraphRenderer extends LitElement {
   }
 
   zoomToFit(animate = false) {
-    this.#userHasInteracted = false;
-    this.#setTargetContainerMatrixFromBounds(this.#createBoundsFromAllGraphs());
+    const matrix = this.#calculateTargetContainerMatrixFromBounds(
+      this.#createBoundsFromAllGraphs()
+    );
 
-    this.#updateContainerFromTargetMatrix(animate);
+    this.#updateContainerFromTargetMatrix(matrix, animate);
   }
 
   #setTargetContainerMatrix(animate = false) {
-    this.#userHasInteracted = false;
-
-    this.#setTargetContainerMatrixFromBounds(this.#createBoundsFromSelection());
-    if (this.#targetContainerMatrix.isIdentity()) {
-      this.#setTargetContainerMatrixFromBounds(
+    let matrix = this.#calculateTargetContainerMatrixFromBounds(
+      this.#createBoundsFromSelection()
+    );
+    if (matrix.isIdentity()) {
+      matrix = this.#calculateTargetContainerMatrixFromBounds(
         this.#createBoundsFromAllGraphs()
       );
     }
 
-    this.#updateContainerFromTargetMatrix(animate);
+    this.#updateContainerFromTargetMatrix(matrix, animate);
   }
 
-  #updating = false;
-  #updateContainerFromTargetMatrix(animate = false) {
-    if (this.#updating) {
+  #effects = new Map<string, () => void>();
+  #addEffect(name: string, effect: () => void) {
+    this.#effects.set(name, effect);
+  }
+
+  #removeEffect(name: string) {
+    this.#effects.delete(name);
+  }
+
+  #updateContainerFromTargetMatrix(matrix: PIXI.Matrix, animate = false) {
+    if (!animate) {
+      this.#container.setFromMatrix(matrix);
+      this.#background?.tileTransform.setFromMatrix(matrix);
       return;
     }
 
-    this.#updating = true;
-    const setContainer = (target = this.#targetContainerMatrix) => {
-      this.#container.setFromMatrix(target);
-      this.#background?.tileTransform.setFromMatrix(target);
-    };
-
-    if (this.#targetContainerMatrix.isIdentity()) {
+    if (matrix.isIdentity()) {
       console.warn("Unable to set container matrix");
       return;
     }
 
-    if (!animate) {
-      setContainer();
-      this.#updating = false;
-      return;
-    }
-
-    const EASING = 10;
-    const THRESHOLD = 0.001;
-    const update = () => {
-      if (this.#userHasInteracted) {
-        this.#updating = false;
-        return;
-      }
-
+    function effect(this: GraphRenderer, matrix: PIXI.Matrix) {
+      const EASING = 10;
+      const THRESHOLD = 0.001;
       const current = this.#container.worldTransform.clone();
 
-      current.a += (this.#targetContainerMatrix.a - current.a) / EASING;
-      current.b += (this.#targetContainerMatrix.b - current.b) / EASING;
-      current.c += (this.#targetContainerMatrix.c - current.c) / EASING;
-      current.d += (this.#targetContainerMatrix.d - current.d) / EASING;
-      current.tx += (this.#targetContainerMatrix.tx - current.tx) / EASING;
-      current.ty += (this.#targetContainerMatrix.ty - current.ty) / EASING;
+      current.a += (matrix.a - current.a) / EASING;
+      current.b += (matrix.b - current.b) / EASING;
+      current.c += (matrix.c - current.c) / EASING;
+      current.d += (matrix.d - current.d) / EASING;
+      current.tx += (matrix.tx - current.tx) / EASING;
+      current.ty += (matrix.ty - current.ty) / EASING;
 
       if (
-        Math.abs(current.a - this.#targetContainerMatrix.a) < THRESHOLD &&
-        Math.abs(current.b - this.#targetContainerMatrix.b) < THRESHOLD &&
-        Math.abs(current.c - this.#targetContainerMatrix.c) < THRESHOLD &&
-        Math.abs(current.d - this.#targetContainerMatrix.d) < THRESHOLD &&
-        Math.abs(current.tx - this.#targetContainerMatrix.tx) < THRESHOLD &&
-        Math.abs(current.ty - this.#targetContainerMatrix.ty) < THRESHOLD
+        Math.abs(current.a - matrix.a) < THRESHOLD &&
+        Math.abs(current.b - matrix.b) < THRESHOLD &&
+        Math.abs(current.c - matrix.c) < THRESHOLD &&
+        Math.abs(current.d - matrix.d) < THRESHOLD &&
+        Math.abs(current.tx - matrix.tx) < THRESHOLD &&
+        Math.abs(current.ty - matrix.ty) < THRESHOLD
       ) {
-        setContainer();
-        this.#updating = false;
+        this.#container.setFromMatrix(matrix);
+        this.#background?.tileTransform.setFromMatrix(matrix);
+        this.#removeEffect("container");
         return;
       }
 
-      setContainer(current);
-      requestAnimationFrame(update);
-    };
+      this.#container.setFromMatrix(current);
+      this.#background?.tileTransform.setFromMatrix(current);
+    }
 
-    requestAnimationFrame(update);
+    this.#addEffect("container", effect.bind(this, matrix));
   }
 
   #onPointerDown() {
@@ -1474,6 +1470,11 @@ export class GraphRenderer extends LitElement {
 
     this.#app.start();
     this.#app.resize();
+    this.#app.ticker.add(() => {
+      for (const effect of this.#effects.values()) {
+        effect.call(this);
+      }
+    });
     this.#app.renderer.addListener("resize", () => {
       if (!this.#background) {
         return;
