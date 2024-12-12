@@ -89,7 +89,6 @@ export class Graph extends PIXI.Container {
   #minimized = false;
   #collapseNodesByDefault = false;
   #showNodePreviewValues = false;
-  #showNodeTypeDescriptions = false;
   #showBoardReferenceMarkers = false;
   #highlightDragOver = false;
   #subGraphId: string | null = null;
@@ -1144,16 +1143,6 @@ export class Graph extends PIXI.Container {
     }
   }
 
-  #setNodesTypeDescriptions() {
-    for (const child of this.children) {
-      if (!(child instanceof GraphNode)) {
-        continue;
-      }
-
-      child.showNodeTypeDescriptions = this.showNodeTypeDescriptions;
-    }
-  }
-
   updateNodePositions(delta: PIXI.Point) {
     const selectionState = this.#selectionState;
     if (!selectionState) {
@@ -1234,20 +1223,6 @@ export class Graph extends PIXI.Container {
 
   get showNodePreviewValues() {
     return this.#showNodePreviewValues;
-  }
-
-  set showNodeTypeDescriptions(showNodeTypeDescriptions: boolean) {
-    if (showNodeTypeDescriptions === this.#showNodeTypeDescriptions) {
-      return;
-    }
-
-    this.#isDirty = true;
-    this.#showNodeTypeDescriptions = showNodeTypeDescriptions;
-    this.#setNodesTypeDescriptions();
-  }
-
-  get showNodeTypeDescriptions() {
-    return this.#showNodeTypeDescriptions;
   }
 
   set showBoardReferenceMarkers(showBoardReferenceMarkers: boolean) {
@@ -1745,7 +1720,6 @@ export class Graph extends PIXI.Container {
       let graphNode = this.#graphNodeById.get(id);
       if (!graphNode || !(graphNode instanceof GraphNode)) {
         graphNode = new GraphNode(id, type, node.title(), typeTitle);
-        graphNode.showNodeTypeDescriptions = this.showNodeTypeDescriptions;
         graphNode.showNodePreviewValues = this.showNodePreviewValues;
         graphNode.label = id;
 

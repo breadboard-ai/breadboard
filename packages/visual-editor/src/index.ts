@@ -2013,12 +2013,6 @@ export class Main extends LitElement {
           BreadboardUI.Utils.TopGraphObserver.entryResult(this.tab?.graph);
         const inputsFromLastRun = runs[1]?.inputs() ?? null;
         const tabURLs = this.#runtime.board.getTabURLs();
-        const showNodeTypeDescriptions =
-          (this.#settings
-            ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
-            .items.get("Show Node Type Descriptions")?.value as boolean) ??
-          false;
-
         const offerConfigurationEnhancements =
           this.#settings?.getItem(
             BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
@@ -2327,7 +2321,6 @@ export class Main extends LitElement {
             .boardServers=${this.#boardServers}
             .showTypes=${false}
             .offerConfigurationEnhancements=${offerConfigurationEnhancements}
-            .showNodeTypeDescriptions=${showNodeTypeDescriptions}
             .readOnly=${this.tab?.readOnly}
             @bbworkspaceselectionstate=${(
               evt: BreadboardUI.Events.WorkspaceSelectionStateEvent

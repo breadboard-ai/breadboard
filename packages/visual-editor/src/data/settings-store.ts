@@ -101,15 +101,6 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
           },
         ],
         [
-          "Show Node Type Descriptions",
-          {
-            name: "Show Node Type Descriptions",
-            description:
-              "Toggles the visibility of node type descriptions in graph nodes",
-            value: true,
-          },
-        ],
-        [
           "Show Node Preview Values",
           {
             name: "Show Node Preview Values",

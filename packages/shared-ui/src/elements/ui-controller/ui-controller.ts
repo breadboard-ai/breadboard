@@ -205,12 +205,6 @@ export class UI extends LitElement {
           .items.get("Collapse Nodes by Default")?.value
       : false;
 
-    const showNodeTypeDescriptions = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Show Node Type Descriptions")?.value
-      : false;
-
     const showNodePreviewValues = this.settings
       ? this.settings
           .getSection(SETTINGS_TYPE.GENERAL)
@@ -303,7 +297,6 @@ export class UI extends LitElement {
         collapseNodesByDefault,
         hideSubboardSelectorWhenEmpty,
         showNodeShortcuts,
-        showNodeTypeDescriptions,
         showNodePreviewValues,
         invertZoomScrollDirection,
         showPortTooltips,
@@ -329,7 +322,6 @@ export class UI extends LitElement {
           .showExperimentalComponents=${showExperimentalComponents}
           .showNodePreviewValues=${showNodePreviewValues}
           .showNodeShortcuts=${showNodeShortcuts}
-          .showNodeTypeDescriptions=${showNodeTypeDescriptions}
           .showPortTooltips=${showPortTooltips}
           .showSubgraphsInline=${this.mode === "tree"}
           .showReadOnlyOverlay=${true}
