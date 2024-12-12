@@ -18,27 +18,27 @@ export function isBoardArrayBehavior(schema: Schema): boolean {
   return schema.items.behavior?.includes("board") ?? false;
 }
 
-export function isPortSpecBehavior(schema: Schema) {
-  return schema.behavior?.includes("ports-spec");
+export function isPortSpecBehavior(schema: Schema): boolean {
+  return schema.behavior?.includes("ports-spec") ?? false;
 }
 
-export function isCodeBehavior(schema: Schema) {
-  return schema.behavior?.includes("code");
+export function isCodeBehavior(schema: Schema): boolean {
+  return schema.behavior?.includes("code") ?? false;
 }
 
-export function isLLMContentBehavior(schema: Schema) {
-  return schema.behavior?.includes("llm-content");
+export function isLLMContentBehavior(schema: Schema): boolean {
+  return schema.behavior?.includes("llm-content") ?? false;
 }
 
-export function isModuleBehavior(schema: Schema) {
-  return schema.behavior?.includes("module");
+export function isModuleBehavior(schema: Schema): boolean {
+  return schema.behavior?.includes("module") ?? false;
 }
 
-export function isConfigurableBehavior(schema: Schema) {
-  return schema.behavior?.includes("config");
+export function isConfigurableBehavior(schema: Schema): boolean {
+  return schema.behavior?.includes("config") ?? false;
 }
 
-export function isLLMContentArrayBehavior(schema: Schema) {
+export function isLLMContentArrayBehavior(schema: Schema): boolean {
   if (schema.type !== "array") return false;
   if (Array.isArray(schema.items)) return false;
   if (schema.items?.type !== "object") return false;
@@ -47,7 +47,7 @@ export function isLLMContentArrayBehavior(schema: Schema) {
   return true;
 }
 
-export function isTextBehavior(schema: Schema) {
+export function isTextBehavior(schema: Schema): boolean {
   return schema.type === "string";
 }
 

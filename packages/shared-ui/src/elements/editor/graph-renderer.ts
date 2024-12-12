@@ -26,6 +26,8 @@ import {
   WorkspaceSelectionStateEvent,
   WorkspaceVisualUpdateEvent,
   DragConnectorStartEvent,
+  ToastEvent,
+  ToastType,
 } from "../../events/events.js";
 import { GRAPH_OPERATIONS, GraphOpts, MoveToSelection } from "./types.js";
 import { Graph } from "./graph.js";
@@ -1969,6 +1971,10 @@ export class GraphRenderer extends LitElement {
 
     graph.on(GRAPH_OPERATIONS.GRAPH_REFERENCE_LOAD, (reference) => {
       this.dispatchEvent(new StartEvent(reference));
+    });
+
+    graph.on(GRAPH_OPERATIONS.WARN_USER, (message: string) => {
+      this.dispatchEvent(new ToastEvent(message, ToastType.WARNING));
     });
 
     graph.on(
