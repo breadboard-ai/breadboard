@@ -16,7 +16,7 @@ export default defineConfig({
         index: "./index.html",
         api: "./api.html",
         oauth: "./oauth/index.html",
-        editor: "./editor.html",
+        editor: "./experimental/editor.html",
       },
       formats: ["es"],
     },
