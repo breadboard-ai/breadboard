@@ -54,6 +54,7 @@ export enum GRAPH_OPERATIONS {
   GRAPH_REFERENCE_TOGGLE_SELECTED = "graphreferenceselected",
   GRAPH_REFERENCE_GOTO = "graphreferencegoto",
   GRAPH_REFERENCE_LOAD = "graphreferenceload",
+  WARN_USER = "warnuser",
 }
 
 export enum GraphNodePortType {

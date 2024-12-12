@@ -31,7 +31,11 @@ import { GraphPortLabel as GraphNodePortLabel } from "./graph-port-label.js";
 import { ComponentActivityItem } from "../../types/types.js";
 import { GraphNodeActivityMarker } from "./graph-node-activity-marker.js";
 import { GraphNodeReferenceContainer } from "./graph-node-reference-container.js";
-import { isBoardArrayBehavior, isBoardBehavior } from "../../utils/index.js";
+import {
+  isBoardArrayBehavior,
+  isBoardBehavior,
+  isConfigurableBehavior,
+} from "../../utils/index.js";
 
 const borderColor = getGlobalColor("--bb-neutral-500");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
@@ -1333,6 +1337,7 @@ export class GraphNode extends PIXI.Container {
 
     let portStartY = 0;
     if (this.#titleText) {
+      this.#titleText.eventMode = "none";
       this.#titleText.x = titleStartX;
       this.#titleText.y = this.#padding;
       this.addChild(this.#titleText);
@@ -1362,6 +1367,9 @@ export class GraphNode extends PIXI.Container {
       nodePort.status = port.status;
       nodePort.configured = port.configured && port.edges.length === 0;
       nodePort.visible = true;
+      nodePort.readOnly =
+        isConfigurableBehavior(port.schema) &&
+        this.#expansionState !== "advanced";
 
       const isBoard =
         isBoardBehavior(port.schema) || isBoardArrayBehavior(port.schema);
