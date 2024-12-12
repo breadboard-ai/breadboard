@@ -8,13 +8,13 @@ import type { Result } from "../util/result.js";
 import { resultify } from "../util/resultify.js";
 import { transposeResults } from "../util/transpose-results.js";
 import type { Artifact, ArtifactBlob } from "./artifact-interface.js";
-import type { ArtifactReaderWriter } from "./artifact-store-interface.js";
+import type { ArtifactReaderWriter } from "./artifact-reader-writer.js";
 
 const ARTIFACT_IDB_DB_NAME = "bbrt";
 const ARTIFACT_IDB_DB_VERSION = 1;
 const ARTIFACT_IDB_STORE_NAME = "artifacts";
 
-export class IdbArtifactStore implements ArtifactReaderWriter {
+export class IdbArtifactReaderWriter implements ArtifactReaderWriter {
   public async write(...artifacts: Artifact[]): Promise<Result<void>> {
     const open = await this.#openDB();
     if (!open.ok) {
@@ -56,9 +56,15 @@ export class IdbArtifactStore implements ArtifactReaderWriter {
       return dbResult;
     }
     const db = dbResult.value;
-    const transaction = db.transaction(ARTIFACT_IDB_STORE_NAME, "readonly");
-    const store = transaction.objectStore(ARTIFACT_IDB_STORE_NAME);
-    const request = store.get(artifactId);
+    const requestResult = resultify(() => {
+      const transaction = db.transaction(ARTIFACT_IDB_STORE_NAME, "readonly");
+      const store = transaction.objectStore(ARTIFACT_IDB_STORE_NAME);
+      return store.get(artifactId);
+    });
+    if (!requestResult.ok) {
+      return requestResult;
+    }
+    const request = requestResult.value;
 
     return new Promise((resolve) => {
       request.onsuccess = () => {

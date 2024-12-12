@@ -14,10 +14,9 @@ import type { GraphDescriptor } from "@google-labs/breadboard";
 import type { JSONSchema7 } from "json-schema";
 import { html, nothing } from "lit";
 import { Signal } from "signal-polyfill";
-import type { ArtifactReaderWriter } from "../artifacts/artifact-store-interface.js";
+import type { ArtifactStore } from "../artifacts/artifact-store.js";
 import "../components/activate-modal.js";
 import type { EmptyObject } from "../util/empty-object.js";
-import { Lock } from "../util/lock.js";
 import { coercePresentableError } from "../util/presentable-error.js";
 import type { Result } from "../util/result.js";
 import type {
@@ -43,9 +42,9 @@ type Inputs = ConvertBreadboardType<typeof inputs>;
 type Outputs = EmptyObject;
 
 export class AddNode implements BBRTTool<Inputs, Outputs> {
-  #artifacts: ArtifactReaderWriter;
+  #artifacts: ArtifactStore;
 
-  constructor(artifacts: ArtifactReaderWriter) {
+  constructor(artifacts: ArtifactStore) {
     this.#artifacts = artifacts;
   }
 
@@ -75,18 +74,14 @@ export class AddNode implements BBRTTool<Inputs, Outputs> {
   }
 }
 
-// TODO(aomarks) The artifact store should have a transactional API that does
-// its own read/write locking on a per artifact basis.
-const badGlobalArtifactsLock = new Lock();
-
 class AddNodeInvocation implements ToolInvocation<Outputs> {
   readonly #args: Inputs;
-  readonly #artifacts: ArtifactReaderWriter;
+  readonly #artifacts: ArtifactStore;
   readonly state = new Signal.State<ToolInvocationState<Outputs>>({
     status: "unstarted",
   });
 
-  constructor(args: Inputs, artifacts: ArtifactReaderWriter) {
+  constructor(args: Inputs, artifacts: ArtifactStore) {
     this.#args = args;
     this.#artifacts = artifacts;
   }
@@ -104,79 +99,79 @@ class AddNodeInvocation implements ToolInvocation<Outputs> {
       return;
     }
     this.state.set({ status: "running" });
-    await badGlobalArtifactsLock.do(async () => {
-      const boardId = this.#args.board.id;
-      const artifact = await this.#artifacts.read(boardId);
-      if (!artifact.ok) {
-        this.state.set({
-          status: "error",
-          error: coercePresentableError(artifact.error),
-        });
-        return;
-      }
-      const blob = artifact.value.blob;
-      if (blob.type !== "application/vnd.breadboard.board") {
-        this.state.set({
-          status: "error",
-          error: {
-            message:
-              `Expected Artifact ${JSON.stringify(this.#args.board.id)} to` +
-              ` have type "application/vnd.breadboard.board", but got` +
-              ` ${JSON.stringify(blob.type)}.`,
-          },
-        });
-        return;
-      }
-      const buffer = await blob.arrayBuffer();
-      const board = JSON.parse(
-        new TextDecoder().decode(buffer)
-      ) as GraphDescriptor;
-      const { id, type, title, description } = this.#args.node;
 
-      board.nodes.push({
-        id,
-        type,
-        metadata: {
-          title,
-          description,
-          visual: {
-            // TODO(aomarks) A smarter layout algorithm.
-            x: getRandomIntInclusive(-400, 400),
-            y: getRandomIntInclusive(-400, 400),
-            collapsed: false,
-          },
+    const entry = this.#artifacts.entry(this.#args.board.id);
+
+    using transaction = await entry.acquireExclusiveReadWriteLock();
+    const artifact = await transaction.read();
+    if (!artifact.ok) {
+      this.state.set({
+        status: "error",
+        error: coercePresentableError(artifact.error),
+      });
+      return;
+    }
+
+    const blob = artifact.value.blob;
+    if (blob.type !== "application/vnd.breadboard.board") {
+      this.state.set({
+        status: "error",
+        error: {
+          message:
+            `Expected Artifact ${JSON.stringify(this.#args.board.id)} to` +
+            ` have type "application/vnd.breadboard.board", but got` +
+            ` ${JSON.stringify(blob.type)}.`,
         },
       });
+      return;
+    }
+    const buffer = await blob.arrayBuffer();
+    const board = JSON.parse(
+      new TextDecoder().decode(buffer)
+    ) as GraphDescriptor;
+    const { id, type, title, description } = this.#args.node;
 
-      if (board.nodes.length > 1) {
-        // TODO(aomarks) Obviously wrong wiring, just to have something to look
-        // at.
-        board.edges.push({
-          from: board.nodes.at(-2)!.id,
-          out: "output",
-          to: board.nodes.at(-1)!.id,
-          in: "output",
-        });
-      }
+    board.nodes.push({
+      id,
+      type,
+      metadata: {
+        title,
+        description,
+        visual: {
+          // TODO(aomarks) A smarter layout algorithm.
+          x: getRandomIntInclusive(-400, 400),
+          y: getRandomIntInclusive(-400, 400),
+          collapsed: false,
+        },
+      },
+    });
 
-      const written = await this.#artifacts.write({
-        id: boardId,
-        kind: "blob",
-        blob: new Blob([JSON.stringify(board)], {
-          type: "application/vnd.breadboard.board",
-        }),
+    if (board.nodes.length > 1) {
+      // TODO(aomarks) Obviously wrong wiring, just to have something to look
+      // at.
+      board.edges.push({
+        from: board.nodes.at(-2)!.id,
+        out: "output",
+        to: board.nodes.at(-1)!.id,
+        in: "output",
       });
-      if (!written.ok) {
-        this.state.set({
-          status: "error",
-          error: coercePresentableError(written.error),
-        });
-        return;
-      }
+    }
+
+    const written = await transaction.write(
+      new Blob([JSON.stringify(board)], {
+        type: "application/vnd.breadboard.board",
+      })
+    );
+    if (!written.ok) {
       this.state.set({
-        status: "success",
-        value: { output: {}, artifacts: [] },
+        status: "error",
+        error: coercePresentableError(written.error),
       });
+      return;
+    }
+    this.state.set({
+      status: "success",
+      value: { output: {}, artifacts: [] },
     });
   }
 }
