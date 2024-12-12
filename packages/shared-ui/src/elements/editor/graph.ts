@@ -51,6 +51,7 @@ import {
   cloneEdgeData,
 } from "../../types/types.js";
 import { getSubItemColor } from "../../utils/subgraph-color.js";
+import { isConfigurableBehavior } from "../../utils/behaviors.js";
 
 const highlightedNodeColor = getGlobalColor("--bb-ui-600");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
@@ -135,7 +136,7 @@ export class Graph extends PIXI.Container {
     this.#graphOutlineConnector.eventMode = "static";
     this.#graphOutlineConnector.addEventListener(
       "pointerdown",
-      (evt: PointerEvent) => {
+      (evt: PIXI.FederatedPointerEvent) => {
         this.emit(
           GRAPH_OPERATIONS.SUBGRAPH_CONNECTION_START,
           evt.clientX,
@@ -148,7 +149,7 @@ export class Graph extends PIXI.Container {
     this.#graphOutlineMarker.eventMode = "static";
     this.#graphOutlineMarker.addEventListener(
       "pointerdown",
-      (evt: PointerEvent) => {
+      (evt: PIXI.FederatedPointerEvent) => {
         const isMac = navigator.platform.indexOf("Mac") === 0;
         const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
@@ -162,7 +163,7 @@ export class Graph extends PIXI.Container {
 
     this.#graphOutlineMarker.addEventListener(
       "globalpointermove",
-      (evt: PointerEvent) => {
+      (evt: PIXI.FederatedPointerEvent) => {
         if (!subGraphOutlineMarkerDragStart) {
           return;
         }
@@ -178,7 +179,7 @@ export class Graph extends PIXI.Container {
       }
     );
 
-    const onMarkerPointerUp = (evt: PointerEvent) => {
+    const onMarkerPointerUp = (evt: PIXI.FederatedPointerEvent) => {
       if (!subGraphOutlineMarkerDragStart) {
         return;
       }
@@ -201,24 +202,27 @@ export class Graph extends PIXI.Container {
       onMarkerPointerUp
     );
 
-    this.#graphOutlineMarker.addEventListener("click", (evt: PointerEvent) => {
-      const clickDelta = window.performance.now() - this.#lastClickTime;
-      this.#lastClickTime = window.performance.now();
+    this.#graphOutlineMarker.addEventListener(
+      "click",
+      (evt: PIXI.FederatedPointerEvent) => {
+        const clickDelta = window.performance.now() - this.#lastClickTime;
+        this.#lastClickTime = window.performance.now();
 
-      const isMac = navigator.platform.indexOf("Mac") === 0;
-      const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+        const isMac = navigator.platform.indexOf("Mac") === 0;
+        const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
-      if (clickDelta > DBL_CLICK_DELTA) {
-        return;
+        if (clickDelta > DBL_CLICK_DELTA) {
+          return;
+        }
+
+        if (isCtrlCommand) {
+          return;
+        }
+
+        this.minimized = !this.minimized;
+        this.emit(GRAPH_OPERATIONS.GRAPH_TOGGLE_MINIMIZED);
       }
-
-      if (isCtrlCommand) {
-        return;
-      }
-
-      this.minimized = !this.minimized;
-      this.emit(GRAPH_OPERATIONS.GRAPH_TOGGLE_MINIMIZED);
-    });
+    );
 
     let lastHoverPort: GraphNodePort | null = null;
     let lastHoverNode: GraphNode | null = null;
@@ -356,6 +360,26 @@ export class Graph extends PIXI.Container {
       if (evt.target instanceof GraphNodePort) {
         nodePortBeingEdited = evt.target;
         nodeBeingEdited = evt.target.parent as GraphNode;
+
+        // Ensure that the user isn't attempting to wire a configurable port
+        // when outside of "advanced" mode.
+        if (
+          nodePortBeingEdited &&
+          nodeBeingEdited.expansionState !== "advanced"
+        ) {
+          if (
+            nodePortBeingEdited.type === GraphNodePortType.IN &&
+            nodeBeingEdited.inPorts
+          ) {
+            const port = nodeBeingEdited.inPorts.find(
+              (port) => port.name === nodePortBeingEdited!.label
+            );
+            if (port && isConfigurableBehavior(port.schema)) {
+              return;
+            }
+          }
+        }
+
         nodePortBeingEdited.overrideStatus = PortStatus.Connected;
 
         switch (nodePortBeingEdited.type) {
@@ -449,11 +473,43 @@ export class Graph extends PIXI.Container {
       const topTarget = path[path.length - 1];
       const isSameGraph = topTarget?.parent?.parent === this;
 
+      // Assume that the user can snap out ports to in ports and vice-versa.
+      // But then do a check to see if they are trying to wire a configurable
+      // port outside of "advanced" mode. In those cases, prevent them from
+      // doing so.
+      let canSnapToGraphNodePortOfCorrectType = true;
       if (
         topTarget instanceof GraphNodePort &&
         topTarget.type === nodePortType &&
         isSameGraph &&
         visibleOnNextMove
+      ) {
+        const nodeBeingTargeted = topTarget.parent as GraphNode;
+        if (
+          nodeBeingTargeted &&
+          nodeBeingTargeted.expansionState !== "advanced"
+        ) {
+          if (
+            topTarget.type === GraphNodePortType.IN &&
+            nodeBeingTargeted.inPorts
+          ) {
+            const port = nodeBeingTargeted.inPorts.find(
+              (port) => port.name === topTarget.label
+            );
+
+            if (port && isConfigurableBehavior(port.schema)) {
+              canSnapToGraphNodePortOfCorrectType = false;
+            }
+          }
+        }
+      }
+
+      if (
+        topTarget instanceof GraphNodePort &&
+        topTarget.type === nodePortType &&
+        isSameGraph &&
+        visibleOnNextMove &&
+        canSnapToGraphNodePortOfCorrectType
       ) {
         // Snap to nearest port.
         topTarget.overrideStatus = PortStatus.Connected;
@@ -701,72 +757,114 @@ export class Graph extends PIXI.Container {
         }
       }
 
-      const edgeKey = inspectableEdgeToString(targetEdgeDescriptor);
-      switch (action) {
-        case GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH: {
-          const existingEdge = this.#edgeGraphics.get(edgeKey);
-          if (existingEdge) {
-            break;
-          }
+      // Confirm that the user is not trying to attach a wire to a configurable
+      // port outside of "advanced" mode.
+      let canMakeWireModification = true;
+      const targetNode = this.getGraphNodeById(
+        targetEdgeDescriptor.to.descriptor.id
+      );
 
-          if (evt.metaKey) {
-            targetEdgeDescriptor.type = InspectableEdgeType.Constant;
-          }
-          this.emit(GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH, targetEdgeDescriptor);
-          break;
-        }
-
-        case GRAPH_OPERATIONS.GRAPH_EDGE_CHANGE: {
-          targetEdge.overrideColor = null;
-
-          const existingEdge = this.#edgeGraphics.get(edgeKey);
-          if (existingEdge) {
-            break;
-          }
-
-          if (evt.metaKey) {
-            targetEdgeDescriptor.type = InspectableEdgeType.Constant;
-          }
-          this.emit(
-            GRAPH_OPERATIONS.GRAPH_EDGE_CHANGE,
-            originalEdgeDescriptor,
-            targetEdgeDescriptor
+      if (
+        targetNode &&
+        targetNode instanceof GraphNode &&
+        targetNode.expansionState !== "advanced"
+      ) {
+        if (targetNode.inPorts) {
+          const port = targetNode.inPorts.find(
+            (port) => port.name === topTarget.label
           );
-          break;
+
+          if (port && isConfigurableBehavior(port.schema)) {
+            canMakeWireModification = false;
+          }
         }
+      }
 
-        default: {
-          // Possible ad-hoc wire disambiguation.
-          if (creatingAdHocEdge && targetNodePort && targetHoverNodeForAdHoc) {
-            const knownPorts =
-              targetNodePort.type === GraphNodePortType.OUT
-                ? possiblePortsOut
-                : possiblePortsIn;
+      // Also check that the user isn't trying to attach a star port to a named
+      // port.
+      if (
+        (targetEdgeDescriptor.out === "*" && targetEdgeDescriptor.in !== "*") ||
+        (targetEdgeDescriptor.out !== "*" && targetEdgeDescriptor.in === "*")
+      ) {
+        canMakeWireModification = false;
+      }
 
-            const from =
-              targetNodePort.type === GraphNodePortType.OUT
-                ? targetEdgeDescriptor.from.descriptor.id
-                : targetHoverNodeForAdHoc.label;
-
-            const to =
-              targetNodePort.type === GraphNodePortType.IN
-                ? targetEdgeDescriptor.from.descriptor.id
-                : targetHoverNodeForAdHoc.label;
-
-            if (knownPorts.length === 0) {
+      if (canMakeWireModification) {
+        const edgeKey = inspectableEdgeToString(targetEdgeDescriptor);
+        switch (action) {
+          case GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH: {
+            const existingEdge = this.#edgeGraphics.get(edgeKey);
+            if (existingEdge) {
               break;
             }
 
-            this.emit(
-              GRAPH_OPERATIONS.GRAPH_EDGE_ADD_AD_HOC_DISAMBIGUATION_REQUESTED,
-              from,
-              to,
-              targetNodePort.type === GraphNodePortType.OUT ? knownPorts : null,
-              targetNodePort.type === GraphNodePortType.IN ? knownPorts : null,
-              evt.client
-            );
+            if (evt.metaKey) {
+              targetEdgeDescriptor.type = InspectableEdgeType.Constant;
+            }
+            this.emit(GRAPH_OPERATIONS.GRAPH_EDGE_ATTACH, targetEdgeDescriptor);
+            break;
           }
-          break;
+
+          case GRAPH_OPERATIONS.GRAPH_EDGE_CHANGE: {
+            targetEdge.overrideColor = null;
+
+            const existingEdge = this.#edgeGraphics.get(edgeKey);
+            if (existingEdge) {
+              break;
+            }
+
+            if (evt.metaKey) {
+              targetEdgeDescriptor.type = InspectableEdgeType.Constant;
+            }
+            this.emit(
+              GRAPH_OPERATIONS.GRAPH_EDGE_CHANGE,
+              originalEdgeDescriptor,
+              targetEdgeDescriptor
+            );
+            break;
+          }
+
+          default: {
+            // Possible ad-hoc wire disambiguation.
+            if (
+              creatingAdHocEdge &&
+              targetNodePort &&
+              targetHoverNodeForAdHoc
+            ) {
+              const knownPorts =
+                targetNodePort.type === GraphNodePortType.OUT
+                  ? possiblePortsOut
+                  : possiblePortsIn;
+
+              const from =
+                targetNodePort.type === GraphNodePortType.OUT
+                  ? targetEdgeDescriptor.from.descriptor.id
+                  : targetHoverNodeForAdHoc.label;
+
+              const to =
+                targetNodePort.type === GraphNodePortType.IN
+                  ? targetEdgeDescriptor.from.descriptor.id
+                  : targetHoverNodeForAdHoc.label;
+
+              if (knownPorts.length === 0) {
+                break;
+              }
+
+              this.emit(
+                GRAPH_OPERATIONS.GRAPH_EDGE_ADD_AD_HOC_DISAMBIGUATION_REQUESTED,
+                from,
+                to,
+                targetNodePort.type === GraphNodePortType.OUT
+                  ? knownPorts
+                  : null,
+                targetNodePort.type === GraphNodePortType.IN
+                  ? knownPorts
+                  : null,
+                evt.client
+              );
+            }
+            break;
+          }
         }
       }
 

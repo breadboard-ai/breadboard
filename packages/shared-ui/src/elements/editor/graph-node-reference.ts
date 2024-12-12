@@ -131,7 +131,5 @@ export class GraphNodeReference extends PIXI.Container {
 
     this.#title.x = 10 - w;
     this.#title.y = 5;
-
-    // TODO: Render the line to the target.
   }
 }
