@@ -20,6 +20,8 @@ import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types";
 import {
   isBoardArrayBehavior,
   isBoardBehavior,
+  isLLMContentArrayBehavior,
+  isLLMContentBehavior,
   isModuleBehavior,
 } from "../../utils";
 
@@ -310,12 +312,52 @@ export class GraphPortLabel extends PIXI.Container {
 
     let { value } = port;
     if (value === null || value === undefined) {
-      if (
-        port.status === PortStatus.Missing &&
-        isConfigurablePort(port, this.#expansionState)
-      ) {
-        return "(not configured)";
+      if (isConfigurablePort(port, this.#expansionState)) {
+        const isLLMContent =
+          isLLMContentBehavior(port.schema) ||
+          isLLMContentArrayBehavior(port.schema);
+        if (isLLMContent && port.schema.default) {
+          try {
+            value = JSON.parse(port.schema.default);
+          } catch (err) {
+            return "(empty)";
+          }
+        } else {
+          if (port.status === PortStatus.Missing && !port.schema.default) {
+            return "(not configured)";
+          }
+
+          if (port.schema.default !== undefined && !isLLMContent) {
+            if (port.schema.type === "array") {
+              try {
+                const items = JSON.parse(port.schema.default);
+                if (items.length === 0) {
+                  return "(empty list)";
+                }
+              } catch (err) {
+                return "(empty)";
+              }
+            }
+
+            let defaultValue =
+              typeof port.schema.default === "object"
+                ? JSON.stringify(port.schema.default)
+                : `${port.schema.default}`;
+
+            if (defaultValue.length > 30) {
+              defaultValue = `${defaultValue.slice(0, 27)}...`;
+            }
+
+            return defaultValue;
+          }
+
+          return "";
+        }
       }
+    }
+
+    // Catch the cases where we still fail to refine the preview value.
+    if (value === null || value === undefined) {
       return "";
     }
 
@@ -352,6 +394,9 @@ export class GraphPortLabel extends PIXI.Container {
           const firstPart = firstValue.parts[0];
           if (isTextCapabilityPart(firstPart)) {
             valStr = firstPart.text;
+            if (valStr === "") {
+              valStr = "(empty text)";
+            }
           } else if (isInlineData(firstPart)) {
             valStr = firstPart.inlineData.mimeType;
           } else if (isStoredData(firstPart)) {
