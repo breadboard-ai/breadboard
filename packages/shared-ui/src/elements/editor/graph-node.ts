@@ -1359,8 +1359,15 @@ export class GraphNode extends PIXI.Container {
         continue;
       }
       const { port, label, nodePort } = portItem;
+      const isBoard =
+        isBoardBehavior(port.schema) || isBoardArrayBehavior(port.schema);
+      const hidePortBubble =
+        (isConfigurableBehavior(port.schema) || port.configured) &&
+        !isBoard &&
+        this.#expansionState !== "advanced";
+
       nodePort.label = port.name;
-      nodePort.radius = this.#portRadius;
+      nodePort.radius = hidePortBubble ? 0 : this.#portRadius;
       nodePort.x = 0;
       nodePort.y = portY + this.#textSize * 0.5 + 0.5;
       nodePort.overrideStatus = null;
@@ -1371,8 +1378,6 @@ export class GraphNode extends PIXI.Container {
         isConfigurableBehavior(port.schema) &&
         this.#expansionState !== "advanced";
 
-      const isBoard =
-        isBoardBehavior(port.schema) || isBoardArrayBehavior(port.schema);
       nodePort.showBoardReferenceMarker =
         isBoard && this.#showBoardReferenceMarkers;
 
