@@ -11,6 +11,7 @@ import {
   InspectableNodePorts,
   InspectablePort,
   NodeIdentifier,
+  UnresolvedPathBoardCapability,
 } from "@google-labs/breadboard";
 import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
@@ -867,7 +868,13 @@ export class WorkspaceOutline
     );
   }
 
-  #toBoardName(id: GraphIdentifier | ModuleIdentifier) {
+  #toBoardName(
+    id: GraphIdentifier | ModuleIdentifier | UnresolvedPathBoardCapability
+  ) {
+    if (typeof id === "object") {
+      id = id.path;
+    }
+
     if (id.startsWith("#module:")) {
       const modules = this.graph?.modules();
       if (typeof id === "string") {
