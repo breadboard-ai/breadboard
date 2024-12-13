@@ -32,6 +32,10 @@ impl ModuleDef for CapabilitiesModule {
             "invoke",
             Function::new(ctx.clone(), Async(invoke_value))?.with_name("invoke")?,
         )?;
+        exports.export(
+            "output",
+            Function::new(ctx.clone(), Async(output_value))?.with_name("output")?,
+        )?;
         Ok(())
     }
 }
@@ -77,9 +81,17 @@ async fn invoke_value<'js>(
     call_capability(invocation_id, inputs, invoke).await
 }
 
+async fn output_value<'js>(
+    invocation_id: String,
+    inputs: Value<'js>,
+) -> rquickjs::Result<Value<'js>> {
+    call_capability(invocation_id, inputs, output).await
+}
+
 #[wasm_bindgen(raw_module = "./capabilities.js")]
 extern "C" {
     async fn fetch(invocation_id: String, inputs: String) -> JsValue;
     async fn secrets(invocation_id: String, inputs: String) -> JsValue;
     async fn invoke(invocation_id: String, inputs: String) -> JsValue;
+    async fn output(invocation_id: String, inputs: String) -> JsValue;
 }
