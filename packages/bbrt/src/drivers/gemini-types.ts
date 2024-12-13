@@ -13,10 +13,11 @@ export interface GeminiRequest {
     mode: "auto" | "any" | "none";
     allowedFunctionNames: string[];
   };
+  systemInstruction?: GeminiContent;
 }
 
 export interface GeminiContent {
-  role: "user" | "model";
+  role?: "user" | "model";
   parts: GeminiPart[];
 }
 

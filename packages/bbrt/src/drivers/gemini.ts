@@ -45,7 +45,8 @@ export class GeminiDriver implements BBRTDriver {
 
   async executeTurn(
     turns: BBRTTurn[],
-    tools: BBRTTool[]
+    tools: BBRTTool[],
+    systemInstruction: string
   ): Promise<Result<AsyncIterableIterator<BBRTChunk>>> {
     const contents = await convertTurnsForGemini(turns);
     const request: GeminiRequest = {
@@ -53,6 +54,9 @@ export class GeminiDriver implements BBRTDriver {
     };
     if (tools.length > 0) {
       request.tools = await convertToolsForGemini(tools);
+    }
+    if (systemInstruction.length > 0) {
+      request.systemInstruction = { parts: [{ text: systemInstruction }] };
     }
 
     const model = "gemini-1.5-pro";

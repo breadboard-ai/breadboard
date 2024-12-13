@@ -22,6 +22,7 @@ import type {
   BBRTTurn,
   BBRTTurnStatus,
 } from "./conversation-types.js";
+import { BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION } from "./system-instruction.js";
 
 export class BBRTConversation {
   readonly turns = new SignalArray<BBRTTurn>();
@@ -216,9 +217,11 @@ export class BBRTConversation {
 
   async #generate(): Promise<Result<AsyncIterableIterator<BBRTChunk>>> {
     const driver = this.#driver.get();
-    const chunks = await driver.executeTurn(this.turns, [
-      ...this.#activeTools.get(),
-    ]);
+    const chunks = await driver.executeTurn(
+      this.turns,
+      [...this.#activeTools.get()],
+      BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION
+    );
     if (!chunks.ok) {
       return chunks;
     }
