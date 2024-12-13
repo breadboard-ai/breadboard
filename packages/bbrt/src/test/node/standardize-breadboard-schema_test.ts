@@ -46,7 +46,7 @@ suite("standardizeBreadboardSchema", () => {
     assert.deepEqual(standardizeBreadboardSchema(input), expected);
   });
 
-  test("decode JSON-encoded defaults", () => {
+  test("decodes JSON-encoded defaults", () => {
     const input: Schema = {
       type: "object",
       default: '{"foo":42}',
@@ -86,7 +86,7 @@ suite("standardizeBreadboardSchema", () => {
     assert.deepEqual(standardizeBreadboardSchema(input), expected);
   });
 
-  test("decode JSON-encoded examples", () => {
+  test("decodes JSON-encoded examples", () => {
     const input: Schema = {
       type: "object",
       examples: ['{"foo":42}'],
@@ -126,7 +126,7 @@ suite("standardizeBreadboardSchema", () => {
     assert.deepEqual(standardizeBreadboardSchema(input), expected);
   });
 
-  test("expand llm-content object behavior to JSON schema", () => {
+  test("expands llm-content object behavior to JSON schema", () => {
     const input: Schema = {
       type: "object",
       properties: {
@@ -166,7 +166,7 @@ suite("standardizeBreadboardSchema", () => {
     assert.deepEqual(standardizeBreadboardSchema(input), expected);
   });
 
-  test("expand llm-content array behavior to JSON schema", () => {
+  test("expands llm-content array behavior to JSON schema", () => {
     const input: Schema = {
       type: "object",
       properties: {
