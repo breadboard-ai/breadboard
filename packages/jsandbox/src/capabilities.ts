@@ -31,8 +31,9 @@ class Capabilities {
       );
     }
     const parsedInputs = JSON.parse(inputs);
+    const isOutput = name === "output";
     const metadata = parsedInputs.$metadata;
-    if (metadata) {
+    if (metadata && !isOutput) {
       delete parsedInputs.$metadata;
     }
     const path =

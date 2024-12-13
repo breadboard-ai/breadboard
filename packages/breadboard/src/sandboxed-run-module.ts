@@ -67,8 +67,8 @@ function getHandler(handlerName: string, context: NodeHandlerContext) {
 }
 
 function createOutputHandler(context: NodeHandlerContext) {
-  return (async (inputs: InputValues, invocationPath: number[]) => {
-    const schema = inputs.schema as Schema;
+  return (async (allInputs: InputValues, invocationPath: number[]) => {
+    const schema = allInputs.schema as Schema;
     const descriptor: NodeDescriptor = {
       id: "output-from-run-module",
       type: "output",
@@ -79,7 +79,8 @@ function createOutputHandler(context: NodeHandlerContext) {
         } satisfies Schema,
       },
     };
-    const metadata = inputs.$metadata as NodeMetadata | undefined;
+    const { $metadata, ...inputs } = allInputs;
+    const metadata = $metadata as NodeMetadata | undefined;
     if (metadata) {
       descriptor.metadata = metadata;
     }
