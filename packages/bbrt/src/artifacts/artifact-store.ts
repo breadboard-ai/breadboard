@@ -63,7 +63,7 @@ export class ArtifactEntry {
     return { ok: true, value: undefined };
   }
 
-  #exclusiveReadWriteLock = new Lock();
+  readonly #exclusiveReadWriteLock = new Lock();
   async acquireExclusiveReadWriteLock() {
     const unlock = await this.#exclusiveReadWriteLock.acquire();
     return {
@@ -73,7 +73,7 @@ export class ArtifactEntry {
     };
   }
 
-  #notifySignal = new Signal.State<EmptyObject>({});
+  readonly #notifySignal = new Signal.State<EmptyObject>({});
 
   readonly blob = new AsyncComputed(async () => {
     this.#notifySignal.get(); // Stay tracked.

@@ -8,7 +8,7 @@ import { Signal } from "signal-polyfill";
 import { SignalArray } from "signal-utils/array";
 import type { SignalSet } from "signal-utils/set";
 import type { BBRTTool } from "../tools/tool.js";
-import { BufferedMultiplexStream } from "../util/buffered-multiplex-stream.js";
+import { CachingMultiplexStream } from "../util/caching-multiplex-stream.js";
 import type {
   SerializableBBRTToolCall,
   SerializableBBRTToolResponse,
@@ -52,7 +52,7 @@ function restoreTurn(
       ),
     };
   } else if (turn.kind === "model") {
-    const content = BufferedMultiplexStream.finished(turn.content);
+    const content = CachingMultiplexStream.finished(turn.content);
     return {
       kind: turn.kind,
       role: turn.role,
