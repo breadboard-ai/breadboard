@@ -765,7 +765,6 @@ export class ModuleEditor extends LitElement {
     return true;
   }
 
-  #graphTopologyUpdateId = 0;
   render() {
     if (!this.modules || !this.moduleId) {
       return nothing;
