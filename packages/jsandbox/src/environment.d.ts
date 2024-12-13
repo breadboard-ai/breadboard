@@ -120,7 +120,9 @@ declare module "@output" {
     schema?: Schema;
   } & Record<string, unknown>;
 
-  export type OutputOutputs = Record<string, unknown>;
+  export type OutputOutputs = {
+    delivered: boolean;
+  };
 
   export default function output(inputs: OutputInputs): Promise<OutputOutputs>;
 }

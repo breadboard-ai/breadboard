@@ -70,7 +70,7 @@ function createOutputHandler(context: NodeHandlerContext) {
   return (async (inputs: InputValues, invocationPath: number[]) => {
     const schema = inputs.schema as Schema;
     const descriptor: NodeDescriptor = {
-      id: "propert-id-goes-here",
+      id: "output-from-run-module",
       type: "output",
       configuration: {
         schema: {
