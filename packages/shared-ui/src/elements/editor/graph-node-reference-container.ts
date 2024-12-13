@@ -109,6 +109,7 @@ export class GraphNodeReferenceContainer extends PIXI.Container {
       return;
     }
 
+    let lastKnownMaxY = 0;
     for (const [port, references] of this.#references) {
       const location = this.#inPortLocations.get(port);
       if (!location) {
@@ -119,6 +120,10 @@ export class GraphNodeReferenceContainer extends PIXI.Container {
       let y = Math.round(
         location.y - references.length * GraphNodeReference.HEIGHT * 0.5
       );
+
+      if (y < lastKnownMaxY) {
+        y = lastKnownMaxY;
+      }
 
       for (const reference of references) {
         const label = this.#createLabel(port, reference.reference);
@@ -147,6 +152,8 @@ export class GraphNodeReferenceContainer extends PIXI.Container {
         this.#edges.stroke({ color: edgeColorOrdinary });
         this.#edges.closePath();
       }
+
+      lastKnownMaxY = y;
     }
   }
 
