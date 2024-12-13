@@ -127,8 +127,12 @@ declare module "@output" {
       title?: string;
       description?: string;
     };
-    schema: Schema;
+    schema?: Schema;
   } & Record<string, unknown>;
+
+  export type OutputOutputs = Record<string, unknown>;
+
+  export default function output(inputs: OutputInputs): Promise<OutputOutputs>;
 }
 
 declare type FunctionCallCapabilityPart = {

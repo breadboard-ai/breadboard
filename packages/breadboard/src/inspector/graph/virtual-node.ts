@@ -5,6 +5,7 @@
  */
 
 import type {
+  InputValues,
   NodeConfiguration,
   NodeDescriptor,
   NodeMetadata,
@@ -16,14 +17,16 @@ import type {
   InspectableNodePorts,
   InspectableNodeType,
 } from "../types.js";
+import { describerResultToPorts } from "./ports.js";
+import { describeOutput } from "./schemas.js";
 
 export { VirtualNode };
 
-type VirtualNodeType = "fetch" | "secrets" | "invoke" | "unknown";
+type VirtualNodeType = "fetch" | "secrets" | "invoke" | "output" | "unknown";
 
 function discernType(id: string): VirtualNodeType {
   const [type] = id.split("-");
-  if (["fetch", "secrets", "invoke"].includes(type)) {
+  if (["fetch", "secrets", "invoke", "output"].includes(type)) {
     return type as VirtualNodeType;
   }
   return "unknown";
@@ -51,6 +54,7 @@ class VirtualNode implements InspectableNode {
       id,
       type: this.#type,
       metadata,
+      configuration: descriptor.configuration,
     };
   }
 
@@ -78,7 +82,17 @@ class VirtualNode implements InspectableNode {
     return false;
   }
 
-  #ports(): InspectableNodePorts {
+  #ports(inputs: InputValues): InspectableNodePorts {
+    const { type, configuration } = this.descriptor;
+    if (type === "output") {
+      return describerResultToPorts(
+        this,
+        describeOutput({
+          inputs: { ...configuration, ...inputs },
+        }),
+        inputs
+      );
+    }
     return {
       inputs: {
         ports: [],
@@ -111,7 +125,7 @@ class VirtualNode implements InspectableNode {
         return this.#type;
       },
       ports: async () => {
-        return this.#ports();
+        return this.#ports({});
       },
     };
   }
@@ -124,19 +138,19 @@ class VirtualNode implements InspectableNode {
   }
 
   configuration(): NodeConfiguration {
-    return {};
+    return this.descriptor.configuration || {};
   }
 
   metadata(): NodeMetadata {
     return this.descriptor.metadata || {};
   }
 
-  async ports(): Promise<InspectableNodePorts> {
-    return this.#ports();
+  async ports(inputs: InputValues): Promise<InspectableNodePorts> {
+    return this.#ports(inputs);
   }
 
-  currentPorts(): InspectableNodePorts {
-    return this.#ports();
+  currentPorts(inputs: InputValues): InspectableNodePorts {
+    return this.#ports(inputs);
   }
 
   deleted(): boolean {

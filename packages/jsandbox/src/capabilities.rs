@@ -15,6 +15,7 @@ impl ModuleDef for CapabilitiesModule {
         decl.declare("fetch")?;
         decl.declare("secrets")?;
         decl.declare("invoke")?;
+        decl.declare("output")?;
         Ok(())
     }
 

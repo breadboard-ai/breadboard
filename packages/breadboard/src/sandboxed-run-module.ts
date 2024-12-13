@@ -8,6 +8,8 @@ import type {
   InputValues,
   GraphDescriptor,
   ModuleIdentifier,
+  NodeDescriptor,
+  NodeMetadata,
 } from "@breadboard-ai/types";
 import type {
   NodeDescriberContext,
@@ -25,6 +27,7 @@ import {
   Telemetry,
 } from "@breadboard-ai/jsandbox";
 import { inflateData } from "./data/inflate-deflate.js";
+import { bubbleUpOutputsIfNeeded } from "./bubble.js";
 
 export { addSandboxedRunModule, invokeDescriber, invokeMainDescriber };
 
@@ -60,6 +63,33 @@ function getHandler(handlerName: string, context: NodeHandlerContext) {
     } catch (e) {
       return { $error: (e as Error).message };
     }
+  }) as Capability;
+}
+
+function createOutputHandler(context: NodeHandlerContext) {
+  return (async (inputs: InputValues, invocationPath: number[]) => {
+    const schema = inputs.schema as Schema;
+    const descriptor: NodeDescriptor = {
+      id: "propert-id-goes-here",
+      type: "output",
+      configuration: {
+        schema: {
+          ...schema,
+          behavior: ["bubble"],
+        } satisfies Schema,
+      },
+    };
+    const metadata = inputs.$metadata as NodeMetadata | undefined;
+    if (metadata) {
+      descriptor.metadata = metadata;
+    }
+    const delivered = await bubbleUpOutputsIfNeeded(
+      inputs,
+      descriptor,
+      context,
+      invocationPath
+    );
+    return { delivered };
   }) as Capability;
 }
 
@@ -101,6 +131,7 @@ function addSandboxedRunModule(sandbox: Sandbox, kits: Kit[]): Kit[] {
                 fetch: getHandler("fetch", context),
                 secrets: getHandler("secrets", context),
                 invoke: getHandler("invoke", context),
+                output: createOutputHandler(context),
               },
               modules
             );
