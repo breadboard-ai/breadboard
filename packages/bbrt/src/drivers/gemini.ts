@@ -7,7 +7,12 @@
 import type { BBRTChunk } from "../llm/chunk.js";
 import type { BBRTTurn } from "../llm/conversation-types.js";
 import type { BBRTTool } from "../tools/tool.js";
+import {
+  exponentialBackoff,
+  type ExponentialBackoffParameters,
+} from "../util/exponential-backoff.js";
 import type { Result } from "../util/result.js";
+import { resultify } from "../util/resultify.js";
 import { streamJsonArrayItems } from "../util/stream-json-array-items.js";
 import { adjustSchemaForGemini } from "./adjust-schema-for-gemini.js";
 import type { BBRTDriver } from "./driver-interface.js";
@@ -19,6 +24,14 @@ import type {
   GeminiRequest,
   GeminiResponse,
 } from "./gemini-types.js";
+
+const BACKOFF_PARAMS: ExponentialBackoffParameters = {
+  budget: 30_000,
+  minDelay: 500,
+  maxDelay: 5000,
+  multiplier: 2,
+  jitter: 0.1,
+};
 
 export class GeminiDriver implements BBRTDriver {
   readonly name = "Gemini";
@@ -54,32 +67,52 @@ export class GeminiDriver implements BBRTDriver {
       return { ok: false, error: Error("No Gemini API key was available") };
     }
     url.searchParams.set("key", apiKey.value);
-    let result;
-    try {
-      result = await fetch(url.href, {
-        method: "POST",
-        body: JSON.stringify(request),
-      });
-    } catch (e) {
-      return { ok: false, error: e as Error };
-    }
-    if (result.status !== 200) {
-      try {
-        const error = (await result.json()) as unknown;
+
+    const response = await (async (): Promise<Result<Response>> => {
+      const fetchRequest = { method: "POST", body: JSON.stringify(request) };
+      const retryDelays = exponentialBackoff(BACKOFF_PARAMS);
+      const startTime = performance.now();
+      for (let attempt = 0; ; attempt++) {
+        const result = await resultify(fetch(url.href, fetchRequest));
+        if (!result.ok) {
+          return result;
+        }
+        const response = result.value;
+        if (response.status === 200) {
+          return result;
+        }
+        const retryable = response.status === /* Too Many Requests */ 429;
+        if (retryable) {
+          const delay = retryDelays.next();
+          if (!delay.done) {
+            await new Promise((resolve) => setTimeout(resolve, delay.value));
+            continue;
+          }
+        }
+        const seconds = Math.ceil((performance.now() - startTime) / 1000);
+        const text = await resultify(result.value.text());
         return {
           ok: false,
           error: new Error(
-            `HTTP status ${result.status}` +
-              `\n\n${JSON.stringify(error, null, 2)}`
+            `Gemini API responded with HTTP status ${response.status}` +
+              (attempt > 0
+                ? ` after ${attempt + 1} attempts within ${seconds} seconds.`
+                : ".") +
+              (text.ok ? `\n\n${text.value}` : "")
           ),
         };
-      } catch {
-        return { ok: false, error: Error(`http status was ${result.status}`) };
       }
+    })();
+    if (!response.ok) {
+      return response;
     }
-    const body = result.body;
+
+    const body = response.value.body;
     if (body === null) {
-      return { ok: false, error: Error("body was null") };
+      return {
+        ok: false,
+        error: Error("Gemini API response had null body"),
+      };
     }
     const stream = convertGeminiChunks(
       streamJsonArrayItems<GeminiResponse>(
@@ -94,10 +127,15 @@ async function* convertGeminiChunks(
   stream: AsyncIterable<GeminiResponse>
 ): AsyncIterableIterator<BBRTChunk> {
   for await (const chunk of stream) {
-    // TODO(aomarks) Sometimes we get no parts, just a mostly empty message.
-    // That should probably generate an error, which should somehow appear on
-    // this stream.
-    const parts = chunk?.candidates?.[0]?.content?.parts;
+    // TODO(aomarks) A way to send errors down the stream, or a side-channel.
+    const candidate = chunk?.candidates?.[0];
+    const parts = candidate?.content?.parts;
+    if (candidate?.finishReason && candidate.finishReason !== "STOP") {
+      console.error(
+        `gemini chunk had finish reason ${candidate.finishReason}:` +
+          ` ${JSON.stringify(chunk)}`
+      );
+    }
     if (parts === undefined) {
       console.error(`gemini chunk had no parts: ${JSON.stringify(chunk)}`);
       continue;

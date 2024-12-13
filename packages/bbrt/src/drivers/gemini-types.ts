@@ -48,7 +48,8 @@ export interface GeminiResponse {
 }
 
 export interface GeminiCandidate {
-  content: GeminiContent;
+  finishReason?: string;
+  content?: GeminiContent;
 }
 
 export interface GeminiFunctionDeclaration {
