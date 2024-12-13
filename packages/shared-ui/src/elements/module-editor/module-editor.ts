@@ -765,6 +765,7 @@ export class ModuleEditor extends LitElement {
     return true;
   }
 
+  #graphTopologyUpdateId = 0;
   render() {
     if (!this.modules || !this.moduleId) {
       return nothing;
@@ -898,7 +899,7 @@ export class ModuleEditor extends LitElement {
             <div id="module-graph">
               <bb-graph-renderer
                 .padding=${28}
-                .topGraphUrl=${this.graph?.raw().url ?? "no-url"}
+                .topGraphUrl=${globalThis.crypto.randomUUID()}
                 .topGraphResult=${this.topGraphResult}
                 .assetPrefix=${this.assetPrefix}
                 .configs=${this.#createModuleGraphConfig(isMainModule)}
