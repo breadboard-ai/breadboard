@@ -121,6 +121,22 @@ declare module "@invoke" {
   export default function invoke(inputs: InvokeInputs): Promise<InvokeOutputs>;
 }
 
+declare module "@output" {
+  export type OutputInputs = {
+    $metadata?: {
+      title?: string;
+      description?: string;
+    };
+    schema?: Schema;
+  } & Record<string, unknown>;
+
+  export type OutputOutputs = {
+    delivered: boolean;
+  };
+
+  export default function output(inputs: OutputInputs): Promise<OutputOutputs>;
+}
+
 declare type FunctionCallCapabilityPart = {
   functionCall: {
     name: string;

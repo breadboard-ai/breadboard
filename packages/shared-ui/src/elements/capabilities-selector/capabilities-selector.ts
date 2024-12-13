@@ -37,6 +37,14 @@ export class CapabilitiesSelector extends LitElement {
         description: "Runs another board and returns its output values.",
       },
     ],
+    [
+      "Output",
+      {
+        icon: "output",
+        code: `import output from "@output";`,
+        description: "Provides updates to the user.",
+      },
+    ],
   ]);
 
   static styles = css`
@@ -130,6 +138,10 @@ export class CapabilitiesSelector extends LitElement {
 
     ul li.capability-item .capability-icon.invoke::before {
       background-image: var(--bb-icon-invoke);
+    }
+
+    ul li.capability-item .capability-icon.output::before {
+      background-image: var(--bb-icon-output);
     }
   `;
 
