@@ -16,7 +16,8 @@ import "./board-visualizer.js";
 @customElement("bbrt-artifact-display")
 export class BBRTArtifactDisplay extends SignalWatcher(LitElement) {
   @property({ attribute: false })
-  artifact?: AsyncComputed<ArtifactEntry | undefined>;
+  accessor artifact: AsyncComputed<ArtifactEntry | undefined> | undefined =
+    undefined;
 
   static override styles = css`
     :host {

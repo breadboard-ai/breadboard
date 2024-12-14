@@ -11,10 +11,10 @@ import { customElement, property } from "lit/decorators.js";
 @customElement("bbrt-content")
 export class BBRTContent extends LitElement {
   @property({ type: Object })
-  schema?: JSONSchema7;
+  accessor schema: JSONSchema7 | undefined = undefined;
 
   @property({ type: Object })
-  data?: unknown;
+  accessor data: unknown | undefined = undefined;
 
   static override styles = css`
     :host {

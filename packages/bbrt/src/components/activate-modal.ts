@@ -10,10 +10,10 @@ import { customElement, property } from "lit/decorators.js";
 @customElement("bbrt-activate-modal")
 export class BBRTActivateModal extends LitElement {
   @property()
-  name?: string;
+  accessor name: string | undefined = undefined;
 
   @property({ reflect: true })
-  state: "pending" | "allowed" | "denied" = "pending";
+  accessor state: "pending" | "allowed" | "denied" = "pending";
 
   static override styles = css`
     :host {

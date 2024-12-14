@@ -14,7 +14,7 @@ import { ScrollController } from "./scroll-controller.js";
 @customElement("bbrt-chat")
 export class BBRTChat extends SignalWatcher(LitElement) {
   @property({ attribute: false })
-  conversation?: BBRTConversation;
+  accessor conversation: BBRTConversation | undefined = undefined;
 
   static override styles = css`
     :host {

@@ -14,10 +14,10 @@ import type { BBRTTool } from "../tools/tool.js";
 @customElement("bbrt-tool-palette")
 export class BBRTToolPalette extends SignalWatcher(LitElement) {
   @property({ attribute: false })
-  availableTools?: SignalSet<BBRTTool>;
+  accessor availableTools: SignalSet<BBRTTool> | undefined = undefined;
 
   @property({ attribute: false })
-  activeToolIds?: SignalSet<string>;
+  accessor activeToolIds: SignalSet<string> | undefined = undefined;
 
   static override styles = css`
     :host {

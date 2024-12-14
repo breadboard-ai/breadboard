@@ -14,7 +14,7 @@ import { gfm, gfmHtml } from "micromark-extension-gfm";
 @customElement("bbrt-markdown")
 export class BBRTMarkdown extends LitElement {
   @property()
-  markdown?: string | AsyncIterable<string>;
+  accessor markdown: string | AsyncIterable<string> | undefined = undefined;
 
   static override styles = css`
     :host {

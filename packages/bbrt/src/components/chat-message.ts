@@ -21,10 +21,10 @@ import "./tool-call.js";
 @customElement("bbrt-chat-message")
 export class BBRTChatMessage extends SignalWatcher(LitElement) {
   @property({ type: Object })
-  turn?: BBRTTurn;
+  accessor turn: BBRTTurn | undefined = undefined;
 
   @property({ type: Boolean })
-  hideIcon = false;
+  accessor hideIcon = false;
 
   static override styles = css`
     :host {

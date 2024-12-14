@@ -29,7 +29,7 @@ const APP_STATE_SESSION_STORAGE_KEY = "bbrt-app-state-v1";
 @customElement("bbrt-main")
 export class BBRTMain extends SignalWatcher(LitElement) {
   @property({ type: Object })
-  config?: Config;
+  accessor config: Config | undefined = undefined;
 
   readonly #state = new BBRTAppState();
 

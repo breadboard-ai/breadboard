@@ -11,7 +11,7 @@ import type { BBRTConversation } from "../llm/conversation.js";
 @customElement("bbrt-prompt")
 export class BBRTPrompt extends LitElement {
   @property({ attribute: false })
-  conversation?: BBRTConversation;
+  accessor conversation: BBRTConversation | undefined = undefined;
 
   static override styles = css`
     :host {

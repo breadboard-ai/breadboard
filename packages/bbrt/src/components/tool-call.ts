@@ -12,7 +12,7 @@ import type { BBRTToolCall } from "../llm/conversation-types.js";
 @customElement("bbrt-tool-call")
 export class BBRTToolCallEl extends SignalWatcher(LitElement) {
   @property({ attribute: false })
-  toolCall?: BBRTToolCall;
+  accessor toolCall: BBRTToolCall | undefined = undefined;
 
   static override styles = css`
     :host {

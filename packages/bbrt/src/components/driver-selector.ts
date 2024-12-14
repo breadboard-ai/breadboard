@@ -13,10 +13,10 @@ import type { BBRTDriver } from "../drivers/driver-interface.js";
 @customElement("bbrt-driver-selector")
 export class BBRTDriverSelector extends SignalWatcher(LitElement) {
   @property({ attribute: false })
-  available?: BBRTDriver[];
+  accessor available: BBRTDriver[] | undefined = undefined;
 
   @property({ attribute: false })
-  active?: Signal.State<BBRTDriver>;
+  accessor active: Signal.State<BBRTDriver> | undefined = undefined;
 
   static override styles = css`
     :host {
