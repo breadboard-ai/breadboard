@@ -138,8 +138,8 @@ export class BBRTMain extends SignalWatcher(LitElement) {
     this.#state.activeToolIds.add(boardLister.metadata.id);
 
     const toolActivator = new ActivateTool(
-      this.#state.toolProviders,
-      this.#state.availableTools
+      this.#state.availableTools,
+      this.#state.activeToolIds
     );
     this.#state.availableTools.add(toolActivator as BBRTTool);
     this.#state.activeToolIds.add(toolActivator.metadata.id);

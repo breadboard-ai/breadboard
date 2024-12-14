@@ -908,7 +908,9 @@ export class WorkspaceOutline
     }
 
     if (isBoardBehavior(port.schema)) {
-      return this.#toBoardName(port.value as GraphIdentifier);
+      const value = port.value;
+      if (!value) return "Unset";
+      return this.#toBoardName(value as GraphIdentifier);
     }
 
     if (isBoardArrayBehavior(port.schema) && Array.isArray(port.value)) {

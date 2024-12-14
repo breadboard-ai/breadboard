@@ -7,183 +7,139 @@
 import type { Schema } from "@google-labs/breadboard";
 import type { JSONSchema7 } from "json-schema";
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { suite, test } from "node:test";
 import { standardizeBreadboardSchema } from "../../breadboard/standardize-breadboard-schema.js";
 
-test("removes behaviors recursively", () => {
-  const input: Schema = {
-    type: "object",
-    behavior: ["config"],
-    properties: {
-      foo: {
-        type: "string",
-        behavior: ["code", "deprecated"],
-      },
-      bar: {
-        type: "array",
-        items: {
-          type: "number",
-          behavior: ["bubble"],
+suite("standardizeBreadboardSchema", () => {
+  test("removes behaviors recursively", () => {
+    const input: Schema = {
+      type: "object",
+      behavior: ["config"],
+      properties: {
+        foo: {
+          type: "string",
+          behavior: ["code", "deprecated"],
         },
-      },
-    },
-  };
-  const expected: JSONSchema7 = {
-    type: "object",
-    properties: {
-      foo: {
-        type: "string",
-      },
-      bar: {
-        type: "array",
-        items: {
-          type: "number",
-        },
-      },
-    },
-  };
-  assert.deepEqual(standardizeBreadboardSchema(input), expected);
-});
-
-test("decode JSON-encoded defaults", () => {
-  const input: Schema = {
-    type: "object",
-    default: '{"foo":42}',
-    properties: {
-      foo: {
-        type: "number",
-        default: "42",
-      },
-      bar: {
-        type: "boolean",
-        default: "true",
-      },
-      baz: {
-        type: "number",
-        default: 47 as unknown as string,
-      },
-    },
-  };
-  const expected: JSONSchema7 = {
-    type: "object",
-    default: { foo: 42 },
-    properties: {
-      foo: {
-        type: "number",
-        default: 42,
-      },
-      bar: {
-        type: "boolean",
-        default: true,
-      },
-      baz: {
-        type: "number",
-        default: 47,
-      },
-    },
-  };
-  assert.deepEqual(standardizeBreadboardSchema(input), expected);
-});
-
-test("decode JSON-encoded examples", () => {
-  const input: Schema = {
-    type: "object",
-    examples: ['{"foo":42}'],
-    properties: {
-      foo: {
-        type: "number",
-        examples: ["42"],
-      },
-      bar: {
-        type: "boolean",
-        examples: ["true", "false"],
-      },
-      baz: {
-        type: "number",
-        examples: [47 as unknown as string],
-      },
-    },
-  };
-  const expected: JSONSchema7 = {
-    type: "object",
-    examples: [{ foo: 42 }],
-    properties: {
-      foo: {
-        type: "number",
-        examples: [42],
-      },
-      bar: {
-        type: "boolean",
-        examples: [true, false],
-      },
-      baz: {
-        type: "number",
-        examples: [47],
-      },
-    },
-  };
-  assert.deepEqual(standardizeBreadboardSchema(input), expected);
-});
-
-test("expand llm-content object behavior to JSON schema", () => {
-  const input: Schema = {
-    type: "object",
-    properties: {
-      foo: {
-        type: "object",
-        behavior: ["llm-content"],
-      },
-    },
-  };
-  const expected: JSONSchema7 = {
-    type: "object",
-    properties: {
-      foo: {
-        type: "object",
-        required: ["role", "parts"],
-        properties: {
-          role: {
-            type: "string",
-            enum: ["user", "model"],
-          },
-          parts: {
-            type: "array",
-            items: {
-              type: "object",
-              required: ["text"],
-              properties: {
-                text: {
-                  type: "string",
-                },
-              },
-            },
+        bar: {
+          type: "array",
+          items: {
+            type: "number",
+            behavior: ["bubble"],
           },
         },
       },
-    },
-  };
-  assert.deepEqual(standardizeBreadboardSchema(input), expected);
-});
+    };
+    const expected: JSONSchema7 = {
+      type: "object",
+      properties: {
+        foo: {
+          type: "string",
+        },
+        bar: {
+          type: "array",
+          items: {
+            type: "number",
+          },
+        },
+      },
+    };
+    assert.deepEqual(standardizeBreadboardSchema(input), expected);
+  });
 
-test("expand llm-content array behavior to JSON schema", () => {
-  const input: Schema = {
-    type: "object",
-    properties: {
-      foo: {
-        type: "array",
-        items: {
+  test("decodes JSON-encoded defaults", () => {
+    const input: Schema = {
+      type: "object",
+      default: '{"foo":42}',
+      properties: {
+        foo: {
+          type: "number",
+          default: "42",
+        },
+        bar: {
+          type: "boolean",
+          default: "true",
+        },
+        baz: {
+          type: "number",
+          default: 47 as unknown as string,
+        },
+      },
+    };
+    const expected: JSONSchema7 = {
+      type: "object",
+      default: { foo: 42 },
+      properties: {
+        foo: {
+          type: "number",
+          default: 42,
+        },
+        bar: {
+          type: "boolean",
+          default: true,
+        },
+        baz: {
+          type: "number",
+          default: 47,
+        },
+      },
+    };
+    assert.deepEqual(standardizeBreadboardSchema(input), expected);
+  });
+
+  test("decodes JSON-encoded examples", () => {
+    const input: Schema = {
+      type: "object",
+      examples: ['{"foo":42}'],
+      properties: {
+        foo: {
+          type: "number",
+          examples: ["42"],
+        },
+        bar: {
+          type: "boolean",
+          examples: ["true", "false"],
+        },
+        baz: {
+          type: "number",
+          examples: [47 as unknown as string],
+        },
+      },
+    };
+    const expected: JSONSchema7 = {
+      type: "object",
+      examples: [{ foo: 42 }],
+      properties: {
+        foo: {
+          type: "number",
+          examples: [42],
+        },
+        bar: {
+          type: "boolean",
+          examples: [true, false],
+        },
+        baz: {
+          type: "number",
+          examples: [47],
+        },
+      },
+    };
+    assert.deepEqual(standardizeBreadboardSchema(input), expected);
+  });
+
+  test("expands llm-content object behavior to JSON schema", () => {
+    const input: Schema = {
+      type: "object",
+      properties: {
+        foo: {
           type: "object",
           behavior: ["llm-content"],
         },
       },
-    },
-  };
-  const expected: JSONSchema7 = {
-    type: "object",
-    properties: {
-      foo: {
-        type: "array",
-        items: {
+    };
+    const expected: JSONSchema7 = {
+      type: "object",
+      properties: {
+        foo: {
           type: "object",
           required: ["role", "parts"],
           properties: {
@@ -206,7 +162,53 @@ test("expand llm-content array behavior to JSON schema", () => {
           },
         },
       },
-    },
-  };
-  assert.deepEqual(standardizeBreadboardSchema(input), expected);
+    };
+    assert.deepEqual(standardizeBreadboardSchema(input), expected);
+  });
+
+  test("expands llm-content array behavior to JSON schema", () => {
+    const input: Schema = {
+      type: "object",
+      properties: {
+        foo: {
+          type: "array",
+          items: {
+            type: "object",
+            behavior: ["llm-content"],
+          },
+        },
+      },
+    };
+    const expected: JSONSchema7 = {
+      type: "object",
+      properties: {
+        foo: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["role", "parts"],
+            properties: {
+              role: {
+                type: "string",
+                enum: ["user", "model"],
+              },
+              parts: {
+                type: "array",
+                items: {
+                  type: "object",
+                  required: ["text"],
+                  properties: {
+                    text: {
+                      type: "string",
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    assert.deepEqual(standardizeBreadboardSchema(input), expected);
+  });
 });

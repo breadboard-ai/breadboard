@@ -4,17 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Deferred } from "./deferred.js";
-
 type State = "unstarted" | "started" | "ended";
 
-export class BufferedMultiplexStream<T> {
+export class CachingMultiplexStream<T> {
   readonly #source: AsyncIterable<T>;
   // TODO(aomarks) Should not be public.
   readonly buffer: T[] = [];
   // TODO(aomarks) Should not be public.
   state: State = "unstarted";
-  #nextTick = new Deferred<void>();
+  #nextTick = Promise.withResolvers<void>();
 
   constructor(source: AsyncIterable<T>) {
     this.#source = source;
@@ -23,7 +21,7 @@ export class BufferedMultiplexStream<T> {
   static finished<T>(values: Iterable<T>) {
     // TODO(aomarks) Shouldn't need this constructor. It's only because of
     // weirdness in our serialization scheme.
-    const stream = new BufferedMultiplexStream<T>((async function* () {})());
+    const stream = new CachingMultiplexStream<T>((async function* () {})());
     stream.state = "ended";
     for (const value of values) {
       stream.buffer.push(value);
@@ -47,7 +45,7 @@ export class BufferedMultiplexStream<T> {
 
   #tick() {
     this.#nextTick.resolve();
-    this.#nextTick = new Deferred();
+    this.#nextTick = Promise.withResolvers();
   }
 
   async #startBufferingIfNeeded() {

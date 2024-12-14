@@ -30,7 +30,8 @@ export class OpenAiDriver implements BBRTDriver {
 
   async executeTurn(
     turns: BBRTTurn[],
-    tools: BBRTTool[]
+    tools: BBRTTool[],
+    systemInstruction: string
   ): Promise<Result<AsyncIterableIterator<BBRTChunk>>> {
     const messages = await convertTurnsForOpenAi(turns);
     const request: OpenAIChatRequest = {
@@ -38,6 +39,9 @@ export class OpenAiDriver implements BBRTDriver {
       stream: true,
       messages,
     };
+    if (systemInstruction.length > 0) {
+      messages.push({ role: "system", content: systemInstruction });
+    }
     if (tools.length > 0) {
       const openAiTools = await convertToolsForOpenAi([...tools.values()]);
       if (!openAiTools.ok) {

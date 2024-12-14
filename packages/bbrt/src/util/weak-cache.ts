@@ -10,26 +10,12 @@ export class WeakCache<K, T extends WeakKey> {
     this.#cache.delete(key)
   );
 
-  has(key: K): boolean {
-    return this.#cache.has(key);
-  }
-
   get(key: K): T | undefined {
     return this.#cache.get(key)?.deref();
   }
 
   set(key: K, value: T) {
     this.#cache.set(key, new WeakRef(value));
-    this.#finalizers.register(value, key, { key });
-  }
-
-  getOrCreate(key: K, factory: (key: K) => T): T {
-    if (this.has(key)) {
-      return this.get(key)!;
-    } else {
-      const value = factory(key);
-      this.set(key, value);
-      return value;
-    }
+    this.#finalizers.register(value, key);
   }
 }

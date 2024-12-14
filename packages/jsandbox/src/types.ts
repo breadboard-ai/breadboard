@@ -28,6 +28,7 @@ export type CapabilitySpec = {
   fetch?: Capability;
   invoke?: Capability;
   secrets?: Capability;
+  output?: Capability;
 };
 
 export type Sandbox = {
