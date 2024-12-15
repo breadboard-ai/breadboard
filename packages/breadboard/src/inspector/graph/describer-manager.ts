@@ -344,14 +344,25 @@ class GraphDescriberManager {
 
         const moduleId = customDescriber.slice("module:".length);
 
-        const result = await invokeDescriber(
-          moduleId,
-          sandbox,
-          this.handle.graph(),
-          inputs,
-          inputSchema,
-          outputSchema
-        );
+        let result;
+        if (this.handle.main() === moduleId) {
+          result = await invokeMainDescriber(
+            sandbox,
+            this.handle.graph(),
+            inputs,
+            inputSchema,
+            outputSchema
+          );
+        } else {
+          result = await invokeDescriber(
+            moduleId,
+            sandbox,
+            this.handle.graph(),
+            inputs,
+            inputSchema,
+            outputSchema
+          );
+        }
         if (result) {
           return { success: true, result };
         }
