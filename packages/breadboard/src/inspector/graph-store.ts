@@ -22,6 +22,7 @@ import {
   MainGraphIdentifier,
   MutableGraph,
   MutableGraphStore,
+  AddResult,
 } from "./types.js";
 import { hash } from "../utils/hash.js";
 import { Kit, NodeHandlerContext, NodeHandlerMetadata } from "../types.js";
@@ -31,6 +32,7 @@ import { SnapshotUpdater } from "../utils/snapshot-updater.js";
 import { UpdateEvent } from "./graph/event.js";
 import { createBuiltInKit } from "./graph/kits.js";
 import { graphUrlLike } from "../utils/graph-url-like.js";
+import { getGraphUrl, getGraphUrlComponents } from "../loader/loader.js";
 
 export { GraphStore, makeTerribleOptions, contextFromStore };
 
@@ -151,7 +153,7 @@ class GraphStore
   registerKit(kit: Kit, dependences: MainGraphIdentifier[]): void {
     Object.keys(kit.handlers).forEach((type) => {
       if (graphUrlLike(type)) {
-        const mutable = this.addByURL(type, dependences, {});
+        const mutable = this.addByURL(type, dependences, {}).mutable;
         mutable.legacyKitMetadata = filterEmptyValues({
           url: kit.url,
           title: kit.title,
@@ -224,21 +226,32 @@ class GraphStore
   }
 
   addByURL(
-    url: string,
+    path: string,
     dependencies: MainGraphIdentifier[],
     context: GraphLoaderContext = {}
-  ): MutableGraph {
-    const id = this.#mainGraphIds.get(url);
+  ): AddResult {
+    const { mainGraphUrl, graphId, moduleId } = getGraphUrlComponents(
+      getGraphUrl(path, context)
+    );
+    const id = this.#mainGraphIds.get(mainGraphUrl);
     if (id) {
       this.#addDependencies(id, dependencies);
-      return this.#mutables.get(id)!.current();
+      return { mutable: this.#mutables.get(id)!.current(), graphId, moduleId };
     }
-    const snapshot = this.#snapshotFromUrl(url, context);
+    const snapshot = this.#snapshotFromUrl(mainGraphUrl, context);
     const mutable = snapshot.current();
     this.#mutables.set(mutable.id, snapshot);
-    this.#mainGraphIds.set(url, mutable.id);
+    this.#mainGraphIds.set(mainGraphUrl, mutable.id);
     this.#addDependencies(mutable.id, dependencies);
-    return mutable;
+    return { mutable, graphId, moduleId };
+  }
+
+  async getLatest(mutable: MutableGraph): Promise<MutableGraph> {
+    const snapshot = this.#mutables.get(mutable.id);
+    if (!snapshot) {
+      return mutable;
+    }
+    return snapshot.latest();
   }
 
   #addDependencies(

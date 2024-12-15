@@ -15,7 +15,32 @@ import type {
 
 export const SENTINEL_BASE_URL = new URL("sentinel://sentinel/sentinel");
 
-export { resolveGraph };
+export { resolveGraph, getGraphUrl, getGraphUrlComponents };
+
+function getGraphUrl(path: string, context: GraphLoaderContext): URL {
+  const base = baseURLFromContext(context);
+  return new URL(path, base);
+}
+
+function getGraphUrlComponents(url: URL): {
+  mainGraphUrl: string;
+  graphId: string;
+  moduleId?: string;
+} {
+  const noHash = removeHash(url);
+  const mainGraphUrl = noHash.href;
+  const graphId = url.hash.slice(1);
+  if (graphId.startsWith("module:")) {
+    return {
+      mainGraphUrl,
+      graphId: "",
+      moduleId: graphId.slice("module:".length),
+    };
+  } else if (graphId) {
+    return { mainGraphUrl, graphId };
+  }
+  return { mainGraphUrl, graphId: "" };
+}
 
 function resolveGraph(graphToRun: GraphToRun): GraphDescriptor {
   const { graph, subGraphId, moduleId } = graphToRun;
@@ -135,9 +160,7 @@ export class Loader implements GraphLoader {
       return this.#getSubgraph(null, path.substring(1), supergraph);
     }
 
-    const base = baseURLFromContext(context);
-
-    const url = new URL(path, base);
+    const url = getGraphUrl(path, context);
 
     // If we don't have a hash, just load the graph.
     if (!url.hash) {

@@ -709,6 +709,13 @@ type GraphsStoreEventMap = {
 
 export type GraphStoreEventTarget = TypedEventTarget<GraphsStoreEventMap>;
 
+export type AddResult = {
+  mutable: MutableGraph;
+  graphId: GraphIdentifier;
+  // NEED THIS, because describing is different for graphs and modules
+  moduleId?: ModuleIdentifier;
+};
+
 export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> & {
   readonly kits: readonly Kit[];
   readonly sandbox: Sandbox;
@@ -730,7 +737,10 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> & {
     url: string,
     dependencies: MainGraphIdentifier[],
     context: GraphLoaderContext
-  ): MutableGraph;
+  ): AddResult;
+
+  getLatest(mutable: MutableGraph): Promise<MutableGraph>;
+
   addByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier>;
   getByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier>;
   editByDescriptor(
