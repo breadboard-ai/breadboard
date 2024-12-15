@@ -116,6 +116,11 @@ function createDescribeHandler(context: NodeHandlerContext) {
     if (!graphStore) {
       return { $error: "Unable to describe: GraphStore is unavailable." };
     }
+    if (typeof inputs.url !== "string") {
+      return {
+        $error: `Unable to describe: "${inputs.url}" is not a string`,
+      };
+    }
     const addResult = graphStore.addByURL(inputs.url, [], context);
     const mutable = await graphStore.getLatest(addResult.mutable);
 
