@@ -94,6 +94,39 @@ function createOutputHandler(context: NodeHandlerContext) {
   }) as Capability;
 }
 
+type DescribeInputs = {
+  url: string;
+  inputs?: InputValues;
+  inputSchema?: Schema;
+  outputSchema?: Schema;
+};
+
+type DescribeOutputs = {
+  $error?: string;
+  inputSchema?: Schema;
+  outputSchema?: Schema;
+};
+
+function createDescribeHandler(context: NodeHandlerContext) {
+  return (async (
+    inputs: DescribeInputs,
+    _invocationPath: number[]
+  ): Promise<DescribeOutputs> => {
+    const graphStore = context.graphStore;
+    if (!graphStore) {
+      return { $error: "Unable to describe: GraphStore is unavailable." };
+    }
+    const mutable = await graphStore.getLatest(
+      graphStore.addByURL(inputs.url, [], context)
+    );
+
+    // Currently, can only describe the main graph.
+    // TODO: Implement subgraph support.
+    const result = await mutable.graphs.get("")!.describe(inputs.inputs);
+    return result;
+  }) as Capability;
+}
+
 function addSandboxedRunModule(sandbox: Sandbox, kits: Kit[]): Kit[] {
   const existingRunModule = findHandler("runModule", kits);
   const originalDescriber =
@@ -133,6 +166,7 @@ function addSandboxedRunModule(sandbox: Sandbox, kits: Kit[]): Kit[] {
                 secrets: getHandler("secrets", context),
                 invoke: getHandler("invoke", context),
                 output: createOutputHandler(context),
+                describe: createDescribeHandler(context),
               },
               modules
             );

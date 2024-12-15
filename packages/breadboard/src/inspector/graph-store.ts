@@ -241,6 +241,14 @@ class GraphStore
     return mutable;
   }
 
+  async getLatest(mutable: MutableGraph): Promise<MutableGraph> {
+    const snapshot = this.#mutables.get(mutable.id);
+    if (!snapshot) {
+      return mutable;
+    }
+    return snapshot.latest();
+  }
+
   #addDependencies(
     id: MainGraphIdentifier,
     dependencies: MainGraphIdentifier[]

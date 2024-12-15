@@ -114,7 +114,8 @@ pub async fn run_module(
         "fetch",
         "invoke",
         "secrets",
-        "output"
+        "output",
+        "describe"
     );
 
     let mut peer_loader = BuiltinLoader::default();

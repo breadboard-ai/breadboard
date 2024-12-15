@@ -124,6 +124,7 @@ export class Run extends EventTarget {
       ...config,
       kits: [...this.graphStore.kits, ...tab.boardServerKits],
       signal: abortController.signal,
+      graphStore: this.graphStore,
     };
 
     const runner = this.#createBoardRunner(config, abortController);

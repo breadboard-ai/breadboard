@@ -8,7 +8,7 @@ import { OutputValues, UUID } from "@breadboard-ai/types";
 import { Telemetry } from "./telemetry.js";
 import { Capability, CapabilitySpec } from "./types.js";
 
-export { fetch, secrets, invoke, output, Capabilities };
+export { fetch, secrets, invoke, output, describe, Capabilities };
 
 type Installed = {
   capabilities: Map<string, Capability>;
@@ -94,4 +94,8 @@ async function invoke(invocationId: UUID, inputs: string) {
 
 async function output(invocationId: UUID, inputs: string) {
   return Capabilities.instance().invoke(invocationId, "output", inputs);
+}
+
+async function describe(invocationId: UUID, inputs: string) {
+  return Capabilities.instance().invoke(invocationId, "describe", inputs);
 }

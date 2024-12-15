@@ -731,6 +731,9 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> & {
     dependencies: MainGraphIdentifier[],
     context: GraphLoaderContext
   ): MutableGraph;
+
+  getLatest(mutable: MutableGraph): Promise<MutableGraph>;
+
   addByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier>;
   getByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier>;
   editByDescriptor(
