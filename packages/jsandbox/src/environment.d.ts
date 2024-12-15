@@ -136,6 +136,7 @@ declare module "@describe" {
   };
 
   export type DescribeOutputs = {
+    $error?: string;
     inputSchema: Schema;
     outputSchema: Schema;
   };

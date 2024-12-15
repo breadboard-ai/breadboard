@@ -116,14 +116,35 @@ function createDescribeHandler(context: NodeHandlerContext) {
     if (!graphStore) {
       return { $error: "Unable to describe: GraphStore is unavailable." };
     }
-    const mutable = await graphStore.getLatest(
-      graphStore.addByURL(inputs.url, [], context)
-    );
+    const addResult = graphStore.addByURL(inputs.url, [], context);
+    const mutable = await graphStore.getLatest(addResult.mutable);
 
-    // Currently, can only describe the main graph.
-    // TODO: Implement subgraph support.
-    const result = await mutable.graphs.get("")!.describe(inputs.inputs);
-    return result;
+    const inspectable = mutable.graphs.get(addResult.graphId);
+
+    if (!inspectable) {
+      return {
+        $error: `Unable to describe: ${inputs.url}: is not inspectable`,
+      };
+    }
+
+    if (addResult.moduleId) {
+      const result = await invokeDescriber(
+        addResult.moduleId,
+        graphStore.sandbox,
+        mutable.graph,
+        inputs.inputs || {},
+        inputs.inputSchema,
+        inputs.outputSchema
+      );
+      if (!result) {
+        return {
+          $error: `Unable to describe: ${addResult.moduleId} has no describer`,
+        };
+      }
+      return result;
+    } else {
+      return inspectable.describe(inputs.inputs);
+    }
   }) as Capability;
 }
 
