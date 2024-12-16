@@ -79,6 +79,7 @@ describe("getGraphHandler", () => {
     );
     ok(description !== undefined);
     deepStrictEqual(description, {
+      title: "simple",
       inputSchema: {
         additionalProperties: false,
         properties: {

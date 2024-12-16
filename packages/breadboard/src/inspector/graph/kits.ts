@@ -163,7 +163,7 @@ function collectCustomNodeTypes(
     .sort()
     .map((type) => {
       if (graphUrlLike(type)) {
-        const mutable = store.addByURL(type, dependencies, {});
+        const mutable = store.addByURL(type, dependencies, {}).mutable;
         return new CustomNodeType(type, mutable);
       }
       throw new Error(`Unknown custom node type: ${type}`);
@@ -312,7 +312,7 @@ class CustomNodeType implements InspectableNodeType {
       this.#type,
       [this.#mutable.id],
       {}
-    );
+    ).mutable;
     return toNodeHandlerMetadata(graph.graph);
   }
 

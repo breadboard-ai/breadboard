@@ -898,7 +898,7 @@ export class ModuleEditor extends LitElement {
             <div id="module-graph">
               <bb-graph-renderer
                 .padding=${28}
-                .topGraphUrl=${this.graph?.raw().url ?? "no-url"}
+                .topGraphUrl=${globalThis.crypto.randomUUID()}
                 .topGraphResult=${this.topGraphResult}
                 .assetPrefix=${this.assetPrefix}
                 .configs=${this.#createModuleGraphConfig(isMainModule)}

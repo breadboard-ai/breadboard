@@ -137,6 +137,35 @@ declare module "@output" {
   export default function output(inputs: OutputInputs): Promise<OutputOutputs>;
 }
 
+declare module "@describe" {
+  export type DescribeInputs = {
+    url: string;
+    inputs?: Values;
+    inputSchema?: Schema;
+    outputSchema?: Schema;
+  };
+
+  export type DescribeOutputs = {
+    $error?: string;
+    title?: string;
+    description?: string;
+    metadata?: {
+      icon?: string;
+      tags?: string[];
+      help?: {
+        description?: string;
+        url: string;
+      };
+    };
+    inputSchema: Schema;
+    outputSchema: Schema;
+  };
+
+  export default function describe(
+    inputs: DescribeInputs
+  ): Promise<DescribeOutputs>;
+}
+
 declare type FunctionCallCapabilityPart = {
   functionCall: {
     name: string;

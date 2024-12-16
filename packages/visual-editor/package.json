@@ -323,7 +323,7 @@
     "vitest": "^2.1.5"
   },
   "dependencies": {
-    "@breadboard-ai/bbrt": "^0.0.1",
+    "@breadboard-ai/bbrt": "0.0.1",
     "@breadboard-ai/board-server-management": "1.19.1",
     "@breadboard-ai/board-server-utils": "0.1.6",
     "@breadboard-ai/build": "0.11.0",
@@ -359,7 +359,7 @@
     "idb-keyval": "^6.2.1",
     "lit": "^3.2.1",
     "markdown-it": "^14.1.0",
-    "pixi.js": "^8.5.2",
+    "pixi.js": "^8.6.5",
     "prettier": "^3.4.1"
   }
 }

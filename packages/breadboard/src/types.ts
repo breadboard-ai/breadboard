@@ -21,6 +21,8 @@ import type {
   Probe,
   GraphIdentifier,
   ModuleIdentifier,
+  GraphInlineMetadata,
+  GraphMetadata,
 } from "@breadboard-ai/types";
 import { GraphLoader } from "./loader/types.js";
 import { DataStore } from "./data/types.js";
@@ -205,7 +207,8 @@ export type ReservedNodeNames = {
 /**
  * The result of running `NodeDescriptorFunction`
  */
-export type NodeDescriberResult = {
+export type NodeDescriberResult = GraphInlineMetadata & {
+  metadata?: GraphMetadata;
   inputSchema: Schema;
   outputSchema: Schema;
 };

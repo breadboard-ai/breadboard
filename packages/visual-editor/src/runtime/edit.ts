@@ -13,6 +13,7 @@ import {
   GraphLoader,
   GraphProvider,
   Kit,
+  MoveToGraphTransform,
   MutableGraphStore,
   NodeConfiguration,
   NodeDescriptor,
@@ -23,6 +24,7 @@ import {
   EnhanceSideboard,
   Tab,
   TabId,
+  WorkspaceSelectionState,
   WorkspaceVisualChangeId,
   WorkspaceVisualState,
 } from "./types";
@@ -33,6 +35,7 @@ import {
   RuntimeVisualChangeEvent,
 } from "./events";
 import {
+  CommentNode,
   GraphIdentifier,
   GraphMetadata,
   GraphTag,
@@ -45,7 +48,7 @@ import {
   NodeValue,
 } from "@breadboard-ai/types";
 import { Sandbox } from "@breadboard-ai/jsandbox";
-import { MAIN_BOARD_ID } from "./util";
+import { createGraphId, MAIN_BOARD_ID } from "./util";
 
 function isGraphDescriptor(source: unknown): source is GraphDescriptor {
   return (
@@ -1315,6 +1318,142 @@ export class Edit extends EventTarget {
       edits,
       `Change partial configuration for "${id}"`
     );
+  }
+
+  async moveToNewGraph(
+    tab: Tab | null,
+    selectionState: WorkspaceSelectionState,
+    targetGraphId: GraphIdentifier | null,
+    delta: { x: number; y: number }
+  ) {
+    if (tab?.readOnly) {
+      return;
+    }
+
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
+      return;
+    }
+
+    const newGraphId = targetGraphId ?? createGraphId();
+    const inspectableGraphId = newGraphId === MAIN_BOARD_ID ? "" : newGraphId;
+
+    const edits: EditSpec[] = [];
+    const commentsForNewGraph: CommentNode[] = [];
+    const nodeIds: NodeIdentifier[] = [];
+
+    let hasEdited = false;
+    for (const [sourceGraphId, graph] of selectionState.graphs) {
+      const inspectableSourceGraphId =
+        sourceGraphId === MAIN_BOARD_ID ? "" : sourceGraphId;
+      // Make the new graph if needed.
+      if (
+        newGraphId !== MAIN_BOARD_ID &&
+        (!editableGraph.raw().graphs ||
+          !editableGraph.raw().graphs?.[newGraphId])
+      ) {
+        await editableGraph.edit(
+          [
+            {
+              type: "addgraph",
+              id: newGraphId,
+              graph: { nodes: [], edges: [], title: "New Board" },
+            },
+          ],
+          "Create new graph"
+        );
+      }
+
+      // Skip transforms where the target is the same as the source.
+      if (inspectableGraphId === inspectableSourceGraphId) {
+        continue;
+      }
+
+      hasEdited = true;
+
+      if (graph.comments.size > 0) {
+        const metadata =
+          editableGraph.inspect(inspectableSourceGraphId).metadata() ?? {};
+        const comments = metadata.comments ?? [];
+        const graphCommentsAfterEdit: CommentNode[] = [];
+        for (const comment of comments) {
+          if (graph.comments.has(comment.id)) {
+            const newComment = structuredClone(comment);
+            commentsForNewGraph.push(newComment);
+            newComment.metadata ??= {};
+            newComment.metadata.visual ??= { x: 0, y: 0 };
+
+            const visual = newComment.metadata.visual as Record<string, number>;
+            visual.x += delta.x;
+            visual.y += delta.y;
+          } else {
+            graphCommentsAfterEdit.push(comment);
+          }
+        }
+
+        // Update the graph's comments.
+        metadata.comments = graphCommentsAfterEdit;
+        edits.push({
+          type: "changegraphmetadata",
+          graphId: inspectableSourceGraphId,
+          metadata,
+        });
+      }
+
+      // Track the nodes seen so that we can update their location values.
+      nodeIds.push(...graph.nodes);
+
+      // Transform all the selected nodes into it.
+      const transform = new MoveToGraphTransform(
+        [...graph.nodes],
+        inspectableSourceGraphId,
+        inspectableGraphId
+      );
+
+      const result = await editableGraph.apply(transform);
+      if (!result.success) {
+        this.dispatchEvent(new RuntimeErrorEvent("Unable to transform board"));
+        return;
+      }
+    }
+
+    if (!hasEdited) {
+      return;
+    }
+
+    // Now go through each one and adjust it by the left-most position and
+    // the cursor position.
+    for (const nodeId of nodeIds) {
+      const node = editableGraph.inspect(inspectableGraphId).nodeById(nodeId);
+      if (!node) {
+        continue;
+      }
+
+      const metadata = node.metadata();
+      const visual = (metadata.visual ?? {}) as Record<string, number>;
+
+      visual.x += delta.x;
+      visual.y += delta.y;
+
+      edits.push({
+        type: "changemetadata",
+        id: nodeId,
+        graphId: inspectableGraphId,
+        metadata,
+      });
+    }
+
+    // Finally set comments.
+    edits.push({
+      type: "changegraphmetadata",
+      graphId: inspectableGraphId,
+      metadata: {
+        comments: commentsForNewGraph,
+      },
+    });
+
+    await editableGraph.edit(edits, "Location updates");
   }
 
   deleteNode(tab: Tab | null, id: string, subGraphId: string | null = null) {

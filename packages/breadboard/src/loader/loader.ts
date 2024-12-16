@@ -14,16 +14,42 @@ import type {
 } from "./types.js";
 
 export const SENTINEL_BASE_URL = new URL("sentinel://sentinel/sentinel");
+const MODULE_PREFIX = "module:";
 
-export { resolveGraph };
+export { resolveGraph, getGraphUrl, getGraphUrlComponents };
+
+function getGraphUrl(path: string, context: GraphLoaderContext): URL {
+  const base = baseURLFromContext(context);
+  return new URL(path, base);
+}
+
+function getGraphUrlComponents(url: URL): {
+  mainGraphUrl: string;
+  graphId: string;
+  moduleId?: string;
+} {
+  const noHash = removeHash(url);
+  const mainGraphUrl = noHash.href;
+  const graphId = url.hash.slice(1);
+  if (graphId.startsWith(MODULE_PREFIX)) {
+    return {
+      mainGraphUrl,
+      graphId: "",
+      moduleId: graphId.slice(MODULE_PREFIX.length),
+    };
+  } else if (graphId) {
+    return { mainGraphUrl, graphId };
+  }
+  return { mainGraphUrl, graphId: "" };
+}
 
 function resolveGraph(graphToRun: GraphToRun): GraphDescriptor {
   const { graph, subGraphId, moduleId } = graphToRun;
   if (moduleId) {
     const title = graph.modules?.[moduleId]?.metadata?.title || moduleId;
-    const url = graph.url?.startsWith("module:")
+    const url = graph.url?.startsWith(MODULE_PREFIX)
       ? graph.url
-      : `module:${moduleId}:${graph.url}`;
+      : `${MODULE_PREFIX}${moduleId}:${graph.url}`;
     return { ...graph, main: moduleId, url, title };
   }
   return subGraphId ? graph.graphs![subGraphId] : graph;
@@ -40,14 +66,23 @@ export const sameWithoutHash = (a: URL, b: URL): boolean => {
 };
 
 export const baseURLFromContext = (context: GraphLoaderContext) => {
-  if (context.outerGraph?.url) return new URL(context.outerGraph.url);
-  const invokingBoardURL = context.board?.url;
-  if (invokingBoardURL) return new URL(invokingBoardURL);
+  let urlString;
+  if (context.outerGraph?.url) {
+    urlString = context.outerGraph.url;
+  } else if (context.board?.url) {
+    urlString = context.board?.url;
+  }
+  if (urlString) {
+    // Account for generated module URL, created in `resolveGraph`.
+    if (urlString.startsWith(MODULE_PREFIX)) {
+      // remove MODULE_PREFIX and moduleId
+      urlString = urlString.split(":").slice(2).join(":");
+    }
+    return new URL(urlString);
+  }
   if (context.base) return context.base;
   return SENTINEL_BASE_URL;
 };
-
-const MODULE_PREFIX = "module:";
 
 export class Loader implements GraphLoader {
   #graphProviders: GraphProvider[];
@@ -135,9 +170,7 @@ export class Loader implements GraphLoader {
       return this.#getSubgraph(null, path.substring(1), supergraph);
     }
 
-    const base = baseURLFromContext(context);
-
-    const url = new URL(path, base);
+    const url = getGraphUrl(path, context);
 
     // If we don't have a hash, just load the graph.
     if (!url.hash) {

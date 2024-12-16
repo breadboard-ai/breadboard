@@ -73,6 +73,8 @@ import { GraphNodeReferenceOpts, GraphReferences, GraphOpts } from "./types.js";
 import { isBoardArrayBehavior, isBoardBehavior } from "../../utils/index.js";
 import { getSubItemColor } from "../../utils/subgraph-color.js";
 
+import "./graph-renderer.js";
+
 const ZOOM_KEY = "bb-editor-zoom-to-highlighted-node-during-runs";
 const DATA_TYPE = "text/plain";
 const RIBBON_HEIGHT = 44;
@@ -145,6 +147,9 @@ export class Editor extends LitElement implements DragConnectorReceiver {
   @property()
   showNodeShortcuts = true;
 
+  @property({ reflect: true })
+  hideRibbonMenu = false;
+
   @property()
   topGraphResult: TopGraphRunResult | null = null;
 
@@ -211,6 +216,9 @@ export class Editor extends LitElement implements DragConnectorReceiver {
   @property()
   showBoardReferenceMarkers = false;
 
+  @property()
+  showMainGraphBorder = true;
+
   @state()
   showOverflowMenu = false;
 
@@ -268,6 +276,9 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       width: 100%;
       height: 100%;
       position: relative;
+    }
+
+    :host([hideRibbonMenu="false"]) {
       padding-top: 44px;
     }
 
@@ -295,6 +306,10 @@ export class Editor extends LitElement implements DragConnectorReceiver {
         no-repeat;
       margin-right: var(--bb-grid-size);
       mix-blend-mode: difference;
+    }
+
+    :host([hideRibbonMenu="true"]) bb-graph-ribbon-menu {
+      display: none;
     }
 
     bb-graph-ribbon-menu {
@@ -1048,6 +1063,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     }
 
     const ribbonMenu = html`<bb-graph-ribbon-menu
+      ?hidden=${this.hideRibbonMenu}
       .graph=${this.graph}
       .subGraphId=${this.subGraphId}
       .moduleId=${null}
@@ -1097,6 +1113,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
         .selectionChangeId=${this.selectionState?.selectionChangeId}
         .moveToSelection=${this.selectionState?.moveToSelection}
         .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
+        .showMainGraphBorder=${this.showMainGraphBorder}
       ></bb-graph-renderer>
     </div>`;
 

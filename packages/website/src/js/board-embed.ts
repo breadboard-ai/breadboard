@@ -14,6 +14,7 @@ import GeminiKit from "@google-labs/gemini-kit";
 import AgentKit from "@google-labs/agent-kit/agent.kit.json" assert { type: "json" };
 
 import "@breadboard-ai/shared-ui/editor";
+import "@breadboard-ai/shared-ui/editor";
 
 import {
   GraphDescriptor,
@@ -169,6 +170,8 @@ export class BoardEmbed extends LitElement {
         .showNodePreviewValues=${false}
         .showReadOnlyLabel=${false}
         .readOnly=${true}
+        .hideRibbonMenu=${true}
+        .showMainGraphBorder=${false}
       ></bb-editor>
       <div id="overlay"></div>
       ${this.url

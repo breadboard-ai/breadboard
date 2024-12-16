@@ -29,6 +29,7 @@ export type CapabilitySpec = {
   invoke?: Capability;
   secrets?: Capability;
   output?: Capability;
+  describe?: Capability;
 };
 
 export type Sandbox = {
