@@ -444,11 +444,11 @@ class GraphDescriberManager {
       filterEmptyValues({
         title: graph.title,
         description: graph.description,
-        metadata: {
+        metadata: filterEmptyValues({
           icon: graph.metadata?.icon,
           help: graph.metadata?.help,
           tags: graph.metadata?.tags,
-        },
+        }),
       });
     return {
       ...metadata,
@@ -480,6 +480,12 @@ class GraphDescriberManager {
  */
 function filterEmptyValues<T extends Record<string, unknown>>(obj: T): T {
   return Object.fromEntries(
-    Object.entries(obj).filter(([, value]) => !!value)
+    Object.entries(obj).filter(([, value]) => {
+      if (!value) return false;
+      if (typeof value === "object") {
+        return Object.keys(value).length > 0;
+      }
+      return true;
+    })
   ) as T;
 }
