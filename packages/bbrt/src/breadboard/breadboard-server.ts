@@ -17,9 +17,11 @@ const BOARDS_CACHE_KEY = "bbrt-boards-v1";
 
 export class BreadboardServer {
   readonly #baseUrl: string;
+  readonly #apiKey: string | undefined;
 
-  constructor(url: string) {
+  constructor(url: string, apiKey?: string) {
     this.#baseUrl = url;
+    this.#apiKey = apiKey;
   }
 
   get url() {
@@ -35,7 +37,7 @@ export class BreadboardServer {
       return resultify(() => JSON.parse(cached) as BreadboardBoardListing[]);
     }
     const url = new URL("/boards", this.#baseUrl);
-    const response = await resultify(fetch(url));
+    const response = await resultify(fetch(url, { credentials: "include" }));
     if (!response.ok) {
       return response;
     }
@@ -57,7 +59,10 @@ export class BreadboardServer {
 
   async board(boardPath: string): Promise<Result<GraphDescriptor>> {
     const url = new URL(`/boards/${boardPath}`, this.#baseUrl);
-    const response = await resultify(fetch(url));
+    if (this.#apiKey) {
+      url.searchParams.set("API_KEY", this.#apiKey);
+    }
+    const response = await resultify(fetch(url, { credentials: "include" }));
     if (!response.ok) {
       return response;
     }
