@@ -147,6 +147,16 @@ declare module "@describe" {
 
   export type DescribeOutputs = {
     $error?: string;
+    title?: string;
+    description?: string;
+    metadata?: {
+      icon?: string;
+      tags?: string[];
+      help?: {
+        description?: string;
+        url: string;
+      };
+    };
     inputSchema: Schema;
     outputSchema: Schema;
   };

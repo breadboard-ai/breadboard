@@ -116,6 +116,11 @@ function createDescribeHandler(context: NodeHandlerContext) {
     if (!graphStore) {
       return { $error: "Unable to describe: GraphStore is unavailable." };
     }
+    if (typeof inputs.url !== "string") {
+      return {
+        $error: `Unable to describe: "${inputs.url}" is not a string`,
+      };
+    }
     const addResult = graphStore.addByURL(inputs.url, [], context);
     const mutable = await graphStore.getLatest(addResult.mutable);
 
@@ -277,11 +282,26 @@ async function invokeDescriber(
   );
   const module = new SandboxedModule(sandbox, {}, modules);
   try {
-    return module.describe(moduleId, {
+    const result = (await module.describe(moduleId, {
       inputs,
       inputSchema,
       outputSchema,
-    }) as Promise<NodeDescriberResult>;
+    })) as NodeDescriberResult;
+    const moduleData = declarations[moduleId]!;
+    const metadata: Omit<NodeDescriberResult, "inputSchema" | "outputSchema"> =
+      filterEmptyValues({
+        title: moduleData.metadata?.title,
+        description: moduleData.metadata?.description,
+        metadata: {
+          icon: moduleData.metadata?.icon,
+          help: moduleData.metadata?.help,
+          tags: moduleData.metadata?.tags,
+        },
+      });
+    return {
+      ...metadata,
+      ...result,
+    };
   } catch (e) {
     // swallow the error. It's okay that some modules don't have
     // custom describers.
@@ -304,14 +324,41 @@ async function invokeMainDescriber(
   );
   const module = new SandboxedModule(sandbox, {}, modules);
   try {
-    return module.describe(main, {
+    const result = (await module.describe(main, {
       inputs,
       inputSchema,
       outputSchema,
-    }) as Promise<NodeDescriberResult>;
+    })) as NodeDescriberResult;
+    const metadata: Omit<NodeDescriberResult, "inputSchema" | "outputSchema"> =
+      filterEmptyValues({
+        title: graph.title,
+        description: graph.description,
+        metadata: {
+          icon: graph.metadata?.icon,
+          help: graph.metadata?.help,
+          tags: graph.metadata?.tags,
+        },
+      });
+    return {
+      ...metadata,
+      ...result,
+    };
   } catch (e) {
     // swallow the error. It's okay that some modules don't have
     // custom describers.
   }
   return false;
+}
+
+/**
+ * A utility function to filter out empty (null or undefined) values from
+ * an object.
+ *
+ * @param obj -- The object to filter.
+ * @returns -- The object with empty values removed.
+ */
+function filterEmptyValues<T extends Record<string, unknown>>(obj: T): T {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, value]) => !!value)
+  ) as T;
 }
