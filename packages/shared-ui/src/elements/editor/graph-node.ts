@@ -333,6 +333,10 @@ export class GraphNode extends PIXI.Container {
 
     this.cursor = "pointer";
 
+    let isMoveOp = false;
+    let isCloneOp = false;
+    let cursorStartPosition: PIXI.PointData | null = null;
+
     this.addEventListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
       if (!(evt.target instanceof GraphNode) || !evt.isPrimary) {
         return;
@@ -340,7 +344,10 @@ export class GraphNode extends PIXI.Container {
 
       hasMoved = false;
       dragStart = evt.global.clone();
+      cursorStartPosition = { x: evt.screen.x, y: evt.screen.y };
       originalPosition = this.position.clone();
+      isMoveOp = evt.shiftKey;
+      isCloneOp = evt.altKey;
     });
 
     this.addEventListener(
@@ -350,30 +357,71 @@ export class GraphNode extends PIXI.Container {
           return;
         }
 
+        const isSettled = false;
+
         const scale = this.worldTransform.a;
         const dragPosition = evt.global;
         const dragDeltaX = (dragPosition.x - dragStart.x) / scale;
         const dragDeltaY = (dragPosition.y - dragStart.y) / scale;
 
-        this.x = Math.round(originalPosition.x + dragDeltaX);
-        this.y = Math.round(originalPosition.y + dragDeltaY);
+        this.cursor = "grabbing";
         hasMoved = true;
 
-        this.cursor = "grabbing";
-        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y, false);
+        const x = Math.round(originalPosition.x + dragDeltaX);
+        const y = Math.round(originalPosition.y + dragDeltaY);
+
+        this.emit(
+          GRAPH_OPERATIONS.GRAPH_NODE_MOVED,
+          x,
+          y,
+          isSettled,
+          isMoveOp,
+          isCloneOp,
+          dragPosition
+        );
       }
     );
 
-    const onPointerUp = () => {
-      dragStart = null;
-      originalPosition = null;
-      if (!hasMoved) {
+    const onPointerUp = (evt: PIXI.FederatedPointerEvent) => {
+      if (!dragStart || !originalPosition || !evt.isPrimary) {
         return;
       }
 
-      hasMoved = false;
+      const scale = this.worldTransform.a;
+      const dragPosition = evt.global;
+      const dragDeltaX = (dragPosition.x - dragStart.x) / scale;
+      const dragDeltaY = (dragPosition.y - dragStart.y) / scale;
+
+      this.cursor = "grabbing";
+      hasMoved = true;
+
+      const x = Math.round(originalPosition.x + dragDeltaX);
+      const y = Math.round(originalPosition.y + dragDeltaY);
+
+      dragStart = null;
+      originalPosition = null;
+      if (!hasMoved) {
+        isMoveOp = false;
+        isCloneOp = false;
+        return;
+      }
+
+      const isSettled = true;
       this.cursor = "pointer";
-      this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y, true);
+      this.emit(
+        GRAPH_OPERATIONS.GRAPH_NODE_MOVED,
+        x,
+        y,
+        isSettled,
+        isMoveOp,
+        isCloneOp,
+        cursorStartPosition
+      );
+
+      cursorStartPosition = null;
+      hasMoved = false;
+      isMoveOp = false;
+      isCloneOp = false;
     };
 
     this.addEventListener("pointerupoutside", onPointerUp);
@@ -728,10 +776,10 @@ export class GraphNode extends PIXI.Container {
     for (const [inPortName, portItem] of this.#inPortsData) {
       if (!ports.find((inPort) => inPort.name === inPortName)) {
         portItem?.label.removeFromParent();
-        portItem?.label.destroy();
+        portItem?.label.destroy({ children: true });
 
         portItem?.nodePort.removeFromParent();
-        portItem?.nodePort.destroy();
+        portItem?.nodePort.destroy({ children: true });
 
         this.#inPortsData.delete(inPortName);
       }
@@ -828,10 +876,10 @@ export class GraphNode extends PIXI.Container {
     for (const [outPortName, portItem] of this.#outPortsData) {
       if (!ports.find((outPort) => outPort.name === outPortName)) {
         portItem?.label.removeFromParent();
-        portItem?.label.destroy();
+        portItem?.label.destroy({ children: true });
 
         portItem?.nodePort.removeFromParent();
-        portItem?.nodePort.destroy();
+        portItem?.nodePort.destroy({ children: true });
 
         this.#outPortsData.delete(outPortName);
       }
@@ -1225,7 +1273,7 @@ export class GraphNode extends PIXI.Container {
       const existingBackground = this.#background;
       existingBackground.removeFromParent();
       requestAnimationFrame(() => {
-        existingBackground.destroy();
+        existingBackground.destroy({ children: true });
       });
 
       this.#background = new PIXI.Graphics();

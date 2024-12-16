@@ -383,6 +383,17 @@ export class KitNodeChosenEvent extends Event {
  * Workspace management
  */
 
+export class WorkspaceSelectionMoveEvent extends Event {
+  static eventName = "bbworkspaceselectionmove";
+  constructor(
+    public readonly selections: WorkspaceSelectionState,
+    public readonly targetGraphId: GraphIdentifier | null,
+    public readonly delta: { x: number; y: number }
+  ) {
+    super(WorkspaceSelectionMoveEvent.eventName, { ...eventInit });
+  }
+}
+
 export class WorkspaceVisualUpdateEvent extends Event {
   static eventName = "bbworkspacevisualupdate";
   constructor(

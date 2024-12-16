@@ -3139,6 +3139,20 @@ export class Main extends LitElement {
                 this.#dragConnectorRef.value.source = evt.graphId;
                 this.showBoardReferenceMarkers = true;
               }}
+              @bbworkspaceselectionmove=${async (
+                evt: BreadboardUI.Events.WorkspaceSelectionMoveEvent
+              ) => {
+                if (!this.tab) {
+                  return;
+                }
+
+                await this.#runtime.edit.moveToNewGraph(
+                  this.tab,
+                  evt.selections,
+                  evt.targetGraphId,
+                  evt.delta
+                );
+              }}
               @bbnodecreatereference=${async (
                 evt: BreadboardUI.Events.NodeCreateReferenceEvent
               ) => {

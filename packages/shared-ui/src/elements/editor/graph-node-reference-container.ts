@@ -98,7 +98,7 @@ export class GraphNodeReferenceContainer extends PIXI.Container {
       }
 
       child.removeFromParent();
-      child.destroy();
+      child.destroy({ children: true });
     }
   }
 
