@@ -666,7 +666,6 @@ export class Editor extends LitElement implements DragConnectorReceiver {
 
   #lastGraphUrl: string | null = null;
   protected shouldUpdate(changedProperties: PropertyValues): boolean {
-    console.log("shouldUpdate", changedProperties);
     if (changedProperties.has("graph")) {
       const graphUrl = this.graph?.raw().url;
       const matches = graphUrl === this.#lastGraphUrl;
@@ -695,7 +694,6 @@ export class Editor extends LitElement implements DragConnectorReceiver {
   #configs = new Map<GraphIdentifier, GraphOpts>();
   protected willUpdate(): void {
     this.#configs = this.#convertGraphsToConfigs(this.graph);
-    console.log(this.#configs);
   }
 
   #convertGraphsToConfigs(
