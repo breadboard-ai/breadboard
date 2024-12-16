@@ -91,6 +91,7 @@ const selectionBoxBackgroundColor = getGlobalColor("--bb-neutral-900");
 const selectionBoxBorderColor = getGlobalColor("--bb-neutral-500");
 const ADHOC_EDGE_ERROR_MESSAGE =
   "Ad-hoc port names must only contain lowercase alphanumeric characters and '-'";
+const GRAPH_HIDDEN_ALPHA = 0.0001;
 
 enum MODE {
   MOVE = "move",
@@ -1915,7 +1916,7 @@ export class GraphRenderer extends LitElement {
         continue;
       }
 
-      child.visible = true;
+      child.alpha = 1;
     }
   }
 
@@ -1945,6 +1946,7 @@ export class GraphRenderer extends LitElement {
 
       const graph = new Graph();
       graph.label = graphUrl;
+      graph.alpha = GRAPH_HIDDEN_ALPHA;
 
       // Initial Draw - wait for all graphs before attempting to move.
       if (this.#topGraphUrlChanged) {
