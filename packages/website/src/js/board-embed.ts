@@ -171,6 +171,7 @@ export class BoardEmbed extends LitElement {
         .showReadOnlyLabel=${false}
         .readOnly=${true}
         .hideRibbonMenu=${true}
+        .showMainGraphBorder=${false}
       ></bb-editor>
       <div id="overlay"></div>
       ${this.url

@@ -1104,11 +1104,7 @@ export class GraphRenderer extends LitElement {
 
   #removeGraph(graph: Graph) {
     graph.removeFromParent();
-
-    // Wait a frame before destroying.
-    requestAnimationFrame(() => {
-      graph.destroy({ children: true });
-    });
+    graph.destroy({ children: true });
   }
 
   #removeAllGraphs() {

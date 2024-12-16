@@ -216,6 +216,9 @@ export class Editor extends LitElement implements DragConnectorReceiver {
   @property()
   showBoardReferenceMarkers = false;
 
+  @property()
+  showMainGraphBorder = true;
+
   @state()
   showOverflowMenu = false;
 
@@ -1110,6 +1113,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
         .selectionChangeId=${this.selectionState?.selectionChangeId}
         .moveToSelection=${this.selectionState?.moveToSelection}
         .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
+        .showMainGraphBorder=${this.showMainGraphBorder}
       ></bb-graph-renderer>
     </div>`;
 

@@ -2267,10 +2267,7 @@ export class Graph extends PIXI.Container {
       }
 
       edgeGraphic.removeFromParent();
-      // Wait a frame before destroying.
-      requestAnimationFrame(() => {
-        edgeGraphic.destroy({ children: true });
-      });
+      edgeGraphic.destroy({ children: true });
       this.#edgeGraphics.delete(edgeDescription);
     }
   }
@@ -2288,10 +2285,7 @@ export class Graph extends PIXI.Container {
         }
 
         node.removeFromParent();
-        // Wait a frame before destroying.
-        requestAnimationFrame(() => {
-          node.destroy({ children: true });
-        });
+        node.destroy({ children: true });
         this.#graphNodeById.delete(id);
         this.#layout.delete(id);
       }
