@@ -448,6 +448,8 @@ export class GraphRenderer extends LitElement {
   ) {
     super();
 
+    console.log("Graph renderer");
+
     this.#container.position.set(0, 0);
     this.#container.scale.set(1, 1);
 
