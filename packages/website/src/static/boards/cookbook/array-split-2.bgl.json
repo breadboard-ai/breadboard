@@ -10,9 +10,9 @@
         "text": "Generates an array of values like `[1, 2]`",
         "metadata": {
           "visual": {
-            "x": -147,
-            "y": -39,
-            "collapsed": true
+            "x": -335,
+            "y": -40,
+            "collapsed": "collapsed"
           }
         }
       },
@@ -21,13 +21,14 @@
         "text": "Obtains the value of the first item in the array by selecting it from the result value passed in.\n\nNote that we have to create a [\"dynamic wire\"](https://breadboard-ai.github.io/breadboard/docs/visual-editor/components/#dynamic-wires) from the Number Generator to this `runJavascript` component.",
         "metadata": {
           "visual": {
-            "x": 156,
-            "y": -230,
-            "collapsed": true
+            "x": 110,
+            "y": -224,
+            "collapsed": "collapsed"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   },
   "edges": [
     {
@@ -79,9 +80,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 435,
-          "y": 41,
-          "collapsed": true
+          "x": 508,
+          "y": 55,
+          "collapsed": "collapsed"
         }
       }
     },
@@ -90,9 +91,9 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": -139,
-          "y": 41,
-          "collapsed": true
+          "x": -373,
+          "y": 51,
+          "collapsed": "collapsed"
         },
         "title": "Number Generator",
         "logLevel": "debug"
@@ -107,9 +108,9 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": 167,
-          "y": -28,
-          "collapsed": true
+          "x": 73,
+          "y": -21,
+          "collapsed": "collapsed"
         },
         "title": "First Number",
         "logLevel": "debug"
@@ -124,9 +125,9 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": 162,
-          "y": 104,
-          "collapsed": true
+          "x": 75,
+          "y": 111,
+          "collapsed": "collapsed"
         },
         "title": "Second Number",
         "logLevel": "debug"

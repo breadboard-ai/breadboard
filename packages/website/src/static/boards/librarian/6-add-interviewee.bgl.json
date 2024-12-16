@@ -8,14 +8,15 @@
         "text": "Step 6: **Put Human in the loop**",
         "metadata": {
           "visual": {
-            "x": -284,
-            "y": -182,
-            "collapsed": false
+            "x": -521.9999999999993,
+            "y": -152,
+            "collapsed": "expanded"
           }
         }
       }
     ],
-    "tags": []
+    "tags": [],
+    "visual": {}
   },
   "edges": [
     {
@@ -88,9 +89,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -281.9999999999998,
-          "y": -92.00000000000007,
-          "collapsed": false
+          "x": -519.9999999999989,
+          "y": -62.000000000000114,
+          "collapsed": "expanded"
         }
       }
     },
@@ -99,9 +100,9 @@
       "type": "looper",
       "metadata": {
         "visual": {
-          "x": -78.99999999999991,
-          "y": -99.00000000000011,
-          "collapsed": false
+          "x": -233.99999999999955,
+          "y": -151.00000000000026,
+          "collapsed": "expanded"
         },
         "title": "Interview Planner",
         "logLevel": "debug"
@@ -122,9 +123,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": -55.99999999999993,
-          "y": 119.9999999999998,
-          "collapsed": false
+          "x": -429.0000000000003,
+          "y": 243.99999999999994,
+          "collapsed": "expanded"
         },
         "title": "Interviewer",
         "logLevel": "debug"
@@ -145,9 +146,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 149,
-          "y": -118.0000000000001,
-          "collapsed": false
+          "x": 169,
+          "y": -122,
+          "collapsed": "expanded"
         },
         "title": "Researcher",
         "logLevel": "debug"
@@ -171,9 +172,9 @@
       "type": "human",
       "metadata": {
         "visual": {
-          "x": 178.99999999999994,
-          "y": 79.99999999999977,
-          "collapsed": false
+          "x": 35,
+          "y": 377.99999999999994,
+          "collapsed": "expanded"
         },
         "title": "Interviewee",
         "logLevel": "debug"
@@ -204,9 +205,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 472.0000000000001,
-          "y": 12.999999999999773,
-          "collapsed": false
+          "x": 605,
+          "y": 298,
+          "collapsed": "expanded"
         }
       }
     },
@@ -215,9 +216,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 392,
-          "y": -158.00000000000003,
-          "collapsed": false
+          "x": 570,
+          "y": -121,
+          "collapsed": "expanded"
         },
         "title": "Summarizer",
         "logLevel": "debug"

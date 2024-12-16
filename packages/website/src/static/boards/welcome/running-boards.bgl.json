@@ -15,7 +15,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
             }
@@ -26,9 +28,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 2.842170943040401e-14,
-          "y": 1.1368683772161603e-13,
-          "collapsed": false
+          "x": -217,
+          "y": -87,
+          "collapsed": "expanded"
         }
       }
     },
@@ -44,7 +46,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "null"
             }
@@ -55,9 +59,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 173,
-          "y": 1.1368683772161603e-13,
-          "collapsed": false
+          "x": 171,
+          "y": -75,
+          "collapsed": "expanded"
         }
       }
     }
@@ -77,9 +81,9 @@
         "text": "Previous: [Kits](board:kits.bgl.json)",
         "metadata": {
           "visual": {
-            "x": -184.00000000000003,
+            "x": -184,
             "y": -148.99999999999997,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -88,13 +92,14 @@
         "text": "Next: [To be continued...](board:welcome.bgl.json)",
         "metadata": {
           "visual": {
-            "x": 198,
-            "y": 161,
-            "collapsed": false
+            "x": 186,
+            "y": 41,
+            "collapsed": "expanded"
           }
         }
       }
     ],
-    "tags": []
+    "tags": [],
+    "visual": {}
   }
 }

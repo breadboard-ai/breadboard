@@ -8,9 +8,9 @@
         "text": "The body of the looper starts here ...",
         "metadata": {
           "visual": {
-            "x": -152,
-            "y": -47,
-            "collapsed": false
+            "x": -410,
+            "y": -25,
+            "collapsed": "expanded"
           }
         }
       },
@@ -19,9 +19,9 @@
         "text": "... and ends here.",
         "metadata": {
           "visual": {
-            "x": 385,
-            "y": -66,
-            "collapsed": false
+            "x": 801,
+            "y": 181,
+            "collapsed": "expanded"
           }
         }
       },
@@ -30,9 +30,9 @@
         "text": "< back to the Looper",
         "metadata": {
           "visual": {
-            "x": 92,
-            "y": -123,
-            "collapsed": false
+            "x": 487.00000000000006,
+            "y": 31.000000000000057,
+            "collapsed": "expanded"
           }
         }
       },
@@ -41,9 +41,9 @@
         "text": "Loop exit",
         "metadata": {
           "visual": {
-            "x": 274,
-            "y": -231,
-            "collapsed": false
+            "x": 387.00000000000017,
+            "y": -175.99999999999994,
+            "collapsed": "expanded"
           }
         }
       },
@@ -52,13 +52,14 @@
         "text": "Loop entrance",
         "metadata": {
           "visual": {
-            "x": -51,
-            "y": -231,
-            "collapsed": false
+            "x": -152,
+            "y": -197,
+            "collapsed": "expanded"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   },
   "edges": [
     {
@@ -111,7 +112,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
             }
@@ -122,9 +125,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -195,
-          "y": -245,
-          "collapsed": false
+          "x": -412,
+          "y": -184.99999999999994,
+          "collapsed": "expanded"
         }
       }
     },
@@ -140,7 +143,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "null"
             }
@@ -151,9 +156,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 412,
-          "y": -245,
-          "collapsed": false
+          "x": 531,
+          "y": -186.99999999999994,
+          "collapsed": "expanded"
         }
       }
     },
@@ -162,9 +167,9 @@
       "type": "looper",
       "metadata": {
         "visual": {
-          "x": 76,
-          "y": -245,
-          "collapsed": false
+          "x": 36,
+          "y": -220,
+          "collapsed": "expanded"
         },
         "title": "Looper",
         "logLevel": "debug"
@@ -175,9 +180,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": -140,
-          "y": 7,
-          "collapsed": false
+          "x": -339,
+          "y": 110,
+          "collapsed": "expanded"
         },
         "title": "Writer",
         "logLevel": "debug"
@@ -188,9 +193,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 78,
-          "y": -16,
-          "collapsed": false
+          "x": 47.99999999999977,
+          "y": 107.00000000000006,
+          "collapsed": "expanded"
         },
         "title": "Critic",
         "logLevel": "debug"
@@ -201,9 +206,9 @@
       "type": "human",
       "metadata": {
         "visual": {
-          "x": 292,
-          "y": -29,
-          "collapsed": false
+          "x": 430.9999999999994,
+          "y": 135.00000000000006,
+          "collapsed": "expanded"
         },
         "title": "Reviewer",
         "logLevel": "debug"

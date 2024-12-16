@@ -9,14 +9,15 @@
         "text": "Step 2: **Add Summarizer**",
         "metadata": {
           "visual": {
-            "x": -121,
-            "y": -136,
-            "collapsed": false
+            "x": -281,
+            "y": -82,
+            "collapsed": "expanded"
           }
         }
       }
     ],
-    "tags": []
+    "tags": [],
+    "visual": {}
   },
   "edges": [
     {
@@ -58,9 +59,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -123,
-          "y": -42,
-          "collapsed": false
+          "x": -287,
+          "y": -11,
+          "collapsed": "expanded"
         }
       }
     },
@@ -89,9 +90,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 312,
-          "y": -58,
-          "collapsed": false
+          "x": 421,
+          "y": -21,
+          "collapsed": "expanded"
         }
       }
     },
@@ -100,9 +101,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 49,
-          "y": -40,
-          "collapsed": false
+          "x": 23,
+          "y": -63,
+          "collapsed": "expanded"
         }
       }
     }

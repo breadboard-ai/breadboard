@@ -61,8 +61,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 816.9999999999998,
-          "y": -33,
+          "x": 954.000000000001,
+          "y": -9,
           "collapsed": "expanded"
         },
         "title": "Report",
@@ -74,7 +74,7 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 59.00000000000006,
+          "x": 59.00000000000034,
           "y": -208.99999999999994,
           "collapsed": "expanded"
         },
@@ -112,8 +112,8 @@
       "type": "output",
       "metadata": {
         "visual": {
-          "x": 473.9999999999999,
-          "y": -321.00000000000006,
+          "x": 537.0000000000001,
+          "y": -299,
           "collapsed": "expanded"
         },
         "title": "Intermediate Thought Process",
@@ -146,8 +146,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 446.9999999999999,
-          "y": -45,
+          "x": 520.0000000000001,
+          "y": 10,
           "collapsed": "expanded"
         },
         "title": "Report Writer",
@@ -178,8 +178,8 @@
       "type": "content",
       "metadata": {
         "visual": {
-          "x": -300,
-          "y": 146.9999999999999,
+          "x": -451,
+          "y": 145,
           "collapsed": "expanded"
         },
         "title": "Report Template",
@@ -249,8 +249,8 @@
         "text": "The Researcher loops onto itself, forming a ReAct loop: it continuously generates a thought and an action based on that thought, then invokes tool to produce observations, and repeats the process until it concludes it is done.",
         "metadata": {
           "visual": {
-            "x": 39,
-            "y": -408,
+            "x": 132,
+            "y": -414,
             "collapsed": "expanded"
           }
         }
@@ -260,8 +260,8 @@
         "text": "This output is not technically necessary. It simply gives us a glimpe inside of the ReAct loop.",
         "metadata": {
           "visual": {
-            "x": 460.9999999999999,
-            "y": -437,
+            "x": 588.0000000000001,
+            "y": -422,
             "collapsed": "expanded"
           }
         }
@@ -271,8 +271,8 @@
         "text": "The Report Writer takes all the raw research dug up by the Researcher and turns it into a nice business report. ",
         "metadata": {
           "visual": {
-            "x": 533.9999999999999,
-            "y": -162.00000000000006,
+            "x": 567.0000000000001,
+            "y": -125.00000000000006,
             "collapsed": "expanded"
           }
         }
@@ -282,8 +282,8 @@
         "text": "The Report Template provides one place where we can specify what we would like to be included in the report. It is used by both Researcher and Report Writer.",
         "metadata": {
           "visual": {
-            "x": -220,
-            "y": -14,
+            "x": -456.00000000000006,
+            "y": -43,
             "collapsed": "expanded"
           }
         }
@@ -291,6 +291,7 @@
     ],
     "tags": [
       "published"
-    ]
+    ],
+    "visual": {}
   }
 }

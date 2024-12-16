@@ -20,8 +20,8 @@
       },
       "metadata": {
         "visual": {
-          "x": -296,
-          "y": -118,
+          "x": -404,
+          "y": -10,
           "collapsed": "expanded"
         }
       }
@@ -44,8 +44,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 249,
-          "y": -141,
+          "x": 302,
+          "y": -77,
           "collapsed": "expanded"
         }
       }
@@ -55,8 +55,8 @@
       "type": "invoke",
       "metadata": {
         "visual": {
-          "x": -101,
-          "y": -127,
+          "x": -78,
+          "y": -118,
           "collapsed": "expanded"
         },
         "title": "Greetings",
@@ -94,12 +94,13 @@
         "text": "Invokes the [Make a Greeting](https://breadboard-ai.web.app/?board=https%3A%2F%2Fbreadboard-ai.github.io%2Fbreadboard%2Fstatic%2Fboards%2Fkits%2Fexample-simple-greeting.bgl.json) board.",
         "metadata": {
           "visual": {
-            "x": 20,
-            "y": -205,
+            "x": -47,
+            "y": -196,
             "collapsed": "expanded"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   }
 }

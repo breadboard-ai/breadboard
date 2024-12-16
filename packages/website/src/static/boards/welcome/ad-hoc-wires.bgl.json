@@ -15,7 +15,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
             }
@@ -26,9 +28,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 2.842170943040401e-14,
-          "y": 1.1368683772161603e-13,
-          "collapsed": false
+          "x": -172,
+          "y": -68,
+          "collapsed": "expanded"
         }
       }
     },
@@ -44,7 +46,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "null"
             }
@@ -55,9 +59,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 173,
-          "y": 1.1368683772161603e-13,
-          "collapsed": false
+          "x": 134,
+          "y": -67,
+          "collapsed": "expanded"
         }
       }
     }
@@ -79,7 +83,7 @@
           "visual": {
             "x": -184,
             "y": -149,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -88,13 +92,14 @@
         "text": "Next: [Kits](board:kits.bgl.json)",
         "metadata": {
           "visual": {
-            "x": 198,
-            "y": 161,
-            "collapsed": false
+            "x": 232,
+            "y": 47,
+            "collapsed": "expanded"
           }
         }
       }
     ],
-    "tags": []
+    "tags": [],
+    "visual": {}
   }
 }

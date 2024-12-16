@@ -26,8 +26,8 @@
       },
       "metadata": {
         "visual": {
-          "x": -215,
-          "y": -150,
+          "x": -313,
+          "y": -105,
           "collapsed": "expanded"
         }
       }
@@ -51,8 +51,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 364.00000000000006,
-          "y": -136,
+          "x": 385,
+          "y": -110,
           "collapsed": "expanded"
         }
       }
@@ -62,8 +62,8 @@
       "type": "promptTemplate",
       "metadata": {
         "visual": {
-          "x": 19,
-          "y": -126,
+          "x": -8,
+          "y": -116,
           "collapsed": "expanded"
         },
         "title": "Make a Greeting",
@@ -101,13 +101,14 @@
         "text": "Creates a simple greeting using name and location:\n\n**Hello {{name}} from {{location}}!**",
         "metadata": {
           "visual": {
-            "x": 57.00000000000001,
-            "y": -255.9999999999999,
+            "x": 31,
+            "y": -257,
             "collapsed": "expanded"
           }
         }
       }
     ],
-    "tags": []
+    "tags": [],
+    "visual": {}
   }
 }

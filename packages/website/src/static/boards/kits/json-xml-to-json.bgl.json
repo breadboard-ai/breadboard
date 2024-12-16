@@ -23,8 +23,8 @@
       },
       "metadata": {
         "visual": {
-          "x": -188,
-          "y": 19,
+          "x": -345,
+          "y": -88,
           "collapsed": "expanded"
         }
       }
@@ -47,8 +47,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 278,
-          "y": 25,
+          "x": 355,
+          "y": -73,
           "collapsed": "expanded"
         }
       }
@@ -58,8 +58,8 @@
       "type": "xmlToJson",
       "metadata": {
         "visual": {
-          "x": -2,
-          "y": -137,
+          "x": -19,
+          "y": -86,
           "collapsed": "expanded"
         },
         "title": "Convert XML to JSON",
@@ -88,8 +88,8 @@
         "text": "Takes in a string\nthat contains XML.",
         "metadata": {
           "visual": {
-            "x": -188,
-            "y": -63,
+            "x": -319,
+            "y": -168,
             "collapsed": "expanded"
           }
         }
@@ -99,8 +99,8 @@
         "text": "First, attempts to parse the string as XML.\n\nThen, converts it to alt-json, a format outlined [here](https://developers.google.com/gdata/docs/json).",
         "metadata": {
           "visual": {
-            "x": 45,
-            "y": -260,
+            "x": -5,
+            "y": -227,
             "collapsed": "expanded"
           }
         }
@@ -110,13 +110,14 @@
         "text": "Outputs \nresulting JSON",
         "metadata": {
           "visual": {
-            "x": 280,
-            "y": -69,
+            "x": 395,
+            "y": -155,
             "collapsed": "expanded"
           }
         }
       }
     ],
-    "tags": []
+    "tags": [],
+    "visual": {}
   }
 }

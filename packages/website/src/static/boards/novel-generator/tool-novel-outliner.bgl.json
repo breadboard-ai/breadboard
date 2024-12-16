@@ -28,9 +28,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 163.29296875,
-          "y": -312.60546875,
-          "collapsed": true
+          "x": -113.00000000000006,
+          "y": -305.0000000000004,
+          "collapsed": "collapsed"
         },
         "title": "Input",
         "logLevel": "debug"
@@ -61,9 +61,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 1523.2929687500002,
-          "y": -310.6054687500002,
-          "collapsed": true
+          "x": 2048.9999999999995,
+          "y": -301.00000000000006,
+          "collapsed": "collapsed"
         },
         "title": "Result",
         "logLevel": "debug"
@@ -74,9 +74,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 329.18855729498694,
-          "y": -311.6449007811074,
-          "collapsed": true
+          "x": 156.9999999999999,
+          "y": -305.0000000000004,
+          "collapsed": "collapsed"
         },
         "title": "Author",
         "description": "Description",
@@ -106,9 +106,9 @@
       "type": "human",
       "metadata": {
         "visual": {
-          "x": 1289.29296875,
-          "y": -310.6054687500002,
-          "collapsed": true
+          "x": 1704,
+          "y": -302,
+          "collapsed": "collapsed"
         },
         "title": "Patron",
         "logLevel": "debug",
@@ -124,9 +124,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 594.29296875,
-          "y": -453.6054687500001,
-          "collapsed": true
+          "x": 572.9999999999998,
+          "y": -433.00000000000057,
+          "collapsed": "collapsed"
         },
         "title": "Friend (encouraging)",
         "logLevel": "debug"
@@ -155,9 +155,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 586.29296875,
-          "y": -308.6054687500002,
-          "collapsed": true
+          "x": 572.9999999999998,
+          "y": -304.00000000000034,
+          "collapsed": "collapsed"
         },
         "title": "Friend (skeptical)",
         "logLevel": "debug"
@@ -186,9 +186,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 590.2929687499999,
-          "y": -183.60546875,
-          "collapsed": true
+          "x": 571.9999999999998,
+          "y": -184.00000000000057,
+          "collapsed": "collapsed"
         },
         "title": "Friend (neutral)",
         "logLevel": "debug"
@@ -217,9 +217,9 @@
       "type": "joiner",
       "metadata": {
         "visual": {
-          "x": 1086.29296875,
-          "y": -310.6054687500002,
-          "collapsed": true
+          "x": 1352,
+          "y": -303.00000000000017,
+          "collapsed": "collapsed"
         },
         "title": "SxS",
         "logLevel": "debug"
@@ -231,9 +231,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 835.29296875,
-          "y": -452.60546875000006,
-          "collapsed": true
+          "x": 955.9999999999999,
+          "y": -431,
+          "collapsed": "collapsed"
         },
         "title": "Author",
         "logLevel": "debug"
@@ -262,9 +262,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 827.2929687500001,
-          "y": -308.6054687500001,
-          "collapsed": true
+          "x": 954,
+          "y": -305,
+          "collapsed": "collapsed"
         },
         "title": "Author",
         "logLevel": "debug"
@@ -293,9 +293,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 826.29296875,
-          "y": -183.60546875,
-          "collapsed": true
+          "x": 950.9999999999995,
+          "y": -183.00000000000045,
+          "collapsed": "collapsed"
         },
         "title": "Author",
         "logLevel": "debug"
@@ -401,9 +401,9 @@
         "text": "Writes initial draft",
         "metadata": {
           "visual": {
-            "x": 255.29296875,
-            "y": -389.60546875000017,
-            "collapsed": true
+            "x": 202.9999999999999,
+            "y": -365.0000000000001,
+            "collapsed": "collapsed"
           }
         }
       },
@@ -412,9 +412,9 @@
         "text": "Generates 3 parallel revisions",
         "metadata": {
           "visual": {
-            "x": 695.2929687499999,
-            "y": -562.60546875,
-            "collapsed": true
+            "x": 605,
+            "y": -495.0000000000002,
+            "collapsed": "collapsed"
           }
         }
       },
@@ -423,9 +423,9 @@
         "text": "Offers choice",
         "metadata": {
           "visual": {
-            "x": 1307.29296875,
-            "y": -398.6054687500001,
-            "collapsed": true
+            "x": 1431,
+            "y": -363,
+            "collapsed": "collapsed"
           }
         }
       },
@@ -434,15 +434,16 @@
         "text": "Read the guide: [Building a Novel Generator with the Agent Kit](https://breadboard-ai.github.io/breadboard/docs/guides/novel-generator/)",
         "metadata": {
           "visual": {
-            "x": 171,
-            "y": -563,
-            "collapsed": true
+            "x": -113.00000000000006,
+            "y": -472,
+            "collapsed": "collapsed"
           }
         }
       }
     ],
     "tags": [
       "tool"
-    ]
+    ],
+    "visual": {}
   }
 }

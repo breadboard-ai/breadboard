@@ -22,8 +22,8 @@
       },
       "metadata": {
         "visual": {
-          "x": -200,
-          "y": -9,
+          "x": -307,
+          "y": 0,
           "collapsed": "expanded"
         }
       }
@@ -46,8 +46,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 245,
-          "y": -13,
+          "x": 236,
+          "y": 6,
           "collapsed": "expanded"
         }
       }
@@ -57,8 +57,8 @@
       "type": "nano",
       "metadata": {
         "visual": {
-          "x": 46,
-          "y": -21,
+          "x": -24,
+          "y": -4,
           "collapsed": "expanded"
         },
         "title": "Nano",
@@ -79,5 +79,8 @@
       "out": "text",
       "in": "text"
     }
-  ]
+  ],
+  "metadata": {
+    "visual": {}
+  }
 }

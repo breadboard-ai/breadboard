@@ -10,9 +10,9 @@
         "text": "Generates an array of values like `[1, 2]`",
         "metadata": {
           "visual": {
-            "x": -140,
-            "y": -36,
-            "collapsed": true
+            "x": -314,
+            "y": -32,
+            "collapsed": "collapsed"
           }
         }
       },
@@ -21,13 +21,14 @@
         "text": "Uses [JSONata](https://jsonata.org/) to \"select into\" the array of numbers and grab the item of interest.",
         "metadata": {
           "visual": {
-            "x": 167,
-            "y": -139,
-            "collapsed": true
+            "x": 110,
+            "y": -135,
+            "collapsed": "collapsed"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   },
   "edges": [
     {
@@ -79,9 +80,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 475,
-          "y": 46,
-          "collapsed": true
+          "x": 494,
+          "y": 50,
+          "collapsed": "collapsed"
         }
       }
     },
@@ -90,9 +91,9 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": -145,
-          "y": 44,
-          "collapsed": true
+          "x": -342,
+          "y": 46,
+          "collapsed": "collapsed"
         },
         "title": "Number Generator",
         "logLevel": "debug"
@@ -107,9 +108,9 @@
       "type": "jsonata",
       "metadata": {
         "visual": {
-          "x": 197,
-          "y": -37,
-          "collapsed": true
+          "x": 77,
+          "y": -32,
+          "collapsed": "collapsed"
         },
         "title": "First Number",
         "logLevel": "debug"
@@ -123,9 +124,9 @@
       "type": "jsonata",
       "metadata": {
         "visual": {
-          "x": 188,
-          "y": 120,
-          "collapsed": true
+          "x": 78,
+          "y": 116,
+          "collapsed": "collapsed"
         },
         "title": "Second Number",
         "logLevel": "debug"

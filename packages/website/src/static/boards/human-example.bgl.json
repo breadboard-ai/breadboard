@@ -8,9 +8,9 @@
         "text": "Show Writer's work to the user.",
         "metadata": {
           "visual": {
-            "x": -199,
-            "y": 22,
-            "collapsed": false
+            "x": 421,
+            "y": -51,
+            "collapsed": "expanded"
           }
         }
       },
@@ -19,13 +19,14 @@
         "text": "Let the user provide a review and send it to the Editor.",
         "metadata": {
           "visual": {
-            "x": 123,
-            "y": -75,
-            "collapsed": false
+            "x": -55.99999999999977,
+            "y": 70,
+            "collapsed": "expanded"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   },
   "edges": [
     {
@@ -66,7 +67,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
             }
@@ -77,9 +80,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -173,
-          "y": -217,
-          "collapsed": false
+          "x": -421.99999999999926,
+          "y": -232.99999999999966,
+          "collapsed": "expanded"
         }
       }
     },
@@ -95,7 +98,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "null"
             }
@@ -106,9 +111,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 149,
-          "y": 132,
-          "collapsed": false
+          "x": 621.0000000000003,
+          "y": 77.00000000000011,
+          "collapsed": "expanded"
         }
       }
     },
@@ -117,9 +122,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": -20,
-          "y": -256,
-          "collapsed": false
+          "x": 52.00000000000068,
+          "y": -354,
+          "collapsed": "expanded"
         },
         "title": "Writer",
         "logLevel": "debug"
@@ -130,9 +135,9 @@
       "type": "human",
       "metadata": {
         "visual": {
-          "x": -58,
-          "y": -41,
-          "collapsed": false
+          "x": -391.9999999999995,
+          "y": 107.00000000000023,
+          "collapsed": "expanded"
         },
         "title": "Reviewer",
         "logLevel": "debug"
@@ -143,9 +148,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": -121,
-          "y": 147,
-          "collapsed": false
+          "x": 219.00000000000045,
+          "y": 53.000000000000114,
+          "collapsed": "expanded"
         },
         "title": "Editor",
         "logLevel": "debug"

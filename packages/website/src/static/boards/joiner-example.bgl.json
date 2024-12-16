@@ -8,9 +8,9 @@
         "text": "Writes contents of \na game card",
         "metadata": {
           "visual": {
-            "x": -129,
-            "y": 70,
-            "collapsed": false
+            "x": -379.0000000000005,
+            "y": -40.00000000000068,
+            "collapsed": "expanded"
           }
         }
       },
@@ -19,9 +19,9 @@
         "text": "Uses the contents to craft a prompt and create picture.",
         "metadata": {
           "visual": {
-            "x": -77,
-            "y": -175,
-            "collapsed": false
+            "x": 62,
+            "y": -197.00000000000045,
+            "collapsed": "expanded"
           }
         }
       },
@@ -31,8 +31,8 @@
         "metadata": {
           "visual": {
             "x": 50,
-            "y": -29,
-            "collapsed": false
+            "y": -29.0000000000025,
+            "collapsed": "expanded"
           }
         }
       },
@@ -41,13 +41,14 @@
         "text": "Joins picture, voice, and text into one card.",
         "metadata": {
           "visual": {
-            "x": 268,
-            "y": 113,
-            "collapsed": false
+            "x": 453,
+            "y": 266.99999999999955,
+            "collapsed": "expanded"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   },
   "edges": [
     {
@@ -106,7 +107,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
             }
@@ -117,9 +120,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -213,
-          "y": -127,
-          "collapsed": false
+          "x": -767.9999999999999,
+          "y": 97.9999999999992,
+          "collapsed": "expanded"
         }
       }
     },
@@ -135,7 +138,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "null"
             }
@@ -146,9 +151,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 369,
-          "y": -148,
-          "collapsed": false
+          "x": 796,
+          "y": 108,
+          "collapsed": "expanded"
         }
       }
     },
@@ -157,9 +162,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": -167,
-          "y": 126,
-          "collapsed": false
+          "x": -457,
+          "y": 42.99999999999898,
+          "collapsed": "expanded"
         },
         "title": "Writer",
         "logLevel": "debug"
@@ -170,9 +175,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 45,
-          "y": -123,
-          "collapsed": false
+          "x": 22,
+          "y": -112.00000000000057,
+          "collapsed": "expanded"
         },
         "title": "Illustrator",
         "logLevel": "debug"
@@ -183,9 +188,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 90,
-          "y": 24,
-          "collapsed": false
+          "x": 16.999999999999318,
+          "y": 213.99999999999932,
+          "collapsed": "expanded"
         },
         "title": "Narrator",
         "logLevel": "debug"
@@ -196,9 +201,9 @@
       "type": "joiner",
       "metadata": {
         "visual": {
-          "x": 354,
-          "y": 2,
-          "collapsed": false
+          "x": 423.9999999999993,
+          "y": 45.99999999999966,
+          "collapsed": "expanded"
         },
         "title": "Card Maker",
         "logLevel": "debug"
