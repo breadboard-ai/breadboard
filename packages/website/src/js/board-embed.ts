@@ -36,22 +36,9 @@ export class BoardEmbed extends LitElement {
   collapseNodesByDefault = "true";
 
   @property({ reflect: true })
-  active = false;
+  active = true;
 
   #data: Promise<TemplateResult> | null = null;
-  #observer = new IntersectionObserver(
-    (entries) => {
-      this.active = false;
-
-      if (entries.length === 0) {
-        return;
-      }
-
-      this.active = entries[0].isIntersecting;
-    },
-    { rootMargin: "80px", threshold: 0 }
-  );
-
   static styles = css`
     :host {
       display: flex;
@@ -101,14 +88,7 @@ export class BoardEmbed extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
 
-    this.#observer.observe(this);
     this.#data = this.loadBoard();
-  }
-
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-
-    this.#observer.unobserve(this);
   }
 
   async loadBoard() {
