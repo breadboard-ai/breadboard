@@ -2161,29 +2161,39 @@ export class GraphRenderer extends LitElement {
 
     graph.on(
       GRAPH_OPERATIONS.GRAPH_SELECTION_MOVE,
-      (delta, sourcePosition, isMoveOp = false, isCloneOp = false) => {
-        const targetPoint = new PIXI.Point(sourcePosition.x, sourcePosition.y);
+      (
+        delta,
+        sourcePosition?: PIXI.PointData,
+        isMoveOp = false,
+        isCloneOp = false
+      ) => {
+        if (sourcePosition) {
+          const targetPoint = new PIXI.Point(
+            sourcePosition.x,
+            sourcePosition.y
+          );
 
-        targetPoint.x += delta.x * this.#container.worldTransform.a;
-        targetPoint.y += delta.y * this.#container.worldTransform.a;
+          targetPoint.x += delta.x * this.#container.worldTransform.a;
+          targetPoint.y += delta.y * this.#container.worldTransform.a;
 
-        if (isMoveOp) {
-          if (!this.#moveCloneGraph) {
-            this.#createMoveCloneGraph();
-          }
+          if (isMoveOp) {
+            if (!this.#moveCloneGraph) {
+              this.#createMoveCloneGraph();
+            }
 
-          if (!this.#moveCloneGraph) {
+            if (!this.#moveCloneGraph) {
+              return;
+            }
+
+            this.#moveCloneGraph.x = delta.x;
+            this.#moveCloneGraph.y = delta.y;
             return;
           }
 
-          this.#moveCloneGraph.x = delta.x;
-          this.#moveCloneGraph.y = delta.y;
-          return;
-        }
-
-        if (isCloneOp) {
-          // TODO: Represent
-          return;
+          if (isCloneOp) {
+            // TODO: Represent
+            return;
+          }
         }
 
         this.#applyPositionDeltaToSelection(delta);
@@ -2192,40 +2202,50 @@ export class GraphRenderer extends LitElement {
 
     graph.on(
       GRAPH_OPERATIONS.GRAPH_SELECTION_MOVE_SETTLED,
-      (delta, sourcePosition, isMoveOp = false, isCloneOp = false) => {
-        const targetPoint = new PIXI.Point(sourcePosition.x, sourcePosition.y);
+      (
+        delta,
+        sourcePosition?: PIXI.PointData,
+        isMoveOp = false,
+        isCloneOp = false
+      ) => {
+        if (sourcePosition) {
+          const targetPoint = new PIXI.Point(
+            sourcePosition.x,
+            sourcePosition.y
+          );
 
-        targetPoint.x += delta.x * this.#container.worldTransform.a;
-        targetPoint.y += delta.y * this.#container.worldTransform.a;
+          targetPoint.x += delta.x * this.#container.worldTransform.a;
+          targetPoint.y += delta.y * this.#container.worldTransform.a;
 
-        if (this.#moveCloneGraph) {
-          this.#removeMoveCloneGraph();
-        }
-
-        if (isMoveOp) {
-          let targetGraphId: GraphIdentifier | null = null;
-          if (sourcePosition) {
-            for (const graph of this.#container.children) {
-              if (!(graph instanceof Graph)) {
-                continue;
-              }
-
-              if (
-                graph.getBounds().containsPoint(targetPoint.x, targetPoint.y)
-              ) {
-                targetGraphId = graph.subGraphId ?? MAIN_BOARD_ID;
-                break;
-              }
-            }
+          if (this.#moveCloneGraph) {
+            this.#removeMoveCloneGraph();
           }
 
-          this.#emitGraphMoveEvent(delta, targetGraphId);
-          return;
-        }
+          if (isMoveOp) {
+            let targetGraphId: GraphIdentifier | null = null;
+            if (sourcePosition) {
+              for (const graph of this.#container.children) {
+                if (!(graph instanceof Graph)) {
+                  continue;
+                }
 
-        if (isCloneOp) {
-          console.log("clone finished", delta);
-          return;
+                if (
+                  graph.getBounds().containsPoint(targetPoint.x, targetPoint.y)
+                ) {
+                  targetGraphId = graph.subGraphId ?? MAIN_BOARD_ID;
+                  break;
+                }
+              }
+            }
+
+            this.#emitGraphMoveEvent(delta, targetGraphId);
+            return;
+          }
+
+          if (isCloneOp) {
+            console.log("clone finished", delta);
+            return;
+          }
         }
 
         this.#emitGraphVisualInformation();
