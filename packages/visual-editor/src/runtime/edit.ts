@@ -35,6 +35,7 @@ import {
   RuntimeVisualChangeEvent,
 } from "./events";
 import {
+  CommentNode,
   GraphIdentifier,
   GraphMetadata,
   GraphTag,
@@ -1338,7 +1339,11 @@ export class Edit extends EventTarget {
     const newGraphId = targetGraphId ?? createGraphId();
     const inspectableGraphId = newGraphId === MAIN_BOARD_ID ? "" : newGraphId;
 
+    const edits: EditSpec[] = [];
+    const commentsForNewGraph: CommentNode[] = [];
     const nodeIds: NodeIdentifier[] = [];
+
+    let hasEdited = false;
     for (const [sourceGraphId, graph] of selectionState.graphs) {
       const inspectableSourceGraphId =
         sourceGraphId === MAIN_BOARD_ID ? "" : sourceGraphId;
@@ -1365,6 +1370,37 @@ export class Edit extends EventTarget {
         continue;
       }
 
+      hasEdited = true;
+
+      if (graph.comments.size > 0) {
+        const metadata =
+          editableGraph.inspect(inspectableSourceGraphId).metadata() ?? {};
+        const comments = metadata.comments ?? [];
+        const graphCommentsAfterEdit: CommentNode[] = [];
+        for (const comment of comments) {
+          if (graph.comments.has(comment.id)) {
+            const newComment = structuredClone(comment);
+            commentsForNewGraph.push(newComment);
+            newComment.metadata ??= {};
+            newComment.metadata.visual ??= { x: 0, y: 0 };
+
+            const visual = newComment.metadata.visual as Record<string, number>;
+            visual.x += delta.x;
+            visual.y += delta.y;
+          } else {
+            graphCommentsAfterEdit.push(comment);
+          }
+        }
+
+        // Update the graph's comments.
+        metadata.comments = graphCommentsAfterEdit;
+        edits.push({
+          type: "changegraphmetadata",
+          graphId: inspectableSourceGraphId,
+          metadata,
+        });
+      }
+
       // Track the nodes seen so that we can update their location values.
       nodeIds.push(...graph.nodes);
 
@@ -1378,13 +1414,16 @@ export class Edit extends EventTarget {
       const result = await editableGraph.apply(transform);
       if (!result.success) {
         this.dispatchEvent(new RuntimeErrorEvent("Unable to transform board"));
-        break;
+        return;
       }
+    }
+
+    if (!hasEdited) {
+      return;
     }
 
     // Now go through each one and adjust it by the left-most position and
     // the cursor position.
-    const edits: EditSpec[] = [];
     for (const nodeId of nodeIds) {
       const node = editableGraph.inspect(inspectableGraphId).nodeById(nodeId);
       if (!node) {
@@ -1404,6 +1443,17 @@ export class Edit extends EventTarget {
         metadata,
       });
     }
+
+    // Finally set comments.
+    edits.push({
+      type: "changegraphmetadata",
+      graphId: inspectableGraphId,
+      metadata: {
+        comments: commentsForNewGraph,
+      },
+    });
+
+    await editableGraph.edit(edits, "Location updates");
   }
 
   deleteNode(tab: Tab | null, id: string, subGraphId: string | null = null) {
