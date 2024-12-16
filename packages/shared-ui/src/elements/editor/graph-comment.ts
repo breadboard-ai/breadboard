@@ -164,7 +164,7 @@ export class GraphComment extends PIXI.Container {
       this.#isDirty = false;
       this.#background.clear();
       for (const child of this.#hitAreas.removeChildren()) {
-        child.destroy();
+        child.destroy({ children: true });
       }
 
       this.#draw();
@@ -226,6 +226,10 @@ export class GraphComment extends PIXI.Container {
       this.cursor = "grabbing";
     });
 
+    let isMoveOp = false;
+    let isCloneOp = false;
+    let cursorStartPosition: PIXI.PointData | null = null;
+
     this.addEventListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
       if (!(evt.target instanceof GraphComment) || this.readOnly) {
         return;
@@ -233,7 +237,10 @@ export class GraphComment extends PIXI.Container {
 
       hasMoved = false;
       dragStart = evt.global.clone();
+      cursorStartPosition = { x: evt.screen.x, y: evt.screen.y };
       originalPosition = this.position.clone();
+      isMoveOp = evt.shiftKey;
+      isCloneOp = evt.altKey;
     });
 
     this.addEventListener(
@@ -243,28 +250,71 @@ export class GraphComment extends PIXI.Container {
           return;
         }
 
+        const isSettled = false;
+
         const scale = this.worldTransform.a;
         const dragPosition = evt.global;
         const dragDeltaX = (dragPosition.x - dragStart.x) / scale;
         const dragDeltaY = (dragPosition.y - dragStart.y) / scale;
 
-        this.x = Math.round(originalPosition.x + dragDeltaX);
-        this.y = Math.round(originalPosition.y + dragDeltaY);
+        this.cursor = "grabbing";
         hasMoved = true;
 
-        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y, false);
+        const x = Math.round(originalPosition.x + dragDeltaX);
+        const y = Math.round(originalPosition.y + dragDeltaY);
+
+        this.emit(
+          GRAPH_OPERATIONS.GRAPH_NODE_MOVED,
+          x,
+          y,
+          isSettled,
+          isMoveOp,
+          isCloneOp,
+          dragPosition
+        );
       }
     );
 
-    const onPointerUp = () => {
-      dragStart = null;
-      originalPosition = null;
-      if (!hasMoved) {
+    const onPointerUp = (evt: PIXI.FederatedPointerEvent) => {
+      if (!dragStart || !originalPosition || !evt.isPrimary) {
         return;
       }
 
+      const scale = this.worldTransform.a;
+      const dragPosition = evt.global;
+      const dragDeltaX = (dragPosition.x - dragStart.x) / scale;
+      const dragDeltaY = (dragPosition.y - dragStart.y) / scale;
+
+      this.cursor = "grabbing";
+      hasMoved = true;
+
+      const x = Math.round(originalPosition.x + dragDeltaX);
+      const y = Math.round(originalPosition.y + dragDeltaY);
+
+      dragStart = null;
+      originalPosition = null;
+      if (!hasMoved) {
+        isMoveOp = false;
+        isCloneOp = false;
+        return;
+      }
+
+      const isSettled = true;
+      this.cursor = "pointer";
+      this.emit(
+        GRAPH_OPERATIONS.GRAPH_NODE_MOVED,
+        x,
+        y,
+        isSettled,
+        isMoveOp,
+        isCloneOp,
+        cursorStartPosition
+      );
+
+      cursorStartPosition = null;
       hasMoved = false;
-      this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y, true);
+      isMoveOp = false;
+      isCloneOp = false;
     };
 
     this.addEventListener("pointerupoutside", onPointerUp);

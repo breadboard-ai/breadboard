@@ -879,6 +879,41 @@ export class Graph extends PIXI.Container {
     this.addListener("pointerupoutside", onPointerUp);
   }
 
+  getSelectedItems(): PIXI.Container[] | null {
+    if (!this.selectionState) {
+      return null;
+    }
+
+    const selectedItems: PIXI.Container[] = [];
+    for (const child of this.children) {
+      if (
+        child instanceof GraphNode &&
+        this.selectionState.nodes.has(child.label)
+      ) {
+        selectedItems.push(child);
+      }
+
+      if (
+        child instanceof GraphComment &&
+        this.selectionState.comments.has(child.label)
+      ) {
+        selectedItems.push(child);
+      }
+    }
+
+    for (const edge of this.#edgeContainer.children) {
+      if (
+        edge instanceof GraphEdge &&
+        edge.edge &&
+        this.selectionState.edges.has(inspectableEdgeToString(edge.edge))
+      ) {
+        selectedItems.push(edge);
+      }
+    }
+
+    return selectedItems;
+  }
+
   createGraphSelectionFrom(
     rect: PIXI.Rectangle,
     retainExistingSelection = false
@@ -1506,7 +1541,10 @@ export class Graph extends PIXI.Container {
     this: { graph: Graph; id: string },
     x: number,
     y: number,
-    hasSettled: boolean
+    hasSettled: boolean,
+    isMoveOp: boolean = false,
+    isCloneOp: boolean = false,
+    sourcePosition: PIXI.PointData | undefined = undefined
   ) {
     const position = this.graph.getNodeLayoutPosition(this.id);
     const delta = new PIXI.Point(0, 0);
@@ -1515,13 +1553,25 @@ export class Graph extends PIXI.Container {
       delta.y = y - position.y;
     }
 
-    this.graph.emit(GRAPH_OPERATIONS.GRAPH_SELECTION_MOVE, delta);
+    this.graph.emit(
+      GRAPH_OPERATIONS.GRAPH_SELECTION_MOVE,
+      delta,
+      sourcePosition,
+      isMoveOp,
+      isCloneOp
+    );
 
     if (!hasSettled) {
       return;
     }
 
-    this.graph.emit(GRAPH_OPERATIONS.GRAPH_SELECTION_MOVE_SETTLED);
+    this.graph.emit(
+      GRAPH_OPERATIONS.GRAPH_SELECTION_MOVE_SETTLED,
+      delta,
+      sourcePosition,
+      isMoveOp,
+      isCloneOp
+    );
   }
 
   #drawNodeHighlight() {
@@ -2217,7 +2267,10 @@ export class Graph extends PIXI.Container {
       }
 
       edgeGraphic.removeFromParent();
-      edgeGraphic.destroy();
+      // Wait a frame before destroying.
+      requestAnimationFrame(() => {
+        edgeGraphic.destroy({ children: true });
+      });
       this.#edgeGraphics.delete(edgeDescription);
     }
   }
@@ -2235,7 +2288,10 @@ export class Graph extends PIXI.Container {
         }
 
         node.removeFromParent();
-        node.destroy();
+        // Wait a frame before destroying.
+        requestAnimationFrame(() => {
+          node.destroy({ children: true });
+        });
         this.#graphNodeById.delete(id);
         this.#layout.delete(id);
       }
