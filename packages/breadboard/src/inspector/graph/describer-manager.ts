@@ -438,7 +438,22 @@ class GraphDescriberManager {
     if (result.success) {
       return result.result;
     }
-    return this.#describeWithStaticAnalysis();
+    const staticResult = await this.#describeWithStaticAnalysis();
+    const graph = this.handle.graph();
+    const metadata: Omit<NodeDescriberResult, "inputSchema" | "outputSchema"> =
+      filterEmptyValues({
+        title: graph.title,
+        description: graph.description,
+        metadata: {
+          icon: graph.metadata?.icon,
+          help: graph.metadata?.help,
+          tags: graph.metadata?.tags,
+        },
+      });
+    return {
+      ...metadata,
+      ...staticResult,
+    };
   }
 
   static create(
@@ -454,4 +469,17 @@ class GraphDescriberManager {
       result: new GraphDescriberManager(handle.result, cache),
     };
   }
+}
+
+/**
+ * A utility function to filter out empty (null or undefined) values from
+ * an object.
+ *
+ * @param obj -- The object to filter.
+ * @returns -- The object with empty values removed.
+ */
+function filterEmptyValues<T extends Record<string, unknown>>(obj: T): T {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, value]) => !!value)
+  ) as T;
 }
