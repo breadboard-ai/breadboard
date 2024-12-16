@@ -4,7 +4,8 @@
   "version": "0.0.1",
   "metadata": {
     "tags": [],
-    "comments": []
+    "comments": [],
+    "visual": {}
   },
   "edges": [
     {
@@ -33,7 +34,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
             }
@@ -44,9 +47,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 0,
+          "x": -263,
           "y": 0,
-          "collapsed": true
+          "collapsed": "collapsed"
         }
       }
     },
@@ -62,7 +65,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "null"
             }
@@ -73,9 +78,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 421,
-          "y": 0,
-          "collapsed": true
+          "x": 465,
+          "y": -2,
+          "collapsed": "collapsed"
         }
       }
     },
@@ -84,9 +89,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 173,
-          "y": 0,
-          "collapsed": true
+          "x": 52,
+          "y": -1,
+          "collapsed": "collapsed"
         },
         "title": "Poet",
         "logLevel": "debug"

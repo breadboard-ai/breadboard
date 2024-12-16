@@ -20,7 +20,13 @@
           "required": []
         }
       },
-      "metadata": { "visual": { "x": -302, "y": 9, "collapsed": false } }
+      "metadata": {
+        "visual": {
+          "x": -621,
+          "y": 8.000000000000114,
+          "collapsed": "expanded"
+        }
+      }
     },
     {
       "type": "output",
@@ -28,18 +34,34 @@
       "configuration": {
         "schema": {
           "properties": {
-            "context": { "type": "string", "title": "Results", "examples": [] }
+            "context": {
+              "type": "string",
+              "title": "Results",
+              "examples": []
+            }
           },
           "type": "object",
           "required": []
         }
       },
-      "metadata": { "visual": { "x": 597, "y": -56, "collapsed": false } }
+      "metadata": {
+        "visual": {
+          "x": 766,
+          "y": 22.999999999999943,
+          "collapsed": "expanded"
+        }
+      }
     },
     {
       "id": "urlTemplate-088efd32",
       "type": "urlTemplate",
-      "metadata": { "visual": { "x": -126, "y": 10, "collapsed": false } },
+      "metadata": {
+        "visual": {
+          "x": -349,
+          "y": -10,
+          "collapsed": "expanded"
+        }
+      },
       "configuration": {
         "template": "https://www.googleapis.com/books/v1/volumes?q={query}&orderBy=relevance"
       }
@@ -47,13 +69,27 @@
     {
       "id": "fetch-273de1b8",
       "type": "fetch",
-      "metadata": { "visual": { "x": 108, "y": -92, "collapsed": false } }
+      "metadata": {
+        "visual": {
+          "x": 22.999999999999886,
+          "y": -97.00000000000006,
+          "collapsed": "expanded"
+        }
+      }
     },
     {
       "id": "jsonata-d924a566",
       "type": "jsonata",
-      "metadata": { "visual": { "x": 371, "y": -64, "collapsed": false } },
-      "configuration": { "expression": "items.volumeInfo" }
+      "metadata": {
+        "visual": {
+          "x": 392.9999999999999,
+          "y": -17.000000000000057,
+          "collapsed": "expanded"
+        }
+      },
+      "configuration": {
+        "expression": "items.volumeInfo"
+      }
     }
   ],
   "edges": [
@@ -82,5 +118,7 @@
       "in": "context"
     }
   ],
-  "url": "https://breadboard.live/boards/@dimitri/tool-google-books.bgl.json"
+  "metadata": {
+    "visual": {}
+  }
 }

@@ -9,9 +9,9 @@
         "text": "Generates an object with two groups of people as lists.",
         "metadata": {
           "visual": {
-            "x": -427,
-            "y": -116,
-            "collapsed": true
+            "x": -613,
+            "y": -120,
+            "collapsed": "collapsed"
           }
         }
       },
@@ -20,13 +20,14 @@
         "text": "Uses [JSONata](https://jsonata.org/) to \"select into\" the array of strings and count the number of times \"alice\" appears.",
         "metadata": {
           "visual": {
-            "x": -168,
-            "y": -195,
-            "collapsed": true
+            "x": -117,
+            "y": -239,
+            "collapsed": "collapsed"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   },
   "edges": [
     {
@@ -78,9 +79,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 93,
-          "y": -26,
-          "collapsed": true
+          "x": 308,
+          "y": -30,
+          "collapsed": "collapsed"
         }
       }
     },
@@ -89,9 +90,9 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": -429,
-          "y": -33,
-          "collapsed": true
+          "x": -642,
+          "y": -35,
+          "collapsed": "collapsed"
         },
         "title": "Group Generator",
         "logLevel": "debug"
@@ -106,9 +107,9 @@
       "type": "jsonata",
       "metadata": {
         "visual": {
-          "x": -137,
-          "y": -73,
-          "collapsed": true
+          "x": -151,
+          "y": -118,
+          "collapsed": "collapsed"
         },
         "title": "Sum First",
         "logLevel": "debug"
@@ -122,9 +123,9 @@
       "type": "jsonata",
       "metadata": {
         "visual": {
-          "x": -145,
-          "y": 10,
-          "collapsed": true
+          "x": -153,
+          "y": 27,
+          "collapsed": "collapsed"
         },
         "title": "Sum Second",
         "logLevel": "debug"

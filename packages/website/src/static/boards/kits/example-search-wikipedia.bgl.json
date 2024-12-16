@@ -26,7 +26,7 @@
       },
       "metadata": {
         "visual": {
-          "x": -343,
+          "x": -343.0000000000016,
           "y": -160,
           "collapsed": "expanded"
         }
@@ -37,8 +37,8 @@
       "type": "fetch",
       "metadata": {
         "visual": {
-          "x": 172,
-          "y": 190,
+          "x": 111,
+          "y": 107,
           "collapsed": "expanded"
         },
         "title": "Search Wikipedia",
@@ -50,8 +50,8 @@
       "type": "urlTemplate",
       "metadata": {
         "visual": {
-          "x": -159,
-          "y": 70,
+          "x": -290.0000000000006,
+          "y": 305,
           "collapsed": "expanded"
         },
         "title": "Make URL",
@@ -66,8 +66,8 @@
       "type": "output",
       "metadata": {
         "visual": {
-          "x": 791,
-          "y": -123,
+          "x": 912,
+          "y": 1.0000000000000568,
           "collapsed": "expanded"
         },
         "title": "output",
@@ -93,8 +93,8 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": 424,
-          "y": -120,
+          "x": 530,
+          "y": -169.00000000000003,
           "collapsed": "expanded"
         },
         "title": "Append Results",
@@ -145,8 +145,8 @@
         "text": "Use `promptTemplate` component to create a URL to search Wikipedia.",
         "metadata": {
           "visual": {
-            "x": -57,
-            "y": -33,
+            "x": -260.0000000000005,
+            "y": 203.0000000000001,
             "collapsed": "expanded"
           }
         }
@@ -157,7 +157,7 @@
         "metadata": {
           "visual": {
             "x": 178,
-            "y": 404,
+            "y": 404.0000000000002,
             "collapsed": "expanded"
           }
         }
@@ -167,7 +167,7 @@
         "text": "This board is shaped to fit into the [reduce](https://breadboard-ai.github.io/breadboard/docs/kits/core/#the-reduce-component) component. It has two inputs:\n\n- *accumulator* -- a string that is the current accumulated result\n\n- *item* - the value to use to query Wikipedia search.",
         "metadata": {
           "visual": {
-            "x": -114,
+            "x": -114.00000000000085,
             "y": -302,
             "collapsed": "expanded"
           }
@@ -178,8 +178,8 @@
         "text": "Once the results are fetched, a tiny bit of JS is used to append these results to the accumulator...",
         "metadata": {
           "visual": {
-            "x": 267,
-            "y": -210,
+            "x": 289,
+            "y": -171,
             "collapsed": "expanded"
           }
         }
@@ -189,12 +189,13 @@
         "text": "... and pass it as the new accumulated result.",
         "metadata": {
           "visual": {
-            "x": 672,
-            "y": -219,
+            "x": 901,
+            "y": -83,
             "collapsed": "expanded"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   }
 }

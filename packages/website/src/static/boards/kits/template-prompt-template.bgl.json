@@ -30,8 +30,8 @@
       },
       "metadata": {
         "visual": {
-          "x": -328,
-          "y": -116,
+          "x": -433,
+          "y": -121,
           "collapsed": "expanded"
         }
       }
@@ -55,8 +55,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 321,
-          "y": -170,
+          "x": 320,
+          "y": -109,
           "collapsed": "expanded"
         }
       }
@@ -106,8 +106,8 @@
         "text": "Takes \"Question\"\nand \"Thought\" \nas inputs and \npasses them \nto Question Maker",
         "metadata": {
           "visual": {
-            "x": -265,
-            "y": -253,
+            "x": -405,
+            "y": -258,
             "collapsed": "expanded"
           }
         }
@@ -117,8 +117,8 @@
         "text": "Looks for `{{question}}` and `{{thought}}` in the template and replaces them with the supplied values. ",
         "metadata": {
           "visual": {
-            "x": -27,
-            "y": -293,
+            "x": -54,
+            "y": -302,
             "collapsed": "expanded"
           }
         }
@@ -128,8 +128,8 @@
         "text": "Outputs \nthe resulting\nprompt.",
         "metadata": {
           "visual": {
-            "x": 289,
-            "y": -269,
+            "x": 372,
+            "y": -211,
             "collapsed": "expanded"
           }
         }
@@ -139,12 +139,13 @@
         "text": "💡 Input ports on this node are dynamic: they will pop up as soon as you specify them as `{{inputName}}` in the template.",
         "metadata": {
           "visual": {
-            "x": -5,
-            "y": 4,
+            "x": -56,
+            "y": 32,
             "collapsed": "expanded"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   }
 }

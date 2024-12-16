@@ -27,8 +27,8 @@
       },
       "metadata": {
         "visual": {
-          "x": -379,
-          "y": -1,
+          "x": -502.0000000000001,
+          "y": 142.99999999999997,
           "collapsed": "expanded"
         }
       }
@@ -52,8 +52,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 639,
-          "y": 89,
+          "x": 710,
+          "y": 233,
           "collapsed": "expanded"
         }
       }
@@ -63,8 +63,8 @@
       "type": "curry",
       "metadata": {
         "visual": {
-          "x": -29,
-          "y": -100,
+          "x": -164,
+          "y": -79,
           "collapsed": "expanded"
         },
         "title": "Curry Location",
@@ -82,8 +82,8 @@
       "type": "map",
       "metadata": {
         "visual": {
-          "x": 232,
-          "y": -80,
+          "x": 269.0000000000001,
+          "y": -43.99999999999997,
           "collapsed": "expanded"
         },
         "title": "Greet Each Name",
@@ -95,8 +95,8 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": -107,
-          "y": 217,
+          "x": -154,
+          "y": 204.00000000000003,
           "collapsed": "expanded"
         },
         "title": "Split Names",
@@ -111,8 +111,8 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": 318,
-          "y": 230,
+          "x": 318.0000000000001,
+          "y": 229.99999999999997,
           "collapsed": "expanded"
         },
         "title": "Join Greetings",
@@ -170,8 +170,8 @@
         "text": "Curry the \"Location\" input \ninto the board.",
         "metadata": {
           "visual": {
-            "x": -83,
-            "y": -160,
+            "x": -113,
+            "y": -160.00000000000006,
             "collapsed": "expanded"
           }
         }
@@ -181,8 +181,8 @@
         "text": "In parallel, invoke supplied \nboard for each name\nin the list.",
         "metadata": {
           "visual": {
-            "x": 173,
-            "y": -185,
+            "x": 284,
+            "y": -146,
             "collapsed": "expanded"
           }
         }
@@ -192,8 +192,8 @@
         "text": "Some Javascript to split the names into a list...",
         "metadata": {
           "visual": {
-            "x": -63,
-            "y": 143,
+            "x": -133,
+            "y": 123.00000000000003,
             "collapsed": "expanded"
           }
         }
@@ -203,12 +203,13 @@
         "text": "... and some more JS to join the resulting greetings back into a string.",
         "metadata": {
           "visual": {
-            "x": 234,
-            "y": 112,
+            "x": 319.0000000000001,
+            "y": 129.00000000000003,
             "collapsed": "expanded"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   }
 }

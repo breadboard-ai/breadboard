@@ -9,9 +9,9 @@
         "text": "Encodes the user's input into the URL",
         "metadata": {
           "visual": {
-            "x": 87,
-            "y": -104,
-            "collapsed": true
+            "x": 56,
+            "y": -97,
+            "collapsed": "collapsed"
           }
         }
       },
@@ -20,13 +20,14 @@
         "text": "Makes a request to the remote service or API",
         "metadata": {
           "visual": {
-            "x": 376,
-            "y": -138,
-            "collapsed": true
+            "x": 424,
+            "y": -134,
+            "collapsed": "collapsed"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   },
   "edges": [
     {
@@ -67,9 +68,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -123,
-          "y": 3,
-          "collapsed": false
+          "x": -266,
+          "y": 21,
+          "collapsed": "expanded"
         }
       }
     },
@@ -91,9 +92,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 643,
-          "y": 28,
-          "collapsed": true
+          "x": 802,
+          "y": 48,
+          "collapsed": "collapsed"
         }
       }
     },
@@ -102,9 +103,9 @@
       "type": "urlTemplate",
       "metadata": {
         "visual": {
-          "x": 88,
-          "y": -18,
-          "collapsed": false
+          "x": 14,
+          "y": -16,
+          "collapsed": "expanded"
         },
         "title": "Google Books API",
         "logLevel": "debug"
@@ -120,7 +121,7 @@
         "visual": {
           "x": 382,
           "y": -47,
-          "collapsed": false
+          "collapsed": "expanded"
         },
         "title": "Data Fetcher",
         "logLevel": "debug"

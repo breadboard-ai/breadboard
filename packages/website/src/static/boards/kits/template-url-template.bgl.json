@@ -48,8 +48,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 363,
-          "y": -43,
+          "x": 365,
+          "y": -26,
           "collapsed": "expanded"
         }
       }
@@ -93,8 +93,8 @@
         "text": "Takes in \"query\" \nand passes it to \n\"Query Google \nBooks API\" \nto construct the URL.",
         "metadata": {
           "visual": {
-            "x": -202,
-            "y": -125,
+            "x": -308,
+            "y": -126,
             "collapsed": "expanded"
           }
         }
@@ -104,8 +104,8 @@
         "text": "Outputs the URL.",
         "metadata": {
           "visual": {
-            "x": 387,
-            "y": -111,
+            "x": 394,
+            "y": -89,
             "collapsed": "expanded"
           }
         }
@@ -115,8 +115,8 @@
         "text": "Replaces placeholders (single braces!) in the **Template** with inputs.\n\nIn this particular case, it's just `{query}`.\n\nUses [URI template specification](https://tools.ietf.org/html/rfc6570) to construct URLs.",
         "metadata": {
           "visual": {
-            "x": 74,
-            "y": -315,
+            "x": 29,
+            "y": -318,
             "collapsed": "expanded"
           }
         }
@@ -126,12 +126,13 @@
         "text": "💡 Input ports on this node are dynamic: they will pop up as soon as you specify them as `{inputName}` in the template.",
         "metadata": {
           "visual": {
-            "x": 29,
-            "y": 106,
+            "x": 30,
+            "y": 124,
             "collapsed": "expanded"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   }
 }

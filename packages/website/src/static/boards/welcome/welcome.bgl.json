@@ -8,9 +8,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 21,
-          "y": -120,
-          "collapsed": false
+          "x": 20,
+          "y": -156,
+          "collapsed": "collapsed"
         },
         "title": "Hi, I am a Specialist",
         "logLevel": "debug"
@@ -31,9 +31,9 @@
       "type": "input",
       "metadata": {
         "visual": {
-          "x": -139,
-          "y": -149.00000000000006,
-          "collapsed": false
+          "x": -234,
+          "y": -169,
+          "collapsed": "expanded"
         },
         "title": "Input",
         "logLevel": "debug"
@@ -45,7 +45,9 @@
               "type": "object",
               "title": "Context",
               "examples": [],
-              "behavior": ["llm-content"],
+              "behavior": [
+                "llm-content"
+              ],
               "default": "{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}"
             }
           },
@@ -59,9 +61,9 @@
       "type": "output",
       "metadata": {
         "visual": {
-          "x": 331,
-          "y": -58,
-          "collapsed": false
+          "x": 372,
+          "y": -99,
+          "collapsed": "expanded"
         },
         "title": "Output",
         "logLevel": "debug"
@@ -73,7 +75,9 @@
               "type": "object",
               "title": "Context",
               "examples": [],
-              "behavior": ["llm-content"],
+              "behavior": [
+                "llm-content"
+              ],
               "default": "null"
             }
           },
@@ -104,9 +108,9 @@
         "text": "**Welcome to ✨✨✨✨✨\nBreadboard Visual Editor!**\nA place to quickly put together generative AI experiences and play with them.",
         "metadata": {
           "visual": {
-            "x": -10,
-            "y": -361,
-            "collapsed": false
+            "x": 52,
+            "y": -397,
+            "collapsed": "expanded"
           }
         }
       },
@@ -115,9 +119,9 @@
         "text": "🔝 The top bar shows the current board you're editing, as well as the familiar controls to undo/redo changes, save, etc.",
         "metadata": {
           "visual": {
-            "x": -10,
-            "y": -482,
-            "collapsed": false
+            "x": 52,
+            "y": -515,
+            "collapsed": "expanded"
           }
         }
       },
@@ -126,9 +130,9 @@
         "text": "💡The Breadboard project was inspired by [breadboards](https://en.wikipedia.org/wiki/Breadboard) used to prototype electronic circuits.",
         "metadata": {
           "visual": {
-            "x": -9,
-            "y": -222,
-            "collapsed": false
+            "x": 53,
+            "y": -255,
+            "collapsed": "expanded"
           }
         }
       },
@@ -139,7 +143,7 @@
           "visual": {
             "x": -244,
             "y": -324,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -148,9 +152,9 @@
         "text": "This is a node. It represents an action of some sort. This type of node is called \"Specialist\". \n\nYou can spot a Specialist by the 🤖 icon in its title.",
         "metadata": {
           "visual": {
-            "x": -7,
-            "y": -28,
-            "collapsed": false
+            "x": 55,
+            "y": -55,
+            "collapsed": "expanded"
           }
         }
       },
@@ -159,9 +163,9 @@
         "text": "The right sidebar * is where ➡\nyou can see board activity when it runs or, when a node is selected, view and edit node's configuration.",
         "metadata": {
           "visual": {
-            "x": 222.99999999999994,
-            "y": -482,
-            "collapsed": false
+            "x": 357,
+            "y": -524,
+            "collapsed": "expanded"
           }
         }
       },
@@ -172,7 +176,7 @@
           "visual": {
             "x": -244,
             "y": -48,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -183,7 +187,7 @@
           "visual": {
             "x": -244,
             "y": -482,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -192,9 +196,9 @@
         "text": "This is a functional board. Click the **Run** button at the bottom-right and ask it questions about itself. Like \"what is this green thing?\" or \"who are you?\"",
         "metadata": {
           "visual": {
-            "x": 223.99999999999994,
-            "y": -340,
-            "collapsed": false
+            "x": 358,
+            "y": -382,
+            "collapsed": "expanded"
           }
         }
       },
@@ -203,9 +207,9 @@
         "text": "When you're ready to learn more about Breadboard Visual Editor,\n\n[🍞 Click here to continue](board:nodes-wires-ports.bgl.json).",
         "metadata": {
           "visual": {
-            "x": 223.99999999999994,
-            "y": -197.99999999999994,
-            "collapsed": false
+            "x": 358,
+            "y": -239.99999999999994,
+            "collapsed": "expanded"
           }
         }
       },
@@ -214,13 +218,16 @@
         "text": "_* - if your window has portrait proportions, the activity sidebar will be at the bottom._",
         "metadata": {
           "visual": {
-            "x": 228,
-            "y": 32.999999999999886,
-            "collapsed": false
+            "x": 360,
+            "y": 15,
+            "collapsed": "expanded"
           }
         }
       }
     ],
-    "tags": ["published"]
+    "tags": [
+      "published"
+    ],
+    "visual": {}
   }
 }

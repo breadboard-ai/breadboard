@@ -27,8 +27,8 @@
       },
       "metadata": {
         "visual": {
-          "x": -178,
-          "y": -34,
+          "x": -298,
+          "y": -33,
           "collapsed": "expanded"
         }
       }
@@ -59,7 +59,7 @@
       "metadata": {
         "visual": {
           "x": 299,
-          "y": -52,
+          "y": -32,
           "collapsed": "expanded"
         }
       }
@@ -69,8 +69,8 @@
       "type": "passthrough",
       "metadata": {
         "visual": {
-          "x": 53,
-          "y": -51,
+          "x": 13,
+          "y": -29,
           "collapsed": "expanded"
         },
         "title": "Pass it through",
@@ -101,12 +101,13 @@
         "text": "Passes inputs unmodified as outputs.",
         "metadata": {
           "visual": {
-            "x": 47,
-            "y": -110,
+            "x": 9,
+            "y": -106,
             "collapsed": "expanded"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   }
 }

@@ -8,9 +8,9 @@
         "text": "🧩 This board snapshot is an intermediate step in the build, and won't run until we finish the build.",
         "metadata": {
           "visual": {
-            "x": 363.0000000000001,
-            "y": -290,
-            "collapsed": false
+            "x": 245,
+            "y": -161.00000000000023,
+            "collapsed": "expanded"
           }
         }
       },
@@ -19,14 +19,15 @@
         "text": "Step 5: **Add Interviewer**",
         "metadata": {
           "visual": {
-            "x": -280,
-            "y": -208,
-            "collapsed": false
+            "x": -428.000000000001,
+            "y": -172.0000000000007,
+            "collapsed": "expanded"
           }
         }
       }
     ],
-    "tags": []
+    "tags": [],
+    "visual": {}
   },
   "edges": [
     {
@@ -87,9 +88,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -281.9999999999998,
-          "y": -92,
-          "collapsed": false
+          "x": -440.00000000000114,
+          "y": -95,
+          "collapsed": "expanded"
         }
       }
     },
@@ -98,9 +99,9 @@
       "type": "looper",
       "metadata": {
         "visual": {
-          "x": -78.99999999999991,
-          "y": -99.00000000000003,
-          "collapsed": false
+          "x": -177,
+          "y": -145.0000000000006,
+          "collapsed": "expanded"
         },
         "title": "Interview Planner",
         "logLevel": "debug"
@@ -121,9 +122,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": -55.99999999999994,
-          "y": 119.99999999999993,
-          "collapsed": false
+          "x": -354.00000000000085,
+          "y": 178.99999999999994,
+          "collapsed": "expanded"
         },
         "title": "Interviewer",
         "logLevel": "debug"
@@ -144,9 +145,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 149.00000000000006,
-          "y": -118.00000000000003,
-          "collapsed": false
+          "x": 201.9999999999999,
+          "y": -8.000000000000057,
+          "collapsed": "expanded"
         },
         "title": "Researcher",
         "logLevel": "debug"
@@ -190,9 +191,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 472,
-          "y": 12.999999999999858,
-          "collapsed": false
+          "x": 1014,
+          "y": 82,
+          "collapsed": "expanded"
         }
       }
     },
@@ -201,9 +202,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 392.00000000000017,
-          "y": -157.99999999999994,
-          "collapsed": false
+          "x": 627,
+          "y": -9,
+          "collapsed": "expanded"
         },
         "title": "Summarizer",
         "logLevel": "debug"

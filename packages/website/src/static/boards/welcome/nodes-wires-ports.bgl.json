@@ -15,7 +15,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
             }
@@ -26,9 +28,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 2.1316282072803006e-14,
-          "y": 8.526512829121202e-14,
-          "collapsed": false
+          "x": -189,
+          "y": -84,
+          "collapsed": "expanded"
         }
       }
     },
@@ -44,7 +46,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "null"
             }
@@ -55,9 +59,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 173,
-          "y": 8.526512829121202e-14,
-          "collapsed": false
+          "x": 172,
+          "y": -81,
+          "collapsed": "expanded"
         }
       }
     }
@@ -77,9 +81,9 @@
         "text": "[Go back](board:welcome.bgl.json) to the beginning",
         "metadata": {
           "visual": {
-            "x": -184.00000000000003,
+            "x": -184,
             "y": -148.99999999999997,
-            "collapsed": false
+            "collapsed": "expanded"
           }
         }
       },
@@ -88,13 +92,14 @@
         "text": "Next: [Ad hoc wires](board:ad-hoc-wires.bgl.json)",
         "metadata": {
           "visual": {
-            "x": 198,
-            "y": 161,
-            "collapsed": false
+            "x": 201,
+            "y": 37,
+            "collapsed": "expanded"
           }
         }
       }
     ],
-    "tags": []
+    "tags": [],
+    "visual": {}
   }
 }

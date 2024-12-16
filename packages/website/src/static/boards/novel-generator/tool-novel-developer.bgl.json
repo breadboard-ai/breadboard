@@ -28,9 +28,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 202.05468749999983,
-          "y": -28.183593749999943,
-          "collapsed": true
+          "x": -45,
+          "y": -30,
+          "collapsed": "collapsed"
         }
       }
     },
@@ -59,9 +59,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 967.04248046875,
-          "y": -28.34941482543951,
-          "collapsed": true
+          "x": 1026,
+          "y": -30,
+          "collapsed": "collapsed"
         }
       }
     },
@@ -70,9 +70,9 @@
       "type": "looper",
       "metadata": {
         "visual": {
-          "x": 433.0546875,
-          "y": -29.183593749999773,
-          "collapsed": true
+          "x": 268,
+          "y": -31,
+          "collapsed": "collapsed"
         },
         "title": "Literary Agent",
         "logLevel": "debug"
@@ -93,9 +93,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 672.0546874999999,
-          "y": 278.8164062500002,
-          "collapsed": true
+          "x": 757,
+          "y": 198,
+          "collapsed": "collapsed"
         },
         "title": "Writer (revise)",
         "logLevel": "debug"
@@ -124,9 +124,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 710.0424804687501,
-          "y": -28.34941482543951,
-          "collapsed": true
+          "x": 667,
+          "y": -31,
+          "collapsed": "collapsed"
         },
         "title": "Publisher",
         "logLevel": "debug"
@@ -155,9 +155,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 458.0546874999998,
-          "y": 278.8164062500002,
-          "collapsed": true
+          "x": 373,
+          "y": 175,
+          "collapsed": "collapsed"
         },
         "title": "Editor",
         "logLevel": "debug"
@@ -186,9 +186,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 243.05468749999994,
-          "y": 277.81640625,
-          "collapsed": true
+          "x": -7,
+          "y": 144,
+          "collapsed": "collapsed"
         },
         "title": "Writer (draft)",
         "logLevel": "debug"
@@ -268,9 +268,9 @@
         "text": "Develops the novel chapter by chapter",
         "metadata": {
           "visual": {
-            "x": 436.0424804687499,
-            "y": -116.34941482543957,
-            "collapsed": true
+            "x": 304,
+            "y": -119,
+            "collapsed": "collapsed"
           }
         }
       },
@@ -279,15 +279,16 @@
         "text": "Read the guide: [Building a Novel Generator with the Agent Kit](https://breadboard-ai.github.io/breadboard/docs/guides/novel-generator/)",
         "metadata": {
           "visual": {
-            "x": 203.9999999999999,
-            "y": -213,
-            "collapsed": true
+            "x": -51,
+            "y": -140,
+            "collapsed": "collapsed"
           }
         }
       }
     ],
     "tags": [
       "tool"
-    ]
+    ],
+    "visual": {}
   }
 }

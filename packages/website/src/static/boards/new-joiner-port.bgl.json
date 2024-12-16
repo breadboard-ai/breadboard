@@ -8,9 +8,9 @@
         "text": "Drag a wire from \"Context Out\" ...",
         "metadata": {
           "visual": {
-            "x": 19,
-            "y": -46,
-            "collapsed": false
+            "x": -185,
+            "y": -69,
+            "collapsed": "expanded"
           }
         }
       },
@@ -19,13 +19,14 @@
         "text": "... to the center of Joiner and then let go. You will then be asked to name the incoming port for this wire.",
         "metadata": {
           "visual": {
-            "x": 259,
-            "y": -1,
-            "collapsed": false
+            "x": 211,
+            "y": 117,
+            "collapsed": "expanded"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   },
   "edges": [],
   "nodes": [
@@ -34,9 +35,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": -39,
-          "y": 8,
-          "collapsed": false
+          "x": -223,
+          "y": 23,
+          "collapsed": "expanded"
         },
         "title": "Illustrator",
         "logLevel": "debug"
@@ -47,9 +48,9 @@
       "type": "joiner",
       "metadata": {
         "visual": {
-          "x": 221,
-          "y": -71,
-          "collapsed": false
+          "x": 171,
+          "y": -43,
+          "collapsed": "expanded"
         },
         "title": "Card Maker",
         "logLevel": "debug"

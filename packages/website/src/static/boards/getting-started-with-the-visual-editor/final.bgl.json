@@ -9,9 +9,9 @@
         "text": "This is a **Greeter** Specialist. It has a persona that tells it how to behave.",
         "metadata": {
           "visual": {
-            "x": -49,
-            "y": 32,
-            "collapsed": true
+            "x": -127,
+            "y": -129,
+            "collapsed": "collapsed"
           }
         }
       },
@@ -20,9 +20,9 @@
         "text": "This is our board's **input**. For this board it accepts a greeting as a string.",
         "metadata": {
           "visual": {
-            "x": -188,
-            "y": -193,
-            "collapsed": true
+            "x": -463,
+            "y": -129,
+            "collapsed": "collapsed"
           }
         }
       },
@@ -31,13 +31,14 @@
         "text": "This is our board's **output** where we see the response from our Specialist",
         "metadata": {
           "visual": {
-            "x": 91,
-            "y": -193,
-            "collapsed": true
+            "x": 201,
+            "y": -127,
+            "collapsed": "collapsed"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   },
   "edges": [
     {
@@ -66,7 +67,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
             }
@@ -77,9 +80,9 @@
       },
       "metadata": {
         "visual": {
-          "collapsed": true,
-          "x": -81.953125,
-          "y": -93.20703125
+          "x": -451,
+          "y": -21,
+          "collapsed": "collapsed"
         }
       }
     },
@@ -95,7 +98,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "null"
             }
@@ -106,9 +111,9 @@
       },
       "metadata": {
         "visual": {
-          "collapsed": true,
-          "x": 91.046875,
-          "y": -93.20703125
+          "x": 214,
+          "y": -21,
+          "collapsed": "collapsed"
         }
       }
     },
@@ -117,9 +122,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "collapsed": true,
-          "x": -33.953125,
-          "y": -18.20703125
+          "x": -162,
+          "y": -19,
+          "collapsed": "collapsed"
         },
         "title": "Greeter",
         "logLevel": "debug"

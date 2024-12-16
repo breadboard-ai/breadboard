@@ -32,8 +32,8 @@
       "type": "text",
       "metadata": {
         "visual": {
-          "x": -44,
-          "y": -63,
+          "x": -34,
+          "y": -8,
           "collapsed": "expanded"
         },
         "title": "Generate Text",
@@ -63,8 +63,8 @@
       "type": "output",
       "metadata": {
         "visual": {
-          "x": 249,
-          "y": -47,
+          "x": 388,
+          "y": 82,
           "collapsed": "expanded"
         }
       },
@@ -110,6 +110,7 @@
   "description": "",
   "metadata": {
     "tags": [],
-    "comments": []
+    "comments": [],
+    "visual": {}
   }
 }

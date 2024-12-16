@@ -7,8 +7,8 @@
       "type": "input",
       "metadata": {
         "visual": {
-          "x": -299,
-          "y": 49,
+          "x": -388,
+          "y": 26,
           "collapsed": "expanded"
         },
         "title": "Input",
@@ -37,7 +37,7 @@
       "metadata": {
         "visual": {
           "x": 342,
-          "y": 32,
+          "y": 65,
           "collapsed": "expanded"
         },
         "title": "Output",
@@ -62,8 +62,8 @@
       "type": "validateJson",
       "metadata": {
         "visual": {
-          "x": 16,
-          "y": -22,
+          "x": -69,
+          "y": -36,
           "collapsed": "expanded"
         },
         "title": "Snippet Validator",
@@ -88,8 +88,8 @@
       "type": "output",
       "metadata": {
         "visual": {
-          "x": 299,
-          "y": -152,
+          "x": 331,
+          "y": -78,
           "collapsed": "expanded"
         },
         "title": "Error",
@@ -139,8 +139,8 @@
         "text": "Snippet Validator attempts to parse and validate the string using the schema, supplied in the configuration.\nIf successful, it outputs the validated JSON. If not successful, it outputs an error.",
         "metadata": {
           "visual": {
-            "x": -31,
-            "y": -181,
+            "x": -22,
+            "y": -224,
             "collapsed": "expanded"
           }
         }
@@ -150,8 +150,8 @@
         "text": "Input asks for \na stringified JSON object.\nThis is very handy for processing LLM output (text) that contains JSON.",
         "metadata": {
           "visual": {
-            "x": -299,
-            "y": -97,
+            "x": -394,
+            "y": -116,
             "collapsed": "expanded"
           }
         }
@@ -161,8 +161,8 @@
         "text": "Output returns \nthe validated JSON",
         "metadata": {
           "visual": {
-            "x": 406,
-            "y": 146,
+            "x": 355,
+            "y": 182,
             "collapsed": "expanded"
           }
         }
@@ -172,8 +172,8 @@
         "text": "If JSON is invalid,\nreturns the error message",
         "metadata": {
           "visual": {
-            "x": 367,
-            "y": -242,
+            "x": 333,
+            "y": -168,
             "collapsed": "expanded"
           }
         }
@@ -183,12 +183,13 @@
         "text": "💡 the **validateJson** will also know to only look inside the markdown JSON delimiters that commonly appear in LLM JSON output -- and ignore the rest of the string.",
         "metadata": {
           "visual": {
-            "x": 43,
-            "y": 121,
+            "x": -23,
+            "y": 181,
             "collapsed": "expanded"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   }
 }

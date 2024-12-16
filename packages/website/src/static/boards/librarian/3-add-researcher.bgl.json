@@ -9,14 +9,15 @@
         "text": "Step 3: **Add Researcher**",
         "metadata": {
           "visual": {
-            "x": -148,
-            "y": 143,
-            "collapsed": false
+            "x": -495,
+            "y": -211,
+            "collapsed": "expanded"
           }
         }
       }
     ],
-    "tags": []
+    "tags": [],
+    "visual": {}
   },
   "edges": [
     {
@@ -64,9 +65,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -110,
-          "y": -220,
-          "collapsed": false
+          "x": -508,
+          "y": -140,
+          "collapsed": "expanded"
         }
       }
     },
@@ -95,9 +96,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 140,
-          "y": 164,
-          "collapsed": false
+          "x": 639,
+          "y": -121,
+          "collapsed": "expanded"
         }
       }
     },
@@ -106,9 +107,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": -10,
-          "y": -4,
-          "collapsed": false
+          "x": 252,
+          "y": -224,
+          "collapsed": "expanded"
         },
         "title": "Summarizer",
         "logLevel": "debug"
@@ -137,9 +138,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 70,
-          "y": -155,
-          "collapsed": false
+          "x": -189,
+          "y": -223,
+          "collapsed": "expanded"
         },
         "title": "Researcher",
         "logLevel": "debug"

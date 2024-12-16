@@ -29,9 +29,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -190.99999999999997,
-          "y": -188.9999999999999,
-          "collapsed": false
+          "x": -561.9999999999995,
+          "y": -184.99999999999972,
+          "collapsed": "expanded"
         }
       }
     },
@@ -60,9 +60,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 462.00000000000006,
-          "y": -218.9999999999999,
-          "collapsed": false
+          "x": 618.0000000000001,
+          "y": -125.99999999999994,
+          "collapsed": "expanded"
         }
       }
     },
@@ -71,9 +71,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 15,
-          "y": -21,
-          "collapsed": false
+          "x": -185.99999999999955,
+          "y": 25,
+          "collapsed": "expanded"
         },
         "title": "Interviewer",
         "logLevel": "debug"
@@ -94,9 +94,9 @@
       "type": "looper",
       "metadata": {
         "visual": {
-          "x": 8.000000000000028,
-          "y": -217.9999999999999,
-          "collapsed": false
+          "x": -189.99999999999966,
+          "y": -278.9999999999989,
+          "collapsed": "expanded"
         },
         "title": "Interview Planner",
         "logLevel": "debug"
@@ -117,9 +117,9 @@
       "type": "human",
       "metadata": {
         "visual": {
-          "x": 251,
-          "y": -62.99999999999977,
-          "collapsed": false
+          "x": 200,
+          "y": 104,
+          "collapsed": "expanded"
         },
         "title": "Interviewee",
         "logLevel": "debug"
@@ -130,9 +130,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 237,
-          "y": -245.9999999999999,
-          "collapsed": false
+          "x": 231.00000000000034,
+          "y": -322.99999999999983,
+          "collapsed": "expanded"
         },
         "title": "Outline Writer",
         "logLevel": "debug"
@@ -202,9 +202,9 @@
         "text": "Comes up with a plan for a 5-7 question interview based on the initial idea of the book, then runs the loop through\nall steps of the plan.",
         "metadata": {
           "visual": {
-            "x": -79,
-            "y": -337,
-            "collapsed": false
+            "x": -130.99999999999966,
+            "y": -373.9999999999991,
+            "collapsed": "expanded"
           }
         }
       },
@@ -213,9 +213,9 @@
         "text": "Formulates a question based on the current step of the plan and the interview answers so far. ",
         "metadata": {
           "visual": {
-            "x": -95,
-            "y": 46,
-            "collapsed": false
+            "x": -526.0000000000005,
+            "y": 162.99999999999966,
+            "collapsed": "expanded"
           }
         }
       },
@@ -224,9 +224,9 @@
         "text": "Hands control over to the user, letting the user respond to the interview question.",
         "metadata": {
           "visual": {
-            "x": 331,
-            "y": 5,
-            "collapsed": false
+            "x": 571,
+            "y": 124,
+            "collapsed": "expanded"
           }
         }
       },
@@ -235,9 +235,9 @@
         "text": "< goes back to planner",
         "metadata": {
           "visual": {
-            "x": 263,
-            "y": -129,
-            "collapsed": false
+            "x": 245.0000000000001,
+            "y": 13,
+            "collapsed": "expanded"
           }
         }
       },
@@ -246,9 +246,9 @@
         "text": "Starts by asking\nfor an idea of a book.",
         "metadata": {
           "visual": {
-            "x": -262,
-            "y": -248,
-            "collapsed": false
+            "x": -552.0000000000005,
+            "y": -267.99999999999994,
+            "collapsed": "expanded"
           }
         }
       },
@@ -257,9 +257,9 @@
         "text": "Ends by presenting \nthe proposed outline.",
         "metadata": {
           "visual": {
-            "x": 480,
-            "y": -147,
-            "collapsed": false
+            "x": 634.9999999999999,
+            "y": -206.99999999999994,
+            "collapsed": "expanded"
           }
         }
       },
@@ -268,9 +268,9 @@
         "text": "**THE BOOK OUTLINE\nINTERVIEWER**\n\nHelps you write your \nnext book.",
         "metadata": {
           "visual": {
-            "x": -216,
-            "y": -100,
-            "collapsed": false
+            "x": -556.0000000000005,
+            "y": -54.000000000000114,
+            "collapsed": "expanded"
           }
         }
       },
@@ -279,12 +279,13 @@
         "text": "Using the material collected during the interview, comes up with a detailed chapter outline.",
         "metadata": {
           "visual": {
-            "x": 283,
-            "y": -325,
-            "collapsed": false
+            "x": 260.0000000000001,
+            "y": -420.0000000000001,
+            "collapsed": "expanded"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   }
 }
