@@ -78,6 +78,7 @@ import "./graph-renderer.js";
 const ZOOM_KEY = "bb-editor-zoom-to-highlighted-node-during-runs";
 const DATA_TYPE = "text/plain";
 const RIBBON_HEIGHT = 44;
+const EDITOR_PADDING = 100;
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
   if (type !== "input" && type !== "output") {
@@ -1113,6 +1114,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
         .selectionChangeId=${this.selectionState?.selectionChangeId}
         .moveToSelection=${this.selectionState?.moveToSelection}
         .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
+        .padding=${EDITOR_PADDING}
       ></bb-graph-renderer>
     </div>`;
 
