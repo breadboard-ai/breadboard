@@ -1276,7 +1276,7 @@ export class GraphRenderer extends LitElement {
       }
 
       for (const node of graph.children) {
-        if (!(node instanceof GraphNode)) {
+        if (!(node instanceof GraphNode || node instanceof GraphComment)) {
           continue;
         }
 
