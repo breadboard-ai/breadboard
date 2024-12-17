@@ -147,7 +147,7 @@ export class GraphRenderer extends LitElement {
   } = undefined;
 
   @property()
-  padding = 100;
+  padding = 30;
 
   @property()
   set showBoardReferenceMarkers(showBoardReferenceMarkers: boolean) {
@@ -240,7 +240,7 @@ export class GraphRenderer extends LitElement {
   #onWheelBound = this.#onWheel.bind(this);
   #onPointerDownBound = this.#onPointerDown.bind(this);
 
-  ready = this.#loadTexturesAndInitializeRenderer();
+  ready: Promise<HTMLCanvasElement | undefined> | null = null;
   zoomToHighlightedNode = false;
 
   static styles = css`
@@ -707,6 +707,10 @@ export class GraphRenderer extends LitElement {
       // Only observe selection changes when we're not dealing with the top
       // level graph.
       this.#selectionHasChanged = true;
+    }
+
+    if (!this.ready && changedProperties.has("assetPrefix")) {
+      this.ready = this.#loadTexturesAndInitializeRenderer();
     }
   }
 
@@ -1840,6 +1844,10 @@ export class GraphRenderer extends LitElement {
             : nothing}
         </div>`
       : nothing;
+
+    if (!this.ready) {
+      return nothing;
+    }
 
     return [
       until(
