@@ -85,6 +85,7 @@ export class Graph extends PIXI.Container {
   #selectionState: GraphSelectionState | null = null;
   #references: GraphReferences | null = null;
 
+  #shouldRenderOutline = false;
   #isInitialDraw = true;
   #minimized = false;
   #collapseNodesByDefault = false;
@@ -234,17 +235,24 @@ export class Graph extends PIXI.Container {
     let creatingAdHocEdge = false;
 
     this.onRender = () => {
+      // We defer outline rendering by a frame because we have to wait for the
+      // nodes and edges to be in place first.
+      if (this.#shouldRenderOutline) {
+        this.#shouldRenderOutline = false;
+        this.#drawGraphOutline();
+      }
+
       if (!this.#isDirty) {
         return;
       }
 
       this.#isDirty = false;
+      this.#shouldRenderOutline = true;
 
       this.#drawComments();
       this.#drawEdges();
       this.#drawNodes();
       this.#drawNodeHighlight();
-      this.#drawGraphOutline();
       this.#sortChildrenBySelectedStatus();
 
       if (this.#minimized && this.#subGraphId) {
@@ -1662,6 +1670,23 @@ export class Graph extends PIXI.Container {
 
       maxX = Math.max(maxX, child.position.x + width);
       maxY = Math.max(maxY, child.position.y + height);
+    }
+
+    for (const edge of this.#edgeContainer.children) {
+      if (!(edge instanceof GraphEdge)) {
+        continue;
+      }
+
+      const edgeBounds = edge.hitArea?.getBounds();
+      if (!edgeBounds) {
+        continue;
+      }
+
+      minX = Math.min(minX, edgeBounds.left);
+      minY = Math.min(minY, edgeBounds.top);
+
+      maxX = Math.max(maxX, edgeBounds.right);
+      maxY = Math.max(maxY, edgeBounds.bottom);
     }
 
     minX -= this.#graphOutlinePadding;
