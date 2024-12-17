@@ -1186,7 +1186,7 @@ export class Graph extends PIXI.Container {
     }
   }
 
-  updateNodePositions(delta: PIXI.Point) {
+  updateNodePositions(delta: PIXI.Point, settled = false) {
     const selectionState = this.#selectionState;
     if (!selectionState) {
       return;
@@ -1206,6 +1206,9 @@ export class Graph extends PIXI.Container {
       child.x = layout.x + delta.x;
       child.y = layout.y + delta.y;
 
+      if (!settled) {
+        continue;
+      }
       this.setNodeLayoutPosition(
         node,
         "node",
@@ -1229,6 +1232,9 @@ export class Graph extends PIXI.Container {
       child.x = layout.x + delta.x;
       child.y = layout.y + delta.y;
 
+      if (!settled) {
+        continue;
+      }
       this.setNodeLayoutPosition(
         comment,
         "comment",

@@ -216,9 +216,6 @@ export class Editor extends LitElement implements DragConnectorReceiver {
   @property()
   showBoardReferenceMarkers = false;
 
-  @property()
-  showMainGraphBorder = true;
-
   @state()
   showOverflowMenu = false;
 
@@ -475,6 +472,8 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       subGraphId ? subGraphId : MAIN_BOARD_ID
     );
 
+    const hasSubGraphs = Object.keys(selectedGraph.graphs() ?? {}).length > 0;
+
     return {
       url,
       title: subGraphId
@@ -490,6 +489,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       nodes: selectedGraph.nodes(),
       modules: selectedGraph.modules(),
       metadata: selectedGraph.metadata() || {},
+      showGraphOutline: subGraphId ? true : hasSubGraphs,
       references,
       selectionState: graphSelectionState ?? null,
     };
@@ -1113,7 +1113,6 @@ export class Editor extends LitElement implements DragConnectorReceiver {
         .selectionChangeId=${this.selectionState?.selectionChangeId}
         .moveToSelection=${this.selectionState?.moveToSelection}
         .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
-        .showMainGraphBorder=${this.showMainGraphBorder}
       ></bb-graph-renderer>
     </div>`;
 
