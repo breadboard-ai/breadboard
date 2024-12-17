@@ -49,6 +49,7 @@
       ],
       "dependencies": [
         "build:esbuild",
+        "update-sandbox-runtime",
         "../breadboard:build:tsc",
         "../data-store:build:tsc",
         "../agent-kit:build:tsc",
@@ -59,7 +60,8 @@
         "../json-kit:build:tsc",
         "../template-kit:build:tsc",
         "../node-nursery-web:build:tsc",
-        "../shared-ui:build:tsc"
+        "../shared-ui:build:tsc",
+        "../visual-editor:build"
       ],
       "clean": "if-file-deleted"
     },
@@ -162,6 +164,18 @@
       ],
       "files": [],
       "output": []
+    },
+    "update-sandbox-runtime": {
+      "command": "tsx src/update-sandbox-runtime.ts",
+      "dependencies": [
+        "../jsandbox:build"
+      ],
+      "files": [
+        "src/update-sandbox-runtime.ts"
+      ],
+      "output": [
+        "public/sandbox.wasm"
+      ]
     }
   },
   "repository": {
