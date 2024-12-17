@@ -1661,6 +1661,10 @@ export class Graph extends PIXI.Container {
     this.#graphOutlineMarker.clear();
     this.#graphOutlineConnector.clear();
 
+    if (this.#graphOutlineTitleLabel) {
+      this.#graphOutlineTitleLabel.visible = false;
+    }
+
     if (this.#graphOutlineConnectorIcon) {
       this.#graphOutlineConnectorIcon.visible = false;
     }
@@ -1763,6 +1767,7 @@ export class Graph extends PIXI.Container {
 
       this.#graphOutlineTitleLabel.x = x + 14;
       this.#graphOutlineTitleLabel.y = y + 8;
+      this.#graphOutlineTitleLabel.visible = true;
 
       if (this.subGraphId) {
         if (this.#graphOutlineConnectorIcon) {
