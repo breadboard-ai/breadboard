@@ -20,8 +20,8 @@
       },
       "metadata": {
         "visual": {
-          "x": -310,
-          "y": -67,
+          "x": -411,
+          "y": -66,
           "collapsed": "expanded"
         }
       }
@@ -44,8 +44,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 286,
-          "y": -96,
+          "x": 302,
+          "y": -50,
           "collapsed": "expanded"
         }
       }
@@ -55,8 +55,8 @@
       "type": "service",
       "metadata": {
         "visual": {
-          "x": -76,
-          "y": -66,
+          "x": -96,
+          "y": -65,
           "collapsed": "expanded"
         },
         "title": "News",
@@ -90,12 +90,13 @@
         "text": "Uses a [Valtown](https://val.town) HTTP [endpoint](https://www.val.town/v/dglazkov/googlenews) to fetch and parse Google News.",
         "metadata": {
           "visual": {
-            "x": 15,
-            "y": -168,
+            "x": -58,
+            "y": -165,
             "collapsed": "expanded"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   }
 }

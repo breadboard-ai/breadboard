@@ -78,6 +78,7 @@ import "./graph-renderer.js";
 const ZOOM_KEY = "bb-editor-zoom-to-highlighted-node-during-runs";
 const DATA_TYPE = "text/plain";
 const RIBBON_HEIGHT = 44;
+const EDITOR_PADDING = 100;
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
   if (type !== "input" && type !== "output") {
@@ -215,9 +216,6 @@ export class Editor extends LitElement implements DragConnectorReceiver {
 
   @property()
   showBoardReferenceMarkers = false;
-
-  @property()
-  showMainGraphBorder = true;
 
   @state()
   showOverflowMenu = false;
@@ -475,6 +473,8 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       subGraphId ? subGraphId : MAIN_BOARD_ID
     );
 
+    const hasSubGraphs = Object.keys(selectedGraph.graphs() ?? {}).length > 0;
+
     return {
       url,
       title: subGraphId
@@ -490,6 +490,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       nodes: selectedGraph.nodes(),
       modules: selectedGraph.modules(),
       metadata: selectedGraph.metadata() || {},
+      showGraphOutline: subGraphId ? true : hasSubGraphs,
       references,
       selectionState: graphSelectionState ?? null,
     };
@@ -1113,7 +1114,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
         .selectionChangeId=${this.selectionState?.selectionChangeId}
         .moveToSelection=${this.selectionState?.moveToSelection}
         .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
-        .showMainGraphBorder=${this.showMainGraphBorder}
+        .padding=${EDITOR_PADDING}
       ></bb-graph-renderer>
     </div>`;
 

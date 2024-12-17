@@ -22,8 +22,8 @@
       },
       "metadata": {
         "visual": {
-          "x": -439,
-          "y": -56,
+          "x": -599,
+          "y": -49,
           "collapsed": "expanded"
         }
       }
@@ -47,8 +47,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 416,
-          "y": -170,
+          "x": 465,
+          "y": 197,
           "collapsed": "expanded"
         }
       }
@@ -58,8 +58,8 @@
       "type": "reduce",
       "metadata": {
         "visual": {
-          "x": 124,
-          "y": -7,
+          "x": 75,
+          "y": 131,
           "collapsed": "expanded"
         },
         "title": "Search All Results",
@@ -78,8 +78,8 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": -233,
-          "y": -150,
+          "x": -313,
+          "y": -157,
           "collapsed": "expanded"
         },
         "title": "Split Topics",
@@ -120,8 +120,8 @@
         "text": "Split topics into\na list with JS.",
         "metadata": {
           "visual": {
-            "x": -119,
-            "y": -231,
+            "x": -219,
+            "y": -243,
             "collapsed": "expanded"
           }
         }
@@ -131,12 +131,13 @@
         "text": "Call [Search Wikipedia](https://breadboard-ai.web.app/?board=https%3A%2Fbreadboard-ai.github.io%2Fbreadboard%2Fstatic%2Fboards%2Fkits%2Fexample-search-wikipedia.bgl.json) board for each item in the list.",
         "metadata": {
           "visual": {
-            "x": 107,
-            "y": -93,
+            "x": 118,
+            "y": 47,
             "collapsed": "expanded"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   }
 }

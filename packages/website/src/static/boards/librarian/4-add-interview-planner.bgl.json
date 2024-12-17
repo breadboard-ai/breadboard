@@ -8,9 +8,9 @@
         "text": "Looper has two output\nports 👇 ",
         "metadata": {
           "visual": {
-            "x": -217.99999999999994,
-            "y": -67.00000000000001,
-            "collapsed": false
+            "x": -28.99999999999943,
+            "y": -66,
+            "collapsed": "expanded"
           }
         }
       },
@@ -19,9 +19,9 @@
         "text": "\"Context out\" for when \nall plan steps are  finished.",
         "metadata": {
           "visual": {
-            "x": -109.99999999999994,
-            "y": 18.999999999999964,
-            "collapsed": false
+            "x": -29.999999999999318,
+            "y": 16.000000000000114,
+            "collapsed": "expanded"
           }
         }
       },
@@ -30,9 +30,9 @@
         "text": "\"Loop\" to repeat\nfor each step in the plan.",
         "metadata": {
           "visual": {
-            "x": -106.99999999999994,
-            "y": 104,
-            "collapsed": false
+            "x": -29.999999999999545,
+            "y": 97.99999999999994,
+            "collapsed": "expanded"
           }
         }
       },
@@ -41,9 +41,9 @@
         "text": "🧩 This board snapshot is an intermediate step in the build, and won't run until we finish the build.",
         "metadata": {
           "visual": {
-            "x": 243.99999999999997,
-            "y": -267,
-            "collapsed": false
+            "x": 240,
+            "y": -226,
+            "collapsed": "expanded"
           }
         }
       },
@@ -52,14 +52,15 @@
         "text": "Step 2: **Add Interview Planner**",
         "metadata": {
           "visual": {
-            "x": -307,
-            "y": -158,
-            "collapsed": false
+            "x": -304.99999999999926,
+            "y": -131.99999999999994,
+            "collapsed": "expanded"
           }
         }
       }
     ],
-    "tags": []
+    "tags": [],
+    "visual": {}
   },
   "edges": [
     {
@@ -87,9 +88,9 @@
       "type": "looper",
       "metadata": {
         "visual": {
-          "x": -312.9999999999999,
-          "y": 32.00000000000002,
-          "collapsed": false
+          "x": -342.99999999999926,
+          "y": -70,
+          "collapsed": "expanded"
         },
         "title": "Interview Planner",
         "logLevel": "debug"
@@ -130,9 +131,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 65.00000000000009,
-          "y": -198,
-          "collapsed": false
+          "x": 250.0000000000001,
+          "y": -104.99999999999997,
+          "collapsed": "expanded"
         }
       }
     },
@@ -161,9 +162,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 315.0000000000001,
-          "y": 186,
-          "collapsed": false
+          "x": 790.0000000000001,
+          "y": 210,
+          "collapsed": "expanded"
         }
       }
     },
@@ -172,9 +173,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 164.99999999999997,
-          "y": 17.999999999999964,
-          "collapsed": false
+          "x": 223,
+          "y": 206,
+          "collapsed": "expanded"
         },
         "title": "Summarizer",
         "logLevel": "debug"
@@ -203,9 +204,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 245.00000000000009,
-          "y": -133,
-          "collapsed": false
+          "x": 555.9999999999999,
+          "y": -189.99999999999997,
+          "collapsed": "expanded"
         },
         "title": "Researcher",
         "logLevel": "debug"

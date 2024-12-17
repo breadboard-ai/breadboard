@@ -84,6 +84,7 @@ export interface GraphOpts {
   title: string;
   subGraphId: string | null;
   showNodePreviewValues: boolean;
+  showGraphOutline: boolean;
   collapseNodesByDefault: boolean;
   ports: Map<string, InspectableNodePorts> | null;
   typeMetadata: Map<string, NodeHandlerMetadata> | null;

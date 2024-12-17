@@ -648,6 +648,7 @@ export class ModuleEditor extends LitElement {
       minimized: false,
       showNodePreviewValues: false,
       collapseNodesByDefault: false,
+      showGraphOutline: false,
       ports: ports,
       typeMetadata,
       edges: selectedGraph.edges(),
@@ -907,7 +908,6 @@ export class ModuleEditor extends LitElement {
                 .highlightInvalidWires=${false}
                 .showPortTooltips=${false}
                 .showSubgraphsInline=${false}
-                .showMainGraphBorder=${false}
                 .selectionChangeId=${null}
               ></bb-graph-renderer>
             </div>

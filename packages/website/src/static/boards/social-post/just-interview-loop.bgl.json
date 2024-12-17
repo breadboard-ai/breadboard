@@ -1,189 +1,190 @@
 {
-    "title": "Just interview Loop",
-    "description": "Contains board up through the interview with user",
-    "version": "0.0.1",
-    "nodes": [
-      {
-        "id": "human-a7ffc3c9",
-        "type": "human",
-        "metadata": {
-          "visual": {
-            "x": 876,
-            "y": 302,
-            "collapsed": false
-          },
-          "title": "Interviewee",
-          "logLevel": "debug",
-          "description": "user participating in the chat"
-        }
-      },
-      {
-        "id": "specialist-1b71b8b7",
-        "type": "specialist",
-        "metadata": {
-          "visual": {
-            "x": 1048,
-            "y": 106,
-            "collapsed": false
-          },
-          "title": "Interviewer",
-          "description": "get the business name and location",
-          "logLevel": "debug"
+  "title": "Just interview Loop",
+  "description": "Contains board up through the interview with user",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "human-a7ffc3c9",
+      "type": "human",
+      "metadata": {
+        "visual": {
+          "x": 118,
+          "y": 287,
+          "collapsed": "expanded"
         },
-        "configuration": {
-          "persona": {
-            "role": "user",
-            "parts": [
-              {
-                "text": "You are an expert interviewer, whose job it is to interview the user to find out what their social media post is about and theirs goals for it are. Based on the theme provided and incorporating the history of the interview so far, ask ONE question that allows the user to easily and quickly type an answer. You only need to get one basic answer from the user."
-              }
-            ]
-          },
-          "task": {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Ask just ONE question that includes what this social media post is about and its main goal. You only need to elicit ONE answer. Do so in a friendly and casual manner."
-              }
-            ]
-          }
-        }
-      },
-      {
-        "id": "looper-03c40c9b",
-        "type": "looper",
-        "metadata": {
-          "visual": {
-            "x": 773,
-            "y": 86,
-            "collapsed": false
-          },
-          "title": "Interview Planner",
-          "logLevel": "debug",
-          "description": "Sets up the basics for the interview conversation loop"
+        "title": "Interviewee",
+        "logLevel": "debug",
+        "description": "user participating in the chat"
+      }
+    },
+    {
+      "id": "specialist-1b71b8b7",
+      "type": "specialist",
+      "metadata": {
+        "visual": {
+          "x": 1011,
+          "y": 266,
+          "collapsed": "expanded"
         },
-        "configuration": {
-          "task": {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Based on the initial topic, come up with ONE question to collect just enough information from the user about the social media post's topic and goals. You only need to get one answer from the user."
-              }
-            ]
-          }
-        }
+        "title": "Interviewer",
+        "description": "get the business name and location",
+        "logLevel": "debug"
       },
-      {
-        "id": "output-11fb8604",
-        "type": "output",
-        "metadata": {
-          "visual": {
-            "x": 1052,
-            "y": -26,
-            "collapsed": false
-          },
-          "title": "output",
-          "logLevel": "debug"
+      "configuration": {
+        "persona": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are an expert interviewer, whose job it is to interview the user to find out what their social media post is about and theirs goals for it are. Based on the theme provided and incorporating the history of the interview so far, ask ONE question that allows the user to easily and quickly type an answer. You only need to get one basic answer from the user."
+            }
+          ]
         },
-        "configuration": {
-          "schema": {
-            "properties": {
-              "property-1": {
-                "type": "object",
-                "title": "out",
-                "examples": [],
-                "behavior": [
-                  "llm-content"
-                ],
-                "default": "null"
-              }
-            },
-            "type": "object",
-            "required": []
-          }
-        }
-      },
-      {
-        "id": "input-78f58945",
-        "type": "input",
-        "metadata": {
-          "visual": {
-            "x": 431,
-            "y": 85,
-            "collapsed": false
-          },
-          "title": "Get business name and location",
-          "description": "Asks for the business name and location",
-          "logLevel": "debug"
-        },
-        "configuration": {
-          "schema": {
-            "properties": {
-              "content": {
-                "type": "object",
-                "title": "Business Name",
-                "examples": [],
-                "behavior": [
-                  "llm-content"
-                ],
-                "default": "{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}"
-              },
-              "property-2": {
-                "type": "object",
-                "behavior": [
-                  "llm-content"
-                ],
-                "title": "Business Location (city and state)",
-                "examples": [],
-                "default": "{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}"
-              }
-            },
-            "type": "object",
-            "required": []
-          }
+        "task": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Ask just ONE question that includes what this social media post is about and its main goal. You only need to elicit ONE answer. Do so in a friendly and casual manner."
+            }
+          ]
         }
       }
-    ],
-    "edges": [
-      {
-        "from": "input-78f58945",
-        "to": "looper-03c40c9b",
-        "out": "content",
-        "in": "context"
+    },
+    {
+      "id": "looper-03c40c9b",
+      "type": "looper",
+      "metadata": {
+        "visual": {
+          "x": 614,
+          "y": 107,
+          "collapsed": "expanded"
+        },
+        "title": "Interview Planner",
+        "logLevel": "debug",
+        "description": "Sets up the basics for the interview conversation loop"
       },
-      {
-        "from": "input-78f58945",
-        "to": "looper-03c40c9b",
-        "out": "property-2",
-        "in": "context"
-      },
-      {
-        "from": "looper-03c40c9b",
-        "to": "specialist-1b71b8b7",
-        "out": "loop",
-        "in": "in"
-      },
-      {
-        "from": "specialist-1b71b8b7",
-        "to": "human-a7ffc3c9",
-        "out": "out",
-        "in": "context"
-      },
-      {
-        "from": "human-a7ffc3c9",
-        "to": "looper-03c40c9b",
-        "out": "context",
-        "in": "context"
-      },
-      {
-        "from": "looper-03c40c9b",
-        "to": "output-11fb8604",
-        "out": "done",
-        "in": "property-1"
+      "configuration": {
+        "task": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Based on the initial topic, come up with ONE question to collect just enough information from the user about the social media post's topic and goals. You only need to get one answer from the user."
+            }
+          ]
+        }
       }
-    ],
-    "metadata": {
-      "comments": [],
-      "tags": []
+    },
+    {
+      "id": "output-11fb8604",
+      "type": "output",
+      "metadata": {
+        "visual": {
+          "x": 1063,
+          "y": 108,
+          "collapsed": "expanded"
+        },
+        "title": "output",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "schema": {
+          "properties": {
+            "property-1": {
+              "type": "object",
+              "title": "out",
+              "examples": [],
+              "behavior": [
+                "llm-content"
+              ],
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      }
+    },
+    {
+      "id": "input-78f58945",
+      "type": "input",
+      "metadata": {
+        "visual": {
+          "x": 91,
+          "y": 98,
+          "collapsed": "expanded"
+        },
+        "title": "Get business name and location",
+        "description": "Asks for the business name and location",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "schema": {
+          "properties": {
+            "content": {
+              "type": "object",
+              "title": "Business Name",
+              "examples": [],
+              "behavior": [
+                "llm-content"
+              ],
+              "default": "{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}"
+            },
+            "property-2": {
+              "type": "object",
+              "behavior": [
+                "llm-content"
+              ],
+              "title": "Business Location (city and state)",
+              "examples": [],
+              "default": "{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      }
     }
+  ],
+  "edges": [
+    {
+      "from": "input-78f58945",
+      "to": "looper-03c40c9b",
+      "out": "content",
+      "in": "context"
+    },
+    {
+      "from": "input-78f58945",
+      "to": "looper-03c40c9b",
+      "out": "property-2",
+      "in": "context"
+    },
+    {
+      "from": "looper-03c40c9b",
+      "to": "specialist-1b71b8b7",
+      "out": "loop",
+      "in": "in"
+    },
+    {
+      "from": "specialist-1b71b8b7",
+      "to": "human-a7ffc3c9",
+      "out": "out",
+      "in": "context"
+    },
+    {
+      "from": "human-a7ffc3c9",
+      "to": "looper-03c40c9b",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "looper-03c40c9b",
+      "to": "output-11fb8604",
+      "out": "done",
+      "in": "property-1"
+    }
+  ],
+  "metadata": {
+    "comments": [],
+    "tags": [],
+    "visual": {}
   }
+}

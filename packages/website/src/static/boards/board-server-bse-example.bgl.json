@@ -27,9 +27,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -82,
-          "y": -188,
-          "collapsed": false
+          "x": -287,
+          "y": -185,
+          "collapsed": "expanded"
         }
       }
     },
@@ -58,9 +58,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 347,
-          "y": -66,
-          "collapsed": false
+          "x": 505,
+          "y": -90,
+          "collapsed": "expanded"
         }
       }
     },
@@ -69,9 +69,9 @@
       "type": "service",
       "metadata": {
         "visual": {
-          "x": 109,
+          "x": 95,
           "y": -133,
-          "collapsed": false
+          "collapsed": "expanded"
         },
         "title": "Get Song Lyrics",
         "logLevel": "debug"
@@ -85,9 +85,9 @@
       "type": "secrets",
       "metadata": {
         "visual": {
-          "x": -122,
-          "y": -68,
-          "collapsed": false
+          "x": -363,
+          "y": -37,
+          "collapsed": "expanded"
         },
         "title": "Get BSE Key",
         "logLevel": "debug"
@@ -118,5 +118,8 @@
       "out": "BB_LIVE_KEY",
       "in": "$key"
     }
-  ]
+  ],
+  "metadata": {
+    "visual": {}
+  }
 }

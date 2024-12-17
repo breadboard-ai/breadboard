@@ -19,8 +19,8 @@
       },
       "metadata": {
         "visual": {
-          "x": -307,
-          "y": -65,
+          "x": -444,
+          "y": -62,
           "collapsed": "expanded"
         }
       }
@@ -43,8 +43,8 @@
       "type": "urlTemplate",
       "metadata": {
         "visual": {
-          "x": -89,
-          "y": -92,
+          "x": -169,
+          "y": -85,
           "collapsed": "expanded"
         },
         "title": "Make URL",
@@ -59,8 +59,8 @@
       "type": "output",
       "metadata": {
         "visual": {
-          "x": 496,
-          "y": -133,
+          "x": 608,
+          "y": -62,
           "collapsed": "expanded"
         },
         "title": "output",
@@ -110,8 +110,8 @@
         "text": "Use `promptTemplate` component to create a URL to search Wikipedia.",
         "metadata": {
           "visual": {
-            "x": -29,
-            "y": -191,
+            "x": -135,
+            "y": -187,
             "collapsed": "expanded"
           }
         }
@@ -121,12 +121,13 @@
         "text": "Make a `fetch` call \nto Wikipedia.",
         "metadata": {
           "visual": {
-            "x": 313,
+            "x": 304,
             "y": -225,
             "collapsed": "expanded"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   }
 }

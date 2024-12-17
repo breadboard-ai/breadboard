@@ -27,8 +27,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 956.9999999999998,
-          "y": -140,
+          "x": 931,
+          "y": -134,
           "collapsed": "expanded"
         }
       }
@@ -38,8 +38,8 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 148.00000000000006,
-          "y": -346.00000000000006,
+          "x": -34,
+          "y": -282,
           "collapsed": "expanded"
         },
         "title": "Respond and Route",
@@ -73,8 +73,8 @@
       "type": "human",
       "metadata": {
         "visual": {
-          "x": 511,
-          "y": -584,
+          "x": 516,
+          "y": -583,
           "collapsed": "expanded"
         },
         "title": "Human",
@@ -90,8 +90,8 @@
       "type": "content",
       "metadata": {
         "visual": {
-          "x": 571,
-          "y": -276.00000000000006,
+          "x": 513,
+          "y": -187,
           "collapsed": "expanded"
         },
         "title": "Get Only Latest",
@@ -114,8 +114,8 @@
       "type": "content",
       "metadata": {
         "visual": {
-          "x": 163.99999999999994,
-          "y": 177,
+          "x": -34,
+          "y": 180,
           "collapsed": "expanded"
         },
         "title": "Content",
@@ -138,8 +138,8 @@
       "type": "runJavascript",
       "metadata": {
         "visual": {
-          "x": 517.9999999999999,
-          "y": 177.99999999999977,
+          "x": 539,
+          "y": 107,
           "collapsed": "expanded"
         },
         "title": "Slice Last Result Off",
@@ -155,8 +155,8 @@
       "type": "input",
       "metadata": {
         "visual": {
-          "x": -365.99999999999983,
-          "y": -246.99999999999994,
+          "x": -557,
+          "y": -165,
           "collapsed": "expanded"
         },
         "title": "Input",
@@ -271,6 +271,7 @@
       "published",
       "component"
     ],
-    "comments": []
+    "comments": [],
+    "visual": {}
   }
 }

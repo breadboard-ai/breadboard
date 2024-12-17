@@ -9,9 +9,9 @@
         "text": "The initial input from the user.",
         "metadata": {
           "visual": {
-            "x": -289,
-            "y": -138.99999999999994,
-            "collapsed": true
+            "x": -525,
+            "y": -140.99999999999997,
+            "collapsed": "collapsed"
           }
         }
       },
@@ -20,9 +20,9 @@
         "text": "The looper here keeps the conversation going.",
         "metadata": {
           "visual": {
-            "x": -9,
-            "y": -159,
-            "collapsed": true
+            "x": -54.000000000000114,
+            "y": -198,
+            "collapsed": "collapsed"
           }
         }
       },
@@ -31,24 +31,25 @@
         "text": "The Chat Bot is backed by an LLM and responds to the user.",
         "metadata": {
           "visual": {
-            "x": -129.99999999999994,
-            "y": 177,
-            "collapsed": true
+            "x": -377,
+            "y": 132,
+            "collapsed": "collapsed"
           }
         }
       },
       {
         "id": "comment-5093fff2",
-        "text": "The Chat Bot is backed by an LLM and responds to the user.",
+        "text": "The User adds to the context",
         "metadata": {
           "visual": {
-            "x": 115.00000000000006,
-            "y": 177,
-            "collapsed": true
+            "x": 384,
+            "y": 225,
+            "collapsed": "collapsed"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   },
   "edges": [
     {
@@ -85,7 +86,9 @@
           "properties": {
             "property-1": {
               "type": "object",
-              "behavior": ["llm-content"],
+              "behavior": [
+                "llm-content"
+              ],
               "title": "Conversation Starter",
               "examples": [],
               "default": "null"
@@ -97,9 +100,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -277,
-          "y": -74,
-          "collapsed": false
+          "x": -513,
+          "y": -76,
+          "collapsed": "expanded"
         }
       }
     },
@@ -108,9 +111,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": -112,
-          "y": 85.00000000000011,
-          "collapsed": false
+          "x": -409,
+          "y": 217,
+          "collapsed": "expanded"
         },
         "title": "Chat Bot",
         "logLevel": "debug"
@@ -131,9 +134,9 @@
       "type": "looper",
       "metadata": {
         "visual": {
-          "x": 6.000000000000057,
-          "y": -74,
-          "collapsed": false
+          "x": -92.99999999999989,
+          "y": -123.99999999999997,
+          "collapsed": "expanded"
         },
         "title": "Conversation",
         "logLevel": "debug"
@@ -154,9 +157,9 @@
       "type": "human",
       "metadata": {
         "visual": {
-          "x": 131.00000000000006,
-          "y": 85.00000000000011,
-          "collapsed": false
+          "x": 147,
+          "y": 300,
+          "collapsed": "expanded"
         },
         "title": "User",
         "logLevel": "debug"

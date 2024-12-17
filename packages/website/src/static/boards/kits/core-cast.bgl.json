@@ -8,8 +8,8 @@
         "text": "*Example type*:\n\n`{`\n`  \"type\": \"object\",`\n`  \"properties\": {`\n`    \"foo\": {`\n`      \"type\": \"string\"`\n`    },`\n`    \"bar\": {`\n`      \"type\": \"number\"`\n`    }`\n`  }`\n`}`",
         "metadata": {
           "visual": {
-            "x": 25,
-            "y": -49,
+            "x": 161,
+            "y": -175,
             "collapsed": "expanded"
           }
         }
@@ -19,8 +19,8 @@
         "text": "*Example response*:\n\n`{`\n`  \"foo\": \"hello\",`\n`  \"bar\": 42`\n`}`",
         "metadata": {
           "visual": {
-            "x": -261,
-            "y": -183,
+            "x": -238.00000000000014,
+            "y": -90.00000000000063,
             "collapsed": "expanded"
           }
         }
@@ -30,13 +30,14 @@
         "text": "**`cast`** takes any kind of value and forces it to have a particular schema.",
         "metadata": {
           "visual": {
-            "x": 140,
-            "y": -273,
+            "x": 160.99999999999994,
+            "y": -440,
             "collapsed": "expanded"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   },
   "edges": [
     {
@@ -78,8 +79,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 395,
-          "y": -35,
+          "x": 508.00000000000006,
+          "y": -286.00000000000006,
           "collapsed": "expanded"
         },
         "title": "Output",
@@ -91,8 +92,8 @@
       "type": "fetch",
       "metadata": {
         "visual": {
-          "x": -286,
-          "y": -505,
+          "x": -286.0000000000002,
+          "y": -505.00000000000057,
           "collapsed": "expanded"
         },
         "title": "Fetch Some URL",
@@ -110,8 +111,8 @@
       "type": "cast",
       "metadata": {
         "visual": {
-          "x": 168,
-          "y": -176,
+          "x": 154.99999999999994,
+          "y": -335.0000000000001,
           "collapsed": "expanded"
         },
         "title": "Cast Fetch Result",

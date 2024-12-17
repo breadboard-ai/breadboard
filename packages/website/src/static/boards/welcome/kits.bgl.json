@@ -28,9 +28,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 2.842170943040401e-14,
-          "y": 1.1368683772161603e-13,
-          "collapsed": false
+          "x": -228,
+          "y": -43,
+          "collapsed": "expanded"
         }
       }
     },
@@ -61,7 +61,7 @@
         "visual": {
           "x": 173,
           "y": 1.1368683772161603e-13,
-          "collapsed": false
+          "collapsed": "expanded"
         }
       }
     }
@@ -81,9 +81,9 @@
         "text": "Previous: [Ad-hoc wires](board:ad-hoc-wires.bgl.json)",
         "metadata": {
           "visual": {
-            "x": -184.00000000000003,
-            "y": -148.99999999999997,
-            "collapsed": false
+            "x": -217,
+            "y": -100,
+            "collapsed": "expanded"
           }
         }
       },
@@ -92,13 +92,14 @@
         "text": "Next: [Running Boards](board:running-boards.bgl.json)",
         "metadata": {
           "visual": {
-            "x": 198,
-            "y": 161,
-            "collapsed": false
+            "x": 190,
+            "y": 112,
+            "collapsed": "expanded"
           }
         }
       }
     ],
-    "tags": []
+    "tags": [],
+    "visual": {}
   }
 }

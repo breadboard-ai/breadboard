@@ -22,7 +22,7 @@
       },
       "metadata": {
         "visual": {
-          "x": -268,
+          "x": -278,
           "y": 39,
           "collapsed": "expanded"
         }
@@ -49,8 +49,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 367,
-          "y": -93,
+          "x": 389,
+          "y": 45,
           "collapsed": "expanded"
         }
       }
@@ -102,6 +102,7 @@
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   }
 }

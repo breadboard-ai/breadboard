@@ -1336,28 +1336,29 @@ export class Edit extends EventTarget {
       return;
     }
 
-    const newGraphId = targetGraphId ?? createGraphId();
-    const inspectableGraphId = newGraphId === MAIN_BOARD_ID ? "" : newGraphId;
+    targetGraphId = targetGraphId ?? createGraphId();
+    const inspectableTargetGraphId =
+      targetGraphId === MAIN_BOARD_ID ? "" : targetGraphId;
 
     const edits: EditSpec[] = [];
-    const commentsForNewGraph: CommentNode[] = [];
+    const commentsForTargetGraph: CommentNode[] = [];
     const nodeIds: NodeIdentifier[] = [];
 
     let hasEdited = false;
-    for (const [sourceGraphId, graph] of selectionState.graphs) {
+    for (const [sourceGraphId, sourceGraph] of selectionState.graphs) {
       const inspectableSourceGraphId =
         sourceGraphId === MAIN_BOARD_ID ? "" : sourceGraphId;
       // Make the new graph if needed.
       if (
-        newGraphId !== MAIN_BOARD_ID &&
+        targetGraphId !== MAIN_BOARD_ID &&
         (!editableGraph.raw().graphs ||
-          !editableGraph.raw().graphs?.[newGraphId])
+          !editableGraph.raw().graphs?.[targetGraphId])
       ) {
         await editableGraph.edit(
           [
             {
               type: "addgraph",
-              id: newGraphId,
+              id: targetGraphId,
               graph: { nodes: [], edges: [], title: "New Board" },
             },
           ],
@@ -1366,21 +1367,21 @@ export class Edit extends EventTarget {
       }
 
       // Skip transforms where the target is the same as the source.
-      if (inspectableGraphId === inspectableSourceGraphId) {
+      if (inspectableTargetGraphId === inspectableSourceGraphId) {
         continue;
       }
 
       hasEdited = true;
 
-      if (graph.comments.size > 0) {
+      if (sourceGraph.comments.size > 0) {
         const metadata =
           editableGraph.inspect(inspectableSourceGraphId).metadata() ?? {};
         const comments = metadata.comments ?? [];
         const graphCommentsAfterEdit: CommentNode[] = [];
         for (const comment of comments) {
-          if (graph.comments.has(comment.id)) {
+          if (sourceGraph.comments.has(comment.id)) {
             const newComment = structuredClone(comment);
-            commentsForNewGraph.push(newComment);
+            commentsForTargetGraph.push(newComment);
             newComment.metadata ??= {};
             newComment.metadata.visual ??= { x: 0, y: 0 };
 
@@ -1402,13 +1403,13 @@ export class Edit extends EventTarget {
       }
 
       // Track the nodes seen so that we can update their location values.
-      nodeIds.push(...graph.nodes);
+      nodeIds.push(...sourceGraph.nodes);
 
       // Transform all the selected nodes into it.
       const transform = new MoveToGraphTransform(
-        [...graph.nodes],
+        [...sourceGraph.nodes],
         inspectableSourceGraphId,
-        inspectableGraphId
+        inspectableTargetGraphId
       );
 
       const result = await editableGraph.apply(transform);
@@ -1425,7 +1426,9 @@ export class Edit extends EventTarget {
     // Now go through each one and adjust it by the left-most position and
     // the cursor position.
     for (const nodeId of nodeIds) {
-      const node = editableGraph.inspect(inspectableGraphId).nodeById(nodeId);
+      const node = editableGraph
+        .inspect(inspectableTargetGraphId)
+        .nodeById(nodeId);
       if (!node) {
         continue;
       }
@@ -1439,17 +1442,25 @@ export class Edit extends EventTarget {
       edits.push({
         type: "changemetadata",
         id: nodeId,
-        graphId: inspectableGraphId,
+        graphId: inspectableTargetGraphId,
         metadata,
       });
     }
 
+    // Carry any existing comments.
+    const inspectableTargetGraph = editableGraph.inspect(
+      inspectableTargetGraphId
+    );
+    commentsForTargetGraph.push(
+      ...(inspectableTargetGraph.metadata()?.comments ?? [])
+    );
+
     // Finally set comments.
     edits.push({
       type: "changegraphmetadata",
-      graphId: inspectableGraphId,
+      graphId: inspectableTargetGraphId,
       metadata: {
-        comments: commentsForNewGraph,
+        comments: commentsForTargetGraph,
       },
     });
 

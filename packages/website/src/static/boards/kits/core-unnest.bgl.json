@@ -8,8 +8,8 @@
         "text": "*Example:*\n\n`{`\n`  \"foo\": \"hello\",`\n`  \"bar\": 42`\n`}`",
         "metadata": {
           "visual": {
-            "x": -350,
-            "y": -147,
+            "x": -382,
+            "y": -117,
             "collapsed": "expanded"
           }
         }
@@ -19,8 +19,8 @@
         "text": "  `\"hello\"`",
         "metadata": {
           "visual": {
-            "x": 25,
-            "y": -93,
+            "x": 100,
+            "y": -73,
             "collapsed": "expanded"
           }
         }
@@ -30,8 +30,8 @@
         "text": "      `42`",
         "metadata": {
           "visual": {
-            "x": 26,
-            "y": -182,
+            "x": 100,
+            "y": -180,
             "collapsed": "expanded"
           }
         }
@@ -41,13 +41,14 @@
         "text": "**`unnest`** exposes all properties of the given JSON object as separate output ports.",
         "metadata": {
           "visual": {
-            "x": -168,
-            "y": -315,
+            "x": -145,
+            "y": -308,
             "collapsed": "expanded"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   },
   "edges": [
     {
@@ -109,8 +110,8 @@
       "type": "unnest",
       "metadata": {
         "visual": {
-          "x": -138,
-          "y": -180,
+          "x": -134,
+          "y": -208,
           "collapsed": "expanded"
         },
         "title": "Unnest",
@@ -122,8 +123,8 @@
       "type": "output",
       "metadata": {
         "visual": {
-          "x": 143,
-          "y": -211,
+          "x": 221,
+          "y": -193,
           "collapsed": "expanded"
         },
         "title": "Output"

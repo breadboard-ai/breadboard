@@ -2964,27 +2964,6 @@ export class Main extends LitElement {
                 })}
               >
                 <button
-                  class="tab-overflow"
-                  @click=${(evt: PointerEvent) => {
-                    if (!(evt.target instanceof HTMLButtonElement)) {
-                      return;
-                    }
-
-                    const btnBounds = evt.target.getBoundingClientRect();
-                    const x = btnBounds.x + btnBounds.width;
-                    const y = btnBounds.y + btnBounds.height;
-
-                    this.#boardOverflowMenuConfiguration = {
-                      tabId: tab.id,
-                      x,
-                      y,
-                    };
-                    this.showBoardOverflowMenu = true;
-                  }}
-                >
-                  Overflow
-                </button>
-                <button
                   class=${classMap({
                     "back-to-main-board": true,
                     "can-save": canSave,
@@ -3024,6 +3003,29 @@ export class Main extends LitElement {
                     ></span
                   >
                 </button>
+
+                <button
+                  class="tab-overflow"
+                  @click=${(evt: PointerEvent) => {
+                    if (!(evt.target instanceof HTMLButtonElement)) {
+                      return;
+                    }
+
+                    const btnBounds = evt.target.getBoundingClientRect();
+                    const x = btnBounds.x + btnBounds.width;
+                    const y = btnBounds.y + btnBounds.height;
+
+                    this.#boardOverflowMenuConfiguration = {
+                      tabId: tab.id,
+                      x,
+                      y,
+                    };
+                    this.showBoardOverflowMenu = true;
+                  }}
+                >
+                  Overflow
+                </button>
+
                 <button
                   @click=${() => {
                     this.#runtime.board.closeTab(id);

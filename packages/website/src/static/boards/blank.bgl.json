@@ -14,7 +14,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
             }
@@ -25,9 +27,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 0,
-          "y": 0,
-          "collapsed": false
+          "x": -174,
+          "y": -1,
+          "collapsed": "expanded"
         }
       }
     },
@@ -43,7 +45,9 @@
               "examples": [],
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "null"
             }
@@ -56,7 +60,7 @@
         "visual": {
           "x": 173,
           "y": 0,
-          "collapsed": false
+          "collapsed": "expanded"
         }
       }
     }
@@ -68,5 +72,8 @@
       "to": "output",
       "in": "context"
     }
-  ]
+  ],
+  "metadata": {
+    "visual": {}
+  }
 }

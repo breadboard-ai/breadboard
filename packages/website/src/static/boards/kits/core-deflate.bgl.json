@@ -27,8 +27,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 237,
-          "y": -165,
+          "x": 328,
+          "y": -66,
           "collapsed": "expanded"
         }
       }
@@ -55,8 +55,8 @@
       "type": "deflate",
       "metadata": {
         "visual": {
-          "x": 38,
-          "y": -145,
+          "x": 17,
+          "y": -9,
           "collapsed": "expanded"
         },
         "title": "Deflate It",
@@ -87,8 +87,8 @@
         "text": "Fetches some inline data from the Internet.",
         "metadata": {
           "visual": {
-            "x": -270,
-            "y": -244,
+            "x": -331,
+            "y": -237,
             "collapsed": "expanded"
           }
         }
@@ -98,12 +98,13 @@
         "text": "Converts inline data to\na lightweight handle.",
         "metadata": {
           "visual": {
-            "x": 39,
-            "y": -228,
+            "x": 41,
+            "y": -93,
             "collapsed": "expanded"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   }
 }

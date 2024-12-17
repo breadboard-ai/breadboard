@@ -8,9 +8,9 @@
         "text": "Comes up with a plan for a short (3-5 question) interview based on the initial topic, then runs the loop through\nall steps of the plan.",
         "metadata": {
           "visual": {
-            "x": -125.99999999999994,
-            "y": -208,
-            "collapsed": false
+            "x": -354.9999999999993,
+            "y": -335,
+            "collapsed": "expanded"
           }
         }
       },
@@ -19,9 +19,9 @@
         "text": "Starts by asking\nfor the topic.",
         "metadata": {
           "visual": {
-            "x": -321.9999999999999,
-            "y": -146.00000000000003,
-            "collapsed": false
+            "x": -659.9999999999995,
+            "y": -282,
+            "collapsed": "expanded"
           }
         }
       },
@@ -30,9 +30,9 @@
         "text": "Formulates a question based on the current step of the plan and the interview answers so far. ",
         "metadata": {
           "visual": {
-            "x": -141.99999999999994,
-            "y": 189.9999999999996,
-            "collapsed": false
+            "x": -469.9999999999994,
+            "y": 278.9999999999999,
+            "collapsed": "expanded"
           }
         }
       },
@@ -41,9 +41,9 @@
         "text": "Based on the interview results, formulates and makes 3 varying queries\nto Google Books API.",
         "metadata": {
           "visual": {
-            "x": 123.99999999999994,
-            "y": -218,
-            "collapsed": false
+            "x": 247,
+            "y": -345,
+            "collapsed": "expanded"
           }
         }
       },
@@ -52,9 +52,9 @@
         "text": "Hands control over to the user, letting the user respond to the interview question.",
         "metadata": {
           "visual": {
-            "x": 276.99999999999994,
-            "y": 151.99999999999994,
-            "collapsed": false
+            "x": 234,
+            "y": 179,
+            "collapsed": "expanded"
           }
         }
       },
@@ -63,9 +63,9 @@
         "text": "Summarizes the results and formats them nicely for final output.",
         "metadata": {
           "visual": {
-            "x": 367.99999999999994,
-            "y": -234.99999999999997,
-            "collapsed": false
+            "x": 625,
+            "y": -328,
+            "collapsed": "expanded"
           }
         }
       },
@@ -74,9 +74,9 @@
         "text": "Ends by presenting recommendations.",
         "metadata": {
           "visual": {
-            "x": 503.99999999999994,
-            "y": 82.00000000000006,
-            "collapsed": false
+            "x": 628,
+            "y": 121,
+            "collapsed": "expanded"
           }
         }
       },
@@ -85,9 +85,9 @@
         "text": "📚 THE LIBRARIAN 📚\nHelps you find\nthe next book \nor your reading list.",
         "metadata": {
           "visual": {
-            "x": -302,
-            "y": 8.9999999999999,
-            "collapsed": false
+            "x": -689,
+            "y": -64.99999999999994,
+            "collapsed": "expanded"
           }
         }
       },
@@ -96,14 +96,15 @@
         "text": "< goes back to planner",
         "metadata": {
           "visual": {
-            "x": 216.00000000000006,
-            "y": 3.9999999999999574,
-            "collapsed": false
+            "x": 215.99999999999886,
+            "y": 3.9999999999997726,
+            "collapsed": "expanded"
           }
         }
       }
     ],
-    "tags": []
+    "tags": [],
+    "visual": {}
   },
   "edges": [
     {
@@ -176,9 +177,9 @@
       },
       "metadata": {
         "visual": {
-          "x": -281.9999999999998,
-          "y": -91.99999999999999,
-          "collapsed": false
+          "x": -704.9999999999991,
+          "y": -203,
+          "collapsed": "expanded"
         }
       }
     },
@@ -187,9 +188,9 @@
       "type": "looper",
       "metadata": {
         "visual": {
-          "x": -78.99999999999989,
-          "y": -99,
-          "collapsed": false
+          "x": -385.9999999999991,
+          "y": -191,
+          "collapsed": "expanded"
         },
         "title": "Interview Planner",
         "logLevel": "debug"
@@ -210,9 +211,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": -55.99999999999994,
-          "y": 119.99999999999997,
-          "collapsed": false
+          "x": -222,
+          "y": 179.99999999999977,
+          "collapsed": "expanded"
         },
         "title": "Interviewer",
         "logLevel": "debug"
@@ -233,9 +234,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 149.00000000000006,
-          "y": -117.99999999999999,
-          "collapsed": false
+          "x": 200,
+          "y": -217,
+          "collapsed": "expanded"
         },
         "title": "Researcher",
         "logLevel": "debug"
@@ -267,9 +268,9 @@
       "type": "human",
       "metadata": {
         "visual": {
-          "x": 179.00000000000006,
-          "y": 79.99999999999983,
-          "collapsed": false
+          "x": 187.99999999999977,
+          "y": 273.9999999999998,
+          "collapsed": "expanded"
         },
         "title": "Interviewee",
         "logLevel": "debug"
@@ -300,9 +301,9 @@
       },
       "metadata": {
         "visual": {
-          "x": 471.99999999999994,
-          "y": 12.999999999999886,
-          "collapsed": false
+          "x": 965.0000000000002,
+          "y": -28.999999999999943,
+          "collapsed": "expanded"
         }
       }
     },
@@ -311,9 +312,9 @@
       "type": "specialist",
       "metadata": {
         "visual": {
-          "x": 391.99999999999994,
-          "y": -157.99999999999994,
-          "collapsed": false
+          "x": 585,
+          "y": -224,
+          "collapsed": "expanded"
         },
         "title": "Summarizer",
         "logLevel": "debug"

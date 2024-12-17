@@ -85,6 +85,7 @@ export class Graph extends PIXI.Container {
   #selectionState: GraphSelectionState | null = null;
   #references: GraphReferences | null = null;
 
+  #shouldRenderOutline = false;
   #isInitialDraw = true;
   #minimized = false;
   #collapseNodesByDefault = false;
@@ -234,17 +235,24 @@ export class Graph extends PIXI.Container {
     let creatingAdHocEdge = false;
 
     this.onRender = () => {
+      // We defer outline rendering by a frame because we have to wait for the
+      // nodes and edges to be in place first.
+      if (this.#shouldRenderOutline) {
+        this.#shouldRenderOutline = false;
+        this.#drawGraphOutline();
+      }
+
       if (!this.#isDirty) {
         return;
       }
 
       this.#isDirty = false;
+      this.#shouldRenderOutline = true;
 
       this.#drawComments();
       this.#drawEdges();
       this.#drawNodes();
       this.#drawNodeHighlight();
-      this.#drawGraphOutline();
       this.#sortChildrenBySelectedStatus();
 
       if (this.#minimized && this.#subGraphId) {
@@ -1178,7 +1186,7 @@ export class Graph extends PIXI.Container {
     }
   }
 
-  updateNodePositions(delta: PIXI.Point) {
+  updateNodePositions(delta: PIXI.Point, settled = false) {
     const selectionState = this.#selectionState;
     if (!selectionState) {
       return;
@@ -1197,6 +1205,17 @@ export class Graph extends PIXI.Container {
 
       child.x = layout.x + delta.x;
       child.y = layout.y + delta.y;
+
+      if (!settled) {
+        continue;
+      }
+      this.setNodeLayoutPosition(
+        node,
+        "node",
+        this.toGlobal(child.position),
+        layout.expansionState,
+        layout.justAdded
+      );
     }
 
     for (const comment of selectionState.comments) {
@@ -1212,6 +1231,17 @@ export class Graph extends PIXI.Container {
 
       child.x = layout.x + delta.x;
       child.y = layout.y + delta.y;
+
+      if (!settled) {
+        continue;
+      }
+      this.setNodeLayoutPosition(
+        comment,
+        "comment",
+        this.toGlobal(child.position),
+        layout.expansionState,
+        layout.justAdded
+      );
     }
 
     this.#drawEdges();
@@ -1631,6 +1661,10 @@ export class Graph extends PIXI.Container {
     this.#graphOutlineMarker.clear();
     this.#graphOutlineConnector.clear();
 
+    if (this.#graphOutlineTitleLabel) {
+      this.#graphOutlineTitleLabel.visible = false;
+    }
+
     if (this.#graphOutlineConnectorIcon) {
       this.#graphOutlineConnectorIcon.visible = false;
     }
@@ -1662,6 +1696,23 @@ export class Graph extends PIXI.Container {
 
       maxX = Math.max(maxX, child.position.x + width);
       maxY = Math.max(maxY, child.position.y + height);
+    }
+
+    for (const edge of this.#edgeContainer.children) {
+      if (!(edge instanceof GraphEdge)) {
+        continue;
+      }
+
+      const edgeBounds = edge.hitArea?.getBounds();
+      if (!edgeBounds) {
+        continue;
+      }
+
+      minX = Math.min(minX, edgeBounds.left);
+      minY = Math.min(minY, edgeBounds.top);
+
+      maxX = Math.max(maxX, edgeBounds.right);
+      maxY = Math.max(maxY, edgeBounds.bottom);
     }
 
     minX -= this.#graphOutlinePadding;
@@ -1716,6 +1767,7 @@ export class Graph extends PIXI.Container {
 
       this.#graphOutlineTitleLabel.x = x + 14;
       this.#graphOutlineTitleLabel.y = y + 8;
+      this.#graphOutlineTitleLabel.visible = true;
 
       if (this.subGraphId) {
         if (this.#graphOutlineConnectorIcon) {

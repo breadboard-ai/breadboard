@@ -26,8 +26,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 113,
-          "y": 36,
+          "x": 63,
+          "y": 32,
           "collapsed": "expanded"
         }
       }
@@ -53,12 +53,13 @@
         "text": "The number, names, and types of the output ports is specified using **Schema** configuration port.",
         "metadata": {
           "visual": {
-            "x": 61,
-            "y": 148,
+            "x": 52,
+            "y": 187,
             "collapsed": "expanded"
           }
         }
       }
-    ]
+    ],
+    "visual": {}
   }
 }

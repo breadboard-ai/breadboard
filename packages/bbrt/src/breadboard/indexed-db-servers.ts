@@ -8,7 +8,7 @@ import type { Result } from "../util/result.js";
 import { resultify } from "../util/resultify.js";
 import { BreadboardServer } from "./breadboard-server.js";
 
-type BoardServerEntry = { url: string };
+type BoardServerEntry = { url: string; user?: { apiKey?: string } };
 
 export async function readBoardServersFromIndexedDB(): Promise<
   Result<BreadboardServer[]>
@@ -36,8 +36,9 @@ export async function readBoardServersFromIndexedDB(): Promise<
   return {
     ok: true,
     value: entries.value
-      .map(({ url }) => url)
-      .filter((url) => url.startsWith("http") || url.startsWith("https"))
-      .map((url) => new BreadboardServer(url)),
+      .filter(
+        ({ url }) => url.startsWith("http://") || url.startsWith("https://")
+      )
+      .map(({ url, user }) => new BreadboardServer(url, user?.apiKey)),
   };
 }
