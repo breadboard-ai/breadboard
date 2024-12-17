@@ -210,6 +210,7 @@ export function generateDeleteEditSpecFrom(
         graphId,
         id: nodeId,
         configuration: newConfiguration,
+        reset: true,
       });
     }
 
