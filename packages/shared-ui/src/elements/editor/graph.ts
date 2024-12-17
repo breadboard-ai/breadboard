@@ -1186,7 +1186,7 @@ export class Graph extends PIXI.Container {
     }
   }
 
-  updateNodePositions(delta: PIXI.Point) {
+  updateNodePositions(delta: PIXI.Point, settled = false) {
     const selectionState = this.#selectionState;
     if (!selectionState) {
       return;
@@ -1206,6 +1206,9 @@ export class Graph extends PIXI.Container {
       child.x = layout.x + delta.x;
       child.y = layout.y + delta.y;
 
+      if (!settled) {
+        continue;
+      }
       this.setNodeLayoutPosition(
         node,
         "node",
@@ -1229,6 +1232,9 @@ export class Graph extends PIXI.Container {
       child.x = layout.x + delta.x;
       child.y = layout.y + delta.y;
 
+      if (!settled) {
+        continue;
+      }
       this.setNodeLayoutPosition(
         comment,
         "comment",
@@ -1655,6 +1661,10 @@ export class Graph extends PIXI.Container {
     this.#graphOutlineMarker.clear();
     this.#graphOutlineConnector.clear();
 
+    if (this.#graphOutlineTitleLabel) {
+      this.#graphOutlineTitleLabel.visible = false;
+    }
+
     if (this.#graphOutlineConnectorIcon) {
       this.#graphOutlineConnectorIcon.visible = false;
     }
@@ -1757,6 +1767,7 @@ export class Graph extends PIXI.Container {
 
       this.#graphOutlineTitleLabel.x = x + 14;
       this.#graphOutlineTitleLabel.y = y + 8;
+      this.#graphOutlineTitleLabel.visible = true;
 
       if (this.subGraphId) {
         if (this.#graphOutlineConnectorIcon) {

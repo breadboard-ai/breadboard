@@ -72,6 +72,7 @@ export class BBRTBoardVisualizer extends LitElement {
       subGraphId: null,
       minimized: false,
       showNodePreviewValues: true,
+      showGraphOutline: false,
       collapseNodesByDefault: false,
       ports: ports,
       typeMetadata,

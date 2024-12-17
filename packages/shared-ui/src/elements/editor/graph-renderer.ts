@@ -119,9 +119,6 @@ export class GraphRenderer extends LitElement {
   showSubgraphsInline = false;
 
   @property()
-  showMainGraphBorder = true;
-
-  @property()
   assetPrefix = "";
 
   @property()
@@ -1092,12 +1089,13 @@ export class GraphRenderer extends LitElement {
     }
   }
 
-  #applyPositionDeltaToSelection(delta: PIXI.Point) {
+  #applyPositionDeltaToSelection(delta: PIXI.Point, settled = false) {
     for (const child of this.#container.children) {
       if (!(child instanceof Graph)) {
         continue;
       }
-      child.updateNodePositions(delta);
+
+      child.updateNodePositions(delta, settled);
     }
   }
 
@@ -2248,6 +2246,7 @@ export class GraphRenderer extends LitElement {
           }
         }
 
+        this.#applyPositionDeltaToSelection(delta, true);
         this.#emitGraphVisualInformation();
       }
     );
@@ -2624,7 +2623,7 @@ export class GraphRenderer extends LitElement {
 
     graph.subGraphId = subGraphId;
     graph.graphTitle = opts.title ?? null;
-    graph.graphOutlineVisible = subGraphId !== null || this.showMainGraphBorder;
+    graph.graphOutlineVisible = opts.showGraphOutline ?? false;
 
     return true;
   }
