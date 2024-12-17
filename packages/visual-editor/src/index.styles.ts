@@ -234,7 +234,7 @@ export const styles = css`
     border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
     padding: var(--bb-grid-size);
     display: grid;
-    grid-template-columns: 32px 1fr 32px;
+    grid-template-columns: 1fr 24px 32px;
     align-items: center;
     justify-items: center;
     user-select: none;
@@ -251,11 +251,18 @@ export const styles = css`
   }
 
   #tab-container .tab-overflow {
-    width: 20px;
-    height: 20px;
-    background: var(--bb-icon-menu) center center / 20px 20px no-repeat;
+    width: 24px;
+    height: 24px;
+    background: var(--bb-neutral-0) var(--bb-icon-more-vert) center center /
+      20px 20px no-repeat;
     font-size: 0;
     border: none;
+    border-radius: 50%;
+  }
+
+  #tab-container .tab-overflow:hover,
+  #tab-container .tab-overflow:focus {
+    background-color: var(--bb-neutral-200);
   }
 
   #tab-container .tab:hover {
@@ -316,7 +323,7 @@ export const styles = css`
     align-items: flex-start;
     justify-content: center;
     column-gap: var(--bb-grid-size);
-    padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size);
+    padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-3);
     margin: 0;
     cursor: pointer;
     background: transparent;
