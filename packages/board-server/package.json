@@ -61,7 +61,7 @@
         "../template-kit:build:tsc",
         "../node-nursery-web:build:tsc",
         "../shared-ui:build:tsc",
-        "../visual-editor:update-sandbox-runtime"
+        "../visual-editor:build"
       ],
       "clean": "if-file-deleted"
     },
