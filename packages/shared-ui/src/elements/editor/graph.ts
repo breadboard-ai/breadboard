@@ -1205,6 +1205,14 @@ export class Graph extends PIXI.Container {
 
       child.x = layout.x + delta.x;
       child.y = layout.y + delta.y;
+
+      this.setNodeLayoutPosition(
+        node,
+        "node",
+        this.toGlobal(child.position),
+        layout.expansionState,
+        layout.justAdded
+      );
     }
 
     for (const comment of selectionState.comments) {
@@ -1220,6 +1228,14 @@ export class Graph extends PIXI.Container {
 
       child.x = layout.x + delta.x;
       child.y = layout.y + delta.y;
+
+      this.setNodeLayoutPosition(
+        comment,
+        "comment",
+        this.toGlobal(child.position),
+        layout.expansionState,
+        layout.justAdded
+      );
     }
 
     this.#drawEdges();
