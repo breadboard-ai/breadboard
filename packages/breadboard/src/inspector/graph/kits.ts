@@ -308,11 +308,9 @@ class CustomNodeType implements InspectableNodeType {
   }
 
   currentMetadata(): NodeHandlerMetadata {
-    const graph = this.#mutable.store.addByURL(
-      this.#type,
-      [this.#mutable.id],
-      {}
-    ).mutable;
+    const graph = this.#mutable.store.addByURL(this.#type, [this.#mutable.id], {
+      outerGraph: this.#mutable.graph,
+    }).mutable;
     return toNodeHandlerMetadata(graph.graph);
   }
 
