@@ -6,6 +6,7 @@
 
 import { resolveGraph } from "./loader/loader.js";
 import { invokeGraph } from "./run/invoke-graph.js";
+import { invokeDescriber } from "./sandboxed-run-module.js";
 import {
   GraphDescriptor,
   GraphToRun,
@@ -18,26 +19,8 @@ import {
   NodeTypeIdentifier,
   Schema,
 } from "./types.js";
-import { hash } from "./utils/hash.js";
-import { Throttler } from "./utils/throttler.js";
 
 export { GraphBasedNodeHandler, toNodeHandlerMetadata };
-
-type NodeDescriberThrottler = Throttler<
-  [InputValues | undefined, GraphDescriptor, NodeDescriberContext],
-  NodeDescriberResult
->;
-
-type DescribeThrottlerWithHash = {
-  throttler: NodeDescriberThrottler;
-  hash: number;
-};
-
-const DESCRIBE_THROTTLE_DELAY = 5000;
-const DESCRIBE_RESULT_CACHE = new Map<
-  NodeTypeIdentifier,
-  DescribeThrottlerWithHash
->();
 
 class GraphBasedNodeHandler implements NodeHandlerObject {
   #graph: GraphToRun;
@@ -66,29 +49,53 @@ class GraphBasedNodeHandler implements NodeHandlerObject {
 
   async describe(
     inputs?: InputValues,
-    _inputSchema?: Schema,
-    _outputSchema?: Schema,
+    inputSchema?: Schema,
+    outputSchema?: Schema,
     context?: NodeDescriberContext
   ) {
     if (!context) {
       return { inputSchema: {}, outputSchema: {} };
     }
-    const inputsHash = hash(inputs);
-    let describeThrottler = DESCRIBE_RESULT_CACHE.get(this.#type);
-    if (!describeThrottler || describeThrottler.hash !== inputsHash) {
-      describeThrottler = {
-        throttler: new Throttler(describeGraph, DESCRIBE_THROTTLE_DELAY),
-        hash: inputsHash,
-      };
 
-      DESCRIBE_RESULT_CACHE.set(this.#type, describeThrottler);
+    const graphStore = context?.graphStore;
+    if (!graphStore) {
+      return emptyDescriberResult();
     }
-    return describeThrottler.throttler.call(
-      {},
-      inputs,
-      this.#descriptor,
-      context
-    );
+    const adding = graphStore.addByDescriptor(this.#graph.graph);
+    if (!adding.success) {
+      return emptyDescriberResult();
+    }
+    if (this.#graph.moduleId) {
+      const moduleId = this.#graph.moduleId;
+      const graph = this.#graph.graph;
+      const sandbox = context.graphStore?.sandbox;
+      if (!sandbox) {
+        console.warn("Sandbox was not supplied to describe node type");
+        return emptyDescriberResult();
+      }
+      const result = await invokeDescriber(
+        moduleId,
+        sandbox,
+        graph,
+        inputs || {},
+        inputSchema,
+        outputSchema
+      );
+      if (!result) {
+        return emptyDescriberResult();
+      }
+      return result;
+    } else {
+      const inspectableGraph = graphStore.inspect(
+        adding.result,
+        this.#graph.subGraphId || ""
+      );
+      if (!inspectableGraph) {
+        return emptyDescriberResult();
+      }
+      const result = await inspectableGraph.describe(inputs);
+      return result;
+    }
   }
 
   get metadata() {
@@ -104,27 +111,6 @@ function toNodeHandlerMetadata(graph: GraphDescriptor): NodeHandlerMetadata {
     icon: graph.metadata?.icon,
     help: graph.metadata?.help,
   });
-}
-
-async function describeGraph(
-  inputs: InputValues | undefined,
-  graph: GraphDescriptor,
-  context: NodeDescriberContext
-) {
-  const graphStore = context?.graphStore;
-  if (!graphStore) {
-    return emptyDescriberResult();
-  }
-  const adding = graphStore.addByDescriptor(graph);
-  if (!adding.success) {
-    return emptyDescriberResult();
-  }
-  const inspectableGraph = graphStore.inspect(adding.result, "");
-  if (!inspectableGraph) {
-    return emptyDescriberResult();
-  }
-  const result = await inspectableGraph.describe(inputs);
-  return result;
 }
 
 /**
