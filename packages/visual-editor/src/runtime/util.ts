@@ -39,7 +39,8 @@ export function isBoardArrayBehavior(schema: Schema): boolean {
 }
 
 export function edgeToString(edge: Edge): string {
-  return `${edge.from}:${edge.out}->${edge.to}:${edge.in}`;
+  const edgeIn = edge.out === "*" ? "*" : edge.in;
+  return `${edge.from}:${edge.out}->${edge.to}:${edgeIn}`;
 }
 
 export function inspectableEdgeToString(edge: InspectableEdge): string {
