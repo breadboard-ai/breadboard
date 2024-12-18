@@ -100,7 +100,9 @@ export async function getGraphHandlerFromMutableGraph(
     return undefined;
   }
   const store = mutable.store;
-  const result = store.addByURL(type, [], {}).mutable;
+  const result = store.addByURL(type, [], {
+    outerGraph: mutable.graph,
+  }).mutable;
   return new GraphBasedNodeHandler({ graph: result.graph }, type);
 }
 
