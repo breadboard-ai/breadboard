@@ -800,6 +800,15 @@ export class Edit extends EventTarget {
       graphId = "";
     }
 
+    if (typeof value === "string") {
+      // Convert to `UnresolvedPathBoardCapability`, so that it is resolved
+      // at runtime.
+      // This is important for ensuring that relative URLs are resolved
+      // relative to where they are invoked from, rather than to where they
+      // are used.
+      value = { kind: "board", path: value };
+    }
+
     const node = editableGraph.inspect(graphId).nodeById(nodeId);
     const port = node
       ?.currentPorts()
