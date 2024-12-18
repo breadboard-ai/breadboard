@@ -543,10 +543,12 @@ export function generateAddEditSpecFromDescriptor(
         edits.push({ type: "addedge", edge, graphId });
       }
 
+      const existingMetadata = structuredClone(targetGraph.metadata() ?? {});
+      let updateGraphMetadata = false;
+
       // Comments.
       const comments = sourceGraph.metadata?.comments;
       if (comments) {
-        const existingMetadata = structuredClone(targetGraph.metadata() ?? {});
         existingMetadata.comments ??= [];
         for (const sourceComment of comments) {
           const comment = structuredClone(sourceComment);
@@ -559,8 +561,18 @@ export function generateAddEditSpecFromDescriptor(
             graphOffset
           );
           existingMetadata.comments.push(comment);
+          updateGraphMetadata = true;
         }
+      }
 
+      // Also copy "describer", if present
+      const describer = sourceGraph.metadata?.describer;
+      if (describer) {
+        existingMetadata.describer = describer;
+        updateGraphMetadata = true;
+      }
+
+      if (updateGraphMetadata) {
         edits.push({
           type: "changegraphmetadata",
           metadata: { ...existingMetadata },
