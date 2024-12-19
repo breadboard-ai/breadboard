@@ -599,7 +599,7 @@ export class Graph extends PIXI.Container {
           nodePortBeingEdited.label !== "" &&
           topTarget instanceof GraphNode &&
           topTarget !== nodeBeingEdited &&
-          isSameGraph
+          !isSameGraph
         ) {
           const targetAllowsAdHocPorts =
             (nodePortBeingEdited.type === GraphNodePortType.IN &&
@@ -790,8 +790,10 @@ export class Graph extends PIXI.Container {
       // Also check that the user isn't trying to attach a star port to a named
       // port.
       if (
-        (targetEdgeDescriptor.out === "*" && targetEdgeDescriptor.in !== "*") ||
-        (targetEdgeDescriptor.out !== "*" && targetEdgeDescriptor.in === "*")
+        !creatingAdHocEdge &&
+        ((targetEdgeDescriptor.out === "*" &&
+          targetEdgeDescriptor.in !== "*") ||
+          (targetEdgeDescriptor.out !== "*" && targetEdgeDescriptor.in === "*"))
       ) {
         canMakeWireModification = false;
       }

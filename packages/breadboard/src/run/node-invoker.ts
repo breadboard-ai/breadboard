@@ -63,7 +63,12 @@ export class NodeInvoker {
     const { kits = [], base = SENTINEL_BASE_URL, state } = this.#context;
     let outputs: OutputValues | undefined = undefined;
 
-    const handler = await getHandler(descriptor.type, this.#context);
+    const outerGraph = this.#graph.graph;
+
+    const handler = await getHandler(descriptor.type, {
+      ...this.#context,
+      outerGraph,
+    });
 
     const newContext: NodeHandlerContext = {
       ...this.#context,
@@ -73,7 +78,7 @@ export class NodeInvoker {
       // if this.#graph is a subgraph.
       // Or it equals to "board" it this is not a subgraph
       // TODO: Make this more elegant.
-      outerGraph: this.#graph.graph,
+      outerGraph,
       base,
       kits,
       requestInput: this.#requestedInputs.createHandler(

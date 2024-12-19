@@ -34,14 +34,16 @@ import { createBuiltInKit } from "./graph/kits.js";
 import { graphUrlLike } from "../utils/graph-url-like.js";
 import { getGraphUrl, getGraphUrlComponents } from "../loader/loader.js";
 
-export { GraphStore, makeTerribleOptions, contextFromStore };
+export { GraphStore, makeTerribleOptions, contextFromMutableGraph };
 
-function contextFromStore(store: MutableGraphStore): NodeHandlerContext {
+function contextFromMutableGraph(mutable: MutableGraph): NodeHandlerContext {
+  const store = mutable.store;
   return {
     kits: [...store.kits],
     loader: store.loader,
     sandbox: store.sandbox,
     graphStore: store,
+    outerGraph: mutable.graph,
   };
 }
 

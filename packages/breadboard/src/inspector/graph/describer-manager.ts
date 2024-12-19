@@ -40,7 +40,7 @@ import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
 import { combineSchemas, removeProperty } from "../../schema.js";
 import { Result } from "../../editor/types.js";
 import { invokeGraph } from "../../run/invoke-graph.js";
-import { contextFromStore } from "../graph-store.js";
+import { contextFromMutableGraph } from "../graph-store.js";
 import { SchemaDiffer } from "../../utils/schema-differ.js";
 import { UpdateEvent } from "./event.js";
 
@@ -114,7 +114,7 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
   ): Promise<NodeDescriberFunction | undefined> {
     let handler: NodeHandler | undefined;
     try {
-      handler = await getHandler(type, contextFromStore(this.mutable.store));
+      handler = await getHandler(type, contextFromMutableGraph(this.mutable));
     } catch (e) {
       console.warn(`Error getting describer for node type ${type}`, e);
     }
