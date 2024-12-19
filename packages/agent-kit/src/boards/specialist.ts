@@ -70,6 +70,7 @@ const model = input({
       "gemini-1.5-flash-latest",
       "gemini-1.5-pro-latest",
       "gemini-2.0-flash-exp",
+      "gemini-2.0-flash-thinking-exp",
       "gemini-exp-1206",
       "gemini-exp-1121",
       "learnlm-1.5-pro-experimental",
