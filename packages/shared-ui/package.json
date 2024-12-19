@@ -105,7 +105,7 @@
     "@breadboard-ai/data-store": "0.2.6",
     "@breadboard-ai/jsandbox": "0.2.0",
     "@breadboard-ai/types": "0.3.0",
-    "@codemirror/autocomplete": "^6.18.3",
+    "@codemirror/autocomplete": "^6.18.4",
     "@codemirror/commands": "^6.7.1",
     "@codemirror/lang-javascript": "^6.2.2",
     "@codemirror/lang-json": "^6.0.1",
