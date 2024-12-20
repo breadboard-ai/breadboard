@@ -8,6 +8,7 @@ import type {
   BBRTDriverSendOptions,
 } from "../../../drivers/driver-interface.js";
 import type { TurnChunk } from "../../../state/turn-chunk.js";
+import "./install-promise-with-resolvers-polyfill.js";
 
 type SyncHandler = (opts: BBRTDriverSendOptions) => TurnChunk[];
 type AsyncHandler = (opts: BBRTDriverSendOptions) => AsyncIterable<TurnChunk>;
