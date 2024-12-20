@@ -5,11 +5,16 @@
  */
 
 import { getDataStore } from "@breadboard-ai/data-store";
-import { createLoader, type ReanimationState } from "@google-labs/breadboard";
+import {
+  createGraphStore,
+  createLoader,
+  type ReanimationState,
+} from "@google-labs/breadboard";
 import { handleRunGraphRequest } from "@google-labs/breadboard/remote";
 import type { RunBoardArguments } from "../../types.js";
 import { BoardServerProvider } from "./board-server-provider.js";
 import { createKits } from "./create-kits.js";
+import { NodeSandbox } from "@breadboard-ai/jsandbox/node";
 
 export const timestamp = () => globalThis.performance.now();
 
@@ -39,6 +44,14 @@ export const runBoard = async ({
   const boardServerProvider = new BoardServerProvider(path, loader);
   await boardServerProvider.ready();
 
+  const runLoader = createLoader([boardServerProvider]);
+  const runKits = createKits(kitOverrides);
+  const graphStore = createGraphStore({
+    loader: runLoader,
+    kits: runKits,
+    sandbox: new NodeSandbox(),
+  });
+
   return handleRunGraphRequest(
     {
       inputs,
@@ -47,10 +60,11 @@ export const runBoard = async ({
     },
     {
       url,
-      kits: createKits(kitOverrides),
+      kits: runKits,
       writer,
-      loader: createLoader([boardServerProvider]),
+      loader: runLoader,
       dataStore: store,
+      graphStore,
       stateStore: {
         async load(next?: string) {
           if (!next) {
