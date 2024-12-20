@@ -25,7 +25,10 @@ const providers = {
     new SQLiteStorageProvider(
       process.env["SQLITE_DB_PATH"] || "board-server.db"
     ),
-  firestore: () => new FirestoreStorageProvider("board-server"),
+  firestore: () =>
+    new FirestoreStorageProvider(
+      process.env["FIRESTORE_DB_NAME"] || "board-server"
+    ),
 };
 
 export const getStore = () => {
