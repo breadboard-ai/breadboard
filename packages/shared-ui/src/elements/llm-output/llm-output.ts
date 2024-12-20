@@ -157,6 +157,23 @@ export class LLMOutput extends LitElement {
     :host([lite="true"]) .value {
       margin: 0;
     }
+
+    .play-audio {
+      background: var(--bb-neutral-0) var(--bb-icon-sound) 6px 3px / 16px 16px
+        no-repeat;
+      border-radius: 20px;
+      color: var(--bb-neutral-900);
+      border: 1px solid var(--bb-neutral-600);
+      height: 24px;
+      padding: 0 16px 0 28px;
+      cursor: pointer;
+      opacity: 0.5;
+    }
+
+    .play-audio:hover,
+    .play-audio:focus {
+      opacity: 1;
+    }
   `;
 
   connectedCallback(): void {
@@ -175,6 +192,40 @@ export class LLMOutput extends LitElement {
     }
 
     this.#partDataURLs.clear();
+  }
+
+  // TODO: Store this value rather than converting it on the fly.
+  async #convertToAudioBuffer(url: string) {
+    const TO_FLOAT = 32768;
+    const sampleRate = 24000;
+    const audio = await fetch(url);
+    const arrayBuffer = await audio.arrayBuffer();
+    const audioDataIn = new Int16Array(arrayBuffer);
+    const audioDataOut = new Float32Array(audioDataIn.length);
+
+    const duration = audioDataOut.length / sampleRate;
+    const audioCtx = new OfflineAudioContext({
+      length: audioDataOut.length,
+      sampleRate,
+    });
+
+    const audioBuffer = audioCtx.createBuffer(
+      1,
+      sampleRate * duration,
+      sampleRate
+    );
+
+    for (let i = 0; i < audioDataIn.length; i++) {
+      audioDataOut[i] = audioDataIn[i] / TO_FLOAT;
+    }
+
+    audioBuffer.copyToChannel(audioDataOut, 0);
+    const source = audioCtx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(audioCtx.destination);
+    source.start();
+
+    return audioCtx.startRendering();
   }
 
   render() {
@@ -206,6 +257,30 @@ export class LLMOutput extends LitElement {
                 return cache(html`<img src="${url}" alt="LLM Image" />`);
               }
               if (part.inlineData.mimeType.startsWith("audio")) {
+                if (
+                  part.inlineData.mimeType === "audio/L16;codec=pcm;rate=24000"
+                ) {
+                  return this.#convertToAudioBuffer(url).then((buffer) => {
+                    return cache(
+                      html`<div class="play-audio-container">
+                        <button
+                          class="play-audio"
+                          @click=${() => {
+                            const audioCtx = new AudioContext({
+                              sampleRate: 24000,
+                            });
+                            const source = audioCtx.createBufferSource();
+                            source.buffer = buffer;
+                            source.connect(audioCtx.destination);
+                            source.start();
+                          }}
+                        >
+                          Play audio
+                        </button>
+                      </div>`
+                    );
+                  });
+                }
                 return cache(html`<audio src="${url}" controls />`);
               }
               if (part.inlineData.mimeType.startsWith("video")) {
