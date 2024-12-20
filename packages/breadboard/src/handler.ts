@@ -116,16 +116,18 @@ export async function getGraphHandler(
   if (!nodeTypeUrl) {
     return undefined;
   }
-  const { loader } = context;
-  if (!loader) {
-    throw new Error(`Cannot load graph for type "${type}" without a loader.`);
-  }
-  const loadResult = await loader.load(type, context);
-  if (!loadResult.success) {
+  const { graphStore } = context;
+  if (!graphStore) {
     throw new Error(
-      `Cannot load graph for type "${type}": ${loadResult.error}`
+      `Cannot load graph for type "${type}" without a graph store.`
     );
   }
 
+  const loadResult = await graphStore.load(type, context);
+  if (!loadResult.success) {
+    throw new Error(
+      `Loading graph for type "${type}" failed: ${loadResult.error}`
+    );
+  }
   return new GraphBasedNodeHandler(loadResult, type);
 }

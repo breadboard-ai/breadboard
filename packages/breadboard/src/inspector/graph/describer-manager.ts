@@ -337,7 +337,7 @@ class GraphDescriberManager {
     }
     // invoke graph
     try {
-      const { loader, sandbox } = this.mutable.store;
+      const { sandbox } = this.mutable.store;
       if (sandbox && customDescriber.startsWith("module:")) {
         const { inputSchema, outputSchema } =
           await this.#describeWithStaticAnalysis();
@@ -373,17 +373,10 @@ class GraphDescriberManager {
           };
         }
       }
-      if (!loader) {
-        return {
-          success: false,
-          error:
-            "Unable to proceed with custom describer graph: no loader supplied.",
-        };
-      }
       const base = this.handle.url();
 
       // try loading the describer graph.
-      const loadResult = await loader.load(customDescriber, {
+      const loadResult = await this.mutable.store.load(customDescriber, {
         base,
         board: this.handle.graph(),
         outerGraph: this.handle.graph(),
@@ -406,7 +399,7 @@ class GraphDescriberManager {
         {
           base,
           kits: [...this.mutable.store.kits],
-          loader,
+          loader: this.mutable.store,
         }
       )) as NodeDescriberResult;
       if ("$error" in result) {
