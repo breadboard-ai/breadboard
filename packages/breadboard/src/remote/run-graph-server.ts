@@ -25,6 +25,7 @@ export const handleRunGraphRequest = async (
     stateStore,
     inputs: defaultInputs,
     graph,
+    graphStore,
   } = config;
   const { next, inputs, diagnostics = false } = request;
 
@@ -44,6 +45,7 @@ export const handleRunGraphRequest = async (
     interactiveSecrets: false,
     diagnostics,
     state,
+    graphStore,
   });
 
   const filter = new DiagnosticsFilter(writer, diagnostics);

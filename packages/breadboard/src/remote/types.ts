@@ -23,6 +23,7 @@ import type {
   TraversalResult,
 } from "@breadboard-ai/types";
 import { OutputResponse, Kit, ErrorResponse, InputResponse } from "../types.js";
+import { MutableGraphStore } from "../inspector/types.js";
 
 /**
  * Sent by the client to request loading a board. This is an optional request
@@ -240,6 +241,7 @@ export type ServerRunConfig = {
   kits: Kit[];
   writer: RemoteMessageWriter;
   loader: GraphLoader;
+  graphStore: MutableGraphStore;
   dataStore: DataStore;
   stateStore: StateStore;
   inputs?: InputValues;

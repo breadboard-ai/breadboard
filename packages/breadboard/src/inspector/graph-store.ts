@@ -11,7 +11,11 @@ import {
   EditableGraphOptions,
   Result,
 } from "../editor/types.js";
-import { GraphLoader, GraphLoaderContext } from "../loader/types.js";
+import {
+  GraphLoader,
+  GraphLoaderContext,
+  GraphLoaderResult,
+} from "../loader/types.js";
 import { MutableGraphImpl } from "./graph/mutable-graph.js";
 import {
   GraphStoreEntry,
@@ -107,6 +111,37 @@ class GraphStore
       })
       .filter(Boolean) as GraphStoreEntry[];
     return [...this.#legacyKits, ...graphs];
+  }
+
+  async load(
+    path: string,
+    context: GraphLoaderContext
+  ): Promise<GraphLoaderResult> {
+    // Add loading graph as a dependency.
+    const dependencies: MainGraphIdentifier[] = [];
+    if (context) {
+      const url = context.outerGraph?.url;
+      if (url) {
+        const outerMutable = this.addByURL(url, [], context);
+        dependencies.push(outerMutable.mutable.id);
+      }
+    }
+
+    const result = this.addByURL(path, dependencies, context);
+    try {
+      const mutable = await this.getLatest(result.mutable);
+      return {
+        success: true,
+        graph: mutable.graph,
+        subGraphId: result.graphId,
+        moduleId: result.moduleId,
+      };
+    } catch (e) {
+      return {
+        success: false,
+        error: (e as Error).message,
+      };
+    }
   }
 
   #populateLegacyKits(kits: Kit[]) {

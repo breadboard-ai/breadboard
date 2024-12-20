@@ -15,6 +15,7 @@ import {
 import { testKit } from "../test-kit.js";
 import { createDefaultDataStore, createLoader } from "../../../src/index.js";
 import { handleRunGraphRequest } from "../../../src/remote/run-graph-server.js";
+import { makeTestGraphStore } from "../../helpers/_graph-store.js";
 
 export type EventLogEntry = [name: string, data: unknown];
 
@@ -79,13 +80,15 @@ export const mockFetch = (graph: GraphDescriptor) => {
       },
     });
 
+    const loader = createLoader();
     const config: ServerRunConfig = {
       graph,
       url: import.meta.url,
       kits: [testKit],
       writer: pipe.writable.getWriter(),
-      loader: createLoader(),
+      loader,
       dataStore: createDefaultDataStore(),
+      graphStore: makeTestGraphStore({ loader }),
       stateStore: {
         async load(next?: string) {
           return next ? JSON.parse(next as string) : undefined;

@@ -716,50 +716,51 @@ export type AddResult = {
   moduleId?: ModuleIdentifier;
 };
 
-export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> & {
-  readonly kits: readonly Kit[];
-  readonly sandbox: Sandbox;
-  readonly loader: GraphLoader;
+export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
+  GraphLoader & {
+    readonly kits: readonly Kit[];
+    readonly sandbox: Sandbox;
+    readonly loader: GraphLoader;
 
-  graphs(): GraphStoreEntry[];
+    graphs(): GraphStoreEntry[];
 
-  /**
-   * Registers a Kit with the GraphStore.
-   * Currently, only Kits that contain Graph URL-like types
-   * are support.
-   *
-   * @param kit - the kit to register
-   * @param dependences - known dependencies to this kit
-   */
-  registerKit(kit: Kit, dependences: MainGraphIdentifier[]): void;
+    /**
+     * Registers a Kit with the GraphStore.
+     * Currently, only Kits that contain Graph URL-like types
+     * are support.
+     *
+     * @param kit - the kit to register
+     * @param dependences - known dependencies to this kit
+     */
+    registerKit(kit: Kit, dependences: MainGraphIdentifier[]): void;
 
-  addByURL(
-    url: string,
-    dependencies: MainGraphIdentifier[],
-    context: GraphLoaderContext
-  ): AddResult;
+    addByURL(
+      url: string,
+      dependencies: MainGraphIdentifier[],
+      context: GraphLoaderContext
+    ): AddResult;
 
-  getLatest(mutable: MutableGraph): Promise<MutableGraph>;
+    getLatest(mutable: MutableGraph): Promise<MutableGraph>;
 
-  addByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier>;
-  getByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier>;
-  editByDescriptor(
-    graph: GraphDescriptor,
-    options?: EditableGraphOptions
-  ): EditableGraph | undefined;
-  edit(
-    id: MainGraphIdentifier,
-    options?: EditableGraphOptions
-  ): EditableGraph | undefined;
-  inspect(
-    id: MainGraphIdentifier,
-    graphId: GraphIdentifier
-  ): InspectableGraph | undefined;
-  inspectSnapshot(
-    graph: GraphDescriptor,
-    graphId: GraphIdentifier
-  ): InspectableGraph | undefined;
-};
+    addByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier>;
+    getByDescriptor(graph: GraphDescriptor): Result<MainGraphIdentifier>;
+    editByDescriptor(
+      graph: GraphDescriptor,
+      options?: EditableGraphOptions
+    ): EditableGraph | undefined;
+    edit(
+      id: MainGraphIdentifier,
+      options?: EditableGraphOptions
+    ): EditableGraph | undefined;
+    inspect(
+      id: MainGraphIdentifier,
+      graphId: GraphIdentifier
+    ): InspectableGraph | undefined;
+    inspectSnapshot(
+      graph: GraphDescriptor,
+      graphId: GraphIdentifier
+    ): InspectableGraph | undefined;
+  };
 
 export type PortIdentifier = string;
 

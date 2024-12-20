@@ -13,6 +13,8 @@ import {
   InputValues,
   OutputValues,
   asRuntimeKit,
+  createGraphStore,
+  createLoader,
 } from "@google-labs/breadboard";
 import { RunConfig, run } from "@google-labs/breadboard/harness";
 
@@ -25,10 +27,21 @@ const runBoard = async (
   board: string,
   inputs: InputValues
 ): Promise<SimpleRunResult> => {
+  const loader = createLoader();
+  const kits = [asRuntimeKit(Core)];
   const config: RunConfig = {
     base: new URL(import.meta.url),
-    kits: [asRuntimeKit(Core)],
+    kits,
     url: `../../../tests/data/boards/${board}`,
+    graphStore: createGraphStore({
+      kits,
+      sandbox: {
+        runModule() {
+          throw new Error("Do not use sandbox with test graph store");
+        },
+      },
+      loader,
+    }),
   };
   for await (const result of run(config)) {
     const { type } = result;

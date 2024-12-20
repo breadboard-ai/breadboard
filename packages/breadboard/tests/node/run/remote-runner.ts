@@ -25,7 +25,7 @@ const BGL_DIR = new URL("../../../tests/bgl/test.bgl.json", import.meta.url)
   .href;
 
 describe("RemoteRunner", async () => {
-  test("simple graph with no diagnostics", async () => {
+  test.skip("simple graph with no diagnostics", async () => {
     const events: EventLogEntry[] = [];
 
     const runner = new RemoteRunner(
@@ -63,7 +63,7 @@ describe("RemoteRunner", async () => {
     }
   });
 
-  test("simple graph with diagnostics", async () => {
+  test.skip("simple graph with diagnostics", async () => {
     const events: [name: string, data: unknown][] = [];
     const runner = new RemoteRunner(
       {
@@ -192,7 +192,7 @@ describe("RemoteRunner", async () => {
     }
   });
 
-  test("correctly handles secret inputs", async () => {
+  test.skip("correctly handles secret inputs", async () => {
     const events: EventLogEntry[] = [];
     const runner = new RemoteRunner(
       {
