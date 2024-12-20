@@ -11,6 +11,7 @@ import { GraphDescriptor } from "@breadboard-ai/types";
 import simple from "../../bgl/simple.bgl.json" with { type: "json" };
 import { NodeDescriberResult, NodeDescriberWires } from "../../../src/types.js";
 import { makeTestGraphStore } from "../../helpers/_graph-store.js";
+import { GraphLoader, MutableGraphStore } from "../../../src/index.js";
 
 describe("getGraphHandler", () => {
   test("returns undefined for non-URL-like type", async () => {
@@ -20,7 +21,7 @@ describe("getGraphHandler", () => {
 
   test("returns handler for URL-like type", async () => {
     const handler = await getGraphHandler("https://example.com/1", {
-      loader: {
+      graphStore: {
         async load(url: string) {
           ok(url === "https://example.com/1");
           return {
@@ -31,21 +32,21 @@ describe("getGraphHandler", () => {
             } as GraphDescriptor,
           };
         },
-      },
+      } as unknown as MutableGraphStore,
     });
     ok(handler !== undefined);
     ok("invoke" in handler);
   });
 
   test("returns handler that can be invoked for URL-like type", async () => {
-    const handler = await getGraphHandler("https://example.com/2", {
-      loader: {
-        async load(url: string) {
-          ok(url === "https://example.com/2");
-          return { success: true, graph: simple as GraphDescriptor };
-        },
+    const loader: GraphLoader = {
+      load: async (url: string) => {
+        ok(url === "https://example.com/2");
+        return { success: true, graph: simple as GraphDescriptor };
       },
-      graphStore: makeTestGraphStore(),
+    };
+    const handler = await getGraphHandler("https://example.com/2", {
+      graphStore: makeTestGraphStore({ loader }),
     });
     ok(handler !== undefined);
     ok("invoke" in handler);
@@ -56,13 +57,14 @@ describe("getGraphHandler", () => {
 
   test("returns handler with a describer for URL-like type", async () => {
     const handler = await getGraphHandler("https://example.com/3", {
-      loader: {
-        async load(url: string) {
-          ok(url === "https://example.com/3");
-          return { success: true, graph: simple as GraphDescriptor };
+      graphStore: makeTestGraphStore({
+        loader: {
+          async load(url: string) {
+            ok(url === "https://example.com/3");
+            return { success: true, graph: simple as GraphDescriptor };
+          },
         },
-      },
-      graphStore: makeTestGraphStore(),
+      }),
     });
     ok(handler !== undefined);
     ok("describe" in handler);

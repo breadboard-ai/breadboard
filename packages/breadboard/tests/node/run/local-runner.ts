@@ -21,6 +21,7 @@ import {
 import askForSecret from "../../bgl/ask-for-secret.bgl.json" with { type: "json" };
 import multiLevelInvoke from "../../bgl/multi-level-invoke.bgl.json" with { type: "json" };
 import simple from "../../bgl/simple.bgl.json" with { type: "json" };
+import { makeTestGraphStore } from "../../helpers/_graph-store.js";
 
 const BGL_DIR = new URL("../../../tests/bgl/test.bgl.json", import.meta.url)
   .href;
@@ -107,10 +108,13 @@ describe("LocalRunner", async () => {
     const events: EventLogEntry[] = [];
     const graph = multiLevelInvoke as GraphDescriptor;
     graph.url = BGL_DIR;
+    const loader = createLoader();
+    const graphStore = makeTestGraphStore({ loader });
     const runner = new LocalRunner({
       runner: multiLevelInvoke as GraphDescriptor,
       url: import.meta.url,
       loader: createLoader(),
+      graphStore,
       kits: [testKit],
       diagnostics: true,
     });

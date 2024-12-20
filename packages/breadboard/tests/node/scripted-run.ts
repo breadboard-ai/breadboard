@@ -13,6 +13,7 @@ import { deepStrictEqual, fail } from "assert";
 import {
   createLoader,
   createRunStateManager,
+  MutableGraphStore,
   RunArguments,
   runGraph,
 } from "../../src/index.js";
@@ -48,10 +49,12 @@ export async function interruptibleScriptedRun(
     // TODO: Move inputs into the current scriptEntry, rather than the previous
     // one.
     const state = createRunStateManager(resumeFrom, inputs);
+    const loader = createLoader();
     const args: RunArguments = {
       kits: [testKit],
       state,
-      loader: createLoader(),
+      loader,
+      graphStore: loader as unknown as MutableGraphStore,
     };
     let outputCount = 0;
     let interrupted = false;

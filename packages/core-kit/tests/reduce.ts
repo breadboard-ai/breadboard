@@ -55,7 +55,7 @@ test("using reduce as part of a board", async (t) => {
 
   const result = await invokeGraph(
     { graph: serialize(outerBoard) },
-    { value: 4 },
+    { value: 10 },
     { kits: [asRuntimeKit(Core)], loader: createLoader() }
   );
   t.falsy(result.$error);
