@@ -16,7 +16,7 @@ const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
 const ROOT_PATH = resolve(MODULE_PATH, "../../../..");
 
 export type SecretsStore = {
-  getList: () => Promise<SecretMapEntry[]>;
+  getList: () => Promise<SecretListEntry[]>;
   getKey(
     key: string
   ): Promise<[name: string, value: string, origin?: string | null] | null>;
@@ -27,12 +27,17 @@ export type SecretMapEntry = {
   origin: string | null;
 };
 
+export type SecretListEntry = {
+  name: string;
+  origin: string | null;
+};
+
 export const buildSecretsTunnel = async (): Promise<TunnelSpec> => {
   const secrets = await SecretsProvider.instance().getList();
   return Object.fromEntries(
-    secrets.map(({ secret, origin }) => {
+    secrets.map(({ name, origin }) => {
       return [
-        secret,
+        name,
         {
           to: "fetch",
           when: {
@@ -48,6 +53,7 @@ class SecretManagerProvider implements SecretsStore {
   #projectId: Promise<string>;
   #secretManager = new SecretManagerServiceClient();
   #secretsMap = new Map<string, SecretMapEntry>();
+  #secretsList?: SecretListEntry[];
 
   constructor() {
     this.#projectId = this.#getProjectId();
@@ -92,7 +98,10 @@ class SecretManagerProvider implements SecretsStore {
     return origin;
   }
 
-  async getList(): Promise<SecretMapEntry[]> {
+  async getList(): Promise<SecretListEntry[]> {
+    if (this.#secretsList) {
+      return this.#secretsList;
+    }
     const projectId = await this.#projectId;
     try {
       const [secrets] = await this.#secretManager.listSecrets({
@@ -107,10 +116,11 @@ class SecretManagerProvider implements SecretsStore {
           if (!origin) {
             return null;
           }
-          return { secret: name, origin };
+          return { name, origin };
         })
       );
-      return entries.filter(Boolean) as SecretMapEntry[];
+      this.#secretsList = entries.filter(Boolean) as SecretListEntry[];
+      return this.#secretsList;
     } catch (e) {
       throw new Error(`Failed to list secrets: ${e}`);
     }
@@ -179,10 +189,10 @@ class SimpleSecretsProvider implements SecretsStore {
     }
   }
 
-  async getList(): Promise<SecretMapEntry[]> {
+  async getList(): Promise<SecretListEntry[]> {
     const secrets = await this.#secrets;
-    return Object.entries(secrets).map(([secret, { origin }]) => ({
-      secret,
+    return Object.entries(secrets).map(([name, { origin }]) => ({
+      name,
       origin,
     }));
   }
@@ -203,7 +213,7 @@ class SecretsProvider implements SecretsStore {
   #store: SecretsStore;
 
   constructor() {
-    let backend = process.env.STORAGE_BACKEND;
+    const backend = process.env.STORAGE_BACKEND;
     if (backend && backend !== "firestore") {
       this.#store = new SimpleSecretsProvider();
     } else {
@@ -212,7 +222,7 @@ class SecretsProvider implements SecretsStore {
     this.getKey = this.getKey.bind(this);
   }
 
-  getList(): Promise<SecretMapEntry[]> {
+  getList(): Promise<SecretListEntry[]> {
     return this.#store.getList();
   }
 
