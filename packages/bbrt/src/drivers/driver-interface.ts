@@ -4,22 +4,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { BBRTChunk } from "../llm/chunk.js";
-import type { BBRTTurn } from "../llm/conversation-types.js";
-import type { BBRTTool } from "../tools/tool.js";
-import type { Result } from "../util/result.js";
+import type { TurnChunk } from "../state/turn-chunk.js";
+import type { ReactiveTurnState } from "../state/turn.js";
+import type { BBRTTool } from "../tools/tool-types.js";
 
 /**
  * A _driver_ implements interactions with a language model for the primary
  * conversation.
  */
-export interface BBRTDriver {
+export interface BBRTDriver extends BBRTDriverInfo {
+  send(opts: BBRTDriverSendOptions): AsyncIterable<TurnChunk>;
+}
+
+export interface BBRTDriverInfo {
+  readonly id: string;
   readonly name: string;
   readonly icon: string;
+}
 
-  executeTurn(
-    turns: BBRTTurn[],
-    tools: BBRTTool[],
-    systemInstruction: string
-  ): Promise<Result<AsyncIterableIterator<BBRTChunk>>>;
+export interface BBRTDriverSendOptions {
+  systemPrompt: string;
+  tools: Map<string, BBRTTool> | undefined;
+  turns: ReactiveTurnState[];
 }

@@ -5,19 +5,11 @@
  */
 
 import type { GraphDescriptor } from "@google-labs/breadboard";
-import { html, nothing } from "lit";
-import { Signal } from "signal-polyfill";
+import type { ArtifactHandle } from "../artifacts/artifact-interface.js";
 import type { ArtifactStore } from "../artifacts/artifact-store.js";
 import "../components/activate-modal.js";
-import { coercePresentableError } from "../util/presentable-error.js";
 import type { Result } from "../util/result.js";
-import type {
-  BBRTTool,
-  ToolAPI,
-  ToolInvocation,
-  ToolInvocationState,
-  ToolMetadata,
-} from "./tool.js";
+import type { BBRTTool, BBRTToolAPI, BBRTToolMetadata } from "./tool-types.js";
 
 interface Inputs {
   name: string;
@@ -34,7 +26,7 @@ export class CreateBoard implements BBRTTool<Inputs, Outputs> {
     this.#artifacts = artifacts;
   }
 
-  readonly metadata: ToolMetadata = {
+  readonly metadata: BBRTToolMetadata = {
     id: "create_board",
     title: "Create Board",
     description:
@@ -45,7 +37,7 @@ export class CreateBoard implements BBRTTool<Inputs, Outputs> {
     icon: "/bbrt/images/tool.svg",
   };
 
-  async api(): Promise<Result<ToolAPI>> {
+  async api(): Promise<Result<BBRTToolAPI>> {
     return {
       ok: true as const,
       value: {
@@ -67,45 +59,22 @@ export class CreateBoard implements BBRTTool<Inputs, Outputs> {
             },
           },
         },
-      } satisfies ToolAPI,
+      } satisfies BBRTToolAPI,
     };
   }
 
-  invoke(args: Inputs) {
-    return new CreateBoardInvocation(this.#artifacts, args);
-  }
-}
-
-class CreateBoardInvocation implements ToolInvocation<Outputs> {
-  readonly #artifacts: ArtifactStore;
-  readonly #args: Inputs;
-  readonly state = new Signal.State<ToolInvocationState<Outputs>>({
-    status: "unstarted",
-  });
-
-  constructor(artifacts: ArtifactStore, args: Inputs) {
-    this.#artifacts = artifacts;
-    this.#args = args;
+  execute(args: Inputs) {
+    return { result: this.#execute(args) };
   }
 
-  render() {
-    return html` Creating board... `;
-  }
-
-  renderContent() {
-    return nothing;
-  }
-
-  async start(): Promise<void> {
-    if (this.state.get().status !== "unstarted") {
-      return;
-    }
-    this.state.set({ status: "running" });
-
+  async #execute({ name }: Inputs): Promise<
+    Result<{
+      data: Outputs;
+      artifacts: ArtifactHandle[];
+    }>
+  > {
     const bgl: GraphDescriptor = {
-      metadata: {
-        name: this.#args.name,
-      },
+      metadata: { name },
       nodes: [],
       edges: [],
     };
@@ -119,19 +88,12 @@ class CreateBoardInvocation implements ToolInvocation<Outputs> {
     });
     const write = await transaction.write(blob);
     if (!write.ok) {
-      this.state.set({
-        status: "error",
-        error: coercePresentableError(write.error),
-      });
-      return;
+      return { ok: false, error: write.error };
     }
-
-    this.state.set({
-      status: "success",
+    return {
+      ok: true,
       value: {
-        output: {
-          artifactId: artifactId,
-        },
+        data: { artifactId },
         artifacts: [
           {
             kind: "handle",
@@ -140,6 +102,6 @@ class CreateBoardInvocation implements ToolInvocation<Outputs> {
           },
         ],
       },
-    });
+    };
   }
 }

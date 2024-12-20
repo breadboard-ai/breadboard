@@ -10,8 +10,10 @@ export interface GeminiRequest {
     functionDeclarations: GeminiFunctionDeclaration[];
   }>;
   toolConfig?: {
-    mode: "auto" | "any" | "none";
-    allowedFunctionNames: string[];
+    functionCallingConfig?: {
+      mode: "auto" | "any" | "none";
+      allowedFunctionNames?: string[];
+    };
   };
   systemInstruction?: GeminiContent;
 }

@@ -8,16 +8,13 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import type { SignalSet } from "signal-utils/set";
-import type { BBRTTool } from "../tools/tool.js";
+import type { Conversation } from "../llm/conversation.js";
+import type { BBRTTool } from "../tools/tool-types.js";
 
 @customElement("bbrt-tool-palette")
 export class BBRTToolPalette extends SignalWatcher(LitElement) {
   @property({ attribute: false })
-  accessor availableTools: SignalSet<BBRTTool> | undefined = undefined;
-
-  @property({ attribute: false })
-  accessor activeToolIds: SignalSet<string> | undefined = undefined;
+  accessor conversation: Conversation | undefined = undefined;
 
   static override styles = css`
     :host {
@@ -54,42 +51,59 @@ export class BBRTToolPalette extends SignalWatcher(LitElement) {
   `;
 
   override render() {
-    if (this.availableTools === undefined) {
+    if (this.conversation === undefined) {
+      return nothing;
+    }
+    const { availableTools } = this.conversation;
+    if (availableTools === undefined) {
       return nothing;
     }
     return html`
       <ul>
-        ${[...this.availableTools].map(this.#renderTool)}
+        ${availableTools.values().map(this.#renderTool)}
       </ul>
     `;
   }
 
-  #renderTool = (tool: BBRTTool) => html`
-    <li
-      class=${classMap({
-        active: this.activeToolIds?.has(tool.metadata.id) ?? false,
-      })}
-    >
-      <a href="#" @click=${(event: MouseEvent) => this.#clickTool(event, tool)}>
-        ${tool.metadata.icon
-          ? html`<img src=${tool.metadata.icon} alt="" />`
-          : nothing}
-        ${tool.metadata.title}
-      </a>
-    </li>
-  `;
+  #renderTool = (tool: BBRTTool) => {
+    if (this.conversation === undefined) {
+      return nothing;
+    }
+    return html`
+      <li
+        class=${classMap({
+          active: this.conversation.activeToolIds?.has(tool.metadata.id),
+        })}
+      >
+        <a
+          href="#"
+          @click=${(event: MouseEvent) => this.#clickTool(event, tool)}
+        >
+          ${tool.metadata.icon
+            ? html`<img src=${tool.metadata.icon} alt="" />`
+            : nothing}
+          ${tool.metadata.title}
+        </a>
+      </li>
+    `;
+  };
 
   #clickTool(event: MouseEvent, tool: BBRTTool) {
     event.preventDefault();
     event.stopImmediatePropagation();
-    if (this.activeToolIds === undefined) {
+    if (this.conversation === undefined) {
       return;
     }
-    const id = tool.metadata.id;
-    if (this.activeToolIds.has(id)) {
-      this.activeToolIds.delete(id);
+    const clickedToolId = tool.metadata.id;
+    if (this.conversation.activeToolIds.has(clickedToolId)) {
+      this.conversation.activeToolIds = [
+        ...this.conversation.activeToolIds,
+      ].filter((id) => id !== clickedToolId);
     } else {
-      this.activeToolIds.add(id);
+      this.conversation.activeToolIds = [
+        ...this.conversation.activeToolIds,
+        clickedToolId,
+      ];
     }
   }
 }

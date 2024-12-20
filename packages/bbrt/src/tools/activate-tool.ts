@@ -4,46 +4,37 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { html, nothing } from "lit";
-import { Signal } from "signal-polyfill";
-import type { SignalSet } from "signal-utils/set";
+import { html } from "lit";
 import "../components/activate-modal.js";
-import type { EmptyObject } from "../util/empty-object.js";
+import type { ReactiveSessionState } from "../state/session.js";
 import type { Result } from "../util/result.js";
-import type {
-  BBRTTool,
-  ToolAPI,
-  ToolInvocation,
-  ToolInvocationState,
-  ToolMetadata,
-} from "./tool.js";
+import type { BBRTTool, BBRTToolAPI, BBRTToolMetadata } from "./tool-types.js";
 
-interface Inputs {
-  name: string;
-}
-
-type Outputs = EmptyObject;
-
-export class ActivateTool implements BBRTTool<Inputs, Outputs> {
-  #availableTools: SignalSet<BBRTTool>;
-  #activeToolIds: SignalSet<string>;
+export class ActivateTool
+  implements BBRTTool<{ name: string }, { allowed: boolean }>
+{
+  #activatableToolIds: Promise<ReadonlySet<string>>;
+  // TODO(aomarks) I don't love that this is passed down. Should it be the
+  // session (there's an initialization order issue that makes this annoying),
+  // or something else?
+  #sessionState: ReactiveSessionState;
 
   constructor(
-    availableTools: SignalSet<BBRTTool>,
-    activeToolIds: SignalSet<string>
+    activatableToolIds: Promise<ReadonlySet<string>>,
+    sessionState: ReactiveSessionState
   ) {
-    this.#availableTools = availableTools;
-    this.#activeToolIds = activeToolIds;
+    this.#activatableToolIds = activatableToolIds;
+    this.#sessionState = sessionState;
   }
 
-  readonly metadata: ToolMetadata = {
+  readonly metadata: BBRTToolMetadata = {
     id: "activate_tool",
     title: "Activate Tool",
     description: "Activate a tool, asking the user's permission if necessary.",
     icon: "/bbrt/images/tool.svg",
   };
 
-  async api(): Promise<Result<ToolAPI>> {
+  async api(): Promise<Result<BBRTToolAPI>> {
     return {
       ok: true as const,
       value: {
@@ -59,107 +50,54 @@ export class ActivateTool implements BBRTTool<Inputs, Outputs> {
         outputSchema: {
           type: "object",
           properties: {
-            status: {
-              type: "string",
+            allowed: {
+              type: "boolean",
             },
           },
         },
-      } satisfies ToolAPI,
+      } satisfies BBRTToolAPI,
     };
   }
 
-  invoke(args: Inputs) {
-    return new ActivateToolInvocation(
-      this.#availableTools,
-      this.#activeToolIds,
-      args
-    );
-  }
-}
-
-class ActivateToolInvocation implements ToolInvocation<Outputs> {
-  readonly #availableTools: SignalSet<BBRTTool>;
-  readonly #activeToolIds: SignalSet<string>;
-  readonly #args: Inputs;
-  readonly #outcome = Promise.withResolvers<"allow" | "deny">();
-  readonly state = new Signal.State<ToolInvocationState<Outputs>>({
-    status: "unstarted",
-  });
-
-  constructor(
-    availableTools: SignalSet<BBRTTool>,
-    activeToolIds: SignalSet<string>,
-    args: Inputs
-  ) {
-    this.#availableTools = availableTools;
-    this.#activeToolIds = activeToolIds;
-    this.#args = args;
-  }
-
-  render() {
-    return html`
-      <bbrt-activate-modal
-        .name=${this.#args.name}
-        @allow=${() => this.#outcome.resolve("allow")}
-        @deny=${() => this.#outcome.resolve("deny")}
-      >
-      </bbrt-activate-modal>
-    `;
-  }
-
-  renderContent() {
-    return nothing;
-  }
-
-  async start(): Promise<void> {
-    if (this.state.get().status !== "unstarted") {
-      return;
-    }
-    this.state.set({ status: "running" });
-
-    const result = await this.#outcome.promise;
-    switch (result) {
-      case "allow": {
-        const match = await this.#findTool(this.#args.name);
-        if (match !== undefined) {
-          this.#activeToolIds.add(match.metadata.id);
-          this.state.set({
-            status: "success",
-            value: { output: {}, artifacts: [] },
-          });
-        } else {
-          this.state.set({
-            status: "error",
-            error: { message: "Error finding tool" },
-          });
+  execute(args: { name: string }): {
+    render?: () => unknown;
+    result: Promise<Result<{ data: { allowed: boolean } }>>;
+  } {
+    const allowed = Promise.withResolvers<boolean>();
+    return {
+      render: () => html`
+        <bbrt-activate-modal
+          .name=${args.name}
+          @allow=${() => allowed.resolve(true)}
+          @deny=${() => allowed.resolve(false)}
+        >
+        </bbrt-activate-modal>
+      `,
+      result: (async (): Promise<Result<{ data: { allowed: boolean } }>> => {
+        const activatableToolIds = await this.#activatableToolIds;
+        if (!activatableToolIds.has(args.name)) {
+          return {
+            ok: false,
+            error: {
+              message: `No tool found with name ${JSON.stringify(args.name)}.`,
+            },
+          };
         }
-        break;
-      }
-      case "deny": {
-        this.state.set({
-          status: "error",
-          error: { message: "User disallowed tool" },
-        });
-        break;
-      }
-      default: {
-        result satisfies never;
-        console.error("Unknown result:", result);
-        this.state.set({
-          status: "error",
-          error: { message: "Internal error" },
-        });
-        break;
-      }
-    }
-  }
-
-  async #findTool(name: string): Promise<BBRTTool | undefined> {
-    for (const tool of this.#availableTools) {
-      if (tool.metadata.id === name) {
-        return tool;
-      }
-    }
-    return undefined;
+        const state = this.#sessionState;
+        if (await allowed.promise) {
+          if (!state.activeToolIds.has(args.name)) {
+            state.activeToolIds = [...state.activeToolIds, args.name];
+          }
+          return { ok: true, value: { data: { allowed: true } } };
+        } else {
+          if (state.activeToolIds.has(args.name)) {
+            state.activeToolIds = [...state.activeToolIds].filter(
+              (id) => id !== args.name
+            );
+          }
+          return { ok: true, value: { data: { allowed: false } } };
+        }
+      })(),
+    };
   }
 }

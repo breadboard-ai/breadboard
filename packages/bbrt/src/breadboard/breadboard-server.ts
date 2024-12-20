@@ -15,7 +15,7 @@ import { getDefaultSchema } from "./get-default-schema.js";
 
 const BOARDS_CACHE_KEY = "bbrt-boards-v1";
 
-export class BreadboardServer {
+export class BreadboardServiceClient {
   readonly #baseUrl: string;
   readonly #apiKey: string | undefined;
 

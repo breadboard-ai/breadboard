@@ -9,15 +9,13 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { until } from "lit/directives/until.js";
-import type { AsyncComputed } from "signal-utils/async-computed";
 import type { ArtifactEntry } from "../artifacts/artifact-store.js";
 import "./board-visualizer.js";
 
 @customElement("bbrt-artifact-display")
 export class BBRTArtifactDisplay extends SignalWatcher(LitElement) {
   @property({ attribute: false })
-  accessor artifact: AsyncComputed<ArtifactEntry | undefined> | undefined =
-    undefined;
+  accessor artifact: ArtifactEntry | undefined = undefined;
 
   static override styles = css`
     :host {
@@ -29,11 +27,10 @@ export class BBRTArtifactDisplay extends SignalWatcher(LitElement) {
   `;
 
   override render() {
-    const entry = this.artifact?.get();
-    if (entry === undefined) {
+    if (this.artifact === undefined) {
       return nothing;
     }
-    const task = entry.blob;
+    const task = this.artifact.blob;
     if (task.status === "error") {
       return html`<div>Internal error: ${task.error}</div>`;
     }
@@ -46,7 +43,7 @@ export class BBRTArtifactDisplay extends SignalWatcher(LitElement) {
     }
     if (blob.type === "application/vnd.breadboard.board") {
       return until(
-        entry.json.complete.then((graph) => {
+        this.artifact.json.complete.then((graph) => {
           return html`
             <bbrt-board-visualizer
               .graph=${graph as GraphDescriptor}

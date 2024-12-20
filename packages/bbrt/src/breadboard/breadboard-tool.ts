@@ -21,40 +21,41 @@ import CoreKit from "@google-labs/core-kit";
 import GeminiKit from "@google-labs/gemini-kit";
 import JSONKit from "@google-labs/json-kit";
 import TemplateKit from "@google-labs/template-kit";
-import { html, nothing } from "lit";
 import { Signal } from "signal-polyfill";
 import type { ArtifactHandle } from "../artifacts/artifact-interface.js";
 import type { ArtifactStore } from "../artifacts/artifact-store.js";
-import "../components/content.js";
 import type { SecretsProvider } from "../secrets/secrets-provider.js";
 import type {
   BBRTTool,
-  ToolAPI,
-  ToolInvocation,
-  ToolInvocationState,
-  ToolMetadata,
-} from "../tools/tool.js";
-import { coercePresentableError } from "../util/presentable-error.js";
+  BBRTToolAPI,
+  BBRTToolExecuteResult,
+  BBRTToolMetadata,
+} from "../tools/tool-types.js";
+import type { JsonSerializableObject } from "../util/json-serializable.js";
+import {
+  coercePresentableError,
+  type PresentableError,
+} from "../util/presentable-error.js";
 import type { Result } from "../util/result.js";
 import { resultify } from "../util/resultify.js";
 import { transposeResults } from "../util/transpose-results.js";
 import type {
   BreadboardBoardListing,
-  BreadboardServer,
+  BreadboardServiceClient,
 } from "./breadboard-server.js";
 import { getDefaultSchema } from "./get-default-schema.js";
 import { makeToolSafeName } from "./make-tool-safe-name.js";
 import { standardizeBreadboardSchema } from "./standardize-breadboard-schema.js";
 
-export class BreadboardTool implements BBRTTool<unknown, unknown> {
+export class BreadboardTool implements BBRTTool {
   readonly #listing: BreadboardBoardListing;
-  readonly #server: BreadboardServer;
+  readonly #server: BreadboardServiceClient;
   readonly #secrets: SecretsProvider;
   readonly #artifacts: ArtifactStore;
 
   constructor(
     listing: BreadboardBoardListing,
-    server: BreadboardServer,
+    server: BreadboardServiceClient,
     secrets: SecretsProvider,
     artifacts: ArtifactStore
   ) {
@@ -64,7 +65,7 @@ export class BreadboardTool implements BBRTTool<unknown, unknown> {
     this.#artifacts = artifacts;
   }
 
-  get metadata(): ToolMetadata {
+  get metadata(): BBRTToolMetadata {
     return {
       id: makeToolSafeName(this.#server.url + "_" + this.#listing.path),
       title: this.#listing.title,
@@ -73,8 +74,8 @@ export class BreadboardTool implements BBRTTool<unknown, unknown> {
     };
   }
 
-  #api?: Promise<Result<ToolAPI>>;
-  async api(): Promise<Result<ToolAPI>> {
+  #api?: Promise<Result<BBRTToolAPI>>;
+  async api(): Promise<Result<BBRTToolAPI>> {
     return (this.#api ??= (async () => {
       const bgl = await this.bgl();
       if (!bgl.ok) {
@@ -94,14 +95,42 @@ export class BreadboardTool implements BBRTTool<unknown, unknown> {
     })());
   }
 
-  invoke(args: unknown) {
-    return new BreadboardToolInvocation(
-      this.#listing,
+  execute(args: JsonSerializableObject) {
+    return {
+      result: this.#execute(args),
+    };
+  }
+
+  async #execute(
+    args: JsonSerializableObject
+  ): Promise<
+    Result<{ data: JsonSerializableObject; artifacts: ArtifactHandle[] }>
+  > {
+    // TODO(aomarks) Clean this up.
+    const invocation = new BreadboardToolInvocation(
       args,
       () => this.bgl(),
       this.#secrets,
       this.#artifacts
     );
+    // TODO(aomarks) Broadly rethink this. Executions should be a stream of
+    // events, and those should be saved in state too.
+    await invocation.start();
+    const state = invocation.state.get();
+    if (state.status === "success") {
+      return {
+        ok: true,
+        value: {
+          data: state.value.output as JsonSerializableObject,
+          artifacts: state.value.artifacts,
+        },
+      };
+    } else if (state.status === "error") {
+      return { ok: false, error: state.error };
+    } else {
+      state.status satisfies "running" | "unstarted";
+      return { ok: false, error: `Internal error: state was ${state.status}` };
+    }
   }
 
   #bglCache?: Promise<Result<GraphDescriptor>>;
@@ -110,25 +139,31 @@ export class BreadboardTool implements BBRTTool<unknown, unknown> {
   }
 }
 
-export class BreadboardToolInvocation implements ToolInvocation<unknown> {
-  readonly #listing: BreadboardBoardListing;
+type InvocationState<O = unknown> =
+  | { status: "unstarted" }
+  | { status: "running" }
+  | {
+      status: "success";
+      value: BBRTToolExecuteResult<O>;
+    }
+  | { status: "error"; error: PresentableError };
+
+export class BreadboardToolInvocation {
   readonly #args: unknown;
   readonly #secrets: SecretsProvider;
   readonly #getBgl: () => Promise<Result<GraphDescriptor>>;
   readonly #artifacts: ArtifactStore;
 
-  readonly state = new Signal.State<ToolInvocationState<unknown>>({
+  readonly state = new Signal.State<InvocationState<unknown>>({
     status: "unstarted",
   });
 
   constructor(
-    listing: BreadboardBoardListing,
     args: unknown,
     getBgl: () => Promise<Result<GraphDescriptor>>,
     secrets: SecretsProvider,
     artifacts: ArtifactStore
   ) {
-    this.#listing = listing;
     this.#args = args;
     this.#getBgl = getBgl;
     this.#secrets = secrets;
@@ -299,60 +334,5 @@ export class BreadboardToolInvocation implements ToolInvocation<unknown> {
         })
       )
     );
-  }
-
-  render() {
-    const basicInfo = html`
-      <span>${this.#listing.title}</span>
-      <pre>${JSON.stringify(this.#args)}</pre>
-    `;
-    const state = this.state.get();
-    switch (state.status) {
-      case "unstarted": {
-        return [basicInfo, "Unstarted"];
-      }
-      case "running": {
-        return [basicInfo, "Running..."];
-      }
-      case "success": {
-        return [basicInfo, "Success"];
-      }
-      case "error": {
-        return [
-          basicInfo,
-          "Error",
-          html`<pre>${JSON.stringify(state.error)}</pre>`,
-        ];
-      }
-      default: {
-        state satisfies never;
-        console.error("Unexpected state", state);
-        return [basicInfo, "Internal error"];
-      }
-    }
-  }
-
-  renderContent() {
-    const state = this.state.get();
-    if (state.status !== "success") {
-      return nothing;
-    }
-    const artifacts = [];
-    for (const { id, mimeType } of state.value.artifacts) {
-      const entry = this.#artifacts.entry(id);
-      if (mimeType.startsWith("image/")) {
-        artifacts.push(html`<img src=${entry.url.value ?? ""} />`);
-      } else if (mimeType.startsWith("audio/")) {
-        artifacts.push(
-          html`<audio controls src=${entry.url.value ?? ""}></audio>`
-        );
-      } else {
-        console.log(
-          "Could not display artifact with unsupported MIME type",
-          mimeType
-        );
-      }
-    }
-    return artifacts;
   }
 }

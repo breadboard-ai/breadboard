@@ -6,12 +6,12 @@
 
 import type { Result } from "../util/result.js";
 import { resultify } from "../util/resultify.js";
-import { BreadboardServer } from "./breadboard-server.js";
+import { BreadboardServiceClient } from "./breadboard-server.js";
 
 type BoardServerEntry = { url: string; user?: { apiKey?: string } };
 
 export async function readBoardServersFromIndexedDB(): Promise<
-  Result<BreadboardServer[]>
+  Result<BreadboardServiceClient[]>
 > {
   const db = await resultify(indexedDB.open("board-server"));
   if (!db.ok) {
@@ -39,6 +39,6 @@ export async function readBoardServersFromIndexedDB(): Promise<
       .filter(
         ({ url }) => url.startsWith("http://") || url.startsWith("https://")
       )
-      .map(({ url, user }) => new BreadboardServer(url, user?.apiKey)),
+      .map(({ url, user }) => new BreadboardServiceClient(url, user?.apiKey)),
   };
 }

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type Artifact = ArtifactHandle | ArtifactBlob | ArtifactArrayBuffer;
+export type Artifact = ArtifactHandle | ArtifactBlob;
 
 export interface ArtifactHandle {
   id: string;
@@ -16,11 +16,4 @@ export interface ArtifactBlob {
   id: string;
   kind: "blob";
   blob: Blob;
-}
-
-export interface ArtifactArrayBuffer {
-  id: string;
-  kind: "buffer";
-  mimeType: string;
-  buffer: ArrayBuffer;
 }

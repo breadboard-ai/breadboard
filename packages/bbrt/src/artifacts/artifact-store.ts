@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { createContext } from "@lit/context";
 import { Signal } from "signal-polyfill";
 import { AsyncComputed } from "signal-utils/async-computed";
 import type { EmptyObject } from "../util/empty-object.js";
@@ -12,6 +13,12 @@ import type { Result } from "../util/result.js";
 import { WeakCache } from "../util/weak-cache.js";
 import type { ArtifactBlob } from "./artifact-interface.js";
 import type { ArtifactReaderWriter } from "./artifact-reader-writer.js";
+
+// TODO(aomarks) It's kind of weird that we have to included `undefined` here,
+// but there doesn't seem to be a way to use the @consume decorator without it.
+export const artifactStoreContext = createContext<ArtifactStore | undefined>(
+  "ArtifactStore"
+);
 
 export class ArtifactStore {
   readonly #underlying: ArtifactReaderWriter;
