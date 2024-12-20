@@ -85,7 +85,7 @@
     "vite": "^6.0.2",
     "vite-plugin-full-reload": "^1.2.0",
     "vite-plugin-watch-and-run": "^1.7.0",
-    "vitest": "^2.1.5"
+    "vitest": "^2.1.8"
   },
   "dependencies": {
     "@breadboard-ai/build": "0.11.0",
