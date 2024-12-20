@@ -6,7 +6,7 @@
 
 const getCompleteChunks = (pending: string, chunk: string) => {
   const asString = `${pending}${chunk}`;
-  return asString.split("\n\n").filter(Boolean);
+  return asString.split("\n\n");
 };
 
 /**
@@ -51,7 +51,13 @@ export const chunkRepairTransform = () => {
           if (brokenChunk !== null) {
             // Variant 3: x | x
             const completeChunks = getCompleteChunks(brokenChunk, chunk);
-            brokenChunk = completeChunks.pop() ?? null;
+            const allComplete = completeChunks.at(-1) === "";
+            if (allComplete) {
+              completeChunks.pop();
+              brokenChunk = null;
+            } else {
+              brokenChunk = completeChunks.pop() ?? null;
+            }
             for (const completeChunk of completeChunks) {
               enqueue(completeChunk);
             }
@@ -63,6 +69,10 @@ export const chunkRepairTransform = () => {
           if (brokenChunk !== null) {
             // Variant 1: x | o
             const completeChunks = getCompleteChunks(brokenChunk, chunk);
+            console.assert(
+              completeChunks.pop() === "",
+              "Last complete chunk must be an empty string"
+            );
             for (const completeChunk of completeChunks) {
               enqueue(completeChunk);
             }

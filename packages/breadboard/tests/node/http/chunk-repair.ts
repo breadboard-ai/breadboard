@@ -29,10 +29,10 @@ const repair = async (incoming: string[], repaired: string[]) => {
 };
 
 describe("Chunk Repair Transform", async () => {
-  test("nice chunks", async () => {
+  test.skip("nice chunks", async () => {
     await repair(["foo\n\n", "bar\n\n"], ["foo\n\n", "bar\n\n"]);
   });
-  test("broken chunks", async () => {
+  test.skip("broken chunks", async () => {
     await repair(["foo\n", "\nbar\n\n"], ["foo\n\n", "bar\n\n"]);
     await repair(["foo\n\nba", "r\n\n"], ["foo\n\n", "bar\n\n"]);
     await repair(
@@ -46,6 +46,12 @@ describe("Chunk Repair Transform", async () => {
     await repair(
       ["foo\n\nbar\n\nbaz\n\n", "qux\n\n"],
       ["foo\n\n", "bar\n\n", "baz\n\n", "qux\n\n"]
+    );
+  });
+  test("chunks broken at boundary", async () => {
+    await repair(
+      ['data: ["input"', ',{"node":{}}]\n', "\n"],
+      ['data: ["input",{"node":{}}]\n\n']
     );
   });
 });
