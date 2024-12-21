@@ -23,7 +23,7 @@ import { TopGraphObserver } from "../../../shared-ui/dist/utils/utils.js";
 @customElement("bbrt-board-visualizer")
 export class BBRTBoardVisualizer extends LitElement {
   @property({ attribute: false })
-  graph?: GraphDescriptor;
+  accessor graph: GraphDescriptor | undefined = undefined;
 
   static override styles = css`
     :host {

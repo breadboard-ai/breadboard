@@ -4,14 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import type { BBRTConversation } from "../llm/conversation.js";
+import type { Conversation } from "../llm/conversation.js";
 
 @customElement("bbrt-prompt")
-export class BBRTPrompt extends LitElement {
+export class BBRTPrompt extends SignalWatcher(LitElement) {
   @property({ attribute: false })
-  conversation?: BBRTConversation;
+  accessor conversation: Conversation | undefined = undefined;
 
   static override styles = css`
     :host {
@@ -44,17 +45,18 @@ export class BBRTPrompt extends LitElement {
   }
 
   #onKeydown(event: KeyboardEvent & { target: HTMLInputElement }) {
-    if (event.key !== "Enter") {
-      return;
-    }
-    if (event.shiftKey) {
-      return;
-    }
-    if (this.conversation === undefined) {
+    if (
+      !(
+        event.key === "Enter" &&
+        !event.shiftKey &&
+        this.conversation?.status === "ready" &&
+        event.target.value
+      )
+    ) {
       return;
     }
     const input = event.target;
-    void this.conversation.send({ content: input.value });
+    void this.conversation.send(input.value);
     input.value = "";
   }
 }

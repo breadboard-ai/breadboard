@@ -12,20 +12,11 @@ import {
 } from "@breadboard-ai/build";
 import type { GraphDescriptor } from "@google-labs/breadboard";
 import type { JSONSchema7 } from "json-schema";
-import { html, nothing } from "lit";
-import { Signal } from "signal-polyfill";
 import type { ArtifactStore } from "../artifacts/artifact-store.js";
 import "../components/activate-modal.js";
 import type { EmptyObject } from "../util/empty-object.js";
-import { coercePresentableError } from "../util/presentable-error.js";
 import type { Result } from "../util/result.js";
-import type {
-  BBRTTool,
-  ToolAPI,
-  ToolInvocation,
-  ToolInvocationState,
-  ToolMetadata,
-} from "./tool.js";
+import type { BBRTTool, BBRTToolAPI, BBRTToolMetadata } from "./tool-types.js";
 
 const inputs = object({
   board: object({ id: "string" }),
@@ -48,14 +39,14 @@ export class AddNode implements BBRTTool<Inputs, Outputs> {
     this.#artifacts = artifacts;
   }
 
-  readonly metadata: ToolMetadata = {
+  readonly metadata: BBRTToolMetadata = {
     id: "add_node_to_board",
     title: "Add Node To Board",
     description: "Add a node to the currently displayed Breadboard",
     icon: "/bbrt/images/tool.svg",
   };
 
-  async api(): Promise<Result<ToolAPI>> {
+  async api(): Promise<Result<BBRTToolAPI>> {
     return {
       ok: true as const,
       value: {
@@ -65,71 +56,39 @@ export class AddNode implements BBRTTool<Inputs, Outputs> {
           type: "object",
           properties: {},
         },
-      } satisfies ToolAPI,
+      } satisfies BBRTToolAPI,
     };
   }
 
-  invoke(args: Inputs) {
-    return new AddNodeInvocation(args, this.#artifacts);
-  }
-}
-
-class AddNodeInvocation implements ToolInvocation<Outputs> {
-  readonly #args: Inputs;
-  readonly #artifacts: ArtifactStore;
-  readonly state = new Signal.State<ToolInvocationState<Outputs>>({
-    status: "unstarted",
-  });
-
-  constructor(args: Inputs, artifacts: ArtifactStore) {
-    this.#args = args;
-    this.#artifacts = artifacts;
+  execute(args: Inputs) {
+    return { result: this.#execute(args) };
   }
 
-  render() {
-    return html`Adding node... `;
-  }
-
-  renderContent() {
-    return nothing;
-  }
-
-  async start(): Promise<void> {
-    if (this.state.get().status !== "unstarted") {
-      return;
-    }
-    this.state.set({ status: "running" });
-
-    const entry = this.#artifacts.entry(this.#args.board.id);
-
+  async #execute(args: Inputs): Promise<Result<{ data: Outputs }>> {
+    const entry = this.#artifacts.entry(args.board.id);
     using transaction = await entry.acquireExclusiveReadWriteLock();
     const artifact = await transaction.read();
     if (!artifact.ok) {
-      this.state.set({
-        status: "error",
-        error: coercePresentableError(artifact.error),
-      });
-      return;
+      return { ok: false, error: artifact.error };
     }
 
     const blob = artifact.value.blob;
     if (blob.type !== "application/vnd.breadboard.board") {
-      this.state.set({
-        status: "error",
+      return {
+        ok: false,
         error: {
           message:
-            `Expected Artifact ${JSON.stringify(this.#args.board.id)} to` +
+            `Expected Artifact ${JSON.stringify(args.board.id)} to` +
             ` have type "application/vnd.breadboard.board", but got` +
             ` ${JSON.stringify(blob.type)}.`,
         },
-      });
-      return;
+      };
     }
     const buffer = await blob.arrayBuffer();
     const board = JSON.parse(
       new TextDecoder().decode(buffer)
     ) as GraphDescriptor;
-    const { id, type, title, description } = this.#args.node;
+    const { id, type, title, description } = args.node;
 
     board.nodes.push({
       id,
@@ -163,16 +122,9 @@ class AddNodeInvocation implements ToolInvocation<Outputs> {
       })
     );
     if (!written.ok) {
-      this.state.set({
-        status: "error",
-        error: coercePresentableError(written.error),
-      });
-      return;
+      return { ok: false, error: written.error };
     }
-    this.state.set({
-      status: "success",
-      value: { output: {}, artifacts: [] },
-    });
+    return { ok: true, value: { data: {} } };
   }
 }
 

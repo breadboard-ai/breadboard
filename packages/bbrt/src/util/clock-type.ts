@@ -4,4 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type BBRTModel = "openai" | "gemini";
+export interface Clock {
+  now(): number;
+}

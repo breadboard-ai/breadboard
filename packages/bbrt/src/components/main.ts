@@ -5,18 +5,32 @@
  */
 
 import { SignalWatcher } from "@lit-labs/signals";
+import { provide } from "@lit/context";
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { BBRTAppState } from "../app-state.js";
-import { BreadboardToolProvider } from "../breadboard/breadboard-tool-provider.js";
+import {
+  ArtifactStore,
+  artifactStoreContext,
+} from "../artifacts/artifact-store.js";
+import { IdbArtifactReaderWriter } from "../artifacts/idb-artifact-reader-writer.js";
+import { BreadboardTool } from "../breadboard/breadboard-tool.js";
 import { readBoardServersFromIndexedDB } from "../breadboard/indexed-db-servers.js";
 import type { Config } from "../config.js";
+import type { BBRTDriver } from "../drivers/driver-interface.js";
+import { GeminiDriver } from "../drivers/gemini.js";
+import { OpenAiDriver } from "../drivers/openai.js";
+import { Conversation } from "../llm/conversation.js";
+import { BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION } from "../llm/system-instruction.js";
+import { IndexedDBSettingsSecrets } from "../secrets/indexed-db-secrets.js";
+import { ReactiveSessionBriefState } from "../state/session-brief.js";
+import { ReactiveSessionEventState } from "../state/session-event.js";
+import { ReactiveSessionState } from "../state/session.js";
 import { ActivateTool } from "../tools/activate-tool.js";
 import { AddNode } from "../tools/add-node.js";
 import { CreateBoard } from "../tools/create-board.js";
 import { DisplayArtifact } from "../tools/display-artifact.js";
 import { BoardLister } from "../tools/list-tools.js";
-import type { BBRTTool } from "../tools/tool.js";
+import { type BBRTTool } from "../tools/tool-types.js";
 import { connectedEffect } from "../util/connected-effect.js";
 import "./artifact-display.js";
 import "./chat.js";
@@ -24,14 +38,21 @@ import "./driver-selector.js";
 import "./prompt.js";
 import "./tool-palette.js";
 
-const APP_STATE_SESSION_STORAGE_KEY = "bbrt-app-state-v1";
+const APP_STATE_SESSION_STORAGE_KEY = "bbrt-app-state-v2";
 
 @customElement("bbrt-main")
 export class BBRTMain extends SignalWatcher(LitElement) {
   @property({ type: Object })
-  config?: Config;
+  accessor config: Config | undefined = undefined;
+  readonly #secrets = new IndexedDBSettingsSecrets();
+  readonly #state: ReactiveSessionState;
+  readonly #conversation: Conversation;
 
-  readonly #state = new BBRTAppState();
+  // TODO(aomarks) Due to the bug https://github.com/lit/lit/issues/4675, when
+  // using standard decorators, context provider initialization must be done in
+  // the constructor.
+  @provide({ context: artifactStoreContext })
+  accessor #artifacts: ArtifactStore;
 
   static override styles = css`
     :host {
@@ -70,27 +91,109 @@ export class BBRTMain extends SignalWatcher(LitElement) {
 
   constructor() {
     super();
-    void this.#firstBoot();
-  }
 
-  async #firstBoot() {
-    await this.#loadAllTools();
-    this.#restoreState();
-    connectedEffect(this, () => this.#persistState());
-  }
+    this.#artifacts = new ArtifactStore(new IdbArtifactReaderWriter());
 
-  #restoreState() {
-    const serialized = sessionStorage.getItem(APP_STATE_SESSION_STORAGE_KEY);
-    if (serialized !== null) {
-      const parsed = JSON.parse(serialized);
+    const serializedState = sessionStorage.getItem(
+      APP_STATE_SESSION_STORAGE_KEY
+    );
+    // TODO(aomarks) Support multiple sessions.
+    const temporarySingletonBrief = new ReactiveSessionBriefState({
+      id: "main",
+      title: "Main",
+    });
+    if (serializedState) {
+      const parsed = JSON.parse(serializedState);
       console.log("Restoring state", parsed);
-      this.#state.restore(parsed);
+      this.#state = new ReactiveSessionState(parsed, temporarySingletonBrief);
+    } else {
+      this.#state = new ReactiveSessionState(
+        { id: "main", events: [] },
+        temporarySingletonBrief
+      );
     }
+
+    const drivers = new Map<string, BBRTDriver>(
+      [
+        new GeminiDriver(() => this.#secrets.getSecret("GEMINI_API_KEY")),
+        new OpenAiDriver(() => this.#secrets.getSecret("OPENAI_API_KEY")),
+      ].map((driver) => [driver.id, driver])
+    );
+    const breadboardToolsPromise = this.#loadBreadboardTools();
+    const standardTools: BBRTTool[] = [
+      new BoardLister(breadboardToolsPromise),
+      new ActivateTool(
+        breadboardToolsPromise.then(
+          (tools) => new Set(tools.map((tool) => tool.metadata.id))
+        ),
+        this.#state
+      ),
+      new CreateBoard(this.#artifacts),
+      new AddNode(this.#artifacts),
+      new DisplayArtifact((artifactId) => {
+        this.#state.activeArtifactId = artifactId;
+        return { ok: true, value: undefined };
+      }),
+    ];
+    const availableToolsPromise = breadboardToolsPromise.then(
+      (breadboardTools) =>
+        new Map(
+          [...standardTools, ...breadboardTools].map((tool) => [
+            tool.metadata.id,
+            tool,
+          ])
+        )
+    );
+
+    this.#conversation = new Conversation({
+      state: this.#state,
+      drivers,
+      availableToolsPromise,
+    });
+
+    if (!serializedState) {
+      const timestamp = Date.now();
+      this.#state.events.push(
+        // TODO(aomarks) Helpers, this is mostly boilerplate.
+        new ReactiveSessionEventState({
+          timestamp,
+          id: crypto.randomUUID(),
+          detail: {
+            kind: "set-system-prompt",
+            systemPrompt: BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION,
+          },
+        }),
+        new ReactiveSessionEventState({
+          timestamp,
+          id: crypto.randomUUID(),
+          detail: {
+            kind: "set-active-tool-ids",
+            toolIds: standardTools.map((tool) => tool.metadata.id),
+          },
+        }),
+        // TODO(aomarks) Before the first turn is when we should expect some
+        // churn in settings. But only the most recent event can get
+        // efficiently in-place updated. If we had a single "set-config"
+        // event with optional fields, we could get rid of all that churn.
+        new ReactiveSessionEventState({
+          timestamp,
+          id: crypto.randomUUID(),
+          detail: {
+            kind: "set-driver",
+            driverId: drivers.keys().next().value!,
+          },
+        })
+      );
+    }
+
+    connectedEffect(this, () => this.#persistState());
+    connectedEffect(this, () => {
+      console.log(JSON.stringify(this.#state.data, null, 2));
+    });
   }
 
   #persistState() {
-    const state = this.#state.serialize();
-    const serialized = JSON.stringify(state, null, 2);
+    const serialized = JSON.stringify(this.#state.data, null, 2);
     try {
       sessionStorage.setItem(APP_STATE_SESSION_STORAGE_KEY, serialized);
     } catch (error) {
@@ -99,77 +202,56 @@ export class BBRTMain extends SignalWatcher(LitElement) {
   }
 
   override render() {
+    const artifactId = this.#state.activeArtifactId;
+    const artifact = artifactId ? this.#artifacts.entry(artifactId) : undefined;
     return html`
       <div id="inputs">
         <bbrt-driver-selector
-          .available=${this.#state.drivers}
-          .active=${this.#state.activeDriver}
+          .conversation=${this.#conversation}
         ></bbrt-driver-selector>
-        <bbrt-prompt .conversation=${this.#state.conversation}></bbrt-prompt>
+        <bbrt-prompt .conversation=${this.#conversation}></bbrt-prompt>
       </div>
 
-      <bbrt-chat .conversation=${this.#state.conversation}></bbrt-chat>
+      <bbrt-chat .conversation=${this.#conversation}></bbrt-chat>
 
       <bbrt-tool-palette
-        .availableTools=${this.#state.availableTools}
-        .activeToolIds=${this.#state.activeToolIds}
+        .conversation=${this.#conversation}
       ></bbrt-tool-palette>
 
-      <bbrt-artifact-display
-        .artifact=${this.#state.activeArtifact}
-      ></bbrt-artifact-display>
+      <bbrt-artifact-display .artifact=${artifact}></bbrt-artifact-display>
     `;
   }
 
-  async #loadAllTools() {
+  async #loadBreadboardTools(): Promise<BBRTTool[]> {
+    const tools: BBRTTool[] = [];
     const servers = await readBoardServersFromIndexedDB();
     if (!servers.ok) {
       console.error(
         "Failed to read board servers from IndexedDB:",
         servers.error
       );
-      return;
-    }
-
-    const boardLister = new BoardLister(servers.value);
-    // TODO(aomarks) Casts should not be needed. Something to do with the
-    // default parameter being unknown instead of any.
-    this.#state.availableTools.add(boardLister as BBRTTool);
-    this.#state.activeToolIds.add(boardLister.metadata.id);
-
-    const toolActivator = new ActivateTool(
-      this.#state.availableTools,
-      this.#state.activeToolIds
-    );
-    this.#state.availableTools.add(toolActivator as BBRTTool);
-    this.#state.activeToolIds.add(toolActivator.metadata.id);
-
-    const boardCreator = new CreateBoard(this.#state.artifacts);
-    this.#state.availableTools.add(boardCreator as BBRTTool);
-    this.#state.activeToolIds.add(boardCreator.metadata.id);
-
-    const nodeAdder = new AddNode(this.#state.artifacts);
-    this.#state.availableTools.add(nodeAdder as BBRTTool);
-    this.#state.activeToolIds.add(nodeAdder.metadata.id);
-
-    const artifactDisplayer = new DisplayArtifact((artifactId) => {
-      this.#state.activeArtifactId.set(artifactId);
-      return { ok: true, value: undefined };
-    });
-    this.#state.availableTools.add(artifactDisplayer as BBRTTool);
-    this.#state.activeToolIds.add(artifactDisplayer.metadata.id);
-
-    for (const server of servers.value) {
-      const provider = new BreadboardToolProvider(
-        server,
-        this.#state.secrets,
-        this.#state.artifacts
-      );
-      this.#state.toolProviders.push(provider);
-      for (const tool of await provider.tools()) {
-        this.#state.availableTools.add(tool);
+    } else {
+      for (const server of servers.value) {
+        const boards = await server.boards();
+        if (!boards.ok) {
+          console.error(
+            `Failed to read boards from server ${server.url}:`,
+            boards.error
+          );
+          continue;
+        }
+        for (const board of boards.value) {
+          const tool = new BreadboardTool(
+            board,
+            server,
+            this.#secrets,
+            this.#artifacts
+          );
+          tools.push(tool);
+        }
       }
     }
+    return tools;
   }
 }
 

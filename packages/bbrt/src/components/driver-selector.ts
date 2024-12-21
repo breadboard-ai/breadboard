@@ -7,16 +7,12 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import type { Signal } from "signal-polyfill";
-import type { BBRTDriver } from "../drivers/driver-interface.js";
+import type { Conversation } from "../llm/conversation.js";
 
 @customElement("bbrt-driver-selector")
 export class BBRTDriverSelector extends SignalWatcher(LitElement) {
   @property({ attribute: false })
-  available?: BBRTDriver[];
-
-  @property({ attribute: false })
-  active?: Signal.State<BBRTDriver>;
+  accessor conversation: Conversation | undefined = undefined;
 
   static override styles = css`
     :host {
@@ -38,10 +34,16 @@ export class BBRTDriverSelector extends SignalWatcher(LitElement) {
   `;
 
   override render() {
-    if (this.active === undefined || this.available === undefined) {
+    if (!this.conversation) {
       return nothing;
     }
-    const { name, icon } = this.active.get();
+    const info = this.conversation.driverInfo.get(
+      this.conversation.activeDriverId
+    );
+    if (info === undefined) {
+      return nothing;
+    }
+    const { name, icon } = info;
     return html`
       <button
         @click=${this.#cycle}
@@ -53,12 +55,19 @@ export class BBRTDriverSelector extends SignalWatcher(LitElement) {
   }
 
   #cycle() {
-    if (this.active === undefined || this.available === undefined) {
+    if (!this.conversation) {
       return;
     }
-    const indexOfActive = this.available.indexOf(this.active.get());
-    const nextIndex = (indexOfActive + 1) % this.available.length;
-    this.active.set(this.available[nextIndex]!);
+    const availableKeys = [...this.conversation.driverInfo.keys()];
+    if (availableKeys.length < 2) {
+      return;
+    }
+    const indexOfActive = availableKeys.indexOf(
+      this.conversation.activeDriverId
+    );
+    const nextIndex = (indexOfActive + 1) % availableKeys.length;
+    const nextId = availableKeys[nextIndex]!;
+    this.conversation.activeDriverId = nextId;
   }
 }
 

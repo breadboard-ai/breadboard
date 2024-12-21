@@ -7,14 +7,14 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import type { BBRTConversation } from "../llm/conversation.js";
+import type { Conversation } from "../llm/conversation.js";
 import "./chat-message.js";
 import { ScrollController } from "./scroll-controller.js";
 
 @customElement("bbrt-chat")
 export class BBRTChat extends SignalWatcher(LitElement) {
   @property({ attribute: false })
-  conversation?: BBRTConversation;
+  accessor conversation: Conversation | undefined = undefined;
 
   static override styles = css`
     :host {
@@ -35,7 +35,6 @@ export class BBRTChat extends SignalWatcher(LitElement) {
       return html`Connecting...`;
     }
     const turns = this.conversation.turns;
-    // .filter(({kind}) => kind !== 'user-tool-responses');
     return this.conversation.turns.map(
       (turn, i) =>
         html`<bbrt-chat-message
@@ -48,10 +47,7 @@ export class BBRTChat extends SignalWatcher(LitElement) {
             // actually be nice, though, because it's ambiguous sometimes if
             // e.g. one turn had multiple tool calls, or there was a sequence of
             // tool calls.
-            turn.role === turns[i - 1]?.role ||
-            // TODO(aomarks) Maybe just get rid of error turn, and put errors on
-            // the turns they are associated with?
-            turn.kind === "error"
+            turn.role === turns[i - 1]?.role
           }
         ></bbrt-chat-message>`
     );

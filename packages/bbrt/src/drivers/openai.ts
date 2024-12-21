@@ -4,21 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { BBRTChunk } from "../llm/chunk.js";
-import type { BBRTTurn } from "../llm/conversation-types.js";
-import type { BBRTTool } from "../tools/tool.js";
+import type { TurnChunk } from "../state/turn-chunk.js";
+import type { ReactiveTurnState } from "../state/turn.js";
+import type { BBRTTool } from "../tools/tool-types.js";
 import { JsonDataStreamTransformer } from "../util/json-data-stream-transformer.js";
+import type { JsonSerializableObject } from "../util/json-serializable.js";
 import type { Result } from "../util/result.js";
-import type { BBRTDriver } from "./driver-interface.js";
+import type { BBRTDriver, BBRTDriverSendOptions } from "./driver-interface.js";
 import type {
-  OpenAIAssistantMessage,
   OpenAIChatRequest,
   OpenAIChunk,
   OpenAIMessage,
   OpenAITool,
+  OpenAIToolCall,
+  OpenAIToolMessage,
 } from "./openai-types.js";
 
 export class OpenAiDriver implements BBRTDriver {
+  readonly id = "openai";
   readonly name = "OpenAI";
   readonly icon = "/bbrt/images/openai-logomark.svg";
 
@@ -28,21 +31,25 @@ export class OpenAiDriver implements BBRTDriver {
     this.#getApiKey = getApiKey;
   }
 
-  async executeTurn(
-    turns: BBRTTurn[],
-    tools: BBRTTool[],
-    systemInstruction: string
-  ): Promise<Result<AsyncIterableIterator<BBRTChunk>>> {
+  async *send({
+    turns,
+    systemPrompt,
+    tools,
+  }: BBRTDriverSendOptions): AsyncIterable<TurnChunk> {
     const messages = await convertTurnsForOpenAi(turns);
+    if (!messages.ok) {
+      // TODO(aomarks) Send should return a Result.
+      throw new Error(String(messages.error));
+    }
     const request: OpenAIChatRequest = {
       model: "gpt-4o",
       stream: true,
-      messages,
+      messages: messages.value,
     };
-    if (systemInstruction.length > 0) {
-      messages.push({ role: "system", content: systemInstruction });
+    if (systemPrompt.length > 0) {
+      messages.value.push({ role: "system", content: systemPrompt });
     }
-    if (tools.length > 0) {
+    if (tools !== undefined && tools.size > 0) {
       const openAiTools = await convertToolsForOpenAi([...tools.values()]);
       if (!openAiTools.ok) {
         return openAiTools;
@@ -89,16 +96,15 @@ export class OpenAiDriver implements BBRTDriver {
     if (body === null) {
       return { ok: false, error: Error("body was null") };
     }
-    const stream = convertOpenAiChunks(
+    yield* convertOpenAiChunks(
       body.pipeThrough(new JsonDataStreamTransformer<OpenAIChunk>())
     );
-    return { ok: true, value: stream };
   }
 }
 
 async function* convertOpenAiChunks(
   stream: AsyncIterable<OpenAIChunk>
-): AsyncIterableIterator<BBRTChunk> {
+): AsyncIterableIterator<TurnChunk> {
   const toolCalls = new Map<
     number,
     { id: string; name: string; jsonArgs: string }
@@ -123,7 +129,11 @@ async function* convertOpenAiChunks(
 
     const content = delta.content;
     if (content != null) {
-      yield { kind: "append-content", content };
+      yield {
+        timestamp: Date.now(),
+        kind: "text",
+        text: content,
+      };
       continue;
     }
 
@@ -148,74 +158,88 @@ async function* convertOpenAiChunks(
 
   for (const call of toolCalls.values()) {
     yield {
-      kind: "tool-call",
-      name: call.name,
-      id: call.id,
-      arguments: JSON.parse(call.jsonArgs) as Record<string, unknown>,
+      kind: "function-call",
+      timestamp: Date.now(),
+      call: {
+        functionId: call.name,
+        callId: call.id,
+        args: JSON.parse(call.jsonArgs) as JsonSerializableObject,
+        response: {
+          status: "unstarted",
+        },
+      },
     };
   }
 }
 
-async function convertTurnsForOpenAi(
-  turns: BBRTTurn[]
-): Promise<OpenAIMessage[]> {
+export function convertTurnsForOpenAi(
+  turns: ReactiveTurnState[]
+): Result<OpenAIMessage[]> {
   const messages: OpenAIMessage[] = [];
   for (const turn of turns) {
-    if (turn.status.get() !== "done") {
-      continue;
+    if (turn.status !== "done") {
+      return { ok: false, error: Error("Turn was not done") };
     }
-    switch (turn.kind) {
-      case "user-content": {
-        messages.push({ role: "user", content: turn.content });
-        break;
-      }
-      case "user-tool-responses": {
-        for (const response of turn.responses) {
-          messages.push({
-            role: "tool",
-            tool_call_id: response.id,
-            content: JSON.stringify(response.response.output),
-          });
-        }
-        break;
-      }
-      case "model": {
-        const content = (await Array.fromAsync(turn.content)).join("");
-        const msg: OpenAIAssistantMessage = { role: "assistant" };
-        if (content) {
-          msg.content = content;
-        }
-        if (turn.toolCalls?.length) {
-          msg.tool_calls = turn.toolCalls.map((toolCall) => ({
-            // TODO(aomarks) We shouldn't need to specify an index, typings isue
-            // (need request vs response variants).
+    if (turn.role === "user") {
+      messages.push({
+        role: "user",
+        content: turn.partialText,
+      });
+    } else {
+      turn.role satisfies "model";
+      const functionCalls = turn.partialFunctionCalls;
+      if (functionCalls.length === 0) {
+        messages.push({
+          role: "assistant",
+          content: turn.partialText,
+        });
+      } else {
+        const toolCalls: OpenAIToolCall[] = [];
+        const toolResponses: OpenAIToolMessage[] = [];
+        for (const call of functionCalls) {
+          const status = call.response.status;
+          if (status === "unstarted" || status === "executing") {
+            return {
+              ok: false,
+              error: new Error(`Function call was ${status}.`),
+            };
+          }
+          status satisfies "success" | "error";
+          toolCalls.push({
+            // TODO(aomarks) Kinda silly, see note in OpenAIToolCall interface.
             index: undefined as unknown as number,
-            id: toolCall.id,
+            id: call.callId,
             type: "function",
             function: {
-              name: toolCall.tool.metadata.id,
-              arguments: JSON.stringify(toolCall.args),
+              name: call.functionId,
+              arguments: JSON.stringify(call.args),
             },
-          }));
+          });
+          toolResponses.push({
+            role: "tool",
+            tool_call_id: call.callId,
+            content: JSON.stringify(
+              status === "success"
+                ? call.response.result
+                : { error: call.response.error.message }
+            ),
+          });
         }
-        messages.push(msg);
-        break;
-      }
-      case "error": {
-        // TODO(aomarks) Do something better?
-        break;
-      }
-      default: {
-        turn satisfies never;
-        console.error("Unknown turn kind:", turn);
-        break;
+        messages.push(
+          {
+            role: "assistant",
+            content: turn.partialText,
+            tool_calls: toolCalls,
+          },
+          ...toolResponses
+        );
       }
     }
   }
-  return messages;
+  return { ok: true, value: messages };
 }
 
-async function convertToolsForOpenAi(
+export async function convertToolsForOpenAi(
   tools: BBRTTool[]
 ): Promise<Result<OpenAIChatRequest["tools"]>> {
   const results: OpenAITool[] = [];

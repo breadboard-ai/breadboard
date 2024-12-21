@@ -11,7 +11,7 @@ import { coercePresentableError } from "../util/presentable-error.js";
 @customElement("bbrt-error-message")
 export class BBRTErrorMessage extends LitElement {
   @property({ type: Object })
-  error?: unknown;
+  accessor error: unknown;
 
   static override styles = css`
     :host {

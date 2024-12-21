@@ -4,19 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { html, nothing } from "lit";
-import { Signal } from "signal-polyfill";
 import "../components/activate-modal.js";
 import type { EmptyObject } from "../util/empty-object.js";
-import { coercePresentableError } from "../util/presentable-error.js";
 import type { Result } from "../util/result.js";
-import type {
-  BBRTTool,
-  ToolAPI,
-  ToolInvocation,
-  ToolInvocationState,
-  ToolMetadata,
-} from "./tool.js";
+import type { BBRTTool, BBRTToolAPI, BBRTToolMetadata } from "./tool-types.js";
 
 interface Inputs {
   artifactId: string;
@@ -27,13 +18,13 @@ type Outputs = EmptyObject;
 type Callback = (artifactId: string) => Result<void>;
 
 export class DisplayArtifact implements BBRTTool<Inputs, Outputs> {
-  callback: Callback;
+  #callback: Callback;
 
   constructor(callback: Callback) {
-    this.callback = callback;
+    this.#callback = callback;
   }
 
-  readonly metadata: ToolMetadata = {
+  readonly metadata: BBRTToolMetadata = {
     id: "display_artifact",
     title: "Display Artifact",
     description:
@@ -41,7 +32,7 @@ export class DisplayArtifact implements BBRTTool<Inputs, Outputs> {
     icon: "/bbrt/images/tool.svg",
   };
 
-  async api(): Promise<Result<ToolAPI>> {
+  async api(): Promise<Result<BBRTToolAPI>> {
     return {
       ok: true as const,
       value: {
@@ -58,51 +49,19 @@ export class DisplayArtifact implements BBRTTool<Inputs, Outputs> {
           type: "object",
           properties: {},
         },
-      } satisfies ToolAPI,
+      } satisfies BBRTToolAPI,
     };
   }
 
-  invoke(args: Inputs) {
-    return new DisplayArtifactInvocation(args, this.callback);
-  }
-}
-
-class DisplayArtifactInvocation implements ToolInvocation<Outputs> {
-  readonly #callback: Callback;
-  readonly #args: Inputs;
-  readonly state = new Signal.State<ToolInvocationState<Outputs>>({
-    status: "unstarted",
-  });
-
-  constructor(args: Inputs, callback: Callback) {
-    this.#args = args;
-    this.#callback = callback;
+  execute(args: Inputs) {
+    return { result: this.#execute(args) };
   }
 
-  render() {
-    return html`Displaying Artifact ...`;
-  }
-
-  renderContent() {
-    return nothing;
-  }
-
-  async start(): Promise<void> {
-    if (this.state.get().status !== "unstarted") {
-      return;
-    }
-    this.state.set({ status: "running" });
-    const result = this.#callback(this.#args.artifactId);
+  async #execute({ artifactId }: Inputs): Promise<Result<{ data: Outputs }>> {
+    const result = this.#callback(artifactId);
     if (!result.ok) {
-      this.state.set({
-        status: "error",
-        error: coercePresentableError(result.error),
-      });
-      return;
+      return result;
     }
-    this.state.set({
-      status: "success",
-      value: { output: {}, artifacts: [] },
-    });
+    return { ok: true, value: { data: {} } };
   }
 }

@@ -4,227 +4,293 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Signal } from "signal-polyfill";
-import { SignalArray } from "signal-utils/array";
-import type { BBRTDriver } from "../drivers/driver-interface.js";
-import type { BBRTTool, ToolInvocation } from "../tools/tool.js";
-import { CachingMultiplexStream } from "../util/caching-multiplex-stream.js";
-import { Lock } from "../util/lock.js";
+import { signal } from "signal-utils";
+import { AsyncComputed } from "signal-utils/async-computed";
+import type {
+  BBRTDriver,
+  BBRTDriverInfo,
+} from "../drivers/driver-interface.js";
+import { ReactiveFunctionCallState } from "../state/function-call.js";
+import {
+  ReactiveSessionEventState,
+  type ReactiveSessionEventTurn,
+} from "../state/session-event.js";
+import { ReactiveSessionState } from "../state/session.js";
+import { ReactiveTurnState } from "../state/turn.js";
+import type { BBRTTool } from "../tools/tool-types.js";
+import type { Clock } from "../util/clock-type.js";
+import type { JsonSerializableObject } from "../util/json-serializable.js";
 import { coercePresentableError } from "../util/presentable-error.js";
 import type { Result } from "../util/result.js";
-import { transposeResults } from "../util/transpose-results.js";
-import { waitForState } from "../util/wait-for-state.js";
-import type { BBRTChunk } from "./chunk.js";
-import type {
-  BBRTModelTurn,
-  BBRTToolCall,
-  BBRTToolResponse,
-  BBRTTurn,
-  BBRTTurnStatus,
-} from "./conversation-types.js";
-import { BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION } from "./system-instruction.js";
 
-export class BBRTConversation {
-  readonly turns = new SignalArray<BBRTTurn>();
-  readonly #lock = new Lock();
-  readonly #driver: Signal.State<BBRTDriver>;
-  readonly #activeTools: Signal.Computed<Set<BBRTTool>>;
+export interface ConversationOptions {
+  state: ReactiveSessionState;
+  drivers: Map<string, BBRTDriver>;
+  availableToolsPromise: Promise<Map<string, BBRTTool>>;
+  clock?: Clock;
+  idGenerator?: () => string;
+}
 
-  constructor(
-    driver: Signal.State<BBRTDriver>,
-    activeTools: Signal.Computed<Set<BBRTTool>>
-  ) {
-    this.#driver = driver;
-    this.#activeTools = activeTools;
+export class Conversation {
+  readonly #state: ReactiveSessionState;
+  readonly #drivers: Map<string, BBRTDriver>;
+  readonly #availableToolsPromise: Promise<Map<string, BBRTTool>>;
+  readonly #clock: Clock;
+  readonly #idGenerator: () => string;
+  @signal accessor #status: "ready" | "busy" = "ready";
+
+  constructor({
+    state,
+    drivers,
+    availableToolsPromise,
+    clock,
+    idGenerator,
+  }: ConversationOptions) {
+    this.#state = state;
+    this.#drivers = drivers;
+    this.#availableToolsPromise = availableToolsPromise;
+    this.#clock = clock ?? Date;
+    this.#idGenerator = idGenerator ?? (() => crypto.randomUUID());
   }
 
-  send(message: { content: string }): Promise<void> {
-    // Serialize all requests with a lock. Note that a single call to #send can
-    // generate many turns, because of tool calls.
-    return this.#lock.do(() => this.#send(message));
+  get status() {
+    return this.#status;
   }
 
-  async #send(
-    message: { content: string } | { toolResponses: BBRTToolResponse[] }
-  ): Promise<void> {
-    // TODO(aomarks) We read this.#model and this.#tools across async boundaries
-    // in this function, plus we recurse. We should have frozen copies of those
-    // instead, and use them throughout. What's a good pattern for this problem
-    // in general? Should we be factoring out a Sender class so that we can
-    // replace it wholesale whenever the other two change, maybe with a computed
-    // signal?
-
-    // Create the user turn. (Note we only support sending either content or
-    // tool responses in one message, not both).
-    if ("toolResponses" in message) {
-      this.turns.push({
-        kind: "user-tool-responses",
-        role: "user",
-        status: new Signal.State<BBRTTurnStatus>("done"),
-        responses: message.toolResponses,
-      });
-    } else {
-      this.turns.push({
-        kind: "user-content",
-        role: "user",
-        status: new Signal.State<BBRTTurnStatus>("done"),
-        content: message.content,
-      });
-    }
-
-    // Create the model turn (in anticipation).
-    const status = new Signal.State<BBRTTurnStatus>("pending");
-    const toolCalls = new SignalArray<BBRTToolCall>();
-    const contentStream = new TransformStream<string, string>();
-    const modelTurn: BBRTModelTurn = {
-      kind: "model",
-      role: "model",
-      status,
-      // Use BufferedMultiplexStream so that we can have as many consumers as
-      // needed of the entire content stream.
-      content: new CachingMultiplexStream(contentStream.readable),
-      toolCalls,
-    };
-    this.turns.push(modelTurn);
-
-    const modelResponse = await this.#generate();
-    if (!modelResponse.ok) {
-      status.set("error");
-      const error = coercePresentableError(modelResponse.error);
-      modelTurn.error = error;
-      // TODO(aomarks) Use a new "using" statement for this, with broad scope.
-      // Same for lock.
-      void contentStream.writable.close();
-      // TODO(aomarks) Hack because we don't yet render the error for a model
-      // turn whose state is error. Can probably delete the error kind all
-      // together.
-      this.turns.push({
-        kind: "error",
-        role: "model",
-        status,
-        error,
-      });
-      return;
-    }
-
-    const contentWriter = contentStream.writable.getWriter();
-    const toolResponsePromises: Array<Promise<Result<BBRTToolResponse>>> = [];
-    for await (const chunk of modelResponse.value) {
-      status.set("streaming");
-      switch (chunk.kind) {
-        case "append-content": {
-          await contentWriter.write(chunk.content);
-          break;
-        }
-        case "tool-call": {
-          // TODO(aomarks) tools should be a Map, not a Set (throughout). Though
-          // we should preserve order, so maybe it should be some other data
-          // structure really.
-          const tool = await (async () => {
-            for (const tool of this.#activeTools.get()) {
-              if (tool.metadata.id === chunk.name) {
-                return tool;
-              }
-            }
-            return undefined;
-          })();
-          if (tool === undefined) {
-            console.error("unknown tool", JSON.stringify(chunk));
-            this.turns.push({
-              kind: "error",
-              role: "model",
-              status,
-              error: new Error(`Unknown tool: ${JSON.stringify(chunk)}`),
-            });
-            break;
-          }
-          const invocation = tool.invoke(chunk.arguments);
-          invocation.start();
-          toolCalls.push({
-            id: chunk.id,
-            args: chunk.arguments,
-            tool,
-            invocation,
-          });
-          toolResponsePromises.push(
-            this.#monitorInvocation(chunk.id, tool, chunk.arguments, invocation)
-          );
-          break;
-        }
-        default: {
-          chunk satisfies never;
-          console.error("unknown chunk kind:", chunk);
-          break;
-        }
-      }
-    }
-    await contentWriter.close();
-    if (toolResponsePromises.length === 0) {
-      status.set("done");
-    } else {
-      status.set("using-tools");
-      const toolResponses = transposeResults(
-        await Promise.all(toolResponsePromises)
-      );
-      if (toolResponses.ok) {
-        status.set("done");
-        return this.#send({ toolResponses: toolResponses.value });
-      } else {
-        status.set("error");
-        const error = coercePresentableError(toolResponses.error);
-        modelTurn.error = error;
-        // TODO(aomarks) Remove once we render errors directly on turns. Though,
-        // be careful here, since if we add retry, we don't want to retry the
-        // whole turn, just the model call. Maybe we need a turn role for tool
-        // invocations?
-        this.turns.push({
-          kind: "error",
-          role: "model",
-          status,
-          error,
-        });
-      }
-    }
+  get turns() {
+    return this.#state.turns;
   }
 
-  // TODO(aomarks) Kinda ugly. Should be simpler?
-  async #monitorInvocation(
-    id: string,
-    tool: BBRTTool,
-    args: unknown,
-    invocation: ToolInvocation
-  ): Promise<Result<BBRTToolResponse>> {
-    const result = await waitForState(
-      invocation.state,
-      (state) => state.status === "success" || state.status === "error"
+  // TODO(aomarks) Should this pattern be a decorator, or is there a simpler
+  // pattern?
+  get availableTools() {
+    return this.#availableToolsComputed.value;
+  }
+  readonly #availableToolsComputed = new AsyncComputed<
+    ReadonlyMap<string, BBRTTool>
+  >(() => this.#availableToolsPromise);
+
+  send(text: string): Result<{ done: Promise<void> }> {
+    if (this.#status === "busy") {
+      return { ok: false, error: new Error("Session is busy") };
+    }
+    this.#status satisfies "ready";
+    this.#status = "busy";
+
+    const driver = this.#getDriver();
+    if (!driver.ok) {
+      this.#status = "ready";
+      return driver;
+    }
+
+    const initialTimestamp = this.#clock.now();
+    const systemPrompt = this.#state.systemPrompt ?? "";
+    const userTurn = new ReactiveTurnState({
+      role: "user",
+      // TODO(aomarks) We should probably model a state to indicate whether a
+      // user has been sent to the model yet.
+      status: "done",
+      chunks: [{ kind: "text", timestamp: initialTimestamp, text }],
+    });
+    this.#state.events.push(
+      new ReactiveSessionEventState({
+        id: this.#idGenerator(),
+        timestamp: initialTimestamp,
+        detail: { kind: "turn", turn: userTurn },
+      })
     );
-    if (result.status === "success") {
-      return {
-        ok: true,
-        value: { id, tool, invocation, args, response: result.value },
-      };
-    } else if (result.status === "error") {
-      return { ok: false, error: result.error };
-    } else {
-      const msg = `Internal error: could not handle status ${result.status}`;
-      console.error(msg);
+
+    const done = (async (): Promise<void> => {
+      const activeTools = await this.#getActiveTools();
+      const { functionCalls } = await this.#callModel(
+        driver.value,
+        activeTools,
+        initialTimestamp,
+        systemPrompt
+      );
+      if (functionCalls.length > 0) {
+        await Promise.all(
+          functionCalls.map((call) =>
+            this.#executeFunctionCall(call, activeTools)
+          )
+        );
+        await this.#callModel(
+          driver.value,
+          undefined,
+          this.#clock.now(),
+          systemPrompt
+        );
+      }
+      this.#status = "ready";
+    })();
+
+    return { ok: true, value: { done } };
+  }
+
+  #getDriver(): Result<BBRTDriver> {
+    const driverId = this.#state.driverId;
+    if (!driverId) {
       return {
         ok: false,
-        error: new Error(msg),
+        error: new Error(`Session driver ID was missing or empty`),
+      };
+    }
+    const driver = this.#drivers.get(driverId);
+    if (!driver) {
+      return {
+        ok: false,
+        error: new Error(
+          `Driver was not found with id ${JSON.stringify(driverId)}`
+        ),
+      };
+    }
+    return { ok: true, value: driver };
+  }
+
+  async #getActiveTools(): Promise<Map<string, BBRTTool>> {
+    const availableTools = await this.#availableToolsPromise;
+    const tools = new Map<string, BBRTTool>();
+    for (const toolId of this.#state.activeToolIds) {
+      const tool = availableTools.get(toolId);
+      if (!tool) {
+        // TODO(aomarks) Something visible to the user.
+        console.error(`Tool not found: ${JSON.stringify(toolId)}`);
+        continue;
+      }
+      tools.set(toolId, tool);
+    }
+    return tools;
+  }
+
+  async #callModel(
+    driver: BBRTDriver,
+    tools: Map<string, BBRTTool> | undefined,
+    timestamp: number,
+    systemPrompt: string
+  ): Promise<{ functionCalls: ReactiveFunctionCallState[] }> {
+    // TODO(aomarks) This is a little weird. The natural thing to do would seem
+    // to be to create a ReactiveSessionEventTurn, and pass it in. But in fact
+    // our State constructors treat all initializer data as pure data, so that
+    // means it gets initialized to a clone of the ReactiveSessionEventTurn we
+    // passed in. Maybe we should detect such instances, or maybe the pattern
+    // should be a little different -- like constructor always takes Reactive
+    // instances, and there's a separate static method to initialize from JSON.
+    const event = new ReactiveSessionEventState({
+      id: this.#idGenerator(),
+      timestamp,
+      detail: {
+        kind: "turn",
+        turn: {
+          role: "model",
+          status: "pending",
+          chunks: [],
+        },
+      },
+    });
+    this.#state.events.push(event);
+    const turn = (event.detail as ReactiveSessionEventTurn).turn;
+
+    // Don't include the pending turn we just created.
+    const slice = this.#state.turns.slice(0, -1);
+    const chunks = driver.send({
+      systemPrompt,
+      tools,
+      turns: slice,
+    });
+    const functionCalls = [];
+    for await (const chunk of chunks) {
+      if (chunk.kind === "function-call") {
+        if (tools !== undefined) {
+          const call = new ReactiveFunctionCallState(chunk.call);
+          functionCalls.push(call);
+          turn.chunks.push({
+            kind: "function-call",
+            timestamp: chunk.timestamp,
+            call: call,
+          });
+        } else {
+          turn.chunks.push({
+            kind: "error",
+            timestamp: chunk.timestamp,
+            error: {
+              message:
+                `Model made unexpected function call: ` +
+                JSON.stringify(chunk.call),
+            },
+          });
+        }
+      } else {
+        turn.chunks.push(chunk);
+      }
+    }
+    turn.status = "done";
+    return { functionCalls };
+  }
+
+  async #executeFunctionCall(
+    call: ReactiveFunctionCallState,
+    tools: Map<string, BBRTTool>
+  ): Promise<void> {
+    const { functionId } = call;
+    const tool = tools.get(functionId);
+    if (tool === undefined) {
+      call.response = {
+        status: "error",
+        error: { message: `Tool not found: ${JSON.stringify(functionId)}` },
+      };
+      return;
+    }
+    const execution = tool.execute(call.args);
+    call.response = { status: "executing" };
+    // TODO(aomarks) Feels like we should set the render earlier, since we
+    // should be able to know it before we even start executing. Right now
+    // render is a signal for that reason, but it doesn't need to be.
+    call.render = execution.render;
+    const result = await execution.result;
+    if (result.ok) {
+      call.response = {
+        status: "success",
+        result: result.value.data as JsonSerializableObject,
+        artifacts: result.value.artifacts ?? [],
+      };
+    } else {
+      call.response = {
+        status: "error",
+        error: coercePresentableError(result.error),
       };
     }
   }
 
-  async #generate(): Promise<Result<AsyncIterableIterator<BBRTChunk>>> {
-    const driver = this.#driver.get();
-    const chunks = await driver.executeTurn(
-      this.turns,
-      [...this.#activeTools.get()],
-      BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION
-    );
-    if (!chunks.ok) {
-      return chunks;
+  get activeDriverId() {
+    return this.#state.driverId ?? "gemini";
+  }
+
+  set activeDriverId(driverId: string) {
+    const lastEvent = this.#state.events.at(-1);
+    if (lastEvent?.detail.kind === "set-driver") {
+      this.#state.events.pop();
     }
-    return { ok: true, value: chunks.value };
+    this.#state.events.push(
+      new ReactiveSessionEventState({
+        id: crypto.randomUUID(),
+        timestamp: Date.now(),
+        detail: {
+          kind: "set-driver",
+          driverId,
+        },
+      })
+    );
+  }
+
+  get driverInfo(): Map<string, BBRTDriverInfo> {
+    return this.#drivers;
+  }
+
+  get activeToolIds(): ReadonlySet<string> {
+    return this.#state.activeToolIds;
+  }
+
+  set activeToolIds(toolIds: string[]) {
+    this.#state.activeToolIds = toolIds;
   }
 }
