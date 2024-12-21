@@ -375,8 +375,10 @@ class GraphDescriberManager {
       }
       const base = this.handle.url();
 
+      const loader = this.mutable.store.loader;
+
       // try loading the describer graph.
-      const loadResult = await this.mutable.store.load(customDescriber, {
+      const loadResult = await loader.load(customDescriber, {
         base,
         board: this.handle.graph(),
         outerGraph: this.handle.graph(),
@@ -399,7 +401,7 @@ class GraphDescriberManager {
         {
           base,
           kits: [...this.mutable.store.kits],
-          loader: this.mutable.store,
+          loader,
         }
       )) as NodeDescriberResult;
       if ("$error" in result) {
