@@ -29,10 +29,10 @@ const repair = async (incoming: string[], repaired: string[]) => {
 };
 
 describe("Chunk Repair Transform", async () => {
-  test.skip("nice chunks", async () => {
+  test("nice chunks", async () => {
     await repair(["foo\n\n", "bar\n\n"], ["foo\n\n", "bar\n\n"]);
   });
-  test.skip("broken chunks", async () => {
+  test("broken chunks", async () => {
     await repair(["foo\n", "\nbar\n\n"], ["foo\n\n", "bar\n\n"]);
     await repair(["foo\n\nba", "r\n\n"], ["foo\n\n", "bar\n\n"]);
     await repair(

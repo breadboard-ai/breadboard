@@ -33,13 +33,13 @@ export const chunkRepairTransform = () => {
   //    the two chunks likely have a complete chunk somewhere in the middle
   //    (or not), yet there's a broken left-over chunk at the end.
   return new TransformStream<string, string>({
-    transform(chunk, controller) {
+    transform(incomingChunk, controller) {
       const enqueue = (chunk: string) => {
         controller.enqueue(`${chunk}\n\n`);
       };
 
-      const missingEndMarker = !chunk.endsWith("\n\n");
-      const chunks = chunk.split("\n\n");
+      const missingEndMarker = !incomingChunk.endsWith("\n\n");
+      const chunks = incomingChunk.split("\n\n");
       if (!missingEndMarker) {
         chunks.pop();
       }
@@ -69,10 +69,6 @@ export const chunkRepairTransform = () => {
           if (brokenChunk !== null) {
             // Variant 1: x | o
             const completeChunks = getCompleteChunks(brokenChunk, chunk);
-            console.assert(
-              completeChunks.pop() === "",
-              "Last complete chunk must be an empty string"
-            );
             for (const completeChunk of completeChunks) {
               enqueue(completeChunk);
             }
