@@ -32,7 +32,7 @@ export interface ConversationOptions {
 }
 
 export class Conversation {
-  readonly #state: ReactiveSessionState;
+  readonly state: ReactiveSessionState;
   readonly #drivers: Map<string, BBRTDriver>;
   readonly #availableToolsPromise: Promise<Map<string, BBRTTool>>;
   readonly #clock: Clock;
@@ -46,7 +46,7 @@ export class Conversation {
     clock,
     idGenerator,
   }: ConversationOptions) {
-    this.#state = state;
+    this.state = state;
     this.#drivers = drivers;
     this.#availableToolsPromise = availableToolsPromise;
     this.#clock = clock ?? Date;
@@ -55,10 +55,6 @@ export class Conversation {
 
   get status() {
     return this.#status;
-  }
-
-  get turns() {
-    return this.#state.turns;
   }
 
   // TODO(aomarks) Should this pattern be a decorator, or is there a simpler
@@ -84,7 +80,7 @@ export class Conversation {
     }
 
     const initialTimestamp = this.#clock.now();
-    const systemPrompt = this.#state.systemPrompt ?? "";
+    const systemPrompt = this.state.systemPrompt ?? "";
     const userTurn = new ReactiveTurnState({
       role: "user",
       // TODO(aomarks) We should probably model a state to indicate whether a
@@ -92,7 +88,7 @@ export class Conversation {
       status: "done",
       chunks: [{ kind: "text", timestamp: initialTimestamp, text }],
     });
-    this.#state.events.push(
+    this.state.events.push(
       new ReactiveSessionEventState({
         id: this.#idGenerator(),
         timestamp: initialTimestamp,
@@ -128,7 +124,7 @@ export class Conversation {
   }
 
   #getDriver(): Result<BBRTDriver> {
-    const driverId = this.#state.driverId;
+    const driverId = this.state.driverId;
     if (!driverId) {
       return {
         ok: false,
@@ -150,7 +146,7 @@ export class Conversation {
   async #getActiveTools(): Promise<Map<string, BBRTTool>> {
     const availableTools = await this.#availableToolsPromise;
     const tools = new Map<string, BBRTTool>();
-    for (const toolId of this.#state.activeToolIds) {
+    for (const toolId of this.state.activeToolIds) {
       const tool = availableTools.get(toolId);
       if (!tool) {
         // TODO(aomarks) Something visible to the user.
@@ -187,11 +183,11 @@ export class Conversation {
         },
       },
     });
-    this.#state.events.push(event);
+    this.state.events.push(event);
     const turn = (event.detail as ReactiveSessionEventTurn).turn;
 
     // Don't include the pending turn we just created.
-    const slice = this.#state.turns.slice(0, -1);
+    const slice = this.state.turns.slice(0, -1);
     const chunks = driver.send({
       systemPrompt,
       tools,
@@ -260,37 +256,7 @@ export class Conversation {
       };
     }
   }
-
-  get activeDriverId() {
-    return this.#state.driverId ?? "gemini";
-  }
-
-  set activeDriverId(driverId: string) {
-    const lastEvent = this.#state.events.at(-1);
-    if (lastEvent?.detail.kind === "set-driver") {
-      this.#state.events.pop();
-    }
-    this.#state.events.push(
-      new ReactiveSessionEventState({
-        id: crypto.randomUUID(),
-        timestamp: Date.now(),
-        detail: {
-          kind: "set-driver",
-          driverId,
-        },
-      })
-    );
-  }
-
   get driverInfo(): Map<string, BBRTDriverInfo> {
     return this.#drivers;
-  }
-
-  get activeToolIds(): ReadonlySet<string> {
-    return this.#state.activeToolIds;
-  }
-
-  set activeToolIds(toolIds: string[]) {
-    this.#state.activeToolIds = toolIds;
   }
 }

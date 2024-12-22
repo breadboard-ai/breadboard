@@ -23,7 +23,6 @@ import { Conversation } from "../llm/conversation.js";
 import { BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION } from "../llm/system-instruction.js";
 import { IndexedDBSettingsSecrets } from "../secrets/indexed-db-secrets.js";
 import { ReactiveSessionBriefState } from "../state/session-brief.js";
-import { ReactiveSessionEventState } from "../state/session-event.js";
 import { ReactiveSessionState } from "../state/session.js";
 import { ActivateTool } from "../tools/activate-tool.js";
 import { AddNode } from "../tools/add-node.js";
@@ -45,7 +44,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
   @property({ type: Object })
   accessor config: Config | undefined = undefined;
   readonly #secrets = new IndexedDBSettingsSecrets();
-  readonly #state: ReactiveSessionState;
+  readonly #sessionState: ReactiveSessionState;
   readonly #conversation: Conversation;
 
   // TODO(aomarks) Due to the bug https://github.com/lit/lit/issues/4675, when
@@ -105,9 +104,12 @@ export class BBRTMain extends SignalWatcher(LitElement) {
     if (serializedState) {
       const parsed = JSON.parse(serializedState);
       console.log("Restoring state", parsed);
-      this.#state = new ReactiveSessionState(parsed, temporarySingletonBrief);
+      this.#sessionState = new ReactiveSessionState(
+        parsed,
+        temporarySingletonBrief
+      );
     } else {
-      this.#state = new ReactiveSessionState(
+      this.#sessionState = new ReactiveSessionState(
         { id: "main", events: [] },
         temporarySingletonBrief
       );
@@ -126,12 +128,12 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         breadboardToolsPromise.then(
           (tools) => new Set(tools.map((tool) => tool.metadata.id))
         ),
-        this.#state
+        this.#sessionState
       ),
       new CreateBoard(this.#artifacts),
       new AddNode(this.#artifacts),
       new DisplayArtifact((artifactId) => {
-        this.#state.activeArtifactId = artifactId;
+        this.#sessionState.activeArtifactId = artifactId;
         return { ok: true, value: undefined };
       }),
     ];
@@ -146,54 +148,27 @@ export class BBRTMain extends SignalWatcher(LitElement) {
     );
 
     this.#conversation = new Conversation({
-      state: this.#state,
+      state: this.#sessionState,
       drivers,
       availableToolsPromise,
     });
 
     if (!serializedState) {
-      const timestamp = Date.now();
-      this.#state.events.push(
-        // TODO(aomarks) Helpers, this is mostly boilerplate.
-        new ReactiveSessionEventState({
-          timestamp,
-          id: crypto.randomUUID(),
-          detail: {
-            kind: "set-system-prompt",
-            systemPrompt: BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION,
-          },
-        }),
-        new ReactiveSessionEventState({
-          timestamp,
-          id: crypto.randomUUID(),
-          detail: {
-            kind: "set-active-tool-ids",
-            toolIds: standardTools.map((tool) => tool.metadata.id),
-          },
-        }),
-        // TODO(aomarks) Before the first turn is when we should expect some
-        // churn in settings. But only the most recent event can get
-        // efficiently in-place updated. If we had a single "set-config"
-        // event with optional fields, we could get rid of all that churn.
-        new ReactiveSessionEventState({
-          timestamp,
-          id: crypto.randomUUID(),
-          detail: {
-            kind: "set-driver",
-            driverId: drivers.keys().next().value!,
-          },
-        })
+      this.#sessionState.driverId = drivers.keys().next().value!;
+      this.#sessionState.systemPrompt = BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION;
+      this.#sessionState.activeToolIds = standardTools.map(
+        (tool) => tool.metadata.id
       );
     }
 
     connectedEffect(this, () => this.#persistState());
     connectedEffect(this, () => {
-      console.log(JSON.stringify(this.#state.data, null, 2));
+      console.log(JSON.stringify(this.#sessionState.data, null, 2));
     });
   }
 
   #persistState() {
-    const serialized = JSON.stringify(this.#state.data, null, 2);
+    const serialized = JSON.stringify(this.#sessionState.data, null, 2);
     try {
       sessionStorage.setItem(APP_STATE_SESSION_STORAGE_KEY, serialized);
     } catch (error) {
@@ -202,7 +177,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
   }
 
   override render() {
-    const artifactId = this.#state.activeArtifactId;
+    const artifactId = this.#sessionState.activeArtifactId;
     const artifact = artifactId ? this.#artifacts.entry(artifactId) : undefined;
     return html`
       <div id="inputs">
