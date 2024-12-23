@@ -17,11 +17,11 @@ export class ActivateTool
   // TODO(aomarks) I don't love that this is passed down. Should it be the
   // session (there's an initialization order issue that makes this annoying),
   // or something else?
-  #sessionState: ReactiveSessionState;
+  #sessionState: () => ReactiveSessionState | undefined;
 
   constructor(
     activatableToolIds: Promise<ReadonlySet<string>>,
-    sessionState: ReactiveSessionState
+    sessionState: () => ReactiveSessionState | undefined
   ) {
     this.#activatableToolIds = activatableToolIds;
     this.#sessionState = sessionState;
@@ -83,7 +83,15 @@ export class ActivateTool
             },
           };
         }
-        const state = this.#sessionState;
+        const state = this.#sessionState();
+        if (!state) {
+          return {
+            ok: false,
+            error: new Error(
+              `Internal error: ActivateTool could not find a session to mutate`
+            ),
+          };
+        }
         if (await allowed.promise) {
           if (!state.activeToolIds.has(args.name)) {
             state.activeToolIds = [...state.activeToolIds, args.name];

@@ -15,7 +15,7 @@ import {
  * JSON-serializable top-level application state.
  */
 export interface AppState {
-  activeSessionId: string;
+  activeSessionId: string | null;
   sessions: Record<string, SessionBriefState>;
 }
 
@@ -25,7 +25,7 @@ export interface AppState {
  */
 export class ReactiveAppState implements AppState {
   @signal
-  accessor activeSessionId: string;
+  accessor activeSessionId: string | null;
   readonly sessionMap: SignalMap<string, ReactiveSessionBriefState>;
 
   constructor({ activeSessionId, sessions }: AppState) {
@@ -38,8 +38,15 @@ export class ReactiveAppState implements AppState {
     );
   }
 
-  get sessions(): Record<string, ReactiveSessionBriefState> {
+  get sessions(): Readonly<Record<string, ReactiveSessionBriefState>> {
     return Object.fromEntries(this.sessionMap);
+  }
+
+  get activeSession(): ReactiveSessionBriefState | undefined {
+    if (this.activeSessionId === null) {
+      return undefined;
+    }
+    return this.sessionMap.get(this.activeSessionId);
   }
 
   get data(): AppState {
@@ -52,5 +59,14 @@ export class ReactiveAppState implements AppState {
         ])
       ),
     };
+  }
+
+  createSessionBrief(): ReactiveSessionBriefState {
+    const brief = new ReactiveSessionBriefState({
+      id: crypto.randomUUID(),
+      title: "New Session",
+    });
+    this.sessionMap.set(brief.id, brief);
+    return brief;
   }
 }

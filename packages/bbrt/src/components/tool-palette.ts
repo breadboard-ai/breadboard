@@ -52,11 +52,11 @@ export class BBRTToolPalette extends SignalWatcher(LitElement) {
 
   override render() {
     if (this.conversation === undefined) {
-      return nothing;
+      return "Waiting for conversation...";
     }
     const { availableTools } = this.conversation;
     if (availableTools === undefined) {
-      return nothing;
+      return "Waiting for tools...";
     }
     return html`
       <ul>

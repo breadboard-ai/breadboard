@@ -114,7 +114,7 @@ export class BBRTToolCallEl extends SignalWatcher(LitElement) {
           html`<audio controls src=${entry.url.value ?? ""}></audio>`
         );
       } else {
-        console.log(
+        console.error(
           "Could not display artifact with unsupported MIME type",
           mimeType
         );
