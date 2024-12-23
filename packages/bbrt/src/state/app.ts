@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import {
   ReactiveSessionBriefState,
@@ -14,6 +15,7 @@ import {
  * JSON-serializable top-level application state.
  */
 export interface AppState {
+  activeSessionId: string;
   sessions: Record<string, SessionBriefState>;
 }
 
@@ -22,9 +24,12 @@ export interface AppState {
  * via proposed TC39 signals (https://github.com/tc39/proposal-signals).
  */
 export class ReactiveAppState implements AppState {
+  @signal
+  accessor activeSessionId: string;
   readonly sessionMap: SignalMap<string, ReactiveSessionBriefState>;
 
-  constructor({ sessions }: AppState) {
+  constructor({ activeSessionId, sessions }: AppState) {
+    this.activeSessionId = activeSessionId;
     this.sessionMap = new SignalMap(
       Object.entries(sessions).map(([id, session]) => [
         id,
@@ -39,6 +44,7 @@ export class ReactiveAppState implements AppState {
 
   get data(): AppState {
     return {
+      activeSessionId: this.activeSessionId,
       sessions: Object.fromEntries(
         [...this.sessionMap.entries()].map(([id, session]) => [
           id,
