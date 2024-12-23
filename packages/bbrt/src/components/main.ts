@@ -24,9 +24,9 @@ import { Conversation } from "../llm/conversation.js";
 import { BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION } from "../llm/system-instruction.js";
 import { IndexedDBSettingsSecrets } from "../secrets/indexed-db-secrets.js";
 import type { SecretsProvider } from "../secrets/secrets-provider.js";
-import { LocalStorageAppPersister } from "../state/app-persistence.js";
 import { ReactiveAppState } from "../state/app.js";
-import { LocalStorageSessionPersister } from "../state/session-persistence.js";
+import { LocalStoragePersistence } from "../state/local-storage-persistence.js";
+import type { Persistence } from "../state/persistence.js";
 import { SessionStore } from "../state/session-store.js";
 import type { ReactiveSessionState } from "../state/session.js";
 import { ActivateTool } from "../tools/activate-tool.js";
@@ -49,12 +49,13 @@ export class BBRTMain extends SignalWatcher(LitElement) {
   accessor config: Config | undefined = undefined;
 
   @property({ attribute: false })
-  accessor #state: ReactiveAppState | undefined = undefined;
+  accessor #appState: ReactiveAppState | undefined = undefined;
 
   readonly #secrets: SecretsProvider;
   readonly #sessions: SessionStore;
   readonly #drivers: Map<string, BBRTDriver>;
   readonly #toolsPromise: Promise<Map<string, BBRTTool>>;
+  readonly #persistence: Persistence = new LocalStoragePersistence();
 
   // TODO(aomarks) Due to the bug https://github.com/lit/lit/issues/4675, when
   // using standard decorators, context provider initialization must be done in
@@ -147,33 +148,31 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         )
     );
 
-    const appPersistence = new LocalStorageAppPersister();
-    const sessionPersistence = new LocalStorageSessionPersister();
     const sessionStore = new SessionStore({
       defaults: {
         systemPrompt: BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION,
         driverId: this.#drivers.keys().next().value!,
         activeToolIds: standardTools.map((tool) => tool.metadata.id),
       },
-      persistence: sessionPersistence,
+      persistence: this.#persistence,
     });
     this.#sessions = sessionStore;
 
     void (async () => {
-      const appState = await appPersistence.load();
+      const appState = await this.#persistence.loadApp();
       if (!appState.ok) {
         // TODO(aomarks) Show error.
         console.error("Failed to load app state", appState.error);
         return;
       }
       if (appState.value) {
-        this.#state = appState.value;
+        this.#appState = appState.value;
       } else {
-        this.#state = new ReactiveAppState({
+        this.#appState = new ReactiveAppState({
           activeSessionId: null,
           sessions: {},
         });
-        const initialSessionBrief = this.#state.createSessionBrief();
+        const initialSessionBrief = this.#appState.createSessionBrief();
         const initialSession =
           await sessionStore.createSession(initialSessionBrief);
         if (!initialSession.ok) {
@@ -181,17 +180,19 @@ export class BBRTMain extends SignalWatcher(LitElement) {
           console.error("Failed to create session", initialSession.error);
           return;
         }
-        this.#state.activeSessionId = initialSessionBrief.id;
+        this.#appState.activeSessionId = initialSessionBrief.id;
       }
 
+      // TODO(aomarks) Debounce
       connectedEffect(this, () => {
-        if (this.#state) {
-          appPersistence.save(this.#state);
+        if (this.#appState) {
+          this.#persistence.saveApp(this.#appState);
         }
       });
+      // TODO(aomarks) Debounce
       connectedEffect(this, () => {
         if (this.#sessionState) {
-          sessionPersistence.save(this.#sessionState);
+          this.#persistence.saveSession(this.#sessionState);
         }
       });
     })();
@@ -203,10 +204,10 @@ export class BBRTMain extends SignalWatcher(LitElement) {
   readonly #sessionStateComputed = new AsyncComputed<
     ReactiveSessionState | undefined
   >(async () => {
-    if (!this.#state) {
+    if (!this.#appState) {
       return undefined;
     }
-    const brief = this.#state.activeSession;
+    const brief = this.#appState.activeSession;
     if (!brief) {
       return undefined;
     }
@@ -249,7 +250,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
 
       <div id="left-sidebar">
         <bbrt-session-picker
-          .appState=${this.#state}
+          .appState=${this.#appState}
           .sessionStore=${this.#sessions}
         ></bbrt-session-picker>
         <bbrt-tool-palette
