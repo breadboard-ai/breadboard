@@ -77,6 +77,12 @@ export class BBRTSesssionPicker extends SignalWatcher(LitElement) {
         <a @click=${(event: MouseEvent) => this.#clickSessionLink(event, id)}
           >${title}</a
         >
+        <button
+          @click=${(event: MouseEvent) =>
+            this.#clickDeleteSessionButton(event, id)}
+        >
+          X
+        </button>
       </li>
     `;
   }
@@ -104,6 +110,18 @@ export class BBRTSesssionPicker extends SignalWatcher(LitElement) {
     // TODO(aomarks) Make this a real hyperlink, syncronize session via hash.
     if (this.appState) {
       this.appState.activeSessionId = sessionId;
+    }
+  }
+
+  #clickDeleteSessionButton(event: MouseEvent, sessionId: string) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (this.appState && this.sessionStore) {
+      if (this.appState.activeSessionId === sessionId) {
+        this.appState.activeSessionId = null;
+      }
+      this.appState.sessionMap.delete(sessionId);
+      this.sessionStore.deleteSession(sessionId);
     }
   }
 }

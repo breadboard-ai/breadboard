@@ -49,4 +49,8 @@ export class SessionStore {
   ): Promise<Result<ReactiveSessionState | null>> {
     return this.#persistence.load(brief);
   }
+
+  deleteSession(id: string): Promise<Result<void>> {
+    return this.#persistence.delete(id);
+  }
 }

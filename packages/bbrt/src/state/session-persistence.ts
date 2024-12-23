@@ -14,6 +14,7 @@ export interface SessionPersister {
   load(
     brief: ReactiveSessionBriefState
   ): Promise<Result<ReactiveSessionState | null>>;
+  delete(sessionId: string): Promise<Result<void>>;
 }
 
 function sessionLocalStorageKey(sessionId: string): string {
@@ -50,5 +51,10 @@ export class LocalStorageSessionPersister implements SessionPersister {
       ok: true,
       value: new ReactiveSessionState(parsed.value, brief),
     };
+  }
+
+  async delete(sessionId: string): Promise<Result<void>> {
+    localStorage.removeItem(sessionLocalStorageKey(sessionId));
+    return { ok: true, value: undefined };
   }
 }
