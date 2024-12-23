@@ -5,8 +5,8 @@
  */
 
 import type { Result } from "../util/result.js";
+import type { Persistence } from "./persistence.js";
 import type { ReactiveSessionBriefState } from "./session-brief.js";
-import type { SessionPersister } from "./session-persistence.js";
 import { ReactiveSessionState } from "./session.js";
 
 export interface SessionStoreOptions {
@@ -15,12 +15,12 @@ export interface SessionStoreOptions {
     driverId: string;
     activeToolIds: string[];
   };
-  persistence: SessionPersister;
+  persistence: Persistence;
 }
 
 export class SessionStore {
   readonly #defaults: SessionStoreOptions["defaults"];
-  readonly #persistence: SessionPersister;
+  readonly #persistence: Persistence;
 
   constructor({ defaults, persistence }: SessionStoreOptions) {
     this.#defaults = defaults;
@@ -37,7 +37,7 @@ export class SessionStore {
     session.driverId = this.#defaults.driverId;
     session.systemPrompt = this.#defaults.systemPrompt;
     session.activeToolIds = this.#defaults.activeToolIds;
-    const saveResult = await this.#persistence.save(session);
+    const saveResult = await this.#persistence.saveSession(session);
     if (!saveResult.ok) {
       return saveResult;
     }
@@ -47,10 +47,10 @@ export class SessionStore {
   loadSession(
     brief: ReactiveSessionBriefState
   ): Promise<Result<ReactiveSessionState | null>> {
-    return this.#persistence.load(brief);
+    return this.#persistence.loadSession(brief);
   }
 
   deleteSession(id: string): Promise<Result<void>> {
-    return this.#persistence.delete(id);
+    return this.#persistence.deleteSession(id);
   }
 }
