@@ -35,7 +35,7 @@ export class BBRTPrompt extends SignalWatcher(LitElement) {
 
   override render() {
     if (this.conversation === undefined) {
-      return html`Connecting...`;
+      return html`Waiting for conversation...`;
     }
     return html`<input
       type="text"

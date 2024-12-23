@@ -70,140 +70,140 @@ suite("SesssionManager", async () => {
   // TODO(aomarks) Something very bad is happening with data getting shared
   // across tests.
 
-  // test("basic exchange", async () => {
-  //   using driver = new FakeDriver();
-  //   const state = new ReactiveSessionState(
-  //     {
-  //       id: "session0",
-  //       events: [
-  //         new ReactiveSessionEventState({
-  //           timestamp: 1000,
-  //           id: "fake-uuid",
-  //           detail: {
-  //             kind: "set-driver",
-  //             driverId: driver.id,
-  //           },
-  //         }),
-  //       ],
-  //     },
-  //     new ReactiveSessionBriefState({
-  //       id: "session0",
-  //       title: "Session 0 Title",
-  //     })
-  //   );
-  //   const manager = makeManager({
-  //     state,
-  //     drivers: { fake: driver },
-  //   });
-  //   assert.equal(manager.status, "ready");
-  //   assert.equal(state.events.length, 1);
+  test("basic exchange", async () => {
+    using driver = new FakeDriver();
+    const state = new ReactiveSessionState(
+      {
+        id: "session0",
+        events: [
+          new ReactiveSessionEventState({
+            timestamp: 1000,
+            id: "fake-uuid",
+            detail: {
+              kind: "set-driver",
+              driverId: driver.id,
+            },
+          }),
+        ],
+      },
+      new ReactiveSessionBriefState({
+        id: "session0",
+        title: "Session 0 Title",
+      })
+    );
+    const manager = makeManager({
+      state,
+      drivers: { fake: driver },
+    });
+    assert.equal(manager.status, "ready");
+    assert.equal(state.events.length, 1);
 
-  //   const turn = manager.send("Hello, I'm a person.");
-  //   assert.equal(turn.ok, true, String(turn.error));
-  //   assert.equal(manager.status, "busy");
-  //   assert.deepEqual(state.data, {
-  //     id: "session0",
-  //     events: [
-  //       {
-  //         detail: {
-  //           driverId: "fake",
-  //           kind: "set-driver",
-  //         },
-  //         id: "fake-uuid",
-  //         timestamp: 1000,
-  //       },
-  //       {
-  //         id: "fake-uuid-1",
-  //         timestamp: 1000,
-  //         detail: {
-  //           kind: "turn",
-  //           turn: {
-  //             role: "user",
-  //             status: "done",
-  //             chunks: [
-  //               {
-  //                 timestamp: 1000,
-  //                 kind: "text",
-  //                 text: "Hello, I'm a person.",
-  //               },
-  //             ],
-  //           },
-  //         },
-  //       },
-  //     ],
-  //   });
+    const turn = manager.send("Hello, I'm a person.");
+    assert.equal(turn.ok, true, String(turn.error));
+    assert.equal(manager.status, "busy");
+    assert.deepEqual(state.data, {
+      id: "session0",
+      events: [
+        {
+          detail: {
+            driverId: "fake",
+            kind: "set-driver",
+          },
+          id: "fake-uuid",
+          timestamp: 1000,
+        },
+        {
+          id: "fake-uuid-1",
+          timestamp: 1000,
+          detail: {
+            kind: "turn",
+            turn: {
+              role: "user",
+              status: "done",
+              chunks: [
+                {
+                  timestamp: 1000,
+                  kind: "text",
+                  text: "Hello, I'm a person.",
+                },
+              ],
+            },
+          },
+        },
+      ],
+    });
 
-  //   await driver.handleNextRequest(() => [
-  //     {
-  //       timestamp: 1000,
-  //       kind: "text",
-  //       text: "Hello, ",
-  //     },
-  //     {
-  //       timestamp: 1000,
-  //       kind: "text",
-  //       text: "I'm a computer.",
-  //     },
-  //   ]);
+    await driver.handleNextRequest(() => [
+      {
+        timestamp: 1000,
+        kind: "text",
+        text: "Hello, ",
+      },
+      {
+        timestamp: 1000,
+        kind: "text",
+        text: "I'm a computer.",
+      },
+    ]);
 
-  //   await turn.value.done;
-  //   assert.equal(state.turns[0]!.partialText, "Hello, I'm a person.");
-  //   assert.equal(state.turns[1]!.partialText, "Hello, I'm a computer.");
-  //   assert.deepEqual(state.data, {
-  //     id: "session0",
-  //     events: [
-  //       {
-  //         detail: {
-  //           driverId: "fake",
-  //           kind: "set-driver",
-  //         },
-  //         id: "fake-uuid",
-  //         timestamp: 1000,
-  //       },
-  //       {
-  //         id: "fake-uuid-1",
-  //         timestamp: 1000,
-  //         detail: {
-  //           kind: "turn",
-  //           turn: {
-  //             role: "user",
-  //             status: "done",
-  //             chunks: [
-  //               {
-  //                 timestamp: 1000,
-  //                 kind: "text",
-  //                 text: "Hello, I'm a person.",
-  //               },
-  //             ],
-  //           },
-  //         },
-  //       },
-  //       {
-  //         id: "fake-uuid-2",
-  //         timestamp: 1000,
-  //         detail: {
-  //           kind: "turn",
-  //           turn: {
-  //             role: "model",
-  //             status: "done",
-  //             chunks: [
-  //               {
-  //                 timestamp: 1000,
-  //                 kind: "text",
-  //                 text: "Hello, ",
-  //               },
-  //               {
-  //                 timestamp: 1000,
-  //                 kind: "text",
-  //                 text: "I'm a computer.",
-  //               },
-  //             ],
-  //           },
-  //         },
-  //       },
-  //     ],
-  //   });
-  // });
+    await turn.value.done;
+    assert.equal(state.turns[0]!.partialText, "Hello, I'm a person.");
+    assert.equal(state.turns[1]!.partialText, "Hello, I'm a computer.");
+    assert.deepEqual(state.data, {
+      id: "session0",
+      events: [
+        {
+          detail: {
+            driverId: "fake",
+            kind: "set-driver",
+          },
+          id: "fake-uuid",
+          timestamp: 1000,
+        },
+        {
+          id: "fake-uuid-1",
+          timestamp: 1000,
+          detail: {
+            kind: "turn",
+            turn: {
+              role: "user",
+              status: "done",
+              chunks: [
+                {
+                  timestamp: 1000,
+                  kind: "text",
+                  text: "Hello, I'm a person.",
+                },
+              ],
+            },
+          },
+        },
+        {
+          id: "fake-uuid-2",
+          timestamp: 1000,
+          detail: {
+            kind: "turn",
+            turn: {
+              role: "model",
+              status: "done",
+              chunks: [
+                {
+                  timestamp: 1000,
+                  kind: "text",
+                  text: "Hello, ",
+                },
+                {
+                  timestamp: 1000,
+                  kind: "text",
+                  text: "I'm a computer.",
+                },
+              ],
+            },
+          },
+        },
+      ],
+    });
+  });
 
   test("function calls", async () => {
     using driver = new FakeDriver();

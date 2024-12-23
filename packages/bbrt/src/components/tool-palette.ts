@@ -52,11 +52,11 @@ export class BBRTToolPalette extends SignalWatcher(LitElement) {
 
   override render() {
     if (this.conversation === undefined) {
-      return nothing;
+      return "Waiting for conversation...";
     }
     const { availableTools } = this.conversation;
     if (availableTools === undefined) {
-      return nothing;
+      return "Waiting for tools...";
     }
     return html`
       <ul>
@@ -72,7 +72,7 @@ export class BBRTToolPalette extends SignalWatcher(LitElement) {
     return html`
       <li
         class=${classMap({
-          active: this.conversation.activeToolIds?.has(tool.metadata.id),
+          active: this.conversation.state.activeToolIds.has(tool.metadata.id),
         })}
       >
         <a
@@ -95,13 +95,14 @@ export class BBRTToolPalette extends SignalWatcher(LitElement) {
       return;
     }
     const clickedToolId = tool.metadata.id;
-    if (this.conversation.activeToolIds.has(clickedToolId)) {
-      this.conversation.activeToolIds = [
-        ...this.conversation.activeToolIds,
-      ].filter((id) => id !== clickedToolId);
+    const alreadyActiveToolIds = this.conversation.state.activeToolIds;
+    if (alreadyActiveToolIds.has(clickedToolId)) {
+      this.conversation.state.activeToolIds = [...alreadyActiveToolIds].filter(
+        (id) => id !== clickedToolId
+      );
     } else {
-      this.conversation.activeToolIds = [
-        ...this.conversation.activeToolIds,
+      this.conversation.state.activeToolIds = [
+        ...alreadyActiveToolIds,
         clickedToolId,
       ];
     }

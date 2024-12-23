@@ -37,9 +37,11 @@ export class BBRTDriverSelector extends SignalWatcher(LitElement) {
     if (!this.conversation) {
       return nothing;
     }
-    const info = this.conversation.driverInfo.get(
-      this.conversation.activeDriverId
-    );
+    const driverId = this.conversation.state.driverId;
+    if (driverId === undefined) {
+      return nothing;
+    }
+    const info = this.conversation.driverInfo.get(driverId);
     if (info === undefined) {
       return nothing;
     }
@@ -62,12 +64,14 @@ export class BBRTDriverSelector extends SignalWatcher(LitElement) {
     if (availableKeys.length < 2) {
       return;
     }
-    const indexOfActive = availableKeys.indexOf(
-      this.conversation.activeDriverId
-    );
+    const driverId = this.conversation.state.driverId;
+    if (driverId === undefined) {
+      return;
+    }
+    const indexOfActive = availableKeys.indexOf(driverId);
     const nextIndex = (indexOfActive + 1) % availableKeys.length;
     const nextId = availableKeys[nextIndex]!;
-    this.conversation.activeDriverId = nextId;
+    this.conversation.state.driverId = nextId;
   }
 }
 

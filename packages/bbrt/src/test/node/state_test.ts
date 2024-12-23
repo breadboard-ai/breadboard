@@ -23,6 +23,7 @@ suite("state", () => {
   suite("App", () => {
     test("JSON round-trip", () => {
       const state = (): AppState => ({
+        activeSessionId: "id1",
         sessions: {
           id1: {
             id: "id1",

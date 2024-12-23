@@ -8,6 +8,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { provide } from "@lit/context";
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { AsyncComputed } from "signal-utils/async-computed";
 import {
   ArtifactStore,
   artifactStoreContext,
@@ -22,9 +23,12 @@ import { OpenAiDriver } from "../drivers/openai.js";
 import { Conversation } from "../llm/conversation.js";
 import { BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION } from "../llm/system-instruction.js";
 import { IndexedDBSettingsSecrets } from "../secrets/indexed-db-secrets.js";
-import { ReactiveSessionBriefState } from "../state/session-brief.js";
-import { ReactiveSessionEventState } from "../state/session-event.js";
-import { ReactiveSessionState } from "../state/session.js";
+import type { SecretsProvider } from "../secrets/secrets-provider.js";
+import { LocalStorageAppPersister } from "../state/app-persistence.js";
+import { ReactiveAppState } from "../state/app.js";
+import { LocalStorageSessionPersister } from "../state/session-persistence.js";
+import { SessionStore } from "../state/session-store.js";
+import type { ReactiveSessionState } from "../state/session.js";
 import { ActivateTool } from "../tools/activate-tool.js";
 import { AddNode } from "../tools/add-node.js";
 import { CreateBoard } from "../tools/create-board.js";
@@ -36,17 +40,21 @@ import "./artifact-display.js";
 import "./chat.js";
 import "./driver-selector.js";
 import "./prompt.js";
+import "./session-picker.js";
 import "./tool-palette.js";
-
-const APP_STATE_SESSION_STORAGE_KEY = "bbrt-app-state-v2";
 
 @customElement("bbrt-main")
 export class BBRTMain extends SignalWatcher(LitElement) {
   @property({ type: Object })
   accessor config: Config | undefined = undefined;
-  readonly #secrets = new IndexedDBSettingsSecrets();
-  readonly #state: ReactiveSessionState;
-  readonly #conversation: Conversation;
+
+  @property({ attribute: false })
+  accessor #state: ReactiveAppState | undefined = undefined;
+
+  readonly #secrets: SecretsProvider;
+  readonly #sessions: SessionStore;
+  readonly #drivers: Map<string, BBRTDriver>;
+  readonly #toolsPromise: Promise<Map<string, BBRTTool>>;
 
   // TODO(aomarks) Due to the bug https://github.com/lit/lit/issues/4675, when
   // using standard decorators, context provider initialization must be done in
@@ -64,10 +72,20 @@ export class BBRTMain extends SignalWatcher(LitElement) {
       grid-template-columns: 300px 1fr 1fr;
       grid-template-rows: 1fr min-content;
     }
-    bbrt-tool-palette {
+    #left-sidebar {
       grid-area: sidebar;
-      overflow-y: auto;
       border-right: 1px solid #ccc;
+      display: flex;
+      flex-direction: column;
+    }
+    bbrt-session-picker {
+      overflow-y: auto;
+      flex: 1;
+      border-bottom: 1px solid #ccc;
+    }
+    bbrt-tool-palette {
+      overflow-y: auto;
+      flex: 1;
     }
     bbrt-chat {
       grid-area: chatlog;
@@ -91,34 +109,15 @@ export class BBRTMain extends SignalWatcher(LitElement) {
 
   constructor() {
     super();
-
     this.#artifacts = new ArtifactStore(new IdbArtifactReaderWriter());
-
-    const serializedState = sessionStorage.getItem(
-      APP_STATE_SESSION_STORAGE_KEY
-    );
-    // TODO(aomarks) Support multiple sessions.
-    const temporarySingletonBrief = new ReactiveSessionBriefState({
-      id: "main",
-      title: "Main",
-    });
-    if (serializedState) {
-      const parsed = JSON.parse(serializedState);
-      console.log("Restoring state", parsed);
-      this.#state = new ReactiveSessionState(parsed, temporarySingletonBrief);
-    } else {
-      this.#state = new ReactiveSessionState(
-        { id: "main", events: [] },
-        temporarySingletonBrief
-      );
-    }
-
-    const drivers = new Map<string, BBRTDriver>(
+    this.#secrets = new IndexedDBSettingsSecrets();
+    this.#drivers = new Map<string, BBRTDriver>(
       [
         new GeminiDriver(() => this.#secrets.getSecret("GEMINI_API_KEY")),
         new OpenAiDriver(() => this.#secrets.getSecret("OPENAI_API_KEY")),
       ].map((driver) => [driver.id, driver])
     );
+
     const breadboardToolsPromise = this.#loadBreadboardTools();
     const standardTools: BBRTTool[] = [
       new BoardLister(breadboardToolsPromise),
@@ -126,16 +125,19 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         breadboardToolsPromise.then(
           (tools) => new Set(tools.map((tool) => tool.metadata.id))
         ),
-        this.#state
+        () => this.#sessionState
       ),
       new CreateBoard(this.#artifacts),
       new AddNode(this.#artifacts),
       new DisplayArtifact((artifactId) => {
-        this.#state.activeArtifactId = artifactId;
+        if (!this.#sessionState) {
+          return { ok: false, error: "No active session" };
+        }
+        this.#sessionState.activeArtifactId = artifactId;
         return { ok: true, value: undefined };
       }),
     ];
-    const availableToolsPromise = breadboardToolsPromise.then(
+    this.#toolsPromise = breadboardToolsPromise.then(
       (breadboardTools) =>
         new Map(
           [...standardTools, ...breadboardTools].map((tool) => [
@@ -145,64 +147,95 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         )
     );
 
-    this.#conversation = new Conversation({
-      state: this.#state,
-      drivers,
-      availableToolsPromise,
+    const appPersistence = new LocalStorageAppPersister();
+    const sessionPersistence = new LocalStorageSessionPersister();
+    const sessionStore = new SessionStore({
+      defaults: {
+        systemPrompt: BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION,
+        driverId: this.#drivers.keys().next().value!,
+        activeToolIds: standardTools.map((tool) => tool.metadata.id),
+      },
+      persistence: sessionPersistence,
     });
+    this.#sessions = sessionStore;
 
-    if (!serializedState) {
-      const timestamp = Date.now();
-      this.#state.events.push(
-        // TODO(aomarks) Helpers, this is mostly boilerplate.
-        new ReactiveSessionEventState({
-          timestamp,
-          id: crypto.randomUUID(),
-          detail: {
-            kind: "set-system-prompt",
-            systemPrompt: BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION,
-          },
-        }),
-        new ReactiveSessionEventState({
-          timestamp,
-          id: crypto.randomUUID(),
-          detail: {
-            kind: "set-active-tool-ids",
-            toolIds: standardTools.map((tool) => tool.metadata.id),
-          },
-        }),
-        // TODO(aomarks) Before the first turn is when we should expect some
-        // churn in settings. But only the most recent event can get
-        // efficiently in-place updated. If we had a single "set-config"
-        // event with optional fields, we could get rid of all that churn.
-        new ReactiveSessionEventState({
-          timestamp,
-          id: crypto.randomUUID(),
-          detail: {
-            kind: "set-driver",
-            driverId: drivers.keys().next().value!,
-          },
-        })
-      );
-    }
+    void (async () => {
+      const appState = await appPersistence.load();
+      if (!appState.ok) {
+        // TODO(aomarks) Show error.
+        console.error("Failed to load app state", appState.error);
+        return;
+      }
+      if (appState.value) {
+        this.#state = appState.value;
+      } else {
+        this.#state = new ReactiveAppState({
+          activeSessionId: null,
+          sessions: {},
+        });
+        const initialSessionBrief = this.#state.createSessionBrief();
+        const initialSession =
+          await sessionStore.createSession(initialSessionBrief);
+        if (!initialSession.ok) {
+          // TODO(aomarks) Show error.
+          console.error("Failed to create session", initialSession.error);
+          return;
+        }
+        this.#state.activeSessionId = initialSessionBrief.id;
+      }
 
-    connectedEffect(this, () => this.#persistState());
-    connectedEffect(this, () => {
-      console.log(JSON.stringify(this.#state.data, null, 2));
-    });
+      connectedEffect(this, () => {
+        if (this.#state) {
+          appPersistence.save(this.#state);
+        }
+      });
+      connectedEffect(this, () => {
+        if (this.#sessionState) {
+          sessionPersistence.save(this.#sessionState);
+        }
+      });
+    })();
   }
 
-  #persistState() {
-    const serialized = JSON.stringify(this.#state.data, null, 2);
-    try {
-      sessionStorage.setItem(APP_STATE_SESSION_STORAGE_KEY, serialized);
-    } catch (error) {
-      console.error("Failed to persist state", error);
-    }
+  get #sessionState() {
+    return this.#sessionStateComputed.value;
   }
+  readonly #sessionStateComputed = new AsyncComputed<
+    ReactiveSessionState | undefined
+  >(async () => {
+    if (!this.#state) {
+      return undefined;
+    }
+    const brief = this.#state.activeSession;
+    if (!brief) {
+      return undefined;
+    }
+    const session = await this.#sessions.loadSession(brief);
+    if (!session.ok || !session.value) {
+      return undefined;
+    }
+    return session.value;
+  });
+
+  get #conversation() {
+    return this.#conversationComputed.value;
+  }
+  readonly #conversationComputed = new AsyncComputed<Conversation | undefined>(
+    async () => {
+      const sessionState = await this.#sessionStateComputed.complete;
+      if (!sessionState) {
+        return undefined;
+      }
+      return new Conversation({
+        state: sessionState,
+        drivers: this.#drivers,
+        availableToolsPromise: this.#toolsPromise,
+      });
+    }
+  );
 
   override render() {
-    const artifactId = this.#state.activeArtifactId;
+    const artifactId = this.#sessionState?.activeArtifactId;
     const artifact = artifactId ? this.#artifacts.entry(artifactId) : undefined;
     return html`
       <div id="inputs">
@@ -214,9 +247,15 @@ export class BBRTMain extends SignalWatcher(LitElement) {
 
       <bbrt-chat .conversation=${this.#conversation}></bbrt-chat>
 
-      <bbrt-tool-palette
-        .conversation=${this.#conversation}
-      ></bbrt-tool-palette>
+      <div id="left-sidebar">
+        <bbrt-session-picker
+          .appState=${this.#state}
+          .sessionStore=${this.#sessions}
+        ></bbrt-session-picker>
+        <bbrt-tool-palette
+          .conversation=${this.#conversation}
+        ></bbrt-tool-palette>
+      </div>
 
       <bbrt-artifact-display .artifact=${artifact}></bbrt-artifact-display>
     `;

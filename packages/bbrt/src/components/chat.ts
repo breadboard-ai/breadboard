@@ -32,10 +32,10 @@ export class BBRTChat extends SignalWatcher(LitElement) {
 
   override render() {
     if (this.conversation === undefined) {
-      return html`Connecting...`;
+      return html`Waiting for conversation...`;
     }
-    const turns = this.conversation.turns;
-    return this.conversation.turns.map(
+    const turns = this.conversation.state.turns;
+    return this.conversation.state.turns.map(
       (turn, i) =>
         html`<bbrt-chat-message
           .turn=${turn}

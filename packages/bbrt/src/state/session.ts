@@ -49,20 +49,20 @@ export class ReactiveSessionState implements SessionState {
     );
   }
 
-  get title() {
-    return this.#brief.title;
-  }
-
-  set title(title: string) {
-    this.#brief.title = title;
-  }
-
   @signal
   get data(): SessionState {
     return {
       id: this.id,
       events: [...this.events].map((event) => event.data),
     };
+  }
+
+  get title() {
+    return this.#brief.title;
+  }
+
+  set title(title) {
+    this.#brief.title = title;
   }
 
   @signal
@@ -77,28 +77,12 @@ export class ReactiveSessionState implements SessionState {
   }
 
   @signal
-  get driverId() {
+  get driverId(): string | undefined {
     return this.#mostRecentEventOfKind("set-driver")?.driverId;
   }
-
-  @signal
-  get systemPrompt() {
-    return this.#mostRecentEventOfKind("set-system-prompt")?.systemPrompt;
-  }
-
-  @signal
-  get activeToolIds(): ReadonlySet<string> {
-    return new Set(this.#mostRecentEventOfKind("set-active-tool-ids")?.toolIds);
-  }
-
-  @signal
-  get activeArtifactId(): string | undefined {
-    return this.#mostRecentEventOfKind("set-active-artifact-id")?.artifactId;
-  }
-
-  set activeArtifactId(artifactId: string | undefined) {
+  set driverId(driverId: string) {
     const lastEvent = this.events.at(-1);
-    if (lastEvent?.detail.kind === "set-active-artifact-id") {
+    if (lastEvent?.detail.kind === "set-driver") {
       this.events.pop();
     }
     this.events.push(
@@ -106,13 +90,38 @@ export class ReactiveSessionState implements SessionState {
         id: crypto.randomUUID(),
         timestamp: Date.now(),
         detail: {
-          kind: "set-active-artifact-id",
-          artifactId,
+          kind: "set-driver",
+          driverId,
         },
       })
     );
   }
 
+  @signal
+  get systemPrompt(): string | undefined {
+    return this.#mostRecentEventOfKind("set-system-prompt")?.systemPrompt;
+  }
+  set systemPrompt(systemPrompt: string) {
+    const lastEvent = this.events.at(-1);
+    if (lastEvent?.detail.kind === "set-system-prompt") {
+      this.events.pop();
+    }
+    this.events.push(
+      new ReactiveSessionEventState({
+        id: crypto.randomUUID(),
+        timestamp: Date.now(),
+        detail: {
+          kind: "set-system-prompt",
+          systemPrompt,
+        },
+      })
+    );
+  }
+
+  @signal
+  get activeToolIds(): ReadonlySet<string> {
+    return new Set(this.#mostRecentEventOfKind("set-active-tool-ids")?.toolIds);
+  }
   set activeToolIds(toolIds: string[]) {
     const lastEvent = this.events.at(-1);
     if (lastEvent?.detail.kind === "set-active-tool-ids") {
@@ -125,6 +134,27 @@ export class ReactiveSessionState implements SessionState {
         detail: {
           kind: "set-active-tool-ids",
           toolIds,
+        },
+      })
+    );
+  }
+
+  @signal
+  get activeArtifactId(): string | undefined {
+    return this.#mostRecentEventOfKind("set-active-artifact-id")?.artifactId;
+  }
+  set activeArtifactId(artifactId: string | undefined) {
+    const lastEvent = this.events.at(-1);
+    if (lastEvent?.detail.kind === "set-active-artifact-id") {
+      this.events.pop();
+    }
+    this.events.push(
+      new ReactiveSessionEventState({
+        id: crypto.randomUUID(),
+        timestamp: Date.now(),
+        detail: {
+          kind: "set-active-artifact-id",
+          artifactId,
         },
       })
     );
