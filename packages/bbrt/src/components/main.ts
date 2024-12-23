@@ -35,6 +35,7 @@ import "./artifact-display.js";
 import "./chat.js";
 import "./driver-selector.js";
 import "./prompt.js";
+import "./session-picker.js";
 import "./tool-palette.js";
 
 const APP_STATE_SESSION_STORAGE_KEY = "bbrt-app-state-v2";
@@ -63,10 +64,20 @@ export class BBRTMain extends SignalWatcher(LitElement) {
       grid-template-columns: 300px 1fr 1fr;
       grid-template-rows: 1fr min-content;
     }
-    bbrt-tool-palette {
+    #left-sidebar {
       grid-area: sidebar;
-      overflow-y: auto;
       border-right: 1px solid #ccc;
+      display: flex;
+      flex-direction: column;
+    }
+    bbrt-session-picker {
+      overflow-y: auto;
+      flex: 1;
+      border-bottom: 1px solid #ccc;
+    }
+    bbrt-tool-palette {
+      overflow-y: auto;
+      flex: 1;
     }
     bbrt-chat {
       grid-area: chatlog;
@@ -189,9 +200,12 @@ export class BBRTMain extends SignalWatcher(LitElement) {
 
       <bbrt-chat .conversation=${this.#conversation}></bbrt-chat>
 
-      <bbrt-tool-palette
-        .conversation=${this.#conversation}
-      ></bbrt-tool-palette>
+      <div id="left-sidebar">
+        <bbrt-session-picker></bbrt-session-picker>
+        <bbrt-tool-palette
+          .conversation=${this.#conversation}
+        ></bbrt-tool-palette>
+      </div>
 
       <bbrt-artifact-display .artifact=${artifact}></bbrt-artifact-display>
     `;
