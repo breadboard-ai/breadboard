@@ -23,7 +23,7 @@ export { FileSystemImpl, Path };
 class File {
   constructor(
     public readonly data: string,
-    public readonly type: "text" | "binary",
+    public readonly type: "text" | "data",
     public readonly mimeType?: string
   ) {}
 

@@ -176,7 +176,7 @@ export type FileSystemQueryEntry =
       path: FileSystemPath;
     }
   | {
-      type: "binary";
+      type: "data";
       path: FileSystemPath;
       mimeType: string;
     };
@@ -191,7 +191,7 @@ export type FileSystemReadResult = Outcome<
       data: string;
     }
   | {
-      type: "binary";
+      type: "data";
       data: string;
       mimeType: string;
     }
@@ -207,7 +207,7 @@ export type FileSystemWriteArguments =
       data: string | null;
     }
   | {
-      type: "binary";
+      type: "data";
       path: FileSystemReadWritePath;
       data: string;
       mimeType: string;
