@@ -58,4 +58,19 @@ describe("FileSystem Path", () => {
       ok(path.dir);
     }
   });
+
+  it("correctly reports persistent and transient dirs", () => {
+    {
+      const path = good(Path.create("/env/foo"));
+      ok(path.persistent);
+    }
+    {
+      const path = good(Path.create("/run/foo"));
+      ok(!path.persistent);
+    }
+    {
+      const path = good(Path.create("/local/foo"));
+      ok(path.persistent);
+    }
+  });
 });

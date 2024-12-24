@@ -209,11 +209,15 @@ export type FileSystemWriteArguments =
   | {
       type: "binary";
       path: FileSystemReadWritePath;
+      data: string;
+      mimeType: string;
+    }
+  | {
+      path: FileSystemReadWritePath;
       /**
        * Set value to `null` to delete this file.
        */
-      data: string | null;
-      mimeType: string;
+      data: null;
     };
 
 export type FileSystemWriteResult = Outcome<void>;
@@ -225,9 +229,9 @@ export type FileSystem = {
   /**
    * Clears `/run`
    */
-  startRun(): Promise<void>;
+  startRun(): void;
   /**
    * Clears `/tmp`.
    */
-  startModule(): Promise<void>;
+  startModule(): void;
 };

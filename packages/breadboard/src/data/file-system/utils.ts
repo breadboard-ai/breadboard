@@ -6,8 +6,12 @@
 
 import { Outcome } from "../types.js";
 
-export { ok };
+export { ok, err };
 
 function ok<T>(o: Outcome<T>): o is T {
   return !(o && typeof o === "object" && "$error" in o);
+}
+
+function err($error: string) {
+  return { $error };
 }

@@ -11,13 +11,24 @@ export { Path };
 
 const PATH_SEPARATOR = "/";
 
-const ROOT_DIRS: readonly { name: string; writable: boolean }[] = [
-  { name: "local", writable: true },
-  { name: "session", writable: true },
-  { name: "run", writable: true },
-  { name: "tmp", writable: true },
-  { name: "env", writable: false },
-  { name: "assets", writable: false },
+type RootDirSpec = {
+  name: string;
+  writable: boolean;
+  /**
+   * Set to true when the files in this directory are persisted across the
+   * lifetime of the FileSystem instance. In other words, they aren't part
+   * of FileSystem's in-memory store.
+   */
+  persistent: boolean;
+};
+
+const ROOT_DIRS: readonly RootDirSpec[] = [
+  { name: "local", writable: true, persistent: true },
+  { name: "session", writable: true, persistent: false },
+  { name: "run", writable: true, persistent: false },
+  { name: "tmp", writable: true, persistent: false },
+  { name: "env", writable: false, persistent: true },
+  { name: "assets", writable: false, persistent: true },
 ] as const;
 
 class Path {
@@ -25,8 +36,12 @@ class Path {
   static writableRoots = new Set(
     ROOT_DIRS.filter((item) => item.writable).map((item) => item.name)
   );
+  static persistentRoots = new Set(
+    ROOT_DIRS.filter((item) => item.persistent).map((item) => item.name)
+  );
 
   readonly writable: boolean;
+  readonly persistent: boolean;
 
   constructor(
     public readonly root: string,
@@ -34,11 +49,9 @@ class Path {
     public readonly dir: boolean
   ) {
     this.writable = Path.writableRoots.has(this.root);
+    this.persistent = Path.persistentRoots.has(this.root);
   }
 
-  // This is a bit too loose, since `root` is not constrained
-  // to values specified in ROOT_DIRS. But we'll just be careful and not call
-  // it from anywhere other than Tree constructo.
   static createRoots(): Path[] {
     return ROOT_DIRS.map((item) => {
       return new Path(item.name, [], true);

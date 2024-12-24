@@ -8,15 +8,15 @@ import {
   FileSystem,
   FileSystemPath,
   FileSystemQueryArguments,
+  FileSystemQueryEntry,
   FileSystemQueryResult,
   FileSystemReadArguments,
   FileSystemReadResult,
   FileSystemWriteArguments,
   FileSystemWriteResult,
-  Outcome,
 } from "../types.js";
 import { Path } from "./path.js";
-import { ok } from "./utils.js";
+import { err, ok } from "./utils.js";
 
 export { FileSystemImpl, Path };
 
@@ -32,16 +32,20 @@ class File {
     if (type === "text") {
       return { type, data: this.data };
     }
-    if (!this.mimeType) {
-      return {
-        $error: "File system integrity error: mimeType not set",
-      };
-    }
     return {
       type,
       data: this.data,
-      mimeType: this.mimeType,
+      mimeType: this.mimeType!,
     };
+  }
+
+  queryEntry(path: FileSystemPath): FileSystemQueryEntry {
+    const type = this.type;
+    if (type === "text") {
+      return { type, path };
+    } else {
+      return { type, path, mimeType: this.mimeType! };
+    }
   }
 }
 
@@ -71,42 +75,85 @@ class FileSystemImpl implements FileSystem {
   #files: Map<FileSystemPath, File> = new Map();
   #tree = new Tree();
 
-  query({ path }: FileSystemQueryArguments): Promise<FileSystemQueryResult> {
-    throw new Error("Method not implemented.");
+  async query({
+    path,
+  }: FileSystemQueryArguments): Promise<FileSystemQueryResult> {
+    const parsedPath = Path.create(path);
+    if (!ok(parsedPath)) {
+      return parsedPath;
+    }
+    if (parsedPath.persistent) {
+      return err(`Querying "${parsedPath.root}" is not yet implemented.`);
+    }
+    return {
+      entries: this.#startsWith(path),
+    };
+  }
+
+  #startsWith(prefix: FileSystemPath): FileSystemQueryEntry[] {
+    const results: FileSystemQueryEntry[] = [];
+    for (const [path, file] of this.#files.entries()) {
+      if (path.startsWith(prefix)) {
+        results.push(file.queryEntry(path));
+      }
+    }
+    return results;
   }
 
   async read({ path }: FileSystemReadArguments): Promise<FileSystemReadResult> {
+    const parsedPath = Path.create(path);
+    if (!ok(parsedPath)) {
+      return parsedPath;
+    }
+    if (parsedPath.persistent) {
+      return err(`Reading from "${parsedPath.root}" is not yet implemented`);
+    }
     const file = this.#files.get(path);
     if (!file) {
-      return { $error: `File not found: "${path}"` };
+      return err(`File not found: "${path}"`);
     }
     return file.result();
   }
 
   async write(args: FileSystemWriteArguments): Promise<FileSystemWriteResult> {
-    const { path, data, type } = args;
+    const { path, data } = args;
     const parsedPath = Path.create(path);
     if (!ok(parsedPath)) {
       return parsedPath;
     }
     if (!parsedPath.writable) {
-      return {
-        $error: `Destination "${path}" is not writable/`,
-      };
+      return err(`Destination "${path}" is not writable`);
+    }
+    if (parsedPath.persistent) {
+      return err(`Writing to "${parsedPath.root}" is not yet implemented`);
     }
     if (data === null) {
+      if (parsedPath.dir) {
+        this.#deleteDir(path);
+      }
       this.#files.delete(path);
       return;
     }
+    if (parsedPath.dir) {
+      return err(`Can't write data to a directory: "${path}"`);
+    }
+    const type = args.type;
     const mimeType = type === "text" ? undefined : args.mimeType;
     this.#files.set(path, new File(data, type, mimeType));
   }
 
-  startRun(): Promise<void> {
-    throw new Error("Method not implemented.");
+  #deleteDir(path: FileSystemPath) {
+    this.#startsWith(path).forEach((entry) => {
+      this.#files.delete(entry.path);
+    });
   }
 
-  startModule(): Promise<void> {
-    throw new Error("Method not implemented.");
+  startRun() {
+    this.#deleteDir("/run/");
+    this.startModule();
+  }
+
+  startModule() {
+    this.#deleteDir("/tmp/");
   }
 }
