@@ -107,3 +107,127 @@ export type RetrieveDataResult =
     };
 
 export type DataStoreScope = "run" | "session" | "client";
+
+export type Outcome<T> = T | { $error: string };
+
+export type FileSystemReadWriteRootDirectories =
+  /**
+   * Project-level persistent storage.
+   * Lifetime = persistent, unmanaged
+   */
+  | "/local"
+  /**
+   * Session-scoped persistent storage
+   * Lifetime = same as this object
+   */
+  | "/session"
+  /**
+   * Run-specific storage (execution state, inter-module data)
+   * Lifetime = one run
+   */
+  | "/run"
+  /**
+   * Temporary storage
+   * Lifetime = one module invocation
+   */
+  | "/tmp";
+
+export type FileSystemReadOnlyRootDirectories =
+  /**
+   * Environment-provided read-only resources
+   */
+  | "/env"
+  /**
+   * Project-level read-only shared assets
+   */
+  | "/assets";
+
+// Very, very basic path validation.
+type ValidPath<
+  Root extends string,
+  Rest extends string,
+> = Rest extends `${infer Dir}/${infer Next}`
+  ? `${Root}/${Dir}/${Next}`
+  : `${Root}/${Rest}`;
+
+export type FileSystemReadWritePath = ValidPath<
+  FileSystemReadWriteRootDirectories,
+  string
+>;
+
+export type FileSystemPath =
+  | FileSystemReadWritePath
+  | ValidPath<FileSystemReadOnlyRootDirectories, string>;
+
+export type FileSystemQueryArguments = {
+  /**
+   * Path to use to constrain the query.
+   */
+  path: FileSystemPath;
+};
+
+export type FileSystemQueryResult = Outcome<{
+  entries: FileSystemQueryEntry[];
+}>;
+
+export type FileSystemQueryEntry =
+  | {
+      type: "text" | "directory";
+      path: FileSystemPath;
+    }
+  | {
+      type: "binary";
+      path: FileSystemPath;
+      mimeType: string;
+    };
+
+export type FileSystemReadArguments = {
+  path: FileSystemPath;
+};
+
+export type FileSystemReadResult = Outcome<
+  | {
+      type: "text";
+      data: string;
+    }
+  | {
+      type: "binary";
+      data: string;
+      mimeType: string;
+    }
+>;
+
+export type FileSystemWriteArguments =
+  | {
+      type: "text";
+      path: FileSystemReadWritePath;
+      /**
+       * Set value to `null` to delete this file.
+       */
+      data: string | null;
+    }
+  | {
+      type: "binary";
+      path: FileSystemReadWritePath;
+      /**
+       * Set value to `null` to delete this file.
+       */
+      data: string | null;
+      mimeType: string;
+    };
+
+export type FileSystemWriteResult = Outcome<void>;
+
+export type FileSystem = {
+  query(args: FileSystemQueryArguments): Promise<FileSystemQueryResult>;
+  read(args: FileSystemReadArguments): Promise<FileSystemReadResult>;
+  write(args: FileSystemWriteArguments): Promise<FileSystemWriteResult>;
+  /**
+   * Clears `/run`
+   */
+  startRun(): Promise<void>;
+  /**
+   * Clears `/tmp`.
+   */
+  startModule(): Promise<void>;
+};
