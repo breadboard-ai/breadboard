@@ -222,6 +222,24 @@ export type FileSystemWriteArguments =
 
 export type FileSystemWriteResult = Outcome<void>;
 
+export type FileSystemEntry =
+  | {
+      type: "text";
+      path: FileSystemPath;
+      data: string;
+    }
+  | {
+      type: "data";
+      path: FileSystemPath;
+      data: string;
+      mimeType: string;
+    };
+
+export type OuterFileSystems = {
+  env: FileSystemEntry[];
+  assets: FileSystemEntry[];
+};
+
 export type FileSystem = {
   query(args: FileSystemQueryArguments): Promise<FileSystemQueryResult>;
   read(args: FileSystemReadArguments): Promise<FileSystemReadResult>;

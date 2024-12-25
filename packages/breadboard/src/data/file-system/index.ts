@@ -11,9 +11,12 @@ import {
   FileSystemQueryEntry,
   FileSystemQueryResult,
   FileSystemReadArguments,
+  FileSystemEntry,
   FileSystemReadResult,
   FileSystemWriteArguments,
   FileSystemWriteResult,
+  OuterFileSystems,
+  Outcome,
 } from "../types.js";
 import { Path } from "./path.js";
 import { err, ok } from "./utils.js";
@@ -47,6 +50,16 @@ class File {
       return { type, path, mimeType: this.mimeType! };
     }
   }
+
+  static fromEntry(entry: FileSystemEntry): File {
+    const { data, type } = entry;
+    const mimeType = entry.type === "data" ? entry.mimeType : undefined;
+    return new File(data, type, mimeType);
+  }
+
+  static fromEntries(entries: FileSystemEntry[]): Map<FileSystemPath, File> {
+    return new Map(entries.map((entry) => [entry.path, File.fromEntry(entry)]));
+  }
 }
 
 class TreeNode {
@@ -71,9 +84,17 @@ class Tree {
   }
 }
 
+type FileMap = Map<FileSystemPath, File>;
+
 class FileSystemImpl implements FileSystem {
-  #files: Map<FileSystemPath, File> = new Map();
-  #tree = new Tree();
+  #files: FileMap = new Map();
+  #env: FileMap;
+  #assets: FileMap;
+
+  constructor(outer: OuterFileSystems) {
+    this.#env = File.fromEntries(outer.env);
+    this.#assets = File.fromEntries(outer.assets);
+  }
 
   async query({
     path,
@@ -82,17 +103,30 @@ class FileSystemImpl implements FileSystem {
     if (!ok(parsedPath)) {
       return parsedPath;
     }
-    if (parsedPath.persistent) {
-      return err(`Querying "${parsedPath.root}" is not yet implemented.`);
+    const map = this.#getFileMap(parsedPath);
+    if (!ok(map)) {
+      return map;
     }
     return {
-      entries: this.#startsWith(path),
+      entries: this.#startsWith(map, path),
     };
   }
 
-  #startsWith(prefix: FileSystemPath): FileSystemQueryEntry[] {
+  #getFileMap(parsedPath: Path): Outcome<FileMap> {
+    if (parsedPath.root === "local") {
+      return err(`Querying "${parsedPath.root}" is not yet implemented.`);
+    } else if (parsedPath.root === "env") {
+      return this.#env;
+    } else if (parsedPath.root === "assets") {
+      return this.#assets;
+    } else {
+      return this.#files;
+    }
+  }
+
+  #startsWith(map: FileMap, prefix: FileSystemPath): FileSystemQueryEntry[] {
     const results: FileSystemQueryEntry[] = [];
-    for (const [path, file] of this.#files.entries()) {
+    for (const [path, file] of map.entries()) {
       if (path.startsWith(prefix)) {
         results.push(file.queryEntry(path));
       }
@@ -105,10 +139,11 @@ class FileSystemImpl implements FileSystem {
     if (!ok(parsedPath)) {
       return parsedPath;
     }
-    if (parsedPath.persistent) {
-      return err(`Reading from "${parsedPath.root}" is not yet implemented`);
+    const map = this.#getFileMap(parsedPath);
+    if (!ok(map)) {
+      return map;
     }
-    const file = this.#files.get(path);
+    const file = map.get(path);
     if (!file) {
       return err(`File not found: "${path}"`);
     }
@@ -143,7 +178,7 @@ class FileSystemImpl implements FileSystem {
   }
 
   #deleteDir(path: FileSystemPath) {
-    this.#startsWith(path).forEach((entry) => {
+    this.#startsWith(this.#files, path).forEach((entry) => {
       this.#files.delete(entry.path);
     });
   }
