@@ -313,14 +313,43 @@ describe("File System", () => {
     );
     good(
       await fs.write({
-        path: "/session/bar",
-        source: "/tmp/foo",
+        path: "/tmp/foo",
+        source: "/session/bar",
       })
     );
     const readBack = await fs.read({ path: "/session/bar" });
     if (good(readBack)) {
       deepStrictEqual(readBack.context, makeCx("foo1", "foo2", "foo3"));
       last(readBack, 2);
+    }
+    const readCopy = await fs.read({ path: "/tmp/foo" });
+    if (good(readCopy)) {
+      deepStrictEqual(readCopy.context, makeCx("foo1", "foo2", "foo3"));
+      last(readCopy, 2);
+    }
+  });
+
+  it("supports move", async () => {
+    const fs = makeFs();
+    good(
+      await fs.write({
+        path: "/session/bar",
+        context: makeCx("foo1", "foo2", "foo3"),
+      })
+    );
+    good(
+      await fs.write({
+        path: "/tmp/foo",
+        source: "/session/bar",
+        move: true,
+      })
+    );
+    const readBack = await fs.read({ path: "/session/bar" });
+    bad(readBack);
+    const readCopy = await fs.read({ path: "/tmp/foo" });
+    if (good(readCopy)) {
+      deepStrictEqual(readCopy.context, makeCx("foo1", "foo2", "foo3"));
+      last(readCopy, 2);
     }
   });
 });

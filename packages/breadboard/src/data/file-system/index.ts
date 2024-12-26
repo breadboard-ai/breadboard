@@ -134,7 +134,8 @@ class FileSystemImpl implements FileSystem {
   async write(args: FileSystemWriteArguments): Promise<FileSystemWriteResult> {
     const { path } = args;
     if ("source" in args) {
-      const sourcePath = Path.create(args.source);
+      const { source, move } = args;
+      const sourcePath = Path.create(source);
       if (!ok(sourcePath)) {
         return sourcePath;
       }
@@ -142,11 +143,14 @@ class FileSystemImpl implements FileSystem {
       if (!ok(map)) {
         return map;
       }
-      const file = map.get(path);
+      const file = map.get(source);
       if (!file) {
-        return err(`Source file not found: "${path}"`);
+        return err(`Source file not found: "${source}"`);
       }
       this.#files.set(path, file.copy());
+      if (move) {
+        map.delete(source);
+      }
       return;
     }
     const parsedPath = Path.create(path);
