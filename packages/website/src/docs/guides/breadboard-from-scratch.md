@@ -82,27 +82,9 @@ steps, assuming that no previous setup has been performed. See [this help center
 article](https://cloud.google.com/appengine/docs/standard/managing-projects-apps-billing)
 for more information.
 
-In the [Google Cloud Console](https://console.cloud.google.com), go to [App
-Engine](https://console.cloud.google.com/appengine). If no billing account
-exists, you will be prompted to set up billing for your Cloud project.
-
-### Configure the App Engine service account
-
-App Engine requires the default service account to possess both the **Editor**
-and **Storage Admin** roles to successfully deploy applications. As of May 2024,
-it is no longer possible for App Engine to make this change automatically. It
-will need to be done manually.
-
-> [!NOTE]
-> If you are using an established project, or have already configured a service
-> account, this step may not be necessary. See [the troubleshooting
-> guide](https://cloud.google.com/appengine/docs/standard/troubleshooting#default-sa-permissions)
-> for more information.
-
-1. Go to [Identity & Access Management](https://console.cloud.google.com/iam-admin/iam) in Google Cloud console.
-1. Locate the default App Engine service account: **`${PROJECT_ID}@appspot.gserviceaccount.com`**
-1. Click **Edit Principal** (the pencil icon)
-1. Ensure that the service account has both the **Editor** and **Storage Admin** roles.
+If no billing account exists, you must enable billing in the [Google Cloud
+Console](https://console.cloud.google.com/billing/enable) in order to create an
+App Engine application.
 
 ### Create the App Engine application
 
@@ -116,6 +98,27 @@ This will interactively walk through the process of selecting a region to which 
 deploy your application, plus other setup options. For more information and
 additional options, see the [SDK
 documentation](https://cloud.google.com/sdk/gcloud/reference/app/create).
+
+### Configure the App Engine service account
+
+App Engine requires the default service account to possess both the **Editor**
+and **Storage Admin** roles to successfully deploy applications. As of May 2024,
+it is no longer possible for App Engine to make this change automatically. It
+will need to be done manually.
+
+> [!NOTE]
+> If you are using an established project, or have already configured a service
+> account, this step may not be necessary. See [the troubleshooting
+> guide](https://cloud.google.com/appengine/docs/flexible/troubleshooting#default-sa-permissions)
+> for more information.
+
+```sh
+gcloud projects add-iam-policy-binding ${PROJECT_ID} --member=serviceAccount:${PROJECT_ID}@appspot.gserviceaccount.com --role=roles/editor
+```
+
+```sh
+gcloud projects add-iam-policy-binding ${PROJECT_ID} --member=serviceAccount:${PROJECT_ID}@appspot.gserviceaccount.com --role=roles/storage.admin
+```
 
 ---
 
