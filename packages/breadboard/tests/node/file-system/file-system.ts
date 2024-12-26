@@ -29,8 +29,8 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
   return new FileSystemImpl({ env, assets });
 }
 
-function makeCx(text: string): LLMContent[] {
-  return [{ parts: [{ text }] }];
+function makeCx(...items: string[]): LLMContent[] {
+  return items.map((text) => ({ parts: [{ text }] }));
 }
 
 function justPaths(q: FileSystemQueryResult) {
@@ -244,5 +244,32 @@ describe("File System", () => {
     if (good(queryBaz)) {
       deepStrictEqual(justPaths(queryBaz), ["/session/baz"]);
     }
+  });
+
+  it("supports partial reads", async () => {
+    const fs = makeFs();
+    good(
+      await fs.write({
+        path: "/tmp/foo",
+        context: makeCx("foo1", "foo2", "foo3"),
+      })
+    );
+    const readZero = await fs.read({ path: "/tmp/foo", start: 0 });
+    if (good(readZero)) {
+      deepStrictEqual(readZero.context, makeCx("foo1", "foo2", "foo3"));
+      ok("last" in readZero && readZero.last == 2);
+    }
+    const readOne = await fs.read({ path: "/tmp/foo", start: 1 });
+    if (good(readOne)) {
+      deepStrictEqual(readOne.context, makeCx("foo2", "foo3"));
+      ok("last" in readZero && readZero.last == 2);
+    }
+    const readTwo = await fs.read({ path: "/tmp/foo", start: 2 });
+    if (good(readTwo)) {
+      deepStrictEqual(readTwo.context, makeCx("foo3"));
+      ok("last" in readZero && readZero.last == 2);
+    }
+    const readThree = await fs.read({ path: "/tmp/foo", start: 3 });
+    bad(readThree);
   });
 });

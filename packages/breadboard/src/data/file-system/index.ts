@@ -27,9 +27,12 @@ export { FileSystemImpl, Path };
 class File {
   constructor(public readonly context: LLMContent[]) {}
 
-  result(): FileSystemReadResult {
+  result(start: number = 0): FileSystemReadResult {
+    if (start >= this.context.length) {
+      return err(`Length of file is smaller than start "${start}"`);
+    }
     return {
-      context: this.context,
+      context: this.context.slice(start),
       last: this.context.length - 1,
     };
   }
@@ -123,7 +126,10 @@ class FileSystemImpl implements FileSystem {
     return results;
   }
 
-  async read({ path }: FileSystemReadArguments): Promise<FileSystemReadResult> {
+  async read({
+    path,
+    start,
+  }: FileSystemReadArguments): Promise<FileSystemReadResult> {
     const parsedPath = Path.create(path);
     if (!ok(parsedPath)) {
       return parsedPath;
@@ -136,7 +142,7 @@ class FileSystemImpl implements FileSystem {
     if (!file) {
       return err(`File not found: "${path}"`);
     }
-    return file.result();
+    return file.result(start);
   }
 
   async write(args: FileSystemWriteArguments): Promise<FileSystemWriteResult> {
