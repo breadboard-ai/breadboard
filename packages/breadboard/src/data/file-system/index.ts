@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { LLMContent } from "@breadboard-ai/types";
 import {
   FileSystem,
   FileSystemPath,
@@ -24,37 +25,25 @@ import { err, ok } from "./utils.js";
 export { FileSystemImpl, Path };
 
 class File {
-  constructor(
-    public readonly data: string,
-    public readonly type: "text" | "data",
-    public readonly mimeType?: string
-  ) {}
+  constructor(public readonly context: LLMContent[]) {}
 
   result(): FileSystemReadResult {
-    const type = this.type;
-    if (type === "text") {
-      return { type, data: this.data };
-    }
     return {
-      type,
-      data: this.data,
-      mimeType: this.mimeType!,
+      context: this.context,
+      last: this.context.length - 1,
     };
   }
 
   queryEntry(path: FileSystemPath): FileSystemQueryEntry {
-    const type = this.type;
-    if (type === "text") {
-      return { type, path };
-    } else {
-      return { type, path, mimeType: this.mimeType! };
-    }
+    return {
+      path,
+      length: this.context.length,
+      stream: false,
+    };
   }
 
   static fromEntry(entry: FileSystemEntry): File {
-    const { data, type } = entry;
-    const mimeType = entry.type === "data" ? entry.mimeType : undefined;
-    return new File(data, type, mimeType);
+    return new File(entry.context);
   }
 
   static fromEntries(entries: FileSystemEntry[]): Map<FileSystemPath, File> {
@@ -151,7 +140,10 @@ class FileSystemImpl implements FileSystem {
   }
 
   async write(args: FileSystemWriteArguments): Promise<FileSystemWriteResult> {
-    const { path, data } = args;
+    const { path } = args;
+    if ("source" in args) {
+      return err("Copying/moving files is not yet implemented.");
+    }
     const parsedPath = Path.create(path);
     if (!ok(parsedPath)) {
       return parsedPath;
@@ -162,7 +154,8 @@ class FileSystemImpl implements FileSystem {
     if (parsedPath.persistent) {
       return err(`Writing to "${parsedPath.root}" is not yet implemented`);
     }
-    if (data === null) {
+    const { context } = args;
+    if (context === null) {
       if (parsedPath.dir) {
         this.#deleteDir(path);
       }
@@ -172,9 +165,7 @@ class FileSystemImpl implements FileSystem {
     if (parsedPath.dir) {
       return err(`Can't write data to a directory: "${path}"`);
     }
-    const type = args.type;
-    const mimeType = type === "text" ? undefined : args.mimeType;
-    this.#files.set(path, new File(data, type, mimeType));
+    this.#files.set(path, new File(context));
   }
 
   #deleteDir(path: FileSystemPath) {

@@ -11,7 +11,9 @@ import {
   FileSystemReadWritePath,
   Outcome,
   FileSystemEntry,
+  FileSystemQueryResult,
 } from "../../../src/data/types.js";
+import { LLMContent } from "@breadboard-ai/types";
 
 function good<T>(o: Outcome<T>): o is T {
   const error = o && typeof o === "object" && "$error" in o;
@@ -27,43 +29,54 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
   return new FileSystemImpl({ env, assets });
 }
 
+function makeCx(text: string): LLMContent[] {
+  return [{ parts: [{ text }] }];
+}
+
+function justPaths(q: FileSystemQueryResult) {
+  return good(q) && q.entries.map((entry) => entry.path);
+}
+
 describe("File System", () => {
   it("reads and writes files", async () => {
+    const context = makeCx("test");
     const fs = makeFs();
     const writeResult = await fs.write({
       path: "/session/test",
-      type: "text",
-      data: "test",
+      context,
     });
     ok(!writeResult);
     const readResult = await fs.read({
       path: "/session/test",
     });
-    deepStrictEqual(readResult, { type: "text", data: "test" });
+    if (good(readResult)) {
+      deepStrictEqual(readResult.context, context);
+    }
   });
 
   it("can delete files", async () => {
     const fs = makeFs();
+    const context = makeCx("test");
     const writeResult = await fs.write({
       path: "/session/test",
-      type: "text",
-      data: "test",
+      context,
     });
-    ok(!writeResult);
+    good(writeResult);
     const readResult = await fs.read({
       path: "/session/test",
     });
-    deepStrictEqual(readResult, { type: "text", data: "test" });
+    if (good(readResult)) {
+      deepStrictEqual(readResult.context, context);
+    }
     const deleteResult = await fs.write({
       path: "/session/test",
-      type: "text",
-      data: null,
+      context: null,
     });
-    ok(!deleteResult);
+    good(deleteResult);
     const repeatReadResult = await fs.read({
       path: "/session/test",
     });
-    ok("$error" in repeatReadResult);
+    bad(repeatReadResult);
   });
 
   it("has runtime check for readonly/invalid paths", async () => {
@@ -71,37 +84,36 @@ describe("File System", () => {
     const writeResult = await fs.write({
       // Force invalid value
       path: "/env/test" as unknown as FileSystemReadWritePath,
-      type: "text",
-      data: "test",
+      context: makeCx("test"),
     });
     ok(writeResult && "$error" in writeResult);
   });
 
   it("can delete entire directories", async () => {
     const fs = makeFs();
+    const fooContext = makeCx("foo context");
+    const barContext = makeCx("bar context");
     good(
       await fs.write({
         path: "/session/test/foo",
-        type: "text",
-        data: "foo contents",
+        context: fooContext,
       })
     );
     good(
       await fs.write({
         path: "/session/test/bar",
-        type: "text",
-        data: "bar contents",
+        context: barContext,
       })
     );
     const readingFoo = await fs.read({ path: "/session/test/foo" });
     if (good(readingFoo)) {
-      deepStrictEqual(readingFoo.data, "foo contents");
+      deepStrictEqual(readingFoo.context, fooContext);
     }
     const readingBar = await fs.read({ path: "/session/test/bar" });
     if (good(readingBar)) {
-      deepStrictEqual(readingBar.data, "bar contents");
+      deepStrictEqual(readingBar.context, barContext);
     }
-    good(await fs.write({ path: "/session/test/", data: null }));
+    good(await fs.write({ path: "/session/test/", context: null }));
     bad(await fs.read({ path: "/session/test/foo" }));
     bad(await fs.read({ path: "/session/test/bar" }));
   });
@@ -111,8 +123,7 @@ describe("File System", () => {
     bad(
       await fs.write({
         path: "/session/test/",
-        type: "text",
-        data: "hello",
+        context: makeCx("hello"),
       })
     );
   });
@@ -122,22 +133,19 @@ describe("File System", () => {
     good(
       await fs.write({
         path: "/tmp/foo",
-        type: "text",
-        data: "foo contents",
+        context: makeCx("foo contents"),
       })
     );
     good(
       await fs.write({
         path: "/run/bar",
-        type: "text",
-        data: "bar contents",
+        context: makeCx("bar contents"),
       })
     );
     good(
       await fs.write({
         path: "/session/baz",
-        type: "text",
-        data: "baz contents",
+        context: makeCx("baz contents"),
       })
     );
     fs.startModule();
@@ -151,22 +159,19 @@ describe("File System", () => {
     good(
       await fs.write({
         path: "/tmp/foo",
-        type: "text",
-        data: "foo contents",
+        context: makeCx("foo contents"),
       })
     );
     good(
       await fs.write({
         path: "/run/bar",
-        type: "text",
-        data: "bar contents",
+        context: makeCx("bar contents"),
       })
     );
     good(
       await fs.write({
         path: "/session/baz",
-        type: "text",
-        data: "baz contents",
+        context: makeCx("baz contents"),
       })
     );
     fs.startRun();
@@ -176,34 +181,34 @@ describe("File System", () => {
   });
 
   it("reads from env and assets", async () => {
+    const foo = makeCx("foo");
+    const bar = makeCx("bar");
     const fs = makeFs(
-      [{ type: "text", path: "/env/foo", data: "foo" }],
-      [{ type: "text", path: "/assets/bar", data: "bar" }]
+      [{ path: "/env/foo", context: foo }],
+      [{ path: "/assets/bar", context: bar }]
     );
     const readFoo = await fs.read({ path: "/env/foo" });
     if (good(readFoo)) {
-      deepStrictEqual(readFoo.data, "foo");
+      deepStrictEqual(readFoo.context, foo);
     }
     const readBar = await fs.read({ path: "/assets/bar" });
     if (good(readBar)) {
-      deepStrictEqual(readBar.data, "bar");
+      deepStrictEqual(readBar.context, bar);
     }
   });
 
   it("queries env and assets", async () => {
     const fs = makeFs(
-      [{ type: "text", path: "/env/foo", data: "foo" }],
-      [{ type: "text", path: "/assets/bar", data: "bar" }]
+      [{ path: "/env/foo", context: makeCx("foo") }],
+      [{ path: "/assets/bar", context: makeCx("bar") }]
     );
     const queryFoo = await fs.query({ path: "/env/foo" });
     if (good(queryFoo)) {
-      deepStrictEqual(queryFoo.entries, [{ type: "text", path: "/env/foo" }]);
+      deepStrictEqual(justPaths(queryFoo), ["/env/foo"]);
     }
     const queryBar = await fs.query({ path: "/assets/bar" });
     if (good(queryBar)) {
-      deepStrictEqual(queryBar.entries, [
-        { type: "text", path: "/assets/bar" },
-      ]);
+      deepStrictEqual(justPaths(queryBar), ["/assets/bar"]);
     }
   });
 
@@ -212,37 +217,32 @@ describe("File System", () => {
     good(
       await fs.write({
         path: "/tmp/foo",
-        type: "text",
-        data: "foo contents",
+        context: makeCx("foo contents"),
       })
     );
     good(
       await fs.write({
         path: "/run/bar",
-        type: "text",
-        data: "bar contents",
+        context: makeCx("bar contents"),
       })
     );
     good(
       await fs.write({
         path: "/session/baz",
-        type: "text",
-        data: "baz contents",
+        context: makeCx("baz contents"),
       })
     );
     const queryFoo = await fs.query({ path: "/tmp/foo" });
     if (good(queryFoo)) {
-      deepStrictEqual(queryFoo.entries, [{ type: "text", path: "/tmp/foo" }]);
+      deepStrictEqual(justPaths(queryFoo), ["/tmp/foo"]);
     }
     const queryBar = await fs.query({ path: "/run/bar" });
     if (good(queryBar)) {
-      deepStrictEqual(queryBar.entries, [{ type: "text", path: "/run/bar" }]);
+      deepStrictEqual(justPaths(queryBar), ["/run/bar"]);
     }
     const queryBaz = await fs.query({ path: "/session/baz" });
     if (good(queryBaz)) {
-      deepStrictEqual(queryBaz.entries, [
-        { type: "text", path: "/session/baz" },
-      ]);
+      deepStrictEqual(justPaths(queryBaz), ["/session/baz"]);
     }
   });
 });

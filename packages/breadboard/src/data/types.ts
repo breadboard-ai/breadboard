@@ -7,6 +7,7 @@
 import type {
   DataStoreHandle,
   InlineDataCapabilityPart,
+  LLMContent,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 import { HarnessRunResult } from "../harness/types.js";
@@ -170,70 +171,101 @@ export type FileSystemQueryResult = Outcome<{
   entries: FileSystemQueryEntry[];
 }>;
 
-export type FileSystemQueryEntry =
-  | {
-      type: "text" | "directory";
-      path: FileSystemPath;
-    }
-  | {
-      type: "data";
-      path: FileSystemPath;
-      mimeType: string;
-    };
+export type FileSystemQueryEntry = {
+  path: FileSystemPath;
+  /**
+   * Returns `true` if this file is a stream. Streams are special kind of files
+   * that can be written to and read from in chunks: each read empties
+   * the contents (the chunk) of the file until the next write puts new chunk
+   * into it.
+   */
+  stream: boolean;
+  /**
+   * Current number of LLMContent items in the file.
+   */
+  length: number;
+};
 
 export type FileSystemReadArguments = {
   path: FileSystemPath;
+  /**
+   * When specified, performs a partial read of the file.
+   * The value must be a valid index in the LLMContent array.
+   * Negative values count back from the last item in the array.
+   */
+  start?: number;
 };
 
 export type FileSystemReadResult = Outcome<
   | {
-      type: "text";
-      data: string;
+      /**
+       * Returns the concents of the file.
+       */
+      context: LLMContent[];
+      /**
+       * The index of the last read LLMContent items in the file.
+       * May be different from `context.length - 1`, because the read request
+       * may ask for partial read.
+       */
+      last: number;
     }
   | {
-      type: "data";
-      data: string;
-      mimeType: string;
+      /**
+       * Returns the current chunk in the stream or null if there's
+       * no new chunk.
+       */
+      context: LLMContent[] | null;
+      /**
+       * When the file is a stream, returns `true` when at the end of the
+       * stream.
+       */
+      done: boolean;
     }
 >;
 
 export type FileSystemWriteArguments =
   | {
-      type: "text";
+      path: FileSystemReadWritePath;
+      context: LLMContent[];
+      /**
+       * When set to `true`, appends the context to the file, rather than
+       * overwriting it.
+       */
+      append?: boolean;
+      /**
+       * When set to `true`, makes this file a stream.
+       * Streams are special kind of files that can be written to and read from
+       * in chunks: each read empties the contents (the chunk) of the file until
+       * the next write puts new chunk into it.
+       */
+      stream?: boolean;
+    }
+  | {
+      path: FileSystemReadWritePath;
+      /**
+       * If specified, will efficiently copy data from source
+       * to specified path.
+       */
+      source: FileSystemPath;
+      /**
+       * If `true`, will delete the source after copying to path.
+       */
+      move?: boolean;
+    }
+  | {
       path: FileSystemReadWritePath;
       /**
        * Set value to `null` to delete this file.
        */
-      data: string | null;
-    }
-  | {
-      type: "data";
-      path: FileSystemReadWritePath;
-      data: string;
-      mimeType: string;
-    }
-  | {
-      path: FileSystemReadWritePath;
-      /**
-       * Set value to `null` to delete this file.
-       */
-      data: null;
+      context: null;
     };
 
 export type FileSystemWriteResult = Outcome<void>;
 
-export type FileSystemEntry =
-  | {
-      type: "text";
-      path: FileSystemPath;
-      data: string;
-    }
-  | {
-      type: "data";
-      path: FileSystemPath;
-      data: string;
-      mimeType: string;
-    };
+export type FileSystemEntry = {
+  path: FileSystemPath;
+  context: LLMContent[];
+};
 
 export type OuterFileSystems = {
   env: FileSystemEntry[];
