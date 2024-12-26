@@ -272,4 +272,26 @@ describe("File System", () => {
     const readThree = await fs.read({ path: "/tmp/foo", start: 3 });
     bad(readThree);
   });
+
+  it("supports append", async () => {
+    const fs = makeFs();
+    good(
+      await fs.write({
+        path: "/tmp/foo",
+        context: makeCx("foo1", "foo2", "foo3"),
+      })
+    );
+    good(
+      await fs.write({
+        path: "/tmp/foo",
+        append: true,
+        context: makeCx("foo4"),
+      })
+    );
+    const readBack = await fs.read({ path: "/tmp/foo" });
+    if (good(readBack)) {
+      deepStrictEqual(readBack.context, makeCx("foo1", "foo2", "foo3", "foo4"));
+      ok("last" in readBack && readBack.last == 3);
+    }
+  });
 });

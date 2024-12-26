@@ -37,6 +37,10 @@ class File {
     };
   }
 
+  append(context: LLMContent[]) {
+    this.context.push(...context);
+  }
+
   queryEntry(path: FileSystemPath): FileSystemQueryEntry {
     return {
       path,
@@ -51,28 +55,6 @@ class File {
 
   static fromEntries(entries: FileSystemEntry[]): Map<FileSystemPath, File> {
     return new Map(entries.map((entry) => [entry.path, File.fromEntry(entry)]));
-  }
-}
-
-class TreeNode {
-  children = new Map<string, TreeNode>();
-
-  constructor(public path: Path) {}
-}
-
-class Tree {
-  #top: Map<string, TreeNode>;
-  #writables: Set<string>;
-
-  constructor() {
-    this.#top = new Map();
-    this.#writables = new Set();
-    Path.createRoots().forEach((path) => {
-      if (path.writable) {
-        this.#writables.add(path.root);
-      }
-      this.#top.set(path.root, new TreeNode(path));
-    });
   }
 }
 
@@ -170,6 +152,14 @@ class FileSystemImpl implements FileSystem {
     }
     if (parsedPath.dir) {
       return err(`Can't write data to a directory: "${path}"`);
+    }
+    if ("append" in args && args.append) {
+      const file = this.#files.get(path);
+      if (file) {
+        file.append(context);
+        return;
+      }
+      // otherwise, fall through to create a new file
     }
     this.#files.set(path, new File(context));
   }
