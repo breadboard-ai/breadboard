@@ -6,12 +6,13 @@
 
 import { describe, it } from "node:test";
 import { FileSystemImpl } from "../../../src/data/file-system/index.js";
-import { deepStrictEqual, ok } from "node:assert";
+import { deepStrictEqual, fail, ok } from "node:assert";
 import {
   FileSystemReadWritePath,
   Outcome,
   FileSystemEntry,
   FileSystemQueryResult,
+  FileSystemReadResult,
 } from "../../../src/data/types.js";
 import { LLMContent } from "@breadboard-ai/types";
 
@@ -35,6 +36,13 @@ function makeCx(...items: string[]): LLMContent[] {
 
 function justPaths(q: FileSystemQueryResult) {
   return good(q) && q.entries.map((entry) => entry.path);
+}
+
+function last(result: FileSystemReadResult, last: number) {
+  if (!("last" in result)) {
+    fail("Last must be present in `FileSystemReadResult`");
+  }
+  deepStrictEqual(result.last, last);
 }
 
 describe("File System", () => {
@@ -257,17 +265,17 @@ describe("File System", () => {
     const readZero = await fs.read({ path: "/tmp/foo", start: 0 });
     if (good(readZero)) {
       deepStrictEqual(readZero.context, makeCx("foo1", "foo2", "foo3"));
-      ok("last" in readZero && readZero.last == 2);
+      last(readZero, 2);
     }
     const readOne = await fs.read({ path: "/tmp/foo", start: 1 });
     if (good(readOne)) {
       deepStrictEqual(readOne.context, makeCx("foo2", "foo3"));
-      ok("last" in readZero && readZero.last == 2);
+      last(readOne, 2);
     }
     const readTwo = await fs.read({ path: "/tmp/foo", start: 2 });
     if (good(readTwo)) {
       deepStrictEqual(readTwo.context, makeCx("foo3"));
-      ok("last" in readZero && readZero.last == 2);
+      last(readTwo, 2);
     }
     const readThree = await fs.read({ path: "/tmp/foo", start: 3 });
     bad(readThree);
@@ -291,7 +299,28 @@ describe("File System", () => {
     const readBack = await fs.read({ path: "/tmp/foo" });
     if (good(readBack)) {
       deepStrictEqual(readBack.context, makeCx("foo1", "foo2", "foo3", "foo4"));
-      ok("last" in readBack && readBack.last == 3);
+      last(readBack, 3);
+    }
+  });
+
+  it("supports copy", async () => {
+    const fs = makeFs();
+    good(
+      await fs.write({
+        path: "/session/bar",
+        context: makeCx("foo1", "foo2", "foo3"),
+      })
+    );
+    good(
+      await fs.write({
+        path: "/session/bar",
+        source: "/tmp/foo",
+      })
+    );
+    const readBack = await fs.read({ path: "/session/bar" });
+    if (good(readBack)) {
+      deepStrictEqual(readBack.context, makeCx("foo1", "foo2", "foo3"));
+      last(readBack, 2);
     }
   });
 });

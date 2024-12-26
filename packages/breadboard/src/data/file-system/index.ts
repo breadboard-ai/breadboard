@@ -41,6 +41,10 @@ class File {
     this.context.push(...context);
   }
 
+  copy(): File {
+    return new File(this.context);
+  }
+
   queryEntry(path: FileSystemPath): FileSystemQueryEntry {
     return {
       path,
@@ -130,7 +134,20 @@ class FileSystemImpl implements FileSystem {
   async write(args: FileSystemWriteArguments): Promise<FileSystemWriteResult> {
     const { path } = args;
     if ("source" in args) {
-      return err("Copying/moving files is not yet implemented.");
+      const sourcePath = Path.create(args.source);
+      if (!ok(sourcePath)) {
+        return sourcePath;
+      }
+      const map = this.#getFileMap(sourcePath);
+      if (!ok(map)) {
+        return map;
+      }
+      const file = map.get(path);
+      if (!file) {
+        return err(`Source file not found: "${path}"`);
+      }
+      this.#files.set(path, file.copy());
+      return;
     }
     const parsedPath = Path.create(path);
     if (!ok(parsedPath)) {
