@@ -156,7 +156,7 @@ describe("File System", () => {
         context: makeCx("baz contents"),
       })
     );
-    fs.startModule();
+    await fs.startModule();
     bad(await fs.read({ path: "/tmp/foo" }));
     good(await fs.read({ path: "/run/bar" }));
     good(await fs.read({ path: "/session/baz" }));
@@ -182,7 +182,7 @@ describe("File System", () => {
         context: makeCx("baz contents"),
       })
     );
-    fs.startRun();
+    await fs.startRun();
     bad(await fs.read({ path: "/tmp/foo" }));
     bad(await fs.read({ path: "/run/bar" }));
     good(await fs.read({ path: "/session/baz" }));

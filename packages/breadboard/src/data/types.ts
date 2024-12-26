@@ -211,10 +211,10 @@ export type FileSystemReadResult = Outcome<
     }
   | {
       /**
-       * Returns the current chunk in the stream or null if there's
+       * Returns the current chunk in the stream or undefined if there's
        * no new chunk.
        */
-      context: LLMContent[] | null;
+      context: LLMContent[] | undefined;
       /**
        * When the file is a stream, returns `true` when at the end of the
        * stream.
@@ -234,11 +234,14 @@ export type FileSystemWriteArguments =
       append?: boolean;
       /**
        * When set to `true`, makes this file a stream.
+       * When set to "done", indicates that the stream is done.
+       * If never set to "done", the stream will continue to exist and read
+       * empty values from it.
        * Streams are special kind of files that can be written to and read from
        * in chunks: each read empties the contents (the chunk) of the file until
        * the next write puts new chunk into it.
        */
-      stream?: boolean;
+      stream?: boolean | "done";
     }
   | {
       path: FileSystemReadWritePath;
