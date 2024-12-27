@@ -201,7 +201,7 @@ export type FileSystemReadResult = Outcome<
       /**
        * Returns the concents of the file.
        */
-      context: LLMContent[];
+      context: LLMContent[] | undefined;
       /**
        * The index of the last read LLMContent items in the file.
        * May be different from `context.length - 1`, because the read request
@@ -234,14 +234,32 @@ export type FileSystemWriteArguments =
       append?: boolean;
       /**
        * When set to `true`, makes this file a stream.
-       * When set to "done", indicates that the stream is done.
-       * If never set to "done", the stream will continue to exist and read
-       * empty values from it.
        * Streams are special kind of files that can be written to and read from
        * in chunks: each read empties the contents (the chunk) of the file until
        * the next write puts new chunk into it.
        */
-      stream?: boolean | "done";
+      stream?: false;
+    }
+  | {
+      path: FileSystemReadWritePath;
+      context: LLMContent[];
+      stream: true;
+      /**
+       * A way to manage backpresssure and/or track read receipts.
+       * If set to `true`, write will only resolve after the chunk has been
+       * read. If set to `false`, write returns immediately.
+       */
+      receipt?: boolean;
+      done?: false;
+    }
+  | {
+      path: FileSystemReadWritePath;
+      stream: true;
+      /**
+       * Signals the end of the stream.
+       * Once the end of stream read, the stream file is deleted.
+       */
+      done: true;
     }
   | {
       path: FileSystemReadWritePath;
@@ -279,6 +297,10 @@ export type FileSystem = {
   query(args: FileSystemQueryArguments): Promise<FileSystemQueryResult>;
   read(args: FileSystemReadArguments): Promise<FileSystemReadResult>;
   write(args: FileSystemWriteArguments): Promise<FileSystemWriteResult>;
+  /**
+   * Cleans up
+   */
+  close(): Promise<void>;
   /**
    * Clears `/run`
    */

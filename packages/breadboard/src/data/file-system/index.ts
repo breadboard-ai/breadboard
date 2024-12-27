@@ -26,7 +26,11 @@ export { FileSystemImpl, Path };
 
 type FileSystemFile = {
   read(start?: number): Promise<FileSystemReadResult>;
-  append(context: LLMContent[], done: boolean): Promise<Outcome<void>>;
+  append(
+    context: LLMContent[],
+    done: boolean,
+    receipt?: boolean
+  ): Promise<Outcome<void>>;
   copy(): Outcome<FileSystemFile>;
   queryEntry(path: FileSystemPath): FileSystemQueryEntry;
   delete(): Promise<void>;
@@ -61,20 +65,30 @@ class StreamFile implements FileSystemFile {
     }
   }
 
-  async append(context: LLMContent[], done: boolean): Promise<Outcome<void>> {
+  async append(
+    context: LLMContent[],
+    done: boolean,
+    receipt = false
+  ): Promise<Outcome<void>> {
     if (!this.writer) {
       return err(`Unable to write to a closed stream`);
     }
-    await this.writer.write(context);
     if (done) {
-      await this.delete();
+      this.writer.close();
+      this.writer = null;
+    } else if (receipt) {
+      await this.writer.write(context);
+    } else {
+      this.writer.write(context);
     }
   }
 
   async delete() {
     if (!this.writer) return;
 
-    await this.writer.close();
+    this.writer.close().catch(() => {
+      // eat errors
+    });
     this.writer = null;
   }
 
@@ -103,7 +117,10 @@ class SimpleFile implements FileSystemFile {
     };
   }
 
-  async append(context: LLMContent[]) {
+  async append(context: LLMContent[], done: boolean, receipt = false) {
+    if (done || receipt) {
+      return err("Can't close the file that isn't a stream");
+    }
     this.context.push(...context);
   }
 
@@ -158,37 +175,6 @@ class FileSystemImpl implements FileSystem {
     };
   }
 
-  async #createFile(context: LLMContent[], stream?: boolean | "done") {
-    if (stream) {
-      const file = new StreamFile();
-      await file.append(context, false);
-      return file;
-    }
-    return new SimpleFile(context);
-  }
-
-  #getFileMap(parsedPath: Path): Outcome<FileMap> {
-    if (parsedPath.root === "local") {
-      return err(`Querying "${parsedPath.root}" is not yet implemented.`);
-    } else if (parsedPath.root === "env") {
-      return this.#env;
-    } else if (parsedPath.root === "assets") {
-      return this.#assets;
-    } else {
-      return this.#files;
-    }
-  }
-
-  #startsWith(map: FileMap, prefix: FileSystemPath): FileSystemQueryEntry[] {
-    const results: FileSystemQueryEntry[] = [];
-    for (const [path, file] of map.entries()) {
-      if (path.startsWith(prefix)) {
-        results.push(file.queryEntry(path));
-      }
-    }
-    return results;
-  }
-
   async read({
     path,
     start,
@@ -205,7 +191,18 @@ class FileSystemImpl implements FileSystem {
     if (!file) {
       return err(`File not found: "${path}"`);
     }
-    return file.read(start);
+    const result = await file.read(start);
+    if (!ok(result)) {
+      return result;
+    }
+    if ("done" in result) {
+      const { done } = result;
+      if (done) {
+        // We are done with the stream, delete the file.
+        this.#deleteFile(path);
+      }
+    }
+    return result;
   }
 
   async write(args: FileSystemWriteArguments): Promise<FileSystemWriteResult> {
@@ -222,7 +219,7 @@ class FileSystemImpl implements FileSystem {
       return err(`Writing to "${parsedPath.root}" is not yet implemented`);
     }
 
-    // 2) Handle copy/move path
+    // 2) Handle copy/move case
     if ("source" in args) {
       const { source, move } = args;
       const sourcePath = Path.create(source);
@@ -248,14 +245,34 @@ class FileSystemImpl implements FileSystem {
       return;
     }
 
+    // 3) Handle stream case
+    if ("stream" in args && args.stream) {
+      let file = this.#files.get(path);
+      const { done } = args;
+      if (done) {
+        if (!file) {
+          return err(`Can't close stream on a non-existent file "${path}"`);
+        }
+        // Handle end of stream.
+        return file.append([], true);
+      } else {
+        if (!file) {
+          file = new StreamFile();
+          this.#files.set(path, file);
+        }
+        const { receipt, context } = args;
+        return file.append(context, false, receipt);
+      }
+    }
+
     const { context } = args;
 
-    // 3) Handle delete path
+    // 4) Handle delete case
     if (context === null) {
       if (parsedPath.dir) {
-        await this.#deleteDir(path);
+        this.#deleteDir(path);
       } else {
-        await this.#deleteFile(path);
+        this.#deleteFile(path);
       }
       return;
     }
@@ -264,34 +281,67 @@ class FileSystemImpl implements FileSystem {
       return err(`Can't write data to a directory: "${path}"`);
     }
 
-    const { stream, append } = args;
+    const { append } = args;
 
-    // 4) Handle append path
+    // 5) Handle append case
     if (append) {
       const file = this.#files.get(path);
       if (file) {
-        return file.append(context, stream === "done");
+        return file.append(context, false);
       }
-      // 5) otherwise, fall through to create a new file
     }
-    const file = await this.#createFile(context, stream);
+
+    // 6) otherwise, fall through to create a new file
+    const file = new SimpleFile(context);
     this.#files.set(path, file);
+  }
+
+  #getFileMap(parsedPath: Path): Outcome<FileMap> {
+    if (parsedPath.root === "local") {
+      return err(`Querying "${parsedPath.root}" is not yet implemented.`);
+    } else if (parsedPath.root === "env") {
+      return this.#env;
+    } else if (parsedPath.root === "assets") {
+      return this.#assets;
+    } else {
+      return this.#files;
+    }
+  }
+
+  #startsWith(map: FileMap, prefix: FileSystemPath): FileSystemQueryEntry[] {
+    const results: FileSystemQueryEntry[] = [];
+    for (const [path, file] of map.entries()) {
+      if (path.startsWith(prefix)) {
+        results.push(file.queryEntry(path));
+      }
+    }
+    return results;
   }
 
   #deleteFile(path: FileSystemPath) {
     const file = this.#files.get(path);
     if (!file) return;
     this.#files.delete(path);
-    // Async, but it's okay here, because we don't need to wait for cleanup
-    // to complete.
-    file.delete();
+    // Async, but it's okay to not await here, because we don't need to wait
+    // for cleanup to complete.
+    file.delete().catch(() => {
+      // Eat the errors.
+    });
   }
 
-  async #deleteDir(path: FileSystemPath) {
+  #deleteDir(path: FileSystemPath) {
     const entries = this.#startsWith(this.#files, path);
     for (const entry of entries) {
       this.#deleteFile(entry.path);
     }
+  }
+
+  async close(): Promise<void> {
+    await Promise.all(
+      [...this.#files.values()].map((file) => {
+        return file.delete();
+      })
+    );
   }
 
   startRun() {
