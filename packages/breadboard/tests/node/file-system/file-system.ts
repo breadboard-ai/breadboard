@@ -136,7 +136,7 @@ describe("File System", () => {
     );
   });
 
-  it("cleans up /tmp/", async () => {
+  it("does not pass /tmp/ to new module", async () => {
     const fs = makeFs();
     good(
       await fs.write({
@@ -156,13 +156,13 @@ describe("File System", () => {
         context: makeCx("baz contents"),
       })
     );
-    await fs.startModule();
-    bad(await fs.read({ path: "/tmp/foo" }));
-    good(await fs.read({ path: "/run/bar" }));
-    good(await fs.read({ path: "/session/baz" }));
+    const moduleFs = fs.createModuleFileSystem();
+    bad(await moduleFs.read({ path: "/tmp/foo" }));
+    good(await moduleFs.read({ path: "/run/bar" }));
+    good(await moduleFs.read({ path: "/session/baz" }));
   });
 
-  it("cleans up /run/", async () => {
+  it("does not pass /run/ to new run", async () => {
     const fs = makeFs();
     good(
       await fs.write({
@@ -182,10 +182,10 @@ describe("File System", () => {
         context: makeCx("baz contents"),
       })
     );
-    await fs.startRun();
-    bad(await fs.read({ path: "/tmp/foo" }));
-    bad(await fs.read({ path: "/run/bar" }));
-    good(await fs.read({ path: "/session/baz" }));
+    const moduleFs = fs.createRunFileSystem();
+    bad(await moduleFs.read({ path: "/tmp/foo" }));
+    bad(await moduleFs.read({ path: "/run/bar" }));
+    good(await moduleFs.read({ path: "/session/baz" }));
   });
 
   it("reads from env and assets", async () => {

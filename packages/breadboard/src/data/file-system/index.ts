@@ -7,6 +7,7 @@
 import { LLMContent } from "@breadboard-ai/types";
 import {
   FileSystem,
+  FileSystemFile,
   FileSystemPath,
   FileSystemQueryArguments,
   FileSystemQueryEntry,
@@ -18,25 +19,15 @@ import {
   FileSystemWriteResult,
   OuterFileSystems,
   Outcome,
+  FileMap,
 } from "../types.js";
 import { Path } from "./path.js";
 import { err, ok } from "./utils.js";
 
 export { FileSystemImpl, Path };
 
-type FileSystemFile = {
-  read(start?: number): Promise<FileSystemReadResult>;
-  append(
-    context: LLMContent[],
-    done: boolean,
-    receipt?: boolean
-  ): Promise<Outcome<void>>;
-  copy(): Outcome<FileSystemFile>;
-  queryEntry(path: FileSystemPath): FileSystemQueryEntry;
-  delete(): Promise<void>;
-};
-
 class StreamFile implements FileSystemFile {
+  readonly context = [];
   readable: ReadableStream<LLMContent[]>;
   writer: WritableStreamDefaultWriter<LLMContent[]> | null;
 
@@ -147,16 +138,23 @@ class SimpleFile implements FileSystemFile {
   }
 }
 
-type FileMap = Map<FileSystemPath, FileSystemFile>;
-
 class FileSystemImpl implements FileSystem {
-  #files: FileMap = new Map();
+  #session: FileMap;
+  #run: FileMap;
+  #tmp: FileMap;
   #env: FileMap;
   #assets: FileMap;
+  #ownsSession: boolean;
+  #ownsRun: boolean;
 
   constructor(outer: OuterFileSystems) {
     this.#env = SimpleFile.fromEntries(outer.env);
     this.#assets = SimpleFile.fromEntries(outer.assets);
+    this.#ownsSession = !outer.session;
+    this.#ownsRun = !outer.run;
+    this.#session = outer.session ? outer.session : new Map();
+    this.#run = outer.run ? outer.run : new Map();
+    this.#tmp = new Map();
   }
 
   async query({
@@ -226,11 +224,11 @@ class FileSystemImpl implements FileSystem {
       if (!ok(sourcePath)) {
         return sourcePath;
       }
-      const map = this.#getFileMap(sourcePath);
-      if (!ok(map)) {
-        return map;
+      const sourceMap = this.#getFileMap(sourcePath);
+      if (!ok(sourceMap)) {
+        return sourceMap;
       }
-      const file = map.get(source);
+      const file = sourceMap.get(source);
       if (!file) {
         return err(`Source file not found: "${source}"`);
       }
@@ -238,16 +236,25 @@ class FileSystemImpl implements FileSystem {
       if (!ok(copy)) {
         return copy;
       }
-      this.#files.set(path, copy);
+      const destinationMap = this.#getFileMap(parsedPath);
+      if (!ok(destinationMap)) {
+        return destinationMap;
+      }
+      destinationMap.set(path, copy);
       if (move) {
-        map.delete(source);
+        sourceMap.delete(source);
       }
       return;
     }
 
+    const map = this.#getFileMap(parsedPath);
+    if (!ok(map)) {
+      return map;
+    }
+
     // 3) Handle stream case
     if ("stream" in args && args.stream) {
-      let file = this.#files.get(path);
+      let file = map.get(path);
       const { done } = args;
       if (done) {
         if (!file) {
@@ -258,7 +265,7 @@ class FileSystemImpl implements FileSystem {
       } else {
         if (!file) {
           file = new StreamFile();
-          this.#files.set(path, file);
+          map.set(path, file);
         }
         const { receipt, context } = args;
         return file.append(context, false, receipt);
@@ -285,7 +292,7 @@ class FileSystemImpl implements FileSystem {
 
     // 5) Handle append case
     if (append) {
-      const file = this.#files.get(path);
+      const file = map.get(path);
       if (file) {
         return file.append(context, false);
       }
@@ -293,18 +300,26 @@ class FileSystemImpl implements FileSystem {
 
     // 6) otherwise, fall through to create a new file
     const file = new SimpleFile(context);
-    this.#files.set(path, file);
+    map.set(path, file);
   }
 
   #getFileMap(parsedPath: Path): Outcome<FileMap> {
-    if (parsedPath.root === "local") {
-      return err(`Querying "${parsedPath.root}" is not yet implemented.`);
-    } else if (parsedPath.root === "env") {
-      return this.#env;
-    } else if (parsedPath.root === "assets") {
-      return this.#assets;
-    } else {
-      return this.#files;
+    const { root } = parsedPath;
+    switch (root) {
+      case "local":
+        return err(`Querying "${parsedPath.root}" is not yet implemented.`);
+      case "env":
+        return this.#env;
+      case "assets":
+        return this.#assets;
+      case "session":
+        return this.#session;
+      case "run":
+        return this.#run;
+      case "tmp":
+        return this.#tmp;
+      default:
+        return err(`Unknown root "${root}"`);
     }
   }
 
@@ -319,9 +334,19 @@ class FileSystemImpl implements FileSystem {
   }
 
   #deleteFile(path: FileSystemPath) {
-    const file = this.#files.get(path);
+    const parsedPath = Path.create(path);
+    if (!ok(parsedPath)) {
+      return parsedPath;
+    }
+
+    const map = this.#getFileMap(parsedPath);
+    if (!ok(map)) {
+      return map;
+    }
+
+    const file = map.get(path);
     if (!file) return;
-    this.#files.delete(path);
+    map.delete(path);
     // Async, but it's okay to not await here, because we don't need to wait
     // for cleanup to complete.
     file.delete().catch(() => {
@@ -330,26 +355,61 @@ class FileSystemImpl implements FileSystem {
   }
 
   #deleteDir(path: FileSystemPath) {
-    const entries = this.#startsWith(this.#files, path);
+    const parsedPath = Path.create(path);
+    if (!ok(parsedPath)) {
+      return parsedPath;
+    }
+
+    const map = this.#getFileMap(parsedPath);
+    if (!ok(map)) {
+      return map;
+    }
+
+    const entries = this.#startsWith(map, path);
     for (const entry of entries) {
       this.#deleteFile(entry.path);
     }
   }
 
   async close(): Promise<void> {
-    await Promise.all(
-      [...this.#files.values()].map((file) => {
-        return file.delete();
-      })
-    );
+    if (this.#ownsSession) {
+      await deleteAll(this.#session);
+    }
+    if (this.#ownsRun) {
+      await deleteAll(this.#run);
+    }
+    await deleteAll(this.#tmp);
+
+    async function deleteAll(map: FileMap) {
+      await Promise.all(
+        [...map.values()].map((file) => {
+          return file.delete();
+        })
+      );
+    }
   }
 
-  startRun() {
-    this.#deleteDir("/run/");
-    this.startModule();
+  createModuleFileSystem(): FileSystem {
+    return new FileSystemImpl({
+      env: mapToEntries(this.#env),
+      assets: mapToEntries(this.#assets),
+      session: this.#session,
+      run: this.#run,
+    });
   }
 
-  startModule() {
-    this.#deleteDir("/tmp/");
+  createRunFileSystem(): FileSystem {
+    return new FileSystemImpl({
+      env: mapToEntries(this.#env),
+      assets: mapToEntries(this.#assets),
+      session: this.#session,
+    });
   }
+}
+
+function mapToEntries(map: FileMap): FileSystemEntry[] {
+  return [...map.entries()].map(([path, file]) => ({
+    path,
+    context: file.context,
+  }));
 }

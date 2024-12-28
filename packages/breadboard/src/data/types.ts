@@ -288,9 +288,27 @@ export type FileSystemEntry = {
   context: LLMContent[];
 };
 
+export type FileSystemFile = {
+  read(start?: number): Promise<FileSystemReadResult>;
+  append(
+    context: LLMContent[],
+    done: boolean,
+    receipt?: boolean
+  ): Promise<Outcome<void>>;
+  copy(): Outcome<FileSystemFile>;
+  queryEntry(path: FileSystemPath): FileSystemQueryEntry;
+  delete(): Promise<void>;
+  context: LLMContent[];
+};
+
+// Simplest possible backend.
+export type FileMap = Map<FileSystemPath, FileSystemFile>;
+
 export type OuterFileSystems = {
   env: FileSystemEntry[];
   assets: FileSystemEntry[];
+  session?: FileMap;
+  run?: FileMap;
 };
 
 export type FileSystem = {
@@ -302,11 +320,18 @@ export type FileSystem = {
    */
   close(): Promise<void>;
   /**
-   * Clears `/run`
+   * Creates a new instance of a FileSystem that inherits all but `/run/`
+   * and `/tmp/` store from this instance.
+   *
+   * Use it to get the right FileSystem instance at the start of a run.
    */
-  startRun(): void;
+  createRunFileSystem(): FileSystem;
   /**
-   * Clears `/tmp`.
+   * Creates a new instance of a FileSystem that inherits all but `/tmp/`
+   * from this instance.
+   *
+   * Use it to get the right FileSystem instance whenever a module is
+   * invoked.
    */
-  startModule(): void;
+  createModuleFileSystem(): FileSystem;
 };
