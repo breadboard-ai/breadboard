@@ -304,7 +304,13 @@ export type FileSystemFile = {
 // Simplest possible backend.
 export type FileMap = Map<FileSystemPath, FileSystemFile>;
 
+export type PersistentBackend = {
+  query(path: FileSystemPath): Promise<FileSystemQueryResult>;
+  get(path: FileSystemPath): Promise<FileSystemFile>;
+};
+
 export type OuterFileSystems = {
+  local: PersistentBackend;
   env: FileSystemEntry[];
   assets: FileSystemEntry[];
   session?: FileMap;

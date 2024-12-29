@@ -27,8 +27,8 @@ const ROOT_DIRS: readonly RootDirSpec[] = [
   { name: "session", writable: true, persistent: false },
   { name: "run", writable: true, persistent: false },
   { name: "tmp", writable: true, persistent: false },
-  { name: "env", writable: false, persistent: true },
-  { name: "assets", writable: false, persistent: true },
+  { name: "env", writable: false, persistent: false },
+  { name: "assets", writable: false, persistent: false },
 ] as const;
 
 class Path {

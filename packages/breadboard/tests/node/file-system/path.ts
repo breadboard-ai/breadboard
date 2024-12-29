@@ -62,7 +62,7 @@ describe("FileSystem Path", () => {
   it("correctly reports persistent and transient dirs", () => {
     {
       const path = good(Path.create("/env/foo"));
-      ok(path.persistent);
+      ok(!path.persistent);
     }
     {
       const path = good(Path.create("/run/foo"));

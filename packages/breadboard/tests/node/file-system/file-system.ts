@@ -5,45 +5,16 @@
  */
 
 import { describe, it } from "node:test";
-import { FileSystemImpl } from "../../../src/data/file-system/index.js";
-import { deepStrictEqual, fail, ok } from "node:assert";
+import { deepStrictEqual, ok } from "node:assert";
+import { FileSystemReadWritePath } from "../../../src/data/types.js";
 import {
-  FileSystemReadWritePath,
-  Outcome,
-  FileSystemEntry,
-  FileSystemQueryResult,
-  FileSystemReadResult,
-} from "../../../src/data/types.js";
-import { LLMContent } from "@breadboard-ai/types";
-
-function good<T>(o: Outcome<T>): o is T {
-  const error = o && typeof o === "object" && "$error" in o;
-  ok(!error, "outcome must not be an error");
-  return !error;
-}
-
-function bad<T>(o: Outcome<T>) {
-  ok(o && typeof o === "object" && "$error" in o, "outcome must be an error");
-}
-
-function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
-  return new FileSystemImpl({ env, assets });
-}
-
-function makeCx(...items: string[]): LLMContent[] {
-  return items.map((text) => ({ parts: [{ text }] }));
-}
-
-function justPaths(q: FileSystemQueryResult) {
-  return good(q) && q.entries.map((entry) => entry.path);
-}
-
-function last(result: FileSystemReadResult, last: number) {
-  if (!("last" in result)) {
-    fail("Last must be present in `FileSystemReadResult`");
-  }
-  deepStrictEqual(result.last, last);
-}
+  bad,
+  good,
+  justPaths,
+  last,
+  makeCx,
+  makeFs,
+} from "../test-file-system.js";
 
 describe("File System", () => {
   it("reads and writes files", async () => {

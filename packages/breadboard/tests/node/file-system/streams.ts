@@ -8,34 +8,7 @@ import { afterEach, beforeEach, describe, it } from "node:test";
 import { FileSystemImpl } from "../../../src/data/file-system/index.js";
 import { deepStrictEqual, ok } from "node:assert";
 
-import { LLMContent } from "@breadboard-ai/types";
-import {
-  Outcome,
-  FileSystemEntry,
-  FileSystemQueryResult,
-} from "../../../src/data/types.js";
-
-function good<T>(o: Outcome<T>): o is T {
-  const error = o && typeof o === "object" && "$error" in o && o.$error;
-  ok(!error, error as string);
-  return !error;
-}
-
-function bad<T>(o: Outcome<T>) {
-  ok(o && typeof o === "object" && "$error" in o, "outcome must be an error");
-}
-
-function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
-  return new FileSystemImpl({ env, assets });
-}
-
-function makeCx(...items: string[]): LLMContent[] {
-  return items.map((text) => ({ parts: [{ text }] }));
-}
-
-function justPaths(q: FileSystemQueryResult) {
-  return good(q) && q.entries.map((entry) => entry.path);
-}
+import { bad, good, justPaths, makeCx, makeFs } from "../test-file-system.js";
 
 // Helper function to test that a promise never resolves
 async function neverResolves(

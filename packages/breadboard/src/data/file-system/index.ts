@@ -20,6 +20,7 @@ import {
   OuterFileSystems,
   Outcome,
   FileMap,
+  PersistentBackend,
 } from "../types.js";
 import { Path } from "./path.js";
 import { err, ok } from "./utils.js";
@@ -139,6 +140,7 @@ class SimpleFile implements FileSystemFile {
 }
 
 class FileSystemImpl implements FileSystem {
+  #local: PersistentBackend;
   #session: FileMap;
   #run: FileMap;
   #tmp: FileMap;
@@ -148,6 +150,7 @@ class FileSystemImpl implements FileSystem {
   #ownsRun: boolean;
 
   constructor(outer: OuterFileSystems) {
+    this.#local = outer.local;
     this.#env = SimpleFile.fromEntries(outer.env);
     this.#assets = SimpleFile.fromEntries(outer.assets);
     this.#ownsSession = !outer.session;
@@ -164,13 +167,18 @@ class FileSystemImpl implements FileSystem {
     if (!ok(parsedPath)) {
       return parsedPath;
     }
-    const map = this.#getFileMap(parsedPath);
-    if (!ok(map)) {
-      return map;
+
+    if (parsedPath.persistent) {
+      return this.#local.query(path);
+    } else {
+      const map = this.#getFileMap(parsedPath);
+      if (!ok(map)) {
+        return map;
+      }
+      return {
+        entries: this.#startsWith(map, path),
+      };
     }
-    return {
-      entries: this.#startsWith(map, path),
-    };
   }
 
   async read({
@@ -181,23 +189,34 @@ class FileSystemImpl implements FileSystem {
     if (!ok(parsedPath)) {
       return parsedPath;
     }
-    const map = this.#getFileMap(parsedPath);
-    if (!ok(map)) {
-      return map;
+
+    let file: FileSystemFile | undefined;
+
+    if (parsedPath.persistent) {
+      file = await this.#local.get(path);
+    } else {
+      const map = this.#getFileMap(parsedPath);
+      if (!ok(map)) {
+        return map;
+      }
+      file = map.get(path);
     }
-    const file = map.get(path);
     if (!file) {
       return err(`File not found: "${path}"`);
     }
+
     const result = await file.read(start);
     if (!ok(result)) {
       return result;
     }
-    if ("done" in result) {
-      const { done } = result;
-      if (done) {
-        // We are done with the stream, delete the file.
-        this.#deleteFile(path);
+
+    if (!parsedPath.persistent) {
+      if ("done" in result) {
+        const { done } = result;
+        if (done) {
+          // We are done with the stream, delete the file.
+          this.#deleteFile(path);
+        }
       }
     }
     return result;
@@ -213,12 +232,15 @@ class FileSystemImpl implements FileSystem {
     if (!parsedPath.writable) {
       return err(`Destination "${path}" is not writable`);
     }
-    if (parsedPath.persistent) {
-      return err(`Writing to "${parsedPath.root}" is not yet implemented`);
-    }
 
     // 2) Handle copy/move case
     if ("source" in args) {
+      if (parsedPath.persistent) {
+        return err(
+          `Copying/moving with "${parsedPath.root}" is not yet implemented`
+        );
+      }
+
       const { source, move } = args;
       const sourcePath = Path.create(source);
       if (!ok(sourcePath)) {
@@ -247,13 +269,19 @@ class FileSystemImpl implements FileSystem {
       return;
     }
 
-    const map = this.#getFileMap(parsedPath);
-    if (!ok(map)) {
-      return map;
-    }
-
     // 3) Handle stream case
     if ("stream" in args && args.stream) {
+      if (parsedPath.persistent) {
+        return err(
+          `Creating streams in "${parsedPath.root}" is not yet supported`
+        );
+      }
+
+      const map = this.#getFileMap(parsedPath);
+      if (!ok(map)) {
+        return map;
+      }
+
       let file = map.get(path);
       const { done } = args;
       if (done) {
@@ -292,6 +320,15 @@ class FileSystemImpl implements FileSystem {
 
     // 5) Handle append case
     if (append) {
+      if (parsedPath.persistent) {
+        return err(`Appending in "${parsedPath.root}" is not yet implemented`);
+      }
+
+      const map = this.#getFileMap(parsedPath);
+      if (!ok(map)) {
+        return map;
+      }
+
       const file = map.get(path);
       if (file) {
         return file.append(context, false);
@@ -299,7 +336,18 @@ class FileSystemImpl implements FileSystem {
     }
 
     // 6) otherwise, fall through to create a new file
+    if (parsedPath.persistent) {
+      return err(
+        `Creating new files in "${parsedPath.root}" is not yet implemented`
+      );
+    }
+
     const file = new SimpleFile(context);
+    const map = this.#getFileMap(parsedPath);
+    if (!ok(map)) {
+      return map;
+    }
+
     map.set(path, file);
   }
 
@@ -391,6 +439,7 @@ class FileSystemImpl implements FileSystem {
 
   createModuleFileSystem(): FileSystem {
     return new FileSystemImpl({
+      local: this.#local,
       env: mapToEntries(this.#env),
       assets: mapToEntries(this.#assets),
       session: this.#session,
@@ -400,6 +449,7 @@ class FileSystemImpl implements FileSystem {
 
   createRunFileSystem(): FileSystem {
     return new FileSystemImpl({
+      local: this.#local,
       env: mapToEntries(this.#env),
       assets: mapToEntries(this.#assets),
       session: this.#session,
