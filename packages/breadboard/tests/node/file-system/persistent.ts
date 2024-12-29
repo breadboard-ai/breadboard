@@ -6,7 +6,7 @@
 
 import { afterEach, beforeEach, describe, it } from "node:test";
 import { FileSystemImpl } from "../../../src/data/file-system/index.js";
-import { deepStrictEqual, ok } from "node:assert";
+import { deepStrictEqual } from "node:assert";
 
 import { bad, good, justPaths, makeCx, makeFs } from "../test-file-system.js";
 

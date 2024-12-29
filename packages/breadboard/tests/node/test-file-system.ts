@@ -15,7 +15,6 @@ import {
   FileSystemReadResult,
 } from "../../src/data/types.js";
 import { deepStrictEqual, fail, ok } from "node:assert";
-import { PersistentFile } from "../../src/data/file-system/persistent-file.js";
 import { err } from "../../src/data/file-system/utils.js";
 
 export { good, bad, makeFs, makeCx, justPaths, last };
@@ -56,9 +55,6 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
         return err(`File ${path} not found`);
       }
       return entry;
-    },
-    get: async (path) => {
-      return new PersistentFile(path, local);
     },
     append: async (path, data) => {
       const entry = map.get(path);

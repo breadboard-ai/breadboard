@@ -9,7 +9,6 @@ import {
   FileSystemFile,
   FileSystemPath,
   FileSystemQueryEntry,
-  FileSystemQueryResult,
   FileSystemReadResult,
   FileSystemWriteResult,
   Outcome,
@@ -17,29 +16,7 @@ import {
 } from "../types.js";
 import { err, ok } from "./utils.js";
 
-export { PersistentBackendImpl, PersistentFile };
-
-class PersistentBackendImpl implements PersistentBackend {
-  constructor() {}
-
-  query(path: FileSystemPath): Promise<FileSystemQueryResult> {
-    throw new Error("Method not implemented.");
-  }
-  get(path: FileSystemPath): Promise<FileSystemFile> {
-    throw new Error("Method not implemented.");
-  }
-
-  async read(path: FileSystemPath): Promise<Outcome<LLMContent[]>> {
-    return err(`Reading from persistent store is not yet implemented`);
-  }
-
-  async append(
-    path: FileSystemPath,
-    data: LLMContent[]
-  ): Promise<FileSystemWriteResult> {
-    return err(`Writing to persistent store is not yet implemented`);
-  }
-}
+export { PersistentFile };
 
 // TODO: Move to common
 function readFromStart(

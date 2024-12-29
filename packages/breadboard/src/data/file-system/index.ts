@@ -24,6 +24,7 @@ import {
 } from "../types.js";
 import { Path } from "./path.js";
 import { err, ok } from "./utils.js";
+import { PersistentFile } from "./persistent-file.js";
 
 export { FileSystemImpl, Path };
 
@@ -193,7 +194,7 @@ class FileSystemImpl implements FileSystem {
     let file: FileSystemFile | undefined;
 
     if (parsedPath.persistent) {
-      file = await this.#local.get(path);
+      file = new PersistentFile(path, this.#local);
     } else {
       const map = this.#getFileMap(parsedPath);
       if (!ok(map)) {
@@ -321,7 +322,7 @@ class FileSystemImpl implements FileSystem {
     // 5) Handle append case
     if (append) {
       if (parsedPath.persistent) {
-        const file = await this.#local.get(path);
+        const file = new PersistentFile(path, this.#local);
         return file.append(context, false);
       }
 
@@ -338,7 +339,7 @@ class FileSystemImpl implements FileSystem {
 
     // 6) otherwise, fall through to create a new file
     if (parsedPath.persistent) {
-      const file = await this.#local.get(path);
+      const file = new PersistentFile(path, this.#local);
       return file.append(context, false);
     }
 
