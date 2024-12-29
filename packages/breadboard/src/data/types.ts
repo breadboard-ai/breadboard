@@ -297,7 +297,7 @@ export type FileSystemFile = {
   ): Promise<Outcome<void>>;
   copy(): Outcome<FileSystemFile>;
   queryEntry(path: FileSystemPath): FileSystemQueryEntry;
-  delete(): Promise<void>;
+  delete(): Promise<FileSystemWriteResult>;
   context: LLMContent[];
 };
 
@@ -311,6 +311,7 @@ export type PersistentBackend = {
     path: FileSystemPath,
     data: LLMContent[]
   ): Promise<FileSystemWriteResult>;
+  delete(path: FileSystemPath): Promise<FileSystemWriteResult>;
 };
 
 export type OuterFileSystems = {

@@ -64,6 +64,9 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
         map.set(path, structuredClone(data));
       }
     },
+    delete: async (path) => {
+      map.delete(path);
+    },
   };
   return new FileSystemImpl({ local, env, assets });
 }

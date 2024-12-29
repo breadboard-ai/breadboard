@@ -306,9 +306,9 @@ class FileSystemImpl implements FileSystem {
     // 4) Handle delete case
     if (context === null) {
       if (parsedPath.dir) {
-        this.#deleteDir(path);
+        await this.#deleteDir(path);
       } else {
-        this.#deleteFile(path);
+        await this.#deleteFile(path);
       }
       return;
     }
@@ -387,6 +387,10 @@ class FileSystemImpl implements FileSystem {
     if (!ok(parsedPath)) {
       return parsedPath;
     }
+    if (parsedPath.persistent) {
+      const file = new PersistentFile(path, this.#local);
+      return file.delete();
+    }
 
     const map = this.#getFileMap(parsedPath);
     if (!ok(map)) {
@@ -403,10 +407,21 @@ class FileSystemImpl implements FileSystem {
     });
   }
 
-  #deleteDir(path: FileSystemPath) {
+  async #deleteDir(path: FileSystemPath) {
     const parsedPath = Path.create(path);
     if (!ok(parsedPath)) {
       return parsedPath;
+    }
+
+    if (parsedPath.persistent) {
+      const list = await this.#local.query(path);
+      if (!ok(list)) {
+        return list;
+      }
+      for (const entry of list.entries) {
+        await this.#deleteFile(entry.path);
+      }
+      return;
     }
 
     const map = this.#getFileMap(parsedPath);
