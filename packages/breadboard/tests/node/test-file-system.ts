@@ -60,6 +60,14 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
     get: async (path) => {
       return new PersistentFile(path, local);
     },
+    append: async (path, data) => {
+      const entry = map.get(path);
+      if (entry) {
+        entry.push(...data);
+      } else {
+        map.set(path, structuredClone(data));
+      }
+    },
   };
   return new FileSystemImpl({ local, env, assets });
 }

@@ -321,7 +321,8 @@ class FileSystemImpl implements FileSystem {
     // 5) Handle append case
     if (append) {
       if (parsedPath.persistent) {
-        return err(`Appending in "${parsedPath.root}" is not yet implemented`);
+        const file = await this.#local.get(path);
+        return file.append(context, false);
       }
 
       const map = this.#getFileMap(parsedPath);
@@ -337,9 +338,8 @@ class FileSystemImpl implements FileSystem {
 
     // 6) otherwise, fall through to create a new file
     if (parsedPath.persistent) {
-      return err(
-        `Creating new files in "${parsedPath.root}" is not yet implemented`
-      );
+      const file = await this.#local.get(path);
+      return file.append(context, false);
     }
 
     const file = new SimpleFile(context);

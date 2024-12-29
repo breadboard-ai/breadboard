@@ -39,4 +39,16 @@ describe("FileSystem persistent store", () => {
     const nonExistent = await fs.read({ path: "/local/non-existent" });
     bad(nonExistent);
   });
+
+  it("is able to write data to backend", async () => {
+    const foo = makeCx("foo");
+    good(await fs.write({ path: "/local/foo", context: foo }));
+    const readFoo = await fs.read({ path: "/local/foo" });
+    good(readFoo) && deepStrictEqual(readFoo.context, foo);
+
+    const bar = makeCx("bar");
+    good(await fs.write({ path: "/local/foo", context: bar, append: true }));
+    const readBar = await fs.read({ path: "/local/foo", start: 1 });
+    good(readBar) && deepStrictEqual(readBar.context, bar);
+  });
 });

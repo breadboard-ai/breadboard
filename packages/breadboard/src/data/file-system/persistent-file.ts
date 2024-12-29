@@ -11,6 +11,7 @@ import {
   FileSystemQueryEntry,
   FileSystemQueryResult,
   FileSystemReadResult,
+  FileSystemWriteResult,
   Outcome,
   PersistentBackend,
 } from "../types.js";
@@ -30,6 +31,13 @@ class PersistentBackendImpl implements PersistentBackend {
 
   async read(path: FileSystemPath): Promise<Outcome<LLMContent[]>> {
     return err(`Reading from persistent store is not yet implemented`);
+  }
+
+  async append(
+    path: FileSystemPath,
+    data: LLMContent[]
+  ): Promise<FileSystemWriteResult> {
+    return err(`Writing to persistent store is not yet implemented`);
   }
 }
 
@@ -52,6 +60,12 @@ function readFromStart(
   };
 }
 
+function noStreams(done: boolean, receipt?: boolean): FileSystemWriteResult {
+  if (done || receipt) {
+    return err("Can't close the file that isn't a stream");
+  }
+}
+
 class PersistentFile implements FileSystemFile {
   constructor(
     public readonly path: FileSystemPath,
@@ -66,12 +80,16 @@ class PersistentFile implements FileSystemFile {
     return readFromStart(this.path, reading, start);
   }
 
-  append(
-    context: LLMContent[],
+  async append(
+    data: LLMContent[],
     done: boolean,
     receipt?: boolean
-  ): Promise<Outcome<void>> {
-    throw new Error("Method not implemented.");
+  ): Promise<FileSystemWriteResult> {
+    const checkForStreams = noStreams(done, receipt);
+    if (!ok(checkForStreams)) {
+      return checkForStreams;
+    }
+    return this.backend.append(this.path, data);
   }
 
   copy(): Outcome<FileSystemFile> {
