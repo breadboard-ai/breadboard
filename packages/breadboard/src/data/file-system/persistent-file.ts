@@ -14,6 +14,7 @@ import {
   Outcome,
   PersistentBackend,
 } from "../types.js";
+import { err, ok } from "./utils.js";
 
 export { PersistentBackendImpl, PersistentFile };
 
@@ -26,12 +27,45 @@ class PersistentBackendImpl implements PersistentBackend {
   get(path: FileSystemPath): Promise<FileSystemFile> {
     throw new Error("Method not implemented.");
   }
+
+  async read(path: FileSystemPath): Promise<Outcome<LLMContent[]>> {
+    return err(`Reading from persistent store is not yet implemented`);
+  }
+}
+
+// TODO: Move to common
+function readFromStart(
+  path: FileSystemPath,
+  data: LLMContent[] | undefined,
+  start: number
+): FileSystemReadResult {
+  if (!data) {
+    return err(`File at "${path}" is empty`);
+  }
+
+  if (start >= data.length) {
+    return err(`Length of file is lesser than start "${start}"`);
+  }
+  return {
+    context: data.slice(start),
+    last: data.length - 1,
+  };
 }
 
 class PersistentFile implements FileSystemFile {
-  read(start?: number): Promise<FileSystemReadResult> {
-    throw new Error("Method not implemented.");
+  constructor(
+    public readonly path: FileSystemPath,
+    public readonly backend: PersistentBackend
+  ) {}
+
+  async read(start: number = 0): Promise<FileSystemReadResult> {
+    const reading = await this.backend.read(this.path);
+    if (!ok(reading)) {
+      return reading;
+    }
+    return readFromStart(this.path, reading, start);
   }
+
   append(
     context: LLMContent[],
     done: boolean,
@@ -39,12 +73,15 @@ class PersistentFile implements FileSystemFile {
   ): Promise<Outcome<void>> {
     throw new Error("Method not implemented.");
   }
+
   copy(): Outcome<FileSystemFile> {
     throw new Error("Method not implemented.");
   }
+
   queryEntry(path: FileSystemPath): FileSystemQueryEntry {
     throw new Error("Method not implemented.");
   }
+
   delete(): Promise<void> {
     throw new Error("Method not implemented.");
   }

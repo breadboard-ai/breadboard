@@ -7,7 +7,6 @@
 import { LLMContent } from "@breadboard-ai/types";
 import { FileSystemImpl } from "../../src/data/file-system/index.js";
 import {
-  FileSystemFile,
   FileSystemEntry,
   FileSystemPath,
   FileSystemQueryResult,
@@ -16,6 +15,8 @@ import {
   FileSystemReadResult,
 } from "../../src/data/types.js";
 import { deepStrictEqual, fail, ok } from "node:assert";
+import { PersistentFile } from "../../src/data/file-system/persistent-file.js";
+import { err } from "../../src/data/file-system/utils.js";
 
 export { good, bad, makeFs, makeCx, justPaths, last };
 
@@ -30,12 +31,34 @@ function good<T>(o: Outcome<T>): o is T {
 }
 
 function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
+  const map = new Map<FileSystemPath, LLMContent[]>();
+  // Add dummy file.
+  map.set("/local/dummy", makeCx("dummy"));
+  map.set("/local/dummy2", makeCx("dummy1", "dummy2"));
+
   const local: PersistentBackend = {
-    query: function (path: FileSystemPath): Promise<FileSystemQueryResult> {
-      throw new Error("Function not implemented.");
+    query: async (startWith) => {
+      {
+        return {
+          entries: [...map.entries()]
+            .filter(([path]) => {
+              return path.startsWith(startWith);
+            })
+            .map(([path, entry]) => {
+              return { path, length: entry.length, stream: false };
+            }),
+        };
+      }
     },
-    get: function (path: FileSystemPath): Promise<FileSystemFile> {
-      throw new Error("Function not implemented.");
+    read: async (path) => {
+      const entry = map.get(path);
+      if (!entry) {
+        return err(`File ${path} not found`);
+      }
+      return entry;
+    },
+    get: async (path) => {
+      return new PersistentFile(path, local);
     },
   };
   return new FileSystemImpl({ local, env, assets });

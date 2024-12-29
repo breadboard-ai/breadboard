@@ -307,6 +307,7 @@ export type FileMap = Map<FileSystemPath, FileSystemFile>;
 export type PersistentBackend = {
   query(path: FileSystemPath): Promise<FileSystemQueryResult>;
   get(path: FileSystemPath): Promise<FileSystemFile>;
+  read(path: FileSystemPath): Promise<Outcome<LLMContent[]>>;
 };
 
 export type OuterFileSystems = {
