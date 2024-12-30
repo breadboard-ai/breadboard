@@ -89,4 +89,30 @@ describe("FileSystem persistent store", () => {
     const readBaz = await fs.read({ path: "/local/baz" });
     good(readBaz) && deepStrictEqual(readBaz.context, makeCx("baz"));
   });
+
+  it("is able to move files in backend", async () => {
+    // 1) From persistent to persistent
+    good(
+      await fs.write({ path: "/local/foo", source: "/local/dummy", move: true })
+    );
+    const readFoo = await fs.read({ path: "/local/foo" });
+    good(readFoo) && deepStrictEqual(readFoo.context, makeCx("dummy"));
+    bad(await fs.read({ path: "/local/dummy" }));
+    // 2) From persistent to ephemeral
+    good(
+      await fs.write({ path: "/tmp/bar", source: "/local/dummy2", move: true })
+    );
+    const readBar = await fs.read({ path: "/tmp/bar" });
+    good(readBar) &&
+      deepStrictEqual(readBar.context, makeCx("dummy1", "dummy2"));
+    bad(await fs.read({ path: "/local/dummy2" }));
+    // 3) From ephemeral to persistent
+    good(await fs.write({ path: "/tmp/baz", context: makeCx("baz") }));
+    good(
+      await fs.write({ path: "/local/baz", source: "/tmp/baz", move: true })
+    );
+    const readBaz = await fs.read({ path: "/local/baz" });
+    good(readBaz) && deepStrictEqual(readBaz.context, makeCx("baz"));
+    bad(await fs.read({ path: "/tmp/baz" }));
+  });
 });

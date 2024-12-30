@@ -245,7 +245,14 @@ class FileSystemImpl implements FileSystem {
       if (parsedPath.persistent) {
         if (sourcePath.persistent) {
           // TODO: Support "move".
-          return this.#local.copy(source, path);
+          const copying = this.#local.copy(source, path);
+          if (!ok(copying)) {
+            return copying;
+          }
+          if (move) {
+            return this.#local.delete(source);
+          }
+          return;
         } else {
           // TODO: Support "move".
           const sourceMap = this.#getFileMap(sourcePath);
@@ -259,6 +266,9 @@ class FileSystemImpl implements FileSystem {
 
           const dest = new PersistentFile(path, this.#local);
           await dest.append(file.context, false, false);
+          if (move) {
+            sourceMap.delete(source);
+          }
           return;
         }
       }
@@ -278,7 +288,7 @@ class FileSystemImpl implements FileSystem {
           return err(`Source file "${path}" is empty`);
         }
         destinationMap.set(path, new SimpleFile(sourceContents.context));
-        return;
+        return this.#local.delete(source);
       }
 
       const sourceMap = this.#getFileMap(sourcePath);
