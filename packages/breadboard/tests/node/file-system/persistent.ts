@@ -73,4 +73,20 @@ describe("FileSystem persistent store", () => {
     const listFooAgain = await fs.query({ path: "/local/foo/" });
     good(listFooAgain) && deepStrictEqual(justPaths(listFooAgain), []);
   });
+
+  it("is able to copy files in backend", async () => {
+    // 1) From persistent to persistent
+    good(await fs.write({ path: "/local/foo", source: "/local/dummy" }));
+    const readFoo = await fs.read({ path: "/local/foo" });
+    good(readFoo) && deepStrictEqual(readFoo.context, makeCx("dummy"));
+    // 2) From persistent to ephemeral
+    good(await fs.write({ path: "/tmp/bar", source: "/local/dummy" }));
+    const readBar = await fs.read({ path: "/tmp/bar" });
+    good(readBar) && deepStrictEqual(readBar.context, makeCx("dummy"));
+    // 3) From ephemeral to persistent
+    good(await fs.write({ path: "/tmp/baz", context: makeCx("baz") }));
+    good(await fs.write({ path: "/local/baz", source: "/tmp/baz" }));
+    const readBaz = await fs.read({ path: "/local/baz" });
+    good(readBaz) && deepStrictEqual(readBaz.context, makeCx("baz"));
+  });
 });

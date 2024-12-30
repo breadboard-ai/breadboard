@@ -55,7 +55,7 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
     read: async (path) => {
       const entry = map.get(path);
       if (!entry) {
-        return err(`File ${path} not found`);
+        return err(`File "${path}" not found`);
       }
       return entry;
     },
@@ -69,6 +69,13 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
     },
     delete: async (path) => {
       map.delete(path);
+    },
+    copy: async (source, destination) => {
+      const entry = map.get(source);
+      if (!entry) {
+        return err(`Source "${source}" not found`);
+      }
+      map.set(destination, entry);
     },
   };
   return new FileSystemImpl({ local, env, assets });

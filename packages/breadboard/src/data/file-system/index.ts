@@ -236,17 +236,51 @@ class FileSystemImpl implements FileSystem {
 
     // 2) Handle copy/move case
     if ("source" in args) {
-      if (parsedPath.persistent) {
-        return err(
-          `Copying/moving with "${parsedPath.root}" is not yet implemented`
-        );
-      }
-
       const { source, move } = args;
       const sourcePath = Path.create(source);
       if (!ok(sourcePath)) {
         return sourcePath;
       }
+
+      if (parsedPath.persistent) {
+        if (sourcePath.persistent) {
+          // TODO: Support "move".
+          return this.#local.copy(source, path);
+        } else {
+          // TODO: Support "move".
+          const sourceMap = this.#getFileMap(sourcePath);
+          if (!ok(sourceMap)) {
+            return sourceMap;
+          }
+          const file = sourceMap.get(source);
+          if (!file) {
+            return err(`Source file not found: "${source}"`);
+          }
+
+          const dest = new PersistentFile(path, this.#local);
+          await dest.append(file.context, false, false);
+          return;
+        }
+      }
+
+      if (sourcePath.persistent) {
+        const sourceFile = new PersistentFile(source, this.#local);
+        const sourceContents = await sourceFile.read();
+        if (!ok(sourceContents)) {
+          return sourceContents;
+        }
+
+        const destinationMap = this.#getFileMap(parsedPath);
+        if (!ok(destinationMap)) {
+          return destinationMap;
+        }
+        if (!sourceContents.context) {
+          return err(`Source file "${path}" is empty`);
+        }
+        destinationMap.set(path, new SimpleFile(sourceContents.context));
+        return;
+      }
+
       const sourceMap = this.#getFileMap(sourcePath);
       if (!ok(sourceMap)) {
         return sourceMap;

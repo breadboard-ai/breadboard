@@ -312,6 +312,10 @@ export type BackendAtomicOperations = {
     data: LLMContent[]
   ): Promise<FileSystemWriteResult>;
   delete(path: FileSystemPath): Promise<FileSystemWriteResult>;
+  copy(
+    source: FileSystemPath,
+    destination: FileSystemPath
+  ): Promise<FileSystemWriteResult>;
 };
 
 export type BackendTransaction = BackendAtomicOperations;
