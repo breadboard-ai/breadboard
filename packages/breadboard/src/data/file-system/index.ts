@@ -414,13 +414,16 @@ class FileSystemImpl implements FileSystem {
     }
 
     if (parsedPath.persistent) {
-      const list = await this.#local.query(path);
-      if (!ok(list)) {
-        return list;
-      }
-      for (const entry of list.entries) {
-        await this.#deleteFile(entry.path);
-      }
+      await this.#local.transaction(async (tx) => {
+        const list = await tx.query(path);
+        if (!ok(list)) {
+          return list;
+        }
+        for (const entry of list.entries) {
+          const file = new PersistentFile(entry.path, tx);
+          await file.delete();
+        }
+      });
       return;
     }
 

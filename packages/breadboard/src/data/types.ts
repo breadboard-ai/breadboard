@@ -304,7 +304,7 @@ export type FileSystemFile = {
 // Simplest possible backend.
 export type FileMap = Map<FileSystemPath, FileSystemFile>;
 
-export type PersistentBackend = {
+export type BackendAtomicOperations = {
   query(path: FileSystemPath): Promise<FileSystemQueryResult>;
   read(path: FileSystemPath): Promise<Outcome<LLMContent[]>>;
   append(
@@ -312,6 +312,16 @@ export type PersistentBackend = {
     data: LLMContent[]
   ): Promise<FileSystemWriteResult>;
   delete(path: FileSystemPath): Promise<FileSystemWriteResult>;
+};
+
+export type BackendTransaction = BackendAtomicOperations;
+
+export type BackendTransactionResult = Promise<Outcome<void>>;
+
+export type PersistentBackend = BackendAtomicOperations & {
+  transaction(
+    transactionHandler: (tx: BackendTransaction) => BackendTransactionResult
+  ): BackendTransactionResult;
 };
 
 export type OuterFileSystems = {

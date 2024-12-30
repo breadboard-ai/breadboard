@@ -6,6 +6,7 @@
 
 import { LLMContent } from "@breadboard-ai/types";
 import {
+  BackendAtomicOperations,
   FileSystemFile,
   FileSystemPath,
   FileSystemQueryEntry,
@@ -46,7 +47,7 @@ function noStreams(done: boolean, receipt?: boolean): FileSystemWriteResult {
 class PersistentFile implements FileSystemFile {
   constructor(
     public readonly path: FileSystemPath,
-    public readonly backend: PersistentBackend
+    public readonly backend: BackendAtomicOperations
   ) {}
 
   async read(start: number = 0): Promise<FileSystemReadResult> {

@@ -36,6 +36,9 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
   map.set("/local/dummy2", makeCx("dummy1", "dummy2"));
 
   const local: PersistentBackend = {
+    transaction(transactionHandler) {
+      return transactionHandler(this);
+    },
     query: async (startWith) => {
       {
         return {
