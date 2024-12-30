@@ -18,34 +18,34 @@ import {
 
 describe("File System", () => {
   it("reads and writes files", async () => {
-    const context = makeCx("test");
+    const data = makeCx("test");
     const fs = makeFs();
     const writeResult = await fs.write({
       path: "/session/test",
-      context,
+      data,
     });
     ok(!writeResult);
     const readResult = await fs.read({
       path: "/session/test",
     });
     if (good(readResult)) {
-      deepStrictEqual(readResult.context, context);
+      deepStrictEqual(readResult.data, data);
     }
   });
 
   it("can delete files", async () => {
     const fs = makeFs();
-    const context = makeCx("test");
+    const data = makeCx("test");
     const writeResult = await fs.write({
       path: "/session/test",
-      context,
+      data,
     });
     good(writeResult);
     const readResult = await fs.read({
       path: "/session/test",
     });
     if (good(readResult)) {
-      deepStrictEqual(readResult.context, context);
+      deepStrictEqual(readResult.data, data);
     }
     const deleteResult = await fs.write({
       path: "/session/test",
@@ -63,34 +63,34 @@ describe("File System", () => {
     const writeResult = await fs.write({
       // Force invalid value
       path: "/env/test" as unknown as FileSystemReadWritePath,
-      context: makeCx("test"),
+      data: makeCx("test"),
     });
     ok(writeResult && "$error" in writeResult);
   });
 
   it("can delete entire directories", async () => {
     const fs = makeFs();
-    const fooContext = makeCx("foo context");
-    const barContext = makeCx("bar context");
+    const fooData = makeCx("foo data");
+    const barData = makeCx("bar data");
     good(
       await fs.write({
         path: "/session/test/foo",
-        context: fooContext,
+        data: fooData,
       })
     );
     good(
       await fs.write({
         path: "/session/test/bar",
-        context: barContext,
+        data: barData,
       })
     );
     const readingFoo = await fs.read({ path: "/session/test/foo" });
     if (good(readingFoo)) {
-      deepStrictEqual(readingFoo.context, fooContext);
+      deepStrictEqual(readingFoo.data, fooData);
     }
     const readingBar = await fs.read({ path: "/session/test/bar" });
     if (good(readingBar)) {
-      deepStrictEqual(readingBar.context, barContext);
+      deepStrictEqual(readingBar.data, barData);
     }
     good(await fs.write({ path: "/session/test/", delete: true }));
     bad(await fs.read({ path: "/session/test/foo" }));
@@ -102,7 +102,7 @@ describe("File System", () => {
     bad(
       await fs.write({
         path: "/session/test/",
-        context: makeCx("hello"),
+        data: makeCx("hello"),
       })
     );
   });
@@ -112,19 +112,19 @@ describe("File System", () => {
     good(
       await fs.write({
         path: "/tmp/foo",
-        context: makeCx("foo contents"),
+        data: makeCx("foo contents"),
       })
     );
     good(
       await fs.write({
         path: "/run/bar",
-        context: makeCx("bar contents"),
+        data: makeCx("bar contents"),
       })
     );
     good(
       await fs.write({
         path: "/session/baz",
-        context: makeCx("baz contents"),
+        data: makeCx("baz contents"),
       })
     );
     const moduleFs = fs.createModuleFileSystem();
@@ -138,19 +138,19 @@ describe("File System", () => {
     good(
       await fs.write({
         path: "/tmp/foo",
-        context: makeCx("foo contents"),
+        data: makeCx("foo contents"),
       })
     );
     good(
       await fs.write({
         path: "/run/bar",
-        context: makeCx("bar contents"),
+        data: makeCx("bar contents"),
       })
     );
     good(
       await fs.write({
         path: "/session/baz",
-        context: makeCx("baz contents"),
+        data: makeCx("baz contents"),
       })
     );
     const moduleFs = fs.createRunFileSystem();
@@ -163,23 +163,23 @@ describe("File System", () => {
     const foo = makeCx("foo");
     const bar = makeCx("bar");
     const fs = makeFs(
-      [{ path: "/env/foo", context: foo }],
-      [{ path: "/assets/bar", context: bar }]
+      [{ path: "/env/foo", data: foo }],
+      [{ path: "/assets/bar", data: bar }]
     );
     const readFoo = await fs.read({ path: "/env/foo" });
     if (good(readFoo)) {
-      deepStrictEqual(readFoo.context, foo);
+      deepStrictEqual(readFoo.data, foo);
     }
     const readBar = await fs.read({ path: "/assets/bar" });
     if (good(readBar)) {
-      deepStrictEqual(readBar.context, bar);
+      deepStrictEqual(readBar.data, bar);
     }
   });
 
   it("queries env and assets", async () => {
     const fs = makeFs(
-      [{ path: "/env/foo", context: makeCx("foo") }],
-      [{ path: "/assets/bar", context: makeCx("bar") }]
+      [{ path: "/env/foo", data: makeCx("foo") }],
+      [{ path: "/assets/bar", data: makeCx("bar") }]
     );
     const queryFoo = await fs.query({ path: "/env/foo" });
     if (good(queryFoo)) {
@@ -196,19 +196,19 @@ describe("File System", () => {
     good(
       await fs.write({
         path: "/tmp/foo",
-        context: makeCx("foo contents"),
+        data: makeCx("foo contents"),
       })
     );
     good(
       await fs.write({
         path: "/run/bar",
-        context: makeCx("bar contents"),
+        data: makeCx("bar contents"),
       })
     );
     good(
       await fs.write({
         path: "/session/baz",
-        context: makeCx("baz contents"),
+        data: makeCx("baz contents"),
       })
     );
     const queryFoo = await fs.query({ path: "/tmp/foo" });
@@ -230,22 +230,22 @@ describe("File System", () => {
     good(
       await fs.write({
         path: "/tmp/foo",
-        context: makeCx("foo1", "foo2", "foo3"),
+        data: makeCx("foo1", "foo2", "foo3"),
       })
     );
     const readZero = await fs.read({ path: "/tmp/foo", start: 0 });
     if (good(readZero)) {
-      deepStrictEqual(readZero.context, makeCx("foo1", "foo2", "foo3"));
+      deepStrictEqual(readZero.data, makeCx("foo1", "foo2", "foo3"));
       last(readZero, 2);
     }
     const readOne = await fs.read({ path: "/tmp/foo", start: 1 });
     if (good(readOne)) {
-      deepStrictEqual(readOne.context, makeCx("foo2", "foo3"));
+      deepStrictEqual(readOne.data, makeCx("foo2", "foo3"));
       last(readOne, 2);
     }
     const readTwo = await fs.read({ path: "/tmp/foo", start: 2 });
     if (good(readTwo)) {
-      deepStrictEqual(readTwo.context, makeCx("foo3"));
+      deepStrictEqual(readTwo.data, makeCx("foo3"));
       last(readTwo, 2);
     }
     const readThree = await fs.read({ path: "/tmp/foo", start: 3 });
@@ -257,19 +257,19 @@ describe("File System", () => {
     good(
       await fs.write({
         path: "/tmp/foo",
-        context: makeCx("foo1", "foo2", "foo3"),
+        data: makeCx("foo1", "foo2", "foo3"),
       })
     );
     good(
       await fs.write({
         path: "/tmp/foo",
         append: true,
-        context: makeCx("foo4"),
+        data: makeCx("foo4"),
       })
     );
     const readBack = await fs.read({ path: "/tmp/foo" });
     if (good(readBack)) {
-      deepStrictEqual(readBack.context, makeCx("foo1", "foo2", "foo3", "foo4"));
+      deepStrictEqual(readBack.data, makeCx("foo1", "foo2", "foo3", "foo4"));
       last(readBack, 3);
     }
   });
@@ -279,7 +279,7 @@ describe("File System", () => {
     good(
       await fs.write({
         path: "/session/bar",
-        context: makeCx("foo1", "foo2", "foo3"),
+        data: makeCx("foo1", "foo2", "foo3"),
       })
     );
     good(
@@ -290,12 +290,12 @@ describe("File System", () => {
     );
     const readBack = await fs.read({ path: "/session/bar" });
     if (good(readBack)) {
-      deepStrictEqual(readBack.context, makeCx("foo1", "foo2", "foo3"));
+      deepStrictEqual(readBack.data, makeCx("foo1", "foo2", "foo3"));
       last(readBack, 2);
     }
     const readCopy = await fs.read({ path: "/tmp/foo" });
     if (good(readCopy)) {
-      deepStrictEqual(readCopy.context, makeCx("foo1", "foo2", "foo3"));
+      deepStrictEqual(readCopy.data, makeCx("foo1", "foo2", "foo3"));
       last(readCopy, 2);
     }
   });
@@ -305,7 +305,7 @@ describe("File System", () => {
     good(
       await fs.write({
         path: "/session/bar",
-        context: makeCx("foo1", "foo2", "foo3"),
+        data: makeCx("foo1", "foo2", "foo3"),
       })
     );
     good(
@@ -319,7 +319,7 @@ describe("File System", () => {
     bad(readBack);
     const readCopy = await fs.read({ path: "/tmp/foo" });
     if (good(readCopy)) {
-      deepStrictEqual(readCopy.context, makeCx("foo1", "foo2", "foo3"));
+      deepStrictEqual(readCopy.data, makeCx("foo1", "foo2", "foo3"));
       last(readCopy, 2);
     }
   });

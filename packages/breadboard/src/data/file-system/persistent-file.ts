@@ -32,7 +32,7 @@ function readFromStart(
     return err(`Length of file is lesser than start "${start}"`);
   }
   return {
-    context: data.slice(start),
+    data: data.slice(start),
     last: data.length - 1,
   };
 }
@@ -73,7 +73,7 @@ class PersistentFile implements FileSystemFile {
     throw new Error("Method not implemented.");
   }
 
-  queryEntry(path: FileSystemPath): FileSystemQueryEntry {
+  queryEntry(_path: FileSystemPath): FileSystemQueryEntry {
     throw new Error("Method not implemented.");
   }
 
@@ -81,5 +81,5 @@ class PersistentFile implements FileSystemFile {
     return this.backend.delete(this.path);
   }
 
-  context: LLMContent[] = [];
+  data: LLMContent[] = [];
 }

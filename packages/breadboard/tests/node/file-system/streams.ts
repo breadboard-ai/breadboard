@@ -36,34 +36,34 @@ describe("FileSystem stream files", () => {
 
   it("can create, write to, and read from stream files", async () => {
     good(
-      await fs.write({ path: "/tmp/foo", context: makeCx("foo"), stream: true })
+      await fs.write({ path: "/tmp/foo", data: makeCx("foo"), stream: true })
     );
     const foo = await fs.read({ path: "/tmp/foo" });
-    good(foo) && deepStrictEqual(foo.context, makeCx("foo"));
+    good(foo) && deepStrictEqual(foo.data, makeCx("foo"));
     await neverResolves(fs.read({ path: "/tmp/foo" }));
 
     good(
       await fs.write({
         path: "/tmp/bar",
-        context: makeCx("bar1"),
+        data: makeCx("bar1"),
         stream: true,
       })
     );
     good(
       await fs.write({
         path: "/tmp/bar",
-        context: makeCx("bar2"),
+        data: makeCx("bar2"),
         stream: true,
       })
     );
     good(await fs.write({ path: "/tmp/bar", stream: true, done: true }));
 
     const readBar1 = await fs.read({ path: "/tmp/bar" });
-    good(readBar1) && deepStrictEqual(readBar1.context, makeCx("bar1"));
+    good(readBar1) && deepStrictEqual(readBar1.data, makeCx("bar1"));
     const readBar2 = await fs.read({ path: "/tmp/bar" });
-    good(readBar2) && deepStrictEqual(readBar2.context, makeCx("bar2"));
+    good(readBar2) && deepStrictEqual(readBar2.data, makeCx("bar2"));
     const readEnd = await fs.read({ path: "/tmp/bar" });
-    good(readEnd) && deepStrictEqual(readEnd.context, undefined);
+    good(readEnd) && deepStrictEqual(readEnd.data, undefined);
     const list = await fs.query({ path: "/tmp/ " });
     good(list) && deepStrictEqual(justPaths(list), []);
     const readMore = await fs.read({ path: "/tmp/bar" });
@@ -76,7 +76,7 @@ describe("FileSystem stream files", () => {
     const write = async () => {
       await fs.write({
         path: "/tmp/foo",
-        context: makeCx("foo"),
+        data: makeCx("foo"),
         stream: true,
         receipt: true,
       });
@@ -93,16 +93,16 @@ describe("FileSystem stream files", () => {
 
   it("handles subsequent writes without the stream flag", async () => {
     good(
-      await fs.write({ path: "/tmp/foo", context: makeCx("foo"), stream: true })
+      await fs.write({ path: "/tmp/foo", data: makeCx("foo"), stream: true })
     );
-    good(await fs.write({ path: "/tmp/foo", context: makeCx("bar") }));
+    good(await fs.write({ path: "/tmp/foo", data: makeCx("bar") }));
 
     const readFoo = await fs.read({ path: "/tmp/foo" });
-    good(readFoo) && deepStrictEqual(readFoo.context, makeCx("bar"));
+    good(readFoo) && deepStrictEqual(readFoo.data, makeCx("bar"));
   });
 
   it("handles trying to close non-streams", async () => {
-    good(await fs.write({ path: "/tmp/foo", context: makeCx("bar") }));
+    good(await fs.write({ path: "/tmp/foo", data: makeCx("bar") }));
     bad(await fs.write({ path: "/tmp/foo", stream: true, done: true }));
   });
 
@@ -110,7 +110,7 @@ describe("FileSystem stream files", () => {
     good(
       await fs.write({
         path: "/tmp/foo",
-        context: makeCx("foo", "bar"),
+        data: makeCx("foo", "bar"),
         stream: true,
       })
     );
@@ -119,7 +119,7 @@ describe("FileSystem stream files", () => {
 
   it("correctly reports inability to copy/move stream files", async () => {
     good(
-      await fs.write({ path: "/tmp/foo", context: makeCx("bar"), stream: true })
+      await fs.write({ path: "/tmp/foo", data: makeCx("bar"), stream: true })
     );
     bad(await fs.write({ path: "/tmp/bar", source: "/tmp/foo" }));
   });

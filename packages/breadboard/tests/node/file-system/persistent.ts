@@ -31,10 +31,10 @@ describe("FileSystem persistent store", () => {
 
   it("is able to read data from backend", async () => {
     const dummy = await fs.read({ path: "/local/dummy" });
-    good(dummy) && deepStrictEqual(dummy.context, makeCx("dummy"));
+    good(dummy) && deepStrictEqual(dummy.data, makeCx("dummy"));
 
     const dummy2 = await fs.read({ path: "/local/dummy2", start: 1 });
-    good(dummy2) && deepStrictEqual(dummy2.context, makeCx("dummy2"));
+    good(dummy2) && deepStrictEqual(dummy2.data, makeCx("dummy2"));
 
     const nonExistent = await fs.read({ path: "/local/non-existent" });
     bad(nonExistent);
@@ -42,14 +42,14 @@ describe("FileSystem persistent store", () => {
 
   it("is able to write data to backend", async () => {
     const foo = makeCx("foo");
-    good(await fs.write({ path: "/local/foo", context: foo }));
+    good(await fs.write({ path: "/local/foo", data: foo }));
     const readFoo = await fs.read({ path: "/local/foo" });
-    good(readFoo) && deepStrictEqual(readFoo.context, foo);
+    good(readFoo) && deepStrictEqual(readFoo.data, foo);
 
     const bar = makeCx("bar");
-    good(await fs.write({ path: "/local/foo", context: bar, append: true }));
+    good(await fs.write({ path: "/local/foo", data: bar, append: true }));
     const readBar = await fs.read({ path: "/local/foo", start: 1 });
-    good(readBar) && deepStrictEqual(readBar.context, bar);
+    good(readBar) && deepStrictEqual(readBar.data, bar);
   });
 
   it("is able to delete files/dirs in backend", async () => {
@@ -57,9 +57,9 @@ describe("FileSystem persistent store", () => {
     bad(await fs.read({ path: "/local/dummy" }));
 
     const foo = makeCx("foo");
-    good(await fs.write({ path: "/local/foo/1", context: foo }));
-    good(await fs.write({ path: "/local/foo/2", context: foo }));
-    good(await fs.write({ path: "/local/foo/3", context: foo }));
+    good(await fs.write({ path: "/local/foo/1", data: foo }));
+    good(await fs.write({ path: "/local/foo/2", data: foo }));
+    good(await fs.write({ path: "/local/foo/3", data: foo }));
     const listFoo = await fs.query({ path: "/local/foo/" });
     good(listFoo) &&
       deepStrictEqual(justPaths(listFoo), [
@@ -78,16 +78,16 @@ describe("FileSystem persistent store", () => {
     // 1) From persistent to persistent
     good(await fs.write({ path: "/local/foo", source: "/local/dummy" }));
     const readFoo = await fs.read({ path: "/local/foo" });
-    good(readFoo) && deepStrictEqual(readFoo.context, makeCx("dummy"));
+    good(readFoo) && deepStrictEqual(readFoo.data, makeCx("dummy"));
     // 2) From persistent to ephemeral
     good(await fs.write({ path: "/tmp/bar", source: "/local/dummy" }));
     const readBar = await fs.read({ path: "/tmp/bar" });
-    good(readBar) && deepStrictEqual(readBar.context, makeCx("dummy"));
+    good(readBar) && deepStrictEqual(readBar.data, makeCx("dummy"));
     // 3) From ephemeral to persistent
-    good(await fs.write({ path: "/tmp/baz", context: makeCx("baz") }));
+    good(await fs.write({ path: "/tmp/baz", data: makeCx("baz") }));
     good(await fs.write({ path: "/local/baz", source: "/tmp/baz" }));
     const readBaz = await fs.read({ path: "/local/baz" });
-    good(readBaz) && deepStrictEqual(readBaz.context, makeCx("baz"));
+    good(readBaz) && deepStrictEqual(readBaz.data, makeCx("baz"));
   });
 
   it("is able to move files in backend", async () => {
@@ -96,23 +96,22 @@ describe("FileSystem persistent store", () => {
       await fs.write({ path: "/local/foo", source: "/local/dummy", move: true })
     );
     const readFoo = await fs.read({ path: "/local/foo" });
-    good(readFoo) && deepStrictEqual(readFoo.context, makeCx("dummy"));
+    good(readFoo) && deepStrictEqual(readFoo.data, makeCx("dummy"));
     bad(await fs.read({ path: "/local/dummy" }));
     // 2) From persistent to ephemeral
     good(
       await fs.write({ path: "/tmp/bar", source: "/local/dummy2", move: true })
     );
     const readBar = await fs.read({ path: "/tmp/bar" });
-    good(readBar) &&
-      deepStrictEqual(readBar.context, makeCx("dummy1", "dummy2"));
+    good(readBar) && deepStrictEqual(readBar.data, makeCx("dummy1", "dummy2"));
     bad(await fs.read({ path: "/local/dummy2" }));
     // 3) From ephemeral to persistent
-    good(await fs.write({ path: "/tmp/baz", context: makeCx("baz") }));
+    good(await fs.write({ path: "/tmp/baz", data: makeCx("baz") }));
     good(
       await fs.write({ path: "/local/baz", source: "/tmp/baz", move: true })
     );
     const readBaz = await fs.read({ path: "/local/baz" });
-    good(readBaz) && deepStrictEqual(readBaz.context, makeCx("baz"));
+    good(readBaz) && deepStrictEqual(readBaz.data, makeCx("baz"));
     bad(await fs.read({ path: "/tmp/baz" }));
   });
 });

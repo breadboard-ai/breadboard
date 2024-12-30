@@ -29,7 +29,7 @@ import { PersistentFile } from "./persistent-file.js";
 export { FileSystemImpl, Path };
 
 class StreamFile implements FileSystemFile {
-  readonly context = [];
+  readonly data = [];
   readable: ReadableStream<LLMContent[]>;
   writer: WritableStreamDefaultWriter<LLMContent[]> | null;
 
@@ -50,7 +50,7 @@ class StreamFile implements FileSystemFile {
     const reader = this.readable.getReader();
     try {
       const { value, done } = await reader.read();
-      return { context: value, done };
+      return { data: value, done };
     } catch (e) {
       return err(`Unable to read stream: ${(e as Error).message}`);
     } finally {
@@ -59,7 +59,7 @@ class StreamFile implements FileSystemFile {
   }
 
   async append(
-    context: LLMContent[],
+    data: LLMContent[],
     done: boolean,
     receipt = false
   ): Promise<Outcome<void>> {
@@ -70,9 +70,9 @@ class StreamFile implements FileSystemFile {
       this.writer.close();
       this.writer = null;
     } else if (receipt) {
-      await this.writer.write(context);
+      await this.writer.write(data);
     } else {
-      this.writer.write(context);
+      this.writer.write(data);
     }
   }
 
@@ -98,37 +98,37 @@ class StreamFile implements FileSystemFile {
 }
 
 class SimpleFile implements FileSystemFile {
-  constructor(public readonly context: LLMContent[]) {}
+  constructor(public readonly data: LLMContent[]) {}
 
   async read(start: number = 0): Promise<FileSystemReadResult> {
-    if (start >= this.context.length) {
+    if (start >= this.data.length) {
       return err(`Length of file is lesser than start "${start}"`);
     }
     return {
-      context: this.context.slice(start),
-      last: this.context.length - 1,
+      data: this.data.slice(start),
+      last: this.data.length - 1,
     };
   }
 
-  async append(context: LLMContent[], done: boolean, receipt = false) {
+  async append(data: LLMContent[], done: boolean, receipt = false) {
     if (done || receipt) {
       return err("Can't close the file that isn't a stream");
     }
-    this.context.push(...context);
+    this.data.push(...data);
   }
 
   async delete() {}
 
   copy(): Outcome<FileSystemFile> {
-    return new SimpleFile(this.context);
+    return new SimpleFile(this.data);
   }
 
   queryEntry(path: FileSystemPath): FileSystemQueryEntry {
-    return { path, length: this.context.length, stream: false };
+    return { path, length: this.data.length, stream: false };
   }
 
   static fromEntry(entry: FileSystemEntry): SimpleFile {
-    return new SimpleFile(entry.context);
+    return new SimpleFile(entry.data);
   }
 
   static fromEntries(
@@ -265,7 +265,7 @@ class FileSystemImpl implements FileSystem {
           }
 
           const dest = new PersistentFile(path, this.#local);
-          await dest.append(file.context, false, false);
+          await dest.append(file.data, false, false);
           if (move) {
             sourceMap.delete(source);
           }
@@ -284,10 +284,10 @@ class FileSystemImpl implements FileSystem {
         if (!ok(destinationMap)) {
           return destinationMap;
         }
-        if (!sourceContents.context) {
+        if (!sourceContents.data) {
           return err(`Source file "${path}" is empty`);
         }
-        destinationMap.set(path, new SimpleFile(sourceContents.context));
+        destinationMap.set(path, new SimpleFile(sourceContents.data));
         return this.#local.delete(source);
       }
 
@@ -340,8 +340,8 @@ class FileSystemImpl implements FileSystem {
           file = new StreamFile();
           map.set(path, file);
         }
-        const { receipt, context } = args;
-        return file.append(context, false, receipt);
+        const { receipt, data } = args;
+        return file.append(data, false, receipt);
       }
     }
 
@@ -359,13 +359,13 @@ class FileSystemImpl implements FileSystem {
       return err(`Can't write data to a directory: "${path}"`);
     }
 
-    const { context, append } = args;
+    const { data, append } = args;
 
     // 5) Handle append case
     if (append) {
       if (parsedPath.persistent) {
         const file = new PersistentFile(path, this.#local);
-        return file.append(context, false);
+        return file.append(data, false);
       }
 
       const map = this.#getFileMap(parsedPath);
@@ -375,17 +375,17 @@ class FileSystemImpl implements FileSystem {
 
       const file = map.get(path);
       if (file) {
-        return file.append(context, false);
+        return file.append(data, false);
       }
     }
 
     // 6) otherwise, fall through to create a new file
     if (parsedPath.persistent) {
       const file = new PersistentFile(path, this.#local);
-      return file.append(context, false);
+      return file.append(data, false);
     }
 
-    const file = new SimpleFile(context);
+    const file = new SimpleFile(data);
     const map = this.#getFileMap(parsedPath);
     if (!ok(map)) {
       return map;
@@ -521,6 +521,6 @@ class FileSystemImpl implements FileSystem {
 function mapToEntries(map: FileMap): FileSystemEntry[] {
   return [...map.entries()].map(([path, file]) => ({
     path,
-    context: file.context,
+    data: file.data,
   }));
 }

@@ -201,10 +201,10 @@ export type FileSystemReadResult = Outcome<
       /**
        * Returns the concents of the file.
        */
-      context: LLMContent[] | undefined;
+      data: LLMContent[] | undefined;
       /**
        * The index of the last read LLMContent items in the file.
-       * May be different from `context.length - 1`, because the read request
+       * May be different from `data.length - 1`, because the read request
        * may ask for partial read.
        */
       last: number;
@@ -214,7 +214,7 @@ export type FileSystemReadResult = Outcome<
        * Returns the current chunk in the stream or undefined if there's
        * no new chunk.
        */
-      context: LLMContent[] | undefined;
+      data: LLMContent[] | undefined;
       /**
        * When the file is a stream, returns `true` when at the end of the
        * stream.
@@ -226,9 +226,9 @@ export type FileSystemReadResult = Outcome<
 export type FileSystemWriteArguments =
   | {
       path: FileSystemReadWritePath;
-      context: LLMContent[];
+      data: LLMContent[];
       /**
-       * When set to `true`, appends the context to the file, rather than
+       * When set to `true`, appends data to the file, rather than
        * overwriting it.
        */
       append?: boolean;
@@ -242,7 +242,7 @@ export type FileSystemWriteArguments =
     }
   | {
       path: FileSystemReadWritePath;
-      context: LLMContent[];
+      data: LLMContent[];
       stream: true;
       /**
        * A way to manage backpresssure and/or track read receipts.
@@ -285,20 +285,20 @@ export type FileSystemWriteResult = Outcome<void>;
 
 export type FileSystemEntry = {
   path: FileSystemPath;
-  context: LLMContent[];
+  data: LLMContent[];
 };
 
 export type FileSystemFile = {
   read(start?: number): Promise<FileSystemReadResult>;
   append(
-    context: LLMContent[],
+    data: LLMContent[],
     done: boolean,
     receipt?: boolean
   ): Promise<Outcome<void>>;
   copy(): Outcome<FileSystemFile>;
   queryEntry(path: FileSystemPath): FileSystemQueryEntry;
   delete(): Promise<FileSystemWriteResult>;
-  context: LLMContent[];
+  data: LLMContent[];
 };
 
 // Simplest possible backend.
