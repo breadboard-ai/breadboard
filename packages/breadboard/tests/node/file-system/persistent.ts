@@ -53,7 +53,7 @@ describe("FileSystem persistent store", () => {
   });
 
   it("is able to delete files/dirs in backend", async () => {
-    good(await fs.write({ path: "/local/dummy", context: null }));
+    good(await fs.write({ path: "/local/dummy", delete: true }));
     bad(await fs.read({ path: "/local/dummy" }));
 
     const foo = makeCx("foo");
@@ -68,7 +68,7 @@ describe("FileSystem persistent store", () => {
         "/local/foo/3",
       ]);
 
-    good(await fs.write({ path: "/local/foo/", context: null }));
+    good(await fs.write({ path: "/local/foo/", delete: true }));
 
     const listFooAgain = await fs.query({ path: "/local/foo/" });
     good(listFooAgain) && deepStrictEqual(justPaths(listFooAgain), []);

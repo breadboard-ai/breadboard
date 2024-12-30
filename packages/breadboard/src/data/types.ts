@@ -276,9 +276,9 @@ export type FileSystemWriteArguments =
   | {
       path: FileSystemReadWritePath;
       /**
-       * Set value to `null` to delete this file.
+       * Set to `true` to delete the file.
        */
-      context: null;
+      delete: true;
     };
 
 export type FileSystemWriteResult = Outcome<void>;

@@ -13,7 +13,6 @@ import {
   FileSystemReadResult,
   FileSystemWriteResult,
   Outcome,
-  PersistentBackend,
 } from "../types.js";
 import { err, ok } from "./utils.js";
 

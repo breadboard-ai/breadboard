@@ -49,7 +49,7 @@ describe("File System", () => {
     }
     const deleteResult = await fs.write({
       path: "/session/test",
-      context: null,
+      delete: true,
     });
     good(deleteResult);
     const repeatReadResult = await fs.read({
@@ -92,7 +92,7 @@ describe("File System", () => {
     if (good(readingBar)) {
       deepStrictEqual(readingBar.context, barContext);
     }
-    good(await fs.write({ path: "/session/test/", context: null }));
+    good(await fs.write({ path: "/session/test/", delete: true }));
     bad(await fs.read({ path: "/session/test/foo" }));
     bad(await fs.read({ path: "/session/test/bar" }));
   });

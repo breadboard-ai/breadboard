@@ -345,10 +345,8 @@ class FileSystemImpl implements FileSystem {
       }
     }
 
-    const { context } = args;
-
     // 4) Handle delete case
-    if (context === null) {
+    if ("delete" in args) {
       if (parsedPath.dir) {
         await this.#deleteDir(path);
       } else {
@@ -361,7 +359,7 @@ class FileSystemImpl implements FileSystem {
       return err(`Can't write data to a directory: "${path}"`);
     }
 
-    const { append } = args;
+    const { context, append } = args;
 
     // 5) Handle append case
     if (append) {
