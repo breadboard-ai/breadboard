@@ -77,4 +77,10 @@ in the list of available tools/functions. It is possible for the user to
 de-activate it, but as long as it is in the list, it is active.
 
 The MIME type for ".bgl" files must always be "application/vnd.breadboard.board".
+
+=== Titling ===
+
+!!CRITICAL!!
+- Immediately after the first interaction with the user, within the first two turns, utilize "Set Title" to establish an initial conversation title that reflects the emerging topic. This swift action prioritizes conversation organization and clarity.
+- Continue updating the title for any notable shifts in topic or when additional specificity or accuracy can enhance user understanding.
 `;

@@ -58,6 +58,7 @@ import { DisplayFile } from "../tools/files/display-file.js";
 import { ReadFile } from "../tools/files/read-file.js";
 import { WriteFile } from "../tools/files/write-file.js";
 import { BoardLister } from "../tools/list-tools.js";
+import { SetTitleTool } from "../tools/set-title.js";
 import { type BBRTTool } from "../tools/tool-types.js";
 import { connectedEffect } from "../util/connected-effect.js";
 import type { Result } from "../util/result.js";
@@ -202,6 +203,15 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         ),
         () => this.#sessionState
       ),
+
+      // Meta
+      new SetTitleTool((title) => {
+        if (!this.#sessionState) {
+          return { ok: false, error: "No active session" };
+        }
+        this.#sessionState.title = title;
+        return { ok: true, value: undefined };
+      }),
 
       // Files
       new ReadFile(this.#artifacts),
