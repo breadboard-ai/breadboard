@@ -78,7 +78,7 @@ class PersistentFile implements FileSystemFile {
   }
 
   delete(): Promise<FileSystemWriteResult> {
-    return this.backend.delete(this.path);
+    throw new Error("Method not implemented.");
   }
 
   data: LLMContent[] = [];

@@ -201,9 +201,9 @@ class FileSystemImpl implements FileSystem {
         return map;
       }
       file = map.get(path);
-    }
-    if (!file) {
-      return err(`File not found: "${path}"`);
+      if (!file) {
+        return err(`File not found: "${path}"`);
+      }
     }
 
     const result = await file.read(start);
@@ -250,7 +250,7 @@ class FileSystemImpl implements FileSystem {
             return copying;
           }
           if (move) {
-            return this.#local.delete(source);
+            return this.#local.delete(source, false);
           }
           return;
         } else {
@@ -288,7 +288,7 @@ class FileSystemImpl implements FileSystem {
           return err(`Source file "${path}" is empty`);
         }
         destinationMap.set(path, new SimpleFile(sourceContents.data));
-        return this.#local.delete(source);
+        return this.#local.delete(source, false);
       }
 
       const sourceMap = this.#getFileMap(sourcePath);
@@ -430,8 +430,7 @@ class FileSystemImpl implements FileSystem {
       return parsedPath;
     }
     if (parsedPath.persistent) {
-      const file = new PersistentFile(path, this.#local);
-      return file.delete();
+      return this.#local.delete(path, false);
     }
 
     const map = this.#getFileMap(parsedPath);
@@ -456,16 +455,7 @@ class FileSystemImpl implements FileSystem {
     }
 
     if (parsedPath.persistent) {
-      await this.#local.transaction(async (tx) => {
-        const list = await tx.query(path);
-        if (!ok(list)) {
-          return list;
-        }
-        for (const entry of list.entries) {
-          const file = new PersistentFile(entry.path, tx);
-          await file.delete();
-        }
-      });
+      await this.#local.delete(path, parsedPath.dir);
       return;
     }
 

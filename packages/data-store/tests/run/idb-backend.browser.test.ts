@@ -99,6 +99,9 @@ describe("IDB Backend", () => {
     const copying = await backend.copy("/local/foo", "/local/bar/test");
     good(copying);
 
+    const copying2 = await backend.copy("/local/foo", "/local/foo2");
+    good(copying2);
+
     const writingBaz = await backend.append("/local/baz", makeCx("baz"));
     good(writingBaz);
 
@@ -108,9 +111,10 @@ describe("IDB Backend", () => {
         "/local/bar/test",
         "/local/baz",
         "/local/foo",
+        "/local/foo2",
       ]);
 
-    const deletingFoo = await backend.delete("/local/foo");
+    const deletingFoo = await backend.delete("/local/foo", false);
     good(deletingFoo);
 
     const afterDeletingFoo = await backend.query("/local/");
@@ -118,9 +122,10 @@ describe("IDB Backend", () => {
       expect(justPaths(afterDeletingFoo)).to.deep.equal([
         "/local/bar/test",
         "/local/baz",
+        "/local/foo2",
       ]);
 
-    const deletingAll = await backend.delete("/local/");
+    const deletingAll = await backend.delete("/local/", true);
     good(deletingAll);
 
     const afterDeletingAll = await backend.query("/local/");
@@ -162,7 +167,7 @@ describe("IDB Backend", () => {
       const readingFoo = await tx.read("/local/foo");
       good(readingFoo) && expect(readingFoo).to.deep.equal(makeCx("foo"));
 
-      const deletingFoo = await tx.delete("/local/foo");
+      const deletingFoo = await tx.delete("/local/foo", false);
       good(deletingFoo);
     });
     good(txing);

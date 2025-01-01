@@ -35,20 +35,22 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
   map.set("/local/dummy", makeCx("dummy"));
   map.set("/local/dummy2", makeCx("dummy1", "dummy2"));
 
+  function startWith(prefix: FileSystemPath) {
+    return [...map.entries()].filter(([path]) => {
+      return path.startsWith(prefix);
+    });
+  }
+
   const local: PersistentBackend = {
     transaction(transactionHandler) {
       return transactionHandler(this);
     },
-    query: async (startWith) => {
+    query: async (path) => {
       {
         return {
-          entries: [...map.entries()]
-            .filter(([path]) => {
-              return path.startsWith(startWith);
-            })
-            .map(([path, entry]) => {
-              return { path, length: entry.length, stream: false };
-            }),
+          entries: startWith(path).map(([path, entry]) => {
+            return { path, length: entry.length, stream: false };
+          }),
         };
       }
     },
@@ -67,8 +69,14 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
         map.set(path, structuredClone(data));
       }
     },
-    delete: async (path) => {
-      map.delete(path);
+    delete: async (path, all) => {
+      if (all) {
+        startWith(path).forEach(([path]) => {
+          map.delete(path);
+        });
+      } else {
+        map.delete(path);
+      }
     },
     copy: async (source, destination) => {
       const entry = map.get(source);

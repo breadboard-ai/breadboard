@@ -144,10 +144,16 @@ class IDBBackend implements PersistentBackend {
     }
   }
 
-  async delete(path: FileSystemPath): Promise<FileSystemWriteResult> {
+  async delete(
+    path: FileSystemPath,
+    all: boolean
+  ): Promise<FileSystemWriteResult> {
     try {
       const db = await this.#db;
-      await db.delete("files", this.#startsWith(path));
+      await db.delete(
+        "files",
+        all ? this.#startsWith(path) : [this.#graphUrl, path]
+      );
     } catch (e) {
       return err((e as Error).message);
     }

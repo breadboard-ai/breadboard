@@ -311,7 +311,12 @@ export type BackendAtomicOperations = {
     path: FileSystemPath,
     data: LLMContent[]
   ): Promise<FileSystemWriteResult>;
-  delete(path: FileSystemPath): Promise<FileSystemWriteResult>;
+  /**
+   * Deletes files in persistent backend.
+   * @param path - path to the file to delete
+   * @param all - if `true`, will delete all files starting with `path`.
+   */
+  delete(path: FileSystemPath, all: boolean): Promise<FileSystemWriteResult>;
   copy(
     source: FileSystemPath,
     destination: FileSystemPath
