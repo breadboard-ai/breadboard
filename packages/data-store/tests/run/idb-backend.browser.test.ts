@@ -38,7 +38,7 @@ describe("IDB Backend", () => {
     await backend.clear();
   });
 
-  it("supports read/write/query", async () => {
+  it("supports read/append/query", async () => {
     const backend = new IDBBackend(url);
 
     const appending = await backend.append("/local/foo", makeCx("foo"));
@@ -63,6 +63,22 @@ describe("IDB Backend", () => {
     const querying = await backend.query("/local/");
     good(querying) &&
       expect(justPaths(querying)).to.deep.equal(["/local/bar", "/local/foo"]);
+  });
+
+  it("supports overwriting", async () => {
+    const backend = new IDBBackend(url);
+
+    const writingBar = await backend.write("/local/bar", makeCx("bar"));
+    good(writingBar);
+
+    const readingBar = await backend.read("/local/bar");
+    good(readingBar) && expect(readingBar).to.deep.equal(makeCx("bar"));
+
+    const writingBar2 = await backend.write("/local/bar", makeCx("bar2"));
+    good(writingBar2);
+
+    const readingBar2 = await backend.read("/local/bar");
+    good(readingBar2) && expect(readingBar2).to.deep.equal(makeCx("bar2"));
   });
 
   it("handles not found error", async () => {

@@ -59,6 +59,7 @@ class IDBBackend implements PersistentBackend {
       append: this.append.bind(this),
       delete: this.delete.bind(this),
       copy: this.copy.bind(this),
+      write: this.write.bind(this),
     };
   }
 
@@ -113,6 +114,23 @@ class IDBBackend implements PersistentBackend {
         return err(`File "${path}" not found.`);
       }
       return result.data;
+    } catch (e) {
+      return err((e as Error).message);
+    }
+  }
+
+  async write(
+    path: FileSystemPath,
+    data: LLMContent[]
+  ): Promise<FileSystemWriteResult> {
+    try {
+      const db = await this.#db;
+      await db.put("files", {
+        graphUrl: this.#graphUrl,
+        path,
+        data,
+        timestamp: Date.now(),
+      });
     } catch (e) {
       return err((e as Error).message);
     }

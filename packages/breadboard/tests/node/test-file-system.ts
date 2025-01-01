@@ -61,6 +61,9 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
       }
       return entry;
     },
+    write: async (path, data) => {
+      map.set(path, structuredClone(data));
+    },
     append: async (path, data) => {
       const entry = map.get(path);
       if (entry) {

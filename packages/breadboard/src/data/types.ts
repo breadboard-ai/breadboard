@@ -307,6 +307,10 @@ export type FileMap = Map<FileSystemPath, FileSystemFile>;
 export type BackendAtomicOperations = {
   query(path: FileSystemPath): Promise<FileSystemQueryResult>;
   read(path: FileSystemPath): Promise<Outcome<LLMContent[]>>;
+  write(
+    path: FileSystemPath,
+    data: LLMContent[]
+  ): Promise<FileSystemWriteResult>;
   append(
     path: FileSystemPath,
     data: LLMContent[]

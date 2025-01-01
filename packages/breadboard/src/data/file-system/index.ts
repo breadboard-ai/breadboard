@@ -244,7 +244,6 @@ class FileSystemImpl implements FileSystem {
 
       if (parsedPath.persistent) {
         if (sourcePath.persistent) {
-          // TODO: Support "move".
           const copying = this.#local.copy(source, path);
           if (!ok(copying)) {
             return copying;
@@ -254,7 +253,6 @@ class FileSystemImpl implements FileSystem {
           }
           return;
         } else {
-          // TODO: Support "move".
           const sourceMap = this.#getFileMap(sourcePath);
           if (!ok(sourceMap)) {
             return sourceMap;
@@ -264,8 +262,7 @@ class FileSystemImpl implements FileSystem {
             return err(`Source file not found: "${source}"`);
           }
 
-          const dest = new PersistentFile(path, this.#local);
-          await dest.append(file.data, false, false);
+          await this.#local.write(path, file.data);
           if (move) {
             sourceMap.delete(source);
           }
@@ -364,8 +361,7 @@ class FileSystemImpl implements FileSystem {
     // 5) Handle append case
     if (append) {
       if (parsedPath.persistent) {
-        const file = new PersistentFile(path, this.#local);
-        return file.append(data, false);
+        return this.#local.append(path, data);
       }
 
       const map = this.#getFileMap(parsedPath);
@@ -381,8 +377,7 @@ class FileSystemImpl implements FileSystem {
 
     // 6) otherwise, fall through to create a new file
     if (parsedPath.persistent) {
-      const file = new PersistentFile(path, this.#local);
-      return file.append(data, false);
+      return this.#local.write(path, data);
     }
 
     const file = new SimpleFile(data);
