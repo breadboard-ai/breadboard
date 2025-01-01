@@ -5,6 +5,7 @@
  */
 
 import type {
+  DataPart,
   DataStoreHandle,
   InlineDataCapabilityPart,
   LLMContent,
@@ -325,6 +326,7 @@ export type BackendAtomicOperations = {
     source: FileSystemPath,
     destination: FileSystemPath
   ): Promise<FileSystemWriteResult>;
+  blobs(): FileSystemBlobStore;
 };
 
 export type BackendTransaction = BackendAtomicOperations;
@@ -343,6 +345,38 @@ export type OuterFileSystems = {
   assets: FileSystemEntry[];
   session?: FileMap;
   run?: FileMap;
+};
+
+export type FileSystemBlobTransform = {
+  transform(
+    path: FileSystemPath,
+    part: DataPart
+  ): Promise<Outcome<InlineDataCapabilityPart | StoredDataCapabilityPart>>;
+};
+
+export type FileSystemBlobStore = {
+  /**
+   * Deletes blobs associated with the provided `path`.
+   * If `options.all` is true, treats the provided path as
+   * a directory and deletes all blobs associated with paths
+   * that start with `path`.
+   */
+  delete(
+    path: FileSystemPath,
+    options?: { all?: boolean }
+  ): Promise<Outcome<void>>;
+
+  /**
+   * Creates a transform that inflates all stored parts, converting
+   * them from storedDataPart to inlineDataPart.
+   */
+  inflator(): FileSystemBlobTransform;
+
+  /**
+   * Creates a transform that deflates all inline paerts, converting
+   * them from inlineDataPart to storedDataPart.
+   */
+  deflator(): FileSystemBlobTransform;
 };
 
 export type FileSystem = {

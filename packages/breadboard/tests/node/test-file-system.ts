@@ -17,7 +17,7 @@ import {
 import { deepStrictEqual, fail, ok } from "node:assert";
 import { err } from "../../src/data/file-system/utils.js";
 
-export { good, bad, makeFs, makeCx, justPaths, last };
+export { good, bad, makeFs, makeCx, makeDataCx, justPaths, last };
 
 function bad<T>(o: Outcome<T>) {
   ok(o && typeof o === "object" && "$error" in o, "outcome must be an error");
@@ -88,12 +88,23 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
       }
       map.set(destination, entry);
     },
+    blobs: () => {
+      throw new Error("Not yet implemented");
+    },
   };
   return new FileSystemImpl({ local, env, assets });
 }
 
 function makeCx(...items: string[]): LLMContent[] {
   return items.map((text) => ({ parts: [{ text }] }));
+}
+
+function makeDataCx(...items: string[][]): LLMContent[] {
+  return items.map((part) => ({
+    parts: part.map((data) => ({
+      inlineData: { mimeType: "text/plain", data },
+    })),
+  }));
 }
 
 function justPaths(q: FileSystemQueryResult) {
