@@ -5,7 +5,6 @@
  */
 
 import type {
-  DataPart,
   DataStoreHandle,
   InlineDataCapabilityPart,
   LLMContent,
@@ -350,7 +349,7 @@ export type OuterFileSystems = {
 export type FileSystemBlobTransform = {
   transform(
     path: FileSystemPath,
-    part: DataPart
+    part: InlineDataCapabilityPart | StoredDataCapabilityPart
   ): Promise<Outcome<InlineDataCapabilityPart | StoredDataCapabilityPart>>;
 };
 
@@ -377,6 +376,12 @@ export type FileSystemBlobStore = {
    * them from inlineDataPart to storedDataPart.
    */
   deflator(): FileSystemBlobTransform;
+
+  /**
+   * Does any necessary clean up at the end of the blob
+   * store lifecycle.
+   */
+  close(): Promise<void>;
 };
 
 export type FileSystem = {

@@ -122,7 +122,9 @@ export const isSerializedData = (
 export async function asBase64(file: File | Blob): Promise<string> {
   if ("Buffer" in globalThis) {
     // Node.js implementation, since Node.js doesn't have FileReader.
-    return Buffer.from(await file.arrayBuffer()).toString("base64");
+    return Buffer.from(await file.arrayBuffer())
+      .toString("base64")
+      .replace(/=+$/, "");
   } else {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();

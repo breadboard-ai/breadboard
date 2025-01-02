@@ -22,7 +22,7 @@ async function transformBlobs(
     const parts: DataPart[] = [];
     for (const part of entry.parts) {
       let newPart: TransformOutcome = part;
-      if ("inlineData" in part || "storedData" in part) {
+      if ("inlineData" in newPart || "storedData" in newPart) {
         for (const transformer of pipeline) {
           newPart = await transformer.transform(path, newPart);
           if (!ok(newPart)) {

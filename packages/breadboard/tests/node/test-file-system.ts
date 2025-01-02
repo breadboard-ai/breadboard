@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LLMContent } from "@breadboard-ai/types";
+import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
 import { FileSystemImpl } from "../../src/data/file-system/index.js";
 import {
   FileSystemEntry,
@@ -17,7 +17,7 @@ import {
 import { deepStrictEqual, fail, ok } from "node:assert";
 import { err } from "../../src/data/file-system/utils.js";
 
-export { good, bad, makeFs, makeCx, makeDataCx, justPaths, last };
+export { good, bad, makeFs, makeCx, inline, makeDataCx, justPaths, last };
 
 function bad<T>(o: Outcome<T>) {
   ok(o && typeof o === "object" && "$error" in o, "outcome must be an error");
@@ -99,11 +99,13 @@ function makeCx(...items: string[]): LLMContent[] {
   return items.map((text) => ({ parts: [{ text }] }));
 }
 
+function inline(data: string): InlineDataCapabilityPart {
+  return { inlineData: { data, mimeType: "text/plain" } };
+}
+
 function makeDataCx(...items: string[][]): LLMContent[] {
   return items.map((part) => ({
-    parts: part.map((data) => ({
-      inlineData: { mimeType: "text/plain", data },
-    })),
+    parts: part.map((data) => inline(data)),
   }));
 }
 
