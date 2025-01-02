@@ -345,6 +345,7 @@ export type PersistentBackend = BackendAtomicOperations & {
 export type OuterFileSystems = {
   local: PersistentBackend;
   env: FileSystemEntry[];
+  blobs?: FileSystemBlobStore;
   assets: FileSystemEntry[];
   session?: FileMap;
   run?: FileMap;

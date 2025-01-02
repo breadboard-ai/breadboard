@@ -340,6 +340,28 @@ describe("File System", () => {
     }
   });
 
+  it("correctly deflates on append", async () => {
+    const fs = makeFs();
+    good(
+      await fs.write({
+        path: "/session/bar",
+        data: makeCx("bar"),
+      })
+    );
+    good(
+      await fs.write({
+        path: "/session/bar",
+        data: makeDataCx(["barData"]),
+        append: true,
+      })
+    );
+    const readBack = await fs.read({ path: "/session/bar" });
+    if (good(readBack)) {
+      const part = readBack.data?.at(1)?.parts?.at(0);
+      ok(part && "storedData" in part);
+    }
+  });
+
   it("can inflate on read", async () => {
     const fs = makeFs();
     good(

@@ -33,14 +33,6 @@ describe("File System in-memory blob store", () => {
       good(result) && ok("storedData" in result);
     }
     deepStrictEqual(store.handles.size, 3);
-    good(await store.delete("/tmp/bar"));
-    deepStrictEqual(store.handles.size, 2);
-    good(await store.delete("/tmp/random"));
-    deepStrictEqual(store.handles.size, 2);
-    good(await store.delete("/tmp/"));
-    deepStrictEqual(store.handles.size, 2);
-    good(await store.delete("/tmp/", { all: true }));
-    deepStrictEqual(store.handles.size, 0);
   });
 
   it("inflates deflated parts", async () => {

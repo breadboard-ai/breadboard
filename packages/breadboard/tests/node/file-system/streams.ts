@@ -8,7 +8,14 @@ import { afterEach, beforeEach, describe, it } from "node:test";
 import { FileSystemImpl } from "../../../src/data/file-system/index.js";
 import { deepStrictEqual, ok } from "node:assert";
 
-import { bad, good, justPaths, makeCx, makeFs } from "../test-file-system.js";
+import {
+  bad,
+  good,
+  justPaths,
+  makeCx,
+  makeDataCx,
+  makeFs,
+} from "../test-file-system.js";
 
 // Helper function to test that a promise never resolves
 async function neverResolves(
@@ -122,5 +129,20 @@ describe("FileSystem stream files", () => {
       await fs.write({ path: "/tmp/foo", data: makeCx("bar"), stream: true })
     );
     bad(await fs.write({ path: "/tmp/bar", source: "/tmp/foo" }));
+  });
+
+  it("deflates stream data", async () => {
+    good(
+      await fs.write({
+        path: "/tmp/bar",
+        data: makeDataCx(["bar1"]),
+        stream: true,
+      })
+    );
+    const readBar1 = await fs.read({ path: "/tmp/bar" });
+    if (good(readBar1)) {
+      const part = readBar1.data?.at(0)?.parts?.at(0);
+      ok(part && "storedData" in part);
+    }
   });
 });

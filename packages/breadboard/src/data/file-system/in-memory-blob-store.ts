@@ -57,19 +57,9 @@ class InMemoryBlobStore implements FileSystemBlobStore {
     this.handles.delete(path);
   }
 
-  async delete(
-    path: FileSystemPath,
-    { all = false }: { all?: boolean } = {}
-  ): Promise<Outcome<void>> {
-    if (all) {
-      [...this.handles.keys()]
-        .filter((path) => path.startsWith(path))
-        .forEach((path) => {
-          this.#deleteHandlesForPath(path);
-        });
-    } else {
-      this.#deleteHandlesForPath(path);
-    }
+  async delete(): Promise<Outcome<void>> {
+    // blobs are scoped to the session, so we don't ever delete
+    // anything.
   }
 
   inflator(): FileSystemBlobTransform {

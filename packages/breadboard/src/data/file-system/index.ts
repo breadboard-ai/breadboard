@@ -21,6 +21,7 @@ import {
   Outcome,
   FileMap,
   PersistentBackend,
+  FileSystemBlobStore,
 } from "../types.js";
 import { Path } from "./path.js";
 import { err, ok } from "./utils.js";
@@ -144,23 +145,34 @@ class SimpleFile implements FileSystemFile {
 
 class FileSystemImpl implements FileSystem {
   #local: PersistentBackend;
-  #session: FileMap;
-  #run: FileMap;
-  #tmp: FileMap;
   #env: FileMap;
   #assets: FileMap;
+
+  #blobs: FileSystemBlobStore;
+  #ownsBlobs: boolean;
+
+  #session: FileMap;
   #ownsSession: boolean;
+
+  #run: FileMap;
   #ownsRun: boolean;
-  #transientBlobs: InMemoryBlobStore = new InMemoryBlobStore();
+
+  #tmp: FileMap;
 
   constructor(outer: OuterFileSystems) {
     this.#local = outer.local;
     this.#env = SimpleFile.fromEntries(outer.env);
     this.#assets = SimpleFile.fromEntries(outer.assets);
+
+    this.#ownsBlobs = !outer.blobs;
+    this.#blobs = outer.blobs ? outer.blobs : new InMemoryBlobStore();
+
     this.#ownsSession = !outer.session;
-    this.#ownsRun = !outer.run;
     this.#session = outer.session ? outer.session : new Map();
+
+    this.#ownsRun = !outer.run;
     this.#run = outer.run ? outer.run : new Map();
+
     this.#tmp = new Map();
   }
 
@@ -224,7 +236,7 @@ class FileSystemImpl implements FileSystem {
         }
       } else if (inflate && result.data) {
         const inflating = await transformBlobs(path, result.data, [
-          this.#transientBlobs.inflator(),
+          this.#blobs.inflator(),
         ]);
         if (!ok(inflating)) {
           return inflating;
@@ -350,7 +362,13 @@ class FileSystemImpl implements FileSystem {
           map.set(path, file);
         }
         const { receipt, data } = args;
-        return file.append(data, false, receipt);
+        const deflated = await transformBlobs(path, data, [
+          this.#blobs.deflator(),
+        ]);
+        if (!ok(deflated)) {
+          return deflated;
+        }
+        return file.append(deflated, false, receipt);
       }
     }
 
@@ -383,7 +401,13 @@ class FileSystemImpl implements FileSystem {
 
       const file = map.get(path);
       if (file) {
-        return file.append(data, false);
+        const deflated = await transformBlobs(path, data, [
+          this.#blobs.deflator(),
+        ]);
+        if (!ok(deflated)) {
+          return deflated;
+        }
+        return file.append(deflated, false);
       }
     }
 
@@ -392,7 +416,7 @@ class FileSystemImpl implements FileSystem {
       return this.#local.write(path, data);
     } else {
       const deflated = await transformBlobs(path, data, [
-        this.#transientBlobs.deflator(),
+        this.#blobs.deflator(),
       ]);
       if (!ok(deflated)) {
         return deflated;
@@ -500,7 +524,9 @@ class FileSystemImpl implements FileSystem {
       );
     }
 
-    await this.#transientBlobs.close();
+    if (this.#ownsBlobs) {
+      await this.#blobs.close();
+    }
   }
 
   createModuleFileSystem(): FileSystem {
@@ -508,6 +534,7 @@ class FileSystemImpl implements FileSystem {
       local: this.#local,
       env: mapToEntries(this.#env),
       assets: mapToEntries(this.#assets),
+      blobs: this.#blobs,
       session: this.#session,
       run: this.#run,
     });
@@ -518,6 +545,7 @@ class FileSystemImpl implements FileSystem {
       local: this.#local,
       env: mapToEntries(this.#env),
       assets: mapToEntries(this.#assets),
+      blobs: this.#blobs,
       session: this.#session,
     });
   }
