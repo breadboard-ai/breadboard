@@ -229,12 +229,14 @@ class FileSystemImpl implements FileSystem {
 
     if (!parsedPath.persistent) {
       if ("done" in result) {
+        // Handle end of stream.
         const { done } = result;
         if (done) {
           // We are done with the stream, delete the file.
           this.#deleteFile(path);
         }
       } else if (inflate && result.data) {
+        // Handle inflating transient data.
         const inflating = await transformBlobs(path, result.data, [
           this.#blobs.inflator(),
         ]);
@@ -243,6 +245,15 @@ class FileSystemImpl implements FileSystem {
         }
         return { data: inflating, last: result.last };
       }
+    } else if (inflate && result.data) {
+      // Handle inflating persistent data.
+      const inflating = await transformBlobs(path, result.data, [
+        this.#local.blobs().inflator(),
+      ]);
+      if (!ok(inflating)) {
+        return inflating;
+      }
+      return { ...result, data: inflating };
     }
     return result;
   }

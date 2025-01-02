@@ -13,6 +13,8 @@ import {
   PersistentBackend,
   Outcome,
   FileSystemReadResult,
+  FileSystemBlobStore,
+  FileSystemBlobTransform,
 } from "../../src/data/types.js";
 import { deepStrictEqual, fail, ok } from "node:assert";
 import { err } from "../../src/data/file-system/utils.js";
@@ -29,7 +31,11 @@ function good<T>(o: Outcome<T>): o is T {
   return !error;
 }
 
-function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
+function makeFs(
+  env: FileSystemEntry[] = [],
+  assets: FileSystemEntry[] = [],
+  logger: (event: string) => void = () => {}
+) {
   const map = new Map<FileSystemPath, LLMContent[]>();
   // Add dummy file.
   map.set("/local/dummy", makeCx("dummy"));
@@ -40,6 +46,29 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
       return path.startsWith(prefix);
     });
   }
+
+  const blobs: FileSystemBlobStore = {
+    delete: function (
+      path: FileSystemPath,
+      options?: { all?: boolean }
+    ): Promise<Outcome<void>> {
+      throw new Error("Function not implemented.");
+    },
+    inflator: function (): FileSystemBlobTransform {
+      return {
+        transform: async (path, part) => {
+          logger(`inflate ${path}`);
+          return part;
+        },
+      };
+    },
+    deflator: function (): FileSystemBlobTransform {
+      throw new Error("Function not implemented.");
+    },
+    close: function (): Promise<void> {
+      throw new Error("Function not implemented.");
+    },
+  };
 
   const local: PersistentBackend = {
     transaction(transactionHandler) {
@@ -89,7 +118,7 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
       map.set(destination, entry);
     },
     blobs: () => {
-      throw new Error("Not yet implemented");
+      return blobs;
     },
   };
   return new FileSystemImpl({ local, env, assets });

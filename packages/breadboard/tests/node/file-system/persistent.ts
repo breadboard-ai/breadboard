@@ -8,17 +8,28 @@ import { afterEach, beforeEach, describe, it } from "node:test";
 import { FileSystemImpl } from "../../../src/data/file-system/index.js";
 import { deepStrictEqual } from "node:assert";
 
-import { bad, good, justPaths, makeCx, makeFs } from "../test-file-system.js";
+import {
+  bad,
+  good,
+  justPaths,
+  makeCx,
+  makeDataCx,
+  makeFs,
+} from "../test-file-system.js";
 
 describe("FileSystem persistent store", () => {
   let fs: FileSystemImpl;
+  const log: string[] = [];
 
   beforeEach(() => {
-    fs = makeFs();
+    fs = makeFs([], [], (e) => {
+      log.push(e);
+    });
   });
 
   afterEach(async () => {
     await fs.close();
+    log.length = 0;
   });
 
   it("is able to query backend", async () => {
@@ -120,5 +131,13 @@ describe("FileSystem persistent store", () => {
     const readBaz = await fs.read({ path: "/local/baz" });
     good(readBaz) && deepStrictEqual(readBaz.data, makeCx("baz"));
     bad(await fs.read({ path: "/tmp/baz" }));
+  });
+
+  it("is able to inflate on read", async () => {
+    const foo = makeDataCx(["foo"]);
+    good(await fs.write({ path: "/local/foo", data: foo }));
+    const readFoo = await fs.read({ path: "/local/foo", inflate: true });
+    good(readFoo) && deepStrictEqual(readFoo.data, foo);
+    deepStrictEqual(log, [`inflate /local/foo`]);
   });
 });

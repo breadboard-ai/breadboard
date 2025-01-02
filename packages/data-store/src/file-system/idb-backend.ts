@@ -9,6 +9,7 @@ import {
   BackendAtomicOperations,
   BackendTransaction,
   BackendTransactionResult,
+  FileSystemBlobStore,
   FileSystemPath,
   FileSystemQueryResult,
   FileSystemWriteResult,
@@ -60,6 +61,7 @@ class IDBBackend implements PersistentBackend {
       delete: this.delete.bind(this),
       copy: this.copy.bind(this),
       write: this.write.bind(this),
+      blobs: this.blobs.bind(this),
     };
   }
 
@@ -219,6 +221,10 @@ class IDBBackend implements PersistentBackend {
     } catch (e) {
       return err((e as Error).message);
     }
+  }
+
+  blobs(): FileSystemBlobStore {
+    throw new Error("Not yet implemented");
   }
 
   async clear(): Promise<void> {
