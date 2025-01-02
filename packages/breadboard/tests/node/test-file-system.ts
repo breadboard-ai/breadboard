@@ -48,11 +48,8 @@ function makeFs(
   }
 
   const blobs: FileSystemBlobStore = {
-    delete: function (
-      path: FileSystemPath,
-      options?: { all?: boolean }
-    ): Promise<Outcome<void>> {
-      throw new Error("Function not implemented.");
+    delete: async function (): Promise<Outcome<void>> {
+      // do nothing.
     },
     inflator: function (): FileSystemBlobTransform {
       return {
@@ -63,10 +60,15 @@ function makeFs(
       };
     },
     deflator: function (): FileSystemBlobTransform {
-      throw new Error("Function not implemented.");
+      return {
+        transform: async (path, part) => {
+          logger(`deflate ${path}`);
+          return part;
+        },
+      };
     },
-    close: function (): Promise<void> {
-      throw new Error("Function not implemented.");
+    close: async function (): Promise<void> {
+      // do nothing.
     },
   };
 

@@ -402,7 +402,13 @@ class FileSystemImpl implements FileSystem {
     // 5) Handle append case
     if (append) {
       if (parsedPath.persistent) {
-        return this.#local.append(path, data);
+        const deflated = await transformBlobs(path, data, [
+          this.#local.blobs().deflator(),
+        ]);
+        if (!ok(deflated)) {
+          return deflated;
+        }
+        return this.#local.append(path, deflated);
       }
 
       const map = this.#getFileMap(parsedPath);
@@ -424,7 +430,13 @@ class FileSystemImpl implements FileSystem {
 
     // 6) otherwise, fall through to create a new file
     if (parsedPath.persistent) {
-      return this.#local.write(path, data);
+      const deflated = await transformBlobs(path, data, [
+        this.#local.blobs().deflator(),
+      ]);
+      if (!ok(deflated)) {
+        return deflated;
+      }
+      return this.#local.write(path, deflated);
     } else {
       const deflated = await transformBlobs(path, data, [
         this.#blobs.deflator(),

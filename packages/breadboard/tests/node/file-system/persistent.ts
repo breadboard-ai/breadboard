@@ -133,11 +133,18 @@ describe("FileSystem persistent store", () => {
     bad(await fs.read({ path: "/tmp/baz" }));
   });
 
+  it("deflates on write and append", async () => {
+    const foo = makeDataCx(["foo"]);
+    good(await fs.write({ path: "/local/foo", data: foo }));
+    good(await fs.write({ path: "/local/foo", data: foo, append: true }));
+    deepStrictEqual(log, [`deflate /local/foo`, `deflate /local/foo`]);
+  });
+
   it("is able to inflate on read", async () => {
     const foo = makeDataCx(["foo"]);
     good(await fs.write({ path: "/local/foo", data: foo }));
     const readFoo = await fs.read({ path: "/local/foo", inflate: true });
     good(readFoo) && deepStrictEqual(readFoo.data, foo);
-    deepStrictEqual(log, [`inflate /local/foo`]);
+    deepStrictEqual(log, [`deflate /local/foo`, `inflate /local/foo`]);
   });
 });
