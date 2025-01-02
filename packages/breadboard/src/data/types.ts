@@ -194,6 +194,10 @@ export type FileSystemReadArguments = {
    * Negative values count back from the last item in the array.
    */
   start?: number;
+  /**
+   * When set to `true`, inflates all stored parts to inline parts
+   */
+  inflate?: boolean;
 };
 
 export type FileSystemReadResult = Outcome<

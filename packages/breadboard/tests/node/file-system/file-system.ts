@@ -13,6 +13,7 @@ import {
   justPaths,
   last,
   makeCx,
+  makeDataCx,
   makeFs,
 } from "../test-file-system.js";
 
@@ -322,5 +323,32 @@ describe("File System", () => {
       deepStrictEqual(readCopy.data, makeCx("foo1", "foo2", "foo3"));
       last(readCopy, 2);
     }
+  });
+
+  it("correctly deflates on write", async () => {
+    const fs = makeFs();
+    good(
+      await fs.write({
+        path: "/session/bar",
+        data: makeDataCx(["foo1"]),
+      })
+    );
+    const readBack = await fs.read({ path: "/session/bar" });
+    if (good(readBack)) {
+      const part = readBack.data?.at(0)?.parts?.at(0);
+      ok(part && "storedData" in part);
+    }
+  });
+
+  it("can inflate on read", async () => {
+    const fs = makeFs();
+    good(
+      await fs.write({
+        path: "/session/bar",
+        data: makeDataCx(["foo"]),
+      })
+    );
+    const readBack = await fs.read({ path: "/session/bar", inflate: true });
+    good(readBack) && deepStrictEqual(readBack.data, makeDataCx(["foo"]));
   });
 });

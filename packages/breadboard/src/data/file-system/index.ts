@@ -25,6 +25,8 @@ import {
 import { Path } from "./path.js";
 import { err, ok } from "./utils.js";
 import { PersistentFile } from "./persistent-file.js";
+import { InMemoryBlobStore } from "./in-memory-blob-store.js";
+import { transformBlobs } from "./blob-transform.js";
 
 export { FileSystemImpl, Path };
 
@@ -149,6 +151,7 @@ class FileSystemImpl implements FileSystem {
   #assets: FileMap;
   #ownsSession: boolean;
   #ownsRun: boolean;
+  #transientBlobs: InMemoryBlobStore = new InMemoryBlobStore();
 
   constructor(outer: OuterFileSystems) {
     this.#local = outer.local;
@@ -185,6 +188,7 @@ class FileSystemImpl implements FileSystem {
   async read({
     path,
     start,
+    inflate,
   }: FileSystemReadArguments): Promise<FileSystemReadResult> {
     const parsedPath = Path.create(path);
     if (!ok(parsedPath)) {
@@ -218,6 +222,14 @@ class FileSystemImpl implements FileSystem {
           // We are done with the stream, delete the file.
           this.#deleteFile(path);
         }
+      } else if (inflate && result.data) {
+        const inflating = await transformBlobs(path, result.data, [
+          this.#transientBlobs.inflator(),
+        ]);
+        if (!ok(inflating)) {
+          return inflating;
+        }
+        return { data: inflating, last: result.last };
       }
     }
     return result;
@@ -378,15 +390,21 @@ class FileSystemImpl implements FileSystem {
     // 6) otherwise, fall through to create a new file
     if (parsedPath.persistent) {
       return this.#local.write(path, data);
-    }
+    } else {
+      const deflated = await transformBlobs(path, data, [
+        this.#transientBlobs.deflator(),
+      ]);
+      if (!ok(deflated)) {
+        return deflated;
+      }
+      const file = new SimpleFile(deflated);
+      const map = this.#getFileMap(parsedPath);
+      if (!ok(map)) {
+        return map;
+      }
 
-    const file = new SimpleFile(data);
-    const map = this.#getFileMap(parsedPath);
-    if (!ok(map)) {
-      return map;
+      map.set(path, file);
     }
-
-    map.set(path, file);
   }
 
   #getFileMap(parsedPath: Path): Outcome<FileMap> {
@@ -481,6 +499,8 @@ class FileSystemImpl implements FileSystem {
         })
       );
     }
+
+    await this.#transientBlobs.close();
   }
 
   createModuleFileSystem(): FileSystem {
