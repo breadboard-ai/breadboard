@@ -86,6 +86,18 @@ If no billing account exists, you must enable billing in the [Google Cloud
 Console](https://console.cloud.google.com/billing/enable) in order to create an
 App Engine application.
 
+1. Add a billing account to your cloud project
+
+![Screenshot - enable Cloud Billing](/breadboard/static/images/from-scratch/cloud-billing-enable.png)
+
+2. Select your country and agree to the terms of service
+
+![Screenshot - select country and agree to terms](/breadboard/static/images/from-scratch/cloud-billing-step-1.png)
+
+3. Enter payment information
+
+![Screenshot - enter payment information](/breadboard/static/images/from-scratch/cloud-billing-step-2.png)
+
 ### Create the App Engine application
 
 Run the following command to create an App Engine application.
@@ -406,10 +418,14 @@ user grants your Cloud project permission to read their Drive files.
      organization to use your application, you may select the **Internal** user
      type
 
+![Screenshot - configure OAuth consent screen](/breadboard/static/images/from-scratch/oauth-start.png)
+
 3. Provide **App name**, **User support email**, and **Developer contact
    information**.
 
    - Other fields may be skipped for now.
+
+![Screenshot - provide app information](/breadboard/static/images/from-scratch/oauth-app-information.png)
 
 4. For **Authorized Domains**, provide the domain of your Visual Editor instance
 
@@ -427,6 +443,8 @@ user grants your Cloud project permission to read their Drive files.
    - This is a much less permissive scope than the full **`drive`** scope, which
      gives the application complete, unrestricted access to the user's Drive.
 
+![Screenshot - add drive.file scope](/breadboard/static/images/from-scratch/oauth-scopes.png)
+
 7. Add the users that you want to authorize to use your application.
 
    - All applications begin in "Testing" mode. Access to your application is
@@ -436,11 +454,16 @@ user grants your Cloud project permission to read their Drive files.
    - To open your application to all users, you will need to complete the [app
      verification process](https://support.google.com/cloud/answer/13463073?hl=en)
 
+![Screenshot - add authorized users](/breadboard/static/images/from-scratch/oauth-users.png)
+
 ##### Create an OAuth credential
 
 1. Go to [Credentials](https://console.cloud.google.com/apis/credentials) in
    Google Cloud console
 2. Click **CREATE CREDENTIALS > OAuth Client ID**
+
+![Screenshot - create OAuth client](/breadboard/static/images/from-scratch/oauth-create-client.png)
+
 3. Set the **Application type** to **Web application**
 4. Give the credential a name.
 
@@ -459,6 +482,8 @@ user grants your Cloud project permission to read their Drive files.
 
 7. Click **CREATE** to finish creating the credential
 
+![Screenshot - configure OAuth client](/breadboard/static/images/from-scratch/oauth-client-config.png)
+
 > [!WARNING]
 > You will be shown a confirmation dialog with details of your new credential,
 > including a client secret value. This client secret is highly sensitive. Do not
@@ -471,6 +496,9 @@ user grants your Cloud project permission to read their Drive files.
 1. Go to [Credentials](https://console.cloud.google.com/apis/credentials) in
    Google Cloud console
 2. Find your OAuth client ID and click **Download OAuth client**
+
+![Screenshot - download OAuth client](/breadboard/static/images/from-scratch/oauth-client-secret.png)
+
 3. Download the JSON file to your local filesystem
 
 > [!WARNING]
@@ -519,6 +547,12 @@ gcloud app deploy
 Your Connection Server is now configured to serve access tokens for the Google
 Drive API. You can see the configured connection (and sign in to the Drive API)
 in the **Settings > Connections** menu in the Visual Editor.
+
+![Screenshot - sign in to Google Drive](/breadboard/static/images/from-scratch/drive-sign-in.png)
+
+![Screenshot - confirm unverified application](/breadboard/static/images/from-scratch/drive-unverified-app.png)
+
+![Screenshot - grant Drive access](/breadboard/static/images/from-scratch/drive-grant-access.png)
 
 ---
 
