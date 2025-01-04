@@ -236,7 +236,7 @@ class FileSystemImpl implements FileSystem {
           this.#deleteFile(path);
         }
       } else if (inflate && result.data) {
-        // Handle inflating transient data.
+        // Handle inflating ephemeral data.
         const inflating = await transformBlobs(path, result.data, [
           this.#blobs.inflator(),
         ]);
@@ -279,15 +279,29 @@ class FileSystemImpl implements FileSystem {
 
       if (parsedPath.persistent) {
         if (sourcePath.persistent) {
-          const copying = this.#local.copy(source, path);
+          // a) Persistent -> Persistent
+          const copying = await this.#local.copy(source, path);
           if (!ok(copying)) {
             return copying;
           }
           if (move) {
-            return this.#local.delete(source, false);
+            const deleting = await this.#local.delete(source, false);
+            if (!ok(deleting)) {
+              return deleting;
+            }
+            const movingBlobs = await this.#local.blobs().move(source, path);
+            if (!ok(movingBlobs)) {
+              return movingBlobs;
+            }
+          } else {
+            const copyingBlobs = await this.#local.blobs().copy(source, path);
+            if (!ok(copyingBlobs)) {
+              return copyingBlobs;
+            }
           }
           return;
         } else {
+          // b) Ephemeral -> Persistent
           const sourceMap = this.#getFileMap(sourcePath);
           if (!ok(sourceMap)) {
             return sourceMap;
@@ -297,7 +311,17 @@ class FileSystemImpl implements FileSystem {
             return err(`Source file not found: "${source}"`);
           }
 
-          await this.#local.write(path, file.data);
+          const deflated = await transformBlobs(path, file.data, [
+            this.#local.blobs().deflator(),
+          ]);
+          if (!ok(deflated)) {
+            return deflated;
+          }
+          const writing = await this.#local.write(path, deflated);
+          if (!ok(writing)) {
+            return writing;
+          }
+
           if (move) {
             sourceMap.delete(source);
           }
@@ -306,6 +330,7 @@ class FileSystemImpl implements FileSystem {
       }
 
       if (sourcePath.persistent) {
+        // c) Persistent -> Ephemeral
         const sourceFile = new PersistentFile(source, this.#local);
         const sourceContents = await sourceFile.read();
         if (!ok(sourceContents)) {
@@ -323,6 +348,7 @@ class FileSystemImpl implements FileSystem {
         return this.#local.delete(source, false);
       }
 
+      // d) Ephemeral -> Ephemeral
       const sourceMap = this.#getFileMap(sourcePath);
       if (!ok(sourceMap)) {
         return sourceMap;

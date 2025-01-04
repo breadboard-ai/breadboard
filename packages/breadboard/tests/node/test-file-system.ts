@@ -67,6 +67,18 @@ function makeFs(
         },
       };
     },
+    copy: async function (
+      source: FileSystemPath,
+      destination: FileSystemPath
+    ): Promise<Outcome<void>> {
+      logger(`copy ${source} to ${destination}`);
+    },
+    move: async function (
+      source: FileSystemPath,
+      destination: FileSystemPath
+    ): Promise<Outcome<void>> {
+      logger(`move ${source} to ${destination}`);
+    },
     close: async function (): Promise<void> {
       // do nothing.
     },

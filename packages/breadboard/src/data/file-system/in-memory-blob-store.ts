@@ -70,6 +70,14 @@ class InMemoryBlobStore implements FileSystemBlobStore {
     return this.#deflator;
   }
 
+  async copy(): Promise<Outcome<void>> {
+    // a no op, there's nothing here to do.
+  }
+
+  async move(): Promise<Outcome<void>> {
+    // a no op, there's nothing here to do.
+  }
+
   async close(): Promise<void> {
     [...this.handles.keys()].forEach((path) => {
       this.#deleteHandlesForPath(path);

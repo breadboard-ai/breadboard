@@ -387,6 +387,22 @@ export type FileSystemBlobStore = {
    * store lifecycle.
    */
   close(): Promise<void>;
+
+  /**
+   * Ensures blob reference integrity when a copy of a file is made.
+   */
+  copy(
+    source: FileSystemPath,
+    destination: FileSystemPath
+  ): Promise<Outcome<void>>;
+
+  /**
+   * Ensures blob reference integrity when a file is moved.
+   */
+  move(
+    source: FileSystemPath,
+    destination: FileSystemPath
+  ): Promise<Outcome<void>>;
 };
 
 export type FileSystem = {
