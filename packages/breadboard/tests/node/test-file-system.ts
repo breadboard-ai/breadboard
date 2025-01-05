@@ -42,7 +42,7 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
   }
 
   const local: PersistentBackend = {
-    query: async (path) => {
+    query: async (_graph, path) => {
       {
         return {
           entries: startWith(path).map(([path, entry]) => {
@@ -51,17 +51,17 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
         };
       }
     },
-    read: async (path) => {
+    read: async (_graph, path) => {
       const entry = map.get(path);
       if (!entry) {
         return err(`File "${path}" not found`);
       }
       return entry;
     },
-    write: async (path, data) => {
+    write: async (_graph, path, data) => {
       map.set(path, structuredClone(data));
     },
-    append: async (path, data) => {
+    append: async (_graph, path, data) => {
       const entry = map.get(path);
       if (entry) {
         entry.push(...data);
@@ -69,7 +69,7 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
         map.set(path, structuredClone(data));
       }
     },
-    delete: async (path, all) => {
+    delete: async (_graph, path, all) => {
       if (all) {
         startWith(path).forEach(([path]) => {
           map.delete(path);
@@ -78,14 +78,14 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
         map.delete(path);
       }
     },
-    copy: async (source, destination) => {
+    copy: async (_graph, source, destination) => {
       const entry = map.get(source);
       if (!entry) {
         return err(`Source "${source}" not found`);
       }
       map.set(destination, entry);
     },
-    move: async (source, destination) => {
+    move: async (_graph, source, destination) => {
       const entry = map.get(source);
       if (!entry) {
         return err(`Source "${source}" not found`);
@@ -94,7 +94,12 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
       map.delete(source);
     },
   };
-  return new FileSystemImpl({ local, env, assets });
+  return new FileSystemImpl({
+    graphUrl: "https://example.com/",
+    local,
+    env,
+    assets,
+  });
 }
 
 function makeCx(...items: string[]): LLMContent[] {

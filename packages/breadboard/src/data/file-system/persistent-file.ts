@@ -20,6 +20,7 @@ export { PersistentFile };
 
 class PersistentFile implements FileSystemFile {
   constructor(
+    public readonly graphUrl: string,
     public readonly path: FileSystemPath,
     public readonly backend: PersistentBackend
   ) {}
@@ -28,7 +29,7 @@ class PersistentFile implements FileSystemFile {
     inflate: boolean,
     start: number = 0
   ): Promise<FileSystemReadResult> {
-    const reading = await this.backend.read(this.path, inflate);
+    const reading = await this.backend.read(this.graphUrl, this.path, inflate);
     if (!ok(reading)) {
       return reading;
     }
@@ -44,7 +45,7 @@ class PersistentFile implements FileSystemFile {
     if (!ok(checkForStreams)) {
       return checkForStreams;
     }
-    return this.backend.append(this.path, data);
+    return this.backend.append(this.graphUrl, this.path, data);
   }
 
   copy(): Outcome<FileSystemFile> {

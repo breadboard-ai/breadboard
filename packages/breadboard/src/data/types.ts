@@ -310,13 +310,19 @@ export type FileSystemFile = {
 export type FileMap = Map<FileSystemPath, FileSystemFile>;
 
 export type PersistentBackend = {
-  query(path: FileSystemPath): Promise<FileSystemQueryResult>;
-  read(path: FileSystemPath, inflate: boolean): Promise<Outcome<LLMContent[]>>;
+  query(graphUrl: string, path: FileSystemPath): Promise<FileSystemQueryResult>;
+  read(
+    graphUrl: string,
+    path: FileSystemPath,
+    inflate: boolean
+  ): Promise<Outcome<LLMContent[]>>;
   write(
+    graphUrl: string,
     path: FileSystemPath,
     data: LLMContent[]
   ): Promise<FileSystemWriteResult>;
   append(
+    graphUrl: string,
     path: FileSystemPath,
     data: LLMContent[]
   ): Promise<FileSystemWriteResult>;
@@ -325,12 +331,18 @@ export type PersistentBackend = {
    * @param path - path to the file to delete
    * @param all - if `true`, will delete all files starting with `path`.
    */
-  delete(path: FileSystemPath, all: boolean): Promise<FileSystemWriteResult>;
+  delete(
+    graphUrl: string,
+    path: FileSystemPath,
+    all: boolean
+  ): Promise<FileSystemWriteResult>;
   copy(
+    graphUrl: string,
     source: FileSystemPath,
     destination: FileSystemPath
   ): Promise<FileSystemWriteResult>;
   move(
+    graphUrl: string,
     source: FileSystemPath,
     destination: FileSystemPath
   ): Promise<FileSystemWriteResult>;
@@ -351,6 +363,7 @@ export type EphemeralBlobStore = {
 };
 
 export type OuterFileSystems = {
+  graphUrl: string;
   local: PersistentBackend;
   env: FileSystemEntry[];
   blobs?: FileSystemBlobStore;
@@ -435,5 +448,5 @@ export type FileSystem = {
    * Use it to get the right FileSystem instance whenever a module is
    * invoked.
    */
-  createModuleFileSystem(): FileSystem;
+  createModuleFileSystem(graphUrl: string): FileSystem;
 };
