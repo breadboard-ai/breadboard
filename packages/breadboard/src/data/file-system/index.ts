@@ -24,7 +24,7 @@ import {
   FileSystemBlobStore,
 } from "../types.js";
 import { Path } from "./path.js";
-import { err, ok } from "./utils.js";
+import { err, noStreams, ok } from "./utils.js";
 import { PersistentFile } from "./persistent-file.js";
 import { InMemoryBlobStore } from "./in-memory-blob-store.js";
 import { transformBlobs } from "./blob-transform.js";
@@ -120,8 +120,9 @@ class SimpleFile implements FileSystemFile {
   }
 
   async append(data: LLMContent[], done: boolean, receipt = false) {
-    if (done || receipt) {
-      return err("Can't close the file that isn't a stream");
+    const checkForStreams = noStreams(done, receipt);
+    if (!ok(checkForStreams)) {
+      return checkForStreams;
     }
     this.data.push(...data);
   }
