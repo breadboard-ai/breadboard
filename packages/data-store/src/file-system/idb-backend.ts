@@ -4,30 +4,30 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LLMContent, UUID } from "@breadboard-ai/types";
+import { LLMContent } from "@breadboard-ai/types";
 import {
   asBase64,
   asBlob,
   BackendAtomicOperations,
   BackendTransaction,
   BackendTransactionResult,
+  EphemeralBlobStore,
   FileSystemPath,
   FileSystemQueryResult,
   FileSystemWriteResult,
   Outcome,
   PersistentBackend,
+  PersistentBlobHandle,
   transformBlobs,
 } from "@google-labs/breadboard";
 
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 
-export { IDBBackend, createEphemeralBlobStore, type Files };
+export { IDBBackend, type Files };
 
 const FILES_DB = "files";
 
 type FileKey = [graphUrl: string, path: FileSystemPath];
-
-type BlobHandle = `files:${UUID}`;
 
 interface Files extends DBSchema {
   files: {
@@ -43,40 +43,32 @@ interface Files extends DBSchema {
     };
   };
   refs: {
-    key: [BlobHandle, FileSystemPath];
+    key: [PersistentBlobHandle, FileSystemPath];
     value: {
-      handle: BlobHandle;
+      handle: PersistentBlobHandle;
       path: FileSystemPath;
     };
     indexes: {
       byPath: FileSystemPath;
-      byHandle: BlobHandle;
+      byHandle: PersistentBlobHandle;
     };
   };
   blobs: {
-    key: BlobHandle;
+    key: PersistentBlobHandle;
     value: {
-      handle: BlobHandle;
+      handle: PersistentBlobHandle;
       blob: Blob;
     };
   };
 }
 
-type EphemeralBlobHandle = string;
-type EphemeralBlobs = {
-  byEphemeralHandle(handle: EphemeralBlobHandle): BlobHandle | undefined;
-  byBlobHandle(handle: BlobHandle): string | undefined;
-  add(blob: Blob, handle: BlobHandle): EphemeralBlobHandle;
-  size: number;
-};
-
 class IDBBackend implements PersistentBackend {
   #db: Promise<IDBPDatabase<Files>>;
   #graphUrl: string;
   #ops: BackendAtomicOperations;
-  #ephemeralBlobs: EphemeralBlobs;
+  #ephemeralBlobs: EphemeralBlobStore;
 
-  constructor(graphUrl: string, ephemeralBlobs: EphemeralBlobs) {
+  constructor(graphUrl: string, ephemeralBlobs: EphemeralBlobStore) {
     this.#ephemeralBlobs = ephemeralBlobs;
     this.#graphUrl = graphUrl;
     this.#db = this.initialize();
@@ -128,18 +120,14 @@ class IDBBackend implements PersistentBackend {
     );
   }
 
-  #newBlobHandle(): BlobHandle {
-    return `files:${crypto.randomUUID()}`;
-  }
-
   async #write(
     path: FileSystemPath,
     data: LLMContent[],
     append: boolean
   ): Promise<FileSystemWriteResult> {
     try {
-      const newBlobs: Map<BlobHandle, Blob> = new Map();
-      const newRefs: Set<BlobHandle> = new Set();
+      const newBlobs: Map<PersistentBlobHandle, Blob> = new Map();
+      const newRefs: Set<PersistentBlobHandle> = new Set();
 
       let deflated = await transformBlobs(path, data, [
         {
@@ -162,8 +150,7 @@ class IDBBackend implements PersistentBackend {
               // Otherwise, fall through to add a new blob.
             }
             const blob = await asBlob(part);
-            const blobId = this.#newBlobHandle();
-            this.#ephemeralBlobs.add(blob, blobId);
+            const { persistent: blobId } = this.#ephemeralBlobs.add(blob);
             newBlobs.set(blobId, blob);
             return {
               storedData: {
@@ -252,7 +239,7 @@ class IDBBackend implements PersistentBackend {
         {
           transform: async (path, part) => {
             if ("storedData" in part) {
-              const handle = part.storedData.handle as BlobHandle;
+              const handle = part.storedData.handle as PersistentBlobHandle;
               if (inflate) {
                 // Instead of using ephemeral blobs, convert directly to
                 // inlineData.
@@ -270,7 +257,7 @@ class IDBBackend implements PersistentBackend {
                 };
               } else {
                 const ephemeralHandle =
-                  this.#ephemeralBlobs.byBlobHandle(handle);
+                  this.#ephemeralBlobs.byPersistentHandle(handle);
                 if (ephemeralHandle) {
                   // We already have an ephemeral blob, just return that.
                   return {
@@ -287,13 +274,13 @@ class IDBBackend implements PersistentBackend {
                       `File System persistent backend integrity error: blob not found for "${path}"`
                     );
                   }
-                  const ephemeralHandle = this.#ephemeralBlobs.add(
+                  const { ephemeral } = this.#ephemeralBlobs.add(
                     blob.blob,
                     handle
                   );
                   return {
                     storedData: {
-                      handle: ephemeralHandle,
+                      handle: ephemeral,
                       mimeType: part.storedData.mimeType,
                     },
                   };
@@ -346,7 +333,7 @@ class IDBBackend implements PersistentBackend {
       }
 
       // 2) Get the list of affected blobs
-      const affectedBlobs: Set<BlobHandle> = new Set();
+      const affectedBlobs: Set<PersistentBlobHandle> = new Set();
       for (const toBeDeleted of list) {
         const index = refs.index("byPath");
         const blobRefs = await index.getAllKeys(toBeDeleted);
@@ -479,33 +466,9 @@ class IDBBackend implements PersistentBackend {
   }
 
   async close(): Promise<void> {
-    (await this.#db).close();
+    const db = await this.#db;
+    db.close();
   }
-}
-
-class EphemeralBlobsImpl implements EphemeralBlobs {
-  #byBlobHandle: Map<BlobHandle, EphemeralBlobHandle> = new Map();
-  #byEphemeralHandle: Map<EphemeralBlobHandle, BlobHandle> = new Map();
-
-  byEphemeralHandle(handle: EphemeralBlobHandle): BlobHandle | undefined {
-    return this.#byEphemeralHandle.get(handle);
-  }
-  byBlobHandle(handle: BlobHandle): string | undefined {
-    return this.#byBlobHandle.get(handle);
-  }
-  add(blob: Blob, handle: BlobHandle): EphemeralBlobHandle {
-    const ephemeralHandle = URL.createObjectURL(blob);
-    this.#byBlobHandle.set(handle, ephemeralHandle);
-    this.#byEphemeralHandle.set(ephemeralHandle, handle);
-    return ephemeralHandle;
-  }
-  get size() {
-    return this.#byBlobHandle.size;
-  }
-}
-
-function createEphemeralBlobStore(): EphemeralBlobs {
-  return new EphemeralBlobsImpl();
 }
 
 // TODO: Find a better place for these.

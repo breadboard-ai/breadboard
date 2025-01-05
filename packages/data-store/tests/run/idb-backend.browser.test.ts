@@ -5,13 +5,13 @@
  */
 
 import { expect } from "@esm-bundle/chai";
+import { Files, IDBBackend } from "../../src/file-system/idb-backend.js";
+import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
 import {
   createEphemeralBlobStore,
-  Files,
-  IDBBackend,
-} from "../../src/file-system/idb-backend.js";
-import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
-import { FileSystemQueryResult, Outcome } from "@google-labs/breadboard";
+  FileSystemQueryResult,
+  Outcome,
+} from "@google-labs/breadboard";
 import { DBSchema, deleteDB, openDB } from "idb";
 
 const url = "http://www.example.com";

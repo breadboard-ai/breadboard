@@ -9,6 +9,7 @@ import type {
   InlineDataCapabilityPart,
   LLMContent,
   StoredDataCapabilityPart,
+  UUID,
 } from "@breadboard-ai/types";
 import { HarnessRunResult } from "../harness/types.js";
 import { ReanimationState } from "../run/types.js";
@@ -333,6 +334,20 @@ export type BackendAtomicOperations = {
     source: FileSystemPath,
     destination: FileSystemPath
   ): Promise<FileSystemWriteResult>;
+};
+
+export type PersistentBlobHandle = `files:${UUID}`;
+export type EphemeralBlobHandle = string;
+export type EphemeralBlobStore = {
+  byEphemeralHandle(
+    handle: EphemeralBlobHandle
+  ): PersistentBlobHandle | undefined;
+  byPersistentHandle(handle: PersistentBlobHandle): string | undefined;
+  add(
+    blob: Blob,
+    handle?: PersistentBlobHandle
+  ): { ephemeral: EphemeralBlobHandle; persistent: PersistentBlobHandle };
+  size: number;
 };
 
 export type BackendTransaction = BackendAtomicOperations;

@@ -121,6 +121,7 @@ export {
   createDefaultDataStore,
   createDefaultRunStore,
   transformBlobs,
+  createEphemeralBlobStore,
 } from "./data/index.js";
 
 /**
