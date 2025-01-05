@@ -72,11 +72,10 @@ async function inspect(): Promise<InspectableDB<Files>> {
   const files = await db.getAll("files");
   const refs = await db.getAll("refs");
   const blobs = await db.getAll("blobs");
-  const blobMetadata = await db.getAll("blobMetadata");
 
   db.close();
 
-  return { files, refs, blobMetadata, blobs };
+  return { files, refs, blobs };
 }
 
 describe("IDB Backend", () => {
@@ -305,7 +304,6 @@ describe("IDB Backend", () => {
     good(writingQux);
     {
       const db = await inspect();
-      expect(db.blobMetadata.length).eq(4);
       expect(db.blobs.length).eq(4);
       expect(db.refs.length).eq(4);
       expect(db.files.length).eq(4);
@@ -315,7 +313,6 @@ describe("IDB Backend", () => {
     good(deletingFooBar);
     {
       const db = await inspect();
-      expect(db.blobMetadata.length).eq(2);
       expect(db.blobs.length).eq(2);
       expect(db.refs.length).eq(2);
       expect(db.files.length).eq(2);
@@ -325,7 +322,6 @@ describe("IDB Backend", () => {
     good(deletingBaz);
     {
       const db = await inspect();
-      expect(db.blobMetadata.length).eq(1);
       expect(db.blobs.length).eq(1);
       expect(db.refs.length).eq(1);
       expect(db.files.length).eq(1);
@@ -346,7 +342,6 @@ describe("IDB Backend", () => {
     good(copyingFoo);
     {
       const db = await inspect();
-      expect(db.blobMetadata.length).eq(1);
       expect(db.blobs.length).eq(1);
       expect(db.refs.length).eq(2);
       expect(db.files.length).eq(2);
@@ -356,7 +351,6 @@ describe("IDB Backend", () => {
     good(deletingBar);
     {
       const db = await inspect();
-      expect(db.blobMetadata.length).eq(1);
       expect(db.blobs.length).eq(1);
       expect(db.refs.length).eq(1);
       expect(db.files.length).eq(1);
@@ -366,7 +360,6 @@ describe("IDB Backend", () => {
     good(deletingFoo);
     {
       const db = await inspect();
-      expect(db.blobMetadata.length).eq(0);
       expect(db.blobs.length).eq(0);
       expect(db.refs.length).eq(0);
       expect(db.files.length).eq(0);
@@ -387,7 +380,6 @@ describe("IDB Backend", () => {
     good(copyingFoo);
     {
       const db = await inspect();
-      expect(db.blobMetadata.length).eq(1);
       expect(db.blobs.length).eq(1);
       expect(db.refs.length).eq(1);
       expect(db.files.length).eq(1);

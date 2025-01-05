@@ -53,14 +53,6 @@ interface Files extends DBSchema {
       byHandle: BlobHandle;
     };
   };
-  blobMetadata: {
-    key: BlobHandle;
-    value: {
-      handle: BlobHandle;
-      mimeType: string;
-      timestamp: number;
-    };
-  };
   blobs: {
     key: BlobHandle;
     value: {
@@ -114,11 +106,6 @@ class IDBBackend implements PersistentBackend {
 
         // 2) Initialize `blobs` store.
         db.createObjectStore("blobs", { keyPath: "handle" });
-
-        // 3) Initialzie `blobMetadata` store.
-        db.createObjectStore("blobMetadata", {
-          keyPath: "handle",
-        });
 
         // 4) Initialize `refs` store.
         const refs = db.createObjectStore("refs", {
@@ -196,23 +183,14 @@ class IDBBackend implements PersistentBackend {
 
       const db = await this.#db;
 
-      const tx = db.transaction(
-        ["files", "blobs", "blobMetadata", "refs"],
-        "readwrite"
-      );
+      const tx = db.transaction(["files", "blobs", "refs"], "readwrite");
       const files = tx.objectStore("files");
       const blobs = tx.objectStore("blobs");
-      const blobMetadata = tx.objectStore("blobMetadata");
       const refs = tx.objectStore("refs");
 
       // Store new blobs and add refs
       for (const [handle, blob] of newBlobs.entries()) {
         await blobs.put({ handle, blob });
-        await blobMetadata.put({
-          handle,
-          mimeType: blob.type,
-          timestamp,
-        });
         await refs.put({ path, handle });
       }
 
@@ -352,13 +330,9 @@ class IDBBackend implements PersistentBackend {
     try {
       const db = await this.#db;
 
-      const tx = db.transaction(
-        ["files", "blobMetadata", "blobs", "refs"],
-        "readwrite"
-      );
+      const tx = db.transaction(["files", "blobs", "refs"], "readwrite");
 
       const files = tx.objectStore("files");
-      const blobMetadata = tx.objectStore("blobMetadata");
       const refs = tx.objectStore("refs");
       const blobs = tx.objectStore("blobs");
 
@@ -384,14 +358,10 @@ class IDBBackend implements PersistentBackend {
 
       // 3) Update ref counts or deleted orphaned blobs.
       for (const handle of affectedBlobs) {
-        const metadata = await blobMetadata.get(handle);
-        if (!metadata) continue;
-
         const refCount = await refs.index("byHandle").count(handle);
         if (refCount == 0) {
           // Delete orphaned blobs and their metadata.
           await blobs.delete(handle);
-          await blobMetadata.delete(handle);
         }
       }
 
