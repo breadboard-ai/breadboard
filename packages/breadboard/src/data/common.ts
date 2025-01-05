@@ -135,7 +135,7 @@ export async function asBase64(file: File | Blob): Promise<string> {
         }
 
         const [, content] = reader.result.split(",");
-        resolve(content);
+        resolve(content.replace(/=+$/, ""));
       };
       reader.onerror = (err) => reject(err);
       reader.readAsDataURL(file);

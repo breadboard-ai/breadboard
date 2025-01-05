@@ -6,30 +6,19 @@
 
 import { afterEach, beforeEach, describe, it } from "node:test";
 import { FileSystemImpl } from "../../../src/data/file-system/index.js";
-import { deepStrictEqual, ok } from "node:assert";
+import { deepStrictEqual } from "node:assert";
 
-import {
-  bad,
-  good,
-  justPaths,
-  makeCx,
-  makeDataCx,
-  makeFs,
-} from "../test-file-system.js";
+import { bad, good, justPaths, makeCx, makeFs } from "../test-file-system.js";
 
 describe("FileSystem persistent store", () => {
   let fs: FileSystemImpl;
-  const log: string[] = [];
 
   beforeEach(() => {
-    fs = makeFs([], [], (e) => {
-      log.push(e);
-    });
+    fs = makeFs([], []);
   });
 
   afterEach(async () => {
     await fs.close();
-    log.length = 0;
   });
 
   it("is able to query backend", async () => {
@@ -131,70 +120,5 @@ describe("FileSystem persistent store", () => {
     const readBaz = await fs.read({ path: "/local/baz" });
     good(readBaz) && deepStrictEqual(readBaz.data, makeCx("baz"));
     bad(await fs.read({ path: "/tmp/baz" }));
-  });
-
-  it("is able to copy & move files with blobs", async () => {
-    const data = makeDataCx(["data"]);
-    good(await fs.write({ path: "/local/data", data }));
-
-    // 1.a) Copy from persistent to persistent
-    good(await fs.write({ path: "/local/copy", source: "/local/data" }));
-    const readCopy = await fs.read({ path: "/local/copy" });
-    good(readCopy) && deepStrictEqual(readCopy.data, data);
-    good(await fs.read({ path: "/local/data" }));
-    deepStrictEqual(log, [
-      `deflate /local/data`,
-      `copy /local/data to /local/copy`,
-    ]);
-
-    // 1.b) Move from persistent to persistent
-    log.length = 0;
-    good(
-      await fs.write({ path: "/local/foo", source: "/local/data", move: true })
-    );
-    const readFoo = await fs.read({ path: "/local/foo" });
-    good(readFoo) && deepStrictEqual(readFoo.data, data);
-    bad(await fs.read({ path: "/local/data" }));
-    deepStrictEqual(log, [`move /local/data to /local/foo`]);
-
-    // 2) From persistent to ephemeral
-    log.length = 0;
-    good(await fs.write({ path: "/local/data", data }));
-    good(
-      await fs.write({ path: "/tmp/bar", source: "/local/data", move: true })
-    );
-    const readBar = await fs.read({ path: "/tmp/bar" });
-    good(readBar) && deepStrictEqual(readBar.data, data);
-    bad(await fs.read({ path: "/local/data" }));
-    deepStrictEqual(log, [`deflate /local/data`]);
-
-    // 3) From ephemeral to persistent
-    log.length = 0;
-    good(await fs.write({ path: "/tmp/baz", data }));
-    good(
-      await fs.write({ path: "/local/baz", source: "/tmp/baz", move: true })
-    );
-    const readBaz = await fs.read({ path: "/local/baz" });
-    if (good(readBaz)) {
-      const part = readBaz.data?.at(0)?.parts?.at(0);
-      ok(part && "storedData" in part);
-    }
-    bad(await fs.read({ path: "/tmp/baz" }));
-    deepStrictEqual(log, [`deflate /local/baz`]);
-  });
-
-  it("deflates on write and append", async () => {
-    const foo = makeDataCx(["foo"]);
-    good(await fs.write({ path: "/local/foo", data: foo }));
-    good(await fs.write({ path: "/local/foo", data: foo, append: true }));
-    deepStrictEqual(log, [`deflate /local/foo`, `deflate /local/foo`]);
-  });
-
-  it("is able to inflate on read", async () => {
-    const foo = makeDataCx(["foo"]);
-    good(await fs.write({ path: "/local/foo", data: foo }));
-    const readFoo = await fs.read({ path: "/local/foo", inflate: true });
-    good(readFoo) && deepStrictEqual(readFoo.data, foo);
-    deepStrictEqual(log, [`deflate /local/foo`, `inflate /local/foo`]);
   });
 });

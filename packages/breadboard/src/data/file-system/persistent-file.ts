@@ -49,8 +49,11 @@ class PersistentFile implements FileSystemFile {
     public readonly backend: BackendAtomicOperations
   ) {}
 
-  async read(start: number = 0): Promise<FileSystemReadResult> {
-    const reading = await this.backend.read(this.path);
+  async read(
+    inflate: boolean,
+    start: number = 0
+  ): Promise<FileSystemReadResult> {
+    const reading = await this.backend.read(this.path, inflate);
     if (!ok(reading)) {
       return reading;
     }

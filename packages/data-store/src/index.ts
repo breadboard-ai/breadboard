@@ -12,7 +12,10 @@ import {
   PersistentBackend,
 } from "@google-labs/breadboard";
 import { IDBRunStore } from "./run/idb-run-store.js";
-import { IDBBackend } from "./file-system/idb-backend.js";
+import {
+  createEphemeralBlobStore,
+  IDBBackend,
+} from "./file-system/idb-backend.js";
 
 // TODO: Allow for other data stores.
 export function getDataStore(): DataStore {
@@ -20,7 +23,7 @@ export function getDataStore(): DataStore {
 }
 
 export function createFileSystemBackend(url: string): PersistentBackend {
-  return new IDBBackend(url);
+  return new IDBBackend(url, createEphemeralBlobStore());
 }
 
 export function getRunStore(useInMemoryStore = true): RunStore {

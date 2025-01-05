@@ -13,8 +13,6 @@ import {
   PersistentBackend,
   Outcome,
   FileSystemReadResult,
-  FileSystemBlobStore,
-  FileSystemBlobTransform,
 } from "../../src/data/types.js";
 import { deepStrictEqual, fail, ok } from "node:assert";
 import { err } from "../../src/data/file-system/utils.js";
@@ -31,11 +29,7 @@ function good<T>(o: Outcome<T>): o is T {
   return !error;
 }
 
-function makeFs(
-  env: FileSystemEntry[] = [],
-  assets: FileSystemEntry[] = [],
-  logger: (event: string) => void = () => {}
-) {
+function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
   const map = new Map<FileSystemPath, LLMContent[]>();
   // Add dummy file.
   map.set("/local/dummy", makeCx("dummy"));
@@ -46,43 +40,6 @@ function makeFs(
       return path.startsWith(prefix);
     });
   }
-
-  const blobs: FileSystemBlobStore = {
-    delete: async function (): Promise<Outcome<void>> {
-      // do nothing.
-    },
-    inflator: function (): FileSystemBlobTransform {
-      return {
-        transform: async (path, part) => {
-          logger(`inflate ${path}`);
-          return part;
-        },
-      };
-    },
-    deflator: function (): FileSystemBlobTransform {
-      return {
-        transform: async (path, part) => {
-          logger(`deflate ${path}`);
-          return part;
-        },
-      };
-    },
-    copy: async function (
-      source: FileSystemPath,
-      destination: FileSystemPath
-    ): Promise<Outcome<void>> {
-      logger(`copy ${source} to ${destination}`);
-    },
-    move: async function (
-      source: FileSystemPath,
-      destination: FileSystemPath
-    ): Promise<Outcome<void>> {
-      logger(`move ${source} to ${destination}`);
-    },
-    close: async function (): Promise<void> {
-      // do nothing.
-    },
-  };
 
   const local: PersistentBackend = {
     transaction(transactionHandler) {
@@ -131,8 +88,13 @@ function makeFs(
       }
       map.set(destination, entry);
     },
-    blobs: () => {
-      return blobs;
+    move: async (source, destination) => {
+      const entry = map.get(source);
+      if (!entry) {
+        return err(`Source "${source}" not found`);
+      }
+      map.set(destination, entry);
+      map.delete(source);
     },
   };
   return new FileSystemImpl({ local, env, assets });

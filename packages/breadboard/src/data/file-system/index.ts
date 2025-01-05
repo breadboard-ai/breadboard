@@ -45,7 +45,10 @@ class StreamFile implements FileSystemFile {
     this.writer = writable.getWriter();
   }
 
-  async read(start: number = 0): Promise<FileSystemReadResult> {
+  async read(
+    _inflate: boolean,
+    start: number = 0
+  ): Promise<FileSystemReadResult> {
     if (start !== 0) {
       return err(`Reading partial streams is not supported.`);
     }
@@ -103,7 +106,10 @@ class StreamFile implements FileSystemFile {
 class SimpleFile implements FileSystemFile {
   constructor(public readonly data: LLMContent[]) {}
 
-  async read(start: number = 0): Promise<FileSystemReadResult> {
+  async read(
+    _inflate: boolean,
+    start: number = 0
+  ): Promise<FileSystemReadResult> {
     if (start >= this.data.length) {
       return err(`Length of file is lesser than start "${start}"`);
     }
@@ -200,7 +206,7 @@ class FileSystemImpl implements FileSystem {
   async read({
     path,
     start,
-    inflate,
+    inflate = false,
   }: FileSystemReadArguments): Promise<FileSystemReadResult> {
     const parsedPath = Path.create(path);
     if (!ok(parsedPath)) {
@@ -222,7 +228,7 @@ class FileSystemImpl implements FileSystem {
       }
     }
 
-    const result = await file.read(start);
+    const result = await file.read(inflate, start);
     if (!ok(result)) {
       return result;
     }
@@ -245,15 +251,8 @@ class FileSystemImpl implements FileSystem {
         }
         return { data: inflating, last: result.last };
       }
-    } else if (inflate && result.data) {
-      // Handle inflating persistent data.
-      const inflating = await transformBlobs(path, result.data, [
-        this.#local.blobs().inflator(),
-      ]);
-      if (!ok(inflating)) {
-        return inflating;
-      }
-      return { ...result, data: inflating };
+    } else {
+      return file.read(inflate, start);
     }
     return result;
   }
@@ -280,23 +279,15 @@ class FileSystemImpl implements FileSystem {
       if (parsedPath.persistent) {
         if (sourcePath.persistent) {
           // a) Persistent -> Persistent
-          const copying = await this.#local.copy(source, path);
-          if (!ok(copying)) {
-            return copying;
-          }
           if (move) {
-            const deleting = await this.#local.delete(source, false);
-            if (!ok(deleting)) {
-              return deleting;
-            }
-            const movingBlobs = await this.#local.blobs().move(source, path);
-            if (!ok(movingBlobs)) {
-              return movingBlobs;
+            const moving = await this.#local.move(source, path);
+            if (!ok(moving)) {
+              return moving;
             }
           } else {
-            const copyingBlobs = await this.#local.blobs().copy(source, path);
-            if (!ok(copyingBlobs)) {
-              return copyingBlobs;
+            const copying = await this.#local.copy(source, path);
+            if (!ok(copying)) {
+              return copying;
             }
           }
           return;
@@ -310,18 +301,10 @@ class FileSystemImpl implements FileSystem {
           if (!file) {
             return err(`Source file not found: "${source}"`);
           }
-
-          const deflated = await transformBlobs(path, file.data, [
-            this.#local.blobs().deflator(),
-          ]);
-          if (!ok(deflated)) {
-            return deflated;
-          }
-          const writing = await this.#local.write(path, deflated);
+          const writing = await this.#local.write(path, file.data);
           if (!ok(writing)) {
             return writing;
           }
-
           if (move) {
             sourceMap.delete(source);
           }
@@ -332,7 +315,7 @@ class FileSystemImpl implements FileSystem {
       if (sourcePath.persistent) {
         // c) Persistent -> Ephemeral
         const sourceFile = new PersistentFile(source, this.#local);
-        const sourceContents = await sourceFile.read();
+        const sourceContents = await sourceFile.read(false);
         if (!ok(sourceContents)) {
           return sourceContents;
         }
@@ -428,13 +411,7 @@ class FileSystemImpl implements FileSystem {
     // 5) Handle append case
     if (append) {
       if (parsedPath.persistent) {
-        const deflated = await transformBlobs(path, data, [
-          this.#local.blobs().deflator(),
-        ]);
-        if (!ok(deflated)) {
-          return deflated;
-        }
-        return this.#local.append(path, deflated);
+        return this.#local.append(path, data);
       }
 
       const map = this.#getFileMap(parsedPath);
@@ -456,13 +433,7 @@ class FileSystemImpl implements FileSystem {
 
     // 6) otherwise, fall through to create a new file
     if (parsedPath.persistent) {
-      const deflated = await transformBlobs(path, data, [
-        this.#local.blobs().deflator(),
-      ]);
-      if (!ok(deflated)) {
-        return deflated;
-      }
-      return this.#local.write(path, deflated);
+      return this.#local.write(path, data);
     } else {
       const deflated = await transformBlobs(path, data, [
         this.#blobs.deflator(),

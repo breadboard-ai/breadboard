@@ -293,7 +293,7 @@ export type FileSystemEntry = {
 };
 
 export type FileSystemFile = {
-  read(start?: number): Promise<FileSystemReadResult>;
+  read(inflate: boolean, start?: number): Promise<FileSystemReadResult>;
   append(
     data: LLMContent[],
     done: boolean,
@@ -310,7 +310,7 @@ export type FileMap = Map<FileSystemPath, FileSystemFile>;
 
 export type BackendAtomicOperations = {
   query(path: FileSystemPath): Promise<FileSystemQueryResult>;
-  read(path: FileSystemPath): Promise<Outcome<LLMContent[]>>;
+  read(path: FileSystemPath, inflate: boolean): Promise<Outcome<LLMContent[]>>;
   write(
     path: FileSystemPath,
     data: LLMContent[]
@@ -329,7 +329,10 @@ export type BackendAtomicOperations = {
     source: FileSystemPath,
     destination: FileSystemPath
   ): Promise<FileSystemWriteResult>;
-  blobs(): FileSystemBlobStore;
+  move(
+    source: FileSystemPath,
+    destination: FileSystemPath
+  ): Promise<FileSystemWriteResult>;
 };
 
 export type BackendTransaction = BackendAtomicOperations;
