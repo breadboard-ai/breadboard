@@ -123,7 +123,7 @@
       "dependencies": [
         "../breadboard:build:tsc",
         "../data-store:build:tsc",
-        "../agent-kit:build:tsc",
+        "../agent-kit:generate-kit-manifest",
         "../palm-kit:build:tsc",
         "../core-kit:build:tsc",
         "../json-kit:build:tsc",

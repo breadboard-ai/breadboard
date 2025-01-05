@@ -7,7 +7,9 @@
 import type {
   DataStoreHandle,
   InlineDataCapabilityPart,
+  LLMContent,
   StoredDataCapabilityPart,
+  UUID,
 } from "@breadboard-ai/types";
 import { HarnessRunResult } from "../harness/types.js";
 import { ReanimationState } from "../run/types.js";
@@ -107,3 +109,341 @@ export type RetrieveDataResult =
     };
 
 export type DataStoreScope = "run" | "session" | "client";
+
+export type Outcome<T> = T | { $error: string };
+
+export type FileSystemReadWriteRootDirectories =
+  /**
+   * Project-level persistent storage.
+   * Lifetime = persistent, unmanaged
+   */
+  | "/local"
+  /**
+   * Session-scoped persistent storage
+   * Lifetime = same as this object
+   */
+  | "/session"
+  /**
+   * Run-specific storage (execution state, inter-module data)
+   * Lifetime = one run
+   */
+  | "/run"
+  /**
+   * Temporary storage
+   * Lifetime = one module invocation
+   */
+  | "/tmp";
+
+export type FileSystemReadOnlyRootDirectories =
+  /**
+   * Environment-provided read-only resources
+   */
+  | "/env"
+  /**
+   * Project-level read-only shared assets
+   */
+  | "/assets";
+
+// Very, very basic path validation.
+type ValidPath<
+  Root extends string,
+  Rest extends string,
+> = Rest extends `${infer Dir}/${infer Next}`
+  ? `${Root}/${Dir}/${Next}`
+  : `${Root}/${Rest}`;
+
+export type FileSystemReadWritePath = ValidPath<
+  FileSystemReadWriteRootDirectories,
+  string
+>;
+
+export type FileSystemPath =
+  | FileSystemReadWritePath
+  | ValidPath<FileSystemReadOnlyRootDirectories, string>;
+
+export type FileSystemQueryArguments = {
+  /**
+   * Path to use to constrain the query.
+   */
+  path: FileSystemPath;
+};
+
+export type FileSystemQueryResult = Outcome<{
+  entries: FileSystemQueryEntry[];
+}>;
+
+export type FileSystemQueryEntry = {
+  path: FileSystemPath;
+  /**
+   * Returns `true` if this file is a stream. Streams are special kind of files
+   * that can be written to and read from in chunks: each read empties
+   * the contents (the chunk) of the file until the next write puts new chunk
+   * into it.
+   */
+  stream: boolean;
+  /**
+   * Current number of LLMContent items in the file.
+   */
+  length: number;
+};
+
+export type FileSystemReadArguments = {
+  path: FileSystemPath;
+  /**
+   * When specified, performs a partial read of the file.
+   * The value must be a valid index in the LLMContent array.
+   * Negative values count back from the last item in the array.
+   */
+  start?: number;
+  /**
+   * When set to `true`, inflates all stored parts to inline parts
+   */
+  inflate?: boolean;
+};
+
+export type FileSystemReadResult = Outcome<
+  | {
+      /**
+       * Returns the concents of the file.
+       */
+      data: LLMContent[] | undefined;
+      /**
+       * The index of the last read LLMContent items in the file.
+       * May be different from `data.length - 1`, because the read request
+       * may ask for partial read.
+       */
+      last: number;
+    }
+  | {
+      /**
+       * Returns the current chunk in the stream or undefined if there's
+       * no new chunk.
+       */
+      data: LLMContent[] | undefined;
+      /**
+       * When the file is a stream, returns `true` when at the end of the
+       * stream.
+       */
+      done: boolean;
+    }
+>;
+
+export type FileSystemWriteArguments =
+  | {
+      path: FileSystemReadWritePath;
+      data: LLMContent[];
+      /**
+       * When set to `true`, appends data to the file, rather than
+       * overwriting it.
+       */
+      append?: boolean;
+      /**
+       * When set to `true`, makes this file a stream.
+       * Streams are special kind of files that can be written to and read from
+       * in chunks: each read empties the contents (the chunk) of the file until
+       * the next write puts new chunk into it.
+       */
+      stream?: false;
+    }
+  | {
+      path: FileSystemReadWritePath;
+      data: LLMContent[];
+      stream: true;
+      /**
+       * A way to manage backpresssure and/or track read receipts.
+       * If set to `true`, write will only resolve after the chunk has been
+       * read. If set to `false`, write returns immediately.
+       */
+      receipt?: boolean;
+      done?: false;
+    }
+  | {
+      path: FileSystemReadWritePath;
+      stream: true;
+      /**
+       * Signals the end of the stream.
+       * Once the end of stream read, the stream file is deleted.
+       */
+      done: true;
+    }
+  | {
+      path: FileSystemReadWritePath;
+      /**
+       * If specified, will efficiently copy data from source
+       * to specified path.
+       */
+      source: FileSystemPath;
+      /**
+       * If `true`, will delete the source after copying to path.
+       */
+      move?: boolean;
+    }
+  | {
+      path: FileSystemReadWritePath;
+      /**
+       * Set to `true` to delete the file.
+       */
+      delete: true;
+    };
+
+export type FileSystemWriteResult = Outcome<void>;
+
+export type FileSystemEntry = {
+  path: FileSystemPath;
+  data: LLMContent[];
+};
+
+export type FileSystemFile = {
+  read(inflate: boolean, start?: number): Promise<FileSystemReadResult>;
+  append(
+    data: LLMContent[],
+    done: boolean,
+    receipt?: boolean
+  ): Promise<Outcome<void>>;
+  copy(): Outcome<FileSystemFile>;
+  queryEntry(path: FileSystemPath): FileSystemQueryEntry;
+  delete(): Promise<FileSystemWriteResult>;
+  data: LLMContent[];
+};
+
+// Simplest possible backend.
+export type FileMap = Map<FileSystemPath, FileSystemFile>;
+
+export type BackendAtomicOperations = {
+  query(path: FileSystemPath): Promise<FileSystemQueryResult>;
+  read(path: FileSystemPath, inflate: boolean): Promise<Outcome<LLMContent[]>>;
+  write(
+    path: FileSystemPath,
+    data: LLMContent[]
+  ): Promise<FileSystemWriteResult>;
+  append(
+    path: FileSystemPath,
+    data: LLMContent[]
+  ): Promise<FileSystemWriteResult>;
+  /**
+   * Deletes files in persistent backend.
+   * @param path - path to the file to delete
+   * @param all - if `true`, will delete all files starting with `path`.
+   */
+  delete(path: FileSystemPath, all: boolean): Promise<FileSystemWriteResult>;
+  copy(
+    source: FileSystemPath,
+    destination: FileSystemPath
+  ): Promise<FileSystemWriteResult>;
+  move(
+    source: FileSystemPath,
+    destination: FileSystemPath
+  ): Promise<FileSystemWriteResult>;
+};
+
+export type PersistentBlobHandle = `files:${UUID}`;
+export type EphemeralBlobHandle = string;
+export type EphemeralBlobStore = {
+  byEphemeralHandle(
+    handle: EphemeralBlobHandle
+  ): PersistentBlobHandle | undefined;
+  byPersistentHandle(handle: PersistentBlobHandle): string | undefined;
+  add(
+    blob: Blob,
+    handle?: PersistentBlobHandle
+  ): { ephemeral: EphemeralBlobHandle; persistent: PersistentBlobHandle };
+  size: number;
+};
+
+export type BackendTransaction = BackendAtomicOperations;
+
+export type BackendTransactionResult = Promise<Outcome<void>>;
+
+export type PersistentBackend = BackendAtomicOperations & {
+  transaction(
+    transactionHandler: (tx: BackendTransaction) => BackendTransactionResult
+  ): BackendTransactionResult;
+};
+
+export type OuterFileSystems = {
+  local: PersistentBackend;
+  env: FileSystemEntry[];
+  blobs?: FileSystemBlobStore;
+  assets: FileSystemEntry[];
+  session?: FileMap;
+  run?: FileMap;
+};
+
+export type FileSystemBlobTransform = {
+  transform(
+    path: FileSystemPath,
+    part: InlineDataCapabilityPart | StoredDataCapabilityPart
+  ): Promise<Outcome<InlineDataCapabilityPart | StoredDataCapabilityPart>>;
+};
+
+export type FileSystemBlobStore = {
+  /**
+   * Deletes blobs associated with the provided `path`.
+   * If `options.all` is true, treats the provided path as
+   * a directory and deletes all blobs associated with paths
+   * that start with `path`.
+   */
+  delete(
+    path: FileSystemPath,
+    options?: { all?: boolean }
+  ): Promise<Outcome<void>>;
+
+  /**
+   * Creates a transform that inflates all stored parts, converting
+   * them from storedDataPart to inlineDataPart.
+   */
+  inflator(): FileSystemBlobTransform;
+
+  /**
+   * Creates a transform that deflates all inline paerts, converting
+   * them from inlineDataPart to storedDataPart.
+   */
+  deflator(): FileSystemBlobTransform;
+
+  /**
+   * Does any necessary clean up at the end of the blob
+   * store lifecycle.
+   */
+  close(): Promise<void>;
+
+  /**
+   * Ensures blob reference integrity when a copy of a file is made.
+   */
+  copy(
+    source: FileSystemPath,
+    destination: FileSystemPath
+  ): Promise<Outcome<void>>;
+
+  /**
+   * Ensures blob reference integrity when a file is moved.
+   */
+  move(
+    source: FileSystemPath,
+    destination: FileSystemPath
+  ): Promise<Outcome<void>>;
+};
+
+export type FileSystem = {
+  query(args: FileSystemQueryArguments): Promise<FileSystemQueryResult>;
+  read(args: FileSystemReadArguments): Promise<FileSystemReadResult>;
+  write(args: FileSystemWriteArguments): Promise<FileSystemWriteResult>;
+  /**
+   * Cleans up
+   */
+  close(): Promise<void>;
+  /**
+   * Creates a new instance of a FileSystem that inherits all but `/run/`
+   * and `/tmp/` store from this instance.
+   *
+   * Use it to get the right FileSystem instance at the start of a run.
+   */
+  createRunFileSystem(): FileSystem;
+  /**
+   * Creates a new instance of a FileSystem that inherits all but `/tmp/`
+   * from this instance.
+   *
+   * Use it to get the right FileSystem instance whenever a module is
+   * invoked.
+   */
+  createModuleFileSystem(): FileSystem;
+};

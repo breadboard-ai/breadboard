@@ -120,6 +120,8 @@ export {
   toStoredDataPart,
   createDefaultDataStore,
   createDefaultRunStore,
+  transformBlobs,
+  createEphemeralBlobStore,
 } from "./data/index.js";
 
 /**

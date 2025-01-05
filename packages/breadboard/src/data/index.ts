@@ -33,3 +33,7 @@ export {
   toInlineDataPart,
   toStoredDataPart,
 } from "./common.js";
+
+export { transformBlobs } from "./file-system/blob-transform.js";
+
+export { createEphemeralBlobStore } from "./file-system/ephemeral-blob-store.js";
