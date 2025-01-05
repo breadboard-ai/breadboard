@@ -309,7 +309,7 @@ export type FileSystemFile = {
 // Simplest possible backend.
 export type FileMap = Map<FileSystemPath, FileSystemFile>;
 
-export type BackendAtomicOperations = {
+export type PersistentBackend = {
   query(path: FileSystemPath): Promise<FileSystemQueryResult>;
   read(path: FileSystemPath, inflate: boolean): Promise<Outcome<LLMContent[]>>;
   write(
@@ -348,16 +348,6 @@ export type EphemeralBlobStore = {
     handle?: PersistentBlobHandle
   ): { ephemeral: EphemeralBlobHandle; persistent: PersistentBlobHandle };
   size: number;
-};
-
-export type BackendTransaction = BackendAtomicOperations;
-
-export type BackendTransactionResult = Promise<Outcome<void>>;
-
-export type PersistentBackend = BackendAtomicOperations & {
-  transaction(
-    transactionHandler: (tx: BackendTransaction) => BackendTransactionResult
-  ): BackendTransactionResult;
 };
 
 export type OuterFileSystems = {

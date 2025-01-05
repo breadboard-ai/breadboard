@@ -25,7 +25,7 @@ import type {
   GraphMetadata,
 } from "@breadboard-ai/types";
 import { GraphLoader } from "./loader/types.js";
-import { DataStore } from "./data/types.js";
+import { DataStore, FileSystem } from "./data/types.js";
 import { ManagedRunState, RunState } from "./run/types.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { MutableGraphStore } from "./inspector/types.js";
@@ -649,6 +649,10 @@ export interface NodeHandlerContext {
    * dependencies.
    */
   graphStore?: MutableGraphStore;
+  /**
+   * The file system, provided as module capability.
+   */
+  fileSystem?: FileSystem;
 }
 
 export type RunArguments = NodeHandlerContext & {

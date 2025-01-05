@@ -42,9 +42,6 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
   }
 
   const local: PersistentBackend = {
-    transaction(transactionHandler) {
-      return transactionHandler(this);
-    },
     query: async (path) => {
       {
         return {

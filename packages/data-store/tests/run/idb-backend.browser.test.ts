@@ -229,25 +229,6 @@ describe("IDB Backend", () => {
     await backend3.close();
   });
 
-  it("supports transactions", async () => {
-    backend = new IDBBackend(url, createEphemeralBlobStore());
-
-    const writingFoo = await backend.append("/local/foo", makeCx("foo"));
-    good(writingFoo);
-
-    const txing = await backend.transaction(async (tx) => {
-      const readingFoo = await tx.read("/local/foo", false);
-      good(readingFoo) && expect(readingFoo).to.deep.equal(makeCx("foo"));
-
-      const deletingFoo = await tx.delete("/local/foo", false);
-      good(deletingFoo);
-    });
-    good(txing);
-
-    const querying = await backend.query("/local/");
-    good(querying) && expect(justPaths(querying)).to.deep.equal([]);
-  });
-
   it("supports blob write/append/read", async () => {
     const blobs = createEphemeralBlobStore();
     backend = new IDBBackend(url, blobs);

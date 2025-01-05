@@ -8,9 +8,6 @@ import { LLMContent } from "@breadboard-ai/types";
 import {
   asBase64,
   asBlob,
-  BackendAtomicOperations,
-  BackendTransaction,
-  BackendTransactionResult,
   EphemeralBlobStore,
   FileSystemPath,
   FileSystemQueryResult,
@@ -65,22 +62,12 @@ interface Files extends DBSchema {
 class IDBBackend implements PersistentBackend {
   #db: Promise<IDBPDatabase<Files>>;
   #graphUrl: string;
-  #ops: BackendAtomicOperations;
   #ephemeralBlobs: EphemeralBlobStore;
 
   constructor(graphUrl: string, ephemeralBlobs: EphemeralBlobStore) {
     this.#ephemeralBlobs = ephemeralBlobs;
     this.#graphUrl = graphUrl;
     this.#db = this.initialize();
-    this.#ops = {
-      query: this.query.bind(this),
-      read: this.read.bind(this),
-      append: this.append.bind(this),
-      delete: this.delete.bind(this),
-      copy: this.copy.bind(this),
-      move: this.move.bind(this),
-      write: this.write.bind(this),
-    };
   }
 
   /**
@@ -438,26 +425,6 @@ class IDBBackend implements PersistentBackend {
 
       // 5) Delete source
       await files.delete(this.#key(source));
-
-      await tx.done;
-    } catch (e) {
-      return err((e as Error).message);
-    }
-  }
-
-  async transaction(
-    handler: (tx: BackendTransaction) => BackendTransactionResult
-  ): BackendTransactionResult {
-    try {
-      const db = await this.#db;
-      const tx = db.transaction("files", "readwrite");
-
-      const result = await handler(this.#ops);
-
-      if (!ok(result)) {
-        tx.abort();
-        return result;
-      }
 
       await tx.done;
     } catch (e) {
