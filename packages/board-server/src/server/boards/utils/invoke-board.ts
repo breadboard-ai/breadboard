@@ -7,10 +7,15 @@
 import { getDataStore } from "@breadboard-ai/data-store";
 import { run, type HarnessRunResult } from "@google-labs/breadboard/harness";
 import { createKits } from "./create-kits.js";
-import { createLoader, inflateData } from "@google-labs/breadboard";
+import {
+  createGraphStore,
+  createLoader,
+  inflateData,
+} from "@google-labs/breadboard";
 import { BoardServerProvider } from "./board-server-provider.js";
 import { formatRunError } from "./format-run-error.js";
 import type { InvokeBoardArguments } from "../../types.js";
+import { NodeSandbox } from "@breadboard-ai/jsandbox/node";
 
 export const invokeBoard = async ({
   url,
@@ -26,10 +31,19 @@ export const invokeBoard = async ({
   // TODO: Figure out if this is the right thing to do here.
   store.createGroup("run-board");
 
+  const invokeKits = createKits(kitOverrides);
+  const invokeLoader = createLoader([new BoardServerProvider(path, loader)]);
+  const graphStore = createGraphStore({
+    loader: invokeLoader,
+    kits: invokeKits,
+    sandbox: new NodeSandbox(),
+  });
+
   const runner = run({
     url,
-    kits: createKits(kitOverrides),
-    loader: createLoader([new BoardServerProvider(path, loader)]),
+    kits: invokeKits,
+    loader: invokeLoader,
+    graphStore,
     store,
     inputs: { model: "gemini-1.5-flash-latest" },
     interactiveSecrets: false,
