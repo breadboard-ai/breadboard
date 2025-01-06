@@ -6,6 +6,7 @@
 
 import { GraphDescriberManager } from "../inspector/graph/describer-manager.js";
 import { MutableGraphImpl } from "../inspector/graph/mutable-graph.js";
+import { MutableGraphStore } from "../inspector/types.js";
 import { loadWithFetch } from "../loader/default.js";
 import { invokeGraph } from "../run/invoke-graph.js";
 import {
@@ -20,6 +21,8 @@ import {
   Schema,
 } from "../types.js";
 import { asRuntimeKit } from "./ctors.js";
+
+export { registerKitGraphs };
 
 const setBaseURL = (base: URL, key: string, graph: GraphDescriptor) => {
   if (graph.edges && graph.nodes) {
@@ -168,3 +171,29 @@ export const load = async (url: URL): Promise<Kit> => {
   }
   throw new Error(`Unable to load kit from "${url}"`);
 };
+
+/**
+ * A helper function for registering old-style graph kits that are
+ * created using `kitFromGraphDescriptor`.
+ *
+ * Call it to ensure that the graphs, representing the node handlers
+ * for these kits are in the graph store, so that the graph store doesn't
+ * attempt to load them (their URLs are just URIs).
+ *
+ * @param legacyKitGraphs -- loosely, Agent Kit and Google Drive Kit
+ * @param graphStore
+ */
+function registerKitGraphs(
+  legacyKitGraphs: GraphDescriptor[],
+  graphStore: MutableGraphStore
+): void {
+  for (const project of legacyKitGraphs) {
+    if (!project.graphs) continue;
+    for (const [key, graph] of Object.entries(project.graphs)) {
+      graphStore.addByDescriptor({
+        ...graph,
+        url: `${project.url}?graph=${key}`,
+      });
+    }
+  }
+}

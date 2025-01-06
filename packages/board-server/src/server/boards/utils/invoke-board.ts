@@ -6,7 +6,7 @@
 
 import { getDataStore } from "@breadboard-ai/data-store";
 import { run, type HarnessRunResult } from "@google-labs/breadboard/harness";
-import { createKits } from "./create-kits.js";
+import { createKits, registerLegacyKits } from "./create-kits.js";
 import {
   createGraphStore,
   createLoader,
@@ -38,6 +38,7 @@ export const invokeBoard = async ({
     kits: invokeKits,
     sandbox: new NodeSandbox(),
   });
+  registerLegacyKits(graphStore);
 
   const runner = run({
     url,

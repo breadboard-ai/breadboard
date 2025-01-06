@@ -13,7 +13,7 @@ import {
 import { handleRunGraphRequest } from "@google-labs/breadboard/remote";
 import type { RunBoardArguments } from "../../types.js";
 import { BoardServerProvider } from "./board-server-provider.js";
-import { createKits } from "./create-kits.js";
+import { createKits, registerLegacyKits } from "./create-kits.js";
 import { NodeSandbox } from "@breadboard-ai/jsandbox/node";
 
 export const timestamp = () => globalThis.performance.now();
@@ -51,6 +51,8 @@ export const runBoard = async ({
     kits: runKits,
     sandbox: new NodeSandbox(),
   });
+
+  registerLegacyKits(graphStore);
 
   return handleRunGraphRequest(
     {
