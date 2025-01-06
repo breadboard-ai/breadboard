@@ -440,7 +440,7 @@ export type FileSystem = {
    *
    * Use it to get the right FileSystem instance at the start of a run.
    */
-  createRunFileSystem(): FileSystem;
+  createRunFileSystem(graphUrl: string): FileSystem;
   /**
    * Creates a new instance of a FileSystem that inherits all but `/tmp/`
    * from this instance.

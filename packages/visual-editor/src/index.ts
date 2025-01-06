@@ -28,8 +28,14 @@ import {
   SerializedRun,
   MutableGraphStore,
   defaultModuleContent,
+  createFileSystem,
+  createEphemeralBlobStore,
 } from "@google-labs/breadboard";
-import { getDataStore, getRunStore } from "@breadboard-ai/data-store";
+import {
+  createFileSystemBackend,
+  getDataStore,
+  getRunStore,
+} from "@breadboard-ai/data-store";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { SettingsStore } from "./data/settings-store";
@@ -249,6 +255,11 @@ export class Main extends LitElement {
   #graphStore!: MutableGraphStore;
   #dataStore = getDataStore();
   #runStore = getRunStore();
+  #fileSystem = createFileSystem({
+    local: createFileSystemBackend(createEphemeralBlobStore()),
+    env: [],
+    assets: [],
+  });
   #selectionState: WorkspaceSelectionStateWithChangeId | null = null;
   #lastVisualChangeId: WorkspaceVisualChangeId | null = null;
   #lastPointerPosition = { x: 0, y: 0 };
@@ -3407,7 +3418,8 @@ export class Main extends LitElement {
                 await this.#attemptNodeRun(evt.id);
               }}
               @bbrunboard=${async () => {
-                if (!this.tab?.graph?.url) {
+                const url = this.tab?.graph?.url;
+                if (!url) {
                   return;
                 }
 
@@ -3417,13 +3429,14 @@ export class Main extends LitElement {
                   addNodeProxyServerConfig(
                     this.#proxy,
                     {
-                      url: this.tab?.graph.url,
+                      url,
                       runner: graph,
                       diagnostics: true,
                       kits: [], // The kits are added by the runtime.
                       loader: this.#runtime.board.getLoader(),
                       store: this.#dataStore,
                       graphStore: this.#graphStore,
+                      fileSystem: this.#fileSystem.createRunFileSystem(url),
                       inputs: BreadboardUI.Data.inputsFromSettings(
                         this.#settings
                       ),
@@ -3431,7 +3444,7 @@ export class Main extends LitElement {
                     },
                     this.#settings,
                     this.proxyFromUrl,
-                    await this.#getProxyURL(this.tab?.graph.url)
+                    await this.#getProxyURL(url)
                   )
                 );
               }}

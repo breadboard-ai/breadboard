@@ -120,6 +120,7 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
       : await load(config);
     const loader = config.loader || createLoader();
     const store = config.store || createDefaultDataStore();
+    const fileSystem = config.fileSystem;
     const { base, signal, inputs, state, start, stopAfter, graphStore } =
       config;
 
@@ -138,6 +139,7 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
         kits,
         loader,
         store,
+        fileSystem,
         base,
         signal,
         inputs,

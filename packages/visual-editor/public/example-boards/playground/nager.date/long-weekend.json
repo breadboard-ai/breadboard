@@ -174,7 +174,7 @@
               "type": "number",
               "title": "year",
               "description": "The data for year",
-              "default": "2024"
+              "default": "2025"
             }
           },
           "required": []

@@ -29,7 +29,13 @@ import { PersistentFile } from "./persistent-file.js";
 import { InMemoryBlobStore } from "./in-memory-blob-store.js";
 import { transformBlobs } from "./blob-transform.js";
 
-export { FileSystemImpl, Path };
+export { FileSystemImpl, Path, createFileSystem };
+
+function createFileSystem(
+  args: Omit<OuterFileSystems, "graphUrl" | "blobs" | "session" | "run">
+): FileSystem {
+  return new FileSystemImpl({ ...args, graphUrl: "" });
+}
 
 class StreamFile implements FileSystemFile {
   readonly data = [];
@@ -169,7 +175,7 @@ class FileSystemImpl implements FileSystem {
   #tmp: FileMap;
 
   constructor(outer: OuterFileSystems) {
-    this.#graphUrl = outer.graphUrl;
+    this.#graphUrl = outer.graphUrl || "";
     this.#local = outer.local;
     this.#env = SimpleFile.fromEntries(outer.env);
     this.#assets = SimpleFile.fromEntries(outer.assets);
@@ -577,9 +583,9 @@ class FileSystemImpl implements FileSystem {
     });
   }
 
-  createRunFileSystem(): FileSystem {
+  createRunFileSystem(graphUrl: string): FileSystem {
     return new FileSystemImpl({
-      graphUrl: this.#graphUrl,
+      graphUrl,
       local: this.#local,
       env: mapToEntries(this.#env),
       assets: mapToEntries(this.#assets),
