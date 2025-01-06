@@ -8,19 +8,20 @@ export const formatRunError = (e: unknown) => {
   if (typeof e === "string") {
     return e;
   }
-  if (e instanceof Error) {
+  if (maybeError(e)) {
     return e.message;
-  }
-  if ("message" in (e as any)) {
-    return (e as { message: string }).message;
   }
   // Presume it's an ErrorObject.
   const error = (e as { error: unknown }).error;
   if (typeof error === "string") {
     return error;
   }
-  if (error instanceof Error) {
+  if (maybeError(error)) {
     return error.message;
   }
   return JSON.stringify(error);
+
+  function maybeError(e: unknown): e is Error {
+    return "message" in (e as Error);
+  }
 };
