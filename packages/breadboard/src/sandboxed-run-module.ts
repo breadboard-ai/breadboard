@@ -28,6 +28,13 @@ import {
 } from "@breadboard-ai/jsandbox";
 import { inflateData } from "./data/inflate-deflate.js";
 import { bubbleUpOutputsIfNeeded } from "./bubble.js";
+import {
+  FileSystem,
+  FileSystemQueryArguments,
+  FileSystemReadArguments,
+  FileSystemWriteArguments,
+} from "./data/types.js";
+import { err, ok } from "./data/file-system/utils.js";
 
 export { addSandboxedRunModule, invokeDescriber, invokeMainDescriber };
 
@@ -178,6 +185,7 @@ function addSandboxedRunModule(sandbox: Sandbox, kits: Kit[]): Kit[] {
                 $error: `Unable to run module: no modules found within board ${context.board?.url || "uknown board"}`,
               };
             }
+            const fs = new FileSystemHandlerFactory(context.fileSystem);
             const telemetry = Telemetry.create(context);
             const modules = Object.fromEntries(
               Object.entries(moduleDeclaration).map(([name, spec]) => [
@@ -193,6 +201,9 @@ function addSandboxedRunModule(sandbox: Sandbox, kits: Kit[]): Kit[] {
                 invoke: getHandler("invoke", context),
                 output: createOutputHandler(context),
                 describe: createDescribeHandler(context),
+                query: fs.query(),
+                read: fs.read(),
+                write: fs.write(),
               },
               modules
             );
@@ -348,6 +359,42 @@ async function invokeMainDescriber(
     // custom describers.
   }
   return false;
+}
+
+class FileSystemHandlerFactory {
+  constructor(public readonly fs?: FileSystem) {}
+
+  query(): Capability {
+    return async (inputs) => {
+      if (!this.fs) {
+        return err("File system capability is not available");
+      }
+      return this.fs.query(inputs as FileSystemQueryArguments);
+    };
+  }
+
+  read(): Capability {
+    return async (inputs) => {
+      if (!this.fs) {
+        return err("File system capability is not available");
+      }
+      return this.fs.read(inputs as FileSystemReadArguments);
+    };
+  }
+
+  write(): Capability {
+    return async (inputs) => {
+      if (!this.fs) {
+        return err("File system capability is not available");
+      }
+
+      const result = await this.fs.write(inputs as FileSystemWriteArguments);
+      if (!ok(result)) {
+        return result;
+      }
+      return {};
+    };
+  }
 }
 
 /**

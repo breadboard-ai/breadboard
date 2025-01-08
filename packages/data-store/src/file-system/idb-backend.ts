@@ -198,7 +198,7 @@ class IDBBackend implements PersistentBackend {
       ).map((entry) => ({
         stream: false,
         path: entry.path as FileSystemPath,
-        length: entry.data.length - 1,
+        length: entry.data.length,
       }));
       return { entries };
     } catch (e) {

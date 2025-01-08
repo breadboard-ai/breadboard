@@ -115,7 +115,10 @@ pub async fn run_module(
         "invoke",
         "secrets",
         "output",
-        "describe"
+        "describe",
+        "query",
+        "read",
+        "write"
     );
 
     let mut peer_loader = BuiltinLoader::default();

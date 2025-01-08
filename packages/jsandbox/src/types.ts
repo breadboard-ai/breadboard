@@ -30,6 +30,9 @@ export type CapabilitySpec = {
   secrets?: Capability;
   output?: Capability;
   describe?: Capability;
+  query?: Capability;
+  read?: Capability;
+  write?: Capability;
 };
 
 export type Sandbox = {

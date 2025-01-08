@@ -329,4 +329,200 @@ declare type Schema = {
    */
   examples?: string[];
 };
+
+declare type Outcome<T> = T | { $error: string };
+
+declare type FileSystemReadWriteRootDirectories =
+  /**
+   * Project-level persistent storage.
+   * Lifetime = persistent, unmanaged
+   */
+  | "/local"
+  /**
+   * Session-scoped persistent storage
+   * Lifetime = same as this object
+   */
+  | "/session"
+  /**
+   * Run-specific storage (execution state, inter-module data)
+   * Lifetime = one run
+   */
+  | "/run"
+  /**
+   * Temporary storage
+   * Lifetime = one module invocation
+   */
+  | "/tmp";
+
+declare type FileSystemReadOnlyRootDirectories =
+  /**
+   * Environment-provided read-only resources
+   */
+  | "/env"
+  /**
+   * Project-level read-only shared assets
+   */
+  | "/assets";
+
+// Very, very basic path validation.
+declare type ValidPath<
+  Root extends string,
+  Rest extends string,
+> = Rest extends \`\${infer Dir}/\${infer Next}\`
+  ? \`\${Root}/\${Dir}/\${Next}\`
+  : \`\${Root}/\${Rest}\`;
+
+declare type FileSystemReadWritePath = ValidPath<
+  FileSystemReadWriteRootDirectories,
+  string
+>;
+
+declare type FileSystemPath =
+  | FileSystemReadWritePath
+  | ValidPath<FileSystemReadOnlyRootDirectories, string>;
+
+declare type FileSystemQueryArguments = {
+  /**
+   * Path to use to constrain the query.
+   */
+  path: FileSystemPath;
+};
+
+declare type FileSystemQueryResult = Outcome<{
+  entries: FileSystemQueryEntry[];
+}>;
+
+declare type FileSystemQueryEntry = {
+  path: FileSystemPath;
+  /**
+   * Returns \`true\` if this file is a stream. Streams are special kind of files
+   * that can be written to and read from in chunks: each read empties
+   * the contents (the chunk) of the file until the next write puts new chunk
+   * into it.
+   */
+  stream: boolean;
+  /**
+   * Current number of LLMContent items in the file.
+   */
+  length: number;
+};
+
+declare type FileSystemReadArguments = {
+  path: FileSystemPath;
+  /**
+   * When specified, performs a partial read of the file.
+   * The value must be a valid index in the LLMContent array.
+   * Negative values count back from the last item in the array.
+   */
+  start?: number;
+  /**
+   * When set to \`true\`, inflates all stored parts to inline parts
+   */
+  inflate?: boolean;
+};
+
+declare type FileSystemReadResult = Outcome<
+  | {
+      /**
+       * Returns the concents of the file.
+       */
+      data: LLMContent[] | undefined;
+      /**
+       * The index of the last read LLMContent items in the file.
+       * May be different from \`data.length - 1\`, because the read request
+       * may ask for partial read.
+       */
+      last: number;
+    }
+  | {
+      /**
+       * Returns the current chunk in the stream or undefined if there's
+       * no new chunk.
+       */
+      data: LLMContent[] | undefined;
+      /**
+       * When the file is a stream, returns \`true\` when at the end of the
+       * stream.
+       */
+      done: boolean;
+    }
+>;
+
+declare type FileSystemWriteArguments =
+  | {
+      path: FileSystemReadWritePath;
+      data: LLMContent[];
+      /**
+       * When set to \`true\`, appends data to the file, rather than
+       * overwriting it.
+       */
+      append?: boolean;
+      /**
+       * When set to \`true\`, makes this file a stream.
+       * Streams are special kind of files that can be written to and read from
+       * in chunks: each read empties the contents (the chunk) of the file until
+       * the next write puts new chunk into it.
+       */
+      stream?: false;
+    }
+  | {
+      path: FileSystemReadWritePath;
+      data: LLMContent[];
+      stream: true;
+      /**
+       * A way to manage backpresssure and/or track read receipts.
+       * If set to \`true\`, write will only resolve after the chunk has been
+       * read. If set to \`false\`, write returns immediately.
+       */
+      receipt?: boolean;
+      done?: false;
+    }
+  | {
+      path: FileSystemReadWritePath;
+      stream: true;
+      /**
+       * Signals the end of the stream.
+       * Once the end of stream read, the stream file is deleted.
+       */
+      done: true;
+    }
+  | {
+      path: FileSystemReadWritePath;
+      /**
+       * If specified, will efficiently copy data from source
+       * to specified path.
+       */
+      source: FileSystemPath;
+      /**
+       * If \`true\`, will delete the source after copying to path.
+       */
+      move?: boolean;
+    }
+  | {
+      path: FileSystemReadWritePath;
+      /**
+       * Set to \`true\` to delete the file.
+       */
+      delete: true;
+    };
+
+declare type FileSystemWriteResult = Outcome<void>;
+
+declare module "@query" {
+  export default function query(
+    inputs: FileSystemQueryArguments
+  ): Promise<FileSystemQueryResult>;
+}
+
+declare module "@read" {
+  export default function read(
+    inputs: FileSystemReadArguments
+  ): Promise<FileSystemReadResult>;
+}
+
+declare module "@write" {
+  export default function write(
+    inputs: FileSystemWriteArguments
+  ): Promise<FileSystemWriteResult>;
+}
 `

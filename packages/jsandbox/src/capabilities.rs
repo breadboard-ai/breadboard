@@ -17,6 +17,10 @@ impl ModuleDef for CapabilitiesModule {
         decl.declare("invoke")?;
         decl.declare("output")?;
         decl.declare("describe")?;
+        decl.declare("query")?;
+        decl.declare("read")?;
+        decl.declare("write")?;
+
         Ok(())
     }
 
@@ -42,6 +46,19 @@ impl ModuleDef for CapabilitiesModule {
             "describe",
             Function::new(ctx.clone(), Async(describe_value))?.with_name("describe")?,
         )?;
+        exports.export(
+            "query",
+            Function::new(ctx.clone(), Async(query_value))?.with_name("query")?,
+        )?;
+        exports.export(
+            "read",
+            Function::new(ctx.clone(), Async(read_value))?.with_name("read")?,
+        )?;
+        exports.export(
+            "write",
+            Function::new(ctx.clone(), Async(write_value))?.with_name("write")?,
+        )?;
+
         Ok(())
     }
 }
@@ -66,40 +83,25 @@ where
     ctx.json_parse(result_str)
 }
 
-async fn fetch_value<'js>(
-    invocation_id: String,
-    inputs: Value<'js>,
-) -> rquickjs::Result<Value<'js>> {
-    call_capability(invocation_id, inputs, fetch).await
+macro_rules! create_value_function {
+    ($func_name:ident, $capability:ident) => {
+        async fn $func_name<'js>(
+            invocation_id: String,
+            inputs: Value<'js>,
+        ) -> rquickjs::Result<Value<'js>> {
+            call_capability(invocation_id, inputs, $capability).await
+        }
+    };
 }
 
-async fn secrets_value<'js>(
-    invocation_id: String,
-    inputs: Value<'js>,
-) -> rquickjs::Result<Value<'js>> {
-    call_capability(invocation_id, inputs, secrets).await
-}
-
-async fn invoke_value<'js>(
-    invocation_id: String,
-    inputs: Value<'js>,
-) -> rquickjs::Result<Value<'js>> {
-    call_capability(invocation_id, inputs, invoke).await
-}
-
-async fn output_value<'js>(
-    invocation_id: String,
-    inputs: Value<'js>,
-) -> rquickjs::Result<Value<'js>> {
-    call_capability(invocation_id, inputs, output).await
-}
-
-async fn describe_value<'js>(
-    invocation_id: String,
-    inputs: Value<'js>,
-) -> rquickjs::Result<Value<'js>> {
-    call_capability(invocation_id, inputs, describe).await
-}
+create_value_function!(fetch_value, fetch);
+create_value_function!(secrets_value, secrets);
+create_value_function!(invoke_value, invoke);
+create_value_function!(output_value, output);
+create_value_function!(describe_value, describe);
+create_value_function!(query_value, query);
+create_value_function!(read_value, read);
+create_value_function!(write_value, write);
 
 #[wasm_bindgen(raw_module = "./capabilities.js")]
 extern "C" {
@@ -108,4 +110,7 @@ extern "C" {
     async fn invoke(invocation_id: String, inputs: String) -> JsValue;
     async fn output(invocation_id: String, inputs: String) -> JsValue;
     async fn describe(invocation_id: String, inputs: String) -> JsValue;
+    async fn query(invocation_id: String, inputs: String) -> JsValue;
+    async fn read(invocation_id: String, inputs: String) -> JsValue;
+    async fn write(invocation_id: String, inputs: String) -> JsValue;
 }

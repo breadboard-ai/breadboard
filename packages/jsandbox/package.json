@@ -56,7 +56,8 @@
     "update-type-declarations": {
       "command": "tsx src/update-type-declarations.ts",
       "files": [
-        "src/environment.d.ts"
+        "src/environment.d.ts",
+        "src/update-type-declarations.ts"
       ],
       "output": [
         "src/type-declarations.ts"
