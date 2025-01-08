@@ -1,6 +1,0 @@
-{
-  "$schema": "../strings.schema.json",
-  "APP_NAME": {
-    "str": "Breadboard"
-  }
-}

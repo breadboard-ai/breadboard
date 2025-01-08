@@ -10,19 +10,30 @@
 <body>
   <script type="module">
     import * as pkg from "./package.json";
-    import { Main } from "./src/index.ts";
-    import { SettingsStore } from "./src/data/settings-store.ts";
+    import * as StringsHelper from "@breadboard-ai/shared-ui/strings";
 
-    const config = {
-      settings: SettingsStore.instance(),
-      version: pkg.version,
-    };
+    async function init() {
+      await StringsHelper.initFrom(LANGUAGE_PACK);
 
-    window.oncontextmenu = (evt) => evt.preventDefault();
+      const { Main } = await import("./src/index.ts");
+      const { SettingsStore } = await import("./src/data/settings-store.ts");
 
-    const main = new Main(config);
-    document.body.appendChild(main);
+      const config = {
+        settings: SettingsStore.instance(),
+        version: pkg.version,
+      };
 
-    console.log(`[Breadboard Visual Editor: Version ${pkg.version}]`);
+      window.oncontextmenu = (evt) => evt.preventDefault();
+
+      const main = new Main(config);
+      document.body.appendChild(main);
+
+      const Strings = StringsHelper.forSection("Global");
+      console.log(
+        `[${Strings.from("APP_NAME")} Visual Editor: Version ${pkg.version}]`
+      );
+    }
+
+    init();
   </script>
 </body>

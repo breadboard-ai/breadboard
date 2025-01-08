@@ -4,9 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as ViewStrings from "../../strings/project-listing/en-US.json" assert { type: "json" };
 import * as StringsHelper from "../../strings/helper.js";
-const Strings = StringsHelper.from(ViewStrings);
+const Strings = StringsHelper.forSection("ProjectListing");
 
 import { LitElement, html, css, nothing, PropertyValueMap } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
@@ -176,7 +175,15 @@ export class ProjectListing extends LitElement {
     }
 
     td:has(.version) {
-      max-width: 60px;
+      max-width: 10px;
+    }
+
+    td:has(.tool) {
+      max-width: 45px;
+    }
+
+    td:has(.board) {
+      max-width: 90px;
     }
 
     #guides {
@@ -317,42 +324,34 @@ export class ProjectListing extends LitElement {
       padding: 0;
       height: 100%;
       text-align: left;
+      display: flex;
+      align-items: center;
     }
 
-    .board.selected::before {
-      content: "";
-      background: var(--bb-ui-50);
-      z-index: -1;
-      order: 1;
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      border-radius: var(--bb-grid-size);
-      box-shadow: 0 0 0 4px var(--bb-ui-50);
+    .tool,
+    .published {
+      display: inline-block;
+      opacity: 0.3;
+      width: 20px;
+      height: 20px;
+      margin-right: var(--bb-grid-size);
+      font-size: 0;
+      background: red;
     }
 
-    .board.selected::after,
-    .board.selected .version {
-      background-color: var(--bb-neutral-0);
+    .tool {
+      background: transparent var(--bb-icon-tool) center center / 20px 20px
+        no-repeat;
     }
 
-    summary::-webkit-details-marker {
-      display: none;
+    .published {
+      background: transparent var(--bb-icon-public) center center / 20px 20px
+        no-repeat;
     }
 
-    summary {
-      list-style: none;
-      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family);
-      height: var(--bb-grid-size-7);
-      color: var(--bb-neutral-600);
-      user-select: none;
-    }
-
-    details {
-      margin-bottom: var(--bb-grid-size-2);
+    .tool.active,
+    .published.active {
+      opacity: 1;
     }
 
     #board-server-settings {
@@ -508,6 +507,11 @@ export class ProjectListing extends LitElement {
       padding: var(--bb-grid-size-2) 0;
     }
 
+    #location-selector:focus {
+      outline: none;
+      background: var(--bb-ui-50);
+    }
+
     .no-value {
       color: var(--bb-neutral-500);
       font-style: italic;
@@ -521,13 +525,17 @@ export class ProjectListing extends LitElement {
       right: var(--bb-grid-size-2);
     }
 
-    @media (min-width: 800px) {
+    @media (min-width: 840px) {
       #wrapper {
         display: grid;
         width: 90vw;
-        grid-template-columns: 1fr 240px;
+        grid-template-columns: 1fr 260px;
         max-width: 1440px;
         column-gap: var(--bb-grid-size-6);
+      }
+
+      #content {
+        height: calc(100% - 120px);
       }
 
       #board-listing {
@@ -537,9 +545,8 @@ export class ProjectListing extends LitElement {
       #guides {
         grid-template-columns: auto;
         row-gap: var(--bb-grid-size-3);
-        border: 1px solid var(--bb-ui-50);
-        padding: var(--bb-grid-size-2);
-        border-radius: var(--bb-grid-size);
+        border-left: 1px solid var(--bb-neutral-100);
+        padding: var(--bb-grid-size-4);
       }
 
       #guides h1 {
@@ -551,7 +558,7 @@ export class ProjectListing extends LitElement {
 
       .guide {
         grid-column: 1 / 4;
-        max-width: 220px;
+        max-width: 240px;
       }
     }
   `;
@@ -1043,8 +1050,6 @@ export class ProjectListing extends LitElement {
                           class=${classMap({
                             mine,
                             board: true,
-                            tool: tags?.includes("tool") ?? false,
-                            published: tags?.includes("published") ?? false,
                           })}
                           title=${url}
                         >
@@ -1069,6 +1074,23 @@ export class ProjectListing extends LitElement {
                             >`}
                       </td>
 
+                      <td>
+                        <span
+                          class=${classMap({
+                            tool: true,
+                            active: tags?.includes("tool") ?? false,
+                          })}
+                          >Tool</span
+                        >
+                        <span
+                          class=${classMap({
+                            published: true,
+                            active: tags?.includes("published") ?? false,
+                          })}
+                          >Published</span
+                        >
+                      </td>
+
                       ${this.showOtherPeoplesBoards
                         ? html` <td class="username">
                             ${mine
@@ -1089,6 +1111,7 @@ export class ProjectListing extends LitElement {
                         <td>${Strings.from("TABLE_HEADER_NAME")}</td>
                         <td>${Strings.from("TABLE_HEADER_VERSION")}</td>
                         <td>${Strings.from("TABLE_HEADER_DESCRIPTION")}</td>
+                        <td>${Strings.from("TABLE_HEADER_TAGS")}</td>
                         ${this.showOtherPeoplesBoards
                           ? html`<td>
                               ${Strings.from("TABLE_HEADER_DESCRIPTION")}
@@ -1110,6 +1133,7 @@ export class ProjectListing extends LitElement {
                         <td>${Strings.from("TABLE_HEADER_NAME")}</td>
                         <td>${Strings.from("TABLE_HEADER_VERSION")}</td>
                         <td>${Strings.from("TABLE_HEADER_DESCRIPTION")}</td>
+                        <td>${Strings.from("TABLE_HEADER_TAGS")}</td>
                         ${this.showOtherPeoplesBoards
                           ? html`<td>
                               ${Strings.from("TABLE_HEADER_DESCRIPTION")}

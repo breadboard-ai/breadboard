@@ -5,9 +5,7 @@
  */
 
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-
-import * as ViewStrings from "@breadboard-ai/shared-ui/strings/global/en-US.json" assert { type: "json" };
-const Strings = BreadboardUI.Strings.from(ViewStrings);
+const Strings = BreadboardUI.Strings.forSection("Global");
 
 import {
   HarnessProxyConfig,
@@ -73,7 +71,6 @@ import {
   PasteCommand,
   SelectAllCommand,
 } from "./commands/commands";
-import { MAIN_BOARD_ID } from "../../shared-ui/dist/constants/constants";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 250;
@@ -84,6 +81,7 @@ type MainArguments = {
   settings?: SettingsStore;
   proxy?: HarnessProxyConfig[];
   version?: string;
+  languagePack: string;
 };
 
 type SaveAsConfiguration = {
@@ -443,9 +441,10 @@ export class Main extends LitElement {
     };
 
     // Initialization order:
-    //  1. Recent boards.
-    //  2. Settings.
-    //  3. Runtime.
+    //  1. Language support.
+    //  2. Recent boards.
+    //  3. Settings.
+    //  4. Runtime.
     //
     // Note: the runtime loads the kits and the initializes the board servers.
     this.#initialize = this.#recentBoardStore
@@ -3476,7 +3475,7 @@ export class Main extends LitElement {
                 this.#runtime.select.selectNode(
                   this.tab.id,
                   this.#runtime.select.generateId(),
-                  evt.subGraphId ?? MAIN_BOARD_ID,
+                  evt.subGraphId ?? BreadboardUI.Constants.MAIN_BOARD_ID,
                   evt.id
                 );
               }}

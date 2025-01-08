@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-type LanguagePack = Record<string, { str: string; desc?: string } | string>;
+import { LanguagePack, LanguagePackEntry } from "../types/types";
 
-class Strings {
-  constructor(private lang: LanguagePack) {}
+class Strings<T extends LanguagePackEntry> {
+  constructor(private lang: T) {}
 
   from(key: string) {
     if (typeof this.lang[key] === "string") {
@@ -22,6 +22,18 @@ class Strings {
   }
 }
 
-export function from(lib: LanguagePack) {
-  return new Strings(lib);
+let currentLanguage: LanguagePack;
+export async function initFrom(language: LanguagePack) {
+  currentLanguage = language;
+}
+
+export function forSection<T extends keyof LanguagePack>(section: T) {
+  return new Strings(currentLanguage[section]);
+}
+
+export function from<T extends LanguagePack, Y extends keyof T>(
+  lib: T,
+  name: Y
+) {
+  return new Strings(lib[name] as LanguagePackEntry);
 }

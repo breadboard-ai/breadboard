@@ -208,6 +208,10 @@ export const styles = css`
     position: relative;
   }
 
+  #logo:not([disabled]) {
+    cursor: pointer;
+  }
+
   #tab-info {
     flex: 1;
     display: flex;

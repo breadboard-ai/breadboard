@@ -4,4 +4,4 @@ public/pyodide*
 public/python*
 public/sandbox.wasm
 public/bbrt*
-public/styles/overrides.css
+langs

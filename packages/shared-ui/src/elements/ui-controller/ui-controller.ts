@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as StringsHelper from "../../strings/helper.js";
+const Strings = StringsHelper.forSection("UIController");
+
 import {
   BoardServer,
   EditHistory,
@@ -412,7 +415,7 @@ export class UI extends LitElement {
     switch (this.sideNavItem) {
       case "workspace-overview": {
         sideNavItem = html`<h1 id="side-nav-title">
-            <span>Workspace</span>
+            <span>${Strings.from("TITLE_WORKSPACE")}</span>
             <div id="workspace-controls">
               <button
                 id="create-new"
