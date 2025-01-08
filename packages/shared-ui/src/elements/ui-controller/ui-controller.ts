@@ -90,9 +90,6 @@ export class UI extends LitElement {
   readOnly = false;
 
   @property()
-  showWelcomePanel = false;
-
-  @property()
   version = "dev";
 
   @property()
@@ -339,14 +336,6 @@ export class UI extends LitElement {
       }
     );
 
-    let welcomePanel: HTMLTemplateResult | symbol = nothing;
-    if (this.showWelcomePanel) {
-      welcomePanel = html`<bb-welcome-panel
-        .version=${this.version}
-        .recentBoards=${this.recentBoards}
-      ></bb-welcome-panel>`;
-    }
-
     const selectedModules = this.selectionState?.selectionState.modules;
     const modules = selectedModules ? [...selectedModules] : [];
     if (modules.length > 0) {
@@ -417,7 +406,6 @@ export class UI extends LitElement {
 
     const contentContainer = html`<div id="graph-container" slot="slot-1">
       ${graphEditor} ${modules.length > 0 ? moduleEditor : nothing}
-      ${welcomePanel}
     </div>`;
 
     let sideNavItem: HTMLTemplateResult | symbol = nothing;
@@ -577,9 +565,7 @@ export class UI extends LitElement {
               </bb-splitter>`
             : contentContainer}
         </section>`
-      : html`<section id="content" class="welcome">
-          ${graphEditor} ${welcomePanel}
-        </section>`;
+      : html`<section id="content" class="welcome">${graphEditor}</section>`;
   }
 
   updated() {

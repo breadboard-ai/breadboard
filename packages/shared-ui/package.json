@@ -15,7 +15,8 @@
     "./editor": {
       "types": "./dist/elements/editor/editor.d.ts",
       "default": "./dist/elements/editor/editor.js"
-    }
+    },
+    "./strings/global/en-US.json": "./dist/strings/global/en-US.json"
   },
   "types": "dist/index.d.ts",
   "type": "module",
@@ -47,6 +48,7 @@
       ],
       "files": [
         "src/**/*.ts",
+        "src/**/*.json",
         "tsconfig.json",
         "../../core/tsconfig/base.json"
       ]

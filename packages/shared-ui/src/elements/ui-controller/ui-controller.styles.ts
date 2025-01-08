@@ -246,7 +246,7 @@ export const styles = css`
   }
 
   #side-nav {
-    background: var(--bb-ui-700);
+    background: var(--bb-neutral-600);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
