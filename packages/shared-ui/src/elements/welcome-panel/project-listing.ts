@@ -525,6 +525,23 @@ export class ProjectListing extends LitElement {
       right: var(--bb-grid-size-2);
     }
 
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    summary {
+      list-style: none;
+      font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
+        var(--bb-font-family);
+      height: var(--bb-grid-size-7);
+      color: var(--bb-neutral-700);
+      user-select: none;
+    }
+
+    details {
+      margin-bottom: var(--bb-grid-size-2);
+    }
+
     @media (min-width: 840px) {
       #wrapper {
         display: grid;
