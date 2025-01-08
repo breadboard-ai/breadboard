@@ -52,6 +52,7 @@ export { OpenBoardOverlay } from "./overlay/open-board.js";
 export { OverflowMenu } from "./overflow-menu/overflow-menu.js";
 export { Overlay } from "./overlay/overlay.js";
 export { PortTooltip } from "./editor/port-tooltip.js";
+export { ProjectListing } from "./welcome-panel/project-listing.js";
 export { GraphRibbonMenu as RibbonMenu } from "./editor/ribbon.js";
 export { SaveAsOverlay } from "./overlay/save-as.js";
 export { SchemaEditor } from "./input/schema-editor/schema-editor.js";

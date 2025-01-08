@@ -344,6 +344,8 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
         {
           url: project.url.href,
           mine: project.metadata.owner === this.user.username,
+          version: project.board?.descriptor.version,
+          description: project.metadata.description,
           readonly: false,
           handle: null,
           tags: project.metadata?.tags,
@@ -430,6 +432,7 @@ export class RemoteBoardServer extends EventTarget implements BoardServer {
             owner: item.username ?? "Unknown",
             tags: item.tags,
             title: item.title,
+            description: item.description,
             access,
           },
         };

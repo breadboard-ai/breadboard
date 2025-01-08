@@ -13,6 +13,8 @@ body.hide-cursor {
 }
 
 :root {
+  --bb-config-logo: url(/images/bb-logo.svg);
+
   --bb-grid-size: 4px;
   --bb-grid-size-2: calc(var(--bb-grid-size) * 2);
   --bb-grid-size-3: calc(var(--bb-grid-size) * 3);

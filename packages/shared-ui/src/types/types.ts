@@ -472,3 +472,18 @@ export interface DragConnectorReceiver extends HTMLElement {
   highlight(x: number, y: number): void;
   removeHighlight(x: number, y: number): void;
 }
+
+export type LanguagePackEntry = Record<
+  string,
+  { str: string; desc?: string } | string
+>;
+
+/**
+ * Explicitly list the language packs to ensure new packs contain the correct
+ * top-level entries.
+ */
+export interface LanguagePack {
+  Global: LanguagePackEntry;
+  ProjectListing: LanguagePackEntry;
+  UIController: LanguagePackEntry;
+}

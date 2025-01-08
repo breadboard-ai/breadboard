@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as BreadboardUI from "@breadboard-ai/shared-ui";
+const Strings = BreadboardUI.Strings.forSection("Global");
+
 import {
   HarnessProxyConfig,
   RunConfig,
@@ -15,7 +18,6 @@ import { until } from "lit/directives/until.js";
 import { map } from "lit/directives/map.js";
 import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
   blankLLMContent,
   createRunObserver,
@@ -69,7 +71,6 @@ import {
   PasteCommand,
   SelectAllCommand,
 } from "./commands/commands";
-import { MAIN_BOARD_ID } from "../../shared-ui/dist/constants/constants";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 250;
@@ -80,6 +81,7 @@ type MainArguments = {
   settings?: SettingsStore;
   proxy?: HarnessProxyConfig[];
   version?: string;
+  languagePack: string;
 };
 
 type SaveAsConfiguration = {
@@ -222,7 +224,6 @@ export class Main extends LitElement {
 
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
-  #tabContainerRef: Ref<HTMLDivElement> = createRef();
   #dragConnectorRef: Ref<BreadboardUI.Elements.DragConnector> = createRef();
   #boardId = 0;
   #boardPendingSave = false;
@@ -324,21 +325,10 @@ export class Main extends LitElement {
       name: "edit-board-information",
       icon: "edit",
       callback: () => {
-        if (!this.#tabContainerRef.value) {
-          return;
-        }
-
-        const activeTab = this.#tabContainerRef.value.querySelector(".active");
-        if (!activeTab) {
-          return;
-        }
-
-        const { left, bottom } = activeTab.getBoundingClientRect();
-        const maxLeft = window.innerWidth - 500;
         this.#showBoardEditOverlay(
           this.tab,
-          Math.min(maxLeft, left),
-          bottom,
+          100,
+          50,
           this.tab?.subGraphId ?? null
         );
       },
@@ -451,9 +441,10 @@ export class Main extends LitElement {
     };
 
     // Initialization order:
-    //  1. Recent boards.
-    //  2. Settings.
-    //  3. Runtime.
+    //  1. Language support.
+    //  2. Recent boards.
+    //  3. Settings.
+    //  4. Runtime.
     //
     // Note: the runtime loads the kits and the initializes the board servers.
     this.#initialize = this.#recentBoardStore
@@ -844,8 +835,11 @@ export class Main extends LitElement {
     }
 
     // Add a little clearance onto the value.
-    this.#tooltipRef.value.x = Math.max(tooltipEvent.x, 80);
-    this.#tooltipRef.value.y = Math.max(tooltipEvent.y, 30);
+    this.#tooltipRef.value.x = Math.min(
+      Math.max(tooltipEvent.x, 80),
+      window.innerWidth - 80
+    );
+    this.#tooltipRef.value.y = Math.max(tooltipEvent.y, 90);
     this.#tooltipRef.value.message = tooltipEvent.message;
     this.#tooltipRef.value.visible = true;
   }
@@ -2900,109 +2894,81 @@ export class Main extends LitElement {
           ></bb-overflow-menu>`;
         }
 
-        const tabs = this.#runtime?.board.tabs ?? [];
+        const canSave = this.tab
+          ? this.#runtime.board.canSave(this.tab.id) && !this.tab.readOnly
+          : false;
+        const saveStatus = this.tab
+          ? (this.#tabSaveStatus.get(this.tab.id) ?? "saved")
+          : BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR;
+        const remote =
+          (this.tab?.graph.url?.startsWith("http") ||
+            this.tab?.graph.url?.startsWith("drive")) ??
+          false;
+        const readonly = this.tab?.readOnly ?? !canSave;
+        let saveTitle = "Saved";
+        switch (saveStatus) {
+          case BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING: {
+            saveTitle = "Saving";
+            break;
+          }
+
+          case BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED: {
+            if (readonly) {
+              saveTitle += " - Read Only";
+            }
+            break;
+          }
+
+          case BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR: {
+            saveTitle = "Error";
+            break;
+          }
+
+          case BreadboardUI.Types.BOARD_SAVE_STATUS.UNSAVED: {
+            saveTitle = "Unsaved";
+            break;
+          }
+        }
+
         const ui = html`<header>
           <div id="header-bar" data-active=${this.tab ? "true" : nothing} ?inert=${showingOverlay}>
-          <button
-            id="show-nav"
-            @click=${() => {
-              this.showNav = !this.showNav;
-              window.addEventListener(
-                "pointerdown",
-                () => {
-                  this.showNav = false;
-                },
-                { once: true }
-              );
-            }}
-          ></button>
-          <h1 id="breadboard-logo">
-            Breadboard
-          </h1>
-          <div id="tab-container" ${ref(this.#tabContainerRef)}>
-          ${
-            tabs.size > 0 // The Welcome Panel is shown when there are no tabs.
-              ? html`<div id="add-tab-container">
-                  <button
-                    id="add-tab"
-                    @click=${() => {
-                      this.showOpenBoardOverlay = true;
-                    }}
-                  >
-                    +
-                  </button>
-                </div>`
-              : nothing
-          }
-            ${map(tabs, ([id, tab]) => {
-              const canSave = this.#runtime.board.canSave(id) && !tab.readOnly;
-              const saveStatus = this.#tabSaveStatus.get(id) ?? "saved";
-              const remote =
-                (tab.graph.url?.startsWith("http") ||
-                  tab.graph.url?.startsWith("drive")) ??
-                false;
-              const readonly = tab.readOnly || !canSave;
+          <button id="logo" @click=${() => {
+            if (!this.tab) {
+              return;
+            }
 
-              let saveTitle = "Saved";
-              switch (saveStatus) {
-                case BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING: {
-                  saveTitle = "Saving";
-                  break;
-                }
+            this.#runtime.board.closeTab(this.tab.id);
+          }}
+              ?disabled=${this.tab === null}>
+            ${Strings.from("APP_NAME")}
+          </button>
+          <div id="tab-info">
 
-                case BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED: {
-                  if (readonly) {
-                    saveTitle += " - Read Only";
-                  }
-                  break;
-                }
+            ${
+              this.tab
+                ? html` <span class="tab-title">${this.tab.graph.title}</span>
+                    <button
+                      id="tab-edit"
+                      class=${classMap({
+                        "can-save": canSave,
+                      })}
+                      @click=${(evt: PointerEvent) => {
+                        if (!this.tab || !canSave) {
+                          return;
+                        }
 
-                case BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR: {
-                  saveTitle = "Error";
-                  break;
-                }
+                        this.#showBoardEditOverlay(
+                          this.tab,
+                          evt.clientX,
+                          evt.clientY,
+                          this.tab.subGraphId
+                        );
+                      }}
+                    >
+                      Edit
+                    </button>
 
-                case BreadboardUI.Types.BOARD_SAVE_STATUS.UNSAVED: {
-                  saveTitle = "Unsaved";
-                  break;
-                }
-              }
-
-              return html`<div
-                class=${classMap({
-                  tab: true,
-                  active: this.tab?.id === tab.id,
-                })}
-              >
-                <button
-                  class=${classMap({
-                    "back-to-main-board": true,
-                    "can-save": canSave,
-                  })}
-                  @click=${() => {
-                    if (this.tab?.id === tab.id && tab.subGraphId !== null) {
-                      tab.subGraphId = null;
-                      return;
-                    }
-
-                    this.#runtime.board.changeTab(tab.id);
-                  }}
-                  @dblclick=${(evt: PointerEvent) => {
-                    if (!this.tab) {
-                      return;
-                    }
-
-                    this.#showBoardEditOverlay(
-                      this.tab,
-                      evt.clientX,
-                      evt.clientY,
-                      this.tab.subGraphId
-                    );
-                  }}
-                >
-                  <span class="tab-title">${tab.graph.title}</span>
-                  <span
-                    ><span
+                    <span
                       class=${classMap({
                         "save-status": true,
                         "can-save": canSave,
@@ -3010,55 +2976,69 @@ export class Main extends LitElement {
                         [saveStatus]: true,
                         readonly,
                       })}
-                      >${saveTitle}</span
-                    ></span
-                  >
-                </button>
-
-                <button
-                  class="tab-overflow"
-                  @click=${(evt: PointerEvent) => {
-                    if (!(evt.target instanceof HTMLButtonElement)) {
-                      return;
-                    }
-
-                    const btnBounds = evt.target.getBoundingClientRect();
-                    const x = btnBounds.x + btnBounds.width;
-                    const y = btnBounds.y + btnBounds.height;
-
-                    this.#boardOverflowMenuConfiguration = {
-                      tabId: tab.id,
-                      x,
-                      y,
-                    };
-                    this.showBoardOverflowMenu = true;
-                  }}
-                >
-                  Overflow
-                </button>
-
-                <button
-                  @click=${() => {
-                    this.#runtime.board.closeTab(id);
-                  }}
-                  ?disabled=${tab.graph === null}
-                  class="close-board"
-                  title="Close Board"
-                >
-                  Close
-                </button>
-              </div>`;
-            })}
+                    >
+                      ${saveTitle}
+                    </span>`
+                : nothing
+            }
           </div>
           <button
             class=${classMap({ active: this.showSettingsOverlay })}
             id="toggle-settings"
-            title="Edit your Visual Editor settings"
+            @pointerover=${(evt: PointerEvent) => {
+              this.dispatchEvent(
+                new BreadboardUI.Events.ShowTooltipEvent(
+                  `Edit Settings`,
+                  evt.clientX,
+                  evt.clientY
+                )
+              );
+            }}
+            @pointerout=${() => {
+              this.dispatchEvent(new BreadboardUI.Events.HideTooltipEvent());
+            }}
             @click=${() => {
               this.showSettingsOverlay = true;
             }}
           >
             Settings
+          </button>
+          <button
+            id="toggle-overflow-menu"
+            @pointerover=${(evt: PointerEvent) => {
+              this.dispatchEvent(
+                new BreadboardUI.Events.ShowTooltipEvent(
+                  `See additional items`,
+                  evt.clientX,
+                  evt.clientY
+                )
+              );
+            }}
+            @pointerout=${() => {
+              this.dispatchEvent(new BreadboardUI.Events.HideTooltipEvent());
+            }}
+            @click=${(evt: PointerEvent) => {
+              if (!(evt.target instanceof HTMLButtonElement)) {
+                return;
+              }
+
+              if (!this.tab) {
+                return;
+              }
+
+              const btnBounds = evt.target.getBoundingClientRect();
+              const x = btnBounds.x + btnBounds.width - 205;
+              const y = btnBounds.y + btnBounds.height;
+
+              this.#boardOverflowMenuConfiguration = {
+                tabId: this.tab.id,
+                x,
+                y,
+              };
+              this.showBoardOverflowMenu = true;
+            }}
+          >
+            Overflow
           </button>
         </div>
       </header>
@@ -3084,7 +3064,6 @@ export class Main extends LitElement {
               .boardServers=${this.#boardServers}
               .history=${this.#runtime.edit.getHistory(this.tab)}
               .version=${this.#version}
-              .showWelcomePanel=${this.showWelcomePanel}
               .recentBoards=${this.#recentBoards}
               .inputsFromLastRun=${inputsFromLastRun}
               .tabURLs=${tabURLs}
@@ -3496,7 +3475,7 @@ export class Main extends LitElement {
                 this.#runtime.select.selectNode(
                   this.tab.id,
                   this.#runtime.select.generateId(),
-                  evt.subGraphId ?? MAIN_BOARD_ID,
+                  evt.subGraphId ?? BreadboardUI.Constants.MAIN_BOARD_ID,
                   evt.id
                 );
               }}
@@ -3586,6 +3565,97 @@ export class Main extends LitElement {
                 );
               }}
             ></bb-ui-controller>
+        ${
+          this.showWelcomePanel
+            ? html`<bb-project-listing
+                .version=${this.#version}
+                .recentBoards=${this.#recentBoards}
+                .selectedBoardServer=${this.selectedBoardServer}
+                .selectedLocation=${this.selectedLocation}
+                .boardServers=${this.#boardServers}
+                .boardServerNavState=${this.boardServerNavState}
+                @bbgraphboardserverblankboard=${() => {
+                  this.#attemptBoardCreate(blankLLMContent());
+                }}
+                @bbgraphboardserveradd=${() => {
+                  this.showBoardServerAddOverlay = true;
+                }}
+                @bbgraphboardserverrefresh=${async (
+                  evt: BreadboardUI.Events.GraphBoardServerRefreshEvent
+                ) => {
+                  const boardServer = this.#runtime.board.getBoardServerByName(
+                    evt.boardServerName
+                  );
+                  if (!boardServer) {
+                    return;
+                  }
+
+                  const refreshed = await boardServer.refresh(evt.location);
+                  if (refreshed) {
+                    this.toast(
+                      "Source files refreshed",
+                      BreadboardUI.Events.ToastType.INFORMATION
+                    );
+                  } else {
+                    this.toast(
+                      "Unable to refresh source files",
+                      BreadboardUI.Events.ToastType.WARNING
+                    );
+                  }
+
+                  this.boardServerNavState = globalThis.crypto.randomUUID();
+                }}
+                @bbgraphboardserverdisconnect=${async (
+                  evt: BreadboardUI.Events.GraphBoardServerDisconnectEvent
+                ) => {
+                  await this.#runtime.board.disconnect(evt.location);
+                  this.boardServerNavState = globalThis.crypto.randomUUID();
+                }}
+                @bbgraphboardserverrenewaccesssrequest=${async (
+                  evt: BreadboardUI.Events.GraphBoardServerRenewAccessRequestEvent
+                ) => {
+                  const boardServer = this.#runtime.board.getBoardServerByName(
+                    evt.boardServerName
+                  );
+
+                  if (!boardServer) {
+                    return;
+                  }
+
+                  if (boardServer.renewAccess) {
+                    await boardServer.renewAccess();
+                  }
+
+                  this.boardServerNavState = globalThis.crypto.randomUUID();
+                }}
+                @bbgraphboardserverloadrequest=${async (
+                  evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
+                ) => {
+                  this.showWelcomePanel = false;
+                  this.#attemptBoardStart(
+                    new BreadboardUI.Events.StartEvent(evt.url)
+                  );
+                }}
+                @bbgraphboardserverdeleterequest=${async (
+                  evt: BreadboardUI.Events.GraphBoardServerDeleteRequestEvent
+                ) => {
+                  await this.#attemptBoardDelete(
+                    evt.boardServerName,
+                    evt.url,
+                    evt.isActive
+                  );
+                }}
+                @bbgraphboardserverselectionchange=${(
+                  evt: BreadboardUI.Events.GraphBoardServerSelectionChangeEvent
+                ) => {
+                  this.#persistBoardServerAndLocation(
+                    evt.selectedBoardServer,
+                    evt.selectedLocation
+                  );
+                }}
+              ></bb-project-listing>`
+            : nothing
+        }
           </div>
         ${until(nav)}
       </div>`;

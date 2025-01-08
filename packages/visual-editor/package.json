@@ -97,7 +97,8 @@
         "../../core/tsconfig/base.json",
         "package.json",
         ".env.development",
-        ".env.production"
+        ".env.production",
+        "langs"
       ]
     },
     "build:tsc": {

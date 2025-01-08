@@ -15,6 +15,14 @@
     "./editor": {
       "types": "./dist/elements/editor/editor.d.ts",
       "default": "./dist/elements/editor/editor.js"
+    },
+    "./strings/en_US": {
+      "types": "./dist/strings/en_US/index.d.ts",
+      "default": "./dist/strings/en_US/index.js"
+    },
+    "./strings": {
+      "types": "./dist/strings/helper.d.ts",
+      "default": "./dist/strings/helper.js"
     }
   },
   "types": "dist/index.d.ts",
@@ -47,6 +55,7 @@
       ],
       "files": [
         "src/**/*.ts",
+        "src/**/*.json",
         "tsconfig.json",
         "../../core/tsconfig/base.json"
       ]

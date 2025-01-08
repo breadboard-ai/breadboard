@@ -20,6 +20,6 @@
     "noFallthroughCasesInSwitch": true,
     "types": ["vite/client"]
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "include": ["src/**/*.ts", "src/strings/**/*.json", "tests/**/*.ts"],
   "extends": "@google-labs/tsconfig/base.json"
 }

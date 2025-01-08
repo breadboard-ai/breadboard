@@ -6,14 +6,33 @@
 
 import { config } from "dotenv";
 import { defineConfig } from "vitest/config";
+import { loadEnv } from "vite";
+import path from "node:path";
 
 export const buildCustomAllowList = (value?: string) => {
   if (!value) return {};
   return { fs: { allow: [value] } };
 };
 
-export default defineConfig((_) => {
+export default defineConfig(async ({ mode }) => {
   config();
+
+  const envConfig = { ...loadEnv(mode, process.cwd()) };
+  if (!envConfig.VITE_LANGUAGE_PACK) {
+    throw new Error("Language Pack not specified");
+  }
+
+  const languagePackUrl = await import.meta.resolve(
+    envConfig.VITE_LANGUAGE_PACK
+  );
+
+  let languagePack;
+  try {
+    languagePack = (await import(languagePackUrl)).default;
+  } catch (err) {
+    throw new Error("Unable to import language pack");
+  }
+
   return {
     build: {
       lib: {
@@ -33,6 +52,9 @@ export default defineConfig((_) => {
         formats: ["es"],
       },
       target: "esnext",
+    },
+    define: {
+      LANGUAGE_PACK: JSON.stringify(languagePack),
     },
     server: {
       ...buildCustomAllowList(process.env.VITE_FS_ALLOW),
