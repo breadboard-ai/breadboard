@@ -24,12 +24,18 @@ import {
   FileSystemBlobStore,
 } from "../types.js";
 import { Path } from "./path.js";
-import { err, ok } from "./utils.js";
+import { err, noStreams, ok } from "./utils.js";
 import { PersistentFile } from "./persistent-file.js";
 import { InMemoryBlobStore } from "./in-memory-blob-store.js";
 import { transformBlobs } from "./blob-transform.js";
 
-export { FileSystemImpl, Path };
+export { FileSystemImpl, Path, createFileSystem };
+
+function createFileSystem(
+  args: Omit<OuterFileSystems, "graphUrl" | "blobs" | "session" | "run">
+): FileSystem {
+  return new FileSystemImpl({ ...args, graphUrl: "" });
+}
 
 class StreamFile implements FileSystemFile {
   readonly data = [];
@@ -120,8 +126,9 @@ class SimpleFile implements FileSystemFile {
   }
 
   async append(data: LLMContent[], done: boolean, receipt = false) {
-    if (done || receipt) {
-      return err("Can't close the file that isn't a stream");
+    const checkForStreams = noStreams(done, receipt);
+    if (!ok(checkForStreams)) {
+      return checkForStreams;
     }
     this.data.push(...data);
   }
@@ -150,6 +157,8 @@ class SimpleFile implements FileSystemFile {
 }
 
 class FileSystemImpl implements FileSystem {
+  #graphUrl: string;
+
   #local: PersistentBackend;
   #env: FileMap;
   #assets: FileMap;
@@ -166,6 +175,7 @@ class FileSystemImpl implements FileSystem {
   #tmp: FileMap;
 
   constructor(outer: OuterFileSystems) {
+    this.#graphUrl = outer.graphUrl || "";
     this.#local = outer.local;
     this.#env = SimpleFile.fromEntries(outer.env);
     this.#assets = SimpleFile.fromEntries(outer.assets);
@@ -191,7 +201,7 @@ class FileSystemImpl implements FileSystem {
     }
 
     if (parsedPath.persistent) {
-      return this.#local.query(path);
+      return this.#local.query(this.#graphUrl, path);
     } else {
       const map = this.#getFileMap(parsedPath);
       if (!ok(map)) {
@@ -216,7 +226,7 @@ class FileSystemImpl implements FileSystem {
     let file: FileSystemFile | undefined;
 
     if (parsedPath.persistent) {
-      file = new PersistentFile(path, this.#local);
+      file = new PersistentFile(this.#graphUrl, path, this.#local);
     } else {
       const map = this.#getFileMap(parsedPath);
       if (!ok(map)) {
@@ -280,12 +290,16 @@ class FileSystemImpl implements FileSystem {
         if (sourcePath.persistent) {
           // a) Persistent -> Persistent
           if (move) {
-            const moving = await this.#local.move(source, path);
+            const moving = await this.#local.move(this.#graphUrl, source, path);
             if (!ok(moving)) {
               return moving;
             }
           } else {
-            const copying = await this.#local.copy(source, path);
+            const copying = await this.#local.copy(
+              this.#graphUrl,
+              source,
+              path
+            );
             if (!ok(copying)) {
               return copying;
             }
@@ -301,7 +315,11 @@ class FileSystemImpl implements FileSystem {
           if (!file) {
             return err(`Source file not found: "${source}"`);
           }
-          const writing = await this.#local.write(path, file.data);
+          const writing = await this.#local.write(
+            this.#graphUrl,
+            path,
+            file.data
+          );
           if (!ok(writing)) {
             return writing;
           }
@@ -314,7 +332,11 @@ class FileSystemImpl implements FileSystem {
 
       if (sourcePath.persistent) {
         // c) Persistent -> Ephemeral
-        const sourceFile = new PersistentFile(source, this.#local);
+        const sourceFile = new PersistentFile(
+          this.#graphUrl,
+          source,
+          this.#local
+        );
         const sourceContents = await sourceFile.read(false);
         if (!ok(sourceContents)) {
           return sourceContents;
@@ -328,7 +350,7 @@ class FileSystemImpl implements FileSystem {
           return err(`Source file "${path}" is empty`);
         }
         destinationMap.set(path, new SimpleFile(sourceContents.data));
-        return this.#local.delete(source, false);
+        return this.#local.delete(this.#graphUrl, source, false);
       }
 
       // d) Ephemeral -> Ephemeral
@@ -411,7 +433,7 @@ class FileSystemImpl implements FileSystem {
     // 5) Handle append case
     if (append) {
       if (parsedPath.persistent) {
-        return this.#local.append(path, data);
+        return this.#local.append(this.#graphUrl, path, data);
       }
 
       const map = this.#getFileMap(parsedPath);
@@ -433,7 +455,7 @@ class FileSystemImpl implements FileSystem {
 
     // 6) otherwise, fall through to create a new file
     if (parsedPath.persistent) {
-      return this.#local.write(path, data);
+      return this.#local.write(this.#graphUrl, path, data);
     } else {
       const deflated = await transformBlobs(path, data, [
         this.#blobs.deflator(),
@@ -487,7 +509,7 @@ class FileSystemImpl implements FileSystem {
       return parsedPath;
     }
     if (parsedPath.persistent) {
-      return this.#local.delete(path, false);
+      return this.#local.delete(this.#graphUrl, path, false);
     }
 
     const map = this.#getFileMap(parsedPath);
@@ -512,7 +534,7 @@ class FileSystemImpl implements FileSystem {
     }
 
     if (parsedPath.persistent) {
-      await this.#local.delete(path, parsedPath.dir);
+      await this.#local.delete(this.#graphUrl, path, parsedPath.dir);
       return;
     }
 
@@ -549,8 +571,9 @@ class FileSystemImpl implements FileSystem {
     }
   }
 
-  createModuleFileSystem(): FileSystem {
+  createModuleFileSystem(graphUrl: string): FileSystem {
     return new FileSystemImpl({
+      graphUrl,
       local: this.#local,
       env: mapToEntries(this.#env),
       assets: mapToEntries(this.#assets),
@@ -560,8 +583,9 @@ class FileSystemImpl implements FileSystem {
     });
   }
 
-  createRunFileSystem(): FileSystem {
+  createRunFileSystem(graphUrl: string): FileSystem {
     return new FileSystemImpl({
+      graphUrl,
       local: this.#local,
       env: mapToEntries(this.#env),
       assets: mapToEntries(this.#assets),

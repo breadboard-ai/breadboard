@@ -22,7 +22,7 @@ async function generate() {
 // DO NOT EDIT DIRECTLY
 
 export const typeDeclarations = \`
-${declarations}\`
+${declarations.replaceAll("`", "\\`").replaceAll("${", "\\${")}\`
 `;
   await writeFile(destination, asString);
 }

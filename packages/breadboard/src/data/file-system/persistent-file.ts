@@ -6,7 +6,7 @@
 
 import { LLMContent } from "@breadboard-ai/types";
 import {
-  BackendAtomicOperations,
+  PersistentBackend,
   FileSystemFile,
   FileSystemPath,
   FileSystemQueryEntry,
@@ -14,46 +14,22 @@ import {
   FileSystemWriteResult,
   Outcome,
 } from "../types.js";
-import { err, ok } from "./utils.js";
+import { noStreams, ok, readFromStart } from "./utils.js";
 
 export { PersistentFile };
 
-// TODO: Move to common
-function readFromStart(
-  path: FileSystemPath,
-  data: LLMContent[] | undefined,
-  start: number
-): FileSystemReadResult {
-  if (!data) {
-    return err(`File at "${path}" is empty`);
-  }
-
-  if (start >= data.length) {
-    return err(`Length of file is lesser than start "${start}"`);
-  }
-  return {
-    data: data.slice(start),
-    last: data.length - 1,
-  };
-}
-
-function noStreams(done: boolean, receipt?: boolean): FileSystemWriteResult {
-  if (done || receipt) {
-    return err("Can't close the file that isn't a stream");
-  }
-}
-
 class PersistentFile implements FileSystemFile {
   constructor(
+    public readonly graphUrl: string,
     public readonly path: FileSystemPath,
-    public readonly backend: BackendAtomicOperations
+    public readonly backend: PersistentBackend
   ) {}
 
   async read(
     inflate: boolean,
     start: number = 0
   ): Promise<FileSystemReadResult> {
-    const reading = await this.backend.read(this.path, inflate);
+    const reading = await this.backend.read(this.graphUrl, this.path, inflate);
     if (!ok(reading)) {
       return reading;
     }
@@ -69,7 +45,7 @@ class PersistentFile implements FileSystemFile {
     if (!ok(checkForStreams)) {
       return checkForStreams;
     }
-    return this.backend.append(this.path, data);
+    return this.backend.append(this.graphUrl, this.path, data);
   }
 
   copy(): Outcome<FileSystemFile> {

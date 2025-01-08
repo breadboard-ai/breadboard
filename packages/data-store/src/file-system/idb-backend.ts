@@ -8,9 +8,6 @@ import { LLMContent } from "@breadboard-ai/types";
 import {
   asBase64,
   asBlob,
-  BackendAtomicOperations,
-  BackendTransaction,
-  BackendTransactionResult,
   EphemeralBlobStore,
   FileSystemPath,
   FileSystemQueryResult,
@@ -64,23 +61,11 @@ interface Files extends DBSchema {
 
 class IDBBackend implements PersistentBackend {
   #db: Promise<IDBPDatabase<Files>>;
-  #graphUrl: string;
-  #ops: BackendAtomicOperations;
   #ephemeralBlobs: EphemeralBlobStore;
 
-  constructor(graphUrl: string, ephemeralBlobs: EphemeralBlobStore) {
+  constructor(ephemeralBlobs: EphemeralBlobStore) {
     this.#ephemeralBlobs = ephemeralBlobs;
-    this.#graphUrl = graphUrl;
     this.#db = this.initialize();
-    this.#ops = {
-      query: this.query.bind(this),
-      read: this.read.bind(this),
-      append: this.append.bind(this),
-      delete: this.delete.bind(this),
-      copy: this.copy.bind(this),
-      move: this.move.bind(this),
-      write: this.write.bind(this),
-    };
   }
 
   /**
@@ -109,18 +94,16 @@ class IDBBackend implements PersistentBackend {
     });
   }
 
-  #key(path: FileSystemPath): FileKey {
-    return [this.#graphUrl, path];
+  #key(graphUrl: string, path: FileSystemPath): FileKey {
+    return [graphUrl, path];
   }
 
-  #startsWith(path: FileSystemPath) {
-    return IDBKeyRange.bound(
-      [this.#graphUrl, path],
-      [this.#graphUrl, path + "\uffff"]
-    );
+  #startsWith(graphUrl: string, path: FileSystemPath) {
+    return IDBKeyRange.bound([graphUrl, path], [graphUrl, path + "\uffff"]);
   }
 
   async #write(
+    graphUrl: string,
     path: FileSystemPath,
     data: LLMContent[],
     append: boolean
@@ -187,12 +170,12 @@ class IDBBackend implements PersistentBackend {
       }
 
       if (append) {
-        const existing = await files.get(this.#key(path));
+        const existing = await files.get(this.#key(graphUrl, path));
         deflated = existing ? [...existing.data, ...deflated] : deflated;
       }
 
       await files.put({
-        graphUrl: this.#graphUrl,
+        graphUrl,
         path,
         data: deflated,
         timestamp,
@@ -204,16 +187,19 @@ class IDBBackend implements PersistentBackend {
     }
   }
 
-  async query(path: FileSystemPath): Promise<FileSystemQueryResult> {
+  async query(
+    graphUrl: string,
+    path: FileSystemPath
+  ): Promise<FileSystemQueryResult> {
     const db = await this.#db;
     try {
-      const entries = (await db.getAll("files", this.#startsWith(path))).map(
-        (entry) => ({
-          stream: false,
-          path: entry.path as FileSystemPath,
-          length: entry.data.length - 1,
-        })
-      );
+      const entries = (
+        await db.getAll("files", this.#startsWith(graphUrl, path))
+      ).map((entry) => ({
+        stream: false,
+        path: entry.path as FileSystemPath,
+        length: entry.data.length,
+      }));
       return { entries };
     } catch (e) {
       return err((e as Error).message);
@@ -221,6 +207,7 @@ class IDBBackend implements PersistentBackend {
   }
 
   async read(
+    graphUrl: string,
     path: FileSystemPath,
     inflate: boolean
   ): Promise<Outcome<LLMContent[]>> {
@@ -230,7 +217,7 @@ class IDBBackend implements PersistentBackend {
       const files = tx.objectStore("files");
       const blobs = tx.objectStore("blobs");
 
-      const result = await files.get(this.#key(path));
+      const result = await files.get(this.#key(graphUrl, path));
 
       if (!result) {
         return err(`File "${path}" not found.`);
@@ -297,20 +284,23 @@ class IDBBackend implements PersistentBackend {
   }
 
   async write(
+    graphUrl: string,
     path: FileSystemPath,
     data: LLMContent[]
   ): Promise<FileSystemWriteResult> {
-    return this.#write(path, data, false);
+    return this.#write(graphUrl, path, data, false);
   }
 
   async append(
+    graphUrl: string,
     path: FileSystemPath,
     data: LLMContent[]
   ): Promise<FileSystemWriteResult> {
-    return this.#write(path, data, true);
+    return this.#write(graphUrl, path, data, true);
   }
 
   async delete(
+    graphUrl: string,
     path: FileSystemPath,
     all: boolean
   ): Promise<FileSystemWriteResult> {
@@ -326,7 +316,9 @@ class IDBBackend implements PersistentBackend {
       // 1) Get all the paths to be deleted.
       let list: FileSystemPath[];
       if (all) {
-        const querying = await files.getAllKeys(this.#startsWith(path));
+        const querying = await files.getAllKeys(
+          this.#startsWith(graphUrl, path)
+        );
         list = querying.map((entry) => entry[1]);
       } else {
         list = [path];
@@ -353,7 +345,9 @@ class IDBBackend implements PersistentBackend {
       }
 
       // 4) Delete the files themselves.
-      await files.delete(all ? this.#startsWith(path) : [this.#graphUrl, path]);
+      await files.delete(
+        all ? this.#startsWith(graphUrl, path) : [graphUrl, path]
+      );
 
       await tx.done;
     } catch (e) {
@@ -362,6 +356,7 @@ class IDBBackend implements PersistentBackend {
   }
 
   async copy(
+    graphUrl: string,
     source: FileSystemPath,
     destination: FileSystemPath
   ): Promise<FileSystemWriteResult> {
@@ -381,13 +376,13 @@ class IDBBackend implements PersistentBackend {
       }
 
       // 3) Copy contents
-      const sourceContents = await files.get(this.#key(source));
+      const sourceContents = await files.get(this.#key(graphUrl, source));
       if (!sourceContents) {
         return err(`Source file "${source}" not found.`);
       }
 
       await files.put({
-        graphUrl: this.#graphUrl,
+        graphUrl: graphUrl,
         path: destination,
         data: sourceContents.data,
         timestamp: Date.now(),
@@ -400,6 +395,7 @@ class IDBBackend implements PersistentBackend {
   }
 
   async move(
+    graphUrl: string,
     source: FileSystemPath,
     destination: FileSystemPath
   ): Promise<FileSystemWriteResult> {
@@ -424,40 +420,20 @@ class IDBBackend implements PersistentBackend {
       }
 
       // 4) Copy contents
-      const sourceContents = await files.get(this.#key(source));
+      const sourceContents = await files.get(this.#key(graphUrl, source));
       if (!sourceContents) {
         return err(`Source file "${source}" not found.`);
       }
 
       await files.put({
-        graphUrl: this.#graphUrl,
+        graphUrl: graphUrl,
         path: destination,
         data: sourceContents.data,
         timestamp: Date.now(),
       });
 
       // 5) Delete source
-      await files.delete(this.#key(source));
-
-      await tx.done;
-    } catch (e) {
-      return err((e as Error).message);
-    }
-  }
-
-  async transaction(
-    handler: (tx: BackendTransaction) => BackendTransactionResult
-  ): BackendTransactionResult {
-    try {
-      const db = await this.#db;
-      const tx = db.transaction("files", "readwrite");
-
-      const result = await handler(this.#ops);
-
-      if (!ok(result)) {
-        tx.abort();
-        return result;
-      }
+      await files.delete(this.#key(graphUrl, source));
 
       await tx.done;
     } catch (e) {

@@ -21,10 +21,9 @@ export function getDataStore(): DataStore {
 }
 
 export function createFileSystemBackend(
-  url: string,
   store: EphemeralBlobStore
 ): PersistentBackend {
-  return new IDBBackend(url, store);
+  return new IDBBackend(store);
 }
 
 export function getRunStore(useInMemoryStore = true): RunStore {

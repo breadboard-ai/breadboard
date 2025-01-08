@@ -309,14 +309,20 @@ export type FileSystemFile = {
 // Simplest possible backend.
 export type FileMap = Map<FileSystemPath, FileSystemFile>;
 
-export type BackendAtomicOperations = {
-  query(path: FileSystemPath): Promise<FileSystemQueryResult>;
-  read(path: FileSystemPath, inflate: boolean): Promise<Outcome<LLMContent[]>>;
+export type PersistentBackend = {
+  query(graphUrl: string, path: FileSystemPath): Promise<FileSystemQueryResult>;
+  read(
+    graphUrl: string,
+    path: FileSystemPath,
+    inflate: boolean
+  ): Promise<Outcome<LLMContent[]>>;
   write(
+    graphUrl: string,
     path: FileSystemPath,
     data: LLMContent[]
   ): Promise<FileSystemWriteResult>;
   append(
+    graphUrl: string,
     path: FileSystemPath,
     data: LLMContent[]
   ): Promise<FileSystemWriteResult>;
@@ -325,12 +331,18 @@ export type BackendAtomicOperations = {
    * @param path - path to the file to delete
    * @param all - if `true`, will delete all files starting with `path`.
    */
-  delete(path: FileSystemPath, all: boolean): Promise<FileSystemWriteResult>;
+  delete(
+    graphUrl: string,
+    path: FileSystemPath,
+    all: boolean
+  ): Promise<FileSystemWriteResult>;
   copy(
+    graphUrl: string,
     source: FileSystemPath,
     destination: FileSystemPath
   ): Promise<FileSystemWriteResult>;
   move(
+    graphUrl: string,
     source: FileSystemPath,
     destination: FileSystemPath
   ): Promise<FileSystemWriteResult>;
@@ -350,17 +362,8 @@ export type EphemeralBlobStore = {
   size: number;
 };
 
-export type BackendTransaction = BackendAtomicOperations;
-
-export type BackendTransactionResult = Promise<Outcome<void>>;
-
-export type PersistentBackend = BackendAtomicOperations & {
-  transaction(
-    transactionHandler: (tx: BackendTransaction) => BackendTransactionResult
-  ): BackendTransactionResult;
-};
-
 export type OuterFileSystems = {
+  graphUrl: string;
   local: PersistentBackend;
   env: FileSystemEntry[];
   blobs?: FileSystemBlobStore;
@@ -437,7 +440,7 @@ export type FileSystem = {
    *
    * Use it to get the right FileSystem instance at the start of a run.
    */
-  createRunFileSystem(): FileSystem;
+  createRunFileSystem(graphUrl: string): FileSystem;
   /**
    * Creates a new instance of a FileSystem that inherits all but `/tmp/`
    * from this instance.
@@ -445,5 +448,5 @@ export type FileSystem = {
    * Use it to get the right FileSystem instance whenever a module is
    * invoked.
    */
-  createModuleFileSystem(): FileSystem;
+  createModuleFileSystem(graphUrl: string): FileSystem;
 };

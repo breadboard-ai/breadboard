@@ -122,6 +122,7 @@ export {
   createDefaultRunStore,
   transformBlobs,
   createEphemeralBlobStore,
+  createFileSystem,
 } from "./data/index.js";
 
 /**

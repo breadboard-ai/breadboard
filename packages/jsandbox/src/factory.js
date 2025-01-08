@@ -1,4 +1,4 @@
-import { fetch, secrets, invoke, output, describe } from './capabilities.js';
+import { fetch, secrets, invoke, output, describe, query, read, write } from './capabilities.js';
 
         export const RAW_WASM = Symbol();
         export default function() {
@@ -196,7 +196,7 @@ CLOSURE_DTORS.register(real, state, state);
 return real;
 }
 function __wbg_adapter_24(arg0, arg1, arg2) {
-wasm.closure69_externref_shim(arg0, arg1, arg2);
+wasm.closure78_externref_shim(arg0, arg1, arg2);
 }
 
 function getArrayJsValueFromWasm0(ptr, len) {
@@ -280,9 +280,36 @@ const idx = addToExternrefTable0(e);
 wasm.__wbindgen_exn_store(idx);
 }
 }
-function __wbg_adapter_61(arg0, arg1, arg2, arg3) {
-wasm.closure90_externref_shim(arg0, arg1, arg2, arg3);
+function __wbg_adapter_67(arg0, arg1, arg2, arg3) {
+wasm.closure99_externref_shim(arg0, arg1, arg2, arg3);
 }
+
+ function __wbg_query_613fc9b5583de0f7(arg0, arg1, arg2, arg3) {
+let deferred0_0;
+let deferred0_1;
+let deferred1_0;
+let deferred1_1;
+try {
+deferred0_0 = arg0;
+deferred0_1 = arg1;
+deferred1_0 = arg2;
+deferred1_1 = arg3;
+const ret = query(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
+return ret;
+} finally {
+wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
+wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+}
+};
+
+ function __wbindgen_string_get(arg0, arg1) {
+const obj = arg1;
+const ret = typeof(obj) === 'string' ? obj : undefined;
+var ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+var len1 = WASM_VECTOR_LEN;
+getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
+getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
+};
 
  function __wbg_invoke_b869e83afb3faed8(arg0, arg1, arg2, arg3) {
 let deferred0_0;
@@ -302,15 +329,6 @@ wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
 }
 };
 
- function __wbindgen_string_get(arg0, arg1) {
-const obj = arg1;
-const ret = typeof(obj) === 'string' ? obj : undefined;
-var ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-var len1 = WASM_VECTOR_LEN;
-getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
-getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
-};
-
  function __wbg_secrets_52d52956bc8d3d7b(arg0, arg1, arg2, arg3) {
 let deferred0_0;
 let deferred0_1;
@@ -322,6 +340,42 @@ deferred0_1 = arg1;
 deferred1_0 = arg2;
 deferred1_1 = arg3;
 const ret = secrets(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
+return ret;
+} finally {
+wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
+wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+}
+};
+
+ function __wbg_read_755ee9c8622f9470(arg0, arg1, arg2, arg3) {
+let deferred0_0;
+let deferred0_1;
+let deferred1_0;
+let deferred1_1;
+try {
+deferred0_0 = arg0;
+deferred0_1 = arg1;
+deferred1_0 = arg2;
+deferred1_1 = arg3;
+const ret = read(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
+return ret;
+} finally {
+wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
+wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+}
+};
+
+ function __wbg_write_b6e5c4220ac10a32(arg0, arg1, arg2, arg3) {
+let deferred0_0;
+let deferred0_1;
+let deferred1_0;
+let deferred1_1;
+try {
+deferred0_0 = arg0;
+deferred0_1 = arg1;
+deferred1_0 = arg2;
+deferred1_1 = arg3;
+const ret = write(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
 return ret;
 } finally {
 wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
@@ -500,7 +554,7 @@ var cb0 = (arg0, arg1) => {
 const a = state0.a;
 state0.a = 0;
 try {
-return __wbg_adapter_61(a, state0.b, arg0, arg1);
+return __wbg_adapter_67(a, state0.b, arg0, arg1);
 } finally {
 state0.a = a;
 }
@@ -544,8 +598,8 @@ getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
 throw new Error(getStringFromWasm0(arg0, arg1));
 };
 
- function __wbindgen_closure_wrapper233(arg0, arg1, arg2) {
-const ret = makeMutClosure(arg0, arg1, 70, __wbg_adapter_24);
+ function __wbindgen_closure_wrapper260(arg0, arg1, arg2) {
+const ret = makeMutClosure(arg0, arg1, 79, __wbg_adapter_24);
 return ret;
 };
 
@@ -567,11 +621,17 @@ eval_code
 ,
 run_module
 ,
-__wbg_invoke_b869e83afb3faed8
+__wbg_query_613fc9b5583de0f7
 ,
 __wbindgen_string_get
 ,
+__wbg_invoke_b869e83afb3faed8
+,
 __wbg_secrets_52d52956bc8d3d7b
+,
+__wbg_read_755ee9c8622f9470
+,
+__wbg_write_b6e5c4220ac10a32
 ,
 __wbg_describe_47b99ea8f240afa3
 ,
@@ -635,7 +695,7 @@ __wbindgen_debug_string
 ,
 __wbindgen_throw
 ,
-__wbindgen_closure_wrapper233
+__wbindgen_closure_wrapper260
 ,
 __wbindgen_init_externref_table
 ,

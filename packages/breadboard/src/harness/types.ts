@@ -12,7 +12,7 @@ import type {
   SkipProbeMessage,
   TraversalResult,
 } from "@breadboard-ai/types";
-import type { DataStore } from "../data/types.js";
+import type { DataStore, FileSystem } from "../data/types.js";
 import {
   InspectableRunObserver,
   MutableGraphStore,
@@ -225,6 +225,10 @@ export type RunConfig = {
    * dependencies.
    */
   graphStore?: MutableGraphStore;
+  /**
+   * The file system, provided as module capability.
+   */
+  fileSystem?: FileSystem;
   /**
    * The state from which to resume the run.
    */
