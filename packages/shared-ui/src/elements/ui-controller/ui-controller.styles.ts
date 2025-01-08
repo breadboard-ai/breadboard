@@ -27,7 +27,7 @@ export const styles = css`
 
   #content {
     display: grid;
-    grid-template-columns: var(--bb-grid-size-12) minmax(0, 1fr);
+    grid-template-columns: 1fr;
   }
 
   #content.welcome {
@@ -287,120 +287,68 @@ export const styles = css`
     opacity: 1;
   }
 
-  #toggle-components,
-  #toggle-activity,
-  #toggle-workspace-overview,
-  #toggle-capabilities {
-    width: 32px;
-    height: 32px;
-    font-size: 0;
-    padding: 0;
+  #section-nav {
+    height: var(--bb-grid-size-14);
+    border-bottom: 1px solid var(--bb-neutral-300);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  #section-nav button {
+    padding: var(--bb-grid-size-6) 0 var(--bb-grid-size-2) 0;
     border: none;
-    background: none;
-    opacity: 1;
-    cursor: pointer;
-    border-radius: var(--bb-grid-size);
     position: relative;
-  }
-
-  #toggle-components::after,
-  #toggle-activity::after,
-  #toggle-workspace-overview::after,
-  #toggle-capabilities::after {
-    background: var(--bb-neutral-800);
-    color: var(--bb-neutral-0);
-    padding: var(--bb-grid-size-2);
-    left: calc(100% + var(--bb-grid-size-3));
-    border-radius: var(--bb-grid-size);
-    top: 50%;
-    pointer-events: none;
-    transform: translateY(-50%);
-    display: block;
-    font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+    margin: 0 var(--bb-grid-size-2);
+    font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
       var(--bb-font-family);
-    position: absolute;
-    opacity: 0;
-    transition: opacity 0.15s cubic-bezier(0, 0, 0.3, 1);
   }
 
-  #toggle-components::after {
-    content: "Components";
-  }
-
-  #toggle-workspace-overview::after {
-    content: "Workspace";
-  }
-
-  #toggle-capabilities::after {
-    content: "Capabilities";
-  }
-
-  #toggle-activity::after {
-    content: "Activity";
-  }
-
-  #toggle-activity:hover::after,
-  #toggle-components:hover::after,
-  #toggle-workspace-overview:hover::after,
-  #toggle-capabilities:hover::after {
+  #section-nav button[disabled] {
     opacity: 1;
+    color: var(--bb-ui-500);
+  }
+
+  #section-nav button[disabled]::after {
+    content: "";
+    position: absolute;
+    height: 3px;
+    width: 100%;
+    bottom: 0;
+    left: 0;
+    border-radius: var(--bb-grid-size) var(--bb-grid-size) 0 0;
+    background: var(--bb-ui-500);
+  }
+
+  #section-nav button:not([disabled]) {
+    cursor: pointer;
   }
 
   #toggle-components {
-    background: transparent var(--bb-icon-extension-inverted) center center /
-      24px 24px no-repeat;
-  }
-
-  #toggle-workspace-overview {
-    background: transparent var(--bb-icon-workspace-inverted) center center /
-      24px 24px no-repeat;
-  }
-
-  #toggle-capabilities {
-    background: transparent var(--bb-icon-capabilities-inverted) center center /
-      24px 24px no-repeat;
+    background: var(--bb-icon-extension) center 4px / 20px 20px no-repeat;
   }
 
   #toggle-activity {
-    background: transparent var(--bb-icon-vital-signs-inverted) center center /
-      24px 24px no-repeat;
+    background: var(--bb-icon-vital-signs) center 4px / 20px 20px no-repeat;
   }
 
-  #toggle-components:hover,
-  #toggle-components:focus,
-  #toggle-components.active {
-    background: oklch(from var(--bb-neutral-0) l c h/0.22)
-      var(--bb-icon-extension-inverted) center center / 24px 24px no-repeat;
+  #toggle-workspace-overview {
+    background: transparent var(--bb-icon-workspace) center 4px / 20px 20px
+      no-repeat;
   }
 
-  #toggle-workspace-overview:hover,
-  #toggle-workspace-overview:focus,
-  #toggle-workspace-overview.active {
-    background: oklch(from var(--bb-neutral-0) l c h/0.22)
-      var(--bb-icon-workspace-inverted) center center / 24px 24px no-repeat;
-  }
-
-  #toggle-capabilities:hover,
-  #toggle-capabilities:focus,
-  #toggle-capabilities.active {
-    background: oklch(from var(--bb-neutral-0) l c h/0.22)
-      var(--bb-icon-capabilities-inverted) center center / 24px 24px no-repeat;
-  }
-
-  #toggle-activity:hover,
-  #toggle-activity:focus,
-  #toggle-activity.active {
-    background: oklch(from var(--bb-neutral-0) l c h/0.22)
-      var(--bb-icon-vital-signs-inverted) center center / 24px 24px no-repeat;
+  #toggle-capabilities {
+    background: transparent var(--bb-icon-capabilities) center 4px / 20px 20px
+      no-repeat;
   }
 
   #toggle-activity[data-count]::before {
     content: attr(data-count);
     position: absolute;
-    top: -8px;
-    right: -8px;
-    width: 20px;
-    height: 20px;
+    top: -6px;
+    right: -6px;
+    width: 18px;
+    height: 18px;
     background: var(--bb-notify-500);
     color: var(--bb-neutral-0);
     border-radius: 50%;

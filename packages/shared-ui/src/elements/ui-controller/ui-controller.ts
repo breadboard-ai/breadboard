@@ -379,32 +379,42 @@ export class UI extends LitElement {
       chosenSideNavItem = null;
     }
 
-    const sideNavItems = ["activity", "workspace-overview"];
+    const sectionNavItems = [
+      { item: "activity", label: "SECTION_NAV_ACTIVITY" },
+      { item: "workspace-overview", label: "SECTION_NAV_WORKSPACE" },
+    ];
+
     if (modules.length > 0) {
-      sideNavItems.unshift("capabilities");
+      sectionNavItems.unshift({
+        item: "capabilities",
+        label: "SECTION_NAV_CAPABILITIES",
+      });
     } else {
-      sideNavItems.unshift("components");
+      sectionNavItems.unshift({
+        item: "components",
+        label: "SECTION_NAV_COMPONENTS",
+      });
     }
 
-    const sideNav = html`<div id="side-nav">
-      <div id="side-nav-top">
-        ${map(sideNavItems, (item) => {
-          const newEventCount = events.length - this.#lastEventPosition;
-          return html`<button
-            id="toggle-${item}"
-            data-count=${item === "activity" &&
-            chosenSideNavItem !== "activity" &&
-            newEventCount > 0
-              ? newEventCount
-              : nothing}
-            class=${classMap({ active: chosenSideNavItem === item })}
-            @click=${() => {
-              this.#handleSideNav(item);
-            }}
-          ></button>`;
-        })}
-      </div>
-      <div id="side-nav-bottom"></div>
+    const sectionNav = html`<div id="section-nav">
+      ${map(sectionNavItems, ({ item, label }) => {
+        const newEventCount = events.length - this.#lastEventPosition;
+        return html`<button
+          id="toggle-${item}"
+          ?disabled=${chosenSideNavItem === item}
+          data-count=${item === "activity" &&
+          chosenSideNavItem !== "activity" &&
+          newEventCount > 0
+            ? newEventCount
+            : nothing}
+          class=${classMap({ active: chosenSideNavItem === item })}
+          @click=${() => {
+            this.#handleSideNav(item);
+          }}
+        >
+          ${Strings.from(label)}
+        </button>`;
+      })}
     </div> `;
 
     const contentContainer = html`<div id="graph-container" slot="slot-1">
@@ -453,8 +463,7 @@ export class UI extends LitElement {
       }
 
       case "capabilities": {
-        sideNavItem = html`<h1 id="side-nav-title">Capabilities</h1>
-          <bb-capabilities-selector></bb-capabilities-selector>`;
+        sideNavItem = html` <bb-capabilities-selector></bb-capabilities-selector>`;
         break;
       }
 
@@ -462,14 +471,13 @@ export class UI extends LitElement {
         sideNavItem = html`${guard(
           [this.boardServerKits, this.graphStoreUpdateId, this.mainGraphId],
           () =>
-            html`<h1 id="side-nav-title">Components</h1>
-              <bb-component-selector
-                .graphStoreUpdateId=${this.graphStoreUpdateId}
-                .showExperimentalComponents=${showExperimentalComponents}
-                .boardServerKits=${this.boardServerKits}
-                .graphStore=${this.graphStore}
-                .mainGraphId=${this.mainGraphId}
-              ></bb-component-selector>`
+            html` <bb-component-selector
+              .graphStoreUpdateId=${this.graphStoreUpdateId}
+              .showExperimentalComponents=${showExperimentalComponents}
+              .boardServerKits=${this.boardServerKits}
+              .graphStore=${this.graphStore}
+              .mainGraphId=${this.mainGraphId}
+            ></bb-component-selector>`
         )}`;
         break;
       }
@@ -490,64 +498,48 @@ export class UI extends LitElement {
         sideNavItem = html`${guard(
           [run, events, eventPosition, this.debugEvent],
           () =>
-            html`<h1 id="side-nav-title">
-                Activity
-                ${this.debugEvent !== null
-                  ? html`<button
-                      id="back-to-activity"
-                      @click=${() => {
-                        this.debugEvent = null;
-                      }}
-                    >
-                      Back to Activity
-                    </button>`
-                  : nothing}
-              </h1>
-              <div id="board-activity-container">
-                <bb-board-activity
-                  class=${classMap({ collapsed: this.debugEvent !== null })}
-                  .run=${run}
-                  .events=${events}
-                  .eventPosition=${eventPosition}
-                  .inputsFromLastRun=${inputsFromLastRun}
-                  .showExtendedInfo=${true}
-                  .settings=${this.settings}
-                  .showLogTitle=${false}
-                  .logTitle=${"Run"}
-                  .hideLast=${hideLast}
-                  .boardServers=${this.boardServers}
-                  .showDebugControls=${showDebugControls}
-                  .nextNodeId=${nextNodeId}
-                  @pointerdown=${(evt: PointerEvent) => {
-                    const [top] = evt.composedPath();
-                    if (
-                      !(top instanceof HTMLElement) ||
-                      !top.dataset.messageId
-                    ) {
-                      return;
-                    }
-                    evt.stopImmediatePropagation();
-                    const id = top.dataset.messageId;
-                    const event = run?.getEventById(id);
-                    if (!event) {
-                      // TODO: Offer the user more information.
-                      console.warn(`Unable to find event with ID "${id}"`);
-                      return;
-                    }
-                    if (event.type !== "node") {
-                      return;
-                    }
+            html` <div id="board-activity-container">
+              <bb-board-activity
+                class=${classMap({ collapsed: this.debugEvent !== null })}
+                .run=${run}
+                .events=${events}
+                .eventPosition=${eventPosition}
+                .inputsFromLastRun=${inputsFromLastRun}
+                .showExtendedInfo=${true}
+                .settings=${this.settings}
+                .showLogTitle=${false}
+                .logTitle=${"Run"}
+                .hideLast=${hideLast}
+                .boardServers=${this.boardServers}
+                .showDebugControls=${showDebugControls}
+                .nextNodeId=${nextNodeId}
+                @pointerdown=${(evt: PointerEvent) => {
+                  const [top] = evt.composedPath();
+                  if (!(top instanceof HTMLElement) || !top.dataset.messageId) {
+                    return;
+                  }
+                  evt.stopImmediatePropagation();
+                  const id = top.dataset.messageId;
+                  const event = run?.getEventById(id);
+                  if (!event) {
+                    // TODO: Offer the user more information.
+                    console.warn(`Unable to find event with ID "${id}"`);
+                    return;
+                  }
+                  if (event.type !== "node") {
+                    return;
+                  }
 
-                    this.debugEvent = event;
-                  }}
-                  name="Board"
-                ></bb-board-activity>
-                ${this.debugEvent
-                  ? html`<bb-event-details
-                      .event=${this.debugEvent}
-                    ></bb-event-details>`
-                  : nothing}
-              </div>`
+                  this.debugEvent = event;
+                }}
+                name="Board"
+              ></bb-board-activity>
+              ${this.debugEvent
+                ? html`<bb-event-details
+                    .event=${this.debugEvent}
+                  ></bb-event-details>`
+                : nothing}
+            </div>`
         )}`;
         break;
       }
@@ -555,18 +547,28 @@ export class UI extends LitElement {
 
     return graph
       ? html`<section id="content">
-          ${sideNav}
-          ${chosenSideNavItem
-            ? html`<bb-splitter
-                id="splitter"
-                split="[0.2, 0.8]"
-                .name=${"outline-editor"}
-                .minSegmentSizeHorizontal=${265}
-              >
-                <div id="outline-container" slot="slot-0">${sideNavItem}</div>
-                ${contentContainer}
-              </bb-splitter>`
-            : contentContainer}
+          <bb-splitter
+            id="splitter"
+            split="[0.2, 0.8]"
+            .name=${"outline-editor"}
+            .minSegmentSizeHorizontal=${265}
+          >
+            <div id="outline-container" slot="slot-0">
+              ${sectionNav}
+              ${this.debugEvent !== null
+                ? html`<button
+                    id="back-to-activity"
+                    @click=${() => {
+                      this.debugEvent = null;
+                    }}
+                  >
+                    Back to Activity
+                  </button>`
+                : nothing}
+              ${sideNavItem}
+            </div>
+            ${contentContainer}
+          </bb-splitter>
         </section>`
       : html`<section id="content" class="welcome">${graphEditor}</section>`;
   }
