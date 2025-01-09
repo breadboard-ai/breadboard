@@ -9,9 +9,7 @@ import {
   FormatModuleCodeEvent,
   HideTooltipEvent,
   ModuleChangeLanguageEvent,
-  RunEvent,
   ShowTooltipEvent,
-  StopEvent,
   ToggleModulePreviewEvent,
 } from "../../events/events";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -656,33 +654,10 @@ export class ModuleRibbonMenu extends LitElement {
           <div class="divider"></div>`
       : nothing;
 
-    const left = [
-      html`<button
-        id="run"
-        title="Run this board"
-        ?disabled=${!this.graph || this.readOnly}
-        class=${classMap({ running: this.isRunning })}
-        @pointerdown=${(evt: PointerEvent) => {
-          // We do this to prevent the pointer event firing and dismissing the
-          // board activity overlay. Otherwise the overlay disappears and then
-          // immediately reappears.
-          evt.stopImmediatePropagation();
-        }}
-        @click=${() => {
-          if (this.isRunning) {
-            this.dispatchEvent(new StopEvent());
-          } else {
-            this.dispatchEvent(new RunEvent());
-          }
-        }}
-      >
-        ${this.isRunning ? "Stop" : "Run"}
-      </button>`,
-    ];
     const right = [errors, moduleControls];
 
     return [
-      html`<div id="left">${left}</div>`,
+      html`<div id="left"></div>`,
       html`<div id="right">${right}</div>`,
       errorMenu,
     ];

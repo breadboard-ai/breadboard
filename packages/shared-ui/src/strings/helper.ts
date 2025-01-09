@@ -7,18 +7,24 @@
 import { LanguagePack, LanguagePackEntry } from "../types/types";
 
 class Strings<T extends LanguagePackEntry> {
-  constructor(private lang: T) {}
+  constructor(
+    private name: string,
+    private values: T
+  ) {}
 
   from(key: string) {
-    if (typeof this.lang[key] === "string") {
-      return this.lang[key];
+    if (typeof this.values[key] === "string") {
+      return this.values[key];
     }
 
-    if (typeof this.lang[key] === "object" && this.lang[key] !== null) {
-      return this.lang[key].str;
+    if (typeof this.values[key] === "object" && this.values[key] !== null) {
+      return this.values[key].str;
     }
 
-    return "__MISSING_VALUE__";
+    console.warn(
+      `Missing language pack key "${key}" from section ${this.name}`
+    );
+    return key.toUpperCase();
   }
 }
 
@@ -28,12 +34,12 @@ export async function initFrom(language: LanguagePack) {
 }
 
 export function forSection<T extends keyof LanguagePack>(section: T) {
-  return new Strings(currentLanguage[section]);
+  return new Strings(section, currentLanguage[section]);
 }
 
 export function from<T extends LanguagePack, Y extends keyof T>(
   lib: T,
   name: Y
 ) {
-  return new Strings(lib[name] as LanguagePackEntry);
+  return new Strings(name as string, lib[name] as LanguagePackEntry);
 }
