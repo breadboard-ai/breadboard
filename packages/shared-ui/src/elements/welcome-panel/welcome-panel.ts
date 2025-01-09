@@ -118,33 +118,6 @@ export class WelcomePanel extends LitElement {
       background-color: var(--bb-neutral-300);
     }
 
-    #contents {
-      display: grid;
-      grid-template-columns: minmax(0, 2fr) 3fr;
-      column-gap: var(--bb-grid-size-4);
-      row-gap: var(--bb-grid-size-6);
-      padding: var(--bb-grid-size-5) 0 var(--bb-grid-size-6) 0;
-      position: relative;
-    }
-
-    #contents::before {
-      content: "Breadboard";
-      font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
-        var(--bb-font-family);
-      color: var(--bb-neutral-600);
-      height: 36px;
-      top: var(--bb-grid-size-4);
-      left: var(--bb-grid-size-4);
-      padding-left: 32px;
-      background: url(/images/bb-logo.svg) left center / 21px 36px no-repeat;
-      line-height: 36px;
-      position: absolute;
-    }
-
-    #contents section {
-      padding: 0 var(--bb-grid-size-4);
-    }
-
     section h1 {
       margin: 0;
       padding-bottom: var(--bb-grid-size-2);

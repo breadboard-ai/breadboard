@@ -219,10 +219,11 @@ export const styles = css`
   #logo {
     font-size: 0;
     border: none;
-    padding-left: var(--bb-grid-size-11);
-    margin: 0;
-    background: var(--bb-config-logo) var(--bb-grid-size-4) center no-repeat;
-    height: 100%;
+    width: 24px;
+    height: 24px;
+    margin: 0 var(--bb-grid-size-4);
+    background: var(--logo-svg) center center / 24px 24px no-repeat;
+    padding: 0;
     display: flex;
     align-items: center;
     position: relative;
