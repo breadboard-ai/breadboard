@@ -1,7 +1,10 @@
 {
   "compilerOptions": {
     "composite": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "strict": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext"
   },
   "include": ["src/**/*", "tests/**/*"],
   "extends": "@google-labs/tsconfig/base.json"
