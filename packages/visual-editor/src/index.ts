@@ -73,9 +73,7 @@ import {
 } from "./commands/commands";
 import {
   HideTooltipEvent,
-  RunEvent,
   ShowTooltipEvent,
-  StopEvent,
 } from "../../shared-ui/dist/events/events";
 
 const STORAGE_PREFIX = "bb-main";
