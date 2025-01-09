@@ -8,11 +8,73 @@ import { config } from "dotenv";
 import { defineConfig } from "vitest/config";
 import { loadEnv } from "vite";
 import path from "node:path";
+import fs from "node:fs/promises";
 
 export const buildCustomAllowList = (value?: string) => {
   if (!value) return {};
   return { fs: { allow: [value] } };
 };
+
+async function processAssetPack(src: string) {
+  const srcPath = path.join(__dirname, src);
+  const files = await fs.readdir(srcPath, { withFileTypes: true });
+
+  const styles: string[] = [];
+  let mainIcon = "";
+  for (const file of files) {
+    // TODO: Support nested dirs.
+    if (file.isDirectory()) {
+      continue;
+    }
+
+    const filePath = path.join(file.parentPath, file.name);
+    const fileNameAsStyleProp = file.name.replaceAll(/\./gim, "-");
+
+    let mimeType;
+    const data = await fs.readFile(filePath, { encoding: "binary" });
+    switch (path.extname(file.name)) {
+      case ".svg": {
+        mimeType = "image/svg+xml";
+        break;
+      }
+
+      case ".png": {
+        mimeType = "image/png";
+        break;
+      }
+
+      case ".jpg": {
+        mimeType = "image/jpeg";
+        break;
+      }
+
+      default:
+        continue;
+    }
+
+    styles.push(
+      `--${fileNameAsStyleProp}: url("data:${mimeType};base64,${btoa(data)}")`
+    );
+
+    // Special-case the logo.
+    if (file.name === "logo.svg") {
+      console.log("Setting main icon");
+      mainIcon = `data:${mimeType};base64,${btoa(data)}`;
+    }
+  }
+
+  return {
+    mainIcon,
+    styles: `/**
+    * @license
+    * Copyright 2025 Google LLC
+    * SPDX-License-Identifier: Apache-2.0
+    */
+    :root {
+      ${styles.join("\n")}
+    }`,
+  };
+}
 
 export default defineConfig(async ({ mode }) => {
   config();
@@ -20,6 +82,10 @@ export default defineConfig(async ({ mode }) => {
   const envConfig = { ...loadEnv(mode, process.cwd()) };
   if (!envConfig.VITE_LANGUAGE_PACK) {
     throw new Error("Language Pack not specified");
+  }
+
+  if (!envConfig.VITE_ASSET_PACK) {
+    throw new Error("Asset Pack not specified");
   }
 
   const languagePackUrl = await import.meta.resolve(
@@ -33,6 +99,7 @@ export default defineConfig(async ({ mode }) => {
     throw new Error("Unable to import language pack");
   }
 
+  const assetPack = await processAssetPack(envConfig.VITE_ASSET_PACK);
   return {
     build: {
       lib: {
@@ -55,6 +122,8 @@ export default defineConfig(async ({ mode }) => {
     },
     define: {
       LANGUAGE_PACK: JSON.stringify(languagePack),
+      ASSET_PACK: JSON.stringify(assetPack.styles),
+      MAIN_ICON: JSON.stringify(assetPack.mainIcon),
     },
     server: {
       ...buildCustomAllowList(process.env.VITE_FS_ALLOW),
