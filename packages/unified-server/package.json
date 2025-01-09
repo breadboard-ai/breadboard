@@ -83,7 +83,7 @@
   },
   "dependencies": {
     "express": "^4.21.2",
-    "vite": "^6.0.7",
+    "vite": "^6.0.2",
     "vite-express": "^0.20.0"
   }
 }
