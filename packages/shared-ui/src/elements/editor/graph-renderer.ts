@@ -84,8 +84,6 @@ import { isBoardArrayBehavior, isBoardBehavior } from "../../utils/index.js";
 import { CommentNode, ModuleIdentifier } from "@breadboard-ai/types";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
-const backgroundGridColor = getGlobalColor("--bb-ui-100");
-const backgroundGridAlpha = 0.25;
 const selectionBoxBackgroundAlpha = 0.05;
 const selectionBoxBackgroundColor = getGlobalColor("--bb-neutral-900");
 const selectionBoxBorderColor = getGlobalColor("--bb-neutral-500");
@@ -1497,16 +1495,6 @@ export class GraphRenderer extends LitElement {
       // Solid blue background.
       ctx.fillStyle = `#${backgroundColor.toString(16)}`;
       ctx.fillRect(0, 0, 32, 32);
-
-      // Grid.
-      ctx.save();
-      ctx.strokeStyle = `#${backgroundGridColor.toString(16)}`;
-      ctx.beginPath();
-      ctx.rect(0.5, 0.5, 32, 32);
-      ctx.globalAlpha = backgroundGridAlpha;
-      ctx.stroke();
-      ctx.closePath();
-      ctx.restore();
 
       const texture = PIXI.Texture.from(canvas);
 

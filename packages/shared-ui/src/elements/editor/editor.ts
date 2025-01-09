@@ -77,7 +77,6 @@ import "./graph-renderer.js";
 
 const ZOOM_KEY = "bb-editor-zoom-to-highlighted-node-during-runs";
 const DATA_TYPE = "text/plain";
-const RIBBON_HEIGHT = 44;
 const EDITOR_PADDING = 100;
 
 function getDefaultConfiguration(type: string): NodeConfiguration | undefined {
@@ -147,9 +146,6 @@ export class Editor extends LitElement implements DragConnectorReceiver {
 
   @property()
   showNodeShortcuts = true;
-
-  @property({ reflect: true })
-  hideRibbonMenu = false;
 
   @property()
   topGraphResult: TopGraphRunResult | null = null;
@@ -276,10 +272,6 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       position: relative;
     }
 
-    :host([hideRibbonMenu="false"]) {
-      padding-top: 44px;
-    }
-
     #readonly-overlay {
       display: flex;
       align-items: center;
@@ -310,16 +302,6 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       display: none;
     }
 
-    bb-graph-ribbon-menu {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 44px;
-      flex: 0 0 auto;
-      z-index: 1;
-    }
-
     #content {
       display: block;
       width: 100%;
@@ -327,6 +309,38 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       outline: none;
       overflow: hidden;
       position: relative;
+    }
+
+    #floating-buttons {
+      position: absolute;
+      top: var(--bb-grid-size-4);
+      right: var(--bb-grid-size-4);
+      z-index: 1;
+      border-radius: var(--bb-grid-size-16);
+      height: var(--bb-grid-size-9);
+      display: flex;
+      align-items: center;
+      padding: 0 var(--bb-grid-size-2);
+      border: 1px solid var(--bb-neutral-300);
+      background: var(--bb-neutral-0);
+    }
+
+    #floating-buttons #zoom-to-fit {
+      width: 20px;
+      height: 20px;
+      font-size: 0;
+      background: transparent var(--bb-icon-fit) center center / 20px 20px
+        no-repeat;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+      opacity: 0.6;
+    }
+
+    #floating-buttons #zoom-to-fit:focus,
+    #floating-buttons #zoom-to-fit:hover {
+      opacity: 1;
     }
 
     bb-graph-renderer {
@@ -819,7 +833,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
 
     const pointer = {
       x: evt.pageX - this.#left + window.scrollX,
-      y: evt.pageY - this.#top - window.scrollY - RIBBON_HEIGHT,
+      y: evt.pageY - this.#top - window.scrollY,
     };
 
     const location =
@@ -936,7 +950,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
 
     const pointer = {
       x: evt.pageX - this.#left + window.scrollX,
-      y: evt.pageY - this.#top - window.scrollY - RIBBON_HEIGHT,
+      y: evt.pageY - this.#top - window.scrollY,
     };
 
     this.#graphRendererRef.value.removeSubGraphHighlights();
@@ -964,7 +978,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
 
     const pointer = {
       x: evt.pageX - this.#left + window.scrollX,
-      y: evt.pageY - this.#top - window.scrollY - RIBBON_HEIGHT,
+      y: evt.pageY - this.#top - window.scrollY,
     };
 
     // The user has dropped the item onto a board port.
@@ -1011,7 +1025,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
 
     const pointer = {
       x: x - this.#left + window.scrollX,
-      y: y - this.#top - window.scrollY - RIBBON_HEIGHT,
+      y: y - this.#top - window.scrollY,
     };
 
     const boardPort =
@@ -1031,7 +1045,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
 
     const pointer = {
       x: x - this.#left + window.scrollX,
-      y: y - this.#top - window.scrollY - RIBBON_HEIGHT,
+      y: y - this.#top - window.scrollY,
     };
 
     this.#graphRendererRef.value.removeBoardPortHighlights();
@@ -1047,58 +1061,30 @@ export class Editor extends LitElement implements DragConnectorReceiver {
   }
 
   render() {
-    const isRunning = this.topGraphResult
-      ? this.topGraphResult.status === "running" ||
-        this.topGraphResult.status === "paused"
-      : false;
-
-    let isInputPending = false;
-    let isError = false;
-    const eventCount = this.run?.events.length ?? 0;
-    const newestEvent = this.run?.events.at(-1);
-    if (newestEvent) {
-      isInputPending =
-        newestEvent.type === "node" &&
-        newestEvent.node.descriptor.type === "input";
-      isError = newestEvent.type === "error";
-    }
-
-    const ribbonMenu = html`<bb-graph-ribbon-menu
-      ?hidden=${this.hideRibbonMenu}
-      .graph=${this.graph}
-      .subGraphId=${this.subGraphId}
-      .moduleId=${null}
-      .dataType=${DATA_TYPE}
-      .showExperimentalComponents=${this.showExperimentalComponents}
-      .canSave=${this.capabilities && this.capabilities.save}
-      .canUndo=${this.canUndo}
-      .canRedo=${this.canRedo}
-      .readOnly=${this.readOnly}
-      .isRunning=${isRunning}
-      .follow=${this.zoomToHighlightedNode}
-      .eventCount=${eventCount}
-      .isInputPending=${isInputPending}
-      .isError=${isError}
-      .isShowingBoardActivityOverlay=${this.isShowingBoardActivityOverlay}
-      @bbzoomtofit=${() => {
-        if (!this.#graphRendererRef.value) {
-          return;
-        }
-
-        let animate = true;
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-          animate = false;
-        }
-        this.#graphRendererRef.value.zoomToFit(animate);
-      }}
-    ></bb-graph-ribbon-menu>`;
-
     const readOnlyFlag =
       this.graph !== null && this.readOnly && this.showReadOnlyLabel
         ? html`<aside id="readonly-overlay">Read-only View</aside>`
         : nothing;
 
     const content = html`<div id="content">
+      <div id="floating-buttons">
+        <button
+          id="zoom-to-fit"
+          @click=${() => {
+            if (!this.#graphRendererRef.value) {
+              return;
+            }
+
+            let animate = true;
+            if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+              animate = false;
+            }
+            this.#graphRendererRef.value.zoomToFit(animate);
+          }}
+        >
+          Zoom to fit
+        </button>
+      </div>
       <bb-graph-renderer
         ${ref(this.#graphRendererRef)}
         .topGraphUrl=${this.graph?.raw().url ?? "no-url"}
@@ -1118,6 +1104,6 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       ></bb-graph-renderer>
     </div>`;
 
-    return [this.graph ? ribbonMenu : nothing, content, readOnlyFlag];
+    return [content, readOnlyFlag];
   }
 }

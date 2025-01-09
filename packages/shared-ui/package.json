@@ -55,7 +55,6 @@
       ],
       "files": [
         "src/**/*.ts",
-        "src/**/*.json",
         "tsconfig.json",
         "../../core/tsconfig/base.json"
       ]

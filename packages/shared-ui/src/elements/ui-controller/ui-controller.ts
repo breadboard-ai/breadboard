@@ -43,10 +43,7 @@ import {
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { ModuleEditor } from "../module-editor/module-editor.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import {
-  CommandsSetSwitchEvent,
-  WorkspaceNewItemCreateRequestEvent,
-} from "../../events/events.js";
+import { CommandsSetSwitchEvent } from "../../events/events.js";
 import {
   COMMAND_SET_GRAPH_EDITOR,
   COMMAND_SET_MODULE_EDITOR,
@@ -156,6 +153,15 @@ export class UI extends LitElement {
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("isShowingBoardActivityOverlay")) {
       this.editorRender++;
+    }
+
+    if (changedProperties.has("status")) {
+      if (
+        changedProperties.get("status") === "stopped" &&
+        this.status === "running"
+      ) {
+        this.sideNavItem = "activity";
+      }
     }
 
     if (changedProperties.has("topGraphResult")) {
@@ -424,41 +430,28 @@ export class UI extends LitElement {
     let sideNavItem: HTMLTemplateResult | symbol = nothing;
     switch (this.sideNavItem) {
       case "workspace-overview": {
-        sideNavItem = html`<h1 id="side-nav-title">
-            <span>${Strings.from("TITLE_WORKSPACE")}</span>
-            <div id="workspace-controls">
-              <button
-                id="create-new"
-                @click=${() => {
-                  this.dispatchEvent(new WorkspaceNewItemCreateRequestEvent());
-                }}
-              >
-                New item...
-              </button>
-            </div>
-          </h1>
-          ${guard(
-            [
-              graph,
-              this.mode,
-              this.selectionState,
-              this.graphStoreUpdateId,
-              this.showBoardReferenceMarkers,
-            ],
-            () => {
-              return html`<bb-workspace-outline
-                .graph=${graph}
-                .renderId=${globalThis.crypto.randomUUID()}
-                .mode=${this.mode}
-                .selectionState=${this.selectionState}
-                .graphStoreUpdateId=${this.graphStoreUpdateId}
-                .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
-                @bbdragconnectorstart=${() => {
-                  this.showBoardReferenceMarkers = true;
-                }}
-              ></bb-workspace-outline>`;
-            }
-          )}`;
+        sideNavItem = html` ${guard(
+          [
+            graph,
+            this.mode,
+            this.selectionState,
+            this.graphStoreUpdateId,
+            this.showBoardReferenceMarkers,
+          ],
+          () => {
+            return html`<bb-workspace-outline
+              .graph=${graph}
+              .renderId=${globalThis.crypto.randomUUID()}
+              .mode=${this.mode}
+              .selectionState=${this.selectionState}
+              .graphStoreUpdateId=${this.graphStoreUpdateId}
+              .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
+              @bbdragconnectorstart=${() => {
+                this.showBoardReferenceMarkers = true;
+              }}
+            ></bb-workspace-outline>`;
+          }
+        )}`;
         break;
       }
 

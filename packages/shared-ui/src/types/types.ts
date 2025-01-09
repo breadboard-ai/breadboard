@@ -486,4 +486,5 @@ export interface LanguagePack {
   Global: LanguagePackEntry;
   ProjectListing: LanguagePackEntry;
   UIController: LanguagePackEntry;
+  WorkspaceOutline: LanguagePackEntry;
 }

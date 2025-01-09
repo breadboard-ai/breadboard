@@ -71,6 +71,12 @@ import {
   PasteCommand,
   SelectAllCommand,
 } from "./commands/commands";
+import {
+  HideTooltipEvent,
+  RunEvent,
+  ShowTooltipEvent,
+  StopEvent,
+} from "../../shared-ui/dist/events/events";
 
 const STORAGE_PREFIX = "bb-main";
 const LOADING_TIMEOUT = 250;
@@ -1179,6 +1185,36 @@ export class Main extends LitElement {
     }
   }
 
+  async #attemptBoardStart() {
+    const url = this.tab?.graph?.url;
+    if (!url) {
+      return;
+    }
+
+    const graph = this.tab?.graph;
+
+    this.#runBoard(
+      addNodeProxyServerConfig(
+        this.#proxy,
+        {
+          url,
+          runner: graph,
+          diagnostics: true,
+          kits: [], // The kits are added by the runtime.
+          loader: this.#runtime.board.getLoader(),
+          store: this.#dataStore,
+          graphStore: this.#graphStore,
+          fileSystem: this.#fileSystem.createRunFileSystem(url),
+          inputs: BreadboardUI.Data.inputsFromSettings(this.#settings),
+          interactiveSecrets: true,
+        },
+        this.#settings,
+        this.proxyFromUrl,
+        await this.#getProxyURL(url)
+      )
+    );
+  }
+
   #attemptBoardStop() {
     const tabId = this.tab?.id ?? null;
     const abortController = this.#runtime.run.getAbortSignal(tabId);
@@ -1356,7 +1392,7 @@ export class Main extends LitElement {
     this.#setBoardPendingSaveState(false);
     this.#persistBoardServerAndLocation(boardServerName, location);
 
-    this.#attemptBoardStart(new BreadboardUI.Events.StartEvent(url.href));
+    this.#attemptBoardLoad(new BreadboardUI.Events.StartEvent(url.href));
     this.toast(
       "Board saved",
       BreadboardUI.Events.ToastType.INFORMATION,
@@ -1698,7 +1734,7 @@ export class Main extends LitElement {
     });
   }
 
-  async #attemptBoardStart(evt: BreadboardUI.Events.StartEvent) {
+  async #attemptBoardLoad(evt: BreadboardUI.Events.StartEvent) {
     if (evt.url) {
       let id;
       const loadingTimeout = setTimeout(() => {
@@ -1902,105 +1938,6 @@ export class Main extends LitElement {
       this.showModulePalette ||
       this.showNewWorkspaceItemOverlay ||
       this.showBoardOverflowMenu;
-
-    const nav = this.#initialize.then(() => {
-      return html`<bb-nav
-        .visible=${this.showNav}
-        .url=${this.tab?.graph.url ?? null}
-        .selectedBoardServer=${this.selectedBoardServer}
-        .selectedLocation=${this.selectedLocation}
-        .boardServers=${this.#boardServers}
-        .boardServerNavState=${this.boardServerNavState}
-        ?inert=${showingOverlay}
-        @pointerdown=${(evt: Event) => evt.stopPropagation()}
-        @bbreset=${() => {
-          if (!this.tab) {
-            return;
-          }
-
-          this.#runtime.board.closeTab(this.tab.id);
-        }}
-        @bbgraphboardserveradd=${() => {
-          this.showBoardServerAddOverlay = true;
-        }}
-        @bbgraphboardserverblankboard=${() => {
-          this.#attemptBoardCreate(blankLLMContent());
-        }}
-        @bbgraphboardserverdeleterequest=${async (
-          evt: BreadboardUI.Events.GraphBoardServerDeleteRequestEvent
-        ) => {
-          await this.#attemptBoardDelete(
-            evt.boardServerName,
-            evt.url,
-            evt.isActive
-          );
-        }}
-        @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
-          this.#attemptBoardStart(evt);
-        }}
-        @bbgraphboardserverrefresh=${async (
-          evt: BreadboardUI.Events.GraphBoardServerRefreshEvent
-        ) => {
-          const boardServer = this.#runtime.board.getBoardServerByName(
-            evt.boardServerName
-          );
-          if (!boardServer) {
-            return;
-          }
-
-          const refreshed = await boardServer.refresh(evt.location);
-          if (refreshed) {
-            this.toast(
-              "Source files refreshed",
-              BreadboardUI.Events.ToastType.INFORMATION
-            );
-          } else {
-            this.toast(
-              "Unable to refresh source files",
-              BreadboardUI.Events.ToastType.WARNING
-            );
-          }
-
-          this.boardServerNavState = globalThis.crypto.randomUUID();
-        }}
-        @bbgraphboardserverdisconnect=${async (
-          evt: BreadboardUI.Events.GraphBoardServerDisconnectEvent
-        ) => {
-          await this.#runtime.board.disconnect(evt.location);
-          this.boardServerNavState = globalThis.crypto.randomUUID();
-        }}
-        @bbgraphboardserverrenewaccesssrequest=${async (
-          evt: BreadboardUI.Events.GraphBoardServerRenewAccessRequestEvent
-        ) => {
-          const boardServer = this.#runtime.board.getBoardServerByName(
-            evt.boardServerName
-          );
-
-          if (!boardServer) {
-            return;
-          }
-
-          if (boardServer.renewAccess) {
-            await boardServer.renewAccess();
-          }
-
-          this.boardServerNavState = globalThis.crypto.randomUUID();
-        }}
-        @bbgraphboardserverloadrequest=${async (
-          evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
-        ) => {
-          this.#attemptBoardStart(new BreadboardUI.Events.StartEvent(evt.url));
-        }}
-        @bbgraphboardserverselectionchange=${(
-          evt: BreadboardUI.Events.GraphBoardServerSelectionChangeEvent
-        ) => {
-          this.#persistBoardServerAndLocation(
-            evt.selectedBoardServer,
-            evt.selectedLocation
-          );
-        }}
-      ></bb-nav> `;
-    });
 
     const uiController = this.#initialize
       .then(() => {
@@ -2247,36 +2184,6 @@ export class Main extends LitElement {
               this.showBoardServerAddOverlay = false;
             }}
           ></bb-board-server-overlay>`;
-        }
-
-        let historyOverlay: HTMLTemplateResult | symbol = nothing;
-        if (this.showHistory) {
-          const history = this.#runtime.edit.getHistory(this.tab);
-          if (history) {
-            historyOverlay = html`<bb-graph-history
-              .entries=${history.entries()}
-              .canRedo=${history.canRedo()}
-              .canUndo=${history.canUndo()}
-              .count=${history.entries().length}
-              .idx=${history.index()}
-              @bbundo=${() => {
-                if (!history.canUndo()) {
-                  return;
-                }
-
-                history.undo();
-                this.requestUpdate();
-              }}
-              @bbredo=${() => {
-                if (!history.canRedo()) {
-                  return;
-                }
-
-                history.redo();
-                this.requestUpdate();
-              }}
-            ></bb-graph-history>`;
-          }
         }
 
         let saveAsDialogOverlay: HTMLTemplateResult | symbol = nothing;
@@ -2579,7 +2486,7 @@ export class Main extends LitElement {
               evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
             ) => {
               this.showOpenBoardOverlay = false;
-              this.#attemptBoardStart(
+              this.#attemptBoardLoad(
                 new BreadboardUI.Events.StartEvent(evt.url)
               );
             }}
@@ -2834,7 +2741,6 @@ export class Main extends LitElement {
                     return;
                   }
 
-                  console.log(boardServer.name, tab.graph.url, true);
                   this.#attemptBoardDelete(
                     boardServer.name,
                     tab.graph.url,
@@ -2892,6 +2798,81 @@ export class Main extends LitElement {
               }
             }}
           ></bb-overflow-menu>`;
+        }
+
+        let tabControls: HTMLTemplateResult | symbol = nothing;
+        const tabHistory = this.#runtime.edit.getHistory(this.tab);
+        if (this.tab && tabHistory) {
+          const isRunning = topGraphResult
+            ? topGraphResult.status === "running" ||
+              topGraphResult.status === "paused"
+            : false;
+
+          tabControls = html` <button
+              id="undo"
+              ?disabled=${!tabHistory.canUndo()}
+              @click=${() => {
+                this.#attemptUndo();
+              }}
+              @pointerover=${(evt: PointerEvent) => {
+                this.dispatchEvent(
+                  new ShowTooltipEvent(
+                    `Undo last action${tabHistory.canUndo() ? "" : " (unavailable)"}`,
+                    evt.clientX,
+                    evt.clientY
+                  )
+                );
+              }}
+              @pointerout=${() => {
+                this.dispatchEvent(new HideTooltipEvent());
+              }}
+            >
+              Undo
+            </button>
+            <button
+              id="redo"
+              ?disabled=${!tabHistory.canRedo()}
+              @click=${() => {
+                this.#attemptRedo();
+              }}
+              @pointerover=${(evt: PointerEvent) => {
+                this.dispatchEvent(
+                  new ShowTooltipEvent(
+                    `Redo last action${tabHistory.canRedo() ? "" : " (unavailable)"}`,
+                    evt.clientX,
+                    evt.clientY
+                  )
+                );
+              }}
+              @pointerout=${() => {
+                this.dispatchEvent(new HideTooltipEvent());
+              }}
+            >
+              Redo
+            </button>
+
+            <button
+              id="run"
+              title="Run this board"
+              ?disabled=${!this.tab.graph}
+              class=${classMap({ running: isRunning })}
+              @pointerdown=${(evt: PointerEvent) => {
+                // We do this to prevent the pointer event firing and dismissing the
+                // board activity overlay. Otherwise the overlay disappears and then
+                // immediately reappears.
+                evt.stopImmediatePropagation();
+              }}
+              @click=${async () => {
+                if (isRunning) {
+                  this.#attemptBoardStop();
+                } else {
+                  console.log("Attempt board start");
+                  await this.#attemptBoardStart();
+                }
+              }}
+            >
+              ${isRunning ? "Stop" : "Run"}
+            </button>`;
         }
 
         const canSave = this.tab
@@ -2982,6 +2963,7 @@ export class Main extends LitElement {
                 : nothing
             }
           </div>
+          ${tabControls}
           <button
             class=${classMap({ active: this.showSettingsOverlay })}
             id="toggle-settings"
@@ -3045,9 +3027,9 @@ export class Main extends LitElement {
       <div id="content" ?inert=${showingOverlay}>
         <bb-ui-controller
               ${ref(this.#uiRef)}
+              ?inert=${showingOverlay}
               .graphStore=${this.#graphStore}
               .mainGraphId=${this.tab?.mainGraphId}
-              ?inert=${showingOverlay}
               .readOnly=${this.tab?.readOnly ?? true}
               .graph=${this.tab?.graph ?? null}
               .editor=${this.#runtime.edit.getEditor(this.tab)}
@@ -3116,7 +3098,7 @@ export class Main extends LitElement {
               @bbgraphboardserverloadrequest=${async (
                 evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
               ) => {
-                this.#attemptBoardStart(
+                this.#attemptBoardLoad(
                   new BreadboardUI.Events.StartEvent(evt.url)
                 );
               }}
@@ -3264,14 +3246,8 @@ export class Main extends LitElement {
               @bbsaveas=${() => {
                 this.showSaveAsDialog = true;
               }}
-              @bbundo=${() => {
-                this.#attemptUndo();
-              }}
-              @bbredo=${() => {
-                this.#attemptRedo();
-              }}
               @bbstart=${(evt: BreadboardUI.Events.StartEvent) => {
-                this.#attemptBoardStart(evt);
+                this.#attemptBoardLoad(evt);
               }}
               @bbgraphboardopenrequest=${() => {
                 this.showOpenBoardOverlay = true;
@@ -3395,40 +3371,6 @@ export class Main extends LitElement {
                 evt: BreadboardUI.Events.NodeRunRequestEvent
               ) => {
                 await this.#attemptNodeRun(evt.id);
-              }}
-              @bbrunboard=${async () => {
-                const url = this.tab?.graph?.url;
-                if (!url) {
-                  return;
-                }
-
-                const graph = this.tab?.graph;
-
-                this.#runBoard(
-                  addNodeProxyServerConfig(
-                    this.#proxy,
-                    {
-                      url,
-                      runner: graph,
-                      diagnostics: true,
-                      kits: [], // The kits are added by the runtime.
-                      loader: this.#runtime.board.getLoader(),
-                      store: this.#dataStore,
-                      graphStore: this.#graphStore,
-                      fileSystem: this.#fileSystem.createRunFileSystem(url),
-                      inputs: BreadboardUI.Data.inputsFromSettings(
-                        this.#settings
-                      ),
-                      interactiveSecrets: true,
-                    },
-                    this.#settings,
-                    this.proxyFromUrl,
-                    await this.#getProxyURL(url)
-                  )
-                );
-              }}
-              @bbstopboard=${() => {
-                this.#attemptBoardStop();
               }}
               @bbedgechange=${(evt: BreadboardUI.Events.EdgeChangeEvent) => {
                 this.#runtime.edit.changeEdge(
@@ -3632,7 +3574,7 @@ export class Main extends LitElement {
                   evt: BreadboardUI.Events.GraphBoardServerLoadRequestEvent
                 ) => {
                   this.showWelcomePanel = false;
-                  this.#attemptBoardStart(
+                  this.#attemptBoardLoad(
                     new BreadboardUI.Events.StartEvent(evt.url)
                   );
                 }}
@@ -3657,7 +3599,6 @@ export class Main extends LitElement {
             : nothing
         }
           </div>
-        ${until(nav)}
       </div>`;
         const recentItemsKey =
           (this.graph?.url ?? "untitled-graph").replace(/[\W\s]/gim, "-") +
@@ -3794,7 +3735,6 @@ export class Main extends LitElement {
           settingsOverlay,
           firstRunOverlay,
           showNewWorkspaceItemOverlay,
-          historyOverlay,
           boardServerAddOverlay,
           previewOverlay,
           nodeConfiguratorOverlay,

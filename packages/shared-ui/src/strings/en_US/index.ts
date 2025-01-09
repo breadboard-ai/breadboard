@@ -8,9 +8,11 @@ import { LanguagePack } from "../../types/types";
 import Global from "./global.js";
 import ProjectListing from "./project-listing.js";
 import UIController from "./ui-controller.js";
+import WorkspaceOutline from "./workspace-outline.js";
 
 export default {
   Global,
   ProjectListing,
   UIController,
+  WorkspaceOutline,
 } as LanguagePack;

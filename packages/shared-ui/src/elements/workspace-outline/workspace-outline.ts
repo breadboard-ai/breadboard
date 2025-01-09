@@ -3,6 +3,10 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+
+import * as StringsHelper from "../../strings/helper.js";
+const Strings = StringsHelper.forSection("WorkspaceOutline");
+
 import {
   GraphIdentifier,
   InspectableGraph,
@@ -30,6 +34,7 @@ import {
   DragConnectorStartEvent,
   ShowTooltipEvent,
   HideTooltipEvent,
+  WorkspaceNewItemCreateRequestEvent,
 } from "../../events/events";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
@@ -142,22 +147,38 @@ export class WorkspaceOutline
     }
 
     #controls {
-      height: var(--bb-grid-size-12);
+      height: var(--bb-grid-size-11);
       padding: var(--bb-grid-size-2);
-      display: grid;
-      grid-template-columns: 1fr min-content;
-      column-gap: var(--bb-grid-size-2);
+      display: flex;
     }
 
     #controls input[type="text"],
     #controls input[type="search"],
     #controls select,
     #controls textarea {
-      padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+      height: var(--bb-grid-size-7);
+      padding: 0 var(--bb-grid-size-2);
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
       border: 1px solid var(--bb-neutral-300);
       border-radius: var(--bb-grid-size);
+    }
+
+    #controls #create-new {
+      height: var(--bb-grid-size-7);
+      background: var(--bb-neutral-50) var(--bb-icon-add) 4px center / 20px 20px
+        no-repeat;
+      border: 1px solid var(--bb-neutral-300);
+      color: var(--bb-neutral-700);
+      border-radius: var(--bb-grid-size-12);
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
+      padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-7);
+    }
+
+    #controls input[type="search"] {
+      flex: 1;
+      margin-right: var(--bb-grid-size-2);
     }
 
     #controls input[type="search"]:focus {
@@ -1609,9 +1630,17 @@ export class WorkspaceOutline
 
               this.filter = evt.target.value;
             }}
-            placeholder="Search for an item"
+            placeholder=${Strings.from("LABEL_SEARCH")}
             type="search"
           />
+          <button
+            id="create-new"
+            @click=${() => {
+              this.dispatchEvent(new WorkspaceNewItemCreateRequestEvent());
+            }}
+          >
+            ${Strings.from("CREATE")}
+          </button>
         </div>
         <div id="outline">${this.#renderOutline()}</div>
       </div>
