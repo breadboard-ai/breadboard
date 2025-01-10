@@ -58,7 +58,6 @@ async function processAssetPack(src: string) {
 
     // Special-case the logo.
     if (file.name === "logo.svg") {
-      console.log("Setting main icon");
       mainIcon = `data:${mimeType};base64,${btoa(data)}`;
     }
   }
@@ -100,21 +99,27 @@ export default defineConfig(async ({ mode }) => {
   }
 
   const assetPack = await processAssetPack(envConfig.VITE_ASSET_PACK);
+  const entry = {
+    worker: "src/worker.ts",
+    sample: "./index.html",
+    oauth: "./oauth/index.html",
+    bbrt: "./experimental/bbrt/index.html",
+    "palm-kit": "src/palm-kit.ts",
+    "core-kit": "src/core-kit.ts",
+    "json-kit": "src/json-kit.ts",
+    "template-kit": "src/template-kit.ts",
+    "python-wasm-kit": "src/python-wasm-kit.ts",
+    "node-nursery-web-kit": "src/node-nursery-web-kit.ts",
+  };
+
+  if (mode === "development") {
+    entry["langage"] = "./language.html";
+  }
+
   return {
     build: {
       lib: {
-        entry: {
-          worker: "src/worker.ts",
-          sample: "./index.html",
-          oauth: "./oauth/index.html",
-          bbrt: "./experimental/bbrt/index.html",
-          "palm-kit": "src/palm-kit.ts",
-          "core-kit": "src/core-kit.ts",
-          "json-kit": "src/json-kit.ts",
-          "template-kit": "src/template-kit.ts",
-          "python-wasm-kit": "src/python-wasm-kit.ts",
-          "node-nursery-web-kit": "src/node-nursery-web-kit.ts",
-        },
+        entry,
         name: "Breadboard Web Runtime",
         formats: ["es"],
       },

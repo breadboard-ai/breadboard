@@ -301,7 +301,7 @@ export class Main extends LitElement {
 
   #globalCommands: BreadboardUI.Types.Command[] = [
     {
-      title: "Open board...",
+      title: Strings.from("COMMAND_OPEN_PROJECT"),
       name: "open-board",
       icon: "open",
       callback: () => {
@@ -309,7 +309,7 @@ export class Main extends LitElement {
       },
     },
     {
-      title: "Save board",
+      title: Strings.from("COMMAND_SAVE_PROJECT"),
       name: "save-board",
       icon: "save",
       callback: () => {
@@ -317,7 +317,7 @@ export class Main extends LitElement {
       },
     },
     {
-      title: "Save board As...",
+      title: Strings.from("COMMAND_SAVE_PROJECT_AS"),
       name: "save-board-as",
       icon: "save",
       callback: () => {
@@ -325,7 +325,7 @@ export class Main extends LitElement {
       },
     },
     {
-      title: "Edit board information...",
+      title: Strings.from("COMMAND_EDIT_PROJECT_INFORMATION"),
       name: "edit-board-information",
       icon: "edit",
       callback: () => {
@@ -338,7 +338,7 @@ export class Main extends LitElement {
       },
     },
     {
-      title: "Open module...",
+      title: Strings.from("COMMAND_OPEN_MODULE"),
       name: "open-module",
       icon: "open",
       callback: () => {
@@ -346,7 +346,7 @@ export class Main extends LitElement {
       },
     },
     {
-      title: "Create module...",
+      title: Strings.from("COMMAND_CREATE_MODULE"),
       icon: "add-circle",
       name: "create-module",
       callback: () => {
@@ -553,7 +553,7 @@ export class Main extends LitElement {
 
             this.#attemptBoardSave(
               this.tab,
-              "Saving board",
+              Strings.from("STATUS_SAVING_PROJECT"),
               false,
               false,
               BOARD_AUTO_SAVE_TIMEOUT
@@ -582,7 +582,7 @@ export class Main extends LitElement {
             }
 
             this.toast(
-              "Unable to load board",
+              Strings.from("ERROR_UNABLE_TO_LOAD_PROJECT"),
               BreadboardUI.Events.ToastType.ERROR
             );
           }
@@ -920,6 +920,10 @@ export class Main extends LitElement {
       return;
     }
 
+    if (!this.tab) {
+      return;
+    }
+
     // Check if there's an input preference before actioning any main keyboard
     // command.
     if (
@@ -966,7 +970,7 @@ export class Main extends LitElement {
         let toastId;
         const notifyUser = () => {
           toastId = this.toast(
-            command.messagePending ?? "Working...",
+            command.messagePending ?? Strings.from("STATUS_GENERIC_WORKING"),
             BreadboardUI.Events.ToastType.PENDING,
             true
           );
@@ -990,7 +994,7 @@ export class Main extends LitElement {
           // Replace the toast.
           if (toastId) {
             this.toast(
-              command.messageComplete ?? "Done",
+              command.messageComplete ?? Strings.from("STATUS_GENERIC_WORKING"),
               command.messageType ?? BreadboardUI.Events.ToastType.INFORMATION,
               false,
               toastId
@@ -999,7 +1003,7 @@ export class Main extends LitElement {
         } catch (err) {
           const commandErr = err as { message: string };
           this.toast(
-            commandErr.message ?? "An error occurred",
+            commandErr.message ?? Strings.from("ERROR_GENERIC"),
             BreadboardUI.Events.ToastType.ERROR,
             false,
             toastId
@@ -1041,27 +1045,14 @@ export class Main extends LitElement {
         return;
       }
 
-      let saveMessage = "Workspace saved";
+      let saveMessage = Strings.from("STATUS_PROJECT_SAVED");
       if (this.#nodeConfiguratorRef.value) {
         this.#nodeConfiguratorRef.value.processData();
-        saveMessage = "Workspace and configuration saved";
+        saveMessage = Strings.from("STATUS_PROJECT_CONFIGURATION_SAVED");
       }
 
       this.#attemptBoardSave(this.tab, saveMessage);
       return;
-    }
-
-    if (evt.key === "h" && !isCtrlCommand && !evt.shiftKey) {
-      const isFocusedOnRenderer = evt
-        .composedPath()
-        .find(
-          (target) => target instanceof BreadboardUI.Elements.GraphRenderer
-        );
-      if (!isFocusedOnRenderer) {
-        return;
-      }
-
-      this.showHistory = !this.showHistory;
     }
 
     if (evt.key === "z" && isCtrlCommand) {
@@ -1072,14 +1063,6 @@ export class Main extends LitElement {
         );
 
       if (!isFocusedOnRenderer) {
-        return;
-      }
-
-      if (!this.tab) {
-        this.toast(
-          "Unable to edit; no active graph",
-          BreadboardUI.Events.ToastType.ERROR
-        );
         return;
       }
 
@@ -1220,7 +1203,7 @@ export class Main extends LitElement {
       return;
     }
 
-    abortController.abort("Stopped board");
+    abortController.abort(Strings.from("STATUS_GENERIC_RUN_STOPPED"));
     const runner = this.#runtime.run.getRunner(tabId);
     runner?.run();
     this.requestUpdate();
@@ -1253,7 +1236,7 @@ export class Main extends LitElement {
 
   async #attemptBoardSave(
     tabToSave = this.tab,
-    message = "Workspace saved",
+    message = Strings.from("STATUS_PROJECT_SAVED"),
     ackUser = true,
     showSaveAsIfNeeded = true,
     timeout = 0
@@ -1304,7 +1287,7 @@ export class Main extends LitElement {
     let id;
     if (ackUser) {
       id = this.toast(
-        "Saving workspace...",
+        Strings.from("STATUS_SAVING_PROJECT"),
         BreadboardUI.Events.ToastType.PENDING,
         true
       );
@@ -1363,7 +1346,7 @@ export class Main extends LitElement {
     }
 
     const id = this.toast(
-      "Saving board...",
+      Strings.from("STATUS_SAVING_PROJECT"),
       BreadboardUI.Events.ToastType.PENDING,
       true
     );
@@ -1379,7 +1362,7 @@ export class Main extends LitElement {
 
     if (!result || !url) {
       this.toast(
-        error || "Unable to create board",
+        error || Strings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
         BreadboardUI.Events.ToastType.ERROR,
         false,
         id
@@ -1392,7 +1375,7 @@ export class Main extends LitElement {
 
     this.#attemptBoardLoad(new BreadboardUI.Events.StartEvent(url.href));
     this.toast(
-      "Board saved",
+      Strings.from("STATUS_PROJECT_SAVED"),
       BreadboardUI.Events.ToastType.INFORMATION,
       false,
       id
@@ -1404,16 +1387,12 @@ export class Main extends LitElement {
     url: string,
     isActive: boolean
   ) {
-    if (
-      !confirm(
-        "Are you sure you want to delete this Workspace? This cannot be undone"
-      )
-    ) {
+    if (!confirm(Strings.from("QUERY_DELETE_PROJECT"))) {
       return;
     }
 
     const id = this.toast(
-      "Deleting workspace...",
+      Strings.from("STATUS_DELETING_PROJECT"),
       BreadboardUI.Events.ToastType.PENDING,
       true
     );
@@ -1424,14 +1403,14 @@ export class Main extends LitElement {
     );
     if (result) {
       this.toast(
-        "Workspace deleted",
+        Strings.from("STATUS_PROJECT_DELETED"),
         BreadboardUI.Events.ToastType.INFORMATION,
         false,
         id
       );
     } else {
       this.toast(
-        error || "Unexpected error",
+        error || Strings.from("ERROR_GENERIC"),
         BreadboardUI.Events.ToastType.ERROR,
         false,
         id
@@ -1452,7 +1431,7 @@ export class Main extends LitElement {
 
   #attemptBoardCreate(graph: GraphDescriptor) {
     this.#saveAsState = {
-      title: "Create new Workspace",
+      title: Strings.from("TITLE_CREATE_PROJECT"),
       graph,
       isNewBoard: true,
     };
@@ -1461,7 +1440,7 @@ export class Main extends LitElement {
   }
 
   #setPageTitle(title: string | null) {
-    const suffix = "Breadboard - Visual Editor";
+    const suffix = `${Strings.from("APP_NAME")} - ${Strings.from("SUB_APP_NAME")}`;
     if (title) {
       window.document.title = `${title} - ${suffix}`;
       return;
@@ -1477,7 +1456,7 @@ export class Main extends LitElement {
     );
     if (currentIndex === -1) {
       this.#recentBoards.unshift({
-        title: this.tab?.graph.title ?? "Untitled Board",
+        title: this.tab?.graph.title ?? Strings.from("TITLE_UNTITLED_PROJECT"),
         url,
       });
     } else {
@@ -1609,9 +1588,7 @@ export class Main extends LitElement {
       return;
     }
 
-    if (
-      !confirm("The current board isn't saved - would you like to save first?")
-    ) {
+    if (!confirm(Strings.from("QUERY_SAVE_PROJECT"))) {
       return;
     }
 
@@ -1620,14 +1597,17 @@ export class Main extends LitElement {
 
   async #handleBoardInfoUpdate(evt: BreadboardUI.Events.BoardInfoUpdateEvent) {
     if (!evt.tabId) {
-      this.toast("Unable to edit", BreadboardUI.Events.ToastType.ERROR);
+      this.toast(
+        Strings.from("ERROR_GENERIC"),
+        BreadboardUI.Events.ToastType.ERROR
+      );
       return;
     }
 
     const tab = this.#runtime.board.getTabById(evt.tabId as TabId);
     if (!tab) {
       this.toast(
-        "Unable to edit - no tab found",
+        Strings.from("ERROR_NO_PROJECT"),
         BreadboardUI.Events.ToastType.ERROR
       );
       return;
@@ -1711,13 +1691,13 @@ export class Main extends LitElement {
                 );
               } else {
                 this.toast(
-                  "Unable to load run data",
+                  Strings.from("ERROR_RUN_LOAD_DATA_FAILED"),
                   BreadboardUI.Events.ToastType.ERROR
                 );
               }
             } else {
               this.toast(
-                "Unable to load run data",
+                Strings.from("ERROR_RUN_LOAD_DATA_FAILED"),
                 BreadboardUI.Events.ToastType.ERROR
               );
             }
@@ -1727,7 +1707,10 @@ export class Main extends LitElement {
         }
       } catch (err) {
         console.warn(err);
-        this.toast("Unable to load file", BreadboardUI.Events.ToastType.ERROR);
+        this.toast(
+          Strings.from("ERROR_LOAD_FAILED"),
+          BreadboardUI.Events.ToastType.ERROR
+        );
       }
     });
   }
@@ -1737,7 +1720,7 @@ export class Main extends LitElement {
       let id;
       const loadingTimeout = setTimeout(() => {
         id = this.toast(
-          "Loading...",
+          Strings.from("STATUS_GENERIC_LOADING"),
           BreadboardUI.Events.ToastType.PENDING,
           true
         );
@@ -2019,13 +2002,13 @@ export class Main extends LitElement {
               try {
                 await this.#settings.save(evt.settings);
                 this.toast(
-                  "Saved settings",
+                  Strings.from("STATUS_SAVED_SETTINGS"),
                   BreadboardUI.Events.ToastType.INFORMATION
                 );
               } catch (err) {
                 console.warn(err);
                 this.toast(
-                  "Unable to save settings",
+                  Strings.from("ERROR_SAVE_SETTINGS"),
                   BreadboardUI.Events.ToastType.ERROR
                 );
               }
@@ -2130,13 +2113,13 @@ export class Main extends LitElement {
               try {
                 await this.#settings.save(evt.settings);
                 this.toast(
-                  "Welcome to Breadboard!",
+                  `Welcome to ${Strings.from("APP_NAME")}!`,
                   BreadboardUI.Events.ToastType.INFORMATION
                 );
               } catch (err) {
                 console.warn(err);
                 this.toast(
-                  "Unable to save settings",
+                  Strings.from("ERROR_SAVE_SETTINGS"),
                   BreadboardUI.Events.ToastType.ERROR
                 );
               }
@@ -2187,7 +2170,8 @@ export class Main extends LitElement {
         let saveAsDialogOverlay: HTMLTemplateResult | symbol = nothing;
         if (this.showSaveAsDialog) {
           saveAsDialogOverlay = html`<bb-save-as-overlay
-            .panelTitle=${this.#saveAsState?.title ?? "Save As..."}
+            .panelTitle=${this.#saveAsState?.title ??
+            Strings.from("COMMAND_SAVE_PROJECT_AS")}
             .boardServers=${this.#boardServers}
             .selectedBoardServer=${this.selectedBoardServer}
             .selectedLocation=${this.selectedLocation}
@@ -2319,7 +2303,7 @@ export class Main extends LitElement {
             ) => {
               if (!this.tab) {
                 this.toast(
-                  "Unable to edit; no active graph",
+                  Strings.from("ERROR_NO_PROJECT"),
                   BreadboardUI.Events.ToastType.ERROR
                 );
                 return;
@@ -2445,12 +2429,12 @@ export class Main extends LitElement {
               const refreshed = await boardServer.refresh(evt.location);
               if (refreshed) {
                 this.toast(
-                  "Source files refreshed",
+                  Strings.from("STATUS_PROJECTS_REFRESHED"),
                   BreadboardUI.Events.ToastType.INFORMATION
                 );
               } else {
                 this.toast(
-                  "Unable to refresh source files",
+                  Strings.from("ERROR_UNABLE_TO_REFRESH_PROJECTS"),
                   BreadboardUI.Events.ToastType.WARNING
                 );
               }
@@ -2517,25 +2501,25 @@ export class Main extends LitElement {
           const tabId = this.#boardOverflowMenuConfiguration.tabId;
           const actions: BreadboardUI.Types.OverflowAction[] = [
             {
-              title: "Save Workspace As...",
+              title: Strings.from("COMMAND_SAVE_PROJECT_AS"),
               name: "save-as",
               icon: "save",
               value: tabId,
             },
             {
-              title: "Copy Workspace Contents",
+              title: Strings.from("COMMAND_COPY_PROJECT_CONTENTS"),
               name: "copy-board-contents",
               icon: "copy",
               value: tabId,
             },
             {
-              title: "Copy Workspace URL",
+              title: Strings.from("COMMAND_COPY_PROJECT_URL"),
               name: "copy-to-clipboard",
               icon: "copy",
               value: tabId,
             },
             {
-              title: "Copy Tab URL",
+              title: Strings.from("COMMAND_COPY_FULL_URL"),
               name: "copy-tab-to-clipboard",
               icon: "copy",
               value: tabId,
@@ -2544,7 +2528,7 @@ export class Main extends LitElement {
 
           if (this.#runtime.board.canPreview(tabId)) {
             actions.push({
-              title: "Copy Preview URL",
+              title: Strings.from("COMMAND_COPY_APP_PREVIEW_URL"),
               name: "copy-preview-to-clipboard",
               icon: "copy",
               value: tabId,
@@ -2553,21 +2537,21 @@ export class Main extends LitElement {
 
           if (this.#runtime.board.canSave(tabId)) {
             actions.unshift({
-              title: "Save Workspace",
+              title: Strings.from("COMMAND_SAVE_PROJECT"),
               name: "save",
               icon: "save",
               value: tabId,
             });
 
             actions.push({
-              title: "Edit Workspace Details",
+              title: Strings.from("COMMAND_EDIT_PROJECT_INFORMATION"),
               name: "edit-board-details",
               icon: "edit-board-details",
               value: tabId,
             });
 
             actions.push({
-              title: "Delete Workspace",
+              title: Strings.from("COMMAND_DELETE_PROJECT"),
               name: "delete",
               icon: "delete",
               value: tabId,
@@ -2575,7 +2559,7 @@ export class Main extends LitElement {
           }
 
           actions.push({
-            title: "Download Workspace",
+            title: Strings.from("COMMAND_EXPORT_PROJECT"),
             name: "download",
             icon: "download",
             value: tabId,
@@ -2601,7 +2585,7 @@ export class Main extends LitElement {
 
               if (!actionEvt.value) {
                 this.toast(
-                  "Unable to perform action with tab - no ID provided",
+                  Strings.from("ERROR_GENERIC"),
                   BreadboardUI.Events.ToastType.ERROR
                 );
                 return;
@@ -2612,7 +2596,7 @@ export class Main extends LitElement {
               );
               if (!tab) {
                 this.toast(
-                  "Unable to perform action with tab",
+                  Strings.from("ERROR_GENERIC"),
                   BreadboardUI.Events.ToastType.ERROR
                 );
                 return;
@@ -2627,7 +2611,7 @@ export class Main extends LitElement {
                 case "copy-board-contents": {
                   if (!tab.graph || !tab.graph.url) {
                     this.toast(
-                      "Unable to copy board URL",
+                      Strings.from("ERROR_GENERIC"),
                       BreadboardUI.Events.ToastType.ERROR
                     );
                     break;
@@ -2637,7 +2621,7 @@ export class Main extends LitElement {
                     JSON.stringify(tab.graph, null, 2)
                   );
                   this.toast(
-                    "Workspace contents copied",
+                    Strings.from("STATUS_PROJECT_CONTENTS_COPIED"),
                     BreadboardUI.Events.ToastType.INFORMATION
                   );
                   break;
@@ -2646,7 +2630,7 @@ export class Main extends LitElement {
                 case "copy-to-clipboard": {
                   if (!tab.graph || !tab.graph.url) {
                     this.toast(
-                      "Unable to copy Workspace URL",
+                      Strings.from("ERROR_GENERIC"),
                       BreadboardUI.Events.ToastType.ERROR
                     );
                     break;
@@ -2654,7 +2638,7 @@ export class Main extends LitElement {
 
                   await navigator.clipboard.writeText(tab.graph.url);
                   this.toast(
-                    "Workspace URL copied",
+                    Strings.from("STATUS_PROJECT_URL_COPIED"),
                     BreadboardUI.Events.ToastType.INFORMATION
                   );
                   break;
@@ -2663,7 +2647,7 @@ export class Main extends LitElement {
                 case "copy-tab-to-clipboard": {
                   if (!tab.graph || !tab.graph.url) {
                     this.toast(
-                      "Unable to copy Tab URL",
+                      Strings.from("ERROR_GENERIC"),
                       BreadboardUI.Events.ToastType.ERROR
                     );
                     break;
@@ -2674,7 +2658,7 @@ export class Main extends LitElement {
 
                   await navigator.clipboard.writeText(url.href);
                   this.toast(
-                    "Tab URL copied",
+                    Strings.from("STATUS_FULL_URL_COPIED"),
                     BreadboardUI.Events.ToastType.INFORMATION
                   );
                   break;
@@ -2704,7 +2688,7 @@ export class Main extends LitElement {
                   generatedUrls.clear();
                   generatedUrls.add(url);
 
-                  let fileName = `${board.title ?? "Untitled Workspace"}.json`;
+                  let fileName = `${board.title ?? Strings.from("TITLE_UNTITLED_PROJECT")}.json`;
                   if (tab.graph.url) {
                     try {
                       const boardUrl = new URL(
@@ -2754,7 +2738,7 @@ export class Main extends LitElement {
 
                 case "save-as": {
                   this.#saveAsState = {
-                    title: "Save Workspace As...",
+                    title: Strings.from("COMMAND_SAVE_PROJECT_AS"),
                     graph: tab.graph,
                     isNewBoard: false,
                   };
@@ -2782,12 +2766,12 @@ export class Main extends LitElement {
 
                     await navigator.clipboard.writeText(previewUrl.href);
                     this.toast(
-                      "Preview URL copied",
+                      Strings.from("STATUS_APP_PREVIEW_URL_COPIED"),
                       BreadboardUI.Events.ToastType.INFORMATION
                     );
                   } catch (err) {
                     this.toast(
-                      "Unable to create preview",
+                      Strings.from("ERROR_GENERIC"),
                       BreadboardUI.Events.ToastType.ERROR
                     );
                   }
@@ -2815,7 +2799,7 @@ export class Main extends LitElement {
               @pointerover=${(evt: PointerEvent) => {
                 this.dispatchEvent(
                   new ShowTooltipEvent(
-                    `Undo last action${tabHistory.canUndo() ? "" : " (unavailable)"}`,
+                    Strings.from("LABEL_UNDO"),
                     evt.clientX,
                     evt.clientY
                   )
@@ -2836,7 +2820,7 @@ export class Main extends LitElement {
               @pointerover=${(evt: PointerEvent) => {
                 this.dispatchEvent(
                   new ShowTooltipEvent(
-                    `Redo last action${tabHistory.canRedo() ? "" : " (unavailable)"}`,
+                    Strings.from("LABEL_REDO"),
                     evt.clientX,
                     evt.clientY
                   )
@@ -2851,7 +2835,7 @@ export class Main extends LitElement {
 
             <button
               id="run"
-              title="Run this board"
+              title=${Strings.from("LABEL_RUN_PROJECT")}
               ?disabled=${!this.tab.graph}
               class=${classMap({ running: isRunning })}
               @pointerdown=${(evt: PointerEvent) => {
@@ -2864,12 +2848,13 @@ export class Main extends LitElement {
                 if (isRunning) {
                   this.#attemptBoardStop();
                 } else {
-                  console.log("Attempt board start");
                   await this.#attemptBoardStart();
                 }
               }}
             >
-              ${isRunning ? "Stop" : "Run"}
+              ${isRunning
+                ? Strings.from("LABEL_STOP")
+                : Strings.from("LABEL_RUN")}
             </button>`;
         }
 
@@ -2884,27 +2869,27 @@ export class Main extends LitElement {
             this.tab?.graph.url?.startsWith("drive")) ??
           false;
         const readonly = this.tab?.readOnly ?? !canSave;
-        let saveTitle = "Saved";
+        let saveTitle = Strings.from("LABEL_SAVE_STATUS_SAVED");
         switch (saveStatus) {
           case BreadboardUI.Types.BOARD_SAVE_STATUS.SAVING: {
-            saveTitle = "Saving";
+            saveTitle = Strings.from("LABEL_SAVE_STATUS_SAVING");
             break;
           }
 
           case BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED: {
             if (readonly) {
-              saveTitle += " - Read Only";
+              saveTitle += " - " + Strings.from("LABEL_SAVE_STATUS_READ_ONLY");
             }
             break;
           }
 
           case BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR: {
-            saveTitle = "Error";
+            saveTitle = Strings.from("LABEL_SAVE_ERROR");
             break;
           }
 
           case BreadboardUI.Types.BOARD_SAVE_STATUS.UNSAVED: {
-            saveTitle = "Unsaved";
+            saveTitle = Strings.from("LABEL_SAVE_UNSAVED");
             break;
           }
         }
@@ -2968,7 +2953,7 @@ export class Main extends LitElement {
             @pointerover=${(evt: PointerEvent) => {
               this.dispatchEvent(
                 new BreadboardUI.Events.ShowTooltipEvent(
-                  `Edit Settings`,
+                  Strings.from("COMMAND_EDIT_SETTINGS"),
                   evt.clientX,
                   evt.clientY
                 )
@@ -2988,7 +2973,7 @@ export class Main extends LitElement {
             @pointerover=${(evt: PointerEvent) => {
               this.dispatchEvent(
                 new BreadboardUI.Events.ShowTooltipEvent(
-                  `See additional items`,
+                  Strings.from("COMMAND_ADDITIONAL_ITEMS"),
                   evt.clientX,
                   evt.clientY
                 )
@@ -3206,7 +3191,7 @@ export class Main extends LitElement {
               ) => {
                 if (!this.tab) {
                   this.toast(
-                    "Unable to edit; no active graph",
+                    Strings.from("ERROR_GENERIC"),
                     BreadboardUI.Events.ToastType.ERROR
                   );
                   return;
@@ -3266,7 +3251,7 @@ export class Main extends LitElement {
 
                   default: {
                     this.toast(
-                      "Unknown action",
+                      Strings.from("ERROR_GENERIC"),
                       BreadboardUI.Events.ToastType.WARNING
                     );
                     break;
@@ -3302,7 +3287,7 @@ export class Main extends LitElement {
                 );
                 if (!result) {
                   this.toast(
-                    "Unable to create sub board",
+                    Strings.from("ERROR_GENERIC"),
                     BreadboardUI.Events.ToastType.ERROR
                   );
                   return;
@@ -3486,11 +3471,9 @@ export class Main extends LitElement {
               @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
                 this.toast(toastEvent.message, toastEvent.toastType);
               }}
-              @bbnodetyperetrievalerror=${(
-                evt: BreadboardUI.Events.NodeTypeRetrievalErrorEvent
-              ) => {
+              @bbnodetyperetrievalerror=${() => {
                 this.toast(
-                  `Error retrieving type information for ${evt.id}; try removing the component from the board`,
+                  Strings.from("ERROR_UNABLE_TO_RETRIEVE_TYPE_INFO"),
                   BreadboardUI.Events.ToastType.ERROR
                 );
               }}
@@ -3533,12 +3516,12 @@ export class Main extends LitElement {
                   const refreshed = await boardServer.refresh(evt.location);
                   if (refreshed) {
                     this.toast(
-                      "Source files refreshed",
+                      Strings.from("STATUS_PROJECTS_REFRESHED"),
                       BreadboardUI.Events.ToastType.INFORMATION
                     );
                   } else {
                     this.toast(
-                      "Unable to refresh source files",
+                      Strings.from("ERROR_UNABLE_TO_REFRESH_PROJECTS"),
                       BreadboardUI.Events.ToastType.WARNING
                     );
                   }
@@ -3664,13 +3647,13 @@ export class Main extends LitElement {
           .map(([id, module]): BreadboardUI.Types.Command => {
             if (id === BreadboardUI.Constants.MAIN_BOARD_ID) {
               return {
-                title: `Open Main Board...`,
+                title: `${Strings.from("COMMAND_OPEN")} ${Strings.from("LABEL_MAIN_PROJECT")}`,
                 icon: "open",
                 name: "open",
               };
             }
             return {
-              title: `Open ${module.metadata?.title ?? id}...`,
+              title: `${Strings.from("COMMAND_OPEN")} ${module.metadata?.title ?? id}...`,
               icon: "open",
               name: "open",
               secondaryAction: id,
