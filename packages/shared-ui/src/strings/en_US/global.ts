@@ -61,7 +61,7 @@ export default {
     str: "See additional items",
   },
 
-  // Label.
+  // Labels.
   LABEL_RUN: {
     str: "Run",
   },
@@ -96,7 +96,7 @@ export default {
     str: "Main Project...",
   },
 
-  // Status.
+  // Statuses.
   STATUS_SAVING_PROJECT: {
     str: "Saving Project",
   },
