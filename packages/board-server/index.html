@@ -22,11 +22,20 @@
   <body>
     <script type="module">
       import * as pkg from "./package.json";
-      import { AppView } from "./src/app/app.ts";
-      const appView = new AppView();
-      appView.version = pkg.version;
-      document.body.appendChild(appView);
-      console.log(`[Board Server App View: Version ${pkg.version}]`);
+      import * as StringsHelper from "@breadboard-ai/shared-ui/strings";
+
+      async function init() {
+        await StringsHelper.initFrom(LANGUAGE_PACK);
+
+        const { AppView } = await import("./src/app/app.ts");
+
+        const appView = new AppView();
+        appView.version = pkg.version;
+        document.body.appendChild(appView);
+        console.log(`[Board Server App View: Version ${pkg.version}]`);
+      }
+
+      init();
     </script>
   </body>
 </html>

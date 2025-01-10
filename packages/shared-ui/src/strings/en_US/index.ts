@@ -5,14 +5,20 @@
  */
 
 import { LanguagePack } from "../../types/types";
+import ComponentSelector from "./component-selector.js";
 import Global from "./global.js";
+import KitSelector from "./kit-selector.js";
 import ProjectListing from "./project-listing.js";
 import UIController from "./ui-controller.js";
 import WorkspaceOutline from "./workspace-outline.js";
 
-export default {
+const lang: LanguagePack = {
+  ComponentSelector,
   Global,
+  KitSelector,
   ProjectListing,
   UIController,
   WorkspaceOutline,
-} as LanguagePack;
+};
+
+export default lang;

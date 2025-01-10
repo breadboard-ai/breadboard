@@ -483,7 +483,9 @@ export type LanguagePackEntry = Record<
  * top-level entries.
  */
 export interface LanguagePack {
+  ComponentSelector: LanguagePackEntry;
   Global: LanguagePackEntry;
+  KitSelector: LanguagePackEntry;
   ProjectListing: LanguagePackEntry;
   UIController: LanguagePackEntry;
   WorkspaceOutline: LanguagePackEntry;

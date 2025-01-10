@@ -42,7 +42,7 @@ export class OverflowMenu extends LitElement {
       box-shadow:
         0px 4px 8px 3px rgba(0, 0, 0, 0.05),
         0px 1px 3px rgba(0, 0, 0, 0.1);
-      max-height: 360px;
+      max-height: 380px;
       scrollbar-width: none;
       overflow-y: scroll;
     }
