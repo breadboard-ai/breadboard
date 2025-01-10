@@ -293,35 +293,40 @@ export const styles = css`
     display: flex;
     align-items: flex-end;
     justify-content: center;
-  }
 
-  #section-nav button {
-    padding: var(--bb-grid-size-6) 0 var(--bb-grid-size-2) 0;
-    border: none;
-    position: relative;
-    margin: 0 var(--bb-grid-size-2);
-    font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
-      var(--bb-font-family);
-  }
+    & button {
+      padding: var(--bb-grid-size-6) var(--bb-grid-size) var(--bb-grid-size-2)
+        var(--bb-grid-size);
+      border: none;
+      position: relative;
+      margin: 0 var(--bb-grid-size-2);
+      font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
+        var(--bb-font-family);
 
-  #section-nav button[disabled] {
-    opacity: 1;
-    color: var(--bb-ui-500);
-  }
+      &[disabled] {
+        opacity: 1;
+        color: var(--bb-ui-500);
 
-  #section-nav button[disabled]::after {
-    content: "";
-    position: absolute;
-    height: 3px;
-    width: 100%;
-    bottom: 0;
-    left: 0;
-    border-radius: var(--bb-grid-size) var(--bb-grid-size) 0 0;
-    background: var(--bb-ui-500);
-  }
+        &::after {
+          content: "";
+          position: absolute;
+          height: 3px;
+          width: 100%;
+          bottom: 0;
+          left: 0;
+          border-radius: var(--bb-grid-size) var(--bb-grid-size) 0 0;
+          background: var(--bb-ui-500);
+        }
+      }
 
-  #section-nav button:not([disabled]) {
-    cursor: pointer;
+      &:not([disabled]) {
+        cursor: pointer;
+
+        &:hover {
+          color: var(--bb-ui-700);
+        }
+      }
+    }
   }
 
   #toggle-components {

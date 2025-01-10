@@ -174,6 +174,7 @@ export class WorkspaceOutline
       font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
       padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-7);
+      cursor: pointer;
     }
 
     #controls input[type="search"] {
