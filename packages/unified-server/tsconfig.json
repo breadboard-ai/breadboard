@@ -1,11 +1,24 @@
 {
   "compilerOptions": {
-    "composite": true,
-    "outDir": "./dist",
-    "strict": true,
+    "allowJs": true,
+    "composite": false,
+    "declaration": true,
+    "declarationMap": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "incremental": true,
+    "inlineSources": false,
+    "isolatedModules": true,
+    "lib": ["ES2022", "DOM"],
     "module": "NodeNext",
-    "moduleResolution": "NodeNext"
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "outDir": "./dist",
+    "preserveWatchOutput": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "target": "ES2022"
   },
   "include": ["src/**/*", "tests/**/*"],
-  "extends": "@google-labs/tsconfig/base.json"
 }
