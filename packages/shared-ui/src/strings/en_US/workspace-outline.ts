@@ -7,10 +7,18 @@
 import { LanguagePackEntry } from "../../types/types";
 
 export default {
-  CREATE: {
+  // Commands.
+  COMMAND_CREATE: {
     str: "Create",
   },
+
+  // Statuses.
+
+  // Labels.
   LABEL_SEARCH: {
     str: "Search",
   },
+
+  // Queries.
+  // Errors.
 } as LanguagePackEntry;
