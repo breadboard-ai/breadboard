@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, nothing } from "lit";
+import * as StringsHelper from "../../strings/helper.js";
+const Strings = StringsHelper.forSection("ComponentSelector");
+
+import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
@@ -14,10 +17,11 @@ import {
   MutableGraphStore,
   NodeHandlerMetadata,
 } from "@google-labs/breadboard";
-import { KitNodeChosenEvent } from "../../events/events.js";
+import { KitNodeChosenEvent, KitToggleEvent } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 
+const ACTIVE_KITS_KEY = "bb-component-selector-active-kits";
 const DATA_TYPE = "text/plain";
 
 @customElement("bb-component-selector")
@@ -31,9 +35,6 @@ export class ComponentSelector extends LitElement {
   @property()
   graphStore: MutableGraphStore | null = null;
 
-  @state()
-  filter: string | null = null;
-
   @property()
   showExperimentalComponents = false;
 
@@ -45,6 +46,15 @@ export class ComponentSelector extends LitElement {
 
   @property()
   static = false;
+
+  @state()
+  filter: string | null = null;
+
+  @state()
+  activeKits: string[] = ["Agent Kit", "Built-in Kit"];
+
+  @state()
+  showKitSelector = false;
 
   #searchInputRef: Ref<HTMLInputElement> = createRef();
 
@@ -75,31 +85,53 @@ export class ComponentSelector extends LitElement {
         var(--bb-grid-size-2);
     }
 
-    #controls {
-      height: var(--bb-grid-size-12);
-      padding: var(--bb-grid-size-2);
-      display: grid;
-      column-gap: var(--bb-grid-size-2);
-    }
-
     #controls input[type="text"],
     #controls input[type="search"],
     #controls select,
     #controls textarea {
-      padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+      height: var(--bb-grid-size-7);
+      padding: 0 var(--bb-grid-size-2);
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
       border: 1px solid var(--bb-neutral-300);
       border-radius: var(--bb-grid-size);
     }
 
-    #search:focus {
-      outline: none;
-      box-shadow: inset 0 0 0 4px var(--bb-ui-50);
+    #controls {
+      height: var(--bb-grid-size-11);
+      padding: var(--bb-grid-size-2);
+      display: flex;
+      position: relative;
+
+      & #kits {
+        height: var(--bb-grid-size-7);
+        background: var(--bb-neutral-50) var(--bb-icon-extension) 4px center /
+          20px 20px no-repeat;
+        border: 1px solid var(--bb-neutral-300);
+        color: var(--bb-neutral-700);
+        border-radius: var(--bb-grid-size-12);
+        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          var(--bb-font-family);
+        padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-7);
+        cursor: pointer;
+      }
+
+      bb-kit-selector {
+        position: fixed;
+        left: var(--kit-x, 200px);
+        top: var(--kit-y, 240px);
+        z-index: 200;
+      }
     }
 
-    #search:not(:placeholder-shown) {
-      background: var(--bb-neutral-0);
+    #controls input[type="search"] {
+      flex: 1;
+      margin-right: var(--bb-grid-size-2);
+    }
+
+    #controls input[type="search"]:focus {
+      outline: none;
+      box-shadow: inset 0 0 0 4px var(--bb-ui-50);
     }
 
     details {
@@ -234,12 +266,44 @@ export class ComponentSelector extends LitElement {
       background: var(--bb-icon-google-drive) top left / 28px 28px no-repeat;
     }
 
-    .no-components {
+    .no-components,
+    .no-items {
       font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
         var(--bb-font-family);
       margin: var(--bb-grid-size-2);
     }
   `;
+
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    window.addEventListener("pointerdown", this.#onPointerDownBound);
+
+    const activeKits = globalThis.localStorage.getItem(ACTIVE_KITS_KEY);
+    if (!activeKits) {
+      return;
+    }
+
+    try {
+      const kits = JSON.parse(activeKits);
+      if (Array.isArray(kits)) {
+        this.activeKits = kits;
+      }
+    } catch (err) {
+      globalThis.localStorage.removeItem(ACTIVE_KITS_KEY);
+    }
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    window.removeEventListener("pointerdown", this.#onPointerDownBound);
+  }
+
+  #onPointerDownBound = this.#onPointerDown.bind(this);
+  #onPointerDown() {
+    this.showKitSelector = false;
+  }
 
   #createKitList(
     graphStore: MutableGraphStore,
@@ -320,27 +384,34 @@ export class ComponentSelector extends LitElement {
   #filterKitList(
     kitList: Map<string, { id: string; metadata: NodeHandlerMetadata }[]>
   ) {
-    if (!this.filter) {
-      return kitList;
-    }
-
     const filteredKitList = new Map<
       string,
       { id: string; metadata: NodeHandlerMetadata }[]
     >();
 
-    const filter = new RegExp(this.filter, "gim");
+    if (this.filter) {
+      const filter = new RegExp(this.filter, "gim");
+      for (const [kitName, kitContents] of kitList) {
+        const filteredKitContents = kitContents.filter(
+          (nodeTypeInfo) =>
+            filter.test(nodeTypeInfo.id) ||
+            (nodeTypeInfo.metadata.title &&
+              filter.test(nodeTypeInfo.metadata.title))
+        );
 
-    for (const [kitName, kitContents] of kitList) {
-      const filteredKitContents = kitContents.filter(
-        (nodeTypeInfo) =>
-          filter.test(nodeTypeInfo.id) ||
-          (nodeTypeInfo.metadata.title &&
-            filter.test(nodeTypeInfo.metadata.title))
-      );
+        if (filteredKitContents.length > 0) {
+          filteredKitList.set(kitName, filteredKitContents);
+        }
+      }
+    } else {
+      for (const [kitName, kitContents] of kitList) {
+        filteredKitList.set(kitName, kitContents);
+      }
+    }
 
-      if (filteredKitContents.length > 0) {
-        filteredKitList.set(kitName, filteredKitContents);
+    for (const kitName of filteredKitList.keys()) {
+      if (!this.activeKits.includes(kitName)) {
+        filteredKitList.delete(kitName);
       }
     }
 
@@ -365,12 +436,39 @@ export class ComponentSelector extends LitElement {
     const kitList = this.#filterKitList(allKits);
     const expandAll = before > kitList.size;
 
+    let kitSelector: HTMLTemplateResult | symbol = nothing;
+    if (this.showKitSelector) {
+      const availableKits = [...allKits.keys()];
+      kitSelector = html`<bb-kit-selector
+        .kits=${availableKits}
+        .activeKits=${this.activeKits}
+        @bbkittoggle=${(evt: KitToggleEvent) => {
+          const active = new Set(this.activeKits);
+          if (active.has(evt.name)) {
+            active.delete(evt.name);
+          } else {
+            active.add(evt.name);
+          }
+
+          const kits = [...active];
+          this.activeKits = kits;
+          globalThis.localStorage.setItem(
+            ACTIVE_KITS_KEY,
+            JSON.stringify(kits)
+          );
+        }}
+        @pointerdown=${(evt: PointerEvent) => {
+          evt.stopImmediatePropagation();
+        }}
+      ></bb-kit-selector>`;
+    }
+
     return html` <div id="controls">
         <input
-          type="search"
           id="search"
           slot="search"
-          placeholder="Search for an item"
+          placeholder=${Strings.from("LABEL_SEARCH")}
+          type="search"
           value=${this.filter || ""}
           ${ref(this.#searchInputRef)}
           @input=${(evt: InputEvent) => {
@@ -381,10 +479,31 @@ export class ComponentSelector extends LitElement {
             this.filter = evt.target.value;
           }}
         />
+
+        <button
+          id="kits"
+          @click=${(evt: PointerEvent) => {
+            if (!(evt.target instanceof HTMLButtonElement)) {
+              return;
+            }
+
+            const bounds = evt.target.getBoundingClientRect();
+            this.style.setProperty("--kit-x", `${bounds.right + 4}px`);
+            this.style.setProperty("--kit-y", `${bounds.top - 4}px`);
+
+            this.showKitSelector = true;
+          }}
+        >
+          ${Strings.from("BUTTON_KITS")}
+        </button>
+        ${kitSelector}
       </div>
       <div id="content">
         <div id="container">
           <form>
+            ${kitList.size === 0
+              ? html`<p class="no-items">${Strings.from("NO_ITEMS")}</p>`
+              : nothing}
             ${map(kitList, ([kitName, kitContents]) => {
               const kitId = kitName.toLocaleLowerCase().replace(/\W/gim, "-");
 

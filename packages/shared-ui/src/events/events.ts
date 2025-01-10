@@ -1242,3 +1242,13 @@ export class CommandsAvailableEvent extends Event {
     super(CommandsAvailableEvent.eventName, { ...eventInit });
   }
 }
+
+/** Components */
+
+export class KitToggleEvent extends Event {
+  static eventName = "bbkittoggle";
+
+  constructor(public readonly name: string) {
+    super(KitToggleEvent.eventName, { ...eventInit });
+  }
+}
