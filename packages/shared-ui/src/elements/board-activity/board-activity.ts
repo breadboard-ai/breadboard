@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as StringsHelper from "../../strings/helper.js";
+const Strings = StringsHelper.forSection("ActivityLog");
+const GlobalStrings = StringsHelper.forSection("Global");
+
 import {
   BoardServer,
   InspectableRun,
@@ -60,7 +64,7 @@ export class BoardActivity extends LitElement {
   logTitle = "Activity Log";
 
   @property()
-  waitingMessage = 'Click "Run Board" to get started';
+  waitingMessage = Strings.from("LABEL_WAITING_MESSAGE");
 
   @property({ reflect: true })
   showExtendedInfo = false;
@@ -199,7 +203,7 @@ export class BoardActivity extends LitElement {
                 >
                 ${this.showExtendedInfo
                   ? html`<button class="details" data-message-id=${event.id}>
-                      Details
+                      ${Strings.from("LABEL_DETAILS")}
                     </button>`
                   : nothing}
               </summary>
@@ -364,7 +368,7 @@ export class BoardActivity extends LitElement {
       </div>
 
       <button class="continue-button" @click=${() => continueRun()}>
-        Continue
+        ${Strings.from("COMMAND_CONTINUE")}
       </button>
     </div>`;
   }
@@ -480,7 +484,7 @@ export class BoardActivity extends LitElement {
       </div>
 
       <button class="continue-button" @click=${() => continueRun()}>
-        Continue
+        ${Strings.from("COMMAND_CONTINUE")}
       </button>
     </div>`;
   }
@@ -605,7 +609,7 @@ export class BoardActivity extends LitElement {
     let exportMessage: HTMLTemplateResult | symbol = nothing;
     switch (this.downloadStatus) {
       case "generating": {
-        exportMessage = html`Generating export...`;
+        exportMessage = html`${Strings.from("STATUS_GENERATING_EXPORT")}`;
         break;
       }
 
@@ -614,13 +618,13 @@ export class BoardActivity extends LitElement {
             id="clear-export"
             @click=${() => this.#deleteCurrentExport()}
           >
-            Clear
+            ${Strings.from("COMMAND_CLEAR")}
           </button>
           <a
             id="download-export"
             .download=${`run-${new Date().toISOString()}.json`}
             .href=${this.#serializedRunUrl}
-            >Download</a
+            >${Strings.from("COMMAND_DOWNLOAD")}</a
           >`;
         break;
       }
@@ -630,7 +634,7 @@ export class BoardActivity extends LitElement {
           id="export"
           @click=${() => this.#createExportFromCurrentRun()}
         >
-          Create export
+          ${Strings.from("COMMAND_CREATE_EXPORT")}
         </button>`;
         break;
       }
@@ -665,7 +669,9 @@ export class BoardActivity extends LitElement {
                       }
 
                       if (event.hidden) {
-                        content = html`<h1>Working</h1>`;
+                        content = html`<h1>
+                          ${GlobalStrings.from("STATUS_GENERIC_WORKING")}
+                        </h1>`;
                       } else {
                         const hasComponentActivity =
                           event.runs.length && event.runs[0].events.length;
@@ -728,7 +734,7 @@ export class BoardActivity extends LitElement {
                                     class="details"
                                     data-message-id=${event.id}
                                   >
-                                    Details
+                                    ${Strings.from("LABEL_DETAILS")}
                                   </button>`
                                 : nothing}
                             </summary>
@@ -753,7 +759,9 @@ export class BoardActivity extends LitElement {
                                     ? html`<h2>${description}</h2>`
                                     : nothing}
                                   <span class="title"
-                                    >Retrieving values...</span
+                                    >${Strings.from(
+                                      "STATUS_RETRIEVING_VALUES"
+                                    )}</span
                                   >
                                 </summary>
                               </details>
@@ -855,7 +863,7 @@ export class BoardActivity extends LitElement {
               this.dispatchEvent(new RunIsolatedNodeEvent(allowRerun, true));
             }}
           >
-            Re-run
+            ${Strings.from("COMMAND_RE_RUN")}
           </button>
           <button
             id="debug-stepnext"
@@ -866,7 +874,7 @@ export class BoardActivity extends LitElement {
               this.dispatchEvent(new RunIsolatedNodeEvent(allowStepNext, true));
             }}
           >
-            Step to next
+            ${Strings.from("COMMAND_STEP_TO_NEXT")}
           </button>
           <button
             id="debug-continue"
@@ -879,7 +887,7 @@ export class BoardActivity extends LitElement {
               );
             }}
           >
-            Continue
+            ${Strings.from("COMMAND_CONTINUE")}
           </button>
         </div>`
       : nothing;

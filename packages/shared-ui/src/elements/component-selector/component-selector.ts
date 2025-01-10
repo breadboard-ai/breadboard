@@ -494,7 +494,7 @@ export class ComponentSelector extends LitElement {
             this.showKitSelector = true;
           }}
         >
-          ${Strings.from("BUTTON_KITS")}
+          ${Strings.from("LABEL_BUTTON_KITS")}
         </button>
         ${kitSelector}
       </div>
@@ -502,7 +502,7 @@ export class ComponentSelector extends LitElement {
         <div id="container">
           <form>
             ${kitList.size === 0
-              ? html`<p class="no-items">${Strings.from("NO_ITEMS")}</p>`
+              ? html`<p class="no-items">${Strings.from("STATUS_NO_ITEMS")}</p>`
               : nothing}
             ${map(kitList, ([kitName, kitContents]) => {
               const kitId = kitName.toLocaleLowerCase().replace(/\W/gim, "-");

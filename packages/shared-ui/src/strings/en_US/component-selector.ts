@@ -7,13 +7,22 @@
 import { LanguagePackEntry } from "../../types/types";
 
 export default {
-  BUTTON_KITS: {
+  // Commands.
+
+  // Statuses.
+  STATUS_NO_ITEMS: {
+    str: "No items",
+  },
+
+  // Labels.
+  LABEL_BUTTON_KITS: {
     str: "Kits",
   },
   LABEL_SEARCH: {
     str: "Search",
   },
-  NO_ITEMS: {
-    str: "No items",
-  },
+
+  // Queries.
+
+  // Errors.
 } as LanguagePackEntry;
