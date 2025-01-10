@@ -10,6 +10,7 @@ import type {
   ModuleIdentifier,
   NodeDescriptor,
   NodeMetadata,
+  OutputValues,
 } from "@breadboard-ai/types";
 import type {
   NodeDescriberContext,
@@ -66,7 +67,7 @@ function getHandler(handlerName: string, context: NodeHandlerContext) {
           type: handlerName,
         },
       });
-      return result;
+      return maybeUnwrapError(result);
     } catch (e) {
       return { $error: (e as Error).message };
     }
@@ -408,4 +409,24 @@ function filterEmptyValues<T extends Record<string, unknown>>(obj: T): T {
   return Object.fromEntries(
     Object.entries(obj).filter(([, value]) => !!value)
   ) as T;
+}
+
+function maybeUnwrapError(o: void | OutputValues): void | OutputValues {
+  if (!o) return o;
+  if (!("$error" in o)) return o;
+
+  let { $error } = o;
+
+  if (
+    $error &&
+    typeof $error === "object" &&
+    "kind" in $error &&
+    $error.kind === "error" &&
+    "error" in $error
+  ) {
+    const error = $error.error as { message: string };
+    $error = error.message;
+  }
+
+  return { ...o, $error };
 }

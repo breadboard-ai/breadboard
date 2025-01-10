@@ -24,6 +24,17 @@ export function normalizeBreadboardError(value: unknown): BreadboardError {
       return { kind: "error", error: value } as BreadboardError;
     }
   }
-  const message = typeof value === "string" ? value : JSON.stringify(value);
+
+  const message = typeof value === "string" ? value : maybeUnwrapError(value);
   return { kind: "error", error: { message } };
+}
+
+function maybeUnwrapError(value: unknown) {
+  if (value && typeof value === "object" && "error" in value) {
+    const error = value.error as Error;
+    if ("message" in error) {
+      return error.message;
+    }
+  }
+  return JSON.stringify(value);
 }

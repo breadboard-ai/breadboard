@@ -73,7 +73,7 @@ export class KitSelector extends LitElement {
       return nothing;
     }
 
-    return html` <header>${Strings.from("TITLE")}</header>
+    return html` <header>${Strings.from("LABEL_TITLE")}</header>
       <section>
         <ul>
           ${map(this.kits, (kit) => {

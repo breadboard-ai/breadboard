@@ -881,7 +881,9 @@ export class ProjectListing extends LitElement {
 
     if (!boardServer) {
       this.#returnToDefaultStore();
-      return html`<nav id="menu">${Strings.from("LOADING_ERROR")}</nav>`;
+      return html`<nav id="menu">
+        ${Strings.from("ERROR_LOADING_PROJECTS")}
+      </nav>`;
     }
 
     const extendedCapabilities = boardServer.extendedCapabilities();
@@ -901,7 +903,7 @@ export class ProjectListing extends LitElement {
                   this.dispatchEvent(new GraphBoardServerBlankBoardEvent());
                 }}
               >
-                ${Strings.from("NEW_BOARD")}
+                ${Strings.from("COMMAND_NEW_PROJECT")}
               </button>
             </div>
           </div>
@@ -951,14 +953,14 @@ export class ProjectListing extends LitElement {
                   this.showBoardServerOverflowMenu = true;
                 }}
               >
-                ${Strings.from("BOARD_SERVER_SETTINGS")}
+                ${Strings.from("LABEL_PROJECT_SERVER_SETTINGS")}
               </button>
             </div>
             <div id="search-container">
               <input
                 type="search"
                 id="search"
-                placeholder="${Strings.from("SEARCH_BOARDS")}"
+                placeholder="${Strings.from("LABEL_SEARCH_BOARDS")}"
                 autocomplete="off"
                 ${ref(this.#searchRef)}
                 @input=${(evt: InputEvent) => {
@@ -987,7 +989,7 @@ export class ProjectListing extends LitElement {
                 }}
               />
               <label for="list-other-peoples-boards"
-                >${Strings.from("LIST_OTHERS_BOARDS")}</label
+                >${Strings.from("LABEL_LIST_OTHERS_PROJECTS")}</label
               >
             </div>
           </div>
@@ -1077,7 +1079,7 @@ export class ProjectListing extends LitElement {
                         ${version
                           ? html`<span class="version">${version}</span>`
                           : html`<span class="no-value"
-                              >${Strings.from("NO_VERSION")}</span
+                              >${Strings.from("LABEL_NO_VERSION")}</span
                             >`}
                       </td>
 
@@ -1087,7 +1089,7 @@ export class ProjectListing extends LitElement {
                               >${description}</span
                             >`
                           : html`<span class="no-value"
-                              >${Strings.from("NO_DESCRIPTION")}</span
+                              >${Strings.from("LABEL_NO_DESCRIPTION")}</span
                             >`}
                       </td>
 
@@ -1115,7 +1117,7 @@ export class ProjectListing extends LitElement {
                               : username
                                 ? `@${username}`
                                 : html`<span class="no-value"
-                                    >${Strings.from("NO_OWNER")}</span
+                                    >${Strings.from("LABEL_NO_OWNER")}</span
                                   >`}
                           </td>`
                         : nothing}
@@ -1125,13 +1127,15 @@ export class ProjectListing extends LitElement {
                   const myBoards = html` <table cellspacing="0" class="mine">
                     <thead>
                       <tr>
-                        <td>${Strings.from("TABLE_HEADER_NAME")}</td>
-                        <td>${Strings.from("TABLE_HEADER_VERSION")}</td>
-                        <td>${Strings.from("TABLE_HEADER_DESCRIPTION")}</td>
-                        <td>${Strings.from("TABLE_HEADER_TAGS")}</td>
+                        <td>${Strings.from("LABEL_TABLE_HEADER_NAME")}</td>
+                        <td>${Strings.from("LABEL_TABLE_HEADER_VERSION")}</td>
+                        <td>
+                          ${Strings.from("LABEL_TABLE_HEADER_DESCRIPTION")}
+                        </td>
+                        <td>${Strings.from("LABEL_TABLE_HEADER_TAGS")}</td>
                         ${this.showOtherPeoplesBoards
                           ? html`<td>
-                              ${Strings.from("TABLE_HEADER_DESCRIPTION")}
+                              ${Strings.from("LABEL_TABLE_HEADER_DESCRIPTION")}
                             </td>`
                           : nothing}
                       </tr>
@@ -1147,13 +1151,15 @@ export class ProjectListing extends LitElement {
                   >
                     <thead>
                       <tr>
-                        <td>${Strings.from("TABLE_HEADER_NAME")}</td>
-                        <td>${Strings.from("TABLE_HEADER_VERSION")}</td>
-                        <td>${Strings.from("TABLE_HEADER_DESCRIPTION")}</td>
-                        <td>${Strings.from("TABLE_HEADER_TAGS")}</td>
+                        <td>${Strings.from("LABEL_TABLE_HEADER_NAME")}</td>
+                        <td>${Strings.from("LABEL_TABLE_HEADER_VERSION")}</td>
+                        <td>
+                          ${Strings.from("LABEL_TABLE_HEADER_DESCRIPTION")}
+                        </td>
+                        <td>${Strings.from("LABEL_TABLE_HEADER_TAGS")}</td>
                         ${this.showOtherPeoplesBoards
                           ? html`<td>
-                              ${Strings.from("TABLE_HEADER_DESCRIPTION")}
+                              ${Strings.from("LABEL_TABLE_HEADER_DESCRIPTION")}
                             </td>`
                           : nothing}
                       </tr>
@@ -1168,14 +1174,16 @@ export class ProjectListing extends LitElement {
                     boardListing = html`<div class="boards">
                       <details open>
                         <summary>
-                          ${Strings.from("TABLE_DESCRIPTION_YOUR_BOARDS")}
+                          ${Strings.from(
+                            "LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS"
+                          )}
                         </summary>
                         ${myBoards}
                       </details>
                       <details open>
                         <summary>
                           ${Strings.from(
-                            "TABLE_DESCRIPTION_OTHER_PEOPLES_BOARDS"
+                            "LABEL_TABLE_DESCRIPTION_OTHER_PEOPLES_PROJECTS"
                           )}
                         </summary>
                         ${otherBoards}
@@ -1189,14 +1197,18 @@ export class ProjectListing extends LitElement {
                     </div>`;
                   } else {
                     boardListing = html`<div id="empty-board-server">
-                      ${Strings.from("NO_BOARDS_FOUND")}
+                      ${Strings.from("LABEL_NO_PROJECTS_FOUND")}
                     </div>`;
                   }
 
                   return permission === "granted"
                     ? boardListing
                     : html`<div id="renew-access">
-                        <span>${Strings.from("ACCESS_EXPIRED")}</span>
+                        <span
+                          >${Strings.from(
+                            "LABEL_ACCESS_EXPIRED_PROJECT_SERVER"
+                          )}</span
+                        >
                         <button
                           id="request-renewed-access"
                           @click=${() => {
@@ -1208,18 +1220,20 @@ export class ProjectListing extends LitElement {
                             );
                           }}
                         >
-                          ${Strings.from("RENEW")}
+                          ${Strings.from("COMMAND_RENEW_ACCESS")}
                         </button>
                       </div>`;
                 }),
-                html`<div id="loading-message">${Strings.from("LOADING")}</div>`
+                html`<div id="loading-message">
+                  ${Strings.from("STATUS_LOADING")}
+                </div>`
               )}
             </div>
           </div>
         </div>
         <div>
           <section id="guides">
-            <h1>${Strings.from("FEATURED_GUIDES")}</h1>
+            <h1>${Strings.from("LABEL_FEATURED_GUIDES")}</h1>
             ${map(this.guides, (guide) => {
               return html`<div class="guide">
                 <a href="${guide.url}">
@@ -1232,7 +1246,9 @@ export class ProjectListing extends LitElement {
         </div>
       </div>
 
-      <div id="app-version">${Strings.from("VERSION")} ${this.version}</div>
+      <div id="app-version">
+        ${Strings.from("LABEL_APP_VERSION")} ${this.version}
+      </div>
 
       ${this.showBoardServerOverflowMenu
         ? html` <div id="overflow-menu">
@@ -1243,7 +1259,7 @@ export class ProjectListing extends LitElement {
               }}
               id="add-new-board-server"
             >
-              ${Strings.from("ADD_NEW_BOARD_SERVER")}
+              ${Strings.from("COMMAND_ADD_NEW_PROJECT_SERVER")}
             </button>
             ${extendedCapabilities.refresh
               ? html`<button
@@ -1258,13 +1274,13 @@ export class ProjectListing extends LitElement {
                   }}
                   id="refresh-board-server"
                 >
-                  ${Strings.from("REFRESH_BOARD_SERVER")}
+                  ${Strings.from("COMMAND_REFRESH_PROJECT_SERVER")}
                 </button>`
               : nothing}
             ${extendedCapabilities.disconnect
               ? html`<button
                   @click=${() => {
-                    if (!confirm(Strings.from("CONFIRM_REMOVE_SERVER"))) {
+                    if (!confirm(Strings.from("QUERY_CONFIRM_REMOVE_SERVER"))) {
                       return;
                     }
                     this.dispatchEvent(
@@ -1278,7 +1294,7 @@ export class ProjectListing extends LitElement {
                   }}
                   id="remove-board-server"
                 >
-                  ${Strings.from("REMOVE_BOARD_SERVER")}
+                  ${Strings.from("COMMAND_REMOVE_PROJECT_SERVER")}
                 </button>`
               : nothing}
           </div>`

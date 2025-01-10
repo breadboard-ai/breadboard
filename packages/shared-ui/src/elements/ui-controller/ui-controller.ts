@@ -386,19 +386,19 @@ export class UI extends LitElement {
     }
 
     const sectionNavItems = [
-      { item: "activity", label: "SECTION_NAV_ACTIVITY" },
-      { item: "workspace-overview", label: "SECTION_NAV_PROJECT" },
+      { item: "activity", label: "LABEL_SECTION_NAV_ACTIVITY" },
+      { item: "workspace-overview", label: "LABEL_SECTION_NAV_PROJECT" },
     ];
 
     if (modules.length > 0) {
       sectionNavItems.unshift({
         item: "capabilities",
-        label: "SECTION_NAV_CAPABILITIES",
+        label: "LABEL_SECTION_NAV_CAPABILITIES",
       });
     } else {
       sectionNavItems.unshift({
         item: "components",
-        label: "SECTION_NAV_COMPONENTS",
+        label: "LABEL_SECTION_NAV_COMPONENTS",
       });
     }
 
@@ -525,7 +525,7 @@ export class UI extends LitElement {
 
                   this.debugEvent = event;
                 }}
-                name="Board"
+                name=${Strings.from("LABEL_PROJECT")}
               ></bb-board-activity>
               ${this.debugEvent
                 ? html`<bb-event-details
@@ -555,7 +555,7 @@ export class UI extends LitElement {
                       this.debugEvent = null;
                     }}
                   >
-                    Back to Activity
+                    ${Strings.from("COMMAND_BACK_TO_ACTIVITY")}
                   </button>`
                 : nothing}
               ${sideNavItem}

@@ -7,79 +7,88 @@
 import { LanguagePackEntry } from "../../types/types";
 
 export default {
-  LOADING_ERROR: {
-    str: "Error loading Board Server",
+  // Commands.
+  COMMAND_NEW_PROJECT: {
+    str: "New Project",
   },
-  NEW_BOARD: {
-    str: "New board",
+  COMMAND_ADD_NEW_PROJECT_SERVER: {
+    str: "Add new Project Server",
   },
-  FEATURED_GUIDES: {
-    str: "Featured Guides",
+  COMMAND_REFRESH_PROJECT_SERVER: {
+    str: "Refresh Project Server",
   },
-  BOARD_SERVER_SETTINGS: {
-    str: "Board Server Settings",
+  COMMAND_REMOVE_PROJECT_SERVER: {
+    str: "Remove Project Server",
   },
-  LIST_OTHERS_BOARDS: {
-    str: "List others' boards",
+  COMMAND_RENEW_ACCESS: {
+    str: "Renew Access",
   },
-  NO_VERSION: {
-    str: "(no version)",
-  },
-  NO_DESCRIPTION: {
-    str: "(no description)",
-  },
-  NO_OWNER: {
-    str: "(no owner)",
-  },
-  TABLE_HEADER_NAME: {
-    str: "Name",
-  },
-  TABLE_HEADER_VERSION: {
-    str: "Version",
-  },
-  TABLE_HEADER_DESCRIPTION: {
-    str: "Description",
-  },
-  TABLE_HEADER_TAGS: {
-    str: "Tags",
-  },
-  TABLE_HEADER_OWNER: {
-    str: "Owner",
-  },
-  TABLE_DESCRIPTION_YOUR_BOARDS: {
-    str: "Your boards",
-  },
-  TABLE_DESCRIPTION_OTHER_PEOPLES_BOARDS: {
-    str: "Other people's boards",
-  },
-  NO_BOARDS_FOUND: {
-    str: "No boards found",
-  },
-  ACCESS_EXPIRED: {
-    str: "Access has expired for this Board Server",
-  },
-  LOADING: {
+
+  // Statuses.
+  STATUS_LOADING: {
     str: "Loading...",
   },
-  VERSION: {
+
+  // Labels.
+  LABEL_FEATURED_GUIDES: {
+    str: "Featured Guides",
+  },
+  LABEL_PROJECT_SERVER_SETTINGS: {
+    str: "Project Server Settings",
+  },
+  LABEL_LIST_OTHERS_PROJECTS: {
+    str: "List others' Projects",
+  },
+  LABEL_NO_VERSION: {
+    str: "(no version)",
+  },
+  LABEL_NO_DESCRIPTION: {
+    str: "(no description)",
+  },
+  LABEL_NO_OWNER: {
+    str: "(no owner)",
+  },
+  LABEL_TABLE_HEADER_NAME: {
+    str: "Name",
+  },
+  LABEL_TABLE_HEADER_VERSION: {
     str: "Version",
   },
-  ADD_NEW_BOARD_SERVER: {
-    str: "Add new Board Server",
+  LABEL_TABLE_HEADER_DESCRIPTION: {
+    str: "Description",
   },
-  REFRESH_BOARD_SERVER: {
-    str: "Refresh Board Server",
+  LABEL_TABLE_HEADER_TAGS: {
+    str: "Tags",
   },
-  REMOVE_BOARD_SERVER: {
-    str: "Remove Board Server",
+  LABEL_TABLE_HEADER_OWNER: {
+    str: "Owner",
   },
-  CONFIRM_REMOVE_SERVER: {
-    str: "Are you sure you want to remove this Board Server?",
+  LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS: {
+    str: "Your Project",
   },
-  RENEW: {
-    str: "Renew",
+  LABEL_TABLE_DESCRIPTION_OTHER_PEOPLES_PROJECTS: {
+    str: "Other people's Projects",
   },
-  SEARCH_BOARDS: {
-    str: "Search boards",
+  LABEL_NO_PROJECTS_FOUND: {
+    str: "No Projects found",
+  },
+  LABEL_ACCESS_EXPIRED_PROJECT_SERVER: {
+    str: "Access has expired for this Project Server",
+  },
+  LABEL_APP_VERSION: {
+    str: "Version",
+  },
+  LABEL_SEARCH_BOARDS: {
+    str: "Search Projects",
+  },
+
+  // Queries.
+  QUERY_CONFIRM_REMOVE_SERVER: {
+    str: "Are you sure you want to remove this Project Server?",
+  },
+
+  // Errors.
+  ERROR_LOADING_PROJECTS: {
+    str: "Error loading Project Server",
   },
 } as LanguagePackEntry;

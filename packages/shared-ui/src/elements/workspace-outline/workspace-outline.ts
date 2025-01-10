@@ -1640,7 +1640,7 @@ export class WorkspaceOutline
               this.dispatchEvent(new WorkspaceNewItemCreateRequestEvent());
             }}
           >
-            ${Strings.from("CREATE")}
+            ${Strings.from("COMMAND_CREATE")}
           </button>
         </div>
         <div id="outline">${this.#renderOutline()}</div>
