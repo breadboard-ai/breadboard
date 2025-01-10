@@ -3,12 +3,11 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "private": true,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Breadboard Components for building AI systems",
-  "main": "./dist/src/index.js",
-  "exports": "./dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "exports": {
+    "gemini": "./bgl/a2-gemini.bgl.json"
+  },
   "type": "module",
   "repository": {
     "directory": "packages/a2",

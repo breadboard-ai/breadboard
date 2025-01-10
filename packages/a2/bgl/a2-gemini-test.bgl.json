@@ -1,0 +1,72 @@
+{
+  "title": "A2 Gemini Test",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "main": "main",
+  "modules": {
+    "main": {
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nimport invokeBoard from \"@invoke\";\nimport { ok } from \"./utils\";\nexport { invoke as default, describe };\nconst GEMINI_LATEST = \"file://bgl/a2-gemini.bgl.json\";\nasync function invoke({ context }) {\n    // no inputs\n    const noInputs = await invokeBoard({ $board: GEMINI_LATEST });\n    console.log(\"noInputs\", noInputs);\n    // invalid context\n    const invalidContext = await invokeBoard({\n        $board: GEMINI_LATEST,\n        context: [{ parts: [] }],\n    });\n    console.log(\"invalidContext\", invalidContext);\n    // malformed parts\n    const malformedParts = await invokeBoard({\n        $board: GEMINI_LATEST,\n        context: [{ parts: [{ test: \"test test, are you there? over\" }] }],\n    });\n    console.log(\"malformedParts\", malformedParts);\n    // successful call\n    const good = await invokeBoard({\n        $board: GEMINI_LATEST,\n        context: [{ parts: [{ text: \"test test, are you there? over\" }] }],\n    });\n    console.log(\"good\", good);\n    return { context: \"DONE\" };\n}\nasync function describe() {\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {},\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n    };\n}\n",
+      "metadata": {
+        "description": "Add a description for your module here.",
+        "url": "main.js",
+        "source": {
+          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nimport invokeBoard from \"@invoke\";\n\nimport { ok } from \"./utils\";\n\nexport { invoke as default, describe };\n\nconst GEMINI_LATEST = \"file://bgl/a2-gemini.bgl.json\";\n\nasync function invoke({ context }: { context: LLMContent[] }) {\n  // no inputs\n  const noInputs = await invokeBoard({ $board: GEMINI_LATEST });\n  console.log(\"noInputs\", noInputs);\n\n  // invalid context\n  const invalidContext = await invokeBoard({\n    $board: GEMINI_LATEST,\n    context: [{ parts: [] }],\n  });\n  console.log(\"invalidContext\", invalidContext);\n\n  // malformed parts\n  const malformedParts = await invokeBoard({\n    $board: GEMINI_LATEST,\n    context: [{ parts: [{ test: \"test test, are you there? over\" }] }],\n  });\n  console.log(\"malformedParts\", malformedParts);\n\n  // successful call\n  const good = await invokeBoard({\n    $board: GEMINI_LATEST,\n    context: [{ parts: [{ text: \"test test, are you there? over\" }] }],\n  });\n  console.log(\"good\", good);\n\n  return { context: \"DONE\" };\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {},\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n  };\n}\n",
+          "language": "typescript"
+        },
+        "runnable": true
+      }
+    },
+    "utils": {
+      "code": "export { ok, err };\nfunction ok(o) {\n    return !(o && typeof o === \"object\" && \"$error\" in o);\n}\nfunction err($error) {\n    return { $error };\n}\n",
+      "metadata": {
+        "title": "utils",
+        "source": {
+          "code": "export { ok, err };\n\nfunction ok<T>(o: Outcome<T>): o is T {\n  return !(o && typeof o === \"object\" && \"$error\" in o);\n}\n\nfunction err($error: string) {\n  return { $error };\n}\n",
+          "language": "typescript"
+        },
+        "description": "",
+        "runnable": false
+      }
+    }
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "metadata": {
+        "title": "Input"
+      }
+    },
+    {
+      "id": "run-module",
+      "type": "runModule",
+      "configuration": {
+        "$module": "main"
+      },
+      "metadata": {
+        "title": "Run \"A2 Gemini Test\" module"
+      }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "metadata": {
+        "title": "Output"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "run-module",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "run-module",
+      "to": "output",
+      "out": "*",
+      "in": ""
+    }
+  ]
+}
