@@ -5,6 +5,7 @@
  */
 
 import { LanguagePack } from "../../types/types";
+import ActivityLog from "./activity-log.js";
 import ComponentSelector from "./component-selector.js";
 import Global from "./global.js";
 import KitSelector from "./kit-selector.js";
@@ -13,6 +14,7 @@ import UIController from "./ui-controller.js";
 import WorkspaceOutline from "./workspace-outline.js";
 
 const lang: LanguagePack = {
+  ActivityLog,
   ComponentSelector,
   Global,
   KitSelector,

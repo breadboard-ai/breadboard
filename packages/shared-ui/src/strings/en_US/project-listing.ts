@@ -34,10 +34,10 @@ export default {
     str: "Featured Guides",
   },
   LABEL_PROJECT_SERVER_SETTINGS: {
-    str: "Board Server Settings",
+    str: "Project Server Settings",
   },
   LABEL_LIST_OTHERS_PROJECTS: {
-    str: "List others' boards",
+    str: "List others' Projects",
   },
   LABEL_NO_VERSION: {
     str: "(no version)",
@@ -79,16 +79,16 @@ export default {
     str: "Version",
   },
   LABEL_SEARCH_BOARDS: {
-    str: "Search boards",
+    str: "Search Projects",
   },
 
   // Queries.
   QUERY_CONFIRM_REMOVE_SERVER: {
-    str: "Are you sure you want to remove this Board Server?",
+    str: "Are you sure you want to remove this Project Server?",
   },
 
   // Errors.
   ERROR_LOADING_PROJECTS: {
-    str: "Error loading Board Server",
+    str: "Error loading Project Server",
   },
 } as LanguagePackEntry;

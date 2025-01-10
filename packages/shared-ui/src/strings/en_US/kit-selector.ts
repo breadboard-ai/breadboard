@@ -7,7 +7,7 @@
 import { LanguagePackEntry } from "../../types/types";
 
 export default {
-  TITLE: {
+  LABEL_TITLE: {
     str: "Kits",
   },
 } as LanguagePackEntry;

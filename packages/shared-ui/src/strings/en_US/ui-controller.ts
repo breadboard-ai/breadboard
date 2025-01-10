@@ -7,19 +7,31 @@
 import { LanguagePackEntry } from "../../types/types";
 
 export default {
-  TITLE_WORKSPACE: {
-    str: "Workspace",
+  // Commands.
+  COMMAND_BACK_TO_ACTIVITY: {
+    str: "Back to ACtivity",
   },
-  SECTION_NAV_ACTIVITY: {
+
+  // Statuses.
+
+  // Labels.
+  LABEL_SECTION_NAV_ACTIVITY: {
     str: "Activity",
   },
-  SECTION_NAV_PROJECT: {
+  LABEL_SECTION_NAV_PROJECT: {
     str: "Project",
   },
-  SECTION_NAV_CAPABILITIES: {
+  LABEL_SECTION_NAV_CAPABILITIES: {
     str: "Capabilities",
   },
-  SECTION_NAV_COMPONENTS: {
+  LABEL_SECTION_NAV_COMPONENTS: {
     str: "Components",
   },
+  LABEL_PROJECT: {
+    str: "Project",
+  },
+
+  // Queries.
+
+  // Errors.
 } as LanguagePackEntry;

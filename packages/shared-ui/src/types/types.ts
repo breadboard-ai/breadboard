@@ -483,6 +483,7 @@ export type LanguagePackEntry = Record<
  * top-level entries.
  */
 export interface LanguagePack {
+  ActivityLog: LanguagePackEntry;
   ComponentSelector: LanguagePackEntry;
   Global: LanguagePackEntry;
   KitSelector: LanguagePackEntry;
