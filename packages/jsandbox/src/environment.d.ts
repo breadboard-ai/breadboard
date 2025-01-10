@@ -101,9 +101,7 @@ declare module "@invoke" {
     $stopAfter?: string;
   } & Record<string, unknown>;
 
-  export type InvokeOutputs = Record<string, unknown> & {
-    $error?: unknown;
-  };
+  export type InvokeOutputs = Outcome<Record<string, unknown>>;
 
   /**
    * A built-in capability of Breadboard to invoke boards.
