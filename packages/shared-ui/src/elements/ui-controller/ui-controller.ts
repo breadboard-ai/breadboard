@@ -387,7 +387,7 @@ export class UI extends LitElement {
 
     const sectionNavItems = [
       { item: "activity", label: "SECTION_NAV_ACTIVITY" },
-      { item: "workspace-overview", label: "SECTION_NAV_WORKSPACE" },
+      { item: "workspace-overview", label: "SECTION_NAV_PROJECT" },
     ];
 
     if (modules.length > 0) {

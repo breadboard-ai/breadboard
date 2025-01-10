@@ -13,8 +13,8 @@ export default {
   SECTION_NAV_ACTIVITY: {
     str: "Activity",
   },
-  SECTION_NAV_WORKSPACE: {
-    str: "Workspace",
+  SECTION_NAV_PROJECT: {
+    str: "Project",
   },
   SECTION_NAV_CAPABILITIES: {
     str: "Capabilities",
