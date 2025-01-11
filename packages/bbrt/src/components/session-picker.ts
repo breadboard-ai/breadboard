@@ -11,6 +11,8 @@ import { classMap } from "lit/directives/class-map.js";
 import type { ReactiveAppState } from "../state/app.js";
 import type { ReactiveSessionBriefState } from "../state/session-brief.js";
 import type { SessionStore } from "../state/session-store.js";
+import { buttonStyle } from "../style/button.js";
+import { iconButtonStyle } from "../style/icon-button.js";
 
 @customElement("bbrt-session-picker")
 export class BBRTSesssionPicker extends SignalWatcher(LitElement) {
@@ -20,41 +22,60 @@ export class BBRTSesssionPicker extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor sessionStore: SessionStore | undefined = undefined;
 
-  static override styles = css`
-    :host {
-      display: block;
-      padding: 24px;
-      font-family: Helvetica, sans-serif;
-    }
-    ul {
-      list-style-type: none;
-      padding: 0;
-      margin: 0;
-    }
-    li {
-      margin: 0.2em 0;
-    }
-    a {
-      text-decoration: none;
-      color: #6c80a0;
-      font-size: 0.85em;
-    }
-    .active > a {
-      color: #008dff;
-    }
-    a:hover,
-    .active > a:hover {
-      color: #52e5ad;
-      cursor: pointer;
-    }
-    :first-child {
-      margin-top: 0;
-    }
-    img {
-      height: 16px;
-      max-width: 16px;
-    }
-  `;
+  static override styles = [
+    buttonStyle,
+    iconButtonStyle,
+    css`
+      :host {
+        display: block;
+        padding: 24px;
+        font-family: Helvetica, sans-serif;
+      }
+      ul {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+      }
+      li {
+        margin: 0.2em 0;
+        display: flex;
+        align-items: stretch;
+      }
+      a {
+        text-decoration: none;
+        color: #6c80a0;
+        font-size: 0.85em;
+        flex: 1;
+        display: flex;
+        align-items: center;
+      }
+      .active > a {
+        color: #008dff;
+      }
+      a:hover,
+      .active > a:hover {
+        color: #52e5ad;
+        cursor: pointer;
+      }
+      :first-child {
+        margin-top: 0;
+      }
+      img {
+        height: 16px;
+        max-width: 16px;
+      }
+      #new-session-button {
+        --bb-icon: var(--bb-icon-add);
+        margin-bottom: 16px;
+      }
+      .delete-button {
+        --bb-icon: var(--bb-icon-delete);
+        border: none;
+        background-color: transparent;
+        opacity: 50%;
+      }
+    `,
+  ];
 
   override render() {
     if (!this.appState) {
@@ -64,7 +85,13 @@ export class BBRTSesssionPicker extends SignalWatcher(LitElement) {
       this.#renderSession(session)
     );
     return html`
-      <button @click=${this.#clickNewSessionButton}>New Session</button>
+      <button
+        id="new-session-button"
+        class="bb-button"
+        @click=${this.#clickNewSessionButton}
+      >
+        New Session
+      </button>
       <ul>
         ${sessions}
       </ul>
@@ -78,6 +105,7 @@ export class BBRTSesssionPicker extends SignalWatcher(LitElement) {
           >${title}</a
         >
         <button
+          class="delete-button bb-icon-button"
           @click=${(event: MouseEvent) =>
             this.#clickDeleteSessionButton(event, id)}
         >
