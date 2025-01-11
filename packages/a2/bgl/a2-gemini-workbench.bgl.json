@@ -1,0 +1,227 @@
+{
+  "title": "A2 Gemini Workbench",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"A photo of a hot air balloon above a field of blossoming tulips\"}]}]",
+              "description": ""
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -333.9999999999992,
+          "y": -131.00000000000097,
+          "collapsed": "expanded"
+        },
+        "logLevel": "debug"
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 1517,
+          "y": 330,
+          "collapsed": "expanded"
+        }
+      }
+    },
+    {
+      "id": "content-2124de81",
+      "type": "content",
+      "metadata": {
+        "visual": {
+          "x": 862.9999999999987,
+          "y": -11,
+          "collapsed": "expanded"
+        },
+        "title": "Content",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "role": "user",
+        "template": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "{{poem}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "e61e31d6-ef5a-4822-b5e0-4d68931f8dc0",
+      "type": "file://bgl/a2-gemini.bgl.json",
+      "metadata": {
+        "title": "Board (a2-gemini.bgl.json)",
+        "visual": {
+          "x": -20,
+          "y": -121,
+          "collapsed": "expanded"
+        },
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "model": "gemini-2.0-flash-exp",
+        "prompt": {
+          "role": "user",
+          "parts": [
+            {
+              "text": ""
+            }
+          ]
+        },
+        "systemInstruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": ""
+            }
+          ]
+        },
+        "modality": "Text and Image"
+      }
+    },
+    {
+      "id": "174d9763-bfbe-472f-8956-b9eba7fe66c9",
+      "type": "file://bgl/a2-gemini.bgl.json",
+      "metadata": {
+        "title": "Board (a2-gemini.bgl.json)",
+        "visual": {
+          "x": 381,
+          "y": -244.9999999999998,
+          "collapsed": "expanded"
+        },
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "model": "gemini-2.0-flash-exp",
+        "prompt": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Write a short poem about the picture"
+            }
+          ]
+        },
+        "systemInstruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "You are a melancholic, romantic poet fond of ballade rhyme scheme."
+            }
+          ]
+        },
+        "modality": "Text"
+      }
+    },
+    {
+      "id": "976467c0-7aa8-48d1-8ffb-4279e51743a2",
+      "type": "file://bgl/a2-gemini.bgl.json",
+      "metadata": {
+        "title": "Board (a2-gemini.bgl.json)",
+        "visual": {
+          "x": 1266,
+          "y": -63.999999999999915,
+          "collapsed": "expanded"
+        },
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "model": "gemini-2.0-flash-exp",
+        "systemInstruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": ""
+            }
+          ]
+        },
+        "modality": "Audio",
+        "prompt": {
+          "role": "user",
+          "parts": [
+            {
+              "text": ""
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "e61e31d6-ef5a-4822-b5e0-4d68931f8dc0",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "e61e31d6-ef5a-4822-b5e0-4d68931f8dc0",
+      "to": "174d9763-bfbe-472f-8956-b9eba7fe66c9",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "174d9763-bfbe-472f-8956-b9eba7fe66c9",
+      "to": "content-2124de81",
+      "out": "context",
+      "in": "p-poem"
+    },
+    {
+      "from": "content-2124de81",
+      "to": "976467c0-7aa8-48d1-8ffb-4279e51743a2",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "976467c0-7aa8-48d1-8ffb-4279e51743a2",
+      "to": "output",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "metadata": {
+    "visual": {}
+  }
+}
