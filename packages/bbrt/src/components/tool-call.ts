@@ -13,6 +13,7 @@ import {
   type ArtifactStore,
 } from "../artifacts/artifact-store.js";
 import type { FunctionCallState } from "../state/function-call.js";
+import "./error-message.js";
 
 @customElement("bbrt-tool-call")
 export class BBRTToolCallEl extends SignalWatcher(LitElement) {
@@ -26,22 +27,17 @@ export class BBRTToolCallEl extends SignalWatcher(LitElement) {
   static override styles = css`
     :host {
       background: #fff;
-      display: inline-flex;
+      display: block;
       align-items: flex-start;
       font-family: Helvetica, sans-serif;
       border-radius: 8px;
-      padding: 10px 14px;
+      padding: 16px;
       border: 1px solid #d9d9d9;
       box-shadow: rgba(0, 0, 0, 0.1) 1px 1px 5px;
-    }
-    img {
-      width: 40px;
-      max-height: 100%;
     }
     :host::part(tool-call-content) {
       display: flex;
       flex-direction: column;
-      padding: 0 0 0 16px;
       line-height: 1.4;
     }
     [part~="tool-call-content"] > :last-child {
@@ -50,6 +46,31 @@ export class BBRTToolCallEl extends SignalWatcher(LitElement) {
     pre {
       white-space: pre-wrap;
       overflow-wrap: break-word;
+    }
+    * {
+      margin: 8px 0 0 0;
+    }
+    :first-child {
+      margin-top: 0;
+    }
+    .json-args,
+    .json-result {
+      overflow: auto;
+      max-height: 200px;
+      background: rgba(0, 0, 0, 2%);
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--bb-neutral-300);
+    }
+    bbrt-error-message {
+      border-radius: 8px;
+      border: 1px solid var(--bb-error-color);
+    }
+    img {
+      max-width: 800px;
+      max-height: 450px;
+      object-fit: contain;
+      padding: 32px 16px 16px 16px;
     }
   `;
 
@@ -61,19 +82,22 @@ export class BBRTToolCallEl extends SignalWatcher(LitElement) {
       const response = this.toolCall.response;
       switch (response.status) {
         case "unstarted": {
-          return "Unstarted";
+          return html`Status: <em>Unstarted</em>`;
         }
         case "executing": {
-          return "Executing...";
+          return html`Status: <em>Executing...</em>`;
         }
         case "success": {
           return [
-            "Success",
-            html`<pre>${JSON.stringify(response.result)}</pre>`,
+            html`Status: <em>Success</em>`,
+            html`<pre class="json-result">
+${JSON.stringify(response.result, null, 2)}</pre
+            >`,
           ];
         }
         case "error": {
-          return ["Error", html`<pre>${JSON.stringify(response.error)}</pre>`];
+          return html`Status: <em>Error</em><br />
+            <bbrt-error-message .error=${response.error}></bbrt-error-message>`;
         }
         default: {
           response satisfies never;
@@ -83,10 +107,14 @@ export class BBRTToolCallEl extends SignalWatcher(LitElement) {
       }
     })();
     return html`
-      <img src="/bbrt/images/tool.svg" />
       <div part="tool-call-content">
-        <span>${this.toolCall.functionId}</span>
-        <pre>${JSON.stringify(this.toolCall.args)}</pre>
+        <span
+          >Calling <code>${this.toolCall.functionId}</code> with
+          arguments:</span
+        >
+        <pre class="json-args">
+${JSON.stringify(this.toolCall.args, null, 2)}</pre
+        >
         <div>${status}</div>
         ${this.#renderArtifacts()}
       </div>

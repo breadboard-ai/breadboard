@@ -256,6 +256,7 @@ export class Conversation {
       };
     }
   }
+
   get driverInfo(): Map<string, BBRTDriverInfo> {
     return this.#drivers;
   }
