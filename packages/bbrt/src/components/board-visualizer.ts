@@ -4,10 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// TODO(aomarks) Make it possible to import only the elements we need like
-// graph-renderer.
-import "@breadboard-ai/shared-ui";
-
 import {
   type GraphDescriptor,
   type InspectableNodePorts,
@@ -19,6 +15,7 @@ import { customElement, property } from "lit/decorators.js";
 import { MAIN_BOARD_ID } from "../../../shared-ui/dist/constants/constants.js";
 import type { GraphOpts } from "../../../shared-ui/dist/elements/editor/types.js";
 import { TopGraphObserver } from "../../../shared-ui/dist/utils/utils.js";
+import { loadSharedUi } from "../util/load-shared-ui.js";
 
 @customElement("bbrt-board-visualizer")
 export class BBRTBoardVisualizer extends LitElement {
@@ -33,6 +30,11 @@ export class BBRTBoardVisualizer extends LitElement {
       width: 100%;
     }
   `;
+
+  override connectedCallback() {
+    super.connectedCallback();
+    loadSharedUi().then(() => this.requestUpdate());
+  }
 
   override render() {
     const graph = this.graph;
