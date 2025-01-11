@@ -5,10 +5,9 @@
  */
 
 import { SignalWatcher } from "@lit-labs/signals";
-import { LitElement, css, html, nothing } from "lit";
+import { LitElement, css, html, nothing, svg } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import type { ReactiveTurnState } from "../state/turn.js";
-import "./error-message.js";
 import "./markdown.js";
 import "./tool-call.js";
 
@@ -78,17 +77,8 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       when we have no content. */
       margin-bottom: 20px;
     }
-
-    #toolCalls,
-    #toolResponses {
-      display: grid;
-      gap: 18px;
-      grid-template-columns: repeat(auto-fill, 300px);
-      /* Space for shadows to breathe on the bottom row. */
-      padding-bottom: 5px;
-    }
-    #toolResponses > img {
-      max-width: 100%;
+    #toolCalls > bbrt-tool-call:not(:first-child) {
+      margin-top: 20px;
     }
   `;
 
@@ -105,9 +95,9 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
             .markdown=${this.turn.partialText}
             part="content"
           ></bbrt-markdown>
+          ${this.#renderFunctionCalls()}
         </div>
       `,
-      this.#renderFunctionCalls(),
     ];
   }
 
@@ -126,16 +116,16 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
   }
 
   get #roleIcon() {
-    if (!this.turn || this.hideIcon) {
+    if (!this.turn) {
       return nothing;
     }
-    const role = this.turn.role;
+    const role = this.hideIcon ? undefined : this.turn.role;
     return html`<svg
       aria-label="${role}"
       role="img"
       part="icon icon-${role} icon-${this.turn.status}"
     >
-      <use href="/bbrt/images/${role}.svg#icon"></use>
+      ${role ? svg`<use href="/bbrt/images/${role}.svg#icon"></use>` : nothing}
     </svg>`;
   }
 }

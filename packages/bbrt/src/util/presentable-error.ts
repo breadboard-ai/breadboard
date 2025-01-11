@@ -17,7 +17,7 @@ export function coercePresentableError(error: unknown): PresentableError {
       additional: error.errors.slice(1).map(coercePresentableError),
     };
   } else if (error instanceof Error) {
-    let message = error.message ?? "";
+    let message = reindentIfJson(error.message ?? "");
     let stack = error.stack ?? "";
     const prefixedMessage = `Error: ${message}`;
     if (stack.startsWith(`${prefixedMessage}\n`)) {
@@ -35,8 +35,8 @@ export function coercePresentableError(error: unknown): PresentableError {
     error.message
   ) {
     return {
-      message: String(error.message),
-      stack: "stack" in error ? String(error.stack) : undefined,
+      message: reindentIfJson(String(error.message)),
+      stack: "stack" in error && error.stack ? String(error.stack) : undefined,
       additional:
         "additional" in error && Array.isArray(error.additional)
           ? error.additional.map(coercePresentableError)
@@ -55,4 +55,16 @@ export function coercePresentableError(error: unknown): PresentableError {
   } else {
     return { message: JSON.stringify(error, null, 2) };
   }
+}
+
+function reindentIfJson(text: string): string {
+  if (text.startsWith("{") || text.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(text);
+      return JSON.stringify(parsed, null, 2);
+    } catch {
+      // Ignore
+    }
+  }
+  return text;
 }
