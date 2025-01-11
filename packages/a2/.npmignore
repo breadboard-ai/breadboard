@@ -1,2 +1,4 @@
 .env
 tsconfig.tsbuildinfo
+*-test.bgl.json
+*-workbench.bgl.json
