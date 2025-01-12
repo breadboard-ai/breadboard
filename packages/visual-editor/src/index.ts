@@ -62,7 +62,12 @@ import {
 } from "@breadboard-ai/connection-client";
 
 import { sandbox } from "./sandbox";
-import { InputValues, Module, ModuleIdentifier } from "@breadboard-ai/types";
+import {
+  GraphIdentifier,
+  InputValues,
+  Module,
+  ModuleIdentifier,
+} from "@breadboard-ai/types";
 import { KeyboardCommand, KeyboardCommandDeps } from "./commands/types";
 import {
   CopyCommand,
@@ -1815,6 +1820,17 @@ export class Main extends LitElement {
     this.#runtime.edit.createModule(this.tab, moduleId, newModule);
   }
 
+  #attemptToggleExport(
+    id: ModuleIdentifier | GraphIdentifier,
+    type: "imperative" | "declarative"
+  ) {
+    if (!this.tab) {
+      return;
+    }
+
+    this.#runtime.edit.toggleExport(this.tab, id, type);
+  }
+
   #showBoardEditOverlay(
     tab = this.tab,
     x: number | null,
@@ -3349,6 +3365,11 @@ export class Main extends LitElement {
                   evt.code,
                   evt.metadata
                 );
+              }}
+              @bbtoggleexport=${(
+                evt: BreadboardUI.Events.ToggleExportEvent
+              ) => {
+                this.#attemptToggleExport(evt.exportId, evt.exportType);
               }}
               @bbnoderunrequest=${async (
                 evt: BreadboardUI.Events.NodeRunRequestEvent

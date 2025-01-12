@@ -35,6 +35,7 @@ import {
   ShowTooltipEvent,
   HideTooltipEvent,
   WorkspaceNewItemCreateRequestEvent,
+  ToggleExportEvent,
 } from "../../events/events";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
@@ -72,6 +73,7 @@ interface Outline {
   runnable?: boolean;
   minimized?: boolean;
   subItems: Map<ItemIdentifier, Outline>;
+  exported: boolean;
 }
 
 interface OverflowMenu {
@@ -772,7 +774,8 @@ export class WorkspaceOutline
   #getGraphDetails(graph: InspectableGraph) {
     const moduleToOutline = (
       id: ModuleIdentifier,
-      module: InspectableModule
+      module: InspectableModule,
+      exported: boolean
     ): Outline => {
       return {
         type: "imperative",
@@ -783,12 +786,14 @@ export class WorkspaceOutline
         },
         runnable: module.metadata().runnable ?? false,
         subItems: new Map(),
+        exported,
       };
     };
 
     const graphToOutline = (
       graph: InspectableGraph,
-      overrideTitle = true
+      overrideTitle: boolean,
+      exported: boolean
     ): Outline => {
       const nodes: InspectableNode[] = [];
       const ports: Map<NodeIdentifier, InspectableNodePorts> = new Map();
@@ -831,16 +836,21 @@ export class WorkspaceOutline
 
       const subItems = new Map<GraphIdentifier | ModuleIdentifier, Outline>();
       const subGraphs = graph.graphs();
+      const graphExports = graph.graphExports();
       if (subGraphs) {
         for (const [id, subGraph] of Object.entries(subGraphs)) {
-          subItems.set(id, graphToOutline(subGraph, false));
+          subItems.set(
+            id,
+            graphToOutline(subGraph, false, graphExports.has(id))
+          );
         }
       }
 
+      const moduleExports = graph.moduleExports();
       const modules = graph.modules();
       if (modules) {
         for (const [id, module] of Object.entries(modules)) {
-          subItems.set(id, moduleToOutline(id, module));
+          subItems.set(id, moduleToOutline(id, module, moduleExports.has(id)));
         }
       }
 
@@ -856,6 +866,7 @@ export class WorkspaceOutline
         },
         minimized: graph.metadata()?.visual?.minimized ?? false,
         subItems,
+        exported,
       } as Outline;
     };
 
@@ -867,7 +878,7 @@ export class WorkspaceOutline
       throw new Error("Unable to load graph");
     }
 
-    return graphToOutline(graph);
+    return graphToOutline(graph, true, false);
   }
 
   connectedCallback(): void {
@@ -1294,6 +1305,20 @@ export class WorkspaceOutline
                       });
                     }
 
+                    if (subItem.exported) {
+                      actions.push({
+                        title: "Mark as not exported",
+                        name: "toggle-export",
+                        icon: "checked",
+                      });
+                    } else {
+                      actions.push({
+                        title: "Mark as exported",
+                        name: "toggle-export",
+                        icon: "unchecked",
+                      });
+                    }
+
                     if (subItem.type === "declarative") {
                       actions.push({
                         title: "Edit Board Information",
@@ -1541,6 +1566,26 @@ export class WorkspaceOutline
                   );
                   break;
                 }
+              }
+
+              case "toggle-export": {
+                evt.stopImmediatePropagation();
+
+                const targetId = this.#overflowMenu.target;
+
+                if (!targetId) {
+                  break;
+                }
+
+                const target = subItems.get(targetId);
+                if (!target) {
+                  break;
+                }
+
+                this.dispatchEvent(
+                  new ToggleExportEvent(targetId, target.type)
+                );
+                break;
               }
             }
           }}

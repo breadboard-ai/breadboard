@@ -208,6 +208,14 @@ export class OverflowMenu extends LitElement {
       background-image: var(--bb-icon-minimize);
     }
 
+    button.checked {
+      background-image: var(--bb-icon-check);
+    }
+
+    button.unchecked {
+      background-image: var(--bb-icon-check-inverted);
+    }
+
     button.error {
       background-image: var(--bb-icon-error);
       color: var(--bb-warning-600);

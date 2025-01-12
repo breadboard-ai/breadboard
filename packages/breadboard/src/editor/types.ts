@@ -152,6 +152,12 @@ export type RemoveGraphSpec = {
   id: GraphIdentifier;
 };
 
+export type ToggleExportSpec = {
+  type: "toggleexport";
+  id: GraphIdentifier | ModuleIdentifier;
+  exportType: "imperative" | "declarative";
+};
+
 export type EditOperationConductor = (
   edits: EditSpec[],
   editLabel: string
@@ -180,7 +186,8 @@ export type EditSpec =
   | ChangeGraphMetadataSpec
   | ChangeModuleSpec
   | AddGraphSpec
-  | RemoveGraphSpec;
+  | RemoveGraphSpec
+  | ToggleExportSpec;
 
 export type EditableGraph = {
   addEventListener<Key extends keyof EditableGraphEventMap>(

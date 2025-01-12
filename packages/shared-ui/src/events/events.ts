@@ -547,6 +547,21 @@ export class ModuleCreateEvent extends Event {
 }
 
 /**
+ * Exports management
+ */
+
+export class ToggleExportEvent extends Event {
+  static eventName = "bbtoggleexport";
+
+  constructor(
+    public readonly exportId: ModuleIdentifier | GraphIdentifier,
+    public readonly exportType: "imperative" | "declarative"
+  ) {
+    super(ToggleExportEvent.eventName, { ...eventInit });
+  }
+}
+
+/**
  * Board Servers
  */
 

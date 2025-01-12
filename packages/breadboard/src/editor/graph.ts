@@ -44,12 +44,14 @@ import { AddGraph } from "./operations/add-graph.js";
 import { RemoveGraph } from "./operations/remove-graph.js";
 import { MutableGraphImpl } from "../inspector/graph/mutable-graph.js";
 import { MutableGraph } from "../inspector/types.js";
+import { ToggleExport } from "./operations/toggle-export.js";
 
 const validImperativeEdits: EditSpec["type"][] = [
   "addmodule",
   "changegraphmetadata",
   "removemodule",
   "changemodule",
+  "toggleexport",
 ];
 
 const operations = new Map<EditSpec["type"], EditOperation>([
@@ -66,6 +68,7 @@ const operations = new Map<EditSpec["type"], EditOperation>([
   ["changemodule", new ChangeModule()],
   ["addgraph", new AddGraph()],
   ["removegraph", new RemoveGraph()],
+  ["toggleexport", new ToggleExport()],
 ]);
 
 export class Graph implements EditableGraph {
