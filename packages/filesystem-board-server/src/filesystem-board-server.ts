@@ -6,6 +6,7 @@
 
 import {
   blankLLMContent,
+  GraphProviderPreloadHandler,
   type BoardServer,
   type BoardServerCapabilities,
   type BoardServerConfiguration,
@@ -460,5 +461,13 @@ export class FileSystemBoardServer extends EventTarget implements BoardServer {
   async renewAccess() {
     await this.handle.requestPermission({ mode: "readwrite" });
     await this.refresh();
+  }
+
+  async preload(preloader: GraphProviderPreloadHandler): Promise<void> {
+    this.items().forEach((item) => {
+      item.items.forEach((item) => {
+        preloader(item);
+      });
+    });
   }
 }
