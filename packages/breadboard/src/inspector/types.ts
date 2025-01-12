@@ -342,6 +342,14 @@ export type InspectableGraph = {
    * this is a `DeclarativeGraph` instance.
    */
   main(): string | undefined;
+  /**
+   * Returns all module exports
+   */
+  moduleExports(): Set<ModuleIdentifier>;
+  /**
+   * Returns all graph exports
+   */
+  graphExports(): Set<GraphIdentifier>;
 };
 
 /**

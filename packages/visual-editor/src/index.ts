@@ -62,7 +62,12 @@ import {
 } from "@breadboard-ai/connection-client";
 
 import { sandbox } from "./sandbox";
-import { InputValues, Module, ModuleIdentifier } from "@breadboard-ai/types";
+import {
+  GraphIdentifier,
+  InputValues,
+  Module,
+  ModuleIdentifier,
+} from "@breadboard-ai/types";
 import { KeyboardCommand, KeyboardCommandDeps } from "./commands/types";
 import {
   CopyCommand,
@@ -185,6 +190,7 @@ export class Main extends LitElement {
     isTool: boolean | null;
     isComponent: boolean | null;
     subGraphId: string | null;
+    moduleId: string | null;
     x: number | null;
     y: number | null;
   } | null = null;
@@ -333,7 +339,8 @@ export class Main extends LitElement {
           this.tab,
           100,
           50,
-          this.tab?.subGraphId ?? null
+          this.tab?.subGraphId ?? null,
+          null
         );
       },
     },
@@ -1624,6 +1631,14 @@ export class Main extends LitElement {
         evt.isTool,
         evt.isComponent
       );
+    }
+    if (evt.moduleId) {
+      await this.#runtime.edit.updateModuleInfo(
+        tab,
+        evt.moduleId,
+        evt.title,
+        evt.description
+      );
     } else {
       this.#runtime.edit.updateBoardInfo(
         tab,
@@ -1815,13 +1830,49 @@ export class Main extends LitElement {
     this.#runtime.edit.createModule(this.tab, moduleId, newModule);
   }
 
+  #attemptToggleExport(
+    id: ModuleIdentifier | GraphIdentifier,
+    type: "imperative" | "declarative"
+  ) {
+    if (!this.tab) {
+      return;
+    }
+
+    this.#runtime.edit.toggleExport(this.tab, id, type);
+  }
+
   #showBoardEditOverlay(
     tab = this.tab,
     x: number | null,
     y: number | null,
-    subGraphId: string | null
+    subGraphId: string | null,
+    moduleId: string | null
   ) {
     if (!tab) {
+      return;
+    }
+
+    if (moduleId) {
+      const module = tab.graph.modules?.[moduleId];
+      if (!module) {
+        return;
+      }
+
+      const { metadata } = module;
+
+      this.boardEditOverlayInfo = {
+        tabId: tab.id,
+        description: metadata?.description ?? "",
+        isTool: false,
+        isComponent: false,
+        published: false,
+        subGraphId,
+        moduleId,
+        title: metadata?.title ?? "",
+        version: "",
+        x,
+        y,
+      };
       return;
     }
 
@@ -1840,6 +1891,7 @@ export class Main extends LitElement {
       isComponent: metadata?.tags?.includes("component") ?? false,
       published: metadata?.tags?.includes("published") ?? false,
       subGraphId,
+      moduleId,
       title: title ?? "",
       version: version ?? "",
       x,
@@ -1973,6 +2025,7 @@ export class Main extends LitElement {
             .boardIsTool=${this.boardEditOverlayInfo.isTool}
             .boardIsComponent=${this.boardEditOverlayInfo.isComponent}
             .subGraphId=${this.boardEditOverlayInfo.subGraphId}
+            .moduleId=${this.boardEditOverlayInfo.moduleId}
             .location=${location}
             @bboverlaydismissed=${() => {
               this.boardEditOverlayInfo = null;
@@ -2604,7 +2657,7 @@ export class Main extends LitElement {
 
               switch (actionEvt.action) {
                 case "edit-board-details": {
-                  this.#showBoardEditOverlay(tab, x, y, null);
+                  this.#showBoardEditOverlay(tab, x, y, null, null);
                   break;
                 }
 
@@ -2925,7 +2978,8 @@ export class Main extends LitElement {
                           this.tab,
                           evt.clientX,
                           evt.clientY,
-                          this.tab.subGraphId
+                          this.tab.subGraphId,
+                          null
                         );
                       }}
                     >
@@ -3244,6 +3298,18 @@ export class Main extends LitElement {
                       this.tab,
                       evt.x ?? null,
                       evt.y ?? null,
+                      evt.value,
+                      null
+                    );
+                    break;
+                  }
+
+                  case "edit-module-details": {
+                    this.#showBoardEditOverlay(
+                      this.tab,
+                      evt.x ?? null,
+                      evt.y ?? null,
+                      null,
                       evt.value
                     );
                     break;
@@ -3349,6 +3415,11 @@ export class Main extends LitElement {
                   evt.code,
                   evt.metadata
                 );
+              }}
+              @bbtoggleexport=${(
+                evt: BreadboardUI.Events.ToggleExportEvent
+              ) => {
+                this.#attemptToggleExport(evt.exportId, evt.exportType);
               }}
               @bbnoderunrequest=${async (
                 evt: BreadboardUI.Events.NodeRunRequestEvent

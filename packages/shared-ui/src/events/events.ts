@@ -116,7 +116,8 @@ export class BoardInfoUpdateEvent extends Event {
     public readonly status: "published" | "draft" | null = null,
     public readonly isTool: boolean | null = null,
     public readonly isComponent: boolean | null = null,
-    public readonly subGraphId: string | null = null
+    public readonly subGraphId: string | null = null,
+    public readonly moduleId: string | null = null
   ) {
     super(BoardInfoUpdateEvent.eventName, { ...eventInit });
   }
@@ -543,6 +544,21 @@ export class ModuleCreateEvent extends Event {
 
   constructor(public readonly moduleId: ModuleIdentifier) {
     super(ModuleCreateEvent.eventName, { ...eventInit });
+  }
+}
+
+/**
+ * Exports management
+ */
+
+export class ToggleExportEvent extends Event {
+  static eventName = "bbtoggleexport";
+
+  constructor(
+    public readonly exportId: ModuleIdentifier | GraphIdentifier,
+    public readonly exportType: "imperative" | "declarative"
+  ) {
+    super(ToggleExportEvent.eventName, { ...eventInit });
   }
 }
 

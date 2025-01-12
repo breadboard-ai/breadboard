@@ -341,6 +341,34 @@ export class Edit extends EventTarget {
     // editableGraph.replaceGraph(subGraphId, subGraphDescriptor);
   }
 
+  async updateModuleInfo(
+    tab: Tab | null,
+    moduleId: string,
+    title: string,
+    description: string
+  ) {
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(
+        new RuntimeErrorEvent("Unable to edit module; no active board")
+      );
+      return;
+    }
+
+    const module = editableGraph.inspect("").moduleById(moduleId);
+    if (!module) {
+      return null;
+    }
+
+    const code = module.code();
+    const metadata = { ...module.metadata() };
+
+    metadata.title = title;
+    metadata.description = description;
+
+    this.editModule(tab, moduleId, code, metadata);
+  }
+
   deleteComment(tab: Tab | null, id: string) {
     if (!tab) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to find tab"));
@@ -652,6 +680,23 @@ export class Edit extends EventTarget {
         },
       ],
       `Update module ${moduleId}`
+    );
+  }
+
+  toggleExport(
+    tab: Tab,
+    id: ModuleIdentifier | GraphIdentifier,
+    exportType: "imperative" | "declarative"
+  ) {
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
+      return null;
+    }
+
+    editableGraph.edit(
+      [{ type: "toggleexport", exportType, id }],
+      `Toggle export for ${exportType} graph "${id}"`
     );
   }
 

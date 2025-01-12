@@ -129,4 +129,12 @@ class Graph implements InspectableGraph {
   graphId(): GraphIdentifier {
     return this.#graphId;
   }
+
+  moduleExports(): Set<ModuleIdentifier> {
+    return new GraphQueries(this.#mutable, this.#graphId).moduleExports();
+  }
+
+  graphExports(): Set<GraphIdentifier> {
+    return new GraphQueries(this.#mutable, this.#graphId).graphExports();
+  }
 }

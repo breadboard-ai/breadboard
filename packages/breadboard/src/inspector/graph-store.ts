@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor, GraphIdentifier } from "@breadboard-ai/types";
+import {
+  GraphDescriptor,
+  GraphIdentifier,
+  KitDescriptor,
+} from "@breadboard-ai/types";
 import { Graph as GraphEditor } from "../editor/graph.js";
 import {
   EditableGraph,
@@ -104,10 +108,25 @@ class GraphStore
           help: descriptor.metadata?.help,
           id: mainGraphId,
         });
-        return {
-          mainGraph: mutable.legacyKitMetadata || mainGraphMetadata,
-          ...mainGraphMetadata,
-        };
+        const exports: GraphStoreEntry[] = [];
+        if (descriptor.exports) {
+          for (const e of descriptor.exports) {
+            const metadata = entryFromExport(descriptor, e, mainGraphId);
+            exports.push({
+              mainGraph: mainGraphMetadata,
+              ...metadata,
+            });
+          }
+        } else {
+          exports.push({
+            mainGraph:
+              (mutable.legacyKitMetadata as KitDescriptor & {
+                id: MainGraphIdentifier;
+              }) || mainGraphMetadata,
+            ...mainGraphMetadata,
+          });
+        }
+        return exports;
       })
       .filter(Boolean) as GraphStoreEntry[];
     return [...this.#legacyKits, ...graphs];
@@ -414,6 +433,44 @@ function emptyGraph(): GraphDescriptor {
     edges: [],
     nodes: [],
   };
+}
+
+const MODULE_EXPORT_PREFIX = "#module:";
+
+function entryFromExport(
+  graph: GraphDescriptor,
+  id: string,
+  mainGraphId: MainGraphIdentifier
+): NodeHandlerMetadata | null {
+  const url = `${graph.url}${id}`;
+  if (id.startsWith(MODULE_EXPORT_PREFIX)) {
+    const moduleId = id.slice(MODULE_EXPORT_PREFIX.length);
+    const module = graph.modules?.[moduleId];
+    if (!module) return null;
+    const { title, description, icon, help } = module.metadata || {};
+    return filterEmptyValues({
+      title,
+      description,
+      icon,
+      url,
+      tags: ["component"],
+      help,
+      id: mainGraphId,
+    });
+  } else {
+    const graphId = id.slice(1);
+    const descriptor = graphId ? graph.graphs?.[graphId] : graph;
+    if (!descriptor) return null;
+    return filterEmptyValues({
+      title: descriptor.title,
+      description: descriptor.description,
+      icon: descriptor.metadata?.icon,
+      url: descriptor.url,
+      tags: ["component"],
+      help: descriptor.metadata?.help,
+      id: mainGraphId,
+    });
+  }
 }
 
 /**

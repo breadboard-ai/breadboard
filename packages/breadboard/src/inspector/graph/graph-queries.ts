@@ -7,6 +7,7 @@
 import {
   GraphDescriptor,
   GraphIdentifier,
+  ModuleIdentifier,
   NodeIdentifier,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
@@ -21,6 +22,8 @@ import { createGraphNodeType } from "./kits.js";
 import { VirtualNode } from "./virtual-node.js";
 
 export { GraphQueries };
+
+const MODULE_EXPORT_PREFIX = "#module:";
 
 /**
  * Encapsulates common graph operations.
@@ -89,5 +92,25 @@ class GraphQueries {
       return undefined;
     }
     return createGraphNodeType(id, this.#cache);
+  }
+
+  moduleExports(): Set<ModuleIdentifier> {
+    const exports = this.#cache.graph.exports;
+    if (!exports) return new Set();
+    return new Set(
+      exports
+        .filter((e) => e.startsWith(MODULE_EXPORT_PREFIX))
+        .map((e) => e.slice(MODULE_EXPORT_PREFIX.length))
+    );
+  }
+
+  graphExports(): Set<GraphIdentifier> {
+    const exports = this.#cache.graph.exports;
+    if (!exports) return new Set();
+    return new Set(
+      exports
+        .filter((e) => !e.startsWith(MODULE_EXPORT_PREFIX))
+        .map((e) => e.slice(1))
+    );
   }
 }

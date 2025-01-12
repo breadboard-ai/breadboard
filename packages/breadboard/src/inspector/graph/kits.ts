@@ -8,6 +8,7 @@ import { toNodeHandlerMetadata } from "../../graph-based-node-handler.js";
 import { getGraphHandlerFromMutableGraph } from "../../handler.js";
 import {
   GraphDescriptor,
+  GraphToRun,
   Kit,
   NodeDescriberResult,
   NodeDescriptor,
@@ -311,7 +312,10 @@ class CustomNodeType implements InspectableNodeType {
     const graph = this.#mutable.store.addByURL(this.#type, [this.#mutable.id], {
       outerGraph: this.#mutable.graph,
     }).mutable;
-    return toNodeHandlerMetadata(graph.graph);
+    const graphToRun: GraphToRun = {
+      graph: graph.graph,
+    };
+    return toNodeHandlerMetadata(graphToRun, this.#type) || {};
   }
 
   async metadata(): Promise<NodeHandlerMetadata> {

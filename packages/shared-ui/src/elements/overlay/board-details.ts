@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, PropertyValues } from "lit";
+import { LitElement, html, css, PropertyValues, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Overlay } from "./overlay.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -42,6 +42,9 @@ export class BoardDetailsOverlay extends LitElement {
 
   @property()
   subGraphId: string | null = null;
+
+  @property()
+  moduleId: string | null = null;
 
   @property()
   location = { x: 100, y: 100, addHorizontalClickClearance: true };
@@ -445,7 +448,8 @@ export class BoardDetailsOverlay extends LitElement {
         data.get("status") as "published" | "draft" | null,
         data.get("tool") === "on",
         data.get("component") === "on",
-        this.subGraphId
+        this.subGraphId,
+        this.moduleId
       )
     );
   }
@@ -550,15 +554,17 @@ export class BoardDetailsOverlay extends LitElement {
                 .value=${this.boardTitle || ""}
               />
 
-              <label for="version">Version</label>
-              <input
-                id="version"
-                name="version"
-                pattern="\\d+\\.\\d+\\.\\d+"
-                type="text"
-                required
-                .value=${this.boardVersion || ""}
-              />
+              ${this.moduleId === null
+                ? html` <label for="version">Version</label>
+                    <input
+                      id="version"
+                      name="version"
+                      pattern="\\d+\\.\\d+\\.\\d+"
+                      type="text"
+                      required
+                      .value=${this.boardVersion || ""}
+                    />`
+                : nothing}
 
               <label for="description">Description</label>
               <textarea
@@ -567,63 +573,73 @@ export class BoardDetailsOverlay extends LitElement {
                 .value=${this.boardDescription || ""}
               ></textarea>
 
-              <label for="status">Status</label>
-              <select
-                @input=${(evt: Event) => {
-                  if (!(evt.target instanceof HTMLSelectElement)) {
-                    return;
-                  }
+              ${this.moduleId === null
+                ? html` <label for="status">Status</label>
+                    <select
+                      @input=${(evt: Event) => {
+                        if (!(evt.target instanceof HTMLSelectElement)) {
+                          return;
+                        }
 
-                  if (this.boardPublished && evt.target.value !== "published") {
-                    if (
-                      !confirm(
-                        "This board was published. Unpublishing it may break other boards. Are you sure?"
-                      )
-                    ) {
-                      evt.preventDefault();
-                      evt.target.value = "published";
-                    }
-                  }
-                }}
-                id="status"
-                name="status"
-                .value=${this.boardPublished ? "published" : "draft"}
-              >
-                <option value="draft" ?selected=${!this.boardPublished}>
-                  Draft
-                </option>
-                <option value="published" ?selected=${this.boardPublished}>
-                  Published
-                </option>
-              </select>
+                        if (
+                          this.boardPublished &&
+                          evt.target.value !== "published"
+                        ) {
+                          if (
+                            !confirm(
+                              "This board was published. Unpublishing it may break other boards. Are you sure?"
+                            )
+                          ) {
+                            evt.preventDefault();
+                            evt.target.value = "published";
+                          }
+                        }
+                      }}
+                      id="status"
+                      name="status"
+                      .value=${this.boardPublished ? "published" : "draft"}
+                    >
+                      <option value="draft" ?selected=${!this.boardPublished}>
+                        Draft
+                      </option>
+                      <option
+                        value="published"
+                        ?selected=${this.boardPublished}
+                      >
+                        Published
+                      </option>
+                    </select>
 
-              <label class="component" for="is-component">Component</label>
-              <div class="additional-items">
-                <input
-                  id="is-component"
-                  name="component"
-                  type="checkbox"
-                  .value="on"
-                  .checked=${this.boardIsComponent}
-                />
-                <label for="is-component"
-                  >Show this in the Board Server Components list?</label
-                >
-              </div>
+                    <label class="component" for="is-component"
+                      >Component</label
+                    >
+                    <div class="additional-items">
+                      <input
+                        id="is-component"
+                        name="component"
+                        type="checkbox"
+                        .value="on"
+                        .checked=${this.boardIsComponent}
+                      />
+                      <label for="is-component"
+                        >Show this in the Board Server Components list?</label
+                      >
+                    </div>
 
-              <label for="is-tool">Tool</label>
-              <div class="additional-items">
-                <input
-                  id="is-tool"
-                  name="tool"
-                  type="checkbox"
-                  .value="on"
-                  .checked=${this.boardIsComponent}
-                />
-                <label for="is-tool"
-                  >Show this as a tool for Specialists?</label
-                >
-              </div>
+                    <label for="is-tool">Tool</label>
+                    <div class="additional-items">
+                      <input
+                        id="is-tool"
+                        name="tool"
+                        type="checkbox"
+                        .value="on"
+                        .checked=${this.boardIsComponent}
+                      />
+                      <label for="is-tool"
+                        >Show this as a tool for Specialists?</label
+                      >
+                    </div>`
+                : nothing}
             </form>
           </div>
         </div>
