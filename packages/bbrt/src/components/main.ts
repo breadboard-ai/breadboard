@@ -99,6 +99,10 @@ export class BBRTMain extends SignalWatcher(LitElement) {
       display: flex;
       padding: 24px;
       border-top: 1px solid #ccc;
+      align-items: flex-start;
+    }
+    bbrt-driver-selector {
+      margin-top: 8px;
     }
     bbrt-prompt {
       flex-grow: 1;
