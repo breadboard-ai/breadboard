@@ -7,6 +7,7 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { createRef, ref } from "lit/directives/ref.js";
 import type { Conversation } from "../llm/conversation.js";
 
 @customElement("bbrt-prompt")
@@ -14,50 +15,108 @@ export class BBRTPrompt extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor conversation: Conversation | undefined = undefined;
 
+  #measure = createRef();
+
   static override styles = css`
     :host {
+      --bbrt-prompt-padding: 0.6em;
+      --bbrt-prompt-line-height: 1.3em;
+      --bbrt-prompt-max-lines: 10;
+      font-size: 16px;
+      font-weight: 400;
+      font-family: Helvetica, sans-serif;
+    }
+    #container {
       display: flex;
       justify-content: center;
       align-items: center;
+      position: relative;
     }
-    input {
-      background: #f0f4f9;
-      border: none;
-      border-radius: 14px;
-      padding: 0 14px;
-      height: 40px;
+    textarea,
+    #measure {
+      line-height: var(--bbrt-prompt-line-height);
+      font-size: inherit;
+      font-weight: inherit;
+      font-family: inherit;
+      word-break: break-all;
+      white-space: pre-wrap;
+    }
+    textarea {
       flex: 1;
-      font-family: Helvetica, sans-serif;
-      font-size: 16px;
-      font-weight: 400;
+      background: #f0f4f9;
+      border-radius: 14px;
+      padding: var(--bbrt-prompt-padding);
+      height: min(
+        var(--bbrt-prompt-max-lines) * var(--bbrt-prompt-line-height),
+        var(--num-lines, 1) * var(--bbrt-prompt-line-height)
+      );
+      border: none;
+      resize: none;
+    }
+    #measure {
+      visibility: hidden;
+      margin: var(--bbrt-prompt-padding);
+      color: magenta;
+      pointer-events: none;
+      position: absolute;
+      user-select: none;
+      top: 0;
+      left: 0;
+    }
+    #measure::after {
+      /* Unlike our <textarea>, our measurement <div> won't claim height for
+         trailing newlines. We can work around this by appending a zero-width
+         space. */
+      content: "\u200B";
     }
   `;
-
   override render() {
     if (this.conversation === undefined) {
       return html`Waiting for conversation...`;
     }
-    return html`<input
-      type="text"
-      placeholder="Ask me about Breadboard"
-      @keydown=${this.#onKeydown}
-    />`;
+    return html`
+      <div id="container">
+        <textarea
+          placeholder="Ask me about Breadboard"
+          @keydown=${this.#onKeydown}
+          @input=${this.#onInput}
+        ></textarea>
+        <div id="measure" ${ref(this.#measure)}></div>
+      </div>
+    `;
   }
 
-  #onKeydown(event: KeyboardEvent & { target: HTMLInputElement }) {
+  #onKeydown(event: KeyboardEvent & { target: HTMLTextAreaElement }) {
     if (
-      !(
-        event.key === "Enter" &&
-        !event.shiftKey &&
-        this.conversation?.status === "ready" &&
-        event.target.value
-      )
+      event.key === "Enter" &&
+      !event.shiftKey &&
+      this.conversation?.status === "ready" &&
+      event.target.value
     ) {
+      const textarea = event.target;
+      void this.conversation.send(textarea.value);
+      textarea.value = "";
+    }
+  }
+
+  #onInput(event: InputEvent & { target: HTMLTextAreaElement }) {
+    // The "measure" <div> is used to measure the actual rendered height of the
+    // text. We can't measure the <textarea> directly, because the case where
+    // there is 1 line is indistinguishable from 2 lines.
+    const measure = this.#measure.value;
+    if (!measure) {
       return;
     }
-    const input = event.target;
-    void this.conversation.send(input.value);
-    input.value = "";
+    const textarea = event.target;
+    measure.textContent = textarea.value;
+    // Instead of directly matching the height, round to the nearest number of
+    // lines, and then multiply by line height. This ensures our height is
+    // always a multiple of line height, and accounts for tiny rendering
+    // differences between the <div> and <textarea> (there seemed to be 1px
+    // differences sometimes).
+    const lineHeight = parseFloat(getComputedStyle(measure).lineHeight);
+    const numLines = Math.round(measure.scrollHeight / lineHeight);
+    textarea.style.setProperty("--num-lines", `${numLines}`);
   }
 }
 

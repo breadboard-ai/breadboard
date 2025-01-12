@@ -59,20 +59,15 @@ export class BBRTArtifactDisplay extends SignalWatcher(LitElement) {
       );
     }
     if (blob.type === "text/markdown") {
-      return until(
-        this.artifact.text.complete.then((text) => {
-          return html`<bbrt-markdown-viewer
-            .markdown=${text}
-          ></bbrt-markdown-viewer>`;
-        })
-      );
+      return html`
+        <bbrt-markdown-viewer .markdown=${this.artifact.text.value}>
+        </bbrt-markdown-viewer>
+      `;
     }
     if (blob.type.startsWith("text/") || blob.type === "application/json") {
-      return until(
-        this.artifact.text.complete.then((text) => {
-          return html`<bbrt-text-viewer .text=${text}></bbrt-text-viewer>`;
-        })
-      );
+      return html`
+        <bbrt-text-viewer .text=${this.artifact.text.value}></bbrt-text-viewer>
+      `;
     }
     return html`<div>Unknown artifact type: ${blob.type}</div>`;
   }
