@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor, GraphIdentifier } from "@breadboard-ai/types";
+import {
+  GraphDescriptor,
+  GraphIdentifier,
+  KitDescriptor,
+} from "@breadboard-ai/types";
 import { Graph as GraphEditor } from "../editor/graph.js";
 import {
   EditableGraph,
@@ -104,10 +108,28 @@ class GraphStore
           help: descriptor.metadata?.help,
           id: mainGraphId,
         });
-        return {
-          mainGraph: mutable.legacyKitMetadata || mainGraphMetadata,
-          ...mainGraphMetadata,
-        };
+        const exports: GraphStoreEntry[] = [];
+        if (descriptor.exports) {
+          for (const e of descriptor.exports) {
+            exports.push({
+              title: e,
+              url: `${descriptor.url}${e}`,
+              icon: descriptor.metadata?.icon,
+              tags: descriptor.metadata?.tags,
+              help: descriptor.metadata?.help,
+              mainGraph: mainGraphMetadata,
+            });
+          }
+        } else {
+          exports.push({
+            mainGraph:
+              (mutable.legacyKitMetadata as KitDescriptor & {
+                id: MainGraphIdentifier;
+              }) || mainGraphMetadata,
+            ...mainGraphMetadata,
+          });
+        }
+        return exports;
       })
       .filter(Boolean) as GraphStoreEntry[];
     return [...this.#legacyKits, ...graphs];
