@@ -99,18 +99,44 @@ class GraphBasedNodeHandler implements NodeHandlerObject {
   }
 
   get metadata() {
-    return toNodeHandlerMetadata(this.#descriptor);
+    return toNodeHandlerMetadata(this.#graph, this.#type);
   }
 }
 
-function toNodeHandlerMetadata(graph: GraphDescriptor): NodeHandlerMetadata {
-  return filterEmptyValues({
-    title: graph.title,
-    description: graph.description,
-    url: graph.url,
-    icon: graph.metadata?.icon,
-    help: graph.metadata?.help,
-  });
+function toNodeHandlerMetadata(
+  graphToRun: GraphToRun,
+  url: NodeTypeIdentifier
+): NodeHandlerMetadata | undefined {
+  const graph = graphToRun.graph;
+  if (graphToRun.moduleId) {
+    const module = graph.modules?.[graphToRun.moduleId];
+    if (!module) return undefined;
+    const {
+      title = graphToRun.moduleId,
+      description,
+      icon,
+      help,
+    } = module.metadata || {};
+    return filterEmptyValues({ title, description, url, icon, help });
+  } else if (graphToRun.subGraphId) {
+    const descriptor = graph.graphs?.[graphToRun.subGraphId];
+    if (!descriptor) return undefined;
+    return filterEmptyValues({
+      title: descriptor.title,
+      description: descriptor.description,
+      url,
+      icon: descriptor.metadata?.icon,
+      help: descriptor.metadata?.help,
+    });
+  } else {
+    return filterEmptyValues({
+      title: graph.title,
+      description: graph.description,
+      url: graph.url,
+      icon: graph.metadata?.icon,
+      help: graph.metadata?.help,
+    });
+  }
 }
 
 /**
