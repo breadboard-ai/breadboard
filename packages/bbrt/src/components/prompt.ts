@@ -87,15 +87,15 @@ export class BBRTPrompt extends SignalWatcher(LitElement) {
   }
 
   #onKeydown(event: KeyboardEvent & { target: HTMLTextAreaElement }) {
-    if (
-      event.key === "Enter" &&
-      !event.shiftKey &&
-      this.conversation?.status === "ready" &&
-      event.target.value
-    ) {
-      const textarea = event.target;
-      void this.conversation.send(textarea.value);
-      textarea.value = "";
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (this.conversation?.status === "ready" && event.target.value) {
+        const textarea = event.target;
+        void this.conversation.send(textarea.value);
+        textarea.value = "";
+        textarea.style.setProperty("--num-lines", "1");
+      }
     }
   }
 
