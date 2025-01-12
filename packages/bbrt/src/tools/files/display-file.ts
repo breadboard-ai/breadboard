@@ -4,20 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import "../components/activate-modal.js";
-import type { EmptyObject } from "../util/empty-object.js";
-import type { Result } from "../util/result.js";
-import type { BBRTTool, BBRTToolAPI, BBRTToolMetadata } from "./tool-types.js";
+import type { EmptyObject } from "../../util/empty-object.js";
+import type { Result } from "../../util/result.js";
+import type { BBRTTool, BBRTToolAPI, BBRTToolMetadata } from "../tool-types.js";
 
 interface Inputs {
-  artifactId: string;
+  path: string;
 }
 
 type Outputs = EmptyObject;
 
-type Callback = (artifactId: string) => Result<void>;
+type Callback = (path: string) => Result<void>;
 
-export class DisplayArtifact implements BBRTTool<Inputs, Outputs> {
+export class DisplayFile implements BBRTTool<Inputs, Outputs> {
   #callback: Callback;
 
   constructor(callback: Callback) {
@@ -25,29 +24,32 @@ export class DisplayArtifact implements BBRTTool<Inputs, Outputs> {
   }
 
   readonly metadata: BBRTToolMetadata = {
-    id: "display_artifact",
-    title: "Display Artifact",
+    id: "display_file",
+    title: "Display File",
     description:
-      "Display a Breadboard artifact to the user in a prominent way.",
+      "Display a file to the user in a prominent manner so that they can see " +
+      "and interact with it.",
     icon: "/bbrt/images/tool.svg",
   };
 
   async api(): Promise<Result<BBRTToolAPI>> {
     return {
-      ok: true as const,
+      ok: true,
       value: {
         inputSchema: {
           type: "object",
           properties: {
-            artifactId: {
+            path: {
               type: "string",
-              description: "The ID of the artifact to display.",
+              description: "The path of the file to display.",
             },
           },
+          required: [],
         },
         outputSchema: {
           type: "object",
           properties: {},
+          required: [],
         },
       } satisfies BBRTToolAPI,
     };
@@ -57,8 +59,8 @@ export class DisplayArtifact implements BBRTTool<Inputs, Outputs> {
     return { result: this.#execute(args) };
   }
 
-  async #execute({ artifactId }: Inputs): Promise<Result<{ data: Outputs }>> {
-    const result = this.#callback(artifactId);
+  async #execute({ path }: Inputs): Promise<Result<{ data: Outputs }>> {
+    const result = this.#callback(path);
     if (!result.ok) {
       return result;
     }

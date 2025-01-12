@@ -13,13 +13,12 @@ import {
 import type { GraphDescriptor } from "@google-labs/breadboard";
 import type { JSONSchema7 } from "json-schema";
 import type { ArtifactStore } from "../artifacts/artifact-store.js";
-import "../components/activate-modal.js";
 import type { EmptyObject } from "../util/empty-object.js";
 import type { Result } from "../util/result.js";
 import type { BBRTTool, BBRTToolAPI, BBRTToolMetadata } from "./tool-types.js";
 
 const inputs = object({
-  board: object({ id: "string" }),
+  board: object({ path: "string" }),
   node: object({
     id: "string",
     title: "string",
@@ -65,7 +64,7 @@ export class AddNode implements BBRTTool<Inputs, Outputs> {
   }
 
   async #execute(args: Inputs): Promise<Result<{ data: Outputs }>> {
-    const entry = this.#artifacts.entry(args.board.id);
+    const entry = this.#artifacts.entry(args.board.path);
     using transaction = await entry.acquireExclusiveReadWriteLock();
     const artifact = await transaction.read();
     if (!artifact.ok) {
@@ -78,7 +77,7 @@ export class AddNode implements BBRTTool<Inputs, Outputs> {
         ok: false,
         error: {
           message:
-            `Expected Artifact ${JSON.stringify(args.board.id)} to` +
+            `Expected Artifact ${JSON.stringify(args.board.path)} to` +
             ` have type "application/vnd.breadboard.board", but got` +
             ` ${JSON.stringify(blob.type)}.`,
         },
