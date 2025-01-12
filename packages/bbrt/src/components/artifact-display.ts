@@ -11,6 +11,7 @@ import { customElement, property } from "lit/decorators.js";
 import { until } from "lit/directives/until.js";
 import type { ArtifactEntry } from "../artifacts/artifact-store.js";
 import "./board-visualizer.js";
+import "./markdown-viewer.js";
 import "./text-viewer.js";
 
 @customElement("bbrt-artifact-display")
@@ -54,6 +55,15 @@ export class BBRTArtifactDisplay extends SignalWatcher(LitElement) {
               .graph=${graph as GraphDescriptor}
             ></bbrt-board-visualizer>
           `;
+        })
+      );
+    }
+    if (blob.type === "text/markdown") {
+      return until(
+        this.artifact.text.complete.then((text) => {
+          return html`<bbrt-markdown-viewer
+            .markdown=${text}
+          ></bbrt-markdown-viewer>`;
         })
       );
     }
