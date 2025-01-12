@@ -32,7 +32,9 @@ import type { ReactiveSessionState } from "../state/session.js";
 import { ActivateTool } from "../tools/activate-tool.js";
 import { AddNode } from "../tools/add-node.js";
 import { CreateBoard } from "../tools/create-board.js";
-import { DisplayArtifact } from "../tools/display-artifact.js";
+import { DisplayFile } from "../tools/files/display-file.js";
+import { ReadFile } from "../tools/files/read-file.js";
+import { WriteFile } from "../tools/files/write-file.js";
 import { BoardLister } from "../tools/list-tools.js";
 import { type BBRTTool } from "../tools/tool-types.js";
 import { connectedEffect } from "../util/connected-effect.js";
@@ -121,6 +123,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
 
     const breadboardToolsPromise = this.#loadBreadboardTools();
     const standardTools: BBRTTool[] = [
+      // Tool info
       new BoardLister(breadboardToolsPromise),
       new ActivateTool(
         breadboardToolsPromise.then(
@@ -128,15 +131,21 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         ),
         () => this.#sessionState
       ),
-      new CreateBoard(this.#artifacts),
-      new AddNode(this.#artifacts),
-      new DisplayArtifact((artifactId) => {
+
+      // Files
+      new ReadFile(this.#artifacts),
+      new WriteFile(this.#artifacts),
+      new DisplayFile((path) => {
         if (!this.#sessionState) {
           return { ok: false, error: "No active session" };
         }
-        this.#sessionState.activeArtifactId = artifactId;
+        this.#sessionState.activeArtifactId = path;
         return { ok: true, value: undefined };
       }),
+
+      // BGL
+      new CreateBoard(this.#artifacts),
+      new AddNode(this.#artifacts),
     ];
     this.#toolsPromise = breadboardToolsPromise.then(
       (breadboardTools) =>

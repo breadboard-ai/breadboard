@@ -7,7 +7,6 @@
 import type { GraphDescriptor } from "@google-labs/breadboard";
 import type { ArtifactHandle } from "../artifacts/artifact-interface.js";
 import type { ArtifactStore } from "../artifacts/artifact-store.js";
-import "../components/activate-modal.js";
 import type { Result } from "../util/result.js";
 import type { BBRTTool, BBRTToolAPI, BBRTToolMetadata } from "./tool-types.js";
 
