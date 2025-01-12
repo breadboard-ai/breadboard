@@ -78,7 +78,7 @@ export class CreateBoard implements BBRTTool<Inputs, Outputs> {
       edges: [],
     };
 
-    const artifactId = crypto.randomUUID();
+    const artifactId = `/boards/${crypto.randomUUID()}.bgl`;
     const entry = this.#artifacts.entry(artifactId);
     using transaction = await entry.acquireExclusiveReadWriteLock();
 
