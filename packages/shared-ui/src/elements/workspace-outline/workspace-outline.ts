@@ -1342,6 +1342,13 @@ export class WorkspaceOutline
                           value: id,
                         });
                       }
+                    } else {
+                      actions.push({
+                        title: "Edit Module Information",
+                        name: "edit-module-details",
+                        icon: "edit-board-details",
+                        value: id,
+                      });
                     }
 
                     actions.push(

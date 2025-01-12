@@ -111,13 +111,10 @@ class GraphStore
         const exports: GraphStoreEntry[] = [];
         if (descriptor.exports) {
           for (const e of descriptor.exports) {
+            const metadata = entryFromExport(descriptor, e, mainGraphId);
             exports.push({
-              title: e,
-              url: `${descriptor.url}${e}`,
-              icon: descriptor.metadata?.icon,
-              tags: descriptor.metadata?.tags,
-              help: descriptor.metadata?.help,
               mainGraph: mainGraphMetadata,
+              ...metadata,
             });
           }
         } else {
@@ -436,6 +433,44 @@ function emptyGraph(): GraphDescriptor {
     edges: [],
     nodes: [],
   };
+}
+
+const MODULE_EXPORT_PREFIX = "#module:";
+
+function entryFromExport(
+  graph: GraphDescriptor,
+  id: string,
+  mainGraphId: MainGraphIdentifier
+): NodeHandlerMetadata | null {
+  const url = `${graph.url}${id}`;
+  if (id.startsWith(MODULE_EXPORT_PREFIX)) {
+    const moduleId = id.slice(MODULE_EXPORT_PREFIX.length);
+    const module = graph.modules?.[moduleId];
+    if (!module) return null;
+    const { title, description, icon, help } = module.metadata || {};
+    return filterEmptyValues({
+      title,
+      description,
+      icon,
+      url,
+      tags: ["component"],
+      help,
+      id: mainGraphId,
+    });
+  } else {
+    const graphId = id.slice(1);
+    const descriptor = graphId ? graph.graphs?.[graphId] : graph;
+    if (!descriptor) return null;
+    return filterEmptyValues({
+      title: descriptor.title,
+      description: descriptor.description,
+      icon: descriptor.metadata?.icon,
+      url: descriptor.url,
+      tags: ["component"],
+      help: descriptor.metadata?.help,
+      id: mainGraphId,
+    });
+  }
 }
 
 /**
