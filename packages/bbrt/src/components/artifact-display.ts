@@ -11,6 +11,7 @@ import { customElement, property } from "lit/decorators.js";
 import { until } from "lit/directives/until.js";
 import type { ArtifactEntry } from "../artifacts/artifact-store.js";
 import "./board-visualizer.js";
+import "./text-viewer.js";
 
 @customElement("bbrt-artifact-display")
 export class BBRTArtifactDisplay extends SignalWatcher(LitElement) {
@@ -23,6 +24,10 @@ export class BBRTArtifactDisplay extends SignalWatcher(LitElement) {
     }
     :host > * {
       flex-grow: 1;
+    }
+    .text {
+      padding: 24px;
+      margin-top: 0;
     }
   `;
 
@@ -49,6 +54,13 @@ export class BBRTArtifactDisplay extends SignalWatcher(LitElement) {
               .graph=${graph as GraphDescriptor}
             ></bbrt-board-visualizer>
           `;
+        })
+      );
+    }
+    if (blob.type.startsWith("text/") || blob.type === "application/json") {
+      return until(
+        this.artifact.text.complete.then((text) => {
+          return html`<bbrt-text-viewer .text=${text}></bbrt-text-viewer>`;
         })
       );
     }
