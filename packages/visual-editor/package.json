@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/visual-editor",
-  "version": "1.24.3",
+  "version": "1.24.4",
   "description": "The Visual Editor for Breadboard",
   "main": "./build/index.js",
   "exports": {
