@@ -777,9 +777,15 @@ export class WorkspaceOutline
       module: InspectableModule,
       exported: boolean
     ): Outline => {
+      let title = module.metadata().title;
+      if (!title || title === id) {
+        title = id;
+      } else {
+        title = `${title} (${id})`;
+      }
       return {
         type: "imperative",
-        title: module.metadata().title ?? id,
+        title,
         items: {
           nodes: [],
           ports: new Map(),
