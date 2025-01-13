@@ -213,7 +213,7 @@ export class OverflowMenu extends LitElement {
     }
 
     button.unchecked {
-      background-image: var(--bb-icon-check-inverted);
+      background-image: var(--bb-icon-check);
     }
 
     button.error {

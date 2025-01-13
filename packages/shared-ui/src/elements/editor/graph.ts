@@ -56,6 +56,7 @@ import { isConfigurableBehavior } from "../../utils/behaviors.js";
 const highlightedNodeColor = getGlobalColor("--bb-ui-600");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
 const nodeBorderColor = getGlobalColor("--bb-neutral-500");
+const subGraphDefaultBackgroundColor = getGlobalColor("--bb-neutral-0");
 const subGraphDefaultBorderColor = getGlobalColor("--bb-neutral-400");
 const subGraphDefaultLabelColor = getGlobalColor("--bb-neutral-600");
 
@@ -101,6 +102,7 @@ export class Graph extends PIXI.Container {
   #graphOutlineMarker = new PIXI.Graphics();
   #graphOutline = new PIXI.Graphics();
   #graphOutlinePadding = 28;
+  #graphOutlineBackgroundColor = subGraphDefaultBackgroundColor;
   #graphBorderColor = subGraphDefaultBorderColor;
   #graphLabelColor = subGraphDefaultLabelColor;
   #graphOutlineVisible = true;
@@ -1742,7 +1744,10 @@ export class Graph extends PIXI.Container {
         8 + this.#graphOutlinePadding
       );
       this.#graphOutline.closePath();
-      this.#graphOutline.fill({ color: 0xffffff, alpha: 0.2 });
+      this.#graphOutline.fill({
+        color: this.#graphOutlineBackgroundColor,
+        alpha: 0.2,
+      });
       this.#graphOutline.stroke();
     }
 
@@ -1756,7 +1761,9 @@ export class Graph extends PIXI.Container {
       this.#graphOutlineMarker.beginPath();
       this.#graphOutlineMarker.roundRect(x, y, w, h, 50);
       this.#graphOutlineMarker.closePath();
-      this.#graphOutlineMarker.fill({ color: 0xffffff });
+      this.#graphOutlineMarker.fill({
+        color: this.#graphOutlineBackgroundColor,
+      });
       this.#graphOutlineMarker.stroke({ color: this.#graphLabelColor });
 
       this.#graphOutlineConnector.beginPath();

@@ -138,7 +138,7 @@ export class FirstRunOverlay extends LitElement {
     }
 
     input[type="submit"] {
-      background: var(--bb-continue-color);
+      background: var(--bb-ui-500);
       background-image: var(--bb-icon-resume-ui);
       background-size: 16px 16px;
       background-position: 8px 4px;

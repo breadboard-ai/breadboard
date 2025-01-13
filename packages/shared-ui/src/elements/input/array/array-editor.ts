@@ -127,7 +127,7 @@ export class ArrayEditor extends LitElement {
     #unset-all-items,
     #create {
       font-size: var(--bb-label-small);
-      background: var(--bb-continue-color);
+      background: var(--bb-ui-500);
       color: #246db5;
       border-radius: 20px;
       border: none;
