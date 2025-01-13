@@ -74,7 +74,7 @@ export class BBRTArtifactDisplay extends SignalWatcher(LitElement) {
 }
 
 declare global {
-  interface BBRTArtifactDisplay {
+  interface HTMLElementTagNameMap {
     "bbrt-artifact-display": BBRTArtifactDisplay;
   }
 }
