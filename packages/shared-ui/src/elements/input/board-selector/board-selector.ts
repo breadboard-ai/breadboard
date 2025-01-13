@@ -69,9 +69,9 @@ export class BoardSelector extends LitElement {
       font-size: var(--bb-body-x-small);
       line-height: var(--bb-body-line-height-x-small);
       border-radius: var(--bb-grid-size);
-      background: rgb(255, 255, 255);
+      background: var(--bb-neutral-900);
       padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
-      border: 1px solid rgb(209, 209, 209);
+      border: 1px solid var(--bb-neutral-200);
       width: 100%;
     }
 
@@ -86,9 +86,9 @@ export class BoardSelector extends LitElement {
       field-sizing: content;
       max-height: 300px;
       border-radius: var(--bb-grid-size);
-      background: rgb(255, 255, 255);
+      background: var(--bb-neutral-0);
       padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
-      border: 1px solid rgb(209, 209, 209);
+      border: 1px solid var(--bb-neutral-200);
       margin-top: var(--bb-grid-size);
     }
   `;

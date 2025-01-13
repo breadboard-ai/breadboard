@@ -93,7 +93,7 @@ export class CapabilitiesSelector extends LitElement {
       width: 100%;
       border-radius: 12px;
       position: relative;
-      background: #fff;
+      background: var(--bb-neutral-0);
       cursor: grab;
       display: grid;
       grid-template-columns: 28px minmax(0, auto);

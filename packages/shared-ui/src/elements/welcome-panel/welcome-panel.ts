@@ -62,7 +62,7 @@ export class WelcomePanel extends LitElement {
       left: 50%;
       width: min(80%, 650px);
       transform: translate(-50%, -50%);
-      background: #fff;
+      background: var(--bb-neutral-0);
       border-radius: var(--bb-grid-size-2);
       border: 1px solid var(--bb-neutral-300);
       user-select: none;

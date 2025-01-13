@@ -83,7 +83,7 @@ export class Navigation extends LitElement {
       transform: translateX(-100%);
       will-change: transform;
       width: calc(100% - 10px);
-      background: #fff;
+      background: var(--bb-neutral-0);
       border-right: 1px solid var(--bb-neutral-300);
       pointer-events: auto;
       height: 100%;
@@ -338,7 +338,7 @@ export class Navigation extends LitElement {
       box-shadow:
         0px 4px 8px 3px rgba(0, 0, 0, 0.05),
         0px 1px 3px rgba(0, 0, 0, 0.1);
-      background: #ffffff;
+      background: var(--bb-neutral-0);
       border: 1px solid var(--bb-neutral-300);
       border-radius: var(--bb-grid-size-2);
       overflow: auto;

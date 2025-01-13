@@ -127,7 +127,7 @@ export class SchemaEditor extends LitElement {
     .schema-item select {
       border-radius: var(--bb-grid-size);
       border: 1px solid var(--bb-neutral-300);
-      background: #fff;
+      background: var(--bb-neutral-0);
       margin: 0;
       padding: var(--bb-grid-size) var(--bb-grid-size-2);
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
@@ -138,13 +138,13 @@ export class SchemaEditor extends LitElement {
       -webkit-appearance: none;
       -moz-appearance: none;
       appearance: none;
-      background: #fff var(--bb-icon-expand) calc(100% - 5px) 4px / 16px 16px
-        no-repeat;
+      background: var(--bb-neutral-0) var(--bb-icon-expand) calc(100% - 5px)
+        4px / 16px 16px no-repeat;
     }
 
     .schema-item select[multiple] {
       resize: vertical;
-      background: #fff;
+      background: var(--bb-neutral-0);
     }
 
     .schema-item select option {

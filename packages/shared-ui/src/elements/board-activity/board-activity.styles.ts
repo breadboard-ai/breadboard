@@ -419,7 +419,7 @@ export const styles = css`
   }
 
   .continue-button {
-    background: var(--bb-ui-100) var(--bb-icon-resume-blue) 8px 4px / 16px 16px
+    background: var(--bb-ui-100) var(--bb-icon-resume-ui) 8px 4px / 16px 16px
       no-repeat;
     color: var(--bb-ui-700);
     border-radius: var(--bb-grid-size-5);
@@ -546,8 +546,8 @@ export const styles = css`
 
   #debug-continue {
     color: var(--bb-ui-700);
-    background: var(--bb-ui-100) var(--bb-icon-resume-blue) 8px center / 16px
-      16px no-repeat;
+    background: var(--bb-ui-100) var(--bb-icon-resume-ui) 8px center / 16px 16px
+      no-repeat;
   }
 
   #debug-rerun:focus,

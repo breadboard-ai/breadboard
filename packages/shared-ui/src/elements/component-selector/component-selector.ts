@@ -68,11 +68,12 @@ export class ComponentSelector extends LitElement {
     :host {
       display: block;
       height: 100%;
+      color: var(--bb-neutral-900);
     }
 
     #content {
       width: 100%;
-      height: calc(100% - var(--bb-grid-size-12));
+      height: calc(100% - 100px);
       overflow-y: auto;
     }
 
@@ -95,6 +96,8 @@ export class ComponentSelector extends LitElement {
         var(--bb-font-family);
       border: 1px solid var(--bb-neutral-300);
       border-radius: var(--bb-grid-size);
+      background: var(--bb-neutral-0);
+      color: var(--bb-neutral-900);
     }
 
     #controls {
@@ -146,6 +149,7 @@ export class ComponentSelector extends LitElement {
       height: 28px;
       background: var(--bb-neutral-100) var(--bb-icon-unfold-more)
         calc(100% - 4px) center / 20px 20px no-repeat;
+      color: var(--bb-neutral-900);
       list-style: none;
       border-radius: 4px;
       display: flex;
@@ -199,7 +203,7 @@ export class ComponentSelector extends LitElement {
       width: 100%;
       border-radius: 12px;
       position: relative;
-      background: #fff;
+      background: var(--bb-neutral-0);
       cursor: grab;
       display: grid;
       grid-template-columns: 28px minmax(0, auto);

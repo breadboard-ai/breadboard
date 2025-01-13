@@ -275,7 +275,7 @@ export class LLMInput extends LitElement {
       border: 1px solid var(--bb-neutral-300);
       border-radius: 0 0 var(--bb-grid-size) var(--bb-grid-size);
       padding: var(--bb-grid-size-3) 0 var(--bb-grid-size) 0;
-      background: #fff;
+      background: var(--bb-neutral-0);
     }
 
     :host([clamped="true"]) #container {
@@ -309,7 +309,7 @@ export class LLMInput extends LitElement {
       padding: var(--bb-grid-size) var(--bb-grid-size-2);
       border-radius: var(--bb-grid-size-8);
       border: 1px solid var(--bb-neutral-300);
-      background: #fff;
+      background: var(--bb-neutral-0);
     }
 
     .part:hover .part-controls {
@@ -331,21 +331,23 @@ export class LLMInput extends LitElement {
     }
 
     .part-controls .add-part-after {
-      background: #fff var(--bb-icon-add) center center / 16px 16px no-repeat;
+      background: var(--bb-neutral-0) var(--bb-icon-add) center center / 16px
+        16px no-repeat;
     }
 
     .part-controls .move-part-up {
-      background: #fff var(--bb-icon-move-up) center center / 16px 16px
-        no-repeat;
+      background: var(--bb-neutral-0) var(--bb-icon-move-up) center center /
+        16px 16px no-repeat;
     }
 
     .part-controls .move-part-down {
-      background: #fff var(--bb-icon-move-down) center center / 16px 16px
-        no-repeat;
+      background: var(--bb-neutral-0) var(--bb-icon-move-down) center center /
+        16px 16px no-repeat;
     }
 
     .part-controls .delete-part {
-      background: #fff var(--bb-icon-delete) center center / 16px 16px no-repeat;
+      background: var(--bb-neutral-0) var(--bb-icon-delete) center center / 16px
+        16px no-repeat;
       margin-right: 0;
     }
 
@@ -517,7 +519,7 @@ export class LLMInput extends LitElement {
     }
 
     .confirm {
-      background: var(--bb-continue-color) var(--bb-icon-confirm-blue) 8px 4px /
+      background: var(--bb-continue-color) var(--bb-icon-confirm-ui) 8px 4px /
         16px 16px no-repeat;
       color: var(--bb-ui-700);
       border-radius: var(--bb-grid-size-5);

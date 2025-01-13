@@ -42,6 +42,7 @@ const nodeTextColor = getGlobalColor("--bb-neutral-900");
 const segmentDividerColor = getGlobalColor("--bb-neutral-300");
 const portsDividerColor = getGlobalColor("--bb-neutral-100");
 
+const nodeBackgroundColor = getGlobalColor("--bb-neutral-0");
 const selectedNodeColor = getGlobalColor("--bb-ui-600");
 const highlightForAdHocNodeColor = getGlobalColor("--bb-boards-500");
 const highlightForBoardPortNodeColor = getGlobalColor("--bb-joiner-500");
@@ -76,7 +77,7 @@ export class GraphNode extends PIXI.Container {
   #highlightForAdHocColor = highlightForAdHocNodeColor;
   #highlightForBoardPortColor = highlightForBoardPortNodeColor;
   #textSize = 12;
-  #backgroundColor = 0x333333;
+  #backgroundColor = nodeBackgroundColor;
   #padding = 12;
   #menuPadding = 8;
   #iconPadding = 8;
@@ -152,7 +153,6 @@ export class GraphNode extends PIXI.Container {
     this.type = type;
     this.#typeTitle = typeTitle;
 
-    this.backgroundColor = 0xffffff;
     this.portTextColor = nodeTextColor;
 
     this.eventMode = "static";
@@ -650,15 +650,6 @@ export class GraphNode extends PIXI.Container {
 
   get textSize() {
     return this.#textSize;
-  }
-
-  set backgroundColor(backgroundColor: number) {
-    this.#backgroundColor = backgroundColor;
-    this.#isDirty = true;
-  }
-
-  get backgroundColor() {
-    return this.#backgroundColor;
   }
 
   set padding(padding: number) {

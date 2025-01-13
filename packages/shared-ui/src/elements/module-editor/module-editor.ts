@@ -186,16 +186,15 @@ export class ModuleEditor extends LitElement {
       width: 100%;
       height: 100%;
       overflow-y: scroll;
-      background: white;
+      background: var(--bb-neutral-0);
       position: relative;
     }
 
     #code-container-inner::before {
       content: "";
-      background-color: rgb(245, 245, 245);
-      color: rgb(108, 108, 108);
-      border-right: 1px solid rgb(221, 221, 221);
-      width: 20px;
+      background-color: var(--bb-neutral-50);
+      color: var(--bb-neutral-700);
+      width: 22px;
       height: 100%;
       position: absolute;
       top: 0;

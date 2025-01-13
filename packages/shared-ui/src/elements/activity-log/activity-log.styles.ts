@@ -22,7 +22,7 @@ export const styles = css`
       var(--bb-font-family);
     margin: 0 0 var(--bb-grid-size) 0;
     padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
-    background: white;
+    background: var(--bb-neutral-0);
     z-index: 2;
     display: flex;
   }
@@ -133,7 +133,7 @@ export const styles = css`
     height: calc(var(--bb-grid-size) * 7);
     left: calc(var(--padding-x) + 3px);
     top: calc(var(--padding-y) - var(--bb-grid-size));
-    background: #fff var(--node-icon) center center no-repeat;
+    background: var(--bb-neutral-0) var(--node-icon) center center no-repeat;
     background-size: 20px 20px;
     border: 1px solid #d9d9d9;
   }
@@ -439,8 +439,8 @@ export const styles = css`
   }
 
   .continue-button {
-    background: var(--bb-continue-color) var(--bb-icon-resume-blue) 8px 4px /
-      16px 16px no-repeat;
+    background: var(--bb-continue-color) var(--bb-icon-resume-ui) 8px 4px / 16px
+      16px no-repeat;
     color: var(--bb-ui-700);
     border-radius: var(--bb-grid-size-5);
     border: none;

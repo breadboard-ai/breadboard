@@ -161,7 +161,7 @@ export class NodeMetaDetails extends LitElement {
       display: flex;
       align-items: center;
       border: none;
-      background: #fff;
+      background: var(--bb-neutral-0);
       font: 400 var(--bb-title-medium) / var(--bb-title-line-height-medium)
         var(--bb-font-family);
       padding: 0;
@@ -206,7 +206,7 @@ export class NodeMetaDetails extends LitElement {
       grid-template-columns: auto min-content;
       align-items: center;
       border: none;
-      background: #fff;
+      background: var(--bb-neutral-0);
       font: 400 var(--bb-title-medium) / var(--bb-title-line-height-medium)
         var(--bb-font-family);
       padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
@@ -217,14 +217,14 @@ export class NodeMetaDetails extends LitElement {
       content: "";
       width: 20px;
       height: 20px;
-      background: #fff var(--bb-icon-unfold-more) center center / 20px 20px
-        no-repeat;
+      background: var(--bb-neutral-0) var(--bb-icon-unfold-more) center center /
+        20px 20px no-repeat;
       justify-self: end;
     }
 
     #unfold.visible::after {
-      background: #fff var(--bb-icon-unfold-less) center center / 20px 20px
-        no-repeat;
+      background: var(--bb-neutral-0) var(--bb-icon-unfold-less) center center /
+        20px 20px no-repeat;
     }
 
     form {

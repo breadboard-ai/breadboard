@@ -24,7 +24,8 @@ export class KitSelector extends LitElement {
   static styles = css`
     :host {
       display: block;
-      padding: var(--bb-grid-size-2);
+      padding: var(--bb-grid-size-2) var(--bb-grid-size-4) var(--bb-grid-size-4)
+        var(--bb-grid-size-2);
       background: var(--bb-neutral-0);
       border-radius: var(--bb-grid-size);
       border: 1px solid var(--bb-neutral-500);

@@ -26,6 +26,7 @@ export class Overlay extends LitElement {
       left: 0;
       right: 0;
       bottom: 0;
+      color: var(--bb-neutral-900);
     }
 
     #background {
@@ -50,7 +51,7 @@ export class Overlay extends LitElement {
 
     #content {
       border-radius: var(--bb-grid-size-2);
-      background: #fff;
+      background: var(--bb-neutral-0);
 
       display: flex;
       flex-direction: column;

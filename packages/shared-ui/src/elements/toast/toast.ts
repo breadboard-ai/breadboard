@@ -35,7 +35,7 @@ export class Toast extends LitElement {
       bottom: calc(var(--bb-grid-size) * 10);
       right: calc(var(--bb-grid-size) * 10);
       display: block;
-      background: rgb(255, 255, 255);
+      background: var(--bb-neutral-0);
       border: 1px solid #ccc;
       box-shadow:
         0 2px 3px 0 rgba(0, 0, 0, 0.13),
