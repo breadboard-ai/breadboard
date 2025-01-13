@@ -48,7 +48,8 @@ export class AudioInput extends LitElement {
     }
 
     #play-audio {
-      background: #fff var(--bb-icon-sound) 6px 3px / 16px 16px no-repeat;
+      background: var(--bb-neutral-0) var(--bb-icon-sound) 6px 3px / 16px 16px
+        no-repeat;
       border-radius: 20px;
       color: var(--bb-neutral-900);
       border: 1px solid var(--bb-neutral-600);

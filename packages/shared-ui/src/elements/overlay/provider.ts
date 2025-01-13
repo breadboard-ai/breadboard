@@ -122,7 +122,7 @@ export class BoardServerOverlay extends LitElement {
 
     input[type="submit"] {
       background: var(--bb-continue-color);
-      background-image: var(--bb-icon-resume-blue);
+      background-image: var(--bb-icon-resume-ui);
       background-size: 16px 16px;
       background-position: 8px 4px;
       background-repeat: no-repeat;

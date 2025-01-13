@@ -276,7 +276,7 @@ export class GraphRenderer extends LitElement {
       box-shadow:
         0px 4px 8px 3px rgba(0, 0, 0, 0.05),
         0px 1px 3px rgba(0, 0, 0, 0.1);
-      background: #ffffff;
+      background: var(--bb-neutral-0);
       border: 1px solid var(--bb-neutral-300);
       border-radius: var(--bb-grid-size-2);
       overflow: auto;
@@ -365,8 +365,8 @@ export class GraphRenderer extends LitElement {
     }
 
     #edge-create-disambiguation-menu #confirm {
-      background: var(--bb-ui-100) var(--bb-icon-resume-blue) 8px 4px / 16px
-        16px no-repeat;
+      background: var(--bb-ui-100) var(--bb-icon-resume-ui) 8px 4px / 16px 16px
+        no-repeat;
       color: var(--bb-ui-700);
       border-radius: var(--bb-grid-size-5);
       border: none;

@@ -118,6 +118,7 @@ export class UserInput extends LitElement {
     :host {
       display: block;
       position: relative;
+      color: var(--bb-neutral-900);
     }
 
     :host([readonly="true"])::after {
@@ -168,7 +169,7 @@ export class UserInput extends LitElement {
       width: var(--bb-grid-size-2);
       height: var(--bb-grid-size-2);
       border: 1px solid var(--bb-neutral-500);
-      background: rgb(255, 255, 255);
+      background: var(--bb-neutral-0);
       margin-right: var(--bb-grid-size-2);
       border-radius: 50%;
       box-sizing: border-box;
@@ -200,7 +201,7 @@ export class UserInput extends LitElement {
       display: block;
       width: 100%;
       border-radius: var(--bb-grid-size);
-      background: rgb(255, 255, 255);
+      background: color: var(--bb-neutral-0);
       padding: var(--bb-grid-size-2);
       border: 1px solid var(--bb-neutral-300);
 

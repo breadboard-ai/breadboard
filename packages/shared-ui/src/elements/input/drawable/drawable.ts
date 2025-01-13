@@ -69,8 +69,8 @@ export class DrawableInput extends LitElement {
       top: calc(var(--bb-grid-size) * 4);
       left: calc(var(--bb-grid-size) * 4);
       padding: calc(var(--bb-grid-size) * 0.5);
-      background: rgb(255, 255, 255);
-      border: 1px solid rgb(237, 237, 237);
+      background: var(--bb-neutral-900);
+      border: 1px solid var(--bb-neutral-700);
       border-radius: calc(var(--bb-grid-size) * 2);
       cursor: auto;
       z-index: 1;

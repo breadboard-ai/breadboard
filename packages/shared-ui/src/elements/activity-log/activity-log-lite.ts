@@ -430,14 +430,14 @@ export class ActivityLogLite extends LitElement {
 
     .entry summary {
       list-style: none;
-      background: #fff var(--bb-icon-unfold-more) right center / 20px 20px
-        no-repeat;
+      background: var(--bb-neutral-0) var(--bb-icon-unfold-more) right center /
+        20px 20px no-repeat;
       cursor: pointer;
     }
 
     .entry details[open] summary {
-      background: #fff var(--bb-icon-unfold-less) right center / 20px 20px
-        no-repeat;
+      background: var(--bb-neutral-0) var(--bb-icon-unfold-less) right center /
+        20px 20px no-repeat;
     }
 
     .entry ul {
@@ -489,8 +489,8 @@ export class ActivityLogLite extends LitElement {
     }
 
     .continue-button {
-      background: var(--bb-ui-100) var(--bb-icon-resume-blue) 8px 4px / 16px
-        16px no-repeat;
+      background: var(--bb-ui-100) var(--bb-icon-resume-ui) 8px 4px / 16px 16px
+        no-repeat;
       color: var(--bb-ui-700);
       border-radius: var(--bb-grid-size-5);
       border: none;

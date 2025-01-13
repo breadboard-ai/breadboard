@@ -1067,24 +1067,28 @@ export class Editor extends LitElement implements DragConnectorReceiver {
         : nothing;
 
     const content = html`<div id="content">
-      <div id="floating-buttons">
-        <button
-          id="zoom-to-fit"
-          @click=${() => {
-            if (!this.#graphRendererRef.value) {
-              return;
-            }
+      ${this.graph
+        ? html`<div id="floating-buttons">
+            <button
+              id="zoom-to-fit"
+              @click=${() => {
+                if (!this.#graphRendererRef.value) {
+                  return;
+                }
 
-            let animate = true;
-            if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-              animate = false;
-            }
-            this.#graphRendererRef.value.zoomToFit(animate);
-          }}
-        >
-          Zoom to fit
-        </button>
-      </div>
+                let animate = true;
+                if (
+                  window.matchMedia("(prefers-reduced-motion: reduce)").matches
+                ) {
+                  animate = false;
+                }
+                this.#graphRendererRef.value.zoomToFit(animate);
+              }}
+            >
+              Zoom to fit
+            </button>
+          </div>`
+        : nothing}
       <bb-graph-renderer
         ${ref(this.#graphRendererRef)}
         .topGraphUrl=${this.graph?.raw().url ?? "no-url"}

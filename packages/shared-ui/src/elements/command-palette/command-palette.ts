@@ -3,6 +3,10 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+
+import * as StringsHelper from "../../strings/helper.js";
+const Strings = StringsHelper.forSection("CommandPalette");
+
 import { LitElement, html, css, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Command } from "../../types/types";
@@ -344,6 +348,8 @@ export class CommandPalette extends LitElement {
               </li>`;
             })}
           </menu>`
-        : html`<div class="no-options">No options available</div>`}`;
+        : html`<div class="no-options">
+            ${Strings.from("LABEL_NO_OPTIONS")}
+          </div>`}`;
   }
 }

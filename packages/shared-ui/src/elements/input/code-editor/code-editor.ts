@@ -32,6 +32,7 @@ import {
 import { bracketMatching } from "@codemirror/language";
 import { CodeChangeEvent } from "../../../events/events.js";
 import { type Extension } from "@codemirror/state";
+import { oneDark } from "@codemirror/theme-one-dark";
 
 import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
 import { CodeMirrorExtensions } from "../../../types/types.js";
@@ -39,6 +40,8 @@ import type { HoverInfo } from "@valtown/codemirror-ts";
 
 const CODE_CHANGE_EMIT_TIMEOUT = 500;
 const CODE_INDENTATION = 2;
+
+const darkTheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
 @customElement("bb-code-editor")
 export class CodeEditor extends LitElement {
@@ -119,9 +122,9 @@ export class CodeEditor extends LitElement {
     }
 
     textarea {
-      background: rgb(255, 255, 255);
+      background: var(--bb-neutral-0);
       border-radius: var(--bb-grid-size);
-      border: 1px solid rgb(209, 209, 209);
+      border: 1px solid var(--bb-neutral-100);
       box-sizing: border-box;
       display: block;
       field-sizing: content;
@@ -600,6 +603,10 @@ export class CodeEditor extends LitElement {
         editorExtensions.push(json());
         break;
       }
+    }
+
+    if (darkTheme) {
+      editorExtensions.push(oneDark);
     }
 
     this.#editor = new EditorView({

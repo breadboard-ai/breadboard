@@ -15,6 +15,7 @@ export const styles = css`
     height: 100%;
     overscroll-behavior: contain;
     overflow: auto;
+    color: var(--bb-neutral-900);
   }
 
   #controls-activity,
@@ -37,7 +38,7 @@ export const styles = css`
   #controls-activity {
     display: grid;
     grid-auto-rows: 1fr calc(var(--bb-grid-size) * 14);
-    background: #fff;
+    background: var(--bb-neutral-0);
   }
 
   #controls-activity-content {
@@ -49,8 +50,8 @@ export const styles = css`
   }
 
   #stop {
-    background: #fff var(--bb-icon-stop-circle) center center / 24px 24px
-      no-repeat;
+    background: var(--bb-neutral-0) var(--bb-icon-stop-circle) center center /
+      24px 24px no-repeat;
     height: 32px;
     width: 32px;
     font-size: 0;
@@ -76,36 +77,6 @@ export const styles = css`
     display: flex;
   }
 
-  #run-status {
-    font-size: var(--bb-text-pico);
-    margin-left: calc(var(--bb-grid-size) * 2);
-    text-transform: uppercase;
-    text-align: center;
-    background: #eee;
-    border-radius: calc(var(--bb-grid-size) * 3);
-    padding: var(--bb-grid-size);
-    font-weight: bold;
-    border: 1px solid rgb(230 230 230);
-    margin-top: -3px;
-    height: 22px;
-  }
-
-  #run-status {
-    width: 70px;
-  }
-
-  #run-status.running {
-    border: 1px solid rgb(174 206 161);
-    color: rgb(31 56 21);
-    background: rgb(223 239 216);
-  }
-
-  #run-status.paused {
-    border: 1px solid rgb(248 193 122);
-    color: rgb(192 116 19);
-    background: rgb(255, 242, 204);
-  }
-
   #value {
     padding: 0 calc(var(--bb-grid-size) * 2);
     display: flex;
@@ -125,20 +96,11 @@ export const styles = css`
     font-weight: normal;
   }
 
-  #continue {
-    background: rgb(209, 203, 255);
-    border-radius: calc(var(--bb-grid-size) * 3);
-    font-size: var(--bb-text-small);
-    font-weight: bold;
-    height: calc(var(--bb-grid-size) * 5);
-    border: none;
-  }
-
   #details {
     display: block;
     position: absolute;
     z-index: 100;
-    background: #fff;
+    background: var(--bb-neutral-0);
     padding: 10px;
     width: 90%;
     max-width: 35vw;
@@ -302,6 +264,7 @@ export const styles = css`
       margin: 0 var(--bb-grid-size-2);
       font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
         var(--bb-font-family);
+      color: var(--bb-neutral-900);
 
       &[disabled] {
         opacity: 1;
