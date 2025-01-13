@@ -5,6 +5,8 @@
  */
 
 import {
+  createGraphStore,
+  createLoader,
   type GraphDescriptor,
   type Kit,
   type NodeDescriberFunction,
@@ -23,6 +25,7 @@ import type { JsonSerializableObject } from "../util/json-serializable.js";
 import type { Result } from "../util/result.js";
 import { BreadboardToolInvocation } from "./breadboard-tool.js";
 import { makeToolSafeName } from "./make-tool-safe-name.js";
+import { standardizeBreadboardSchema } from "./standardize-breadboard-schema.js";
 
 export class BreadboardComponentTool implements BBRTTool {
   readonly #kit: Kit;
@@ -60,14 +63,40 @@ export class BreadboardComponentTool implements BBRTTool {
   }
 
   async api(): Promise<Result<BBRTToolAPI>> {
+    const graphStore = createGraphStore({
+      kits: this.#kits,
+      loader: createLoader(),
+      sandbox: {
+        runModule: () => {
+          throw new Error("TODO: runModule not implemented");
+        },
+      },
+    });
+
     if (this.#describe) {
-      return { ok: true, value: (await this.#describe()) as BBRTToolAPI };
+      const { inputSchema, outputSchema } = await this.#describe(
+        undefined,
+        undefined,
+        undefined,
+        {
+          graphStore,
+          outerGraph: { nodes: [], edges: [] },
+          wires: { incoming: {}, outgoing: {} },
+        }
+      );
+      return {
+        ok: true,
+        value: {
+          inputSchema: standardizeBreadboardSchema(inputSchema),
+          outputSchema: standardizeBreadboardSchema(outputSchema),
+        },
+      };
     }
     return {
       ok: true,
       value: {
-        inputSchema: {},
-        outputSchema: {},
+        inputSchema: { type: "object", properties: {}, required: [] },
+        outputSchema: { type: "object", properties: {}, required: [] },
       },
     };
   }
