@@ -4,6 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import GoogleDriveKit from "@breadboard-ai/google-drive-kit/google-drive.kit.json" with { type: "json" };
+import AgentKit from "@google-labs/agent-kit/agent.kit.json" assert { type: "json" };
+import {
+  asRuntimeKit,
+  type GraphDescriptor,
+  type Kit,
+} from "@google-labs/breadboard";
+import { kitFromGraphDescriptor } from "@google-labs/breadboard/kits";
+import CoreKit from "@google-labs/core-kit";
+import GeminiKit from "@google-labs/gemini-kit";
+import JSONKit from "@google-labs/json-kit";
+import TemplateKit from "@google-labs/template-kit";
 import { SignalWatcher } from "@lit-labs/signals";
 import { provide } from "@lit/context";
 import { LitElement, css, html } from "lit";
@@ -15,6 +27,7 @@ import {
   artifactStoreContext,
 } from "../artifacts/artifact-store.js";
 import { IdbArtifactReaderWriter } from "../artifacts/idb-artifact-reader-writer.js";
+import { BreadboardComponentTool } from "../breadboard/breadboard-component-tool.js";
 import { BreadboardTool } from "../breadboard/breadboard-tool.js";
 import { readBoardServersFromIndexedDB } from "../breadboard/indexed-db-servers.js";
 import type { Config } from "../config.js";
@@ -70,6 +83,15 @@ export class BBRTMain extends SignalWatcher(LitElement) {
 
   readonly #leftBar = createRef();
   readonly #rightBar = createRef();
+
+  readonly #breadboardKits: Kit[] = [
+    asRuntimeKit(CoreKit),
+    asRuntimeKit(TemplateKit),
+    asRuntimeKit(JSONKit),
+    asRuntimeKit(GeminiKit),
+    kitFromGraphDescriptor(AgentKit as GraphDescriptor)!,
+    kitFromGraphDescriptor(GoogleDriveKit as GraphDescriptor)!,
+  ];
 
   static override styles = css`
     :host {
@@ -317,6 +339,20 @@ export class BBRTMain extends SignalWatcher(LitElement) {
 
   async #loadBreadboardTools(): Promise<BBRTTool[]> {
     const tools: BBRTTool[] = [];
+    for (const kit of this.#breadboardKits) {
+      for (const [id, handler] of Object.entries(kit.handlers)) {
+        tools.push(
+          new BreadboardComponentTool(
+            kit,
+            id,
+            handler,
+            this.#secrets,
+            this.#artifacts,
+            this.#breadboardKits
+          )
+        );
+      }
+    }
     const servers = await readBoardServersFromIndexedDB();
     if (!servers.ok) {
       console.error(
@@ -338,7 +374,8 @@ export class BBRTMain extends SignalWatcher(LitElement) {
             board,
             server,
             this.#secrets,
-            this.#artifacts
+            this.#artifacts,
+            this.#breadboardKits
           );
           tools.push(tool);
         }
