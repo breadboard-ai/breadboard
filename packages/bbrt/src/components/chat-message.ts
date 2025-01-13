@@ -7,7 +7,7 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html, nothing, svg } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { ForkEvent } from "../llm/fork.js";
+import { ForkEvent, RetryEvent } from "../llm/events.js";
 import type { ReactiveTurnState } from "../state/turn.js";
 import { iconButtonStyle } from "../style/icon-button.js";
 import { connectedEffect } from "../util/connected-effect.js";
@@ -99,6 +99,7 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
         width: min-content;
         position: relative;
         margin: 4px auto 12px -10px;
+        display: flex;
       }
       :host(:hover) #actions,
       :host(:focus) #actions,
@@ -111,8 +112,13 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       }
       #actions button {
         border: none;
-        --bb-icon: var(--bb-icon-fork-down-right);
         --bb-icon-size: 20px;
+      }
+      #retryButton {
+        --bb-icon: var(--bb-icon-refresh);
+      }
+      #forkButton {
+        --bb-icon: var(--bb-icon-fork-down-right);
       }
       #actions button:not(:hover) {
         --bb-button-background: transparent;
@@ -177,16 +183,33 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
     if (!this.turn) {
       return nothing;
     }
-    return html`
-      <div id="actions">
+    const buttons = [];
+    if (this.turn.role === "user") {
+      buttons.push(html`
         <button
-          id="forkButton"
+          id="retryButton"
           class="bb-icon-button"
-          title="Fork"
-          @click=${this.#onClickForkButton}
+          title="Retry"
+          @click=${this.#onClickRetryButton}
+        ></button>
+      `);
+    }
+    if (
+      this.turn.role === "model" &&
+      this.turn.status === "done" &&
+      this.turn.partialFunctionCalls.length === 0
+    ) {
+      buttons.push(html`
+        <button
+        id="forkButton"
+        class="bb-icon-button"
+        title="Fork"
+        @click=${this.#onClickForkButton}
         ></button>
       </div>
-    `;
+      `);
+    }
+    return html`<div id="actions">${buttons}</div>`;
   }
 
   #onClickForkButton() {
@@ -194,6 +217,13 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       return;
     }
     this.dispatchEvent(new ForkEvent(this.turn));
+  }
+
+  #onClickRetryButton() {
+    if (!this.turn) {
+      return;
+    }
+    this.dispatchEvent(new RetryEvent(this.turn));
   }
 }
 

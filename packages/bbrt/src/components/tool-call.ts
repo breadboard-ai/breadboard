@@ -53,6 +53,9 @@ export class BBRTToolCallEl extends SignalWatcher(LitElement) {
     :first-child {
       margin-top: 0;
     }
+    .status {
+      margin-top: 20px;
+    }
     .json-args,
     .json-result,
     .custom-widget {
@@ -67,7 +70,7 @@ export class BBRTToolCallEl extends SignalWatcher(LitElement) {
       max-height: 200px;
     }
     .custom-widget {
-      margin: 0 20px;
+      margin: 20px 0;
       box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.1);
     }
     bbrt-error-message {
@@ -92,7 +95,7 @@ export class BBRTToolCallEl extends SignalWatcher(LitElement) {
       <div part="tool-call-content">
         <span>Calling <code>${toolCall.functionId}</code> with arguments:</span>
         <pre class="json-args">${JSON.stringify(toolCall.args, null, 2)}</pre>
-        <div>Status: ${this.#renderStatus()}</div>
+        <div class="status">Status: ${this.#renderStatus()}</div>
         ${this.#renderCustomWidget()}
         ${this.#renderJsonResult()}
         ${this.#renderError()}

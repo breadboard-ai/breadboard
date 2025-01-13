@@ -35,7 +35,7 @@ import type { BBRTDriver } from "../drivers/driver-interface.js";
 import { GeminiDriver } from "../drivers/gemini.js";
 import { OpenAiDriver } from "../drivers/openai.js";
 import { Conversation } from "../llm/conversation.js";
-import type { ForkEvent } from "../llm/fork.js";
+import type { ForkEvent, RetryEvent } from "../llm/events.js";
 import { BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION } from "../llm/system-instruction.js";
 import { IndexedDBSettingsSecrets } from "../secrets/indexed-db-secrets.js";
 import type { SecretsProvider } from "../secrets/secrets-provider.js";
@@ -44,6 +44,7 @@ import { LocalStoragePersistence } from "../state/local-storage-persistence.js";
 import type { Persistence } from "../state/persistence.js";
 import { SessionStore } from "../state/session-store.js";
 import type { ReactiveSessionState } from "../state/session.js";
+import type { ReactiveTurnState } from "../state/turn.js";
 import { ActivateTool } from "../tools/activate-tool.js";
 import { AddNode } from "../tools/add-node.js";
 import { CreateBoard } from "../tools/create-board.js";
@@ -303,6 +304,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         .appState=${this.#appState}
         .sessionStore=${this.#sessions}
         @bbrt-fork=${this.#onFork}
+        @bbrt-retry=${this.#onRetry}
       ></bbrt-chat>
 
       <div id="left-sidebar" ${ref(this.#leftBar)}>
@@ -384,27 +386,20 @@ export class BBRTMain extends SignalWatcher(LitElement) {
     return tools;
   }
 
-  #onFork(forkEvent: ForkEvent) {
+  #onRetry(event: RetryEvent) {
+    if (!this.#sessionState || !this.#appState) {
+      return;
+    }
+    this.#sessionState.rollback(this.#findEventIndexForTurn(event.turn));
+    this.#conversation?.send(event.turn.partialText);
+  }
+
+  #onFork(event: ForkEvent) {
     if (!this.#sessionState || !this.#appState) {
       return;
     }
     const sessionEvents = this.#sessionState.events;
-    let sessionEventIndex = -1;
-    // TODO(aomarks) Unnecessary O(n). Messages should instead know their event
-    // index and include it when they dispatch a ForkEvent.
-    for (let i = 0; i < sessionEvents.length; i++) {
-      const sessionEvent = sessionEvents[i]!;
-      if (
-        sessionEvent.detail.kind === "turn" &&
-        sessionEvent.detail.turn === forkEvent.turn
-      ) {
-        sessionEventIndex = i;
-        break;
-      }
-    }
-    if (sessionEventIndex === -1) {
-      return;
-    }
+    const sessionEventIndex = this.#findEventIndexForTurn(event.turn);
     const forkEvents = sessionEvents.slice(0, sessionEventIndex + 1);
     const appState = this.#appState;
     const forkBrief = appState.createSessionBrief(
@@ -418,6 +413,25 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         console.error(`Failed to fork session: ${result.error}`);
       }
     });
+  }
+
+  #findEventIndexForTurn(turn: ReactiveTurnState) {
+    if (!this.#sessionState) {
+      return -1;
+    }
+    const sessionEvents = this.#sessionState.events;
+    // TODO(aomarks) Unnecessary O(n). Messages should instead know their event
+    // index and include it when they dispatch a ForkEvent.
+    for (let i = 0; i < sessionEvents.length; i++) {
+      const sessionEvent = sessionEvents[i]!;
+      if (
+        sessionEvent.detail.kind === "turn" &&
+        sessionEvent.detail.turn === turn
+      ) {
+        return i;
+      }
+    }
+    return -1;
   }
 }
 

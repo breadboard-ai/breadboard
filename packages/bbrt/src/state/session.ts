@@ -49,6 +49,13 @@ export class ReactiveSessionState implements SessionState {
     );
   }
 
+  /**
+   * Delete all events including and after the given index.
+   */
+  rollback(index: number) {
+    this.events.splice(index);
+  }
+
   @signal
   get data(): SessionState {
     return {
