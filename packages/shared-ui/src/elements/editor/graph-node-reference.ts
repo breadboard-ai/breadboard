@@ -8,6 +8,7 @@ import * as PIXI from "pixi.js";
 import { GRAPH_OPERATIONS, GraphNodeReferenceOpts } from "./types";
 import { DBL_CLICK_DELTA, getGlobalColor } from "./utils";
 
+const referenceBackgroundColor = getGlobalColor("--bb-neutral-0");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
 const selectedNodeColor = getGlobalColor("--bb-ui-600");
 const SUB_GRAPH_LABEL_TEXT_SIZE = 12;
@@ -118,7 +119,7 @@ export class GraphNodeReference extends PIXI.Container {
     this.#background.beginPath();
     this.#background.roundRect(-w, 0, w, h, 50);
     this.#background.closePath();
-    this.#background.fill({ color: 0xffffff });
+    this.#background.fill({ color: referenceBackgroundColor });
     this.#background.stroke({
       color: this.#selected ? selectedNodeColor : this.#reference.color,
       width: this.#selected ? 2 : 1,

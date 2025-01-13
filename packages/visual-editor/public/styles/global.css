@@ -31,7 +31,7 @@ body.hide-cursor {
   --bb-grid-size-16: calc(var(--bb-grid-size) * 16);
 
   --bb-selected-color: rgb(46, 139, 232);
-  --bb-continue-color: #c0dfff;
+  --bb-ui-500: #c0dfff;
   --bb-font-family-header: "FiraCode";
   --bb-font-family-mono: "Courier New", Courier, monospace;
   --bb-font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;

@@ -439,8 +439,8 @@ export const styles = css`
   }
 
   .continue-button {
-    background: var(--bb-continue-color) var(--bb-icon-resume-ui) 8px 4px / 16px
-      16px no-repeat;
+    background: var(--bb-ui-500) var(--bb-icon-resume-ui) 8px 4px / 16px 16px
+      no-repeat;
     color: var(--bb-ui-700);
     border-radius: var(--bb-grid-size-5);
     border: none;
