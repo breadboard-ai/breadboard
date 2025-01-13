@@ -8,6 +8,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { provide } from "@lit/context";
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { createRef, ref } from "lit/directives/ref.js";
 import { AsyncComputed } from "signal-utils/async-computed";
 import {
   ArtifactStore,
@@ -42,6 +43,7 @@ import "./artifact-display.js";
 import "./chat.js";
 import "./driver-selector.js";
 import "./prompt.js";
+import "./resizer.js";
 import "./session-picker.js";
 import "./tool-palette.js";
 
@@ -65,14 +67,22 @@ export class BBRTMain extends SignalWatcher(LitElement) {
   @provide({ context: artifactStoreContext })
   accessor #artifacts: ArtifactStore;
 
+  readonly #leftBar = createRef();
+  readonly #rightBar = createRef();
+
   static override styles = css`
     :host {
       display: grid;
+      --bbrt-resizer-thickness: 0;
       grid-template-areas:
-        "sidebar chatlog artifacts"
-        "sidebar chatlog artifacts"
-        "sidebar inputs  artifacts";
-      grid-template-columns: 300px 1fr 1fr;
+        "sidebar resizeleft chatlog resizeright artifacts"
+        "sidebar resizeleft chatlog resizeright artifacts"
+        "sidebar resizeleft  inputs resizeright artifacts";
+      grid-template-columns:
+        var(--bbrt-left-bar-width, 300px) var(--bbrt-resizer-thickness) 1fr var(
+          --bbrt-resizer-thickness
+        )
+        var(--bbrt-right-bar-width, 1fr);
       grid-template-rows: 1fr min-content;
     }
     #left-sidebar {
@@ -111,6 +121,12 @@ export class BBRTMain extends SignalWatcher(LitElement) {
       grid-area: artifacts;
       border-left: 1px solid #ccc;
       overflow: hidden;
+    }
+    #resizeLeft {
+      grid-area: resizeleft;
+    }
+    #resizeRight {
+      grid-area: resizeright;
     }
   `;
 
@@ -261,7 +277,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
 
       <bbrt-chat .conversation=${this.#conversation}></bbrt-chat>
 
-      <div id="left-sidebar">
+      <div id="left-sidebar" ${ref(this.#leftBar)}>
         <bbrt-session-picker
           .appState=${this.#appState}
           .sessionStore=${this.#sessions}
@@ -271,7 +287,25 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         ></bbrt-tool-palette>
       </div>
 
-      <bbrt-artifact-display .artifact=${artifact}></bbrt-artifact-display>
+      <bbrt-resizer
+        id="resizeLeft"
+        .target=${this.#leftBar.value}
+        .cssProperty=${"--bbrt-left-bar-width"}
+        .cssPropertyReceiver=${this}
+      ></bbrt-resizer>
+
+      <bbrt-artifact-display
+        ${ref(this.#rightBar)}
+        .artifact=${artifact}
+      ></bbrt-artifact-display>
+
+      <bbrt-resizer
+        id="resizeRight"
+        .target=${this.#rightBar.value}
+        .cssProperty=${"--bbrt-right-bar-width"}
+        .cssPropertyReceiver=${this}
+        reverse
+      ></bbrt-resizer>
     `;
   }
 
