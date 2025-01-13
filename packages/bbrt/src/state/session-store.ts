@@ -7,6 +7,7 @@
 import type { Result } from "../util/result.js";
 import type { Persistence } from "./persistence.js";
 import type { ReactiveSessionBriefState } from "./session-brief.js";
+import type { ReactiveSessionEventState } from "./session-event.js";
 import { ReactiveSessionState } from "./session.js";
 
 export interface SessionStoreOptions {
@@ -28,10 +29,11 @@ export class SessionStore {
   }
 
   async createSession(
-    brief: ReactiveSessionBriefState
+    brief: ReactiveSessionBriefState,
+    events?: ReactiveSessionEventState[]
   ): Promise<Result<ReactiveSessionState>> {
     const session = new ReactiveSessionState(
-      { id: brief.id, events: [] },
+      { id: brief.id, events: events ?? [] },
       brief
     );
     session.driverId = this.#defaults.driverId;

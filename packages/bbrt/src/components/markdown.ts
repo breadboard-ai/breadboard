@@ -24,6 +24,9 @@ export class BBRTMarkdown extends LitElement {
     :first-child {
       margin-top: 0;
     }
+    :last-child {
+      margin-bottom: 0;
+    }
     ol,
     ul {
       /* The default chrome value is 40px, which is weird since it doesn't scale
