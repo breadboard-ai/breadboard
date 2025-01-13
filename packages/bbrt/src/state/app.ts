@@ -61,10 +61,10 @@ export class ReactiveAppState implements AppState {
     };
   }
 
-  createSessionBrief(): ReactiveSessionBriefState {
+  createSessionBrief(title?: string): ReactiveSessionBriefState {
     const brief = new ReactiveSessionBriefState({
       id: crypto.randomUUID(),
-      title: "New Session",
+      title: title ?? "Untitled Session",
     });
     this.sessionMap.set(brief.id, brief);
     return brief;

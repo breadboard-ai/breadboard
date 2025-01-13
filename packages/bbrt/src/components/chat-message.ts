@@ -7,8 +7,10 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html, nothing, svg } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { ForkEvent } from "../llm/fork.js";
 import type { ReactiveTurnState } from "../state/turn.js";
 import { iconButtonStyle } from "../style/icon-button.js";
+import { connectedEffect } from "../util/connected-effect.js";
 import "./markdown.js";
 import "./tool-call.js";
 
@@ -115,11 +117,15 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       #actions button:not(:hover) {
         --bb-button-background: transparent;
       }
-      :host(:last-of-type) #actions {
-        opacity: 100%;
-      }
     `,
   ];
+
+  override connectedCallback() {
+    super.connectedCallback();
+    connectedEffect(this, () =>
+      this.setAttribute("status", this.turn?.status ?? "pending")
+    );
+  }
 
   override render() {
     // return html`<pre>${JSON.stringify(this.turn?.data ?? {}, null, 2)}</pre>`;
@@ -189,7 +195,7 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
     if (!this.turn) {
       return;
     }
-    console.log("fork!");
+    this.dispatchEvent(new ForkEvent(this.turn));
   }
 }
 

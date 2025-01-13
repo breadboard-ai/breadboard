@@ -21,6 +21,7 @@ import type { BBRTDriver } from "../drivers/driver-interface.js";
 import { GeminiDriver } from "../drivers/gemini.js";
 import { OpenAiDriver } from "../drivers/openai.js";
 import { Conversation } from "../llm/conversation.js";
+import type { ForkEvent } from "../llm/fork.js";
 import { BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION } from "../llm/system-instruction.js";
 import { IndexedDBSettingsSecrets } from "../secrets/indexed-db-secrets.js";
 import type { SecretsProvider } from "../secrets/secrets-provider.js";
@@ -259,7 +260,12 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         <bbrt-prompt .conversation=${this.#conversation}></bbrt-prompt>
       </div>
 
-      <bbrt-chat .conversation=${this.#conversation}></bbrt-chat>
+      <bbrt-chat
+        .conversation=${this.#conversation}
+        .appState=${this.#appState}
+        .sessionStore=${this.#sessions}
+        @bbrt-fork=${this.#onFork}
+      ></bbrt-chat>
 
       <div id="left-sidebar">
         <bbrt-session-picker
@@ -305,6 +311,42 @@ export class BBRTMain extends SignalWatcher(LitElement) {
       }
     }
     return tools;
+  }
+
+  #onFork(forkEvent: ForkEvent) {
+    if (!this.#sessionState || !this.#appState) {
+      return;
+    }
+    const sessionEvents = this.#sessionState.events;
+    let sessionEventIndex = -1;
+    // TODO(aomarks) Unnecessary O(n). Messages should instead know their event
+    // index and include it when they dispatch a ForkEvent.
+    for (let i = 0; i < sessionEvents.length; i++) {
+      const sessionEvent = sessionEvents[i]!;
+      if (
+        sessionEvent.detail.kind === "turn" &&
+        sessionEvent.detail.turn === forkEvent.turn
+      ) {
+        sessionEventIndex = i;
+        break;
+      }
+    }
+    if (sessionEventIndex === -1) {
+      return;
+    }
+    const forkEvents = sessionEvents.slice(0, sessionEventIndex + 1);
+    const appState = this.#appState;
+    const forkBrief = appState.createSessionBrief(
+      `Fork of ${this.#sessionState.title}`
+    );
+    this.#sessions.createSession(forkBrief, forkEvents).then((result) => {
+      if (result.ok) {
+        appState.activeSessionId = forkBrief.id;
+      } else {
+        // TODO(aomarks) Show an error.
+        console.error(`Failed to fork session: ${result.error}`);
+      }
+    });
   }
 }
 
