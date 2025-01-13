@@ -61,6 +61,7 @@
         "../breadboard:build",
         "../core-kit:build",
         "../gemini-kit:build",
+        "../google-drive-kit:build",
         "../json-kit:build",
         "../shared-ui:build",
         "../template-kit:build"
@@ -70,6 +71,7 @@
       "command": "tsc --pretty",
       "dependencies": [
         "../agent-kit:build",
+        "../google-drive-kit:build",
         "../breadboard:build:tsc",
         "../core-kit:build:tsc",
         "../gemini-kit:build:tsc",
@@ -125,6 +127,7 @@
     }
   },
   "dependencies": {
+    "@breadboard-ai/google-drive-kit": "0.4.0",
     "@breadboard-ai/shared-ui": "1.21.0",
     "@google-labs/agent-kit": "^0.14.0",
     "@google-labs/breadboard": "^0.30.0",

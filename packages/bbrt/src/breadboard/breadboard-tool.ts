@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import AgentKit from "@google-labs/agent-kit/agent.kit.json" assert { type: "json" };
 import {
-  asRuntimeKit,
   createDefaultDataStore,
   createLoader,
   type DataStore,
@@ -16,11 +14,6 @@ import {
   type OutputValues,
 } from "@google-labs/breadboard";
 import { createRunner, type RunConfig } from "@google-labs/breadboard/harness";
-import { kitFromGraphDescriptor } from "@google-labs/breadboard/kits";
-import CoreKit from "@google-labs/core-kit";
-import GeminiKit from "@google-labs/gemini-kit";
-import JSONKit from "@google-labs/json-kit";
-import TemplateKit from "@google-labs/template-kit";
 import { Signal } from "signal-polyfill";
 import type { ArtifactHandle } from "../artifacts/artifact-interface.js";
 import type { ArtifactStore } from "../artifacts/artifact-store.js";
@@ -52,17 +45,20 @@ export class BreadboardTool implements BBRTTool {
   readonly #server: BreadboardServiceClient;
   readonly #secrets: SecretsProvider;
   readonly #artifacts: ArtifactStore;
+  readonly #kits: Kit[];
 
   constructor(
     listing: BreadboardBoardListing,
     server: BreadboardServiceClient,
     secrets: SecretsProvider,
-    artifacts: ArtifactStore
+    artifacts: ArtifactStore,
+    kits: Kit[]
   ) {
     this.#listing = listing;
     this.#server = server;
     this.#secrets = secrets;
     this.#artifacts = artifacts;
+    this.#kits = kits;
   }
 
   get metadata(): BBRTToolMetadata {
@@ -111,7 +107,8 @@ export class BreadboardTool implements BBRTTool {
       args,
       () => this.bgl(),
       this.#secrets,
-      this.#artifacts
+      this.#artifacts,
+      this.#kits
     );
     // TODO(aomarks) Broadly rethink this. Executions should be a stream of
     // events, and those should be saved in state too.
@@ -153,6 +150,7 @@ export class BreadboardToolInvocation {
   readonly #secrets: SecretsProvider;
   readonly #getBgl: () => Promise<Result<GraphDescriptor>>;
   readonly #artifacts: ArtifactStore;
+  readonly #kits: Kit[];
 
   readonly state = new Signal.State<InvocationState<unknown>>({
     status: "unstarted",
@@ -162,12 +160,14 @@ export class BreadboardToolInvocation {
     args: unknown,
     getBgl: () => Promise<Result<GraphDescriptor>>,
     secrets: SecretsProvider,
-    artifacts: ArtifactStore
+    artifacts: ArtifactStore,
+    kits: Kit[]
   ) {
     this.#args = args;
     this.#getBgl = getBgl;
     this.#secrets = secrets;
     this.#artifacts = artifacts;
+    this.#kits = kits;
   }
 
   async start(): Promise<void> {
@@ -185,14 +185,6 @@ export class BreadboardToolInvocation {
     }
 
     const loader = createLoader();
-    const kits: Kit[] = [
-      asRuntimeKit(CoreKit),
-      asRuntimeKit(TemplateKit),
-      asRuntimeKit(JSONKit),
-      asRuntimeKit(GeminiKit),
-      kitFromGraphDescriptor(AgentKit as GraphDescriptor)!,
-    ];
-
     const store = createDefaultDataStore();
     const storeGroupId = crypto.randomUUID();
     store.createGroup(storeGroupId);
@@ -201,7 +193,7 @@ export class BreadboardToolInvocation {
       // TODO(aomarks) What should this be, it matters for relative imports,
       // right?
       url: `https://example.com/fake`,
-      kits,
+      kits: this.#kits,
       runner: bgl.value,
       loader,
       store,

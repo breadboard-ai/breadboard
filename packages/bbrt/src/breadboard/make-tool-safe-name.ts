@@ -9,5 +9,5 @@
  * OpenAI requires [a-zA-Z0-9_\-]{1,??}
  */
 export function makeToolSafeName(path: string) {
-  return path.replace(/[^a-zA-Z0-9_\\-]/g, "").slice(0, 63);
+  return path.replace(/[^a-zA-Z0-9_\\-]/g, "_").slice(0, 63);
 }
