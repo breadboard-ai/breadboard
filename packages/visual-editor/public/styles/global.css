@@ -629,16 +629,16 @@ body.hide-cursor {
     --bb-neutral-10: #202020;
     --bb-neutral-0: #1a1a1a;
 
-    --bb-ui-900: #f8fbff;
-    --bb-ui-800: #dceaf8;
-    --bb-ui-700: #b1c5da;
-    --bb-ui-600: #a6b8c9;
-    --bb-ui-500: #76899a;
-    --bb-ui-400: #556778;
-    --bb-ui-300: #47586b;
-    --bb-ui-200: #304151;
-    --bb-ui-100: #1b2834;
-    --bb-ui-50: #0f1923;
+    --bb-ui-900: #f7f8f8;
+    --bb-ui-800: #d6dbdd;
+    --bb-ui-700: #bac2c6;
+    --bb-ui-600: #9ba9af;
+    --bb-ui-500: #67747a;
+    --bb-ui-400: #4e575c;
+    --bb-ui-300: #40484c;
+    --bb-ui-200: #3a4246;
+    --bb-ui-100: #2e3235;
+    --bb-ui-50: #16191b;
 
     --bb-icon-add: url(/third_party/icons/add-inverted.svg);
     --bb-icon-add-inverted: url(/third_party/icons/add.svg);
