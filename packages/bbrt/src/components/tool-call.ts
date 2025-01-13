@@ -12,13 +12,13 @@ import {
   artifactStoreContext,
   type ArtifactStore,
 } from "../artifacts/artifact-store.js";
-import type { FunctionCallState } from "../state/function-call.js";
+import type { ReactiveFunctionCallState } from "../state/function-call.js";
 import "./error-message.js";
 
 @customElement("bbrt-tool-call")
 export class BBRTToolCallEl extends SignalWatcher(LitElement) {
   @property({ attribute: false })
-  accessor toolCall: FunctionCallState | undefined = undefined;
+  accessor toolCall: ReactiveFunctionCallState | undefined = undefined;
 
   @consume({ context: artifactStoreContext })
   @property({ attribute: false })
@@ -54,13 +54,21 @@ export class BBRTToolCallEl extends SignalWatcher(LitElement) {
       margin-top: 0;
     }
     .json-args,
-    .json-result {
+    .json-result,
+    .custom-widget {
       overflow: auto;
-      max-height: 200px;
-      background: rgba(0, 0, 0, 2%);
       padding: 12px;
       border-radius: 8px;
       border: 1px solid var(--bb-neutral-300);
+    }
+    .json-args,
+    .json-result {
+      background: rgba(0, 0, 0, 2%);
+      max-height: 200px;
+    }
+    .custom-widget {
+      margin: 0 20px;
+      box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.1);
     }
     bbrt-error-message {
       border-radius: 8px;
@@ -75,61 +83,73 @@ export class BBRTToolCallEl extends SignalWatcher(LitElement) {
   `;
 
   override render() {
-    if (this.toolCall === undefined) {
+    const toolCall = this.toolCall;
+    if (toolCall === undefined) {
       return nothing;
     }
-    const status = (() => {
-      const response = this.toolCall.response;
-      switch (response.status) {
-        case "unstarted": {
-          return html`Status: <em>Unstarted</em>`;
-        }
-        case "executing": {
-          return html`Status: <em>Executing...</em>`;
-        }
-        case "success": {
-          return [
-            html`Status: <em>Success</em>`,
-            html`<pre class="json-result">
-${JSON.stringify(response.result, null, 2)}</pre
-            >`,
-          ];
-        }
-        case "error": {
-          return html`Status: <em>Error</em><br />
-            <bbrt-error-message .error=${response.error}></bbrt-error-message>`;
-        }
-        default: {
-          response satisfies never;
-          console.error("Unexpected state", response);
-          return "Internal error";
-        }
-      }
-    })();
+    // prettier-ignore
     return html`
       <div part="tool-call-content">
-        <span
-          >Calling <code>${this.toolCall.functionId}</code> with
-          arguments:</span
-        >
-        <pre class="json-args">
-${JSON.stringify(this.toolCall.args, null, 2)}</pre
-        >
-        <div>${status}</div>
+        <span>Calling <code>${toolCall.functionId}</code> with arguments:</span>
+        <pre class="json-args">${JSON.stringify(toolCall.args, null, 2)}</pre>
+        <div>Status: ${this.#renderStatus()}</div>
+        ${this.#renderCustomWidget()}
+        ${this.#renderJsonResult()}
+        ${this.#renderError()}
         ${this.#renderArtifacts()}
       </div>
     `;
   }
 
-  #renderArtifacts() {
-    if (this.toolCall === undefined || this.artifacts === undefined) {
+  #renderStatus() {
+    if (this.toolCall === undefined) {
       return nothing;
     }
     const response = this.toolCall.response;
-    if (response.status !== "success") {
+    switch (response.status) {
+      case "unstarted": {
+        return html`<em>Unstarted</em>`;
+      }
+      case "executing": {
+        return html`<em>Executing...</em>`;
+      }
+      case "success": {
+        return [html`<em>Success</em>`];
+      }
+      case "error": {
+        return html`<em>Error</em>`;
+      }
+      default: {
+        response satisfies never;
+        console.error("Unexpected state", response);
+        return "Internal error";
+      }
+    }
+  }
+
+  #renderCustomWidget() {
+    if (this.toolCall?.render) {
+      return html`<div class="custom-widget">${this.toolCall.render()}</div>`;
+    }
+    return nothing;
+  }
+
+  #renderJsonResult() {
+    const response = this.toolCall?.response;
+    if (response?.status !== "success") {
       return nothing;
     }
-    if (!response.artifacts.length) {
+    const indented = JSON.stringify(response.result, null, 2);
+    return html` <pre class="json-result">${indented}</pre>`;
+  }
+
+  #renderArtifacts() {
+    const response = this.toolCall?.response;
+    if (
+      response?.status !== "success" ||
+      this.artifacts === undefined ||
+      !response.artifacts.length
+    ) {
       return nothing;
     }
     const artifacts = [];
@@ -149,6 +169,17 @@ ${JSON.stringify(this.toolCall.args, null, 2)}</pre
       }
     }
     return artifacts;
+  }
+
+  #renderError() {
+    if (this.toolCall?.response?.status !== "error") {
+      return nothing;
+    }
+    return html`
+      <bbrt-error-message
+        .error=${this.toolCall.response.error}
+      ></bbrt-error-message>
+    `;
   }
 }
 

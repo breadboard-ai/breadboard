@@ -153,10 +153,8 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       return nothing;
     }
     return html`<div id="toolCalls" part="content">
-      ${calls.map((call) =>
-        call.render
-          ? call.render()
-          : html`<bbrt-tool-call .toolCall=${call}></bbrt-tool-call>`
+      ${calls.map(
+        (call) => html`<bbrt-tool-call .toolCall=${call}></bbrt-tool-call>`
       )}
     </div>`;
   }
