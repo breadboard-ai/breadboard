@@ -41,7 +41,8 @@ import type { HoverInfo } from "@valtown/codemirror-ts";
 const CODE_CHANGE_EMIT_TIMEOUT = 500;
 const CODE_INDENTATION = 2;
 
-const darkTheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
+const root = document.querySelector(":root");
+const darkTheme = root?.classList.contains("dark-theme") ?? false;
 
 @customElement("bb-code-editor")
 export class CodeEditor extends LitElement {

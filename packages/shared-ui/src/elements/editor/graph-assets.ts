@@ -6,7 +6,8 @@
 
 import * as PIXI from "pixi.js";
 
-const darkTheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
+const root = document.querySelector(":root");
+const darkTheme = root?.classList.contains("dark-theme") ?? false;
 const themeSuffix = darkTheme ? "-inverted" : "";
 const themeAssets: [string, string][] = [
   [
