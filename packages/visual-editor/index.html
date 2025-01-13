@@ -21,6 +21,17 @@
     assetPack.textContent = ASSET_PACK;
     document.head.appendChild(assetPack);
 
+    const params = new URLSearchParams(location.search);
+    if (params.has("dark")) {
+      globalThis.localStorage.setItem("dark-theme", "true");
+    } else if (params.has("light")) {
+      globalThis.localStorage.removeItem("dark-theme");
+    }
+
+    if (globalThis.localStorage.getItem("dark-theme") === "true") {
+      document.documentElement.classList.add("dark-theme");
+    }
+
     async function init() {
       await StringsHelper.initFrom(LANGUAGE_PACK);
 
