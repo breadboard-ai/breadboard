@@ -86,6 +86,8 @@ export type GraphProviderExtendedCapabilities = {
   preview: boolean;
 };
 
+export type GraphProviderPreloadHandler = (item: GraphProviderItem) => void;
+
 /**
  * Represents a provider of `GraphDescriptor` instances. This is an
  * extensibility point for Breadboard: you can add new providers to load
@@ -220,6 +222,13 @@ export type GraphProvider = {
    * Provides a way to watch for changes in the store.
    */
   renewAccess?: () => Promise<void>;
+
+  /**
+   * Allows the provider to delegate preloading some graphs.
+   * This is useful when some of the graphs are public/published, and
+   * only the provider knows which ones.
+   */
+  preload?: (preloader: GraphProviderPreloadHandler) => Promise<void>;
 };
 
 /**

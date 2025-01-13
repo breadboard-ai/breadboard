@@ -92,6 +92,11 @@ export async function create(config: RuntimeConfig): Promise<{
       server.kits.forEach((kit) => {
         graphStore.registerKit(kit, []);
       });
+      if (server.preload) {
+        server.preload((item) => {
+          graphStore.addByURL(item.url, [], {});
+        });
+      }
     });
   });
 
