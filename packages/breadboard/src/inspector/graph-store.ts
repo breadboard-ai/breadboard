@@ -465,7 +465,7 @@ function entryFromExport(
       title: descriptor.title,
       description: descriptor.description,
       icon: descriptor.metadata?.icon,
-      url: descriptor.url,
+      url,
       tags: ["component"],
       help: descriptor.metadata?.help,
       id: mainGraphId,
