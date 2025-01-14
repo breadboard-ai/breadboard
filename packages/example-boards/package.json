@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/example-boards",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "A collection of example boards",
   "main": "./build/make-graphs.js",
   "exports": {
@@ -135,17 +135,17 @@
     "typescript": "^5.6.3"
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.11.0",
-    "@breadboard-ai/google-drive-kit": "0.4.0",
-    "@breadboard-ai/manifest": "0.6.0",
-    "@breadboard-ai/python-wasm": "0.1.11",
-    "@google-labs/agent-kit": "^0.14.0",
-    "@google-labs/breadboard": "^0.30.0",
-    "@google-labs/core-kit": "^0.17.0",
-    "@google-labs/gemini-kit": "^0.10.0",
-    "@google-labs/json-kit": "^0.3.13",
-    "@google-labs/node-nursery-web": "^1.4.0",
-    "@google-labs/palm-kit": "^0.1.7",
-    "@google-labs/template-kit": "^0.3.15"
+    "@breadboard-ai/build": "0.11.1",
+    "@breadboard-ai/google-drive-kit": "0.4.1",
+    "@breadboard-ai/manifest": "0.7.0",
+    "@breadboard-ai/python-wasm": "0.1.12",
+    "@google-labs/agent-kit": "^0.15.0",
+    "@google-labs/breadboard": "^0.31.0",
+    "@google-labs/core-kit": "^0.17.1",
+    "@google-labs/gemini-kit": "^0.11.0",
+    "@google-labs/json-kit": "^0.3.14",
+    "@google-labs/node-nursery-web": "^1.4.1",
+    "@google-labs/palm-kit": "^0.1.8",
+    "@google-labs/template-kit": "^0.3.16"
   }
 }

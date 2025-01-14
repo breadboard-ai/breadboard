@@ -1,5 +1,16 @@
 # @google-labs/breadboard-schema
 
+## 1.11.0
+
+### Minor Changes
+
+- a8eccc4: Add various improvements to board navigation
+
+### Patch Changes
+
+- 4a898eb: Introduce `GraphStore.graphs()`.
+- df9b8b9: Support subgraph visual controls
+
 ## 1.10.0
 
 ### Minor Changes

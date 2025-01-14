@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/remote-board-server",
-  "version": "1.19.1",
+  "version": "1.19.2",
   "description": "Remote Board Server for Breadboard",
   "main": "./dist/index.js",
   "exports": {
@@ -88,9 +88,9 @@
     "vitest": "^2.1.8"
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.11.0",
-    "@breadboard-ai/data-store": "0.2.6",
-    "@google-labs/breadboard": "^0.30.0",
-    "@google-labs/breadboard-schema": "^1.10.0"
+    "@breadboard-ai/build": "0.11.1",
+    "@breadboard-ai/data-store": "0.3.0",
+    "@google-labs/breadboard": "^0.31.0",
+    "@google-labs/breadboard-schema": "^1.11.0"
   }
 }

@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Breadboard Components for building AI systems",
   "exports": {
     "gemini": "./bgl/a2-gemini.bgl.json"

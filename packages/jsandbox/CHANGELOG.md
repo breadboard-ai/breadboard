@@ -1,5 +1,22 @@
 # @breadboard-ai/jsandbox
 
+## 0.3.0
+
+### Minor Changes
+
+- 37e3fbd: Connect file system to Visual Editor.
+- 2a6d643: Introduce `output` capability.
+- 07b5676: Add support for `@describe` capability.
+
+### Patch Changes
+
+- 7ea05ca: Remove the use of `inspect` inside `packages/breadboard`.
+- cae3a3f: A plethora of bug fixes and polish
+- a717ddc: Fix various bugs with describer capability
+- 032d962: Fix the replay and runModule telemetry bugs.
+- 96b0597: Introduce `GraphStore`: a top-level holder of all boards.
+- d73587b: Type declaration tweaks and better error unwrapping.
+
 ## 0.2.0
 
 ### Minor Changes

@@ -1,5 +1,230 @@
 # @google-labs/breadboard-web
 
+## 1.25.0
+
+### Minor Changes
+
+- 25dd1c2: Introduce chiclets for board capabilities
+- 45c7e5f: Make `MutableGraph` the actual store of nodes, kits, graphs, modules, edges.
+- 37e3fbd: Connect file system to Visual Editor.
+- 0afae9c: Improve side nav behaviors
+- 8722c8f: Make retrieving type metadata sync.
+- 5d91f23: Add basic dark theme support
+- de75b63: Improvements to drag and drop
+- e7d4316: Add "Prompt" to Model (aka "Task" in Specialist)
+- 6ed34ad: Lots of visual updates
+- 21b654a: Move SettingsStore into @breadboard-ai/shared-ui package
+- 66105f9: Dispatch topology events on edits.
+- 733bf2a: Revamp selection model
+- 96b0597: Introduce `GraphStore`: a top-level holder of all boards.
+- eb3fc28: Start using `currentPorts` and `update` event in VE.
+- cf9d064: Improve graph zoom behaviors
+- a8eccc4: Add various improvements to board navigation
+- 7ea3b85: Teach Breadboard to recognize and edit BGL exports.
+
+### Patch Changes
+
+- f880be7: Teach Editor about graph hierarchies
+- 71992c0: Fix the update-loop-of-death
+- 1467eb5: Truncate long node titles
+- 707a440: Teach visual editor to create runtime-resolvable references.
+- db77f23: Various UI changes and improvements
+- 1cd4301: Add capabilities view
+- 64bbe1b: Drive the usage of `inspect` down to four callsites.
+- 4a898eb: Introduce `GraphStore.graphs()`.
+- 2d03abe: Add side nav
+- b198059: Teach runtime and UI to duplicate boards & mods
+- 7ea05ca: Remove the use of `inspect` inside `packages/breadboard`.
+- 8001cd3: Fix some UI colors
+- cae3a3f: A plethora of bug fixes and polish
+- abf3ab7: Remove Task override in Model describer.
+- 3967bec: Improve reference drag and drop
+- 3c19bc6: Fix overlaid module previews
+- f9dc26b: Properly track deletions of edges and nodes.
+- df6926d: A cornucopia of fixes and polish
+- fdc9731: Fix single ref removal bug
+- 0bc58ac: Wrangle graphs a little better
+- 762e662: Teach Component Selector about kit toggling
+- 409576b: Bring back side wire computation.
+- fe69294: Teach selections about references
+- c55afe3: Fix the bug with only board server kits being sent to runBoard.
+- 9a966b4: Clean graph entities more readily
+- f6f9adf: Improve the styling of the new workspace item overlay
+- fa7e8f2: Fix tab rendering
+- 46c9327: Allow pasting fragment URLs into VE and add a nicer module title when running modules.
+- 07b5676: Add support for `@describe` capability.
+- 80de5a3: Support shift+drag to move items between boards
+- 6b957aa: Ensure comments are retained
+- 45ac69f: Replace hard-coded strings with Language Pack in index
+- d32cabe: Only enable dark theme when requested
+- 404a08f: Teach Graph Outline various tricks
+- 37c3f15: Add control over when to animate
+- 4b3ae00: Update logo and inline SVG
+- 3915ad0: Update the list of available Gemini models.
+- 99e1e48: Switch moduleId on deletion
+- e528810: Move board info edit to overflow
+- a8ca30b: Add sliding board selector
+- 81b2de4: Remove list mode
+- df9b8b9: Support subgraph visual controls
+- 2130bc6: Teach FSAPI Board Server to show published boards.
+- 3025283: Teach Workspace Outline about selections
+- 1c83e7d: Improve preview values
+- e4521d9: Don't delete completed chunk.
+- a4fee76: Make module preview work and teach backspace to behave when editing modules.
+- 3536a91: Add `gemini-2.0-flash-thinking-exp` to the list of available models
+- 93a0a94: Make board server components show in component selector.
+- 573f1d5: Flatten paste structure and remove node types
+- 35f2299: Add the ability to edit boards
+- 99532f4: Inform node/edge caches when subgraphs are removed/added
+- Updated dependencies [25dd1c2]
+- Updated dependencies [45c7e5f]
+- Updated dependencies [f880be7]
+- Updated dependencies [37e3fbd]
+- Updated dependencies [4c03eaa]
+- Updated dependencies [10a4911]
+- Updated dependencies [c7b778f]
+- Updated dependencies [71992c0]
+- Updated dependencies [37eb28c]
+- Updated dependencies [a7f278c]
+- Updated dependencies [6338d6d]
+- Updated dependencies [1467eb5]
+- Updated dependencies [0afae9c]
+- Updated dependencies [a9d432a]
+- Updated dependencies [f47b90e]
+- Updated dependencies [c8fbda4]
+- Updated dependencies [db77f23]
+- Updated dependencies [7b16abc]
+- Updated dependencies [8722c8f]
+- Updated dependencies [1cd4301]
+- Updated dependencies [5d91f23]
+- Updated dependencies [64bbe1b]
+- Updated dependencies [de75b63]
+- Updated dependencies [e4631ff]
+- Updated dependencies [78ea16b]
+- Updated dependencies [8edcb12]
+- Updated dependencies [96ea699]
+- Updated dependencies [e22e33b]
+- Updated dependencies [4a898eb]
+- Updated dependencies [087280f]
+- Updated dependencies [2d03abe]
+- Updated dependencies [b198059]
+- Updated dependencies [ccc1135]
+- Updated dependencies [7ea05ca]
+- Updated dependencies [f9d5378]
+- Updated dependencies [8001cd3]
+- Updated dependencies [a80d5b9]
+- Updated dependencies [e9a22df]
+- Updated dependencies [f8e1526]
+- Updated dependencies [cae3a3f]
+- Updated dependencies [e7d4316]
+- Updated dependencies [ce0f654]
+- Updated dependencies [862c53c]
+- Updated dependencies [d72a40b]
+- Updated dependencies [abf3ab7]
+- Updated dependencies [3967bec]
+- Updated dependencies [3c19bc6]
+- Updated dependencies [f9dc26b]
+- Updated dependencies [3eff6c0]
+- Updated dependencies [18f9b8d]
+- Updated dependencies [df6926d]
+- Updated dependencies [84f6a3a]
+- Updated dependencies [35eb4e0]
+- Updated dependencies [6ed34ad]
+- Updated dependencies [f6c31d3]
+- Updated dependencies [2a6d643]
+- Updated dependencies [183c9eb]
+- Updated dependencies [0bc58ac]
+- Updated dependencies [21b654a]
+- Updated dependencies [762e662]
+- Updated dependencies [409576b]
+- Updated dependencies [b1f11fa]
+- Updated dependencies [fe69294]
+- Updated dependencies [502d1fe]
+- Updated dependencies [1d58ff1]
+- Updated dependencies [c91a1ed]
+- Updated dependencies [b685d49]
+- Updated dependencies [a717ddc]
+- Updated dependencies [02f905f]
+- Updated dependencies [c55afe3]
+- Updated dependencies [ba78d58]
+- Updated dependencies [9a966b4]
+- Updated dependencies [58166f8]
+- Updated dependencies [f6f9adf]
+- Updated dependencies [46c9327]
+- Updated dependencies [07b5676]
+- Updated dependencies [80de5a3]
+- Updated dependencies [45ac69f]
+- Updated dependencies [057113a]
+- Updated dependencies [66105f9]
+- Updated dependencies [4eb6d6d]
+- Updated dependencies [032d962]
+- Updated dependencies [d32cabe]
+- Updated dependencies [7728225]
+- Updated dependencies [78da2ab]
+- Updated dependencies [733bf2a]
+- Updated dependencies [96b0597]
+- Updated dependencies [404a08f]
+- Updated dependencies [671a25e]
+- Updated dependencies [37c3f15]
+- Updated dependencies [4b3ae00]
+- Updated dependencies [eb3fc28]
+- Updated dependencies [3915ad0]
+- Updated dependencies [99e1e48]
+- Updated dependencies [d7b3a53]
+- Updated dependencies [5269190]
+- Updated dependencies [0d5ff0f]
+- Updated dependencies [e528810]
+- Updated dependencies [a8ca30b]
+- Updated dependencies [81b2de4]
+- Updated dependencies [df9b8b9]
+- Updated dependencies [91e0930]
+- Updated dependencies [5dbdf2f]
+- Updated dependencies [2130bc6]
+- Updated dependencies [d73587b]
+- Updated dependencies [8ab7211]
+- Updated dependencies [cf9d064]
+- Updated dependencies [3025283]
+- Updated dependencies [1c83e7d]
+- Updated dependencies [b23168c]
+- Updated dependencies [8619ff4]
+- Updated dependencies [def94be]
+- Updated dependencies [e4521d9]
+- Updated dependencies [a4fee76]
+- Updated dependencies [3536a91]
+- Updated dependencies [2df9044]
+- Updated dependencies [a8eccc4]
+- Updated dependencies [11e4c86]
+- Updated dependencies [93a0a94]
+- Updated dependencies [573f1d5]
+- Updated dependencies [e145357]
+- Updated dependencies [3ce820e]
+- Updated dependencies [35f2299]
+- Updated dependencies [c6935b7]
+- Updated dependencies [7ea3b85]
+- Updated dependencies [0f3980f]
+- Updated dependencies [99532f4]
+  - @google-labs/breadboard@0.31.0
+  - @breadboard-ai/shared-ui@1.22.0
+  - @breadboard-ai/data-store@0.3.0
+  - @breadboard-ai/jsandbox@0.3.0
+  - @breadboard-ai/bbrt@0.1.0
+  - @google-labs/gemini-kit@0.11.0
+  - @breadboard-ai/build@0.11.1
+  - @breadboard-ai/manifest@0.7.0
+  - @breadboard-ai/types@0.4.0
+  - @google-labs/agent-kit@0.15.0
+  - @breadboard-ai/idb-board-server@1.19.1
+  - @google-labs/core-kit@0.17.1
+  - @breadboard-ai/board-server-management@1.19.2
+  - @breadboard-ai/google-drive-kit@0.4.1
+  - @breadboard-ai/board-server-utils@0.1.7
+  - @breadboard-ai/example-boards@0.3.8
+  - @google-labs/json-kit@0.3.14
+  - @google-labs/node-nursery-web@1.4.1
+  - @google-labs/palm-kit@0.1.8
+  - @google-labs/template-kit@0.3.16
+  - @breadboard-ai/python-wasm@0.1.12
+
 ## 1.23.0
 
 ### Minor Changes

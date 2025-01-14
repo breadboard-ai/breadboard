@@ -1,5 +1,70 @@
 # Changelog
 
+## 0.31.0
+
+### Minor Changes
+
+- 25dd1c2: Introduce chiclets for board capabilities
+- 45c7e5f: Make `MutableGraph` the actual store of nodes, kits, graphs, modules, edges.
+- 37e3fbd: Connect file system to Visual Editor.
+- 8722c8f: Make retrieving type metadata sync.
+- 64bbe1b: Drive the usage of `inspect` down to four callsites.
+- 96ea699: Introduce snapshot-based update machinery.
+- 4a898eb: Introduce `GraphStore.graphs()`.
+- 7ea05ca: Remove the use of `inspect` inside `packages/breadboard`.
+- 84f6a3a: Start dispatching `update` event on InspectableGraph.
+- 2a6d643: Introduce `output` capability.
+- c91a1ed: Support `[graphurl]#module:{moduleId}` URL syntax.
+- 07b5676: Add support for `@describe` capability.
+- 66105f9: Dispatch topology events on edits.
+- 96b0597: Introduce `GraphStore`: a top-level holder of all boards.
+- eb3fc28: Start using `currentPorts` and `update` event in VE.
+- b23168c: Introduce file system infrastructure.
+- c6935b7: Make MutableGraph the main backing store for editing and inspection.
+- 7ea3b85: Teach Breadboard to recognize and edit BGL exports.
+
+### Patch Changes
+
+- 71992c0: Fix the update-loop-of-death
+- e4631ff: Remove old GraphStore bits.
+- e22e33b: Make edits after runs not crash
+- cae3a3f: A plethora of bug fixes and polish
+- 862c53c: Yuletide bug bash.
+- f9dc26b: Properly track deletions of edges and nodes.
+- df6926d: A cornucopia of fixes and polish
+- f6c31d3: Undo the change to use GraphStore for custom graph describers, as it breaks Agent Kit.
+- 183c9eb: Start moving A2 to multi-export setup.
+- b685d49: Remove `InspectableGraph.kits`.
+- a717ddc: Fix various bugs with describer capability
+- 46c9327: Allow pasting fragment URLs into VE and add a nicer module title when running modules.
+- 4eb6d6d: Ensure that Graph-based Kits are registered before run starts.
+- 032d962: Fix the replay and runModule telemetry bugs.
+- 78da2ab: Revert rollup bump 4.25.0 to 4.27.1, because it causes build to be super-slow.
+- 404a08f: Teach Graph Outline various tricks
+- 91e0930: Teach VE and Breadboard to invoke sub-boards properly.
+- 2130bc6: Teach FSAPI Board Server to show published boards.
+- d73587b: Type declaration tweaks and better error unwrapping.
+- e4521d9: Don't delete completed chunk.
+- 11e4c86: Fix a bunch of bugs I made last week.
+- 93a0a94: Make board server components show in component selector.
+- 3ce820e: Clean up and docs.
+- 99532f4: Inform node/edge caches when subgraphs are removed/added
+- Updated dependencies [37e3fbd]
+- Updated dependencies [4a898eb]
+- Updated dependencies [7ea05ca]
+- Updated dependencies [cae3a3f]
+- Updated dependencies [2a6d643]
+- Updated dependencies [a717ddc]
+- Updated dependencies [07b5676]
+- Updated dependencies [032d962]
+- Updated dependencies [96b0597]
+- Updated dependencies [df9b8b9]
+- Updated dependencies [d73587b]
+- Updated dependencies [a8eccc4]
+  - @breadboard-ai/jsandbox@0.3.0
+  - @google-labs/breadboard-schema@1.11.0
+  - @breadboard-ai/types@0.4.0
+
 ## 0.30.0
 
 ### Minor Changes
