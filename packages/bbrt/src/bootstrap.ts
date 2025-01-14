@@ -4,13 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import "./components/main.js";
-import type { Config } from "./config.js";
+/// <reference types="vite/client" />
 
-const config: Config = {};
-const main = document.querySelector("bbrt-main");
-if (main !== null) {
-  main.config = config;
-} else {
-  console.error("could not find top-level <bbrt-main> element");
-}
+import { BBRTMain } from "./components/main.js";
+
+document.body.appendChild(
+  new BBRTMain({
+    connectionServerUrl: import.meta.env["VITE_CONNECTION_SERVER_URL"],
+    connectionRedirectUrl: "/oauth/",
+    plugins: {
+      input: [],
+    },
+  })
+);

@@ -22,6 +22,7 @@ import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { AsyncComputed } from "signal-utils/async-computed";
+import type { Environment } from "../../../shared-ui/dist/contexts/environment.js";
 import {
   ArtifactStore,
   artifactStoreContext,
@@ -30,7 +31,6 @@ import { IdbArtifactReaderWriter } from "../artifacts/idb-artifact-reader-writer
 import { BreadboardComponentTool } from "../breadboard/breadboard-component-tool.js";
 import { BreadboardTool } from "../breadboard/breadboard-tool.js";
 import { readBoardServersFromIndexedDB } from "../breadboard/indexed-db-servers.js";
-import type { Config } from "../config.js";
 import type { BBRTDriver } from "../drivers/driver-interface.js";
 import { GeminiDriver } from "../drivers/gemini.js";
 import { OpenAiDriver } from "../drivers/openai.js";
@@ -65,12 +65,10 @@ import "./tool-palette.js";
 
 @customElement("bbrt-main")
 export class BBRTMain extends SignalWatcher(LitElement) {
-  @property({ type: Object })
-  accessor config: Config | undefined = undefined;
-
   @property({ attribute: false })
   accessor #appState: ReactiveAppState | undefined = undefined;
 
+  readonly #environment: Environment;
   readonly #secrets: SecretsProvider;
   readonly #sessions: SessionStore;
   readonly #drivers: Map<string, BBRTDriver>;
@@ -156,8 +154,9 @@ export class BBRTMain extends SignalWatcher(LitElement) {
     }
   `;
 
-  constructor() {
+  constructor(environment: Environment) {
     super();
+    this.#environment = environment;
     this.#artifacts = new ArtifactStore(new IdbArtifactReaderWriter());
     this.#secrets = new IndexedDBSettingsSecrets();
     this.#drivers = new Map<string, BBRTDriver>(
