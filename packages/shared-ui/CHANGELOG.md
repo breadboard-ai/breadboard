@@ -1,5 +1,156 @@
 # @breadboard-ai/shared-ui
 
+## 1.22.0
+
+### Minor Changes
+
+- 25dd1c2: Introduce chiclets for board capabilities
+- 0afae9c: Improve side nav behaviors
+- 8722c8f: Make retrieving type metadata sync.
+- 5d91f23: Add basic dark theme support
+- de75b63: Improvements to drag and drop
+- 96ea699: Introduce snapshot-based update machinery.
+- 6ed34ad: Lots of visual updates
+- 21b654a: Move SettingsStore into @breadboard-ai/shared-ui package
+- c91a1ed: Support `[graphurl]#module:{moduleId}` URL syntax.
+- 733bf2a: Revamp selection model
+- eb3fc28: Start using `currentPorts` and `update` event in VE.
+- cf9d064: Improve graph zoom behaviors
+- a8eccc4: Add various improvements to board navigation
+- 7ea3b85: Teach Breadboard to recognize and edit BGL exports.
+
+### Patch Changes
+
+- f880be7: Teach Editor about graph hierarchies
+- 4c03eaa: Only show configurable items as clickable
+- 10a4911: Support drag-move on sub graphs
+- c7b778f: Update strings for various components
+- 37eb28c: Tidy up labels for boards & board arrays
+- a7f278c: Change to using the main app tick for animations
+- 6338d6d: Account for moduleId when creating stable URL for Module Preview.
+- 1467eb5: Truncate long node titles
+- a9d432a: Guard for empty port values in workspace outline preview.
+- f47b90e: Teach Workspace Outline about module titles
+- c8fbda4: Add tooltips
+- db77f23: Various UI changes and improvements
+- 1cd4301: Add capabilities view
+- 64bbe1b: Drive the usage of `inspect` down to four callsites.
+- 78ea16b: Add highlight for board port hovers
+- 8edcb12: Prevent accidental wiring of configurable ports outside of "advanced" mode
+- 4a898eb: Introduce `GraphStore.graphs()`.
+- 087280f: Fix main graph zooming
+- 2d03abe: Add side nav
+- b198059: Teach runtime and UI to duplicate boards & mods
+- ccc1135: Restore back button in Activity
+- 7ea05ca: Remove the use of `inspect` inside `packages/breadboard`.
+- 8001cd3: Fix some UI colors
+- a80d5b9: Teach user input & graph about module titles
+- e9a22df: Prevent reference bubbles from stomping one another
+- f8e1526: Make subitems a little more subtle
+- cae3a3f: A plethora of bug fixes and polish
+- ce0f654: Ensure target matrix has positive values
+- d72a40b: Improve the workspace outline filter
+- 3967bec: Improve reference drag and drop
+- 3c19bc6: Fix overlaid module previews
+- f9dc26b: Properly track deletions of edges and nodes.
+- 3eff6c0: Improve workspace outline styling
+- 18f9b8d: Delay initial non-animation render
+- df6926d: A cornucopia of fixes and polish
+- 35eb4e0: Update Project Listing Language Pack
+- 0bc58ac: Wrangle graphs a little better
+- 762e662: Teach Component Selector about kit toggling
+- 409576b: Bring back side wire computation.
+- fe69294: Teach selections about references
+- 502d1fe: Only show graph outline when there are multiple graphs
+- 1d58ff1: Handle PCM Audio
+- b685d49: Remove `InspectableGraph.kits`.
+- 02f905f: Further tweaks to new item overlay
+- c55afe3: Fix the bug with only board server kits being sent to runBoard.
+- ba78d58: Comment out the logic that causes transient outputs to be eaten.
+- 9a966b4: Clean graph entities more readily
+- f6f9adf: Improve the styling of the new workspace item overlay
+- 80de5a3: Support shift+drag to move items between boards
+- 45ac69f: Replace hard-coded strings with Language Pack in index
+- 057113a: Improve handling of imperative boards
+- d32cabe: Only enable dark theme when requested
+- 7728225: Bring back the module preview
+- 404a08f: Teach Graph Outline various tricks
+- 671a25e: Fix embed issues
+- 37c3f15: Add control over when to animate
+- 4b3ae00: Update logo and inline SVG
+- 99e1e48: Switch moduleId on deletion
+- d7b3a53: Include edges in bounds calculations
+- 0d5ff0f: Improve subgraph quick jump in workspace outline
+- e528810: Move board info edit to overflow
+- a8ca30b: Add sliding board selector
+- 81b2de4: Remove list mode
+- df9b8b9: Support subgraph visual controls
+- 91e0930: Teach VE and Breadboard to invoke sub-boards properly.
+- 5dbdf2f: Small tweaks to hierarchy
+- 8ab7211: Update Workspace Outline strings
+- 3025283: Teach Workspace Outline about selections
+- 1c83e7d: Improve preview values
+- 8619ff4: Teach transform matrix to account for comments
+- def94be: Calculate dimensions when assigning port in `GraphPortLabel`.
+- a4fee76: Make module preview work and teach backspace to behave when editing modules.
+- 11e4c86: Fix a bunch of bugs I made last week.
+- 93a0a94: Make board server components show in component selector.
+- 573f1d5: Flatten paste structure and remove node types
+- e145357: Fix a bug with phantom subgraphs.
+- 35f2299: Add the ability to edit boards
+- 0f3980f: Unstick graph renderer when hierarchy is enabled
+- 99532f4: Inform node/edge caches when subgraphs are removed/added
+- Updated dependencies [25dd1c2]
+- Updated dependencies [45c7e5f]
+- Updated dependencies [37e3fbd]
+- Updated dependencies [71992c0]
+- Updated dependencies [8722c8f]
+- Updated dependencies [64bbe1b]
+- Updated dependencies [e4631ff]
+- Updated dependencies [96ea699]
+- Updated dependencies [e22e33b]
+- Updated dependencies [4a898eb]
+- Updated dependencies [7ea05ca]
+- Updated dependencies [cae3a3f]
+- Updated dependencies [862c53c]
+- Updated dependencies [f9dc26b]
+- Updated dependencies [df6926d]
+- Updated dependencies [84f6a3a]
+- Updated dependencies [f6c31d3]
+- Updated dependencies [2a6d643]
+- Updated dependencies [183c9eb]
+- Updated dependencies [c91a1ed]
+- Updated dependencies [b685d49]
+- Updated dependencies [a717ddc]
+- Updated dependencies [46c9327]
+- Updated dependencies [07b5676]
+- Updated dependencies [66105f9]
+- Updated dependencies [4eb6d6d]
+- Updated dependencies [032d962]
+- Updated dependencies [78da2ab]
+- Updated dependencies [96b0597]
+- Updated dependencies [404a08f]
+- Updated dependencies [eb3fc28]
+- Updated dependencies [df9b8b9]
+- Updated dependencies [91e0930]
+- Updated dependencies [2130bc6]
+- Updated dependencies [d73587b]
+- Updated dependencies [b23168c]
+- Updated dependencies [e4521d9]
+- Updated dependencies [a8eccc4]
+- Updated dependencies [11e4c86]
+- Updated dependencies [93a0a94]
+- Updated dependencies [3ce820e]
+- Updated dependencies [c6935b7]
+- Updated dependencies [7ea3b85]
+- Updated dependencies [99532f4]
+  - @google-labs/breadboard@0.31.0
+  - @breadboard-ai/data-store@0.3.0
+  - @breadboard-ai/jsandbox@0.3.0
+  - @breadboard-ai/build@0.11.1
+  - @google-labs/breadboard-schema@1.11.0
+  - @breadboard-ai/types@0.4.0
+
 ## 1.21.0
 
 ### Minor Changes

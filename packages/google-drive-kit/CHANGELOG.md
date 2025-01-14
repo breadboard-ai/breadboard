@@ -1,5 +1,17 @@
 # @breadboard-ai/google-drive-kit
 
+## 0.4.1
+
+### Patch Changes
+
+- 93a0a94: Make board server components show in component selector.
+- Updated dependencies [64bbe1b]
+- Updated dependencies [d73587b]
+- Updated dependencies [11e4c86]
+  - @breadboard-ai/build@0.11.1
+  - @google-labs/core-kit@0.17.1
+  - @google-labs/template-kit@0.3.16
+
 ## 0.4.0
 
 ### Minor Changes

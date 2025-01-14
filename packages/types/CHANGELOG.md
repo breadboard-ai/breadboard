@@ -1,5 +1,18 @@
 # @breadboard-ai/types
 
+## 0.4.0
+
+### Minor Changes
+
+- a8eccc4: Add various improvements to board navigation
+
+### Patch Changes
+
+- 4a898eb: Introduce `GraphStore.graphs()`.
+- 7ea05ca: Remove the use of `inspect` inside `packages/breadboard`.
+- 96b0597: Introduce `GraphStore`: a top-level holder of all boards.
+- df9b8b9: Support subgraph visual controls
+
 ## 0.3.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/example-board-server",
-  "version": "1.18.2",
+  "version": "1.18.3",
   "description": "Example Board Server for Breadboard",
   "main": "./dist/index.js",
   "exports": {
@@ -90,11 +90,11 @@
     "vitest": "^2.1.8"
   },
   "dependencies": {
-    "@breadboard-ai/build": "0.11.0",
-    "@breadboard-ai/data-store": "0.2.6",
-    "@breadboard-ai/manifest": "0.6.0",
-    "@breadboard-ai/example-boards": "0.3.7",
-    "@google-labs/breadboard": "^0.30.0",
-    "@google-labs/breadboard-schema": "^1.10.0"
+    "@breadboard-ai/build": "0.11.1",
+    "@breadboard-ai/data-store": "0.3.0",
+    "@breadboard-ai/manifest": "0.7.0",
+    "@breadboard-ai/example-boards": "0.3.8",
+    "@google-labs/breadboard": "^0.31.0",
+    "@google-labs/breadboard-schema": "^1.11.0"
   }
 }

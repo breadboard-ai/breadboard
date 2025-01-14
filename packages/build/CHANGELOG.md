@@ -1,5 +1,58 @@
 # Changelog
 
+## 0.11.1
+
+### Patch Changes
+
+- 64bbe1b: Drive the usage of `inspect` down to four callsites.
+- d73587b: Type declaration tweaks and better error unwrapping.
+- Updated dependencies [25dd1c2]
+- Updated dependencies [45c7e5f]
+- Updated dependencies [37e3fbd]
+- Updated dependencies [71992c0]
+- Updated dependencies [8722c8f]
+- Updated dependencies [64bbe1b]
+- Updated dependencies [e4631ff]
+- Updated dependencies [96ea699]
+- Updated dependencies [e22e33b]
+- Updated dependencies [4a898eb]
+- Updated dependencies [7ea05ca]
+- Updated dependencies [cae3a3f]
+- Updated dependencies [862c53c]
+- Updated dependencies [f9dc26b]
+- Updated dependencies [df6926d]
+- Updated dependencies [84f6a3a]
+- Updated dependencies [f6c31d3]
+- Updated dependencies [2a6d643]
+- Updated dependencies [183c9eb]
+- Updated dependencies [c91a1ed]
+- Updated dependencies [b685d49]
+- Updated dependencies [a717ddc]
+- Updated dependencies [46c9327]
+- Updated dependencies [07b5676]
+- Updated dependencies [66105f9]
+- Updated dependencies [4eb6d6d]
+- Updated dependencies [032d962]
+- Updated dependencies [78da2ab]
+- Updated dependencies [96b0597]
+- Updated dependencies [404a08f]
+- Updated dependencies [eb3fc28]
+- Updated dependencies [df9b8b9]
+- Updated dependencies [91e0930]
+- Updated dependencies [2130bc6]
+- Updated dependencies [d73587b]
+- Updated dependencies [b23168c]
+- Updated dependencies [e4521d9]
+- Updated dependencies [a8eccc4]
+- Updated dependencies [11e4c86]
+- Updated dependencies [93a0a94]
+- Updated dependencies [3ce820e]
+- Updated dependencies [c6935b7]
+- Updated dependencies [7ea3b85]
+- Updated dependencies [99532f4]
+  - @google-labs/breadboard@0.31.0
+  - @breadboard-ai/types@0.4.0
+
 ## 0.11.0
 
 ### Minor Changes

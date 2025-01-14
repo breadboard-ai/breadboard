@@ -1,5 +1,27 @@
 # @google-labs/agent-kit
 
+## 0.15.0
+
+### Minor Changes
+
+- e7d4316: Add "Prompt" to Model (aka "Task" in Specialist)
+- 3915ad0: Update the list of available Gemini models.
+
+### Patch Changes
+
+- abf3ab7: Remove Task override in Model describer.
+- 5269190: Remove mention of `legacyKit` in Agent Kit.
+- 3536a91: Add `gemini-2.0-flash-thinking-exp` to the list of available models
+- Updated dependencies [64bbe1b]
+- Updated dependencies [4a898eb]
+- Updated dependencies [7ea05ca]
+- Updated dependencies [96b0597]
+- Updated dependencies [df9b8b9]
+- Updated dependencies [d73587b]
+- Updated dependencies [a8eccc4]
+  - @breadboard-ai/build@0.11.1
+  - @breadboard-ai/types@0.4.0
+
 ## 0.14.0
 
 ### Minor Changes

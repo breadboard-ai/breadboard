@@ -1,5 +1,71 @@
 # @breadboard-ai/example-boards
 
+## 0.3.8
+
+### Patch Changes
+
+- Updated dependencies [25dd1c2]
+- Updated dependencies [45c7e5f]
+- Updated dependencies [37e3fbd]
+- Updated dependencies [71992c0]
+- Updated dependencies [8722c8f]
+- Updated dependencies [64bbe1b]
+- Updated dependencies [e4631ff]
+- Updated dependencies [96ea699]
+- Updated dependencies [e22e33b]
+- Updated dependencies [4a898eb]
+- Updated dependencies [7ea05ca]
+- Updated dependencies [cae3a3f]
+- Updated dependencies [e7d4316]
+- Updated dependencies [862c53c]
+- Updated dependencies [abf3ab7]
+- Updated dependencies [f9dc26b]
+- Updated dependencies [df6926d]
+- Updated dependencies [84f6a3a]
+- Updated dependencies [f6c31d3]
+- Updated dependencies [2a6d643]
+- Updated dependencies [183c9eb]
+- Updated dependencies [c91a1ed]
+- Updated dependencies [b685d49]
+- Updated dependencies [a717ddc]
+- Updated dependencies [46c9327]
+- Updated dependencies [07b5676]
+- Updated dependencies [66105f9]
+- Updated dependencies [4eb6d6d]
+- Updated dependencies [032d962]
+- Updated dependencies [78da2ab]
+- Updated dependencies [96b0597]
+- Updated dependencies [404a08f]
+- Updated dependencies [eb3fc28]
+- Updated dependencies [3915ad0]
+- Updated dependencies [5269190]
+- Updated dependencies [df9b8b9]
+- Updated dependencies [91e0930]
+- Updated dependencies [2130bc6]
+- Updated dependencies [d73587b]
+- Updated dependencies [b23168c]
+- Updated dependencies [e4521d9]
+- Updated dependencies [3536a91]
+- Updated dependencies [a8eccc4]
+- Updated dependencies [11e4c86]
+- Updated dependencies [93a0a94]
+- Updated dependencies [3ce820e]
+- Updated dependencies [c6935b7]
+- Updated dependencies [7ea3b85]
+- Updated dependencies [99532f4]
+  - @google-labs/breadboard@0.31.0
+  - @google-labs/gemini-kit@0.11.0
+  - @breadboard-ai/build@0.11.1
+  - @breadboard-ai/manifest@0.7.0
+  - @google-labs/agent-kit@0.15.0
+  - @google-labs/core-kit@0.17.1
+  - @breadboard-ai/google-drive-kit@0.4.1
+  - @google-labs/json-kit@0.3.14
+  - @google-labs/node-nursery-web@1.4.1
+  - @google-labs/palm-kit@0.1.8
+  - @google-labs/template-kit@0.3.16
+  - @breadboard-ai/python-wasm@0.1.12
+
 ## 0.3.7
 
 ### Patch Changes
