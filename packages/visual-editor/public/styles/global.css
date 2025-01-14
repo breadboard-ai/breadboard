@@ -226,6 +226,9 @@ body.hide-cursor {
   --bb-icon-keep-filled: url(/third_party/icons/keep-filled.svg);
   --bb-icon-keep-filled-inverted: url(/third_party/icons/keep-filled-inverted.svg);
 
+  --bb-icon-flowchart: url(/third_party/icons/flowchart.svg);
+  --bb-icon-flowchart-inverted: url(/third_party/icons/flowchart-inverted.svg);
+
   --bb-icon-google-drive: url(/third_party/icons/graph/google-drive-48px.svg);
 
   --bb-icon-input: url(/third_party/icons/input.svg);
@@ -297,6 +300,9 @@ body.hide-cursor {
   --bb-icon-pending: url(/third_party/icons/pending.svg);
   --bb-icon-pending-inverted: url(/third_party/icons/pending-inverted.svg);
 
+  --bb-icon-phone: url(/third_party/icons/phone.svg);
+  --bb-icon-phone-inverted: url(/third_party/icons/phone-inverted.svg);
+
   --bb-icon-play-filled: url(/third_party/icons/play-filled.svg);
   --bb-icon-play-filled-inverted: url(/third_party/icons/play-filled-inverted.svg);
 
@@ -348,6 +354,9 @@ body.hide-cursor {
 
   --bb-icon-search: url(/third_party/icons/search.svg);
   --bb-icon-search-inverted: url(/third_party/icons/search-inverted.svg);
+
+  --bb-icon-send: url(/third_party/icons/send.svg);
+  --bb-icon-send-inverted: url(/third_party/icons/send-inverted.svg);
 
   --bb-icon-settings: url(/third_party/icons/settings.svg);
   --bb-icon-settings-inverted: url(/third_party/icons/settings-inverted.svg);

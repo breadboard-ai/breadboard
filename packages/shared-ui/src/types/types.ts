@@ -484,6 +484,7 @@ export type LanguagePackEntry = Record<
  */
 export interface LanguagePack {
   ActivityLog: LanguagePackEntry;
+  AppPreview: LanguagePackEntry;
   CommandPalette: LanguagePackEntry;
   ComponentSelector: LanguagePackEntry;
   Global: LanguagePackEntry;
