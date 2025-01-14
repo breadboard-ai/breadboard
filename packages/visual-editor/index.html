@@ -36,7 +36,9 @@
       await StringsHelper.initFrom(LANGUAGE_PACK);
 
       const { Main } = await import("./src/index.ts");
-      const { SettingsStore } = await import("./src/data/settings-store.ts");
+      const { SettingsStore } = await import(
+        "@breadboard-ai/shared-ui/data/settings-store.js"
+      );
 
       const config = {
         settings: SettingsStore.instance(),
