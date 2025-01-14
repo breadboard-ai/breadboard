@@ -27,7 +27,11 @@
       ]
     },
     "build:vite": {
-      "command": "vite build"
+      "command": "vite build",
+      "dependencies": [
+        "update-sandbox-runtime",
+        "../visual-editor:build"
+      ]
     },
     "build:tsc": {
       "command": "tsc"
@@ -40,6 +44,18 @@
       "command": "ava",
       "dependencies": [
         "build:tsc"
+      ]
+    },
+    "update-sandbox-runtime": {
+      "command": "tsx scripts/update-sandbox-runtime.ts",
+      "dependencies": [
+        "../jsandbox:build"
+      ],
+      "files": [
+        "scripts/update-sandbox-runtime.ts"
+      ],
+      "output": [
+        "public/sandbox.wasm"
       ]
     }
   },
@@ -82,6 +98,7 @@
     "wireit": "^0.14.9"
   },
   "dependencies": {
+    "@breadboard-ai/visual-editor": "^1.24.4",
     "express": "^4.21.2",
     "vite": "^6.0.2",
     "vite-express": "^0.20.0"

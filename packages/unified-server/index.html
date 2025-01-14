@@ -1,7 +1,26 @@
 <!doctype html>
 <head>
-  <title>Breadboard - Unified Server</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width" />
+  <meta name="theme-color" content="#2E8BE8" />
+  <link rel="stylesheet" href="/styles/global.css" />
+  <title>Breadboard - Visual Editor</title>
 </head>
 <body>
-  Breadboard Unified Server
+  <script type="module">
+    import { Main } from "../visual-editor/src/index.ts";
+    import { SettingsStore } from "../visual-editor/src/data/settings-store.ts";
+
+    const config = {
+      settings: SettingsStore.instance(),
+      version: "0.0.1",
+    };
+
+    window.oncontextmenu = (evt) => evt.preventDefault();
+
+    const main = new Main(config);
+    document.body.appendChild(main);
+
+    console.log(`[Breadboard Visual Editor: Version ${pkg.version}]`);
+  </script>
 </body>
