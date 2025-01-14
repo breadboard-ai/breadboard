@@ -38,8 +38,8 @@ export class BBRTChat extends SignalWatcher(LitElement) {
     return this.conversation.state.turns.map(
       (turn, i) =>
         html`<bbrt-chat-message
-          .turn=${turn}
-          .hideIcon=${
+          .info=${{
+            turn,
             // Hide the icon if the previous turn role was the same (since
             // otherwise we see two of the same icons in a row, which looks
             // weird).
@@ -47,8 +47,10 @@ export class BBRTChat extends SignalWatcher(LitElement) {
             // actually be nice, though, because it's ambiguous sometimes if
             // e.g. one turn had multiple tool calls, or there was a sequence of
             // tool calls.
-            turn.role === turns[i - 1]?.role
-          }
+            hideIcon: turn.role === turns[i - 1]?.role,
+            index: i,
+            numTurnsTotal: turns.length,
+          }}
         ></bbrt-chat-message>`
     );
   }

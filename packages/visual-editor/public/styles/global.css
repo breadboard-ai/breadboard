@@ -133,6 +133,9 @@ body.hide-cursor {
   --bb-icon-continue: url(/third_party/icons/continue.svg);
   --bb-icon-continue-inverted: url(/third_party/icons/continue-inverted.svg);
 
+  --bb-icon-content-cut: url(/third_party/icons/content-cut.svg);
+  --bb-icon-content-cut-inverted: url(/third_party/icons/content-cut-inverted.svg);
+
   --bb-icon-copy-to-clipboard: url(/third_party/icons/copy-to-clipboard.svg);
   --bb-icon-copy-to-clipboard-inverted: url(/third_party/icons/copy-to-clipboard-inverted.svg);
 

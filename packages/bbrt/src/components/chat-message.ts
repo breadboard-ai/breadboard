@@ -7,20 +7,24 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html, nothing, svg } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { ForkEvent, RetryEvent } from "../llm/events.js";
+import { CutEvent, ForkEvent, RetryEvent } from "../llm/events.js";
 import type { ReactiveTurnState } from "../state/turn.js";
 import { iconButtonStyle } from "../style/icon-button.js";
 import { connectedEffect } from "../util/connected-effect.js";
 import "./markdown.js";
 import "./tool-call.js";
 
+export interface TurnInfo {
+  turn: ReactiveTurnState;
+  index: number;
+  numTurnsTotal: number;
+  hideIcon: boolean;
+}
+
 @customElement("bbrt-chat-message")
 export class BBRTChatMessage extends SignalWatcher(LitElement) {
-  @property({ type: Object })
-  accessor turn: ReactiveTurnState | undefined = undefined;
-
-  @property({ type: Boolean })
-  accessor hideIcon = false;
+  @property({ attribute: false })
+  accessor info: TurnInfo | undefined = undefined;
 
   static override styles = [
     iconButtonStyle,
@@ -120,6 +124,9 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       #forkButton {
         --bb-icon: var(--bb-icon-fork-down-right);
       }
+      #cutButton {
+        --bb-icon: var(--bb-icon-content-cut);
+      }
       #actions button:not(:hover) {
         --bb-button-background: transparent;
       }
@@ -129,13 +136,12 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
   override connectedCallback() {
     super.connectedCallback();
     connectedEffect(this, () =>
-      this.setAttribute("status", this.turn?.status ?? "pending")
+      this.setAttribute("status", this.info?.turn.status ?? "pending")
     );
   }
 
   override render() {
-    // return html`<pre>${JSON.stringify(this.turn?.data ?? {}, null, 2)}</pre>`;
-    if (!this.turn) {
+    if (!this.info) {
       return nothing;
     }
     return [
@@ -143,7 +149,7 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       html`
         <div part="contents">
           <bbrt-markdown
-            .markdown=${this.turn.partialText}
+            .markdown=${this.info.turn.partialText}
             part="content"
           ></bbrt-markdown>
           ${this.#renderFunctionCalls()}
@@ -154,7 +160,7 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
   }
 
   #renderFunctionCalls() {
-    const calls = this.turn?.partialFunctionCalls;
+    const calls = this.info?.turn.partialFunctionCalls;
     if (!calls?.length) {
       return nothing;
     }
@@ -166,25 +172,25 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
   }
 
   get #roleIcon() {
-    if (!this.turn || this.hideIcon) {
+    if (!this.info || this.info.hideIcon) {
       return nothing;
     }
-    const role = this.hideIcon ? undefined : this.turn.role;
+    const role = this.info.hideIcon ? undefined : this.info.turn.role;
     return html`<svg
       aria-label="${role}"
       role="img"
-      part="icon icon-${role} icon-${this.turn.status}"
+      part="icon icon-${role} icon-${this.info.turn.status}"
     >
       ${role ? svg`<use href="/bbrt/images/${role}.svg#icon"></use>` : nothing}
     </svg>`;
   }
 
   get #actions() {
-    if (!this.turn) {
+    if (!this.info) {
       return nothing;
     }
     const buttons = [];
-    if (this.turn.role === "user") {
+    if (this.info.turn.role === "user") {
       buttons.push(html`
         <button
           id="retryButton"
@@ -195,35 +201,52 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       `);
     }
     if (
-      this.turn.role === "model" &&
-      this.turn.status === "done" &&
-      this.turn.partialFunctionCalls.length === 0
+      this.info.turn.role === "model" &&
+      this.info.turn.status === "done" &&
+      // If the turn has function calls, we don't allow splicing, because it is
+      // expected that there is always another turn to come, so the cut should
+      // happen there instead.
+      this.info.turn.partialFunctionCalls.length === 0 &&
+      // No reason to splice if we're already at the end.
+      this.info.index < this.info.numTurnsTotal - 1
     ) {
       buttons.push(html`
         <button
-        id="forkButton"
-        class="bb-icon-button"
-        title="Fork"
-        @click=${this.#onClickForkButton}
-        ></button>
-      </div>
-      `);
+          id="cutButton"
+          class="bb-icon-button"
+          title="Cut"
+          @click=${this.#onClickCutButton}
+          ></button>
+        <button
+          id="forkButton"
+          class="bb-icon-button"
+          title="Fork"
+          @click=${this.#onClickForkButton}
+          ></button>
+        </div>`);
     }
     return html`<div id="actions">${buttons}</div>`;
   }
 
-  #onClickForkButton() {
-    if (!this.turn) {
+  #onClickCutButton() {
+    if (!this.info) {
       return;
     }
-    this.dispatchEvent(new ForkEvent(this.turn));
+    this.dispatchEvent(new CutEvent(this.info.turn));
+  }
+
+  #onClickForkButton() {
+    if (!this.info) {
+      return;
+    }
+    this.dispatchEvent(new ForkEvent(this.info.turn));
   }
 
   #onClickRetryButton() {
-    if (!this.turn) {
+    if (!this.info) {
       return;
     }
-    this.dispatchEvent(new RetryEvent(this.turn));
+    this.dispatchEvent(new RetryEvent(this.info.turn));
   }
 }
 

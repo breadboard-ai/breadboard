@@ -35,7 +35,7 @@ import type { BBRTDriver } from "../drivers/driver-interface.js";
 import { GeminiDriver } from "../drivers/gemini.js";
 import { OpenAiDriver } from "../drivers/openai.js";
 import { Conversation } from "../llm/conversation.js";
-import type { ForkEvent, RetryEvent } from "../llm/events.js";
+import type { CutEvent, ForkEvent, RetryEvent } from "../llm/events.js";
 import { BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION } from "../llm/system-instruction.js";
 import { IndexedDBSettingsSecrets } from "../secrets/indexed-db-secrets.js";
 import type { SecretsProvider } from "../secrets/secrets-provider.js";
@@ -305,6 +305,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         .sessionStore=${this.#sessions}
         @bbrt-fork=${this.#onFork}
         @bbrt-retry=${this.#onRetry}
+        @bbrt-cut=${this.#onCut}
       ></bbrt-chat>
 
       <div id="left-sidebar" ${ref(this.#leftBar)}>
@@ -386,8 +387,15 @@ export class BBRTMain extends SignalWatcher(LitElement) {
     return tools;
   }
 
+  #onCut(event: CutEvent) {
+    if (!this.#sessionState) {
+      return;
+    }
+    this.#sessionState.rollback(this.#findEventIndexForTurn(event.turn) + 1);
+  }
+
   #onRetry(event: RetryEvent) {
-    if (!this.#sessionState || !this.#appState) {
+    if (!this.#sessionState) {
       return;
     }
     this.#sessionState.rollback(this.#findEventIndexForTurn(event.turn));
