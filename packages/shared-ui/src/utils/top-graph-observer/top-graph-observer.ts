@@ -537,17 +537,21 @@ function placeOutputInLog(log: LogEntry[], edge: EdgeLogEntry): LogEntry[] {
     return [...log.slice(0, lastNode - 1), edge, ...log.slice(lastNode)];
   }
 
+  // Comment out this logic, because it causes transient outputs from modules
+  // to be eaten.
+  // TODO: Figure out if this should just be deleted or improved to avoid
+  // eating outputs from modules.
   // To avoid there being two edges placed side-by-side we skip this edge if we
   // intend to place it next to an existing edge.
-  if (lastNode > 0) {
-    const succeedingItemIdx = lastNode + 1;
-    const precedingItemIsEdge = log[lastNode] && log[lastNode].type === "edge";
-    const succeedingItemIsEdge =
-      log[succeedingItemIdx] && log[succeedingItemIdx].type === "edge";
-    if (precedingItemIsEdge || succeedingItemIsEdge) {
-      return [...log];
-    }
-  }
+  // if (lastNode > 0) {
+  //   const succeedingItemIdx = lastNode + 1;
+  //   const precedingItemIsEdge = log[lastNode] && log[lastNode].type === "edge";
+  //   const succeedingItemIsEdge =
+  //     log[succeedingItemIdx] && log[succeedingItemIdx].type === "edge";
+  //   if (precedingItemIsEdge || succeedingItemIsEdge) {
+  //     return [...log, edge];
+  //   }
+  // }
 
   return [...log.slice(0, lastNode), edge, ...log.slice(lastNode)];
 }
