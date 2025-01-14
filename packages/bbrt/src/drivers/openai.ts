@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TurnChunk } from "../state/turn-chunk.js";
+import type { TurnChunk, TurnChunkError } from "../state/turn-chunk.js";
 import type { ReactiveTurnState } from "../state/turn.js";
 import type { BBRTTool } from "../tools/tool-types.js";
+import { makeErrorEvent } from "../util/event-factories.js";
 import { JsonDataStreamTransformer } from "../util/json-data-stream-transformer.js";
 import type { JsonSerializableObject } from "../util/json-serializable.js";
 import type { Result } from "../util/result.js";
@@ -35,11 +36,10 @@ export class OpenAiDriver implements BBRTDriver {
     turns,
     systemPrompt,
     tools,
-  }: BBRTDriverSendOptions): AsyncIterable<TurnChunk> {
+  }: BBRTDriverSendOptions): AsyncGenerator<TurnChunk, void | TurnChunkError> {
     const messages = await convertTurnsForOpenAi(turns);
     if (!messages.ok) {
-      // TODO(aomarks) Send should return a Result.
-      throw new Error(String(messages.error));
+      return makeErrorEvent(messages.error);
     }
     const request: OpenAIChatRequest = {
       model: "gpt-4o",
@@ -52,49 +52,48 @@ export class OpenAiDriver implements BBRTDriver {
     if (tools !== undefined && tools.size > 0) {
       const openAiTools = await convertToolsForOpenAi([...tools.values()]);
       if (!openAiTools.ok) {
-        return openAiTools;
+        return makeErrorEvent(openAiTools.error);
       }
       request.tools = openAiTools.value;
     }
-
     const url = new URL(`https://api.openai.com/v1/chat/completions`);
     const apiKey = await this.#getApiKey();
     if (!apiKey.ok) {
-      return apiKey;
+      return makeErrorEvent(apiKey.error);
     }
     if (!apiKey.value) {
-      return { ok: false, error: Error("No OpenAI API key was available") };
+      return makeErrorEvent(
+        new Error(
+          "No OpenAI API key was available. " +
+            "Add an OPENAI_API_KEY secret in Visual Editor settings."
+        )
+      );
     }
-    let result;
-    try {
-      result = await fetch(url.href, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey.value}`,
-        },
-        body: JSON.stringify(request),
-      });
-    } catch (e) {
-      return { ok: false, error: e as Error };
-    }
+    const result = await fetch(url.href, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey.value}`,
+      },
+      body: JSON.stringify(request),
+    });
+
     if (result.status !== 200) {
       try {
-        const error = (await result.json()) as unknown;
-        return {
-          ok: false,
-          error: new Error(
+        const error = await result.json();
+        return makeErrorEvent(
+          new Error(
             `HTTP status ${result.status}` +
               `\n\n${JSON.stringify(error, null, 2)}`
-          ),
-        };
+          )
+        );
       } catch {
-        return { ok: false, error: Error(`http status was ${result.status}`) };
+        return makeErrorEvent(new Error(`http status was ${result.status}`));
       }
     }
     const body = result.body;
     if (body === null) {
-      return { ok: false, error: Error("body was null") };
+      return makeErrorEvent(new Error("body was null"));
     }
     yield* convertOpenAiChunks(
       body.pipeThrough(new JsonDataStreamTransformer<OpenAIChunk>())
