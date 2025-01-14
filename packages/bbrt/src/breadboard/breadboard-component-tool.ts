@@ -23,7 +23,7 @@ import type {
 } from "../tools/tool-types.js";
 import type { JsonSerializableObject } from "../util/json-serializable.js";
 import type { Result } from "../util/result.js";
-import { BreadboardToolInvocation } from "./breadboard-tool.js";
+import { BreadboardToolInvocation } from "./breadboard-invocation.js";
 import { makeToolSafeName } from "./make-tool-safe-name.js";
 import { standardizeBreadboardSchema } from "./standardize-breadboard-schema.js";
 
@@ -102,14 +102,6 @@ export class BreadboardComponentTool implements BBRTTool {
   }
 
   execute(args: JsonSerializableObject) {
-    return { result: this.#execute(args) };
-  }
-
-  async #execute(
-    args: JsonSerializableObject
-  ): Promise<
-    Result<{ data: JsonSerializableObject; artifacts: ArtifactHandle[] }>
-  > {
     const component: NodeDescriptor = {
       id: "component",
       type: this.#id,
@@ -126,6 +118,17 @@ export class BreadboardComponentTool implements BBRTTool {
       this.#artifacts,
       this.#kits
     );
+    return {
+      result: this.#execute(invocation),
+      render: () => invocation.render(),
+    };
+  }
+
+  async #execute(
+    invocation: BreadboardToolInvocation
+  ): Promise<
+    Result<{ data: JsonSerializableObject; artifacts: ArtifactHandle[] }>
+  > {
     await invocation.start();
     const state = invocation.state.get();
     if (state.status === "success") {
