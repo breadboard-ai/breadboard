@@ -36,8 +36,7 @@ class SchemaDiffer implements SchemaDiff {
     public readonly existing: Schema,
     public readonly incoming: Schema
   ) {
-    this.additionalPropsChanged =
-      existing.additionalProperties !== incoming.additionalProperties;
+    this.additionalPropsChanged = this.computeAdditionPropsChanged();
   }
 
   computeDiff(): void {
@@ -63,9 +62,15 @@ class SchemaDiffer implements SchemaDiff {
     };
   }
 
+  computeAdditionPropsChanged() {
+    const incoming = !!this.incoming?.additionalProperties;
+    const existing = !!this.existing?.additionalProperties;
+    return incoming !== existing;
+  }
+
   computeRequiredChanges() {
-    const existing = this.existing.required || [];
-    const incoming = this.incoming.required || [];
+    const existing = this.existing?.required || [];
+    const incoming = this.incoming?.required || [];
 
     const existingSet = new Set(existing);
     for (const name of incoming) {
@@ -79,8 +84,8 @@ class SchemaDiffer implements SchemaDiff {
   }
 
   computePropertyChanges() {
-    const existing = this.existing.properties || {};
-    const incoming = this.incoming.properties || {};
+    const existing = this.existing?.properties || {};
+    const incoming = this.incoming?.properties || {};
     const all = new Set([...Object.keys(existing), ...Object.keys(incoming)]);
 
     for (const name of all) {
