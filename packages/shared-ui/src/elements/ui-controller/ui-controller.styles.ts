@@ -19,20 +19,49 @@ export const styles = css`
   }
 
   #controls-activity,
-  #content {
+  #create-view {
     width: 100%;
     height: 100%;
     overflow: auto;
     position: relative;
   }
 
-  #content {
+  #create-view {
     display: grid;
     grid-template-columns: 1fr;
+    &.welcome {
+      grid-template-columns: none;
+    }
   }
 
-  #content.welcome {
-    grid-template-columns: none;
+  #deploy-view {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: var(--bb-neutral-0);
+    z-index: 2;
+
+    & #deploy-view-sidenav {
+      background: var(--bb-neutral-0);
+      border-right: 1px solid var(--bb-neutral-300);
+    }
+
+    & bb-app-preview {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+
+    & #no-items {
+      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+        var(--bb-font-family);
+      color: var(--bb-neutral-700);
+      padding: var(--bb-grid-size-4);
+    }
   }
 
   #controls-activity {
@@ -169,11 +198,11 @@ export const styles = css`
     background: var(--bb-ui-50);
   }
 
-  #outline-container {
+  #create-view-sidenav {
     border-right: 1px solid var(--bb-neutral-300);
   }
 
-  #outline-container,
+  #create-view-sidenav,
   #graph-container {
     width: 100%;
     height: 100%;

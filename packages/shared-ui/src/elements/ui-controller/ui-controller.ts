@@ -9,6 +9,7 @@ const Strings = StringsHelper.forSection("UIController");
 
 import {
   BoardServer,
+  DataStore,
   EditHistory,
   EditableGraph,
   GraphDescriptor,
@@ -21,6 +22,7 @@ import {
   Kit,
   MainGraphIdentifier,
   MutableGraphStore,
+  RunStore,
 } from "@google-labs/breadboard";
 import {
   HTMLTemplateResult,
@@ -51,11 +53,15 @@ import {
 import { Editor } from "../elements.js";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
+import { Sandbox } from "@breadboard-ai/jsandbox";
 
 const SIDE_NAV_ITEM_KEY = "bb-ui-side-nav-item";
 
 @customElement("bb-ui-controller")
 export class UI extends LitElement {
+  @property()
+  mainView: "create" | "deploy" = "create";
+
   @property()
   graph: GraphDescriptor | null = null;
 
@@ -82,6 +88,18 @@ export class UI extends LitElement {
 
   @property()
   topGraphResult: TopGraphRunResult | null = null;
+
+  @property()
+  dataStore: DataStore | null = null;
+
+  @property()
+  runStore: RunStore | null = null;
+
+  @property()
+  sandbox: Sandbox | null = null;
+
+  @property()
+  fileSystem: FileSystem | null = null;
 
   @property({ reflect: true })
   failedToLoad = false;
@@ -286,6 +304,15 @@ export class UI extends LitElement {
     const run = this.runs?.[0] ?? null;
     const lastRun = this.runs?.[1] ?? null;
     const events = run?.events ?? [];
+    const eventPosition = events.length - 1;
+
+    const appPreview = guard([run, events, eventPosition], () => {
+      return html`<bb-app-preview
+        .run=${run}
+        .events=${events}
+        .boardServers=${this.boardServers}
+      ></bb-app-preview>`;
+    });
 
     const graphEditor = guard(
       [
@@ -476,7 +503,6 @@ export class UI extends LitElement {
       }
 
       case "activity": {
-        const eventPosition = events.length - 1;
         const latest = events.at(-1);
         let showDebugControls = false;
         if (latest && latest.type === "node") {
@@ -539,30 +565,48 @@ export class UI extends LitElement {
     }
 
     return graph
-      ? html`<section id="content">
-          <bb-splitter
-            id="splitter"
-            split="[0.2, 0.8]"
-            .name=${"outline-editor"}
-            .minSegmentSizeHorizontal=${265}
-          >
-            <div id="outline-container" slot="slot-0">
-              ${sectionNav}
-              ${this.debugEvent !== null
-                ? html`<button
-                    id="back-to-activity"
-                    @click=${() => {
-                      this.debugEvent = null;
-                    }}
+      ? html`<section id="create-view">
+            <bb-splitter
+              id="splitter"
+              split="[0.2, 0.8]"
+              .name=${"create-view"}
+              .minSegmentSizeHorizontal=${265}
+            >
+              <div id="create-view-sidenav" slot="slot-0">
+                ${sectionNav}
+                ${this.debugEvent !== null
+                  ? html`<button
+                      id="back-to-activity"
+                      @click=${() => {
+                        this.debugEvent = null;
+                      }}
+                    >
+                      ${Strings.from("COMMAND_BACK_TO_ACTIVITY")}
+                    </button>`
+                  : nothing}
+                ${sideNavItem}
+              </div>
+              ${contentContainer}
+            </bb-splitter>
+          </section>
+
+          ${this.mainView === "create"
+            ? nothing
+            : html`
+                <section id="deploy-view">
+                  <bb-splitter
+                    id="splitter"
+                    split="[0.2, 0.8]"
+                    .name=${"deploy-view"}
+                    .minSegmentSizeHorizontal=${265}
                   >
-                    ${Strings.from("COMMAND_BACK_TO_ACTIVITY")}
-                  </button>`
-                : nothing}
-              ${sideNavItem}
-            </div>
-            ${contentContainer}
-          </bb-splitter>
-        </section>`
+                    <div id="deploy-view-sidenav" slot="slot-0">
+                      <div id="no-items">There are no configuration items</div>
+                    </div>
+                    <div id="deploy" slot="slot-1">${appPreview}</div>
+                  </bb-splitter>
+                </section>
+              `}`
       : html`<section id="content" class="welcome">${graphEditor}</section>`;
   }
 
