@@ -72,7 +72,13 @@ export class BBRTSesssionPicker extends SignalWatcher(LitElement) {
         --bb-icon: var(--bb-icon-delete);
         border: none;
         background-color: transparent;
+        opacity: 0%;
+      }
+      li:hover .delete-button {
         opacity: 50%;
+      }
+      li:hover .delete-button:hover {
+        opacity: 100%;
       }
     `,
   ];
@@ -106,6 +112,7 @@ export class BBRTSesssionPicker extends SignalWatcher(LitElement) {
         >
         <button
           class="delete-button bb-icon-button"
+          title="Delete session"
           @click=${(event: MouseEvent) =>
             this.#clickDeleteSessionButton(event, id)}
         >

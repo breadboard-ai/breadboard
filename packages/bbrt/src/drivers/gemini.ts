@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TurnChunk } from "../state/turn-chunk.js";
+import type { TurnChunk, TurnChunkError } from "../state/turn-chunk.js";
 import type { ReactiveTurnState } from "../state/turn.js";
 import type { BBRTTool } from "../tools/tool-types.js";
+import { makeErrorEvent } from "../util/event-factories.js";
 import {
   exponentialBackoff,
   type ExponentialBackoffParameters,
@@ -49,11 +50,10 @@ export class GeminiDriver implements BBRTDriver {
     turns,
     systemPrompt,
     tools,
-  }: BBRTDriverSendOptions): AsyncIterable<TurnChunk> {
+  }: BBRTDriverSendOptions): AsyncGenerator<TurnChunk, void | TurnChunkError> {
     const contents = convertTurnsForGemini(turns);
     if (!contents.ok) {
-      // TODO(aomarks) Send should return a Result.
-      throw new Error(String(contents.error));
+      return makeErrorEvent(contents.error);
     }
     const request: GeminiRequest = {
       contents: contents.value,
@@ -74,10 +74,13 @@ export class GeminiDriver implements BBRTDriver {
     );
     const apiKey = await this.#getApiKey();
     if (!apiKey.ok) {
-      return apiKey;
+      return makeErrorEvent(apiKey.error);
     }
     if (!apiKey.value) {
-      return { ok: false, error: Error("No Gemini API key was available") };
+      throw new Error(
+        "No Gemini API key was available. " +
+          "Add API keys from the Visual Editor."
+      );
     }
     url.searchParams.set("key", apiKey.value);
 
@@ -117,15 +120,12 @@ export class GeminiDriver implements BBRTDriver {
       }
     })();
     if (!response.ok) {
-      throw new Error(String(response.error));
+      return makeErrorEvent(response.error);
     }
 
     const body = response.value.body;
     if (body === null) {
-      return {
-        ok: false,
-        error: Error("Gemini API response had null body"),
-      };
+      return makeErrorEvent(new Error("Gemini API response had null body"));
     }
     yield* convertGeminiChunks(
       streamJsonArrayItems<GeminiResponse>(

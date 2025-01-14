@@ -19,6 +19,7 @@ import { ReactiveSessionState } from "../state/session.js";
 import { ReactiveTurnState } from "../state/turn.js";
 import type { BBRTTool } from "../tools/tool-types.js";
 import type { Clock } from "../util/clock-type.js";
+import { makeErrorEvent } from "../util/event-factories.js";
 import type { JsonSerializableObject } from "../util/json-serializable.js";
 import { coercePresentableError } from "../util/presentable-error.js";
 import type { Result } from "../util/result.js";
@@ -185,39 +186,42 @@ export class Conversation {
     });
     this.state.events.push(event);
     const turn = (event.detail as ReactiveSessionEventTurn).turn;
-
+    const functionCalls = [];
     // Don't include the pending turn we just created.
     const slice = this.state.turns.slice(0, -1);
-    const chunks = driver.send({
-      systemPrompt,
-      tools,
-      turns: slice,
-    });
-    const functionCalls = [];
-    for await (const chunk of chunks) {
-      if (chunk.kind === "function-call") {
-        if (tools !== undefined) {
-          const call = new ReactiveFunctionCallState(chunk.call);
-          functionCalls.push(call);
-          turn.chunks.push({
-            kind: "function-call",
-            timestamp: chunk.timestamp,
-            call: call,
-          });
+    try {
+      const chunks = driver.send({
+        systemPrompt,
+        tools,
+        turns: slice,
+      });
+      for await (const chunk of chunks) {
+        if (chunk.kind === "function-call") {
+          if (tools !== undefined) {
+            const call = new ReactiveFunctionCallState(chunk.call);
+            functionCalls.push(call);
+            turn.chunks.push({
+              kind: "function-call",
+              timestamp: chunk.timestamp,
+              call: call,
+            });
+          } else {
+            turn.chunks.push({
+              kind: "error",
+              timestamp: chunk.timestamp,
+              error: {
+                message:
+                  `Model made unexpected function call: ` +
+                  JSON.stringify(chunk.call),
+              },
+            });
+          }
         } else {
-          turn.chunks.push({
-            kind: "error",
-            timestamp: chunk.timestamp,
-            error: {
-              message:
-                `Model made unexpected function call: ` +
-                JSON.stringify(chunk.call),
-            },
-          });
+          turn.chunks.push(chunk);
         }
-      } else {
-        turn.chunks.push(chunk);
       }
+    } catch (e) {
+      turn.chunks.push(makeErrorEvent(e));
     }
     turn.status = "done";
     return { functionCalls };
