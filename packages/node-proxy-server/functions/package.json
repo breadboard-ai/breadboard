@@ -81,7 +81,7 @@
     "@google-labs/core-kit": "^0.17.1",
     "@google-labs/palm-kit": "^0.1.8",
     "@google-labs/template-kit": "^0.3.16",
-    "@rollup/plugin-commonjs": "^28.0.1",
+    "@rollup/plugin-commonjs": "^28.0.2",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.3.0",
     "@rollup/plugin-terser": "^0.4.4",
