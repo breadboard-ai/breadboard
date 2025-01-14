@@ -7,20 +7,24 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html, nothing, svg } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { ForkEvent } from "../llm/fork.js";
+import { CutEvent, EditEvent, ForkEvent, RetryEvent } from "../llm/events.js";
 import type { ReactiveTurnState } from "../state/turn.js";
 import { iconButtonStyle } from "../style/icon-button.js";
 import { connectedEffect } from "../util/connected-effect.js";
 import "./markdown.js";
 import "./tool-call.js";
 
+export interface TurnInfo {
+  turn: ReactiveTurnState;
+  index: number;
+  numTurnsTotal: number;
+  hideIcon: boolean;
+}
+
 @customElement("bbrt-chat-message")
 export class BBRTChatMessage extends SignalWatcher(LitElement) {
-  @property({ type: Object })
-  accessor turn: ReactiveTurnState | undefined = undefined;
-
-  @property({ type: Boolean })
-  accessor hideIcon = false;
+  @property({ attribute: false })
+  accessor info: TurnInfo | undefined = undefined;
 
   static override styles = [
     iconButtonStyle,
@@ -99,6 +103,7 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
         width: min-content;
         position: relative;
         margin: 4px auto 12px -10px;
+        display: flex;
       }
       :host(:hover) #actions,
       :host(:focus) #actions,
@@ -111,8 +116,19 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       }
       #actions button {
         border: none;
-        --bb-icon: var(--bb-icon-fork-down-right);
         --bb-icon-size: 20px;
+      }
+      #editButton {
+        --bb-icon: var(--bb-icon-edit);
+      }
+      #retryButton {
+        --bb-icon: var(--bb-icon-refresh);
+      }
+      #forkButton {
+        --bb-icon: var(--bb-icon-fork-down-right);
+      }
+      #cutButton {
+        --bb-icon: var(--bb-icon-content-cut);
       }
       #actions button:not(:hover) {
         --bb-button-background: transparent;
@@ -123,13 +139,12 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
   override connectedCallback() {
     super.connectedCallback();
     connectedEffect(this, () =>
-      this.setAttribute("status", this.turn?.status ?? "pending")
+      this.setAttribute("status", this.info?.turn.status ?? "pending")
     );
   }
 
   override render() {
-    // return html`<pre>${JSON.stringify(this.turn?.data ?? {}, null, 2)}</pre>`;
-    if (!this.turn) {
+    if (!this.info) {
       return nothing;
     }
     return [
@@ -137,7 +152,7 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       html`
         <div part="contents">
           <bbrt-markdown
-            .markdown=${this.turn.partialText}
+            .markdown=${this.info.turn.partialText}
             part="content"
           ></bbrt-markdown>
           ${this.#renderFunctionCalls()}
@@ -148,54 +163,106 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
   }
 
   #renderFunctionCalls() {
-    const calls = this.turn?.partialFunctionCalls;
+    const calls = this.info?.turn.partialFunctionCalls;
     if (!calls?.length) {
       return nothing;
     }
     return html`<div id="toolCalls" part="content">
-      ${calls.map((call) =>
-        call.render
-          ? call.render()
-          : html`<bbrt-tool-call .toolCall=${call}></bbrt-tool-call>`
+      ${calls.map(
+        (call) => html`<bbrt-tool-call .toolCall=${call}></bbrt-tool-call>`
       )}
     </div>`;
   }
 
   get #roleIcon() {
-    if (!this.turn || this.hideIcon) {
+    if (!this.info || this.info.hideIcon) {
       return nothing;
     }
-    const role = this.hideIcon ? undefined : this.turn.role;
+    const role = this.info.hideIcon ? undefined : this.info.turn.role;
     return html`<svg
       aria-label="${role}"
       role="img"
-      part="icon icon-${role} icon-${this.turn.status}"
+      part="icon icon-${role} icon-${this.info.turn.status}"
     >
       ${role ? svg`<use href="/bbrt/images/${role}.svg#icon"></use>` : nothing}
     </svg>`;
   }
 
   get #actions() {
-    if (!this.turn) {
+    if (!this.info) {
       return nothing;
     }
-    return html`
-      <div id="actions">
+    const buttons = [];
+    if (this.info.turn.role === "user") {
+      buttons.push(html`
+        <button
+          id="editButton"
+          class="bb-icon-button"
+          title="Edit"
+          @click=${this.#onClickEditButton}
+        ></button>
+        <button
+          id="retryButton"
+          class="bb-icon-button"
+          title="Retry"
+          @click=${this.#onClickRetryButton}
+        ></button>
+      `);
+    }
+    if (
+      this.info.turn.role === "model" &&
+      this.info.turn.status === "done" &&
+      // If the turn has function calls, we don't allow splicing, because it is
+      // expected that there is always another turn to come, so the cut should
+      // happen there instead.
+      this.info.turn.partialFunctionCalls.length === 0 &&
+      // No reason to splice if we're already at the end.
+      this.info.index < this.info.numTurnsTotal - 1
+    ) {
+      buttons.push(html`
+        <button
+          id="cutButton"
+          class="bb-icon-button"
+          title="Cut"
+          @click=${this.#onClickCutButton}
+          ></button>
         <button
           id="forkButton"
           class="bb-icon-button"
           title="Fork"
           @click=${this.#onClickForkButton}
-        ></button>
-      </div>
-    `;
+          ></button>
+        </div>`);
+    }
+    return html`<div id="actions">${buttons}</div>`;
+  }
+
+  #onClickCutButton() {
+    if (!this.info) {
+      return;
+    }
+    this.dispatchEvent(new CutEvent(this.info.turn));
   }
 
   #onClickForkButton() {
-    if (!this.turn) {
+    if (!this.info) {
       return;
     }
-    this.dispatchEvent(new ForkEvent(this.turn));
+    this.dispatchEvent(new ForkEvent(this.info.turn));
+  }
+
+  #onClickRetryButton() {
+    if (!this.info) {
+      return;
+    }
+    this.dispatchEvent(new RetryEvent(this.info.turn));
+  }
+
+  #onClickEditButton() {
+    if (!this.info) {
+      return;
+    }
+    this.dispatchEvent(new EditEvent(this.info.turn));
   }
 }
 

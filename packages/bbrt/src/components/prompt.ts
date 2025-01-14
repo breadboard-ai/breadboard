@@ -15,7 +15,11 @@ export class BBRTPrompt extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor conversation: Conversation | undefined = undefined;
 
-  #measure = createRef();
+  @property()
+  accessor value: string = "";
+
+  #measure = createRef<HTMLElement>();
+  #textarea = createRef<HTMLTextAreaElement>();
 
   static override styles = css`
     :host {
@@ -70,6 +74,7 @@ export class BBRTPrompt extends SignalWatcher(LitElement) {
       content: "\u200B";
     }
   `;
+
   override render() {
     if (this.conversation === undefined) {
       return html`Waiting for conversation...`;
@@ -77,13 +82,19 @@ export class BBRTPrompt extends SignalWatcher(LitElement) {
     return html`
       <div id="container">
         <textarea
+          ${ref(this.#textarea)}
           placeholder="Ask me about Breadboard"
           @keydown=${this.#onKeydown}
           @input=${this.#onInput}
+          .value=${this.value}
         ></textarea>
         <div id="measure" ${ref(this.#measure)}></div>
       </div>
     `;
+  }
+
+  focus() {
+    this.#textarea.value?.focus();
   }
 
   #onKeydown(event: KeyboardEvent & { target: HTMLTextAreaElement }) {
