@@ -32,12 +32,12 @@ export class BBRTResizer extends LitElement {
   static override styles = css`
     :host {
       position: relative;
-      cursor: ew-resize;
+      cursor: col-resize;
     }
     div::before,
     div::after {
       content: "";
-      cursor: ew-resize;
+      cursor: col-resize;
       position: absolute;
       width: calc(var(--bbrt-resizer-touch-area, 16px) / 2);
       height: 100%;
