@@ -348,7 +348,7 @@ class GraphDescriberManager {
         if (this.handle.main() === moduleId) {
           result = await invokeMainDescriber(
             sandbox,
-            this.handle.graph(),
+            this.mutable.graph,
             inputs,
             inputSchema,
             outputSchema
@@ -357,7 +357,7 @@ class GraphDescriberManager {
           result = await invokeDescriber(
             moduleId,
             sandbox,
-            this.handle.graph(),
+            this.mutable.graph,
             inputs,
             inputSchema,
             outputSchema

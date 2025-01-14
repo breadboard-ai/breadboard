@@ -103,9 +103,10 @@ export async function getGraphHandlerFromMutableGraph(
   const result = store.addByURL(type, [], {
     outerGraph: mutable.graph,
   });
+  const latest = await store.getLatest(result.mutable);
   return new GraphBasedNodeHandler(
     {
-      graph: result.mutable.graph,
+      graph: latest.graph,
       subGraphId: result.graphId,
       moduleId: result.moduleId,
     },
