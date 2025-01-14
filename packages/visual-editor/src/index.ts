@@ -40,7 +40,7 @@ import {
 } from "@breadboard-ai/data-store";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { SettingsStore } from "./data/settings-store";
+import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import { addNodeProxyServerConfig } from "./data/node-proxy-servers";
 import { provide } from "@lit/context";
 import { RecentBoardStore } from "./data/recent-boards";

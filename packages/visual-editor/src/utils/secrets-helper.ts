@@ -5,7 +5,7 @@
  */
 
 import { InputValues } from "@google-labs/breadboard";
-import { SettingsStore } from "../data/settings-store";
+import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 
 export class SecretsHelper {

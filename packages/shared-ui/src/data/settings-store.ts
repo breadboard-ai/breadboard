@@ -5,14 +5,14 @@
  */
 
 import * as idb from "idb";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import * as BreadboardUI_Types from "../types/types.js";
 
-interface SettingsDB extends BreadboardUI.Types.SettingsList, idb.DBSchema {}
+interface SettingsDB extends BreadboardUI_Types.SettingsList, idb.DBSchema {}
 
 const SETTINGS_NAME = "settings";
 const SETTINGS_VERSION = 7;
 
-export class SettingsStore implements BreadboardUI.Types.SettingsStore {
+export class SettingsStore implements BreadboardUI_Types.SettingsStore {
   static #instance: SettingsStore;
   static instance() {
     if (!this.#instance) {
@@ -21,8 +21,8 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
     return this.#instance;
   }
 
-  #settings: BreadboardUI.Types.Settings = {
-    [BreadboardUI.Types.SETTINGS_TYPE.GENERAL]: {
+  #settings: BreadboardUI_Types.Settings = {
+    [BreadboardUI_Types.SETTINGS_TYPE.GENERAL]: {
       configuration: {
         extensible: false,
         description: `General Breadboard settings`,
@@ -188,7 +188,7 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
         ],
       ]),
     },
-    [BreadboardUI.Types.SETTINGS_TYPE.SECRETS]: {
+    [BreadboardUI_Types.SETTINGS_TYPE.SECRETS]: {
       configuration: {
         extensible: true,
         description: `Secrets that you want to store locally, such as API keys. When calling an API, the API provider's applicable privacy policy and terms apply. Please note that items in this list should have unique names. `,
@@ -197,7 +197,7 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
       },
       items: new Map([]),
     },
-    [BreadboardUI.Types.SETTINGS_TYPE.INPUTS]: {
+    [BreadboardUI_Types.SETTINGS_TYPE.INPUTS]: {
       configuration: {
         extensible: true,
         description: `Inputs that the boards ask for in the middle of the run (also known as "bubbled inputs"), such as model names`,
@@ -206,7 +206,7 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
       },
       items: new Map([]),
     },
-    [BreadboardUI.Types.SETTINGS_TYPE.NODE_PROXY_SERVERS]: {
+    [BreadboardUI_Types.SETTINGS_TYPE.NODE_PROXY_SERVERS]: {
       configuration: {
         extensible: true,
         description:
@@ -216,7 +216,7 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
       },
       items: new Map([]),
     },
-    [BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS]: {
+    [BreadboardUI_Types.SETTINGS_TYPE.CONNECTIONS]: {
       configuration: {
         extensible: false,
         description:
@@ -233,24 +233,24 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
     return structuredClone(this.#settings);
   }
 
-  getSection(section: BreadboardUI.Types.SETTINGS_TYPE) {
+  getSection(section: BreadboardUI_Types.SETTINGS_TYPE) {
     return this.#settings[section];
   }
 
-  getItem(section: BreadboardUI.Types.SETTINGS_TYPE, name: string) {
+  getItem(section: BreadboardUI_Types.SETTINGS_TYPE, name: string) {
     return this.#settings[section].items.get(name);
   }
 
   private constructor() {}
 
-  async save(settings: BreadboardUI.Types.Settings) {
+  async save(settings: BreadboardUI_Types.Settings) {
     const settingsDb = await idb.openDB<SettingsDB>(
       SETTINGS_NAME,
       SETTINGS_VERSION
     );
 
     for (const [store, data] of Object.entries(settings)) {
-      const settingsStore = store as BreadboardUI.Types.SETTINGS_TYPE;
+      const settingsStore = store as BreadboardUI_Types.SETTINGS_TYPE;
       if (settingsDb.objectStoreNames.contains(settingsStore)) {
         await settingsDb.clear(settingsStore);
       }
@@ -278,7 +278,7 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
         upgrade(db) {
           settingsFound = false;
           for (const groupName of Object.keys(settings)) {
-            const name = groupName as BreadboardUI.Types.SETTINGS_TYPE;
+            const name = groupName as BreadboardUI_Types.SETTINGS_TYPE;
             if (db.objectStoreNames.contains(name)) continue;
             db.createObjectStore(name, {
               keyPath: "id",
@@ -298,7 +298,7 @@ export class SettingsStore implements BreadboardUI.Types.SettingsStore {
         }
 
         if (
-          store === BreadboardUI.Types.SETTINGS_TYPE.GENERAL &&
+          store === BreadboardUI_Types.SETTINGS_TYPE.GENERAL &&
           !this.#settings[store].items.get(item.name)
         ) {
           skippedSettings = true;
