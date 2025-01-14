@@ -24,7 +24,7 @@ export class IndexedDBSettingsSecrets implements SecretsProvider {
       return db;
     }
     const store = resultify(() => {
-      const transaction = db.value.transaction(["Secrets"]);
+      const transaction = db.value.transaction("Secrets", "readonly");
       return transaction.objectStore("Secrets");
     });
     if (!store.ok) {

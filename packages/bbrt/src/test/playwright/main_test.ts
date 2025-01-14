@@ -9,7 +9,11 @@ import { BBRTMain } from "../../components/main.js";
 
 describe("bbrt-main", () => {
   it("is an HTMLElement", () => {
-    const c = new BBRTMain();
+    const c = new BBRTMain({
+      connectionRedirectUrl: "",
+      connectionServerUrl: "",
+      plugins: { input: [] },
+    });
     expect(c).instanceOf(HTMLElement);
   });
 });
