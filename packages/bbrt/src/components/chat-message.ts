@@ -7,7 +7,7 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html, nothing, svg } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { CutEvent, ForkEvent, RetryEvent } from "../llm/events.js";
+import { CutEvent, EditEvent, ForkEvent, RetryEvent } from "../llm/events.js";
 import type { ReactiveTurnState } from "../state/turn.js";
 import { iconButtonStyle } from "../style/icon-button.js";
 import { connectedEffect } from "../util/connected-effect.js";
@@ -118,6 +118,9 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
         border: none;
         --bb-icon-size: 20px;
       }
+      #editButton {
+        --bb-icon: var(--bb-icon-edit);
+      }
       #retryButton {
         --bb-icon: var(--bb-icon-refresh);
       }
@@ -193,6 +196,12 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
     if (this.info.turn.role === "user") {
       buttons.push(html`
         <button
+          id="editButton"
+          class="bb-icon-button"
+          title="Edit"
+          @click=${this.#onClickEditButton}
+        ></button>
+        <button
           id="retryButton"
           class="bb-icon-button"
           title="Retry"
@@ -247,6 +256,13 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       return;
     }
     this.dispatchEvent(new RetryEvent(this.info.turn));
+  }
+
+  #onClickEditButton() {
+    if (!this.info) {
+      return;
+    }
+    this.dispatchEvent(new EditEvent(this.info.turn));
   }
 }
 

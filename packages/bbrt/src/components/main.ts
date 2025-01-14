@@ -58,6 +58,7 @@ import "./artifact-display.js";
 import "./chat.js";
 import "./driver-selector.js";
 import "./prompt.js";
+import { BBRTPrompt } from "./prompt.js";
 import "./resizer.js";
 import "./session-picker.js";
 import "./tool-palette.js";
@@ -84,6 +85,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
 
   readonly #leftBar = createRef();
   readonly #rightBar = createRef();
+  readonly #prompt = createRef<BBRTPrompt>();
 
   readonly #breadboardKits: Kit[] = [
     asRuntimeKit(CoreKit),
@@ -296,7 +298,10 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         <bbrt-driver-selector
           .conversation=${this.#conversation}
         ></bbrt-driver-selector>
-        <bbrt-prompt .conversation=${this.#conversation}></bbrt-prompt>
+        <bbrt-prompt
+          .conversation=${this.#conversation}
+          ${ref(this.#prompt)}
+        ></bbrt-prompt>
       </div>
 
       <bbrt-chat
@@ -306,6 +311,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         @bbrt-fork=${this.#onFork}
         @bbrt-retry=${this.#onRetry}
         @bbrt-cut=${this.#onCut}
+        @bbrt-edit=${this.#onEdit}
       ></bbrt-chat>
 
       <div id="left-sidebar" ${ref(this.#leftBar)}>
@@ -400,6 +406,16 @@ export class BBRTMain extends SignalWatcher(LitElement) {
     }
     this.#sessionState.rollback(this.#findEventIndexForTurn(event.turn));
     this.#conversation?.send(event.turn.partialText);
+  }
+
+  #onEdit(event: RetryEvent) {
+    const prompt = this.#prompt.value;
+    if (!this.#sessionState || !prompt) {
+      return;
+    }
+    this.#sessionState.rollback(this.#findEventIndexForTurn(event.turn));
+    prompt.value = event.turn.partialText;
+    prompt.focus();
   }
 
   #onFork(event: ForkEvent) {

@@ -33,10 +33,20 @@ export class CutEvent extends Event {
   }
 }
 
+export class EditEvent extends Event {
+  readonly turn: ReactiveTurnState;
+
+  constructor(turn: ReactiveTurnState) {
+    super("bbrt-edit", { bubbles: true, composed: true });
+    this.turn = turn;
+  }
+}
+
 declare global {
   interface WindowEventMap {
     "bbrt-fork": ForkEvent;
     "bbrt-retry": RetryEvent;
     "bbrt-cut": CutEvent;
+    "bbrt-edit": EditEvent;
   }
 }
