@@ -6,8 +6,8 @@
   "private": true,
   "version": "0.0.1",
   "description": "serves visual editor, board server, and connection server from a single origin",
-  "main": "./dist/server/main.js",
-  "exports": "./dist/server/main.js",
+  "main": "./dist/src/server/main.js",
+  "exports": "./dist/src/server/main.js",
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
