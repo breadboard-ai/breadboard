@@ -191,7 +191,7 @@
   ],
   "graphs": {
     "daf082ca-c1aa-4aff-b2c8-abeb984ab66c": {
-      "title": "Agent",
+      "title": "Text Generator",
       "description": "Calls an LLM and so much more. Insert real description here.",
       "version": "0.0.1",
       "describer": "module:entry",
