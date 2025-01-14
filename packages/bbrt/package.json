@@ -127,6 +127,7 @@
     }
   },
   "dependencies": {
+    "@breadboard-ai/connection-client": "0.1.0",
     "@breadboard-ai/google-drive-kit": "0.4.0",
     "@breadboard-ai/shared-ui": "1.21.0",
     "@google-labs/agent-kit": "^0.14.0",

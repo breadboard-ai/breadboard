@@ -4,7 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { createTokenVendor } from "@breadboard-ai/connection-client";
 import GoogleDriveKit from "@breadboard-ai/google-drive-kit/google-drive.kit.json" with { type: "json" };
+import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import AgentKit from "@google-labs/agent-kit/agent.kit.json" assert { type: "json" };
 import {
   asRuntimeKit,
@@ -22,6 +24,10 @@ import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { AsyncComputed } from "signal-utils/async-computed";
+import type {
+  GrantStore,
+  TokenVendor,
+} from "../../../connection-client/dist/src/types.js";
 import type { Environment } from "../../../shared-ui/dist/contexts/environment.js";
 import {
   ArtifactStore,
@@ -63,6 +69,9 @@ import "./resizer.js";
 import "./session-picker.js";
 import "./tool-palette.js";
 
+const settingsStore = SettingsStore.instance();
+await settingsStore.restore();
+
 @customElement("bbrt-main")
 export class BBRTMain extends SignalWatcher(LitElement) {
   @property({ attribute: false })
@@ -70,6 +79,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
 
   readonly #environment: Environment;
   readonly #secrets: SecretsProvider;
+  readonly #tokenVendor: TokenVendor;
   readonly #sessions: SessionStore;
   readonly #drivers: Map<string, BBRTDriver>;
   readonly #toolsPromise: Promise<Map<string, BBRTTool>>;
@@ -159,6 +169,21 @@ export class BBRTMain extends SignalWatcher(LitElement) {
     this.#environment = environment;
     this.#artifacts = new ArtifactStore(new IdbArtifactReaderWriter());
     this.#secrets = new IndexedDBSettingsSecrets();
+    const grantStore: GrantStore = {
+      get: (conectionId: string) => {
+        return settingsStore.values["Connections"].items.get(conectionId)
+          ?.value as string;
+      },
+      set: async (connectionId: string, grant: string) => {
+        const values = settingsStore.values;
+        values["Connections"].items.set(connectionId, {
+          name: connectionId,
+          value: grant,
+        });
+        await settingsStore.save(values);
+      },
+    };
+    this.#tokenVendor = createTokenVendor(grantStore, this.#environment);
     this.#drivers = new Map<string, BBRTDriver>(
       [
         new GeminiDriver(() => this.#secrets.getSecret("GEMINI_API_KEY")),
@@ -355,6 +380,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
             id,
             handler,
             this.#secrets,
+            this.#tokenVendor,
             this.#artifacts,
             this.#breadboardKits
           )
@@ -382,6 +408,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
             board,
             server,
             this.#secrets,
+            this.#tokenVendor,
             this.#artifacts,
             this.#breadboardKits
           );

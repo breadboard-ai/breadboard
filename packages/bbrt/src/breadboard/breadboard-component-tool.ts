@@ -13,6 +13,7 @@ import {
   type NodeDescriptor,
   type NodeHandler,
 } from "@google-labs/breadboard";
+import type { TokenVendor } from "../../../connection-client/dist/src/types.js";
 import type { ArtifactHandle } from "../artifacts/artifact-interface.js";
 import type { ArtifactStore } from "../artifacts/artifact-store.js";
 import type { SecretsProvider } from "../secrets/secrets-provider.js";
@@ -32,6 +33,7 @@ export class BreadboardComponentTool implements BBRTTool {
   readonly #id: string;
   readonly #describe?: NodeDescriberFunction;
   readonly #secrets: SecretsProvider;
+  readonly #tokenVendor: TokenVendor;
   readonly #artifacts: ArtifactStore;
   readonly #kits: Kit[];
 
@@ -40,12 +42,14 @@ export class BreadboardComponentTool implements BBRTTool {
     id: string,
     handler: NodeHandler,
     secrets: SecretsProvider,
+    tokenVendor: TokenVendor,
     artifacts: ArtifactStore,
     kits: Kit[]
   ) {
     this.#kit = kit;
     this.#id = id;
     this.#secrets = secrets;
+    this.#tokenVendor = tokenVendor;
     this.#artifacts = artifacts;
     this.#kits = kits;
     if ("describe" in handler) {
@@ -115,6 +119,7 @@ export class BreadboardComponentTool implements BBRTTool {
       args,
       async () => ({ ok: true, value: bgl }),
       this.#secrets,
+      this.#tokenVendor,
       this.#artifacts,
       this.#kits
     );

@@ -13,13 +13,10 @@ import {
   createDefaultDataStore,
   createLoader,
 } from "@google-labs/breadboard";
-import {
-  type RunConfig,
-  type RunSecretEvent,
-  createRunner,
-} from "@google-labs/breadboard/harness";
+import { type RunConfig, createRunner } from "@google-labs/breadboard/harness";
 import { nothing } from "lit";
 import { Signal } from "signal-polyfill";
+import type { TokenVendor } from "../../../connection-client/dist/src/types.js";
 import type { ArtifactHandle } from "../artifacts/artifact-interface.js";
 import type { ArtifactStore } from "../artifacts/artifact-store.js";
 import type { SecretsProvider } from "../secrets/secrets-provider.js";
@@ -44,7 +41,10 @@ export type InvocationState<O = unknown> =
 
 export class BreadboardToolInvocation {
   readonly #args: unknown;
+  // TODO(aomarks) We have SecretsProvider, TokenVendor, and SecretsHelper.
+  // Collapse all of them down into one.
   readonly #secrets: SecretsProvider;
+  readonly #tokenVendor: TokenVendor;
   readonly #getBgl: () => Promise<Result<GraphDescriptor>>;
   readonly #artifacts: ArtifactStore;
   readonly #kits: Kit[];
@@ -57,12 +57,14 @@ export class BreadboardToolInvocation {
     args: unknown,
     getBgl: () => Promise<Result<GraphDescriptor>>,
     secrets: SecretsProvider,
+    tokenVendor: TokenVendor,
     artifacts: ArtifactStore,
     kits: Kit[]
   ) {
     this.#args = args;
     this.#getBgl = getBgl;
     this.#secrets = secrets;
+    this.#tokenVendor = tokenVendor;
     this.#artifacts = artifacts;
     this.#kits = kits;
   }
@@ -125,13 +127,44 @@ export class BreadboardToolInvocation {
           endBoardRun({ ok: false, error: event.data.error });
         });
         runner.addEventListener("secret", (event) => {
+          const getSecret = async (
+            name: string
+          ): Promise<Result<string | undefined>> => {
+            if (!name.startsWith("connection:")) {
+              return this.#secrets.getSecret(name);
+            } else {
+              const connectionId = name.slice("connection:".length);
+              const result = this.#tokenVendor.getToken(connectionId);
+              if (result.state === "valid") {
+                return {
+                  ok: true,
+                  value: result.grant.access_token,
+                };
+              } else if (result.state === "expired") {
+                return {
+                  ok: true,
+                  value: (await result.refresh()).grant.access_token,
+                };
+              } else if (result.state === "signedout") {
+                return {
+                  ok: true,
+                  // TODO(aomarks) Integrate existing breadboard inputs system
+                  // so that the oauth widget displays.
+                  value: undefined,
+                };
+              } else {
+                result satisfies never;
+                throw new Error(`unreachable`);
+              }
+            }
+          };
+
           void (async () => {
             const secrets: Record<string, string> = {};
             const missing = [];
             const results = await Promise.all(
               event.data.keys.map(
-                async (name) =>
-                  [name, await this.#secrets.getSecret(name)] as const
+                async (name) => [name, await getSecret(name)] as const
               )
             );
             for (const [name, result] of results) {
@@ -185,39 +218,6 @@ export class BreadboardToolInvocation {
         artifacts: artifacts.value,
       },
     });
-  }
-
-  async #onSecret(event: RunSecretEvent) {
-    void (async () => {
-      const secrets: Record<string, string> = {};
-      const missing = [];
-      const results = await Promise.all(
-        event.data.keys.map(
-          async (name) => [name, await this.#secrets.getSecret(name)] as const
-        )
-      );
-      for (const [name, result] of results) {
-        if (!result.ok) {
-          endBoardRun(result);
-          return;
-        }
-        if (result.value !== undefined) {
-          secrets[name] = result.value;
-        } else {
-          missing.push(name);
-        }
-      }
-      if (missing.length > 0) {
-        endBoardRun({
-          ok: false,
-          error:
-            `Missing secret(s): ${missing.join(", ")}.` +
-            ` Use the Visual Editor Settings to add API keys.`,
-        });
-        return;
-      }
-      void runner.run(secrets);
-    })();
   }
 
   async #extractAndStoreArtifacts(

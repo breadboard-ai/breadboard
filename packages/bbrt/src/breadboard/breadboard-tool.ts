@@ -5,6 +5,7 @@
  */
 
 import { type GraphDescriptor, type Kit } from "@google-labs/breadboard";
+import type { TokenVendor } from "../../../connection-client/dist/src/types.js";
 import type { ArtifactHandle } from "../artifacts/artifact-interface.js";
 import type { ArtifactStore } from "../artifacts/artifact-store.js";
 import type { SecretsProvider } from "../secrets/secrets-provider.js";
@@ -28,6 +29,7 @@ export class BreadboardTool implements BBRTTool {
   readonly #listing: BreadboardBoardListing;
   readonly #server: BreadboardServiceClient;
   readonly #secrets: SecretsProvider;
+  readonly #tokenVendor: TokenVendor;
   readonly #artifacts: ArtifactStore;
   readonly #kits: Kit[];
 
@@ -35,12 +37,14 @@ export class BreadboardTool implements BBRTTool {
     listing: BreadboardBoardListing,
     server: BreadboardServiceClient,
     secrets: SecretsProvider,
+    tokenVendor: TokenVendor,
     artifacts: ArtifactStore,
     kits: Kit[]
   ) {
     this.#listing = listing;
     this.#server = server;
     this.#secrets = secrets;
+    this.#tokenVendor = tokenVendor;
     this.#artifacts = artifacts;
     this.#kits = kits;
   }
@@ -80,6 +84,7 @@ export class BreadboardTool implements BBRTTool {
       args,
       () => this.bgl(),
       this.#secrets,
+      this.#tokenVendor,
       this.#artifacts,
       this.#kits
     );
