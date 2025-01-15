@@ -159,7 +159,7 @@ export class Main extends LitElement {
   showNewWorkspaceItemOverlay = false;
 
   @state()
-  view: "deploy" | "create" = "deploy";
+  view: "deploy" | "create" = "create";
 
   @state()
   showBoardOverflowMenu = false;
