@@ -8,8 +8,8 @@
       "type": "content",
       "metadata": {
         "visual": {
-          "x": -642.9999999999998,
-          "y": -185.0000000000009,
+          "x": -594,
+          "y": -238,
           "collapsed": "expanded"
         },
         "title": "Content",
@@ -32,8 +32,8 @@
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": 135.00000000000023,
-          "y": -180,
+          "x": 177,
+          "y": -246,
           "collapsed": "expanded"
         },
         "title": "Outline Writer",
@@ -55,8 +55,8 @@
       "type": "file://bgl/a2.bgl.json#module:researcher",
       "metadata": {
         "visual": {
-          "x": -255,
-          "y": -166.0000000000009,
+          "x": -202.99999999999994,
+          "y": -232.00000000000006,
           "collapsed": "expanded"
         },
         "title": "Researcher",
@@ -78,8 +78,8 @@
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": 568,
-          "y": -47,
+          "x": 711,
+          "y": -49,
           "collapsed": "expanded"
         },
         "title": "Post Writer",
@@ -101,7 +101,7 @@
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": 557.9999999999995,
+          "x": 557.9999999999993,
           "y": -359.00000000000273,
           "collapsed": "expanded"
         },
@@ -124,8 +124,8 @@
       "type": "file://bgl/a2.bgl.json#module:image-generator",
       "metadata": {
         "visual": {
-          "x": 933.9999999999998,
-          "y": -218.00000000000182,
+          "x": 898,
+          "y": -205,
           "collapsed": "expanded"
         },
         "title": "Banner Image Generator",
@@ -138,8 +138,8 @@
       "type": "content",
       "metadata": {
         "visual": {
-          "x": 1364.0000000000007,
-          "y": -236.00000000000182,
+          "x": 1239,
+          "y": -160.0000000000001,
           "collapsed": "expanded"
         },
         "title": "Content",
