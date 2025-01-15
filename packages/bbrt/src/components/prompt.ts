@@ -5,7 +5,7 @@
  */
 
 import { SignalWatcher } from "@lit-labs/signals";
-import { LitElement, css, html } from "lit";
+import { LitElement, css, html, type PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import type { Conversation } from "../llm/conversation.js";
@@ -75,6 +75,12 @@ export class BBRTPrompt extends SignalWatcher(LitElement) {
     }
   `;
 
+  override updated(changes: PropertyValues<this>) {
+    if (changes.has("value")) {
+      this.updateComplete.then(() => this.#recomputeHeight());
+    }
+  }
+
   override render() {
     if (this.conversation === undefined) {
       return html`Waiting for conversation...`;
@@ -85,7 +91,7 @@ export class BBRTPrompt extends SignalWatcher(LitElement) {
           ${ref(this.#textarea)}
           placeholder="Ask me about Breadboard"
           @keydown=${this.#onKeydown}
-          @input=${this.#onInput}
+          @input=${this.#recomputeHeight}
           .value=${this.value}
         ></textarea>
         <div id="measure" ${ref(this.#measure)}></div>
@@ -110,15 +116,15 @@ export class BBRTPrompt extends SignalWatcher(LitElement) {
     }
   }
 
-  #onInput(event: InputEvent & { target: HTMLTextAreaElement }) {
+  #recomputeHeight() {
     // The "measure" <div> is used to measure the actual rendered height of the
     // text. We can't measure the <textarea> directly, because the case where
     // there is 1 line is indistinguishable from 2 lines.
+    const textarea = this.#textarea.value;
     const measure = this.#measure.value;
-    if (!measure) {
+    if (!textarea || !measure) {
       return;
     }
-    const textarea = event.target;
     measure.textContent = textarea.value;
     // Instead of directly matching the height, round to the nearest number of
     // lines, and then multiply by line height. This ensures our height is
