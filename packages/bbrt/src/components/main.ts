@@ -355,6 +355,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         <bbrt-session-picker
           .appState=${this.#appState}
           .sessionStore=${this.#sessions}
+          @bbrt-focus-prompt=${this.#onFocusPrompt}
         ></bbrt-session-picker>
         <bbrt-tool-palette
           .conversation=${this.#conversation}
@@ -476,6 +477,10 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         console.error(`Failed to fork session: ${result.error}`);
       }
     });
+  }
+
+  #onFocusPrompt() {
+    this.#prompt.value?.focus();
   }
 
   #findEventIndexForTurn(turn: ReactiveTurnState) {
