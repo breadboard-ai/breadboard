@@ -60,6 +60,7 @@ import { WriteFile } from "../tools/files/write-file.js";
 import { BoardLister } from "../tools/list-tools.js";
 import { type BBRTTool } from "../tools/tool-types.js";
 import { connectedEffect } from "../util/connected-effect.js";
+import type { Result } from "../util/result.js";
 import "./artifact-display.js";
 import "./chat.js";
 import "./driver-selector.js";
@@ -204,14 +205,8 @@ export class BBRTMain extends SignalWatcher(LitElement) {
 
       // Files
       new ReadFile(this.#artifacts),
-      new WriteFile(this.#artifacts),
-      new DisplayFile((path) => {
-        if (!this.#sessionState) {
-          return { ok: false, error: "No active session" };
-        }
-        this.#sessionState.activeArtifactId = path;
-        return { ok: true, value: undefined };
-      }),
+      new WriteFile(this.#artifacts, this.#displayFile),
+      new DisplayFile(this.#displayFile),
 
       // BGL
       new CreateBoard(this.#artifacts),
@@ -276,6 +271,14 @@ export class BBRTMain extends SignalWatcher(LitElement) {
       });
     })();
   }
+
+  #displayFile = (path: string): Result<void> => {
+    if (!this.#sessionState) {
+      return { ok: false, error: "No active session" };
+    }
+    this.#sessionState.activeArtifactId = path;
+    return { ok: true, value: undefined };
+  };
 
   get #sessionState() {
     return this.#sessionStateComputed.value;
