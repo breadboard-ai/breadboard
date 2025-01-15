@@ -8,9 +8,14 @@ import type { TurnChunk, TurnChunkError } from "../state/turn-chunk.js";
 import type { ReactiveTurnState } from "../state/turn.js";
 import type { BBRTTool } from "../tools/tool-types.js";
 import { makeErrorEvent } from "../util/event-factories.js";
+import {
+  exponentialBackoff,
+  type ExponentialBackoffParameters,
+} from "../util/exponential-backoff.js";
 import { JsonDataStreamTransformer } from "../util/json-data-stream-transformer.js";
 import type { JsonSerializableObject } from "../util/json-serializable.js";
 import type { Result } from "../util/result.js";
+import { resultify } from "../util/resultify.js";
 import type { BBRTDriver, BBRTDriverSendOptions } from "./driver-interface.js";
 import type {
   OpenAIChatRequest,
@@ -20,6 +25,14 @@ import type {
   OpenAIToolCall,
   OpenAIToolMessage,
 } from "./openai-types.js";
+
+const BACKOFF_PARAMS: ExponentialBackoffParameters = {
+  budget: 30_000,
+  minDelay: 500,
+  maxDelay: 5000,
+  multiplier: 2,
+  jitter: 0.1,
+};
 
 export class OpenAiDriver implements BBRTDriver {
   readonly id = "openai";
@@ -69,31 +82,56 @@ export class OpenAiDriver implements BBRTDriver {
         )
       );
     }
-    const result = await fetch(url.href, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey.value}`,
-      },
-      body: JSON.stringify(request),
-    });
 
-    if (result.status !== 200) {
-      try {
-        const error = await result.json();
-        return makeErrorEvent(
-          new Error(
-            `HTTP status ${result.status}` +
-              `\n\n${JSON.stringify(error, null, 2)}`
-          )
-        );
-      } catch {
-        return makeErrorEvent(new Error(`http status was ${result.status}`));
+    const response = await (async (): Promise<Result<Response>> => {
+      const fetchRequest = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey.value}`,
+        },
+        body: JSON.stringify(request),
+      };
+      const retryDelays = exponentialBackoff(BACKOFF_PARAMS);
+      const startTime = performance.now();
+      for (let attempt = 0; ; attempt++) {
+        const result = await resultify(fetch(url.href, fetchRequest));
+        if (!result.ok) {
+          return result;
+        }
+        const response = result.value;
+        if (response.status === 200) {
+          return result;
+        }
+        const retryable = response.status === /* Too Many Requests */ 429;
+        if (retryable) {
+          const delay = retryDelays.next();
+          if (!delay.done) {
+            await new Promise((resolve) => setTimeout(resolve, delay.value));
+            continue;
+          }
+        }
+        const seconds = Math.ceil((performance.now() - startTime) / 1000);
+        const text = await resultify(result.value.text());
+        return {
+          ok: false,
+          error: new Error(
+            `OpenAI API responded with HTTP status ${response.status}` +
+              (attempt > 0
+                ? ` after ${attempt + 1} attempts within ${seconds} seconds.`
+                : ".") +
+              (text.ok ? `\n\n${text.value}` : "")
+          ),
+        };
       }
+    })();
+    if (!response.ok) {
+      return makeErrorEvent(response.error);
     }
-    const body = result.body;
+
+    const body = response.value.body;
     if (body === null) {
-      return makeErrorEvent(new Error("body was null"));
+      return makeErrorEvent(new Error("OpenAI API response had null body"));
     }
     yield* convertOpenAiChunks(
       body.pipeThrough(new JsonDataStreamTransformer<OpenAIChunk>())
