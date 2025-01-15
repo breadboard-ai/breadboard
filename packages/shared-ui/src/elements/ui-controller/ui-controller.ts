@@ -54,6 +54,7 @@ import { Editor } from "../elements.js";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
+import { until } from "lit/directives/until.js";
 
 const SIDE_NAV_ITEM_KEY = "bb-ui-side-nav-item";
 
@@ -564,6 +565,31 @@ export class UI extends LitElement {
       }
     }
 
+    const previewUrl: Promise<URL | null> = new Promise<BoardServer | null>(
+      (resolve) => {
+        if (!this.graph) {
+          resolve(null);
+          return;
+        }
+
+        const boardServer = this.boardServers.find((boardServer) => {
+          if (!this.graph || !this.graph.url) {
+            return null;
+          }
+
+          return boardServer.canProvide(new URL(this.graph.url));
+        });
+
+        resolve(boardServer ?? null);
+      }
+    ).then((boardServer: BoardServer | null) => {
+      if (!boardServer || !this.graph || !this.graph.url) {
+        return null;
+      }
+
+      return boardServer.preview(new URL(this.graph.url));
+    });
+
     return graph
       ? html`<section id="create-view">
             <bb-splitter
@@ -601,7 +627,34 @@ export class UI extends LitElement {
                     .minSegmentSizeHorizontal=${265}
                   >
                     <div id="deploy-view-sidenav" slot="slot-0">
-                      <div id="no-items">There are no configuration items</div>
+                      <div class="deploy-option layout">
+                        <label>${Strings.from("LABEL_APP_LAYOUT")}</label>
+                        <p>${Strings.from("LABEL_APP_LAYOUT_DESCRIPTION")}</p>
+                        <select>
+                          <option>${Strings.from("LABEL_TEMPLATE_1")}</option>
+                          <option>${Strings.from("LABEL_TEMPLATE_2")}</option>
+                          <option>${Strings.from("LABEL_TEMPLATE_3")}</option>
+                        </select>
+                      </div>
+
+                      <div class="deploy-option public">
+                        <label>${Strings.from("LABEL_PUBLIC")}</label>
+                        <input id="visibility" type="checkbox" checked />
+                        <label for="visibility" id="visibility-status"
+                          >Status</label
+                        >
+                      </div>
+
+                      <div class="deploy-option share">
+                        <label>${Strings.from("LABEL_SHARE")}</label>
+                        <p>${Strings.from("LABEL_SHARE_DESCRIPTION")}</p>
+                        <div class="deploy-share-url">
+                          <span class="url"
+                            >${until(previewUrl, html`Loading URL...`)}</span
+                          >
+                          <button>Copy to Clipboard</button>
+                        </div>
+                      </div>
                     </div>
                     <div id="deploy" slot="slot-1">${appPreview}</div>
                   </bb-splitter>
