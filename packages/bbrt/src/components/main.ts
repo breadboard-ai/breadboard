@@ -40,9 +40,9 @@ import { readBoardServersFromIndexedDB } from "../breadboard/indexed-db-servers.
 import type { BBRTDriver } from "../drivers/driver-interface.js";
 import { GeminiDriver } from "../drivers/gemini.js";
 import { OpenAiDriver } from "../drivers/openai.js";
+import { SYSTEM_INSTRUCTION } from "../instructions/system-instruction.js";
 import { Conversation } from "../llm/conversation.js";
 import type { CutEvent, ForkEvent, RetryEvent } from "../llm/events.js";
-import { BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION } from "../llm/system-instruction.js";
 import { IndexedDBSettingsSecrets } from "../secrets/indexed-db-secrets.js";
 import type { SecretsProvider } from "../secrets/secrets-provider.js";
 import { ReactiveAppState } from "../state/app.js";
@@ -234,7 +234,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
 
     const sessionStore = new SessionStore({
       defaults: {
-        systemPrompt: BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION,
+        systemPrompt: SYSTEM_INSTRUCTION,
         driverId: this.#drivers.keys().next().value!,
         activeToolIds: standardTools.map((tool) => tool.metadata.id),
       },
