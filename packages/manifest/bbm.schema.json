@@ -170,6 +170,10 @@
 					"$ref": "#/definitions/InputValues",
 					"description": "Arguments that are passed to the graph, useful to bind values to graphs."
 				},
+				"describer": {
+					"description": "The URL of the graph that will act as the describer for this graph. Can be a relative URL and refer to a sub-graph within this graph.\n\nThe describers in the format of \"module:name\" will be interpreted as \"use the `describe` export of the module named `name` to describe this graph\".",
+					"type": "string"
+				},
 				"description": {
 					"description": "The description of the graph.",
 					"type": "string"
