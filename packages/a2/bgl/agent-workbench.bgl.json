@@ -8,8 +8,8 @@
       "type": "content",
       "metadata": {
         "visual": {
-          "x": -642.9999999999999,
-          "y": -185.00000000000045,
+          "x": -642.9999999999998,
+          "y": -185.0000000000009,
           "collapsed": "expanded"
         },
         "title": "Content",
@@ -32,8 +32,8 @@
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": 135,
-          "y": -180.00000000000003,
+          "x": 135.00000000000023,
+          "y": -180,
           "collapsed": "expanded"
         },
         "title": "Outline Writer",
@@ -56,7 +56,7 @@
       "metadata": {
         "visual": {
           "x": -255,
-          "y": -166.00000000000048,
+          "y": -166.0000000000009,
           "collapsed": "expanded"
         },
         "title": "Researcher",
@@ -102,7 +102,7 @@
       "metadata": {
         "visual": {
           "x": 557.9999999999995,
-          "y": -359.0000000000023,
+          "y": -359.00000000000273,
           "collapsed": "expanded"
         },
         "title": "Banner Prompt Writer",
@@ -124,8 +124,8 @@
       "type": "file://bgl/a2.bgl.json#module:image-generator",
       "metadata": {
         "visual": {
-          "x": 933.9999999999997,
-          "y": -218.00000000000185,
+          "x": 933.9999999999998,
+          "y": -218.00000000000182,
           "collapsed": "expanded"
         },
         "title": "Banner Image Generator",
@@ -138,7 +138,7 @@
       "type": "content",
       "metadata": {
         "visual": {
-          "x": 1364.0000000000005,
+          "x": 1364.0000000000007,
           "y": -236.00000000000182,
           "collapsed": "expanded"
         },
