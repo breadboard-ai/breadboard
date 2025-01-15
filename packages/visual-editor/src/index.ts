@@ -1634,8 +1634,7 @@ export class Main extends LitElement {
         evt.isTool,
         evt.isComponent
       );
-    }
-    if (evt.moduleId) {
+    } else if (evt.moduleId) {
       await this.#runtime.edit.updateModuleInfo(
         tab,
         evt.moduleId,

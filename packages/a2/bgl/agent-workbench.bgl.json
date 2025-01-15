@@ -1,0 +1,209 @@
+{
+  "title": "A2 Agent Workbench",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "content-10fef410",
+      "type": "content",
+      "metadata": {
+        "visual": {
+          "x": -594,
+          "y": -238,
+          "collapsed": "expanded"
+        },
+        "title": "Content",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "role": "user",
+        "template": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "The pros and cons of using AIs to generate blog posts"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a2-7e19872d",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "visual": {
+          "x": 177,
+          "y": -246,
+          "collapsed": "expanded"
+        },
+        "title": "Outline Writer",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "You are a blog post outline writer. Your job is to take topic provided and come up with an outline for a blog post. \n\nThe outline will weave together the following details:\n- The basic overview of the topic\n- Historical perspective, if applicable\n- Current opinions on the topic, if applicable\n- Any controversies that might be surrounding the topic\n- Any future developments around the topic"
+            }
+          ],
+          "role": "user"
+        }
+      }
+    },
+    {
+      "id": "a2-cb7ec1eb",
+      "type": "file://bgl/a2.bgl.json#module:researcher",
+      "metadata": {
+        "visual": {
+          "x": -202.99999999999994,
+          "y": -232.00000000000006,
+          "collapsed": "expanded"
+        },
+        "title": "Researcher",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "plan": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Research the topic for a blog post. A well-done research should include:\n\n- The basic overview of the topic\n- Historical perspective, if applicable\n- Current opinions on the topic, if applicable\n- Any controversies that might be surrounding the topic\n- Any future developments around the topic"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a2-25320551",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "visual": {
+          "x": 711,
+          "y": -49,
+          "collapsed": "expanded"
+        },
+        "title": "Post Writer",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "You are a blog post writer. Your job is to take the provided outline and all of the raw research collected so far in the conversation context and produce a blog post that incorporates all of the research into one coherent and detailed piece of writing.\n\nThe post will follow the outline and further enrich it, with an interesting story that is based on the raw research, a hypothetical example (if applicable), a couple of different angles to look at the particular aspect of the topic, and a conclusion that also acts as a segue to the next part of the blog. \n\nThe writing style is elegant, with a bit of levity. It comes across as musings of an intellectual who is trying to examine the topic from various angles."
+            }
+          ],
+          "role": "user"
+        }
+      }
+    },
+    {
+      "id": "a2-c317510b",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "visual": {
+          "x": 557.9999999999993,
+          "y": -359.00000000000273,
+          "collapsed": "expanded"
+        },
+        "title": "Banner Prompt Writer",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "You are an image prompt writer. Given an outline of a blog post, you come up with an wildly abstract art that reflects the ideas in the outline. This art will serve as the heading of the blog post."
+            }
+          ],
+          "role": "user"
+        }
+      }
+    },
+    {
+      "id": "a2-f41834f9",
+      "type": "file://bgl/a2.bgl.json#module:image-generator",
+      "metadata": {
+        "visual": {
+          "x": 898,
+          "y": -205,
+          "collapsed": "expanded"
+        },
+        "title": "Banner Image Generator",
+        "logLevel": "debug"
+      },
+      "configuration": {}
+    },
+    {
+      "id": "content-086a7fe8",
+      "type": "content",
+      "metadata": {
+        "visual": {
+          "x": 1239,
+          "y": -160.0000000000001,
+          "collapsed": "expanded"
+        },
+        "title": "Content",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "role": "user",
+        "template": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "{{image}}\n{{post}}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "content-10fef410",
+      "to": "a2-cb7ec1eb",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "a2-cb7ec1eb",
+      "to": "a2-7e19872d",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "a2-7e19872d",
+      "to": "a2-25320551",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "a2-7e19872d",
+      "to": "a2-c317510b",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "a2-c317510b",
+      "to": "a2-f41834f9",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "a2-f41834f9",
+      "to": "content-086a7fe8",
+      "out": "context",
+      "in": "p-image"
+    },
+    {
+      "from": "a2-25320551",
+      "to": "content-086a7fe8",
+      "out": "context",
+      "in": "p-post"
+    }
+  ],
+  "metadata": {
+    "tags": [],
+    "visual": {}
+  }
+}
