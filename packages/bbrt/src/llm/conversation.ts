@@ -100,10 +100,12 @@ export class Conversation {
     );
 
     const done = (async (): Promise<void> => {
-      const activeTools = await this.#getActiveTools();
       let remainingModelCalls = 1 + Math.max(0, MAX_TOOL_ITERATIONS);
       let functionCalls: ReactiveFunctionCallState[];
       do {
+        // Note that tools can change between iterations, since "activate_tool"
+        // could be called.
+        const activeTools = await this.#getActiveTools();
         const allowFunctionCalls = remainingModelCalls > 1;
         functionCalls = (
           await this.#callModel(

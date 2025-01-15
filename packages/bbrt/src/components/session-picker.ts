@@ -131,6 +131,9 @@ export class BBRTSesssionPicker extends SignalWatcher(LitElement) {
       this.sessionStore.createSession(brief).then((result) => {
         if (result.ok) {
           appState.activeSessionId = brief.id;
+          this.dispatchEvent(
+            new Event("bbrt-focus-prompt", { bubbles: true, composed: true })
+          );
         } else {
           // TODO(aomarks) Show an error.
           console.error(`Failed to create session: ${result.error}`);
@@ -145,6 +148,9 @@ export class BBRTSesssionPicker extends SignalWatcher(LitElement) {
     // TODO(aomarks) Make this a real hyperlink, syncronize session via hash.
     if (this.appState) {
       this.appState.activeSessionId = sessionId;
+      this.dispatchEvent(
+        new Event("bbrt-focus-prompt", { bubbles: true, composed: true })
+      );
     }
   }
 

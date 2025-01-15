@@ -40,9 +40,9 @@ import { readBoardServersFromIndexedDB } from "../breadboard/indexed-db-servers.
 import type { BBRTDriver } from "../drivers/driver-interface.js";
 import { GeminiDriver } from "../drivers/gemini.js";
 import { OpenAiDriver } from "../drivers/openai.js";
+import { SYSTEM_INSTRUCTION } from "../instructions/system-instruction.js";
 import { Conversation } from "../llm/conversation.js";
 import type { CutEvent, ForkEvent, RetryEvent } from "../llm/events.js";
-import { BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION } from "../llm/system-instruction.js";
 import { IndexedDBSettingsSecrets } from "../secrets/indexed-db-secrets.js";
 import type { SecretsProvider } from "../secrets/secrets-provider.js";
 import { ReactiveAppState } from "../state/app.js";
@@ -58,6 +58,7 @@ import { DisplayFile } from "../tools/files/display-file.js";
 import { ReadFile } from "../tools/files/read-file.js";
 import { WriteFile } from "../tools/files/write-file.js";
 import { BoardLister } from "../tools/list-tools.js";
+import { SetTitleTool } from "../tools/set-title.js";
 import { type BBRTTool } from "../tools/tool-types.js";
 import { connectedEffect } from "../util/connected-effect.js";
 import type { Result } from "../util/result.js";
@@ -203,6 +204,15 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         () => this.#sessionState
       ),
 
+      // Meta
+      new SetTitleTool((title) => {
+        if (!this.#sessionState) {
+          return { ok: false, error: "No active session" };
+        }
+        this.#sessionState.title = title;
+        return { ok: true, value: undefined };
+      }),
+
       // Files
       new ReadFile(this.#artifacts),
       new WriteFile(this.#artifacts, this.#displayFile),
@@ -224,7 +234,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
 
     const sessionStore = new SessionStore({
       defaults: {
-        systemPrompt: BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION,
+        systemPrompt: SYSTEM_INSTRUCTION,
         driverId: this.#drivers.keys().next().value!,
         activeToolIds: standardTools.map((tool) => tool.metadata.id),
       },
@@ -345,6 +355,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         <bbrt-session-picker
           .appState=${this.#appState}
           .sessionStore=${this.#sessions}
+          @bbrt-focus-prompt=${this.#onFocusPrompt}
         ></bbrt-session-picker>
         <bbrt-tool-palette
           .conversation=${this.#conversation}
@@ -466,6 +477,10 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         console.error(`Failed to fork session: ${result.error}`);
       }
     });
+  }
+
+  #onFocusPrompt() {
+    this.#prompt.value?.focus();
   }
 
   #findEventIndexForTurn(turn: ReactiveTurnState) {
