@@ -40,6 +40,7 @@ import { readBoardServersFromIndexedDB } from "../breadboard/indexed-db-servers.
 import type { BBRTDriver } from "../drivers/driver-interface.js";
 import { GeminiDriver } from "../drivers/gemini.js";
 import { OpenAiDriver } from "../drivers/openai.js";
+import { BGL_DOCS } from "../instructions/bgl.js";
 import { SYSTEM_INSTRUCTION } from "../instructions/system-instruction.js";
 import { Conversation } from "../llm/conversation.js";
 import type { CutEvent, ForkEvent, RetryEvent } from "../llm/events.js";
@@ -52,8 +53,6 @@ import { SessionStore } from "../state/session-store.js";
 import type { ReactiveSessionState } from "../state/session.js";
 import type { ReactiveTurnState } from "../state/turn.js";
 import { ActivateTool } from "../tools/activate-tool.js";
-import { AddNode } from "../tools/add-node.js";
-import { CreateBoard } from "../tools/create-board.js";
 import { DisplayFile } from "../tools/files/display-file.js";
 import { ReadFile } from "../tools/files/read-file.js";
 import { WriteFile } from "../tools/files/write-file.js";
@@ -169,7 +168,22 @@ export class BBRTMain extends SignalWatcher(LitElement) {
   constructor(environment: Environment) {
     super();
     this.#environment = environment;
-    this.#artifacts = new ArtifactStore(new IdbArtifactReaderWriter());
+
+    const artifacts = new ArtifactStore(new IdbArtifactReaderWriter());
+    (async () => {
+      // TODO(aomarks) Obviously bad hack just to demonstrate pre-mounting files
+      // with documentation the model can access if needed. The right solution
+      // is probably that ArtifactStore can take N underlying stores, along with
+      // a mount path for each.
+      for (const [name, { type, content }] of Object.entries(BGL_DOCS)) {
+        using transaction = await artifacts
+          .entry(name)
+          .acquireExclusiveReadWriteLock();
+        transaction.write(new Blob([content], { type }));
+      }
+    })();
+    this.#artifacts = artifacts;
+
     this.#secrets = new IndexedDBSettingsSecrets();
     const grantStore: GrantStore = {
       get: (conectionId: string) => {
@@ -217,10 +231,6 @@ export class BBRTMain extends SignalWatcher(LitElement) {
       new ReadFile(this.#artifacts),
       new WriteFile(this.#artifacts, this.#displayFile),
       new DisplayFile(this.#displayFile),
-
-      // BGL
-      new CreateBoard(this.#artifacts),
-      new AddNode(this.#artifacts),
     ];
     this.#toolsPromise = breadboardToolsPromise.then(
       (breadboardTools) =>

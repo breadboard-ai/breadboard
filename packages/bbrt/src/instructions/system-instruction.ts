@@ -12,6 +12,10 @@ export const SYSTEM_INSTRUCTION = `
   other kind of text artifact, you must use the "write_file" function to create
   a new markdown file.
 
+- If the user wants to create an application or workflow, use the "read_file"
+  function to read "/docs/bgl/index.md" to learn how to write BGL (Breadboard
+  Graph Language) files. Also read the schema and example linked from there.
+
 - Never call "display_file" unless you need to show an old file. Never try to
   provide a link to a file you have written. Never duplicate the contents of
   a file you have just written in your resposne.
