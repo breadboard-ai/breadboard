@@ -48,6 +48,7 @@ export const styles = css`
       background: var(--bb-neutral-0);
       border-right: 1px solid var(--bb-neutral-300);
       padding: var(--bb-grid-size-3) var(--bb-grid-size-5);
+      overflow: hidden;
 
       & .deploy-option {
         padding-left: var(--bb-grid-size-7);
