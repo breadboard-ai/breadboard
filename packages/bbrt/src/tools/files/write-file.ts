@@ -17,11 +17,15 @@ interface Inputs {
 
 interface Outputs {}
 
+type Callback = (path: string) => unknown;
+
 export class WriteFile implements BBRTTool<Inputs, Outputs> {
   #artifacts: ArtifactStore;
+  #callback: Callback;
 
-  constructor(artifacts: ArtifactStore) {
+  constructor(artifacts: ArtifactStore, callback: Callback) {
     this.#artifacts = artifacts;
+    this.#callback = callback;
   }
 
   readonly metadata: BBRTToolMetadata = {
@@ -81,6 +85,7 @@ export class WriteFile implements BBRTTool<Inputs, Outputs> {
     if (!write.ok) {
       return { ok: false, error: write.error };
     }
+    this.#callback(path);
     return { ok: true, value: { data: {}, artifacts: [] } };
   }
 }
