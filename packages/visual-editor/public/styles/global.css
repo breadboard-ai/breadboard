@@ -297,6 +297,9 @@ body.hide-cursor {
   --bb-icon-output: url(/third_party/icons/output.svg);
   --bb-icon-output-inverted: url(/third_party/icons/output-inverted.svg);
 
+  --bb-icon-palette: url(/third_party/icons/palette.svg);
+  --bb-icon-palette-inverted: url(/third_party/icons/palette-inverted.svg);
+
   --bb-icon-pending: url(/third_party/icons/pending.svg);
   --bb-icon-pending-inverted: url(/third_party/icons/pending-inverted.svg);
 
@@ -361,6 +364,9 @@ body.hide-cursor {
   --bb-icon-settings: url(/third_party/icons/settings.svg);
   --bb-icon-settings-inverted: url(/third_party/icons/settings-inverted.svg);
 
+  --bb-icon-share: url(/third_party/icons/share.svg);
+  --bb-icon-share-inverted: url(/third_party/icons/share-inverted.svg);
+
   --bb-icon-smart-toy: url(/third_party/icons/smart-toy.svg);
   --bb-icon-smart-toy-inverted: url(/third_party/icons/smart-toy-inverted.svg);
 
@@ -399,6 +405,9 @@ body.hide-cursor {
 
   --bb-icon-vital-signs: url(/third_party/icons/vital-signs.svg);
   --bb-icon-vital-signs-inverted: url(/third_party/icons/vital-signs-inverted.svg);
+
+  --bb-icon-visibility: url(/third_party/icons/visibility.svg);
+  --bb-icon-visibility-inverted: url(/third_party/icons/visibility-inverted.svg);
 
   --bb-icon-visibility-off: url(/third_party/icons/visibility-off.svg);
   --bb-icon-visibility-off-inverted: url(/third_party/icons/visibility-off-inverted.svg);

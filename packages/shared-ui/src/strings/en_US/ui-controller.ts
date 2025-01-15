@@ -30,6 +30,31 @@ export default {
   LABEL_PROJECT: {
     str: "Project",
   },
+  LABEL_APP_LAYOUT: {
+    str: "App Layout",
+  },
+  LABEL_APP_LAYOUT_DESCRIPTION: {
+    str: "Choose a layout to style your app",
+  },
+  LABEL_TEMPLATE_1: {
+    str: "Default",
+  },
+  LABEL_TEMPLATE_2: {
+    str: "Dark",
+  },
+  LABEL_TEMPLATE_3: {
+    str: "Light",
+  },
+
+  LABEL_PUBLIC: {
+    str: "Public",
+  },
+  LABEL_SHARE: {
+    str: "Share",
+  },
+  LABEL_SHARE_DESCRIPTION: {
+    str: "Share this URL with friends",
+  },
 
   // Queries.
 

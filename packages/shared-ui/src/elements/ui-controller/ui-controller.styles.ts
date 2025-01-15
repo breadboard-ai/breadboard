@@ -47,6 +47,117 @@ export const styles = css`
     & #deploy-view-sidenav {
       background: var(--bb-neutral-0);
       border-right: 1px solid var(--bb-neutral-300);
+      padding: var(--bb-grid-size-3) var(--bb-grid-size-5);
+
+      & .deploy-option {
+        padding-left: var(--bb-grid-size-7);
+        margin-bottom: var(--bb-grid-size-4);
+
+        & select {
+          display: block;
+          border-radius: var(--bb-grid-size);
+          background: color: var(--bb-neutral-0);
+          padding: var(--bb-grid-size-2);
+          border: 1px solid var(--bb-neutral-300);
+
+          font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+            var(--bb-font-family);
+        }
+
+        & label {
+          color: var(--bb-neutral-900);
+          font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+            var(--bb-font-family);
+        }
+
+        & p {
+          font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
+            var(--bb-font-family);
+          margin: var(--bb-grid-size) 0;
+        }
+
+        &.layout {
+          background: var(--bb-icon-palette) 0 0 / 20px 20px no-repeat;
+        }
+
+        &.public {
+          background: var(--bb-icon-visibility) 0 0 / 20px 20px no-repeat;
+
+          & #visibility {
+            display: none;
+
+            & + #visibility-status {
+              background: var(--bb-neutral-300);
+              width: 42px;
+              height: 24px;
+              border-radius: var(--bb-grid-size-12);
+              display: block;
+              font-size: 0;
+              position: relative;
+
+              &::before,
+              &::after {
+                content: '';
+                position: absolute;
+                left: 4px;
+                top: 4px;
+                width: 16px;
+                height: 16px;
+                background: var(--bb-neutral-0);
+                border-radius: 50%;
+                transition: transform 0.2s cubic-bezier(0, 0, 0.3, 1);
+              }
+
+              &::after {
+                background: var(--bb-icon-check) center center / 16px 16px no-repeat;
+                transition: transform 0.2s cubic-bezier(0, 0, 0.3, 1),
+                  opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+                opacity: 0;
+              }
+            }
+
+            &:checked + #visibility-status {
+              background: var(--bb-ui-500);
+
+              &::before,
+              &::after {
+                transform: translateX(18px);
+              }
+
+              &::after {
+                opacity: 1;
+              }
+            }
+          }
+        }
+
+        &.share {
+          background: var(--bb-icon-share) 0 0 / 20px 20px no-repeat;
+        }
+
+        & .deploy-share-url {
+          display: grid;
+          grid-template-columns: 1fr var(--bb-grid-size-5);
+          column-gap: var(--bb-grid-size-2);
+
+          & .url {
+            font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+              var(--bb-font-family);
+            padding: var(--bb-grid-size-2);
+            border: 1px solid var(--bb-neutral-300);
+            border-radius: var(--bb-grid-size);
+          }
+
+          & button {
+            width: 20px;
+            height: 20px;
+            font-size: 0;
+            background: transparent var(--bb-icon-copy-to-clipboard) center
+              center / 20px 20px no-repeat;
+            border: none;
+          }
+        }
+      }
     }
 
     & bb-app-preview {
