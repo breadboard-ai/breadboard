@@ -64,14 +64,9 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
         overflow-x: auto;
       }
 
-      /* :host > :last-child {
-        /* We put this here rather than on :host so that we don't have a margin
-        when we have no content. */
-      /* margin-bottom: 20px; */
-      /* } */
-      /* #toolCalls > bbrt-tool-call:not(:first-child) { */
-      /* margin-top: 20px; */
-      /* } */
+      bbrt-tool-call:not(:first-child) {
+        margin-top: 20px;
+      }
 
       /* Icon styling */
       :host::part(icon) {
