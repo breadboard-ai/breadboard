@@ -5,7 +5,7 @@
  */
 
 import { SignalWatcher } from "@lit-labs/signals";
-import { LitElement, css, html, nothing, svg } from "lit";
+import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { CutEvent, EditEvent, ForkEvent, RetryEvent } from "../llm/events.js";
 import type { ReactiveTurnState } from "../state/turn.js";
@@ -91,6 +91,10 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       :host::part(icon-done) {
         animation: throb 0.5s 1;
       }
+      :host::part(icon-hide) {
+        opacity: 20%;
+        scale: 50%;
+      }
       @keyframes throb {
         0%,
         100% {
@@ -164,16 +168,18 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
   }
 
   #renderRoleIcon() {
-    if (!this.info || this.info.hideIcon) {
+    if (!this.info) {
       return nothing;
     }
     const role = this.info.turn.role;
     return html`<svg
       aria-label="${role}"
       role="img"
-      part="icon icon-${role} icon-${this.info.turn.status}"
+      part="icon icon-${role} icon-${this.info.turn.status} ${this.info.hideIcon
+        ? "icon-hide"
+        : ""}"
     >
-      ${role ? svg`<use href="/bbrt/images/${role}.svg#icon"></use>` : nothing}
+      <use href="/bbrt/images/${role}.svg#icon"></use>
     </svg>`;
   }
 
