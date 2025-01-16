@@ -6,16 +6,18 @@
   "private": true,
   "version": "0.0.1",
   "description": "serves visual editor, board server, and connection server from a single origin",
-  "main": "./dist/server/main.js",
-  "exports": "./dist/server/main.js",
+  "main": "./dist/src/server/main.js",
+  "exports": "./dist/src/server/main.js",
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
     "build": "wireit",
     "build:tsc": "wireit",
     "build:vite": "wireit",
+    "copy-assets": "wireit",
     "dev": "wireit",
     "lint": "FORCE_COLOR=1 eslint . --ext .ts",
+    "start": "NODE_ENV=production node .",
     "test": "wireit",
     "watch": "FORCE_COLOR=1 tsc --b --watch"
   },
@@ -27,7 +29,11 @@
       ]
     },
     "build:vite": {
-      "command": "vite build"
+      "command": "vite build",
+      "dependencies": [
+        "copy-assets",
+        "../visual-editor:build"
+      ]
     },
     "build:tsc": {
       "command": "tsc"
@@ -40,6 +46,19 @@
       "command": "ava",
       "dependencies": [
         "build:tsc"
+      ]
+    },
+    "copy-assets": {
+      "command": "tsx scripts/copy-assets.ts",
+      "dependencies": [
+        "../jsandbox:build",
+        "../visual-editor:build"
+      ],
+      "files": [
+        "scripts/copy-assets.ts"
+      ],
+      "output": [
+        "public"
       ]
     }
   },
@@ -82,6 +101,7 @@
     "wireit": "^0.14.9"
   },
   "dependencies": {
+    "@breadboard-ai/visual-editor": "1.25.0",
     "express": "^4.21.2",
     "vite": "^6.0.2",
     "vite-express": "^0.20.0"
