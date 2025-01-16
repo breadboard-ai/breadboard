@@ -587,7 +587,11 @@ export class UI extends LitElement {
         return null;
       }
 
-      return boardServer.preview(new URL(this.graph.url));
+      if (boardServer.capabilities.preview) {
+        return boardServer.preview(new URL(this.graph.url));
+      } else {
+        return null;
+      }
     });
 
     return graph
