@@ -90,7 +90,6 @@ export class BreadboardTool implements BBRTTool {
     );
     return {
       result: this.#execute(invocation),
-      render: () => invocation.render(),
     };
   }
 

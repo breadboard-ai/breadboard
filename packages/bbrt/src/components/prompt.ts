@@ -107,11 +107,18 @@ export class BBRTPrompt extends SignalWatcher(LitElement) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      if (this.conversation?.status === "ready" && event.target.value) {
-        const textarea = event.target;
-        void this.conversation.send(textarea.value);
+      const textarea = this.#textarea.value;
+      const value = textarea?.value;
+      if (
+        value &&
+        this.conversation?.status === "ready" &&
+        event.target.value
+      ) {
+        void this.conversation.send(value);
         textarea.value = "";
         textarea.style.setProperty("--num-lines", "1");
+      } else {
+        this.#shake();
       }
     }
   }
@@ -134,6 +141,26 @@ export class BBRTPrompt extends SignalWatcher(LitElement) {
     const lineHeight = parseFloat(getComputedStyle(measure).lineHeight);
     const numLines = Math.round(measure.scrollHeight / lineHeight);
     textarea.style.setProperty("--num-lines", `${numLines}`);
+  }
+
+  #shake() {
+    const textarea = this.#textarea.value;
+    if (!textarea) {
+      return;
+    }
+    const numShakes = 3;
+    const distance = 3;
+    const duration = 200;
+    const keyframes = [];
+    keyframes.push({ transform: "translateX(0)" });
+    for (let i = 0; i < numShakes; i++) {
+      keyframes.push(
+        { transform: `translateX(${-distance}px)` },
+        { transform: `translateX(${distance}px)` }
+      );
+    }
+    keyframes.push({ transform: "translateX(0)" });
+    textarea.animate(keyframes, { duration, easing: "ease-in-out" });
   }
 }
 

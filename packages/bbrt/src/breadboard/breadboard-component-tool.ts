@@ -125,7 +125,6 @@ export class BreadboardComponentTool implements BBRTTool {
     );
     return {
       result: this.#execute(invocation),
-      render: () => invocation.render(),
     };
   }
 

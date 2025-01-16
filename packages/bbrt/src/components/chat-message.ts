@@ -7,9 +7,11 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
 import { CutEvent, EditEvent, ForkEvent, RetryEvent } from "../llm/events.js";
 import type { ReactiveTurnState } from "../state/turn.js";
 import { iconButtonStyle } from "../style/icon-button.js";
+import { loadingEllipsisStyle } from "../style/loading-ellipsis.js";
 import { connectedEffect } from "../util/connected-effect.js";
 import "./error-message.js";
 import "./markdown.js";
@@ -29,6 +31,7 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
 
   static override styles = [
     iconButtonStyle,
+    loadingEllipsisStyle,
     css`
       :host {
         --icon-size: 24px;
@@ -36,40 +39,26 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
         font-family: Helvetica, sans-serif;
         position: relative;
         display: grid;
-        grid-template-areas:
-          "icon pad markdown"
-          "icon pad toolcalls"
-          "icon pad errors"
-          "icon pad actions";
+        grid-template-areas: "icon pad content";
         grid-template-columns: var(--icon-size) var(--pad-size) 1fr;
-        grid-template-rows: min-content;
-      }
-      :host::part(icon) {
-        grid-area: icon;
-      }
-      :host::part(markdown) {
-        grid-area: markdown;
-        overflow-x: auto;
-      }
-      :host::part(toolcalls) {
-        grid-area: toolcalls;
-        overflow-x: auto;
-      }
-      :host::part(errors) {
-        grid-area: errors;
-        overflow-x: auto;
-      }
-      :host::part(actions) {
-        grid-area: actions;
-        overflow-x: auto;
       }
 
       bbrt-tool-call:not(:first-child) {
         margin-top: 20px;
       }
 
-      /* Icon styling */
+      #content {
+        grid-area: content;
+        min-width: 0;
+      }
+
+      :host::part(error) {
+        margin-bottom: 20px;
+      }
+
+      /* Icon */
       :host::part(icon) {
+        grid-area: icon;
         width: var(--icon-size);
         aspect-ratio: 1;
       }
@@ -92,8 +81,9 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
         animation: throb 0.5s 1;
       }
       :host::part(icon-hide) {
-        opacity: 20%;
-        scale: 50%;
+        opacity: 40%;
+        scale: 20%;
+        filter: grayscale(100%);
       }
       @keyframes throb {
         0%,
@@ -111,7 +101,7 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
         height: min-content;
         width: min-content;
         position: relative;
-        margin: 4px auto 12px -10px;
+        margin: -10px auto 10px -7px;
         display: flex;
       }
       :host(:hover) #actions,
@@ -144,6 +134,10 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       #cutButton {
         --bb-icon: var(--bb-icon-content-cut);
       }
+
+      .loading-ellipsis {
+        color: #b8b8b8;
+      }
     `,
   ];
 
@@ -160,11 +154,22 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
     }
     return [
       this.#renderRoleIcon(),
-      this.#renderMarkdown(),
-      this.#renderToolCalls(),
-      this.#renderErrors(),
-      this.#renderActions(),
+      html`<div id="content">
+        ${[
+          this.#renderMarkdown(),
+          this.#renderToolCalls(),
+          this.#renderErrors(),
+          this.#renderActions(),
+          this.#renderEllipsisIfPending(),
+        ]}
+      </div>`,
     ];
+  }
+
+  #renderEllipsisIfPending() {
+    return this.info?.turn.status === "pending"
+      ? html`<span class="loading-ellipsis"></span>`
+      : nothing;
   }
 
   #renderRoleIcon() {
@@ -173,6 +178,8 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
     }
     const role = this.info.turn.role;
     return html`<svg
+      id="role-icon"
+      class=${classMap({ hidden: this.info.hideIcon })}
       aria-label="${role}"
       role="img"
       part="icon icon-${role} icon-${this.info.turn.status} ${this.info.hideIcon
@@ -277,7 +284,9 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
           ></button>
         </div>`);
     }
-    return html`<div id="actions" part="actions">${buttons}</div>`;
+    return buttons.length > 0
+      ? html`<div id="actions" part="actions">${buttons}</div>`
+      : nothing;
   }
 
   #onClickEditButton() {

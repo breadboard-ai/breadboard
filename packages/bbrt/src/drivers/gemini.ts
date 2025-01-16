@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TurnChunk, TurnChunkError } from "../state/turn-chunk.js";
+import type { TurnChunk } from "../state/turn-chunk.js";
 import type { ReactiveTurnState } from "../state/turn.js";
 import type { BBRTTool } from "../tools/tool-types.js";
 import { makeErrorEvent } from "../util/event-factories.js";
@@ -50,10 +50,11 @@ export class GeminiDriver implements BBRTDriver {
     turns,
     systemPrompt,
     tools,
-  }: BBRTDriverSendOptions): AsyncGenerator<TurnChunk, void | TurnChunkError> {
+  }: BBRTDriverSendOptions): AsyncGenerator<TurnChunk, void> {
     const contents = convertTurnsForGemini(turns);
     if (!contents.ok) {
-      return makeErrorEvent(contents.error);
+      yield makeErrorEvent(contents.error);
+      return;
     }
     const request: GeminiRequest = {
       contents: contents.value,
@@ -74,7 +75,8 @@ export class GeminiDriver implements BBRTDriver {
     );
     const apiKey = await this.#getApiKey();
     if (!apiKey.ok) {
-      return makeErrorEvent(apiKey.error);
+      yield makeErrorEvent(apiKey.error);
+      return;
     }
     if (!apiKey.value) {
       throw new Error(
@@ -120,12 +122,14 @@ export class GeminiDriver implements BBRTDriver {
       }
     })();
     if (!response.ok) {
-      return makeErrorEvent(response.error);
+      yield makeErrorEvent(response.error);
+      return;
     }
 
     const body = response.value.body;
     if (body === null) {
-      return makeErrorEvent(new Error("Gemini API response had null body"));
+      yield makeErrorEvent(new Error("Gemini API response had null body"));
+      return;
     }
     yield* convertGeminiChunks(
       streamJsonArrayItems<GeminiResponse>(
