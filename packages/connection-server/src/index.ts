@@ -4,10 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import express from "express";
 import { env } from "node:process";
 import { loadConnections, type ServerConfig } from "./config.js";
-import { startServer } from "./server.js";
+import { createServer } from "./server.js";
 
 const configPath = process.env["CONNECTIONS_FILE"];
 const config: ServerConfig = {
@@ -42,13 +41,22 @@ if (config.allowedOrigins.length === 0) {
 `
   );
 }
-const host = env.HOST || "localhost";
 const port = env.PORT ? Number(env.PORT) : 5555;
 
-const app = express();
-
 try {
-  startServer(port, config);
+  const app = createServer(config);
+
+  app.listen(port, () => {
+    console.info(
+      `
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Breadboard Connection Server                                            │
+├─────────────────────────────────────────────────────────────────────────┘
+│ Listening on port ${port}...
+└──────────────────────────────────────────────────────────────────────────
+`
+    );
+  });
 } catch (e) {
   console.error(e);
   if ((e as { code?: string }).code === "EADDRINUSE") {
