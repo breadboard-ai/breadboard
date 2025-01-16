@@ -8,7 +8,6 @@ import type { GraphDescriptor } from "@google-labs/breadboard";
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { until } from "lit/directives/until.js";
 import type { ArtifactEntry } from "../artifacts/artifact-store.js";
 import "./board-visualizer.js";
 import "./markdown-viewer.js";
@@ -30,6 +29,10 @@ export class BBRTArtifactDisplay extends SignalWatcher(LitElement) {
       padding: 24px;
       margin-top: 0;
     }
+    #error {
+      padding: 20px;
+      min-width: 0;
+    }
   `;
 
   override render() {
@@ -48,15 +51,21 @@ export class BBRTArtifactDisplay extends SignalWatcher(LitElement) {
       return html`<div>Internal error: Missing Blob</div>`;
     }
     if (blob.type === "application/vnd.breadboard.board") {
-      return until(
-        this.artifact.json.complete.then((graph) => {
-          return html`
-            <bbrt-board-visualizer
-              .graph=${graph as GraphDescriptor}
-            ></bbrt-board-visualizer>
-          `;
-        })
-      );
+      if (this.artifact.json.status === "complete") {
+        const graph = this.artifact.json.value as GraphDescriptor;
+        return html`
+          <bbrt-board-visualizer .graph=${graph}></bbrt-board-visualizer>
+        `;
+      } else if (this.artifact.json.status === "error") {
+        return html`
+          <div id="error">
+            <bbrt-error-message
+              class="error"
+              .error=${this.artifact.json.error}
+            ></bbrt-error-message>
+          </div>
+        `;
+      }
     }
     if (blob.type === "text/markdown") {
       return html`
