@@ -13,7 +13,7 @@ import { list } from "./api/list.js";
 import { refresh } from "./api/refresh.js";
 import type { ServerConfig } from "./config.js";
 
-export function startServer(port: number, config: ServerConfig) {
+export function createServer(config: ServerConfig) {
   const app = express();
 
   app.use(
@@ -41,15 +41,5 @@ export function startServer(port: number, config: ServerConfig) {
     refresh(req, res, config)
   );
 
-  app.listen(port, () => {
-    console.info(
-      `
-┌─────────────────────────────────────────────────────────────────────────┐
-│ Breadboard Connection Server                                            │
-├─────────────────────────────────────────────────────────────────────────┘
-│ Listening on port ${port}...
-└──────────────────────────────────────────────────────────────────────────
-`
-    );
-  });
+  return app;
 }
