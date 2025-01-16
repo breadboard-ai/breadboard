@@ -14,8 +14,10 @@
     "build": "wireit",
     "build:tsc": "wireit",
     "build:vite": "wireit",
+    "copy-assets": "wireit",
     "dev": "wireit",
     "lint": "FORCE_COLOR=1 eslint . --ext .ts",
+    "start": "NODE_ENV=production node .",
     "test": "wireit",
     "watch": "FORCE_COLOR=1 tsc --b --watch"
   },
@@ -29,7 +31,7 @@
     "build:vite": {
       "command": "vite build",
       "dependencies": [
-        "update-sandbox-runtime",
+        "copy-assets",
         "../visual-editor:build"
       ]
     },
@@ -46,16 +48,17 @@
         "build:tsc"
       ]
     },
-    "update-sandbox-runtime": {
-      "command": "tsx scripts/update-sandbox-runtime.ts",
+    "copy-assets": {
+      "command": "tsx scripts/copy-assets.ts",
       "dependencies": [
-        "../jsandbox:build"
+        "../jsandbox:build",
+        "../visual-editor:build"
       ],
       "files": [
-        "scripts/update-sandbox-runtime.ts"
+        "scripts/copy-assets.ts"
       ],
       "output": [
-        "public/sandbox.wasm"
+        "public"
       ]
     }
   },

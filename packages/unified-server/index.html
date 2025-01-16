@@ -8,19 +8,54 @@
 </head>
 <body>
   <script type="module">
-    import { Main } from "../visual-editor/src/index.ts";
-    import { SettingsStore } from "../shared-ui/src/data/settings-store.ts";
+    import * as pkg from "./package.json";
+    import * as StringsHelper from "@breadboard-ai/shared-ui/strings";
 
-    const config = {
-      settings: SettingsStore.instance(),
-      version: "0.0.1",
-    };
+    const icon = document.createElement("link");
+    icon.rel = "icon";
+    icon.type = "image/svg+xml";
+    icon.href = MAIN_ICON;
+    document.head.appendChild(icon);
 
-    window.oncontextmenu = (evt) => evt.preventDefault();
+    const assetPack = document.createElement("style");
+    assetPack.textContent = ASSET_PACK;
+    document.head.appendChild(assetPack);
 
-    const main = new Main(config);
-    document.body.appendChild(main);
+    const params = new URLSearchParams(location.search);
+    if (params.has("dark")) {
+      globalThis.localStorage.setItem("dark-theme", "true");
+    } else if (params.has("light")) {
+      globalThis.localStorage.removeItem("dark-theme");
+    }
 
-    console.log(`[Breadboard Visual Editor: Version ${pkg.version}]`);
+    if (globalThis.localStorage.getItem("dark-theme") === "true") {
+      document.documentElement.classList.add("dark-theme");
+    }
+
+    async function init() {
+      await StringsHelper.initFrom(LANGUAGE_PACK);
+
+      const { Main } = await import("@breadboard-ai/visual-editor");
+      const { SettingsStore } = await import(
+        "@breadboard-ai/shared-ui/data/settings-store.js"
+      );
+
+      const config = {
+        settings: SettingsStore.instance(),
+        version: "0.1",
+      };
+
+      window.oncontextmenu = (evt) => evt.preventDefault();
+
+      const main = new Main(config);
+      document.body.appendChild(main);
+
+      const Strings = StringsHelper.forSection("Global");
+      console.log(
+        `[${Strings.from("APP_NAME")} Visual Editor: Version ${pkg.version}]`
+      );
+    }
+
+    init();
   </script>
 </body>

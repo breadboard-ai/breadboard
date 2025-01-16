@@ -22,7 +22,6 @@ export default defineConfig(async (): Promise<UserConfig> => {
     optimizeDeps: { esbuildOptions: { target: "esnext" } },
     build: {
       target: "esnext",
-      outDir: "./dist/client",
       lib: {
         entry: {
           index: "./index.html",
@@ -33,6 +32,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
     define: {
       LANGUAGE_PACK: JSON.stringify(languagePack),
       ASSET_PACK: "{}",
+      MAIN_ICON: JSON.stringify("main.svg"),
     },
     resolve: {
       dedupe: ["lit"],
