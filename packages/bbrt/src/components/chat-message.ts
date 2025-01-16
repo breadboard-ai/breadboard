@@ -277,7 +277,9 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
           ></button>
         </div>`);
     }
-    return html`<div id="actions" part="actions">${buttons}</div>`;
+    return buttons.length > 0
+      ? html`<div id="actions" part="actions">${buttons}</div>`
+      : nothing;
   }
 
   #onClickEditButton() {
