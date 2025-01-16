@@ -18,14 +18,12 @@ export class BBRTMarkdown extends LitElement {
 
   static override styles = css`
     :host {
+      display: block;
       line-height: 1.4;
       color: #222;
     }
     :first-child {
       margin-top: 0;
-    }
-    :last-child {
-      margin-bottom: 0;
     }
     ol,
     ul {

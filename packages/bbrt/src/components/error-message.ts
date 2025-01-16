@@ -20,6 +20,7 @@ export class BBRTErrorMessage extends LitElement {
     :host::part(error) {
       background: #fff0ef;
       padding: 12px 16px;
+      border: 1px solid red;
       border-radius: 8px;
     }
     :host::part(message) {
