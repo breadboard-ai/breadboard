@@ -10,6 +10,7 @@ import { customElement, property } from "lit/decorators.js";
 import { CutEvent, EditEvent, ForkEvent, RetryEvent } from "../llm/events.js";
 import type { ReactiveTurnState } from "../state/turn.js";
 import { iconButtonStyle } from "../style/icon-button.js";
+import { loadingEllipsisStyle } from "../style/loading-ellipsis.js";
 import { connectedEffect } from "../util/connected-effect.js";
 import "./error-message.js";
 import "./markdown.js";
@@ -29,6 +30,7 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
 
   static override styles = [
     iconButtonStyle,
+    loadingEllipsisStyle,
     css`
       :host {
         --icon-size: 24px;
@@ -144,6 +146,10 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       #cutButton {
         --bb-icon: var(--bb-icon-content-cut);
       }
+
+      .loading-ellipsis {
+        color: #b8b8b8;
+      }
     `,
   ];
 
@@ -164,7 +170,13 @@ export class BBRTChatMessage extends SignalWatcher(LitElement) {
       this.#renderToolCalls(),
       this.#renderErrors(),
       this.#renderActions(),
-    ];
+          this.#renderEllipsisIfPending(),
+        ]}
+
+  #renderEllipsisIfPending() {
+    return this.info?.turn.status === "pending"
+      ? html`<span class="loading-ellipsis"></span>`
+      : nothing;
   }
 
   #renderRoleIcon() {
