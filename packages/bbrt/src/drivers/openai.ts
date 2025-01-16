@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TurnChunk, TurnChunkError } from "../state/turn-chunk.js";
+import type { TurnChunk } from "../state/turn-chunk.js";
 import type { ReactiveTurnState } from "../state/turn.js";
 import type { BBRTTool } from "../tools/tool-types.js";
 import { makeErrorEvent } from "../util/event-factories.js";
@@ -49,10 +49,11 @@ export class OpenAiDriver implements BBRTDriver {
     turns,
     systemPrompt,
     tools,
-  }: BBRTDriverSendOptions): AsyncGenerator<TurnChunk, void | TurnChunkError> {
+  }: BBRTDriverSendOptions): AsyncGenerator<TurnChunk, void> {
     const messages = await convertTurnsForOpenAi(turns);
     if (!messages.ok) {
-      return makeErrorEvent(messages.error);
+      yield makeErrorEvent(messages.error);
+      return;
     }
     const request: OpenAIChatRequest = {
       model: "gpt-4o",
@@ -65,22 +66,25 @@ export class OpenAiDriver implements BBRTDriver {
     if (tools !== undefined && tools.size > 0) {
       const openAiTools = await convertToolsForOpenAi([...tools.values()]);
       if (!openAiTools.ok) {
-        return makeErrorEvent(openAiTools.error);
+        yield makeErrorEvent(openAiTools.error);
+        return;
       }
       request.tools = openAiTools.value;
     }
     const url = new URL(`https://api.openai.com/v1/chat/completions`);
     const apiKey = await this.#getApiKey();
     if (!apiKey.ok) {
-      return makeErrorEvent(apiKey.error);
+      yield makeErrorEvent(apiKey.error);
+      return;
     }
     if (!apiKey.value) {
-      return makeErrorEvent(
+      yield makeErrorEvent(
         new Error(
           "No OpenAI API key was available. " +
             "Add an OPENAI_API_KEY secret in Visual Editor settings."
         )
       );
+      return;
     }
 
     const response = await (async (): Promise<Result<Response>> => {
@@ -126,12 +130,14 @@ export class OpenAiDriver implements BBRTDriver {
       }
     })();
     if (!response.ok) {
-      return makeErrorEvent(response.error);
+      yield makeErrorEvent(response.error);
+      return;
     }
 
     const body = response.value.body;
     if (body === null) {
-      return makeErrorEvent(new Error("OpenAI API response had null body"));
+      yield makeErrorEvent(new Error("OpenAI API response had null body"));
+      return;
     }
     yield* convertOpenAiChunks(
       body.pipeThrough(new JsonDataStreamTransformer<OpenAIChunk>())
