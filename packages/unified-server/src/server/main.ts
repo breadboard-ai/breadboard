@@ -2,6 +2,7 @@ import express from "express";
 import ViteExpress from "vite-express";
 
 import { createServer } from "@breadboard-ai/connection-server/server.js";
+import { makeRouter } from "@breadboard-ai/board-server/router.js";
 
 const app = express();
 
@@ -10,6 +11,18 @@ app.use(
   createServer({
     connections: new Map(),
     allowedOrigins: [],
+  })
+);
+
+app.use(
+  "/board",
+  makeRouter({
+    allowedOrigins: new Set(),
+    hostname: "",
+    serverUrl: "",
+    viteDevServer: null,
+    rootPath: "",
+    storageBucket: "",
   })
 );
 
