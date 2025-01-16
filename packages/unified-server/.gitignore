@@ -1,7 +1,4 @@
-/icons/
-/langs/
-/oauth/
-/public/
-/secrets/
-
-/index.html
+public
+index.html
+/icons
+secrets
