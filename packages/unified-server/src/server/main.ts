@@ -5,7 +5,13 @@ import { createServer } from "@breadboard-ai/connection-server/server.js";
 
 const app = express();
 
-app.use("/connection", createServer());
+app.use(
+  "/connection",
+  createServer({
+    connections: new Map(),
+    allowedOrigins: [],
+  })
+);
 
 ViteExpress.listen(app, 3000, () => {
   console.log("Server is listening on port 3000");
