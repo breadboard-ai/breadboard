@@ -13,6 +13,8 @@ import {
   type ArtifactStore,
 } from "../artifacts/artifact-store.js";
 import type { ReactiveFunctionCallState } from "../state/function-call.js";
+import { iconButtonStyle } from "../style/icon-button.js";
+import { loadingEllipsisStyle } from "../style/loading-ellipsis.js";
 import "./error-message.js";
 
 @customElement("bbrt-tool-call")
@@ -24,126 +26,168 @@ export class BBRTToolCallEl extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor artifacts!: ArtifactStore;
 
-  static override styles = css`
-    :host {
-      background: #fff;
-      display: block;
-      align-items: flex-start;
-      font-family: Helvetica, sans-serif;
-      border-radius: 8px;
-      padding: 16px;
-      border: 1px solid #d9d9d9;
-      box-shadow: rgba(0, 0, 0, 0.1) 1px 1px 5px;
-    }
-    :host::part(tool-call-content) {
-      display: flex;
-      flex-direction: column;
-      line-height: 1.4;
-    }
-    [part~="tool-call-content"] > :last-child {
-      margin-bottom: 0;
-    }
-    pre {
-      white-space: pre-wrap;
-      overflow-wrap: break-word;
-    }
-    * {
-      margin: 8px 0 0 0;
-    }
-    :first-child {
-      margin-top: 0;
-    }
-    .status {
-      margin-top: 20px;
-    }
-    .json-args,
-    .json-result,
-    .custom-widget {
-      overflow: auto;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid var(--bb-neutral-300);
-    }
-    .json-args,
-    .json-result {
-      background: rgba(0, 0, 0, 2%);
-      max-height: 200px;
-    }
-    .custom-widget {
-      margin: 20px 0;
-      box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    bbrt-error-message {
-      border-radius: 8px;
-      border: 1px solid var(--bb-error-color);
-    }
-    img {
-      max-width: 800px;
-      max-height: 450px;
-      object-fit: contain;
-      padding: 32px 16px 16px 16px;
-    }
-  `;
+  @property({ reflect: true })
+  accessor mode: "collapsed" | "expanded" = "collapsed";
+
+  static override styles = [
+    iconButtonStyle,
+    loadingEllipsisStyle,
+    css`
+      #header {
+        display: flex;
+        justify-content: space-between;
+      }
+      #summary-container {
+        cursor: pointer;
+      }
+      #summary {
+        opacity: 80%;
+        min-width: 0;
+        flex: 1;
+      }
+      #summary-status {
+        color: #868686;
+        font-style: italic;
+      }
+      :host(:hover) #summary-status {
+        color: #585858;
+      }
+      #summary-container #error {
+        margin-bottom: 20px;
+        margin: 5px 10px 20px -15px;
+        border-radius: 8px;
+      }
+
+      #toggle-expand-button {
+        --bb-button-background: transparent;
+        border: none;
+        margin: -6px 0 0 0;
+        opacity: 20%;
+      }
+      :host(:hover) #toggle-expand-button {
+        opacity: 100%;
+      }
+      .expanded #toggle-expand-button {
+        --bb-icon: var(--bb-icon-expand);
+      }
+      .collapsed #toggle-expand-button {
+        --bb-icon: var(--bb-icon-collapse);
+      }
+
+      #summary #error {
+        margin: 20px -0 20px -10px;
+      }
+
+      #expanded,
+      #custom-widget {
+        padding: 15px;
+        margin: 5px 10px 20px -15px;
+        border: 1px solid #e4e4e4;
+        border-radius: 8px;
+        box-shadow: inset rgb(0 0 0 / 5%) 1px 1px 5px;
+        background: #fff;
+      }
+      #expanded {
+        overflow-x: auto;
+      }
+      .error #expanded {
+        border-color: red;
+      }
+      #custom-widget {
+        margin-top: 8px;
+      }
+
+      #expanded pre {
+        white-space: pre-wrap;
+        max-height: 200px;
+        overflow-y: auto;
+        color: #6b6b6b;
+        border: 1px solid #e4e4e4;
+        border-radius: 8px;
+        padding: 8px;
+        margin: 0;
+      }
+
+      ::part(error) {
+        border: 1px solid red;
+        border-radius: 8px;
+        max-height: 10em;
+        overflow: auto;
+      }
+
+      .status-success {
+        color: green;
+      }
+      .status-error {
+        color: red;
+      }
+      .status-executing {
+        color: blue;
+      }
+
+      #artifacts img {
+        max-width: 800px;
+        max-height: 400px;
+        object-fit: contain;
+        box-shadow: rgb(0 0 0 / 11%) 3px 3px 5px;
+        border: 1px solid #bababa;
+        border-radius: 6px;
+        margin: 20px auto;
+      }
+
+      h5 {
+        margin-bottom: 6px;
+      }
+      h5:first-of-type {
+        margin-top: 0;
+      }
+    `,
+  ];
 
   override render() {
     const toolCall = this.toolCall;
     if (toolCall === undefined) {
       return nothing;
     }
-    // prettier-ignore
     return html`
-      <div part="tool-call-content">
-        <span>Calling <code>${toolCall.functionId}</code> with arguments:</span>
-        <pre class="json-args">${JSON.stringify(toolCall.args, null, 2)}</pre>
-        <div class="status">Status: ${this.#renderStatus()}</div>
+      <div id="container" class="${this.mode} ${toolCall.response.status}">
+        <div id="summary-container" @click=${this.#toggleExpanded}>
+          <div id="header">
+            <div id="summary">${this.#renderSummary()}</div>
+            <button
+              id="toggle-expand-button"
+              class="bb-icon-button"
+              title=${this.mode === "collapsed" ? "Expand" : "Collapse"}
+            ></button>
+          </div>
+          ${this.mode === "collapsed" ? this.#renderError() : nothing}
+        </div>
+
+        ${this.mode === "expanded" ? this.#renderExpanded() : nothing}
+        <div id="artifacts">${this.#renderArtifacts()}</div>
         ${this.#renderCustomWidget()}
-        ${this.#renderJsonResult()}
-        ${this.#renderError()}
-        ${this.#renderArtifacts()}
       </div>
     `;
   }
 
-  #renderStatus() {
-    if (this.toolCall === undefined) {
-      return nothing;
-    }
-    const response = this.toolCall.response;
-    switch (response.status) {
-      case "unstarted": {
-        return html`<em>Unstarted</em>`;
-      }
-      case "executing": {
-        return html`<em>Executing...</em>`;
-      }
-      case "success": {
-        return [html`<em>Success</em>`];
-      }
-      case "error": {
-        return html`<em>Error</em>`;
-      }
-      default: {
-        response satisfies never;
-        console.error("Unexpected state", response);
-        return "Internal error";
-      }
-    }
+  #toggleExpanded() {
+    this.mode = this.mode === "collapsed" ? "expanded" : "collapsed";
   }
 
-  #renderCustomWidget() {
-    if (this.toolCall?.render) {
-      return html`<div class="custom-widget">${this.toolCall.render()}</div>`;
-    }
-    return nothing;
+  #renderSummary() {
+    const toolCall = this.toolCall!;
+    return html`
+      <div id="summary-status">
+        <code>${toolCall.functionId}</code>
+        ${this.#loadingEllipsisIfExecuting}
+      </div>
+    `;
   }
 
-  #renderJsonResult() {
-    const response = this.toolCall?.response;
-    if (response?.status !== "success") {
-      return nothing;
-    }
-    const indented = JSON.stringify(response.result, null, 2);
-    return html` <pre class="json-result">${indented}</pre>`;
+  get #loadingEllipsisIfExecuting() {
+    return this.toolCall?.response?.status === "executing"
+      ? html`<span class="loading-ellipsis"></span>`
+      : nothing;
   }
 
   #renderArtifacts() {
@@ -174,12 +218,71 @@ export class BBRTToolCallEl extends SignalWatcher(LitElement) {
     return artifacts;
   }
 
+  #renderExpanded() {
+    const toolCall = this.toolCall!;
+    // prettier-ignore
+    return html`
+      <div id="expanded">
+        <h5>Status</h5>
+        <div class="expanded-status">${this.#renderStatus()}</div>
+
+        <h5>Tool ID</h5>
+        <code>${toolCall.functionId}</code>
+
+        <h5>Arguments</h5>
+        ${this.#renderJsonArgs()}
+        ${this.#renderJsonResult()}
+        ${
+          toolCall.response.status === "error"
+            ? html`<h5>Error</h5>${this.#renderError()}`
+            : nothing
+        }
+      </div>
+    `;
+  }
+
+  #renderStatus() {
+    const status = this.toolCall?.response?.status;
+    if (!status) {
+      return nothing;
+    }
+    return html`
+      <code class="status-${status}">
+        ${status}
+        ${status == "executing" ? this.#loadingEllipsisIfExecuting : nothing}
+      </code>
+    `;
+  }
+
+  #renderJsonArgs() {
+    const toolCall = this.toolCall!;
+    return html`<pre>${JSON.stringify(toolCall.args, null, 2)}</pre>`;
+  }
+
+  #renderJsonResult() {
+    const response = this.toolCall?.response;
+    return response?.status === "success"
+      ? html`
+          <h5>Result</h5>
+          <pre>${JSON.stringify(response.result, null, 2)}</pre>
+        `
+      : nothing;
+  }
+
+  #renderCustomWidget() {
+    if (this.toolCall?.render) {
+      return html`<div id="custom-widget">${this.toolCall.render()}</div>`;
+    }
+    return nothing;
+  }
+
   #renderError() {
     if (this.toolCall?.response?.status !== "error") {
       return nothing;
     }
     return html`
       <bbrt-error-message
+        id="error"
         .error=${this.toolCall.response.error}
       ></bbrt-error-message>
     `;
