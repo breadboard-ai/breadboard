@@ -5,7 +5,7 @@
  */
 
 import cors from "cors";
-import express from "express";
+import express, { type Express } from "express";
 import type { Request, Response } from "express";
 
 import { grant } from "./api/grant.js";
@@ -13,7 +13,7 @@ import { list } from "./api/list.js";
 import { refresh } from "./api/refresh.js";
 import type { ServerConfig } from "./config.js";
 
-export function createServer(config: ServerConfig) {
+export function createServer(config: ServerConfig): Express {
   const app = express();
 
   app.use(
