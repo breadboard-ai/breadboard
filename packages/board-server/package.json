@@ -209,7 +209,7 @@
     "@breadboard-ai/google-drive-kit": "0.4.1",
     "@breadboard-ai/jsandbox": "0.3.0",
     "@breadboard-ai/types": "0.4.0",
-    "@google-cloud/firestore": "^7.10.0",
+    "@google-cloud/firestore": "^7.11.0",
     "@google-cloud/secret-manager": "^5.6.0",
     "@google-cloud/storage": "^7.14.0",
     "@google-labs/breadboard": "^0.31.0",

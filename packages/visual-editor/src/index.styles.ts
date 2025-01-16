@@ -238,6 +238,60 @@ export const styles = css`
     display: flex;
     align-items: center;
     height: 100%;
+
+    & .toggle {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      & button {
+        display: flex;
+        height: var(--bb-grid-size-7);
+        align-items: center;
+        font-size: 0;
+        padding: 0;
+        margin: 0;
+        background: var(--bb-neutral-50);
+        border: 1px solid var(--bb-neutral-300);
+        border-radius: var(--bb-grid-size-16);
+
+        &::before,
+        &::after {
+          display: flex;
+          align-items: center;
+          border-radius: var(--bb-grid-size-16);
+          padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-9);
+          text-align: left;
+          flex: 1;
+          font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+            var(--bb-font-family);
+          height: calc(var(--bb-grid-size-7) - 2px);
+        }
+
+        &::before {
+          content: "Create";
+          background: var(--bb-icon-flowchart) 10px center / 20px 20px no-repeat;
+        }
+
+        &::after {
+          content: "App";
+          background: var(--bb-icon-phone) 10px center / 20px 20px no-repeat;
+        }
+
+        &.create::before {
+          background: var(--bb-ui-500) var(--bb-icon-flowchart-inverted) 10px
+            center / 20px 20px no-repeat;
+          color: var(--bb-neutral-0);
+        }
+
+        &.deploy::after {
+          background: var(--bb-ui-500) var(--bb-icon-phone-inverted) 10px
+            center / 20px 20px no-repeat;
+          color: var(--bb-neutral-0);
+        }
+      }
+    }
   }
 
   #header-bar[data-active="true"] h1::after {

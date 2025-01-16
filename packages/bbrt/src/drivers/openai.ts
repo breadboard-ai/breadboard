@@ -7,9 +7,15 @@
 import type { TurnChunk } from "../state/turn-chunk.js";
 import type { ReactiveTurnState } from "../state/turn.js";
 import type { BBRTTool } from "../tools/tool-types.js";
+import { makeErrorEvent } from "../util/event-factories.js";
+import {
+  exponentialBackoff,
+  type ExponentialBackoffParameters,
+} from "../util/exponential-backoff.js";
 import { JsonDataStreamTransformer } from "../util/json-data-stream-transformer.js";
 import type { JsonSerializableObject } from "../util/json-serializable.js";
 import type { Result } from "../util/result.js";
+import { resultify } from "../util/resultify.js";
 import type { BBRTDriver, BBRTDriverSendOptions } from "./driver-interface.js";
 import type {
   OpenAIChatRequest,
@@ -19,6 +25,14 @@ import type {
   OpenAIToolCall,
   OpenAIToolMessage,
 } from "./openai-types.js";
+
+const BACKOFF_PARAMS: ExponentialBackoffParameters = {
+  budget: 30_000,
+  minDelay: 500,
+  maxDelay: 5000,
+  multiplier: 2,
+  jitter: 0.1,
+};
 
 export class OpenAiDriver implements BBRTDriver {
   readonly id = "openai";
@@ -35,11 +49,11 @@ export class OpenAiDriver implements BBRTDriver {
     turns,
     systemPrompt,
     tools,
-  }: BBRTDriverSendOptions): AsyncIterable<TurnChunk> {
+  }: BBRTDriverSendOptions): AsyncGenerator<TurnChunk, void> {
     const messages = await convertTurnsForOpenAi(turns);
     if (!messages.ok) {
-      // TODO(aomarks) Send should return a Result.
-      throw new Error(String(messages.error));
+      yield makeErrorEvent(messages.error);
+      return;
     }
     const request: OpenAIChatRequest = {
       model: "gpt-4o",
@@ -52,49 +66,78 @@ export class OpenAiDriver implements BBRTDriver {
     if (tools !== undefined && tools.size > 0) {
       const openAiTools = await convertToolsForOpenAi([...tools.values()]);
       if (!openAiTools.ok) {
-        return openAiTools;
+        yield makeErrorEvent(openAiTools.error);
+        return;
       }
       request.tools = openAiTools.value;
     }
-
     const url = new URL(`https://api.openai.com/v1/chat/completions`);
     const apiKey = await this.#getApiKey();
     if (!apiKey.ok) {
-      return apiKey;
+      yield makeErrorEvent(apiKey.error);
+      return;
     }
     if (!apiKey.value) {
-      return { ok: false, error: Error("No OpenAI API key was available") };
+      yield makeErrorEvent(
+        new Error(
+          "No OpenAI API key was available. " +
+            "Add an OPENAI_API_KEY secret in Visual Editor settings."
+        )
+      );
+      return;
     }
-    let result;
-    try {
-      result = await fetch(url.href, {
+
+    const response = await (async (): Promise<Result<Response>> => {
+      const fetchRequest = {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey.value}`,
         },
         body: JSON.stringify(request),
-      });
-    } catch (e) {
-      return { ok: false, error: e as Error };
-    }
-    if (result.status !== 200) {
-      try {
-        const error = (await result.json()) as unknown;
+      };
+      const retryDelays = exponentialBackoff(BACKOFF_PARAMS);
+      const startTime = performance.now();
+      for (let attempt = 0; ; attempt++) {
+        const result = await resultify(fetch(url.href, fetchRequest));
+        if (!result.ok) {
+          return result;
+        }
+        const response = result.value;
+        if (response.status === 200) {
+          return result;
+        }
+        const retryable = response.status === /* Too Many Requests */ 429;
+        if (retryable) {
+          const delay = retryDelays.next();
+          if (!delay.done) {
+            await new Promise((resolve) => setTimeout(resolve, delay.value));
+            continue;
+          }
+        }
+        const seconds = Math.ceil((performance.now() - startTime) / 1000);
+        const text = await resultify(result.value.text());
         return {
           ok: false,
           error: new Error(
-            `HTTP status ${result.status}` +
-              `\n\n${JSON.stringify(error, null, 2)}`
+            `OpenAI API responded with HTTP status ${response.status}` +
+              (attempt > 0
+                ? ` after ${attempt + 1} attempts within ${seconds} seconds.`
+                : ".") +
+              (text.ok ? `\n\n${text.value}` : "")
           ),
         };
-      } catch {
-        return { ok: false, error: Error(`http status was ${result.status}`) };
       }
+    })();
+    if (!response.ok) {
+      yield makeErrorEvent(response.error);
+      return;
     }
-    const body = result.body;
+
+    const body = response.value.body;
     if (body === null) {
-      return { ok: false, error: Error("body was null") };
+      yield makeErrorEvent(new Error("OpenAI API response had null body"));
+      return;
     }
     yield* convertOpenAiChunks(
       body.pipeThrough(new JsonDataStreamTransformer<OpenAIChunk>())

@@ -91,6 +91,7 @@ export const collectPorts = (
     }
     return type === EdgeType.In ? edge.in : edge.out;
   });
+  schema ??= {};
   const fixed = schema.additionalProperties === false;
   const schemaPortNames = Object.keys(schema.properties || {});
   if (addErrorPort) {
@@ -281,7 +282,7 @@ function describerResultToPorts(
   const incoming = node.incoming();
   const outgoing = node.outgoing();
   const inputs: InspectablePortList = {
-    fixed: described.inputSchema.additionalProperties === false,
+    fixed: described.inputSchema?.additionalProperties === false,
     ports: collectPorts(
       EdgeType.In,
       incoming,
@@ -298,7 +299,7 @@ function describerResultToPorts(
   const addErrorPort =
     node.descriptor.type !== "input" && node.descriptor.type !== "output";
   const outputs: InspectablePortList = {
-    fixed: described.outputSchema.additionalProperties === false,
+    fixed: described.outputSchema?.additionalProperties === false,
     ports: collectPorts(
       EdgeType.Out,
       outgoing,

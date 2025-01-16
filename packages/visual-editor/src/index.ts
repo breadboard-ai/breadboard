@@ -159,6 +159,9 @@ export class Main extends LitElement {
   showNewWorkspaceItemOverlay = false;
 
   @state()
+  view: "deploy" | "create" = "create";
+
+  @state()
   showBoardOverflowMenu = false;
   #boardOverflowMenuConfiguration: BoardOverlowMenuConfiguration | null = null;
 
@@ -1631,8 +1634,7 @@ export class Main extends LitElement {
         evt.isTool,
         evt.isComponent
       );
-    }
-    if (evt.moduleId) {
+    } else if (evt.moduleId) {
       await this.#runtime.edit.updateModuleInfo(
         tab,
         evt.moduleId,
@@ -2999,6 +3001,20 @@ export class Main extends LitElement {
                     </span>`
                 : nothing
             }
+            <span class="toggle">
+            ${
+              this.tab && this.#runtime.board.canPreview(this.tab.id)
+                ? html`<button
+                    class=${classMap({ [this.view]: true })}
+                    @click=${() => {
+                      this.view = this.view === "create" ? "deploy" : "create";
+                    }}
+                  >
+                    Toggle View
+                  </button>`
+                : nothing
+            }
+            </span>
           </div>
           ${tabControls}
           <button
@@ -3065,6 +3081,11 @@ export class Main extends LitElement {
         <bb-ui-controller
               ${ref(this.#uiRef)}
               ?inert=${showingOverlay}
+              .mainView=${this.view}
+              .dataStore=${this.#dataStore}
+              .runStore=${this.#runStore}
+              .sandbox=${sandbox}
+              .fileSystem=${this.#fileSystem}
               .graphStore=${this.#graphStore}
               .mainGraphId=${this.tab?.mainGraphId}
               .readOnly=${this.tab?.readOnly ?? true}

@@ -41,6 +41,7 @@ export type DraggableState =
       handlers: DraggableHandlers;
       initial: number;
       abort: AbortController;
+      previousBodyUserSelect: string;
     };
 
 class Draggable extends AsyncDirective {
@@ -89,12 +90,15 @@ class Draggable extends AsyncDirective {
     globalThis.addEventListener("mouseup", this.#onDone, opts);
     globalThis.addEventListener("blur", this.#onCancel, opts);
     globalThis.addEventListener("keydown", this.#onCancel, opts);
+    const previousBodyUserSelect = document.body.style.userSelect;
+    document.body.style.userSelect = "none";
     this.#state = {
       status: "dragging",
       element: this.#state.element,
       handlers: this.#state.handlers,
       initial: event.clientX,
       abort,
+      previousBodyUserSelect,
     };
     this.#state.handlers.start?.();
   };
@@ -137,6 +141,7 @@ class Draggable extends AsyncDirective {
       return;
     }
     this.#state.abort.abort();
+    document.body.style.userSelect = this.#state.previousBodyUserSelect;
     this.#state = {
       status: "ready",
       element: this.#state.element,

@@ -231,6 +231,16 @@ export type GraphInlineMetadata = {
    * [semver](https://semver.org/) format is encouraged.
    */
   version?: string;
+  /**
+   * The URL of the graph that will act as the describer for
+   * this graph. Can be a relative URL and refer to a sub-graph
+   * within this graph.
+   *
+   * The describers in the format of "module:name" will be interpreted as
+   * "use the `describe` export of the module named `name` to describe this
+   * graph".
+   */
+  describer?: string;
 };
 
 /**

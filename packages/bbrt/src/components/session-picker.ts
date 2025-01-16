@@ -72,7 +72,13 @@ export class BBRTSesssionPicker extends SignalWatcher(LitElement) {
         --bb-icon: var(--bb-icon-delete);
         border: none;
         background-color: transparent;
+        opacity: 0%;
+      }
+      li:hover .delete-button {
         opacity: 50%;
+      }
+      li:hover .delete-button:hover {
+        opacity: 100%;
       }
     `,
   ];
@@ -106,6 +112,7 @@ export class BBRTSesssionPicker extends SignalWatcher(LitElement) {
         >
         <button
           class="delete-button bb-icon-button"
+          title="Delete session"
           @click=${(event: MouseEvent) =>
             this.#clickDeleteSessionButton(event, id)}
         >
@@ -124,6 +131,9 @@ export class BBRTSesssionPicker extends SignalWatcher(LitElement) {
       this.sessionStore.createSession(brief).then((result) => {
         if (result.ok) {
           appState.activeSessionId = brief.id;
+          this.dispatchEvent(
+            new Event("bbrt-focus-prompt", { bubbles: true, composed: true })
+          );
         } else {
           // TODO(aomarks) Show an error.
           console.error(`Failed to create session: ${result.error}`);
@@ -138,6 +148,9 @@ export class BBRTSesssionPicker extends SignalWatcher(LitElement) {
     // TODO(aomarks) Make this a real hyperlink, syncronize session via hash.
     if (this.appState) {
       this.appState.activeSessionId = sessionId;
+      this.dispatchEvent(
+        new Event("bbrt-focus-prompt", { bubbles: true, composed: true })
+      );
     }
   }
 

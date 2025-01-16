@@ -165,7 +165,7 @@
     "@google-labs/breadboard": "^0.31.0",
     "@google-labs/core-kit": "^0.17.1",
     "@google-labs/template-kit": "^0.3.16",
-    "@rollup/plugin-commonjs": "^28.0.1",
+    "@rollup/plugin-commonjs": "^28.0.2",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.3.0",
     "@rollup/plugin-virtual": "^3.0.2",
@@ -175,6 +175,6 @@
     "serve": "^14.2.4",
     "urlpattern-polyfill": "^10.0.0",
     "vite": "^6.0.2",
-    "yaml": "^2.6.1"
+    "yaml": "^2.7.0"
   }
 }

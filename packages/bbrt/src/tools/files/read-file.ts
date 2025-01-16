@@ -7,6 +7,7 @@
 import type { ArtifactHandle } from "../../artifacts/artifact-interface.js";
 import type { ArtifactStore } from "../../artifacts/artifact-store.js";
 import type { Result } from "../../util/result.js";
+import { resultify } from "../../util/resultify.js";
 import type { BBRTTool, BBRTToolAPI, BBRTToolMetadata } from "../tool-types.js";
 
 interface Inputs {
@@ -73,13 +74,16 @@ export class ReadFile implements BBRTTool<Inputs, Outputs> {
       artifacts: ArtifactHandle[];
     }>
   > {
-    const text = await this.#artifacts.entry(path).text.complete;
+    const text = await resultify(this.#artifacts.entry(path).text.complete);
+    if (!text.ok) {
+      return text;
+    }
     return {
       ok: true,
       value: {
         data: {
           type: "text",
-          text,
+          text: text.value,
         },
         artifacts: [],
       },

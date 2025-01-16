@@ -86,6 +86,10 @@
 					"type": "string",
 					"description": "Version of the graph. [semver](https://semver.org/) format is encouraged."
 				},
+				"describer": {
+					"type": "string",
+					"description": "The URL of the graph that will act as the describer for this graph. Can be a relative URL and refer to a sub-graph within this graph.\n\nThe describers in the format of \"module:name\" will be interpreted as \"use the `describe` export of the module named `name` to describe this graph\"."
+				},
 				"metadata": {
 					"$ref": "#/definitions/GraphMetadata",
 					"description": "Metadata associated with the graph."

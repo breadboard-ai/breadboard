@@ -18,10 +18,9 @@ export class BBRTChat extends SignalWatcher(LitElement) {
 
   static override styles = css`
     :host {
+      background: #fafafa;
       display: block;
-      padding: 16px;
-      overflow-y: auto;
-      background: #fafdff;
+      padding: 16px 28px 16px 16px;
     }
   `;
 

@@ -40,9 +40,10 @@ import { readBoardServersFromIndexedDB } from "../breadboard/indexed-db-servers.
 import type { BBRTDriver } from "../drivers/driver-interface.js";
 import { GeminiDriver } from "../drivers/gemini.js";
 import { OpenAiDriver } from "../drivers/openai.js";
+import { BGL_DOCS } from "../instructions/bgl.js";
+import { SYSTEM_INSTRUCTION } from "../instructions/system-instruction.js";
 import { Conversation } from "../llm/conversation.js";
 import type { CutEvent, ForkEvent, RetryEvent } from "../llm/events.js";
-import { BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION } from "../llm/system-instruction.js";
 import { IndexedDBSettingsSecrets } from "../secrets/indexed-db-secrets.js";
 import type { SecretsProvider } from "../secrets/secrets-provider.js";
 import { ReactiveAppState } from "../state/app.js";
@@ -52,14 +53,14 @@ import { SessionStore } from "../state/session-store.js";
 import type { ReactiveSessionState } from "../state/session.js";
 import type { ReactiveTurnState } from "../state/turn.js";
 import { ActivateTool } from "../tools/activate-tool.js";
-import { AddNode } from "../tools/add-node.js";
-import { CreateBoard } from "../tools/create-board.js";
 import { DisplayFile } from "../tools/files/display-file.js";
 import { ReadFile } from "../tools/files/read-file.js";
 import { WriteFile } from "../tools/files/write-file.js";
 import { BoardLister } from "../tools/list-tools.js";
+import { SetTitleTool } from "../tools/set-title.js";
 import { type BBRTTool } from "../tools/tool-types.js";
 import { connectedEffect } from "../util/connected-effect.js";
+import type { Result } from "../util/result.js";
 import "./artifact-display.js";
 import "./chat.js";
 import "./driver-selector.js";
@@ -167,7 +168,22 @@ export class BBRTMain extends SignalWatcher(LitElement) {
   constructor(environment: Environment) {
     super();
     this.#environment = environment;
-    this.#artifacts = new ArtifactStore(new IdbArtifactReaderWriter());
+
+    const artifacts = new ArtifactStore(new IdbArtifactReaderWriter());
+    (async () => {
+      // TODO(aomarks) Obviously bad hack just to demonstrate pre-mounting files
+      // with documentation the model can access if needed. The right solution
+      // is probably that ArtifactStore can take N underlying stores, along with
+      // a mount path for each.
+      for (const [name, { type, content }] of Object.entries(BGL_DOCS)) {
+        using transaction = await artifacts
+          .entry(name)
+          .acquireExclusiveReadWriteLock();
+        transaction.write(new Blob([content], { type }));
+      }
+    })();
+    this.#artifacts = artifacts;
+
     this.#secrets = new IndexedDBSettingsSecrets();
     const grantStore: GrantStore = {
       get: (conectionId: string) => {
@@ -202,20 +218,19 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         () => this.#sessionState
       ),
 
-      // Files
-      new ReadFile(this.#artifacts),
-      new WriteFile(this.#artifacts),
-      new DisplayFile((path) => {
+      // Meta
+      new SetTitleTool((title) => {
         if (!this.#sessionState) {
           return { ok: false, error: "No active session" };
         }
-        this.#sessionState.activeArtifactId = path;
+        this.#sessionState.title = title;
         return { ok: true, value: undefined };
       }),
 
-      // BGL
-      new CreateBoard(this.#artifacts),
-      new AddNode(this.#artifacts),
+      // Files
+      new ReadFile(this.#artifacts),
+      new WriteFile(this.#artifacts, this.#displayFile),
+      new DisplayFile(this.#displayFile),
     ];
     this.#toolsPromise = breadboardToolsPromise.then(
       (breadboardTools) =>
@@ -229,7 +244,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
 
     const sessionStore = new SessionStore({
       defaults: {
-        systemPrompt: BREADBOARD_ASSISTANT_SYSTEM_INSTRUCTION,
+        systemPrompt: SYSTEM_INSTRUCTION,
         driverId: this.#drivers.keys().next().value!,
         activeToolIds: standardTools.map((tool) => tool.metadata.id),
       },
@@ -276,6 +291,14 @@ export class BBRTMain extends SignalWatcher(LitElement) {
       });
     })();
   }
+
+  #displayFile = (path: string): Result<void> => {
+    if (!this.#sessionState) {
+      return { ok: false, error: "No active session" };
+    }
+    this.#sessionState.activeArtifactId = path;
+    return { ok: true, value: undefined };
+  };
 
   get #sessionState() {
     return this.#sessionStateComputed.value;
@@ -342,6 +365,7 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         <bbrt-session-picker
           .appState=${this.#appState}
           .sessionStore=${this.#sessions}
+          @bbrt-focus-prompt=${this.#onFocusPrompt}
         ></bbrt-session-picker>
         <bbrt-tool-palette
           .conversation=${this.#conversation}
@@ -463,6 +487,10 @@ export class BBRTMain extends SignalWatcher(LitElement) {
         console.error(`Failed to fork session: ${result.error}`);
       }
     });
+  }
+
+  #onFocusPrompt() {
+    this.#prompt.value?.focus();
   }
 
   #findEventIndexForTurn(turn: ReactiveTurnState) {
