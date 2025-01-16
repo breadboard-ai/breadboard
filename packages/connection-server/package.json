@@ -18,7 +18,10 @@
     "dist/"
   ],
   "main": "./dist/index.js",
-  "exports": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./server.js": "./dist/server.js"
+  },
   "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {

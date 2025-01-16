@@ -36,7 +36,10 @@
       ]
     },
     "build:tsc": {
-      "command": "tsc"
+      "command": "tsc",
+      "dependencies": [
+        "../connection-server:build"
+      ]
     },
     "dev": {
       "command": "tsx src/server/main.ts",
