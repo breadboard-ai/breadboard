@@ -2072,10 +2072,8 @@ export class Graph extends PIXI.Container {
       graphNode.fixedOutputs = portInfo.outputs.fixed;
       const info = this.#nodeInfo;
       if (info) {
-        graphNode.activity = info.getActivity(id) ?? null;
         graphNode.showNodeRunnerButton = info.canRunNode(id);
       } else {
-        graphNode.activity = null;
         graphNode.showNodeRunnerButton = false;
       }
 
