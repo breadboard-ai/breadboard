@@ -136,6 +136,7 @@ export const styles = css`
       width: 230px;
       overflow: hidden;
       pointer-events: none;
+      border-radius: var(--bb-grid-size-4) 0 0 var(--bb-grid-size-4);
 
       & #history-list {
         pointer-events: auto;
@@ -143,7 +144,7 @@ export const styles = css`
         background: var(--bb-neutral-0);
         border-right: 1px solid var(--bb-neutral-300);
         width: 100%;
-        transition: transform 1.2s cubic-bezier(0, 0, 0.3, 1);
+        transition: transform 0.2s cubic-bezier(0, 0, 0.3, 1);
         transform: translateX(-100%) translateX(-2px);
         overflow-y: scroll;
         scrollbar-width: none;
