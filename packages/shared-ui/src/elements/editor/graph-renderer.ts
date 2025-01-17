@@ -46,6 +46,7 @@ import {
   InspectableNode,
   InspectableNodePorts,
   InspectablePort,
+  InspectableRun,
   NodeHandlerMetadata,
   NodeIdentifier,
   PortIdentifier,
@@ -81,7 +82,11 @@ import {
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import { GraphComment } from "./graph-comment.js";
 import { isBoardArrayBehavior, isBoardBehavior } from "../../utils/index.js";
-import { CommentNode, ModuleIdentifier } from "@breadboard-ai/types";
+import {
+  CommentNode,
+  ModuleIdentifier,
+  OutputValues,
+} from "@breadboard-ai/types";
 
 const backgroundColor = getGlobalColor("--bb-ui-50");
 const selectionBoxBackgroundAlpha = 0.05;
@@ -100,6 +105,9 @@ enum MODE {
 export class GraphRenderer extends LitElement {
   @property()
   graph: InspectableGraph | null = null;
+
+  @property()
+  run: InspectableRun | null = null;
 
   @property({ reflect: true })
   invertZoomScrollDirection = false;
@@ -1845,6 +1853,7 @@ export class GraphRenderer extends LitElement {
             this.#applyConfigs();
           }
 
+          this.#handleRun();
           this.#handleTopGraphResult();
           return html`${canvas}`;
         })
@@ -1854,6 +1863,43 @@ export class GraphRenderer extends LitElement {
       edgeMenu,
       this.#renderPortTooltip(),
     ];
+  }
+
+  #handleRun() {
+    if (!this.run) {
+      return;
+    }
+
+    const valuesByNode = new Map<NodeIdentifier, OutputValues[]>();
+    for (const event of this.run.events) {
+      if (event.type !== "node") {
+        continue;
+      }
+
+      if (event.end === null || event.outputs === null) {
+        continue;
+      }
+
+      let values = valuesByNode.get(event.node.descriptor.id);
+      if (!values) {
+        values = [];
+        valuesByNode.set(event.node.descriptor.id, values);
+      }
+
+      values.push(event.outputs);
+    }
+
+    for (const graph of this.#container.children) {
+      if (!(graph instanceof Graph) || !graph.visible) {
+        continue;
+      }
+
+      if (graph.subGraphId) {
+        continue;
+      }
+
+      graph.valuesByNode = valuesByNode;
+    }
   }
 
   #handleTopGraphResult() {

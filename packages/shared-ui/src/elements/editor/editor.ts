@@ -1093,6 +1093,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
         ${ref(this.#graphRendererRef)}
         .topGraphUrl=${this.graph?.raw().url ?? "no-url"}
         .topGraphResult=${this.topGraphResult}
+        .run=${this.run}
         .assetPrefix=${this.assetPrefix}
         .graphTopologyUpdateId=${this.graphTopologyUpdateId}
         .configs=${this.#configs}

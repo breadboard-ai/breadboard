@@ -16,7 +16,11 @@ import {
 } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
 import { getGlobalColor, isConfigurablePort } from "./utils";
-import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types";
+import {
+  ComponentExpansionState,
+  GRAPH_OPERATIONS,
+  GraphNodePortType,
+} from "./types";
 import {
   isBoardArrayBehavior,
   isBoardBehavior,
@@ -24,12 +28,14 @@ import {
   isLLMContentBehavior,
   isModuleBehavior,
 } from "../../utils";
+import { GraphNodePort } from "./graph-node-port";
 
 const hoverColor = getGlobalColor("--bb-ui-50");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
-const previewTextColor = getGlobalColor("--bb-neutral-500");
+const previewTextColor = getGlobalColor("--bb-neutral-700");
 
-const PREVIEW_WIDTH = 270;
+const PREVIEW_WIDTH = 220;
+const OFFSET_WHEN_EXPANDED = 16;
 
 export class GraphPortLabel extends PIXI.Container {
   #isDirty = false;
@@ -46,13 +52,14 @@ export class GraphPortLabel extends PIXI.Container {
   #paddingRight = 4;
   #expansionState: ComponentExpansionState = "expanded";
 
-  #previewTextSize = 12;
+  #previewTextSize = 10;
   #previewTextColor = previewTextColor;
 
   #port: InspectablePort | null = null;
   #label: PIXI.Text;
   #valuePreview: PIXI.HTMLText;
   #hoverZone = new PIXI.Graphics();
+  #portStatus = new GraphNodePort(GraphNodePortType.INERT);
 
   #showNodePreviewValues = false;
   #isConfigurable = false;
@@ -68,6 +75,7 @@ export class GraphPortLabel extends PIXI.Container {
     super();
 
     this.#modules = modules;
+    this.#portStatus.status = port.status;
 
     this.#label = new PIXI.Text({
       text: port.title,
@@ -80,14 +88,14 @@ export class GraphPortLabel extends PIXI.Container {
     });
 
     this.#valuePreview = new PIXI.HTMLText({
-      text: this.#createTruncatedValue(port),
+      text: `<p>${this.#createTruncatedValue(port)}</p>`,
       style: {
         fontFamily: "Arial",
         fontSize: this.#previewTextSize,
+        cssOverrides: ["background-color: red"],
         tagStyles: {
           div: {
-            fontStyle: "italic",
-            lineHeight: this.#previewTextSize * 1.5,
+            lineHeight: this.#previewTextSize * 1.4,
           },
         },
         fill: this.#previewTextColor,
@@ -98,12 +106,18 @@ export class GraphPortLabel extends PIXI.Container {
       },
     });
 
+    this.#valuePreview.style.addOverride("white-space: nowrap");
+    this.#valuePreview.style.addOverride("width: 224px");
+    this.#valuePreview.style.addOverride("overflow: hidden");
+    this.#valuePreview.style.addOverride("text-overflow: ellipsis");
+
     this.#label.eventMode = "none";
     this.#valuePreview.eventMode = "none";
 
     this.addChild(this.#hoverZone);
     this.addChild(this.#label);
     this.addChild(this.#valuePreview);
+    this.addChild(this.#portStatus);
 
     this.#hoverZone.visible = false;
     this.#valuePreview.visible = false;
@@ -265,6 +279,13 @@ export class GraphPortLabel extends PIXI.Container {
 
   #draw() {
     this.#hoverZone.clear();
+    this.#hoverZone.x =
+      this.#expansionState === "expanded" ? OFFSET_WHEN_EXPANDED : 0;
+
+    this.#portStatus.x = 4;
+    this.#portStatus.y = 7;
+    this.#portStatus.visible =
+      this.isConfigurable && this.#expansionState === "expanded";
 
     if (!this.isConfigurable || this.readOnly) {
       return;
@@ -286,9 +307,15 @@ export class GraphPortLabel extends PIXI.Container {
   }
 
   #calculateDimensions() {
-    this.#label.x = 0;
+    this.#label.x =
+      this.isConfigurable && this.#expansionState === "expanded"
+        ? OFFSET_WHEN_EXPANDED
+        : 0;
     this.#label.y = 0;
-    this.#valuePreview.x = 0;
+    this.#valuePreview.x =
+      this.isConfigurable && this.#expansionState === "expanded"
+        ? OFFSET_WHEN_EXPANDED
+        : 0;
     this.#valuePreview.y = this.#label.height + this.#spacing;
 
     this.#width = Math.max(this.#label.width, this.#valuePreview.width);
@@ -373,7 +400,6 @@ export class GraphPortLabel extends PIXI.Container {
       return "Unspecified Module";
     }
 
-    // TODO: Pass through a user-friendly label for boards & board arrays?
     if (isBoardBehavior(port.schema)) {
       return "1 item";
     }
@@ -413,7 +439,7 @@ export class GraphPortLabel extends PIXI.Container {
         valStr = value.preview as string;
       }
     } else {
-      valStr = value.toString();
+      valStr = "";
     }
 
     if (valStr.length > 60) {
