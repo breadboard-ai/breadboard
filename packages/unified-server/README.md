@@ -101,11 +101,68 @@ This is not an issue when running in production mode. The import succeeds during
 the Rollup build step. It only fails when running the Vite dev server. Not sure
 why that is.
 
-### Visual Editor shows blank screen
+### Visual Editor doesn't work in dev mode
 
 Even when the previous build step is worked around by manually invoking the
 build steps, the Visual Editor doesn't display properly. The bootstrap process
 fails and the component never displays.
+
+The failure appears to be related to the HTML proxy logic. During startup, the
+client tries to load this URL:
+
+http://localhost:3000/@id/**x00**/.../packages/unified-server/index.html?html-proxy&index=0.js
+
+This is an attempt to load a JS module, but the dev server instead returns the
+contents of `index.html` (due to the fallthrough logic of Vite-Express).
+
+This error appears in the console:
+
+```
+Failed to load module script: Expected a JavaScript module script but the
+server responded with a MIME type of "text/html". Strict MIME type checking is
+enforced for module scripts per HTML spec.
+```
+
+Not sure why this URL is being loaded, or what we need to do to fix it, but it
+does seem to prevent the Visual Editor from showing in build mode.
+
+Board Server, which implements similar logic using a custom router, does have
+special handling for this situation.
+
+https://github.com/breadboard-ai/breadboard/blob/7c64db3f1147e1112bcd1269c3f95917f511e4f0/packages/board-server/src/server/common.ts#L93-L96
+
+### Visual Editor doesn't work in production mode
+
+In production mode, when running from the compiled bundle, Visual Editor still
+fails, but for a different reason.
+
+At some point during the startup, the client loads this URL:
+
+http://localhost:3000/kits.json
+
+This successfully loads the `kits.json` file, which is copied into the `public`
+directory during the build process.
+
+https://github.com/breadboard-ai/breadboard/blob/main/packages/visual-editor/public/kits.json
+
+The client then proceeds to load each of the strings in that file as paths on
+the local server. For example:
+
+http://localhost:3000/core-kit.js
+
+Since this file doesn't exist, it returns the `index.html` per the fallback
+logic, and we get the same error as above.
+
+```
+Uncaught (in promise) TypeError: Failed to fetch dynamically imported module:
+http://localhost:3000/palm-kit.js
+```
+
+```
+Failed to load module script: Expected a JavaScript module script but the
+server responded with a MIME type of "text/html". Strict MIME type checking is
+enforced for module scripts per HTML spec.
+```
 
 ### Build failures when attaching Board Server
 
@@ -136,7 +193,7 @@ The board server router is not build using Express. The server is attached to
 the unified server by attaching the handler returned by `makeRouter` as an
 express subroute:
 
-https://github.com/breadboard-ai/breadboard/blob/2cfcaa5f8e37ff316e163f4124baf46f87d98534/packages/board-server/src/router.ts#L26
+https://github.com/breadboard-ai/breadboard/blob/main/packages/board-server/src/router.ts#L26
 
 However, this doesn't work because of the way that the board server routing is
 written.
