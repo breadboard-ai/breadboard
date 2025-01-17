@@ -38,7 +38,6 @@
     "build:tsc": {
       "command": "tsc",
       "dependencies": [
-        "../board-server:build",
         "../connection-server:build"
       ]
     },
@@ -105,7 +104,6 @@
     "wireit": "^0.14.9"
   },
   "dependencies": {
-    "@breadboard-ai/board-server": "^0.11.0",
     "@breadboard-ai/connection-server": "^0.4.0",
     "@breadboard-ai/visual-editor": "1.25.0",
     "express": "^4.21.2",
