@@ -1,12 +1,9 @@
 ---
 layout: docs.liquid
-title: Breadboard from scratch
+title: Breadboard From Scratch
 tags:
   - guide
-  - wip
 ---
-
-_Work in progress. See <https://github.com/breadboard-ai/breadboard/issues/2675>_
 
 This guide is targeted at a developer who wants to deploy their own Breadboard
 instance with no previous setup or configuration. It will cover all components
