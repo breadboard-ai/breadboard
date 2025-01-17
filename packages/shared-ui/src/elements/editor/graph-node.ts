@@ -300,8 +300,8 @@ export class GraphNode extends PIXI.Container {
       this.addChild(this.#runnerButton);
     }
 
-    this.#headerInPort.label = "_header-port-in";
-    this.#headerOutPort.label = "_header-port-out";
+    this.#headerInPort.label = "context";
+    this.#headerOutPort.label = "context";
     this.#headerInPort.visible = false;
     this.#headerOutPort.visible = false;
 

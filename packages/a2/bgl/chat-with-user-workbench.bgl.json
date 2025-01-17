@@ -1,0 +1,110 @@
+{
+  "title": "Chat With User Workbench",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"Birmingham, AL\"}]}]",
+              "description": ""
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -200,
+          "y": -40,
+          "collapsed": "expanded"
+        },
+        "logLevel": "debug"
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 400.0000000000001,
+          "y": -40,
+          "collapsed": "expanded"
+        }
+      }
+    },
+    {
+      "id": "a2-ba0b0b0b",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "visual": {
+          "x": 100,
+          "y": -40,
+          "collapsed": "expanded"
+        },
+        "title": "Text Generator",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "Create travel plan based on the destination provided"
+            }
+          ],
+          "role": "user"
+        },
+        "p-chat": true
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "a2-ba0b0b0b",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "a2-ba0b0b0b",
+      "to": "output",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "metadata": {
+    "visual": {}
+  }
+}
