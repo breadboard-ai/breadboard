@@ -133,7 +133,7 @@ export class Toast extends LitElement {
     }
 
     clearTimeout(this.#removalTimeout);
-    this.#removalTimeout = setTimeout(() => {
+    this.#removalTimeout = window.setTimeout(() => {
       this.addEventListener(
         "animationend",
         () => {

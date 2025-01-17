@@ -475,7 +475,7 @@ export class CodeEditor extends LitElement {
         }
 
         globalThis.clearTimeout(this.#emitTimeout);
-        this.#emitTimeout = setTimeout(() => {
+        this.#emitTimeout = window.setTimeout(() => {
           const opts: {
             format?: boolean;
             manual?: boolean;
