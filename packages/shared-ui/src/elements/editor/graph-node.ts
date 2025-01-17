@@ -8,6 +8,7 @@ import {
   InspectableModules,
   InspectablePort,
   NodeIdentifier,
+  OutputValues,
   PortIdentifier,
   PortStatus,
 } from "@google-labs/breadboard";
@@ -36,12 +37,14 @@ import {
   isLLMContentArrayBehavior,
   isLLMContentBehavior,
 } from "../../utils/index.js";
+import { GraphNodeOutput } from "./graph-node-output.js";
 
 const borderColor = getGlobalColor("--bb-neutral-500");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
 const segmentDividerColor = getGlobalColor("--bb-neutral-300");
 const portsDividerColor = getGlobalColor("--bb-neutral-100");
 
+const grabHandleColor = getGlobalColor("--bb-neutral-300");
 const nodeBackgroundColor = getGlobalColor("--bb-neutral-0");
 const selectedNodeColor = getGlobalColor("--bb-ui-600");
 const highlightForAdHocNodeColor = getGlobalColor("--bb-boards-500");
@@ -68,6 +71,7 @@ export class GraphNode extends PIXI.Container {
 
   #titleTextColor = nodeTextColor;
   #titleTextSize = 14;
+  #outputHeight = 44;
 
   #portTextColor = nodeTextColor;
   #borderColor = borderColor;
@@ -78,15 +82,22 @@ export class GraphNode extends PIXI.Container {
   #highlightForBoardPortColor = highlightForBoardPortNodeColor;
   #textSize = 12;
   #backgroundColor = nodeBackgroundColor;
+  #grabHandleColor = grabHandleColor;
+
   #padding = 12;
   #menuPadding = 8;
   #iconPadding = 8;
   #portLabelVerticalPadding = 8;
   #portRadius = 4;
   #background = new PIXI.Graphics();
+  #grabHandle = new PIXI.Graphics();
   #collapsedPortList = new GraphNodePortList();
   #referenceContainer = new GraphNodeReferenceContainer();
   #references: GraphNodeReferences | null = null;
+
+  #nodeOutput = new GraphNodeOutput();
+  #nodeOutputMask = new PIXI.Graphics();
+
   #inPorts: InspectablePort[] | null = null;
   #inPortsData: Map<
     string,
@@ -160,6 +171,77 @@ export class GraphNode extends PIXI.Container {
     this.addChild(this.#headerOutPort);
     this.addChild(this.#collapsedPortList);
     this.addChild(this.#referenceContainer);
+
+    if (this.#hasVisibleOutputs()) {
+      this.#grabHandle.beginPath();
+      this.#grabHandle.moveTo(12, 2);
+      this.#grabHandle.lineTo(2, 12);
+
+      this.#grabHandle.moveTo(12, 6);
+      this.#grabHandle.lineTo(6, 12);
+
+      this.#grabHandle.moveTo(12, 10);
+      this.#grabHandle.lineTo(10, 12);
+
+      this.#grabHandle.stroke({
+        color: this.#grabHandleColor,
+        cap: "round",
+        width: 1.5,
+      });
+
+      this.#grabHandle.closePath();
+      this.#grabHandle.hitArea = new PIXI.Polygon([
+        -2, -2, -2, 20, 20, 20, 20, -2,
+      ]);
+
+      let resizing = false;
+      let resizeStart = 0;
+      let outputSizeStart = 0;
+      const setOutputHeight = (outputHeight: number) => {
+        if (outputHeight < 40) {
+          outputHeight = 40;
+        }
+
+        if (outputHeight === this.#outputHeight) {
+          return;
+        }
+
+        this.#outputHeight = outputHeight;
+        this.#isDirty = true;
+      };
+
+      this.#grabHandle.addEventListener("pointerdown", (evt) => {
+        resizing = true;
+        resizeStart = evt.pageY;
+        outputSizeStart = this.#outputHeight;
+      });
+
+      this.#grabHandle.addEventListener("globalpointermove", (evt) => {
+        if (!resizing) {
+          return;
+        }
+
+        const delta =
+          Math.round(
+            (evt.pageY - resizeStart) / this.worldTransform.a / GRID_SIZE
+          ) * GRID_SIZE;
+        setOutputHeight(outputSizeStart + delta);
+      });
+
+      const stopResize = (evt: PIXI.FederatedPointerEvent) => {
+        const delta =
+          Math.round(
+            (evt.pageY - resizeStart) / this.worldTransform.a / GRID_SIZE
+          ) * GRID_SIZE;
+        setOutputHeight(outputSizeStart + delta);
+        resizing = false;
+      };
+      this.#grabHandle.addEventListener("pointerup", stopResize);
+      this.#grabHandle.addEventListener("pointerupoutside", stopResize);
+
+      this.addChild(this.#grabHandle);
+      this.addChild(this.#nodeOutput);
+    }
 
     this.#referenceContainer.x = -10;
     this.#referenceContainer.y = 0;
@@ -872,6 +954,18 @@ export class GraphNode extends PIXI.Container {
     return this.#outPorts;
   }
 
+  set values(values: OutputValues[] | null) {
+    this.#nodeOutput.values = values;
+  }
+
+  get values() {
+    return this.#nodeOutput.values;
+  }
+
+  #hasVisibleOutputs() {
+    return this.type !== "input";
+  }
+
   forceUpdateDimensions() {
     this.#createTitleTextIfNeeded();
     this.#updateDimensions();
@@ -984,6 +1078,10 @@ export class GraphNode extends PIXI.Container {
       }
     }
 
+    if (this.#hasVisibleOutputs() && !this.collapsed) {
+      height += this.#outputHeight;
+    }
+
     this.#width = width;
     this.#height = height;
   }
@@ -1065,6 +1163,7 @@ export class GraphNode extends PIXI.Container {
     this.#drawCollapsedPortListIfNeeded();
     this.#drawRunnerButtonIfNeeded();
     this.#drawReferences();
+    this.#drawNodeOutput();
   }
 
   #updateHitZone() {
@@ -1299,6 +1398,15 @@ export class GraphNode extends PIXI.Container {
       this.#background.closePath();
       this.#background.stroke({ color: this.#portsDividerColor });
     }
+
+    if (this.#hasVisibleOutputs()) {
+      const y = Math.round(this.#height - this.#outputHeight) + 0.5;
+      this.#background.beginPath();
+      this.#background.moveTo(0, y);
+      this.#background.lineTo(this.#width, y);
+      this.#background.closePath();
+      this.#background.stroke({ color: this.#segmentDividerColor });
+    }
   }
 
   #drawTitle() {
@@ -1440,6 +1548,28 @@ export class GraphNode extends PIXI.Container {
     this.#referenceContainer.selectedReferences = this.#selectedReferences;
 
     this.addChildAt(this.#referenceContainer, 0);
+  }
+
+  #drawNodeOutput() {
+    this.#nodeOutput.x = 16;
+    this.#nodeOutput.y = this.#height - this.#outputHeight + 16;
+
+    this.addChild(this.#nodeOutputMask);
+    this.#nodeOutputMask.clear();
+    this.#nodeOutputMask.beginPath();
+    this.#nodeOutputMask.rect(
+      16,
+      this.#height - this.#outputHeight + 16,
+      this.#width,
+      this.#outputHeight - 20
+    );
+
+    this.#nodeOutputMask.closePath();
+    this.#nodeOutputMask.fill();
+
+    this.#nodeOutput.setMask({ mask: this.#nodeOutputMask });
+    this.#grabHandle.x = this.#width - 18;
+    this.#grabHandle.y = this.#height - 18;
   }
 
   referenceRects(): Array<{ id: string; rect: PIXI.Rectangle }> {

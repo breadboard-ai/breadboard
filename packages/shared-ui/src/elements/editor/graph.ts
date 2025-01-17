@@ -14,6 +14,7 @@ import {
   InspectablePort,
   NodeHandlerMetadata,
   NodeIdentifier,
+  OutputValues,
   PortIdentifier,
   PortStatus,
 } from "@google-labs/breadboard";
@@ -85,6 +86,7 @@ export class Graph extends PIXI.Container {
   #nodeInfo: TopGraphNodeInfo | null = null;
   #selectionState: GraphSelectionState | null = null;
   #references: GraphReferences | null = null;
+  #valuesByNode: Map<NodeIdentifier, OutputValues[]> | null = null;
 
   #shouldRenderOutline = false;
   #isInitialDraw = true;
@@ -1438,6 +1440,15 @@ export class Graph extends PIXI.Container {
     return this.#nodeInfo;
   }
 
+  set valuesByNode(valuesByNode: Map<NodeIdentifier, OutputValues[]> | null) {
+    this.#valuesByNode = valuesByNode;
+    this.#isDirty = true;
+  }
+
+  get valuesByNode() {
+    return this.#valuesByNode;
+  }
+
   set nodes(nodes: InspectableNode[] | null) {
     this.#nodes = nodes;
     this.#isDirty = true;
@@ -1993,6 +2004,7 @@ export class Graph extends PIXI.Container {
       const graphNodeReferences =
         this.#references?.get(graphNode.label) ?? null;
       graphNode.references = graphNodeReferences;
+      graphNode.values = this.valuesByNode?.get(graphNode.label) ?? null;
 
       if (icon && GraphAssets.instance().has(icon)) {
         graphNode.icon = icon;

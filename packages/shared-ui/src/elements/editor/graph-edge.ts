@@ -431,7 +431,10 @@ export class GraphEdge extends PIXI.Container {
       const yDist = Math.round(Math.abs(inLocation.y - outLocation.y));
 
       // Standard curve.
-      if (xDist > 40 && Math.abs(midA.x - midB.x) < 0.5) {
+      if (
+        (xDist > 40 || (xDist <= 40 && yDist < 20)) &&
+        Math.abs(midA.x - midB.x) < 0.5
+      ) {
         this.#edgeGraphic.beginPath();
         this.#edgeGraphic.moveTo(outLocation.x, outLocation.y);
 
