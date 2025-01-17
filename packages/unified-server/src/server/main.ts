@@ -2,7 +2,7 @@ import express from "express";
 import ViteExpress from "vite-express";
 
 import { createServer } from "@breadboard-ai/connection-server/server.js";
-import { makeRouter } from "@breadboard-ai/board-server/router.js";
+import { makeRouter } from "@breadboard-ai/board-server/router";
 
 const app = express();
 
