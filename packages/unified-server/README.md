@@ -1,7 +1,9 @@
 # Breadboard Unified Server
 
-> [!NOTE] The Breadboard Unified Server is currently under active development
-> and is being tracked at
+> [!NOTE]
+>
+> The Breadboard Unified Server is currently under active development and is
+> being tracked at
 > [Issue #3913](https://github.com/breadboard-ai/breadboard/issues/3913)
 
 The Breadboard Unified Server is a single client/server application that serves
@@ -63,7 +65,7 @@ If the `vite build` step is run second, it clobbers the output from the
 startup.
 
 Manually running `npm build:vite` followed by `npm build:tsc` does work, but
-only for local development. We need a solution that works in automation. Either
+only for local development. We need a solution that works in automation, either
 by allowing these two steps to co-exist (preferable), or by forcing the build to
 run in a particular order.
 
@@ -73,6 +75,77 @@ compiled directly to `dist`. If the client-side code is instead compiled to
 isolation. However, the visual editor is not currently configured to look for
 assets in a `client` directory. It expects them to be in the root.
 
+### `package.json` fails to resolve in dev mode
+
+When running the frontend server in dev mode, where client-side artifacts are
+resolved by the Vite Dev Server, the dev server is not able to resolve artifacts
+referenced by `index.html`.
+
+The console logs show the following error:
+
+```
+12:28:39 PM [vite] Pre-transform error: Failed to resolve import "./package.json" from "packages/unified-server/index.html?html-proxy&index=0.js". Does the file exist?
+  Plugin: vite:import-analysis
+  File: packages/unified-server/index.html?html-proxy&index=0.js:2:27
+  1  |
+  2  |      import * as pkg from "./package.json";
+     |                            ^
+  3  |      import * as StringsHelper from "@breadboard-ai/shared-ui/strings";
+  4  |
+```
+
+Since this value is only used to set the version in the config, it can be worked
+around by hard-coding the string, but it would be nice to get it working.
+
+This is not an issue when running in production mode. The import succeeds during
+the Rollup build step. It only fails when running the Vite dev server. Not sure
+why that is.
+
 ### Visual Editor shows blank screen
 
+Even when the previous build step is worked around by manually invoking the
+build steps, the Visual Editor doesn't display properly. The bootstrap process
+fails and the component never displays.
+
+### Build failures when attaching Board Server
+
+See this PR:
+
+https://github.com/breadboard-ai/breadboard/pull/4145
+
+And its rollback:
+
+https://github.com/breadboard-ai/breadboard/pull/4152
+
+The original PR caused CI failures because the server wouldn't build
+successfully.
+
+https://github.com/breadboard-ai/breadboard/actions/runs/12833510619/job/35788714403
+
+The errors look a lot like the problems caused by the Vite build clobbering the
+server-side build, which causes the server to fail to start up.
+
+https://github.com/breadboard-ai/breadboard/actions/runs/12833510619/job/35788714403
+
+Because of this, the board server integration has been rolled back until we can
+figure out how to get it working.
+
 ### Board server routing is broken
+
+The board server router is not build using Express. The server is attached to
+the unified server by attaching the handler returned by `makeRouter` as an
+express subroute:
+
+https://github.com/breadboard-ai/breadboard/blob/2cfcaa5f8e37ff316e163f4124baf46f87d98534/packages/board-server/src/router.ts#L26
+
+However, this doesn't work because of the way that the board server routing is
+written.
+
+Board Server is not an ExpressJS app. Its routing is handwritten, and inspects
+the entire URL to make routing decisions. This means that if you attach it to a
+subroute, the routing logic will fail because of the additional path element
+prefixed to all the paths.
+
+The simplest solution to this is probably to rewrite Board Server in place to
+use ExpressJS routing. Then it will drop in without needing any special
+handling.
