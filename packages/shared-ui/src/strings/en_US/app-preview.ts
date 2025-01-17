@@ -8,6 +8,9 @@ import { LanguagePackEntry } from "../../types/types";
 
 export default {
   // Commands.
+  COMMAND_CONTINUE: {
+    str: "Continue",
+  },
 
   // Statuses.
   STATUS_GENERATING_EXPORT: {
@@ -28,7 +31,13 @@ export default {
     str: "Start",
   },
   LABEL_INITIAL_MESSAGE: {
-    str: "Please start the conversation",
+    str: "Tap Start to begin",
+  },
+  LABEL_FOOTER: {
+    str: "Made with",
+  },
+  LABEL_UNTITLED_APP: {
+    str: "Untitled App",
   },
 
   // Queries.
