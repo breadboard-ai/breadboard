@@ -14,16 +14,7 @@ await Promise.all([
     external: ["@google-cloud", "import.meta", "vite", "better-sqlite3"],
     format: "esm",
     outfile: "dist/server/index.js",
-    sourcemap: true,
-  }),
-  esbuild.build({
-    entryPoints: ["src/router.ts"],
-    bundle: true,
-    platform: "node",
-    external: ["@google-cloud", "import.meta", "vite", "better-sqlite3"],
-    format: "esm",
-    outfile: "dist/server/router.js",
-    sourcemap: true,
+    sourcemap: true
   }),
   esbuild.build({
     entryPoints: ["scripts/create-account.ts"],
@@ -33,5 +24,5 @@ await Promise.all([
     outfile: "dist/scripts/create-account.js",
     sourcemap: true,
     external: ["@google-cloud", "import.meta", "vite", "better-sqlite3"],
-  }),
+  })
 ]);
