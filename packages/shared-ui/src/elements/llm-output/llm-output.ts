@@ -18,6 +18,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { until } from "lit/directives/until.js";
 import { markdown } from "../../directives/markdown.js";
+import { toZip } from "../../utils/llm-content.js";
 
 @customElement("bb-llm-output")
 export class LLMOutput extends LitElement {
@@ -30,14 +31,18 @@ export class LLMOutput extends LitElement {
   @property({ reflect: true })
   lite = false;
 
+  @property({ reflect: true })
+  showExportControls = false;
+
   #partDataURLs = new Map<number, string>();
 
   static styles = css`
     :host {
       display: block;
-      border: 2px solid var(--bb-neutral-300);
-      border-radius: var(--bb-grid-size);
-      padding: var(--bb-grid-size-3) 0;
+      border: var(--output-border-width, 2px) solid
+        var(--output-border-color, var(--bb-neutral-300));
+      border-radius: var(--output-border-radius, var(--bb-grid-size));
+      padding: var(--output-padding, var(--bb-grid-size-3)) 0;
       margin-bottom: var(--bb-grid-size-2);
     }
 
@@ -77,13 +82,21 @@ export class LLMOutput extends LitElement {
       white-space: normal;
       border-radius: initial;
       user-select: text;
+
+      &:has(> img),
+      &:has(> video),
+      &:has(> audio) {
+        justify-content: center;
+        align-items: center;
+        padding: var(--bb-grid-size-2) 0;
+      }
     }
 
     .value img,
     .value video,
     .value audio {
       width: 100%;
-      max-width: 320px;
+      max-width: 360px;
     }
 
     .value img,
@@ -115,26 +128,38 @@ export class LLMOutput extends LitElement {
     }
 
     .value h1 {
-      font-size: var(--bb-title-large);
-      margin: var(--bb-grid-size-4) 0 var(--bb-grid-size-2) 0;
+      font: 500 var(--bb-title-large) / var(--bb-title-line-height-large)
+        var(--bb-font-family);
+
+      margin: var(--bb-grid-size-6) 0 var(--bb-grid-size-2) 0;
     }
 
     .value h2 {
-      font-size: var(--bb-title-medium);
+      font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
+        var(--bb-font-family);
+
       margin: var(--bb-grid-size-4) 0 var(--bb-grid-size-2) 0;
     }
 
     .value h3,
     .value h4,
     .value h5 {
-      font-size: var(--bb-title-small);
-      margin: 0 0 var(--bb-grid-size-3) 0;
+      font: 500 var(--bb-title-small) / var(--bb-title-line-height-small)
+        var(--bb-font-family);
+
+      margin: var(--bb-grid-size-3) 0 var(--bb-grid-size-2) 0;
     }
 
     .value p {
-      font-size: var(--bb-body-medium);
-      margin: 0 0 var(--bb-grid-size-3) 0;
+      font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+        var(--bb-font-family);
+
+      margin: 0 0 var(--bb-grid-size-2) 0;
       white-space: pre-line;
+
+      & strong:only-child {
+        margin: var(--bb-grid-size-2) 0 0 0;
+      }
     }
 
     .value h1:first-of-type,
@@ -173,6 +198,44 @@ export class LLMOutput extends LitElement {
     .play-audio:hover,
     .play-audio:focus {
       opacity: 1;
+    }
+
+    :host([showexportcontrols="true"]) {
+      margin-top: var(--bb-grid-size-4);
+      position: relative;
+
+      & #export-controls {
+        display: flex;
+        align-items: center;
+        position: absolute;
+        height: var(--bb-grid-size-8);
+        top: calc(-1 * var(--bb-grid-size-4));
+        right: var(--bb-grid-size-6);
+        background: var(--bb-neutral-0);
+        border: 1px solid var(--bb-neutral-300);
+        border-radius: var(--bb-grid-size-12);
+        padding: 0 var(--bb-grid-size-2);
+
+        & #get-zip {
+          width: 24px;
+          height: 24px;
+          font-size: 0;
+          border: none;
+          background: var(--bb-icon-download) center center / 24px 24px
+            no-repeat;
+          opacity: 0.6;
+
+          &:not([disabled]) {
+            cursor: pointer;
+            transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+            &:hover,
+            &:focus {
+              opacity: 1;
+            }
+          }
+        }
+      }
     }
   `;
 
@@ -228,9 +291,34 @@ export class LLMOutput extends LitElement {
     return audioCtx.startRendering();
   }
 
+  #creatingZip = false;
   render() {
     return this.value && this.value.parts.length
-      ? html`${map(this.value.parts, (part, idx) => {
+      ? html`${this.showExportControls
+          ? html`<div id="export-controls">
+              <button
+                id="get-zip"
+                @click=${async () => {
+                  if (!this.value || this.#creatingZip) {
+                    return;
+                  }
+
+                  this.#creatingZip = true;
+                  const zip = await toZip(this.value);
+                  const url = URL.createObjectURL(zip);
+                  this.#creatingZip = false;
+
+                  const link = document.createElement("a");
+                  link.href = url;
+                  link.download = "export";
+                  link.click();
+                }}
+              >
+                Zip
+              </button>
+            </div>`
+          : nothing}
+        ${map(this.value.parts, (part, idx) => {
           let value: TemplateResult | symbol = nothing;
           if (isTextCapabilityPart(part)) {
             value = html`${markdown(part.text)}`;

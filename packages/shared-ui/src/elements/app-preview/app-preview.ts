@@ -4,12 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LLMContent, OutputValues } from "@breadboard-ai/types";
+import {
+  GraphDescriptor,
+  LLMContent,
+  OutputValues,
+} from "@breadboard-ai/types";
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("AppPreview");
 const GlobalStrings = StringsHelper.forSection("Global");
-
-const GLOBAL_START_TIME = Date.now();
 
 import { LitElement, html, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -19,13 +21,14 @@ import {
   InspectableRunEvent,
   InspectableRunInputs,
   InspectableRunNodeEvent,
+  InspectableRunSecretEvent,
   isLLMContent,
   isLLMContentArray,
   isTextCapabilityPart,
   Schema,
 } from "@google-labs/breadboard";
 
-import { UserInputConfiguration } from "../../types/types.js";
+import { SETTINGS_TYPE, UserInputConfiguration } from "../../types/types.js";
 import { until } from "lit/directives/until.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -40,9 +43,14 @@ import {
   isLLMContentBehavior,
 } from "../../utils/behaviors.js";
 import { InputEnterEvent } from "../../events/events.js";
+import { SettingsStore } from "../../data/settings-store.js";
+import { formatError } from "../../utils/format-error.js";
 
 @customElement("bb-app-preview")
 export class AppPreview extends LitElement {
+  @property({ reflect: false })
+  graph: GraphDescriptor | null = null;
+
   @property({ reflect: false })
   run: InspectableRun | null = null;
 
@@ -58,11 +66,29 @@ export class AppPreview extends LitElement {
   @property({ reflect: true })
   eventPosition = 0;
 
+  @property()
+  settings: SettingsStore | null = null;
+
+  @property({ reflect: true })
+  showHistory = false;
+
   static styles = appPreviewStyles;
 
   #seenItems = new Set<string>();
   #newestEntry: Ref<HTMLElement> = createRef();
   #userInputRef: Ref<UserInput> = createRef();
+
+  protected updated(): void {
+    if (!this.#newestEntry.value) {
+      return;
+    }
+
+    this.#newestEntry.value.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "nearest",
+    });
+  }
 
   async #renderPendingInput(event?: InspectableRunEvent) {
     if (
@@ -141,30 +167,36 @@ export class AppPreview extends LitElement {
       };
 
       return html`
-        <bb-user-input
-          id="${descriptor.id}"
-          .boardServers=${this.boardServers}
-          .showTypes=${false}
-          .showTitleInfo=${false}
-          .llmInputShowEntrySelector=${false}
-          .inputs=${userInputs}
-          .inlineControls=${true}
-          ${ref(this.#userInputRef)}
-          @keydown=${(evt: KeyboardEvent) => {
-            const isMac = navigator.platform.indexOf("Mac") === 0;
-            const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+        <div class="user-input">
+          <div class="icon"></div>
+          <div class="input">
+            <h2 class="title">${event.node.title()}</h2>
+            <bb-user-input
+              id="${descriptor.id}"
+              .boardServers=${this.boardServers}
+              .showTypes=${false}
+              .showTitleInfo=${false}
+              .llmInputShowEntrySelector=${false}
+              .inputs=${userInputs}
+              .inlineControls=${true}
+              ${ref(this.#userInputRef)}
+              @keydown=${(evt: KeyboardEvent) => {
+                const isMac = navigator.platform.indexOf("Mac") === 0;
+                const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
 
-            if (!(evt.key === "Enter" && isCtrlCommand)) {
-              return;
-            }
+                if (!(evt.key === "Enter" && isCtrlCommand)) {
+                  return;
+                }
 
-            continueRun();
-          }}
-        ></bb-user-input>
-        <div id="continue-button-container">
-          <button class="continue-button" @click=${() => continueRun()}>
-            Continue
-          </button>
+                continueRun();
+              }}
+            ></bb-user-input>
+            <div id="continue-button-container">
+              <button class="continue-button" @click=${() => continueRun()}>
+                Continue
+              </button>
+            </div>
+          </div>
         </div>
       `;
     }
@@ -183,7 +215,6 @@ export class AppPreview extends LitElement {
     return "image_url" in nodeValue;
   }
 
-  #formatter = new Intl.DateTimeFormat("en-US", { timeStyle: "long" });
   async #renderNodeOutputs(event: InspectableRunNodeEvent) {
     const { node, inputs, outputs } = event;
     const allPorts = await node.ports(inputs, outputs as OutputValues);
@@ -208,6 +239,7 @@ export class AppPreview extends LitElement {
               .clamped=${false}
               .showModeToggle=${false}
               .showEntrySelector=${false}
+              .showExportControls=${true}
               .values=${nodeValue}
             ></bb-llm-output-array>`;
           } else if (isLLMContent(nodeValue)) {
@@ -253,25 +285,162 @@ export class AppPreview extends LitElement {
             >${renderableValue}</div>`;
         }
 
-        return html` <div class="model-output">
+        return html` <section class="model-output">
           <div class="icon"></div>
           <div>
-            <div class="meta">
-              ${event.end
-                ? this.#formatter.format(GLOBAL_START_TIME + event.end)
-                : "Pending"}
-            </div>
+            <h2 class="title">${port.title}</h2>
             <div class="value">${value}</div>
           </div>
-        </div>`;
+        </section>`;
       })}
     </section>`;
+  }
+
+  async #renderSecretInput(event: InspectableRunSecretEvent) {
+    const userInputs: UserInputConfiguration[] = event.keys.reduce(
+      (prev, key) => {
+        const schema: Schema = {
+          properties: {
+            secret: {
+              title: key,
+              description: `Enter ${key}`,
+              type: "string",
+            },
+          },
+        };
+
+        const savedSecret =
+          this.settings?.getSection(SETTINGS_TYPE.SECRETS).items.get(key) ??
+          null;
+
+        let value = undefined;
+        if (savedSecret) {
+          value = savedSecret.value;
+        }
+
+        prev.push({
+          name: key,
+          title: schema.title ?? key,
+          secret: true,
+          schema,
+          configured: false,
+          required: true,
+          value,
+        });
+
+        return prev;
+      },
+      [] as UserInputConfiguration[]
+    );
+
+    // If there aren't any secrets to enter, we can skip rendering the control.
+    if (userInputs.every((secret) => secret.value !== undefined)) {
+      return html``;
+    }
+
+    const continueRun = () => {
+      if (!this.#userInputRef.value) {
+        return;
+      }
+
+      const outputs = this.#userInputRef.value.processData(true);
+      if (!outputs) {
+        return;
+      }
+
+      for (const [key, value] of Object.entries(outputs)) {
+        if (typeof value !== "string") {
+          console.warn(
+            `Expected secret as string, instead received ${typeof value}`
+          );
+          continue;
+        }
+
+        // Dispatch an event for each secret received.
+        this.dispatchEvent(
+          new InputEnterEvent(
+            key,
+            { secret: value },
+            /* allowSavingIfSecret */ true
+          )
+        );
+      }
+    };
+
+    return html`<div>
+      <div class="edge">
+        ${event.keys.map((id) => {
+          if (id.startsWith("connection:")) {
+            return html`<bb-connection-input
+              id=${id}
+              .connectionId=${id.replace(/^connection:/, "")}
+            ></bb-connection-input>`;
+          } else {
+            return html`<bb-user-input
+              id=${event.id}
+              .showTypes=${false}
+              .inputs=${userInputs}
+              ${ref(this.#userInputRef)}
+              @keydown=${(evt: KeyboardEvent) => {
+                const isMac = navigator.platform.indexOf("Mac") === 0;
+                const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+                if (!(evt.key === "Enter" && isCtrlCommand)) {
+                  return;
+                }
+
+                continueRun();
+              }}
+            ></bb-user-input>`;
+          }
+        })}
+
+        <div class="edge-status"></div>
+      </div>
+
+      <button class="continue-button" @click=${() => continueRun()}>
+        ${Strings.from("COMMAND_CONTINUE")}
+      </button>
+    </div>`;
   }
 
   render() {
     const newestEvent = this.events?.at(-1);
 
-    return html` <section id="content">
+    return html` <section
+      id="content"
+      @pointerdown=${() => {
+        this.showHistory = false;
+      }}
+    >
+      <header>
+        <button
+          id="menu"
+          @click=${() => {
+            this.showHistory = !this.showHistory;
+          }}
+        >
+          Menu
+        </button>
+        <h1 class="title">
+          ${this.graph?.title ?? Strings.from("LABEL_UNTITLED_APP")}
+        </h1>
+        <div id="controls">
+          <button id="share">Share</button>
+          <button id="clear">Clear</button>
+        </div>
+      </header>
+      <div id="history">
+        <div id="history-list">
+          <h1>History</h1>
+          <ul>
+            <li>Jan 16, 2.32pm</li>
+            <li>Jan 15, 1.32pm</li>
+            <li>Jan 14, 5.12pm</li>
+            <li>Jan 11, 9.11am</li>
+          </ul>
+        </div>
+      </div>
       <div id="log">
         ${this.events && this.events.length
           ? html`${repeat(
@@ -294,14 +463,15 @@ export class AppPreview extends LitElement {
                     // been received.
                     if (end === null) {
                       if (type === "input") {
-                        return;
+                        content = this.#renderPendingInput(newestEvent);
+                        break;
                       }
 
                       if (node.descriptor.type === "specialist") {
                         content = html`<h1 class="status">
                           ${GlobalStrings.from("STATUS_GENERIC_WORKING")}
                           ${node.descriptor.metadata?.title
-                            ? html`(${node.descriptor.metadata?.title})`
+                            ? html`(${node.descriptor.metadata?.title.trim()})`
                             : nothing}
                         </h1>`;
                         break;
@@ -319,13 +489,12 @@ export class AppPreview extends LitElement {
                             const lastPart = context.at(-1)?.parts.at(-1);
                             if (isTextCapabilityPart(lastPart)) {
                               content = html`<div class="user-output">
-                                <div class="meta">
-                                  ${this.#formatter.format(
-                                    GLOBAL_START_TIME + (event.end ?? 0)
-                                  )}
-                                </div>
-                                <div class="value">
-                                  ${markdown(lastPart.text)}
+                                <div class="icon"></div>
+                                <div>
+                                  <h2 class="title">${event.node.title()}</h2>
+                                  <div class="value">
+                                    ${markdown(lastPart.text)}
+                                  </div>
                                 </div>
                               </div>`;
                             }
@@ -359,12 +528,12 @@ export class AppPreview extends LitElement {
                       return nothing;
                     }
 
-                    content = html`Secret`; //this.#renderSecretInput(event);
+                    content = this.#renderSecretInput(event);
                     break;
                   }
 
                   case "error": {
-                    const output = `Error`; //formatError(event.error);
+                    const output = formatError(event.error);
                     content = html`<div class="error-content">${output}</div>`;
                     break;
                   }
@@ -432,9 +601,9 @@ export class AppPreview extends LitElement {
               ${Strings.from("LABEL_INITIAL_MESSAGE")}
             </div>`}
       </div>
-      <section id="user-input">
-        ${until(this.#renderPendingInput(newestEvent))}
-      </section>
+      <footer>
+        ${Strings.from("LABEL_FOOTER")} ${GlobalStrings.from("APP_NAME")}
+      </footer>
     </section>`;
   }
 }

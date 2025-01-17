@@ -28,6 +28,9 @@ export class LLMOutputArray extends LitElement {
   @property()
   lite = false;
 
+  @property()
+  showExportControls = false;
+
   @property({ reflect: true })
   selected = 0;
 
@@ -228,6 +231,7 @@ export class LLMOutputArray extends LitElement {
                     .value=${item}
                     .clamped=${this.clamped}
                     .lite=${this.lite}
+                    .showExportControls=${this.showExportControls}
                   ></bb-llm-output>`;
                 })
               : html`<bb-json-tree .json=${values}></bb-json-tree>`}

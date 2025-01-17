@@ -379,6 +379,9 @@ body.hide-cursor {
   --bb-icon-stop-circle: url(/third_party/icons/stop-circle.svg);
   --bb-icon-stop-circle-inverted: url(/third_party/icons/stop-circle-inverted.svg);
 
+  --bb-icon-sweep: url(/third_party/icons/sweep.svg);
+  --bb-icon-sweep-inverted: url(/third_party/icons/sweep-inverted.svg);
+
   --bb-icon-tool: url(/third_party/icons/tool.svg);
   --bb-icon-tool-inverted: url(/third_party/icons/tool-inverted.svg);
 
@@ -743,6 +746,9 @@ body.hide-cursor {
   --bb-icon-continue: url(/third_party/icons/continue-inverted.svg);
   --bb-icon-continue-inverted: url(/third_party/icons/continue.svg);
 
+  --bb-icon-content-cut: url(/third_party/icons/content-cut-inverted.svg);
+  --bb-icon-content-cut-inverted: url(/third_party/icons/content-cut.svg);
+
   --bb-icon-copy-to-clipboard: url(/third_party/icons/copy-to-clipboard-inverted.svg);
   --bb-icon-copy-to-clipboard-inverted: url(/third_party/icons/copy-to-clipboard.svg);
 
@@ -833,6 +839,9 @@ body.hide-cursor {
   --bb-icon-keep-filled: url(/third_party/icons/keep-filled-inverted.svg);
   --bb-icon-keep-filled-inverted: url(/third_party/icons/keep-filled.svg);
 
+  --bb-icon-flowchart: url(/third_party/icons/flowchart-inverted.svg);
+  --bb-icon-flowchart-inverted: url(/third_party/icons/flowchart.svg);
+
   --bb-icon-google-drive: url(/third_party/icons/graph/google-drive-48px.svg);
 
   --bb-icon-input: url(/third_party/icons/input-inverted.svg);
@@ -901,8 +910,14 @@ body.hide-cursor {
   --bb-icon-output: url(/third_party/icons/output-inverted.svg);
   --bb-icon-output-inverted: url(/third_party/icons/output.svg);
 
+  --bb-icon-palette: url(/third_party/icons/palette-inverted.svg);
+  --bb-icon-palette-inverted: url(/third_party/icons/palette.svg);
+
   --bb-icon-pending: url(/third_party/icons/pending-inverted.svg);
   --bb-icon-pending-inverted: url(/third_party/icons/pending.svg);
+
+  --bb-icon-phone: url(/third_party/icons/phone-inverted.svg);
+  --bb-icon-phone-inverted: url(/third_party/icons/phone.svg);
 
   --bb-icon-play-filled: url(/third_party/icons/play-filled-inverted.svg);
   --bb-icon-play-filled-inverted: url(/third_party/icons/play-filled.svg);
@@ -956,8 +971,14 @@ body.hide-cursor {
   --bb-icon-search: url(/third_party/icons/search-inverted.svg);
   --bb-icon-search-inverted: url(/third_party/icons/search.svg);
 
+  --bb-icon-send: url(/third_party/icons/send-inverted.svg);
+  --bb-icon-send-inverted: url(/third_party/icons/send.svg);
+
   --bb-icon-settings: url(/third_party/icons/settings-inverted.svg);
   --bb-icon-settings-inverted: url(/third_party/icons/settings.svg);
+
+  --bb-icon-share: url(/third_party/icons/share-inverted.svg);
+  --bb-icon-share-inverted: url(/third_party/icons/share.svg);
 
   --bb-icon-smart-toy: url(/third_party/icons/smart-toy-inverted.svg);
   --bb-icon-smart-toy-inverted: url(/third_party/icons/smart-toy.svg);
@@ -970,6 +991,9 @@ body.hide-cursor {
 
   --bb-icon-stop-circle: url(/third_party/icons/stop-circle-inverted.svg);
   --bb-icon-stop-circle-inverted: url(/third_party/icons/stop-circle.svg);
+
+  --bb-icon-sweep: url(/third_party/icons/sweep-inverted.svg);
+  --bb-icon-sweep-inverted: url(/third_party/icons/sweep.svg);
 
   --bb-icon-tool: url(/third_party/icons/tool-inverted.svg);
   --bb-icon-tool-inverted: url(/third_party/icons/tool.svg);
@@ -997,6 +1021,9 @@ body.hide-cursor {
 
   --bb-icon-vital-signs: url(/third_party/icons/vital-signs-inverted.svg);
   --bb-icon-vital-signs-inverted: url(/third_party/icons/vital-signs.svg);
+
+  --bb-icon-visibility: url(/third_party/icons/visibility-inverted.svg);
+  --bb-icon-visibility-inverted: url(/third_party/icons/visibility.svg);
 
   --bb-icon-visibility-off: url(/third_party/icons/visibility-off-inverted.svg);
   --bb-icon-visibility-off-inverted: url(/third_party/icons/visibility-off.svg);

@@ -307,8 +307,9 @@ export class UI extends LitElement {
     const events = run?.events ?? [];
     const eventPosition = events.length - 1;
 
-    const appPreview = guard([run, events, eventPosition], () => {
+    const appPreview = guard([run, events, eventPosition, this.graph], () => {
       return html`<bb-app-preview
+        .graph=${this.graph}
         .run=${run}
         .events=${events}
         .boardServers=${this.boardServers}
@@ -595,7 +596,8 @@ export class UI extends LitElement {
     });
 
     return graph
-      ? html`<section id="create-view">
+      ? this.mainView === "create"
+        ? html`<section id="create-view">
             <bb-splitter
               id="splitter"
               split="[0.2, 0.8]"
@@ -618,52 +620,50 @@ export class UI extends LitElement {
               </div>
               ${contentContainer}
             </bb-splitter>
-          </section>
+          </section>`
+        : html`
+            <section id="deploy-view">
+              <bb-splitter
+                id="splitter"
+                split="[0.2, 0.8]"
+                .settings=${this.settings}
+                .name=${"deploy-view"}
+                .minSegmentSizeHorizontal=${265}
+              >
+                <div id="deploy-view-sidenav" slot="slot-0">
+                  <div class="deploy-option layout">
+                    <label>${Strings.from("LABEL_APP_LAYOUT")}</label>
+                    <p>${Strings.from("LABEL_APP_LAYOUT_DESCRIPTION")}</p>
+                    <select>
+                      <option>${Strings.from("LABEL_TEMPLATE_1")}</option>
+                      <option>${Strings.from("LABEL_TEMPLATE_2")}</option>
+                      <option>${Strings.from("LABEL_TEMPLATE_3")}</option>
+                    </select>
+                  </div>
 
-          ${this.mainView === "create"
-            ? nothing
-            : html`
-                <section id="deploy-view">
-                  <bb-splitter
-                    id="splitter"
-                    split="[0.2, 0.8]"
-                    .name=${"deploy-view"}
-                    .minSegmentSizeHorizontal=${265}
-                  >
-                    <div id="deploy-view-sidenav" slot="slot-0">
-                      <div class="deploy-option layout">
-                        <label>${Strings.from("LABEL_APP_LAYOUT")}</label>
-                        <p>${Strings.from("LABEL_APP_LAYOUT_DESCRIPTION")}</p>
-                        <select>
-                          <option>${Strings.from("LABEL_TEMPLATE_1")}</option>
-                          <option>${Strings.from("LABEL_TEMPLATE_2")}</option>
-                          <option>${Strings.from("LABEL_TEMPLATE_3")}</option>
-                        </select>
-                      </div>
+                  <div class="deploy-option public">
+                    <label>${Strings.from("LABEL_PUBLIC")}</label>
+                    <input id="visibility" type="checkbox" checked />
+                    <label for="visibility" id="visibility-status"
+                      >Status</label
+                    >
+                  </div>
 
-                      <div class="deploy-option public">
-                        <label>${Strings.from("LABEL_PUBLIC")}</label>
-                        <input id="visibility" type="checkbox" checked />
-                        <label for="visibility" id="visibility-status"
-                          >Status</label
-                        >
-                      </div>
-
-                      <div class="deploy-option share">
-                        <label>${Strings.from("LABEL_SHARE")}</label>
-                        <p>${Strings.from("LABEL_SHARE_DESCRIPTION")}</p>
-                        <div class="deploy-share-url">
-                          <span class="url"
-                            >${until(previewUrl, html`Loading URL...`)}</span
-                          >
-                          <button>Copy to Clipboard</button>
-                        </div>
-                      </div>
+                  <div class="deploy-option share">
+                    <label>${Strings.from("LABEL_SHARE")}</label>
+                    <p>${Strings.from("LABEL_SHARE_DESCRIPTION")}</p>
+                    <div class="deploy-share-url">
+                      <span class="url"
+                        >${until(previewUrl, html`Loading URL...`)}</span
+                      >
+                      <button>Copy to Clipboard</button>
                     </div>
-                    <div id="deploy" slot="slot-1">${appPreview}</div>
-                  </bb-splitter>
-                </section>
-              `}`
+                  </div>
+                </div>
+                <div id="deploy" slot="slot-1">${appPreview}</div>
+              </bb-splitter>
+            </section>
+          `
       : html`<section id="content" class="welcome">${graphEditor}</section>`;
   }
 
