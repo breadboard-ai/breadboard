@@ -106,6 +106,6 @@
     "@types/json-schema": "^7.0.15",
     "ajv": "^8.17.1",
     "jsonata": "^2.0.5",
-    "jsonschema": "^1.4.1"
+    "jsonschema": "^1.5.0"
   }
 }
