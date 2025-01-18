@@ -90,6 +90,7 @@ class VirtualNode implements InspectableNode {
         describeOutput({
           inputs: { ...configuration, ...inputs },
         }),
+        false,
         inputs
       );
     }
@@ -106,6 +107,7 @@ class VirtualNode implements InspectableNode {
         ports: [],
         fixed: true,
       },
+      updating: false,
     };
   }
 

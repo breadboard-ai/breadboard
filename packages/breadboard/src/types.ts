@@ -313,6 +313,8 @@ export type NodeHandlerMetadata = {
     description?: string;
     url: string;
   };
+
+  updating?: boolean;
 };
 
 export type NodeHandlerObject = {
