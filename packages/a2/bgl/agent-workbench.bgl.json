@@ -8,7 +8,7 @@
       "type": "content",
       "metadata": {
         "visual": {
-          "x": -594,
+          "x": -593.9999999999999,
           "y": -238,
           "collapsed": "expanded"
         },
@@ -32,8 +32,8 @@
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": 177,
-          "y": -246,
+          "x": 180,
+          "y": -240,
           "collapsed": "expanded"
         },
         "title": "Outline Writer",
@@ -43,11 +43,12 @@
         "description": {
           "parts": [
             {
-              "text": "You are a blog post outline writer. Your job is to take topic provided and come up with an outline for a blog post. \n\nThe outline will weave together the following details:\n- The basic overview of the topic\n- Historical perspective, if applicable\n- Current opinions on the topic, if applicable\n- Any controversies that might be surrounding the topic\n- Any future developments around the topic"
+              "text": "You are a blog post outline writer. Your job is to examine the initial topic and the research report provided and come up with an outline for a blog post. \n\nThe outline will weave together the following details:\n- The basic overview of the topic\n- Historical perspective, if applicable\n- Current opinions on the topic, if applicable\n- Any controversies that might be surrounding the topic\n- Any future developments around the topic"
             }
           ],
           "role": "user"
-        }
+        },
+        "p-chat": true
       }
     },
     {
@@ -55,7 +56,7 @@
       "type": "file://bgl/a2.bgl.json#module:researcher",
       "metadata": {
         "visual": {
-          "x": -202.99999999999994,
+          "x": -202.9999999999999,
           "y": -232.00000000000006,
           "collapsed": "expanded"
         },
@@ -70,7 +71,8 @@
               "text": "Research the topic for a blog post. A well-done research should include:\n\n- The basic overview of the topic\n- Historical perspective, if applicable\n- Current opinions on the topic, if applicable\n- Any controversies that might be surrounding the topic\n- Any future developments around the topic"
             }
           ]
-        }
+        },
+        "summarize": true
       }
     },
     {
@@ -79,7 +81,7 @@
       "metadata": {
         "visual": {
           "x": 711,
-          "y": -49,
+          "y": -49.00000000000006,
           "collapsed": "expanded"
         },
         "title": "Post Writer",
@@ -93,7 +95,8 @@
             }
           ],
           "role": "user"
-        }
+        },
+        "p-chat": true
       }
     },
     {
@@ -124,8 +127,8 @@
       "type": "file://bgl/a2.bgl.json#module:image-generator",
       "metadata": {
         "visual": {
-          "x": 898,
-          "y": -205,
+          "x": 900,
+          "y": -280,
           "collapsed": "expanded"
         },
         "title": "Banner Image Generator",
@@ -138,8 +141,8 @@
       "type": "content",
       "metadata": {
         "visual": {
-          "x": 1239,
-          "y": -160.0000000000001,
+          "x": 1238.9999999999995,
+          "y": -160.00000000000017,
           "collapsed": "expanded"
         },
         "title": "Content",
