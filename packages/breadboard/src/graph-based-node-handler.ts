@@ -99,13 +99,14 @@ class GraphBasedNodeHandler implements NodeHandlerObject {
   }
 
   get metadata() {
-    return toNodeHandlerMetadata(this.#graph, this.#type);
+    return toNodeHandlerMetadata(this.#graph, this.#type, false);
   }
 }
 
 function toNodeHandlerMetadata(
   graphToRun: GraphToRun,
-  url: NodeTypeIdentifier
+  url: NodeTypeIdentifier,
+  updating: boolean
 ): NodeHandlerMetadata | undefined {
   const graph = graphToRun.graph;
   if (graphToRun.moduleId) {
@@ -117,7 +118,7 @@ function toNodeHandlerMetadata(
       icon,
       help,
     } = module.metadata || {};
-    return filterEmptyValues({ title, description, url, icon, help });
+    return filterEmptyValues({ title, description, url, icon, help, updating });
   } else if (graphToRun.subGraphId) {
     const descriptor = graph.graphs?.[graphToRun.subGraphId];
     if (!descriptor) return undefined;
@@ -127,6 +128,7 @@ function toNodeHandlerMetadata(
       url,
       icon: descriptor.metadata?.icon,
       help: descriptor.metadata?.help,
+      updating,
     });
   } else {
     return filterEmptyValues({
@@ -135,6 +137,7 @@ function toNodeHandlerMetadata(
       url: graph.url,
       icon: graph.metadata?.icon,
       help: graph.metadata?.help,
+      updating,
     });
   }
 }

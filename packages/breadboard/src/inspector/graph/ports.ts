@@ -276,6 +276,7 @@ export function filterSidePorts(inputs: InspectablePortList) {
 function describerResultToPorts(
   node: InspectableNode,
   described: NodeDescriberResult,
+  updating: boolean,
   inputValues?: InputValues,
   outputValues?: OutputValues
 ): InspectableNodePorts {
@@ -309,5 +310,5 @@ function describerResultToPorts(
       outputValues
     ),
   };
-  return { inputs, outputs, side };
+  return { inputs, outputs, side, updating };
 }

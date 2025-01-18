@@ -568,6 +568,11 @@ export type InspectableNodePorts = {
    * Return the side ports of the node.
    */
   side: InspectablePortList;
+  /**
+   * Returns `true` when the actually value is still being updated, and
+   * the current value may be stale.
+   */
+  updating: boolean;
 };
 
 /**
@@ -669,6 +674,11 @@ export type InspectableDescriberResultCacheEntry = {
    * Provides the current value, which may be stale.
    */
   current: NodeDescriberResult;
+  /**
+   * True when this is not the latest value, and the current value is
+   * being updated
+   */
+  updating: boolean;
 };
 
 export type InspectableDescriberResultCache = {
@@ -722,6 +732,7 @@ export type AddResult = {
   graphId: GraphIdentifier;
   // NEED THIS, because describing is different for graphs and modules
   moduleId?: ModuleIdentifier;
+  updating: boolean;
 };
 
 export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &

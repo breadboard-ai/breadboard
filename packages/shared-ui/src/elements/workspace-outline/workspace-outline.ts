@@ -999,6 +999,7 @@ export class WorkspaceOutline
           inputs: { ports: [], fixed: false },
           outputs: { ports: [], fixed: false },
           side: { ports: [], fixed: false },
+          updating: false,
         };
 
         const selection = this.selectionState?.selectionState.graphs.get(

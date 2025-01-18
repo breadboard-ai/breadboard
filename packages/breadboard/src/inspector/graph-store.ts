@@ -292,14 +292,25 @@ class GraphStore
     const id = this.#mainGraphIds.get(mainGraphUrl);
     if (id) {
       this.#addDependencies(id, dependencies);
-      return { mutable: this.#mutables.get(id)!.current(), graphId, moduleId };
+      const snapshot = this.#mutables.get(id)!;
+      return {
+        mutable: snapshot.current(),
+        graphId,
+        moduleId,
+        updating: snapshot.updating(),
+      };
     }
     const snapshot = this.#snapshotFromUrl(mainGraphUrl, context);
     const mutable = snapshot.current();
     this.#mutables.set(mutable.id, snapshot);
     this.#mainGraphIds.set(mainGraphUrl, mutable.id);
     this.#addDependencies(mutable.id, dependencies);
-    return { mutable, graphId, moduleId };
+    return {
+      mutable,
+      graphId,
+      moduleId,
+      updating: snapshot.updating(),
+    };
   }
 
   async getLatest(mutable: MutableGraph): Promise<MutableGraph> {

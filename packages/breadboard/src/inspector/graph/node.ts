@@ -99,11 +99,17 @@ export class Node implements InspectableNode {
     inputValues?: InputValues,
     outputValues?: OutputValues
   ): InspectableNodePorts {
-    const current = this.#graph.describe.get(
+    const snapshot = this.#graph.describe.get(
       this.descriptor.id,
       this.#graphId
-    ).current;
-    return describerResultToPorts(this, current, inputValues, outputValues);
+    );
+    return describerResultToPorts(
+      this,
+      snapshot.current,
+      snapshot.updating,
+      inputValues,
+      outputValues
+    );
   }
 
   async ports(
@@ -111,7 +117,13 @@ export class Node implements InspectableNode {
     outputValues?: OutputValues
   ): Promise<InspectableNodePorts> {
     const described = await this.describe(inputValues);
-    return describerResultToPorts(this, described, inputValues, outputValues);
+    return describerResultToPorts(
+      this,
+      described,
+      false,
+      inputValues,
+      outputValues
+    );
   }
 
   setDeleted() {

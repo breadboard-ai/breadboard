@@ -41,6 +41,7 @@ export const filterConfigByMode = (
       },
       outputs,
       side: ports.side,
+      updating: ports.updating,
     };
   }
 
@@ -56,7 +57,12 @@ export const filterConfigByMode = (
     ports: inputPorts,
   };
 
-  return { inputs, outputs: ports.outputs, side: ports.side };
+  return {
+    inputs,
+    outputs: ports.outputs,
+    side: ports.side,
+    updating: ports.updating,
+  };
 
   function filterForConfigAware(port: InspectablePort) {
     const hasConfig = port.schema.behavior?.includes("config");
@@ -91,5 +97,5 @@ export const filterPortsByMode = (
     ports: ports.outputs.ports.filter(removeHardPort("$error")),
   };
 
-  return { inputs, outputs, side: ports.side };
+  return { inputs, outputs, side: ports.side, updating: ports.updating };
 };

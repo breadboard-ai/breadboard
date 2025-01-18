@@ -216,6 +216,7 @@ const portsFromHandler = async (
         ports: collectPortsForType(described.outputSchema, "output"),
       },
       side,
+      updating: false,
     };
   } catch (e) {
     console.warn(`Error describing node type ${type}:`, e);
@@ -278,6 +279,7 @@ export const emptyPorts = (): InspectableNodePorts => ({
     ports: [],
     fixed: true,
   },
+  updating: false,
 });
 
 function shortUrlTitle(url: string) {
@@ -309,13 +311,18 @@ class CustomNodeType implements InspectableNodeType {
   }
 
   currentMetadata(): NodeHandlerMetadata {
-    const graph = this.#mutable.store.addByURL(this.#type, [this.#mutable.id], {
-      outerGraph: this.#mutable.graph,
-    }).mutable;
+    const addResult = this.#mutable.store.addByURL(
+      this.#type,
+      [this.#mutable.id],
+      {
+        outerGraph: this.#mutable.graph,
+      }
+    );
+    const { mutable: graph, updating } = addResult;
     const graphToRun: GraphToRun = {
       graph: graph.graph,
     };
-    return toNodeHandlerMetadata(graphToRun, this.#type) || {};
+    return toNodeHandlerMetadata(graphToRun, this.#type, updating) || {};
   }
 
   async metadata(): Promise<NodeHandlerMetadata> {

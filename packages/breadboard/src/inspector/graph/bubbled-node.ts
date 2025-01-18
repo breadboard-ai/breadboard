@@ -124,7 +124,7 @@ export class BubbledInspectableNode implements InspectableNode {
       fixed: true,
       ports: [],
     };
-    return { inputs, outputs, side };
+    return { inputs, outputs, side, updating: false };
   }
 
   async ports(
