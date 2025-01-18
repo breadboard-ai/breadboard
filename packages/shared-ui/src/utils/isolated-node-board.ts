@@ -9,15 +9,16 @@ import {
   GraphDescriptor,
   GraphLoader,
   InspectableNode,
-  InspectableNodePorts,
   Kit,
   PortStatus,
   Schema,
 } from "@google-labs/breadboard";
 
+type PortNames = "inputs" | "outputs" | "side";
+
 async function generatePortSpec(
   node: InspectableNode,
-  key: keyof InspectableNodePorts
+  key: PortNames
 ): Promise<{ schema: Schema }> {
   const allPorts = await node.ports();
   const ports = [...allPorts[key].ports].filter((port) => {
