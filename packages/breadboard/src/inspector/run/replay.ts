@@ -41,11 +41,11 @@ class Replay {
       const inspector = this.#graphStore.inspectSnapshot(graph, graphId)!;
       this.#graphs.set(index, inspector);
     } else {
-      graph = this.#graphs.get(index)?.raw() || null;
+      graph = this.#graphs.get(index)?.mainGraphDescriptor() || null;
     }
     return {
       type: "graphstart",
-      data: { timestamp, path, graph, edges },
+      data: { timestamp, path, graph, graphId, edges },
     } as HarnessRunResult;
   }
 
