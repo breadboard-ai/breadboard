@@ -134,7 +134,13 @@ export type BehaviorSchema =
    * Indicates that this is a side wire
    * See https://github.com/breadboard-ai/breadboard/issues/3788#issuecomment-2477813443
    */
-  | "side";
+  | "side"
+  /**
+   * When a port is marked with it, indicates that this port is the main
+   * input or output port, so that UI can treat it differently, like hoist
+   * it into a header.
+   */
+  | "main-port";
 
 export type Schema = {
   title?: string;

@@ -3706,6 +3706,7 @@
                       "image",
                       "json-schema",
                       "llm-content",
+                      "main-port",
                       "module",
                       "ports-spec",
                       "side",
