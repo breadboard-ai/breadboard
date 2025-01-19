@@ -38,6 +38,7 @@ import {
   isLLMContentBehavior,
 } from "../../utils/index.js";
 import { GraphNodeOutput } from "./graph-node-output.js";
+import { isMainPortBehavior } from "../../utils/behaviors.js";
 
 const borderColor = getGlobalColor("--bb-neutral-500");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
@@ -56,6 +57,8 @@ const ICON_ALPHA_OUT = 0.7;
 const MAX_NODE_TITLE_LENGTH = 30;
 const GRAPH_NODE_WIDTH = 260;
 const GRID_SIZE = 20;
+
+const INITIAL_HEADER_PORT_LABEL = "_header-port";
 
 export class GraphNode extends PIXI.Container {
   #width = 0;
@@ -300,8 +303,8 @@ export class GraphNode extends PIXI.Container {
       this.addChild(this.#runnerButton);
     }
 
-    this.#headerInPort.label = "context";
-    this.#headerOutPort.label = "context";
+    this.#headerInPort.label = INITIAL_HEADER_PORT_LABEL;
+    this.#headerOutPort.label = INITIAL_HEADER_PORT_LABEL;
     this.#headerInPort.visible = false;
     this.#headerOutPort.visible = false;
 
@@ -1196,7 +1199,47 @@ export class GraphNode extends PIXI.Container {
       this.#height - this.#collapsedPortList.dimensions.height;
   }
 
+  #initializeHeaderPorts(): boolean {
+    if (
+      this.#headerInPort.label !== INITIAL_HEADER_PORT_LABEL &&
+      this.#headerInPort.label !== INITIAL_HEADER_PORT_LABEL
+    ) {
+      return true;
+    }
+
+    const inHeaderPort = pickPort(this.inPorts);
+    if (!inHeaderPort) return false;
+
+    const outHeaderPort = pickPort(this.outPorts);
+    if (!outHeaderPort) return false;
+
+    this.#headerInPort.label = inHeaderPort.name;
+    this.#headerOutPort.label = outHeaderPort.name;
+
+    return true;
+
+    function pickPort(ports: InspectablePort[] | null) {
+      if (!ports) return undefined;
+      // Order of precedence:
+      // 1) First "main-port" labeled port
+      // 2) First LLMContent[] port
+      // 3) Any first port
+      let firstContext: InspectablePort | undefined = undefined;
+      for (const port of ports) {
+        if (isMainPortBehavior(port.schema)) {
+          return port;
+        }
+        if (isLLMContentArrayBehavior(port.schema) && !firstContext) {
+          firstContext = port;
+        }
+      }
+      return firstContext || ports.at(0);
+    }
+  }
+
   #showHeaderPorts() {
+    if (!this.#initializeHeaderPorts()) return;
+
     this.#headerInPort.visible = true;
     this.#headerOutPort.visible = true;
 
