@@ -65,6 +65,7 @@ function describeSpecialist(inputs: unknown) {
         title: "Context in",
         description: "Incoming conversation context",
         type: "array",
+        behavior: ["main-port"],
         items: {
           type: "object",
           behavior: ["llm-content"],
@@ -461,6 +462,7 @@ function describeContent(inputs: unknown) {
         type: "array",
         title: "Context in",
         examples: [],
+        behavior: ["main-port"],
         items: {
           type: "object",
           behavior: ["llm-content"],
