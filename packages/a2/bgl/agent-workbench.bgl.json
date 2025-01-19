@@ -8,8 +8,8 @@
       "type": "content",
       "metadata": {
         "visual": {
-          "x": -593.9999999999999,
-          "y": -238,
+          "x": -599.9999999999995,
+          "y": -219.99999999999974,
           "collapsed": "expanded"
         },
         "title": "Content",
@@ -32,8 +32,8 @@
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": 180,
-          "y": -240,
+          "x": -1.1368683772161603e-13,
+          "y": -219.99999999999974,
           "collapsed": "expanded"
         },
         "title": "Outline Writer",
@@ -56,8 +56,8 @@
       "type": "file://bgl/a2.bgl.json#module:researcher",
       "metadata": {
         "visual": {
-          "x": -202.9999999999999,
-          "y": -232.00000000000006,
+          "x": -300,
+          "y": -220,
           "collapsed": "expanded"
         },
         "title": "Researcher",
@@ -80,8 +80,8 @@
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": 711,
-          "y": -49.00000000000006,
+          "x": 319.9999999999999,
+          "y": -100.00000000000006,
           "collapsed": "expanded"
         },
         "title": "Post Writer",
@@ -100,49 +100,35 @@
       }
     },
     {
-      "id": "a2-c317510b",
-      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
-      "metadata": {
-        "visual": {
-          "x": 557.9999999999993,
-          "y": -359.00000000000273,
-          "collapsed": "expanded"
-        },
-        "title": "Banner Prompt Writer",
-        "logLevel": "debug"
-      },
-      "configuration": {
-        "description": {
-          "parts": [
-            {
-              "text": "You are an image prompt writer. Given an outline of a blog post, you come up with an wildly abstract art that reflects the ideas in the outline. This art will serve as the heading of the blog post."
-            }
-          ],
-          "role": "user"
-        }
-      }
-    },
-    {
       "id": "a2-f41834f9",
       "type": "file://bgl/a2.bgl.json#module:image-generator",
       "metadata": {
         "visual": {
-          "x": 900,
-          "y": -280,
+          "x": 319.9999999999999,
+          "y": -259.99999999999983,
           "collapsed": "expanded"
         },
         "title": "Banner Image Generator",
         "logLevel": "debug"
       },
-      "configuration": {}
+      "configuration": {
+        "instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Abstract art that serves as a banner for the blog post, reflecting its theme and concepts"
+            }
+          ]
+        }
+      }
     },
     {
       "id": "content-086a7fe8",
       "type": "content",
       "metadata": {
         "visual": {
-          "x": 1238.9999999999995,
-          "y": -160.00000000000017,
+          "x": 639.9999999999999,
+          "y": -219.99999999999997,
           "collapsed": "expanded"
         },
         "title": "Content",
@@ -181,18 +167,6 @@
       "in": "context"
     },
     {
-      "from": "a2-7e19872d",
-      "to": "a2-c317510b",
-      "out": "context",
-      "in": "context"
-    },
-    {
-      "from": "a2-c317510b",
-      "to": "a2-f41834f9",
-      "out": "context",
-      "in": "context"
-    },
-    {
       "from": "a2-f41834f9",
       "to": "content-086a7fe8",
       "out": "context",
@@ -203,6 +177,12 @@
       "to": "content-086a7fe8",
       "out": "context",
       "in": "p-post"
+    },
+    {
+      "from": "a2-7e19872d",
+      "to": "a2-f41834f9",
+      "out": "context",
+      "in": "context"
     }
   ],
   "metadata": {

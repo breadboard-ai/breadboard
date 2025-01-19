@@ -1,0 +1,109 @@
+{
+  "title": "Image Generator Workbench",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"[verse]\\nClimbed the peaks\\nand fell down valleys\\nFought with knives\\nIn dark back alleys \\n\\nLooked for God\\nand searched for stillness\\nThen made bank\\nAnd went out of business\\n\\n[bridge]\\nAnd in all that\\nTainted hue\\n\\n[chorus]\\nI\\nstill\\nwant\\nyou\\n\\n(you you you you you you)\\nyou you you you you you\\nI still want you.\\n\\nI still want you.\\n\\n[verse]\\nMade new friends\\nAnd lost their track\\nLearned to breathe\\nAnd broke my back\\n\\nTurned to crime\\nBecame a saint\\nLived it large\\nAnd lived it quaint.\\n\\n\\n[bridge]\\nAnd in all that\\nTainted hue\\n\\n[chorus]\\nI\\nstill\\nwant\\nyou\\n\\n(you you you you you you)\\nyou you you you you you\\nI still want you.\\n\\nI still want you.\\n\\n\\n\\n[chorus]\\nI\\nstill\\nwant\\nyou\\n\\n(you you you you you you)\\nyou you you you you you\\nI still want you.\\n\\nI still want you.\\n\\n\"}]}]",
+              "description": ""
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -120,
+          "y": -240,
+          "collapsed": "expanded"
+        },
+        "logLevel": "debug"
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 500.00000000000045,
+          "y": -240,
+          "collapsed": "expanded"
+        }
+      }
+    },
+    {
+      "id": "a2-66d82041",
+      "type": "file://bgl/a2.bgl.json#module:image-generator",
+      "metadata": {
+        "visual": {
+          "x": 180.00000000000006,
+          "y": -240,
+          "collapsed": "expanded"
+        },
+        "title": "Image Generator",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Cover art for the song in the style similar to that of 90s electronica bands."
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "a2-66d82041",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "a2-66d82041",
+      "to": "output",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "metadata": {
+    "visual": {}
+  }
+}
