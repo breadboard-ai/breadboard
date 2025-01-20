@@ -863,6 +863,9 @@ export class GraphNode extends PIXI.Container {
       if (!portAHasDashes && portBHasDashes) {
         return -1;
       }
+      if (portAHasDashes && portBHasDashes) {
+        return portA.port.name.localeCompare(portB.port.name);
+      }
       if (portA.label.text > portB.label.text) {
         return 1;
       }
