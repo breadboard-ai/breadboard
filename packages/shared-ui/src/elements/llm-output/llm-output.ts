@@ -326,7 +326,7 @@ export class LLMOutput extends LitElement {
   }
 
   render() {
-    const canCopy = "ClipboardItem" in window;
+    const canCopy = this.showExportControls && "ClipboardItem" in window;
 
     return this.value && this.value.parts.length
       ? html` ${canCopy
