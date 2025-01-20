@@ -136,58 +136,82 @@ export class UserInput extends LitElement {
     .item {
       scroll-margin-top: var(--bb-grid-size-2);
       color: var(--bb-neutral-900);
-      margin-bottom: var(--bb-grid-size-3);
+      margin-bottom: var(--bb-grid-size-4);
+
+      & .title {
+        display: flex;
+        align-items: center;
+        font: 500 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          var(--bb-font-family);
+        margin-bottom: var(--bb-grid-size);
+      }
+
+      &.status {
+        & .title::before {
+          content: "";
+          width: var(--bb-grid-size-2);
+          height: var(--bb-grid-size-2);
+          border: 1px solid var(--bb-neutral-500);
+          background: var(--bb-neutral-0);
+          margin-right: var(--bb-grid-size-2);
+          border-radius: 50%;
+          box-sizing: border-box;
+        }
+
+        &.connected .title::before {
+          background: var(--bb-input-200);
+          border: 1px solid var(--bb-input-600);
+        }
+
+        &.connected.configured .title::before {
+          background: var(--bb-input-300);
+          border: 1px solid var(--bb-input-600);
+        }
+
+        &.missing .title::before {
+          background: var(--bb-warning-300);
+          border: 1px solid var(--bb-warning-700);
+        }
+      }
+
+      & .input {
+        margin-left: var(--bb-grid-size-4);
+      }
+
+      & label {
+        font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
+          var(--bb-font-family);
+      }
+
+      &:has(input[type="checkbox"]) {
+        & label {
+          display: flex;
+          margin-left: var(--bb-grid-size-4);
+
+          &::before {
+            content: "";
+            display: block;
+            width: 20px;
+            height: 20px;
+            border-radius: var(--bb-grid-size);
+            border: 1px solid var(--bb-neutral-300);
+            flex: 0 0 auto;
+            margin-right: var(--bb-grid-size-2);
+          }
+
+          &:has(+ .input > input:checked)::before {
+            background: var(--bb-icon-check) center center / 20px 20px no-repeat;
+          }
+        }
+
+        & input {
+          display: none;
+        }
+      }
     }
 
     .item:last-of-type {
       margin-bottom: 0;
-    }
-
-    .item label .title {
-      display: flex;
-      align-items: center;
-      font: 600 var(--bb-label-medium) / var(--bb-label-line-height-medium)
-        var(--bb-font-family);
-      padding: 0 0 var(--bb-grid-size) 0;
-    }
-
-    .item label .title .type {
-      font: italic 400 var(--bb-label-medium) /
-        var(--bb-label-line-height-medium) var(--bb-font-family);
-      color: var(--bb-neutral-600);
-      margin-left: var(--bb-grid-size);
-    }
-
-    .item label .description {
-      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family);
-      margin: 0 0 var(--bb-grid-size-2) 0;
-    }
-
-    .item.status .title::before {
-      content: "";
-      width: var(--bb-grid-size-2);
-      height: var(--bb-grid-size-2);
-      border: 1px solid var(--bb-neutral-500);
-      background: var(--bb-neutral-0);
-      margin-right: var(--bb-grid-size-2);
-      border-radius: 50%;
-      box-sizing: border-box;
-    }
-
-    .item.status.connected .title::before {
-      background: var(--bb-input-200);
-      border: 1px solid var(--bb-input-600);
-    }
-
-    .item.status.connected.configured .title::before {
-      background: var(--bb-ui-300);
-      border: 1px solid var(--bb-ui-600);
-    }
-
-    .item.status.missing .title::before {
-      background: var(--bb-warning-300);
-      border: 1px solid var(--bb-warning-700);
     }
 
     .item input[type="checkbox"] {
@@ -201,7 +225,8 @@ export class UserInput extends LitElement {
       display: block;
       width: 100%;
       border-radius: var(--bb-grid-size);
-      background: color: var(--bb-neutral-0);
+      background: var(--bb-neutral-0);
+      color: var(--bb-neutral-900);
       padding: var(--bb-grid-size-2);
       border: 1px solid var(--bb-neutral-300);
 
@@ -1162,22 +1187,20 @@ export class UserInput extends LitElement {
           id=${this.#createId(`container-${input.name}`)}
           class=${classMap(styles)}
         >
-          <label>
-            ${input.secret
-              ? html`<p class="api-message">
-                  When calling an API, the API provider's applicable privacy
-                  policy and terms apply
-                </p>`
-              : nothing}
-            ${this.showTitleInfo
-              ? html`<span class="title">
-                  <span class="title-value">${input.title} ${typeInfo}</span>
-                  ${reset} ${enhance}
-                </span>`
-              : html`${reset} ${enhance}`}
-            ${description}
-          </label>
-          ${inputField}
+          ${input.secret
+            ? html`<p class="api-message">
+                When calling an API, the API provider's applicable privacy
+                policy and terms apply
+              </p>`
+            : nothing}
+          ${this.showTitleInfo
+            ? html`<span class="title">
+                <span class="title-value">${input.title} ${typeInfo}</span>
+                ${reset} ${enhance}
+              </span>`
+            : html`${reset} ${enhance}`}
+          <label for="${this.#createId(input.name)}">${description}</label>
+          <div class="input">${inputField}</div>
         </div>`;
       })}
     </form> `;

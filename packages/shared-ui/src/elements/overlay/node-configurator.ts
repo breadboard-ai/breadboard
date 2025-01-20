@@ -18,7 +18,6 @@ import {
   EnhanceNodeResetEvent,
   NodePartialUpdateEvent,
   OverlayDismissedEvent,
-  RunIsolatedNodeEvent,
 } from "../../events/events.js";
 import { EditorMode, filterConfigByMode } from "../../utils/mode.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -75,227 +74,186 @@ export class NodeConfigurationOverlay extends LitElement {
       z-index: 20;
     }
 
-    h1 {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      font: 400 var(--bb-title-medium) / var(--bb-title-line-height-medium)
-        var(--bb-font-family);
-      padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
-      margin: 0;
-      text-align: left;
-      border-bottom: 1px solid var(--bb-neutral-300);
-      user-select: none;
-      cursor: pointer;
-    }
-
-    h1::before {
-      content: "";
-      display: block;
-      width: 20px;
-      height: 20px;
-      background: transparent var(--bb-icon-wrench) center center / 20px 20px
-        no-repeat;
-      margin-right: var(--bb-grid-size-2);
-    }
-
-    h1 span {
-      flex: 1;
-    }
-
-    #content {
-      width: 100%;
-      max-height: none;
-      flex: 1;
-      overflow-y: auto;
-    }
-
     #wrapper {
       min-width: 410px;
       width: max(40vw, 450px);
       min-height: 250px;
-      height: max(50vh, 450px);
+      height: max(70vh, 450px);
       display: flex;
       flex-direction: column;
       resize: both;
       overflow: auto;
       container-type: size;
+
+      & input[type="text"],
+      & select,
+      & textarea {
+        padding: var(--bb-grid-size) var(--bb-grid-size-2);
+        font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+          var(--bb-font-family);
+        border: 1px solid var(--bb-neutral-300);
+        border-radius: var(--bb-grid-size);
+        height: var(--bb-grid-size-6);
+      }
+
+      textarea {
+        resize: none;
+        field-sizing: content;
+        max-height: 300px;
+      }
+
+      & form {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+
+        & label {
+          font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+            var(--bb-font-family);
+        }
+
+        & #title {
+          flex: 1;
+          margin-right: var(--bb-grid-size-6);
+        }
+
+        & header {
+          &::before {
+            content: "";
+            width: 20px;
+            height: 20px;
+            background: var(--bb-icon-wrench) center center / 20px 20px
+              no-repeat;
+            margin-right: var(--bb-grid-size);
+          }
+
+          height: 40px;
+          border-bottom: 1px solid var(--bb-neutral-300);
+          height: 40px;
+          padding: 0 var(--bb-grid-size-3);
+
+          display: flex;
+          justify-content: flex-end;
+          align-items: center;
+
+          & > div {
+            flex: 1;
+
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+
+            & label[for="log-level"] {
+              display: flex;
+              align-items: center;
+
+              &::after {
+                margin-left: var(--bb-grid-size-2);
+                content: "";
+                display: block;
+                width: 20px;
+                height: 20px;
+                border-radius: var(--bb-grid-size);
+                border: 1px solid var(--bb-neutral-300);
+              }
+
+              &:has(+ #log-level:checked)::after {
+                background: var(--bb-icon-check) center center / 20px 20px
+                  no-repeat;
+              }
+            }
+
+            & #log-level {
+              display: none;
+            }
+          }
+
+          & #minmax {
+            width: 20px;
+            height: 20px;
+            border: none;
+            padding: 0;
+            margin: 0 0 0 var(--bb-grid-size-2);
+            font-size: 0;
+            cursor: pointer;
+            background: transparent var(--bb-icon-maximize) center center / 20px
+              20px no-repeat;
+
+            &.maximized {
+              background: transparent var(--bb-icon-minimize) center center /
+                20px 20px no-repeat;
+            }
+          }
+        }
+
+        #content {
+          width: 100%;
+          max-height: none;
+          flex: 1;
+          overflow-y: auto;
+
+          & .container {
+            padding: var(--bb-grid-size-3);
+          }
+        }
+
+        & footer {
+          border-top: 1px solid var(--bb-neutral-300);
+          height: 40px;
+          padding: 0 var(--bb-grid-size-4);
+
+          display: flex;
+          justify-content: flex-end;
+          align-items: center;
+
+          & #cancel {
+            background: transparent;
+            border: none;
+            font: 400 var(--bb-label-medium) /
+              var(--bb-label-line-height-medium) var(--bb-font-family);
+            color: var(--bb-neutral-500);
+            margin-right: var(--bb-grid-size-2);
+          }
+
+          & #update {
+            background: var(--bb-ui-500);
+            border: none;
+            border-radius: var(--bb-grid-size-16);
+            color: var(--bb-neutral-0);
+
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            height: var(--bb-grid-size-6);
+
+            font: 400 var(--bb-label-medium) /
+              var(--bb-label-line-height-medium) var(--bb-font-family);
+            padding: 0 var(--bb-grid-size-4);
+            transition: background-color 0.3s cubic-bezier(0, 0, 0.3, 1);
+            opacity: 0.5;
+
+            &:not([disabled]) {
+              opacity: 1;
+              cursor: pointer;
+
+              &:hover,
+              &:focus {
+                background: var(--bb-ui-600);
+                transition-duration: 0.1s;
+              }
+            }
+          }
+        }
+      }
+
+      & .outputs {
+        border-top: 1px solid var(--bb-neutral-300);
+      }
     }
 
     :host([maximized="true"]) #wrapper {
       width: 100% !important;
       flex: 1;
-    }
-
-    #container {
-      padding: var(--bb-grid-size-4) var(--bb-grid-size-4) var(--bb-grid-size)
-        var(--bb-grid-size-4);
-    }
-
-    #buttons {
-      padding: var(--bb-grid-size-2) var(--bb-grid-size-4) var(--bb-grid-size-4)
-        var(--bb-grid-size-4);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    #buttons > div {
-      display: flex;
-      flex: 0 0 auto;
-    }
-
-    #run-node {
-      background: var(--bb-neutral-100);
-      border: none;
-      font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
-        var(--bb-font-family);
-      color: var(--bb-neutral-600);
-      padding: var(--bb-grid-size) var(--bb-grid-size-4) var(--bb-grid-size)
-        var(--bb-grid-size-2);
-      border-radius: var(--bb-grid-size-12);
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      cursor: pointer;
-      transition: background-color 0.3s cubic-bezier(0, 0, 0.3, 1);
-    }
-
-    #run-node::before {
-      content: "";
-      display: block;
-      width: 20px;
-      height: 20px;
-      background: transparent var(--bb-icon-play-filled) center center / 20px
-        20px no-repeat;
-      opacity: 0.4;
-      margin-right: var(--bb-grid-size);
-    }
-
-    #run-node:not([disabled]):hover,
-    #run-node:not([disabled]):focus {
-      background: var(--bb-neutral-300);
-      transition-duration: 0.1s;
-    }
-
-    #run-node[disabled] {
-      opacity: 0.3;
-      cursor: initial;
-    }
-
-    #cancel {
-      background: transparent;
-      border: none;
-      font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
-        var(--bb-font-family);
-      color: var(--bb-neutral-500);
-      margin-right: var(--bb-grid-size-2);
-    }
-
-    #update {
-      background: var(--bb-ui-500);
-      border: none;
-      font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
-        var(--bb-font-family);
-      color: var(--bb-neutral-0);
-      padding: var(--bb-grid-size) var(--bb-grid-size-4) var(--bb-grid-size)
-        var(--bb-grid-size-2);
-      border-radius: var(--bb-grid-size-12);
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      cursor: pointer;
-      transition: background-color 0.3s cubic-bezier(0, 0, 0.3, 1);
-    }
-
-    #update::before {
-      content: "";
-      display: block;
-      width: 20px;
-      height: 20px;
-      background: transparent var(--bb-icon-check-inverted) center center / 20px
-        20px no-repeat;
-      margin-right: var(--bb-grid-size-2);
-    }
-
-    #update:not([disabled]):hover,
-    #update:not([disabled]):focus {
-      background: var(--bb-ui-600);
-      transition-duration: 0.1s;
-    }
-
-    #update[disabled] {
-      opacity: 0.5;
-      cursor: default;
-    }
-
-    #minmax {
-      width: 20px;
-      height: 20px;
-      border: none;
-      padding: 0;
-      margin: 0;
-      font-size: 0;
-      cursor: pointer;
-      background: transparent var(--bb-icon-maximize) center center / 20px 20px
-        no-repeat;
-    }
-
-    #minmax.maximized {
-      background: transparent var(--bb-icon-minimize) center center / 20px 20px
-        no-repeat;
-    }
-
-    form {
-      display: grid;
-      grid-template-columns: 90px auto;
-      grid-template-rows: var(--bb-grid-size-7);
-      align-items: center;
-      row-gap: var(--bb-grid-size-2);
-      padding: 0 0 var(--bb-grid-size-4) 0;
-      border-bottom: 1px solid var(--bb-neutral-200);
-      column-gap: var(--bb-grid-size-4);
-    }
-
-    @container (min-width: 600px) {
-      form {
-        grid-template-columns: 90px auto 90px auto;
-        grid-template-rows: var(--bb-grid-size-7);
-        column-gap: var(--bb-grid-size-4);
-      }
-
-      form textarea {
-        grid-column: 2/5;
-      }
-
-      label[for="log-level"] {
-        justify-self: end;
-      }
-    }
-
-    input[type="text"],
-    select,
-    textarea {
-      padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
-      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family);
-      border: 1px solid var(--bb-neutral-300);
-      border-radius: var(--bb-grid-size);
-    }
-
-    textarea {
-      resize: none;
-      field-sizing: content;
-      max-height: 300px;
-    }
-
-    label {
-      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
-        var(--bb-font-family);
-    }
-
-    bb-user-input {
-      padding-top: var(--bb-grid-size-4);
     }
   `;
 
@@ -456,15 +414,15 @@ export class NodeConfigurationOverlay extends LitElement {
     const titleEl =
       this.#formRef.value.querySelector<HTMLInputElement>("#title");
     const logLevelEl =
-      this.#formRef.value.querySelector<HTMLSelectElement>("#log-level");
+      this.#formRef.value.querySelector<HTMLInputElement>("#log-level");
     const descriptionEl =
-      this.#formRef.value.querySelector<HTMLTextAreaElement>("#description");
+      this.#formRef.value.querySelector<HTMLInputElement>("#description");
 
     const metadata: NodeMetadata = {};
     if (titleEl?.value) metadata.title = titleEl.value;
     if (descriptionEl?.value) metadata.description = descriptionEl.value;
     if (logLevelEl?.value)
-      metadata.logLevel = logLevelEl?.value as "info" | "debug";
+      metadata.logLevel = logLevelEl?.checked ? "debug" : "info";
 
     if (!debugging) {
       this.#destroyCodeEditors();
@@ -494,6 +452,9 @@ export class NodeConfigurationOverlay extends LitElement {
       return nothing;
     }
 
+    const icon = (this.value.type ?? "configure")
+      .toLocaleLowerCase()
+      .replaceAll(/\s/gi, "-");
     const { inputs } = filterConfigByMode(this.value.ports, this.#editorMode());
     const ports = [...inputs.ports].sort((portA, portB) => {
       const isSchema =
@@ -555,74 +516,61 @@ export class NodeConfigurationOverlay extends LitElement {
       inline
     >
       <div id="wrapper">
-        <h1
-          @pointerdown=${(evt: PointerEvent) => {
-            if (this.maximized) {
-              return;
-            }
-
-            if (!(evt.target instanceof HTMLElement)) {
-              return;
-            }
-
-            const bounds = this.#overlayRef.value?.contentBounds;
-            if (!bounds) {
-              return;
-            }
-
-            contentLocationStart.x = bounds.left;
-            contentLocationStart.y = bounds.top;
-
-            dragStart.x = evt.clientX;
-            dragStart.y = evt.clientY;
-            dragging = true;
-
-            evt.target.setPointerCapture(evt.pointerId);
+        <form
+          ${ref(this.#formRef)}
+          @submit=${(evt: Event) => {
+            evt.preventDefault();
           }}
-          @pointermove=${(evt: PointerEvent) => {
-            if (!dragging) {
-              return;
-            }
-
-            dragDelta.x = evt.clientX - dragStart.x;
-            dragDelta.y = evt.clientY - dragStart.y;
-
-            this.#left = contentLocationStart.x + dragDelta.x;
-            this.#top = contentLocationStart.y + dragDelta.y;
-
-            this.#updateOverlayContentPositionAndSize();
-          }}
-          @pointerup=${() => {
-            dragging = false;
-          }}
-          @dblclick=${() => {
-            this.#toggleMaximize();
+          @input=${() => {
+            this.#pendingSave = true;
           }}
         >
-          <span>Configure ${this.value.title}</span>
-          <button
-            id="minmax"
-            title=${this.maximized ? "Minimize overlay" : "Maximize overlay"}
-            class=${classMap({ maximized: this.maximized })}
-            @click=${() => {
+          <header
+            class=${classMap({ [icon]: true })}
+            @pointerdown=${(evt: PointerEvent) => {
+              if (this.maximized) {
+                return;
+              }
+
+              if (!(evt.target instanceof HTMLElement)) {
+                return;
+              }
+
+              const bounds = this.#overlayRef.value?.contentBounds;
+              if (!bounds) {
+                return;
+              }
+
+              contentLocationStart.x = bounds.left;
+              contentLocationStart.y = bounds.top;
+
+              dragStart.x = evt.clientX;
+              dragStart.y = evt.clientY;
+              dragging = true;
+
+              evt.target.setPointerCapture(evt.pointerId);
+            }}
+            @pointermove=${(evt: PointerEvent) => {
+              if (!dragging) {
+                return;
+              }
+
+              dragDelta.x = evt.clientX - dragStart.x;
+              dragDelta.y = evt.clientY - dragStart.y;
+
+              this.#left = contentLocationStart.x + dragDelta.x;
+              this.#top = contentLocationStart.y + dragDelta.y;
+
+              this.#updateOverlayContentPositionAndSize();
+            }}
+            @pointerup=${() => {
+              dragging = false;
+            }}
+            @dblclick=${() => {
               this.#toggleMaximize();
             }}
           >
-            ${this.maximized ? "Minimize" : "Maximize"}
-          </button>
-        </h1>
-        <div id="content">
-          <div id="container">
-            <form
-              ${ref(this.#formRef)}
-              @submit=${(evt: Event) => {
-                evt.preventDefault();
-              }}
-              @input=${() => {
-                this.#pendingSave = true;
-              }}
-            >
-              <label for="title">Title</label>
+            <div>
               <input
                 name="title"
                 id="title"
@@ -631,80 +579,66 @@ export class NodeConfigurationOverlay extends LitElement {
                 .value=${this.value.metadata?.title || ""}
                 ?disabled=${this.readOnly}
               />
-
-              <label for="log-level">Log values</label>
-              <select
-                type="text"
+              <label for="log-level">Show in app</label>
+              <input
+                type="checkbox"
                 id="log-level"
                 name="log-level"
                 ?disabled=${this.readOnly}
-              >
-                <option
-                  value="debug"
-                  ?selected=${this.value.metadata?.logLevel === "debug"}
-                >
-                  Only when debugging
-                </option>
-                <option
-                  value="info"
-                  ?selected=${this.value.metadata?.logLevel === "info"}
-                >
-                  All the time
-                </option>
-              </select>
+                .checked=${this.value.metadata?.logLevel === "debug"}
+              />
 
-              <label for="description">Description</label>
-              <textarea
+              <input
                 id="description"
                 name="description"
                 placeholder="Enter the description for this component"
                 .value=${this.value.metadata?.description || ""}
+                type="hidden"
                 ?disabled=${this.readOnly}
-              ></textarea>
-            </form>
-            <bb-user-input
-              ${ref(this.#userInputRef)}
-              @input=${() => {
-                this.#pendingSave = true;
+              />
+            </div>
+            <button
+              id="minmax"
+              title=${this.maximized ? "Minimize overlay" : "Maximize overlay"}
+              class=${classMap({ maximized: this.maximized })}
+              @click=${() => {
+                this.#toggleMaximize();
               }}
-              @bbenhancenodereset=${(evt: EnhanceNodeResetEvent) => {
-                if (!this.value || !this.value.nodeConfiguration) {
-                  return;
-                }
+            >
+              ${this.maximized ? "Minimize" : "Maximize"}
+            </button>
+          </header>
+          <div id="content">
+            <div class="container">
+              <bb-user-input
+                ${ref(this.#userInputRef)}
+                @input=${() => {
+                  this.#pendingSave = true;
+                }}
+                @bbenhancenodereset=${(evt: EnhanceNodeResetEvent) => {
+                  if (!this.value || !this.value.nodeConfiguration) {
+                    return;
+                  }
 
-                delete this.value.nodeConfiguration[evt.id];
-                this.requestUpdate();
-              }}
-              .nodeId=${this.value.id}
-              .inputs=${userInputs}
-              .graph=${this.graph}
-              .subGraphId=${this.value.subGraphId}
-              .boardServers=${this.boardServers}
-              .showTypes=${this.showTypes}
-              .showTitleInfo=${true}
-              .inlineControls=${true}
-              .jumpTo=${this.value.selectedPort}
-              .enhancingValue=${false}
-              .readOnly=${this.readOnly}
-            ></bb-user-input>
+                  delete this.value.nodeConfiguration[evt.id];
+                  this.requestUpdate();
+                }}
+                .nodeId=${this.value.id}
+                .inputs=${userInputs}
+                .graph=${this.graph}
+                .subGraphId=${this.value.subGraphId}
+                .boardServers=${this.boardServers}
+                .showTypes=${this.showTypes}
+                .showTitleInfo=${true}
+                .inlineControls=${true}
+                .jumpTo=${this.value.selectedPort}
+                .enhancingValue=${false}
+                .readOnly=${this.readOnly}
+              ></bb-user-input>
+            </div>
+            <div class="container outputs">...</div>
           </div>
-        </div>
-        <div id="buttons">
-          <button
-            id="run-node"
-            ?disabled=${!this.canRunNode || this.readOnly}
-            @click=${() => {
-              if (!this.value) {
-                return;
-              }
-
-              this.processData(true);
-              this.dispatchEvent(new RunIsolatedNodeEvent(this.value.id));
-            }}
-          >
-            Run
-          </button>
-          <div>
+          <footer>
             <button
               id="cancel"
               @click=${() => {
@@ -722,8 +656,8 @@ export class NodeConfigurationOverlay extends LitElement {
             >
               Update
             </button>
-          </div>
-        </div>
+          </footer>
+        </form>
       </div>
     </bb-overlay>`;
   }
