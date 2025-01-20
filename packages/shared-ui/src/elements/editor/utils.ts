@@ -58,6 +58,7 @@ export function edgeToString(edge: Edge): string {
 }
 
 export const DBL_CLICK_DELTA = 450;
+export const GRID_SIZE = 20;
 
 export function isConfigurablePort(
   port: InspectablePort,

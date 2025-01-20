@@ -25,6 +25,7 @@ import {
   computeNextExpansionState,
   DBL_CLICK_DELTA,
   getGlobalColor,
+  GRID_SIZE,
   isConfigurablePort,
 } from "./utils.js";
 import { GraphNodePortList } from "./graph-node-port-list.js";
@@ -56,7 +57,7 @@ const ICON_ALPHA_OVER = 1;
 const ICON_ALPHA_OUT = 0.7;
 const MAX_NODE_TITLE_LENGTH = 30;
 const GRAPH_NODE_WIDTH = 260;
-const GRID_SIZE = 20;
+const MIN_OUTPUT_HEIGHT = 44;
 
 const INITIAL_HEADER_PORT_LABEL = "_header-port";
 
@@ -201,8 +202,8 @@ export class GraphNode extends PIXI.Container {
       let resizeStart = 0;
       let outputSizeStart = 0;
       const setOutputHeight = (outputHeight: number) => {
-        if (outputHeight < 40) {
-          outputHeight = 40;
+        if (outputHeight < MIN_OUTPUT_HEIGHT) {
+          outputHeight = MIN_OUTPUT_HEIGHT;
         }
 
         if (outputHeight === this.#outputHeight) {
@@ -232,6 +233,10 @@ export class GraphNode extends PIXI.Container {
       });
 
       const stopResize = (evt: PIXI.FederatedPointerEvent) => {
+        if (!resizing) {
+          return;
+        }
+
         const delta =
           Math.round(
             (evt.pageY - resizeStart) / this.worldTransform.a / GRID_SIZE
@@ -1442,7 +1447,7 @@ export class GraphNode extends PIXI.Container {
       this.#background.stroke({ color: this.#portsDividerColor });
     }
 
-    if (this.#hasVisibleOutputs()) {
+    if (this.#hasVisibleOutputs() && this.#expansionState !== "collapsed") {
       const y = Math.round(this.#height - this.#outputHeight) + 0.5;
       this.#background.beginPath();
       this.#background.moveTo(0, y);
@@ -1594,6 +1599,15 @@ export class GraphNode extends PIXI.Container {
   }
 
   #drawNodeOutput() {
+    if (this.#expansionState === "collapsed") {
+      this.#nodeOutput.visible = false;
+      this.#grabHandle.visible = false;
+      return;
+    }
+
+    this.#nodeOutput.visible = true;
+    this.#grabHandle.visible = true;
+
     this.#nodeOutput.x = 16;
     this.#nodeOutput.y = this.#height - this.#outputHeight + 16;
 

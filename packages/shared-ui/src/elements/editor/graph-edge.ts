@@ -27,6 +27,8 @@ const edgeColorControl = getGlobalColor("--bb-boards-200");
 const edgeColorStar = getGlobalColor("--bb-inputs-200");
 const edgeColorInvalid = getGlobalColor("--bb-warning-500");
 
+const ARROW_HEAD_PADDING = 5;
+
 export class GraphEdge extends PIXI.Container {
   #isDirty = true;
   #edge: EdgeData | null = null;
@@ -439,35 +441,44 @@ export class GraphEdge extends PIXI.Container {
         this.#edgeGraphic.moveTo(outLocation.x, outLocation.y);
 
         let hitAreaSpacing = this.#hitAreaSpacing;
-        let curveBackRadius = this.#loopBackCurveRadius;
+        let curveBackRadiusX = this.#loopBackCurveRadius;
+        let curveBackRadiusY = this.#loopBackCurveRadius;
+        let loopbackPadding = this.#loopBackPadding;
         if (yDist < 20) {
-          curveBackRadius = 0;
+          curveBackRadiusX = 0;
+          curveBackRadiusY = 0;
+          if (xDist <= 40) {
+            loopbackPadding = 0;
+          }
         } else if (inLocation.y < outLocation.y) {
-          curveBackRadius *= -1;
+          curveBackRadiusY *= -1;
           hitAreaSpacing *= -1;
         }
 
         this.#edgeGraphic.lineTo(
-          outLocation.x + this.#loopBackPadding - this.#loopBackCurveRadius,
+          outLocation.x + loopbackPadding - curveBackRadiusX,
           outLocation.y
         );
         this.#edgeGraphic.quadraticCurveTo(
-          outLocation.x + this.#loopBackPadding,
+          outLocation.x + loopbackPadding,
           outLocation.y,
-          outLocation.x + this.#loopBackPadding,
-          outLocation.y + curveBackRadius
+          outLocation.x + loopbackPadding,
+          outLocation.y + curveBackRadiusY
         );
         this.#edgeGraphic.lineTo(
-          outLocation.x + this.#loopBackPadding,
-          inLocation.y - curveBackRadius
+          outLocation.x + loopbackPadding,
+          inLocation.y - curveBackRadiusY
         );
         this.#edgeGraphic.quadraticCurveTo(
-          outLocation.x + this.#loopBackPadding,
+          outLocation.x + loopbackPadding,
           inLocation.y,
-          outLocation.x + this.#loopBackPadding + this.#loopBackCurveRadius,
+          outLocation.x + loopbackPadding + curveBackRadiusX,
           inLocation.y
         );
-        this.#edgeGraphic.lineTo(inLocation.x, inLocation.y);
+        this.#edgeGraphic.lineTo(
+          inLocation.x - ARROW_HEAD_PADDING,
+          inLocation.y
+        );
 
         this.#edgeGraphic.stroke();
         this.#edgeGraphic.closePath();
@@ -477,10 +488,10 @@ export class GraphEdge extends PIXI.Container {
           outLocation.x,
           outLocation.y - this.#hitAreaSpacing,
 
-          outLocation.x + this.#loopBackPadding + hitAreaSpacing,
+          outLocation.x + loopbackPadding + hitAreaSpacing,
           outLocation.y - this.#hitAreaSpacing,
 
-          outLocation.x + this.#loopBackPadding + hitAreaSpacing,
+          outLocation.x + loopbackPadding + hitAreaSpacing,
           inLocation.y - this.#hitAreaSpacing,
 
           inLocation.x,
@@ -489,10 +500,10 @@ export class GraphEdge extends PIXI.Container {
           inLocation.x,
           inLocation.y + this.#hitAreaSpacing,
 
-          outLocation.x + this.#loopBackPadding - hitAreaSpacing,
+          outLocation.x + loopbackPadding - hitAreaSpacing,
           inLocation.y + this.#hitAreaSpacing,
 
-          outLocation.x + this.#loopBackPadding - hitAreaSpacing,
+          outLocation.x + loopbackPadding - hitAreaSpacing,
           outLocation.y + this.#hitAreaSpacing,
 
           outLocation.x,
@@ -571,7 +582,10 @@ export class GraphEdge extends PIXI.Container {
           inLocation.y
         );
 
-        this.#edgeGraphic.lineTo(inLocation.x, inLocation.y);
+        this.#edgeGraphic.lineTo(
+          inLocation.x - ARROW_HEAD_PADDING,
+          inLocation.y
+        );
 
         this.#edgeGraphic.stroke();
         this.#edgeGraphic.closePath();
@@ -619,15 +633,21 @@ export class GraphEdge extends PIXI.Container {
 
     // Arrow head.
     this.#edgeGraphic.beginPath();
-    this.#edgeGraphic.moveTo(inLocation.x - 5, inLocation.y);
-    this.#edgeGraphic.lineTo(inLocation.x - 11, inLocation.y - 6);
+    this.#edgeGraphic.moveTo(inLocation.x - ARROW_HEAD_PADDING, inLocation.y);
+    this.#edgeGraphic.lineTo(
+      inLocation.x - ARROW_HEAD_PADDING - 6,
+      inLocation.y - 6
+    );
     this.#edgeGraphic.stroke({
       cap: "round",
       width: edgeWidth,
       color: edgeColor,
     });
-    this.#edgeGraphic.moveTo(inLocation.x - 5, inLocation.y);
-    this.#edgeGraphic.lineTo(inLocation.x - 11, inLocation.y + 6);
+    this.#edgeGraphic.moveTo(inLocation.x - ARROW_HEAD_PADDING, inLocation.y);
+    this.#edgeGraphic.lineTo(
+      inLocation.x - ARROW_HEAD_PADDING - 6,
+      inLocation.y + 6
+    );
     this.#edgeGraphic.stroke({
       cap: "round",
       width: edgeWidth,

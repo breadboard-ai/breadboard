@@ -657,6 +657,10 @@ export class Graph extends PIXI.Container {
         if (topTarget instanceof GraphNodePort) {
           topTarget.overrideStatus = null;
         }
+
+        if (targetEdge && targetEdge.temporary) {
+          this.#removeStaleEdges();
+        }
         return;
       }
 
