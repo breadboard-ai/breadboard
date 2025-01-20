@@ -129,6 +129,7 @@ export class GraphNode extends PIXI.Container {
   #inPortLocations: Map<PortIdentifier, PIXI.ObservablePoint> = new Map();
   #outPortLocations: Map<PortIdentifier, PIXI.ObservablePoint> = new Map();
   #modules: InspectableModules | null = null;
+  #updating = true;
   #selected = false;
   #selectedReferences: Map<PortIdentifier, number[]> | null = null;
   #highlightForAdHoc = false;
@@ -973,6 +974,14 @@ export class GraphNode extends PIXI.Container {
     return this.#nodeOutput.values;
   }
 
+  get updating() {
+    return this.#updating;
+  }
+
+  set updating(value: boolean) {
+    this.#updating = value;
+  }
+
   #hasVisibleOutputs() {
     return this.type !== "input";
   }
@@ -1208,6 +1217,7 @@ export class GraphNode extends PIXI.Container {
   }
 
   #initializeHeaderPorts(): boolean {
+    if (this.updating) return false;
     if (
       this.#headerInPort.label !== INITIAL_HEADER_PORT_LABEL &&
       this.#headerInPort.label !== INITIAL_HEADER_PORT_LABEL
