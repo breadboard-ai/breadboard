@@ -530,6 +530,7 @@ export class BoardActivity extends LitElement {
           if (typeof nodeValue === "object") {
             if (isLLMContentArray(nodeValue)) {
               value = html`<bb-llm-output-array
+                .showExportControls=${true}
                 .values=${nodeValue}
               ></bb-llm-output-array>`;
             } else if (isLLMContent(nodeValue)) {
@@ -546,7 +547,10 @@ export class BoardActivity extends LitElement {
               }
 
               value = nodeValue.parts.length
-                ? html`<bb-llm-output .value=${nodeValue}></bb-llm-output>`
+                ? html`<bb-llm-output
+                    .showExportControls=${true}
+                    .value=${nodeValue}
+                  ></bb-llm-output>`
                 : html`No data provided`;
             } else if (this.#isImageURL(nodeValue)) {
               value = html`<img src=${nodeValue.image_url} />`;
