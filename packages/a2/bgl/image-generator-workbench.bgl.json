@@ -28,8 +28,8 @@
       },
       "metadata": {
         "visual": {
-          "x": -120,
-          "y": -240,
+          "x": -200,
+          "y": -320,
           "collapsed": "expanded"
         },
         "logLevel": "debug"
@@ -59,8 +59,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 500.00000000000045,
-          "y": -240,
+          "x": 459.99999999999994,
+          "y": -260,
           "collapsed": "expanded"
         }
       }
@@ -70,8 +70,8 @@
       "type": "file://bgl/a2.bgl.json#module:image-generator",
       "metadata": {
         "visual": {
-          "x": 180.00000000000006,
-          "y": -240,
+          "x": 139.99999999999983,
+          "y": -260.0000000000001,
           "collapsed": "expanded"
         },
         "title": "Image Generator",
@@ -82,9 +82,43 @@
           "role": "user",
           "parts": [
             {
-              "text": "Cover art for the song in the style similar to that of 90s electronica bands."
+              "text": "Cover art for the song in the following style:\n{{style}}"
             }
           ]
+        }
+      }
+    },
+    {
+      "id": "input-c452372a",
+      "type": "input",
+      "metadata": {
+        "visual": {
+          "x": -200,
+          "y": -180,
+          "collapsed": "expanded"
+        },
+        "title": "Input",
+        "logLevel": "info"
+      },
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "items": {
+                "type": "object",
+                "examples": [],
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"90s electronica bands\"}]}]",
+              "description": ""
+            }
+          },
+          "type": "object",
+          "required": []
         }
       }
     }
@@ -101,6 +135,12 @@
       "to": "output",
       "out": "context",
       "in": "context"
+    },
+    {
+      "from": "input-c452372a",
+      "to": "a2-66d82041",
+      "out": "context",
+      "in": "p-z-style"
     }
   ],
   "metadata": {
