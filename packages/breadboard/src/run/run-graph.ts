@@ -275,6 +275,7 @@ export async function* runGraph(
     }
 
     if (remainingOutputs) {
+      invocationId--;
       await next(
         new OutputStageResult(
           {
