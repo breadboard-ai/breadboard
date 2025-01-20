@@ -8,7 +8,7 @@
       "type": "content",
       "metadata": {
         "visual": {
-          "x": -599.9999999999995,
+          "x": -599.9999999999997,
           "y": -219.99999999999974,
           "collapsed": "expanded"
         },
@@ -32,7 +32,7 @@
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": -1.1368683772161603e-13,
+          "x": -1.2789769243681803e-13,
           "y": -219.99999999999974,
           "collapsed": "expanded"
         },
@@ -43,7 +43,7 @@
         "description": {
           "parts": [
             {
-              "text": "You are a blog post outline writer. Your job is to examine the initial topic and the research report provided and come up with an outline for a blog post. \n\nThe outline will weave together the following details:\n- The basic overview of the topic\n- Historical perspective, if applicable\n- Current opinions on the topic, if applicable\n- Any controversies that might be surrounding the topic\n- Any future developments around the topic"
+              "text": "You are a blog post outline writer. Your job is to examine the initial topic and the research report provided and come up with an outline for a blog post. \n\nThe outline will weave together the following details:\n- The basic overview of the topic\n- Historical perspective, if applicable\n- Current opinions on the topic, if applicable\n- Any controversies that might be surrounding the topic\n- Any future developments around the topic\n\nThe format of the outline is informal, as if you're sketching the blog post out for yourself."
             }
           ],
           "role": "user"
@@ -56,8 +56,8 @@
       "type": "file://bgl/a2.bgl.json#module:researcher",
       "metadata": {
         "visual": {
-          "x": -300,
-          "y": -220,
+          "x": -300.00000000000006,
+          "y": -219.99999999999997,
           "collapsed": "expanded"
         },
         "title": "Researcher",
@@ -104,8 +104,8 @@
       "type": "file://bgl/a2.bgl.json#module:image-generator",
       "metadata": {
         "visual": {
-          "x": 319.9999999999999,
-          "y": -259.99999999999983,
+          "x": 320,
+          "y": -360,
           "collapsed": "expanded"
         },
         "title": "Banner Image Generator",
@@ -127,7 +127,7 @@
       "type": "content",
       "metadata": {
         "visual": {
-          "x": 639.9999999999999,
+          "x": 640,
           "y": -219.99999999999997,
           "collapsed": "expanded"
         },

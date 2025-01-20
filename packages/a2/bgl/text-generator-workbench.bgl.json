@@ -8,8 +8,8 @@
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": 259.99999999999994,
-          "y": -140,
+          "x": 260.00000000000006,
+          "y": -140.00000000000023,
           "collapsed": "expanded"
         },
         "title": "Text Generator",
@@ -31,8 +31,8 @@
       "type": "content",
       "metadata": {
         "visual": {
-          "x": -179.99999999999997,
-          "y": 0,
+          "x": -60,
+          "y": -60,
           "collapsed": "expanded"
         },
         "title": "Content",
@@ -65,8 +65,8 @@
       "type": "content",
       "metadata": {
         "visual": {
-          "x": -200,
-          "y": -240,
+          "x": -60,
+          "y": -260.0000000000002,
           "collapsed": "expanded"
         },
         "title": "Content",
