@@ -2082,6 +2082,7 @@ export class Graph extends PIXI.Container {
       // we will need to look it up in the modules object.
       graphNode.modules = this.modules;
       graphNode.inPorts = portInfo.inputs.ports;
+      graphNode.updating = portInfo.updating;
       graphNode.outPorts = portInfo.outputs.ports;
       graphNode.sidePorts = portInfo.side.ports;
       graphNode.fixedInputs = portInfo.inputs.fixed;

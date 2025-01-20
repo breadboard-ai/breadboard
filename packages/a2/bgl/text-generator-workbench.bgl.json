@@ -1,0 +1,115 @@
+{
+  "title": "Text Generator Workbench",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "a2-9b2f9a3f",
+      "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+      "metadata": {
+        "visual": {
+          "x": 260.00000000000006,
+          "y": -140.00000000000023,
+          "collapsed": "expanded"
+        },
+        "title": "Text Generator",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "you are a {{hello}} who has a comedy show"
+            }
+          ],
+          "role": "user"
+        }
+      }
+    },
+    {
+      "id": "content-7b7ce635",
+      "type": "content",
+      "metadata": {
+        "visual": {
+          "x": -60,
+          "y": -60,
+          "collapsed": "expanded"
+        },
+        "title": "Content",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "context": [
+          {
+            "role": "user",
+            "parts": [
+              {
+                "text": ""
+              }
+            ]
+          }
+        ],
+        "role": "user",
+        "template": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Banana"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "0d7669c0-9f0d-4aa3-a72b-1c1dd15055bc",
+      "type": "content",
+      "metadata": {
+        "visual": {
+          "x": -60,
+          "y": -260.0000000000002,
+          "collapsed": "expanded"
+        },
+        "title": "Content",
+        "logLevel": "debug"
+      },
+      "configuration": {
+        "context": [
+          {
+            "role": "user",
+            "parts": [
+              {
+                "text": ""
+              }
+            ]
+          }
+        ],
+        "role": "user",
+        "template": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Say something clever"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "0d7669c0-9f0d-4aa3-a72b-1c1dd15055bc",
+      "to": "a2-9b2f9a3f",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "content-7b7ce635",
+      "to": "a2-9b2f9a3f",
+      "out": "context",
+      "in": "p-z-hello"
+    }
+  ],
+  "metadata": {
+    "visual": {}
+  }
+}
