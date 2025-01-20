@@ -20,6 +20,7 @@ export { inflateData, deflateData } from "./inflate-deflate.js";
 export {
   isFunctionCallCapabilityPart,
   isFunctionResponseCapabilityPart,
+  isImageURL,
   isLLMContent,
   isLLMContentArray,
   isTextCapabilityPart,

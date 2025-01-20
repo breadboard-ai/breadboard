@@ -2262,11 +2262,23 @@ export class Main extends LitElement {
                 this.#nodeConfiguratorData.id
               )
             : false;
+
+          const run = runs?.[0] ?? null;
+          const events = run?.events ?? [];
+          const runEventsForNode = events.filter((evt) => {
+            return (
+              evt.type === "node" &&
+              evt.node.descriptor.id === this.#nodeConfiguratorData?.id &&
+              evt.end !== null
+            );
+          });
+
           nodeConfiguratorOverlay = html`<bb-node-configuration-overlay
             ${ref(this.#nodeConfiguratorRef)}
             .canRunNode=${canRunNode}
-            .value=${this.#nodeConfiguratorData}
+            .configuration=${this.#nodeConfiguratorData}
             .graph=${this.tab?.graph}
+            .runEventsForNode=${runEventsForNode}
             .boardServers=${this.#boardServers}
             .showTypes=${false}
             .offerConfigurationEnhancements=${offerConfigurationEnhancements}
@@ -2376,6 +2388,9 @@ export class Main extends LitElement {
                 evt.subGraphId,
                 evt.metadata
               );
+            }}
+            @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
+              this.toast(toastEvent.message, toastEvent.toastType);
             }}
           ></bb-node-configuration-overlay>`;
         }

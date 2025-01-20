@@ -17,8 +17,11 @@ import { cache } from "lit/directives/cache.js";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { until } from "lit/directives/until.js";
-import { markdown } from "../../directives/markdown.js";
-import { toZip } from "../../utils/llm-content.js";
+import {
+  markdown,
+  renderMarkdownToHtmlString,
+} from "../../directives/markdown.js";
+import { ToastEvent, ToastType } from "../../events/events.js";
 
 @customElement("bb-llm-output")
 export class LLMOutput extends LitElement {
@@ -39,6 +42,7 @@ export class LLMOutput extends LitElement {
   static styles = css`
     :host {
       display: block;
+      position: relative;
       border: var(--output-border-width, 2px) solid
         var(--output-border-color, var(--bb-neutral-300));
       border-radius: var(--output-border-radius, var(--bb-grid-size));
@@ -60,6 +64,7 @@ export class LLMOutput extends LitElement {
 
     .content {
       display: block;
+      position: relative;
       margin-bottom: var(--bb-grid-size-2);
     }
 
@@ -72,12 +77,12 @@ export class LLMOutput extends LitElement {
       flex-direction: column;
       position: relative;
 
-      margin: 0 var(--bb-grid-size-3);
+      margin: 0 var(--output-value-margin-x, var(--bb-grid-size-3));
       font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
       color: var(--bb-neutral-900);
 
-      padding: 0 var(--bb-grid-size-3);
+      padding: 0 var(--output-value-padding-x, var(--bb-grid-size-3));
 
       white-space: normal;
       border-radius: initial;
@@ -200,39 +205,68 @@ export class LLMOutput extends LitElement {
       opacity: 1;
     }
 
-    :host([showexportcontrols="true"]) {
-      margin-top: var(--bb-grid-size-4);
+    .copy-image-to-clipboard {
       position: relative;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
 
-      & #export-controls {
+      & button {
+        background: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+
+        position: absolute;
+        z-index: 1;
+        display: block;
+        width: 28px;
+        height: 28px;
+        background: var(--bb-neutral-0) var(--bb-icon-copy-to-clipboard) center
+          center / 20px 20px no-repeat;
+        border-radius: 50%;
+        opacity: 0;
+        position: absolute;
+        right: var(--bb-grid-size-2);
+        top: var(--bb-grid-size-2);
+        cursor: pointer;
+        transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+      }
+
+      &:hover button,
+      &:focus button {
+        opacity: 1;
+      }
+    }
+
+    #copy-container {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: var(--bb-grid-size-2);
+
+      & #copy-all-to-clipboard {
         display: flex;
         align-items: center;
-        position: absolute;
-        height: var(--bb-grid-size-8);
-        top: calc(-1 * var(--bb-grid-size-4));
-        right: var(--bb-grid-size-6);
-        background: var(--bb-neutral-0);
+
+        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          var(--bb-font-family);
+
+        height: 28px;
+        border-radius: var(--bb-grid-size-16);
         border: 1px solid var(--bb-neutral-300);
-        border-radius: var(--bb-grid-size-12);
-        padding: 0 var(--bb-grid-size-2);
+        background: var(--bb-neutral-0) var(--bb-icon-copy-to-clipboard) 8px
+          center / 20px 20px no-repeat;
+        opacity: 0.6;
+        position: relative;
+        padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-8);
 
-        & #get-zip {
-          width: 24px;
-          height: 24px;
-          font-size: 0;
-          border: none;
-          background: var(--bb-icon-download) center center / 24px 24px
-            no-repeat;
-          opacity: 0.6;
+        &:not([disabled]) {
+          cursor: pointer;
+          transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
 
-          &:not([disabled]) {
-            cursor: pointer;
-            transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
-
-            &:hover,
-            &:focus {
-              opacity: 1;
-            }
+          &:hover,
+          &:focus {
+            opacity: 1;
           }
         }
       }
@@ -291,30 +325,43 @@ export class LLMOutput extends LitElement {
     return audioCtx.startRendering();
   }
 
-  #creatingZip = false;
   render() {
+    const canCopy = "ClipboardItem" in window;
+
     return this.value && this.value.parts.length
-      ? html`${this.showExportControls
-          ? html`<div id="export-controls">
+      ? html` ${canCopy
+          ? html`<div id="copy-container">
               <button
-                id="get-zip"
+                id="copy-all-to-clipboard"
                 @click=${async () => {
-                  if (!this.value || this.#creatingZip) {
+                  if (!this.value) {
                     return;
                   }
 
-                  this.#creatingZip = true;
-                  const zip = await toZip(this.value);
-                  const url = URL.createObjectURL(zip);
-                  this.#creatingZip = false;
+                  let htmlText = "";
+                  for (const part of this.value.parts) {
+                    if (isTextCapabilityPart(part)) {
+                      htmlText += renderMarkdownToHtmlString(part.text);
+                    } else if (isInlineData(part)) {
+                      const dataURL = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                      htmlText += `<img src="${dataURL}" />`;
+                    }
+                  }
 
-                  const link = document.createElement("a");
-                  link.href = url;
-                  link.download = "export";
-                  link.click();
+                  await navigator.clipboard.write([
+                    new ClipboardItem({
+                      "text/html": new Blob([htmlText], {
+                        type: "text/html",
+                      }),
+                    }),
+                  ]);
+
+                  this.dispatchEvent(
+                    new ToastEvent("Copied to Clipboard", ToastType.INFORMATION)
+                  );
                 }}
               >
-                Zip
+                Copy all
               </button>
             </div>`
           : nothing}
@@ -342,7 +389,32 @@ export class LLMOutput extends LitElement {
             }
             const tmpl = partDataURL.then((url: string) => {
               if (part.inlineData.mimeType.startsWith("image")) {
-                return cache(html`<img src="${url}" alt="LLM Image" />`);
+                return cache(html`
+                  ${canCopy
+                    ? html` <div class="copy-image-to-clipboard">
+                        <img src="${url}" alt="LLM Image" />
+                        <button
+                          @click=${async () => {
+                            const data = await fetch(url);
+                            const imageData = await data.blob();
+
+                            await navigator.clipboard.write([
+                              new ClipboardItem({
+                                [part.inlineData.mimeType]: imageData,
+                              }),
+                            ]);
+
+                            this.dispatchEvent(
+                              new ToastEvent(
+                                "Copied image to Clipboard",
+                                ToastType.INFORMATION
+                              )
+                            );
+                          }}
+                        ></button>
+                      </div>`
+                    : html`<img src="${url}" alt="LLM Image" />`}
+                `);
               }
               if (part.inlineData.mimeType.startsWith("audio")) {
                 if (
