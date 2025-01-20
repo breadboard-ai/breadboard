@@ -503,7 +503,7 @@ export class LLMInput extends LitElement {
 
     #no-parts .add-text {
       background: var(--bb-ui-500);
-      color: var(--bb-ui-700);
+      color: var(--bb-neutral-0);
       border-radius: var(--bb-grid-size-5);
       border: none;
       height: var(--bb-grid-size-6);
@@ -521,7 +521,7 @@ export class LLMInput extends LitElement {
     .confirm {
       background: var(--bb-ui-500) var(--bb-icon-confirm-ui) 8px 4px / 16px 16px
         no-repeat;
-      color: var(--bb-ui-700);
+      color: var(--bb-neutral-0);
       border-radius: var(--bb-grid-size-5);
       border: none;
       height: var(--bb-grid-size-6);

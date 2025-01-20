@@ -179,8 +179,10 @@ export class UserInput extends LitElement {
       }
 
       & label {
-        font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
+        padding: 0 0 var(--bb-grid-size) var(--bb-grid-size-4);
+        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
           var(--bb-font-family);
+        display: block;
       }
 
       &:has(input[type="checkbox"]) {

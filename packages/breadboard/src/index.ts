@@ -112,6 +112,7 @@ export {
   isSerializedData,
   isFunctionCallCapabilityPart,
   isFunctionResponseCapabilityPart,
+  isImageURL,
   isLLMContent,
   isLLMContentArray,
   isMetadataEntry,

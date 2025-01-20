@@ -4,7 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, nothing, PropertyValues } from "lit";
+import {
+  LitElement,
+  html,
+  css,
+  nothing,
+  PropertyValues,
+  HTMLTemplateResult,
+} from "lit";
 import { customElement, property } from "lit/decorators.js";
 import {
   NodePortConfiguration,
@@ -13,7 +20,14 @@ import {
 import { Overlay } from "./overlay.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { UserInput } from "../elements.js";
-import { BoardServer, GraphDescriptor } from "@google-labs/breadboard";
+import {
+  BoardServer,
+  GraphDescriptor,
+  InspectableRunNodeEvent,
+  isImageURL,
+  isLLMContent,
+  isLLMContentArray,
+} from "@google-labs/breadboard";
 import {
   EnhanceNodeResetEvent,
   NodePartialUpdateEvent,
@@ -22,6 +36,8 @@ import {
 import { EditorMode, filterConfigByMode } from "../../utils/mode.js";
 import { classMap } from "lit/directives/class-map.js";
 import { NodeMetadata } from "@breadboard-ai/types";
+import { map } from "lit/directives/map.js";
+import { markdown } from "../../directives/markdown.js";
 
 const MAXIMIZE_KEY = "bb-node-configuration-overlay-maximized";
 const OVERLAY_CLEARANCE = 60;
@@ -32,7 +48,10 @@ export class NodeConfigurationOverlay extends LitElement {
   canRunNode = false;
 
   @property()
-  value: NodePortConfiguration | null = null;
+  configuration: NodePortConfiguration | null = null;
+
+  @property()
+  runEventsForNode: InspectableRunNodeEvent[] | null = null;
 
   @property()
   graph: GraphDescriptor | null = null;
@@ -76,7 +95,7 @@ export class NodeConfigurationOverlay extends LitElement {
 
     #wrapper {
       min-width: 410px;
-      width: max(40vw, 450px);
+      width: max(25vw, 550px);
       min-height: 250px;
       height: max(70vh, 450px);
       display: flex;
@@ -108,7 +127,7 @@ export class NodeConfigurationOverlay extends LitElement {
         height: 100%;
 
         & label {
-          font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+          font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
             var(--bb-font-family);
         }
 
@@ -248,7 +267,14 @@ export class NodeConfigurationOverlay extends LitElement {
 
       & .outputs {
         border-top: 1px solid var(--bb-neutral-300);
-      }
+
+        --output-border-width: 0;
+        --output-border-radius: 0;
+        --output-padding: 0;
+        --output-value-margin-x: 0;
+        --output-value-margin-y: 0;
+        --output-value-padding-x: 0;
+        --output-value-padding-y: 0;
     }
 
     :host([maximized="true"]) #wrapper {
@@ -282,7 +308,7 @@ export class NodeConfigurationOverlay extends LitElement {
 
   protected firstUpdated(): void {
     requestAnimationFrame(() => {
-      if (!this.#overlayRef.value || !this.value) {
+      if (!this.#overlayRef.value || !this.configuration) {
         return;
       }
 
@@ -293,8 +319,8 @@ export class NodeConfigurationOverlay extends LitElement {
       const width = contentBounds.width / 0.9;
       const height = contentBounds.height / 0.9;
 
-      let { x, y } = this.value;
-      if (this.value.addHorizontalClickClearance) {
+      let { x, y } = this.configuration;
+      if (this.configuration.addHorizontalClickClearance) {
         x += OVERLAY_CLEARANCE;
       }
 
@@ -371,7 +397,7 @@ export class NodeConfigurationOverlay extends LitElement {
   }
 
   #editorMode(): EditorMode {
-    const metadata = this.value?.metadata;
+    const metadata = this.configuration?.metadata;
     if (!metadata || !metadata.visual) {
       return EditorMode.MINIMAL;
     }
@@ -389,8 +415,8 @@ export class NodeConfigurationOverlay extends LitElement {
 
     if (
       !this.#userInputRef.value ||
-      !this.value ||
-      !this.value.ports ||
+      !this.configuration ||
+      !this.configuration.ports ||
       !this.#formRef.value
     ) {
       return;
@@ -403,14 +429,17 @@ export class NodeConfigurationOverlay extends LitElement {
 
     // Ensure that all expected values are set. If they are not set in the
     // outputs we assume that the user wants to remove the value.
-    const { inputs } = filterConfigByMode(this.value.ports, this.#editorMode());
+    const { inputs } = filterConfigByMode(
+      this.configuration.ports,
+      this.#editorMode()
+    );
     for (const expectedInput of inputs.ports) {
       if (!outputs[expectedInput.name]) {
         outputs[expectedInput.name] = undefined;
       }
     }
 
-    const { id, subGraphId } = this.value;
+    const { id, subGraphId } = this.configuration;
     const titleEl =
       this.#formRef.value.querySelector<HTMLInputElement>("#title");
     const logLevelEl =
@@ -448,14 +477,17 @@ export class NodeConfigurationOverlay extends LitElement {
   }
 
   render() {
-    if (!this.value || !this.value.ports) {
+    if (!this.configuration || !this.configuration.ports) {
       return nothing;
     }
 
-    const icon = (this.value.type ?? "configure")
+    const icon = (this.configuration.type ?? "configure")
       .toLocaleLowerCase()
       .replaceAll(/\s/gi, "-");
-    const { inputs } = filterConfigByMode(this.value.ports, this.#editorMode());
+    const { inputs } = filterConfigByMode(
+      this.configuration.ports,
+      this.#editorMode()
+    );
     const ports = [...inputs.ports].sort((portA, portB) => {
       const isSchema =
         portA.name === "schema" ||
@@ -468,10 +500,10 @@ export class NodeConfigurationOverlay extends LitElement {
       let value = port.value;
       let hasValueOverride = false;
       if (
-        this.value?.nodeConfiguration &&
-        this.value.nodeConfiguration[port.name]
+        this.configuration?.nodeConfiguration &&
+        this.configuration.nodeConfiguration[port.name]
       ) {
-        value = this.value.nodeConfiguration[port.name];
+        value = this.configuration.nodeConfiguration[port.name];
         hasValueOverride = true;
       }
 
@@ -490,7 +522,7 @@ export class NodeConfigurationOverlay extends LitElement {
           enhance:
             this.offerConfigurationEnhancements &&
             port.name === "persona" &&
-            this.value?.type === "Model",
+            this.configuration?.type === "Model",
         },
       };
     });
@@ -576,7 +608,7 @@ export class NodeConfigurationOverlay extends LitElement {
                 id="title"
                 type="text"
                 placeholder="Enter the title for this component"
-                .value=${this.value.metadata?.title || ""}
+                .value=${this.configuration.metadata?.title || ""}
                 ?disabled=${this.readOnly}
               />
               <label for="log-level">Show in app</label>
@@ -585,14 +617,14 @@ export class NodeConfigurationOverlay extends LitElement {
                 id="log-level"
                 name="log-level"
                 ?disabled=${this.readOnly}
-                .checked=${this.value.metadata?.logLevel === "debug"}
+                .checked=${this.configuration.metadata?.logLevel === "debug"}
               />
 
               <input
                 id="description"
                 name="description"
                 placeholder="Enter the description for this component"
-                .value=${this.value.metadata?.description || ""}
+                .value=${this.configuration.metadata?.description || ""}
                 type="hidden"
                 ?disabled=${this.readOnly}
               />
@@ -616,27 +648,108 @@ export class NodeConfigurationOverlay extends LitElement {
                   this.#pendingSave = true;
                 }}
                 @bbenhancenodereset=${(evt: EnhanceNodeResetEvent) => {
-                  if (!this.value || !this.value.nodeConfiguration) {
+                  if (
+                    !this.configuration ||
+                    !this.configuration.nodeConfiguration
+                  ) {
                     return;
                   }
 
-                  delete this.value.nodeConfiguration[evt.id];
+                  delete this.configuration.nodeConfiguration[evt.id];
                   this.requestUpdate();
                 }}
-                .nodeId=${this.value.id}
+                .nodeId=${this.configuration.id}
                 .inputs=${userInputs}
                 .graph=${this.graph}
-                .subGraphId=${this.value.subGraphId}
+                .subGraphId=${this.configuration.subGraphId}
                 .boardServers=${this.boardServers}
                 .showTypes=${this.showTypes}
                 .showTitleInfo=${true}
                 .inlineControls=${true}
-                .jumpTo=${this.value.selectedPort}
+                .jumpTo=${this.configuration.selectedPort}
                 .enhancingValue=${false}
                 .readOnly=${this.readOnly}
               ></bb-user-input>
             </div>
-            <div class="container outputs">...</div>
+            <div class="container outputs">
+              ${this.runEventsForNode && this.runEventsForNode.length > 0
+                ? html`${map(this.runEventsForNode, (evt) => {
+                    const { outputs } = evt;
+                    if (!outputs) {
+                      return html`No value`;
+                    }
+
+                    return html`${map(Object.values(outputs), (outputValue) => {
+                      let value: HTMLTemplateResult | symbol = nothing;
+                      if (typeof outputValue === "object") {
+                        if (isLLMContentArray(outputValue)) {
+                          value = html`<bb-llm-output-array
+                            .clamped=${false}
+                            .showModeToggle=${false}
+                            .showEntrySelector=${false}
+                            .showExportControls=${true}
+                            .values=${outputValue}
+                          ></bb-llm-output-array>`;
+                        } else if (isLLMContent(outputValue)) {
+                          if (!outputValue.parts) {
+                            // Special case for "$metadata" item.
+                            // See https://github.com/breadboard-ai/breadboard/issues/1673
+                            // TODO: Make this not ugly.
+                            const data = (
+                              outputValue as unknown as { data: unknown }
+                            ).data;
+                            value = html`<bb-json-tree
+                              .json=${data}
+                            ></bb-json-tree>`;
+                          }
+
+                          if (!outputValue.parts.length) {
+                            value = html`No data provided`;
+                          }
+
+                          value = outputValue.parts.length
+                            ? html`<bb-llm-output
+                                .clamped=${false}
+                                .lite=${true}
+                                .showExportControls=${true}
+                                .value=${outputValue}
+                              ></bb-llm-output>`
+                            : html`No data provided`;
+                        } else if (isImageURL(outputValue)) {
+                          value = html`<img src=${outputValue.image_url} />`;
+                        } else {
+                          value = html`<bb-json-tree
+                            .json=${outputValue}
+                          ></bb-json-tree>`;
+                        }
+                      } else {
+                        let renderableValue: HTMLTemplateResult | symbol =
+                          nothing;
+                        if (typeof outputValue === "string") {
+                          renderableValue = html`${markdown(outputValue)}`;
+                        } else {
+                          renderableValue = html`${outputValue !== undefined
+                            ? outputValue
+                            : html`<span class="no-value"
+                                >[No value provided]</span
+                              >`}`;
+                        }
+
+                        // prettier-ignore
+                        value = html`<div
+                          class=${classMap({
+                            value: true,
+                          })}
+                        >${renderableValue}</div>`;
+                      }
+
+                      return html` <div class="output-port">
+                        <div class="value">${value}</div>
+                      </div>`;
+                    })}`;
+                  })}`
+                : html`...`}
+            </div>
           </div>
           <footer>
             <button

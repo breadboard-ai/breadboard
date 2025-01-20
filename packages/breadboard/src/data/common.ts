@@ -16,6 +16,16 @@ import { DataCapability } from "../types.js";
 
 // Helpers for handling DataCapability objects.
 
+export function isImageURL(
+  nodeValue: unknown
+): nodeValue is { image_url: string } {
+  if (typeof nodeValue !== "object" || !nodeValue) {
+    return false;
+  }
+
+  return "image_url" in nodeValue;
+}
+
 export function isTextCapabilityPart(
   part: unknown
 ): part is TextCapabilityPart {
