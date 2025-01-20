@@ -17,6 +17,62 @@ import {
 const markdown = MarkdownIt();
 const outputTextColor = getGlobalColor("--bb-neutral-700");
 
+function create(text: string, tag: string) {
+  const opts: PIXI.HTMLTextStyleOptions = {
+    fontWeight: "400",
+    fontFamily: "Arial",
+    fontSize: 12,
+    lineHeight: 18,
+    wordWrap: true,
+    breakWords: true,
+    wordWrapWidth: 220,
+    fill: outputTextColor,
+    align: "left",
+  };
+
+  const metrics = { marginBottom: 8 };
+
+  switch (tag) {
+    case "h1": {
+      opts.fontSize = 16;
+      opts.fontWeight = "600";
+      break;
+    }
+
+    case "h2": {
+      opts.fontSize = 14;
+      opts.fontWeight = "600";
+      break;
+    }
+
+    case "h3": {
+      opts.fontSize = 13;
+      opts.fontWeight = "600";
+      break;
+    }
+
+    case "h4": {
+      opts.fontSize = 12;
+      opts.fontWeight = "600";
+      break;
+    }
+
+    case "h5": {
+      opts.fontSize = 12;
+      opts.fontWeight = "600";
+      break;
+    }
+  }
+
+  return {
+    textPart: new PIXI.HTMLText({
+      text,
+      style: { ...opts },
+    }),
+    metrics: { ...metrics },
+  };
+}
+
 export class GraphNodeOutput extends PIXI.Container {
   #isDirty = true;
   #label = new PIXI.Text({
@@ -43,10 +99,17 @@ export class GraphNodeOutput extends PIXI.Container {
       }
 
       this.#isDirty = false;
-      this.#clean();
-
       this.#draw();
     };
+
+    this.on("destroyed", () => {
+      // Prevent future renderings.
+      this.#isDirty = false;
+
+      for (const child of this.children) {
+        child.destroy({ children: true });
+      }
+    });
   }
 
   set values(values: OutputValues[] | null) {
@@ -58,15 +121,17 @@ export class GraphNodeOutput extends PIXI.Container {
     return this.#values;
   }
 
-  #clean() {
-    const children = this.removeChildren();
-    for (const child of children) {
-      child.destroy();
+  #clear() {
+    for (const child of this.children) {
+      child.removeFromParent();
+      child.destroy({ children: true });
     }
   }
 
   #draw() {
     if (!this.values) {
+      this.#clear();
+
       const text = new PIXI.Text({
         text: "...",
         style: {
@@ -75,9 +140,13 @@ export class GraphNodeOutput extends PIXI.Container {
           fill: outputTextColor,
         },
       });
-
+      text.label = "placeholder";
       this.addChild(text);
       return;
+    } else {
+      const placeholder = this.getChildByLabel("placeholder");
+      placeholder?.removeFromParent();
+      placeholder?.destroy();
     }
 
     const newestItem = this.values.at(-1);
@@ -86,7 +155,7 @@ export class GraphNodeOutput extends PIXI.Container {
     }
 
     let y = 0;
-    for (const entry of Object.values(newestItem)) {
+    for (const [id, entry] of Object.entries(newestItem)) {
       if (!isLLMContentArray(entry)) {
         continue;
       }
@@ -98,7 +167,12 @@ export class GraphNodeOutput extends PIXI.Container {
       }
 
       Promise.all(
-        newestAddition.parts.map((part) => {
+        newestAddition.parts.map((part, idx) => {
+          const item = this.getChildByLabel(`${id}-${idx}`);
+          if (item) {
+            return Promise.resolve(item);
+          }
+
           return new Promise<PIXI.ContainerChild | null>((resolve) => {
             if (isInlineData(part)) {
               if (part.inlineData.mimeType.startsWith("image")) {
@@ -115,6 +189,7 @@ export class GraphNodeOutput extends PIXI.Container {
                   const ratio = 228 / texture.width;
                   item.scale.x = ratio;
                   item.scale.y = ratio;
+                  item.label = `${id}-${idx}`;
 
                   resolve(item);
                 };
@@ -122,28 +197,45 @@ export class GraphNodeOutput extends PIXI.Container {
                 resolve(null);
               }
             } else if (isTextCapabilityPart(part)) {
-              const partText =
-                part.text.length < 500
-                  ? part.text
-                  : `${part.text.slice(0, 500)}...`;
-              const text = new PIXI.HTMLText({
-                text: `${markdown.renderInline(partText)}`,
-                style: {
-                  fontSize: 12,
-                  fontFamily: "Arial",
-                  fill: outputTextColor,
-                  wordWrap: true,
-                  breakWords: true,
-                  wordWrapWidth: 220,
-                  tagStyles: {
-                    h1: {
-                      fontSize: 14,
-                    },
-                  },
-                },
-              });
+              const item = new PIXI.Container();
+              const parts = markdown.parse(part.text, {});
 
-              resolve(text);
+              let y = 0;
+              let currentTag = "p";
+              for (const part of parts) {
+                if (part.type === "heading_open") {
+                  currentTag = part.tag;
+                  continue;
+                }
+
+                if (
+                  part.type === "heading_close" ||
+                  part.type === "paragraph_open" ||
+                  part.type === "paragraph_close"
+                ) {
+                  currentTag = "p";
+                  continue;
+                }
+
+                if (
+                  part.type !== "inline" ||
+                  (part.content === "" && part.children?.length === 0)
+                ) {
+                  continue;
+                }
+
+                const { textPart, metrics } = create(
+                  markdown.renderInline(part.content),
+                  currentTag
+                );
+                textPart.y = y;
+
+                item.addChild(textPart);
+                y += textPart.height + metrics.marginBottom;
+              }
+
+              item.label = `${id}-${idx}`;
+              resolve(item);
             } else {
               resolve(null);
             }
@@ -151,7 +243,6 @@ export class GraphNodeOutput extends PIXI.Container {
         })
       ).then((renderables: Array<PIXI.ContainerChild | null>) => {
         for (const renderable of renderables) {
-          console.log(renderable);
           if (!renderable) {
             continue;
           }
