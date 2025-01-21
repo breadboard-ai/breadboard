@@ -4,36 +4,12 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "content-10fef410",
-      "type": "content",
-      "metadata": {
-        "visual": {
-          "x": -599.9999999999997,
-          "y": -219.99999999999974,
-          "collapsed": "expanded"
-        },
-        "title": "Content",
-        "logLevel": "debug"
-      },
-      "configuration": {
-        "role": "user",
-        "template": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "The pros and cons of using AIs to generate blog posts"
-            }
-          ]
-        }
-      }
-    },
-    {
       "id": "a2-7e19872d",
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": -1.2789769243681803e-13,
-          "y": -219.99999999999974,
+          "x": 0,
+          "y": -219.9999999999999,
           "collapsed": "expanded"
         },
         "title": "Outline Writer",
@@ -56,8 +32,8 @@
       "type": "file://bgl/a2.bgl.json#module:researcher",
       "metadata": {
         "visual": {
-          "x": -300.00000000000006,
-          "y": -219.99999999999997,
+          "x": -299.99999999999994,
+          "y": -220.00000000000034,
           "collapsed": "expanded"
         },
         "title": "Researcher",
@@ -80,8 +56,8 @@
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": 319.9999999999999,
-          "y": -100.00000000000006,
+          "x": 320,
+          "y": -100.00000000000011,
           "collapsed": "expanded"
         },
         "title": "Post Writer",
@@ -105,7 +81,7 @@
       "metadata": {
         "visual": {
           "x": 320,
-          "y": -360,
+          "y": -360.00000000000034,
           "collapsed": "expanded"
         },
         "title": "Banner Image Generator",
@@ -116,27 +92,49 @@
           "role": "user",
           "parts": [
             {
-              "text": "Abstract art that serves as a banner for the blog post, reflecting its theme and concepts"
+              "text": "Given the outline, imagine abstract art that serves as a banner for the blog post, reflecting its theme and concepts"
             }
           ]
         }
       }
     },
     {
-      "id": "content-086a7fe8",
-      "type": "content",
+      "id": "a2-5ff966c0",
+      "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
       "metadata": {
         "visual": {
-          "x": 640,
-          "y": -219.99999999999997,
+          "x": -599.9999999999998,
+          "y": -220,
           "collapsed": "expanded"
         },
-        "title": "Content",
-        "logLevel": "debug"
+        "title": "Text",
+        "logLevel": "info"
       },
       "configuration": {
-        "role": "user",
-        "template": {
+        "text": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "The pros and cons of using AIs to generate blog posts"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a2-3e1f52e1",
+      "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "metadata": {
+        "visual": {
+          "x": 660,
+          "y": -220,
+          "collapsed": "expanded"
+        },
+        "title": "Text",
+        "logLevel": "info"
+      },
+      "configuration": {
+        "text": {
           "role": "user",
           "parts": [
             {
@@ -148,12 +146,6 @@
     }
   ],
   "edges": [
-    {
-      "from": "content-10fef410",
-      "to": "a2-cb7ec1eb",
-      "out": "context",
-      "in": "context"
-    },
     {
       "from": "a2-cb7ec1eb",
       "to": "a2-7e19872d",
@@ -167,22 +159,28 @@
       "in": "context"
     },
     {
-      "from": "a2-f41834f9",
-      "to": "content-086a7fe8",
-      "out": "context",
-      "in": "p-image"
-    },
-    {
-      "from": "a2-25320551",
-      "to": "content-086a7fe8",
-      "out": "context",
-      "in": "p-post"
-    },
-    {
       "from": "a2-7e19872d",
       "to": "a2-f41834f9",
       "out": "context",
       "in": "context"
+    },
+    {
+      "from": "a2-5ff966c0",
+      "to": "a2-cb7ec1eb",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "a2-f41834f9",
+      "to": "a2-3e1f52e1",
+      "out": "context",
+      "in": "p-z-image"
+    },
+    {
+      "from": "a2-25320551",
+      "to": "a2-3e1f52e1",
+      "out": "context",
+      "in": "p-z-post"
     }
   ],
   "metadata": {

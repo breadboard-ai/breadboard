@@ -171,7 +171,8 @@ export async function* runGraph(
       });
     }
 
-    let remainingOutputs: TraversalResult | null = null;
+    let remainingOutputs: { result: TraversalResult; path: number[] } | null =
+      null;
 
     for await (const result of machine) {
       context?.signal?.throwIfAborted();
@@ -250,7 +251,7 @@ export async function* runGraph(
         remainingOutputs = null;
       } else {
         outputs = await nodeInvoker.invokeNode(result, path());
-        remainingOutputs = result;
+        remainingOutputs = { result, path: path() };
       }
 
       lifecycle?.dispatchNodeEnd(outputs, path());
@@ -275,15 +276,15 @@ export async function* runGraph(
     }
 
     if (remainingOutputs) {
-      invocationId--;
+      const oldInvocationId = remainingOutputs.path.at(-1) || -1;
       await next(
         new OutputStageResult(
           {
-            ...remainingOutputs,
-            inputs: remainingOutputs.outputs || {},
+            ...remainingOutputs.result,
+            inputs: remainingOutputs.result.outputs || {},
           },
-          invocationId,
-          path()
+          oldInvocationId,
+          remainingOutputs.path
         )
       );
     }
