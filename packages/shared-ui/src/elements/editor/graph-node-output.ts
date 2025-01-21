@@ -35,31 +35,36 @@ function create(text: string, tag: string) {
   switch (tag) {
     case "h1": {
       opts.fontSize = 16;
-      opts.fontWeight = "600";
+      opts.lineHeight = 24;
+      opts.fontWeight = "500";
       break;
     }
 
     case "h2": {
       opts.fontSize = 14;
-      opts.fontWeight = "600";
+      opts.lineHeight = 22;
+      opts.fontWeight = "500";
       break;
     }
 
     case "h3": {
       opts.fontSize = 13;
-      opts.fontWeight = "600";
+      opts.lineHeight = 20;
+      opts.fontWeight = "500";
       break;
     }
 
     case "h4": {
       opts.fontSize = 12;
-      opts.fontWeight = "600";
+      opts.lineHeight = 18;
+      opts.fontWeight = "500";
       break;
     }
 
     case "h5": {
       opts.fontSize = 12;
-      opts.fontWeight = "600";
+      opts.lineHeight = 18;
+      opts.fontWeight = "500";
       break;
     }
   }

@@ -2855,11 +2855,6 @@ export class Main extends LitElement {
         let tabControls: HTMLTemplateResult | symbol = nothing;
         const tabHistory = this.#runtime.edit.getHistory(this.tab);
         if (this.tab && tabHistory) {
-          const isRunning = topGraphResult
-            ? topGraphResult.status === "running" ||
-              topGraphResult.status === "paused"
-            : false;
-
           tabControls = html` <button
               id="undo"
               ?disabled=${!tabHistory.canUndo()}
@@ -2901,30 +2896,6 @@ export class Main extends LitElement {
               }}
             >
               Redo
-            </button>
-
-            <button
-              id="run"
-              title=${Strings.from("LABEL_RUN_PROJECT")}
-              ?disabled=${!this.tab.graph}
-              class=${classMap({ running: isRunning })}
-              @pointerdown=${(evt: PointerEvent) => {
-                // We do this to prevent the pointer event firing and dismissing the
-                // board activity overlay. Otherwise the overlay disappears and then
-                // immediately reappears.
-                evt.stopImmediatePropagation();
-              }}
-              @click=${async () => {
-                if (isRunning) {
-                  this.#attemptBoardStop();
-                } else {
-                  await this.#attemptBoardStart();
-                }
-              }}
-            >
-              ${isRunning
-                ? Strings.from("LABEL_STOP")
-                : Strings.from("LABEL_RUN")}
             </button>`;
         }
 
@@ -3127,6 +3098,12 @@ export class Main extends LitElement {
               .graphTopologyUpdateId=${this.graphTopologyUpdateId}
               .graphStoreUpdateId=${this.graphStoreUpdateId}
               .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
+              @bbrun=${async () => {
+                await this.#attemptBoardStart();
+              }}
+              @bbstop=${() => {
+                this.#attemptBoardStop();
+              }}
               @bbinputenter=${async (
                 event: BreadboardUI.Events.InputEnterEvent
               ) => {

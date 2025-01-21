@@ -74,7 +74,7 @@ export class StartEvent extends Event {
 }
 
 export class RunEvent extends Event {
-  static eventName = "bbrunboard";
+  static eventName = "bbrun";
 
   constructor() {
     super(RunEvent.eventName, { ...eventInit });
@@ -82,7 +82,7 @@ export class RunEvent extends Event {
 }
 
 export class StopEvent extends Event {
-  static eventName = "bbstopboard";
+  static eventName = "bbstop";
 
   constructor() {
     super(StopEvent.eventName, { ...eventInit });

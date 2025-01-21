@@ -4,24 +4,39 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as StringsHelper from "../../strings/helper.js";
+const Strings = StringsHelper.forSection("Editor");
+const GlobalStrings = StringsHelper.forSection("Global");
+
 import {
   BoardServer,
   BreadboardCapability,
   GraphIdentifier,
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
+  GraphStoreEntry,
   InspectableGraph,
   InspectableNodePorts,
   InspectableRun,
   isGraphDescriptorCapability,
   isResolvedURLBoardCapability,
   isUnresolvedPathBoardCapability,
+  Kit,
+  MainGraphIdentifier,
+  MutableGraphStore,
   NodeConfiguration,
   NodeHandlerMetadata,
   NodeIdentifier,
   PortIdentifier,
 } from "@google-labs/breadboard";
-import { LitElement, PropertyValues, css, html, nothing } from "lit";
+import {
+  HTMLTemplateResult,
+  LitElement,
+  PropertyValues,
+  css,
+  html,
+  nothing,
+} from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import {
@@ -44,6 +59,7 @@ import {
   GraphShowTooltipEvent,
   HideTooltipEvent,
   InteractionEvent,
+  KitNodeChosenEvent,
   NodeActivitySelectedEvent,
   NodeConfigurationUpdateRequestEvent,
   NodeCreateEvent,
@@ -51,7 +67,9 @@ import {
   NodeDeleteEvent,
   NodeRunRequestEvent,
   NodeTypeRetrievalErrorEvent,
+  RunEvent,
   ShowTooltipEvent,
+  StopEvent,
   WorkspaceSelectionStateEvent,
   WorkspaceVisualUpdateEvent,
 } from "../../events/events.js";
@@ -74,6 +92,8 @@ import { isBoardArrayBehavior, isBoardBehavior } from "../../utils/index.js";
 import { getSubItemColor } from "../../utils/subgraph-color.js";
 
 import "./graph-renderer.js";
+import { classMap } from "lit/directives/class-map.js";
+import { map } from "lit/directives/map.js";
 
 const ZOOM_KEY = "bb-editor-zoom-to-highlighted-node-during-runs";
 const DATA_TYPE = "text/plain";
@@ -121,7 +141,22 @@ export class Editor extends LitElement implements DragConnectorReceiver {
   subGraphId: string | null = null;
 
   @property()
+  boardServerKits: Kit[] | null = null;
+
+  @property()
+  mainGraphId: MainGraphIdentifier | null = null;
+
+  @property()
+  graphStore: MutableGraphStore | null = null;
+
+  @property()
+  graphStoreUpdateId = 0;
+
+  @property()
   run: InspectableRun | null = null;
+
+  @property()
+  offsetZoom = 0;
 
   @property()
   boardId: number = -1;
@@ -219,10 +254,26 @@ export class Editor extends LitElement implements DragConnectorReceiver {
   @property()
   boardServers: BoardServer[] = [];
 
+  @state()
+  showComponentLibrary = false;
+
+  @state()
+  showComponentPicker = false;
+  #componentPickerConfiguration: {
+    components: Array<{ id: string; metadata: GraphStoreEntry }>;
+    x: number;
+    y: number;
+  } = {
+    components: [],
+    x: 0,
+    y: 0,
+  };
+
   #graphRendererRef: Ref<GraphRenderer> = createRef();
 
   #onDropBound = this.#onDrop.bind(this);
   #onDragOverBound = this.#onDragOver.bind(this);
+  #onPointerDownBound = this.#onPointerDown.bind(this);
   #onPointerMoveBound = this.#onPointerMove.bind(this);
   #onWorkspaceSelectionStateChangeBound =
     this.#onWorkspaceSelectionStateChange.bind(this);
@@ -256,6 +307,18 @@ export class Editor extends LitElement implements DragConnectorReceiver {
   });
 
   static styles = css`
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        translate: 0 -10px;
+      }
+
+      to {
+        opacity: 1;
+        translate: none;
+      }
+    }
+
     * {
       box-sizing: border-box;
     }
@@ -275,11 +338,10 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     #readonly-overlay {
       display: flex;
       align-items: center;
-      height: var(--bb-grid-size-9);
+      height: var(--bb-grid-size-7);
       position: absolute;
-      top: 52px;
-      left: 50%;
-      transform: translateX(-50%);
+      top: 16px;
+      left: 16px;
       color: var(--bb-boards-900);
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
@@ -311,36 +373,248 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       position: relative;
     }
 
+    #component-picker {
+      position: fixed;
+      left: var(--component-picker-x, 100px);
+      top: var(--component-picker-y, 100px);
+      z-index: 2;
+      background: var(--bb-neutral-0);
+      border: 1px solid var(--bb-neutral-300);
+      width: 172px;
+      border-radius: var(--bb-grid-size-2);
+      box-shadow: var(--bb-elevation-5);
+      animation: slideIn 0.2s cubic-bezier(0, 0, 0.3, 1) forwards;
+
+      .no-components-available {
+        padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+
+        font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+          var(--bb-font-family);
+      }
+
+      ul#components {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        & li {
+          display: grid;
+          grid-template-columns: 20px 1fr;
+          column-gap: var(--bb-grid-size-2);
+          padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+          cursor: pointer;
+          position: relative;
+
+          &::before {
+            content: "";
+            position: absolute;
+            display: block;
+            left: 2px;
+            top: 2px;
+            width: calc(100% - 4px);
+            height: calc(100% - 4px);
+            background: var(--bb-neutral-50);
+            z-index: 0;
+            border-radius: var(--bb-grid-size);
+            opacity: 0;
+            transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+          }
+
+          &:hover::before {
+            opacity: 1;
+          }
+
+          & .node-id {
+            position: relative;
+            color: var(--bb-neutral-900);
+            margin-bottom: var(--bb-grid-size);
+            font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+              var(--bb-font-family);
+          }
+
+          & .node-icon {
+            position: relative;
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            background: transparent var(--bb-icon-board) top left / 20px 20px
+              no-repeat;
+
+            &.code-blocks {
+              background: var(--bb-icon-code-blocks) top left / 20px 20px
+                no-repeat;
+            }
+
+            &.smart-toy {
+              background: var(--bb-icon-smart-toy) top left / 20px 20px
+                no-repeat;
+            }
+
+            &.human {
+              background: var(--bb-icon-human) top left / 20px 20px no-repeat;
+            }
+
+            &.merge-type {
+              background: var(--bb-icon-merge-type) top left / 20px 20px
+                no-repeat;
+            }
+
+            &.laps {
+              background: var(--bb-icon-laps) top left / 20px 20px no-repeat;
+            }
+
+            &.google-drive {
+              background: var(--bb-icon-google-drive) top left / 20px 20px
+                no-repeat;
+            }
+          }
+        }
+      }
+    }
+
     #floating-buttons {
       position: absolute;
+      display: flex;
       top: var(--bb-grid-size-4);
-      right: var(--bb-grid-size-4);
-      z-index: 1;
-      border-radius: var(--bb-grid-size-16);
+      left: 0;
+      width: 100%;
       height: var(--bb-grid-size-9);
+      z-index: 1;
       display: flex;
       align-items: center;
-      padding: 0 var(--bb-grid-size-2);
-      border: 1px solid var(--bb-neutral-300);
-      background: var(--bb-neutral-0);
-    }
+      justify-content: center;
+      font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        var(--bb-font-family);
 
-    #floating-buttons #zoom-to-fit {
-      width: 20px;
-      height: 20px;
-      font-size: 0;
-      background: transparent var(--bb-icon-fit) center center / 20px 20px
-        no-repeat;
-      border: none;
-      padding: 0;
-      cursor: pointer;
-      transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
-      opacity: 0.6;
-    }
+      & #run {
+        min-width: 76px;
+        height: var(--bb-grid-size-7);
+        background: var(--bb-ui-500) var(--bb-icon-play-filled-inverted) 4px
+          center / 20px 20px no-repeat;
+        color: #fff;
+        border-radius: 20px;
+        border: none;
+        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          var(--bb-font-family);
+        padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-7);
+        opacity: 0.3;
 
-    #floating-buttons #zoom-to-fit:focus,
-    #floating-buttons #zoom-to-fit:hover {
-      opacity: 1;
+        &.running {
+          background: var(--bb-ui-500) url(/images/progress-ui-inverted.svg) 8px
+            center / 16px 16px no-repeat;
+        }
+
+        &:not([disabled]) {
+          cursor: pointer;
+          opacity: 1;
+        }
+      }
+
+      & #shelf {
+        border-radius: var(--bb-grid-size-16);
+        height: 100%;
+        display: flex;
+        align-items: center;
+        padding: 0 var(--bb-grid-size-2);
+        border: 1px solid var(--bb-neutral-300);
+        background: var(--bb-neutral-0);
+        margin: 0 var(--bb-grid-size-4);
+
+        & button {
+          font-size: 0;
+          width: var(--bb-grid-size-7);
+          height: var(--bb-grid-size-9);
+          border: none;
+          padding: 0 var(--bb-grid-size);
+          background: var(--bb-icon-board) center center / 20px 20px no-repeat;
+          position: relative;
+          opacity: 0.3;
+
+          &:not([disabled]) {
+            opacity: 0.6;
+            cursor: pointer;
+            transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+            &:focus,
+            &:hover {
+              opacity: 1;
+            }
+          }
+
+          &#preset-comment {
+            background: var(--bb-icon-comment) center center / 20px 20px
+              no-repeat;
+          }
+
+          &.expandable {
+            width: var(--bb-grid-size-12);
+            background:
+              var(--bb-icon-board) 8px center / 20px 20px no-repeat,
+              var(--bb-icon-keyboard-arrow-down) 28px center / 12px 12px
+                no-repeat;
+
+            &#preset-all {
+              border-right: 1px solid var(--bb-neutral-100);
+              background:
+                var(--bb-icon-add-box) 8px center / 20px 20px no-repeat,
+                var(--bb-icon-keyboard-arrow-down) 28px center / 12px 12px
+                  no-repeat;
+            }
+
+            &#preset-a2 {
+              background:
+                var(--bb-add-icon-generative) 10px center / 16px 16px no-repeat,
+                var(--bb-icon-keyboard-arrow-down) 28px center / 12px 12px
+                  no-repeat;
+            }
+
+            &#preset-built-in {
+              background:
+                var(--bb-icon-extension) 8px center / 20px 20px no-repeat,
+                var(--bb-icon-keyboard-arrow-down) 28px center / 12px 12px
+                  no-repeat;
+            }
+
+            &#preset-utility {
+              background:
+                var(--bb-icon-route) 8px center / 20px 20px no-repeat,
+                var(--bb-icon-keyboard-arrow-down) 28px center / 12px 12px
+                  no-repeat;
+            }
+
+            &#preset-tools {
+              background:
+                var(--bb-icon-home-repair-service) 8px center / 20px 20px
+                  no-repeat,
+                var(--bb-icon-keyboard-arrow-down) 28px center / 12px 12px
+                  no-repeat;
+            }
+          }
+        }
+      }
+
+      & #controls {
+        border-radius: var(--bb-grid-size-16);
+        height: 100%;
+        display: flex;
+        align-items: center;
+        padding: 0 var(--bb-grid-size-2);
+        border: 1px solid var(--bb-neutral-300);
+        background: var(--bb-neutral-0);
+
+        & #zoom-to-fit {
+          width: 20px;
+          height: 20px;
+          font-size: 0;
+          background: transparent var(--bb-icon-fit) center center / 20px 20px
+            no-repeat;
+          border: none;
+          padding: 0;
+          cursor: pointer;
+          transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+          opacity: 0.6;
+        }
+      }
     }
 
     bb-graph-renderer {
@@ -349,6 +623,15 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       height: 100%;
       outline: none;
       overflow: hidden;
+    }
+
+    bb-component-selector-overlay {
+      position: absolute;
+      top: 57px;
+      left: 50%;
+      transform: translateX(-50%) translateX(40px);
+      z-index: 2;
+      animation: slideIn 0.2s cubic-bezier(0, 0, 0.3, 1) forwards;
     }
   `;
 
@@ -592,6 +875,8 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       this.#onGraphNodeRunRequestBound
     );
 
+    window.addEventListener("pointerdown", this.#onPointerDownBound);
+
     this.addEventListener("pointermove", this.#onPointerMoveBound);
     this.addEventListener("dragover", this.#onDragOverBound);
     this.addEventListener("drop", this.#onDropBound);
@@ -676,6 +961,8 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       GraphNodeRunRequestEvent.eventName,
       this.#onGraphNodeRunRequestBound
     );
+
+    window.removeEventListener("pointerdown", this.#onPointerDownBound);
 
     this.removeEventListener("pointermove", this.#onPointerMoveBound);
     this.removeEventListener("dragover", this.#onDragOverBound);
@@ -824,6 +1111,11 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     this.dispatchEvent(
       new NodeRunRequestEvent(runRequestEvt.id, runRequestEvt.subGraphId)
     );
+  }
+
+  #onPointerDown() {
+    this.showComponentLibrary = false;
+    this.showComponentPicker = false;
   }
 
   #onPointerMove(evt: PointerEvent) {
@@ -1007,6 +1299,9 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       this.#graphRendererRef.value.toContainerCoordinates(pointer);
     const subGraph = this.#graphRendererRef.value.toSubGraphId(pointer);
 
+    this.showComponentLibrary = false;
+    this.showComponentPicker = false;
+
     this.dispatchEvent(
       new NodeCreateEvent(id, type, subGraph, configuration, {
         visual: {
@@ -1060,37 +1355,295 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     this.#graphRendererRef.value.removeBoardPortHighlights();
   }
 
+  #createComponentList(graphStore: MutableGraphStore, kitName: string) {
+    const kitList: Array<{ id: string; metadata: GraphStoreEntry }> = [];
+    const graphs = graphStore.graphs();
+
+    for (const graph of graphs) {
+      if (!graph.title) {
+        continue;
+      }
+
+      const { mainGraph } = graph;
+      if (
+        !mainGraph.title ||
+        mainGraph.title !== kitName ||
+        mainGraph.tags?.includes("deprecated") ||
+        !graph.tags?.includes("component") ||
+        graph.tags?.includes("deprecated")
+      ) {
+        continue;
+      }
+
+      if (
+        !this.showExperimentalComponents &&
+        mainGraph.tags?.includes("experimental")
+      ) {
+        continue;
+      }
+
+      if (
+        !this.showExperimentalComponents &&
+        graph.tags?.includes("experimental")
+      ) {
+        continue;
+      }
+
+      kitList.push({ id: graph.url!, metadata: graph });
+    }
+
+    kitList.sort((kit1, kit2) => {
+      const title1 = kit1.metadata.mainGraph.title || "";
+      const title2 = kit2.metadata.mainGraph.title || "";
+      if (title1 > title2) {
+        return 1;
+      }
+      if (title1 < title2) {
+        return -1;
+      }
+      return (kit1.metadata.title || "") > (kit2.metadata.title || "") ? 1 : -1;
+    });
+
+    return kitList;
+  }
+
+  #showComponentPicker(target: HTMLElement, kitName: string) {
+    if (!this.graphStore) {
+      return;
+    }
+
+    const bounds = target.getBoundingClientRect();
+    this.#componentPickerConfiguration = {
+      components: this.#createComponentList(this.graphStore, kitName),
+      x: bounds.left - 5,
+      y: bounds.bottom + 4,
+    };
+
+    this.showComponentPicker = !this.showComponentPicker;
+  }
+
   render() {
+    const isRunning = this.topGraphResult
+      ? this.topGraphResult.status === "running" ||
+        this.topGraphResult.status === "paused"
+      : false;
+
     const readOnlyFlag =
       this.graph !== null && this.readOnly && this.showReadOnlyLabel
         ? html`<aside id="readonly-overlay">Read-only View</aside>`
         : nothing;
 
+    let componentLibrary: HTMLTemplateResult | symbol = nothing;
+    if (this.showComponentLibrary) {
+      componentLibrary = html`<bb-component-selector-overlay
+        .graphStoreUpdateId=${this.graphStoreUpdateId}
+        .showExperimentalComponents=${this.showExperimentalComponents}
+        .boardServerKits=${this.boardServerKits}
+        .graphStore=${this.graphStore}
+        .mainGraphId=${this.mainGraphId}
+        @pointerdown=${(evt: PointerEvent) => {
+          evt.stopImmediatePropagation();
+        }}
+      >
+      </bb-component-selector-overlay>`;
+    }
+
+    let componentPicker: HTMLTemplateResult | symbol = nothing;
+    if (this.showComponentPicker) {
+      this.style.setProperty(
+        "--component-picker-x",
+        `${this.#componentPickerConfiguration.x}px`
+      );
+      this.style.setProperty(
+        "--component-picker-y",
+        `${this.#componentPickerConfiguration.y}px`
+      );
+      componentPicker = html`<div
+        id="component-picker"
+        @pointerdown=${(evt: PointerEvent) => {
+          evt.stopImmediatePropagation();
+        }}
+      >
+        ${this.#componentPickerConfiguration.components.length
+          ? html`<ul id="components">
+              ${map(
+                this.#componentPickerConfiguration.components,
+                (kitContents) => {
+                  const className = kitContents.id
+                    .toLocaleLowerCase()
+                    .replaceAll(/\W/gim, "-");
+                  const id = kitContents.id;
+                  const title = kitContents.metadata.title || id;
+                  const icon = kitContents.metadata.icon ?? "generic";
+
+                  return html`<li
+                    class=${classMap({
+                      [className]: true,
+                      ["kit-item"]: true,
+                    })}
+                    draggable="true"
+                    @dblclick=${() => {
+                      this.dispatchEvent(new KitNodeChosenEvent(id));
+                    }}
+                    @dragstart=${(evt: DragEvent) => {
+                      if (!evt.dataTransfer) {
+                        return;
+                      }
+                      evt.dataTransfer.setData(DATA_TYPE, id);
+                    }}
+                  >
+                    <div
+                      class=${classMap({
+                        "node-icon": true,
+                        [icon]: true,
+                      })}
+                    ></div>
+                    <div>
+                      <div class="node-id">${title}</div>
+                    </div>
+                  </li>`;
+                }
+              )}
+            </ul>`
+          : html`<div class="no-components-available">
+              ${Strings.from("LABEL_NO_COMPONENTS")}
+            </div>`}
+      </div>`;
+    }
+
     const content = html`<div id="content">
       ${this.graph
         ? html`<div id="floating-buttons">
-            <button
-              id="zoom-to-fit"
-              @click=${() => {
-                if (!this.#graphRendererRef.value) {
-                  return;
-                }
+            <div id="start">
+              <button
+                id="run"
+                title=${GlobalStrings.from("LABEL_RUN_PROJECT")}
+                class=${classMap({ running: isRunning })}
+                ?disabled=${this.readOnly}
+                @click=${() => {
+                  if (isRunning) {
+                    this.dispatchEvent(new StopEvent());
+                  } else {
+                    this.dispatchEvent(new RunEvent());
+                  }
+                }}
+              >
+                ${isRunning
+                  ? GlobalStrings.from("LABEL_STOP")
+                  : GlobalStrings.from("LABEL_RUN")}
+              </button>
+            </div>
+            <div id="shelf">
+              <button
+                id="preset-all"
+                class="expandable"
+                ?disabled=${this.readOnly}
+                @click=${() => {
+                  this.showComponentLibrary = !this.showComponentLibrary;
+                }}
+              >
+                ${Strings.from("LABEL_COMPONENT_LIBRARY")}
+              </button>
+              <button
+                id="preset-a2"
+                class="expandable"
+                ?disabled=${this.readOnly}
+                @click=${(evt: PointerEvent) => {
+                  if (!(evt.target instanceof HTMLButtonElement)) {
+                    return;
+                  }
 
-                let animate = true;
-                if (
-                  window.matchMedia("(prefers-reduced-motion: reduce)").matches
-                ) {
-                  animate = false;
-                }
-                this.#graphRendererRef.value.zoomToFit(animate);
-              }}
-            >
-              Zoom to fit
-            </button>
+                  this.#showComponentPicker(evt.target, "A2");
+                }}
+              >
+                ${Strings.from("LABEL_SHOW_LIST")}
+              </button>
+              <button
+                id="preset-built-in"
+                class="expandable"
+                ?disabled=${this.readOnly}
+                @click=${(evt: PointerEvent) => {
+                  if (!(evt.target instanceof HTMLButtonElement)) {
+                    return;
+                  }
+
+                  this.#showComponentPicker(evt.target, "Built-in Kit");
+                }}
+              >
+                ${Strings.from("LABEL_SHOW_LIST")}
+              </button>
+              <button
+                id="preset-utility"
+                class="expandable"
+                ?disabled=${this.readOnly}
+                @click=${(evt: PointerEvent) => {
+                  if (!(evt.target instanceof HTMLButtonElement)) {
+                    return;
+                  }
+
+                  this.#showComponentPicker(evt.target, "Utility Kit");
+                }}
+              >
+                ${Strings.from("LABEL_SHOW_LIST")}
+              </button>
+              <button
+                id="preset-tools"
+                class="expandable"
+                ?disabled=${this.readOnly}
+                @click=${(evt: PointerEvent) => {
+                  if (!(evt.target instanceof HTMLButtonElement)) {
+                    return;
+                  }
+
+                  this.#showComponentPicker(evt.target, "Tool Kit");
+                }}
+              >
+                ${Strings.from("LABEL_SHOW_LIST")}
+              </button>
+              <button
+                id="preset-comment"
+                draggable="true"
+                ?disabled=${this.readOnly}
+                @dblclick=${() => {
+                  this.dispatchEvent(new KitNodeChosenEvent("comment"));
+                }}
+                @dragstart=${(evt: DragEvent) => {
+                  if (!evt.dataTransfer) {
+                    return;
+                  }
+                  evt.dataTransfer.setData(DATA_TYPE, "comment");
+                }}
+              >
+                ${Strings.from("LABEL_SHOW_LIST")}
+              </button>
+            </div>
+            <div id="controls">
+              <button
+                id="zoom-to-fit"
+                @click=${() => {
+                  if (!this.#graphRendererRef.value) {
+                    return;
+                  }
+
+                  let animate = true;
+                  if (
+                    window.matchMedia("(prefers-reduced-motion: reduce)")
+                      .matches
+                  ) {
+                    animate = false;
+                  }
+                  this.#graphRendererRef.value.zoomToFit(animate);
+                }}
+              >
+                Zoom to fit
+              </button>
+            </div>
           </div>`
         : nothing}
+      ${componentLibrary} ${componentPicker}
       <bb-graph-renderer
         ${ref(this.#graphRendererRef)}
+        .offsetZoom=${this.offsetZoom}
         .topGraphUrl=${this.graph?.raw().url ?? "no-url"}
         .topGraphResult=${this.topGraphResult}
         .run=${this.run}

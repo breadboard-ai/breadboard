@@ -32,6 +32,103 @@ export const styles = css`
     &.welcome {
       grid-template-columns: none;
     }
+
+    & #create-view-popout {
+      position: absolute;
+      bottom: 32px;
+      right: 32px;
+      width: 50vw;
+      height: 44px;
+      max-height: 70vh;
+      max-width: 450px;
+      z-index: 3;
+      display: grid;
+      grid-template-rows: 44px 1fr;
+      border-radius: var(--bb-grid-size-2);
+      box-shadow: var(--bb-elevation-6);
+      overflow: hidden;
+      background: var(--bb-neutral-0);
+
+      & #create-view-popout-content {
+        overflow: hidden;
+      }
+
+      & #create-view-popout-nav {
+        background: var(--bb-neutral-50);
+        border-bottom: 1px solid var(--bb-neutral-300);
+        position: relative;
+        user-select: none;
+
+        & #sections {
+          display: flex;
+          align-items: flex-end;
+          justify-content: center;
+          height: 100%;
+
+          & button {
+            height: 100%;
+            font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+              var(--bb-font-family);
+            margin: 0 var(--bb-grid-size-2);
+            padding: 0 var(--bb-grid-size);
+            color: var(--bb-neutral-700);
+            background: none;
+            border: none;
+            position: relative;
+
+            &[disabled] {
+              color: var(--bb-neutral-900);
+
+              &::after {
+                content: "";
+                display: block;
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                height: 3px;
+                border-radius: 4px 4px 0 0;
+                background: var(--bb-ui-500);
+              }
+            }
+          }
+        }
+
+        & #create-view-popout-toggle {
+          cursor: pointer;
+          position: absolute;
+          border: none;
+          background: var(--bb-icon-unfold-more) center center / 20px 20px
+            no-repeat;
+          width: 20px;
+          height: 20px;
+          font-size: 0;
+          right: var(--bb-grid-size-3);
+          top: 50%;
+          translate: 0 -50%;
+          opacity: 0.5;
+          transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+          &:hover,
+          &:focus {
+            opacity: 1;
+          }
+        }
+      }
+
+      &.expanded {
+        height: 100%;
+
+        & #create-view-popout-content {
+          overflow-y: scroll;
+        }
+
+        & #create-view-popout-nav #create-view-popout-toggle {
+          background: var(--bb-icon-unfold-less) center center / 20px 20px
+            no-repeat;
+        }
+      }
+    }
   }
 
   #deploy-view {
@@ -57,7 +154,7 @@ export const styles = css`
         & select {
           display: block;
           border-radius: var(--bb-grid-size);
-          background: color: var(--bb-neutral-0);
+          background: var(--bb-neutral-0);
           padding: var(--bb-grid-size-2);
           border: 1px solid var(--bb-neutral-300);
 
@@ -98,7 +195,7 @@ export const styles = css`
 
               &::before,
               &::after {
-                content: '';
+                content: "";
                 position: absolute;
                 left: 4px;
                 top: 4px;
@@ -110,8 +207,10 @@ export const styles = css`
               }
 
               &::after {
-                background: var(--bb-icon-check) center center / 16px 16px no-repeat;
-                transition: transform 0.2s cubic-bezier(0, 0, 0.3, 1),
+                background: var(--bb-icon-check) center center / 16px 16px
+                  no-repeat;
+                transition:
+                  transform 0.2s cubic-bezier(0, 0, 0.3, 1),
                   opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
                 opacity: 0;
               }
@@ -310,10 +409,6 @@ export const styles = css`
     background: var(--bb-ui-50);
   }
 
-  #create-view-sidenav {
-    border-right: 1px solid var(--bb-neutral-300);
-  }
-
   #create-view-sidenav,
   #graph-container {
     width: 100%;
@@ -433,32 +528,14 @@ export const styles = css`
     }
   }
 
-  #toggle-components {
-    background: var(--bb-icon-extension) center 4px / 20px 20px no-repeat;
-  }
-
-  #toggle-activity {
-    background: var(--bb-icon-vital-signs) center 4px / 20px 20px no-repeat;
-  }
-
-  #toggle-workspace-overview {
-    background: transparent var(--bb-icon-workspace) center 4px / 20px 20px
-      no-repeat;
-  }
-
-  #toggle-capabilities {
-    background: transparent var(--bb-icon-capabilities) center 4px / 20px 20px
-      no-repeat;
-  }
-
   #toggle-activity[data-count]::before {
     content: attr(data-count);
     position: absolute;
-    top: -6px;
-    right: -6px;
+    top: 2px;
+    right: -14px;
     width: 18px;
     height: 18px;
-    background: var(--bb-notify-500);
+    background: var(--bb-input-500);
     color: var(--bb-neutral-0);
     border-radius: 50%;
     font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
@@ -472,13 +549,13 @@ export const styles = css`
   }
 
   #board-activity-container {
-    height: calc(100% - 64px);
+    height: 100%;
     overflow: auto;
     position: relative;
     padding: var(--bb-grid-size-2);
   }
 
-  bb-activity-log.collapsed {
+  bb-board-activity.collapsed {
     overflow: hidden;
     height: 0;
   }
@@ -486,31 +563,39 @@ export const styles = css`
   bb-event-details {
     background: var(--bb-neutral-0);
     position: absolute;
-    top: 0;
-    left: 0;
+    top: 0px;
+    left: 0px;
     width: 100%;
-    min-height: 100%;
-    z-index: 1;
+    /* min-height: 100%; */
+    z-index: 15;
     padding: var(--bb-grid-size-4);
+    height: 100%;
+    overflow: scroll;
   }
 
   #back-to-activity {
-    background: var(--bb-ui-50) var(--bb-icon-arrow-back) 6px center / 20px 20px
-      no-repeat;
-    border: none;
+    position: absolute;
+    top: 8px;
+    right: 4px;
+    background: var(--bb-neutral-0) var(--bb-icon-arrow-back) 6px center / 20px
+      20px no-repeat;
+    border: 1px solid var(--bb-neutral-100);
     font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
       var(--bb-font-family);
-    color: var(--bb-ui-600);
+    color: var(--bb-neutral-700);
     padding: var(--bb-grid-size) var(--bb-grid-size-4) var(--bb-grid-size)
       var(--bb-grid-size-8);
     margin-right: var(--bb-grid-size-2);
     border-radius: 50px;
     cursor: pointer;
-    transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+    transition:
+      background-color 0.2s cubic-bezier(0, 0, 0.3, 1),
+      color 0.2s cubic-bezier(0, 0, 0.3, 1);
   }
 
   #back-to-activity:hover,
   #back-to-activity:focus {
-    background-color: var(--bb-ui-100);
+    background-color: var(--bb-neutral-100);
+    color: var(--bb-neutral-900);
   }
 `;

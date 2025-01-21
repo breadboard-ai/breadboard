@@ -126,6 +126,11 @@ export class LLMOutput extends LitElement {
 
     .value.markdown {
       line-height: 1.5;
+      overflow-x: auto;
+
+      & a {
+        color: var(--bb-ui-700);
+      }
     }
 
     .value * {

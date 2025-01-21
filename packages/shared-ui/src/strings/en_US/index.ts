@@ -9,6 +9,7 @@ import ActivityLog from "./activity-log.js";
 import AppPreview from "./app-preview.js";
 import CommandPalette from "./command-palette.js";
 import ComponentSelector from "./component-selector.js";
+import Editor from "./editor.js";
 import Global from "./global.js";
 import KitSelector from "./kit-selector.js";
 import ProjectListing from "./project-listing.js";
@@ -20,6 +21,7 @@ const lang: LanguagePack = {
   AppPreview,
   CommandPalette,
   ComponentSelector,
+  Editor,
   Global,
   KitSelector,
   ProjectListing,

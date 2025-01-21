@@ -57,6 +57,7 @@ import { Sandbox } from "@breadboard-ai/jsandbox";
 import { until } from "lit/directives/until.js";
 
 const SIDE_NAV_ITEM_KEY = "bb-ui-side-nav-item";
+const POPOUT_STATE = "bb-ui-popout-state";
 
 @customElement("bb-ui-controller")
 export class UI extends LitElement {
@@ -130,7 +131,7 @@ export class UI extends LitElement {
   mode = "tree" as const;
 
   @property()
-  sideNavItem: string | null = "components";
+  sideNavItem: string | null = "activity";
 
   @property()
   selectionState: WorkspaceSelectionStateWithChangeId | null = null;
@@ -153,6 +154,9 @@ export class UI extends LitElement {
   @state()
   debugEvent: InspectableRunEvent | null = null;
 
+  @state()
+  popoutExpanded = false;
+
   #lastEventPosition = 0;
   #graphEditorRef: Ref<Editor> = createRef();
   #moduleEditorRef: Ref<ModuleEditor> = createRef();
@@ -163,9 +167,17 @@ export class UI extends LitElement {
     super.connectedCallback();
 
     const sideNavItem = globalThis.localStorage.getItem(SIDE_NAV_ITEM_KEY);
-    if (sideNavItem) {
+    if (sideNavItem && sideNavItem !== "components") {
       this.sideNavItem = sideNavItem;
     }
+
+    const popoutState = globalThis.localStorage.getItem(POPOUT_STATE);
+    this.popoutExpanded = popoutState === "true";
+  }
+
+  #setPopoutState(state: boolean) {
+    this.popoutExpanded = state;
+    globalThis.localStorage.setItem(POPOUT_STATE, `${this.popoutExpanded}`);
   }
 
   editorRender = 0;
@@ -179,6 +191,7 @@ export class UI extends LitElement {
         changedProperties.get("status") === "stopped" &&
         this.status === "running"
       ) {
+        this.#setPopoutState(true);
         this.sideNavItem = "activity";
       }
     }
@@ -210,10 +223,6 @@ export class UI extends LitElement {
   }
 
   #handleSideNav(label: string) {
-    if (this.sideNavItem === "activity") {
-      this.#lastEventPosition = this.runs?.[0]?.events.length ?? 0;
-    }
-
     if (this.sideNavItem === label) {
       this.sideNavItem = null;
       globalThis.localStorage.removeItem(SIDE_NAV_ITEM_KEY);
@@ -221,6 +230,8 @@ export class UI extends LitElement {
       this.sideNavItem = label;
       globalThis.localStorage.setItem(SIDE_NAV_ITEM_KEY, label);
     }
+
+    this.#setPopoutState(true);
   }
 
   render() {
@@ -307,6 +318,10 @@ export class UI extends LitElement {
     const events = run?.events ?? [];
     const eventPosition = events.length - 1;
 
+    if (this.sideNavItem === "activity" && this.popoutExpanded) {
+      this.#lastEventPosition = this.runs?.[0]?.events.length ?? 0;
+    }
+
     const appPreview = guard([run, events, eventPosition, this.graph], () => {
       return html`<bb-app-preview
         .graph=${this.graph}
@@ -329,6 +344,7 @@ export class UI extends LitElement {
         this.visualChangeId,
         this.graphTopologyUpdateId,
         this.showBoardReferenceMarkers,
+        this.popoutExpanded,
         collapseNodesByDefault,
         hideSubboardSelectorWhenEmpty,
         showNodeShortcuts,
@@ -341,8 +357,16 @@ export class UI extends LitElement {
         showBoardHierarchy,
       ],
       () => {
+        // This needs to be kept in sync with the width of #create-view-popout.
+        const offsetZoom = Math.min(window.innerWidth * 0.5, 450) - 65;
+
         return html`<bb-editor
           ${ref(this.#graphEditorRef)}
+          .offsetZoom=${this.popoutExpanded ? offsetZoom : 0}
+          .graphStoreUpdateId=${this.graphStoreUpdateId}
+          .boardServerKits=${this.boardServerKits}
+          .graphStore=${this.graphStore}
+          .mainGraphId=${this.mainGraphId}
           .canRedo=${canRedo}
           .canUndo=${canUndo}
           .capabilities=${capabilities}
@@ -367,7 +391,8 @@ export class UI extends LitElement {
           .graphTopologyUpdateId=${this.graphTopologyUpdateId}
           .boardServers=${this.boardServers}
           .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
-          @bbrunboard=${() => {
+          @bbrun=${() => {
+            this.#setPopoutState(true);
             this.sideNavItem = "activity";
           }}
         ></bb-editor>`;
@@ -395,7 +420,8 @@ export class UI extends LitElement {
         .run=${run}
         .topGraphResult=${this.topGraphResult}
         .graphStore=${this.graphStore}
-        @bbrunboard=${() => {
+        @bbrun=${() => {
+          this.#setPopoutState(true);
           this.sideNavItem = "activity";
         }}
       ></bb-module-editor>`;
@@ -416,7 +442,6 @@ export class UI extends LitElement {
 
     const sectionNavItems = [
       { item: "activity", label: "LABEL_SECTION_NAV_ACTIVITY" },
-      { item: "workspace-overview", label: "LABEL_SECTION_NAV_PROJECT" },
     ];
 
     if (modules.length > 0) {
@@ -424,33 +449,14 @@ export class UI extends LitElement {
         item: "capabilities",
         label: "LABEL_SECTION_NAV_CAPABILITIES",
       });
-    } else {
-      sectionNavItems.unshift({
-        item: "components",
-        label: "LABEL_SECTION_NAV_COMPONENTS",
-      });
     }
 
-    const sectionNav = html`<div id="section-nav">
-      ${map(sectionNavItems, ({ item, label }) => {
-        const newEventCount = events.length - this.#lastEventPosition;
-        return html`<button
-          id="toggle-${item}"
-          ?disabled=${chosenSideNavItem === item}
-          data-count=${item === "activity" &&
-          chosenSideNavItem !== "activity" &&
-          newEventCount > 0
-            ? newEventCount
-            : nothing}
-          class=${classMap({ active: chosenSideNavItem === item })}
-          @click=${() => {
-            this.#handleSideNav(item);
-          }}
-        >
-          ${Strings.from(label)}
-        </button>`;
-      })}
-    </div> `;
+    if (showBoardHierarchy) {
+      sectionNavItems.push({
+        item: "workspace-overview",
+        label: "LABEL_SECTION_NAV_PROJECT",
+      });
+    }
 
     const contentContainer = html`<div id="graph-container" slot="slot-1">
       ${graphEditor} ${modules.length > 0 ? moduleEditor : nothing}
@@ -598,28 +604,61 @@ export class UI extends LitElement {
     return graph
       ? this.mainView === "create"
         ? html`<section id="create-view">
-            <bb-splitter
-              id="splitter"
-              split="[0.2, 0.8]"
-              .name=${"create-view"}
-              .minSegmentSizeHorizontal=${265}
+            <div
+              id="create-view-popout"
+              class=${classMap({ expanded: this.popoutExpanded })}
             >
-              <div id="create-view-sidenav" slot="slot-0">
-                ${sectionNav}
-                ${this.debugEvent !== null
-                  ? html`<button
-                      id="back-to-activity"
+              <div id="create-view-popout-nav">
+                <div
+                  id="sections"
+                  @dblclick=${() => {
+                    this.#setPopoutState(!this.popoutExpanded);
+                  }}
+                >
+                  ${map(sectionNavItems, ({ item, label }) => {
+                    const newEventCount =
+                      events.length - this.#lastEventPosition;
+                    return html`<button
+                      id="toggle-${item}"
+                      ?disabled=${chosenSideNavItem === item}
+                      data-count=${item === "activity" &&
+                      (chosenSideNavItem !== "activity" ||
+                        !this.popoutExpanded) &&
+                      newEventCount > 0
+                        ? newEventCount
+                        : nothing}
+                      class=${classMap({ active: chosenSideNavItem === item })}
                       @click=${() => {
-                        this.debugEvent = null;
+                        this.#handleSideNav(item);
                       }}
                     >
-                      ${Strings.from("COMMAND_BACK_TO_ACTIVITY")}
-                    </button>`
-                  : nothing}
-                ${sideNavItem}
+                      ${Strings.from(label)}
+                    </button>`;
+                  })}
+                </div>
+
+                <button
+                  id="create-view-popout-toggle"
+                  @click=${() => {
+                    this.#setPopoutState(!this.popoutExpanded);
+                  }}
+                >
+                  ${Strings.from("LABEL_TOGGLE_EXPAND")}
+                </button>
               </div>
-              ${contentContainer}
-            </bb-splitter>
+              ${this.debugEvent !== null
+                ? html`<button
+                    id="back-to-activity"
+                    @click=${() => {
+                      this.debugEvent = null;
+                    }}
+                  >
+                    ${Strings.from("COMMAND_BACK_TO_ACTIVITY")}
+                  </button>`
+                : nothing}
+              <div id="create-view-popout-content">${sideNavItem}</div>
+            </div>
+            ${contentContainer}
           </section>`
         : html`
             <section id="deploy-view">

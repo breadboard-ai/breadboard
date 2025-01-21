@@ -50,8 +50,18 @@ body.hide-cursor {
   --bb-easing-duration-in: 0.15s;
   --bb-easing-duration-out: 0.3s;
 
+  /* Additional icons */
+
+  --bb-add-icon-generative: url(/images/additional_icons/a2/generative.svg);
+  --bb-add-icon-generative-inverted: url(/images/additional_icons/a2/generative-inverted.svg);
+
+  /* Icons */
+
   --bb-icon-add: url(/third_party/icons/add.svg);
   --bb-icon-add-inverted: url(/third_party/icons/add-inverted.svg);
+
+  --bb-icon-add-box: url(/third_party/icons/add-box.svg);
+  --bb-icon-add-box-inverted: url(/third_party/icons/add-box-inverted.svg);
 
   --bb-icon-add-audio: url(/third_party/icons/add-audio.svg);
   --bb-icon-add-audio-inverted: url(/third_party/icons/add-audio-inverted.svg);
@@ -226,10 +236,16 @@ body.hide-cursor {
   --bb-icon-keep-filled: url(/third_party/icons/keep-filled.svg);
   --bb-icon-keep-filled-inverted: url(/third_party/icons/keep-filled-inverted.svg);
 
+  --bb-icon-keyboard-arrow-down: url(/third_party/icons/keyboard-arrow-down.svg);
+  --bb-icon-keyboard-arrow-down-inverted: url(/third_party/icons/keyboard-arrow-down-inverted.svg);
+
   --bb-icon-flowchart: url(/third_party/icons/flowchart.svg);
   --bb-icon-flowchart-inverted: url(/third_party/icons/flowchart-inverted.svg);
 
   --bb-icon-google-drive: url(/third_party/icons/graph/google-drive-48px.svg);
+
+  --bb-icon-home-repair-service: url(/third_party/icons/home-repair-service.svg);
+  --bb-icon-home-repair-service-inverted: url(/third_party/icons/home-repair-service-inverted.svg);
 
   --bb-icon-input: url(/third_party/icons/input.svg);
   --bb-icon-input-inverted: url(/third_party/icons/input-inverted.svg);
@@ -336,6 +352,9 @@ body.hide-cursor {
   --bb-icon-resume-ui: url(/third_party/icons/resume-ui.svg);
   --bb-icon-resume: url(/third_party/icons/resume.svg);
   --bb-icon-resume-inverted: url(/third_party/icons/resume-inverted.svg);
+
+  --bb-icon-route: url(/third_party/icons/route.svg);
+  --bb-icon-route-inverted: url(/third_party/icons/route-inverted.svg);
 
   --bb-icon-save: url(/third_party/icons/save.svg);
   --bb-icon-save-inverted: url(/third_party/icons/save-inverted.svg);
@@ -634,8 +653,10 @@ body.hide-cursor {
   --bb-depth-4: hsl(39deg, 60%, 92%);
   --bb-depth-5: hsl(36deg, 60%, 90%);
 
-  --bb-elevation-5: 0px 8px 12px 6px rgba(0, 0, 0, 0.15),
+  --bb-elevation-6: 0px 8px 12px 6px rgba(0, 0, 0, 0.15),
     0px 4px 4px rgba(0, 0, 0, 0.3);
+  --bb-elevation-5: 0px 4px 8px 3px rgba(0, 0, 0, 0.05),
+    0px 1px 3px 0 rgba(0, 0, 0, 0.1);
 }
 
 :root.dark-theme {
@@ -663,8 +684,18 @@ body.hide-cursor {
   --bb-ui-100: #2e3235;
   --bb-ui-50: #16191b;
 
+  /* Additional icons */
+
+  --bb-add-icon-generative: url(/images/additional_icons/a2/generative-inverted.svg);
+  --bb-add-icon-generative-inverted: url(/images/additional_icons/a2/generative.svg);
+
+  /* Icons */
+
   --bb-icon-add: url(/third_party/icons/add-inverted.svg);
   --bb-icon-add-inverted: url(/third_party/icons/add.svg);
+
+  --bb-icon-add-box: url(/third_party/icons/add-box-inverted.svg);
+  --bb-icon-add-box-inverted: url(/third_party/icons/add-box.svg);
 
   --bb-icon-add-audio: url(/third_party/icons/add-audio-inverted.svg);
   --bb-icon-add-audio-inverted: url(/third_party/icons/add-audio.svg);
@@ -830,6 +861,9 @@ body.hide-cursor {
   --bb-icon-http: url(/third_party/icons/http-inverted.svg);
   --bb-icon-http-inverted: url(/third_party/icons/http.svg);
 
+  --bb-icon-home-repair-service: url(/third_party/icons/home-repair-service-inverted.svg);
+  --bb-icon-home-repair-service-inverted: url(/third_party/icons/home-repair-service.svg);
+
   --bb-icon-human: url(/third_party/icons/human-inverted.svg);
   --bb-icon-human-inverted: url(/third_party/icons/human.svg);
 
@@ -838,6 +872,9 @@ body.hide-cursor {
 
   --bb-icon-keep-filled: url(/third_party/icons/keep-filled-inverted.svg);
   --bb-icon-keep-filled-inverted: url(/third_party/icons/keep-filled.svg);
+
+  --bb-icon-keyboard-arrow-down: url(/third_party/icons/keyboard-arrow-down-inverted.svg);
+  --bb-icon-keyboard-arrow-down-inverted: url(/third_party/icons/keyboard-arrow-down.svg);
 
   --bb-icon-flowchart: url(/third_party/icons/flowchart-inverted.svg);
   --bb-icon-flowchart-inverted: url(/third_party/icons/flowchart.svg);
@@ -949,6 +986,9 @@ body.hide-cursor {
   --bb-icon-resume-ui: url(/third_party/icons/resume-ui.svg);
   --bb-icon-resume: url(/third_party/icons/resume-inverted.svg);
   --bb-icon-resume-inverted: url(/third_party/icons/resume.svg);
+
+  --bb-icon-route: url(/third_party/icons/route-inverted.svg);
+  --bb-icon-route-inverted: url(/third_party/icons/route.svg);
 
   --bb-icon-save: url(/third_party/icons/save-inverted.svg);
   --bb-icon-save-inverted: url(/third_party/icons/save.svg);
