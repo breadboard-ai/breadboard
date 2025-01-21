@@ -11,8 +11,8 @@
         "text": "Left Intentionally Blank",
         "metadata": {
           "visual": {
-            "x": -37.90625,
-            "y": -415.85546875,
+            "x": -37.90624999999967,
+            "y": -415.85546874999966,
             "collapsed": "expanded"
           }
         }
@@ -217,13 +217,38 @@
         "description": "Generates audio output using supplied context.",
         "runnable": true
       }
+    },
+    "text-entry": {
+      "code": "/**\n * @fileoverview The entry point and a describer for the \"Text\" component.\n */\nimport { ok, defaultLLMContent, toText } from \"./utils\";\nimport {} from \"./common\";\nimport { Template, withParameters } from \"./template\";\nexport { invoke as default, describe };\nfunction toInput(title = \"Please enter text\") {\n    const toInput = {\n        type: \"object\",\n        properties: {\n            request: {\n                type: \"object\",\n                title,\n                behavior: [\"transient\", \"llm-content\"],\n                examples: [defaultLLMContent()],\n            },\n        },\n    };\n    return toInput;\n}\nasync function invoke({ context, text, description, ...params }) {\n    const haveText = text && toText(text).length > 0;\n    if (haveText) {\n        const template = new Template(text);\n        const substituting = await template.substitute(withParameters(params));\n        if (!ok(substituting)) {\n            return substituting;\n        }\n        return { context: substituting, toMain: \"haveInput\" };\n    }\n    const title = description ? toText(description) : undefined;\n    return { context: \"nothing\", toInput: toInput(title) };\n}\nasync function describe({ inputs: { text } }) {\n    const template = new Template(text);\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context in\",\n                    behavior: [\"main-port\"],\n                },\n                description: {\n                    type: \"object\",\n                    behavior: [\"llm-content\", \"config\"],\n                    title: \"Description\",\n                    description: \"Optionally provide a description to show to the user when run.\",\n                },\n                text: {\n                    type: \"object\",\n                    behavior: [\"llm-content\", \"config\"],\n                    title: \"Text Contents\",\n                    description: \"Put your text here\",\n                },\n                ...template.schemas(),\n            },\n            ...template.requireds(),\n            additionalProperties: false,\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                    behavior: [\"main-port\"],\n                },\n            },\n            additionalProperties: false,\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "text-entry",
+        "source": {
+          "code": "/**\n * @fileoverview The entry point and a describer for the \"Text\" component.\n */\nimport { ok, defaultLLMContent, toText } from \"./utils\";\nimport { type Params } from \"./common\";\nimport { Template, withParameters } from \"./template\";\n\nexport { invoke as default, describe };\n\ntype TextInputs = {\n  context?: LLMContent[];\n  text?: LLMContent;\n  description?: LLMContent;\n} & Params;\n\ntype TextOutputs =\n  | {\n      toInput: Schema;\n      context: \"nothing\";\n    }\n  | {\n      toMain: string;\n      context: LLMContent;\n    };\n\nfunction toInput(title: string = \"Please enter text\") {\n  const toInput: Schema = {\n    type: \"object\",\n    properties: {\n      request: {\n        type: \"object\",\n        title,\n        behavior: [\"transient\", \"llm-content\"],\n        examples: [defaultLLMContent()],\n      },\n    },\n  };\n  return toInput;\n}\n\nasync function invoke({\n  context,\n  text,\n  description,\n  ...params\n}: TextInputs): Promise<Outcome<TextOutputs>> {\n  const haveText = text && toText(text).length > 0;\n  if (haveText) {\n    const template = new Template(text);\n    const substituting = await template.substitute(withParameters(params));\n    if (!ok(substituting)) {\n      return substituting;\n    }\n    return { context: substituting, toMain: \"haveInput\" };\n  }\n  const title = description ? toText(description) : undefined;\n  return { context: \"nothing\", toInput: toInput(title) };\n}\n\ntype DescribeInputs = {\n  inputs: {\n    text?: LLMContent;\n  };\n};\n\nasync function describe({ inputs: { text } }: DescribeInputs) {\n  const template = new Template(text);\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context in\",\n          behavior: [\"main-port\"],\n        },\n        description: {\n          type: \"object\",\n          behavior: [\"llm-content\", \"config\"],\n          title: \"Description\",\n          description:\n            \"Optionally provide a description to show to the user when run.\",\n        },\n        text: {\n          type: \"object\",\n          behavior: [\"llm-content\", \"config\"],\n          title: \"Text Contents\",\n          description: \"Put your text here\",\n        },\n        ...template.schemas(),\n      },\n      ...template.requireds(),\n      additionalProperties: false,\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n          behavior: [\"main-port\"],\n        },\n      },\n      additionalProperties: false,\n    } satisfies Schema,\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "The entry point and a describer for the \"Text\" component.",
+        "runnable": true
+      }
+    },
+    "text-main": {
+      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nimport { err } from \"./utils\";\nexport { invoke as default, describe };\nasync function invoke({ context, request, }) {\n    if (context == \"nothing\") {\n        if (!request) {\n            return err(`No text supplied.`);\n        }\n        return { context: [request] };\n    }\n    return { context: [context] };\n}\nasync function describe() {\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"object\",\n                    title: \"Context in\",\n                },\n                request: {\n                    type: \"object\",\n                    title: \"Data From Input\",\n                },\n            },\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n    };\n}\n",
+      "metadata": {
+        "title": "text-main",
+        "source": {
+          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nimport { err } from \"./utils\";\n\nexport { invoke as default, describe };\n\ntype TextMainInputs = {\n  context: LLMContent | \"nothing\";\n  request?: LLMContent;\n};\n\ntype TextMainOutputs = {\n  context: LLMContent[];\n};\n\nasync function invoke({\n  context,\n  request,\n}: TextMainInputs): Promise<Outcome<TextMainOutputs>> {\n  if (context == \"nothing\") {\n    if (!request) {\n      return err(`No text supplied.`);\n    }\n    return { context: [request] };\n  }\n  return { context: [context] };\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"object\",\n          title: \"Context in\",\n        },\n        request: {\n          type: \"object\",\n          title: \"Data From Input\",\n        },\n      },\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n  };\n}\n",
+          "language": "typescript"
+        },
+        "description": "Add a description for your module here.",
+        "runnable": true
+      }
     }
   },
   "exports": [
     "#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     "#module:researcher",
     "#module:image-generator",
-    "#module:audio-generator"
+    "#module:audio-generator",
+    "#21ee02e7-83fa-49d0-964c-0cab10eafc2c"
   ],
   "graphs": {
     "daf082ca-c1aa-4aff-b2c8-abeb984ab66c": {
@@ -256,7 +281,7 @@
           },
           "metadata": {
             "visual": {
-              "x": 708,
+              "x": 707.9999999999984,
               "y": 44,
               "collapsed": "expanded"
             }
@@ -267,8 +292,8 @@
           "type": "#module:entry",
           "metadata": {
             "visual": {
-              "x": -47,
-              "y": -72,
+              "x": -46.9999999999997,
+              "y": -72.00000000000045,
               "collapsed": "expanded"
             },
             "title": "entry"
@@ -279,8 +304,8 @@
           "type": "#module:agent-main",
           "metadata": {
             "visual": {
-              "x": 332,
-              "y": -6,
+              "x": 331.9999999999998,
+              "y": -6.000000000000568,
               "collapsed": "expanded"
             },
             "title": "agent-main"
@@ -291,8 +316,8 @@
           "type": "#module:join",
           "metadata": {
             "visual": {
-              "x": 953,
-              "y": -248,
+              "x": 1059.9999999999984,
+              "y": -160.0000000000001,
               "collapsed": "expanded"
             },
             "title": "join"
@@ -303,8 +328,8 @@
           "id": "input",
           "metadata": {
             "visual": {
-              "x": 713,
-              "y": 170,
+              "x": 712.9999999999993,
+              "y": 169.99999999999864,
               "collapsed": "advanced"
             },
             "title": "input"
@@ -355,6 +380,117 @@
         },
         "describer": "module:entry",
         "tags": []
+      }
+    },
+    "21ee02e7-83fa-49d0-964c-0cab10eafc2c": {
+      "title": "Text",
+      "description": "A block of text as input or output",
+      "version": "0.0.1",
+      "nodes": [
+        {
+          "type": "input",
+          "id": "input",
+          "metadata": {
+            "visual": {
+              "x": 460,
+              "y": -460,
+              "collapsed": "expanded"
+            }
+          }
+        },
+        {
+          "type": "output",
+          "id": "output",
+          "configuration": {
+            "schema": {
+              "properties": {
+                "context": {
+                  "type": "array",
+                  "title": "Context",
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  },
+                  "default": "null"
+                }
+              },
+              "type": "object",
+              "required": []
+            }
+          },
+          "metadata": {
+            "visual": {
+              "x": 1159.9999999999986,
+              "y": -460,
+              "collapsed": "expanded"
+            }
+          }
+        },
+        {
+          "id": "board-64b2c3a8",
+          "type": "#module:text-entry",
+          "metadata": {
+            "visual": {
+              "x": 120,
+              "y": -580,
+              "collapsed": "expanded"
+            },
+            "title": "text-entry"
+          }
+        },
+        {
+          "id": "board-95a57400",
+          "type": "#module:text-main",
+          "metadata": {
+            "visual": {
+              "x": 900.0000000000001,
+              "y": -520,
+              "collapsed": "expanded"
+            },
+            "title": "text-main"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "board-64b2c3a8",
+          "out": "toInput",
+          "to": "input",
+          "in": "schema"
+        },
+        {
+          "from": "board-64b2c3a8",
+          "out": "toMain",
+          "to": "board-95a57400",
+          "in": "request"
+        },
+        {
+          "from": "board-95a57400",
+          "to": "output",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "board-64b2c3a8",
+          "to": "board-95a57400",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "input",
+          "to": "board-95a57400",
+          "out": "request",
+          "in": "request"
+        }
+      ],
+      "metadata": {
+        "visual": {
+          "minimized": false
+        },
+        "tags": [],
+        "describer": "module:text-entry"
       }
     }
   }
