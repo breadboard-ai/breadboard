@@ -1696,6 +1696,15 @@ export class GraphNode extends PIXI.Container {
     if (this.#isContextOnly() && !isConfigurablePort(port)) {
       return true;
     }
+
+    if (
+      this.#isContextOnly() &&
+      isConfigurablePort(port) &&
+      port.value === undefined
+    ) {
+      return true;
+    }
+
     if (this.expansionState === "advanced") {
       return false;
     }

@@ -59,26 +59,6 @@ export const styles = css`
     opacity: 1;
   }
 
-  #run {
-    width: 76px;
-    height: var(--bb-grid-size-7);
-    background: var(--bb-ui-500) var(--bb-icon-play-filled-inverted) 4px
-      center / 20px 20px no-repeat;
-    color: #fff;
-    border-radius: 20px;
-    border: none;
-    font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
-      var(--bb-font-family);
-    padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-7);
-    cursor: pointer;
-    margin: 0 var(--bb-grid-size-2);
-  }
-
-  #run.running {
-    background: var(--bb-ui-500) url(/images/progress-ui-inverted.svg) 8px
-      center / 16px 16px no-repeat;
-  }
-
   #new-board {
     font-size: var(--bb-text-nano);
   }

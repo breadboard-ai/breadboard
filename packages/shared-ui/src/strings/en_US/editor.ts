@@ -10,22 +10,16 @@ export default {
   // Commands.
 
   // Statuses.
-  STATUS_NO_ITEMS: {
-    str: "No items",
-  },
 
   // Labels.
-  LABEL_TITLE: {
-    str: "Components",
+  LABEL_COMPONENT_LIBRARY: {
+    str: "Component Library",
   },
-  LABEL_BUTTON_COMPONENTS: {
-    str: "Components",
+  LABEL_SHOW_LIST: {
+    str: "Show List",
   },
-  LABEL_BUTTON_KITS: {
-    str: "Kits",
-  },
-  LABEL_SEARCH: {
-    str: "Search Components",
+  LABEL_NO_COMPONENTS: {
+    str: "No Components available",
   },
 
   // Queries.

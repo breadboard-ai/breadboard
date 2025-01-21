@@ -9,7 +9,7 @@ import { LanguagePackEntry } from "../../types/types";
 export default {
   // Commands.
   COMMAND_BACK_TO_ACTIVITY: {
-    str: "Back to ACtivity",
+    str: "Back to Activity",
   },
 
   // Statuses.
@@ -54,6 +54,10 @@ export default {
   },
   LABEL_SHARE_DESCRIPTION: {
     str: "Share this URL with friends",
+  },
+
+  LABEL_TOGGLE_EXPAND: {
+    str: "Toggle expand",
   },
 
   // Queries.

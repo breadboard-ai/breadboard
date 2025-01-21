@@ -241,7 +241,7 @@ export class WorkspaceOutline
     }
 
     #outline {
-      height: calc(100% - 92px);
+      height: calc(100% - 44px);
       overflow-x: hidden;
       overflow-y: scroll;
       padding: 0 var(--bb-grid-size-2);

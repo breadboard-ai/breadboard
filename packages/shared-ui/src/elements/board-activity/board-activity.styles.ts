@@ -17,9 +17,11 @@ export const styles = css`
   }
 
   #click-run {
-    font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+    font: 400 var(--bb-body-large) / var(--bb-body-line-height-large)
       var(--bb-font-family);
-    color: var(--bb-neutral-600);
+    color: var(--bb-neutral-700);
+    text-align: center;
+    margin-top: var(--bb-grid-size-3);
   }
 
   .run-component {

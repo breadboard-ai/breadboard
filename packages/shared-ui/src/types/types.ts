@@ -487,6 +487,7 @@ export interface LanguagePack {
   AppPreview: LanguagePackEntry;
   CommandPalette: LanguagePackEntry;
   ComponentSelector: LanguagePackEntry;
+  Editor: LanguagePackEntry;
   Global: LanguagePackEntry;
   KitSelector: LanguagePackEntry;
   ProjectListing: LanguagePackEntry;

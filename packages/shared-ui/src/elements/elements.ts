@@ -18,6 +18,7 @@ export { CodeEditor } from "./input/code-editor/code-editor.js";
 export { CommandPalette } from "./command-palette/command-palette.js";
 export { CommentOverlay } from "./overlay/comment.js";
 export { ComponentSelector } from "./component-selector/component-selector.js";
+export { ComponentSelectorOverlay } from "./component-selector/component-selector-overlay.js";
 export { ConnectionBroker } from "./connection/connection-broker.js";
 export { ConnectionInput } from "./connection/connection-input.js";
 export { ConnectionSettings } from "./connection/connection-settings.js";
