@@ -10,7 +10,6 @@ import {
   type BoardServerProject,
   type ChangeNotificationCallback,
   type GraphDescriptor,
-  type GraphProvider,
   type GraphProviderCapabilities,
   type GraphProviderExtendedCapabilities,
   type GraphProviderStore,
@@ -121,37 +120,36 @@ export class BoardServerProvider implements BoardServer {
     // different origin than the URL (commonly the case when board server is
     // running from local server).
     const sameServer = url.origin === this.#serverUrl;
-    const key = sameServer ? url.pathname : this.#path;
-    if (this.#cache.has(key)) {
-      return this.#cache.get(key)!;
+    const path = sameServer ? trimBoard(url.pathname) : this.#path;
+    if (this.#cache.has(path)) {
+      return this.#cache.get(path)!;
     }
-    const path = sameServer ? url.pathname : this.#path;
     const graph = await this.#loader(path);
     if (graph) {
-      this.#cache.set(key, graph);
+      this.#cache.set(path, graph);
     }
     return graph;
   }
 
   async save(
-    url: URL,
-    graph: GraphDescriptor
+    _url: URL,
+    _graph: GraphDescriptor
   ): Promise<{ result: boolean; error?: string }> {
     throw new Error("Method not supported.");
   }
 
-  createBlank(url: URL): Promise<{ result: boolean; error?: string }> {
+  createBlank(_url: URL): Promise<{ result: boolean; error?: string }> {
     throw new Error("Method not supported.");
   }
 
   create(
-    url: URL,
-    graph: GraphDescriptor
+    _url: URL,
+    _graph: GraphDescriptor
   ): Promise<{ result: boolean; error?: string }> {
     throw new Error("Method not supported.");
   }
 
-  delete(url: URL): Promise<{ result: boolean; error?: string }> {
+  delete(_url: URL): Promise<{ result: boolean; error?: string }> {
     throw new Error("Method not supported.");
   }
 
@@ -177,7 +175,7 @@ export class BoardServerProvider implements BoardServer {
     throw new Error("Method not supported.");
   };
 
-  parseURL(url: URL): { location: string; fileName: string } {
+  parseURL(_url: URL): { location: string; fileName: string } {
     throw new Error("Method not supported.");
   }
 
@@ -196,4 +194,11 @@ export class BoardServerProvider implements BoardServer {
   preview: (_url: URL) => Promise<URL> = () => {
     throw new Error("Method not supported.");
   };
+}
+
+function trimBoard(path: string) {
+  if (!path.startsWith("/boards/")) {
+    throw new Error(`Board path "${path}" must start with "/boards/".`);
+  }
+  return path.slice("/boards/".length);
 }

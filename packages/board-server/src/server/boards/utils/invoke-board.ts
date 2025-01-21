@@ -32,7 +32,10 @@ export const invokeBoard = async ({
   store.createGroup("run-board");
 
   const invokeKits = createKits(kitOverrides);
-  const invokeLoader = createLoader([new BoardServerProvider(path, loader)]);
+  const boardServerProvider = new BoardServerProvider(path, loader);
+  await boardServerProvider.ready();
+
+  const invokeLoader = createLoader([boardServerProvider]);
   const graphStore = createGraphStore({
     loader: invokeLoader,
     kits: invokeKits,
