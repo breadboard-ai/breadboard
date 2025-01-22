@@ -22,6 +22,10 @@ import {
   renderMarkdownToHtmlString,
 } from "../../directives/markdown.js";
 import { ToastEvent, ToastType } from "../../events/events.js";
+import { appendToDocUsingDriveKit } from "../google-drive/append-to-doc-using-drive-kit.js";
+import { tokenVendorContext } from "../elements.js";
+import { consume } from "@lit/context";
+import type { TokenVendor } from "@breadboard-ai/connection-client";
 
 @customElement("bb-llm-output")
 export class LLMOutput extends LitElement {
@@ -36,6 +40,9 @@ export class LLMOutput extends LitElement {
 
   @property({ reflect: true })
   showExportControls = false;
+
+  @consume({ context: tokenVendorContext })
+  tokenVendor?: TokenVendor;
 
   #partDataURLs = new Map<number, string>();
 
@@ -244,10 +251,11 @@ export class LLMOutput extends LitElement {
       }
     }
 
-    #copy-container {
+    #action-buttons {
       display: flex;
       justify-content: flex-end;
       margin-bottom: var(--bb-grid-size-2);
+      margin-right: var(--bb-grid-size-2);
 
       & #copy-all-to-clipboard {
         display: flex;
@@ -271,6 +279,36 @@ export class LLMOutput extends LitElement {
 
           &:hover,
           &:focus {
+            opacity: 1;
+          }
+        }
+      }
+
+      & #save-to-google-drive {
+        display: flex;
+        align-items: center;
+
+        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+          var(--bb-font-family);
+
+        height: 28px;
+        border-radius: var(--bb-grid-size-16);
+        border: 1px solid var(--bb-neutral-300);
+        background: var(--bb-neutral-0) var(--bb-icon-google-drive) 8px center /
+          16px 16px no-repeat;
+        opacity: 0.6;
+        position: relative;
+        padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-8);
+        filter: grayscale(1);
+        margin-left: var(--bb-grid-size-2);
+
+        &:not([disabled]) {
+          cursor: pointer;
+          transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+          &:hover,
+          &:focus {
+            filter: unset;
             opacity: 1;
           }
         }
@@ -335,7 +373,7 @@ export class LLMOutput extends LitElement {
 
     return this.value && this.value.parts.length
       ? html` ${canCopy
-          ? html`<div id="copy-container">
+          ? html`<div id="action-buttons">
               <button
                 id="copy-all-to-clipboard"
                 @click=${async () => {
@@ -367,6 +405,12 @@ export class LLMOutput extends LitElement {
                 }}
               >
                 Copy all
+              </button>
+              <button
+                id="save-to-google-drive"
+                @click=${this.#onClickSaveToGoogleDriveButton}
+              >
+                Save to Drive
               </button>
             </div>`
           : nothing}
@@ -501,5 +545,31 @@ export class LLMOutput extends LitElement {
           </div>`;
         })}`
       : html`<span class="value no-data">No data set</span>`;
+  }
+
+  async #onClickSaveToGoogleDriveButton() {
+    if (!this.value) {
+      console.error("Error saving to Google Drive: No value");
+      return;
+    }
+    if (!this.tokenVendor) {
+      console.error("Error saving to Google Drive: No token vendor");
+      return;
+    }
+    const { url } = await appendToDocUsingDriveKit(
+      this.value,
+      `Breadboard Demo (${new Date().toLocaleDateString("en-US")})`,
+      this.tokenVendor
+    );
+    this.dispatchEvent(
+      new ToastEvent(
+        // HACK: Toast messages are typed to only allow strings, but actually
+        // they just directly render the value, so a TemplateResult works too,
+        // letting us embed a link.
+        html`Content saved to
+          <a href=${url} target="_blank">Google Doc</a>` as unknown as string,
+        ToastType.INFORMATION
+      )
+    );
   }
 }
