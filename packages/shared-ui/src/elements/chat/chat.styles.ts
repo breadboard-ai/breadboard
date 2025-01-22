@@ -134,7 +134,8 @@ export const styles = css`
         }
 
         &.input,
-        &.output {
+        &.output,
+        &.error {
           padding: var(--bb-grid-size-4) var(--bb-grid-size-4) 0
             var(--bb-grid-size-4);
 
@@ -144,6 +145,24 @@ export const styles = css`
             & .icon::after {
               background-image: var(--bb-icon-smart-toy);
             }
+          }
+        }
+
+        &.error {
+          color: #cc0000;
+          user-select: text;
+
+          &.error-content {
+            white-space: pre;
+            border: 1px solid var(--bb-warning-200);
+            background-color: var(--bb-warning-50);
+            border-radius: var(--bb-grid-size-2);
+            padding: var(--bb-grid-size-4);
+            overflow-x: scroll;
+            font: 400 var(--bb-body-x-small) /
+              var(--bb-body-line-height-x-small) var(--bb-font-family-mono);
+            margin-left: 28px;
+            scrollbar-width: none;
           }
         }
       }
@@ -329,9 +348,9 @@ export const styles = css`
       font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
         var(--bb-font-family);
       background: oklch(from var(--bb-neutral-900) l c h / 0.8)
-        url(/images/progress-ui-inverted.svg) 8px center / 20px 20px no-repeat;
+        url(/images/progress-ui-inverted.svg) 12px center / 20px 20px no-repeat;
       padding: var(--bb-grid-size-2) var(--bb-grid-size-2) var(--bb-grid-size-2)
-        var(--bb-grid-size-12);
+        var(--bb-grid-size-11);
       width: calc(100% - var(--bb-grid-size-8));
       color: var(--bb-neutral-0);
       display: flex;
