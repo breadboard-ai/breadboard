@@ -59,8 +59,12 @@ export async function appendToDocUsingDriveKit(
       reject(event.data.error);
     });
     runner.addEventListener("secret", async (event) => {
-      const secrets = await getSecrets(event.data.keys, tokenVendor);
-      void runner.run(secrets);
+      try {
+        const secrets = await getSecrets(event.data.keys, tokenVendor);
+        void runner.run(secrets);
+      } catch (error) {
+        reject(error);
+      }
     });
     void runner.run();
   });
@@ -104,8 +108,12 @@ async function getSecret(
     } else if (token.state === "expired") {
       return (await token.refresh()).grant.access_token;
     } else if (token.state === "signedout") {
+      const niceName =
+        name === "connection:google-drive-limited"
+          ? "Google Drive (Limited)"
+          : name;
       throw new Error(
-        `You must sign in to ${JSON.stringify(connectionId)} through settings.`
+        `Please sign in to ${niceName} via Settings > Connections`
       );
     } else {
       throw new Error(`Unexpected token state`, token satisfies never);
