@@ -19,10 +19,13 @@ import {
   InspectableRun,
   InspectableRunEvent,
   InspectableRunInputs,
+  InspectableRunNodeEvent,
   Kit,
   MainGraphIdentifier,
   MutableGraphStore,
   RunStore,
+  isLLMContent,
+  isLLMContentArray,
 } from "@google-labs/breadboard";
 import {
   HTMLTemplateResult,
@@ -39,22 +42,32 @@ import {
   STATUS,
   SettingsStore,
   TopGraphRunResult,
+  UserInputConfiguration,
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
 } from "../../types/types.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { ModuleEditor } from "../module-editor/module-editor.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { CommandsSetSwitchEvent } from "../../events/events.js";
+import {
+  CommandsSetSwitchEvent,
+  InputEnterEvent,
+} from "../../events/events.js";
 import {
   COMMAND_SET_GRAPH_EDITOR,
   COMMAND_SET_MODULE_EDITOR,
 } from "../../constants/constants.js";
-import { Editor } from "../elements.js";
+import { Editor, UserInput } from "../elements.js";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { Sandbox } from "@breadboard-ai/jsandbox";
 import { until } from "lit/directives/until.js";
+import {
+  isLLMContentArrayBehavior,
+  isLLMContentBehavior,
+} from "../../utils/behaviors.js";
+import { cache, CacheDirective } from "lit/directives/cache.js";
+import { DirectiveResult } from "lit/directive.js";
 
 const SIDE_NAV_ITEM_KEY = "bb-ui-side-nav-item";
 const POPOUT_STATE = "bb-ui-popout-state";
@@ -131,7 +144,7 @@ export class UI extends LitElement {
   mode = "tree" as const;
 
   @property()
-  sideNavItem: string | null = "activity";
+  sideNavItem: string | null = "console";
 
   @property()
   selectionState: WorkspaceSelectionStateWithChangeId | null = null;
@@ -160,6 +173,7 @@ export class UI extends LitElement {
   #lastEventPosition = 0;
   #graphEditorRef: Ref<Editor> = createRef();
   #moduleEditorRef: Ref<ModuleEditor> = createRef();
+  #userInputRef: Ref<UserInput> = createRef();
 
   static styles = uiControllerStyles;
 
@@ -192,7 +206,7 @@ export class UI extends LitElement {
         this.status === "running"
       ) {
         this.#setPopoutState(true);
-        this.sideNavItem = "activity";
+        this.sideNavItem = "console";
       }
     }
 
@@ -232,6 +246,141 @@ export class UI extends LitElement {
     }
 
     this.#setPopoutState(true);
+  }
+
+  async #renderPendingInput(event: InspectableRunNodeEvent | null) {
+    let preamble: HTMLTemplateResult | DirectiveResult<typeof CacheDirective> =
+      cache(html`<div class="preamble"></div>`);
+    let userInput: HTMLTemplateResult | DirectiveResult<typeof CacheDirective> =
+      cache(html`<div class="no-input-needed"></div>`);
+    let continueRun: (() => void) | null = null;
+
+    if (event !== null) {
+      const { inputs, node } = event;
+      const nodeSchema = await node.describe(inputs);
+      const descriptor = node.descriptor;
+      const schema = nodeSchema?.outputSchema || inputs.schema;
+      const requiredFields = schema.required ?? [];
+
+      if (!schema.properties || Object.keys(schema.properties).length === 0) {
+        this.dispatchEvent(
+          new InputEnterEvent(descriptor.id, {}, /* allowSavingIfSecret */ true)
+        );
+      }
+
+      // TODO: Implement support for multiple iterations over the
+      // same input over a run. Currently, we will only grab the
+      // first value.
+      const values = this.inputsFromLastRun?.get(descriptor.id)?.[0];
+      const userInputs: UserInputConfiguration[] = Object.entries(
+        schema.properties ?? {}
+      ).reduce((prev, [name, schema]) => {
+        let value = values ? values[name] : undefined;
+        if (schema.type === "object") {
+          if (isLLMContentBehavior(schema)) {
+            if (!isLLMContent(value)) {
+              value = undefined;
+            }
+          } else {
+            value = JSON.stringify(value, null, 2);
+          }
+        }
+
+        if (schema.type === "array") {
+          if (isLLMContentArrayBehavior(schema)) {
+            if (!isLLMContentArray(value)) {
+              value = undefined;
+            }
+          } else {
+            value = JSON.stringify(value, null, 2);
+          }
+        }
+
+        if (schema.type === "string" && typeof value === "object") {
+          value = undefined;
+        }
+
+        prev.push({
+          name,
+          title: schema.title ?? name,
+          secret: false,
+          schema,
+          configured: false,
+          required: requiredFields.includes(name),
+          value,
+        });
+
+        return prev;
+      }, [] as UserInputConfiguration[]);
+
+      continueRun = () => {
+        if (!this.#userInputRef.value) {
+          return;
+        }
+
+        const outputs = this.#userInputRef.value.processData(true);
+        if (!outputs) {
+          return;
+        }
+
+        this.dispatchEvent(
+          new InputEnterEvent(
+            descriptor.id,
+            outputs,
+            /* allowSavingIfSecret */ true
+          )
+        );
+      };
+
+      const userMessage = userInputs.map((input) => {
+        return html`<span>${input.title}</span>`;
+      });
+
+      preamble = html`<div class="preamble">
+        ${node.description() && node.title() !== node.description()
+          ? html`<h2>${node.description()}</h2>`
+          : html`<h2>${userMessage}</h2>`}
+      </div>`;
+
+      userInput = html`<bb-user-input
+        .boardServers=${this.boardServers}
+        .showTypes=${false}
+        .showTitleInfo=${false}
+        .inputs=${userInputs}
+        .inlineControls=${true}
+        .llmInputShowEntrySelector=${false}
+        .useChatInput=${true}
+        ${ref(this.#userInputRef)}
+        @keydown=${(evt: KeyboardEvent) => {
+          const isMac = navigator.platform.indexOf("Mac") === 0;
+          const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
+
+          if (!(evt.key === "Enter" && isCtrlCommand)) {
+            return;
+          }
+
+          if (!continueRun) {
+            return;
+          }
+
+          continueRun();
+        }}
+      ></bb-user-input>`;
+    }
+
+    return html`${preamble} ${userInput}
+      <button
+        class="continue-button"
+        ?disabled=${continueRun === null}
+        @click=${() => {
+          if (!continueRun) {
+            return;
+          }
+          continueRun();
+        }}
+      >
+        ${Strings.from("COMMAND_CONTINUE")}
+      </button>`;
   }
 
   render() {
@@ -318,7 +467,7 @@ export class UI extends LitElement {
     const events = run?.events ?? [];
     const eventPosition = events.length - 1;
 
-    if (this.sideNavItem === "activity" && this.popoutExpanded) {
+    if (this.sideNavItem === "console" && this.popoutExpanded) {
       this.#lastEventPosition = this.runs?.[0]?.events.length ?? 0;
     }
 
@@ -393,7 +542,7 @@ export class UI extends LitElement {
           .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
           @bbrun=${() => {
             this.#setPopoutState(true);
-            this.sideNavItem = "activity";
+            this.sideNavItem = "console";
           }}
         ></bb-editor>`;
       }
@@ -422,7 +571,7 @@ export class UI extends LitElement {
         .graphStore=${this.graphStore}
         @bbrun=${() => {
           this.#setPopoutState(true);
-          this.sideNavItem = "activity";
+          this.sideNavItem = "console";
         }}
       ></bb-module-editor>`;
     }
@@ -441,7 +590,7 @@ export class UI extends LitElement {
     }
 
     const sectionNavItems = [
-      { item: "activity", label: "LABEL_SECTION_NAV_ACTIVITY" },
+      { item: "console", label: "LABEL_SECTION_NAV_CONSOLE" },
     ];
 
     if (modules.length > 0) {
@@ -461,6 +610,8 @@ export class UI extends LitElement {
     const contentContainer = html`<div id="graph-container" slot="slot-1">
       ${graphEditor} ${modules.length > 0 ? moduleEditor : nothing}
     </div>`;
+
+    const newestEvent = events.at(-1);
 
     let sideNavItem: HTMLTemplateResult | symbol = nothing;
     switch (this.sideNavItem) {
@@ -510,11 +661,11 @@ export class UI extends LitElement {
         break;
       }
 
-      case "activity": {
-        const latest = events.at(-1);
+      case "console": {
         let showDebugControls = false;
-        if (latest && latest.type === "node") {
-          showDebugControls = this.status === "stopped" && latest.end === null;
+        if (newestEvent && newestEvent.type === "node") {
+          showDebugControls =
+            this.status === "stopped" && newestEvent.end === null;
         }
 
         const hideLast = this.status === STATUS.STOPPED;
@@ -525,7 +676,7 @@ export class UI extends LitElement {
         sideNavItem = html`${guard(
           [run, events, eventPosition, this.debugEvent],
           () =>
-            html` <div id="board-activity-container">
+            html` <div id="board-console-container">
               <bb-board-activity
                 class=${classMap({ collapsed: this.debugEvent !== null })}
                 .run=${run}
@@ -621,8 +772,8 @@ export class UI extends LitElement {
                     return html`<button
                       id="toggle-${item}"
                       ?disabled=${chosenSideNavItem === item}
-                      data-count=${item === "activity" &&
-                      (chosenSideNavItem !== "activity" ||
+                      data-count=${item === "console" &&
+                      (chosenSideNavItem !== "console" ||
                         !this.popoutExpanded) &&
                       newEventCount > 0
                         ? newEventCount
@@ -648,15 +799,25 @@ export class UI extends LitElement {
               </div>
               ${this.debugEvent !== null
                 ? html`<button
-                    id="back-to-activity"
+                    id="back-to-console"
                     @click=${() => {
                       this.debugEvent = null;
                     }}
                   >
-                    ${Strings.from("COMMAND_BACK_TO_ACTIVITY")}
+                    ${Strings.from("COMMAND_BACK_TO_CONSOLE")}
                   </button>`
                 : nothing}
               <div id="create-view-popout-content">${sideNavItem}</div>
+              <div id="input">
+                ${until(
+                  this.#renderPendingInput(
+                    newestEvent?.type === "node" &&
+                      newestEvent.node.descriptor.type === "input"
+                      ? newestEvent
+                      : null
+                  )
+                )}
+              </div>
             </div>
             ${contentContainer}
           </section>`

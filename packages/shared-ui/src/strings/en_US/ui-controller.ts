@@ -8,15 +8,18 @@ import { LanguagePackEntry } from "../../types/types";
 
 export default {
   // Commands.
-  COMMAND_BACK_TO_ACTIVITY: {
-    str: "Back to Activity",
+  COMMAND_BACK_TO_CONSOLE: {
+    str: "Back to Console",
+  },
+  COMMAND_CONTINUE: {
+    str: "Continue",
   },
 
   // Statuses.
 
   // Labels.
-  LABEL_SECTION_NAV_ACTIVITY: {
-    str: "Activity",
+  LABEL_SECTION_NAV_CONSOLE: {
+    str: "Console",
   },
   LABEL_SECTION_NAV_PROJECT: {
     str: "Project",

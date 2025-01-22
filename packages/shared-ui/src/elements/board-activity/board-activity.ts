@@ -363,8 +363,6 @@ export class BoardActivity extends LitElement {
             ></bb-user-input>`;
           }
         })}
-
-        <div class="edge-status"></div>
       </div>
 
       <button class="continue-button" @click=${() => continueRun()}>
@@ -479,8 +477,6 @@ export class BoardActivity extends LitElement {
             continueRun();
           }}
         ></bb-user-input>
-
-        <div class="edge-status"></div>
       </div>
 
       <button class="continue-button" @click=${() => continueRun()}>
@@ -515,7 +511,10 @@ export class BoardActivity extends LitElement {
         consumed: consumed || isOutput,
       })}
     >
-      <details ?open=${stored || isOutput} class="node-output">
+      <details
+        ?open=${stored || isOutput || portList.length === 1}
+        class="node-output"
+      >
         <summary
           class=${classMap({ "with-description": description !== null })}
         >
@@ -531,6 +530,8 @@ export class BoardActivity extends LitElement {
             if (isLLMContentArray(nodeValue)) {
               value = html`<bb-llm-output-array
                 .showExportControls=${true}
+                .lite=${true}
+                .clamped=${false}
                 .values=${nodeValue}
               ></bb-llm-output-array>`;
             } else if (isLLMContent(nodeValue)) {
@@ -549,6 +550,8 @@ export class BoardActivity extends LitElement {
               value = nodeValue.parts.length
                 ? html`<bb-llm-output
                     .showExportControls=${true}
+                    .lite=${true}
+                    .clamped=${false}
                     .value=${nodeValue}
                   ></bb-llm-output>`
                 : html`No data provided`;
@@ -586,7 +589,6 @@ export class BoardActivity extends LitElement {
           </div>`;
         })}
       </details>
-      <div class=${classMap({ "node-status": true, stored })}></div>
     </div>`;
   }
 
@@ -651,7 +653,7 @@ export class BoardActivity extends LitElement {
             ${repeat(
               this.events,
               (event) => event.id,
-              (event, idx) => {
+              (event, _idx) => {
                 const isNew = !this.#seenItems.has(event.id);
                 this.#seenItems.add(event.id);
 
@@ -668,7 +670,9 @@ export class BoardActivity extends LitElement {
                     // been received.
                     if (end === null) {
                       if (type === "input") {
-                        content = this.#renderPendingInput(idx, event);
+                        // TODO: Potentially reenable this.
+                        // content = this.#renderPendingInput(idx, event);
+                        content = nothing;
                         break;
                       }
 
@@ -769,7 +773,6 @@ export class BoardActivity extends LitElement {
                                   >
                                 </summary>
                               </details>
-                              <div class="node-status"></div>
                             </div>`
                           )}
                         </div>
