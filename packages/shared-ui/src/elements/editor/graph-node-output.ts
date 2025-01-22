@@ -171,6 +171,10 @@ export class GraphNodeOutput extends PIXI.Container {
         continue;
       }
 
+      if (!newestAddition.parts) {
+        return Promise.resolve([]);
+      }
+
       Promise.all(
         newestAddition.parts.map((part, idx) => {
           const item = this.getChildByLabel(`${id}-${idx}`);

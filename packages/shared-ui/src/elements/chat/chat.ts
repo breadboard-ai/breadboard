@@ -231,11 +231,16 @@ export class Chat extends LitElement {
 
                           const lastPart = context.at(-1)?.parts.at(-1) ?? null;
                           if (isTextCapabilityPart(lastPart)) {
+                            let textContent = lastPart.text;
+                            if (textContent.trim() === "") {
+                              textContent = "[No input provided]";
+                            }
+
                             content = html`<div class="user-output">
                               <div>
                                 <h2 class="title">User Input</h2>
                                 <div class="value">
-                                  ${markdown(lastPart.text)}
+                                  ${markdown(textContent)}
                                 </div>
                               </div>
                             </div>`;
