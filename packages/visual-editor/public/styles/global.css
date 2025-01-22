@@ -243,6 +243,7 @@ body.hide-cursor {
   --bb-icon-flowchart-inverted: url(/third_party/icons/flowchart-inverted.svg);
 
   --bb-icon-google-drive: url(/third_party/icons/graph/google-drive-48px.svg);
+  --bb-icon-google-drive-outline: url(/third_party/icons/graph/google-drive-outline.svg);
 
   --bb-icon-home-repair-service: url(/third_party/icons/home-repair-service.svg);
   --bb-icon-home-repair-service-inverted: url(/third_party/icons/home-repair-service-inverted.svg);
@@ -878,8 +879,6 @@ body.hide-cursor {
 
   --bb-icon-flowchart: url(/third_party/icons/flowchart-inverted.svg);
   --bb-icon-flowchart-inverted: url(/third_party/icons/flowchart.svg);
-
-  --bb-icon-google-drive: url(/third_party/icons/graph/google-drive-48px.svg);
 
   --bb-icon-input: url(/third_party/icons/input-inverted.svg);
   --bb-icon-input-inverted: url(/third_party/icons/input.svg);
