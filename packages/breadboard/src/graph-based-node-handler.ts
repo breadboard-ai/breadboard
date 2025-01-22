@@ -20,7 +20,11 @@ import {
   Schema,
 } from "./types.js";
 
-export { GraphBasedNodeHandler, toNodeHandlerMetadata };
+export {
+  GraphBasedNodeHandler,
+  toNodeHandlerMetadata,
+  describerResultToNodeHandlerMetadata,
+};
 
 class GraphBasedNodeHandler implements NodeHandlerObject {
   #graph: GraphToRun;
@@ -101,6 +105,20 @@ class GraphBasedNodeHandler implements NodeHandlerObject {
   get metadata() {
     return toNodeHandlerMetadata(this.#graph, this.#type, false);
   }
+}
+
+function describerResultToNodeHandlerMetadata(
+  result: NodeDescriberResult,
+  updating: boolean
+): NodeHandlerMetadata {
+  return filterEmptyValues({
+    title: result.title,
+    description: result.description,
+    url: result.url,
+    icon: result.metadata?.icon,
+    help: result.metadata?.help,
+    updating,
+  });
 }
 
 function toNodeHandlerMetadata(

@@ -8,6 +8,7 @@ import type {
   GraphIdentifier,
   InputValues,
   NodeIdentifier,
+  NodeTypeIdentifier,
 } from "@breadboard-ai/types";
 import {
   DescribeResultCacheArgs,
@@ -54,6 +55,21 @@ class DescribeResultCache implements InspectableDescriberResultCache {
       latest: () => this.args.latest(graphId, nodeId, inputs),
       willUpdate() {},
     } as SnapshotUpdaterArgs<NodeDescriberResult>;
+  }
+
+  getByType(type: NodeTypeIdentifier): InspectableDescriberResultCacheEntry {
+    const typeHash = hash(type);
+    let result = this.#map.get(typeHash);
+    if (result) {
+      return result.snapshot();
+    }
+    result = new SnapshotUpdater({
+      initial: () => this.args.initialType(),
+      latest: () => this.args.latestType(type),
+      willUpdate: () => this.args.willUpdateType(type),
+    });
+    this.#map.set(typeHash, result);
+    return result.snapshot();
   }
 
   get(

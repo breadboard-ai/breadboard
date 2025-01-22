@@ -56,6 +56,20 @@ function emptyResult(): NodeDescriberResult {
 class NodeTypeDescriberManager implements DescribeResultCacheArgs {
   public constructor(public readonly mutable: MutableGraph) {}
 
+  initialType(): NodeDescriberResult {
+    return emptyResult();
+  }
+
+  willUpdateType(): void {
+    this.mutable.store.dispatchEvent(
+      new UpdateEvent(this.mutable.id, "", "", [])
+    );
+  }
+
+  latestType(type: NodeTypeIdentifier): Promise<NodeDescriberResult> {
+    return this.getLatestDescription(type, "");
+  }
+
   initial(
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier
@@ -101,7 +115,11 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
     );
     outputsDiffer.computeDiff();
 
-    if (inputsDiffer.same() && outputsDiffer.same()) {
+    if (
+      inputsDiffer.same() &&
+      outputsDiffer.same() &&
+      sameMetadata(previous, current)
+    ) {
       return;
     }
     this.mutable.store.dispatchEvent(
@@ -483,4 +501,12 @@ function filterEmptyValues<T extends Record<string, unknown>>(obj: T): T {
       return true;
     })
   ) as T;
+}
+
+function sameMetadata(a: NodeDescriberResult, b: NodeDescriberResult) {
+  if (a.title !== b.title) return false;
+  if (a.description !== b.description) return false;
+  if (a.metadata?.icon !== b.metadata?.icon) return false;
+  // TODO: Compare tags and help.
+  return true;
 }

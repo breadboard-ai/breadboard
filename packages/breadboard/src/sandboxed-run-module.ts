@@ -302,13 +302,13 @@ async function invokeDescriber(
     const moduleData = declarations[moduleId]!;
     const metadata: Omit<NodeDescriberResult, "inputSchema" | "outputSchema"> =
       filterEmptyValues({
-        title: moduleData.metadata?.title,
-        description: moduleData.metadata?.description,
-        metadata: {
-          icon: moduleData.metadata?.icon,
-          help: moduleData.metadata?.help,
-          tags: moduleData.metadata?.tags,
-        },
+        title: result.title ?? moduleData.metadata?.title,
+        description: result.description ?? moduleData.metadata?.description,
+        metadata: filterEmptyValues({
+          icon: result.metadata?.icon ?? moduleData.metadata?.icon,
+          help: result.metadata?.help ?? moduleData.metadata?.help,
+          tags: result.metadata?.tags ?? moduleData.metadata?.tags,
+        }),
       });
     return {
       ...metadata,
@@ -343,13 +343,13 @@ async function invokeMainDescriber(
     })) as NodeDescriberResult;
     const metadata: Omit<NodeDescriberResult, "inputSchema" | "outputSchema"> =
       filterEmptyValues({
-        title: graph.title,
-        description: graph.description,
-        metadata: {
-          icon: graph.metadata?.icon,
-          help: graph.metadata?.help,
-          tags: graph.metadata?.tags,
-        },
+        title: result.title ?? graph.title,
+        description: result.description ?? graph.description,
+        metadata: filterEmptyValues({
+          icon: result?.metadata?.icon ?? graph.metadata?.icon,
+          help: result?.metadata?.help ?? graph.metadata?.help,
+          tags: result?.metadata?.tags ?? graph.metadata?.tags,
+        }),
       });
     return {
       ...metadata,
