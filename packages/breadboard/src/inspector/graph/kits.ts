@@ -4,11 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { toNodeHandlerMetadata } from "../../graph-based-node-handler.js";
+import { describerResultToNodeHandlerMetadata } from "../../graph-based-node-handler.js";
 import { getGraphHandlerFromMutableGraph } from "../../handler.js";
 import {
   GraphDescriptor,
-  GraphToRun,
   Kit,
   NodeDescriberResult,
   NodeDescriptor,
@@ -302,6 +301,10 @@ class CustomNodeType implements InspectableNodeType {
 
   async #readMetadata() {
     const handler = await this.#handlerPromise;
+    const describeResult = await handler?.describe?.();
+    if (describeResult && describeResult.metadata) {
+      return describeResult.metadata;
+    }
     if (handler && "metadata" in handler && handler.metadata) {
       return handler.metadata;
     }
@@ -311,18 +314,9 @@ class CustomNodeType implements InspectableNodeType {
   }
 
   currentMetadata(): NodeHandlerMetadata {
-    const addResult = this.#mutable.store.addByURL(
-      this.#type,
-      [this.#mutable.id],
-      {
-        outerGraph: this.#mutable.graph,
-      }
-    );
-    const { mutable: graph, updating } = addResult;
-    const graphToRun: GraphToRun = {
-      graph: graph.graph,
-    };
-    return toNodeHandlerMetadata(graphToRun, this.#type, updating) || {};
+    const { current, updating } = this.#mutable.describe.getByType(this.#type);
+    const result = describerResultToNodeHandlerMetadata(current, updating);
+    return result;
   }
 
   async metadata(): Promise<NodeHandlerMetadata> {
