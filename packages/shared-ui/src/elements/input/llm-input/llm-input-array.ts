@@ -23,6 +23,9 @@ export class LLMInputArray extends LitElement {
   @property()
   showEntrySelector = true;
 
+  @property()
+  useChatInput = false;
+
   @property({ reflect: true })
   clamped = true;
 
@@ -230,6 +233,35 @@ export class LLMInputArray extends LitElement {
         ${this.values
           ? map(this.values, (value, idx) => {
               if (value.role === "$metadata") return nothing;
+              if (this.useChatInput) {
+                return html`<bb-llm-input-chat
+                  class=${classMap({ visible: idx === this.selected })}
+                  @input=${(evt: Event) => {
+                    if (!this.values) {
+                      return;
+                    }
+
+                    if (!(evt.target instanceof LLMInput)) {
+                      return;
+                    }
+
+                    if (!evt.target.value) {
+                      return;
+                    }
+
+                    this.values[idx] = evt.target.value;
+                  }}
+                  ${idx === this.selected
+                    ? ref(this.#activeLLMContentRef)
+                    : nothing}
+                  .value=${value}
+                  .minItems=${this.minItems}
+                  .clamped=${this.clamped}
+                  .inlineControls=${this.inlineControls}
+                  .allow=${this.allow}
+                  .autofocus=${this.autofocus && idx === 0}
+                ></bb-llm-input-chat>`;
+              }
               return html`<bb-llm-input
                 class=${classMap({ visible: idx === this.selected })}
                 @input=${(evt: Event) => {

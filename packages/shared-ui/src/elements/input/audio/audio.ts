@@ -91,7 +91,7 @@ export class AudioInput extends LitElement {
       role: "user",
       parts: [
         {
-          inlineData: { data: this.#output || "", mimeType: this.#mimeType },
+          inlineData: { data: this.#output ?? "", mimeType: this.#mimeType },
         },
       ],
     };

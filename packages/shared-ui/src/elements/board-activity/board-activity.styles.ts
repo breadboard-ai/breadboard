@@ -14,6 +14,8 @@ export const styles = css`
     display: block;
     background: var(--bb-neutral-0);
     position: relative;
+
+    --user-input-padding-left: var(--bb-grid-size-3);
   }
 
   #click-run {
@@ -52,17 +54,6 @@ export const styles = css`
     margin-top: 0;
   }
 
-  :host([showdebugcontrols="false"]) > .activity-entry:last-of-type {
-    padding-bottom: 60px;
-  }
-
-  .activity-entry.running + .activity-entry::before,
-  .activity-entry.output + .activity-entry::before,
-  .node-info .activity-entry::before,
-  .activity-entry:first-of-type::before {
-    display: none;
-  }
-
   .activity-entry.secret {
     padding-top: 0;
     margin-top: calc(var(--bb-grid-size) * -2);
@@ -80,15 +71,33 @@ export const styles = css`
 
   .activity-entry h1,
   .activity-entry .node-info {
-    font: 400 var(--bb-title-medium) / var(--bb-title-line-height-medium)
+    min-height: var(--bb-grid-size-8);
+    font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
       var(--bb-font-family);
     display: flex;
     align-items: center;
     margin: 0;
-    padding: 4px 8px;
-    border: 1px solid var(--bb-neutral-400);
-    border-radius: 8px;
-    background: var(--bb-neutral-0);
+    border-radius: var(--bb-grid-size);
+    color: var(--bb-neutral-700);
+    position: relative;
+    border: 1px solid var(--bb-neutral-100);
+
+    & summary {
+      position: relative;
+      z-index: 1;
+    }
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--bb-grid-size-8);
+      border-radius: var(--bb-grid-size);
+      background: var(--bb-neutral-100);
+      z-index: 0;
+    }
   }
 
   .activity-entry .node-info {
@@ -104,17 +113,14 @@ export const styles = css`
     margin-top: 0;
   }
 
-  .activity-entry .node-info summary::before {
-    margin-top: 2px;
-  }
-
   .activity-entry .node-info .activity-entry summary::before {
     margin-top: 1px;
   }
 
   .activity-entry .node-info summary {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
+    padding: var(--bb-grid-size) var(--bb-grid-size-2);
   }
 
   .activity-entry .node-info summary span {
@@ -142,14 +148,14 @@ export const styles = css`
   .node summary::before,
   .activity-entry .activity-entry.node summary::before,
   .activity-entry.node h1::before {
-    background: transparent var(--bb-icon-board) center -1px / 20px 20px
+    background: transparent var(--bb-icon-board) center center / 20px 20px
       no-repeat;
   }
 
   .node.specialist summary::before,
   .activity-entry .activity-entry.node.specialist summary::before,
   .activity-entry.node.specialist h1::before {
-    background: transparent var(--bb-icon-smart-toy) center -1px / 20px 20px
+    background: transparent var(--bb-icon-smart-toy) center center / 20px 20px
       no-repeat;
   }
 
@@ -184,14 +190,14 @@ export const styles = css`
   .node.human summary::before,
   .activity-entry .activity-entry.node.human summary::before,
   .activity-entry.node.human h1::before {
-    background: transparent var(--bb-icon-human) center -1px / 20px 20px
+    background: transparent var(--bb-icon-human) center center / 20px 20px
       no-repeat;
   }
 
   .node.urlTemplate summary::before,
   .activity-entry .activity-entry.node.urlTemplate summary::before,
   .activity-entry.node.urlTemplate h1::before {
-    background: transparent var(--bb-icon-http) center -1px / 20px 20px
+    background: transparent var(--bb-icon-http) center center / 20px 20px
       no-repeat;
   }
 
@@ -235,39 +241,15 @@ export const styles = css`
   .activity-entry .node-output,
   .activity-entry .edge {
     position: relative;
-    padding: 0 0 0 38px;
-    margin: var(--bb-grid-size-3) 0;
+    margin: 0;
   }
 
-  .activity-entry .node-output-container:not(.stored) .node-output[open] {
-    padding-bottom: var(--bb-grid-size-5);
-  }
-
-  .activity-entry .node-output::before,
-  .activity-entry .edge::before {
-    content: "";
-    width: 1px;
-    background: var(--bb-neutral-400);
-    height: calc(50% - 3px);
-    position: absolute;
-    top: 3px;
-    left: 20px;
-    transform: translateX(-0.5px);
+  .activity-entry .node-output-container:not(.stored) .node-output {
+    padding: var(--bb-grid-size) var(--bb-grid-size-3);
   }
 
   .activity-entry:not(.output) .consumed .node-output::before {
     height: 100%;
-  }
-
-  .activity-entry .edge-status {
-    background: var(--bb-neutral-400) var(--bb-icon-unknown-value-inverted)
-      center center / 16px 16px no-repeat;
-    width: 20px;
-    height: 20px;
-    position: absolute;
-    top: calc(50% - 5px);
-    left: 10px;
-    border-radius: 50%;
   }
 
   .activity-entry .node-output-container {
@@ -301,21 +283,6 @@ export const styles = css`
   .activity-entry .consumed .node-output::before {
     background: var(--bb-inputs-600);
     width: 2px;
-  }
-
-  .activity-entry::before,
-  .activity-entry .node-output::after,
-  .activity-entry .edge::after {
-    content: "";
-    width: var(--bb-grid-size-2);
-    height: var(--bb-grid-size-2);
-    border: 1px solid var(--bb-inputs-600);
-    background: var(--bb-inputs-200);
-    top: 3px;
-    left: calc(var(--bb-grid-size) + 11px);
-    position: absolute;
-    display: block;
-    border-radius: 50%;
   }
 
   .activity-entry::before {
@@ -354,7 +321,7 @@ export const styles = css`
   }
 
   .activity-entry .node-output summary {
-    padding: var(--bb-grid-size-6) 0 var(--bb-grid-size-3) 0;
+    padding: var(--bb-grid-size-2) 0;
     cursor: pointer;
     color: var(--bb-neutral-600);
     transition: color 0.1s cubic-bezier(0, 0, 0.3, 1);
@@ -440,19 +407,7 @@ export const styles = css`
 
   .output-port {
     margin-bottom: var(--bb-grid-size-3);
-    padding-left: 16px;
     position: relative;
-  }
-
-  .output-port::before {
-    content: "";
-    position: absolute;
-    left: 2px;
-    border-radius: var(--bb-grid-size-3);
-    background: var(--bb-ui-100);
-    width: 3px;
-    top: 0;
-    height: 100%;
   }
 
   .secrets .output-port * {
@@ -499,15 +454,66 @@ export const styles = css`
       var(--bb-font-family);
     margin: 0 0 var(--bb-grid-size-2) 0;
     white-space: pre-line;
+
+    &:last-of-type {
+      margin-bottom: 0;
+    }
   }
 
   .output-port.markdown {
     white-space: normal;
     line-height: 1.5;
-  }
 
-  .output-port.markdown p {
-    white-space: normal;
+    & a {
+      color: var(--bb-ui-700);
+    }
+
+    & h1 {
+      font: 500 var(--bb-title-large) / var(--bb-title-line-height-large)
+        var(--bb-font-family);
+
+      margin: var(--bb-grid-size-6) 0 var(--bb-grid-size-2) 0;
+    }
+
+    & h2 {
+      font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
+        var(--bb-font-family);
+
+      margin: var(--bb-grid-size-4) 0 var(--bb-grid-size-2) 0;
+    }
+
+    & h3,
+    & h4,
+    & h5 {
+      font: 500 var(--bb-title-small) / var(--bb-title-line-height-small)
+        var(--bb-font-family);
+
+      margin: var(--bb-grid-size-3) 0 var(--bb-grid-size-2) 0;
+    }
+
+    & p {
+      font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+        var(--bb-font-family);
+
+      margin: 0 0 var(--bb-grid-size-2) 0;
+      white-space: pre-line;
+
+      & strong:only-child {
+        margin: var(--bb-grid-size-2) 0 0 0;
+      }
+    }
+
+    & h1:first-of-type,
+    & h2:first-of-type,
+    & h3:first-of-type,
+    & h4:first-of-type,
+    & h5:first-of-type {
+      margin-top: 0;
+    }
+
+    & p:last-of-type {
+      margin-bottom: 0;
+    }
   }
 
   .output-port :first-child {

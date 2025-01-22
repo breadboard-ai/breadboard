@@ -65,8 +65,8 @@ export class LLMOutput extends LitElement {
     }
 
     :host([lite="true"]) {
-      border: 1px solid var(--bb-ui-100);
-      background: var(--bb-ui-50);
+      border: 1px solid var(--bb-neutral-100);
+      background: var(--bb-neutral-0);
     }
 
     .content {

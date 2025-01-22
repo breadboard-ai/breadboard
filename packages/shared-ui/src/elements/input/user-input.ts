@@ -79,6 +79,9 @@ export class UserInput extends LitElement {
   showTitleInfo = true;
 
   @property()
+  useChatInput = false;
+
+  @property()
   jumpTo: string | null = null;
 
   @property()
@@ -175,7 +178,7 @@ export class UserInput extends LitElement {
       }
 
       & .input {
-        margin-left: var(--bb-grid-size-4);
+        padding-left: var(--user-input-padding-left, var(--bb-grid-size-4));
       }
 
       & label {
@@ -183,6 +186,10 @@ export class UserInput extends LitElement {
         font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
           var(--bb-font-family);
         display: block;
+
+        &:empty {
+          display: none;
+        }
       }
 
       &:has(input[type="checkbox"]) {
@@ -856,6 +863,7 @@ export class UserInput extends LitElement {
                     id="${id}"
                     name="${id}"
                     .description=${input.schema.description || null}
+                    .useChatInput=${this.useChatInput}
                     .values=${value}
                     .allow=${allow}
                     .minItems=${minItems}
@@ -918,6 +926,17 @@ export class UserInput extends LitElement {
                     input.value = undefined;
                   }
 
+                  if (this.useChatInput) {
+                    inputField = html`<bb-llm-input-chat
+                      id="${id}"
+                      name="${id}"
+                      .schema=${input.schema}
+                      .value=${input.value ?? defaultValue ?? null}
+                      .description=${input.schema.description || null}
+                      .clamped=${this.llmInputClamped}
+                    ></bb-llm-input-chat>`;
+                    break;
+                  }
                   inputField = html`<bb-llm-input
                     id="${id}"
                     name="${id}"
