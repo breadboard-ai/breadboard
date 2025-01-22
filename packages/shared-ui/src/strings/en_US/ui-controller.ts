@@ -18,6 +18,9 @@ export default {
   // Statuses.
 
   // Labels.
+  LABEL_SECTION_NAV_CHAT: {
+    str: "Chat",
+  },
   LABEL_SECTION_NAV_CONSOLE: {
     str: "Console",
   },

@@ -15,6 +15,7 @@ export { BoardDetailsOverlay } from "./overlay/board-details.js";
 export { BoardSelector } from "./input/board-selector/board-selector.js";
 export { BoardServerOverlay } from "./overlay/provider.js";
 export { CapabilitiesSelector } from "./capabilities-selector/capabilities-selector.js";
+export { Chat } from "./chat/chat.js";
 export { CodeEditor } from "./input/code-editor/code-editor.js";
 export { CommandPalette } from "./command-palette/command-palette.js";
 export { CommentOverlay } from "./overlay/comment.js";

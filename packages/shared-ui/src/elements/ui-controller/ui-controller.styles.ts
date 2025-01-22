@@ -629,11 +629,19 @@ export const styles = css`
     overflow: hidden;
   }
 
+  #board-chat-container,
   #board-console-container {
     height: 100%;
     overflow: auto;
     position: relative;
+  }
+
+  #board-console-container {
     padding: var(--bb-grid-size-2);
+  }
+
+  bb-chat {
+    height: 100%;
   }
 
   bb-board-activity.collapsed {

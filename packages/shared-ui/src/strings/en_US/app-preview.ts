@@ -22,7 +22,7 @@ export default {
 
   // Labels.
   LABEL_WAITING_MESSAGE: {
-    str: "Click 'Run' to get started",
+    str: "Tap Start to begin",
   },
   LABEL_DETAILS: {
     str: "Details",

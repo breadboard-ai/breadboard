@@ -206,7 +206,7 @@ export class UI extends LitElement {
         this.status === "running"
       ) {
         this.#setPopoutState(true);
-        this.sideNavItem = "console";
+        this.sideNavItem = "chat";
       }
     }
 
@@ -322,6 +322,8 @@ export class UI extends LitElement {
         if (!outputs) {
           return;
         }
+
+        console.log(descriptor.id, outputs);
 
         this.dispatchEvent(
           new InputEnterEvent(
@@ -467,7 +469,7 @@ export class UI extends LitElement {
     const events = run?.events ?? [];
     const eventPosition = events.length - 1;
 
-    if (this.sideNavItem === "console" && this.popoutExpanded) {
+    if (this.popoutExpanded) {
       this.#lastEventPosition = this.runs?.[0]?.events.length ?? 0;
     }
 
@@ -590,6 +592,7 @@ export class UI extends LitElement {
     }
 
     const sectionNavItems = [
+      { item: "chat", label: "LABEL_SECTION_NAV_CHAT" },
       { item: "console", label: "LABEL_SECTION_NAV_CONSOLE" },
     ];
 
@@ -657,6 +660,43 @@ export class UI extends LitElement {
               .graphStore=${this.graphStore}
               .mainGraphId=${this.mainGraphId}
             ></bb-component-selector>`
+        )}`;
+        break;
+      }
+
+      case "chat": {
+        let showDebugControls = false;
+        if (newestEvent && newestEvent.type === "node") {
+          showDebugControls =
+            this.status === "stopped" && newestEvent.end === null;
+        }
+
+        const hideLast = this.status === STATUS.STOPPED;
+        const inputsFromLastRun = lastRun?.inputs() ?? null;
+        const nextNodeId =
+          this.topGraphResult?.currentNode?.descriptor.id ?? null;
+
+        sideNavItem = html`${guard(
+          [run, events, eventPosition, this.debugEvent],
+          () =>
+            html` <div id="board-chat-container">
+              <bb-chat
+                class=${classMap({ collapsed: this.debugEvent !== null })}
+                .run=${run}
+                .events=${events}
+                .eventPosition=${eventPosition}
+                .inputsFromLastRun=${inputsFromLastRun}
+                .showExtendedInfo=${true}
+                .settings=${this.settings}
+                .showLogTitle=${false}
+                .logTitle=${"Run"}
+                .hideLast=${hideLast}
+                .boardServers=${this.boardServers}
+                .showDebugControls=${showDebugControls}
+                .nextNodeId=${nextNodeId}
+                name=${Strings.from("LABEL_PROJECT")}
+              ></bb-chat>
+            </div>`
         )}`;
         break;
       }

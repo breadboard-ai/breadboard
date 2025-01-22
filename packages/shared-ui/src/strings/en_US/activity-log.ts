@@ -37,7 +37,7 @@ export default {
 
   // Labels.
   LABEL_WAITING_MESSAGE: {
-    str: "Tap 'Start' to begin",
+    str: "Tap Start to begin",
   },
   LABEL_DETAILS: {
     str: "Details",
