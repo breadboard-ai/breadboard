@@ -26,6 +26,7 @@ import { appendToDocUsingDriveKit } from "../google-drive/append-to-doc-using-dr
 import { tokenVendorContext } from "../elements.js";
 import { consume } from "@lit/context";
 import type { TokenVendor } from "@breadboard-ai/connection-client";
+import "./export-toolbar.js";
 
 @customElement("bb-llm-output")
 export class LLMOutput extends LitElement {
@@ -217,102 +218,10 @@ export class LLMOutput extends LitElement {
       opacity: 1;
     }
 
-    .copy-image-to-clipboard {
-      position: relative;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-
-      & button {
-        background: none;
-        border: none;
-        padding: 0;
-        margin: 0;
-
-        position: absolute;
-        z-index: 1;
-        display: block;
-        width: 28px;
-        height: 28px;
-        background: var(--bb-neutral-0) var(--bb-icon-copy-to-clipboard) center
-          center / 20px 20px no-repeat;
-        border-radius: 50%;
-        opacity: 0;
-        position: absolute;
-        right: var(--bb-grid-size-2);
-        top: var(--bb-grid-size-2);
-        cursor: pointer;
-        transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
-      }
-
-      &:hover button,
-      &:focus button {
-        opacity: 1;
-      }
-    }
-
-    #action-buttons {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: var(--bb-grid-size-2);
-      margin-right: var(--bb-grid-size-2);
-
-      & #copy-all-to-clipboard {
-        display: flex;
-        align-items: center;
-
-        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
-          var(--bb-font-family);
-
-        height: 28px;
-        border-radius: var(--bb-grid-size-16);
-        border: 1px solid var(--bb-neutral-300);
-        background: var(--bb-neutral-0) var(--bb-icon-copy-to-clipboard) 8px
-          center / 20px 20px no-repeat;
-        opacity: 0.6;
-        position: relative;
-        padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-8);
-
-        &:not([disabled]) {
-          cursor: pointer;
-          transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
-
-          &:hover,
-          &:focus {
-            opacity: 1;
-          }
-        }
-      }
-
-      & #save-to-google-drive {
-        display: flex;
-        align-items: center;
-
-        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
-          var(--bb-font-family);
-
-        height: 28px;
-        border-radius: var(--bb-grid-size-16);
-        border: 1px solid var(--bb-neutral-300);
-        background: var(--bb-neutral-0) var(--bb-icon-google-drive) 8px center /
-          16px 16px no-repeat;
-        opacity: 0.6;
-        position: relative;
-        padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-8);
-        filter: grayscale(1);
-        margin-left: var(--bb-grid-size-2);
-
-        &:not([disabled]) {
-          cursor: pointer;
-          transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
-
-          &:hover,
-          &:focus {
-            filter: unset;
-            opacity: 1;
-          }
-        }
-      }
+    bb-export-toolbar {
+      position: absolute;
+      top: -16px;
+      right: 16px;
     }
   `;
 
@@ -372,47 +281,8 @@ export class LLMOutput extends LitElement {
     const canCopy = this.showExportControls && "ClipboardItem" in window;
 
     return this.value && this.value.parts.length
-      ? html` ${canCopy
-          ? html`<div id="action-buttons">
-              <button
-                id="copy-all-to-clipboard"
-                @click=${async () => {
-                  if (!this.value) {
-                    return;
-                  }
-
-                  let htmlText = "";
-                  for (const part of this.value.parts) {
-                    if (isTextCapabilityPart(part)) {
-                      htmlText += renderMarkdownToHtmlString(part.text);
-                    } else if (isInlineData(part)) {
-                      const dataURL = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-                      htmlText += `<img src="${dataURL}" />`;
-                    }
-                  }
-
-                  await navigator.clipboard.write([
-                    new ClipboardItem({
-                      "text/html": new Blob([htmlText], {
-                        type: "text/html",
-                      }),
-                    }),
-                  ]);
-
-                  this.dispatchEvent(
-                    new ToastEvent("Copied to Clipboard", ToastType.INFORMATION)
-                  );
-                }}
-              >
-                Copy all
-              </button>
-              <button
-                id="save-to-google-drive"
-                @click=${this.#onClickSaveToGoogleDriveButton}
-              >
-                Save to Drive
-              </button>
-            </div>`
+      ? html` ${this.showExportControls
+          ? html`<bb-export-toolbar .value=${this.value}></bb-export-toolbar>`
           : nothing}
         ${map(this.value.parts, (part, idx) => {
           let value: TemplateResult | symbol = nothing;
