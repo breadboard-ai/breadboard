@@ -111,7 +111,7 @@ class GraphStore
         const exports: GraphStoreEntry[] = [];
         if (descriptor.exports) {
           for (const e of descriptor.exports) {
-            const metadata = entryFromExport(descriptor, e, mainGraphId);
+            const metadata = entryFromExport(mutable, e, mainGraphId);
             exports.push({
               mainGraph: mainGraphMetadata,
               ...metadata,
@@ -449,23 +449,29 @@ function emptyGraph(): GraphDescriptor {
 const MODULE_EXPORT_PREFIX = "#module:";
 
 function entryFromExport(
-  graph: GraphDescriptor,
+  mutable: MutableGraph,
   id: string,
   mainGraphId: MainGraphIdentifier
 ): NodeHandlerMetadata | null {
+  const graph = mutable.graph;
   const url = `${graph.url}${id}`;
+  const { current, updating } = mutable.describe.getByType(url);
+  const {
+    title,
+    description,
+    metadata: { icon, help } = {},
+  } = updating ? {} : current || {};
   if (id.startsWith(MODULE_EXPORT_PREFIX)) {
     const moduleId = id.slice(MODULE_EXPORT_PREFIX.length);
     const module = graph.modules?.[moduleId];
     if (!module) return null;
-    const { title, description, icon, help } = module.metadata || {};
     return filterEmptyValues({
-      title,
-      description,
-      icon,
+      title: title ?? module.metadata?.title,
+      description: description ?? module.metadata?.description,
+      icon: icon ?? module.metadata?.icon,
       url,
       tags: ["component"],
-      help,
+      help: help ?? module.metadata?.help,
       id: mainGraphId,
     });
   } else {
@@ -473,12 +479,12 @@ function entryFromExport(
     const descriptor = graphId ? graph.graphs?.[graphId] : graph;
     if (!descriptor) return null;
     return filterEmptyValues({
-      title: descriptor.title,
-      description: descriptor.description,
-      icon: descriptor.metadata?.icon,
+      title: title ?? descriptor.title,
+      description: description ?? descriptor.description,
+      icon: icon ?? descriptor.metadata?.icon,
       url,
       tags: ["component"],
-      help: descriptor.metadata?.help,
+      help: help ?? descriptor.metadata?.help,
       id: mainGraphId,
     });
   }

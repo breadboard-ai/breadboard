@@ -467,6 +467,11 @@ export class Editor extends LitElement implements DragConnectorReceiver {
               background: var(--bb-icon-google-drive) top left / 20px 20px
                 no-repeat;
             }
+
+            &.generative {
+              background: var(--bb-add-icon-generative) top left / 20px 20px
+                no-repeat;
+            }
           }
         }
       }
