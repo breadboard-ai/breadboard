@@ -493,15 +493,15 @@ export class Editor extends LitElement implements DragConnectorReceiver {
 
       & #run {
         min-width: 76px;
-        height: var(--bb-grid-size-7);
-        background: var(--bb-ui-500) var(--bb-icon-play-filled-inverted) 4px
+        height: var(--bb-grid-size-9);
+        background: var(--bb-ui-500) var(--bb-icon-play-filled-inverted) 8px
           center / 20px 20px no-repeat;
         color: #fff;
         border-radius: 20px;
         border: none;
-        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+        font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
           var(--bb-font-family);
-        padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-7);
+        padding: 0 var(--bb-grid-size-5) 0 var(--bb-grid-size-9);
         opacity: 0.3;
 
         &.running {

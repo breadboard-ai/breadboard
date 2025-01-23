@@ -17,10 +17,7 @@ import { cache } from "lit/directives/cache.js";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { until } from "lit/directives/until.js";
-import {
-  markdown,
-  renderMarkdownToHtmlString,
-} from "../../directives/markdown.js";
+import { markdown } from "../../directives/markdown.js";
 import { ToastEvent, ToastType } from "../../events/events.js";
 import { appendToDocUsingDriveKit } from "../google-drive/append-to-doc-using-drive-kit.js";
 import { tokenVendorContext } from "../elements.js";
@@ -218,6 +215,31 @@ export class LLMOutput extends LitElement {
       opacity: 1;
     }
 
+    .copy-image-to-clipboard {
+      position: relative;
+
+      & button {
+        width: 32px;
+        height: 32px;
+        background: var(--bb-neutral-0) var(--bb-icon-copy-to-clipboard) center
+          center / 20px 20px no-repeat;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        translate: -50% -50%;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 1px solid var(--bb-neutral-300);
+        font-size: 0;
+        opacity: 0;
+        transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+      }
+
+      &:hover button {
+        opacity: 1;
+      }
+    }
+
     bb-export-toolbar {
       position: absolute;
       top: -16px;
@@ -330,7 +352,9 @@ export class LLMOutput extends LitElement {
                               )
                             );
                           }}
-                        ></button>
+                        >
+                          Copy image to clipboard
+                        </button>
                       </div>`
                     : html`<img src="${url}" alt="LLM Image" />`}
                 `);

@@ -38,12 +38,12 @@ export const styles = css`
       bottom: 32px;
       right: 32px;
       width: 50vw;
-      height: 44px;
+      height: 96px;
       max-height: 70vh;
       max-width: 450px;
       z-index: 3;
       display: grid;
-      grid-template-rows: 44px 1fr minmax(min-content, 50px);
+      grid-template-rows: 44px 1fr min-content;
       border-radius: var(--bb-grid-size-2);
       box-shadow: var(--bb-elevation-6);
       overflow: hidden;
@@ -55,7 +55,6 @@ export const styles = css`
 
       & #create-view-popout-nav {
         background: var(--bb-neutral-50);
-        border-bottom: 1px solid var(--bb-neutral-300);
         position: relative;
         user-select: none;
 
@@ -123,9 +122,13 @@ export const styles = css`
           overflow-y: scroll;
         }
 
-        & #create-view-popout-nav #create-view-popout-toggle {
-          background: var(--bb-icon-unfold-less) center center / 20px 20px
-            no-repeat;
+        & #create-view-popout-nav {
+          border-bottom: 1px solid var(--bb-neutral-300);
+
+          & #create-view-popout-toggle {
+            background: var(--bb-icon-unfold-less) center center / 20px 20px
+              no-repeat;
+          }
         }
       }
     }
@@ -138,6 +141,8 @@ export const styles = css`
       display: grid;
       grid-template-columns: 1fr 32px;
       column-gap: var(--bb-grid-size-2);
+      max-height: 385px;
+      overflow: auto;
 
       & .preamble {
         grid-column: 1 / 3;
@@ -196,7 +201,7 @@ export const styles = css`
         border: none;
         filter: grayscale(1);
         opacity: 0.6;
-        align-self: center;
+        align-self: end;
         margin-bottom: 2px;
 
         &:not([disabled]) {
