@@ -94,6 +94,7 @@ export interface GraphEntityVisualState {
   x: number;
   y: number;
   expansionState: "collapsed" | "expanded" | "advanced";
+  outputHeight: number;
 }
 
 export type GraphVisualState = {

@@ -985,6 +985,7 @@ export class Edit extends EventTarget {
                 x: entityVisualState.x,
                 y: entityVisualState.y,
                 collapsed: entityVisualState.expansionState,
+                outputHeight: entityVisualState.outputHeight ?? 0,
               };
             }
             break;
@@ -1004,6 +1005,7 @@ export class Edit extends EventTarget {
                   x: entityVisualState.x,
                   y: entityVisualState.y,
                   collapsed: entityVisualState.expansionState,
+                  outputHeight: entityVisualState.outputHeight ?? 0,
                 },
               },
             });

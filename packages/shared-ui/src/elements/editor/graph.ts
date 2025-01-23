@@ -1066,6 +1066,7 @@ export class Graph extends PIXI.Container {
         "comment",
         this.toGlobal(child.position),
         child.expansionState,
+        0,
         false
       );
     }
@@ -1076,6 +1077,7 @@ export class Graph extends PIXI.Container {
     type: "comment" | "node",
     position: PIXI.PointData,
     expansionState: ComponentExpansionState,
+    outputHeight: number,
     justAdded = false
   ) {
     this.#layout.set(node, {
@@ -1083,6 +1085,7 @@ export class Graph extends PIXI.Container {
       type,
       expansionState,
       justAdded,
+      outputHeight,
     });
   }
 
@@ -1146,6 +1149,7 @@ export class Graph extends PIXI.Container {
           expansionState: this.collapseNodesByDefault
             ? "collapsed"
             : "expanded",
+          outputHeight: 0,
         });
       }
     }
@@ -1159,6 +1163,7 @@ export class Graph extends PIXI.Container {
 
       graphNode.position.set(layout.x, layout.y);
       graphNode.expansionState = layout.expansionState;
+      graphNode.outputHeight = layout.outputHeight ?? 0;
     }
 
     this.#drawEdges();
@@ -1224,6 +1229,7 @@ export class Graph extends PIXI.Container {
         "node",
         this.toGlobal(child.position),
         layout.expansionState,
+        layout.outputHeight,
         layout.justAdded
       );
     }
@@ -1250,6 +1256,7 @@ export class Graph extends PIXI.Container {
         "comment",
         this.toGlobal(child.position),
         layout.expansionState,
+        layout.outputHeight,
         layout.justAdded
       );
     }
@@ -1528,6 +1535,7 @@ export class Graph extends PIXI.Container {
         y: child.y,
         type,
         expansionState: child.expansionState,
+        outputHeight: child instanceof GraphNode ? child.outputHeight : 0,
       });
     }
 
@@ -1860,6 +1868,14 @@ export class Graph extends PIXI.Container {
           id,
         });
 
+        graphNode.on(GRAPH_OPERATIONS.GRAPH_NODE_RESIZED, (settled) => {
+          if (!settled) {
+            return;
+          }
+
+          this.emit(GRAPH_OPERATIONS.GRAPH_NODE_RESIZED);
+        });
+
         // PIXI doesn't bubble events automatically, so we re-issue the event for
         // requesting the menu to the graph renderer.
         graphNode.on(
@@ -1919,6 +1935,7 @@ export class Graph extends PIXI.Container {
 
             node.position.set(layout.x, layout.y);
             node.expansionState = layout.expansionState;
+            node.outputHeight = layout.outputHeight ?? 0;
 
             node.emit(
               GRAPH_OPERATIONS.GRAPH_NODE_MOVED,
@@ -2017,8 +2034,12 @@ export class Graph extends PIXI.Container {
       }
 
       if (node.descriptor.metadata?.visual) {
-        const { x, y, collapsed } = node.descriptor.metadata
-          .visual as VisualMetadata;
+        const {
+          x,
+          y,
+          collapsed,
+          outputHeight: metadataOutputHeight,
+        } = node.descriptor.metadata.visual as VisualMetadata;
 
         // We may receive visual values for the node, but we may also have
         // marked the node as having just been added to the editor. So we go
@@ -2030,12 +2051,24 @@ export class Graph extends PIXI.Container {
           justAdded = existingLayout.justAdded ?? false;
         }
 
+        let outputHeight = 0;
+        if (metadataOutputHeight) {
+          outputHeight = metadataOutputHeight;
+        }
+
         const expansionState = expansionStateFromMetadata(
           collapsed,
           this.collapseNodesByDefault
         );
         const pos = this.toGlobal({ x: x ?? 0, y: y ?? 0 });
-        this.setNodeLayoutPosition(id, "node", pos, expansionState, justAdded);
+        this.setNodeLayoutPosition(
+          id,
+          "node",
+          pos,
+          expansionState,
+          outputHeight,
+          justAdded
+        );
 
         graphNode.expansionState = expansionState;
       }
@@ -2199,7 +2232,12 @@ export class Graph extends PIXI.Container {
       }
 
       if (node.metadata?.visual) {
-        const { x, y, collapsed } = node.metadata.visual as VisualMetadata;
+        const {
+          x,
+          y,
+          collapsed,
+          outputHeight: metadataOutputHeight,
+        } = node.metadata.visual as VisualMetadata;
 
         // We may receive visual values for the node, but we may also have
         // marked the node as having just been added to the editor. So we go
@@ -2215,12 +2253,18 @@ export class Graph extends PIXI.Container {
           this.collapseNodesByDefault
         );
 
+        let outputHeight = 0;
+        if (metadataOutputHeight) {
+          outputHeight = metadataOutputHeight;
+        }
+
         const pos = this.toGlobal({ x, y });
         this.setNodeLayoutPosition(
           id,
           "comment",
           pos,
           expansionState,
+          outputHeight,
           justAdded
         );
 
