@@ -36,6 +36,9 @@ export class ComponentSelectorOverlay extends LitElement {
   @property()
   graphStore: MutableGraphStore | null = null;
 
+  @property({ reflect: true })
+  detached = false;
+
   @property()
   showExperimentalComponents = false;
 
@@ -77,6 +80,7 @@ export class ComponentSelectorOverlay extends LitElement {
     }
 
     header {
+      display: none;
       height: 40px;
       padding: var(--bb-grid-size-3) var(--bb-grid-size-3) var(--bb-grid-size-2)
         var(--bb-grid-size-6);
@@ -85,6 +89,10 @@ export class ComponentSelectorOverlay extends LitElement {
       border-bottom: 1px solid var(--bb-neutral-300);
       font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
         var(--bb-font-family);
+    }
+
+    :host([detached="true"]) header {
+      display: block;
     }
 
     #controls {

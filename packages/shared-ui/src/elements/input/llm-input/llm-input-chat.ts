@@ -13,7 +13,6 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { AllowedLLMContentTypes } from "../../../types/types.js";
-import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
@@ -36,6 +35,7 @@ import type {
   LLMContent,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
+import { repeat } from "lit/directives/repeat.js";
 
 const inlineDataTemplate = { inlineData: { data: "", mimeType: "" } };
 
@@ -295,6 +295,10 @@ export class LLMInputChat extends LitElement {
 
     #value-container {
       min-height: var(--bb-grid-size-9);
+      max-height: max(20svh, 340px);
+      overflow: auto;
+      scrollbar-width: none;
+      scroll-padding-bottom: 30px;
       border: 1px solid var(--bb-neutral-300);
       border-radius: var(--bb-grid-size-5);
       background: var(--bb-neutral-0);
@@ -327,74 +331,40 @@ export class LLMInputChat extends LitElement {
 
     .part {
       position: relative;
-    }
+      padding-right: var(--bb-grid-size-7);
 
-    .part-controls {
-      display: none;
-      position: absolute;
-      top: calc(var(--bb-grid-size-4) * -1 - 2px);
-      right: calc(var(--bb-grid-size-2) * -1);
-      height: var(--bb-grid-size-7);
-      padding: var(--bb-grid-size) var(--bb-grid-size-2);
-      border-radius: var(--bb-grid-size-8);
-      border: 1px solid var(--bb-neutral-300);
-      background: var(--bb-neutral-0);
-    }
+      & .part-controls {
+        display: none;
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        height: var(--bb-grid-size-7);
+        width: var(--bb-grid-size-7);
+        border-radius: var(--bb-grid-size-8);
+        border: 1px solid var(--bb-neutral-300);
+        background: var(--bb-neutral-0);
+      }
 
-    .part:hover .part-controls {
-      display: flex;
-    }
+      &:hover .part-controls {
+        display: flex;
 
-    .part-controls .add-part-after,
-    .part-controls .move-part-up,
-    .part-controls .move-part-down,
-    .part-controls .delete-part {
-      width: 20px;
-      height: 20px;
-      opacity: 0.5;
-      margin-right: var(--bb-grid-size);
-      border: none;
-      border-radius: 0;
-      font-size: 0;
-      cursor: pointer;
-    }
+        & .delete-part {
+          width: 28px;
+          height: 28px;
+          opacity: 0.5;
+          margin: 0;
+          border: none;
+          border-radius: 0;
+          font-size: 0;
+          cursor: pointer;
+          background: var(--bb-icon-delete) center center / 20px 20px no-repeat;
 
-    .part-controls .add-part-after {
-      background: var(--bb-neutral-0) var(--bb-icon-add) center center / 16px
-        16px no-repeat;
-    }
-
-    .part-controls .move-part-up {
-      background: var(--bb-neutral-0) var(--bb-icon-move-up) center center /
-        16px 16px no-repeat;
-    }
-
-    .part-controls .move-part-down {
-      background: var(--bb-neutral-0) var(--bb-icon-move-down) center center /
-        16px 16px no-repeat;
-    }
-
-    .part-controls .delete-part {
-      background: var(--bb-neutral-0) var(--bb-icon-delete) center center / 16px
-        16px no-repeat;
-      margin-right: 0;
-    }
-
-    .part-controls .add-part-after:hover,
-    .part-controls .move-part-up:hover,
-    .part-controls .move-part-down:hover,
-    .part-controls .delete-part:hover,
-    .part-controls .add-part-after:focus,
-    .part-controls .move-part-up:focus,
-    .part-controls .move-part-down:focus,
-    .part-controls .delete-part:focus {
-      opacity: 1;
-    }
-
-    .part-controls .move-part-up[disabled],
-    .part-controls .move-part-down[disabled] {
-      opacity: 0.3;
-      cursor: auto;
+          &:hover,
+          &:focus {
+            opacity: 1;
+          }
+        }
+      }
     }
 
     .value {
@@ -690,6 +660,15 @@ export class LLMInputChat extends LitElement {
 
     if (focusLastPart && this.#lastPartRef.value) {
       this.#lastPartRef.value.focus();
+
+      const lastPart = this.#lastPartRef.value;
+      requestAnimationFrame(() => {
+        lastPart.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+          inline: "end",
+        });
+      });
     }
 
     if (triggerSelectionFlow) {
@@ -884,8 +863,7 @@ export class LLMInputChat extends LitElement {
 
   async #getPartDataAsHTML(
     idx: number,
-    part: InlineDataCapabilityPart | StoredDataCapabilityPart,
-    isLastPart = false
+    part: InlineDataCapabilityPart | StoredDataCapabilityPart
   ) {
     let mimeType;
     let getData: () => Promise<string>;
@@ -911,8 +889,6 @@ export class LLMInputChat extends LitElement {
         return atob(response.inlineData.data);
       };
     }
-
-    console.log(url, mimeType);
 
     switch (mimeType) {
       case "image/png":
@@ -949,7 +925,6 @@ export class LLMInputChat extends LitElement {
         const accept = this.#createAcceptList();
         return html`<label for="part-${idx}"
           ><input
-            ${isLastPart ? ref(this.#lastInputRef) : nothing}
             @input=${(evt: InputEvent) => {
               evt.preventDefault();
               evt.stopImmediatePropagation();
@@ -1143,7 +1118,7 @@ export class LLMInputChat extends LitElement {
           ${this.value &&
           Array.isArray(this.value.parts) &&
           this.value.parts.length
-            ? map(this.value.parts, (part, idx) => {
+            ? repeat(this.value.parts, (part, idx) => {
                 const isLastPart = idx === (this.value?.parts.length || 0) - 1;
 
                 let partClass = "";
@@ -1162,7 +1137,6 @@ export class LLMInputChat extends LitElement {
                       part.text = evt.target.value;
                     }}
                     .value=${part.text.trim()}
-                    ${isLastPart ? ref(this.#lastPartRef) : nothing}
                   ></textarea>`;
                 } else if (isFunctionCallCapabilityPart(part)) {
                   partClass = "function-call";
@@ -1176,14 +1150,14 @@ export class LLMInputChat extends LitElement {
                   partClass = "inline-data";
 
                   value = html`${until(
-                    this.#getPartDataAsHTML(idx, part, isLastPart),
+                    this.#getPartDataAsHTML(idx, part),
                     "Loading..."
                   )}`;
                 } else if (isInlineData(part)) {
                   partClass = "inline-data";
 
                   value = html`${until(
-                    this.#getPartDataAsHTML(idx, part, isLastPart),
+                    this.#getPartDataAsHTML(idx, part),
                     "Loading..."
                   )}`;
                 }
@@ -1191,33 +1165,13 @@ export class LLMInputChat extends LitElement {
                 return html`<div
                   class=${classMap({ part: true, [partClass]: true })}
                 >
-                  <div class="content">
+                  <div
+                    class="content"
+                    ${isLastPart ? ref(this.#lastPartRef) : nothing}
+                  >
                     <span class="value">${value}</span>
                   </div>
                   <div class="part-controls">
-                    <button
-                      class="add-part-after"
-                      @click=${() => this.#addPartAfter(idx)}
-                      title="Add text after"
-                    >
-                      Add text after
-                    </button>
-                    <button
-                      class="move-part-up"
-                      @click=${() => this.#movePartUp(idx)}
-                      ?disabled=${idx === 0}
-                      title="Move up"
-                    >
-                      Move up
-                    </button>
-                    <button
-                      class="move-part-down"
-                      @click=${() => this.#movePartDown(idx)}
-                      ?disabled=${isLastPart}
-                      title="Move down"
-                    >
-                      Move down
-                    </button>
                     <button
                       class="delete-part"
                       @click=${() => this.#deletePart(idx)}

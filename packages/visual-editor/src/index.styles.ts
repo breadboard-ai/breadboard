@@ -47,8 +47,8 @@ export const styles = css`
     height: var(--bb-grid-size-5);
     font-size: 0;
     cursor: pointer;
-    background: transparent var(--bb-icon-data-info-alert) center center / 20px
-      20px no-repeat;
+    background: transparent var(--bb-icon-edit) center center / 20px 20px
+      no-repeat;
     opacity: 0.6;
     border: none;
     transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
@@ -408,6 +408,7 @@ export const styles = css`
     position: fixed;
     right: auto;
     bottom: auto;
+    z-index: 5;
   }
 
   bb-project-listing {

@@ -2615,8 +2615,8 @@ export class Main extends LitElement {
 
             actions.push({
               title: Strings.from("COMMAND_EDIT_PROJECT_INFORMATION"),
-              name: "edit-board-details",
-              icon: "edit-board-details",
+              name: "edit",
+              icon: "edit",
               value: tabId,
             });
 
@@ -3004,27 +3004,6 @@ export class Main extends LitElement {
           </div>
           ${tabControls}
           <button
-            class=${classMap({ active: this.showSettingsOverlay })}
-            id="toggle-settings"
-            @pointerover=${(evt: PointerEvent) => {
-              this.dispatchEvent(
-                new BreadboardUI.Events.ShowTooltipEvent(
-                  Strings.from("COMMAND_EDIT_SETTINGS"),
-                  evt.clientX,
-                  evt.clientY
-                )
-              );
-            }}
-            @pointerout=${() => {
-              this.dispatchEvent(new BreadboardUI.Events.HideTooltipEvent());
-            }}
-            @click=${() => {
-              this.showSettingsOverlay = true;
-            }}
-          >
-            Settings
-          </button>
-          <button
             id="toggle-overflow-menu"
             @pointerover=${(evt: PointerEvent) => {
               this.dispatchEvent(
@@ -3060,6 +3039,27 @@ export class Main extends LitElement {
             }}
           >
             Overflow
+          </button>
+          <button
+            class=${classMap({ active: this.showSettingsOverlay })}
+            id="toggle-settings"
+            @pointerover=${(evt: PointerEvent) => {
+              this.dispatchEvent(
+                new BreadboardUI.Events.ShowTooltipEvent(
+                  Strings.from("COMMAND_EDIT_SETTINGS"),
+                  evt.clientX,
+                  evt.clientY
+                )
+              );
+            }}
+            @pointerout=${() => {
+              this.dispatchEvent(new BreadboardUI.Events.HideTooltipEvent());
+            }}
+            @click=${() => {
+              this.showSettingsOverlay = true;
+            }}
+          >
+            Settings
           </button>
         </div>
       </header>

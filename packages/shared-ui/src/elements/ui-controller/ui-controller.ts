@@ -237,14 +237,8 @@ export class UI extends LitElement {
   }
 
   #handleSideNav(label: string) {
-    if (this.sideNavItem === label) {
-      this.sideNavItem = null;
-      globalThis.localStorage.removeItem(SIDE_NAV_ITEM_KEY);
-    } else {
-      this.sideNavItem = label;
-      globalThis.localStorage.setItem(SIDE_NAV_ITEM_KEY, label);
-    }
-
+    this.sideNavItem = label;
+    globalThis.localStorage.setItem(SIDE_NAV_ITEM_KEY, label);
     this.#setPopoutState(true);
   }
 
@@ -811,7 +805,8 @@ export class UI extends LitElement {
                       events.length - this.#lastEventPosition;
                     return html`<button
                       id="toggle-${item}"
-                      ?disabled=${chosenSideNavItem === item}
+                      ?disabled=${chosenSideNavItem === item &&
+                      this.popoutExpanded}
                       data-count=${item === "console" &&
                       (chosenSideNavItem !== "console" ||
                         !this.popoutExpanded) &&
