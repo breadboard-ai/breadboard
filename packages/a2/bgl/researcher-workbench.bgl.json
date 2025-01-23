@@ -14,7 +14,9 @@
               "title": "Context",
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"The merits of using AI-generated content for making blog posts.\"}]}]",
               "description": ""
@@ -26,8 +28,8 @@
       },
       "metadata": {
         "visual": {
-          "x": -300.00000000000006,
-          "y": -140,
+          "x": -280,
+          "y": -80,
           "collapsed": "expanded"
         },
         "logLevel": "debug"
@@ -44,7 +46,9 @@
               "title": "Context",
               "items": {
                 "type": "object",
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "null"
             }
@@ -55,8 +59,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 360.00000000000017,
-          "y": -19.999999999999886,
+          "x": 360.00000000000034,
+          "y": -19.999999999999716,
           "collapsed": "expanded"
         }
       }
@@ -67,7 +71,7 @@
       "metadata": {
         "visual": {
           "x": 40,
-          "y": -40,
+          "y": -39.999999999999886,
           "collapsed": "expanded"
         },
         "title": "Researcher",
@@ -96,8 +100,8 @@
       "type": "input",
       "metadata": {
         "visual": {
-          "x": -300,
-          "y": 0,
+          "x": -280,
+          "y": 280,
           "collapsed": "expanded"
         },
         "title": "Input",
@@ -112,7 +116,9 @@
               "items": {
                 "type": "object",
                 "examples": [],
-                "behavior": ["llm-content"]
+                "behavior": [
+                  "llm-content"
+                ]
               },
               "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"- The basic overview of the topic\\n- Historical perspective, if applicable\\n- Current opinions on the topic, if applicable\\n- Any controversies that might be surrounding the topic\\n- Any future developments around the topic\"}]}]",
               "description": ""
