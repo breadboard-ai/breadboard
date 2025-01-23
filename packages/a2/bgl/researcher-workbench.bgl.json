@@ -28,8 +28,8 @@
       },
       "metadata": {
         "visual": {
-          "x": -300,
-          "y": -140,
+          "x": -280,
+          "y": -80,
           "collapsed": "expanded"
         },
         "logLevel": "debug"
@@ -59,8 +59,8 @@
       },
       "metadata": {
         "visual": {
-          "x": 360.0000000000001,
-          "y": -19.999999999999886,
+          "x": 360.00000000000034,
+          "y": -19.999999999999716,
           "collapsed": "expanded"
         }
       }
@@ -70,8 +70,8 @@
       "type": "file://bgl/a2.bgl.json#module:researcher",
       "metadata": {
         "visual": {
-          "x": 40.000000000000114,
-          "y": -40,
+          "x": 40,
+          "y": -39.999999999999886,
           "collapsed": "expanded"
         },
         "title": "Researcher",
@@ -86,6 +86,12 @@
             }
           ]
         },
+        "tools": [
+          "https://breadboard.live/boards/@dimitri/custom-google-search.bgl.json",
+          "https://breadboard.live/boards/@dimitri/wikipedia.bgl.json",
+          "https://breadboard.live/boards/@dimitri/tool-page-as-markdown.bgl.json",
+          "https://breadboard.live/boards/@dimitri/tool-maps-text-search.bgl.json"
+        ],
         "summarize": true
       }
     },
@@ -94,8 +100,8 @@
       "type": "input",
       "metadata": {
         "visual": {
-          "x": -300,
-          "y": 0,
+          "x": -280,
+          "y": 280,
           "collapsed": "expanded"
         },
         "title": "Input",

@@ -8,8 +8,8 @@
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": 0,
-          "y": -219.9999999999999,
+          "x": 1.1368683772161603e-13,
+          "y": -220,
           "collapsed": "expanded"
         },
         "title": "Outline Writer",
@@ -32,8 +32,8 @@
       "type": "file://bgl/a2.bgl.json#module:researcher",
       "metadata": {
         "visual": {
-          "x": -299.99999999999994,
-          "y": -220.00000000000034,
+          "x": -320,
+          "y": -220,
           "collapsed": "expanded"
         },
         "title": "Researcher",
@@ -48,7 +48,13 @@
             }
           ]
         },
-        "summarize": true
+        "summarize": true,
+        "tools": [
+          "https://breadboard.live/boards/@dimitri/custom-google-search.bgl.json",
+          "https://breadboard.live/boards/@dimitri/wikipedia.bgl.json",
+          "https://breadboard.live/boards/@dimitri/tool-page-as-markdown.bgl.json",
+          "https://breadboard.live/boards/@dimitri/tool-maps-text-search.bgl.json"
+        ]
       }
     },
     {
@@ -57,7 +63,7 @@
       "metadata": {
         "visual": {
           "x": 320,
-          "y": -100.00000000000011,
+          "y": -100.00000000000023,
           "collapsed": "expanded"
         },
         "title": "Post Writer",
@@ -103,8 +109,8 @@
       "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
       "metadata": {
         "visual": {
-          "x": -599.9999999999998,
-          "y": -220,
+          "x": -640,
+          "y": -320,
           "collapsed": "expanded"
         },
         "title": "Text",
@@ -126,8 +132,8 @@
       "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
       "metadata": {
         "visual": {
-          "x": 660,
-          "y": -220,
+          "x": 660.0000000000001,
+          "y": -220.00000000000006,
           "collapsed": "expanded"
         },
         "title": "Text",

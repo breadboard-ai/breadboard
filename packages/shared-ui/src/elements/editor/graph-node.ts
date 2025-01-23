@@ -1124,7 +1124,6 @@ export class GraphNode extends PIXI.Container {
 
       if (
         !isConfigurablePort(inPort) &&
-        inPort.status !== PortStatus.Connected &&
         !(
           isLLMContentBehavior(inPort.schema) ||
           isLLMContentArrayBehavior(inPort.schema)
