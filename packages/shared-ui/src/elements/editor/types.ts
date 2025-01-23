@@ -23,6 +23,7 @@ export enum GRAPH_OPERATIONS {
   GRAPH_COMMENT_EDIT_REQUESTED = "graphcommenteditrequested",
   GRAPH_COMMENT_TOGGLE_SELECTED = "graphcommenttoggleselected",
   GRAPH_NODE_MOVED = "graphnodemoved",
+  GRAPH_NODE_RESIZED = "graphnoderesized",
   GRAPH_INITIAL_DRAW = "graphinitialdraw",
   GRAPH_DRAW = "graphdraw",
   GRAPH_NODE_EDIT = "graphnodeedit",
@@ -70,6 +71,7 @@ export type LayoutInfo = {
   y: number;
   type: "comment" | "node";
   expansionState: ComponentExpansionState;
+  outputHeight: number;
   justAdded?: boolean;
 };
 
@@ -77,6 +79,7 @@ export type VisualMetadata = {
   x: number;
   y: number;
   collapsed: ComponentExpansionState | boolean;
+  outputHeight: number;
 };
 
 export interface GraphOpts {

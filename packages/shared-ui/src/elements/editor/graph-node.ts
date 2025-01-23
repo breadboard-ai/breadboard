@@ -202,18 +202,6 @@ export class GraphNode extends PIXI.Container {
       let resizing = false;
       let resizeStart = 0;
       let outputSizeStart = 0;
-      const setOutputHeight = (outputHeight: number) => {
-        if (outputHeight < MIN_OUTPUT_HEIGHT) {
-          outputHeight = MIN_OUTPUT_HEIGHT;
-        }
-
-        if (outputHeight === this.#outputHeight) {
-          return;
-        }
-
-        this.#outputHeight = outputHeight;
-        this.#isDirty = true;
-      };
 
       this.#grabHandle.addEventListener("pointerdown", (evt) => {
         resizing = true;
@@ -230,7 +218,8 @@ export class GraphNode extends PIXI.Container {
           Math.round(
             (evt.pageY - resizeStart) / this.worldTransform.a / GRID_SIZE
           ) * GRID_SIZE;
-        setOutputHeight(outputSizeStart + delta);
+        this.outputHeight = outputSizeStart + delta;
+        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_RESIZED, false);
       });
 
       const stopResize = (evt: PIXI.FederatedPointerEvent) => {
@@ -242,8 +231,9 @@ export class GraphNode extends PIXI.Container {
           Math.round(
             (evt.pageY - resizeStart) / this.worldTransform.a / GRID_SIZE
           ) * GRID_SIZE;
-        setOutputHeight(outputSizeStart + delta);
+        this.outputHeight = outputSizeStart + delta;
         resizing = false;
+        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_RESIZED, true);
       };
       this.#grabHandle.addEventListener("pointerup", stopResize);
       this.#grabHandle.addEventListener("pointerupoutside", stopResize);
@@ -516,6 +506,23 @@ export class GraphNode extends PIXI.Container {
   set title(title: string) {
     this.#title = title;
     this.#isDirty = true;
+  }
+
+  set outputHeight(outputHeight: number) {
+    if (outputHeight < MIN_OUTPUT_HEIGHT) {
+      outputHeight = MIN_OUTPUT_HEIGHT;
+    }
+
+    if (outputHeight === this.#outputHeight) {
+      return;
+    }
+
+    this.#outputHeight = outputHeight;
+    this.#isDirty = true;
+  }
+
+  get outputHeight() {
+    return this.#outputHeight;
   }
 
   get borderColor() {

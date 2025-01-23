@@ -2203,6 +2203,10 @@ export class GraphRenderer extends LitElement {
       this.#emitGraphVisualInformation();
     });
 
+    graph.on(GRAPH_OPERATIONS.GRAPH_NODE_RESIZED, () => {
+      this.#emitGraphVisualInformation();
+    });
+
     graph.on(
       GRAPH_OPERATIONS.GRAPH_SELECTION_MOVE,
       (

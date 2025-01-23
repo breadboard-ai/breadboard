@@ -149,6 +149,7 @@ export class GraphComment extends PIXI.Container {
   #hitAreaData: LinkData[] = [];
   #hitAreas = new PIXI.Container();
   #lastClickTime = 0;
+  #outputHeight = 0;
 
   expansionState: ComponentExpansionState = "expanded";
   readOnly = false;
@@ -319,6 +320,16 @@ export class GraphComment extends PIXI.Container {
 
     this.addEventListener("pointerupoutside", onPointerUp);
     this.addEventListener("pointerup", onPointerUp);
+  }
+
+  // Not currently used, but here for parity with the GraphNode
+  set outputHeight(outputHeight: number) {
+    this.#outputHeight = outputHeight;
+    this.#isDirty = true;
+  }
+
+  get outputHeight() {
+    return this.#outputHeight;
   }
 
   set selected(selected: boolean) {
