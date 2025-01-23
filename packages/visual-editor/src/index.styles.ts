@@ -194,32 +194,32 @@ export const styles = css`
     width: 100%;
     height: 100%;
     padding: 0 var(--bb-grid-size-2) 0 0;
-  }
 
-  #logo {
-    font-size: 0;
-    border: none;
-    width: 24px;
-    height: 24px;
-    margin: 0 var(--bb-grid-size-4);
-    background: var(--logo-svg) center center / 24px 24px no-repeat;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    position: relative;
-  }
+    & #tab-info {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      height: 100%;
 
-  #logo:not([disabled]) {
-    cursor: pointer;
-  }
+      & #logo {
+        font-size: 0;
+        border: none;
+        width: 24px;
+        height: 24px;
+        margin: 0 var(--bb-grid-size-4);
+        background: var(--logo-svg) center center / 24px 24px no-repeat;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        position: relative;
 
-  #tab-info {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    height: 100%;
+        &:not([disabled]) {
+          cursor: pointer;
+        }
+      }
+    }
 
-    & .toggle {
+    & #tab-toggle {
       flex: 1;
       display: flex;
       align-items: center;
@@ -271,6 +271,13 @@ export const styles = css`
           color: var(--bb-neutral-0);
         }
       }
+    }
+
+    & #tab-controls {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
     }
   }
 

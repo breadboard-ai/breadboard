@@ -39,7 +39,22 @@ const themeAssets: [string, string][] = [
   ["runModule", `/third_party/icons/graph/extension${themeSuffix}-48px.svg`],
   ["secrets", `/third_party/icons/graph/secrets${themeSuffix}-48px.svg`],
   ["smart-toy", `/third_party/icons/graph/smart-toy${themeSuffix}-48px.svg`],
-  ["generative", `/third_party/icons/graph/generative${themeSuffix}-48px.svg`],
+  [
+    "generative",
+    `/third_party/icons/graph/generative/generative${themeSuffix}-48px.svg`,
+  ],
+  [
+    "generative-audio",
+    `/third_party/icons/graph/generative/generative-audio${themeSuffix}-48px.svg`,
+  ],
+  [
+    "generative-image",
+    `/third_party/icons/graph/generative/generative-image${themeSuffix}-48px.svg`,
+  ],
+  [
+    "generative-text",
+    `/third_party/icons/graph/generative/generative-text${themeSuffix}-48px.svg`,
+  ],
   ["urlTemplate", `/third_party/icons/graph/http${themeSuffix}-48px.svg`],
   ["value", `/third_party/icons/graph/value${themeSuffix}-48px.svg`],
 ];

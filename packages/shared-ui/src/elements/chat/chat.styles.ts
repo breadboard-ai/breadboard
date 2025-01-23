@@ -27,7 +27,7 @@ export const styles = css`
     --output-border-width: 1px;
     --output-border-color: var(--bb-neutral-300);
     --output-border-radius: var(--bb-grid-size-2);
-    --output-padding: var(--bb-grid-size-2);
+    --output-padding: var(--bb-grid-size-6);
   }
 
   #content {
@@ -136,11 +136,22 @@ export const styles = css`
         &.input,
         &.output,
         &.error {
-          padding: var(--bb-grid-size-4) var(--bb-grid-size-4) 0
+          padding: var(--bb-grid-size-2) var(--bb-grid-size-4) 0
             var(--bb-grid-size-4);
+
+          & h1 {
+            margin: 0 0 var(--bb-grid-size-2) 0;
+            font: 500 var(--bb-label-medium) /
+              var(--bb-label-line-height-medium) var(--bb-font-family);
+          }
 
           & .model-output {
             width: 100%;
+            overflow: auto;
+
+            & p:last-of-type {
+              margin-bottom: var(--bb-grid-size-2);
+            }
 
             & .icon::after {
               background-image: var(--bb-icon-smart-toy);
@@ -299,6 +310,11 @@ export const styles = css`
 
       & .value {
         color: var(--bb-neutral-900);
+        width: 100%;
+
+        & bb-llm-output:only-child {
+          margin-top: var(--bb-grid-size-4);
+        }
       }
 
       & .title {

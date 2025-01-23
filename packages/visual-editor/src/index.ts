@@ -159,7 +159,7 @@ export class Main extends LitElement {
   showNewWorkspaceItemOverlay = false;
 
   @state()
-  view: "deploy" | "create" = "create";
+  view: "deploy" | "create" = "deploy";
 
   @state()
   showBoardOverflowMenu = false;
@@ -2937,130 +2937,140 @@ export class Main extends LitElement {
 
         const ui = html`<header>
           <div id="header-bar" data-active=${this.tab ? "true" : nothing} ?inert=${showingOverlay}>
-          <button id="logo" @click=${() => {
-            if (!this.tab) {
-              return;
-            }
+            <div id="tab-info">
+              <button id="logo" @click=${() => {
+                if (!this.tab) {
+                  return;
+                }
 
-            this.#runtime.board.closeTab(this.tab.id);
-          }}
-              ?disabled=${this.tab === null}>
-            ${Strings.from("APP_NAME")}
-          </button>
-          <div id="tab-info">
+                this.#runtime.board.closeTab(this.tab.id);
+              }}
+                  ?disabled=${this.tab === null}>
+                ${Strings.from("APP_NAME")}
+              </button>
 
-            ${
-              this.tab
-                ? html` <span class="tab-title">${this.tab.graph.title}</span>
-                    <button
-                      id="tab-edit"
-                      class=${classMap({
-                        "can-save": canSave,
-                      })}
-                      @click=${(evt: PointerEvent) => {
-                        if (!this.tab || !canSave) {
-                          return;
-                        }
+              ${
+                this.tab
+                  ? html` <span class="tab-title">${this.tab.graph.title}</span>
+                      <button
+                        id="tab-edit"
+                        class=${classMap({
+                          "can-save": canSave,
+                        })}
+                        @click=${(evt: PointerEvent) => {
+                          if (!this.tab || !canSave) {
+                            return;
+                          }
 
-                        this.#showBoardEditOverlay(
-                          this.tab,
-                          evt.clientX,
-                          evt.clientY,
-                          this.tab.subGraphId,
-                          null
-                        );
+                          this.#showBoardEditOverlay(
+                            this.tab,
+                            evt.clientX,
+                            evt.clientY,
+                            this.tab.subGraphId,
+                            null
+                          );
+                        }}
+                      >
+                        Edit
+                      </button>
+
+                      <span
+                        class=${classMap({
+                          "save-status": true,
+                          "can-save": canSave,
+                          remote,
+                          [saveStatus]: true,
+                          readonly,
+                        })}
+                      >
+                        ${saveTitle}
+                      </span>`
+                  : nothing
+              }
+
+            </div>
+            <div id="tab-toggle">
+              ${
+                this.tab && this.#runtime.board.canPreview(this.tab.id)
+                  ? html`<button
+                      class=${classMap({ [this.view]: true })}
+                      @click=${() => {
+                        this.view =
+                          this.view === "create" ? "deploy" : "create";
                       }}
                     >
-                      Edit
-                    </button>
+                      Toggle View
+                    </button>`
+                  : nothing
+              }
+            </div>
+            <div id="tab-controls">
 
-                    <span
-                      class=${classMap({
-                        "save-status": true,
-                        "can-save": canSave,
-                        remote,
-                        [saveStatus]: true,
-                        readonly,
-                      })}
-                    >
-                      ${saveTitle}
-                    </span>`
-                : nothing
-            }
-            <span class="toggle">
-            ${
-              this.tab && this.#runtime.board.canPreview(this.tab.id)
-                ? html`<button
-                    class=${classMap({ [this.view]: true })}
-                    @click=${() => {
-                      this.view = this.view === "create" ? "deploy" : "create";
-                    }}
-                  >
-                    Toggle View
-                  </button>`
-                : nothing
-            }
-            </span>
+              ${tabControls}
+              <button
+                id="toggle-overflow-menu"
+                @pointerover=${(evt: PointerEvent) => {
+                  this.dispatchEvent(
+                    new BreadboardUI.Events.ShowTooltipEvent(
+                      Strings.from("COMMAND_ADDITIONAL_ITEMS"),
+                      evt.clientX,
+                      evt.clientY
+                    )
+                  );
+                }}
+                @pointerout=${() => {
+                  this.dispatchEvent(
+                    new BreadboardUI.Events.HideTooltipEvent()
+                  );
+                }}
+                @click=${(evt: PointerEvent) => {
+                  if (!(evt.target instanceof HTMLButtonElement)) {
+                    return;
+                  }
+
+                  if (!this.tab) {
+                    return;
+                  }
+
+                  const btnBounds = evt.target.getBoundingClientRect();
+                  const x = btnBounds.x + btnBounds.width - 205;
+                  const y = btnBounds.y + btnBounds.height;
+
+                  this.#boardOverflowMenuConfiguration = {
+                    tabId: this.tab.id,
+                    x,
+                    y,
+                  };
+                  this.showBoardOverflowMenu = true;
+                }}
+              >
+                Overflow
+              </button>
+              <button
+                class=${classMap({ active: this.showSettingsOverlay })}
+                id="toggle-settings"
+                @pointerover=${(evt: PointerEvent) => {
+                  this.dispatchEvent(
+                    new BreadboardUI.Events.ShowTooltipEvent(
+                      Strings.from("COMMAND_EDIT_SETTINGS"),
+                      evt.clientX,
+                      evt.clientY
+                    )
+                  );
+                }}
+                @pointerout=${() => {
+                  this.dispatchEvent(
+                    new BreadboardUI.Events.HideTooltipEvent()
+                  );
+                }}
+                @click=${() => {
+                  this.showSettingsOverlay = true;
+                }}
+              >
+                Settings
+              </button>
+            </div>
           </div>
-          ${tabControls}
-          <button
-            id="toggle-overflow-menu"
-            @pointerover=${(evt: PointerEvent) => {
-              this.dispatchEvent(
-                new BreadboardUI.Events.ShowTooltipEvent(
-                  Strings.from("COMMAND_ADDITIONAL_ITEMS"),
-                  evt.clientX,
-                  evt.clientY
-                )
-              );
-            }}
-            @pointerout=${() => {
-              this.dispatchEvent(new BreadboardUI.Events.HideTooltipEvent());
-            }}
-            @click=${(evt: PointerEvent) => {
-              if (!(evt.target instanceof HTMLButtonElement)) {
-                return;
-              }
-
-              if (!this.tab) {
-                return;
-              }
-
-              const btnBounds = evt.target.getBoundingClientRect();
-              const x = btnBounds.x + btnBounds.width - 205;
-              const y = btnBounds.y + btnBounds.height;
-
-              this.#boardOverflowMenuConfiguration = {
-                tabId: this.tab.id,
-                x,
-                y,
-              };
-              this.showBoardOverflowMenu = true;
-            }}
-          >
-            Overflow
-          </button>
-          <button
-            class=${classMap({ active: this.showSettingsOverlay })}
-            id="toggle-settings"
-            @pointerover=${(evt: PointerEvent) => {
-              this.dispatchEvent(
-                new BreadboardUI.Events.ShowTooltipEvent(
-                  Strings.from("COMMAND_EDIT_SETTINGS"),
-                  evt.clientX,
-                  evt.clientY
-                )
-              );
-            }}
-            @pointerout=${() => {
-              this.dispatchEvent(new BreadboardUI.Events.HideTooltipEvent());
-            }}
-            @click=${() => {
-              this.showSettingsOverlay = true;
-            }}
-          >
-            Settings
-          </button>
         </div>
       </header>
       <div id="content" ?inert=${showingOverlay}>

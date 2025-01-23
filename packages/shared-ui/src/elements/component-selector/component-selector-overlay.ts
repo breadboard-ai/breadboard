@@ -210,6 +210,26 @@ export class ComponentSelectorOverlay extends LitElement {
                 no-repeat;
             }
 
+            &.generative {
+              background: var(--bb-add-icon-generative) top left / 20px 20px
+                no-repeat;
+            }
+
+            &.generative-audio {
+              background: var(--bb-add-icon-generative-audio) top left / 20px
+                20px no-repeat;
+            }
+
+            &.generative-text {
+              background: var(--bb-add-icon-generative-text) top left / 20px
+                20px no-repeat;
+            }
+
+            &.generative-image {
+              background: var(--bb-add-icon-generative-image) top left / 20px
+                20px no-repeat;
+            }
+
             &.human {
               background: var(--bb-icon-human) top left / 20px 20px no-repeat;
             }
