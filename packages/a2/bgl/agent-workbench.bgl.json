@@ -8,7 +8,7 @@
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": 0,
+          "x": 1.1368683772161603e-13,
           "y": -219.9999999999999,
           "collapsed": "expanded"
         },
@@ -32,7 +32,7 @@
       "type": "file://bgl/a2.bgl.json#module:researcher",
       "metadata": {
         "visual": {
-          "x": -299.99999999999994,
+          "x": -299.9999999999999,
           "y": -220.00000000000034,
           "collapsed": "expanded"
         },
@@ -48,7 +48,13 @@
             }
           ]
         },
-        "summarize": true
+        "summarize": true,
+        "tools": [
+          "https://breadboard.live/boards/@dimitri/custom-google-search.bgl.json",
+          "https://breadboard.live/boards/@dimitri/wikipedia.bgl.json",
+          "https://breadboard.live/boards/@dimitri/tool-page-as-markdown.bgl.json",
+          "https://breadboard.live/boards/@dimitri/tool-maps-text-search.bgl.json"
+        ]
       }
     },
     {
@@ -103,7 +109,7 @@
       "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
       "metadata": {
         "visual": {
-          "x": -599.9999999999998,
+          "x": -640,
           "y": -220,
           "collapsed": "expanded"
         },

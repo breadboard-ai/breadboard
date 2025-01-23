@@ -14,9 +14,7 @@
               "title": "Context",
               "items": {
                 "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
+                "behavior": ["llm-content"]
               },
               "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"The merits of using AI-generated content for making blog posts.\"}]}]",
               "description": ""
@@ -28,7 +26,7 @@
       },
       "metadata": {
         "visual": {
-          "x": -300,
+          "x": -300.00000000000006,
           "y": -140,
           "collapsed": "expanded"
         },
@@ -46,9 +44,7 @@
               "title": "Context",
               "items": {
                 "type": "object",
-                "behavior": [
-                  "llm-content"
-                ]
+                "behavior": ["llm-content"]
               },
               "default": "null"
             }
@@ -59,7 +55,7 @@
       },
       "metadata": {
         "visual": {
-          "x": 360.0000000000001,
+          "x": 360.00000000000017,
           "y": -19.999999999999886,
           "collapsed": "expanded"
         }
@@ -70,7 +66,7 @@
       "type": "file://bgl/a2.bgl.json#module:researcher",
       "metadata": {
         "visual": {
-          "x": 40.000000000000114,
+          "x": 40,
           "y": -40,
           "collapsed": "expanded"
         },
@@ -86,6 +82,12 @@
             }
           ]
         },
+        "tools": [
+          "https://breadboard.live/boards/@dimitri/custom-google-search.bgl.json",
+          "https://breadboard.live/boards/@dimitri/wikipedia.bgl.json",
+          "https://breadboard.live/boards/@dimitri/tool-page-as-markdown.bgl.json",
+          "https://breadboard.live/boards/@dimitri/tool-maps-text-search.bgl.json"
+        ],
         "summarize": true
       }
     },
@@ -110,9 +112,7 @@
               "items": {
                 "type": "object",
                 "examples": [],
-                "behavior": [
-                  "llm-content"
-                ]
+                "behavior": ["llm-content"]
               },
               "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"- The basic overview of the topic\\n- Historical perspective, if applicable\\n- Current opinions on the topic, if applicable\\n- Any controversies that might be surrounding the topic\\n- Any future developments around the topic\"}]}]",
               "description": ""
