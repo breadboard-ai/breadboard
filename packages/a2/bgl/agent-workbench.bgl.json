@@ -9,8 +9,9 @@
       "metadata": {
         "visual": {
           "x": 1.1368683772161603e-13,
-          "y": -220,
-          "collapsed": "expanded"
+          "y": -220.0000000000001,
+          "collapsed": "expanded",
+          "outputHeight": 44
         },
         "title": "Outline Writer",
         "logLevel": "debug"
@@ -32,9 +33,10 @@
       "type": "file://bgl/a2.bgl.json#module:researcher",
       "metadata": {
         "visual": {
-          "x": -320,
-          "y": -220,
-          "collapsed": "expanded"
+          "x": -320.00000000000006,
+          "y": -220.0000000000001,
+          "collapsed": "expanded",
+          "outputHeight": 44
         },
         "title": "Researcher",
         "logLevel": "debug"
@@ -63,8 +65,9 @@
       "metadata": {
         "visual": {
           "x": 320,
-          "y": -100.00000000000023,
-          "collapsed": "expanded"
+          "y": -100.00000000000034,
+          "collapsed": "expanded",
+          "outputHeight": 44
         },
         "title": "Post Writer",
         "logLevel": "debug"
@@ -88,7 +91,8 @@
         "visual": {
           "x": 320,
           "y": -360.00000000000034,
-          "collapsed": "expanded"
+          "collapsed": "expanded",
+          "outputHeight": 124
         },
         "title": "Banner Image Generator",
         "logLevel": "debug"
@@ -110,8 +114,9 @@
       "metadata": {
         "visual": {
           "x": -640,
-          "y": -320,
-          "collapsed": "expanded"
+          "y": -320.0000000000001,
+          "collapsed": "expanded",
+          "outputHeight": 44
         },
         "title": "Text",
         "logLevel": "info"
@@ -132,9 +137,10 @@
       "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
       "metadata": {
         "visual": {
-          "x": 660.0000000000001,
-          "y": -220.00000000000006,
-          "collapsed": "expanded"
+          "x": 660,
+          "y": -360,
+          "collapsed": "expanded",
+          "outputHeight": 304
         },
         "title": "Text",
         "logLevel": "info"

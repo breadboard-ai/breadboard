@@ -317,8 +317,6 @@ export class UI extends LitElement {
           return;
         }
 
-        console.log(descriptor.id, outputs);
-
         this.dispatchEvent(
           new InputEnterEvent(
             descriptor.id,
@@ -538,7 +536,7 @@ export class UI extends LitElement {
           .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
           @bbrun=${() => {
             this.#setPopoutState(true);
-            this.sideNavItem = "console";
+            this.sideNavItem = "chat";
           }}
         ></bb-editor>`;
       }
@@ -567,7 +565,7 @@ export class UI extends LitElement {
         .graphStore=${this.graphStore}
         @bbrun=${() => {
           this.#setPopoutState(true);
-          this.sideNavItem = "console";
+          this.sideNavItem = "chat";
         }}
       ></bb-module-editor>`;
     }

@@ -98,6 +98,9 @@ export class Chat extends LitElement {
     });
 
     return html`<section class="output">
+      ${node.title() !== node.type().type()
+        ? html`<h1 class="">${node.title()}</h1>`
+        : nothing}
       ${portList.map((port) => {
         const nodeValue = port.value;
         let value: HTMLTemplateResult | symbol = nothing;
@@ -161,7 +164,6 @@ export class Chat extends LitElement {
 
         return html` <section class="model-output">
           <div>
-            <h2 class="title"><span class="icon"></span>${port.title}</h2>
             <div class="value">${value}</div>
           </div>
         </section>`;
