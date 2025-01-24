@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Sandbox } from "@breadboard-ai/jsandbox";
 import {
   GraphDescriptor,
   GraphIdentifier,
@@ -15,34 +16,33 @@ import {
   EditableGraphOptions,
   Result,
 } from "../editor/types.js";
+import { createLoader } from "../loader/index.js";
+import { getGraphUrl, getGraphUrlComponents } from "../loader/loader.js";
 import {
   GraphLoader,
   GraphLoaderContext,
   GraphLoaderResult,
 } from "../loader/types.js";
+import { Kit, NodeHandlerContext, NodeHandlerMetadata } from "../types.js";
+import { graphUrlLike } from "../utils/graph-url-like.js";
+import { hash } from "../utils/hash.js";
+import { SnapshotUpdater } from "../utils/snapshot-updater.js";
+import { UpdateEvent } from "./graph/event.js";
+import { createBuiltInKit } from "./graph/kits.js";
 import { MutableGraphImpl } from "./graph/mutable-graph.js";
 import {
-  GraphStoreEntry,
+  AddResult,
   GraphStoreArgs,
+  GraphStoreEntry,
   GraphStoreEventTarget,
   InspectableGraph,
   InspectableGraphOptions,
   MainGraphIdentifier,
   MutableGraph,
   MutableGraphStore,
-  AddResult,
 } from "./types.js";
-import { hash } from "../utils/hash.js";
-import { Kit, NodeHandlerContext, NodeHandlerMetadata } from "../types.js";
-import { Sandbox } from "@breadboard-ai/jsandbox";
-import { createLoader } from "../loader/index.js";
-import { SnapshotUpdater } from "../utils/snapshot-updater.js";
-import { UpdateEvent } from "./graph/event.js";
-import { createBuiltInKit } from "./graph/kits.js";
-import { graphUrlLike } from "../utils/graph-url-like.js";
-import { getGraphUrl, getGraphUrlComponents } from "../loader/loader.js";
 
-export { GraphStore, makeTerribleOptions, contextFromMutableGraph };
+export { contextFromMutableGraph, GraphStore, makeTerribleOptions };
 
 function contextFromMutableGraph(mutable: MutableGraph): NodeHandlerContext {
   const store = mutable.store;
@@ -93,12 +93,41 @@ class GraphStore
     this.#legacyKits = this.#populateLegacyKits(args.kits);
   }
 
+  getEntryByDescriptor(
+    descriptor: GraphDescriptor,
+    graphId: GraphIdentifier
+  ): GraphStoreEntry | undefined {
+    const getting = this.getOrAdd(descriptor, false);
+    if (!getting.success) {
+      return;
+    }
+    const mutable = getting.result;
+    const mainGraphMetadata = filterEmptyValues({
+      title: descriptor.title,
+      description: descriptor.description,
+      icon: descriptor.metadata?.icon,
+      url: descriptor.url,
+      tags: descriptor.metadata?.tags,
+      help: descriptor.metadata?.help,
+      id: mutable.id,
+    });
+    let metadata;
+    if (graphId) {
+      metadata = entryFromExport(mutable, `#${graphId}`, mutable.id);
+    } else {
+      metadata = mainGraphMetadata;
+    }
+    return {
+      mainGraph: mainGraphMetadata,
+      ...metadata,
+    };
+  }
+
   graphs(): GraphStoreEntry[] {
     const graphs = [...this.#mutables.entries()]
       .flatMap(([mainGraphId, snapshot]) => {
         const mutable = snapshot.current();
         const descriptor = mutable.graph;
-        // TODO: Support exports and main module
         const mainGraphMetadata = filterEmptyValues({
           title: descriptor.title,
           description: descriptor.description,

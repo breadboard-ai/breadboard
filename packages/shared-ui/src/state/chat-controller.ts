@@ -4,22 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GraphStartProbeData, OutputValues } from "@breadboard-ai/types";
+import { GraphStoreEntry, MutableGraphStore } from "@google-labs/breadboard";
 import {
   HarnessRunner,
   RunErrorEvent,
-  RunGraphEndEvent,
   RunGraphStartEvent,
   RunInputEvent,
   RunNodeStartEvent,
   RunOutputEvent,
 } from "@google-labs/breadboard/harness";
 import { ChatConversationState, ChatState, ChatStatus } from "./types";
-import { GraphStartProbeData, OutputValues } from "@breadboard-ai/types";
-import {
-  InspectableGraph,
-  MutableGraph,
-  MutableGraphStore,
-} from "@google-labs/breadboard";
 
 export { ChatController };
 
@@ -28,7 +23,6 @@ class ChatController {
   #conversation: ChatConversationState[] = [];
   #state: ChatState = this.#initialChatState();
   #stale: boolean = false;
-  #currentNode: string | null = null;
   #currentInput: RunInputEvent | null = null;
   #graphStack: GraphStartProbeData[] = [];
 
@@ -39,7 +33,6 @@ class ChatController {
     if (!runner) return;
 
     runner.addEventListener("abort", () => {
-      this.#currentNode = null;
       this.#currentInput = null;
       this.#status = "stopped";
     });
@@ -54,12 +47,10 @@ class ChatController {
       this.#status = "running";
     });
     runner.addEventListener("end", () => {
-      this.#currentNode = null;
       this.#status = "stopped";
     });
     runner.addEventListener("graphstart", this.#onGraphstart.bind(this));
     runner.addEventListener("graphend", this.#onGraphend.bind(this));
-    runner.addEventListener("nodestart", this.#onNodestart.bind(this));
     runner.addEventListener("input", this.#onInput.bind(this));
     runner.addEventListener("output", this.#onOutput.bind(this));
     runner.addEventListener("error", this.#onError.bind(this));
@@ -116,15 +107,6 @@ class ChatController {
     this.#graphStack.shift();
   }
 
-  #onNodestart(event: RunNodeStartEvent) {
-    const {
-      data: { path },
-    } = event;
-    if (path.length > 1) return;
-
-    this.#currentNode = event.data.node.type;
-  }
-
   #onInput(event: RunInputEvent) {
     this.#currentInput = event;
   }
@@ -135,12 +117,7 @@ class ChatController {
   }
 
   #onOutput(event: RunOutputEvent) {
-    console.log(
-      "ADDING OUTPUT",
-      event,
-      this.#currentNode,
-      this.#currentGraph()
-    );
+    console.log("ADDING OUTPUT", event, this.#currentGraph());
     this.#appendTurn({
       role: "system",
       icon: "generate",
@@ -151,17 +128,22 @@ class ChatController {
 
   #onError(_event: RunErrorEvent) {
     this.#currentInput = null;
-    this.#currentNode = null;
   }
 
-  #currentGraph(): MutableGraph | undefined {
-    const data = this.#graphStack.find((graphData) => !graphData.graph.virtual);
+  #currentGraph(): GraphStoreEntry | undefined {
+    const data = this.#graphStack.find(
+      (graphData) =>
+        !graphData.graph.virtual && !graphData.graph.url?.startsWith("module:")
+    );
     if (!data) return;
 
     const url = data.graph.url;
     if (!url) return;
 
-    const addResult = this.graphStore?.addByURL(url, [], {});
-    return addResult?.mutable;
+    const entry = this.graphStore?.getEntryByDescriptor(
+      data.graph,
+      data.graphId
+    );
+    return entry;
   }
 }
