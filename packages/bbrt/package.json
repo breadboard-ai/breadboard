@@ -143,7 +143,7 @@
     "lit": "^3.2.1",
     "micromark": "^4.0.1",
     "micromark-extension-gfm": "^3.0.0",
-    "signal-polyfill": "^0.2.1",
+    "signal-polyfill": "^0.2.2",
     "signal-utils": "^0.21.1"
   },
   "devDependencies": {
