@@ -633,6 +633,7 @@ export class Main extends LitElement {
                 this.#runtime.run.create(
                   this.tab,
                   evt.topGraphObserver,
+                  evt.chatController,
                   evt.runObserver
                 );
               }
@@ -3108,6 +3109,7 @@ export class Main extends LitElement {
               .graphTopologyUpdateId=${this.graphTopologyUpdateId}
               .graphStoreUpdateId=${this.graphStoreUpdateId}
               .showBoardReferenceMarkers=${this.showBoardReferenceMarkers}
+              .chatController=${observers?.chatController}
               @bbrun=${async () => {
                 await this.#attemptBoardStart();
               }}

@@ -19,6 +19,7 @@ import {
   NodeConfiguration,
   NodeIdentifier,
 } from "@google-labs/breadboard";
+import { ChatController } from "../../../shared-ui/dist/state";
 
 const eventInit = {
   bubbles: true,
@@ -82,7 +83,8 @@ export class RuntimeTabChangeEvent extends Event {
 
   constructor(
     public readonly topGraphObserver?: BreadboardUI.Utils.TopGraphObserver,
-    public readonly runObserver?: InspectableRunObserver
+    public readonly runObserver?: InspectableRunObserver,
+    public readonly chatController?: ChatController
   ) {
     super(RuntimeTabChangeEvent.eventName, { ...eventInit });
   }
