@@ -63,8 +63,8 @@ export class LLMOutput extends LitElement {
     }
 
     :host([lite="true"]) {
-      border: 1px solid var(--bb-neutral-100);
-      background: var(--bb-neutral-0);
+      border: 1px solid var(--output-lite-border-color, var(--bb-neutral-100));
+      background: var(--output-lite-background-color, var(--bb-neutral-0));
     }
 
     .content {
@@ -309,7 +309,11 @@ export class LLMOutput extends LitElement {
         ${map(this.value.parts, (part, idx) => {
           let value: TemplateResult | symbol = nothing;
           if (isTextCapabilityPart(part)) {
-            value = html`${markdown(part.text)}`;
+            if (part.text === "") {
+              value = html`${markdown("No value provided")}`;
+            } else {
+              value = html`${markdown(part.text)}`;
+            }
           } else if (isInlineData(part)) {
             const key = idx;
             let partDataURL: Promise<string> = Promise.resolve("No source");

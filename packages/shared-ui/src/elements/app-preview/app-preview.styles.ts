@@ -158,7 +158,7 @@ export const styles = css`
       background: var(--bb-neutral-0);
       border-left: 1px solid var(--bb-neutral-300);
       border-right: 1px solid var(--bb-neutral-300);
-      padding: var(--bb-grid-size-4) var(--bb-grid-size-6);
+      scrollbar-width: none;
 
       & .activity-entry {
         margin-bottom: var(--bb-grid-size-6);
