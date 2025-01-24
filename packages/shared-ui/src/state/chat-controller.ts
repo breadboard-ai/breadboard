@@ -66,10 +66,8 @@ class ChatController {
 
   #initialChatState(): ChatState {
     return {
-      session: {
-        conversation: [],
-        status: "stopped",
-      },
+      conversation: [],
+      status: "stopped",
     };
   }
 
@@ -77,10 +75,8 @@ class ChatController {
     if (!this.#stale) return;
 
     this.#state = {
-      session: {
-        conversation: this.#conversation,
-        status: this.#status,
-      },
+      conversation: this.#conversation,
+      status: this.#status,
     };
     this.#stale = false;
   }

@@ -50,11 +50,7 @@ export type ChatSystemTurnState = {
 
 export type ChatConversationState = ChatUserTurnState | ChatSystemTurnState;
 
-export type ChatSessionState = {
+export type ChatState = {
   conversation: ChatConversationState[];
   status: ChatStatus;
-};
-
-export type ChatState = {
-  session: ChatSessionState;
 };
