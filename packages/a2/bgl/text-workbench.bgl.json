@@ -10,7 +10,8 @@
         "visual": {
           "x": 100,
           "y": -59.999999999999886,
-          "collapsed": "expanded"
+          "collapsed": "expanded",
+          "outputHeight": 44
         },
         "title": "Text",
         "logLevel": "info"
@@ -33,7 +34,8 @@
         "visual": {
           "x": 440,
           "y": -60,
-          "collapsed": "expanded"
+          "collapsed": "expanded",
+          "outputHeight": 44
         },
         "title": "Text",
         "logLevel": "info"

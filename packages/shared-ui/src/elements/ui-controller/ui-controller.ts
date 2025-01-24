@@ -68,6 +68,7 @@ import {
 } from "../../utils/behaviors.js";
 import { cache, CacheDirective } from "lit/directives/cache.js";
 import { DirectiveResult } from "lit/directive.js";
+import { ChatController } from "../../state/chat-controller.js";
 
 const SIDE_NAV_ITEM_KEY = "bb-ui-side-nav-item";
 const POPOUT_STATE = "bb-ui-popout-state";
@@ -163,6 +164,9 @@ export class UI extends LitElement {
 
   @property()
   showBoardReferenceMarkers = false;
+
+  @property()
+  chatController: ChatController | null = null;
 
   @state()
   debugEvent: InspectableRunEvent | null = null;
@@ -676,6 +680,7 @@ export class UI extends LitElement {
                 class=${classMap({ collapsed: this.debugEvent !== null })}
                 .run=${run}
                 .events=${events}
+                .state=${this.chatController?.state()}
                 .eventPosition=${eventPosition}
                 .inputsFromLastRun=${inputsFromLastRun}
                 .showExtendedInfo=${true}

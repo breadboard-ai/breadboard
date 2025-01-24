@@ -369,9 +369,13 @@ export class Board extends EventTarget {
       readOnly,
     });
 
+    // No chat controller when loading from run.
+    // TODO: Implement loading chat history here.
+    const chatController = undefined;
+
     this.#currentTabId = id;
     this.dispatchEvent(
-      new RuntimeTabChangeEvent(topGraphObserver, runObserver)
+      new RuntimeTabChangeEvent(topGraphObserver, runObserver, chatController)
     );
   }
 

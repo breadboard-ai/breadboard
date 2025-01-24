@@ -47,6 +47,7 @@ export class Run extends EventTarget {
     {
       harnessRunner?: HarnessRunner;
       topGraphObserver?: BreadboardUI.Utils.TopGraphObserver;
+      chatController?: BreadboardUI.State.ChatController;
       runObserver?: InspectableRunObserver;
       abortController?: AbortController;
       kits: Kit[];
@@ -64,11 +65,13 @@ export class Run extends EventTarget {
   create(
     tab: Tab,
     topGraphObserver: BreadboardUI.Utils.TopGraphObserver,
+    chatController?: BreadboardUI.State.ChatController,
     runObserver?: InspectableRunObserver
   ) {
     this.#runs.set(tab.id, {
       topGraphObserver,
       runObserver,
+      chatController,
       kits: [...this.graphStore.kits, ...tab.boardServerKits],
     });
   }
@@ -109,8 +112,8 @@ export class Run extends EventTarget {
       return null;
     }
 
-    const { topGraphObserver, runObserver } = run;
-    return { topGraphObserver, runObserver };
+    const { topGraphObserver, runObserver, chatController } = run;
+    return { topGraphObserver, runObserver, chatController };
   }
 
   async runBoard(
@@ -240,11 +243,17 @@ export class Run extends EventTarget {
 
     harnessRunner.addObserver(runObserver);
 
+    const chatController = new BreadboardUI.State.ChatController(
+      harnessRunner,
+      this.graphStore
+    );
+
     return {
       harnessRunner,
       topGraphObserver,
       runObserver,
       abortController,
+      chatController,
       kits: config.kits,
     };
   }

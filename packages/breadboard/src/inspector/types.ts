@@ -715,6 +715,7 @@ export type MainGraphIdentifier = UUID;
 
 export type GraphStoreEntry = NodeHandlerMetadata & {
   mainGraph: NodeHandlerMetadata & { id: MainGraphIdentifier };
+  updating: boolean;
 };
 
 export type GraphStoreArgs = Required<InspectableGraphOptions>;
@@ -747,7 +748,15 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
     readonly loader: GraphLoader;
 
     graphs(): GraphStoreEntry[];
-
+    /**
+     * This is a hacky API. Ideally, there's a list of graph entries
+     * that is queriable and `graphs()` returns it, and this method
+     * goes onto it.
+     */
+    getEntryByDescriptor(
+      descriptor: GraphDescriptor,
+      graphId: GraphIdentifier
+    ): GraphStoreEntry | undefined;
     /**
      * Registers a Kit with the GraphStore.
      * Currently, only Kits that contain Graph URL-like types

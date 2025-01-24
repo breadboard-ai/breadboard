@@ -38,11 +38,19 @@ import { UserInput } from "../elements.js";
 import { markdown } from "../../directives/markdown.js";
 import { SettingsStore } from "../../data/settings-store.js";
 import { formatError } from "../../utils/format-error.js";
+import { ChatState } from "../../state/types.js";
 
 @customElement("bb-chat")
 export class Chat extends LitElement {
   @property({ reflect: false })
   graph: GraphDescriptor | null = null;
+
+  /**
+   * Provides an up-to-date model of the chat state.
+   * See `ChatController` for the implementation that manages the model.
+   */
+  @property()
+  state: ChatState | null = null;
 
   @property({ reflect: false })
   run: InspectableRun | null = null;
