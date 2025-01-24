@@ -118,6 +118,7 @@ class GraphStore
       metadata = mainGraphMetadata;
     }
     return {
+      updating: false,
       mainGraph: mainGraphMetadata,
       ...metadata,
     };
@@ -143,11 +144,13 @@ class GraphStore
             const metadata = entryFromExport(mutable, e, mainGraphId);
             exports.push({
               mainGraph: mainGraphMetadata,
+              updating: false,
               ...metadata,
             });
           }
         } else {
           exports.push({
+            updating: false,
             mainGraph:
               (mutable.legacyKitMetadata as KitDescriptor & {
                 id: MainGraphIdentifier;
@@ -481,7 +484,7 @@ function entryFromExport(
   mutable: MutableGraph,
   id: string,
   mainGraphId: MainGraphIdentifier
-): NodeHandlerMetadata | null {
+): (NodeHandlerMetadata & { updating: boolean }) | null {
   const graph = mutable.graph;
   const url = `${graph.url}${id}`;
   const { current, updating } = mutable.describe.getByType(url);
@@ -502,6 +505,7 @@ function entryFromExport(
       tags: ["component"],
       help: help ?? module.metadata?.help,
       id: mainGraphId,
+      updating,
     });
   } else {
     const graphId = id.slice(1);
@@ -515,6 +519,7 @@ function entryFromExport(
       tags: ["component"],
       help: help ?? descriptor.metadata?.help,
       id: mainGraphId,
+      updating,
     });
   }
 }

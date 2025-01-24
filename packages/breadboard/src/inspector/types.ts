@@ -715,6 +715,7 @@ export type MainGraphIdentifier = UUID;
 
 export type GraphStoreEntry = NodeHandlerMetadata & {
   mainGraph: NodeHandlerMetadata & { id: MainGraphIdentifier };
+  updating: boolean;
 };
 
 export type GraphStoreArgs = Required<InspectableGraphOptions>;

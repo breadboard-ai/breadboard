@@ -11,7 +11,6 @@ import {
   RunErrorEvent,
   RunGraphStartEvent,
   RunInputEvent,
-  RunNodeStartEvent,
   RunOutputEvent,
 } from "@google-labs/breadboard/harness";
 import { ChatConversationState, ChatState, ChatStatus } from "./types";
@@ -54,6 +53,10 @@ class ChatController {
     runner.addEventListener("input", this.#onInput.bind(this));
     runner.addEventListener("output", this.#onOutput.bind(this));
     runner.addEventListener("error", this.#onError.bind(this));
+
+    graphStore?.addEventListener("update", () => {
+      this.#stale = true;
+    });
   }
 
   state(): ChatState {
