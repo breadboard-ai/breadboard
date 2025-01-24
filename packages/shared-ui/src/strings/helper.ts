@@ -9,7 +9,8 @@ import { LanguagePack, LanguagePackEntry } from "../types/types";
 class Strings<T extends LanguagePackEntry> {
   constructor(
     private name: string,
-    private values: T
+    private values: T,
+    private warnIfMissing = false
   ) {}
 
   from(key: string) {
@@ -21,9 +22,11 @@ class Strings<T extends LanguagePackEntry> {
       return this.values[key].str;
     }
 
-    console.warn(
-      `Missing language pack key "${key}" from section ${this.name}`
-    );
+    if (this.warnIfMissing) {
+      console.warn(
+        `Missing language pack key "${key}" from section ${this.name}`
+      );
+    }
     return key.toUpperCase();
   }
 }
@@ -34,12 +37,31 @@ export async function initFrom(language: LanguagePack) {
 }
 
 export function forSection<T extends keyof LanguagePack>(section: T) {
+  if (!currentLanguage) {
+    currentLanguage = {
+      ActivityLog: {},
+      AppPreview: {},
+      CommandPalette: {},
+      ComponentSelector: {},
+      Editor: {},
+      Global: {},
+      KitSelector: {},
+      ProjectListing: {},
+      UIController: {},
+      WorkspaceOutline: {},
+    };
+  }
   return new Strings(section, currentLanguage[section]);
 }
 
 export function from<T extends LanguagePack, Y extends keyof T>(
   lib: T,
-  name: Y
+  name: Y,
+  warnIfMissing = false
 ) {
-  return new Strings(name as string, lib[name] as LanguagePackEntry);
+  return new Strings(
+    name as string,
+    lib[name] as LanguagePackEntry,
+    warnIfMissing
+  );
 }

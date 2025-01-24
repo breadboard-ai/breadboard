@@ -1532,7 +1532,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
     }
 
     const content = html`<div id="content">
-      ${this.graph
+      ${this.graph && !this.readOnly
         ? html`<div id="floating-buttons">
             <div id="start">
               <button
