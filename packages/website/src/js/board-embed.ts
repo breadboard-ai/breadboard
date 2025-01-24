@@ -3,6 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+
 import { LitElement, html, css, TemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { cache } from "lit/directives/cache.js";
@@ -13,7 +14,6 @@ import TemplateKit from "@google-labs/template-kit";
 import GeminiKit from "@google-labs/gemini-kit";
 import AgentKit from "@google-labs/agent-kit/agent.kit.json" assert { type: "json" };
 
-import "@breadboard-ai/shared-ui/editor";
 import "@breadboard-ai/shared-ui/editor";
 
 import {
