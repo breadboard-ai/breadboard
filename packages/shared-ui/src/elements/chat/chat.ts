@@ -45,6 +45,10 @@ export class Chat extends LitElement {
   @property({ reflect: false })
   graph: GraphDescriptor | null = null;
 
+  /**
+   * Provides an up-to-date model of the chat state.
+   * See `ChatController` for the implementation that manages the model.
+   */
   @property()
   state: ChatState | null = null;
 

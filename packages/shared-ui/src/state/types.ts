@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LLMContent } from "@breadboard-ai/types";
+import { LLMContent, NodeValue } from "@breadboard-ai/types";
 
 export type ChatStatus = "running" | "paused" | "stopped";
 
@@ -24,7 +24,12 @@ export type ChatLLMContent = {
   context: LLMContent[];
 };
 
-export type ChatContent = ChatTextContent | ChatLLMContent;
+export type ChatObjectContent = {
+  title: string;
+  object: NodeValue;
+};
+
+export type ChatContent = ChatTextContent | ChatLLMContent | ChatObjectContent;
 
 /**
  * Represents the system entry in the chat conversation between the
@@ -37,11 +42,11 @@ export type ChatSystemTurnState = {
   /**
    * The icon representing the participant.
    */
-  icon: string;
+  icon?: string;
   /**
    * The friendly name of the participant.
    */
-  name: string;
+  name?: string;
   /**
    * The content of the turn. May contain multiple messages.
    */
