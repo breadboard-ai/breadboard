@@ -120,6 +120,7 @@ export const styles = css`
 
         & #create-view-popout-content {
           overflow-y: scroll;
+          scrollbar-width: none;
         }
 
         & #create-view-popout-nav {

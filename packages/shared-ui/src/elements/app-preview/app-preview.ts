@@ -35,11 +35,19 @@ import {
   isLLMContentArrayBehavior,
   isLLMContentBehavior,
 } from "../../utils/behaviors.js";
+import { ChatState } from "../../state/types.js";
 
 @customElement("bb-app-preview")
 export class AppPreview extends LitElement {
   @property({ reflect: false })
   graph: GraphDescriptor | null = null;
+
+  /**
+   * Provides an up-to-date model of the chat state.
+   * See `ChatController` for the implementation that manages the model.
+   */
+  @property()
+  state: ChatState | null = null;
 
   @property({ reflect: false })
   run: InspectableRun | null = null;
@@ -64,7 +72,6 @@ export class AppPreview extends LitElement {
 
   static styles = appPreviewStyles;
 
-  #seenItems = new Set<string>();
   #newestEntry: Ref<HTMLElement> = createRef();
   #userInputRef: Ref<UserInput> = createRef();
 
@@ -81,8 +88,6 @@ export class AppPreview extends LitElement {
   }
 
   async #renderPendingInput(event: InspectableRunNodeEvent | null) {
-    let preamble: HTMLTemplateResult | DirectiveResult<typeof CacheDirective> =
-      cache(html`<div class="preamble"></div>`);
     let userInput: HTMLTemplateResult | DirectiveResult<typeof CacheDirective> =
       cache(html`<div class="no-input-needed"></div>`);
     let continueRun: (() => void) | null = null;
@@ -164,16 +169,6 @@ export class AppPreview extends LitElement {
         );
       };
 
-      const userMessage = userInputs.map((input) => {
-        return html`<span>${input.title}</span>`;
-      });
-
-      preamble = html`<div class="preamble">
-        ${node.description() && node.title() !== node.description()
-          ? html`<h2>${node.description()}</h2>`
-          : html`<h2>${userMessage}</h2>`}
-      </div>`;
-
       userInput = html`<bb-user-input
         .boardServers=${this.boardServers}
         .showTypes=${false}
@@ -200,7 +195,7 @@ export class AppPreview extends LitElement {
       ></bb-user-input>`;
     }
 
-    return html`${preamble} ${userInput}
+    return html`${userInput}
       <button
         class="continue-button"
         ?disabled=${continueRun === null}
@@ -216,7 +211,7 @@ export class AppPreview extends LitElement {
   }
 
   render() {
-    const isRunning = false;
+    const isRunning = this.state?.status === "running";
     const newestEvent = this.events?.at(-1);
 
     return html` <section
@@ -281,6 +276,7 @@ export class AppPreview extends LitElement {
           .logTitle=${"Run"}
           .boardServers=${this.boardServers}
           .showDebugControls=${false}
+          .state=${this.state}
         ></bb-chat>
       </div>
 

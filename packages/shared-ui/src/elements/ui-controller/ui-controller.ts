@@ -247,8 +247,6 @@ export class UI extends LitElement {
   }
 
   async #renderPendingInput(event: InspectableRunNodeEvent | null) {
-    let preamble: HTMLTemplateResult | DirectiveResult<typeof CacheDirective> =
-      cache(html`<div class="preamble"></div>`);
     let userInput: HTMLTemplateResult | DirectiveResult<typeof CacheDirective> =
       cache(html`<div class="no-input-needed"></div>`);
     let continueRun: (() => void) | null = null;
@@ -330,16 +328,6 @@ export class UI extends LitElement {
         );
       };
 
-      const userMessage = userInputs.map((input) => {
-        return html`<span>${input.title}</span>`;
-      });
-
-      preamble = html`<div class="preamble">
-        ${node.description() && node.title() !== node.description()
-          ? html`<h2>${node.description()}</h2>`
-          : html`<h2>${userMessage}</h2>`}
-      </div>`;
-
       userInput = html`<bb-user-input
         .boardServers=${this.boardServers}
         .showTypes=${false}
@@ -366,7 +354,7 @@ export class UI extends LitElement {
       ></bb-user-input>`;
     }
 
-    return html`${preamble} ${userInput}
+    return html`${userInput}
       <button
         class="continue-button"
         ?disabled=${continueRun === null}
@@ -469,14 +457,18 @@ export class UI extends LitElement {
       this.#lastEventPosition = this.runs?.[0]?.events.length ?? 0;
     }
 
-    const appPreview = guard([run, events, eventPosition, this.graph], () => {
-      return html`<bb-app-preview
-        .graph=${this.graph}
-        .run=${run}
-        .events=${events}
-        .boardServers=${this.boardServers}
-      ></bb-app-preview>`;
-    });
+    const appPreview = guard(
+      [run, events, eventPosition, this.graph, this.chatController?.state()],
+      () => {
+        return html`<bb-app-preview
+          .graph=${this.graph}
+          .run=${run}
+          .events=${events}
+          .boardServers=${this.boardServers}
+          .state=${this.chatController?.state()}
+        ></bb-app-preview>`;
+      }
+    );
 
     const graphEditor = guard(
       [
@@ -673,9 +665,15 @@ export class UI extends LitElement {
           this.topGraphResult?.currentNode?.descriptor.id ?? null;
 
         sideNavItem = html`${guard(
-          [run, events, eventPosition, this.debugEvent],
-          () =>
-            html` <div id="board-chat-container">
+          [
+            run,
+            events,
+            eventPosition,
+            this.debugEvent,
+            this.chatController?.state(),
+          ],
+          () => {
+            return html` <div id="board-chat-container">
               <bb-chat
                 class=${classMap({ collapsed: this.debugEvent !== null })}
                 .run=${run}
@@ -693,7 +691,8 @@ export class UI extends LitElement {
                 .nextNodeId=${nextNodeId}
                 name=${Strings.from("LABEL_PROJECT")}
               ></bb-chat>
-            </div>`
+            </div>`;
+          }
         )}`;
         break;
       }
