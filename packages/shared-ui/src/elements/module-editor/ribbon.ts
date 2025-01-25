@@ -3,13 +3,18 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+import * as StringsHelper from "../../strings/helper.js";
+const GlobalStrings = StringsHelper.forSection("Global");
+
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   FormatModuleCodeEvent,
   HideTooltipEvent,
   ModuleChangeLanguageEvent,
+  RunEvent,
   ShowTooltipEvent,
+  StopEvent,
   ToggleModulePreviewEvent,
 } from "../../events/events";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -498,6 +503,25 @@ export class ModuleRibbonMenu extends LitElement {
 
     const moduleIsRunnable = !!(module && module.metadata().runnable);
     const moduleControls = html`<div id="module-controls">
+      <div id="start">
+        <button
+          id="run"
+          title=${GlobalStrings.from("LABEL_RUN_PROJECT")}
+          class=${classMap({ running: this.isRunning })}
+          ?disabled=${this.readOnly}
+          @click=${() => {
+            if (this.isRunning) {
+              this.dispatchEvent(new StopEvent());
+            } else {
+              this.dispatchEvent(new RunEvent());
+            }
+          }}
+        >
+          ${this.isRunning
+            ? GlobalStrings.from("LABEL_STOP")
+            : GlobalStrings.from("LABEL_RUN")}
+        </button>
+      </div>
       <div id="language-selector-container">
         <label for="language-selector">Language</label>
         <select

@@ -170,6 +170,10 @@
 					"$ref": "#/definitions/InputValues",
 					"description": "Arguments that are passed to the graph, useful to bind values to graphs."
 				},
+				"assets": {
+					"$ref": "#/definitions/Record%3CAssetPath%2CNodeValue%3E",
+					"description": "An optional collection of assets associated with the graph. Each asset is an array of LLM Content items."
+				},
 				"describer": {
 					"description": "The URL of the graph that will act as the describer for this graph. Can be a relative URL and refer to a sub-graph within this graph.\n\nThe describers in the format of \"module:name\" will be interpreted as \"use the `describe` export of the module named `name` to describe this graph\".",
 					"type": "string"
@@ -613,6 +617,10 @@
 					"description": "A more detailed description of the node.",
 					"type": "string"
 				},
+				"icon": {
+					"description": "The icon for the node.",
+					"type": "string"
+				},
 				"logLevel": {
 					"description": "Logging level.",
 					"enum": [
@@ -717,6 +725,12 @@
 		"OutputValues": {
 			"$ref": "#/definitions/Record%3COutputIdentifier%2CNodeValue%3E",
 			"description": "Values that the `NodeHandler` outputs."
+		},
+		"Record<AssetPath,NodeValue>": {
+			"additionalProperties": {
+				"$ref": "#/definitions/NodeValue"
+			},
+			"type": "object"
 		},
 		"Record<GraphIdentifier,GraphDescriptor>": {
 			"additionalProperties": {

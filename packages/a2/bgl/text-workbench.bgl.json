@@ -45,7 +45,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "{{post}}"
+              "text": "{{ in | id: \"post\" }}"
             }
           ]
         }

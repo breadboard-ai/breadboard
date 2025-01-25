@@ -22,6 +22,7 @@ import {
   FileMap,
   PersistentBackend,
   FileSystemBlobStore,
+  CreateRunFileSystemArgs,
 } from "../types.js";
 import { Path } from "./path.js";
 import { err, noStreams, ok } from "./utils.js";
@@ -32,7 +33,10 @@ import { transformBlobs } from "./blob-transform.js";
 export { FileSystemImpl, Path, createFileSystem };
 
 function createFileSystem(
-  args: Omit<OuterFileSystems, "graphUrl" | "blobs" | "session" | "run">
+  args: Omit<
+    OuterFileSystems,
+    "graphUrl" | "blobs" | "session" | "run" | "env" | "assets"
+  >
 ): FileSystem {
   return new FileSystemImpl({ ...args, graphUrl: "" });
 }
@@ -174,11 +178,14 @@ class FileSystemImpl implements FileSystem {
 
   #tmp: FileMap;
 
-  constructor(outer: OuterFileSystems) {
+  constructor(outer: Partial<OuterFileSystems>) {
     this.#graphUrl = outer.graphUrl || "";
+    if (!outer.local) {
+      throw new Error("Must supply persistent backend for file system to work");
+    }
     this.#local = outer.local;
-    this.#env = SimpleFile.fromEntries(outer.env);
-    this.#assets = SimpleFile.fromEntries(outer.assets);
+    this.#env = SimpleFile.fromEntries(outer.env || []);
+    this.#assets = SimpleFile.fromEntries(outer.assets || []);
 
     this.#ownsBlobs = !outer.blobs;
     this.#blobs = outer.blobs ? outer.blobs : new InMemoryBlobStore();
@@ -583,12 +590,13 @@ class FileSystemImpl implements FileSystem {
     });
   }
 
-  createRunFileSystem(graphUrl: string): FileSystem {
+  createRunFileSystem(args: CreateRunFileSystemArgs): FileSystem {
+    const { graphUrl, env, assets } = args;
     return new FileSystemImpl({
       graphUrl,
       local: this.#local,
-      env: mapToEntries(this.#env),
-      assets: mapToEntries(this.#assets),
+      env: env || mapToEntries(this.#env),
+      assets: assets || mapToEntries(this.#assets),
       blobs: this.#blobs,
       session: this.#session,
     });
