@@ -124,6 +124,7 @@ export {
   transformBlobs,
   createEphemeralBlobStore,
   createFileSystem,
+  assetsFromGraphDescriptor,
 } from "./data/index.js";
 
 /**

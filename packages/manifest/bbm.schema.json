@@ -123,28 +123,6 @@
 			],
 			"type": "object"
 		},
-		"DataPart": {
-			"anyOf": [
-				{
-					"$ref": "#/definitions/InlineDataCapabilityPart"
-				},
-				{
-					"$ref": "#/definitions/StoredDataCapabilityPart"
-				},
-				{
-					"$ref": "#/definitions/FunctionCallCapabilityPart"
-				},
-				{
-					"$ref": "#/definitions/FunctionResponseCapabilityPart"
-				},
-				{
-					"$ref": "#/definitions/TextCapabilityPart"
-				}
-			]
-		},
-		"DataStoreHandle": {
-			"type": "string"
-		},
 		"Edge": {
 			"additionalProperties": false,
 			"description": "Represents an edge in a graph.",
@@ -180,56 +158,6 @@
 			],
 			"type": "object"
 		},
-		"FunctionCallCapabilityPart": {
-			"additionalProperties": false,
-			"properties": {
-				"functionCall": {
-					"additionalProperties": false,
-					"properties": {
-						"args": {
-							"type": "object"
-						},
-						"name": {
-							"type": "string"
-						}
-					},
-					"required": [
-						"args",
-						"name"
-					],
-					"type": "object"
-				}
-			},
-			"required": [
-				"functionCall"
-			],
-			"type": "object"
-		},
-		"FunctionResponseCapabilityPart": {
-			"additionalProperties": false,
-			"properties": {
-				"functionResponse": {
-					"additionalProperties": false,
-					"properties": {
-						"name": {
-							"type": "string"
-						},
-						"response": {
-							"type": "object"
-						}
-					},
-					"required": [
-						"name",
-						"response"
-					],
-					"type": "object"
-				}
-			},
-			"required": [
-				"functionResponse"
-			],
-			"type": "object"
-		},
 		"GraphDescriptor": {
 			"additionalProperties": false,
 			"description": "A union type of both declarative and imperative graphs. Represents a graph that is either declarative (defined by nodes and edges) or imperative (backed by code).",
@@ -243,7 +171,7 @@
 					"description": "Arguments that are passed to the graph, useful to bind values to graphs."
 				},
 				"assets": {
-					"$ref": "#/definitions/Record%3CAssetPath%2Cdef-alias-1848780956-780-852-1848780956-0-1074%5B%5D%3E",
+					"$ref": "#/definitions/Record%3CAssetPath%2CNodeValue%3E",
 					"description": "An optional collection of assets associated with the graph. Each asset is an array of LLM Content items."
 				},
 				"describer": {
@@ -481,32 +409,6 @@
 			],
 			"type": "string"
 		},
-		"InlineDataCapabilityPart": {
-			"additionalProperties": false,
-			"description": "Represents inline data, encoded as a base64 string.",
-			"properties": {
-				"inlineData": {
-					"additionalProperties": false,
-					"properties": {
-						"data": {
-							"type": "string"
-						},
-						"mimeType": {
-							"type": "string"
-						}
-					},
-					"required": [
-						"data",
-						"mimeType"
-					],
-					"type": "object"
-				}
-			},
-			"required": [
-				"inlineData"
-			],
-			"type": "object"
-		},
 		"InputIdentifier": {
 			"description": "Unique identifier of a node's input.",
 			"type": "string"
@@ -555,24 +457,6 @@
 				"experimental"
 			],
 			"type": "string"
-		},
-		"LLMContent": {
-			"additionalProperties": false,
-			"properties": {
-				"parts": {
-					"items": {
-						"$ref": "#/definitions/DataPart"
-					},
-					"type": "array"
-				},
-				"role": {
-					"type": "string"
-				}
-			},
-			"required": [
-				"parts"
-			],
-			"type": "object"
 		},
 		"ManifestReference": {
 			"anyOf": [
@@ -842,12 +726,9 @@
 			"$ref": "#/definitions/Record%3COutputIdentifier%2CNodeValue%3E",
 			"description": "Values that the `NodeHandler` outputs."
 		},
-		"Record<AssetPath,def-alias-1848780956-780-852-1848780956-0-1074[]>": {
+		"Record<AssetPath,NodeValue>": {
 			"additionalProperties": {
-				"items": {
-					"$ref": "#/definitions/LLMContent"
-				},
-				"type": "array"
+				"$ref": "#/definitions/NodeValue"
 			},
 			"type": "object"
 		},
@@ -936,32 +817,6 @@
 			],
 			"type": "object"
 		},
-		"StoredDataCapabilityPart": {
-			"additionalProperties": false,
-			"description": "Represents data that is stored by a DataStoreProvider.",
-			"properties": {
-				"storedData": {
-					"additionalProperties": false,
-					"properties": {
-						"handle": {
-							"$ref": "#/definitions/DataStoreHandle"
-						},
-						"mimeType": {
-							"type": "string"
-						}
-					},
-					"required": [
-						"handle",
-						"mimeType"
-					],
-					"type": "object"
-				}
-			},
-			"required": [
-				"storedData"
-			],
-			"type": "object"
-		},
 		"SubGraphs": {
 			"$ref": "#/definitions/Record%3CGraphIdentifier%2CGraphDescriptor%3E",
 			"description": "Represents a collection of sub-graphs. The key is the identifier of the sub-graph. The value is the descriptor of the sub-graph."
@@ -972,18 +827,6 @@
 				"type": "string"
 			},
 			"type": "array"
-		},
-		"TextCapabilityPart": {
-			"additionalProperties": false,
-			"properties": {
-				"text": {
-					"type": "string"
-				}
-			},
-			"required": [
-				"text"
-			],
-			"type": "object"
 		},
 		"Title": {
 			"examples": [

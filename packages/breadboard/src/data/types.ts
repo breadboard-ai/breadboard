@@ -426,6 +426,11 @@ export type FileSystemBlobStore = {
   ): Promise<Outcome<void>>;
 };
 
+export type CreateRunFileSystemArgs = Omit<
+  OuterFileSystems,
+  "blobs" | "session" | "run" | "local"
+>;
+
 export type FileSystem = {
   query(args: FileSystemQueryArguments): Promise<FileSystemQueryResult>;
   read(args: FileSystemReadArguments): Promise<FileSystemReadResult>;
@@ -440,7 +445,7 @@ export type FileSystem = {
    *
    * Use it to get the right FileSystem instance at the start of a run.
    */
-  createRunFileSystem(graphUrl: string): FileSystem;
+  createRunFileSystem(args: CreateRunFileSystemArgs): FileSystem;
   /**
    * Creates a new instance of a FileSystem that inherits all but `/tmp/`
    * from this instance.

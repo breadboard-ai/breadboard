@@ -32,6 +32,7 @@ import {
   defaultModuleContent,
   createFileSystem,
   createEphemeralBlobStore,
+  assetsFromGraphDescriptor,
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
@@ -271,8 +272,6 @@ export class Main extends LitElement {
   #runStore = getRunStore();
   #fileSystem = createFileSystem({
     local: createFileSystemBackend(createEphemeralBlobStore()),
-    env: [],
-    assets: [],
   });
   #selectionState: WorkspaceSelectionStateWithChangeId | null = null;
   #lastVisualChangeId: WorkspaceVisualChangeId | null = null;
@@ -1196,7 +1195,11 @@ export class Main extends LitElement {
           loader: this.#runtime.board.getLoader(),
           store: this.#dataStore,
           graphStore: this.#graphStore,
-          fileSystem: this.#fileSystem.createRunFileSystem(url),
+          fileSystem: this.#fileSystem.createRunFileSystem({
+            graphUrl: url,
+            env: [],
+            assets: assetsFromGraphDescriptor(graph),
+          }),
           inputs: BreadboardUI.Data.inputsFromSettings(this.#settings),
           interactiveSecrets: true,
         },
