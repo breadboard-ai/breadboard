@@ -30,12 +30,15 @@ interface Console {
 
 declare var console: Console;
 
+declare type NodeMetadata = {
+  title?: string;
+  description?: string;
+  icon?: string;
+};
+
 declare module "@fetch" {
   export type FetchInputs = {
-    $metadata?: {
-      title?: string;
-      description?: string;
-    };
+    $metadata?: NodeMetadata;
     /**
      * The URL to fetch
      */
@@ -92,20 +95,14 @@ declare module "@secrets" {
    * A built-in capability of Breadboard to obtain secrets.
    */
   export default function secrets<S extends string>(inputs: {
-    $metadata?: {
-      title?: string;
-      description?: string;
-    };
+    $metadata?: NodeMetadata;
     keys: S[];
   }): Promise<{ [K in S]: string }>;
 }
 
 declare module "@invoke" {
   export type InvokeInputs = {
-    $metadata?: {
-      title?: string;
-      description?: string;
-    };
+    $metadata?: NodeMetadata;
     $board?: string;
     $start?: string;
     $stopAfter?: string;
@@ -121,10 +118,7 @@ declare module "@invoke" {
 
 declare module "@output" {
   export type OutputInputs = {
-    $metadata?: {
-      title?: string;
-      description?: string;
-    };
+    $metadata?: NodeMetadata;
     schema?: Schema;
   } & Record<string, unknown>;
 

@@ -389,6 +389,10 @@
 						"$ref": "#/definitions/NodeTag"
 					},
 					"description": "Tags associated with the node. Can be either a string or a structured tag, like a `StartTag`."
+				},
+				"icon": {
+					"type": "string",
+					"description": "The icon for the node."
 				}
 			},
 			"additionalProperties": false,

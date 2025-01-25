@@ -9,6 +9,7 @@ import {
   GraphIdentifier,
   GraphStartProbeData,
   LLMContent,
+  NodeMetadata,
   OutputValues,
 } from "@breadboard-ai/types";
 import { MutableGraphStore, Schema } from "@google-labs/breadboard";
@@ -165,8 +166,9 @@ class ChatController {
   #onOutput(event: RunOutputEvent) {
     const properties = (event.data.node.configuration?.schema as Schema)
       ?.properties;
+    const metadata = event.data.node.metadata;
     const content = toChatContent(event.data.outputs, properties);
-    const turn = this.#createSystemTurn(content);
+    const turn = this.#createSystemTurn(content, metadata);
     this.#appendTurn(turn);
   }
 
@@ -184,13 +186,21 @@ class ChatController {
     this.#stale = true;
   }
 
-  #createSystemTurn(content: ChatContent[]): ChatSystemTurnState {
+  #createSystemTurn(
+    content: ChatContent[],
+    metadata?: NodeMetadata
+  ): ChatSystemTurnState {
     const turn: ChatSystemTurnState = {
       role: "system",
-      icon: undefined,
-      name: undefined,
+      icon: metadata?.icon,
+      name: metadata?.title,
       content,
     };
+    // 0) If icon and name already present, exit early.
+    if (turn.icon || turn.name) {
+      return turn;
+    }
+
     // 1) Find the current graph that might have an icon in the graph stack.
     const data = this.#graphStack.find(
       (graphData) =>
@@ -214,8 +224,8 @@ class ChatController {
     }
 
     // 4) .. and return the updated turn in either case.
-    turn.icon = entry.icon;
-    turn.name = entry.title;
+    turn.icon ??= entry.icon;
+    turn.name ??= entry.title;
     return turn;
   }
 }

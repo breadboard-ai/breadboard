@@ -613,6 +613,10 @@
 					"description": "A more detailed description of the node.",
 					"type": "string"
 				},
+				"icon": {
+					"description": "The icon for the node.",
+					"type": "string"
+				},
 				"logLevel": {
 					"description": "Logging level.",
 					"enum": [

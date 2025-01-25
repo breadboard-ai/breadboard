@@ -154,6 +154,10 @@ export type NodeMetadata = {
    * like a `StartTag`.
    */
   tags?: NodeTag[];
+  /**
+   * The icon for the node.
+   */
+  icon?: string;
 };
 
 /**
