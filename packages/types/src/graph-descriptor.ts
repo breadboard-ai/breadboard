@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { LLMContent } from "./llm-content.js";
+
 export interface Capability {
   readonly kind: string;
 }
@@ -464,6 +466,8 @@ export type Module = {
 
 export type Modules = Record<ModuleIdentifier, Module>;
 
+export type AssetPath = string;
+
 export type GraphCommonProperties = GraphInlineMetadata & {
   /**
    * Metadata associated with the graph.
@@ -498,6 +502,12 @@ export type GraphCommonProperties = GraphInlineMetadata & {
    * is discovered through imperative code execution
    */
   virtual?: true;
+
+  /**
+   * An optional collection of assets associated with the graph. Each asset
+   * is an array of LLM Content items.
+   */
+  assets?: Record<AssetPath, LLMContent[]>;
 };
 
 /**
