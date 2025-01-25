@@ -26,6 +26,7 @@ import {
   ChatStatus,
   ChatSystemTurnState,
 } from "./types";
+import { formatError } from "../utils/format-error";
 
 export { ChatController };
 
@@ -169,8 +170,18 @@ class ChatController {
     this.#appendTurn(turn);
   }
 
-  #onError(_event: RunErrorEvent) {
+  #onError(event: RunErrorEvent) {
     this.#currentInput = null;
+    this.#status = "stopped";
+    this.#appendTurn(
+      this.#createSystemTurn([
+        {
+          title: "Stopping due to the following error",
+          error: formatError(event.data.error),
+        },
+      ])
+    );
+    this.#stale = true;
   }
 
   #createSystemTurn(content: ChatContent[]): ChatSystemTurnState {

@@ -29,7 +29,16 @@ export type ChatObjectContent = {
   object: NodeValue;
 };
 
-export type ChatContent = ChatTextContent | ChatLLMContent | ChatObjectContent;
+export type ChatError = {
+  title: string;
+  error: string;
+};
+
+export type ChatContent =
+  | ChatTextContent
+  | ChatLLMContent
+  | ChatObjectContent
+  | ChatError;
 
 /**
  * Represents the system entry in the chat conversation between the
