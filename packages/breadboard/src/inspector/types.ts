@@ -374,7 +374,7 @@ export type InspectableGraphOptions = {
 export type DescribeResultCacheArgs = {
   initialType(): NodeDescriberResult;
   latestType(type: NodeTypeIdentifier): Promise<NodeDescriberResult>;
-  willUpdateType(type: NodeTypeIdentifier): void;
+  updatedType(type: NodeTypeIdentifier): void;
 
   initial(
     graphId: GraphIdentifier,
@@ -385,12 +385,8 @@ export type DescribeResultCacheArgs = {
     nodeId: NodeIdentifier,
     inputs?: InputValues
   ): Promise<NodeDescriberResult>;
-  willUpdate(
-    graphId: GraphIdentifier,
-    nodeId: NodeIdentifier,
-    previous: NodeDescriberResult,
-    current: NodeDescriberResult
-  ): void;
+  willUpdate(previous: NodeDescriberResult, current: NodeDescriberResult): void;
+  updated(graphId: GraphIdentifier, nodeId: NodeIdentifier): void;
 };
 
 /**

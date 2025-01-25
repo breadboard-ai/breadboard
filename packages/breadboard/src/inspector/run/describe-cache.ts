@@ -41,7 +41,10 @@ class DescribeResultCache implements InspectableDescriberResultCache {
       initial: () => this.args.initial(graphId, nodeId),
       latest: () => this.args.latest(graphId, nodeId, inputs),
       willUpdate: (previous, current) =>
-        this.args.willUpdate(graphId, nodeId, previous, current),
+        this.args.willUpdate(previous, current),
+      updated: () => {
+        this.args.updated(graphId, nodeId);
+      },
     } as SnapshotUpdaterArgs<NodeDescriberResult>;
   }
 
@@ -66,7 +69,7 @@ class DescribeResultCache implements InspectableDescriberResultCache {
     result = new SnapshotUpdater({
       initial: () => this.args.initialType(),
       latest: () => this.args.latestType(type),
-      willUpdate: () => this.args.willUpdateType(type),
+      updated: () => this.args.updatedType(type),
     });
     this.#map.set(typeHash, result);
     return result.snapshot();

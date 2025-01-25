@@ -53,19 +53,24 @@ class ChatController {
     runner.addEventListener("abort", () => {
       this.#currentInput = null;
       this.#status = "stopped";
+      this.#stale = true;
     });
     runner.addEventListener("start", () => {
       this.#status = "running";
+      this.#stale = true;
     });
     runner.addEventListener("pause", () => {
       this.#status = "paused";
+      this.#stale = true;
     });
     runner.addEventListener("resume", (event) => {
       this.#finalizeInput(event.data.inputs || {});
       this.#status = "running";
+      this.#stale = true;
     });
     runner.addEventListener("end", () => {
       this.#status = "stopped";
+      this.#stale = true;
     });
     runner.addEventListener("graphstart", this.#onGraphstart.bind(this));
     runner.addEventListener("graphend", this.#onGraphend.bind(this));
@@ -74,8 +79,6 @@ class ChatController {
     runner.addEventListener("error", this.#onError.bind(this));
 
     graphStore?.addEventListener("update", () => {
-      this.#stale = true;
-
       // Technically, the event has `mainGraphId` and we should only update
       // pending entries that have the id, but I don't yet trust the GraphStore
       // machinery to always give me the right id, so I'll brute-force and
@@ -84,17 +87,15 @@ class ChatController {
       // Also need setTimeout, because unfortunately (yikes) this event
       // fires just BEFORE the value actually updated.
 
-      globalThis.setTimeout(() => {
-        [...this.#pending.values()].forEach((pending) => {
-          const { turn, graph, graphId } = pending;
-          const entry = this.graphStore?.getEntryByDescriptor(graph, graphId);
-          if (!entry?.updating) {
-            this.#pending.delete(pending);
-            turn.icon = entry?.icon;
-            turn.name = entry?.title;
-          }
-        });
-      }, 0);
+      [...this.#pending.values()].forEach((pending) => {
+        const { turn, graph, graphId } = pending;
+        const entry = this.graphStore?.getEntryByDescriptor(graph, graphId);
+        if (!entry?.updating) {
+          this.#pending.delete(pending);
+          this.#replaceTurn(turn, entry?.icon, entry?.title);
+          this.#stale = true;
+        }
+      });
     });
   }
 
@@ -145,6 +146,14 @@ class ChatController {
 
   #onInput(event: RunInputEvent) {
     this.#currentInput = event;
+  }
+
+  #replaceTurn(turn: ChatSystemTurnState, icon?: string, name?: string) {
+    const index = this.#conversation.indexOf(turn);
+    if (index >= 0) {
+      this.#conversation.splice(index, 1, { ...turn, icon, name });
+      this.#conversation = [...this.#conversation];
+    }
   }
 
   #appendTurn(turn: ChatConversationState) {

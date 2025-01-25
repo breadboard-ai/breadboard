@@ -28,9 +28,10 @@
       },
       "metadata": {
         "visual": {
-          "x": -200,
+          "x": -200.00000000000003,
           "y": -40,
-          "collapsed": "expanded"
+          "collapsed": "expanded",
+          "outputHeight": 44
         },
         "logLevel": "debug"
       }
@@ -59,9 +60,10 @@
       },
       "metadata": {
         "visual": {
-          "x": 400.0000000000001,
+          "x": 400.00000000000017,
           "y": -40,
-          "collapsed": "expanded"
+          "collapsed": "expanded",
+          "outputHeight": 44
         }
       }
     },
@@ -72,9 +74,10 @@
         "visual": {
           "x": 100,
           "y": -40,
-          "collapsed": "expanded"
+          "collapsed": "expanded",
+          "outputHeight": 44
         },
-        "title": "Text Generator",
+        "title": "Make a Plan",
         "logLevel": "debug"
       },
       "configuration": {

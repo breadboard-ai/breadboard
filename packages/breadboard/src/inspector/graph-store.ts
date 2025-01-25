@@ -424,7 +424,6 @@ class GraphStore
       latest() {
         return Promise.resolve(mutable);
       },
-      willUpdate() {},
     });
   }
 
@@ -449,7 +448,7 @@ class GraphStore
         graphId = loading.subGraphId || "";
         return mutable;
       },
-      willUpdate: () => {
+      updated: () => {
         this.dispatchEvent(
           new UpdateEvent(mutable.id, graphId, "", [
             ...(this.#dependencies.get(mutable.id) || []),
