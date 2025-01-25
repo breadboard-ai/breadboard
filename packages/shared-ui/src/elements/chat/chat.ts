@@ -122,6 +122,8 @@ export class Chat extends LitElement {
         } else {
           items.push(html` <p>${entry.text}</p>`);
         }
+      } else if ("error" in entry) {
+        items.push(html` <p style="color:red">${entry.error}</p>`);
       }
     }
 
