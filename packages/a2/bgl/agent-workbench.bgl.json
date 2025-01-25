@@ -150,7 +150,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "{{image}}\n{{post}}"
+              "text": "{{ in | id: \"image\" }}\n{{ in | id: \"post\" }}"
             }
           ]
         }
