@@ -7,7 +7,8 @@
 export type SnapshotUpdaterArgs<Value> = {
   initial(): Value;
   latest(): Promise<Value>;
-  willUpdate(previous: Value, current: Value): void;
+  willUpdate?(previous: Value, current: Value): void;
+  updated?(latest: Value): void;
 };
 
 type Snapshot<Value> = {
@@ -59,9 +60,10 @@ class SnapshotUpdater<Value> {
     }
 
     this.#snapshot = this.args.latest().then((latest) => {
-      this.args.willUpdate(this.current(), latest);
+      this.args.willUpdate?.(this.current(), latest);
       this.#current = latest;
       this.#updating = false;
+      this.args.updated?.(latest);
       return latest;
     });
 

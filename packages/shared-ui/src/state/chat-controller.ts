@@ -87,17 +87,15 @@ class ChatController {
       // Also need setTimeout, because unfortunately (yikes) this event
       // fires just BEFORE the value actually updated.
 
-      globalThis.setTimeout(() => {
-        [...this.#pending.values()].forEach((pending) => {
-          const { turn, graph, graphId } = pending;
-          const entry = this.graphStore?.getEntryByDescriptor(graph, graphId);
-          if (!entry?.updating) {
-            this.#pending.delete(pending);
-            this.#replaceTurn(turn, entry?.icon, entry?.title);
-            this.#stale = true;
-          }
-        });
-      }, 0);
+      [...this.#pending.values()].forEach((pending) => {
+        const { turn, graph, graphId } = pending;
+        const entry = this.graphStore?.getEntryByDescriptor(graph, graphId);
+        if (!entry?.updating) {
+          this.#pending.delete(pending);
+          this.#replaceTurn(turn, entry?.icon, entry?.title);
+          this.#stale = true;
+        }
+      });
     });
   }
 

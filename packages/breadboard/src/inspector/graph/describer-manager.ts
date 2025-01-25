@@ -60,7 +60,7 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
     return emptyResult();
   }
 
-  willUpdateType(): void {
+  updatedType(): void {
     this.mutable.store.dispatchEvent(
       new UpdateEvent(this.mutable.id, "", "", [])
     );
@@ -98,8 +98,6 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
   }
 
   willUpdate(
-    graphId: GraphIdentifier,
-    nodeId: NodeIdentifier,
     previous: NodeDescriberResult,
     current: NodeDescriberResult
   ): void {
@@ -122,6 +120,9 @@ class NodeTypeDescriberManager implements DescribeResultCacheArgs {
     ) {
       return;
     }
+  }
+
+  updated(graphId: GraphIdentifier, nodeId: NodeIdentifier): void {
     this.mutable.store.dispatchEvent(
       new UpdateEvent(this.mutable.id, graphId, nodeId, [])
     );
