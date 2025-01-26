@@ -1,0 +1,75 @@
+{
+  "title": "Param Tool Calling Workbench",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "a2-8223b85c",
+      "type": "file://bgl/a2.bgl.json#module:researcher",
+      "metadata": {
+        "visual": {
+          "x": 260,
+          "y": -160,
+          "collapsed": "expanded",
+          "outputHeight": 44
+        },
+        "title": "Researcher",
+        "logLevel": "info"
+      },
+      "configuration": {
+        "plan": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Research the top 10 Korean restaurants around Los Altos, CA"
+            }
+          ]
+        },
+        "summarize": true
+      }
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "visual": {}
+  },
+  "graphs": {
+    "2ca07fef-b34a-46f1-97b2-8ccfc61c9918": {
+      "title": "Unused",
+      "description": "A blank board. Use it as a starting point for your creations.",
+      "version": "0.0.1",
+      "nodes": [
+        {
+          "id": "a2-7267d844",
+          "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+          "metadata": {
+            "visual": {
+              "x": 264.2622175580432,
+              "y": 304.33132514510766,
+              "collapsed": "expanded",
+              "outputHeight": 364
+            },
+            "title": "Text Generator",
+            "logLevel": "info"
+          },
+          "configuration": {
+            "description": {
+              "parts": [
+                {
+                  "text": "You are a blog post outline writer. Your job is to write an outline for a blog post on a given topic. The topic is:\n\nThe founder of Ike's Sandwiches\n\nTo do any additional research, use {{ tool | url: \"https://breadboard.live/boards/@dimitri/custom-google-search.bgl.json\" }} and {{ tool | url: \"https://breadboard.live/boards/@dimitri/tool-maps-text-search.bgl.json\" }} tools."
+                }
+              ],
+              "role": "user"
+            }
+          }
+        }
+      ],
+      "edges": [],
+      "metadata": {
+        "visual": {
+          "minimized": false
+        }
+      }
+    }
+  }
+}
