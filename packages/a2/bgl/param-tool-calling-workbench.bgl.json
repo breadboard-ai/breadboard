@@ -4,28 +4,27 @@
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "a2-8223b85c",
-      "type": "file://bgl/a2.bgl.json#module:researcher",
+      "id": "a2-3822aba8",
+      "type": "file://bgl/a2.bgl.json#module:image-generator",
       "metadata": {
         "visual": {
-          "x": 260,
+          "x": 360,
           "y": -160,
           "collapsed": "expanded",
           "outputHeight": 44
         },
-        "title": "Researcher",
+        "title": "Image Generator",
         "logLevel": "info"
       },
       "configuration": {
-        "plan": {
+        "instruction": {
           "role": "user",
           "parts": [
             {
-              "text": "Research the Top Hacker News story for the purpose of writing an interesting blog post about the story that offers novel information that was not in the story.\n\nUse the {{ tool | url: \"https://breadboard.live/boards/@dimitri/get-top-hacker-news-story.bgl.json\" }} tool to get the latest story."
+              "text": "Depict current weather conditions and time in London. Use {{ tool | url: \"https://breadboard.live/boards/@dimitri/get-weather-for-location.bgl.json\" }} to get the current weather and time."
             }
           ]
-        },
-        "summarize": true
+        }
       }
     }
   ],
@@ -44,8 +43,8 @@
           "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
           "metadata": {
             "visual": {
-              "x": 264.2622175580432,
-              "y": 304.33132514510766,
+              "x": 233.3556182371221,
+              "y": 306.29749001504644,
               "collapsed": "expanded",
               "outputHeight": 364
             },
@@ -61,6 +60,31 @@
               ],
               "role": "user"
             }
+          }
+        },
+        {
+          "id": "a2-8223b85c",
+          "type": "file://bgl/a2.bgl.json#module:researcher",
+          "metadata": {
+            "visual": {
+              "x": 520.0000000000003,
+              "y": 300.00000000000017,
+              "collapsed": "expanded",
+              "outputHeight": 44
+            },
+            "title": "Researcher",
+            "logLevel": "info"
+          },
+          "configuration": {
+            "plan": {
+              "role": "user",
+              "parts": [
+                {
+                  "text": "Research the Top Hacker News story for the purpose of writing an interesting blog post about the story that offers novel information that was not in the story.\n\nUse the {{ tool | url: \"https://breadboard.live/boards/@dimitri/get-top-hacker-news-story.bgl.json\" }} tool to get the latest story."
+                }
+              ]
+            },
+            "summarize": true
           }
         }
       ],
