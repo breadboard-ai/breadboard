@@ -163,7 +163,8 @@ export const styles = css`
 
         &.generative-audio .title::before,
         &.generative-image .title::before,
-        &.generative-text .title::before {
+        &.generative-text .title::before,
+        &.generative .title::before {
           content: "";
           height: 20px;
           width: 20px;
@@ -173,6 +174,11 @@ export const styles = css`
         &.generative-audio .title::before {
           background: var(--bb-add-icon-generative-audio) center center / 20px
             20px no-repeat;
+        }
+
+        &.generative .title::before {
+          background: var(--bb-add-icon-generative) center center / 20px 20px
+            no-repeat;
         }
 
         &.generative-image .title::before {

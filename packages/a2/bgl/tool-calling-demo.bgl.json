@@ -1,0 +1,35 @@
+{
+  "title": "Tool-Calling Demo",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "id": "a2-1462c8af",
+      "type": "file://bgl/a2.bgl.json#module:image-generator",
+      "metadata": {
+        "visual": {
+          "x": 40,
+          "y": 100,
+          "collapsed": "expanded",
+          "outputHeight": 44
+        },
+        "title": "Image Generator",
+        "logLevel": "info"
+      },
+      "configuration": {
+        "instruction": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "Depict current weather conditions and time in Los Altos. Use {{ tool | url: \"https://breadboard.live/boards/@dimitri/get-weather-for-location.bgl.json\" }} tool to get the weather and time."
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "visual": {}
+  }
+}

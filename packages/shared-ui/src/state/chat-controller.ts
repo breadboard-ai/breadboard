@@ -197,7 +197,7 @@ class ChatController {
       content,
     };
     // 0) If icon and name already present, exit early.
-    if (turn.icon || turn.name) {
+    if (turn.icon && turn.name) {
       return turn;
     }
 
