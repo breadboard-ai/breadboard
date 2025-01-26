@@ -21,7 +21,7 @@
           "role": "user",
           "parts": [
             {
-              "text": "Research the top 10 Korean restaurants around Los Altos, CA"
+              "text": "Research the Top Hacker News story for the purpose of writing an interesting blog post about the story that offers novel information that was not in the story.\n\nUse the {{ tool | url: \"https://breadboard.live/boards/@dimitri/get-top-hacker-news-story.bgl.json\" }} tool to get the latest story."
             }
           ]
         },
