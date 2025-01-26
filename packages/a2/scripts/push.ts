@@ -23,6 +23,7 @@ function whatToPush(entry: string) {
   if (!entry.endsWith(BGL_SUFFIX)) return false;
   entry = entry.slice(0, -BGL_SUFFIX.length);
   if (entry.endsWith("workbench")) return false;
+  if (entry.endsWith("demo")) return false;
   if (entry.endsWith("wip")) return false;
   if (entry.endsWith("old")) return false;
   if (entry.endsWith("test")) return false;
