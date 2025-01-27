@@ -4,16 +4,18 @@
   "version": "0.0.1",
   "main": "main",
   "assets": {
-    "my-text": [
-      {
-        "parts": [
-          {
-            "text": "Hello world"
-          }
-        ],
-        "role": "user"
-      }
-    ]
+    "my-text": {
+      "data": [
+        {
+          "parts": [
+            {
+              "text": "Hello world"
+            }
+          ],
+          "role": "user"
+        }
+      ]
+    }
   },
   "modules": {
     "main": {

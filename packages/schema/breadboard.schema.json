@@ -124,7 +124,7 @@
 				"assets": {
 					"type": "object",
 					"additionalProperties": {
-						"$ref": "#/definitions/NodeValue"
+						"$ref": "#/definitions/Asset"
 					},
 					"description": "An optional collection of assets associated with the graph. Each asset is an array of LLM Content items."
 				},
@@ -530,6 +530,61 @@
 		"ModuleIdentifier": {
 			"type": "string",
 			"description": "Unique identifier of a module."
+		},
+		"Asset": {
+			"type": "object",
+			"properties": {
+				"metadata": {
+					"$ref": "#/definitions/AssetMetadata"
+				},
+				"data": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "number"
+						},
+						{
+							"type": "boolean"
+						},
+						{
+							"type": "null"
+						},
+						{
+							"type": "array",
+							"items": {
+								"$ref": "#/definitions/NodeValue"
+							}
+						},
+						{
+							"$ref": "#/definitions/Capability"
+						},
+						{
+							"type": "object",
+							"additionalProperties": {
+								"$ref": "#/definitions/NodeValue"
+							}
+						}
+					]
+				}
+			},
+			"additionalProperties": false
+		},
+		"AssetMetadata": {
+			"type": "object",
+			"properties": {
+				"title": {
+					"type": "string"
+				},
+				"description": {
+					"type": "string"
+				}
+			},
+			"required": [
+				"title"
+			],
+			"additionalProperties": false
 		},
 		"Edge": {
 			"type": "object",

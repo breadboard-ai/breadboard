@@ -5,11 +5,14 @@
  */
 
 import {
+  AssetMetadata,
+  AssetPath,
   GraphIdentifier,
   GraphMetadata,
   Module,
   ModuleIdentifier,
   NodeMetadata,
+  NodeValue,
 } from "@breadboard-ai/types";
 import {
   InspectableGraph,
@@ -158,6 +161,24 @@ export type ToggleExportSpec = {
   exportType: "imperative" | "declarative";
 };
 
+export type AddAssetSpec = {
+  type: "addasset";
+  path: AssetPath;
+  metadata?: AssetMetadata;
+  data: NodeValue;
+};
+
+export type ChangeAssetMetadataSpec = {
+  type: "changeassetmetadata";
+  path: AssetPath;
+  metadata: AssetMetadata;
+};
+
+export type RemoveAssetSpec = {
+  type: "removeasset";
+  path: AssetPath;
+};
+
 export type EditOperationConductor = (
   edits: EditSpec[],
   editLabel: string
@@ -187,7 +208,10 @@ export type EditSpec =
   | ChangeModuleSpec
   | AddGraphSpec
   | RemoveGraphSpec
-  | ToggleExportSpec;
+  | ToggleExportSpec
+  | AddAssetSpec
+  | RemoveAssetSpec
+  | ChangeAssetMetadataSpec;
 
 export type EditableGraph = {
   addEventListener<Key extends keyof EditableGraphEventMap>(

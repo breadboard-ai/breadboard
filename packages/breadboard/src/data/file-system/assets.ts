@@ -17,8 +17,9 @@ function assetsFromGraphDescriptor(
   if (!assets) return [];
 
   return Object.entries(assets)
-    .filter(([, data]) => isLLMContentArray(data))
-    .map(([path, data]) => {
+    .filter(([, asset]) => isLLMContentArray(asset.data))
+    .map(([path, asset]) => {
+      const data = asset.data;
       return { path: `/assets/${path}`, data } as FileSystemEntry;
     });
 }
