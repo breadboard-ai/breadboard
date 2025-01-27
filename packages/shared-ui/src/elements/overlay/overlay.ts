@@ -74,7 +74,7 @@ export class Overlay extends LitElement {
       position: fixed;
       left: var(--left, auto);
       top: var(--top, auto);
-      border: 1px solid var(--bb-neutral-300);
+      border: 1px solid var(--outer-border, var(--bb-neutral-300));
       box-shadow:
         0 8px 8px 0 rgba(0, 0, 0, 0.07),
         0 15px 12px 0 rgba(0, 0, 0, 0.09);

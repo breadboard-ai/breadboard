@@ -18,6 +18,7 @@ import {
   NodeIdentifier,
   InspectableNodePorts,
   PortIdentifier,
+  NodeHandlerMetadata,
 } from "@google-labs/breadboard";
 import {
   CommentNode,
@@ -365,6 +366,7 @@ export type NodePortConfiguration = {
   x: number;
   y: number;
   addHorizontalClickClearance: boolean;
+  currentMetadata: NodeHandlerMetadata | null;
 };
 
 export type EdgeValueConfiguration = {

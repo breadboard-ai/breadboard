@@ -165,6 +165,30 @@ export class Edit extends EventTarget {
     return editableGraph.inspect(subGraphId).nodeById(id)?.title() ?? null;
   }
 
+  getNodeCurrentMetadata(
+    tab: Tab | null,
+    id: string,
+    subGraphId: string | null = null
+  ) {
+    if (!tab) {
+      return null;
+    }
+
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph) {
+      this.dispatchEvent(new RuntimeErrorEvent("Unable to edit graph"));
+      return null;
+    }
+
+    return (
+      editableGraph
+        .inspect(subGraphId)
+        .nodeById(id)
+        ?.type()
+        .currentMetadata() ?? null
+    );
+  }
+
   getNodeType(tab: Tab | null, id: string, subGraphId: string | null = null) {
     if (!tab) {
       return null;
@@ -177,7 +201,7 @@ export class Edit extends EventTarget {
     }
 
     return (
-      editableGraph.inspect(subGraphId).nodeById(id)?.type().metadata() ?? null
+      editableGraph.inspect(subGraphId).nodeById(id)?.type().type() ?? null
     );
   }
 
@@ -196,7 +220,9 @@ export class Edit extends EventTarget {
       return null;
     }
 
-    return editableGraph.inspect(subGraphId).nodeById(id)?.metadata() ?? null;
+    return (
+      editableGraph.inspect(subGraphId).nodeById(id)?.type().metadata() ?? null
+    );
   }
 
   getNodeConfiguration(

@@ -411,6 +411,9 @@ body.hide-cursor {
   --bb-icon-sweep: url(/third_party/icons/sweep.svg);
   --bb-icon-sweep-inverted: url(/third_party/icons/sweep-inverted.svg);
 
+  --bb-icon-text: url(/third_party/icons/text.svg);
+  --bb-icon-text-inverted: url(/third_party/icons/text-inverted.svg);
+
   --bb-icon-tool: url(/third_party/icons/tool.svg);
   --bb-icon-tool-inverted: url(/third_party/icons/tool-inverted.svg);
 
@@ -535,6 +538,18 @@ body.hide-cursor {
   --bb-neutral-900: #1a1a1a;
 
   /** Node Colors */
+
+  --bb-generative-10: #fbfaff;
+  --bb-generative-50: #f7f5ff;
+  --bb-generative-100: #f0ebff;
+  --bb-generative-200: #e8e0ff;
+  --bb-generative-300: #cec2f2;
+  --bb-generative-400: #b2a1e6;
+  --bb-generative-500: #987ee6;
+  --bb-generative-600: #7757d9;
+  --bb-generative-700: #5734bf;
+  --bb-generative-800: #3d16a8;
+  --bb-generative-900: #28078c;
 
   --bb-human-50: #ede7f6;
   --bb-human-100: #d1c4e9;
@@ -1051,6 +1066,9 @@ body.hide-cursor {
 
   --bb-icon-sweep: url(/third_party/icons/sweep-inverted.svg);
   --bb-icon-sweep-inverted: url(/third_party/icons/sweep.svg);
+
+  --bb-icon-text: url(/third_party/icons/text-inverted.svg);
+  --bb-icon-text-inverted: url(/third_party/icons/text.svg);
 
   --bb-icon-tool: url(/third_party/icons/tool-inverted.svg);
   --bb-icon-tool-inverted: url(/third_party/icons/tool.svg);

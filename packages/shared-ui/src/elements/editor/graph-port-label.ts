@@ -16,11 +16,7 @@ import {
 } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
 import { getGlobalColor, isConfigurablePort } from "./utils";
-import {
-  ComponentExpansionState,
-  GRAPH_OPERATIONS,
-  GraphNodePortType,
-} from "./types";
+import { ComponentExpansionState, GRAPH_OPERATIONS } from "./types";
 import {
   isBoardArrayBehavior,
   isBoardBehavior,
@@ -28,14 +24,13 @@ import {
   isLLMContentBehavior,
   isModuleBehavior,
 } from "../../utils";
-import { GraphNodePort } from "./graph-node-port";
 
 const hoverColor = getGlobalColor("--bb-ui-50");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
 const previewTextColor = getGlobalColor("--bb-neutral-700");
 
 const PREVIEW_WIDTH = 220;
-const OFFSET_WHEN_EXPANDED = 16;
+const OFFSET_WHEN_EXPANDED = 0;
 
 export class GraphPortLabel extends PIXI.Container {
   #isDirty = false;
@@ -59,7 +54,6 @@ export class GraphPortLabel extends PIXI.Container {
   #label: PIXI.Text;
   #valuePreview: PIXI.HTMLText;
   #hoverZone = new PIXI.Graphics();
-  #portStatus = new GraphNodePort(GraphNodePortType.INERT);
 
   #showNodePreviewValues = false;
   #isConfigurable = false;
@@ -75,7 +69,6 @@ export class GraphPortLabel extends PIXI.Container {
     super();
 
     this.#modules = modules;
-    this.#portStatus.status = port.status;
 
     this.#label = new PIXI.Text({
       text: port.title,
@@ -117,7 +110,6 @@ export class GraphPortLabel extends PIXI.Container {
     this.addChild(this.#hoverZone);
     this.addChild(this.#label);
     this.addChild(this.#valuePreview);
-    this.addChild(this.#portStatus);
 
     this.#hoverZone.visible = false;
     this.#valuePreview.visible = false;
@@ -281,11 +273,6 @@ export class GraphPortLabel extends PIXI.Container {
     this.#hoverZone.clear();
     this.#hoverZone.x =
       this.#expansionState === "expanded" ? OFFSET_WHEN_EXPANDED : 0;
-
-    this.#portStatus.x = 4;
-    this.#portStatus.y = 7;
-    this.#portStatus.visible =
-      this.isConfigurable && this.#expansionState === "expanded";
 
     if (!this.isConfigurable || this.readOnly) {
       return;
