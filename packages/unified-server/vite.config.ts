@@ -22,6 +22,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
     optimizeDeps: { esbuildOptions: { target: "esnext" } },
     build: {
       target: "esnext",
+      outDir: "dist/client",
       lib: {
         entry: {
           index: "./index.html",
