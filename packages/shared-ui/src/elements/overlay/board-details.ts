@@ -20,37 +20,37 @@ const OVERLAY_CLEARANCE = 20;
 @customElement("bb-board-details-overlay")
 export class BoardDetailsOverlay extends LitElement {
   @property()
-  tabId: string | null = null;
+  accessor tabId: string | null = null;
 
   @property()
-  boardTitle: string | null = null;
+  accessor boardTitle: string | null = null;
 
   @property()
-  boardVersion: string | null = null;
+  accessor boardVersion: string | null = null;
 
   @property()
-  boardDescription: string | null = null;
+  accessor boardDescription: string | null = null;
 
   @property()
-  boardPublished: boolean | null = null;
+  accessor boardPublished: boolean | null = null;
 
   @property()
-  boardIsTool: boolean | null = null;
+  accessor boardIsTool: boolean | null = null;
 
   @property()
-  boardIsComponent: boolean | null = null;
+  accessor boardIsComponent: boolean | null = null;
 
   @property()
-  subGraphId: string | null = null;
+  accessor subGraphId: string | null = null;
 
   @property()
-  moduleId: string | null = null;
+  accessor moduleId: string | null = null;
 
   @property()
-  location = { x: 100, y: 100, addHorizontalClickClearance: true };
+  accessor location = { x: 100, y: 100, addHorizontalClickClearance: true };
 
   @property({ reflect: true })
-  maximized = false;
+  accessor maximized = false;
 
   #formRef: Ref<HTMLFormElement> = createRef();
 

@@ -22,7 +22,7 @@ import { classMap } from "lit/directives/class-map.js";
 @customElement("bb-settings-edit-overlay")
 export class SettingsEditOverlay extends LitElement {
   @property()
-  settings: Settings | null = null;
+  accessor settings: Settings | null = null;
 
   #formRef: Ref<HTMLFormElement> = createRef();
   #selectNewestItemFor: string | null = null;

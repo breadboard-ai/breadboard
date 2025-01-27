@@ -22,13 +22,13 @@ const CAN_COPY = "ClipboardItem" in window;
 @customElement("bb-export-toolbar")
 export class ExportToolbar extends LitElement {
   @property({ type: Object })
-  value: LLMContent | null = null;
+  accessor value: LLMContent | null = null;
 
   @consume({ context: tokenVendorContext })
-  tokenVendor?: TokenVendor;
+  accessor tokenVendor!: TokenVendor;
 
   @state()
-  private _savingToDrive = false;
+  private accessor _savingToDrive = false;
 
   static override styles = [
     toolbarStyles,

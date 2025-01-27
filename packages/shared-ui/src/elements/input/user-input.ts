@@ -70,46 +70,46 @@ const NO_MODULE = " -- No module";
 @customElement("bb-user-input")
 export class UserInput extends LitElement {
   @property()
-  nodeId: string | null = null;
+  accessor nodeId: string | null = null;
 
   @property()
-  inputs: UserInputConfiguration[] = [];
+  accessor inputs: UserInputConfiguration[] = [];
 
   @property()
-  showTitleInfo = true;
+  accessor showTitleInfo = true;
 
   @property()
-  useChatInput = false;
+  accessor useChatInput = false;
 
   @property()
-  jumpTo: string | null = null;
+  accessor jumpTo: string | null = null;
 
   @property()
-  showTypes = false;
+  accessor showTypes = false;
 
   @property({ reflect: true })
-  inlineControls = false;
+  accessor inlineControls = false;
 
   @property({ reflect: true })
-  llmInputClamped = false;
+  accessor llmInputClamped = false;
 
   @property()
-  llmInputShowEntrySelector = true;
+  accessor llmInputShowEntrySelector = true;
 
   @property()
-  graph: GraphDescriptor | null = null;
+  accessor graph: GraphDescriptor | null = null;
 
   @property()
-  subGraphId: string | null = null;
+  accessor subGraphId: string | null = null;
 
   @property()
-  boardServers: BoardServer[] = [];
+  accessor boardServers: BoardServer[] = [];
 
   @property({ reflect: true })
-  readOnly = false;
+  accessor readOnly = false;
 
   @property()
-  enhancingInput = new Set<string>();
+  accessor enhancingInput = new Set<string>();
 
   #formRef: Ref<HTMLFormElement> = createRef();
 

@@ -18,19 +18,19 @@ import { CommandEvent, PaletteDismissedEvent } from "../../events/events";
 @customElement("bb-command-palette")
 export class CommandPalette extends LitElement {
   @property()
-  commands: Command[] = [];
+  accessor commands: Command[] = [];
 
   @property()
-  selectedIndex = 0;
+  accessor selectedIndex = 0;
 
   @property()
-  filter: string | null = null;
+  accessor filter: string | null = null;
 
   @property()
-  recentItemsKey: string | null = null;
+  accessor recentItemsKey: string | null = null;
 
   @property()
-  recencyType: "local" | "session" = "session";
+  accessor recencyType: "local" | "session" = "session";
 
   static styles = css`
     :host {

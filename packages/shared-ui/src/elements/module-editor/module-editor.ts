@@ -61,58 +61,58 @@ type CompilationEnvironment = {
 @customElement("bb-module-editor")
 export class ModuleEditor extends LitElement {
   @property()
-  graph: InspectableGraph | null = null;
+  accessor graph: InspectableGraph | null = null;
 
   @property()
-  moduleId: ModuleIdentifier | null = null;
+  accessor moduleId: ModuleIdentifier | null = null;
 
   @property()
-  modules: InspectableModules = {};
+  accessor modules: InspectableModules = {};
 
   @property({ reflect: true })
-  focused = false;
+  accessor focused = false;
 
   @property()
-  readOnly = false;
+  accessor readOnly = false;
 
   @property()
-  assetPrefix = "";
+  accessor assetPrefix = "";
 
   @property()
-  renderId = "";
+  accessor renderId = "";
 
   @property()
-  run: InspectableRun | null = null;
+  accessor run: InspectableRun | null = null;
 
   @property()
-  topGraphResult: TopGraphRunResult | null = null;
+  accessor topGraphResult: TopGraphRunResult | null = null;
 
   @property()
-  isShowingBoardActivityOverlay = false;
+  accessor isShowingBoardActivityOverlay = false;
 
   @property()
-  showModulePreview = false;
+  accessor showModulePreview = false;
 
   @property()
-  capabilities: false | GraphProviderCapabilities = false;
+  accessor capabilities: false | GraphProviderCapabilities = false;
 
   @property()
-  graphStore: MutableGraphStore | null = null;
+  accessor graphStore: MutableGraphStore | null = null;
 
   @state()
-  private previewUpdateId = 0;
+  private accessor previewUpdateId = 0;
 
   @state()
-  private formatting = false;
+  private accessor formatting = false;
 
   @state()
-  private errorCount = 0;
+  private accessor errorCount = 0;
 
   @state()
-  private showCommandPalette = false;
+  private accessor showCommandPalette = false;
 
   @state()
-  private showModulePalette = false;
+  private accessor showModulePalette = false;
 
   static styles = css`
     * {

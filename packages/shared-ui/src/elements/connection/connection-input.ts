@@ -30,13 +30,13 @@ import {
 @customElement("bb-connection-input")
 export class ConnectionInput extends LitElement {
   @property()
-  connectionId?: string;
+  accessor connectionId: string | undefined = undefined;
 
   @consume({ context: environmentContext })
-  environment?: Environment;
+  accessor environment!: Environment;
 
   @consume({ context: tokenVendorContext })
-  tokenVendor?: TokenVendor;
+  accessor tokenVendor!: TokenVendor;
 
   #availableConnections = fetchAvailableConnections(
     this,

@@ -13,19 +13,19 @@ import { RedoEvent, UndoEvent } from "../../events/events.js";
 @customElement("bb-graph-history")
 export class GraphHistory extends LitElement {
   @property()
-  entries: EditHistoryEntry[] | null = null;
+  accessor entries: EditHistoryEntry[] | null = null;
 
   @property()
-  count: number = -1;
+  accessor count: number = -1;
 
   @property()
-  canRedo = false;
+  accessor canRedo = false;
 
   @property()
-  canUndo = false;
+  accessor canUndo = false;
 
   @property()
-  idx = -1;
+  accessor idx = -1;
 
   static styles = css`
     :host {

@@ -37,19 +37,19 @@ type CommentMetaDetailsInfo = {
 @customElement("bb-node-meta-details")
 export class NodeMetaDetails extends LitElement {
   @property()
-  graph: InspectableGraph | null = null;
+  accessor graph: InspectableGraph | null = null;
 
   @property()
-  selectedNodeIds: string[] = [];
+  accessor selectedNodeIds: string[] = [];
 
   @property()
-  subGraphId: string | null = null;
+  accessor subGraphId: string | null = null;
 
   @property()
-  readOnly = false;
+  accessor readOnly = false;
 
   @state()
-  expanded = true;
+  accessor expanded = true;
 
   #ignoreNextUpdate = false;
   #titleRef: Ref<HTMLSpanElement> = createRef();

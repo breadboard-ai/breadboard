@@ -11,7 +11,7 @@ import { map } from "lit/directives/map.js";
 @customElement("bb-capabilities-selector")
 export class CapabilitiesSelector extends LitElement {
   @property()
-  capabiliies = new Map([
+  accessor capabiliies = new Map([
     [
       "Describe",
       {

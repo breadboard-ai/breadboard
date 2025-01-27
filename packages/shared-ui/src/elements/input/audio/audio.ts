@@ -13,10 +13,10 @@ import type { LLMContent } from "@breadboard-ai/types";
 @customElement("bb-audio-input")
 export class AudioInput extends LitElement {
   @property()
-  audio: string | null = null;
+  accessor audio: string | null = null;
 
   @state()
-  recording: boolean = false;
+  accessor recording: boolean = false;
 
   #stream: MediaStream | null = null;
   #output: string | null = null;

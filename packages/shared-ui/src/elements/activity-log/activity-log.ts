@@ -43,40 +43,40 @@ import { formatError } from "../../utils/format-error.js";
 @customElement("bb-activity-log")
 export class ActivityLog extends LitElement {
   @property({ reflect: false })
-  run: InspectableRun | null = null;
+  accessor run: InspectableRun | null = null;
 
   @property({ reflect: false })
-  inputsFromLastRun: InspectableRunInputs | null = null;
+  accessor inputsFromLastRun: InspectableRunInputs | null = null;
 
   @property({ reflect: false })
-  events: InspectableRunEvent[] | null = null;
+  accessor events: InspectableRunEvent[] | null = null;
 
   @property({ reflect: true })
-  eventPosition = 0;
+  accessor eventPosition = 0;
 
   @property({ reflect: true })
-  logTitle = "Activity Log";
+  accessor logTitle = "Activity Log";
 
   @property()
-  waitingMessage = 'Click "Run Board" to get started';
+  accessor waitingMessage = 'Click "Run Board" to get started';
 
   @property({ reflect: true })
-  showExtendedInfo = false;
+  accessor showExtendedInfo = false;
 
   @property({ reflect: true })
-  showLogTitle = true;
+  accessor showLogTitle = true;
 
   @property()
-  settings: SettingsStore | null = null;
+  accessor settings: SettingsStore | null = null;
 
   @property()
-  boardServers: BoardServer[] = [];
+  accessor boardServers: BoardServer[] = [];
 
   @property()
-  showDebugControls = false;
+  accessor showDebugControls = false;
 
   @property()
-  nextNodeId: string | null = null;
+  accessor nextNodeId: string | null = null;
 
   #seenItems = new Set<string>();
   #newestEntry: Ref<HTMLElement> = createRef();

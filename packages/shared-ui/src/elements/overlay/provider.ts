@@ -17,13 +17,14 @@ import { BoardServer } from "@google-labs/breadboard";
 @customElement("bb-board-server-overlay")
 export class BoardServerOverlay extends LitElement {
   @property()
-  boardServers: BoardServer[] = [];
+  accessor boardServers: BoardServer[] = [];
 
   @property()
-  showGoogleDrive = false;
+  accessor showGoogleDrive = false;
 
   @state()
-  serverType: "FileSystem" | "BoardServer" | "GoogleDrive" = "BoardServer";
+  accessor serverType: "FileSystem" | "BoardServer" | "GoogleDrive" =
+    "BoardServer";
 
   #formRef: Ref<HTMLFormElement> = createRef();
   #driveIdRef: Ref<HTMLInputElement> = createRef();

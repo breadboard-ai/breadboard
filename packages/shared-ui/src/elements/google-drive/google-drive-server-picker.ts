@@ -19,7 +19,7 @@ const ALL_BOARD_SERVER_FOLDERS_QUERY =
 @customElement("bb-google-drive-server-picker")
 export class GoogleDriveServerPicker extends LitElement {
   @state()
-  accessToken: string | null = null;
+  accessor accessToken: string | null = null;
 
   static styles = css`
     :host {
@@ -83,10 +83,10 @@ type DriveFileList = {
 @customElement("bb-google-drive-server-dir-picker")
 export class GoogleDriveServerDirPicker extends LitElement {
   @property()
-  accessToken: string | null = null;
+  accessor accessToken: string | null = null;
 
   @state()
-  action: "create" | "use-existing" = "use-existing";
+  accessor action: "create" | "use-existing" = "use-existing";
 
   #newlyCreated: string | null = null;
 

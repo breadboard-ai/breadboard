@@ -20,16 +20,16 @@ const AUTOMATED_MOVEMENT_DURATION = 300;
 @customElement("bb-splitter")
 export class Splitter extends LitElement {
   @property({ reflect: true, attribute: true })
-  direction = Direction.HORIZONTAL;
+  accessor direction = Direction.HORIZONTAL;
 
   @property({ reflect: true, attribute: true })
-  name = "";
+  accessor name = "";
 
   @property({ reflect: true, attribute: true, type: "number" })
-  minSegmentSizeHorizontal = 360;
+  accessor minSegmentSizeHorizontal = 360;
 
   @property({ reflect: true, attribute: true, type: "number" })
-  minSegmentSizeVertical = 200;
+  accessor minSegmentSizeVertical = 200;
 
   @property({
     reflect: true,
@@ -48,10 +48,10 @@ export class Splitter extends LitElement {
       return true;
     },
   })
-  split = [0.5, 0.5];
+  accessor split = [0.5, 0.5];
 
   @property({ reflect: true })
-  showQuickExpandCollapse = false;
+  accessor showQuickExpandCollapse = false;
 
   #quickExpandRef: Ref<HTMLButtonElement> = createRef();
   #handleIdx: number | null = null;

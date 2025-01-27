@@ -31,35 +31,35 @@ import { ChatConversationState, ChatState } from "../../state/types.js";
 @customElement("bb-chat")
 export class Chat extends LitElement {
   @property({ reflect: false })
-  graph: GraphDescriptor | null = null;
+  accessor graph: GraphDescriptor | null = null;
 
   /**
    * Provides an up-to-date model of the chat state.
    * See `ChatController` for the implementation that manages the model.
    */
   @property()
-  state: ChatState | null = null;
+  accessor state: ChatState | null = null;
 
   @property({ reflect: false })
-  run: InspectableRun | null = null;
+  accessor run: InspectableRun | null = null;
 
   @property({ reflect: false })
-  inputsFromLastRun: InspectableRunInputs | null = null;
+  accessor inputsFromLastRun: InspectableRunInputs | null = null;
 
   @property({ reflect: false })
-  events: InspectableRunEvent[] | null = null;
+  accessor events: InspectableRunEvent[] | null = null;
 
   @property()
-  boardServers: BoardServer[] = [];
+  accessor boardServers: BoardServer[] = [];
 
   @property({ reflect: true })
-  eventPosition = 0;
+  accessor eventPosition = 0;
 
   @property()
-  settings: SettingsStore | null = null;
+  accessor settings: SettingsStore | null = null;
 
   @property({ reflect: true })
-  showHistory = false;
+  accessor showHistory = false;
 
   static styles = appPreviewStyles;
 

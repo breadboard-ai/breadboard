@@ -14,11 +14,11 @@ export class PortTooltip extends LitElement {
   #port?: InspectablePort;
   #latestValidateRequest?: symbol;
 
-  @property({ reflect: false, type: Object })
   get port(): InspectablePort | undefined {
     return this.#port;
   }
 
+  @property({ reflect: false, type: Object })
   set port(port: InspectablePort | undefined) {
     this.#port = port;
     this.#latestValidateRequest = undefined;
@@ -41,7 +41,7 @@ export class PortTooltip extends LitElement {
   }
 
   @state()
-  private _validation?: ValidateResult;
+  private accessor _validation: ValidateResult | undefined = undefined;
 
   static styles = css`
     pre {

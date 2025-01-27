@@ -45,13 +45,13 @@ const MARKDOWN_TEXT: Schema = {
 @customElement("bb-streamlined-schema-editor")
 export class StreamlinedSchemaEditor extends LitElement {
   @property()
-  nodeId: string | null = null;
+  accessor nodeId: string | null = null;
 
   @property()
-  schema: Schema | null = null;
+  accessor schema: Schema | null = null;
 
   @property()
-  showAsCustom = new Set<string>();
+  accessor showAsCustom = new Set<string>();
 
   #formRef: Ref<HTMLFormElement> = createRef();
   #schemaPropertiesOrder: string[] = [];

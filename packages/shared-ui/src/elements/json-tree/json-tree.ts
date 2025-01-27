@@ -23,10 +23,10 @@ interface JSONObject {
 @customElement("bb-json-tree")
 export class JSONTree extends LitElement {
   @property({ reflect: false })
-  json: JSONObject | null = null;
+  accessor json: JSONObject | null = null;
 
   @property({ reflect: true })
-  autoExpand = false;
+  accessor autoExpand = false;
 
   #copying = false;
 

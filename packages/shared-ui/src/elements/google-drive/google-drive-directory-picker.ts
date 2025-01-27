@@ -59,10 +59,12 @@ export class GoogleDriveDirectoryPicker extends LitElement {
   `;
 
   @state()
-  private _authorization?: { clientId: string; secret: string };
+  private accessor _authorization:
+    | { clientId: string; secret: string }
+    | undefined = undefined;
 
   @state()
-  private _pickerLib?: typeof google.picker;
+  private accessor _pickerLib: typeof google.picker | undefined = undefined;
 
   #picker?: google.picker.Picker;
 

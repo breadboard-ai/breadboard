@@ -30,28 +30,28 @@ const STORAGE_PREFIX = "bb-node-runner";
 @customElement("bb-node-runner")
 export class NodeRunner extends LitElement {
   @property()
-  graph: GraphDescriptor | null = null;
+  accessor graph: GraphDescriptor | null = null;
 
   @property()
-  settings: SettingsStore | null = null;
+  accessor settings: SettingsStore | null = null;
 
   @property()
-  status = STATUS.STOPPED;
+  accessor status = STATUS.STOPPED;
 
   @property()
-  selectedNodeIds: string[] = [];
+  accessor selectedNodeIds: string[] = [];
 
   @property()
-  runs: InspectableRun[] | null = null;
+  accessor runs: InspectableRun[] | null = null;
 
   @property()
-  loader: GraphLoader | null = null;
+  accessor loader: GraphLoader | null = null;
 
   @property()
-  kits: Kit[] = [];
+  accessor kits: Kit[] = [];
 
   @state()
-  expanded = false;
+  accessor expanded = false;
 
   #isolatedNodeGraphDescriptor: Promise<GraphDescriptor | null> | null = null;
   #handlers: Map<string, InputCallback[]> = new Map();

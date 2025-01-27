@@ -49,43 +49,43 @@ import { guard } from "lit/directives/guard.js";
 @customElement("bb-board-activity")
 export class BoardActivity extends LitElement {
   @property({ reflect: false })
-  run: InspectableRun | null = null;
+  accessor run: InspectableRun | null = null;
 
   @property({ reflect: false })
-  inputsFromLastRun: InspectableRunInputs | null = null;
+  accessor inputsFromLastRun: InspectableRunInputs | null = null;
 
   @property({ reflect: false })
-  events: InspectableRunEvent[] | null = null;
+  accessor events: InspectableRunEvent[] | null = null;
 
   @property({ reflect: true })
-  eventPosition = 0;
+  accessor eventPosition = 0;
 
   @property({ reflect: true })
-  logTitle = "Activity Log";
+  accessor logTitle = "Activity Log";
 
   @property()
-  waitingMessage = Strings.from("LABEL_WAITING_MESSAGE");
+  accessor waitingMessage = Strings.from("LABEL_WAITING_MESSAGE");
 
   @property({ reflect: true })
-  showExtendedInfo = false;
+  accessor showExtendedInfo = false;
 
   @property({ reflect: true })
-  showLogTitle = true;
+  accessor showLogTitle = true;
 
   @property()
-  settings: SettingsStore | null = null;
+  accessor settings: SettingsStore | null = null;
 
   @property()
-  boardServers: BoardServer[] = [];
+  accessor boardServers: BoardServer[] = [];
 
   @property({ reflect: true })
-  showDebugControls = false;
+  accessor showDebugControls = false;
 
   @property()
-  nextNodeId: string | null = null;
+  accessor nextNodeId: string | null = null;
 
   @state()
-  downloadStatus: "initial" | "generating" | "ready" = "initial";
+  accessor downloadStatus: "initial" | "generating" | "ready" = "initial";
 
   #seenItems = new Set<string>();
   #newestEntry: Ref<HTMLElement> = createRef();

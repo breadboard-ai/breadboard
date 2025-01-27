@@ -28,37 +28,37 @@ const DATA_TYPE = "text/plain";
 @customElement("bb-component-selector-overlay")
 export class ComponentSelectorOverlay extends LitElement {
   @property()
-  boardServerKits: Kit[] | null = null;
+  accessor boardServerKits: Kit[] | null = null;
 
   @property()
-  mainGraphId: MainGraphIdentifier | null = null;
+  accessor mainGraphId: MainGraphIdentifier | null = null;
 
   @property()
-  graphStore: MutableGraphStore | null = null;
+  accessor graphStore: MutableGraphStore | null = null;
 
   @property({ reflect: true })
-  detached = false;
+  accessor detached = false;
 
   @property()
-  showExperimentalComponents = false;
+  accessor showExperimentalComponents = false;
 
   @property()
-  graphStoreUpdateId = 0;
+  accessor graphStoreUpdateId = 0;
 
   @property()
-  persist = false;
+  accessor persist = false;
 
   @property()
-  static = false;
+  accessor static = false;
 
   @state()
-  filter: string | null = null;
+  accessor filter: string | null = null;
 
   @state()
-  activeKits: string[] = ["Agent Kit", "Built-in Kit"];
+  accessor activeKits: string[] = ["Agent Kit", "Built-in Kit"];
 
   @state()
-  view: "components" | "kits" = "components";
+  accessor view: "components" | "kits" = "components";
 
   #searchInputRef: Ref<HTMLInputElement> = createRef();
 

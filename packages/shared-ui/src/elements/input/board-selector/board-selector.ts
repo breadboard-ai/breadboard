@@ -19,16 +19,16 @@ import { SubGraphChosenEvent } from "../../../events/events.js";
 @customElement("bb-board-selector")
 export class BoardSelector extends LitElement {
   @property()
-  graph: GraphDescriptor | null = null;
+  accessor graph: GraphDescriptor | null = null;
 
   @property()
-  boardServers: BoardServer[] = [];
+  accessor boardServers: BoardServer[] = [];
 
   @property()
-  subGraphs: SubGraphs | null = null;
+  accessor subGraphs: SubGraphs | null = null;
 
   @state()
-  usingCustomURL = false;
+  accessor usingCustomURL = false;
 
   #inputRef: Ref<HTMLInputElement> = createRef();
   #selectorRef: Ref<HTMLSelectElement> = createRef();

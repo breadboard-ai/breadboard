@@ -14,13 +14,13 @@ export class Switcher extends LitElement {
       return typeof value === "number";
     },
   })
-  selected = 0;
+  accessor selected = 0;
 
   @property({ reflect: true, attribute: true })
-  disabled = false;
+  accessor disabled = false;
 
   @property({ reflect: true, type: Number })
-  slots = 2;
+  accessor slots = 2;
 
   static styles = css`
     :host {

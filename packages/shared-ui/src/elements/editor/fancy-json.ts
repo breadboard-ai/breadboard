@@ -19,18 +19,18 @@ export interface FancyJsonAnnotation {
 @customElement("bb-fancy-json")
 export class FancyJson extends LitElement {
   @property({ type: Object })
-  json?: JsonSerializable;
+  accessor json: JsonSerializable | undefined = undefined;
 
   @property({ type: Number })
-  indent = 2;
+  accessor indent = 2;
 
   #annotations?: FancyJsonAnnotation[];
   #annotationsBySerializedPath = new Map<string, FancyJsonAnnotation[]>();
 
-  @property({ type: Array })
   get annotations(): FancyJsonAnnotation[] | undefined {
     return this.#annotations;
   }
+  @property({ type: Array })
   set annotations(annotations: FancyJsonAnnotation[] | undefined) {
     this.#annotations = annotations;
     this.#annotationsBySerializedPath.clear();
