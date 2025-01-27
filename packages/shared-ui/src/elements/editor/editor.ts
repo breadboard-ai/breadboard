@@ -377,7 +377,7 @@ export class Editor extends LitElement implements DragConnectorReceiver {
       position: fixed;
       left: var(--component-picker-x, 100px);
       top: var(--component-picker-y, 100px);
-      z-index: 2;
+      z-index: 3;
       background: var(--bb-neutral-0);
       border: 1px solid var(--bb-neutral-300);
       width: 172px;
