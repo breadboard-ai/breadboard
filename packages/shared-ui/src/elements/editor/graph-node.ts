@@ -359,22 +359,6 @@ export class GraphNode extends PIXI.Container {
         return;
       }
 
-      const titleHeight =
-        this.#padding + this.#titleText.height + this.#padding;
-
-      const nodeGlobal = this.getBounds();
-      const titleY = this.toGlobal({ x: 0, y: titleHeight }).y;
-
-      const isInHeaderArea =
-        evt.global.x > nodeGlobal.left &&
-        evt.global.x < nodeGlobal.right &&
-        evt.global.y > nodeGlobal.top &&
-        evt.global.y < titleY;
-
-      if (!isInHeaderArea) {
-        return;
-      }
-
       const isMac = navigator.platform.indexOf("Mac") === 0;
       const isCtrlCommand = isMac ? evt.metaKey : evt.ctrlKey;
       if (isCtrlCommand) {

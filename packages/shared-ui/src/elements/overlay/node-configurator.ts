@@ -93,6 +93,13 @@ export class NodeConfigurationOverlay extends LitElement {
       z-index: 20;
     }
 
+    :host([maximized="true"]) {
+      & #wrapper {
+        width: 100%;
+        height: 100%;
+      }
+    }
+
     #wrapper {
       min-width: 410px;
       width: max(25vw, 550px);
@@ -270,11 +277,16 @@ export class NodeConfigurationOverlay extends LitElement {
 
         --output-border-width: 0;
         --output-border-radius: 0;
-        --output-padding: 0;
+        --output-padding: var(--bb-grid-size-6);
         --output-value-margin-x: 0;
         --output-value-margin-y: 0;
         --output-value-padding-x: 0;
         --output-value-padding-y: 0;
+      }
+
+      bb-llm-output-array {
+        padding-top: var(--bb-grid-size-8);
+      }
     }
 
     :host([maximized="true"]) #wrapper {
@@ -532,6 +544,87 @@ export class NodeConfigurationOverlay extends LitElement {
     const dragDelta = { x: 0, y: 0 };
     let dragging = false;
 
+    let outputs: HTMLTemplateResult | symbol = nothing;
+    const shouldShowOutputs =
+      this.configuration.type?.toLocaleLowerCase() !== "input";
+    if (shouldShowOutputs) {
+      outputs = html`<div class="container outputs">
+        ${this.runEventsForNode && this.runEventsForNode.length > 0
+          ? html`${map(this.runEventsForNode, (evt) => {
+              const { outputs } = evt;
+              if (!outputs) {
+                return html`No value`;
+              }
+
+              return html`${map(Object.values(outputs), (outputValue) => {
+                let value: HTMLTemplateResult | symbol = nothing;
+                if (typeof outputValue === "object") {
+                  if (isLLMContentArray(outputValue)) {
+                    value = html`<bb-llm-output-array
+                      .clamped=${false}
+                      .showModeToggle=${false}
+                      .showEntrySelector=${false}
+                      .showExportControls=${true}
+                      .values=${outputValue}
+                    ></bb-llm-output-array>`;
+                  } else if (isLLMContent(outputValue)) {
+                    if (!outputValue.parts) {
+                      // Special case for "$metadata" item.
+                      // See https://github.com/breadboard-ai/breadboard/issues/1673
+                      // TODO: Make this not ugly.
+                      const data = (outputValue as unknown as { data: unknown })
+                        .data;
+                      value = html`<bb-json-tree .json=${data}></bb-json-tree>`;
+                    }
+
+                    if (!outputValue.parts.length) {
+                      value = html`No data provided`;
+                    }
+
+                    value = outputValue.parts.length
+                      ? html`<bb-llm-output
+                          .clamped=${false}
+                          .lite=${true}
+                          .showExportControls=${true}
+                          .value=${outputValue}
+                        ></bb-llm-output>`
+                      : html`No data provided`;
+                  } else if (isImageURL(outputValue)) {
+                    value = html`<img src=${outputValue.image_url} />`;
+                  } else {
+                    value = html`<bb-json-tree
+                      .json=${outputValue}
+                    ></bb-json-tree>`;
+                  }
+                } else {
+                  let renderableValue: HTMLTemplateResult | symbol = nothing;
+                  if (typeof outputValue === "string") {
+                    renderableValue = html`${markdown(outputValue)}`;
+                  } else {
+                    renderableValue = html`${outputValue !== undefined
+                      ? outputValue
+                      : html`<span class="no-value"
+                          >[No value provided]</span
+                        >`}`;
+                  }
+
+                  // prettier-ignore
+                  value = html`<div
+                  class=${classMap({
+                    value: true,
+                  })}
+                >${renderableValue}</div>`;
+                }
+
+                return html` <div class="output-port">
+                  <div class="value">${value}</div>
+                </div>`;
+              })}`;
+            })}`
+          : html`...`}
+      </div>`;
+    }
+
     return html`<bb-overlay
       @bboverlaydismissed=${(evt: Event) => {
         if (
@@ -671,85 +764,7 @@ export class NodeConfigurationOverlay extends LitElement {
                 .readOnly=${this.readOnly}
               ></bb-user-input>
             </div>
-            <div class="container outputs">
-              ${this.runEventsForNode && this.runEventsForNode.length > 0
-                ? html`${map(this.runEventsForNode, (evt) => {
-                    const { outputs } = evt;
-                    if (!outputs) {
-                      return html`No value`;
-                    }
-
-                    return html`${map(Object.values(outputs), (outputValue) => {
-                      let value: HTMLTemplateResult | symbol = nothing;
-                      if (typeof outputValue === "object") {
-                        if (isLLMContentArray(outputValue)) {
-                          value = html`<bb-llm-output-array
-                            .clamped=${false}
-                            .showModeToggle=${false}
-                            .showEntrySelector=${false}
-                            .showExportControls=${true}
-                            .values=${outputValue}
-                          ></bb-llm-output-array>`;
-                        } else if (isLLMContent(outputValue)) {
-                          if (!outputValue.parts) {
-                            // Special case for "$metadata" item.
-                            // See https://github.com/breadboard-ai/breadboard/issues/1673
-                            // TODO: Make this not ugly.
-                            const data = (
-                              outputValue as unknown as { data: unknown }
-                            ).data;
-                            value = html`<bb-json-tree
-                              .json=${data}
-                            ></bb-json-tree>`;
-                          }
-
-                          if (!outputValue.parts.length) {
-                            value = html`No data provided`;
-                          }
-
-                          value = outputValue.parts.length
-                            ? html`<bb-llm-output
-                                .clamped=${false}
-                                .lite=${true}
-                                .showExportControls=${true}
-                                .value=${outputValue}
-                              ></bb-llm-output>`
-                            : html`No data provided`;
-                        } else if (isImageURL(outputValue)) {
-                          value = html`<img src=${outputValue.image_url} />`;
-                        } else {
-                          value = html`<bb-json-tree
-                            .json=${outputValue}
-                          ></bb-json-tree>`;
-                        }
-                      } else {
-                        let renderableValue: HTMLTemplateResult | symbol =
-                          nothing;
-                        if (typeof outputValue === "string") {
-                          renderableValue = html`${markdown(outputValue)}`;
-                        } else {
-                          renderableValue = html`${outputValue !== undefined
-                            ? outputValue
-                            : html`<span class="no-value"
-                                >[No value provided]</span
-                              >`}`;
-                        }
-
-                        // prettier-ignore
-                        value = html`<div
-                          class=${classMap({
-                            value: true,
-                          })}
-                        >${renderableValue}</div>`;
-                      }
-
-                      return html` <div class="output-port">
-                        <div class="value">${value}</div>
-                      </div>`;
-                    })}`;
-                  })}`
-                : html`...`}
-            </div>
+            ${outputs}
           </div>
           <footer>
             <button
