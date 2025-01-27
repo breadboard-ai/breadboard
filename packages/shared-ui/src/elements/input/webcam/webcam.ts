@@ -12,10 +12,10 @@ import { createRef, ref, type Ref } from "lit/directives/ref.js";
 @customElement("bb-webcam-input")
 export class WebcamInput extends LitElement {
   @property()
-  type = "image/png";
+  accessor type = "image/png";
 
   @state()
-  error = "";
+  accessor error = "";
 
   static styles = css`
     :host {

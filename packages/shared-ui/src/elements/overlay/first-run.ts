@@ -35,13 +35,13 @@ type FetchServerInfoResult =
 @customElement("bb-first-run-overlay")
 export class FirstRunOverlay extends LitElement {
   @property()
-  settings: Settings | null = null;
+  accessor settings: Settings | null = null;
 
   @property()
-  boardServerUrl: string | null = null;
+  accessor boardServerUrl: string | null = null;
 
   @property()
-  boardServers: BoardServer[] = [];
+  accessor boardServers: BoardServer[] = [];
 
   #formRef: Ref<HTMLFormElement> = createRef();
 

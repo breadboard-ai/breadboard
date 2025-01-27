@@ -61,16 +61,18 @@ export class GoogleDriveFileId extends LitElement {
   `;
 
   @state()
-  private _authorization?: { clientId: string; secret: string };
+  private accessor _authorization:
+    | { clientId: string; secret: string }
+    | undefined = undefined;
 
   @state()
-  private _pickerLib?: typeof google.picker;
+  private accessor _pickerLib: typeof google.picker | undefined = undefined;
 
   @state()
-  docName = "";
+  accessor docName = "";
 
   @property()
-  value: PickedValue | null = null;
+  accessor value: PickedValue | null = null;
 
   #picker?: google.picker.Picker;
 

@@ -24,85 +24,86 @@ import { classMap } from "lit/directives/class-map.js";
 @customElement("bb-module-ribbon-menu")
 export class ModuleRibbonMenu extends LitElement {
   @property()
-  graph: InspectableGraph | null = null;
+  accessor graph: InspectableGraph | null = null;
 
   @property()
-  subGraphId: string | null = null;
+  accessor subGraphId: string | null = null;
 
   @property()
-  modules: InspectableModules = {};
+  accessor modules: InspectableModules = {};
 
   @property()
-  moduleId: string | null = null;
+  accessor moduleId: string | null = null;
 
   @property()
-  readOnly = true;
+  accessor readOnly = true;
 
   @property()
-  follow = false;
+  accessor follow = false;
 
   @property()
-  isRunning = false;
+  accessor isRunning = false;
 
   @property()
-  showExperimentalComponents = false;
+  accessor showExperimentalComponents = false;
 
   @property()
-  canSave = false;
+  accessor canSave = false;
 
   @property()
-  eventCount = 0;
+  accessor eventCount = 0;
 
   @property()
-  errorCount = 0;
+  accessor errorCount = 0;
 
   @property()
-  errorDetails: Array<{ message: string; start: number }> | null = null;
+  accessor errorDetails: Array<{ message: string; start: number }> | null =
+    null;
 
   @property()
-  showErrors = false;
+  accessor showErrors = false;
 
   @property()
-  isInputPending = false;
+  accessor isInputPending = false;
 
   @property()
-  isError = false;
+  accessor isError = false;
 
   @property({ reflect: true })
-  isShowingBoardActivityOverlay = false;
+  accessor isShowingBoardActivityOverlay = false;
 
   @property({ reflect: true })
-  isShowingModulePreview = false;
+  accessor isShowingModulePreview = false;
 
   @property()
-  canShowModulePreview = false;
+  accessor canShowModulePreview = false;
 
   @property()
-  formatting = false;
+  accessor formatting = false;
 
   @property()
-  renderId: string | null = null;
+  accessor renderId: string | null = null;
 
   @property()
-  canUndo = false;
+  accessor canUndo = false;
 
   @property()
-  canRedo = false;
+  accessor canRedo = false;
 
   @state()
-  showSaveMenu = false;
+  accessor showSaveMenu = false;
 
   @state()
-  showErrorMenu = false;
+  accessor showErrorMenu = false;
 
   @state()
-  showCopyMenu = false;
+  accessor showCopyMenu = false;
 
   @state()
-  showOverflowMenu = false;
+  accessor showOverflowMenu = false;
 
   @state()
-  showBoardModules = false;
+  accessor showBoardModules = false;
 
   static styles = css`
     * {

@@ -9,10 +9,10 @@ import { customElement, property } from "lit/decorators.js";
 @customElement("bb-tooltip")
 export class Tooltip extends LitElement {
   @property({ reflect: true })
-  visible = false;
+  accessor visible = false;
 
   @property()
-  message: string | null = null;
+  accessor message: string | null = null;
 
   @property()
   set x(x: number) {

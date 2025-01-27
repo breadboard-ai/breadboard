@@ -37,37 +37,37 @@ interface Guides {
 @customElement("bb-project-listing")
 export class ProjectListing extends LitElement {
   @property()
-  boardServers: BoardServer[] = [];
+  accessor boardServers: BoardServer[] = [];
 
   @property()
-  boardServerNavState: string | null = null;
+  accessor boardServerNavState: string | null = null;
 
   @property({ reflect: true })
-  visible = false;
+  accessor visible = false;
 
   @property()
-  url: string | null = null;
+  accessor url: string | null = null;
 
   @property()
-  version = "dev";
+  accessor version = "dev";
 
   @property()
-  selectedBoardServer = "Example Boards";
+  accessor selectedBoardServer = "Example Boards";
 
   @property()
-  selectedLocation = "example://example-boards";
+  accessor selectedLocation = "example://example-boards";
 
   @state()
-  filter: string | null = null;
+  accessor filter: string | null = null;
 
   @state()
-  showOtherPeoplesBoards = false;
+  accessor showOtherPeoplesBoards = false;
 
   @state()
-  showBoardServerOverflowMenu = false;
+  accessor showBoardServerOverflowMenu = false;
 
   @state()
-  guides: Guides[] = [
+  accessor guides: Guides[] = [
     {
       title: "Getting Started with Breadboard",
       description: "Learn the basics of using the Visual Editor",

@@ -46,19 +46,19 @@ type MultiModalInput = AudioInput | DrawableInput | WebcamInput;
 @customElement("bb-llm-input-chat")
 export class LLMInputChat extends LitElement {
   @property()
-  value: LLMContent | null = null;
+  accessor value: LLMContent | null = null;
 
   @property()
-  description: string | null = null;
+  accessor description: string | null = null;
 
   @property({ reflect: true })
-  clamped = true;
+  accessor clamped = true;
 
   @property()
-  minItems = 0;
+  accessor minItems = 0;
 
   @property()
-  allow: AllowedLLMContentTypes = {
+  accessor allow: AllowedLLMContentTypes = {
     audioFile: true,
     audioMicrophone: true,
     videoFile: true,
@@ -71,10 +71,10 @@ export class LLMInputChat extends LitElement {
   };
 
   @state()
-  showInlineControls: { x: number; y: number } | null = null;
+  accessor showInlineControls: { x: number; y: number } | null = null;
 
   @property()
-  autofocus = false;
+  accessor autofocus = false;
 
   #forceRenderCount = 0;
   #focusLastPart = false;

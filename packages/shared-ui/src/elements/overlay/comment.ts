@@ -19,7 +19,7 @@ const MAXIMIZE_KEY = "bb-comment-overlay-maximized";
 @customElement("bb-comment-overlay")
 export class CommentOverlay extends LitElement {
   @property()
-  commentValue: CommentConfiguration | null = null;
+  accessor commentValue: CommentConfiguration | null = null;
 
   #formRef: Ref<HTMLFormElement> = createRef();
 

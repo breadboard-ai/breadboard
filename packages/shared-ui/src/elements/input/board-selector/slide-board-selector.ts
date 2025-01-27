@@ -21,16 +21,16 @@ const ITEM_HEIGHT = 24;
 @customElement("bb-slide-board-selector")
 export class SlideBoardSelector extends LitElement {
   @property()
-  graph: InspectableGraph | null = null;
+  accessor graph: InspectableGraph | null = null;
 
   @property()
-  value: GraphIdentifier | null = null;
+  accessor value: GraphIdentifier | null = null;
 
   @state()
-  active = false;
+  accessor active = false;
 
   @state()
-  private selectedIndex: number | null = null;
+  private accessor selectedIndex: number | null = null;
 
   static styles = css`
     * {

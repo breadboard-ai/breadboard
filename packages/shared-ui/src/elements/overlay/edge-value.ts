@@ -28,28 +28,28 @@ const MAXIMIZE_KEY = "bb-edge-value-overlay-maximized";
 @customElement("bb-edge-value-overlay")
 export class EdgeValueOverlay extends LitElement {
   @property()
-  readOnly = false;
+  accessor readOnly = false;
 
   @property()
-  showRegenerateEdgeValueButton = false;
+  accessor showRegenerateEdgeValueButton = false;
 
   @property()
-  canRunNode = false;
+  accessor canRunNode = false;
 
   @property()
-  edgeValue: EdgeValueConfiguration | null = null;
+  accessor edgeValue: EdgeValueConfiguration | null = null;
 
   @property()
-  graph: GraphDescriptor | null = null;
+  accessor graph: GraphDescriptor | null = null;
 
   @property()
-  subGraphId: string | null = null;
+  accessor subGraphId: string | null = null;
 
   @property()
-  boardServers: BoardServer[] = [];
+  accessor boardServers: BoardServer[] = [];
 
   @property({ reflect: true })
-  maximized = false;
+  accessor maximized = false;
 
   #overlayRef: Ref<Overlay> = createRef();
   #userInputRef: Ref<UserInput> = createRef();

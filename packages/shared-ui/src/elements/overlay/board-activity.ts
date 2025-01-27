@@ -23,37 +23,37 @@ const PERSIST_KEY = "bb-board-activity-overlay-persist";
 @customElement("bb-board-activity-overlay")
 export class BoardActivityOverlay extends LitElement {
   @property()
-  run: InspectableRun | null = null;
+  accessor run: InspectableRun | null = null;
 
   @property()
-  hideLast = false;
+  accessor hideLast = false;
 
   @property()
-  showDebugControls = false;
+  accessor showDebugControls = false;
 
   @property()
-  nextNodeId: string | null = null;
+  accessor nextNodeId: string | null = null;
 
   @property()
-  location = { x: 10, y: 10 };
+  accessor location = { x: 10, y: 10 };
 
   @property()
-  inputsFromLastRun: InspectableRunInputs | null = null;
+  accessor inputsFromLastRun: InspectableRunInputs | null = null;
 
   @property()
-  settings: SettingsStore | null = null;
+  accessor settings: SettingsStore | null = null;
 
   @property()
-  boardServers: BoardServer[] = [];
+  accessor boardServers: BoardServer[] = [];
 
   @property()
-  persist = false;
+  accessor persist = false;
 
   @property()
-  events: InspectableRunEvent[] | null = null;
+  accessor events: InspectableRunEvent[] | null = null;
 
   @state()
-  debugEvent: InspectableRunEvent | null = null;
+  accessor debugEvent: InspectableRunEvent | null = null;
 
   #contentScrollTop = 0;
   #contentRef: Ref<HTMLDivElement> = createRef();

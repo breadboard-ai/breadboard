@@ -24,13 +24,13 @@ interface Guides {
 @customElement("bb-welcome-panel")
 export class WelcomePanel extends LitElement {
   @property()
-  version = "dev";
+  accessor version = "dev";
 
   @state()
-  recentBoards: RecentBoard[] = [];
+  accessor recentBoards: RecentBoard[] = [];
 
   @state()
-  guides: Guides[] = [
+  accessor guides: Guides[] = [
     {
       title: "New here? Try our Getting Started Guide",
       description: "Learn the basics of using the Visual Editor",

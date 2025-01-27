@@ -31,20 +31,20 @@ export class DelegatingInput
   implements InputWidget<unknown>
 {
   @property({ attribute: false })
-  schema?: JSONSchema4;
+  accessor schema: JSONSchema4 | undefined = undefined;
 
   // See #onChange for why we maintain a private #value shadow.
   #value: unknown;
-  @property({ attribute: false })
   get value(): unknown {
     return this.#value;
   }
+  @property({ attribute: false })
   set value(value: unknown) {
     this.#value = value;
   }
 
   @consume({ context: environmentContext })
-  private _environment?: Environment;
+  private accessor _environment!: Environment;
 
   /**
    * This first task chooses the best plugin and instantiates the inner widget

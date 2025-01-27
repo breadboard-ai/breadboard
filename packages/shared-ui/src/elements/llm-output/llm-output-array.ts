@@ -14,28 +14,28 @@ import { LLMOutput } from "./llm-output.js";
 @customElement("bb-llm-output-array")
 export class LLMOutputArray extends LitElement {
   @property()
-  values: LLMContent[] | null = null;
+  accessor values: LLMContent[] | null = null;
 
   @property()
-  showModeToggle = true;
+  accessor showModeToggle = true;
 
   @property()
-  showEntrySelector = true;
+  accessor showEntrySelector = true;
 
   @property()
-  clamped = true;
+  accessor clamped = true;
 
   @property()
-  lite = false;
+  accessor lite = false;
 
   @property()
-  showExportControls = false;
+  accessor showExportControls = false;
 
   @property({ reflect: true })
-  selected = 0;
+  accessor selected = 0;
 
   @property({ reflect: true })
-  mode: "visual" | "json" = "visual";
+  accessor mode: "visual" | "json" = "visual";
 
   #resizeObserver: ResizeObserver | null = null;
   #activeLLMContentRef: Ref<LLMOutput> = createRef();

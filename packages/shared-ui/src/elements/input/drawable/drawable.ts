@@ -12,13 +12,13 @@ import { createRef, ref, type Ref } from "lit/directives/ref.js";
 @customElement("bb-drawable-input")
 export class DrawableInput extends LitElement {
   @property()
-  type = "image/png";
+  accessor type = "image/png";
 
   @state()
-  error = "";
+  accessor error = "";
 
   @state()
-  strokeColor = "#333333";
+  accessor strokeColor = "#333333";
 
   #drawing = false;
   #canvasRef: Ref<HTMLCanvasElement> = createRef();

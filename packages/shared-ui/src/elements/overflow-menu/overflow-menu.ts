@@ -17,10 +17,10 @@ import { OverflowAction } from "../../types/types.js";
 @customElement("bb-overflow-menu")
 export class OverflowMenu extends LitElement {
   @property()
-  actions: OverflowAction[] = [];
+  accessor actions: OverflowAction[] = [];
 
   @property()
-  disabled = true;
+  accessor disabled = true;
 
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #onPointerDownBound = this.#onPointerDown.bind(this);

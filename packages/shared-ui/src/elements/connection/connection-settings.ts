@@ -28,7 +28,7 @@ export class ConnectionSettings
   implements CustomSettingsElement
 {
   @consume({ context: environmentContext })
-  environment?: Environment;
+  accessor environment!: Environment;
 
   /**
    * The available connections vary across deployment environments, so we fetch

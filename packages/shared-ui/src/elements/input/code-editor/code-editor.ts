@@ -47,25 +47,25 @@ const darkTheme = root?.classList.contains("dark-theme") ?? false;
 @customElement("bb-code-editor")
 export class CodeEditor extends LitElement {
   @property()
-  language: "javascript" | "typescript" | "json" | null = null;
+  accessor language: "javascript" | "typescript" | "json" | null = null;
 
   @property()
-  definitions: Map<string, string> | null = null;
+  accessor definitions: Map<string, string> | null = null;
 
   @property()
-  showMessage = false;
+  accessor showMessage = false;
 
   @property({ reflect: true })
-  passthru = false;
+  accessor passthru = false;
 
   @property()
-  fileName: string | null = null;
+  accessor fileName: string | null = null;
 
   @property()
-  env: VirtualTypeScriptEnvironment | null = null;
+  accessor env: VirtualTypeScriptEnvironment | null = null;
 
   @property()
-  extensions: CodeMirrorExtensions | null = null;
+  accessor extensions: CodeMirrorExtensions | null = null;
 
   #editor: EditorView | null = null;
   #content: Ref<HTMLDivElement> = createRef();

@@ -89,28 +89,28 @@ export class WorkspaceOutline
   implements DragConnectorReceiver
 {
   @property()
-  graph: InspectableGraph | null = null;
+  accessor graph: InspectableGraph | null = null;
 
   @property()
-  renderId = "";
+  accessor renderId = "";
 
   @property({ reflect: true })
-  mode = "tree" as const;
+  accessor mode = "tree" as const;
 
   @property()
-  selectionState: WorkspaceSelectionStateWithChangeId | null = null;
+  accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
 
   @property()
-  graphStoreUpdateId: number = 0;
+  accessor graphStoreUpdateId: number = 0;
 
   @property({ reflect: true })
-  showBoardReferenceMarkers = false;
+  accessor showBoardReferenceMarkers = false;
 
   @state()
-  filter: string | null = null;
+  accessor filter: string | null = null;
 
   @state()
-  private showOverflowMenu = false;
+  private accessor showOverflowMenu = false;
   #overflowMenu: OverflowMenu = {
     type: "declarative",
     target: null,

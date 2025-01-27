@@ -22,25 +22,25 @@ import { map } from "lit/directives/map.js";
 @customElement("bb-save-as-overlay")
 export class SaveAsOverlay extends LitElement {
   @property()
-  panelTitle: string = "Save As...";
+  accessor panelTitle: string = "Save As...";
 
   @property()
-  graph: GraphDescriptor | null = null;
+  accessor graph: GraphDescriptor | null = null;
 
   @property()
-  boardFileName: string | null = null;
+  accessor boardFileName: string | null = null;
 
   @property()
-  boardServers: BoardServer[] = [];
+  accessor boardServers: BoardServer[] = [];
 
   @property()
-  selectedBoardServer = "Browser Storage";
+  accessor selectedBoardServer = "Browser Storage";
 
   @property()
-  selectedLocation = "idb://board-server-local";
+  accessor selectedLocation = "idb://board-server-local";
 
   @property()
-  isNewBoard = false;
+  accessor isNewBoard = false;
 
   #formRef: Ref<HTMLFormElement> = createRef();
   #fileNameRef: Ref<HTMLInputElement> = createRef();

@@ -41,37 +41,37 @@ import { markdown } from "../../directives/markdown.js";
 @customElement("bb-activity-log-lite")
 export class ActivityLogLite extends LitElement {
   @property({ reflect: true })
-  logTitle = "Activity Log";
+  accessor logTitle = "Activity Log";
 
   @property()
-  waitingMessage = 'Click "Run Board" to get started';
+  accessor waitingMessage = 'Click "Run Board" to get started';
 
   @property()
-  showLogTitle = false;
+  accessor showLogTitle = false;
 
   @property({ reflect: true })
-  showExtendedInfo = false;
+  accessor showExtendedInfo = false;
 
   @property()
-  showActions = true;
+  accessor showActions = true;
 
   @property()
-  start: number = 0;
+  accessor start: number = 0;
 
   @property({ reflect: true })
-  neutral = false;
+  accessor neutral = false;
 
   @property({ reflect: true })
-  animateNewItems = false;
+  accessor animateNewItems = false;
 
   @property({ reflect: true })
-  hideEmptyEdges = false;
+  accessor hideEmptyEdges = false;
 
   @property()
-  waitingGraphic: UserMessage | null = null;
+  accessor waitingGraphic: UserMessage | null = null;
 
   @property()
-  topGraphResult: TopGraphRunResult | null = null;
+  accessor topGraphResult: TopGraphRunResult | null = null;
 
   static styles = css`
     * {

@@ -104,59 +104,61 @@ enum MODE {
 @customElement("bb-graph-renderer")
 export class GraphRenderer extends LitElement {
   @property()
-  graph: InspectableGraph | null = null;
+  accessor graph: InspectableGraph | null = null;
 
   @property()
-  run: InspectableRun | null = null;
+  accessor run: InspectableRun | null = null;
 
   @property()
-  offsetZoom = 0;
+  accessor offsetZoom = 0;
 
   @property({ reflect: true })
-  invertZoomScrollDirection = false;
+  accessor invertZoomScrollDirection = false;
 
   @property({ reflect: true })
-  readOnly = false;
+  accessor readOnly = false;
 
   @property({ reflect: true })
-  highlightInvalidWires = false;
+  accessor highlightInvalidWires = false;
 
   @property()
-  showPortTooltips = false;
+  accessor showPortTooltips = false;
 
   @property()
-  showSubgraphsInline = false;
+  accessor showSubgraphsInline = false;
 
   @property()
-  assetPrefix = "";
+  accessor assetPrefix = "";
 
   @property()
-  configs: Map<GraphIdentifier, GraphOpts> | null = null;
+  accessor configs: Map<GraphIdentifier, GraphOpts> | null = null;
 
   @property()
-  topGraphResult: TopGraphRunResult | null = null;
+  accessor topGraphResult: TopGraphRunResult | null = null;
 
   @property()
-  selectionChangeId: WorkspaceSelectionChangeId | null = null;
+  accessor selectionChangeId: WorkspaceSelectionChangeId | null = null;
 
   @property()
-  graphTopologyUpdateId: number = 0;
+  accessor graphTopologyUpdateId: number = 0;
 
   @property()
-  moveToSelection: WorkspaceSelectionStateWithChangeId["moveToSelection"] =
+  accessor moveToSelection: WorkspaceSelectionStateWithChangeId["moveToSelection"] =
     false;
 
   @property()
-  topGraphUrl: string | null = null;
+  accessor topGraphUrl: string | null = null;
 
   @state()
-  private _portTooltip?: {
-    location: PIXI.ObservablePoint;
-    port: InspectablePort;
-  } = undefined;
+  private accessor _portTooltip:
+    | {
+        location: PIXI.ObservablePoint;
+        port: InspectablePort;
+      }
+    | undefined = undefined;
 
   @property()
-  padding = 30;
+  accessor padding = 30;
 
   @property()
   set showBoardReferenceMarkers(showBoardReferenceMarkers: boolean) {

@@ -31,19 +31,19 @@ export function getGlobalColor(
 @customElement("bb-drag-connector")
 export class DragConnector extends LitElement {
   @property()
-  start: { x: number; y: number } | null = null;
+  accessor start: { x: number; y: number } | null = null;
 
   @property()
-  source: GraphIdentifier | null = null;
+  accessor source: GraphIdentifier | null = null;
 
   @property()
-  end: { x: number; y: number } | null = null;
+  accessor end: { x: number; y: number } | null = null;
 
   @property()
-  dimensions: { w: number; h: number } | null = null;
+  accessor dimensions: { w: number; h: number } | null = null;
 
   @state()
-  isOnTarget = false;
+  accessor isOnTarget = false;
 
   #resizeObserver = new ResizeObserver((entries) => {
     this.dimensions = {

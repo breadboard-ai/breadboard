@@ -27,19 +27,19 @@ type ArrayEditorType = string | number | object | boolean | null;
 @customElement("bb-array-editor")
 export class ArrayEditor extends LitElement {
   @property({ reflect: true })
-  type = TYPE.STRING;
+  accessor type = TYPE.STRING;
 
   @property()
-  items: ArrayEditorType[] | null = null;
+  accessor items: ArrayEditorType[] | null = null;
 
   @property({ reflect: true })
-  behavior: BehaviorSchema | null = null;
+  accessor behavior: BehaviorSchema | null = null;
 
   @property()
-  boardServers: BoardServer[] = [];
+  accessor boardServers: BoardServer[] = [];
 
   @property()
-  graph: GraphDescriptor | null = null;
+  accessor graph: GraphDescriptor | null = null;
 
   #formRef: Ref<HTMLFormElement> = createRef();
   #appendNewItemOnNextRender = false;

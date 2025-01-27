@@ -15,28 +15,28 @@ import { LLMInput } from "./llm-input.js";
 @customElement("bb-llm-input-array")
 export class LLMInputArray extends LitElement {
   @property()
-  values: LLMContent[] | null = null;
+  accessor values: LLMContent[] | null = null;
 
   @property()
-  description: string | null = null;
+  accessor description: string | null = null;
 
   @property()
-  showEntrySelector = true;
+  accessor showEntrySelector = true;
 
   @property()
-  useChatInput = false;
+  accessor useChatInput = false;
 
   @property({ reflect: true })
-  clamped = true;
+  accessor clamped = true;
 
   @property({ reflect: true })
-  inlineControls = false;
+  accessor inlineControls = false;
 
   @property()
-  minItems = 0;
+  accessor minItems = 0;
 
   @property()
-  allow: AllowedLLMContentTypes = {
+  accessor allow: AllowedLLMContentTypes = {
     audioFile: true,
     audioMicrophone: true,
     videoFile: true,
@@ -49,10 +49,10 @@ export class LLMInputArray extends LitElement {
   };
 
   @property({ reflect: true })
-  selected = 0;
+  accessor selected = 0;
 
   @property()
-  autofocus = false;
+  accessor autofocus = false;
 
   #resizeObserver: ResizeObserver | null = null;
   #activeLLMContentRef: Ref<LLMInput> = createRef();

@@ -76,103 +76,103 @@ const POPOUT_STATE = "bb-ui-popout-state";
 @customElement("bb-ui-controller")
 export class UI extends LitElement {
   @property()
-  mainView: "create" | "deploy" = "create";
+  accessor mainView: "create" | "deploy" = "create";
 
   @property()
-  graph: GraphDescriptor | null = null;
+  accessor graph: GraphDescriptor | null = null;
 
   @property()
-  mainGraphId: MainGraphIdentifier | null = null;
+  accessor mainGraphId: MainGraphIdentifier | null = null;
 
   @property()
-  editor: EditableGraph | null = null;
+  accessor editor: EditableGraph | null = null;
 
   @property()
-  runs: InspectableRun[] | null = null;
+  accessor runs: InspectableRun[] | null = null;
 
   @property()
-  inputsFromLastRun: InspectableRunInputs | null = null;
+  accessor inputsFromLastRun: InspectableRunInputs | null = null;
 
   @property()
-  boardServerKits: Kit[] = [];
+  accessor boardServerKits: Kit[] = [];
 
   @property()
-  loader: GraphLoader | null = null;
+  accessor loader: GraphLoader | null = null;
 
   @property({ reflect: true })
-  status = STATUS.RUNNING;
+  accessor status = STATUS.RUNNING;
 
   @property()
-  topGraphResult: TopGraphRunResult | null = null;
+  accessor topGraphResult: TopGraphRunResult | null = null;
 
   @property()
-  dataStore: DataStore | null = null;
+  accessor dataStore: DataStore | null = null;
 
   @property()
-  runStore: RunStore | null = null;
+  accessor runStore: RunStore | null = null;
 
   @property()
-  sandbox: Sandbox | null = null;
+  accessor sandbox: Sandbox | null = null;
 
   @property()
-  fileSystem: FileSystem | null = null;
+  accessor fileSystem: FileSystem | null = null;
 
   @property({ reflect: true })
-  failedToLoad = false;
+  accessor failedToLoad = false;
 
   @property()
-  readOnly = false;
+  accessor readOnly = false;
 
   @property()
-  version = "dev";
+  accessor version = "dev";
 
   @property()
-  recentBoards: RecentBoard[] = [];
+  accessor recentBoards: RecentBoard[] = [];
 
   @property()
-  settings: SettingsStore | null = null;
+  accessor settings: SettingsStore | null = null;
 
   @property()
-  boardServers: BoardServer[] = [];
+  accessor boardServers: BoardServer[] = [];
 
   @property()
-  tabURLs: string[] = [];
+  accessor tabURLs: string[] = [];
 
   @state()
-  history: EditHistory | null = null;
+  accessor history: EditHistory | null = null;
 
   @property()
-  mode = "tree" as const;
+  accessor mode = "tree" as const;
 
   @property()
-  sideNavItem: string | null = "console";
+  accessor sideNavItem: string | null = "console";
 
   @property()
-  selectionState: WorkspaceSelectionStateWithChangeId | null = null;
+  accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
 
   @property()
-  visualChangeId: WorkspaceVisualChangeId | null = null;
+  accessor visualChangeId: WorkspaceVisualChangeId | null = null;
 
   @property()
-  graphStore: MutableGraphStore | null = null;
+  accessor graphStore: MutableGraphStore | null = null;
 
   @property()
-  graphTopologyUpdateId: number = 0;
+  accessor graphTopologyUpdateId: number = 0;
 
   @property()
-  graphStoreUpdateId: number = 0;
+  accessor graphStoreUpdateId: number = 0;
 
   @property()
-  showBoardReferenceMarkers = false;
+  accessor showBoardReferenceMarkers = false;
 
   @property()
-  chatController: ChatController | null = null;
+  accessor chatController: ChatController | null = null;
 
   @state()
-  debugEvent: InspectableRunEvent | null = null;
+  accessor debugEvent: InspectableRunEvent | null = null;
 
   @state()
-  popoutExpanded = false;
+  accessor popoutExpanded = false;
 
   #lastEventPosition = 0;
   #graphEditorRef: Ref<Editor> = createRef();

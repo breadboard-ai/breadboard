@@ -28,19 +28,19 @@ import "./export-toolbar.js";
 @customElement("bb-llm-output")
 export class LLMOutput extends LitElement {
   @property()
-  value: LLMContent | null = null;
+  accessor value: LLMContent | null = null;
 
   @property({ reflect: true })
-  clamped = true;
+  accessor clamped = true;
 
   @property({ reflect: true })
-  lite = false;
+  accessor lite = false;
 
   @property({ reflect: true })
-  showExportControls = false;
+  accessor showExportControls = false;
 
   @consume({ context: tokenVendorContext })
-  tokenVendor?: TokenVendor;
+  accessor tokenVendor!: TokenVendor;
 
   #partDataURLs = new Map<number, string>();
 

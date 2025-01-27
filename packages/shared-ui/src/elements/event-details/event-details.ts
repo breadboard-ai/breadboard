@@ -19,7 +19,7 @@ import { classMap } from "lit/directives/class-map.js";
 @customElement("bb-event-details")
 export class EventDetails extends LitElement {
   @property()
-  event: InspectableRunEvent | null = null;
+  accessor event: InspectableRunEvent | null = null;
 
   static styles = css`
     :host {

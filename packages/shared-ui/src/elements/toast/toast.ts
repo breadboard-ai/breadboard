@@ -13,19 +13,19 @@ const DEFAULT_TIMEOUT = 8000;
 @customElement("bb-toast")
 export class Toast extends LitElement {
   @property({ reflect: true })
-  toastId: string | null = null;
+  accessor toastId: string | null = null;
 
   @property({ reflect: true })
-  type: ToastType = ToastType.INFORMATION;
+  accessor type: ToastType = ToastType.INFORMATION;
 
   @property()
-  message = "";
+  accessor message = "";
 
   @property()
-  timeout = DEFAULT_TIMEOUT;
+  accessor timeout = DEFAULT_TIMEOUT;
 
   @property()
-  offset = 0;
+  accessor offset = 0;
 
   static styles = css`
     :host {

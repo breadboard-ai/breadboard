@@ -45,34 +45,34 @@ const EXPANDED_KEY = `${STORAGE_PREFIX}-expanded`;
 @customElement("bb-node-configuration")
 export class NodeConfigurationInfo extends LitElement {
   @property()
-  graph: GraphDescriptor | null = null;
+  accessor graph: GraphDescriptor | null = null;
 
   @property()
-  kits: Kit[] = [];
+  accessor kits: Kit[] = [];
 
   @property()
-  loader: GraphLoader | null = null;
+  accessor loader: GraphLoader | null = null;
 
   @property()
-  editable = false;
+  accessor editable = false;
 
   @property()
-  editorMode = EditorMode.ADVANCED;
+  accessor editorMode = EditorMode.ADVANCED;
 
   @property()
-  selectedNodeIds: string[] = [];
+  accessor selectedNodeIds: string[] = [];
 
   @property()
-  subGraphId: string | null = null;
+  accessor subGraphId: string | null = null;
 
   @property()
-  boardServers: BoardServer[] = [];
+  accessor boardServers: BoardServer[] = [];
 
   @property()
-  showTypes = false;
+  accessor showTypes = false;
 
   @state()
-  isStale = false;
+  accessor isStale = false;
 
   static styles = css`
     * {

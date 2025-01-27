@@ -124,68 +124,68 @@ const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
 @customElement("bb-main")
 export class Main extends LitElement {
   @state()
-  graph: GraphDescriptor | null = null;
+  accessor graph: GraphDescriptor | null = null;
 
   @property()
-  subGraphId: string | null = null;
+  accessor subGraphId: string | null = null;
 
   @state()
-  showNav = false;
+  accessor showNav = false;
 
   @state()
-  showBoardServerAddOverlay = false;
+  accessor showBoardServerAddOverlay = false;
 
   @state()
-  showHistory = false;
+  accessor showHistory = false;
 
   @state()
-  showFirstRun = false;
+  accessor showFirstRun = false;
 
   @state()
-  showWelcomePanel = false;
+  accessor showWelcomePanel = false;
 
   @state()
-  showBoardReferenceMarkers = false;
+  accessor showBoardReferenceMarkers = false;
 
   @state()
-  showOpenBoardOverlay = false;
+  accessor showOpenBoardOverlay = false;
 
   @state()
-  showCommandPalette = false;
+  accessor showCommandPalette = false;
 
   @state()
-  showModulePalette = false;
+  accessor showModulePalette = false;
 
   @state()
-  showNewWorkspaceItemOverlay = false;
+  accessor showNewWorkspaceItemOverlay = false;
 
   @state()
-  view: "deploy" | "create" = "create";
+  accessor view: "deploy" | "create" = "create";
 
   @state()
-  showBoardOverflowMenu = false;
+  accessor showBoardOverflowMenu = false;
   #boardOverflowMenuConfiguration: BoardOverlowMenuConfiguration | null = null;
 
   @state()
-  showSaveAsDialog = false;
+  accessor showSaveAsDialog = false;
   #saveAsState: SaveAsConfiguration | null = null;
 
   @state()
-  showNodeConfigurator = false;
+  accessor showNodeConfigurator = false;
   #nodeConfiguratorData: BreadboardUI.Types.NodePortConfiguration | null = null;
   #nodeConfiguratorRef: Ref<BreadboardUI.Elements.NodeConfigurationOverlay> =
     createRef();
 
   @state()
-  showCommentEditor = false;
+  accessor showCommentEditor = false;
   #commentValueData: BreadboardUI.Types.CommentConfiguration | null = null;
 
   @state()
-  showEdgeValue = false;
+  accessor showEdgeValue = false;
   #edgeValueData: BreadboardUI.Types.EdgeValueConfiguration | null = null;
 
   @state()
-  boardEditOverlayInfo: {
+  accessor boardEditOverlayInfo: {
     tabId: TabId;
     title: string;
     version: string;
@@ -200,10 +200,10 @@ export class Main extends LitElement {
   } | null = null;
 
   @state()
-  showSettingsOverlay = false;
+  accessor showSettingsOverlay = false;
 
   @state()
-  toasts = new Map<
+  accessor toasts = new Map<
     string,
     {
       message: string;
@@ -213,28 +213,28 @@ export class Main extends LitElement {
   >();
 
   @provide({ context: BreadboardUI.Contexts.environmentContext })
-  environment = ENVIRONMENT;
+  accessor environment = ENVIRONMENT;
 
   @provide({ context: BreadboardUI.Elements.tokenVendorContext })
-  tokenVendor!: TokenVendor;
+  accessor tokenVendor!: TokenVendor;
 
   @provide({ context: BreadboardUI.Contexts.settingsHelperContext })
-  settingsHelper!: SettingsHelperImpl;
+  accessor settingsHelper!: SettingsHelperImpl;
 
   @state()
-  selectedBoardServer = "Example Boards";
+  accessor selectedBoardServer = "Example Boards";
 
   @state()
-  selectedLocation = "example://example-boards";
+  accessor selectedLocation = "example://example-boards";
 
   @state()
-  previewOverlayURL: URL | null = null;
+  accessor previewOverlayURL: URL | null = null;
 
   @state()
-  boardServerNavState: string | null = null;
+  accessor boardServerNavState: string | null = null;
 
   @property()
-  tab: Runtime.Types.Tab | null = null;
+  accessor tab: Runtime.Types.Tab | null = null;
 
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
@@ -297,7 +297,7 @@ export class Main extends LitElement {
    *   of the UI that need to reflect the latest graph topology up to date.
    */
   @state()
-  graphTopologyUpdateId: number = 0;
+  accessor graphTopologyUpdateId: number = 0;
 
   /**
    * Similar to graphTopologyUpdateId, but for all graphs in the graph store.
@@ -305,7 +305,7 @@ export class Main extends LitElement {
    * component/boards selectors.
    */
   @state()
-  graphStoreUpdateId: number = 0;
+  accessor graphStoreUpdateId: number = 0;
 
   #globalCommands: BreadboardUI.Types.Command[] = [
     {

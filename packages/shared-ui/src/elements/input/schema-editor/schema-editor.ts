@@ -31,16 +31,16 @@ const STORAGE_PREFIX = "bb-schema-editor";
 @customElement("bb-schema-editor")
 export class SchemaEditor extends LitElement {
   @property({ reflect: false })
-  nodeId: string | null = null;
+  accessor nodeId: string | null = null;
 
   @property()
-  schema: Schema | null = {};
+  accessor schema: Schema | null = {};
 
   @property()
-  schemaVersion = 0;
+  accessor schemaVersion = 0;
 
   @state()
-  expanded = new Map<string, boolean>();
+  accessor expanded = new Map<string, boolean>();
 
   #formRef: Ref<HTMLFormElement> = createRef();
   #schemaPropertiesOrder: string[] = [];

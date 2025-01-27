@@ -135,130 +135,131 @@ type EditedNode = {
 @customElement("bb-editor")
 export class Editor extends LitElement implements DragConnectorReceiver {
   @property()
-  graph: InspectableGraph | null = null;
+  accessor graph: InspectableGraph | null = null;
 
   @property()
-  subGraphId: string | null = null;
+  accessor subGraphId: string | null = null;
 
   @property()
-  boardServerKits: Kit[] | null = null;
+  accessor boardServerKits: Kit[] | null = null;
 
   @property()
-  mainGraphId: MainGraphIdentifier | null = null;
+  accessor mainGraphId: MainGraphIdentifier | null = null;
 
   @property()
-  graphStore: MutableGraphStore | null = null;
+  accessor graphStore: MutableGraphStore | null = null;
 
   @property()
-  graphStoreUpdateId = 0;
+  accessor graphStoreUpdateId = 0;
 
   @property()
-  run: InspectableRun | null = null;
+  accessor run: InspectableRun | null = null;
 
   @property()
-  offsetZoom = 0;
+  accessor offsetZoom = 0;
 
   @property()
-  boardId: number = -1;
+  accessor boardId: number = -1;
 
   @property()
-  capabilities: false | GraphProviderCapabilities = false;
+  accessor capabilities: false | GraphProviderCapabilities = false;
 
   @property()
-  extendedCapabilities: false | GraphProviderExtendedCapabilities = false;
+  accessor extendedCapabilities: false | GraphProviderExtendedCapabilities =
+    false;
 
   @property()
-  canUndo = false;
+  accessor canUndo = false;
 
   @property()
-  canRedo = false;
+  accessor canRedo = false;
 
   @property()
-  collapseNodesByDefault = false;
+  accessor collapseNodesByDefault = false;
 
   @property()
-  hideSubboardSelectorWhenEmpty = false;
+  accessor hideSubboardSelectorWhenEmpty = false;
 
   @property()
-  showNodeShortcuts = true;
+  accessor showNodeShortcuts = true;
 
   @property()
-  topGraphResult: TopGraphRunResult | null = null;
+  accessor topGraphResult: TopGraphRunResult | null = null;
 
   @state()
-  nodeValueBeingEdited: EditedNode | null = null;
+  accessor nodeValueBeingEdited: EditedNode | null = null;
 
   @state()
-  defaultConfiguration: NodeConfiguration | null = null;
+  accessor defaultConfiguration: NodeConfiguration | null = null;
 
   @property({ reflect: true })
-  invertZoomScrollDirection = false;
+  accessor invertZoomScrollDirection = false;
 
   @property()
-  showNodePreviewValues = true;
+  accessor showNodePreviewValues = true;
 
   @property()
-  assetPrefix = "";
+  accessor assetPrefix = "";
 
   @property()
-  showControls = true;
+  accessor showControls = true;
 
   @property()
-  showReadOnlyLabel = true;
+  accessor showReadOnlyLabel = true;
 
   @property()
-  readOnly = false;
+  accessor readOnly = false;
 
   @property()
-  showReadOnlyOverlay = false;
+  accessor showReadOnlyOverlay = false;
 
   @property()
-  highlightInvalidWires = false;
+  accessor highlightInvalidWires = false;
 
   @property()
-  showExperimentalComponents = false;
+  accessor showExperimentalComponents = false;
 
   @property()
-  showSubgraphsInline = true;
+  accessor showSubgraphsInline = true;
 
   @property()
-  tabURLs: string[] = [];
+  accessor tabURLs: string[] = [];
 
   @property()
-  showBoardHierarchy = true;
+  accessor showBoardHierarchy = true;
 
   @property()
-  selectionState: WorkspaceSelectionStateWithChangeId | null = null;
+  accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
 
   @property()
-  visualChangeId: WorkspaceVisualChangeId | null = null;
+  accessor visualChangeId: WorkspaceVisualChangeId | null = null;
 
   @property()
-  graphTopologyUpdateId: number = 0;
+  accessor graphTopologyUpdateId: number = 0;
 
   @property()
-  showPortTooltips = false;
+  accessor showPortTooltips = false;
 
   @property()
-  zoomToHighlightedNode = false;
+  accessor zoomToHighlightedNode = false;
 
   @property()
-  isShowingBoardActivityOverlay = false;
+  accessor isShowingBoardActivityOverlay = false;
 
   @property()
-  showBoardReferenceMarkers = false;
+  accessor showBoardReferenceMarkers = false;
 
   @state()
-  showOverflowMenu = false;
+  accessor showOverflowMenu = false;
 
   @property()
-  boardServers: BoardServer[] = [];
+  accessor boardServers: BoardServer[] = [];
 
   @state()
-  showComponentLibrary = false;
+  accessor showComponentLibrary = false;
 
   @state()
-  showComponentPicker = false;
+  accessor showComponentPicker = false;
   #componentPickerConfiguration: {
     components: Array<{ id: string; metadata: GraphStoreEntry }>;
     x: number;

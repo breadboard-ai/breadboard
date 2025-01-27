@@ -27,37 +27,37 @@ interface DockStatus {
 @customElement("bb-drag-dock-overlay")
 export class DragDockOverlay extends LitElement {
   @property()
-  overlayTitle: string | null = null;
+  accessor overlayTitle: string | null = null;
 
   @property({ reflect: true })
-  overlayIcon: string | null = null;
+  accessor overlayIcon: string | null = null;
 
   @property()
-  maximizeKey: string | null = null;
+  accessor maximizeKey: string | null = null;
 
   @property()
-  persistable = false;
+  accessor persistable = false;
 
   @property({ reflect: true })
-  persist = false;
+  accessor persist = false;
 
   @property()
-  dockKey: string | null = null;
+  accessor dockKey: string | null = null;
 
   @property()
-  dockable = false;
+  accessor dockable = false;
 
   @property()
-  x: number | null = null;
+  accessor x: number | null = null;
 
   @property()
-  y: number | null = null;
+  accessor y: number | null = null;
 
   @property({ reflect: true })
-  static = false;
+  accessor static = false;
 
   @property()
-  dock: DockStatus = {
+  accessor dock: DockStatus = {
     top: false,
     right: false,
     bottom: false,
@@ -65,7 +65,7 @@ export class DragDockOverlay extends LitElement {
   };
 
   @property()
-  dockZones = {
+  accessor dockZones = {
     left: new DOMRect(
       0,
       DOCK_ZONE_CLEARANCE,
@@ -88,22 +88,22 @@ export class DragDockOverlay extends LitElement {
   };
 
   @property({ reflect: true })
-  showDockDropZones = false;
+  accessor showDockDropZones = false;
 
   @property({ reflect: true })
-  maximized = false;
+  accessor maximized = false;
 
   @property({ reflect: true })
-  highlightDropZoneLeft = false;
+  accessor highlightDropZoneLeft = false;
 
   @property({ reflect: true })
-  highlightDropZoneRight = false;
+  accessor highlightDropZoneRight = false;
 
   @property({ reflect: true })
-  dockedLeft = false;
+  accessor dockedLeft = false;
 
   @property({ reflect: true })
-  dockedRight = false;
+  accessor dockedRight = false;
 
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #onWindowPointerDownBound = this.#onWindowPointerDown.bind(this);

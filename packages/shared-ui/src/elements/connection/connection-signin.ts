@@ -28,19 +28,19 @@ import { ConnectionSignedOutEvent } from "../../events/events.js";
 @customElement("bb-connection-signin")
 export class ConnectionSignin extends LitElement {
   @property({ attribute: false })
-  connection?: Connection;
+  accessor connection: Connection | undefined = undefined;
 
   @consume({ context: environmentContext })
-  environment?: Environment;
+  accessor environment!: Environment;
 
   @consume({ context: settingsHelperContext })
-  settingsHelper?: SettingsHelper;
+  accessor settingsHelper!: SettingsHelper;
 
   @state()
-  private _nonce = crypto.randomUUID();
+  private accessor _nonce = crypto.randomUUID();
 
   @state()
-  private _state: "signedout" | "pending" | "signedin" = "signedout";
+  private accessor _state: "signedout" | "pending" | "signedin" = "signedout";
 
   static styles = css`
     :host {

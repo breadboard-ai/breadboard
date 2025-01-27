@@ -45,31 +45,31 @@ const OVERLAY_CLEARANCE = 60;
 @customElement("bb-node-configuration-overlay")
 export class NodeConfigurationOverlay extends LitElement {
   @property()
-  canRunNode = false;
+  accessor canRunNode = false;
 
   @property()
-  configuration: NodePortConfiguration | null = null;
+  accessor configuration: NodePortConfiguration | null = null;
 
   @property()
-  runEventsForNode: InspectableRunNodeEvent[] | null = null;
+  accessor runEventsForNode: InspectableRunNodeEvent[] | null = null;
 
   @property()
-  graph: GraphDescriptor | null = null;
+  accessor graph: GraphDescriptor | null = null;
 
   @property()
-  boardServers: BoardServer[] = [];
+  accessor boardServers: BoardServer[] = [];
 
   @property()
-  showTypes = false;
+  accessor showTypes = false;
 
   @property({ reflect: true })
-  maximized = false;
+  accessor maximized = false;
 
   @property()
-  offerConfigurationEnhancements = false;
+  accessor offerConfigurationEnhancements = false;
 
   @property()
-  readOnly = false;
+  accessor readOnly = false;
 
   #overlayRef: Ref<Overlay> = createRef();
   #userInputRef: Ref<UserInput> = createRef();

@@ -16,10 +16,10 @@ import { KitToggleEvent } from "../../events/events.js";
 @customElement("bb-kit-selector")
 export class KitSelector extends LitElement {
   @property()
-  kits: string[] = [];
+  accessor kits: string[] = [];
 
   @property()
-  activeKits: string[] = [];
+  accessor activeKits: string[] = [];
 
   static styles = css`
     :host {
