@@ -466,6 +466,16 @@ export type Modules = Record<ModuleIdentifier, Module>;
 
 export type AssetPath = string;
 
+export type AssetMetadata = {
+  title: string;
+  description?: string;
+};
+
+export type Asset = {
+  metadata?: AssetMetadata;
+  data: NodeValue;
+};
+
 export type GraphCommonProperties = GraphInlineMetadata & {
   /**
    * Metadata associated with the graph.
@@ -505,7 +515,7 @@ export type GraphCommonProperties = GraphInlineMetadata & {
    * An optional collection of assets associated with the graph. Each asset
    * is an array of LLM Content items.
    */
-  assets?: Record<AssetPath, NodeValue>;
+  assets?: Record<AssetPath, Asset>;
 };
 
 /**

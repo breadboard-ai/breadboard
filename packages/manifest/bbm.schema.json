@@ -3,6 +3,61 @@
 	"$ref": "#/definitions/BreadboardManifest",
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"definitions": {
+		"Asset": {
+			"additionalProperties": false,
+			"properties": {
+				"data": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "number"
+						},
+						{
+							"type": "boolean"
+						},
+						{
+							"type": "null"
+						},
+						{
+							"items": {
+								"$ref": "#/definitions/NodeValue"
+							},
+							"type": "array"
+						},
+						{
+							"$ref": "#/definitions/Capability"
+						},
+						{
+							"additionalProperties": {
+								"$ref": "#/definitions/NodeValue"
+							},
+							"type": "object"
+						}
+					]
+				},
+				"metadata": {
+					"$ref": "#/definitions/AssetMetadata"
+				}
+			},
+			"type": "object"
+		},
+		"AssetMetadata": {
+			"additionalProperties": false,
+			"properties": {
+				"description": {
+					"type": "string"
+				},
+				"title": {
+					"type": "string"
+				}
+			},
+			"required": [
+				"title"
+			],
+			"type": "object"
+		},
 		"Board": {
 			"$ref": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.11.0/packages/schema/breadboard.schema.json#/definitions/GraphDescriptor",
 			"description": "A reference to the BGL schema GraphDescriptor type.",
@@ -171,7 +226,7 @@
 					"description": "Arguments that are passed to the graph, useful to bind values to graphs."
 				},
 				"assets": {
-					"$ref": "#/definitions/Record%3CAssetPath%2CNodeValue%3E",
+					"$ref": "#/definitions/Record%3CAssetPath%2CAsset%3E",
 					"description": "An optional collection of assets associated with the graph. Each asset is an array of LLM Content items."
 				},
 				"describer": {
@@ -726,9 +781,9 @@
 			"$ref": "#/definitions/Record%3COutputIdentifier%2CNodeValue%3E",
 			"description": "Values that the `NodeHandler` outputs."
 		},
-		"Record<AssetPath,NodeValue>": {
+		"Record<AssetPath,Asset>": {
 			"additionalProperties": {
-				"$ref": "#/definitions/NodeValue"
+				"$ref": "#/definitions/Asset"
 			},
 			"type": "object"
 		},
