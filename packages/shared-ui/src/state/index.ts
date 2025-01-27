@@ -5,3 +5,6 @@
  */
 
 export { ChatController } from "./chat-controller.js";
+export * from "./types.js";
+export { createOrganizer } from "./organizer.js";
+export type * from "./organizer.js";

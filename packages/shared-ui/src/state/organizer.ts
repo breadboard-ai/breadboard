@@ -13,7 +13,7 @@ import {
 } from "@google-labs/breadboard";
 import { SignalMap } from "signal-utils/map";
 
-export { ReactiveOrganizer };
+export { createOrganizer };
 
 export type Organizer = {
   /**
@@ -28,6 +28,13 @@ export type Organizer = {
     metadata: AssetMetadata
   ): Promise<Outcome<void>>;
 };
+
+function createOrganizer(
+  mainGraphId: MainGraphIdentifier,
+  store: MutableGraphStore
+) {
+  return new ReactiveOrganizer(mainGraphId, store);
+}
 
 class ReactiveOrganizer implements Organizer {
   #mainGraphId: MainGraphIdentifier;

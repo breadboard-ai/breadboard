@@ -1,0 +1,80 @@
+{
+  "title": "Organizer Demo",
+  "description": "A blank board. Use it as a starting point for your creations.",
+  "version": "0.0.1",
+  "nodes": [
+    {
+      "type": "input",
+      "id": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": -80,
+          "y": -260,
+          "collapsed": "expanded",
+          "outputHeight": 44
+        }
+      }
+    },
+    {
+      "type": "output",
+      "id": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "items": {
+                "type": "object",
+                "behavior": [
+                  "llm-content"
+                ]
+              },
+              "default": "null"
+            }
+          },
+          "type": "object",
+          "required": []
+        }
+      },
+      "metadata": {
+        "visual": {
+          "x": 260,
+          "y": -260,
+          "collapsed": "expanded",
+          "outputHeight": 44
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "out": "context",
+      "to": "output",
+      "in": "context"
+    }
+  ],
+  "metadata": {
+    "visual": {}
+  }
+}
