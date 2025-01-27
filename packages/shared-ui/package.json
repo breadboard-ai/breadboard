@@ -120,7 +120,7 @@
     "@breadboard-ai/jsandbox": "0.3.0",
     "@breadboard-ai/types": "0.4.0",
     "@codemirror/autocomplete": "^6.18.4",
-    "@codemirror/commands": "^6.7.1",
+    "@codemirror/commands": "^6.8.0",
     "@codemirror/lang-javascript": "^6.2.2",
     "@codemirror/lang-json": "^6.0.1",
     "@codemirror/language": "^6.10.3",
