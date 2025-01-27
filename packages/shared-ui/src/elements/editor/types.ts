@@ -117,3 +117,10 @@ export type GraphNodeReferenceOpts = Array<{
 }>;
 
 export type MoveToSelection = "immediate" | "animated" | false;
+
+export type GraphNodeIconName = string;
+export interface GraphNodeColorScheme {
+  background: number;
+  mainBorder: number;
+  headerBorder: number;
+}

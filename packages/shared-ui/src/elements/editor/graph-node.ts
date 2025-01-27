@@ -16,6 +16,7 @@ import * as PIXI from "pixi.js";
 import {
   ComponentExpansionState,
   GRAPH_OPERATIONS,
+  GraphNodeColorScheme,
   GraphNodePortType,
   GraphNodeReferences,
 } from "./types.js";
@@ -40,6 +41,7 @@ import {
 } from "../../utils/index.js";
 import { GraphNodeOutput } from "./graph-node-output.js";
 import { isMainPortBehavior } from "../../utils/behaviors.js";
+import { defaultColorScheme, GraphNodeColors } from "./graph-node-colors.js";
 
 const borderColor = getGlobalColor("--bb-neutral-500");
 const nodeTextColor = getGlobalColor("--bb-neutral-900");
@@ -146,6 +148,7 @@ export class GraphNode extends PIXI.Container {
   #lastClickTime = 0;
   #icon: string | null = null;
   #iconSprite: PIXI.Sprite | null = null;
+  #colorScheme: GraphNodeColorScheme = defaultColorScheme;
 
   #runnerButton: PIXI.Sprite | null = null;
 
@@ -532,6 +535,7 @@ export class GraphNode extends PIXI.Container {
         if (this.#iconSprite) {
           this.#iconSprite.scale.x = ICON_SCALE;
           this.#iconSprite.scale.y = ICON_SCALE;
+          this.#colorScheme = GraphNodeColors.get(icon) || defaultColorScheme;
         }
       }
     } else {
@@ -1402,9 +1406,7 @@ export class GraphNode extends PIXI.Container {
         ? this.#highlightForAdHocColor
         : this.#highlightForBoardPort
           ? this.#highlightForBoardPortColor
-          : this.selected
-            ? this.#selectedColor
-            : this.#borderColor,
+          : this.#colorScheme.mainBorder,
     });
 
     this.#background.beginPath();
@@ -1418,14 +1420,35 @@ export class GraphNode extends PIXI.Container {
     this.#background.closePath();
     this.#background.fill({ color: this.#backgroundColor });
 
-    if (this.#titleText && !this.collapsed) {
+    if (this.#titleText) {
       const titleHeight =
         this.#padding + this.#titleText.height + this.#padding;
+
       this.#background.beginPath();
-      this.#background.moveTo(0, titleHeight);
-      this.#background.lineTo(this.#width, titleHeight);
+      this.#background.moveTo(0, 0);
+      this.#background.roundRect(
+        0,
+        0,
+        this.#width,
+        titleHeight,
+        this.#borderRadius
+      );
+      this.#background.rect(
+        0,
+        titleHeight - this.#borderRadius,
+        this.#width,
+        this.#borderRadius
+      );
       this.#background.closePath();
-      this.#background.stroke({ color: this.#segmentDividerColor });
+      this.#background.fill({ color: this.#colorScheme.background });
+
+      if (!this.collapsed) {
+        this.#background.beginPath();
+        this.#background.moveTo(0, titleHeight);
+        this.#background.lineTo(this.#width, titleHeight);
+        this.#background.closePath();
+        this.#background.stroke({ color: this.#colorScheme.headerBorder });
+      }
     }
 
     // Collapsed Port List.
@@ -1436,7 +1459,7 @@ export class GraphNode extends PIXI.Container {
       this.#background.moveTo(0, y);
       this.#background.lineTo(this.#width, y);
       this.#background.closePath();
-      this.#background.stroke({ color: this.#segmentDividerColor });
+      this.#background.stroke({ color: this.#colorScheme.headerBorder });
     }
 
     if (portsDivider !== null) {
@@ -1593,6 +1616,9 @@ export class GraphNode extends PIXI.Container {
    * are known.
    */
   #drawReferences() {
+    return;
+
+    // TODO: Bring this back when references are clearer.
     this.#referenceContainer.visible = this.#expansionState !== "collapsed";
     this.#referenceContainer.inPortLocations = this.#inPortLocations;
     this.#referenceContainer.references = this.#references;

@@ -56,6 +56,7 @@ const themeAssets: [string, string][] = [
     `/third_party/icons/graph/generative/generative-text${themeSuffix}-48px.svg`,
   ],
   ["urlTemplate", `/third_party/icons/graph/http${themeSuffix}-48px.svg`],
+  ["text", `/third_party/icons/graph/text${themeSuffix}-48px.svg`],
   ["value", `/third_party/icons/graph/value${themeSuffix}-48px.svg`],
 ];
 

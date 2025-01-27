@@ -91,6 +91,24 @@ export class NodeConfigurationOverlay extends LitElement {
       display: block;
       position: fixed;
       z-index: 20;
+
+      --outer-border: var(--bb-ui-500);
+      --inner-border: var(--bb-ui-300);
+    }
+
+    :host :has(header.generative),
+    :host :has(header.generative-image),
+    :host :has(header.generative-audio),
+    :host :has(header.generative-text) {
+      --outer-border: var(--bb-generative-600);
+      --inner-border: var(--bb-generative-300);
+    }
+
+    :host :has(header.text),
+    :host :has(header.input),
+    :host :has(header.output) {
+      --outer-border: var(--bb-inputs-600);
+      --inner-border: var(--bb-inputs-300);
     }
 
     :host([maximized="true"]) {
@@ -117,7 +135,7 @@ export class NodeConfigurationOverlay extends LitElement {
         padding: var(--bb-grid-size) var(--bb-grid-size-2);
         font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
           var(--bb-font-family);
-        border: 1px solid var(--bb-neutral-300);
+        border: 1px solid var(--inner-border);
         border-radius: var(--bb-grid-size);
         height: var(--bb-grid-size-6);
       }
@@ -153,14 +171,59 @@ export class NodeConfigurationOverlay extends LitElement {
             margin-right: var(--bb-grid-size);
           }
 
+          background: var(--bb-ui-100);
           height: 40px;
-          border-bottom: 1px solid var(--bb-neutral-300);
+          border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
+          border-bottom: 1px solid var(--inner-border);
           height: 40px;
           padding: 0 var(--bb-grid-size-3);
 
           display: flex;
           justify-content: flex-end;
           align-items: center;
+
+          &.generative,
+          &.generative-image,
+          &.generative-text,
+          &.generative-audio {
+            background: var(--bb-generative-100);
+            border-bottom: 1px solid var(--bb-generative-300);
+          }
+
+          &.generative::before {
+            background-image: var(--bb-add-icon-generative);
+          }
+
+          &.generative-audio::before {
+            background-image: var(--bb-add-icon-generative-audio);
+          }
+
+          &.generative-text::before {
+            background-image: var(--bb-add-icon-generative-text);
+          }
+
+          &.generative-image::before {
+            background-image: var(--bb-add-icon-generative-image);
+          }
+
+          &.input,
+          &.output,
+          &.text {
+            background: var(--bb-input-100);
+            border-bottom: 1px solid var(--bb-input-300);
+          }
+
+          &.input::before {
+            background-image: var(--bb-icon-input);
+          }
+
+          &.output::before {
+            background-image: var(--bb-icon-output);
+          }
+
+          &.text::before {
+            background-image: var(--bb-icon-text);
+          }
 
           & > div {
             flex: 1;
@@ -180,12 +243,13 @@ export class NodeConfigurationOverlay extends LitElement {
                 width: 20px;
                 height: 20px;
                 border-radius: var(--bb-grid-size);
-                border: 1px solid var(--bb-neutral-300);
+                border: 1px solid var(--inner-border);
+                background: var(--bb-neutral-0);
               }
 
               &:has(+ #log-level:checked)::after {
-                background: var(--bb-icon-check) center center / 20px 20px
-                  no-repeat;
+                background: var(--bb-neutral-0) var(--bb-icon-check) center
+                  center / 20px 20px no-repeat;
               }
             }
 
@@ -493,7 +557,11 @@ export class NodeConfigurationOverlay extends LitElement {
       return nothing;
     }
 
-    const icon = (this.configuration.type ?? "configure")
+    const icon = (
+      this.configuration.currentMetadata?.icon ??
+      this.configuration.type ??
+      "configure"
+    )
       .toLocaleLowerCase()
       .replaceAll(/\s/gi, "-");
     const { inputs } = filterConfigByMode(

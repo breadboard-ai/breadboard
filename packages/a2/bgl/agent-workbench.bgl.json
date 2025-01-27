@@ -8,8 +8,8 @@
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": 1.1368683772161603e-13,
-          "y": -220.0000000000001,
+          "x": 0,
+          "y": -220.00000000000017,
           "collapsed": "expanded",
           "outputHeight": 44
         },
@@ -33,8 +33,8 @@
       "type": "file://bgl/a2.bgl.json#module:researcher",
       "metadata": {
         "visual": {
-          "x": -320.00000000000006,
-          "y": -220.0000000000001,
+          "x": -320,
+          "y": -219.99999999999983,
           "collapsed": "expanded",
           "outputHeight": 44
         },
@@ -64,8 +64,8 @@
       "type": "file://bgl/a2.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
       "metadata": {
         "visual": {
-          "x": 320,
-          "y": -100.00000000000034,
+          "x": 320.00000000000034,
+          "y": -100.00000000000011,
           "collapsed": "expanded",
           "outputHeight": 44
         },
@@ -90,7 +90,7 @@
       "metadata": {
         "visual": {
           "x": 320,
-          "y": -360.00000000000034,
+          "y": -360,
           "collapsed": "expanded",
           "outputHeight": 124
         },
@@ -113,8 +113,8 @@
       "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
       "metadata": {
         "visual": {
-          "x": -640,
-          "y": -320.0000000000001,
+          "x": -639.9999999999999,
+          "y": -219.99999999999983,
           "collapsed": "expanded",
           "outputHeight": 44
         },
@@ -137,8 +137,8 @@
       "type": "file://bgl/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
       "metadata": {
         "visual": {
-          "x": 660,
-          "y": -360,
+          "x": 660.0000000000001,
+          "y": -359.99999999999983,
           "collapsed": "expanded",
           "outputHeight": 304
         },

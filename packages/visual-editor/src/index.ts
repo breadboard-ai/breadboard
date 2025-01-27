@@ -1918,10 +1918,11 @@ export class Main extends LitElement {
 
     const title = this.#runtime.edit.getNodeTitle(this.tab, id, subGraphId);
 
-    const [ports, nodeType, metadata] = await Promise.all([
+    const [ports, nodeType, metadata, currentMetadata] = await Promise.all([
       this.#runtime.edit.getNodePorts(this.tab, id, subGraphId),
       this.#runtime.edit.getNodeType(this.tab, id, subGraphId),
       this.#runtime.edit.getNodeMetadata(this.tab, id, subGraphId),
+      this.#runtime.edit.getNodeCurrentMetadata(this.tab, id, subGraphId),
     ]);
 
     if (!ports) {
@@ -1934,12 +1935,13 @@ export class Main extends LitElement {
       x: configuration.x ?? 0,
       y: configuration.y ?? 0,
       title,
-      type: nodeType?.title ? nodeType?.title : null,
+      type: nodeType,
       selectedPort: configuration.selectedPort ?? null,
       subGraphId: subGraphId ?? null,
       ports,
       metadata,
       nodeConfiguration,
+      currentMetadata,
       addHorizontalClickClearance:
         configuration.addHorizontalClickClearance ?? false,
     };
