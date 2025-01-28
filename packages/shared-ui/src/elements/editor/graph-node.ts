@@ -1124,6 +1124,10 @@ export class GraphNode extends PIXI.Container {
           isLLMContentArrayBehavior(inPort.schema)
         )
       ) {
+        if (isBoardArrayBehavior(inPort.schema)) {
+          continue;
+        }
+
         return false;
       }
     }
@@ -1479,7 +1483,13 @@ export class GraphNode extends PIXI.Container {
       this.#background.moveTo(0, y);
       this.#background.lineTo(this.#width, y);
       this.#background.closePath();
-      this.#background.stroke({ color: this.#segmentDividerColor });
+      this.#background.stroke({ color: this.#colorScheme.headerBorder });
+
+      this.#background.beginPath();
+      this.#background.moveTo(0, y + 0.5);
+      this.#background.rect(0, y + 0.5, this.#width, 4);
+      this.#background.closePath();
+      this.#background.fill({ color: this.#colorScheme.background });
     }
   }
 
