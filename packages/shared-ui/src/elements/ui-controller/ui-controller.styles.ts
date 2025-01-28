@@ -45,12 +45,12 @@ export const styles = css`
       bottom: var(--bb-grid-size-4);
       right: var(--bb-grid-size-4);
       width: 50vw;
-      height: 96px;
+      height: var(--bb-grid-size-11);
       max-height: 70vh;
       max-width: 450px;
       z-index: 3;
       display: grid;
-      grid-template-rows: 44px 1fr min-content;
+      grid-template-rows: 44px;
       border-radius: var(--bb-grid-size-2);
       box-shadow: var(--bb-elevation-6);
       overflow: hidden;
@@ -58,24 +58,26 @@ export const styles = css`
 
       & #create-view-popout-content {
         overflow: hidden;
+        display: none;
       }
 
       & #create-view-popout-nav {
-        background: var(--bb-neutral-50);
+        background: var(--bb-neutral-0);
         position: relative;
         user-select: none;
 
         & #sections {
           display: flex;
-          align-items: flex-end;
-          justify-content: center;
+          align-items: center;
+          justify-content: flex-start;
           height: 100%;
+          padding: 0 var(--bb-grid-size-3);
 
           & button {
             height: 100%;
             font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
               var(--bb-font-family);
-            margin: 0 var(--bb-grid-size-2);
+            margin: 0 var(--bb-grid-size-2) 0 0;
             padding: 0 var(--bb-grid-size);
             color: var(--bb-neutral-700);
             background: none;
@@ -98,13 +100,37 @@ export const styles = css`
               }
             }
           }
+
+          & #run {
+            min-width: 76px;
+            height: var(--bb-grid-size-7);
+            background: var(--bb-ui-500) var(--bb-icon-play-filled-inverted) 8px
+              center / 20px 20px no-repeat;
+            color: #fff;
+            border-radius: 20px;
+            border: none;
+            font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+              var(--bb-font-family);
+            padding: 0 var(--bb-grid-size-5) 0 var(--bb-grid-size-9);
+            opacity: 0.3;
+
+            &.running {
+              background: var(--bb-ui-500) url(/images/progress-ui-inverted.svg)
+                8px center / 16px 16px no-repeat;
+            }
+
+            &:not([disabled]) {
+              cursor: pointer;
+              opacity: 1;
+            }
+          }
         }
 
         & #create-view-popout-toggle {
           cursor: pointer;
           position: absolute;
           border: none;
-          background: var(--bb-icon-unfold-more) center center / 20px 20px
+          background: var(--bb-icon-expand-content) center center / 20px 20px
             no-repeat;
           width: 20px;
           height: 20px;
@@ -122,10 +148,95 @@ export const styles = css`
         }
       }
 
+      & #input {
+        --user-input-padding-left: 0;
+
+        border-top: 1px solid var(--bb-neutral-300);
+        padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+        display: grid;
+        grid-template-columns: 1fr 32px;
+        column-gap: var(--bb-grid-size-2);
+        max-height: 385px;
+        display: none;
+
+        & .preamble {
+          grid-column: 1 / 3;
+
+          & h2 {
+            color: var(--bb-neutral-900);
+            margin: 0 0 var(--bb-grid-size-2) 0;
+            font: 500 var(--bb-body-small) / var(--bb-body-line-height-small)
+              var(--bb-font-family);
+          }
+        }
+
+        & .no-input-needed {
+          display: flex;
+          box-sizing: border-box;
+          align-items: center;
+          height: var(--bb-grid-size-9);
+          font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+            var(--bb-font-family);
+
+          &::before {
+            content: "";
+            display: block;
+            width: 22px;
+            height: 22px;
+            border: 1px solid var(--bb-neutral-600);
+            margin-right: var(--bb-grid-size-2);
+            background: var(--bb-neutral-0) var(--bb-icon-add) center center /
+              20px 20px no-repeat;
+            opacity: 0.4;
+            border-radius: 50%;
+          }
+
+          &::after {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            flex: 1;
+            content: "No input needed";
+            border-radius: var(--bb-grid-size-16);
+            background: var(--bb-neutral-100);
+            border: 1px solid var(--bb-neutral-400);
+            color: var(--bb-neutral-900);
+            padding: 0 var(--bb-grid-size-4);
+            opacity: 0.4;
+          }
+        }
+
+        & .continue-button {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: var(--bb-ui-500) var(--bb-icon-send-inverted) center
+            center / 18px 18px no-repeat;
+          font-size: 0;
+          border: none;
+          filter: grayscale(1);
+          opacity: 0.6;
+          align-self: end;
+          margin-bottom: 2px;
+
+          &:not([disabled]) {
+            cursor: pointer;
+            filter: none;
+
+            &:hover,
+            &:focus {
+              opacity: 1;
+            }
+          }
+        }
+      }
+
       &.expanded {
+        grid-template-rows: 44px 1fr min-content;
         height: 100%;
 
         & #create-view-popout-content {
+          display: block;
           overflow-y: scroll;
           scrollbar-width: none;
         }
@@ -134,92 +245,13 @@ export const styles = css`
           border-bottom: 1px solid var(--bb-neutral-300);
 
           & #create-view-popout-toggle {
-            background: var(--bb-icon-unfold-less) center center / 20px 20px
-              no-repeat;
+            background: var(--bb-icon-collapse-content) center center / 20px
+              20px no-repeat;
           }
         }
-      }
-    }
 
-    & #input {
-      --user-input-padding-left: 0;
-
-      border-top: 1px solid var(--bb-neutral-300);
-      padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
-      display: grid;
-      grid-template-columns: 1fr 32px;
-      column-gap: var(--bb-grid-size-2);
-      max-height: 385px;
-      overflow: auto;
-
-      & .preamble {
-        grid-column: 1 / 3;
-
-        & h2 {
-          color: var(--bb-neutral-900);
-          margin: 0 0 var(--bb-grid-size-2) 0;
-          font: 500 var(--bb-body-small) / var(--bb-body-line-height-small)
-            var(--bb-font-family);
-        }
-      }
-
-      & .no-input-needed {
-        display: flex;
-        box-sizing: border-box;
-        align-items: center;
-        height: var(--bb-grid-size-9);
-        font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-          var(--bb-font-family);
-
-        &::before {
-          content: "";
-          display: block;
-          width: 22px;
-          height: 22px;
-          border: 1px solid var(--bb-neutral-600);
-          margin-right: var(--bb-grid-size-2);
-          background: var(--bb-neutral-0) var(--bb-icon-add) center center /
-            20px 20px no-repeat;
-          opacity: 0.4;
-          border-radius: 50%;
-        }
-
-        &::after {
-          display: flex;
-          align-items: center;
-          height: 100%;
-          flex: 1;
-          content: "No input needed";
-          border-radius: var(--bb-grid-size-16);
-          background: var(--bb-neutral-100);
-          border: 1px solid var(--bb-neutral-400);
-          color: var(--bb-neutral-900);
-          padding: 0 var(--bb-grid-size-4);
-          opacity: 0.4;
-        }
-      }
-
-      & .continue-button {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: var(--bb-ui-500) var(--bb-icon-send-inverted) center
-          center / 18px 18px no-repeat;
-        font-size: 0;
-        border: none;
-        filter: grayscale(1);
-        opacity: 0.6;
-        align-self: end;
-        margin-bottom: 2px;
-
-        &:not([disabled]) {
-          cursor: pointer;
-          filter: none;
-
-          &:hover,
-          &:focus {
-            opacity: 1;
-          }
+        & #input {
+          display: grid;
         }
       }
     }
