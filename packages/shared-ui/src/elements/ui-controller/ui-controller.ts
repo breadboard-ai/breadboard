@@ -69,6 +69,7 @@ import {
 import { cache, CacheDirective } from "lit/directives/cache.js";
 import { DirectiveResult } from "lit/directive.js";
 import { ChatController } from "../../state/chat-controller.js";
+import { Organizer } from "../../state/organizer.js";
 
 const SIDE_NAV_ITEM_KEY = "bb-ui-side-nav-item";
 const POPOUT_STATE = "bb-ui-popout-state";
@@ -173,6 +174,9 @@ export class UI extends LitElement {
 
   @state()
   accessor popoutExpanded = false;
+
+  @state()
+  accessor organizer: Organizer | null = null;
 
   #lastEventPosition = 0;
   #graphEditorRef: Ref<Editor> = createRef();
@@ -689,6 +693,7 @@ export class UI extends LitElement {
                 .boardServers=${this.boardServers}
                 .showDebugControls=${showDebugControls}
                 .nextNodeId=${nextNodeId}
+                .assets=${this.organizer?.assets}
                 name=${Strings.from("LABEL_PROJECT")}
               ></bb-chat>
             </div>`;
