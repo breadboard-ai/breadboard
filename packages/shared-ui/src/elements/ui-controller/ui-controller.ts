@@ -693,7 +693,6 @@ export class UI extends LitElement {
                 .boardServers=${this.boardServers}
                 .showDebugControls=${showDebugControls}
                 .nextNodeId=${nextNodeId}
-                .assets=${this.organizer?.assets}
                 name=${Strings.from("LABEL_PROJECT")}
               ></bb-chat>
             </div>`;
@@ -796,6 +795,9 @@ export class UI extends LitElement {
     return graph
       ? this.mainView === "create"
         ? html`<section id="create-view">
+            <div id="organizer-popout">
+              <bb-organizer .state="${this.organizer}"> </bb-organizer>
+            </div>
             <div
               id="create-view-popout"
               class=${classMap({ expanded: this.popoutExpanded })}

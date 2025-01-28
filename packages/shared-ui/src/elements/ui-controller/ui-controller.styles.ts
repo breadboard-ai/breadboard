@@ -33,6 +33,19 @@ export const styles = css`
       grid-template-columns: none;
     }
 
+    & #organizer-popout {
+      position: absolute;
+      bottom: 32px;
+      left: 32px;
+      width: 50vw;
+      height: 96px;
+      max-height: 70vh;
+      max-width: 200px;
+      z-index: 4;
+      overflow: scroll;
+      background: var(--bb-neutral-0);
+    }
+
     & #create-view-popout {
       position: absolute;
       bottom: 32px;
